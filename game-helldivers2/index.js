@@ -2,8 +2,8 @@
 Name: Helldivers 2 Vortex Extension
 Structure: Custom Game Data
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-08-23
+Version: 1.0.1
+Date: 2026-08-29
 /////////////////////////////////////////*/
 
 //Import libraries
@@ -73,6 +73,11 @@ const PLAN_FILE = (profileId) => `${profileId}_patch_plan.json`;
 //Load order UI
 const LO_IMAGE_WIDTH = 96; //Width of the load order thumbnail image
 const LO_IMAGE_HEIGHT = LO_IMAGE_WIDTH * 0.5625;
+
+//Conflicts page icon: two arrows meeting head-on with an exclamation mark between them. The
+//built-in `conflict` icon is a lightning bolt and the Load Order page's is a pair of chevrons -
+//neither reads as two mods clashing, and the two pages sit next to each other in the sidebar.
+const PATCH_CONFLICT_ICON = 'M1 10.25H5.5V7L9.5 12L5.5 17V13.75H1V10.25ZM23 10.25H18.5V7L14.5 12L18.5 17V13.75H23V10.25ZM10.85 3.4H13.15V13.1H10.85V3.4ZM10.85 15.1H13.15V17.7H10.85V15.1Z';
 
 //Mod update guard (keeps load order positions across a mod update)
 let mod_update_all_profile = false; // for mod update to keep them in the load order and not uncheck them
@@ -469,77 +474,465 @@ function testPatch(files, gameId) {
   });
 }
 
-//install patch mods, asking which variant to use when the archive offers a choice
-function installPatchMulti(api, files) {
+// MOD OPTION TREE ///////////////////////////////////////////////////////////
+
+// A mod can offer the user a choice in more than one shape: a `manifest.json` describing named
+// options with images and descriptions, or nothing but a folder per version of the mod. Every
+// source is parsed into one normalized tree so that a single resolver, a single renumbering pass
+// and a single dialog serve all of them:
+//
+//   { name, description, icon, exclusive, dataPath, categories: [...], options: [...] }
+//
+// `exclusive` marks the whole option list as one pick-one radio group - what a bare folder layout
+// and a Legacy manifest both mean - as opposed to independent checkboxes. An option's `include`
+// names archive-relative folders whose patch files are taken when that option is chosen; a folder
+// is read without descending into its subfolders, matching the community mod managers.
+
+const MANIFEST_FILE = 'manifest.json';
+const ARCHIVE_ROOT_LABEL = '(archive root)';
+
+//The archive-relative folder a file sits in, '' for the archive root. This doubles as an option's
+//identity in an inferred tree, so separators are normalized and any trailing one dropped.
+function optionDir(file) {
+  const dir = path.dirname(file);
+  if ((dir === '.') || (dir === '')) return '';
+  return normalizeRelPath(dir);
+}
+
+//Archive-relative paths arrive from three places - Vortex's file list, a manifest's `Include`, a
+//manifest's `Image` - with whichever separator the author typed. One spelling for all of them.
+function normalizeRelPath(value) {
+  if ((value === undefined) || (value === null)) return '';
+  return String(value)
+    .split(/[\\/]+/)
+    .filter(segment => (segment !== '') && (segment !== '.'))
+    .join('/');
+}
+
+//Build a tree out of the archive's folder layout alone. Patch files spread over more than one
+//folder mean the mod ships alternative versions of itself, so the FOLDER is the question. Asking
+//about the folder instead of about each file name it contains is what keeps a version shipping
+//`<hash>.patch_0` plus its `.gpu_resources` and `.stream` sidecars down to a single question - and
+//makes a self-contradictory answer impossible, which repeating the question per file did not.
+function inferOptionTree(patchFiles, dataPath) {
+  const dirs = [];
+  for (const file of patchFiles) {
+    const dir = optionDir(file);
+    if (!dirs.includes(dir)) dirs.push(dir);
+  }
+  if (dirs.length < 2) return undefined;
+  return {
+    name: undefined,
+    description: undefined,
+    icon: undefined,
+    exclusive: true,
+    dataPath,
+    categories: [],
+    options: dirs.map(dir => ({
+      //An empty id would be lost in the dialog result, so the archive root is identified as '.'.
+      id: (dir === '') ? '.' : dir,
+      name: (dir === '') ? ARCHIVE_ROOT_LABEL : dir,
+      description: undefined,
+      image: undefined,
+      categoryId: undefined,
+      defaultOn: false,
+      include: [dir],
+      subOptions: [],
+    })),
+  };
+}
+
+// MANIFEST.JSON /////////////////////////////////////////////////////////////
+
+// Helldivers 2 mods have a community manifest standard, shared by the two managers that predate
+// this extension. Three versions exist and all three are read here:
+//
+//   Legacy  no `Version` property. `Options` is an array of folder names, exactly one is installed.
+//   V1      `Version: 1`. `Options` are objects with Name/Description/Image/Include/SubOptions.
+//           Any number of options can be enabled; an enabled option with sub-options installs
+//           exactly one of them.
+//   V2      `Version: 2`. V1 plus per-option `Guid`/`CategoryRef`, a `Categories` list and `Tags`.
+//
+// `NexusData` is deliberately ignored: Vortex tracks a mod's Nexus identity itself, and letting an
+// archive declare its own mod id is how mods end up attributed to the wrong page.
+//
+// Nothing here may fail an install. A missing, unreadable, malformed or self-contradictory manifest
+// is logged and the folder layout is used instead - the mod still installs.
+
+async function readManifest(files, destinationPath) {
+  if (!destinationPath) return undefined;
+  const entry = files.find(file =>
+    (path.dirname(file) === '.') && (path.basename(file).toLowerCase() === MANIFEST_FILE));
+  if (entry === undefined) return undefined;
+  try {
+    const raw = await fs.readFileAsync(path.join(destinationPath, entry), { encoding: 'utf8' });
+    //JS counts a byte-order mark as whitespace, so trimming is enough to survive one.
+    return { file: entry, data: JSON.parse(raw.trim()) };
+  } catch (err) {
+    //The file is still reported so that it is kept out of the install even when it cannot be read.
+    log('warn', `[${GAME_ID}] ignoring unreadable ${entry}: ${err.message}`);
+    return { file: entry, data: undefined };
+  }
+}
+
+//Every folder the archive actually contains, so that an `Include` naming a folder that is not there
+//can be reported rather than silently installing nothing.
+function collectArchiveDirs(files) {
+  const dirs = new Set(['']);
+  for (const file of files) {
+    const segments = normalizeRelPath(path.dirname(file)).split('/').filter(segment => segment !== '');
+    let current = '';
+    for (const segment of segments) {
+      current = (current === '') ? segment : `${current}/${segment}`;
+      dirs.add(current);
+    }
+  }
+  return dirs;
+}
+
+function manifestVersion(data) {
+  const version = data.Version ?? data.version;
+  return (typeof version === 'number') ? version : 0;
+}
+
+//`Include` entries, normalized and checked against the archive. A warning is the whole penalty for
+//naming a folder that is not there: the option simply contributes nothing.
+function parseInclude(raw, archiveDirs, label) {
+  const list = Array.isArray(raw) ? raw : (raw !== undefined) ? [raw] : [];
+  const result = [];
+  for (const value of list) {
+    const dir = normalizeRelPath(value);
+    if (!archiveDirs.has(dir)) {
+      log('warn', `[${GAME_ID}] ${MANIFEST_FILE}: ${label} includes "${value}", which the archive does not contain`);
+      continue;
+    }
+    if (!result.includes(dir)) result.push(dir);
+  }
+  return result;
+}
+
+//Manifest image paths are collected as they are parsed so that they can be kept out of the install:
+//they are artwork for the picker, and would otherwise deploy into the game's data folder.
+function parseImage(raw, imageFiles) {
+  const image = normalizeRelPath(raw);
+  if (image === '') return undefined;
+  imageFiles.add(image.toLowerCase());
+  return image;
+}
+
+//Legacy: `Options` is a list of folder names and exactly one of them is installed.
+function parseLegacyOptions(data, archiveDirs) {
+  const list = Array.isArray(data.Options) ? data.Options : [];
+  return list.reduce((accum, value, idx) => {
+    const include = parseInclude(value, archiveDirs, `option "${value}"`);
+    if (include.length === 0) return accum;
+    accum.push({
+      id: `option-${idx}`,
+      name: String(value),
+      description: undefined,
+      image: undefined,
+      categoryId: undefined,
+      defaultOn: false,
+      include,
+      subOptions: [],
+    });
+    return accum;
+  }, []);
+}
+
+//V1 and V2: `Options` are objects, any number can be enabled, and an option's `SubOptions` are a
+//pick-one list of their own.
+function parseStructuredOptions(data, archiveDirs, imageFiles) {
+  const list = Array.isArray(data.Options) ? data.Options : [];
+  return list.reduce((accum, entry, idx) => {
+    if ((entry === null) || (typeof entry !== 'object')) {
+      log('warn', `[${GAME_ID}] ${MANIFEST_FILE}: option ${idx} is not an object, skipping it`);
+      return accum;
+    }
+    const name = (entry.Name !== undefined) ? String(entry.Name) : `Option ${idx + 1}`;
+    const id = (entry.Guid !== undefined) ? String(entry.Guid) : `option-${idx}`;
+    const rawSubs = Array.isArray(entry.SubOptions) ? entry.SubOptions : [];
+    const subOptions = rawSubs.reduce((subs, sub, subIdx) => {
+      if ((sub === null) || (typeof sub !== 'object')) return subs;
+      const subName = (sub.Name !== undefined) ? String(sub.Name) : `Option ${subIdx + 1}`;
+      const include = parseInclude(sub.Include, archiveDirs, `sub-option "${name} / ${subName}"`);
+      if (include.length === 0) {
+        log('warn', `[${GAME_ID}] ${MANIFEST_FILE}: sub-option "${name} / ${subName}" installs nothing, skipping it`);
+        return subs;
+      }
+      subs.push({
+        id: `${id}-sub-${subIdx}`,
+        name: subName,
+        description: (sub.Description !== undefined) ? String(sub.Description) : undefined,
+        image: parseImage(sub.Image, imageFiles),
+        include,
+      });
+      return subs;
+    }, []);
+    if ((rawSubs.length > 0) && (subOptions.length === 0)) {
+      log('warn', `[${GAME_ID}] ${MANIFEST_FILE}: option "${name}" has no usable sub-options`);
+    }
+    const include = parseInclude(entry.Include, archiveDirs, `option "${name}"`);
+    if ((include.length === 0) && (subOptions.length === 0)) {
+      log('warn', `[${GAME_ID}] ${MANIFEST_FILE}: option "${name}" installs nothing, skipping it`);
+      return accum;
+    }
+    accum.push({
+      id,
+      name,
+      description: (entry.Description !== undefined) ? String(entry.Description) : undefined,
+      image: parseImage(entry.Image, imageFiles),
+      categoryId: (entry.CategoryRef !== undefined) ? String(entry.CategoryRef) : undefined,
+      defaultOn: false,
+      include,
+      subOptions,
+    });
+    return accum;
+  }, []);
+}
+
+function parseCategories(data) {
+  const list = Array.isArray(data.Categories) ? data.Categories : [];
+  return list.reduce((accum, entry, idx) => {
+    if ((entry === null) || (typeof entry !== 'object')) return accum;
+    accum.push({
+      id: (entry.Guid !== undefined) ? String(entry.Guid) : `category-${idx}`,
+      name: (entry.Name !== undefined) ? String(entry.Name) : `Category ${idx + 1}`,
+      description: (entry.Description !== undefined) ? String(entry.Description) : undefined,
+    });
+    return accum;
+  }, []);
+}
+
+//The manifest as a normalized tree, or undefined when it carries nothing this extension can use -
+//in which case the caller falls back to the folder layout.
+function parseManifestTree(data, dataPath, archiveDirs, imageFiles) {
+  if ((data === null) || (typeof data !== 'object')) {
+    log('warn', `[${GAME_ID}] ${MANIFEST_FILE} is not an object, using the folder layout instead`);
+    return undefined;
+  }
+  const version = manifestVersion(data);
+  if (version > 2) {
+    log('warn', `[${GAME_ID}] ${MANIFEST_FILE} declares version ${version}, which is newer than this extension knows; reading it as version 2`);
+  }
+  const exclusive = (version === 0);
+  const options = exclusive
+    ? parseLegacyOptions(data, archiveDirs)
+    : parseStructuredOptions(data, archiveDirs, imageFiles);
+  if ((options.length === 0) && Array.isArray(data.Options) && (data.Options.length > 0)) {
+    log('warn', `[${GAME_ID}] ${MANIFEST_FILE} lists options but none of them are usable, using the folder layout instead`);
+    return undefined;
+  }
+  const categories = exclusive ? [] : parseCategories(data);
+  for (const option of options) {
+    if ((option.categoryId !== undefined)
+      && !categories.some(category => category.id === option.categoryId)) {
+      log('warn', `[${GAME_ID}] ${MANIFEST_FILE}: option "${option.name}" references category "${option.categoryId}", which is not declared`);
+      option.categoryId = undefined;
+    }
+  }
+  return {
+    name: (data.Name !== undefined) ? String(data.Name) : undefined,
+    description: (data.Description !== undefined) ? String(data.Description) : undefined,
+    icon: parseImage(data.IconPath, imageFiles),
+    exclusive,
+    dataPath,
+    categories,
+    //An empty option list is legitimate: the manifest is describing the mod, not offering a choice.
+    options,
+  };
+}
+
+// OPTION RESOLUTION /////////////////////////////////////////////////////////
+
+//Turn a selection into the ordered, de-duplicated list of folders to install from. The selection is
+//  { options: { [optionId]: boolean }, subOptions: { [optionId]: subOptionId } }
+//and folder order follows option order, because that is the order the files are numbered in.
+function resolveSelection(tree, selection) {
+  const dirs = [];
+  const addDir = (dir) => {
+    const normalized = normalizeRelPath(dir);
+    if (!dirs.includes(normalized)) dirs.push(normalized);
+  };
+  for (const option of tree.options) {
+    if (selection.options[option.id] !== true) continue;
+    option.include.forEach(addDir);
+    if (option.subOptions.length === 0) continue;
+    const chosen = option.subOptions.find(sub => sub.id === selection.subOptions[option.id]);
+    if (chosen !== undefined) chosen.include.forEach(addDir);
+  }
+  return dirs;
+}
+
+//Copy instructions for the patch files in the selected folders, flattened to the mod root and
+//renumbered per archive. Renumbering matters as soon as two selected folders touch the same
+//archive: both would be called `<hash>.patch_0` and one would silently overwrite the other.
+//Numbering runs folder by folder and, inside a folder, in the file's own index order, so the
+//layering a mod author expressed within one folder survives; sidecars keep their patch file's
+//number. A single selected folder that is already numbered from zero comes out unchanged.
+function buildPatchFileInstructions(patchFiles, dirs) {
+  const counters = {};
+  const instructions = [];
+  for (const dir of dirs) {
+    const groups = new Map();
+    for (const file of patchFiles) {
+      if (optionDir(file) !== dir) continue;
+      const match = PATCH_FILE_RE.exec(path.basename(file));
+      if (match === null) continue;
+      const index = parseInt(match[2], 10);
+      const key = `${match[1].toLowerCase()}:${index}`;
+      if (!groups.has(key)) groups.set(key, { hash: match[1], index, files: [] });
+      groups.get(key).files.push({
+        file,
+        suffix: (match[3] !== undefined) ? match[3] : '',
+      });
+    }
+    const ordered = Array.from(groups.values()).sort((lhs, rhs) => {
+      const byHash = lhs.hash.toLowerCase().localeCompare(rhs.hash.toLowerCase());
+      return (byHash !== 0) ? byHash : (lhs.index - rhs.index);
+    });
+    for (const group of ordered) {
+      const hashKey = group.hash.toLowerCase();
+      const nextIndex = (counters[hashKey] !== undefined) ? counters[hashKey] : 0;
+      counters[hashKey] = nextIndex + 1;
+      for (const entry of group.files) {
+        instructions.push({
+          type: 'copy',
+          source: entry.file,
+          destination: `${group.hash}.patch_${nextIndex}${entry.suffix}`,
+        });
+      }
+    }
+  }
+  return instructions;
+}
+
+//A tree only needs asking about when it offers a real choice. No options at all means the manifest
+//describes the mod without branching, and a single exclusive option is a choice of one.
+function needsQuery(tree) {
+  return (tree.options.length > 0) && !(tree.exclusive && (tree.options.length === 1));
+}
+
+function defaultSelection(tree) {
+  const options = {};
+  tree.options.forEach((option, idx) => {
+    options[option.id] = (tree.exclusive) ? (idx === 0) : (option.defaultOn === true);
+  });
+  const subOptions = {};
+  for (const option of tree.options) {
+    if (option.subOptions.length > 0) subOptions[option.id] = option.subOptions[0].id;
+  }
+  return { options, subOptions };
+}
+
+//Asking the user is a dialog component, not `api.showDialog`: a Vortex dialog can hold only one
+//radio group, and a manifest can have a sub-option group per enabled option. The installer and the
+//dialog talk through this queue rather than through the api, because they are the same module.
+const OPTION_QUEUE = [];
+const OPTION_LISTENERS = new Set();
+
+function activeOptionRequest() {
+  return (OPTION_QUEUE.length > 0) ? OPTION_QUEUE[0] : undefined;
+}
+
+function notifyOptionListeners() {
+  const request = activeOptionRequest();
+  for (const listener of Array.from(OPTION_LISTENERS)) listener(request);
+}
+
+//Resolves once the user confirms. Installs are queued one at a time, but a queue costs nothing and
+//means a second request can never silently replace one the user is still looking at.
+function requestOptionSelection(tree) {
+  return new Promise((resolve, reject) => {
+    OPTION_QUEUE.push({ tree, resolve, reject });
+    if (OPTION_QUEUE.length === 1) notifyOptionListeners();
+  });
+}
+
+function answerOptionRequest(selection) {
+  const request = OPTION_QUEUE.shift();
+  notifyOptionListeners();
+  if (request !== undefined) request.resolve(selection);
+}
+
+function cancelOptionRequest() {
+  const request = OPTION_QUEUE.shift();
+  notifyOptionListeners();
+  if (request !== undefined) request.reject(new util.UserCanceled());
+}
+
+//install patch mods, asking once which of the mod's versions to install when it offers a choice
+async function installPatchMulti(files, destinationPath) {
   const patchFiles = files.filter(file =>
     !file.endsWith(path.sep) && (parsePatchFile(path.basename(file)) !== undefined));
 
-  //A mod offers variants when the same patch file name appears in more than one folder.
-  const byName = patchFiles.reduce((accum, iter) => {
-    const base = path.basename(iter);
-    if (accum[base] === undefined) accum[base] = [];
-    accum[base].push(iter);
-    return accum;
-  }, {});
-  const variantNames = Object.keys(byName).filter(name => byName[name].length > 1);
+  //A manifest is authoritative when it is usable, because it carries the names, descriptions and
+  //grouping the mod author wrote. Anything wrong with it falls back to the folder layout.
+  const manifestFiles = new Set();
+  const manifest = await readManifest(files, destinationPath);
+  let tree;
+  if (manifest !== undefined) {
+    manifestFiles.add(normalizeRelPath(manifest.file).toLowerCase());
+    if (manifest.data !== undefined) {
+      tree = parseManifestTree(manifest.data, destinationPath, collectArchiveDirs(files), manifestFiles);
+    }
+  }
+  if (tree === undefined) tree = inferOptionTree(patchFiles, destinationPath);
 
   //Documentation and similar files that sit at the root of the archive are installed alongside the
   //patch files so they deploy normally. Anything deeper is skipped: it would collide once the patch
-  //files are flattened, and it is nearly always part of a variant folder.
+  //files are flattened, and it is nearly always part of a variant folder. The manifest and the
+  //artwork it points at are skipped too - they belong to the picker, not to the game.
   const extraFiles = files.filter(file =>
     !file.endsWith(path.sep)
     && (parsePatchFile(path.basename(file)) === undefined)
-    && (path.dirname(file) === '.'));
+    && (path.dirname(file) === '.')
+    && !manifestFiles.has(normalizeRelPath(file).toLowerCase()));
 
-  let filtered = patchFiles.slice();
-
-  const queryVariant = async () => {
-    for (const patchFile of variantNames) {
-      const res = await api.showDialog('question', 'Choose Variant', {
-        text: 'This mod has several variants for "{{patch}}" - please '
-            + 'choose the variant you wish to install. (You can choose a '
-            + 'different variant by re-installing the mod)',
-        choices: byName[patchFile].map((iter, idx) => ({
-          id: iter,
-          text: iter,
-          value: idx === 0,
-        })),
-        parameters: {
-          patch: patchFile,
-        },
-      }, [
-        { label: 'Cancel' },
-        { label: 'Confirm' },
-      ]);
-      if (res.action !== 'Confirm') {
-        throw new util.UserCanceled();
-      }
-      const choice = Object.keys(res.input).find(key => res.input[key]);
-      filtered = filtered.filter(file =>
-        (path.basename(file) !== patchFile) || (file === choice));
-    }
-  };
-
-  const generateInstructions = () => {
-    const archives = Array.from(new Set(filtered
-      .map(file => parsePatchFile(path.basename(file)))
+  const generateInstructions = (dirs, chosenNames) => {
+    const fileInstructions = buildPatchFileInstructions(patchFiles, dirs);
+    const archives = Array.from(new Set(fileInstructions
+      .map(instruction => parsePatchFile(instruction.destination))
       .filter(parsed => parsed !== undefined)
       .map(parsed => parsed.hash))).sort();
-
-    const fileInstructions = filtered.concat(extraFiles).map(iter => ({
+    const extraInstructions = extraFiles.map(file => ({
       type: 'copy',
-      source: iter,
-      destination: path.basename(iter),
+      source: file,
+      destination: path.basename(file),
     }));
 
     return [
       { type: 'setmodtype', value: PATCH_ID },
       { type: 'attribute', key: 'patchArchives', value: archives },
-    ].concat(fileInstructions);
+      //Recorded for the mod list and for support reports: what the user actually picked, by name.
+      { type: 'attribute', key: 'hd2ModOptions', value: chosenNames },
+    ].concat(fileInstructions, extraInstructions);
   };
 
-  const prom = (variantNames.length > 0) ? queryVariant() : Promise.resolve();
-  return prom.then(() => ({ instructions: generateInstructions() }));
+  const selectedNames = (selection) => tree.options
+    .filter(option => selection.options[option.id] === true)
+    .map(option => {
+      const sub = option.subOptions.find(entry => entry.id === selection.subOptions[option.id]);
+      return (sub !== undefined) ? `${option.name} / ${sub.name}` : option.name;
+    });
+
+  if (tree === undefined) {
+    //All the patch files live in one folder, so there is nothing to ask.
+    const dirs = (patchFiles.length > 0) ? [optionDir(patchFiles[0])] : [];
+    return { instructions: generateInstructions(dirs, []) };
+  }
+
+  if (tree.options.length === 0) {
+    //A manifest that offers no options describes a mod installed from its root folder.
+    return { instructions: generateInstructions([''], []) };
+  }
+
+  const selection = needsQuery(tree)
+    ? await requestOptionSelection(tree)
+    : defaultSelection(tree);
+  return {
+    instructions: generateInstructions(resolveSelection(tree, selection), selectedNames(selection)),
+  };
 }
 
 //Test for .stream files
@@ -1165,7 +1558,8 @@ function applyGame(context, gameSpec) {
 
   //register mod installers
   context.registerInstaller(DATA_ID, 25, testDlbin, installDlbin);
-  context.registerInstaller(PATCH_ID, 27, testPatch, (files) => installPatchMulti(context.api, files));
+  context.registerInstaller(PATCH_ID, 27, testPatch,
+    (files, destinationPath) => installPatchMulti(files, destinationPath));
   context.registerInstaller(STREAM_ID, 31, testStream, installStream);
 
   //register actions
@@ -1765,6 +2159,200 @@ function FbloContextMenu({ x, y, item, loadOrder, profile, dispatch, context, se
   );
 }
 
+// MOD OPTIONS DIALOG ////////////////////////////////////////////////////////
+
+const OPTION_DIALOG_CSS = [
+  '.hd2-option-layout { display: flex; gap: 16px; align-items: flex-start; }',
+  '.hd2-option-list { flex: 1 1 60%; max-height: 45vh; overflow-y: auto; }',
+  '.hd2-option-detail { flex: 1 1 40%; max-height: 45vh; overflow-y: auto; }',
+  '.hd2-option-sub { margin-left: 24px; }',
+  '.hd2-option-warning { margin-top: 8px; color: #e2c04c; }',
+  '.hd2-option-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }',
+  '.hd2-option-actions p { margin: 0; }',
+].join(' ');
+
+//The option picker. Registered with `registerDialog`, so it controls its own visibility: it renders
+//nothing until an install asks a question, and the install's promise stays pending until it is
+//answered. Options are checkboxes (or one radio group when the tree is exclusive), an enabled
+//option's sub-options are a radio group of their own, and the pane on the right shows the artwork
+//and description of whatever is focused.
+function PatchOptionsDialog() {
+  const { Modal, Icon } = require('vortex-api');
+  const { Button, Checkbox, Radio } = require('react-bootstrap');
+  const { pathToFileURL } = require('url');
+
+  const [request, setRequest] = React.useState(activeOptionRequest());
+  const [selection, setSelection] = React.useState(undefined);
+  const [focus, setFocus] = React.useState(undefined);
+  const [imageFailed, setImageFailed] = React.useState({});
+
+  React.useEffect(() => {
+    OPTION_LISTENERS.add(setRequest);
+    setRequest(activeOptionRequest());
+    return () => { OPTION_LISTENERS.delete(setRequest); };
+  }, []);
+
+  //Every request starts from its own defaults, so answering one install never leaks into the next.
+  React.useEffect(() => {
+    if (request === undefined) {
+      setSelection(undefined);
+      setFocus(undefined);
+      return;
+    }
+    setSelection(defaultSelection(request.tree));
+    setFocus({ optionId: request.tree.options[0]?.id });
+    setImageFailed({});
+  }, [request]);
+
+  useInjectStyleOnce('hd2-mod-options-style', OPTION_DIALOG_CSS);
+
+  if ((request === undefined) || (selection === undefined)) return null;
+  const tree = request.tree;
+
+  const setOption = (option, enabled) => {
+    const options = (tree.exclusive)
+      ? tree.options.reduce((accum, iter) => ({ ...accum, [iter.id]: iter.id === option.id }), {})
+      : { ...selection.options, [option.id]: enabled };
+    setSelection({ ...selection, options });
+    setFocus({ optionId: option.id });
+  };
+
+  const setSubOption = (option, sub) => {
+    setSelection({ ...selection, subOptions: { ...selection.subOptions, [option.id]: sub.id } });
+    setFocus({ optionId: option.id, subId: sub.id });
+  };
+
+  //Enabling everything at once. Only offered when the options are independent checkboxes - an
+  //exclusive tree is one radio group, where "all" is not a state that exists. Sub-option picks the
+  //user already made are kept; an option that gains a sub-group here falls back to its first entry,
+  //the same answer the dialog opens with, so Install is never blocked by an option the user was not
+  //shown a choice for.
+  const selectAllOptions = () => {
+    const options = tree.options.reduce((accum, iter) => ({ ...accum, [iter.id]: true }), {});
+    const subOptions = { ...selection.subOptions };
+    for (const option of tree.options) {
+      const chosen = subOptions[option.id];
+      if ((option.subOptions.length > 0) && !option.subOptions.some(sub => sub.id === chosen)) {
+        subOptions[option.id] = option.subOptions[0].id;
+      }
+    }
+    setSelection({ options, subOptions });
+  };
+
+  //An enabled option whose sub-options are all unpicked would install nothing, so it blocks Install
+  //rather than quietly dropping out.
+  const unanswered = tree.options.filter(option =>
+    (selection.options[option.id] === true)
+    && (option.subOptions.length > 0)
+    && !option.subOptions.some(sub => sub.id === selection.subOptions[option.id]));
+  const nothingChosen = !tree.options.some(option => selection.options[option.id] === true);
+  const everythingChosen = tree.options.every(option => selection.options[option.id] === true);
+
+  const focused = (() => {
+    if (focus === undefined) return undefined;
+    const option = tree.options.find(iter => iter.id === focus.optionId);
+    if (option === undefined) return undefined;
+    if (focus.subId === undefined) return option;
+    return option.subOptions.find(sub => sub.id === focus.subId) ?? option;
+  })();
+
+  const imageUrl = (entry) => {
+    if ((entry === undefined) || !entry.image || !tree.dataPath) return undefined;
+    if (imageFailed[entry.id] === true) return undefined;
+    try {
+      return pathToFileURL(path.join(tree.dataPath, entry.image.split('/').join(path.sep))).href;
+    } catch {
+      return undefined;
+    }
+  };
+
+  const renderSubOption = (option, sub) => React.createElement('div',
+    { key: sub.id, className: 'hd2-option-sub' },
+    React.createElement(Radio, {
+      name: `hd2-sub-${option.id}`,
+      checked: selection.subOptions[option.id] === sub.id,
+      onChange: () => setSubOption(option, sub),
+      onClick: () => setFocus({ optionId: option.id, subId: sub.id }),
+    }, sub.name));
+
+  const renderOption = (option) => React.createElement('div',
+    { key: option.id, className: 'hd2-option' },
+    React.createElement(tree.exclusive ? Radio : Checkbox, {
+      name: 'hd2-option',
+      checked: selection.options[option.id] === true,
+      onChange: (evt) => setOption(option, evt.currentTarget.checked),
+      onClick: () => setFocus({ optionId: option.id }),
+    }, option.name),
+    (selection.options[option.id] === true)
+      ? option.subOptions.map(sub => renderSubOption(option, sub))
+      : null);
+
+  //Options carrying no category, or a category the manifest never declared, are listed first and
+  //without a heading - the same place they would be if the mod declared no categories at all.
+  const grouped = [
+    { category: undefined, options: tree.options.filter(option => option.categoryId === undefined) },
+  ].concat(tree.categories.map(category => ({
+    category,
+    options: tree.options.filter(option => option.categoryId === category.id),
+  }))).filter(group => group.options.length > 0);
+
+  const focusedImage = imageUrl(focused);
+
+  return React.createElement(Modal, {
+    id: 'hd2-mod-options-dialog',
+    show: true,
+    onHide: () => cancelOptionRequest(),
+  },
+    React.createElement(Modal.Header, null,
+      React.createElement(Modal.Title, null, tree.name ?? 'Choose Mod Options')),
+    React.createElement(Modal.Body, null,
+      (tree.description !== undefined)
+        ? React.createElement('p', null, tree.description) : null,
+      React.createElement('div', { className: 'hd2-option-actions' },
+        React.createElement('p', null, (tree.exclusive)
+          ? 'Choose the version of this mod you wish to install.'
+          : 'Choose the components you wish to install.'),
+        (!tree.exclusive && (tree.options.length > 1))
+          ? React.createElement(Button, {
+            bsSize: 'small',
+            disabled: everythingChosen,
+            onClick: () => selectAllOptions(),
+          }, 'Select All')
+          : null),
+      React.createElement('div', { className: 'hd2-option-layout' },
+        React.createElement('div', { className: 'hd2-option-list' },
+          grouped.map(group => React.createElement('div',
+            { key: group.category?.id ?? 'hd2-ungrouped' },
+            (group.category !== undefined)
+              ? React.createElement('h5', null, group.category.name) : null,
+            group.options.map(renderOption)))),
+        React.createElement('div', { className: 'hd2-option-detail' },
+          (focusedImage !== undefined)
+            ? React.createElement('img', {
+              src: focusedImage,
+              alt: focused.name,
+              style: { maxWidth: '100%', marginBottom: 8 },
+              onError: () => setImageFailed({ ...imageFailed, [focused.id]: true }),
+            })
+            : null,
+          (focused !== undefined)
+            ? React.createElement('h5', null, focused.name) : null,
+          (focused !== undefined) && (focused.description !== undefined)
+            ? React.createElement('p', null, focused.description) : null)),
+      (unanswered.length > 0)
+        ? React.createElement('p', { className: 'hd2-option-warning' },
+          React.createElement(Icon, { name: 'feedback-warning' }),
+          ` Choose a version for: ${unanswered.map(option => option.name).join(', ')}`)
+        : null),
+    React.createElement(Modal.Footer, null,
+      React.createElement(Button, { onClick: () => cancelOptionRequest() }, 'Cancel'),
+      React.createElement(Button, {
+        bsStyle: 'primary',
+        disabled: (unanswered.length > 0) || nothingChosen,
+        onClick: () => answerOptionRequest(selection),
+      }, 'Install')));
+}
+
 // PATCH CONFLICTS PAGE //////////////////////////////////////////////////////
 
 //Lists only the archives that more than one enabled mod patches, which is normally a handful at
@@ -1968,8 +2556,11 @@ function main(context) {
     customItemRenderer: LoadOrderItemRenderer,
   });
 
+  context.registerDialog('helldivers2-mod-options', PatchOptionsDialog);
+
   context.registerMainPage('conflict', 'Patch Conflicts', PatchConflictsPage, {
     id: `${GAME_ID}-patch-conflicts`,
+    mdi: PATCH_CONFLICT_ICON,
     priority: 31,
     group: 'per-game',
     visible: () => selectors.activeGameId(context.api.getState()) === GAME_ID,

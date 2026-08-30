@@ -169,6 +169,7 @@ const PARAMETERS = [PARAMETERS_STRING];
 let MODTYPE_FOLDERS = [BINARIES_PATH];
 if (needsModInstaller) MODTYPE_FOLDERS.push(MOD_PATH);
 if (saveInstaller) MODTYPE_FOLDERS.push(SAVE_PATH);
+if (hasLoader) MODTYPE_FOLDERS.push(LOADER_PATH);
 const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 

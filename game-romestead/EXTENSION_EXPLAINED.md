@@ -13,10 +13,10 @@
 | Property | Value |
 | --- | --- |
 | Game ID | `romestead` |
-| Executable | `XXX.exe` |
+| Executable | `Romestead.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
-| Executable (GOG) | `XXX.exe` |
-| Executable (Demo) | `XXX.exe` |
+| Executable (GOG) | `Romestead.exe` |
+| Executable (Demo) | `Romestead.exe` |
 
 ## Supported Stores
 
@@ -26,6 +26,7 @@
 
 | Flag | Value | Description |
 | --- | --- | --- |
+| `isXna` | `true` | set to true if game is XNA engine |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
 | `hasXbox` | `false` | toggle for Xbox version logic |
 | `multiExe` | `false` | set to true if there are multiple executables (typically for Xbox/EGS) |
@@ -91,7 +92,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch** (`XXX.exe`)
+- **Custom Launch** (`Romestead.exe`)
 
 ## Toolbar Actions
 
@@ -117,7 +118,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 | Dependency | Version | Details |
 | --- | --- | --- |
-| BepInEx | 5.4.23.5 | il2cpp |
+| BepInEx | 5.4.23.5 | mono |
 
 ## Config & Save Paths
 

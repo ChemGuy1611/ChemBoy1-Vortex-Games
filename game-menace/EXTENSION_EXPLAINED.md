@@ -71,6 +71,8 @@ Mod types define where each category of mod gets deployed:
 | Root Game Folder | `menace-root` | high | `{gamePath}` |
 | BepInEx Injector | `menace-bepinex` | low | `{gamePath}` |
 | MelonLoader | `menace-melonloader` | low | `{gamePath}` |
+| Jiangyu Loader | `menace-jiangyu` | low | `{gamePath}/Mods` |
+| Jiangyu Mod | `menace-jiangyumod` | 29 | `?` |
 | Assembly DLL Mod | `menace-assemblydll` | 60 | `?` |
 | Assets/Resources File | `menace-assets` | 62 | `?` |
 
@@ -83,15 +85,17 @@ Installers run in priority order (lower number = tested first). The first instal
 | `menace-melonloader` | 26 |
 | `menace-bepinex` | 27 |
 | `menace-modkit` | 28 |
-| `menace-modpackloader` | 29 |
-| `menace-modpackmod` | 30 |
-| `menace-root` | 31 |
-| `menace-bepcfgman` | 32 |
-| `menace-melonprefman` | 33 |
-| `menace-assemblydll` | 34 |
-| `menace-plugin` | 35 |
-| `menace-customleaders` | 36 |
-| `menace-assets` | 37 |
+| `menace-jiangyu` | 29 |
+| `menace-jiangyumod` | 30 |
+| `menace-modpackloader` | 31 |
+| `menace-modpackmod` | 32 |
+| `menace-root` | 33 |
+| `menace-bepcfgman` | 34 |
+| `menace-melonprefman` | 35 |
+| `menace-assemblydll` | 36 |
+| `menace-plugin` | 37 |
+| `menace-customleaders` | 38 |
+| `menace-assets` | 39 |
 | `menace-fallback` | 49 |
 
 ## Registered Tools

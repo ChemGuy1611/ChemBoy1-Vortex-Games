@@ -44,12 +44,14 @@ Usage:
         node_check, node_check_source, eslint_check,
         run_generate_explained, run_generate_explained_batch,
         run_generate_notes, run_generate_notes_batch,
+        run_generate_description_batch,
         get_discovery_ids, detect_engine, detect_stores,
         has_downloader_js, has_bepinexbe_downloader_js, has_codeberg_downloader_js,
         has_fcmodding_downloader_js,
         has_gamebanana_downloader_js,
         has_moddb_downloader_js, has_modworkshop_downloader_js,
         has_thunderstore_downloader_js,
+        requires_extensions, has_extension_dependency,
         requires_unreal_mod_installer, has_ue4ss_load_order_parity,
         is_unreleased_extension,
         validate_index_js,
@@ -57,6 +59,7 @@ Usage:
         find_vortex_exe, safe_windows_dirname,
         safe_rmtree, touch_empty, find_vortex_plugin_folder,
         normalize_target_ids, read_id_list, write_id_list, is_load_order_game,
+        is_merge_game, has_mergemods_callback,
         parse_nexus_mod_url, nexus_list_games, nexus_get_mod,
         download_exec_icon, download_cover_art,
         download_title_image, download_banner_image,
@@ -1723,6 +1726,23 @@ def run_generate_notes_batch(game_ids):
     return result.returncode == 0, result.stderr.strip()
 
 
+def run_generate_description_batch(game_ids):
+    """Run generate_notes.js --description for multiple game IDs in a single node
+    invocation, refreshing the "Mod Installation Notes" list inside each extension's
+    DESCRIPTION.bbcode.txt (the Nexus mod page description) and scaffolding that file
+    for extensions that do not have one yet. Everything else on an existing page is
+    left as the author wrote it.
+    Returns (ok: bool, stderr: str). No-op (ok=True) for empty input."""
+    if not game_ids:
+        return True, ""
+    result = subprocess.run(
+        ["node", "generate_notes.js", "--description"] + list(game_ids),
+        cwd=REPO_ROOT, capture_output=True, text=True,
+        encoding="utf-8", errors="replace",
+    )
+    return result.returncode == 0, result.stderr.strip()
+
+
 def node_check(path):
     """Run `node --check` on a JS file. Returns (ok: bool, stderr: str)."""
     result = subprocess.run(
@@ -2590,16 +2610,19 @@ def find_vortex_plugin_folder(game_id, game_name=None):
     Checks VORTEX_PLUGINS_DIR env var (default: C:\\ProgramData\\vortex\\plugins).
     Match priority:
       1. Exact game_id match or game_id prefix (e.g. "subnautica2", "subnautica2-1.2.0")
-      2. "Vortex Extension Update - <name> v*" folder (deployed via Nexus in-app update);
-         cleaned game_id or game_name equal to the folder's name portion, else a
-         substring of it
-      3. Fuzzy match of cleaned game_id or game_name against any folder, again
-         equal before substring
+      2. "Vortex Extension Update - <name> v*" folder (deployed via Nexus in-app
+         update) whose cleaned name portion equals the cleaned game_id or game_name
+      3. Any folder whose cleaned name equals the cleaned game_id or game_name
+      4. Substring hits, the update-folder form first, then any folder
 
-    Passes 2 and 3 each scan every entry and only fall back to a substring hit
-    when no folder matches exactly, so a game id contained in another game's id
-    ("reddeadredemption" in "reddeadredemption2support") cannot resolve to the
-    longer-named extension.
+    Every exact form outranks every substring form, across the passes and not
+    merely within one, so a game id contained in another game's id
+    ("reddeadredemption" in "reddeadredemption2support", "theouterworlds" in
+    "theouterworlds2") cannot resolve to the longer-named extension. Ranking
+    substring hits only within a pass is not enough: "The Outer Worlds" matches
+    the update folder for "The Outer Worlds 2" by substring in pass 2, which
+    would win before the exactly-named "The Outer Worlds Vortex Extension"
+    folder is ever considered in pass 3.
 
     Cleaning normalizes underscores to spaces (newer deployed folders use the
     underscore-delimited "{Name}_Vortex_Extension_{version}_{hash}" form),
@@ -2679,11 +2702,13 @@ def find_vortex_plugin_folder(game_id, game_name=None):
                 (gid_clean and gid_clean in entry_name_clean)
                 or (name_clean and name_clean in entry_name_clean)):
             vu_substr = full
-    if vu_exact or vu_substr:
-        return vu_exact or vu_substr
+    if vu_exact:
+        return vu_exact
 
     # Pass 3: fuzzy game_name match against any folder (original fallback),
-    # exact before substring for the same reason as pass 2.
+    # exact before substring for the same reason as pass 2. Runs even when
+    # pass 2 produced a substring hit, because that hit is only accepted below
+    # once no folder anywhere has matched exactly.
     fuzzy_exact = None
     fuzzy_substr = None
     for entry in entries:
@@ -2698,7 +2723,7 @@ def find_vortex_plugin_folder(game_id, game_name=None):
                 (gid_clean and gid_clean in ec) or (name_clean and name_clean in ec)):
             fuzzy_substr = full
 
-    return fuzzy_exact or fuzzy_substr
+    return fuzzy_exact or vu_substr or fuzzy_substr
 
 
 def open_in_default_app(path):
@@ -2739,6 +2764,48 @@ def write_id_list(filepath, game_ids):
 def is_load_order_game(src):
     """Return True if the extension registers a load order and is not a UE4/5 game."""
     return "context.registerLoadOrder" in src and detect_engine(src) != "UE4-5"
+
+
+def is_merge_game(src):
+    """Return True if the extension calls context.registerMerge and is not an Unreal game.
+
+    Comments are stripped first, so a registerMerge sitting inside a disabled
+    block-toggle region does not count as a live registration.
+
+    Unreal games are excluded because their file merging is handled by the shared
+    UE templates rather than per-game merge handlers, which would otherwise swamp
+    the list once a template picked the call up.
+    """
+    return ("context.registerMerge" in strip_js_comments(src)
+            and detect_engine(src) not in ("UE4-5", "UE2-3"))
+
+
+# A mergeMods value that is a function literal: `function`, `(a, b) => `, or `mod => `.
+# Deliberately does not match a bare identifier (`mergeMods: reZip`), because those are
+# boolean consts in this repo rather than callbacks - see has_mergemods_callback.
+_MERGEMODS_CALLBACK_RE = re.compile(
+    r'["\']?mergeMods["\']?\s*:\s*(?:async\s+)?'
+    r'(?:function\b|\([^)]*\)\s*=>|[A-Za-z_$][\w$]*\s*=>)')
+
+
+def has_mergemods_callback(src):
+    """Return True if a non-Unreal extension gives mergeMods a callback rather than a flag.
+
+    `mergeMods` on IGame or a mod type decides the deployment destination folder: `true`
+    merges every mod into one tree, `false` gives each its own folder, and a function
+    returns the folder name per mod. The callback form is how an extension writes a
+    numbered load-order prefix into the folder name at deploy time.
+
+    This is a different feature from context.registerMerge, which merges file contents -
+    see is_merge_game. Almost every extension sets the boolean form somewhere in its game
+    spec, so only the callback form is worth listing.
+
+    Comments are stripped first, and only a literal function value counts. A value that
+    is a bare identifier is not matched: those are boolean consts in these extensions
+    (`mergeMods: reZip`), and resolving the name would mean evaluating the module.
+    """
+    return (_MERGEMODS_CALLBACK_RE.search(strip_js_comments(src)) is not None
+            and detect_engine(src) not in ("UE4-5", "UE2-3"))
 
 
 # Chars after which a '/' starts a regex literal rather than a division operator.

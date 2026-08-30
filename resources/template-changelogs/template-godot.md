@@ -1,5 +1,9 @@
 # template-godot Changelog
 
+## [2026-08-28]
+
+- Fixed: `downloader.js` searches Vortex's downloads for the game being managed only. Vortex keeps one flat list of downloads across every managed game, so a requirement whose archive has a common name - `Release.zip` is used by more than a dozen extensions - could match an archive downloaded for a different game and install it in place of the real requirement. The version check read the same list and could likewise report a version taken from another game's archive.
+
 ## [2026-08-22]
 
 - Fixed: `keepZips` is now forced on whenever `customLoader` is off. Stock Godot Mod Loader resolves `mods/` off the executable folder but `mods-unpacked` off `res://`, and a `res://` directory listing never falls back to disk, so an unpacked mods folder is invisible to it. The two toggles cannot be set independently, and a game scaffolded on the previous defaults deployed mods the stock loader could not see.

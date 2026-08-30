@@ -246,8 +246,14 @@ async function downloadThunderstoreRequirement(api, gameSpec, requirement, check
       game: gameSpec.game.id,
       name: requirement.userFacingName,
     };
+    //File name hint: Thunderstore's download URL ends in a slash and its CDN sends no
+    //Content-Disposition, so Vortex has nothing to name the archive from and keeps the placeholder
+    //name it downloads under - which then becomes the mod's staging folder name. 'replace' keeps
+    //the old behaviour of always fetching a fresh copy, which a named download would otherwise
+    //refuse when the archive is already in the download folder.
+    const archive = latestVersion ? archiveName(requirement, latestVersion) : undefined;
     const dlId = await util.toPromise(cb =>
-      api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      api.events.emit('start-download', [URL], dlInfo, archive, cb, 'replace', { allowInstall: false }));
     const modId = await util.toPromise(cb =>
       api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
     const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);

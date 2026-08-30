@@ -55,6 +55,20 @@ Full group list (incl. `global-icons`, `downloads-*`, `categories-icons`, `game-
 etc.) and the dynamic `${tableId}-action-icons` / `${tableId}-multirow-actions` table-group
 patterns: see `TOOLBAR_ACTIONS.md` §6.
 
+### Actions in a group are collapsed by icon
+
+`IconBar` buckets the actions of a group by their icon name, so **every action sharing an icon
+renders as one dropdown button** rather than as separate buttons. This is why a set of actions all
+registered with `'open-ext'` appears as a single folder button whose menu lists them, and why
+giving one action its own icon promotes it to a standalone button beside that dropdown.
+
+Pick the icon accordingly: reuse the group's existing icon to file an action into the same menu,
+or give it a distinct one to surface it on its own. When choosing a distinct icon, check it is not
+already used by a core button in the same bar — a duplicate reads as two buttons that do the same
+thing.
+
+Vortex resolves an icon name to an SVG `<symbol id="icon-NAME">` in the document. `util.installIconSet(setName, filePath)` adds a set, but it only reads from a **file on disk**, so an extension shipping its own icon must ensure that file actually reaches the installed extension folder. An extension can otherwise append its own `<symbol>` to the `#icon-sets` container at startup and then use that name like any built-in.
+
 ---
 
 ## Icon-string form (most common)

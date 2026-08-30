@@ -22,7 +22,7 @@ routes to one of the topic files below depending on the work.
 | File | Read it when | Substance |
 | --- | --- | --- |
 | `AGENTS-DIRECTORIES.md` | Navigating or searching the repo | Per-directory map of `src/`, `extensions/`, `packages/`, plus a "Start Here" table by task type and a list of build-output dirs to ignore |
-| `AGENTS-TESTING.md` | Writing or running tests | `pnpm run test -- <path>` for one file; tests colocated as `src/**/*.test.ts`; how to alias `vortex-api` to a local `__mocks__` module in an extension's `vitest.config.ts`, mocking only the exports the test uses |
+| `AGENTS-TESTING.md` | Writing or running tests | The vitest layer only: `pnpm run test -- <path>` for one file; tests colocated as `src/**/*.test.ts`; how to alias `vortex-api` to a local `__mocks__` module in an extension's `vitest.config.ts`, mocking only the exports the test uses. It says nothing about the Playwright suite — those rules live in `packages/e2e/E2E-BEST-PRACTICES.md` and the `e2e-test` skill, and are collected in `VORTEX_TESTING.md` |
 | `AGENTS-FRONTEND.md` | Any renderer/UI change | The substantial one — React 16 constraints, component/props conventions, auto-enforced prop and class ordering, Redux selector discipline, i18n rules, icon conventions, accessibility, testing. Distilled into `VORTEX_CODESTYLE.md` |
 | `AGENTS-DEBUGGING.md` | Debugging a running app | VS Code F5 debugs both processes, build first; `VORTEX_TRACE_DB_WRITES=1` for per-write persistence breadcrumbs |
 | `AGENTS-COLLECTIONS.md` | Touching collection install logic | Phased-installation invariants — the rules below are the valuable part |
@@ -59,7 +59,7 @@ Under `.claude/skills/`, each a self-contained workflow:
 | Skill | Purpose |
 | --- | --- |
 | `changelog` | Drafts the next `CHANGELOG.md` entry from PRs merged since a tag: auto-detects the release branch, pulls PR titles/bodies with `gh`, dedupes against the existing changelog, applies exclusion rules (internal CI/infra, telemetry, docs-only, minor dependency bumps), and writes only after review. Also exposed as the `/changelog` command with `[version] [date]` args |
-| `e2e-test` | Scaffolds a Playwright E2E spec from a plain description or a Linear issue ID, inspecting the live app through Chrome DevTools |
+| `e2e-test` | Scaffolds a Playwright E2E spec from a plain description or a Linear issue ID, inspecting the live app through Chrome DevTools. It drives the `llmBreakpoint` inspector loop described in `VORTEX_TESTING.md` |
 | `watch-log` | Log investigation router with six modes — live tail, session/crash/error investigation, persistence integrity, log-line-to-code correlation, single lifecycle trace (download/install/collection/deploy), and a collection-install audit. Rotation- and session-aware; defaults to the dev log |
 
 ---
@@ -83,5 +83,6 @@ Verified against the current tree — these paths do not exist as written:
 ## See also
 
 `VORTEX_CODESTYLE.md` (the conventions these guides encode) · `VORTEX_DEV_BUILD.md` (running the
-build/test/lint commands `AGENTS.md` asks for) · `VORTEX_APP.md` (repo layout in depth) ·
+build/test/lint commands `AGENTS.md` asks for) · `VORTEX_TESTING.md` (what `AGENTS-TESTING.md`
+leaves out: the Playwright suite, its fixtures, and what a PR has to ship) · `VORTEX_APP.md` (repo layout in depth) ·
 `VORTEX_MOD_INSTALL.md` (the install pipeline the collections guide constrains).

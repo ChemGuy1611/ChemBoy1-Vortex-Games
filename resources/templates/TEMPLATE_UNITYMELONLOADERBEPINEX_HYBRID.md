@@ -82,6 +82,8 @@ Config, Open MelonLoader Log, plus the universal set.
 
 `../TEMPLATES_OVERVIEW.md` (template selection, shared anatomy, universal toggles — read first).
 `../DOWNLOADER.md` (requirement objects and every version-resolve strategy used here).
+`../BEPINEX.md` and `../MELONLOADER.md` (the two loaders themselves: their bootstraps, folder
+layouts and mod formats, and why installing both at once breaks the game).
 `../BEPINEX_BE_BUILDS.md` (the sibling module this template bundles).
 `../WINAPI_BINDINGS.md` (the .NET 6 runtime registry probe).
 `../NOTIFICATIONS_DIALOGS.md` (the loader-choice dialog).

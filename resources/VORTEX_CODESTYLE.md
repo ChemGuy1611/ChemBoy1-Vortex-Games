@@ -119,9 +119,15 @@ throw new CustomError(`CustomName "${dynamicInformation}"`);
 ## Testing
 
 No coverage target, but "off-path" and critical behaviours get tests — the examples the standard
-gives are things like changing the mod staging folder or the downloads directory. Renderer tests
-use vitest with `@testing-library/react` v12, colocated as `<Name>.test.tsx`, querying by
-role/label/text rather than test ids.
+gives are things like changing the mod staging folder or the downloads directory. Renderer tests use
+vitest with `@testing-library/react`, colocated as `<Name>.test.tsx`, querying by role or by a
+`data-testid` the component exposes. Not by text: the test setup has no i18n instance, so `t` returns
+the raw translation key — text matching belongs in the E2E suite, which runs against real translations.
+
+A change is expected to ship its own tests and to have run them before the pull request:
+`pnpm run test` for the vitest layers, plus `pnpm run e2e` when the change touches a UI flow, since CI
+does not run the E2E suite on a normal PR. `VORTEX_TESTING.md` covers both layers, including the
+Playwright conventions `AGENTS-TESTING.md` is silent about.
 
 ---
 
@@ -159,7 +165,8 @@ Likewise, `CODESTYLE.md` is silent on React because it predates the function-com
 
 ## See also
 
-`VORTEX_DEV_BUILD.md` (how to run the formatter, linter, and type checker) · `VORTEX_AGENT_GUIDES.md`
+`VORTEX_DEV_BUILD.md` (how to run the formatter, linter, and type checker) · `VORTEX_TESTING.md`
+(the test layers these conventions apply to, and what a PR has to ship) · `VORTEX_AGENT_GUIDES.md`
 (the repo's own instruction files, which these conventions are drawn from) · `VORTEX_APP.md` (repo
 layout and where each toolchain config lives) · `VORTEX_2_MIGRATION.md` (API-level changes for
 extension authors).

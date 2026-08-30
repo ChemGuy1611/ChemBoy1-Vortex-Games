@@ -34,7 +34,7 @@ signature and the `IActionOptions` field table (`noCollapse`, `namespace`, `holl
 
 The flow:
 
-```
+```text
 User clicks action button
   └─ IconBar / ContextMenu normalizes instanceId → string[]
        └─ condition(instanceIds) called — determines enabled/disabled/hidden
@@ -164,7 +164,7 @@ You generally don't register actions into these directly — use `mod-icons` / `
 
 The action/condition callback signature is identical for toolbar buttons and context menu items. The only differences are how they are rendered and when condition is called.
 
-```
+```text
 Toolbar (IconBar)          Context Menu (ContextMenu / ActionDropdown)
 ─────────────────────      ──────────────────────────────────────────
 Always visible             Opens on right-click

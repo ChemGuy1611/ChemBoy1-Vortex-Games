@@ -2,8 +2,8 @@
 Name: Return to Castle Wolfenstein Vortex Extension
 Structure: Generic Game with Custom Engine Mod (RealRTCW)
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-08-05
+Version: 1.1.0
+Date: 2026-08-29
 ////////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -11,7 +11,11 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const { parseStringPromise } = require('xml2js');
-const { downloadModDb, checkForModDbUpdate } = require('./moddb_downloader');
+const { downloadModDb, checkForModDbUpdate, downloadModDbRequirement } = require('./moddb_downloader');
+const { registerModDbBrowser, onceModDbBrowser } = require('./moddb_browser');
+
+//feature toggles
+const moddbBrowser = true; //register the "Browse ModDB" page (moddb.com)
 
 //Specify all the information about the game
 const STEAMAPP_ID = "9010";
@@ -47,9 +51,26 @@ const MODDB_REQUIREMENTS = [ //ModDB requirements for moddb_downloader.js
     fallbackFileId: '273184', //https://www.moddb.com/downloads/start/273184
     fallbackVersion: '5.43',
     pageUrl: REALRTCW_URL,
+    browseKey: 'mods/realrtcw-realism-mod#realrtcw', //RealRTCW's own file on the browse page, so browsing to it installs the requirement
     skipDownloadManager: true, //modDB blocks Vortex's download manager - fetch the file directly instead
   },
 ];
+
+//Embedded ModDB browser page - the user browses the live moddb.com section for this game and
+//installs from it. Vortex's download manager cannot fetch from this host, so the page fetches
+//the file itself; the requirement above keeps its own mod type when downloaded there.
+const MODDB_BROWSER_CONFIG = {
+  //the GAME, not the RealRTCW mod page the requirement above tracks - the browse page is for
+  //finding anything for this game, and the game feed is also the fallback for a mod page whose
+  //own feed 404s
+  moddbPath: 'games/return-to-castle-wolfenstein',
+  requirements: MODDB_REQUIREMENTS,
+  installRequirement: (api, gameSpec, requirement) =>
+    downloadModDbRequirement(api, gameSpec, requirement, true),
+  pageId: `${GAME_ID}-moddb-browse`,
+  pageTitle: 'Browse ModDB',
+  //no hotkey: Ctrl+Shift+B is already taken, and a second claim on it is dropped with a warning
+};
 
 const MAIN_ID = `${GAME_ID}-mainfolder`;
 const MAIN_NAME = "Main Folder";
@@ -557,6 +578,11 @@ function applyGame(context, gameSpec) {
     supportedTools: tools,
   };
   context.registerGame(game);
+
+  //register the embedded moddb.com browser page
+  if (moddbBrowser) {
+    registerModDbBrowser(context, gameSpec, MODDB_BROWSER_CONFIG);
+  }
   
   //register mod types
   (gameSpec.modTypes || []).forEach((type, idx) => {
@@ -637,6 +663,9 @@ function main(context) {
       return checkForModDbUpdate(api, spec, MODDB_REQUIREMENTS)
         .catch(err => log('warn', `Failed to check for ${REALRTCW_NAME} update: ${err}`));
     });
+    if (moddbBrowser) { //installs downloads started from the browse page, and update-checks the mods installed through it
+      onceModDbBrowser(context.api, spec, MODDB_BROWSER_CONFIG);
+    }
   });
   return true;
 }

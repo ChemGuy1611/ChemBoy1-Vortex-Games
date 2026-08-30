@@ -422,3 +422,5 @@ and the Vortex mechanics it sits on).
 `CODEBERG_API.md` (the Forgejo/Gitea release API — a third host whose download URL comes straight
 out of the API response, with no resolution step between listing and download).
 `GITHUB_API.md` (the default requirement host, and the API `downloader.js` talks to).
+`BEPINEX.md` and `MELONLOADER.md` (the two loaders most Thunderstore packages target, and the
+in-game folders a package's payload has to land in).

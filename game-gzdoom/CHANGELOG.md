@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.4.0] - 2026-08-29
+
+- Fixed: Updated downloader for new naming scheme with UZDoom 5.0.0 release.
+
 ## [0.3.3] - 2026-08-22
 
 - Fixed: Updating a required mod loader or tool now disables every older copy of it, so an out-of-date version can no longer stay enabled alongside the new one

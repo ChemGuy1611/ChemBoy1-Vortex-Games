@@ -76,6 +76,7 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `run_generate_explained_batch(game_ids)` | Run `generate_explained.js` for multiple game IDs in a single `node` invocation. Returns `(ok: bool, stderr: str)`. |
 | `run_generate_notes(game_id)` | Run `generate_notes.js` for a game; returns `(ok: bool, stderr: str)` |
 | `run_generate_notes_batch(game_ids)` | Run `generate_notes.js` for multiple game IDs in a single `node` invocation. Returns `(ok: bool, stderr: str)`. |
+| `run_generate_description_batch(game_ids)` | Run `generate_notes.js --description` for multiple game IDs in a single `node` invocation, refreshing each `DESCRIPTION.bbcode.txt` install list. Returns `(ok: bool, stderr: str)`. |
 | `node_check(path)` | Run `node --check` on a JS file path; returns `(ok: bool, stderr: str)` |
 | `node_check_source(src)` | Run `node --check` on an in-memory JS string (writes a temp file internally); returns `(ok, error_msg)` — `ok` is `None` if node is not on PATH |
 | `eslint_check(path)` | Run `npx eslint` on a JS file (config auto-discovered from `REPO_ROOT`); returns `(ok: bool, output: str)` |
@@ -132,11 +133,13 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `safe_windows_dirname(name)` | Strip characters invalid in Windows directory names (`<>:"/\|?*`) and strip whitespace |
 | `safe_rmtree(path, hint)` | Remove a directory tree, retrying once on `PermissionError` after 1 second. `hint` shown in the warning (e.g. `"close Vortex first"`). |
 | `touch_empty(path, force)` | Create an empty file at `path` atomically. No-op if file exists and `force=False`. |
-| `find_vortex_plugin_folder(game_id, game_name)` | Return the deployed plugin folder path for `game_id` in Vortex's plugins dir. Reads `VORTEX_PLUGINS_DIR` env (default `C:\ProgramData\vortex\plugins`). Matches on the game-id folder name first, then the `Vortex Extension Update - <name> v*` form, then any folder; the latter two prefer an exact name match and fall back to a substring only when no folder matches exactly, so a game id contained in another's (`reddeadredemption` in `reddeadredemption2support`) cannot resolve to the longer-named extension. Returns `None` if not found. |
+| `find_vortex_plugin_folder(game_id, game_name)` | Return the deployed plugin folder path for `game_id` in Vortex's plugins dir. Reads `VORTEX_PLUGINS_DIR` env (default `C:\ProgramData\vortex\plugins`). Matches on the game-id folder name first, then an exact cleaned-name match against the `Vortex Extension Update - <name> v*` form, then an exact cleaned-name match against any folder, and only then substring hits (update form first, then any folder). Every exact form outranks every substring form across the whole listing, so a game id contained in another's (`reddeadredemption` in `reddeadredemption2support`, `theouterworlds` in `theouterworlds2`) cannot resolve to the longer-named extension. Returns `None` if not found. |
 | `normalize_target_ids(arg)` | Convert an argparse game-ID list to a set, or `None` meaning "all games" |
 | `read_id_list(filepath)` | Read a text file; return list of stripped non-empty lines (game IDs or similar) |
 | `write_id_list(filepath, game_ids)` | Write a sorted list of IDs to a file, one per line |
 | `is_load_order_game(src)` | Return `True` if `src` calls `registerLoadOrder` and is not a UE4/5 extension |
+| `is_merge_game(src)` | Return `True` if `src` calls `registerMerge` (comments stripped) and is not an Unreal extension |
+| `has_mergemods_callback(src)` | Return `True` if `src` gives `mergeMods` a function value rather than a boolean, and is not an Unreal extension |
 | `has_downloader_js(folder)` | Return `True` if the extension `folder` contains a bundled `downloader.js` module |
 | `has_bepinexbe_downloader_js(folder)` | Return `True` if the extension `folder` contains a bundled `bepinexbe_downloader.js` module |
 | `has_codeberg_downloader_js(folder)` | Return `True` if the extension `folder` contains a bundled `codeberg_downloader.js` module |
@@ -604,7 +607,7 @@ The game input can be a quoted game name (searched on Steam) or a numeric Steam 
 Use `--force` to overwrite an existing folder.
 Use `--dry-run` to run all lookups and print what would be created without writing any files.
 Use `--no-images` to skip downloading `exec.png`, cover art, and title image (useful when re-running on an existing extension).
-Use `--no-browser` to suppress all `webbrowser.open` calls (PCGamingWiki, SteamDB, Steam demo page). Useful in headless / CI environments.
+Use `--no-browser` to suppress all `webbrowser.open` calls (PCGamingWiki, SteamDB, SteamDB demo page). Useful in headless / CI environments.
 Use `--no-startfile` to suppress opening downloaded images and `index.js` in the default editor.
 Use `--refresh-images GAME_ID` to re-download all 4 images for an existing extension without redoing any lookups or rewriting `index.js`. Reads `STEAMAPP_ID` and `GAME_NAME` directly from the existing `game-{GAME_ID}/index.js`. Always overwrites existing image files.
 Use `--dry-run` to run all lookups and print what would be created without writing any files. After all lookups, prints the list of XXX placeholders that would still need manual entry.
@@ -690,7 +693,7 @@ After writing `index.js`, the script automatically runs:
 4. `python categorize_games.py {GAME_ID}` — adds the game to the correct engine category file in `resources/lists/`
 5. `python setup_test_folder.py {GAME_ID}` — creates a minimal test game folder
 
-It also opens the PCGamingWiki page, SteamDB info page, and Steam demo page (if a demo exists) in the default browser, and opens each saved image and `index.js` with `os.startfile`.
+It also opens the PCGamingWiki page, SteamDB info page, and SteamDB demo page (if a demo exists) in the default browser, and opens each saved image and `index.js` with `os.startfile`.
 
 ---
 
@@ -776,6 +779,12 @@ Sections come from two tiers. Tier 1 is hand-written prose keyed by the installe
 
 Installers hidden behind a disabled feature flag are omitted, so an extension with `SIGBYPASS_REQUIRED = false` gets no signature-bypass section.
 
+### generate_notes.js — Adding a tier-1 block
+
+A tier-1 block is an entry in the `PROSE` array, keyed by `fn` (the installer's test function name) plus either `engine` (one engine key or an array of them) or `game` (one extension folder, for a test function unique to it). Its `build(v)` receives the extension's resolved constants and returns a section, or `null` to fall back to tier 2.
+
+The constants in `v` come from a **fixed whitelist in `buildVars`** — scalars in the first list, array constants in the second. A block referencing a constant that is not on that list receives `undefined`, so it usually returns `null` and the installer silently renders as a tier-2 stub. Add the constant names alongside the block, in the same edit.
+
 ### generate_notes.js — Requirements
 
 Node.js (no additional packages required).
@@ -809,7 +818,7 @@ node generate_notes.js subnautica2 farfarwest ue4-5 --templates
 
 ### generate_notes.js — Output
 
-Always writes two files into each processed extension folder, overwriting any existing copies:
+Always writes two files into each processed extension folder, overwriting any existing copies. `release_extension.py` runs this for every game that releases, so the notes cannot drift from `index.js` between releases:
 
 | File | Purpose |
 | --- | --- |
@@ -831,7 +840,7 @@ Two paths, depending on whether the page already exists:
 - **File present** — only the list between `[b]🛠️ Mod Installation Notes:[/b]` and its closing `[/list]` is replaced. Everything else the author wrote is untouched. List items carrying BBCode markup (`[b]`, `[color=`, `[url=`, …) are kept and moved to the top of the rebuilt list: those are the lines no generator can produce — the yellow "downloaded automatically" loader line, a red caveat — and the house style already puts them first. Generated lines are always plain text, so nothing is duplicated. If the heading is missing the extension is skipped rather than overwritten.
 - **File absent** — a full page is scaffolded: opening line, `✅ Supported Versions` built from whichever of `STEAMAPP_ID`, `GOGAPP_ID`, `EPICAPP_ID`, `UPLAYAPP_ID`, `EAAPP_ID` and `XBOXAPP_ID` resolve to a real value, the install list, a stub `📋 Usage Notes`, and the donation block. Loader warnings, per-game usage notes and credits are left for the author to add.
 
-`DESCRIPTION.bbcode.txt` is repo-only — `release_extension.py` excludes it from the released zip.
+`DESCRIPTION.bbcode.txt` is repo-only — `release_extension.py` excludes it from the released zip, and regenerates it for every game that releases so the install list cannot drift from `index.js`. The **Generate Description** button in `vortex_gui.py` runs the same command against the selected games.
 
 Exits with code `1` if any extension threw an error during generation; `0` otherwise.
 
@@ -967,6 +976,8 @@ The engine categories above are mutually exclusive (one per game). The lists bel
 | File | Flag |
 | --- | --- |
 | `resources/lists/games-loadorder.txt` | Non-UE4/5 games that call `context.registerLoadOrder` |
+| `resources/lists/games-merge.txt` | Non-Unreal games that call `context.registerMerge`, i.e. carry their own file-merge handler |
+| `resources/lists/games-mergemods.txt` | Non-Unreal games that give `mergeMods` a callback instead of a boolean, i.e. name each mod's deployment folder themselves |
 | `resources/lists/games-downloader.txt` | Games with a bundled `downloader.js` module |
 | `resources/lists/games-downloader-bepinexbe.txt` | Games with a bundled `bepinexbe_downloader.js` module (BepInEx bleeding-edge builds) |
 | `resources/lists/games-downloader-codeberg.txt` | Games with a bundled `codeberg_downloader.js` module (Codeberg / any Forgejo-Gitea instance) |
@@ -982,7 +993,9 @@ The engine categories above are mutually exclusive (one per game). The lists bel
 
 ### categorize_games.py — Detection
 
-Each game is matched against the engine categories in order — the first match wins. Detection uses the `Structure:` comment on line 3 of `index.js` as the primary signal, with fallback checks for unique code markers such as `const UNREALDATA =`, `const ATK_ID =`, `context.requireExtension('modtype-bepinex')`, etc. The flag lists are computed separately via dedicated predicates (`is_load_order_game`, `has_downloader_js`, `has_bepinexbe_downloader_js`, `has_fcmodding_downloader_js`, `has_gamebanana_downloader_js`, `has_moddb_downloader_js`, `has_modworkshop_downloader_js`, `has_thunderstore_downloader_js`, `requires_unreal_mod_installer`, `has_extension_dependency`, `has_ue4ss_load_order_parity`, `is_unreleased_extension`) in `vortex_utils.py`. The parity predicate keys off the `Ue4ssContextMenu` component, which only exists in games that took the whole load-order region (PAK + custom UE4SS + LogicMods pages) from `template-ue4-5`.
+Each game is matched against the engine categories in order — the first match wins. Detection uses the `Structure:` comment on line 3 of `index.js` as the primary signal, with fallback checks for unique code markers such as `const UNREALDATA =`, `const ATK_ID =`, `context.requireExtension('modtype-bepinex')`, etc. The flag lists are computed separately via dedicated predicates (`is_load_order_game`, `is_merge_game`, `has_mergemods_callback`, `has_downloader_js`, `has_bepinexbe_downloader_js`, `has_fcmodding_downloader_js`, `has_gamebanana_downloader_js`, `has_moddb_downloader_js`, `has_modworkshop_downloader_js`, `has_thunderstore_downloader_js`, `requires_unreal_mod_installer`, `has_extension_dependency`, `has_ue4ss_load_order_parity`, `is_unreleased_extension`) in `vortex_utils.py`. The parity predicate keys off the `Ue4ssContextMenu` component, which only exists in games that took the whole load-order region (PAK + custom UE4SS + LogicMods pages) from `template-ue4-5`.
+
+`games-merge.txt` and `games-mergemods.txt` track two unrelated features that share a word. `context.registerMerge` merges file *contents* during deployment. `mergeMods` picks the deployment *destination folder*: `true` merges every mod into one tree, `false` gives each its own folder, and a function returns the folder name per mod - which is how an extension writes a numbered load-order prefix at deploy time. Nearly every extension sets the boolean somewhere in its game spec, so only the callback form is listed. Both predicates strip comments first, and `has_mergemods_callback` matches only a literal function value: a bare identifier (`mergeMods: reZip`) is skipped, because in these extensions those names are boolean consts.
 
 No host has an inline-download list. GitHub requirements are tracked by `games-downloader.txt` — the shared `downloader.js` module is GitHub-sourced — and GameBanana, ModDB, ModWorkshop, Thunderstore, Codeberg, and builds.bepinex.dev by their own `games-downloader-*.txt` module lists: every extension fetching a requirement from those hosts carries the matching downloader module, so the module list is the complete list. A bare host URL left in an extension is a browse link behind an `Open <host> Page` button, which was never counted as a download.
 
@@ -993,6 +1006,8 @@ Browser modules (`resources/browsers/`) have no list of their own. A game gets a
 `games-unreleased.txt` flags extensions that have never been published to Nexus Mods. The signal is the `EXTENSION_URL` const, which is filled in by hand once the extension's Nexus page exists: a missing, empty, `"XXX"` or non-Nexus value means unpublished. All three JavaScript quote styles are matched, since single-quoted and backtick literals both occur in these extensions.
 
 Because the const is hand-maintained rather than checked against Nexus, the list is a starting point rather than proof. An extension that shipped without its const being updated would be listed, and one that parked a real URL before shipping would not.
+
+`release_extension.py --upload` also prunes this file directly: any game whose upload succeeds is removed from it at the end of the run, so a first release does not leave a stale entry behind until the next categorize run. The two writers agree — an uploaded extension has a real `EXTENSION_URL`, so a later categorize run reaches the same list.
 
 Nothing in `index.js` marks a permanent test bed — an extension run live to verify changes, versioned and changelogged normally, but never uploaded — so those are excluded by ID through `UNRELEASED_LIST_EXCLUDED_GAMES` in `categorize_games.py`. It currently holds `warhammer40kdarktide`; the other test bed, `subnautica2`, drops out on its own because a real extension URL is already parked in its `EXTENSION_URL`. Add an ID there when a new test bed appears, so the list stays a list of extensions genuinely awaiting a first release.
 
@@ -1066,6 +1081,8 @@ Packages a game extension folder into a `.zip` archive using 7-Zip, optionally u
 
 The repo-facing documentation is excluded from the zip — `EXTENSION_EXPLAINED.md`, `NOTES_FOR_MOD_AUTHORS.md`, `NOTES_FOR_MOD_AUTHORS.bbcode.txt` and `DESCRIPTION.bbcode.txt`. They stay in the repo for GitHub, but are not shipped in the extension Vortex installs. The exclusion list is the `ZIP_EXCLUDES` constant; after zipping, the script warns if any of those files ended up in the archive anyway.
 
+All four are regenerated at the end of every run, for the games that released successfully: `EXTENSION_EXPLAINED.md` via `generate_explained.js`, the two `NOTES_FOR_MOD_AUTHORS` files via `generate_notes.js`, and `DESCRIPTION.bbcode.txt` — the Nexus mod page description — via `generate_notes.js --description`. The first three are overwritten outright; for the description, only the install-notes list is rewritten and the rest of the page stays as the author wrote it.
+
 ### release_extension.py — Environment Variables
 
 | Variable | Required | Description |
@@ -1088,7 +1105,7 @@ Pass one or more `GAME_ID` values to release multiple extensions in one run.
 Use `--no-open` to skip opening the browser (useful for testing or bulk releases).
 Use `--dry-run` to print what would be done without running checks, 7-Zip, or upload.
 Use `--skip-node-check` to skip the `node --check` syntax step. Use `--skip-eslint` to skip the ESLint step.
-Use `--upload` to upload the zip to Nexus Mods as a new file version after zipping. Default is skip (no prompt). The changelog entry for the current version is attached as the file description on Nexus.
+Use `--upload` to upload the zip to Nexus Mods as a new file version after zipping. Default is skip (no prompt). The changelog entry for the current version is attached as the file description on Nexus. Every game that uploads successfully is also dropped from `resources/lists/games-unreleased.txt`.
 Use `--edit-changelog` to also open the Nexus Mods changelog editor (Documents tab) in the browser alongside the Files tab.
 Passing a template name (e.g. `template-basic`) instead of a game ID errors immediately before any release steps run.
 
@@ -1102,7 +1119,7 @@ python release_extension.py assassinscreedorigins assassinscreedvalhalla --no-op
 
 ### release_extension.py — Output
 
-**Aborts** if `CHANGELOG.md` is missing, if `info.json` version has no matching `## [X.Y.Z]` section in `CHANGELOG.md`, if `info.json` `name` does not match `Game: <Name>` pattern, or if `const debug = true` is found in `index.js`. Warns (but does not abort) if `info.json` version does not match the _latest_ `## [X.X.X]` entry in `CHANGELOG.md`. Runs `validate_index_js` checks (leftover `XXX`, missing `applyGame`, etc.) and warns on each issue found. Renames the versioned `.txt` file (e.g. `0.2.7.txt` -> `0.2.8.txt`) to match the current version. Updates the `Version:` and `Date:` lines in the `index.js` header comment — version from `info.json`, date from the most recent `## [X.X.X] - YYYY-MM-DD` entry in `CHANGELOG.md`. Adds any resolved store IDs to `DISCOVERY_IDS_ACTIVE` if not already present. Runs `node --check` on `index.js` (skip with `--skip-node-check`) and warns on syntax errors. Runs ESLint (skip with `--skip-eslint`). Runs `generate_explained.js` to regenerate `EXTENSION_EXPLAINED.md` (batched across all games in a single Node invocation when releasing multiple). Creates `game-{GAME_ID}.zip` inside the extension folder, overwriting any existing zip. If `--upload` is passed, looks up the active file update group from `GET /v3/mods/{id}/file-update-groups`, runs a multipart upload via the Nexus v3 API, and publishes a new file version with the `## [X.Y.Z]` changelog entry as the description. Upload failure logs an error but does not fail the overall release. Always prints the extracted changelog entry for the current version to the console before zipping. Reads `EXTENSION_URL` from `index.js` — if set to a valid URL, opens `EXTENSION_URL?tab=files` in the default browser; otherwise opens `https://www.nexusmods.com/games/site`. If `--edit-changelog` is passed, also opens the Nexus Mods Documents editor (`EXTENSION_URL/edit/documents`) in the browser.
+**Aborts** if `CHANGELOG.md` is missing, if `info.json` version has no matching `## [X.Y.Z]` section in `CHANGELOG.md`, if `info.json` `name` does not match `Game: <Name>` pattern, or if `const debug = true` is found in `index.js`. Warns (but does not abort) if `info.json` version does not match the _latest_ `## [X.X.X]` entry in `CHANGELOG.md`. Runs `validate_index_js` checks (leftover `XXX`, missing `applyGame`, etc.) and warns on each issue found. Renames the versioned `.txt` file (e.g. `0.2.7.txt` -> `0.2.8.txt`) to match the current version. Updates the `Version:` and `Date:` lines in the `index.js` header comment — version from `info.json`, date from the most recent `## [X.X.X] - YYYY-MM-DD` entry in `CHANGELOG.md`. Adds any resolved store IDs to `DISCOVERY_IDS_ACTIVE` if not already present. Runs `node --check` on `index.js` (skip with `--skip-node-check`) and warns on syntax errors. Runs ESLint (skip with `--skip-eslint`). Runs `generate_explained.js` to regenerate `EXTENSION_EXPLAINED.md`, then `generate_notes.js` to regenerate the `NOTES_FOR_MOD_AUTHORS` pair, then `generate_notes.js --description` to refresh each `DESCRIPTION.bbcode.txt` install list (each batched across all games in a single Node invocation when releasing multiple; all skipped by `--dry-run`, and a failure of any one warns without failing the release). Creates `game-{GAME_ID}.zip` inside the extension folder, overwriting any existing zip. If `--upload` is passed, looks up the active file update group from `GET /v3/mods/{id}/file-update-groups`, runs a multipart upload via the Nexus v3 API, and publishes a new file version with the `## [X.Y.Z]` changelog entry as the description. Upload failure logs an error but does not fail the overall release. After the release loop, every game that uploaded successfully is removed from `resources/lists/games-unreleased.txt` in a single rewrite — that list is generated by `categorize_games.py` from each `index.js` `EXTENSION_URL`, so it goes stale the moment an extension is first published and stays stale until the next categorize run, and a successful upload proves the Nexus page exists. Games that did not upload, or are not in the list, are left alone. With `--dry-run --upload` the entries that would be removed are printed instead. Always prints the extracted changelog entry for the current version to the console before zipping. Reads `EXTENSION_URL` from `index.js` — if set to a valid URL, opens `EXTENSION_URL?tab=files` in the default browser; otherwise opens `https://www.nexusmods.com/games/site`. If `--edit-changelog` is passed, also opens the Nexus Mods Documents editor (`EXTENSION_URL/edit/documents`) in the browser.
 
 ---
 
@@ -1122,12 +1139,14 @@ python bump_version.py --minor GAME_ID [GAME_ID ...]
 python bump_version.py --patch GAME_ID [GAME_ID ...]
 python bump_version.py --version 1.2.3 GAME_ID [GAME_ID ...]
 python bump_version.py --minor GAME_ID --dry-run
+python bump_version.py --patch GAME_ID --open-changelog
 ```
 
 - `--major` — bumps the major segment and resets minor and patch to 0 (e.g. `1.2.3 -> 2.0.0`).
 - `--minor` — bumps the minor segment and resets patch to 0 (e.g. `1.2.3 -> 1.3.0`).
 - `--patch` — bumps the patch segment (e.g. `1.2.3 -> 1.2.4`).
 - `--version VER` — sets an explicit version; must be valid semver (`X.Y.Z`). Errors immediately if format is invalid.
+- `--open-changelog` — opens each bumped extension's `CHANGELOG.md` in the default editor after the bump, so the new empty section can be filled in immediately. Skipped for games whose version is unchanged or that have no `CHANGELOG.md`.
 - `--dry-run` — prints what would change without writing files.
 
 One of `--major`, `--minor`, `--patch`, or `--version` is required. Pass multiple `GAME_ID` values to bump several extensions in one run.
@@ -1561,7 +1580,7 @@ The per-folder `index.js`/`info.json`/`CHANGELOG.md` parse is cached in `vortex_
 ```text
 [ Filter: ____________ ]  [Refresh]  [New Game...]  [Group by Engine]  [Flagged Only]  [All Categories v]  [Clear Checks]
 [ Bump Version ] [ Release ] [ Deploy to Vortex ] [ Launch in Vortex ] | [ Open Folder ] [ Open in Editor ] [ Open Changelog ]
-[ Open Game Page ] [ Open Extension Page ] | [ Port to Template... ] [ Setup Test Folder ] [ Patch ] [ Categorize ]
+[ Open Game Page ] [ Open Extension Page ] | [ Port to Template... ] [ Setup Test Folder ] [ Patch ] [ Categorize ] [ Generate Description ]
 [ Analyze Log ] [ Audit Scripts ] | [ Fetch Icon ] [ Fetch Cover ] [ Fetch Title ] [ Fetch Banner ] [ Fetch Nexus Stats ] [ View Images ]
 -----------------------------------------------------------------------------------------------------------------------
 | [x] | Flag | Icon | Game ID | Name | Ver | Updated | Engine | Stores | End | DL | Pub | Cover | Title | Banner |
@@ -1591,7 +1610,7 @@ The per-folder `index.js`/`info.json`/`CHANGELOG.md` parse is cached in `vortex_
 
 | Button | Script invoked |
 | --- | --- |
-| Bump Version | Dialog (`--major`, `--minor` (default), `--patch`, Manual `--version X.Y.Z`, `--dry-run`), then `python bump_version.py <id> [flags]` |
+| Bump Version | Dialog (`--major`, `--minor` (default), `--patch`, Manual `--version X.Y.Z`, `--open-changelog` default-checked, `--dry-run`), then `python bump_version.py <id> [flags]` |
 | Release | Dialog (`--no-open`, `--dry-run`, `--upload`, `--edit-changelog`), then `python release_extension.py <ids> [flags]` |
 | Deploy to Vortex | Dialog (`--dry-run`, `--force`, `--restart-vortex` default-checked, `--launch-game`), then `python deploy_to_vortex.py [flags] <ids>` |
 | Launch in Vortex | `subprocess.Popen(VortexExe, ...)` — opens Vortex with `--game` for the selected game |
@@ -1604,6 +1623,7 @@ The per-folder `index.js`/`info.json`/`CHANGELOG.md` parse is cached in `vortex_
 | Setup Test Folder | `python setup_test_folder.py <ids>` |
 | Patch | `python patch_extensions.py <ids>` |
 | Categorize | Dialog, then `python categorize_games.py [--dry-run] <ids>` |
+| Generate Description | `node generate_notes.js --description <ids>` — rewrites the install-notes list in each `DESCRIPTION.bbcode.txt`, scaffolding the page when absent |
 | Analyze Log | `python analyze_vortex_log.py --force` (no selection required; opens output file) |
 | Audit Scripts | `python audit_scripts.py` (no selection required) |
 | Fetch Icon | `python fetch_exec_icon.py <ids>` |

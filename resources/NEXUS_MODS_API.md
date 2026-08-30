@@ -616,3 +616,9 @@ the search/filter grammar and the batch mod/file lookups live.
 mod an archive belongs to).
 `GITHUB_API.md` (the other API this project depends on - unauthenticated, 60 requests per hour
 per IP, and the source of most modding requirements).
+
+`HELLDIVERS2_MOD_MANIFEST.md` (a mod archive format carrying its own `NexusData` mod id, and why
+an extension should ignore it rather than trust it).
+
+`SIMPLE_MOD_FRAMEWORK.md` (a mod page downloaded purely so the download is counted against it -
+the file itself is never installed).

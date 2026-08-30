@@ -39,7 +39,7 @@ MyRootMod.zip
 
 Mod:
 
-Recognised when the archive contains a file with one of these extensions: ".mgsv".
+Recognised when the archive contains a file with one of these extensions: ".mgsv" or ".MGSVPreset".
 
   Installs to: "SnakeBite_Mods"
 

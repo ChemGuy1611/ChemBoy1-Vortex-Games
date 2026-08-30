@@ -458,6 +458,10 @@ const adapter = {
   //Submissions carry a human title, so the mod list shows that rather than "Mod-428520"
   displayName: (resolved, key) => resolved.name || key,
 
+  //gamebanana.com/dl/{fileId} carries no file name and the file CDN it redirects to sends no
+  //Content-Disposition, so without this the archive is saved under a name with no extension at all
+  archiveName: (resolved) => resolved.fileName || undefined,
+
   //The installed file id rides along with the standard attributes, under the same name
   //gamebanana_downloader.js uses, so a requirement installed by either route is recognised by both
   extraAttributes: (config, resolved) => [[fileIdAttribute(config), Number(resolved.fileId)]],

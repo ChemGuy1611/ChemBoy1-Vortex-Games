@@ -11,12 +11,14 @@ Usage:
     python bump_version.py --patch GAME_ID [GAME_ID ...]
     python bump_version.py --version 1.2.3 GAME_ID [GAME_ID ...]
     python bump_version.py --minor GAME_ID --dry-run
+    python bump_version.py --patch GAME_ID --open-changelog
 
 Options:
     --major          Bump major segment: 1.2.3 -> 2.0.0 (resets minor and patch)
     --minor          Bump minor segment: 1.2.3 -> 1.3.0 (resets patch)
     --patch          Bump patch segment: 1.2.3 -> 1.2.4
     --version VER    Set explicit semver version (X.Y.Z)
+    --open-changelog Open CHANGELOG.md in the default editor after bumping
     --dry-run        Print changes without writing files
 """
 
@@ -33,7 +35,7 @@ def _bump(version: str, bump_type: str) -> str:
 
 
 def _process(folder: str, game_id: str, bump_type: str | None, dry_run: bool,
-             manual_ver: str | None = None) -> bool:
+             manual_ver: str | None = None, open_changelog: bool = False) -> bool:
     info = vu.read_info_json(folder)
     if info is None:
         vu.log_error(game_id, "info.json missing or invalid")
@@ -61,6 +63,8 @@ def _process(folder: str, game_id: str, bump_type: str | None, dry_run: bool,
         vu.log_dry(f"Would write info.json version: {new_ver}")
         vu.log_dry(f"Would update index.js header: Version {new_ver}, Date {today}")
         vu.log_dry(f"Would prepend ## [{new_ver}] - {today} to CHANGELOG.md")
+        if open_changelog:
+            vu.log_dry("Would open CHANGELOG.md in the default editor")
         return True
 
     # info.json
@@ -75,6 +79,13 @@ def _process(folder: str, game_id: str, bump_type: str | None, dry_run: bool,
             vu.write_index_js(folder, new_src)
 
     vu.prepend_changelog_entry(folder, new_ver, today)
+
+    if open_changelog:
+        changelog_path = os.path.join(folder, "CHANGELOG.md")
+        if os.path.exists(changelog_path):
+            vu.open_in_default_app(changelog_path)
+        else:
+            vu.log_info(game_id, "CHANGELOG.md missing, nothing to open")
 
     return True
 
@@ -99,6 +110,11 @@ def main():
     group.add_argument(
         "--version", metavar="VER", help="Set explicit version (X.Y.Z semver)"
     )
+    parser.add_argument(
+        "--open-changelog",
+        action="store_true",
+        help="Open CHANGELOG.md in the default editor after bumping",
+    )
     args = parser.parse_args()
 
     if args.version and not vu.is_valid_semver(args.version):
@@ -111,7 +127,8 @@ def main():
     try:
         for folder, game_id, _ in vu.iter_game_folders(args.game_ids):
             try:
-                ok = _process(folder, game_id, bump_type, args.dry_run, manual_ver)
+                ok = _process(folder, game_id, bump_type, args.dry_run, manual_ver,
+                              args.open_changelog)
                 (saved if ok else failed).append(game_id)
             except Exception as e:
                 vu.log_error(game_id, f"unexpected error: {e}")

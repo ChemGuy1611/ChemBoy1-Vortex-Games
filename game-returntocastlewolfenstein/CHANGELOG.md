@@ -4,6 +4,10 @@
 
 - None
 
+## [1.1.0] - 2026-08-29
+
+- Added: A page to browse mods on ModDB and install them without leaving Vortex
+
 ## [1.0.1] - 2026-08-05
 
 - Added: Checking for updates now installs a missing requirement instead of reporting an update for something that is not installed
@@ -16,10 +20,12 @@
 - Removed the ioRTCW download option - RealRTCW is the actively maintained fork. ioRTCW can still be installed manually and launched from the tools list
 
 ## [0.4.1]
+
 - Made game discovery more reliable
 - Corrected a typo in a modtype id
 - Added buttons to manually start RealRTCW and ioRTCW download processes (folder icon in Mods toolbar)
 
 ## [0.4.0]
+
 - Improved notification to download RealRTCW or ioRTCW to automate the process
 - Cleaned up code

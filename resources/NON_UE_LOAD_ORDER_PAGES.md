@@ -275,3 +275,6 @@ so the same defects travel with it.
 `VORTEX_LOAD_ORDER.md` (FBLO runtime orchestration).
 `TEMPLATES_OVERVIEW.md` (which template each game derives from).
 `templates/` (one file per template, with the mechanics of each).
+
+`HELLDIVERS2_MOD_MANIFEST.md` (how that game's patch files are chosen at install time, before the
+load order page ever sees them).

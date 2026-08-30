@@ -169,11 +169,16 @@ Repo-wide equivalents:
 | `pnpm run typecheck` | `tsc` across every project |
 | `pnpm run lint` / `lint:verbose` | ESLint across every project (`--quiet` hides warnings) |
 | `pnpm run test` | vitest unit + integration, excluding the Playwright E2E package |
-| `pnpm run e2e` | Playwright E2E (`@vortex/e2e`), also `:headed`, `:debug`, `:report` |
+| `pnpm run e2e` | Playwright E2E (`@vortex/e2e`); the variants are `pnpm -F @vortex/e2e run e2e:headed` and `run e2e:ui` — the root `e2e:debug` and `e2e:report` scripts name nx targets that do not exist |
 | `pnpm oxfmt --check <paths>` | Formatting check; drop `--check` to rewrite. `pnpm run format` does the whole tree |
 
 Unit tests are colocated with the code as `src/**/*.test.ts(x)` and run under vitest, so a change to
 a renderer utility can usually be covered by a test file placed next to it.
+
+A pull request is expected to arrive with tests for the change and with evidence that they were run.
+`pnpm run test` covers the vitest layers and is what CI checks; the Playwright suite is **not** a PR
+gate — `e2e.yml` only triggers on PRs that touch `packages/e2e/**` — so a change to a UI flow has to be
+exercised locally with `pnpm run e2e`. Writing tests for either layer is covered in `VORTEX_TESTING.md`.
 
 ---
 
@@ -192,6 +197,8 @@ a renderer utility can usually be covered by a test file placed next to it.
 ## See also
 
 `VORTEX_APP.md` (repo layout, process model, persistence, and where each subsystem lives) ·
+`VORTEX_TESTING.md` (both test layers in depth: what a PR has to ship, and how to write vitest and
+Playwright tests for this app) ·
 `VORTEX_CODESTYLE.md` (the conventions the code these commands check is written to) ·
 `VORTEX_AGENT_GUIDES.md` (the repo's own contributor/assistant instruction files) ·
 `BOOTSTRAP.md` (the separate, much lighter environment needed for the extension-authoring scripts) ·

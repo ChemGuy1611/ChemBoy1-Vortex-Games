@@ -2,8 +2,8 @@
 Name: MENACE Vortex Extension
 Structure: Unity BepinEx/MelonLoader Hybrid
 Author: ChemBoy1
-Version: 0.6.2
-Date: 2026-07-29
+Version: 0.7.0
+Date: 2026-08-29
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -14,6 +14,8 @@ const fsExtra = require('fs-extra');
 const { parseStringPromise } = require('xml2js');
 const winapi = require('winapi-bindings');
 const React = require('react');
+//Auto-downloader module
+const { download, findModByFile, findDownloadIdByFile, resolveVersionByDirectCopyMarker, resolveVersionByModVersion } = require('./downloader');
 
 // -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -278,14 +280,33 @@ const CUSTOMLOADER_PLUGIN_PATH = path.join('XXX');
 const CUSTOMLOADER_PLUGIN_FOLDERS = ['XXX'];
 const CUSTOM_PLUGIN_STRING = 'XXX'; //string to ID Custom plugin file
 
+//Jiangyu is the current mod loader for the game and replaced ModpackLoader. The release asset is a
+//naked .dll dropped into the MelonLoader "Mods" folder, so it is fetched in direct-copy mode.
+const JIANGYU_ID = `${GAME_ID}-jiangyu`;
+const JIANGYU_NAME = "Jiangyu Loader";
+const JIANGYU_PATH = MELON_MODS_PATH;
+const JIANGYU_FILE = 'Jiangyu.Loader.dll';
+const JIANGYU_FILES = [JIANGYU_FILE];
+const JIANGYU_ARC_NAME = JIANGYU_FILE;
+const JIANGYU_URL_API = `https://api.github.com/repos/antistrategie/jiangyu`;
+
+const JIANGYUMOD_ID = `${GAME_ID}-jiangyumod`;
+const JIANGYUMOD_NAME = "Jiangyu Mod";
+const JIANGYUMOD_PATH = MELON_MODS_PATH;
+const JIANGYUMOD_FILE = 'jiangyu.json';
+const JIANGYUMOD_FILES = [JIANGYUMOD_FILE];
+
 const MODPACKLOADER_ID = `${GAME_ID}-modpackloader`;
 const MODPACKLOADER_NAME = "ModpackLoader";
 const MODPACKLOADER_PATH = '.';
 const MODPACKLOADER_FILE = "Menace.ModpackLoader.dll";
 const MODPACKLOADER_FOLDER = "UserLibs";
+//The ModKit bundles the ModpackLoader runtime, but under its own tooling folder rather than at the
+//paths the game reads. installModkit copies them out to "Mods" (the loader itself) and "UserLibs"
+//(its dependencies). Kept as a list so the same files can be excluded from conflict reporting -
+//the ModpackLoader mod on Nexus ships identical copies.
 const MODPACKLOADER_DLLS = [
   MODPACKLOADER_FILE,
-  //'Menace.DataExtractor.dll',
   'Microsoft.CodeAnalysis.CSharp.dll',
   'Microsoft.CodeAnalysis.dll',
   'MoonSharp.Interpreter.dll',
@@ -294,9 +315,6 @@ const MODPACKLOADER_DLLS = [
   'System.Collections.Immutable.dll',
   'System.Reflection.Metadata.dll'
 ];
-const MODPACKLOADER_PAGE_NO = 56;
-const MODPACKLOADER_FILE_NO = 168;
-const MODPACKLOADER_DOMAIN = GAME_ID;
 const MPL_DOTNET_VER = '10';
 const MPL_DOTNET_URL = `https://dotnet.microsoft.com/download/dotnet/${MPL_DOTNET_VER}.0`;
 
@@ -316,13 +334,56 @@ const MODKIT_ID = `${GAME_ID}-modkit`;
 const MODKIT_NAME = "Menace ModKit";
 const MODKIT_EXEC = 'Menace.Modkit.App.exe';
 const MODKIT_PATH = '.';
-const MODKIT_URL = 'https://github.com/p0ss/MenaceAssetPacker/releases/latest/download/menace-modkit-win-x64.zip';
-const MODKIT_URL_ERR = 'https://github.com/p0ss/MenaceAssetPacker/releases';
+const MODKIT_ARC_NAME = 'menace-modkit-win-x64.zip';
+//Folder inside the ModKit archive holding the bundled ModpackLoader runtime
+const MODKIT_LOADER_FOLDER = path.join('third_party', 'bundled', 'ModpackLoader');
+const MODKIT_URL_API = 'https://api.github.com/repos/antistrategie/MenaceModkit';
 
-const LO_FILE = MODPACKMOD_FILE;
+//Jiangyu ships a naked .dll, which Vortex's archive install pipeline cannot handle - direct-copy
+//mode fetches it straight to the MelonLoader "Mods" folder instead.
+const JIANGYU_REQUIREMENTS = [
+  {
+    archiveFileName: JIANGYU_ARC_NAME,
+    userFacingName: JIANGYU_NAME,
+    githubUrl: JIANGYU_URL_API,
+    //placeholder only: GAME_PATH is '' at module load, so setup() reassigns this
+    directCopyPath: path.join(GAME_PATH, JIANGYU_PATH, JIANGYU_FILE),
+    //counts as installed if the user got the archived build from Nexus instead
+    directCopyModType: JIANGYU_ID,
+    //the release also carries jiangyu-cli and jiangyu-studio archives - anchor both ends
+    fileArchivePattern: /^Jiangyu\.Loader\.dll$/i,
+    resolveVersion: (api) => resolveVersionByDirectCopyMarker(api, JIANGYU_REQUIREMENTS[0]),
+    autoInstall: true, //this is the game's current loader, so a missing copy is installed for the user
+  },
+];
+
+//The ModKit is an optional authoring tool, never a play requirement, so only the toolbar button
+//installs it. The asset name carries no version, so the installed mod's version is the marker.
+const MODKIT_REQUIREMENTS = [
+  {
+    archiveFileName: MODKIT_ARC_NAME,
+    modType: MODKIT_ID,
+    assemblyFileName: MODKIT_EXEC,
+    userFacingName: MODKIT_NAME,
+    githubUrl: MODKIT_URL_API,
+    findMod: (api) => findModByFile(api, MODKIT_ID, MODKIT_EXEC),
+    findDownloadId: (api) => findDownloadIdByFile(api, MODKIT_ARC_NAME),
+    //the same release ships menace-mod-manager-win-x64.zip - anchor both ends so it cannot match
+    fileArchivePattern: /^menace-modkit-win-x64\.zip$/i,
+    resolveVersion: (api) => resolveVersionByModVersion(api, MODKIT_REQUIREMENTS[0]),
+    autoInstall: false, //the toolbar action installs this - never setup() and never a deploy
+  },
+];
+
+//Both loaders share the "Mods" folder, so one page covers both. Jiangyu has no load order field of
+//its own and sorts lexically by folder name, so its position is written as a numeric folder prefix
+//at deploy time, while ModpackLoader mods keep the number inside their own modpack.json.
 const LO_JSON_KEY = "loadOrder";
 const LO_INCREMENT = 10;
 const LO_ATTRIBUTE = "modName";
+const LO_PREFIX_PAD = 3; //zero-padded so "010-" cannot sort above "009-"; good for 999 mods
+const LO_UNSORTED_PREFIX = 'ZZZ';
+const LO_UNSORTED_POS = 9999; //sort key for a mod with no recorded position - always last
 // for mod update to keep them in the load order and not uncheck them
 let mod_update_all_profile = false;
 let updateModIds = new Map(); // Nexus mod id -> {firstSeen, targetFileId} (Map, not scalar, so batch updates don't clobber each other)
@@ -344,7 +405,9 @@ if (multiExe && (BEPINEX_BUILD === 'mono')) {
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
 
-const IGNORE_CONFLICTS = [path.join('**', 'Menace.ModpackLoader.dll'), path.join('**', 'manifest.json'), path.join('**', 'icon.png'), path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
+//The ModKit and the ModpackLoader mod on Nexus both supply the loader runtime, so those files are
+//expected to be identical duplicates rather than a conflict the user has to resolve.
+const IGNORE_CONFLICTS = [...MODPACKLOADER_DLLS.map(dll => path.join('**', dll)), path.join('**', JIANGYU_FILE), path.join('**', 'manifest.json'), path.join('**', 'icon.png'), path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 const IGNORE_DEPLOY = [path.join('**', 'manifest.json'), path.join('**', 'icon.png'), path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 let MODTYPE_FOLDERS = [BEPINEX_PATCHERS_PATH, BEPINEX_PLUGINS_PATH, BEPINEX_CONFIG_PATH, MELON_PLUGINS_PATH, MELON_MODS_PATH, MELON_CONFIG_PATH, CUSTOMLEADERS_PATH];
 if (hasCustomMods) {
@@ -497,6 +560,14 @@ const spec = {
       "name": MELON_NAME,
       "priority": "low",
       "targetPath": '{gamePath}'
+    },
+    //appended last on purpose: the loop below derives each priority from the array index, so
+    //inserting anywhere else renumbers every mod type after it
+    {
+      "id": JIANGYU_ID,
+      "name": JIANGYU_NAME,
+      "priority": "low",
+      "targetPath": path.join('{gamePath}', JIANGYU_PATH)
     },
   ],
   "discovery": {
@@ -883,7 +954,7 @@ function testModkit(files, gameId) {
   });
 }
 
-//Install ModpackLoader files
+//Install ModKit files
 function installModkit(files) {
   const MOD_TYPE = MODKIT_ID;
   const modFile = files.find(file => (path.basename(file) === MODKIT_EXEC));
@@ -903,7 +974,138 @@ function installModkit(files) {
       destination: path.join(file.substr(idx)),
     };
   });
+
+  //The ModKit bundles the ModpackLoader runtime under its own tooling folder, which is not where
+  //the game loads it from. Copy those files a second time to the paths the loader needs: the
+  //loader assembly into the "Mods" folder, its dependencies into "UserLibs". Taken from the
+  //archive rather than a fixed list, so a dependency added upstream is placed too.
+  const loaderSuffix = `${path.sep}${MODKIT_LOADER_FOLDER.toLowerCase()}`;
+  const loaderFiles = filtered.filter(file => path.dirname(file).toLowerCase().endsWith(loaderSuffix));
+  loaderFiles.forEach(file => {
+    const fileName = path.basename(file);
+    const destFolder = (fileName.toLowerCase() === MODPACKLOADER_FILE.toLowerCase())
+      ? MELON_MODS_PATH
+      : MODPACKLOADER_FOLDER;
+    instructions.push({
+      type: 'copy',
+      source: file,
+      destination: path.join(destFolder, fileName),
+    });
+  });
+
   instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for Jiangyu Loader files. The loader is normally fetched straight to the game folder by the
+//auto-downloader; this covers the archived copy attached to a mod page on Nexus.
+function testJiangyu(files, gameId) {
+  const isMod = files.some(file => JIANGYU_FILES.some(loaderFile =>
+    (loaderFile.toLowerCase() === path.basename(file).toLowerCase())));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+      supported,
+      requiredFiles: [],
+  });
+}
+
+//Install Jiangyu Loader files
+function installJiangyu(files) {
+  const MOD_TYPE = JIANGYU_ID;
+  const modFile = files.find(file => JIANGYU_FILES.some(loaderFile =>
+    (loaderFile.toLowerCase() === path.basename(file).toLowerCase())));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file => (
+    (file.indexOf(rootPath) !== -1) &&
+    (!file.endsWith(path.sep))
+  ));
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for Jiangyu mod files
+function testJiangyuMod(files, gameId) {
+  const isMod = files.some(file => JIANGYUMOD_FILES.includes(path.basename(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install Jiangyu mod files
+async function installJiangyuMod(files, destinationPath) {
+  const MOD_TYPE = JIANGYUMOD_ID;
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === JIANGYUMOD_FILE));
+  const rootPath = path.dirname(modFile);
+  const idx = modFile.indexOf(path.basename(modFile));
+
+  //Folder the mod deploys into. The manifest's "name" is the loader's own identity for the mod -
+  //what other mods declare as a dependency - so it wins over anything derived from the archive.
+  let folder = path.basename(destinationPath).split('-')[0];
+  const ROOT_PATH = path.basename(rootPath);
+  if (ROOT_PATH !== '.') {
+    folder = ROOT_PATH;
+  }
+  try {
+    const contents = await fs.readFileAsync(path.join(destinationPath, modFile), 'utf8');
+    const manifestName = JSON.parse(contents).name;
+    if ((typeof manifestName === 'string') && (manifestName.trim() !== '')) {
+      folder = manifestName.trim();
+    }
+  } catch (err) {
+    log('warn', `Failed to read "${JIANGYUMOD_FILE}", using "${folder}" as the mod folder instead: ${err}`);
+  }
+  folder = folder.replace(/[<>:"/\\|?*]/g, '_'); //a manifest name is not limited to valid folder characters
+
+  const MOD_ATTRIBUTE = { //attribute for use in load order
+    type: 'attribute',
+    key: LO_ATTRIBUTE,
+    value: folder,
+  };
+
+  //Files install at the mod root. The folder they deploy into is applied by the mod type's
+  //mergeMods callback, which is what lets the load order page reorder them.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: file.substr(idx),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  instructions.push(MOD_ATTRIBUTE);
   return Promise.resolve({ instructions });
 }
 
@@ -1784,33 +1986,51 @@ function getIndex(number) {
   return ( (number - LO_INCREMENT) / 10 ) + 1;
 }
 
-async function readFromFiles(loadOrderPaths, modFolders) {
-  let posArray = [];
-  for (let index = 0; index < loadOrderPaths.length; index++) {
-    let contents;
-    try {
-      await fs.statAsync(loadOrderPaths[index]);
-      contents = await fs.readFileAsync(loadOrderPaths[index], 'utf8');
-    } catch (err) {
-      log('error', `Failed to read load order file or it does not exist: ${loadOrderPaths[index]}: ${err}`);
-      continue;
+//Matches only a complete load order prefix, so a mod folder that merely starts with digits is left
+//alone.
+const LO_PREFIX_REGEX = new RegExp(`^(?:[0-9]{${LO_PREFIX_PAD}}|${LO_UNSORTED_PREFIX})-`);
+
+//The folder name without its load order prefix. Load order entries are identified by this, so an
+//entry keeps the same id when the mod is moved to a different position.
+function stripLoadOrderPrefix(folder) {
+  return folder.replace(LO_PREFIX_REGEX, '');
+}
+
+//Folder a Jiangyu mod deploys into, before the load order prefix is added. The installer records it
+//as an attribute; the mod id is a fallback for anything installed without one.
+function modFolderName(mod) {
+  const folder = util.getSafe(mod, ['attributes', LO_ATTRIBUTE], '');
+  return ((typeof folder === 'string') && (folder !== '')) ? folder : mod.id;
+}
+
+//Position of a mod folder in the load order, on one scale for both loaders: a Jiangyu mod carries
+//it in its folder prefix, a ModpackLoader mod inside its own modpack.json. Returns undefined for a
+//folder belonging to neither loader, which the load order page does not list.
+async function readLoadOrderPosition(modFolderPath, folder) {
+  if (await statCheckAsync(path.join(modFolderPath, folder), JIANGYUMOD_FILE)) {
+    const prefix = folder.match(LO_PREFIX_REGEX);
+    if (prefix === null) { //installed by hand, or deployed before this extension sorted them
+      return LO_UNSORTED_POS;
     }
-    const json = JSON.parse(contents);
-    let number = json.loadOrder;
-    if (number === undefined) { //if loadOrder is undefined, put it at the end
-      log('warn', `Mod "${modFolders[index]}" loadOrder is undefined. Placing at 99th position.`);
-      number = 990;
-    }
-    //const pos = getIndex(number);
-    posArray[index] = {
-      pos: number,
-      mod: modFolders[index] 
-    };
+    const pos = Number.parseInt(prefix[0], 10);
+    return Number.isNaN(pos) ? LO_UNSORTED_POS : pos + 1; //prefixes count from 0, positions from 1
   }
-  const modArray = posArray
-    .sort((a, b) => a.pos - b.pos)
-    .map(entry => entry.mod);
-  return modArray;
+  if (await statCheckAsync(path.join(modFolderPath, folder), MODPACKMOD_FILE)) {
+    const filePath = path.join(modFolderPath, folder, MODPACKMOD_FILE);
+    let number;
+    try {
+      number = JSON.parse(await fs.readFileAsync(filePath, 'utf8'))[LO_JSON_KEY];
+    } catch (err) {
+      log('error', `Failed to read load order file ${filePath}: ${err}`);
+      return LO_UNSORTED_POS;
+    }
+    if (number === undefined) { //if loadOrder is undefined, put it at the end
+      log('warn', `Mod "${folder}" ${LO_JSON_KEY} is undefined. Placing it last.`);
+      return LO_UNSORTED_POS;
+    }
+    return getIndex(number);
+  }
+  return undefined;
 }
 
 //Reordering is ignored while a mod update is in flight: the deserializers below freeze the stored
@@ -1845,44 +2065,48 @@ async function deserializeLoadOrder(context) {
   try {
     modFolders = await fs.readdirAsync(modFolderPath);
     modFolders = modFolders.filter((file) => isDir(modFolderPath, file));
+    modFolders = modFolders.filter((file) => (file.toLowerCase() !== CUSTOMLEADERS_FOLDER.toLowerCase()));
     modFolders = modFolders.sort((a,b) => a.toLowerCase().localeCompare(b.toLowerCase()));
   } catch {
     return Promise.reject(new Error('Failed to read "Mods" folder'));
   }
 
-  // Each mod has its own json file where the load order is stored. Need to read each one to get the load order.
-  const loadOrderPaths = modFolders
-    .map((mod) => path.join(GAME_PATH, MODPACKMOD_PATH, mod, LO_FILE));
-  const LO_MOD_ARRAY = await readFromFiles(loadOrderPaths, modFolders);
+  //One entry per folder holding either loader's manifest. "folder" is the folder as it is on disk,
+  //which for a Jiangyu mod carries the load order prefix, while "id" is that name without it.
+  const entries = [];
+  for (const folder of modFolders) {
+    const pos = await readLoadOrderPosition(modFolderPath, folder);
+    if (pos === undefined) { //not a mod for either loader
+      continue;
+    }
+    entries.push({ pos, folder, id: stripLoadOrderPrefix(folder) });
+  }
+  entries.sort((lhs, rhs) => (lhs.pos - rhs.pos) || lhs.id.toLowerCase().localeCompare(rhs.id.toLowerCase()));
 
-  //Determine if mod is managed by Vortex (async version)
-  const isVortexManaged = async (modId) => {
-    return fs.statAsync(path.join(modFolderPath, modId, `__folder_managed_by_vortex`))
+  //Determine if mod is managed by Vortex - keyed on the folder as deployed, prefix included
+  const isVortexManaged = async (folder) => {
+    return fs.statAsync(path.join(modFolderPath, folder, `__folder_managed_by_vortex`))
       .then(() => true)
       .catch(() => false)
   };
-  
+
   // Get readable mod name using attribute from mod installer
-  async function getModName(folder) {
-    const VORTEX = await isVortexManaged(folder);
-    if (!VORTEX) {
-      return ('Manual Mod');
-    }
+  function getModName(id) {
     try {//Mod installed by Vortex, find mod where atrribute (from installer) matches folder in the load order
-      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], '') === folder));
+      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], '') === id));
       if (modMatch) {
         return modMatch.attributes.customFileName ?? modMatch.attributes.logicalFileName ?? modMatch.attributes.name;
       }
-      return folder;
+      return id;
     } catch {
-      return folder;
+      return id;
     }
   }
 
   // Get Vortex mod id using attribute from mod installer
-  async function getModId(folder) {
+  function getModId(id) {
     try {//find mod where atrribute (from installer) matches file in the load order
-      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], '') === folder)); //find mod by folder name attribute
+      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], '') === id)); //find mod by folder name attribute
       if (modMatch) {
         return modMatch.id;
       }
@@ -1893,37 +2117,16 @@ async function deserializeLoadOrder(context) {
   }
 
   //Set load order
-  let loadOrder = await LO_MOD_ARRAY
-    .reduce(async (accumP, entry) => {
-      const accum = await accumP;
-      const folder = entry;
-      if (!modFolders.includes(folder)) {
-        return Promise.resolve(accum);
-      }
-      accum.push(
-        {
-          id: folder,
-          //name: `${await getModName(folder)} (${folder})`,
-          name: await getModName(folder),
-          modId: await isVortexManaged(folder) ? await getModId(folder) : undefined,
-          enabled: true,
-        }
-      );
-      return Promise.resolve(accum);
-    }, Promise.resolve([]));
-  
-  /*push new mods to loadOrder - DISABLED since there's no central LO file.
-  for (let folder of modFolders) {
-    if (!loadOrder.find((mod) => (mod.id === folder))) {
-      loadOrder.push({
-        id: folder,
-        //name: `${await getModName(folder)} (${folder})`,
-        name: await getModName(folder),
-        modId: await isVortexManaged(folder) ? await getModId(folder) : undefined,
-        enabled: true,
-      });
-    }
-  } //*/
+  const loadOrder = [];
+  for (const entry of entries) {
+    const managed = await isVortexManaged(entry.folder);
+    loadOrder.push({
+      id: entry.id,
+      name: managed ? getModName(entry.id) : 'Manual Mod',
+      modId: managed ? getModId(entry.id) : undefined,
+      enabled: true,
+    });
+  }
 
   return loadOrder;
 }
@@ -1935,21 +2138,23 @@ function setNumber(index) {
   return (index * 10) + LO_INCREMENT;
 }
 
-async function writeToFiles(loadOrderPaths) {
-  for (let index = 0; index < loadOrderPaths.length; index++) {
+//entries: [{ filePath, position }] - position is the mod's index in the whole load order, so that
+//both loaders' mods end up on the same scale and the page's order survives a round trip.
+async function writeToFiles(entries) {
+  for (const entry of entries) {
     let contents;
     try {
-      await fs.statAsync(loadOrderPaths[index]);
-      contents = await fs.readFileAsync(loadOrderPaths[index], 'utf8');
+      await fs.statAsync(entry.filePath);
+      contents = await fs.readFileAsync(entry.filePath, 'utf8');
     } catch (err) {
-      log('error', `Failed to write load order file or it does not exist: ${loadOrderPaths[index]}: ${err}`);
+      log('error', `Failed to write load order file or it does not exist: ${entry.filePath}: ${err}`);
       continue;
     }
     const json = JSON.parse(contents);
-    json.loadOrder = setNumber(index);
+    json[LO_JSON_KEY] = setNumber(entry.position);
     const loadOrderOutput = JSON.stringify(json, null, 2);
     await fs.writeFileAsync(
-      loadOrderPaths[index],
+      entry.filePath,
       loadOrderOutput,
       { encoding: "utf8" },
   );
@@ -1964,49 +2169,52 @@ async function serializeLoadOrder(context, loadOrder) {
     return;
   } //*/
   GAME_PATH = getDiscoveryPath(context.api);
-  const loadOrderMapped = loadOrder //get an array of folder names (mod.id)
-    .map((mod) => (mod.id));
-  const loadOrderPaths = loadOrderMapped //path to each mod's json file
-    .map((mod) => path.join(GAME_PATH, MODPACKMOD_PATH, mod, LO_FILE));
+  const modFolderPath = path.join(GAME_PATH, MODPACKMOD_PATH);
+
+  //Entry ids have no load order prefix, so map them back to the folders as they stand on disk -
+  //those still carry whatever prefix the last deployment gave them.
+  let modFolders = [];
+  try {
+    modFolders = (await fs.readdirAsync(modFolderPath)).filter((file) => isDir(modFolderPath, file));
+  } catch (err) {
+    log('error', `Failed to read "Mods" folder: ${err}`);
+    return;
+  }
+  const folderById = new Map(modFolders.map((folder) => [stripLoadOrderPrefix(folder).toLowerCase(), folder]));
+
+  //Only ModpackLoader mods are written here. A Jiangyu mod has nowhere on disk to record its
+  //position - it gets the numbered folder from mergeMods on the next deployment instead.
+  const entries = [];
+  for (let index = 0; index < loadOrder.length; index++) {
+    const folder = folderById.get(String(loadOrder[index].id).toLowerCase());
+    if (folder === undefined) {
+      continue;
+    }
+    if (await statCheckAsync(path.join(modFolderPath, folder), MODPACKMOD_FILE)) {
+      entries.push({ filePath: path.join(modFolderPath, folder, MODPACKMOD_FILE), position: index });
+    }
+  }
   //must write to each mod's json file
-  await writeToFiles(loadOrderPaths);
+  await writeToFiles(entries);
   return;
 }
 
-/* Functions for folder-based merger load order (does NOT seem to work)
-function makePrefix(input) {
-  let res = '';
-  let rest = input;
-  while (rest > 0) {
-      res = String.fromCharCode(65 + (rest % 25)) + res;
-      rest = Math.floor(rest / 25);
-  }
-  return util.pad(res, 'A', 3);
-}
+//Numbered folder prefix that puts a Jiangyu mod's load order position onto disk. Zero-padded
+//because the loader sorts mod folders lexically, where "10-" would otherwise come before "9-".
 function loadOrderPrefix(api, mod) {
   const state = api.getState();
   const profile = selectors.lastActiveProfileForGame(state, GAME_ID);
-  const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', profile], {});
-  const loKeys = Object.keys(loadOrder);
-  const pos = loKeys.indexOf(mod.id);
-  if (pos === -1) {
-      return 'ZZZZ-';
+  const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', profile], []);
+  //The load order is an array of entries, where "id" is the mod's folder name and "modId" is the
+  //Vortex mod id - the latter is what identifies the mod being deployed here.
+  const pos = Array.isArray(loadOrder)
+    ? loadOrder.findIndex((entry) => (entry.modId === mod.id))
+    : -1;
+  if (pos === -1) { //not on the page yet - sorts last until the next deserialize picks it up
+    return `${LO_UNSORTED_PREFIX}-`;
   }
-  return makePrefix(pos) + '-';
+  return `${String(pos).padStart(LO_PREFIX_PAD, '0')}-`;
 }
-async function preSort(api, items, direction) {
-  const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
-  const loadOrder = items.map(mod => {
-    const modInfo = mods[mod.id];
-    let name = modInfo ? modInfo.attributes.customFileName ?? modInfo.attributes.logicalFileName ?? modInfo.attributes.name : mod.name;
-    return {
-      id: mod.id,
-      name,
-      imgUrl: util.getSafe(modInfo, ['attributes', 'pictureUrl'], path.join(__dirname, spec.game.logo))
-    }
-  });
-  return (direction === 'descending') ? Promise.resolve(loadOrder.reverse()) : Promise.resolve(loadOrder);
-} //*/
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
@@ -2356,58 +2564,6 @@ async function modFoldersEnsureWritable(gamePath, relPaths) {
   }
 }
 
-async function dllFilesCopy(api, gamePath, files) {
-  await fs.ensureDirWritableAsync(path.join(gamePath, 'UserLibs'));
-  for (let index = 0; index < files.length; index++) {
-    const source = path.join(__dirname, 'ModpackLoader', files[index]);
-    let destination;
-    if (index < 1) { 
-      destination = path.join(gamePath, 'Mods', files[index]);
-    } else {
-      destination = path.join(gamePath, 'UserLibs', files[index]);
-    }
-    try {
-      await fs.copyAsync(source, destination, { overwrite: true });
-    } catch (err) {
-      api.showErrorNotification('Failed to copy ModPackLoader dlls to game folder. Please deploy mods to try again.', err, { allowReport: false });
-    }
-  }
-}
-
-async function ensureModpackLoader(api, check) {
-  GAME_PATH = getDiscoveryPath(api);
-  if (check) {
-    const dllPath = path.join(GAME_PATH, 'Mods', MODPACKLOADER_FILE);
-    const libPath = path.join(GAME_PATH, 'UserLibs', MODPACKLOADER_DLLS[1]);
-    //const state = api.getState();
-    //const mods = state.persistent.mods[GAME_ID] || {};
-    //let test =  Object.keys(mods).some(id => mods[id]?.type === MODPACKLOADER_ID);
-    let test = false;
-    let testLib = false;
-    if (!test) {
-      try {
-        await fs.statAsync(dllPath);
-        test = true;
-      } catch {
-        test = false;
-      }
-    }
-    if (!testLib) {
-      try {
-        await fs.statAsync(libPath);
-        testLib = true;
-      } catch {
-        testLib = false;
-      }
-    }
-    if (!test && !testLib) { //*/
-      await dllFilesCopy(api, GAME_PATH, MODPACKLOADER_DLLS);
-    }
-  } else {
-    await dllFilesCopy(api, GAME_PATH, MODPACKLOADER_DLLS);
-  }
-}
-
 function dotNetMelonNotify(api) {
   const NOTIF_ID = `${GAME_ID}-dotnetmelon-notify`;
   const MESSAGE = `.NET ${MELON_DOTNET_VER} Required`;
@@ -2569,8 +2725,11 @@ async function setup(discovery, api, gameSpec) {
   MODTYPE_FOLDERS.push(ASSEMBLY_PATH);
   MODTYPE_FOLDERS.push(ASSETS_PATH);
   await modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
-  //await ensureModpackLoader(api, false);
-  await downloadModpackLoader(api, gameSpec);
+  //REQUIRED: JIANGYU_REQUIREMENTS is built at module load, when GAME_PATH is still '', so the
+  //baked-in directCopyPath is relative and would never resolve. setup() runs on every
+  //gamemode-activated, so this reassignment precedes every path that reads the field.
+  JIANGYU_REQUIREMENTS[0].directCopyPath = path.join(GAME_PATH, JIANGYU_PATH, JIANGYU_FILE);
+  await downloadJiangyu(api, gameSpec);
   if (!bepinexInstalled && !melonInstalled && !customInstalled) {
     await chooseModLoader(api, spec); //dialog to choose mod loader
   }
@@ -2583,10 +2742,13 @@ async function setup(discovery, api, gameSpec) {
   if (melonInstalled && allowMelPrefMan) {
     downloadMelonPrefManNotify(api, gameSpec); //notification to download MelonPreferencesManager
   } //*/
-  if (isMelonInstalled(api, gameSpec)) {
+  //Jiangyu needs .NET 6 too, so it shares MelonLoader's check rather than getting one of its own
+  if (isMelonInstalled(api, gameSpec) || isJiangyuInstalled(api, gameSpec)) {
     checkDotNetMelon(api);
   }
-  checkDotNetModpack(api);
+  if (isModpackLoaderInstalled(api, gameSpec)) { //.NET 10 is a ModpackLoader requirement only
+    checkDotNetModpack(api);
+  }
 }
 
 //Let Vortex know about the game
@@ -2613,21 +2775,24 @@ function applyGame(context, gameSpec) {
   });
 
   //register mod types explicitly
-  /*context.registerModType(MODPACKMOD_ID, 29, 
+  //Jiangyu has no load order field of its own and loads mods in folder-name order, so the load
+  //order position is written as a numbered folder here, at deploy time. Registered explicitly
+  //rather than through the loop above because that loop cannot carry a mergeMods callback.
+  context.registerModType(JIANGYUMOD_ID, 29,
     (gameId) => {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, path.join('{gamePath}', MODPACKMOD_PATH)),
-    () => Promise.resolve(false), 
-    { name: MODPACKMOD_NAME,
+    },
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', JIANGYUMOD_PATH)),
+    () => Promise.resolve(false),
+    { name: JIANGYUMOD_NAME,
       mergeMods: (mod) => {
         if (enableLoadOrder) {
-          return loadOrderPrefix(context.api, mod) + mod.id.split('-')[0];
+          return loadOrderPrefix(context.api, mod) + modFolderName(mod);
         } else { //If load order is disabled, don't use sorting folders
-          return mod.id.split('-')[0];
+          return modFolderName(mod);
         }
-      } 
+      }
     }
   ); //*/
   if (hasCustomMods) {
@@ -2699,15 +2864,19 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(MELON_ID, 26, testMelon, installMelon);
   context.registerInstaller(BEPINEX_ID, 27, testBepinex, installBepinex);
   context.registerInstaller(MODKIT_ID, 28, testModkit, installModkit);
-  context.registerInstaller(MODPACKLOADER_ID, 29, testModpackLoader, installModpackLoader);
-  context.registerInstaller(MODPACKMOD_ID, 30, testModpackMod, installModpackMod);
-  context.registerInstaller(ROOT_ID, 31, testRoot, installRoot);
-  context.registerInstaller(BEPCFGMAN_ID, 32, testBepCfgMan, installBepCfgMan);
-  context.registerInstaller(MELONPREFMAN_ID, 33, testMelonPrefMan, installMelonPrefMan);
-  context.registerInstaller(ASSEMBLY_ID, 34, testAssembly, installAssembly);
-  context.registerInstaller(`${GAME_ID}-plugin`, 35, testPlugin, (files, workingDir) => installPlugin(context.api, gameSpec, files, workingDir));
-  context.registerInstaller(CUSTOMLEADERS_ID, 36, testCustomLeaders, installCustomLeaders);
-  context.registerInstaller(ASSETS_ID, 37, testAssets, installAssets);
+  //both Jiangyu installers sit above the generic .dll plugin installer, which would otherwise claim
+  //the loader, and above the ModpackLoader pair so a mod carrying both manifests loads with Jiangyu
+  context.registerInstaller(JIANGYU_ID, 29, testJiangyu, installJiangyu);
+  context.registerInstaller(JIANGYUMOD_ID, 30, testJiangyuMod, installJiangyuMod);
+  context.registerInstaller(MODPACKLOADER_ID, 31, testModpackLoader, installModpackLoader);
+  context.registerInstaller(MODPACKMOD_ID, 32, testModpackMod, installModpackMod);
+  context.registerInstaller(ROOT_ID, 33, testRoot, installRoot);
+  context.registerInstaller(BEPCFGMAN_ID, 34, testBepCfgMan, installBepCfgMan);
+  context.registerInstaller(MELONPREFMAN_ID, 35, testMelonPrefMan, installMelonPrefMan);
+  context.registerInstaller(ASSEMBLY_ID, 36, testAssembly, installAssembly);
+  context.registerInstaller(`${GAME_ID}-plugin`, 37, testPlugin, (files, workingDir) => installPlugin(context.api, gameSpec, files, workingDir));
+  context.registerInstaller(CUSTOMLEADERS_ID, 38, testCustomLeaders, installCustomLeaders);
+  context.registerInstaller(ASSETS_ID, 39, testAssets, installAssets);
   if (hasCustomMods) {
     context.registerInstaller(CUSTOM_ID, 45, testCustom, installCustom);
   }
@@ -2890,7 +3059,6 @@ function main(context) {
         }
       }
       updating_mod = false; //reset updating flag on deploy
-      //await ensureModpackLoader(api, true);
       bepinexInstalled = isBepinexInstalled(api, spec);
       melonInstalled = isMelonInstalled(api, spec);
       if (hasCustomLoader) {
@@ -2911,8 +3079,8 @@ function main(context) {
       if (hasCustomLoader && customLoaderInstaller && customInstalled) {
         checkCustomInstalled(api, spec); //check if user has run installer and notify if not
       }
-      if (isMelonInstalled(api, spec) && BEPINEX_BUILD === 'il2cpp') {
-        checkDotNetMelon(api); //check for .NET 6 installation
+      if ((isMelonInstalled(api, spec) || isJiangyuInstalled(api, spec)) && BEPINEX_BUILD === 'il2cpp') {
+        checkDotNetMelon(api); //check for .NET 6 installation - Jiangyu requires it as well
       }
       return Promise.resolve();
     });
@@ -2996,18 +3164,26 @@ function isMelonInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === MELON_ID);
 }
 
-// Test if ModKit is installed
-function isModkitInstalled(api, spec) {
-  const state = api.getState();
-  const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === MODKIT_ID);
-}
-
-// Test if ModpackLoader is installed
+// Test if ModpackLoader is installed. It now arrives bundled inside the ModKit rather than as a mod
+// of its own, so the file on disk counts as well as a mod carrying its type.
 function isModpackLoaderInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === MODPACKLOADER_ID);
+  if (Object.keys(mods).some(id => mods[id]?.type === MODPACKLOADER_ID)) {
+    return true;
+  }
+  return statCheckSync(getDiscoveryPath(api), path.join(MELON_MODS_PATH, MODPACKLOADER_FILE));
+}
+
+// Test if Jiangyu Loader is installed. It is normally copied straight into the game folder rather
+// than installed as a mod, so the file on disk counts as well as a mod carrying its type.
+function isJiangyuInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  if (Object.keys(mods).some(id => mods[id]?.type === JIANGYU_ID)) {
+    return true;
+  }
+  return statCheckSync(getDiscoveryPath(api), path.join(JIANGYU_PATH, JIANGYU_FILE));
 }
 
 // Test if Custom Mod Loader is installed
@@ -3281,115 +3457,17 @@ async function downloadMelon(api, gameSpec) {
   }
 } //*/
 
-//* Download MelonLoader Nightly (Nexus)
-async function downloadModpackLoader(api, gameSpec) {
-  let isInstalled = isModpackLoaderInstalled(api, gameSpec);
-  if (!isInstalled) {
-    const MOD_NAME = MODPACKLOADER_NAME;
-    const MOD_TYPE = MODPACKLOADER_ID;
-    const NOTIF_ID = `${MOD_TYPE}-installing`;
-    const PAGE_ID = MODPACKLOADER_PAGE_NO;
-    const FILE_ID = MODPACKLOADER_FILE_NO;  //If using a specific file id because "input" below gives an error
-    const GAME_DOMAIN = MODPACKLOADER_DOMAIN;
-    api.sendNotification({ //notification indicating install process
-      id: NOTIF_ID,
-      message: `Installing ${MOD_NAME}`,
-      type: 'activity',
-      noDismiss: true,
-      allowSuppress: false,
-    });
-    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
-      await api.ext.ensureLoggedIn();
-    }
-    try {
-      let FILE = null;
-      let URL = null;
-      try { //get the mod files information from Nexus
-        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
-        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
-        const file = modFiles
-          .filter(file => file.category_id === 1)
-          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
-          .reverse()[0];
-        if (file === undefined) {
-          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
-        }
-        FILE = file.file_id;
-        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch { // use defined file ID if input is undefined above
-        FILE = FILE_ID;
-        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      }
-      const dlInfo = { //Download the mod
-        game: GAME_DOMAIN,
-        name: MOD_NAME,
-      };
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-      const batched = [
-        actions.setModsEnabled(api, profileId, [modId], true, {
-          allowAutoDeploy: true,
-          installed: true,
-        }),
-        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
-      ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions
-    } catch (err) { //Show the user the download page if the download, install process fails
-      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err, { allowReport: false });
-      util.opn(errPage).catch(() => null);
-    } finally {
-      api.dismissNotification(NOTIF_ID);
-    }
-  }
+// Download the Jiangyu Loader from GitHub. The release is a naked .dll, so this requirement runs in
+// the module's direct-copy mode: the asset is fetched straight to the game's "Mods" folder and is
+// never registered as a Vortex mod.
+async function downloadJiangyu(api, gameSpec, check = true) {
+  return download(api, JIANGYU_REQUIREMENTS, !check);
 } //*/
 
-//* Download Menace Modkit (GitHub)
-async function downloadModkit(api, gameSpec) {
-  let isInstalled = isModkitInstalled(api, gameSpec);
-  if (!isInstalled) {
-    const MOD_NAME = MODKIT_NAME;
-    const MOD_TYPE = MODKIT_ID;
-    const NOTIF_ID = `${MOD_TYPE}-installing`;
-    const GAME_DOMAIN = gameSpec.game.id;
-    api.sendNotification({ //notification indicating install process
-      id: NOTIF_ID,
-      message: `Installing ${MOD_NAME}`,
-      type: 'activity',
-      noDismiss: true,
-      allowSuppress: false,
-    });
-    try {
-      const URL = MODKIT_URL;
-      const dlInfo = { //Download the mod
-        game: GAME_DOMAIN,
-        name: MOD_NAME,
-      };
-      //const dlInfo = {};
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-      const batched = [
-        actions.setModsEnabled(api, profileId, [modId], true, {
-          allowAutoDeploy: true,
-          installed: true,
-        }),
-        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
-      ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions
-    } catch (err) { //Show the user the download page if the download, install process fails
-      const errPage = MODKIT_URL_ERR;
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err, { allowReport: false });
-      util.opn(errPage).catch(() => null);
-    } finally {
-      api.dismissNotification(NOTIF_ID);
-    }
-  }
+// Download the Menace ModKit from GitHub. Only the toolbar action calls this - the ModKit is an
+// authoring tool, not something a player needs to run mods.
+async function downloadModkit(api, gameSpec, check = true) {
+  return download(api, MODKIT_REQUIREMENTS, !check);
 } //*/
 
 //* Function to auto-download Custom Mod Loader from Nexus Mods

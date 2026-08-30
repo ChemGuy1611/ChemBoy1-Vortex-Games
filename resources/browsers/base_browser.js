@@ -44,9 +44,13 @@
 //   identify(config, st, ref) partial reference -> Promise of a full reference (default: as given)
 //   routeUrl(ctx, url, nav)   inspect a URL the page is about to open; true means "handled"
 //   displayName(res, key)     what the mod list and notifications call the mod (default: the key)
+//   archiveName(res, key)     file name Vortex should save the archive under. Only needed by a
+//                             source whose download URL carries no file name of its own
 //   extraAttributes(c, res)   [[attributeName, value], ...] stamped on top of the standard set
 //   dependencies              true when the source publishes a dependency graph
-//   fetchStrategy             'capture' (default) or 'click' - see requestDownload below
+//   fetchStrategy             'capture' (default) or 'click' - see requestDownload below.
+//                             A 'click' source also gets its failed downloads taken over, because
+//                             the site's own button reaches Vortex before this module does.
 //   fetchToFile(config, url)  required by 'click': resolve a download URL to a local file path
 //   unresolvedMessage         error text when a reference cannot be resolved
 //   installedInfo(c, mod, a)  what is recorded about an installed mod, for the update check
@@ -120,6 +124,9 @@ function pageState(pageId) {
       // Whether the user has passed the external-content confirmation. Remembered for the
       // session so switching pages does not re-ask, forgotten on restart.
       confirmed: false,
+      // Downloads already being taken over after the download manager failed on them, so a
+      // second state change for the same id does not start a second install.
+      recovering: new Set(),
       // Whatever the adapter needs to remember for this page, e.g. recently visited mods.
       adapterState: {},
     };
@@ -215,6 +222,19 @@ function displayName(adapter, resolved, key) {
   return adapter.displayName(resolved, key) || key;
 }
 
+//The file name Vortex should save the archive under. Vortex names a download from the server's
+//Content-Disposition header or, failing that, the last path segment of the download URL. A source
+//whose URL ends in a slash or an opaque id and whose server sends no such header leaves it with
+//neither, and the placeholder name the file downloads under becomes the mod's staging folder name.
+//An adapter that knows what its source serves supplies that name here; a name the server does send
+//still takes priority over it.
+function archiveNameFor(adapter, resolved, key) {
+  if (adapter.archiveName === undefined) {
+    return undefined;
+  }
+  return adapter.archiveName(resolved, key) || undefined;
+}
+
 // --- installed detection --------------------------------------------------
 
 //The adopter's requirement entry for a key, if it manages that mod itself
@@ -269,6 +289,36 @@ function stampMod(adapter, api, gameSpec, config, modId, resolved, previousModId
   util.batchDispatch(api.store, batched);
 }
 
+// --- fetching a source Vortex cannot download itself -----------------------
+
+// Most sources hand their download URL to Vortex's download manager, which fetches it in the
+// main process. A few cannot be fetched that way at all - the site's bot protection rejects the
+// main process outright, or the URL is single-use and dies on the hand-off. Those declare
+// fetchStrategy: 'click' and a fetchToFile, which fetches the bytes in the renderer, where fetch
+// uses the real Chromium network stack, and returns a local path.
+
+function usesClickFetch(adapter) {
+  return (adapter.fetchStrategy === 'click') && (adapter.fetchToFile !== undefined);
+}
+
+// The fetched file is handed to Vortex as an imported download, so everything downstream - the
+// install, the mod entry, the attributes - is the normal pipeline. 'import-downloads' MOVES the
+// file into the download folder, so there is nothing left in temp to clean up afterwards.
+// It also calls back with (dlIds) and no error argument, unlike every other event here, so it
+// cannot go through util.toPromise - that would read the id array as the error and reject.
+async function importFetchedFile(adapter, api, config, url) {
+  const filePath = await adapter.fetchToFile(config, url);
+  if ((filePath === null) || (filePath === undefined)) {
+    throw new util.ProcessCanceled(`Could not fetch ${url}`);
+  }
+  return new Promise((resolve, reject) => {
+    api.events.emit('import-downloads', [filePath], (dlIds) => {
+      const dlId = dlIds?.[0];
+      return (dlId === undefined) ? reject(new util.NotFound(filePath)) : resolve(dlId);
+    });
+  });
+}
+
 // --- install --------------------------------------------------------------
 
 //Download and install one mod. Managed requirements are handed to the adopter's requirement
@@ -297,6 +347,7 @@ async function installRef(adapter, api, gameSpec, config, ref, options = {}) {
     return undefined;
   }
   const name = displayName(adapter, resolved, key);
+  const archive = archiveNameFor(adapter, resolved, key);
   const previousModIds = keyModIds(adapter, api, gameId, config, key);
   const NOTIF_ID = `${pageId}-installing-${key}`;
   const { selfStartedUrls } = pageState(pageId);
@@ -309,9 +360,14 @@ async function installRef(adapter, api, gameSpec, config, ref, options = {}) {
     allowSuppress: false,
   });
   try {
-    const dlId = await util.toPromise(cb =>
-      api.events.emit('start-download', [resolved.downloadUrl], { game: gameId, name },
-        undefined, cb, undefined, { allowInstall: false }));
+    const dlId = usesClickFetch(adapter) //a source the download manager cannot fetch for us
+      ? await importFetchedFile(adapter, api, config, resolved.downloadUrl)
+      : await util.toPromise(cb =>
+        api.events.emit('start-download', [resolved.downloadUrl], { game: gameId, name },
+          //'replace' goes with a supplied name and nothing else: naming a download makes Vortex
+          //check the download folder first and report an archive already sitting there back as a
+          //failure. Without a name that check never runs, so the call stays as it was.
+          archive, cb, (archive !== undefined) ? 'replace' : undefined, { allowInstall: false }));
     const modId = await util.toPromise(cb =>
       api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
     stampMod(adapter, api, gameSpec, config, modId, resolved, previousModIds);
@@ -470,6 +526,48 @@ function claimDownload(adapter, api, gameSpec, config, dlId, dlState) {
   });
   if (!autoInstall) {
     api.events.emit('start-install-download', dlId, { allowAutoEnable: false });
+  }
+}
+
+// A click source's downloads are started by Vortex before this module ever sees them: the site's
+// own button hands the URL to Chromium, Chromium hands it to Vortex's download manager, and the
+// download manager is the one client the host refuses. The download therefore fails - and a failed
+// download emits no did-finish-download at all, because that event only ever fires with 'finished'
+// (Vortex emits it from finalizeDownload, which runs on success). So the failure is watched for in
+// the download state instead, and the transfer is redone the only way that works for this source:
+// fetched here, in the renderer, exactly as installRef would have done for a click-through.
+async function recoverFailedDownload(adapter, api, gameSpec, config, dlId, download) {
+  const gameId = gameSpec.game.id;
+  const games = Array.isArray(download.game) ? download.game : [download.game];
+  if (!games.includes(gameId)) {
+    return;
+  }
+  const partial = adapter.parseClaim(download);
+  if ((partial === null) || (partial === undefined)) {
+    return; //a failed download from somewhere else entirely
+  }
+  const pstate = pageState(browserPageId(adapter, gameSpec, config));
+  if (pstate.recovering.has(dlId)) {
+    return;
+  }
+  pstate.recovering.add(dlId);
+  try {
+    const ref = await identifyClaim(adapter, config, pstate, partial);
+    if ((ref === null) || (ref === undefined)) {
+      log('warn', `A failed ${adapter.label} download could not be identified - leaving it alone`,
+        { dlId, claim: partial });
+      return;
+    }
+    log('info', `taking over a ${adapter.label} download the download manager could not fetch`,
+      { dlId, item: adapter.refKey(ref) });
+    // The failed entry is removed first: the install that follows produces its own download, and
+    // leaving the failure behind would show the user two rows for one click.
+    await util.toPromise(cb => api.events.emit('remove-download', dlId, cb))
+      .catch(err => log('warn', `Could not remove the failed ${adapter.label} download: ${err}`));
+    // force, because the user clicked download on a mod they may already have
+    await installRef(adapter, api, gameSpec, config, ref, { force: true });
+  } finally {
+    pstate.recovering.delete(dlId);
   }
 }
 
@@ -641,11 +739,12 @@ function makeBrowsePage(adapter, gameSpec, config) {
     // A 'click' source - one whose bytes Vortex's download manager cannot fetch itself - hands
     // the URL to the adapter, which fetches it in the renderer and imports the result.
     const requestDownload = React.useCallback((url, navigated) => {
-      if ((adapter.fetchStrategy === 'click') && (adapter.fetchToFile !== undefined)) {
-        Promise.resolve(adapter.fetchToFile(config, url))
-          .then(filePath => ((filePath !== undefined)
-            ? util.toPromise(cb => api.events.emit('import-downloads', [filePath], cb))
-            : undefined))
+      if (usesClickFetch(adapter)) {
+        //An imported download carries no source URL, so the claim handler will never see it -
+        //this drives the install itself. An adapter that wants the mod stamped routes the click
+        //through ctx.install(ref) instead, which is installRef and does the whole job.
+        importFetchedFile(adapter, api, config, url)
+          .then(dlId => api.events.emit('start-install-download', dlId, { allowAutoEnable: false }))
           .catch(err => log('warn', `Failed to fetch a ${adapter.label} download: ${err}`));
         return;
       }
@@ -842,6 +941,20 @@ function onceBrowser(adapter, api, gameSpec, config) {
     return checkModUpdates(adapter, api, gameSpec, config)
       .catch(err => log('warn', `Failed to check for ${adapter.label} mod updates: ${err}`));
   });
+  // A click source's downloads reach this module as failures rather than as finished downloads,
+  // and there is no event for a failed one - see recoverFailedDownload. onStateChange is optional
+  // on IExtensionApi, so an older host simply does not get the recovery.
+  if (usesClickFetch(adapter) && (typeof api.onStateChange === 'function')) {
+    api.onStateChange(['persistent', 'downloads', 'files'], (previous, current) => {
+      for (const dlId of Object.keys(current || {})) {
+        if ((current[dlId]?.state !== 'failed') || (previous?.[dlId]?.state === 'failed')) {
+          continue; //only the transition into failure, and only once
+        }
+        recoverFailedDownload(adapter, api, gameSpec, config, dlId, current[dlId])
+          .catch(err => log('warn', `Failed to take over a ${adapter.label} download: ${err}`));
+      }
+    });
+  }
 }
 
 // --- module factory -------------------------------------------------------

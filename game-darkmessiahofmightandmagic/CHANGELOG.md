@@ -4,6 +4,10 @@
 
 - None
 
+## [0.5.0] - 2026-08-29
+
+- Added: A page to browse mods on ModDB and install them without leaving Vortex
+
 ## [0.4.2] - 2026-08-05
 
 - Added: Checking for updates now installs a missing requirement instead of reporting an update for something that is not installed

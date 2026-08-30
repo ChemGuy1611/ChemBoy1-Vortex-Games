@@ -2,8 +2,8 @@
 Name: Doom I & II (UZDoom) Vortex Extension
 Structure: Mod Loader (Any Folder)
 Author: ChemBoy1
-Version: 0.3.3
-Date: 2026-08-22
+Version: 0.4.0
+Date: 2026-08-29
 ///////////////////////////////////////*/
 /*
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣠⣤⣤⣤⡴⣦⡴⣖⠶⣴⠶⡶⣖⡶⣶⢶⣲⡾⠿⢿⡷⣾⢿⣷⣦⢾⣷⣾⣶⣤⣀⣰⣤⣀⡀⠀⠀⢀⣴⣿⡿⡿⣿⣿⣦⣄⠀⠀⣠⣴⣿⡿⢿⡿⣷⣦⡄⠀⠀⢀⣀⣤⣦⣀⣤⣶⣶⣷⣦⣴⡿⢿⡷⣿⠿⡿⣿⣷⢶⣦⢴⡲⣦⢶⡶⢶⡲⣖⡶⣦⣤⣤⣤⣤⣤⣤⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -39,7 +39,7 @@ Date: 2026-08-22
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const { download, findModByFile, findDownloadIdByFile, resolveVersionByPattern, testRequirementVersion } = require('./downloader');
+const { download, findModByFile, findDownloadIdByFile, resolveVersionByModVersion, resolveVersionByPattern, testRequirementVersion } = require('./downloader');
 
 //Specify all the information about the game
 const GAME_ID = "gzdoom";
@@ -119,9 +119,9 @@ const REQUIREMENTS = [
     userFacingName: UZDOOM_NAME,
     githubUrl: UZDOOM_URL_API,
     findMod: (api) => findModByFile(api, UZDOOM_ID, UZDOOM_EXEC),
+    fileArchivePattern: new RegExp(/^Windows-UZDoom-Release-x86_64/, 'i'),
     findDownloadId: (api) => findDownloadIdByFile(api, UZDOOM_ARC_NAME),
-    fileArchivePattern: new RegExp(/^Windows-UZDoom-(\d+\.\d+\.\d+)/, 'i'),
-    resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[0]),
+    resolveVersion: (api) => resolveVersionByModVersion(api, REQUIREMENTS[0]), //reads the version stamped on the installed mod at install time; use when the version is only in the release tag (asset filename is versionless) and fileArchivePattern has no capture group
   }, //*/
   { //DML
     archiveFileName: DML_ARC_NAME,
@@ -494,7 +494,7 @@ async function testZipContent(files, gameId) {
 //Install zips
 async function installZipContent(files, destinationPath) {
   const zipFiles = files.filter(file => ['.zip', '.7z', '.rar'].includes(path.extname(file)));
-  if (zipFiles.length > 0) { // If it's a double zip, we don't need to repack. 
+  if (zipFiles.length > 0) { // If it's a double zip, we don't need to repack.
     const instructions = zipFiles.map(file => {
       return {
         type: 'copy',
@@ -712,7 +712,7 @@ async function downloadUzDoomManual(api, gameSpec) {
             util.batchDispatch(api.store, batched); // Will dispatch both actions.
             return resolve();
           });
-        }, 
+        },
         'never',
         { allowInstall: false },
       );
@@ -780,7 +780,7 @@ async function downloadDMLManual(api, gameSpec) {
             util.batchDispatch(api.store, batched); // Will dispatch both actions.
             return resolve();
           });
-        }, 
+        },
         'never',
         { allowInstall: false },
       );
@@ -809,7 +809,7 @@ async function resolveGameVersion(gamePath) {
     const exeVersion = require('exe-version');
     const EXECUTABLE = path.join(gamePath, UZDOOM_EXEC_PATH);
     version = exeVersion.getProductVersion(EXECUTABLE);
-    return Promise.resolve(version); 
+    return Promise.resolve(version);
   } catch (err) {
     log('error', `Could not read UZDoom executable file to get version: ${err}`);
     return Promise.resolve(version);

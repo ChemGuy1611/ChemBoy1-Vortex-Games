@@ -149,6 +149,33 @@ contract. See `VORTEX_EVENT_BUS.md` for the typed-events layer.
 - `nxm://` resolution can yield a **time-limited** URL — a long-paused nxm download may need
   re-resolution.
 
+## A failed download fires no event
+
+`did-finish-download` is emitted in exactly one place — `finalizeDownload`, after the md5 hash is
+taken — so its `state` argument is always `"finished"`. There is no `did-fail-download`, and the
+failure path dispatches `finishDownload(id, "failed", cause)` to the store without emitting
+anything.
+
+An extension that has to react to a failed download therefore watches the state instead:
+
+```js
+api.onStateChange(['persistent', 'downloads', 'files'], (previous, current) => {
+  for (const dlId of Object.keys(current || {})) {
+    if ((current[dlId]?.state === 'failed') && (previous?.[dlId]?.state !== 'failed')) {
+      // ... only the transition into failure, and only once
+    }
+  }
+});
+```
+
+`onStateChange` is optional on `IExtensionApi`, so guard on it being a function.
+
+To clear the failed entry afterwards, emit `remove-download` (`(downloadId, callback?)`) rather
+than dispatching the action directly — it removes the record and any partial file with it.
+
+This is what `base_browser.js` uses to take over a download for a source whose bytes the
+main-process download manager cannot fetch; see `BROWSER_MODULES.md` and `MODDB_API.md`.
+
 ## See also
 
 Runtime siblings: `VORTEX_NEXUS_INTEGRATION.md` (nxm + Nexus URLs), `VORTEX_MOD_INSTALL.md` (what
@@ -159,3 +186,5 @@ kicks off), `VORTEX_EVENT_BUS.md`. Overview: `VORTEX_APP.md`. **Not**
 here).
 `GITHUB_API.md` (GitHub's `302` to a short-lived signed storage URL and its `accept-ranges: bytes`
 support - what the chunked/resumable path is relying on when a requirement is downloaded).
+`SIMPLE_MOD_FRAMEWORK.md` (a download started with `allowInstall: false` and deliberately never
+installed).

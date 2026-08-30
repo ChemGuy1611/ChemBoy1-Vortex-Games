@@ -410,3 +410,5 @@ To restore a file the extension deliberately deleted, delete it **and leave it o
 `UNDERUSED_API_FUNCTIONS.md` (`registerAPI` / `api.ext` inter-extension calls in general).
 `ERROR_CLASSES.md` (`util.ProcessCanceled` and `util.UserCanceled`, which the delegates raise on
 cancel).
+`STEAMCHARTS_API.md` (concurrent-player history for the same appid this extension verifies files
+for — an unauthenticated third-party source, no SteamKit session involved).

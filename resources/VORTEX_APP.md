@@ -242,7 +242,8 @@ Notifications are session-state entries deduped by `id` (re-send updates in plac
 ## Testing
 
 - **Unit/integration:** vitest, colocated `*.test.ts`. Run a single file with `pnpm run test -- <path>`. Extension tests that import `vortex-api` need a local `vitest.config.ts` alias to `__mocks__/vortex-api.ts`, mocking only the used exports (see `AGENTS-TESTING.md`).
-- **E2E:** Playwright via `@vortex/e2e` (`pnpm run e2e`). `VORTEX_E2E=1` plus `ELECTRON_USERDATA`/`ELECTRON_APPDATA` isolate each worker's data. Setup conventions in `Vortex/AGENTS-TESTING.md` and the playwright README.
+- **E2E:** Playwright via `@vortex/e2e` (`pnpm run e2e`). `VORTEX_E2E=1` plus `ELECTRON_USERDATA`/`ELECTRON_APPDATA` isolate each **test's** data — the fixture launches one Electron process per test, not per worker. Not a PR gate: `e2e.yml` only triggers on PRs that touch `packages/e2e/**`, so UI changes have to be run locally.
+- **What a PR ships:** a test for the change at the lowest layer that can observe it, run before submitting. Both layers, their fixtures, and the Playwright rules are in `VORTEX_TESTING.md` (`AGENTS-TESTING.md` covers only the vitest half, and `packages/e2e/README.md` is stale in several places).
 
 ## Release & branching
 
@@ -265,7 +266,7 @@ Notifications are session-state entries deduped by `id` (re-send updates in plac
 | --- | --- |
 | `AGENTS.md` | Entry: use `pnpm run`; run build/test/lint/format after changes |
 | `AGENTS-DIRECTORIES.md` | Navigation map (note stale Packages section) |
-| `AGENTS-TESTING.md` | vitest + mock-alias conventions |
+| `AGENTS-TESTING.md` | vitest + mock-alias conventions (says nothing about the E2E suite) |
 | `AGENTS-DEBUGGING.md` | F5 debug both processes; `VORTEX_TRACE_DB_WRITES` |
 | `AGENTS-COLLECTIONS.md` | Phased install (note stale `src/extensions/...` path) |
 | `CONTRIBUTE.md` / `CODESTYLE.md` | Setup + code standards |
@@ -277,6 +278,7 @@ install, update, load-order, deployment, discovery/activation, profile-switch, a
 flows).
 
 Contributing to the app itself: `VORTEX_DEV_BUILD.md` (build from source) ·
+`VORTEX_TESTING.md` (vitest and Playwright layers, and what a pull request has to ship) ·
 `VORTEX_CODESTYLE.md` (conventions and their enforcement) · `VORTEX_AGENT_GUIDES.md` (the repo's own
 `AGENTS*.md` instruction set and packaged skills) · `VORTEX_DATABASES.md` (what these persistence
 layers actually write to disk, and how to read it back without the app).

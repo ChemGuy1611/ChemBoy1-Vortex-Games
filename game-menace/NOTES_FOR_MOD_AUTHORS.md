@@ -11,6 +11,8 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | MelonLoader (mod loader) | a `MelonLoader.dll` file | the game folder itself (no subfolder) |
 | BepInEx (mod loader) | a `BepInEx.Core.dll` file | the game folder itself (no subfolder) |
 | Modkit | a file or folder named `Menace.Modkit.App.exe` | the game folder itself (no subfolder) |
+| Jiangyu Loader | a `Jiangyu.Loader.dll` file | `Mods` |
+| Jiangyu Mods | a `jiangyu.json` file | `Mods` |
 | Modpackloader | a file or folder named `Menace.ModpackLoader.dll` and a file or folder named `UserLibs` | the game folder itself (no subfolder) |
 | Modpackmod | a file or folder named `modpack.json` | `Mods` |
 | Root / Game Folder Mods | a `Menace_Data` folder | the game folder itself (no subfolder) |
@@ -59,6 +61,45 @@ Installs to: the game folder itself (no subfolder)
 Recognised when the archive contains a file or folder named `Menace.Modkit.App.exe`.
 
 Installs to: the game folder itself (no subfolder)
+
+## Jiangyu Loader
+
+This installer handles the Jiangyu loader itself, not mods for it. It exists so users can install the Jiangyu loader through Vortex, and mod authors normally never package this.
+
+**Requirements:**
+
+- Recognised by a file named `Jiangyu.Loader.dll` in the archive.
+- Vortex downloads and installs the loader on its own, so this installer only comes into play for a copy the user downloaded by hand from a mod page.
+
+Installs to: `Mods`
+
+**Common mistakes:**
+
+- If you bundle the Jiangyu loader inside your mod archive, Vortex treats the whole download as the Jiangyu loader rather than as your mod. Ship the mod alone and list the Jiangyu loader as a requirement.
+
+## Jiangyu Mods
+
+A Jiangyu mod is a folder with a `jiangyu.json` manifest at its root, exactly as `jiangyu package` produces it. Ship that folder inside the archive, or the manifest and its files at the top level - both are handled.
+
+```text
+MyMod.zip
+└── MyMod
+    ├── jiangyu.json
+    ├── assets
+    ├── compiled
+    └── templates
+```
+
+**Requirements:**
+
+- Recognised by any file named `jiangyu.json`.
+
+Installs to: `Mods`
+
+**Common mistakes:**
+
+- The `name` in `jiangyu.json` decides the folder your mod is installed into, and is what other mods list in `depends`. Keep it stable between releases - changing it makes existing dependencies stop resolving.
+- Vortex adds a numbered prefix to that folder so the load order page can reorder your mod. Do not rely on the folder name in any path inside your mod.
 
 ## Modpackloader
 

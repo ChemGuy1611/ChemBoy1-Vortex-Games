@@ -76,12 +76,33 @@ function installFoo(files) {
 - Return type is `IInstallResult = { instructions: IInstruction[] }`.
 - Always filter out directory entries before building copy instructions.
 
+### `destinationPath` is the extracted archive
+
+The second parameter is frequently mistaken for the archive file name. It is not: Vortex extracts
+the archive before any installer runs and passes the extraction directory, `<staging>/<modId>.installing`.
+Source: `InstallManager.ts`, which calls `installer.install(fileList, tempPath, gameId, progress)`.
+
+That makes the archive's *contents* readable inside `install`, not only its file names. Anything that
+needs to look inside a file to decide what to install — a bundled manifest, a config, an embedded
+version string, an image to show the user — can read it with `path.join(destinationPath, relativePath)`.
+Vortex's own FOMOD wizard works this way, rendering option images with
+`pathToFileURL(path.join(dataPath, image)).href`.
+
+Two rules when reading from it:
+
+- Only paths that appear in `files` are guaranteed to exist. Wrap the read and fall back to whatever
+  the installer would have done without the file; never fail an install because an optional
+  side-file is missing or malformed.
+- The directory is deleted once the install finishes, so nothing may hold a reference past the
+  returned promise. Copy anything that must outlive the install into staging with a `copy` instruction.
+
 ### Passing `api` into an installer
 
 `install` does not receive `api` directly. Inject it via a closure at registration time:
 
 ```js
-context.registerInstaller(MOD_ID, 35, testMod, (files, fileName) => installMod(context.api, files, fileName));
+context.registerInstaller(MOD_ID, 35, testMod, (files, destinationPath) =>
+  installMod(context.api, files, destinationPath));
 ```
 
 ---
@@ -460,3 +481,6 @@ templates; the per-template files under `templates/` give each template's actual
 `VORTEX_MOD_INSTALL.md` (runtime InstallManager orchestration, and where the `files` list passed
 to `testSupported`/`install` is built). `ARCHIVE_HANDLER.md` (`registerArchiveType`, which serves
 `api.openArchive` and does **not** feed the installer `files` list).
+
+`HELLDIVERS2_MOD_MANIFEST.md` (a worked example of an installer reading a manifest and its
+artwork out of the extraction directory to build an option picker).

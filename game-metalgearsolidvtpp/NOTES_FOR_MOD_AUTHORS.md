@@ -11,7 +11,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Loader | a file or folder named `SnakeBite Installer.exe` | - |
 | Mgsvfix | a file or folder named one of: `mgsvfix.asi` | - |
 | Root / Game Folder Mods | a `master` folder | the game folder itself (no subfolder) |
-| Mod | a file with one of these extensions: `.mgsv` | `SnakeBite_Mods` |
+| Mod | a file with one of these extensions: `.mgsv` or `.MGSVPreset` | `SnakeBite_Mods` |
 
 Paths are relative to the game's install folder.
 
@@ -45,7 +45,7 @@ Installs to: the game folder itself (no subfolder)
 
 ## Mod
 
-Recognised when the archive contains a file with one of these extensions: `.mgsv`.
+Recognised when the archive contains a file with one of these extensions: `.mgsv` or `.MGSVPreset`.
 
 Installs to: `SnakeBite_Mods`
 

@@ -30,14 +30,21 @@ MyArmourMod.zip
     - The ".gpu_resources" and ".stream" sidecar files are optional. Ship whichever ones your mod actually needs; some archives have them and some do not.
     - Always number your files from "patch_0". Vortex renumbers them at deploy time so that every mod editing the same archive gets a unique, gap-free number, in the order the user sets on the Mod Priority page. Your own numbering only decides the order of your own files within one archive.
     - A mod may ship patch files for several archives at once, and several files for one archive ("x.patch_0" and "x.patch_1"). Both are handled.
-    - To offer variants, put each complete set of patch files in its own folder. Vortex asks the user which folder to install. Name the folders after what they contain, because those names are what the user picks from.
-    - Documentation files at the top level of the archive are installed alongside the patch files and are left untouched.
+    - To offer variants without a manifest, put each complete set of patch files in its own folder. Vortex asks the user which folder to install - once for the whole mod, not once per file. Name the folders after what they contain, because those names are what the user picks from.
+    - A "manifest.json" at the top level of the archive is read and preferred over the folder layout, so your options get real names, descriptions, thumbnails and categories. All three community versions are supported: the legacy format (no "Version" property, "Options" is a list of folder names and exactly one is installed), version 1 ("Options" are objects with "Name", "Description", "Image", "Include" and "SubOptions") and version 2 (version 1 plus "Guid", "CategoryRef" and "Categories").
+    - In a version 1 or 2 manifest the user may enable any number of options, and each enabled option installs exactly one of its "SubOptions". A folder named in "Include" must hold the patch files directly - subfolders of it are not searched.
+    - If a manifest cannot be read, or none of its options resolve to folders that exist in the archive, Vortex logs the problem and falls back to the folder layout. A bad manifest never stops the mod from installing.
+    - When two enabled options both change the same archive, Vortex numbers their files into one contiguous sequence for that archive. This is expected, not a conflict.
+    - Documentation files at the top level of the archive are installed alongside the patch files and are left untouched. "manifest.json" itself and any images it points at are not installed - they are only used for the option picker.
 
   Common mistakes:
     - Numbering files "patch_1" or higher to "load later" - the number in your archive is not the number the game sees. Priority is set by the user in Vortex, not by the file name.
     - Renaming a patch file to a hash the installed game does not have. The game silently ignores a patch for an archive it does not know, so the mod appears to do nothing. Vortex warns about this at install time.
     - Putting a readme inside each variant folder - only files at the top level of the archive are installed alongside the patch files, so keep shared documentation at the root.
     - Leaving out a ".patch_0" file but shipping its ".gpu_resources" or ".stream" sidecar. A sidecar is only ever installed next to the patch file it belongs to.
+    - Nesting patch files one level below the folder you list in "Include". That folder is read without recursion, so a mod built that way installs nothing.
+    - Hand-numbering files across option folders to control which option wins. Numbers are reassigned per archive in option order; only the order of your files inside a single folder is preserved.
+    - Expecting "NexusData" in a manifest to point Vortex at the right Nexus Mods mod page. Vortex tracks that identity itself and ignores the field.
 
 ========================================================================
 

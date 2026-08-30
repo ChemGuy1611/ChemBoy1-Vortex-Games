@@ -295,3 +295,7 @@ reversibility is the argument for reproducing the patch).
 `FILE_PARSING.md` (`xml2js` `parseStringPromise` and `Builder`, used for both `Config.xml` and
 `Params.xml`).
 `RUN_EXECUTABLE.md` (`api.runExecutable`, for launching the bundled installer as a tool).
+`BEPINEX.md` (the other UnityDoorstop consumer - the reason `winhttp.dll` plus
+`doorstop_config.ini` does not identify a loader, and `target_assembly` has to be read).
+`MELONLOADER.md` (the third general-purpose Unity loader, proxy-DLL based rather than
+Doorstop-based).

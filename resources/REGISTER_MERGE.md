@@ -117,3 +117,6 @@ context.registerMerge(test, merge, '');  // '' = default mod type
 `VORTEX_DEPLOYMENT.md` (where merge runs in the deploy pipeline, relative to file activation).
 `DEPLOYMENT_MANIFEST.md` (`baseFiles`'s `deployedFiles` argument comes from the same manifest
 `util.getManifest` reads).
+
+`HELLDIVERS2_MOD_MANIFEST.md` (the install-time option selection that decides which files reach
+that game's merge).

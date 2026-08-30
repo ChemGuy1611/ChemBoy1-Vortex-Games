@@ -13,6 +13,8 @@ This extension adds MENACE modding support to Vortex Mod Manager.
 [*]Installs MelonLoader itself to the game folder itself (no subfolder), recognised by a "MelonLoader.dll" file.[/*]
 [*]Installs BepInEx itself to the game folder itself (no subfolder), recognised by a "BepInEx.Core.dll" file.[/*]
 [*]Installs mods with a file or folder named "Menace.Modkit.App.exe" to the game folder itself (no subfolder).[/*]
+[*]Installs Jiangyu Loader itself to the "Mods" folder, recognised by a "Jiangyu.Loader.dll" file.[/*]
+[*]Installs mods with a "jiangyu.json" file to the "Mods" folder.[/*]
 [*]Installs mods with a file or folder named "Menace.ModpackLoader.dll" and a file or folder named "UserLibs" to the game folder itself (no subfolder).[/*]
 [*]Installs mods with a file or folder named "modpack.json" to the "Mods" folder.[/*]
 [*]Installs mods with a "Menace_Data" folder to the game folder itself (no subfolder).[/*]

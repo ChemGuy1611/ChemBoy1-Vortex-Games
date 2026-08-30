@@ -1516,6 +1516,10 @@ class BumpTypeDialog(QDialog):
 
         self._manual.toggled.connect(self._version_edit.setEnabled)
 
+        self._open_changelog_cb = QCheckBox("--open-changelog (open CHANGELOG.md after bump)")
+        self._open_changelog_cb.setChecked(True)
+        layout.addWidget(self._open_changelog_cb)
+
         self._dry_run_cb = QCheckBox("--dry-run (dry run, no writes)")
         layout.addWidget(self._dry_run_cb)
 
@@ -1545,6 +1549,8 @@ class BumpTypeDialog(QDialog):
             args = ["--patch"]
         else:
             args = ["--version", self._version_edit.text().strip()]
+        if self._open_changelog_cb.isChecked():
+            args.append("--open-changelog")
         if self._dry_run_cb.isChecked():
             args.append("--dry-run")
         return args
@@ -1609,6 +1615,7 @@ ACTION_DEFS = [
     ("Setup Test Folder",   "_on_setup_test",        False, False),
     ("Patch",               "_on_patch",             False, False),
     ("Categorize",          "_on_categorize",        False, False),
+    ("Generate Description", "_on_generate_description", False, False),
     ("Analyze Log",         "_on_analyze_log",       True,  True),
     ("Audit Scripts",       "_on_audit_scripts",     False, True),
     ("Fetch Icon",          "_on_fetch_icon",        True,  False),
@@ -2319,6 +2326,18 @@ class MainWindow(QMainWindow):
         ids = self._selected_ids()
         self._run([[PYTHON, os.path.join(REPO_ROOT, "categorize_games.py")] + dlg.extra_args() + ids],
                   "categorize_games.py")
+
+    def _on_generate_description(self):
+        """Refresh DESCRIPTION.bbcode.txt, the Nexus mod page description, for the
+        selected games. An existing page keeps everything the author wrote -- only its
+        install-notes list is rewritten; a game with no page yet gets a scaffold."""
+        if not self._require_selection():
+            return
+        ids = self._selected_ids()
+        self._run(
+            [[NODE, os.path.join(REPO_ROOT, "generate_notes.js"), "--description"] + ids],
+            "generate_notes.js --description",
+        )
 
     def _on_audit_scripts(self):
         self._run([[PYTHON, os.path.join(REPO_ROOT, "audit_scripts.py")]], "audit_scripts.py")

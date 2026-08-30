@@ -283,6 +283,45 @@ function matchBlock({ title, lead, files, exts, folders, installsTo, tree, pitfa
 
 const PROSE = [
   {
+    fn: 'testJiangyu', game: 'game-menace',
+    build: (v) => v.JIANGYU_FILE ? toolBlock({
+      title: 'Jiangyu Loader',
+      tool: 'the Jiangyu loader',
+      marker: v.JIANGYU_FILE,
+      installsTo: v.JIANGYU_PATH,
+      extra: [
+        'Vortex downloads and installs the loader on its own, so this installer only comes into ' +
+          'play for a copy the user downloaded by hand from a mod page.',
+      ],
+    }) : null,
+  },
+  {
+    fn: 'testJiangyuMod', game: 'game-menace',
+    build: (v) => matchBlock({
+      title: 'Jiangyu Mods',
+      files: v.JIANGYUMOD_FILE ? [v.JIANGYUMOD_FILE] : [],
+      installsTo: v.JIANGYUMOD_PATH,
+      lead: 'A Jiangyu mod is a folder with a `jiangyu.json` manifest at its root, exactly as ' +
+            '`jiangyu package` produces it. Ship that folder inside the archive, or the manifest ' +
+            'and its files at the top level - both are handled.',
+      tree: [
+        'MyMod.zip',
+        '└── MyMod',
+        '    ├── jiangyu.json',
+        '    ├── assets',
+        '    ├── compiled',
+        '    └── templates',
+      ].join('\n'),
+      pitfalls: [
+        'The `name` in `jiangyu.json` decides the folder your mod is installed into, and is what ' +
+          'other mods list in `depends`. Keep it stable between releases - changing it makes ' +
+          'existing dependencies stop resolving.',
+        'Vortex adds a numbered prefix to that folder so the load order page can reorder your ' +
+          'mod. Do not rely on the folder name in any path inside your mod.',
+      ],
+    }),
+  },
+  {
     fn: 'testPatch', game: 'game-helldivers2',
     build: () => ({
       title: 'Patch Mods (.patch_0)',
@@ -308,11 +347,27 @@ const PROSE = [
           'own files within one archive.',
         'A mod may ship patch files for several archives at once, and several files for one ' +
           'archive (`x.patch_0` and `x.patch_1`). Both are handled.',
-        'To offer variants, put each complete set of patch files in its own folder. Vortex asks ' +
-          'the user which folder to install. Name the folders after what they contain, because ' +
-          'those names are what the user picks from.',
+        'To offer variants without a manifest, put each complete set of patch files in its own ' +
+          'folder. Vortex asks the user which folder to install - once for the whole mod, not ' +
+          'once per file. Name the folders after what they contain, because those names are what ' +
+          'the user picks from.',
+        'A `manifest.json` at the top level of the archive is read and preferred over the folder ' +
+          'layout, so your options get real names, descriptions, thumbnails and categories. All ' +
+          'three community versions are supported: the legacy format (no `Version` property, ' +
+          '`Options` is a list of folder names and exactly one is installed), version 1 ' +
+          '(`Options` are objects with `Name`, `Description`, `Image`, `Include` and ' +
+          '`SubOptions`) and version 2 (version 1 plus `Guid`, `CategoryRef` and `Categories`).',
+        'In a version 1 or 2 manifest the user may enable any number of options, and each ' +
+          'enabled option installs exactly one of its `SubOptions`. A folder named in `Include` ' +
+          'must hold the patch files directly - subfolders of it are not searched.',
+        'If a manifest cannot be read, or none of its options resolve to folders that exist in ' +
+          'the archive, Vortex logs the problem and falls back to the folder layout. A bad ' +
+          'manifest never stops the mod from installing.',
+        'When two enabled options both change the same archive, Vortex numbers their files into ' +
+          'one contiguous sequence for that archive. This is expected, not a conflict.',
         'Documentation files at the top level of the archive are installed alongside the patch ' +
-          'files and are left untouched.',
+          'files and are left untouched. `manifest.json` itself and any images it points at are ' +
+          'not installed - they are only used for the option picker.',
       ],
       pitfalls: [
         'Numbering files `patch_1` or higher to "load later" - the number in your archive is not ' +
@@ -324,6 +379,13 @@ const PROSE = [
           'are installed alongside the patch files, so keep shared documentation at the root.',
         'Leaving out a `.patch_0` file but shipping its `.gpu_resources` or `.stream` sidecar. A ' +
           'sidecar is only ever installed next to the patch file it belongs to.',
+        'Nesting patch files one level below the folder you list in `Include`. That folder is ' +
+          'read without recursion, so a mod built that way installs nothing.',
+        'Hand-numbering files across option folders to control which option wins. Numbers are ' +
+          'reassigned per archive in option order; only the order of your files inside a single ' +
+          'folder is preserved.',
+        'Expecting `NexusData` in a manifest to point Vortex at the right Nexus Mods ' +
+          'mod page. Vortex tracks that identity itself and ignores the field.',
       ],
     }),
   },
@@ -1203,6 +1265,8 @@ function buildVars(src, table) {
     'MELON_DLL_FILE', 'MELON_MODS_PATH', 'MELON_PLUGINS_PATH', 'BEPCFGMAN_FILE',
     'BEPCFGMAN_PATH', 'MELONPREFMAN_FILE', 'MELONPREFMAN_PATH', 'ASSEMBLY_PATH',
     'ASSETS_PATH', 'PLUGIN_PATH', 'DATA_FOLDER',
+    // Unity (Jiangyu - MENACE)
+    'JIANGYU_FILE', 'JIANGYU_PATH', 'JIANGYUMOD_FILE', 'JIANGYUMOD_PATH',
     // Unity (Unity Mod Manager / Railloader)
     'UMM_INST_EXEC', 'UMM_MOD_FILE', 'MODS_FOLDER', 'RAILLOADER_MOD_FILE',
     // UE2-3 / TFC

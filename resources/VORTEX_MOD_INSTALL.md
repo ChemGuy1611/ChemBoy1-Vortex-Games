@@ -193,3 +193,5 @@ chosen), `VORTEX_EVENT_BUS.md`. Overview: `VORTEX_APP.md`. Authoring: `INSTALLER
 `FOMOD_INSTALLER.md`. Diagram of this pipeline: `VORTEX_FLOWCHARTS.md` §1.
 Collection phase-engine invariants the repo asks contributors to preserve:
 `VORTEX_AGENT_GUIDES.md`.
+Loader-specific install contracts: `SIMPLE_MOD_FRAMEWORK.md` (repacking a mod into a single archive
+at install time, and dropping a loader-owned folder from the instructions).

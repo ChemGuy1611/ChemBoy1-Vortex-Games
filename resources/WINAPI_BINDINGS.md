@@ -119,3 +119,5 @@ installed tool). `NTFS_LINKS.md` (the one place the permission, Task Scheduler a
 `templates/` (the templates that actually use it — the two Ubisoft families in
 `TEMPLATE_ANVILENGINE.md` / `TEMPLATE_SNOWDROPENGINE.md` / `TEMPLATE_FARCRY.md`,
 `TEMPLATE_FROSTBITE.md`, and the hybrid's .NET runtime probe).
+`SNAKEBITE_CLI.md` (a worked example of the paragraph above: a mod loader whose installer
+records its own folder as the default value of `HKEY_CURRENT_USER\SOFTWARE\SnakeBite`).

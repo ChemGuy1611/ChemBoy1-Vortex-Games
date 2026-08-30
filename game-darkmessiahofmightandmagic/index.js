@@ -2,15 +2,19 @@
 Name: Dark Messiah of Might & Magic Vortex Extension
 Structure: Basic (Launcher)
 Author: ChemBoy1
-Version: 0.4.2
-Date: 2026-08-05
+Version: 0.5.0
+Date: 2026-08-29
 //////////////////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const { downloadModDb, checkForModDbUpdate } = require('./moddb_downloader');
+const { downloadModDb, checkForModDbUpdate, downloadModDbRequirement } = require('./moddb_downloader');
+const { registerModDbBrowser, onceModDbBrowser } = require('./moddb_browser');
+
+//feature toggles
+const moddbBrowser = true; //register the "Browse ModDB" page (moddb.com)
 
 //Specify all the information about the game
 const GAME_ID = "darkmessiahofmightandmagic";
@@ -87,9 +91,23 @@ const MODDB_REQUIREMENTS = [ //ModDB requirements for moddb_downloader.js
     fallbackFileId: '295315', //https://www.moddb.com/downloads/start/295315
     fallbackVersion: 'R1-08.16',
     pageUrl: LAUNCHER_URL,
+    browseKey: 'games/dark-messiah-of-might-magic#wosdarkmessiahmodlauncherr', //the launcher's own file on the browse page, so browsing to it installs the requirement
     skipDownloadManager: true, //download-manager route confirmed blocked (mirror URL 403) - go straight to direct fetch
   },
 ];
+
+//Embedded ModDB browser page - the user browses the live moddb.com section for this game and
+//installs from it. Vortex's download manager cannot fetch from this host, so the page fetches
+//the file itself; the requirement above keeps its own mod type when downloaded there.
+const MODDB_BROWSER_CONFIG = {
+  moddbPath: 'games/dark-messiah-of-might-magic',
+  requirements: MODDB_REQUIREMENTS,
+  installRequirement: (api, gameSpec, requirement) =>
+    downloadModDbRequirement(api, gameSpec, requirement, true),
+  pageId: `${GAME_ID}-moddb-browse`,
+  pageTitle: 'Browse ModDB',
+  //no hotkey: Ctrl+Shift+B is already taken, and a second claim on it is dropped with a warning
+};
 
 const LAUNCHERMOD_ID = `${GAME_ID}-launchermod`;
 const LAUNCHERMOD_NAME = `Launcher Mod`;
@@ -878,6 +896,11 @@ function applyGame(context, gameSpec) {
   };
   context.registerGame(game);
 
+  //register the embedded moddb.com browser page
+  if (moddbBrowser) {
+    registerModDbBrowser(context, gameSpec, MODDB_BROWSER_CONFIG);
+  }
+
   //register mod types
   (gameSpec.modTypes || []).forEach((type, idx) => {
     context.registerModType(type.id, modTypePriority(type.priority) + idx, (gameId) => {
@@ -980,6 +1003,9 @@ function main(context) {
       return checkForModDbUpdate(api, spec, MODDB_REQUIREMENTS)
         .catch(err => log('warn', `Failed to check for ${LAUNCHER_NAME} update: ${err}`));
     });
+    if (moddbBrowser) { //installs downloads started from the browse page, and update-checks the mods installed through it
+      onceModDbBrowser(context.api, spec, MODDB_BROWSER_CONFIG);
+    }
     /* put code here that should be run (once) when Vortex starts up
     context.api.onAsync('did-deploy', async (profileId, deployment) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);

@@ -31,6 +31,7 @@
 | `hasLoader` | `true` | true if game needs a mod loader |
 | `loaderSilentUpdate` | `true` | true to re-run the mod loader installer unattended when updating an existing install |
 | `allowMgsvFix` | `true` | should MGSVFix be offered to the user (via a notification at setup)? |
+| `snakeBiteCliSync` | `true` | true to install and remove mods through the mod loader's command line, so the game matches what Vortex has deployed |
 | `hasXbox` | `false` | toggle for Xbox version logic |
 | `multiExe` | `false` | set to true if there are multiple executable names |
 | `multiModPath` | `false` | set to true if there are multiple possible mod paths (i.e. different path for Xbox version) |
@@ -75,6 +76,8 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
+- Install Mods with SnakeBite
+- Restore Game Files (SnakeBite)
 - Download Latest MGSVFix
 - Open Snakebite Mod Manager Folder
 - Open PCGamingWiki Page
@@ -91,6 +94,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Special Features
 
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
+- **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.

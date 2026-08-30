@@ -1,5 +1,9 @@
 # template-unitybepinex Changelog
 
+## [2026-08-28]
+
+- Fixed: `downloader.js` searches Vortex's downloads for the game being managed only. Vortex keeps one flat list of downloads across every managed game, so a requirement whose archive has a common name - `Release.zip` is used by more than a dozen extensions - could match an archive downloaded for a different game and install it in place of the real requirement. The version check read the same list and could likewise report a version taken from another game's archive.
+
 ## [2026-08-21]
 
 - Changed: `context.once()` now calls through the local `api` constant declared at the top of the block instead of repeating `context.api` on each call.

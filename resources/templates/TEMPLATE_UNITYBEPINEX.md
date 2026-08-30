@@ -56,6 +56,8 @@ actions: Download BepInExConfigManager, Open BepInEx.cfg, Open Data Folder. Conf
 
 `../TEMPLATES_OVERVIEW.md` (template selection, shared anatomy, universal toggles — read first).
 `../DOWNLOADER.md` (the ConfigurationManager requirement object).
+`../BEPINEX.md` (the loader itself: the three runtimes, Doorstop, plugin and patcher formats, and
+the folders this template routes mods into).
 `../BEPINEX_BE_BUILDS.md` (the IL2CPP bleeding-edge builds).
 `../VORTEX_EXTENSION_LOADING.md` (`requireExtension` and `api.ext.bepinexAddGame`).
 `../REGISTER_GAME.md` (the `spec` / `applyGame()` contract).

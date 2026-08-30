@@ -214,3 +214,5 @@ try {
 ## See also
 
 `WINAPI_BINDINGS.md` (the native INI functions `vortex-parse-ini`'s `WinapiFormat` backs onto).
+
+`ARCHIVE_HANDLER.md` (reading a file that lives *inside* an archive — including why `util.SevenZip`'s `raw` option cannot cherry-pick a single member, and how to read ZIP structures directly instead).

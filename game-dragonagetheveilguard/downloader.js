@@ -808,13 +808,35 @@ async function findModByFile(api, modType, fileName) {
   return matches.find(mod => util.getSafe(modState, [mod.id, 'enabled'], false)) ?? matches[0];
 }
 
+// Compatible game ids recorded on a download. IDownload.game is an array in current Vortex,
+// but entries written by much older versions can still hold a bare string, and a download
+// that never got a game assigned has none at all.
+function downloadGames(dl) {
+  if (Array.isArray(dl.game)) {
+    return dl.game;
+  }
+  return dl.game !== undefined ? [dl.game] : [];
+}
+
+// Whether a download belongs to the game currently being managed. Vortex stores downloads in a
+// per-game folder and the Downloads tab only lists the ones compatible with the active game, so
+// anything this returns false for is not "our" archive even when the file name matches.
+function isDownloadForGame(dl, gameId) {
+  return downloadGames(dl).includes(gameId);
+}
+
+// Downloads are scanned only within the active game. Requirement archives routinely carry
+// generic names - Release.zip alone is used by a dozen extensions here - so a game-blind
+// basename match would return another game's archive and install it through the download
+// shortcut in download(), leaving the requirement holding a completely unrelated mod.
 function findDownloadIdByFile(api, fileName) {
   const state = api.getState();
+  const gameId = selectors.activeGameId(state);
   const downloads = util.getSafe(state, ['persistent', 'downloads', 'files'], {});
   return Object.entries(downloads).reduce((prev, [dlId, dl]) => {
     // localPath is optional on IDownload - entries still initialising, redirects and failed
     // downloads have none, and path.basename throws on undefined.
-    if (!dl?.localPath) {
+    if (!dl?.localPath || !isDownloadForGame(dl, gameId)) {
       return prev;
     }
     if (path.basename(dl.localPath).toLowerCase() === fileName.toLowerCase()) {
@@ -826,9 +848,12 @@ function findDownloadIdByFile(api, fileName) {
 
 async function resolveVersionByPattern(api, requirement) {
   const state = api.getState();
+  const gameId = selectors.activeGameId(state);
   const files = util.getSafe(state, ['persistent', 'downloads', 'files'], []);
   const latestVersion = Object.values(files).reduce((prev, file) => {
-    if (!file?.localPath) { //not every download entry has a local file yet
+    //not every download entry has a local file yet, and archives belonging to another game say
+    //nothing about the version installed for this one
+    if (!file?.localPath || !isDownloadForGame(file, gameId)) {
       return prev;
     }
     const match = requirement.fileArchivePattern.exec(file.localPath);

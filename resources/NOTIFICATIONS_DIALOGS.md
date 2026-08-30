@@ -176,12 +176,16 @@ interface IDialogContent {
 | `bbcode` | `string` | BBCode formatted content |
 | `md` | `string` | Markdown formatted content |
 | `checkboxes` | `ICheckbox[]` | Checkbox controls |
-| `choices` | `ICheckbox[]` | Radio-style choices (same shape as checkboxes) |
+| `choices` | `ICheckbox[]` | Radio-style choices (same shape as checkboxes) -- **one group per dialog** |
 | `input` | `IInput[]` | Text/password/number/etc. input fields |
 | `links` | `ILink[]` | Clickable links (or buttons via `options.linksAsButtons`) |
 | `parameters` | `Record<string, string \| number>` | i18n substitution |
 | `options` | see above | Display options |
 | `condition` | `(content) => IConditionResult[]` | Dynamically disable actions based on input state |
+
+`choices` is a single flat array, so a dialog can pose exactly one either/or question. A form that needs
+several independent radio groups -- one per option, say -- cannot be built from `showDialog`; either ask
+in sequence or register a real component with `context.registerDialog`.
 
 ### IDialogAction / DialogActions
 
@@ -406,3 +410,9 @@ setup, post-deploy tool prompt, and fallback-installer warning).
 `REGISTER_ACTION.md` (the toolbar actions that open most of these dialogs).
 `STEAM_FILE_DOWNLOADER.md` (the Steam login, Steam Guard, 2FA, and mismatch-selection dialogs
 that extension raises on a game extension's behalf).
+
+`HELLDIVERS2_MOD_MANIFEST.md` (an option picker built within the one-`choices`-group limit, and
+what that limit costs when a format nests sub-options).
+
+`SIMPLE_MOD_FRAMEWORK.md` (a post-deploy handoff notification whose actions launch the loader and
+open the folder the mods were deployed to).

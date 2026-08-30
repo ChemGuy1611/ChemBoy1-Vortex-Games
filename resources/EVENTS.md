@@ -96,7 +96,7 @@ Register event handlers inside `context.once()` to ensure all extensions are loa
 | `pause-download` | `(downloadId, cb?)` | Pause an active download |
 | `resume-download` | `(downloadId, cb?, options?)` | Resume a paused download |
 | `remove-download` | `(downloadId, cb?, options?: IDownloadRemoveOptions)` | Remove a download |
-| `did-finish-download` | `(downloadId: string, state: string)` | Download completed |
+| `did-finish-download` | `(downloadId: string, state: string)` | Download completed. **The state argument is always `"finished"`** — the event is emitted only from `finalizeDownload`, which runs on success, so a download that fails emits nothing at all. Code that needs to react to a failure has to watch `persistent.downloads.files` for the state transition instead. |
 | `import-downloads` | `([filePath], cb: (dlIds: string[]) => void)` | Import downloads from files |
 | `did-import-downloads` | `(dlIds: string[], cb?: (err?: Error) => void)` | Downloads were imported |
 | `did-move-downloads` | - | Downloads folder was moved |

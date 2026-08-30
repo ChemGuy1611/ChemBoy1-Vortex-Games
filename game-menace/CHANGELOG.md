@@ -4,6 +4,15 @@
 
 - None planned at this time
 
+## [0.7.0] - 2026-08-29
+
+- Added: Support for Jiangyu, the mod loader that replaced ModpackLoader. It is downloaded and installed for you, and kept up to date.
+- Added: Installer for Jiangyu mods. They install to their own folder under "Mods" and appear on the load order page.
+- Changed: The load order page now covers both Jiangyu and ModpackLoader mods together.
+- Changed: ModpackLoader is no longer downloaded on its own. It now comes with the Menace ModKit, which places the loader files where the game needs them.
+- Changed: The Menace ModKit now downloads from its current home, and is kept up to date.
+- Fixed: The .NET 10 notification no longer appears unless ModpackLoader is actually installed.
+
 ## [0.6.2] - 2026-07-29
 
 - Fixed: The load order could disappear after deploying while a mod update was in progress, and only came back after deploying a second time.

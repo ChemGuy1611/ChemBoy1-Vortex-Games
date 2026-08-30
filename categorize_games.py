@@ -9,6 +9,9 @@ Writes one .txt file per engine category to resources/lists/. Each line is a GAM
 Also writes these non-exclusive "flag" lists, evaluated for every game-* extension
 independently of its engine category and of each other:
     games-loadorder.txt  - non-UE4/5 games that call context.registerLoadOrder
+    games-merge.txt      - non-Unreal games that call context.registerMerge
+    games-mergemods.txt  - non-Unreal games that give mergeMods a callback instead
+                           of a boolean, i.e. name the deploy folder per mod
     games-downloader.txt - games with a bundled downloader.js module
     games-downloader-bepinexbe.txt  - games with a bundled bepinexbe_downloader.js module
     games-downloader-codeberg.txt   - games with a bundled codeberg_downloader.js module
@@ -39,6 +42,8 @@ from vortex_utils import (
     REPO_ROOT, LISTS_DIR, list_game_ids, detect_engine, read_index_js,
     read_id_list, write_id_list,
     is_load_order_game as _is_load_order_game_src,
+    is_merge_game as _is_merge_game_src,
+    has_mergemods_callback,
     has_downloader_js, has_bepinexbe_downloader_js, has_codeberg_downloader_js,
     has_fcmodding_downloader_js,
     has_gamebanana_downloader_js,
@@ -81,6 +86,7 @@ _FILE_FOR_LABEL = {label: fname for fname, label in CATEGORIES}
 UNRELEASED_LIST_EXCLUDED_GAMES = {
     "warhammer40kdarktide",     # non-UE / generic load order test bed
     "subnautica2",              # UE4-5 test bed
+    "starwarszerocompany",      # Personal version, officially supported by NexusMods
 }
 
 
@@ -105,6 +111,13 @@ def _in_unreleased_list(src, folder):
 # Each entry pairs an output filename with a predicate(src, folder) -> bool.
 FLAG_LISTS = [
     ("games-loadorder.txt",  lambda src, folder: _is_load_order_game_src(src)),
+    # Games with their own file-merge handler. Unreal games are excluded: merging
+    # there belongs to the shared UE templates rather than to the game extension.
+    ("games-merge.txt",      lambda src, folder: _is_merge_game_src(src)),
+    # Games whose mergeMods is a callback rather than the usual boolean, so the
+    # extension names each mod's deployment folder itself - typically to write a
+    # numbered load-order prefix. Unrelated to registerMerge above despite the name.
+    ("games-mergemods.txt",  lambda src, folder: has_mergemods_callback(src)),
     ("games-downloader.txt", lambda src, folder: has_downloader_js(folder)),
     ("games-downloader-bepinexbe.txt",  lambda src, folder: has_bepinexbe_downloader_js(folder)),
     ("games-downloader-codeberg.txt",   lambda src, folder: has_codeberg_downloader_js(folder)),

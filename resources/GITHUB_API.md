@@ -364,6 +364,9 @@ difference that bites is the missing asset `updated_at`).
 mod hosts, each with a sibling downloader module).
 `BEPINEX_BE_BUILDS.md` (an upstream CI-build feed served outside GitHub, ordered by build number the
 way a nightly is ordered by run number) and `FCMODDING_API.md` (ordered by build timestamp).
+`MELONLOADER.md` (a GitHub repo whose asset names are constant, so the release tag is the only
+version source, and whose nightlies come from CI artifacts rather than releases) and `BEPINEX.md`
+(the repo whose stable releases cover only one of its three runtimes).
 `GODOT_MOD_LOADER.md` (a GitHub repo shipping two incompatible product lines from one release
 stream — the case where `/releases/latest` is the wrong endpoint and a pin is mandatory).
 `VORTEX_DOWNLOAD_MGMT.md` (what Vortex does with a download URL once an extension hands it over,
@@ -371,3 +374,5 @@ including the chunked/resumable path that `accept-ranges` enables).
 `VORTEX_MOD_METADATA.md` (why a GitHub-sourced archive can end up tagged with an unrelated Nexus
 `modId`).
 `NEXUS_MODS_API.md` (the other API this project talks to, and the one with real authentication).
+`SIMPLE_MOD_FRAMEWORK.md` (a loader installed from `releases/latest/download`, whose Nexus
+installer is itself only a wrapper around that same asset).

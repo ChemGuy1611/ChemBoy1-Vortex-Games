@@ -102,9 +102,39 @@ Two things the base deliberately does **not** assume:
   list.
 - **That Vortex can fetch the bytes.** `fetchStrategy: 'capture'` is today's behaviour — the view
   requests the download URL and Vortex's own chain turns it into a download the claim handler sees.
-  `'click'` exists for a source whose downloads the main-process download manager cannot fetch (ModDB
-  returns 403 to it): the adapter fetches in the renderer instead and the base hands the finished file
-  to `import-downloads`.
+  `'click'` is what `moddb_browser.js` uses, because the main-process download manager cannot fetch
+  from that host at all: the adapter fetches in the renderer instead and the base hands the finished
+  file to `import-downloads`, which **moves** it into the download folder, so there is nothing to
+  clean up afterwards. Three consequences worth knowing. An imported download carries no source URL,
+  so the claim handler never sees it — a click source that wants its mod stamped routes the click
+  through `ctx.install(ref)` rather than `ctx.requestDownload(url)`. The transfer has no progress UI:
+  the user sees an "Installing …" activity notification for the whole download, the same trade-off
+  `moddb_downloader.js` makes with `skipDownloadManager`. And the site's own download button may not
+  reach `routeUrl` at all — see below.
+
+### When the site's own button never reaches the module
+
+`routeUrl` only ever sees what arrives as a navigation or a popup. A site whose download button
+opens a **modal at the same URL** produces neither: the click goes straight to Chromium, which
+converts it into a download and hands the URL to Vortex, whose download manager then fails on it for
+exactly the reason the source is a click source in the first place. ModDB is that shape, and it was
+invisible until a live test — every URL rule in the adapter was correct and none of them ever ran.
+
+The base handles it by taking the failure over, which is gated on `fetchStrategy: 'click'` and so
+costs the capture sources nothing:
+
+1. `did-finish-download` is **no use here** — it only ever fires with `"finished"`, because Vortex
+   emits it from `finalizeDownload`, which runs on success. A failed download emits nothing.
+2. So the base watches `persistent.downloads.files` through `api.onStateChange` (optional on
+   `IExtensionApi`, so guarded) for one of its downloads entering `failed`.
+3. `parseClaim` decides whether the download is this source's. **Match the URL the download actually
+   carries**, which is whatever the site's redirects finally resolved to — for ModDB that is a signed
+   DBolical CDN URL naming an archive and no ids at all, not any moddb.com path.
+4. The failed entry is removed with the `remove-download` event, and `installRef` runs with
+   `force: true`, fetching through `fetchToFile`.
+
+Because such a URL usually identifies nothing, the reference comes from page context — the same
+visited-ring mechanism GameBanana needs, and for the same reason.
 
 ### Per-page state, not module state
 
@@ -121,7 +151,7 @@ about fifteen lines. Fields marked source-specific are defined by the module for
 
 | Field | Required | Purpose |
 | --- | --- | --- |
-| source key | yes | Identifies the site section to open; sets the home URL. `tsCommunity` (Thunderstore), `gbGameId` (GameBanana), `mwsGame` (ModWorkshop), `fcGame` (fcmodding) |
+| source key | yes | Identifies the site section to open; sets the home URL. `tsCommunity` (Thunderstore), `gbGameId` (GameBanana), `mwsGame` (ModWorkshop), `fcGame` (fcmodding), `moddbPath` (ModDB) |
 | `requirements` | no | The adopter's requirement table, for install routing and installed-detection |
 | `installRequirement` | no | `(api, gameSpec, requirement) => Promise` — adopter injects its requirement downloader |
 | `packageAttribute` | no | Mod attribute holding the package key (default `thunderstorePackage` / `gamebananaItem`) |
@@ -134,12 +164,15 @@ Fields only one source needs stay on that source's adapter:
 
 | Field | Module | Purpose |
 | --- | --- | --- |
-| `hideAds` / `adSelectors` | any source with an `adSelectors` default (today `gamebanana_browser.js`) | Hide the site's ad slots in the embedded view (default on). `adSelectors` replaces the adapter's list rather than extending it; a source with no list injects nothing |
-| `blockAdPopups` / `blockedHosts` | any source with a `blockedHosts` default (today `gamebanana_browser.js`) | Drop links that lead to an ad network instead of opening them in the system browser (default on) |
+| `hideAds` / `adSelectors` | any source with an `adSelectors` default (`gamebanana_browser.js`, `modworkshop_browser.js`, `moddb_browser.js`) | Hide the site's ad slots in the embedded view (default on). `adSelectors` replaces the adapter's list rather than extending it; a source with no list injects nothing |
+| `blockAdPopups` / `blockedHosts` | any source with a `blockedHosts` default (`gamebanana_browser.js`, `moddb_browser.js`) | Drop links that lead to an ad network instead of opening them in the system browser (default on) |
 | `gbSection` | `gamebanana_browser.js` | Section the page opens on, e.g. `mods` (default) or `tools` — GameBanana listings are `/{section}/games/{gameId}` |
 | `fcGame` | `fcmodding_browser.js` | Section the page opens on — `fc3`, `fc4`, `fc5`, `fc6`, `fcnd` or `fcp`, the same slug the extension already uses |
 | `homeUrl` | `gamebanana_browser.js` | Full override for the home URL, e.g. the game's hub page instead of one section |
-| `fileIdAttribute` | `gamebanana_browser.js` | Mod attribute holding the installed file id (default `gamebananaFileId`, the same one `gamebanana_downloader.js` tracks) |
+| `fileIdAttribute` | `gamebanana_browser.js`, `modworkshop_browser.js`, `moddb_browser.js` | Mod attribute holding the installed file id (default `gamebananaFileId` / `modworkshopFileId` / `moddbFileId`, the same one that source's downloader tracks) |
+| `moddbPath` | `moddb_browser.js` | The game on moddb.com (`games/deus-ex`, `mods/realrtcw-realism-mod`) — the same field and value `moddb_downloader.js` takes |
+| `homePath` | `moddb_browser.js` | Where the page opens, if not `{moddbPath}/mods`. The mods list, not the file index: a game's `/downloads` page carries only the files uploaded to the game page itself, while the mods list is where the community actually is and every mod page links to its own files. |
+| `browseKey` | `moddb_browser.js` (on a **requirement**, not the config) | The browse key of the one file a requirement installs. Without it the requirement is not routed, because a ModDB requirement names a mod page and a key names a single file on that page |
 | `versionPattern` | `gamebanana_browser.js` | RegExp whose group 1 is a version inside an update title, for submissions that leave `_sVersion` empty |
 
 ## Exports and where they are called
@@ -321,6 +354,7 @@ base skips both.
 | `gamebanana_browser.js` | gamebanana.com | `game-doometernal` |
 | `modworkshop_browser.js` | modworkshop.net | `game-roadtovostok` |
 | `fcmodding_browser.js` | downloads.fcmodding.com | `game-farcry3`, `game-farcry4`, `game-farcry5`, `game-farcry6`, `game-farcrynewdawn`, `game-farcryprimal`, `template-farcry` |
+| `moddb_browser.js` | moddb.com | `game-darkmessiahofmightandmagic`, `game-returntocastlewolfenstein` |
 
 ### Quirks per source
 
@@ -360,6 +394,23 @@ base skips both.
   anything without an archive extension. The sibling database at `mods.farcry.info` is **not** a
   source: every entry there links to a Discord message rather than a file (`FCMODDING_API.md`).
 
+- **ModDB** is the only source Vortex cannot download from itself, so it is the only one running
+  `fetchStrategy: 'click'`. It is also the only source that mints a **new file id for every release**,
+  which rules out keying on the file id: the id a key resolves to is by definition the one already
+  installed, so an update could never be found. The key is therefore the mod's *page* plus a second
+  half naming which file on it — `mods/realrtcw-realism-mod#realrtcw` — since a ModDB page hosts
+  language packs, demos and localisations beside its releases, and keying on the page alone would
+  offer "Real RTCW Czech Localization" as an update to "RealRTCW 5.44" for being newer.
+  That second half is **the letters of the download's URL slug, never its title**: ModDB slugs keep a
+  stable stem and push the version into digits (`realrtcw-50`, `realrtcw-40`, `endrv-0140`,
+  `endrv-0131`), so letters-only collapses a file's releases and separates its neighbours. Titles do
+  not survive the same treatment — "[wOS] Rogue - Combat Arena" is slugged `rogue-combat-arena-wos`,
+  "2027" has no letters at all, and "GMDXv9.0.3 FULL" is slugged `gmdxv90-release`. Nothing in a
+  ModDB download URL says which mod it came from (`/downloads/start/295315` is the whole identity a
+  click carries), so the module keeps a ring of visited file pages and joins the click to the page it
+  came from. Update comparison is on the file id, a site-wide autoincrement, because ModDB versions
+  are free text and often absent.
+
 ## See also
 
 `EMBEDDED_BROWSER.md` (the `Webview` control, the download capture chain, popups and partitions).
@@ -369,6 +420,8 @@ base skips both.
 `MODWORKSHOP_API.md` (the third source: mod and file endpoints, storage download URLs, dependencies).
 `FCMODDING_API.md` (the fourth source: the download catalog, the `/files/` alias redirect, and why
 the `mods.farcry.info` database is not a download route).
+`MODDB_API.md` (the fifth source: the RSS feed, the download-start interstitial, the mirror URL, and
+the bot-block that forces `fetchStrategy: 'click'`).
 `VORTEX_REACT_PAGES.md` (`registerMainPage` and the page component API).
 `VORTEX_MOD_INSTALL.md` (what `start-install-download` hands the archive to).
 `VORTEX_DOWNLOAD_MGMT.md` (download states, protocol handlers, `did-finish-download`).

@@ -311,3 +311,5 @@ Two things to keep in mind when touching that code:
 `TEMPLATES_OVERVIEW.md` (the `PCGAMINGWIKI_URL` constant and the toolbar action every template ships).
 `GAMEBANANA_API.md`, `MODDB_API.md`, and `MODWORKSHOP_API.md` (the other third-party sites this repo
 queries, each with its own bot-protection behaviour and usage rules).
+`STEAMCHARTS_API.md` (concurrent-player history for a Steam AppID resolved here — and the store
+search endpoint that resolves a name to an AppID when the wiki cannot).

@@ -302,3 +302,4 @@ constraint they interact with). `ERROR_CLASSES.md` (`SetupError` thrown from `IG
 reference for the `requiresLauncher` field above). `PCGAMINGWIKI_API.md` (looking up the Steam/GOG/
 Epic/Microsoft Store IDs these fields need). `STEAM_FILE_DOWNLOADER.md` (`details.steamAppId`
 and the `details.hideSteamKit` opt-out, both read by the Steam file-verification extension).
+`STEAMCHARTS_API.md` (player-count history keyed by that same `steamAppId`).

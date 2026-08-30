@@ -29,7 +29,7 @@ const REQUIREMENTS = [
     //resolveVersion: (api) => resolveVersionByFile(api, REQUIREMENTS[0]),
     //allowPrerelease: true, //include GitHub pre-release versions (default false)
     //prereleaseTag: 'experimental', //fetch a specific rolling pre-release tag directly (e.g. UE4SS); skips the prerelease scan
-    //trackByAssetDate: true, //detect updates by the asset's GitHub upload time, not the version tag (rolling pre-release whose tag never changes)
+    //trackByAssetDate: true, //detect updates by the asset's GitHub upload time, not the version tag (rolling pre-release whose tag never changes i.e. UE4SS)
     //resolveVersion: (api) => resolveVersionByAssetDate(api, REQUIREMENTS[0]), //use together with trackByAssetDate
     //resolveVersion: (api) => resolveVersionByModVersion(api, REQUIREMENTS[0]), //reads the version stamped on the installed mod at install time; use when the version is only in the release tag (asset filename is versionless) and fileArchivePattern has no capture group
     //autoInstall: false, //opt out of unattended installs - setup and the update check both skip it, only an explicit user action (toolbar button) installs it
@@ -95,11 +95,17 @@ const NIGHTLY_REQUIREMENTS = [
 // then reads requirement.versionFile (e.g. 'version.txt') for the installed version.
 async function resolveVersionByFile(api, requirement) {
     const state = api.getState();
+    const gameId = selectors.activeGameId(state);
     const downloadPath = selectors.downloadPath(state);
     const files = util.getSafe(state, ['persistent', 'downloads', 'files'], {});
-    // archives matching this requirement (version is not in the name, so match the pattern)
+    // Archives matching this requirement (version is not in the name, so match the pattern),
+    // restricted to the game being managed. Requirement archives often share a generic name
+    // across games, and downloadPath only points at this game's folder anyway - an entry from
+    // another game would either be the wrong mod or a path that does not exist.
     const matches = Object.values(files)
-        .filter(file => !!file.localPath && requirement.fileArchivePattern.exec(file.localPath));
+        .filter(file => !!file.localPath
+            && (Array.isArray(file.game) ? file.game : [file.game]).includes(gameId)
+            && requirement.fileArchivePattern.exec(file.localPath));
     if (matches.length === 0) {
         return '0.0.0';
     }

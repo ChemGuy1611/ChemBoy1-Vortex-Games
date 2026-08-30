@@ -78,6 +78,15 @@ function packageDownloadUrl(ref) {
   return `${API_BASE}/package/download/${ref.namespace}/${ref.name}/${ref.version}/`;
 }
 
+//The archive Thunderstore serves for a version, e.g. SGG_Modding-ENVY-1.2.0.zip. The download URL
+//ends in a slash and the CDN it redirects to sends no Content-Disposition, so Vortex can derive no
+//name of its own and needs this one.
+function packageArchiveName(ref) {
+  return (ref.namespace && ref.name && ref.version)
+    ? `${ref.namespace}-${ref.name}-${ref.version}.zip`
+    : undefined;
+}
+
 //"Namespace-Name" - the key everything in this module is tracked by
 function packageKey(ref) {
   return `${ref.namespace}-${ref.name}`;
@@ -231,6 +240,8 @@ const adapter = {
   parseClaim: downloadPackageRef,
 
   resolve: (config, ref) => resolveThunderstorePackage(config, ref.namespace, ref.name),
+
+  archiveName: packageArchiveName,
 
   //A reference that names its version already names its download URL, so the install path
   //never needs the API for it. The dependency walk and the update check use resolve() instead.

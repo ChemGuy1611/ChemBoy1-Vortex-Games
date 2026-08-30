@@ -15,7 +15,7 @@ Usage:
     python new_extension.py TEMPLATE "Game Name" --skip-explained
     python new_extension.py TEMPLATE "Game Name" --skip-eslint
 
-    --no-browser        Skip opening browser tabs (PCGamingWiki, SteamDB, Steam demo page).
+    --no-browser        Skip opening browser tabs (PCGamingWiki, SteamDB, SteamDB demo page).
     --no-startfile      Skip opening downloaded images and index.js in the default editor.
     --refresh-images    Re-download all 4 images for an existing extension. Pass GAME_ID as
                         the only positional arg. Does not redo lookups or rewrite index.js.
@@ -945,7 +945,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
             webbrowser.open(pcgw_url)
         webbrowser.open(f"https://steamdb.info/app/{appid}/info/")
         if demo_appid:
-            webbrowser.open(f"https://store.steampowered.com/app/{demo_appid}/")
+            webbrowser.open(f"https://steamdb.info/app/{demo_appid}/info/")
         if gog_id:
             webbrowser.open(f"https://www.gogdb.org/product/{gog_id}")
         if epic_found and epic_offer_id:
@@ -1178,7 +1178,7 @@ def main():
     )
     parser.add_argument(
         "--no-browser", action="store_true",
-        help="Skip opening browser tabs (PCGamingWiki, SteamDB, Steam demo page).",
+        help="Skip opening browser tabs (PCGamingWiki, SteamDB, SteamDB demo page).",
     )
     parser.add_argument(
         "--no-startfile", action="store_true",

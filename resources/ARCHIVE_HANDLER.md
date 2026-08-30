@@ -157,6 +157,12 @@ context.registerArchiveType('vmz', (fileName, options) => {
 | `szip.extract(archivePath, destPath, opts?)` | returns stream | Extracts flat (no paths) |
 | `szip.add(archivePath, files, opts?)` | returns stream | Add files; `opts.raw: ['-r']` for recursive |
 
+### `opts.raw` does not work as a file filter on extraction
+
+Passing a member name through `raw` to pull a single file out of an archive — `szip.extractFull(archive, dest, { raw: ['-y', 'metadata.xml'] })` — **extracts nothing and still resolves successfully**. The call returns in a few milliseconds and the destination stays empty, so the failure surfaces later as `ENOENT` on the file that was supposed to be there. Running `7z.exe x <archive> -o<dest> -y metadata.xml` by hand does work, so a shell test of the command is not evidence that the wrapper passes the filter through.
+
+To read one small member out of a large archive, read the ZIP structures directly instead: scan the tail for the end-of-central-directory record, walk the central directory to the entry, then read its local header and `zlib.inflateRawSync` the compressed bytes. This needs no temp files and no child process, and it stays fast on archives in the gigabyte range. See [FILE_PARSING.md](FILE_PARSING.md) for the other in-extension parsing options.
+
 All node-7z streams are thenable — you can `await szip.add(...)` directly, or use `.on('end'/'error')` for the Promise wrapper pattern above.
 
 ---
