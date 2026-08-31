@@ -5,14 +5,6 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ========================================================================
 
-Data:
-
-Recognised when the archive contains a file with the ".dl_bin" extension.
-
-  Installs to: "data\game"
-
-========================================================================
-
 Patch Mods (.patch_0):
 
 Almost every Helldivers 2 mod is a patch mod. A patch file is named after the game archive it edits - a 16-character hex hash - followed by a patch number. Graphics and sound mods use the same format and are installed the same way.
@@ -48,11 +40,42 @@ MyArmourMod.zip
 
 ========================================================================
 
+Data:
+
+Recognised when the archive contains a file with the ".dl_bin" extension.
+
+  Installs to: "data\game"
+
+========================================================================
+
 Stream:
 
 Recognised when the archive contains a file with the ".stream" extension.
 
   Installs to: "data"
+
+========================================================================
+
+Binaries:
+
+Recognised when the archive contains a file with one of these extensions: ".exe", ".dll", ".asi" or ".addon64".
+
+  Installs to: "bin"
+
+========================================================================
+
+Fallback Installer:
+
+The catch-all. Any archive that matched none of the installers above lands here and is copied across unchanged.
+
+[b][color=#ffff00]NOTE: Landing in the fallback installer is a signal your archive layout needs fixing.[/color][/b]
+
+  Requirements:
+    - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
+    - Vortex shows the user a notification when a mod installs through the fallback.
+
+  Common mistakes:
+    - If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.
 
 ========================================================================
 

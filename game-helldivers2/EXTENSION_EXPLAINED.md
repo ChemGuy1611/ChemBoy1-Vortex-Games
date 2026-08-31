@@ -34,6 +34,7 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
+| Root Folder | `helldivers2-root` | high | `{gamePath}` |
 | Game Data (.dl_bin) | `helldivers2-data` | high | `{gamePath}/data/game` |
 | Data Stream File (.stream) | `helldivers2-stream` | high | `{gamePath}/data` |
 | Binaries (Engine Injector) | `helldivers2-binaries` | high | `{gamePath}/bin` |
@@ -46,9 +47,11 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `helldivers2-data` | 25 |
-| `helldivers2-patch--MergedMods--This-is-fine--Ignore-this--SELECT-APPLY-CHANGES--DO-NOT-ENABLE` | 27 |
-| `helldivers2-stream` | 31 |
+| `helldivers2-patch--MergedMods--This-is-fine--Ignore-this--SELECT-APPLY-CHANGES--DO-NOT-ENABLE` | 25 |
+| `helldivers2-data` | 27 |
+| `helldivers2-stream` | 29 |
+| `helldivers2-binaries` | 31 |
+| `helldivers2-fallback` | 49 |
 
 ## Toolbar Actions
 

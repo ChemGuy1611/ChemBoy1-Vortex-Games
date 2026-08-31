@@ -140,6 +140,57 @@ runs. The two disagree — `ApiEvents` types `start-download` as returning a `st
 `remove-download`'s third argument. Treat `ApiEvents` as editor assistance and this table as the
 contract. See `VORTEX_EVENT_BUS.md` for the typed-events layer.
 
+## What names the archive on disk
+
+The file name a download ends up with is not cosmetic. `InstallManager` derives the mod's staging
+folder name straight from it — `path.basename(archivePath, path.extname(archivePath))` — so the
+archive name is what the staging folder is called, and any installer that reads its
+`destinationPath` inherits it.
+
+A download starts under a placeholder name, `__vortex_tmp_<8 digits>`, so the main process can begin
+writing before anything is known about the response. `#completeDownload` then renames it, taking the
+first of:
+
+1. the server's `Content-Disposition` filename (`filename*` before `filename`),
+2. the last path segment of the **requested** URL — not the URL a redirect landed on,
+3. the `fileName` argument passed to `start-download`,
+4. the placeholder itself.
+
+**Step 2 reads the URL the caller supplied, not the URL a redirect landed on**, and it outranks the
+caller's hint — `getFileNameFromUrl` is folded into the same `wireState.fileName` slot as the
+`Content-Disposition` name, so `wireState.fileName ?? hint` never reaches the hint once the URL has
+a non-empty last segment. That splits sources into two cases that need different fixes:
+
+- **A URL ending in a slash** — `thunderstore.io/package/download/{namespace}/{name}/{version}/`,
+  whose CDN sends no `Content-Disposition`. The last segment is empty, so step 2 yields `undefined`
+  and the `fileName` argument **does** apply. Passing the hint is the whole fix.
+- **A URL whose last segment is an opaque id** — `gamebanana.com/dl/{fileId}`, likewise with no
+  `Content-Disposition` behind it. `1788872` is a non-empty segment, so it wins and **the hint is
+  never consulted**. Passing `fileName` here changes nothing. This case is also the more damaging
+  one: an id carries no archive extension, and `removeInvalidFileExts` deletes any download-folder
+  file whose name has none and is not a placeholder, so the archive is removed on a later pass while
+  the installed mod keeps its meaningless name.
+
+The fix for the second case is to resolve the redirect and hand `start-download` the URL it lands
+on, whose last segment *is* the file name. A `HEAD` with the redirect followed is enough, and the
+redirect must be followed rather than read: `redirect: 'manual'` returns an opaque filtered response
+in Chromium — status 0, headers emptied — so `Location` cannot be read at all.
+
+```js
+const response = await fetch(url, { method: 'HEAD' });
+const resolved = response.ok ? response.url : null;   // .../tools/eternalmodinjector_19e3b.zip
+```
+
+Pass `fileName` as well wherever the real name is known — it costs nothing and covers the
+empty-segment case and the fallback path where the unresolved URL is used. Pair it with
+`redownload: 'replace'`: naming a download makes `#handleStartDownload` check the download folder
+first, and an archive already sitting there comes back through the callback as an
+`AlreadyDownloaded` **error**, which a caller that treats every callback error as a failure will
+report as one. Without a name that check never runs at all.
+
+See `VORTEX_MOD_INSTALL.md` for what the staging folder name is then used for, and
+`BROWSER_MODULES.md` for the adapter hook that supplies the name on the browse-page install path.
+
 ## Gotchas
 
 - Don't confuse with the requirements auto-downloader (`DOWNLOADER.md`).

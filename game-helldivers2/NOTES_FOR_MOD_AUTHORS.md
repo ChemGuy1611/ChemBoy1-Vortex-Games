@@ -8,17 +8,13 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Data | a file with the `.dl_bin` extension | `data\game` |
 | Patch Mods (.patch_0) | a file named `<archive hash>.patch_0` | - |
+| Data | a file with the `.dl_bin` extension | `data\game` |
 | Stream | a file with the `.stream` extension | `data` |
+| Binaries | a file with one of these extensions: `.exe`, `.dll`, `.asi` or `.addon64` | `bin` |
+| Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
-
-## Data
-
-Recognised when the archive contains a file with the `.dl_bin` extension.
-
-Installs to: `data\game`
 
 ## Patch Mods (.patch_0)
 
@@ -55,11 +51,38 @@ MyArmourMod.zip
 - Hand-numbering files across option folders to control which option wins. Numbers are reassigned per archive in option order; only the order of your files inside a single folder is preserved.
 - Expecting `NexusData` in a manifest to point Vortex at the right Nexus Mods mod page. Vortex tracks that identity itself and ignores the field.
 
+## Data
+
+Recognised when the archive contains a file with the `.dl_bin` extension.
+
+Installs to: `data\game`
+
 ## Stream
 
 Recognised when the archive contains a file with the `.stream` extension.
 
 Installs to: `data`
+
+## Binaries
+
+Recognised when the archive contains a file with one of these extensions: `.exe`, `.dll`, `.asi` or `.addon64`.
+
+Installs to: `bin`
+
+## Fallback Installer
+
+The catch-all. Any archive that matched none of the installers above lands here and is copied across unchanged.
+
+> **NOTE:** Landing in the fallback installer is a signal your archive layout needs fixing.
+
+**Requirements:**
+
+- Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
+- Vortex shows the user a notification when a mod installs through the fallback.
+
+**Common mistakes:**
+
+- If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.
 
 ## Rules That Apply To Every Mod Type
 

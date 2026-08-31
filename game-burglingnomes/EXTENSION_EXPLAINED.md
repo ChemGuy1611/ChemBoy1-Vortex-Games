@@ -18,7 +18,6 @@
 | Executable (GOG) | `Gnomium.exe` |
 | Executable (Demo) | `Gnomium.exe` |
 | Extension Page | [https://www.nexusmods.com/site/mods/1702](https://www.nexusmods.com/site/mods/1702) |
-| PCGamingWiki | []() |
 
 ## Supported Stores
 
@@ -127,4 +126,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-

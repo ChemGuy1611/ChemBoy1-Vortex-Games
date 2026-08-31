@@ -481,8 +481,17 @@ function resolveWithFallback(expr, table, src) {
   return resolved;
 }
 
+/**
+ * True when a resolved constant carries a real value rather than one of the
+ * "not applicable here" placeholders. An empty string counts as a placeholder:
+ * extensions use `const XBOXAPP_ID = "";` for a store the game is not sold on,
+ * often with a comment saying so, and treating it as real makes generated docs
+ * claim support that does not exist.
+ */
 function isRealValue(v) {
-  return v != null && v !== 'null' && v !== 'XXX' && v !== 'N/A';
+  if (v == null) return false;
+  const s = String(v).trim();
+  return s !== '' && s !== 'null' && s !== 'XXX' && s !== 'N/A';
 }
 
 // ── extractors ──────────────────────────────────────────────────────────────

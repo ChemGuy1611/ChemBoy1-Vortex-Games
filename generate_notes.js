@@ -18,11 +18,13 @@
  *   --json       Write machine-readable JSON to stdout; progress goes to stderr.
  *   --templates  Also process template-* folders (when no GAME_ID args given).
  *   --description  Write DESCRIPTION.bbcode.txt, the Nexus mod page description, in
- *                  place of the notes files. Its "Mod Installation Notes" list is one
- *                  line per installer, trigger + destination ("Installs mods with an
- *                  "info.json" file to the "Mods" folder."). An existing page keeps
- *                  everything the author wrote - only the list between the heading and
- *                  its closing [/list] is replaced. A missing page is scaffolded with
+ *                  place of the notes files. Two lists on the page are generated: the
+ *                  "Mod Installation Notes" list, one line per installer, trigger +
+ *                  destination ("Installs mods with an "info.json" file to the "Mods"
+ *                  folder."), and the "Supported Versions" list, one line per store
+ *                  app-id constant that resolves to a real value. An existing page keeps
+ *                  everything the author wrote - only each list between its heading and
+ *                  the closing [/list] is replaced. A missing page is scaffolded with
  *                  the standard section order for the author to finish.
  *
  * Drift checking is deliberately NOT a flag here - it is handled by the
@@ -1537,6 +1539,7 @@ function fixArticle(s) {
  */
 const DESCRIPTION_FILE = 'DESCRIPTION.bbcode.txt';
 const INSTALL_HEADING = '[b]🛠️ Mod Installation Notes:[/b]';
+const SUPPORTED_HEADING = '[b]✅ Supported Versions:[/b]';
 
 function renderDescription(ctx) {
   const { sections, allFomodGuarded } = ctx;
@@ -1593,6 +1596,22 @@ const STORE_IDS = [
   ['XBOXAPP_ID', 'Xbox (Game Pass)'],
 ];
 
+/**
+ * The store list, one line per app-id constant that resolves to a real value.
+ * A store the game is not sold on carries a null or empty constant, so it drops out.
+ */
+function renderSupportedVersions(ctx) {
+  const L = [];
+  L.push(SUPPORTED_HEADING);
+  L.push('[list]');
+  for (const [name, label] of STORE_IDS) {
+    if (isRealValue(ctx.table.get(name))) L.push(`[*]${label}[/*]`);
+  }
+  L.push('[*]Other versions may need to select the installation location manually.[/*]');
+  L.push('[/list]');
+  return L.join('\n');
+}
+
 /** Donation block, byte-identical across every published extension page. */
 const SUPPORT_BLOCK = [
   '[b]❤️ Support the Mod Author: [/b]',
@@ -1613,18 +1632,11 @@ const SUPPORT_BLOCK = [
  * the section order every published extension page uses. The parts a generator cannot
  * know - loader warnings, per-game usage notes, credits - are left for the author.
  */
-function scaffoldDescription(ctx, installBlock) {
-  const stores = STORE_IDS
-    .filter(([name]) => isRealValue(ctx.table.get(name)))
-    .map(([, label]) => label);
+function scaffoldDescription(ctx, installBlock, supportedBlock) {
   const L = [];
   L.push(`This extension adds ${ctx.gameName} modding support to Vortex Mod Manager.`);
   L.push('');
-  L.push('[b]✅ Supported Versions:[/b]');
-  L.push('[list]');
-  for (const s of stores) L.push(`[*]${s}[/*]`);
-  L.push('[*]Other versions may need to select the installation location manually.[/*]');
-  L.push('[/list]');
+  L.push(supportedBlock);
   L.push(installBlock);
   L.push('[b]📋 Usage Notes:[/b]');
   L.push('[list]');
@@ -1637,10 +1649,10 @@ function scaffoldDescription(ctx, installBlock) {
 }
 
 /**
- * Replace just the install list inside a page that already exists, from the heading
- * through its closing [/list]. Everything the author wrote around it survives.
- * Returns null when the heading is absent, so the caller can refuse rather than
- * overwrite a page laid out some other way.
+ * Replace one generated list inside a page that already exists, from its heading
+ * through the closing [/list]. Everything the author wrote around it survives.
+ * Returns null when the heading is absent, so the caller can decide whether that
+ * is a refusal or simply a section this page does not carry.
  *
  * Items carrying BBCode markup are kept and moved to the top of the rebuilt list.
  * Those are the lines no generator can produce - the yellow "downloaded automatically"
@@ -1649,17 +1661,29 @@ function scaffoldDescription(ctx, installBlock) {
  */
 const AUTHOR_ITEM = /\[(?:b|i|u|color|size|url|img)[=\]]/i;
 
-function spliceDescription(existing, installBlock) {
-  const start = existing.indexOf(INSTALL_HEADING);
+function spliceList(existing, heading, block) {
+  const start = existing.indexOf(heading);
   if (start === -1) return null;
   const listEnd = existing.indexOf('[/list]', start);
   if (listEnd === -1) return null;
   const oldItems = existing.slice(start, listEnd).match(/^\[\*\].*$/gm) || [];
   const kept = oldItems.filter(item => AUTHOR_ITEM.test(item));
-  const lines = installBlock.split('\n');
+  const lines = block.split('\n');
   const listOpen = lines.indexOf('[list]');
   if (kept.length && listOpen !== -1) lines.splice(listOpen + 1, 0, ...kept);
   return existing.slice(0, start) + lines.join('\n') + existing.slice(listEnd + '[/list]'.length);
+}
+
+/**
+ * Refresh both generated lists on an existing page. The install list is mandatory -
+ * a page without that heading is not one this generator wrote, so the caller refuses
+ * it. The store list is optional: a page laid out without it still gets its install
+ * list updated rather than being skipped wholesale.
+ */
+function spliceDescription(existing, installBlock, supportedBlock) {
+  const withInstall = spliceList(existing, INSTALL_HEADING, installBlock);
+  if (withInstall === null) return null;
+  return spliceList(withInstall, SUPPORTED_HEADING, supportedBlock) || withInstall;
 }
 
 // ── per-extension build ─────────────────────────────────────────────────────
@@ -1739,11 +1763,13 @@ function buildNotes(dirName, src) {
   const title = `Notes for Mod Authors - ${gameName}`;
   const ctx = { title, gameName, sections, allFomodGuarded, table };
   const installBlock = renderDescription(ctx);
+  const supportedBlock = renderSupportedVersions(ctx);
   return {
     md: renderMarkdown(ctx),
     bbcode: renderBBCode(ctx),
     description: installBlock,
-    scaffold: () => scaffoldDescription(ctx, installBlock),
+    supported: supportedBlock,
+    scaffold: () => scaffoldDescription(ctx, installBlock, supportedBlock),
     tier1, tier2, unknownFns,
   };
 }
@@ -1822,14 +1848,14 @@ for (const dir of extDirs) {
   }
   try {
     const src = fs.readFileSync(indexPath, 'utf8');
-    const { md, bbcode, description, scaffold, tier1, tier2, unknownFns } = buildNotes(dir, src);
+    const { md, bbcode, description, supported, scaffold, tier1, tier2, unknownFns } = buildNotes(dir, src);
     if (doDescription) {
-      // The page is hand-written around this list, so an existing file is spliced,
+      // The page is hand-written around these lists, so an existing file is spliced,
       // never rewritten. Only a brand new page gets the full scaffold.
       const descPath = path.join(ROOT, dir, DESCRIPTION_FILE);
       if (fs.existsSync(descPath)) {
         const existing = fs.readFileSync(descPath, 'utf8');
-        const merged = spliceDescription(existing, description);
+        const merged = spliceDescription(existing, description, supported);
         if (merged === null) {
           emit(`  SKIP  ${dir} (${DESCRIPTION_FILE} has no "${INSTALL_HEADING}" list to replace)`);
           skipped++;
@@ -1840,7 +1866,7 @@ for (const dir of extDirs) {
           emit(`  OK    ${dir} (${DESCRIPTION_FILE} already up to date)`);
         } else {
           fs.writeFileSync(descPath, merged);
-          emit(`  OK    ${dir} (${DESCRIPTION_FILE} install list updated)`);
+          emit(`  OK    ${dir} (${DESCRIPTION_FILE} generated lists updated)`);
         }
       } else {
         fs.writeFileSync(descPath, scaffold());

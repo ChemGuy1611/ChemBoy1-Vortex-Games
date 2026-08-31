@@ -76,7 +76,7 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `run_generate_explained_batch(game_ids)` | Run `generate_explained.js` for multiple game IDs in a single `node` invocation. Returns `(ok: bool, stderr: str)`. |
 | `run_generate_notes(game_id)` | Run `generate_notes.js` for a game; returns `(ok: bool, stderr: str)` |
 | `run_generate_notes_batch(game_ids)` | Run `generate_notes.js` for multiple game IDs in a single `node` invocation. Returns `(ok: bool, stderr: str)`. |
-| `run_generate_description_batch(game_ids)` | Run `generate_notes.js --description` for multiple game IDs in a single `node` invocation, refreshing each `DESCRIPTION.bbcode.txt` install list. Returns `(ok: bool, stderr: str)`. |
+| `run_generate_description_batch(game_ids)` | Run `generate_notes.js --description` for multiple game IDs in a single `node` invocation, refreshing each `DESCRIPTION.bbcode.txt` install and store list. Returns `(ok: bool, stderr: str)`. |
 | `node_check(path)` | Run `node --check` on a JS file path; returns `(ok: bool, stderr: str)` |
 | `node_check_source(src)` | Run `node --check` on an in-memory JS string (writes a temp file internally); returns `(ok, error_msg)` — `ok` is `None` if node is not on PATH |
 | `eslint_check(path)` | Run `npx eslint` on a JS file (config auto-discovered from `REPO_ROOT`); returns `(ok: bool, output: str)` |
@@ -703,6 +703,8 @@ Shared static-analysis helpers for reading an extension's `index.js` without exe
 
 Not a runnable script — it is required by `generate_explained.js` and `generate_notes.js`. Any change here affects both generators; re-run `node generate_explained.js --check` afterwards and confirm the output is unchanged.
 
+`isRealValue` is the placeholder test both generators use to decide whether a constant carries a real value. `null`, the string `"null"`, `"XXX"`, `"N/A"`, and an empty or whitespace-only string all count as placeholders — extensions write `const XBOXAPP_ID = "";` for a store the game is not sold on, so treating an empty string as real made the generated docs claim support that does not exist.
+
 `extractInstallers` returns `{ id, priority, testFn, guardFlag }` per registration. `testFn` is the installer's test function name, which is the stable cross-extension identity of an installer and the key `generate_notes.js` uses to attach documentation. Installers behind a disabled boolean flag are omitted.
 
 `getGuardFlag` walks outward through every enclosing block rather than stopping at the innermost one, so a registration nested inside a loop or callback still resolves to the `if (FLAG)` that guards it — for example a `spec.modTypes.push` inside a `.forEach` inside `if (hasDlcFolders) {`. A registration whose guard flag is `false` is omitted from the generated docs.
@@ -804,7 +806,7 @@ Run without arguments to process all `game-*` folders.
 Pass one or more bare `GAME_ID` values to target specific extensions.
 `--json` writes machine-readable JSON to stdout; progress and summary go to stderr instead.
 `--templates` also processes `template-*` folders (only effective when no `GAME_ID` args are given).
-`--description` writes `DESCRIPTION.bbcode.txt`, the Nexus mod page description, instead of the notes files. Its `Mod Installation Notes` list is one line per installer, trigger plus destination.
+`--description` writes `DESCRIPTION.bbcode.txt`, the Nexus mod page description, instead of the notes files. Two of its lists are generated: `Mod Installation Notes`, one line per installer with trigger plus destination, and `Supported Versions`, one line per store the extension carries an app ID for.
 
 There is deliberately no `--check` flag. Drift between these files and their `index.js` is handled by the generated-docs audit, which regenerates and diffs.
 
@@ -837,10 +839,12 @@ Loader and manager installers are phrased as installing the tool itself rather t
 
 Two paths, depending on whether the page already exists:
 
-- **File present** — only the list between `[b]🛠️ Mod Installation Notes:[/b]` and its closing `[/list]` is replaced. Everything else the author wrote is untouched. List items carrying BBCode markup (`[b]`, `[color=`, `[url=`, …) are kept and moved to the top of the rebuilt list: those are the lines no generator can produce — the yellow "downloaded automatically" loader line, a red caveat — and the house style already puts them first. Generated lines are always plain text, so nothing is duplicated. If the heading is missing the extension is skipped rather than overwritten.
-- **File absent** — a full page is scaffolded: opening line, `✅ Supported Versions` built from whichever of `STEAMAPP_ID`, `GOGAPP_ID`, `EPICAPP_ID`, `UPLAYAPP_ID`, `EAAPP_ID` and `XBOXAPP_ID` resolve to a real value, the install list, a stub `📋 Usage Notes`, and the donation block. Loader warnings, per-game usage notes and credits are left for the author to add.
+- **File present** — only the lists between `[b]🛠️ Mod Installation Notes:[/b]` and `[b]✅ Supported Versions:[/b]` and their closing `[/list]` are replaced. Everything else the author wrote is untouched. List items carrying BBCode markup (`[b]`, `[color=`, `[url=`, …) are kept and moved to the top of the rebuilt list: those are the lines no generator can produce — the yellow "downloaded automatically" loader line, a red caveat — and the house style already puts them first. Generated lines are always plain text, so nothing is duplicated. If the install heading is missing the extension is skipped rather than overwritten; a missing `Supported Versions` heading is not fatal, that page just keeps its install list refreshed.
+- **File absent** — a full page is scaffolded: opening line, the store list, the install list, a stub `📋 Usage Notes`, and the donation block. Loader warnings, per-game usage notes and credits are left for the author to add.
 
-`DESCRIPTION.bbcode.txt` is repo-only — `release_extension.py` excludes it from the released zip, and regenerates it for every game that releases so the install list cannot drift from `index.js`. The **Generate Description** button in `vortex_gui.py` runs the same command against the selected games.
+The store list is built from whichever of `STEAMAPP_ID`, `GOGAPP_ID`, `EPICAPP_ID`, `UPLAYAPP_ID`, `EAAPP_ID` and `XBOXAPP_ID` resolve to a real value. `null`, `"XXX"`, `"N/A"` and `""` all count as "not sold on this store" — several extensions use an empty string with a comment such as `// is on Xbox, but not Game Pass`, and that store is left out.
+
+`DESCRIPTION.bbcode.txt` is repo-only — `release_extension.py` excludes it from the released zip, and regenerates it for every game that releases so neither list can drift from `index.js`. The **Generate Description** button in `vortex_gui.py` runs the same command against the selected games.
 
 Exits with code `1` if any extension threw an error during generation; `0` otherwise.
 

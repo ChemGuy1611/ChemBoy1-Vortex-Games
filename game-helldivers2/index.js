@@ -2,8 +2,8 @@
 Name: Helldivers 2 Vortex Extension
 Structure: Custom Game Data
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-08-29
+Version: 1.1.0
+Date: 2026-08-31
 /////////////////////////////////////////*/
 
 //Import libraries
@@ -32,6 +32,10 @@ const streamFileExt = ".stream";
 
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_PATH = path.join("bin");
+const BINARIES_EXTS = ['.exe', '.dll', '.asi', '.addon64'];
+
+const ROOT_ID = `${GAME_ID}-root`;
+const ROOT_NAME = "Root Folder";
 
 let GAME_PATH = '';
 let GAME_VERSION = ''; //Game version
@@ -120,6 +124,12 @@ const spec = {
     "requiresLauncher": "steam"
   },
   "modTypes": [
+    {
+      "id": ROOT_ID,
+      "name": ROOT_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}')
+    },
     {
       "id": DATA_ID,
       "name": DATA_NAME,
@@ -455,6 +465,8 @@ function installDlbin(files, gameSpec) {
 
   return Promise.resolve({ instructions });
 }
+
+// START PATCH MOD INSTALLER FUNCTIONS ///////////////////////////////////////////
 
 //Test for patch files (in mod merger). Any archive, with or without sidecar files.
 function testPatch(files, gameId) {
@@ -935,51 +947,6 @@ async function installPatchMulti(files, destinationPath) {
   };
 }
 
-//Test for .stream files
-function testStream(files, gameId) {
-  const isMod = files.some(file => path.extname(file).toLowerCase() === streamFileExt);
-  let supported = (gameId === spec.game.id) && isMod;
-
-  // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
-    supported = false;
-  }
-
-  return Promise.resolve({
-    supported,
-    requiredFiles: [],
-  });
-}
-
-//Install .stream files
-function installStream(files, gameSpec) {
-  const modFile = files.find(file => path.extname(file).toLowerCase() === streamFileExt);
-  const idx = modFile.indexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: STREAM_ID };
-
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-  (
-    (!file.endsWith(path.sep))
-  )
-  );
-
-  const instructions = filtered.map((file, index) => {
-    return {
-      type: 'copy',
-      source: file,
-      destination: path.join(file.substr(idx)),
-    };
-  });
-
-  instructions.push(setModTypeInstruction);
-
-  return Promise.resolve({ instructions });
-}
-
 //A patch aimed at an archive this installation does not have never loads. Nothing else tells the
 //user that, so say it at install time - but never block the install, since they may be mid-update.
 async function warnAboutInertArchives(api, modId) {
@@ -1013,6 +980,176 @@ async function warnAboutInertArchives(api, modId) {
                 + `the mod was made for a different version of the game, or that the game needs `
                 + `updating.`,
           }, [{ label: 'Close', action: () => dismiss() }]);
+        },
+      },
+    ],
+  });
+}
+
+// END PATCH MOD INSTALLER FUNCTIONS ///////////////////////////////////////////
+
+//Test for .stream files with a patch file
+function testStream(files, gameId) {
+  const isMod = files.some(file => path.extname(file).toLowerCase() === streamFileExt);
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install .stream files without patch file
+function installStream(files) {
+  const modFile = files.find(file => path.extname(file).toLowerCase() === streamFileExt);
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: STREAM_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    (!file.endsWith(path.sep))
+  );
+  const instructions = filtered.map((file) => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for Binaries folder mods
+function testBinaries(files, gameId) {
+  const isMod = files.some(file => BINARIES_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer to Binaries folder
+function installBinaries(files) {
+  const setModTypeInstruction = { type: 'setmodtype', value: BINARIES_ID };
+
+  const filtered = files.filter(file =>
+    (!file.endsWith(path.sep))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: file,
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Fallback installer to root folder
+function testFallback(files, gameId) {
+  let supported = (gameId === spec.game.id);
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Fallback installer to root folder
+function installFallback(api, files, destinationPath) {
+  fallbackInstallerNotify(api, destinationPath);
+  const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
+
+  const filtered = files.filter(file =>
+    (!file.endsWith(path.sep))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: file,
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+function fallbackInstallerNotify(api, modName) {
+  const state = api.getState();
+  STAGING_FOLDER = selectors.installPathForGame(state, spec.game.id);
+  modName = path.basename(modName, '.installing');
+  const id = modName.replace(/[^a-zA-Z0-9\s]*( )*/gi, '').slice(0, 20);
+  const NOTIF_ID = `${GAME_ID}-${id}-fallback`;
+  const MESSAGE = 'Fallback installer reached for ' + modName;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'info',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `The mod you just installed reached the fallback installer. This means Vortex could not determine where to place these mod files.\n`
+                + `Please check the mod page description and review the files in the mod staging folder to determine if manual file manipulation is required.\n`
+                + `\n`
+                + `If you think that Vortex should be capable to install this mod to a specific folder, please contact the extension developer for support at the link below.\n`
+                + `\n`
+                + `Mod Name: ${modName}.\n`
+                + `\n`
+          }, [
+            { label: 'Continue', action: () => dismiss() },
+            {
+              label: 'Contact Ext. Developer', action: () => {
+                util.opn(`${EXTENSION_URL}?tab=posts`).catch(() => null);
+                dismiss();
+              }
+            }, //*/
+            //*
+            { label: `Open Mod Page + Staging Folder`, action: () => {
+              util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
+              const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
+              const modMatch = Object.values(mods).find(mod => mod.installationPath === modName);
+              log('warn', `Found ${modMatch?.id} for ${modName}`);
+              let PAGE = ``;
+              if (modMatch) {
+                const MOD_ID = modMatch.attributes.modId;
+                if (MOD_ID !== undefined) {
+                  PAGE = `${MOD_ID}?tab=description`;
+                }
+              }
+              const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
+              util.opn(MOD_PAGE_URL).catch(() => null);
+              dismiss();
+            }}, //*/
+          ]);
         },
       },
     ],
@@ -1461,13 +1598,14 @@ async function setup(discovery, api, gameSpec) {
   setupNotification(api);
   const state = api.getState();
   GAME_PATH = discovery.path;
-  STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
-  DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
+  STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
+  DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
   invalidateBaseArchives();
   await ensureBaseArchives(api);
   /*const isAutoDeployOn = api.getState().settings.automation.deploy;
   if (isAutoDeployOn) autoDeployNotification(api); //*/
-  return fs.ensureDirWritableAsync(path.join(discovery.path, DATA_PATH));
+  await fs.ensureDirWritableAsync(path.join(GAME_PATH, BINARIES_PATH));
+  return fs.ensureDirWritableAsync(path.join(GAME_PATH, DATA_PATH));
 }
 
 //Sound patches used to be a mod type of their own, installed unmerged and numbered by hand. They are
@@ -1557,10 +1695,12 @@ function applyGame(context, gameSpec) {
   );
 
   //register mod installers
-  context.registerInstaller(DATA_ID, 25, testDlbin, installDlbin);
-  context.registerInstaller(PATCH_ID, 27, testPatch,
+  context.registerInstaller(PATCH_ID, 25, testPatch,
     (files, destinationPath) => installPatchMulti(files, destinationPath));
-  context.registerInstaller(STREAM_ID, 31, testStream, installStream);
+  context.registerInstaller(DATA_ID, 27, testDlbin, installDlbin);
+  context.registerInstaller(STREAM_ID, 29, testStream, installStream);
+  context.registerInstaller(BINARIES_ID, 31, testBinaries, installBinaries);
+  context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
 
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {

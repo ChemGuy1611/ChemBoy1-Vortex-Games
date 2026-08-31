@@ -3,7 +3,6 @@ This extension adds AC Brotherhood modding support to Vortex Mod Manager.
 [b]✅ Supported Versions:[/b]
 [list]
 [*]Steam[/*]
-[*]Ubisoft Connect[/*]
 [*]Other versions may need to select the installation location manually.[/*]
 [/list]
 [b]🛠️ Mod Installation Notes:[/b]

@@ -18,7 +18,6 @@
 | Executable (GOG) | `Humanitz.exe` |
 | Executable (Demo) | `Humanitz_Demo.exe` |
 | Extension Page | [https://www.nexusmods.com/site/mods/691](https://www.nexusmods.com/site/mods/691) |
-| PCGamingWiki | []() |
 
 ## Supported Stores
 
@@ -112,4 +111,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **GOG Support** — detects GOG version with adjusted executable/data paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-

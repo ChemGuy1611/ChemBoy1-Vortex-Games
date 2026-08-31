@@ -44,6 +44,8 @@
 //   identify(config, st, ref) partial reference -> Promise of a full reference (default: as given)
 //   routeUrl(ctx, url, nav)   inspect a URL the page is about to open; true means "handled"
 //   displayName(res, key)     what the mod list and notifications call the mod (default: the key)
+//   archiveName(res, key)     file name Vortex should save the archive under. Only needed by a
+//                             source whose download URL carries no file name of its own
 //   extraAttributes(c, res)   [[attributeName, value], ...] stamped on top of the standard set
 //   dependencies              true when the source publishes a dependency graph
 //   fetchStrategy             'capture' (default) or 'click' - see requestDownload below.
@@ -220,6 +222,19 @@ function displayName(adapter, resolved, key) {
   return adapter.displayName(resolved, key) || key;
 }
 
+//The file name Vortex should save the archive under. Vortex names a download from the server's
+//Content-Disposition header or, failing that, the last path segment of the download URL. A source
+//whose URL ends in a slash or an opaque id and whose server sends no such header leaves it with
+//neither, and the placeholder name the file downloads under becomes the mod's staging folder name.
+//An adapter that knows what its source serves supplies that name here; a name the server does send
+//still takes priority over it.
+function archiveNameFor(adapter, resolved, key) {
+  if (adapter.archiveName === undefined) {
+    return undefined;
+  }
+  return adapter.archiveName(resolved, key) || undefined;
+}
+
 // --- installed detection --------------------------------------------------
 
 //The adopter's requirement entry for a key, if it manages that mod itself
@@ -332,6 +347,7 @@ async function installRef(adapter, api, gameSpec, config, ref, options = {}) {
     return undefined;
   }
   const name = displayName(adapter, resolved, key);
+  const archive = archiveNameFor(adapter, resolved, key);
   const previousModIds = keyModIds(adapter, api, gameId, config, key);
   const NOTIF_ID = `${pageId}-installing-${key}`;
   const { selfStartedUrls } = pageState(pageId);
@@ -348,7 +364,10 @@ async function installRef(adapter, api, gameSpec, config, ref, options = {}) {
       ? await importFetchedFile(adapter, api, config, resolved.downloadUrl)
       : await util.toPromise(cb =>
         api.events.emit('start-download', [resolved.downloadUrl], { game: gameId, name },
-          undefined, cb, undefined, { allowInstall: false }));
+          //'replace' goes with a supplied name and nothing else: naming a download makes Vortex
+          //check the download folder first and report an archive already sitting there back as a
+          //failure. Without a name that check never runs, so the call stays as it was.
+          archive, cb, (archive !== undefined) ? 'replace' : undefined, { allowInstall: false }));
     const modId = await util.toPromise(cb =>
       api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
     stampMod(adapter, api, gameSpec, config, modId, resolved, previousModIds);

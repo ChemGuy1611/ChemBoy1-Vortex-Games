@@ -145,6 +145,12 @@ const adapter = {
   //always correct - implement it only when the source publishes a human title.
   displayName: (resolved, key) => resolved.name || key,
 
+  //The file name Vortex should save the archive under. Omit it unless the source's download URL
+  //carries no file name (a trailing slash, or an opaque id) AND its server sends no
+  //Content-Disposition header - without either, Vortex saves the archive under a placeholder name
+  //and that name becomes the mod's staging folder name.
+  //archiveName: (resolved, key) => resolved.fileName || undefined,
+
   //Extra mod attributes stamped alongside the standard set, as [name, value] pairs
   //extraAttributes: (config, resolved) => [['exampleFileId', Number(resolved.fileId)]],
 

@@ -64,6 +64,42 @@ const DIRECT_REQUIREMENTS = [
 DIRECT_REQUIREMENTS[0].directCopyPath = path.join(GAME_PATH, XXX_TARGET_SUBFOLDER, XXX_FILE);
 //*/
 
+/* Direct-copy requirement, managed as a mod: the same naked (non-archive) asset as above, but
+// placed in the staging folder of a mod this module creates instead of loose in the game folder.
+// Vortex then deploys it through modType, so the requirement gets a mod list row with its
+// version, can be enabled/disabled and removed, and takes part in conflict handling.
+// Everything else - update detection, pinning, the "already up to date" report - is the ordinary
+// requirement flow; only the install mechanism differs.
+const DIRECT_AS_MOD_REQUIREMENTS = [
+  {
+    archiveFileName: XXX_FILE,             //matched against the release asset name
+    userFacingName: XXX_NAME,              //also the mod name, mod id and staging folder name
+    githubUrl: XXX_URL_API,
+    directCopyAsMod: true,                 //presence of this field switches the mode on
+    modType: XXX_ID,                       //REQUIRED - the mod type decides where the file deploys
+    assemblyFileName: XXX_FILE,            //the file inside staging, for findModByFile
+    findMod: (api) => findModByFile(api, XXX_ID, XXX_FILE),
+    fileArchivePattern: new RegExp(/^XXX\.dll$/, 'i'),
+    //reads the version stamped on the mod - NOT resolveVersionByDirectCopyMarker: there is a mod
+    //to stamp in this mode, so no sidecar marker file is written
+    resolveVersion: (api) => resolveVersionByModVersion(api, DIRECT_AS_MOD_REQUIREMENTS[0]),
+    //optional legacy pointer: the loose file an older build of this extension wrote with
+    //directCopyPath, deleted once when the managed mod is created. Omit it on a requirement that
+    //was never in loose mode. Same GAME_PATH timing trap - reassign it in setup() (see below).
+    directCopyPath: path.join(GAME_PATH, XXX_TARGET_SUBFOLDER, XXX_FILE),
+    //do NOT set directCopyModType here: it would treat this module's own mod as proof the file is
+    //present, so a hand-deleted loader would never be re-fetched
+    //no findDownloadId: a naked asset never gets a Downloads-tab entry to reuse
+    autoInstall: true,
+    //pinVersion: VER,
+  },
+];
+
+// *** In setup(), immediately after GAME_PATH = discovery.path ////////////////////
+// Only needed when the legacy directCopyPath pointer above is present.
+DIRECT_AS_MOD_REQUIREMENTS[0].directCopyPath = path.join(GAME_PATH, XXX_TARGET_SUBFOLDER, XXX_FILE);
+//*/
+
 /* Nightly requirement: for upstreams whose bleeding-edge builds are GitHub Actions CI
 // artifacts rather than releases (served through nightly.link). Setting nightlyUrl switches
 // the requirement to resolving its identity from the Actions run listing - the newest

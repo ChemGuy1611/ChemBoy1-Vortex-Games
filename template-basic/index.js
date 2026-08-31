@@ -30,7 +30,7 @@ const STEAMAPP_ID_DEMO = "XXX";
 const EPICAPP_ID = "XXX";
 const GOGAPP_ID = "XXX";
 const XBOXAPP_ID = "XXX";
-const XBOXEXECNAME = "XXX";
+const XBOXEXECNAME = "Game";
 const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
 const INSTALL_HIVE = 'HKEY_LOCAL_MACHINE'; //typically HKEY_LOCAL_MACHINE or HKEY_CURRENT_USER
 const INSTALL_KEY = `SOFTWARE\\WOW6432Node\\XXX\\XXX`; //for finding install in registry - requires winapi-bindings
@@ -600,7 +600,7 @@ function installRoot(files) {
   return Promise.resolve({ instructions });
 }
 
-//Fallback installer to Binaries folder
+//Test for Binaries folder mods
 function testBinaries(files, gameId) {
   const isMod = files.some(file => BINARIES_EXTS.includes(path.extname(file).toLowerCase()));
   let supported = (gameId === spec.game.id) && isMod;
@@ -618,7 +618,7 @@ function testBinaries(files, gameId) {
   });
 }
 
-//Fallback installer to Binaries folder
+//Installer to Binaries folder
 function installBinaries(files) {
   const setModTypeInstruction = { type: 'setmodtype', value: BINARIES_ID };
 

@@ -2,8 +2,8 @@
 Name: MENACE Vortex Extension
 Structure: Unity BepinEx/MelonLoader Hybrid
 Author: ChemBoy1
-Version: 0.7.0
-Date: 2026-08-29
+Version: 0.7.1
+Date: 2026-08-30
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -15,7 +15,7 @@ const { parseStringPromise } = require('xml2js');
 const winapi = require('winapi-bindings');
 const React = require('react');
 //Auto-downloader module
-const { download, findModByFile, findDownloadIdByFile, resolveVersionByDirectCopyMarker, resolveVersionByModVersion } = require('./downloader');
+const { download, findModByFile, findDownloadIdByFile, resolveVersionByModVersion } = require('./downloader');
 
 // -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -339,20 +339,25 @@ const MODKIT_ARC_NAME = 'menace-modkit-win-x64.zip';
 const MODKIT_LOADER_FOLDER = path.join('third_party', 'bundled', 'ModpackLoader');
 const MODKIT_URL_API = 'https://api.github.com/repos/antistrategie/MenaceModkit';
 
-//Jiangyu ships a naked .dll, which Vortex's archive install pipeline cannot handle - direct-copy
-//mode fetches it straight to the MelonLoader "Mods" folder instead.
+//Jiangyu ships a naked .dll, which Vortex's archive install pipeline cannot handle. directCopyAsMod
+//puts the file in a managed mod's staging folder instead, so it deploys to the MelonLoader "Mods"
+//folder through JIANGYU_ID and shows up in the mod list like any other mod - with its version, and
+//removable from there.
 const JIANGYU_REQUIREMENTS = [
   {
     archiveFileName: JIANGYU_ARC_NAME,
     userFacingName: JIANGYU_NAME,
     githubUrl: JIANGYU_URL_API,
-    //placeholder only: GAME_PATH is '' at module load, so setup() reassigns this
-    directCopyPath: path.join(GAME_PATH, JIANGYU_PATH, JIANGYU_FILE),
-    //counts as installed if the user got the archived build from Nexus instead
-    directCopyModType: JIANGYU_ID,
+    directCopyAsMod: true,
+    modType: JIANGYU_ID, //required in this mode - the mod type is what decides where the file deploys
+    assemblyFileName: JIANGYU_FILE,
+    findMod: (api) => findModByFile(api, JIANGYU_ID, JIANGYU_FILE),
     //the release also carries jiangyu-cli and jiangyu-studio archives - anchor both ends
     fileArchivePattern: /^Jiangyu\.Loader\.dll$/i,
-    resolveVersion: (api) => resolveVersionByDirectCopyMarker(api, JIANGYU_REQUIREMENTS[0]),
+    resolveVersion: (api) => resolveVersionByModVersion(api, JIANGYU_REQUIREMENTS[0]),
+    //legacy loose copy written by the old direct-copy mode - deleted once, when the managed mod is
+    //created. Placeholder only: GAME_PATH is '' at module load, so setup() reassigns it.
+    directCopyPath: path.join(GAME_PATH, JIANGYU_PATH, JIANGYU_FILE),
     autoInstall: true, //this is the game's current loader, so a missing copy is installed for the user
   },
 ];
@@ -2725,8 +2730,9 @@ async function setup(discovery, api, gameSpec) {
   MODTYPE_FOLDERS.push(ASSEMBLY_PATH);
   MODTYPE_FOLDERS.push(ASSETS_PATH);
   await modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
-  //REQUIRED: JIANGYU_REQUIREMENTS is built at module load, when GAME_PATH is still '', so the
-  //baked-in directCopyPath is relative and would never resolve. setup() runs on every
+  //REQUIRED while the legacy directCopyPath pointer is present: JIANGYU_REQUIREMENTS is built at
+  //module load, when GAME_PATH is still '', so the baked-in path is relative and would never
+  //resolve - the old loose copy would then never be cleaned up. setup() runs on every
   //gamemode-activated, so this reassignment precedes every path that reads the field.
   JIANGYU_REQUIREMENTS[0].directCopyPath = path.join(GAME_PATH, JIANGYU_PATH, JIANGYU_FILE);
   await downloadJiangyu(api, gameSpec);
@@ -3175,8 +3181,8 @@ function isModpackLoaderInstalled(api, spec) {
   return statCheckSync(getDiscoveryPath(api), path.join(MELON_MODS_PATH, MODPACKLOADER_FILE));
 }
 
-// Test if Jiangyu Loader is installed. It is normally copied straight into the game folder rather
-// than installed as a mod, so the file on disk counts as well as a mod carrying its type.
+// Test if Jiangyu Loader is installed. The downloader installs it as a managed mod of its own type,
+// so that check is the normal case; the file on disk still counts, for a loader placed by hand.
 function isJiangyuInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};

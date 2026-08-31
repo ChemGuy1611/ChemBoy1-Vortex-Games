@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [1.1.0] - 2026-08-31
+
+- Added: Binaries (.dll) and fallback installers.
+
 ## [1.0.1] - 2026-08-29
 
 - The mod options dialog has a "Select All" button for mods that offer several components to install.

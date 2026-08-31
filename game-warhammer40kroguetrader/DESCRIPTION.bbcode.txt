@@ -4,7 +4,6 @@ This extension adds Warhammer 40,000: Rogue Trader modding support to Vortex Mod
 [list]
 [*]Steam[/*]
 [*]GOG[/*]
-[*]Epic[/*]
 [*]Xbox (Game Pass)[/*]
 [*]Other versions may need to select the installation location manually.[/*]
 [/list]

@@ -52,6 +52,24 @@ function fileDownloadUrl(fileId) {
   return `https://gamebanana.com/dl/${fileId}`;
 }
 
+// The CDN URL a /dl/{fileId} link redirects to - files.gamebanana.com/{section}/{fileName}. It is
+// resolved rather than built, because the section segment is not derivable from anything the file
+// record carries. HEAD, so the archive itself is never pulled just to learn its name. A followed
+// redirect is the only way to read it: redirect: 'manual' yields an opaque filtered response in
+// Chromium, status 0 with the headers emptied, so Location cannot be read at all.
+async function resolveCdnUrl(url) {
+  try {
+    const response = await fetch(url, { method: 'HEAD' });
+    if (!response.ok) {
+      throw new Error(`Request failed with status code ${response.status}`);
+    }
+    return response.url || null;
+  } catch (err) {
+    log('debug', `Could not resolve the GameBanana CDN URL for ${url}: ${err}`);
+    return null;
+  }
+}
+
 // --- version pinning ------------------------------------------------------
 // An opt-in pin holds a requirement at one specific submission version instead of tracking the
 // newest file. pinVersion is the label shown to the user and pinFileId is the file to install:
@@ -188,8 +206,22 @@ async function downloadGameBananaRequirement(api, gameSpec, requirement, check =
     if (!URL) {
       throw new util.ProcessCanceled('GameBanana API is unreachable and no fallback file id is set');
     }
+    //Hand Vortex the CDN URL rather than the /dl/{fileId} one. Vortex names an archive from the
+    //server's Content-Disposition, failing that from the last path segment of the URL it was given,
+    //and only failing both from the fileName argument below. /dl/{fileId} puts an opaque id in that
+    //segment and its CDN sends no Content-Disposition, so the id wins over the hint and becomes the
+    //archive name - and with it the mod's staging folder name, since the install pipeline takes the
+    //staging folder name straight off the archive. Worse, an id carries no archive extension, and
+    //Vortex deletes download-folder files that have none. The redirect target carries the real file
+    //name. Falling back to the /dl/ URL still downloads the right file, just under the id.
+    const downloadUrl = (await resolveCdnUrl(URL)) || URL;
+    //Backstop for that fallback, and for a URL whose last segment is empty. 'replace' rides along
+    //with it: naming a download makes Vortex check the download folder first and hand an archive
+    //already sitting there back through the callback as an error rather than a download id.
+    const archive = latestFile?._sFile || undefined;
     const dlId = await util.toPromise(cb =>
-      api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      api.events.emit('start-download', [downloadUrl], dlInfo, archive, cb,
+        (archive !== undefined) ? 'replace' : undefined, { allowInstall: false }));
     const modId = await util.toPromise(cb =>
       api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
     const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);

@@ -135,7 +135,7 @@ https://gamebanana.com/dl/1765017
   200    application/zip
 ```
 
-Two things follow from it:
+Three things follow from it:
 
 - **A stale file id does not fail loudly.** `/dl/{fileId}` for a file the submission has since replaced
   redirects to the submission's download *page* (`/{section}/download/{itemId}`) and returns HTML with a
@@ -145,6 +145,22 @@ Two things follow from it:
   cannot be traced back to its submission from the URL alone. There is no endpoint that maps a file id
   to its item either: `apiv11/File/{fileId}` returns the file record with no parent field, and the Core
   API's `Url().sProfileUrl()` for a `File` returns a malformed URL (`gamebanana.com//{fileId}`).
+- **`/dl/{fileId}` is the wrong URL to hand a download manager**, even though it fetches the right
+  bytes. Vortex names an archive from the server's `Content-Disposition`, failing that from the last
+  path segment of the URL it was given, and only failing both from the file name the caller supplied.
+  The CDN sends no `Content-Disposition` and `1788872` is a perfectly good last segment, so the file
+  id becomes the archive name — and the install pipeline takes the mod's staging folder name straight
+  off the archive name. The id also carries no archive extension, which is enough for Vortex to delete
+  the archive from the download folder on a later pass. Resolve the redirect first and hand over the
+  URL it lands on; the caller-supplied name cannot rescue this case, because the URL segment outranks
+  it. See `VORTEX_DOWNLOAD_MGMT.md`.
+
+  ```js
+  // HEAD, so the archive is not pulled just to learn its name. The redirect must be FOLLOWED:
+  // redirect: 'manual' yields an opaque filtered response in Chromium, Location unreadable.
+  const response = await fetch(`https://gamebanana.com/dl/${fileId}`, { method: 'HEAD' });
+  const downloadUrl = response.ok ? response.url : null;
+  ```
 
 The one-click links the site renders for registered managers take the form
 `{manager}:https://gamebanana.com/mmdl/{fileId},{Model},{itemId}` — the only download link on the site

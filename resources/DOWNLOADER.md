@@ -83,8 +83,9 @@ const {
 | `autoInstall` | opt-out | `false` -> never install this requirement unattended. `setup()` and the update check both leave it alone; only an explicit user action (a toolbar button calling `download`) installs it. Default (unset) installs a missing requirement automatically. |
 | `pinVersion` | opt-in | Hold this requirement at one specific release instead of tracking the newest. While the installed version equals the pin, the update check returns without any HTTP request. See **Version pinning**. |
 | `pinTag` | with `pinVersion` | The GitHub tag to fetch when it is not simply `pinVersion`. The same tag with its leading `v` toggled is retried automatically on a 404, so most repos need no `pinTag` at all. |
-| `directCopyPath` | opt-in | Absolute destination **file** path. Its presence switches the requirement into direct-copy mode for non-archive assets — `findMod`/`findDownloadId`/`modType`/`assemblyFileName` are then not read. See **Direct-copy requirements**. |
-| `directCopyModType` | with `directCopyPath` | Mod type that also satisfies the requirement. If a mod of this type is installed (the user took an archived build from Nexus instead), the file is considered present without touching the filesystem. |
+| `directCopyPath` | opt-in | Absolute destination **file** path. On its own it switches the requirement into **loose** direct-copy mode for non-archive assets — `findMod`/`findDownloadId`/`modType`/`assemblyFileName` are then not read. Alongside `directCopyAsMod` it is only the legacy pointer to the loose file an older build wrote, deleted once on migration. See **Direct-copy requirements**. |
+| `directCopyModType` | with `directCopyPath` | Mod type that also satisfies the requirement. If a mod of this type is installed (the user took an archived build from Nexus instead), the file is considered present without touching the filesystem. Must **not** be set alongside `directCopyAsMod`. |
+| `directCopyAsMod` | opt-in | `true` -> the naked asset is installed into the staging folder of a mod the module creates, and Vortex deploys it through `modType`, instead of being written loose into the game folder. Requires `modType`; `findMod`, `assemblyFileName` and `resolveVersion` are read as for an ordinary requirement. See **Managed-mod mode**. |
 | `nightlyUrl` | opt-in | Stable download URL for a GitHub Actions CI artifact (a `nightly.link` URL). Its presence switches the requirement into nightly mode, where identity comes from the Actions run listing rather than a release. See **Nightly (CI artifact) requirements**. |
 | `nightlyWorkflow` | with `nightlyUrl` | Workflow file name as it appears in `.github/workflows`, e.g. `build.yml`. |
 | `nightlyBranch` | with `nightlyUrl` | Branch the nightly is built from, e.g. `alpha-development`. |
@@ -159,11 +160,41 @@ Two comparison details are load-bearing in `downloader.js`. `latestAssetVersion(
 
 Some upstreams publish a naked file rather than an archive — a bare `.dll`, a single `.exe`. Vortex's install pipeline (`import-downloads` -> `start-install-download`) assumes 7-Zip can open whatever was downloaded, so those assets cannot travel through it at all; extensions have historically hand-rolled ~80 lines of bespoke download code per case.
 
-Setting `directCopyPath` switches a requirement into direct-copy mode: the matched release asset is fetched straight to that path and is never registered as a Vortex mod. `findMod`, `findDownloadId`, `modType` and `assemblyFileName` are not read for such a requirement. Everything about *choosing* the asset is unchanged — `archiveFileName`, `fileArchivePattern`, `githubUrl`, `userFacingName`, `allowPrerelease`, `prereleaseTag`, `trackByAssetDate` and `pinVersion` all behave identically, because none of them care whether the matched asset is an archive.
+There are two ways to handle such an asset. Both pick the asset identically — `archiveFileName`, `fileArchivePattern`, `githubUrl`, `userFacingName`, `allowPrerelease`, `prereleaseTag`, `trackByAssetDate` and `pinVersion` all behave as they do for an archive, because none of them care what the matched file is. They differ in where the file ends up and therefore in what the user can do with it.
+
+| | Loose copy (`directCopyPath`) | Managed mod (`directCopyAsMod`) |
+| --- | --- | --- |
+| Mod list | nothing appears | row with the name, version and a Source link to the repo |
+| Enable / disable | not possible | ordinary — disabling purges the file |
+| Remove | file stays until hand-deleted | removes the file |
+| Update | file overwritten in place, marker rewritten | staging file replaced, `version` attribute restamped |
+| Version source | `<file>.version.json` sidecar | the mod's `version` attribute |
+| File conflicts | invisible to Vortex | ordinary file-conflict handling |
+
+### Loose mode
+
+Setting `directCopyPath` alone switches a requirement into loose direct-copy mode: the matched release asset is fetched straight to that path and is never registered as a Vortex mod. `findMod`, `findDownloadId`, `modType` and `assemblyFileName` are not read for such a requirement.
 
 - **Installed detection** is a `stat` on `directCopyPath`, plus an optional check for a mod of `directCopyModType` — that covers a user who installed an archived build from Nexus instead, whose file Vortex is already deploying.
 - **Version tracking uses a sidecar marker.** A direct-copied file is not a managed mod, so there are no attributes to stamp. The install writes `<directCopyPath>.version.json` holding `{ version, assetDate }`, and `resolveVersionByDirectCopyMarker` reads it back. The marker disappears with the file (or the game folder), which correctly forces re-detection. Deleting only the marker leaves the file in place but forces one re-resolve.
 - **No Downloads-tab entry is created.** This is deliberate: an entry whose "Install" button cannot work would only mislead, for a file that structurally cannot be installed.
+
+### Managed-mod mode
+
+Setting `directCopyAsMod: true` (with a `modType`) keeps the naked-asset download but gives the file an owner: the module creates a mod, writes the asset into that mod's staging folder, and lets Vortex deploy it to wherever the mod type points. Deploy, the mod list row, the version column, enable/disable, remove, conflicts and update all become the ordinary managed-mod paths.
+
+The mode does **not** get its own branch at the top of `download()` the way loose mode does. It runs the ordinary requirement flow and swaps only the *install mechanism*, so `findMod`, update detection, pinning, the "already up to date" report and the outgoing-copy disable sweep keep working unchanged. Three consequences follow from that:
+
+- **`modType` is required**, and it alone decides the deploy destination. It is not subject to the `GAME_PATH` timing trap below.
+- **`resolveVersion` is `resolveVersionByModVersion`** (or `resolveVersionByAssetDate` under `trackByAssetDate`) — *not* `resolveVersionByDirectCopyMarker`. There is a mod to stamp, so no sidecar marker is written.
+- **`directCopyModType` must not be set.** It would make the module's own mod count as proof the file is present, so a loader the user hand-deleted would never be re-fetched. `findDownloadId` is equally pointless here: a naked asset never gets a Downloads-tab entry to reuse.
+
+Two behaviors are worth knowing:
+
+- **Ownership is marked, not assumed.** A user can install an archived build of the same loader by hand, and the extension's own installer types it with the same `modType` — so the module stamps `directCopyAsMod: true` on the mod it creates. A mod found *with* the marker is ours: the staging folder is cleared, the new asset written, the attributes restamped, the mod id kept. A mod found *without* it is the user's own install and is left completely alone, counting as installed (the same semantics `directCopyModType` has in loose mode).
+- **A legacy loose copy is migrated once.** `directCopyPath` stays valid in this mode as a pointer to the file an older build wrote loose; when no mod of the requirement's type exists yet, that file and its `.version.json` marker are deleted before the mod is created, so deployment does not find a foreign file at the target and back it up as `<file>.vortex_backup`. Omit the field entirely on a requirement that was never in loose mode. The deletion only ever runs when no such mod exists — when one does, the file at that path is a link Vortex itself deployed.
+
+Deployment is triggered explicitly: after enabling the mod the module emits `mods-enabled`, which is what schedules the deployment (or raises the "deployment necessary" banner when auto-deploy is off). A dispatch alone would leave Vortex unaware. In collections, the mod appears as a non-shareable local mod — more than the loose copy offers, which is invisible to collections entirely.
 
 ### The `GAME_PATH` timing trap
 
@@ -177,6 +208,8 @@ XXX_REQUIREMENTS[0].directCopyPath = path.join(GAME_PATH, XXX_TARGET_SUBFOLDER, 
 ```
 
 `setup()` runs on every `gamemode-activated`, so it always precedes the toolbar action and the `check-mods-version` handler for that game — one reassignment there covers every path that reads the field. Put it next to the other `GAME_PATH` consumers.
+
+In managed-mod mode this applies only when the legacy pointer is present — the deploy destination itself comes from `modType`, which needs no reassignment. A managed-mod requirement that never had a loose predecessor omits `directCopyPath` and escapes the trap entirely.
 
 ---
 
@@ -258,7 +291,7 @@ const REQUIREMENTS = [
 ];
 ```
 
-The template also carries a commented direct-copy requirement, including the `setup()` reassignment of `directCopyPath` that the `GAME_PATH` timing trap requires.
+The template also carries commented blocks for both direct-copy modes — `DIRECT_REQUIREMENTS` (loose) and `DIRECT_AS_MOD_REQUIREMENTS` (managed mod) — each including the `setup()` reassignment of `directCopyPath` that the `GAME_PATH` timing trap requires.
 
 In `setup()` — install on first run if missing:
 

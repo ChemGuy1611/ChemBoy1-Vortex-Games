@@ -87,6 +87,7 @@ those behaviours bound to a source; a source module is then a thin re-export und
 | `identify(config, state, partial)` | no | Partial reference → Promise of a full one. Default passes it straight through; GameBanana implements it because its download URLs do not identify the mod |
 | `routeUrl(ctx, url, navigated)` | no | First refusal on every URL the page opens. Return `true` to consume it |
 | `displayName(resolved, key)` | no | What the mod list and notifications call the mod. **Default is the key**, which is always correct — no field on the resolved record is treated as a human title by convention |
+| `archiveName(resolved, key)` | no | File name Vortex should save the archive under. Needed only where the source's download URL carries no file name of its own and its server sends no `Content-Disposition` — see below |
 | `extraAttributes(config, resolved)` | no | `[[name, value], ...]` stamped on top of the standard attribute set |
 | `dependencies` | no | `true` only when the source publishes a machine-readable dependency graph |
 | `fetchStrategy` / `fetchToFile` | no | `'capture'` (default) or `'click'` — see below |
@@ -425,3 +426,44 @@ the bot-block that forces `fetchStrategy: 'click'`).
 `VORTEX_REACT_PAGES.md` (`registerMainPage` and the page component API).
 `VORTEX_MOD_INSTALL.md` (what `start-install-download` hands the archive to).
 `VORTEX_DOWNLOAD_MGMT.md` (download states, protocol handlers, `did-finish-download`).
+
+## Naming the archive
+
+Vortex names a download from the server's `Content-Disposition` header, then from the last path
+segment of the requested URL, then from the `fileName` argument the caller passed to
+`start-download` — and failing all three it keeps the `__vortex_tmp_<8 digits>` placeholder it
+downloaded under. `InstallManager` takes the mod's staging folder name straight off that file name,
+so a source that answers none of the first three leaves every mod installed from its page in a
+folder called `__vortex_tmp_00000000`, and any installer that derives an in-game folder name from
+`destinationPath` inherits it.
+
+The URL segment is read from the URL the caller supplied, not the one a redirect lands on, and it
+**outranks** the `fileName` argument. So a source is in one of two situations:
+
+- **The URL's last segment is empty** — `thunderstore.io/package/download/{namespace}/{name}/{version}/`
+  ends in a slash, and its CDN sends no `Content-Disposition`. Nothing is derived, so `archiveName`
+  applies. Thunderstore builds it from the resolved record: `Namespace-Name-Version.zip`, the archive
+  it actually serves.
+- **The URL's last segment is an opaque id** — `gamebanana.com/dl/{fileId}`, again with no
+  `Content-Disposition` behind it. `1788872` is a perfectly good segment as far as Vortex is
+  concerned, so it wins and `archiveName` is never consulted. A hint cannot fix this one; the URL
+  has to change. GameBanana therefore implements `resolveForInstall`, which resolves the redirect
+  (`HEAD` with redirects followed, `response.url`) and hands over
+  `files.gamebanana.com/{section}/{fileName}` instead. Its `archiveName` stays as a backstop for the
+  path where that resolution fails and the `/dl/` URL is used unchanged.
+
+Getting this wrong on GameBanana costs more than a bad folder name: an id carries no archive
+extension, and Vortex deletes download-folder files that have none, so the archive disappears on a
+later pass while the installed mod keeps its meaningless name.
+
+ModDB needs neither hook — it fetches through `fetchToFile` rather than the download manager.
+fcmodding already resolves to a versioned URL that ends in the file name, and ModWorkshop's storage
+URLs carry both an extension and a `Content-Disposition`.
+
+The base passes `redownload: 'replace'` alongside a supplied name and nothing otherwise. Naming a
+download makes Vortex check the download folder first, and an archive already sitting there is
+handed back through the callback as an `AlreadyDownloaded` **error**, which the install path would
+report as a failed download. Without a name that check never runs, so an adapter that supplies no
+`archiveName` behaves exactly as it did before.
+
+Full mechanism in `VORTEX_DOWNLOAD_MGMT.md`.

@@ -2,8 +2,8 @@
 Name: Hades II Vortex Extension
 Structure: 3rd-Party Mod Installer
 Author: ChemBoy1
-Version: 1.1.2
-Date: 2026-08-17
+Version: 1.1.3
+Date: 2026-08-30
 ////////////////////////////////*/
 
 //Import libraries
@@ -775,8 +775,30 @@ function testPlugin(files, gameId) {
   });
 }
 
+//The folder name ReturnOfModding resolves a plugin by. The manifest is authoritative: it names the
+//plugin exactly as the packages that depend on it reference it, so it is read from the extracted
+//files rather than inferred from anything around them.
+function pluginFolderFromManifest(manifest) {
+  if (manifest.FullName) {
+    return String(manifest.FullName).trim();
+  }
+  if (manifest.namespace && manifest.name) {
+    return `${manifest.namespace}-${manifest.name}`.trim();
+  }
+  return manifest.name ? String(manifest.name).trim() : null;
+}
+
+//Fallback for a manifest that cannot be read or names nothing: the staging folder, which Vortex
+//names after the archive. Thunderstore serves Namespace-Name-Version.zip, so stripping the version
+//off it yields the same string the manifest would have given.
+function pluginFolderFromArchive(destinationPath) {
+  return path.basename(destinationPath)
+    .replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '')
+    .replace(/-\d+(\.\d+)*$/, '');
+}
+
 //Installer install ReturnOfModding plugins
-function installPlugin(files, destinationPath) {
+async function installPlugin(files, destinationPath) {
   const modFile = files.find(file => path.basename(file).toLowerCase() === PLUGIN_FILE);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: PLUGIN_ID };
@@ -787,11 +809,17 @@ function installPlugin(files, destinationPath) {
   const hasPluginsFolder = (segments.length > 0) && (segments[0].toLowerCase() === 'plugins');
   const stripPath = hasPluginsFolder ? segments[0] : rootPath;
   const stripPrefix = (stripPath === '.') ? '' : stripPath + path.sep;
-  //Thunderstore serves Namespace-Name-Version.zip and Vortex names the staging folder after the
-  //archive, so stripping the version off the folder name yields the Namespace-Name plugin folder.
-  const MOD_FOLDER = path.basename(destinationPath)
-    .replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '')
-    .replace(/-\d+(\.\d+)*$/, '');
+  let MOD_FOLDER = '';
+  if (!hasPluginsFolder) {
+    let fromManifest = null;
+    try {
+      const manifest = JSON.parse(await fs.readFileAsync(path.join(destinationPath, modFile), 'utf8'));
+      fromManifest = pluginFolderFromManifest(manifest);
+    } catch (err) {
+      log('warn', `Could not read the plugin manifest ${modFile}: ${err}`);
+    }
+    MOD_FOLDER = fromManifest || pluginFolderFromArchive(destinationPath);
+  }
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
@@ -808,7 +836,7 @@ function installPlugin(files, destinationPath) {
   });
   instructions.push(setModTypeInstruction);
 
-  return Promise.resolve({ instructions });
+  return { instructions };
 }
 
 //Installer test for mod files

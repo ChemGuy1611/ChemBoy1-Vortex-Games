@@ -24,7 +24,6 @@
 - **Steam** — `1588550`
 - **Epic Games Store** — `b94ba8f135914605ad8bbc9083db427e`
 - **GOG** — `1300489906`
-- **Xbox / Microsoft Store** — ``
 
 ## Feature Flags
 
@@ -118,9 +117,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
-- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **GOG Support** — detects GOG version with adjusted executable/data paths.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-

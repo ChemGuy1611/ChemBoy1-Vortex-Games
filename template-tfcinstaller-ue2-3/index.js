@@ -959,9 +959,9 @@ function deployNotify(api) {
         action: (dismiss) => {
           api.showDialog('question', MESSAGE, {
             text: `For most mods, you must use ${MOD_NAME} to install the mod to the game files after installing with Vortex.\n`
-                + `Mods to install with ${MOD_NAME} will be found at this folder: "[RootGameFolder]\\${TFC_FOLDER}\\Mods".\n`
+                + `Mods to install with ${MOD_NAME} will be found at this folder: "<RootGameFolder>\\${TFC_FOLDER}\\Mods".\n`
                 + `If you don't see your mod's folder there, check in the root game folder.\n`
-                + `Use the included tool to launch ${MOD_NAME} (button on notification or in "Dashboard" tab).\n`
+                + `Use the included tool to launch ${MOD_NAME} (button on notification or in Tools tab).\n`
           }, [
             {
               label: 'Run TFC', action: () => {

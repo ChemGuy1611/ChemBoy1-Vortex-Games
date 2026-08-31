@@ -356,6 +356,26 @@ async function resolveGameBananaItem(config, ref) {
   };
 }
 
+//The CDN URL a /dl/{fileId} link redirects to - files.gamebanana.com/{section}/{fileName}. Vortex
+//names an archive from the server's Content-Disposition, failing that from the last path segment of
+//the URL it was given, and only failing both from the fileName it was handed. /dl/{fileId} puts an
+//opaque id in that segment and its CDN sends no Content-Disposition, so the id becomes the archive
+//name and, through it, the mod's staging folder name. The redirect target carries the real name.
+//HEAD, so the archive is never pulled just to learn it, and the redirect has to be FOLLOWED:
+//redirect: 'manual' yields an opaque filtered response in Chromium with Location unreadable.
+async function resolveCdnUrl(url) {
+  try {
+    const response = await fetch(url, { method: 'HEAD' });
+    if (!response.ok) {
+      throw new Error(`Request failed with status code ${response.status}`);
+    }
+    return response.url || null;
+  } catch (err) {
+    log('debug', `Could not resolve the GameBanana CDN URL for ${url}: ${err}`);
+    return null;
+  }
+}
+
 // --- identifying a claimed download ---------------------------------------
 
 //Whether a submission's files include the file the download delivered
@@ -454,6 +474,19 @@ const adapter = {
   parseClaim: downloadPartialRef,
   identify: identifyClaimedItem,
   resolve: resolveGameBananaItem,
+
+  //Same lookup, then the download URL is upgraded to the CDN one it redirects to, so the archive is
+  //saved under its real name instead of the file id. Only the install path pays that extra request;
+  //the update check and the dependency walk go through resolve(). parseClaim already recognises a
+  //CDN URL - it is the same shape a download captured from the site carries.
+  resolveForInstall: async (config, ref) => {
+    const resolved = await resolveGameBananaItem(config, ref);
+    if (resolved === null) {
+      return null;
+    }
+    const cdnUrl = await resolveCdnUrl(resolved.downloadUrl);
+    return (cdnUrl !== null) ? { ...resolved, downloadUrl: cdnUrl } : resolved;
+  },
 
   //Submissions carry a human title, so the mod list shows that rather than "Mod-428520"
   displayName: (resolved, key) => resolved.name || key,

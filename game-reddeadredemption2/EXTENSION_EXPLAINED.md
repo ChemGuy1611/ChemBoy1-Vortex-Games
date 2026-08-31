@@ -14,7 +14,6 @@
 | --- | --- |
 | Game ID | `reddeadredemption2` |
 | Executable | `./RDR2.exe` |
-| Extension Page | []() |
 | PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Red_Dead_Redemption_2](https://www.pcgamingwiki.com/wiki/Red_Dead_Redemption_2) |
 
 ## Supported Stores
@@ -62,4 +61,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-

@@ -4,6 +4,10 @@
 
 - None planned at this time
 
+## [0.7.1] - 2026-08-30
+
+- Changed: Jiangyu now appears in your mod list with its version, and can be disabled or removed from there like any other mod. An existing copy is replaced automatically.
+
 ## [0.7.0] - 2026-08-29
 
 - Added: Support for Jiangyu, the mod loader that replaced ModpackLoader. It is downloaded and installed for you, and kept up to date.

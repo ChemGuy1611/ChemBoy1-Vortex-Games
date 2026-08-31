@@ -5,7 +5,6 @@ This extension adds REANIMAL modding support to Vortex Mod Manager.
 [*]Steam[/*]
 [*]GOG[/*]
 [*]Epic[/*]
-[*]Xbox (Game Pass)[/*]
 [*]Other versions may need to select the installation location manually.[/*]
 [/list]
 [b]🛠️ Mod Installation Notes:[/b]

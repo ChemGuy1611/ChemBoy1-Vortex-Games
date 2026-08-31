@@ -4,6 +4,10 @@
 
 - Config and save modtypes, installers, and open buttons.
 
+## [1.0.1] - 2026-08-30
+
+- Fixed: EternalModInjector and mods installed from the Browse GameBanana page are now saved under their real file name. They previously used the numeric GameBanana file id, which left the mod folder unrecognisable and caused Vortex to delete the downloaded archive afterwards.
+
 ## [1.0.0] - 2026-08-17
 
 - Added: "Browse GameBanana" page - browse the DOOM Eternal mod section inside Vortex, and a download started from it installs, enables and names itself like any managed mod

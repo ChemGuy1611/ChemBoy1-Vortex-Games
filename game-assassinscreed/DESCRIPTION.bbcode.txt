@@ -4,7 +4,6 @@ This extension adds AC I modding support to Vortex Mod Manager.
 [list]
 [*]Steam[/*]
 [*]GOG[/*]
-[*]Ubisoft Connect[/*]
 [*]Other versions may need to select the installation location manually.[/*]
 [/list]
 [b]🛠️ Mod Installation Notes:[/b]

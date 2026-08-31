@@ -4,7 +4,6 @@ This extension adds Dragon Age Inquisition modding support to Vortex Mod Manager
 [list]
 [*]Steam[/*]
 [*]Epic[/*]
-[*]EA[/*]
 [*]Other versions may need to select the installation location manually.[/*]
 [/list]
 [b]🛠️ Mod Installation Notes:[/b]

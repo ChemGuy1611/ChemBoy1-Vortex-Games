@@ -7,11 +7,13 @@
 // requests use the same Chromium network stack the old vendored axios browser build
 // did). Externals are vortex-api and node's path/fs/stream, plus semver.
 //
-// Three opt-in requirement modes sit on top of the default "install and track the latest
+// Four opt-in requirement modes sit on top of the default "install and track the latest
 // release" behavior: pinVersion holds a requirement at one release and makes its update check
 // skip the network entirely, directCopyPath fetches a naked (non-archive) release asset
-// straight to a file path instead of installing it as a mod, and nightlyUrl tracks a GitHub
-// Actions CI artifact (which is not a release at all) by its workflow run number.
+// straight to a file path instead of installing it as a mod, directCopyAsMod puts that same
+// naked asset into a managed mod's staging folder so Vortex deploys it like any other mod, and
+// nightlyUrl tracks a GitHub Actions CI artifact (which is not a release at all) by its
+// workflow run number.
 //
 // Public API: download, getLatestGithubReleaseAsset, getLatestNightlyArtifact, doDownload,
 // findModByFile, findDownloadIdByFile, walkPath, resolveVersionByPattern,
@@ -90,6 +92,20 @@ function isNightly(requirement) {
     && (requirement.nightlyUrl !== '');
 }
 
+// Loose direct-copy mode: the asset is written straight to directCopyPath and never becomes a
+// mod. The managed-mod mode re-uses the same field as its legacy pointer (the loose file left
+// behind by an older build, cleaned up once), so it must be excluded here - every behavioral
+// test for loose mode goes through this helper rather than reading the field directly.
+function isDirectCopy(requirement) {
+  return (requirement?.directCopyPath !== undefined) && (requirement.directCopyAsMod !== true);
+}
+
+// Managed-mod direct-copy mode: a naked asset placed into a mod's staging folder, where Vortex
+// deploys it like any other mod. See the direct copy section further down.
+function isDirectCopyAsMod(requirement) {
+  return requirement?.directCopyAsMod === true;
+}
+
 // --- version pinning ------------------------------------------------------
 // An opt-in pin holds a requirement at one specific release instead of tracking the newest
 // one. pinVersion is both the compare key and the label shown to the user; pinTag names the
@@ -107,7 +123,7 @@ function isPinned(requirement) {
 // has to work whichever resolver strategy the requirement is configured with, and
 // resolveVersionByAssetDate returns a date that could never be compared against a version.
 async function installedPinVersion(api, requirement) {
-  if (requirement.directCopyPath !== undefined) {
+  if (isDirectCopy(requirement)) {
     const marker = await readDirectCopyMarker(requirement);
     return marker?.version ?? '';
   }
@@ -246,9 +262,12 @@ async function download(api, requirements, force) {
       }
       activeInstalls.add(guardKey);
       try {
-        // Direct-copy requirements (naked, non-archive release assets) bypass the mod pipeline
-        // entirely - findMod/findDownloadId/modType/assemblyFileName are not read for them.
-        if (req.directCopyPath !== undefined) {
+        // Loose direct-copy requirements (naked, non-archive release assets) bypass the mod
+        // pipeline entirely - findMod/findDownloadId/modType/assemblyFileName are not read for
+        // them. Managed-mod direct copies deliberately do NOT branch here: they run the ordinary
+        // flow below and swap only the install mechanism, which is what keeps pinning, the update
+        // comparison and the up-to-date report working for them.
+        if (isDirectCopy(req)) {
           if (await downloadDirectCopy(api, req, force)) {
             installedAny = true;
           }
@@ -309,7 +328,9 @@ async function download(api, requirements, force) {
         const dlId = req.findDownloadId ? req.findDownloadId(api) : '';
         // A nightly artifact's filename is constant across every CI run, so a local archive
         // matching it is precisely what must NOT be reused - always re-resolve the newest run.
-        if (!versionMismatch && !force && dlId && !isNightly(req)) {
+        // A naked asset has no archive to reuse at all (the module never creates a Downloads-tab
+        // entry for one), so the managed-mod mode is excluded here too.
+        if (!versionMismatch && !force && dlId && !isNightly(req) && !isDirectCopyAsMod(req)) {
           // Archive already downloaded - resolve the version locally (archive filename/version
           // file) rather than hitting the GitHub API, keeping this shortcut path network-free.
           // A failed resolve ('' or the '0.0.0' sentinel) is left unstamped rather than recorded,
@@ -334,6 +355,14 @@ async function download(api, requirements, force) {
         if (!asset) {
           // No usable asset in the release - getLatestGithubReleaseAsset has already told
           // the user why. Move on to the next requirement rather than throwing on asset.name.
+          continue;
+        }
+        // Naked asset, managed as a mod: no archive exists, so the file goes into the mod's
+        // staging folder directly rather than through import-downloads -> start-install-download.
+        if (isDirectCopyAsMod(req)) {
+          if (await installAssetAsMod(api, req, asset)) {
+            installedAny = true;
+          }
           continue;
         }
         const tempPath = path.join(util.getVortexPath('temp'), asset.name);
@@ -672,14 +701,25 @@ async function doDownload(downloadUrl, destination) {
 // --- direct copy ----------------------------------------------------------
 // Some upstreams publish a naked file instead of an archive (e.g. MelonPreferencesManager's
 // bare .dll). The archive pipeline (import-downloads -> start-install-download) assumes 7-Zip
-// can open whatever was downloaded, so those assets cannot travel through it at all. A
-// requirement that sets directCopyPath is fetched straight to that path instead and is never
-// registered as a Vortex mod.
+// can open whatever was downloaded, so those assets cannot travel through it at all. There are
+// two ways to handle one:
+//
+//   LOOSE COPY (directCopyPath) - the asset is fetched straight to that path in the game folder
+//   and is never registered as a Vortex mod, so it has no mod list row, cannot be enabled,
+//   disabled or removed through Vortex, and records its installed version in a sidecar marker
+//   file beside itself.
+//
+//   MANAGED MOD (directCopyAsMod: true, with modType) - the asset lands in the staging folder of
+//   a mod this module creates, and Vortex deploys it to wherever that mod type points. The mod
+//   list row, the version column, enable/disable, remove, conflict handling and the update stamp
+//   are then all the ordinary managed-mod paths. See installAssetAsMod below.
 //
 // ADOPTERS: directCopyPath is the one requirement field that depends on the discovered game
 // path, and extensions build their requirement arrays at module load - when GAME_PATH is still
 // ''. Reassign the field inside setup(), after GAME_PATH is set, or the baked-in path stays
-// relative and never resolves.
+// relative and never resolves. In managed-mod mode the field is only the legacy pointer (the
+// loose file an older build wrote, deleted once on migration); the deploy destination comes from
+// modType, which is not subject to that timing trap.
 
 // Sidecar marker recording what the direct copy installed. A direct-copied file is not a
 // managed mod, so there are no mod attributes to stamp; the marker sits beside the file and
@@ -754,6 +794,106 @@ async function downloadDirectCopy(api, requirement, force) {
     api.showErrorNotification(`Failed to install ${requirement.userFacingName}`, err, { allowReport: false });
   }
   return false;
+}
+
+// Mod id / staging folder name for a managed direct-copy requirement. Windows-invalid characters
+// are replaced because the id is also a folder name (the same idiom the Witcher 3 and Stardew
+// Valley synthetic mods use).
+function directCopyModName(requirement) {
+  return requirement.userFacingName.replace(/[\\/:*?"<>|]/g, '_');
+}
+
+// Promisified create-mod. Vortex's handler dispatches addMod and creates the staging folder;
+// both are needed before anything can be written into it.
+async function createRequirementMod(api, gameId, mod) {
+  return new Promise((resolve, reject) => {
+    api.events.emit('create-mod', gameId, mod, (err) => (err ? reject(err) : resolve()));
+  });
+}
+
+// The loose copy left behind by directCopyPath mode, removed once so deployment does not find a
+// foreign file at the target and back it up as <file>.vortex_backup. Only ever called when no mod
+// of the requirement's type exists: when one does, the file at that path is a link Vortex itself
+// deployed.
+async function removeLegacyDirectCopy(requirement) {
+  if (requirement.directCopyPath === undefined) {
+    return;
+  }
+  for (const target of [requirement.directCopyPath, directCopyMarkerPath(requirement)]) {
+    try {
+      await fs.removeAsync(target);
+      log('info', `Removed legacy direct copy ${target} - now managed as a mod`);
+    } catch {
+      //never installed in the old mode, or already gone - both fine
+    }
+  }
+}
+
+// Install a naked release asset as a managed mod: the file lands in the mod's staging folder and
+// Vortex deploys it to wherever the requirement's mod type points. Returns false when an
+// unmanaged mod of the same type is already installed (the user's own copy - never overwritten).
+async function installAssetAsMod(api, requirement, asset) {
+  const state = api.getState();
+  const gameId = selectors.activeGameId(state);
+  const profileId = selectors.lastActiveProfileForGame(state, gameId);
+  const stagingRoot = selectors.installPathForGame(state, gameId);
+  const existing = (await findModByFile(api, requirement.modType, requirement.assemblyFileName))
+    ?? getMods(api, requirement.modType)[0];
+  // A user can install an archived build of the same loader by hand and the extension's own
+  // installer types it the same way, so ownership is decided by the marker this module stamps,
+  // not by the mod type. Someone else's mod may hold a readme, a config or several files -
+  // leave it completely alone and treat the requirement as installed.
+  if ((existing !== undefined) && (existing.attributes?.directCopyAsMod !== true)) {
+    log('info', `${requirement.userFacingName} is installed as an ordinary mod - leaving it alone`);
+    return false;
+  }
+  const modId = existing?.id ?? directCopyModName(requirement);
+  const modPath = path.join(stagingRoot, existing?.installationPath ?? modId);
+  if (existing === undefined) {
+    await removeLegacyDirectCopy(requirement);
+    await createRequirementMod(api, gameId, {
+      id: modId,
+      state: 'installed',
+      installationPath: modId,
+      type: requirement.modType,
+      attributes: {
+        name: requirement.userFacingName,
+        customFileName: requirement.userFacingName,
+        description: 'This is a modding requirement for this game - leave it enabled.',
+        installTime: new Date(),
+        directCopyAsMod: true,
+      },
+    });
+  } else {
+    // Our own folder, and it only ever holds the asset - clear it so an asset whose name carries
+    // the version does not leave the previous release behind, still deploying.
+    for (const entry of await fs.readdirAsync(modPath).catch(() => [])) {
+      await fs.removeAsync(path.join(modPath, entry)).catch(() => null);
+    }
+  }
+  await fs.ensureDirWritableAsync(modPath);
+  await doDownload(asset.browser_download_url, path.join(modPath, asset.name));
+  const attributes = {
+    installTime: new Date(),
+    name: requirement.userFacingName,
+    customFileName: requirement.userFacingName,
+    version: latestAssetVersion(requirement, asset),
+    directCopyAsMod: true,
+    source: 'website',
+    url: repoPageUrl(requirement),
+  };
+  if (asset.updated_at !== undefined) {
+    attributes.githubAssetDate = asset.updated_at;
+  }
+  util.batchDispatch(api.store, [
+    actions.setModAttributes(gameId, modId, attributes),
+    actions.setModType(gameId, modId, requirement.modType),
+    actions.setModEnabled(profileId, modId, true),
+  ]);
+  // Enabling through a dispatch alone leaves Vortex unaware: onModsEnabled is what schedules the
+  // deployment (or raises the "deployment necessary" banner when auto-deploy is off).
+  api.events.emit('mods-enabled', [modId], true, gameId);
+  return true;
 }
 
 // --- util -----------------------------------------------------------------
@@ -934,7 +1074,7 @@ async function testRequirementVersion(api, requirement) {
   // instead. download() is non-forced here and an installed requirement never reaches this
   // branch, so it cannot recurse back into testRequirementVersion. Requirements the user
   // installs manually (optional loaders behind a toolbar button) opt out with autoInstall: false.
-  const missing = (requirement.directCopyPath !== undefined)
+  const missing = isDirectCopy(requirement)
     ? !(await isDirectCopyInstalled(api, requirement))
     : (!!requirement.findMod && ((await requirement.findMod(api)) === undefined));
   if (missing) {
