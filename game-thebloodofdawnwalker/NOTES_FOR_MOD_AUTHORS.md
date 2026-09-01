@@ -1,0 +1,71 @@
+# Notes for Mod Authors - The Blood of Dawnwalker
+
+Packaging rules for The Blood of Dawnwalker mods, so Vortex installs them to the right place.
+
+Vortex decides what a mod is by looking at the files and folders inside the archive. It tries each installer in order and the first one that matches wins, so archive layout is what determines where your mod ends up.
+
+## Quick Reference
+
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Ue4sscombo | a file or folder named `binaries`, a file or folder named `content`, a file with the `.lua` extension and a file with the `.pak` extension | - |
+| Logicmods | - | `XXX\Content\Paks` |
+| Uesortablepak | a file with the `.pak` extension | - |
+| Ue4ss | a file or folder named `dwmapi.dll` and a file or folder named one of: `MapGenBP`, `MemberVarLayoutTemplates`, `UE4SS_Signatures` or `VTableLayoutTemplates` | - |
+| Scripts | a file with the `.lua` extension | - |
+| Ue4ssdll | a file with the `.dll` extension | - |
+| Root | a file or folder named one of: `Engine`, a file or folder named one of: `Content`, `Binaries` or `Mods` and a file or folder named one of: `Paks` or `Movies` | - |
+| Config | a file or folder named one of: `engine.ini`, `game.ini`, `gameusersettings.ini`, `input.ini`, `scalability.ini`, `hardware.ini`, `deviceprofiles.ini`, `compat.ini`, `runtimeoptions.ini`, `gameplaytags.ini`, `enhancedinput.ini` or `consolevariables.ini` | - |
+| Save | a file with one of these extensions: `.sav` | - |
+| Binaries | a file with the `.pak` extension | - |
+
+Paths are relative to the game's install folder.
+
+## Ue4sscombo
+
+Recognised when the archive contains a file or folder named `binaries`, a file or folder named `content`, a file with the `.lua` extension and a file with the `.pak` extension.
+
+## Logicmods
+
+Handled by the `testLogic` installer. Inspect the extension source for the exact archive layout it expects.
+
+Installs to: `XXX\Content\Paks`
+
+## Uesortablepak
+
+Recognised when the archive contains a file with the `.pak` extension.
+
+## Ue4ss
+
+Recognised when the archive contains a file or folder named `dwmapi.dll` and a file or folder named one of: `MapGenBP`, `MemberVarLayoutTemplates`, `UE4SS_Signatures` or `VTableLayoutTemplates`.
+
+## Scripts
+
+Recognised when the archive contains a file with the `.lua` extension.
+
+## Ue4ssdll
+
+Recognised when the archive contains a file with the `.dll` extension.
+
+## Root
+
+Recognised when the archive contains a file or folder named one of: `Engine`, a file or folder named one of: `Content`, `Binaries` or `Mods` and a file or folder named one of: `Paks` or `Movies`.
+
+## Config
+
+Recognised when the archive contains a file or folder named one of: `engine.ini`, `game.ini`, `gameusersettings.ini`, `input.ini`, `scalability.ini`, `hardware.ini`, `deviceprofiles.ini`, `compat.ini`, `runtimeoptions.ini`, `gameplaytags.ini`, `enhancedinput.ini` or `consolevariables.ini`.
+
+## Save
+
+Recognised when the archive contains a file with one of these extensions: `.sav`.
+
+## Binaries
+
+Recognised when the archive contains a file with the `.pak` extension.
+
+## Rules That Apply To Every Mod Type
+
+- Archives that contain a FOMOD installer (a `fomod` folder with `ModuleConfig.xml`) are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
+- Folder and file name matching is case-insensitive.
+- Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
+

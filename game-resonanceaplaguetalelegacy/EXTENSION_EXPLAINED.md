@@ -51,6 +51,10 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | Root Folder | `resonanceaplaguetalelegacy-root` | high | `{gamePath}` |
+| Resonance Framework | `resonanceaplaguetalelegacy-framework` | high | `{gamePath}` |
+| Resonance Framework Mod | `resonanceaplaguetalelegacy-frameworkmod` | high | `{gamePath}/Mods` |
+| ASI Loader | `resonanceaplaguetalelegacy-asiloader` | low | `{gamePath}` |
+| TextureStudio | `resonanceaplaguetalelegacy-texturestudio` | low | `{gamePath}/TextureStudio` |
 | Script Mod | `resonanceaplaguetalelegacy-mod` | high | `{gamePath}/Mods` |
 | Mod Merger | `resonanceaplaguetalelegacy-merger` | 70 | `?` |
 
@@ -61,15 +65,18 @@ Installers run in priority order (lower number = tested first). The first instal
 | Installer ID | Priority |
 | --- | --- |
 | `resonanceaplaguetalelegacy-merger` | 25 |
-| `resonanceaplaguetalelegacy-root` | 27 |
-| `resonanceaplaguetalelegacy-mod` | 29 |
+| `resonanceaplaguetalelegacy-framework` | 26 |
+| `resonanceaplaguetalelegacy-asiloader` | 27 |
+| `resonanceaplaguetalelegacy-mod` | 28 |
+| `resonanceaplaguetalelegacy-frameworkmod` | 29 |
+| `resonanceaplaguetalelegacy-root` | 30 |
+| `resonanceaplaguetalelegacy-texturestudio` | 31 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
 - **Custom Launch** (`Resonance.exe`)
-- **Custom Launch** (`gamelaunchhelper.exe`)
 
 ## Toolbar Actions
 
@@ -102,3 +109,4 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
+

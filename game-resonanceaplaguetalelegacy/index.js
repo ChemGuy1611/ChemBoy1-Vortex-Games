@@ -2,8 +2,8 @@
 Name: Resonance: A Plague Tale Legacy Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-08-30
+Version: 1.1.0
+Date: 2026-09-01
 Notes:
 -
 ///////////////////////////////////////////*/
@@ -16,6 +16,7 @@ const { parseStringPromise } = require('xml2js');
 //const winapi = require('winapi-bindings');
 const fsPromises = require('fs/promises'); //.rm() for recursive folder deletion
 //const fsExtra = require('fs-extra');
+const { download, findModByFile, findDownloadIdByFile, resolveVersionByPattern, resolveVersionByAssetDate, resolveVersionByModVersion, resolveVersionByDirectCopyMarker, resolveVersionByNightlyRun, testRequirementVersion } = require('./downloader');
 
 /*const USER_HOME = util.getVortexPath("home");
 const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow'); //*/
@@ -90,6 +91,7 @@ const GOG_FILE = 'Galaxy64.dll';
 const EPIC_FILE = 'EOSSDK-Win64-Shipping.dll';
 const XBOX_FILE = APPMANIFEST_FILE;
 
+//Mod Merger for All.psc script mods
 const LOADER_ID = `${GAME_ID}-merger`;
 const LOADER_NAME = "Mod Merger";
 const LOADER_PATH = BINARIES_PATH;
@@ -98,11 +100,50 @@ const LOADER_PAGE_NO = 11;
 const LOADER_FILE_NO = 16;
 const LOADER_DOMAIN = GAME_ID;
 
+//All.psc script mods
 const MOD_ID = `${GAME_ID}-mod`;
 const MOD_NAME = "Script Mod";
 const MOD_PATH = "Mods";
 const MOD_PATH_XBOX = MOD_PATH;
 const MOD_EXTS = ['.psc'];
+
+//Resonance Framework - texture loader
+const FRAMEWORK_ID = `${GAME_ID}-framework`;
+const FRAMEWORK_NAME = "Resonance Framework";
+const FRAMEWORK_PATH = BINARIES_PATH;
+const FRAMEWORK_FILE = 'RAPTL_Framework.asi';
+const FRAMEWORK_PAGE_NO = 28;
+const FRAMEWORK_FILE_NO = 54;
+const FRAMEWORK_DOMAIN = GAME_ID;
+
+//Framework texture mods
+const FRAMEWORKMOD_ID = `${GAME_ID}-frameworkmod`;
+const FRAMEWORKMOD_NAME = "Resonance Framework Mod";
+const FRAMEWORKMOD_PATH = MOD_PATH;
+const FRAMEWORKMOD_FILES = ['textures']; //didn't include 'RAPTL.index' as it is placed at level above textures folder, next to mod name folder
+
+//Ultimate ASI Loader - for Framework
+const ASILOADER_ID = `${GAME_ID}-asiloader`;
+const ASILOADER_NAME = "ASI Loader";
+const ASILOADER_PATH = BINARIES_PATH;
+const ASILOADER_FILE = 'dinput8.dll';
+const ASILOADER_ARC_NAME = 'Ultimate-ASI-Loader_x64.zip';
+const ASILOADER_AUTHOR = 'ThirteenAG';
+const ASILOADER_REPO = 'Ultimate-ASI-Loader';
+const ASILOADER_URL_API = `https://api.github.com/repos/${ASILOADER_AUTHOR}/${ASILOADER_REPO}`;
+const REQUIREMENTS = [
+  {
+    archiveFileName: ASILOADER_ARC_NAME,
+    modType: ASILOADER_ID, //the module assigns this to the installed mod itself; findModByFile only matches mods carrying it (untyped mods are not considered)
+    assemblyFileName: ASILOADER_FILE,
+    userFacingName: ASILOADER_NAME, //notifications, error messages, and the name shown in the mod list
+    githubUrl: ASILOADER_URL_API,
+    findMod: (api) => findModByFile(api, ASILOADER_ID, ASILOADER_FILE),
+    findDownloadId: (api) => findDownloadIdByFile(api, ASILOADER_ARC_NAME),
+    fileArchivePattern: new RegExp(/^Ultimate-ASI-Loader_x64/, 'i'), //from ARC_NAME
+    resolveVersion: (api) => resolveVersionByModVersion(api, REQUIREMENTS[0]), //reads the version stamped on the installed mod at install time; use when the version is only in the release tag (asset filename is versionless) and fileArchivePattern has no capture group
+  },
+]; //*/
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Folder";
@@ -150,13 +191,14 @@ const CONFIG_PATH_XBOX = CONFIG_PATH; //XBOX Version
 const CONFIG_EXTS = [".XXX"];
 const CONFIG_FILES = ["XXX"];
 
-/* tool info (i.e. save editor)
-const TOOL_ID = `${GAME_ID}-tool`;
-const TOOL_NAME = "XXX";
-const TOOL_EXEC_FOLDER = path.join('XXX');
-const TOOL_EXEC = 'XXX.exe';
-const TOOL_EXEC_PATH = path.join(TOOL_EXEC_FOLDER, TOOL_EXEC);
-//*/
+//Texture Studio
+const TEXTURESTUDIO_ID = `${GAME_ID}-texturestudio`;
+const TEXTURESTUDIO_NAME = "TextureStudio";
+const TEXTURESTUDIO_EXEC = 'TextureStudio_1.1.exe'; //!has version number - will break!
+const TEXTURESTUDIO_STRING = 'TextureStudio_';
+const TEXTURESTUDIO_FOLDER = TEXTURESTUDIO_NAME;
+const TEXTURESTUDIO_PATH = TEXTURESTUDIO_FOLDER;
+const TEXTURESTUDIO_EXEC_PATH = path.join(TEXTURESTUDIO_PATH, TEXTURESTUDIO_EXEC);
 
 let MOD_PATH_DEFAULT = MOD_PATH;
 //if (!needsModInstaller) MOD_PATH_DEFAULT = '.';
@@ -165,7 +207,7 @@ if (multiExe) REQ_FILE = DATA_FOLDER;
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
 
-let MODTYPE_FOLDERS = [BINARIES_PATH];
+let MODTYPE_FOLDERS = [BINARIES_PATH, TEXTURESTUDIO_PATH];
 if (needsModInstaller) MODTYPE_FOLDERS.push(MOD_PATH);
 if (saveInstaller) MODTYPE_FOLDERS.push(SAVE_PATH);
 if (hasLoader) MODTYPE_FOLDERS.push(LOADER_PATH);
@@ -212,6 +254,30 @@ const spec = {
       "priority": "high",
       "targetPath": `{gamePath}`
     },
+    {
+      "id": FRAMEWORK_ID,
+      "name": FRAMEWORK_NAME,
+      "priority": "high",
+      "targetPath": `{gamePath}`,
+    },
+    {
+      "id": FRAMEWORKMOD_ID,
+      "name": FRAMEWORKMOD_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', FRAMEWORKMOD_PATH)
+    },
+    {
+      "id": ASILOADER_ID,
+      "name": ASILOADER_NAME,
+      "priority": "low",
+      "targetPath": `{gamePath}`,
+    },
+    {
+      "id": TEXTURESTUDIO_ID,
+      "name": TEXTURESTUDIO_NAME,
+      "priority": "low",
+      "targetPath": path.join('{gamePath}', TEXTURESTUDIO_PATH)
+    },
   ],
   "discovery": {
     "ids": DISCOVERY_IDS_ACTIVE,
@@ -253,20 +319,6 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
     //defaultPrimary: true,
     //parameters: PARAMETERS,
   }, //*/
-  /*{
-    id: `${GAME_ID}-customlaunchxbox`,
-    name: 'Custom Launch',
-    logo: 'exec.png',
-    executable: () => EXEC_XBOX,
-    requiredFiles: [
-      EXEC_XBOX,
-    ],
-    relative: true,
-    exclusive: true,
-    shell: true,
-    //defaultPrimary: true,
-    //parameters: PARAMETERS,
-  }, //*/
   {
     id: LOADER_ID,
     name: LOADER_NAME,
@@ -276,10 +328,19 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
       LOADER_FILE,
     ],
     relative: true,
-    exclusive: true,
-    //shell: true,
-    //defaultPrimary: true,
-    //parameters: [],
+    exclusive: false,
+  }, //*/
+  {
+    id: TEXTURESTUDIO_ID,
+    name: TEXTURESTUDIO_NAME,
+    logo: 'texturestudio.png',
+    queryPath: () => TEXTURESTUDIO_PATH,
+    executable: () => TEXTURESTUDIO_EXEC,
+    requiredFiles: [
+      TEXTURESTUDIO_EXEC,
+    ],
+    relative: true,
+    exclusive: false,
   }, //*/
 ];
 
@@ -467,7 +528,7 @@ async function deploy(api) { //useful to deploy mods after doing some action
 
 //Test for mod loader files
 function testLoader(files, gameId) {
-  const isMod = files.some(file => path.basename(file) === LOADER_FILE);
+  const isMod = files.some(file => path.basename(file).toLowerCase() === LOADER_FILE.toLowerCase());
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer
@@ -486,7 +547,7 @@ function testLoader(files, gameId) {
 //Install mod loader files
 function installLoader(files) {
   const MOD_TYPE = LOADER_ID;
-  const modFile = files.find(file => path.basename(file) === LOADER_FILE);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === LOADER_FILE.toLowerCase());
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
@@ -506,7 +567,138 @@ function installLoader(files) {
   return Promise.resolve({ instructions });
 }
 
-//Test for mod files
+//Test for Resonance Framework files
+function testFramework(files, gameId) {
+  const isMod = files.some(file => path.basename(file).toLowerCase() === FRAMEWORK_FILE.toLowerCase());
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install Resonance Framework files
+function installFramework(files) {
+  const MOD_TYPE = FRAMEWORK_ID;
+  const modFile = files.find(file => path.basename(file).toLowerCase() === FRAMEWORK_FILE.toLowerCase());
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for Resonance Framework files
+function testAsiLoader(files, gameId) {
+  const isMod = files.some(file => path.basename(file) === FRAMEWORK_FILE);
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install Resonance Framework files
+function installAsiLoader(files) {
+  const MOD_TYPE = ASILOADER_ID;
+  const modFile = files.find(file => path.basename(file) === ASILOADER_FILE);
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for framework texture mod files
+function testFrameworkMod(files, gameId) {
+  const FRAMEWORKMOD_FILES_LOWER = FRAMEWORKMOD_FILES.map(str => str.toLowerCase());
+  const isMod = files.some(file => FRAMEWORKMOD_FILES_LOWER.includes(path.basename(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install Framework texture mod files
+function installFrameworkMod(files, tempFolder) {
+  const MOD_TYPE = FRAMEWORKMOD_ID;
+  const FRAMEWORKMOD_FILES_LOWER = FRAMEWORKMOD_FILES.map(str => str.toLowerCase());
+  let modFile = files.find(file => FRAMEWORKMOD_FILES_LOWER.includes(path.basename(file).toLowerCase()));
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  let rootPath = path.dirname(modFile);
+  const ROOT_PATH = path.basename(rootPath);
+  if (ROOT_PATH !== '.') {
+    modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
+    rootPath = path.dirname(modFile);
+  }
+  const idx = modFile.indexOf(path.basename(modFile));
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for All.psc script mod files
 function testMod(files, gameId) {
   const isMod = files.some(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
   let supported = (gameId === spec.game.id) && isMod;
@@ -524,7 +716,7 @@ function testMod(files, gameId) {
   });
 }
 
-//Install mod files
+//Install All.psc script mod files
 async function installMod(files, tempFolder) {
   const MOD_TYPE = MOD_ID;
   const modFile = files.find(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
@@ -606,6 +798,47 @@ function installRoot(files) {
       type: 'copy',
       source: file,
       destination: path.join(folder, file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for mod loader files
+function testTextureStudio(files, gameId) {
+  const isMod = files.some(file => path.basename(file).includes(TEXTURESTUDIO_STRING) && path.extname(file).toLowerCase() === '.exe');
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install mod loader files
+function installTextureStudio(files) {
+  const MOD_TYPE = TEXTURESTUDIO_ID;
+  const modFile = files.find(file => path.basename(file).includes(TEXTURESTUDIO_STRING) && path.extname(file).toLowerCase() === '.exe');
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
     };
   });
   instructions.push(setModTypeInstruction);
@@ -783,6 +1016,35 @@ function fallbackInstallerNotify(api, modName) {
 
 // AUTOMATIC MOD DOWNLOADERS ///////////////////////////////////////////////////
 
+async function asyncForEachTestVersion(api, requirements) {
+  for (let index = 0; index < requirements.length; index++) {
+    await testRequirementVersion(api, requirements[index]);
+  }
+}
+
+async function asyncForEachCheck(api, requirements) {
+  let mod = [];
+  for (let index = 0; index < requirements.length; index++) {
+    mod[index] = await requirements[index].findMod(api);
+  }
+  let checker = mod.every((entry) => entry !== undefined); //findMod resolves to a mod object or undefined, never a boolean
+  return checker;
+}
+
+async function onCheckModVersion(api, gameId, mods, forced) {
+  try {
+    await asyncForEachTestVersion(api, REQUIREMENTS);
+    log('warn', 'Checked requirements versions');
+  } catch (err) {
+    log('warn', `Failed to test requirement version: ${err}`);
+  }
+}
+
+async function checkForRequirements(api) {
+  const CHECK = await asyncForEachCheck(api, REQUIREMENTS);
+  return CHECK;
+}
+
 //Check if mod loader is installed
 function isLoaderInstalled(api, spec) {
   const state = api.getState();
@@ -800,6 +1062,79 @@ async function downloadLoader(api, gameSpec, check = true) {
     const PAGE_ID = LOADER_PAGE_NO;
     const FILE_ID = LOADER_FILE_NO;  //If using a specific file id because "input" below gives an error
     const GAME_DOMAIN = LOADER_DOMAIN;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
+      await api.ext.ensureLoggedIn();
+    }
+    try {
+      let FILE = null;
+      let URL = null;
+      try { //get the mod files information from Nexus
+        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
+        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
+        const file = modFiles
+          .filter(file => file.category_id === 1)
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
+          .reverse()[0];
+        if (file === undefined) {
+          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+        }
+        FILE = file.file_id;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } catch { // use defined file ID if input is undefined above
+        FILE = FILE_ID;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      }
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.opn(errPage).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+} //*/
+
+//Check if Resonance Framework is installed
+function isFrameworkInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  return Object.keys(mods).some(id => mods[id]?.type === FRAMEWORK_ID);
+}
+
+//* Function to auto-download Resonance Framework from Nexus Mods
+async function downloadFramework(api, gameSpec, check = true) {
+  let isInstalled = isFrameworkInstalled(api, gameSpec);
+  if (!isInstalled || !check) {
+    const MOD_NAME = FRAMEWORK_NAME;
+    const MOD_TYPE = FRAMEWORK_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const PAGE_ID = FRAMEWORK_PAGE_NO;
+    const FILE_ID = FRAMEWORK_FILE_NO;  //If using a specific file id because "input" below gives an error
+    const GAME_DOMAIN = FRAMEWORK_DOMAIN;
     api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
@@ -1009,6 +1344,11 @@ async function setup(discovery, api, gameSpec) {
   if (hasLoader) {
     await downloadLoader(api, gameSpec);
   }
+  await downloadFramework(api, gameSpec);
+  const requirementsInstalled = await checkForRequirements(api);
+  if (!requirementsInstalled) {
+      await download(api, REQUIREMENTS);
+  } //*/
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
@@ -1082,14 +1422,18 @@ function applyGame(context, gameSpec) {
   if (hasLoader) {
     context.registerInstaller(LOADER_ID, 25, testLoader, installLoader);
   }
-  if (rootInstaller) {
-    context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
-  }
+  context.registerInstaller(FRAMEWORK_ID, 26, testFramework, installFramework);
+  context.registerInstaller(ASILOADER_ID, 27, testAsiLoader, installAsiLoader);
   if (needsModInstaller) {
-    context.registerInstaller(MOD_ID, 29, testMod, installMod);
+    context.registerInstaller(MOD_ID, 28, testMod, installMod);
   }
+  context.registerInstaller(FRAMEWORKMOD_ID, 29, testFrameworkMod, installFrameworkMod);
+  if (rootInstaller) {
+    context.registerInstaller(ROOT_ID, 30, testRoot, installRoot);
+  }
+  context.registerInstaller(TEXTURESTUDIO_ID, 31, testTextureStudio, installTextureStudio);
   if (binariesInstaller) {
-    context.registerInstaller(BINARIES_ID, 31, testBinaries, installBinaries);
+    context.registerInstaller(BINARIES_ID, 32, testBinaries, installBinaries);
   }
   //context.registerInstaller(CONFIG_ID, 33, testConfig, installConfig);
   if (saveInstaller) {
@@ -1155,6 +1499,10 @@ function main(context) {
       if (profileId !== LAST_ACTIVE_PROFILE) return;
       return deployNotify(api);
     });
+    api.onAsync('check-mods-version', (gameId, mods, forced) => {
+        if (gameId !== GAME_ID) return;
+        return onCheckModVersion(api, gameId, mods, forced);
+    }); //*/
   });
   return true;
 }

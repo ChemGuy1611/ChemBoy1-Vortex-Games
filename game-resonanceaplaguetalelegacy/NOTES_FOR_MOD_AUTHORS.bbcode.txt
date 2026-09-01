@@ -7,7 +7,35 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 Merger:
 
-Recognised when the archive contains a file or folder named "ResonanceModMerger.exe".
+Handled by the "testLoader" installer. Inspect the extension source for the exact archive layout it expects.
+
+========================================================================
+
+Framework:
+
+Handled by the "testFramework" installer. Inspect the extension source for the exact archive layout it expects.
+
+========================================================================
+
+Asiloader:
+
+Recognised when the archive contains a file or folder named "RAPTL_Framework.asi".
+
+========================================================================
+
+Mod:
+
+Recognised when the archive contains a file with one of these extensions: ".psc".
+
+  Installs to: "Mods"
+
+========================================================================
+
+Frameworkmod:
+
+Recognised when the archive contains a file or folder named one of: "textures".
+
+  Installs to: "Mods"
 
 ========================================================================
 
@@ -31,11 +59,11 @@ MyRootMod.zip
 
 ========================================================================
 
-Mod:
+Texturestudio:
 
-Recognised when the archive contains a file with one of these extensions: ".psc".
+Recognised when the archive contains a file with the ".exe" extension.
 
-  Installs to: "Mods"
+  Installs to: "TextureStudio"
 
 ========================================================================
 
