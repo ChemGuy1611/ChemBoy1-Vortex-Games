@@ -235,3 +235,5 @@ the two hooks a sync can be wired to). `TOOLBAR_ACTIONS.md` (`registerAction`, a
 toolbar buttons are grouped by icon).
 `SIMPLE_MOD_FRAMEWORK.md` (the other loader in this repo that owns its own mod store, and the same
 deploy-then-hand-off notification shape - though it takes archives through a GUI rather than a CLI).
+`LOBOTOMY_BASEMOD.md` (a loader whose own manager is likewise the only official download, but
+whose install is pure file copy - no CLI, no repack, nothing to sync back).

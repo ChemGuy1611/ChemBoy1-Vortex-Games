@@ -21,6 +21,7 @@
 
 - **Steam** — `311560`
 - **Epic Games Store** — `Wolffish`
+- **Ubisoft Connect** — `895`
 
 ## Mod Types
 

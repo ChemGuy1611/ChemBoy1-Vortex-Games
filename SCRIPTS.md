@@ -115,9 +115,12 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `bump_semver(version, kind)` | Bump a version string by standard semver rules — `major` `1.2.3 -> 2.0.0`, `minor` `1.2.3 -> 1.3.0`, `patch` `1.2.3 -> 1.2.4`. Raises `ValueError` on a malformed version or unknown kind |
 | `is_valid_semver(version)` | Return `True` if `version` is strict `X.Y.Z` (no pre-release suffix) |
 | `SEMVER_PATTERN` | Compiled regex behind `is_valid_semver()`; use the function for a boolean check |
-| `prepend_changelog_entry(folder, version, date)` | Prepend a `## [version] - date` section to `CHANGELOG.md`, before the first existing entry. No-op if the file is missing |
+| `changelog_has_version_section(folder, version)` | Return `True` if `CHANGELOG.md` in `folder` already has a `## [version]` section; `False` if the file is missing too. Single source for this check — used by both `prepend_changelog_entry` and `bump_version.py`'s dry-run preview so the two never drift apart |
+| `prepend_changelog_entry(folder, version, date)` | Prepend a `## [version] - date` section to `CHANGELOG.md`, before the first existing entry. No-op if the file is missing, or if a `## [version]` section for this exact version is already present (prints a warning instead of stacking an empty stub over hand-written notes) |
 | `mutate_index_js(folder, game_id, mutator_fn, *, dry_run, changed_msg, unchanged_msg, dry_run_msg)` | Read `index.js`, apply `mutator_fn(src) -> new_src`, write back if changed. Handles all error printing. Returns `True` if changed. |
-| `mutate_text_file(path, fn, *, dry_run, atomic)` | Like `mutate_index_js` but for non-`index.js` files. Reads, applies `fn(src)->new_src`, writes atomically if changed. Returns `True` if changed. |
+| `mutate_text_file(path, fn, *, dry_run, atomic)` | Like `mutate_index_js` but for non-`index.js` files. Reads, applies `fn(src)->new_src`, writes atomically if changed. Returns `True` if changed. Reads in universal-newline mode, so a CRLF file comes back as LF and is rewritten as LF — use `patch_text_file` when the file's endings must survive. |
+| `detect_eol(src)` | Return the line ending a text blob actually uses: `"\r\n"` if any CRLF is present, else `"\n"`. Worktree endings are not uniform — sniff, never assume. |
+| `patch_text_file(path, replacements, *, count, dry_run)` | Apply literal `(old, new)` replacements, line-ending aware. Write anchors with plain `\n`; both sides are translated to the file's own ending before matching, so one anchor fits an LF and a CRLF file alike. `count` is the required hit count per anchor (`None` = one or more); a mismatch raises `AssertionError` naming the anchor and the file's ending, so a scripted pass fails loudly instead of reporting success over a no-op. Preserves endings on the round trip. |
 | `read_json(path, default)` | Read and parse a JSON file; returns `default` (empty dict) on missing/corrupt file |
 | `read_gui_stats()` | Read the shared GUI nexus-stats JSON (`{game_id: stats_dict}`); returns `{}` on error |
 | `write_gui_stats(data)` | Write the stats dict to `GUI_STATS_PATH` atomically, with `sort_keys=True` |
@@ -175,6 +178,7 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `detect_engine(src)` | Return a short engine/framework label (e.g. `'Unreal Engine 4/5'`, `'RE Engine'`) based on index.js source. Same detection logic as `categorize_games.py`. |
 | `detect_stores(src)` | Return space-separated store badges from `DISCOVERY_IDS_ACTIVE` in index.js: `S` Steam, `G` GOG, `E` Epic, `X` Xbox, `U` Ubisoft, `EA` EA. |
 | `validate_index_js(src)` | Return list of issue strings: leftover `XXX`, missing `applyGame()`, missing `context.registerGame()`, missing `main()`. |
+| `find_registerinstaller_calls(src)` | Return `(lineno, installer_id, priority)` for every LIVE `context.registerInstaller` call in `src` — a line whose stripped text starts with `//` is skipped, so a disabled/example installer never collides with a live one. Shared by `release_extension.py`'s duplicate-priority check and `patch_extensions.py`'s installer-priority audit. |
 | `GUI_FLAGS_PATH` | Absolute path to `vortex_gui_flags.json` at repo root |
 | `GUI_STATS_PATH` | Absolute path to `vortex_gui_nexus_stats.json` at repo root |
 | `download_exec_icon(appid, game_name, out_path)` | Download and save a 64x64 `exec.png`. Steam CDN first, SteamGridDB icon fallback. |
@@ -200,7 +204,7 @@ Reusable Nexus Mods v3 upload module. Extracted from `release_extension.py`; pro
 | `v3_get(path, api_key)` | GET a Nexus v3 endpoint; returns parsed `data` field |
 | `v3_post_json(path, body, api_key)` | POST JSON to a Nexus v3 endpoint; returns parsed `data` field |
 | `extract_changelog_entry(changelog_src, version)` | Extract the changelog entry body for `version` (date-only header + bullet list) |
-| `pick_file_group(mod_id, domain, api_key, mod_key, name_hint=None, group_id_override=None)` | Resolve mod UID via v1 API, fetch file groups via `GET /v3/mods/{uid}/files` (`mod_files[]`; the old `/file-update-groups` path is defunct), auto-select by exact-normalized name match (then substring fallback) when `name_hint` provided; raises `RuntimeError` on no match or ambiguous match; falls back to interactive prompt only when `name_hint` is absent. Words in `_NAME_STRIP_WORDS` (default: `['addon']`) are stripped from group names before comparison. When `group_id_override` is set (from index.js `FILE_GROUP_ID`), the v1->v3 list is skipped and the group is targeted directly, with the publish name derived from the latest primary v1 file. The resolved group list is cached per `(domain, mod_id)` for the life of the process, so a mod released as several files does one uid + one group lookup rather than one pair per file. |
+| `pick_file_group(mod_id, domain, api_key, mod_key, name_hint=None, group_id_override=None)` | Resolve mod UID via v1 API, fetch file groups via `GET /v3/mods/{uid}/files` (`mod_files[]`; the old `/file-update-groups` path is defunct), auto-select by exact-normalized name match (then substring fallback) when `name_hint` provided; raises `RuntimeError` on no match, ambiguous match, **or when `name_hint` is absent and more than one group is active** (no interactive fallback — this function's only caller, `release_extension.py`, always runs unattended, so blocking on `input()` mid-batch is a hang, not a prompt; the error names every candidate group and tells the caller to set `FILE_GROUP_ID`). Words in `_NAME_STRIP_WORDS` (default: `['addon']`) are stripped from group names before comparison. When `group_id_override` is set (from index.js `FILE_GROUP_ID`), the v1->v3 list is skipped and the group is targeted directly, with the publish name derived from the latest primary v1 file. The resolved group list is cached per `(domain, mod_id)` for the life of the process, so a mod released as several files does one uid + one group lookup rather than one pair per file. |
 | `upload_parts(zip_path, presigned_urls, part_size, mod_key)` | Upload zip in parts to presigned S3 URLs; returns list of ETags |
 | `complete_multipart(complete_url, etags)` | POST CompleteMultipartUpload XML to finalize S3 assembly |
 | `poll_upload_state(upload_id, api_key, mod_key)` | Poll v3 upload until state is `available`; raises on timeout |
@@ -216,7 +220,7 @@ No additional packages required (Python stdlib only). Requires `vortex_utils.py`
 
 Verifies Nexus Mods v1 and v3 API response shapes against documentation. Tests read-only endpoints only — does not create or modify any data. Checks v1 mod field types, rate limit headers (presence *and* whether the limit values still match a documented tier), v3 mod-files shape (`GET /v3/mods/{uid}/files`, including undocumented `archived_count`/`removed_count` fields), and expected error codes for dead endpoints. Defaults to `site/1960` (Fatekeeper) as the test target; pass `--domain` and `--mod-id` to test another mod. Step 8 field-validation checks (`--test-upload`) target `POST /v3/mod-files/{id}/versions`, the current endpoint since the 2026-07-24 migration off the deprecated `/mod-file-update-groups/{id}/versions` path (removed on/after 2026-09-09).
 
-`--check-spec` adds a drift check against the live OpenAPI document at `https://api.nexusmods.com/openapi.yaml`: it diffs the path list against the catalog baked into `SPEC_KNOWN_PATHS` (which mirrors the endpoint catalog in `resources/NEXUS_MODS_API.md`), confirms every endpoint the upload flow depends on is still present and not deprecated, and flags any deprecation that is not already documented. This is what catches endpoints being *added* or *removed* — the per-endpoint probes can only see the paths they already know about. When it reports drift, update both `SPEC_KNOWN_PATHS` and `resources/NEXUS_MODS_API.md` in the same pass.
+`--check-spec` adds a drift check against the live OpenAPI document at `https://api.nexusmods.com/openapi.yaml`: it diffs the path list against the catalog baked into `SPEC_KNOWN_PATHS` (which mirrors the endpoint catalog in `resources/NEXUS_MODS_API.md`), confirms every endpoint the upload flow depends on is still present and not deprecated, and flags any deprecation that is not already documented. This is what catches endpoints being *added* or *removed* — the per-endpoint probes can only see the paths they already know about. When it reports drift, update both `SPEC_KNOWN_PATHS` and `resources/NEXUS_MODS_API.md` in the same pass. A path listed in `SPEC_RETIRING_PATHS` (with its scheduled removal date) is treated as an expected, not a failing, removal once that date has passed — its disappearance prints as `[INFO]` telling you to retire the `SPEC_KNOWN_PATHS` entry, instead of a permanent `[FAIL]`. The tier tally only counts `Beta`/`Experimental`/`Deprecated` badges as stability tiers; any other `x-badges` entry (e.g. a scheduled-change warning like `md5 required from 2026-12-01`) falls through to `Stable` instead of being counted as a bogus fourth tier.
 
 ### check_nexus_api.py — Environment Variables
 
@@ -246,7 +250,7 @@ python check_nexus_api.py --check-spec --spec-only
 
 ### check_nexus_api.py — Output
 
-Per-check `[PASS]` / `[FAIL]` / `[WARN]` lines for: v1 mod shape (13 required fields), rate limit headers (daily + hourly limit and remaining, plus a documented-tier match), v3 mod-files shape (5 required fields + known extras), 4 dead-endpoint status codes, and (with `--test-upload`) upload session shape (step 3) + upload state shape (step 7) + step 8 field-validation against `POST /v3/mod-files/{id}/versions`. With `--check-spec`, adds spec version, path-count diff (naming any added or removed path), per-endpoint presence and stability tier for the upload flow, new-deprecation detection, and an operations-by-tier tally. Summary: `Passed: N/total`. Exits `0` if all pass, `1` if any fail.
+Per-check `[PASS]` / `[FAIL]` / `[WARN]` lines for: v1 mod shape (13 required fields), rate limit headers (daily + hourly limit and remaining, plus a documented-tier match), v3 mod-files shape (5 required fields + known extras), 4 dead-endpoint status codes, and (with `--test-upload`) upload session shape (step 3) + upload state shape (step 7) + step 8 field-validation against `POST /v3/mod-files/{id}/versions`. With `--check-spec`, adds spec version, path-count diff (naming any added or removed path, `[INFO]` instead of `[FAIL]` for an expected `SPEC_RETIRING_PATHS` removal), per-endpoint presence and stability tier for the upload flow, new-deprecation detection, and an operations-by-tier tally. Summary: `Passed: N/total`. Exits `0` if all pass, `1` if any fail.
 
 ---
 
@@ -717,6 +721,8 @@ Reads each extension's `index.js` and generates an `EXTENSION_EXPLAINED.md` file
 
 Parsing is provided by `extension_parser.js`.
 
+Under `Supported Stores`, Steam, Epic, GOG and Xbox are listed only when their app-ID constant resolves to a real value. Ubisoft Connect and EA are listed whenever their constant is declared, real value or not, because those installations are located through the Windows registry; a placeholder ID is reported as `Registry`.
+
 Toolbar actions are read from `context.registerAction` calls. An action wrapped in `if (FLAG) {` is listed only when that flag is on, and a backtick label that interpolates a constant is resolved against the symbol table rather than emitted as a raw `${...}`.
 
 ### generate_explained.js — Requirements
@@ -806,7 +812,7 @@ Run without arguments to process all `game-*` folders.
 Pass one or more bare `GAME_ID` values to target specific extensions.
 `--json` writes machine-readable JSON to stdout; progress and summary go to stderr instead.
 `--templates` also processes `template-*` folders (only effective when no `GAME_ID` args are given).
-`--description` writes `DESCRIPTION.bbcode.txt`, the Nexus mod page description, instead of the notes files. Two of its lists are generated: `Mod Installation Notes`, one line per installer with trigger plus destination, and `Supported Versions`, one line per store the extension carries an app ID for.
+`--description` writes `DESCRIPTION.bbcode.txt`, the Nexus mod page description, instead of the notes files. Two of its lists are generated: `Mod Installation Notes`, one line per installer with trigger plus destination, and `Supported Versions`, one line per store the extension carries an app ID for. Ubisoft Connect and EA are listed as soon as their constant is declared, with or without a real app ID, because those installations are found through the Windows registry.
 
 There is deliberately no `--check` flag. Drift between these files and their `index.js` is handled by the generated-docs audit, which regenerates and diffs.
 
@@ -1123,13 +1129,13 @@ python release_extension.py assassinscreedorigins assassinscreedvalhalla --no-op
 
 ### release_extension.py — Output
 
-**Aborts** if `CHANGELOG.md` is missing, if `info.json` version has no matching `## [X.Y.Z]` section in `CHANGELOG.md`, if `info.json` `name` does not match `Game: <Name>` pattern, or if `const debug = true` is found in `index.js`. Warns (but does not abort) if `info.json` version does not match the _latest_ `## [X.X.X]` entry in `CHANGELOG.md`. Runs `validate_index_js` checks (leftover `XXX`, missing `applyGame`, etc.) and warns on each issue found. Renames the versioned `.txt` file (e.g. `0.2.7.txt` -> `0.2.8.txt`) to match the current version. Updates the `Version:` and `Date:` lines in the `index.js` header comment — version from `info.json`, date from the most recent `## [X.X.X] - YYYY-MM-DD` entry in `CHANGELOG.md`. Adds any resolved store IDs to `DISCOVERY_IDS_ACTIVE` if not already present. Runs `node --check` on `index.js` (skip with `--skip-node-check`) and warns on syntax errors. Runs ESLint (skip with `--skip-eslint`). Runs `generate_explained.js` to regenerate `EXTENSION_EXPLAINED.md`, then `generate_notes.js` to regenerate the `NOTES_FOR_MOD_AUTHORS` pair, then `generate_notes.js --description` to refresh each `DESCRIPTION.bbcode.txt` install list (each batched across all games in a single Node invocation when releasing multiple; all skipped by `--dry-run`, and a failure of any one warns without failing the release). Creates `game-{GAME_ID}.zip` inside the extension folder, overwriting any existing zip. If `--upload` is passed, looks up the active file update group from `GET /v3/mods/{id}/file-update-groups`, runs a multipart upload via the Nexus v3 API, and publishes a new file version with the `## [X.Y.Z]` changelog entry as the description. Upload failure logs an error but does not fail the overall release. After the release loop, every game that uploaded successfully is removed from `resources/lists/games-unreleased.txt` in a single rewrite — that list is generated by `categorize_games.py` from each `index.js` `EXTENSION_URL`, so it goes stale the moment an extension is first published and stays stale until the next categorize run, and a successful upload proves the Nexus page exists. Games that did not upload, or are not in the list, are left alone. With `--dry-run --upload` the entries that would be removed are printed instead. Always prints the extracted changelog entry for the current version to the console before zipping. Reads `EXTENSION_URL` from `index.js` — if set to a valid URL, opens `EXTENSION_URL?tab=files` in the default browser; otherwise opens `https://www.nexusmods.com/games/site`. If `--edit-changelog` is passed, also opens the Nexus Mods Documents editor (`EXTENSION_URL/edit/documents`) in the browser.
+**Aborts** if `CHANGELOG.md` is missing, if `info.json` version has no matching `## [X.Y.Z]` section in `CHANGELOG.md`, if `info.json` `name` does not match `Game: <Name>` pattern, if `const debug = true` is found in `index.js`, or if two LIVE `context.registerInstaller` calls share the same priority number (a commented-out sample call, present in nearly every extension, is ignored via `find_registerinstaller_calls`). Warns (but does not abort) if `info.json` version does not match the *latest* `## [X.X.X]` entry in `CHANGELOG.md`. Runs `validate_index_js` checks (leftover `XXX`, missing `applyGame`, etc.) and warns on each issue found. Renames the versioned `.txt` file (e.g. `0.2.7.txt` -> `0.2.8.txt`) to match the current version. Updates the `Version:` and `Date:` lines in the `index.js` header comment — version from `info.json`, date from the most recent `## [X.X.X] - YYYY-MM-DD` entry in `CHANGELOG.md`. Adds any resolved store IDs to `DISCOVERY_IDS_ACTIVE` if not already present. Runs `node --check` on `index.js` (skip with `--skip-node-check`) and warns on syntax errors. Runs ESLint (skip with `--skip-eslint`). Runs `generate_explained.js` to regenerate `EXTENSION_EXPLAINED.md`, then `generate_notes.js` to regenerate the `NOTES_FOR_MOD_AUTHORS` pair, then `generate_notes.js --description` to refresh each `DESCRIPTION.bbcode.txt` install list (each batched across all games in a single Node invocation when releasing multiple; all skipped by `--dry-run`, and a failure of any one warns without failing the release). Creates `game-{GAME_ID}.zip` inside the extension folder, overwriting any existing zip. If `--upload` is passed, looks up the active file update group via `GET /v3/mods/{uid}/files` (`pick_file_group`, passing the extension's display name as `name_hint` so a mod with several active file groups resolves automatically), runs a multipart upload via the Nexus v3 API, and publishes a new file version with the `## [X.Y.Z]` changelog entry as the description. Upload failure (including an unresolved file-group ambiguity) logs an error but does not fail the overall release. After the release loop, every game that uploaded successfully is removed from `resources/lists/games-unreleased.txt` in a single rewrite — that list is generated by `categorize_games.py` from each `index.js` `EXTENSION_URL`, so it goes stale the moment an extension is first published and stays stale until the next categorize run, and a successful upload proves the Nexus page exists. Games that did not upload, or are not in the list, are left alone. With `--dry-run --upload` the entries that would be removed are printed instead. Always prints the extracted changelog entry for the current version to the console before zipping. Reads `EXTENSION_URL` from `index.js` — if set to a valid URL, opens `EXTENSION_URL?tab=files` in the default browser; otherwise opens `https://www.nexusmods.com/games/site`. If `--edit-changelog` is passed, also opens the Nexus Mods Documents editor (`EXTENSION_URL/edit/documents`) in the browser.
 
 ---
 
 ## bump_version.py
 
-Bumps the version of one or more game extensions. Updates `info.json`, the `index.js` header comment (`Version:` and `Date:` fields), and prepends a new empty changelog section to `CHANGELOG.md`.
+Bumps the version of one or more game extensions. Updates `info.json`, the `index.js` header comment (`Version:` and `Date:` fields), and prepends a new empty changelog section to `CHANGELOG.md` — unless a `## [NEW_VERSION]` section is already there (hand-written first, or a re-run), in which case it prints a warning and leaves the existing section alone rather than burying it under an empty stub. Notes parked under a differently-named heading (e.g. `Planned Improvements`) are not detected and still need a manual check.
 
 ### bump_version.py — Requirements
 
@@ -1157,7 +1163,7 @@ One of `--major`, `--minor`, `--patch`, or `--version` is required. Pass multipl
 
 ### bump_version.py — Output
 
-For each game: prints `[game_id] OLD -> NEW`. Writes `info.json`, updates `index.js` header, and inserts `## [NEW] - YYYY-MM-DD` before the first versioned entry in `CHANGELOG.md`. The new CHANGELOG section body is left as a single blank list item for manual editing. Summary line at the end: `Saved: N | Failed: N`.
+For each game: prints `[game_id] OLD -> NEW`. Writes `info.json`, updates `index.js` header, and inserts `## [NEW] - YYYY-MM-DD` before the first versioned entry in `CHANGELOG.md` — or, if a `## [NEW]` section already exists, prints `[game_id] WARNING - CHANGELOG.md already has a [NEW] section` and skips the insert. The new CHANGELOG section body is left as a single blank list item for manual editing. Summary line at the end: `Saved: N | Failed: N`.
 
 ---
 
@@ -1191,6 +1197,7 @@ python patch_extensions.py GAME_ID [GAME_ID ...] --debug
 python patch_extensions.py --list-patches
 python patch_extensions.py --only PATCH_NAME
 python patch_extensions.py GAME_ID [GAME_ID ...] --only PATCH_NAME
+python patch_extensions.py GAME_ID --only plan_b_lo_region --dry-run
 python patch_extensions.py --audit
 python patch_extensions.py GAME_ID [GAME_ID ...] --audit
 python patch_extensions.py --audit --resolve
@@ -1228,6 +1235,7 @@ Use `--show-suppressed` with `--audit` to list the findings parked by an audit-s
 | `epic_app_id` | Fills in `EPICAPP_ID = ""` by searching egdata.app for the game title and reading the EXECUTABLE item's `releaseInfo.appId`. Skips `null`, `"XXX"`, and already-set IDs. |
 | `gog_app_id` | Fills in `GOGAPP_ID` by searching gogdb.org for the game title. **Registered disabled** (several requests per unresolved game) — run with `--only gog_app_id`. Unlike `epic_app_id`, treats `null` and a missing const as unresolved: `null` here has only ever meant "never looked up", and a survey of 191 extensions found 127 nulls, 62 missing consts and zero empty strings, so an empty-string-only gate would no-op on every candidate. Skips `"XXX"` and already-set IDs unless `--force`. |
 | `discovery_ids` | Adds all resolved store IDs (`STEAMAPP_ID_DEMO`, `GOGAPP_ID`, `EPICAPP_ID`, `XBOXAPP_ID`, `UPLAYAPP_ID`, `EAAPP_ID`) to `DISCOVERY_IDS_ACTIVE` if not already present. Uses `add_to_discovery_ids()` from `vortex_utils`. |
+| `plan_b_lo_region` | Plan B FBLO load order port. Splices the shared load order region (multi-select, lock button, status filter, `FbloContextMenu`) from `game-warhammer40kdarktide/index.js` over the target's pre-port `LoadOrderItemRenderer` block, then inserts the status-filter head into `LoadOrderInstructions`. Adapts per `PLAN_B_LO_GAMES`: folder-mode games rewrite `gameDir` to a `modBasePath` expression; file-mode games (value `None`) drop the "Open Mod Folder" menu items and gate the Open-section separators. **Registered disabled** — run one game at a time with `--only plan_b_lo_region`. Guards: skips if `useFbloState` is already present, if the game is not in `PLAN_B_LO_GAMES`, or if the renderer block's SHA-256 does not match `PLAN_B_LO_BASELINE_SHA` (the file drifted and needs a hand-port). Preserves the file's on-disk line ending. Does not bump versions, touch the CHANGELOG, or deploy. |
 
 Each patch skips a game if the value is already set (unless `--force-pcgw` is used for `pcgamingwiki_url`). Games that fail a non-trivial step are always printed in the output so failures are visible. After writing any changed `index.js`, `generate_explained.js` is run automatically to keep `EXTENSION_EXPLAINED.md` in sync.
 
@@ -1267,6 +1275,41 @@ Add an entry to the `PATCHES` list at the bottom of the script:
 ```
 
 Each patch function receives `(game_id, src, context)` and returns `(new_src, changed: bool, message: str)`.
+
+---
+
+## migrate_fs.py
+
+Migrates game extensions, templates and shared modules off the vortex-api `fs` wrapper onto native node `fs` / `fs.promises` (plan `node-fs-migration-copper-crucible`). Not a `patch_extensions.py` patch — that framework only walks `game-*/index.js`, and this also reaches `*downloader.js`, `*_browser.js`, `zCustomGames/**`, `helper-*/`, and `resources/downloader` + `resources/browsers`.
+
+Import convention A: after a file is rewritten, `fs` means native node fs. The vortex-api wrapper is rebound to `vfs` and kept only for `ensureDirWritableAsync`, `unlinkAsync`, and the fd-based `openAsync`/`readAsync`/`writeAsync`/`closeAsync`/`fsyncAsync` (no native promise form). Because `fs` changes meaning, each file is rewritten **whole or not at all** — a missed call site throws `TypeError` on first run rather than misbehaving, and `--report` must show zero migratable members for any file it migrated.
+
+Method mapping: `statAsync`→`fsp.stat`, `readdirAsync`→`fsp.readdir`, `readFileAsync`→`fsp.readFile`, `writeFileAsync`→`fsp.writeFile`, `renameAsync`→`fsp.rename`, `symlinkAsync`→`fsp.symlink`, `ensureDirSync`→`fs.mkdirSync(p, { recursive: true })`, `ensureDirAsync`→`fsp.mkdir(p, { recursive: true })`, `removeAsync`→`fsp.rm(p, { recursive: true, force: true })`, `copyAsync`→`fsp.cp(s, d, { recursive: true })` (a trailing `{ overwrite: true }` is dropped), `ensureFileAsync`→a local `ensureFileAsync()` helper injected once per file before the first top-level function. `statSync`/`readdirSync`/`readFileSync`/`writeFileSync` are unchanged — they are native once `fs` is rebound. `moveAsync` is not scripted; it is reported for hand migration (the only occurrence in the repo is commented out).
+
+Also folds partial native imports into the rebind: `const { createWriteStream } = require('fs')` (call sites become `fs.createWriteStream`), `const fsNative = require('fs')`, and `const fsPromises = require('fs/promises')` (renamed to `fsp` = `fs.promises`; the commented scaffold line is dropped when `fsp` is added). `fs-extra` is left untouched — its retirement is a separate later step.
+
+Skips (reported, never written) any file that binds `fs` to something other than `require('fs')` — e.g. the `const fs = require('vortex-api').fs` DUMMY-placeholder line in `resources/browsers/template_*_browser.js` — plus `resources/snippets.js` (hand-fixed). Idempotent: re-running produces no further change.
+
+The ESLint guard for this migration lives in `eslint.config.js` as a `no-restricted-properties` block restricting the 17 migrated `vfs.<method>` names and `fsExtra.unlinkSync`/`copyFileSync`, at `warn` (flipped to `error` in the final wave).
+
+### migrate_fs.py — Usage
+
+```sh
+python migrate_fs.py GAME_ID [GAME_ID ...]      # migrate game-<id>/ (index.js + downloader/browser siblings)
+python migrate_fs.py --templates                # also migrate template-*/
+python migrate_fs.py --shared                   # also migrate resources/downloader + resources/browsers
+python migrate_fs.py --custom                   # also migrate zCustomGames/** + helper-*/
+python migrate_fs.py --all                      # every in-scope file
+python migrate_fs.py --all --dry-run            # preview every change, write nothing
+python migrate_fs.py --all --report             # method census + residual counts, write nothing
+python migrate_fs.py GAME_ID --dry-run
+```
+
+With no `GAME_ID` and no scope flag, `--report` implies `--all`; a bare run errors. Scope flags without `GAME_ID` and without `--all` do not sweep every game. Each migrated file is run through `node --check` before it is written (skip with `--no-node-check`).
+
+### migrate_fs.py — Output
+
+Per file: `OK` / `DRY` / `SKIP <reason>` / `FAIL <node --check error>`, then a `migrated / unchanged / skipped / failed` tally and any hand-migration notes. `--report` prints the live `fs.<method>` census across the scanned set (methods kept on `vfs` are tagged), the count of migratable call sites still on `fs.*` (zero once a wave is complete), the `vfs.*` / `fsp.*` call-site totals for the orphan sweep, and the list of files not yet migrated.
 
 ---
 
@@ -1332,7 +1375,7 @@ Extensions that register several games from one folder (for example `game-ninjag
 
 ## deploy_to_vortex.py
 
-Copies one or more CB1 game extension folders from the repo into the Vortex plugins directory (`C:\ProgramData\vortex\plugins`). If a matching plugin folder already exists (exact `game-{id}` or a versioned `Vortex Extension Update - {GAME_NAME} Vortex Extension v*` folder), only `index.js` plus any bundled shared modules (files ending in `downloader.js` or `browser.js`, e.g. `downloader.js`, `gamebanana_downloader.js`, `moddb_downloader.js`, `thunderstore_browser.js`) are copied. If no match is found, the full folder is deployed. Use `--force` to always do a full replace.
+Copies one or more CB1 game extension folders from the repo into the Vortex plugins directory (`C:\ProgramData\vortex\plugins`). If a matching plugin folder already exists (exact `game-{id}` or a versioned `Vortex Extension Update - {GAME_NAME} Vortex Extension v*` folder), a partial update is done: `index.js`, any bundled shared modules (files ending in `downloader.js` or `browser.js`, e.g. `downloader.js`, `gamebanana_downloader.js`, `moddb_downloader.js`, `thunderstore_browser.js`), every `*.json` data file **except `info.json`** (e.g. `archives.json`), and any other file already present in the deployed folder. `info.json` is deliberately never carried on a partial update, so the deployed version stays put and Vortex does not treat the extension as updated (which can fire a spurious `registerMigration`). If no match is found, the full folder is deployed, `info.json` included. Use `--force` to always do a full replace.
 
 ### deploy_to_vortex.py — Requirements
 

@@ -4,6 +4,10 @@
 
 - None
 
+## [1.0.2] - 2026-09-02
+
+- Fixed: A required mod loader or tool is no longer matched against downloads belonging to other games, which could report the wrong installed version or check for updates against the wrong file
+
 ## [1.0.1] - 2026-08-24
 
 - Fixed: Deploying could fail with an error when the load order had not been read yet, which can happen while installing a collection.

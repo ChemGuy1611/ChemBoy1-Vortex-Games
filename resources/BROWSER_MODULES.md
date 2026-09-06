@@ -41,6 +41,19 @@ const { registerModWorkshopBrowser, onceModWorkshopBrowser } = require('./modwor
 `index.js` never requires the base directly; the source module does. Copying only the source module
 fails at require time, on the machine where the extension is being tested rather than in the repo.
 
+**Two files, not three.** A source module requires only the base — never that source's downloader —
+so an extension that browses a site without having any requirement to fetch from it bundles exactly
+the two browser files. Such a config omits `requirements` and `installRequirement`: the base reads
+`config.requirements || []` and gates the requirement-install path on `installRequirement` being
+defined, so both are optional and their absence is the ordinary case, not a degraded one.
+
+**A page belongs to one spec.** The register export scopes the page to `gameSpec.game.id`, and the
+page's `visible` predicate compares that against the active game. In an extension that registers
+several games, call the register export from the `applyGame` variant of whichever spec should show
+the page, and pass that same spec to the once export. `game-systemshock225thanniversaryremaster`
+registers a classic game and a remaster, and its moddb.com page carries classic content only, so the
+page is registered against the classic spec alone and never appears while the remaster is active.
+
 Every export name carries its source: the Thunderstore module's `registerThunderstoreBrowser` /
 `installThunderstorePackage` are `registerGameBananaBrowser` / `installGameBananaItem` in the
 GameBanana one, and so on down the table below.
@@ -49,12 +62,15 @@ A change to a canonical file must be propagated to every adopter copy in the sam
 copies verified by hash. A change to `base_browser.js` touches **every** adopter of **every** source,
 so its blast radius is the union of every source's adopter roster (below) across all games.
 
-Browser modules have no `games-browser-*.txt` list of their own. A game gets a source's browser page
-as standard equipment alongside that source's downloader module - it is not an independent decision -
-so the roster is the same `games-downloader-*.txt` list `categorize_games.py` already writes. A
-separate browser list would just be a copy of that list that silently drifts out of sync. To find
-current adopters of a source's browser module specifically (as opposed to just its downloader),
-grep that list's games for a bundled `*_browser.js` file.
+Browser modules have no `games-browser-*.txt` list of their own, and their roster is **not** the
+source's `games-downloader-*.txt` list. The two travel together often but are independent decisions:
+a browse page is worth having wherever the site hosts an active scene for the game, while a
+downloader is only worth having where the extension has a *requirement* to fetch from that site.
+ModDB is where the two diverge most — most of its browser adopters carry no ModDB requirement at
+all, so they ship the browser modules and no `moddb_downloader.js`.
+
+The roster is therefore a grep: look for a bundled `<source>_browser.js` beside an `index.js`. The
+adopter table below is the written form of that grep and must be updated when an extension adopts.
 
 `deploy_to_vortex.py` copies `index.js` plus every bundled `*downloader.js` and `*browser.js` beside
 it, so both files reach the deployed extension without `--force`. That suffix rule is why the base is
@@ -137,13 +153,47 @@ costs the capture sources nothing:
 Because such a URL usually identifies nothing, the reference comes from page context — the same
 visited-ring mechanism GameBanana needs, and for the same reason.
 
-### Per-page state, not module state
+### Per-source state, not module state
 
-The claim map, the self-started-URL set, the confirmation flag and whatever the adapter needs to
-remember are keyed by page id (`<gameId>-<id>-browse`), not held in module-level singletons. Before
-the base existed, each adopter's own file copy gave each source its own instance. One shared base
-required by two source modules in the same extension would otherwise let one source claim — and
-install a second time — a download the other made.
+The claim map, the recovery set, the self-started-URL set, the confirmation flag and whatever the
+adapter needs to remember are keyed by **source** — `<gameId>::<adapter id>` — not held in
+module-level singletons. Before the base existed, each adopter's own file copy gave each source its
+own instance. One shared base required by two source modules in the same extension would otherwise
+let one source claim — and install a second time — a download the other made. The source key keeps
+those two apart, because the adapter id is what distinguishes them.
+
+State was originally keyed by page id, which looked equivalent — one page per source is the normal
+case. It is not equivalent when one game registers **two pages against the same source**, which is
+what the next section covers.
+
+### Two pages on one game and one source
+
+A game may register more than one browse page for the same site: `game-gzdoom` registers one game
+id but serves two moddb.com pages, Doom and Doom II, because GZDoom mods for both target the same
+Vortex game. Give each config its own `pageId` and `pageTitle` (and a `priority` each if sidebar
+order matters — pages sharing the default sort unpredictably), then call the register and once
+exports once per config.
+
+What makes this safe is that the pages **share one state entry**, since they share a source key.
+They therefore share the claim map, the recovery set, the self-started URLs, the visited-page ring
+and the external-content confirmation. Sharing is the wanted behaviour on every count:
+
+- One claim map means one listener claims a click, so a download produces exactly one install. Two
+  independent state entries would have both pages claim the same download, install it twice, and
+  each run its own failed-download recovery whose de-duplication the other could not see.
+- One visited-page ring means the click is identified no matter which page the user was on. Per-page
+  rings would leave the sibling with an empty ring and no way to identify anything.
+- One confirmation means confirming external content on the Doom page opens the Doom II page already
+  confirmed.
+
+The once export enforces this with a module-level guard: **the first call for a source registers the
+event handlers, and later calls for that same source are no-ops.** Two calls would otherwise install
+two sets of `did-finish-download` / `did-install-mod` handlers and one download watcher per call.
+
+The consequence to design around: because only the first registration's config is held for listener
+purposes, **sibling configs must carry identical `requirements` tables** — requirement routing reads
+the registered config, so a table only the second config declares is never consulted. A sibling
+declaring a different table is warn-logged rather than silently merged.
 
 ## Config contract
 
@@ -355,7 +405,7 @@ base skips both.
 | `gamebanana_browser.js` | gamebanana.com | `game-doometernal` |
 | `modworkshop_browser.js` | modworkshop.net | `game-roadtovostok` |
 | `fcmodding_browser.js` | downloads.fcmodding.com | `game-farcry3`, `game-farcry4`, `game-farcry5`, `game-farcry6`, `game-farcrynewdawn`, `game-farcryprimal`, `template-farcry` |
-| `moddb_browser.js` | moddb.com | `game-darkmessiahofmightandmagic`, `game-returntocastlewolfenstein` |
+| `moddb_browser.js` | moddb.com | `game-darkmessiahofmightandmagic`, `game-returntocastlewolfenstein`, `game-deusex`, `game-deusexinvisiblewar`, `game-doom3`, `game-gzdoom` (two pages), `game-painkillerblackedition`, `game-redfactionguerrillaremarstered`, `game-systemshock225thanniversaryremaster` (classic game only), `game-unrealtournament2004`, `game-wolfenstein2009` |
 
 ### Quirks per source
 

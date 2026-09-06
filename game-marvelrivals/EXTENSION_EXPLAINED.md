@@ -48,7 +48,6 @@ Mod types define where each category of mod gets deployed:
 | Signature Bypass | `marvelrivals-sigbypass` | low | `{gamePath}/MarvelGame/Marvel/Binaries/Win64` |
 | UE5 Sortable Mod | `marvelrivals-ue5-sortable-modtype` | 25 | `?` |
 | Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
-| Config (LocalAppData) | `marvelrivals-config` | 45 | `?` |
 
 ## Mod Installers
 
@@ -59,7 +58,6 @@ Installers run in priority order (lower number = tested first). The first instal
 | `marvelrivals-root` | 30 |
 | `marvelrivals-ue5-sortable-modtype` | 35 |
 | `marvelrivals-sigbypass` | 37 |
-| `marvelrivals-config` | 40 |
 
 ## Toolbar Actions
 

@@ -2,7 +2,13 @@
 
 ## Planned Improvements (Not Yet Released)
 
-- None
+- None Planned
+
+## [0.2.6] - 2026-09-02
+
+- Changed: HFW Mod Manager now appears in the mod list with its version, and can be disabled or removed from there
+- Added: Update check for HFW Mod Manager, with a notification when a new version is released
+- Fixed: HFW Mod Manager now installs the current version instead of an outdated one
 
 ## [0.2.5] - 2026-04-18
 

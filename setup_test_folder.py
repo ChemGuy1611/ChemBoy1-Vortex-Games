@@ -141,7 +141,7 @@ def resolve_expr(src, expr):
     """
     if not expr:
         return None
-    expr = re.sub(r'\s*//.*$', '', expr.strip())
+    expr = re.sub(r'\s+//.*$', '', expr.strip())
     expr = re.sub(r'^\(\s*\)\s*=>\s*', '', expr).strip().rstrip(",;").strip()
     if not expr:
         return None

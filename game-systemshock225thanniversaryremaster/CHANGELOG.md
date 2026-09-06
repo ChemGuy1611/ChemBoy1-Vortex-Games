@@ -4,6 +4,10 @@
 
 - None planned
 
+## [0.4.8] - 2026-09-04
+
+- Added: A "Browse ModDB" page for the classic game that opens moddb.com inside Vortex, so mods can be downloaded and installed without leaving the app.
+
 ## [0.4.7] - 2026-01-19
 
 - Fixed: More reliable folder deletion operations - revised deprecated fsPromises.rmdir function to fsPromises.rm

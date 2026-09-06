@@ -4,6 +4,20 @@
 
 - None planned at this time
 
+## [0.8.1] - 2026-09-05
+
+- Added: Right-click menu on load order entries - lock or unlock a position, move to top or bottom, open the mod folder, staging folder or mod page, and disable the Vortex mod. Works on a single entry or a multi-selection.
+- Added: Lock button on each load order row, and ctrl/shift multi-select.
+- Added: Enable/Disable button on each load order row that turns the Vortex mod on or off.
+- Added: Load order status filter (enabled, disabled, locked, unlocked, unmanaged) with a matched/total count.
+- Added: Load order rows for mods Vortex does not manage are now marked "Not managed by Vortex".
+- Fixed: Locked load order positions now survive a deployment.
+- Fixed: The load order page no longer fails to open on a fresh install before the mods folder exists.
+
+## [0.8.0] - 2026-09-05
+
+- Added: ModpackLoader is downloaded and kept up to date automatically again, from the Menace Mod Manager release on GitHub.
+
 ## [0.7.1] - 2026-08-30
 
 - Changed: Jiangyu now appears in your mod list with its version, and can be disabled or removed from there like any other mod. An existing copy is replaced automatically.

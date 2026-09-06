@@ -45,6 +45,47 @@ Standard RSS 2.0. Items are newest-first. Each `<item>` relevant to file discove
 
 There is no documented rate limit on the RSS feed; keep polling infrequent (once per requirement per `setup()`/update-check, not on a timer).
 
+### The downloads feed is the only probe surface
+
+To find out whether a game has a ModDB page worth adopting, and how busy it is, there is exactly one
+URL a plain HTTP client can ask:
+
+```text
+https://rss.moddb.com/games/{slug}/downloads/feed/rss.xml
+```
+
+Everything else is shut. `www.moddb.com` returns `403` to any non-browser client (the fingerprint
+block above), and the sibling **mods** feed — `rss.moddb.com/games/{slug}/mods/feed/rss.xml` —
+returns a Cloudflare challenge rather than XML, so only the downloads feed answers. Since the feed
+caps at ten items with no paging, the only activity metric available is *ten items divided by the
+days they span*, i.e. files per month. That is enough to tell a live scene from a dead page and
+nothing more.
+
+A `200` with items means the slug is real. A `404` means it is not. A `301` means the slug is real
+but not canonical — **follow it**, because the redirect target is the slug the site actually uses,
+and matching page paths against a non-canonical slug silently matches nothing.
+
+### Slugs are not derivable from the game's name
+
+A ModDB slug must be confirmed against the feed, never constructed. Three failure modes, all found
+in real adoptions:
+
+| Guess | Actual | Why |
+| --- | --- | --- |
+| `games/doom-3` | `games/doom-iii` | Roman numerals. The guessed form `301`s to the real one |
+| `games/red-faction-guerrilla` | `games/red-faction-guerilla` | The site misspells it — one `r` in "guerilla". The correctly-spelled form `301`s to the misspelled one |
+| `games/doom` | — | Resolves, but to **1993 Doom**, not the 2016 game, whose slug is `doom-4` |
+
+The last is the dangerous shape: a slug that resolves to a *different game* than intended fails no
+check and produces a page full of mods for the wrong title. Read a few `<title>` values out of the
+feed and confirm they are the game you meant before adopting. Other confirmed cases of this kind:
+`games/wolfenstein` is the 2009 game, `games/painkiller` is the classic rather than the 2026 reboot
+(which has no page at all), and `games/silent-hill-2` is the 2001 original rather than the remake.
+
+One page can also serve several editions of a game: `games/red-faction-guerilla` covers both the
+original and the Re-Mars-tered release, with mod titles distinguishing themselves as
+`/ReMARStered` or `/non-ReMARStered`. There is no separate remaster page to adopt.
+
 ## Resolving a Download URL
 
 `GET https://www.moddb.com/downloads/start/{fileId}` returns an interstitial HTML page containing a mirror link:

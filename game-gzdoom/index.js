@@ -2,8 +2,8 @@
 Name: Doom I & II (UZDoom) Vortex Extension
 Structure: Mod Loader (Any Folder)
 Author: ChemBoy1
-Version: 0.4.0
-Date: 2026-08-29
+Version: 0.4.2
+Date: 2026-09-03
 ///////////////////////////////////////*/
 /*
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣠⣤⣤⣤⡴⣦⡴⣖⠶⣴⠶⡶⣖⡶⣶⢶⣲⡾⠿⢿⡷⣾⢿⣷⣦⢾⣷⣾⣶⣤⣀⣰⣤⣀⡀⠀⠀⢀⣴⣿⡿⡿⣿⣿⣦⣄⠀⠀⣠⣴⣿⡿⢿⡿⣷⣦⡄⠀⠀⢀⣀⣤⣦⣀⣤⣶⣶⣷⣦⣴⡿⢿⡷⣿⠿⡿⣿⣷⢶⣦⢴⡲⣦⢶⡶⢶⡲⣖⡶⣦⣤⣤⣤⣤⣤⣤⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -40,6 +40,10 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const { download, findModByFile, findDownloadIdByFile, resolveVersionByModVersion, resolveVersionByPattern, testRequirementVersion } = require('./downloader');
+const { registerModDbBrowser, onceModDbBrowser } = require('./moddb_browser');
+
+//feature toggles
+const moddbBrowser = true; //register the "Browse ModDB" pages (moddb.com) - one for Doom, one for Doom II
 
 //Specify all the information about the game
 const GAME_ID = "gzdoom";
@@ -145,6 +149,35 @@ const PCGAMINGWIKI_URL = "XXX";
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1319";
 const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+
+//Embedded ModDB browser pages - Doom and Doom II each have their own moddb.com game page, but
+//this extension registers one game id for both, so both pages hang off it. The shared base keys
+//its listeners by source, so the two pages share one claim map and the second onceModDbBrowser
+//call is a no-op. No requirements: nothing on either page is a managed mod loader.
+
+//The ModDB mark, scaled to make room for a subscript roman numeral so the two sidebar entries
+//are told apart at a glance.
+const MODDB_MDI_MARK = 'M4.08 4.08L1.36 4.08L1.36 12.24L4.08 12.24L4.08 14.96L6.8 14.96L6.8 12.24L4.08 12.24'
+  + 'L4.08 9.52L12.24 9.52L12.24 12.24L9.52 12.24L9.52 14.96L12.24 14.96L12.24 12.24L14.96 12.24L14.96 4.08'
+  + 'L12.24 4.08L12.24 1.36L4.08 1.36ZM6.8 6.8L4.08 6.8L4.08 4.08L6.8 4.08ZM12.24 6.8L9.52 6.8L9.52 4.08L12.24 4.08Z';
+const MODDB_MDI_DOOM = `${MODDB_MDI_MARK}M18.6 13L21.4 13L21.4 23L18.6 23Z`;
+const MODDB_MDI_DOOM2 = `${MODDB_MDI_MARK}M15.2 13L17.6 13L17.6 23L15.2 23ZM18.8 13L21.2 13L21.2 23L18.8 23Z`;
+
+const MODDB_BROWSER_CONFIG_DOOM = {
+  moddbPath: 'games/doom',
+  pageId: `${GAME_ID}-moddb-browse-doom`,
+  pageTitle: 'Browse ModDB (Doom)',
+  mdi: MODDB_MDI_DOOM,
+  priority: 40, //keep Doom above Doom II in the sidebar
+};
+const MODDB_BROWSER_CONFIG_DOOM2 = {
+  moddbPath: 'games/doom-ii',
+  pageId: `${GAME_ID}-moddb-browse-doom2`,
+  pageTitle: 'Browse ModDB (Doom II)',
+  mdi: MODDB_MDI_DOOM2,
+  priority: 41,
+};
+
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -913,6 +946,12 @@ function applyGame(context, gameSpec) {
   };
   context.registerGame(game);
 
+  //register the embedded moddb.com browser pages (Doom and Doom II, both on this one game id)
+  if (moddbBrowser) {
+    registerModDbBrowser(context, gameSpec, MODDB_BROWSER_CONFIG_DOOM);
+    registerModDbBrowser(context, gameSpec, MODDB_BROWSER_CONFIG_DOOM2);
+  }
+
   //register mod types
   (gameSpec.modTypes || []).forEach((type, idx) => {
     context.registerModType(type.id, modTypePriority(type.priority) + idx, (gameId) => {
@@ -1040,6 +1079,10 @@ function main(context) {
       if (gameId !== GAME_ID) return;
       return onCheckModVersion(context.api, gameId, mods, forced);
     }); //*/
+    if (moddbBrowser) { //the second call is the no-op the shared base makes safe - listeners are per source
+      onceModDbBrowser(api, spec, MODDB_BROWSER_CONFIG_DOOM);
+      onceModDbBrowser(api, spec, MODDB_BROWSER_CONFIG_DOOM2);
+    }
     /*context.api.onAsync('did-deploy', (profileId) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;

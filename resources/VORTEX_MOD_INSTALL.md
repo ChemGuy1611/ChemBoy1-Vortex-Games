@@ -195,3 +195,5 @@ Collection phase-engine invariants the repo asks contributors to preserve:
 `VORTEX_AGENT_GUIDES.md`.
 Loader-specific install contracts: `SIMPLE_MOD_FRAMEWORK.md` (repacking a mod into a single archive
 at install time, and dropping a loader-owned folder from the instructions).
+`LOBOTOMY_BASEMOD.md` (flattening wrapper folders behind a marker-folder test, naming each mod's
+destination folder after its archive, and renaming one file on copy).

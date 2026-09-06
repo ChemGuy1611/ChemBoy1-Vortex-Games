@@ -3,7 +3,9 @@ bump_version.py
 
 Bump the version of one or more Vortex game extensions.
 Updates info.json, the index.js header comment, and prepends a new section
-to CHANGELOG.md.
+to CHANGELOG.md -- unless a ## [NEW_VERSION] section is already present, in
+which case it warns and leaves that section alone instead of stacking an
+empty stub over it.
 
 Usage:
     python bump_version.py --major GAME_ID [GAME_ID ...]
@@ -62,7 +64,11 @@ def _process(folder: str, game_id: str, bump_type: str | None, dry_run: bool,
     if dry_run:
         vu.log_dry(f"Would write info.json version: {new_ver}")
         vu.log_dry(f"Would update index.js header: Version {new_ver}, Date {today}")
-        vu.log_dry(f"Would prepend ## [{new_ver}] - {today} to CHANGELOG.md")
+        if vu.changelog_has_version_section(folder, new_ver):
+            vu.log_dry(f"CHANGELOG.md already has a [{new_ver}] section - "
+                       f"would NOT prepend a stub")
+        else:
+            vu.log_dry(f"Would prepend ## [{new_ver}] - {today} to CHANGELOG.md")
         if open_changelog:
             vu.log_dry("Would open CHANGELOG.md in the default editor")
         return True

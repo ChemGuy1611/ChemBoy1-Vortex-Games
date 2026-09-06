@@ -10,8 +10,8 @@
 // Newest APIs land in the Vortex source before either of those:
 //   Vortex/src/renderer/src/types/IExtensionContext.ts
 //
-// Signatures below last reconciled against the Vortex source 2026-08-05
-// (v2.4.2 stable / v2.5.0-beta.2 prerelease).
+// Signatures below last reconciled against the Vortex source 2026-09-04
+// (v2.6.3 stable).
 ///////////////////////////////////////////////////////////////////////
 
 //context.registerModType
@@ -21,7 +21,7 @@ export declare function registerModType(id: string, priority: number, isSupporte
 registerInstaller: (id: string, priority: number, testSupported: TestSupported, install: InstallFunc) => void;
 
 //context.registerAction
-export type RegisterAction = (group: string, position: number, iconOrComponent: string | React.ComponentType<any>, options: IActionOptions, titleOrProps?: string | PropsCallback, actionOrCondition?: (instanceIds?: string[]) => void | boolean, condition?: (instanceIds?: string[]) => boolean | string) => void;
+export type RegisterAction = (group: string, position: number, iconOrComponent: string | React.ComponentType<React.PropsWithChildren<any>>, options: IActionOptions, titleOrProps?: string | PropsCallback, actionOrCondition?: (instanceIds?: string[]) => void | boolean, condition?: (instanceIds?: string[]) => boolean | string) => void;
 
 //util.getVortexPath
 export type AppPath = 'base' | 'assets' | 'assets_unpacked' | 'modules' | 'modules_unpacked' | 'bundledPlugins' | 'locales' | 'package' | 'package_unpacked' | 'application' | 'userData' | 'appData' | 'localAppData' | 'temp' | 'home' | 'documents' | 'exe' | 'desktop';
@@ -54,7 +54,7 @@ export type PropsCallback = () => any;
 export type PersistingType = 'global' | 'game' | 'profile';
 export type CheckFunction = () => Promise<ITestResult>;
 export type RegisterSettings = (title: string, element: React.ComponentClass<any> | React.FunctionComponent<React.PropsWithChildren<any>>, props?: PropsCallback, visible?: () => boolean, priority?: number) => void;
-export type RegisterAction = (group: string, position: number, iconOrComponent: string | React.ComponentType<any>, options: IActionOptions, titleOrProps?: string | PropsCallback, actionOrCondition?: (instanceIds?: string[]) => void | boolean, condition?: (instanceIds?: string[]) => boolean | string) => void;
+export type RegisterAction = (group: string, position: number, iconOrComponent: string | React.ComponentType<React.PropsWithChildren<any>>, options: IActionOptions, titleOrProps?: string | PropsCallback, actionOrCondition?: (instanceIds?: string[]) => void | boolean, condition?: (instanceIds?: string[]) => boolean | string) => void;
 export type RegisterControlWrapper = (group: string, priority: number, wrapper: React.ComponentType<React.PropsWithChildren<any>>) => void;
 export type RegisterFooter = (id: string, element: React.ComponentClass<any>, props?: PropsCallback) => void;
 export type RegisterBanner = (group: string, component: React.ComponentType<React.PropsWithChildren<any>>, options: IBannerOptions) => void;
@@ -109,7 +109,7 @@ export interface IDashletOptions {
  * @param height Height of the dashlet in rows. Please note that 1 row is very slim, it's not
  *               commonly used in practice
  */
-export type RegisterDashlet = (title: string, width: 1 | 2 | 3, height: 1 | 2 | 3 | 4 | 5 | 6, position: number, component: React.ComponentClass<any> | React.FunctionComponent<any>, isVisible: (state: any) => boolean, props: PropsCallback, options: IDashletOptions) => void;
+export type RegisterDashlet = (title: string, width: 1 | 2 | 3, height: 1 | 2 | 3 | 4 | 5 | 6, position: number, component: React.ComponentClass<any> | React.FunctionComponent<React.PropsWithChildren<any>>, isVisible: (state: any) => boolean, props: PropsCallback, options: IDashletOptions) => void;
 export type RegisterDialog = (id: string, element: React.ComponentType<React.PropsWithChildren<any>>, props?: PropsCallback) => void;
 export type RegisterOverlay = (id: string, element: React.ComponentType<React.PropsWithChildren<any>>, props?: PropsCallback) => void;
 export type ToDoType = 'settings' | 'search' | 'workaround' | 'more';
@@ -317,7 +317,7 @@ export interface IApiFuncOptions {
 export interface IExtensionApiExtension extends INexusAPIExtension {
     ensureLoggedIn?: () => Promise<void>;
     awaitProfileSwitch?: () => Promise<string>;
-    showOverlay?: (id: string, title: string, content: string | React.ComponentType<any>, pos?: IPosition, options?: IOverlayOptions) => void;
+    showOverlay?: (id: string, title: string, content: string | React.ComponentType<React.PropsWithChildren<any>>, pos?: IPosition, options?: IOverlayOptions) => void;
     showHistory?: (stack: string) => void;
     addToHistory?: (stack: string, entry: IHistoryEvent) => void;
     [key: string]: (...args: any[]) => any;
@@ -410,12 +410,15 @@ export interface IExtensionApi {
      */
     store?: ThunkStore<any>;
     /**
-     * event emitter
+     * event emitter. Typed since v2.5.0 via the open `ApiEvents` interface (currently covers
+     * only the 4 download events: start-download/remove-download/pause-download/resume-download);
+     * everything else still flows through untyped `Record<string, any[]>`. Augment `ApiEvents`
+     * via `declare module` to type your own events.
      *
-     * @type {NodeJS.EventEmitter}
+     * @type {NodeJS.EventEmitter<ApiEventMap & Record<string, any[]>>}
      * @memberOf IExtensionApi
      */
-    events: NodeJS.EventEmitter;
+    events: NodeJS.EventEmitter<ApiEventMap & Record<string, any[]>>;
     /**
      * translation function
      */
@@ -559,17 +562,22 @@ export interface IExtensionApi {
     /**
      * emit an event and allow every receiver to return a Promise. This call will only return
      * after all these Promises are resolved.
-     * If the event handlers return a value, this returns an array of results
+     * If the event handlers return a value, this returns an array of results.
+     * Since v2.5.0 this is a typed overload pair: an `ApiEvents`-known `eventName` gets its args
+     * and result narrowed; any other string still falls back to the old untyped shape below.
      */
-    emitAndAwait: <T = any>(eventName: string, ...args: any[]) => Promise<T>;
+    emitAndAwait: (<TEvent extends ApiEventName>(eventName: TEvent, ...args: ApiEventArgs<TEvent>) => Promise<ApiEventResult<TEvent> extends void ? void : ApiEventResult<TEvent>[]>)
+        & (<TResult = any>(eventName: string, ...args: any[]) => Promise<TResult[]>);
     /**
      * handle an event emitted with emitAndAwait. The listener can return a promise and the emitter
      * will only return after all promises from handlers are returned.
      * Note that listeners should report all errors themselves, it is considered a bug if the listener
      * returns a rejected promise.
-     * If errors do need to be reported they have to be part of the resolved valued
+     * If errors do need to be reported they have to be part of the resolved valued.
+     * Typed overload pair since v2.5.0, same as emitAndAwait.
      */
-    onAsync: (eventName: string, listener: (...args: any[]) => PromiseLike<any>) => void;
+    onAsync: (<TEvent extends ApiEventName>(eventName: TEvent, listener: (...args: ApiEventArgs<TEvent>) => PromiseLike<ApiEventResult<TEvent>>) => void)
+        & ((eventName: string, listener: (...args: any[]) => PromiseLike<any>) => void);
     /**
      * wraps a function such that it will emitAndAwait will-eventName and did-eventName events
      * before and after invoking the actual callback.
@@ -986,15 +994,6 @@ export interface IExtensionContext {
      * In extreme cases you could instead throw an exception from the check (which would bubble up
      * through the dispatch call) which will likely crash Vortex.
      * That might be preferrable to corrupting state
-     * Further: Most actions are processed twice, once in the UI process where they got triggered and
-     *   in the main process where they get persisted to disk. If you stop an action in the UI
-     *   process it will not get forwarded to the main process, so this check only runs once. If you
-     *   allow it through though, this check is done a second time in the main process and you *need*
-     *   to generate the same result, you can't allow an action in the UI process and then reject it
-     *   in the main process!
-     *   Due to checks being run twice, if you write a log message that also will happen twice. You
-     *   can check "process.type === 'browser') to log only in the main (aka browser) process but
-     *   again: The result of the check *has to has to has to* be the same between all processes.
      * @param {string} actionType type of the action (like STORE_WINDOW_SIZE)
      * @param {SanityCheck} check the check to run for the specified action
      */

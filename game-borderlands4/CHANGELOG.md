@@ -4,6 +4,10 @@
 
 - tool to launch bl4-crypt (by Cr4nkSt4r, naked exe file)
 
+## [0.4.3] - 2026-09-02
+
+- Fixed: A required mod loader or tool is no longer matched against downloads belonging to other games, which could report the wrong installed version or check for updates against the wrong file
+
 ## [0.4.2] - 2026-08-12
 
 - Fixed: Epic version launch through EGS.

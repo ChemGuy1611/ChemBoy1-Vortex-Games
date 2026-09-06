@@ -20,6 +20,7 @@
 ## Supported Stores
 
 - **Steam** — `1237950`
+- **EA** — `Registry`
 
 ## Feature Flags
 

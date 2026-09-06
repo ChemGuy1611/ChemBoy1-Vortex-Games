@@ -11,7 +11,6 @@ This extension adds Marvel Rivals modding support to Vortex Mod Manager.
 [*]Installs mods with a top-level folder such as "Marvel" to the game folder itself (no subfolder).[/*]
 [*]Installs mods with a ".pak" file to the "MarvelGame\Marvel\Content\Paks\~mods" folder.[/*]
 [*]Installs mods with "dsound.dll" and "marvelrivalsutocsignaturebypass.asi" to the "MarvelGame\Marvel\Binaries\Win64" folder.[/*]
-[*]Installs mods with a config file such as "engine.ini" or "game.ini" to the "LOCALAPPDATA\Marvel\Saved\Config\Windows" folder.[/*]
 [*]Archives with a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to Vortex's built-in FOMOD installer instead.[/*]
 [/list]
 [b]📋 Usage Notes:[/b]

@@ -21,6 +21,7 @@
 
 - **Steam** — `33230`
 - **Epic Games Store** — `d0ae8ca1b5c8421ca6ab892353d3204d`
+- **Ubisoft Connect** — `4`
 
 ## Mod Types
 

@@ -16,6 +16,12 @@
 | Executable | `N/A` |
 | Extension Page | [https://www.nexusmods.com/site/mods/1319](https://www.nexusmods.com/site/mods/1319) |
 
+## Feature Flags
+
+| Flag | Value | Description |
+| --- | --- | --- |
+| `moddbBrowser` | `true` | register the "Browse ModDB" pages (moddb.com) - one for Doom, one for Doom II |
+
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:

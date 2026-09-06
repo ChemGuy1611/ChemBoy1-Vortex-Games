@@ -21,6 +21,7 @@
 
 - **Steam** — `243470`
 - **Epic Games Store** — `Jasper`
+- **Ubisoft Connect** — `274`
 
 ## Feature Flags
 

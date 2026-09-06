@@ -21,6 +21,7 @@
 
 - **Steam** — `371660`
 - **Epic Games Store** — `Larkspur`
+- **Ubisoft Connect** — `2010`
 
 ## Feature Flags
 

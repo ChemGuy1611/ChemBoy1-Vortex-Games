@@ -2,8 +2,8 @@
 Name: Stellar Blade Vortex Extension
 Structure: UE5 (static exe)
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-08-24
+Version: 1.0.2
+Date: 2026-09-02
 //////////////////////////////////////////////////*/
 
 //Import libraries

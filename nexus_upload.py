@@ -174,8 +174,11 @@ def pick_file_group(mod_id, domain, api_key, mod_key, name_hint=None, group_id_o
     endpoint 404s for a mod whose files were uploaded via the web/v1 flow.
 
     name_hint: optional string used to auto-select from multiple groups by
-    fuzzy name match (lowercase, spaces/underscores/hyphens stripped).
-    Falls back to interactive picker when hint is ambiguous or absent.
+    fuzzy name match (lowercase, spaces/underscores/hyphens stripped). Raises
+    RuntimeError when no hint is given and more than one group is active --
+    pick_file_group has exactly one caller (release_extension.py, which always
+    runs unattended for --upload) so there is no safe place to block on stdin;
+    set FILE_GROUP_ID in the extension's index.js to pin a group explicitly.
     """
     if group_id_override is not None:
         name = _v1_primary_file_name(mod_id, domain, api_key) or name_hint or f"file group {group_id_override}"
@@ -211,15 +214,11 @@ def pick_file_group(mod_id, domain, api_key, mod_key, name_hint=None, group_id_o
             + ", ".join(g["name"] for g in matched)
         )
 
-    print(f"\n  Multiple active file groups for mod {mod_id}:")  # noqa: raw-log-print
-    for i, g in enumerate(groups):
-        last = g.get("latest_file_upload_date") or "never"
-        print(f"  [{i + 1}] {g['name']}  (id: {g['id']}, last upload: {last})")  # noqa: raw-log-print
-    while True:
-        ans = input(f"  Choose group [1-{len(groups)}]: ").strip()
-        if ans.isdigit() and 1 <= int(ans) <= len(groups):
-            return groups[int(ans) - 1]
-        print(f"  Enter a number between 1 and {len(groups)}.")  # noqa: raw-log-print
+    names = ", ".join(f"{g['name']!r} (id: {g['id']})" for g in groups)
+    raise RuntimeError(
+        f"mod {mod_id} has {len(groups)} active file groups and no name_hint matched one: "
+        f"{names}. Set FILE_GROUP_ID in the extension's index.js to pin a group."
+    )
 
 
 # == Multipart upload ==========================================================

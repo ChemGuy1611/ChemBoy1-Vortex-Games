@@ -2,8 +2,8 @@
 Name: Marvel Rivals Vortex Extension
 Structure: UE5
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-08-24
+Version: 1.1.0
+Date: 2026-09-05
 ////////////////////////////////////////*/
 
 //Import libraries
@@ -530,7 +530,7 @@ function configInstallerNotify(api) {
                 + `Please move the game and/or staging folder to the same drive as the Local AppData folder (typically C Drive) to install these types of mods with Vortex.\n`
                 + `\n`
                 + `Config Path: ${path.join(CONFIG_PATH)}\n`
-                + `\n`             
+                + `\n`
                 + `If you want to use this mod installer, you must move the game and staging folder to the same partition as the Local AppData folder (typically C Drive).\n`
                 + `\n`
           }, [
@@ -826,7 +826,7 @@ function checkPartitions(folder, discoveryPath) {
     // Ensure all folders exist
     fs.ensureDirSync(path1);
     fs.ensureDirSync(path2);
-    fs.ensureDirSync(path3); 
+    fs.ensureDirSync(path3);
     // Get the stats for all folders
     const stats1 = fs.statSync(path1);
     const stats2 = fs.statSync(path2);
@@ -867,7 +867,7 @@ function partitionCheckNotify(api, CHECK_CONFIG) {
                 + `Config Path: ${CONFIG_PATH}\n`
                 + `Staging Path: ${STAGING_FOLDER}\n`
                 + `Game Path: ${GAME_PATH}\n`
-                + `\n`             
+                + `\n`
                 + `If you want to use the disabled mod types, you must move the game and staging folder to the same partition as the Local AppData folder (typically C Drive).\n`
                 + `\n`
           }, [
@@ -917,7 +917,7 @@ function legacyModsNotify(api, legacyMods) {
                   3. Click the "Reinstall" button in the blue ribbon at the bottom of the Mods page.\n
                   4. You can now sort all of your pak mods in the Load Order tab.\n`
                 + `\n`
-                + `Pak Mods to Reinstall:\n` 
+                + `Pak Mods to Reinstall:\n`
                 + `${legacyMods.join('\n')}`
                 + `\n`
                 + `\n`
@@ -968,6 +968,7 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
+  /* //!disabled due to NetEase policy change
   CHECK_CONFIG = checkPartitions(LOCALAPPDATA, GAME_PATH);
   if (!CHECK_CONFIG) {
     partitionCheckNotify(api, CHECK_CONFIG);
@@ -975,7 +976,7 @@ async function setup(discovery, api, gameSpec) {
   //ASYNC CODE ///////////////////////////////////////////
   if (CHECK_CONFIG) { //if game, staging folder, and config folder are on the same drive
     await fs.ensureDirWritableAsync(CONFIG_PATH);
-  }
+  } //*/
   if (SIGBYPASS_REQUIRED === true) {
     await downloadSigBypass(api, gameSpec);
   }
@@ -1037,7 +1038,7 @@ function applyGame(context, gameSpec) {
     }
   );
 
-  //register mod types dependent on drive partition
+  /* //!Disabled due to NetEase policy change
   context.registerModType(CONFIG_ID, 45,
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api)
@@ -1046,16 +1047,16 @@ function applyGame(context, gameSpec) {
       }
       return ((gameId === GAME_ID) && (CHECK_CONFIG === true));
     },
-    (game) => pathPattern(context.api, game, CONFIG_PATH), 
-    () => Promise.resolve(false), 
+    (game) => pathPattern(context.api, game, CONFIG_PATH),
+    () => Promise.resolve(false),
     { name: CONFIG_NAME }
-  );
+  ); //*/
 
   //register mod installers
   context.registerInstaller(ROOT_ID, 30, testRoot, installRoot);
   context.registerInstaller(UE5_SORTABLE_ID, 35, testPak, (files) => installPak(context.api, files)); //Pak installer
   context.registerInstaller(SIGBYPASS_ID, 37, testSigBypass, installSigBypass);
-  context.registerInstaller(CONFIG_ID, 40, testConfig, (files) => installConfig(context.api, files));
+  //context.registerInstaller(CONFIG_ID, 40, testConfig, (files) => installConfig(context.api, files)); //!disabled due to NetEase policy change
 
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Paks Folder', () => {

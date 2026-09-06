@@ -3,6 +3,7 @@ This extension adds STAR WARS Battlefront II modding support to Vortex Mod Manag
 [b]✅ Supported Versions:[/b]
 [list]
 [*]Steam[/*]
+[*]EA[/*]
 [*]Other versions may need to select the installation location manually.[/*]
 [/list]
 [b]🛠️ Mod Installation Notes:[/b]

@@ -126,6 +126,54 @@ const NIGHTLY_REQUIREMENTS = [
 ];
 //*/
 
+/* Nexus requirement: for a tool published on a Nexus Mods page instead of a GitHub repository.
+// Setting nexusModId switches the mode on; githubUrl is not read at all. The file is fetched
+// through Vortex's own download pipeline (an nxm:// link), so free accounts go through the
+// site's normal download dialog rather than failing.
+const XXX_PAGE_NO = 137;                   //the mod page id, from the page URL
+const XXX_DOMAIN = 'placeholder';          //the Nexus game domain the PAGE sits under
+const NEXUS_REQUIREMENTS = [
+  {
+    archiveFileName: XXX_ARC_NAME,         //notification id only in this mode - files are matched by the fields below
+    userFacingName: XXX_NAME,
+    nexusModId: XXX_PAGE_NO,               //presence of this field switches the mode on
+    //REQUIRED whenever the page is not on the game being managed (a shared tool hosted under
+    //another game). Omit it only for a requirement published on this game's own page, where it
+    //defaults to the active game.
+    nexusDomain: XXX_DOMAIN,
+    modType: XXX_ID,
+    assemblyFileName: XXX_FILE,
+    findMod: (api) => findModByFile(api, XXX_ID, XXX_FILE),
+    //reads the version stamped on the installed mod; the module compares it against the newest
+    //main file's version. A Nexus upload's file name carries ids, not a usable version, so
+    //resolveVersionByPattern is the wrong resolver here.
+    resolveVersion: (api) => resolveVersionByModVersion(api, NEXUS_REQUIREMENTS[0]),
+    //no findDownloadId: reusing a stale local archive is what the page's file listing prevents
+    autoInstall: true,
+    //--- picking the file, when the page publishes more than one current main file ---
+    //All of these are AND-ed, run before the newest-first sort AND before the pin, and are
+    //matched case-insensitively against both the uploaded file name and the file's title.
+    //nexusFileExclude: 'dev',             //drop the dev build - the one filter most pages need,
+                                           //since a dev build is routinely the NEWER upload
+    //nexusFileMatch: 'x64',               //or the other way round: keep only what carries a marker
+    //nexusFilePattern: new RegExp(/^XXX/, 'i'), //for naming that needs a real expression
+    //nexusCategoryId: [1, 3, 5],          //MAIN(1)/OPTIONAL(3)/MISCELLANEOUS(5) = every category a
+                                           //file can be UPLOADED as. Default is 1 alone. Check the
+                                           //page first - a current build is not always in MAIN, and
+                                           //2/4/7 (UPDATE/OLD_VERSION/ARCHIVED) are superseded builds
+    //--- naked (non-archive) file, e.g. a bare .exe or .dll ---
+    //directCopyAsMod: true,               //put it in a managed mod's staging folder (see above)
+    //REQUIRED with directCopyAsMod on this route: a Nexus upload's file name carries the mod and
+    //file ids ("XXX-137-1-2-0-1234567890.exe"), which is almost never the name the game expects.
+    //installFileName: XXX_FILE,
+    //--- optional ---
+    //nexusFileId: 763,                    //a specific file id: used as the pin target, and as the
+                                           //fallback when the file listing cannot be read at all
+    //pinVersion: VER,                     //hold at this exact file version
+  },
+];
+//*/
+
 //* Alternative to resolveVersionByPattern for when the version is NOT in the archive
 // file name. Finds the newest matching downloaded archive, extracts it to a temp dir,
 // then reads requirement.versionFile (e.g. 'version.txt') for the installed version.

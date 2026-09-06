@@ -21,6 +21,7 @@
 
 - **Steam** — `552520`
 - **Epic Games Store** — `Coriander`
+- **Ubisoft Connect** — `1803`
 
 ## Feature Flags
 

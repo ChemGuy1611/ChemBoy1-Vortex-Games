@@ -1,14 +1,15 @@
 /*////////////////////////////////////////////////
 Name: Horizon Forbidden West Vortex Extension
 Author: ChemBoy1
-Version: 0.2.5
-Date: 2026-04-18
+Version: 0.2.6
+Date: 2026-09-02
 ////////////////////////////////////////////////*/
 
 //import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { download, findModByFile, resolveVersionByModVersion, testRequirementVersion } = require('./downloader');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "2420110";
@@ -49,11 +50,37 @@ let repackerInstalled = false;
 
 const MODMANAGER_ID = `${GAME_ID}-modmanager`;
 const MODMANAGER_NAME = "HFW Mod Manager";
-const MODMANAGER_STRING = 'HFW Mod Manager';
 const MODMANAGER_EXEC = 'HFW_MM.exe';
 const MODMANAGER_PAGE_NO = 137;
 const MODMANAGER_FILE_NO = 763;
 const MODMANAGER_DOMAIN = GAME_ID;
+
+// The Mod Manager is published only on Nexus, and as a naked .exe rather than an archive, so the
+// requirement takes the module's Nexus route with directCopyAsMod: the file lands in a managed
+// mod's staging folder and deploys to the game folder through MODMANAGER_ID. That gives it a mod
+// list row with its version, and an update check, in place of an untracked loose copy.
+const MODMANAGER_REQUIREMENTS = [
+  {
+    archiveFileName: MODMANAGER_EXEC, //notification id only on this route
+    userFacingName: MODMANAGER_NAME,
+    nexusModId: MODMANAGER_PAGE_NO, //presence of this switches the requirement to the Nexus route
+    //the page is this game's own, but the same requirement is declared by two other extensions
+    //whose active game is NOT this one - so the domain is always stated, never inferred
+    nexusDomain: MODMANAGER_DOMAIN,
+    nexusFileId: MODMANAGER_FILE_NO, //fallback only, for when the file listing cannot be read
+    //The page files its current build under MISCELLANEOUS, not MAIN, and has no MAIN file at all -
+    //so accept every category a file can be uploaded as (MAIN/OPTIONAL/MISCELLANEOUS) and none of
+    //the states a superseded file falls into (UPDATE/OLD_VERSION/ARCHIVED).
+    nexusCategoryId: [1, 3, 5],
+    modType: MODMANAGER_ID,
+    assemblyFileName: MODMANAGER_EXEC,
+    directCopyAsMod: true,
+    installFileName: MODMANAGER_EXEC, //the uploaded file name carries the mod and file ids
+    findMod: (api) => findModByFile(api, MODMANAGER_ID, MODMANAGER_EXEC),
+    resolveVersion: (api) => resolveVersionByModVersion(api, MODMANAGER_REQUIREMENTS[0]),
+    autoInstall: true,
+  },
+];
 
 const REPACKER_ID = `${GAME_ID}-repacker`;
 const REPACKER_NAME = "Repacker";
@@ -241,6 +268,13 @@ async function deploy(api) {
 
 //Check if HFW ModManager is installed
 async function isModManagerInstalled(api) {
+  //The managed mod is the primary signal: the executable only appears in the game folder once
+  //Vortex has deployed it, so with auto-deploy off the disk check alone would keep asking the
+  //user to install something they already have.
+  if ((await findModByFile(api, MODMANAGER_ID, MODMANAGER_EXEC)) !== undefined) {
+    return true;
+  }
+  //Fallback for a copy the user placed in the game folder by hand, which Vortex does not manage.
   try {
     GAME_PATH = getDiscoveryPath(api);
     await fs.statAsync(path.join(GAME_PATH, MODMANAGER_EXEC));
@@ -257,112 +291,12 @@ function isRepackerInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === REPACKER_ID);
 }
 
-//* Function to auto-download HFW MM from Nexus Mods
+//Install the Mod Manager. check === true means "only if it is missing"; the toolbar action passes
+//false to force an update, which is exactly download()'s forced branch.
 async function downloadModManager(api, check = true) {
   GAME_PATH = getDiscoveryPath(api);
-  DOWNLOAD_FOLDER = selectors.downloadPathForGame(api.getState(), GAME_ID);
-  let isInstalled = await isModManagerInstalled(api);
-  if (!isInstalled || !check) {
-    const MOD_NAME = MODMANAGER_NAME;
-    const MOD_TYPE = MODMANAGER_ID;
-    const NOTIF_ID = `${MOD_TYPE}-installing`;
-    const PAGE_ID = MODMANAGER_PAGE_NO;
-    const FILE_ID = MODMANAGER_FILE_NO;  //If using a specific file id because "input" below gives an error
-    const GAME_DOMAIN = MODMANAGER_DOMAIN;
-    api.sendNotification({ //notification indicating install process
-      id: NOTIF_ID,
-      message: `Installing ${MOD_NAME}`,
-      type: 'activity',
-      noDismiss: true,
-      allowSuppress: false,
-    });
-    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
-      await api.ext.ensureLoggedIn();
-    }
-    try {
-      let FILE = null;
-      let URL = null;
-      try { //get the mod files information from Nexus
-        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
-        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
-        const file = modFiles
-          .filter(file => file.category_id === 1) //Author fixed - files in Main Files
-          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
-          .reverse()[0];
-        if (file === undefined) {
-          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
-        }
-        FILE = file.file_id;
-        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch { // use defined file ID if input is undefined above
-        FILE = FILE_ID;
-        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      }
-      const dlInfo = { //Download the mod
-        game: GAME_DOMAIN,
-        name: MOD_NAME,
-      };
-      //*Only start-download with Promise
-      return new Promise((resolve, reject) => {
-        api.events.emit('start-download', [URL], dlInfo, undefined,
-          async (error, dlid) => { //callback function to check for errors and pass id to and call 'start-install-download' event
-            if (error !== null && (error.name !== 'AlreadyDownloaded')) {
-              return reject(error);
-            }
-            try { //find the file in Download and copy it to the game folder
-              api.sendNotification({ //notification indicating copy process
-                id: `${NOTIF_ID}-copy`,
-                message: `Copying ${MOD_NAME} executable to game folder`,
-                type: 'activity',
-                noDismiss: true,
-                allowSuppress: false,
-              });
-              let files = await fs.readdirAsync(DOWNLOAD_FOLDER);
-              files = files.filter(file => ( path.basename(file).includes(MODMANAGER_STRING) && (path.extname(file).toLowerCase() === '.exe') ))
-                .sort((a,b) => a.toLowerCase().localeCompare(b.toLowerCase()))
-                .reverse();
-              const copyFile = files[0];
-              if (copyFile === undefined) {
-                throw new util.UserCanceled(`No ${MOD_NAME} download file found`);
-              } //*/
-              await fs.statAsync(path.join(DOWNLOAD_FOLDER, copyFile));
-              const source = path.join(DOWNLOAD_FOLDER, copyFile);
-              const destination = path.join(GAME_PATH, MODMANAGER_EXEC);
-              await fs.copyAsync(source, destination, { overwrite: true });
-              api.dismissNotification(NOTIF_ID);
-              api.dismissNotification(`${NOTIF_ID}-copy`);
-              api.sendNotification({ //notification copy success
-                id: `${NOTIF_ID}-success`,
-                message: `Successfully copied ${MOD_NAME} executable to game folder`,
-                type: 'success',
-                noDismiss: false,
-                allowSuppress: true,
-              });
-            } catch (err) {
-              const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
-              api.showErrorNotification(`Failed to download and copy ${MOD_NAME} executable`, err, { allowReport: false });
-              util.opn(errPage).catch(() => null);
-              return reject(err);
-            }
-            finally {
-              api.dismissNotification(NOTIF_ID);
-              api.dismissNotification(`${NOTIF_ID}-copy`);
-              return resolve();
-            }
-          },
-          'never',
-          { allowInstall: false },
-        );
-      });
-    } catch (err) { //Show the user the download page if the download and copy process fails
-      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
-      api.showErrorNotification(`Failed to download and copy ${MOD_NAME} executable`, err, { allowReport: false });
-      util.opn(errPage).catch(() => null);
-      api.dismissNotification(NOTIF_ID);
-      api.dismissNotification(`${NOTIF_ID}-copy`);
-    }
-  }
-} //*/
+  return download(api, MODMANAGER_REQUIREMENTS, !check);
+}
 
 //* Function to auto-download Repacker from Nexus Mods
 async function downloadRepacker(api, gameSpec) {
@@ -848,6 +782,15 @@ function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     const api = context.api;
+    context.api.onAsync('check-mods-version', async (gameId, mods, forced) => {
+      if (gameId !== GAME_ID) return;
+      try {
+        await testRequirementVersion(api, MODMANAGER_REQUIREMENTS[0]);
+      } catch (err) {
+        log('warn', `Failed to test requirement version: ${err}`);
+      }
+      return Promise.resolve();
+    });
     context.api.onAsync('did-deploy', async (profileId, deployment) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;

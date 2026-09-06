@@ -20,6 +20,7 @@
 ## Supported Stores
 
 - **Steam** — `201870`
+- **Ubisoft Connect** — `40`
 
 ## Mod Types
 

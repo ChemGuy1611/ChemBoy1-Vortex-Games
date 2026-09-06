@@ -4,7 +4,7 @@ Functions available in the Vortex API that are **not used by any of the 16 templ
 
 For the exhaustive API reference see the bundled type declarations in `node_modules/vortex-api/lib/api.d.ts`. Grep it by symbol name — the file is a build artifact and its line numbers move with every release, so nothing here cites them.
 
-Entries marked **(2.4.x)** were added during the Vortex 2.4 line and are absent from older bundles. Entries marked **(2.5.0-beta.1+)** are not in the current stable line at all — check what your users are running before relying on them.
+Entries marked **(2.4.x)** were added during the Vortex 2.4 line and are absent from older bundles. Entries marked **(v2.5.0+)** or **(v2.6.0+)** shipped in that stable release and are absent from anything earlier — check what your users are running before relying on them.
 
 ---
 
@@ -66,7 +66,7 @@ Entries marked **(2.4.x)** were added during the Vortex 2.4 line and are absent 
 
 ---
 
-### `IMainPageOptions.menuBadge` — **(2.4.x)**
+### `IMainPageOptions.menuBadge` — **(v2.5.0+)**
 
 **Why useful:** A component mounted on your page's entry in the left menu, which subscribes to state itself. Where `badge` can only show a number from a `ReduxProp`, `menuBadge` can render anything — a severity dot, a warning icon, a coloured pill.
 
@@ -74,7 +74,7 @@ Entries marked **(2.4.x)** were added during the Vortex 2.4 line and are absent 
 
 ---
 
-### `IMainPageOptions.newLayout` — **(2.4.x)**
+### `IMainPageOptions.newLayout` — **(v2.5.0+)**
 
 **Why useful:** Opts your page out of the legacy `.main-page` / header / body-container chrome so it renders as the flat root of its own subtree, for building against Vortex's redesigned UI.
 
@@ -404,7 +404,7 @@ All are sync (NodeJS.EventEmitter). Subscribe in `context.once()`.
 
 ---
 
-### The `ApiEvents` type registry — **(2.4.x)**
+### The `ApiEvents` type registry — **(v2.5.0+)**
 
 **Why useful:** `api.events` is now typed as `NodeJS.EventEmitter<ApiEventMap & Record<string, any[]>>`, and `ApiEvents` is an **open interface** — a TypeScript extension can add its own event names via `declare module` augmentation and get argument checking on `emit`, `onAsync` and `emitAndAwait` for them. `emit<'my-event'>(...)` then fails to compile on a wrong argument list instead of failing silently at runtime.
 
@@ -527,13 +527,14 @@ cancel semantics: see `ERROR_CLASSES.md`.
 
 ---
 
-### `VortexError` — **(2.5.0-beta.1+)**
+### `VortexError` — **(v2.5.0+)**
 
 Exported from the `vortex-api` barrel alongside the classes above, which now all derive from it.
 Its identity is in `err.data.kind`, a discriminated union, so a `catch` block can branch on a
 specific failure (`'fs:no-permissions'`, `'http:timeout'`, `'user-canceled'`, …) with the payload
 correctly narrowed — rather than string-matching a message or testing ten `instanceof`s. Also
-carries `isTransient`. Not present in 2.4.2; see `ERROR_CLASSES.md` for the kind catalog.
+carries `isTransient`. Shipped in stable since v2.5.0 (2026-08-10); see `ERROR_CLASSES.md` for the
+kind catalog.
 
 ---
 
@@ -581,7 +582,7 @@ extension run automated integrity checks against the active game or each install
 optional one-click fixes surfaced on the Health Check page. Full `IHealthCheck`/`IModHealthCheck`
 shape, category/severity/trigger enums, and worked examples: see `HEALTH_CHECK.md`.
 
-Two options there are easy to miss — both **(2.4.x)**:
+Two options there are easy to miss — both **(v2.5.0+)**:
 
 - **`gameId`** scopes a check to one game. The registry then skips it while another game is active
   and discards a result that lands after the user switched away. Cleaner than an early

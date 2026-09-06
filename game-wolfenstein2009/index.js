@@ -2,8 +2,8 @@
 Name: Wolfenstein (2009) Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.3.0
-Date: 2026-08-03
+Version: 0.3.1
+Date: 2026-09-03
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -11,6 +11,10 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const winapi = require('winapi-bindings');
+const { registerModDbBrowser, onceModDbBrowser } = require('./moddb_browser');
+
+//feature toggles
+const moddbBrowser = true; //register the "Browse ModDB" page (moddb.com)
 
 //Specify all the information about the game
 const STEAMAPP_ID = "10170";
@@ -41,6 +45,17 @@ let GAME_PATH = ''; //Game installation path
 let GAME_VERSION = ''; //Game version
 const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+
+//Embedded ModDB browser page - the user browses the live moddb.com section for this game and
+//installs from it. Vortex's download manager cannot fetch from this host, so the page fetches
+//the file itself. No requirements: nothing on this game's ModDB page is a managed mod loader.
+//moddb.com serves the 2009 game page ('wolfenstein').
+const MODDB_BROWSER_CONFIG = {
+  moddbPath: 'games/wolfenstein',
+  pageId: `${GAME_ID}-moddb-browse`,
+  pageTitle: 'Browse ModDB',
+};
+
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -745,6 +760,11 @@ function applyGame(context, gameSpec) {
   };
   context.registerGame(game);
 
+  //register the embedded moddb.com browser page
+  if (moddbBrowser) {
+    registerModDbBrowser(context, gameSpec, MODDB_BROWSER_CONFIG);
+  }
+
   //register mod types
   (gameSpec.modTypes || []).forEach((type, idx) => {
     context.registerModType(type.id, modTypePriority(type.priority) + idx, (gameId) => {
@@ -814,7 +834,9 @@ function main(context) {
   context.once(() => {
     const api = context.api;
     // put code here that should be run (once) when Vortex starts up
-
+    if (moddbBrowser) { //installs downloads started from the browse page, and update-checks the mods installed through it
+      onceModDbBrowser(api, spec, MODDB_BROWSER_CONFIG);
+    }
   });
   return true;
 }

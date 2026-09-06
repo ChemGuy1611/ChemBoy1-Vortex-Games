@@ -33,8 +33,9 @@ Usage:
         update_index_header, inject_register_actions,
         find_fn_end, find_fn_body, REGISTER_ACTIONS,
         read_info_json, make_info_json, make_changelog, parse_changelog_latest,
-        bump_semver, prepend_changelog_entry,
-        mutate_index_js, mutate_text_file, read_json, write_json_atomic,
+        bump_semver, prepend_changelog_entry, changelog_has_version_section,
+        mutate_index_js, mutate_text_file, detect_eol, patch_text_file,
+        read_json, write_json_atomic,
         read_gui_stats, write_gui_stats,
         SEMVER_PATTERN, is_valid_semver,
         list_game_ids, iter_game_folders, iter_steam_image_targets, iter_repo_scripts,
@@ -54,7 +55,7 @@ Usage:
         requires_extensions, has_extension_dependency,
         requires_unreal_mod_installer, has_ue4ss_load_order_parity,
         is_unreleased_extension,
-        validate_index_js,
+        validate_index_js, find_registerinstaller_calls,
         log_info, log_error, log_warn,
         find_vortex_exe, safe_windows_dirname,
         safe_rmtree, touch_empty, find_vortex_plugin_folder,
@@ -1128,7 +1129,7 @@ def const_decl_match(src, name):
 
     Useful for line-position edits — m.start()/m.end() give the declaration bounds."""
     return re.search(
-        rf'^[ \t]*(?:const|let)\s+{re.escape(name)}\s*=\s*.+?(?:\s*;|\s*//|$)',
+        rf'^[ \t]*(?:const|let)\s+{re.escape(name)}\s*=\s*.+?(?:\s*;|\s+//|$)',
         src, re.MULTILINE,
     )
 
@@ -2113,6 +2114,30 @@ def validate_index_js(src: str) -> list[str]:
     return issues
 
 
+_REGISTER_INSTALLER_RE = re.compile(
+    r'^[ \t]*context\.registerInstaller\(\s*([^,]+?)\s*,\s*(\d+)\s*,'
+)
+
+
+def find_registerinstaller_calls(src):
+    """Return (lineno, installer_id, priority) for every LIVE context.registerInstaller
+    call in src. 1-indexed lineno, priority as int.
+
+    Comment-aware: a line whose stripped text starts with "//" is skipped, so a
+    disabled/example installer's priority literal can never collide with a live
+    one. Every extension carries at least one commented-out sample registerInstaller
+    line (the template's disabled CONFIG_ID installer) -- scanning without this guard
+    false-positives a "duplicate priority" the moment a live priority matches it."""
+    calls = []
+    for lineno, line in enumerate(src.splitlines(), 1):
+        if line.lstrip().startswith('//'):
+            continue
+        m = _REGISTER_INSTALLER_RE.match(line)
+        if m:
+            calls.append((lineno, m.group(1).strip(), int(m.group(2))))
+    return calls
+
+
 def detect_stores(src: str) -> str:
     """Return space-separated store badges present in DISCOVERY_IDS_ACTIVE.
 
@@ -2267,6 +2292,74 @@ def mutate_text_file(path, fn, *, dry_run=False, atomic=True,
         return False
 
 
+def detect_eol(src):
+    """Return the line ending a text blob actually uses: CRLF if any is present, else LF.
+
+    Worktree endings are NOT uniform here: a file git checked out is CRLF
+    (core.autocrlf=true) while a file any tooling has rewritten since is LF, and
+    the memory tree under %USERPROFILE%\\.claude is a genuine mix. Sniff, never
+    assume."""
+    return "\r\n" if "\r\n" in src else "\n"
+
+
+def patch_text_file(path, replacements, *, count=1, dry_run=False):
+    """Apply literal (old, new) replacements to a text file, line-ending aware.
+
+    Write anchors with plain "\\n" regardless of the target. Both sides of every
+    replacement are normalized to LF and then translated to the file's OWN
+    ending before matching, so one anchor works against an LF file and a CRLF
+    file alike -- the failure this exists to prevent is a multi-line anchor
+    built with "\\n" matching zero times against a CRLF file and the patch
+    silently doing nothing.
+
+    replacements: iterable of (old, new) string pairs, applied in order.
+    count: required hit count per anchor; None means "one or more". A mismatch
+    raises AssertionError naming the anchor and the file's ending, so a scripted
+    multi-file pass fails loudly on the first file that drifted instead of
+    reporting success over a no-op.
+
+    Returns True if the file changed. Reads and writes with newline="" so the
+    file's own endings survive the round trip -- mutate_text_file cannot be
+    reused here because it reads in universal-newline mode, which collapses
+    CRLF to LF before anything can detect it and rewrites the whole file."""
+    label = os.path.basename(path)
+    if not os.path.isfile(path):
+        print(f"  WARNING - {label} not found")
+        return False
+    with open(path, encoding="utf-8", newline="") as f:
+        src = f.read()
+
+    eol = detect_eol(src)
+    out = src
+    for old, new in replacements:
+        old_t = old.replace("\r\n", "\n")
+        new_t = new.replace("\r\n", "\n")
+        if eol != "\n":
+            old_t = old_t.replace("\n", eol)
+            new_t = new_t.replace("\n", eol)
+        hits = out.count(old_t)
+        if hits < 1 if count is None else hits != count:
+            anchor = old.strip().splitlines()[0][:60] if old.strip() else old[:60]
+            raise AssertionError(
+                "%s: anchor %r matched %d time(s), expected %s (file is %s)"
+                % (label, anchor, hits,
+                   "1 or more" if count is None else count,
+                   "CRLF" if eol != "\n" else "LF"))
+        out = out.replace(old_t, new_t)
+
+    if out == src:
+        return False
+    if dry_run:
+        print(f"  [DRY RUN] Would patch: {label}")
+        return True
+    tmp = str(path) + ".tmp"
+    with open(tmp, "w", encoding="utf-8", newline="") as f:
+        f.write(out)
+    os.replace(tmp, path)
+    print(f"  Patched: {label}")
+    return True
+
+
 def read_json(path, default=None):
     """Read and parse a JSON file. Returns default (empty dict by default) on missing/corrupt file."""
     if default is None:
@@ -2413,13 +2506,40 @@ def bump_semver(version, kind):
     return f"{major}.{minor}.{patch}"
 
 
+def changelog_has_version_section(folder, version):
+    """Return True if CHANGELOG.md in folder already has a "## [version]" section.
+
+    False (not just "no section") when CHANGELOG.md itself is missing. Single
+    source for this check -- prepend_changelog_entry and bump_version.py's
+    dry-run preview both call it instead of each keeping their own copy of the
+    anchor regex."""
+    changelog_path = os.path.join(folder, "CHANGELOG.md")
+    if not os.path.exists(changelog_path):
+        return False
+    with open(changelog_path, "r", encoding="utf-8") as f:
+        content = f.read()
+    return bool(re.search(r"^## \[" + re.escape(version) + r"\]", content, re.MULTILINE))
+
+
 def prepend_changelog_entry(folder, version, date):
     """Prepend a new ## [version] - date section to CHANGELOG.md in folder.
 
     No-op if CHANGELOG.md does not exist. Inserts before the first existing
-    ## [ heading, or appends after trailing content if none found."""
+    ## [ heading, or appends after trailing content if none found.
+
+    No-op if a ## [version] section for this exact version is already present:
+    that means the entry was hand-written first, or bump_version already ran,
+    and prepending a second empty stub buries the real notes and ships blank
+    release notes (seen ~6 times). Does NOT catch notes parked under a
+    differently-named heading (e.g. "Planned Improvements") -- that still needs
+    a manual check."""
     changelog_path = os.path.join(folder, "CHANGELOG.md")
     if not os.path.exists(changelog_path):
+        return
+    if changelog_has_version_section(folder, version):
+        log_warn(os.path.basename(folder),
+                 f"CHANGELOG.md already has a [{version}] section - "
+                 f"not prepending a stub; write notes into the existing one")
         return
     with open(changelog_path, "r", encoding="utf-8") as f:
         content = f.read()

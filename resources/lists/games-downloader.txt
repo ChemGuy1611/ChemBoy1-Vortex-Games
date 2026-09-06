@@ -5,6 +5,7 @@ borderlands
 borderlands2
 borderlands3
 borderlands4
+deathstranding2onthebeach
 doom
 doom3
 doomthedarkages
@@ -12,10 +13,14 @@ dragonagetheveilguard
 godofwarragnarok
 gzdoom
 hitman3
+horizonforbiddenwest
+horizonzerodawnremastered
 howtofish
+lobotomycorporation
 megabonk
 menace
 reddeadredemption
+resonanceaplaguetalelegacy
 roadtovostok
 romestead
 stellarblade

@@ -21,6 +21,7 @@
 
 - **Steam** — `460930`
 - **Epic Games Store** — `Hyacinth`
+- **Ubisoft Connect** — `1771`
 
 ## Feature Flags
 

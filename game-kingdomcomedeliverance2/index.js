@@ -2,8 +2,8 @@
 Name: Kingdom Come Deliverance II Vortex Extension
 Structure: Mod Folder and FBLO
 Author: ChemBoy1
-Version: 1.0.3
-Date: 2026-08-03
+Version: 1.0.4
+Date: 2026-09-05
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -787,6 +787,12 @@ async function deserializeLoadOrder(context) {
     return util.getSafe(updateState, ['persistent', 'loadOrder', updateProfileId], []);
   } //*/
 
+  //Seed lock state from the stored load order. The game's own load order file has no lock
+  //field, so without this a locked entry would silently unlock on the next deploy or page mount.
+  const prevState = context.api.getState();
+  const prevLO = util.getSafe(prevState, ['persistent', 'loadOrder', selectors.lastActiveProfileForGame(prevState, GAME_ID)], []);
+  const prevById = new Map(prevLO.map(e => [e.id, e]));
+
   //Set basic information for load order paths and data
   let gameDir = getDiscoveryPath(context.api);
   if (gameDir === undefined) {
@@ -798,6 +804,9 @@ async function deserializeLoadOrder(context) {
   if (GAME_VERSION === 'xbox') {
     loadOrderPath = LO_PATH_XBOX;
   }
+  //The load order page can mount before setup has created the file, so make sure it exists
+  //before reading it.
+  await fs.ensureFileAsync(loadOrderPath);
   let loadOrderFile = await fs.readFileAsync(
     loadOrderPath,
     { encoding: "utf8", }
@@ -1011,6 +1020,7 @@ async function deserializeLoadOrder(context) {
           name: `${await getModName(folder)} (${folder})`,
           modId: await isVortexManaged(folder) ? await getModId(folder) : undefined,
           enabled: !line.startsWith("#"),
+          locked: prevById.get(folder)?.locked ?? false,
         }
       );
       return Promise.resolve(accum);
@@ -1025,6 +1035,7 @@ async function deserializeLoadOrder(context) {
         name: `${await getModName(folder)} (${folder})`,
         modId: await isVortexManaged(folder) ? await getModId(folder) : undefined,
         enabled: true,
+        locked: prevById.get(folder)?.locked ?? false,
       });
     }
   }
@@ -1038,6 +1049,7 @@ async function deserializeLoadOrder(context) {
           name: `${await getModName(MOD_ID)} (${MOD_ID})`,
           modId: undefined,
           enabled: true,
+          locked: prevById.get(MOD_ID)?.locked ?? false,
         });
       }
     }
@@ -1435,15 +1447,7 @@ function LoadOrderInstructions() {
   // Collapse the DraggableListItem wrapper of any filtered-out row. The renderer only owns the
   // inner <li>; the two dnd <div> wrappers retain their spacing when the <li> is display:none,
   // leaving visible gaps. This :has() rule hides the whole wrapper when its row is marked hidden.
-  React.useEffect(() => {
-    const styleId = 'fblo-status-filter-hide-style';
-    if (!globalThis.document.getElementById(styleId)) {
-      const style = globalThis.document.createElement('style');
-      style.id = styleId;
-      style.textContent = '.file-based-load-order-list .list-group > div:has(.lo-row-hidden) { display: none !important; }';
-      globalThis.document.head.appendChild(style);
-    }
-  }, []);
+  useInjectStyleOnce('fblo-status-filter-hide-style', LO_ROW_HIDDEN_CSS);
   return React.createElement('div', null,
     React.createElement(StatusPills, { active: statusFilter, setActive: setStatusFilter, groups: ['enabled', 'locked', 'unmanaged'], count: statusFilter.size > 0 ? { matched, total } : null }),
     React.createElement('p', { style: { fontStyle: 'italic', color: '#7ec8e3' } },
@@ -1523,6 +1527,40 @@ function matchesStatus(entry, active, isEnabledFn, isLockedFn) {
   }
   if (active.has('unmanaged') && entry.modId !== undefined) return false;
   return true;
+}
+
+//Style blocks injected by the load order surfaces (see useInjectStyleOnce below)
+const LO_INDEX_FOCUS_CSS = '.load-order-index input:focus { background: white !important; color: black !important; } .layout-flex.file-based-load-order-list-outer { overflow: auto; }';
+const LO_ROW_HIDDEN_CSS = '.file-based-load-order-list .list-group > div:has(.lo-row-hidden) { display: none !important; }';
+const LO_CTX_MENU_CSS = '.ue4ss-ctx-item:hover { background: rgba(255,255,255,0.1); }';
+
+//Extensions cannot ship CSS, so a component injects its styles into the document head on mount.
+//Guarded by a fixed id, so repeated mounts (every row, every page visit) never duplicate the block.
+function useInjectStyleOnce(styleId, css) {
+  React.useEffect(() => {
+    if (globalThis.document.getElementById(styleId)) return;
+    const style = globalThis.document.createElement('style');
+    style.id = styleId;
+    style.textContent = css;
+    globalThis.document.head.appendChild(style);
+  }, [styleId, css]);
+}
+
+//Shared dismiss behaviour for the context menus: any click or right-click outside closes the menu,
+//as does Escape. Menu items call stopPropagation, so their own clicks never reach these listeners.
+function useDismissOnOutside(onClose) {
+  React.useEffect(() => {
+    const dismiss = () => onClose();
+    const onKey = (evt) => { if (evt.key === 'Escape') onClose(); };
+    globalThis.document.addEventListener('click', dismiss);
+    globalThis.document.addEventListener('contextmenu', dismiss);
+    globalThis.document.addEventListener('keydown', onKey);
+    return () => {
+      globalThis.document.removeEventListener('click', dismiss);
+      globalThis.document.removeEventListener('contextmenu', dismiss);
+      globalThis.document.removeEventListener('keydown', onKey);
+    };
+  }, [onClose]);
 }
 
 //Viewport clamp for the context menu. The clamped position is measured once into state and then
@@ -1650,6 +1688,8 @@ function LoadOrderItemRenderer(props) {
     serializeLoadOrder(context, newLO);
   }, [dispatch, context, profile, loadOrder, loEntry, isEntryLocked]);
 
+  useInjectStyleOnce('lo-index-focus-style', LO_INDEX_FOCUS_CSS);
+
   const classes = ['load-order-entry'];
   if (className) classes.push(...className.split(' '));
 
@@ -1669,19 +1709,23 @@ function LoadOrderItemRenderer(props) {
       onContextMenu: onContextMenu,
       style: { outline: isSelected ? '2px solid #337ab7' : 'none', outlineOffset: '-1px' },
     },
-    React.createElement(Icon, { className: 'drag-handle-icon', name: 'drag-handle' }),
-    React.createElement(LoadOrderIndexInput, {
-      className: 'load-order-index',
-      api: context.api,
-      item: loEntry,
-      currentPosition: currentIdx,
-      lockedEntriesCount: lockedCount,
-      loadOrder: loadOrder,
-      isLocked: isLocked,
-      onApplyIndex: onApplyIndex,
-    }),
+    React.createElement('div', { style: { visibility: isEntryLocked ? 'hidden' : 'visible' } },
+      React.createElement(Icon, { className: 'drag-handle-icon', name: 'drag-handle' }),
+    ),
+    React.createElement('div', { style: { width: 24, flexShrink: 0, overflow: 'hidden' } },
+      React.createElement(LoadOrderIndexInput, {
+        className: 'load-order-index',
+        api: context.api,
+        item: loEntry,
+        currentPosition: currentIdx,
+        lockedEntriesCount: lockedCount,
+        loadOrder: loadOrder,
+        isLocked: isLocked,
+        onApplyIndex: onApplyIndex,
+      }),
+    ),
     React.createElement('div', {
-      style: { cursor: 'pointer', display: 'flex', alignItems: 'center', marginRight: 4 },
+      style: { cursor: 'pointer', display: 'flex', alignItems: 'center' },
       title: isEntryLocked ? 'Unlock position' : 'Lock position',
       onClick: (evt) => { evt.stopPropagation(); onLock(); },
     },
@@ -1702,7 +1746,7 @@ function LoadOrderItemRenderer(props) {
         style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, objectFit: 'cover', borderRadius: 2, pointerEvents: 'none' },
       }) : null,
     ),
-    React.createElement('p', { className: 'load-order-name' }, loEntry.name),
+    React.createElement('p', { className: 'load-order-name', style: { whiteSpace: 'normal', wordBreak: 'break-word' } }, loEntry.name),
     displayCheckboxes ? React.createElement(Checkbox, {
       className: 'entry-checkbox',
       checked: loEntry.enabled,
@@ -1719,31 +1763,9 @@ function LoadOrderItemRenderer(props) {
 
 //Right-click context menu for load order entries (single + multi-select)
 function FbloContextMenu({ x, y, item, loadOrder, profile, dispatch, context, selectedIds, onClose }) {
-  React.useEffect(() => {
-    const onKey = (evt) => { if (evt.key === 'Escape') onClose(); };
-    globalThis.document.addEventListener('keydown', onKey);
-    return () => globalThis.document.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  useDismissOnOutside(onClose);
 
-  React.useEffect(() => {
-    const dismiss = onClose;
-    globalThis.document.addEventListener('click', dismiss);
-    globalThis.document.addEventListener('contextmenu', dismiss);
-    return () => {
-      globalThis.document.removeEventListener('click', dismiss);
-      globalThis.document.removeEventListener('contextmenu', dismiss);
-    };
-  }, []);
-
-  React.useEffect(() => {
-    const styleId = 'ue4ss-ctx-menu-style';
-    if (!globalThis.document.getElementById(styleId)) {
-      const style = globalThis.document.createElement('style');
-      style.id = styleId;
-      style.textContent = '.ue4ss-ctx-item:hover { background: rgba(255,255,255,0.1); }';
-      globalThis.document.head.appendChild(style);
-    }
-  }, []);
+  useInjectStyleOnce('ue4ss-ctx-menu-style', LO_CTX_MENU_CSS);
 
   const [menuPosition, clampRef] = useClampedMenuPosition(x, y);
 
@@ -1766,7 +1788,9 @@ function FbloContextMenu({ x, y, item, loadOrder, profile, dispatch, context, se
   const modBasePath = GAME_VERSION === 'xbox' ? MOD_PATH_XBOX : path.join(getDiscoveryPath(context.api), MOD_PATH);
   const isModEnabled = (e) => util.getSafe(profile, ['modState', e.modId, 'enabled'], false);
   const setVortexEnabled = (entries, enabled) => {
-    const modIds = entries.filter(e => e.modId !== undefined).map(e => e.modId);
+    //One Vortex mod can own several load order rows on file-based games (LO_ATTRIBUTE is an array
+    //of basenames), so a multi-select can list the same modId more than once - dedupe before dispatch.
+    const modIds = [...new Set(entries.filter(e => e.modId !== undefined).map(e => e.modId))];
     if (modIds.length > 0) {
       actions.setModsEnabled(context.api, profile.id, modIds, enabled, { allowAutoDeploy: true });
     }
@@ -1821,10 +1845,9 @@ function FbloContextMenu({ x, y, item, loadOrder, profile, dispatch, context, se
       React.createElement('div', { style: sepStyle }),
       menuItem(`Open Mod Folders (${n})`, () => openModFolders(targets)),
       targets.some(t => t.modId !== undefined) ? menuItem(`Open Staging Folders (${n})`, () => {
-        targets.forEach(t => {
-          const folder = getModStagingFolder(context.api, t.modId);
-          if (folder) util.opn(folder).catch(() => null);
-        });
+        //Several rows can resolve to the same staging folder on file-based games - dedupe so it opens once.
+        const folders = [...new Set(targets.map(t => getModStagingFolder(context.api, t.modId)).filter(Boolean))];
+        folders.forEach(folder => util.opn(folder).catch(() => null));
         onClose();
       }) : null,
       React.createElement('div', { style: sepStyle }),

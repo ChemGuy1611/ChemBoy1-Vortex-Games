@@ -4,6 +4,12 @@
 
 - ModKit?
 
+## [0.5.6] - 2026-09-06
+
+- Fixed: Move to Top and Move to Bottom no longer drag locked entries out of position. Locked entries now stay where they are and the other mods reorder around them.
+- Fixed: Typing a position into a load order row no longer pushes locked entries out of place.
+- Fixed: The first position can now be typed into a load order row when nothing is locked at the top of the list.
+
 ## [0.5.5] - 2026-08-24
 
 - Fixed: Deploying could fail with an error when the load order had not been read yet, which can happen while installing a collection.

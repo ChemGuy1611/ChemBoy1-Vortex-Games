@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [2.0.3] - 2026-09-02
+
+- Changed: Removed the 2.0 Pak mod installer as it is not necessary.
+
 ## [2.0.2] - 2026-08-24
 
 - Fixed: The load order no longer stops working for the rest of the session if its file cannot be read or is damaged.

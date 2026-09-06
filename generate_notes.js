@@ -22,7 +22,9 @@
  *                  "Mod Installation Notes" list, one line per installer, trigger +
  *                  destination ("Installs mods with an "info.json" file to the "Mods"
  *                  folder."), and the "Supported Versions" list, one line per store
- *                  app-id constant that resolves to a real value. An existing page keeps
+ *                  app-id constant that resolves to a real value - plus Ubisoft Connect
+ *                  and EA, which are found through the Windows registry and so are
+ *                  listed whenever their constant is declared. An existing page keeps
  *                  everything the author wrote - only each list between its heading and
  *                  the closing [/list] is replaced. A missing page is scaffolded with
  *                  the standard section order for the author to finish.
@@ -59,6 +61,17 @@ const {
 } = require('./extension_parser');
 
 const ROOT = __dirname;
+
+/**
+ * Write content to path via tmp-file + rename, same pattern as generate_explained.js
+ * and lint_extensions.js's writeResultsAtomic -- a crash or Ctrl-C mid-write during a
+ * multi-game batch must not leave a shipped generated doc truncated.
+ */
+function writeFileAtomic(filePath, content) {
+  const tmp = filePath + '.tmp';
+  fs.writeFileSync(tmp, content, 'utf8');
+  fs.renameSync(tmp, filePath);
+}
 
 // ── engine detection ────────────────────────────────────────────────────────
 
@@ -1597,15 +1610,26 @@ const STORE_IDS = [
 ];
 
 /**
+ * Stores located through the Windows registry rather than by a store app id. Support
+ * for them does not depend on the app-id constant ever being filled in.
+ */
+const REGISTRY_STORES = new Set(['UPLAYAPP_ID', 'EAAPP_ID']);
+
+/**
  * The store list, one line per app-id constant that resolves to a real value.
  * A store the game is not sold on carries a null or empty constant, so it drops out.
+ * The registry-detected stores are the exception: declaring the constant is enough to
+ * list them, because the installation is found without the app id.
  */
 function renderSupportedVersions(ctx) {
   const L = [];
   L.push(SUPPORTED_HEADING);
   L.push('[list]');
   for (const [name, label] of STORE_IDS) {
-    if (isRealValue(ctx.table.get(name))) L.push(`[*]${label}[/*]`);
+    const supported = REGISTRY_STORES.has(name)
+      ? ctx.table.has(name)
+      : isRealValue(ctx.table.get(name));
+    if (supported) L.push(`[*]${label}[/*]`);
   }
   L.push('[*]Other versions may need to select the installation location manually.[/*]');
   L.push('[/list]');
@@ -1865,19 +1889,19 @@ for (const dir of extDirs) {
         if (merged === existing) {
           emit(`  OK    ${dir} (${DESCRIPTION_FILE} already up to date)`);
         } else {
-          fs.writeFileSync(descPath, merged);
+          writeFileAtomic(descPath, merged);
           emit(`  OK    ${dir} (${DESCRIPTION_FILE} generated lists updated)`);
         }
       } else {
-        fs.writeFileSync(descPath, scaffold());
+        writeFileAtomic(descPath, scaffold());
         emit(`  NEW   ${dir} (${DESCRIPTION_FILE} scaffolded - fill in the loader, usage and credit lines)`);
       }
       created++;
       jsonResults.push({ id: dir, ok: true, description: true });
       continue;
     }
-    fs.writeFileSync(path.join(ROOT, dir, 'NOTES_FOR_MOD_AUTHORS.md'), md);
-    fs.writeFileSync(path.join(ROOT, dir, 'NOTES_FOR_MOD_AUTHORS.bbcode.txt'), bbcode);
+    writeFileAtomic(path.join(ROOT, dir, 'NOTES_FOR_MOD_AUTHORS.md'), md);
+    writeFileAtomic(path.join(ROOT, dir, 'NOTES_FOR_MOD_AUTHORS.bbcode.txt'), bbcode);
     created++;
     tier1Total += tier1;
     tier2Total += tier2;

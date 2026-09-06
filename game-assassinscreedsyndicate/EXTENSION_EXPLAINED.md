@@ -21,6 +21,7 @@
 
 - **Steam** — `368500`
 - **Epic Games Store** — `Albacore`
+- **Ubisoft Connect** — `1875`
 
 ## Mod Types
 

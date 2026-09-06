@@ -10,13 +10,16 @@ Arguments:
     GAME_ID     One or more game IDs (e.g. thelastofuspart2)
     --all       Deploy every game-* extension in the repo
     --dry-run   Preview what would change without copying
-    --force     Fully replace the deployed folder instead of updating only
-                index.js and any *downloader.js / *browser.js modules inside it.
-                The deployed
-                folder is always located by name first, with or without --force,
-                so this replaces the existing extension rather than creating a
-                second copy beside it. A new "game-<id>" folder is created only
-                when no deployed folder can be found at all.
+    --force     Fully replace the deployed folder instead of doing a partial
+                update. A partial update carries index.js, the *downloader.js /
+                *browser.js modules, every *.json data file except info.json,
+                and any other file already present in the deployed folder;
+                info.json never travels on a partial update so the deployed
+                version stays put. The deployed folder is always located by name
+                first, with or without --force, so this replaces the existing
+                extension rather than creating a second copy beside it. A new
+                "game-<id>" folder is created only when no deployed folder can be
+                found at all.
     --restart-vortex
                 Close Vortex before copying (graceful taskkill, force-kill
                 after 30s) and launch it again (no CLI args) after all copies.
@@ -116,13 +119,28 @@ def deploy_game(game_id: str, dry_run: bool, force: bool) -> bool:
     resolved = vu.find_vortex_plugin_folder(game_id, game_name)
     dest = resolved or os.path.join(PLUGINS_DIR, f"game-{game_id}")
     partial = bool(resolved) and not force
-    # Shared modules bundled beside index.js: the *downloader.js family and the
-    # *browser.js family (resources/browsers/). Both are edited in the repo and
-    # have to travel with index.js or the deployed extension fails to require them.
-    copy_names = ["index.js"] + sorted(
-        n for n in os.listdir(src)
-        if n.endswith("downloader.js") or n.endswith("browser.js")
-    )
+
+    # Partial update (deployed folder already exists, no --force): carry index.js,
+    # the shared *downloader.js / *browser.js modules, the data files an extension
+    # ships (archives.json and the like), and anything already present in the
+    # deployed folder so it does not silently drift. info.json is deliberately
+    # NEVER copied on a partial update -- bumping the deployed version makes Vortex
+    # treat the extension as updated and can fire a spurious registerMigration.
+    # A genuine first-time deploy uses the copytree branch below and takes the
+    # whole tree, info.json included.
+    def _partial_wanted(n):
+        p = os.path.join(src, n)
+        if not os.path.isfile(p) or n.endswith((".bak", ".tmp")):
+            return False
+        if n == "info.json":
+            return False
+        if n == "index.js":
+            return True
+        if n.endswith(("downloader.js", "browser.js")) or n.endswith(".json"):
+            return True
+        return os.path.isfile(os.path.join(dest, n))
+
+    copy_names = sorted(n for n in os.listdir(src) if _partial_wanted(n))
     if dry_run:
         if partial:
             vu.log_info(game_id, f"copy {', '.join(copy_names)} -> {dest}")

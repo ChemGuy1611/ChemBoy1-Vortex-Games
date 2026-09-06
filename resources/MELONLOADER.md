@@ -215,6 +215,45 @@ Harmony (HarmonyX) is bundled and, for Mods, `PatchAll` runs automatically on re
 must opt in manually — add `[assembly: HarmonyDontPatchAll]` and call
 `HarmonyInstance.PatchAll(MelonAssembly.Assembly)` yourself.
 
+### Subfolders under `Mods/`, `Plugins/` and `UserLibs/`
+
+Supported since 0.6.0 (`MelonFolderHandler`), with one condition that trips up anything installing mods
+automatically: **a first-level subfolder is only scanned if it contains a `manifest.json`.**
+`MelonFolderHandler.ScanForFolders` calls `FindSubFolders` with `require_manifest: true` for each of the
+three base directories, and a folder without the file is skipped in silence — no warning, no log line, the
+mod simply never loads. `AddFolder` then recurses with `require_manifest: false`, so only the first level
+needs one. MelonLoader checks existence only; it does not parse the file at scan time.
+
+Two `Loader.cfg` options change this, both user-controlled and both defaulting to false:
+
+| Option | Launch argument | Effect |
+| --- | --- | --- |
+| `disable_subfolder_load` | `--melonloader.nosfload` | no subfolder is scanned at all; every wrapped mod disappears |
+| `disable_subfolder_manifest` | `--melonloader.nosfmanifest` | drops the `manifest.json` requirement |
+
+Folder names are not neutral. `_nameExclusions` skips any folder whose name starts with `~` or `.`, or is
+exactly `Broken`, `Retired` or `Disabled`. A subfolder named `UserLibs`, `Plugins` or `Mods` switches the
+scan type for its whole subtree, so a mod folder must never take one of those names either.
+
+### What decides mod load order
+
+Three stages, in this order:
+
+1. **Discovery.** `MelonPreprocessor.LoadFolders` walks the directory list built above — the base directory
+   first, then each accepted subfolder in `Directory.GetDirectories` order (alphabetical on NTFS for ASCII
+   names) — and inside each one, `Directory.GetFiles(path, "*.dll", SearchOption.TopDirectoryOnly)`.
+   Results accumulate in a `Dictionary` keyed by **assembly name**, where a later find only wins if its
+   assembly version is higher. Two mods shipping the same assembly name therefore collapse to one, silently.
+2. **Dependency sort.** `MelonBase.SortMelons` runs `DependencyGraph<T>.TopologicalSort`.
+3. **Priority sort.** `melons.OrderBy(x => x.Priority)`, where `Priority` is `[MelonPriority(int)]` and
+   lower loads earlier. LINQ `OrderBy` is a stable sort, so discovery order survives as the tiebreaker
+   within each priority band.
+
+So folder names *do* influence order here, unlike BepInEx — but weakly. A `.dll` sitting flat in `Mods/`
+always loads before every subfolder mod, any mod declaring a non-default `[MelonPriority]` moves regardless
+of where it sits, and `disable_subfolder_load` takes the whole scheme away. Numbered folder prefixes are a
+hint, not a guarantee.
+
 ### Target framework
 
 Chosen from the game, exactly as with any Unity modding:
@@ -231,7 +270,8 @@ Chosen from the game, exactly as with any Unity modding:
 
 Mods ship as bare `.dll` files far more often than BepInEx plugins do, because a MelonLoader mod is
 usually a single assembly dropped into `Mods/`. Archives, when used, are normally rooted at `Mods/`,
-`Plugins/`, `UserLibs/` and/or `UserData/`. `UserLibs/` is the correct home for shared libraries a
+`Plugins/`, `UserLibs/` and/or `UserData/`. A bare `.dll` moved into a folder of its own needs a
+`manifest.json` beside it or it stops loading — see the subfolder section above. `UserLibs/` is the correct home for shared libraries a
 mod depends on but that are not themselves Melons; a library placed in `Mods/` without the
 `MelonInfo` attribute is reported as a failed load.
 
@@ -323,3 +363,5 @@ enforces the mutual exclusion).
 `WINAPI_BINDINGS.md` (the registry probe for an installed .NET 6 desktop runtime).
 `REGISTER_GAME.md` (the `spec` / `applyGame()` contract, including `parameters` for the launch
 options above).
+`LOBOTOMY_BASEMOD.md` (a game-specific Unity loader that replaces the game assembly outright
+instead of injecting at startup, so it needs no proxy DLL and no runtime patch step).

@@ -29,6 +29,8 @@ context.registerAction(
 | `hollowIcon` | `boolean` | Outline-only icon style |
 | `isClassicOnly` | `boolean` | Visible only in classic layout |
 | `isModernOnly` | `boolean` | Visible only in modern layout |
+| `notice` | `() => string \| undefined` | Extra text read on render, shown bracketed after the title. Unreleased (Vortex `master`, past v2.6.3). |
+| `pinned` | `boolean` | Action stays on a pinning-aware toolbar until the user removes it; toolbars without pinning ignore it. Unreleased (Vortex `master`, past v2.6.3). |
 
 ---
 

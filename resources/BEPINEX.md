@@ -205,7 +205,9 @@ Order matters, because each stage can only see what the previous one has not yet
 3. **Preload-time patchers** in `BepInEx/patchers` are loaded and given raw `AssemblyDefinition`
    objects via Mono.Cecil, *before* the runtime has loaded those assemblies.
 4. **The chainloader** starts once the game's runtime is up, scans `BepInEx/plugins` recursively for
-   assemblies carrying `[BepInPlugin]`, sorts them by dependency, and instantiates each one.
+   assemblies carrying `[BepInPlugin]`, sorts them by GUID and then by dependency, and instantiates
+   each one. See [What decides plugin load order](#what-decides-plugin-load-order) — the sort key is
+   the GUID, never the file or folder name.
 5. **Plugins** run. Harmony patches applied here operate on already-loaded assemblies.
 
 Three assemblies can never be patched at stage 3, because the patcher engine itself needs them:
@@ -256,6 +258,39 @@ Supporting attributes, all optional and all repeatable:
 - `[BepInProcess("Game.exe")]` — only load when the host process matches. Useful when several games
   share a folder.
 - `[BepInIncompatibility("guid")]` — skip this plugin if that one is present.
+
+### What decides plugin load order
+
+The plugin **GUID**, and nothing else. `BaseChainloader.Execute` (v6) and `Chainloader.Start` (v5) collect
+the discovered plugins into a
+`SortedDictionary<string, IEnumerable<string>>(StringComparer.InvariantCultureIgnoreCase)` keyed by
+`[BepInPlugin]` GUID, then run `Utility.TopologicalSort` over that dictionary's keys with
+`[BepInDependency]` supplying the edges. The result is: alphabetical by GUID, case-insensitively, adjusted
+so a dependency always precedes its dependents.
+
+Three consequences worth stating plainly:
+
+- **File names, folder names and directory depth have no effect on load order.** Renaming a plugin DLL, or
+  moving it into a subfolder, changes nothing. A mod manager cannot offer a working load order page for
+  BepInEx plugins; the only ordering lever is `[BepInDependency]`, which is compiled into the assembly.
+- **Duplicate GUIDs are not both loaded.** `OrderByDescending(x => x.Metadata.Version)` keeps the highest
+  version of a GUID and discards the others, whatever their paths.
+- Preload-time patchers are ordered separately, in their own `SortedDictionary` inside
+  `AssemblyPatcher.AddPatchersFromDirectory`.
+
+### Subfolders under `plugins`
+
+Fully supported, at any depth, and safe for a mod manager to impose:
+
+- discovery is `Directory.GetFiles(directory, "*.dll", SearchOption.AllDirectories)` in
+  `TypeLoader.FindPluginTypes`, used for `plugins` and `patchers` alike;
+- assembly resolution follows — `Utility.TryResolveDllAssembly` builds its candidate list from the directory
+  plus `Directory.GetDirectories(directory, "*", SearchOption.AllDirectories)`, so a dependency assembly
+  shipped alongside a plugin still resolves from inside a subfolder;
+- because order comes from the GUID, wrapping each plugin in its own folder cannot reorder anything.
+
+`BepInEx/config` is the exception: config files are read as `config/<GUID>.cfg` at the top level, so nothing
+should nest those.
 
 ### Preloader patchers, the rarer case
 

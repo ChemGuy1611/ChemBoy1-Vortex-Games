@@ -174,3 +174,5 @@ types, `setmodtype`, and the staging folder the repack happens in).
 `SNAKEBITE_CLI.md` (the other loader in this repo that repacks mods into the game rather than
 deploying them, and the same deploy-then-hand-off notification pattern).
 `NOTIFICATIONS_DIALOGS.md` (the deploy notification used to tell the user the handoff is pending).
+`LOBOTOMY_BASEMOD.md` (the opposite case - a loader that owns a mods folder and a mod list file,
+yet installs and ingests entirely by file copy, so no handoff is needed).

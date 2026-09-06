@@ -21,6 +21,7 @@
 
 - **Steam** — `911400`
 - **Epic Games Store** — `Anise`
+- **Ubisoft Connect** — `5183`
 
 ## Mod Types
 

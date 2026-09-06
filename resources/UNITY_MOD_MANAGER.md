@@ -299,3 +299,5 @@ reversibility is the argument for reproducing the patch).
 `doorstop_config.ini` does not identify a loader, and `target_assembly` has to be read).
 `MELONLOADER.md` (the third general-purpose Unity loader, proxy-DLL based rather than
 Doorstop-based).
+`LOBOTOMY_BASEMOD.md` (a game-specific Unity loader that needs neither Doorstop nor a proxy DLL -
+it ships a prebuilt patched game assembly and is installed purely by copying files).

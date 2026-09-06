@@ -21,6 +21,7 @@
 
 - **Steam** — `289650`
 - **Epic Games Store** — `Amberjack`
+- **Ubisoft Connect** — `720`
 
 ## Mod Types
 

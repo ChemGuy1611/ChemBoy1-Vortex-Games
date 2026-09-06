@@ -20,6 +20,7 @@
 ## Supported Stores
 
 - **Steam** — `48190`
+- **Ubisoft Connect** — `Registry`
 
 ## Mod Types
 

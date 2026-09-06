@@ -62,21 +62,6 @@ This game ships signed pak files, so a signature bypass is required before most 
 
 ========================================================================
 
-Config File Mods:
-
-Config tweaks are deployed to the game's config folder in your user profile, not into the game installation.
-
-  Requirements:
-    - Recognised by any of these filenames in the archive: "engine.ini", "game.ini", "gameusersettings.ini", "input.ini", "scalability.ini", "hardware.ini", "deviceprofiles.ini", "compat.ini", "runtimeoptions.ini", "gameplaytags.ini", "enhancedinput.ini" or "consolevariables.ini".
-    - Installed to "LOCALAPPDATA\Marvel\Saved\Config\Windows".
-
-  Installs to: "LOCALAPPDATA\Marvel\Saved\Config\Windows"
-
-  Common mistakes:
-    - Shipping a config file with one of these names inside an unrelated mod - the whole archive is then treated as a config mod.
-
-========================================================================
-
 Rules That Apply To Every Mod Type:
 
     - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.

@@ -376,3 +376,5 @@ including the chunked/resumable path that `accept-ranges` enables).
 `NEXUS_MODS_API.md` (the other API this project talks to, and the one with real authentication).
 `SIMPLE_MOD_FRAMEWORK.md` (a loader installed from `releases/latest/download`, whose Nexus
 installer is itself only a wrapper around that same asset).
+`LOBOTOMY_BASEMOD.md` (a release whose version lives in the asset filename rather than the tag, and
+which ships two similarly named assets only one of which is wanted).

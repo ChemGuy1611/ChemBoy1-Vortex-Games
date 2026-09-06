@@ -6,7 +6,7 @@ Throwing the correct error class changes how Vortex handles failures. Wrong clas
 
 ## Full list
 
-These ten are what to throw today. Vortex 2.5.0 begins folding them into a single `VortexError`
+These ten are what to throw today. Since v2.5.0 Vortex folds them into a single `VortexError`
 class — see the section further down — but they keep working and their constructors are unchanged.
 
 | Class | Constructor | Vortex behavior when thrown |
@@ -38,12 +38,12 @@ They exist as classes inside Vortex (`src/shared/src/types/errors.ts`) but are a
 
 ---
 
-## `VortexError` (Vortex 2.5.0-beta.1+ — not in 2.4.2)
+## `VortexError` (stable since Vortex v2.5.0)
 
 Vortex is consolidating the ten classes above onto a single error class whose identity lives in a
-data field rather than in the prototype chain. **It is not in the 2.4.2 stable line**, so keep
-throwing the classes above in extensions shipping today; this section is a heads-up for when 2.5.0
-goes stable.
+data field rather than in the prototype chain. It shipped in **v2.5.0** (2026-08-10) and is in
+every stable since. Extensions on a `^2.5.0`+ peer can use it directly; keep throwing the ten
+classes when you still support older bundles — they remain the compat path.
 
 All ten classes now `extend VortexError<kind>` and carry `@deprecated Use VortexError directly`.
 `instanceof UserCanceled` still works — the change is additive, and every constructor signature is

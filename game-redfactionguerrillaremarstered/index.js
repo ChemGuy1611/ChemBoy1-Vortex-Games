@@ -2,14 +2,18 @@
 Name: Red Faction Guerrilla Re-Mars-tered Vortex Extension
 Structure: 3rd-Party Mod Installer
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2025-10-04
+Version: 0.2.1
+Date: 2026-09-04
 //////////////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { registerModDbBrowser, onceModDbBrowser } = require('./moddb_browser');
+
+//feature toggles
+const moddbBrowser = true; //register the "Browse ModDB" page (moddb.com)
 
 //Specify all the information about the game
 const GAME_ID = "redfactionguerrillaremarstered";
@@ -50,6 +54,18 @@ const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1145"; //Nexus link t
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Red_Faction_Guerrilla_Re-Mars-tered";
 const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+
+//Embedded ModDB browser page - the user browses the live moddb.com section for this game and
+//installs from it. Vortex's download manager cannot fetch from this host, so the page fetches
+//the file itself. No requirements: nothing on this game's ModDB page is a managed mod loader.
+//One moddb.com page serves both editions; mod titles tag themselves /ReMARStered or
+///non-ReMARStered. The slug is moddb.com's own misspelling ('guerilla', one r).
+const MODDB_BROWSER_CONFIG = {
+  moddbPath: 'games/red-faction-guerilla',
+  pageId: `${GAME_ID}-moddb-browse`,
+  pageTitle: 'Browse ModDB',
+};
+
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -583,6 +599,11 @@ function applyGame(context, gameSpec) {
   };
   context.registerGame(game);
 
+  //register the embedded moddb.com browser page
+  if (moddbBrowser) {
+    registerModDbBrowser(context, gameSpec, MODDB_BROWSER_CONFIG);
+  }
+
   //register mod types
   (gameSpec.modTypes || []).forEach((type, idx) => {
     context.registerModType(type.id, modTypePriority(type.priority) + idx, (gameId) => {
@@ -654,6 +675,9 @@ function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     const api = context.api;
+    if (moddbBrowser) { //installs downloads started from the browse page, and update-checks the mods installed through it
+      onceModDbBrowser(api, spec, MODDB_BROWSER_CONFIG);
+    }
     context.api.onAsync('did-deploy', async (profileId, deployment) => {
       const lastActiveProfile = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== lastActiveProfile) return;

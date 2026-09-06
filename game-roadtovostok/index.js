@@ -2,8 +2,8 @@
 Name: Road to Vostok Vortex Extension
 Structure: Godot Engine Game
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-08-23
+Version: 1.0.1
+Date: 2026-09-02
 Notes:
 - 
 ///////////////////////////////////////////*/

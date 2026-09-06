@@ -212,7 +212,7 @@ function fileIdFromUrl(url) {
 
 // A ModDB download URL names a file id and nothing else, so the page the click came from is
 // what says which mod it belongs to. Pages the user opened are kept here, newest first, in the
-// base's per-page adapter state - two games never share a ring.
+// base's per-source adapter state - two games, or two sources on one game, never share a ring.
 
 function noteVisitedPage(adapterState, ref) {
   const previous = (adapterState.visited || []).filter(entry => modDbKey(entry) !== modDbKey(ref));

@@ -4,6 +4,10 @@
 
 - None
 
+## [0.3.1] - 2026-09-03
+
+- Added: A "Browse ModDB" page in the sidebar. Browse the game's ModDB mod list inside Vortex and install mods with a click.
+
 ## [0.3.0] - 2026-08-03
 
 - Fixed: Readme and changelog files inside mods no longer show up as file conflicts.

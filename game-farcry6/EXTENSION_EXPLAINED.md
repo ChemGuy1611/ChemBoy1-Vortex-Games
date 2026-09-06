@@ -21,6 +21,7 @@
 
 - **Steam** — `2369390`
 - **Epic Games Store** — `4f26d568e05b43928aeb98b50923d1f5`
+- **Ubisoft Connect** — `5266`
 
 ## Feature Flags
 

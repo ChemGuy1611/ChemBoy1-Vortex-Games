@@ -20,6 +20,7 @@
 
 - **Steam** — `447040`
 - **Epic Games Store** — `Angelonia`
+- **Ubisoft Connect** — `2668`
 
 ## Feature Flags
 

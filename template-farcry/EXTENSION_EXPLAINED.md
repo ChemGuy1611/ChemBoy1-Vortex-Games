@@ -15,6 +15,10 @@
 | Game ID | `XXX` |
 | Executable | `bin/XXX.exe` |
 
+## Supported Stores
+
+- **Ubisoft Connect** — `Registry`
+
 ## Feature Flags
 
 | Flag | Value | Description |
@@ -22,6 +26,7 @@
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
 | `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
 | `setupNotification` | `true` | enable to show the user a notification with special instructions (specify below) - default true: FC Mod Installer usage instructions are always relevant |
+| `fcmoddingBrowser` | `true` | register the "Browse Far Cry Mods" page (downloads.fcmodding.com) |
 | `debug` | `false` | toggle for debug mode |
 
 ## Mod Types

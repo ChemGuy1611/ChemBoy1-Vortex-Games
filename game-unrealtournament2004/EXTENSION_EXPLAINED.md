@@ -32,6 +32,7 @@
 | `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
 | `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
 | `debug` | `false` | toggle for debug mode |
+| `moddbBrowser` | `true` | register the "Browse ModDB" page (moddb.com) |
 
 ## Mod Types
 

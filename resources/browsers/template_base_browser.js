@@ -101,7 +101,7 @@ function downloadRef(download) {
 
 const adapter = {
   // --- required ---
-  id: 'example', //namespaces the page id (<gameId>-example-browse) and the per-page state
+  id: 'example', //namespaces the page id (<gameId>-example-browse) and the per-source state
   label: 'Example', //appears in messages, notifications and log lines
   homeUrl,
   refKey: itemKey,

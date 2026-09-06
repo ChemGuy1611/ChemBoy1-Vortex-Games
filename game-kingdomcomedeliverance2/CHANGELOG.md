@@ -4,6 +4,13 @@
 
 - Changed launcher settings so that Steam version launches through Steam (so that Steam launch arguments are used).
 
+## [1.0.4] - 2026-09-05
+
+- Fixed: A locked load order entry no longer unlocks itself after deploying or reopening the load order page.
+- Fixed: Opening the load order on a fresh install could fail with a "file doesn't exist" error for mod_order.txt. The file is now created if it is missing.
+- Fixed: Selecting several load order rows that all belong to the same mod no longer opens that mod's staging folder more than once, or acts on it twice.
+- Changed: Long mod names in the load order now wrap onto a second line instead of being cut off.
+
 ## [1.0.3] - 2026-08-03
 
 - Fixed: Error notification when trying to read Steam Workshop mods folder, even when present.

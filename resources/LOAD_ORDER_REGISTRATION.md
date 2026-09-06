@@ -310,6 +310,37 @@ types.ts:81                 interface ILoadOrderGameInfo { ... }
 | `deserializeLoadOrder` | `() => Promise<LoadOrder>` | Read LO from disk, return sorted array |
 | `validate` | `(prev, current) => Promise<IValidationResult>` | Check for invalid entries |
 
+### `deserializeLoadOrder` must tolerate a missing load order file
+
+`FileBasedLoadOrderPage.componentDidMount` calls `onStartUp` -> `deserializeLoadOrder` as soon as
+the page mounts. That is **not** ordered against the game extension's `setup()`, so a deserializer
+that reads a load order file `setup()` was going to create can run first and hit `ENOENT` -- most
+likely on a fresh install, where `setup()` may also have aborted earlier on an unrelated step
+(a failed loader download, a missing staging folder).
+
+A rejected `deserializeLoadOrder` fails the whole page: Vortex logs `Failed load order operation`
+and shows the user a `Vortex tried to access "<file>" but it doesn't exist` dialog. Guard the read:
+
+```javascript
+// Plain text load order file: creating an empty one is harmless, and ensureFileAsync also
+// creates the parent folder.
+await fs.ensureFileAsync(loadOrderPath);
+let loadOrderFile = await fs.readFileAsync(loadOrderPath, { encoding: 'utf8' });
+```
+
+Two caveats:
+
+- **Do not `ensureFileAsync` a file the game itself parses** (a settings `.json`, a loader `.ini`).
+  A zero-byte file the game chokes on is worse than no file. Read it inside a `try`/`catch` and
+  fall back to an empty structure instead, letting `serializeLoadOrder` write a valid file later.
+- **An empty file must survive the parser too.** `JSON.parse('')` throws, and
+  `lines.find(...)` returns `undefined` -- so guard the parse, not just the read. The mirror case
+  bites `serializeLoadOrder`: `array[array.indexOf(undefined)] = value` assigns to index `-1`,
+  which sets a stray property and silently writes nothing.
+
+See also [LOAD_ORDER_ITEM_RENDERER.md](LOAD_ORDER_ITEM_RENDERER.md) and
+[VORTEX_LOAD_ORDER.md](VORTEX_LOAD_ORDER.md).
+
 ### Optional fields
 
 | Field | Default | Purpose |

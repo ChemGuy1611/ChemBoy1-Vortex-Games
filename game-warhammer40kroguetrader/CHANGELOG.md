@@ -4,6 +4,19 @@
 
 - None Planned
 
+## [0.5.6] - 2026-09-04
+
+- Added: Right-click menu on the load order: enable or disable an entry, lock or unlock it, move it to the top or bottom, and open its mod folder, staging folder or mod page. Works on one entry or several at once.
+- Added: Lock button on each load order row, plus ctrl/shift multi-select.
+- Added: Load order filter by status (enabled, disabled, locked, unlocked, unmanaged) with a matched/total count.
+- Added: Load order entries for mods Vortex does not manage are now marked "Not managed by Vortex".
+- Fixed: A locked load order entry no longer unlocks itself after deploying or reopening the load order page.
+- Fixed: Opening the load order could fail with an error when the Owlcat mod manager settings file did not exist yet. A missing or empty settings file is now treated as an empty load order.
+
+## [0.5.5] - 2026-09-02
+
+- Fixed: A required mod loader or tool is no longer matched against downloads belonging to other games, which could report the wrong installed version or check for updates against the wrong file
+
 ## [0.5.4] - 2026-08-22
 
 - Fixed: Updating a required mod loader or tool now disables every older copy of it, so an out-of-date version can no longer stay enabled alongside the new one

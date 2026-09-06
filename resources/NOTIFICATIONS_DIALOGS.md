@@ -195,7 +195,7 @@ type DialogActions = IDialogAction[];
 interface IDialogAction {
   label: string;
   default?: boolean;
-  action?: (label: string) => void;
+  action?: () => void;   // v2.6.0: was (label: string) => void
 }
 ```
 
@@ -203,7 +203,7 @@ interface IDialogAction {
 | --- | --- | --- | --- |
 | `label` | `string` | Yes | Button text -- also the key in `IDialogResult.action` |
 | `default` | `boolean` | No | Pre-selects this button (Enter key) |
-| `action` | `(label: string) => void` | No | Inline callback instead of using the returned promise |
+| `action` | `() => void` | No | Inline callback instead of using the returned promise. Dropped its `label` argument in Vortex v2.6.0 (the callback already belongs to one labelled action). |
 
 ### ICheckbox
 

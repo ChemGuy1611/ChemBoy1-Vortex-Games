@@ -79,6 +79,7 @@ from vortex_utils import (
     print_run_summary, assert_is_game_id, log_info, log_warn, log_error,
     get_api_key, parse_nexus_mod_url,
     LISTS_DIR, read_id_list, write_id_list,
+    find_registerinstaller_calls,
 )
 from nexus_upload import pick_file_group, upload_zip, extract_changelog_entry
 SEVENZIP = os.environ.get("SEVENZIP_PATH", r"C:\Program Files\7-Zip\7z.exe")
@@ -100,18 +101,19 @@ ZIP_EXCLUDES = [
 # == Extension helpers =========================================================
 
 def check_installer_priorities(index_src, game_id):
-    """Error if any two context.registerInstaller calls share the same priority number."""
-    priorities = re.findall(
-        r"""context\.registerInstaller\s*\(\s*["'`][^"'`]*["'`]\s*,\s*(\d+)\s*,""",
-        index_src,
-    )
+    """Error if any two LIVE context.registerInstaller calls share the same priority number.
+
+    Comment-aware via find_registerinstaller_calls -- every extension carries at least
+    one commented-out sample registerInstaller line, and without the comment guard a
+    numeric collision with a live installer false-positives here and aborts the release."""
+    priorities = [p for _lineno, _id, p in find_registerinstaller_calls(index_src)]
     seen, dupes = set(), []
     for p in priorities:
         if p in seen and p not in dupes:
             dupes.append(p)
         seen.add(p)
     if dupes:
-        log_error(game_id, f"duplicate registerInstaller priority: {', '.join(dupes)}")
+        log_error(game_id, f"duplicate registerInstaller priority: {', '.join(str(p) for p in dupes)}")
         return False
     return True
 
@@ -192,7 +194,7 @@ def release(game_id, open_browser, dry_run=False, skip_eslint=False,
     extension_url = None
     file_group_id = None
     if os.path.isfile(index_path):
-        with open(index_path, encoding="utf-8") as f:
+        with open(index_path, encoding="utf-8", errors="replace") as f:
             index_src = f.read()
         extension_url = extract_extension_url(index_src)
         file_group_id = extract_file_group_id(index_src)
@@ -214,12 +216,13 @@ def release(game_id, open_browser, dry_run=False, skip_eslint=False,
     if not re.match(r'^Game:\s+\S', name_field):
         log_error(game_id, f"info.json 'name' does not match 'Game: <Name>' pattern: {name_field!r}")
         return False
+    game_display_name = re.sub(r'^Game:\s*', '', name_field)
 
     changelog_path = os.path.join(folder, "CHANGELOG.md")
     if not os.path.isfile(changelog_path):
         log_error(game_id, "CHANGELOG.md missing")
         return False
-    with open(changelog_path, encoding="utf-8") as f:
+    with open(changelog_path, encoding="utf-8", errors="replace") as f:
         changelog_src = f.read()
     if version and not re.search(rf'## \[{re.escape(version)}\]', changelog_src):
         log_error(game_id, f"version {version} has no entry in CHANGELOG.md (add ## [{version}] section)")
@@ -262,7 +265,7 @@ def release(game_id, open_browser, dry_run=False, skip_eslint=False,
             else:
                 _domain, mod_id = parsed
                 try:
-                    group = pick_file_group(mod_id, _domain, api_key, game_id, group_id_override=file_group_id)
+                    group = pick_file_group(mod_id, _domain, api_key, game_id, name_hint=game_display_name, group_id_override=file_group_id)
                     if upload:
                         log_info(game_id, f"[DRY RUN] Would upload {os.path.basename(zip_path)} to file group"
                                  f" '{group['name']}' (id: {group['id']})")
@@ -352,7 +355,7 @@ def release(game_id, open_browser, dry_run=False, skip_eslint=False,
             else:
                 _domain, mod_id = parsed
                 try:
-                    upload_zip(zip_path, mod_id, _domain, version or "", changelog_entry, api_key, game_id, group_id_override=file_group_id)
+                    upload_zip(zip_path, mod_id, _domain, version or "", changelog_entry, api_key, game_id, name_hint=game_display_name, group_id_override=file_group_id)
                     out["uploaded"] = True
                 except Exception as e:
                     log_error(game_id, f"upload failed: {e}")

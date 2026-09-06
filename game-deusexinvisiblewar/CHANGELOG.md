@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.2.1] - 2026-09-04
+
+- Added: A "Browse ModDB" page that opens moddb.com inside Vortex, so mods can be downloaded and installed without leaving the app.
+
 ## [0.2.0] - 2026-08-03
 
 - Fixed: Readme and changelog files inside mods no longer show up as file conflicts.

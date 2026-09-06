@@ -21,6 +21,7 @@
 
 - **Steam** — `1222680`
 - **Epic Games Store** — `nunt`
+- **EA** — `Registry`
 
 ## Feature Flags
 

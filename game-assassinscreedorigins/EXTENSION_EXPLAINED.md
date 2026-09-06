@@ -21,6 +21,7 @@
 
 - **Steam** — `582160`
 - **Epic Games Store** — `Camellia`
+- **Ubisoft Connect** — `3539`
 
 ## Mod Types
 

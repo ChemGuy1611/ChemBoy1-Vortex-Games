@@ -2,8 +2,8 @@
 Name: Bloodborne Vortex Extension
 Structure: Emulation Game
 Author: ChemBoy1
-Version: 0.4.3
-Date: 2026-08-22
+Version: 0.4.4
+Date: 2026-09-02
 ////////////////////////////////////////////////////*/
 
 //Import libraries

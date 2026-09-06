@@ -779,9 +779,17 @@ async function getLatestNexusFile(api, requirement) {
     reportNexusFailure(api, requirement, domain, error);
     return null;
   }
-  const categoryId = requirement.nexusCategoryId ?? 1;
+  // A number or a set of them. A set is not over-engineering here: a page's current build is not
+  // reliably in MAIN - HFW Mod Manager's is in MISCELLANEOUS while every superseded build sits in
+  // OLD_VERSION/ARCHIVED - and an adopter that accepted "whatever is newest" instead would install
+  // a superseded build the moment the author archives one. Naming the acceptable categories keeps
+  // the requirement correct whichever of them the author files the next release under.
+  // MAIN(1) / OPTIONAL(3) / MISCELLANEOUS(5) are the only categories a file can be UPLOADED as, so
+  // that set means "any current build"; UPDATE(2), OLD_VERSION(4) and ARCHIVED(7) are states a file
+  // reaches later, which is exactly what a requirement must never install.
+  const categoryIds = [].concat(requirement.nexusCategoryId ?? 1);
   const candidates = (files ?? [])
-    .filter(file => file.category_id === categoryId)
+    .filter(file => categoryIds.includes(file.category_id))
     .filter(file => matchesNexusFileName(requirement, file))
     // uploaded_timestamp is the numeric upload time. uploaded_time is an ISO string, and
     // parseInt-ing that yields the year - which is what made the hand-rolled copies of this
@@ -794,7 +802,7 @@ async function getLatestNexusFile(api, requirement) {
   if (file === undefined) {
     // Filters that match nothing and a page that stopped publishing look identical from here,
     // and both are otherwise completely silent - name what was asked for and what is on offer.
-    const applied = [`main files (category ${categoryId})`];
+    const applied = [`file category ${categoryIds.join(' or ')}`];
     if (requirement.nexusFileExclude !== undefined) {
       applied.push(`name not containing "${requirement.nexusFileExclude}"`);
     }

@@ -9,9 +9,11 @@ Companion docs: `NEXUS_MODS_API.md` (v1 + v3 REST, including the file-upload flo
 `NODE_NEXUS_API_CLIENT.md` (`@nexusmods/nexus-api`, the typed Node client Vortex uses, which wraps a
 small subset of what follows).
 
-Everything here was verified live on 2026-08-23 against schema totals of **66 query fields**
-(4 deprecated), **96 mutation fields** (22 deprecated), and **346 types**. There is no subscription
-type.
+Everything here was verified live on 2026-09-04 against schema totals of **67 query fields**
+(4 deprecated), **99 mutation fields** (22 deprecated), and **354 types**. There is no subscription
+type. The growth since the 2026-08-23 pass (66/96/346) is six new staff/internal-scoped operations —
+see "Moderation, admin, reporting" and "Moderation and admin" below — none of it touches the mod,
+file, or collection surface.
 
 ---
 
@@ -251,9 +253,11 @@ first/last/after/before)`, `media(facets, filter, postFilter, sort, offset, coun
 `moderationReason(id)`, `moderationReasons`, `moderationWarnings(category, first/last/after/before)`,
 `csamDeletionRequests(status, cdnSecret)`, `csamHashCheck(md5Hashes: [String!]!)`,
 `uploads(start!, perPage!, orderDir!, orderColumn!, ...)`, `temporalWorkflowStatus(uploadId)`,
-`transactions(...)`, `userMonthlyReport(accountId!, year!, month!)`, `userMonthlyReportById`,
-`userMonthlySummary(accountId!)`, `speedtestUrls`. Most of these are staff-scoped and return
-`UNAUTHORIZED` for ordinary accounts.
+`temporalWorkflowInspection`, `temporalArchiveSearch` (both found 2026-09-04 — Temporal
+workflow-engine admin tooling), `transactions(...)`, `userMonthlyReport(accountId!, year!, month!)`,
+`userMonthlyReportById`, `userMonthlySummary(accountId!)`, `speedtestUrls`, and deprecated
+`wallets` ("Legacy Query", found 2026-09-04 — the schema's 4th deprecated query as of this pass).
+Most of these are staff-scoped and return `UNAUTHORIZED` for ordinary accounts.
 
 ## Mutation Catalog
 
@@ -317,8 +321,10 @@ these manage **collection-tag definitions** and are permission-gated (`tag:disca
 `writeFullPageNotificationToUser`, `createCsamDeletionRequest`, `updateCsamDeletionRequest`,
 `rescanVirusTotal(uploadId!)`, `restartUploadProcessing(uploadId!)`, `updateGame(gameId!,
 artworkSchema, copyrightedName)`, `uploadGameArtworkV2`, `uploadAttachment(file: Upload!)`,
-`trackAppMetric`, `reorderItem`. Deprecated generics: `moderate`, `amendModeration`, `endorse`,
-`rate`, `unpublishRevision`.
+`trackAppMetric`, `reorderItem`, `replayTemporalWorkflow`, `replayTemporalArchiveHistory`,
+`startTemporalArchiveSearch` (all three found 2026-09-04 — Temporal workflow-engine admin
+tooling, pairs with the `temporalWorkflowInspection`/`temporalArchiveSearch` queries above).
+Deprecated generics: `moderate`, `amendModeration`, `endorse`, `rate`, `unpublishRevision`.
 
 ## Key Types
 

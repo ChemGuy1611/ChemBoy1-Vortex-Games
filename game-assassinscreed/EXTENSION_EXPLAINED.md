@@ -21,6 +21,7 @@
 
 - **Steam** — `15100`
 - **GOG** — `1207659023`
+- **Ubisoft Connect** — `Registry`
 
 ## Mod Types
 

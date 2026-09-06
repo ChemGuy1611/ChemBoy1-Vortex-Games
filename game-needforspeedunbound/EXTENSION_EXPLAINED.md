@@ -21,6 +21,7 @@
 
 - **Steam** — `1846380`
 - **Epic Games Store** — `Chokeberry`
+- **EA** — `Registry`
 
 ## Feature Flags
 

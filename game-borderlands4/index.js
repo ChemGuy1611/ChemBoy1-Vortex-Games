@@ -2,8 +2,8 @@
 Name: Borderlands 4 Vortex Extension
 Structure: UE5 (static exe)
 Author: ChemBoy1
-Version: 0.4.2
-Date: 2026-08-12
+Version: 0.4.3
+Date: 2026-09-02
 //////////////////////////////////////////////////*/
 
 //Import libraries

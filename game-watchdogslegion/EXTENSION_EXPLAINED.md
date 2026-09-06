@@ -20,6 +20,7 @@
 
 - **Steam** — `2239550`
 - **Epic Games Store** — `Hawk`
+- **Ubisoft Connect** — `3353`
 
 ## Feature Flags
 

@@ -21,6 +21,7 @@
 
 - **Steam** — `1845910`
 - **Epic Games Store** — `chamaelejp`
+- **EA** — `Registry`
 
 ## Mod Types
 

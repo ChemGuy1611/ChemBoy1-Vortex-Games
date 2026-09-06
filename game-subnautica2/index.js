@@ -2,8 +2,8 @@
 Name: Subnautica 2 Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 0.5.5
-Date: 2026-08-24
+Version: 0.5.6
+Date: 2026-09-06
 Notes:\
 - version.json file in root
 - Game is Early Access
@@ -3463,12 +3463,20 @@ function LoadOrderItemRenderer(props) {
     util.getSafe(state, ['persistent', 'profiles', profile?.id, 'modState'], {}));
 
   const isLocked = (entry) => [true, 'true', 'always'].includes(entry?.locked);
-  const lockedCount = item.lockedEntriesCount ?? loadOrder.filter(isLocked).length;
+  //Core derives the index input's minimum from this and assumes locked entries sit at the top.
+  //Only the LEADING locked run blocks row 1 - a lock further down must not raise the floor.
+  const firstUnlocked = loadOrder.findIndex(e => !isLocked(e));
+  const leadingLockedCount = firstUnlocked === -1 ? loadOrder.length : firstUnlocked;
 
   const onApplyIndex = React.useCallback((idx) => {
-    if (currentIdx === idx) return;
-    const newLO = loadOrder.filter((e) => e.id !== loEntry.id);
-    newLO.splice(idx - 1, 0, loEntry);
+    if (currentIdx === idx || isLocked(loEntry)) return;
+    //Locked entries hold their absolute index - the typed row picks a slot among the unlocked ones
+    const bound = idx - 1 + (idx > currentIdx ? 1 : 0);
+    const dest = loadOrder.filter((e, i) => !isLocked(e) && e.id !== loEntry.id && i < bound).length;
+    const unlocked = loadOrder.filter((e) => !isLocked(e) && e.id !== loEntry.id);
+    unlocked.splice(dest, 0, loEntry);
+    let next = 0;
+    const newLO = loadOrder.map((e) => isLocked(e) ? e : unlocked[next++]);
     dispatch(actions.setFBLoadOrder(profile.id, newLO));
   }, [dispatch, profile, loadOrder, loEntry, currentIdx]);
 
@@ -3548,7 +3556,7 @@ function LoadOrderItemRenderer(props) {
         api: context.api,
         item: loEntry,
         currentPosition: currentIdx,
-        lockedEntriesCount: lockedCount,
+        lockedEntriesCount: leadingLockedCount,
         loadOrder: loadOrder,
         isLocked: isLocked,
         onApplyIndex: onApplyIndex,
@@ -3648,16 +3656,20 @@ function PakContextMenu({ x, y, item, loadOrder, profile, dispatch, context, sel
       menuItem(`Unlock Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, locked: false } : e), true)),
       React.createElement('div', { style: sepStyle }),
       menuItem(`Move to Top (${n})`, () => applyToTargets((lo) => {
-        const locked = lo.filter(isLocked);
+        //Locked entries hold their absolute index - only the unlocked entries reorder into the slots between them
         const selected = lo.filter(e => targets.find(t => t.id === e.id) && !isLocked(e));
         const rest = lo.filter(e => !isLocked(e) && !targets.find(t => t.id === e.id));
-        return [...locked, ...selected, ...rest];
+        const reordered = [...selected, ...rest];
+        let next = 0;
+        return lo.map(e => isLocked(e) ? e : reordered[next++]);
       })),
       menuItem(`Move to Bottom (${n})`, () => applyToTargets((lo) => {
-        //Locked entries stay put, so they have to be counted into rest or they drop out of the order
+        //Locked entries hold their absolute index - only the unlocked entries reorder into the slots between them
         const selected = lo.filter(e => targets.find(t => t.id === e.id) && !isLocked(e));
-        const rest = lo.filter(e => !targets.find(t => t.id === e.id) || isLocked(e));
-        return [...rest, ...selected];
+        const rest = lo.filter(e => !isLocked(e) && !targets.find(t => t.id === e.id));
+        const reordered = [...rest, ...selected];
+        let next = 0;
+        return lo.map(e => isLocked(e) ? e : reordered[next++]);
       })),
       React.createElement('div', { style: sepStyle }),
       //menuItem(`Enable Selected (${n})`, () => setModsEnabled(targets, true)),
@@ -3673,14 +3685,21 @@ function PakContextMenu({ x, y, item, loadOrder, profile, dispatch, context, sel
     React.createElement('div', { style: sepStyle }),
     menuItem('Move to Top', () => applyToTargets((lo) => {
       if (isLocked(item)) return lo;
-      const locked = lo.filter(isLocked);
+      //Locked entries hold their absolute index - only the unlocked entries reorder into the slots between them
+      const moved = lo.filter(e => !isLocked(e) && e.id === item.id);
       const rest = lo.filter(e => !isLocked(e) && e.id !== item.id);
-      return [...locked, item, ...rest];
+      const reordered = [...moved, ...rest];
+      let next = 0;
+      return lo.map(e => isLocked(e) ? e : reordered[next++]);
     })),
     menuItem('Move to Bottom', () => applyToTargets((lo) => {
       if (isLocked(item)) return lo;
-      const rest = lo.filter(e => e.id !== item.id);
-      return [...rest, item];
+      //Locked entries hold their absolute index - only the unlocked entries reorder into the slots between them
+      const moved = lo.filter(e => !isLocked(e) && e.id === item.id);
+      const rest = lo.filter(e => !isLocked(e) && e.id !== item.id);
+      const reordered = [...rest, ...moved];
+      let next = 0;
+      return lo.map(e => isLocked(e) ? e : reordered[next++]);
     })),
     (stagingFolder || modPageUrl) ? React.createElement('div', { style: sepStyle }) : null,
     stagingFolder ? menuItem('Open Staging Folder', () => { util.opn(stagingFolder).catch(() => null); onClose(); }) : null,
@@ -3779,12 +3798,20 @@ function Ue4ssItemRenderer({ className, item }) {
 
   const currentIdx = loadOrder.findIndex((e) => e.id === item.id) + 1;
   const isLocked = (entry) => [true, 'true', 'always'].includes(entry?.locked);
-  const lockedCount = loadOrder.filter(isLocked).length;
+  //Core derives the index input's minimum from this and assumes locked entries sit at the top.
+  //Only the LEADING locked run blocks row 1 - a lock further down must not raise the floor.
+  const firstUnlocked = loadOrder.findIndex(e => !isLocked(e));
+  const leadingLockedCount = firstUnlocked === -1 ? loadOrder.length : firstUnlocked;
 
   const onApplyIndex = React.useCallback((idx) => {
-    if (currentIdx === idx) return;
-    const newLO = loadOrder.filter((e) => e.id !== item.id);
-    newLO.splice(idx - 1, 0, item);
+    if (currentIdx === idx || isLocked(item)) return;
+    //Locked entries hold their absolute index - the typed row picks a slot among the unlocked ones
+    const bound = idx - 1 + (idx > currentIdx ? 1 : 0);
+    const dest = loadOrder.filter((e, i) => !isLocked(e) && e.id !== item.id && i < bound).length;
+    const unlocked = loadOrder.filter((e) => !isLocked(e) && e.id !== item.id);
+    unlocked.splice(dest, 0, item);
+    let next = 0;
+    const newLO = loadOrder.map((e) => isLocked(e) ? e : unlocked[next++]);
     dispatch(setUe4ssLoadOrder(profileId, newLO));
     serializeUe4ss(vortexContext.api, newLO);
   }, [dispatch, vortexContext, profileId, loadOrder, item, currentIdx]);
@@ -3887,7 +3914,7 @@ function Ue4ssItemRenderer({ className, item }) {
         api: vortexContext.api,
         item: item,
         currentPosition: currentIdx,
-        lockedEntriesCount: lockedCount,
+        lockedEntriesCount: leadingLockedCount,
         loadOrder: loadOrder,
         isLocked: isLocked,
         onApplyIndex: onApplyIndex,
@@ -3991,16 +4018,20 @@ function Ue4ssContextMenu({ x, y, item, loadOrder, profileId, dispatch, api, gam
       menuItem(`Unlock Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, locked: false } : e))),
       React.createElement('div', { style: sepStyle }),
       menuItem(`Move to Top (${n})`, () => applyToTargets((lo) => {
-        const locked = lo.filter(isLocked);
+        //Locked entries hold their absolute index - only the unlocked entries reorder into the slots between them
         const selected = lo.filter(e => targets.find(t => t.id === e.id) && !isLocked(e));
         const rest = lo.filter(e => !isLocked(e) && !targets.find(t => t.id === e.id));
-        return [...locked, ...selected, ...rest];
+        const reordered = [...selected, ...rest];
+        let next = 0;
+        return lo.map(e => isLocked(e) ? e : reordered[next++]);
       })),
       menuItem(`Move to Bottom (${n})`, () => applyToTargets((lo) => {
-        //Locked entries stay put, so they have to be counted into rest or they drop out of the order
+        //Locked entries hold their absolute index - only the unlocked entries reorder into the slots between them
         const selected = lo.filter(e => targets.find(t => t.id === e.id) && !isLocked(e));
-        const rest = lo.filter(e => !targets.find(t => t.id === e.id) || isLocked(e));
-        return [...rest, ...selected];
+        const rest = lo.filter(e => !isLocked(e) && !targets.find(t => t.id === e.id));
+        const reordered = [...rest, ...selected];
+        let next = 0;
+        return lo.map(e => isLocked(e) ? e : reordered[next++]);
       })),
       React.createElement('div', { style: sepStyle }),
       menuItem(`Open Mod Folders (${n})`, () => { targets.forEach(t => util.opn(path.join(gamePath, BINARIES_PATH, UE4SS_MOD_PATH, t.id)).catch(() => null)); onClose(); }),
@@ -4026,14 +4057,21 @@ function Ue4ssContextMenu({ x, y, item, loadOrder, profileId, dispatch, api, gam
     React.createElement('div', { style: sepStyle }),
     menuItem('Move to Top', () => applyToTargets((lo) => {
       if (isLocked(item)) return lo;
-      const locked = lo.filter(isLocked);
+      //Locked entries hold their absolute index - only the unlocked entries reorder into the slots between them
+      const moved = lo.filter(e => !isLocked(e) && e.id === item.id);
       const rest = lo.filter(e => !isLocked(e) && e.id !== item.id);
-      return [...locked, item, ...rest];
+      const reordered = [...moved, ...rest];
+      let next = 0;
+      return lo.map(e => isLocked(e) ? e : reordered[next++]);
     })),
     menuItem('Move to Bottom', () => applyToTargets((lo) => {
       if (isLocked(item)) return lo;
-      const rest = lo.filter(e => e.id !== item.id);
-      return [...rest, item];
+      //Locked entries hold their absolute index - only the unlocked entries reorder into the slots between them
+      const moved = lo.filter(e => !isLocked(e) && e.id === item.id);
+      const rest = lo.filter(e => !isLocked(e) && e.id !== item.id);
+      const reordered = [...rest, ...moved];
+      let next = 0;
+      return lo.map(e => isLocked(e) ? e : reordered[next++]);
     })),
     React.createElement('div', { style: sepStyle }),
     menuItem('Open Mod Folder', () => { util.opn(path.join(gamePath, BINARIES_PATH, UE4SS_MOD_PATH, item.id)).catch(() => null); onClose(); }),
@@ -4203,12 +4241,20 @@ function LogicModsItemRenderer({ className, item }) {
 
   const currentIdx = loadOrder.findIndex((e) => e.id === item.id) + 1;
   const isLocked = (entry) => [true, 'true', 'always'].includes(entry?.locked);
-  const lockedCount = loadOrder.filter(isLocked).length;
+  //Core derives the index input's minimum from this and assumes locked entries sit at the top.
+  //Only the LEADING locked run blocks row 1 - a lock further down must not raise the floor.
+  const firstUnlocked = loadOrder.findIndex(e => !isLocked(e));
+  const leadingLockedCount = firstUnlocked === -1 ? loadOrder.length : firstUnlocked;
 
   const onApplyIndex = React.useCallback((idx) => {
-    if (currentIdx === idx) return;
-    const newLO = loadOrder.filter((e) => e.id !== item.id);
-    newLO.splice(idx - 1, 0, item);
+    if (currentIdx === idx || isLocked(item)) return;
+    //Locked entries hold their absolute index - the typed row picks a slot among the unlocked ones
+    const bound = idx - 1 + (idx > currentIdx ? 1 : 0);
+    const dest = loadOrder.filter((e, i) => !isLocked(e) && e.id !== item.id && i < bound).length;
+    const unlocked = loadOrder.filter((e) => !isLocked(e) && e.id !== item.id);
+    unlocked.splice(dest, 0, item);
+    let next = 0;
+    const newLO = loadOrder.map((e) => isLocked(e) ? e : unlocked[next++]);
     dispatch(setLogicModsLoadOrder(profileId, newLO));
     serializeLogicMods(vortexContext.api, newLO);
   }, [dispatch, vortexContext, profileId, loadOrder, item, currentIdx]);
@@ -4284,7 +4330,7 @@ function LogicModsItemRenderer({ className, item }) {
         api: vortexContext.api,
         item: item,
         currentPosition: currentIdx,
-        lockedEntriesCount: lockedCount,
+        lockedEntriesCount: leadingLockedCount,
         loadOrder: loadOrder,
         isLocked: isLocked,
         onApplyIndex: onApplyIndex,
@@ -4371,16 +4417,20 @@ function LogicModsContextMenu({ x, y, item, loadOrder, profileId, dispatch, api,
       menuItem(`Unlock Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, locked: false } : e))),
       React.createElement('div', { style: sepStyle }),
       menuItem(`Move to Top (${n})`, () => applyToTargets((lo) => {
-        const locked = lo.filter(isLocked);
+        //Locked entries hold their absolute index - only the unlocked entries reorder into the slots between them
         const selected = lo.filter(e => targets.find(t => t.id === e.id) && !isLocked(e));
         const rest = lo.filter(e => !isLocked(e) && !targets.find(t => t.id === e.id));
-        return [...locked, ...selected, ...rest];
+        const reordered = [...selected, ...rest];
+        let next = 0;
+        return lo.map(e => isLocked(e) ? e : reordered[next++]);
       })),
       menuItem(`Move to Bottom (${n})`, () => applyToTargets((lo) => {
-        //Locked entries stay put, so they have to be counted into rest or they drop out of the order
+        //Locked entries hold their absolute index - only the unlocked entries reorder into the slots between them
         const selected = lo.filter(e => targets.find(t => t.id === e.id) && !isLocked(e));
-        const rest = lo.filter(e => !targets.find(t => t.id === e.id) || isLocked(e));
-        return [...rest, ...selected];
+        const rest = lo.filter(e => !isLocked(e) && !targets.find(t => t.id === e.id));
+        const reordered = [...rest, ...selected];
+        let next = 0;
+        return lo.map(e => isLocked(e) ? e : reordered[next++]);
       })),
       React.createElement('div', { style: sepStyle }),
       menuItem(`Open LogicMods Folder (${n})`, () => { util.opn(path.join(GAME_PATH, LOGICMODS_PATH, LOGICMODS_FOLDER)).catch(() => null); onClose(); }),
@@ -4403,14 +4453,21 @@ function LogicModsContextMenu({ x, y, item, loadOrder, profileId, dispatch, api,
     React.createElement('div', { style: sepStyle }),
     menuItem('Move to Top', () => applyToTargets((lo) => {
       if (isLocked(item)) return lo;
-      const locked = lo.filter(isLocked);
+      //Locked entries hold their absolute index - only the unlocked entries reorder into the slots between them
+      const moved = lo.filter(e => !isLocked(e) && e.id === item.id);
       const rest = lo.filter(e => !isLocked(e) && e.id !== item.id);
-      return [...locked, item, ...rest];
+      const reordered = [...moved, ...rest];
+      let next = 0;
+      return lo.map(e => isLocked(e) ? e : reordered[next++]);
     })),
     menuItem('Move to Bottom', () => applyToTargets((lo) => {
       if (isLocked(item)) return lo;
-      const rest = lo.filter(e => e.id !== item.id);
-      return [...rest, item];
+      //Locked entries hold their absolute index - only the unlocked entries reorder into the slots between them
+      const moved = lo.filter(e => !isLocked(e) && e.id === item.id);
+      const rest = lo.filter(e => !isLocked(e) && e.id !== item.id);
+      const reordered = [...rest, ...moved];
+      let next = 0;
+      return lo.map(e => isLocked(e) ? e : reordered[next++]);
     })),
     React.createElement('div', { style: sepStyle }),
     menuItem('Open LogicMods Folder', () => { util.opn(path.join(GAME_PATH, LOGICMODS_PATH, LOGICMODS_FOLDER)).catch(() => null); onClose(); }),

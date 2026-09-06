@@ -21,6 +21,7 @@
 
 - **Steam** — `2231380`
 - **Epic Games Store** — `Saffron`
+- **Ubisoft Connect** — `11903`
 
 ## Mod Types
 

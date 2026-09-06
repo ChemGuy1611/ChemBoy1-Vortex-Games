@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.4.6] - 2026-09-02
+
+- Fixed: A required mod loader or tool is no longer matched against downloads belonging to other games, which could report the wrong installed version or check for updates against the wrong file
+
 ## [0.4.5] - 2026-08-22
 
 - Fixed: Updating a required mod loader or tool now disables every older copy of it, so an out-of-date version can no longer stay enabled alongside the new one

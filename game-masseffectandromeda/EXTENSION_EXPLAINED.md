@@ -21,6 +21,7 @@
 
 - **Steam** — `1238000`
 - **Epic Games Store** — `dvorak`
+- **EA** — `Registry`
 
 ## Mod Types
 

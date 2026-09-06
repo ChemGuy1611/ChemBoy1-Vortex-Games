@@ -4,6 +4,14 @@
 
 - None Planned
 
+## [0.4.2] - 2026-09-03
+
+- Added: "Browse ModDB (Doom)" and "Browse ModDB (Doom II)" sidebar pages. Browse each game's ModDB mod list inside Vortex and install mods with a click.
+
+## [0.4.1] - 2026-09-02
+
+- Fixed: A required mod loader or tool is no longer matched against downloads belonging to other games, which could report the wrong installed version or check for updates against the wrong file
+
 ## [0.4.0] - 2026-08-29
 
 - Fixed: Updated downloader for new naming scheme with UZDoom 5.0.0 release.

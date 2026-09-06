@@ -2,8 +2,8 @@
 Name: DOOM 3 & DOOM 3: BFG Edition Vortex Extension
 Structure: Basic multi-game with multiple exes
 Author: ChemBoy1
-Version: 0.5.5
-Date: 2026-08-22
+Version: 0.5.7
+Date: 2026-09-03
 /////////////////////////////////////////*/
 /*
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣠⣤⣤⣤⡴⣦⡴⣖⠶⣴⠶⡶⣖⡶⣶⢶⣲⡾⠿⢿⡷⣾⢿⣷⣦⢾⣷⣾⣶⣤⣀⣰⣤⣀⡀⠀⠀⢀⣴⣿⡿⡿⣿⣿⣦⣄⠀⠀⣠⣴⣿⡿⢿⡿⣷⣦⡄⠀⠀⢀⣀⣤⣦⣀⣤⣶⣶⣷⣦⣴⡿⢿⡷⣿⠿⡿⣿⣷⢶⣦⢴⡲⣦⢶⡶⢶⡲⣖⡶⣦⣤⣤⣤⣤⣤⣤⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -41,6 +41,10 @@ const path = require('path');
 const template = require('string-template');
 const { download, findModByFile, findDownloadIdByFile, resolveVersionByPattern, testRequirementVersion } = require('./downloader');
 const { parseStringPromise } = require('xml2js');
+const { registerModDbBrowser, onceModDbBrowser } = require('./moddb_browser');
+
+//feature toggles
+const moddbBrowser = true; //register the "Browse ModDB" page (moddb.com)
 
 //Specify all information about the game
 const GAME_ID = "doom3";
@@ -147,6 +151,18 @@ const IGNORE_CONFLICTS = [path.join('**', 'readme.txt'), path.join('**', 'README
 // Filled in from data above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/686"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Doom_3";
+
+//Embedded ModDB browser page - the user browses the live moddb.com section for this game and
+//installs from it. Vortex's download manager cannot fetch from this host, so the page fetches
+//the file itself. No requirements: nothing on this game's ModDB page is a managed mod loader.
+//moddb.com serves the classic Doom 3 page ('doom-iii'); its mod list is classic-only, so the
+//page registers against the classic spec and not DOOM 3: BFG Edition.
+const MODDB_BROWSER_CONFIG = {
+  moddbPath: 'games/doom-iii',
+  pageId: `${GAME_ID}-moddb-browse`,
+  pageTitle: 'Browse ModDB',
+};
+
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -921,6 +937,11 @@ function applyGame(context, gameSpec) {
   };
   context.registerGame(game);
 
+  //register the embedded moddb.com browser page
+  if (moddbBrowser) {
+    registerModDbBrowser(context, gameSpec, MODDB_BROWSER_CONFIG);
+  }
+
   //register mod types
   (gameSpec.modTypes || []).forEach((type, idx) => {
     context.registerModType(type.id, modTypePriority(type.priority) + idx, (gameId) => {
@@ -1063,6 +1084,9 @@ function main(context) {
       if (gameId !== GAME_ID) return;
       return onCheckModVersion(api, gameId, mods, forced);
     }); //*/
+    if (moddbBrowser) { //installs downloads started from the browse page, and update-checks the mods installed through it
+      onceModDbBrowser(api, spec, MODDB_BROWSER_CONFIG);
+    }
   });
   return true;
 }

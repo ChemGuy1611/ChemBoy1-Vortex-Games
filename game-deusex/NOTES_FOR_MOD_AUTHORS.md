@@ -11,7 +11,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod | a file or folder named one of: `Community Update` | the game folder itself (no subfolder) |
 | Root / Game Folder Mods | a `System` folder | the game folder itself (no subfolder) |
 | Launcher | a file or folder named `deusex.exe` | `System` |
-| Binaries | a file or folder named one of: `engine.dll`, `deusexechelonrenderer.dll`, `d3d9.dll` or `rtx.conf` | `System` |
+| Binaries | a file or folder named one of: `engine.dll`, `deusexechelonrenderer.dll`, `d3d9.dll` or `rtx.conf` and a file with one of these extensions: `.exe`, `.dll`, `.asi` or `.addon64` | `System` |
 
 Paths are relative to the game's install folder.
 
@@ -49,7 +49,7 @@ Installs to: `System`
 
 ## Binaries
 
-Recognised when the archive contains a file or folder named one of: `engine.dll`, `deusexechelonrenderer.dll`, `d3d9.dll` or `rtx.conf`.
+Recognised when the archive contains a file or folder named one of: `engine.dll`, `deusexechelonrenderer.dll`, `d3d9.dll` or `rtx.conf` and a file with one of these extensions: `.exe`, `.dll`, `.asi` or `.addon64`.
 
 Installs to: `System`
 

@@ -21,6 +21,7 @@
 
 - **Steam** — `939960`
 - **Epic Games Store** — `Cumin`
+- **Ubisoft Connect** — `5210`
 
 ## Feature Flags
 

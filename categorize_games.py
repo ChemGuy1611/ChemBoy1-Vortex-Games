@@ -87,6 +87,7 @@ UNRELEASED_LIST_EXCLUDED_GAMES = {
     "warhammer40kdarktide",     # non-UE / generic load order test bed
     "subnautica2",              # UE4-5 test bed
     "starwarszerocompany",      # Personal version, officially supported by NexusMods
+    "thebloodofdawnwalker",     # Personal version, officially supported by NexusMods
 }
 
 

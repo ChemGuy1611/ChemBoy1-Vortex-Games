@@ -24,6 +24,12 @@
 - **Epic Games Store** — `2feb2f328922458e9f698f620fbddc13`
 - **GOG** — `1448370350`
 
+## Feature Flags
+
+| Flag | Value | Description |
+| --- | --- | --- |
+| `moddbBrowser` | `true` | register the "Browse ModDB" page (moddb.com) on the classic game |
+
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:

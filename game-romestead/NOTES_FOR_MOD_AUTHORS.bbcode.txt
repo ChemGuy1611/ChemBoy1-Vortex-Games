@@ -10,28 +10,13 @@ BepInEx (mod loader):
 This installer handles BepInEx itself, not mods for it. It exists so users can install BepInEx through Vortex, and mod authors normally never package this.
 
   Requirements:
-    - Recognised by a file named "winhttp.dll" in the archive.
-    - Requires BOTH a folder named "BepInEx" and the loader file "winhttp.dll".
+    - Recognised by a file named "BepInEx.Core.dll" in the archive.
+    - Requires BOTH a folder named "BepInEx" and the loader file "BepInEx.Core.dll".
 
   Installs to: the game folder itself (no subfolder)
 
   Common mistakes:
     - If you bundle BepInEx inside your mod archive, Vortex treats the whole download as BepInEx rather than as your mod. Ship the mod alone and list BepInEx as a requirement.
-
-========================================================================
-
-MelonLoader (mod loader):
-
-This installer handles MelonLoader itself, not mods for it. It exists so users can install MelonLoader through Vortex, and mod authors normally never package this.
-
-  Requirements:
-    - Recognised by a file named "version.dll" in the archive.
-    - Requires BOTH a folder named "MelonLoader" and the loader file "version.dll".
-
-  Installs to: the game folder itself (no subfolder)
-
-  Common mistakes:
-    - If you bundle MelonLoader inside your mod archive, Vortex treats the whole download as MelonLoader rather than as your mod. Ship the mod alone and list MelonLoader as a requirement.
 
 ========================================================================
 
@@ -116,20 +101,6 @@ MyPlugin.zip
   Common mistakes:
     - Wrapping the DLL in a "BepInEx\plugins" folder as well - it can end up nested one level too deep.
     - Shipping a plugin together with loader files, which makes the archive look like a loader install instead.
-
-========================================================================
-
-Asset Replacement Mods:
-
-Mods that replace packed Unity asset files, deployed into the game's data folder.
-
-  Requirements:
-    - Recognised by any file with the ".assets", ".resource" or ".ress" extensions.
-
-  Installs to: "Romestead_Data"
-
-  Common mistakes:
-    - Asset files must keep their original names to replace the right bundle.
 
 ========================================================================
 

@@ -2,8 +2,8 @@
 Name: S.T.A.L.K.E.R. 2: Heart of Chornobyl Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 2.0.2
-Date: 2026-08-24
+Version: 2.0.3
+Date: 2026-09-02
 //////////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -148,6 +148,7 @@ const UE5_SORTABLE_ID = `${GAME_ID}-ue5-sortable-modtype`; //this game's own pre
 const LEGACY_UE5_SORTABLE_ID = 'ue5-sortable-modtype'; //very old shared/buggy modtype id from before per-game ids existed - kept for legacyModsNotify reinstall prompt only
 const UE5_SORTABLE_NAME = 'UE5 Sortable Mod';
 
+const enableNewPak = false;
 const NEWPAK_ID = `${GAME_ID}-newpak`;
 const NEWPAK_NAME = "2.0 Pak";
 const NEWPAK_PATH = UE5_PATH;
@@ -2625,7 +2626,9 @@ function applyGame(context, gameSpec) {
     context.registerInstaller(LOGICMODS_ID, 31, testLogic, installLogic);
   }
   context.registerInstaller(HERBATAMOD_ID, 33, testHerbataMod, installHerbataMod);
-  context.registerInstaller(NEWPAK_ID, 34, testNewPakMod, installNewPakMod);
+  if (enableNewPak) {
+    context.registerInstaller(NEWPAK_ID, 34, testNewPakMod, installNewPakMod);
+  }
   context.registerInstaller(UE5_SORTABLE_ID, UE5_PAK_PRIORITY, testPak, (files) => installPak(context.api, files));
   if (ue4ssLoadOrder) {
     context.registerInstaller(UE4SS_ID, 37, testUe4ss, installUe4ss);

@@ -109,10 +109,10 @@ context.registerInstaller(MOD_ID, 35, testMod, (files, destinationPath) =>
 
 ## `IInstruction` Interface
 
-Source: `node_modules/vortex-api/lib/api.d.ts` (grep `declare interface IInstruction` and `InstructionType`).
+Source: `node_modules/vortex-api/lib/api.d.ts` (grep `IInstruction` and `InstructionType` -- since v2.6.0 the bundle is rolldown-built and no longer prefixes real types with `declare`).
 
 ```typescript
-declare interface IInstruction {
+interface IInstruction {
     type: InstructionType;
     path?: string;
     source?: string;
@@ -125,7 +125,7 @@ declare interface IInstruction {
     rule?: IRule;
 }
 
-declare type InstructionType =
+type InstructionType =
     | "copy"
     | "mkdir"
     | "submodule"

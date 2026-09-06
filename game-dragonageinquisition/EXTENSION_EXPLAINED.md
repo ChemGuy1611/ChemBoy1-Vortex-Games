@@ -21,6 +21,7 @@
 
 - **Steam** — `1222690`
 - **Epic Games Store** — `verdi`
+- **EA** — `Registry`
 
 ## Mod Types
 

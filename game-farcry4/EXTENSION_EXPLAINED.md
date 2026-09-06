@@ -21,6 +21,7 @@
 
 - **Steam** — `298110`
 - **Epic Games Store** — `Tautog`
+- **Ubisoft Connect** — `420`
 
 ## Feature Flags
 

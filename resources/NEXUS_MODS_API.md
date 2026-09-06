@@ -111,6 +111,15 @@ knowing before building on v3:
 Re-fetch `openapi.yaml` to refresh the catalog below; `check_nexus_api.py --check-spec` in this
 repo does that and reports any drift against the counts recorded here.
 
+### Upcoming Changes (deprecation watch)
+
+The spec's `info.description` carries a table of scheduled breaking changes. As of 2026-09-04:
+
+| Date | Change | Pipeline impact |
+| --- | --- | --- |
+| 2026-09-09 | `POST /mod-file-update-groups/{group_id}/versions` (`createUpdateGroupVersion`) removed — deprecated since 2026-06-11, 90-day Stable notice period ends. | None. Pipeline migrated to `POST /mod-files/{id}/versions` on 2026-07-24. Doc section below kept for historical reference until the path actually 404s. |
+| 2026-12-01 | `md5` becomes **required** on `POST /uploads` (single-part upload) — uploads omitting it are rejected. | None yet. This pipeline uses `/uploads/multipart` (`createMultipartUpload`), which does not carry this field or requirement. Re-check before 2026-12-01 whether Nexus extends it to the multipart flow. |
+
 ### V1 to V3 Identifier Bridge
 
 V3 uses a global `uid` (large int, e.g. `9856949946066`), **not** the per-domain integer
@@ -135,7 +144,7 @@ Use `uid` for all v3 mod-scoped endpoints.
 
 ---
 
-### V3 Endpoint Catalog (30 paths, confirmed against the live spec 2026-08-05)
+### V3 Endpoint Catalog (31 paths, confirmed against the live spec 2026-09-04)
 
 Every path the live v3 API exposes, grouped by resource. `id` in a mod-file-scoped path is the
 same value as `mod_files[].id` from `GET /mods/{id}/files` (what this repo calls the "file group"
@@ -154,6 +163,7 @@ in `{ "data": ... }`. The **Tier** column carries the operation's stability badg
 | POST | `/mods/batch` | `getModsBatch` | Experimental | Body `{ mod_ids: string[] }` (composite uids). Returns `{ data: { mods: ModDetail[] } }` — name/summary/status/thumbnail/adult_content per id; unknown ids simply contribute no row. |
 | POST | `/mods/{id}/changelogs` | `addModChangelogEntries` | Experimental | Body `{ version, entries: string[] }` (1-50 entries, each non-empty; `version` matches `^[a-zA-Z0-9.-]+$`, max 50 chars). **Additive only** — repeated calls for the same version append further entries rather than replacing them. 201 response echoes `{ version, entries }`. This is the first public way to write mod-page changelog text; previously (per the "Documents editor" note below) it could only be done by hand on the site. Not yet wired into `release_extension.py --edit-changelog`, which still opens a browser. |
 | GET | `/games/{game_domain}/dlcs` | `getGameDlcs` | Experimental | **No auth** (`security: []`). Response `{ dlcs: [{ id, name, thumbnail_url }] }` — the DLC catalog for a game, used as the target list for the DLC-dependency endpoints below. |
+| POST | `/mod-file-versions/{id}/download-repacked` | `downloadRepackedModFileVersion` | Experimental | Found 2026-09-04. Path lives under `mod-file-versions` but is tagged `mods` in the spec. `id` = mod file version id; optional `Application-Name` header, recorded against the download. No request body. **Unwrapped response**: `{ download_url: string, expires_at: date-time }` — a time-limited link to Nexus's repacked archive of that version. 403/404 otherwise. Not used by this pipeline. |
 
 #### Mod Files
 
@@ -181,7 +191,7 @@ A "mod file" is an update group/chain; `id` = group id.
 | PUT | `/mod-file-versions/{id}/dependencies/ranges` | `setModFileVersionDependencyRanges` | Experimental | Replaces all range definitions for a version. 204 on success. |
 | GET | `/mod-file-versions/{id}/dependencies/ranges/materialized` | `getModFileVersionDependencyRangesMaterialized` | Experimental | **Unwrapped response.** Ranges resolved into concrete candidate file+version lists, for one version. |
 | POST | `/mod-file-versions/dependencies/ranges/materialized/batch` | `getModFileVersionDependencyRangesMaterializedBatch` | Experimental | Current batch variant — paginated (`page`/`page_size`, default 1/1000), response includes `meta: PaginationMeta`. Batch-resolves install/recommend candidates for a set of source versions. |
-| POST | `/mod-file-versions/dependencies/materialized/batch` | `getModFileVersionDependencyCandidatesBatch` | Deprecated | Still no removal date published as of 2026-08-05, unlike the group-version endpoint below. Superseded by the `ranges/materialized/batch` row above — same purpose, same request/response shape, just renamed. |
+| POST | `/mod-file-versions/dependencies/materialized/batch` | `getModFileVersionDependencyCandidatesBatch` | Deprecated | Still no removal date published as of 2026-09-04, unlike the group-version endpoint below. Superseded by the `ranges/materialized/batch` row above — same purpose, same request/response shape, just renamed. |
 | GET | `/mod-file-versions/{id}/dependencies/dlc` | `getModFileVersionDlcDependencies` | Experimental | **Unwrapped response.** `{ dlc_dependency_definitions: [{ id, dlc_targets: [{ id, dlc_id, name }] }] }` — declared DLC-dependency definitions (OR-alternatives within `dlc_targets`). |
 | PUT | `/mod-file-versions/{id}/dependencies/dlc` | `setModFileVersionDependencyDlc` | Experimental | Body `{ dlc_dependency_definitions: [{ dlc_ids: string[] }] }` — replaces the full set; empty array clears all DLC dependencies. `dlc_ids` must reference DLCs from `getGameDlcs` for that version's game. |
 | POST | `/mod-file-update-groups/{group_id}/versions` | `createUpdateGroupVersion` | Stable (deprecated) | **Deprecated 2026-06-11, removal on/after 2026-09-09** — a Stable-tier endpoint, so it gets the full 90-day notice. See deprecation notice below. |
@@ -193,7 +203,7 @@ Stable; only the two mod-file endpoints that bracket it are Experimental.
 
 | Method | Path | Operation | Tier | Notes |
 | --- | --- | --- | --- | --- |
-| POST | `/uploads` | `createUpload` | Stable | Single-part upload (files ≤100 MiB). Body `{ filename, size_bytes }`. Response adds one `presigned_url` (PUT your whole file there, then finalise) — this pipeline always uses the multipart variant below instead, even for small files. |
+| POST | `/uploads` | `createUpload` | Stable (badged `md5 required from 2026-12-01`) | Single-part upload (files ≤100 MiB). Body `{ filename, size_bytes, md5? }` — `md5` (hex digest) is optional today, becomes **required on/after 2026-12-01**; when sent, the paired `PUT` must also carry a base64 `Content-MD5` header matching it. Response adds one `presigned_url` (PUT your whole file there, then finalise) — this pipeline always uses the multipart variant below instead, even for small files, and that variant has no `md5` field. |
 | POST | `/uploads/multipart` | `createMultipartUpload` | Stable | What this pipeline uses; see Upload Flow below. |
 | GET | `/uploads/{id}` | `getUpload` | Stable | Poll target. |
 | POST | `/uploads/{id}/finalise` | `finaliseUpload` | Stable | |
@@ -269,7 +279,9 @@ Full working flow confirmed 2026-05-26. Used by `release_extension.py --upload`.
 > `{id}`/`{group_id}` value** — see "Step 8 (current) vs. legacy" below. Nexus's own reference
 > client (`Nexus-Mods/upload-action`) migrated to it on 2026-06-17. Verified live against the real
 > API same session (`check_nexus_api.py --test-upload`, 28/28 checks passed). The legacy section
-> below stays for historical reference until Nexus actually removes the endpoint.
+> below stays for historical reference until Nexus actually removes the endpoint. As of the
+> 2026-09-04 audit pass the path is still live in the spec, still marked deprecated, still carries
+> the same "removal on or after 2026-09-09" wording — a few days out at time of writing.
 
 ### Upload Steps
 
@@ -557,8 +569,8 @@ accepted without error but with no effect:
 
 ### Response Envelope Inconsistency
 
-Most v3 endpoints wrap their success payload as `{ "data": { ... } }`, but **six** don't — the
-payload is the response body directly. All six are in the mod-file-versions family:
+Most v3 endpoints wrap their success payload as `{ "data": { ... } }`, but **seven** don't — the
+payload is the response body directly. All seven are in the mod-file-versions family:
 
 - `GET /mod-file-versions/{id}/dependencies`
 - `GET /mod-file-versions/{id}/dependencies/dlc`
@@ -566,13 +578,14 @@ payload is the response body directly. All six are in the mod-file-versions fami
 - `GET /mod-file-versions/{id}/dependencies/ranges/materialized`
 - `POST /mod-file-versions/move`
 - `POST /mod-file-versions/move-to-new-mod-file`
+- `POST /mod-file-versions/{id}/download-repacked` (added 2026-09-04)
 
 Check the specific operation before assuming `response["data"]` — `nexus_v3_get`/`v3_get` in this
 repo always unwraps `["data"]`, which would raise `KeyError` if pointed at any of these six.
 
 ---
 
-### Known Broken V3 Endpoints (all six re-verified live 2026-08-05)
+### Known Broken V3 Endpoints (all six re-verified live 2026-09-04)
 
 | Endpoint | Problem |
 | --- | --- |
@@ -580,8 +593,8 @@ repo always unwraps `["data"]`, which would raise `KeyError` if pointed at any o
 | `GET /v3/games/{domain}/mods/{mod_id}/file-update-groups` | 404 (was 500 as of 2026-05-26) |
 | `GET /v3/mod-file-update-groups/{group_id}` | 404 (was 500 as of 2026-05-26) |
 | `GET /v3/mods/{uid}/file-update-groups` | 404 even with correct `uid` — endpoint now defunct. **Use `GET /v3/mods/{uid}/files` instead** (returns the same group list under `mod_files[]`) |
-| `GET /v3/openapi.yaml` | 404 — **not actually broken, wrong path.** The live spec is at the domain root, `GET https://api.nexusmods.com/openapi.yaml` (no `/v3/` prefix), confirmed reachable 2026-08-05 (HTTP 200, 30 paths, `info.version: "3.0.0"`). Corrected from an earlier note in this doc that called it dead. |
-| `GET /v3/mods/{uid}` (mod-level, fetch by uid directly) | 404 — **not a bug; this path was never part of the spec.** The only mod-level GET in the live spec is `GET /v3/games/{game_domain}/mods/{game_scoped_id}` (by domain + game-scoped id, not uid). Confirmed against the live 30-path catalog 2026-08-05. |
+| `GET /v3/openapi.yaml` | 404 — **not actually broken, wrong path.** The live spec is at the domain root, `GET https://api.nexusmods.com/openapi.yaml` (no `/v3/` prefix), confirmed reachable 2026-09-04 (HTTP 200, 31 paths, `info.version: "3.0.0"`). Corrected from an earlier note in this doc that called it dead. |
+| `GET /v3/mods/{uid}` (mod-level, fetch by uid directly) | 404 — **not a bug; this path was never part of the spec.** The only mod-level GET in the live spec is `GET /v3/games/{game_domain}/mods/{game_scoped_id}` (by domain + game-scoped id, not uid). Confirmed against the live 31-path catalog 2026-09-04. |
 
 The `/v3/mods/{uid}` and `/v3/openapi.yaml` rows were flagged broken in earlier passes based on
 probing the wrong path or an unreachable mirror; re-checking against the real, fetchable spec

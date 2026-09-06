@@ -8,14 +8,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| BepInEx (mod loader) | a `winhttp.dll` file | the game folder itself (no subfolder) |
-| MelonLoader (mod loader) | a `version.dll` file | the game folder itself (no subfolder) |
+| BepInEx (mod loader) | a `BepInEx.Core.dll` file | the game folder itself (no subfolder) |
 | Root / Game Folder Mods | a `Romestead_Data` folder | the game folder itself (no subfolder) |
 | BepInEx Configuration Manager | a `configurationmanager.dll` file | `BepInEx` |
 | MelonLoader Preferences Manager | a `melonprefmanager.il2cpp.dll` file | `Mods` |
 | Assembly Replacement Mods | a `GameAssembly.dll` file | the game folder itself (no subfolder) |
 | Plugin Mods | a `.dll` file | `BepInEx` |
-| Asset Replacement Mods | a `.assets` file | `Romestead_Data` |
 | Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
@@ -26,29 +24,14 @@ This installer handles BepInEx itself, not mods for it. It exists so users can i
 
 **Requirements:**
 
-- Recognised by a file named `winhttp.dll` in the archive.
-- Requires BOTH a folder named `BepInEx` and the loader file `winhttp.dll`.
+- Recognised by a file named `BepInEx.Core.dll` in the archive.
+- Requires BOTH a folder named `BepInEx` and the loader file `BepInEx.Core.dll`.
 
 Installs to: the game folder itself (no subfolder)
 
 **Common mistakes:**
 
 - If you bundle BepInEx inside your mod archive, Vortex treats the whole download as BepInEx rather than as your mod. Ship the mod alone and list BepInEx as a requirement.
-
-## MelonLoader (mod loader)
-
-This installer handles MelonLoader itself, not mods for it. It exists so users can install MelonLoader through Vortex, and mod authors normally never package this.
-
-**Requirements:**
-
-- Recognised by a file named `version.dll` in the archive.
-- Requires BOTH a folder named `MelonLoader` and the loader file `version.dll`.
-
-Installs to: the game folder itself (no subfolder)
-
-**Common mistakes:**
-
-- If you bundle MelonLoader inside your mod archive, Vortex treats the whole download as MelonLoader rather than as your mod. Ship the mod alone and list MelonLoader as a requirement.
 
 ## Root / Game Folder Mods
 
@@ -133,20 +116,6 @@ Installs to: `BepInEx`
 
 - Wrapping the DLL in a `BepInEx\plugins` folder as well - it can end up nested one level too deep.
 - Shipping a plugin together with loader files, which makes the archive look like a loader install instead.
-
-## Asset Replacement Mods
-
-Mods that replace packed Unity asset files, deployed into the game's data folder.
-
-**Requirements:**
-
-- Recognised by any file with the `.assets`, `.resource` or `.ress` extensions.
-
-Installs to: `Romestead_Data`
-
-**Common mistakes:**
-
-- Asset files must keep their original names to replace the right bundle.
 
 ## Fallback Installer
 

@@ -2,8 +2,8 @@
 Name: Deus Ex Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2026-08-03
+Version: 0.2.1
+Date: 2026-09-03
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -11,6 +11,10 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 //const winapi = require('winapi-bindings');
+const { registerModDbBrowser, onceModDbBrowser } = require('./moddb_browser');
+
+//feature toggles
+const moddbBrowser = true; //register the "Browse ModDB" page (moddb.com)
 
 //const USER_HOME = util.getVortexPath("home");
 const DOCUMENTS = util.getVortexPath("documents");
@@ -34,6 +38,7 @@ const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
 
 const ROOT_FOLDERS = ['System', 'Maps', 'Textures', 'Sounds', 'Music', 'Save', 'GOTY_1'];
 const BINARIES_FILES = ['engine.dll', 'deusexechelonrenderer.dll', 'd3d9.dll', 'rtx.conf'];
+const BINARIES_EXTS = ['.exe', '.dll', '.asi', '.addon64'];
 
 const DATA_FOLDER = 'Deus Ex';
 const CONFIGMOD_LOCATION = DOCUMENTS;
@@ -90,6 +95,16 @@ const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1462"; //Nexus link t
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Deus_Ex";
 const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+
+//Embedded ModDB browser page - the user browses the live moddb.com section for this game and
+//installs from it. Vortex's download manager cannot fetch from this host, so the page fetches
+//the file itself. No requirements: nothing on this game's ModDB page is a managed mod loader.
+const MODDB_BROWSER_CONFIG = {
+  moddbPath: 'games/deus-ex',
+  pageId: `${GAME_ID}-moddb-browse`,
+  pageTitle: 'Browse ModDB',
+};
+
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -517,7 +532,7 @@ function installRoot(files) {
 
 //Fallback installer to Binaries folder
 function testBinaries(files, gameId) {
-  const isMod = files.some(file => BINARIES_FILES.includes(path.basename(file).toLowerCase()));
+  const isMod = files.some(file => BINARIES_FILES.includes(path.basename(file).toLowerCase()) || BINARIES_EXTS.includes(path.extname(file).toLowerCase()));
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer.
@@ -536,11 +551,11 @@ function testBinaries(files, gameId) {
 //Fallback installer to Binaries folder
 function installBinaries(files) {
   const MOD_TYPE = BINARIES_ID;
-  const modFile = files.find(file => BINARIES_FILES.includes(path.basename(file).toLowerCase()));
+  const modFile = files.find(file => BINARIES_FILES.includes(path.basename(file).toLowerCase()) || BINARIES_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
-  
+
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
@@ -586,6 +601,11 @@ function applyGame(context, gameSpec) {
   };
   context.registerGame(game);
 
+  //register the embedded moddb.com browser page
+  if (moddbBrowser) {
+    registerModDbBrowser(context, gameSpec, MODDB_BROWSER_CONFIG);
+  }
+
   //register mod types
   (gameSpec.modTypes || []).forEach((type, idx) => {
     context.registerModType(type.id, modTypePriority(type.priority) + idx, (gameId) => {
@@ -596,25 +616,25 @@ function applyGame(context, gameSpec) {
   });
 
   /*register mod types explicitly
-  context.registerModType(CONFIG_ID, 60, 
+  context.registerModType(CONFIG_ID, 60,
     (gameId) => {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, CONFIG_PATH), 
-    () => Promise.resolve(false), 
+    },
+    (game) => pathPattern(context.api, game, CONFIG_PATH),
+    () => Promise.resolve(false),
     { name: CONFIG_NAME }
   ); //
-  context.registerModType(SAVE_ID, 60, 
+  context.registerModType(SAVE_ID, 60,
     (gameId) => {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, SAVE_PATH), 
-    () => Promise.resolve(false), 
+    },
+    (game) => pathPattern(context.api, game, SAVE_PATH),
+    () => Promise.resolve(false),
     { name: SAVE_NAME }
   ); //*/
-  
+
   //register mod installers
   context.registerInstaller(KNOWNMOD_ID, 25, testKnownMod, installKnownMod);
   context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
@@ -694,7 +714,9 @@ function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     const api = context.api;
-
+    if (moddbBrowser) { //installs downloads started from the browse page, and update-checks the mods installed through it
+      onceModDbBrowser(api, spec, MODDB_BROWSER_CONFIG);
+    }
   });
   return true;
 }

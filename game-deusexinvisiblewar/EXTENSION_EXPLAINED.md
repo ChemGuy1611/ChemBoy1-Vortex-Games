@@ -22,6 +22,12 @@
 - **Steam** — `6920`
 - **GOG** — `1207659068`
 
+## Feature Flags
+
+| Flag | Value | Description |
+| --- | --- | --- |
+| `moddbBrowser` | `true` | register the "Browse ModDB" page (moddb.com) |
+
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:

@@ -7,17 +7,18 @@
 // requests use the same Chromium network stack the old vendored axios browser build
 // did). Externals are vortex-api and node's path/fs/stream, plus semver.
 //
-// Four opt-in requirement modes sit on top of the default "install and track the latest
+// Five opt-in requirement modes sit on top of the default "install and track the latest
 // release" behavior: pinVersion holds a requirement at one release and makes its update check
 // skip the network entirely, directCopyPath fetches a naked (non-archive) release asset
 // straight to a file path instead of installing it as a mod, directCopyAsMod puts that same
-// naked asset into a managed mod's staging folder so Vortex deploys it like any other mod, and
+// naked asset into a managed mod's staging folder so Vortex deploys it like any other mod,
 // nightlyUrl tracks a GitHub Actions CI artifact (which is not a release at all) by its
-// workflow run number.
+// workflow run number, and nexusModId points a requirement at a Nexus Mods page instead of a
+// GitHub repository.
 //
-// Public API: download, getLatestGithubReleaseAsset, getLatestNightlyArtifact, doDownload,
-// findModByFile, findDownloadIdByFile, walkPath, resolveVersionByPattern,
-// resolveVersionByAssetDate, resolveVersionByModVersion,
+// Public API: download, getLatestGithubReleaseAsset, getLatestNightlyArtifact,
+// getLatestNexusFile, doDownload, findModByFile, findDownloadIdByFile, walkPath,
+// resolveVersionByPattern, resolveVersionByAssetDate, resolveVersionByModVersion,
 // resolveVersionByDirectCopyMarker, resolveVersionByNightlyRun, getMods,
 // testRequirementVersion, default(init).
 
@@ -86,6 +87,13 @@ function isNightly(requirement) {
   return (requirement?.nightlyUrl !== undefined)
     && (requirement.nightlyUrl !== null)
     && (requirement.nightlyUrl !== '');
+}
+
+// Whether a requirement is hosted on a Nexus Mods page instead of a GitHub repository. Setting
+// nexusModId is what switches the mode on; see the Nexus section further down. githubUrl is not
+// read at all in this mode.
+function isNexusRequirement(requirement) {
+  return (requirement?.nexusModId !== undefined) && (requirement.nexusModId !== null);
 }
 
 // Loose direct-copy mode: the asset is written straight to directCopyPath and never becomes a
@@ -219,9 +227,14 @@ function isUpdateAvailable(requirement, latest, installed) {
   return semver.gt(latestAssetVersion(requirement, latest), installedVersion);
 }
 
-// requirement.githubUrl is the REST API base (https://api.github.com/repos/{owner}/{repo}),
-// used to build the releases endpoints - convert to the human repo page for the mod's source link.
-function repoPageUrl(requirement) {
+// Human-facing home page of the requirement, used for the installed mod's "Source" link. For a
+// Nexus requirement that is the mod page; otherwise requirement.githubUrl, which is the REST API
+// base (https://api.github.com/repos/{owner}/{repo}) the release endpoints are built from,
+// rewritten to the repo page. api is only read to resolve the default Nexus domain.
+function repoPageUrl(requirement, api) {
+  if (isNexusRequirement(requirement)) {
+    return nexusPageUrl(nexusDomain(api, requirement), requirement.nexusModId);
+  }
   return requirement.githubUrl?.replace('https://api.github.com/repos/', 'https://github.com/');
 }
 
@@ -325,8 +338,12 @@ async function download(api, requirements, force) {
         // A nightly artifact's filename is constant across every CI run, so a local archive
         // matching it is precisely what must NOT be reused - always re-resolve the newest run.
         // A naked asset has no archive to reuse at all (the module never creates a Downloads-tab
-        // entry for one), so the managed-mod mode is excluded here too.
-        if (!versionMismatch && !force && dlId && !isNightly(req) && !isDirectCopyAsMod(req)) {
+        // entry for one), so the managed-mod mode is excluded here too. Nexus requirements are
+        // excluded for the nightly reason: reusing a stale archive is exactly what the page's
+        // file listing exists to prevent, and re-requesting a file already downloaded costs
+        // nothing (Vortex reuses the local copy itself).
+        if (!versionMismatch && !force && dlId && !isNightly(req) && !isDirectCopyAsMod(req)
+            && !isNexusRequirement(req)) {
           // Archive already downloaded - resolve the version locally (archive filename/version
           // file) rather than hitting the GitHub API, keeping this shortcut path network-free.
           // A failed resolve ('' or the '0.0.0' sentinel) is left unstamped rather than recorded,
@@ -338,7 +355,7 @@ async function download(api, requirements, force) {
           }
           await installDownload(api, dlId, {
             name: req.userFacingName,
-            pageUrl: repoPageUrl(req),
+            pageUrl: repoPageUrl(req, api),
             version: shortcutVersion,
             modType: req.modType,
           });
@@ -349,16 +366,30 @@ async function download(api, requirements, force) {
           asset = await resolveLatestAsset(api, req);
         }
         if (!asset) {
-          // No usable asset in the release - getLatestGithubReleaseAsset has already told
-          // the user why. Move on to the next requirement rather than throwing on asset.name.
+          // No usable asset in the release - getLatestGithubReleaseAsset / getLatestNexusFile
+          // has already told the user why. Move on to the next requirement rather than throwing
+          // on asset.name.
           continue;
         }
         // Naked asset, managed as a mod: no archive exists, so the file goes into the mod's
         // staging folder directly rather than through import-downloads -> start-install-download.
         if (isDirectCopyAsMod(req)) {
-          if (await installAssetAsMod(api, req, asset)) {
+          if (await installAssetAsMod(api, req, asset, assetFetcher(api, req, asset))) {
             installedAny = true;
           }
+          continue;
+        }
+        // A Nexus archive is already in the download folder once Vortex's pipeline has fetched
+        // it, so it skips the temp-file + import-downloads round trip and installs from there.
+        if (isNexusRequirement(req)) {
+          await installDownload(api, await downloadNexusFile(api, req, asset), {
+            name: req.userFacingName,
+            assetDate: asset.updated_at,
+            pageUrl: repoPageUrl(req, api),
+            version: latestAssetVersion(req, asset),
+            modType: req.modType,
+          });
+          installedAny = true;
           continue;
         }
         const tempPath = path.join(util.getVortexPath('temp'), asset.name);
@@ -367,7 +398,7 @@ async function download(api, requirements, force) {
           await importAndInstall(api, tempPath, {
             name: req.userFacingName,
             assetDate: asset.updated_at,
-            pageUrl: repoPageUrl(req),
+            pageUrl: repoPageUrl(req, api),
             version: latestAssetVersion(req, asset),
             nightlyRunNumber: asset.nightlyRunNumber,
             modType: req.modType,
@@ -633,12 +664,248 @@ async function getLatestNightlyArtifact(api, requirement) {
   return null;
 }
 
+// --- Nexus-hosted requirements --------------------------------------------
+// A requirement that sets nexusModId lives on a Nexus Mods page instead of in a GitHub
+// repository. githubUrl is not read at all in this mode - the page id (nexusModId) and the game
+// domain the page sits under (nexusDomain) replace it.
+//
+// Two things make this more than a URL swap:
+//
+//   THE DOMAIN IS ITS OWN FIELD. The tool a game needs is routinely published on a different
+//   game's page - HFW_MM.exe lives under horizonforbiddenwest while also being a requirement of
+//   horizonzerodawnremastered and deathstranding2onthebeach - so the domain cannot be taken from
+//   the game being managed. It falls back to the active game only when nexusDomain is absent.
+//
+//   THE DOWNLOAD IS VORTEX'S, NOT OURS. A Nexus download link is short-lived, account-bound and
+//   ad-gated for free accounts, so doDownload cannot fetch one: the file is requested through an
+//   nxm:// URL handed to Vortex's own 'start-download', whose nxm protocol resolver is what
+//   routes a free account through the direct-download check and the download dialog.
+//   api.ext.nexusDownload is deliberately NOT used - it rejects every non-premium account
+//   outright ("Only available to premium users") and reports failure by resolving undefined.
+//
+// The listing is shaped into a release asset so resolveLatestAsset, latestAssetVersion,
+// isUpdateAvailable and installAssetAsMod can treat it like one. browser_download_url is
+// deliberately absent: there is no fetchable URL to put in it.
+//
+// The installed mod is stamped source: 'website', NOT source: 'nexus'. A Nexus-sourced mod is
+// picked up by Vortex's own update check, which would then own the notification, the version
+// column and the update button for a mod this module installs and replaces itself - two update
+// mechanisms on one mod - and it is also the shape that gets a wrong modId stamped onto a file
+// whose md5 happens to match something else on the site.
+
+// Nexus game domain the requirement's page sits under. The fallback is only right for a
+// requirement hosted on the page of the game being managed; every cross-game one sets the field.
+function nexusDomain(api, requirement) {
+  return requirement.nexusDomain ?? selectors.activeGameId(api.getState());
+}
+
+function nexusPageUrl(domain, modId) {
+  return `https://www.nexusmods.com/${domain}/mods/${modId}`;
+}
+
+// Failure on this route sends the user to the page as well as notifying: an account that cannot
+// auto-download, or a page whose files were reorganised, still leaves the file one click away.
+function reportNexusFailure(api, requirement, domain, error) {
+  api.showErrorNotification(`Failed to download ${requirement.userFacingName}`, error, { allowReport: false });
+  util.opn(`${nexusPageUrl(domain, requirement.nexusModId)}/files/?tab=files`).catch(() => null);
+}
+
+// Name filters for a page publishing several current main files. Both plain-string fields are
+// substring tests, matched case-insensitively against file_name AND name: the marker separating
+// a release build from a dev build sits in whichever of the two the author bothered to set, and
+// an adopter should not have to know which. nexusFilePattern stays available for a page whose
+// naming needs a real expression. All three are AND-ed, and exclude wins over match on a file
+// carrying both strings - installing the wrong build is worse than installing nothing.
+function matchesNexusFileName(requirement, file) {
+  const names = [file.file_name, file.name]
+    .filter(name => typeof name === 'string')
+    .map(name => name.toLowerCase());
+  if ((requirement.nexusFileExclude !== undefined)
+      && names.some(name => name.includes(String(requirement.nexusFileExclude).toLowerCase()))) {
+    return false;
+  }
+  if ((requirement.nexusFileMatch !== undefined)
+      && !names.some(name => name.includes(String(requirement.nexusFileMatch).toLowerCase()))) {
+    return false;
+  }
+  if (requirement.nexusFilePattern === undefined) {
+    return true;
+  }
+  // test() and exec() are both stateful on a /g-flagged RegExp, so a pattern authored with /g
+  // would carry lastIndex from one file to the next inside .filter() and drop matches at random.
+  requirement.nexusFilePattern.lastIndex = 0;
+  return names.some(name => requirement.nexusFilePattern.test(name));
+}
+
+// The newest allowed main file of a Nexus page, shaped like a release asset. The filters run
+// before the newest-first sort and before the pin lookup, so "newest" always means "newest of
+// what is allowed" and a pin can never resolve to a file the filters exclude.
+async function getLatestNexusFile(api, requirement) {
+  const domain = nexusDomain(api, requirement);
+  // Reach-the-file fallback for an unreadable listing: a requirement naming a file id can still
+  // be installed. It carries no version, so it also reports no update - which is correct, since
+  // nothing is known about what else the page offers.
+  const configuredFileAsset = () => {
+    if (requirement.nexusFileId === undefined) {
+      return undefined;
+    }
+    log('warn', `Could not read the Nexus file listing for ${requirement.userFacingName} - falling back to the configured file id`,
+      { domain, modId: requirement.nexusModId, fileId: requirement.nexusFileId });
+    return {
+      name: requirement.archiveFileName,
+      nexusFileId: requirement.nexusFileId,
+      nexusModId: requirement.nexusModId,
+      nexusDomain: domain,
+      release: { tag_name: '' },
+    };
+  };
+  if (api.ext?.nexusGetModFiles === undefined) {
+    const fallback = configuredFileAsset();
+    if (fallback !== undefined) {
+      return fallback;
+    }
+    const err = new Error('Nexus integration is unavailable in this Vortex build');
+    reportNexusFailure(api, requirement, domain, err);
+    return Promise.reject(new util.ProcessCanceled(err.message));
+  }
+  let files;
+  try {
+    files = await api.ext.nexusGetModFiles(domain, requirement.nexusModId);
+  } catch (error) {
+    const fallback = configuredFileAsset();
+    if (fallback !== undefined) {
+      return fallback;
+    }
+    reportNexusFailure(api, requirement, domain, error);
+    return null;
+  }
+  // A number or a set of them. A set is not over-engineering here: a page's current build is not
+  // reliably in MAIN - HFW Mod Manager's is in MISCELLANEOUS while every superseded build sits in
+  // OLD_VERSION/ARCHIVED - and an adopter that accepted "whatever is newest" instead would install
+  // a superseded build the moment the author archives one. Naming the acceptable categories keeps
+  // the requirement correct whichever of them the author files the next release under.
+  // MAIN(1) / OPTIONAL(3) / MISCELLANEOUS(5) are the only categories a file can be UPLOADED as, so
+  // that set means "any current build"; UPDATE(2), OLD_VERSION(4) and ARCHIVED(7) are states a file
+  // reaches later, which is exactly what a requirement must never install.
+  const categoryIds = [].concat(requirement.nexusCategoryId ?? 1);
+  const candidates = (files ?? [])
+    .filter(file => categoryIds.includes(file.category_id))
+    .filter(file => matchesNexusFileName(requirement, file))
+    // uploaded_timestamp is the numeric upload time. uploaded_time is an ISO string, and
+    // parseInt-ing that yields the year - which is what made the hand-rolled copies of this
+    // sort almost a no-op.
+    .sort((lhs, rhs) => Number(rhs.uploaded_timestamp ?? 0) - Number(lhs.uploaded_timestamp ?? 0));
+  const file = isPinned(requirement)
+    ? (candidates.find(entry => isSamePinVersion(requirement.pinVersion, entry.version))
+      ?? candidates.find(entry => entry.file_id === requirement.nexusFileId))
+    : candidates[0];
+  if (file === undefined) {
+    // Filters that match nothing and a page that stopped publishing look identical from here,
+    // and both are otherwise completely silent - name what was asked for and what is on offer.
+    const applied = [`file category ${categoryIds.join(' or ')}`];
+    if (requirement.nexusFileExclude !== undefined) {
+      applied.push(`name not containing "${requirement.nexusFileExclude}"`);
+    }
+    if (requirement.nexusFileMatch !== undefined) {
+      applied.push(`name containing "${requirement.nexusFileMatch}"`);
+    }
+    if (requirement.nexusFilePattern !== undefined) {
+      applied.push(`name matching ${requirement.nexusFilePattern}`);
+    }
+    if (isPinned(requirement)) {
+      applied.push(`version "${requirement.pinVersion}"`);
+    }
+    const available = (files ?? []).map(entry => entry.file_name);
+    log('warn', `No usable Nexus file for ${requirement.userFacingName}`,
+      { domain, modId: requirement.nexusModId, applied, available });
+    api.showErrorNotification('Could not find a download for {{repName}}',
+      `No file on the mod page matched: ${applied.join('; ')}. `
+      + `${available.length > 0 ? `The page currently offers: ${available.join(', ')}` : 'The page offers no files'}. `
+      + 'The files were most likely renamed or recategorised by their author, in which case this extension needs an update.',
+      { allowReport: false, replace: { repName: requirement.userFacingName } });
+    return null;
+  }
+  return {
+    name: file.file_name,
+    nexusFileId: file.file_id,
+    nexusModId: requirement.nexusModId,
+    nexusDomain: domain,
+    uploadedTimestamp: file.uploaded_timestamp,
+    updated_at: file.uploaded_time,
+    release: { tag_name: file.version ?? file.mod_version ?? '' },
+  };
+}
+
+// Start the download through Vortex's own pipeline and resolve to its download id. The
+// 'start-download' tuple shape is load-bearing - Vortex zod-validates it and a mismatch is a
+// silent no-op rather than an error - and its callback fires once the file is on disk and its
+// final name has been recorded in state. allowInstall: false keeps the archive out of the
+// auto-install path; this module decides what happens to it.
+async function downloadNexusFile(api, requirement, asset) {
+  if (api.ext?.ensureLoggedIn !== undefined) {
+    await api.ext.ensureLoggedIn();
+  }
+  const nxmUrl = `nxm://${asset.nexusDomain}/mods/${asset.nexusModId}/files/${asset.nexusFileId}`;
+  const dlInfo = { game: asset.nexusDomain, name: requirement.userFacingName };
+  const dlId = await util.toPromise(cb =>
+    api.events.emit('start-download', [nxmUrl], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+  if (!dlId) {
+    // A dismissed free-user download dialog and a link refused for this account both land here.
+    // Neither is an error worth a stack trace; download() reports the skip.
+    throw new util.ProcessCanceled(`${requirement.userFacingName} was not downloaded`);
+  }
+  return dlId;
+}
+
+// Local path of a finished download, read from state rather than by scanning the download
+// folder: the file belongs to whichever game its nxm URL named, which for a cross-game
+// requirement is NOT the game being managed. Vortex resolves the same folder the same way, from
+// the download's own first game id.
+function downloadLocalPath(api, dlId) {
+  const state = api.getState();
+  const dl = util.getSafe(state, ['persistent', 'downloads', 'files', dlId], undefined);
+  if (dl?.localPath === undefined) {
+    return undefined;
+  }
+  const owner = downloadGames(dl)[0] ?? selectors.activeGameId(state);
+  return path.join(selectors.downloadPathForGame(state, owner), dl.localPath);
+}
+
+// fetchAsset implementation for the naked-asset route: Vortex downloads the file, we copy it
+// into the mod's staging folder and then drop the download entry. The copy cannot be deferred -
+// a non-archive file in the download folder is deleted the next time the download path is
+// initialised (removeInvalidFileExts culls everything 7-Zip cannot open, and .exe is not in
+// Vortex's known-archive set), which would leave a Downloads tab row pointing at nothing.
+async function fetchNexusAsset(api, requirement, asset, destination) {
+  const dlId = await downloadNexusFile(api, requirement, asset);
+  const source = downloadLocalPath(api, dlId);
+  if (source === undefined) {
+    throw new util.ProcessCanceled(`${requirement.userFacingName} download produced no file`);
+  }
+  await fs.copyAsync(source, destination, { overwrite: true });
+  // Guarded: the event exists in every current Vortex version, but failing to tidy up the row
+  // must not fail an install that already succeeded.
+  await util.toPromise(cb => api.events.emit('remove-download', dlId, cb)).catch(() => null);
+}
+
+// How the bytes of a resolved asset are obtained. GitHub and nightly assets carry a fetchable
+// URL; a Nexus file goes through Vortex's download pipeline instead.
+function assetFetcher(api, requirement, asset) {
+  return isNexusRequirement(requirement)
+    ? (destination) => fetchNexusAsset(api, requirement, asset, destination)
+    : (destination) => doDownload(asset.browser_download_url, destination);
+}
+
 // Single entry point for "what is upstream offering right now" - releases by default, the
-// Actions run listing for a nightly requirement.
+// Actions run listing for a nightly requirement, the mod page's file listing for a Nexus one.
 async function resolveLatestAsset(api, requirement) {
-  return isNightly(requirement)
-    ? getLatestNightlyArtifact(api, requirement)
-    : getLatestGithubReleaseAsset(api, requirement);
+  if (isNightly(requirement)) {
+    return getLatestNightlyArtifact(api, requirement);
+  }
+  if (isNexusRequirement(requirement)) {
+    return getLatestNexusFile(api, requirement);
+  }
+  return getLatestGithubReleaseAsset(api, requirement);
 }
 
 //Write a fetch response body to disk without buffering it - mod loaders and emulator
@@ -825,10 +1092,21 @@ async function removeLegacyDirectCopy(requirement) {
   }
 }
 
-// Install a naked release asset as a managed mod: the file lands in the mod's staging folder and
-// Vortex deploys it to wherever the requirement's mod type points. Returns false when an
-// unmanaged mod of the same type is already installed (the user's own copy - never overwritten).
-async function installAssetAsMod(api, requirement, asset) {
+// Name the asset is written under in the staging folder, and therefore the name it deploys as.
+// The asset's own name by default; installFileName overrides it for a source whose file name is
+// not the name the game expects - a Nexus upload carries the mod and file ids in its name
+// ("HFW Mod Manager-137-1-2-0-1234567890.exe"), and the tool only works as HFW_MM.exe.
+function stagedAssetName(requirement, asset) {
+  return requirement.installFileName ?? asset.name;
+}
+
+// Install a naked asset as a managed mod: the file lands in the mod's staging folder and Vortex
+// deploys it to wherever the requirement's mod type points. Returns false when an unmanaged mod
+// of the same type is already installed (the user's own copy - never overwritten).
+// fetchAsset(destination) writes the bytes; it is the one thing that differs between sources
+// (see assetFetcher), and everything around it - the mod creation, the ownership marker, the
+// staging clear, the attribute stamp, the mods-enabled emit - is shared.
+async function installAssetAsMod(api, requirement, asset, fetchAsset) {
   const state = api.getState();
   const gameId = selectors.activeGameId(state);
   const profileId = selectors.lastActiveProfileForGame(state, gameId);
@@ -868,7 +1146,7 @@ async function installAssetAsMod(api, requirement, asset) {
     }
   }
   await fs.ensureDirWritableAsync(modPath);
-  await doDownload(asset.browser_download_url, path.join(modPath, asset.name));
+  await fetchAsset(path.join(modPath, stagedAssetName(requirement, asset)));
   const attributes = {
     installTime: new Date(),
     name: requirement.userFacingName,
@@ -876,10 +1154,17 @@ async function installAssetAsMod(api, requirement, asset) {
     version: latestAssetVersion(requirement, asset),
     directCopyAsMod: true,
     source: 'website',
-    url: repoPageUrl(requirement),
+    url: repoPageUrl(requirement, api),
   };
   if (asset.updated_at !== undefined) {
     attributes.githubAssetDate = asset.updated_at;
+  }
+  // Which page and file this came from, recorded for diagnostics only. Deliberately NOT the
+  // modId/fileId pair Vortex reads, which only means anything alongside source: 'nexus' - see
+  // the Nexus section for why that source is not used here.
+  if (isNexusRequirement(requirement)) {
+    attributes.nexusModId = asset.nexusModId;
+    attributes.nexusFileId = asset.nexusFileId;
   }
   util.batchDispatch(api.store, [
     actions.setModAttributes(gameId, modId, attributes),
@@ -1140,6 +1425,7 @@ module.exports = {
   download,
   getLatestGithubReleaseAsset,
   getLatestNightlyArtifact,
+  getLatestNexusFile,
   doDownload,
   findModByFile,
   findDownloadIdByFile,

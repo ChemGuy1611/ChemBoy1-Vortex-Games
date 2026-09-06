@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [1.0.1] - 2026-09-02
+
+- Fixed: A required mod loader or tool is no longer matched against downloads belonging to other games, which could report the wrong installed version or check for updates against the wrong file
+
 ## [1.0.0] - 2026-08-22
 
 - Fixed: Installing the mod loader no longer copies about 2600 unrelated files into the game folder. Only the loader itself is installed

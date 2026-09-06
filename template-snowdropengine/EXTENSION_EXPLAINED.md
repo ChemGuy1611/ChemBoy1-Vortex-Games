@@ -15,6 +15,10 @@
 | Game ID | `XXX` |
 | Executable | `XXX.exe` |
 
+## Supported Stores
+
+- **Ubisoft Connect** — `Registry`
+
 ## Feature Flags
 
 | Flag | Value | Description |

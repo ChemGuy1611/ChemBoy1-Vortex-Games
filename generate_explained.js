@@ -192,7 +192,19 @@ function extractActions(src, table) {
 }
 
 /**
- * Detect supported stores from non-null App IDs.
+ * Stores whose installations are located through the Windows registry rather than by a
+ * store app id. Support for them does not depend on the app-id constant ever being
+ * filled in, so a declared-but-empty constant still counts as supported.
+ */
+const REGISTRY_STORES = [
+  ['UPLAYAPP_ID', 'Ubisoft Connect'],
+  ['EAAPP_ID', 'EA'],
+];
+
+/**
+ * Detect supported stores from non-null App IDs, plus the registry-detected stores,
+ * which are listed as soon as their constant is declared. A placeholder app id on one
+ * of those is reported as "Registry" rather than dropping the store from the list.
  */
 function detectStores(table) {
   const stores = [];
@@ -204,6 +216,11 @@ function detectStores(table) {
   if (isRealValue(steamId)) stores.push({ store: 'Steam', appId: steamId });
   if (isRealValue(epicId))  stores.push({ store: 'Epic Games Store', appId: epicId });
   if (isRealValue(gogId))   stores.push({ store: 'GOG', appId: gogId });
+  for (const [name, label] of REGISTRY_STORES) {
+    if (!table.has(name)) continue;
+    const appId = table.get(name);
+    stores.push({ store: label, appId: isRealValue(appId) ? appId : 'Registry' });
+  }
   if (isRealValue(xboxId))  stores.push({ store: 'Xbox / Microsoft Store', appId: xboxId });
   return stores;
 }

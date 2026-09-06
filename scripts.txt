@@ -7,6 +7,7 @@ new_extension.py
 new_template.py
 port_to_template.py
 patch_extensions.py
+migrate_fs.py
 fetch_cover_art.py
 make_title_image.py
 fetch_exec_icon.py

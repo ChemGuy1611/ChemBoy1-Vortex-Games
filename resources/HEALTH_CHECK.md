@@ -226,6 +226,35 @@ context.registerHealthCheck({
 
 ---
 
+## Built-in "Nexus Mod Requirements" check — how satisfaction is decided
+
+The core check (`health_check/checks/modRequirementsCheck.ts`, id
+`check-nexus-mod-requirements`) fetches each installed Nexus mod's requirements from the Nexus
+API and reports any that are not met — this is the "Missing required mod for: X" entry with a
+1-click install button.
+
+What counts as "the requirement is installed":
+
+- **Enabled mods only.** The satisfied set (`installedModUids`) is built from
+  `getEnabledMods()` → `partitionNexusMods()`, which filters `profile.modState` for
+  `enabled === true`. A mod that is installed but **disabled contributes nothing** — the
+  requirement still reports missing.
+- **Match is a version-agnostic mod-page identity.** Both sides build a UID with
+  `makeModUID({ gameId, modId, fileId: "0" })` — so `fileId` and version are ignored; only
+  `(downloadGame, modId)` and `attributes.source === "nexus"` matter. The `gameId` resolves
+  through the Nexus games list, so cross-domain requirements work (a game mod can require a
+  `site`-domain mod like a mod manager).
+- **`mod.type === "collection"` is excluded**; any other type (including `""`) is eligible.
+
+Consequence for an extension whose loader is installed from GitHub but whose author also has a
+Nexus page other mods cite as a requirement: register an **enabled placeholder mod** carrying
+`{ source: 'nexus', modId: <page id>, downloadGame: <domain> }` and no files (via the
+`create-mod` event). It deploys nothing but satisfies the check. Stamp `fileId`/`newestFileId`
+to the current file so the mod update check does not offer to "update" it into the real archive.
+Worked example: `LOBOTOMY_BASEMOD.md` (`ensureNexusRequirementMod` in `game-lobotomycorporation`).
+
+---
+
 ## Migrating from registerTest
 
 `registerTest(id, event, check)` still works — Vortex wraps it as an

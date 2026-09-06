@@ -2,8 +2,8 @@
 Name: How to Fish Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-08-26
+Version: 1.0.2
+Date: 2026-09-02
 Notes:
 -
 //////////////////////////////////////////*/

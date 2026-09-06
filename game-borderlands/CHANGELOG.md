@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.3.2] - 2026-09-02
+
+- Fixed: A required mod loader or tool is no longer matched against downloads belonging to other games, which could report the wrong installed version or check for updates against the wrong file
+
 ## [0.3.1] - 2026-08-05
 
 - Fixed: A required mod loader or tool that can no longer be found in its GitHub release is now reported, listing the files the release actually contains, instead of failing quietly

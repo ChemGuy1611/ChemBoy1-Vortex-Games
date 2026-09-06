@@ -21,6 +21,7 @@ Usage:
     python patch_extensions.py --list-patches                 # list all patches with enabled status and description
     python patch_extensions.py --only PATCH_NAME              # run only the named patch (bypasses enabled flag)
     python patch_extensions.py --only gog_app_id              # resolve GOGAPP_ID from gogdb.org (registered disabled: several requests per unresolved game)
+    python patch_extensions.py GAME_ID --only plan_b_lo_region --dry-run   # Plan B FBLO load order port: splice darktide's LO region into one target game (registered disabled; one game at a time; see PLAN_B_LO_GAMES)
     python patch_extensions.py GAME_ID [GAME_ID ...] --only PATCH_NAME
     python patch_extensions.py --audit                        # run the read-only audits (installer priorities + FOMOD checks + store ID wiring) then exit
     python patch_extensions.py GAME_ID [GAME_ID ...] --audit  # scope audits to specific games only
@@ -36,6 +37,7 @@ Environment variables:
 """
 
 import argparse
+import hashlib
 import os
 import re
 import sys
@@ -51,6 +53,7 @@ from vortex_utils import (
     is_placeholder_value, replace_const_rhs, print_count_summary, js_string_literal,
     strip_js_comments, is_real_value,
     audit_skip_lines, AUDIT_SKIP_STORE_ID, AUDIT_SKIP_FOMOD, AUDIT_SKIP_PRIORITY,
+    find_registerinstaller_calls,
 )
 MANIFEST_PATH = os.environ.get("VORTEX_MANIFEST_PATH", os.path.join(os.environ.get("APPDATA", ""), "Vortex", "temp", "extensions-manifest.json"))
 NEXUS_SITE_BASE = "https://www.nexusmods.com/site/mods"
@@ -688,6 +691,195 @@ def patch_context_once_api(game_id, src, context):
     return new_src, True, f"inserted const api in {inserted} context.once block(s)"
 
 
+# ── Plan B FBLO load order port ───────────────────────────────────────────────
+# Child of the memoized-moseying-journal Plan B. Splices the shared FBLO load order
+# region (multi-select, lock button, status pills, FbloContextMenu) from
+# game-warhammer40kdarktide/index.js into the 6 Plan B target games, one at a time.
+# Registered disabled - run explicitly:
+#   python patch_extensions.py <game_id> --only plan_b_lo_region --dry-run
+#   python patch_extensions.py <game_id> --only plan_b_lo_region
+
+# Value = JS expression for the per-entry mod folder base (folder-based load orders,
+# which keep the "Open Mod Folder" menu items), or None for file-based load orders
+# (no "Open Mod Folder" items). Explicit table, not auto-detection from modFolderPath:
+# 6 games, and a wrong guess writes a broken folder path silently.
+PLAN_B_LO_GAMES = {
+    "mewgenics":                  "path.join(getDiscoveryPath(context.api), MOD_PATH)",
+    "warhammer40kdarkheresy":     "MOD_PATH",
+    "warhammer40kroguetrader":    "MOD_PATH",
+    "middleearthshadowofwar":     None,
+    "thelastofuspart2":           None,
+    "warhammer40000spacemarine2": None,
+}
+
+PLAN_B_LO_SOURCE = "game-warhammer40kdarktide"
+
+# SHA-256 of the pre-port renderer block ("//* React line item renderer for load order"
+# through the closing "} //*/" with no trailing newline, CRLF normalized to \n). All 6
+# targets share this today; a mismatch means the file drifted and needs a hand-port.
+PLAN_B_LO_BASELINE_SHA = "756849729da9ed2e4eef2b474e4caad8ae36df05a577aa68269aed0ab708a5b3"
+
+_PLAN_B_RENDERER_END_RE = re.compile(r'^\} //\*/[ \t]*$', re.MULTILINE)
+
+
+def _plan_b_replace_once(text, old, new, label):
+    """Replace exactly one occurrence of old in text. Returns (text, None) on success,
+    (None, reason) if old was absent or appeared more than once."""
+    count = text.count(old)
+    if count != 1:
+        return None, f"{label}: expected 1 occurrence, found {count}"
+    return text.replace(old, new), None
+
+
+def _plan_b_adapt_folder_mode(region, folder_expr):
+    region, err = _plan_b_replace_once(
+        region,
+        "  const gameDir = getDiscoveryPath(context.api);\n",
+        f"  const modBasePath = {folder_expr};\n",
+        "gameDir decl",
+    )
+    if err:
+        return None, err
+    region, err = _plan_b_replace_once(
+        region,
+        "path.join(gameDir, MOD_FOLDER, e.id)",
+        "path.join(modBasePath, e.id)",
+        "openModFolders path.join",
+    )
+    if err:
+        return None, err
+    return region, "gameDir -> modBasePath"
+
+
+_PLAN_B_OPENMODFOLDERS_HELPER = (
+    "  const openModFolders = (entries) => {\n"
+    "    entries\n"
+    "      .filter(e => e.id !== undefined)\n"
+    "      .forEach(e => util.opn(path.join(gameDir, MOD_FOLDER, e.id)).catch(() => null));\n"
+    "    onClose();\n"
+    "  };\n"
+)
+
+_PLAN_B_MULTI_OPEN_OLD = (
+    "      React.createElement('div', { style: sepStyle }),\n"
+    "      menuItem(`Open Mod Folders (${n})`, () => openModFolders(targets)),\n"
+    "      targets.some(t => t.modId !== undefined) ? menuItem(`Open Staging Folders (${n})`, () => {\n"
+)
+_PLAN_B_MULTI_OPEN_NEW = (
+    "      targets.some(t => t.modId !== undefined) ? React.createElement('div', { style: sepStyle }) : null,\n"
+    "      targets.some(t => t.modId !== undefined) ? menuItem(`Open Staging Folders (${n})`, () => {\n"
+)
+
+_PLAN_B_SINGLE_OPEN_OLD = (
+    "    React.createElement('div', { style: sepStyle }),\n"
+    "    menuItem('Open Mod Folder', () => openModFolders([item])),\n"
+    "    stagingFolder ? menuItem('Open Staging Folder', () => { util.opn(stagingFolder).catch(() => null); onClose(); }) : null,\n"
+)
+_PLAN_B_SINGLE_OPEN_NEW = (
+    "    (stagingFolder || modPageUrl) ? React.createElement('div', { style: sepStyle }) : null,\n"
+    "    stagingFolder ? menuItem('Open Staging Folder', () => { util.opn(stagingFolder).catch(() => null); onClose(); }) : null,\n"
+)
+
+
+def _plan_b_adapt_file_mode(region):
+    for old, new, label in (
+        ("  const gameDir = getDiscoveryPath(context.api);\n", "", "gameDir decl"),
+        (_PLAN_B_OPENMODFOLDERS_HELPER, "", "openModFolders helper"),
+        (_PLAN_B_MULTI_OPEN_OLD, _PLAN_B_MULTI_OPEN_NEW, "multi-select Open section"),
+        (_PLAN_B_SINGLE_OPEN_OLD, _PLAN_B_SINGLE_OPEN_NEW, "single-entry Open section"),
+    ):
+        region, err = _plan_b_replace_once(region, old, new, label)
+        if err:
+            return None, err
+    return region, "dropped Open Mod Folder items, gated Open separators"
+
+
+def _plan_b_patch_loi(src, ref):
+    """Insert the status-filter head + StatusPills/filter line into LoadOrderInstructions,
+    lifting both verbatim from the darktide reference. Existing paragraphs are preserved."""
+    open_marker = "function LoadOrderInstructions() {\n"
+    ret_marker = "  return React.createElement('div', null,\n"
+    br_marker = "    React.createElement('br', null),\n"
+
+    ro = ref.find(open_marker)
+    rr = ref.find(ret_marker, ro)
+    if ro == -1 or rr == -1:
+        return None, "LoadOrderInstructions not found in reference"
+    head_block = ref[ro + len(open_marker):rr]
+    rb = ref.find(br_marker, rr + len(ret_marker))
+    if rb == -1:
+        return None, "StatusPills block not found in reference"
+    children_block = ref[rr + len(ret_marker):rb + len(br_marker)]
+
+    target = open_marker + ret_marker
+    if src.count(target) != 1:
+        return None, f"LoadOrderInstructions head shape unexpected (found {src.count(target)})"
+    replacement = open_marker + head_block + ret_marker + children_block
+    return src.replace(target, replacement), "status filter head + pills inserted"
+
+
+def patch_plan_b_lo_region(game_id, src, context):
+    """
+    Plan B FBLO load order port. Splices darktide's shared load order region
+    (multi-select, lock button, status filter, FbloContextMenu) over the target's
+    pre-port renderer block, adapting for folder- vs file-based load orders, then
+    inserts the status-filter head into LoadOrderInstructions. Registered disabled;
+    run one game at a time with --only plan_b_lo_region.
+    """
+    if game_id not in PLAN_B_LO_GAMES:
+        return src, False, "not a Plan B LO target (see PLAN_B_LO_GAMES)"
+    if "useFbloState" in src:
+        return src, False, SKIP_ALREADY_SET
+
+    folder_expr = PLAN_B_LO_GAMES[game_id]
+    file_mode = folder_expr is None
+
+    # The runner reads index.js in universal-newline mode, so src is already LF here even
+    # for the CRLF-on-disk targets. Re-read the raw bytes to learn the file's real ending
+    # and restore it on the way out, so `git diff --numstat` stays a real line delta and
+    # the patch does not silently rewrite every line of a CRLF file.
+    raw = open(os.path.join(REPO_ROOT, f"game-{game_id}", "index.js"), "rb").read()
+    nl = "\r\n" if b"\r\n" in raw else "\n"
+    work = src.replace("\r\n", "\n")
+
+    start = work.find("//* React line item renderer for load order")
+    if start == -1:
+        return src, False, "renderer block start marker not found"
+    end_m = _PLAN_B_RENDERER_END_RE.search(work, start)
+    if not end_m:
+        return src, False, "renderer block end marker not found"
+    block = work[start:end_m.end()]
+    block_sha = hashlib.sha256(block.encode("utf-8")).hexdigest()
+    if block_sha != PLAN_B_LO_BASELINE_SHA:
+        return src, False, f"renderer block hash mismatch ({block_sha[:12]}...) - file drifted, hand-port needed"
+
+    ref_path = os.path.join(REPO_ROOT, PLAN_B_LO_SOURCE, "index.js")
+    with open(ref_path, encoding="utf-8", errors="replace") as f:
+        ref = f.read().replace("\r\n", "\n")
+    r0 = ref.find("//Module-level pub-sub for multi-select")
+    r1 = ref.find("\nmodule.exports")
+    if r0 == -1 or r1 == -1 or r1 <= r0:
+        return src, False, "could not extract source region from " + PLAN_B_LO_SOURCE
+    region = ref[r0:r1].rstrip()
+
+    if file_mode:
+        region, msg = _plan_b_adapt_file_mode(region)
+    else:
+        region, msg = _plan_b_adapt_folder_mode(region, folder_expr)
+    if region is None:
+        return src, False, "adapt failed - " + msg
+
+    new_work = work[:start] + region + work[end_m.end():]
+    new_work, loi_msg = _plan_b_patch_loi(new_work, ref)
+    if new_work is None:
+        return src, False, "LoadOrderInstructions patch failed - " + loi_msg
+
+    new_src = new_work if nl == "\n" else new_work.replace("\n", nl)
+    delta = len(new_src) - len(src)
+    mode = "file" if file_mode else "folder"
+    return new_src, True, f"{mode} mode; {msg}; {loi_msg}; {delta:+d} bytes"
+
+
 # ── Patch registry ────────────────────────────────────────────────────────────
 # Add new patches here. Set enabled=False to skip without removing.
 
@@ -707,6 +899,7 @@ PATCHES = [
     {"name": "epic_app_id",                      "enabled": True, "fn": patch_epic_app_id},
     {"name": "gog_app_id",                       "enabled": False,"fn": patch_gog_app_id},
     {"name": "discovery_ids",                    "enabled": True, "fn": patch_discovery_ids},
+    {"name": "plan_b_lo_region",                 "enabled": False,"fn": patch_plan_b_lo_region},
 ]
 
 
@@ -729,32 +922,21 @@ def audit_installer_priorities(folder_paths):
 
     Read-only; no files modified. Returns (outlier count, suppressed rows).
     """
-    pat = re.compile(
-        r'^\s*context\.registerInstaller\(\s*([^,]+?)\s*,\s*(\d+)\s*,',
-        re.MULTILINE
-    )
     total = 0
     suppressed = []
     for folder, index_path in folder_paths:
         with open(index_path, encoding="utf-8", errors="replace") as f:
             src = f.read()
-        lines = src.splitlines()
         skip_lines = audit_skip_lines(src, AUDIT_SKIP_PRIORITY)
         file_hits = []
-        for lineno, line in enumerate(lines, 1):
-            if line.lstrip().startswith('//'):
-                continue
-            m = re.match(r'\s*context\.registerInstaller\(\s*([^,]+?)\s*,\s*(\d+)\s*,', line)
-            if m:
-                installer_id = m.group(1).strip()
-                priority = int(m.group(2))
-                if priority < 25 or priority > 49:
-                    reason = _marker_reason(skip_lines, lineno)
-                    if reason:
-                        suppressed.append((folder, lineno,
-                                           f"priority={priority}  id={installer_id}", reason))
-                    else:
-                        file_hits.append((lineno, priority, installer_id))
+        for lineno, installer_id, priority in find_registerinstaller_calls(src):
+            if priority < 25 or priority > 49:
+                reason = _marker_reason(skip_lines, lineno)
+                if reason:
+                    suppressed.append((folder, lineno,
+                                       f"priority={priority}  id={installer_id}", reason))
+                else:
+                    file_hits.append((lineno, priority, installer_id))
         if file_hits:
             print(f"\n{folder}/index.js:")  # noqa: raw-log-print
             for lineno, priority, installer_id in file_hits:
@@ -1192,8 +1374,13 @@ def run_patches(game_ids, dry_run, context, only=None):
                 total_skipped += 1
                 continue
 
-            with open(index_path, encoding="utf-8", errors="replace") as f:
-                src = f.read()
+            try:
+                with open(index_path, encoding="utf-8", errors="replace") as f:
+                    src = f.read()
+            except OSError as ex:
+                log_error(game_id, f"could not read index.js: {ex}")
+                total_errors += 1
+                continue
 
             original_src = src
             game_changed = False
@@ -1217,13 +1404,20 @@ def run_patches(game_ids, dry_run, context, only=None):
                 log_error(game_id, '; '.join(err_msgs))
 
             if game_changed:
-                total_changed += 1
                 log_info(game_id, f"{'[DRY RUN] ' if dry_run else ''}CHANGED")
                 for msg in changed_msgs:
                     print(f"    - {msg}")
-                if not dry_run:
-                    write_index_js(os.path.join(REPO_ROOT, f"game-{game_id}"), src)
-                    changed_ids.append(game_id)
+                if dry_run:
+                    total_changed += 1
+                else:
+                    try:
+                        write_index_js(os.path.join(REPO_ROOT, f"game-{game_id}"), src)
+                    except OSError as ex:
+                        log_error(game_id, f"could not write index.js: {ex}")
+                        total_errors += 1
+                    else:
+                        total_changed += 1
+                        changed_ids.append(game_id)
             else:
                 if fail_msgs:
                     log_warn(game_id, '; '.join(fail_msgs))

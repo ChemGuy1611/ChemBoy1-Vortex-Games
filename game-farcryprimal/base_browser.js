@@ -102,16 +102,25 @@ function isNewerVersion(latest, installed) {
   return semver.gt(latestNormalized, installedNormalized);
 }
 
-// --- per-page state -------------------------------------------------------
+// --- per-source state ----------------------------------------------------
 
-// State is keyed by page id rather than held in module-level singletons, because one
-// extension may require this file from two source modules at once: a single shared claim
-// map would let one source claim - and install a second time - a download the other made.
-// The page id already carries both the game and the source.
-const pageStates = new Map();
+// State is keyed by source - the game id plus the adapter id - not held in module-level
+// singletons and not keyed by page id. One extension may require this file from two source
+// modules at once, and a single shared claim map would let one source claim - and install a
+// second time - a download the other made; the adapter id keeps those apart. Keying any finer
+// than the source would break sibling pages: one extension may register two browse pages on a
+// single (game, source) pair - a game whose mods are split across two of the source's pages -
+// and they must share one claim map, recovery set, self-started set, visited ring and
+// external-content confirmation, or a single click is claimed and installed by both at once.
+const sourceStates = new Map();
 
-function pageState(pageId) {
-  let state = pageStates.get(pageId);
+function sourceStateKey(adapter, gameSpec) {
+  return `${gameSpec.game.id}::${adapter.id}`;
+}
+
+function sourceState(adapter, gameSpec) {
+  const key = sourceStateKey(adapter, gameSpec);
+  let state = sourceStates.get(key);
   if (state === undefined) {
     state = {
       // URLs this module started downloads for. The claim handler ignores them: those installs
@@ -122,15 +131,16 @@ function pageState(pageId) {
       // install lands - which may be started by core rather than here.
       claimedDownloads: new Map(),
       // Whether the user has passed the external-content confirmation. Remembered for the
-      // session so switching pages does not re-ask, forgotten on restart.
+      // session so switching pages does not re-ask, forgotten on restart. Shared across sibling
+      // pages on one source: confirming on one opens the other already confirmed.
       confirmed: false,
       // Downloads already being taken over after the download manager failed on them, so a
       // second state change for the same id does not start a second install.
       recovering: new Set(),
-      // Whatever the adapter needs to remember for this page, e.g. recently visited mods.
+      // Whatever the adapter needs to remember for this source, e.g. recently visited mods.
       adapterState: {},
     };
-    pageStates.set(pageId, state);
+    sourceStates.set(key, state);
   }
   return state;
 }
@@ -350,7 +360,7 @@ async function installRef(adapter, api, gameSpec, config, ref, options = {}) {
   const archive = archiveNameFor(adapter, resolved, key);
   const previousModIds = keyModIds(adapter, api, gameId, config, key);
   const NOTIF_ID = `${pageId}-installing-${key}`;
-  const { selfStartedUrls } = pageState(pageId);
+  const { selfStartedUrls } = sourceState(adapter, gameSpec);
   selfStartedUrls.add(resolved.downloadUrl);
   api.sendNotification({
     id: NOTIF_ID,
@@ -487,8 +497,7 @@ function claimDownload(adapter, api, gameSpec, config, dlId, dlState) {
   if (!games.includes(gameSpec.game.id)) {
     return;
   }
-  const pageId = browserPageId(adapter, gameSpec, config);
-  const pstate = pageState(pageId);
+  const pstate = sourceState(adapter, gameSpec);
   if ((download.urls || []).some(url => pstate.selfStartedUrls.has(url))) {
     return; //started by installRef, which drives its own install
   }
@@ -546,7 +555,7 @@ async function recoverFailedDownload(adapter, api, gameSpec, config, dlId, downl
   if ((partial === null) || (partial === undefined)) {
     return; //a failed download from somewhere else entirely
   }
-  const pstate = pageState(browserPageId(adapter, gameSpec, config));
+  const pstate = sourceState(adapter, gameSpec);
   if (pstate.recovering.has(dlId)) {
     return;
   }
@@ -576,7 +585,7 @@ async function adoptMod(adapter, api, gameSpec, config, gameId, archiveId, modId
   if (gameId !== gameSpec.game.id) {
     return;
   }
-  const pstate = pageState(browserPageId(adapter, gameSpec, config));
+  const pstate = sourceState(adapter, gameSpec);
   const claim = pstate.claimedDownloads.get(archiveId);
   if (claim === undefined) {
     return;
@@ -699,7 +708,7 @@ function makeBrowsePage(adapter, gameSpec, config) {
   return function BrowsePage(props) {
     const { Button } = require('react-bootstrap');
     const api = props.api;
-    const pstate = pageState(PAGE_ID);
+    const pstate = sourceState(adapter, gameSpec);
     const [confirmed, setConfirmed] = React.useState(pstate.confirmed || (config.confirmExternal === false));
     const [loading, setLoading] = React.useState(false);
     const [nav, setNav] = React.useState({ entries: [HOME_URL], idx: 0 });
@@ -920,8 +929,27 @@ function registerBrowser(adapter, context, gameSpec, config) {
     });
 }
 
+// onceBrowser installs its listeners per source (game id + adapter id), not per page:
+// claimDownload, adoptMod, the update check and the failed-download recovery all key their
+// work by source. A game that registers two browse pages on one source calls onceBrowser
+// twice, and without this guard every handler would fire twice for a single download.
+const wiredSources = new Map();
+
 //Install the event handlers the page relies on. Called from context.once().
 function onceBrowser(adapter, api, gameSpec, config) {
+  const sourceKey = sourceStateKey(adapter, gameSpec);
+  const wiredConfig = wiredSources.get(sourceKey);
+  if (wiredConfig !== undefined) {
+    // A sibling page on a source already wired. Listeners route the install path through
+    // config.requirements, and only the first config registered is consulted - so a sibling
+    // that carries a different requirements table is a latent bug worth a log line.
+    if (JSON.stringify(wiredConfig.requirements || []) !== JSON.stringify(config.requirements || [])) {
+      log('warn', `${adapter.label}: a second browse page for ${gameSpec.game.id} declares a `
+        + 'different requirements table; install routing follows the page registered first');
+    }
+    return;
+  }
+  wiredSources.set(sourceKey, config);
   api.events.on('did-finish-download', (dlId, dlState) => {
     try {
       claimDownload(adapter, api, gameSpec, config, dlId, dlState);
@@ -979,7 +1007,7 @@ function createBrowserModule(adapter) {
       promptDependencies(adapter, api, gameSpec, config, ref, resolved),
     // exposed for adapters and their tests
     pageId: (gameSpec, config) => browserPageId(adapter, gameSpec, config),
-    pageState: (gameSpec, config) => pageState(browserPageId(adapter, gameSpec, config)),
+    pageState: (gameSpec) => sourceState(adapter, gameSpec),
     isHostAllowed: (config, url) => isHostAllowed(adapter, config, url),
     adHidingCss: (config) => adHidingCss(adapter, config),
     isBlockedHost: (config, url) => isBlockedHost(adapter, config, url),

@@ -4,6 +4,7 @@ This extension adds Anno 117: Pax Romana modding support to Vortex Mod Manager.
 [list]
 [*]Steam[/*]
 [*]Epic[/*]
+[*]Ubisoft Connect[/*]
 [*]Other versions may need to select the installation location manually.[/*]
 [/list]
 [b]🛠️ Mod Installation Notes:[/b]

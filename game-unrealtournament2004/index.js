@@ -2,8 +2,8 @@
 Name: Unreal Tournament 2004 Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.2
-Date: 2026-08-11
+Version: 0.1.3
+Date: 2026-09-03
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -14,6 +14,7 @@ const template = require('string-template');
 //const fsPromises = require('fs/promises'); //.rm() for recursive folder deletion
 //const fsExtra = require('fs-extra');
 const winapi = require('winapi-bindings');
+const { registerModDbBrowser, onceModDbBrowser } = require('./moddb_browser');
 
 /*const USER_HOME = util.getVortexPath("home");
 const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow'); //*/
@@ -49,6 +50,7 @@ const allowSymlinks = true; //true if game can use symlinks without issues. Typi
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
 const debug = false; //toggle for debug mode
+const moddbBrowser = true; //register the "Browse ModDB" page (moddb.com)
 
 //info for modtypes, installers, tools, and actions
 const ANIMATIONS_FOLDER = 'Animations';
@@ -119,6 +121,15 @@ const PARAMETERS = [PARAMETERS_STRING];
 
 const IGNORE_CONFLICTS = [path.join('**', 'Preview - *'), path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const IGNORE_DEPLOY = [path.join('**', 'Preview - *'), path.join('**', 'changelog*'), path.join('**', 'readme*')];
+
+//Embedded ModDB browser page - the user browses the live moddb.com section for this game and
+//installs from it. Vortex's download manager cannot fetch from this host, so the page fetches
+//the file itself. No requirements: nothing on this game's ModDB page is a managed mod loader.
+const MODDB_BROWSER_CONFIG = {
+  moddbPath: 'games/unreal-tournament-2004',
+  pageId: `${GAME_ID}-moddb-browse`,
+  pageTitle: 'Browse ModDB',
+};
 
 //filled in from data above
 const spec = {
@@ -657,6 +668,11 @@ function applyGame(context, gameSpec) {
   };
   context.registerGame(game);
 
+  //register the embedded moddb.com browser page
+  if (moddbBrowser) {
+    registerModDbBrowser(context, gameSpec, MODDB_BROWSER_CONFIG);
+  }
+
   //register mod types
   (gameSpec.modTypes || []).forEach((type, idx) => {
     context.registerModType(type.id, modTypePriority(type.priority) + idx, (gameId) => {
@@ -776,6 +792,9 @@ function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     const api = context.api;
+    if (moddbBrowser) { //installs downloads started from the browse page, and update-checks the mods installed through it
+      onceModDbBrowser(api, spec, MODDB_BROWSER_CONFIG);
+    }
   });
   return true;
 }

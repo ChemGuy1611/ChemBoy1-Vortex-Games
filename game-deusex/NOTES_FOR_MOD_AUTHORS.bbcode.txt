@@ -43,7 +43,7 @@ Recognised when the archive contains a file or folder named "deusex.exe".
 
 Binaries:
 
-Recognised when the archive contains a file or folder named one of: "engine.dll", "deusexechelonrenderer.dll", "d3d9.dll" or "rtx.conf".
+Recognised when the archive contains a file or folder named one of: "engine.dll", "deusexechelonrenderer.dll", "d3d9.dll" or "rtx.conf" and a file with one of these extensions: ".exe", ".dll", ".asi" or ".addon64".
 
   Installs to: "System"
 

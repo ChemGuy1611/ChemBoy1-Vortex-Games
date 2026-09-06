@@ -212,3 +212,5 @@ Runtime siblings: `VORTEX_PROFILES.md`, `VORTEX_DEPLOYMENT.md`, `VORTEX_GAME_LIF
 `LOAD_ORDER_ITEM_RENDERER.md`, `GAMEBRYO_PLUGIN_SYSTEM.md`. Diagram of the FBLO lifecycle:
 `VORTEX_FLOWCHARTS.md` §3. On-disk shape of `persistent###loadOrder` (array vs per-entry
 children): `VORTEX_DATABASES.md`.
+A worked file-backed example: `LOBOTOMY_BASEMOD.md` (`BaseModList_v2.xml` - order plus an enabled
+flag in one game-side file, with unlisted folders loading last).

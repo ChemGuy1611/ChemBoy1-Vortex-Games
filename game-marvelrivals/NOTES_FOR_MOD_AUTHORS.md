@@ -11,9 +11,8 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Root / Game Folder Mods | a top-level folder such as `Marvel` | the game folder itself (no subfolder) |
 | Pak Mods | a `.pak` file | `MarvelGame\Marvel\Content\Paks\~mods` |
 | Signature Bypass | `dsound.dll` and `marvelrivalsutocsignaturebypass.asi` | `MarvelGame\Marvel\Binaries\Win64` |
-| Config File Mods | a config file such as `engine.ini` or `game.ini` | `LOCALAPPDATA\Marvel\Saved\Config\Windows` |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## Root / Game Folder Mods
 
@@ -71,21 +70,6 @@ Installs to: `MarvelGame\Marvel\Binaries\Win64`
 **Common mistakes:**
 
 - Shipping only one of the two files - the archive will fall through to another installer.
-
-## Config File Mods
-
-Config tweaks are deployed to the game's config folder in your user profile, not into the game installation.
-
-**Requirements:**
-
-- Recognised by any of these filenames in the archive: `engine.ini`, `game.ini`, `gameusersettings.ini`, `input.ini`, `scalability.ini`, `hardware.ini`, `deviceprofiles.ini`, `compat.ini`, `runtimeoptions.ini`, `gameplaytags.ini`, `enhancedinput.ini` or `consolevariables.ini`.
-- Installed to `LOCALAPPDATA\Marvel\Saved\Config\Windows`.
-
-Installs to: `LOCALAPPDATA\Marvel\Saved\Config\Windows`
-
-**Common mistakes:**
-
-- Shipping a config file with one of these names inside an unrelated mod - the whole archive is then treated as a config mod.
 
 ## Rules That Apply To Every Mod Type
 

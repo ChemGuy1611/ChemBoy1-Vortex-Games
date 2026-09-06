@@ -43,6 +43,7 @@
 | `collectionsLoadOrder` | `true` | include UE4SS and LogicMods load orders in collections (ANDed with the toggles above) |
 | `autoDeployMerge` | `false` | automatically run the merge tool on deploy (takes a long time and requires user input) |
 | `debug` | `false` | enables verbose debug logging |
+| `enableNewPak` | `false` |  |
 
 ## Mod Types
 
@@ -77,7 +78,6 @@ Installers run in priority order (lower number = tested first). The first instal
 | `stalker2heartofchornobyl-ue4sscombo` | 29 |
 | `stalker2heartofchornobyl-logicmods` | 31 |
 | `stalker2heartofchornobyl-herbatamod` | 33 |
-| `stalker2heartofchornobyl-newpak` | 34 |
 | `stalker2heartofchornobyl-ue4ss` | 37 |
 | `stalker2heartofchornobyl-scripts` | 39 |
 | `stalker2heartofchornobyl-ue4ssdll` | 41 |

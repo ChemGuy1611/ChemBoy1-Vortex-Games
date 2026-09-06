@@ -21,6 +21,7 @@
 
 - **Steam** — `220240`
 - **Epic Games Store** — `Hellebore`
+- **Ubisoft Connect** — `46`
 
 ## Feature Flags
 

@@ -4,6 +4,14 @@
 
 - None Planned
 
+## [0.8.3] - 2026-09-04
+
+- Added: Right-click menu on the load order: enable or disable an entry, lock or unlock it, move it to the top or bottom, and open its staging folder or mod page. Works on one entry or several at once.
+- Added: Lock button on each load order row, plus ctrl/shift multi-select.
+- Added: Load order filter by status (enabled, disabled, locked, unlocked, unmanaged) with a matched/total count.
+- Added: Load order entries for mods Vortex does not manage are now marked "Not managed by Vortex".
+- Fixed: A locked load order entry no longer unlocks itself after deploying or reopening the load order page.
+
 ## [0.8.2] - 2026-07-29
 
 - Fixed: The load order could disappear after deploying while a mod update was in progress, and only came back after deploying a second time.

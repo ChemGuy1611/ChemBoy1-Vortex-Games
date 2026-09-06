@@ -6,7 +6,9 @@ Read-only checks run by default. Use --test-upload to also verify the
 multipart upload session shape (creates a dangling 1-byte upload session
 on Nexus/S3 that expires automatically; does not publish any files).
 Use --check-spec to diff the live OpenAPI document against the endpoint
-catalog recorded in resources/NEXUS_MODS_API.md (no API key needed).
+catalog recorded in resources/NEXUS_MODS_API.md (no API key needed). A path
+listed in SPEC_RETIRING_PATHS is tolerated as an expected removal once its
+scheduled date has passed, instead of failing the check.
 
 Usage:
     python check_nexus_api.py
@@ -26,6 +28,7 @@ import ssl
 import sys
 import urllib.error
 import urllib.request
+from datetime import date
 
 from vortex_utils import get_api_key as vu_get_api_key
 from vortex_utils import NEXUS_USER_AGENT
@@ -140,6 +143,7 @@ SPEC_KNOWN_PATHS = {
     "/mod-file-versions/move",
     "/mod-file-versions/move-to-new-mod-file",
     "/mod-file-versions/{id}",
+    "/mod-file-versions/{id}/download-repacked",
     "/mod-file-versions/{id}/dependencies",
     "/mod-file-versions/{id}/dependencies/dlc",
     "/mod-file-versions/{id}/dependencies/ranges",
@@ -175,6 +179,19 @@ SPEC_KNOWN_DEPRECATIONS = {
     "/mod-file-update-groups/{group_id}/versions",
     "/mod-file-versions/dependencies/materialized/batch",
 }
+
+# Endpoints scheduled for removal on/after a known date. Once the date has
+# passed, the path's disappearance from the live spec is expected (INFO, not
+# FAIL) -- update SPEC_KNOWN_PATHS to drop it once confirmed gone instead of
+# leaving the check permanently red.
+SPEC_RETIRING_PATHS = {
+    "/mod-file-update-groups/{group_id}/versions": "2026-09-09",
+}
+
+# Recognized stability-tier badge names. Any other x-badges entry (e.g. a
+# scheduled-change warning like "md5 required from 2026-12-01") is not a
+# tier and must not be counted as one.
+_TIER_BADGE_NAMES = {"Beta", "Experimental", "Deprecated"}
 
 
 # == HTTP helpers ==============================================================
@@ -576,10 +593,14 @@ _HTTP_METHODS = ("get", "post", "put", "patch", "delete")
 
 
 def _operation_tier(op):
-    """Return the stability badge name for an operation ('Stable' when unbadged)."""
+    """Return the stability tier for an operation ('Stable' when unbadged).
+
+    x-badges can also carry a non-tier scheduled-change warning (e.g. "md5
+    required from 2026-12-01") -- only Beta/Experimental/Deprecated count as
+    an actual tier; anything else falls through to Stable."""
     for badge in (op.get("x-badges") or []):
         name = badge.get("name")
-        if name:
+        if name in _TIER_BADGE_NAMES:
             return name
     return "Stable"
 
@@ -629,14 +650,31 @@ def run_spec_check(results):
     added = sorted(live_paths - SPEC_KNOWN_PATHS)
     removed = sorted(SPEC_KNOWN_PATHS - live_paths)
 
-    if not added and not removed:
-        ok(f"Path count {len(live_paths)} - catalog matches live spec exactly")
+    # A path in SPEC_RETIRING_PATHS whose date has passed is an EXPECTED
+    # removal, not drift -- surface it as INFO so the check stays green and
+    # tells the caller to retire the SPEC_KNOWN_PATHS entry.
+    today = date.today().isoformat()
+    expected_removed = [
+        p for p in removed
+        if p in SPEC_RETIRING_PATHS and today >= SPEC_RETIRING_PATHS[p]
+    ]
+    unexpected_removed = [p for p in removed if p not in expected_removed]
+
+    if not added and not unexpected_removed:
+        ok(f"Path count {len(live_paths)} - catalog matches live spec"
+           + (" exactly" if not expected_removed else " (expected retirements pending cleanup)"))
     else:
         for p in added:
             fail(f"NEW path not in docs: {p} - add it to resources/NEXUS_MODS_API.md")
-        for p in removed:
+        for p in unexpected_removed:
             fail(f"Documented path GONE from spec: {p} - update resources/NEXUS_MODS_API.md")
         print(f"  {INFO} live spec has {len(live_paths)} paths, docs record {len(SPEC_KNOWN_PATHS)}")
+    for p in expected_removed:
+        print(f"  {INFO} {p} confirmed retired (scheduled {SPEC_RETIRING_PATHS[p]}) - "
+              "drop it from SPEC_KNOWN_PATHS and the docs' active catalog")
+    for p, retire_date in sorted(SPEC_RETIRING_PATHS.items()):
+        if p in live_paths and today < retire_date:
+            print(f"  {INFO} {p} still live, scheduled to retire {retire_date}")
 
     # Upload-flow endpoints -- Experimental tier, so they can vanish without notice.
     for path, method in sorted(SPEC_PIPELINE_PATHS.items()):
