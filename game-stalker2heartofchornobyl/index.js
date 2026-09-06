@@ -2,8 +2,8 @@
 Name: S.T.A.L.K.E.R. 2: Heart of Chornobyl Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 2.1.0
-Date: 2026-09-13
+Version: 2.1.1
+Date: 2026-09-14
 //////////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -1807,6 +1807,31 @@ function installNewPakMod(files) {
   return Promise.resolve({ instructions });
 }
 
+//Mirrors the registration-priority ladder (see the registerInstaller calls in main()) for
+//just the installers that sit ABOVE the pak installer's priority (UE5_PAK_PRIORITY = 35):
+//Merger (25), UE4SS Script-LogicMod Combo (29), LogicMods/Blueprint (31), Herbatamod (33),
+//and 2.0 Pak (34, only registered when enableNewPak is on). An installer below priority 35
+//never gets a turn once a .pak/.ucas/.utoc file is present, since testPak's own check is
+//just "has a pak-type file" with no exclusivity - so those lower-priority markers (Root,
+//Config, Save, UE4SS, Scripts, DLL) can't have "actually" claimed the archive and are not
+//checked here. Used both by retagFomodPakMod() below (to work out, after the fact, what a
+//FOMOD-installed mod would have been classified as had FOMOD not intercepted it first) and
+//is safe to reuse from testPak/testNewPakMod later if they're ever refactored to share it.
+function beatsPakInstaller(files) {
+  const base = files.map((file) => path.basename(file));
+  const baseLower = base.map((b) => b.toLowerCase());
+  if (baseLower.includes(MERGER_FILE)) return true; //Merger (25)
+  const hasScriptsExt = files.some((file) => path.extname(file).toLowerCase() === SCRIPTS_EXT);
+  const hasBinariesFolder = baseLower.includes("binaries");
+  const hasLogicmodsExt = files.some((file) => path.extname(file).toLowerCase() === LOGICMODS_EXT);
+  const hasRootFolder = baseLower.includes(ROOT_FOLDER.toLowerCase());
+  if ((hasScriptsExt || hasBinariesFolder) && hasLogicmodsExt && hasRootFolder) return true; //UE4SS Combo (29)
+  if (baseLower.includes(LOGICMODS_FOLDER.toLowerCase())) return true; //LogicMods (31)
+  if (base.includes(HERBATAMOD_FOLDER)) return true; //Herbatamod (33)
+  if (enableNewPak && base.some((b) => NEWPAK_FOLDERS.includes(b))) return true; //2.0 Pak (34)
+  return false;
+}
+
 //Test for pak mods
 function testPak(files, gameId) {
   const supportedGame = gameId === spec.game.id;
@@ -3420,6 +3445,14 @@ function main(context) {
           (id) => modId.includes("-" + id + "-") || modId.includes(" " + id + " "),
         );
     });
+    //Retag a FOMOD-installed plain pak mod as the sortable pak modtype so it shows up on
+    //the Load Order page - see retagFomodPakMod() for why this is needed. Covers both a
+    //first install and a mod update (did-install-mod fires for both, see VORTEX_MOD_INSTALL.md).
+    api.events.on("did-install-mod", (gameId, archiveId, modId) => {
+      retagFomodPakMod(api, gameId, modId).catch((err) =>
+        log("warn", `[${GAME_ID}] retagFomodPakMod failed for "${modId}"`, err),
+      );
+    });
   });
   return true;
 }
@@ -3443,6 +3476,65 @@ const requestDeployment = (api, spec) => {
     ],
   });
 };
+
+//FOMOD's built-in installer (and the generic basicInstaller fallback) never emit a
+//`setmodtype` instruction, so a mod they hand off keeps modtype '' forever - and
+//deserializeLoadOrder() above only ever pulls in enabled mods whose type is exactly
+//UE5_SORTABLE_ID. That's the entire reason a FOMOD-packaged pak mod (e.g. one built with
+//a checkbox wizard picking between pak variants) never shows up on the Load Order page:
+//it was never tagged as a sortable pak mod in the first place. did-install-mod fires after
+//Vortex's own processSetModType step has already run, so mod.type here is final for this
+//install - retag it here if it looks like a plain pak mod that just happened to go through
+//FOMOD instead of this extension's own testPak/installPak.
+async function retagFomodPakMod(api, gameId, modId) {
+  if (gameId !== GAME_ID || !PAKMOD_LOADORDER) return;
+  const state = api.getState();
+  //Same collection-install guard deserializeLoadOrder relies on - nothing about load order
+  //state is trustworthy mid-collection-install.
+  const installingDependencies = util.getSafe(
+    state,
+    ["session", "base", "activity", "installing_dependencies"],
+    [],
+  );
+  if (
+    Array.isArray(installingDependencies)
+      ? installingDependencies.length > 0
+      : !!installingDependencies
+  )
+    return;
+  const mod = util.getSafe(state, ["persistent", "mods", GAME_ID, modId], undefined);
+  //Non-empty type means one of this extension's own installers already classified it
+  //correctly (or a previous run of this same handler already fixed it) - strict no-op for
+  //every mod that didn't go through FOMOD/basicInstaller, so normal installs can't regress.
+  if (mod === undefined || !!mod.type) return;
+  const stagingFolder = getModStagingFolder(api, modId);
+  if (!stagingFolder) return;
+  const files = await getAllFiles(stagingFolder);
+  const hasPak = files.some((file) =>
+    UNREALDATA.fileExt.includes(path.extname(file).toLowerCase()),
+  );
+  if (!hasPak || beatsPakInstaller(files)) return;
+  api.store.dispatch(actions.setModType(GAME_ID, modId, UE5_SORTABLE_ID));
+  if (debug)
+    log(
+      "debug",
+      `[${GAME_ID}] retagged FOMOD-installed mod "${modId}" as ${UE5_SORTABLE_ID} so it shows up on the Load Order page`,
+    );
+  //The core file_based_loadorder extension already deserialized before this handler ran
+  //(it registers first and did-install-mod listeners run concurrently), so it read the
+  //mod's old (empty) type. Re-read it ourselves now that the type is fixed and push the
+  //result into state - same pattern didDeploy() above uses after its own update guard clears.
+  try {
+    const refreshedLO = await deserializeLoadOrder({ api });
+    const profileId = selectors.lastActiveProfileForGame(state, GAME_ID);
+    if (profileId) {
+      api.store.dispatch(actions.setFBLoadOrder(profileId, refreshedLO));
+    }
+  } catch (err) {
+    log("warn", `[${GAME_ID}] load order refresh after retagging "${modId}" failed`, err);
+  }
+  requestDeployment(api, spec);
+}
 
 async function didDeploy(api, profileId) {
   //run on mod deploy
