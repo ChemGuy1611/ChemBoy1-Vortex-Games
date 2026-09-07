@@ -6,7 +6,7 @@ distinct mechanisms — pick the right one:
 
 - **A. `context.optional.registerCollectionFeature(...)`** — a named feature
   layered onto the collection manifest, provided by the collections extension as
-  a *soft* API. This is what file-based load order (FBLO) uses internally, and
+  a _soft_ API. This is what file-based load order (FBLO) uses internally, and
   what custom sidecar load orders (UE4SS, LogicMods) use.
 - **C. `context.registerGameSpecificCollectionsData(...)`** — the older,
   wholesale per-game collection data hook, a core context method (used by
@@ -65,11 +65,11 @@ context.optional.registerCollectionFeature(
 
 ```ts
 interface ICollection {
-  info: ICollectionInfo;
-  mods: ICollectionMod[];
-  modRules: ICollectionModRule[];
-  loadOrder: LoadOrder;        // FBLO's own key
-  // ...plus any feature keys merged in by generate()
+    info: ICollectionInfo;
+    mods: ICollectionMod[];
+    modRules: ICollectionModRule[];
+    loadOrder: LoadOrder; // FBLO's own key
+    // ...plus any feature keys merged in by generate()
 }
 ```
 
@@ -97,17 +97,22 @@ context.registerGameSpecificCollectionsData(data: ICollectionsGameSupportEntry):
 
 ```ts
 interface ICollectionsGameSupportEntry {
-  gameId: string;
-  generator: (state: IState, gameId: string, stagingPath: string,
-              modIds: string[], mods: { [modId: string]: IMod }) => Promise<any>;
-  parser:    (api: IExtensionApi, gameId: string, collection: ICollection) => Promise<void>;
-  interface: (props: IGameSpecificInterfaceProps) => JSX.Element;
+    gameId: string;
+    generator: (
+        state: IState,
+        gameId: string,
+        stagingPath: string,
+        modIds: string[],
+        mods: { [modId: string]: IMod },
+    ) => Promise<any>;
+    parser: (api: IExtensionApi, gameId: string, collection: ICollection) => Promise<void>;
+    interface: (props: IGameSpecificInterfaceProps) => JSX.Element;
 }
 
 interface IGameSpecificInterfaceProps {
-  t: TFunction;
-  collection: IMod;
-  revisionInfo: IRevision;
+    t: TFunction;
+    collection: IMod;
+    revisionInfo: IRevision;
 }
 ```
 
@@ -116,11 +121,11 @@ Note the UI prop shape differs from A's `editComponent`: `interface` gets only
 
 ### A vs C — which to use
 
-| Need | Use |
-| ------ | ----- |
-| A named feature layered on top of FBLO (extra LO, toggles) | A `registerCollectionFeature` (via `context.optional`) |
-| Wholesale game-specific collection data, one hook per game | C `registerGameSpecificCollectionsData` |
-| PAK / file-based load order in collections | nothing — FBLO does it (B); opt out with `noCollectionGeneration` |
+| Need                                                       | Use                                                               |
+| ---------------------------------------------------------- | ----------------------------------------------------------------- |
+| A named feature layered on top of FBLO (extra LO, toggles) | A `registerCollectionFeature` (via `context.optional`)            |
+| Wholesale game-specific collection data, one hook per game | C `registerGameSpecificCollectionsData`                           |
+| PAK / file-based load order in collections                 | nothing — FBLO does it (B); opt out with `noCollectionGeneration` |
 
 ---
 

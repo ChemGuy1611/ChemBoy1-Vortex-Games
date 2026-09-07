@@ -6,10 +6,10 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| Psarc | a file with the `.psarc` extension | `cache_pc\psarc` |
-| Save Game Files | a `.sav` file | `userDocsPathString\Ghost of Tsushima DIRECTOR'S CUT\USERID_FOLDER` |
+| Mod Type        | Archive must contain               | Installs to                                                         |
+| --------------- | ---------------------------------- | ------------------------------------------------------------------- |
+| Psarc           | a file with the `.psarc` extension | `cache_pc\psarc`                                                    |
+| Save Game Files | a `.sav` file                      | `userDocsPathString\Ghost of Tsushima DIRECTOR'S CUT\USERID_FOLDER` |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
@@ -38,4 +38,3 @@ Installs to: `userDocsPathString\Ghost of Tsushima DIRECTOR'S CUT\USERID_FOLDER`
 - Archives that contain a FOMOD installer (a `fomod` folder with `ModuleConfig.xml`) are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

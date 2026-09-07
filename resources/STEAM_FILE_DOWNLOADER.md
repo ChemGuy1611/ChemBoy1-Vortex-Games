@@ -8,16 +8,16 @@ verification and Workshop-download service that game extensions consume through
 
 ## 1. What it is
 
-| Property | Value |
-| --- | --- |
-| Nexus page | [nexusmods.com/site/mods/409](https://www.nexusmods.com/site/mods/409) |
-| Extension name (for `requireExtension`) | `Vortex Steam File Downloader` |
-| Internal package name | `steamkit` |
-| Author | Nagev (IDCs) |
-| Current version | 0.2.2, released 2023-03-23 — unchanged since |
-| JS side | [Nexus-Mods/extension-steamkit](https://github.com/Nexus-Mods/extension-steamkit) |
-| Native side | [IDCs/DepotDownloader](https://github.com/IDCs/DepotDownloader) — a fork of SteamRE/DepotDownloader |
-| Install location | `<Vortex plugins dir>\Vortex Extension Update - Vortex Steam File Downloader v0.2.2\` |
+| Property                                | Value                                                                                               |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Nexus page                              | [nexusmods.com/site/mods/409](https://www.nexusmods.com/site/mods/409)                              |
+| Extension name (for `requireExtension`) | `Vortex Steam File Downloader`                                                                      |
+| Internal package name                   | `steamkit`                                                                                          |
+| Author                                  | Nagev (IDCs)                                                                                        |
+| Current version                         | 0.2.2, released 2023-03-23 — unchanged since                                                        |
+| JS side                                 | [Nexus-Mods/extension-steamkit](https://github.com/Nexus-Mods/extension-steamkit)                   |
+| Native side                             | [IDCs/DepotDownloader](https://github.com/IDCs/DepotDownloader) — a fork of SteamRE/DepotDownloader |
+| Install location                        | `<Vortex plugins dir>\Vortex Extension Update - Vortex Steam File Downloader v0.2.2\`               |
 
 It is **not bundled** with Vortex. The user must install it from the Extensions page (or from the
 Nexus site page) before any extension that depends on it will work.
@@ -59,7 +59,7 @@ with `0x80131700`.
 Transport is a Windows named pipe by default, with a fallback to a `localhost` TCP socket if the
 pipe fails. Messages are JSON delimited by `￿`.
 
-The Steam session lives in **static** C# state and is deliberately *not* shut down after an app
+The Steam session lives in **static** C# state and is deliberately _not_ shut down after an app
 verification run, so credentials survive for the rest of the Vortex session and a second verify does
 not re-prompt. Restarting Vortex re-prompts. If the session sits idle too long, the C# side calls
 back into the `timedOut` UI delegate, which offers a "Try Again" button that re-emits
@@ -70,7 +70,7 @@ back into the `timedOut` UI delegate, which offers a "Try Again" button that re-
 ## 3. The developer API
 
 ```js
-context.requireExtension('Vortex Steam File Downloader');
+context.requireExtension("Vortex Steam File Downloader");
 
 api.ext.steamkitVerifyFileIntegrity(parameters, gameId, callback);
 ```
@@ -82,9 +82,13 @@ function **raw** on `api.ext` (`ExtensionManager.ts`: `this.mApi.ext[key] = func
 promisification layer. The steamkit registration is:
 
 ```ts
-context.registerAPI('steamkitVerifyFileIntegrity',
-  (parameters, gameId, callback) => { verifyFilesWrap(parameters, gameId, callback); },
-  { minArguments: 2 });
+context.registerAPI(
+    "steamkitVerifyFileIntegrity",
+    (parameters, gameId, callback) => {
+        verifyFilesWrap(parameters, gameId, callback);
+    },
+    { minArguments: 2 },
+);
 ```
 
 The registered arrow function does not return the inner promise, so the call **returns `undefined`**.
@@ -93,18 +97,20 @@ Consequently:
 ```js
 // WRONG - resolves immediately, never throws, and the catch block is dead code.
 try {
-  await api.ext.steamkitVerifyFileIntegrity(parameters, GAME_ID);
-  log('info', 'verification complete');   // fires while verification is still starting up
+    await api.ext.steamkitVerifyFileIntegrity(parameters, GAME_ID);
+    log("info", "verification complete"); // fires while verification is still starting up
 } catch (err) {
-  // unreachable
+    // unreachable
 }
 ```
 
 ```js
 // CORRECT - wrap the third-argument callback.
 await new Promise((resolve, reject) =>
-  api.ext.steamkitVerifyFileIntegrity(parameters, GAME_ID,
-    (err) => (err ? reject(err) : resolve())));
+    api.ext.steamkitVerifyFileIntegrity(parameters, GAME_ID, (err) =>
+        err ? reject(err) : resolve(),
+    ),
+);
 ```
 
 The callback fires with `null` on success, or with an `Error` for the three failure paths the JS
@@ -120,47 +126,47 @@ it enforces nothing.
 
 ```ts
 export interface ISteamKitParameters {
-  Username?: string;
-  Password?: string;
-  RememberPassword?: boolean;
-  ManifestOnly?: boolean;
-  CellId?: number;
+    Username?: string;
+    Password?: string;
+    RememberPassword?: boolean;
+    ManifestOnly?: boolean;
+    CellId?: number;
 
-  // Files need to be separated by /r or /n
-  FileList?: string;
-  InstallDirectory?: string;
-  VerifyAll?: boolean;
-  MaxServers?: number;
-  MaxDownloads?: number;
-  LoginId?: number;
+    // Files need to be separated by /r or /n
+    FileList?: string;
+    InstallDirectory?: string;
+    VerifyAll?: boolean;
+    MaxServers?: number;
+    MaxDownloads?: number;
+    LoginId?: number;
 
-  // Steam app id
-  AppId?: number;
+    // Steam app id
+    AppId?: number;
 
-  PubFile?: string;
-  UgcId?: string;
-  Branch?: string;
-  BetaBranchPassword?: string;
-  DepotIdList?: number[];
-  ManifestIdList?: number[];
+    PubFile?: string;
+    UgcId?: string;
+    Branch?: string;
+    BetaBranchPassword?: string;
+    DepotIdList?: number[];
+    ManifestIdList?: number[];
 }
 ```
 
-| Field | Default | What it actually does |
-| --- | --- | --- |
-| `AppId` | — | **Required.** Steam app id as a number. Missing/unparseable aborts with "SteamAppId not specified". |
-| `InstallDirectory` | — | **Required in practice.** The game's discovery path. Used as the download target *and* as the string stripped off `FileList` entries to derive manifest-relative names. |
-| `FileList` | walked from disk | Newline- or CR-separated list of **absolute paths of local files to hash**. See §4 — this is not a download filter in the way the upstream project's `-filelist` is. |
-| `VerifyAll` | `false` | Must be `true` whenever `FileList` is supplied. See §4.3. |
-| `ManifestOnly` | `false` | Writes `manifest_<depotId>_<manifestId>.txt` into `InstallDirectory`. It does **not** suppress downloading in this fork. Leaving it `false` avoids littering the game folder. |
-| `DepotIdList` | installed depots | Omit it and the extension reads `AppState.InstalledDepots` out of the game's Steam `appmanifest`, which is what you want in almost all cases. |
-| `ManifestIdList` | none | If supplied, must have exactly the same length as `DepotIdList`. |
-| `Branch` | `public` | Steam branch. `BetaBranchPassword` goes with it. |
-| `Username` / `Password` | prompted | Leave unset. The C# side prompts through the UI delegate (login dialog, Steam Guard, 2FA). |
-| `RememberPassword` | `false` | Declared but effectively unused; Vortex does not persist Steam credentials. |
-| `MaxServers` / `MaxDownloads` | 20 / 8 | CDN parallelism. `MaxServers` is raised to at least `MaxDownloads`. |
-| `CellId`, `LoginId` | 0 / `0x534B32` | Leave unset. |
-| `PubFile` / `UgcId` | — | Workshop download mode, not file verification. Setting either takes a completely different code path. |
+| Field                         | Default          | What it actually does                                                                                                                                                         |
+| ----------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AppId`                       | —                | **Required.** Steam app id as a number. Missing/unparseable aborts with "SteamAppId not specified".                                                                           |
+| `InstallDirectory`            | —                | **Required in practice.** The game's discovery path. Used as the download target _and_ as the string stripped off `FileList` entries to derive manifest-relative names.       |
+| `FileList`                    | walked from disk | Newline- or CR-separated list of **absolute paths of local files to hash**. See §4 — this is not a download filter in the way the upstream project's `-filelist` is.          |
+| `VerifyAll`                   | `false`          | Must be `true` whenever `FileList` is supplied. See §4.3.                                                                                                                     |
+| `ManifestOnly`                | `false`          | Writes `manifest_<depotId>_<manifestId>.txt` into `InstallDirectory`. It does **not** suppress downloading in this fork. Leaving it `false` avoids littering the game folder. |
+| `DepotIdList`                 | installed depots | Omit it and the extension reads `AppState.InstalledDepots` out of the game's Steam `appmanifest`, which is what you want in almost all cases.                                 |
+| `ManifestIdList`              | none             | If supplied, must have exactly the same length as `DepotIdList`.                                                                                                              |
+| `Branch`                      | `public`         | Steam branch. `BetaBranchPassword` goes with it.                                                                                                                              |
+| `Username` / `Password`       | prompted         | Leave unset. The C# side prompts through the UI delegate (login dialog, Steam Guard, 2FA).                                                                                    |
+| `RememberPassword`            | `false`          | Declared but effectively unused; Vortex does not persist Steam credentials.                                                                                                   |
+| `MaxServers` / `MaxDownloads` | 20 / 8           | CDN parallelism. `MaxServers` is raised to at least `MaxDownloads`.                                                                                                           |
+| `CellId`, `LoginId`           | 0 / `0x534B32`   | Leave unset.                                                                                                                                                                  |
+| `PubFile` / `UgcId`           | —                | Workshop download mode, not file verification. Setting either takes a completely different code path.                                                                         |
 
 ---
 
@@ -269,7 +275,7 @@ return filesData.FindAll((file) =>
 So a targeted `FileList` gives you: **hash checking for the listed files, plus missing-file detection
 for the entire depot**. That is the useful shape for an extension that wants to restore one or two
 specific files it deleted — list a small file that definitely still exists, and let the
-missing-file branch catch the deleted ones. Files that exist but are tampered and are *not* listed
+missing-file branch catch the deleted ones. Files that exist but are tampered and are _not_ listed
 are silently passed over.
 
 Manifest entries with no file extension are skipped by the check
@@ -309,12 +315,14 @@ The toolbar button's visibility is driven off the game spec:
 
 ```js
 // visible when either of these resolves
-game?.details?.steamAppId      // canonical
-game?.environment?.SteamAppId  // legacy fallback (note the casing difference from the
-                               // parameters block, which reads environment.steamAppId)
+game?.details?.steamAppId; // canonical
+game?.environment?.SteamAppId; // legacy fallback (note the casing difference from the
+// parameters block, which reads environment.steamAppId)
 
 // suppress the button for a game that should not offer Steam verification
-details: { hideSteamKit: true }
+details: {
+    hideSteamKit: true;
+}
 ```
 
 `hideSteamKit` is the only opt-out. There is no opt-in — every registered game carrying
@@ -334,45 +342,51 @@ const STEAMAPP_ID = "2651280";
 const GAME_ID = "mygame";
 
 function applyGame(context, gameSpec) {
-  // Hard dependency: without `optional`, Vortex unloads THIS extension entirely when the
-  // Steam File Downloader is not installed. Pass `true` as the third argument to make it
-  // a soft dependency that only prompts the user.
-  context.requireExtension('Vortex Steam File Downloader', undefined, true);
-  // ...
+    // Hard dependency: without `optional`, Vortex unloads THIS extension entirely when the
+    // Steam File Downloader is not installed. Pass `true` as the third argument to make it
+    // a soft dependency that only prompts the user.
+    context.requireExtension("Vortex Steam File Downloader", undefined, true);
+    // ...
 }
 
 async function verifyGameFiles(api) {
-  const GAME_PATH = getDiscoveryPath(api);
-  const state = api.getState();
+    const GAME_PATH = getDiscoveryPath(api);
+    const state = api.getState();
 
-  // The extension refuses non-Steam copies anyway, but checking first avoids the
-  // "Must be a Steam game" warning on Epic/GOG installs.
-  if (state.settings.gameMode.discovered?.[GAME_ID]?.store !== 'steam') {
-    return api.showErrorNotification('Steam verification unavailable',
-      'This feature only works with the Steam version of the game.', { allowReport: false });
-  }
+    // The extension refuses non-Steam copies anyway, but checking first avoids the
+    // "Must be a Steam game" warning on Epic/GOG installs.
+    if (state.settings.gameMode.discovered?.[GAME_ID]?.store !== "steam") {
+        return api.showErrorNotification(
+            "Steam verification unavailable",
+            "This feature only works with the Steam version of the game.",
+            { allowReport: false },
+        );
+    }
 
-  const parameters = {
-    // absolute path(s), files that exist; anchors the hash check
-    FileList: path.join(GAME_PATH, EXEC),
-    InstallDirectory: GAME_PATH,
-    VerifyAll: true,     // required whenever FileList is set
-    AppId: +STEAMAPP_ID,
-  };
+    const parameters = {
+        // absolute path(s), files that exist; anchors the hash check
+        FileList: path.join(GAME_PATH, EXEC),
+        InstallDirectory: GAME_PATH,
+        VerifyAll: true, // required whenever FileList is set
+        AppId: +STEAMAPP_ID,
+    };
 
-  try {
-    await new Promise((resolve, reject) =>
-      api.ext.steamkitVerifyFileIntegrity(parameters, GAME_ID,
-        (err) => (err ? reject(err) : resolve())));
-  } catch (err) {
-    // the extension has already shown its own notification for this failure
-    log('warn', 'Steam file verification failed', err.message);
-    return;
-  }
+    try {
+        await new Promise((resolve, reject) =>
+            api.ext.steamkitVerifyFileIntegrity(parameters, GAME_ID, (err) =>
+                err ? reject(err) : resolve(),
+            ),
+        );
+    } catch (err) {
+        // the extension has already shown its own notification for this failure
+        log("warn", "Steam file verification failed", err.message);
+        return;
+    }
 
-  // the extension purged and never re-deployed
-  return new Promise((resolve, reject) =>
-    api.events.emit('deploy-mods', (err) => (err ? reject(err) : resolve())));
+    // the extension purged and never re-deployed
+    return new Promise((resolve, reject) =>
+        api.events.emit("deploy-mods", (err) => (err ? reject(err) : resolve())),
+    );
 }
 ```
 
@@ -383,21 +397,21 @@ To restore a file the extension deliberately deleted, delete it **and leave it o
 
 ## 8. Constraints and gotchas
 
-| Issue | Detail |
-| --- | --- |
-| Callback, not promise | `await api.ext.steamkitVerifyFileIntegrity(p, id)` resolves instantly and never rejects. Wrap the third argument. See §3.1. |
-| `requireExtension` is hard by default | Omitting the third `optional` argument means the whole game extension is unloaded with a "dependency" load failure if the user has not installed the Steam File Downloader. |
-| Absolute paths only | A relative `FileList` entry throws `FileNotFoundException` inside the native process. See §4.1. |
-| Never list a deleted file | Same failure. Rely on the missing-file branch instead. |
-| `VerifyAll` must be `true` with `FileList` | Otherwise the download set is empty and nothing is restored. See §4.3. |
-| 5-second walk timeout | Omitting `FileList` on a large install can time out `GetGameFileList`. See §4.2. |
-| Silent native failures | `Exec.VerifyFileIntegrity` wraps the app-download path in `try { ... } catch (Exception ex) { }` and returns an empty result dictionary. An exception thrown while hashing therefore surfaces as a *successful* run that did nothing. |
-| Steam login required every session | Username, password, and Steam Guard / 2FA, entered into Vortex dialogs. Credentials are not stored, but the session is reused until Vortex restarts. |
-| Purge without deploy | The run purges mods and only sets `deploymentNecessary`. Re-deploy yourself. |
-| `ManifestOnly` writes into the game folder | `manifest_<depotId>_<manifestId>.txt` in `InstallDirectory`. Harmless but untidy, and it does not suppress downloads. |
-| Steam-only, and path-matched | The Steam library path must equal the discovery path exactly (after lowercase/separator normalisation). |
-| Windows-focused | `createIPC` hard-codes `DepotDownloaderIPC.exe` and prefers a Windows named pipe. |
-| Frozen upstream | 0.2.2 has been unchanged since March 2023. Neither repo has open issues or a README. Treat the behaviour above as the contract; it is not going to be fixed. |
+| Issue                                      | Detail                                                                                                                                                                                                                                |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Callback, not promise                      | `await api.ext.steamkitVerifyFileIntegrity(p, id)` resolves instantly and never rejects. Wrap the third argument. See §3.1.                                                                                                           |
+| `requireExtension` is hard by default      | Omitting the third `optional` argument means the whole game extension is unloaded with a "dependency" load failure if the user has not installed the Steam File Downloader.                                                           |
+| Absolute paths only                        | A relative `FileList` entry throws `FileNotFoundException` inside the native process. See §4.1.                                                                                                                                       |
+| Never list a deleted file                  | Same failure. Rely on the missing-file branch instead.                                                                                                                                                                                |
+| `VerifyAll` must be `true` with `FileList` | Otherwise the download set is empty and nothing is restored. See §4.3.                                                                                                                                                                |
+| 5-second walk timeout                      | Omitting `FileList` on a large install can time out `GetGameFileList`. See §4.2.                                                                                                                                                      |
+| Silent native failures                     | `Exec.VerifyFileIntegrity` wraps the app-download path in `try { ... } catch (Exception ex) { }` and returns an empty result dictionary. An exception thrown while hashing therefore surfaces as a _successful_ run that did nothing. |
+| Steam login required every session         | Username, password, and Steam Guard / 2FA, entered into Vortex dialogs. Credentials are not stored, but the session is reused until Vortex restarts.                                                                                  |
+| Purge without deploy                       | The run purges mods and only sets `deploymentNecessary`. Re-deploy yourself.                                                                                                                                                          |
+| `ManifestOnly` writes into the game folder | `manifest_<depotId>_<manifestId>.txt` in `InstallDirectory`. Harmless but untidy, and it does not suppress downloads.                                                                                                                 |
+| Steam-only, and path-matched               | The Steam library path must equal the discovery path exactly (after lowercase/separator normalisation).                                                                                                                               |
+| Windows-focused                            | `createIPC` hard-codes `DepotDownloaderIPC.exe` and prefers a Windows named pipe.                                                                                                                                                     |
+| Frozen upstream                            | 0.2.2 has been unchanged since March 2023. Neither repo has open issues or a README. Treat the behaviour above as the contract; it is not going to be fixed.                                                                          |
 
 ---
 

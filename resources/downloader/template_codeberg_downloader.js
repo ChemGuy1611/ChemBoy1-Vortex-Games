@@ -1,17 +1,21 @@
-const { actions, fs, util, selectors, log } = require('vortex-api');
-const path = require('path');
-const GAME_ID = 'placeholder';
-const api = require('vortex-api'); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
+const { actions, fs, util, selectors, log } = require("vortex-api");
+const path = require("path");
+const GAME_ID = "placeholder";
+const api = require("vortex-api"); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 const spec = { game: { id: GAME_ID } }; //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 const context = { api }; //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 
 // CODEBERG REQUIREMENT ///////////////////////////////////////////////////
-const { downloadCodeberg, checkForCodebergUpdate, isCodebergRequirementInstalled } = require('./codeberg_downloader');
+const {
+  downloadCodeberg,
+  checkForCodebergUpdate,
+  isCodebergRequirementInstalled,
+} = require("./codeberg_downloader");
 const XXX_ID = `${GAME_ID}-XXX`; //mod type id for the requirement (register the mod type + installer in index.js as usual)
 const XXX_NAME = "XXX";
-const XXX_REPO = 'author/Repo'; //Codeberg repository - https://codeberg.org/author/Repo
-const XXX_VER = '0.0.0'; //fallback version if the Codeberg API is unreachable
-const XXX_ARCHIVE_PATTERN = new RegExp(`^Repo_(\\d+\\.\\d+(?:\\.\\d+)?)`, 'i'); //capture group 1 is the version
+const XXX_REPO = "author/Repo"; //Codeberg repository - https://codeberg.org/author/Repo
+const XXX_VER = "0.0.0"; //fallback version if the Codeberg API is unreachable
+const XXX_ARCHIVE_PATTERN = new RegExp(`^Repo_(\\d+\\.\\d+(?:\\.\\d+)?)`, "i"); //capture group 1 is the version
 const CODEBERG_REQUIREMENTS = [
   {
     repo: XXX_REPO,
@@ -60,38 +64,46 @@ function downloadXXXNotify(api) {
   const MESSAGE = `Would you like to download ${MOD_NAME}?`;
   api.sendNotification({
     id: NOTIF_ID,
-    type: 'warning',
+    type: "warning",
     message: MESSAGE,
     allowSuppress: true,
     actions: [
       {
-        title: 'Download',
+        title: "Download",
         action: (dismiss) => {
           downloadCodeberg(api, spec, CODEBERG_REQUIREMENTS);
           dismiss();
         },
       },
       {
-        title: 'More',
+        title: "More",
         action: (dismiss) => {
-          api.showDialog('question', MESSAGE, {
-            text: `${MOD_NAME} is XXX.\n`
-                + `Click the button below to download and install ${MOD_NAME}.\n`
-          }, [
+          api.showDialog(
+            "question",
+            MESSAGE,
             {
-              label: `Download ${MOD_NAME}`, action: () => {
-                downloadCodeberg(api, spec, CODEBERG_REQUIREMENTS);
-                dismiss();
-              }
+              text:
+                `${MOD_NAME} is XXX.\n` +
+                `Click the button below to download and install ${MOD_NAME}.\n`,
             },
-            { label: 'Not Now', action: () => dismiss() },
-            {
-              label: 'Never Show Again', action: () => {
-                api.suppressNotification(NOTIF_ID);
-                dismiss();
-              }
-            },
-          ]);
+            [
+              {
+                label: `Download ${MOD_NAME}`,
+                action: () => {
+                  downloadCodeberg(api, spec, CODEBERG_REQUIREMENTS);
+                  dismiss();
+                },
+              },
+              { label: "Not Now", action: () => dismiss() },
+              {
+                label: "Never Show Again",
+                action: () => {
+                  api.suppressNotification(NOTIF_ID);
+                  dismiss();
+                },
+              },
+            ],
+          );
         },
       },
     ],
@@ -99,20 +111,29 @@ function downloadXXXNotify(api) {
 }
 
 // *** In context.once() function ////////////////////
-  api.onAsync('check-mods-version', (gameId, mods, forced) => {
-    if (gameId !== GAME_ID) return;
-    return checkForCodebergUpdate(api, spec, CODEBERG_REQUIREMENTS)
-      .catch(err => log('warn', `Failed to check for ${XXX_NAME} update: ${err}`));
-  }); //*/
+api.onAsync("check-mods-version", (gameId, mods, forced) => {
+  if (gameId !== GAME_ID) return;
+  return checkForCodebergUpdate(api, spec, CODEBERG_REQUIREMENTS).catch((err) =>
+    log("warn", `Failed to check for ${XXX_NAME} update: ${err}`),
+  );
+}); //*/
 
 // *** In applyGame() function ////////////////////
-  //register a toolbar button to (re)download the latest release
-  //REQUIRED for an autoInstall: false requirement - the notification is otherwise the only
-  //install path, and "Never Show Again" would leave the user with no way back
-  context.registerAction('mod-icons', 300, 'open-ext', {}, `Download Latest ${XXX_NAME}`, () => {
+//register a toolbar button to (re)download the latest release
+//REQUIRED for an autoInstall: false requirement - the notification is otherwise the only
+//install path, and "Never Show Again" would leave the user with no way back
+context.registerAction(
+  "mod-icons",
+  300,
+  "open-ext",
+  {},
+  `Download Latest ${XXX_NAME}`,
+  () => {
     downloadCodeberg(context.api, spec, CODEBERG_REQUIREMENTS, false);
-  }, () => {
+  },
+  () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
-  }); //*/
+  },
+); //*/

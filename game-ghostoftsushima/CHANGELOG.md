@@ -8,7 +8,7 @@
 
 - Enhanced psarc mod installer to handle mods with psarc files in multile folders or with variants of the same psarc file name.
 - Added custom launch tool.
-- Added buttons to open Config & Save folders, changelog, and Vortex downloads folder  (folder icon in Mods toolbar).
+- Added buttons to open Config & Save folders, changelog, and Vortex downloads folder (folder icon in Mods toolbar).
 
 ## [0.1.8] - 2025-09-19
 

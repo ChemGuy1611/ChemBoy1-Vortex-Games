@@ -6,11 +6,11 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| Config | a file with one of these extensions: `.local` or `.cfg` | `USER_DOCS\Saved Games\MachineGames\TheGreatCircle\base` |
-| Save Game Files | a `.dat` file | `ROAMINGAPPDATA\GSE Saves\2677660\remote\GAME-SLOT0` |
-| Sounds | a file with one of these extensions: `.pack` or `.bnk` | `base\sound\soundbanks\pc` |
+| Mod Type        | Archive must contain                                    | Installs to                                              |
+| --------------- | ------------------------------------------------------- | -------------------------------------------------------- |
+| Config          | a file with one of these extensions: `.local` or `.cfg` | `USER_DOCS\Saved Games\MachineGames\TheGreatCircle\base` |
+| Save Game Files | a `.dat` file                                           | `ROAMINGAPPDATA\GSE Saves\2677660\remote\GAME-SLOT0`     |
+| Sounds          | a file with one of these extensions: `.pack` or `.bnk`  | `base\sound\soundbanks\pc`                               |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
@@ -45,4 +45,3 @@ Installs to: `base\sound\soundbanks\pc`
 - Archives that contain a FOMOD installer (a `fomod` folder with `ModuleConfig.xml`) are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

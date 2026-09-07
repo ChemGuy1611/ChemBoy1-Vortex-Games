@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 // Shared ModDB browser page for Vortex game extensions.
 //
@@ -81,26 +81,26 @@
 // Public API: registerModDbBrowser, onceModDbBrowser, makeModDbBrowsePage,
 // installModDbFile, resolveModDbFile, isModDbFileInstalled, checkModDbModUpdates.
 
-const path = require('path');
-const { createWriteStream } = require('fs'); //node's fs directly - vortex-api's createWriteStream re-export is deprecated
-const { finished } = require('stream/promises');
-const { fs, log, util } = require('vortex-api');
-const { createBrowserModule } = require('./base_browser');
+const path = require("path");
+const { createWriteStream } = require("fs"); //node's fs directly - vortex-api's createWriteStream re-export is deprecated
+const { finished } = require("stream/promises");
+const { fs, log, util } = require("vortex-api");
+const { createBrowserModule } = require("./base_browser");
 
-const SITE_BASE = 'https://www.moddb.com';
-const RSS_BASE = 'https://rss.moddb.com';
+const SITE_BASE = "https://www.moddb.com";
+const RSS_BASE = "https://rss.moddb.com";
 
 // Mod attributes. Dedicated attributes rather than the standard 'version' one because
 // Vortex's md5 meta lookup can overwrite 'version' with data from an unrelated Nexus match.
 // The file id attribute is deliberately the same one moddb_downloader.js tracks, so a
 // requirement installed by either route is recognised by both. The browse key gets its own
 // name rather than sharing moddbFileId, whose value is a number and a different identity.
-const DEFAULT_PACKAGE_ATTRIBUTE = 'moddbBrowseId';
-const DEFAULT_VERSION_ATTRIBUTE = 'moddbVersion';
-const DEFAULT_FILE_ID_ATTRIBUTE = 'moddbFileId';
+const DEFAULT_PACKAGE_ATTRIBUTE = "moddbBrowseId";
+const DEFAULT_VERSION_ATTRIBUTE = "moddbVersion";
+const DEFAULT_FILE_ID_ATTRIBUTE = "moddbFileId";
 
 // One entry covers www., media. and rss. - the base matches a host or any subdomain of it.
-const DEFAULT_ALLOWED_HOSTS = ['moddb.com'];
+const DEFAULT_ALLOWED_HOSTS = ["moddb.com"];
 
 // Ad slots hidden in the embedded view. ModDB's own server-rendered ad containers are NOT in
 // this list: their markup could not be probed, because the www host returns 403 to every
@@ -108,7 +108,7 @@ const DEFAULT_ALLOWED_HOSTS = ['moddb.com'];
 // the ad networks' own elements, which are safe to hide sight-unseen - none of them can be
 // real page content. Cosmetic only: the requests still happen.
 const DEFAULT_AD_SELECTORS = [
-  'ins.adsbygoogle',
+  "ins.adsbygoogle",
   'div[id^="google_ads_"]',
   'iframe[src*="doubleclick.net"]',
   'iframe[src*="googlesyndication.com"]',
@@ -117,17 +117,18 @@ const DEFAULT_AD_SELECTORS = [
 
 // Pop-under and interstitial destinations: dropped rather than opened in a system browser.
 const DEFAULT_BLOCKED_HOSTS = [
-  'doubleclick.net',
-  'googlesyndication.com',
-  'googleadservices.com',
-  'adnxs.com',
+  "doubleclick.net",
+  "googlesyndication.com",
+  "googleadservices.com",
+  "adnxs.com",
 ];
 
 // Sidebar icon: ModDB's own mark, traced from its safari-pinned-tab.svg. That file is a
 // single-path potrace on a clean ten-by-ten pixel grid, so it converts to mdi's 24x24 box
 // exactly - every coordinate below is a whole number.
-const DEFAULT_MDI = 'M6 6L2 6L2 18L6 18L6 22L10 22L10 18L6 18L6 14L18 14L18 18L14 18L14 22'
-  + 'L18 22L18 18L22 18L22 6L18 6L18 2L6 2ZM10 10L6 10L6 6L10 6ZM18 10L14 10L14 6L18 6Z';
+const DEFAULT_MDI =
+  "M6 6L2 6L2 18L6 18L6 22L10 22L10 18L6 18L6 14L18 14L18 18L14 18L14 22" +
+  "L18 22L18 18L22 18L22 6L18 6L18 2L6 2ZM10 10L6 10L6 6L10 6ZM18 10L14 10L14 6L18 6Z";
 
 // How many visited file pages are kept as candidates for a download click.
 const VISITED_PAGES_CAP = 20;
@@ -159,7 +160,9 @@ function entityUrl(entityPath) {
 
 //Letters only, lowercased - which is what collapses realrtcw-50 and realrtcw-40 onto one key
 function slugKey(slug) {
-  return String(slug || '').toLowerCase().replace(/[^a-z]+/g, '');
+  return String(slug || "")
+    .toLowerCase()
+    .replace(/[^a-z]+/g, "");
 }
 
 function modDbKey(ref) {
@@ -169,8 +172,8 @@ function modDbKey(ref) {
 const KEY_RE = /^((?:games|mods|engines|groups)\/[A-Za-z0-9._-]+)#([a-z]+)$/;
 
 function parseModDbKey(key) {
-  const matched = KEY_RE.exec(String(key || ''));
-  return (matched !== null) ? { path: matched[1], slugKey: matched[2] } : null;
+  const matched = KEY_RE.exec(String(key || ""));
+  return matched !== null ? { path: matched[1], slugKey: matched[2] } : null;
 }
 
 //A slug with no letters at all (ModDB allows a purely numeric one, e.g. "2027") still has to
@@ -179,7 +182,7 @@ function refFromPage(entityPath, slug, pageUrl) {
   return {
     path: entityPath,
     slug,
-    slugKey: slugKey(slug) || 'file',
+    slugKey: slugKey(slug) || "file",
     pageUrl,
   };
 }
@@ -187,7 +190,8 @@ function refFromPage(entityPath, slug, pageUrl) {
 // --- URL parsing ----------------------------------------------------------
 
 // A file's own page, which is where a download click comes from
-const FILE_PAGE_RE = /moddb\.com\/((?:games|mods|engines|groups)\/[A-Za-z0-9._-]+)\/downloads\/([A-Za-z0-9._-]+)/i;
+const FILE_PAGE_RE =
+  /moddb\.com\/((?:games|mods|engines|groups)\/[A-Za-z0-9._-]+)\/downloads\/([A-Za-z0-9._-]+)/i;
 // The button on that page: an interstitial that resolves the current mirror
 const START_URL_RE = /moddb\.com\/downloads\/start\/(\d+)/i;
 // What the interstitial sends the browser to
@@ -203,9 +207,9 @@ function startUrl(fileId) {
 
 //The file id a download URL carries, or null when it carries none
 function fileIdFromUrl(url) {
-  const input = String(url || '');
+  const input = String(url || "");
   const matched = MIRROR_URL_RE.exec(input) || START_URL_RE.exec(input);
-  return (matched !== null) ? matched[1] : null;
+  return matched !== null ? matched[1] : null;
 }
 
 // --- visited file pages ---------------------------------------------------
@@ -215,8 +219,13 @@ function fileIdFromUrl(url) {
 // base's per-source adapter state - two games, or two sources on one game, never share a ring.
 
 function noteVisitedPage(adapterState, ref) {
-  const previous = (adapterState.visited || []).filter(entry => modDbKey(entry) !== modDbKey(ref));
-  adapterState.visited = [{ ...ref, visitedAt: Date.now() }, ...previous].slice(0, VISITED_PAGES_CAP);
+  const previous = (adapterState.visited || []).filter(
+    (entry) => modDbKey(entry) !== modDbKey(ref),
+  );
+  adapterState.visited = [{ ...ref, visitedAt: Date.now() }, ...previous].slice(
+    0,
+    VISITED_PAGES_CAP,
+  );
 }
 
 //The mod a download belongs to: the file page the user is on. A download always starts from the
@@ -258,13 +267,13 @@ function feedUrl(entityPath) {
 }
 
 function decodeEntities(text) {
-  return String(text || '')
-    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
+  return String(text || "")
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
     .replace(/&#x([0-9a-f]+);/gi, (_, code) => String.fromCodePoint(parseInt(code, 16)))
     .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(parseInt(code, 10)))
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
     .replace(/&apos;/g, "'");
 }
@@ -285,8 +294,8 @@ function parseFeedItems(xml) {
         id,
         title: decodeEntities((block.match(/<title>([\s\S]*?)<\/title>/) || [])[1]),
         link,
-        path: (page !== null) ? page[1] : null,
-        slug: (page !== null) ? page[2] : null,
+        path: page !== null ? page[1] : null,
+        slug: page !== null ? page[2] : null,
       });
     }
     matched = itemPattern.exec(xml);
@@ -309,11 +318,11 @@ async function fetchFeedItems(entityPath) {
 
 function feedItems(entityPath) {
   const cached = feedCache.get(entityPath);
-  if ((cached !== undefined) && ((Date.now() - cached.at) < FEED_CACHE_MS)) {
+  if (cached !== undefined && Date.now() - cached.at < FEED_CACHE_MS) {
     return cached.items;
   }
   const items = fetchFeedItems(entityPath).catch((err) => {
-    log('debug', `Could not read the ModDB feed for ${entityPath}: ${err}`);
+    log("debug", `Could not read the ModDB feed for ${entityPath}: ${err}`);
     feedCache.delete(entityPath); //a failed fetch must not be cached as an empty page
     return [];
   });
@@ -325,10 +334,10 @@ function feedItems(entityPath) {
 // game's feed carries files from the mods under it as well as its own, so it is the fallback.
 async function pageItems(config, entityPath) {
   const own = await feedItems(entityPath);
-  if ((own.length > 0) || (entityPath === config.moddbPath)) {
+  if (own.length > 0 || entityPath === config.moddbPath) {
     return own;
   }
-  return (await feedItems(config.moddbPath)).filter(item => item.path === entityPath);
+  return (await feedItems(config.moddbPath)).filter((item) => item.path === entityPath);
 }
 
 // --- versions -------------------------------------------------------------
@@ -343,7 +352,7 @@ const VERSION_PATTERNS = [
 
 function versionFromTitle(title) {
   for (const pattern of VERSION_PATTERNS) {
-    const matched = pattern.exec(String(title || ''));
+    const matched = pattern.exec(String(title || ""));
     if (matched !== null) {
       return matched[1].trim();
     }
@@ -353,11 +362,11 @@ function versionFromTitle(title) {
 
 //A readable name for a file the feed does not list, built from its slug
 function nameFromSlug(slug) {
-  return String(slug || '')
-    .split('-')
-    .filter(part => part.length > 0)
-    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ');
+  return String(slug || "")
+    .split("-")
+    .filter((part) => part.length > 0)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 }
 
 // --- resolving ------------------------------------------------------------
@@ -377,9 +386,9 @@ async function resolveMirrorUrl(fileId) {
       return null;
     }
     const href = decodeEntities(matched[1]); //hrefs in HTML may carry entity-encoded characters
-    return href.startsWith('http') ? href : `${SITE_BASE}${href}`;
+    return href.startsWith("http") ? href : `${SITE_BASE}${href}`;
   } catch (err) {
-    log('warn', `Could not resolve the ModDB mirror URL for file ${fileId}: ${err}`);
+    log("warn", `Could not resolve the ModDB mirror URL for file ${fileId}: ${err}`);
     return null;
   }
 }
@@ -397,12 +406,17 @@ async function readFilePage(pageUrl) {
     const start = /\/downloads\/start\/(\d+)/.exec(html);
     const title = /<title>([^<]+)<\/title>/i.exec(html);
     return {
-      fileId: (start !== null) ? start[1] : null,
+      fileId: start !== null ? start[1] : null,
       //ModDB titles its file pages "<file> file - <mod> mod for <game> - ModDB"
-      title: (title !== null) ? decodeEntities(title[1]).split(/\s+file\s+-\s+/)[0].trim() : null,
+      title:
+        title !== null
+          ? decodeEntities(title[1])
+              .split(/\s+file\s+-\s+/)[0]
+              .trim()
+          : null,
     };
   } catch (err) {
-    log('debug', `Could not read the ModDB file page ${pageUrl}: ${err}`);
+    log("debug", `Could not read the ModDB file page ${pageUrl}: ${err}`);
     return { fileId: null, title: null };
   }
 }
@@ -411,19 +425,20 @@ async function readFilePage(pageUrl) {
 //version and page. Null when the page lists nothing under the key - which is also what an
 //unreachable feed returns, so a site outage never reports an update.
 async function resolveModDbFile(config, ref) {
-  const items = (await pageItems(config, ref.path))
-    .filter(item => slugKey(item.slug) === ref.slugKey);
+  const items = (await pageItems(config, ref.path)).filter(
+    (item) => slugKey(item.slug) === ref.slugKey,
+  );
   if (items.length === 0) {
     return null;
   }
-  const newest = items.reduce((best, item) => ((Number(item.id) > Number(best.id)) ? item : best));
+  const newest = items.reduce((best, item) => (Number(item.id) > Number(best.id) ? item : best));
   return {
     path: ref.path,
     slugKey: ref.slugKey,
     slug: newest.slug,
     fileId: newest.id,
     name: newest.title || nameFromSlug(newest.slug),
-    version: versionFromTitle(newest.title) || '',
+    version: versionFromTitle(newest.title) || "",
     pageUrl: newest.link || entityUrl(ref.path),
   };
 }
@@ -435,17 +450,19 @@ async function resolveModDbFileForInstall(config, ref) {
   //A download taken over from the download manager already has a resolved URL and, usually, no
   //file id - the id and the title come from the page it was started on instead. Re-resolving the
   //mirror here would only mint a second URL for the same bytes.
-  const fromPage = ((ref.fileId === undefined) && (ref.pageUrl !== undefined))
-    ? await readFilePage(ref.pageUrl)
-    : { fileId: null, title: null };
+  const fromPage =
+    ref.fileId === undefined && ref.pageUrl !== undefined
+      ? await readFilePage(ref.pageUrl)
+      : { fileId: null, title: null };
   const knownId = ref.fileId ?? fromPage.fileId ?? undefined;
-  if (knownId === undefined) { //an update install, which knows the key but not yet the file
+  if (knownId === undefined) {
+    //an update install, which knows the key but not yet the file
     const resolved = await resolveModDbFile(config, ref);
-    return (resolved === null) ? null : resolveModDbFileForInstall(config, { ...ref, ...resolved });
+    return resolved === null ? null : resolveModDbFileForInstall(config, { ...ref, ...resolved });
   }
   const fileId = String(knownId);
-  const listed = (await pageItems(config, ref.path)).find(item => item.id === fileId);
-  const downloadUrl = ref.downloadUrl || await resolveMirrorUrl(fileId);
+  const listed = (await pageItems(config, ref.path)).find((item) => item.id === fileId);
+  const downloadUrl = ref.downloadUrl || (await resolveMirrorUrl(fileId));
   if (downloadUrl === null) {
     return null;
   }
@@ -455,8 +472,9 @@ async function resolveModDbFileForInstall(config, ref) {
     slugKey: ref.slugKey,
     slug,
     fileId,
-    name: listed?.title || fromPage.title || ref.name || nameFromSlug(slug) || `ModDB file ${fileId}`,
-    version: versionFromTitle(listed?.title || fromPage.title) || ref.version || '',
+    name:
+      listed?.title || fromPage.title || ref.name || nameFromSlug(slug) || `ModDB file ${fileId}`,
+    version: versionFromTitle(listed?.title || fromPage.title) || ref.version || "",
     downloadUrl,
     pageUrl: listed?.link || ref.pageUrl || entityUrl(ref.path),
   };
@@ -469,7 +487,7 @@ async function resolveModDbFileForInstall(config, ref) {
 // of temp, and the install proceeds exactly as it would for any other source.
 
 function filenameFromResponse(response, fallback) {
-  const disposition = response.headers.get('content-disposition');
+  const disposition = response.headers.get("content-disposition");
   if (disposition) {
     const matched = disposition.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/i);
     if (matched) {
@@ -501,12 +519,19 @@ async function streamToFile(body, targetPath) {
       if (done) {
         break;
       }
-      if (!out.write(value)) { //respect backpressure instead of queueing the whole file in memory
+      if (!out.write(value)) {
+        //respect backpressure instead of queueing the whole file in memory
         await new Promise((resolve, reject) => {
-          const onDrain = () => { out.off('error', onError); resolve(); };
-          const onError = (err) => { out.off('drain', onDrain); reject(err); };
-          out.once('drain', onDrain);
-          out.once('error', onError);
+          const onDrain = () => {
+            out.off("error", onError);
+            resolve();
+          };
+          const onError = (err) => {
+            out.off("drain", onDrain);
+            reject(err);
+          };
+          out.once("drain", onDrain);
+          out.once("error", onError);
         });
       }
     }
@@ -526,11 +551,14 @@ async function fetchModDbToFile(config, url) {
     throw new Error(`Request failed with status code ${response.status} (${url})`);
   }
   const fileId = fileIdFromUrl(url);
-  const target = path.join(util.getVortexPath('temp'),
-    filenameFromResponse(response, `moddb-${fileId || Date.now()}.zip`));
+  const target = path.join(
+    util.getVortexPath("temp"),
+    filenameFromResponse(response, `moddb-${fileId || Date.now()}.zip`),
+  );
   try {
     await streamToFile(response.body, target);
-  } catch (err) { //a half-written file must not be left for the importer to pick up
+  } catch (err) {
+    //a half-written file must not be left for the importer to pick up
     await fs.removeAsync(target).catch(() => null);
     throw err;
   }
@@ -540,23 +568,23 @@ async function fetchModDbToFile(config, url) {
 // --- the adapter ----------------------------------------------------------
 
 const adapter = {
-  id: 'moddb',
-  label: 'ModDB',
+  id: "moddb",
+  label: "ModDB",
   defaults: {
     packageAttribute: DEFAULT_PACKAGE_ATTRIBUTE,
     versionAttribute: DEFAULT_VERSION_ATTRIBUTE,
     allowedHosts: DEFAULT_ALLOWED_HOSTS,
-    icon: 'search',
+    icon: "search",
     mdi: DEFAULT_MDI,
-    pageTitle: 'Browse ModDB',
-    homeTooltip: 'Back to the game mods',
+    pageTitle: "Browse ModDB",
+    homeTooltip: "Back to the game mods",
     adSelectors: DEFAULT_AD_SELECTORS,
     blockedHosts: DEFAULT_BLOCKED_HOSTS,
   },
   dependencies: false, //the site publishes no dependency data of any kind
-  fetchStrategy: 'click', //the download manager is refused by this host - see header note 1
+  fetchStrategy: "click", //the download manager is refused by this host - see header note 1
   fetchToFile: fetchModDbToFile,
-  unresolvedMessage: 'ModDB is unreachable, or this file has no mirror to download from',
+  unresolvedMessage: "ModDB is unreachable, or this file has no mirror to download from",
 
   homeUrl,
   refKey: modDbKey,
@@ -564,25 +592,26 @@ const adapter = {
   //A requirement opts in by declaring the key of the one file it installs; without it the
   //browse page treats that mod like any other, because a requirement names a mod page and a
   //key names a single file on that page.
-  requirementKey: (requirement) => String(requirement.browseKey
-    || `moddb-requirement:${requirement.modType}`),
+  requirementKey: (requirement) =>
+    String(requirement.browseKey || `moddb-requirement:${requirement.modType}`),
   //Three shapes reach here: the interstitial and the mirror, which name a file id, and the CDN
   //URL Vortex is actually handed, which names only an archive. The CDN form carries its URL
   //along, because it is the one already resolved and is what the retry fetches.
   parseClaim: (download) => {
-    for (const url of (download.urls || [])) {
+    for (const url of download.urls || []) {
       const fileId = fileIdFromUrl(url);
       if (fileId !== null) {
         return { fileId, downloadUrl: url };
       }
-      const cdn = CDN_URL_RE.exec(String(url || ''));
+      const cdn = CDN_URL_RE.exec(String(url || ""));
       if (cdn !== null) {
         return { fileName: decodeURIComponent(cdn[1]), downloadUrl: url };
       }
     }
     return null;
   },
-  identify: (config, adapterState, partial) => Promise.resolve(refForDownload(adapterState, partial)),
+  identify: (config, adapterState, partial) =>
+    Promise.resolve(refForDownload(adapterState, partial)),
   resolve: resolveModDbFile,
   resolveForInstall: resolveModDbFileForInstall,
 
@@ -591,9 +620,8 @@ const adapter = {
 
   //The installed file id rides along under the same name moddb_downloader.js uses, so a
   //requirement installed by either route is recognised by both
-  extraAttributes: (config, resolved) => ((resolved.fileId !== undefined)
-    ? [[fileIdAttribute(config), Number(resolved.fileId)]]
-    : []), //no id means no update tracking for this mod, which beats stamping NaN
+  extraAttributes: (config, resolved) =>
+    resolved.fileId !== undefined ? [[fileIdAttribute(config), Number(resolved.fileId)]] : [], //no id means no update tracking for this mod, which beats stamping NaN
 
   //A download click is turned into a full install rather than a navigation: the file id it
   //carries is joined to the page the user is on, and the base takes it from there.
@@ -605,15 +633,20 @@ const adapter = {
         ctx.install(ref);
         return true;
       }
-      if (MIRROR_URL_RE.test(url)) { //a real file URL with no page behind it: fetched unattributed
-        log('info', `A ModDB mirror was reached with no file page behind it - installing ${fileId} unstamped`);
+      if (MIRROR_URL_RE.test(url)) {
+        //a real file URL with no page behind it: fetched unattributed
+        log(
+          "info",
+          `A ModDB mirror was reached with no file page behind it - installing ${fileId} unstamped`,
+        );
         ctx.requestDownload(url, navigated);
         return true;
       }
       return false; //an interstitial: let it load, and catch the mirror it sends the view to
     }
     const page = FILE_PAGE_RE.exec(url);
-    if (page !== null) { //remember it: the next download click is matched against these
+    if (page !== null) {
+      //remember it: the next download click is matched against these
       noteVisitedPage(ctx.adapterState, refFromPage(page[1], page[2], url));
     }
     return false; //not consumed - the base decides whether the view may stay on this URL
@@ -629,7 +662,7 @@ const adapter = {
   isUpdate: (resolved, installed) => {
     const latest = Number(resolved.fileId);
     const current = Number(installed.fileId);
-    return Number.isFinite(latest) && Number.isFinite(current) && (current > 0) && (latest > current);
+    return Number.isFinite(latest) && Number.isFinite(current) && current > 0 && latest > current;
   },
   updateRef: (parsed, resolved) => ({
     ...parsed,

@@ -1,46 +1,46 @@
 //Import some assets from Vortex we'll need.
-const path = require('path');
-const { fs, log, util } = require('vortex-api');
+const path = require("path");
+const { fs, log, util } = require("vortex-api");
 
 // Nexus Mods domain for the game. e.g. nexusmods.com/aliensfireteamelite
-const GAME_ID = 'aliensfireteamelite';
+const GAME_ID = "aliensfireteamelite";
 
 //Steam Application ID, you can get this from https://steamdb.info/apps/
-const STEAMAPP_ID = '1549970';
-const XBOXAPP_ID = 'ColdIronStudiosLLC.AliensFireteam';
-const XBOXEXECNAME = 'AppAliensFireteamEliteShipping';
-const EXEC_XBOX = 'gamelaunchhelper.exe';
-const EXEC = 'Endeavor.exe';
+const STEAMAPP_ID = "1549970";
+const XBOXAPP_ID = "ColdIronStudiosLLC.AliensFireteam";
+const XBOXEXECNAME = "AppAliensFireteamEliteShipping";
+const EXEC_XBOX = "gamelaunchhelper.exe";
+const EXEC = "Endeavor.exe";
 
 function findGame() {
-  return util.GameStoreHelper.findByAppId([STEAMAPP_ID, XBOXAPP_ID])
-      .then(game => game.gamePath);
+  return util.GameStoreHelper.findByAppId([STEAMAPP_ID, XBOXAPP_ID]).then((game) => game.gamePath);
 }
 
 function prepareForModding(discovery) {
-    return fs.ensureDirWritableAsync(path.join(discovery.path, 'Endeavor', 'Content', 'Paks', '~mods'));
+  return fs.ensureDirWritableAsync(
+    path.join(discovery.path, "Endeavor", "Content", "Paks", "~mods"),
+  );
 }
 
 function statCheckSync(gamePath, file) {
   try {
     fs.statSync(path.join(gamePath, file));
     return true;
-  }
-  catch {
+  } catch {
     return false;
   }
 }
 
 //Set launcher requirements
 async function requiresLauncher(gamePath, store) {
-  if (store === 'xbox') {
-      return Promise.resolve({
-        launcher: 'xbox',
-        addInfo: {
-          appId: XBOXAPP_ID,
-          parameters: [{ appExecName: XBOXEXECNAME }],
-        },
-      });
+  if (store === "xbox") {
+    return Promise.resolve({
+      launcher: "xbox",
+      addInfo: {
+        appId: XBOXAPP_ID,
+        parameters: [{ appExecName: XBOXEXECNAME }],
+      },
+    });
   }
   return Promise.resolve(undefined);
 }
@@ -49,24 +49,22 @@ async function requiresLauncher(gamePath, store) {
 function getExecutable(discoveryPath) {
   if (statCheckSync(discoveryPath, EXEC_XBOX)) {
     return EXEC_XBOX;
-  };
+  }
   return EXEC;
 }
 
 function main(context) {
-	//This is the main function Vortex will run when detecting the game extension. 
-	context.registerGame({
+  //This is the main function Vortex will run when detecting the game extension.
+  context.registerGame({
     id: GAME_ID,
-    name: 'Aliens: Fireteam Elite',
+    name: "Aliens: Fireteam Elite",
     mergeMods: true,
     queryPath: findGame,
     supportedTools: [],
-    queryModPath: () => 'Endeavor/Content/Paks/~mods',
-    logo: 'gameart.jpg',
+    queryModPath: () => "Endeavor/Content/Paks/~mods",
+    logo: "gameart.jpg",
     executable: getExecutable,
-    requiredFiles: [
-      'Endeavor',
-    ],
+    requiredFiles: ["Endeavor"],
     setup: prepareForModding,
     requiresLauncher: requiresLauncher,
     environment: {
@@ -74,12 +72,12 @@ function main(context) {
     },
     details: {
       steamAppId: STEAMAPP_ID,
-	    stopPatterns: ['(^|/).*.pak$'],
+      stopPatterns: ["(^|/).*.pak$"],
     },
   });
-	return true;
+  return true;
 }
 
 module.exports = {
-    default: main,
+  default: main,
 };

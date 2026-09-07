@@ -16,95 +16,88 @@ sendNotification(notification: INotification): string;
 
 ```typescript
 interface INotification {
-  id?: string;
-  type: NotificationType;
-  message: string;
-  title?: string;
-  icon?: string;
-  progress?: number;
-  displayMS?: number;
-  noDismiss?: boolean;
-  noToast?: boolean;
-  allowSuppress?: boolean;
-  group?: string;
-  actions?: INotificationAction[];
-  onDismiss?: () => void;
-  replace?: { [key: string]: any };
-  localize?: { title?: boolean; message?: boolean };
-  createdTime?: number;
-  updatedTime?: number;
-  process?: string;
+    id?: string;
+    type: NotificationType;
+    message: string;
+    title?: string;
+    icon?: string;
+    progress?: number;
+    displayMS?: number;
+    noDismiss?: boolean;
+    noToast?: boolean;
+    allowSuppress?: boolean;
+    group?: string;
+    actions?: INotificationAction[];
+    onDismiss?: () => void;
+    replace?: { [key: string]: any };
+    localize?: { title?: boolean; message?: boolean };
+    createdTime?: number;
+    updatedTime?: number;
+    process?: string;
 }
 ```
 
-| Field | Type | Required | Notes |
-| --- | --- | --- | --- |
-| `id` | `string` | No | Auto-generated if omitted. Use a fixed ID to update/replace an existing notification |
-| `type` | `NotificationType` | Yes | See below |
-| `message` | `string` | Yes | Main notification text |
-| `title` | `string` | No | Keep to 1-2 words |
-| `icon` | `string` | No | Path to icon image |
-| `progress` | `number` | No | 0-100, shows a progress indicator |
-| `displayMS` | `number` | No | Auto-dismiss after N milliseconds |
-| `noDismiss` | `boolean` | No | Hides the dismiss button |
-| `noToast` | `boolean` | No | Suppress toast even if `displayMS` is set |
-| `allowSuppress` | `boolean` | No | Lets the user suppress future occurrences |
-| `group` | `string` | No | Groups related notifications together |
-| `actions` | `INotificationAction[]` | No | Buttons shown on the notification |
-| `onDismiss` | `() => void` | No | Callback when notification is dismissed |
-| `replace` | `{ [key: string]: any }` | No | i18n substitution parameters |
-| `localize` | `{ title?: boolean; message?: boolean }` | No | Control which fields get translated (default: both `true`) |
+| Field           | Type                                     | Required | Notes                                                                                |
+| --------------- | ---------------------------------------- | -------- | ------------------------------------------------------------------------------------ |
+| `id`            | `string`                                 | No       | Auto-generated if omitted. Use a fixed ID to update/replace an existing notification |
+| `type`          | `NotificationType`                       | Yes      | See below                                                                            |
+| `message`       | `string`                                 | Yes      | Main notification text                                                               |
+| `title`         | `string`                                 | No       | Keep to 1-2 words                                                                    |
+| `icon`          | `string`                                 | No       | Path to icon image                                                                   |
+| `progress`      | `number`                                 | No       | 0-100, shows a progress indicator                                                    |
+| `displayMS`     | `number`                                 | No       | Auto-dismiss after N milliseconds                                                    |
+| `noDismiss`     | `boolean`                                | No       | Hides the dismiss button                                                             |
+| `noToast`       | `boolean`                                | No       | Suppress toast even if `displayMS` is set                                            |
+| `allowSuppress` | `boolean`                                | No       | Lets the user suppress future occurrences                                            |
+| `group`         | `string`                                 | No       | Groups related notifications together                                                |
+| `actions`       | `INotificationAction[]`                  | No       | Buttons shown on the notification                                                    |
+| `onDismiss`     | `() => void`                             | No       | Callback when notification is dismissed                                              |
+| `replace`       | `{ [key: string]: any }`                 | No       | i18n substitution parameters                                                         |
+| `localize`      | `{ title?: boolean; message?: boolean }` | No       | Control which fields get translated (default: both `true`)                           |
 
 ### NotificationType
 
 ```typescript
-type NotificationType =
-  | 'activity'
-  | 'global'
-  | 'success'
-  | 'info'
-  | 'warning'
-  | 'error'
-  | 'silent';
+type NotificationType = "activity" | "global" | "success" | "info" | "warning" | "error" | "silent";
 ```
 
-| Value | Description |
-| --- | --- |
-| `'activity'` | Spinner icon -- use for ongoing operations |
-| `'success'` | Green -- operation completed |
-| `'info'` | Neutral information |
-| `'warning'` | Yellow -- something needs attention |
-| `'error'` | Red -- something went wrong |
-| `'global'` | Always visible; shown as system notification if window is unfocused |
-| `'silent'` | No visual, logged only |
+| Value        | Description                                                         |
+| ------------ | ------------------------------------------------------------------- |
+| `'activity'` | Spinner icon -- use for ongoing operations                          |
+| `'success'`  | Green -- operation completed                                        |
+| `'info'`     | Neutral information                                                 |
+| `'warning'`  | Yellow -- something needs attention                                 |
+| `'error'`    | Red -- something went wrong                                         |
+| `'global'`   | Always visible; shown as system notification if window is unfocused |
+| `'silent'`   | No visual, logged only                                              |
 
 ### INotificationAction
 
 ```typescript
 interface INotificationAction {
-  title?: string;
-  icon?: string;
-  action: (dismiss: NotificationDismiss) => void;
+    title?: string;
+    icon?: string;
+    action: (dismiss: NotificationDismiss) => void;
 }
 
 type NotificationDismiss = () => void;
 ```
 
-| Field | Type | Required | Notes |
-| --- | --- | --- | --- |
-| `title` | `string` | No | Button label |
-| `icon` | `string` | No | Button icon |
-| `action` | `(dismiss: () => void) => void` | Yes | Callback; call `dismiss()` to close the notification |
+| Field    | Type                            | Required | Notes                                                |
+| -------- | ------------------------------- | -------- | ---------------------------------------------------- |
+| `title`  | `string`                        | No       | Button label                                         |
+| `icon`   | `string`                        | No       | Button icon                                          |
+| `action` | `(dismiss: () => void) => void` | Yes      | Callback; call `dismiss()` to close the notification |
 
 ### Example: sendNotification
 
 ```js
 const nid = api.sendNotification({
-  id: 'my-install-progress',
-  type: 'activity',
-  title: 'Installing',
-  message: 'Downloading required tools...',
-  noDismiss: true,
+    id: "my-install-progress",
+    type: "activity",
+    title: "Installing",
+    message: "Downloading required tools...",
+    noDismiss: true,
 });
 
 // later, dismiss it:
@@ -127,61 +120,61 @@ showDialog(
 ): PromiseBB<IDialogResult>;
 ```
 
-| Param | Type | Required | Notes |
-| --- | --- | --- | --- |
-| `type` | `DialogType` | Yes | `'success'`, `'info'`, `'error'`, `'question'` |
-| `title` | `string` | Yes | Dialog title |
-| `content` | `IDialogContent` | Yes | Body content -- see below |
-| `actions` | `IDialogAction[]` | Yes | Buttons shown at the bottom |
-| `id` | `string` | No | Stable ID; prevents duplicate dialogs |
+| Param     | Type              | Required | Notes                                          |
+| --------- | ----------------- | -------- | ---------------------------------------------- |
+| `type`    | `DialogType`      | Yes      | `'success'`, `'info'`, `'error'`, `'question'` |
+| `title`   | `string`          | Yes      | Dialog title                                   |
+| `content` | `IDialogContent`  | Yes      | Body content -- see below                      |
+| `actions` | `IDialogAction[]` | Yes      | Buttons shown at the bottom                    |
+| `id`      | `string`          | No       | Stable ID; prevents duplicate dialogs          |
 
 ### DialogType
 
 ```typescript
-type DialogType = 'success' | 'info' | 'error' | 'question';
+type DialogType = "success" | "info" | "error" | "question";
 ```
 
 ### IDialogContent
 
 ```typescript
 interface IDialogContent {
-  text?: string;
-  message?: string;
-  htmlFile?: string;
-  htmlText?: string;
-  bbcode?: string;
-  md?: string;
-  checkboxes?: ICheckbox[];
-  choices?: ICheckbox[];
-  input?: IInput[];
-  links?: ILink[];
-  parameters?: Record<string, string | number> & { count?: number };
-  options?: {
-    translated?: boolean;
-    wrap?: boolean;
-    hideMessage?: boolean;
-    linksAsButtons?: boolean;
-    order?: DialogContentItem[];
-    bbcodeContext?: IBBCodeContext;
-  };
-  condition?: (content: IDialogContent) => IConditionResult[];
+    text?: string;
+    message?: string;
+    htmlFile?: string;
+    htmlText?: string;
+    bbcode?: string;
+    md?: string;
+    checkboxes?: ICheckbox[];
+    choices?: ICheckbox[];
+    input?: IInput[];
+    links?: ILink[];
+    parameters?: Record<string, string | number> & { count?: number };
+    options?: {
+        translated?: boolean;
+        wrap?: boolean;
+        hideMessage?: boolean;
+        linksAsButtons?: boolean;
+        order?: DialogContentItem[];
+        bbcodeContext?: IBBCodeContext;
+    };
+    condition?: (content: IDialogContent) => IConditionResult[];
 }
 ```
 
-| Field | Type | Notes |
-| --- | --- | --- |
-| `text` | `string` | Plain text -- wrapped, not selectable |
-| `message` | `string` | Scrollable, selectable text |
-| `htmlText` | `string` | Raw HTML -- inserted directly into DOM |
-| `bbcode` | `string` | BBCode formatted content |
-| `md` | `string` | Markdown formatted content |
-| `checkboxes` | `ICheckbox[]` | Checkbox controls |
-| `choices` | `ICheckbox[]` | Radio-style choices (same shape as checkboxes) -- **one group per dialog** |
-| `input` | `IInput[]` | Text/password/number/etc. input fields |
-| `links` | `ILink[]` | Clickable links (or buttons via `options.linksAsButtons`) |
-| `parameters` | `Record<string, string \| number>` | i18n substitution |
-| `options` | see above | Display options |
-| `condition` | `(content) => IConditionResult[]` | Dynamically disable actions based on input state |
+| Field        | Type                               | Notes                                                                      |
+| ------------ | ---------------------------------- | -------------------------------------------------------------------------- |
+| `text`       | `string`                           | Plain text -- wrapped, not selectable                                      |
+| `message`    | `string`                           | Scrollable, selectable text                                                |
+| `htmlText`   | `string`                           | Raw HTML -- inserted directly into DOM                                     |
+| `bbcode`     | `string`                           | BBCode formatted content                                                   |
+| `md`         | `string`                           | Markdown formatted content                                                 |
+| `checkboxes` | `ICheckbox[]`                      | Checkbox controls                                                          |
+| `choices`    | `ICheckbox[]`                      | Radio-style choices (same shape as checkboxes) -- **one group per dialog** |
+| `input`      | `IInput[]`                         | Text/password/number/etc. input fields                                     |
+| `links`      | `ILink[]`                          | Clickable links (or buttons via `options.linksAsButtons`)                  |
+| `parameters` | `Record<string, string \| number>` | i18n substitution                                                          |
+| `options`    | see above                          | Display options                                                            |
+| `condition`  | `(content) => IConditionResult[]`  | Dynamically disable actions based on input state                           |
 
 `choices` is a single flat array, so a dialog can pose exactly one either/or question. A form that needs
 several independent radio groups -- one per option, say -- cannot be built from `showDialog`; either ask
@@ -193,86 +186,86 @@ in sequence or register a real component with `context.registerDialog`.
 type DialogActions = IDialogAction[];
 
 interface IDialogAction {
-  label: string;
-  default?: boolean;
-  action?: () => void;   // v2.6.0: was (label: string) => void
+    label: string;
+    default?: boolean;
+    action?: () => void; // v2.6.0: was (label: string) => void
 }
 ```
 
-| Field | Type | Required | Notes |
-| --- | --- | --- | --- |
-| `label` | `string` | Yes | Button text -- also the key in `IDialogResult.action` |
-| `default` | `boolean` | No | Pre-selects this button (Enter key) |
-| `action` | `() => void` | No | Inline callback instead of using the returned promise. Dropped its `label` argument in Vortex v2.6.0 (the callback already belongs to one labelled action). |
+| Field     | Type         | Required | Notes                                                                                                                                                       |
+| --------- | ------------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `label`   | `string`     | Yes      | Button text -- also the key in `IDialogResult.action`                                                                                                       |
+| `default` | `boolean`    | No       | Pre-selects this button (Enter key)                                                                                                                         |
+| `action`  | `() => void` | No       | Inline callback instead of using the returned promise. Dropped its `label` argument in Vortex v2.6.0 (the callback already belongs to one labelled action). |
 
 ### ICheckbox
 
 ```typescript
 interface ICheckbox extends IControlBase {
-  text?: string;
-  bbcode?: string;
-  value: boolean;
-  disabled?: boolean;
-  subText?: string;
+    text?: string;
+    bbcode?: string;
+    value: boolean;
+    disabled?: boolean;
+    subText?: string;
 }
 ```
 
-| Field | Type | Required | Notes |
-| --- | --- | --- | --- |
-| `id` | `string` | Yes | (from IControlBase) Used to read value from result |
-| `text` | `string` | No | Label |
-| `value` | `boolean` | Yes | Initial checked state |
-| `disabled` | `boolean` | No | |
-| `subText` | `string` | No | Secondary label |
+| Field      | Type      | Required | Notes                                              |
+| ---------- | --------- | -------- | -------------------------------------------------- |
+| `id`       | `string`  | Yes      | (from IControlBase) Used to read value from result |
+| `text`     | `string`  | No       | Label                                              |
+| `value`    | `boolean` | Yes      | Initial checked state                              |
+| `disabled` | `boolean` | No       |                                                    |
+| `subText`  | `string`  | No       | Secondary label                                    |
 
 ### IInput
 
 ```typescript
 interface IInput extends IControlBase {
-  type?: 'text' | 'password' | 'number' | 'date' | 'time' | 'email' | 'url' | 'multiline';
-  value?: string;
-  label?: string;
-  placeholder?: string;
+    type?: "text" | "password" | "number" | "date" | "time" | "email" | "url" | "multiline";
+    value?: string;
+    label?: string;
+    placeholder?: string;
 }
 ```
 
-| Field | Type | Required | Notes |
-| --- | --- | --- | --- |
-| `id` | `string` | Yes | (from IControlBase) Used to read value from result |
-| `label` | `string` | No | Field label |
-| `value` | `string` | No | Initial value |
-| `placeholder` | `string` | No | |
-| `type` | `string` | No | `'text'` (default), `'password'`, `'number'`, `'date'`, `'time'`, `'email'`, `'url'`, `'multiline'` |
+| Field         | Type     | Required | Notes                                                                                               |
+| ------------- | -------- | -------- | --------------------------------------------------------------------------------------------------- |
+| `id`          | `string` | Yes      | (from IControlBase) Used to read value from result                                                  |
+| `label`       | `string` | No       | Field label                                                                                         |
+| `value`       | `string` | No       | Initial value                                                                                       |
+| `placeholder` | `string` | No       |                                                                                                     |
+| `type`        | `string` | No       | `'text'` (default), `'password'`, `'number'`, `'date'`, `'time'`, `'email'`, `'url'`, `'multiline'` |
 
 ### ILink
 
 ```typescript
 interface ILink {
-  label: string;
-  id?: string;
-  action?: (dismiss: () => void, id: string) => void;
+    label: string;
+    id?: string;
+    action?: (dismiss: () => void, id: string) => void;
 }
 ```
 
-| Field | Type | Required | Notes |
-| --- | --- | --- | --- |
-| `label` | `string` | Yes | Link text |
-| `id` | `string` | No | |
-| `action` | `(dismiss, id) => void` | No | Click handler |
+| Field    | Type                    | Required | Notes         |
+| -------- | ----------------------- | -------- | ------------- |
+| `label`  | `string`                | Yes      | Link text     |
+| `id`     | `string`                | No       |               |
+| `action` | `(dismiss, id) => void` | No       | Click handler |
 
 ### IDialogResult
 
 ```typescript
 interface IDialogResult {
-  action: string;
-  input: any;
+    action: string;
+    input: any;
 }
 ```
 
-| Field | Type | Notes |
-| --- | --- | --- |
-| `action` | `string` | Label of the button the user clicked |
-| `input` | `any` | Map of control `id` -> value for checkboxes/inputs |
+| Field    | Type     | Notes                                              |
+| -------- | -------- | -------------------------------------------------- |
+| `action` | `string` | Label of the button the user clicked               |
+| `input`  | `any`    | Map of control `id` -> value for checkboxes/inputs |
 
 ### condition (dynamic action disabling)
 
@@ -280,28 +273,28 @@ The `condition` field is called on every content change. Return an array of `ICo
 
 ```typescript
 interface IConditionResult {
-  id: string;        // control ID that triggered this
-  actions: string[]; // action labels to disable
-  errorText: string; // reason shown to the user
+    id: string; // control ID that triggered this
+    actions: string[]; // action labels to disable
+    errorText: string; // reason shown to the user
 }
 ```
 
 ### Example: showDialog
 
 ```js
-const result = await api.showDialog('question', 'Confirm Install', {
-  text: 'Install the required tool?',
-  checkboxes: [
-    { id: 'remember', text: "Don't ask again", value: false },
-  ],
-}, [
-  { label: 'Cancel' },
-  { label: 'Install', default: true },
-]);
+const result = await api.showDialog(
+    "question",
+    "Confirm Install",
+    {
+        text: "Install the required tool?",
+        checkboxes: [{ id: "remember", text: "Don't ask again", value: false }],
+    },
+    [{ label: "Cancel" }, { label: "Install", default: true }],
+);
 
-if (result.action === 'Install') {
-  const dontAsk = result.input['remember'];
-  // proceed...
+if (result.action === "Install") {
+    const dontAsk = result.input["remember"];
+    // proceed...
 }
 ```
 

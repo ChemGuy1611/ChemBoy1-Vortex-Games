@@ -6,10 +6,10 @@ How to add buttons to toolbars, context menus, and custom page toolbars using `r
 
 ## Two Ways to Add Toolbar Buttons
 
-| Approach | When to use |
-| --- | --- |
+| Approach                             | When to use                                                                                                          |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
 | `context.registerAction(group, ...)` | Adding buttons to built-in toolbars (Mods, Downloads, Load Order). Allows other extensions to add to the same group. |
-| `staticElements` on `IconBar` | Hardcoded buttons in a custom page's own header. Not extensible. |
+| `staticElements` on `IconBar`        | Hardcoded buttons in a custom page's own header. Not extensible.                                                     |
 
 Both are rendered by `IconBar`. `registerAction` populates the action registry; `IconBar` reads from it by group name.
 
@@ -45,7 +45,7 @@ The `IconBar` component normalizes `instanceId` prop to `string[]` before passin
 
 ```js
 // Vortex internals:
-const ids = typeof instanceId === 'string' ? [instanceId] : instanceId;
+const ids = typeof instanceId === "string" ? [instanceId] : instanceId;
 icon.action?.(ids, icon.data);
 ```
 
@@ -63,32 +63,27 @@ examples: see `REGISTER_ACTION.md`.
 
 ```js
 // Minimal — no condition, always visible
-context.registerAction(
-  'mod-icons',
-  300,
-  'open-ext',
-  {},
-  'Open Wiki',
-  () => util.opn('https://wiki.example.com').catch(() => null)
+context.registerAction("mod-icons", 300, "open-ext", {}, "Open Wiki", () =>
+    util.opn("https://wiki.example.com").catch(() => null),
 );
 
 // With condition gated on game + selection
 context.registerAction(
-  'mod-icons',
-  310,
-  'refresh',
-  {},
-  'Refresh Config',
-  (instanceIds) => {
-    // instanceIds = selected mod IDs
-    doRefresh(api, instanceIds);
-  },
-  (instanceIds) => {
-    const gameId = selectors.activeGameId(api.getState());
-    if (gameId !== GAME_ID) return false;       // hidden for other games
-    if (instanceIds.length === 0) return 'Select a mod'; // disabled
-    return true;
-  }
+    "mod-icons",
+    310,
+    "refresh",
+    {},
+    "Refresh Config",
+    (instanceIds) => {
+        // instanceIds = selected mod IDs
+        doRefresh(api, instanceIds);
+    },
+    (instanceIds) => {
+        const gameId = selectors.activeGameId(api.getState());
+        if (gameId !== GAME_ID) return false; // hidden for other games
+        if (instanceIds.length === 0) return "Select a mod"; // disabled
+        return true;
+    },
 );
 ```
 
@@ -100,15 +95,16 @@ Use when you need more than an icon + label — e.g. a dropdown, a toggle, or a 
 
 ```js
 context.registerAction(
-  'mod-icons',
-  105,
-  MyCustomButton,     // React component
-  {},
-  () => ({            // PropsCallback — returns props for the component
-    api,
-    onAction: () => doSomething(api),
-  }),
-  () => selectors.activeGameId(api.getState()) === GAME_ID  // condition (3rd positional arg in component form)
+    "mod-icons",
+    105,
+    MyCustomButton, // React component
+    {},
+    () => ({
+        // PropsCallback — returns props for the component
+        api,
+        onAction: () => doSomething(api),
+    }),
+    () => selectors.activeGameId(api.getState()) === GAME_ID, // condition (3rd positional arg in component form)
 );
 ```
 
@@ -116,11 +112,15 @@ The component receives the props from the PropsCallback plus a `parentType` prop
 
 ```js
 function MyCustomButton({ api, onAction, parentType }) {
-  // parentType is 'iconbar' | 'context' — tells you where you're rendered
-  return React.createElement('button', {
-    className: 'btn btn-default',
-    onClick: onAction,
-  }, 'My Button');
+    // parentType is 'iconbar' | 'context' — tells you where you're rendered
+    return React.createElement(
+        "button",
+        {
+            className: "btn btn-default",
+            onClick: onAction,
+        },
+        "My Button",
+    );
 }
 ```
 
@@ -130,31 +130,31 @@ function MyCustomButton({ api, onAction, parentType }) {
 
 ## 6. Built-In Group Strings
 
-| Group | Where it appears |
-| --- | --- |
-| `'mod-icons'` | Mods page main toolbar — most common for game extensions |
-| `'mod-context-icons'` | Mods list single-row right-click context menu |
-| `'mods-multirow-actions'` | Mods list footer when multiple rows are selected |
-| `'fb-load-order-icons'` | File-based load order page toolbar |
-| `'generic-load-order-icons'` | Generic load order page toolbar |
-| `'global-icons'` | Application header (always visible, any page) |
-| `'application-icons'` | Application header — often `isClassicOnly: true` |
-| `'downloads-action-icons'` | Downloads page per-row actions |
-| `'downloads-multirow-actions'` | Downloads page multirow footer |
-| `'categories-icons'` | Categories page toolbar |
-| `'extensions-layout-icons'` | Extensions manager toolbar |
-| `'game-managed-buttons'` | Games list row (managed game) |
-| `'game-unmanaged-buttons'` | Games list row (unmanaged game) |
-| `'starter-dashlet-tools-controls'` | Starter tool dashlet controls |
+| Group                              | Where it appears                                         |
+| ---------------------------------- | -------------------------------------------------------- |
+| `'mod-icons'`                      | Mods page main toolbar — most common for game extensions |
+| `'mod-context-icons'`              | Mods list single-row right-click context menu            |
+| `'mods-multirow-actions'`          | Mods list footer when multiple rows are selected         |
+| `'fb-load-order-icons'`            | File-based load order page toolbar                       |
+| `'generic-load-order-icons'`       | Generic load order page toolbar                          |
+| `'global-icons'`                   | Application header (always visible, any page)            |
+| `'application-icons'`              | Application header — often `isClassicOnly: true`         |
+| `'downloads-action-icons'`         | Downloads page per-row actions                           |
+| `'downloads-multirow-actions'`     | Downloads page multirow footer                           |
+| `'categories-icons'`               | Categories page toolbar                                  |
+| `'extensions-layout-icons'`        | Extensions manager toolbar                               |
+| `'game-managed-buttons'`           | Games list row (managed game)                            |
+| `'game-unmanaged-buttons'`         | Games list row (unmanaged game)                          |
+| `'starter-dashlet-tools-controls'` | Starter tool dashlet controls                            |
 
 ### Dynamic table groups
 
 Vortex tables generate group strings dynamically from `tableId`:
 
-| Pattern | Example | Where |
-| --- | --- | --- |
-| `${tableId}-action-icons` | `modlist-action-icons` | Per-row context menu / ActionDropdown |
-| `${tableId}-multirow-actions` | `modlist-multirow-actions` | Multirow selection footer toolbar |
+| Pattern                       | Example                    | Where                                 |
+| ----------------------------- | -------------------------- | ------------------------------------- |
+| `${tableId}-action-icons`     | `modlist-action-icons`     | Per-row context menu / ActionDropdown |
+| `${tableId}-multirow-actions` | `modlist-multirow-actions` | Multirow selection footer toolbar     |
 
 You generally don't register actions into these directly — use `mod-icons` / `mod-context-icons` etc. instead.
 
@@ -181,8 +181,16 @@ To add an action to both:
 const sharedAction = (instanceIds) => doThing(api, instanceIds);
 const sharedCondition = (instanceIds) => selectors.activeGameId(api.getState()) === GAME_ID;
 
-context.registerAction('mod-icons', 300, 'my-icon', {}, 'My Action', sharedAction, sharedCondition);
-context.registerAction('mod-context-icons', 300, 'my-icon', {}, 'My Action', sharedAction, sharedCondition);
+context.registerAction("mod-icons", 300, "my-icon", {}, "My Action", sharedAction, sharedCondition);
+context.registerAction(
+    "mod-context-icons",
+    300,
+    "my-icon",
+    {},
+    "My Action",
+    sharedAction,
+    sharedCondition,
+);
 ```
 
 ---
@@ -199,22 +207,28 @@ Pattern: use `'mod-icons'` + a condition that handles `instanceIds.length === 0`
 
 ```js
 // Page-level action — works even with no selection
-context.registerAction('mod-icons', 200, 'refresh', {}, 'Refresh All', () => refreshAll(api));
+context.registerAction("mod-icons", 200, "refresh", {}, "Refresh All", () => refreshAll(api));
 
 // Row-specific action — requires exactly one mod selected
 context.registerAction(
-  'mod-context-icons', 100, 'open-ext', {},
-  'Open Mod Folder',
-  (instanceIds) => openModFolder(api, instanceIds[0]),
-  (instanceIds) => instanceIds.length === 1 || 'Select exactly one mod'
+    "mod-context-icons",
+    100,
+    "open-ext",
+    {},
+    "Open Mod Folder",
+    (instanceIds) => openModFolder(api, instanceIds[0]),
+    (instanceIds) => instanceIds.length === 1 || "Select exactly one mod",
 );
 
 // Multi-row action
 context.registerAction(
-  'mods-multirow-actions', 100, 'delete', {},
-  'Remove Selected',
-  (instanceIds) => removeAll(api, instanceIds),
-  (instanceIds) => instanceIds.length > 0
+    "mods-multirow-actions",
+    100,
+    "delete",
+    {},
+    "Remove Selected",
+    (instanceIds) => removeAll(api, instanceIds),
+    (instanceIds) => instanceIds.length > 0,
 );
 ```
 
@@ -232,18 +246,22 @@ Use `${GAME_ID}-toolbar-icons` or similar to avoid collisions.
 
 ```js
 function MyPage({ api }) {
-  const { IconBar } = require('vortex-api');
+    const { IconBar } = require("vortex-api");
 
-  return React.createElement(MainPage, null,
-    React.createElement(MainPage.Header, null,
-      React.createElement(IconBar, {
-        group: `${GAME_ID}-toolbar-icons`,  // matches registerAction group
-        instanceId: `${GAME_ID}-page`,     // a stable ID for this page (no rows)
-        staticElements: [],                // optional hardcoded buttons (see §10)
-      }),
-    ),
-    React.createElement(MainPage.Body, null, /* ... */),
-  );
+    return React.createElement(
+        MainPage,
+        null,
+        React.createElement(
+            MainPage.Header,
+            null,
+            React.createElement(IconBar, {
+                group: `${GAME_ID}-toolbar-icons`, // matches registerAction group
+                instanceId: `${GAME_ID}-page`, // a stable ID for this page (no rows)
+                staticElements: [], // optional hardcoded buttons (see §10)
+            }),
+        ),
+        React.createElement(MainPage.Body, null /* ... */),
+    );
 }
 ```
 
@@ -252,13 +270,13 @@ function MyPage({ api }) {
 ```js
 // In main():
 context.registerAction(
-  `${GAME_ID}-toolbar-icons`,
-  100,
-  'refresh',
-  {},
-  'Refresh',
-  () => reload(context.api),
-  () => selectors.activeGameId(context.api.getState()) === GAME_ID
+    `${GAME_ID}-toolbar-icons`,
+    100,
+    "refresh",
+    {},
+    "Refresh",
+    () => reload(context.api),
+    () => selectors.activeGameId(context.api.getState()) === GAME_ID,
 );
 ```
 
@@ -271,39 +289,47 @@ Real example: `fb-load-order-icons` group in `Vortex/src/renderer/src/extensions
 `staticElements` adds fixed buttons alongside registered-action buttons. They are not extensible by other extensions.
 
 ```js
-const { IconBar } = require('vortex-api');
+const { IconBar } = require("vortex-api");
 
 const ToolbarIcon = ({ id, icon, text, onClick }) => {
-  const { Icon } = require('vortex-api');
-  return React.createElement('div', {
-    id,
-    className: 'toolbar-icon',
-    onClick,
-    title: text,
-    style: { display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', padding: '0 8px' },
-  },
-    React.createElement(Icon, { name: icon }),
-    React.createElement('span', null, text),
-  );
+    const { Icon } = require("vortex-api");
+    return React.createElement(
+        "div",
+        {
+            id,
+            className: "toolbar-icon",
+            onClick,
+            title: text,
+            style: {
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                cursor: "pointer",
+                padding: "0 8px",
+            },
+        },
+        React.createElement(Icon, { name: icon }),
+        React.createElement("span", null, text),
+    );
 };
 
 const toolbarButtons = [
-  {
-    component: ToolbarIcon,
-    props: () => ({
-      id: 'btn-refresh',
-      icon: 'refresh',
-      text: 'Refresh',
-      onClick: () => reload(api),
-    }),
-  },
+    {
+        component: ToolbarIcon,
+        props: () => ({
+            id: "btn-refresh",
+            icon: "refresh",
+            text: "Refresh",
+            onClick: () => reload(api),
+        }),
+    },
 ];
 
 // In the page JSX:
 React.createElement(IconBar, {
-  group: `${GAME_ID}-toolbar-icons`,
-  staticElements: toolbarButtons,
-})
+    group: `${GAME_ID}-toolbar-icons`,
+    staticElements: toolbarButtons,
+});
 ```
 
 Use `staticElements` for buttons that will never be added to by other extensions. Use `registerAction` if you want the action to be composable.
@@ -316,12 +342,12 @@ When a toolbar has too many buttons to fit, Vortex collapses some into a "…" o
 
 ```js
 context.registerAction(
-  'mod-icons',
-  100,
-  'deploy',
-  { noCollapse: true },   // always stays in the toolbar, never collapses
-  'Deploy Mods',
-  () => api.events.emit('deploy-mods', api.store.getState().settings.profiles.activeProfileId)
+    "mod-icons",
+    100,
+    "deploy",
+    { noCollapse: true }, // always stays in the toolbar, never collapses
+    "Deploy Mods",
+    () => api.events.emit("deploy-mods", api.store.getState().settings.profiles.activeProfileId),
 );
 ```
 
@@ -337,12 +363,12 @@ When rendering `IconBar` manually in a custom page:
 
 ```ts
 interface IIconBarProps {
-  group: string;          // action group name — matches registerAction group
-  instanceId?: string | string[]; // ID(s) passed to action/condition callbacks
-  staticElements?: IActionDefinition[]; // hardcoded buttons (not from registry)
-  collapse?: boolean | 'force'; // collapse into "..." menu
-  buttonType?: 'text' | 'icon' | 'both' | 'menu'; // how buttons render labels
-  orientation?: 'horizontal' | 'vertical';
+    group: string; // action group name — matches registerAction group
+    instanceId?: string | string[]; // ID(s) passed to action/condition callbacks
+    staticElements?: IActionDefinition[]; // hardcoded buttons (not from registry)
+    collapse?: boolean | "force"; // collapse into "..." menu
+    buttonType?: "text" | "icon" | "both" | "menu"; // how buttons render labels
+    orientation?: "horizontal" | "vertical";
 }
 ```
 
@@ -350,9 +376,9 @@ Minimal usage in a custom page header (no selection, stable instanceId):
 
 ```js
 React.createElement(IconBar, {
-  group: `${GAME_ID}-my-toolbar`,
-  instanceId: GAME_ID,
-})
+    group: `${GAME_ID}-my-toolbar`,
+    instanceId: GAME_ID,
+});
 ```
 
 ---
@@ -373,10 +399,13 @@ Do not confuse with the `condition` parameter of `registerAction`.
 
 ```js
 context.registerAction(
-  'mod-icons', 400, 'open-ext', {},
-  'Open Nexus Page',
-  () => util.opn(`https://www.nexusmods.com/${NEXUS_DOMAIN}`).catch(() => null),
-  () => selectors.activeGameId(context.api.getState()) === GAME_ID
+    "mod-icons",
+    400,
+    "open-ext",
+    {},
+    "Open Nexus Page",
+    () => util.opn(`https://www.nexusmods.com/${NEXUS_DOMAIN}`).catch(() => null),
+    () => selectors.activeGameId(context.api.getState()) === GAME_ID,
 );
 ```
 
@@ -384,19 +413,27 @@ context.registerAction(
 
 ```js
 context.registerAction(
-  'mod-context-icons', 200, 'info', {},
-  'Mod Details',
-  (instanceIds) => {
-    const state = context.api.getState();
-    const mod = state.persistent.mods[GAME_ID]?.[instanceIds[0]];
-    context.api.showDialog('info', mod?.attributes?.name ?? 'Mod', {
-      text: `Version: ${mod?.attributes?.version ?? 'unknown'}`,
-    }, [{ label: 'Close' }]);
-  },
-  (instanceIds) => {
-    if (selectors.activeGameId(context.api.getState()) !== GAME_ID) return false;
-    return instanceIds.length === 1 || 'Select exactly one mod';
-  }
+    "mod-context-icons",
+    200,
+    "info",
+    {},
+    "Mod Details",
+    (instanceIds) => {
+        const state = context.api.getState();
+        const mod = state.persistent.mods[GAME_ID]?.[instanceIds[0]];
+        context.api.showDialog(
+            "info",
+            mod?.attributes?.name ?? "Mod",
+            {
+                text: `Version: ${mod?.attributes?.version ?? "unknown"}`,
+            },
+            [{ label: "Close" }],
+        );
+    },
+    (instanceIds) => {
+        if (selectors.activeGameId(context.api.getState()) !== GAME_ID) return false;
+        return instanceIds.length === 1 || "Select exactly one mod";
+    },
 );
 ```
 
@@ -404,13 +441,17 @@ context.registerAction(
 
 ```js
 context.registerAction(
-  'mod-icons', 150, 'deploy', { noCollapse: true }, {},
-  'Deploy Mods',
-  () => {
-    const profileId = selectors.activeProfile(context.api.getState())?.id;
-    context.api.events.emit('deploy-mods', profileId);
-  },
-  () => selectors.activeGameId(context.api.getState()) === GAME_ID
+    "mod-icons",
+    150,
+    "deploy",
+    { noCollapse: true },
+    {},
+    "Deploy Mods",
+    () => {
+        const profileId = selectors.activeProfile(context.api.getState())?.id;
+        context.api.events.emit("deploy-mods", profileId);
+    },
+    () => selectors.activeGameId(context.api.getState()) === GAME_ID,
 );
 ```
 
@@ -419,10 +460,13 @@ context.registerAction(
 ```js
 // registerAction approach:
 context.registerAction(
-  `${GAME_ID}-my-page-toolbar`, 100, 'refresh', {},
-  'Refresh',
-  () => reloadPageData(context.api),
-  () => selectors.activeGameId(context.api.getState()) === GAME_ID
+    `${GAME_ID}-my-page-toolbar`,
+    100,
+    "refresh",
+    {},
+    "Refresh",
+    () => reloadPageData(context.api),
+    () => selectors.activeGameId(context.api.getState()) === GAME_ID,
 );
 ```
 
@@ -430,13 +474,13 @@ context.registerAction(
 
 ## 15. Real Examples in the Codebase
 
-| Pattern | File | Notes |
-| --- | --- | --- |
-| Custom page toolbar group | `Vortex/src/renderer/src/extensions/file_based_loadorder/views/FileBasedLoadOrderPage.tsx:292` | `group="fb-load-order-icons"` with `staticElements` |
-| Multirow footer | `Vortex/src/renderer/src/controls/Table.tsx:429` | `group="${tableId}-multirow-actions"` with `instanceId={selected}` |
-| Single-row context | `Vortex/src/renderer/src/controls/table/TableRow.tsx:435` | `ActionDropdown` with `group="${tableId}-action-icons"` |
-| Badge on page icon | `Vortex/src/renderer/src/extensions/download_management/index.ts` | `new ReduxProp(...)` passed as `badge:` to `registerMainPage` |
-| noCollapse example | Any CB1 extension with `'mod-icons'` | See `mod-icons` calls in game-* index.js files |
+| Pattern                   | File                                                                                           | Notes                                                              |
+| ------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Custom page toolbar group | `Vortex/src/renderer/src/extensions/file_based_loadorder/views/FileBasedLoadOrderPage.tsx:292` | `group="fb-load-order-icons"` with `staticElements`                |
+| Multirow footer           | `Vortex/src/renderer/src/controls/Table.tsx:429`                                               | `group="${tableId}-multirow-actions"` with `instanceId={selected}` |
+| Single-row context        | `Vortex/src/renderer/src/controls/table/TableRow.tsx:435`                                      | `ActionDropdown` with `group="${tableId}-action-icons"`            |
+| Badge on page icon        | `Vortex/src/renderer/src/extensions/download_management/index.ts`                              | `new ReduxProp(...)` passed as `badge:` to `registerMainPage`      |
+| noCollapse example        | Any CB1 extension with `'mod-icons'`                                                           | See `mod-icons` calls in game-\* index.js files                    |
 
 ---
 

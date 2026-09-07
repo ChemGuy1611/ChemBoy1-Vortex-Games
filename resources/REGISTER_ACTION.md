@@ -22,36 +22,36 @@ context.registerAction(
 
 ## IActionOptions
 
-| Field | Type | Description |
-| --- | --- | --- |
-| `noCollapse` | `boolean` | Prevent collapsing into overflow "..." menu |
-| `namespace` | `string` | i18n namespace override |
-| `hollowIcon` | `boolean` | Outline-only icon style |
-| `isClassicOnly` | `boolean` | Visible only in classic layout |
-| `isModernOnly` | `boolean` | Visible only in modern layout |
-| `notice` | `() => string \| undefined` | Extra text read on render, shown bracketed after the title. Unreleased (Vortex `master`, past v2.6.3). |
-| `pinned` | `boolean` | Action stays on a pinning-aware toolbar until the user removes it; toolbars without pinning ignore it. Unreleased (Vortex `master`, past v2.6.3). |
+| Field           | Type                        | Description                                                                                                                                       |
+| --------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `noCollapse`    | `boolean`                   | Prevent collapsing into overflow "..." menu                                                                                                       |
+| `namespace`     | `string`                    | i18n namespace override                                                                                                                           |
+| `hollowIcon`    | `boolean`                   | Outline-only icon style                                                                                                                           |
+| `isClassicOnly` | `boolean`                   | Visible only in classic layout                                                                                                                    |
+| `isModernOnly`  | `boolean`                   | Visible only in modern layout                                                                                                                     |
+| `notice`        | `() => string \| undefined` | Extra text read on render, shown bracketed after the title. Unreleased (Vortex `master`, past v2.6.3).                                            |
+| `pinned`        | `boolean`                   | Action stays on a pinning-aware toolbar until the user removes it; toolbars without pinning ignore it. Unreleased (Vortex `master`, past v2.6.3). |
 
 ---
 
 ## Condition return values
 
-| Return value | Meaning |
-| --- | --- |
-| `true` | Enabled |
-| `false` | Hidden |
-| `string` | Disabled; string shown as tooltip reason |
+| Return value | Meaning                                  |
+| ------------ | ---------------------------------------- |
+| `true`       | Enabled                                  |
+| `false`      | Hidden                                   |
+| `string`     | Disabled; string shown as tooltip reason |
 
 ---
 
 ## Common group strings
 
-| Group | Where it appears |
-| --- | --- |
-| `'mod-icons'` | Mods page toolbar (most common for game extensions) |
-| `'mod-context-icons'` | Mods list single-row right-click menu |
-| `'mods-multirow-actions'` | Mods list multi-row context actions |
-| `'fb-load-order-icons'` | FBLO (file-based) load order page toolbar |
+| Group                     | Where it appears                                    |
+| ------------------------- | --------------------------------------------------- |
+| `'mod-icons'`             | Mods page toolbar (most common for game extensions) |
+| `'mod-context-icons'`     | Mods list single-row right-click menu               |
+| `'mods-multirow-actions'` | Mods list multi-row context actions                 |
+| `'fb-load-order-icons'`   | FBLO (file-based) load order page toolbar           |
 
 Full group list (incl. `global-icons`, `downloads-*`, `categories-icons`, `game-managed-buttons`,
 etc.) and the dynamic `${tableId}-action-icons` / `${tableId}-multirow-actions` table-group
@@ -77,14 +77,15 @@ Vortex resolves an icon name to an SVG `<symbol id="icon-NAME">` in the document
 
 ```js
 context.registerAction(
-  'mod-icons',          // group
-  300,                  // position
-  'open-ext',           // icon name (from icon font)
-  {},                   // options
-  'Open PCGamingWiki',  // title
-  () => {               // action
-    util.opn(PCGAMINGWIKI_URL).catch(() => null);
-  }
+    "mod-icons", // group
+    300, // position
+    "open-ext", // icon name (from icon font)
+    {}, // options
+    "Open PCGamingWiki", // title
+    () => {
+        // action
+        util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
 );
 ```
 
@@ -92,16 +93,19 @@ context.registerAction(
 
 ```js
 context.registerAction(
-  'mod-icons', 300, 'open-ext', {},
-  'Open Config Folder',
-  () => { util.opn(CONFIG_PATH).catch(() => null); },
-  (instanceIds) => {
-    const state = api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID
-      ? true
-      : 'Only available for this game';  // string = disabled with tooltip
-  }
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Config Folder",
+    () => {
+        util.opn(CONFIG_PATH).catch(() => null);
+    },
+    (instanceIds) => {
+        const state = api.getState();
+        const gameId = selectors.activeGameId(state);
+        return gameId === GAME_ID ? true : "Only available for this game"; // string = disabled with tooltip
+    },
 );
 ```
 
@@ -109,15 +113,16 @@ context.registerAction(
 
 ```js
 context.registerAction(
-  'mod-icons',          // group
-  105,                  // position
-  ActivationButton,     // React component
-  {},
-  () => ({              // PropsCallback — returns props for the component
-    t: api.translate,
-    api,
-  }),
-  isGameActive         // condition fn (component form: 3rd arg becomes condition)
+    "mod-icons", // group
+    105, // position
+    ActivationButton, // React component
+    {},
+    () => ({
+        // PropsCallback — returns props for the component
+        t: api.translate,
+        api,
+    }),
+    isGameActive, // condition fn (component form: 3rd arg becomes condition)
 );
 ```
 

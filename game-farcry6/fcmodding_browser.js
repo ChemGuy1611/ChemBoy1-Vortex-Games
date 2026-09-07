@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 // Shared fcmodding.com browser page for Vortex game extensions.
 //
@@ -49,31 +49,31 @@
 // installFcModdingFile, resolveFcModdingFile, isFcModdingFileInstalled,
 // checkFcModdingModUpdates.
 
-const { log } = require('vortex-api');
-const { createBrowserModule } = require('./base_browser');
+const { log } = require("vortex-api");
+const { createBrowserModule } = require("./base_browser");
 
-const SITE_BASE = 'https://downloads.fcmodding.com';
-const SITE_HOST = 'downloads.fcmodding.com';
+const SITE_BASE = "https://downloads.fcmodding.com";
+const SITE_HOST = "downloads.fcmodding.com";
 
 // Mod attributes. A dedicated attribute rather than the standard 'version' one because
 // Vortex's md5 meta lookup can overwrite 'version' with data from an unrelated Nexus match.
 // The version attribute is deliberately the same one fcmodding_downloader.js tracks, so the
 // Mod Installer stays recognised whichever route installed it.
-const DEFAULT_PACKAGE_ATTRIBUTE = 'fcmoddingFile';
-const DEFAULT_VERSION_ATTRIBUTE = 'fcmoddingVersion';
+const DEFAULT_PACKAGE_ATTRIBUTE = "fcmoddingFile";
+const DEFAULT_VERSION_ATTRIBUTE = "fcmoddingVersion";
 
 // Hosts the embedded view stays on: the download host and the project site its assets and
 // header links point at. drive.google.com is deliberately absent - see note 5 above.
-const DEFAULT_ALLOWED_HOSTS = [SITE_HOST, 'fcmodding.com'];
+const DEFAULT_ALLOWED_HOSTS = [SITE_HOST, "fcmodding.com"];
 
 // Sidebar icon: mdi's pine-tree. The site's own mark is antlers over three pine trees above a
 // wordmark, and only the trees survive as a single-colour 24x24 glyph - the vendor's traced
 // SVG is a 649-path potrace in which the antlers are fused to the background texture.
-const DEFAULT_MDI = 'M10,21V18H3L8,13H5L10,8H7L12,3L17,8H14L19,13H16L21,18H14V21H10Z';
+const DEFAULT_MDI = "M10,21V18H3L8,13H5L10,8H7L12,3L17,8H14L19,13H16L21,18H14V21H10Z";
 
 // Sections searched for a file that is not in the game's own, in this order: the shared Mod
 // Installer section, then the tools.
-const SHARED_SECTIONS = ['all', 'others'];
+const SHARED_SECTIONS = ["all", "others"];
 
 // --- config helpers -------------------------------------------------------
 
@@ -92,7 +92,7 @@ function fileKey(ref) {
 const FILE_KEY_RE = /^[A-Za-z0-9._-]+\.(?:zip|rar|7z)$/i;
 
 function parseFileKey(key) {
-  const name = String(key || '');
+  const name = String(key || "");
   return FILE_KEY_RE.test(name) ? { fileName: name } : null;
 }
 
@@ -110,7 +110,7 @@ const VERSIONED_NAME_RE = /^(.+)_(\d{8}-\d{4}|\d+(?:\.\d+)*)(\.[A-Za-z0-9]+)$/;
 //A versioned target file name -> the alias it came from, plus the version it carries
 function aliasFromVersionedName(name) {
   const matched = VERSIONED_NAME_RE.exec(name);
-  return (matched !== null)
+  return matched !== null
     ? { fileName: `${matched[1]}${matched[3]}`, version: matched[2] }
     : { fileName: name, version: null };
 }
@@ -118,7 +118,7 @@ function aliasFromVersionedName(name) {
 //Parse what a download URL reveals. Returns null for anything that is not one of this host's
 //archive downloads, including the opaque ids that redirect to Google Drive.
 function parseDownloadRef(url) {
-  const input = String(url || '');
+  const input = String(url || "");
   const versioned = VERSION_URL_RE.exec(input);
   if (versioned !== null) {
     const parsed = aliasFromVersionedName(decodeURIComponent(versioned[1]));
@@ -155,7 +155,7 @@ async function fetchText(url) {
 
 //Mod page URLs listed by a section index, e.g. /fc5/ -> /fc5/resistance-mod/
 function modPageUrls(section, html) {
-  const pattern = new RegExp(`https://downloads\\.fcmodding\\.com/${section}/[a-z0-9-]+/`, 'gi');
+  const pattern = new RegExp(`https://downloads\\.fcmodding\\.com/${section}/[a-z0-9-]+/`, "gi");
   return Array.from(new Set(html.match(pattern) || []));
 }
 
@@ -180,7 +180,7 @@ function parseModPage(pageUrl, html) {
   }
   return {
     pageUrl,
-    title: title ? title[1].trim().replace(TITLE_PREFIX_RE, '') : null,
+    title: title ? title[1].trim().replace(TITLE_PREFIX_RE, "") : null,
     version: version ? version[1] : null,
     files,
   };
@@ -194,12 +194,13 @@ async function scanSection(section) {
     try {
       const page = parseModPage(pageUrl, await fetchText(pageUrl));
       for (const fileName of page.files) {
-        if (!entries.has(fileName)) { //first page to offer a file owns it
+        if (!entries.has(fileName)) {
+          //first page to offer a file owns it
           entries.set(fileName, { pageUrl, title: page.title, version: page.version });
         }
       }
     } catch (err) {
-      log('debug', `Could not read fcmodding mod page ${pageUrl}: ${err}`);
+      log("debug", `Could not read fcmodding mod page ${pageUrl}: ${err}`);
     }
   }
   return entries;
@@ -207,11 +208,14 @@ async function scanSection(section) {
 
 function sectionEntries(section) {
   if (!sectionCache.has(section)) {
-    sectionCache.set(section, scanSection(section).catch((err) => {
-      log('warn', `Could not read the fcmodding ${section} section: ${err}`);
-      sectionCache.delete(section); //a failed scan must not be cached as an empty catalog
-      return new Map();
-    }));
+    sectionCache.set(
+      section,
+      scanSection(section).catch((err) => {
+        log("warn", `Could not read the fcmodding ${section} section: ${err}`);
+        sectionCache.delete(section); //a failed scan must not be cached as an empty catalog
+        return new Map();
+      }),
+    );
   }
   return sectionCache.get(section);
 }
@@ -236,10 +240,10 @@ async function lookupCatalog(config, fileName) {
 //hundreds of megabytes.
 async function resolveDownloadUrl(fileName) {
   try {
-    const response = await fetch(filesUrl(fileName), { method: 'HEAD' });
+    const response = await fetch(filesUrl(fileName), { method: "HEAD" });
     return response.url || null;
   } catch (err) {
-    log('debug', `Could not resolve the fcmodding download for ${fileName}: ${err}`);
+    log("debug", `Could not resolve the fcmodding download for ${fileName}: ${err}`);
     return null;
   }
 }
@@ -250,18 +254,22 @@ async function resolveFcModdingFile(config, ref) {
   const fileName = String(ref.fileName);
   const entry = await lookupCatalog(config, fileName);
   const resolvedUrl = await resolveDownloadUrl(fileName);
-  if ((resolvedUrl !== null) && !resolvedUrl.includes(SITE_HOST)) {
-    log('info', `fcmodding file ${fileName} redirects off-host to ${resolvedUrl} - not installable from here`);
+  if (resolvedUrl !== null && !resolvedUrl.includes(SITE_HOST)) {
+    log(
+      "info",
+      `fcmodding file ${fileName} redirects off-host to ${resolvedUrl} - not installable from here`,
+    );
     return null;
   }
-  const fromUrl = (resolvedUrl !== null)
-    ? aliasFromVersionedName(decodeURIComponent(resolvedUrl.split('/').pop()))
-    : { version: null };
+  const fromUrl =
+    resolvedUrl !== null
+      ? aliasFromVersionedName(decodeURIComponent(resolvedUrl.split("/").pop()))
+      : { version: null };
   const version = ref.version || fromUrl.version || entry?.version || null;
   return {
     fileName,
     name: entry?.title || fileName,
-    version: (version !== null) ? String(version) : '',
+    version: version !== null ? String(version) : "",
     //the versioned target rather than the alias, so two builds of the same mod do not collide
     //in the download folder under one name
     downloadUrl: resolvedUrl || filesUrl(fileName),
@@ -271,7 +279,7 @@ async function resolveFcModdingFile(config, ref) {
 
 //Recognise a finished download as an fcmodding one (returns null when it is anything else)
 function downloadRef(download) {
-  for (const url of (download.urls || [])) {
+  for (const url of download.urls || []) {
     const ref = parseDownloadRef(url);
     if (ref !== null) {
       return ref;
@@ -286,7 +294,7 @@ function downloadRef(download) {
 //them segment by segment as numbers orders both: 4.52 above 4.9 because 52 > 9, and two builds
 //from the same day by their time half, which semver coercion drops.
 function versionSegments(version) {
-  return (String(version || '').match(/\d+/g) || []).map(Number);
+  return (String(version || "").match(/\d+/g) || []).map(Number);
 }
 
 function compareVersions(left, right) {
@@ -295,7 +303,7 @@ function compareVersions(left, right) {
   for (let i = 0; i < Math.max(a.length, b.length); i += 1) {
     const diff = (a[i] || 0) - (b[i] || 0);
     if (diff !== 0) {
-      return (diff > 0) ? 1 : -1;
+      return diff > 0 ? 1 : -1;
     }
   }
   return 0;
@@ -313,19 +321,19 @@ function isNewerBuild(latest, installed) {
 // --- the adapter ----------------------------------------------------------
 
 const adapter = {
-  id: 'fcmodding',
-  label: 'fcmodding.com',
+  id: "fcmodding",
+  label: "fcmodding.com",
   defaults: {
     packageAttribute: DEFAULT_PACKAGE_ATTRIBUTE,
     versionAttribute: DEFAULT_VERSION_ATTRIBUTE,
     allowedHosts: DEFAULT_ALLOWED_HOSTS,
-    icon: 'search',
+    icon: "search",
     mdi: DEFAULT_MDI,
-    pageTitle: 'Browse Far Cry Mods',
-    homeTooltip: 'Back to the game downloads',
+    pageTitle: "Browse Far Cry Mods",
+    homeTooltip: "Back to the game downloads",
   },
   dependencies: false, //the site publishes no dependency data of any kind
-  unresolvedMessage: 'downloads.fcmodding.com is unreachable, or this download is hosted elsewhere',
+  unresolvedMessage: "downloads.fcmodding.com is unreachable, or this download is hosted elsewhere",
 
   homeUrl,
   refKey: fileKey,

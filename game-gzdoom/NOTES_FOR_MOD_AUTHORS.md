@@ -6,13 +6,13 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| Dml | - | `DML` |
-| Gzdoom | a file or folder named `uzdoom.exe` | `DML\FILE\PORT\gzdoom` |
-| Wad | a file or folder named one of: `doom.wad`, `doom2.wad`, `freedoom.wad` or `nerve.wad` and a file with one of these extensions: `.iwad` or `.ipk3` | `DML\FILE\IWAD` |
-| Mod | a file with one of these extensions: `.wad`, `.pk3`, `.zip`, `.pak`, `.pk7`, `.grp`, `.rff`, `.deh`, `.iwad` or `.ipk3` | `DML\FILE\PWAD` |
-| Zipmod | - | - |
+| Mod Type | Archive must contain                                                                                                                              | Installs to            |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| Dml      | -                                                                                                                                                 | `DML`                  |
+| Gzdoom   | a file or folder named `uzdoom.exe`                                                                                                               | `DML\FILE\PORT\gzdoom` |
+| Wad      | a file or folder named one of: `doom.wad`, `doom2.wad`, `freedoom.wad` or `nerve.wad` and a file with one of these extensions: `.iwad` or `.ipk3` | `DML\FILE\IWAD`        |
+| Mod      | a file with one of these extensions: `.wad`, `.pk3`, `.zip`, `.pak`, `.pk7`, `.grp`, `.rff`, `.deh`, `.iwad` or `.ipk3`                           | `DML\FILE\PWAD`        |
+| Zipmod   | -                                                                                                                                                 | -                      |
 
 Paths are relative to the game's install folder.
 
@@ -49,4 +49,3 @@ Handled by the `testZipContent` installer. Inspect the extension source for the 
 - Archives that contain a FOMOD installer (a `fomod` folder with `ModuleConfig.xml`) are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

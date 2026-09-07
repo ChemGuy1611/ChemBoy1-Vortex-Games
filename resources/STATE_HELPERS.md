@@ -7,12 +7,12 @@ Immutable state manipulation and Redux dispatch helpers from the `util` namespac
 ## Batch dispatch
 
 ```js
-import { util, actions } from 'vortex-api';
+import { util, actions } from "vortex-api";
 
 // Never dispatch in a loop — always batch
 util.batchDispatch(api.store, [
-  actions.setModAttribute(gameId, modId, 'version', '1.0'),
-  actions.setModAttribute(gameId, modId, 'author', 'foo'),
+    actions.setModAttribute(gameId, modId, "version", "1.0"),
+    actions.setModAttribute(gameId, modId, "author", "foo"),
 ]);
 ```
 
@@ -21,9 +21,9 @@ util.batchDispatch(api.store, [
 ## Safe deep read
 
 ```js
-util.getSafe(state, ['persistent', 'mods', gameId, modId], undefined)
+util.getSafe(state, ["persistent", "mods", gameId, modId], undefined);
 // case-insensitive key lookup:
-util.getSafeCI(state, ['persistent', 'mods', gameId, modId], undefined)
+util.getSafeCI(state, ["persistent", "mods", gameId, modId], undefined);
 ```
 
 `path` elements may be `undefined` without throwing.
@@ -34,32 +34,32 @@ util.getSafeCI(state, ['persistent', 'mods', gameId, modId], undefined)
 
 All functions return **new state**; never mutate in-place inside a reducer spec.
 
-| Function | Description |
-| --- | --- |
-| `util.setSafe(state, path, value)` | Deep set — creates intermediate keys |
-| `util.setOrNop(state, path, value)` | Set only if the path already exists |
-| `util.changeOrNop(state, path, value)` | Set only if the value differs |
-| `util.deleteOrNop(state, path)` | Delete key at path |
-| `util.merge(state, path, value)` | Shallow-merge object at path |
-| `util.deepMerge(lhs, rhs)` | Deep merge (no state path) |
-| `util.mutateSafe(state, path, value)` | Mutating variant — only valid outside reducers |
-| `util.pushSafe(state, path, value)` | Append to array at path |
-| `util.addUniqueSafe(state, path, value)` | Append only if not already present |
-| `util.removeValue(state, path, value)` | Remove value from array at path |
-| `util.removeValueIf(state, path, predicate)` | Remove all elements matching predicate |
+| Function                                     | Description                                    |
+| -------------------------------------------- | ---------------------------------------------- |
+| `util.setSafe(state, path, value)`           | Deep set — creates intermediate keys           |
+| `util.setOrNop(state, path, value)`          | Set only if the path already exists            |
+| `util.changeOrNop(state, path, value)`       | Set only if the value differs                  |
+| `util.deleteOrNop(state, path)`              | Delete key at path                             |
+| `util.merge(state, path, value)`             | Shallow-merge object at path                   |
+| `util.deepMerge(lhs, rhs)`                   | Deep merge (no state path)                     |
+| `util.mutateSafe(state, path, value)`        | Mutating variant — only valid outside reducers |
+| `util.pushSafe(state, path, value)`          | Append to array at path                        |
+| `util.addUniqueSafe(state, path, value)`     | Append only if not already present             |
+| `util.removeValue(state, path, value)`       | Remove value from array at path                |
+| `util.removeValueIf(state, path, predicate)` | Remove all elements matching predicate         |
 
 ---
 
 ## Misc
 
 ```js
-util.setdefault(obj, key, defaultValue)
+util.setdefault(obj, key, defaultValue);
 // Like Python dict.setdefault — assigns and returns defaultValue if key missing
 
-util.rehydrate(state, inbound, path, replace, defaults)
+util.rehydrate(state, inbound, path, replace, defaults);
 // Merge persisted state on store hydration (used in registerReducer specs)
 
-util.makeReactive(value)
+util.makeReactive(value);
 // Wrap a value so property assignments trigger React re-renders
 ```
 
@@ -68,12 +68,11 @@ util.makeReactive(value)
 ## Reducer spec pattern
 
 ```js
-context.registerReducer(['persistent', 'settings', gameId], {
-  defaults: { configPath: '' },
-  reducers: {
-    [actions.setConfigPath]: (state, payload) =>
-      util.setSafe(state, ['configPath'], payload),
-  },
+context.registerReducer(["persistent", "settings", gameId], {
+    defaults: { configPath: "" },
+    reducers: {
+        [actions.setConfigPath]: (state, payload) => util.setSafe(state, ["configPath"], payload),
+    },
 });
 ```
 

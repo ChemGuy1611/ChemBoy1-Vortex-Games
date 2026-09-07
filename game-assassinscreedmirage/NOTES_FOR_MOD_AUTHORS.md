@@ -6,10 +6,10 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| AnvilToolkit (tool) | a `anviltoolkit.exe` file | - |
-| Forger | a file with the `.forger2` extension | - |
+| Mod Type            | Archive must contain                 | Installs to |
+| ------------------- | ------------------------------------ | ----------- |
+| AnvilToolkit (tool) | a `anviltoolkit.exe` file            | -           |
+| Forger              | a file with the `.forger2` extension | -           |
 
 Paths are relative to the game's install folder.
 
@@ -33,4 +33,3 @@ Recognised when the archive contains a file with the `.forger2` extension.
 
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

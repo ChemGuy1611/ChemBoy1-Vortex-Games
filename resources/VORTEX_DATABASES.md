@@ -17,9 +17,9 @@ The per-user store is never deleted when Multi-User Mode is switched on, so on a
 
 Two overrides exist:
 
-| Situation | Folder |
-| --- | --- |
-| `--user-data <path>` on the command line | the given path |
+| Situation                                  | Folder                   |
+| ------------------------------------------ | ------------------------ |
+| `--user-data <path>` on the command line   | the given path           |
 | Source build (`Vortex` repo, `pnpm start`) | `%APPDATA%\@vortex\main` |
 
 The active folder can also be confirmed from a log line at startup or from `startup.json`, which sits next to the stores and records `storeVersion` (the app version that last wrote them).
@@ -28,10 +28,10 @@ The active folder can also be confirmed from a log line at startup or from `star
 
 ## The two stores
 
-| Directory | Contents |
-| --- | --- |
+| Directory  | Contents                                                                                                                        |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `state.v2` | The persisted Redux state — the whole application. Typically 5–15 MiB, hundreds of thousands of keys on a heavily used install. |
-| `metadb` | Nexus mod-metadata cache, keyed by file hash. Populated by MD5 lookups during install and by download metadata. |
+| `metadb`   | Nexus mod-metadata cache, keyed by file hash. Populated by MD5 lookups during install and by download metadata.                 |
 
 Other files in the same folder are Chromium's, not Vortex's: `Cache`, `Code Cache`, `GPUCache`, `Local Storage`, `IndexedDB`, `Session Storage`, `Network`, `DIPS`, `SharedStorage`, `blob_storage`. They hold browser-level state for the Electron window and contain nothing about mods.
 
@@ -43,14 +43,14 @@ A handful of plain JSON sidecars sit alongside the stores and are read before th
 
 Both stores are ordinary LevelDB directories:
 
-| File | Role |
-| --- | --- |
-| `NNNNNN.ldb` | Sorted string table (SST). Compacted, immutable, snappy-compressed blocks. |
-| `NNNNNN.log` | Write-ahead log. Holds writes not yet compacted into a table. |
-| `MANIFEST-NNNNNN` | Version edits — which tables belong to which level. |
-| `CURRENT` | One line naming the live manifest. |
-| `LOCK` | Held exclusively by the process that has the database open. |
-| `LOG` / `LOG.old` | LevelDB's own human-readable activity log (compactions, recovery). |
+| File              | Role                                                                       |
+| ----------------- | -------------------------------------------------------------------------- |
+| `NNNNNN.ldb`      | Sorted string table (SST). Compacted, immutable, snappy-compressed blocks. |
+| `NNNNNN.log`      | Write-ahead log. Holds writes not yet compacted into a table.              |
+| `MANIFEST-NNNNNN` | Version edits — which tables belong to which level.                        |
+| `CURRENT`         | One line naming the live manifest.                                         |
+| `LOCK`            | Held exclusively by the process that has the database open.                |
+| `LOG` / `LOG.old` | LevelDB's own human-readable activity log (compactions, recovery).         |
 
 Vortex 2.x reaches this data through DuckDB rather than a LevelDB binding, but **the disk format is unchanged**. `src/main/src/store/DuckDBSingleton.ts` loads a custom DuckDB extension called `level_pivot` and runs:
 
@@ -88,37 +88,37 @@ Deleting a path removes the exact key **and every descendant** (`key = $1 OR sta
 
 Five top-level hives exist. Key counts below are from a real install with ~180 discovered games, to give a sense of proportion.
 
-| Hive | Share | What is in it |
-| --- | --- | --- |
-| `persistent` | ~97% | Everything that survives restarts and belongs to the user's data, not their preferences. |
-| `settings` | ~2% | User preferences and per-game configuration. |
-| `app` | ~1% | Installed extension inventory, app version, instance id, completed migrations. |
-| `confidential` | 3 keys | Nexus OAuth token and refresh token. **Treat as secret.** |
-| `user` | 1 key | `multiUser` only — the bootstrap flag described above. |
+| Hive           | Share  | What is in it                                                                            |
+| -------------- | ------ | ---------------------------------------------------------------------------------------- |
+| `persistent`   | ~97%   | Everything that survives restarts and belongs to the user's data, not their preferences. |
+| `settings`     | ~2%    | User preferences and per-game configuration.                                             |
+| `app`          | ~1%    | Installed extension inventory, app version, instance id, completed migrations.           |
+| `confidential` | 3 keys | Nexus OAuth token and refresh token. **Treat as secret.**                                |
+| `user`         | 1 key  | `multiUser` only — the bootstrap flag described above.                                   |
 
 Paths worth knowing, all verified against a live store:
 
-| Path | Value |
-| --- | --- |
-| `app###appVersion` | Vortex version that wrote the store |
-| `app###migrations` | Array of completed migration ids |
-| `app###extensions###<folder name>###version` | Installed extension version, plus `modId`, `fileId`, `author`, `path`, `type`, `endorsed` |
-| `settings###gameMode###discovered###<gameId>###path` | Game install folder; absent means the game was never discovered |
-| `settings###gameMode###discovered###<gameId>###tools###<toolId>###*` | Registered and user-added tools |
-| `settings###mods###installPath###<gameId>` | Staging folder, may contain `{game}` / `{USERDATA}` placeholders |
-| `settings###downloads###path` | Download folder |
-| `settings###profiles###activeProfileId` | Currently active profile |
-| `settings###profiles###lastActiveProfile###<gameId>` | Per-game last active profile id |
-| `persistent###mods###<gameId>###<modId>###attributes###*` | Everything the Mods page shows: version, fileId, modId, fileMD5, installTime, category, source |
-| `persistent###mods###<gameId>###<modId>###type` | Mod type id |
-| `persistent###profiles###<profileId>###gameId` / `name` / `lastActivated` | Profile header |
-| `persistent###profiles###<profileId>###modState###<modId>###enabled` | Per-profile enable state — **enablement is a property of the profile, not the mod** |
-| `persistent###loadOrder###<profileId>` | FBLO load order (array, or per-entry children) |
-| `persistent###ue4ssLoadOrder` / `persistent###logicModsLoadOrder` | Secondary load-order pages registered by UE4-5 extensions |
-| `persistent###downloads###files###<downloadId>###*` | Download archive records — usually the largest single subtree |
-| `persistent###deployment###deploymentCounter###<gameId>` | Deployment counter |
-| `persistent###categories###<gameId>###*` | Category tree |
-| `persistent###nexus###userInfo###*` | Logged-in account: name, userId, premium/supporter flags |
+| Path                                                                      | Value                                                                                          |
+| ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `app###appVersion`                                                        | Vortex version that wrote the store                                                            |
+| `app###migrations`                                                        | Array of completed migration ids                                                               |
+| `app###extensions###<folder name>###version`                              | Installed extension version, plus `modId`, `fileId`, `author`, `path`, `type`, `endorsed`      |
+| `settings###gameMode###discovered###<gameId>###path`                      | Game install folder; absent means the game was never discovered                                |
+| `settings###gameMode###discovered###<gameId>###tools###<toolId>###*`      | Registered and user-added tools                                                                |
+| `settings###mods###installPath###<gameId>`                                | Staging folder, may contain `{game}` / `{USERDATA}` placeholders                               |
+| `settings###downloads###path`                                             | Download folder                                                                                |
+| `settings###profiles###activeProfileId`                                   | Currently active profile                                                                       |
+| `settings###profiles###lastActiveProfile###<gameId>`                      | Per-game last active profile id                                                                |
+| `persistent###mods###<gameId>###<modId>###attributes###*`                 | Everything the Mods page shows: version, fileId, modId, fileMD5, installTime, category, source |
+| `persistent###mods###<gameId>###<modId>###type`                           | Mod type id                                                                                    |
+| `persistent###profiles###<profileId>###gameId` / `name` / `lastActivated` | Profile header                                                                                 |
+| `persistent###profiles###<profileId>###modState###<modId>###enabled`      | Per-profile enable state — **enablement is a property of the profile, not the mod**            |
+| `persistent###loadOrder###<profileId>`                                    | FBLO load order (array, or per-entry children)                                                 |
+| `persistent###ue4ssLoadOrder` / `persistent###logicModsLoadOrder`         | Secondary load-order pages registered by UE4-5 extensions                                      |
+| `persistent###downloads###files###<downloadId>###*`                       | Download archive records — usually the largest single subtree                                  |
+| `persistent###deployment###deploymentCounter###<gameId>`                  | Deployment counter                                                                             |
+| `persistent###categories###<gameId>###*`                                  | Category tree                                                                                  |
+| `persistent###nexus###userInfo###*`                                       | Logged-in account: name, userId, premium/supporter flags                                       |
 
 `metadb` does not use `###` paths. Its keys are opaque strings:
 
@@ -140,10 +140,10 @@ The `.ldb` tables are **not** locked and can be read freely at any time.
 
 That produces two modes:
 
-| Vortex state | What is readable | Accuracy |
-| --- | --- | --- |
-| Closed | Everything, including the write-ahead log | Exact |
-| Running | `.ldb` tables only | Complete except for writes made since the last compaction |
+| Vortex state | What is readable                          | Accuracy                                                  |
+| ------------ | ----------------------------------------- | --------------------------------------------------------- |
+| Closed       | Everything, including the write-ahead log | Exact                                                     |
+| Running      | `.ldb` tables only                        | Complete except for writes made since the last compaction |
 
 The gap is real, not theoretical: a freshly installed mod or a load order changed a minute ago may still be sitting in the WAL. On an active session the WAL can hold a hundred-plus keys. Compaction folds it into a table within a few MB of writes, so the gap closes on its own, but for a definitive read close Vortex first.
 

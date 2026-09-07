@@ -1,16 +1,16 @@
-const { actions, fs, util, selectors, log } = require('vortex-api');
-const path = require('path');
-const GAME_ID = 'placeholder';
-const api = require('vortex-api'); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
+const { actions, fs, util, selectors, log } = require("vortex-api");
+const path = require("path");
+const GAME_ID = "placeholder";
+const api = require("vortex-api"); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 const spec = { game: { id: GAME_ID } }; //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 const context = { api }; //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 
 // BEPINEX BLEEDING EDGE REQUIREMENT /////////////////////////////////////
-const { downloadBepinexBe, checkForBepinexBeUpdate } = require('./bepinexbe_downloader');
+const { downloadBepinexBe, checkForBepinexBeUpdate } = require("./bepinexbe_downloader");
 const BEPINEX_ID = `${GAME_ID}-bepinex`; //mod type id for the requirement (register the mod type + installer in index.js as usual)
 const BEPINEX_NAME = "BepInEx";
-const BEP_BE_VER = '785'; //fallback build if the builds.bepinex.dev index page is unreachable
-const BEP_BE_COMMIT = '6abdba4'; //git commit for the fallback build - only used to build the fallback URL
+const BEP_BE_VER = "785"; //fallback build if the builds.bepinex.dev index page is unreachable
+const BEP_BE_COMMIT = "6abdba4"; //git commit for the fallback build - only used to build the fallback URL
 const BEPINEX_URL = `https://builds.bepinex.dev/projects/bepinex_be/${BEP_BE_VER}/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.${BEP_BE_VER}%2B${BEP_BE_COMMIT}.zip`;
 const BEPINEX_BE_REQUIREMENTS = [
   {
@@ -42,18 +42,27 @@ async function setup(api, gameSpec) {
 }
 
 // *** In context.once() function ////////////////////
-  api.onAsync('check-mods-version', (gameId, mods, forced) => {
-    if (gameId !== GAME_ID) return;
-    return checkForBepinexBeUpdate(api, spec, BEPINEX_BE_REQUIREMENTS)
-      .catch(err => log('warn', `Failed to check for ${BEPINEX_NAME} update: ${err}`));
-  }); //*/
+api.onAsync("check-mods-version", (gameId, mods, forced) => {
+  if (gameId !== GAME_ID) return;
+  return checkForBepinexBeUpdate(api, spec, BEPINEX_BE_REQUIREMENTS).catch((err) =>
+    log("warn", `Failed to check for ${BEPINEX_NAME} update: ${err}`),
+  );
+}); //*/
 
 // *** In applyGame() function ////////////////////
-  //register a toolbar button to (re)download the latest build
-  context.registerAction('mod-icons', 300, 'open-ext', {}, `Download Latest ${BEPINEX_NAME}`, () => {
+//register a toolbar button to (re)download the latest build
+context.registerAction(
+  "mod-icons",
+  300,
+  "open-ext",
+  {},
+  `Download Latest ${BEPINEX_NAME}`,
+  () => {
     downloadBepinexBe(context.api, spec, BEPINEX_BE_REQUIREMENTS, false);
-  }, () => {
+  },
+  () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
-  }); //*/
+  },
+); //*/

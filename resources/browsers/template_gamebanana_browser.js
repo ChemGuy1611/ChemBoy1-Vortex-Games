@@ -1,12 +1,12 @@
-const { selectors, log } = require('vortex-api');
-const path = require('path');
-const GAME_ID = 'placeholder';
-const api = require('vortex-api'); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
+const { selectors, log } = require("vortex-api");
+const path = require("path");
+const GAME_ID = "placeholder";
+const api = require("vortex-api"); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 const spec = { game: { id: GAME_ID } }; //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 const context = { api }; //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 const GB_REQUIREMENTS = []; //DUMMY PLACEHOLDER - the array from template_gamebanana_downloader.js
 const downloadGameBananaRequirement = () => null; //DUMMY PLACEHOLDER - imported from gamebanana_downloader.js
-const MOD_PATH = path.join('Mods'); //DUMMY PLACEHOLDER - the adopter's mod folder
+const MOD_PATH = path.join("Mods"); //DUMMY PLACEHOLDER - the adopter's mod folder
 
 // GAMEBANANA BROWSER ////////////////////////////////////////////////
 // A sidebar page that embeds the live gamebanana.com site. The user browses the real
@@ -15,15 +15,16 @@ const MOD_PATH = path.join('Mods'); //DUMMY PLACEHOLDER - the adopter's mod fold
 // The adopter must carry TWO files beside index.js: gamebanana_browser.js and base_browser.js,
 // which it requires from beside itself. Copying only the first fails at require time.
 const gamebananaBrowser = true; //toggle - set false to leave the page unregistered
-const { registerGameBananaBrowser, onceGameBananaBrowser } = require('./gamebanana_browser');
-const GB_GAME_ID = '0000'; //GameBanana game id - https://gamebanana.com/games/0000 (from _aGame._idRow on any of the game's submissions)
+const { registerGameBananaBrowser, onceGameBananaBrowser } = require("./gamebanana_browser");
+const GB_GAME_ID = "0000"; //GameBanana game id - https://gamebanana.com/games/0000 (from _aGame._idRow on any of the game's submissions)
 const GB_BROWSER_CONFIG = {
   gbGameId: GB_GAME_ID,
   requirements: GB_REQUIREMENTS, //optional - submissions the extension manages itself, so they install to their own mod type
-  installRequirement: (api, gameSpec, requirement) => //optional - required only when requirements is set
+  installRequirement: (api, gameSpec, requirement) =>
+    //optional - required only when requirements is set
     downloadGameBananaRequirement(api, gameSpec, requirement, true),
   pageId: `${GAME_ID}-gamebanana-browse`, //optional (default shown)
-  pageTitle: 'Browse GameBanana', //optional - sidebar label
+  pageTitle: "Browse GameBanana", //optional - sidebar label
   //hotkey: 'G', //optional - Ctrl+Shift+<key>. Pick a free one: Vortex logs "hotkey already used" and drops the second claim (B is taken)
   //gbSection: 'mods', //optional - section the page opens on (default shown); e.g. 'tools', 'sounds'
   //homeUrl: 'https://gamebanana.com/games/0000', //optional - full override for the home URL, e.g. the game's hub page instead of one section
@@ -62,28 +63,36 @@ const GB_BROWSER_CONFIG = {
 
 // *** In setup() function ////////////////////
 async function setup(discovery) {
-  const fs = require('vortex-api').fs; //DUMMY PLACEHOLDER - use the extension's existing import
+  const fs = require("vortex-api").fs; //DUMMY PLACEHOLDER - use the extension's existing import
   await fs.ensureDirWritableAsync(path.join(discovery.path, MOD_PATH)); //browsed mods need their target folder to exist
 }
 
 // *** In applyGame() function ////////////////////
-  if (gamebananaBrowser) {
-    registerGameBananaBrowser(context, spec, GB_BROWSER_CONFIG);
-  } //*/
+if (gamebananaBrowser) {
+  registerGameBananaBrowser(context, spec, GB_BROWSER_CONFIG);
+} //*/
 
 // *** In context.once() function ////////////////////
-  if (gamebananaBrowser) {
-    onceGameBananaBrowser(context.api, spec, GB_BROWSER_CONFIG);
-  } //*/
+if (gamebananaBrowser) {
+  onceGameBananaBrowser(context.api, spec, GB_BROWSER_CONFIG);
+} //*/
 
 // *** Optional: a toolbar button that opens the page's site in the system browser ////////////////////
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open GameBanana Page', () => {
-    const { util } = require('vortex-api');
+context.registerAction(
+  "mod-icons",
+  300,
+  "open-ext",
+  {},
+  "Open GameBanana Page",
+  () => {
+    const { util } = require("vortex-api");
     util.opn(`https://gamebanana.com/games/${GB_GAME_ID}`).catch(() => null);
-  }, () => {
+  },
+  () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
-  }); //*/
+  },
+); //*/
 
-log('debug', `${setup}`); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
+log("debug", `${setup}`); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT

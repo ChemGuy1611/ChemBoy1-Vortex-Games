@@ -6,12 +6,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| Reloaded-II (mod loader) | a `reloaded-ii.exe` file | - |
-| XXX Reloadedmodloader | a file or folder named `modconfig.json` and a file or folder named `XXX.modloader.dll` | `Reloaded\Mods\XXX_Mod_Loader` |
-| XXX Reloadedmod | a file or folder named `modconfig.json` | `Reloaded\Mods` |
-| Fallback Installer | anything not matched above | - |
+| Mod Type                 | Archive must contain                                                                   | Installs to                    |
+| ------------------------ | -------------------------------------------------------------------------------------- | ------------------------------ |
+| Reloaded-II (mod loader) | a `reloaded-ii.exe` file                                                               | -                              |
+| XXX Reloadedmodloader    | a file or folder named `modconfig.json` and a file or folder named `XXX.modloader.dll` | `Reloaded\Mods\XXX_Mod_Loader` |
+| XXX Reloadedmod          | a file or folder named `modconfig.json`                                                | `Reloaded\Mods`                |
+| Fallback Installer       | anything not matched above                                                             | -                              |
 
 Paths are relative to the game's install folder.
 
@@ -58,4 +58,3 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

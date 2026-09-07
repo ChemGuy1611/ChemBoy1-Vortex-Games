@@ -20,11 +20,11 @@ the Nexus `site` domain, `REF_FILE` `dinput8.dll`, `REF_URL`
 allowlist of engine DLLs (`nvngx_dlss.dll`, `dstorage.dll`, `dstoragecore.dll`,
 `amd_fidelityfx_dx12.dll`, `amd_ags_x64.dll`, `libxess.dll`) used to recognise a root-folder mod.
 
-| Mod type | Priority | Target |
-| --- | --- | --- |
-| `ROOT_ID`, `LOOSELUA_ID`, `FLUFFY_ID`, `REF_ID` | spec | `{gamePath}` |
-| `FLUFFYMOD_ID` | 25 | Fluffy mods folder |
-| `PRESET_ID` | 40 | Fluffy presets folder |
+| Mod type                                        | Priority | Target                |
+| ----------------------------------------------- | -------- | --------------------- |
+| `ROOT_ID`, `LOOSELUA_ID`, `FLUFFY_ID`, `REF_ID` | spec     | `{gamePath}`          |
+| `FLUFFYMOD_ID`                                  | 25       | Fluffy mods folder    |
+| `PRESET_ID`                                     | 40       | Fluffy presets folder |
 
 **Installers:** `FLUFFY` 25 → `REF` 27 → `LOOSELUA` 29 → `ROOT` 31 → `PRESET` 33 → then, at 49,
 either `FLUFFYMOD` (when `reZip` is off) or `FLUFFYMOD-zip` (when it is on).

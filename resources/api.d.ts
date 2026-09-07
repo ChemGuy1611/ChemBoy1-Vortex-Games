@@ -1,31 +1,97 @@
+import { FSWatcher, Stats, WriteStream, constants } from "fs";
+import { ClientRequest, IncomingMessage } from "http";
+import { Readable } from "stream";
+
+import {
+  EndorsedStatus,
+  ICollection,
+  ICollectionManifest,
+  ICollectionSearchOptions,
+  ICollectionSearchResult,
+  IDownloadURL,
+  IFeedbackResponse,
+  IFileInfo,
+  IIssue,
+  IModFileContentPage,
+  IModFileContentPageQuery,
+  IModFileContentSearchFilter,
+  IModInfo,
+  IModRequirements,
+  IPreference,
+  IPreferenceQuery,
+  IRevision,
+  RatingOptions,
+} from "@nexusmods/nexus-api";
 import * as Promise$1 from "bluebird";
 import PromiseBB, { default as PromiseBB$1 } from "bluebird";
-import { IHashResult, ILookupResult, IModInfo as IModInfo$1, IQuery, IReference, IReference as IReference$1, IReference as IReference$2, IRule, IRule as IRule$1, IServer } from "modmeta-db";
+import { BrowserWindow } from "electron";
+import * as fs from "fs-extra";
+import I18next, { TFunction, TOptions, i18n } from "i18next";
+import {
+  IHashResult,
+  ILookupResult,
+  IModInfo as IModInfo$1,
+  IQuery,
+  IReference,
+  IReference as IReference$1,
+  IReference as IReference$2,
+  IRule,
+  IRule as IRule$1,
+  IServer,
+} from "modmeta-db";
+import SevenZip from "node-7z";
+import {
+  accessSync,
+  appendFileSync,
+  closeSync,
+  createReadStream,
+  createWriteStream,
+  linkSync,
+  openSync,
+  readFileSync,
+  readdirSync,
+  statSync,
+  symlinkSync,
+  watch,
+  writeFileSync,
+  writeSync,
+} from "original-fs";
 import * as React$2 from "react";
 import React$1, { CSSProperties, FC, MouseEventHandler, ReactNode } from "react";
+import {
+  Button,
+  Dropdown,
+  DropdownButton,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+  ModalTitle,
+  NavItem,
+  Overlay,
+  OverlayTrigger,
+  SelectCallback,
+} from "react-bootstrap";
+import { WithTranslation } from "react-i18next";
+import { ReactSelectProps } from "react-select";
 import * as Redux from "redux";
 import { Action, AnyAction } from "redux";
 import * as reduxAct from "redux-act";
 import { ComplexActionCreator } from "redux-act";
 import { ThunkAction, ThunkDispatch } from "redux-thunk";
-import { EndorsedStatus, ICollection, ICollectionManifest, ICollectionSearchOptions, ICollectionSearchResult, IDownloadURL, IFeedbackResponse, IFileInfo, IIssue, IModFileContentPage, IModFileContentPageQuery, IModFileContentSearchFilter, IModInfo, IModRequirements, IPreference, IPreferenceQuery, IRevision, RatingOptions } from "@nexusmods/nexus-api";
-import I18next, { TFunction, TOptions, i18n } from "i18next";
-import { BrowserWindow } from "electron";
-import SevenZip from "node-7z";
-import * as semver from "semver";
-import * as fs from "fs-extra";
-import { FSWatcher, Stats, WriteStream, constants } from "fs";
-import { accessSync, appendFileSync, closeSync, createReadStream, createWriteStream, linkSync, openSync, readFileSync, readdirSync, statSync, symlinkSync, watch, writeFileSync, writeSync } from "original-fs";
-import { ClientRequest, IncomingMessage } from "http";
-import { Readable } from "stream";
-import { Button, Dropdown, DropdownButton, Modal, ModalBody, ModalFooter, ModalHeader, ModalTitle, NavItem, Overlay, OverlayTrigger, SelectCallback } from "react-bootstrap";
-import { WithTranslation } from "react-i18next";
-import { ReactSelectProps } from "react-select";
 import { OutputSelector } from "reselect";
+import * as semver from "semver";
 //#endregion
 //#region lib/extensions/download_management/types/IDownload.d.ts
 type RedownloadMode = "always" | "never" | "ask" | "replace";
-type DownloadState = "init" | "started" | "paused" | "finalizing" | "finished" | "failed" | "redirect";
+type DownloadState =
+  | "init"
+  | "started"
+  | "paused"
+  | "finalizing"
+  | "finished"
+  | "failed"
+  | "redirect";
 interface IDownloadFailCause {
   htmlFile?: string;
   message?: string;
@@ -237,7 +303,13 @@ interface IDownloadsAPIExtension {
   removeDownload?: (downloadId: string, options?: IDownloadRemoveOptions) => Promise<void>;
   pauseDownload?: (downloadId: string) => Promise<void>;
   resumeDownload?: (downloadId: string, options?: IStartDownloadOptions) => Promise<void>;
-  startDownload?: (urls: string[], modInfo: any, fileName: string, redownload?: RedownloadMode, options?: IStartDownloadOptions) => Promise<IDownloadResult>;
+  startDownload?: (
+    urls: string[],
+    modInfo: any,
+    fileName: string,
+    redownload?: RedownloadMode,
+    options?: IStartDownloadOptions,
+  ) => Promise<IDownloadResult>;
 }
 //#endregion
 //#region lib/extensions/file_based_loadorder/types/types.d.ts
@@ -290,11 +362,13 @@ interface ILoadOrderGameInfo {
    * Extension developers are able to provide a custom item renderer for the
    *  load order page. This will get rendered instead of the default one.
    */
-  customItemRenderer?: React.ComponentType<React.PropsWithChildren<{
-    className?: string;
-    item: IItemRendererProps;
-    forwardedRef?: (ref: any) => void;
-  }>>;
+  customItemRenderer?: React.ComponentType<
+    React.PropsWithChildren<{
+      className?: string;
+      item: IItemRendererProps;
+      forwardedRef?: (ref: any) => void;
+    }>
+  >;
   /**
    * Set to true if a custom item renderer produces rows of a single, uniform
    *  height. The load order page virtualizes long lists (rendering only the
@@ -562,7 +636,10 @@ interface IGameStore {
    * in the game root directory.
    * The fallback function can be used to invoke the "default" behavior on top.
    */
-  identifyGame?: (gamePath: string, fallback: (gamePath: string) => PromiseLike<boolean>) => PromiseBB$1<boolean>;
+  identifyGame?: (
+    gamePath: string,
+    fallback: (gamePath: string) => PromiseLike<boolean>,
+  ) => PromiseBB$1<boolean>;
 }
 //#endregion
 //#region lib/util/GameStoreHelper.d.ts
@@ -588,12 +665,15 @@ declare class GameStoreHelper {
   isGameInstalled(id: string, storeId?: string): PromiseBB$1<string | undefined>;
   isGameStoreInstalled(storeId: string): PromiseBB$1<boolean>;
   registryLookup(lookup: string): PromiseBB$1<IGameStoreEntry>;
-  find: (query: {
-    [storeId: string]: IQueryArgEntry;
-  }) => PromiseBB$1<IGameStoreEntry[]>;
+  find: (query: { [storeId: string]: IQueryArgEntry }) => PromiseBB$1<IGameStoreEntry[]>;
   findByName(name: string | string[], storeId?: string): PromiseBB$1<IGameStoreEntry>;
   findByAppId(appId: string | string[], storeId?: string): PromiseBB$1<IGameStoreEntry>;
-  launchGameStore(api: IExtensionApi, gameStoreId: string, parameters?: string[], askConsent?: boolean): PromiseBB$1<void>;
+  launchGameStore(
+    api: IExtensionApi,
+    gameStoreId: string,
+    parameters?: string[],
+    askConsent?: boolean,
+  ): PromiseBB$1<void>;
   identifyStore: (gamePath: string) => PromiseBB$1<string>;
   reloadGames(api?: IExtensionApi): PromiseBB$1<void>;
   /**
@@ -804,9 +884,11 @@ type VortexErrorKind = keyof VortexErrorKindMap;
  *
  * @public
  */
-type VortexErrorData = { [K in VortexErrorKind]: {
-  kind: K;
-} & VortexErrorKindMap[K]; }[VortexErrorKind];
+type VortexErrorData = {
+  [K in VortexErrorKind]: {
+    kind: K;
+  } & VortexErrorKindMap[K];
+}[VortexErrorKind];
 /**
  * The one error class Vortex constructs. Identity lives in `data.kind`,
  * not in the class prototype, because prototype identity doesn't survive
@@ -819,9 +901,11 @@ type VortexErrorData = { [K in VortexErrorKind]: {
  */
 declare class VortexError<out K extends VortexErrorKind = VortexErrorKind> extends Error {
   /** Error data keyed on the error kind. */
-  readonly data: { [P in K]: {
-    kind: P;
-  } & VortexErrorKindMap[P]; }[K];
+  readonly data: {
+    [P in K]: {
+      kind: P;
+    } & VortexErrorKindMap[P];
+  }[K];
   /**
    * Whether the root cause is transient (retrying may succeed without any
    * other change), e.g. too many open files, a resource temporarily busy.
@@ -841,12 +925,18 @@ declare class VortexError<out K extends VortexErrorKind = VortexErrorKind> exten
    *   actually knows the underlying cause is temporary.
    * @param meta.cause The underlying error/value this one wraps, if any.
    */
-  constructor(message: string, data: { [P in K]: {
-    kind: P;
-  } & VortexErrorKindMap[P]; }[K], meta?: {
-    isTransient?: boolean;
-    cause?: unknown;
-  });
+  constructor(
+    message: string,
+    data: {
+      [P in K]: {
+        kind: P;
+      } & VortexErrorKindMap[P];
+    }[K],
+    meta?: {
+      isTransient?: boolean;
+      cause?: unknown;
+    },
+  );
 }
 interface ReportableError {
   message: string;
@@ -1237,13 +1327,13 @@ declare enum HealthCheckCategory {
   Requirements = "requirements",
   Tools = "tools",
   Performance = "performance",
-  Legacy = "legacy"
+  Legacy = "legacy",
 }
 declare enum HealthCheckSeverity {
   Info = "info",
   Warning = "warning",
   Error = "error",
-  Critical = "critical"
+  Critical = "critical",
 }
 declare enum HealthCheckTrigger {
   Manual = "manual",
@@ -1255,7 +1345,7 @@ declare enum HealthCheckTrigger {
   SettingsChanged = "settings-changed",
   PluginsChanged = "plugins-changed",
   LootUpdated = "loot-updated",
-  Scheduled = "scheduled"
+  Scheduled = "scheduled",
 }
 interface IHealthCheckResult<TMetadata = unknown> {
   checkId: string;
@@ -1274,7 +1364,10 @@ interface IHealthCheckResult<TMetadata = unknown> {
  * must poll it and return early: the registry cannot stop a body that ignores it, and holds the
  * check's slot until the body returns.
  */
-type HealthCheckFunction = (api: IExtensionApi, signal?: AbortSignal) => Promise<IHealthCheckResult>;
+type HealthCheckFunction = (
+  api: IExtensionApi,
+  signal?: AbortSignal,
+) => Promise<IHealthCheckResult>;
 type HealthCheckFixFunction = (api: IExtensionApi) => Promise<void>;
 interface IHealthCheck {
   id: string;
@@ -1319,7 +1412,11 @@ interface IModCheckContext {
   readFile: (path: string) => Promise<Buffer>;
   attributes: Record<string, unknown>;
 }
-type PerModCheckFunction = (api: IExtensionApi, mod: IModCheckContext, signal?: AbortSignal) => Promise<IHealthCheckResult>;
+type PerModCheckFunction = (
+  api: IExtensionApi,
+  mod: IModCheckContext,
+  signal?: AbortSignal,
+) => Promise<IHealthCheckResult>;
 /**
  * Per-mod variant of IHealthCheck. The registry iterates installed mods for the
  * active game, calls `checkMod` per mod, and aggregates the results.
@@ -1335,7 +1432,9 @@ interface IModHealthCheck extends Omit<IHealthCheck, "check" | "fix"> {
 /**
  * Type guard distinguishing the per-mod variant from a normal IHealthCheck.
  */
-declare function isModHealthCheck(hc: IHealthCheck | IModHealthCheck | ILegacyTestAdapter): hc is IModHealthCheck;
+declare function isModHealthCheck(
+  hc: IHealthCheck | IModHealthCheck | ILegacyTestAdapter,
+): hc is IModHealthCheck;
 //#endregion
 //#region lib/extensions/health_check/reducers/session.d.ts
 interface IHealthCheckSessionState {
@@ -1408,7 +1507,12 @@ interface IHeaderImage {
   height: number;
 }
 type OrderType = "AlphaAsc" | "AlphaDesc" | "Explicit";
-type GroupType = "SelectAtLeastOne" | "SelectAtMostOne" | "SelectExactlyOne" | "SelectAll" | "SelectAny";
+type GroupType =
+  | "SelectAtLeastOne"
+  | "SelectAtMostOne"
+  | "SelectExactlyOne"
+  | "SelectAll"
+  | "SelectAny";
 type PluginType = "Required" | "Optional" | "Recommended" | "NotUsable" | "CouldBeUsable";
 interface IPlugin {
   id: number;
@@ -1445,16 +1549,18 @@ interface IInstallerState {
   installSteps: IInstallStep[];
   currentStep: number;
 }
-type IChoices = {
-  name: string;
-  groups: {
-    name: string;
-    choices: {
+type IChoices =
+  | {
       name: string;
-      idx: number;
-    }[];
-  }[];
-}[] | undefined;
+      groups: {
+        name: string;
+        choices: {
+          name: string;
+          idx: number;
+        }[];
+      }[];
+    }[]
+  | undefined;
 type IChoiceType = {
   type: string;
   options: IChoices;
@@ -1696,7 +1802,12 @@ interface IProfile {
  * a newly added ModState is NOT silently absorbed. The rest are collection-only lifecycle
  * states with no IMod equivalent.
  */
-type CollectionModStatus = keyof Pick<Record<ModState, true>, "downloading" | "downloaded" | "installing" | "installed"> | "pending" | "failed" | "ignored" | "optional";
+type CollectionModStatus =
+  | keyof Pick<Record<ModState, true>, "downloading" | "downloaded" | "installing" | "installed">
+  | "pending"
+  | "failed"
+  | "ignored"
+  | "optional";
 /**
  * Information about a mod's installation within a collection
  */
@@ -1844,7 +1955,17 @@ interface ILink {
   id?: string;
   action?: (dismiss: () => void, id: string) => void;
 }
-type DialogContentItem = "htmlFile" | "htmlText" | "text" | "message" | "bbcode" | "md" | "checkboxes" | "choices" | "input" | "links";
+type DialogContentItem =
+  | "htmlFile"
+  | "htmlText"
+  | "text"
+  | "message"
+  | "bbcode"
+  | "md"
+  | "checkboxes"
+  | "choices"
+  | "input"
+  | "links";
 interface IDialogContent {
   htmlFile?: string;
   /**
@@ -2067,14 +2188,18 @@ interface IPersistor {
   setItem(key: PersistorKey, value: string): PromiseLike<void>;
   removeItem(key: PersistorKey): PromiseLike<void>;
   getAllKeys(): PromiseLike<PersistorKey[]>;
-  getAllKVs?(prefix?: string): PromiseLike<Array<{
-    key: PersistorKey;
-    value: string;
-  }>>;
-  bulkSetItem?(items: ReadonlyArray<{
-    key: PersistorKey;
-    value: string;
-  }>): PromiseLike<void>;
+  getAllKVs?(prefix?: string): PromiseLike<
+    Array<{
+      key: PersistorKey;
+      value: string;
+    }>
+  >;
+  bulkSetItem?(
+    items: ReadonlyArray<{
+      key: PersistorKey;
+      value: string;
+    }>,
+  ): PromiseLike<void>;
   bulkRemoveItem?(keys: ReadonlyArray<PersistorKey>): PromiseLike<void>;
 }
 interface IPosition {
@@ -2142,9 +2267,12 @@ type ExtensionLoadFailureDependency = {
     version?: string;
   };
 };
-type IExtensionLoadFailure = {
-  id: "unsupported-api" | "unsupported-version";
-} | ExtensionLoadFailureException | ExtensionLoadFailureDependency;
+type IExtensionLoadFailure =
+  | {
+      id: "unsupported-api" | "unsupported-version";
+    }
+  | ExtensionLoadFailureException
+  | ExtensionLoadFailureDependency;
 interface IExtensionOptional {
   id: string;
   extensionPath: string;
@@ -2473,19 +2601,28 @@ interface IOverlaysState {
  * @interface IState
  */
 interface ICollectionsPersistentState {
-  collections: Record<string, {
-    timestamp: number;
-    info: ICollection;
-  }>;
-  revisions: Record<string, {
-    timestamp: number;
-    info: IRevision;
-  }>;
-  pendingVotes: Record<string, {
-    collectionSlug: string;
-    revisionNumber: number;
-    time: number;
-  }>;
+  collections: Record<
+    string,
+    {
+      timestamp: number;
+      info: ICollection;
+    }
+  >;
+  revisions: Record<
+    string,
+    {
+      timestamp: number;
+      info: IRevision;
+    }
+  >;
+  pendingVotes: Record<
+    string,
+    {
+      collectionSlug: string;
+      revisionNumber: number;
+      time: number;
+    }
+  >;
 }
 interface IState {
   app: IApp;
@@ -2654,7 +2791,10 @@ interface IGame extends ITool {
    * @param store id of the store the game was detected through
    *
    */
-  requiresLauncher?: (gamePath: string, store?: string) => PromiseBB$1<{
+  requiresLauncher?: (
+    gamePath: string,
+    store?: string,
+  ) => PromiseBB$1<{
     launcher: string;
     addInfo?: any;
   }>;
@@ -2868,22 +3008,34 @@ interface ILoadOrderDisplayItem {
   official?: boolean;
   message?: string;
   contextMenuActions?: IActionDefinitionEx[];
-  condition?: (lhs: ILoadOrderDisplayItem, rhs: ILoadOrderDisplayItem, predictedResult: ILoadOrderDisplayItem[]) => IDnDConditionResult;
+  condition?: (
+    lhs: ILoadOrderDisplayItem,
+    rhs: ILoadOrderDisplayItem,
+    predictedResult: ILoadOrderDisplayItem[],
+  ) => IDnDConditionResult;
 }
 interface IGameLoadOrderEntry {
   gameId: string;
   gameArtURL: string;
   displayCheckboxes?: boolean;
   noCollectionGeneration?: boolean;
-  createInfoPanel: (props: IInfoPanelProps) => string | React.ComponentType<React.PropsWithChildren<unknown>>;
-  preSort?: (items: ILoadOrderDisplayItem[], sortDir: SortType, updateType?: UpdateType) => Promise$1<ILoadOrderDisplayItem[]>;
+  createInfoPanel: (
+    props: IInfoPanelProps,
+  ) => string | React.ComponentType<React.PropsWithChildren<unknown>>;
+  preSort?: (
+    items: ILoadOrderDisplayItem[],
+    sortDir: SortType,
+    updateType?: UpdateType,
+  ) => Promise$1<ILoadOrderDisplayItem[]>;
   filter?: (mods: IMod[]) => IMod[];
   callback?: (loadOrder: ILoadOrder, updateType?: UpdateType) => void;
-  itemRenderer?: React.ComponentType<React.PropsWithChildren<{
-    className?: string;
-    item: ILoadOrderDisplayItem;
-    onRef: (ref: any) => any;
-  }>>;
+  itemRenderer?: React.ComponentType<
+    React.PropsWithChildren<{
+      className?: string;
+      item: ILoadOrderDisplayItem;
+      onRef: (ref: any) => any;
+    }>
+  >;
 }
 //#endregion
 //#region lib/util/getNormalizeFunc.d.ts
@@ -2904,7 +3056,10 @@ interface INormalizeParameters {
  * @param {string} path
  * @returns {PromiseBB<Normalize>}
  */
-declare function getNormalizeFunc(testPath: string, parameters?: INormalizeParameters): PromiseBB$1<Normalize>;
+declare function getNormalizeFunc(
+  testPath: string,
+  parameters?: INormalizeParameters,
+): PromiseBB$1<Normalize>;
 /**
  * creates a proxy for a dictionary that makes all key access normalized with the specified
  * normalization function
@@ -3098,7 +3253,12 @@ interface IDeploymentMethod {
    *
    * @memberOf IDeploymentMethod
    */
-  prepare: (dataPath: string, clean: boolean, lastActivation: IDeployedFile[], normalize: Normalize) => PromiseLike<void>;
+  prepare: (
+    dataPath: string,
+    clean: boolean,
+    lastActivation: IDeployedFile[],
+    normalize: Normalize,
+  ) => PromiseLike<void>;
   /**
    * called after an activate call was made for all active mods,
    * in case this activator needs to do postprocessing
@@ -3114,7 +3274,12 @@ interface IDeploymentMethod {
    *
    * @memberOf IDeploymentMethod
    */
-  finalize: (gameId: string, dataPath: string, installationPath: string, progressCB?: (files: number, total: number) => void) => PromiseLike<IDeployedFile[]>;
+  finalize: (
+    gameId: string,
+    dataPath: string,
+    installationPath: string,
+    progressCB?: (files: number, total: number) => void,
+  ) => PromiseLike<IDeployedFile[]>;
   /**
    * if defined, this gets called instead of finalize if an error occurred since prepare was called.
    * This allows the deployment method to reset all state without actually doing anything in case
@@ -3133,7 +3298,12 @@ interface IDeploymentMethod {
    *
    * @memberOf IDeploymentMethod
    */
-  activate: (sourcePath: string, sourceName: string, deployPath: string, blackList: Set<string>) => PromiseLike<void>;
+  activate: (
+    sourcePath: string,
+    sourceName: string,
+    deployPath: string,
+    blackList: Set<string>,
+  ) => PromiseLike<void>;
   /**
    * deactivate the specified mod, removing all files it has deployed to the destination
    * @param {string} sourcePath source where the mod is installed
@@ -3165,7 +3335,12 @@ interface IDeploymentMethod {
    *
    * @memberOf IDeploymentMethod
    */
-  purge: (installPath: string, dataPath: string, gameId?: string, onProgress?: (num: number, total: number) => void) => PromiseLike<void>;
+  purge: (
+    installPath: string,
+    dataPath: string,
+    gameId?: string,
+    onProgress?: (num: number, total: number) => void,
+  ) => PromiseLike<void>;
   /**
    * called after mods were purged. If multiple mod types wer purged, this is only called
    * after they are all done.
@@ -3180,7 +3355,12 @@ interface IDeploymentMethod {
    *
    * @memberOf IDeploymentMethod
    */
-  externalChanges: (gameId: string, installPath: string, dataPath: string, activation: IDeployedFile[]) => PromiseLike<IFileChange[]>;
+  externalChanges: (
+    gameId: string,
+    installPath: string,
+    dataPath: string,
+    activation: IDeployedFile[],
+  ) => PromiseLike<IFileChange[]>;
   /**
    * given a file path (relative to a staging path), return the name under which the
    * file would be deployed.
@@ -3199,7 +3379,17 @@ interface IDeploymentMethod {
 }
 //#endregion
 //#region lib/extensions/mod_management/types/IInstallResult.d.ts
-type InstructionType = "copy" | "mkdir" | "submodule" | "generatefile" | "iniedit" | "unsupported" | "attribute" | "setmodtype" | "error" | "rule";
+type InstructionType =
+  | "copy"
+  | "mkdir"
+  | "submodule"
+  | "generatefile"
+  | "iniedit"
+  | "unsupported"
+  | "attribute"
+  | "setmodtype"
+  | "error"
+  | "rule";
 interface IInstruction {
   type: InstructionType;
   path?: string;
@@ -3226,7 +3416,11 @@ interface IDeployOptions {
 //#region lib/extensions/mod_management/types/IModsAPIExtension.d.ts
 interface IModsAPIExtension {
   awaitNextPhaseDeployment?: () => Promise<void>;
-  awaitModsDeployment?: (profileId?: string, progressCB?: (text: string, percent: number) => void, deployOptions?: IDeployOptions) => Promise<void>;
+  awaitModsDeployment?: (
+    profileId?: string,
+    progressCB?: (text: string, percent: number) => void,
+    deployOptions?: IDeployOptions,
+  ) => Promise<void>;
 }
 //#endregion
 //#region lib/extensions/mod_management/types/InstallFunc.d.ts
@@ -3238,7 +3432,16 @@ interface IInstallationDetails {
   hasCSScripts?: boolean;
   isTrusted?: boolean;
 }
-type InstallFunc = (files: string[], destinationPath: string, gameId: string, progressDelegate: ProgressDelegate, choices?: IChoiceType, unattended?: boolean, archivePath?: string, options?: IInstallationDetails) => PromiseLike<IInstallResult>;
+type InstallFunc = (
+  files: string[],
+  destinationPath: string,
+  gameId: string,
+  progressDelegate: ProgressDelegate,
+  choices?: IChoiceType,
+  unattended?: boolean,
+  archivePath?: string,
+  options?: IInstallationDetails,
+) => PromiseLike<IInstallResult>;
 //#endregion
 //#region lib/extensions/mod_management/types/TestSupported.d.ts
 interface ISupportedResult {
@@ -3249,7 +3452,12 @@ interface ITestSupportedDetails {
   hasXmlConfigXML?: boolean;
   hasCSScripts?: boolean;
 }
-type TestSupported = (files: string[], gameId: string, archivePath?: string, details?: ITestSupportedDetails) => PromiseLike<ISupportedResult>;
+type TestSupported = (
+  files: string[],
+  gameId: string,
+  archivePath?: string,
+  details?: ITestSupportedDetails,
+) => PromiseLike<ISupportedResult>;
 //#endregion
 //#region lib/extensions/nexus_integration/types/IValidateKeyData.d.ts
 /**
@@ -3278,35 +3486,89 @@ interface IValidateKeyDataV2 extends IValidateKeyData, IMembership, Partial<IPre
 //#endregion
 //#region lib/extensions/nexus_integration/types/INexusAPIExtension.d.ts
 interface INexusAPIExtension {
-  nexusCheckModsVersion?: (gameId: string, mods: {
-    [modId: string]: IMod;
-  }, forceFull: boolean | "silent") => void;
-  nexusDownload?: (gameId: string, modId: number, fileId: number, fileName?: string, allowInstall?: boolean) => PromiseLike<string>;
+  nexusCheckModsVersion?: (
+    gameId: string,
+    mods: {
+      [modId: string]: IMod;
+    },
+    forceFull: boolean | "silent",
+  ) => void;
+  nexusDownload?: (
+    gameId: string,
+    modId: number,
+    fileId: number,
+    fileName?: string,
+    allowInstall?: boolean,
+  ) => PromiseLike<string>;
   nexusGetCollection?: (slug: string) => PromiseLike<ICollection>;
   nexusGetCollections?: (gameId: string) => PromiseLike<Partial<ICollection>[] | undefined>;
-  nexusSearchCollections?: (options: ICollectionSearchOptions) => PromiseLike<ICollectionSearchResult>;
-  nexusGetMyCollections?: (gameId: string, count?: number, offset?: number) => PromiseLike<IRevision[]>;
+  nexusSearchCollections?: (
+    options: ICollectionSearchOptions,
+  ) => PromiseLike<ICollectionSearchResult>;
+  nexusGetMyCollections?: (
+    gameId: string,
+    count?: number,
+    offset?: number,
+  ) => PromiseLike<IRevision[]>;
   nexusResolveCollectionUrl?: (apiLink: string) => PromiseLike<IDownloadURL[]>;
-  nexusGetCollectionRevision?: (collectionSlug: string, revisionNumber: number) => PromiseLike<IRevision>;
+  nexusGetCollectionRevision?: (
+    collectionSlug: string,
+    revisionNumber: number,
+  ) => PromiseLike<IRevision>;
   nexusRateCollectionRevision?: (revisionId: number, rating: RatingOptions) => PromiseLike<any>;
   nexusGetLatestMods?: (gameId: string) => PromiseLike<any>;
   nexusGetTrendingMods?: (gameId: string) => PromiseLike<any>;
-  nexusEndorseDirect?: (gameId: string, nexusId: number, version: string, endorsedStatus: EndorsedStatus) => PromiseLike<EndorsedStatus>;
+  nexusEndorseDirect?: (
+    gameId: string,
+    nexusId: number,
+    version: string,
+    endorsedStatus: EndorsedStatus,
+  ) => PromiseLike<EndorsedStatus>;
   nexusEndorseMod?: (gameId: string, modId: string, endorsedStatus: EndorsedStatus) => void;
-  nexusSubmitFeedback?: (title: string, message: string, hash: string, feedbackFiles: string[], anonymous: boolean, callback: (err: Error, response?: IFeedbackResponse) => void) => void;
-  nexusSubmitCollection?: (collectionInfo: ICollectionManifest, assetFilePath: string, collectionId: number, callback: (err: Error, response?: any) => void) => void;
+  nexusSubmitFeedback?: (
+    title: string,
+    message: string,
+    hash: string,
+    feedbackFiles: string[],
+    anonymous: boolean,
+    callback: (err: Error, response?: IFeedbackResponse) => void,
+  ) => void;
+  nexusSubmitCollection?: (
+    collectionInfo: ICollectionManifest,
+    assetFilePath: string,
+    collectionId: number,
+    callback: (err: Error, response?: any) => void,
+  ) => void;
   nexusModUpdate?: (gameId: string, modId: number, fileId: number, source: string) => void;
-  nexusOpenCollectionPage?: (gameId: string, collectionSlug: string, revisionNumber: number, source: string) => void;
+  nexusOpenCollectionPage?: (
+    gameId: string,
+    collectionSlug: string,
+    revisionNumber: number,
+    source: string,
+  ) => void;
   nexusOpenModPage?: (gameId: string, modId: string, source: string) => void;
   nexusRequestNexusLogin?: (callback: any) => void;
   nexusRequestOwnIssues?: (cb: (err: Error, issues?: IIssue[]) => void) => void;
   nexusRetrieveCategoryList?: (isUpdate: boolean) => void;
   nexusGetModFiles?: (gameId: string, modId: number) => PromiseLike<IFileInfo[]>;
-  nexusDownloadUpdate?: (source: string, gameId: string, modId: string, fileId: string, versionPattern: string, campaign: string, referenceTag?: string) => PromiseLike<{
+  nexusDownloadUpdate?: (
+    source: string,
+    gameId: string,
+    modId: string,
+    fileId: string,
+    versionPattern: string,
+    campaign: string,
+    referenceTag?: string,
+  ) => PromiseLike<{
     error: Error;
     dlId?: string;
   }>;
-  nexusModFileContents?: (query: IModFileContentPageQuery, filter?: IModFileContentSearchFilter, offset?: number, count?: number) => PromiseLike<Partial<IModFileContentPage>>;
+  nexusModFileContents?: (
+    query: IModFileContentPageQuery,
+    filter?: IModFileContentSearchFilter,
+    offset?: number,
+    count?: number,
+  ) => PromiseLike<Partial<IModFileContentPage>>;
   nexusGetPreferences?: (query: IPreferenceQuery) => PromiseLike<Partial<IPreference>>;
   nexusGetModInfo?: (gameId: string, modId: number) => PromiseLike<Partial<IModInfo>>;
   nexusGetModRequirements?: (uids: string[]) => PromiseLike<{
@@ -3411,28 +3673,31 @@ type InstallerMatchMode = "any" | "all";
  * an archive. Directory entries (paths ending in path-sep) are filtered out
  * before evaluation in all modes.
  */
-type IInstallerMatch = {
-  kind: "extensions";
-  list: readonly string[];
-  mode: InstallerMatchMode;
-} | {
-  kind: "regex";
-  patterns: readonly RegExp[];
-  mode: InstallerMatchMode;
-} | {
-  kind: "filename";
-  names: readonly string[];
-  mode: InstallerMatchMode;
-} |
-/** Any file matches any of `game.details.stopPatterns` for the active game. */
-{
-  kind: "stopPatterns";
-} |
-/** Escape hatch: caller-supplied predicate over the (raw) file list. */
-{
-  kind: "custom";
-  predicate: (files: string[]) => boolean;
-};
+type IInstallerMatch =
+  | {
+      kind: "extensions";
+      list: readonly string[];
+      mode: InstallerMatchMode;
+    }
+  | {
+      kind: "regex";
+      patterns: readonly RegExp[];
+      mode: InstallerMatchMode;
+    }
+  | {
+      kind: "filename";
+      names: readonly string[];
+      mode: InstallerMatchMode;
+    }
+  /** Any file matches any of `game.details.stopPatterns` for the active game. */
+  | {
+      kind: "stopPatterns";
+    }
+  /** Escape hatch: caller-supplied predicate over the (raw) file list. */
+  | {
+      kind: "custom";
+      predicate: (files: string[]) => boolean;
+    };
 /**
  * How matched files are turned into install instructions. `declareInstallers`
  * always emits `copy` instructions for every non-directory entry; this struct
@@ -3461,7 +3726,10 @@ interface IInstallerSpec {
   install: IInstallerInstall;
 }
 /** Public signature of the install function `declareInstallers` synthesises. */
-type InstallerSpecInstallFunc = (files: string[], destinationPath: string) => Promise<IInstallResult>;
+type InstallerSpecInstallFunc = (
+  files: string[],
+  destinationPath: string,
+) => Promise<IInstallResult>;
 //#endregion
 //#region lib/types/ITestResult.d.ts
 type ProblemSeverity = "warning" | "error" | "fatal";
@@ -3670,7 +3938,12 @@ interface ITableAttribute<T = any> {
    * Also note that table cells using customRenderer will do more unnecessary rerenders than a
    * calc-based field so please use customRenderer only when necessary.
    */
-  customRenderer?: (object: T | T[], detailCell: boolean, t: TFunction$1, props: ICustomProps) => JSX.Element;
+  customRenderer?: (
+    object: T | T[],
+    detailCell: boolean,
+    t: TFunction$1,
+    props: ICustomProps,
+  ) => JSX.Element;
   /**
    * determine the display value for this attribute. This is used for display if customRenderer is
    * not specified. It's also used for sorting the table so unless isSortable is false and a
@@ -3806,7 +4079,11 @@ interface IStarterInfo {
   extensionPath: string;
   logoName: string;
 }
-type OnShowErrorFunc = (message: string, details?: string | Error | any, allowReport?: boolean) => void;
+type OnShowErrorFunc = (
+  message: string,
+  details?: string | Error | any,
+  allowReport?: boolean,
+) => void;
 /**
  * wrapper for information about a game or tool, combining static and runtime/discovery information
  * for the purpose of actually starting them in a uniform way.
@@ -3817,7 +4094,11 @@ type OnShowErrorFunc = (message: string, details?: string | Error | any, allowRe
 declare class StarterInfo implements IStarterInfo {
   static getGameIcon(game: IGameStored, gameDiscovery: IDiscoveryResult): string;
   static toolIconRW(gameId: string, toolId: string): string;
-  static run(info: IStarterInfo, api: IExtensionApi, onShowError: OnShowErrorFunc): PromiseBB$1<any>;
+  static run(
+    info: IStarterInfo,
+    api: IExtensionApi,
+    onShowError: OnShowErrorFunc,
+  ): PromiseBB$1<any>;
   static getIconPath(info: IStarterInfo): string;
   private static runDirectly;
   private static runThroughLauncher;
@@ -3850,7 +4131,12 @@ declare class StarterInfo implements IStarterInfo {
   logoName: string;
   timestamp: number;
   store: string;
-  constructor(game: IGameStored, gameDiscovery: IDiscoveryResult, tool?: IToolStored, toolDiscovery?: IDiscoveredTool);
+  constructor(
+    game: IGameStored,
+    gameDiscovery: IDiscoveryResult,
+    tool?: IToolStored,
+    toolDiscovery?: IDiscoveredTool,
+  );
   private initFromGame;
   private initFromTool;
 }
@@ -3907,11 +4193,19 @@ interface IReferenceIdentifiers {
   fileIds?: string[];
   condition?: () => boolean;
 }
-declare function testRefByIdentifiers(identifiers: IReferenceIdentifiers, ref: IModReference): boolean;
-declare function testModReference(mod: IMod | IModLookupInfo, reference: IModReference, source?: {
-  gameId: string;
-  modId: string;
-}, fuzzyVersion?: boolean): boolean;
+declare function testRefByIdentifiers(
+  identifiers: IReferenceIdentifiers,
+  ref: IModReference,
+): boolean;
+declare function testModReference(
+  mod: IMod | IModLookupInfo,
+  reference: IModReference,
+  source?: {
+    gameId: string;
+    modId: string;
+  },
+  fuzzyVersion?: boolean,
+): boolean;
 /**
  * Find the rule whose reference matches a mod - the inverse of findModByRef (which finds a mod by a
  * reference). Answers "which of these rules applies to / pulled in this mod"; pass a mod's or a
@@ -3944,7 +4238,11 @@ interface MixpanelEvent {
 declare class CollectionsDraftedEvent implements MixpanelEvent {
   readonly eventName = "collection_drafted";
   readonly properties: Record<string, any>;
-  constructor(collection_name: string, game_name: string, creation_method: "from_profile" | "quick_collection" | "empty");
+  constructor(
+    collection_name: string,
+    game_name: string,
+    creation_method: "from_profile" | "quick_collection" | "empty",
+  );
 }
 /**
  * Event sent when a new draft collection is uploaded.
@@ -3987,7 +4285,13 @@ declare class CollectionsDownloadClickedEvent implements MixpanelEvent {
 declare class CollectionsDownloadCompletedEvent implements MixpanelEvent {
   readonly eventName = "collections_download_completed";
   readonly properties: Record<string, any>;
-  constructor(collection_id: string, revision_id: string, game_id: number, file_size: number, duration_ms: number);
+  constructor(
+    collection_id: string,
+    revision_id: string,
+    game_id: number,
+    file_size: number,
+    duration_ms: number,
+  );
 }
 /**
  * Event sent when a collection download fails.
@@ -4000,7 +4304,13 @@ declare class CollectionsDownloadCompletedEvent implements MixpanelEvent {
 declare class CollectionsDownloadFailedEvent implements MixpanelEvent {
   readonly eventName = "collections_download_failed";
   readonly properties: Record<string, any>;
-  constructor(collection_id: string, revision_id: string, game_id: number, error_code: string, error_message: string);
+  constructor(
+    collection_id: string,
+    revision_id: string,
+    game_id: number,
+    error_code: string,
+    error_message: string,
+  );
 }
 /**
  * Event sent when a collection download is cancelled.
@@ -4076,10 +4386,12 @@ declare class CollectionsInstallationCompletedEvent implements MixpanelEvent {
 declare class CollectionsInstallationFailedEvent implements MixpanelEvent {
   readonly eventName = "collections_installation_failed";
   readonly properties: Record<string, any>;
-  constructor(props: CollectionInstallOutcomeProps & {
-    failure_stage: "member_install" | "postprocessing";
-    error_code?: string;
-  });
+  constructor(
+    props: CollectionInstallOutcomeProps & {
+      failure_stage: "member_install" | "postprocessing";
+      error_code?: string;
+    },
+  );
 }
 /**
  * Event sent when a collection installation is cancelled (user abandon, removal, free-user cancel).
@@ -4096,7 +4408,15 @@ declare class CollectionsInstallationCancelledEvent implements MixpanelEvent {
  * user-driven changes. Install-completion enables are not represented here: they are covered
  * by the mods_installation_* events, so no enable is emitted for them.
  */
-type ModChangeReason = "user_manual" | "variant_replace" | "version_update" | "profile_replace" | "collection_update" | "collection_uninstall" | "stop_managing_game" | "health_check";
+type ModChangeReason =
+  | "user_manual"
+  | "variant_replace"
+  | "version_update"
+  | "profile_replace"
+  | "collection_update"
+  | "collection_uninstall"
+  | "stop_managing_game"
+  | "health_check";
 //#endregion
 //#region lib/extensions/mod_management/types/IRemoveModOptions.d.ts
 interface IRemoveModOptions {
@@ -4119,20 +4439,37 @@ declare const willRemoveProfile: reduxAct.ComplexActionCreator1<unknown, unknown
 /**
  * enable or disable a mod in a profile
  */
-declare const setModEnabled: reduxAct.ComplexActionCreator3<string, string, boolean, {
-  profileId: string;
-  modId: string;
-  enable: boolean;
-}, {}>;
-declare const forgetMod: reduxAct.ComplexActionCreator2<string, string, {
-  profileId: string;
-  modId: string;
-}, {}>;
-declare const setFeature: reduxAct.ComplexActionCreator3<string, string, any, {
-  profileId: string;
-  featureId: string;
-  value: any;
-}, {}>;
+declare const setModEnabled: reduxAct.ComplexActionCreator3<
+  string,
+  string,
+  boolean,
+  {
+    profileId: string;
+    modId: string;
+    enable: boolean;
+  },
+  {}
+>;
+declare const forgetMod: reduxAct.ComplexActionCreator2<
+  string,
+  string,
+  {
+    profileId: string;
+    modId: string;
+  },
+  {}
+>;
+declare const setFeature: reduxAct.ComplexActionCreator3<
+  string,
+  string,
+  any,
+  {
+    profileId: string;
+    featureId: string;
+    value: any;
+  },
+  {}
+>;
 declare const setProfileActivated: reduxAct.ComplexActionCreator1<string, string, {}>;
 interface IEnableOptions {
   installed?: boolean;
@@ -4141,9 +4478,262 @@ interface IEnableOptions {
   reason?: ModChangeReason;
   skipStateChangeEvent?: boolean;
 }
-declare const setModsEnabled: (api: IExtensionApi, profileIdIn: string, modIdsIn: string[], enableIn: boolean, optionsIn?: IEnableOptions) => PromiseBB$1<void>;
+declare const setModsEnabled: (
+  api: IExtensionApi,
+  profileIdIn: string,
+  modIdsIn: string[],
+  enableIn: boolean,
+  optionsIn?: IEnableOptions,
+) => PromiseBB$1<void>;
 declare namespace api_d_exports {
-  export { ActionFunc, ApiEventArgs, ApiEventMap, ApiEventName, ApiEventResult, ApiEvents, ArchiveHandlerCreator, AttributeExtractor, AttributeRenderer, CheckFunction, CollectionModStatus, Condition, ConditionResults, DialogActions, DialogContentItem, DialogType, DirectoryCleaningMode, ExtensionInfo, ExtensionLoadFailureDependency, ExtensionLoadFailureException, LoadOrder as FBLOLoadOrder, LockedState as FBLOLockState, GameEntryNotFound, GameInfoQuery, GameLaunchType, GameStoreNotFound, HealthCheckCategory, HealthCheckFixFunction, HealthCheckFunction, HealthCheckSeverity, HealthCheckTrigger, IActionDefinition, IActionOptions, IApiFuncOptions, IApp, IArchiveHandler, IArchiveOptions, IAttachment, IAttributeState, IAvailableExtension, IBrowserState, ICheckbox, IChoiceType, ICollectionInstallSession, ICollectionInstallState, ICollectionModInstallInfo, ICollectionsPersistentState, IComponentContext, IConditionResult, IControlBase, ICustomExecutionInfo, ICustomProps, IDashletOptions, IDashletSettings, IDeployOptions, IDeployedFile, IDeploymentManifest, IDeploymentMethod, IDialog, IDialogAction, IDialogContent, IDialogResult, IDimensions, IDiscoveredTool, IDiscoveryPhase, IDiscoveryResult, IDiscoveryState, IDownload, IEditChoice, IEnableOptions, IErrorOptions, IExecInfo, IExtension, IExtensionApi, IExtensionApiExtension, IExtensionContext, IExtensionLoadFailure, IExtensionOptional, IExtensionState, ILoadOrderGameInfo as IFBLOGameInfo, IInvalidResult as IFBLOInvalidResult, IItemRendererProps as IFBLOItemRendererProps, ILoadOrderEntry$1 as IFBLOLoadOrderEntry, IValidationResult as IFBLOValidationResult, IFileChange, IFileFilter, IFileListItem, IFilterProps, IGame, IGameDetail, IGameInfoEntry, IGameModeSettings, IGameStore, IGameStoreEntry, IGameStored, IHealthCheck, IHealthCheckEntry, IHealthCheckResult, IHistoryEvent, IHistoryStack, IInput, IInstallResult, IInstallationDetails, IInstallerInstall, IInstallerMatch, IInstallerSpec, IInstruction, ILegacyTestAdapter, ILink, ILoadOrderDisplayItem, ILoadOrderEntry$1 as ILoadOrderEntry, ILoadOrderGameInfo, ILookupDetails, ILookupResult, IMainPageOptions, IMembership, IMergeFilter, IMod, IModCheckContext, IModHealthCheck, IModInfo$1 as IModInfo, IModInstallSpec, IModLookupInfo, IModPatches, IModReference, IModRepoId, IModRule, IModRuleExtra, IModSourceOptions, IModTable, IModType, IModTypeOptions, IModifiers, INotification, INotificationAction, INotificationState, IOpenOptions, IOverlay, IOverlayOptions, IOverlaysState, IPersistor, IPosition, IPreviewFile, IProfile, IProfileMod, IProgress, IProgressProfile, IProgressProfileDeploying, IProgressWithProfile, IQuery, IQueryArgEntry, IReducerSpec, IReference$1 as IReference, IReferenceIdentifiers, IRegisterProtocol, IRegisterRepositoryLookup, IRegisteredExtension, IRemoveModOptions, IRowState, IRunOptions, IRunParameters, IRunningTool, ISaveOptions, ISession, ISessionGameMode, ISettings, ISettingsAutomation, ISettingsDownloads, ISettingsGameMode, ISettingsInterface, ISettingsMods, ISettingsNotification, ISettingsProfiles, ISettingsUpdate, ISettingsWorkarounds, IStarterInfo, IState, IStateDownloads, IStateGameMode, IStatePaths, IStateTransactions, IStateVerifier, IStoreQuery, ISupportedResult, ITableAttribute, ITableFilter, ITableState, ITableStates, ITestResult, ITestSupportedDetails, IToDoButton, ITool, IToolStored, IUIBlocker, IUnavailableReason, IUser, IValidateKeyData, IValidationResult, IVerifierRepairContext, IWindow, InstallFunc, InstallPathMode, InstallerMatchMode, InstallerSpecInstallFunc, InstructionType, LoadOrder, MergeFunc, MergeTest, NotificationDismiss, NotificationType, PayloadT, PerModCheckFunction, PersistingType, PersistorKey, Placement, ProblemSeverity, ProgressDelegate, PropsCallback, PropsCallbackTyped, RegisterAction, RegisterBanner, RegisterControlWrapper, RegisterDashlet, RegisterDialog, RegisterFooter, RegisterMainPage, RegisterOverlay, RegisterSettings, RegisterToDo, Revertability, SortDirection, SortType, StateChangeCallback, TFunction$1 as TFunction, TestSupported, ThunkStore, ToDoType, ToolParameterCB, UPDATE_CHANNELS, UpdateChannel, UpdateType, ValidationState, VerifierDrop, VerifierDropParent, addReducer, isModHealthCheck };
+  export {
+    ActionFunc,
+    ApiEventArgs,
+    ApiEventMap,
+    ApiEventName,
+    ApiEventResult,
+    ApiEvents,
+    ArchiveHandlerCreator,
+    AttributeExtractor,
+    AttributeRenderer,
+    CheckFunction,
+    CollectionModStatus,
+    Condition,
+    ConditionResults,
+    DialogActions,
+    DialogContentItem,
+    DialogType,
+    DirectoryCleaningMode,
+    ExtensionInfo,
+    ExtensionLoadFailureDependency,
+    ExtensionLoadFailureException,
+    LoadOrder as FBLOLoadOrder,
+    LockedState as FBLOLockState,
+    GameEntryNotFound,
+    GameInfoQuery,
+    GameLaunchType,
+    GameStoreNotFound,
+    HealthCheckCategory,
+    HealthCheckFixFunction,
+    HealthCheckFunction,
+    HealthCheckSeverity,
+    HealthCheckTrigger,
+    IActionDefinition,
+    IActionOptions,
+    IApiFuncOptions,
+    IApp,
+    IArchiveHandler,
+    IArchiveOptions,
+    IAttachment,
+    IAttributeState,
+    IAvailableExtension,
+    IBrowserState,
+    ICheckbox,
+    IChoiceType,
+    ICollectionInstallSession,
+    ICollectionInstallState,
+    ICollectionModInstallInfo,
+    ICollectionsPersistentState,
+    IComponentContext,
+    IConditionResult,
+    IControlBase,
+    ICustomExecutionInfo,
+    ICustomProps,
+    IDashletOptions,
+    IDashletSettings,
+    IDeployOptions,
+    IDeployedFile,
+    IDeploymentManifest,
+    IDeploymentMethod,
+    IDialog,
+    IDialogAction,
+    IDialogContent,
+    IDialogResult,
+    IDimensions,
+    IDiscoveredTool,
+    IDiscoveryPhase,
+    IDiscoveryResult,
+    IDiscoveryState,
+    IDownload,
+    IEditChoice,
+    IEnableOptions,
+    IErrorOptions,
+    IExecInfo,
+    IExtension,
+    IExtensionApi,
+    IExtensionApiExtension,
+    IExtensionContext,
+    IExtensionLoadFailure,
+    IExtensionOptional,
+    IExtensionState,
+    ILoadOrderGameInfo as IFBLOGameInfo,
+    IInvalidResult as IFBLOInvalidResult,
+    IItemRendererProps as IFBLOItemRendererProps,
+    ILoadOrderEntry$1 as IFBLOLoadOrderEntry,
+    IValidationResult as IFBLOValidationResult,
+    IFileChange,
+    IFileFilter,
+    IFileListItem,
+    IFilterProps,
+    IGame,
+    IGameDetail,
+    IGameInfoEntry,
+    IGameModeSettings,
+    IGameStore,
+    IGameStoreEntry,
+    IGameStored,
+    IHealthCheck,
+    IHealthCheckEntry,
+    IHealthCheckResult,
+    IHistoryEvent,
+    IHistoryStack,
+    IInput,
+    IInstallResult,
+    IInstallationDetails,
+    IInstallerInstall,
+    IInstallerMatch,
+    IInstallerSpec,
+    IInstruction,
+    ILegacyTestAdapter,
+    ILink,
+    ILoadOrderDisplayItem,
+    ILoadOrderEntry$1 as ILoadOrderEntry,
+    ILoadOrderGameInfo,
+    ILookupDetails,
+    ILookupResult,
+    IMainPageOptions,
+    IMembership,
+    IMergeFilter,
+    IMod,
+    IModCheckContext,
+    IModHealthCheck,
+    IModInfo$1 as IModInfo,
+    IModInstallSpec,
+    IModLookupInfo,
+    IModPatches,
+    IModReference,
+    IModRepoId,
+    IModRule,
+    IModRuleExtra,
+    IModSourceOptions,
+    IModTable,
+    IModType,
+    IModTypeOptions,
+    IModifiers,
+    INotification,
+    INotificationAction,
+    INotificationState,
+    IOpenOptions,
+    IOverlay,
+    IOverlayOptions,
+    IOverlaysState,
+    IPersistor,
+    IPosition,
+    IPreviewFile,
+    IProfile,
+    IProfileMod,
+    IProgress,
+    IProgressProfile,
+    IProgressProfileDeploying,
+    IProgressWithProfile,
+    IQuery,
+    IQueryArgEntry,
+    IReducerSpec,
+    IReference$1 as IReference,
+    IReferenceIdentifiers,
+    IRegisterProtocol,
+    IRegisterRepositoryLookup,
+    IRegisteredExtension,
+    IRemoveModOptions,
+    IRowState,
+    IRunOptions,
+    IRunParameters,
+    IRunningTool,
+    ISaveOptions,
+    ISession,
+    ISessionGameMode,
+    ISettings,
+    ISettingsAutomation,
+    ISettingsDownloads,
+    ISettingsGameMode,
+    ISettingsInterface,
+    ISettingsMods,
+    ISettingsNotification,
+    ISettingsProfiles,
+    ISettingsUpdate,
+    ISettingsWorkarounds,
+    IStarterInfo,
+    IState,
+    IStateDownloads,
+    IStateGameMode,
+    IStatePaths,
+    IStateTransactions,
+    IStateVerifier,
+    IStoreQuery,
+    ISupportedResult,
+    ITableAttribute,
+    ITableFilter,
+    ITableState,
+    ITableStates,
+    ITestResult,
+    ITestSupportedDetails,
+    IToDoButton,
+    ITool,
+    IToolStored,
+    IUIBlocker,
+    IUnavailableReason,
+    IUser,
+    IValidateKeyData,
+    IValidationResult,
+    IVerifierRepairContext,
+    IWindow,
+    InstallFunc,
+    InstallPathMode,
+    InstallerMatchMode,
+    InstallerSpecInstallFunc,
+    InstructionType,
+    LoadOrder,
+    MergeFunc,
+    MergeTest,
+    NotificationDismiss,
+    NotificationType,
+    PayloadT,
+    PerModCheckFunction,
+    PersistingType,
+    PersistorKey,
+    Placement,
+    ProblemSeverity,
+    ProgressDelegate,
+    PropsCallback,
+    PropsCallbackTyped,
+    RegisterAction,
+    RegisterBanner,
+    RegisterControlWrapper,
+    RegisterDashlet,
+    RegisterDialog,
+    RegisterFooter,
+    RegisterMainPage,
+    RegisterOverlay,
+    RegisterSettings,
+    RegisterToDo,
+    Revertability,
+    SortDirection,
+    SortType,
+    StateChangeCallback,
+    TFunction$1 as TFunction,
+    TestSupported,
+    ThunkStore,
+    ToDoType,
+    ToolParameterCB,
+    UPDATE_CHANNELS,
+    UpdateChannel,
+    UpdateType,
+    ValidationState,
+    VerifierDrop,
+    VerifierDropParent,
+    addReducer,
+    isModHealthCheck,
+  };
 }
 //#endregion
 //#region lib/types/collections/IGameSpecificInterfaceProps.d.ts
@@ -4156,9 +4746,15 @@ interface IGameSpecificInterfaceProps {
 //#region lib/types/collections/api.d.ts
 interface ICollectionsGameSupportEntry {
   gameId: string;
-  generator: (state: IState, gameId: string, stagingPath: string, modIds: string[], mods: {
-    [modId: string]: IMod;
-  }) => Promise<any>;
+  generator: (
+    state: IState,
+    gameId: string,
+    stagingPath: string,
+    modIds: string[],
+    mods: {
+      [modId: string]: IMod;
+    },
+  ) => Promise<any>;
   parser: (api: IExtensionApi, gameId: string, collection: any) => Promise<void>;
   interface: (props: IGameSpecificInterfaceProps) => JSX.Element;
 }
@@ -4208,17 +4804,28 @@ interface ILookupOptions {
  * @public
  */
 interface ApiEvents {
-  "start-download": (rawUrls: string[], modInfo: {
-    game?: string;
-    name?: string;
-  } & Record<string, unknown>, fileName?: string, callback?: (err: Error | null, id?: string) => void, redownload?: "never" | "ask" | "replace" | "always", options?: {
-    allowInstall?: boolean | "force";
-  }) => string;
+  "start-download": (
+    rawUrls: string[],
+    modInfo: {
+      game?: string;
+      name?: string;
+    } & Record<string, unknown>,
+    fileName?: string,
+    callback?: (err: Error | null, id?: string) => void,
+    redownload?: "never" | "ask" | "replace" | "always",
+    options?: {
+      allowInstall?: boolean | "force";
+    },
+  ) => string;
   "remove-download": (downloadId: string, callback?: (err: Error | null) => void) => void;
   "pause-download": (downloadId: string, callback?: (err: Error | null) => void) => void;
-  "resume-download": (downloadId: string, callback?: (err: Error | null, id?: string) => void, options?: {
-    allowInstall?: boolean | "force";
-  }) => void;
+  "resume-download": (
+    downloadId: string,
+    callback?: (err: Error | null, id?: string) => void,
+    options?: {
+      allowInstall?: boolean | "force";
+    },
+  ) => void;
 }
 /** Represents all event names.
  * @public
@@ -4233,7 +4840,7 @@ type ApiEventArgs<TEvent extends ApiEventName> = Readonly<Parameters<ApiEvents[T
  * */
 type ApiEventResult<TEvent extends ApiEventName> = ReturnType<ApiEvents[TEvent]>;
 /** Compat for NodeJS Event Map */
-type ApiEventMap = { [K in ApiEventName]: Parameters<ApiEvents[K]>; };
+type ApiEventMap = { [K in ApiEventName]: Parameters<ApiEvents[K]> };
 interface ThunkStore<S> extends Redux.Store<S> {
   dispatch: ThunkDispatch<S, null, Redux.Action>;
 }
@@ -4249,11 +4856,37 @@ type PropsCallbackTyped<T> = () => T;
  */
 type PersistingType = "global" | "game" | "profile";
 type CheckFunction = () => PromiseLike<ITestResult>;
-type RegisterSettings = (title: string, element: React$2.ComponentClass<any> | React$2.FunctionComponent<React$2.PropsWithChildren<any>>, props?: PropsCallback, visible?: () => boolean, priority?: number) => void;
-type RegisterAction = (group: string, position: number, iconOrComponent: string | React$2.ComponentType<React$2.PropsWithChildren<any>>, options: IActionOptions, titleOrProps?: string | PropsCallback, actionOrCondition?: (instanceIds?: string[]) => void | boolean, condition?: (instanceIds?: string[]) => boolean | string) => void;
-type RegisterControlWrapper = (group: string, priority: number, wrapper: React$2.ComponentType<React$2.PropsWithChildren<any>>) => void;
-type RegisterFooter = (id: string, element: React$2.ComponentClass<any>, props?: PropsCallback) => void;
-type RegisterBanner = (group: string, component: React$2.ComponentType<React$2.PropsWithChildren<any>>, options: IBannerOptions) => void;
+type RegisterSettings = (
+  title: string,
+  element: React$2.ComponentClass<any> | React$2.FunctionComponent<React$2.PropsWithChildren<any>>,
+  props?: PropsCallback,
+  visible?: () => boolean,
+  priority?: number,
+) => void;
+type RegisterAction = (
+  group: string,
+  position: number,
+  iconOrComponent: string | React$2.ComponentType<React$2.PropsWithChildren<any>>,
+  options: IActionOptions,
+  titleOrProps?: string | PropsCallback,
+  actionOrCondition?: (instanceIds?: string[]) => void | boolean,
+  condition?: (instanceIds?: string[]) => boolean | string,
+) => void;
+type RegisterControlWrapper = (
+  group: string,
+  priority: number,
+  wrapper: React$2.ComponentType<React$2.PropsWithChildren<any>>,
+) => void;
+type RegisterFooter = (
+  id: string,
+  element: React$2.ComponentClass<any>,
+  props?: PropsCallback,
+) => void;
+type RegisterBanner = (
+  group: string,
+  component: React$2.ComponentType<React$2.PropsWithChildren<any>>,
+  options: IBannerOptions,
+) => void;
 interface IModSourceOptions {
   /**
    * condition for this source to show up. Please make sure this returns quickly, cache if
@@ -4297,7 +4930,12 @@ interface IMainPageOptions {
   /** Self-subscribing status badge shown on this page's left-menu item. */
   menuBadge?: React$2.ComponentType<React$2.PropsWithChildren<unknown>>;
 }
-type RegisterMainPage = (icon: string, title: string, element: React$2.ComponentType<React$2.PropsWithChildren<any>>, options: IMainPageOptions) => void;
+type RegisterMainPage = (
+  icon: string,
+  title: string,
+  element: React$2.ComponentType<React$2.PropsWithChildren<any>>,
+  options: IMainPageOptions,
+) => void;
 interface IDashletOptions {
   fixed?: boolean;
   closable?: boolean;
@@ -4306,21 +4944,58 @@ interface IDashletOptions {
  * @param height Height of the dashlet in rows. Please note that 1 row is very slim, it's not
  *               commonly used in practice
  */
-type RegisterDashlet = (title: string, width: 1 | 2 | 3, height: 1 | 2 | 3 | 4 | 5 | 6, position: number, component: React$2.ComponentClass<any> | React$2.FunctionComponent<React$2.PropsWithChildren<any>>, isVisible: (state: any) => boolean, props: PropsCallback, options: IDashletOptions) => void;
-type RegisterDialog = (id: string, element: React$2.ComponentType<React$2.PropsWithChildren<any>>, props?: PropsCallback) => void;
-type RegisterOverlay = (id: string, element: React$2.ComponentType<React$2.PropsWithChildren<any>>, props?: PropsCallback) => void;
+type RegisterDashlet = (
+  title: string,
+  width: 1 | 2 | 3,
+  height: 1 | 2 | 3 | 4 | 5 | 6,
+  position: number,
+  component:
+    | React$2.ComponentClass<any>
+    | React$2.FunctionComponent<React$2.PropsWithChildren<any>>,
+  isVisible: (state: any) => boolean,
+  props: PropsCallback,
+  options: IDashletOptions,
+) => void;
+type RegisterDialog = (
+  id: string,
+  element: React$2.ComponentType<React$2.PropsWithChildren<any>>,
+  props?: PropsCallback,
+) => void;
+type RegisterOverlay = (
+  id: string,
+  element: React$2.ComponentType<React$2.PropsWithChildren<any>>,
+  props?: PropsCallback,
+) => void;
 type ToDoType = "settings" | "search" | "workaround" | "more";
 interface IToDoButton {
   text: string;
   icon: string;
   onClick: () => void;
 }
-type RegisterToDo = (id: string, type: ToDoType, props: (state: any) => any, icon: ((props: any) => JSX.Element) | string, text: ((t: TFunction$1, props: any) => JSX.Element) | string, action: (props: any) => void, condition: (props: any) => boolean, value: ((t: TFunction$1, props: any) => JSX.Element) | string, priority: number) => void;
+type RegisterToDo = (
+  id: string,
+  type: ToDoType,
+  props: (state: any) => any,
+  icon: ((props: any) => JSX.Element) | string,
+  text: ((t: TFunction$1, props: any) => JSX.Element) | string,
+  action: (props: any) => void,
+  condition: (props: any) => boolean,
+  value: ((t: TFunction$1, props: any) => JSX.Element) | string,
+  priority: number,
+) => void;
 interface IRegisterProtocol {
-  (protocol: string, def: boolean, callback: (url: string, install: boolean) => void): Promise<boolean>;
+  (
+    protocol: string,
+    def: boolean,
+    callback: (url: string, install: boolean) => void,
+  ): Promise<boolean>;
 }
 interface IRegisterRepositoryLookup {
-  (repositoryId: string, preferOverMD5: boolean, callback: (id: IModRepoId) => PromiseBB$1<IModLookupResult[]>): any;
+  (
+    repositoryId: string,
+    preferOverMD5: boolean,
+    callback: (id: IModRepoId) => PromiseBB$1<IModLookupResult[]>,
+  ): any;
 }
 interface IFileFilter {
   name: string;
@@ -4377,14 +5052,20 @@ interface IArchiveHandler {
   create?(sourcePath: string): PromiseBB$1<void>;
   write?(): PromiseBB$1<void>;
 }
-type ArchiveHandlerCreator = (fileName: string, options: IArchiveOptions) => PromiseBB$1<IArchiveHandler>;
+type ArchiveHandlerCreator = (
+  fileName: string,
+  options: IArchiveOptions,
+) => PromiseBB$1<IArchiveHandler>;
 /**
  * callback used to extract download information into mod info.
  * This also gets called a lot when displaying uninstalled mods in the mod list
  * (the modPath is going to be undefined) so when that flag is set, the extractor should
  * not be accessing the disk or network or do any complex coomputation
  */
-type AttributeExtractor = (modInfo: any, modPath: string) => PromiseLike<{
+type AttributeExtractor = (
+  modInfo: any,
+  modPath: string,
+) => PromiseLike<{
   [key: string]: any;
 }>;
 interface IGameDetail {
@@ -4489,10 +5170,17 @@ interface IApiFuncOptions {
    */
   minArguments?: number;
 }
-interface IExtensionApiExtension extends INexusAPIExtension, IModsAPIExtension, IDownloadsAPIExtension {
+interface IExtensionApiExtension
+  extends INexusAPIExtension, IModsAPIExtension, IDownloadsAPIExtension {
   ensureLoggedIn?: () => PromiseBB$1<void>;
   awaitProfileSwitch?: () => PromiseBB$1<string>;
-  showOverlay?: (id: string, title: string, content: string | React$2.ComponentType<React$2.PropsWithChildren<any>>, pos?: IPosition, options?: IOverlayOptions) => void;
+  showOverlay?: (
+    id: string,
+    title: string,
+    content: string | React$2.ComponentType<React$2.PropsWithChildren<any>>,
+    pos?: IPosition,
+    options?: IOverlayOptions,
+  ) => void;
   showHistory?: (stack: string) => void;
   addToHistory?: (stack: string, entry: IHistoryEvent) => void;
   [key: string]: (...args: any[]) => any;
@@ -4525,11 +5213,21 @@ interface IExtensionApi {
    *
    * @memberOf IExtensionApi
    */
-  showErrorNotification?: (message: string, detail: string | Error | any, options?: IErrorOptions) => void;
+  showErrorNotification?: (
+    message: string,
+    detail: string | Error | any,
+    options?: IErrorOptions,
+  ) => void;
   /**
    * show a dialog
    */
-  showDialog?: (type: DialogType, title: string, content: IDialogContent, actions: DialogActions, id?: string) => PromiseBB$1<IDialogResult>;
+  showDialog?: (
+    type: DialogType,
+    title: string,
+    content: IDialogContent,
+    actions: DialogActions,
+    id?: string,
+  ) => PromiseBB$1<IDialogResult>;
   /**
    * close a dialog
    */
@@ -4666,7 +5364,10 @@ interface IExtensionApi {
    *
    * @memberOf IExtensionApi
    */
-  lookupModReference: (ref: IModReference, options?: ILookupOptions) => PromiseBB$1<IModLookupResult[]>;
+  lookupModReference: (
+    ref: IModReference,
+    options?: ILookupOptions,
+  ) => PromiseBB$1<IModLookupResult[]>;
   /**
    * add a meta server
    * Please note that setting a server with the same id again will replace the existing one
@@ -4679,7 +5380,10 @@ interface IExtensionApi {
    * @param progressFunc optional function to report progress
    * @returns a promise resolving to the md5 hash result
    */
-  genMd5Hash: (data: string | Buffer, progressFunc?: (progress: number, total: number) => void) => PromiseBB$1<IHashResult>;
+  genMd5Hash: (
+    data: string | Buffer,
+    progressFunc?: (progress: number, total: number) => void,
+  ) => PromiseBB$1<IHashResult>;
   /**
    * find meta information about a mod
    * this will calculate a hash and the file size of the specified file
@@ -4700,7 +5404,11 @@ interface IExtensionApi {
   /**
    * opens an archive
    */
-  openArchive: (archivePath: string, options?: IArchiveOptions, extension?: string) => PromiseBB$1<Archive>;
+  openArchive: (
+    archivePath: string,
+    options?: IArchiveOptions,
+    extension?: string,
+  ) => PromiseBB$1<Archive>;
   /**
    * clear the stylesheet cache to ensure it gets rebuilt even if the list of files hasn't changed
    */
@@ -4744,7 +5452,14 @@ interface IExtensionApi {
    * after all these Promises are resolved.
    * If the event handlers return a value, this returns an array of results
    */
-  emitAndAwait: (<TEvent extends ApiEventName>(eventName: TEvent, ...args: ApiEventArgs<TEvent>) => Promise<ApiEventResult<TEvent> extends void ? void : ApiEventResult<TEvent>[]>) & (<TResult = unknown, TArgs extends readonly unknown[] = unknown[]>(eventName: string, ...args: TArgs) => Promise<TResult[]>);
+  emitAndAwait: (<TEvent extends ApiEventName>(
+    eventName: TEvent,
+    ...args: ApiEventArgs<TEvent>
+  ) => Promise<ApiEventResult<TEvent> extends void ? void : ApiEventResult<TEvent>[]>) &
+    (<TResult = unknown, TArgs extends readonly unknown[] = unknown[]>(
+      eventName: string,
+      ...args: TArgs
+    ) => Promise<TResult[]>);
   /**
    * handle an event emitted with emitAndAwait. The listener can return a promise and the emitter
    * will only return after all promises from handlers are returned.
@@ -4752,7 +5467,14 @@ interface IExtensionApi {
    * returns a rejected promise.
    * If errors do need to be reported they have to be part of the resolved valued
    */
-  onAsync: (<TEvent extends ApiEventName>(eventName: TEvent, listener: (...args: ApiEventArgs<TEvent>) => PromiseLike<ApiEventResult<TEvent>>) => void) & (<TResult = unknown, TArgs extends readonly unknown[] = unknown[]>(eventName: string, listener: (...args: TArgs) => PromiseLike<TResult>) => void);
+  onAsync: (<TEvent extends ApiEventName>(
+    eventName: TEvent,
+    listener: (...args: ApiEventArgs<TEvent>) => PromiseLike<ApiEventResult<TEvent>>,
+  ) => void) &
+    (<TResult = unknown, TArgs extends readonly unknown[] = unknown[]>(
+      eventName: string,
+      listener: (...args: TArgs) => PromiseLike<TResult>,
+    ) => void);
   /**
    * wraps a function such that it will emitAndAwait `will-${eventName}` and `did-${eventName}` events
    * before and after invoking the actual callback.
@@ -4760,7 +5482,14 @@ interface IExtensionApi {
    * the result of the callback if any (the result is the first argument because the number
    * of arguments may be variable)
    */
-  withPrePost: (<TEvent extends ApiEventName>(eventName: string, callback: (...args: ApiEventArgs<TEvent>) => PromiseLike<ApiEventResult<TEvent>>) => (...args: ApiEventArgs<TEvent>) => Promise<ApiEventResult<TEvent>>) & (<TResult, TArgs extends readonly unknown[] = unknown[]>(eventName: string, callback: (...args: TArgs) => PromiseLike<TResult>) => (...args: TArgs) => Promise<TResult>);
+  withPrePost: (<TEvent extends ApiEventName>(
+    eventName: string,
+    callback: (...args: ApiEventArgs<TEvent>) => PromiseLike<ApiEventResult<TEvent>>,
+  ) => (...args: ApiEventArgs<TEvent>) => Promise<ApiEventResult<TEvent>>) &
+    (<TResult, TArgs extends readonly unknown[] = unknown[]>(
+      eventName: string,
+      callback: (...args: TArgs) => PromiseLike<TResult>,
+    ) => (...args: TArgs) => Promise<TResult>);
   /**
    * returns true if the running version of Vortex is considered outdated. This is mostly used
    * to determine if feedback should be sent to Nexus Mods.
@@ -4777,7 +5506,12 @@ interface IExtensionApi {
    * us to make the target item "position: relative" though which is more intrusive and can
    * break the styling of the contents more severely.
    */
-  highlightControl: (selector: string, durationMS: number, text?: string, altStyle?: boolean) => void;
+  highlightControl: (
+    selector: string,
+    durationMS: number,
+    text?: string,
+    altStyle?: boolean,
+  ) => void;
   /**
    * returns a promise that resolves once the ui has been displayed.
    * This is useful if you have a callback that may be triggered before the ui is
@@ -4831,7 +5565,10 @@ declare class VerifierDropParent extends Error {
   constructor();
 }
 type PayloadT<Type> = Type extends ComplexActionCreator<infer X> ? X : never;
-declare function addReducer<ActionT, StateT>(action: ActionT, handler: (state: StateT, payload: PayloadT<ActionT>) => StateT): {
+declare function addReducer<ActionT, StateT>(
+  action: ActionT,
+  handler: (state: StateT, payload: PayloadT<ActionT>) => StateT,
+): {
   [x: number]: (state: StateT, payload: PayloadT<ActionT>) => StateT;
 };
 /**
@@ -4842,9 +5579,11 @@ declare function addReducer<ActionT, StateT>(action: ActionT, handler: (state: S
  * @export
  * @interface IReducerSpec
  */
-interface IReducerSpec<T = {
-  [key: string]: any;
-}> {
+interface IReducerSpec<
+  T = {
+    [key: string]: any;
+  },
+> {
   reducers: {
     [key: string]: (state: T, payload: any) => T;
   };
@@ -4930,7 +5669,12 @@ interface IExtensionContext {
    *                                      with a mod
    * @param {InstallFunc} install function called to actually install a mod
    */
-  registerInstaller: (id: string, priority: number, testSupported: TestSupported, install: InstallFunc) => void;
+  registerInstaller: (
+    id: string,
+    priority: number,
+    testSupported: TestSupported,
+    install: InstallFunc,
+  ) => void;
   /**
    * register an action (can be a button or a menu item)
    *
@@ -4994,7 +5738,12 @@ interface IExtensionContext {
    * actual features
    * The source can also be used to browse for further mods
    */
-  registerModSource: (id: string, name: string, onBrowse?: () => void, options?: IModSourceOptions) => void;
+  registerModSource: (
+    id: string,
+    name: string,
+    onBrowse?: () => void,
+    options?: IModSourceOptions,
+  ) => void;
   /**
    * register a reducer to introduce new set-operations on the application
    * state.
@@ -5051,11 +5800,14 @@ interface IExtensionContext {
    * resolves the scheme-specific URL to a plain http/https URL that can be
    * downloaded directly.
    */
-  registerDownloadProtocol: (scheme: string, handler: (inputUrl: string) => PromiseLike<{
-    urls: string[];
-    updatedUrl?: string;
-    meta: unknown;
-  }>) => void;
+  registerDownloadProtocol: (
+    scheme: string,
+    handler: (inputUrl: string) => PromiseLike<{
+      urls: string[];
+      updatedUrl?: string;
+      meta: unknown;
+    }>,
+  ) => void;
   /**
    * register a new persistor that will hook a data file into the application store,
    * meaning any part of the application can access that data like any other data in the application
@@ -5141,7 +5893,13 @@ interface IExtensionContext {
    *                        runs out
    * @param {Function} query the query function
    */
-  registerGameInfoProvider: (id: string, priority: number, expireMS: number, keys: string[], query: GameInfoQuery) => void;
+  registerGameInfoProvider: (
+    id: string,
+    priority: number,
+    expireMS: number,
+    keys: string[],
+    query: GameInfoQuery,
+  ) => void;
   /**
    * register an extractor that can access all information known about a downloaded archive and
    * tranfer them into the modInfo data structure so it can be accessed when rendering/managing
@@ -5169,7 +5927,14 @@ interface IExtensionContext {
    *                                                  determine if the installed mod is of this type
    * @param {IModTypeOptions} options options controlling the mod type
    */
-  registerModType: (id: string, priority: number, isSupported: (gameId: string) => boolean, getPath: (game: IGame) => string, test: (installInstructions: IInstruction[]) => PromiseBB$1<boolean>, options?: IModTypeOptions) => void;
+  registerModType: (
+    id: string,
+    priority: number,
+    isSupported: (gameId: string) => boolean,
+    getPath: (game: IGame) => string,
+    test: (installInstructions: IInstruction[]) => PromiseBB$1<boolean>,
+    options?: IModTypeOptions,
+  ) => void;
   /**
    * register an action sanity check
    * a sanity check like this is called before any redux-action of the specified type and gets
@@ -5234,7 +5999,11 @@ interface IExtensionContext {
    * @param {string} id identifier for the hook. This will only be used for logging
    * @param {function} hook the hook to be called
    */
-  registerStartHook: (priority: number, id: string, hook: (call: IRunParameters) => PromiseLike<IRunParameters>) => void;
+  registerStartHook: (
+    priority: number,
+    id: string,
+    hook: (call: IRunParameters) => PromiseLike<IRunParameters>,
+  ) => void;
   /**
    * register a migration step. This migration is always called when the loaded extension has
    * a different version from the one that was used last.
@@ -5273,11 +6042,24 @@ interface IExtensionContext {
    * The configured value can be queried at
    * state.persistent.profiles.<profile id>.features.<feature id>
    */
-  registerProfileFeature?: (featureId: string, type: string, icon: string, label: string, description: string, supported: () => boolean) => void;
+  registerProfileFeature?: (
+    featureId: string,
+    type: string,
+    icon: string,
+    label: string,
+    description: string,
+    supported: () => boolean,
+  ) => void;
   /**
    * register a game version resolution provider.
    */
-  registerGameVersionProvider?: (id: string, priority: number, supported: GameVersionProviderTest, getVersion: GameVersionProviderFunc, options?: IGameVersionProviderOptions) => void;
+  registerGameVersionProvider?: (
+    id: string,
+    priority: number,
+    supported: GameVersionProviderTest,
+    getVersion: GameVersionProviderFunc,
+    options?: IGameVersionProviderOptions,
+  ) => void;
   /**
    * register a handler that can be used to preview or diff files.
    * A handler can return a promise rejected with a "ProcessCanceled" exception to indicate
@@ -5304,7 +6086,10 @@ interface IExtensionContext {
    *   choice is made and include the selected entry, if it doesn't it can resolve
    *   as soon as the handler knows whether it supports the file.
    */
-  registerPreview?: (priority: number, handler: (files: IPreviewFile[], allowPick: boolean) => PromiseBB$1<IPreviewFile>) => void;
+  registerPreview?: (
+    priority: number,
+    handler: (files: IPreviewFile[], allowPick: boolean) => PromiseBB$1<IPreviewFile>,
+  ) => void;
   /**
    * register a callback that will introduce additional variables that can be used as part of
    * tool command lines. The callback you provide here gets called every time a tool gets started
@@ -5464,43 +6249,77 @@ interface IRegisteredExtension {
 //#region lib/actions/app.d.ts
 declare const setStateVersion: import("redux-act").ComplexActionCreator1<string, string, {}>;
 declare const setApplicationVersion: import("redux-act").ComplexActionCreator1<string, string, {}>;
-declare const addExtension: import("redux-act").ComplexActionCreator2<string, ExtensionInfo, {
-  extensionId: string;
-  info: ExtensionInfo;
-}, {}>;
-declare const setExtensionEnabled: import("redux-act").ComplexActionCreator2<string, boolean, {
-  extensionId: string;
-  enabled: boolean;
-}, {}>;
-declare const setExtensionVersion: import("redux-act").ComplexActionCreator2<string, string, {
-  extensionId: string;
-  version: string;
-}, {}>;
-declare const setExtensionEndorsed: import("redux-act").ComplexActionCreator2<string, string, {
-  extensionId: string;
-  endorsed: string;
-}, {}>;
+declare const addExtension: import("redux-act").ComplexActionCreator2<
+  string,
+  ExtensionInfo,
+  {
+    extensionId: string;
+    info: ExtensionInfo;
+  },
+  {}
+>;
+declare const setExtensionEnabled: import("redux-act").ComplexActionCreator2<
+  string,
+  boolean,
+  {
+    extensionId: string;
+    enabled: boolean;
+  },
+  {}
+>;
+declare const setExtensionVersion: import("redux-act").ComplexActionCreator2<
+  string,
+  string,
+  {
+    extensionId: string;
+    version: string;
+  },
+  {}
+>;
+declare const setExtensionEndorsed: import("redux-act").ComplexActionCreator2<
+  string,
+  string,
+  {
+    extensionId: string;
+    endorsed: string;
+  },
+  {}
+>;
 declare const removeExtension: import("redux-act").ComplexActionCreator1<string, string, {}>;
 declare const forgetExtension: import("redux-act").ComplexActionCreator1<string, string, {}>;
 declare const completeMigration: import("redux-act").ComplexActionCreator1<string, string, {}>;
 declare const setInstanceId: import("redux-act").ComplexActionCreator1<string, string, {}>;
 declare const setWarnedAdmin: import("redux-act").ComplexActionCreator1<number, number, {}>;
-declare const setInstallType: import("redux-act").ComplexActionCreator1<VortexInstallType, VortexInstallType, {}>;
+declare const setInstallType: import("redux-act").ComplexActionCreator1<
+  VortexInstallType,
+  VortexInstallType,
+  {}
+>;
 //#endregion
 //#region lib/actions/notifications.d.ts
 /**
  * adds a notification to be displayed. Takes one parameter of type INotification. The id may be
  * left unset, in that case one will be generated
  */
-declare const startNotification: import("redux-act").ComplexActionCreator1<INotification, INotification, {}>;
-declare const updateNotification: import("redux-act").ComplexActionCreator3<string, number, string, {
-  id: string;
-  progress: number;
-  message: string;
-}, {
-  forward: boolean;
-  scope: string;
-}>;
+declare const startNotification: import("redux-act").ComplexActionCreator1<
+  INotification,
+  INotification,
+  {}
+>;
+declare const updateNotification: import("redux-act").ComplexActionCreator3<
+  string,
+  number,
+  string,
+  {
+    id: string;
+    progress: number;
+    message: string;
+  },
+  {
+    forward: boolean;
+    scope: string;
+  }
+>;
 /**
  * dismiss a notification. Takes the id of the notification
  */
@@ -5511,14 +6330,23 @@ declare const stopAllNotifications: import("redux-act").EmptyActionCreator;
  *
  * don't call this directly, use showDialog
  */
-declare const addDialog: import("redux-act").ComplexActionCreator6<string, DialogType, string, IDialogContent, string, string[], {
-  id: string;
-  type: DialogType;
-  title: string;
-  content: IDialogContent;
-  defaultAction: string;
-  actions: string[];
-}, {}>;
+declare const addDialog: import("redux-act").ComplexActionCreator6<
+  string,
+  DialogType,
+  string,
+  IDialogContent,
+  string,
+  string[],
+  {
+    id: string;
+    type: DialogType;
+    title: string;
+    content: IDialogContent;
+    defaultAction: string;
+    actions: string[];
+  },
+  {}
+>;
 /**
  * dismiss the dialog being displayed
  *
@@ -5527,33 +6355,59 @@ declare const addDialog: import("redux-act").ComplexActionCreator6<string, Dialo
  * Use closeDialog instead
  */
 declare const dismissDialog: import("redux-act").ComplexActionCreator1<string, string, {}>;
-declare function fireNotificationAction(notiId: string, notiProcess: string, action: number, dismiss: NotificationDismiss): void;
+declare function fireNotificationAction(
+  notiId: string,
+  notiProcess: string,
+  action: number,
+  dismiss: NotificationDismiss,
+): void;
 declare function setupNotificationSuppression(cb: (id: string) => boolean): void;
 /**
  * show a notification
  *
  * @public
  */
-declare function addNotification(notification: INotification): ThunkAction<Promise<void>, unknown, null, AnyAction>;
+declare function addNotification(
+  notification: INotification,
+): ThunkAction<Promise<void>, unknown, null, AnyAction>;
 declare function dismissNotification(id: string): ThunkAction<void, unknown, null, AnyAction>;
 declare function dismissAllNotifications(): ThunkAction<void, unknown, null, AnyAction>;
 /**
  * show a dialog
  * @public
  */
-declare function showDialog(type: DialogType, title: string, content: IDialogContent, actions: DialogActions, inId?: string): ThunkAction<PromiseBB$1<IDialogResult>, unknown, null, AnyAction>;
-declare function closeDialog(id: string, actionKey?: string, input?: unknown): ThunkAction<void, unknown, null, AnyAction>;
-declare function closeDialogs(ids: string[], actionKey?: string, input?: unknown): ThunkAction<void, unknown, null, AnyAction>;
+declare function showDialog(
+  type: DialogType,
+  title: string,
+  content: IDialogContent,
+  actions: DialogActions,
+  inId?: string,
+): ThunkAction<PromiseBB$1<IDialogResult>, unknown, null, AnyAction>;
+declare function closeDialog(
+  id: string,
+  actionKey?: string,
+  input?: unknown,
+): ThunkAction<void, unknown, null, AnyAction>;
+declare function closeDialogs(
+  ids: string[],
+  actionKey?: string,
+  input?: unknown,
+): ThunkAction<void, unknown, null, AnyAction>;
 declare function triggerDialogLink(id: string, idx: number): void;
 //#endregion
 //#region lib/actions/notificationSettings.d.ts
 /**
  * set (or unset) notifications to not show again
  */
-declare const suppressNotification: import("redux-act").ComplexActionCreator2<string, boolean, {
-  id: string;
-  suppress: boolean;
-}, {}>;
+declare const suppressNotification: import("redux-act").ComplexActionCreator2<
+  string,
+  boolean,
+  {
+    id: string;
+    suppress: boolean;
+  },
+  {}
+>;
 declare const resetSuppression: import("redux-act").ComplexActionCreator1<unknown, any, {}>;
 //#endregion
 //#region lib/actions/session.d.ts
@@ -5561,116 +6415,224 @@ declare const resetSuppression: import("redux-act").ComplexActionCreator1<unknow
  * action to choose which item in a group to display (all other items in the
  * group will be hidden). the itemId can be undefined to hide them all.
  */
-declare const displayGroup: import("redux-act").ComplexActionCreator2<string, string, {
-  groupId: string;
-  itemId: string;
-}, {}>;
-declare const setDialogVisible: import("redux-act").ComplexActionCreator1<string, {
-  dialogId: string;
-}, {}>;
-declare const setSettingsPage: import("redux-act").ComplexActionCreator1<string, {
-  pageId: string;
-}, {}>;
-declare const setOpenMainPage: import("redux-act").ComplexActionCreator2<string, boolean, {
-  page: string;
-  secondary: boolean;
-}, {}>;
-declare const startActivity: import("redux-act").ComplexActionCreator2<string, string, {
-  group: string;
-  activityId: string;
-}, {
-  forward: boolean;
-  scope: string;
-}>;
-declare const stopActivity: import("redux-act").ComplexActionCreator2<string, string, {
-  group: string;
-  activityId: string;
-}, {
-  forward: boolean;
-  scope: string;
-}>;
-declare const setProgress: import("redux-act").ComplexActionCreator4<string, string, string, number, {
-  group: string;
-  progressId: string;
-  text: string;
-  percent: number;
-}, {}>;
-declare const setToolRunning: import("redux-act").ComplexActionCreator3<string, number, boolean, {
-  exePath: string;
-  started: number;
-  exclusive: boolean;
-}, {}>;
-declare const setToolPid: import("redux-act").ComplexActionCreator3<string, number, boolean, {
-  exePath: string;
-  pid: number;
-  exclusive: boolean;
-}, {}>;
-declare const setToolStopped: import("redux-act").ComplexActionCreator1<string, {
-  exePath: string;
-}, {}>;
-declare const setExtensionLoadFailures: import("redux-act").ComplexActionCreator1<Record<string, IExtensionLoadFailure[]>, Record<string, IExtensionLoadFailure[]>, {}>;
-declare const setUIBlocker: import("redux-act").ComplexActionCreator4<string, string, string, boolean, {
-  id: string;
-  icon: string;
-  description: string;
-  mayCancel: boolean;
-}, {}>;
+declare const displayGroup: import("redux-act").ComplexActionCreator2<
+  string,
+  string,
+  {
+    groupId: string;
+    itemId: string;
+  },
+  {}
+>;
+declare const setDialogVisible: import("redux-act").ComplexActionCreator1<
+  string,
+  {
+    dialogId: string;
+  },
+  {}
+>;
+declare const setSettingsPage: import("redux-act").ComplexActionCreator1<
+  string,
+  {
+    pageId: string;
+  },
+  {}
+>;
+declare const setOpenMainPage: import("redux-act").ComplexActionCreator2<
+  string,
+  boolean,
+  {
+    page: string;
+    secondary: boolean;
+  },
+  {}
+>;
+declare const startActivity: import("redux-act").ComplexActionCreator2<
+  string,
+  string,
+  {
+    group: string;
+    activityId: string;
+  },
+  {
+    forward: boolean;
+    scope: string;
+  }
+>;
+declare const stopActivity: import("redux-act").ComplexActionCreator2<
+  string,
+  string,
+  {
+    group: string;
+    activityId: string;
+  },
+  {
+    forward: boolean;
+    scope: string;
+  }
+>;
+declare const setProgress: import("redux-act").ComplexActionCreator4<
+  string,
+  string,
+  string,
+  number,
+  {
+    group: string;
+    progressId: string;
+    text: string;
+    percent: number;
+  },
+  {}
+>;
+declare const setToolRunning: import("redux-act").ComplexActionCreator3<
+  string,
+  number,
+  boolean,
+  {
+    exePath: string;
+    started: number;
+    exclusive: boolean;
+  },
+  {}
+>;
+declare const setToolPid: import("redux-act").ComplexActionCreator3<
+  string,
+  number,
+  boolean,
+  {
+    exePath: string;
+    pid: number;
+    exclusive: boolean;
+  },
+  {}
+>;
+declare const setToolStopped: import("redux-act").ComplexActionCreator1<
+  string,
+  {
+    exePath: string;
+  },
+  {}
+>;
+declare const setExtensionLoadFailures: import("redux-act").ComplexActionCreator1<
+  Record<string, IExtensionLoadFailure[]>,
+  Record<string, IExtensionLoadFailure[]>,
+  {}
+>;
+declare const setUIBlocker: import("redux-act").ComplexActionCreator4<
+  string,
+  string,
+  string,
+  boolean,
+  {
+    id: string;
+    icon: string;
+    description: string;
+    mayCancel: boolean;
+  },
+  {}
+>;
 declare const clearUIBlocker: import("redux-act").ComplexActionCreator1<string, string, {}>;
 declare const setNetworkConnected: import("redux-act").ComplexActionCreator1<boolean, boolean, {}>;
-declare const setCommandLine: import("redux-act").ComplexActionCreator1<IParameters, IParameters, {}>;
+declare const setCommandLine: import("redux-act").ComplexActionCreator1<
+  IParameters,
+  IParameters,
+  {}
+>;
 declare const setDownloadGameFilter: import("redux-act").ComplexActionCreator1<string, string, {}>;
 //#endregion
 //#region lib/actions/tables.d.ts
-declare const setAttributeVisible: import("redux-act").ComplexActionCreator3<string, string, boolean, {
-  tableId: string;
-  attributeId: string;
-  visible: boolean;
-}, {}>;
-declare const setAttributeSort: import("redux-act").ComplexActionCreator3<string, string, SortDirection, {
-  tableId: string;
-  attributeId: string;
-  direction: SortDirection;
-}, {}>;
-declare const setAttributeFilter: import("redux-act").ComplexActionCreator3<string, string, unknown, {
-  tableId: string;
-  attributeId: string;
-  filter: unknown;
-}, {}>;
-declare const setGroupingAttribute: import("redux-act").ComplexActionCreator2<string, string, {
-  tableId: string;
-  attributeId: string;
-}, {}>;
-declare const collapseGroup: import("redux-act").ComplexActionCreator3<string, string, boolean, {
-  tableId: string;
-  groupId: string;
-  collapse: boolean;
-}, {}>;
-declare const setCollapsedGroups: import("redux-act").ComplexActionCreator2<string, string[], {
-  tableId: string;
-  groups: string[];
-}, {}>;
+declare const setAttributeVisible: import("redux-act").ComplexActionCreator3<
+  string,
+  string,
+  boolean,
+  {
+    tableId: string;
+    attributeId: string;
+    visible: boolean;
+  },
+  {}
+>;
+declare const setAttributeSort: import("redux-act").ComplexActionCreator3<
+  string,
+  string,
+  SortDirection,
+  {
+    tableId: string;
+    attributeId: string;
+    direction: SortDirection;
+  },
+  {}
+>;
+declare const setAttributeFilter: import("redux-act").ComplexActionCreator3<
+  string,
+  string,
+  unknown,
+  {
+    tableId: string;
+    attributeId: string;
+    filter: unknown;
+  },
+  {}
+>;
+declare const setGroupingAttribute: import("redux-act").ComplexActionCreator2<
+  string,
+  string,
+  {
+    tableId: string;
+    attributeId: string;
+  },
+  {}
+>;
+declare const collapseGroup: import("redux-act").ComplexActionCreator3<
+  string,
+  string,
+  boolean,
+  {
+    tableId: string;
+    groupId: string;
+    collapse: boolean;
+  },
+  {}
+>;
+declare const setCollapsedGroups: import("redux-act").ComplexActionCreator2<
+  string,
+  string[],
+  {
+    tableId: string;
+    groups: string[];
+  },
+  {}
+>;
 //#endregion
 //#region lib/actions/window.d.ts
 /**
  * action to set window size in the store.
  */
-declare const setWindowSize: import("redux-act").ComplexActionCreator1<{
-  width: number;
-  height: number;
-}, {
-  width: number;
-  height: number;
-}, {}>;
+declare const setWindowSize: import("redux-act").ComplexActionCreator1<
+  {
+    width: number;
+    height: number;
+  },
+  {
+    width: number;
+    height: number;
+  },
+  {}
+>;
 /**
  * action to set window position in the store.
  */
-declare const setWindowPosition: import("redux-act").ComplexActionCreator1<{
-  x: number;
-  y: number;
-}, {
-  x: number;
-  y: number;
-}, {}>;
+declare const setWindowPosition: import("redux-act").ComplexActionCreator1<
+  {
+    x: number;
+    y: number;
+  },
+  {
+    x: number;
+    y: number;
+  },
+  {}
+>;
 /**
  * action to set maximized in the store
  * to avoid confusion: maximize maintains window frame and fills one screen,
@@ -5695,13 +6657,23 @@ declare const setUseModernLayout: import("redux-act").ComplexActionCreator1<bool
  * to store the load order, it's only stored in the form of mod names and it would be
  * impractical to redeploy every time the load order is changed)
  */
-declare const setLoadOrder: import("redux-act").ComplexActionCreator2<string, unknown[], {
-  id: string;
-  order: unknown[];
-}, {}>;
+declare const setLoadOrder: import("redux-act").ComplexActionCreator2<
+  string,
+  unknown[],
+  {
+    id: string;
+    order: unknown[];
+  },
+  {}
+>;
 //#endregion
 //#region lib/extensions/browser/actions.d.ts
-type ShowUrlFunc = (url: string, instructions?: string, subscriber?: string, skippable?: boolean) => Action<{
+type ShowUrlFunc = (
+  url: string,
+  instructions?: string,
+  subscriber?: string,
+  skippable?: boolean,
+) => Action<{
   url: string;
   instructions: string;
   subscriber: string;
@@ -5711,32 +6683,64 @@ declare const showURL: ShowUrlFunc;
 declare const closeBrowser: import("redux-act").EmptyActionCreator;
 //#endregion
 //#region lib/extensions/category_management/actions/category.d.ts
-declare const loadCategories: import("redux-act").ComplexActionCreator2<string, ICategoryDictionary, {
-  gameId: string;
-  gameCategories: ICategoryDictionary;
-}, {}>;
-declare const setCategory: import("redux-act").ComplexActionCreator3<string, string, ICategory, {
-  gameId: string;
-  id: string;
-  category: ICategory;
-}, {}>;
-declare const removeCategory: import("redux-act").ComplexActionCreator2<string, string, {
-  gameId: string;
-  id: string;
-}, {}>;
-declare const setCategoryOrder: import("redux-act").ComplexActionCreator2<string, string[], {
-  gameId: string;
-  categoryIds: string[];
-}, {}>;
-declare const updateCategories: import("redux-act").ComplexActionCreator2<string, ICategoryDictionary, {
-  gameId: string;
-  gameCategories: ICategoryDictionary;
-}, {}>;
-declare const renameCategory: import("redux-act").ComplexActionCreator3<string, string, string, {
-  gameId: string;
-  categoryId: string;
-  name: string;
-}, {}>;
+declare const loadCategories: import("redux-act").ComplexActionCreator2<
+  string,
+  ICategoryDictionary,
+  {
+    gameId: string;
+    gameCategories: ICategoryDictionary;
+  },
+  {}
+>;
+declare const setCategory: import("redux-act").ComplexActionCreator3<
+  string,
+  string,
+  ICategory,
+  {
+    gameId: string;
+    id: string;
+    category: ICategory;
+  },
+  {}
+>;
+declare const removeCategory: import("redux-act").ComplexActionCreator2<
+  string,
+  string,
+  {
+    gameId: string;
+    id: string;
+  },
+  {}
+>;
+declare const setCategoryOrder: import("redux-act").ComplexActionCreator2<
+  string,
+  string[],
+  {
+    gameId: string;
+    categoryIds: string[];
+  },
+  {}
+>;
+declare const updateCategories: import("redux-act").ComplexActionCreator2<
+  string,
+  ICategoryDictionary,
+  {
+    gameId: string;
+    gameCategories: ICategoryDictionary;
+  },
+  {}
+>;
+declare const renameCategory: import("redux-act").ComplexActionCreator3<
+  string,
+  string,
+  string,
+  {
+    gameId: string;
+    categoryId: string;
+    name: string;
+  },
+  {}
+>;
 //#endregion
 //#region lib/extensions/download_management/actions/settings.d.ts
 declare const setMaxDownloads: reduxAct.ComplexActionCreator1<unknown, unknown, {}>;
@@ -5754,145 +6758,273 @@ interface IDictionary {
 /**
  * initialize a download (it may not be started immediately)
  */
-declare const initDownload: import("redux-act").ComplexActionCreator4<string, string[], IDictionary, string[], {
-  id: string;
-  urls: string[];
-  modInfo: IDictionary;
-  games: string[];
-}, {}>;
+declare const initDownload: import("redux-act").ComplexActionCreator4<
+  string,
+  string[],
+  IDictionary,
+  string[],
+  {
+    id: string;
+    urls: string[];
+    modInfo: IDictionary;
+    games: string[];
+  },
+  {}
+>;
 /**
  * set download progress (in percent)
  */
-declare const downloadProgress: import("redux-act").ComplexActionCreator4<string, number, number, string[], {
-  id: string;
-  received: number;
-  total: number;
-  urls: string[];
-}, {}>;
-declare const finalizingProgress: import("redux-act").ComplexActionCreator2<string, number, {
-  id: string;
-  progress: number;
-}, {}>;
+declare const downloadProgress: import("redux-act").ComplexActionCreator4<
+  string,
+  number,
+  number,
+  string[],
+  {
+    id: string;
+    received: number;
+    total: number;
+    urls: string[];
+  },
+  {}
+>;
+declare const finalizingProgress: import("redux-act").ComplexActionCreator2<
+  string,
+  number,
+  {
+    id: string;
+    progress: number;
+  },
+  {}
+>;
 /**
  * set/change the file path
  */
-declare const setDownloadFilePath: import("redux-act").ComplexActionCreator2<string, string, {
-  id: string;
-  filePath: string;
-}, {}>;
+declare const setDownloadFilePath: import("redux-act").ComplexActionCreator2<
+  string,
+  string,
+  {
+    id: string;
+    filePath: string;
+  },
+  {}
+>;
 /**
  * mark the download as pausable or not
  */
-declare const setDownloadPausable: import("redux-act").ComplexActionCreator2<string, boolean, {
-  id: string;
-  pausable: boolean;
-}, {}>;
+declare const setDownloadPausable: import("redux-act").ComplexActionCreator2<
+  string,
+  boolean,
+  {
+    id: string;
+    pausable: boolean;
+  },
+  {}
+>;
 /**
  * mark download as started
  */
-declare const startDownload: import("redux-act").ComplexActionCreator1<string, {
-  id: string;
-}, {}>;
+declare const startDownload: import("redux-act").ComplexActionCreator1<
+  string,
+  {
+    id: string;
+  },
+  {}
+>;
 /**
  * mark download as finalizing, meaning the file has been downloaded fully,
  * during this phase checksums are calculated for example
  */
-declare const finalizingDownload: import("redux-act").ComplexActionCreator1<string, {
-  id: string;
-}, {}>;
+declare const finalizingDownload: import("redux-act").ComplexActionCreator1<
+  string,
+  {
+    id: string;
+  },
+  {}
+>;
 /**
  * mark download as finished
  */
-declare const finishDownload: import("redux-act").ComplexActionCreator3<string, "finished" | "failed" | "redirect", any, {
-  id: string;
-  state: "finished" | "failed" | "redirect";
-  failCause: any;
-}, {}>;
-declare const setDownloadHash: import("redux-act").ComplexActionCreator2<string, string, {
-  id: string;
-  fileMD5: string;
-}, {}>;
-declare const setDownloadHashByFile: import("redux-act").ComplexActionCreator3<string, string, number, {
-  fileName: string;
-  fileMD5: string;
-  fileSize: number;
-}, {}>;
+declare const finishDownload: import("redux-act").ComplexActionCreator3<
+  string,
+  "finished" | "failed" | "redirect",
+  any,
+  {
+    id: string;
+    state: "finished" | "failed" | "redirect";
+    failCause: any;
+  },
+  {}
+>;
+declare const setDownloadHash: import("redux-act").ComplexActionCreator2<
+  string,
+  string,
+  {
+    id: string;
+    fileMD5: string;
+  },
+  {}
+>;
+declare const setDownloadHashByFile: import("redux-act").ComplexActionCreator3<
+  string,
+  string,
+  number,
+  {
+    fileName: string;
+    fileMD5: string;
+    fileSize: number;
+  },
+  {}
+>;
 /**
  * mark download paused
  */
-declare const pauseDownload: import("redux-act").ComplexActionCreator2<string, boolean, {
-  id: string;
-  paused: boolean;
-}, {}>;
-declare const setDownloadInterrupted: import("redux-act").ComplexActionCreator2<string, number, {
-  id: string;
-  realReceived: number;
-}, {}>;
+declare const pauseDownload: import("redux-act").ComplexActionCreator2<
+  string,
+  boolean,
+  {
+    id: string;
+    paused: boolean;
+  },
+  {}
+>;
+declare const setDownloadInterrupted: import("redux-act").ComplexActionCreator2<
+  string,
+  number,
+  {
+    id: string;
+    realReceived: number;
+  },
+  {}
+>;
 /**
  * remove a download (and associated file if any)
  */
-declare const removeDownload: import("redux-act").ComplexActionCreator1<string, {
-  id: string;
-}, {}>;
-declare const removeDownloadSilent: import("redux-act").ComplexActionCreator1<string, {
-  id: string;
-}, {}>;
+declare const removeDownload: import("redux-act").ComplexActionCreator1<
+  string,
+  {
+    id: string;
+  },
+  {}
+>;
+declare const removeDownloadSilent: import("redux-act").ComplexActionCreator1<
+  string,
+  {
+    id: string;
+  },
+  {}
+>;
 /**
  * sets the current download speed in bytes/second
  */
-declare const setDownloadSpeed: import("redux-act").ComplexActionCreator1<unknown, unknown, {
-  forward: boolean;
-  scope: string;
-}>;
+declare const setDownloadSpeed: import("redux-act").ComplexActionCreator1<
+  unknown,
+  unknown,
+  {
+    forward: boolean;
+    scope: string;
+  }
+>;
 declare const setDownloadSpeeds: import("redux-act").ComplexActionCreator1<unknown, unknown, {}>;
 /**
  * add a file that has been found on disk but where we weren't involved
  * in the download.
  */
-declare const addLocalDownload: import("redux-act").ComplexActionCreator4<string, string, string, number, {
-  id: string;
-  game: string;
-  localPath: string;
-  fileSize: number;
-}, {}>;
-declare const mergeDownloadModInfo: import("redux-act").ComplexActionCreator2<string, any, {
-  id: string;
-  value: any;
-}, {}>;
-declare const setDownloadModInfo: import("redux-act").ComplexActionCreator3<string, string, any, {
-  id: string;
-  key: string;
-  value: any;
-}, {}>;
-declare const setDownloadInstalled: import("redux-act").ComplexActionCreator3<string, string, string, {
-  id: string;
-  gameId: string;
-  modId: string;
-}, {}>;
-declare const setDownloadTime: import("redux-act").ComplexActionCreator2<string, number, {
-  id: string;
-  time: number;
-}, {}>;
-declare const setCompatibleGames: import("redux-act").ComplexActionCreator2<string, string[], {
-  id: string;
-  games: string[];
-}, {}>;
+declare const addLocalDownload: import("redux-act").ComplexActionCreator4<
+  string,
+  string,
+  string,
+  number,
+  {
+    id: string;
+    game: string;
+    localPath: string;
+    fileSize: number;
+  },
+  {}
+>;
+declare const mergeDownloadModInfo: import("redux-act").ComplexActionCreator2<
+  string,
+  any,
+  {
+    id: string;
+    value: any;
+  },
+  {}
+>;
+declare const setDownloadModInfo: import("redux-act").ComplexActionCreator3<
+  string,
+  string,
+  any,
+  {
+    id: string;
+    key: string;
+    value: any;
+  },
+  {}
+>;
+declare const setDownloadInstalled: import("redux-act").ComplexActionCreator3<
+  string,
+  string,
+  string,
+  {
+    id: string;
+    gameId: string;
+    modId: string;
+  },
+  {}
+>;
+declare const setDownloadTime: import("redux-act").ComplexActionCreator2<
+  string,
+  number,
+  {
+    id: string;
+    time: number;
+  },
+  {}
+>;
+declare const setCompatibleGames: import("redux-act").ComplexActionCreator2<
+  string,
+  string[],
+  {
+    id: string;
+    games: string[];
+  },
+  {}
+>;
 //#endregion
 //#region lib/extensions/installer_fomod_shared/actions/installerUI.d.ts
-declare const startDialog: import("redux-act").ComplexActionCreator2<IInstallerInfoState, string, {
-  info: IInstallerInfoState;
-  instanceId: string;
-}, {}>;
-declare const endDialog: import("redux-act").ComplexActionCreator1<string, {
-  instanceId: string;
-}, {}>;
-declare const clearDialog: import("redux-act").ComplexActionCreator1<string, {
-  instanceId: string;
-}, {}>;
-declare const setDialogState: import("redux-act").ComplexActionCreator2<IInstallerState, string, {
-  dialogState: IInstallerState;
-  instanceId: string;
-}, {}>;
+declare const startDialog: import("redux-act").ComplexActionCreator2<
+  IInstallerInfoState,
+  string,
+  {
+    info: IInstallerInfoState;
+    instanceId: string;
+  },
+  {}
+>;
+declare const endDialog: import("redux-act").ComplexActionCreator1<
+  string,
+  {
+    instanceId: string;
+  },
+  {}
+>;
+declare const clearDialog: import("redux-act").ComplexActionCreator1<
+  string,
+  {
+    instanceId: string;
+  },
+  {}
+>;
+declare const setDialogState: import("redux-act").ComplexActionCreator2<
+  IInstallerState,
+  string,
+  {
+    dialogState: IInstallerState;
+    instanceId: string;
+  },
+  {}
+>;
 //#endregion
 //#region lib/extensions/mod_load_order/actions/loadOrder.d.ts
 declare const setLoadOrderEntry: any;
@@ -5905,138 +7037,246 @@ declare const setFBLoadOrder: any;
 /**
  * change the mod install path. Supports placeholders
  */
-declare const setInstallPath: reduxAct.ComplexActionCreator2<string, string, {
-  gameId: string;
-  path: string;
-}, {}>;
-declare const setInstallPathMode: reduxAct.ComplexActionCreator1<InstallPathMode, InstallPathMode, {}>;
+declare const setInstallPath: reduxAct.ComplexActionCreator2<
+  string,
+  string,
+  {
+    gameId: string;
+    path: string;
+  },
+  {}
+>;
+declare const setInstallPathMode: reduxAct.ComplexActionCreator1<
+  InstallPathMode,
+  InstallPathMode,
+  {}
+>;
 declare const setSuggestInstallPathDirectory: reduxAct.ComplexActionCreator1<string, string, {}>;
 /**
  * sets the activator to use for this game
  */
-declare const setActivator: reduxAct.ComplexActionCreator2<string, string, {
-  gameId: string;
-  activatorId: string;
-}, {}>;
+declare const setActivator: reduxAct.ComplexActionCreator2<
+  string,
+  string,
+  {
+    gameId: string;
+    activatorId: string;
+  },
+  {}
+>;
 declare const setShowModDropzone: reduxAct.ComplexActionCreator1<unknown, unknown, {}>;
 declare const setConfirmPurge: reduxAct.ComplexActionCreator1<boolean, boolean, {}>;
 declare const setCleanupOnDeploy: reduxAct.ComplexActionCreator1<boolean, boolean, {}>;
 //#endregion
 //#region lib/extensions/mod_management/actions/deployment.d.ts
-declare const setDeploymentNecessary: reduxAct.ComplexActionCreator2<string, boolean, {
-  gameId: string;
-  required: boolean;
-}, {}>;
+declare const setDeploymentNecessary: reduxAct.ComplexActionCreator2<
+  string,
+  boolean,
+  {
+    gameId: string;
+    required: boolean;
+  },
+  {}
+>;
 //#endregion
 //#region lib/extensions/mod_management/actions/mods.d.ts
-declare const addMod: reduxAct.ComplexActionCreator2<string, IMod, {
-  gameId: string;
-  mod: IMod;
-}, {}>;
-declare const addMods: reduxAct.ComplexActionCreator2<string, IMod[], {
-  gameId: string;
-  mods: IMod[];
-}, {}>;
-declare const removeMod: reduxAct.ComplexActionCreator2<string, string, {
-  gameId: string;
-  modId: string;
-}, {}>;
-declare const setModArchiveId: reduxAct.ComplexActionCreator3<string, string, string, {
-  gameId: string;
-  modId: string;
-  archiveId: string;
-}, {}>;
+declare const addMod: reduxAct.ComplexActionCreator2<
+  string,
+  IMod,
+  {
+    gameId: string;
+    mod: IMod;
+  },
+  {}
+>;
+declare const addMods: reduxAct.ComplexActionCreator2<
+  string,
+  IMod[],
+  {
+    gameId: string;
+    mods: IMod[];
+  },
+  {}
+>;
+declare const removeMod: reduxAct.ComplexActionCreator2<
+  string,
+  string,
+  {
+    gameId: string;
+    modId: string;
+  },
+  {}
+>;
+declare const setModArchiveId: reduxAct.ComplexActionCreator3<
+  string,
+  string,
+  string,
+  {
+    gameId: string;
+    modId: string;
+    archiveId: string;
+  },
+  {}
+>;
 /**
  * sets the state of a mod (whether it's downloaded, installed, ...)
  */
-declare const setModState: reduxAct.ComplexActionCreator3<string, string, ModState, {
-  gameId: string;
-  modId: string;
-  modState: ModState;
-}, {}>;
+declare const setModState: reduxAct.ComplexActionCreator3<
+  string,
+  string,
+  ModState,
+  {
+    gameId: string;
+    modId: string;
+    modState: ModState;
+  },
+  {}
+>;
 /**
  * sets the (final) installation path of the mod. This should be set as soon as
  * any data is written to disk so that it can be cleaned/removed in case of an error.
  * The actual path on disk may be a variation of this path during installation.
  */
-declare const setModInstallationPath: reduxAct.ComplexActionCreator3<string, string, string, {
-  gameId: string;
-  modId: string;
-  installPath: string;
-}, {}>;
+declare const setModInstallationPath: reduxAct.ComplexActionCreator3<
+  string,
+  string,
+  string,
+  {
+    gameId: string;
+    modId: string;
+    installPath: string;
+  },
+  {}
+>;
 /**
  * sets the value of an attribute on a mod
  */
-declare const setModAttribute: reduxAct.ComplexActionCreator4<string, string, string, any, {
-  gameId: string;
-  modId: string;
-  attribute: string;
-  value: any;
-}, {}>;
+declare const setModAttribute: reduxAct.ComplexActionCreator4<
+  string,
+  string,
+  string,
+  any,
+  {
+    gameId: string;
+    modId: string;
+    attribute: string;
+    value: any;
+  },
+  {}
+>;
 /**
  * set multiple mod attributes at once
  */
-declare const setModAttributes: reduxAct.ComplexActionCreator3<string, string, {
-  [attribute: string]: any;
-}, {
-  gameId: string;
-  modId: string;
-  attributes: {
+declare const setModAttributes: reduxAct.ComplexActionCreator3<
+  string,
+  string,
+  {
     [attribute: string]: any;
-  };
-}, {}>;
+  },
+  {
+    gameId: string;
+    modId: string;
+    attributes: {
+      [attribute: string]: any;
+    };
+  },
+  {}
+>;
 /**
  * sets the type of a mod
  */
-declare const setModType: reduxAct.ComplexActionCreator3<string, string, string, {
-  gameId: string;
-  modId: string;
-  type: string;
-}, {}>;
-declare const clearModRules: reduxAct.ComplexActionCreator2<string, string, {
-  gameId: string;
-  modId: string;
-}, {}>;
+declare const setModType: reduxAct.ComplexActionCreator3<
+  string,
+  string,
+  string,
+  {
+    gameId: string;
+    modId: string;
+    type: string;
+  },
+  {}
+>;
+declare const clearModRules: reduxAct.ComplexActionCreator2<
+  string,
+  string,
+  {
+    gameId: string;
+    modId: string;
+  },
+  {}
+>;
 /**
  * add a dependency rule for this mod
  */
-declare const addModRule: reduxAct.ComplexActionCreator3<string, string, IModRule, {
-  gameId: string;
-  modId: string;
-  rule: IModRule;
-}, {}>;
+declare const addModRule: reduxAct.ComplexActionCreator3<
+  string,
+  string,
+  IModRule,
+  {
+    gameId: string;
+    modId: string;
+    rule: IModRule;
+  },
+  {}
+>;
 /**
  * remove a dependency rule from this mod
  */
-declare const removeModRule: reduxAct.ComplexActionCreator3<string, string, IModRule, {
-  gameId: string;
-  modId: string;
-  rule: IModRule;
-}, {}>;
+declare const removeModRule: reduxAct.ComplexActionCreator3<
+  string,
+  string,
+  IModRule,
+  {
+    gameId: string;
+    modId: string;
+    rule: IModRule;
+  },
+  {}
+>;
 /**
  * store the mod id for a resolved rule, so we can resolve it quicker and more
  * reliably in the future
  */
-declare const cacheModReference: reduxAct.ComplexActionCreator4<string, string, IModReference, string, {
-  gameId: string;
-  modId: string;
-  reference: IModReference;
-  refModId: string;
-}, {}>;
-declare const setINITweakEnabled: reduxAct.ComplexActionCreator4<string, string, string, boolean, {
-  gameId: string;
-  modId: string;
-  tweak: string;
-  enabled: boolean;
-}, {}>;
+declare const cacheModReference: reduxAct.ComplexActionCreator4<
+  string,
+  string,
+  IModReference,
+  string,
+  {
+    gameId: string;
+    modId: string;
+    reference: IModReference;
+    refModId: string;
+  },
+  {}
+>;
+declare const setINITweakEnabled: reduxAct.ComplexActionCreator4<
+  string,
+  string,
+  string,
+  boolean,
+  {
+    gameId: string;
+    modId: string;
+    tweak: string;
+    enabled: boolean;
+  },
+  {}
+>;
 /**
  * set list of files that will always be provided by this mod, no matter the deployment order
  */
-declare const setFileOverride: reduxAct.ComplexActionCreator3<string, string, string[], {
-  gameId: string;
-  modId: string;
-  files: string[];
-}, {}>;
+declare const setFileOverride: reduxAct.ComplexActionCreator3<
+  string,
+  string,
+  string[],
+  {
+    gameId: string;
+    modId: string;
+    files: string[];
+  },
+  {}
+>;
 //#endregion
 //#region lib/extensions/mod_management/actions/transactions.d.ts
 /**
@@ -6047,27 +7287,43 @@ declare const setFileOverride: reduxAct.ComplexActionCreator3<string, string, st
  * Lives in the cross-extension transactions slice because it is written by the collections install
  * flow but read/cleared by gamebryo plugin management. The value is the epoch-ms time it was queued.
  */
-declare const setPendingPluginSort: import("redux-act").ComplexActionCreator3<string, string, number, {
-  profileId: string;
-  collectionId: string;
-  time: number;
-}, {}>;
+declare const setPendingPluginSort: import("redux-act").ComplexActionCreator3<
+  string,
+  string,
+  number,
+  {
+    profileId: string;
+    collectionId: string;
+    time: number;
+  },
+  {}
+>;
 /**
  * Clears every pending plugin-sort marker for a profile; a single successful sort orders all of the
  * profile's plugins, so it satisfies all collections queued for that profile at once.
  */
-declare const clearPendingPluginSort: import("redux-act").ComplexActionCreator1<string, {
-  profileId: string;
-}, {}>;
+declare const clearPendingPluginSort: import("redux-act").ComplexActionCreator1<
+  string,
+  {
+    profileId: string;
+  },
+  {}
+>;
 //#endregion
 //#region lib/extensions/nexus_integration/actions/account.d.ts
 declare const setUserAPIKey: reduxAct.ComplexActionCreator1<unknown, unknown, {}>;
 declare const clearOAuthCredentials: reduxAct.ComplexActionCreator1<unknown, any, {}>;
-declare const setOAuthCredentials: reduxAct.ComplexActionCreator3<string, string, string, {
-  token: string;
-  refreshToken: string;
-  fingerprint: string;
-}, {}>;
+declare const setOAuthCredentials: reduxAct.ComplexActionCreator3<
+  string,
+  string,
+  string,
+  {
+    token: string;
+    refreshToken: string;
+    fingerprint: string;
+  },
+  {}
+>;
 declare const setForcedLogout: reduxAct.ComplexActionCreator1<boolean, boolean, {}>;
 //#endregion
 //#region lib/extensions/nexus_integration/actions/settings.d.ts
@@ -6087,58 +7343,101 @@ declare const setNewestVersion: import("redux-act").ComplexActionCreator1<any, a
 /**
  * add info about a discovered game
  */
-declare const addDiscoveredGame: import("redux-act").ComplexActionCreator2<string, IDiscoveryResult, {
-  id: string;
-  result: IDiscoveryResult;
-}, {}>;
-declare const clearDiscoveredGame: import("redux-act").ComplexActionCreator1<string, {
-  id: string;
-}, {}>;
+declare const addDiscoveredGame: import("redux-act").ComplexActionCreator2<
+  string,
+  IDiscoveryResult,
+  {
+    id: string;
+    result: IDiscoveryResult;
+  },
+  {}
+>;
+declare const clearDiscoveredGame: import("redux-act").ComplexActionCreator1<
+  string,
+  {
+    id: string;
+  },
+  {}
+>;
 /**
  * override the path of a game that's already been discovered
  */
-declare const setGamePath: import("redux-act").ComplexActionCreator4<string, string, string, string, {
-  gameId: string;
-  gamePath: string;
-  store: string;
-  exePath: string;
-}, {}>;
+declare const setGamePath: import("redux-act").ComplexActionCreator4<
+  string,
+  string,
+  string,
+  string,
+  {
+    gameId: string;
+    gamePath: string;
+    store: string;
+    exePath: string;
+  },
+  {}
+>;
 /**
  * add info about a discovered tool
  */
-declare const addDiscoveredTool: import("redux-act").ComplexActionCreator4<string, string, IDiscoveredTool, boolean, {
-  gameId: string;
-  toolId: string;
-  result: IDiscoveredTool;
-  manual: boolean;
-}, {}>;
+declare const addDiscoveredTool: import("redux-act").ComplexActionCreator4<
+  string,
+  string,
+  IDiscoveredTool,
+  boolean,
+  {
+    gameId: string;
+    toolId: string;
+    result: IDiscoveredTool;
+    manual: boolean;
+  },
+  {}
+>;
 /**
  * set visibility of a tool. Tools that have been added by the user will be removed entirely whereas
  * discovered tools (those where we have code to discover them) are merely hidden
  */
-declare const setToolVisible: import("redux-act").ComplexActionCreator3<string, string, boolean, {
-  gameId: string;
-  toolId: string;
-  visible: boolean;
-}, {}>;
+declare const setToolVisible: import("redux-act").ComplexActionCreator3<
+  string,
+  string,
+  boolean,
+  {
+    gameId: string;
+    toolId: string;
+    visible: boolean;
+  },
+  {}
+>;
 /**
  * change parameters for a game (i.e. call arguments, environment, ...)
  */
-declare const setGameParameters: import("redux-act").ComplexActionCreator2<string, any, {
-  gameId: string;
-  parameters: any;
-}, {}>;
+declare const setGameParameters: import("redux-act").ComplexActionCreator2<
+  string,
+  any,
+  {
+    gameId: string;
+    parameters: any;
+  },
+  {}
+>;
 /**
  * hide or unhide a game
  */
-declare const setGameHidden: import("redux-act").ComplexActionCreator2<string, boolean, {
-  gameId: string;
-  hidden: boolean;
-}, {}>;
+declare const setGameHidden: import("redux-act").ComplexActionCreator2<
+  string,
+  boolean,
+  {
+    gameId: string;
+    hidden: boolean;
+  },
+  {}
+>;
 declare const setGameSearchPaths: import("redux-act").ComplexActionCreator1<string[], string[], {}>;
-declare const setPickerLayout: import("redux-act").ComplexActionCreator1<"small" | "list" | "large", {
-  layout: "small" | "list" | "large";
-}, {}>;
+declare const setPickerLayout: import("redux-act").ComplexActionCreator1<
+  "small" | "list" | "large",
+  {
+    layout: "small" | "list" | "large";
+  },
+  {}
+>;
 declare const setSortManaged: import("redux-act").ComplexActionCreator1<string, string, {}>;
 declare const setSortUnmanaged: import("redux-act").ComplexActionCreator1<string, string, {}>;
 //#endregion
@@ -6146,9 +7445,13 @@ declare const setSortUnmanaged: import("redux-act").ComplexActionCreator1<string
 /**
  * sets a profile to be activated
  */
-declare const setNextProfile: reduxAct.ComplexActionCreator1<string, {
-  profileId: string;
-}, {}>;
+declare const setNextProfile: reduxAct.ComplexActionCreator1<
+  string,
+  {
+    profileId: string;
+  },
+  {}
+>;
 //#endregion
 //#region lib/extensions/settings_interface/actions/automation.d.ts
 declare const setAutoDeployment: reduxAct.ComplexActionCreator1<unknown, unknown, {}>;
@@ -6165,20 +7468,37 @@ declare const setLanguage: reduxAct.ComplexActionCreator1<string, string, {}>;
 /**
  * enable or disable advanced mode
  */
-declare const setAdvancedMode: reduxAct.ComplexActionCreator1<boolean, {
-  advanced: boolean;
-}, {}>;
-declare const setProfilesVisible: reduxAct.ComplexActionCreator1<boolean, {
-  visible: boolean;
-}, {}>;
+declare const setAdvancedMode: reduxAct.ComplexActionCreator1<
+  boolean,
+  {
+    advanced: boolean;
+  },
+  {}
+>;
+declare const setProfilesVisible: reduxAct.ComplexActionCreator1<
+  boolean,
+  {
+    visible: boolean;
+  },
+  {}
+>;
 declare const setDesktopNotifications: reduxAct.ComplexActionCreator1<boolean, boolean, {}>;
-declare const setHideTopLevelCategory: reduxAct.ComplexActionCreator1<boolean, {
-  hide: boolean;
-}, {}>;
-declare const showUsageInstruction: reduxAct.ComplexActionCreator2<string, boolean, {
-  usageId: string;
-  show: boolean;
-}, {}>;
+declare const setHideTopLevelCategory: reduxAct.ComplexActionCreator1<
+  boolean,
+  {
+    hide: boolean;
+  },
+  {}
+>;
+declare const showUsageInstruction: reduxAct.ComplexActionCreator2<
+  string,
+  boolean,
+  {
+    usageId: string;
+    show: boolean;
+  },
+  {}
+>;
 declare const setRelativeTimes: reduxAct.ComplexActionCreator1<boolean, boolean, {}>;
 declare const setForegroundDL: reduxAct.ComplexActionCreator1<boolean, boolean, {}>;
 //#endregion
@@ -6190,26 +7510,238 @@ declare const setForegroundDL: reduxAct.ComplexActionCreator1<boolean, boolean, 
 declare const setUpdateChannel: reduxAct.ComplexActionCreator1<unknown, unknown, {}>;
 //#endregion
 //#region lib/extensions/starter_dashlet/actions.d.ts
-declare const setPrimaryTool: import("redux-act").ComplexActionCreator2<string, string, {
-  gameId: string;
-  toolId: string;
-}, {}>;
-declare const setToolOrder: import("redux-act").ComplexActionCreator2<string, string[], {
-  gameId: string;
-  tools: string[];
-}, {}>;
-declare const setToolValid: import("redux-act").ComplexActionCreator3<string, string, boolean, {
-  gameId: string;
-  toolId: string;
-  valid: boolean;
-}, {}>;
-declare const setToolPinned: import("redux-act").ComplexActionCreator3<string, string, boolean, {
-  gameId: string;
-  toolId: string;
-  pinned: boolean;
-}, {}>;
+declare const setPrimaryTool: import("redux-act").ComplexActionCreator2<
+  string,
+  string,
+  {
+    gameId: string;
+    toolId: string;
+  },
+  {}
+>;
+declare const setToolOrder: import("redux-act").ComplexActionCreator2<
+  string,
+  string[],
+  {
+    gameId: string;
+    tools: string[];
+  },
+  {}
+>;
+declare const setToolValid: import("redux-act").ComplexActionCreator3<
+  string,
+  string,
+  boolean,
+  {
+    gameId: string;
+    toolId: string;
+    valid: boolean;
+  },
+  {}
+>;
+declare const setToolPinned: import("redux-act").ComplexActionCreator3<
+  string,
+  string,
+  boolean,
+  {
+    gameId: string;
+    toolId: string;
+    pinned: boolean;
+  },
+  {}
+>;
 declare namespace index_d_exports {
-  export { Condition, ConditionResults, DialogActions, DialogContentItem, DialogType, ICheckbox, IConditionResult, IControlBase, IDialog, IDialogAction, IDialogContent, IDialogResult, IDictionary, IEnableOptions, IInput, ILink, addDialog, addDiscoveredGame, addDiscoveredTool, addExtension, addLocalDownload, addMod, addModRule, addMods, addNotification, cacheModReference, clearDialog, clearDiscoveredGame, clearModRules, clearOAuthCredentials, clearPendingPluginSort, clearUIBlocker, closeBrowser, closeDialog, closeDialogs, collapseGroup, completeMigration, dismissAllNotifications, dismissDialog, dismissNotification, displayGroup, downloadProgress, endDialog, finalizingDownload, finalizingProgress, finishDownload, fireNotificationAction, forgetExtension, forgetMod, initDownload, loadCategories, mergeDownloadModInfo, pauseDownload, removeCategory, removeDownload, removeDownloadSilent, removeExtension, removeMod, removeModRule, removeProfile, renameCategory, resetSuppression, setActivator, setAdvancedMode, setApplicationVersion, setAssociatedWithNXMURLs, setAttributeFilter, setAttributeSort, setAttributeVisible, setAutoDeployment, setAutoEnable, setAutoInstall, setAutoStart, setCategory, setCategoryOrder, setCleanupOnDeploy, setCollapsedGroups, setCollectionConcurrency, setCommandLine, setCompatibleGames, setConfirmPurge, setCopyOnIFF, setCustomTitlebar, setDeploymentNecessary, setDesktopNotifications, setDialogState, setDialogVisible, setDownloadFilePath, setDownloadGameFilter, setDownloadHash, setDownloadHashByFile, setDownloadInstalled, setDownloadInterrupted, setDownloadModInfo, setDownloadPath, setDownloadPausable, setDownloadSpeed, setDownloadSpeeds, setDownloadTime, setExtensionEnabled, setExtensionEndorsed, setExtensionLoadFailures, setExtensionVersion, setFBLoadOrder, setFBLoadOrderEntry, setFeature, setFileOverride, setForcedLogout, setForegroundDL, setGameHidden, setGameParameters, setGamePath, setGameSearchPaths, setGroupingAttribute, setHideTopLevelCategory, setINITweakEnabled, setInstallPath, setInstallPathMode, setInstallType, setInstanceId, setLanguage, setLoadOrder, setLoadOrderEntry, setMaxBandwidth, setMaxDownloads, setMaximized, setModArchiveId, setModAttribute, setModAttributes, setModEnabled, setModInstallationPath, setModState, setModType, setModsEnabled, setNetworkConnected, setNewestVersion, setNextProfile, setOAuthCredentials, setOpenMainPage, setPendingPluginSort, setPickerLayout, setPrimaryTool, setProfile, setProfileActivated, setProfilesVisible, setProgress, setRelativeTimes, setSettingsPage, setShowDLDropzone, setShowDLGraph, setShowModDropzone, setSortManaged, setSortUnmanaged, setStartMinimized, setStateVersion, setSuggestInstallPathDirectory, setTabsMinimized, setToolOrder, setToolPid, setToolPinned, setToolRunning, setToolStopped, setToolValid, setToolVisible, setUIBlocker, setUpdateChannel, setUseModernLayout, setUserAPIKey, setUserInfo, setWarnedAdmin, setWindowPosition, setWindowSize, setZoomFactor, setupNotificationSuppression, showDialog, showURL, showUsageInstruction, startActivity, startDialog, startDownload, startNotification, stopActivity, stopAllNotifications, stopNotification, suppressNotification, triggerDialogLink, updateCategories, updateNotification, willRemoveProfile };
+  export {
+    Condition,
+    ConditionResults,
+    DialogActions,
+    DialogContentItem,
+    DialogType,
+    ICheckbox,
+    IConditionResult,
+    IControlBase,
+    IDialog,
+    IDialogAction,
+    IDialogContent,
+    IDialogResult,
+    IDictionary,
+    IEnableOptions,
+    IInput,
+    ILink,
+    addDialog,
+    addDiscoveredGame,
+    addDiscoveredTool,
+    addExtension,
+    addLocalDownload,
+    addMod,
+    addModRule,
+    addMods,
+    addNotification,
+    cacheModReference,
+    clearDialog,
+    clearDiscoveredGame,
+    clearModRules,
+    clearOAuthCredentials,
+    clearPendingPluginSort,
+    clearUIBlocker,
+    closeBrowser,
+    closeDialog,
+    closeDialogs,
+    collapseGroup,
+    completeMigration,
+    dismissAllNotifications,
+    dismissDialog,
+    dismissNotification,
+    displayGroup,
+    downloadProgress,
+    endDialog,
+    finalizingDownload,
+    finalizingProgress,
+    finishDownload,
+    fireNotificationAction,
+    forgetExtension,
+    forgetMod,
+    initDownload,
+    loadCategories,
+    mergeDownloadModInfo,
+    pauseDownload,
+    removeCategory,
+    removeDownload,
+    removeDownloadSilent,
+    removeExtension,
+    removeMod,
+    removeModRule,
+    removeProfile,
+    renameCategory,
+    resetSuppression,
+    setActivator,
+    setAdvancedMode,
+    setApplicationVersion,
+    setAssociatedWithNXMURLs,
+    setAttributeFilter,
+    setAttributeSort,
+    setAttributeVisible,
+    setAutoDeployment,
+    setAutoEnable,
+    setAutoInstall,
+    setAutoStart,
+    setCategory,
+    setCategoryOrder,
+    setCleanupOnDeploy,
+    setCollapsedGroups,
+    setCollectionConcurrency,
+    setCommandLine,
+    setCompatibleGames,
+    setConfirmPurge,
+    setCopyOnIFF,
+    setCustomTitlebar,
+    setDeploymentNecessary,
+    setDesktopNotifications,
+    setDialogState,
+    setDialogVisible,
+    setDownloadFilePath,
+    setDownloadGameFilter,
+    setDownloadHash,
+    setDownloadHashByFile,
+    setDownloadInstalled,
+    setDownloadInterrupted,
+    setDownloadModInfo,
+    setDownloadPath,
+    setDownloadPausable,
+    setDownloadSpeed,
+    setDownloadSpeeds,
+    setDownloadTime,
+    setExtensionEnabled,
+    setExtensionEndorsed,
+    setExtensionLoadFailures,
+    setExtensionVersion,
+    setFBLoadOrder,
+    setFBLoadOrderEntry,
+    setFeature,
+    setFileOverride,
+    setForcedLogout,
+    setForegroundDL,
+    setGameHidden,
+    setGameParameters,
+    setGamePath,
+    setGameSearchPaths,
+    setGroupingAttribute,
+    setHideTopLevelCategory,
+    setINITweakEnabled,
+    setInstallPath,
+    setInstallPathMode,
+    setInstallType,
+    setInstanceId,
+    setLanguage,
+    setLoadOrder,
+    setLoadOrderEntry,
+    setMaxBandwidth,
+    setMaxDownloads,
+    setMaximized,
+    setModArchiveId,
+    setModAttribute,
+    setModAttributes,
+    setModEnabled,
+    setModInstallationPath,
+    setModState,
+    setModType,
+    setModsEnabled,
+    setNetworkConnected,
+    setNewestVersion,
+    setNextProfile,
+    setOAuthCredentials,
+    setOpenMainPage,
+    setPendingPluginSort,
+    setPickerLayout,
+    setPrimaryTool,
+    setProfile,
+    setProfileActivated,
+    setProfilesVisible,
+    setProgress,
+    setRelativeTimes,
+    setSettingsPage,
+    setShowDLDropzone,
+    setShowDLGraph,
+    setShowModDropzone,
+    setSortManaged,
+    setSortUnmanaged,
+    setStartMinimized,
+    setStateVersion,
+    setSuggestInstallPathDirectory,
+    setTabsMinimized,
+    setToolOrder,
+    setToolPid,
+    setToolPinned,
+    setToolRunning,
+    setToolStopped,
+    setToolValid,
+    setToolVisible,
+    setUIBlocker,
+    setUpdateChannel,
+    setUseModernLayout,
+    setUserAPIKey,
+    setUserInfo,
+    setWarnedAdmin,
+    setWindowPosition,
+    setWindowSize,
+    setZoomFactor,
+    setupNotificationSuppression,
+    showDialog,
+    showURL,
+    showUsageInstruction,
+    startActivity,
+    startDialog,
+    startDownload,
+    startNotification,
+    stopActivity,
+    stopAllNotifications,
+    stopNotification,
+    suppressNotification,
+    triggerDialogLink,
+    updateCategories,
+    updateNotification,
+    willRemoveProfile,
+  };
 }
 //#endregion
 //#region ../shared/dist/index.d.ts
@@ -6223,7 +7755,12 @@ type ClearTimeoutFunc<Timeout> = (timeout: Timeout) => void;
  * and, for function returning a promise, it ensures that it's not run
  * again (through this Debouncer) before the promise is resolved.
  */
-declare class GenericDebouncer<Timeout, SetTimeout extends SetTimeoutFunc<Timeout>, ClearTimeout extends ClearTimeoutFunc<Timeout>, Args extends unknown[] = unknown[]> {
+declare class GenericDebouncer<
+  Timeout,
+  SetTimeout extends SetTimeoutFunc<Timeout>,
+  ClearTimeout extends ClearTimeoutFunc<Timeout>,
+  Args extends unknown[] = unknown[],
+> {
   #private;
   private mDebounceMS;
   private mFunc;
@@ -6249,7 +7786,14 @@ declare class GenericDebouncer<Timeout, SetTimeout extends SetTimeoutFunc<Timeou
    *                           until the timer expires. Otherwise (the default)
    *                           the initial call is delay.
    */
-  constructor(setTimeoutFunc: SetTimeout, clearTimeoutFunc: ClearTimeout, func: (...args: Args) => Error | PromiseLike<void>, debounceMS: number, reset?: boolean, triggerImmediately?: boolean);
+  constructor(
+    setTimeoutFunc: SetTimeout,
+    clearTimeoutFunc: ClearTimeout,
+    func: (...args: Args) => Error | PromiseLike<void>,
+    debounceMS: number,
+    reset?: boolean,
+    triggerImmediately?: boolean,
+  );
   /**
    * schedule the function and invoke the callback once that is done
    * @param callback the callback to invoke upon completion
@@ -6315,11 +7859,19 @@ declare function calcDuration(messageLength: number): number;
  * @param {string} message
  * @param {string} [id]
  */
-declare function showSuccess<S>(dispatch: ThunkDispatch<IState, null, Redux.Action>, message: string, id?: string): void;
+declare function showSuccess<S>(
+  dispatch: ThunkDispatch<IState, null, Redux.Action>,
+  message: string,
+  id?: string,
+): void;
 /**
  * show activity notification
  */
-declare function showActivity<S>(dispatch: ThunkDispatch<IState, null, Redux.Action>, message: string, id?: string): void;
+declare function showActivity<S>(
+  dispatch: ThunkDispatch<IState, null, Redux.Action>,
+  message: string,
+  id?: string,
+): void;
 /**
  * show an info notification. Please don't use this for important stuff as the message
  * has a timer based on message length
@@ -6330,7 +7882,11 @@ declare function showActivity<S>(dispatch: ThunkDispatch<IState, null, Redux.Act
  * @param {string} message
  * @param {string} [id]
  */
-declare function showInfo<S>(dispatch: ThunkDispatch<IState, null, Redux.Action>, message: string, id?: string): void;
+declare function showInfo<S>(
+  dispatch: ThunkDispatch<IState, null, Redux.Action>,
+  message: string,
+  id?: string,
+): void;
 /**
  * show an error notification with an optional "more" button that displays further details
  * in a modal dialog.
@@ -6342,13 +7898,22 @@ declare function showInfo<S>(dispatch: ThunkDispatch<IState, null, Redux.Action>
  *                        want string or Errors but since some node apis return non-Error objects
  *                        where Errors are expected we have to be a bit more flexible here.
  */
-declare function showError(dispatch: ThunkDispatch<IState, null, Redux.Action>, title: string, details?: string | Error | any, options?: IErrorOptions): void;
+declare function showError(
+  dispatch: ThunkDispatch<IState, null, Redux.Action>,
+  title: string,
+  details?: string | Error | any,
+  options?: IErrorOptions,
+): void;
 interface IPrettifiedError extends Error {
   code?: string;
   replace?: Record<string, string>;
   allowReport?: boolean;
 }
-declare function prettifyNodeErrorMessage(err: any, options?: IErrorOptions, fileName?: string): IPrettifiedError;
+declare function prettifyNodeErrorMessage(
+  err: any,
+  options?: IErrorOptions,
+  fileName?: string,
+): IPrettifiedError;
 interface IErrorRendered {
   message?: string;
   text?: string;
@@ -6408,7 +7973,11 @@ declare function resolveCategoryPath(category: string | number, state: IState): 
 declare function resolveCategoryName(category: string | number, state: IState): string;
 //#endregion
 //#region lib/extensions/extension_manager/util.d.ts
-declare function readExtensibleDir(extType: ExtensionType, bundledPath: string, customPath: string): PromiseBB$1<any[]>;
+declare function readExtensibleDir(
+  extType: ExtensionType,
+  bundledPath: string,
+  customPath: string,
+): PromiseBB$1<any[]>;
 //#endregion
 //#region lib/extensions/gamemode_management/util/getDriveList.d.ts
 declare function getDriveList(api: IExtensionApi): Promise<string[]>;
@@ -6445,28 +8014,44 @@ declare function deriveModInstallName(archiveName: string, info: any): string;
  * @param modType the mod type for which to retrieve the manifest, default mod type if undefined
  * @param gameId the game for which to retrieve the manifest, defaults to the current game.
  */
-declare function getManifest(api: IExtensionApi, modType?: string, gameId?: string): Promise<IDeploymentManifest>;
+declare function getManifest(
+  api: IExtensionApi,
+  modType?: string,
+  gameId?: string,
+): Promise<IDeploymentManifest>;
 //#endregion
 //#region lib/extensions/mod_management/util/coerceToSemver.d.ts
 declare function coerceToSemver(version: string): string;
 //#endregion
 //#region lib/extensions/mod_management/util/dependencies.d.ts
 declare function lookupFromDownload(download: IDownload): IModLookupInfo;
-declare function findDownloadByRef(reference: IReference, downloads: {
-  [dlId: string]: IDownload;
-}): string;
+declare function findDownloadByRef(
+  reference: IReference,
+  downloads: {
+    [dlId: string]: IDownload;
+  },
+): string;
 //#endregion
 //#region lib/extensions/mod_management/util/deploymentMethods.d.ts
-declare function getCurrentActivator(state: IState, gameId: string, allowDefault: boolean): IDeploymentMethod;
+declare function getCurrentActivator(
+  state: IState,
+  gameId: string,
+  allowDefault: boolean,
+): IDeploymentMethod;
 declare function getActivator(activatorId: string): IDeploymentMethod;
 //#endregion
 //#region lib/extensions/mod_management/util/findModByRef.d.ts
-declare function findModByRef(reference: IModReference, mods: {
-  [modId: string]: IMod;
-}, source?: {
-  gameId: string;
-  modId: string;
-}, installSpec?: IModInstallSpec): IMod;
+declare function findModByRef(
+  reference: IModReference,
+  mods: {
+    [modId: string]: IMod;
+  },
+  source?: {
+    gameId: string;
+    modId: string;
+  },
+  installSpec?: IModInstallSpec,
+): IMod;
 //#endregion
 //#region lib/extensions/mod_management/util/isFuzzyVersion.d.ts
 declare function isFuzzyVersion(input: string): boolean;
@@ -6485,11 +8070,18 @@ interface INameOptions {
  * @param {INameOptions} [options]
  * @returns {string}
  */
-declare function modName(mod: Pick<IMod, "attributes" | "installationPath">, options?: INameOptions): string;
+declare function modName(
+  mod: Pick<IMod, "attributes" | "installationPath">,
+  options?: INameOptions,
+): string;
 interface IRenderOptions {
   version?: boolean;
 }
-declare function renderModReference(ref?: IModReference, mod?: Pick<IMod, "attributes" | "installationPath">, options?: IRenderOptions): string;
+declare function renderModReference(
+  ref?: IModReference,
+  mod?: Pick<IMod, "attributes" | "installationPath">,
+  options?: IRenderOptions,
+): string;
 //#endregion
 //#region lib/extensions/mod_management/util/modReference.d.ts
 declare function makeModReference(mod: IMod): IReference$2;
@@ -6553,7 +8145,10 @@ declare function calculateFolderSize(dirPath: string): Promise<number>;
 //#endregion
 //#region lib/util/checksum.d.ts
 declare function checksum(input: Buffer): string;
-declare function fileMD5(input: string | Buffer, progress?: (bytesProcessed: number, totalBytes: number) => void): Promise<string>;
+declare function fileMD5(
+  input: string | Buffer,
+  progress?: (bytesProcessed: number, totalBytes: number) => void,
+): Promise<string>;
 //#endregion
 //#region lib/util/collectionInstallSession.d.ts
 declare function generateCollectionSessionId(collectionId: string, profileId: string): string;
@@ -6605,8 +8200,18 @@ declare class ConcurrencyLimiter {
 declare function copyRecursive(source: string, destination: string): PromiseBB$1<void>;
 //#endregion
 //#region lib/util/Debouncer.d.ts
-declare class Debouncer<Args extends unknown[] = unknown[]> extends GenericDebouncer<number, typeof window.setTimeout, typeof window.clearTimeout, Args> {
-  constructor(func: (...args: Args) => Error | PromiseLike<void>, debounceMS: number, reset?: boolean, triggerImmediately?: boolean);
+declare class Debouncer<Args extends unknown[] = unknown[]> extends GenericDebouncer<
+  number,
+  typeof window.setTimeout,
+  typeof window.clearTimeout,
+  Args
+> {
+  constructor(
+    func: (...args: Args) => Error | PromiseLike<void>,
+    debounceMS: number,
+    reset?: boolean,
+    triggerImmediately?: boolean,
+  );
 }
 //#endregion
 //#region lib/util/EpicGamesLauncher.d.ts
@@ -6623,7 +8228,12 @@ declare function getVisibleWindow(win?: BrowserWindow | null): BrowserWindow | n
  * @export
  * @param {ITermination} error
  */
-declare function terminate(error: ReportableError, state: IState | undefined, allowReport?: boolean, source?: string): void;
+declare function terminate(
+  error: ReportableError,
+  state: IState | undefined,
+  allowReport?: boolean,
+  source?: string,
+): void;
 /**
  * execute a function with the specified error context
  * @param id identifier of the context to set
@@ -6633,7 +8243,10 @@ declare function terminate(error: ReportableError, state: IState | undefined, al
 declare function withContext(id: string, value: string, fun: () => PromiseBB$1<any>): Promise<any>;
 type SetAttribute = (key: string, value: string | number | boolean) => void;
 type SetError = (error: Error) => void;
-type TrackedFunction<T> = (setAttribute: SetAttribute, setError: SetError) => PromiseBB$1<T> | Promise<T>;
+type TrackedFunction<T> = (
+  setAttribute: SetAttribute,
+  setError: SetError,
+) => PromiseBB$1<T> | Promise<T>;
 interface TrackedActivityOptions {
   /** Start a new root trace instead of inheriting the active parent span. */
   root?: boolean;
@@ -6648,7 +8261,13 @@ interface TrackedActivityOptions {
  * should start a new trace rather than becoming children of whatever span
  * happens to be active in the Bluebird chain.
  */
-declare function withTrackedActivity<T>(tracerName: string, spanName: string, attributes: Record<string, string | number | boolean>, fun: TrackedFunction<T>, options?: TrackedActivityOptions): Promise<T>;
+declare function withTrackedActivity<T>(
+  tracerName: string,
+  spanName: string,
+  attributes: Record<string, string | number | boolean>,
+  fun: TrackedFunction<T>,
+  options?: TrackedActivityOptions,
+): Promise<T>;
 //#endregion
 //#region lib/util/exeIcon.d.ts
 declare function extractExeIcon(exePath: string, destPath: string): Promise<void>;
@@ -6670,10 +8289,13 @@ declare function findCommonRootDir(files: readonly string[]): string | undefined
  * at game root rather than inside the wrapper. Appends a `setmodtype`
  * instruction when `modType` is provided.
  */
-declare function buildCopyInstructions(files: readonly string[], opts: {
-  stripCommonRoot: boolean;
-  modType?: string;
-}): IInstallResult;
+declare function buildCopyInstructions(
+  files: readonly string[],
+  opts: {
+    stripCommonRoot: boolean;
+    modType?: string;
+  },
+): IInstallResult;
 /**
  * Compile string stopPatterns (typically taken from `IGame.details.stopPatterns`)
  * to case-insensitive RegExp objects.
@@ -6685,7 +8307,10 @@ declare function compileStopPatterns(patterns: readonly string[]): RegExp[];
  * the loop in `declareInstallers` — useful when a game wants to mix
  * spec-driven installers with hand-written ones at custom priorities.
  */
-declare function makeInstallerFromSpec(spec: IInstallerSpec, gameId: string): {
+declare function makeInstallerFromSpec(
+  spec: IInstallerSpec,
+  gameId: string,
+): {
   testSupported: TestSupported;
   install: (files: string[]) => Promise<IInstallResult>;
 };
@@ -6695,7 +8320,11 @@ declare function makeInstallerFromSpec(spec: IInstallerSpec, gameId: string): {
  * `context.registerInstaller`. Registration id defaults to `${gameId}-${spec.id}`
  * when no `modType` is provided.
  */
-declare function declareInstallers(context: IExtensionContext, gameId: string, specs: readonly IInstallerSpec[]): void;
+declare function declareInstallers(
+  context: IExtensionContext,
+  gameId: string,
+  specs: readonly IInstallerSpec[],
+): void;
 //#endregion
 //#region lib/store/reduxLogger.d.ts
 interface ILog {
@@ -6883,14 +8512,23 @@ declare class Steam implements IGameStore {
   allGames(): PromiseBB$1<ISteamEntry[]>;
   getGameStorePath(): PromiseBB$1<string | undefined>;
   reloadGames(): PromiseBB$1<void>;
-  identifyGame(gamePath: string, fallback: (gamePath: string) => PromiseLike<boolean>): PromiseBB$1<boolean>;
+  identifyGame(
+    gamePath: string,
+    fallback: (gamePath: string) => PromiseLike<boolean>,
+  ): PromiseBB$1<boolean>;
   private isCustomExecObject;
   private resolveSteamPaths;
   private parseManifests;
   /**
    * Run a Windows tool through Proton using the game's prefix
    */
-  runToolWithProton(api: IExtensionApi, exePath: string, args: string[], options: any, gameEntry: ISteamEntry): Promise<void>;
+  runToolWithProton(
+    api: IExtensionApi,
+    exePath: string,
+    args: string[],
+    options: any,
+    gameEntry: ISteamEntry,
+  ): Promise<void>;
 }
 declare const instance: Steam;
 //#endregion
@@ -6934,10 +8572,18 @@ interface IElevatedIpc {
  *                             the path of the tmpFile we had to create. If the caller can figure
  *                             out when the process is done (using ipc) it should delete it
  */
-declare function runElevated(ipcPath: string, func: (ipc: IElevatedIpc, req: NodeJS.Require) => void | PromiseLike<void>, args?: Record<string, unknown>): Promise<string>;
+declare function runElevated(
+  ipcPath: string,
+  func: (ipc: IElevatedIpc, req: NodeJS.Require) => void | PromiseLike<void>,
+  args?: Record<string, unknown>,
+): Promise<string>;
 //#endregion
 //#region lib/util/thread.d.ts
-declare function runThreaded(func: (...args: any[]) => any, moduleBase: string, ...args: any[]): PromiseBB$1<any>;
+declare function runThreaded(
+  func: (...args: any[]) => any,
+  moduleBase: string,
+  ...args: any[]
+): PromiseBB$1<any>;
 //#endregion
 //#region lib/util/util.d.ts
 /**
@@ -7003,7 +8649,9 @@ declare function makeUnique<T>(input: T[]): T[];
  */
 declare function makeUniqueByKey<T>(input: T[], key: (item: T) => string): T[];
 declare function unique<T, U>(input: T[], keyFunc?: (item: T) => U): T[];
-declare function toBlue<T, ArgsT extends any[]>(func: (...args: ArgsT) => Promise<T>): (...args: ArgsT) => PromiseBB$1<T>;
+declare function toBlue<T, ArgsT extends any[]>(
+  func: (...args: ArgsT) => Promise<T>,
+): (...args: ArgsT) => PromiseBB$1<T>;
 declare function semverCoerce(input: string, options?: semver.CoerceOptions): semver.SemVer;
 declare function batchDispatch(store: Redux.Dispatch | Redux.Store, actions: Redux.Action[]): void;
 /**
@@ -7012,7 +8660,7 @@ declare function batchDispatch(store: Redux.Dispatch | Redux.Store, actions: Red
 declare enum Section {
   Mods = 0,
   Collections = 1,
-  Users = 2
+  Users = 2,
 }
 /**
  * Represents the available campaign types for tracking user interactions.
@@ -7021,7 +8669,7 @@ declare enum Section {
  */
 declare enum Campaign {
   BuyPremium = "buy_premium",
-  GeneralNavigation = "general_navigation"
+  GeneralNavigation = "general_navigation",
 }
 /**
  * Represents the different types of content placements for advertisements within the application.
@@ -7040,7 +8688,7 @@ declare enum Content {
   DashboardDashletAd = "dashboard_dashlet_ad",
   CollectionsDownloadAd = "collections_download_ad",
   SettingsDownloadAd = "settings_download_ad",
-  HealthCheckAd = "health_check_ad"
+  HealthCheckAd = "health_check_ad",
 }
 interface INexusURLOptions {
   section?: Section;
@@ -7057,7 +8705,11 @@ declare class Overlayable<KeyT extends string | number | symbol, ObjT> {
   setLayer(layerId: string, data: Record<KeyT, Partial<ObjT>>): void;
   keys(): string[];
   has(key: KeyT): boolean;
-  get<AttrT extends keyof ObjT, ValT extends ObjT[AttrT]>(key: KeyT, attr: AttrT, extraArg?: any): ValT;
+  get<AttrT extends keyof ObjT, ValT extends ObjT[AttrT]>(
+    key: KeyT,
+    attr: AttrT,
+    extraArg?: any,
+  ): ValT;
   get baseData(): Record<KeyT, ObjT>;
 }
 /**
@@ -7068,11 +8720,80 @@ declare class Overlayable<KeyT extends string | number | symbol, ObjT> {
  * @param deduceLayer determine the layer to be used for a given key. If this returns
  * @returns
  */
-declare function makeOverlayableDictionary<KeyT extends string | number | symbol, ValueT>(baseData: Record<KeyT, ValueT>, layers: {
-  [layerId: string]: Record<KeyT, Partial<ValueT>>;
-}, deduceLayer: (key: KeyT, extraArg: any) => string): Overlayable<KeyT, ValueT>;
+declare function makeOverlayableDictionary<KeyT extends string | number | symbol, ValueT>(
+  baseData: Record<KeyT, ValueT>,
+  layers: {
+    [layerId: string]: Record<KeyT, Partial<ValueT>>;
+  },
+  deduceLayer: (key: KeyT, extraArg: any) => string,
+): Overlayable<KeyT, ValueT>;
 declare namespace fs_d_exports {
-  export { FSWatcher, ILinkFileOptions, IRemoveFileOptions, ITmpOptions, Stats, WriteStream, accessSync, appendFileAsync, appendFileSync, changeFileAttributes, changeFileOwnership, chmodAsync, closeAsync, closeSync, constants, copyAsync, createReadStream, createWriteStream, encodingFromBOM, ensureDirAsync, ensureDirSync, ensureDirWritableAsync, ensureFileAsync, forcePerm, fsyncAsync, genFSWrapperAsync, isDirectoryAsync, linkAsync, linkSync, lstatAsync, makeFileWritableAsync, mkdirAsync, mkdirsAsync, moveAsync, moveRenameAsync, openAsync, openSync, readAsync, readFileAsync, readFileBOM, readFileSync, readdirAsync, readdirSync, readlinkAsync, removeAsync, removeSync, renameAsync, rmdirAsync, setTFunction, statAsync, statSilentAsync, statSync, symlinkAsync, symlinkSync, unlinkAsync, utimesAsync, watch, withTmpDir, withTmpDirImpl, withTmpFile, writeAsync, writeFileAsync, writeFileSync, writeSync };
+  export {
+    FSWatcher,
+    ILinkFileOptions,
+    IRemoveFileOptions,
+    ITmpOptions,
+    Stats,
+    WriteStream,
+    accessSync,
+    appendFileAsync,
+    appendFileSync,
+    changeFileAttributes,
+    changeFileOwnership,
+    chmodAsync,
+    closeAsync,
+    closeSync,
+    constants,
+    copyAsync,
+    createReadStream,
+    createWriteStream,
+    encodingFromBOM,
+    ensureDirAsync,
+    ensureDirSync,
+    ensureDirWritableAsync,
+    ensureFileAsync,
+    forcePerm,
+    fsyncAsync,
+    genFSWrapperAsync,
+    isDirectoryAsync,
+    linkAsync,
+    linkSync,
+    lstatAsync,
+    makeFileWritableAsync,
+    mkdirAsync,
+    mkdirsAsync,
+    moveAsync,
+    moveRenameAsync,
+    openAsync,
+    openSync,
+    readAsync,
+    readFileAsync,
+    readFileBOM,
+    readFileSync,
+    readdirAsync,
+    readdirSync,
+    readlinkAsync,
+    removeAsync,
+    removeSync,
+    renameAsync,
+    rmdirAsync,
+    setTFunction,
+    statAsync,
+    statSilentAsync,
+    statSync,
+    symlinkAsync,
+    symlinkSync,
+    unlinkAsync,
+    utimesAsync,
+    watch,
+    withTmpDir,
+    withTmpDirImpl,
+    withTmpFile,
+    writeAsync,
+    writeFileAsync,
+    writeFileSync,
+    writeSync,
+  };
 }
 interface ILinkFileOptions {
   showDialogCallback?: () => boolean;
@@ -7081,7 +8802,9 @@ interface IRemoveFileOptions {
   showDialogCallback?: () => boolean;
 }
 declare function setTFunction(tFunc: TFunction$1): void;
-declare function genFSWrapperAsync<T extends (...args: any[]) => any>(func: T): (...args: any[]) => PromiseBB$1<any>;
+declare function genFSWrapperAsync<T extends (...args: any[]) => any>(
+  func: T,
+): (...args: any[]) => PromiseBB$1<any>;
 declare const chmodAsync: (path: string, mode: string | number) => PromiseBB$1<void>;
 declare const closeAsync: (fd: number) => PromiseBB$1<void>;
 declare const fsyncAsync: (fd: number) => PromiseBB$1<void>;
@@ -7089,7 +8812,11 @@ declare const lstatAsync: (path: string) => PromiseBB$1<fs.Stats>;
 declare const mkdirAsync: (path: string) => PromiseBB$1<void>;
 declare const mkdirsAsync: (path: string) => PromiseBB$1<void>;
 declare const moveAsync: (src: string, dest: string, options?: fs.MoveOptions) => PromiseBB$1<void>;
-declare const openAsync: (path: string, flags: string | number, mode?: number) => PromiseBB$1<number>;
+declare const openAsync: (
+  path: string,
+  flags: string | number,
+  mode?: number,
+) => PromiseBB$1<number>;
 declare const readdirAsync: (path: string) => PromiseBB$1<string[]>;
 declare const readFileAsync: (...args: any[]) => PromiseBB$1<any>;
 declare const statAsync: (path: string) => PromiseBB$1<fs.Stats>;
@@ -7104,8 +8831,16 @@ declare const readAsync: <BufferT>(...args: any[]) => PromiseBB$1<{
   bytesRead: number;
   buffer: BufferT;
 }>;
-declare const writeFileAsync: (file: string, data: any, options?: fs.WriteFileOptions) => PromiseBB$1<void>;
-declare const appendFileAsync: (file: string, data: any, options?: fs.WriteFileOptions) => PromiseBB$1<void>;
+declare const writeFileAsync: (
+  file: string,
+  data: any,
+  options?: fs.WriteFileOptions,
+) => PromiseBB$1<void>;
+declare const appendFileAsync: (
+  file: string,
+  data: any,
+  options?: fs.WriteFileOptions,
+) => PromiseBB$1<void>;
 /** @deprecated use node:fs directly */
 declare function isDirectoryAsync(dirPath: string): PromiseBB$1<boolean>;
 /** @deprecated use node:fs directly */
@@ -7113,7 +8848,10 @@ declare function ensureDirSync(dirPath: string): void;
 /** @deprecated use node:fs directly */
 declare function ensureFileAsync(filePath: string): PromiseBB$1<void>;
 /** @deprecated use node:fs directly */
-declare function ensureDirAsync(dirPath: string, onDirCreatedCB?: (created: string) => PromiseLike<void>): PromiseBB$1<void>;
+declare function ensureDirAsync(
+  dirPath: string,
+  onDirCreatedCB?: (created: string) => PromiseLike<void>,
+): PromiseBB$1<void>;
 /**
  * move a file. If the destination exists, will generate a new name with an
  * increasing counter until an unused name is found
@@ -7132,12 +8870,20 @@ declare function moveRenameAsync(src: string, dest: string): PromiseBB$1<string>
  *
  * @deprecated Use node:fs directly
  */
-declare function copyAsync(src: string, dest: string, options?: fs.CopyOptions & {
-  noSelfCopy?: boolean;
-  showDialogCallback?: () => boolean;
-}): PromiseBB$1<void>;
+declare function copyAsync(
+  src: string,
+  dest: string,
+  options?: fs.CopyOptions & {
+    noSelfCopy?: boolean;
+    showDialogCallback?: () => boolean;
+  },
+): PromiseBB$1<void>;
 /** @deprecated use node:fs directly */
-declare function linkAsync(src: string, dest: string, options?: ILinkFileOptions): PromiseBB$1<void>;
+declare function linkAsync(
+  src: string,
+  dest: string,
+  options?: ILinkFileOptions,
+): PromiseBB$1<void>;
 declare function removeSync(dirPath: string): void;
 declare function unlinkAsync(filePath: string, options?: IRemoveFileOptions): PromiseBB$1<void>;
 /** @deprecated use node:fs directly */
@@ -7147,11 +8893,23 @@ declare function rmdirAsync(dirPath: string): PromiseBB$1<void>;
 declare function removeAsync(remPath: string, options?: IRemoveFileOptions): PromiseBB$1<void>;
 /** @deprecated use node:fs directly */
 declare function readlinkAsync(linkPath: string): PromiseBB$1<string>;
-declare function ensureDirWritableAsync(dirPath: string, confirm?: () => PromiseLike<void>): PromiseBB$1<void>;
+declare function ensureDirWritableAsync(
+  dirPath: string,
+  confirm?: () => PromiseLike<void>,
+): PromiseBB$1<void>;
 declare function changeFileOwnership(filePath: string, stat: fs.Stats): PromiseBB$1<void>;
-declare function changeFileAttributes(filePath: string, wantedAttributes: number, stat: fs.Stats): PromiseBB$1<void>;
+declare function changeFileAttributes(
+  filePath: string,
+  wantedAttributes: number,
+  stat: fs.Stats,
+): PromiseBB$1<void>;
 declare function makeFileWritableAsync(filePath: string): PromiseBB$1<void>;
-declare function forcePerm<T>(t: TFunction$1, op: () => PromiseBB$1<T>, filePath?: string, maxTries?: number): PromiseBB$1<T>;
+declare function forcePerm<T>(
+  t: TFunction$1,
+  op: () => PromiseBB$1<T>,
+  filePath?: string,
+  maxTries?: number,
+): PromiseBB$1<T>;
 declare function withTmpDirImpl<T>(cb: (tmpPath: string) => PromiseBB$1<T>): PromiseBB$1<T>;
 interface ITmpOptions {
   cleanup?: boolean;
@@ -7185,7 +8943,11 @@ interface IWalkOptions {
  *                       rejected, the walk is interrupted
  * @returns {Promise<void>} a promise that is resolved once the search is complete
  */
-declare function walk(target: string, callback: (iterPath: string, stats: Stats) => PromiseLike<any>, options?: IWalkOptions): Promise<void>;
+declare function walk(
+  target: string,
+  callback: (iterPath: string, stats: Stats) => PromiseLike<any>,
+  options?: IWalkOptions,
+): Promise<void>;
 //#endregion
 //#region lib/util/network.d.ts
 interface IRequestOptions {
@@ -7195,7 +8957,12 @@ interface IRequestOptions {
 declare function rawRequest(apiURL: string, options?: IRequestOptions): Promise<string | Buffer>;
 declare function jsonRequest<T>(apiURL: string): Promise<T>;
 type Method = "GET" | "POST" | "PUT";
-declare function request(method: Method, reqURL: string, headers: any, cb: (res: IncomingMessage) => void): ClientRequest;
+declare function request(
+  method: Method,
+  reqURL: string,
+  headers: any,
+  cb: (res: IncomingMessage) => void,
+): ClientRequest;
 declare function upload(targetUrl: string, dataStream: Readable, dataSize: number): Promise<Buffer>;
 //#endregion
 //#region lib/util/storeHelper.d.ts
@@ -7289,7 +9056,11 @@ declare function removeValue<T>(state: T, path: Array<string | number>, value: a
  * @public
  * @deprecated Use `arr.filter(ele => !predicate(ele))`.
  */
-declare function removeValueIf<T extends object>(state: T, path: Array<string | number>, predicate: (element: any) => boolean): T;
+declare function removeValueIf<T extends object>(
+  state: T,
+  path: Array<string | number>,
+  predicate: (element: any) => boolean,
+): T;
 /**
  * shallow merge a value into the store at the specified location
  *
@@ -7301,7 +9072,13 @@ declare function merge<T extends object>(state: T, path: Array<string | number>,
  * @public
  * @deprecated Use spread with nullish coalescing (`{ ...state, ...(inbound ?? {}) }`).
  */
-declare function rehydrate<T extends object>(state: T, inbound: any, path: string[], replace: boolean, defaults: any): T;
+declare function rehydrate<T extends object>(
+  state: T,
+  inbound: any,
+  path: string[],
+  replace: boolean,
+  defaults: any,
+): T;
 /**
  * return the stored static details about the currently selected game mode
  * or a fallback with the id '__placeholder'
@@ -7313,7 +9090,172 @@ declare function rehydrate<T extends object>(state: T, inbound: any, path: strin
  */
 declare function currentGame$1(store: Redux.Store<any>): PromiseBB$1<IGameStored>;
 declare namespace api_d_exports$1 {
-  export { Archive, ArgumentInvalid, Campaign, CollectionInstallOutcomeProps, CollectionsDownloadCancelledEvent, CollectionsDownloadClickedEvent, CollectionsDownloadCompletedEvent, CollectionsDownloadFailedEvent, CollectionsDraftUpdateUploadedEvent, CollectionsDraftUploadedEvent, CollectionsDraftedEvent, CollectionsInstallationCancelledEvent, CollectionsInstallationCompletedEvent, CollectionsInstallationFailedEvent, CollectionsInstallationStartedEvent, ConcurrencyLimiter, Content, CycleError, DataInvalid, Debouncer, GameNotFound, instance$2 as GameStoreHelper, IErrorRendered, IPrettifiedError, IRequestOptions, ISteamEntry, LazyComponent, Method, MissingInterpreter, ModChangeReason, Normalize, NotFound, NotSupportedError, Overlayable, ProcessCanceled, ReduxProp, Section, SetupError, SevenZip, StarterInfo, TextGroup, UserCanceled, addUniqueSafe, batchDispatch, preProcess as bbcodePreProcess, bbcodeToHTML, renderBBCode as bbcodeToReact, buildCopyInstructions, bytesToString, calcDuration, calculateFolderSize, changeOrNop, checksum, coerceToSemver, compileStopPatterns, convertGameIdReverse, copyFileAtomic, copyRecursive, currentGame$1 as currentGame, deBOM, declareInstallers, deepMerge, delay, deleteOrNop, deriveModInstallName as deriveInstallName, instance$1 as epicGamesLauncher, extractExeIcon, fileMD5, findCommonRootDir, findDownloadByRef, findModByRef, findRuleByRef, generateCollectionSessionId, getActivator, getApplication, getCurrentActivator, getCurrentLanguage, getDriveList, getGame, getGames, getManifest, getModSource, getModSources, getModType, getNormalizeFunc, getReduxLog, getSafe, getSafeCI, getText, getVisibleWindow, getVortexPath, _default$14 as github, installIconSet, isChildPath, isFilenameValid, isFuzzyVersion, isPathValid, jsonRequest, lazyRequire, local, lookupFromDownload, makeInstallerFromSpec, makeModReference, makeNormalizingDict, makeOverlayableDictionary, makeQueue, makeReactive, makeRemoteCall, makeUnique, makeUniqueByKey, merge, modRuleId, mutateSafe, nexusGameId, nexusModsURL, normalizeStoreQuery, objDiff, onceCB, open as opn, pad, prettifyNodeErrorMessage, pushSafe, rawRequest, readExtensibleDir, rehydrate, relativeTime, removeMods, removeValue, removeValueIf, renderError, modName as renderModName, renderModReference, request, resolveCategoryName, resolveCategoryPath, ruleInstallSpec, rulePhase, runElevated, runThreaded, sanitizeCSSId, sanitizeFilename, semverCoerce, setDefaultArray, setOrNop, setSafe, setdefault, showActivity, showError, showInfo, showSuccess, sortMods, instance as steam, terminate, testModReference, testRefByIdentifiers, toBlue, toPromise, unique, upload, userFriendlyTime, walk, withContext as withErrorContext, withTrackedActivity, writeFileAtomic };
+  export {
+    Archive,
+    ArgumentInvalid,
+    Campaign,
+    CollectionInstallOutcomeProps,
+    CollectionsDownloadCancelledEvent,
+    CollectionsDownloadClickedEvent,
+    CollectionsDownloadCompletedEvent,
+    CollectionsDownloadFailedEvent,
+    CollectionsDraftUpdateUploadedEvent,
+    CollectionsDraftUploadedEvent,
+    CollectionsDraftedEvent,
+    CollectionsInstallationCancelledEvent,
+    CollectionsInstallationCompletedEvent,
+    CollectionsInstallationFailedEvent,
+    CollectionsInstallationStartedEvent,
+    ConcurrencyLimiter,
+    Content,
+    CycleError,
+    DataInvalid,
+    Debouncer,
+    GameNotFound,
+    instance$2 as GameStoreHelper,
+    IErrorRendered,
+    IPrettifiedError,
+    IRequestOptions,
+    ISteamEntry,
+    LazyComponent,
+    Method,
+    MissingInterpreter,
+    ModChangeReason,
+    Normalize,
+    NotFound,
+    NotSupportedError,
+    Overlayable,
+    ProcessCanceled,
+    ReduxProp,
+    Section,
+    SetupError,
+    SevenZip,
+    StarterInfo,
+    TextGroup,
+    UserCanceled,
+    addUniqueSafe,
+    batchDispatch,
+    preProcess as bbcodePreProcess,
+    bbcodeToHTML,
+    renderBBCode as bbcodeToReact,
+    buildCopyInstructions,
+    bytesToString,
+    calcDuration,
+    calculateFolderSize,
+    changeOrNop,
+    checksum,
+    coerceToSemver,
+    compileStopPatterns,
+    convertGameIdReverse,
+    copyFileAtomic,
+    copyRecursive,
+    currentGame$1 as currentGame,
+    deBOM,
+    declareInstallers,
+    deepMerge,
+    delay,
+    deleteOrNop,
+    deriveModInstallName as deriveInstallName,
+    instance$1 as epicGamesLauncher,
+    extractExeIcon,
+    fileMD5,
+    findCommonRootDir,
+    findDownloadByRef,
+    findModByRef,
+    findRuleByRef,
+    generateCollectionSessionId,
+    getActivator,
+    getApplication,
+    getCurrentActivator,
+    getCurrentLanguage,
+    getDriveList,
+    getGame,
+    getGames,
+    getManifest,
+    getModSource,
+    getModSources,
+    getModType,
+    getNormalizeFunc,
+    getReduxLog,
+    getSafe,
+    getSafeCI,
+    getText,
+    getVisibleWindow,
+    getVortexPath,
+    _default$14 as github,
+    installIconSet,
+    isChildPath,
+    isFilenameValid,
+    isFuzzyVersion,
+    isPathValid,
+    jsonRequest,
+    lazyRequire,
+    local,
+    lookupFromDownload,
+    makeInstallerFromSpec,
+    makeModReference,
+    makeNormalizingDict,
+    makeOverlayableDictionary,
+    makeQueue,
+    makeReactive,
+    makeRemoteCall,
+    makeUnique,
+    makeUniqueByKey,
+    merge,
+    modRuleId,
+    mutateSafe,
+    nexusGameId,
+    nexusModsURL,
+    normalizeStoreQuery,
+    objDiff,
+    onceCB,
+    open as opn,
+    pad,
+    prettifyNodeErrorMessage,
+    pushSafe,
+    rawRequest,
+    readExtensibleDir,
+    rehydrate,
+    relativeTime,
+    removeMods,
+    removeValue,
+    removeValueIf,
+    renderError,
+    modName as renderModName,
+    renderModReference,
+    request,
+    resolveCategoryName,
+    resolveCategoryPath,
+    ruleInstallSpec,
+    rulePhase,
+    runElevated,
+    runThreaded,
+    sanitizeCSSId,
+    sanitizeFilename,
+    semverCoerce,
+    setDefaultArray,
+    setOrNop,
+    setSafe,
+    setdefault,
+    showActivity,
+    showError,
+    showInfo,
+    showSuccess,
+    sortMods,
+    instance as steam,
+    terminate,
+    testModReference,
+    testRefByIdentifiers,
+    toBlue,
+    toPromise,
+    unique,
+    upload,
+    userFriendlyTime,
+    walk,
+    withContext as withErrorContext,
+    withTrackedActivity,
+    writeFileAtomic,
+  };
 }
 /**
  * @deprecated Use window.api for IPC communication from renderer to main process.
@@ -7326,47 +9268,68 @@ declare function getText(group: TextGroup, textId: string, t: TFunction$1): stri
 //#region lib/extensions/download_management/selectors.d.ts
 declare const downloadPath: (state: IState) => string;
 declare function downloadPathForGame(state: IState, gameId?: string): string;
-declare const downloadsForGame: (state: IState, gameId: string) => {
+declare const downloadsForGame: (
+  state: IState,
+  gameId: string,
+) => {
   [dlId: string]: IDownload;
 };
 declare const downloadsForActiveGame: (state: IState) => ((state: IState) => {
   [dlId: string]: IDownload;
-}) & import("reselect").OutputSelectorFields<(args_0: string) => {
-  [dlId: string]: IDownload;
-}, {
-  clearCache: () => void;
-}> & {
-  clearCache: () => void;
-};
-declare const queueClearingDownloads: ((state: IState) => {}) & import("reselect").OutputSelectorFields<(args_0: {
-  [id: string]: IDownload;
-}) => {}, {
-  clearCache: () => void;
-}> & {
-  clearCache: () => void;
-};
-declare const activeDownloads: ((state: IState) => {}) & import("reselect").OutputSelectorFields<(args_0: {
-  [id: string]: IDownload;
-}) => {}, {
-  clearCache: () => void;
-}> & {
-  clearCache: () => void;
-};
-declare const getDownloadByIds: ((state: IState, identifiers: {
-  fileId: number;
-  modId: number;
-  gameId: string;
-}) => IDownload) & import("reselect").OutputSelectorFields<(args_0: {
-  [id: string]: IDownload;
-}, args_1: {
-  fileId: number;
-  modId: number;
-  gameId: string;
-}) => IDownload, {
-  clearCache: () => void;
-}> & {
-  clearCache: () => void;
-};
+}) &
+  import("reselect").OutputSelectorFields<
+    (args_0: string) => {
+      [dlId: string]: IDownload;
+    },
+    {
+      clearCache: () => void;
+    }
+  > & {
+    clearCache: () => void;
+  };
+declare const queueClearingDownloads: ((state: IState) => {}) &
+  import("reselect").OutputSelectorFields<
+    (args_0: { [id: string]: IDownload }) => {},
+    {
+      clearCache: () => void;
+    }
+  > & {
+    clearCache: () => void;
+  };
+declare const activeDownloads: ((state: IState) => {}) &
+  import("reselect").OutputSelectorFields<
+    (args_0: { [id: string]: IDownload }) => {},
+    {
+      clearCache: () => void;
+    }
+  > & {
+    clearCache: () => void;
+  };
+declare const getDownloadByIds: ((
+  state: IState,
+  identifiers: {
+    fileId: number;
+    modId: number;
+    gameId: string;
+  },
+) => IDownload) &
+  import("reselect").OutputSelectorFields<
+    (
+      args_0: {
+        [id: string]: IDownload;
+      },
+      args_1: {
+        fileId: number;
+        modId: number;
+        gameId: string;
+      },
+    ) => IDownload,
+    {
+      clearCache: () => void;
+    }
+  > & {
+    clearCache: () => void;
+  };
 //#endregion
 //#region lib/extensions/profile_management/selectors.d.ts
 declare const profiles: (state: IState) => {
@@ -7376,44 +9339,105 @@ declare const lastActiveProfiles: (state: IState) => {
   [gameId: string]: string;
 };
 declare const activeGameId: (state: IState) => string;
-declare const gameProfiles: ((state: IState) => IProfile[]) & import("reselect").OutputSelectorFields<(args_0: string, args_1: {
-  [profileId: string]: IProfile;
-}) => IProfile[], {
-  clearCache: () => void;
-}> & {
-  clearCache: () => void;
-};
+declare const gameProfiles: ((state: IState) => IProfile[]) &
+  import("reselect").OutputSelectorFields<
+    (
+      args_0: string,
+      args_1: {
+        [profileId: string]: IProfile;
+      },
+    ) => IProfile[],
+    {
+      clearCache: () => void;
+    }
+  > & {
+    clearCache: () => void;
+  };
 declare const activeProfileId: (state: IState) => string | undefined;
 declare const nextProfileId: (state: IState) => string | undefined;
 declare const activeProfile: (state: IState) => IProfile | undefined;
 declare function profileById(state: IState, profileId: string): IProfile;
-declare const enabledModCountForProfile: import("re-reselect").ParametricSelector<IState, string, number> & {
+declare const enabledModCountForProfile: import("re-reselect").ParametricSelector<
+  IState,
+  string,
+  number
+> & {
   resultFunc: (res1: IModTable, res2: IProfile) => number;
-  dependencies: [import("re-reselect").ParametricSelector<IState, string, IModTable>, import("re-reselect").ParametricSelector<IState, string, IProfile>];
+  dependencies: [
+    import("re-reselect").ParametricSelector<IState, string, IModTable>,
+    import("re-reselect").ParametricSelector<IState, string, IProfile>,
+  ];
   recomputations: () => number;
   resetRecomputations: () => number;
 } & {
-  getMatchingSelector: (state: IState, props: string, ...args: any[]) => import("re-reselect").OutputParametricSelector<IState, string, number, (res1: IModTable, res2: IProfile) => number, [import("re-reselect").ParametricSelector<IState, string, IModTable>, import("re-reselect").ParametricSelector<IState, string, IProfile>]>;
+  getMatchingSelector: (
+    state: IState,
+    props: string,
+    ...args: any[]
+  ) => import("re-reselect").OutputParametricSelector<
+    IState,
+    string,
+    number,
+    (res1: IModTable, res2: IProfile) => number,
+    [
+      import("re-reselect").ParametricSelector<IState, string, IModTable>,
+      import("re-reselect").ParametricSelector<IState, string, IProfile>,
+    ]
+  >;
   removeMatchingSelector: (state: IState, props: string, ...args: any[]) => void;
   clearCache: () => void;
   cache: import("re-reselect").ICacheObject;
   keySelector: import("re-reselect").ParametricKeySelector<IState, string>;
 };
-declare const lastActiveProfileForGame: import("re-reselect").ParametricSelector<IState, string, string> & {
-  resultFunc: (res1: {
-    [gameId: string]: string;
-  }, res2: string) => string;
-  dependencies: [import("re-reselect").ParametricSelector<IState, string, {
-    [gameId: string]: string;
-  }>, import("re-reselect").ParametricSelector<IState, string, string>];
+declare const lastActiveProfileForGame: import("re-reselect").ParametricSelector<
+  IState,
+  string,
+  string
+> & {
+  resultFunc: (
+    res1: {
+      [gameId: string]: string;
+    },
+    res2: string,
+  ) => string;
+  dependencies: [
+    import("re-reselect").ParametricSelector<
+      IState,
+      string,
+      {
+        [gameId: string]: string;
+      }
+    >,
+    import("re-reselect").ParametricSelector<IState, string, string>,
+  ];
   recomputations: () => number;
   resetRecomputations: () => number;
 } & {
-  getMatchingSelector: (state: IState, props: string, ...args: any[]) => import("re-reselect").OutputParametricSelector<IState, string, string, (res1: {
-    [gameId: string]: string;
-  }, res2: string) => string, [import("re-reselect").ParametricSelector<IState, string, {
-    [gameId: string]: string;
-  }>, import("re-reselect").ParametricSelector<IState, string, string>]>;
+  getMatchingSelector: (
+    state: IState,
+    props: string,
+    ...args: any[]
+  ) => import("re-reselect").OutputParametricSelector<
+    IState,
+    string,
+    string,
+    (
+      res1: {
+        [gameId: string]: string;
+      },
+      res2: string,
+    ) => string,
+    [
+      import("re-reselect").ParametricSelector<
+        IState,
+        string,
+        {
+          [gameId: string]: string;
+        }
+      >,
+      import("re-reselect").ParametricSelector<IState, string, string>,
+    ]
+  >;
   removeMatchingSelector: (state: IState, props: string, ...args: any[]) => void;
   clearCache: () => void;
   cache: import("re-reselect").ICacheObject;
@@ -7421,47 +9445,111 @@ declare const lastActiveProfileForGame: import("re-reselect").ParametricSelector
 };
 //#endregion
 //#region lib/extensions/mod_management/selectors.d.ts
-declare const installPath: ((state: IState) => string) & import("reselect").OutputSelectorFields<(args_0: {
-  [gameId: string]: string;
-}, args_1: string) => string, {
-  clearCache: () => void;
-}> & {
-  clearCache: () => void;
-};
-declare const installPathForGame: import("re-reselect").ParametricSelector<IState, string, string> & {
+declare const installPath: ((state: IState) => string) &
+  import("reselect").OutputSelectorFields<
+    (
+      args_0: {
+        [gameId: string]: string;
+      },
+      args_1: string,
+    ) => string,
+    {
+      clearCache: () => void;
+    }
+  > & {
+    clearCache: () => void;
+  };
+declare const installPathForGame: import("re-reselect").ParametricSelector<
+  IState,
+  string,
+  string
+> & {
   resultFunc: (res1: string, res2: string) => string;
-  dependencies: [import("re-reselect").ParametricSelector<IState, string, string>, import("re-reselect").ParametricSelector<IState, string, string>];
+  dependencies: [
+    import("re-reselect").ParametricSelector<IState, string, string>,
+    import("re-reselect").ParametricSelector<IState, string, string>,
+  ];
   recomputations: () => number;
   resetRecomputations: () => number;
 } & {
-  getMatchingSelector: (state: IState, props: string, ...args: any[]) => import("re-reselect").OutputParametricSelector<IState, string, string, (res1: string, res2: string) => string, [import("re-reselect").ParametricSelector<IState, string, string>, import("re-reselect").ParametricSelector<IState, string, string>]>;
+  getMatchingSelector: (
+    state: IState,
+    props: string,
+    ...args: any[]
+  ) => import("re-reselect").OutputParametricSelector<
+    IState,
+    string,
+    string,
+    (res1: string, res2: string) => string,
+    [
+      import("re-reselect").ParametricSelector<IState, string, string>,
+      import("re-reselect").ParametricSelector<IState, string, string>,
+    ]
+  >;
   removeMatchingSelector: (state: IState, props: string, ...args: any[]) => void;
   clearCache: () => void;
   cache: import("re-reselect").ICacheObject;
   keySelector: import("re-reselect").ParametricKeySelector<IState, string>;
 };
-declare const currentActivator: ((state: IState) => string) & import("reselect").OutputSelectorFields<(args_0: {
-  [gameId: string]: string;
-}, args_1: string) => string, {
-  clearCache: () => void;
-}> & {
-  clearCache: () => void;
-};
+declare const currentActivator: ((state: IState) => string) &
+  import("reselect").OutputSelectorFields<
+    (
+      args_0: {
+        [gameId: string]: string;
+      },
+      args_1: string,
+    ) => string,
+    {
+      clearCache: () => void;
+    }
+  > & {
+    clearCache: () => void;
+  };
 declare const activatorForGame: import("re-reselect").ParametricSelector<IState, string, string> & {
-  resultFunc: (res1: {
-    [gameId: string]: string;
-  }, res2: string) => string;
-  dependencies: [import("re-reselect").ParametricSelector<IState, string, {
-    [gameId: string]: string;
-  }>, import("re-reselect").ParametricSelector<IState, string, string>];
+  resultFunc: (
+    res1: {
+      [gameId: string]: string;
+    },
+    res2: string,
+  ) => string;
+  dependencies: [
+    import("re-reselect").ParametricSelector<
+      IState,
+      string,
+      {
+        [gameId: string]: string;
+      }
+    >,
+    import("re-reselect").ParametricSelector<IState, string, string>,
+  ];
   recomputations: () => number;
   resetRecomputations: () => number;
 } & {
-  getMatchingSelector: (state: IState, props: string, ...args: any[]) => import("re-reselect").OutputParametricSelector<IState, string, string, (res1: {
-    [gameId: string]: string;
-  }, res2: string) => string, [import("re-reselect").ParametricSelector<IState, string, {
-    [gameId: string]: string;
-  }>, import("re-reselect").ParametricSelector<IState, string, string>]>;
+  getMatchingSelector: (
+    state: IState,
+    props: string,
+    ...args: any[]
+  ) => import("re-reselect").OutputParametricSelector<
+    IState,
+    string,
+    string,
+    (
+      res1: {
+        [gameId: string]: string;
+      },
+      res2: string,
+    ) => string,
+    [
+      import("re-reselect").ParametricSelector<
+        IState,
+        string,
+        {
+          [gameId: string]: string;
+        }
+      >,
+      import("re-reselect").ParametricSelector<IState, string, string>,
+    ]
+  >;
   removeMatchingSelector: (state: IState, props: string, ...args: any[]) => void;
   clearCache: () => void;
   cache: import("re-reselect").ICacheObject;
@@ -7470,76 +9558,158 @@ declare const activatorForGame: import("re-reselect").ParametricSelector<IState,
 interface INeedToDeployMap {
   [gameId: string]: boolean;
 }
-declare const needToDeploy: ((state: IState) => boolean) & import("reselect").OutputSelectorFields<(args_0: {
-  [gameId: string]: boolean;
-}, args_1: string) => boolean, {
-  clearCache: () => void;
-}> & {
-  clearCache: () => void;
-};
-declare const needToDeployForGame: import("re-reselect").ParametricSelector<IState, string, boolean> & {
+declare const needToDeploy: ((state: IState) => boolean) &
+  import("reselect").OutputSelectorFields<
+    (
+      args_0: {
+        [gameId: string]: boolean;
+      },
+      args_1: string,
+    ) => boolean,
+    {
+      clearCache: () => void;
+    }
+  > & {
+    clearCache: () => void;
+  };
+declare const needToDeployForGame: import("re-reselect").ParametricSelector<
+  IState,
+  string,
+  boolean
+> & {
   resultFunc: (res1: INeedToDeployMap, res2: string) => boolean;
-  dependencies: [import("re-reselect").ParametricSelector<IState, string, INeedToDeployMap>, import("re-reselect").ParametricSelector<IState, string, string>];
+  dependencies: [
+    import("re-reselect").ParametricSelector<IState, string, INeedToDeployMap>,
+    import("re-reselect").ParametricSelector<IState, string, string>,
+  ];
   recomputations: () => number;
   resetRecomputations: () => number;
 } & {
-  getMatchingSelector: (state: IState, props: string, ...args: any[]) => import("re-reselect").OutputParametricSelector<IState, string, boolean, (res1: INeedToDeployMap, res2: string) => boolean, [import("re-reselect").ParametricSelector<IState, string, INeedToDeployMap>, import("re-reselect").ParametricSelector<IState, string, string>]>;
+  getMatchingSelector: (
+    state: IState,
+    props: string,
+    ...args: any[]
+  ) => import("re-reselect").OutputParametricSelector<
+    IState,
+    string,
+    boolean,
+    (res1: INeedToDeployMap, res2: string) => boolean,
+    [
+      import("re-reselect").ParametricSelector<IState, string, INeedToDeployMap>,
+      import("re-reselect").ParametricSelector<IState, string, string>,
+    ]
+  >;
   removeMatchingSelector: (state: IState, props: string, ...args: any[]) => void;
   clearCache: () => void;
   cache: import("re-reselect").ICacheObject;
   keySelector: import("re-reselect").ParametricKeySelector<IState, string>;
 };
-declare const modPathsForGame: ((state: IState, gameId: string) => {
+declare const modPathsForGame: ((
+  state: IState,
+  gameId: string,
+) => {
   [typeId: string]: string;
-}) & import("reselect").OutputSelectorFields<(args_0: {}, args_1: string) => {
-  [typeId: string]: string;
-}, {
-  clearCache: () => void;
-}> & {
-  clearCache: () => void;
-};
-declare const modsForGame: (state: IState, gameId: string) => {
+}) &
+  import("reselect").OutputSelectorFields<
+    (
+      args_0: {},
+      args_1: string,
+    ) => {
+      [typeId: string]: string;
+    },
+    {
+      clearCache: () => void;
+    }
+  > & {
+    clearCache: () => void;
+  };
+declare const modsForGame: (
+  state: IState,
+  gameId: string,
+) => {
   [modId: string]: IMod;
 };
 declare const modsForActiveGame: ((state: IState) => {
   [modId: string]: IMod;
-}) & import("reselect").OutputSelectorFields<(args_0: string, args_1: IState) => {
-  [modId: string]: IMod;
-}, {
-  clearCache: () => void;
-}> & {
-  clearCache: () => void;
-};
-declare const getMod: ((state: IState, gameId: string, modId: string | number) => IMod) & import("reselect").OutputSelectorFields<(args_0: {
-  [modId: string]: IMod;
-}, args_1: string | number) => IMod, {
-  clearCache: () => void;
-}> & {
-  clearCache: () => void;
-};
-declare const getModInstallPath: ((state: IState, gameId: string, modId: string | number) => string) & import("reselect").OutputSelectorFields<(args_0: IMod, args_1: string) => string, {
-  clearCache: () => void;
-}> & {
-  clearCache: () => void;
-};
+}) &
+  import("reselect").OutputSelectorFields<
+    (
+      args_0: string,
+      args_1: IState,
+    ) => {
+      [modId: string]: IMod;
+    },
+    {
+      clearCache: () => void;
+    }
+  > & {
+    clearCache: () => void;
+  };
+declare const getMod: ((state: IState, gameId: string, modId: string | number) => IMod) &
+  import("reselect").OutputSelectorFields<
+    (
+      args_0: {
+        [modId: string]: IMod;
+      },
+      args_1: string | number,
+    ) => IMod,
+    {
+      clearCache: () => void;
+    }
+  > & {
+    clearCache: () => void;
+  };
+declare const getModInstallPath: ((
+  state: IState,
+  gameId: string,
+  modId: string | number,
+) => string) &
+  import("reselect").OutputSelectorFields<
+    (args_0: IMod, args_1: string) => string,
+    {
+      clearCache: () => void;
+    }
+  > & {
+    clearCache: () => void;
+  };
 //#endregion
 //#region lib/extensions/gamemode_management/selectors.d.ts
 declare function knownGames(state: IState): IGameStored[];
 declare function discovered(state: IState): {
   [id: string]: IDiscoveryResult;
 };
-declare const currentGame: ((state: IState) => IGameStored) & import("reselect").OutputSelectorFields<(args_0: IGameStored[], args_1: string) => IGameStored, {
-  clearCache: () => void;
-}> & {
-  clearCache: () => void;
-};
+declare const currentGame: ((state: IState) => IGameStored) &
+  import("reselect").OutputSelectorFields<
+    (args_0: IGameStored[], args_1: string) => IGameStored,
+    {
+      clearCache: () => void;
+    }
+  > & {
+    clearCache: () => void;
+  };
 declare const gameById: import("re-reselect").ParametricSelector<IState, string, IGameStored> & {
   resultFunc: (res1: IGameStored[], res2: string) => IGameStored;
-  dependencies: [import("re-reselect").ParametricSelector<IState, string, IGameStored[]>, import("re-reselect").ParametricSelector<IState, string, string>];
+  dependencies: [
+    import("re-reselect").ParametricSelector<IState, string, IGameStored[]>,
+    import("re-reselect").ParametricSelector<IState, string, string>,
+  ];
   recomputations: () => number;
   resetRecomputations: () => number;
 } & {
-  getMatchingSelector: (state: IState, props: string, ...args: any[]) => import("re-reselect").OutputParametricSelector<IState, string, IGameStored, (res1: IGameStored[], res2: string) => IGameStored, [import("re-reselect").ParametricSelector<IState, string, IGameStored[]>, import("re-reselect").ParametricSelector<IState, string, string>]>;
+  getMatchingSelector: (
+    state: IState,
+    props: string,
+    ...args: any[]
+  ) => import("re-reselect").OutputParametricSelector<
+    IState,
+    string,
+    IGameStored,
+    (res1: IGameStored[], res2: string) => IGameStored,
+    [
+      import("re-reselect").ParametricSelector<IState, string, IGameStored[]>,
+      import("re-reselect").ParametricSelector<IState, string, string>,
+    ]
+  >;
   removeMatchingSelector: (state: IState, props: string, ...args: any[]) => void;
   clearCache: () => void;
   cache: import("re-reselect").ICacheObject;
@@ -7553,21 +9723,55 @@ declare const gameById: import("re-reselect").ParametricSelector<IState, string,
  * @returns {IDiscoveryResult}
  */
 declare function currentGameDiscovery(state: any): IDiscoveryResult;
-declare const discoveryByGame: import("re-reselect").ParametricSelector<IState, string, IDiscoveryResult> & {
-  resultFunc: (res1: {
-    [id: string]: IDiscoveryResult;
-  }, res2: string) => IDiscoveryResult;
-  dependencies: [import("re-reselect").ParametricSelector<IState, string, {
-    [id: string]: IDiscoveryResult;
-  }>, import("re-reselect").ParametricSelector<IState, string, string>];
+declare const discoveryByGame: import("re-reselect").ParametricSelector<
+  IState,
+  string,
+  IDiscoveryResult
+> & {
+  resultFunc: (
+    res1: {
+      [id: string]: IDiscoveryResult;
+    },
+    res2: string,
+  ) => IDiscoveryResult;
+  dependencies: [
+    import("re-reselect").ParametricSelector<
+      IState,
+      string,
+      {
+        [id: string]: IDiscoveryResult;
+      }
+    >,
+    import("re-reselect").ParametricSelector<IState, string, string>,
+  ];
   recomputations: () => number;
   resetRecomputations: () => number;
 } & {
-  getMatchingSelector: (state: IState, props: string, ...args: any[]) => import("re-reselect").OutputParametricSelector<IState, string, IDiscoveryResult, (res1: {
-    [id: string]: IDiscoveryResult;
-  }, res2: string) => IDiscoveryResult, [import("re-reselect").ParametricSelector<IState, string, {
-    [id: string]: IDiscoveryResult;
-  }>, import("re-reselect").ParametricSelector<IState, string, string>]>;
+  getMatchingSelector: (
+    state: IState,
+    props: string,
+    ...args: any[]
+  ) => import("re-reselect").OutputParametricSelector<
+    IState,
+    string,
+    IDiscoveryResult,
+    (
+      res1: {
+        [id: string]: IDiscoveryResult;
+      },
+      res2: string,
+    ) => IDiscoveryResult,
+    [
+      import("re-reselect").ParametricSelector<
+        IState,
+        string,
+        {
+          [id: string]: IDiscoveryResult;
+        }
+      >,
+      import("re-reselect").ParametricSelector<IState, string, string>,
+    ]
+  >;
   removeMatchingSelector: (state: IState, props: string, ...args: any[]) => void;
   clearCache: () => void;
   cache: import("re-reselect").ICacheObject;
@@ -7587,7 +9791,10 @@ declare const isPremium: (state: IState) => boolean;
  */
 declare const shouldShowPremiumAd: (state: IState) => boolean;
 declare const isLoggedIn: (state: IState) => boolean;
-declare const nexusIdsFromDownloadId: ((state: IState, downloadId: string) => {
+declare const nexusIdsFromDownloadId: ((
+  state: IState,
+  downloadId: string,
+) => {
   gameDomainName: string;
   fileId: string;
   modId: string;
@@ -7595,21 +9802,28 @@ declare const nexusIdsFromDownloadId: ((state: IState, downloadId: string) => {
   collectionSlug: string;
   collectionId: string;
   revisionId: string;
-}) & import("reselect").OutputSelectorFields<(args_0: {
-  [id: string]: IDownload;
-}, args_1: string) => {
-  gameDomainName: string;
-  fileId: string;
-  modId: string;
-  numericGameId: number;
-  collectionSlug: string;
-  collectionId: string;
-  revisionId: string;
-}, {
-  clearCache: () => void;
-}> & {
-  clearCache: () => void;
-};
+}) &
+  import("reselect").OutputSelectorFields<
+    (
+      args_0: {
+        [id: string]: IDownload;
+      },
+      args_1: string,
+    ) => {
+      gameDomainName: string;
+      fileId: string;
+      modId: string;
+      numericGameId: number;
+      collectionSlug: string;
+      collectionId: string;
+      revisionId: string;
+    },
+    {
+      clearCache: () => void;
+    }
+  > & {
+    clearCache: () => void;
+  };
 //#endregion
 //#region lib/extensions/analytics/selectors.d.ts
 declare const isAnalyticsEnabled: (state: any) => boolean;
@@ -7642,12 +9856,17 @@ declare const getCollectionSessionHistory: (state: IState) => {
  * @param sessionId The session ID to retrieve
  * @returns The session or undefined if not found
  */
-declare const getCollectionSessionById: (state: IState, sessionId: string) => ICollectionInstallSession | undefined;
+declare const getCollectionSessionById: (
+  state: IState,
+  sessionId: string,
+) => ICollectionInstallSession | undefined;
 /**
  * Get the last completed session from history
  * @returns The last completed session or undefined
  */
-declare const getCollectionLastCompletedSession: (state: IState) => ICollectionInstallSession | undefined;
+declare const getCollectionLastCompletedSession: (
+  state: IState,
+) => ICollectionInstallSession | undefined;
 /**
  * Check if there is an active installation session
  * @returns True if a session is currently active
@@ -7659,9 +9878,14 @@ declare const hasCollectionActiveSession: (state: IState) => boolean;
  * @returns True if the collection is being installed
  */
 declare const isCollectionInstalling: (state: IState, collectionId: string) => boolean;
-declare const getCollectionSessionMods: (state: IState, sessionId: string) => {
-  [ruleId: string]: ICollectionModInstallInfo;
-} | undefined;
+declare const getCollectionSessionMods: (
+  state: IState,
+  sessionId: string,
+) =>
+  | {
+      [ruleId: string]: ICollectionModInstallInfo;
+    }
+  | undefined;
 /**
  * Get all mods in the active session
  * @returns Map of rule IDs to mod installation info, or empty object if no active session
@@ -7674,7 +9898,10 @@ declare const getCollectionActiveSessionMods: (state: IState) => {
  * @param ruleId The rule ID to retrieve
  * @returns The mod installation info or undefined if not found
  */
-declare const getCollectionActiveSessionMod: (state: IState, ruleId: string) => ICollectionModInstallInfo | undefined;
+declare const getCollectionActiveSessionMod: (
+  state: IState,
+  ruleId: string,
+) => ICollectionModInstallInfo | undefined;
 /**
  * Search for a mod in the active collection that a download corresponds to.
  * @param lookup Canonical lookup info for the download (use lookupFromDownload)
@@ -7685,13 +9912,19 @@ declare const getCollectionActiveSessionMod: (state: IState, ruleId: string) => 
  * and no separate "find by modId" path: the session stores the installed Vortex mod id,
  * which is a different namespace than the Nexus ids a download carries.
  */
-declare const getCollectionModByReference: (state: IState, lookup: IModLookupInfo) => ICollectionModInstallInfo | undefined;
+declare const getCollectionModByReference: (
+  state: IState,
+  lookup: IModLookupInfo,
+) => ICollectionModInstallInfo | undefined;
 /**
  * Get all mods with a specific status from the active session
  * @param status The status to filter by
  * @returns Array of mods with the specified status
  */
-declare const getCollectionModsByStatus: (state: IState, status: CollectionModStatus) => ICollectionModInstallInfo[];
+declare const getCollectionModsByStatus: (
+  state: IState,
+  status: CollectionModStatus,
+) => ICollectionModInstallInfo[];
 /**
  * Get all required mods from the active session
  * @returns Array of required mods
@@ -7728,7 +9961,10 @@ declare const getCollectionModsByPhase: (state: IState) => Map<number, ICollecti
  * @param phase The phase number
  * @returns Array of mods in the specified phase
  */
-declare const getCollectionModsForPhase: (state: IState, phase: number) => ICollectionModInstallInfo[];
+declare const getCollectionModsForPhase: (
+  state: IState,
+  phase: number,
+) => ICollectionModInstallInfo[];
 /**
  * Get the total number of phases in the active session
  * @returns The highest phase number, or 0 if no active session
@@ -7749,34 +9985,49 @@ declare const getCollectionInstallProgress: ((state: IState) => {
   installProgress: number;
   combinedProgress: number;
   isComplete: boolean;
-}) & import("reselect").OutputSelectorFields<(args_0: ICollectionInstallSession) => {
-  totalRequired: number;
-  totalOptional: number;
-  downloadedCount: number;
-  installedCount: number;
-  failedCount: number;
-  ignoredCount: number;
-  downloadProgress: number;
-  installProgress: number;
-  combinedProgress: number;
-  isComplete: boolean;
-}, {
-  clearCache: () => void;
-}> & {
-  clearCache: () => void;
-};
-declare const isCollectionModPresent: ((state: IState, collectionSlug: string) => boolean) & import("reselect").OutputSelectorFields<(args_0: {
-  [modId: string]: IMod;
-}, args_1: {}, args_2: string) => boolean, {
-  clearCache: () => void;
-}> & {
-  clearCache: () => void;
-};
+}) &
+  import("reselect").OutputSelectorFields<
+    (args_0: ICollectionInstallSession) => {
+      totalRequired: number;
+      totalOptional: number;
+      downloadedCount: number;
+      installedCount: number;
+      failedCount: number;
+      ignoredCount: number;
+      downloadProgress: number;
+      installProgress: number;
+      combinedProgress: number;
+      isComplete: boolean;
+    },
+    {
+      clearCache: () => void;
+    }
+  > & {
+    clearCache: () => void;
+  };
+declare const isCollectionModPresent: ((state: IState, collectionSlug: string) => boolean) &
+  import("reselect").OutputSelectorFields<
+    (
+      args_0: {
+        [modId: string]: IMod;
+      },
+      args_1: {},
+      args_2: string,
+    ) => boolean,
+    {
+      clearCache: () => void;
+    }
+  > & {
+    clearCache: () => void;
+  };
 /**
  * Get the status breakdown for all mods in the active session
  * @returns Object with counts for each status
  */
-declare const getCollectionStatusBreakdown: ((state: IState, sessionId: string) => {
+declare const getCollectionStatusBreakdown: ((
+  state: IState,
+  sessionId: string,
+) => {
   required: {
     [status: string]: number;
   };
@@ -7786,23 +10037,25 @@ declare const getCollectionStatusBreakdown: ((state: IState, sessionId: string) 
   total: {
     [status: string]: number;
   };
-}) & import("reselect").OutputSelectorFields<(args_0: {
-  [ruleId: string]: ICollectionModInstallInfo;
-}) => {
-  required: {
-    [status: string]: number;
+}) &
+  import("reselect").OutputSelectorFields<
+    (args_0: { [ruleId: string]: ICollectionModInstallInfo }) => {
+      required: {
+        [status: string]: number;
+      };
+      optional: {
+        [status: string]: number;
+      };
+      total: {
+        [status: string]: number;
+      };
+    },
+    {
+      clearCache: () => void;
+    }
+  > & {
+    clearCache: () => void;
   };
-  optional: {
-    [status: string]: number;
-  };
-  total: {
-    [status: string]: number;
-  };
-}, {
-  clearCache: () => void;
-}> & {
-  clearCache: () => void;
-};
 /**
  * Get mods that are currently in progress (downloading or installing)
  * @returns Array of mods that are actively being processed
@@ -7851,31 +10104,110 @@ declare const getCollectionPhaseProgress: ((state: IState) => {
   pending: number;
   progress: number;
   isComplete: boolean;
-}[]) & import("reselect").OutputSelectorFields<(args_0: {
-  [ruleId: string]: ICollectionModInstallInfo;
-}) => {
-  phase: number;
-  total: number;
-  required: number;
-  optional: number;
-  installed: number;
-  failed: number;
-  skipped: number;
-  pending: number;
-  progress: number;
-  isComplete: boolean;
-}[], {
-  clearCache: () => void;
-}> & {
-  clearCache: () => void;
-};
+}[]) &
+  import("reselect").OutputSelectorFields<
+    (args_0: { [ruleId: string]: ICollectionModInstallInfo }) => {
+      phase: number;
+      total: number;
+      required: number;
+      optional: number;
+      installed: number;
+      failed: number;
+      skipped: number;
+      pending: number;
+      progress: number;
+      isComplete: boolean;
+    }[],
+    {
+      clearCache: () => void;
+    }
+  > & {
+    clearCache: () => void;
+  };
 //#endregion
 //#region lib/selectors.d.ts
 declare const mainPage: (state: IState) => string;
 declare const secondaryPage: (state: IState) => string;
 declare const notifications: (state: IState) => INotification[];
 declare namespace selectors_d_exports {
-  export { activatorForGame, activeDownloads, activeGameId, activeProfile, activeProfileId, apiKey, currentActivator, currentGame, currentGameDiscovery, discovered, discoveryByGame, downloadPath, downloadPathForGame, downloadsForActiveGame, downloadsForGame, enabledModCountForProfile, gameById, gameName, gameProfiles, getCollectionActiveSession, getCollectionActiveSessionMod, getCollectionActiveSessionMods, getCollectionCompletedMods, getCollectionCurrentPhase, getCollectionInstallProgress, getCollectionLastActiveSessionId, getCollectionLastCompletedSession, getCollectionModByReference, getCollectionModsByPhase, getCollectionModsByStatus, getCollectionModsForPhase, getCollectionModsInProgress, getCollectionOptionalMods, getCollectionPendingMods, getCollectionPhaseProgress, getCollectionRequiredMods, getCollectionSessionById, getCollectionSessionHistory, getCollectionSessionMods, getCollectionStatusBreakdown, getCollectionTotalPhases, getDownloadByIds, getFailedOptionalMods, getFailedRequiredMods, getMod, getModInstallPath, hasCollectionActiveSession, installPath, installPathForGame, isActiveSessionStalled, isAnalyticsEnabled, isCollectionInstalling, isCollectionModPresent, isCollectionPhaseComplete, isCollectionPhaseSettledSuccessfully, isLoggedIn, isPremium, isTelemetryEnabled, knownGames, lastActiveProfileForGame, lastActiveProfiles, mainPage, modPathsForGame, modsForActiveGame, modsForGame, needToDeploy, needToDeployForGame, nextProfileId, nexusIdsFromDownloadId, notifications, profileById, profiles, queueClearingDownloads, secondaryPage, shouldShowPremiumAd, userInfo };
+  export {
+    activatorForGame,
+    activeDownloads,
+    activeGameId,
+    activeProfile,
+    activeProfileId,
+    apiKey,
+    currentActivator,
+    currentGame,
+    currentGameDiscovery,
+    discovered,
+    discoveryByGame,
+    downloadPath,
+    downloadPathForGame,
+    downloadsForActiveGame,
+    downloadsForGame,
+    enabledModCountForProfile,
+    gameById,
+    gameName,
+    gameProfiles,
+    getCollectionActiveSession,
+    getCollectionActiveSessionMod,
+    getCollectionActiveSessionMods,
+    getCollectionCompletedMods,
+    getCollectionCurrentPhase,
+    getCollectionInstallProgress,
+    getCollectionLastActiveSessionId,
+    getCollectionLastCompletedSession,
+    getCollectionModByReference,
+    getCollectionModsByPhase,
+    getCollectionModsByStatus,
+    getCollectionModsForPhase,
+    getCollectionModsInProgress,
+    getCollectionOptionalMods,
+    getCollectionPendingMods,
+    getCollectionPhaseProgress,
+    getCollectionRequiredMods,
+    getCollectionSessionById,
+    getCollectionSessionHistory,
+    getCollectionSessionMods,
+    getCollectionStatusBreakdown,
+    getCollectionTotalPhases,
+    getDownloadByIds,
+    getFailedOptionalMods,
+    getFailedRequiredMods,
+    getMod,
+    getModInstallPath,
+    hasCollectionActiveSession,
+    installPath,
+    installPathForGame,
+    isActiveSessionStalled,
+    isAnalyticsEnabled,
+    isCollectionInstalling,
+    isCollectionModPresent,
+    isCollectionPhaseComplete,
+    isCollectionPhaseSettledSuccessfully,
+    isLoggedIn,
+    isPremium,
+    isTelemetryEnabled,
+    knownGames,
+    lastActiveProfileForGame,
+    lastActiveProfiles,
+    mainPage,
+    modPathsForGame,
+    modsForActiveGame,
+    modsForGame,
+    needToDeploy,
+    needToDeployForGame,
+    nextProfileId,
+    nexusIdsFromDownloadId,
+    notifications,
+    profileById,
+    profiles,
+    queueClearingDownloads,
+    secondaryPage,
+    shouldShowPremiumAd,
+    userInfo,
+  };
 }
 //#endregion
 //#region lib/extensions/file_based_loadorder/views/loadOrderIndex.d.ts
@@ -7918,7 +10250,10 @@ interface IContextMenuProps {
 declare const _default$3: React$2.ComponentClass<IContextMenuProps>;
 //#endregion
 //#region lib/controls/ActionContextMenu.d.ts
-type ExportType$3 = IContextMenuProps & IActionControlProps & IExtensibleProps & React$2.HTMLAttributes<any>;
+type ExportType$3 = IContextMenuProps &
+  IActionControlProps &
+  IExtensibleProps &
+  React$2.HTMLAttributes<any>;
 declare class ActionContextMenu extends React$2.Component<ExportType$3> {
   private static ACTION_PROPS;
   render(): React$2.JSX.Element;
@@ -7934,7 +10269,10 @@ interface IBaseProps$11 {
   buttonType?: ButtonType$1;
   orientation?: "horizontal" | "vertical";
 }
-type ExportType$2 = IBaseProps$11 & IActionControlProps & IExtensibleProps & React$2.HTMLAttributes<any>;
+type ExportType$2 = IBaseProps$11 &
+  IActionControlProps &
+  IExtensibleProps &
+  React$2.HTMLAttributes<any>;
 declare const _default: React$2.ComponentClass<ExportType$2>;
 //#endregion
 //#region lib/controls/Advanced.d.ts
@@ -7966,9 +10304,11 @@ interface IDraggableListProps {
   items: any[];
   isLocked?: (item: any) => boolean;
   idFunc?: (item: any) => string;
-  itemRenderer: React$2.ComponentType<React$2.PropsWithChildren<{
-    item: any;
-  }>>;
+  itemRenderer: React$2.ComponentType<
+    React$2.PropsWithChildren<{
+      item: any;
+    }>
+  >;
   apply: (ordered: any[]) => void;
   style?: React$2.CSSProperties;
   className?: string;
@@ -7989,9 +10329,12 @@ type IProps$9 = IBaseProps$9 & typeof Dropdown.prototype.props;
  * @class MyDropdown
  * @extends {React.Component<IProps, { up: boolean }>}
  */
-declare class MyDropdown extends React$2.Component<IProps$9, {
-  up: boolean;
-}> {
+declare class MyDropdown extends React$2.Component<
+  IProps$9,
+  {
+    up: boolean;
+  }
+> {
   static Menu: typeof Dropdown.Menu;
   static Toggle: typeof Dropdown.Toggle;
   private mNode;
@@ -8099,13 +10442,19 @@ declare class FormFeedback extends React$2.Component<IFormFeedbackProps, {}> {
  * @template P
  * @template S
  */
-declare class ComponentEx<P, S extends object> extends React$2.Component<P & Partial<WithTranslation>, S> {
+declare class ComponentEx<P, S extends object> extends React$2.Component<
+  P & Partial<WithTranslation>,
+  S
+> {
   static contextTypes: React$2.ValidationMap<any>;
   context: IComponentContext;
   nextState: S;
   protected initState(value: S, delayed?: boolean): void;
 }
-declare class PureComponentEx<P, S extends object> extends React$2.PureComponent<P & Partial<WithTranslation>, S> {
+declare class PureComponentEx<P, S extends object> extends React$2.PureComponent<
+  P & Partial<WithTranslation>,
+  S
+> {
   static contextTypes: React$2.ValidationMap<any>;
   context: IComponentContext;
   nextState: S;
@@ -8187,7 +10536,10 @@ interface IBaseProps$6 {
   showAll?: boolean;
   t: TFunction$1;
 }
-type ExportType = IBaseProps$6 & IActionControlProps & IExtensibleProps & React$2.HTMLAttributes<any>;
+type ExportType = IBaseProps$6 &
+  IActionControlProps &
+  IExtensibleProps &
+  React$2.HTMLAttributes<any>;
 declare const _default$7: React$2.ComponentClass<ExportType>;
 //#endregion
 //#region lib/controls/Image.d.ts
@@ -8254,9 +10606,12 @@ type IProps$5 = IBaseProps$5 & typeof Overlay.prototype.props;
  * @class MyOverlayTrigger
  * @extends {React.Component<any, { placement: string }>}
  */
-declare class MyOverlay extends React$2.Component<IProps$5, {
-  placement: string;
-}> {
+declare class MyOverlay extends React$2.Component<
+  IProps$5,
+  {
+    placement: string;
+  }
+> {
   constructor(props: any);
   render(): React$2.JSX.Element;
   private onEnter;
@@ -8287,9 +10642,12 @@ type IProps$4 = IBaseProps$4 & typeof OverlayTrigger.prototype.props;
  * @class MyOverlayTrigger
  * @extends {React.Component<any, { placement: string }>}
  */
-declare class MyOverlayTrigger extends React$2.Component<IProps$4, {
-  placement: string;
-}> {
+declare class MyOverlayTrigger extends React$2.Component<
+  IProps$4,
+  {
+    placement: string;
+  }
+> {
   private mNode;
   constructor(props: any);
   componentDidMount(): void;
@@ -8304,18 +10662,23 @@ interface IPortalMenuProps {
   onClick: (evt: React$2.MouseEvent<HTMLElement>) => void;
   onClose: () => void;
   onSelect?: SelectCallback;
-  useMousePosition?: boolean | {
-    x: number;
-    y: number;
-  };
+  useMousePosition?:
+    | boolean
+    | {
+        x: number;
+        y: number;
+      };
   bsRole?: string;
   placement?: "top" | "bottom" | "left" | "right";
   children?: React$2.ReactNode;
 }
-declare class PortalMenu extends React$2.Component<IPortalMenuProps, {
-  x: number;
-  y: number;
-}> {
+declare class PortalMenu extends React$2.Component<
+  IPortalMenuProps,
+  {
+    x: number;
+    y: number;
+  }
+> {
   static contextTypes: React$2.ValidationMap<any>;
   context: {
     menuLayer: JSX.Element;
@@ -8456,7 +10819,9 @@ interface IBaseProps$1 {
 }
 type GetSelection = OutputSelector<any, string[], (res: ITableState) => string[]>;
 declare function makeGetSelection(tableId: string): GetSelection;
-declare const _default$11: React$2.ComponentType<React$2.PropsWithChildren<IBaseProps$1 & IExtensibleProps>>;
+declare const _default$11: React$2.ComponentType<
+  React$2.PropsWithChildren<IBaseProps$1 & IExtensibleProps>
+>;
 //#endregion
 //#region lib/controls/table/DateTimeFilter.d.ts
 declare class DateTimeFilterComponent extends ComponentEx<IFilterProps, {}> {
@@ -8584,7 +10949,24 @@ interface IToolIconProps {
 }
 declare const ToolIcon: (props: IToolIconProps) => React$2.JSX.Element;
 declare namespace TooltipControls_d_exports {
-  export { Button$1 as Button, ButtonProps, ClickPopover, ClickPopoverProps, IIconButtonExtraProps, IToggleButtonExtraProps, ITooltipIconProps, ITooltipProps, Icon$1 as Icon, IconButton, IconButtonProps, IconProps, NavItem$1 as NavItem, NavItemProps, ToggleButton, ToggleButtonProps };
+  export {
+    Button$1 as Button,
+    ButtonProps,
+    ClickPopover,
+    ClickPopoverProps,
+    IIconButtonExtraProps,
+    IToggleButtonExtraProps,
+    ITooltipIconProps,
+    ITooltipProps,
+    Icon$1 as Icon,
+    IconButton,
+    IconButtonProps,
+    IconProps,
+    NavItem$1 as NavItem,
+    NavItemProps,
+    ToggleButton,
+    ToggleButtonProps,
+  };
 }
 interface ITooltipProps {
   tooltip: string | React$2.ReactElement<any>;
@@ -8665,9 +11047,12 @@ declare class Icon$1 extends React$2.Component<IconProps, {}> {
   render(): React$2.JSX.Element;
 }
 type ClickPopoverProps = ButtonProps & IIconButtonExtraProps & {};
-declare class ClickPopover extends React$2.Component<ClickPopoverProps, {
-  open: boolean;
-}> {
+declare class ClickPopover extends React$2.Component<
+  ClickPopoverProps,
+  {
+    open: boolean;
+  }
+> {
   private mRef;
   constructor(props: ClickPopoverProps);
   render(): JSX.Element;
@@ -8711,7 +11096,10 @@ declare class VisibilityProxy extends React$2.PureComponent<any, {}> {
 }
 //#endregion
 //#region lib/controls/Webview.d.ts
-interface IWebView extends React$2.DetailedHTMLProps<React$2.WebViewHTMLAttributes<HTMLWebViewElement>, HTMLWebViewElement> {
+interface IWebView extends React$2.DetailedHTMLProps<
+  React$2.WebViewHTMLAttributes<HTMLWebViewElement>,
+  HTMLWebViewElement
+> {
   src?: string;
   style?: any;
   autosize?: boolean;
@@ -8757,9 +11145,12 @@ interface IZoomableImageProps {
   overlayClass?: string;
   children?: React$2.ReactNode;
 }
-declare class ZoomableImage extends React$2.Component<IZoomableImageProps, {
-  showOverlay: boolean;
-}> {
+declare class ZoomableImage extends React$2.Component<
+  IZoomableImageProps,
+  {
+    showOverlay: boolean;
+  }
+> {
   static contextTypes: React$2.ValidationMap<any>;
   context: {
     menuLayer: JSX.Element;
@@ -8785,7 +11176,9 @@ interface IDNDContainerProps {
 declare const DNDContainer: FC<React$1.PropsWithChildren<IDNDContainerProps>>;
 //#endregion
 //#region lib/views/MainPageBody.d.ts
-declare const MainPageBody: React$1.ForwardRefExoticComponent<React$1.HTMLAttributes<HTMLDivElement> & React$1.RefAttributes<HTMLDivElement>>;
+declare const MainPageBody: React$1.ForwardRefExoticComponent<
+  React$1.HTMLAttributes<HTMLDivElement> & React$1.RefAttributes<HTMLDivElement>
+>;
 //#endregion
 //#region lib/views/MainPageHeader.d.ts
 interface IProps {
@@ -8800,10 +11193,81 @@ interface IBaseProps {
   domRef?: (ref: HTMLElement) => void;
   children?: React$1.ReactNode;
 }
-declare const MainPageInner: React$1.ForwardRefExoticComponent<IBaseProps & React$1.RefAttributes<HTMLDivElement>>;
+declare const MainPageInner: React$1.ForwardRefExoticComponent<
+  IBaseProps & React$1.RefAttributes<HTMLDivElement>
+>;
 declare const MainPage: typeof MainPageInner & {
   Body: typeof MainPageBody;
   Header: typeof MainPageHeader;
 };
 //#endregion
-export { ActionContextMenu, _default as ActionDropdown, _default$1 as Advanced, _default$2 as Banner, type ChangeDataHandler, ComponentEx, _default$3 as ContextMenu, DNDContainer, Dashlet, DraggableListWrapper as DraggableList, MyDropdown as Dropdown, MyDropdownButton as DropdownButton, _default$4 as Dropzone, EmptyPlaceholder, _default$5 as ErrorBoundary, type FileSystemErrorData, FlexLayout, FormCheckboxItem, FormFeedback, _default$6 as FormInput, FormPathItem, FormTextItem, type ITableRowAction, Icon, _default$7 as IconBar, Image, LoadOrderIndexInput, MainContext, MainPage, MyModal as Modal, _default$8 as More, OptionsFilter, type OsErrorData, MyOverlay as Overlay, MyOverlayTrigger as OverlayTrigger, PortalMenu, ProgressBar, PromiseBB as Promise, PureComponentEx, _default$9 as RadialProgress, SelectUpDown, Spinner, _default$10 as Steps, _default$11 as Table, DateTimeFilter as TableDateTimeFilter, NumericFilter as TableNumericFilter, TextFilter as TableTextFilter, Timer, Toggle, ToolIcon, ToolbarIcon, _default$12 as TriStateCheckbox, _default$13 as Usage, VisibilityProxy, VortexError, type VortexErrorData, type VortexErrorKind, type VortexErrorKindMap, WebviewEmbed as Webview, ZoomableImage, index_d_exports as actions, fs_d_exports as fs, log, makeGetSelection, selectors_d_exports as selectors, TooltipControls_d_exports as tooltip, api_d_exports as types, api_d_exports$1 as util };
+export {
+  ActionContextMenu,
+  _default as ActionDropdown,
+  _default$1 as Advanced,
+  _default$2 as Banner,
+  type ChangeDataHandler,
+  ComponentEx,
+  _default$3 as ContextMenu,
+  DNDContainer,
+  Dashlet,
+  DraggableListWrapper as DraggableList,
+  MyDropdown as Dropdown,
+  MyDropdownButton as DropdownButton,
+  _default$4 as Dropzone,
+  EmptyPlaceholder,
+  _default$5 as ErrorBoundary,
+  type FileSystemErrorData,
+  FlexLayout,
+  FormCheckboxItem,
+  FormFeedback,
+  _default$6 as FormInput,
+  FormPathItem,
+  FormTextItem,
+  type ITableRowAction,
+  Icon,
+  _default$7 as IconBar,
+  Image,
+  LoadOrderIndexInput,
+  MainContext,
+  MainPage,
+  MyModal as Modal,
+  _default$8 as More,
+  OptionsFilter,
+  type OsErrorData,
+  MyOverlay as Overlay,
+  MyOverlayTrigger as OverlayTrigger,
+  PortalMenu,
+  ProgressBar,
+  PromiseBB as Promise,
+  PureComponentEx,
+  _default$9 as RadialProgress,
+  SelectUpDown,
+  Spinner,
+  _default$10 as Steps,
+  _default$11 as Table,
+  DateTimeFilter as TableDateTimeFilter,
+  NumericFilter as TableNumericFilter,
+  TextFilter as TableTextFilter,
+  Timer,
+  Toggle,
+  ToolIcon,
+  ToolbarIcon,
+  _default$12 as TriStateCheckbox,
+  _default$13 as Usage,
+  VisibilityProxy,
+  VortexError,
+  type VortexErrorData,
+  type VortexErrorKind,
+  type VortexErrorKindMap,
+  WebviewEmbed as Webview,
+  ZoomableImage,
+  index_d_exports as actions,
+  fs_d_exports as fs,
+  log,
+  makeGetSelection,
+  selectors_d_exports as selectors,
+  TooltipControls_d_exports as tooltip,
+  api_d_exports as types,
+  api_d_exports$1 as util,
+};

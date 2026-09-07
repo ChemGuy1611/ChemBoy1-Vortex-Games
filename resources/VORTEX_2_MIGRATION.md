@@ -24,7 +24,7 @@ Existing extensions that depend on the GitHub repository keep working, but the p
 with imports updated to the scoped name (preferred, so dependencies match imports):
 
 ```ts
-import { types, util, selectors } from '@nexusmods/vortex-api';
+import { types, util, selectors } from "@nexusmods/vortex-api";
 ```
 
 Or keep existing imports untouched by aliasing the old name to the new package:
@@ -58,13 +58,13 @@ Vortex's runtime React moved from 17.0.2 to **18.3.1** during the 2.4.x line, an
 ```ts
 // before
 interface IMyPanelProps {
-  title: string;
+    title: string;
 }
 
 // after
 interface IMyPanelProps {
-  title: string;
-  children?: React.ReactNode;
+    title: string;
+    children?: React.ReactNode;
 }
 ```
 
@@ -72,11 +72,11 @@ For function components, `React.FC<React.PropsWithChildren<IMyPanelProps>>` does
 
 ### Removed type aliases
 
-| Removed in `@types/react` 18 | Replace with |
-| --- | --- |
-| `React.StatelessComponent<P>` / `React.SFC<P>` | `React.FC<P>` |
-| `React.ReactText` | `string \| number` |
-| `React.ReactChild` | `React.ReactElement \| string \| number` |
+| Removed in `@types/react` 18                   | Replace with                             |
+| ---------------------------------------------- | ---------------------------------------- |
+| `React.StatelessComponent<P>` / `React.SFC<P>` | `React.FC<P>`                            |
+| `React.ReactText`                              | `string \| number`                       |
+| `React.ReactChild`                             | `React.ReactElement \| string \| number` |
 
 Vortex's own registration surfaces (`RegisterSettings`, `RegisterMainPage`, `RegisterDashlet`, `RegisterDialog`, `RegisterOverlay`, `RegisterBanner`, `RegisterControlWrapper`) and `IMainPage.component` now use `React.FC` / `React.ComponentType<React.PropsWithChildren<any>>` instead of `StatelessComponent`. This is source-compatible — no change needed unless you aliased those types yourself.
 
@@ -84,7 +84,7 @@ The same `PropsWithChildren` treatment reached `IExtensibleProps`, `ITableFilter
 
 ### `Type '...' is not assignable to type 'ReactNode'`
 
-`ReactNode` is stricter in the 18 types — plain objects and component *instances* no longer qualify. Render the value explicitly rather than passing it as a child.
+`ReactNode` is stricter in the 18 types — plain objects and component _instances_ no longer qualify. Render the value explicitly rather than passing it as a child.
 
 ### `npm install` fails with ERESOLVE
 
@@ -108,15 +108,15 @@ If your own `devDependencies` carry React 19 typings, your editor will offer API
 
 ## Summary of breaking changes
 
-| Area | 1.16 | 2.0 |
-| --- | --- | --- |
-| Runtime devDependencies | Manually listed | Provided by `vortex-api` peerDependencies |
-| Dev plugins folder | `%APPDATA%/vortex_devel/plugins` | `%APPDATA%/@vortex/main/plugins` |
-| `VORTEX_VERSION` constant | `@vortex/shared` export | Removed — use `state.app.appVersion` |
-| Main page priority — Load Order | (varied) | `30` |
-| Main page priority — Save Games | (varied) | `50` |
-| Page name casing | Title Case | Sentence case |
-| Bundler | webpack only | webpack or Rolldown |
+| Area                            | 1.16                             | 2.0                                       |
+| ------------------------------- | -------------------------------- | ----------------------------------------- |
+| Runtime devDependencies         | Manually listed                  | Provided by `vortex-api` peerDependencies |
+| Dev plugins folder              | `%APPDATA%/vortex_devel/plugins` | `%APPDATA%/@vortex/main/plugins`          |
+| `VORTEX_VERSION` constant       | `@vortex/shared` export          | Removed — use `state.app.appVersion`      |
+| Main page priority — Load Order | (varied)                         | `30`                                      |
+| Main page priority — Save Games | (varied)                         | `50`                                      |
+| Page name casing                | Title Case                       | Sentence case                             |
+| Bundler                         | webpack only                     | webpack or Rolldown                       |
 
 ---
 
@@ -208,12 +208,15 @@ Production path (`%APPDATA%/Vortex/plugins`) is unchanged.
 If using a custom webpack config:
 
 ```js
-const { peerDependencies } = require('vortex-api/package.json');
+const { peerDependencies } = require("vortex-api/package.json");
 module.exports = {
-  externals: [
-    ...Object.keys(peerDependencies || {}),
-    'electron', 'vortex-api',
-  ].reduce((acc, dep) => { acc[dep] = `commonjs ${dep}`; return acc; }, {}),
+    externals: [...Object.keys(peerDependencies || {}), "electron", "vortex-api"].reduce(
+        (acc, dep) => {
+            acc[dep] = `commonjs ${dep}`;
+            return acc;
+        },
+        {},
+    ),
 };
 ```
 

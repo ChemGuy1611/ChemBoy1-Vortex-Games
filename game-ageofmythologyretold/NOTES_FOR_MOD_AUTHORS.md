@@ -6,12 +6,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| Save Game Files | a `.mythsav` file | `util.getVortexPath('home')\Games\Age of Mythology Retold\USERID_FOLDER\savegames` |
-| Config | a file or folder named `game` and a file with the `.xml` extension | `util.getVortexPath('home')\Games\Age of Mythology Retold\USERID_FOLDER\users` |
-| Reshade | a file or folder named `reshade-shaders` | - |
-| Binaries | a file with one of these extensions: `.dll` or `.ini` | - |
+| Mod Type        | Archive must contain                                               | Installs to                                                                        |
+| --------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| Save Game Files | a `.mythsav` file                                                  | `util.getVortexPath('home')\Games\Age of Mythology Retold\USERID_FOLDER\savegames` |
+| Config          | a file or folder named `game` and a file with the `.xml` extension | `util.getVortexPath('home')\Games\Age of Mythology Retold\USERID_FOLDER\users`     |
+| Reshade         | a file or folder named `reshade-shaders`                           | -                                                                                  |
+| Binaries        | a file with one of these extensions: `.dll` or `.ini`              | -                                                                                  |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
@@ -47,4 +47,3 @@ Recognised when the archive contains a file with one of these extensions: `.dll`
 
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

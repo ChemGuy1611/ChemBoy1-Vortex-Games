@@ -10,11 +10,11 @@ Driver: `Vortex/src/renderer/src/ExtensionManager.ts` (+ `ExtensionProvider.ts`)
 
 ## Kinds of extension
 
-| Kind | Location | Loaded |
-| --- | --- | --- |
-| **Core** | `src/renderer/src/extensions/` | Compiled into the renderer; registered from a static list |
-| **Bundled plugins** | `getVortexPath('bundledPlugins')` | Shipped with the app, loaded from disk |
-| **Dynamic / user** | `getVortexPath('userData')/plugins` | User-installed third-party extensions |
+| Kind                | Location                            | Loaded                                                    |
+| ------------------- | ----------------------------------- | --------------------------------------------------------- |
+| **Core**            | `src/renderer/src/extensions/`      | Compiled into the renderer; registered from a static list |
+| **Bundled plugins** | `getVortexPath('bundledPlugins')`   | Shipped with the app, loaded from disk                    |
+| **Dynamic / user**  | `getVortexPath('userData')/plugins` | User-installed third-party extensions                     |
 
 `ExtensionManager.getExtensionPaths()` returns the user `plugins` dir (`bundled: false`) plus the
 bundled-plugins dir (`bundled: true`). A user copy of an extension can **replace** a bundled one;
@@ -50,8 +50,8 @@ actually happens until the manager replays the recorded calls.
 3. **`apply(funcName, realHandler, addExtInfo?)`** — for each registration type, replay the
    recorded calls into the **real** handler (`realHandler(...call.arguments)`, prefixed with
    `extInfo` when requested). A throw here → `showErrorNotification("Extension failed to
-   initialize. If this isn't an official extension, please report the error to the respective
-   author.")`, and other extensions continue.
+initialize. If this isn't an official extension, please report the error to the respective
+author.")`, and other extensions continue.
 4. **`initExtensionPersistors(store)`** — attach each extension's registered persistors to the
    Redux store.
 5. **`doOnce()`** — run every `once` / `onceMain` callback **in series** (`mapSeries`), now that

@@ -2,21 +2,21 @@
 
 ## Overview
 
-| Property | Value |
-| --- | --- |
-| Name | Dying Light The Beast Vortex Extension |
-| Engine / Structure | Basic Game |
-| Author | ChemBoy1 |
+| Property           | Value                                  |
+| ------------------ | -------------------------------------- |
+| Name               | Dying Light The Beast Vortex Extension |
+| Engine / Structure | Basic Game                             |
+| Author             | ChemBoy1                               |
 
 ## Key Identifiers
 
-| Property | Value |
-| --- | --- |
-| Game ID | `dyinglightthebeast` |
-| Executable | `ph_ft/work/bin/x64/DyingLightGame_TheBeast_x64_rwdi.exe` |
-| Executable (Xbox) | `gamelaunchhelper.exe` |
-| Extension Page | [https://www.nexusmods.com/site/mods/1456](https://www.nexusmods.com/site/mods/1456) |
-| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Dying_Light%3A_The_Beast](https://www.pcgamingwiki.com/wiki/Dying_Light%3A_The_Beast) |
+| Property          | Value                                                                                                                    |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Game ID           | `dyinglightthebeast`                                                                                                     |
+| Executable        | `ph_ft/work/bin/x64/DyingLightGame_TheBeast_x64_rwdi.exe`                                                                |
+| Executable (Xbox) | `gamelaunchhelper.exe`                                                                                                   |
+| Extension Page    | [https://www.nexusmods.com/site/mods/1456](https://www.nexusmods.com/site/mods/1456)                                     |
+| PCGamingWiki      | [https://www.pcgamingwiki.com/wiki/Dying_Light%3A_The_Beast](https://www.pcgamingwiki.com/wiki/Dying_Light%3A_The_Beast) |
 
 ## Supported Stores
 
@@ -25,35 +25,35 @@
 
 ## Feature Flags
 
-| Flag | Value | Description |
-| --- | --- | --- |
-| `DOTNET_INSTALLED` | `false` |  |
-| `superMergerInstalled` | `false` |  |
-| `mergerInstalled` | `false` |  |
+| Flag                   | Value   | Description |
+| ---------------------- | ------- | ----------- |
+| `DOTNET_INSTALLED`     | `false` |             |
+| `superMergerInstalled` | `false` |             |
+| `mergerInstalled`      | `false` |             |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
-| Name | ID | Priority | Target Path |
-| --- | --- | --- | --- |
-| Pak Mod (Merged) | `dyinglightthebeast-pak` | high | `{gamePath}/ph_ft/mods` |
-| Root Folder | `dyinglightthebeast-root` | high | `{gamePath}` |
-| Binaries (Engine Injector) | `dyinglightthebeast-binaries` | high | `{gamePath}/ph_ft/work/bin/x64` |
-| UTM Mod Merger Utility | `dyinglightthebeast-mergerutility` | low | `{gamePath}/ph_ft` |
-| Super Mod Merger | `dyinglightthebeast-supermerger` | low | `{gamePath}/ph_ft` |
+| Name                       | ID                                 | Priority | Target Path                     |
+| -------------------------- | ---------------------------------- | -------- | ------------------------------- |
+| Pak Mod (Merged)           | `dyinglightthebeast-pak`           | high     | `{gamePath}/ph_ft/mods`         |
+| Root Folder                | `dyinglightthebeast-root`          | high     | `{gamePath}`                    |
+| Binaries (Engine Injector) | `dyinglightthebeast-binaries`      | high     | `{gamePath}/ph_ft/work/bin/x64` |
+| UTM Mod Merger Utility     | `dyinglightthebeast-mergerutility` | low      | `{gamePath}/ph_ft`              |
+| Super Mod Merger           | `dyinglightthebeast-supermerger`   | low      | `{gamePath}/ph_ft`              |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID | Priority |
-| --- | --- |
-| `dyinglightthebeast-mergerutility` | 25 |
-| `dyinglightthebeast-supermerger` | 27 |
-| `dyinglightthebeast-pak` | 29 |
-| `dyinglightthebeast-root` | 47 |
-| `dyinglightthebeast-binaries` | 49 |
+| Installer ID                       | Priority |
+| ---------------------------------- | -------- |
+| `dyinglightthebeast-mergerutility` | 25       |
+| `dyinglightthebeast-supermerger`   | 27       |
+| `dyinglightthebeast-pak`           | 29       |
+| `dyinglightthebeast-root`          | 47       |
+| `dyinglightthebeast-binaries`      | 49       |
 
 ## Registered Tools
 
@@ -65,7 +65,7 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- Download Super Mod Merger 
+- Download Super Mod Merger
 - View Changelog
 - Open Downloads Folder
 - Open PCGamingWiki Page
@@ -79,4 +79,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
-

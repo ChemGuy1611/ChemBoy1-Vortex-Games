@@ -14,11 +14,11 @@ against a `master` clone; script and target names move, so read `package.json` a
 
 ## The two layers
 
-| Layer | Runner | Lives in | Run with | Blocks a normal PR |
-| --- | --- | --- | --- | --- |
-| Unit | vitest | colocated `src/**/*.test.ts(x)` | `pnpm run test` | Yes |
-| Integration | vitest | `src/main/**/*.test.integration.ts` | `pnpm run test` | Yes |
-| End-to-end | Playwright + Electron | `packages/e2e/src/tests/*.spec.ts` | `pnpm run e2e` | No |
+| Layer       | Runner                | Lives in                            | Run with        | Blocks a normal PR |
+| ----------- | --------------------- | ----------------------------------- | --------------- | ------------------ |
+| Unit        | vitest                | colocated `src/**/*.test.ts(x)`     | `pnpm run test` | Yes                |
+| Integration | vitest                | `src/main/**/*.test.integration.ts` | `pnpm run test` | Yes                |
+| End-to-end  | Playwright + Electron | `packages/e2e/src/tests/*.spec.ts`  | `pnpm run e2e`  | No                 |
 
 `pnpm run test` expands to `pnpm nx run-many -t test test:integration --exclude @vortex/e2e`, so the
 first two layers run together and the E2E package is deliberately excluded from it.
@@ -66,25 +66,25 @@ Each project owns a `vitest.config.ts`, and the root `vitest.config.ts` picks th
 
 ```ts
 projects: [
-  "./src/**/vitest.config.ts",
-  "./src/**/vitest.config.mts",
-  "./src/main/vitest.downloader.config.ts",
-  "./packages/**/vitest.config.ts",
-  "./extensions/**/vitest.config.ts",
-  "./scripts/vitest.config.ts",
-  "./.github/actions/*/vitest.config.ts",
-]
+    "./src/**/vitest.config.ts",
+    "./src/**/vitest.config.mts",
+    "./src/main/vitest.downloader.config.ts",
+    "./packages/**/vitest.config.ts",
+    "./extensions/**/vitest.config.ts",
+    "./scripts/vitest.config.ts",
+    "./.github/actions/*/vitest.config.ts",
+];
 ```
 
 A new package or extension needs its own `vitest.config.ts` at a path one of those globs matches, or
 its tests silently never run in the repo-wide command.
 
-| Project | Environment | Notes |
-| --- | --- | --- |
-| `@vortex/main` | `node` | `src/**/*.test.ts` plus root-level `*.test.ts` |
-| `@vortex/main` (integration) | `node` | `src/**/*.test.integration.ts`, 30 s per-test timeout |
-| `@vortex/renderer` | `happy-dom` | `@vitejs/plugin-react`, `globals: true`, `setupFiles: ["./test-setup.ts"]` |
-| `@vortex/shared` | `node` | plain vitest |
+| Project                      | Environment | Notes                                                                      |
+| ---------------------------- | ----------- | -------------------------------------------------------------------------- |
+| `@vortex/main`               | `node`      | `src/**/*.test.ts` plus root-level `*.test.ts`                             |
+| `@vortex/main` (integration) | `node`      | `src/**/*.test.integration.ts`, 30 s per-test timeout                      |
+| `@vortex/renderer`           | `happy-dom` | `@vitejs/plugin-react`, `globals: true`, `setupFiles: ["./test-setup.ts"]` |
+| `@vortex/shared`             | `node`      | plain vitest                                                               |
 
 The renderer's `test-setup.ts` registers `@testing-library/jest-dom/vitest` matchers and stubs the
 `VortexPaths` object so `getVortexPath`-backed selectors resolve real strings instead of throwing.
@@ -119,11 +119,11 @@ import { describe, expect, it } from "vitest";
 import ContextMenu from "./ContextMenu";
 
 describe("ContextMenu", () => {
-  it("opens on right click", () => {
-    render(<Harness />);
-    fireEvent.contextMenu(screen.getByTestId("row"));
-    expect(screen.getByRole("menu")).toBeInTheDocument();
-  });
+    it("opens on right click", () => {
+        render(<Harness />);
+        fireEvent.contextMenu(screen.getByTestId("row"));
+        expect(screen.getByRole("menu")).toBeInTheDocument();
+    });
 });
 ```
 
@@ -194,18 +194,18 @@ form; without it the full credential flow runs, which is what CI does.
 
 ### Running the suite
 
-| Command | Effect |
-| --- | --- |
-| `pnpm run e2e` | Whole suite, headless (`pnpm nx run @vortex/e2e:e2e`) |
-| `pnpm -F @vortex/e2e run e2e:headed` | Same, with a visible window (`VORTEX_E2E_HEADED=1`) |
-| `pnpm -F @vortex/e2e run e2e:ui` | Playwright UI mode, headed |
-| `pnpm -F @vortex/e2e exec playwright test mods.spec.ts` | One spec file |
-| `pnpm -F @vortex/e2e exec playwright test -g "Settings"` | By test name |
-| `pnpm -F @vortex/e2e exec playwright test --grep "@smoke"` | By tag |
-| `pnpm -F @vortex/e2e exec playwright show-report` | Open the HTML report from the last run |
-| `pnpm -F @vortex/e2e exec playwright show-trace <zip>` | Open an attached trace |
-| `pnpm -F @vortex/e2e run dev` | Inspector run: `VORTEX_E2E_INSPECT=1`, `--workers=1` |
-| `pnpm -F @vortex/e2e run dev:explore` | Launch one isolated instance, no test |
+| Command                                                    | Effect                                                |
+| ---------------------------------------------------------- | ----------------------------------------------------- |
+| `pnpm run e2e`                                             | Whole suite, headless (`pnpm nx run @vortex/e2e:e2e`) |
+| `pnpm -F @vortex/e2e run e2e:headed`                       | Same, with a visible window (`VORTEX_E2E_HEADED=1`)   |
+| `pnpm -F @vortex/e2e run e2e:ui`                           | Playwright UI mode, headed                            |
+| `pnpm -F @vortex/e2e exec playwright test mods.spec.ts`    | One spec file                                         |
+| `pnpm -F @vortex/e2e exec playwright test -g "Settings"`   | By test name                                          |
+| `pnpm -F @vortex/e2e exec playwright test --grep "@smoke"` | By tag                                                |
+| `pnpm -F @vortex/e2e exec playwright show-report`          | Open the HTML report from the last run                |
+| `pnpm -F @vortex/e2e exec playwright show-trace <zip>`     | Open an attached trace                                |
+| `pnpm -F @vortex/e2e run dev`                              | Inspector run: `VORTEX_E2E_INSPECT=1`, `--workers=1`  |
+| `pnpm -F @vortex/e2e run dev:explore`                      | Launch one isolated instance, no test                 |
 
 Every E2E target declares `dependsOn: @vortex/main:build`, so the first invocation builds the app
 before Playwright starts — budget several minutes for it.
@@ -227,22 +227,22 @@ import { test, expect } from "../fixtures/vortex-app";
 import { DashboardPage } from "../selectors/dashboard";
 
 test("customise button works", async ({ vortexWindow }) => {
-  const dashboard = new DashboardPage(vortexWindow);
-  await expect(dashboard.customiseButton).toBeVisible();
-  await dashboard.customiseButton.click();
-  await expect(dashboard.doneButton).toBeVisible();
+    const dashboard = new DashboardPage(vortexWindow);
+    await expect(dashboard.customiseButton).toBeVisible();
+    await dashboard.customiseButton.click();
+    await expect(dashboard.doneButton).toBeVisible();
 });
 ```
 
-| Fixture | Scope | What it gives |
-| --- | --- | --- |
-| `vortexWindow` | test | The main renderer `Page`, past the splash screen — use this for almost everything |
-| `vortexApp` | test | The `ElectronApplication` handle; only for IPC, extra windows, or `app.evaluate` |
-| `vortexUserDataDir` | test | Path to this test's isolated temp user-data directory |
-| `managedGame` | test | A fake Stardew Valley install, already managed; cleaned up afterwards |
-| `nexusUser` | option | `freeUser` or `premiumUser`; defaults to `null` (no login) |
-| `nexusPage` | test | A logged-in Chromium page on nexusmods.com; the test auto-skips without `nexusUser` |
-| `workerAuthSnapshots` | worker | Cached per-role auth snapshots for the worker's lifetime |
+| Fixture               | Scope  | What it gives                                                                       |
+| --------------------- | ------ | ----------------------------------------------------------------------------------- |
+| `vortexWindow`        | test   | The main renderer `Page`, past the splash screen — use this for almost everything   |
+| `vortexApp`           | test   | The `ElectronApplication` handle; only for IPC, extra windows, or `app.evaluate`    |
+| `vortexUserDataDir`   | test   | Path to this test's isolated temp user-data directory                               |
+| `managedGame`         | test   | A fake Stardew Valley install, already managed; cleaned up afterwards               |
+| `nexusUser`           | option | `freeUser` or `premiumUser`; defaults to `null` (no login)                          |
+| `nexusPage`           | test   | A logged-in Chromium page on nexusmods.com; the test auto-skips without `nexusUser` |
+| `workerAuthSnapshots` | worker | Cached per-role auth snapshots for the worker's lifetime                            |
 
 Set the user role with `test.use()` at describe level, never inside a `test()` body:
 
@@ -251,11 +251,11 @@ import { test, expect } from "../fixtures/vortex-app";
 import { freeUser } from "../helpers/users";
 
 test.describe("premium features", () => {
-  test.use({ nexusUser: freeUser });
+    test.use({ nexusUser: freeUser });
 
-  test("download a mod", async ({ vortexWindow, managedGame }) => {
-    // logged in as freeUser, stardewvalley already managed
-  });
+    test("download a mod", async ({ vortexWindow, managedGame }) => {
+        // logged in as freeUser, stardewvalley already managed
+    });
 });
 ```
 
@@ -283,15 +283,15 @@ different repo's convention.
 import type { Locator, Page } from "@playwright/test";
 
 export class DashboardPage {
-  readonly page: Page;
-  readonly customiseButton: Locator;
-  readonly doneButton: Locator;
+    readonly page: Page;
+    readonly customiseButton: Locator;
+    readonly doneButton: Locator;
 
-  constructor(page: Page) {
-    this.page = page;
-    this.customiseButton = page.getByText(/customi[sz]e/i).first();
-    this.doneButton = page.getByText(/done/i).first();
-  }
+    constructor(page: Page) {
+        this.page = page;
+        this.customiseButton = page.getByText(/customi[sz]e/i).first();
+        this.doneButton = page.getByText(/done/i).first();
+    }
 }
 ```
 
@@ -317,10 +317,10 @@ that broke:
 
 ```ts
 await test.step("Navigate to the games page", async () => {
-  const navbar = new NavBar(vortexWindow);
-  await expect(navbar.gamesLink).toBeVisible();
-  await navbar.gamesLink.click();
-  await expect(navbar.gamesActive).toBeVisible();
+    const navbar = new NavBar(vortexWindow);
+    await expect(navbar.gamesLink).toBeVisible();
+    await navbar.gamesLink.click();
+    await expect(navbar.gamesActive).toBeVisible();
 });
 ```
 
@@ -345,16 +345,16 @@ reaching for CSS.
 
 Every explicit timeout comes from `helpers/timeouts.ts`. The `Timeouts` values double under CI.
 
-| Constant | Value (local) | Use |
-| --- | --- | --- |
-| `GlobalTimeouts.GLOBAL` | 10 min (45 on CI) | Whole run |
-| `GlobalTimeouts.EXPECT` | 5 s | Default for web-first assertions |
-| `GlobalTimeouts.ACTION` | 5 s | Default for `click`, `fill`, `hover` |
-| `GlobalTimeouts.NAVIGATION` | 5 s | Default for navigation |
-| `Timeouts.NETWORK` | 30 s | Assertions that wait on a network round-trip |
-| `Timeouts.MODAL` | 10 s | Bounded wait for a client-rendered modal |
-| `Timeouts.LIFECYCLE` | 3 min | Cold start, fixture setup, per-test timeout |
-| `Timeouts.SNAPSHOT` | 5 min | Auth snapshot build (cold start + OAuth) |
+| Constant                    | Value (local)     | Use                                          |
+| --------------------------- | ----------------- | -------------------------------------------- |
+| `GlobalTimeouts.GLOBAL`     | 10 min (45 on CI) | Whole run                                    |
+| `GlobalTimeouts.EXPECT`     | 5 s               | Default for web-first assertions             |
+| `GlobalTimeouts.ACTION`     | 5 s               | Default for `click`, `fill`, `hover`         |
+| `GlobalTimeouts.NAVIGATION` | 5 s               | Default for navigation                       |
+| `Timeouts.NETWORK`          | 30 s              | Assertions that wait on a network round-trip |
+| `Timeouts.MODAL`            | 10 s              | Bounded wait for a client-rendered modal     |
+| `Timeouts.LIFECYCLE`        | 3 min             | Cold start, fixture setup, per-test timeout  |
+| `Timeouts.SNAPSHOT`         | 5 min             | Auth snapshot build (cold start + OAuth)     |
 
 Pure UI waits take no explicit timeout at all — the config defaults cover them, and a UI wait that
 "needs" longer is usually racing something the test should await explicitly. Network-backed waits
@@ -366,12 +366,12 @@ pass `{ timeout: Timeouts.NETWORK }`. Never hardcode a `30_000` literal, never c
 
 **Never `waitForTimeout()`.** Wait on the condition instead.
 
-| Instead of | Use |
-| --- | --- |
-| `waitForTimeout(X)` then click | `await expect(element).toBeVisible()` then click |
-| `waitForTimeout(X)` for a modal | `await expect(modal).toBeVisible()` |
-| `waitForTimeout(X)` for a spinner | `await expect(spinner).not.toBeVisible()` |
-| `waitForTimeout(X)` for a toggle | `await expect(toggle).toHaveAttribute("aria-checked", "true")` |
+| Instead of                        | Use                                                            |
+| --------------------------------- | -------------------------------------------------------------- |
+| `waitForTimeout(X)` then click    | `await expect(element).toBeVisible()` then click               |
+| `waitForTimeout(X)` for a modal   | `await expect(modal).toBeVisible()`                            |
+| `waitForTimeout(X)` for a spinner | `await expect(spinner).not.toBeVisible()`                      |
+| `waitForTimeout(X)` for a toggle  | `await expect(toggle).toHaveAttribute("aria-checked", "true")` |
 
 **No string predicates.** The renderer ships a strict CSP (`script-src 'self' '<sha256...>'`, no
 `'unsafe-eval'`), and Playwright evaluates string predicates through `eval`, which the CSP rejects.
@@ -421,7 +421,7 @@ by `playwright.config.ts` as the grep pattern, so the inspector run can be point
 VORTEX_E2E_GREP="<test name>" pnpm -F @vortex/e2e run dev
 ```
 
-Two things to get right when scripting the wait: the test can fail *before* reaching the breakpoint,
+Two things to get right when scripting the wait: the test can fail _before_ reaching the breakpoint,
 so poll for the sentinel file **or** runner exit, never the sentinel alone; and strip every
 `llmBreakpoint` call before committing, then re-run the spec headless to confirm it still passes.
 
@@ -453,15 +453,15 @@ running it locally.** Treat a green PR check as evidence about units and integra
 
 ## Stale claims in the repo's own docs
 
-| Claim | Where | Reality |
-| --- | --- | --- |
-| Electron launches once per worker; tests in a file share the instance | `packages/e2e/README.md` | `vortexApp` and `vortexWindow` are test-scoped — one process per test. Only the auth snapshot cache is worker-scoped |
-| Screenshots on failure, video and trace on first retry | `packages/e2e/README.md` | `playwright.config.ts` sets all three to `"off"`; the fixtures attach their own diagnostics |
-| `pnpm nx run @vortex/e2e:dev:isolated` | `E2E-BEST-PRACTICES.md` | The target is `dev:explore` |
-| `pnpm nx run @vortex/e2e:ui` | `E2E-BEST-PRACTICES.md` | The script is `e2e:ui` |
-| `pnpm e2e:debug`, `pnpm e2e:report` | root `package.json`, `packages/e2e/README.md` | Those nx targets do not exist; use `run e2e:ui` and `exec playwright show-report` |
-| Windows E2E is required and blocks PRs on failure | `packages/e2e/README.md` | `e2e.yml` is `continue-on-error: true` throughout, and does not run at all on PRs that leave `packages/e2e/**` untouched |
-| Fixtures at `packages/e2e/fixtures/`, selectors at `packages/e2e/selectors/` | `packages/e2e/README.md` | Everything moved under `packages/e2e/src/` |
+| Claim                                                                        | Where                                         | Reality                                                                                                                  |
+| ---------------------------------------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Electron launches once per worker; tests in a file share the instance        | `packages/e2e/README.md`                      | `vortexApp` and `vortexWindow` are test-scoped — one process per test. Only the auth snapshot cache is worker-scoped     |
+| Screenshots on failure, video and trace on first retry                       | `packages/e2e/README.md`                      | `playwright.config.ts` sets all three to `"off"`; the fixtures attach their own diagnostics                              |
+| `pnpm nx run @vortex/e2e:dev:isolated`                                       | `E2E-BEST-PRACTICES.md`                       | The target is `dev:explore`                                                                                              |
+| `pnpm nx run @vortex/e2e:ui`                                                 | `E2E-BEST-PRACTICES.md`                       | The script is `e2e:ui`                                                                                                   |
+| `pnpm e2e:debug`, `pnpm e2e:report`                                          | root `package.json`, `packages/e2e/README.md` | Those nx targets do not exist; use `run e2e:ui` and `exec playwright show-report`                                        |
+| Windows E2E is required and blocks PRs on failure                            | `packages/e2e/README.md`                      | `e2e.yml` is `continue-on-error: true` throughout, and does not run at all on PRs that leave `packages/e2e/**` untouched |
+| Fixtures at `packages/e2e/fixtures/`, selectors at `packages/e2e/selectors/` | `packages/e2e/README.md`                      | Everything moved under `packages/e2e/src/`                                                                               |
 
 ---
 

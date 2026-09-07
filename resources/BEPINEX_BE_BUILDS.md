@@ -4,10 +4,10 @@
 
 There is **no API of any kind**. The project's build index page is the only machine-readable surface:
 
-| Surface | URL | Purpose |
-| --- | --- | --- |
-| Build index page | `https://builds.bepinex.dev/projects/bepinex_be` | Every build, newest first, with its artifact links |
-| Artifact | `https://builds.bepinex.dev/projects/bepinex_be/{build}/{artifactName}` | The build's downloadable zip |
+| Surface          | URL                                                                     | Purpose                                            |
+| ---------------- | ----------------------------------------------------------------------- | -------------------------------------------------- |
+| Build index page | `https://builds.bepinex.dev/projects/bepinex_be`                        | Every build, newest first, with its artifact links |
+| Artifact         | `https://builds.bepinex.dev/projects/bepinex_be/{build}/{artifactName}` | The build's downloadable zip                       |
 
 Probed live: `/api/projects/bepinex_be` returns `404`, and there is no `/latest` alias (also `404`). Discovery therefore means parsing the index page.
 
@@ -23,14 +23,24 @@ Builds appear newest-first, one `artifact-item` block each:
 <div class="artifact-item">
     <div class="artifact-details">
         <span class="artifact-id">#785</span>
-        <a class="hash-button" href="https://github.com/BepInEx/BepInEx/commit/6abdba47...">6abdba4</a>
-        <span class="build-date-text">Build date: <span class="build-date">2026-06-28T16:09:22.2426304+00:00</span></span>
+        <a class="hash-button" href="https://github.com/BepInEx/BepInEx/commit/6abdba47..."
+            >6abdba4</a
+        >
+        <span class="build-date-text"
+            >Build date: <span class="build-date">2026-06-28T16:09:22.2426304+00:00</span></span
+        >
     </div>
     <div class="artifact-contents content">
         <div class="artifacts-list">
-            <a class="artifact-link"
-                            href="/projects/bepinex_be/785/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.785%2B6abdba4.zip">BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.785+6abdba4.zip</a>
+            <a
+                class="artifact-link"
+                href="/projects/bepinex_be/785/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.785%2B6abdba4.zip"
+                >BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.785+6abdba4.zip</a
+            >
             <span class="artifact-desc">BepInEx Unity (IL2CPP) for Windows (x64) games</span>
+        </div>
+    </div>
+</div>
 ```
 
 Three details a parser has to get right:
@@ -49,10 +59,10 @@ The **build number** is the only ordering key. It is a sequential integer, so up
 
 Two naming schemes appear on the index page, and a pattern written for one does not match the other:
 
-| Builds | Scheme | Example |
-| --- | --- | --- |
+| Builds        | Scheme                                                              | Example                                                 |
+| ------------- | ------------------------------------------------------------------- | ------------------------------------------------------- |
 | 647 and newer | `BepInEx-{Runtime}-{platform}-{arch}-6.0.0-be.{build}+{commit}.zip` | `BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.785+6abdba4.zip` |
-| 577 and older | `BepInEx_{Runtime}_{arch}_{commit}_6.0.0-be.{build}.zip` | `BepInEx_UnityIL2CPP_x64_e66c15b_6.0.0-be.520.zip` |
+| 577 and older | `BepInEx_{Runtime}_{arch}_{commit}_6.0.0-be.{build}.zip`            | `BepInEx_UnityIL2CPP_x64_e66c15b_6.0.0-be.520.zip`      |
 
 The index page has no builds between 578 and 646. The artifact set has also grown: the oldest builds ship 6 artifacts, builds 647-674 ship 11, and current builds ship 13 (the .NET Framework and CoreCLR targets each split into two).
 
@@ -84,19 +94,19 @@ Only IL2CPP games need it. A mono Unity game gets BepInEx 5.x from the project's
 
 The entry points take an array of requirement objects (conventionally a `BEPINEX_BE_REQUIREMENTS` constant in `index.js`), each describing one builds.bepinex.dev requirement:
 
-| Field | Required | Meaning |
-| --- | --- | --- |
-| `artifactPattern` | yes | RegExp tested against artifact **file names**, e.g. `/^BepInEx-Unity\.IL2CPP-win-x64-/i`. Do not set the `g` flag — a stateful RegExp would match on alternating calls. |
-| `modType` | yes | Vortex mod type id the requirement installs as; also the installed-detection key (any mod with this type counts as installed). |
-| `userFacingName` | yes | Display name in notifications, on the download, and in the mod list (stamped as the mod's `customFileName`). |
-| `fallbackBuild` | optional | Build number recorded when the index page is unreachable. |
-| `fallbackArtifactUrl` | optional | Artifact URL used when the index page is unreachable. Without it, an unreachable index fails the install with a manual-download error. |
-| `projectPath` | optional | Project whose index is parsed, relative to `https://builds.bepinex.dev`. Default `'projects/bepinex_be'`. |
-| `buildAttribute` | optional | Mod attribute tracking the installed build number for update checks. Default `'bepinexBeBuild'`. |
-| `pageUrl` | optional | Manual-download page opened on install failure, and the mod's "Source" link. Default derived from `projectPath`. |
-| `autoInstall` | optional | `false` -> never install this requirement unattended; only an explicit user action (a toolbar button, or a loader-choice dialog) installs it. Default installs a missing requirement automatically when the update check runs. |
-| `pinVersion` | optional | Hold the requirement at this build instead of tracking the newest one. See **Version pinning** below. |
-| `pinArtifactUrl` | with an off-index `pinVersion` | Artifact URL for the pinned build. Only needed once that build has scrolled off the index page. |
+| Field                 | Required                       | Meaning                                                                                                                                                                                                                        |
+| --------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `artifactPattern`     | yes                            | RegExp tested against artifact **file names**, e.g. `/^BepInEx-Unity\.IL2CPP-win-x64-/i`. Do not set the `g` flag — a stateful RegExp would match on alternating calls.                                                        |
+| `modType`             | yes                            | Vortex mod type id the requirement installs as; also the installed-detection key (any mod with this type counts as installed).                                                                                                 |
+| `userFacingName`      | yes                            | Display name in notifications, on the download, and in the mod list (stamped as the mod's `customFileName`).                                                                                                                   |
+| `fallbackBuild`       | optional                       | Build number recorded when the index page is unreachable.                                                                                                                                                                      |
+| `fallbackArtifactUrl` | optional                       | Artifact URL used when the index page is unreachable. Without it, an unreachable index fails the install with a manual-download error.                                                                                         |
+| `projectPath`         | optional                       | Project whose index is parsed, relative to `https://builds.bepinex.dev`. Default `'projects/bepinex_be'`.                                                                                                                      |
+| `buildAttribute`      | optional                       | Mod attribute tracking the installed build number for update checks. Default `'bepinexBeBuild'`.                                                                                                                               |
+| `pageUrl`             | optional                       | Manual-download page opened on install failure, and the mod's "Source" link. Default derived from `projectPath`.                                                                                                               |
+| `autoInstall`         | optional                       | `false` -> never install this requirement unattended; only an explicit user action (a toolbar button, or a loader-choice dialog) installs it. Default installs a missing requirement automatically when the update check runs. |
+| `pinVersion`          | optional                       | Hold the requirement at this build instead of tracking the newest one. See **Version pinning** below.                                                                                                                          |
+| `pinArtifactUrl`      | with an off-index `pinVersion` | Artifact URL for the pinned build. Only needed once that build has scrolled off the index page.                                                                                                                                |
 
 There is no `assemblyFileName` field. Installed-detection here is purely by mod type, as in the other non-GitHub companions; `downloader.js` reads that field only through the extension's own `findMod` closure.
 
@@ -106,22 +116,22 @@ There is no `assemblyFileName` field. Installed-detection here is purely by mod 
 
 Unlike the file-id based companions, no second field is required: the index lists every build that has not scrolled off it, so the pinned build is found by number. `pinArtifactUrl` exists for the case where it has, and short-circuits the index fetch on install as well.
 
-When the installed build is not the pinned one — including when nothing is installed — the module resolves the *pinned* build, never the newest. If that build cannot be resolved (scrolled off the index, or carrying no artifact matching `artifactPattern` — see the naming change at 647), the install fails with a message pointing at `pinArtifactUrl` rather than silently installing the newest build in its place. The notification reads "pinned version available" rather than "update available", because the user may be *ahead* of the pin and installing it is then a deliberate downgrade. `autoInstall` stays orthogonal: the pin says which build, `autoInstall` says whether anything installs unattended.
+When the installed build is not the pinned one — including when nothing is installed — the module resolves the _pinned_ build, never the newest. If that build cannot be resolved (scrolled off the index, or carrying no artifact matching `artifactPattern` — see the naming change at 647), the install fails with a message pointing at `pinArtifactUrl` rather than silently installing the newest build in its place. The notification reads "pinned version available" rather than "update available", because the user may be _ahead_ of the pin and installing it is then a deliberate downgrade. `autoInstall` stays orthogonal: the pin says which build, `autoInstall` says whether anything installs unattended.
 
 The same field name and behavior exist in six of the seven downloader modules — the fcmodding.com one has no pin at all, because its host culls old builds; `DOWNLOADER.md` has the cross-module table.
 
 ### Exports
 
-| Export | Role |
-| --- | --- |
-| `downloadBepinexBe(api, gameSpec, requirements, check = true)` | Download + install each requirement in the array (sequentially), then enable it, set its mod type, and record version + build attributes. With `check = true` (default) it is a no-op for requirements already installed; pass `false` to (re)install/update. Main entry point. |
-| `checkForBepinexBeUpdate(api, gameSpec, requirements)` | For each requirement in the array: install it if it is missing (unless `autoInstall: false`), otherwise compare the tracked build against the newest one on the index; raise a warning notification with a Download action when newer. Call from a `check-mods-version` handler. |
-| `downloadBepinexBeRequirement(api, gameSpec, requirement, check = true)` | Single-requirement variant of `downloadBepinexBe`. |
-| `checkForBepinexBeUpdateRequirement(api, gameSpec, requirement)` | Single-requirement variant of `checkForBepinexBeUpdate`. |
-| `isBepinexBeInstalled(api, gameId, requirement)` | Whether any mod with the requirement's mod type exists. |
-| `getLatestBepinexBeBuild(requirement)` | Newest build carrying a matching artifact, as `{ build, commit, date, artifact: { name, url } }`, or `null` if the index is unreachable or nothing matches. |
-| `getBepinexBeBuild(requirement, buildNumber)` | The same shape for one specific build, or `null` if it is not on the index or carries no matching artifact. |
-| `parseBepinexBeArtifacts(html)` | The index-page parser: HTML in, `[{ build, commit, date, artifacts: [{ name, url }] }]` newest-first out. Exported for testing and for callers that want the whole list. |
+| Export                                                                   | Role                                                                                                                                                                                                                                                                             |
+| ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `downloadBepinexBe(api, gameSpec, requirements, check = true)`           | Download + install each requirement in the array (sequentially), then enable it, set its mod type, and record version + build attributes. With `check = true` (default) it is a no-op for requirements already installed; pass `false` to (re)install/update. Main entry point.  |
+| `checkForBepinexBeUpdate(api, gameSpec, requirements)`                   | For each requirement in the array: install it if it is missing (unless `autoInstall: false`), otherwise compare the tracked build against the newest one on the index; raise a warning notification with a Download action when newer. Call from a `check-mods-version` handler. |
+| `downloadBepinexBeRequirement(api, gameSpec, requirement, check = true)` | Single-requirement variant of `downloadBepinexBe`.                                                                                                                                                                                                                               |
+| `checkForBepinexBeUpdateRequirement(api, gameSpec, requirement)`         | Single-requirement variant of `checkForBepinexBeUpdate`.                                                                                                                                                                                                                         |
+| `isBepinexBeInstalled(api, gameId, requirement)`                         | Whether any mod with the requirement's mod type exists.                                                                                                                                                                                                                          |
+| `getLatestBepinexBeBuild(requirement)`                                   | Newest build carrying a matching artifact, as `{ build, commit, date, artifact: { name, url } }`, or `null` if the index is unreachable or nothing matches.                                                                                                                      |
+| `getBepinexBeBuild(requirement, buildNumber)`                            | The same shape for one specific build, or `null` if it is not on the index or carries no matching artifact.                                                                                                                                                                      |
+| `parseBepinexBeArtifacts(html)`                                          | The index-page parser: HTML in, `[{ build, commit, date, artifacts: [{ name, url }] }]` newest-first out. Exported for testing and for callers that want the whole list.                                                                                                         |
 
 ### Behaviors worth knowing
 

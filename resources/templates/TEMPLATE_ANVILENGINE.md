@@ -18,13 +18,13 @@ patches) for the older AC titles.
 `SETTINGS_FILE` (the game's INI), `ATK_FILE` `3699` on the Nexus `site` domain, `FORGER_FILE` `716`
 on the `assassinscreedodyssey` domain. `GOGAPP_ID` is `null` — Ubisoft titles are not on GOG.
 
-| Mod type | Gate | Target |
-| --- | --- | --- |
-| `EXTRACTED_ID`, `FORGEFOLDER_ID`, `DATAFOLDER_ID`, `LOOSE_ID`, `FORGE_ID` | `hasAtk` | `{gamePath}` |
-| `ROOT_ID` | always | `{gamePath}` |
-| `ATK_ID` | `hasAtk`, spec `low` | `{gamePath}` |
-| `FORGER_ID` | `hasForger`, spec `low` | `{gamePath}` |
-| `FORGERPATCH_ID` | `hasForger` | `{gamePath}/ForgerPatches` |
+| Mod type                                                                  | Gate                    | Target                     |
+| ------------------------------------------------------------------------- | ----------------------- | -------------------------- |
+| `EXTRACTED_ID`, `FORGEFOLDER_ID`, `DATAFOLDER_ID`, `LOOSE_ID`, `FORGE_ID` | `hasAtk`                | `{gamePath}`               |
+| `ROOT_ID`                                                                 | always                  | `{gamePath}`               |
+| `ATK_ID`                                                                  | `hasAtk`, spec `low`    | `{gamePath}`               |
+| `FORGER_ID`                                                               | `hasForger`, spec `low` | `{gamePath}`               |
+| `FORGERPATCH_ID`                                                          | `hasForger`             | `{gamePath}/ForgerPatches` |
 
 **Installers:** `ATK` 25 → `EXTRACTED` 27 → `FORGEFOLDER` 29 → `DATAFOLDER` 31 → `LOOSE` 33 (all
 five behind `hasAtk`) → `FORGE` 35 → `ROOT` 37 → `FORGER` 41 → `FORGERPATCH` 43 (both behind

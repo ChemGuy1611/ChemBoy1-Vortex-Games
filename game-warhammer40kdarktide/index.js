@@ -1,8 +1,8 @@
 const path = require("path");
 const { fs, actions, util, selectors, log } = require("vortex-api");
 const template = require("string-template");
-const { parseStringPromise } = require('xml2js');
-const React = require('react');
+const { parseStringPromise } = require("xml2js");
+const React = require("react");
 
 const GAME_ID = "warhammer40kdarktide";
 const STEAMAPP_ID = "1361210";
@@ -10,15 +10,15 @@ const XBOXAPP_ID = "FatsharkAB.Warhammer40000DarktideNew";
 const XBOXEXECNAME = "launcher.launcher";
 const MOD_FILE_EXT = ".mod";
 const BAT_FILE_EXT = ".bat";
-let GAME_PATH = '';
-let GAME_VERSION = '';
+let GAME_PATH = "";
+let GAME_VERSION = "";
 let mod_update_all_profile = false; // for mod update to keep them in the load order and not uncheck them
 let updateModIds = new Map(); // Nexus mod id -> {firstSeen, targetFileId} (Map, not scalar, so batch updates don't clobber each other)
 const MAX_UPDATE_WAIT_MS = 5 * 60 * 1000; // release the guard for an update that never lands (cancelled or failed install)
 let updating_mod = false; // used to see if it's a mod update or not
-const APPMANIFEST_FILE = 'appxmanifest.xml';
+const APPMANIFEST_FILE = "appxmanifest.xml";
 
-const APPDATA = util.getVortexPath('appData');
+const APPDATA = util.getVortexPath("appData");
 const CONFIG_PATH = path.join(APPDATA, "Fatshark", "Darktide");
 const CONFIG_FILE = path.join(CONFIG_PATH, "user_settings.config");
 const LO_FILE = "mod_load_order.txt";
@@ -28,15 +28,15 @@ const LO_ATTRIBUTE = "modName";
 const LO_IMAGE_WIDTH = 96; //Width of the load order thumbnail image
 const LO_IMAGE_HEIGHT = LO_IMAGE_WIDTH * 0.5625;
 const DML_FILE = "toggle_darktide_mods.bat";
-const BINARIES_ID = 'darktide-binaries';
-const BINARIES_NAME = 'Binaries';
+const BINARIES_ID = "darktide-binaries";
+const BINARIES_NAME = "Binaries";
 const BINARIES_PATH = "binaries";
 const LAUNCHER_PATH = "launcher";
-const EXEC = path.join(BINARIES_PATH, 'Darktide.exe');
-const EXEC_LAUNCHER = path.join(LAUNCHER_PATH, 'Launcher.exe');
-const ROOT_ID = 'darktide-root';
-const ROOT_FOLDERS = [MOD_FOLDER, BINARIES_PATH, 'bundle', LAUNCHER_PATH];
-let DOWNLOAD_FOLDER = '';
+const EXEC = path.join(BINARIES_PATH, "Darktide.exe");
+const EXEC_LAUNCHER = path.join(LAUNCHER_PATH, "Launcher.exe");
+const ROOT_ID = "darktide-root";
+const ROOT_FOLDERS = [MOD_FOLDER, BINARIES_PATH, "bundle", LAUNCHER_PATH];
+let DOWNLOAD_FOLDER = "";
 //let STAGING_FOLDER = '';
 
 const tools = [
@@ -73,10 +73,13 @@ const tools = [
 function pathPattern(api, game, pattern) {
   var _a;
   return template(pattern, {
-      gamePath: (_a = api.getState().settings.gameMode.discovered[GAME_ID]) === null || _a === void 0 ? void 0 : _a.path,
-      documents: util.getVortexPath('documents'),
-      localAppData: util.getVortexPath('localAppData'),
-      appData: util.getVortexPath('appData'),
+    gamePath:
+      (_a = api.getState().settings.gameMode.discovered[GAME_ID]) === null || _a === void 0
+        ? void 0
+        : _a.path,
+    documents: util.getVortexPath("documents"),
+    localAppData: util.getVortexPath("localAppData"),
+    appData: util.getVortexPath("appData"),
   });
 }
 
@@ -90,8 +93,7 @@ async function statCheckAsync(gamePath, file) {
   try {
     await fs.statAsync(path.join(gamePath, file));
     return true;
-  }
-  catch {
+  } catch {
     return false;
   }
 }
@@ -100,33 +102,33 @@ async function statCheckAsync(gamePath, file) {
 async function setGameVersion(gamePath) {
   const CHECK = await statCheckAsync(gamePath, APPMANIFEST_FILE);
   if (CHECK) {
-    GAME_VERSION = 'xbox';
+    GAME_VERSION = "xbox";
     return GAME_VERSION;
   } else {
-    GAME_VERSION = 'steam';
+    GAME_VERSION = "steam";
     return GAME_VERSION;
   }
 }
 
 //Find game installation directory
 function makeFindGame() {
-  return () => util.GameStoreHelper.findByAppId([STEAMAPP_ID, XBOXAPP_ID])
-    .then((game) => game.gamePath);
+  return () =>
+    util.GameStoreHelper.findByAppId([STEAMAPP_ID, XBOXAPP_ID]).then((game) => game.gamePath);
 }
 
 async function requiresLauncher(gamePath, store) {
-  if (store === 'xbox') {
+  if (store === "xbox") {
     return Promise.resolve({
-      launcher: 'xbox',
+      launcher: "xbox",
       addInfo: {
         appId: XBOXAPP_ID,
         parameters: [{ appExecName: XBOXEXECNAME }],
       },
     });
   } //*/
-  if (store === 'steam') {
+  if (store === "steam") {
     return Promise.resolve({
-        launcher: 'steam',
+      launcher: "steam",
     });
   } //*/
   return Promise.resolve(undefined);
@@ -135,20 +137,27 @@ async function requiresLauncher(gamePath, store) {
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
 function testSupportedContent(files, gameId) {
-  const isDml = files.some(file => (
-    (path.extname(file).toLowerCase() === BAT_FILE_EXT) &&
-    path.basename(file).toLowerCase().includes("toggle_darktide_mods")
-  ));
-  const isLofm = files.some(file => (
-    (path.extname(file).toLowerCase() === BAT_FILE_EXT) &&
-    path.basename(file).toLowerCase().includes("_mod_load_order_file_maker")
-  ));
-  let supported = (gameId === GAME_ID) && (isDml || isLofm);
+  const isDml = files.some(
+    (file) =>
+      path.extname(file).toLowerCase() === BAT_FILE_EXT &&
+      path.basename(file).toLowerCase().includes("toggle_darktide_mods"),
+  );
+  const isLofm = files.some(
+    (file) =>
+      path.extname(file).toLowerCase() === BAT_FILE_EXT &&
+      path.basename(file).toLowerCase().includes("_mod_load_order_file_maker"),
+  );
+  let supported = gameId === GAME_ID && (isDml || isLofm);
 
   // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -159,10 +168,11 @@ function testSupportedContent(files, gameId) {
 }
 
 function installContent(files) {
-  const mod_load_order_file_maker = files.some(file => (
-    path.extname(file).toLowerCase() === BAT_FILE_EXT &&
-    path.basename(file).toLowerCase().includes("_mod_load_order_file_maker")
-  ));
+  const mod_load_order_file_maker = files.some(
+    (file) =>
+      path.extname(file).toLowerCase() === BAT_FILE_EXT &&
+      path.basename(file).toLowerCase().includes("_mod_load_order_file_maker"),
+  );
 
   if (mod_load_order_file_maker) {
     return install_mod_load_order_file_maker(files);
@@ -171,8 +181,9 @@ function installContent(files) {
   return root_game_install(files); //DML
 }
 
-function root_game_install(files) { //DML
-  const filtered = files.filter(file => !file.endsWith(path.sep));
+function root_game_install(files) {
+  //DML
+  const filtered = files.filter((file) => !file.endsWith(path.sep));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -187,14 +198,11 @@ function install_mod_load_order_file_maker(files) {
   const mod_load_order_file_maker = files.find(
     (file) => path.extname(file).toLowerCase() === BAT_FILE_EXT,
   );
-  const idx = mod_load_order_file_maker.indexOf(
-    path.basename(mod_load_order_file_maker),
-  );
+  const idx = mod_load_order_file_maker.indexOf(path.basename(mod_load_order_file_maker));
   const rootPath = path.dirname(mod_load_order_file_maker);
-  const filtered = files.filter(file => (
-    file.indexOf(rootPath) !== -1 &&
-    !file.endsWith(path.sep)
-  ));
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+  );
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -207,13 +215,18 @@ function install_mod_load_order_file_maker(files) {
 
 //Installer test for mod files
 function testMod(files, gameId) {
-  const isMod = files.some(file => (path.extname(file).toLowerCase() === MOD_FILE_EXT));
-  let supported = (gameId === GAME_ID) && isMod;
+  const isMod = files.some((file) => path.extname(file).toLowerCase() === MOD_FILE_EXT);
+  let supported = gameId === GAME_ID && isMod;
 
   // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -225,18 +238,15 @@ function testMod(files, gameId) {
 
 //Installer install mod files
 function installMod(files) {
-  const modFile = files.find(file =>
-    (path.extname(file).toLowerCase() === MOD_FILE_EXT)
-  );
+  const modFile = files.find((file) => path.extname(file).toLowerCase() === MOD_FILE_EXT);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const modName = path.basename(modFile, MOD_FILE_EXT);
-  const filtered = files.filter((file) => (
-    file.indexOf(rootPath) !== -1 &&
-    !file.endsWith(path.sep)
-  ));
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+  );
   const MOD_ATTRIBUTE = {
-    type: 'attribute',
+    type: "attribute",
     key: LO_ATTRIBUTE,
     value: modName,
   };
@@ -253,13 +263,18 @@ function installMod(files) {
 
 //Installer test for Root folder files
 function testRoot(files, gameId) {
-  const isMod = files.some(file => ROOT_FOLDERS.includes(path.basename(file)));
-  let supported = (gameId === GAME_ID) && isMod;
+  const isMod = files.some((file) => ROOT_FOLDERS.includes(path.basename(file)));
+  let supported = gameId === GAME_ID && isMod;
 
   // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -271,18 +286,18 @@ function testRoot(files, gameId) {
 
 //Installer install Root folder files
 function installRoot(files) {
-  let modFile = files.find(file => ROOT_FOLDERS.includes(path.basename(file)));
+  let modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file)));
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
   const idx = modFile.indexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -292,12 +307,17 @@ function installRoot(files) {
 
 //Test Fallback installer to Binaries folder
 function testBinaries(files, gameId) {
-  let supported = (gameId === GAME_ID);
+  let supported = gameId === GAME_ID;
 
   // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -312,7 +332,7 @@ function fallbackNotify(api, modName) {
   const MESSAGE = `Fallback install to "binaries" folder for mod:\n${modName}`;
   api.sendNotification({
     id: NOTIF_ID,
-    type: 'info',
+    type: "info",
     message: MESSAGE,
     allowSuppress: true,
     actions: [],
@@ -321,20 +341,18 @@ function fallbackNotify(api, modName) {
 
 //Fallback installer to Binaries folder
 function installBinaries(api, files, fileName) {
-  const setModTypeInstruction = { type: 'setmodtype', value: BINARIES_ID };
-  const modName = path.basename(fileName, '.installing');
+  const setModTypeInstruction = { type: "setmodtype", value: BINARIES_ID };
+  const modName = path.basename(fileName, ".installing");
 
   //* Do not resend the alert in case of updates
   if (!updating_mod) {
     fallbackNotify(api, modName);
   } //*/
 
-  const filtered = files.filter(file =>
-    (!file.endsWith(path.sep))
-  );
-  const instructions = filtered.map(file => {
+  const filtered = files.filter((file) => !file.endsWith(path.sep));
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: file,
     };
@@ -350,8 +368,9 @@ function installBinaries(api, files, fileName) {
 function notifyLoadOrderPaused(api, gameId) {
   api.sendNotification({
     id: `${gameId}-loadorder-update-paused`,
-    type: 'warning',
-    message: 'Load order changes are paused while a mod update finishes. Reorder again once it completes.',
+    type: "warning",
+    message:
+      "Load order changes are paused while a mod update finishes. Reorder again once it completes.",
     displayMS: 6000,
   });
 }
@@ -364,57 +383,70 @@ async function deserializeLoadOrder(context) {
     //and the page keeps showing the real load order rather than a placeholder row.
     const updateState = context.api.getState();
     const updateProfileId = selectors.lastActiveProfileForGame(updateState, GAME_ID);
-    return util.getSafe(updateState, ['persistent', 'loadOrder', updateProfileId], []);
+    return util.getSafe(updateState, ["persistent", "loadOrder", updateProfileId], []);
   }
 
   //Seed lock state from the stored load order. The game's own load order file has no lock
   //field, so without this a locked entry would silently unlock on the next deploy or page mount.
   const prevState = context.api.getState();
-  const prevLO = util.getSafe(prevState, ['persistent', 'loadOrder', selectors.lastActiveProfileForGame(prevState, GAME_ID)], []);
-  const prevById = new Map(prevLO.map(e => [e.id, e]));
+  const prevLO = util.getSafe(
+    prevState,
+    ["persistent", "loadOrder", selectors.lastActiveProfileForGame(prevState, GAME_ID)],
+    [],
+  );
+  const prevById = new Map(prevLO.map((e) => [e.id, e]));
 
   //read current LO file
   const gameDir = getDiscoveryPath(context.api);
-  const mods = util.getSafe(context.api.store.getState(), ['persistent', 'mods', GAME_ID], {});
+  const mods = util.getSafe(context.api.store.getState(), ["persistent", "mods", GAME_ID], {});
   const loadOrderPath = path.join(gameDir, "mods", LO_FILE);
   //The load order page can mount before setup has created the file, so make sure it exists
   //before reading it.
   await fs.ensureFileAsync(loadOrderPath);
-  let loadOrderFile = await fs.readFileAsync(
-    loadOrderPath,
-    { encoding: "utf8", }
-  );
+  let loadOrderFile = await fs.readFileAsync(loadOrderPath, { encoding: "utf8" });
 
   //read and filter mod folders
   const ignoredFolders = ["dmf", "base"];
   const ignoredExtensions = [".txt", ".bat"];
   let modFolderPath = path.join(gameDir, MOD_FOLDER);
   async function isValidModFolder(folder) {
-    return fs.statAsync(path.join(modFolderPath, folder, `${folder}.mod`))
+    return fs
+      .statAsync(path.join(modFolderPath, folder, `${folder}.mod`))
       .then(() => true)
-      .catch(() => false)
-  };
+      .catch(() => false);
+  }
   let modFoldersRaw = await fs.readdirAsync(modFolderPath);
   let modFolders = await modFoldersRaw
-    .filter((folder) => !ignoredFolders.includes(folder) && !ignoredExtensions.includes(path.extname(folder)))
+    .filter(
+      (folder) =>
+        !ignoredFolders.includes(folder) && !ignoredExtensions.includes(path.extname(folder)),
+    )
     //.filter((folder) => isDirectory(folder))
-    .filter(async (folder) => { // Filter any files/folders out that don't contain ModName.mod
+    .filter(async (folder) => {
+      // Filter any files/folders out that don't contain ModName.mod
       await isValidModFolder(folder);
     })
     .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())); // Ignore case when sorting
 
   // Get readable mod name using modFolderDerived attribute from mod installer
   async function getModName(folder) {
-    const VORTEX = await getModId(folder) !== undefined;
-    if (!VORTEX) { //If not Steam Workshop, check if mod was not installed by Vortex
-      return ('Manual Mod');
+    const VORTEX = (await getModId(folder)) !== undefined;
+    if (!VORTEX) {
+      //If not Steam Workshop, check if mod was not installed by Vortex
+      return "Manual Mod";
     }
-    try {//Mod installed by Vortex, find mod where atrribute (from installer) matches folder in the load order
-      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], '') === folder));
+    try {
+      //Mod installed by Vortex, find mod where atrribute (from installer) matches folder in the load order
+      const modMatch = Object.values(mods).find(
+        (mod) => util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], "") === folder,
+      );
       if (modMatch) {
-        let name = modMatch.attributes.customFileName ?? modMatch.attributes.logicalFileName ?? modMatch.attributes.name;
-        name = name.replace(/(.zip|.rar|.7z)/gi, '');
-        if (name.includes('Mod List Dividers')) {
+        let name =
+          modMatch.attributes.customFileName ??
+          modMatch.attributes.logicalFileName ??
+          modMatch.attributes.name;
+        name = name.replace(/(.zip|.rar|.7z)/gi, "");
+        if (name.includes("Mod List Dividers")) {
           return `____${folder}`;
         }
         return name;
@@ -427,8 +459,11 @@ async function deserializeLoadOrder(context) {
 
   // Get Vortex mod id using attribute from mod installer
   async function getModId(folder) {
-    try {//find mod where atrribute (from installer) matches file in the load order
-      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], '') === folder)); //find mod by folder name attribute
+    try {
+      //find mod where atrribute (from installer) matches file in the load order
+      const modMatch = Object.values(mods).find(
+        (mod) => util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], "") === folder,
+      ); //find mod by folder name attribute
       if (modMatch) {
         return modMatch.id;
       }
@@ -439,23 +474,22 @@ async function deserializeLoadOrder(context) {
   }
 
   //create load order array
-  let loadOrder = await loadOrderFile.split("\n")
-    .reduce(async (accumP, line) => {
-      const accum = await accumP;
-      const folder = line.replace(/-- /g, "").trim();
-      if (!modFolders.includes(folder)) { //remove lines that don't have corresponding mods in the file system
-        return Promise.resolve(accum);
-      }
-      accum.push({
-        id: folder,
-        name: `${await getModName(folder)} (${folder})`,
-        modId: await getModId(folder),
-        enabled: !line.startsWith("--"),
-        locked: prevById.get(folder)?.locked ?? false,
-      });
+  let loadOrder = await loadOrderFile.split("\n").reduce(async (accumP, line) => {
+    const accum = await accumP;
+    const folder = line.replace(/-- /g, "").trim();
+    if (!modFolders.includes(folder)) {
+      //remove lines that don't have corresponding mods in the file system
       return Promise.resolve(accum);
-      }, Promise.resolve([])
-    )
+    }
+    accum.push({
+      id: folder,
+      name: `${await getModName(folder)} (${folder})`,
+      modId: await getModId(folder),
+      enabled: !line.startsWith("--"),
+      locked: prevById.get(folder)?.locked ?? false,
+    });
+    return Promise.resolve(accum);
+  }, Promise.resolve([]));
 
   //add new mods to load order
   for (let folder of modFolders) {
@@ -481,9 +515,7 @@ async function serializeLoadOrder(context, loadOrder) {
   const gameDir = getDiscoveryPath(context.api);
   const loadOrderPath = path.join(gameDir, MOD_FOLDER, LO_FILE);
 
-  let loadOrderOutput = loadOrder
-    .map((mod) => (mod.enabled ? mod.id : `-- ${mod.id}`))
-    .join("\n");
+  let loadOrderOutput = loadOrder.map((mod) => (mod.enabled ? mod.id : `-- ${mod.id}`)).join("\n");
 
   return fs.writeFileAsync(
     loadOrderPath,
@@ -537,25 +569,26 @@ async function checkForDML(api, toggle_mods_path) {
 //* Resolve game version dynamically for different game versions
 async function resolveGameVersion(gamePath) {
   GAME_VERSION = await setGameVersion(gamePath);
-  let version = '0.0.0';
-  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+  let version = "0.0.0";
+  if (GAME_VERSION === "xbox") {
+    // use appxmanifest.xml for Xbox version
     try {
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
     } catch (err) {
-      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      log("error", `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
       return Promise.resolve(version);
     }
-  }
-  else { // use exe
+  } else {
+    // use exe
     try {
-      const exeVersion = require('exe-version');
+      const exeVersion = require("exe-version");
       version = exeVersion.getFileVersion(path.join(gamePath, EXEC));
       return Promise.resolve(version);
     } catch (err) {
-      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      log("error", `Could not read ${EXEC} file to get Steam game version: ${err}`);
       return Promise.resolve(version);
     }
   }
@@ -567,7 +600,7 @@ async function setup(discovery, api) {
   GAME_PATH = discovery.path;
   //STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
-  await fs.ensureDirWritableAsync(path.join(GAME_PATH,  MOD_FOLDER)); // Ensure the mods directory exists
+  await fs.ensureDirWritableAsync(path.join(GAME_PATH, MOD_FOLDER)); // Ensure the mods directory exists
   await fs.ensureDirWritableAsync(CONFIG_PATH);
   await fs.ensureFileAsync(path.join(GAME_PATH, MOD_FOLDER, LO_FILE)); // Ensure the mod load order file exists
   await checkForDMF(api, path.join(GAME_PATH, MOD_FOLDER, DMF_FOLDER)); // Check if DMF is installed
@@ -613,39 +646,65 @@ function main(context) {
   });
 
   //register mod types
-  context.registerModType(BINARIES_ID, 25, (gameId) => {
-    var _a;
-    return (gameId === GAME_ID)
-      && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, (game) => pathPattern(context.api, game, path.join("{gamePath}", BINARIES_PATH)), () => Promise.resolve(false), { name: BINARIES_NAME }
+  context.registerModType(
+    BINARIES_ID,
+    25,
+    (gameId) => {
+      var _a;
+      return (
+        gameId === GAME_ID &&
+        !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+        _a === void 0
+          ? void 0
+          : _a.path)
+      );
+    },
+    (game) => pathPattern(context.api, game, path.join("{gamePath}", BINARIES_PATH)),
+    () => Promise.resolve(false),
+    { name: BINARIES_NAME },
   ); //*/
-  context.registerModType('darktide-config', 30, (gameId) => {
-    var _a;
-    return (gameId === GAME_ID)
-      && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, (game) => pathPattern(context.api, game, CONFIG_PATH), () => Promise.resolve(false), { name: 'Config' }
+  context.registerModType(
+    "darktide-config",
+    30,
+    (gameId) => {
+      var _a;
+      return (
+        gameId === GAME_ID &&
+        !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+        _a === void 0
+          ? void 0
+          : _a.path)
+      );
+    },
+    (game) => pathPattern(context.api, game, CONFIG_PATH),
+    () => Promise.resolve(false),
+    { name: "Config" },
   ); //*/
 
   //register installers
-  context.registerInstaller( //covers DML and LOFM
+  context.registerInstaller(
+    //covers DML and LOFM
     "warhammer40kdarktide-dmfdml",
     25,
     testSupportedContent,
     installContent,
   );
-  context.registerInstaller( //regular mods & DMF
+  context.registerInstaller(
+    //regular mods & DMF
     "warhammer40kdarktide-mod",
     27,
     testMod,
     installMod,
   );
-  context.registerInstaller( //root folders ("mods", "binaries", "bundle", "launcher")
+  context.registerInstaller(
+    //root folders ("mods", "binaries", "bundle", "launcher")
     ROOT_ID,
     29,
     testRoot,
     installRoot,
   );
-  context.registerInstaller( //fallback installer to Binaries folder (i.e. dll mods, Optiscaler)
+  context.registerInstaller(
+    //fallback installer to Binaries folder (i.e. dll mods, Optiscaler)
     BINARIES_ID,
     31,
     testBinaries,
@@ -653,63 +712,124 @@ function main(context) {
   );
 
   //register actions/////////////////////////////////////////////////
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
-    util.opn(CONFIG_PATH).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, `Open ${LO_FILE}`, () => {
-    GAME_PATH = getDiscoveryPath(context.api);
-    const openPath = path.join(GAME_PATH, MOD_FOLDER, LO_FILE);
-    util.opn(openPath).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open user_settings.config', () => {
-    util.opn(CONFIG_FILE).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open settings_common.ini', () => {
-    GAME_PATH = getDiscoveryPath(context.api);
-    const openPath = path.join(GAME_PATH, "bundle", "application_settings", 'settings_common.ini');
-    util.opn(openPath).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open win32_settings.ini', () => {
-    GAME_PATH = getDiscoveryPath(context.api);
-    const openPath = path.join(GAME_PATH, "bundle", "application_settings", 'win32_settings.ini');
-    util.opn(openPath).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Launcher.exe.config', () => {
-    GAME_PATH = getDiscoveryPath(context.api);
-    const openPath = path.join(GAME_PATH, "launcher", "Launcher.exe.config");
-    util.opn(openPath).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    util.opn(DOWNLOAD_FOLDER).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Config Folder",
+    () => {
+      util.opn(CONFIG_PATH).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    `Open ${LO_FILE}`,
+    () => {
+      GAME_PATH = getDiscoveryPath(context.api);
+      const openPath = path.join(GAME_PATH, MOD_FOLDER, LO_FILE);
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open user_settings.config",
+    () => {
+      util.opn(CONFIG_FILE).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open settings_common.ini",
+    () => {
+      GAME_PATH = getDiscoveryPath(context.api);
+      const openPath = path.join(
+        GAME_PATH,
+        "bundle",
+        "application_settings",
+        "settings_common.ini",
+      );
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open win32_settings.ini",
+    () => {
+      GAME_PATH = getDiscoveryPath(context.api);
+      const openPath = path.join(GAME_PATH, "bundle", "application_settings", "win32_settings.ini");
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Launcher.exe.config",
+    () => {
+      GAME_PATH = getDiscoveryPath(context.api);
+      const openPath = path.join(GAME_PATH, "launcher", "Launcher.exe.config");
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Downloads Folder",
+    () => {
+      util.opn(DOWNLOAD_FOLDER).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
 
   context.once(() => {
     const api = context.api; //don't move from the top
@@ -729,16 +849,20 @@ function main(context) {
         const mods = util.getSafe(state, ["persistent", "mods", GAME_ID], {});
         const now = Date.now();
         for (const [nexusId, { firstSeen, targetFileId }] of Array.from(updateModIds)) {
-          const landed = Object.values(mods).some((mod) =>
-            String(mod?.attributes?.modId ?? '') === nexusId &&
-            //if the target file is unknown, fall back to "installed and enabled"
-            (targetFileId === '' || String(mod?.attributes?.fileId ?? '') === targetFileId) &&
-            util.getSafe(profile, ["modState", mod.id, "enabled"], false)
+          const landed = Object.values(mods).some(
+            (mod) =>
+              String(mod?.attributes?.modId ?? "") === nexusId &&
+              //if the target file is unknown, fall back to "installed and enabled"
+              (targetFileId === "" || String(mod?.attributes?.fileId ?? "") === targetFileId) &&
+              util.getSafe(profile, ["modState", mod.id, "enabled"], false),
           );
           if (landed) {
             updateModIds.delete(nexusId);
           } else if (now - firstSeen > MAX_UPDATE_WAIT_MS) {
-            log('warn', `[${GAME_ID}] Mod update tracking for Nexus mod ${nexusId} timed out without landing; releasing load order guard for it.`);
+            log(
+              "warn",
+              `[${GAME_ID}] Mod update tracking for Nexus mod ${nexusId} timed out without landing; releasing load order guard for it.`,
+            );
             updateModIds.delete(nexusId);
           }
         }
@@ -753,7 +877,7 @@ function main(context) {
           const refreshedLO = await deserializeLoadOrder({ api: context.api });
           context.api.store.dispatch(actions.setFBLoadOrder(profileId, refreshedLO));
         } catch (err) {
-          log('warn', `[${GAME_ID}] post-update load order refresh failed`, err);
+          log("warn", `[${GAME_ID}] post-update load order refresh failed`, err);
         }
       }
       updating_mod = false; //reset updating flag on deploy
@@ -779,7 +903,10 @@ function main(context) {
     //old one on deploy - without it every mod not yet updated still looks "already installed"
     api.events.on("mod-update", (gameId, modId, fileId) => {
       if (GAME_ID == gameId) {
-        updateModIds.set(String(modId), { firstSeen: Date.now(), targetFileId: String(fileId ?? '') });
+        updateModIds.set(String(modId), {
+          firstSeen: Date.now(),
+          targetFileId: String(fileId ?? ""),
+        });
       }
     });
     //detect batch mod update: the "Update all" button emits mods-update with LOCAL mod ids
@@ -792,7 +919,7 @@ function main(context) {
         if (nexusModId !== undefined) {
           updateModIds.set(String(nexusModId), {
             firstSeen: Date.now(),
-            targetFileId: String(mods[modId]?.attributes?.newestFileId ?? ''),
+            targetFileId: String(mods[modId]?.attributes?.newestFileId ?? ""),
           });
         }
       }
@@ -803,7 +930,11 @@ function main(context) {
     //downloaded (older dash-delimited vs current space-delimited), so string
     //parsing silently misses old installs.
     api.events.on("remove-mod", (gameMode, modId) => {
-      const removedMod = util.getSafe(api.getState(), ["persistent", "mods", GAME_ID, modId], undefined);
+      const removedMod = util.getSafe(
+        api.getState(),
+        ["persistent", "mods", GAME_ID, modId],
+        undefined,
+      );
       const nexusModId = removedMod?.attributes?.modId;
       if (nexusModId !== undefined && updateModIds.has(String(nexusModId))) {
         mod_update_all_profile = true;
@@ -813,9 +944,11 @@ function main(context) {
     //fallback-installer re-notify suppression, so a best-effort filename
     //match (covering both the old dash and current space delimiter) is fine.
     api.events.on("will-install-mod", (gameId, archiveId, modId) => {
-      updating_mod = GAME_ID == gameId && Array.from(updateModIds.keys()).some((id) =>
-        modId.includes("-" + id + "-") || modId.includes(" " + id + " ")
-      );
+      updating_mod =
+        GAME_ID == gameId &&
+        Array.from(updateModIds.keys()).some(
+          (id) => modId.includes("-" + id + "-") || modId.includes(" " + id + " "),
+        );
     });
   });
 
@@ -825,31 +958,49 @@ function main(context) {
 //React load order instructions renderer
 function LoadOrderInstructions() {
   const { statusFilter, setStatusFilter } = useFbloState();
-  const { useSelector } = require('react-redux');
+  const { useSelector } = require("react-redux");
   const profile = useSelector((state) => selectors.activeProfile(state));
-  const loadOrder = useSelector((state) => util.getSafe(state, ['persistent', 'loadOrder', profile?.id], []));
-  const isLocked = (entry) => [true, 'true', 'always'].includes(entry?.locked);
+  const loadOrder = useSelector((state) =>
+    util.getSafe(state, ["persistent", "loadOrder", profile?.id], []),
+  );
+  const isLocked = (entry) => [true, "true", "always"].includes(entry?.locked);
   // Count entries matching the active filter (matched / total), shown beside the pills.
   const total = loadOrder.length;
-  const matched = statusFilter.size > 0
-    ? loadOrder.filter((e) => matchesStatus(e, statusFilter, (x) => x.enabled !== false, isLocked)).length
-    : total;
+  const matched =
+    statusFilter.size > 0
+      ? loadOrder.filter((e) =>
+          matchesStatus(e, statusFilter, (x) => x.enabled !== false, isLocked),
+        ).length
+      : total;
   // Collapse the DraggableListItem wrapper of any filtered-out row. The renderer only owns the
   // inner <li>; the two dnd <div> wrappers retain their spacing when the <li> is display:none,
   // leaving visible gaps. This :has() rule hides the whole wrapper when its row is marked hidden.
-  useInjectStyleOnce('fblo-status-filter-hide-style', LO_ROW_HIDDEN_CSS);
-  return React.createElement('div', null,
-    React.createElement(StatusPills, { active: statusFilter, setActive: setStatusFilter, groups: ['enabled', 'locked', 'unmanaged'], count: statusFilter.size > 0 ? { matched, total } : null }),
-    React.createElement('p', { style: { fontStyle: 'italic', color: '#7ec8e3' } },
-      'Filter the list above by status. Clear the filter before reordering mods.',
+  useInjectStyleOnce("fblo-status-filter-hide-style", LO_ROW_HIDDEN_CSS);
+  return React.createElement(
+    "div",
+    null,
+    React.createElement(StatusPills, {
+      active: statusFilter,
+      setActive: setStatusFilter,
+      groups: ["enabled", "locked", "unmanaged"],
+      count: statusFilter.size > 0 ? { matched, total } : null,
+    }),
+    React.createElement(
+      "p",
+      { style: { fontStyle: "italic", color: "#7ec8e3" } },
+      "Filter the list above by status. Clear the filter before reordering mods.",
     ),
-    React.createElement('br', null),
-    React.createElement('p', null,
-      'Drag and drop the mods on the left to change the order in which they load.',
+    React.createElement("br", null),
+    React.createElement(
+      "p",
+      null,
+      "Drag and drop the mods on the left to change the order in which they load.",
     ),
-    React.createElement('br', null),
-    React.createElement('p', null,
-      'Warhammer 40,000: Darktide loads mods in the order you set here — Vortex writes this order directly to the game\'s mod list file. The number in the left column represents the overwrite order. Changes from mods with higher numbers take priority over mods that make similar edits.',
+    React.createElement("br", null),
+    React.createElement(
+      "p",
+      null,
+      "Warhammer 40,000: Darktide loads mods in the order you set here — Vortex writes this order directly to the game's mod list file. The number in the left column represents the overwrite order. Changes from mods with higher numbers take priority over mods that make similar edits.",
     ),
   );
 }
@@ -859,20 +1010,31 @@ let _fbloSelectedIds = new Set();
 let _fbloContextMenu = null;
 let _fbloStatusFilter = new Set();
 const _fbloListeners = new Set();
-function _notifyFblo() { _fbloListeners.forEach(l => l()); }
+function _notifyFblo() {
+  _fbloListeners.forEach((l) => l());
+}
 function useFbloState() {
-  const [, forceUpdate] = React.useReducer(x => x + 1, 0);
+  const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
   React.useEffect(() => {
     _fbloListeners.add(forceUpdate);
     return () => _fbloListeners.delete(forceUpdate);
   }, []);
   return {
     selectedIds: _fbloSelectedIds,
-    setSelectedIds: (fn) => { _fbloSelectedIds = fn(_fbloSelectedIds); _notifyFblo(); },
+    setSelectedIds: (fn) => {
+      _fbloSelectedIds = fn(_fbloSelectedIds);
+      _notifyFblo();
+    },
     contextMenu: _fbloContextMenu,
-    setContextMenu: (val) => { _fbloContextMenu = val; _notifyFblo(); },
+    setContextMenu: (val) => {
+      _fbloContextMenu = val;
+      _notifyFblo();
+    },
     statusFilter: _fbloStatusFilter,
-    setStatusFilter: (next) => { _fbloStatusFilter = next; _notifyFblo(); },
+    setStatusFilter: (next) => {
+      _fbloStatusFilter = next;
+      _notifyFblo();
+    },
   };
 }
 
@@ -880,9 +1042,13 @@ function useFbloState() {
 //Prefers the mod's homepage attribute; falls back to composing the Nexus URL from the numeric mod id.
 function getModPageURL(api, vortexModId) {
   if (vortexModId === undefined) return undefined;
-  const attributes = util.getSafe(api.getState(), ['persistent', 'mods', GAME_ID, vortexModId, 'attributes'], {});
+  const attributes = util.getSafe(
+    api.getState(),
+    ["persistent", "mods", GAME_ID, vortexModId, "attributes"],
+    {},
+  );
   if (attributes.homepage) return attributes.homepage;
-  if (attributes.source === 'nexus' && attributes.modId !== undefined) {
+  if (attributes.source === "nexus" && attributes.modId !== undefined) {
     return `https://www.nexusmods.com/${GAME_ID}/mods/${attributes.modId}`;
   }
   return undefined;
@@ -892,40 +1058,56 @@ function getModPageURL(api, vortexModId) {
 function getModStagingFolder(api, vortexModId) {
   if (vortexModId === undefined) return undefined;
   const state = api.getState();
-  const installationPath = util.getSafe(state, ['persistent', 'mods', GAME_ID, vortexModId, 'installationPath'], undefined);
+  const installationPath = util.getSafe(
+    state,
+    ["persistent", "mods", GAME_ID, vortexModId, "installationPath"],
+    undefined,
+  );
   const stagingPath = selectors.installPathForGame(state, GAME_ID);
   if (!installationPath || !stagingPath) return undefined;
   return path.join(stagingPath, installationPath);
 }
 
 //Status filter shared helpers (load order pages). Groups combine with AND across, OR within.
-const STATUS_GROUP_TOKENS = { enabled: ['enabled', 'disabled'], locked: ['locked', 'unlocked'], unmanaged: ['unmanaged'] };
-const STATUS_TOKEN_LABELS = { enabled: 'Enabled', disabled: 'Disabled', locked: 'Locked', unlocked: 'Unlocked', unmanaged: 'Unmanaged' };
+const STATUS_GROUP_TOKENS = {
+  enabled: ["enabled", "disabled"],
+  locked: ["locked", "unlocked"],
+  unmanaged: ["unmanaged"],
+};
+const STATUS_TOKEN_LABELS = {
+  enabled: "Enabled",
+  disabled: "Disabled",
+  locked: "Locked",
+  unlocked: "Unlocked",
+  unmanaged: "Unmanaged",
+};
 
 function matchesStatus(entry, active, isEnabledFn, isLockedFn) {
-  if (active.has('enabled') || active.has('disabled')) {
+  if (active.has("enabled") || active.has("disabled")) {
     const en = isEnabledFn(entry);
-    if (!((active.has('enabled') && en) || (active.has('disabled') && !en))) return false;
+    if (!((active.has("enabled") && en) || (active.has("disabled") && !en))) return false;
   }
-  if (active.has('locked') || active.has('unlocked')) {
+  if (active.has("locked") || active.has("unlocked")) {
     const lk = isLockedFn(entry);
-    if (!((active.has('locked') && lk) || (active.has('unlocked') && !lk))) return false;
+    if (!((active.has("locked") && lk) || (active.has("unlocked") && !lk))) return false;
   }
-  if (active.has('unmanaged') && entry.modId !== undefined) return false;
+  if (active.has("unmanaged") && entry.modId !== undefined) return false;
   return true;
 }
 
 //Style blocks injected by the load order surfaces (see useInjectStyleOnce below)
-const LO_INDEX_FOCUS_CSS = '.load-order-index input:focus { background: white !important; color: black !important; } .layout-flex.file-based-load-order-list-outer { overflow: auto; }';
-const LO_ROW_HIDDEN_CSS = '.file-based-load-order-list .list-group > div:has(.lo-row-hidden) { display: none !important; }';
-const LO_CTX_MENU_CSS = '.ue4ss-ctx-item:hover { background: rgba(255,255,255,0.1); }';
+const LO_INDEX_FOCUS_CSS =
+  ".load-order-index input:focus { background: white !important; color: black !important; } .layout-flex.file-based-load-order-list-outer { overflow: auto; }";
+const LO_ROW_HIDDEN_CSS =
+  ".file-based-load-order-list .list-group > div:has(.lo-row-hidden) { display: none !important; }";
+const LO_CTX_MENU_CSS = ".ue4ss-ctx-item:hover { background: rgba(255,255,255,0.1); }";
 
 //Extensions cannot ship CSS, so a component injects its styles into the document head on mount.
 //Guarded by a fixed id, so repeated mounts (every row, every page visit) never duplicate the block.
 function useInjectStyleOnce(styleId, css) {
   React.useEffect(() => {
     if (globalThis.document.getElementById(styleId)) return;
-    const style = globalThis.document.createElement('style');
+    const style = globalThis.document.createElement("style");
     style.id = styleId;
     style.textContent = css;
     globalThis.document.head.appendChild(style);
@@ -937,14 +1119,16 @@ function useInjectStyleOnce(styleId, css) {
 function useDismissOnOutside(onClose) {
   React.useEffect(() => {
     const dismiss = () => onClose();
-    const onKey = (evt) => { if (evt.key === 'Escape') onClose(); };
-    globalThis.document.addEventListener('click', dismiss);
-    globalThis.document.addEventListener('contextmenu', dismiss);
-    globalThis.document.addEventListener('keydown', onKey);
+    const onKey = (evt) => {
+      if (evt.key === "Escape") onClose();
+    };
+    globalThis.document.addEventListener("click", dismiss);
+    globalThis.document.addEventListener("contextmenu", dismiss);
+    globalThis.document.addEventListener("keydown", onKey);
     return () => {
-      globalThis.document.removeEventListener('click', dismiss);
-      globalThis.document.removeEventListener('contextmenu', dismiss);
-      globalThis.document.removeEventListener('keydown', onKey);
+      globalThis.document.removeEventListener("click", dismiss);
+      globalThis.document.removeEventListener("contextmenu", dismiss);
+      globalThis.document.removeEventListener("keydown", onKey);
     };
   }, [onClose]);
 }
@@ -954,43 +1138,66 @@ function useDismissOnOutside(onClose) {
 //makes React detach and reattach it, and the next render would overwrite the mutated style anyway.
 function useClampedMenuPosition(x, y) {
   const [position, setPosition] = React.useState({ left: x, top: y });
-  const measureRef = React.useCallback((el) => {
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const vw = globalThis.window.innerWidth;
-    const vh = globalThis.window.innerHeight;
-    const left = (x + rect.width > vw) ? Math.max(8, vw - rect.width - 8) : x;
-    const top = (y + rect.height > vh) ? Math.max(8, vh - rect.height - 8) : y;
-    setPosition(prev => (prev.left === left && prev.top === top) ? prev : { left, top });
-  }, [x, y]);
+  const measureRef = React.useCallback(
+    (el) => {
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const vw = globalThis.window.innerWidth;
+      const vh = globalThis.window.innerHeight;
+      const left = x + rect.width > vw ? Math.max(8, vw - rect.width - 8) : x;
+      const top = y + rect.height > vh ? Math.max(8, vh - rect.height - 8) : y;
+      setPosition((prev) => (prev.left === left && prev.top === top ? prev : { left, top }));
+    },
+    [x, y],
+  );
   return [position, measureRef];
 }
 
 //Inline toggle pills for status filtering (used in the InfoPanel surfaces)
 function StatusPills({ active, setActive, groups, count }) {
-  const { Button } = require('react-bootstrap');
+  const { Button } = require("react-bootstrap");
   const tokens = groups.reduce((acc, g) => acc.concat(STATUS_GROUP_TOKENS[g] || []), []);
   const toggle = (token) => {
     const next = new Set(active);
     next.has(token) ? next.delete(token) : next.add(token);
     setActive(next);
   };
-  return React.createElement('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center', marginBottom: 8 } },
-    React.createElement('span', { style: { fontWeight: 'bold', marginRight: 4 } }, 'Filter:'),
-    count != null ? React.createElement('span', { style: { color: '#7ec8e3', marginRight: 4 } }, `${count.matched} / ${count.total}`) : null,
-    ...tokens.map(token => React.createElement(Button, {
-      key: token,
-      bsSize: 'xsmall',
-      bsStyle: active.has(token) ? 'success' : 'default',
-      style: active.has(token) ? { fontWeight: 'bold' } : undefined,
-      onClick: () => toggle(token),
-    }, STATUS_TOKEN_LABELS[token])),
-    active.size > 0 ? React.createElement(Button, {
-      key: '__clear',
-      bsSize: 'xsmall',
-      bsStyle: 'link',
-      onClick: () => setActive(new Set()),
-    }, 'Clear') : null,
+  return React.createElement(
+    "div",
+    { style: { display: "flex", flexWrap: "wrap", gap: 4, alignItems: "center", marginBottom: 8 } },
+    React.createElement("span", { style: { fontWeight: "bold", marginRight: 4 } }, "Filter:"),
+    count != null
+      ? React.createElement(
+          "span",
+          { style: { color: "#7ec8e3", marginRight: 4 } },
+          `${count.matched} / ${count.total}`,
+        )
+      : null,
+    ...tokens.map((token) =>
+      React.createElement(
+        Button,
+        {
+          key: token,
+          bsSize: "xsmall",
+          bsStyle: active.has(token) ? "success" : "default",
+          style: active.has(token) ? { fontWeight: "bold" } : undefined,
+          onClick: () => toggle(token),
+        },
+        STATUS_TOKEN_LABELS[token],
+      ),
+    ),
+    active.size > 0
+      ? React.createElement(
+          Button,
+          {
+            key: "__clear",
+            bsSize: "xsmall",
+            bsStyle: "link",
+            onClick: () => setActive(new Set()),
+          },
+          "Clear",
+        )
+      : null,
   );
 }
 
@@ -999,165 +1206,273 @@ function LoadOrderItemRenderer(props) {
   const { className, item } = props;
   if (item?.loEntry === undefined) return null;
 
-  const { ListGroupItem, Checkbox } = require('react-bootstrap');
-  const { Icon, LoadOrderIndexInput, MainContext } = require('vortex-api');
-  const { useSelector, useDispatch } = require('react-redux');
+  const { ListGroupItem, Checkbox } = require("react-bootstrap");
+  const { Icon, LoadOrderIndexInput, MainContext } = require("vortex-api");
+  const { useSelector, useDispatch } = require("react-redux");
 
   const context = React.useContext(MainContext);
   const dispatch = useDispatch();
 
   const profile = useSelector((state) => selectors.activeProfile(state));
   const loadOrder = useSelector((state) =>
-    util.getSafe(state, ['persistent', 'loadOrder', profile?.id], []),
+    util.getSafe(state, ["persistent", "loadOrder", profile?.id], []),
   );
 
   const { loEntry, displayCheckboxes } = item;
-  const mods = useSelector((state) => util.getSafe(state, ['persistent', 'mods', GAME_ID], {}));
+  const mods = useSelector((state) => util.getSafe(state, ["persistent", "mods", GAME_ID], {}));
   const pictureUrl = mods[loEntry.modId]?.attributes?.pictureUrl;
   //FBLO precomputes these on the item (memoized by its row cache); the fallbacks keep the
   //renderer working if it is ever mounted outside the FBLO page.
   const currentIdx = item.position ?? loadOrder.findIndex((e) => e.id === loEntry.id) + 1;
 
-  const isLocked = (entry) => [true, 'true', 'always'].includes(entry?.locked);
-  const lockedCount = item.lockedEntriesCount ?? loadOrder.filter(isLocked).length;
+  const isLocked = (entry) => [true, "true", "always"].includes(entry?.locked);
+  //Core derives the index input's minimum from this and assumes locked entries sit at the top.
+  //Only the LEADING locked run blocks row 1 - a lock further down must not raise the floor.
+  const firstUnlocked = loadOrder.findIndex((e) => !isLocked(e));
+  const leadingLockedCount = firstUnlocked === -1 ? loadOrder.length : firstUnlocked;
 
-  const onApplyIndex = React.useCallback((idx) => {
-    if (currentIdx === idx) return;
-    const newLO = loadOrder.filter((e) => e.id !== loEntry.id);
-    newLO.splice(idx - 1, 0, loEntry);
-    dispatch(actions.setFBLoadOrder(profile.id, newLO));
-  }, [dispatch, profile, loadOrder, loEntry, currentIdx]);
+  const onApplyIndex = React.useCallback(
+    (idx) => {
+      if (currentIdx === idx || isLocked(loEntry)) return;
+      //Locked entries hold their absolute index - the typed row picks a slot among the unlocked ones
+      const bound = idx - 1 + (idx > currentIdx ? 1 : 0);
+      const dest = loadOrder.filter(
+        (e, i) => !isLocked(e) && e.id !== loEntry.id && i < bound,
+      ).length;
+      const unlocked = loadOrder.filter((e) => !isLocked(e) && e.id !== loEntry.id);
+      unlocked.splice(dest, 0, loEntry);
+      let next = 0;
+      const newLO = loadOrder.map((e) => (isLocked(e) ? e : unlocked[next++]));
+      dispatch(actions.setFBLoadOrder(profile.id, newLO));
+    },
+    [dispatch, profile, loadOrder, loEntry, currentIdx],
+  );
 
-  const onToggle = React.useCallback((evt) => {
-    dispatch(actions.setFBLoadOrderEntry(profile.id, { ...loEntry, enabled: evt.target.checked }));
-  }, [dispatch, profile, loEntry]);
+  const onToggle = React.useCallback(
+    (evt) => {
+      dispatch(
+        actions.setFBLoadOrderEntry(profile.id, { ...loEntry, enabled: evt.target.checked }),
+      );
+    },
+    [dispatch, profile, loEntry],
+  );
 
   const isEntryLocked = isLocked(loEntry);
   const { selectedIds, setSelectedIds, contextMenu, setContextMenu, statusFilter } = useFbloState();
   const isSelected = selectedIds.has(loEntry.id);
   //Shift-select must span visible rows only, so build the id list from the status-filtered order.
   //Memoized: a bare filter here would run once per row, i.e. O(n^2) over the whole load order.
-  const allIds = React.useMemo(() => loadOrder
-    .filter(e => matchesStatus(e, statusFilter, (entry) => entry.enabled !== false, isLocked))
-    .map(e => e.id), [loadOrder, statusFilter]);
+  const allIds = React.useMemo(
+    () =>
+      loadOrder
+        .filter((e) => matchesStatus(e, statusFilter, (entry) => entry.enabled !== false, isLocked))
+        .map((e) => e.id),
+    [loadOrder, statusFilter],
+  );
 
-  const onSelect = React.useCallback((evt) => {
-    const ctrlKey = evt.ctrlKey || evt.metaKey;
-    const shiftKey = evt.shiftKey;
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-      if (ctrlKey) {
-        next.has(loEntry.id) ? next.delete(loEntry.id) : next.add(loEntry.id);
-      } else if (shiftKey) {
-        const lastId = [...prev].at(-1);
-        const start = allIds.indexOf(lastId ?? loEntry.id);
-        const end = allIds.indexOf(loEntry.id);
-        const [lo, hi] = [Math.min(start, end), Math.max(start, end)];
-        for (let i = lo; i <= hi; i++) next.add(allIds[i]);
-      } else {
-        next.clear();
-        next.add(loEntry.id);
-      }
-      return next;
-    });
-  }, [loEntry.id, setSelectedIds, allIds]);
+  const onSelect = React.useCallback(
+    (evt) => {
+      const ctrlKey = evt.ctrlKey || evt.metaKey;
+      const shiftKey = evt.shiftKey;
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        if (ctrlKey) {
+          next.has(loEntry.id) ? next.delete(loEntry.id) : next.add(loEntry.id);
+        } else if (shiftKey) {
+          const lastId = [...prev].at(-1);
+          const start = allIds.indexOf(lastId ?? loEntry.id);
+          const end = allIds.indexOf(loEntry.id);
+          const [lo, hi] = [Math.min(start, end), Math.max(start, end)];
+          for (let i = lo; i <= hi; i++) next.add(allIds[i]);
+        } else {
+          next.clear();
+          next.add(loEntry.id);
+        }
+        return next;
+      });
+    },
+    [loEntry.id, setSelectedIds, allIds],
+  );
 
-  const onContextMenu = React.useCallback((evt) => {
-    evt.preventDefault();
-    evt.stopPropagation();
-    setContextMenu({ x: evt.clientX, y: evt.clientY, itemId: loEntry.id });
-  }, [loEntry.id, setContextMenu]);
+  const onContextMenu = React.useCallback(
+    (evt) => {
+      evt.preventDefault();
+      evt.stopPropagation();
+      setContextMenu({ x: evt.clientX, y: evt.clientY, itemId: loEntry.id });
+    },
+    [loEntry.id, setContextMenu],
+  );
 
   const onLock = React.useCallback(() => {
-    const newLO = loadOrder.map(e => e.id === loEntry.id ? { ...e, locked: !isEntryLocked } : e);
+    const newLO = loadOrder.map((e) =>
+      e.id === loEntry.id ? { ...e, locked: !isEntryLocked } : e,
+    );
     dispatch(actions.setFBLoadOrder(profile.id, newLO));
     serializeLoadOrder(context, newLO);
   }, [dispatch, context, profile, loadOrder, loEntry, isEntryLocked]);
 
-  useInjectStyleOnce('lo-index-focus-style', LO_INDEX_FOCUS_CSS);
+  useInjectStyleOnce("lo-index-focus-style", LO_INDEX_FOCUS_CSS);
 
-  const classes = ['load-order-entry'];
-  if (className) classes.push(...className.split(' '));
+  const classes = ["load-order-entry"];
+  if (className) classes.push(...className.split(" "));
 
   // Status filter: render hidden (but keep the DnD item count stable) when the entry is filtered out.
   // The 'lo-row-hidden' marker lets the injected CSS collapse the whole DraggableListItem wrapper
   // (the two dnd <div>s the renderer can't reach), otherwise their spacing leaves visible gaps.
   if (!matchesStatus(loEntry, statusFilter, (e) => e.enabled !== false, isLocked)) {
-    return React.createElement(ListGroupItem, { key: loEntry.id, className: 'lo-row-hidden', style: { display: 'none' } });
+    return React.createElement(ListGroupItem, {
+      key: loEntry.id,
+      className: "lo-row-hidden",
+      style: { display: "none" },
+    });
   }
 
   return React.createElement(
     ListGroupItem,
     {
       key: loEntry.id,
-      className: classes.join(' '),
+      className: classes.join(" "),
       onClick: onSelect,
       onContextMenu: onContextMenu,
-      style: { outline: isSelected ? '2px solid #337ab7' : 'none', outlineOffset: '-1px' },
+      style: { outline: isSelected ? "2px solid #337ab7" : "none", outlineOffset: "-1px" },
     },
-    React.createElement('div', { style: { visibility: isEntryLocked ? 'hidden' : 'visible' } },
-      React.createElement(Icon, { className: 'drag-handle-icon', name: 'drag-handle' }),
+    React.createElement(
+      "div",
+      { style: { visibility: isEntryLocked ? "hidden" : "visible" } },
+      React.createElement(Icon, { className: "drag-handle-icon", name: "drag-handle" }),
     ),
-    React.createElement('div', { style: { width: 24, flexShrink: 0, overflow: 'hidden' } },
+    React.createElement(
+      "div",
+      { style: { width: 24, flexShrink: 0, overflow: "hidden" } },
       React.createElement(LoadOrderIndexInput, {
-        className: 'load-order-index',
+        className: "load-order-index",
         api: context.api,
         item: loEntry,
         currentPosition: currentIdx,
-        lockedEntriesCount: lockedCount,
+        lockedEntriesCount: leadingLockedCount,
         loadOrder: loadOrder,
         isLocked: isLocked,
         onApplyIndex: onApplyIndex,
       }),
     ),
-    React.createElement('div', {
-      style: { cursor: 'pointer', display: 'flex', alignItems: 'center' },
-      title: isEntryLocked ? 'Unlock position' : 'Lock position',
-      onClick: (evt) => { evt.stopPropagation(); onLock(); },
-    },
-      React.createElement(Icon, { name: isEntryLocked ? 'locked' : 'unlocked', style: { color: isEntryLocked ? '#e2c04c' : 'inherit' } }),
-    ),
-    React.createElement('div', { className: 'load-order-thumb-slot', style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, marginRight: 4, flexShrink: 0 } },
-      !loEntry.modId ? React.createElement('div', {
-        className: 'load-order-unmanaged-banner',
-        title: 'Not managed by Vortex',
-        style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, textAlign: 'center', borderRadius: 2, border: '1px solid #e2c04c', background: 'rgba(226,192,76,0.12)', color: '#e2c04c', fontSize: 9, lineHeight: 1.1, padding: 2, pointerEvents: 'none' },
+    React.createElement(
+      "div",
+      {
+        style: { cursor: "pointer", display: "flex", alignItems: "center" },
+        title: isEntryLocked ? "Unlock position" : "Lock position",
+        onClick: (evt) => {
+          evt.stopPropagation();
+          onLock();
+        },
       },
-        React.createElement(Icon, { className: 'external-caution-logo', name: 'feedback-warning', style: { color: '#e2c04c' } }),
-        React.createElement('span', null, 'Not managed by Vortex'),
-      ) : pictureUrl ? React.createElement('img', {
-        className: 'load-order-thumb',
-        src: pictureUrl,
-        draggable: false,
-        style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, objectFit: 'cover', borderRadius: 2, pointerEvents: 'none' },
-      }) : null,
+      React.createElement(Icon, {
+        name: isEntryLocked ? "locked" : "unlocked",
+        style: { color: isEntryLocked ? "#e2c04c" : "inherit" },
+      }),
     ),
-    React.createElement('p', { className: 'load-order-name', style: { whiteSpace: 'normal', wordBreak: 'break-word' } }, loEntry.name),
-    displayCheckboxes ? React.createElement(Checkbox, {
-      className: 'entry-checkbox',
-      checked: loEntry.enabled,
-      disabled: isLocked(loEntry),
-      onChange: onToggle,
-    }) : null,
-    contextMenu?.itemId === loEntry.id ? React.createElement(FbloContextMenu, {
-      x: contextMenu.x, y: contextMenu.y,
-      item: loEntry, loadOrder, profile, dispatch, context, selectedIds,
-      onClose: () => setContextMenu(null),
-    }) : null,
+    React.createElement(
+      "div",
+      {
+        className: "load-order-thumb-slot",
+        style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, marginRight: 4, flexShrink: 0 },
+      },
+      !loEntry.modId
+        ? React.createElement(
+            "div",
+            {
+              className: "load-order-unmanaged-banner",
+              title: "Not managed by Vortex",
+              style: {
+                width: LO_IMAGE_WIDTH,
+                height: LO_IMAGE_HEIGHT,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 2,
+                textAlign: "center",
+                borderRadius: 2,
+                border: "1px solid #e2c04c",
+                background: "rgba(226,192,76,0.12)",
+                color: "#e2c04c",
+                fontSize: 9,
+                lineHeight: 1.1,
+                padding: 2,
+                pointerEvents: "none",
+              },
+            },
+            React.createElement(Icon, {
+              className: "external-caution-logo",
+              name: "feedback-warning",
+              style: { color: "#e2c04c" },
+            }),
+            React.createElement("span", null, "Not managed by Vortex"),
+          )
+        : pictureUrl
+          ? React.createElement("img", {
+              className: "load-order-thumb",
+              src: pictureUrl,
+              draggable: false,
+              style: {
+                width: LO_IMAGE_WIDTH,
+                height: LO_IMAGE_HEIGHT,
+                objectFit: "cover",
+                borderRadius: 2,
+                pointerEvents: "none",
+              },
+            })
+          : null,
+    ),
+    React.createElement(
+      "p",
+      { className: "load-order-name", style: { whiteSpace: "normal", wordBreak: "break-word" } },
+      loEntry.name,
+    ),
+    displayCheckboxes
+      ? React.createElement(Checkbox, {
+          className: "entry-checkbox",
+          checked: loEntry.enabled,
+          disabled: isLocked(loEntry),
+          onChange: onToggle,
+        })
+      : null,
+    contextMenu?.itemId === loEntry.id
+      ? React.createElement(FbloContextMenu, {
+          x: contextMenu.x,
+          y: contextMenu.y,
+          item: loEntry,
+          loadOrder,
+          profile,
+          dispatch,
+          context,
+          selectedIds,
+          onClose: () => setContextMenu(null),
+        })
+      : null,
   );
 } //*/
 
 //Right-click context menu for load order entries (single + multi-select)
-function FbloContextMenu({ x, y, item, loadOrder, profile, dispatch, context, selectedIds, onClose }) {
+function FbloContextMenu({
+  x,
+  y,
+  item,
+  loadOrder,
+  profile,
+  dispatch,
+  context,
+  selectedIds,
+  onClose,
+}) {
   useDismissOnOutside(onClose);
 
-  useInjectStyleOnce('ue4ss-ctx-menu-style', LO_CTX_MENU_CSS);
+  useInjectStyleOnce("ue4ss-ctx-menu-style", LO_CTX_MENU_CSS);
 
   const [menuPosition, clampRef] = useClampedMenuPosition(x, y);
 
-  const isLocked = (e) => [true, 'true', 'always'].includes(e?.locked);
+  const isLocked = (e) => [true, "true", "always"].includes(e?.locked);
   const isMulti = selectedIds.size >= 2 && selectedIds.has(item.id);
-  const targets = isMulti ? loadOrder.filter(e => selectedIds.has(e.id)) : [item];
+  const targets = isMulti ? loadOrder.filter((e) => selectedIds.has(e.id)) : [item];
 
   const applyToTargets = (transform, serialize = false) => {
     const newLO = transform(loadOrder, targets);
@@ -1170,11 +1485,11 @@ function FbloContextMenu({ x, y, item, loadOrder, profile, dispatch, context, se
   const isEntryEnabled = item.enabled ?? true;
 
   const gameDir = getDiscoveryPath(context.api);
-  const isModEnabled = (e) => util.getSafe(profile, ['modState', e.modId, 'enabled'], false);
+  const isModEnabled = (e) => util.getSafe(profile, ["modState", e.modId, "enabled"], false);
   const setVortexEnabled = (entries, enabled) => {
     //One Vortex mod can own several load order rows on file-based games (LO_ATTRIBUTE is an array
     //of basenames), so a multi-select can list the same modId more than once - dedupe before dispatch.
-    const modIds = [...new Set(entries.filter(e => e.modId !== undefined).map(e => e.modId))];
+    const modIds = [...new Set(entries.filter((e) => e.modId !== undefined).map((e) => e.modId))];
     if (modIds.length > 0) {
       actions.setModsEnabled(context.api, profile.id, modIds, enabled, { allowAutoDeploy: true });
     }
@@ -1182,8 +1497,8 @@ function FbloContextMenu({ x, y, item, loadOrder, profile, dispatch, context, se
   };
   const openModFolders = (entries) => {
     entries
-      .filter(e => e.id !== undefined)
-      .forEach(e => util.opn(path.join(gameDir, MOD_FOLDER, e.id)).catch(() => null));
+      .filter((e) => e.id !== undefined)
+      .forEach((e) => util.opn(path.join(gameDir, MOD_FOLDER, e.id)).catch(() => null));
     onClose();
   };
   const itemVortexEnabled = isModEnabled(item);
@@ -1191,76 +1506,158 @@ function FbloContextMenu({ x, y, item, loadOrder, profile, dispatch, context, se
   const stagingFolder = getModStagingFolder(context.api, item.modId);
 
   const menuStyle = {
-    position: 'fixed', left: menuPosition.left, top: menuPosition.top, zIndex: 9999,
-    background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.2)',
-    borderRadius: 4, padding: '4px 0', minWidth: 180,
-    boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
+    position: "fixed",
+    left: menuPosition.left,
+    top: menuPosition.top,
+    zIndex: 9999,
+    background: "#1e1e1e",
+    border: "1px solid rgba(255,255,255,0.2)",
+    borderRadius: 4,
+    padding: "4px 0",
+    minWidth: 180,
+    boxShadow: "0 4px 12px rgba(0,0,0,0.6)",
   };
-  const itemStyle = { padding: '6px 16px', cursor: 'pointer', whiteSpace: 'nowrap' };
-  const sepStyle = { borderTop: '1px solid rgba(255,255,255,0.1)', margin: '4px 0' };
+  const itemStyle = { padding: "6px 16px", cursor: "pointer", whiteSpace: "nowrap" };
+  const sepStyle = { borderTop: "1px solid rgba(255,255,255,0.1)", margin: "4px 0" };
 
-  const menuItem = (label, onClick) => React.createElement('div', {
-    className: 'ue4ss-ctx-item',
-    style: itemStyle,
-    onClick: (evt) => { evt.stopPropagation(); onClick(); },
-  }, label);
+  const menuItem = (label, onClick) =>
+    React.createElement(
+      "div",
+      {
+        className: "ue4ss-ctx-item",
+        style: itemStyle,
+        onClick: (evt) => {
+          evt.stopPropagation();
+          onClick();
+        },
+      },
+      label,
+    );
 
   if (isMulti) {
     const n = targets.length;
-    return React.createElement('div', { ref: clampRef, style: menuStyle },
-      menuItem(`Enable Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, enabled: true } : e))),
-      menuItem(`Disable Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, enabled: false } : e))),
-      React.createElement('div', { style: sepStyle }),
-      menuItem(`Lock Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, locked: true } : e), true)),
-      menuItem(`Unlock Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, locked: false } : e), true)),
-      React.createElement('div', { style: sepStyle }),
-      menuItem(`Move to Top (${n})`, () => applyToTargets((lo) => {
-        const locked = lo.filter(isLocked);
-        const selected = lo.filter(e => targets.find(t => t.id === e.id) && !isLocked(e));
-        const rest = lo.filter(e => !isLocked(e) && !targets.find(t => t.id === e.id));
-        return [...locked, ...selected, ...rest];
-      })),
-      menuItem(`Move to Bottom (${n})`, () => applyToTargets((lo) => {
-        //Locked entries stay put, so they have to be counted into rest or they drop out of the order
-        const selected = lo.filter(e => targets.find(t => t.id === e.id) && !isLocked(e));
-        const rest = lo.filter(e => !targets.find(t => t.id === e.id) || isLocked(e));
-        return [...rest, ...selected];
-      })),
-      React.createElement('div', { style: sepStyle }),
+    return React.createElement(
+      "div",
+      { ref: clampRef, style: menuStyle },
+      menuItem(`Enable Selected (${n})`, () =>
+        applyToTargets((lo) =>
+          lo.map((e) => (targets.find((t) => t.id === e.id) ? { ...e, enabled: true } : e)),
+        ),
+      ),
+      menuItem(`Disable Selected (${n})`, () =>
+        applyToTargets((lo) =>
+          lo.map((e) => (targets.find((t) => t.id === e.id) ? { ...e, enabled: false } : e)),
+        ),
+      ),
+      React.createElement("div", { style: sepStyle }),
+      menuItem(`Lock Selected (${n})`, () =>
+        applyToTargets(
+          (lo) => lo.map((e) => (targets.find((t) => t.id === e.id) ? { ...e, locked: true } : e)),
+          true,
+        ),
+      ),
+      menuItem(`Unlock Selected (${n})`, () =>
+        applyToTargets(
+          (lo) => lo.map((e) => (targets.find((t) => t.id === e.id) ? { ...e, locked: false } : e)),
+          true,
+        ),
+      ),
+      React.createElement("div", { style: sepStyle }),
+      menuItem(`Move to Top (${n})`, () =>
+        applyToTargets((lo) => {
+          //Locked entries hold their absolute index - only the unlocked entries reorder into the slots between them
+          const selected = lo.filter((e) => targets.find((t) => t.id === e.id) && !isLocked(e));
+          const rest = lo.filter((e) => !isLocked(e) && !targets.find((t) => t.id === e.id));
+          const reordered = [...selected, ...rest];
+          let next = 0;
+          return lo.map((e) => (isLocked(e) ? e : reordered[next++]));
+        }),
+      ),
+      menuItem(`Move to Bottom (${n})`, () =>
+        applyToTargets((lo) => {
+          //Locked entries hold their absolute index - only the unlocked entries reorder into the slots between them
+          const selected = lo.filter((e) => targets.find((t) => t.id === e.id) && !isLocked(e));
+          const rest = lo.filter((e) => !isLocked(e) && !targets.find((t) => t.id === e.id));
+          const reordered = [...rest, ...selected];
+          let next = 0;
+          return lo.map((e) => (isLocked(e) ? e : reordered[next++]));
+        }),
+      ),
+      React.createElement("div", { style: sepStyle }),
       menuItem(`Open Mod Folders (${n})`, () => openModFolders(targets)),
-      targets.some(t => t.modId !== undefined) ? menuItem(`Open Staging Folders (${n})`, () => {
-        //Several rows can resolve to the same staging folder on file-based games - dedupe so it opens once.
-        const folders = [...new Set(targets.map(t => getModStagingFolder(context.api, t.modId)).filter(Boolean))];
-        folders.forEach(folder => util.opn(folder).catch(() => null));
-        onClose();
-      }) : null,
-      React.createElement('div', { style: sepStyle }),
+      targets.some((t) => t.modId !== undefined)
+        ? menuItem(`Open Staging Folders (${n})`, () => {
+            //Several rows can resolve to the same staging folder on file-based games - dedupe so it opens once.
+            const folders = [
+              ...new Set(
+                targets.map((t) => getModStagingFolder(context.api, t.modId)).filter(Boolean),
+              ),
+            ];
+            folders.forEach((folder) => util.opn(folder).catch(() => null));
+            onClose();
+          })
+        : null,
+      React.createElement("div", { style: sepStyle }),
       menuItem(`Disable Vortex Mod (${n})`, () => setVortexEnabled(targets, false)),
     );
   }
 
-  return React.createElement('div', { ref: clampRef, style: menuStyle },
-    menuItem(isEntryEnabled ? 'Disable' : 'Enable', () => applyToTargets((lo) => lo.map(e => e.id === item.id ? { ...e, enabled: !isEntryEnabled } : e))),
-    menuItem(isEntryLocked ? 'Unlock Position' : 'Lock Position', () => applyToTargets((lo) => lo.map(e => e.id === item.id ? { ...e, locked: !isEntryLocked } : e), true)),
-    React.createElement('div', { style: sepStyle }),
-    menuItem('Move to Top', () => applyToTargets((lo) => {
-      if (isLocked(item)) return lo;
-      const locked = lo.filter(isLocked);
-      const rest = lo.filter(e => !isLocked(e) && e.id !== item.id);
-      return [...locked, item, ...rest];
-    })),
-    menuItem('Move to Bottom', () => applyToTargets((lo) => {
-      if (isLocked(item)) return lo;
-      const rest = lo.filter(e => e.id !== item.id);
-      return [...rest, item];
-    })),
-    React.createElement('div', { style: sepStyle }),
-    menuItem('Open Mod Folder', () => openModFolders([item])),
-    stagingFolder ? menuItem('Open Staging Folder', () => { util.opn(stagingFolder).catch(() => null); onClose(); }) : null,
-    modPageUrl ? menuItem('Open Mod Page', () => { util.opn(modPageUrl).catch(() => null); onClose(); }) : null,
-    item.modId !== undefined ? React.createElement('div', { style: sepStyle }) : null,
+  return React.createElement(
+    "div",
+    { ref: clampRef, style: menuStyle },
+    menuItem(isEntryEnabled ? "Disable" : "Enable", () =>
+      applyToTargets((lo) =>
+        lo.map((e) => (e.id === item.id ? { ...e, enabled: !isEntryEnabled } : e)),
+      ),
+    ),
+    menuItem(isEntryLocked ? "Unlock Position" : "Lock Position", () =>
+      applyToTargets(
+        (lo) => lo.map((e) => (e.id === item.id ? { ...e, locked: !isEntryLocked } : e)),
+        true,
+      ),
+    ),
+    React.createElement("div", { style: sepStyle }),
+    menuItem("Move to Top", () =>
+      applyToTargets((lo) => {
+        if (isLocked(item)) return lo;
+        //Locked entries hold their absolute index - only the unlocked entries reorder into the slots between them
+        const moved = lo.filter((e) => !isLocked(e) && e.id === item.id);
+        const rest = lo.filter((e) => !isLocked(e) && e.id !== item.id);
+        const reordered = [...moved, ...rest];
+        let next = 0;
+        return lo.map((e) => (isLocked(e) ? e : reordered[next++]));
+      }),
+    ),
+    menuItem("Move to Bottom", () =>
+      applyToTargets((lo) => {
+        if (isLocked(item)) return lo;
+        //Locked entries hold their absolute index - only the unlocked entries reorder into the slots between them
+        const moved = lo.filter((e) => !isLocked(e) && e.id === item.id);
+        const rest = lo.filter((e) => !isLocked(e) && e.id !== item.id);
+        const reordered = [...rest, ...moved];
+        let next = 0;
+        return lo.map((e) => (isLocked(e) ? e : reordered[next++]));
+      }),
+    ),
+    React.createElement("div", { style: sepStyle }),
+    menuItem("Open Mod Folder", () => openModFolders([item])),
+    stagingFolder
+      ? menuItem("Open Staging Folder", () => {
+          util.opn(stagingFolder).catch(() => null);
+          onClose();
+        })
+      : null,
+    modPageUrl
+      ? menuItem("Open Mod Page", () => {
+          util.opn(modPageUrl).catch(() => null);
+          onClose();
+        })
+      : null,
+    item.modId !== undefined ? React.createElement("div", { style: sepStyle }) : null,
     item.modId !== undefined
-      ? menuItem(itemVortexEnabled ? 'Disable Vortex Mod' : 'Enable Vortex Mod', () => setVortexEnabled([item], !itemVortexEnabled))
+      ? menuItem(itemVortexEnabled ? "Disable Vortex Mod" : "Enable Vortex Mod", () =>
+          setVortexEnabled([item], !itemVortexEnabled),
+        )
       : null,
   );
 }

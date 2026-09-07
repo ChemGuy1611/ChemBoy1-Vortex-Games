@@ -36,11 +36,18 @@ Date: 2026-09-03
 //*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require('vortex-api');
-const path = require('path');
-const template = require('string-template');
-const { download, findModByFile, findDownloadIdByFile, resolveVersionByModVersion, resolveVersionByPattern, testRequirementVersion } = require('./downloader');
-const { registerModDbBrowser, onceModDbBrowser } = require('./moddb_browser');
+const { actions, fs, util, selectors, log } = require("vortex-api");
+const path = require("path");
+const template = require("string-template");
+const {
+  download,
+  findModByFile,
+  findDownloadIdByFile,
+  resolveVersionByModVersion,
+  resolveVersionByPattern,
+  testRequirementVersion,
+} = require("./downloader");
+const { registerModDbBrowser, onceModDbBrowser } = require("./moddb_browser");
 
 //feature toggles
 const moddbBrowser = true; //register the "Browse ModDB" pages (moddb.com) - one for Doom, one for Doom II
@@ -53,17 +60,17 @@ const GAME_ID3 = "doomplusdoom2";
 const GAME_NAME = "DOOM I & II (UZDoom)";
 const GAME_NAME_SHORT = "UZDoom";
 
-let GAME_PATH = '';
-let GAME_VERSION = ''; //Game version
-let DOWNLOAD_FOLDER = '';
-let STAGING_FOLDER = '';
+let GAME_PATH = "";
+let GAME_VERSION = ""; //Game version
+let DOWNLOAD_FOLDER = "";
+let STAGING_FOLDER = "";
 
 //Info for mod types, tools, and installers
-const USER_HOME = util.getVortexPath('home');
-const DOCUMENTS = util.getVortexPath('documents');
-const UZSAVE_PATH = path.join(USER_HOME, 'Saved Games', 'UZDoom');
-const UZCONFIG_PATH = path.join(DOCUMENTS, 'My Games', 'UZDoom');
-const UZDOOM_INI_FILE = 'uzdoom.ini';
+const USER_HOME = util.getVortexPath("home");
+const DOCUMENTS = util.getVortexPath("documents");
+const UZSAVE_PATH = path.join(USER_HOME, "Saved Games", "UZDoom");
+const UZCONFIG_PATH = path.join(DOCUMENTS, "My Games", "UZDoom");
+const UZDOOM_INI_FILE = "uzdoom.ini";
 const UZDOOM_INI_PATH = path.join(UZCONFIG_PATH, UZDOOM_INI_FILE);
 
 const SAVE_ID = `${GAME_ID}-save`;
@@ -74,60 +81,62 @@ const SAVE_EXT = ".zds";
 const DML_ID = `${GAME_ID}-dml`;
 const DML_NAME = "Doom Mod Loader";
 const DML_TOP_FOLDER = "DML"; //No longer a top folder included in the archive in v2.6
-const DML_EXEC_STRING = 'DML_v';
-const VER_DML = '2.6';
+const DML_EXEC_STRING = "DML_v";
+const VER_DML = "2.6";
 const DML_EXEC = `${DML_EXEC_STRING}${VER_DML}.exe`;
 const DML_EXEC_PATH = path.join(DML_TOP_FOLDER, DML_EXEC);
-const DML_README_FILE = 'HELP.txt';
+const DML_README_FILE = "HELP.txt";
 //const DML_URL = 'https://github.com/Premo36/DML2.X/releases/download/v2.6/DML_v2.6.zip';
 //const DML_URL_MANUAL = 'https://github.com/Premo36/DML2.X/releases/';
 
 const MOD_ID = `${GAME_ID}-mod`;
 const MOD_NAME = "Mod";
-const MOD_EXTS = ['.wad', '.pk3', '.zip', '.pak', '.pk7', '.grp', '.rff', '.deh', '.iwad', '.ipk3'];
-const MOD_PATH = path.join(DML_TOP_FOLDER, 'FILE', "PWAD");
+const MOD_EXTS = [".wad", ".pk3", ".zip", ".pak", ".pk7", ".grp", ".rff", ".deh", ".iwad", ".ipk3"];
+const MOD_PATH = path.join(DML_TOP_FOLDER, "FILE", "PWAD");
 
 const WAD_ID = `${GAME_ID}-wad`;
 const WAD_NAME = "IWAD (Game)";
-const WAD_FILENAMES = ["doom.wad",  "doom2.wad", "freedoom.wad", "nerve.wad"];
+const WAD_FILENAMES = ["doom.wad", "doom2.wad", "freedoom.wad", "nerve.wad"];
 const WAD_EXTS = [".iwad", ".ipk3"];
-const WAD_PATH = path.join(DML_TOP_FOLDER, 'FILE', "IWAD");
+const WAD_PATH = path.join(DML_TOP_FOLDER, "FILE", "IWAD");
 
 const UZDOOM_ID = `${GAME_ID}-gzdoom`;
 const UZDOOM_NAME = "UZDoom";
 const UZDOOM_EXEC = "uzdoom.exe";
-const UZDOOM_PATH = path.join(DML_TOP_FOLDER, 'FILE', 'PORT', "gzdoom");
+const UZDOOM_PATH = path.join(DML_TOP_FOLDER, "FILE", "PORT", "gzdoom");
 const UZDOOM_EXEC_PATH = path.join(UZDOOM_PATH, UZDOOM_EXEC);
 
 // Information for UZDoom downloader and updater
-const AUTHOR = 'UZDoom';
-const REPO = 'UZDoom';
-const VER = '4.14.3';
+const AUTHOR = "UZDoom";
+const REPO = "UZDoom";
+const VER = "4.14.3";
 const UZDOOM_ARC_NAME = `Windows-UZDoom-${VER}.zip`;
 const UZDOOM_URL = `https://github.com/${AUTHOR}/${REPO}/releases/download/${VER}/${UZDOOM_ARC_NAME}`;
 const UZDOOM_URL_MANUAL = `https://github.com/${AUTHOR}/${REPO}/releases`;
 const UZDOOM_URL_API = `https://api.github.com/repos/${AUTHOR}/${REPO}`;
 
-const AUTHOR_DML = 'Premo36';
-const REPO_DML = 'DML2.X';
+const AUTHOR_DML = "Premo36";
+const REPO_DML = "DML2.X";
 const DML_ARC_NAME = `DML_v${VER_DML}.zip`;
 const DML_URL = `https://github.com/${AUTHOR_DML}/${REPO_DML}/releases/download/${VER_DML}/${DML_ARC_NAME}`;
 const DML_URL_MANUAL = `https://github.com/${AUTHOR_DML}/${REPO_DML}/releases`;
 const DML_URL_API = `https://api.github.com/repos/${AUTHOR_DML}/${REPO_DML}`;
 
 const REQUIREMENTS = [
-  { //UZDoom
+  {
+    //UZDoom
     archiveFileName: UZDOOM_ARC_NAME,
     modType: UZDOOM_ID,
     assemblyFileName: UZDOOM_EXEC,
     userFacingName: UZDOOM_NAME,
     githubUrl: UZDOOM_URL_API,
     findMod: (api) => findModByFile(api, UZDOOM_ID, UZDOOM_EXEC),
-    fileArchivePattern: new RegExp(/^Windows-UZDoom-Release-x86_64/, 'i'),
+    fileArchivePattern: new RegExp(/^Windows-UZDoom-Release-x86_64/, "i"),
     findDownloadId: (api) => findDownloadIdByFile(api, UZDOOM_ARC_NAME),
     resolveVersion: (api) => resolveVersionByModVersion(api, REQUIREMENTS[0]), //reads the version stamped on the installed mod at install time; use when the version is only in the release tag (asset filename is versionless) and fileArchivePattern has no capture group
   }, //*/
-  { //DML
+  {
+    //DML
     archiveFileName: DML_ARC_NAME,
     modType: DML_ID,
     assemblyFileName: DML_EXEC,
@@ -135,20 +144,20 @@ const REQUIREMENTS = [
     githubUrl: DML_URL_API,
     findMod: (api) => findModByFile(api, DML_ID, DML_EXEC),
     findDownloadId: (api) => findDownloadIdByFile(api, DML_ARC_NAME),
-    fileArchivePattern: new RegExp(/^DML_v(\d+\.\d+)/, 'i'),
+    fileArchivePattern: new RegExp(/^DML_v(\d+\.\d+)/, "i"),
     resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[1]),
   }, //*/
 ];
 
-const CONFIG_PATH = path.join(DML_TOP_FOLDER, 'CONFIG');
-const PORT_CONFIG_FILE = 'PORT.ini';
+const CONFIG_PATH = path.join(DML_TOP_FOLDER, "CONFIG");
+const PORT_CONFIG_FILE = "PORT.ini";
 const PORT_CONFIG_PATH = path.join(CONFIG_PATH, PORT_CONFIG_FILE);
 
 //Filled in from info above
 const PCGAMINGWIKI_URL = "XXX";
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1319";
-const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
-const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
 
 //Embedded ModDB browser pages - Doom and Doom II each have their own moddb.com game page, but
 //this extension registers one game id for both, so both pages hang off it. The shared base keys
@@ -157,77 +166,78 @@ const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')
 
 //The ModDB mark, scaled to make room for a subscript roman numeral so the two sidebar entries
 //are told apart at a glance.
-const MODDB_MDI_MARK = 'M4.08 4.08L1.36 4.08L1.36 12.24L4.08 12.24L4.08 14.96L6.8 14.96L6.8 12.24L4.08 12.24'
-  + 'L4.08 9.52L12.24 9.52L12.24 12.24L9.52 12.24L9.52 14.96L12.24 14.96L12.24 12.24L14.96 12.24L14.96 4.08'
-  + 'L12.24 4.08L12.24 1.36L4.08 1.36ZM6.8 6.8L4.08 6.8L4.08 4.08L6.8 4.08ZM12.24 6.8L9.52 6.8L9.52 4.08L12.24 4.08Z';
+const MODDB_MDI_MARK =
+  "M4.08 4.08L1.36 4.08L1.36 12.24L4.08 12.24L4.08 14.96L6.8 14.96L6.8 12.24L4.08 12.24" +
+  "L4.08 9.52L12.24 9.52L12.24 12.24L9.52 12.24L9.52 14.96L12.24 14.96L12.24 12.24L14.96 12.24L14.96 4.08" +
+  "L12.24 4.08L12.24 1.36L4.08 1.36ZM6.8 6.8L4.08 6.8L4.08 4.08L6.8 4.08ZM12.24 6.8L9.52 6.8L9.52 4.08L12.24 4.08Z";
 const MODDB_MDI_DOOM = `${MODDB_MDI_MARK}M18.6 13L21.4 13L21.4 23L18.6 23Z`;
 const MODDB_MDI_DOOM2 = `${MODDB_MDI_MARK}M15.2 13L17.6 13L17.6 23L15.2 23ZM18.8 13L21.2 13L21.2 23L18.8 23Z`;
 
 const MODDB_BROWSER_CONFIG_DOOM = {
-  moddbPath: 'games/doom',
+  moddbPath: "games/doom",
   pageId: `${GAME_ID}-moddb-browse-doom`,
-  pageTitle: 'Browse ModDB (Doom)',
+  pageTitle: "Browse ModDB (Doom)",
   mdi: MODDB_MDI_DOOM,
   priority: 40, //keep Doom above Doom II in the sidebar
 };
 const MODDB_BROWSER_CONFIG_DOOM2 = {
-  moddbPath: 'games/doom-ii',
+  moddbPath: "games/doom-ii",
   pageId: `${GAME_ID}-moddb-browse-doom2`,
-  pageTitle: 'Browse ModDB (Doom II)',
+  pageTitle: "Browse ModDB (Doom II)",
   mdi: MODDB_MDI_DOOM2,
   priority: 41,
 };
 
 const spec = {
-  "game": {
-    "id": GAME_ID,
-    "name": GAME_NAME,
-    "shortName": GAME_NAME_SHORT,
-    "executable": DML_EXEC_PATH,
-    "logo": `${GAME_ID}.jpg`,
-    "mergeMods": true,
-    "requiresCleanup": true,
-    "modPath": MOD_PATH,
-    "modPathIsRelative": false,
-    "requiredFiles": [],
-    "details": {
-      "compatibleDownloads": [GAME_ID1, GAME_ID2, GAME_ID3],
-      "nexusPageId": GAME_ID1,
-      "ignoreConflicts": IGNORE_CONFLICTS,
-      "ignoreDeploy": IGNORE_DEPLOY,
+  game: {
+    id: GAME_ID,
+    name: GAME_NAME,
+    shortName: GAME_NAME_SHORT,
+    executable: DML_EXEC_PATH,
+    logo: `${GAME_ID}.jpg`,
+    mergeMods: true,
+    requiresCleanup: true,
+    modPath: MOD_PATH,
+    modPathIsRelative: false,
+    requiredFiles: [],
+    details: {
+      compatibleDownloads: [GAME_ID1, GAME_ID2, GAME_ID3],
+      nexusPageId: GAME_ID1,
+      ignoreConflicts: IGNORE_CONFLICTS,
+      ignoreDeploy: IGNORE_DEPLOY,
     },
-    "environment": {}
+    environment: {},
   },
-  "modTypes": [
+  modTypes: [
     {
-      "id": MOD_ID,
-      "name": MOD_NAME,
-      "priority": "high",
-      "targetPath": path.join(`{gamePath}`, MOD_PATH)
+      id: MOD_ID,
+      name: MOD_NAME,
+      priority: "high",
+      targetPath: path.join(`{gamePath}`, MOD_PATH),
     },
     {
-      "id": WAD_ID,
-      "name": WAD_NAME,
-      "priority": "high",
-      "targetPath": path.join(`{gamePath}`, WAD_PATH)
+      id: WAD_ID,
+      name: WAD_NAME,
+      priority: "high",
+      targetPath: path.join(`{gamePath}`, WAD_PATH),
     },
     {
-      "id": UZDOOM_ID,
-      "name": UZDOOM_NAME,
-      "priority": "low",
-      "targetPath": path.join(`{gamePath}`, UZDOOM_PATH)
+      id: UZDOOM_ID,
+      name: UZDOOM_NAME,
+      priority: "low",
+      targetPath: path.join(`{gamePath}`, UZDOOM_PATH),
     },
     {
-      "id": DML_ID,
-      "name": DML_NAME,
-      "priority": "low",
-      "targetPath": path.join(`{gamePath}`, DML_TOP_FOLDER)
+      id: DML_ID,
+      name: DML_NAME,
+      priority: "low",
+      targetPath: path.join(`{gamePath}`, DML_TOP_FOLDER),
     },
   ],
-  "discovery": {
-    "ids": [],
-    "names": []
-  }
+  discovery: {
+    ids: [],
+    names: [],
+  },
 };
 
 //3rd party tools and launchers
@@ -257,8 +267,7 @@ function statCheckSync(gamePath, file) {
   try {
     fs.statSync(path.join(gamePath, file));
     return true;
-  }
-  catch {
+  } catch {
     return false;
   }
 }
@@ -267,8 +276,7 @@ async function statCheckAsync(gamePath, file) {
   try {
     await fs.statAsync(path.join(gamePath, file));
     return true;
-  }
-  catch {
+  } catch {
     return false;
   }
 }
@@ -280,15 +288,17 @@ async function getAllFiles(dirPath) {
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
       const stats = await fs.statAsync(fullPath);
-      if (stats.isDirectory()) { // Recursively get files from subdirectories
+      if (stats.isDirectory()) {
+        // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
         results = results.concat(subDirFiles);
-      } else { // Add file to results
+      } else {
+        // Add file to results
         results.push(fullPath);
       }
     }
   } catch (err) {
-    log('warn', `Error reading directory ${dirPath}: ${err.message}`);
+    log("warn", `Error reading directory ${dirPath}: ${err.message}`);
   }
   return results;
 }
@@ -304,24 +314,28 @@ function modTypePriority(priority) {
 function pathPattern(api, game, pattern) {
   var _a;
   return template(pattern, {
-    gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
-    documents: util.getVortexPath('documents'),
-    localAppData: util.getVortexPath('localAppData'),
-    appData: util.getVortexPath('appData'),
+    gamePath:
+      (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0
+        ? void 0
+        : _a.path,
+    documents: util.getVortexPath("documents"),
+    localAppData: util.getVortexPath("localAppData"),
+    appData: util.getVortexPath("appData"),
   });
 }
 
 //Set the mod path for the game
 function makeGetModPath(api, gameSpec) {
-  return () => gameSpec.game.modPathIsRelative !== false
-    ? gameSpec.game.modPath || '.'
-    : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
+  return () =>
+    gameSpec.game.modPathIsRelative !== false
+      ? gameSpec.game.modPath || "."
+      : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
 }
 
 //Find game installation directory
 function makeFindGame(api, gameSpec) {
-  return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
-    .then((game) => game.gamePath);
+  return () =>
+    util.GameStoreHelper.findByAppId(gameSpec.discovery.ids).then((game) => game.gamePath);
 }
 
 const getDiscoveryPath = (api) => {
@@ -331,23 +345,32 @@ const getDiscoveryPath = (api) => {
 };
 
 async function purge(api) {
-  return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));
+  return new Promise((resolve, reject) =>
+    api.events.emit("purge-mods", true, (err) => (err ? reject(err) : resolve())),
+  );
 }
 async function deploy(api) {
-  return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
+  return new Promise((resolve, reject) =>
+    api.events.emit("deploy-mods", (err) => (err ? reject(err) : resolve())),
+  );
 }
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
 //Installer test for DML files
 function testDML(files, gameId) {
-  const isMod = files.some(file => (path.basename(file).includes(DML_EXEC_STRING)));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => path.basename(file).includes(DML_EXEC_STRING));
+  let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -359,19 +382,19 @@ function testDML(files, gameId) {
 
 //Installer install DML files
 function installDML(files) {
-  const modFile = files.find(file => (path.basename(file).includes(DML_EXEC_STRING)));
+  const modFile = files.find((file) => path.basename(file).includes(DML_EXEC_STRING));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: DML_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: DML_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -382,13 +405,18 @@ function installDML(files) {
 
 //Installer test for UZDOOM files
 function testUzdoom(files, gameId) {
-  const isMod = files.some(file => (path.basename(file).toLowerCase() === UZDOOM_EXEC));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => path.basename(file).toLowerCase() === UZDOOM_EXEC);
+  let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -400,19 +428,19 @@ function testUzdoom(files, gameId) {
 
 //Installer install UZDOOM files
 function installUzdoom(files) {
-  const modFile = files.find(file => (path.basename(file).toLowerCase() === UZDOOM_EXEC));
+  const modFile = files.find((file) => path.basename(file).toLowerCase() === UZDOOM_EXEC);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: UZDOOM_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: UZDOOM_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -423,14 +451,19 @@ function installUzdoom(files) {
 
 //Installer test for UZDOOM files
 function testWad(files, gameId) {
-  const isMod = files.some(file => WAD_FILENAMES.includes(path.basename(file).toLowerCase()));
-  const isExt = files.some(file => WAD_EXTS.includes(path.extname(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && ( isMod || isExt );
+  const isMod = files.some((file) => WAD_FILENAMES.includes(path.basename(file).toLowerCase()));
+  const isExt = files.some((file) => WAD_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = gameId === spec.game.id && (isMod || isExt);
 
   // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -442,22 +475,22 @@ function testWad(files, gameId) {
 
 //Installer install UZDOOM files
 function installWad(files) {
-  let modFile = files.find(file => WAD_FILENAMES.includes(path.basename(file).toLowerCase()));
+  let modFile = files.find((file) => WAD_FILENAMES.includes(path.basename(file).toLowerCase()));
   if (modFile === undefined) {
-    modFile = files.find(file => WAD_EXTS.includes(path.extname(file).toLowerCase()));
+    modFile = files.find((file) => WAD_EXTS.includes(path.extname(file).toLowerCase()));
   }
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: WAD_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: WAD_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -468,13 +501,18 @@ function installWad(files) {
 
 //Installer test for UZDOOM files
 function testMod(files, gameId) {
-  const isMod = files.some(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => MOD_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -486,19 +524,19 @@ function testMod(files, gameId) {
 
 //Installer install UZDOOM files
 function installMod(files) {
-  const modFile = files.find(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
+  const modFile = files.find((file) => MOD_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: MOD_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: MOD_ID };
 
   // Remove anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -509,45 +547,57 @@ function installMod(files) {
 
 //test for zips
 async function testZipContent(files, gameId) {
-  let supported = (gameId === spec.game.id);
+  let supported = gameId === spec.game.id;
 
   // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
   return Promise.resolve({
     supported,
-    requiredFiles: []
+    requiredFiles: [],
   });
 }
 
 //Install zips
 async function installZipContent(files, destinationPath) {
-  const zipFiles = files.filter(file => ['.zip', '.7z', '.rar'].includes(path.extname(file)));
-  if (zipFiles.length > 0) { // If it's a double zip, we don't need to repack.
-    const instructions = zipFiles.map(file => {
+  const zipFiles = files.filter((file) => [".zip", ".7z", ".rar"].includes(path.extname(file)));
+  if (zipFiles.length > 0) {
+    // If it's a double zip, we don't need to repack.
+    const instructions = zipFiles.map((file) => {
       return {
-        type: 'copy',
+        type: "copy",
         source: file,
         destination: path.basename(file),
-      }
+      };
     });
     return Promise.resolve({ instructions });
-  }
-  else { // Repack the ZIP
+  } else {
+    // Repack the ZIP
     const szip = new util.SevenZip();
-    const archiveName = path.basename(destinationPath, '.installing') + '.zip';
+    const archiveName = path.basename(destinationPath, ".installing") + ".zip";
     const archivePath = path.join(destinationPath, archiveName);
     const rootRelPaths = await fs.readdirAsync(destinationPath);
-    await szip.add(archivePath, rootRelPaths.map(relPath => path.join(destinationPath, relPath)), { raw: ['-r'] });
-    const instructions = [{
-      type: 'copy',
-      source: archiveName,
-      destination: path.basename(archivePath),
-    }];
+    await szip.add(
+      archivePath,
+      rootRelPaths.map((relPath) => path.join(destinationPath, relPath)),
+      { raw: ["-r"] },
+    );
+    const instructions = [
+      {
+        type: "copy",
+        source: archiveName,
+        destination: path.basename(archivePath),
+      },
+    ];
     return Promise.resolve({ instructions });
   }
 }
@@ -585,9 +635,9 @@ async function asyncForEachCheck(api, requirements) {
 async function onCheckModVersion(api, gameId, mods, forced) {
   try {
     await asyncForEachTestVersion(api, REQUIREMENTS);
-    log('warn', 'Checked requirements versions');
+    log("warn", "Checked requirements versions");
   } catch (err) {
-    log('warn', `failed to test requirements versions: ${err}`);
+    log("warn", `failed to test requirements versions: ${err}`);
   }
 }
 
@@ -600,14 +650,14 @@ async function checkForRequirements(api) {
 function isUzdoomInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === UZDOOM_ID);
+  return Object.keys(mods).some((id) => mods[id]?.type === UZDOOM_ID);
 }
 
 //Check if DML is installed
 function isDMLInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === DML_ID);
+  return Object.keys(mods).some((id) => mods[id]?.type === DML_ID);
 }
 
 //* Function to auto-download UZDoom from GitHub
@@ -618,23 +668,29 @@ async function downloadUzdoom(api, gameSpec) {
     const MOD_TYPE = UZDOOM_ID;
     const NOTIF_ID = `${GAME_ID}-${MOD_TYPE}-installing`;
     const GAME_DOMAIN = gameSpec.game.id;
-    api.sendNotification({ //notification indicating install process
+    api.sendNotification({
+      //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
-      type: 'activity',
+      type: "activity",
       noDismiss: true,
       allowSuppress: false,
     });
     try {
       const URL = UZDOOM_URL;
-      const dlInfo = { //Download the mod
+      const dlInfo = {
+        //Download the mod
         game: GAME_DOMAIN,
         name: MOD_NAME,
       };
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const dlId = await util.toPromise((cb) =>
+        api.events.emit("start-download", [URL], dlInfo, undefined, cb, undefined, {
+          allowInstall: false,
+        }),
+      );
+      const modId = await util.toPromise((cb) =>
+        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+      );
       const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
       const batched = [
         actions.setModsEnabled(api, profileId, [modId], true, {
@@ -644,7 +700,8 @@ async function downloadUzdoom(api, gameSpec) {
         actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
       ];
       util.batchDispatch(api.store, batched); // Will dispatch both actions
-    } catch (err) { //Show the user the download page if the download, install process fails
+    } catch (err) {
+      //Show the user the download page if the download, install process fails
       const errPage = UZDOOM_URL_MANUAL;
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
       util.opn(errPage).catch(() => null);
@@ -662,23 +719,29 @@ async function downloadDML(api, gameSpec) {
     const MOD_TYPE = DML_ID;
     const NOTIF_ID = `${GAME_ID}-${MOD_TYPE}-installing`;
     const GAME_DOMAIN = gameSpec.game.id;
-    api.sendNotification({ //notification indicating install process
+    api.sendNotification({
+      //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
-      type: 'activity',
+      type: "activity",
       noDismiss: true,
       allowSuppress: false,
     });
     try {
       const URL = DML_URL;
-      const dlInfo = { //Download the mod
+      const dlInfo = {
+        //Download the mod
         game: GAME_DOMAIN,
         name: MOD_NAME,
       };
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const dlId = await util.toPromise((cb) =>
+        api.events.emit("start-download", [URL], dlInfo, undefined, cb, undefined, {
+          allowInstall: false,
+        }),
+      );
+      const modId = await util.toPromise((cb) =>
+        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+      );
       const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
       const batched = [
         actions.setModsEnabled(api, profileId, [modId], true, {
@@ -688,7 +751,8 @@ async function downloadDML(api, gameSpec) {
         actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
       ];
       util.batchDispatch(api.store, batched); // Will dispatch both actions
-    } catch (err) { //Show the user the download page if the download, install process fails
+    } catch (err) {
+      //Show the user the download page if the download, install process fails
       const errPage = DML_URL_MANUAL;
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
       util.opn(errPage).catch(() => null);
@@ -704,60 +768,84 @@ async function downloadUzDoomManual(api, gameSpec) {
   const MOD_NAME = UZDOOM_NAME;
   const MOD_TYPE = UZDOOM_ID;
   const GAME_DOMAIN = gameSpec.game.id;
-  const ARCHIVE_NAME = 'uzdoom-';
-  const instructions = api.translate(`Click on Continue below to open the browser. - `
-    + `Navigate to the latest version of ${MOD_NAME} on the GitHub releases page and `
-    + `click on the appropriate file to download and install the mod.`
+  const ARCHIVE_NAME = "uzdoom-";
+  const instructions = api.translate(
+    `Click on Continue below to open the browser. - ` +
+      `Navigate to the latest version of ${MOD_NAME} on the GitHub releases page and ` +
+      `click on the appropriate file to download and install the mod.`,
   );
-  return new Promise((resolve, reject) => { //Browse to modDB and download the mod
-    return api.emitAndAwait('browse-for-download', URL, instructions)
-    .then((result) => { //result is an array with the URL to the downloaded file as the only element
-      if (!result || !result.length) { //user clicks outside the window without downloading
-        return reject(new util.UserCanceled());
-      }
-      if (!result[0].toLowerCase().includes(ARCHIVE_NAME)) { //if user downloads the wrong file
-        return reject(new util.UserCanceled('Selected wrong download'));
-      } //*/
-      return Promise.resolve(result);
-    })
-    .catch((error) => {
-      return reject(error);
-    })
-    .then((result) => {
-      const dlInfo = {game: GAME_DOMAIN, name: MOD_NAME};
-      api.events.emit('start-download', result, {}, undefined,
-        async (error, id) => { //callback function to check for errors and pass id to and call 'start-install-download' event
-          if (error !== null && (error.name !== 'AlreadyDownloaded')) {
-            return reject(error);
-          }
-          api.events.emit('start-install-download', id, { allowAutoEnable: true }, async (error) => { //callback function to complete the installation
-            if (error !== null) {
+  return new Promise((resolve, reject) => {
+    //Browse to modDB and download the mod
+    return api
+      .emitAndAwait("browse-for-download", URL, instructions)
+      .then((result) => {
+        //result is an array with the URL to the downloaded file as the only element
+        if (!result || !result.length) {
+          //user clicks outside the window without downloading
+          return reject(new util.UserCanceled());
+        }
+        if (!result[0].toLowerCase().includes(ARCHIVE_NAME)) {
+          //if user downloads the wrong file
+          return reject(new util.UserCanceled("Selected wrong download"));
+        } //*/
+        return Promise.resolve(result);
+      })
+      .catch((error) => {
+        return reject(error);
+      })
+      .then((result) => {
+        const dlInfo = { game: GAME_DOMAIN, name: MOD_NAME };
+        api.events.emit(
+          "start-download",
+          result,
+          {},
+          undefined,
+          async (error, id) => {
+            //callback function to check for errors and pass id to and call 'start-install-download' event
+            if (error !== null && error.name !== "AlreadyDownloaded") {
               return reject(error);
             }
-            const profileId = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
-            const batched = [
-              actions.setModsEnabled(api, profileId, result, true, {
-                allowAutoDeploy: true,
-                installed: true,
-              }),
-              actions.setModType(GAME_ID, result[0], MOD_TYPE), // Set the mod type
-            ];
-            util.batchDispatch(api.store, batched); // Will dispatch both actions.
-            return resolve();
-          });
-        },
-        'never',
-        { allowInstall: false },
-      );
-    });
-  })
-  .catch(err => {
+            api.events.emit(
+              "start-install-download",
+              id,
+              { allowAutoEnable: true },
+              async (error) => {
+                //callback function to complete the installation
+                if (error !== null) {
+                  return reject(error);
+                }
+                const profileId = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
+                const batched = [
+                  actions.setModsEnabled(api, profileId, result, true, {
+                    allowAutoDeploy: true,
+                    installed: true,
+                  }),
+                  actions.setModType(GAME_ID, result[0], MOD_TYPE), // Set the mod type
+                ];
+                util.batchDispatch(api.store, batched); // Will dispatch both actions.
+                return resolve();
+              },
+            );
+          },
+          "never",
+          { allowInstall: false },
+        );
+      });
+  }).catch((err) => {
     if (err instanceof util.UserCanceled) {
-      api.showErrorNotification(`User cancelled download/install of ${MOD_NAME}. Please re-launch Vortex and try again.`, err, { allowReport: false });
+      api.showErrorNotification(
+        `User cancelled download/install of ${MOD_NAME}. Please re-launch Vortex and try again.`,
+        err,
+        { allowReport: false },
+      );
       //util.opn(URL).catch(() => null);
       return Promise.resolve();
     } else if (err instanceof util.ProcessCanceled) {
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}. Please re-launch Vortex and try again or download manually from modDB at the opened paged and install the zip in Vortex.`, err, { allowReport: false });
+      api.showErrorNotification(
+        `Failed to download/install ${MOD_NAME}. Please re-launch Vortex and try again or download manually from modDB at the opened paged and install the zip in Vortex.`,
+        err,
+        { allowReport: false },
+      );
       util.opn(URL).catch(() => null);
       return Promise.reject(err);
     } else {
@@ -772,60 +860,84 @@ async function downloadDMLManual(api, gameSpec) {
   const MOD_NAME = DML_NAME;
   const MOD_TYPE = DML_ID;
   const GAME_DOMAIN = gameSpec.game.id;
-  const ARCHIVE_NAME = 'DMLv';
-  const instructions = api.translate(`Click on Continue below to open the browser. - `
-    + `Navigate to the latest version of ${MOD_NAME} on the GitHub releases page and `
-    + `click on the appropriate file to download and install the mod.`
+  const ARCHIVE_NAME = "DMLv";
+  const instructions = api.translate(
+    `Click on Continue below to open the browser. - ` +
+      `Navigate to the latest version of ${MOD_NAME} on the GitHub releases page and ` +
+      `click on the appropriate file to download and install the mod.`,
   );
-  return new Promise((resolve, reject) => { //Browse to modDB and download the mod
-    return api.emitAndAwait('browse-for-download', URL, instructions)
-    .then((result) => { //result is an array with the URL to the downloaded file as the only element
-      if (!result || !result.length) { //user clicks outside the window without downloading
-        return reject(new util.UserCanceled());
-      }
-      if (!result[0].toLowerCase().includes(ARCHIVE_NAME)) { //if user downloads the wrong file
-        return reject(new util.UserCanceled('Selected wrong download'));
-      } //*/
-      return Promise.resolve(result);
-    })
-    .catch((error) => {
-      return reject(error);
-    })
-    .then((result) => {
-      const dlInfo = {game: GAME_DOMAIN, name: MOD_NAME};
-      api.events.emit('start-download', result, {}, undefined,
-        async (error, id) => { //callback function to check for errors and pass id to and call 'start-install-download' event
-          if (error !== null && (error.name !== 'AlreadyDownloaded')) {
-            return reject(error);
-          }
-          api.events.emit('start-install-download', id, { allowAutoEnable: true }, async (error) => { //callback function to complete the installation
-            if (error !== null) {
+  return new Promise((resolve, reject) => {
+    //Browse to modDB and download the mod
+    return api
+      .emitAndAwait("browse-for-download", URL, instructions)
+      .then((result) => {
+        //result is an array with the URL to the downloaded file as the only element
+        if (!result || !result.length) {
+          //user clicks outside the window without downloading
+          return reject(new util.UserCanceled());
+        }
+        if (!result[0].toLowerCase().includes(ARCHIVE_NAME)) {
+          //if user downloads the wrong file
+          return reject(new util.UserCanceled("Selected wrong download"));
+        } //*/
+        return Promise.resolve(result);
+      })
+      .catch((error) => {
+        return reject(error);
+      })
+      .then((result) => {
+        const dlInfo = { game: GAME_DOMAIN, name: MOD_NAME };
+        api.events.emit(
+          "start-download",
+          result,
+          {},
+          undefined,
+          async (error, id) => {
+            //callback function to check for errors and pass id to and call 'start-install-download' event
+            if (error !== null && error.name !== "AlreadyDownloaded") {
               return reject(error);
             }
-            const profileId = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
-            const batched = [
-              actions.setModsEnabled(api, profileId, result, true, {
-                allowAutoDeploy: true,
-                installed: true,
-              }),
-              actions.setModType(GAME_ID, result[0], MOD_TYPE), // Set the mod type
-            ];
-            util.batchDispatch(api.store, batched); // Will dispatch both actions.
-            return resolve();
-          });
-        },
-        'never',
-        { allowInstall: false },
-      );
-    });
-  })
-  .catch(err => {
+            api.events.emit(
+              "start-install-download",
+              id,
+              { allowAutoEnable: true },
+              async (error) => {
+                //callback function to complete the installation
+                if (error !== null) {
+                  return reject(error);
+                }
+                const profileId = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
+                const batched = [
+                  actions.setModsEnabled(api, profileId, result, true, {
+                    allowAutoDeploy: true,
+                    installed: true,
+                  }),
+                  actions.setModType(GAME_ID, result[0], MOD_TYPE), // Set the mod type
+                ];
+                util.batchDispatch(api.store, batched); // Will dispatch both actions.
+                return resolve();
+              },
+            );
+          },
+          "never",
+          { allowInstall: false },
+        );
+      });
+  }).catch((err) => {
     if (err instanceof util.UserCanceled) {
-      api.showErrorNotification(`User cancelled download/install of ${MOD_NAME}. Please re-launch Vortex and try again.`, err, { allowReport: false });
+      api.showErrorNotification(
+        `User cancelled download/install of ${MOD_NAME}. Please re-launch Vortex and try again.`,
+        err,
+        { allowReport: false },
+      );
       //util.opn(URL).catch(() => null);
       return Promise.resolve();
     } else if (err instanceof util.ProcessCanceled) {
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}. Please re-launch Vortex and try again or download manually from modDB at the opened paged and install the zip in Vortex.`, err, { allowReport: false });
+      api.showErrorNotification(
+        `Failed to download/install ${MOD_NAME}. Please re-launch Vortex and try again or download manually from modDB at the opened paged and install the zip in Vortex.`,
+        err,
+        { allowReport: false },
+      );
       util.opn(URL).catch(() => null);
       return Promise.reject(err);
     } else {
@@ -837,14 +949,14 @@ async function downloadDMLManual(api, gameSpec) {
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
 async function resolveGameVersion(gamePath) {
-  let version = '0.0.0';
+  let version = "0.0.0";
   try {
-    const exeVersion = require('exe-version');
+    const exeVersion = require("exe-version");
     const EXECUTABLE = path.join(gamePath, UZDOOM_EXEC_PATH);
     version = exeVersion.getProductVersion(EXECUTABLE);
     return Promise.resolve(version);
   } catch (err) {
-    log('error', `Could not read UZDoom executable file to get version: ${err}`);
+    log("error", `Could not read UZDoom executable file to get version: ${err}`);
     return Promise.resolve(version);
   }
 }
@@ -852,48 +964,56 @@ async function resolveGameVersion(gamePath) {
 //Notification if Config, Save, and Creations folders are not on the same partition
 function setupNotify(api) {
   const NOTIF_ID = `${GAME_ID}-setupudzoom`;
-  const MESSAGE = 'DML Setup Required';
+  const MESSAGE = "DML Setup Required";
   api.sendNotification({
     id: NOTIF_ID,
-    type: 'warning',
+    type: "warning",
     message: MESSAGE,
     allowSuppress: true,
     actions: [
       {
-        title: 'More',
+        title: "More",
         action: (dismiss) => {
-          api.showDialog('question', MESSAGE, {
-            text: `Some setup for the Doom Mod Loader (DML) is required to use this extension.\n`
-                + `\n`
-                + `First: You must install DOOM game WADs as a mod to Vortex. There are lots of places you can get them, but they cannot be included in the extension for legal reasons.\n`
-                + `If you own DOOM 3: BFG Edition or DOOM Eternal, WADs are included in their game files ("base/wads" and "base/classicwads", respectively).\n`
-                + `\n`
-                + `Second: Use the launch button to launch DML. Once there you can select your game wad and the load order for your mods.\n`
-                + `You can also set custom launch parameters and change various options.\n`
-                + `\n`
-                + `For more info, you can open the DML ReadMe by clicking on the "Open DML ReadMe" button below.\n`
-                + `\n`
-                + `IMPORTANT NOTE: Due to upgrading DML to v2.6+, the folder containing DML has changed to "DML" from "DMLv2.5[WINDOWS]".\n`
-                + `- You may need to copy over your config files if you still need them.\n`
-                + `- Saves and Config files from GZDoom must be copied manually to the UZDoom folders as well, if you want to carry them over. You can open the folders using the buttons within the folder icon on the Mods page toolbar.\n`
-                + `\n`
-          }, [
+          api.showDialog(
+            "question",
+            MESSAGE,
             {
-              label: 'Open DML ReadMe', action: () => {
-                GAME_PATH = getDiscoveryPath(api);
-                const openPath = path.join(GAME_PATH, DML_TOP_FOLDER, DML_README_FILE);
-                util.opn(openPath).catch(() => null);
-                dismiss();
-              }
+              text:
+                `Some setup for the Doom Mod Loader (DML) is required to use this extension.\n` +
+                `\n` +
+                `First: You must install DOOM game WADs as a mod to Vortex. There are lots of places you can get them, but they cannot be included in the extension for legal reasons.\n` +
+                `If you own DOOM 3: BFG Edition or DOOM Eternal, WADs are included in their game files ("base/wads" and "base/classicwads", respectively).\n` +
+                `\n` +
+                `Second: Use the launch button to launch DML. Once there you can select your game wad and the load order for your mods.\n` +
+                `You can also set custom launch parameters and change various options.\n` +
+                `\n` +
+                `For more info, you can open the DML ReadMe by clicking on the "Open DML ReadMe" button below.\n` +
+                `\n` +
+                `IMPORTANT NOTE: Due to upgrading DML to v2.6+, the folder containing DML has changed to "DML" from "DMLv2.5[WINDOWS]".\n` +
+                `- You may need to copy over your config files if you still need them.\n` +
+                `- Saves and Config files from GZDoom must be copied manually to the UZDoom folders as well, if you want to carry them over. You can open the folders using the buttons within the folder icon on the Mods page toolbar.\n` +
+                `\n`,
             },
-            { label: 'Acknowledge', action: () => dismiss() },
-            {
-              label: 'Never Show Again', action: () => {
-                api.suppressNotification(NOTIF_ID);
-                dismiss();
-              }
-            },
-          ]);
+            [
+              {
+                label: "Open DML ReadMe",
+                action: () => {
+                  GAME_PATH = getDiscoveryPath(api);
+                  const openPath = path.join(GAME_PATH, DML_TOP_FOLDER, DML_README_FILE);
+                  util.opn(openPath).catch(() => null);
+                  dismiss();
+                },
+              },
+              { label: "Acknowledge", action: () => dismiss() },
+              {
+                label: "Never Show Again",
+                action: () => {
+                  api.suppressNotification(NOTIF_ID);
+                  dismiss();
+                },
+              },
+            ],
+          );
         },
       },
     ],
@@ -954,11 +1074,23 @@ function applyGame(context, gameSpec) {
 
   //register mod types
   (gameSpec.modTypes || []).forEach((type, idx) => {
-    context.registerModType(type.id, modTypePriority(type.priority) + idx, (gameId) => {
-      var _a;
-      return (gameId === gameSpec.game.id)
-        && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
+    context.registerModType(
+      type.id,
+      modTypePriority(type.priority) + idx,
+      (gameId) => {
+        var _a;
+        return (
+          gameId === gameSpec.game.id &&
+          !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+          _a === void 0
+            ? void 0
+            : _a.path)
+        );
+      },
+      (game) => pathPattern(context.api, game, type.targetPath),
+      () => Promise.resolve(false),
+      { name: type.name },
+    );
   });
 
   //register mod installers
@@ -969,15 +1101,23 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(`${GAME_ID}-zipmod`, 33, testZipContent, installZipContent);
 
   //register actions
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open DML ReadMe', () => {
-    GAME_PATH = getDiscoveryPath(context.api);
-    const openPath = path.join(GAME_PATH, DML_TOP_FOLDER, 'README v2.5.txt');
-    util.opn(openPath).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  }); //*/
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open DML ReadMe",
+    () => {
+      GAME_PATH = getDiscoveryPath(context.api);
+      const openPath = path.join(GAME_PATH, DML_TOP_FOLDER, "README v2.5.txt");
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  ); //*/
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download UZDoom (Manual)', () => {
     downloadUzdoomManual(context.api, gameSpec).catch(() => null);
   }, () => {
@@ -985,45 +1125,85 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download DML (Manual)', () => {
-    downloadDMLManual(context.api, gameSpec).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open UZDoom Save Folder', () => {
-    const openPath = path.join(UZSAVE_PATH);
-    util.opn(openPath).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open UZDoom Config Folder', () => {
-    const openPath = path.join(UZCONFIG_PATH);
-    util.opn(openPath).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open uzdoom.ini', () => {
-    const openPath = path.join(UZDOOM_INI_PATH);
-    util.opn(openPath).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Vortex Downloads Folder', () => {
-    const openPath = path.join(DOWNLOAD_FOLDER);
-    util.opn(openPath).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  }); //*/
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Download DML (Manual)",
+    () => {
+      downloadDMLManual(context.api, gameSpec).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  ); //*/
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open UZDoom Save Folder",
+    () => {
+      const openPath = path.join(UZSAVE_PATH);
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  ); //*/
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open UZDoom Config Folder",
+    () => {
+      const openPath = path.join(UZCONFIG_PATH);
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  ); //*/
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open uzdoom.ini",
+    () => {
+      const openPath = path.join(UZDOOM_INI_PATH);
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  ); //*/
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Vortex Downloads Folder",
+    () => {
+      const openPath = path.join(DOWNLOAD_FOLDER);
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  ); //*/
 
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
     util.opn(CONFIG_PATH).catch(() => null);
@@ -1046,40 +1226,66 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
-    const openPath = path.join(__dirname, 'CHANGELOG.md');
-    util.opn(openPath).catch(() => null);
-    }, () => {
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "View Changelog",
+    () => {
+      const openPath = path.join(__dirname, "CHANGELOG.md");
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
-    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    util.opn(DOWNLOAD_FOLDER).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Submit Bug Report",
+    () => {
+      util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Downloads Folder",
+    () => {
+      util.opn(DOWNLOAD_FOLDER).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
 }
 
 //main function
 function main(context) {
   applyGame(context, spec);
-  context.once(() => { // put code here that should be run (once) when Vortex starts up
+  context.once(() => {
+    // put code here that should be run (once) when Vortex starts up
     const api = context.api;
-    context.api.onAsync('check-mods-version', (gameId, mods, forced) => {
+    context.api.onAsync("check-mods-version", (gameId, mods, forced) => {
       if (gameId !== GAME_ID) return;
       return onCheckModVersion(context.api, gameId, mods, forced);
     }); //*/
-    if (moddbBrowser) { //the second call is the no-op the shared base makes safe - listeners are per source
+    if (moddbBrowser) {
+      //the second call is the no-op the shared base makes safe - listeners are per source
       onceModDbBrowser(api, spec, MODDB_BROWSER_CONFIG_DOOM);
       onceModDbBrowser(api, spec, MODDB_BROWSER_CONFIG_DOOM2);
     }
@@ -1092,7 +1298,8 @@ function main(context) {
   return true;
 }
 
-async function didDeploy(api) { //run on mod deploy
+async function didDeploy(api) {
+  //run on mod deploy
   await writePortIniDeploy(api);
   return Promise.resolve();
 }
@@ -1100,15 +1307,13 @@ async function didDeploy(api) { //run on mod deploy
 async function writePortIniDeploy(api) {
   GAME_PATH = getDiscoveryPath(api);
   if (GAME_PATH === undefined) {
-    return Promise.reject(new util.NotFound('Game not found'));
+    return Promise.reject(new util.NotFound("Game not found"));
   }
   const PORT_CONFIG = path.join(GAME_PATH, PORT_CONFIG_PATH);
 
-  await fs.writeFileAsync(
-    PORT_CONFIG,
-    path.join(GAME_PATH, UZDOOM_EXEC_PATH),
-    { encoding: "utf8" },
-  );
+  await fs.writeFileAsync(PORT_CONFIG, path.join(GAME_PATH, UZDOOM_EXEC_PATH), {
+    encoding: "utf8",
+  });
 }
 
 //export to Vortex

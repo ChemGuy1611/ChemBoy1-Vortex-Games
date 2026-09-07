@@ -2,16 +2,16 @@
 Name: Kingdom Come Deliverance II Vortex Extension
 Structure: Mod Folder and FBLO
 Author: ChemBoy1
-Version: 1.0.4
-Date: 2026-09-05
+Version: 1.0.5
+Date: 2026-09-06
 //////////////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require('vortex-api');
-const path = require('path');
-const template = require('string-template');
-const { parseStringPromise } = require('xml2js');
-const React = require('react');
+const { actions, fs, util, selectors, log } = require("vortex-api");
+const path = require("path");
+const template = require("string-template");
+const { parseStringPromise } = require("xml2js");
+const React = require("react");
 
 const DOCUMENTS = util.getVortexPath("documents");
 
@@ -22,26 +22,26 @@ const GOGAPP_ID = "1248083010";
 const XBOXAPP_ID = "DeepSilver.77536C3FE941";
 const XBOXEXECNAME = "App";
 const GAME_ID = "kingdomcomedeliverance2";
-const GAME_NAME = "Kingdom Come: Deliverance II"
+const GAME_NAME = "Kingdom Come: Deliverance II";
 const GAME_NAME_SHORT = "KCD2";
 const MOD_PATH = "Mods";
 const MOD_PATH_XBOX = path.join(DOCUMENTS, "kingdomcome_mods");
-const REQ_FILE = path.join('Data', 'Levels', 'trosecko', 'cestool.pak');
+const REQ_FILE = path.join("Data", "Levels", "trosecko", "cestool.pak");
 const STEAMWORKSHOP_FOLDER = path.join("workshop", "content", STEAMAPP_ID);
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Kingdom_Come:_Deliverance_II";
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1146"; //Nexus link to this extension. Used for links
 
 let LOAD_ORDER_ENABLED = true;
-let GAME_PATH = '';
-let GAME_VERSION = '';
-let EXEC = '';
-let STAGING_FOLDER = '';
-let DOWNLOAD_FOLDER = '';
-const APPMANIFEST_FILE = 'appxmanifest.xml';
+let GAME_PATH = "";
+let GAME_VERSION = "";
+let EXEC = "";
+let STAGING_FOLDER = "";
+let DOWNLOAD_FOLDER = "";
+const APPMANIFEST_FILE = "appxmanifest.xml";
 
 //information for executable discovery and variable paths
-let BINARIES_PATH = '';
-let BINARIES_TARGET = '';
+let BINARIES_PATH = "";
+let BINARIES_TARGET = "";
 const EXEC_FILENAME = "KingdomCome.exe";
 const BINPATH_STEAM = path.join("Bin", "Win64MasterMasterSteamPGO");
 const EXEC_STEAM = path.join(BINPATH_STEAM, EXEC_FILENAME);
@@ -54,7 +54,7 @@ const EXEC_XBOX = "gamelaunchhelper.exe";
 //const EXEC_XBOX = EXEC_FILENAME;
 
 //Data for mod types, tools, load order, and installers
-const USER_DOCS = util.getVortexPath('home');
+const USER_DOCS = util.getVortexPath("home");
 const KCSE_FOLDER = "KCSE";
 
 const MOD_ID = `${GAME_ID}-mod`;
@@ -85,12 +85,12 @@ const LO_MOD_FILE = MOD_FILE1;
 const LO_PATH = path.join(MOD_PATH, LO_FILE);
 const LO_PATH_XBOX = path.join(MOD_PATH_XBOX, LO_FILE);
 const LO_ATTRIBUTE = "modFolderDerived";
-const IGNORED_EXTS = ['.txt', '.json', '.manifest'];
+const IGNORED_EXTS = [".txt", ".json", ".manifest"];
 
 const LOG_FILE = "kcd.log";
 const CONFIG_FILE = "attributes.xml";
-const CONFIG_PATH = path.join(USER_DOCS, 'Saved Games', 'kingdomcome2', 'profiles', 'default');
-const SAVE_PATH = path.join(USER_DOCS, 'Saved Games', 'kingdomcome2', 'saves');
+const CONFIG_PATH = path.join(USER_DOCS, "Saved Games", "kingdomcome2", "profiles", "default");
+const SAVE_PATH = path.join(USER_DOCS, "Saved Games", "kingdomcome2", "saves");
 
 // for mod update to keep them in the load order and not uncheck them
 let mod_update_all_profile = false;
@@ -103,57 +103,50 @@ const LO_IMAGE_WIDTH = 96; //Width of the load order thumbnail image
 const LO_IMAGE_HEIGHT = LO_IMAGE_WIDTH * 0.5625;
 
 //Filled in from data above
-const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
-const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
 const spec = {
-  "game": {
-    "id": GAME_ID,
-    "name": GAME_NAME,
-    "shortName": GAME_NAME_SHORT,
-    "logo": `${GAME_ID}.jpg`,
-    "mergeMods": true,
-    "requiresCleanup": true,
+  game: {
+    id: GAME_ID,
+    name: GAME_NAME,
+    shortName: GAME_NAME_SHORT,
+    logo: `${GAME_ID}.jpg`,
+    mergeMods: true,
+    requiresCleanup: true,
     //"modPath": MOD_PATH,
-    "modPathIsRelative": true,
-    "requiredFiles": [
-      REQ_FILE,
-    ],
-    "compatible": {
-      "dinput": false,
-      "enb": false,
+    modPathIsRelative: true,
+    requiredFiles: [REQ_FILE],
+    compatible: {
+      dinput: false,
+      enb: false,
     },
-    "details": {
-      "steamAppId": +STEAMAPP_ID,
-      "gogAppId": GOGAPP_ID,
-      "epicAppId": EPICAPP_ID,
-      "xboxAppId": XBOXAPP_ID,
-      "ignoreConflicts": IGNORE_CONFLICTS,
-      "ignoreDeploy": IGNORE_DEPLOY,
+    details: {
+      steamAppId: +STEAMAPP_ID,
+      gogAppId: GOGAPP_ID,
+      epicAppId: EPICAPP_ID,
+      xboxAppId: XBOXAPP_ID,
+      ignoreConflicts: IGNORE_CONFLICTS,
+      ignoreDeploy: IGNORE_DEPLOY,
     },
-    "environment": {
-      "SteamAPPId": STEAMAPP_ID,
-      "GogAPPId": GOGAPP_ID,
-      "EpicAPPId": EPICAPP_ID,
-      "XboxAPPId": XBOXAPP_ID,
-    }
+    environment: {
+      SteamAPPId: STEAMAPP_ID,
+      GogAPPId: GOGAPP_ID,
+      EpicAPPId: EPICAPP_ID,
+      XboxAPPId: XBOXAPP_ID,
+    },
   },
-  "modTypes": [
+  modTypes: [
     {
-      "id": ROOT_ID,
-      "name": ROOT_NAME,
-      "priority": "high",
-      "targetPath": `{gamePath}`
+      id: ROOT_ID,
+      name: ROOT_NAME,
+      priority: "high",
+      targetPath: `{gamePath}`,
     },
   ],
-  "discovery": {
-    "ids": [
-      STEAMAPP_ID,
-      EPICAPP_ID,
-      GOGAPP_ID,
-      XBOXAPP_ID,
-    ],
-    "names": []
-  }
+  discovery: {
+    ids: [STEAMAPP_ID, EPICAPP_ID, GOGAPP_ID, XBOXAPP_ID],
+    names: [],
+  },
 };
 
 // BASIC EXTENSION FUNCTIONS //////////////////////////////////////////////////////////////////////////////////
@@ -167,8 +160,7 @@ function statCheckSync(gamePath, file) {
   try {
     fs.statSync(path.join(gamePath, file));
     return true;
-  }
-  catch {
+  } catch {
     return false;
   }
 }
@@ -176,8 +168,7 @@ async function statCheckAsync(gamePath, file) {
   try {
     await fs.statAsync(path.join(gamePath, file));
     return true;
-  }
-  catch {
+  } catch {
     return false;
   }
 }
@@ -190,15 +181,17 @@ async function getAllFiles(dirPath) {
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
       const stats = await fs.statAsync(fullPath);
-      if (stats.isDirectory()) { // Recursively get files from subdirectories
+      if (stats.isDirectory()) {
+        // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
         results = results.concat(subDirFiles);
-      } else { // Add file to results
+      } else {
+        // Add file to results
         results.push(fullPath);
       }
     }
   } catch (err) {
-    log('warn', `Error reading directory ${dirPath}: ${err.message}`);
+    log("warn", `Error reading directory ${dirPath}: ${err.message}`);
   }
   return results;
 }
@@ -215,32 +208,38 @@ function pathPattern(api, game, pattern) {
   try {
     var _a;
     return template(pattern, {
-      gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
-      documents: util.getVortexPath('documents'),
-      localAppData: util.getVortexPath('localAppData'),
-      appData: util.getVortexPath('appData'),
+      gamePath:
+        (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0
+          ? void 0
+          : _a.path,
+      documents: util.getVortexPath("documents"),
+      localAppData: util.getVortexPath("localAppData"),
+      appData: util.getVortexPath("appData"),
     });
-  }
-  catch (err) {
-    api.showErrorNotification('Failed to locate executable because Vortex cannot read the installation folder. Please launch the game at least once.', err, { allowReport: false });
+  } catch (err) {
+    api.showErrorNotification(
+      "Failed to locate executable because Vortex cannot read the installation folder. Please launch the game at least once.",
+      err,
+      { allowReport: false },
+    );
   }
 }
 
 //Find game installation directory
 function makeFindGame(api, gameSpec) {
-  return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
-    .then((game) => game.gamePath);
+  return () =>
+    util.GameStoreHelper.findByAppId(gameSpec.discovery.ids).then((game) => game.gamePath);
 }
 
 async function requiresLauncher(gamePath, store) {
-  if (store === 'xbox') {
-      return Promise.resolve({
-          launcher: 'xbox',
-          addInfo: {
-              appId: XBOXAPP_ID,
-              parameters: [{ appExecName: XBOXEXECNAME }],
-          },
-      });
+  if (store === "xbox") {
+    return Promise.resolve({
+      launcher: "xbox",
+      addInfo: {
+        appId: XBOXAPP_ID,
+        parameters: [{ appExecName: XBOXEXECNAME }],
+      },
+    });
   } //*/
   /*
   if (store === 'steam') {
@@ -248,9 +247,9 @@ async function requiresLauncher(gamePath, store) {
       launcher: 'steam',
     });
   } //*/
-  if (store === 'epic') {
+  if (store === "epic") {
     return Promise.resolve({
-      launcher: 'epic',
+      launcher: "epic",
       addInfo: {
         appId: EPICAPP_ID,
       },
@@ -262,96 +261,97 @@ async function requiresLauncher(gamePath, store) {
 //* Get mod path dynamically for different game versions
 function getModPath(gamePath) {
   if (statCheckSync(gamePath, EXEC_XBOX)) {
-    GAME_VERSION = 'xbox';
+    GAME_VERSION = "xbox";
     //MOD_PATH = MOD_PATH_XBOX;
     return MOD_PATH_XBOX;
-  };
+  }
   return MOD_PATH;
 } //*/
 
 function getExecutable(gamePath) {
   if (statCheckSync(gamePath, EXEC_STEAM)) {
-    GAME_VERSION = 'steam';
+    GAME_VERSION = "steam";
     BINARIES_PATH = BINPATH_STEAM;
     EXEC = EXEC_STEAM;
     BINARIES_TARGET = path.join(`{gamePath}`, BINARIES_PATH);
     return EXEC_STEAM;
-  };
+  }
   if (statCheckSync(gamePath, EXEC_EPIC)) {
-    GAME_VERSION = 'epic';
+    GAME_VERSION = "epic";
     BINARIES_PATH = BINPATH_EPIC;
     EXEC = EXEC_EPIC;
     BINARIES_TARGET = path.join(`{gamePath}`, BINARIES_PATH);
     return EXEC_EPIC;
-  };
+  }
   if (statCheckSync(gamePath, EXEC_GOG)) {
-    GAME_VERSION = 'gog';
+    GAME_VERSION = "gog";
     BINARIES_PATH = BINPATH_GOG;
     EXEC = EXEC_GOG;
     BINARIES_TARGET = path.join(`{gamePath}`, BINARIES_PATH);
     return EXEC_GOG;
-  };
+  }
   if (statCheckSync(gamePath, EXEC_XBOX)) {
-    GAME_VERSION = 'xbox';
+    GAME_VERSION = "xbox";
     BINARIES_PATH = BINPATH_XBOX;
     EXEC = EXEC_XBOX;
     //LO_PATH = LO_PATH_XBOX;
     //MOD_PATH = MOD_PATH_XBOX;
     BINARIES_TARGET = path.join(`{gamePath}`, BINARIES_PATH);
     return EXEC_XBOX;
-  }; //*/
+  }
+  //*/
   //log('error', `Could not read game folder to set executable for ${GAME_NAME}`);
   return EXEC_STEAM;
 }
 
 async function setGameVersion(gamePath) {
   if (await statCheckAsync(gamePath, EXEC_STEAM)) {
-    GAME_VERSION = 'steam';
+    GAME_VERSION = "steam";
     EXEC = EXEC_STEAM;
     return GAME_VERSION;
-  };
+  }
   if (await statCheckAsync(gamePath, EXEC_EPIC)) {
-    GAME_VERSION = 'epic';
+    GAME_VERSION = "epic";
     EXEC = EXEC_EPIC;
     return GAME_VERSION;
-  };
+  }
   if (await statCheckAsync(gamePath, EXEC_GOG)) {
-    GAME_VERSION = 'gog';
+    GAME_VERSION = "gog";
     EXEC = EXEC_GOG;
     return GAME_VERSION;
-  };
+  }
   if (await statCheckAsync(gamePath, EXEC_XBOX)) {
-    GAME_VERSION = 'xbox';
+    GAME_VERSION = "xbox";
     EXEC = EXEC_XBOX;
     //LO_PATH = LO_PATH_XBOX;
     return GAME_VERSION;
-  }; //*/
-}
+  }
+} //*/
 
 function setGameVersionSync(api) {
   GAME_PATH = getDiscoveryPath(api);
   if (statCheckSync(GAME_PATH, EXEC_STEAM)) {
-    GAME_VERSION = 'steam';
+    GAME_VERSION = "steam";
     EXEC = EXEC_STEAM;
     return GAME_VERSION;
-  };
+  }
   if (statCheckSync(GAME_PATH, EXEC_EPIC)) {
-    GAME_VERSION = 'epic';
+    GAME_VERSION = "epic";
     EXEC = EXEC_EPIC;
     return GAME_VERSION;
-  };
+  }
   if (statCheckSync(GAME_PATH, EXEC_GOG)) {
-    GAME_VERSION = 'gog';
+    GAME_VERSION = "gog";
     EXEC = EXEC_GOG;
     return GAME_VERSION;
-  };
+  }
   if (statCheckSync(GAME_PATH, EXEC_XBOX)) {
-    GAME_VERSION = 'xbox';
+    GAME_VERSION = "xbox";
     EXEC = EXEC_XBOX;
     //LO_PATH = LO_PATH_XBOX;
     return GAME_VERSION;
-  }; //*/
-}
+  }
+} //*/
 
 const getDiscoveryPath = (api) => {
   const state = api.getState();
@@ -359,27 +359,40 @@ const getDiscoveryPath = (api) => {
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
 
-async function purge(api) { //useful to clear out mods prior to doing some action
-  return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));
+async function purge(api) {
+  //useful to clear out mods prior to doing some action
+  return new Promise((resolve, reject) =>
+    api.events.emit("purge-mods", true, (err) => (err ? reject(err) : resolve())),
+  );
 }
-async function deploy(api) { //useful to deploy mods after doing some action
-  return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
+async function deploy(api) {
+  //useful to deploy mods after doing some action
+  return new Promise((resolve, reject) =>
+    api.events.emit("deploy-mods", (err) => (err ? reject(err) : resolve())),
+  );
 }
 
 // MOD INSTALLER FUNCTIONS ////////////////////////////////////////////////////////////////////////////////////////
 
 //Installer test for mod files
 function testMod(files, gameId) {
-  const MOD_FOLDERS_LOWER = MOD_FOLDERS.map(folder => folder.toLowerCase());
-  const isModFile = files.some(file => MOD_FILES.includes(path.basename(file).toLowerCase()));
-  const isFolder = files.some(file => MOD_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
-  const isCfg = files.some(file => path.basename(file).toLowerCase() === CFGMOD_FILE);
-  let supported = (gameId === spec.game.id) && ( isModFile || isFolder || isCfg );
+  const MOD_FOLDERS_LOWER = MOD_FOLDERS.map((folder) => folder.toLowerCase());
+  const isModFile = files.some((file) => MOD_FILES.includes(path.basename(file).toLowerCase()));
+  const isFolder = files.some((file) =>
+    MOD_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
+  );
+  const isCfg = files.some((file) => path.basename(file).toLowerCase() === CFGMOD_FILE);
+  let supported = gameId === spec.game.id && (isModFile || isFolder || isCfg);
 
   // Test for a mod installer
-  if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -391,11 +404,13 @@ function testMod(files, gameId) {
 
 //Installer install mod files
 function installMod(files, fileName) {
-  const MOD_FOLDERS_LOWER = MOD_FOLDERS.map(folder => folder.toLowerCase());
-  const modFile1 = files.find(file => MOD_FILES.includes(path.basename(file).toLowerCase()));
-  const modFile2 = files.find(file => MOD_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
-  const modFile3 = files.find(file => path.basename(file).toLowerCase() === CFGMOD_FILE);
-  const setModTypeInstruction = { type: 'setmodtype', value: MOD_ID };
+  const MOD_FOLDERS_LOWER = MOD_FOLDERS.map((folder) => folder.toLowerCase());
+  const modFile1 = files.find((file) => MOD_FILES.includes(path.basename(file).toLowerCase()));
+  const modFile2 = files.find((file) =>
+    MOD_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
+  );
+  const modFile3 = files.find((file) => path.basename(file).toLowerCase() === CFGMOD_FILE);
+  const setModTypeInstruction = { type: "setmodtype", value: MOD_ID };
   const MOD_NAME = path.basename(fileName);
   let idx = null;
   let rootPath = null;
@@ -406,136 +421,141 @@ function installMod(files, fileName) {
     rootPath = path.dirname(modFile1);
     try {
       //parse mod.manifest XML here to get <name>, lowercase and replace whitespace with "_", and use as MOD_FOLDER
-      const modManifest = fs.readFileSync(path.join(fileName, modFile1), 'utf8');
+      const modManifest = fs.readFileSync(path.join(fileName, modFile1), "utf8");
       const parser = new DOMParser();
       //const serializer = new XMLSerializer();
-      const XML = parser.parseFromString(modManifest, 'text/xml');
+      const XML = parser.parseFromString(modManifest, "text/xml");
       //const XML_SERIAL = serializer.serializeToString(XML);
       //log('info', `mod.manifest: ${XML_SERIAL}`);
       let modName = null;
-      try { //try to get the modid from mod.manifest
+      try {
+        //try to get the modid from mod.manifest
         modName = XML.getElementsByTagName("modid")[0].childNodes[0].nodeValue;
         //log('info', `Mod Name: ${modName}`);
         MOD_FOLDER = modName;
-      } catch { //could not get modid. Try for name, then lowercease and replace whitespace with "_"
+      } catch {
+        //could not get modid. Try for name, then lowercease and replace whitespace with "_"
         modName = XML.getElementsByTagName("name")[0].childNodes[0].nodeValue;
         //log('info', `Mod Name: ${modName}`);
         const modNameLower = modName.toLowerCase();
-        MOD_FOLDER = modNameLower.replace(/ /gi, '_');
+        MOD_FOLDER = modNameLower.replace(/ /gi, "_");
       }
       //log('info', `Mod Folder: ${MOD_FOLDER}`);
-    } catch { //mod.manifest could not be read. Try to overwrite with a clean one.
-      log('error', `Could not read mod.manifest for mod ${MOD_NAME}. Overwriting with a clean one.`);
+    } catch {
+      //mod.manifest could not be read. Try to overwrite with a clean one.
+      log(
+        "error",
+        `Could not read mod.manifest for mod ${MOD_NAME}. Overwriting with a clean one.`,
+      );
       const rootPathLower = path.basename(rootPath).toLowerCase();
-      MOD_FOLDER = rootPathLower.replace(/ /gi, '_');
-      if (MOD_FOLDER === '.') { // If mod did not have a top level folder, make one from the mod name
+      MOD_FOLDER = rootPathLower.replace(/ /gi, "_");
+      if (MOD_FOLDER === ".") {
+        // If mod did not have a top level folder, make one from the mod name
         const modNameLower = MOD_NAME.toLowerCase();
-        const modNameLower2 = modNameLower.replace(/ /gi, '_');
-        MOD_FOLDER = modNameLower2.replace(/[-]*[\d]*[.]*(installing)*(zip)*(rar)*(7z)*( )*/gi, '');
+        const modNameLower2 = modNameLower.replace(/ /gi, "_");
+        MOD_FOLDER = modNameLower2.replace(/[-]*[\d]*[.]*(installing)*(zip)*(rar)*(7z)*( )*/gi, "");
       }
-      try { //write the mod.manifest file
-        const MODMANIFEST_CONTENT = (`<?xml version="1.0" encoding="utf-8"?>\n`
-                                    + `<kcd_mod>\n`
-                                    + `  <info>\n`
-                                    + `    <name>${MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '')}</name>\n`
-                                    + `    <modid>${MOD_FOLDER}</modid>\n`
-                                    + `  </info>\n`
-                                    + `</kcd_mod>`
-        );
-        const MODMANIFEST_PATH = path.join(fileName, rootPath, 'mod.manifest');
-        fs.writeFileSync(
-          MODMANIFEST_PATH,
-          `${MODMANIFEST_CONTENT}`,
-          { encoding: "utf8" },
-        );
+      try {
+        //write the mod.manifest file
+        const MODMANIFEST_CONTENT =
+          `<?xml version="1.0" encoding="utf-8"?>\n` +
+          `<kcd_mod>\n` +
+          `  <info>\n` +
+          `    <name>${MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, "")}</name>\n` +
+          `    <modid>${MOD_FOLDER}</modid>\n` +
+          `  </info>\n` +
+          `</kcd_mod>`;
+        const MODMANIFEST_PATH = path.join(fileName, rootPath, "mod.manifest");
+        fs.writeFileSync(MODMANIFEST_PATH, `${MODMANIFEST_CONTENT}`, { encoding: "utf8" });
         //files.push(path.join(rootPath, 'mod.manifest'));
       } catch {
-        log('error', `Could not create a clean mod.manifest for mod ${MOD_NAME}`);
+        log("error", `Could not create a clean mod.manifest for mod ${MOD_NAME}`);
       }
     }
-  }
-  else if (modFile2 !== undefined) { //Archive contains valid mod folder, but no mod.manifest
+  } else if (modFile2 !== undefined) {
+    //Archive contains valid mod folder, but no mod.manifest
     idx = modFile2.indexOf(`${path.basename(modFile2)}${path.sep}`);
     rootPath = path.dirname(modFile2);
     const rootPathLower = path.basename(rootPath).toLowerCase();
-    MOD_FOLDER = rootPathLower.replace(/ /gi, '_');
-    if (MOD_FOLDER === '.') {
+    MOD_FOLDER = rootPathLower.replace(/ /gi, "_");
+    if (MOD_FOLDER === ".") {
       const modNameLower = MOD_NAME.toLowerCase();
-      const modNameLowerReplaced = modNameLower.replace(/ /gi, '_');
-      MOD_FOLDER = modNameLowerReplaced.replace(/[-]*[\d]*[.]*(installing)*(zip)*(rar)*(7z)*( )*/gi, '');
+      const modNameLowerReplaced = modNameLower.replace(/ /gi, "_");
+      MOD_FOLDER = modNameLowerReplaced.replace(
+        /[-]*[\d]*[.]*(installing)*(zip)*(rar)*(7z)*( )*/gi,
+        "",
+      );
     }
-    try { //Generate basic mod.manifest with modid=MOD_FOLDER
-      const MODMANIFEST_CONTENT = (`<?xml version="1.0" encoding="utf-8"?>\n`
-                                  + `<kcd_mod>\n`
-                                  + `  <info>\n`
-                                  + `    <name>${MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '')}</name>\n`
-                                  + `    <modid>${MOD_FOLDER}</modid>\n`
-                                  + `  </info>\n`
-                                  + `</kcd_mod>`
-      );
-      const MODMANIFEST_PATH = path.join(fileName, rootPath, 'mod.manifest');
-      fs.writeFileSync(
-        MODMANIFEST_PATH,
-        `${MODMANIFEST_CONTENT}`,
-        { encoding: "utf8" },
-      );
-      files.push(path.join(rootPath, 'mod.manifest'));
+    try {
+      //Generate basic mod.manifest with modid=MOD_FOLDER
+      const MODMANIFEST_CONTENT =
+        `<?xml version="1.0" encoding="utf-8"?>\n` +
+        `<kcd_mod>\n` +
+        `  <info>\n` +
+        `    <name>${MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, "")}</name>\n` +
+        `    <modid>${MOD_FOLDER}</modid>\n` +
+        `  </info>\n` +
+        `</kcd_mod>`;
+      const MODMANIFEST_PATH = path.join(fileName, rootPath, "mod.manifest");
+      fs.writeFileSync(MODMANIFEST_PATH, `${MODMANIFEST_CONTENT}`, { encoding: "utf8" });
+      files.push(path.join(rootPath, "mod.manifest"));
     } catch {
-      log('error', `Could not create mod.manifest for mod ${MOD_NAME}`);
+      log("error", `Could not create mod.manifest for mod ${MOD_NAME}`);
     }
-  }
-  else if (modFile3 !== undefined) { //Archive contains mod.cfg, but no mod.manifest
+  } else if (modFile3 !== undefined) {
+    //Archive contains mod.cfg, but no mod.manifest
     idx = modFile3.indexOf(path.basename(modFile3));
     rootPath = path.dirname(modFile3);
     const rootPathLower = path.basename(rootPath).toLowerCase();
-    MOD_FOLDER = rootPathLower.replace(/ /gi, '_');
-    if (MOD_FOLDER === '.') {
+    MOD_FOLDER = rootPathLower.replace(/ /gi, "_");
+    if (MOD_FOLDER === ".") {
       const modNameLower = MOD_NAME.toLowerCase();
-      const modNameLowerReplaced = modNameLower.replace(/ /gi, '_');
-      MOD_FOLDER = modNameLowerReplaced.replace(/[-]*[\d]*[.]*(installing)*(zip)*(rar)*(7z)*( )*/gi, '');
+      const modNameLowerReplaced = modNameLower.replace(/ /gi, "_");
+      MOD_FOLDER = modNameLowerReplaced.replace(
+        /[-]*[\d]*[.]*(installing)*(zip)*(rar)*(7z)*( )*/gi,
+        "",
+      );
     }
-    try { //Generate basic mod.manifest with modid=MOD_FOLDER
-      const MODMANIFEST_CONTENT = (`<?xml version="1.0" encoding="utf-8"?>\n`
-                                  + `<kcd_mod>\n`
-                                  + `  <info>\n`
-                                  + `    <name>${MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '')}</name>\n`
-                                  + `    <modid>${MOD_FOLDER}</modid>\n`
-                                  + `  </info>\n`
-                                  + `</kcd_mod>`
-      );
-      const MODMANIFEST_PATH = path.join(fileName, rootPath, 'mod.manifest');
-      fs.writeFileSync(
-        MODMANIFEST_PATH,
-        `${MODMANIFEST_CONTENT}`,
-        { encoding: "utf8" },
-      );
-      files.push(path.join(rootPath, 'mod.manifest'));
+    try {
+      //Generate basic mod.manifest with modid=MOD_FOLDER
+      const MODMANIFEST_CONTENT =
+        `<?xml version="1.0" encoding="utf-8"?>\n` +
+        `<kcd_mod>\n` +
+        `  <info>\n` +
+        `    <name>${MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, "")}</name>\n` +
+        `    <modid>${MOD_FOLDER}</modid>\n` +
+        `  </info>\n` +
+        `</kcd_mod>`;
+      const MODMANIFEST_PATH = path.join(fileName, rootPath, "mod.manifest");
+      fs.writeFileSync(MODMANIFEST_PATH, `${MODMANIFEST_CONTENT}`, { encoding: "utf8" });
+      files.push(path.join(rootPath, "mod.manifest"));
     } catch {
-      log('error', `Could not create mod.manifest for mod ${MOD_NAME}`);
+      log("error", `Could not create mod.manifest for mod ${MOD_NAME}`);
     }
   }
   const MOD_ATTRIBUTE = {
-    type: 'attribute',
-    key: 'modRootPath',
+    type: "attribute",
+    key: "modRootPath",
     value: path.basename(rootPath),
   };
-  const MOD_ATTRIBUTE2 = { //this attribute is used to identify the mod name in serializeLoadOrder
-    type: 'attribute',
+  const MOD_ATTRIBUTE2 = {
+    //this attribute is used to identify the mod name in serializeLoadOrder
+    type: "attribute",
     key: LO_ATTRIBUTE,
     value: MOD_FOLDER,
   };
   const MOD_ATTRIBUTE3 = {
-    type: 'attribute',
-    key: 'modFileName',
+    type: "attribute",
+    key: "modFileName",
     value: MOD_NAME,
   };
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(MOD_FOLDER, file.substr(idx)),
     };
@@ -549,14 +569,21 @@ function installMod(files, fileName) {
 
 //Installer test for Root folder files
 function testRoot(files, gameId) {
-  const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map(folder => folder.toLowerCase());
-  const isFolder = files.some(file => ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && ( isFolder );
+  const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map((folder) => folder.toLowerCase());
+  const isFolder = files.some((file) =>
+    ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
+  );
+  let supported = gameId === spec.game.id && isFolder;
 
   // Test for a mod installer
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -568,20 +595,22 @@ function testRoot(files, gameId) {
 
 //Installer install Root folder files
 function installRoot(files) {
-  const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map(folder => folder.toLowerCase());
-  const modFile = files.find(file => ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
+  const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map((folder) => folder.toLowerCase());
+  const modFile = files.find((file) =>
+    ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
+  );
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -593,13 +622,18 @@ function installRoot(files) {
 
 //Installer test for Root folder files
 function testCfg(files, gameId) {
-  const isCfg = files.find(file => path.extname(file).toLowerCase() === CFG_EXT) !== undefined;
-  let supported = (gameId === spec.game.id) && ( isCfg );
+  const isCfg = files.find((file) => path.extname(file).toLowerCase() === CFG_EXT) !== undefined;
+  let supported = gameId === spec.game.id && isCfg;
 
   // Test for a mod installer
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -611,19 +645,19 @@ function testCfg(files, gameId) {
 
 //Installer install Root folder files
 function installCfg(files) {
-  const modFile = files.find(file => path.extname(file).toLowerCase() === CFG_EXT);
+  const modFile = files.find((file) => path.extname(file).toLowerCase() === CFG_EXT);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -635,14 +669,19 @@ function installCfg(files) {
 
 //Test for Mod Loader mods
 function testBinaries(files, gameId) {
-  const isDll = files.find(file => path.extname(file).toLowerCase() === DLL_EXT) !== undefined;
-  const isExe = files.find(file => path.extname(file).toLowerCase() === EXE_EXT) !== undefined;
-  let supported = (gameId === spec.game.id) && ( isDll || isExe );
+  const isDll = files.find((file) => path.extname(file).toLowerCase() === DLL_EXT) !== undefined;
+  const isExe = files.find((file) => path.extname(file).toLowerCase() === EXE_EXT) !== undefined;
+  let supported = gameId === spec.game.id && (isDll || isExe);
 
   // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -654,15 +693,13 @@ function testBinaries(files, gameId) {
 
 //Install Mod Loader mods
 function installBinaries(files) {
-  const setModTypeInstruction = { type: 'setmodtype', value: BINARIES_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: BINARIES_ID };
   // Remove empty directories
-  const filtered = files.filter(file =>
-    (!file.endsWith(path.sep))
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep));
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file),
     };
@@ -673,12 +710,17 @@ function installBinaries(files) {
 
 //Fallback installer to root folder
 function testFallback(files, gameId) {
-  let supported = (gameId === spec.game.id);
+  let supported = gameId === spec.game.id;
 
   // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -691,14 +733,12 @@ function testFallback(files, gameId) {
 //Fallback installer to root folder
 function installFallback(api, files, destinationPath) {
   fallbackInstallerNotify(api, destinationPath);
-  const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
 
-  const filtered = files.filter(file =>
-    (!file.endsWith(path.sep))
-  );
-  const instructions = filtered.map(file => {
+  const filtered = files.filter((file) => !file.endsWith(path.sep));
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: file,
     };
@@ -710,53 +750,69 @@ function installFallback(api, files, destinationPath) {
 function fallbackInstallerNotify(api, modName) {
   const state = api.getState();
   STAGING_FOLDER = selectors.installPathForGame(state, spec.game.id);
-  modName = path.basename(modName, '.installing');
-  const id = modName.replace(/[^a-zA-Z0-9\s]*( )*/gi, '').slice(0, 20);
+  modName = path.basename(modName, ".installing");
+  const id = modName.replace(/[^a-zA-Z0-9\s]*( )*/gi, "").slice(0, 20);
   const NOTIF_ID = `${GAME_ID}-${id}-fallback`;
-  const MESSAGE = 'Fallback installer reached for ' + modName;
+  const MESSAGE = "Fallback installer reached for " + modName;
   api.sendNotification({
     id: NOTIF_ID,
-    type: 'info',
+    type: "info",
     message: MESSAGE,
     allowSuppress: true,
     actions: [
       {
-        title: 'More',
+        title: "More",
         action: (dismiss) => {
-          api.showDialog('question', MESSAGE, {
-            text: `The mod you just installed reached the fallback installer. This means Vortex could not determine where to place these mod files.\n`
-                + `Please check the mod page description and review the files in the mod staging folder to determine if manual file manipulation is required.\n`
-                + `\n`
-                + `If you think that Vortex should be capable to install this mod to a specific folder, please contact the extension developer for support at the link below.\n`
-                + `\n`
-                + `Mod Name: ${modName}.\n`
-                + `\n`
-          }, [
-            { label: 'Continue', action: () => dismiss() },
+          api.showDialog(
+            "question",
+            MESSAGE,
             {
-              label: 'Contact Ext. Developer', action: () => {
-                util.opn(`${EXTENSION_URL}?tab=posts`).catch(() => null);
-                dismiss();
-              }
-            }, //*/
-            //*
-            { label: `Open Mod Page + Staging Folder`, action: () => {
-              util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
-              const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
-              const modMatch = Object.values(mods).find(mod => mod.installationPath === modName);
-              log('warn', `Found ${modMatch?.id} for ${modName}`);
-              let PAGE = ``;
-              if (modMatch) {
-                const MOD_ID = modMatch.attributes.modId;
-                if (MOD_ID !== undefined) {
-                  PAGE = `${MOD_ID}?tab=description`;
-                }
-              }
-              const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
-              util.opn(MOD_PAGE_URL).catch(() => null);
-              dismiss();
-            }}, //*/
-          ]);
+              text:
+                `The mod you just installed reached the fallback installer. This means Vortex could not determine where to place these mod files.\n` +
+                `Please check the mod page description and review the files in the mod staging folder to determine if manual file manipulation is required.\n` +
+                `\n` +
+                `If you think that Vortex should be capable to install this mod to a specific folder, please contact the extension developer for support at the link below.\n` +
+                `\n` +
+                `Mod Name: ${modName}.\n` +
+                `\n`,
+            },
+            [
+              { label: "Continue", action: () => dismiss() },
+              {
+                label: "Contact Ext. Developer",
+                action: () => {
+                  util.opn(`${EXTENSION_URL}?tab=posts`).catch(() => null);
+                  dismiss();
+                },
+              }, //*/
+              //*
+              {
+                label: `Open Mod Page + Staging Folder`,
+                action: () => {
+                  util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
+                  const mods = util.getSafe(
+                    api.store.getState(),
+                    ["persistent", "mods", spec.game.id],
+                    {},
+                  );
+                  const modMatch = Object.values(mods).find(
+                    (mod) => mod.installationPath === modName,
+                  );
+                  log("warn", `Found ${modMatch?.id} for ${modName}`);
+                  let PAGE = ``;
+                  if (modMatch) {
+                    const MOD_ID = modMatch.attributes.modId;
+                    if (MOD_ID !== undefined) {
+                      PAGE = `${MOD_ID}?tab=description`;
+                    }
+                  }
+                  const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
+                  util.opn(MOD_PAGE_URL).catch(() => null);
+                  dismiss();
+                },
+              }, //*/
+            ],
+          );
         },
       },
     ],
@@ -770,8 +826,9 @@ function fallbackInstallerNotify(api, modName) {
 function notifyLoadOrderPaused(api, gameId) {
   api.sendNotification({
     id: `${gameId}-loadorder-update-paused`,
-    type: 'warning',
-    message: 'Load order changes are paused while a mod update finishes. Reorder again once it completes.',
+    type: "warning",
+    message:
+      "Load order changes are paused while a mod update finishes. Reorder again once it completes.",
     displayMS: 6000,
   });
 }
@@ -784,35 +841,36 @@ async function deserializeLoadOrder(context) {
     //and the page keeps showing the real load order rather than a placeholder row.
     const updateState = context.api.getState();
     const updateProfileId = selectors.lastActiveProfileForGame(updateState, GAME_ID);
-    return util.getSafe(updateState, ['persistent', 'loadOrder', updateProfileId], []);
+    return util.getSafe(updateState, ["persistent", "loadOrder", updateProfileId], []);
   } //*/
 
   //Seed lock state from the stored load order. The game's own load order file has no lock
   //field, so without this a locked entry would silently unlock on the next deploy or page mount.
   const prevState = context.api.getState();
-  const prevLO = util.getSafe(prevState, ['persistent', 'loadOrder', selectors.lastActiveProfileForGame(prevState, GAME_ID)], []);
-  const prevById = new Map(prevLO.map(e => [e.id, e]));
+  const prevLO = util.getSafe(
+    prevState,
+    ["persistent", "loadOrder", selectors.lastActiveProfileForGame(prevState, GAME_ID)],
+    [],
+  );
+  const prevById = new Map(prevLO.map((e) => [e.id, e]));
 
   //Set basic information for load order paths and data
   let gameDir = getDiscoveryPath(context.api);
   if (gameDir === undefined) {
-    return Promise.reject(new util.NotFound('Game not found'));
+    return Promise.reject(new util.NotFound("Game not found"));
   }
   GAME_VERSION = await setGameVersion(gameDir);
-  const mods = util.getSafe(context.api.store.getState(), ['persistent', 'mods', spec.game.id], {});
+  const mods = util.getSafe(context.api.store.getState(), ["persistent", "mods", spec.game.id], {});
   let loadOrderPath = path.join(gameDir, LO_PATH);
-  if (GAME_VERSION === 'xbox') {
+  if (GAME_VERSION === "xbox") {
     loadOrderPath = LO_PATH_XBOX;
   }
   //The load order page can mount before setup has created the file, so make sure it exists
   //before reading it.
   await fs.ensureFileAsync(loadOrderPath);
-  let loadOrderFile = await fs.readFileAsync(
-    loadOrderPath,
-    { encoding: "utf8", }
-  );
+  let loadOrderFile = await fs.readFileAsync(loadOrderPath, { encoding: "utf8" });
   let modFolderPath = path.join(gameDir, MOD_PATH);
-  if (GAME_VERSION === 'xbox') {
+  if (GAME_VERSION === "xbox") {
     modFolderPath = MOD_PATH_XBOX;
   }
 
@@ -822,18 +880,18 @@ async function deserializeLoadOrder(context) {
     modFolders = await fs.readdirAsync(modFolderPath);
     //modFolders = modFolders.filter((folderName) => !IGNORED_EXTS.includes(path.extname(folderName)));
     modFolders = modFolders.filter((folderName) => isDir(modFolderPath, folderName));
-    modFolders.sort((a,b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+    modFolders.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
   } catch {
-    return Promise.reject(new Error('Failed to read Mods folder'));
+    return Promise.reject(new Error("Failed to read Mods folder"));
   }
 
   //Get all mod folders from Steam Workshop folder
   let modFoldersSteamWorkshop = [];
   let steamWorkshopIds = [];
   let SWFOLDER_FOUND = false;
-  let STEAMWORKSHOP_PATH = '';
+  let STEAMWORKSHOP_PATH = "";
   //get workshop mods path
-  if (GAME_VERSION === 'steam') {
+  if (GAME_VERSION === "steam") {
     try {
       const SPLIT_PATH = gameDir.split(path.sep);
       const SPLIT_PATH_LENGTH = SPLIT_PATH.length;
@@ -841,47 +899,55 @@ async function deserializeLoadOrder(context) {
       //const STEAM_INSTALL_PATH = gameDir.replace(/\/common\/KindgomComeDeliverance2/, '');
       STEAMWORKSHOP_PATH = path.join(STEAM_INSTALL_PATH, STEAMWORKSHOP_FOLDER);
     } catch (err) {
-      log('warn', `Could not modify Steam game path to set Steam Workshop mods folder: ${err}`);
+      log("warn", `Could not modify Steam game path to set Steam Workshop mods folder: ${err}`);
     }
     // Read Steam Workshop mod folders if on Steam game version
     try {
       await fs.statAsync(STEAMWORKSHOP_PATH);
-      modFoldersSteamWorkshop = await fs.readdirAsync(STEAMWORKSHOP_PATH)
-      modFoldersSteamWorkshop = modFoldersSteamWorkshop.filter(folder => isDir(STEAMWORKSHOP_PATH, folder))
-        .sort((a,b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+      modFoldersSteamWorkshop = await fs.readdirAsync(STEAMWORKSHOP_PATH);
+      modFoldersSteamWorkshop = modFoldersSteamWorkshop
+        .filter((folder) => isDir(STEAMWORKSHOP_PATH, folder))
+        .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
       SWFOLDER_FOUND = true;
     } catch (err) {
       SWFOLDER_FOUND = false;
-      log('warn', `Failed to read Steam Workshop mods folder: ${err}`);
+      log("warn", `Failed to read Steam Workshop mods folder: ${err}`);
       const NOTIF_ID = `${GAME_ID}-steamworkshopfolder`;
       const MESSAGE = `Could not read Steam Workshop mods folder.`;
       context.api.sendNotification({
         id: NOTIF_ID,
-        type: 'warning',
+        type: "warning",
         message: MESSAGE,
         allowSuppress: true,
         actions: [
           {
-            title: 'More',
+            title: "More",
             action: (dismiss) => {
-              context.api.showDialog('question', MESSAGE, {
-                text: `Vortex detected you are using the Steam version of the game, but could not read the Steam Workshop mods folder.\n`
-                    + `Vortex looked for the Steam Workshop mods folder at:\n`
-                    + `${STEAMWORKSHOP_PATH}\n`
-                    + '\n'
-                    + 'If you are NOT using any Steam Workshop mods, then no action is required.\n'
-                    + '\n'
-                    + 'If you ARE using Steam Workshop mods:.\n'
-                    + 'You may need to move your Steam Library outside of the Program Files (x86) folder to fix this issue.\n'
-              }, [
-                { label: 'Acknowledge', action: () => dismiss() },
+              context.api.showDialog(
+                "question",
+                MESSAGE,
                 {
-                  label: 'Never Show Again', action: () => {
-                    context.api.suppressNotification(NOTIF_ID);
-                    dismiss();
-                  }
+                  text:
+                    `Vortex detected you are using the Steam version of the game, but could not read the Steam Workshop mods folder.\n` +
+                    `Vortex looked for the Steam Workshop mods folder at:\n` +
+                    `${STEAMWORKSHOP_PATH}\n` +
+                    "\n" +
+                    "If you are NOT using any Steam Workshop mods, then no action is required.\n" +
+                    "\n" +
+                    "If you ARE using Steam Workshop mods:.\n" +
+                    "You may need to move your Steam Library outside of the Program Files (x86) folder to fix this issue.\n",
                 },
-              ]);
+                [
+                  { label: "Acknowledge", action: () => dismiss() },
+                  {
+                    label: "Never Show Again",
+                    action: () => {
+                      context.api.suppressNotification(NOTIF_ID);
+                      dismiss();
+                    },
+                  },
+                ],
+              );
             },
           },
         ],
@@ -890,11 +956,12 @@ async function deserializeLoadOrder(context) {
     //Make an array of all the modid's parsed from the Steam Workshop mods mod.manifest
     if (SWFOLDER_FOUND === true && modFoldersSteamWorkshop.length > 0) {
       for (let folder of modFoldersSteamWorkshop) {
-        let MOD_ID = '';
-        let modManifest = '';
-        let FOLDER_PATH = '';
-        const MOD_ID_ERROR = 'steamworkshop-error-read-modmanifest'
-        try { //Read mod.manifest file to get modid
+        let MOD_ID = "";
+        let modManifest = "";
+        let FOLDER_PATH = "";
+        const MOD_ID_ERROR = "steamworkshop-error-read-modmanifest";
+        try {
+          //Read mod.manifest file to get modid
           /*
           const RAW_MOD_FOLDERS = await fs.readdirAsync(path.join(STEAMWORKSHOP_PATH, folder)); //Raw read, with folders and files
           MOD_FOLDERS = RAW_MOD_FOLDERS.filter(item => fs.statSync(path.join(STEAMWORKSHOP_PATH, folder, item)).isDirectory()); //filter for only folders
@@ -904,61 +971,74 @@ async function deserializeLoadOrder(context) {
             FOLDER_PATH = path.join(STEAMWORKSHOP_PATH, folder, MOD_FOLDERS[0], 'mod.manifest');
           }
           //*/
-          FOLDER_PATH = path.join(STEAMWORKSHOP_PATH, folder, 'mod.manifest');
-          modManifest = await fs.readFileAsync(FOLDER_PATH, 'utf8');
+          FOLDER_PATH = path.join(STEAMWORKSHOP_PATH, folder, "mod.manifest");
+          modManifest = await fs.readFileAsync(FOLDER_PATH, "utf8");
           const parser = new DOMParser();
-          const XML = parser.parseFromString(modManifest, 'text/xml');
-          try { //try to get the modid from mod.manifest
+          const XML = parser.parseFromString(modManifest, "text/xml");
+          try {
+            //try to get the modid from mod.manifest
             MOD_ID = XML.getElementsByTagName("modid")[0].childNodes[0].nodeValue;
-          } catch { //could not get modid. Try for name, then lowercase and replace whitespace with "_"
+          } catch {
+            //could not get modid. Try for name, then lowercase and replace whitespace with "_"
             const MOD_NAME = XML.getElementsByTagName("name")[0].childNodes[0].nodeValue;
             const MOD_NAME_LOWER = MOD_NAME.toLowerCase();
-            MOD_ID = MOD_NAME_LOWER.replace(/ /gi, '_');
+            MOD_ID = MOD_NAME_LOWER.replace(/ /gi, "_");
           }
-          log('info', `Steam Workshop mod.manfest read: #${folder} with ID ${MOD_ID}`);
-        } catch (err) { //mod.manifest could not be read
+          log("info", `Steam Workshop mod.manfest read: #${folder} with ID ${MOD_ID}`);
+        } catch (err) {
+          //mod.manifest could not be read
           MOD_ID = MOD_ID_ERROR;
-          log('warn', `Could read mod.manifest for Steam Workshop mod ${folder}: ${err}`);
+          log("warn", `Could read mod.manifest for Steam Workshop mod ${folder}: ${err}`);
           const NOTIF_ID = `${GAME_ID}-steamworkshoperror-${folder}`;
           const MESSAGE = `Corrupt mod.manifest file in Steam Workshop mod #${folder}. Report this error to the mod author.`;
           const URL = `https://steamcommunity.com/sharedfiles/filedetails/?id=${folder}`;
           context.api.sendNotification({
             id: NOTIF_ID,
-            type: 'warning',
+            type: "warning",
             message: MESSAGE,
             allowSuppress: true,
             actions: [
               {
-                title: 'More',
+                title: "More",
                 action: (dismiss) => {
-                  context.api.showDialog('question', MESSAGE, {
-                    text: `Steam Workshop mod #${folder} contains a corrupt mod.manifest file. This file is required for all KCD2 mods.\n`
-                        + 'This issue prevents the mod from being entered into the mod_order.txt file for load ordering, and thus prevents the game from loading the mod.\n'
-                        + `Vortex tried to read the mod.manifest file at:\n`
-                        + `${FOLDER_PATH}\n`
-                        + '\n'
-                        + 'Please report this error to the mod author.\n'
-                        + `You can open the Steam Workshop mod page with the button below.\n`
-                  }, [
-                    { label: 'Dismiss', action: () => dismiss() },
-                    { label: 'Open Steam Workshop Page', action: () => {
-                      util.opn(URL).catch(() => null);
-                      dismiss();
-                    }},
+                  context.api.showDialog(
+                    "question",
+                    MESSAGE,
                     {
-                      label: 'Never Show Again', action: () => {
-                        context.api.suppressNotification(NOTIF_ID);
-                        dismiss();
-                      }
+                      text:
+                        `Steam Workshop mod #${folder} contains a corrupt mod.manifest file. This file is required for all KCD2 mods.\n` +
+                        "This issue prevents the mod from being entered into the mod_order.txt file for load ordering, and thus prevents the game from loading the mod.\n" +
+                        `Vortex tried to read the mod.manifest file at:\n` +
+                        `${FOLDER_PATH}\n` +
+                        "\n" +
+                        "Please report this error to the mod author.\n" +
+                        `You can open the Steam Workshop mod page with the button below.\n`,
                     },
-                  ]);
+                    [
+                      { label: "Dismiss", action: () => dismiss() },
+                      {
+                        label: "Open Steam Workshop Page",
+                        action: () => {
+                          util.opn(URL).catch(() => null);
+                          dismiss();
+                        },
+                      },
+                      {
+                        label: "Never Show Again",
+                        action: () => {
+                          context.api.suppressNotification(NOTIF_ID);
+                          dismiss();
+                        },
+                      },
+                    ],
+                  );
                 },
               },
             ],
           });
         }
         //push to array if not error or already present
-        if ((!steamWorkshopIds.includes(MOD_ID) && (MOD_ID !== MOD_ID_ERROR))) {
+        if (!steamWorkshopIds.includes(MOD_ID) && MOD_ID !== MOD_ID_ERROR) {
           steamWorkshopIds.push(MOD_ID);
         }
       }
@@ -967,25 +1047,35 @@ async function deserializeLoadOrder(context) {
 
   //Determine if mod is managed by Vortex
   const isVortexManaged = async (modId) => {
-    return fs.statAsync(path.join(modFolderPath, modId, `__folder_managed_by_vortex`))
+    return fs
+      .statAsync(path.join(modFolderPath, modId, `__folder_managed_by_vortex`))
       .then(() => true)
-      .catch(() => false)
+      .catch(() => false);
   };
 
   // Get readable mod name using attribute from mod installer
   async function getModName(folder) {
     const VORTEX = await isVortexManaged(folder);
     const WORKSHOP = steamWorkshopIds.includes(folder);
-    if (WORKSHOP) { //check if mod is from Steam Workshop
-      return ('Steam Workshop Mod');
+    if (WORKSHOP) {
+      //check if mod is from Steam Workshop
+      return "Steam Workshop Mod";
     }
-    if (!VORTEX) { //If not Steam Workshop, check if mod was not installed by Vortex
-      return ('Manual Mod');
+    if (!VORTEX) {
+      //If not Steam Workshop, check if mod was not installed by Vortex
+      return "Manual Mod";
     }
-    try {//Mod installed by Vortex, find mod where atrribute (from installer) matches folder in the load order
-      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], '') === folder));
+    try {
+      //Mod installed by Vortex, find mod where atrribute (from installer) matches folder in the load order
+      const modMatch = Object.values(mods).find(
+        (mod) => util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], "") === folder,
+      );
       if (modMatch) {
-        return modMatch.attributes.customFileName ?? modMatch.attributes.logicalFileName ?? modMatch.attributes.name;
+        return (
+          modMatch.attributes.customFileName ??
+          modMatch.attributes.logicalFileName ??
+          modMatch.attributes.name
+        );
       }
       return folder;
     } catch {
@@ -994,46 +1084,45 @@ async function deserializeLoadOrder(context) {
   }
 
   // Get Vortex mod id using attribute from mod installer
-   async function getModId(folder) {
-     try {//find mod where atrribute (from installer) matches file in the load order
-       const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], '') === folder)); //find mod by folder name attribute
-       if (modMatch) {
-         return modMatch.id;
-       }
-       return undefined;
-     } catch {
-       return undefined;
-     }
-   }
+  async function getModId(folder) {
+    try {
+      //find mod where atrribute (from installer) matches file in the load order
+      const modMatch = Object.values(mods).find(
+        (mod) => util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], "") === folder,
+      ); //find mod by folder name attribute
+      if (modMatch) {
+        return modMatch.id;
+      }
+      return undefined;
+    } catch {
+      return undefined;
+    }
+  }
 
   //Set load order (async version)
-  let loadOrder = await loadOrderFile.split("\n")
-    .reduce(async (accumP, line) => {
-      const accum = await accumP;
-      const folder = line.replace(/#/g, '').trim();
-      if ((!modFolders.includes(folder) && !steamWorkshopIds.includes(folder))) {
-        return Promise.resolve(accum);
-      }
-      accum.push(
-        {
-          id: folder,
-          name: `${await getModName(folder)} (${folder})`,
-          modId: await isVortexManaged(folder) ? await getModId(folder) : undefined,
-          enabled: !line.startsWith("#"),
-          locked: prevById.get(folder)?.locked ?? false,
-        }
-      );
+  let loadOrder = await loadOrderFile.split("\n").reduce(async (accumP, line) => {
+    const accum = await accumP;
+    const folder = line.replace(/#/g, "").trim();
+    if (!modFolders.includes(folder) && !steamWorkshopIds.includes(folder)) {
       return Promise.resolve(accum);
-    }, Promise.resolve([])
-  );
+    }
+    accum.push({
+      id: folder,
+      name: `${await getModName(folder)} (${folder})`,
+      modId: (await isVortexManaged(folder)) ? await getModId(folder) : undefined,
+      enabled: !line.startsWith("#"),
+      locked: prevById.get(folder)?.locked ?? false,
+    });
+    return Promise.resolve(accum);
+  }, Promise.resolve([]));
 
   //push new mod folders from Mods folder to loadOrder
   for (let folder of modFolders) {
-    if (!loadOrder.find((mod) => (mod.id === folder))) {
+    if (!loadOrder.find((mod) => mod.id === folder)) {
       loadOrder.push({
         id: folder,
         name: `${await getModName(folder)} (${folder})`,
-        modId: await isVortexManaged(folder) ? await getModId(folder) : undefined,
+        modId: (await isVortexManaged(folder)) ? await getModId(folder) : undefined,
         enabled: true,
         locked: prevById.get(folder)?.locked ?? false,
       });
@@ -1043,7 +1132,7 @@ async function deserializeLoadOrder(context) {
   //* push new modid's from Steam Workshop mods to loadOrder
   if (steamWorkshopIds.length > 0) {
     for (let MOD_ID of steamWorkshopIds) {
-      if (!loadOrder.find((mod) => (mod.id === MOD_ID))) {
+      if (!loadOrder.find((mod) => mod.id === MOD_ID)) {
         loadOrder.push({
           id: MOD_ID,
           name: `${await getModName(MOD_ID)} (${MOD_ID})`,
@@ -1066,21 +1155,15 @@ async function serializeLoadOrder(context, loadOrder) {
   } //*/
   let gameDir = getDiscoveryPath(context.api);
   if (gameDir === undefined) {
-    return Promise.reject(new util.NotFound('Game not found'));
+    return Promise.reject(new util.NotFound("Game not found"));
   }
   GAME_VERSION = await setGameVersion(gameDir);
   let loadOrderPath = path.join(gameDir, LO_PATH);
-  if (GAME_VERSION === 'xbox') {
+  if (GAME_VERSION === "xbox") {
     loadOrderPath = LO_PATH_XBOX;
   }
-  let loadOrderOutput = loadOrder
-    .map((mod) => (mod.enabled ? mod.id : `#${mod.id}`))
-    .join("\n");
-  return fs.writeFileAsync(
-    loadOrderPath,
-    `${loadOrderOutput}`,
-    { encoding: "utf8" },
-  );
+  let loadOrderOutput = loadOrder.map((mod) => (mod.enabled ? mod.id : `#${mod.id}`)).join("\n");
+  return fs.writeFileAsync(loadOrderPath, `${loadOrderOutput}`, { encoding: "utf8" });
 }
 
 // MAIN FUNCTIONS /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1088,25 +1171,26 @@ async function serializeLoadOrder(context, loadOrder) {
 //* Resolve game version dynamically for different game versions
 async function resolveGameVersion(gamePath) {
   GAME_VERSION = await setGameVersion(gamePath);
-  let version = '0.0.0';
-  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+  let version = "0.0.0";
+  if (GAME_VERSION === "xbox") {
+    // use appxmanifest.xml for Xbox version
     try {
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
     } catch (err) {
-      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      log("error", `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
       return Promise.resolve(version);
     }
-  }
-  else { // use exe
+  } else {
+    // use exe
     try {
-      const exeVersion = require('exe-version');
+      const exeVersion = require("exe-version");
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
       return Promise.resolve(version);
     } catch (err) {
-      log('error', `Could not read ${EXEC} file to get game version: ${err}`);
+      log("error", `Could not read ${EXEC} file to get game version: ${err}`);
       return Promise.resolve(version);
     }
   }
@@ -1119,13 +1203,13 @@ async function setup(discovery, api, gameSpec) {
   STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
   GAME_VERSION = await setGameVersion(GAME_PATH);
-  if (GAME_VERSION === 'xbox') {
+  if (GAME_VERSION === "xbox") {
     await fs.ensureDirWritableAsync(MOD_PATH_XBOX);
   } else {
     await fs.ensureDirWritableAsync(path.join(discovery.path, MOD_PATH));
   }
   if (LOAD_ORDER_ENABLED) {
-    if (GAME_VERSION === 'xbox') {
+    if (GAME_VERSION === "xbox") {
       await fs.ensureFileAsync(LO_PATH_XBOX);
     } else {
       await fs.ensureFileAsync(path.join(discovery.path, LO_PATH));
@@ -1145,7 +1229,8 @@ function applyGame(context, gameSpec) {
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     getGameVersion: resolveGameVersion,
-    supportedTools: [ //3rd party tools and launchers
+    supportedTools: [
+      //3rd party tools and launchers
       {
         id: `${GAME_ID}-devmodelaunch`,
         name: `KCD2 DevMode Launch`,
@@ -1157,7 +1242,7 @@ function applyGame(context, gameSpec) {
         exclusive: true,
         //shell: true,
         //defaultPrimary: true,
-        parameters: ['-devmode +exec user.cfg']
+        parameters: ["-devmode +exec user.cfg"],
       },
       {
         id: `${GAME_ID}-devmodelaunch-epic`,
@@ -1170,7 +1255,7 @@ function applyGame(context, gameSpec) {
         exclusive: true,
         //shell: true,
         //defaultPrimary: true,
-        parameters: ['-devmode +exec user.cfg']
+        parameters: ["-devmode +exec user.cfg"],
       },
       {
         id: `${GAME_ID}-devmodelaunch-gog`,
@@ -1183,7 +1268,7 @@ function applyGame(context, gameSpec) {
         exclusive: true,
         //shell: true,
         //defaultPrimary: true,
-        parameters: ['-devmode +exec user.cfg']
+        parameters: ["-devmode +exec user.cfg"],
       },
       {
         id: `${GAME_ID}-devmodelaunch-xbox`,
@@ -1196,7 +1281,7 @@ function applyGame(context, gameSpec) {
         exclusive: true,
         //shell: true,
         //defaultPrimary: true,
-        parameters: ['-devmode +exec user.cfg']
+        parameters: ["-devmode +exec user.cfg"],
       },
     ], //*/
   };
@@ -1204,37 +1289,65 @@ function applyGame(context, gameSpec) {
 
   //register mod types recusively
   (gameSpec.modTypes || []).forEach((type, idx) => {
-    context.registerModType(type.id, modTypePriority(type.priority) + idx, (gameId) => {
-      var _a;
-      return (gameId === gameSpec.game.id)
-        && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
+    context.registerModType(
+      type.id,
+      modTypePriority(type.priority) + idx,
+      (gameId) => {
+        var _a;
+        return (
+          gameId === gameSpec.game.id &&
+          !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+          _a === void 0
+            ? void 0
+            : _a.path)
+        );
+      },
+      (game) => pathPattern(context.api, game, type.targetPath),
+      () => Promise.resolve(false),
+      { name: type.name },
+    );
   });
   //register mod types explicitly
-  context.registerModType(MOD_ID, 25, //!registered explicity due to Xbox path difference
+  context.registerModType(
+    MOD_ID,
+    25, //!registered explicity due to Xbox path difference
     (gameId) => {
       var _a;
-      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+      return (
+        gameId === GAME_ID &&
+        !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+        _a === void 0
+          ? void 0
+          : _a.path)
+      );
     },
     (game) => {
       GAME_VERSION = setGameVersionSync(context.api);
-      if (GAME_VERSION === 'xbox') {
+      if (GAME_VERSION === "xbox") {
         return pathPattern(context.api, game, MOD_PATH_XBOX);
       } else {
-        return pathPattern(context.api, game, path.join('{gamePath}', MOD_PATH));
+        return pathPattern(context.api, game, path.join("{gamePath}", MOD_PATH));
       }
     },
     () => Promise.resolve(false),
-    { name: MOD_NAME }
+    { name: MOD_NAME },
   );
-  context.registerModType(BINARIES_ID, 45, //!registered explicity due to variable binaries path
+  context.registerModType(
+    BINARIES_ID,
+    45, //!registered explicity due to variable binaries path
     (gameId) => {
       var _a;
-      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+      return (
+        gameId === GAME_ID &&
+        !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+        _a === void 0
+          ? void 0
+          : _a.path)
+      );
     },
     (game) => pathPattern(context.api, game, BINARIES_TARGET),
     () => Promise.resolve(false),
-    { name: BINARIES_NAME }
+    { name: BINARIES_NAME },
   );
 
   //register mod installers
@@ -1242,84 +1355,158 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(ROOT_ID, 30, testRoot, installRoot);
   context.registerInstaller(`${GAME_ID}-cfg`, 35, testCfg, installCfg);
   context.registerInstaller(BINARIES_ID, 40, testBinaries, installBinaries);
-  context.registerInstaller(`${GAME_ID}-fallback`, 45, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
+  context.registerInstaller(`${GAME_ID}-fallback`, 45, testFallback, (files, destinationPath) =>
+    installFallback(context.api, files, destinationPath),
+  );
 
   //register actions and logs
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Log - kcd.log', async () => {
-    GAME_PATH = getDiscoveryPath(context.api);
-    GAME_VERSION = await setGameVersion(GAME_PATH);
-    if (GAME_VERSION === 'xbox') {
-      util.opn(path.join(DOCUMENTS, LOG_FILE)).catch(() => null);
-    } else {
-      util.opn(path.join(GAME_PATH, LOG_FILE)).catch(() => null);
-    }
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open LO File - mod_order.txt', async () => {
-    GAME_PATH = getDiscoveryPath(context.api);
-    GAME_VERSION = await setGameVersion(GAME_PATH);
-    if (GAME_VERSION === 'xbox') {
-      util.opn(LO_PATH_XBOX).catch(() => null);
-    } else {
-      util.opn(path.join(GAME_PATH, LO_PATH)).catch(() => null);
-    }
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Settings - attributes.xml', () => {
-    util.opn(path.join(CONFIG_PATH, CONFIG_FILE)).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
-    util.opn(CONFIG_PATH).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Saves Folder', () => {
-    util.opn(SAVE_PATH).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
-    util.opn(PCGAMINGWIKI_URL).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
-    util.opn(path.join(__dirname, 'CHANGELOG.md')).catch(() => null);
-    }, () => {
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Log - kcd.log",
+    async () => {
+      GAME_PATH = getDiscoveryPath(context.api);
+      GAME_VERSION = await setGameVersion(GAME_PATH);
+      if (GAME_VERSION === "xbox") {
+        util.opn(path.join(DOCUMENTS, LOG_FILE)).catch(() => null);
+      } else {
+        util.opn(path.join(GAME_PATH, LOG_FILE)).catch(() => null);
+      }
+    },
+    () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
-    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    util.opn(DOWNLOAD_FOLDER).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open LO File - mod_order.txt",
+    async () => {
+      GAME_PATH = getDiscoveryPath(context.api);
+      GAME_VERSION = await setGameVersion(GAME_PATH);
+      if (GAME_VERSION === "xbox") {
+        util.opn(LO_PATH_XBOX).catch(() => null);
+      } else {
+        util.opn(path.join(GAME_PATH, LO_PATH)).catch(() => null);
+      }
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Settings - attributes.xml",
+    () => {
+      util.opn(path.join(CONFIG_PATH, CONFIG_FILE)).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Config Folder",
+    () => {
+      util.opn(CONFIG_PATH).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Saves Folder",
+    () => {
+      util.opn(SAVE_PATH).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open PCGamingWiki Page",
+    () => {
+      util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "View Changelog",
+    () => {
+      util.opn(path.join(__dirname, "CHANGELOG.md")).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Submit Bug Report",
+    () => {
+      util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Downloads Folder",
+    () => {
+      util.opn(DOWNLOAD_FOLDER).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
 }
 
 //main function
@@ -1341,7 +1528,10 @@ function main(context) {
     const api = context.api;
     //* put code here that should be run (once) when Vortex starts up
     context.api.onAsync("did-deploy", async (profileId) => {
-      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
+      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(
+        context.api.getState(),
+        GAME_ID,
+      );
       if (profileId !== LAST_ACTIVE_PROFILE) return; //only reset this game's mod update flags
       //release tracking one mod id at a time, and only once that mod's new version has
       //landed and is enabled, so a deploy that fires mid-batch can't disarm the guard for
@@ -1355,16 +1545,20 @@ function main(context) {
         const mods = util.getSafe(state, ["persistent", "mods", GAME_ID], {});
         const now = Date.now();
         for (const [nexusId, { firstSeen, targetFileId }] of Array.from(updateModIds)) {
-          const landed = Object.values(mods).some((mod) =>
-            String(mod?.attributes?.modId ?? '') === nexusId &&
-            //if the target file is unknown, fall back to "installed and enabled"
-            (targetFileId === '' || String(mod?.attributes?.fileId ?? '') === targetFileId) &&
-            util.getSafe(profile, ["modState", mod.id, "enabled"], false)
+          const landed = Object.values(mods).some(
+            (mod) =>
+              String(mod?.attributes?.modId ?? "") === nexusId &&
+              //if the target file is unknown, fall back to "installed and enabled"
+              (targetFileId === "" || String(mod?.attributes?.fileId ?? "") === targetFileId) &&
+              util.getSafe(profile, ["modState", mod.id, "enabled"], false),
           );
           if (landed) {
             updateModIds.delete(nexusId);
           } else if (now - firstSeen > MAX_UPDATE_WAIT_MS) {
-            log('warn', `[${GAME_ID}] Mod update tracking for Nexus mod ${nexusId} timed out without landing; releasing load order guard for it.`);
+            log(
+              "warn",
+              `[${GAME_ID}] Mod update tracking for Nexus mod ${nexusId} timed out without landing; releasing load order guard for it.`,
+            );
             updateModIds.delete(nexusId);
           }
         }
@@ -1379,7 +1573,7 @@ function main(context) {
           const refreshedLO = await deserializeLoadOrder({ api: context.api });
           context.api.store.dispatch(actions.setFBLoadOrder(profileId, refreshedLO));
         } catch (err) {
-          log('warn', `[${GAME_ID}] post-update load order refresh failed`, err);
+          log("warn", `[${GAME_ID}] post-update load order refresh failed`, err);
         }
       }
       updating_mod = false; //reset updating flag on deploy
@@ -1389,7 +1583,10 @@ function main(context) {
     //the old one on deploy - without it every mod not yet updated still looks "already installed"
     context.api.events.on("mod-update", (gameId, modId, fileId) => {
       if (GAME_ID == gameId) {
-        updateModIds.set(String(modId), { firstSeen: Date.now(), targetFileId: String(fileId ?? '') });
+        updateModIds.set(String(modId), {
+          firstSeen: Date.now(),
+          targetFileId: String(fileId ?? ""),
+        });
       }
     });
     //detect batch mod update: the "Update all" button emits mods-update with LOCAL mod ids
@@ -1402,7 +1599,7 @@ function main(context) {
         if (nexusModId !== undefined) {
           updateModIds.set(String(nexusModId), {
             firstSeen: Date.now(),
-            targetFileId: String(mods[modId]?.attributes?.newestFileId ?? ''),
+            targetFileId: String(mods[modId]?.attributes?.newestFileId ?? ""),
           });
         }
       }
@@ -1413,7 +1610,11 @@ function main(context) {
     //downloaded (older dash-delimited vs current space-delimited), so string
     //parsing silently misses old installs.
     context.api.events.on("remove-mod", (gameMode, modId) => {
-      const removedMod = util.getSafe(api.getState(), ["persistent", "mods", GAME_ID, modId], undefined);
+      const removedMod = util.getSafe(
+        api.getState(),
+        ["persistent", "mods", GAME_ID, modId],
+        undefined,
+      );
       const nexusModId = removedMod?.attributes?.modId;
       if (nexusModId !== undefined && updateModIds.has(String(nexusModId))) {
         mod_update_all_profile = true;
@@ -1424,9 +1625,11 @@ function main(context) {
     //match (covering both the old dash and current space delimiter) is fine.
     context.api.events.on("will-install-mod", (gameId, archiveId, modId) => {
       mod_install_name = modId.split("-")[0];
-      updating_mod = GAME_ID == gameId && Array.from(updateModIds.keys()).some((id) =>
-        modId.includes("-" + id + "-") || modId.includes(" " + id + " ")
-      );
+      updating_mod =
+        GAME_ID == gameId &&
+        Array.from(updateModIds.keys()).some(
+          (id) => modId.includes("-" + id + "-") || modId.includes(" " + id + " "),
+        );
     }); //*/
   });
   return true;
@@ -1435,36 +1638,52 @@ function main(context) {
 //React load order instructions renderer
 function LoadOrderInstructions() {
   const { statusFilter, setStatusFilter } = useFbloState();
-  const { useSelector } = require('react-redux');
+  const { useSelector } = require("react-redux");
   const profile = useSelector((state) => selectors.activeProfile(state));
-  const loadOrder = useSelector((state) => util.getSafe(state, ['persistent', 'loadOrder', profile?.id], []));
-  const isLocked = (entry) => [true, 'true', 'always'].includes(entry?.locked);
+  const loadOrder = useSelector((state) =>
+    util.getSafe(state, ["persistent", "loadOrder", profile?.id], []),
+  );
+  const isLocked = (entry) => [true, "true", "always"].includes(entry?.locked);
   // Count entries matching the active filter (matched / total), shown beside the pills.
   const total = loadOrder.length;
-  const matched = statusFilter.size > 0
-    ? loadOrder.filter((e) => matchesStatus(e, statusFilter, (x) => x.enabled !== false, isLocked)).length
-    : total;
+  const matched =
+    statusFilter.size > 0
+      ? loadOrder.filter((e) =>
+          matchesStatus(e, statusFilter, (x) => x.enabled !== false, isLocked),
+        ).length
+      : total;
   // Collapse the DraggableListItem wrapper of any filtered-out row. The renderer only owns the
   // inner <li>; the two dnd <div> wrappers retain their spacing when the <li> is display:none,
   // leaving visible gaps. This :has() rule hides the whole wrapper when its row is marked hidden.
-  useInjectStyleOnce('fblo-status-filter-hide-style', LO_ROW_HIDDEN_CSS);
-  return React.createElement('div', null,
-    React.createElement(StatusPills, { active: statusFilter, setActive: setStatusFilter, groups: ['enabled', 'locked', 'unmanaged'], count: statusFilter.size > 0 ? { matched, total } : null }),
-    React.createElement('p', { style: { fontStyle: 'italic', color: '#7ec8e3' } },
-      'Filter the list above by status. Clear the filter before reordering mods.',
+  useInjectStyleOnce("fblo-status-filter-hide-style", LO_ROW_HIDDEN_CSS);
+  return React.createElement(
+    "div",
+    null,
+    React.createElement(StatusPills, {
+      active: statusFilter,
+      setActive: setStatusFilter,
+      groups: ["enabled", "locked", "unmanaged"],
+      count: statusFilter.size > 0 ? { matched, total } : null,
+    }),
+    React.createElement(
+      "p",
+      { style: { fontStyle: "italic", color: "#7ec8e3" } },
+      "Filter the list above by status. Clear the filter before reordering mods.",
     ),
-    React.createElement('br', null),
-    React.createElement('p', null,
+    React.createElement("br", null),
+    React.createElement(
+      "p",
+      null,
       `Drag and drop the mods on the left to change the order in which they load.   `,
     ),
-    React.createElement('br', null),
-    React.createElement('p', null,
+    React.createElement("br", null),
+    React.createElement(
+      "p",
+      null,
       `${GAME_NAME} loads mods in the order you set from top to bottom.   `,
     ),
-    React.createElement('br', null),
-    React.createElement('p', null,
-      `De-select mods to prevent the game from loading them.   `,
-    ),
+    React.createElement("br", null),
+    React.createElement("p", null, `De-select mods to prevent the game from loading them.   `),
   );
 }
 
@@ -1473,20 +1692,31 @@ let _fbloSelectedIds = new Set();
 let _fbloContextMenu = null;
 let _fbloStatusFilter = new Set();
 const _fbloListeners = new Set();
-function _notifyFblo() { _fbloListeners.forEach(l => l()); }
+function _notifyFblo() {
+  _fbloListeners.forEach((l) => l());
+}
 function useFbloState() {
-  const [, forceUpdate] = React.useReducer(x => x + 1, 0);
+  const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
   React.useEffect(() => {
     _fbloListeners.add(forceUpdate);
     return () => _fbloListeners.delete(forceUpdate);
   }, []);
   return {
     selectedIds: _fbloSelectedIds,
-    setSelectedIds: (fn) => { _fbloSelectedIds = fn(_fbloSelectedIds); _notifyFblo(); },
+    setSelectedIds: (fn) => {
+      _fbloSelectedIds = fn(_fbloSelectedIds);
+      _notifyFblo();
+    },
     contextMenu: _fbloContextMenu,
-    setContextMenu: (val) => { _fbloContextMenu = val; _notifyFblo(); },
+    setContextMenu: (val) => {
+      _fbloContextMenu = val;
+      _notifyFblo();
+    },
     statusFilter: _fbloStatusFilter,
-    setStatusFilter: (next) => { _fbloStatusFilter = next; _notifyFblo(); },
+    setStatusFilter: (next) => {
+      _fbloStatusFilter = next;
+      _notifyFblo();
+    },
   };
 }
 
@@ -1494,9 +1724,13 @@ function useFbloState() {
 //Prefers the mod's homepage attribute; falls back to composing the Nexus URL from the numeric mod id.
 function getModPageURL(api, vortexModId) {
   if (vortexModId === undefined) return undefined;
-  const attributes = util.getSafe(api.getState(), ['persistent', 'mods', GAME_ID, vortexModId, 'attributes'], {});
+  const attributes = util.getSafe(
+    api.getState(),
+    ["persistent", "mods", GAME_ID, vortexModId, "attributes"],
+    {},
+  );
   if (attributes.homepage) return attributes.homepage;
-  if (attributes.source === 'nexus' && attributes.modId !== undefined) {
+  if (attributes.source === "nexus" && attributes.modId !== undefined) {
     return `https://www.nexusmods.com/${GAME_ID}/mods/${attributes.modId}`;
   }
   return undefined;
@@ -1506,40 +1740,56 @@ function getModPageURL(api, vortexModId) {
 function getModStagingFolder(api, vortexModId) {
   if (vortexModId === undefined) return undefined;
   const state = api.getState();
-  const installationPath = util.getSafe(state, ['persistent', 'mods', GAME_ID, vortexModId, 'installationPath'], undefined);
+  const installationPath = util.getSafe(
+    state,
+    ["persistent", "mods", GAME_ID, vortexModId, "installationPath"],
+    undefined,
+  );
   const stagingPath = selectors.installPathForGame(state, GAME_ID);
   if (!installationPath || !stagingPath) return undefined;
   return path.join(stagingPath, installationPath);
 }
 
 //Status filter shared helpers (load order pages). Groups combine with AND across, OR within.
-const STATUS_GROUP_TOKENS = { enabled: ['enabled', 'disabled'], locked: ['locked', 'unlocked'], unmanaged: ['unmanaged'] };
-const STATUS_TOKEN_LABELS = { enabled: 'Enabled', disabled: 'Disabled', locked: 'Locked', unlocked: 'Unlocked', unmanaged: 'Unmanaged' };
+const STATUS_GROUP_TOKENS = {
+  enabled: ["enabled", "disabled"],
+  locked: ["locked", "unlocked"],
+  unmanaged: ["unmanaged"],
+};
+const STATUS_TOKEN_LABELS = {
+  enabled: "Enabled",
+  disabled: "Disabled",
+  locked: "Locked",
+  unlocked: "Unlocked",
+  unmanaged: "Unmanaged",
+};
 
 function matchesStatus(entry, active, isEnabledFn, isLockedFn) {
-  if (active.has('enabled') || active.has('disabled')) {
+  if (active.has("enabled") || active.has("disabled")) {
     const en = isEnabledFn(entry);
-    if (!((active.has('enabled') && en) || (active.has('disabled') && !en))) return false;
+    if (!((active.has("enabled") && en) || (active.has("disabled") && !en))) return false;
   }
-  if (active.has('locked') || active.has('unlocked')) {
+  if (active.has("locked") || active.has("unlocked")) {
     const lk = isLockedFn(entry);
-    if (!((active.has('locked') && lk) || (active.has('unlocked') && !lk))) return false;
+    if (!((active.has("locked") && lk) || (active.has("unlocked") && !lk))) return false;
   }
-  if (active.has('unmanaged') && entry.modId !== undefined) return false;
+  if (active.has("unmanaged") && entry.modId !== undefined) return false;
   return true;
 }
 
 //Style blocks injected by the load order surfaces (see useInjectStyleOnce below)
-const LO_INDEX_FOCUS_CSS = '.load-order-index input:focus { background: white !important; color: black !important; } .layout-flex.file-based-load-order-list-outer { overflow: auto; }';
-const LO_ROW_HIDDEN_CSS = '.file-based-load-order-list .list-group > div:has(.lo-row-hidden) { display: none !important; }';
-const LO_CTX_MENU_CSS = '.ue4ss-ctx-item:hover { background: rgba(255,255,255,0.1); }';
+const LO_INDEX_FOCUS_CSS =
+  ".load-order-index input:focus { background: white !important; color: black !important; } .layout-flex.file-based-load-order-list-outer { overflow: auto; }";
+const LO_ROW_HIDDEN_CSS =
+  ".file-based-load-order-list .list-group > div:has(.lo-row-hidden) { display: none !important; }";
+const LO_CTX_MENU_CSS = ".ue4ss-ctx-item:hover { background: rgba(255,255,255,0.1); }";
 
 //Extensions cannot ship CSS, so a component injects its styles into the document head on mount.
 //Guarded by a fixed id, so repeated mounts (every row, every page visit) never duplicate the block.
 function useInjectStyleOnce(styleId, css) {
   React.useEffect(() => {
     if (globalThis.document.getElementById(styleId)) return;
-    const style = globalThis.document.createElement('style');
+    const style = globalThis.document.createElement("style");
     style.id = styleId;
     style.textContent = css;
     globalThis.document.head.appendChild(style);
@@ -1551,14 +1801,16 @@ function useInjectStyleOnce(styleId, css) {
 function useDismissOnOutside(onClose) {
   React.useEffect(() => {
     const dismiss = () => onClose();
-    const onKey = (evt) => { if (evt.key === 'Escape') onClose(); };
-    globalThis.document.addEventListener('click', dismiss);
-    globalThis.document.addEventListener('contextmenu', dismiss);
-    globalThis.document.addEventListener('keydown', onKey);
+    const onKey = (evt) => {
+      if (evt.key === "Escape") onClose();
+    };
+    globalThis.document.addEventListener("click", dismiss);
+    globalThis.document.addEventListener("contextmenu", dismiss);
+    globalThis.document.addEventListener("keydown", onKey);
     return () => {
-      globalThis.document.removeEventListener('click', dismiss);
-      globalThis.document.removeEventListener('contextmenu', dismiss);
-      globalThis.document.removeEventListener('keydown', onKey);
+      globalThis.document.removeEventListener("click", dismiss);
+      globalThis.document.removeEventListener("contextmenu", dismiss);
+      globalThis.document.removeEventListener("keydown", onKey);
     };
   }, [onClose]);
 }
@@ -1568,43 +1820,66 @@ function useDismissOnOutside(onClose) {
 //makes React detach and reattach it, and the next render would overwrite the mutated style anyway.
 function useClampedMenuPosition(x, y) {
   const [position, setPosition] = React.useState({ left: x, top: y });
-  const measureRef = React.useCallback((el) => {
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const vw = globalThis.window.innerWidth;
-    const vh = globalThis.window.innerHeight;
-    const left = (x + rect.width > vw) ? Math.max(8, vw - rect.width - 8) : x;
-    const top = (y + rect.height > vh) ? Math.max(8, vh - rect.height - 8) : y;
-    setPosition(prev => (prev.left === left && prev.top === top) ? prev : { left, top });
-  }, [x, y]);
+  const measureRef = React.useCallback(
+    (el) => {
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const vw = globalThis.window.innerWidth;
+      const vh = globalThis.window.innerHeight;
+      const left = x + rect.width > vw ? Math.max(8, vw - rect.width - 8) : x;
+      const top = y + rect.height > vh ? Math.max(8, vh - rect.height - 8) : y;
+      setPosition((prev) => (prev.left === left && prev.top === top ? prev : { left, top }));
+    },
+    [x, y],
+  );
   return [position, measureRef];
 }
 
 //Inline toggle pills for status filtering (used in the InfoPanel surfaces)
 function StatusPills({ active, setActive, groups, count }) {
-  const { Button } = require('react-bootstrap');
+  const { Button } = require("react-bootstrap");
   const tokens = groups.reduce((acc, g) => acc.concat(STATUS_GROUP_TOKENS[g] || []), []);
   const toggle = (token) => {
     const next = new Set(active);
     next.has(token) ? next.delete(token) : next.add(token);
     setActive(next);
   };
-  return React.createElement('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center', marginBottom: 8 } },
-    React.createElement('span', { style: { fontWeight: 'bold', marginRight: 4 } }, 'Filter:'),
-    count != null ? React.createElement('span', { style: { color: '#7ec8e3', marginRight: 4 } }, `${count.matched} / ${count.total}`) : null,
-    ...tokens.map(token => React.createElement(Button, {
-      key: token,
-      bsSize: 'xsmall',
-      bsStyle: active.has(token) ? 'success' : 'default',
-      style: active.has(token) ? { fontWeight: 'bold' } : undefined,
-      onClick: () => toggle(token),
-    }, STATUS_TOKEN_LABELS[token])),
-    active.size > 0 ? React.createElement(Button, {
-      key: '__clear',
-      bsSize: 'xsmall',
-      bsStyle: 'link',
-      onClick: () => setActive(new Set()),
-    }, 'Clear') : null,
+  return React.createElement(
+    "div",
+    { style: { display: "flex", flexWrap: "wrap", gap: 4, alignItems: "center", marginBottom: 8 } },
+    React.createElement("span", { style: { fontWeight: "bold", marginRight: 4 } }, "Filter:"),
+    count != null
+      ? React.createElement(
+          "span",
+          { style: { color: "#7ec8e3", marginRight: 4 } },
+          `${count.matched} / ${count.total}`,
+        )
+      : null,
+    ...tokens.map((token) =>
+      React.createElement(
+        Button,
+        {
+          key: token,
+          bsSize: "xsmall",
+          bsStyle: active.has(token) ? "success" : "default",
+          style: active.has(token) ? { fontWeight: "bold" } : undefined,
+          onClick: () => toggle(token),
+        },
+        STATUS_TOKEN_LABELS[token],
+      ),
+    ),
+    active.size > 0
+      ? React.createElement(
+          Button,
+          {
+            key: "__clear",
+            bsSize: "xsmall",
+            bsStyle: "link",
+            onClick: () => setActive(new Set()),
+          },
+          "Clear",
+        )
+      : null,
   );
 }
 
@@ -1613,165 +1888,273 @@ function LoadOrderItemRenderer(props) {
   const { className, item } = props;
   if (item?.loEntry === undefined) return null;
 
-  const { ListGroupItem, Checkbox } = require('react-bootstrap');
-  const { Icon, LoadOrderIndexInput, MainContext } = require('vortex-api');
-  const { useSelector, useDispatch } = require('react-redux');
+  const { ListGroupItem, Checkbox } = require("react-bootstrap");
+  const { Icon, LoadOrderIndexInput, MainContext } = require("vortex-api");
+  const { useSelector, useDispatch } = require("react-redux");
 
   const context = React.useContext(MainContext);
   const dispatch = useDispatch();
 
   const profile = useSelector((state) => selectors.activeProfile(state));
   const loadOrder = useSelector((state) =>
-    util.getSafe(state, ['persistent', 'loadOrder', profile?.id], []),
+    util.getSafe(state, ["persistent", "loadOrder", profile?.id], []),
   );
 
   const { loEntry, displayCheckboxes } = item;
-  const mods = useSelector((state) => util.getSafe(state, ['persistent', 'mods', GAME_ID], {}));
+  const mods = useSelector((state) => util.getSafe(state, ["persistent", "mods", GAME_ID], {}));
   const pictureUrl = mods[loEntry.modId]?.attributes?.pictureUrl;
   //FBLO precomputes these on the item (memoized by its row cache); the fallbacks keep the
   //renderer working if it is ever mounted outside the FBLO page.
   const currentIdx = item.position ?? loadOrder.findIndex((e) => e.id === loEntry.id) + 1;
 
-  const isLocked = (entry) => [true, 'true', 'always'].includes(entry?.locked);
-  const lockedCount = item.lockedEntriesCount ?? loadOrder.filter(isLocked).length;
+  const isLocked = (entry) => [true, "true", "always"].includes(entry?.locked);
+  //Core derives the index input's minimum from this and assumes locked entries sit at the top.
+  //Only the LEADING locked run blocks row 1 - a lock further down must not raise the floor.
+  const firstUnlocked = loadOrder.findIndex((e) => !isLocked(e));
+  const leadingLockedCount = firstUnlocked === -1 ? loadOrder.length : firstUnlocked;
 
-  const onApplyIndex = React.useCallback((idx) => {
-    if (currentIdx === idx) return;
-    const newLO = loadOrder.filter((e) => e.id !== loEntry.id);
-    newLO.splice(idx - 1, 0, loEntry);
-    dispatch(actions.setFBLoadOrder(profile.id, newLO));
-  }, [dispatch, profile, loadOrder, loEntry, currentIdx]);
+  const onApplyIndex = React.useCallback(
+    (idx) => {
+      if (currentIdx === idx || isLocked(loEntry)) return;
+      //Locked entries hold their absolute index - the typed row picks a slot among the unlocked ones
+      const bound = idx - 1 + (idx > currentIdx ? 1 : 0);
+      const dest = loadOrder.filter(
+        (e, i) => !isLocked(e) && e.id !== loEntry.id && i < bound,
+      ).length;
+      const unlocked = loadOrder.filter((e) => !isLocked(e) && e.id !== loEntry.id);
+      unlocked.splice(dest, 0, loEntry);
+      let next = 0;
+      const newLO = loadOrder.map((e) => (isLocked(e) ? e : unlocked[next++]));
+      dispatch(actions.setFBLoadOrder(profile.id, newLO));
+    },
+    [dispatch, profile, loadOrder, loEntry, currentIdx],
+  );
 
-  const onToggle = React.useCallback((evt) => {
-    dispatch(actions.setFBLoadOrderEntry(profile.id, { ...loEntry, enabled: evt.target.checked }));
-  }, [dispatch, profile, loEntry]);
+  const onToggle = React.useCallback(
+    (evt) => {
+      dispatch(
+        actions.setFBLoadOrderEntry(profile.id, { ...loEntry, enabled: evt.target.checked }),
+      );
+    },
+    [dispatch, profile, loEntry],
+  );
 
   const isEntryLocked = isLocked(loEntry);
   const { selectedIds, setSelectedIds, contextMenu, setContextMenu, statusFilter } = useFbloState();
   const isSelected = selectedIds.has(loEntry.id);
   //Shift-select must span visible rows only, so build the id list from the status-filtered order.
   //Memoized: a bare filter here would run once per row, i.e. O(n^2) over the whole load order.
-  const allIds = React.useMemo(() => loadOrder
-    .filter(e => matchesStatus(e, statusFilter, (entry) => entry.enabled !== false, isLocked))
-    .map(e => e.id), [loadOrder, statusFilter]);
+  const allIds = React.useMemo(
+    () =>
+      loadOrder
+        .filter((e) => matchesStatus(e, statusFilter, (entry) => entry.enabled !== false, isLocked))
+        .map((e) => e.id),
+    [loadOrder, statusFilter],
+  );
 
-  const onSelect = React.useCallback((evt) => {
-    const ctrlKey = evt.ctrlKey || evt.metaKey;
-    const shiftKey = evt.shiftKey;
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-      if (ctrlKey) {
-        next.has(loEntry.id) ? next.delete(loEntry.id) : next.add(loEntry.id);
-      } else if (shiftKey) {
-        const lastId = [...prev].at(-1);
-        const start = allIds.indexOf(lastId ?? loEntry.id);
-        const end = allIds.indexOf(loEntry.id);
-        const [lo, hi] = [Math.min(start, end), Math.max(start, end)];
-        for (let i = lo; i <= hi; i++) next.add(allIds[i]);
-      } else {
-        next.clear();
-        next.add(loEntry.id);
-      }
-      return next;
-    });
-  }, [loEntry.id, setSelectedIds, allIds]);
+  const onSelect = React.useCallback(
+    (evt) => {
+      const ctrlKey = evt.ctrlKey || evt.metaKey;
+      const shiftKey = evt.shiftKey;
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        if (ctrlKey) {
+          next.has(loEntry.id) ? next.delete(loEntry.id) : next.add(loEntry.id);
+        } else if (shiftKey) {
+          const lastId = [...prev].at(-1);
+          const start = allIds.indexOf(lastId ?? loEntry.id);
+          const end = allIds.indexOf(loEntry.id);
+          const [lo, hi] = [Math.min(start, end), Math.max(start, end)];
+          for (let i = lo; i <= hi; i++) next.add(allIds[i]);
+        } else {
+          next.clear();
+          next.add(loEntry.id);
+        }
+        return next;
+      });
+    },
+    [loEntry.id, setSelectedIds, allIds],
+  );
 
-  const onContextMenu = React.useCallback((evt) => {
-    evt.preventDefault();
-    evt.stopPropagation();
-    setContextMenu({ x: evt.clientX, y: evt.clientY, itemId: loEntry.id });
-  }, [loEntry.id, setContextMenu]);
+  const onContextMenu = React.useCallback(
+    (evt) => {
+      evt.preventDefault();
+      evt.stopPropagation();
+      setContextMenu({ x: evt.clientX, y: evt.clientY, itemId: loEntry.id });
+    },
+    [loEntry.id, setContextMenu],
+  );
 
   const onLock = React.useCallback(() => {
-    const newLO = loadOrder.map(e => e.id === loEntry.id ? { ...e, locked: !isEntryLocked } : e);
+    const newLO = loadOrder.map((e) =>
+      e.id === loEntry.id ? { ...e, locked: !isEntryLocked } : e,
+    );
     dispatch(actions.setFBLoadOrder(profile.id, newLO));
     serializeLoadOrder(context, newLO);
   }, [dispatch, context, profile, loadOrder, loEntry, isEntryLocked]);
 
-  useInjectStyleOnce('lo-index-focus-style', LO_INDEX_FOCUS_CSS);
+  useInjectStyleOnce("lo-index-focus-style", LO_INDEX_FOCUS_CSS);
 
-  const classes = ['load-order-entry'];
-  if (className) classes.push(...className.split(' '));
+  const classes = ["load-order-entry"];
+  if (className) classes.push(...className.split(" "));
 
   // Status filter: render hidden (but keep the DnD item count stable) when the entry is filtered out.
   // The 'lo-row-hidden' marker lets the injected CSS collapse the whole DraggableListItem wrapper
   // (the two dnd <div>s the renderer can't reach), otherwise their spacing leaves visible gaps.
   if (!matchesStatus(loEntry, statusFilter, (e) => e.enabled !== false, isLocked)) {
-    return React.createElement(ListGroupItem, { key: loEntry.id, className: 'lo-row-hidden', style: { display: 'none' } });
+    return React.createElement(ListGroupItem, {
+      key: loEntry.id,
+      className: "lo-row-hidden",
+      style: { display: "none" },
+    });
   }
 
   return React.createElement(
     ListGroupItem,
     {
       key: loEntry.id,
-      className: classes.join(' '),
+      className: classes.join(" "),
       onClick: onSelect,
       onContextMenu: onContextMenu,
-      style: { outline: isSelected ? '2px solid #337ab7' : 'none', outlineOffset: '-1px' },
+      style: { outline: isSelected ? "2px solid #337ab7" : "none", outlineOffset: "-1px" },
     },
-    React.createElement('div', { style: { visibility: isEntryLocked ? 'hidden' : 'visible' } },
-      React.createElement(Icon, { className: 'drag-handle-icon', name: 'drag-handle' }),
+    React.createElement(
+      "div",
+      { style: { visibility: isEntryLocked ? "hidden" : "visible" } },
+      React.createElement(Icon, { className: "drag-handle-icon", name: "drag-handle" }),
     ),
-    React.createElement('div', { style: { width: 24, flexShrink: 0, overflow: 'hidden' } },
+    React.createElement(
+      "div",
+      { style: { width: 24, flexShrink: 0, overflow: "hidden" } },
       React.createElement(LoadOrderIndexInput, {
-        className: 'load-order-index',
+        className: "load-order-index",
         api: context.api,
         item: loEntry,
         currentPosition: currentIdx,
-        lockedEntriesCount: lockedCount,
+        lockedEntriesCount: leadingLockedCount,
         loadOrder: loadOrder,
         isLocked: isLocked,
         onApplyIndex: onApplyIndex,
       }),
     ),
-    React.createElement('div', {
-      style: { cursor: 'pointer', display: 'flex', alignItems: 'center' },
-      title: isEntryLocked ? 'Unlock position' : 'Lock position',
-      onClick: (evt) => { evt.stopPropagation(); onLock(); },
-    },
-      React.createElement(Icon, { name: isEntryLocked ? 'locked' : 'unlocked', style: { color: isEntryLocked ? '#e2c04c' : 'inherit' } }),
-    ),
-    React.createElement('div', { className: 'load-order-thumb-slot', style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, marginRight: 4, flexShrink: 0 } },
-      !loEntry.modId ? React.createElement('div', {
-        className: 'load-order-unmanaged-banner',
-        title: 'Not managed by Vortex',
-        style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, textAlign: 'center', borderRadius: 2, border: '1px solid #e2c04c', background: 'rgba(226,192,76,0.12)', color: '#e2c04c', fontSize: 9, lineHeight: 1.1, padding: 2, pointerEvents: 'none' },
+    React.createElement(
+      "div",
+      {
+        style: { cursor: "pointer", display: "flex", alignItems: "center" },
+        title: isEntryLocked ? "Unlock position" : "Lock position",
+        onClick: (evt) => {
+          evt.stopPropagation();
+          onLock();
+        },
       },
-        React.createElement(Icon, { className: 'external-caution-logo', name: 'feedback-warning', style: { color: '#e2c04c' } }),
-        React.createElement('span', null, 'Not managed by Vortex'),
-      ) : pictureUrl ? React.createElement('img', {
-        className: 'load-order-thumb',
-        src: pictureUrl,
-        draggable: false,
-        style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, objectFit: 'cover', borderRadius: 2, pointerEvents: 'none' },
-      }) : null,
+      React.createElement(Icon, {
+        name: isEntryLocked ? "locked" : "unlocked",
+        style: { color: isEntryLocked ? "#e2c04c" : "inherit" },
+      }),
     ),
-    React.createElement('p', { className: 'load-order-name', style: { whiteSpace: 'normal', wordBreak: 'break-word' } }, loEntry.name),
-    displayCheckboxes ? React.createElement(Checkbox, {
-      className: 'entry-checkbox',
-      checked: loEntry.enabled,
-      disabled: isLocked(loEntry),
-      onChange: onToggle,
-    }) : null,
-    contextMenu?.itemId === loEntry.id ? React.createElement(FbloContextMenu, {
-      x: contextMenu.x, y: contextMenu.y,
-      item: loEntry, loadOrder, profile, dispatch, context, selectedIds,
-      onClose: () => setContextMenu(null),
-    }) : null,
+    React.createElement(
+      "div",
+      {
+        className: "load-order-thumb-slot",
+        style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, marginRight: 4, flexShrink: 0 },
+      },
+      !loEntry.modId
+        ? React.createElement(
+            "div",
+            {
+              className: "load-order-unmanaged-banner",
+              title: "Not managed by Vortex",
+              style: {
+                width: LO_IMAGE_WIDTH,
+                height: LO_IMAGE_HEIGHT,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 2,
+                textAlign: "center",
+                borderRadius: 2,
+                border: "1px solid #e2c04c",
+                background: "rgba(226,192,76,0.12)",
+                color: "#e2c04c",
+                fontSize: 9,
+                lineHeight: 1.1,
+                padding: 2,
+                pointerEvents: "none",
+              },
+            },
+            React.createElement(Icon, {
+              className: "external-caution-logo",
+              name: "feedback-warning",
+              style: { color: "#e2c04c" },
+            }),
+            React.createElement("span", null, "Not managed by Vortex"),
+          )
+        : pictureUrl
+          ? React.createElement("img", {
+              className: "load-order-thumb",
+              src: pictureUrl,
+              draggable: false,
+              style: {
+                width: LO_IMAGE_WIDTH,
+                height: LO_IMAGE_HEIGHT,
+                objectFit: "cover",
+                borderRadius: 2,
+                pointerEvents: "none",
+              },
+            })
+          : null,
+    ),
+    React.createElement(
+      "p",
+      { className: "load-order-name", style: { whiteSpace: "normal", wordBreak: "break-word" } },
+      loEntry.name,
+    ),
+    displayCheckboxes
+      ? React.createElement(Checkbox, {
+          className: "entry-checkbox",
+          checked: loEntry.enabled,
+          disabled: isLocked(loEntry),
+          onChange: onToggle,
+        })
+      : null,
+    contextMenu?.itemId === loEntry.id
+      ? React.createElement(FbloContextMenu, {
+          x: contextMenu.x,
+          y: contextMenu.y,
+          item: loEntry,
+          loadOrder,
+          profile,
+          dispatch,
+          context,
+          selectedIds,
+          onClose: () => setContextMenu(null),
+        })
+      : null,
   );
 } //*/
 
 //Right-click context menu for load order entries (single + multi-select)
-function FbloContextMenu({ x, y, item, loadOrder, profile, dispatch, context, selectedIds, onClose }) {
+function FbloContextMenu({
+  x,
+  y,
+  item,
+  loadOrder,
+  profile,
+  dispatch,
+  context,
+  selectedIds,
+  onClose,
+}) {
   useDismissOnOutside(onClose);
 
-  useInjectStyleOnce('ue4ss-ctx-menu-style', LO_CTX_MENU_CSS);
+  useInjectStyleOnce("ue4ss-ctx-menu-style", LO_CTX_MENU_CSS);
 
   const [menuPosition, clampRef] = useClampedMenuPosition(x, y);
 
-  const isLocked = (e) => [true, 'true', 'always'].includes(e?.locked);
+  const isLocked = (e) => [true, "true", "always"].includes(e?.locked);
   const isMulti = selectedIds.size >= 2 && selectedIds.has(item.id);
-  const targets = isMulti ? loadOrder.filter(e => selectedIds.has(e.id)) : [item];
+  const targets = isMulti ? loadOrder.filter((e) => selectedIds.has(e.id)) : [item];
 
   const applyToTargets = (transform, serialize = false) => {
     const newLO = transform(loadOrder, targets);
@@ -1785,12 +2168,13 @@ function FbloContextMenu({ x, y, item, loadOrder, profile, dispatch, context, se
 
   // Folder base path depends on game version: Xbox uses the absolute MOD_PATH_XBOX
   // (Documents\kingdomcome_mods), Steam/GOG/Epic join MOD_PATH ("Mods") under the game dir.
-  const modBasePath = GAME_VERSION === 'xbox' ? MOD_PATH_XBOX : path.join(getDiscoveryPath(context.api), MOD_PATH);
-  const isModEnabled = (e) => util.getSafe(profile, ['modState', e.modId, 'enabled'], false);
+  const modBasePath =
+    GAME_VERSION === "xbox" ? MOD_PATH_XBOX : path.join(getDiscoveryPath(context.api), MOD_PATH);
+  const isModEnabled = (e) => util.getSafe(profile, ["modState", e.modId, "enabled"], false);
   const setVortexEnabled = (entries, enabled) => {
     //One Vortex mod can own several load order rows on file-based games (LO_ATTRIBUTE is an array
     //of basenames), so a multi-select can list the same modId more than once - dedupe before dispatch.
-    const modIds = [...new Set(entries.filter(e => e.modId !== undefined).map(e => e.modId))];
+    const modIds = [...new Set(entries.filter((e) => e.modId !== undefined).map((e) => e.modId))];
     if (modIds.length > 0) {
       actions.setModsEnabled(context.api, profile.id, modIds, enabled, { allowAutoDeploy: true });
     }
@@ -1798,8 +2182,8 @@ function FbloContextMenu({ x, y, item, loadOrder, profile, dispatch, context, se
   };
   const openModFolders = (entries) => {
     entries
-      .filter(e => e.id !== undefined)
-      .forEach(e => util.opn(path.join(modBasePath, e.id)).catch(() => null));
+      .filter((e) => e.id !== undefined)
+      .forEach((e) => util.opn(path.join(modBasePath, e.id)).catch(() => null));
     onClose();
   };
   const itemVortexEnabled = isModEnabled(item);
@@ -1807,76 +2191,158 @@ function FbloContextMenu({ x, y, item, loadOrder, profile, dispatch, context, se
   const stagingFolder = getModStagingFolder(context.api, item.modId);
 
   const menuStyle = {
-    position: 'fixed', left: menuPosition.left, top: menuPosition.top, zIndex: 9999,
-    background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.2)',
-    borderRadius: 4, padding: '4px 0', minWidth: 180,
-    boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
+    position: "fixed",
+    left: menuPosition.left,
+    top: menuPosition.top,
+    zIndex: 9999,
+    background: "#1e1e1e",
+    border: "1px solid rgba(255,255,255,0.2)",
+    borderRadius: 4,
+    padding: "4px 0",
+    minWidth: 180,
+    boxShadow: "0 4px 12px rgba(0,0,0,0.6)",
   };
-  const itemStyle = { padding: '6px 16px', cursor: 'pointer', whiteSpace: 'nowrap' };
-  const sepStyle = { borderTop: '1px solid rgba(255,255,255,0.1)', margin: '4px 0' };
+  const itemStyle = { padding: "6px 16px", cursor: "pointer", whiteSpace: "nowrap" };
+  const sepStyle = { borderTop: "1px solid rgba(255,255,255,0.1)", margin: "4px 0" };
 
-  const menuItem = (label, onClick) => React.createElement('div', {
-    className: 'ue4ss-ctx-item',
-    style: itemStyle,
-    onClick: (evt) => { evt.stopPropagation(); onClick(); },
-  }, label);
+  const menuItem = (label, onClick) =>
+    React.createElement(
+      "div",
+      {
+        className: "ue4ss-ctx-item",
+        style: itemStyle,
+        onClick: (evt) => {
+          evt.stopPropagation();
+          onClick();
+        },
+      },
+      label,
+    );
 
   if (isMulti) {
     const n = targets.length;
-    return React.createElement('div', { ref: clampRef, style: menuStyle },
-      menuItem(`Enable Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, enabled: true } : e))),
-      menuItem(`Disable Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, enabled: false } : e))),
-      React.createElement('div', { style: sepStyle }),
-      menuItem(`Lock Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, locked: true } : e), true)),
-      menuItem(`Unlock Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, locked: false } : e), true)),
-      React.createElement('div', { style: sepStyle }),
-      menuItem(`Move to Top (${n})`, () => applyToTargets((lo) => {
-        const locked = lo.filter(isLocked);
-        const selected = lo.filter(e => targets.find(t => t.id === e.id) && !isLocked(e));
-        const rest = lo.filter(e => !isLocked(e) && !targets.find(t => t.id === e.id));
-        return [...locked, ...selected, ...rest];
-      })),
-      menuItem(`Move to Bottom (${n})`, () => applyToTargets((lo) => {
-        //Locked entries stay put, so they have to be counted into rest or they drop out of the order
-        const selected = lo.filter(e => targets.find(t => t.id === e.id) && !isLocked(e));
-        const rest = lo.filter(e => !targets.find(t => t.id === e.id) || isLocked(e));
-        return [...rest, ...selected];
-      })),
-      React.createElement('div', { style: sepStyle }),
+    return React.createElement(
+      "div",
+      { ref: clampRef, style: menuStyle },
+      menuItem(`Enable Selected (${n})`, () =>
+        applyToTargets((lo) =>
+          lo.map((e) => (targets.find((t) => t.id === e.id) ? { ...e, enabled: true } : e)),
+        ),
+      ),
+      menuItem(`Disable Selected (${n})`, () =>
+        applyToTargets((lo) =>
+          lo.map((e) => (targets.find((t) => t.id === e.id) ? { ...e, enabled: false } : e)),
+        ),
+      ),
+      React.createElement("div", { style: sepStyle }),
+      menuItem(`Lock Selected (${n})`, () =>
+        applyToTargets(
+          (lo) => lo.map((e) => (targets.find((t) => t.id === e.id) ? { ...e, locked: true } : e)),
+          true,
+        ),
+      ),
+      menuItem(`Unlock Selected (${n})`, () =>
+        applyToTargets(
+          (lo) => lo.map((e) => (targets.find((t) => t.id === e.id) ? { ...e, locked: false } : e)),
+          true,
+        ),
+      ),
+      React.createElement("div", { style: sepStyle }),
+      menuItem(`Move to Top (${n})`, () =>
+        applyToTargets((lo) => {
+          //Locked entries hold their absolute index - only the unlocked entries reorder into the slots between them
+          const selected = lo.filter((e) => targets.find((t) => t.id === e.id) && !isLocked(e));
+          const rest = lo.filter((e) => !isLocked(e) && !targets.find((t) => t.id === e.id));
+          const reordered = [...selected, ...rest];
+          let next = 0;
+          return lo.map((e) => (isLocked(e) ? e : reordered[next++]));
+        }),
+      ),
+      menuItem(`Move to Bottom (${n})`, () =>
+        applyToTargets((lo) => {
+          //Locked entries hold their absolute index - only the unlocked entries reorder into the slots between them
+          const selected = lo.filter((e) => targets.find((t) => t.id === e.id) && !isLocked(e));
+          const rest = lo.filter((e) => !isLocked(e) && !targets.find((t) => t.id === e.id));
+          const reordered = [...rest, ...selected];
+          let next = 0;
+          return lo.map((e) => (isLocked(e) ? e : reordered[next++]));
+        }),
+      ),
+      React.createElement("div", { style: sepStyle }),
       menuItem(`Open Mod Folders (${n})`, () => openModFolders(targets)),
-      targets.some(t => t.modId !== undefined) ? menuItem(`Open Staging Folders (${n})`, () => {
-        //Several rows can resolve to the same staging folder on file-based games - dedupe so it opens once.
-        const folders = [...new Set(targets.map(t => getModStagingFolder(context.api, t.modId)).filter(Boolean))];
-        folders.forEach(folder => util.opn(folder).catch(() => null));
-        onClose();
-      }) : null,
-      React.createElement('div', { style: sepStyle }),
+      targets.some((t) => t.modId !== undefined)
+        ? menuItem(`Open Staging Folders (${n})`, () => {
+            //Several rows can resolve to the same staging folder on file-based games - dedupe so it opens once.
+            const folders = [
+              ...new Set(
+                targets.map((t) => getModStagingFolder(context.api, t.modId)).filter(Boolean),
+              ),
+            ];
+            folders.forEach((folder) => util.opn(folder).catch(() => null));
+            onClose();
+          })
+        : null,
+      React.createElement("div", { style: sepStyle }),
       menuItem(`Disable Vortex Mod (${n})`, () => setVortexEnabled(targets, false)),
     );
   }
 
-  return React.createElement('div', { ref: clampRef, style: menuStyle },
-    menuItem(isEntryEnabled ? 'Disable' : 'Enable', () => applyToTargets((lo) => lo.map(e => e.id === item.id ? { ...e, enabled: !isEntryEnabled } : e))),
-    menuItem(isEntryLocked ? 'Unlock Position' : 'Lock Position', () => applyToTargets((lo) => lo.map(e => e.id === item.id ? { ...e, locked: !isEntryLocked } : e), true)),
-    React.createElement('div', { style: sepStyle }),
-    menuItem('Move to Top', () => applyToTargets((lo) => {
-      if (isLocked(item)) return lo;
-      const locked = lo.filter(isLocked);
-      const rest = lo.filter(e => !isLocked(e) && e.id !== item.id);
-      return [...locked, item, ...rest];
-    })),
-    menuItem('Move to Bottom', () => applyToTargets((lo) => {
-      if (isLocked(item)) return lo;
-      const rest = lo.filter(e => e.id !== item.id);
-      return [...rest, item];
-    })),
-    React.createElement('div', { style: sepStyle }),
-    menuItem('Open Mod Folder', () => openModFolders([item])),
-    stagingFolder ? menuItem('Open Staging Folder', () => { util.opn(stagingFolder).catch(() => null); onClose(); }) : null,
-    modPageUrl ? menuItem('Open Mod Page', () => { util.opn(modPageUrl).catch(() => null); onClose(); }) : null,
-    item.modId !== undefined ? React.createElement('div', { style: sepStyle }) : null,
+  return React.createElement(
+    "div",
+    { ref: clampRef, style: menuStyle },
+    menuItem(isEntryEnabled ? "Disable" : "Enable", () =>
+      applyToTargets((lo) =>
+        lo.map((e) => (e.id === item.id ? { ...e, enabled: !isEntryEnabled } : e)),
+      ),
+    ),
+    menuItem(isEntryLocked ? "Unlock Position" : "Lock Position", () =>
+      applyToTargets(
+        (lo) => lo.map((e) => (e.id === item.id ? { ...e, locked: !isEntryLocked } : e)),
+        true,
+      ),
+    ),
+    React.createElement("div", { style: sepStyle }),
+    menuItem("Move to Top", () =>
+      applyToTargets((lo) => {
+        if (isLocked(item)) return lo;
+        //Locked entries hold their absolute index - only the unlocked entries reorder into the slots between them
+        const moved = lo.filter((e) => !isLocked(e) && e.id === item.id);
+        const rest = lo.filter((e) => !isLocked(e) && e.id !== item.id);
+        const reordered = [...moved, ...rest];
+        let next = 0;
+        return lo.map((e) => (isLocked(e) ? e : reordered[next++]));
+      }),
+    ),
+    menuItem("Move to Bottom", () =>
+      applyToTargets((lo) => {
+        if (isLocked(item)) return lo;
+        //Locked entries hold their absolute index - only the unlocked entries reorder into the slots between them
+        const moved = lo.filter((e) => !isLocked(e) && e.id === item.id);
+        const rest = lo.filter((e) => !isLocked(e) && e.id !== item.id);
+        const reordered = [...rest, ...moved];
+        let next = 0;
+        return lo.map((e) => (isLocked(e) ? e : reordered[next++]));
+      }),
+    ),
+    React.createElement("div", { style: sepStyle }),
+    menuItem("Open Mod Folder", () => openModFolders([item])),
+    stagingFolder
+      ? menuItem("Open Staging Folder", () => {
+          util.opn(stagingFolder).catch(() => null);
+          onClose();
+        })
+      : null,
+    modPageUrl
+      ? menuItem("Open Mod Page", () => {
+          util.opn(modPageUrl).catch(() => null);
+          onClose();
+        })
+      : null,
+    item.modId !== undefined ? React.createElement("div", { style: sepStyle }) : null,
     item.modId !== undefined
-      ? menuItem(itemVortexEnabled ? 'Disable Vortex Mod' : 'Enable Vortex Mod', () => setVortexEnabled([item], !itemVortexEnabled))
+      ? menuItem(itemVortexEnabled ? "Disable Vortex Mod" : "Enable Vortex Mod", () =>
+          setVortexEnabled([item], !itemVortexEnabled),
+        )
       : null,
   );
 }

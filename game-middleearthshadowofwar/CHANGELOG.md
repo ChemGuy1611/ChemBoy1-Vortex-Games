@@ -4,6 +4,11 @@
 
 - None Planned
 
+## [2.5.4] - 2026-09-06
+
+- Fixed: Locked load order entries could be moved out of position when using "Move to Top", "Move to Bottom" or the position number box on another entry. Locked entries now keep their place.
+- Fixed: The load order position number box now accepts low numbers even when a locked entry is further down the list.
+
 ## [2.5.3] - 2026-09-04
 
 - Added: Right-click menu on the load order: enable or disable an entry, lock or unlock it, move it to the top or bottom, and open its staging folder or mod page. Works on one entry or several at once.

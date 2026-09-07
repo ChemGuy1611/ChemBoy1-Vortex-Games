@@ -6,19 +6,19 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| TFC Installer (tool) | a `tfcinstaller.exe` file | the game folder itself (no subfolder) |
-| Blcmm | a file or folder named `openblcmm.exe` | the game folder itself (no subfolder) |
-| TFC Mods | a `gameprofile.xml` file or a `.packagepatch` file | `TFCInstaller\Mods` |
-| UPK Explorer (tool) | a `upk explorer.exe` file | the game folder itself (no subfolder) |
-| Sdk | a file or folder named `unrealsdk.dll` and a file or folder named `sdk_mods` | the game folder itself (no subfolder) |
-| Sdkmod | a file with the `.py` extension and a file with the `.sdkmod` extension | `sdk_mods` |
-| Blcmfile | a file with the `.blcm` extension | `Binaries` |
-| Root / Game Folder Mods | a `WillowGame` folder | the game folder itself (no subfolder) |
-| Cooked Content Mods | a `English(US)` folder or a `.tfc` file | `WillowGame\CookedPCConsole` |
-| Movie / Cutscene Replacements | a `.bik` file | `WillowGame\Movies` |
-| Binaries / Injector Mods | a `Borderlands2.exe` file or a `.dll` file | `Binaries\Win32` |
+| Mod Type                      | Archive must contain                                                         | Installs to                           |
+| ----------------------------- | ---------------------------------------------------------------------------- | ------------------------------------- |
+| TFC Installer (tool)          | a `tfcinstaller.exe` file                                                    | the game folder itself (no subfolder) |
+| Blcmm                         | a file or folder named `openblcmm.exe`                                       | the game folder itself (no subfolder) |
+| TFC Mods                      | a `gameprofile.xml` file or a `.packagepatch` file                           | `TFCInstaller\Mods`                   |
+| UPK Explorer (tool)           | a `upk explorer.exe` file                                                    | the game folder itself (no subfolder) |
+| Sdk                           | a file or folder named `unrealsdk.dll` and a file or folder named `sdk_mods` | the game folder itself (no subfolder) |
+| Sdkmod                        | a file with the `.py` extension and a file with the `.sdkmod` extension      | `sdk_mods`                            |
+| Blcmfile                      | a file with the `.blcm` extension                                            | `Binaries`                            |
+| Root / Game Folder Mods       | a `WillowGame` folder                                                        | the game folder itself (no subfolder) |
+| Cooked Content Mods           | a `English(US)` folder or a `.tfc` file                                      | `WillowGame\CookedPCConsole`          |
+| Movie / Cutscene Replacements | a `.bik` file                                                                | `WillowGame\Movies`                   |
+| Binaries / Injector Mods      | a `Borderlands2.exe` file or a `.dll` file                                   | `Binaries\Win32`                      |
 
 Paths are relative to the game's install folder.
 
@@ -150,4 +150,3 @@ Installs to: `Binaries\Win32`
 - Archives that contain a FOMOD installer (a `fomod` folder with `ModuleConfig.xml`) are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

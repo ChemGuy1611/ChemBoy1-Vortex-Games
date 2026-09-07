@@ -32,33 +32,33 @@ Hand-authored CommonJS (formerly a webpack bundle). All HTTP goes through the na
 
 ```js
 const {
-  download,
-  findModByFile,
-  findDownloadIdByFile,
-  resolveVersionByPattern,
-  resolveVersionByAssetDate,
-  resolveVersionByModVersion,
-  resolveVersionByDirectCopyMarker,
-  testRequirementVersion,
-} = require('./downloader');
+    download,
+    findModByFile,
+    findDownloadIdByFile,
+    resolveVersionByPattern,
+    resolveVersionByAssetDate,
+    resolveVersionByModVersion,
+    resolveVersionByDirectCopyMarker,
+    testRequirementVersion,
+} = require("./downloader");
 ```
 
-| Export | Role |
-| --- | --- |
-| `download(api, requirements, force)` | Install missing requirements; with `force === true`, perform updates. Main entry point. |
-| `findModByFile(api, modType, fileName)` | Find an installed requirement mod by a marker file (case-insensitive). Used in `findMod`. |
-| `findDownloadIdByFile(api, fileName)` | Find an already-downloaded archive's download id by file name. Used in `findDownloadId`. |
-| `resolveVersionByPattern(api, requirement)` | Resolve the installed version from the archive file name via `fileArchivePattern`. Default strategy. |
-| `resolveVersionByAssetDate(api, requirement)` | Resolve the installed version from the recorded GitHub asset upload time. For `trackByAssetDate` requirements. |
-| `resolveVersionByModVersion(api, requirement)` | Resolve the installed version from the `version` attribute stamped on the installed mod. For versionless asset filenames (version only in the release tag). |
-| `resolveVersionByDirectCopyMarker(api, requirement)` | Resolve the installed version from the `<directCopyPath>.version.json` marker file. For direct-copy requirements, which have no mod entry to stamp. |
-| `resolveVersionByNightlyRun(api, requirement)` | Resolve the installed build from the `nightlyRunNumber` attribute stamped on the installed mod. For nightly (CI artifact) requirements. |
-| `testRequirementVersion(api, requirement)` | Compare installed vs. latest release; if newer, raise the "update available" notification. |
-| `getLatestGithubReleaseAsset(api, requirement)` | Fetch the matching release asset from GitHub (also exported). |
-| `getLatestNightlyArtifact(api, requirement)` | Fetch the newest successful workflow run from the GitHub Actions API and return it shaped as a release asset. For nightly requirements (also exported). |
-| `getLatestNexusFile(api, requirement)` | Read a Nexus mod page's file listing, apply the file filters, and return the newest allowed file shaped as a release asset. For Nexus requirements (also exported). |
-| `doDownload(downloadUrl, destination)` | Low-level streamed download to a path (also exported). |
-| `getMods`, `walkPath` | Helpers also exported but rarely consumed directly. |
+| Export                                               | Role                                                                                                                                                                |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `download(api, requirements, force)`                 | Install missing requirements; with `force === true`, perform updates. Main entry point.                                                                             |
+| `findModByFile(api, modType, fileName)`              | Find an installed requirement mod by a marker file (case-insensitive). Used in `findMod`.                                                                           |
+| `findDownloadIdByFile(api, fileName)`                | Find an already-downloaded archive's download id by file name. Used in `findDownloadId`.                                                                            |
+| `resolveVersionByPattern(api, requirement)`          | Resolve the installed version from the archive file name via `fileArchivePattern`. Default strategy.                                                                |
+| `resolveVersionByAssetDate(api, requirement)`        | Resolve the installed version from the recorded GitHub asset upload time. For `trackByAssetDate` requirements.                                                      |
+| `resolveVersionByModVersion(api, requirement)`       | Resolve the installed version from the `version` attribute stamped on the installed mod. For versionless asset filenames (version only in the release tag).         |
+| `resolveVersionByDirectCopyMarker(api, requirement)` | Resolve the installed version from the `<directCopyPath>.version.json` marker file. For direct-copy requirements, which have no mod entry to stamp.                 |
+| `resolveVersionByNightlyRun(api, requirement)`       | Resolve the installed build from the `nightlyRunNumber` attribute stamped on the installed mod. For nightly (CI artifact) requirements.                             |
+| `testRequirementVersion(api, requirement)`           | Compare installed vs. latest release; if newer, raise the "update available" notification.                                                                          |
+| `getLatestGithubReleaseAsset(api, requirement)`      | Fetch the matching release asset from GitHub (also exported).                                                                                                       |
+| `getLatestNightlyArtifact(api, requirement)`         | Fetch the newest successful workflow run from the GitHub Actions API and return it shaped as a release asset. For nightly requirements (also exported).             |
+| `getLatestNexusFile(api, requirement)`               | Read a Nexus mod page's file listing, apply the file filters, and return the newest allowed file shaped as a release asset. For Nexus requirements (also exported). |
+| `doDownload(downloadUrl, destination)`               | Low-level streamed download to a path (also exported).                                                                                                              |
+| `getMods`, `walkPath`                                | Helpers also exported but rarely consumed directly.                                                                                                                 |
 
 ---
 
@@ -66,38 +66,38 @@ const {
 
 `download()` (and the helpers) take an array of requirement objects. Each describes one GitHub-hosted requirement:
 
-| Field | Required | Meaning |
-| --- | --- | --- |
-| `archiveFileName` | yes | Expected archive file name (also used as the download-id lookup key). |
-| `modType` | yes | Vortex mod type id this requirement installs as. The module assigns it to the installed mod itself, and detection only considers mods that carry it. |
-| `assemblyFileName` | yes | Marker file used to detect an installed requirement (matched **case-insensitively**), searched only within mods of this requirement's `modType`. |
-| `userFacingName` | yes | Display name in notifications, in error messages, and in the mod list (stamped as the mod's `customFileName`). |
-| `githubUrl` | yes | GitHub API repo URL, e.g. `https://api.github.com/repos/{author}/{repo}`. |
-| `findMod` | yes | `(api) => findModByFile(api, modType, assemblyFileName)`. |
-| `findDownloadId` | yes | `(api) => findDownloadIdByFile(api, archiveFileName)`. |
-| `fileArchivePattern` | for pattern resolve | RegExp whose capture group 1 is the version, e.g. `/^Name(\d+\.\d+\.\d+)/i`. |
-| `resolveVersion` | for update checks | `(api) => resolveVersionByPattern(api, req)` (or `…ByFile` / `…ByAssetDate` / `…ByModVersion`). Omit to disable update checks. |
-| `allowPrerelease` | opt-in | `true` -> fetch newest release including GitHub pre-releases (scans `/releases` newest-first, skipping releases that carry no matching asset). Default uses `/releases/latest` (stable only). |
-| `prereleaseTag` | opt-in | `'<tag>'` -> fetch one fixed release directly via `/releases/tags/<tag>` (rolling tag, e.g. UE4SS `experimental-latest`). Pick the tag that upstream *moves*, not one that merely sounds current — see the warning below. |
-| `trackByAssetDate` | opt-in | `true` -> detect updates by the asset's GitHub upload time instead of the version tag (rolling tag whose name never changes, only the files). |
-| `versionFile` | for file resolve | File holding the version (e.g. `version.txt`) when it is not in the archive name; read by `resolveVersionByFile`. |
-| `autoInstall` | opt-out | `false` -> never install this requirement unattended. `setup()` and the update check both leave it alone; only an explicit user action (a toolbar button calling `download`) installs it. Default (unset) installs a missing requirement automatically. |
-| `pinVersion` | opt-in | Hold this requirement at one specific release instead of tracking the newest. While the installed version equals the pin, the update check returns without any HTTP request. See **Version pinning**. |
-| `pinTag` | with `pinVersion` | The GitHub tag to fetch when it is not simply `pinVersion`. The same tag with its leading `v` toggled is retried automatically on a 404, so most repos need no `pinTag` at all. |
-| `directCopyPath` | opt-in | Absolute destination **file** path. On its own it switches the requirement into **loose** direct-copy mode for non-archive assets — `findMod`/`findDownloadId`/`modType`/`assemblyFileName` are then not read. Alongside `directCopyAsMod` it is only the legacy pointer to the loose file an older build wrote, deleted once on migration. See **Direct-copy requirements**. |
-| `directCopyModType` | with `directCopyPath` | Mod type that also satisfies the requirement. If a mod of this type is installed (the user took an archived build from Nexus instead), the file is considered present without touching the filesystem. Must **not** be set alongside `directCopyAsMod`. |
-| `directCopyAsMod` | opt-in | `true` -> the naked asset is installed into the staging folder of a mod the module creates, and Vortex deploys it through `modType`, instead of being written loose into the game folder. Requires `modType`; `findMod`, `assemblyFileName` and `resolveVersion` are read as for an ordinary requirement. See **Managed-mod mode**. |
-| `nightlyUrl` | opt-in | Stable download URL for a GitHub Actions CI artifact (a `nightly.link` URL). Its presence switches the requirement into nightly mode, where identity comes from the Actions run listing rather than a release. See **Nightly (CI artifact) requirements**. |
-| `nightlyWorkflow` | with `nightlyUrl` | Workflow file name as it appears in `.github/workflows`, e.g. `build.yml`. |
-| `nightlyBranch` | with `nightlyUrl` | Branch the nightly is built from, e.g. `alpha-development`. |
-| `nexusModId` | opt-in | Nexus mod page id (a number). Its presence switches the requirement into Nexus mode, where `githubUrl` is not read at all. See **Nexus-hosted requirements**. |
-| `nexusDomain` | with `nexusModId` | Nexus game domain the **page** sits under. Required whenever that is not the game being managed; defaults to the active game when omitted. |
-| `nexusFileId` | opt-in | A specific file id on the page. Used as the pin target, and as the fallback when the file listing cannot be read at all. |
-| `nexusFileMatch` | opt-in | Plain string; keep only files whose name contains it (case-insensitive, matched against both the uploaded file name and the file's title). |
-| `nexusFileExclude` | opt-in | Plain string; drop files whose name contains it. This is what picks a release build off a page that also publishes a `dev` one. |
-| `nexusFilePattern` | opt-in | RegExp on the file name, for a page whose naming needs more than a substring. |
-| `nexusCategoryId` | opt-in | Nexus file category, or an array of them, to consider. Default `1` (MAIN). `[1, 3, 5]` means "any category a file can be uploaded as" and is what a page with no MAIN file needs. |
-| `installFileName` | opt-in | Name the asset is written under in the staging folder, and therefore the name it deploys as. Defaults to the asset's own name. Needed with `directCopyAsMod` on the Nexus route, where the uploaded file name carries the mod and file ids. |
+| Field                | Required              | Meaning                                                                                                                                                                                                                                                                                                                                                                       |
+| -------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `archiveFileName`    | yes                   | Expected archive file name (also used as the download-id lookup key).                                                                                                                                                                                                                                                                                                         |
+| `modType`            | yes                   | Vortex mod type id this requirement installs as. The module assigns it to the installed mod itself, and detection only considers mods that carry it.                                                                                                                                                                                                                          |
+| `assemblyFileName`   | yes                   | Marker file used to detect an installed requirement (matched **case-insensitively**), searched only within mods of this requirement's `modType`.                                                                                                                                                                                                                              |
+| `userFacingName`     | yes                   | Display name in notifications, in error messages, and in the mod list (stamped as the mod's `customFileName`).                                                                                                                                                                                                                                                                |
+| `githubUrl`          | yes                   | GitHub API repo URL, e.g. `https://api.github.com/repos/{author}/{repo}`.                                                                                                                                                                                                                                                                                                     |
+| `findMod`            | yes                   | `(api) => findModByFile(api, modType, assemblyFileName)`.                                                                                                                                                                                                                                                                                                                     |
+| `findDownloadId`     | yes                   | `(api) => findDownloadIdByFile(api, archiveFileName)`.                                                                                                                                                                                                                                                                                                                        |
+| `fileArchivePattern` | for pattern resolve   | RegExp whose capture group 1 is the version, e.g. `/^Name(\d+\.\d+\.\d+)/i`.                                                                                                                                                                                                                                                                                                  |
+| `resolveVersion`     | for update checks     | `(api) => resolveVersionByPattern(api, req)` (or `…ByFile` / `…ByAssetDate` / `…ByModVersion`). Omit to disable update checks.                                                                                                                                                                                                                                                |
+| `allowPrerelease`    | opt-in                | `true` -> fetch newest release including GitHub pre-releases (scans `/releases` newest-first, skipping releases that carry no matching asset). Default uses `/releases/latest` (stable only).                                                                                                                                                                                 |
+| `prereleaseTag`      | opt-in                | `'<tag>'` -> fetch one fixed release directly via `/releases/tags/<tag>` (rolling tag, e.g. UE4SS `experimental-latest`). Pick the tag that upstream _moves_, not one that merely sounds current — see the warning below.                                                                                                                                                     |
+| `trackByAssetDate`   | opt-in                | `true` -> detect updates by the asset's GitHub upload time instead of the version tag (rolling tag whose name never changes, only the files).                                                                                                                                                                                                                                 |
+| `versionFile`        | for file resolve      | File holding the version (e.g. `version.txt`) when it is not in the archive name; read by `resolveVersionByFile`.                                                                                                                                                                                                                                                             |
+| `autoInstall`        | opt-out               | `false` -> never install this requirement unattended. `setup()` and the update check both leave it alone; only an explicit user action (a toolbar button calling `download`) installs it. Default (unset) installs a missing requirement automatically.                                                                                                                       |
+| `pinVersion`         | opt-in                | Hold this requirement at one specific release instead of tracking the newest. While the installed version equals the pin, the update check returns without any HTTP request. See **Version pinning**.                                                                                                                                                                         |
+| `pinTag`             | with `pinVersion`     | The GitHub tag to fetch when it is not simply `pinVersion`. The same tag with its leading `v` toggled is retried automatically on a 404, so most repos need no `pinTag` at all.                                                                                                                                                                                               |
+| `directCopyPath`     | opt-in                | Absolute destination **file** path. On its own it switches the requirement into **loose** direct-copy mode for non-archive assets — `findMod`/`findDownloadId`/`modType`/`assemblyFileName` are then not read. Alongside `directCopyAsMod` it is only the legacy pointer to the loose file an older build wrote, deleted once on migration. See **Direct-copy requirements**. |
+| `directCopyModType`  | with `directCopyPath` | Mod type that also satisfies the requirement. If a mod of this type is installed (the user took an archived build from Nexus instead), the file is considered present without touching the filesystem. Must **not** be set alongside `directCopyAsMod`.                                                                                                                       |
+| `directCopyAsMod`    | opt-in                | `true` -> the naked asset is installed into the staging folder of a mod the module creates, and Vortex deploys it through `modType`, instead of being written loose into the game folder. Requires `modType`; `findMod`, `assemblyFileName` and `resolveVersion` are read as for an ordinary requirement. See **Managed-mod mode**.                                           |
+| `nightlyUrl`         | opt-in                | Stable download URL for a GitHub Actions CI artifact (a `nightly.link` URL). Its presence switches the requirement into nightly mode, where identity comes from the Actions run listing rather than a release. See **Nightly (CI artifact) requirements**.                                                                                                                    |
+| `nightlyWorkflow`    | with `nightlyUrl`     | Workflow file name as it appears in `.github/workflows`, e.g. `build.yml`.                                                                                                                                                                                                                                                                                                    |
+| `nightlyBranch`      | with `nightlyUrl`     | Branch the nightly is built from, e.g. `alpha-development`.                                                                                                                                                                                                                                                                                                                   |
+| `nexusModId`         | opt-in                | Nexus mod page id (a number). Its presence switches the requirement into Nexus mode, where `githubUrl` is not read at all. See **Nexus-hosted requirements**.                                                                                                                                                                                                                 |
+| `nexusDomain`        | with `nexusModId`     | Nexus game domain the **page** sits under. Required whenever that is not the game being managed; defaults to the active game when omitted.                                                                                                                                                                                                                                    |
+| `nexusFileId`        | opt-in                | A specific file id on the page. Used as the pin target, and as the fallback when the file listing cannot be read at all.                                                                                                                                                                                                                                                      |
+| `nexusFileMatch`     | opt-in                | Plain string; keep only files whose name contains it (case-insensitive, matched against both the uploaded file name and the file's title).                                                                                                                                                                                                                                    |
+| `nexusFileExclude`   | opt-in                | Plain string; drop files whose name contains it. This is what picks a release build off a page that also publishes a `dev` one.                                                                                                                                                                                                                                               |
+| `nexusFilePattern`   | opt-in                | RegExp on the file name, for a page whose naming needs more than a substring.                                                                                                                                                                                                                                                                                                 |
+| `nexusCategoryId`    | opt-in                | Nexus file category, or an array of them, to consider. Default `1` (MAIN). `[1, 3, 5]` means "any category a file can be uploaded as" and is what a page with no MAIN file needs.                                                                                                                                                                                             |
+| `installFileName`    | opt-in                | Name the asset is written under in the staging folder, and therefore the name it deploys as. Defaults to the asset's own name. Needed with `directCopyAsMod` on the Nexus route, where the uploaded file name carries the mod and file ids.                                                                                                                                   |
 
 ---
 
@@ -123,8 +123,8 @@ Every version string — release tag, asset-filename capture, stamped mod attrib
 
 Two consequences worth knowing:
 
-- **semver orders `X.Y.Z-N` below a bare `X.Y.Z`.** Ordering within a series is correct (`5.4.23-6` > `5.4.23-5`, `3.1.0-6` > `3.1.0-5`), which is all these upstreams produce. An upstream that ships a bare version *after* a numbered one needs `trackByAssetDate` instead — that is the escape hatch for sources that do not order by semver.
-- **`semver.coerce()` rejects components with leading zeros** (`2026.02.01` -> `null`), so such versions reach the caller's `0.0.0` floor. A source that versions this way needs a game-specific transform applied *before* this ladder, not after — `game-dragonagetheveilguard`'s `normalizeFrostyVersion` (`2026.02.01.0` -> `26.2.1`) is the reference case.
+- **semver orders `X.Y.Z-N` below a bare `X.Y.Z`.** Ordering within a series is correct (`5.4.23-6` > `5.4.23-5`, `3.1.0-6` > `3.1.0-5`), which is all these upstreams produce. An upstream that ships a bare version _after_ a numbered one needs `trackByAssetDate` instead — that is the escape hatch for sources that do not order by semver.
+- **`semver.coerce()` rejects components with leading zeros** (`2026.02.01` -> `null`), so such versions reach the caller's `0.0.0` floor. A source that versions this way needs a game-specific transform applied _before_ this ladder, not after — `game-dragonagetheveilguard`'s `normalizeFrostyVersion` (`2026.02.01.0` -> `26.2.1`) is the reference case.
 
 When the latest release is fetched, `latestAssetVersion()` prefers the version embedded in the **asset filename** (the `fileArchivePattern` capture group run against the asset name) over the release tag. This makes update detection work for rolling-tag repositories whose tag carries no version at all (e.g. EntityAtlan publishes `AtlanModLoader_v_6_1_1.zip` under the permanent tag `ModLoader`). Patterns without a capture group, or assets that don't match, fall back to the semver-coerced tag name as before. The same asset-derived version flows through every stamp point: the fresh-download install stamps it as the mod's `version` attribute, the already-downloaded shortcut path stamps the equivalent value extracted from the local archive name, and both the update check and the update dialog label use it — so a static tag never leaks into comparisons or the UI.
 
@@ -136,28 +136,28 @@ The inverse case needs care: when the version lives only in the release **tag** 
 
 `pinVersion` holds a requirement at one specific release instead of tracking the newest one. It is opt-in and unset by default; with no pin the module behaves exactly as it does without the feature. The intended use is a specific upstream release that breaks a specific game — not general version freezing, since tracking the latest release is the whole point of the module.
 
-The same field name exists in seven of the eight downloader modules. Only the way each one *reaches* the pinned release differs, because their hosts do:
+The same field name exists in seven of the eight downloader modules. Only the way each one _reaches_ the pinned release differs, because their hosts do:
 
-| Module | `pinVersion` means | Reach-the-release field |
-| --- | --- | --- |
-| `downloader.js` | GitHub release version | `pinTag` — optional; defaults to `pinVersion`, retried once with the leading `v` toggled on a 404 |
-| `codeberg_downloader.js` | Codeberg/Forgejo release version | `pinTag` — optional; defaults to `pinVersion`, retried once with the leading `v` toggled |
-| `gamebanana_downloader.js` | submission version | `pinFileId` — **required**; the API has no version-to-file lookup |
-| `moddb_downloader.js` | file revision | `pinFileId` — **required**; the RSS feed is newest-first with no version index |
-| `modworkshop_downloader.js` | file version | `pinFileId` — **required** |
-| `thunderstore_downloader.js` | package version | none — the per-version download URL is fully predictable |
-| `bepinexbe_downloader.js` | BE build number | `pinArtifactUrl` — optional; only needed once the pinned build has scrolled off the index page |
-| `fcmodding_downloader.js` | *not supported* | — the host keeps only the current build and one prior, so any pin 404s within a release or two (`FCMODDING_API.md`) |
+| Module                       | `pinVersion` means               | Reach-the-release field                                                                                             |
+| ---------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `downloader.js`              | GitHub release version           | `pinTag` — optional; defaults to `pinVersion`, retried once with the leading `v` toggled on a 404                   |
+| `codeberg_downloader.js`     | Codeberg/Forgejo release version | `pinTag` — optional; defaults to `pinVersion`, retried once with the leading `v` toggled                            |
+| `gamebanana_downloader.js`   | submission version               | `pinFileId` — **required**; the API has no version-to-file lookup                                                   |
+| `moddb_downloader.js`        | file revision                    | `pinFileId` — **required**; the RSS feed is newest-first with no version index                                      |
+| `modworkshop_downloader.js`  | file version                     | `pinFileId` — **required**                                                                                          |
+| `thunderstore_downloader.js` | package version                  | none — the per-version download URL is fully predictable                                                            |
+| `bepinexbe_downloader.js`    | BE build number                  | `pinArtifactUrl` — optional; only needed once the pinned build has scrolled off the index page                      |
+| `fcmodding_downloader.js`    | _not supported_                  | — the host keeps only the current build and one prior, so any pin 404s within a release or two (`FCMODDING_API.md`) |
 
 Behavior, identical across all seven that support it:
 
 - **Installed identity equals the pin -> the update check returns immediately**, before any HTTP request. A pinned requirement therefore costs nothing against the GitHub rate limit or any host API. This is the headline behavior, and it is what the short-circuit at the top of each module's update-check entry point exists for.
-- Installed identity differs from the pin — **including not installed at all** — and the module resolves the *pinned* release, never the latest one.
-- The notification says "pinned version available", not "update available". The wording has to cover a user who is *ahead* of the pin as well as behind it; installing the pin from that state is a deliberate downgrade, and the dialog says so.
-- The pin overrides every "which release" strategy the module owns: `allowPrerelease` and `prereleaseTag` here, newest-file selection in the companions. Each combination logs a warning. Selection *within* the pinned release is untouched — `fileArchivePattern` / `filePattern` / `fileType` still pick the right asset out of it.
+- Installed identity differs from the pin — **including not installed at all** — and the module resolves the _pinned_ release, never the latest one.
+- The notification says "pinned version available", not "update available". The wording has to cover a user who is _ahead_ of the pin as well as behind it; installing the pin from that state is a deliberate downgrade, and the dialog says so.
+- The pin overrides every "which release" strategy the module owns: `allowPrerelease` and `prereleaseTag` here, newest-file selection in the companions. Each combination logs a warning. Selection _within_ the pinned release is untouched — `fileArchivePattern` / `filePattern` / `fileType` still pick the right asset out of it.
 - `trackByAssetDate` is **ignored** while pinned, and warns. A fixed tag's assets do not roll, so date comparison would only fight the pin.
 - Installed identity is read from the module's existing tracking attribute (`version` here, `gamebananaFileId` / `moddbFileId` / `modworkshopFileId` / `thunderstoreVersion` / `bepinexBeBuild` in the companions). In `downloader.js` this deliberately **bypasses `resolveVersion`**, so a pin works whichever of the resolver strategies a requirement uses — including `resolveVersionByAssetDate`, which returns a date that could never be compared against a version.
-- `autoInstall` stays orthogonal: the pin says *which* version, `autoInstall` says *whether* anything installs unattended.
+- `autoInstall` stays orthogonal: the pin says _which_ version, `autoInstall` says _whether_ anything installs unattended.
 - A requirement installed before the pin was set has no matching stamp, so it reads as "not at pin" -> one notification -> installing it stamps the pin -> silent from then on.
 - A forced `download(api, [req], true)` installs the pin, not the latest. Toolbar actions labelled "Download Latest X" become inaccurate in a pinned extension — relabel them to "Download X" wherever a pin is set.
 
@@ -171,14 +171,14 @@ Some upstreams publish a naked file rather than an archive — a bare `.dll`, a 
 
 There are two ways to handle such an asset. Both pick the asset identically — `archiveFileName`, `fileArchivePattern`, `githubUrl`, `userFacingName`, `allowPrerelease`, `prereleaseTag`, `trackByAssetDate` and `pinVersion` all behave as they do for an archive, because none of them care what the matched file is. They differ in where the file ends up and therefore in what the user can do with it.
 
-| | Loose copy (`directCopyPath`) | Managed mod (`directCopyAsMod`) |
-| --- | --- | --- |
-| Mod list | nothing appears | row with the name, version and a Source link to the repo |
-| Enable / disable | not possible | ordinary — disabling purges the file |
-| Remove | file stays until hand-deleted | removes the file |
-| Update | file overwritten in place, marker rewritten | staging file replaced, `version` attribute restamped |
-| Version source | `<file>.version.json` sidecar | the mod's `version` attribute |
-| File conflicts | invisible to Vortex | ordinary file-conflict handling |
+|                  | Loose copy (`directCopyPath`)               | Managed mod (`directCopyAsMod`)                          |
+| ---------------- | ------------------------------------------- | -------------------------------------------------------- |
+| Mod list         | nothing appears                             | row with the name, version and a Source link to the repo |
+| Enable / disable | not possible                                | ordinary — disabling purges the file                     |
+| Remove           | file stays until hand-deleted               | removes the file                                         |
+| Update           | file overwritten in place, marker rewritten | staging file replaced, `version` attribute restamped     |
+| Version source   | `<file>.version.json` sidecar               | the mod's `version` attribute                            |
+| File conflicts   | invisible to Vortex                         | ordinary file-conflict handling                          |
 
 ### Loose mode
 
@@ -192,15 +192,15 @@ Setting `directCopyPath` alone switches a requirement into loose direct-copy mod
 
 Setting `directCopyAsMod: true` (with a `modType`) keeps the naked-asset download but gives the file an owner: the module creates a mod, writes the asset into that mod's staging folder, and lets Vortex deploy it to wherever the mod type points. Deploy, the mod list row, the version column, enable/disable, remove, conflicts and update all become the ordinary managed-mod paths.
 
-The mode does **not** get its own branch at the top of `download()` the way loose mode does. It runs the ordinary requirement flow and swaps only the *install mechanism*, so `findMod`, update detection, pinning, the "already up to date" report and the outgoing-copy disable sweep keep working unchanged. Three consequences follow from that:
+The mode does **not** get its own branch at the top of `download()` the way loose mode does. It runs the ordinary requirement flow and swaps only the _install mechanism_, so `findMod`, update detection, pinning, the "already up to date" report and the outgoing-copy disable sweep keep working unchanged. Three consequences follow from that:
 
 - **`modType` is required**, and it alone decides the deploy destination. It is not subject to the `GAME_PATH` timing trap below.
-- **`resolveVersion` is `resolveVersionByModVersion`** (or `resolveVersionByAssetDate` under `trackByAssetDate`) — *not* `resolveVersionByDirectCopyMarker`. There is a mod to stamp, so no sidecar marker is written.
+- **`resolveVersion` is `resolveVersionByModVersion`** (or `resolveVersionByAssetDate` under `trackByAssetDate`) — _not_ `resolveVersionByDirectCopyMarker`. There is a mod to stamp, so no sidecar marker is written.
 - **`directCopyModType` must not be set.** It would make the module's own mod count as proof the file is present, so a loader the user hand-deleted would never be re-fetched. `findDownloadId` is equally pointless here: a naked asset never gets a Downloads-tab entry to reuse.
 
 Two behaviors are worth knowing:
 
-- **Ownership is marked, not assumed.** A user can install an archived build of the same loader by hand, and the extension's own installer types it with the same `modType` — so the module stamps `directCopyAsMod: true` on the mod it creates. A mod found *with* the marker is ours: the staging folder is cleared, the new asset written, the attributes restamped, the mod id kept. A mod found *without* it is the user's own install and is left completely alone, counting as installed (the same semantics `directCopyModType` has in loose mode).
+- **Ownership is marked, not assumed.** A user can install an archived build of the same loader by hand, and the extension's own installer types it with the same `modType` — so the module stamps `directCopyAsMod: true` on the mod it creates. A mod found _with_ the marker is ours: the staging folder is cleared, the new asset written, the attributes restamped, the mod id kept. A mod found _without_ it is the user's own install and is left completely alone, counting as installed (the same semantics `directCopyModType` has in loose mode).
 - **A legacy loose copy is migrated once.** `directCopyPath` stays valid in this mode as a pointer to the file an older build wrote loose; when no mod of the requirement's type exists yet, that file and its `.version.json` marker are deleted before the mod is created, so deployment does not find a foreign file at the target and back it up as `<file>.vortex_backup`. Omit the field entirely on a requirement that was never in loose mode. The deletion only ever runs when no such mod exists — when one does, the file at that path is a link Vortex itself deployed.
 
 Deployment is triggered explicitly: after enabling the mod the module emits `mods-enabled`, which is what schedules the deployment (or raises the "deployment necessary" banner when auto-deploy is off). A dispatch alone would leave Vortex unaware. In collections, the mod appears as a non-shareable local mod — more than the loose copy offers, which is invisible to collections entirely.
@@ -248,19 +248,19 @@ Some tools are only published on Nexus Mods. Setting `nexusModId` points a requi
 
 ```js
 const MODMANAGER_REQUIREMENTS = [
-  {
-    archiveFileName: MODMANAGER_EXEC,
-    userFacingName: MODMANAGER_NAME,
-    nexusModId: 137,
-    nexusDomain: 'horizonforbiddenwest',
-    modType: MODMANAGER_ID,
-    assemblyFileName: MODMANAGER_EXEC,
-    directCopyAsMod: true,
-    installFileName: MODMANAGER_EXEC,
-    findMod: (api) => findModByFile(api, MODMANAGER_ID, MODMANAGER_EXEC),
-    resolveVersion: (api) => resolveVersionByModVersion(api, MODMANAGER_REQUIREMENTS[0]),
-    autoInstall: true,
-  },
+    {
+        archiveFileName: MODMANAGER_EXEC,
+        userFacingName: MODMANAGER_NAME,
+        nexusModId: 137,
+        nexusDomain: "horizonforbiddenwest",
+        modType: MODMANAGER_ID,
+        assemblyFileName: MODMANAGER_EXEC,
+        directCopyAsMod: true,
+        installFileName: MODMANAGER_EXEC,
+        findMod: (api) => findModByFile(api, MODMANAGER_ID, MODMANAGER_EXEC),
+        resolveVersion: (api) => resolveVersionByModVersion(api, MODMANAGER_REQUIREMENTS[0]),
+        autoInstall: true,
+    },
 ];
 ```
 
@@ -274,7 +274,7 @@ The same rule applies to the **download folder**. Vortex files a download under 
 
 Files are filtered, then sorted newest-first, then picked. Sorting alone is not enough on a page that publishes more than one current main file: a release build and a `dev` build are uploaded together, and the newer of the two is routinely the one that must **not** be installed.
 
-- `nexusCategoryId` (default `1`, MAIN) selects the category, and accepts an array. **Do not assume the current build is in MAIN.** HFW Mod Manager's page has no MAIN file at all: its current release sits in MISCELLANEOUS while every superseded build is in OLD_VERSION or ARCHIVED. MAIN (1), OPTIONAL (3) and MISCELLANEOUS (5) are the only categories a file can be *uploaded* as, so `[1, 3, 5]` means "any current build" and still excludes UPDATE (2), OLD_VERSION (4) and ARCHIVED (7) — the states a file falls into once it is superseded, and precisely what a requirement must never install. Check the page's listing before choosing.
+- `nexusCategoryId` (default `1`, MAIN) selects the category, and accepts an array. **Do not assume the current build is in MAIN.** HFW Mod Manager's page has no MAIN file at all: its current release sits in MISCELLANEOUS while every superseded build is in OLD_VERSION or ARCHIVED. MAIN (1), OPTIONAL (3) and MISCELLANEOUS (5) are the only categories a file can be _uploaded_ as, so `[1, 3, 5]` means "any current build" and still excludes UPDATE (2), OLD_VERSION (4) and ARCHIVED (7) — the states a file falls into once it is superseded, and precisely what a requirement must never install. Check the page's listing before choosing.
 - `nexusFileMatch`, `nexusFileExclude` and `nexusFilePattern` then narrow the list. All three are **AND-ed**, and all three run **before** the sort and before the pin lookup, so "newest" always means "newest of what is allowed" and a pin can never resolve to a file the filters exclude.
 - The two plain-string fields are substring tests matched case-insensitively against **both** the uploaded file name and the file's title — the marker separating a release from a dev build sits in whichever of the two the author bothered to set, and an adopter should not have to know which.
 - **`nexusFileExclude` wins over `nexusFileMatch`** on a file containing both strings. Excluding is the safety-side answer: installing the wrong build is worse than installing nothing and saying so.
@@ -291,7 +291,7 @@ A Nexus download link is short-lived, account-bound, and ad-gated for free accou
 
 - **Free accounts see a dialog.** That is Vortex's own download dialog, and it appears during setup if a Nexus requirement installs unattended. A requirement that should not do that sets `autoInstall: false` and puts the install behind a toolbar button.
 - **A dismissed dialog is not an error.** It surfaces as `util.ProcessCanceled`, which `download()` logs and skips, like any other cancelled requirement.
-- **Failures open the page.** Any error on this route notifies *and* opens the mod page's files tab, so a user whose account cannot auto-download still lands where the file is.
+- **Failures open the page.** Any error on this route notifies _and_ opens the mod page's files tab, so a user whose account cannot auto-download still lands where the file is.
 - **The listing costs one request per requirement per check**, against the same Nexus API budget as everything else in Vortex. A pinned, installed requirement short-circuits before any request, exactly as on the GitHub route.
 
 ### Naked files
@@ -309,7 +309,7 @@ The installed mod is stamped `source: 'website'` with `url` pointing at the mod 
 
 ## Behaviors worth knowing
 
-- **GitHub or Nexus.** A requirement comes from a GitHub release asset by default, or from a Nexus mod page when it sets `nexusModId` (see **Nexus-hosted requirements**). Requirement objects carrying the *old* Nexus fields (`modId`/`fileFilter`/`modUrl`, from the webpack-bundle era) are still ignored — those are not the current field names. Every other host has its own companion module, listed at the top of this document.
+- **GitHub or Nexus.** A requirement comes from a GitHub release asset by default, or from a Nexus mod page when it sets `nexusModId` (see **Nexus-hosted requirements**). Requirement objects carrying the _old_ Nexus fields (`modId`/`fileFilter`/`modUrl`, from the webpack-bundle era) are still ignored — those are not the current field names. Every other host has its own companion module, listed at the top of this document.
 - **Case-insensitive detection.** `findModByFile` lower-cases both sides, so a maintainer changing the marker file's capitalization won't trigger a constant re-download loop.
 - **Several copies of one requirement can be installed at once, and the enabled one wins.** Whether an update replaces the installed mod or adds a second one is decided by the release asset's **file name**, not by the module. A versionless name (`lovely-x86_64-pc-windows-msvc.zip`) derives the same mod id every time, so Vortex's install pipeline treats the update as a replacement and one copy ever exists. A name carrying the version (`shadps4-win64-sdl-0.18.0.zip`) derives a new mod id per release, so the staging folder accumulates one mod per version — all of them carrying the requirement's mod type and its marker file, and all of them matching `findModByFile`. Mods are iterated in the order the state object holds them, which is neither install order nor version order, so returning the first hit picks an arbitrary copy (in practice the lexicographically lowest, i.e. the oldest). `findModByFile` therefore returns the copy **enabled in the active profile**, falling back to the first match when none is enabled — which is what a single-copy install yields anyway. This matters because `resolveVersionByModVersion`, `resolveVersionByAssetDate` and `resolveVersionByNightlyRun` read their version marker straight off this mod, and `download()` disables it as the outgoing version.
 - **Detection is scoped to the requirement's mod type.** `getMods` returns only mods whose `type` equals the requirement's `modType`; untyped mods are not searched. Marker files are frequently generic — `winmm.dll`, `dinput8.dll` and friends ship with any number of ordinary ASI mods — and including untyped mods meant such a mod could satisfy the requirement, leaving it permanently "installed" (never downloaded, with update checks reading an unrelated mod's version). Scoping also avoids walking every untyped mod's staging folder on each setup and update check. To keep that safe, `installDownload` dispatches `actions.setModType` for the requirement's `modType` itself rather than relying solely on the extension's own installer firing its `setmodtype` instruction; when the installer already assigned it, the dispatch is a no-op. A requirement that was installed previously without a mod type is re-downloaded once, after which it is typed correctly.
@@ -340,28 +340,32 @@ The installed mod is stamped `source: 'website'` with `url` pointing at the mod 
 
 ```js
 const {
-  download, findModByFile, findDownloadIdByFile,
-  resolveVersionByPattern, resolveVersionByAssetDate, testRequirementVersion,
-} = require('./downloader');
+    download,
+    findModByFile,
+    findDownloadIdByFile,
+    resolveVersionByPattern,
+    resolveVersionByAssetDate,
+    testRequirementVersion,
+} = require("./downloader");
 
 const REQUIREMENTS = [
-  {
-    archiveFileName: XXX_ARC_NAME,
-    modType: XXX_ID,
-    assemblyFileName: XXX_FILE,
-    userFacingName: XXX_NAME,
-    githubUrl: XXX_URL_API,
-    findMod: (api) => findModByFile(api, XXX_ID, XXX_FILE),
-    findDownloadId: (api) => findDownloadIdByFile(api, XXX_ARC_NAME),
-    fileArchivePattern: new RegExp(/^XXX(\d+\.\d+\.\d+)/, 'i'),
-    resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[0]),
-    // allowPrerelease: true,
-    // prereleaseTag: 'experimental-latest',
-    // trackByAssetDate: true,
-    // resolveVersion: (api) => resolveVersionByAssetDate(api, REQUIREMENTS[0]),
-    // pinVersion: VER,        // hold at this release; update checks go silent once it is installed
-    // pinTag: `v${VER}`,      // only if the tag is not just pinVersion
-  },
+    {
+        archiveFileName: XXX_ARC_NAME,
+        modType: XXX_ID,
+        assemblyFileName: XXX_FILE,
+        userFacingName: XXX_NAME,
+        githubUrl: XXX_URL_API,
+        findMod: (api) => findModByFile(api, XXX_ID, XXX_FILE),
+        findDownloadId: (api) => findDownloadIdByFile(api, XXX_ARC_NAME),
+        fileArchivePattern: new RegExp(/^XXX(\d+\.\d+\.\d+)/, "i"),
+        resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[0]),
+        // allowPrerelease: true,
+        // prereleaseTag: 'experimental-latest',
+        // trackByAssetDate: true,
+        // resolveVersion: (api) => resolveVersionByAssetDate(api, REQUIREMENTS[0]),
+        // pinVersion: VER,        // hold at this release; update checks go silent once it is installed
+        // pinTag: `v${VER}`,      // only if the tag is not just pinVersion
+    },
 ];
 ```
 
@@ -371,19 +375,19 @@ In `setup()` — install on first run if missing:
 
 ```js
 async function setup(api) {
-  const requirementsInstalled = await checkForRequirements(api);
-  if (!requirementsInstalled) {
-    await download(api, REQUIREMENTS);
-  }
+    const requirementsInstalled = await checkForRequirements(api);
+    if (!requirementsInstalled) {
+        await download(api, REQUIREMENTS);
+    }
 }
 ```
 
 In `context.once()` — check versions when the game's mods are checked:
 
 ```js
-api.onAsync('check-mods-version', (gameId, mods, forced) => {
-  if (gameId !== GAME_ID) return;
-  return onCheckModVersion(api, gameId, mods, forced); // loops testRequirementVersion over REQUIREMENTS
+api.onAsync("check-mods-version", (gameId, mods, forced) => {
+    if (gameId !== GAME_ID) return;
+    return onCheckModVersion(api, gameId, mods, forced); // loops testRequirementVersion over REQUIREMENTS
 });
 ```
 
@@ -438,3 +442,6 @@ recognise it, and the Actions-artifact route behind nightly mode).
 GitHub release is the only correct source).
 `LOBOTOMY_BASEMOD.md` (a requirement whose GitHub asset is an 85 MB application archive of which
 only one folder is deployed, and whose version comes off the asset filename rather than the tag).
+`NODE_FS.md` (the `fs` surface this module writes through — `fs.createWriteStream` for the download
+itself, `fsp.mkdir { recursive: true }` for the staging folder, and why the `createWriteStream`
+import is no longer destructured).

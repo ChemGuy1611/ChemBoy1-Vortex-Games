@@ -2,10 +2,10 @@
 
 GameBanana exposes two public, read-only JSON APIs. Neither requires authentication or an API key for read operations.
 
-| API | Base URL | Status |
-| --- | --- | --- |
-| apiv11 | `https://gamebanana.com/apiv11/` | Current — powers the site itself |
-| Core (legacy) | `https://api.gamebanana.com/` | Older but still functional; self-documenting at its base URL |
+| API           | Base URL                         | Status                                                       |
+| ------------- | -------------------------------- | ------------------------------------------------------------ |
+| apiv11        | `https://gamebanana.com/apiv11/` | Current — powers the site itself                             |
+| Core (legacy) | `https://api.gamebanana.com/`    | Older but still functional; self-documenting at its base URL |
 
 All endpoints below were verified live against the DOOM Eternal EternalModInjector tool page (`https://gamebanana.com/tools/7475`).
 
@@ -13,14 +13,14 @@ All endpoints below were verified live against the DOOM Eternal EternalModInject
 
 GameBanana uses Hungarian-style field prefixes throughout both APIs:
 
-| Prefix | Type | Example |
-| --- | --- | --- |
-| `_s` | string | `_sName`, `_sDownloadUrl` |
-| `_n` | number | `_nFilesize`, `_nDownloadCount` |
-| `_b` | boolean | `_bHasUpdates`, `_bIsArchived` |
-| `_ts` | Unix timestamp (seconds) | `_tsDateAdded`, `_tsDateUpdated` |
-| `_a` | array or object | `_aFiles`, `_aGame` |
-| `_idRow` | numeric record ID | the item/file/update ID |
+| Prefix   | Type                     | Example                          |
+| -------- | ------------------------ | -------------------------------- |
+| `_s`     | string                   | `_sName`, `_sDownloadUrl`        |
+| `_n`     | number                   | `_nFilesize`, `_nDownloadCount`  |
+| `_b`     | boolean                  | `_bHasUpdates`, `_bIsArchived`   |
+| `_ts`    | Unix timestamp (seconds) | `_tsDateAdded`, `_tsDateUpdated` |
+| `_a`     | array or object          | `_aFiles`, `_aGame`              |
+| `_idRow` | numeric record ID        | the item/file/update ID          |
 
 Additional notes:
 
@@ -41,7 +41,7 @@ Key fields:
 - `_aFiles[]` — current downloadable files (see File record below)
 - `_aGame` — `{ _idRow, _sName, _sAbbreviation, _sProfileUrl }` (e.g. DOOM Eternal = game ID `8756`)
 - `_aCategory` — `{ _idRow, _sName, _sModelName }`
-- `_sDownloadUrl` — download *page* URL (`https://gamebanana.com/tools/download/7475`), not a direct file
+- `_sDownloadUrl` — download _page_ URL (`https://gamebanana.com/tools/download/7475`), not a direct file
 - `_aPreviewMedia._aImages[]` — screenshots with `_sBaseUrl` + `_sFile` variants (100/220/530/800 px)
 - `_aTags[]`, `_sLicense`, `_aLicenseChecklist`
 
@@ -53,18 +53,18 @@ Lightweight subset — ideal for update automation. Returns `_aFiles[]`, `_sLice
 
 ```json
 {
-  "_idRow": 1706519,
-  "_sFile": "eternalmodinjector_b20ec.zip",
-  "_nFilesize": 5177982,
-  "_tsDateAdded": 1779267497,
-  "_sDownloadUrl": "https://gamebanana.com/dl/1706519",
-  "_sMd5Checksum": "3c53a6cc8fbef141f91b4dd6d382e940",
-  "_sAnalysisState": "done",
-  "_sAnalysisResult": "ok",
-  "_sAvState": "done",
-  "_sAvResult": "clean",
-  "_bIsArchived": false,
-  "_aAnalysisWarnings": { "contains_exe": ["EternalModManager.exe", "..."] }
+    "_idRow": 1706519,
+    "_sFile": "eternalmodinjector_b20ec.zip",
+    "_nFilesize": 5177982,
+    "_tsDateAdded": 1779267497,
+    "_sDownloadUrl": "https://gamebanana.com/dl/1706519",
+    "_sMd5Checksum": "3c53a6cc8fbef141f91b4dd6d382e940",
+    "_sAnalysisState": "done",
+    "_sAnalysisResult": "ok",
+    "_sAvState": "done",
+    "_sAvResult": "clean",
+    "_bIsArchived": false,
+    "_aAnalysisWarnings": { "contains_exe": ["EternalModManager.exe", "..."] }
 }
 ```
 
@@ -119,12 +119,12 @@ Returns newest submissions as positional pairs: `[["Mod", 678437], ["Mod", 51076
 
 ## Direct Downloads
 
-| URL | Behavior |
-| --- | --- |
-| `https://gamebanana.com/dl/{fileId}` | Direct file download (HTTP redirect to CDN) |
-| `https://gamebanana.com/mmdl/{fileId}` | The one-click "install with mod manager" target; redirects exactly like `/dl/` |
-| `https://gamebanana.com/{section}/download/{itemId}` | Human download page listing all files |
-| `https://gamebanana.com/{section}/{itemId}` | Item profile page (e.g. `/tools/7475`, `/mods/428520`) |
+| URL                                                  | Behavior                                                                       |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `https://gamebanana.com/dl/{fileId}`                 | Direct file download (HTTP redirect to CDN)                                    |
+| `https://gamebanana.com/mmdl/{fileId}`               | The one-click "install with mod manager" target; redirects exactly like `/dl/` |
+| `https://gamebanana.com/{section}/download/{itemId}` | Human download page listing all files                                          |
+| `https://gamebanana.com/{section}/{itemId}`          | Item profile page (e.g. `/tools/7475`, `/mods/428520`)                         |
 
 The redirect chain for a current file, verified August 2026:
 
@@ -138,7 +138,7 @@ https://gamebanana.com/dl/1765017
 Three things follow from it:
 
 - **A stale file id does not fail loudly.** `/dl/{fileId}` for a file the submission has since replaced
-  redirects to the submission's download *page* (`/{section}/download/{itemId}`) and returns HTML with a
+  redirects to the submission's download _page_ (`/{section}/download/{itemId}`) and returns HTML with a
   `200`. Anything holding a hardcoded file id — a fallback, a pin — therefore has to be checked against
   the API rather than trusted to error out.
 - **The CDN URL carries no ids**, only the section and the file name, so a download captured at the CDN
@@ -155,12 +155,12 @@ Three things follow from it:
   URL it lands on; the caller-supplied name cannot rescue this case, because the URL segment outranks
   it. See `VORTEX_DOWNLOAD_MGMT.md`.
 
-  ```js
-  // HEAD, so the archive is not pulled just to learn its name. The redirect must be FOLLOWED:
-  // redirect: 'manual' yields an opaque filtered response in Chromium, Location unreadable.
-  const response = await fetch(`https://gamebanana.com/dl/${fileId}`, { method: 'HEAD' });
-  const downloadUrl = response.ok ? response.url : null;
-  ```
+    ```js
+    // HEAD, so the archive is not pulled just to learn its name. The redirect must be FOLLOWED:
+    // redirect: 'manual' yields an opaque filtered response in Chromium, Location unreadable.
+    const response = await fetch(`https://gamebanana.com/dl/${fileId}`, { method: "HEAD" });
+    const downloadUrl = response.ok ? response.url : null;
+    ```
 
 The one-click links the site renders for registered managers take the form
 `{manager}:https://gamebanana.com/mmdl/{fileId},{Model},{itemId}` — the only download link on the site
@@ -173,32 +173,35 @@ that names the submission it belongs to.
 `ProfilePage`, `DownloadPage` and `Updates`, on repeated calls. (An occasional Cloudflare `BYPASS`
 response is labelled `application/json`, which is why a one-off check can look fine.) Vortex's
 `jsonRequest` accepts only `application/json` or `text/plain`; anything else is rejected before the
-body is ever parsed, and the resulting `TemporaryError` carries the *response body* as its message,
+body is ever parsed, and the resulting `TemporaryError` carries the _response body_ as its message,
 so the failure reads like a successful fetch in a log.
 
 Use `util.rawRequest` with a content type this API actually sends, and parse locally:
 
 ```js
-const { util } = require('vortex-api');
+const { util } = require("vortex-api");
 
 const GB_CONTENT_TYPE = /^(application\/json|text\/html|text\/plain)/;
 
 async function gamebananaJson(url) {
-  const raw = await util.rawRequest(url, { expectedContentType: GB_CONTENT_TYPE, encoding: 'utf-8' });
-  return JSON.parse(String(raw));
+    const raw = await util.rawRequest(url, {
+        expectedContentType: GB_CONTENT_TYPE,
+        encoding: "utf-8",
+    });
+    return JSON.parse(String(raw));
 }
 
 // Resolve the current file ID for a GameBanana tool at runtime
 async function getLatestGamebananaFile(itemType, itemId) {
-  const url = `https://gamebanana.com/apiv11/${itemType}/${itemId}/DownloadPage`;
-  const data = await gamebananaJson(url);
-  const files = data._aFiles || [];
-  if (files.length === 0) {
-    throw new Error(`No files found for GameBanana ${itemType} ${itemId}`);
-  }
-  // Newest file wins when multiple are present
-  files.sort((a, b) => b._tsDateAdded - a._tsDateAdded);
-  return files[0]; // { _idRow, _sFile, _sDownloadUrl, _sMd5Checksum, ... }
+    const url = `https://gamebanana.com/apiv11/${itemType}/${itemId}/DownloadPage`;
+    const data = await gamebananaJson(url);
+    const files = data._aFiles || [];
+    if (files.length === 0) {
+        throw new Error(`No files found for GameBanana ${itemType} ${itemId}`);
+    }
+    // Newest file wins when multiple are present
+    files.sort((a, b) => b._tsDateAdded - a._tsDateAdded);
+    return files[0]; // { _idRow, _sFile, _sDownloadUrl, _sMd5Checksum, ... }
 }
 ```
 
@@ -216,41 +219,41 @@ As with `downloader.js`, the canonical copy lives in `resources/downloader/` and
 
 The entry points take an array of requirement objects (conventionally a `GB_REQUIREMENTS` constant in `index.js`), each describing one GameBanana-hosted requirement:
 
-| Field | Required | Meaning |
-| --- | --- | --- |
-| `gbItemType` | yes | apiv11 model name in URL paths: `'Tool'`, `'Mod'`, `'Sound'`, ... |
-| `gbItemId` | yes | GameBanana item id (e.g. `'7475'` from `gamebanana.com/tools/7475`). |
-| `modType` | yes | Vortex mod type id the requirement installs as; also the installed-detection key (any mod with this type counts as installed). |
-| `userFacingName` | yes | Display name in notifications, on the download, and in the mod list (stamped as the mod's `customFileName`). |
-| `fileNamePattern` | optional | RegExp tested against `_aFiles[]._sFile`, narrowing multi-file submissions (e.g. Windows/Linux variants) to this requirement's file. Default: the newest file. |
-| `fallbackVersion` | optional | Version attribute to record when the API is unreachable. |
-| `fallbackFileId` | optional | File id used to build a `https://gamebanana.com/dl/{fileId}` fallback link when the API is unreachable. Without it, an unreachable API fails the install with a manual-download error. |
-| `fileIdAttribute` | optional | Mod attribute tracking the installed GameBanana file id for update checks. Default `'gamebananaFileId'`. |
-| `versionPattern` | optional | RegExp whose capture group 1 is the version, run against the latest Updates title. Default `/\(Update\s+(.+?)\)/` (matches titles like `"2026-05-20 (Update 6.66 Rev 3 N)"`). |
-| `pageUrl` | optional | Manual-download page opened on install failure. Default derived from `gbItemType`/`gbItemId` (e.g. `https://gamebanana.com/tools/7475`). |
-| `autoInstall` | optional | `false` -> never install this requirement unattended; only an explicit user action (a toolbar button) installs it. Default installs a missing requirement automatically when the update check runs. |
-| `pinVersion` | optional | Hold the requirement at this submission version instead of tracking the newest file. Requires `pinFileId`; without it the pin is ignored with a warning. See **Version pinning** below. |
-| `pinFileId` | with `pinVersion` | The file id to install for the pinned version — the API has no version-to-file lookup, so the pin cannot be resolved without it. |
+| Field             | Required          | Meaning                                                                                                                                                                                             |
+| ----------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `gbItemType`      | yes               | apiv11 model name in URL paths: `'Tool'`, `'Mod'`, `'Sound'`, ...                                                                                                                                   |
+| `gbItemId`        | yes               | GameBanana item id (e.g. `'7475'` from `gamebanana.com/tools/7475`).                                                                                                                                |
+| `modType`         | yes               | Vortex mod type id the requirement installs as; also the installed-detection key (any mod with this type counts as installed).                                                                      |
+| `userFacingName`  | yes               | Display name in notifications, on the download, and in the mod list (stamped as the mod's `customFileName`).                                                                                        |
+| `fileNamePattern` | optional          | RegExp tested against `_aFiles[]._sFile`, narrowing multi-file submissions (e.g. Windows/Linux variants) to this requirement's file. Default: the newest file.                                      |
+| `fallbackVersion` | optional          | Version attribute to record when the API is unreachable.                                                                                                                                            |
+| `fallbackFileId`  | optional          | File id used to build a `https://gamebanana.com/dl/{fileId}` fallback link when the API is unreachable. Without it, an unreachable API fails the install with a manual-download error.              |
+| `fileIdAttribute` | optional          | Mod attribute tracking the installed GameBanana file id for update checks. Default `'gamebananaFileId'`.                                                                                            |
+| `versionPattern`  | optional          | RegExp whose capture group 1 is the version, run against the latest Updates title. Default `/\(Update\s+(.+?)\)/` (matches titles like `"2026-05-20 (Update 6.66 Rev 3 N)"`).                       |
+| `pageUrl`         | optional          | Manual-download page opened on install failure. Default derived from `gbItemType`/`gbItemId` (e.g. `https://gamebanana.com/tools/7475`).                                                            |
+| `autoInstall`     | optional          | `false` -> never install this requirement unattended; only an explicit user action (a toolbar button) installs it. Default installs a missing requirement automatically when the update check runs. |
+| `pinVersion`      | optional          | Hold the requirement at this submission version instead of tracking the newest file. Requires `pinFileId`; without it the pin is ignored with a warning. See **Version pinning** below.             |
+| `pinFileId`       | with `pinVersion` | The file id to install for the pinned version — the API has no version-to-file lookup, so the pin cannot be resolved without it.                                                                    |
 
 ### Version pinning
 
 `pinVersion` + `pinFileId` hold the requirement at one file instead of following the newest one. It is opt-in and unset by default. While the tracked `gamebananaFileId` equals `pinFileId`, `checkForGameBananaUpdate` returns **before making any request** — a pinned requirement costs nothing against the API. A pinned install skips the API entirely as well, since `https://gamebanana.com/dl/{fileId}` is a complete download URL on its own.
 
-When the installed file is not the pinned one — including when nothing is installed — the module resolves the *pinned* file, never the newest. The notification reads "pinned version available" rather than "update available", because the user may be *ahead* of the pin and installing it is then a deliberate downgrade. `autoInstall` stays orthogonal: the pin says which file, `autoInstall` says whether anything installs unattended.
+When the installed file is not the pinned one — including when nothing is installed — the module resolves the _pinned_ file, never the newest. The notification reads "pinned version available" rather than "update available", because the user may be _ahead_ of the pin and installing it is then a deliberate downgrade. `autoInstall` stays orthogonal: the pin says which file, `autoInstall` says whether anything installs unattended.
 
 The same field name and behavior exist in all five downloader modules; `DOWNLOADER.md` has the cross-module table.
 
 ### Exports
 
-| Export | Role |
-| --- | --- |
-| `downloadGameBanana(api, gameSpec, requirements, check = true)` | Download + install each requirement in the array (sequentially) via Vortex's download manager, then enable it, set its mod type, and record version + file id attributes. With `check = true` (default) it is a no-op for requirements already installed; pass `false` to (re)install/update. Main entry point — call in `setup()`. |
-| `checkForGameBananaUpdate(api, gameSpec, requirements)` | For each requirement in the array: install it if it is missing (unless `autoInstall: false`), otherwise compare the tracked file id (or archive name, for mods installed before id tracking) against the latest apiv11 file; raise a warning notification with a Download action when newer. Call from a `check-mods-version` handler and after the `setup()` download. |
-| `downloadGameBananaRequirement(api, gameSpec, requirement, check = true)` | Single-requirement variant of `downloadGameBanana`. |
-| `checkForGameBananaUpdateRequirement(api, gameSpec, requirement)` | Single-requirement variant of `checkForGameBananaUpdate`. |
-| `isGameBananaRequirementInstalled(api, gameId, requirement)` | Whether any mod with the requirement's mod type exists. |
-| `getLatestGameBananaFile(requirement)` | Newest `_aFiles[]` record by `_tsDateAdded` (null if the API is unreachable). |
-| `getLatestGameBananaVersion(requirement)` | Version parsed from the latest Updates title via `versionPattern` (null if unreachable). |
+| Export                                                                    | Role                                                                                                                                                                                                                                                                                                                                                                    |
+| ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `downloadGameBanana(api, gameSpec, requirements, check = true)`           | Download + install each requirement in the array (sequentially) via Vortex's download manager, then enable it, set its mod type, and record version + file id attributes. With `check = true` (default) it is a no-op for requirements already installed; pass `false` to (re)install/update. Main entry point — call in `setup()`.                                     |
+| `checkForGameBananaUpdate(api, gameSpec, requirements)`                   | For each requirement in the array: install it if it is missing (unless `autoInstall: false`), otherwise compare the tracked file id (or archive name, for mods installed before id tracking) against the latest apiv11 file; raise a warning notification with a Download action when newer. Call from a `check-mods-version` handler and after the `setup()` download. |
+| `downloadGameBananaRequirement(api, gameSpec, requirement, check = true)` | Single-requirement variant of `downloadGameBanana`.                                                                                                                                                                                                                                                                                                                     |
+| `checkForGameBananaUpdateRequirement(api, gameSpec, requirement)`         | Single-requirement variant of `checkForGameBananaUpdate`.                                                                                                                                                                                                                                                                                                               |
+| `isGameBananaRequirementInstalled(api, gameId, requirement)`              | Whether any mod with the requirement's mod type exists.                                                                                                                                                                                                                                                                                                                 |
+| `getLatestGameBananaFile(requirement)`                                    | Newest `_aFiles[]` record by `_tsDateAdded` (null if the API is unreachable).                                                                                                                                                                                                                                                                                           |
+| `getLatestGameBananaVersion(requirement)`                                 | Version parsed from the latest Updates title via `versionPattern` (null if unreachable).                                                                                                                                                                                                                                                                                |
 
 ### Behaviors worth knowing
 
@@ -272,16 +275,16 @@ to the downloader above — the downloader installs requirements unattended, the
 picking mods — and an extension can carry both, as `game-doometernal` does. The shared contract, the
 adopter model and the claim chain are in `BROWSER_MODULES.md`; what is GameBanana-specific:
 
-| Piece | How this source does it |
-| --- | --- |
-| Home URL | `/{gbSection}/games/{gbGameId}`, i.e. the game's mod section (`gbSection` defaults to `mods`) |
-| Submission key | `Model-itemId` (`Mod-428520`), stored in the `gamebananaItem` mod attribute |
-| Identity of a download | Not in the URL — the page records the submissions the user opens and matches a claimed download against them by file id or file name (see Direct Downloads above) |
-| Resolution | One `ProfilePage` call per submission: `_aFiles` for the file, `_sVersion` for the version, `_aGame` for the game it belongs to |
-| Version | `_sVersion`, else group 1 of `versionPattern` against the newest `Updates` title, else the file's `_tsDateAdded` as a date, else the file id |
-| Update comparison | File id, numerically. Free-text versions make `semver` useless here |
-| Dependencies | No resolvable graph, so nothing is offered alongside an install — but see `_aRequirements` below, which is structured enough for a best-effort requirement list |
-| One-click links | `{manager}:https://gamebanana.com/mmdl/{fileId},{Model},{itemId}` is parsed when the user clicks it; Vortex is not a registered manager, so no button on the site will say "Vortex" |
+| Piece                  | How this source does it                                                                                                                                                             |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Home URL               | `/{gbSection}/games/{gbGameId}`, i.e. the game's mod section (`gbSection` defaults to `mods`)                                                                                       |
+| Submission key         | `Model-itemId` (`Mod-428520`), stored in the `gamebananaItem` mod attribute                                                                                                         |
+| Identity of a download | Not in the URL — the page records the submissions the user opens and matches a claimed download against them by file id or file name (see Direct Downloads above)                   |
+| Resolution             | One `ProfilePage` call per submission: `_aFiles` for the file, `_sVersion` for the version, `_aGame` for the game it belongs to                                                     |
+| Version                | `_sVersion`, else group 1 of `versionPattern` against the newest `Updates` title, else the file's `_tsDateAdded` as a date, else the file id                                        |
+| Update comparison      | File id, numerically. Free-text versions make `semver` useless here                                                                                                                 |
+| Dependencies           | No resolvable graph, so nothing is offered alongside an install — but see `_aRequirements` below, which is structured enough for a best-effort requirement list                     |
+| One-click links        | `{manager}:https://gamebanana.com/mmdl/{fileId},{Model},{itemId}` is parsed when the user clicks it; Vortex is not a registered manager, so no button on the site will say "Vortex" |
 
 The file id is stored in `gamebananaFileId` — deliberately the same attribute
 `gamebanana_downloader.js` writes, so a submission installed by either route is recognised by both.

@@ -7,11 +7,11 @@ Date: 2026-03-16
 ///////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require('vortex-api');
-const path = require('path');
+const { actions, fs, util, selectors, log } = require("vortex-api");
+const path = require("path");
 //const shortid = require('shortid');
-const template = require('string-template');
-const winapi = require('winapi-bindings');
+const template = require("string-template");
+const winapi = require("winapi-bindings");
 
 //const USER_HOME = util.getVortexPath("home");
 //const DOCUMENTS = util.getVortexPath("documents");
@@ -29,12 +29,12 @@ const XBOXEXECNAME = null;
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "Dying Light: The Beast";
 const GAME_NAME_SHORT = "DL The Beast";
-const BINARIES_PATH = path.join('ph_ft', 'work', 'bin', 'x64');
-const EXEC = path.join(BINARIES_PATH, 'DyingLightGame_TheBeast_x64_rwdi.exe');
+const BINARIES_PATH = path.join("ph_ft", "work", "bin", "x64");
+const EXEC = path.join(BINARIES_PATH, "DyingLightGame_TheBeast_x64_rwdi.exe");
 const EXEC_EGS = EXEC;
-const EXEC_XBOX = 'gamelaunchhelper.exe';
+const EXEC_XBOX = "gamelaunchhelper.exe";
 
-const ROOT_FOLDERS = ['ph_ft'];
+const ROOT_FOLDERS = ["ph_ft"];
 /*
 const DATA_FOLDER = 'XXX';
 const CONFIGMOD_LOCATION = DOCUMENTS;
@@ -43,10 +43,10 @@ const SAVEMOD_LOCATION = DOCUMENTS;
 const SAVE_FOLDERNAME = CONFIG_FOLDERNAME;
 //*/
 
-let GAME_PATH = '';
-let GAME_VERSION = ''; //Game version
-let STAGING_FOLDER = '';
-let DOWNLOAD_FOLDER = '';
+let GAME_PATH = "";
+let GAME_VERSION = ""; //Game version
+let STAGING_FOLDER = "";
+let DOWNLOAD_FOLDER = "";
 let DOTNET_INSTALLED = false;
 let superMergerInstalled = false;
 let mergerInstalled = false;
@@ -54,13 +54,13 @@ let mergerInstalled = false;
 const PAK_ID = `${GAME_ID}-pak`;
 const PAK_NAME = "Pak Mod (Merged)";
 //const PAK_PATH = path.join('ph_ft', 'source'); //
-const PAK_PATH = path.join('ph_ft', 'mods');
-const PAK_EXT = '.pak';
-const PAK_STRING = 'data';
+const PAK_PATH = path.join("ph_ft", "mods");
+const PAK_EXT = ".pak";
+const PAK_STRING = "data";
 const PAK_IDX_START = 2; //data0 and data1 are vanilla
 const PAK_IDX_END = 7; //cannot go above 7 or game won't load the file
-const VANILLA_PAKS = ['data0.pak', 'data1.pak'];
-const VANILLA_PAK_PATH = path.join('ph_ft', 'source');
+const VANILLA_PAKS = ["data0.pak", "data1.pak"];
+const VANILLA_PAK_PATH = path.join("ph_ft", "source");
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Folder";
@@ -70,7 +70,7 @@ const BINARIES_NAME = "Binaries (Engine Injector)";
 
 const MERGER_ID = `${GAME_ID}-mergerutility`;
 const MERGER_NAME = "UTM Mod Merger Utility";
-const MERGER_PATH = 'ph_ft';
+const MERGER_PATH = "ph_ft";
 const MERGER_EXEC = "unleashthemods.exe";
 const MERGER_EXEC_PATH = path.join(MERGER_PATH, MERGER_EXEC);
 const MERGER_PAGE_NO = 140;
@@ -118,94 +118,90 @@ const SAVE_FILES = ["XXX"];
 
 const DOTNET_VER = "8.0";
 const DOTNET_URL = `https://dotnet.microsoft.com/en-us/download/dotnet/${DOTNET_VER}`;
-const DOTNET_REG_HIVE = 'HKEY_LOCAL_MACHINE';
+const DOTNET_REG_HIVE = "HKEY_LOCAL_MACHINE";
 const DOTNET_REG_KEY = `SOFTWARE\\WOW6432Node\\dotnet\\Setup\\InstalledVersions\\x64\\sharedfx\\Microsoft.WindowsDesktop.App`;
 
 const MOD_PATH_DEFAULT = PAK_PATH;
 const REQ_FILE = EXEC;
-const PARAMETERS_STRING = '';
+const PARAMETERS_STRING = "";
 const PARAMETERS = [PARAMETERS_STRING];
-const IGNORED_FILES = [path.join('**', '**.pak')];
-const DEPLOY_IGNORE = [path.join('**', 'data0.pak'), path.join('**', 'data1.pak')];
+const IGNORED_FILES = [path.join("**", "**.pak")];
+const DEPLOY_IGNORE = [path.join("**", "data0.pak"), path.join("**", "data1.pak")];
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1456"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Dying_Light%3A_The_Beast";
-const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
-const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
 const spec = {
-  "game": {
-    "id": GAME_ID,
-    "name": GAME_NAME,
-    "shortName": GAME_NAME_SHORT,
-    "executable": EXEC,
+  game: {
+    id: GAME_ID,
+    name: GAME_NAME,
+    shortName: GAME_NAME_SHORT,
+    executable: EXEC,
     //"parameters": PARAMETERS,
-    "logo": `${GAME_ID}.jpg`,
-    "mergeMods": true,
-    "requiresCleanup": true,
-    "modPath": MOD_PATH_DEFAULT,
-    "modPathIsRelative": true,
-    "requiredFiles": [
-      REQ_FILE
-    ],
-    "details": {
-      "steamAppId": +STEAMAPP_ID,
-      "epicAppId": EPICAPP_ID,
+    logo: `${GAME_ID}.jpg`,
+    mergeMods: true,
+    requiresCleanup: true,
+    modPath: MOD_PATH_DEFAULT,
+    modPathIsRelative: true,
+    requiredFiles: [REQ_FILE],
+    details: {
+      steamAppId: +STEAMAPP_ID,
+      epicAppId: EPICAPP_ID,
       //"ignoreConflicts": IGNORED_FILES,
       //"ignoreDeploy": DEPLOY_IGNORE,
     },
-    "environment": {
-      "SteamAPPId": STEAMAPP_ID,
-      "EpicAPPId": EPICAPP_ID,
-    }
+    environment: {
+      SteamAPPId: STEAMAPP_ID,
+      EpicAPPId: EPICAPP_ID,
+    },
   },
-  "modTypes": [
+  modTypes: [
     {
-      "id": PAK_ID,
-      "name": PAK_NAME,
-      "priority": "high",
-      "targetPath": path.join('{gamePath}', PAK_PATH)
+      id: PAK_ID,
+      name: PAK_NAME,
+      priority: "high",
+      targetPath: path.join("{gamePath}", PAK_PATH),
     }, //*/
     {
-      "id": ROOT_ID,
-      "name": ROOT_NAME,
-      "priority": "high",
-      "targetPath": `{gamePath}`
+      id: ROOT_ID,
+      name: ROOT_NAME,
+      priority: "high",
+      targetPath: `{gamePath}`,
     },
     {
-      "id": BINARIES_ID,
-      "name": BINARIES_NAME,
-      "priority": "high",
-      "targetPath": path.join('{gamePath}', BINARIES_PATH)
+      id: BINARIES_ID,
+      name: BINARIES_NAME,
+      priority: "high",
+      targetPath: path.join("{gamePath}", BINARIES_PATH),
     },
     {
-      "id": MERGER_ID,
-      "name": MERGER_NAME,
-      "priority": "low",
-      "targetPath": path.join('{gamePath}', MERGER_PATH)
+      id: MERGER_ID,
+      name: MERGER_NAME,
+      priority: "low",
+      targetPath: path.join("{gamePath}", MERGER_PATH),
     }, //*/
     {
-      "id": SUPERMERGER_ID,
-      "name": SUPERMERGER_NAME,
-      "priority": "low",
-      "targetPath": path.join('{gamePath}', SUPERMERGER_PATH)
+      id: SUPERMERGER_ID,
+      name: SUPERMERGER_NAME,
+      priority: "low",
+      targetPath: path.join("{gamePath}", SUPERMERGER_PATH),
     }, //*/
   ],
-  "discovery": {
-    "ids": DISCOVERY_IDS_ACTIVE,
-    "names": []
-  }
+  discovery: {
+    ids: DISCOVERY_IDS_ACTIVE,
+    names: [],
+  },
 };
 
 //3rd party tools and launchers
 const tools = [
   {
     id: `${GAME_ID}-customlaunch`,
-    name: 'Custom Launch',
-    logo: 'exec.png',
+    name: "Custom Launch",
+    logo: "exec.png",
     executable: () => EXEC,
-    requiredFiles: [
-      EXEC,
-    ],
+    requiredFiles: [EXEC],
     relative: true,
     exclusive: true,
     shell: true,
@@ -215,11 +211,9 @@ const tools = [
   {
     id: MERGER_ID,
     name: MERGER_NAME,
-    logo: 'merger.png',
+    logo: "merger.png",
     executable: () => MERGER_EXEC_PATH,
-    requiredFiles: [
-      MERGER_EXEC_PATH,
-    ],
+    requiredFiles: [MERGER_EXEC_PATH],
     relative: true,
     exclusive: true,
     shell: true,
@@ -229,11 +223,9 @@ const tools = [
   {
     id: SUPERMERGER_ID,
     name: SUPERMERGER_NAME,
-    logo: 'supermerger.png',
+    logo: "supermerger.png",
     executable: () => SUPERMERGER_EXEC_PATH,
-    requiredFiles: [
-      SUPERMERGER_EXEC_PATH,
-    ],
+    requiredFiles: [SUPERMERGER_EXEC_PATH],
     relative: true,
     exclusive: true,
     shell: true,
@@ -249,8 +241,7 @@ function statCheckSync(gamePath, file) {
   try {
     fs.statSync(path.join(gamePath, file));
     return true;
-  }
-  catch {
+  } catch {
     return false;
   }
 }
@@ -259,8 +250,7 @@ async function statCheckAsync(gamePath, file) {
   try {
     await fs.statAsync(path.join(gamePath, file));
     return true;
-  }
-  catch {
+  } catch {
     return false;
   }
 }
@@ -272,15 +262,17 @@ async function getAllFiles(dirPath) {
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
       const stats = await fs.statAsync(fullPath);
-      if (stats.isDirectory()) { // Recursively get files from subdirectories
+      if (stats.isDirectory()) {
+        // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
         results = results.concat(subDirFiles);
-      } else { // Add file to results
+      } else {
+        // Add file to results
         results.push(fullPath);
       }
     }
   } catch (err) {
-    log('warn', `Error reading directory ${dirPath}: ${err.message}`);
+    log("warn", `Error reading directory ${dirPath}: ${err.message}`);
   }
   return results;
 }
@@ -297,40 +289,47 @@ function pathPattern(api, game, pattern) {
   try {
     var _a;
     return template(pattern, {
-      gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
-      documents: util.getVortexPath('documents'),
-      localAppData: util.getVortexPath('localAppData'),
-      appData: util.getVortexPath('appData'),
+      gamePath:
+        (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0
+          ? void 0
+          : _a.path,
+      documents: util.getVortexPath("documents"),
+      localAppData: util.getVortexPath("localAppData"),
+      appData: util.getVortexPath("appData"),
     });
-  }
-  catch (err) { //this happens if the executable comes back as "undefined", usually caused by the Xbox app locking down the folder
-    api.showErrorNotification('Failed to locate executable. Please launch the game at least once.', err);
+  } catch (err) {
+    //this happens if the executable comes back as "undefined", usually caused by the Xbox app locking down the folder
+    api.showErrorNotification(
+      "Failed to locate executable. Please launch the game at least once.",
+      err,
+    );
   }
 }
 
 //Set the mod path for the game
 function makeGetModPath(api, gameSpec) {
-  return () => gameSpec.game.modPathIsRelative !== false
-    ? gameSpec.game.modPath || '.'
-    : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
+  return () =>
+    gameSpec.game.modPathIsRelative !== false
+      ? gameSpec.game.modPath || "."
+      : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
 }
 
 //Find game installation directory
 function makeFindGame(api, gameSpec) {
-  return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
-    .then((game) => game.gamePath);
+  return () =>
+    util.GameStoreHelper.findByAppId(gameSpec.discovery.ids).then((game) => game.gamePath);
 }
 
 //Set launcher requirements
 async function requiresLauncher(gamePath, store) {
-  if (store === 'epic' && (DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID))) {
+  if (store === "epic" && DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID)) {
     return Promise.resolve({
-        launcher: 'epic',
-        addInfo: {
-          appId: EPICAPP_ID,
-          //parameters: PARAMETERS,
-          //launchType: 'gamestore',
-        },
+      launcher: "epic",
+      addInfo: {
+        appId: EPICAPP_ID,
+        //parameters: PARAMETERS,
+        //launchType: 'gamestore',
+      },
     });
   } //*/
   /*
@@ -347,17 +346,24 @@ async function requiresLauncher(gamePath, store) {
   return Promise.resolve(undefined);
 }
 
-const getDiscoveryPath = (api) => { //get the game's discovered path
+const getDiscoveryPath = (api) => {
+  //get the game's discovered path
   const state = api.getState();
   const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
 
-async function purge(api) { //useful to clear out mods prior to doing some action
-  return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));
+async function purge(api) {
+  //useful to clear out mods prior to doing some action
+  return new Promise((resolve, reject) =>
+    api.events.emit("purge-mods", true, (err) => (err ? reject(err) : resolve())),
+  );
 }
-async function deploy(api) { //useful to deploy mods after doing some action
-  return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
+async function deploy(api) {
+  //useful to deploy mods after doing some action
+  return new Promise((resolve, reject) =>
+    api.events.emit("deploy-mods", (err) => (err ? reject(err) : resolve())),
+  );
 }
 
 // AUTOMATIC DOWNLOADER FUNCTIONS ///////////////////////////////////////////////////
@@ -366,14 +372,14 @@ async function deploy(api) { //useful to deploy mods after doing some action
 function isMergerUtilityInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === MERGER_ID);
+  return Object.keys(mods).some((id) => mods[id]?.type === MERGER_ID);
 }
 
 //Check if Super Merger Utility is installed
 function isSuperMergerInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === SUPERMERGER_ID);
+  return Object.keys(mods).some((id) => mods[id]?.type === SUPERMERGER_ID);
 }
 
 //Function to choose merger utility
@@ -381,32 +387,36 @@ async function chooseMerger(api, gameSpec) {
   const UNLEASHED_LABEL = `Unleash The Mods`;
   const SUPER_LABEL = `Super Mod Merger (Recommended)`;
   const t = api.translate;
-  let choices = [
-    { label: t(SUPER_LABEL) },
-    { label: t(UNLEASHED_LABEL) },
-  ];
+  let choices = [{ label: t(SUPER_LABEL) }, { label: t(UNLEASHED_LABEL) }];
   const replace = {
     game: gameSpec.game.name,
-    bl: '[br][/br][br][/br]',
+    bl: "[br][/br][br][/br]",
   };
-  return api.showDialog('info', 'Mod Merger Selection', {
-    bbcode: t('You must choose a mod merger to install mods.{{bl}}'
-      + 'You can change which merger you have installed by Uninstalling the current one from Vortex, which will bring up this dialog again.{{bl}}'
-      + `Note that ${SUPERMERGER_NAME} is recommended as it can merge more file types and has no external dependencies.{{bl}}`
-      + 'Which mod loader would you like to use for {{game}}?',
-      { replace }
-    ),
-  }, choices)
-  .then(async (result) => {
-    if (result === undefined) {
-      return;
-    }
-    if (result.action === SUPER_LABEL) {
-      await downloadSuperMerger(api, gameSpec);
-    } else if (result.action === UNLEASHED_LABEL) {
-      await downloadMergerUtility(api, gameSpec);
-    }
-  });
+  return api
+    .showDialog(
+      "info",
+      "Mod Merger Selection",
+      {
+        bbcode: t(
+          "You must choose a mod merger to install mods.{{bl}}" +
+            "You can change which merger you have installed by Uninstalling the current one from Vortex, which will bring up this dialog again.{{bl}}" +
+            `Note that ${SUPERMERGER_NAME} is recommended as it can merge more file types and has no external dependencies.{{bl}}` +
+            "Which mod loader would you like to use for {{game}}?",
+          { replace },
+        ),
+      },
+      choices,
+    )
+    .then(async (result) => {
+      if (result === undefined) {
+        return;
+      }
+      if (result.action === SUPER_LABEL) {
+        await downloadSuperMerger(api, gameSpec);
+      } else if (result.action === UNLEASHED_LABEL) {
+        await downloadMergerUtility(api, gameSpec);
+      }
+    });
 }
 
 //* Function to auto-download Mod Merger Utility from Nexus Mods
@@ -416,27 +426,30 @@ async function downloadMergerUtility(api, gameSpec) {
     const MOD_NAME = MERGER_NAME;
     const MOD_TYPE = MERGER_ID;
     const NOTIF_ID = `${MOD_TYPE}-installing`;
-    let FILE_ID = MERGER_FILE_NO;  //If using a specific file id because "input" below gives an error
+    let FILE_ID = MERGER_FILE_NO; //If using a specific file id because "input" below gives an error
     const PAGE_ID = MERGER_PAGE_NO;
     const GAME_DOMAIN = GAME_ID;
-    api.sendNotification({ //notification indicating install process
+    api.sendNotification({
+      //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
-      type: 'activity',
+      type: "activity",
       noDismiss: true,
       allowSuppress: false,
     });
-    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
+    if (api.ext?.ensureLoggedIn !== undefined) {
+      //make sure user is logged into Nexus Mods account in Vortex
       await api.ext.ensureLoggedIn();
     }
     try {
       let FILE = FILE_ID; //use the FILE_ID directly for the correct game store version
       let URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      try { //get the mod files information from Nexus
+      try {
+        //get the mod files information from Nexus
         const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
         const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
         const file = modFiles
-          .filter(file => file.category_id === 1)
+          .filter((file) => file.category_id === 1)
           .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
           .reverse()[0];
         if (file === undefined) {
@@ -444,18 +457,24 @@ async function downloadMergerUtility(api, gameSpec) {
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch { // use defined file ID if input is undefined above
+      } catch {
+        // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       } //
-      const dlInfo = { //Download the mod
+      const dlInfo = {
+        //Download the mod
         game: GAME_DOMAIN,
         name: MOD_NAME,
       };
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const dlId = await util.toPromise((cb) =>
+        api.events.emit("start-download", [URL], dlInfo, undefined, cb, undefined, {
+          allowInstall: false,
+        }),
+      );
+      const modId = await util.toPromise((cb) =>
+        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+      );
       const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
       const batched = [
         actions.setModsEnabled(api, profileId, [modId], true, {
@@ -465,7 +484,8 @@ async function downloadMergerUtility(api, gameSpec) {
         actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
       ];
       util.batchDispatch(api.store, batched); // Will dispatch both actions
-    } catch (err) { //Show the user the download page if the download, install process fails
+    } catch (err) {
+      //Show the user the download page if the download, install process fails
       const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
       util.opn(errPage).catch(() => null);
@@ -482,27 +502,30 @@ async function downloadSuperMerger(api, gameSpec) {
     const MOD_NAME = SUPERMERGER_NAME;
     const MOD_TYPE = SUPERMERGER_ID;
     const NOTIF_ID = `${MOD_TYPE}-installing`;
-    let FILE_ID = SUPERMERGER_FILE_NO;  //If using a specific file id because "input" below gives an error
+    let FILE_ID = SUPERMERGER_FILE_NO; //If using a specific file id because "input" below gives an error
     const PAGE_ID = SUPERMERGER_PAGE_NO;
     const GAME_DOMAIN = SUPERMERGER_DOMAIN;
-    api.sendNotification({ //notification indicating install process
+    api.sendNotification({
+      //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
-      type: 'activity',
+      type: "activity",
       noDismiss: true,
       allowSuppress: false,
     });
-    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
+    if (api.ext?.ensureLoggedIn !== undefined) {
+      //make sure user is logged into Nexus Mods account in Vortex
       await api.ext.ensureLoggedIn();
     }
     try {
       let FILE = FILE_ID; //use the FILE_ID directly for the correct game store version
       let URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      try { //get the mod files information from Nexus
+      try {
+        //get the mod files information from Nexus
         const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
         const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
         const file = modFiles
-          .filter(file => file.category_id === 1)
+          .filter((file) => file.category_id === 1)
           .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
           .reverse()[0];
         if (file === undefined) {
@@ -510,18 +533,24 @@ async function downloadSuperMerger(api, gameSpec) {
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch { // use defined file ID if input is undefined above
+      } catch {
+        // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       } //
-      const dlInfo = { //Download the mod
+      const dlInfo = {
+        //Download the mod
         game: GAME_DOMAIN,
         name: MOD_NAME,
       };
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const dlId = await util.toPromise((cb) =>
+        api.events.emit("start-download", [URL], dlInfo, undefined, cb, undefined, {
+          allowInstall: false,
+        }),
+      );
+      const modId = await util.toPromise((cb) =>
+        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+      );
       const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
       const batched = [
         actions.setModsEnabled(api, profileId, [modId], true, {
@@ -531,7 +560,8 @@ async function downloadSuperMerger(api, gameSpec) {
         actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
       ];
       util.batchDispatch(api.store, batched); // Will dispatch both actions
-    } catch (err) { //Show the user the download page if the download, install process fails
+    } catch (err) {
+      //Show the user the download page if the download, install process fails
       const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
       util.opn(errPage).catch(() => null);
@@ -545,13 +575,18 @@ async function downloadSuperMerger(api, gameSpec) {
 
 //Test for .pak files (in mod merger)
 function testPak(files, gameId) {
-  const isMod = files.some(file => path.extname(file).toLowerCase() === PAK_EXT);
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => path.extname(file).toLowerCase() === PAK_EXT);
+  let supported = gameId === spec.game.id && isMod;
 
   //* Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   } //*/
 
@@ -661,87 +696,100 @@ function installPakInternal(api, files, fileName) {
 
 //*Install pak files (Merger version)
 function installPak(api, files, fileName) {
-  const rootCandidate = files.find(file => file.toLowerCase().split(path.sep).includes('ph_ft'));
-  const idx = rootCandidate !== undefined
-    ? rootCandidate.toLowerCase().split(path.sep).findIndex(seg => seg === 'ph_ft')
-    : 0;
-  
+  const rootCandidate = files.find((file) => file.toLowerCase().split(path.sep).includes("ph_ft"));
+  const idx =
+    rootCandidate !== undefined
+      ? rootCandidate
+          .toLowerCase()
+          .split(path.sep)
+          .findIndex((seg) => seg === "ph_ft")
+      : 0;
+
   const MOD_NAME = path.basename(fileName);
-  const MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
+  const MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, "");
 
   let hasVariants = false;
   const pakFiles = files.reduce((accum, iter) => {
-    if (path.extname(iter) === '.pak') {
+    if (path.extname(iter) === ".pak") {
       const exists = accum[path.basename(iter)] !== undefined;
       if (exists) {
         hasVariants = true;
       }
-      accum[path.basename(iter)] = exists
-        ? accum[path.basename(iter)].concat(iter)
-        : [iter];
+      accum[path.basename(iter)] = exists ? accum[path.basename(iter)].concat(iter) : [iter];
     }
     return accum;
   }, {});
 
   let filtered = files;
   const queryVariant = () => {
-    const paks = Object.keys(pakFiles).filter(key => pakFiles[key].length > 1);
-    return Promise.map(paks, pakFile => {
-      return api.showDialog('question', 'Choose Variant', {
-        text: 'This mod has several variants for "{{pak}}" - please '
-            + 'choose the variant you wish to install. (You can choose a '
-            + 'different variant by re-installing the mod)',
-        choices: pakFiles[pakFile].map((iter, idx) => ({ 
-          id: iter,
-          text: iter,
-          value: idx === 0,
-        })),
-        parameters: {
-          pak: pakFile,
-        },
-      }, [
-        { label: 'Cancel' },
-        { label: 'Confirm' },
-      ]).then(res => {
-        if (res.action === 'Confirm') {
-          const choice = Object.keys(res.input).find(choice => res.input[choice]);
-          filtered = filtered.filter(file => (path.extname(file) !== PAK_EXT)
-            || ((path.basename(file) === pakFile) && file.includes(choice))
-            || (path.basename(file) !== pakFile));
-          return Promise.resolve();
-        } else {
-          return new util.UserCanceled();
-        }
-      });
-    })
+    const paks = Object.keys(pakFiles).filter((key) => pakFiles[key].length > 1);
+    return Promise.map(paks, (pakFile) => {
+      return api
+        .showDialog(
+          "question",
+          "Choose Variant",
+          {
+            text:
+              'This mod has several variants for "{{pak}}" - please ' +
+              "choose the variant you wish to install. (You can choose a " +
+              "different variant by re-installing the mod)",
+            choices: pakFiles[pakFile].map((iter, idx) => ({
+              id: iter,
+              text: iter,
+              value: idx === 0,
+            })),
+            parameters: {
+              pak: pakFile,
+            },
+          },
+          [{ label: "Cancel" }, { label: "Confirm" }],
+        )
+        .then((res) => {
+          if (res.action === "Confirm") {
+            const choice = Object.keys(res.input).find((choice) => res.input[choice]);
+            filtered = filtered.filter(
+              (file) =>
+                path.extname(file) !== PAK_EXT ||
+                (path.basename(file) === pakFile && file.includes(choice)) ||
+                path.basename(file) !== pakFile,
+            );
+            return Promise.resolve();
+          } else {
+            return new util.UserCanceled();
+          }
+        });
+    });
   };
   const generateInstructions = () => {
     const fileInstructions = filtered.reduce((accum, iter) => {
       if (!iter.endsWith(path.sep)) {
         accum.push({
-          type: 'copy',
+          type: "copy",
           source: iter,
           destination: path.join(MOD_FOLDER, path.basename(iter)),
         });
       }
       return accum;
     }, []);
-    const instructions = [{ 
-      type: 'setmodtype',
-      value: PAK_ID,
-    }].concat(fileInstructions);
+    const instructions = [
+      {
+        type: "setmodtype",
+        value: PAK_ID,
+      },
+    ].concat(fileInstructions);
     return instructions;
-  }
+  };
 
   const prom = hasVariants ? queryVariant : Promise.resolve;
-  return prom()
-    .then(() => Promise.resolve({ instructions: generateInstructions() }));
+  return prom().then(() => Promise.resolve({ instructions: generateInstructions() }));
 } //*/
 
 //Installer test for Merger files
 function testMergerUtility(files, gameId) {
-  const isMod = files.some(file => (path.basename(file).toLowerCase() === MERGER_EXEC.toLowerCase()));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some(
+    (file) => path.basename(file).toLowerCase() === MERGER_EXEC.toLowerCase(),
+  );
+  let supported = gameId === spec.game.id && isMod;
 
   /* Test for a mod installer.
   if (supported && files.find(file =>
@@ -759,19 +807,21 @@ function testMergerUtility(files, gameId) {
 //Installer install Merger files
 function installMergerUtility(files) {
   const MOD_TYPE = MERGER_ID;
-  const modFile = files.find(file => (path.basename(file).toLowerCase() === MERGER_EXEC.toLowerCase()));
+  const modFile = files.find(
+    (file) => path.basename(file).toLowerCase() === MERGER_EXEC.toLowerCase(),
+  );
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+  const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -782,8 +832,10 @@ function installMergerUtility(files) {
 
 //Installer test for Super Merger files
 function testSuperMerger(files, gameId) {
-  const isMod = files.some(file => (path.basename(file).toLowerCase() === SUPERMERGER_EXEC.toLowerCase()));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some(
+    (file) => path.basename(file).toLowerCase() === SUPERMERGER_EXEC.toLowerCase(),
+  );
+  let supported = gameId === spec.game.id && isMod;
 
   /* Test for a mod installer.
   if (supported && files.find(file =>
@@ -801,19 +853,21 @@ function testSuperMerger(files, gameId) {
 //Installer install Super Merger files
 function installSuperMerger(files) {
   const MOD_TYPE = SUPERMERGER_ID;
-  const modFile = files.find(file => (path.basename(file).toLowerCase() === SUPERMERGER_EXEC.toLowerCase()));
+  const modFile = files.find(
+    (file) => path.basename(file).toLowerCase() === SUPERMERGER_EXEC.toLowerCase(),
+  );
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+  const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -824,13 +878,18 @@ function installSuperMerger(files) {
 
 //Installer test for Root folder files
 function testRoot(files, gameId) {
-  const isMod = files.some(file => ROOT_FOLDERS.includes(path.basename(file)));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => ROOT_FOLDERS.includes(path.basename(file)));
+  let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -842,20 +901,20 @@ function testRoot(files, gameId) {
 
 //Installer install Root folder files
 function installRoot(files) {
-  const modFile = files.find(file => ROOT_FOLDERS.includes(path.basename(file)));
-  const ROOT_IDX = `${path.basename(modFile)}${path.sep}`
+  const modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file)));
+  const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
   const idx = modFile.indexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -866,13 +925,18 @@ function installRoot(files) {
 
 //Fallback installer to Binaries folder
 function testBinaries(files, gameId) {
-  const isPak = files.some(file => (path.extname(file).toLowerCase() === PAK_EXT));
-  let supported = (gameId === spec.game.id) && !isPak;
+  const isPak = files.some((file) => path.extname(file).toLowerCase() === PAK_EXT);
+  let supported = gameId === spec.game.id && !isPak;
 
   // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -884,14 +948,12 @@ function testBinaries(files, gameId) {
 
 //Install fallback
 function installBinaries(files) {
-  const setModTypeInstruction = { type: 'setmodtype', value: BINARIES_ID };
-  
-  const filtered = files.filter(file =>
-    (!file.endsWith(path.sep))
-  );
-  const instructions = filtered.map(file => {
+  const setModTypeInstruction = { type: "setmodtype", value: BINARIES_ID };
+
+  const filtered = files.filter((file) => !file.endsWith(path.sep));
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file),
     };
@@ -973,63 +1035,74 @@ function dotNetNotify(api) {
   const MESSAGE = `.NET ${DOTNET_VER} Desktop Runtime Required`;
   api.sendNotification({
     id: NOTIF_ID,
-    type: 'warning',
+    type: "warning",
     message: MESSAGE,
     allowSuppress: true,
     actions: [
       {
-        title: 'More',
+        title: "More",
         action: (dismiss) => {
-          api.showDialog('question', MESSAGE, {
-            text: `.NET ${DOTNET_VER} Desktop Runtime is required to run the ${MERGER_NAME}.\n`
-                + `You can download and install the runtime from the Microsoft website using the button below.\n`
-                + `If you don't install the correct version of .NET, the Merger window will open and close immediately when launched, without doing anything.\n`
-                + `Mods must be merged by the utility in order to be loaded by the game.\n`
-          }, [
+          api.showDialog(
+            "question",
+            MESSAGE,
             {
-              label: `Go To .NET ${DOTNET_VER} Download Page`, action: () => {
-                util.opn(DOTNET_URL).catch(() => null);
-                dismiss();
-              }
+              text:
+                `.NET ${DOTNET_VER} Desktop Runtime is required to run the ${MERGER_NAME}.\n` +
+                `You can download and install the runtime from the Microsoft website using the button below.\n` +
+                `If you don't install the correct version of .NET, the Merger window will open and close immediately when launched, without doing anything.\n` +
+                `Mods must be merged by the utility in order to be loaded by the game.\n`,
             },
-            { label: 'Acknowledge', action: () => dismiss() },
-            {
-              label: 'Never Show Again', action: () => {
-                api.suppressNotification(NOTIF_ID);
-                dismiss();
-              }
-            },
-          ]);
+            [
+              {
+                label: `Go To .NET ${DOTNET_VER} Download Page`,
+                action: () => {
+                  util.opn(DOTNET_URL).catch(() => null);
+                  dismiss();
+                },
+              },
+              { label: "Acknowledge", action: () => dismiss() },
+              {
+                label: "Never Show Again",
+                action: () => {
+                  api.suppressNotification(NOTIF_ID);
+                  dismiss();
+                },
+              },
+            ],
+          );
         },
       },
     ],
-  });    
+  });
 }
 
 function checkForDotNet() {
   const version = DOTNET_VER;
   let values = undefined;
   try {
-    const buffer = winapi.WithRegOpen( //array of objects with values.type and values.key
+    const buffer = winapi.WithRegOpen(
+      //array of objects with values.type and values.key
       DOTNET_REG_HIVE,
       DOTNET_REG_KEY,
-      (hkey) => { //have to enum in the callback - https://github.com/Nexus-Mods/node-winapi-bindings/blob/master/index.d.ts
+      (hkey) => {
+        //have to enum in the callback - https://github.com/Nexus-Mods/node-winapi-bindings/blob/master/index.d.ts
         values = winapi.RegEnumValues(hkey); //array of objects with values.type and values.key
-      }
+      },
     );
     if (!values) {
       return false;
     }
-    values = values.map(value => value.key); //map array to only keys
-    const found = values.some(value => value.startsWith(version)); //find entry starting with correct version number
+    values = values.map((value) => value.key); //map array to only keys
+    const found = values.some((value) => value.startsWith(version)); //find entry starting with correct version number
     if (found) {
       //log('warn', `Found .NET ${version} installation`);
       return true;
     } else {
       return false;
     }
-  } catch (err) { //*/
-    log('warn', `Failed to read .NET registry key: ${err}`);
+  } catch (err) {
+    //*/
+    log("warn", `Failed to read .NET registry key: ${err}`);
     return false;
   }
 }
@@ -1081,11 +1154,23 @@ function applyGame(context, gameSpec) {
 
   //register mod types
   (gameSpec.modTypes || []).forEach((type, idx) => {
-    context.registerModType(type.id, modTypePriority(type.priority) + idx, (gameId) => {
-      var _a;
-      return (gameId === gameSpec.game.id)
-        && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
+    context.registerModType(
+      type.id,
+      modTypePriority(type.priority) + idx,
+      (gameId) => {
+        var _a;
+        return (
+          gameId === gameSpec.game.id &&
+          !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+          _a === void 0
+            ? void 0
+            : _a.path)
+        );
+      },
+      (game) => pathPattern(context.api, game, type.targetPath),
+      () => Promise.resolve(false),
+      { name: type.name },
+    );
   });
 
   /*register mod types explicitly
@@ -1104,36 +1189,62 @@ function applyGame(context, gameSpec) {
   //register mod installers
   context.registerInstaller(MERGER_ID, 25, testMergerUtility, installMergerUtility);
   context.registerInstaller(SUPERMERGER_ID, 27, testSuperMerger, installSuperMerger);
-  context.registerInstaller(PAK_ID, 29, testPak, (files, fileName) => installPak(context.api, files, fileName)); // Change back to this function once Mod Merger Utility is updated to look for paks in subfolders
+  context.registerInstaller(PAK_ID, 29, testPak, (files, fileName) =>
+    installPak(context.api, files, fileName),
+  ); // Change back to this function once Mod Merger Utility is updated to look for paks in subfolders
   //context.registerInstaller(CONFIG_ID, 43, testConfig, installConfig);
   //context.registerInstaller(SAVE_ID, 45, testSave, installSave);
   context.registerInstaller(ROOT_ID, 47, testRoot, installRoot);
   context.registerInstaller(BINARIES_ID, 49, testBinaries, installBinaries);
 
   //register actions
-  context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${SUPERMERGER_NAME} `, () => {
-    downloadSuperMerger(context.api, spec).catch(() => null);
-    }, () => {
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    `Download ${SUPERMERGER_NAME} `,
+    () => {
+      downloadSuperMerger(context.api, spec).catch(() => null);
+    },
+    () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
-    const openPath = path.join(__dirname, 'CHANGELOG.md');
-    util.opn(openPath).catch(() => null);
-    }, () => {
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "View Changelog",
+    () => {
+      const openPath = path.join(__dirname, "CHANGELOG.md");
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    const openPath = DOWNLOAD_FOLDER;
-    util.opn(openPath).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Downloads Folder",
+    () => {
+      const openPath = DOWNLOAD_FOLDER;
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
 
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
     util.opn(CONFIG_PATH).catch(() => null);
@@ -1149,20 +1260,36 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
-    util.opn(PCGAMINGWIKI_URL).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
-    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open PCGamingWiki Page",
+    () => {
+      util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Submit Bug Report",
+    () => {
+      util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
 }
 
 //main function
@@ -1174,9 +1301,10 @@ function main(context) {
     (filePath, mergeDir) => mergeOperation(context.api, filePath, mergeDir),
     PAK_ID
   ); //*/
-  context.once(() => { // put code here that should be run (once) when Vortex starts up
+  context.once(() => {
+    // put code here that should be run (once) when Vortex starts up
     const api = context.api;
-    api.onAsync('did-deploy', async (profileId, deployment) => {
+    api.onAsync("did-deploy", async (profileId, deployment) => {
       const lastActiveProfile = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== lastActiveProfile) return;
       mergerInstalled = isMergerUtilityInstalled(api, spec);
@@ -1192,7 +1320,7 @@ function main(context) {
       }
       return deployNotify(api);
     });
-    api.onAsync('did-purge', async (profileId, deployment) => {
+    api.onAsync("did-purge", async (profileId, deployment) => {
       const lastActiveProfile = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== lastActiveProfile) return;
       return didPurge(api);
@@ -1205,17 +1333,18 @@ async function didPurge(api) {
   GAME_PATH = getDiscoveryPath(api);
   const PAK_DIRECTORY = path.join(GAME_PATH, VANILLA_PAK_PATH);
   let FILES = await fs.readdirAsync(PAK_DIRECTORY);
-  try { //clear non-vanilla pak files
-    FILES = FILES.filter(file => 
-      path.extname(file).toLowerCase() === PAK_EXT &&
-      !VANILLA_PAKS.includes(path.basename(file))
+  try {
+    //clear non-vanilla pak files
+    FILES = FILES.filter(
+      (file) =>
+        path.extname(file).toLowerCase() === PAK_EXT && !VANILLA_PAKS.includes(path.basename(file)),
     );
     //log('warn', `Removing pak files on purge: ${FILES.join(', ')}`);
     FILES.forEach(async (file) => {
       await fs.unlinkAsync(path.join(PAK_DIRECTORY, file));
     });
   } catch (err) {
-    log('error', `Failed to remove merged pak files: ${FILES.join(', ')} - ${err.message}`);
+    log("error", `Failed to remove merged pak files: ${FILES.join(", ")} - ${err.message}`);
   }
   return Promise.resolve();
 }
@@ -1223,11 +1352,11 @@ async function didPurge(api) {
 //Notify User to run Merger after deployment
 function deployNotify(api) {
   const NOTIF_ID = `${GAME_ID}-deploy`;
-  const MOD_NAME = 'Merger';
+  const MOD_NAME = "Merger";
   const MESSAGE = `Run ${MOD_NAME} to Install Mods`;
   api.sendNotification({
     id: NOTIF_ID,
-    type: 'warning',
+    type: "warning",
     message: MESSAGE,
     allowSuppress: true,
     actions: [
@@ -1239,30 +1368,38 @@ function deployNotify(api) {
         },
       },
       {
-        title: 'More',
+        title: "More",
         action: (dismiss) => {
-          api.showDialog('question', MESSAGE, {
-            text: `\n`
-                + `For pak mods, you must use ${MOD_NAME} to merge all your paks into a single pak after installing with Vortex.\n`
-                + `Use the included tool to launch ${MOD_NAME} (button below, in "Dashboard" tab, or in notification shown after deployment).\n`
-                + `\n`
-                + `You can run ${MOD_NAME} using the button below, or using the button on the Dashboard tab.\n`
-                + `The use of this tool ensures that all your mods can work together when they make modifications to common files (such as "player_atributes.scr").\n`
-          }, [
+          api.showDialog(
+            "question",
+            MESSAGE,
             {
-              label: `Run ${MOD_NAME}`, action: () => {
-                runModManager(api);
-                dismiss();
-              }
+              text:
+                `\n` +
+                `For pak mods, you must use ${MOD_NAME} to merge all your paks into a single pak after installing with Vortex.\n` +
+                `Use the included tool to launch ${MOD_NAME} (button below, in "Dashboard" tab, or in notification shown after deployment).\n` +
+                `\n` +
+                `You can run ${MOD_NAME} using the button below, or using the button on the Dashboard tab.\n` +
+                `The use of this tool ensures that all your mods can work together when they make modifications to common files (such as "player_atributes.scr").\n`,
             },
-            { label: 'Continue', action: () => dismiss() },
-            {
-              label: 'Never Show Again', action: () => {
-                api.suppressNotification(NOTIF_ID);
-                dismiss();
-              }
-            },
-          ]);
+            [
+              {
+                label: `Run ${MOD_NAME}`,
+                action: () => {
+                  runModManager(api);
+                  dismiss();
+                },
+              },
+              { label: "Continue", action: () => dismiss() },
+              {
+                label: "Never Show Again",
+                action: () => {
+                  api.suppressNotification(NOTIF_ID);
+                  dismiss();
+                },
+              },
+            ],
+          );
         },
       },
     ],
@@ -1279,21 +1416,30 @@ function runModManager(api) {
     TOOL_NAME = SUPERMERGER_NAME;
   }
   const state = api.store.getState();
-  const tool = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'tools', TOOL_ID], undefined);
+  const tool = util.getSafe(
+    state,
+    ["settings", "gameMode", "discovered", GAME_ID, "tools", TOOL_ID],
+    undefined,
+  );
 
   try {
     const TOOL_PATH = tool.path;
     if (TOOL_PATH !== undefined) {
-      return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false, shell: true })
-        .catch(err => api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err,
-          { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 })
-        );
-    }
-    else {
-      return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, `Path to ${TOOL_NAME} executable could not be found. Ensure ${TOOL_NAME} is installed through Vortex.`);
+      return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false, shell: true }).catch((err) =>
+        api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
+          allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+        }),
+      );
+    } else {
+      return api.showErrorNotification(
+        `Failed to run ${TOOL_NAME}`,
+        `Path to ${TOOL_NAME} executable could not be found. Ensure ${TOOL_NAME} is installed through Vortex.`,
+      );
     }
   } catch (err) {
-    return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
+    return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
+      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+    });
   }
 }
 

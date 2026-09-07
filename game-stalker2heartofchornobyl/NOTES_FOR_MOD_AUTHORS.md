@@ -6,19 +6,19 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| Merger | a file or folder named `simple_mod_merger.exe` | `Stalker2SimpleModMerger` |
-| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `Stalker2` |
-| Blueprint Mods (LogicMods) | a `LogicMods` folder | `Stalker2\Content\Paks\LogicMods\LogicMods` |
-| Herbatamod | a file or folder named `GameLite` | `Stalker2\Content` |
-| UE4SS Itself | a `dwmapi.dll` file | - |
-| UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | - |
-| UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | - |
-| Root / Game Folder Mods | a top-level folder such as `Stalker2` | the game folder itself (no subfolder) |
-| Config File Mods | a config file such as `engine.ini` or `game.ini` | - |
-| Save Game Files | a `.sav` file | - |
-| Fallback Installer | anything unrecognised with no pak file | - |
+| Mod Type                                     | Archive must contain                             | Installs to                                 |
+| -------------------------------------------- | ------------------------------------------------ | ------------------------------------------- |
+| Merger                                       | a file or folder named `simple_mod_merger.exe`   | `Stalker2SimpleModMerger`                   |
+| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder         | `Stalker2`                                  |
+| Blueprint Mods (LogicMods)                   | a `LogicMods` folder                             | `Stalker2\Content\Paks\LogicMods\LogicMods` |
+| Herbatamod                                   | a file or folder named `GameLite`                | `Stalker2\Content`                          |
+| UE4SS Itself                                 | a `dwmapi.dll` file                              | -                                           |
+| UE4SS Script Mods (Lua)                      | a `.lua` file and a `Scripts` folder             | -                                           |
+| UE4SS DLL Mods (C++)                         | a `.dll` file and a `dlls` folder                | -                                           |
+| Root / Game Folder Mods                      | a top-level folder such as `Stalker2`            | the game folder itself (no subfolder)       |
+| Config File Mods                             | a config file such as `engine.ini` or `game.ini` | -                                           |
+| Save Game Files                              | a `.sav` file                                    | -                                           |
+| Fallback Installer                           | anything unrecognised with no pak file           | -                                           |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
@@ -210,4 +210,3 @@ This is the catch-all. Any archive with no `.pak` file that matched none of the 
 - Archives that contain a FOMOD installer (a `fomod` folder with `ModuleConfig.xml`) are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

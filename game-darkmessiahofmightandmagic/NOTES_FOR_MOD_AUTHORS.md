@@ -6,19 +6,19 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| Launcher | a file or folder named `mm.exe` | - |
-| Unlimited | a file or folder named `unlimited_edition` | - |
-| Root / Game Folder Mods | a `_mods` folder | the game folder itself (no subfolder) |
-| Launchermod | a file or folder named `info.json` | `_mods` |
-| Data | a file or folder named `mm` | - |
-| Datasub | a file or folder named one of: `materials`, `maps`, `bin`, `cfg`, `media`, `resource`, `scripts` or `SAVE` | `mm` |
-| Vpk | a file with the `.vpk` extension | `vpks` |
-| Materialssub | a file or folder named one of: `models`, `fx`, `sprites`, `cloth`, `console`, `correction`, `decals`, `detail`, `effects`, `engine`, `envcubemaps`, `generic`, `hud`, `nature`, `overlays`, `sun`, `vgui` or `voice` | `mm\materials` |
-| Maps | a file with the `.bsp` extension | `mm\maps` |
-| Save Game Files | a `.sav` file | `mm\SAVE` |
-| Config File Mods | a `config.cfg` file | `mm\cfg` |
+| Mod Type                | Archive must contain                                                                                                                                                                                                 | Installs to                           |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| Launcher                | a file or folder named `mm.exe`                                                                                                                                                                                      | -                                     |
+| Unlimited               | a file or folder named `unlimited_edition`                                                                                                                                                                           | -                                     |
+| Root / Game Folder Mods | a `_mods` folder                                                                                                                                                                                                     | the game folder itself (no subfolder) |
+| Launchermod             | a file or folder named `info.json`                                                                                                                                                                                   | `_mods`                               |
+| Data                    | a file or folder named `mm`                                                                                                                                                                                          | -                                     |
+| Datasub                 | a file or folder named one of: `materials`, `maps`, `bin`, `cfg`, `media`, `resource`, `scripts` or `SAVE`                                                                                                           | `mm`                                  |
+| Vpk                     | a file with the `.vpk` extension                                                                                                                                                                                     | `vpks`                                |
+| Materialssub            | a file or folder named one of: `models`, `fx`, `sprites`, `cloth`, `console`, `correction`, `decals`, `detail`, `effects`, `engine`, `envcubemaps`, `generic`, `hud`, `nature`, `overlays`, `sun`, `vgui` or `voice` | `mm\materials`                        |
+| Maps                    | a file with the `.bsp` extension                                                                                                                                                                                     | `mm\maps`                             |
+| Save Game Files         | a `.sav` file                                                                                                                                                                                                        | `mm\SAVE`                             |
+| Config File Mods        | a `config.cfg` file                                                                                                                                                                                                  | `mm\cfg`                              |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
@@ -116,4 +116,3 @@ Installs to: `mm\cfg`
 
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

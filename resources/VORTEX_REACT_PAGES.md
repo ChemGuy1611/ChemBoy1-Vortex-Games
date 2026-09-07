@@ -7,9 +7,19 @@ How to create sidebar pages and settings panels in Vortex extensions using React
 ## 1. Imports
 
 ```js
-const { actions, fs, util, selectors, log,
-        MainPage, FlexLayout, DNDContainer, DraggableList, Spinner } = require('vortex-api');
-const React = require('react');
+const {
+    actions,
+    fs,
+    util,
+    selectors,
+    log,
+    MainPage,
+    FlexLayout,
+    DNDContainer,
+    DraggableList,
+    Spinner,
+} = require("vortex-api");
+const React = require("react");
 ```
 
 All Vortex UI components come from `vortex-api`. `react-bootstrap` components are required lazily inside component functions. `react-redux` hooks are also required lazily.
@@ -42,12 +52,12 @@ with the originating extension, and `react-select` returns Vortex's `ReactSelect
 context.registerMainPage(icon, title, Component, options);
 ```
 
-| Param | Type | Notes |
-| --- | --- | --- |
-| `icon` | `string` | Icon name string (e.g. `'unreal'`, `'gamepad'`) |
-| `title` | `string` | Label shown in the sidebar. **Keep it under roughly 20 characters** - the sidebar clips a longer label rather than wrapping it. `Browse ModWorkshop.net` (22) was cut off in the live UI; `Browse Thunderstore` (19) is the longest label known to fit |
-| `Component` | `React.ComponentType` | Page component — receives `props` from the `props` callback |
-| `options` | `IMainPageOptions` | See below |
+| Param       | Type                  | Notes                                                                                                                                                                                                                                                  |
+| ----------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `icon`      | `string`              | Icon name string (e.g. `'unreal'`, `'gamepad'`)                                                                                                                                                                                                        |
+| `title`     | `string`              | Label shown in the sidebar. **Keep it under roughly 20 characters** - the sidebar clips a longer label rather than wrapping it. `Browse ModWorkshop.net` (22) was cut off in the live UI; `Browse Thunderstore` (19) is the longest label known to fit |
+| `Component` | `React.ComponentType` | Page component — receives `props` from the `props` callback                                                                                                                                                                                            |
+| `options`   | `IMainPageOptions`    | See below                                                                                                                                                                                                                                              |
 
 ### `IMainPageOptions`
 
@@ -87,18 +97,18 @@ context.registerMainPage(icon, title, Component, options);
 ### Minimal example
 
 ```js
-context.registerMainPage('unreal', 'UE4SS Load Order', Ue4ssLoadOrderPage, {
-  id: `${GAME_ID}-ue4ss-loadorder`,
-  priority: 31,
-  group: 'per-game',
-  hotkey: 'U',
-  visible: () => {
-    const state = context.api.store.getState();
-    const gameId = selectors.activeGameId(state);
-    const loEnabled = util.getSafe(state, ['settings', GAME_ID, 'ue4ssLoEnabled'], true);
-    return gameId === GAME_ID && loEnabled;
-  },
-  props: () => ({ api: context.api }),
+context.registerMainPage("unreal", "UE4SS Load Order", Ue4ssLoadOrderPage, {
+    id: `${GAME_ID}-ue4ss-loadorder`,
+    priority: 31,
+    group: "per-game",
+    hotkey: "U",
+    visible: () => {
+        const state = context.api.store.getState();
+        const gameId = selectors.activeGameId(state);
+        const loEnabled = util.getSafe(state, ["settings", GAME_ID, "ue4ssLoEnabled"], true);
+        return gameId === GAME_ID && loEnabled;
+    },
+    props: () => ({ api: context.api }),
 });
 ```
 
@@ -113,8 +123,13 @@ context.registerMainPage('unreal', 'UE4SS Load Order', Ue4ssLoadOrderPage, {
 Adds a component as a tab panel inside Vortex's Settings dialog:
 
 ```js
-context.registerSettings('Mods', GameSettings, () => ({}),
-  () => selectors.activeGameId(context.api.getState()) === GAME_ID, 150);
+context.registerSettings(
+    "Mods",
+    GameSettings,
+    () => ({}),
+    () => selectors.activeGameId(context.api.getState()) === GAME_ID,
+    150,
+);
 ```
 
 Full `registerSettings` signature/params and the `Toggle`+`More` settings-component pattern
@@ -128,10 +143,12 @@ Pages that need persistent state (like a load order list) use `registerReducer`.
 `registerMainPage`.
 
 ```js
-context.registerReducer(['persistent', 'myList', GAME_ID], spec); // before registerMainPage
+context.registerReducer(["persistent", "myList", GAME_ID], spec); // before registerMainPage
 
 // Reading in a component:
-const items = useSelector(state => util.getSafe(state, ['persistent', 'myList', GAME_ID, 'items'], []));
+const items = useSelector((state) =>
+    util.getSafe(state, ["persistent", "myList", GAME_ID, "items"], []),
+);
 ```
 
 Action-creator patterns, the `settings`/`persistent`/`session`/`window` path-prefix + persistence
@@ -153,14 +170,20 @@ MainPage          — root wrapper
 
 ```js
 function MyPage({ api }) {
-  return React.createElement(MainPage, null,
-    React.createElement(MainPage.Header, null,
-      // toolbar content
-    ),
-    React.createElement(MainPage.Body, null,
-      // page content
-    ),
-  );
+    return React.createElement(
+        MainPage,
+        null,
+        React.createElement(
+            MainPage.Header,
+            null,
+            // toolbar content
+        ),
+        React.createElement(
+            MainPage.Body,
+            null,
+            // page content
+        ),
+    );
 }
 ```
 
@@ -168,9 +191,11 @@ function MyPage({ api }) {
 
 ```js
 if (!items.length) {
-  return React.createElement(MainPage, null,
-    React.createElement(MainPage.Body, null,
-      React.createElement(Spinner)));
+    return React.createElement(
+        MainPage,
+        null,
+        React.createElement(MainPage.Body, null, React.createElement(Spinner)),
+    );
 }
 ```
 
@@ -179,13 +204,25 @@ if (!items.length) {
 Read the setting via `useSelector` alongside other selectors at the top of the component (before any early returns — Rules of Hooks). Then guard after the empty-list check:
 
 ```js
-const loEnabled = useSelector(state => util.getSafe(state, ['settings', GAME_ID, 'ue4ssLoEnabled'], true));
+const loEnabled = useSelector((state) =>
+    util.getSafe(state, ["settings", GAME_ID, "ue4ssLoEnabled"], true),
+);
 
 // after empty-list check:
 if (!loEnabled) {
-  return React.createElement(MainPage, null,
-    React.createElement(MainPage.Body, null,
-      React.createElement('p', { style: { padding: '12px', fontWeight: 'bold', color: 'yellow' } }, 'UE4SS load order is disabled in Settings.')));
+    return React.createElement(
+        MainPage,
+        null,
+        React.createElement(
+            MainPage.Body,
+            null,
+            React.createElement(
+                "p",
+                { style: { padding: "12px", fontWeight: "bold", color: "yellow" } },
+                "UE4SS load order is disabled in Settings.",
+            ),
+        ),
+    );
 }
 ```
 
@@ -198,14 +235,20 @@ if (!loEnabled) {
 Flexbox row or column container with optional fixed/flex children.
 
 ```js
-React.createElement(FlexLayout, { type: 'row', style: { height: '100%' } },
-  React.createElement(FlexLayout.Flex, { style: { overflowY: 'auto' } },
-    // list
-  ),
-  React.createElement(FlexLayout.Flex, { style: { flex: '0 0 300px', overflowY: 'auto' } },
-    // fixed-width info panel
-  ),
-)
+React.createElement(
+    FlexLayout,
+    { type: "row", style: { height: "100%" } },
+    React.createElement(
+        FlexLayout.Flex,
+        { style: { overflowY: "auto" } },
+        // list
+    ),
+    React.createElement(
+        FlexLayout.Flex,
+        { style: { flex: "0 0 300px", overflowY: "auto" } },
+        // fixed-width info panel
+    ),
+);
 ```
 
 - `FlexLayout.Flex` — grows to fill space; accepts `fill?: boolean` and any HTML div attrs.
@@ -216,22 +259,24 @@ React.createElement(FlexLayout, { type: 'row', style: { height: '100%' } },
 Required wrapper for any drag-and-drop list. Provides the react-dnd context.
 
 ```js
-React.createElement(DNDContainer, { style: { height: '95%' } },
-  // DraggableList goes here
-)
+React.createElement(
+    DNDContainer,
+    { style: { height: "95%" } },
+    // DraggableList goes here
+);
 ```
 
 ### `DraggableList`
 
 ```js
 React.createElement(DraggableList, {
-  itemTypeId: `${GAME_ID}-my-entry`,    // unique drag type ID
-  id: `${GAME_ID}-my-list`,            // unique list ID
-  items: itemsArray,                   // array of item objects
-  itemRenderer: MyItemRenderer,        // component rendered per item
-  apply: onApply,                      // called with reordered array on drop
-  idFunc: entry => entry.id,          // extracts unique key from item
-})
+    itemTypeId: `${GAME_ID}-my-entry`, // unique drag type ID
+    id: `${GAME_ID}-my-list`, // unique list ID
+    items: itemsArray, // array of item objects
+    itemRenderer: MyItemRenderer, // component rendered per item
+    apply: onApply, // called with reordered array on drop
+    idFunc: (entry) => entry.id, // extracts unique key from item
+});
 ```
 
 `IDraggableListProps`:
@@ -255,7 +300,7 @@ Behaviour worth knowing (`Vortex\src\renderer\src\controls\DraggableList.tsx`):
 - `virtualized` only takes effect above `VIRTUALIZE_THRESHOLD = 100` items, and requires **uniform
   row heights** — the row pitch is measured from the first two rendered rows. Variable-height rows
   (wrapping names, conditional buttons) must leave it off.
-- `itemTypeId` is the react-dnd drag type *and* the key of a module-level class cache. Two lists
+- `itemTypeId` is the react-dnd drag type _and_ the key of a module-level class cache. Two lists
   sharing an id share the drop target and will accept each other's rows; scope it per game/list.
 - `apply` fires once on drag end, not per hover, and duplicates are removed by id first.
 - Each row is wrapped in two `<div>`s the renderer cannot reach; the drag ref and an `onClick` live
@@ -274,26 +319,30 @@ Components are plain function components. All hooks must be called inside functi
 
 ```js
 function MyComponent({ api }) {
-  const { useSelector, useDispatch } = require('react-redux');
-  const { MainContext } = require('vortex-api');
+    const { useSelector, useDispatch } = require("react-redux");
+    const { MainContext } = require("vortex-api");
 
-  const vortexContext = React.useContext(MainContext); // access api inside components
-  const dispatch = useDispatch();
-  const [localState, setLocalState] = React.useState('');
+    const vortexContext = React.useContext(MainContext); // access api inside components
+    const dispatch = useDispatch();
+    const [localState, setLocalState] = React.useState("");
 
-  const items = useSelector(state =>
-    util.getSafe(state, ['persistent', 'myList', GAME_ID, 'items'], []));
+    const items = useSelector((state) =>
+        util.getSafe(state, ["persistent", "myList", GAME_ID, "items"], []),
+    );
 
-  React.useEffect(() => {
-    // runs when profileId changes
-    loadData(api).then(data => dispatch(setMyList(data)));
-  }, [profileId]);
+    React.useEffect(() => {
+        // runs when profileId changes
+        loadData(api).then((data) => dispatch(setMyList(data)));
+    }, [profileId]);
 
-  const onAction = React.useCallback((value) => {
-    dispatch(setMyList(value));
-  }, [dispatch, items]);
+    const onAction = React.useCallback(
+        (value) => {
+            dispatch(setMyList(value));
+        },
+        [dispatch, items],
+    );
 
-  return React.createElement('div', null, /* ... */);
+    return React.createElement("div", null /* ... */);
 }
 ```
 
@@ -315,33 +364,48 @@ Item renderers receive `{ item, className }` props from `DraggableList`. The `cl
 
 ```js
 function MyItemRenderer({ className, item }) {
-  const { Checkbox } = require('react-bootstrap');
-  const { Icon } = require('vortex-api');
-  const { useSelector, useDispatch } = require('react-redux');
+    const { Checkbox } = require("react-bootstrap");
+    const { Icon } = require("vortex-api");
+    const { useSelector, useDispatch } = require("react-redux");
 
-  const dispatch = useDispatch();
-  const items = useSelector(state =>
-    util.getSafe(state, ['persistent', 'myList', GAME_ID, 'items'], []));
+    const dispatch = useDispatch();
+    const items = useSelector((state) =>
+        util.getSafe(state, ["persistent", "myList", GAME_ID, "items"], []),
+    );
 
-  const onToggle = React.useCallback((evt) => {
-    const newItems = items.map(e => e.id === item.id ? { ...e, enabled: evt.target.checked } : e);
-    dispatch(setMyList(newItems));
-  }, [dispatch, items, item]);
+    const onToggle = React.useCallback(
+        (evt) => {
+            const newItems = items.map((e) =>
+                e.id === item.id ? { ...e, enabled: evt.target.checked } : e,
+            );
+            dispatch(setMyList(newItems));
+        },
+        [dispatch, items, item],
+    );
 
-  const classes = ['load-order-entry'];
-  if (className) classes.push(...className.split(' ').filter(Boolean));
+    const classes = ["load-order-entry"];
+    if (className) classes.push(...className.split(" ").filter(Boolean));
 
-  return React.createElement('div', {
-    className: classes.join(' '),
-    style: { display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 8, padding: '4px 12px', minHeight: 52 },
-  },
-    React.createElement(Icon, { className: 'drag-handle-icon', name: 'drag-handle' }),
-    React.createElement('p', { style: { flex: '1 1 0', margin: 0 } }, item.name),
-    React.createElement(Checkbox, {
-      checked: item.enabled ?? true,
-      onChange: onToggle,
-    }),
-  );
+    return React.createElement(
+        "div",
+        {
+            className: classes.join(" "),
+            style: {
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+                padding: "4px 12px",
+                minHeight: 52,
+            },
+        },
+        React.createElement(Icon, { className: "drag-handle-icon", name: "drag-handle" }),
+        React.createElement("p", { style: { flex: "1 1 0", margin: 0 } }, item.name),
+        React.createElement(Checkbox, {
+            checked: item.enabled ?? true,
+            onChange: onToggle,
+        }),
+    );
 }
 ```
 
@@ -372,20 +436,29 @@ Static (or lightly reactive) info panels are simple function components:
 
 ```js
 function MyInfoPanel() {
-  return React.createElement('div', {
-    id: 'loadorderinfo',
-    style: { padding: '12px', height: '100%', overflowY: 'auto', borderLeft: '1px solid rgba(255,255,255,0.1)' },
-  },
-    React.createElement('h2', { style: { marginTop: 0 } }, 'Panel Title'),
-    React.createElement('p', null, 'Explanatory text here.'),
-    React.createElement('br', null),
-    React.createElement('p', null,
-      'Text with ',
-      React.createElement('strong', null, 'bold inline'),
-      ' words.',
-    ),
-    React.createElement('p', { style: { fontStyle: 'italic' } }, 'Note text.'),
-  );
+    return React.createElement(
+        "div",
+        {
+            id: "loadorderinfo",
+            style: {
+                padding: "12px",
+                height: "100%",
+                overflowY: "auto",
+                borderLeft: "1px solid rgba(255,255,255,0.1)",
+            },
+        },
+        React.createElement("h2", { style: { marginTop: 0 } }, "Panel Title"),
+        React.createElement("p", null, "Explanatory text here."),
+        React.createElement("br", null),
+        React.createElement(
+            "p",
+            null,
+            "Text with ",
+            React.createElement("strong", null, "bold inline"),
+            " words.",
+        ),
+        React.createElement("p", { style: { fontStyle: "italic" } }, "Note text."),
+    );
 }
 ```
 
@@ -433,21 +506,26 @@ under the other filter:
 ```js
 const isFiltered = !!filterText || statusFilter.size > 0;
 
-const onApply = React.useCallback((reordered) => {
-  let newItems;
-  if (isFiltered) {
-    const filteredIds = new Set(reordered.map(e => e.id));
-    const positions = allItems.reduce((acc, e, i) => {
-      if (filteredIds.has(e.id)) acc.push(i);
-      return acc;
-    }, []);
-    newItems = [...allItems];
-    positions.forEach((pos, i) => { newItems[pos] = reordered[i]; });
-  } else {
-    newItems = reordered;
-  }
-  dispatch(setMyList(newItems));
-}, [dispatch, allItems, isFiltered]);
+const onApply = React.useCallback(
+    (reordered) => {
+        let newItems;
+        if (isFiltered) {
+            const filteredIds = new Set(reordered.map((e) => e.id));
+            const positions = allItems.reduce((acc, e, i) => {
+                if (filteredIds.has(e.id)) acc.push(i);
+                return acc;
+            }, []);
+            newItems = [...allItems];
+            positions.forEach((pos, i) => {
+                newItems[pos] = reordered[i];
+            });
+        } else {
+            newItems = reordered;
+        }
+        dispatch(setMyList(newItems));
+    },
+    [dispatch, allItems, isFiltered],
+);
 ```
 
 ### Status filter dropdown (beside the search box)
@@ -460,18 +538,27 @@ section 12b):
 ```js
 const [statusFilter, setStatusFilter] = React.useState(new Set());
 
-const filteredItems = allItems.filter(e =>
-  (!filterText || e.name.toLowerCase().includes(filterText.toLowerCase()))
-  && matchesStatus(e, statusFilter, isEntryEnabled, isEntryLocked));
+const filteredItems = allItems.filter(
+    (e) =>
+        (!filterText || e.name.toLowerCase().includes(filterText.toLowerCase())) &&
+        matchesStatus(e, statusFilter, isEntryEnabled, isEntryLocked),
+);
 
 // Header:
-React.createElement('div', { style: { display: 'flex', alignItems: 'center', width: '100%' } },
-  React.createElement(FormControl, { type: 'search', style: { flex: 1 }, /* ... */ }),
-  React.createElement(LoadOrderStatusFilter, {
-    active: statusFilter, setActive: setStatusFilter, groups: ['enabled', 'locked', 'unmanaged'],
-    count: statusFilter.size > 0 ? { matched: filteredItems.length, total: allItems.length } : null,
-  }),
-)
+React.createElement(
+    "div",
+    { style: { display: "flex", alignItems: "center", width: "100%" } },
+    React.createElement(FormControl, { type: "search", style: { flex: 1 } /* ... */ }),
+    React.createElement(LoadOrderStatusFilter, {
+        active: statusFilter,
+        setActive: setStatusFilter,
+        groups: ["enabled", "locked", "unmanaged"],
+        count:
+            statusFilter.size > 0
+                ? { matched: filteredItems.length, total: allItems.length }
+                : null,
+    }),
+);
 ```
 
 Load-bearing detail: `LoadOrderStatusFilter` is a **hand-built** dropdown (button +
@@ -522,23 +609,23 @@ visible: () => {
 
 ## 13. Available Components Cheatsheet
 
-| Component | Source | Notes |
-| --- | --- | --- |
-| `MainPage` | `vortex-api` | Root page wrapper; use `.Header` and `.Body` |
-| `FlexLayout` | `vortex-api` | Row/column flex container; use `.Flex` and `.Fixed` |
-| `DNDContainer` | `vortex-api` | Required DnD context wrapper |
-| `DraggableList` | `vortex-api` | Drag-and-drop list with custom item renderers |
-| `Spinner` | `vortex-api` | Loading spinner |
-| `Toggle` | `vortex-api` | Boolean toggle; `onToggle(checked)` receives new value |
-| `More` | `vortex-api` | Tooltip/info popup; needs unique `id` |
-| `Icon` | `vortex-api` | Icon by name (e.g. `'drag-handle'`, `'gamepad'`) |
-| `MainContext` | `vortex-api` | React context providing `{ api }` |
-| `LoadOrderIndexInput` | `vortex-api` | Numeric index input for FBLO items |
-| `ListGroupItem` | `react-bootstrap` | Bootstrap list item; use as outer in FBLO renderers |
-| `Checkbox` | `react-bootstrap` | Standard checkbox |
-| `FormControl` | `react-bootstrap` | Text input (search/filter box) |
-| `useSelector` | `react-redux` | Subscribe to Redux state |
-| `useDispatch` | `react-redux` | Get Redux dispatch function |
+| Component             | Source            | Notes                                                  |
+| --------------------- | ----------------- | ------------------------------------------------------ |
+| `MainPage`            | `vortex-api`      | Root page wrapper; use `.Header` and `.Body`           |
+| `FlexLayout`          | `vortex-api`      | Row/column flex container; use `.Flex` and `.Fixed`    |
+| `DNDContainer`        | `vortex-api`      | Required DnD context wrapper                           |
+| `DraggableList`       | `vortex-api`      | Drag-and-drop list with custom item renderers          |
+| `Spinner`             | `vortex-api`      | Loading spinner                                        |
+| `Toggle`              | `vortex-api`      | Boolean toggle; `onToggle(checked)` receives new value |
+| `More`                | `vortex-api`      | Tooltip/info popup; needs unique `id`                  |
+| `Icon`                | `vortex-api`      | Icon by name (e.g. `'drag-handle'`, `'gamepad'`)       |
+| `MainContext`         | `vortex-api`      | React context providing `{ api }`                      |
+| `LoadOrderIndexInput` | `vortex-api`      | Numeric index input for FBLO items                     |
+| `ListGroupItem`       | `react-bootstrap` | Bootstrap list item; use as outer in FBLO renderers    |
+| `Checkbox`            | `react-bootstrap` | Standard checkbox                                      |
+| `FormControl`         | `react-bootstrap` | Text input (search/filter box)                         |
+| `useSelector`         | `react-redux`     | Subscribe to Redux state                               |
+| `useDispatch`         | `react-redux`     | Get Redux dispatch function                            |
 
 ---
 
@@ -561,13 +648,13 @@ working implementation (grep by name -- line numbers drift as the file grows):
 
 The `group` option controls where a page appears in the sidebar.
 
-| Group | When visible | Real examples |
-| --- | --- | --- |
-| `'per-game'` | Only when a game is active | Load Order, Browse Nexus, Health Check |
-| `'global'` | Always (no game required) | Downloads, Extensions, Games |
-| `'dashboard'` | Used only for the Dashboard tab itself | Dashboard |
-| `'hidden'` | Accessible programmatically but no sidebar entry | About dialog |
-| `'support'` | Defined in interface but unused in practice | — |
+| Group         | When visible                                     | Real examples                          |
+| ------------- | ------------------------------------------------ | -------------------------------------- |
+| `'per-game'`  | Only when a game is active                       | Load Order, Browse Nexus, Health Check |
+| `'global'`    | Always (no game required)                        | Downloads, Extensions, Games           |
+| `'dashboard'` | Used only for the Dashboard tab itself           | Dashboard                              |
+| `'hidden'`    | Accessible programmatically but no sidebar entry | About dialog                           |
+| `'support'`   | Defined in interface but unused in practice      | —                                      |
 
 Use `'per-game'` for all game-specific extension pages. Use `'global'` for tools or viewers that make sense without any game active.
 
@@ -580,24 +667,23 @@ Use `'per-game'` for all game-specific extension pages. Use `'global'` for tools
 ### Constructing a `ReduxProp`
 
 ```js
-const { ReduxProp } = require('vortex-api');
+const { ReduxProp } = require("vortex-api");
 
 // badge: count of active items from state
 const myBadgeCount = new ReduxProp(
-  context.api,
-  [['persistent', 'myData', 'items']],   // array of state paths to subscribe to
-  (items) => {
-    const count = Object.keys(items ?? {})
-      .filter(id => items[id].active).length;
-    return count > 0 ? count : undefined;  // undefined = no badge shown
-  }
+    context.api,
+    [["persistent", "myData", "items"]], // array of state paths to subscribe to
+    (items) => {
+        const count = Object.keys(items ?? {}).filter((id) => items[id].active).length;
+        return count > 0 ? count : undefined; // undefined = no badge shown
+    },
 );
 
-context.registerMainPage('download', 'My Page', MyPage, {
-  group: 'global',
-  priority: 30,
-  badge: myBadgeCount,    // numeric badge on sidebar icon
-  // activity: myActivity // spinner instead of badge
+context.registerMainPage("download", "My Page", MyPage, {
+    group: "global",
+    priority: 30,
+    badge: myBadgeCount, // numeric badge on sidebar icon
+    // activity: myActivity // spinner instead of badge
 });
 ```
 
@@ -624,11 +710,11 @@ Workflow to get path data from Pictogrammers:
 **Option A — named import from `@mdi/js`** (bundled with Vortex; preferred when the icon exists):
 
 ```js
-const { mdiGamepad, mdiFolder, mdiCog } = require('@mdi/js');
+const { mdiGamepad, mdiFolder, mdiCog } = require("@mdi/js");
 
-context.registerMainPage('', 'My Page', MyPage, {
-  group: 'per-game',
-  mdi: mdiGamepad,
+context.registerMainPage("", "My Page", MyPage, {
+    group: "per-game",
+    mdi: mdiGamepad,
 });
 ```
 
@@ -637,11 +723,11 @@ Named exports follow `mdi` + PascalCase icon name: `mdi-gamepad` → `mdiGamepad
 **Option B — raw SVG path string** (for custom/unavailable icons):
 
 ```js
-const UE4SS_ICON = 'M12 2A10 10 0 0 0 2 12A10 10 0 0 0 12 22...';
+const UE4SS_ICON = "M12 2A10 10 0 0 0 2 12A10 10 0 0 0 12 22...";
 
-context.registerMainPage('', 'My Page', MyPage, {
-  group: 'per-game',
-  mdi: UE4SS_ICON,
+context.registerMainPage("", "My Page", MyPage, {
+    group: "per-game",
+    mdi: UE4SS_ICON,
 });
 ```
 
@@ -661,46 +747,60 @@ Not all pages need drag-and-drop. A static or read-only page is just a `MainPage
 
 ```js
 function MyInfoPage({ api }) {
-  const { useSelector } = require('react-redux');
-  const [data, setData] = React.useState(null);
+    const { useSelector } = require("react-redux");
+    const [data, setData] = React.useState(null);
 
-  React.useEffect(() => {
-    loadData(api).then(setData);
-  }, []);
+    React.useEffect(() => {
+        loadData(api).then(setData);
+    }, []);
 
-  if (!data) {
-    return React.createElement(MainPage, null,
-      React.createElement(MainPage.Body, null,
-        React.createElement(Spinner)));
-  }
+    if (!data) {
+        return React.createElement(
+            MainPage,
+            null,
+            React.createElement(MainPage.Body, null, React.createElement(Spinner)),
+        );
+    }
 
-  return React.createElement(MainPage, null,
-    React.createElement(MainPage.Body, null,
-      React.createElement('div', { style: { padding: 16 } },
-        React.createElement('h2', null, 'Status'),
-        React.createElement('p', null, `Loaded ${data.items.length} items.`),
-        data.items.map(item =>
-          React.createElement('div', { key: item.id, style: { marginBottom: 8 } },
-            React.createElement('strong', null, item.name),
-            React.createElement('span', { style: { marginLeft: 8, color: '#aaa' } }, item.status),
-          )
+    return React.createElement(
+        MainPage,
+        null,
+        React.createElement(
+            MainPage.Body,
+            null,
+            React.createElement(
+                "div",
+                { style: { padding: 16 } },
+                React.createElement("h2", null, "Status"),
+                React.createElement("p", null, `Loaded ${data.items.length} items.`),
+                data.items.map((item) =>
+                    React.createElement(
+                        "div",
+                        { key: item.id, style: { marginBottom: 8 } },
+                        React.createElement("strong", null, item.name),
+                        React.createElement(
+                            "span",
+                            { style: { marginLeft: 8, color: "#aaa" } },
+                            item.status,
+                        ),
+                    ),
+                ),
+            ),
         ),
-      )
-    )
-  );
+    );
 }
 ```
 
 Register the same way as any page:
 
 ```js
-context.registerMainPage('gamepad', 'My Status', MyInfoPage, {
-  id: `${GAME_ID}-status`,
-  group: 'per-game',
-  priority: 40,
-  hotkey: 'S',
-  visible: () => selectors.activeGameId(context.api.store.getState()) === GAME_ID,
-  props: () => ({ api: context.api }),
+context.registerMainPage("gamepad", "My Status", MyInfoPage, {
+    id: `${GAME_ID}-status`,
+    group: "per-game",
+    priority: 40,
+    hotkey: "S",
+    visible: () => selectors.activeGameId(context.api.store.getState()) === GAME_ID,
+    props: () => ({ api: context.api }),
 });
 ```
 
@@ -715,30 +815,34 @@ Two approaches for toolbar buttons in `MainPage.Header`:
 Use this for hardcoded buttons (not user-extensible).
 
 ```js
-const { IconBar } = require('vortex-api');
+const { IconBar } = require("vortex-api");
 
 const toolbarButtons = [
-  {
-    component: ToolbarIcon,  // or any React component
-    props: () => ({
-      id: 'btn-refresh',
-      icon: 'refresh',
-      text: 'Refresh',
-      onClick: () => loadData(api),
-    }),
-  },
+    {
+        component: ToolbarIcon, // or any React component
+        props: () => ({
+            id: "btn-refresh",
+            icon: "refresh",
+            text: "Refresh",
+            onClick: () => loadData(api),
+        }),
+    },
 ];
 
 // In the page component:
-React.createElement(MainPage, null,
-  React.createElement(MainPage.Header, null,
-    React.createElement(IconBar, {
-      group: `${GAME_ID}-toolbar-icons`,  // matches registerAction group
-      staticElements: toolbarButtons,
-    })
-  ),
-  React.createElement(MainPage.Body, null, /* ... */),
-)
+React.createElement(
+    MainPage,
+    null,
+    React.createElement(
+        MainPage.Header,
+        null,
+        React.createElement(IconBar, {
+            group: `${GAME_ID}-toolbar-icons`, // matches registerAction group
+            staticElements: toolbarButtons,
+        }),
+    ),
+    React.createElement(MainPage.Body, null /* ... */),
+);
 ```
 
 ### Approach B: `registerAction` (user-extensible toolbar)
@@ -748,15 +852,15 @@ React.createElement(MainPage, null,
 ```js
 // In main():
 context.registerAction(
-  `${GAME_ID}-toolbar-icons`,   // group name — matches IconBar group prop
-  100,                          // priority (lower = left)
-  'refresh',                    // icon name
-  {},                           // options
-  'Refresh Data',               // tooltip / label
-  (instanceIds) => {
-    loadData(context.api);
-  },
-  (instanceIds) => true,        // condition: return true/false or an error string
+    `${GAME_ID}-toolbar-icons`, // group name — matches IconBar group prop
+    100, // priority (lower = left)
+    "refresh", // icon name
+    {}, // options
+    "Refresh Data", // tooltip / label
+    (instanceIds) => {
+        loadData(context.api);
+    },
+    (instanceIds) => true, // condition: return true/false or an error string
 );
 ```
 
@@ -772,36 +876,52 @@ For an extension-built tabbed page, hand-roll the same pattern: keep an `activeT
 
 ```js
 function MyTabbedPage({ api }) {
-  // TabProvider/TabBar/TabPanel are NOT available from require('vortex-api');
-  // this shows the structural pattern to replicate with your own components.
-  const [activeTab, setActiveTab] = React.useState('tab-a');
+    // TabProvider/TabBar/TabPanel are NOT available from require('vortex-api');
+    // this shows the structural pattern to replicate with your own components.
+    const [activeTab, setActiveTab] = React.useState("tab-a");
 
-  return React.createElement(MainPage, null,
-    React.createElement(MainPage.Header, null,
-      React.createElement(TabBar, {
-        activeTab,
-        tabs: [
-          { id: 'tab-a', title: 'Overview' },
-          { id: 'tab-b', title: 'Details', count: 3 },  // count shows a badge
-        ],
-        onSelect: setActiveTab,
-      }),
-    ),
-    React.createElement(MainPage.Body, null,
-      React.createElement(TabProvider, { activeTab },
-        React.createElement(TabPanel, { tabId: 'tab-a' },
-          React.createElement('div', { style: { padding: 16 } },
-            React.createElement('p', null, 'Overview content.'),
-          ),
+    return React.createElement(
+        MainPage,
+        null,
+        React.createElement(
+            MainPage.Header,
+            null,
+            React.createElement(TabBar, {
+                activeTab,
+                tabs: [
+                    { id: "tab-a", title: "Overview" },
+                    { id: "tab-b", title: "Details", count: 3 }, // count shows a badge
+                ],
+                onSelect: setActiveTab,
+            }),
         ),
-        React.createElement(TabPanel, { tabId: 'tab-b' },
-          React.createElement('div', { style: { padding: 16 } },
-            React.createElement('p', null, 'Details content.'),
-          ),
+        React.createElement(
+            MainPage.Body,
+            null,
+            React.createElement(
+                TabProvider,
+                { activeTab },
+                React.createElement(
+                    TabPanel,
+                    { tabId: "tab-a" },
+                    React.createElement(
+                        "div",
+                        { style: { padding: 16 } },
+                        React.createElement("p", null, "Overview content."),
+                    ),
+                ),
+                React.createElement(
+                    TabPanel,
+                    { tabId: "tab-b" },
+                    React.createElement(
+                        "div",
+                        { style: { padding: 16 } },
+                        React.createElement("p", null, "Details content."),
+                    ),
+                ),
+            ),
         ),
-      ),
-    ),
-  );
+    );
 }
 ```
 
@@ -819,14 +939,14 @@ Add a widget to the Dashboard page. Dashlets are small cards in the masonry grid
 
 ```js
 context.registerDashlet(
-  title,      // string — card heading
-  width,      // 1 | 2 | 3 — grid column units
-  height,     // 1 | 2 | 3 | 4 | 5 — grid row units
-  position,   // number — initial position in the grid
-  Component,  // React.ComponentType — the card content
-  isFixed,    // boolean — if true, user cannot move/close it
-  propsCallback,  // () => ({}) — extra props for Component
-  isVisible,  // (state) => boolean — hide when condition is false
+    title, // string — card heading
+    width, // 1 | 2 | 3 — grid column units
+    height, // 1 | 2 | 3 | 4 | 5 — grid row units
+    position, // number — initial position in the grid
+    Component, // React.ComponentType — the card content
+    isFixed, // boolean — if true, user cannot move/close it
+    propsCallback, // () => ({}) — extra props for Component
+    isVisible, // (state) => boolean — hide when condition is false
 );
 ```
 
@@ -834,14 +954,14 @@ context.registerDashlet(
 
 ```js
 context.registerDashlet(
-  'My Game Status',
-  2,             // 2 columns wide
-  2,             // 2 rows tall
-  10,            // position 10 in the grid
-  MyDashletComponent,
-  false,         // user can close/move it
-  () => ({}),
-  (state) => selectors.activeGameId(state) === GAME_ID,
+    "My Game Status",
+    2, // 2 columns wide
+    2, // 2 rows tall
+    10, // position 10 in the grid
+    MyDashletComponent,
+    false, // user can close/move it
+    () => ({}),
+    (state) => selectors.activeGameId(state) === GAME_ID,
 );
 ```
 
@@ -849,13 +969,16 @@ context.registerDashlet(
 
 ```js
 function MyDashletComponent() {
-  const { useSelector } = require('react-redux');
-  const count = useSelector(state =>
-    util.getSafe(state, ['persistent', 'myData', GAME_ID, 'items'], []).length);
+    const { useSelector } = require("react-redux");
+    const count = useSelector(
+        (state) => util.getSafe(state, ["persistent", "myData", GAME_ID, "items"], []).length,
+    );
 
-  return React.createElement('div', { style: { padding: 12 } },
-    React.createElement('p', null, `${count} items installed.`),
-  );
+    return React.createElement(
+        "div",
+        { style: { padding: 12 } },
+        React.createElement("p", null, `${count} items installed.`),
+    );
 }
 ```
 
@@ -870,18 +993,19 @@ function MyDashletComponent() {
 Add a persistent component to the Vortex footer bar (bottom of the window).
 
 ```js
-context.registerFooter('my-footer-item', MyFooterComponent);
+context.registerFooter("my-footer-item", MyFooterComponent);
 ```
 
 ```js
 function MyFooterComponent() {
-  const { useSelector } = require('react-redux');
-  const status = useSelector(state =>
-    util.getSafe(state, ['session', GAME_ID, 'status'], ''));
+    const { useSelector } = require("react-redux");
+    const status = useSelector((state) => util.getSafe(state, ["session", GAME_ID, "status"], ""));
 
-  return React.createElement('div', { style: { padding: '0 8px', display: 'flex', alignItems: 'center' } },
-    React.createElement('span', null, status),
-  );
+    return React.createElement(
+        "div",
+        { style: { padding: "0 8px", display: "flex", alignItems: "center" } },
+        React.createElement("span", null, status),
+    );
 }
 ```
 
@@ -916,90 +1040,117 @@ A game-specific page that shows save files (no DnD, has toolbar, reloads on prof
 
 ```js
 // --- In main() ---
-context.registerMainPage('savegame', 'Saves', SavesPage, {
-  id: `${GAME_ID}-saves`,
-  group: 'per-game',
-  priority: 40,
-  hotkey: 'V',
-  visible: () => selectors.activeGameId(context.api.store.getState()) === GAME_ID,
-  props: () => ({ api: context.api }),
+context.registerMainPage("savegame", "Saves", SavesPage, {
+    id: `${GAME_ID}-saves`,
+    group: "per-game",
+    priority: 40,
+    hotkey: "V",
+    visible: () => selectors.activeGameId(context.api.store.getState()) === GAME_ID,
+    props: () => ({ api: context.api }),
 });
 
 // --- Component (after main()) ---
 function SavesPage({ api }) {
-  const { IconBar } = require('vortex-api');
-  const { useSelector } = require('react-redux');
+    const { IconBar } = require("vortex-api");
+    const { useSelector } = require("react-redux");
 
-  const profileId = useSelector(state => selectors.activeProfile(state)?.id);
-  const [saves, setSaves] = React.useState([]);
-  const [loading, setLoading] = React.useState(true);
+    const profileId = useSelector((state) => selectors.activeProfile(state)?.id);
+    const [saves, setSaves] = React.useState([]);
+    const [loading, setLoading] = React.useState(true);
 
-  const reload = React.useCallback(async () => {
-    setLoading(true);
-    try {
-      const result = await loadSavesFromDisk(api);
-      setSaves(result);
-    } finally {
-      setLoading(false);
+    const reload = React.useCallback(async () => {
+        setLoading(true);
+        try {
+            const result = await loadSavesFromDisk(api);
+            setSaves(result);
+        } finally {
+            setLoading(false);
+        }
+    }, [api]);
+
+    React.useEffect(() => {
+        if (!profileId) return;
+        reload();
+    }, [profileId, reload]);
+
+    const toolbarButtons = [
+        {
+            component: ToolbarIcon,
+            props: () => ({ id: "btn-refresh", icon: "refresh", text: "Refresh", onClick: reload }),
+        },
+    ];
+
+    if (loading) {
+        return React.createElement(
+            MainPage,
+            null,
+            React.createElement(MainPage.Body, null, React.createElement(Spinner)),
+        );
     }
-  }, [api]);
 
-  React.useEffect(() => {
-    if (!profileId) return;
-    reload();
-  }, [profileId, reload]);
-
-  const toolbarButtons = [
-    {
-      component: ToolbarIcon,
-      props: () => ({ id: 'btn-refresh', icon: 'refresh', text: 'Refresh', onClick: reload }),
-    },
-  ];
-
-  if (loading) {
-    return React.createElement(MainPage, null,
-      React.createElement(MainPage.Body, null, React.createElement(Spinner)));
-  }
-
-  return React.createElement(MainPage, null,
-    React.createElement(MainPage.Header, null,
-      React.createElement(IconBar, {
-        group: `${GAME_ID}-saves-toolbar`,
-        staticElements: toolbarButtons,
-      }),
-    ),
-    React.createElement(MainPage.Body, null,
-      React.createElement('div', { style: { padding: 16 } },
-        saves.length === 0
-          ? React.createElement('p', null, 'No saves found.')
-          : saves.map(save =>
-              React.createElement('div', {
-                key: save.id,
-                style: { padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.1)' },
-              },
-                React.createElement('strong', null, save.name),
-                React.createElement('span', { style: { marginLeft: 12, color: '#aaa' } },
-                  new Date(save.date).toLocaleDateString()),
-              )
+    return React.createElement(
+        MainPage,
+        null,
+        React.createElement(
+            MainPage.Header,
+            null,
+            React.createElement(IconBar, {
+                group: `${GAME_ID}-saves-toolbar`,
+                staticElements: toolbarButtons,
+            }),
+        ),
+        React.createElement(
+            MainPage.Body,
+            null,
+            React.createElement(
+                "div",
+                { style: { padding: 16 } },
+                saves.length === 0
+                    ? React.createElement("p", null, "No saves found.")
+                    : saves.map((save) =>
+                          React.createElement(
+                              "div",
+                              {
+                                  key: save.id,
+                                  style: {
+                                      padding: "8px 0",
+                                      borderBottom: "1px solid rgba(255,255,255,0.1)",
+                                  },
+                              },
+                              React.createElement("strong", null, save.name),
+                              React.createElement(
+                                  "span",
+                                  { style: { marginLeft: 12, color: "#aaa" } },
+                                  new Date(save.date).toLocaleDateString(),
+                              ),
+                          ),
+                      ),
             ),
-      ),
-    ),
-  );
+        ),
+    );
 }
 
 // ToolbarIcon helper (paste once per file, or import from a shared module)
 function ToolbarIcon({ id, icon, text, onClick }) {
-  const { Icon } = require('vortex-api');
-  return React.createElement('div', {
-    id,
-    className: 'toolbar-icon',
-    onClick,
-    title: text,
-    style: { display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', padding: '0 8px' },
-  },
-    React.createElement(Icon, { name: icon }),
-    React.createElement('span', null, text),
-  );
+    const { Icon } = require("vortex-api");
+    return React.createElement(
+        "div",
+        {
+            id,
+            className: "toolbar-icon",
+            onClick,
+            title: text,
+            style: {
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                cursor: "pointer",
+                padding: "0 8px",
+            },
+        },
+        React.createElement(Icon, { name: icon }),
+        React.createElement("span", null, text),
+    );
 }
 ```
 
@@ -1007,16 +1158,16 @@ function ToolbarIcon({ id, icon, text, onClick }) {
 
 ## 25. Full Examples in Other Repos
 
-| Page type | File | Notes |
-| --- | --- | --- |
-| DnD load order (LO + sidebar info panel) | `game-subnautica2/index.js` | Full UE4SS LO page |
-| DnD load order (FBLO + context menu) | `game-legobatmanlegacyofthedarkknight/index.js` | Pak LO + context menu |
-| Settings panel | `template-ue4-5/index.js` | `Toggle`+`More` pattern |
-| Dashboard | `Vortex/src/renderer/src/extensions/dashboard/index.ts` | Dashlet registry + Packery grid |
-| Search + pagination page | `Vortex/src/renderer/src/extensions/browse_nexus/index.ts` | `useSelector` + async search |
-| Health/status + tabs | `Vortex/src/renderer/src/extensions/health_check/index.ts` | `TabProvider`/`TabBar`/`TabPanel` |
-| Badge on sidebar icon | `Vortex/src/renderer/src/extensions/download_management/index.ts` | `ReduxProp` + `badge` |
-| Saves table page | `vortex-games/game-mount-and-blade2/src/index.ts` | `useContext(MainContext)` + toolbar |
+| Page type                                | File                                                              | Notes                               |
+| ---------------------------------------- | ----------------------------------------------------------------- | ----------------------------------- |
+| DnD load order (LO + sidebar info panel) | `game-subnautica2/index.js`                                       | Full UE4SS LO page                  |
+| DnD load order (FBLO + context menu)     | `game-legobatmanlegacyofthedarkknight/index.js`                   | Pak LO + context menu               |
+| Settings panel                           | `template-ue4-5/index.js`                                         | `Toggle`+`More` pattern             |
+| Dashboard                                | `Vortex/src/renderer/src/extensions/dashboard/index.ts`           | Dashlet registry + Packery grid     |
+| Search + pagination page                 | `Vortex/src/renderer/src/extensions/browse_nexus/index.ts`        | `useSelector` + async search        |
+| Health/status + tabs                     | `Vortex/src/renderer/src/extensions/health_check/index.ts`        | `TabProvider`/`TabBar`/`TabPanel`   |
+| Badge on sidebar icon                    | `Vortex/src/renderer/src/extensions/download_management/index.ts` | `ReduxProp` + `badge`               |
+| Saves table page                         | `vortex-games/game-mount-and-blade2/src/index.ts`                 | `useContext(MainContext)` + toolbar |
 
 ---
 

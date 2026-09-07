@@ -6,9 +6,9 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| AnvilToolkit (tool) | a `anviltoolkit.exe` file | - |
+| Mod Type            | Archive must contain      | Installs to |
+| ------------------- | ------------------------- | ----------- |
+| AnvilToolkit (tool) | a `anviltoolkit.exe` file | -           |
 
 Paths are relative to the game's install folder.
 
@@ -28,4 +28,3 @@ This installer handles AnvilToolkit itself, not mods for it. It exists so users 
 
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

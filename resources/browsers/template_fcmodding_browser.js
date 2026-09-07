@@ -1,12 +1,12 @@
-const { selectors, log } = require('vortex-api');
-const path = require('path');
-const GAME_ID = 'placeholder';
-const api = require('vortex-api'); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
+const { selectors, log } = require("vortex-api");
+const path = require("path");
+const GAME_ID = "placeholder";
+const api = require("vortex-api"); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 const spec = { game: { id: GAME_ID } }; //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 const context = { api }; //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 const MI_REQUIREMENTS = []; //DUMMY PLACEHOLDER - the array from template_fcmodding_downloader.js
 const downloadFcModdingRequirement = () => null; //DUMMY PLACEHOLDER - imported from fcmodding_downloader.js
-const MI_PATH = path.join('FCModInstaller'); //DUMMY PLACEHOLDER - the adopter's Mod Installer folder
+const MI_PATH = path.join("FCModInstaller"); //DUMMY PLACEHOLDER - the adopter's Mod Installer folder
 
 // FCMODDING BROWSER //////////////////////////////////////////////////
 // A sidebar page that embeds the live downloads.fcmodding.com section for this game. The user
@@ -15,15 +15,16 @@ const MI_PATH = path.join('FCModInstaller'); //DUMMY PLACEHOLDER - the adopter's
 // The adopter must carry TWO files beside index.js: fcmodding_browser.js and base_browser.js,
 // which it requires from beside itself. Copying only the first fails at require time.
 const fcmoddingBrowser = true; //toggle - set false to leave the page unregistered
-const { registerFcModdingBrowser, onceFcModdingBrowser } = require('./fcmodding_browser');
-const FC = 'fcXXX'; //DUMMY PLACEHOLDER - the extension's existing section slug (fc3, fc4, fc5, fc6, fcnd, fcp)
+const { registerFcModdingBrowser, onceFcModdingBrowser } = require("./fcmodding_browser");
+const FC = "fcXXX"; //DUMMY PLACEHOLDER - the extension's existing section slug (fc3, fc4, fc5, fc6, fcnd, fcp)
 const FCM_BROWSER_CONFIG = {
   fcGame: FC, //section slug - https://downloads.fcmodding.com/fcXXX/
   requirements: MI_REQUIREMENTS, //optional - mods the extension manages itself, so they install to their own mod type
-  installRequirement: (api, gameSpec, requirement) => //optional - required only when requirements is set
+  installRequirement: (api, gameSpec, requirement) =>
+    //optional - required only when requirements is set
     downloadFcModdingRequirement(api, gameSpec, requirement, true),
   pageId: `${GAME_ID}-fcmodding-browse`, //optional (default shown)
-  pageTitle: 'Browse Far Cry Mods', //optional - sidebar label. Keep it short - the sidebar truncates past ~20 characters
+  pageTitle: "Browse Far Cry Mods", //optional - sidebar label. Keep it short - the sidebar truncates past ~20 characters
   //hotkey: 'F', //optional - Ctrl+Shift+<key>. Pick a free one: Vortex logs "hotkey already used" and drops the second claim (B is taken)
   //priority: 40, //optional - sidebar position, lower is higher up
   //pageGroup: 'per-game', //optional - 'per-game' hides the page while another game is active
@@ -57,30 +58,38 @@ const FCM_BROWSER_CONFIG = {
 
 // *** In setup() function ////////////////////
 async function setup(discovery) {
-  const fs = require('vortex-api').fs; //DUMMY PLACEHOLDER - use the extension's existing import
+  const fs = require("vortex-api").fs; //DUMMY PLACEHOLDER - use the extension's existing import
   await fs.ensureDirWritableAsync(path.join(discovery.path, MI_PATH)); //browsed mods need their target folder to exist
 }
 
 // *** In applyGame() function ////////////////////
-  if (fcmoddingBrowser) {
-    registerFcModdingBrowser(context, spec, FCM_BROWSER_CONFIG);
-  } //*/
+if (fcmoddingBrowser) {
+  registerFcModdingBrowser(context, spec, FCM_BROWSER_CONFIG);
+} //*/
 
 // *** In context.once() function ////////////////////
-  if (fcmoddingBrowser) {
-    onceFcModdingBrowser(context.api, spec, FCM_BROWSER_CONFIG);
-  } //*/
+if (fcmoddingBrowser) {
+  onceFcModdingBrowser(context.api, spec, FCM_BROWSER_CONFIG);
+} //*/
 
 // *** Optional: the existing toolbar buttons stay as they are ////////////////////
 // "Open Far Cry Mods Site" (mods.farcry.info) is unaffected by this page - that database
 // indexes mods posted in the FCModding Discord, which this module does not download from.
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Far Cry Mod Installer Site', () => {
-    const { util } = require('vortex-api');
+context.registerAction(
+  "mod-icons",
+  300,
+  "open-ext",
+  {},
+  "Open Far Cry Mod Installer Site",
+  () => {
+    const { util } = require("vortex-api");
     util.opn(`https://downloads.fcmodding.com/${FC}/`).catch(() => null);
-  }, () => {
+  },
+  () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
-  }); //*/
+  },
+); //*/
 
-log('debug', `${setup}`); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
+log("debug", `${setup}`); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT

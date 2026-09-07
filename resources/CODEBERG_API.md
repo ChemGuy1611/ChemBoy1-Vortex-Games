@@ -4,14 +4,14 @@
 
 Its REST API is deliberately shaped like GitHub's. The three release endpoints an auto-downloader needs return the same field names, which is why the Codeberg module is a near-sibling of the GitHub one rather than a fresh design.
 
-| Surface | URL | Purpose |
-| --- | --- | --- |
-| Latest stable release | `https://codeberg.org/api/v1/repos/{owner}/{repo}/releases/latest` | Newest non-draft, non-prerelease release |
-| Release list | `https://codeberg.org/api/v1/repos/{owner}/{repo}/releases?limit=N` | Newest-first array, includes pre-releases |
-| Release by tag | `https://codeberg.org/api/v1/repos/{owner}/{repo}/releases/tags/{tag}` | One specific release |
-| Repo file | `https://codeberg.org/api/v1/repos/{owner}/{repo}/contents/{path}` | Base64 file content, for reading a README |
-| Instance version | `https://codeberg.org/api/v1/version` | Reports the Forgejo build, e.g. `16.0.0-dev-694+gitea-1.22.0` |
-| Human releases page | `https://codeberg.org/{owner}/{repo}/releases` | Manual-download page |
+| Surface               | URL                                                                    | Purpose                                                       |
+| --------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Latest stable release | `https://codeberg.org/api/v1/repos/{owner}/{repo}/releases/latest`     | Newest non-draft, non-prerelease release                      |
+| Release list          | `https://codeberg.org/api/v1/repos/{owner}/{repo}/releases?limit=N`    | Newest-first array, includes pre-releases                     |
+| Release by tag        | `https://codeberg.org/api/v1/repos/{owner}/{repo}/releases/tags/{tag}` | One specific release                                          |
+| Repo file             | `https://codeberg.org/api/v1/repos/{owner}/{repo}/contents/{path}`     | Base64 file content, for reading a README                     |
+| Instance version      | `https://codeberg.org/api/v1/version`                                  | Reports the Forgejo build, e.g. `16.0.0-dev-694+gitea-1.22.0` |
+| Human releases page   | `https://codeberg.org/{owner}/{repo}/releases`                         | Manual-download page                                          |
 
 No authentication is needed for any public repository. Probed live against `Lyall/MGSVFix`: all three release endpoints answer `200` with `Content-Type: application/json;charset=utf-8`.
 
@@ -23,22 +23,22 @@ Trimmed to the fields that matter:
 
 ```json
 {
-  "tag_name": "0.0.3",
-  "name": "0.0.3",
-  "draft": false,
-  "prerelease": false,
-  "published_at": "2026-06-11T23:53:53+02:00",
-  "html_url": "https://codeberg.org/Lyall/MGSVFix/releases/tag/0.0.3",
-  "assets": [
-    {
-      "id": 1477751,
-      "name": "MGSVFix_0.0.3.zip",
-      "size": 786976,
-      "created_at": "2026-06-11T23:54:35+02:00",
-      "browser_download_url": "https://codeberg.org/Lyall/MGSVFix/releases/download/0.0.3/MGSVFix_0.0.3.zip",
-      "type": "attachment"
-    }
-  ]
+    "tag_name": "0.0.3",
+    "name": "0.0.3",
+    "draft": false,
+    "prerelease": false,
+    "published_at": "2026-06-11T23:53:53+02:00",
+    "html_url": "https://codeberg.org/Lyall/MGSVFix/releases/tag/0.0.3",
+    "assets": [
+        {
+            "id": 1477751,
+            "name": "MGSVFix_0.0.3.zip",
+            "size": 786976,
+            "created_at": "2026-06-11T23:54:35+02:00",
+            "browser_download_url": "https://codeberg.org/Lyall/MGSVFix/releases/download/0.0.3/MGSVFix_0.0.3.zip",
+            "type": "attachment"
+        }
+    ]
 }
 ```
 
@@ -104,35 +104,35 @@ It is a companion-sized module rather than a fork of `downloader.js`: Codeberg h
 
 The entry points take an array of requirement objects (conventionally a `CODEBERG_REQUIREMENTS` constant in `index.js`), each describing one Codeberg requirement:
 
-| Field | Required | Meaning |
-| --- | --- | --- |
-| `repo` | yes | `'{owner}/{repo}'`, e.g. `'Lyall/MGSVFix'`. |
-| `modType` | yes | Vortex mod type id the requirement installs as; also the installed-detection key (any mod with this type counts as installed). |
-| `userFacingName` | yes | Display name in notifications, in error messages, and in the mod list (stamped as the mod's `customFileName`). |
-| `assetPattern` | recommended | RegExp tested against the release asset name; capture group 1 is the version. Required as soon as a release ships more than one file — without it the first asset is taken. |
-| `apiBase` | optional | REST base for the instance. Default `https://codeberg.org/api/v1`. |
-| `pageUrl` | optional | Manual-download page opened on install failure, and the mod's "Source" link. Default derived from `apiBase` + `repo`. |
-| `fallbackVersion` | optional | Version stamped when no version can be resolved. |
-| `allowPrerelease` | optional | `true` -> fetch the newest release including pre-releases, scanning newest-first past releases that carry no matching asset. Default uses `/releases/latest` (stable only). |
-| `releaseTag` | optional | Fetch one fixed release by tag, for a rolling tag upstream *moves*. Same role `prereleaseTag` plays in `downloader.js`. |
-| `trackByAssetDate` | optional | `true` -> detect updates by the asset's upload time instead of the version tag, for a rolling tag whose name never changes. Reads `created_at`. |
-| `autoInstall` | optional | `false` -> never install this requirement unattended. Both the update check and any setup call leave it alone; only an explicit user action installs it. |
-| `pinVersion` | optional | Hold this requirement at one specific release instead of tracking the newest. While the installed version equals the pin, the update check makes no HTTP request. |
-| `pinTag` | with `pinVersion` | The tag to fetch when it is not simply `pinVersion`. The same tag with its leading `v` toggled is retried automatically, so most repos need no `pinTag`. |
+| Field              | Required          | Meaning                                                                                                                                                                     |
+| ------------------ | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `repo`             | yes               | `'{owner}/{repo}'`, e.g. `'Lyall/MGSVFix'`.                                                                                                                                 |
+| `modType`          | yes               | Vortex mod type id the requirement installs as; also the installed-detection key (any mod with this type counts as installed).                                              |
+| `userFacingName`   | yes               | Display name in notifications, in error messages, and in the mod list (stamped as the mod's `customFileName`).                                                              |
+| `assetPattern`     | recommended       | RegExp tested against the release asset name; capture group 1 is the version. Required as soon as a release ships more than one file — without it the first asset is taken. |
+| `apiBase`          | optional          | REST base for the instance. Default `https://codeberg.org/api/v1`.                                                                                                          |
+| `pageUrl`          | optional          | Manual-download page opened on install failure, and the mod's "Source" link. Default derived from `apiBase` + `repo`.                                                       |
+| `fallbackVersion`  | optional          | Version stamped when no version can be resolved.                                                                                                                            |
+| `allowPrerelease`  | optional          | `true` -> fetch the newest release including pre-releases, scanning newest-first past releases that carry no matching asset. Default uses `/releases/latest` (stable only). |
+| `releaseTag`       | optional          | Fetch one fixed release by tag, for a rolling tag upstream _moves_. Same role `prereleaseTag` plays in `downloader.js`.                                                     |
+| `trackByAssetDate` | optional          | `true` -> detect updates by the asset's upload time instead of the version tag, for a rolling tag whose name never changes. Reads `created_at`.                             |
+| `autoInstall`      | optional          | `false` -> never install this requirement unattended. Both the update check and any setup call leave it alone; only an explicit user action installs it.                    |
+| `pinVersion`       | optional          | Hold this requirement at one specific release instead of tracking the newest. While the installed version equals the pin, the update check makes no HTTP request.           |
+| `pinTag`           | with `pinVersion` | The tag to fetch when it is not simply `pinVersion`. The same tag with its leading `v` toggled is retried automatically, so most repos need no `pinTag`.                    |
 
 There is no `assemblyFileName`: installed-detection is purely by mod type, as in the other non-GitHub companions.
 
 ### Exports
 
-| Export | Role |
-| --- | --- |
-| `downloadCodeberg(api, gameSpec, requirements, check = true)` | Download + install each requirement in the array (sequentially), then enable it, set its mod type, and record the version attributes. With `check = true` (default) it is a no-op for requirements already installed; pass `false` to (re)install/update. Main entry point. |
-| `checkForCodebergUpdate(api, gameSpec, requirements)` | For each requirement: install it if missing (unless `autoInstall: false`), otherwise compare the installed marker against the current release; raise a warning notification with a Download action when newer. Call from a `check-mods-version` handler. |
-| `downloadCodebergRequirement(api, gameSpec, requirement, check = true)` | Single-requirement variant of `downloadCodeberg`. |
-| `checkForCodebergUpdateRequirement(api, gameSpec, requirement)` | Single-requirement variant of `checkForCodebergUpdate`. |
-| `isCodebergRequirementInstalled(api, gameId, requirement)` | Whether any mod with the requirement's mod type exists. Useful for gating an "offer this" notification. |
-| `getLatestCodebergAsset(api, requirement)` | The chosen release asset, with its parent release attached as `release`, or `null`. |
-| `getLatestCodebergVersion(requirement, asset)` | Display/compare version for that asset, or `null`. |
+| Export                                                                  | Role                                                                                                                                                                                                                                                                        |
+| ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `downloadCodeberg(api, gameSpec, requirements, check = true)`           | Download + install each requirement in the array (sequentially), then enable it, set its mod type, and record the version attributes. With `check = true` (default) it is a no-op for requirements already installed; pass `false` to (re)install/update. Main entry point. |
+| `checkForCodebergUpdate(api, gameSpec, requirements)`                   | For each requirement: install it if missing (unless `autoInstall: false`), otherwise compare the installed marker against the current release; raise a warning notification with a Download action when newer. Call from a `check-mods-version` handler.                    |
+| `downloadCodebergRequirement(api, gameSpec, requirement, check = true)` | Single-requirement variant of `downloadCodeberg`.                                                                                                                                                                                                                           |
+| `checkForCodebergUpdateRequirement(api, gameSpec, requirement)`         | Single-requirement variant of `checkForCodebergUpdate`.                                                                                                                                                                                                                     |
+| `isCodebergRequirementInstalled(api, gameId, requirement)`              | Whether any mod with the requirement's mod type exists. Useful for gating an "offer this" notification.                                                                                                                                                                     |
+| `getLatestCodebergAsset(api, requirement)`                              | The chosen release asset, with its parent release attached as `release`, or `null`.                                                                                                                                                                                         |
+| `getLatestCodebergVersion(requirement, asset)`                          | Display/compare version for that asset, or `null`.                                                                                                                                                                                                                          |
 
 ### How a version string is parsed
 
@@ -168,17 +168,17 @@ When a release is fetched, the version embedded in the **asset filename** (the `
 For a mandatory requirement (a mod loader), install it unattended:
 
 ```js
-const { downloadCodeberg, checkForCodebergUpdate } = require('./codeberg_downloader');
+const { downloadCodeberg, checkForCodebergUpdate } = require("./codeberg_downloader");
 
 const XXX_ID = `${GAME_ID}-xxx`;
 const XXX_NAME = "Loader Name";
 const CODEBERG_REQUIREMENTS = [
-  {
-    repo: 'author/Repo',
-    modType: XXX_ID,
-    userFacingName: XXX_NAME,
-    assetPattern: /^Repo_(\d+\.\d+(?:\.\d+)?)/i,
-  },
+    {
+        repo: "author/Repo",
+        modType: XXX_ID,
+        userFacingName: XXX_NAME,
+        assetPattern: /^Repo_(\d+\.\d+(?:\.\d+)?)/i,
+    },
 ];
 
 // in setup()
@@ -189,40 +189,57 @@ await checkForCodebergUpdate(api, gameSpec, CODEBERG_REQUIREMENTS).catch(() => n
 For an **optional** requirement — a fix or a QoL plugin the user should choose — set `autoInstall: false` and offer it from a notification instead. This is the pattern `game-metalgearsolidvtpp` uses for MGSVFix:
 
 ```js
-const { downloadCodeberg, isCodebergRequirementInstalled } = require('./codeberg_downloader');
+const { downloadCodeberg, isCodebergRequirementInstalled } = require("./codeberg_downloader");
 
 // in setup(), instead of downloadCodeberg
 function downloadXxxNotify(api) {
-  if (isCodebergRequirementInstalled(api, GAME_ID, CODEBERG_REQUIREMENTS[0])) return;
-  const NOTIF_ID = `${GAME_ID}-xxx`;
-  const MESSAGE = `Would you like to download ${XXX_NAME}?`;
-  api.sendNotification({
-    id: NOTIF_ID,
-    type: 'warning',
-    message: MESSAGE,
-    allowSuppress: true,
-    actions: [
-      {
-        title: 'Download',
-        action: (dismiss) => {
-          downloadCodeberg(api, spec, CODEBERG_REQUIREMENTS);
-          dismiss();
-        },
-      },
-      {
-        title: 'More',
-        action: (dismiss) => {
-          api.showDialog('question', MESSAGE, {
-            text: `${XXX_NAME} does XXX.\n`,
-          }, [
-            { label: `Download ${XXX_NAME}`, action: () => { downloadCodeberg(api, spec, CODEBERG_REQUIREMENTS); dismiss(); } },
-            { label: 'Not Now', action: () => dismiss() },
-            { label: 'Never Show Again', action: () => { api.suppressNotification(NOTIF_ID); dismiss(); } },
-          ]);
-        },
-      },
-    ],
-  });
+    if (isCodebergRequirementInstalled(api, GAME_ID, CODEBERG_REQUIREMENTS[0])) return;
+    const NOTIF_ID = `${GAME_ID}-xxx`;
+    const MESSAGE = `Would you like to download ${XXX_NAME}?`;
+    api.sendNotification({
+        id: NOTIF_ID,
+        type: "warning",
+        message: MESSAGE,
+        allowSuppress: true,
+        actions: [
+            {
+                title: "Download",
+                action: (dismiss) => {
+                    downloadCodeberg(api, spec, CODEBERG_REQUIREMENTS);
+                    dismiss();
+                },
+            },
+            {
+                title: "More",
+                action: (dismiss) => {
+                    api.showDialog(
+                        "question",
+                        MESSAGE,
+                        {
+                            text: `${XXX_NAME} does XXX.\n`,
+                        },
+                        [
+                            {
+                                label: `Download ${XXX_NAME}`,
+                                action: () => {
+                                    downloadCodeberg(api, spec, CODEBERG_REQUIREMENTS);
+                                    dismiss();
+                                },
+                            },
+                            { label: "Not Now", action: () => dismiss() },
+                            {
+                                label: "Never Show Again",
+                                action: () => {
+                                    api.suppressNotification(NOTIF_ID);
+                                    dismiss();
+                                },
+                            },
+                        ],
+                    );
+                },
+            },
+        ],
+    });
 }
 ```
 
@@ -230,32 +247,41 @@ Both modes share the update check and the toolbar action:
 
 ```js
 // in context.once()
-api.onAsync('check-mods-version', (gameId, mods, forced) => {
-  if (gameId !== GAME_ID) return;
-  return checkForCodebergUpdate(api, spec, CODEBERG_REQUIREMENTS)
-    .catch(err => log('warn', `Failed to check for ${XXX_NAME} update: ${err}`));
+api.onAsync("check-mods-version", (gameId, mods, forced) => {
+    if (gameId !== GAME_ID) return;
+    return checkForCodebergUpdate(api, spec, CODEBERG_REQUIREMENTS).catch((err) =>
+        log("warn", `Failed to check for ${XXX_NAME} update: ${err}`),
+    );
 });
 
 // in applyGame() - REQUIRED for an autoInstall: false requirement
-context.registerAction('mod-icons', 300, 'open-ext', {}, `Download Latest ${XXX_NAME}`, () => {
-  downloadCodeberg(context.api, spec, CODEBERG_REQUIREMENTS, false);
-}, () => selectors.activeGameId(context.api.getState()) === GAME_ID);
+context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    `Download Latest ${XXX_NAME}`,
+    () => {
+        downloadCodeberg(context.api, spec, CODEBERG_REQUIREMENTS, false);
+    },
+    () => selectors.activeGameId(context.api.getState()) === GAME_ID,
+);
 ```
 
 ---
 
 ## Reference Adopter: MGSVFix
 
-[MGSVFix](https://codeberg.org/Lyall/MGSVFix) is an ASI plugin for *Metal Gear Solid V: The Phantom Pain* (and *Ground Zeroes*) that skips intro logos, unlocks the framerate and resolution options, fixes HUD and graphical effects at ultrawide resolutions, and tweaks LOD distances.
+[MGSVFix](https://codeberg.org/Lyall/MGSVFix) is an ASI plugin for _Metal Gear Solid V: The Phantom Pain_ (and _Ground Zeroes_) that skips intro logos, unlocks the framerate and resolution options, fixes HUD and graphical effects at ultrawide resolutions, and tweaks LOD distances.
 
 `MGSVFix_0.0.3.zip` unpacks **flat**, with no folder root, straight into the game folder:
 
-| Entry | Role |
-| --- | --- |
-| `MGSVFix.asi` | The plugin itself |
-| `MGSVFix.ini` | Its settings, edited by the user after install |
-| `winmm.dll` | Ultimate ASI Loader, the proxy DLL that loads the `.asi` |
-| `EXTRACT_TO_GAME_FOLDER` | Empty marker file, an instruction to humans |
+| Entry                    | Role                                                     |
+| ------------------------ | -------------------------------------------------------- |
+| `MGSVFix.asi`            | The plugin itself                                        |
+| `MGSVFix.ini`            | Its settings, edited by the user after install           |
+| `winmm.dll`              | Ultimate ASI Loader, the proxy DLL that loads the `.asi` |
+| `EXTRACT_TO_GAME_FOLDER` | Empty marker file, an instruction to humans              |
 
 Two consequences for the extension:
 

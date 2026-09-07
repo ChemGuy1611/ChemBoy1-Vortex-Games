@@ -6,11 +6,11 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
+| Mod Type                | Archive must contain                    | Installs to                           |
+| ----------------------- | --------------------------------------- | ------------------------------------- |
 | Root / Game Folder Mods | a `base` folder or a `cache.psarc` file | the game folder itself (no subfolder) |
-| Cdlcmod | a file with the `.psarc` extension | `dlc` |
-| Eof | a file or folder named `eof.exe` | `EditorOnFire` |
+| Cdlcmod                 | a file with the `.psarc` extension      | `dlc`                                 |
+| Eof                     | a file or folder named `eof.exe`        | `EditorOnFire`                        |
 
 Paths are relative to the game's install folder.
 
@@ -52,4 +52,3 @@ Installs to: `EditorOnFire`
 - Archives that contain a FOMOD installer (a `fomod` folder with `ModuleConfig.xml`) are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

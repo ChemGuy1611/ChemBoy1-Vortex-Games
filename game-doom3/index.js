@@ -36,12 +36,18 @@ Date: 2026-09-03
 //*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require('vortex-api');
-const path = require('path');
-const template = require('string-template');
-const { download, findModByFile, findDownloadIdByFile, resolveVersionByPattern, testRequirementVersion } = require('./downloader');
-const { parseStringPromise } = require('xml2js');
-const { registerModDbBrowser, onceModDbBrowser } = require('./moddb_browser');
+const { actions, fs, util, selectors, log } = require("vortex-api");
+const path = require("path");
+const template = require("string-template");
+const {
+  download,
+  findModByFile,
+  findDownloadIdByFile,
+  resolveVersionByPattern,
+  testRequirementVersion,
+} = require("./downloader");
+const { parseStringPromise } = require("xml2js");
+const { registerModDbBrowser, onceModDbBrowser } = require("./moddb_browser");
 
 //feature toggles
 const moddbBrowser = true; //register the "Browse ModDB" page (moddb.com)
@@ -60,13 +66,13 @@ const GAME_NAME = "DOOM 3";
 const GAME_NAME_BFG = "DOOM 3: BFG Edition";
 const GAME_NAME_SHORT_BFG = "DOOM 3 BFG";
 
-let GAME_PATH = '';
+let GAME_PATH = "";
 let GAME_PATH_BFG = null;
-let STAGING_FOLDER = '';
-let STAGING_FOLDER_BFG = '';
-let DOWNLOAD_FOLDER = '';
-let DOWNLOAD_FOLDER_BFG = '';
-const APPMANIFEST_FILE = 'appxmanifest.xml';
+let STAGING_FOLDER = "";
+let STAGING_FOLDER_BFG = "";
+let DOWNLOAD_FOLDER = "";
+let DOWNLOAD_FOLDER_BFG = "";
+const APPMANIFEST_FILE = "appxmanifest.xml";
 
 const gameFinderQuery = {
   steam: [{ id: STEAMAPP_ID, prefer: 0 }],
@@ -77,10 +83,10 @@ const gameFinderQuery = {
 const EXEC_CLASSIC = "Doom3.exe";
 const EXEC_BFG = "Doom3BFG.exe";
 const EXEC_XBOX = "gamelaunchhelper.exe";
-let GAME_VERSION = '';
-const CLASSIC = 'classic';
-const BFG = 'bfg';
-const XBOX = 'xbox';
+let GAME_VERSION = "";
+const CLASSIC = "classic";
+const BFG = "bfg";
+const XBOX = "xbox";
 
 // Information for installers, modtypes, and tools
 //const USER_HOME = util.getVortexPath("home");
@@ -90,7 +96,7 @@ const XBOX = 'xbox';
 const BASE_ID = `${GAME_ID}-base`;
 const BASE_ID_BFG = `${GAME_ID_BFG}-base`;
 const BASE_NAME = '"base" Data';
-const BASE_PATH = 'base';
+const BASE_PATH = "base";
 
 const D3XP_ID = `${GAME_ID}-d3xp`;
 const D3XP_NAME = "d3xp (RoE) Folder";
@@ -102,29 +108,40 @@ const D3LE_PATH = "d3le";
 
 const ROOT_ID = `${GAME_ID}-binaries`;
 const ROOT_ID_BFG = `${GAME_ID_BFG}-root`;
-const ROOT_NAME = 'Binaries / Root Folder';
-const ROOT_FILE = 'base';
+const ROOT_NAME = "Binaries / Root Folder";
+const ROOT_FILE = "base";
 
 //Files used to trigger root installer
 const WOMD_FILE = "womd_readme.txt"; //Weapon of Mars Destruction mod readme file
 const D3HDP_FILE = "d3hdpack"; //Doom 3 HD Pack mod folder
-const PHOBOS_FILE = 'tfphobos'; //Phobos mod folder
-const ARL_FILE = 'arl'; //ARL mod folder
-const REDUX_FILE = 'redux 20th anniversary edition rc1'; //Redux mod folder
-const REDUX_DHEWM3_FILE = 'installation'; //Redux-Dhewm3 patch mod folder
+const PHOBOS_FILE = "tfphobos"; //Phobos mod folder
+const ARL_FILE = "arl"; //ARL mod folder
+const REDUX_FILE = "redux 20th anniversary edition rc1"; //Redux mod folder
+const REDUX_DHEWM3_FILE = "installation"; //Redux-Dhewm3 patch mod folder
 
-const ROOT_FILES = [BASE_PATH, D3XP_PATH, D3LE_PATH, PHOBOS_FILE, WOMD_FILE, D3HDP_FILE, ARL_FILE, REDUX_FILE, REDUX_DHEWM3_FILE]; //<-- Add file/folder names here to get mods to root folder
+const ROOT_FILES = [
+  BASE_PATH,
+  D3XP_PATH,
+  D3LE_PATH,
+  PHOBOS_FILE,
+  WOMD_FILE,
+  D3HDP_FILE,
+  ARL_FILE,
+  REDUX_FILE,
+  REDUX_DHEWM3_FILE,
+]; //<-- Add file/folder names here to get mods to root folder
 const MANUAL_INTERVENTION_FILES = [WOMD_FILE, D3HDP_FILE, ARL_FILE, REDUX_FILE, REDUX_DHEWM3_FILE]; //<-- These require the user to do manual file manipulation - trigger notification when installing
-const ROOT_FOLDERS_BFG = ['base'];
+const ROOT_FOLDERS_BFG = ["base"];
 
 const DHEWM3_ID = `${GAME_ID}-dhewm3`;
 const DHEWM3_NAME = "Dhewm3";
 const DHEWM3_EXEC = "dhewm3.exe";
-const DHEWM3_ARC_NAME = 'dhewm3-1.5.4_win32.zip';
+const DHEWM3_ARC_NAME = "dhewm3-1.5.4_win32.zip";
 const DHEWM3_URL_MAIN = `https://api.github.com/repos/dhewm/dhewm3`;
 const DHEWM3_FILE = DHEWM3_EXEC; // <-- CASE SENSITIVE! Must match name exactly or downloader will download the file again.
 const REQUIREMENTS = [
-  { //Dhewm3
+  {
+    //Dhewm3
     archiveFileName: DHEWM3_ARC_NAME,
     modType: DHEWM3_ID,
     assemblyFileName: DHEWM3_FILE,
@@ -132,7 +149,7 @@ const REQUIREMENTS = [
     githubUrl: DHEWM3_URL_MAIN,
     findMod: (api) => findModByFile(api, DHEWM3_ID, DHEWM3_FILE),
     findDownloadId: (api) => findDownloadIdByFile(api, DHEWM3_ARC_NAME),
-    fileArchivePattern: new RegExp(/^dhewm3-(\d+\.\d+\.\d+)_win32/, 'i'),
+    fileArchivePattern: new RegExp(/^dhewm3-(\d+\.\d+\.\d+)_win32/, "i"),
     resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[0]),
   },
 ];
@@ -145,8 +162,18 @@ const PARAMETERS = [PARAMETERS_STRING];
 const PARAMETERS_STRING_BFG = "+set com_allowconsole 1 +set com_skipintrovideos 1";
 const PARAMETERS_STRING_BFG2 = "+set fs_resourceLoadPriority 0";
 const PARAMETERS_BFG = [PARAMETERS_STRING_BFG, PARAMETERS_STRING_BFG2];
-const IGNORE_DEPLOY = [path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
-const IGNORE_CONFLICTS = [path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
+const IGNORE_DEPLOY = [
+  path.join("**", "readme.txt"),
+  path.join("**", "README.txt"),
+  path.join("**", "ReadMe.txt"),
+  path.join("**", "Readme.txt"),
+];
+const IGNORE_CONFLICTS = [
+  path.join("**", "readme.txt"),
+  path.join("**", "README.txt"),
+  path.join("**", "ReadMe.txt"),
+  path.join("**", "Readme.txt"),
+];
 
 // Filled in from data above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/686"; //Nexus link to this extension. Used for links
@@ -158,123 +185,114 @@ const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Doom_3";
 //moddb.com serves the classic Doom 3 page ('doom-iii'); its mod list is classic-only, so the
 //page registers against the classic spec and not DOOM 3: BFG Edition.
 const MODDB_BROWSER_CONFIG = {
-  moddbPath: 'games/doom-iii',
+  moddbPath: "games/doom-iii",
   pageId: `${GAME_ID}-moddb-browse`,
-  pageTitle: 'Browse ModDB',
+  pageTitle: "Browse ModDB",
 };
 
 const spec = {
-  "game": {
-    "id": GAME_ID,
-    "name": GAME_NAME,
-    "logo": `${GAME_ID}.jpg`,
-    "mergeMods": true,
-    "requiresCleanup": true,
-    "parameters": PARAMETERS,
-    "modPath": MOD_PATH_DEFAULT,
-    "modPathIsRelative": true,
-    "requiredFiles": [
-      REQ_FILE
-    ],
-    "details": {
-      "steamAppId": +STEAMAPP_ID,
-      "gogAppId": GOGAPP_ID,
-      "ignoreDeploy": IGNORE_DEPLOY,
-      "ignoreConflicts": IGNORE_CONFLICTS,
+  game: {
+    id: GAME_ID,
+    name: GAME_NAME,
+    logo: `${GAME_ID}.jpg`,
+    mergeMods: true,
+    requiresCleanup: true,
+    parameters: PARAMETERS,
+    modPath: MOD_PATH_DEFAULT,
+    modPathIsRelative: true,
+    requiredFiles: [REQ_FILE],
+    details: {
+      steamAppId: +STEAMAPP_ID,
+      gogAppId: GOGAPP_ID,
+      ignoreDeploy: IGNORE_DEPLOY,
+      ignoreConflicts: IGNORE_CONFLICTS,
     },
-    "environment": {
-      "SteamAPPId": STEAMAPP_ID,
-      "GogAPPId": GOGAPP_ID,
-    }
+    environment: {
+      SteamAPPId: STEAMAPP_ID,
+      GogAPPId: GOGAPP_ID,
+    },
   },
-  "modTypes": [
+  modTypes: [
     {
-      "id": ROOT_ID,
-      "name": ROOT_NAME,
-      "priority": "high",
-      "targetPath": "{gamePath}"
+      id: ROOT_ID,
+      name: ROOT_NAME,
+      priority: "high",
+      targetPath: "{gamePath}",
     },
     {
-      "id": BASE_ID,
-      "name": BASE_NAME,
-      "priority": "high",
-      "targetPath": path.join('{gamePath}', BASE_PATH)
+      id: BASE_ID,
+      name: BASE_NAME,
+      priority: "high",
+      targetPath: path.join("{gamePath}", BASE_PATH),
     },
     {
-      "id": D3XP_ID,
-      "name": D3XP_NAME,
-      "priority": "high",
-      "targetPath": `{gamePath}//${D3XP_PATH}`
+      id: D3XP_ID,
+      name: D3XP_NAME,
+      priority: "high",
+      targetPath: `{gamePath}//${D3XP_PATH}`,
     },
     {
-      "id": D3LE_ID,
-      "name": D3LE_NAME,
-      "priority": "high",
-      "targetPath": `{gamePath}//${D3LE_PATH}`
+      id: D3LE_ID,
+      name: D3LE_NAME,
+      priority: "high",
+      targetPath: `{gamePath}//${D3LE_PATH}`,
     },
     {
-      "id": DHEWM3_ID,
-      "name": DHEWM3_NAME,
-      "priority": "low",
-      "targetPath": `{gamePath}`
+      id: DHEWM3_ID,
+      name: DHEWM3_NAME,
+      priority: "low",
+      targetPath: `{gamePath}`,
     },
   ],
 };
 
 const specBfg = {
-  "game": {
-    "id": GAME_ID_BFG,
-    "name": GAME_NAME_BFG,
-    "shortName": GAME_NAME_SHORT_BFG,
-    "logo": `${GAME_ID_BFG}.jpg`,
-    "mergeMods": true,
-    "requiresCleanup": true,
-    "parameters": PARAMETERS_BFG,
-    "modPath": MOD_PATH_DEFAULT_BFG,
-    "modPathIsRelative": true,
-    "requiredFiles": [
-      REQ_FILE
-    ],
-    "details": {
-      "steamAppId": +STEAMAPP_ID_BFG,
-      "gogAppId": GOGAPP_ID_BFG,
-      "epicAppId": EPICAPP_ID_BFG,
-      "xboxAppId": XBOXAPP_ID_BFG,
-      "nexusPageId": GAME_ID,
-      "compatibleDownloads": [GAME_ID],
-      "ignoreDeploy": IGNORE_DEPLOY,
-      "ignoreConflicts": IGNORE_CONFLICTS,
+  game: {
+    id: GAME_ID_BFG,
+    name: GAME_NAME_BFG,
+    shortName: GAME_NAME_SHORT_BFG,
+    logo: `${GAME_ID_BFG}.jpg`,
+    mergeMods: true,
+    requiresCleanup: true,
+    parameters: PARAMETERS_BFG,
+    modPath: MOD_PATH_DEFAULT_BFG,
+    modPathIsRelative: true,
+    requiredFiles: [REQ_FILE],
+    details: {
+      steamAppId: +STEAMAPP_ID_BFG,
+      gogAppId: GOGAPP_ID_BFG,
+      epicAppId: EPICAPP_ID_BFG,
+      xboxAppId: XBOXAPP_ID_BFG,
+      nexusPageId: GAME_ID,
+      compatibleDownloads: [GAME_ID],
+      ignoreDeploy: IGNORE_DEPLOY,
+      ignoreConflicts: IGNORE_CONFLICTS,
     },
-    "environment": {
-      "SteamAPPId": STEAMAPP_ID_BFG,
-      "GogAPPId": GOGAPP_ID_BFG,
-      "EpicAPPId": EPICAPP_ID_BFG,
-      "XboxAPPId": XBOXAPP_ID_BFG,
-    }
+    environment: {
+      SteamAPPId: STEAMAPP_ID_BFG,
+      GogAPPId: GOGAPP_ID_BFG,
+      EpicAPPId: EPICAPP_ID_BFG,
+      XboxAPPId: XBOXAPP_ID_BFG,
+    },
   },
-  "modTypes": [
+  modTypes: [
     {
-      "id": ROOT_ID_BFG,
-      "name": "Binaries / Root Folder",
-      "priority": "high",
-      "targetPath": "{gamePath}"
+      id: ROOT_ID_BFG,
+      name: "Binaries / Root Folder",
+      priority: "high",
+      targetPath: "{gamePath}",
     },
     {
-      "id": BASE_ID_BFG,
-      "name": BASE_NAME,
-      "priority": "high",
-      "targetPath": path.join('{gamePath}', BASE_PATH)
+      id: BASE_ID_BFG,
+      name: BASE_NAME,
+      priority: "high",
+      targetPath: path.join("{gamePath}", BASE_PATH),
     },
   ],
-  "discovery": {
-    "ids": [
-      STEAMAPP_ID_BFG,
-      GOGAPP_ID_BFG,
-      EPICAPP_ID_BFG,
-      XBOXAPP_ID_BFG,
-    ],
-    "names": []
-  }
+  discovery: {
+    ids: [STEAMAPP_ID_BFG, GOGAPP_ID_BFG, EPICAPP_ID_BFG, XBOXAPP_ID_BFG],
+    names: [],
+  },
 };
 
 //3rd party tools and launchers
@@ -319,8 +337,7 @@ function statCheckSync(gamePath, file) {
   try {
     fs.statSync(path.join(gamePath, file));
     return true;
-  }
-  catch {
+  } catch {
     return false;
   }
 }
@@ -329,8 +346,7 @@ async function statCheckAsync(gamePath, file) {
   try {
     await fs.statAsync(path.join(gamePath, file));
     return true;
-  }
-  catch {
+  } catch {
     return false;
   }
 }
@@ -342,31 +358,38 @@ async function getAllFiles(dirPath) {
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
       const stats = await fs.statAsync(fullPath);
-      if (stats.isDirectory()) { // Recursively get files from subdirectories
+      if (stats.isDirectory()) {
+        // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
         results = results.concat(subDirFiles);
-      } else { // Add file to results
+      } else {
+        // Add file to results
         results.push(fullPath);
       }
     }
   } catch (err) {
-    log('warn', `Error reading directory ${dirPath}: ${err.message}`);
+    log("warn", `Error reading directory ${dirPath}: ${err.message}`);
   }
   return results;
 }
 
-const getDiscoveryPath = (api) => { //get the game's discovered path
+const getDiscoveryPath = (api) => {
+  //get the game's discovered path
   const state = api.getState();
   const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
 
 async function purge(api) {
-  return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));
+  return new Promise((resolve, reject) =>
+    api.events.emit("purge-mods", true, (err) => (err ? reject(err) : resolve())),
+  );
 }
 
 async function deploy(api) {
-  return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
+  return new Promise((resolve, reject) =>
+    api.events.emit("deploy-mods", (err) => (err ? reject(err) : resolve())),
+  );
 }
 
 function modTypePriority(priority) {
@@ -378,17 +401,22 @@ function modTypePriority(priority) {
 
 //Convert string placeholders to actual paths
 function pathPattern(api, game, pattern) {
-  try{
+  try {
     var _a;
     return template(pattern, {
-      gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
-      documents: util.getVortexPath('documents'),
-      localAppData: util.getVortexPath('localAppData'),
-      appData: util.getVortexPath('appData'),
+      gamePath:
+        (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0
+          ? void 0
+          : _a.path,
+      documents: util.getVortexPath("documents"),
+      localAppData: util.getVortexPath("localAppData"),
+      appData: util.getVortexPath("appData"),
     });
-  }
-  catch(err){
-    api.showErrorNotification('Failed to locate executable. Please launch the game at least once.', err);
+  } catch (err) {
+    api.showErrorNotification(
+      "Failed to locate executable. Please launch the game at least once.",
+      err,
+    );
   }
 }
 
@@ -398,23 +426,22 @@ function getExecutable(discoveryPath) {
     try {
       fs.statSync(path.join(discoveryPath, exec));
       return true;
-    }
-    catch {
+    } catch {
       return false;
     }
   };
   if (isCorrectExec(EXEC_XBOX)) {
     GAME_VERSION = XBOX;
     return EXEC_XBOX;
-  };
+  }
   if (isCorrectExec(EXEC_CLASSIC)) {
     GAME_VERSION = CLASSIC;
     return EXEC_CLASSIC;
-  };
+  }
   if (isCorrectExec(EXEC_BFG)) {
     GAME_VERSION = BFG;
     return EXEC_BFG;
-  };
+  }
   return EXEC_CLASSIC;
 }
 
@@ -424,19 +451,18 @@ function getExecutableBfg(discoveryPath) {
     try {
       fs.statSync(path.join(discoveryPath, exec));
       return true;
-    }
-    catch {
+    } catch {
       return false;
     }
   };
   if (isCorrectExec(EXEC_XBOX)) {
     GAME_VERSION = XBOX;
     return EXEC_XBOX;
-  };
+  }
   if (isCorrectExec(EXEC_BFG)) {
     GAME_VERSION = BFG;
     return EXEC_BFG;
-  };
+  }
   return EXEC_BFG;
 }
 
@@ -446,20 +472,19 @@ async function getStoreVersion(discoveryPath) {
     try {
       fs.statSync(path.join(discoveryPath, exec));
       return true;
-    }
-    catch {
+    } catch {
       return false;
     }
   };
   if (isCorrectExec(EXEC_XBOX)) {
     return XBOX;
-  };
+  }
   if (isCorrectExec(EXEC_CLASSIC)) {
     return CLASSIC;
-  };
+  }
   if (isCorrectExec(EXEC_BFG)) {
     return BFG;
-  };
+  }
   return CLASSIC;
 }
 
@@ -469,38 +494,38 @@ async function getStoreVersionBfg(discoveryPath) {
     try {
       fs.statSync(path.join(discoveryPath, exec));
       return true;
-    }
-    catch {
+    } catch {
       return false;
     }
   };
   if (isCorrectExec(EXEC_XBOX)) {
     return XBOX;
-  };
+  }
   if (isCorrectExec(EXEC_BFG)) {
     return BFG;
-  };
+  }
   return BFG;
 }
 
 //Set mod path
 function makeGetModPath(api, gameSpec) {
-  return () => gameSpec.game.modPathIsRelative !== false
-    ? gameSpec.game.modPath || '.'
-    : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
+  return () =>
+    gameSpec.game.modPathIsRelative !== false
+      ? gameSpec.game.modPath || "."
+      : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
 }
 
 //Find game installation directory
 function makeFindGame(api, gameSpec) {
-  return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
-    .then((game) => game.gamePath);
+  return () =>
+    util.GameStoreHelper.findByAppId(gameSpec.discovery.ids).then((game) => game.gamePath);
 }
 
 //Set launcher requirements
 async function requiresLauncher(gamePath, store) {
-  if (store === 'steam') {
+  if (store === "steam") {
     return Promise.resolve({
-        launcher: 'steam'
+      launcher: "steam",
     });
   } //*/
   return Promise.resolve(undefined);
@@ -508,23 +533,23 @@ async function requiresLauncher(gamePath, store) {
 
 //Set launcher requirements - BFG Edition
 async function requiresLauncherBfg(gamePath, store) {
-  if (store === 'xbox') {
+  if (store === "xbox") {
     return Promise.resolve({
-      launcher: 'xbox',
+      launcher: "xbox",
       addInfo: {
         appId: XBOXAPP_ID_BFG,
         parameters: [{ appExecName: XBOXEXECNAME_BFG }],
       },
     });
   } //*/
-  if (store === 'steam') {
+  if (store === "steam") {
     return Promise.resolve({
-        launcher: 'steam'
+      launcher: "steam",
     });
   } //*/
-  if (store === 'epic') {
+  if (store === "epic") {
     return Promise.resolve({
-      launcher: 'epic',
+      launcher: "epic",
       addInfo: {
         appId: EPICAPP_ID_BFG,
       },
@@ -539,7 +564,7 @@ async function requiresLauncherBfg(gamePath, store) {
 function isDhewm3Installed(api) {
   const state = api.getState();
   const mods = state.persistent.mods[GAME_ID] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === DHEWM3_ID);
+  return Object.keys(mods).some((id) => mods[id]?.type === DHEWM3_ID);
 }
 
 async function onCheckModVersion(api, gameId, mods, forced) {
@@ -549,7 +574,7 @@ async function onCheckModVersion(api, gameId, mods, forced) {
   try {
     await testRequirementVersion(api, REQUIREMENTS[0]);
   } catch (err) {
-    log('warn', 'failed to test requirement version', err);
+    log("warn", "failed to test requirement version", err);
   }
 }
 
@@ -562,13 +587,18 @@ async function checkForDhewm3(api) {
 
 //Installer test for Dhewm3
 function testDhewm3(files, gameId) {
-  const isMod = files.some(file => (path.basename(file).toLowerCase() === DHEWM3_EXEC));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => path.basename(file).toLowerCase() === DHEWM3_EXEC);
+  let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -580,18 +610,18 @@ function testDhewm3(files, gameId) {
 
 //Installer install Dhewm3
 function installDhewm3(files) {
-  const modFile = files.find(file => path.basename(file).toLowerCase() === DHEWM3_EXEC);
+  const modFile = files.find((file) => path.basename(file).toLowerCase() === DHEWM3_EXEC);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: DHEWM3_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: DHEWM3_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -602,13 +632,18 @@ function installDhewm3(files) {
 
 //Installer test for Root files
 function testRoot(files, gameId) {
-  const isMod = files.some(file => ROOT_FILES.includes(path.basename(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => ROOT_FILES.includes(path.basename(file).toLowerCase()));
+  let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -620,22 +655,22 @@ function testRoot(files, gameId) {
 
 //Installer install Root files
 function installRoot(api, files, fileName) {
-  const modFile = files.find(file => ROOT_FILES.includes(path.basename(file).toLowerCase()));
+  const modFile = files.find((file) => ROOT_FILES.includes(path.basename(file).toLowerCase()));
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
 
   if (MANUAL_INTERVENTION_FILES.includes(path.basename(modFile).toLowerCase())) {
     manualManipulationNotify(api, fileName);
   }
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -647,51 +682,72 @@ function installRoot(api, files, fileName) {
 function manualManipulationNotify(api, fileName) {
   const state = api.getState();
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
-  const MOD_NAME = path.basename(fileName).replace(/(.installing)*(.zip)*(.rar)*(.7z)*/gi, '');
+  const MOD_NAME = path.basename(fileName).replace(/(.installing)*(.zip)*(.rar)*(.7z)*/gi, "");
   const NOTIF_ID = `${GAME_ID}-manualmanipulation-${MOD_NAME}`;
-  const MESSAGE = 'Manual File/Folder Manipulation Required';
+  const MESSAGE = "Manual File/Folder Manipulation Required";
   api.sendNotification({
     id: NOTIF_ID,
-    type: 'warning',
+    type: "warning",
     message: MESSAGE,
     allowSuppress: true,
     actions: [
       {
-        title: 'More',
+        title: "More",
         action: (dismiss) => {
-          api.showDialog('question', MESSAGE, {
-            text: `You've just installed a mod with a folder structure that requires manual file/folder manipulation to install properly.\n`
-              + `\n`
-              + `Mod: ${MOD_NAME}.\n`
-              + `\n`
-              + `Use the button below to open the Staging Folder and manually manipulate files and/or folders, based on the mod's instructions.\n`
-              + `\n`
-              + `Check the mod page description or a readme file for installation instructions. You can use the "Open Mod Page" button below (only for mods with a Nexus page). This notification will remain active after opening the mod page.\n`
-              + `\n`
-          }, [
-            { label: `Open Mod Page`, action: () => {
-              const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
-              const modMatch = Object.values(mods).find(mod => (mod.installationPath === MOD_NAME));
-              //log('warn', `Found ${modMatch?.id} for ${MOD_NAME}`);
-              let PAGE = ``;
-              if (modMatch) {
-                const MOD_ID = modMatch.attributes.modId;
-                PAGE = `${MOD_ID}?tab=description`;
-              }
-              const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
-              util.opn(MOD_PAGE_URL).catch(err => undefined);
-              //dismiss();
-            }}, //*/
-            { label: `Open Staging Folder`, action: () => {
-              util.opn(path.join(STAGING_FOLDER, MOD_NAME)).catch(err => undefined);
-              dismiss();
-            }}, //*/
-            { label: 'Dismiss', action: () => dismiss() },
-            { label: 'Never Show Again', action: () => {
-              api.suppressNotification(NOTIF_ID);
-              dismiss();
-            }},
-          ]);
+          api.showDialog(
+            "question",
+            MESSAGE,
+            {
+              text:
+                `You've just installed a mod with a folder structure that requires manual file/folder manipulation to install properly.\n` +
+                `\n` +
+                `Mod: ${MOD_NAME}.\n` +
+                `\n` +
+                `Use the button below to open the Staging Folder and manually manipulate files and/or folders, based on the mod's instructions.\n` +
+                `\n` +
+                `Check the mod page description or a readme file for installation instructions. You can use the "Open Mod Page" button below (only for mods with a Nexus page). This notification will remain active after opening the mod page.\n` +
+                `\n`,
+            },
+            [
+              {
+                label: `Open Mod Page`,
+                action: () => {
+                  const mods = util.getSafe(
+                    api.store.getState(),
+                    ["persistent", "mods", spec.game.id],
+                    {},
+                  );
+                  const modMatch = Object.values(mods).find(
+                    (mod) => mod.installationPath === MOD_NAME,
+                  );
+                  //log('warn', `Found ${modMatch?.id} for ${MOD_NAME}`);
+                  let PAGE = ``;
+                  if (modMatch) {
+                    const MOD_ID = modMatch.attributes.modId;
+                    PAGE = `${MOD_ID}?tab=description`;
+                  }
+                  const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
+                  util.opn(MOD_PAGE_URL).catch((err) => undefined);
+                  //dismiss();
+                },
+              }, //*/
+              {
+                label: `Open Staging Folder`,
+                action: () => {
+                  util.opn(path.join(STAGING_FOLDER, MOD_NAME)).catch((err) => undefined);
+                  dismiss();
+                },
+              }, //*/
+              { label: "Dismiss", action: () => dismiss() },
+              {
+                label: "Never Show Again",
+                action: () => {
+                  api.suppressNotification(NOTIF_ID);
+                  dismiss();
+                },
+              },
+            ],
+          );
         },
       },
     ],
@@ -702,13 +758,18 @@ function manualManipulationNotify(api, fileName) {
 
 //Installer test for Root folder files
 function testRootBfg(files, gameId) {
-  const isMod = files.some(file => ROOT_FOLDERS_BFG.includes(path.basename(file)));
-  let supported = (gameId === specBfg.game.id) && isMod;
+  const isMod = files.some((file) => ROOT_FOLDERS_BFG.includes(path.basename(file)));
+  let supported = gameId === specBfg.game.id && isMod;
 
   // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -720,19 +781,19 @@ function testRootBfg(files, gameId) {
 
 //Installer install Root folder files
 function installRootBfg(files) {
-  const modFile = files.find(file => ROOT_FOLDERS_BFG.includes(path.basename(file)));
-  const ROOT_IDX = `${path.basename(modFile)}${path.sep}`
+  const modFile = files.find((file) => ROOT_FOLDERS_BFG.includes(path.basename(file)));
+  const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
   const idx = modFile.indexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID_BFG };
+  const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID_BFG };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -748,27 +809,34 @@ function setupNotify(api) {
   if (GAME_VERSION === XBOX) {
     const NOTIF_ID = `${GAME_ID}-xbox-notification`;
     api.sendNotification({
-      id: 'xbox-notification-doom3',
-      type: 'warning',
-      message: 'Xbox Version Detected',
+      id: "xbox-notification-doom3",
+      type: "warning",
+      message: "Xbox Version Detected",
       allowSuppress: true,
       actions: [
         {
-          title: 'More',
+          title: "More",
           action: (dismiss) => {
-            api.showDialog('question', 'Xbox Version Detected', {
-              text: 'Vortex detected that you are using the Xbox version of Doom 3. This version of Doom 3 is the 64-bit "BFG Edition".\n'
-                  + 'Please ensure the mods you install are intended for the BFG version of Doom 3. Mods intended for the Classic version will not work.\n'
-                  + '\n'
-            }, [
-              { label: 'Acknowledge', action: () => dismiss() },
+            api.showDialog(
+              "question",
+              "Xbox Version Detected",
               {
-                label: 'Never Show Again', action: () => {
-                  api.suppressNotification(NOTIF_ID);
-                  dismiss();
-                }
+                text:
+                  'Vortex detected that you are using the Xbox version of Doom 3. This version of Doom 3 is the 64-bit "BFG Edition".\n' +
+                  "Please ensure the mods you install are intended for the BFG version of Doom 3. Mods intended for the Classic version will not work.\n" +
+                  "\n",
               },
-            ]);
+              [
+                { label: "Acknowledge", action: () => dismiss() },
+                {
+                  label: "Never Show Again",
+                  action: () => {
+                    api.suppressNotification(NOTIF_ID);
+                    dismiss();
+                  },
+                },
+              ],
+            );
           },
         },
       ],
@@ -777,27 +845,34 @@ function setupNotify(api) {
   if (GAME_VERSION === BFG) {
     const NOTIF_ID = `${GAME_ID}-bfg-notification`;
     api.sendNotification({
-      id: 'bfg-notification-doom3',
-      type: 'warning',
-      message: 'BFG Version Detected',
+      id: "bfg-notification-doom3",
+      type: "warning",
+      message: "BFG Version Detected",
       allowSuppress: true,
       actions: [
         {
-          title: 'More',
+          title: "More",
           action: (dismiss) => {
-            api.showDialog('question', 'BFG Version Detected', {
-              text: 'Vortex detected that you are using the 64-bit "BFG Edition" version of Doom 3.\n'
-                  + 'Please ensure the mods you install are intended for the BFG version of Doom 3. Mods intended for the Classic version will not work.\n'
-                  + '\n'
-            }, [
-              { label: 'Acknowledge', action: () => dismiss() },
+            api.showDialog(
+              "question",
+              "BFG Version Detected",
               {
-                label: 'Never Show Again', action: () => {
-                  api.suppressNotification(NOTIF_ID);
-                  dismiss();
-                }
+                text:
+                  'Vortex detected that you are using the 64-bit "BFG Edition" version of Doom 3.\n' +
+                  "Please ensure the mods you install are intended for the BFG version of Doom 3. Mods intended for the Classic version will not work.\n" +
+                  "\n",
               },
-            ]);
+              [
+                { label: "Acknowledge", action: () => dismiss() },
+                {
+                  label: "Never Show Again",
+                  action: () => {
+                    api.suppressNotification(NOTIF_ID);
+                    dismiss();
+                  },
+                },
+              ],
+            );
           },
         },
       ],
@@ -807,35 +882,38 @@ function setupNotify(api) {
 
 async function resolveGameVersion(gamePath) {
   GAME_VERSION = await getStoreVersion(gamePath);
-  let version = '0.0.0';
+  let version = "0.0.0";
   if (GAME_VERSION === XBOX) {
-    try { //try to parse appxmanifest.xml
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+    try {
+      //try to parse appxmanifest.xml
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
     } catch (err) {
-      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      log("error", `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
       return Promise.resolve(version);
     }
   }
-  if (GAME_VERSION === CLASSIC) { // use exe
+  if (GAME_VERSION === CLASSIC) {
+    // use exe
     try {
-      const exeVersion = require('exe-version');
+      const exeVersion = require("exe-version");
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC_CLASSIC));
       return Promise.resolve(version);
     } catch (err) {
-      log('error', `Could not read ${EXEC_CLASSIC} file to get Steam game version: ${err}`);
+      log("error", `Could not read ${EXEC_CLASSIC} file to get Steam game version: ${err}`);
       return Promise.resolve(version);
     }
   }
-  if (GAME_VERSION === BFG) { // use exe
+  if (GAME_VERSION === BFG) {
+    // use exe
     try {
-      const exeVersion = require('exe-version');
+      const exeVersion = require("exe-version");
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC_BFG));
       return Promise.resolve(version);
     } catch (err) {
-      log('error', `Could not read ${EXEC_BFG} file to get Steam game version: ${err}`);
+      log("error", `Could not read ${EXEC_BFG} file to get Steam game version: ${err}`);
       return Promise.resolve(version);
     }
   }
@@ -843,25 +921,26 @@ async function resolveGameVersion(gamePath) {
 
 async function resolveGameVersionBfg(gamePath) {
   GAME_VERSION = await getStoreVersion(gamePath);
-  let version = '0.0.0';
+  let version = "0.0.0";
   if (GAME_VERSION === XBOX) {
-    try { //try to parse appxmanifest.xml
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+    try {
+      //try to parse appxmanifest.xml
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
     } catch (err) {
-      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      log("error", `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
       return Promise.resolve(version);
     }
-  }
-  else { // use exe
+  } else {
+    // use exe
     try {
-      const exeVersion = require('exe-version');
+      const exeVersion = require("exe-version");
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC_BFG));
       return Promise.resolve(version);
     } catch (err) {
-      log('error', `Could not read ${EXEC_BFG} file to get Steam game version: ${err}`);
+      log("error", `Could not read ${EXEC_BFG} file to get Steam game version: ${err}`);
       return Promise.resolve(version);
     }
   }
@@ -933,7 +1012,7 @@ function applyGame(context, gameSpec) {
         //defaultPrimary: true,
         parameters: PARAMETERS,
       }, //*/
-    ]
+    ],
   };
   context.registerGame(game);
 
@@ -944,16 +1023,30 @@ function applyGame(context, gameSpec) {
 
   //register mod types
   (gameSpec.modTypes || []).forEach((type, idx) => {
-    context.registerModType(type.id, modTypePriority(type.priority) + idx, (gameId) => {
-      var _a;
-      return (gameId === gameSpec.game.id)
-        && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
+    context.registerModType(
+      type.id,
+      modTypePriority(type.priority) + idx,
+      (gameId) => {
+        var _a;
+        return (
+          gameId === gameSpec.game.id &&
+          !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+          _a === void 0
+            ? void 0
+            : _a.path)
+        );
+      },
+      (game) => pathPattern(context.api, game, type.targetPath),
+      () => Promise.resolve(false),
+      { name: type.name },
+    );
   });
 
   //register mod installers
   context.registerInstaller(DHEWM3_ID, 25, testDhewm3, installDhewm3);
-  context.registerInstaller(ROOT_ID, 27, testRoot, (files, fileName) => installRoot(context.api, files, fileName));
+  context.registerInstaller(ROOT_ID, 27, testRoot, (files, fileName) =>
+    installRoot(context.api, files, fileName),
+  );
 
   //register actions
   /*
@@ -973,22 +1066,38 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
-    const openPath = path.join(__dirname, 'CHANGELOG.md');
-    util.opn(openPath).catch(() => null);
-    }, () => {
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "View Changelog",
+    () => {
+      const openPath = path.join(__dirname, "CHANGELOG.md");
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    const openPath = DOWNLOAD_FOLDER;
-    util.opn(openPath).catch(() => null);
-    }, () => {
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Downloads Folder",
+    () => {
+      const openPath = DOWNLOAD_FOLDER;
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-  });
+    },
+  );
 
   //register actions
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
@@ -998,20 +1107,36 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
-    util.opn(PCGAMINGWIKI_URL).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
-    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open PCGamingWiki Page",
+    () => {
+      util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Submit Bug Report",
+    () => {
+      util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
 }
 
 function applyGameBfg(context, gameSpec) {
@@ -1030,18 +1155,30 @@ function applyGameBfg(context, gameSpec) {
 
   //register mod types
   (gameSpec.modTypes || []).forEach((type, idx) => {
-    context.registerModType(type.id, modTypePriority(type.priority) + idx, (gameId) => {
-      var _a;
-      return (gameId === gameSpec.game.id)
-        && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
+    context.registerModType(
+      type.id,
+      modTypePriority(type.priority) + idx,
+      (gameId) => {
+        var _a;
+        return (
+          gameId === gameSpec.game.id &&
+          !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+          _a === void 0
+            ? void 0
+            : _a.path)
+        );
+      },
+      (game) => pathPattern(context.api, game, type.targetPath),
+      () => Promise.resolve(false),
+      { name: type.name },
+    );
   });
 
   //register mod installers
   context.registerInstaller(ROOT_ID_BFG, 25, testRootBfg, installRootBfg);
 
   //register actions
-    /*
+  /*
     context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
       util.opn(CONFIG_PATH_BFG).catch(() => null);
     }, () => {
@@ -1056,35 +1193,53 @@ function applyGameBfg(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID_BFG;
     }); //*/
-    context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
-      const openPath = path.join(__dirname, 'CHANGELOG.md');
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "View Changelog",
+    () => {
+      const openPath = path.join(__dirname, "CHANGELOG.md");
       util.opn(openPath).catch(() => null);
-      }, () => {
-        const state = context.api.getState();
-        const gameId = selectors.activeGameId(state);
-        return gameId === GAME_ID_BFG;
-    });
-    context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID_BFG;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Downloads Folder",
+    () => {
       const openPath = DOWNLOAD_FOLDER_BFG;
       util.opn(openPath).catch(() => null);
-      }, () => {
-        const state = context.api.getState();
-        const gameId = selectors.activeGameId(state);
-        return gameId === GAME_ID_BFG;
-    });
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID_BFG;
+    },
+  );
 }
 
 //Main function
 function main(context) {
   applyGame(context, spec);
   applyGameBfg(context, specBfg);
-  context.once(() => { //run (once) when Vortex starts up
+  context.once(() => {
+    //run (once) when Vortex starts up
     const api = context.api;
-    api.onAsync('check-mods-version', (gameId, mods, forced) => {
+    api.onAsync("check-mods-version", (gameId, mods, forced) => {
       if (gameId !== GAME_ID) return;
       return onCheckModVersion(api, gameId, mods, forced);
     }); //*/
-    if (moddbBrowser) { //installs downloads started from the browse page, and update-checks the mods installed through it
+    if (moddbBrowser) {
+      //installs downloads started from the browse page, and update-checks the mods installed through it
       onceModDbBrowser(api, spec, MODDB_BROWSER_CONFIG);
     }
   });

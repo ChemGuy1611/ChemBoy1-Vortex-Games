@@ -13,20 +13,20 @@ feature is writing that list for the user.
 
 ```json
 {
-  "name": "{modName}",
-  "status": true,
-  "description": "Mod installed with Vortex. See mod page for descripton. You may need to add additional parameters below.",
-  "parameters": {}
+    "name": "{modName}",
+    "status": true,
+    "description": "Mod installed with Vortex. See mod page for descripton. You may need to add additional parameters below.",
+    "parameters": {}
 }
 ```
 
-| Mod type | Priority | Target |
-| --- | --- | --- |
-| `JSFOLDER_ID` | spec | `{gamePath}` |
-| `JSFILE_ID` | spec | `js/plugins` |
-| `ROOT_ID` | spec | `{gamePath}` |
-| `JSON_ID` | spec | `data` |
-| `CONFIG_ID`, `SAVE_ID` | 60 each | absolute paths |
+| Mod type               | Priority | Target         |
+| ---------------------- | -------- | -------------- |
+| `JSFOLDER_ID`          | spec     | `{gamePath}`   |
+| `JSFILE_ID`            | spec     | `js/plugins`   |
+| `ROOT_ID`              | spec     | `{gamePath}`   |
+| `JSON_ID`              | spec     | `data`         |
+| `CONFIG_ID`, `SAVE_ID` | 60 each  | absolute paths |
 
 **Installers:** `JSFOLDER` 25 → `JSFILE` 27 → `ROOT` 29 → `JSON` 31 → fallback 49.
 

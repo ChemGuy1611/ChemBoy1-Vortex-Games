@@ -11,12 +11,12 @@ replacements.
 `Documents/My Games/<config folder>`, `CONFIG_FILES` `['graphic settings.cfg']`, `CONFIG_EXTS`
 `['.cfg']`. `UPLAYAPP_ID` and `STEAMAPP_ID` only.
 
-| Mod type | Target |
-| --- | --- |
-| `CONFIG_ID` | absolute `Documents/My Games/<config folder>` |
-| `DATA_ID` | `{gamePath}` |
-| `DATASUB_ID` | `{gamePath}/<DATA_FILE>` |
-| `MODLOADER_ID` | `{gamePath}` |
+| Mod type       | Target                                        |
+| -------------- | --------------------------------------------- |
+| `CONFIG_ID`    | absolute `Documents/My Games/<config folder>` |
+| `DATA_ID`      | `{gamePath}`                                  |
+| `DATASUB_ID`   | `{gamePath}/<DATA_FILE>`                      |
+| `MODLOADER_ID` | `{gamePath}`                                  |
 
 **Installers:** `MODLOADER` 25 → `DATA` 27 → `DATASUB` 29 → `CONFIG` 31 → fallback 49.
 

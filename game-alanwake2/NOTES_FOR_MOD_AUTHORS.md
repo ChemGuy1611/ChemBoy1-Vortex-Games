@@ -6,10 +6,10 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| Modloader | a file or folder named `version.dll` | - |
-| Folders | a file or folder named one of: `data_pc` or `data` | - |
+| Mod Type  | Archive must contain                               | Installs to |
+| --------- | -------------------------------------------------- | ----------- |
+| Modloader | a file or folder named `version.dll`               | -           |
+| Folders   | a file or folder named one of: `data_pc` or `data` | -           |
 
 Paths are relative to the game's install folder.
 
@@ -25,4 +25,3 @@ Recognised when the archive contains a file or folder named one of: `data_pc` or
 
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

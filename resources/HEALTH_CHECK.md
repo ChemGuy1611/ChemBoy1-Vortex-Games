@@ -33,75 +33,94 @@ type guard (`typeof hc.checkMod === 'function'`) to tell them apart.
 
 ```ts
 enum HealthCheckCategory {
-  System = "system", Game = "game", Mods = "mods",
-  Requirements = "requirements", Tools = "tools",
-  Performance = "performance", Legacy = "legacy",
+    System = "system",
+    Game = "game",
+    Mods = "mods",
+    Requirements = "requirements",
+    Tools = "tools",
+    Performance = "performance",
+    Legacy = "legacy",
 }
 
 enum HealthCheckSeverity {
-  Info = "info", Warning = "warning", Error = "error", Critical = "critical",
+    Info = "info",
+    Warning = "warning",
+    Error = "error",
+    Critical = "critical",
 }
 
 enum HealthCheckTrigger {
-  Manual = "manual", Startup = "startup", GameChanged = "game-changed",
-  ProfileChanged = "profile-changed", ModsChanged = "mods-changed",
-  LoginChanged = "login-changed", SettingsChanged = "settings-changed",
-  PluginsChanged = "plugins-changed", LootUpdated = "loot-updated", Scheduled = "scheduled",
+    Manual = "manual",
+    Startup = "startup",
+    GameChanged = "game-changed",
+    ProfileChanged = "profile-changed",
+    ModsChanged = "mods-changed",
+    LoginChanged = "login-changed",
+    SettingsChanged = "settings-changed",
+    PluginsChanged = "plugins-changed",
+    LootUpdated = "loot-updated",
+    Scheduled = "scheduled",
 }
 
 interface IHealthCheckResult<TMetadata = unknown> {
-  checkId: string;
-  status: "passed" | "failed" | "warning" | "error";
-  severity: HealthCheckSeverity;
-  message: string;
-  details?: string;
-  metadata?: TMetadata;
-  executionTime: number;
-  timestamp: Date;
-  fixAvailable?: boolean;
-  isLegacyTest?: boolean;
+    checkId: string;
+    status: "passed" | "failed" | "warning" | "error";
+    severity: HealthCheckSeverity;
+    message: string;
+    details?: string;
+    metadata?: TMetadata;
+    executionTime: number;
+    timestamp: Date;
+    fixAvailable?: boolean;
+    isLegacyTest?: boolean;
 }
 
-type HealthCheckFunction = (api: IExtensionApi, signal?: AbortSignal) => Promise<IHealthCheckResult>;
+type HealthCheckFunction = (
+    api: IExtensionApi,
+    signal?: AbortSignal,
+) => Promise<IHealthCheckResult>;
 type HealthCheckFixFunction = (api: IExtensionApi) => Promise<void>;
 
 interface IHealthCheck {
-  id: string;
-  name: string;
-  description: string;
-  category: HealthCheckCategory;
-  severity: HealthCheckSeverity;
-  triggers: HealthCheckTrigger[];
-  gameId?: string;           // scope to one game; omit to run for all
-  dependencies?: string[];   // ids of checks that must run first
-  timeout?: number;          // ms; default 30000
-  cacheDuration?: number;    // ms — reuse last result within this window
-  check: HealthCheckFunction;
-  fix?: HealthCheckFixFunction;
-  extensionName?: string;
+    id: string;
+    name: string;
+    description: string;
+    category: HealthCheckCategory;
+    severity: HealthCheckSeverity;
+    triggers: HealthCheckTrigger[];
+    gameId?: string; // scope to one game; omit to run for all
+    dependencies?: string[]; // ids of checks that must run first
+    timeout?: number; // ms; default 30000
+    cacheDuration?: number; // ms — reuse last result within this window
+    check: HealthCheckFunction;
+    fix?: HealthCheckFixFunction;
+    extensionName?: string;
 }
 
 // Per-mod variant. Registry iterates installed mods for the active game,
 // calls checkMod per mod, aggregates results. Omits check + fix.
 interface IModCheckContext {
-  modId: string;
-  files: string[];                              // paths relative to mod staging root
-  readFile: (path: string) => Promise<Buffer>;  // resolves under mod root
-  attributes: Record<string, unknown>;          // install-time attribute instructions
+    modId: string;
+    files: string[]; // paths relative to mod staging root
+    readFile: (path: string) => Promise<Buffer>; // resolves under mod root
+    attributes: Record<string, unknown>; // install-time attribute instructions
 }
 
-type PerModCheckFunction = (api: IExtensionApi, mod: IModCheckContext, signal?: AbortSignal)
-  => Promise<IHealthCheckResult>;
+type PerModCheckFunction = (
+    api: IExtensionApi,
+    mod: IModCheckContext,
+    signal?: AbortSignal,
+) => Promise<IHealthCheckResult>;
 
 interface IModHealthCheck extends Omit<IHealthCheck, "check" | "fix"> {
-  checkMod: PerModCheckFunction;
+    checkMod: PerModCheckFunction;
 }
 
 // Legacy registerTest shimmed onto the registry:
 interface ILegacyTestAdapter extends IHealthCheck {
-  eventType: string;
-  originalCheck: CheckFunction;
-  isLegacyTest: true;
+    eventType: string;
+    originalCheck: CheckFunction;
+    isLegacyTest: true;
 }
 
 function isModHealthCheck(hc): hc is IModHealthCheck; // typeof hc.checkMod === 'function'
@@ -170,30 +189,32 @@ isn't yours: the check simply doesn't run, and no stale result lingers on the pa
 
 ```js
 const { HealthCheckCategory, HealthCheckSeverity, HealthCheckTrigger } =
-  require('vortex-api').types; // enums exported via types namespace; verify import path
+    require("vortex-api").types; // enums exported via types namespace; verify import path
 
 context.registerHealthCheck({
-  id: `${GAME_ID}-required-tool`,
-  name: 'Script extender installed',
-  description: 'Checks the script extender is present in the game folder.',
-  category: HealthCheckCategory.Requirements,
-  severity: HealthCheckSeverity.Warning,
-  triggers: [HealthCheckTrigger.GameChanged, HealthCheckTrigger.Manual],
-  cacheDuration: 60000,
-  check: async (api) => {
-    const start = Date.now();
-    const present = await isExtenderInstalled(api);
-    return {
-      checkId: `${GAME_ID}-required-tool`,
-      status: present ? 'passed' : 'failed',
-      severity: HealthCheckSeverity.Warning,
-      message: present ? 'Script extender found.' : 'Script extender missing.',
-      executionTime: Date.now() - start,
-      timestamp: new Date(),
-      fixAvailable: !present,
-    };
-  },
-  fix: async (api) => { await downloadExtender(api); },
+    id: `${GAME_ID}-required-tool`,
+    name: "Script extender installed",
+    description: "Checks the script extender is present in the game folder.",
+    category: HealthCheckCategory.Requirements,
+    severity: HealthCheckSeverity.Warning,
+    triggers: [HealthCheckTrigger.GameChanged, HealthCheckTrigger.Manual],
+    cacheDuration: 60000,
+    check: async (api) => {
+        const start = Date.now();
+        const present = await isExtenderInstalled(api);
+        return {
+            checkId: `${GAME_ID}-required-tool`,
+            status: present ? "passed" : "failed",
+            severity: HealthCheckSeverity.Warning,
+            message: present ? "Script extender found." : "Script extender missing.",
+            executionTime: Date.now() - start,
+            timestamp: new Date(),
+            fixAvailable: !present,
+        };
+    },
+    fix: async (api) => {
+        await downloadExtender(api);
+    },
 });
 ```
 
@@ -203,24 +224,24 @@ context.registerHealthCheck({
 
 ```js
 context.registerHealthCheck({
-  id: `${GAME_ID}-loose-files`,
-  name: 'No loose script files',
-  description: 'Flags mods shipping raw scripts outside the expected folder.',
-  category: HealthCheckCategory.Mods,
-  severity: HealthCheckSeverity.Info,
-  triggers: [HealthCheckTrigger.ModsChanged],
-  checkMod: async (api, mod) => {
-    const start = Date.now();
-    const bad = mod.files.some(f => f.endsWith('.lua') && !f.includes('Scripts/'));
-    return {
-      checkId: `${GAME_ID}-loose-files`,
-      status: bad ? 'warning' : 'passed',
-      severity: HealthCheckSeverity.Info,
-      message: bad ? `${mod.modId} has loose scripts.` : 'OK',
-      executionTime: Date.now() - start,
-      timestamp: new Date(),
-    };
-  },
+    id: `${GAME_ID}-loose-files`,
+    name: "No loose script files",
+    description: "Flags mods shipping raw scripts outside the expected folder.",
+    category: HealthCheckCategory.Mods,
+    severity: HealthCheckSeverity.Info,
+    triggers: [HealthCheckTrigger.ModsChanged],
+    checkMod: async (api, mod) => {
+        const start = Date.now();
+        const bad = mod.files.some((f) => f.endsWith(".lua") && !f.includes("Scripts/"));
+        return {
+            checkId: `${GAME_ID}-loose-files`,
+            status: bad ? "warning" : "passed",
+            severity: HealthCheckSeverity.Info,
+            message: bad ? `${mod.modId} has loose scripts.` : "OK",
+            executionTime: Date.now() - start,
+            timestamp: new Date(),
+        };
+    },
 });
 ```
 

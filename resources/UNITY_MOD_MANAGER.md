@@ -21,12 +21,12 @@ would otherwise be reasonable:
 
 ## Distribution
 
-| Property | Value |
-| --- | --- |
-| Home | `https://www.nexusmods.com/site/mods/21` (domain `site`, mod ID `21`) |
-| Current version | 0.33.0 |
-| GitHub | Source only — **no releases, no tags** |
-| Archive root folder | `UnityModManagerInstaller/` |
+| Property            | Value                                                                 |
+| ------------------- | --------------------------------------------------------------------- |
+| Home                | `https://www.nexusmods.com/site/mods/21` (domain `site`, mod ID `21`) |
+| Current version     | 0.33.0                                                                |
+| GitHub              | Source only — **no releases, no tags**                                |
+| Archive root folder | `UnityModManagerInstaller/`                                           |
 
 Because there is no GitHub release stream, the GitHub-releases downloader module (`DOWNLOADER.md`)
 cannot be used. The route is the inline-Nexus one every other Nexus-hosted requirement uses:
@@ -37,8 +37,8 @@ hardcoded file ID, then `start-download` followed by `start-install-download`.
 spaces and a random suffix, for example
 `UnityModManager 21 0.33.0 2026-08-19T17-23Z U5RqIwYsY.zip`. Any logic that string-matches an
 archive name against a known-versions table is already broken by this — which is precisely how the
-`modtype-umm` helper extension bundled with Vortex fails (see *Why the bundled helper extension is
-unusable* below).
+`modtype-umm` helper extension bundled with Vortex fails (see _Why the bundled helper extension is
+unusable_ below).
 
 ### Archive layout
 
@@ -86,17 +86,17 @@ A `<GameInfo>` block:
 </GameInfo>
 ```
 
-| Field | Meaning |
-| --- | --- |
-| `Name` (attribute) | Display name, and the key used everywhere else — `Params.xml`, the dropdown |
-| `Folder` | Game folder name used for auto-detection |
-| `ModsDirectory` | Mod folder relative to the game root, effectively always `Mods` |
-| `ModInfo` | Mod manifest filename. Declared `Info.json`, but shipped mods use `info.json` — match case-insensitively |
-| `GameExe` | Executable to look for when validating a folder |
-| `EntryPoint` | Where the loader initialises |
-| `StartingPoint` | Where mods start |
-| `MinimalManagerVersion` | Oldest UMM that can run this game; also gates which Harmony payload is installed |
-| `HarmonyVersion` | Optional; `2.2` selects the `Harmony/2.2` payload |
+| Field                   | Meaning                                                                                                  |
+| ----------------------- | -------------------------------------------------------------------------------------------------------- |
+| `Name` (attribute)      | Display name, and the key used everywhere else — `Params.xml`, the dropdown                              |
+| `Folder`                | Game folder name used for auto-detection                                                                 |
+| `ModsDirectory`         | Mod folder relative to the game root, effectively always `Mods`                                          |
+| `ModInfo`               | Mod manifest filename. Declared `Info.json`, but shipped mods use `info.json` — match case-insensitively |
+| `GameExe`               | Executable to look for when validating a folder                                                          |
+| `EntryPoint`            | Where the loader initialises                                                                             |
+| `StartingPoint`         | Where mods start                                                                                         |
+| `MinimalManagerVersion` | Oldest UMM that can run this game; also gates which Harmony payload is installed                         |
+| `HarmonyVersion`        | Optional; `2.2` selects the `Harmony/2.2` payload                                                        |
 
 A game already present in the shipped list needs no supplemental file.
 
@@ -124,13 +124,13 @@ reachable for anyone who needs them.
 From `UnityModManagerApp/Form.cs`, `InstallDoorstop(Actions.Install)`. `managerPath` below is
 `<Data>\Managed\UnityModManager`, where `<Data>` comes from `Utils.FindManagedFolder(gamePath)`.
 
-| Destination | Source / content |
-| --- | --- |
-| `<gamePath>\winhttp.dll` | `winhttp_x64.dll` (x64 game) or `winhttp_x86.dll` |
-| `<gamePath>\doorstop_config.ini` | generated — see below |
-| `<gamePath>\<Data>\Managed\UnityModManager\` | `0Harmony.dll`, `dnlib.dll`, `UnityModManager.dll`, `UnityModManager.xml`, conditionally `System.Xml.dll` |
-| `<gamePath>\<Data>\Managed\UnityModManager\Config.xml` | the game's own `<GameInfo>` block, re-serialised with `Config` as the root element |
-| `<gamePath>\Mods\` | created empty |
+| Destination                                            | Source / content                                                                                          |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| `<gamePath>\winhttp.dll`                               | `winhttp_x64.dll` (x64 game) or `winhttp_x86.dll`                                                         |
+| `<gamePath>\doorstop_config.ini`                       | generated — see below                                                                                     |
+| `<gamePath>\<Data>\Managed\UnityModManager\`           | `0Harmony.dll`, `dnlib.dll`, `UnityModManager.dll`, `UnityModManager.xml`, conditionally `System.Xml.dll` |
+| `<gamePath>\<Data>\Managed\UnityModManager\Config.xml` | the game's own `<GameInfo>` block, re-serialised with `Config` as the root element                        |
+| `<gamePath>\Mods\`                                     | created empty                                                                                             |
 
 `doorstop_config.ini`:
 
@@ -193,9 +193,9 @@ upsert the one `GameParam`, write back. Clobbering it wipes the user's other gam
 
 `HKEY_CURRENT_USER\Software\UnityModManager`:
 
-| Value | Content |
-| --- | --- |
-| `Path` | The installer folder |
+| Value     | Content                            |
+| --------- | ---------------------------------- |
+| `Path`    | The installer folder               |
 | `ExePath` | Full path to `UnityModManager.exe` |
 
 The executable writes these itself on first run when `ExePath` is missing or stale, so seeding them
@@ -211,18 +211,18 @@ has to synthesise the folder name — from `info.json`'s `Id`, falling back to t
 
 `info.json` follows `UnityModManager/ModInfo.cs`:
 
-| Field | Notes |
-| --- | --- |
-| `Id` | Unique identifier; the conventional folder name |
-| `DisplayName` | Shown in UMM's in-game UI |
-| `Author`, `Version`, `HomePage`, `Repository` | Metadata |
-| `ManagerVersion` | Minimum UMM version |
-| `GameVersion` | Minimum game version |
-| `Requirements[]` | Other mod IDs required |
-| `LoadAfter[]` | Load-order hints |
-| `AssemblyName` | DLL to load |
-| `EntryMethod` | Method invoked on load |
-| `ContentType` | Optional content classification |
+| Field                                         | Notes                                           |
+| --------------------------------------------- | ----------------------------------------------- |
+| `Id`                                          | Unique identifier; the conventional folder name |
+| `DisplayName`                                 | Shown in UMM's in-game UI                       |
+| `Author`, `Version`, `HomePage`, `Repository` | Metadata                                        |
+| `ManagerVersion`                              | Minimum UMM version                             |
+| `GameVersion`                                 | Minimum game version                            |
+| `Requirements[]`                              | Other mod IDs required                          |
+| `LoadAfter[]`                                 | Load-order hints                                |
+| `AssemblyName`                                | DLL to load                                     |
+| `EntryMethod`                                 | Method invoked on load                          |
+| `ContentType`                                 | Optional content classification                 |
 
 The manifest name is declared as `Info.json` in `UnityModManagerConfig.xml` but shipped mods use
 `info.json`. Match case-insensitively in both directions.
@@ -265,7 +265,7 @@ It fails four independent ways, which is why an extension is better off handling
   previously active game instead; running it again with the game active behaves correctly. See
   `VORTEX_DOWNLOAD_MGMT.md`.
 - **Retarget the tool at the deployed executable.** `modtype-umm` registers its UMM tool against the
-  mod's *staging* folder, which is named after the version it installed
+  mod's _staging_ folder, which is named after the version it installed
   (`.../UnityModManager-21-0-24-2/UnityModManager.exe`), so the entry dangles the moment that
   version is replaced. A game that previously used the helper extension still carries that stale
   entry in `settings.gameMode.discovered.<game>.tools`. Point any tool whose executable is
@@ -282,7 +282,7 @@ types, and installer ladder).
 `RAILLOADER.md` (the second loader used by Railroader, sharing the same `Mods` folder).
 `TEMPLATES_OVERVIEW.md` (template selection, the shared extension anatomy, and the auto-download
 route table this loader's Nexus route belongs to).
-`DOWNLOADER.md` (the GitHub requirements module — explicitly *not* usable here, since UMM publishes
+`DOWNLOADER.md` (the GitHub requirements module — explicitly _not_ usable here, since UMM publishes
 no GitHub releases).
 `NEXUS_MODS_API.md` and `NEXUS_FILE_PROPERTIES.md` (`nexusGetModFiles`, `category_id`, and the file
 naming convention that broke name matching).

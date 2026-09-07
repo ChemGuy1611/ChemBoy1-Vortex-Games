@@ -13,13 +13,13 @@ own site does differently. An adopting extension therefore carries **two** files
 `base_browser.js` and its source module — because the source module requires the base from beside
 itself.
 
-| | Downloader module | Browser module |
-| --- | --- | --- |
-| Purpose | Install known requirements unattended | Let the user browse and pick |
-| Trigger | `setup()`, update check, toolbar button | The user, on a page |
+|                  | Downloader module                         | Browser module                              |
+| ---------------- | ----------------------------------------- | ------------------------------------------- |
+| Purpose          | Install known requirements unattended     | Let the user browse and pick                |
+| Trigger          | `setup()`, update check, toolbar button   | The user, on a page                         |
 | Knows in advance | Namespace, name, mod type per requirement | Nothing; the reference comes from the click |
-| Mod type | Sets one per requirement | Never sets one |
-| Lists | `resources/lists/games-downloader-*.txt` | none of its own — see below |
+| Mod type         | Sets one per requirement                  | Never sets one                              |
+| Lists            | `resources/lists/games-downloader-*.txt`  | none of its own — see below                 |
 
 An extension can carry either, both, or neither. Hades II carries both: `thunderstore_downloader.js`
 installs the Hell2Modding loader and the ModUtil dependency closure, `thunderstore_browser.js` gives
@@ -33,9 +33,9 @@ Same as the downloader modules: every adopter carries a **byte-identical copy** 
 files, required with a relative path. Two files, not one — the source module and the base.
 
 ```js
-const { registerThunderstoreBrowser, onceThunderstoreBrowser } = require('./thunderstore_browser');
-const { registerGameBananaBrowser, onceGameBananaBrowser } = require('./gamebanana_browser');
-const { registerModWorkshopBrowser, onceModWorkshopBrowser } = require('./modworkshop_browser');
+const { registerThunderstoreBrowser, onceThunderstoreBrowser } = require("./thunderstore_browser");
+const { registerGameBananaBrowser, onceGameBananaBrowser } = require("./gamebanana_browser");
+const { registerModWorkshopBrowser, onceModWorkshopBrowser } = require("./modworkshop_browser");
 ```
 
 `index.js` never requires the base directly; the source module does. Copying only the source module
@@ -65,7 +65,7 @@ so its blast radius is the union of every source's adopter roster (below) across
 Browser modules have no `games-browser-*.txt` list of their own, and their roster is **not** the
 source's `games-downloader-*.txt` list. The two travel together often but are independent decisions:
 a browse page is worth having wherever the site hosts an active scene for the game, while a
-downloader is only worth having where the extension has a *requirement* to fetch from that site.
+downloader is only worth having where the extension has a _requirement_ to fetch from that site.
 ModDB is where the two diverge most — most of its browser adopters carry no ModDB requirement at
 all, so they ship the browser modules and no `moddb_downloader.js`.
 
@@ -79,8 +79,8 @@ never be copied, and every adopter would fail to load.
 
 ## The base and its adapters
 
-There are two contracts, and they are easy to confuse. The **config** is per *game*, written by the
-adopting extension. The **adapter** is per *site*, written once inside the source module.
+There are two contracts, and they are easy to confuse. The **config** is per _game_, written by the
+adopting extension. The **adapter** is per _site_, written once inside the source module.
 
 `base_browser.js` owns the page component (chrome, history, host allow-list, the external-content
 confirmation, ad-slot hiding and ad-popup dropping, `onNewWindow` routing), the `did-finish-download`
@@ -89,26 +89,26 @@ guard, the install driver, the optional dependency walk and prompt, the update c
 `registerMainPage` wiring. It exports one function, `createBrowserModule(adapter)`, which returns
 those behaviours bound to a source; a source module is then a thin re-export under its own names.
 
-| Adapter member | Required | Purpose |
-| --- | --- | --- |
-| `id` | yes | Short source id. Namespaces the page id (`<gameId>-<id>-browse`) and the per-page state |
-| `label` | yes | Human name of the site, used in messages, notifications and log lines |
-| `defaults` | no | Per-source defaults a config may override: `packageAttribute`, `versionAttribute`, `allowedHosts`, `icon`, `mdi`, `pageTitle`, `homeTooltip`, `adSelectors`, `blockedHosts` |
-| `homeUrl(config)` | yes | Where the page opens and what Home returns to |
-| `refKey(ref)` / `parseKey(key)` | yes | The package-attribute string and its inverse. **No shared hyphen rule** — Thunderstore's split-at-the-first-hyphen is valid only because its ids are `[a-zA-Z0-9_]` |
-| `requirementKey(req)` | yes | An adopter requirement → the same key string, for install routing and installed-detection |
-| `parseClaim(download)` | yes | A finished download record → a partial reference, or null for "not ours" |
-| `resolve(config, ref)` | yes | The authoritative lookup → `{ version, downloadUrl, pageUrl, dependencies?, ... }` or null |
-| `resolveForInstall(config, ref)` | no | Resolve for a reference that already names its own version. Default is `resolve`; Thunderstore overrides it to avoid an API call the URL already answered |
-| `identify(config, state, partial)` | no | Partial reference → Promise of a full one. Default passes it straight through; GameBanana implements it because its download URLs do not identify the mod |
-| `routeUrl(ctx, url, navigated)` | no | First refusal on every URL the page opens. Return `true` to consume it |
-| `displayName(resolved, key)` | no | What the mod list and notifications call the mod. **Default is the key**, which is always correct — no field on the resolved record is treated as a human title by convention |
-| `archiveName(resolved, key)` | no | File name Vortex should save the archive under. Needed only where the source's download URL carries no file name of its own and its server sends no `Content-Disposition` — see below |
-| `extraAttributes(config, resolved)` | no | `[[name, value], ...]` stamped on top of the standard attribute set |
-| `dependencies` | no | `true` only when the source publishes a machine-readable dependency graph |
-| `fetchStrategy` / `fetchToFile` | no | `'capture'` (default) or `'click'` — see below |
-| `unresolvedMessage` | no | Error text when a reference cannot be resolved |
-| `installedInfo` / `compareInstalled` / `isUpdate` / `updateRef` | no | Update-check hooks. The defaults compare semver-coerced versions; a source whose versions are free text overrides all four |
+| Adapter member                                                  | Required | Purpose                                                                                                                                                                               |
+| --------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                                                            | yes      | Short source id. Namespaces the page id (`<gameId>-<id>-browse`) and the per-page state                                                                                               |
+| `label`                                                         | yes      | Human name of the site, used in messages, notifications and log lines                                                                                                                 |
+| `defaults`                                                      | no       | Per-source defaults a config may override: `packageAttribute`, `versionAttribute`, `allowedHosts`, `icon`, `mdi`, `pageTitle`, `homeTooltip`, `adSelectors`, `blockedHosts`           |
+| `homeUrl(config)`                                               | yes      | Where the page opens and what Home returns to                                                                                                                                         |
+| `refKey(ref)` / `parseKey(key)`                                 | yes      | The package-attribute string and its inverse. **No shared hyphen rule** — Thunderstore's split-at-the-first-hyphen is valid only because its ids are `[a-zA-Z0-9_]`                   |
+| `requirementKey(req)`                                           | yes      | An adopter requirement → the same key string, for install routing and installed-detection                                                                                             |
+| `parseClaim(download)`                                          | yes      | A finished download record → a partial reference, or null for "not ours"                                                                                                              |
+| `resolve(config, ref)`                                          | yes      | The authoritative lookup → `{ version, downloadUrl, pageUrl, dependencies?, ... }` or null                                                                                            |
+| `resolveForInstall(config, ref)`                                | no       | Resolve for a reference that already names its own version. Default is `resolve`; Thunderstore overrides it to avoid an API call the URL already answered                             |
+| `identify(config, state, partial)`                              | no       | Partial reference → Promise of a full one. Default passes it straight through; GameBanana implements it because its download URLs do not identify the mod                             |
+| `routeUrl(ctx, url, navigated)`                                 | no       | First refusal on every URL the page opens. Return `true` to consume it                                                                                                                |
+| `displayName(resolved, key)`                                    | no       | What the mod list and notifications call the mod. **Default is the key**, which is always correct — no field on the resolved record is treated as a human title by convention         |
+| `archiveName(resolved, key)`                                    | no       | File name Vortex should save the archive under. Needed only where the source's download URL carries no file name of its own and its server sends no `Content-Disposition` — see below |
+| `extraAttributes(config, resolved)`                             | no       | `[[name, value], ...]` stamped on top of the standard attribute set                                                                                                                   |
+| `dependencies`                                                  | no       | `true` only when the source publishes a machine-readable dependency graph                                                                                                             |
+| `fetchStrategy` / `fetchToFile`                                 | no       | `'capture'` (default) or `'click'` — see below                                                                                                                                        |
+| `unresolvedMessage`                                             | no       | Error text when a reference cannot be resolved                                                                                                                                        |
+| `installedInfo` / `compareInstalled` / `isUpdate` / `updateRef` | no       | Update-check hooks. The defaults compare semver-coerced versions; a source whose versions are free text overrides all four                                                            |
 
 `template_base_browser.js` is a commented skeleton of exactly this, ready to copy.
 
@@ -200,43 +200,43 @@ declaring a different table is warn-logged rather than silently merged.
 All game-specific knowledge arrives in one object, which is what makes a second adopter a copy plus
 about fifteen lines. Fields marked source-specific are defined by the module for its own site.
 
-| Field | Required | Purpose |
-| --- | --- | --- |
-| source key | yes | Identifies the site section to open; sets the home URL. `tsCommunity` (Thunderstore), `gbGameId` (GameBanana), `mwsGame` (ModWorkshop), `fcGame` (fcmodding), `moddbPath` (ModDB) |
-| `requirements` | no | The adopter's requirement table, for install routing and installed-detection |
-| `installRequirement` | no | `(api, gameSpec, requirement) => Promise` — adopter injects its requirement downloader |
-| `packageAttribute` | no | Mod attribute holding the package key (default `thunderstorePackage` / `gamebananaItem`) |
-| `versionAttribute` | no | Mod attribute holding the installed version (default `thunderstoreVersion` / `gamebananaVersion`) |
-| `allowedHosts` | no | Hosts the embedded view may navigate to |
-| `confirmExternal` | no | Show the external-content confirmation before the site loads (default true). Answering it is remembered per page for the rest of the Vortex session, so leaving the page and coming back does not re-ask; a restart asks again |
-| `pageId` / `pageTitle` / `hotkey` / `icon` / `mdi` / `priority` / `pageGroup` | no | Page identity |
+| Field                                                                         | Required | Purpose                                                                                                                                                                                                                        |
+| ----------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| source key                                                                    | yes      | Identifies the site section to open; sets the home URL. `tsCommunity` (Thunderstore), `gbGameId` (GameBanana), `mwsGame` (ModWorkshop), `fcGame` (fcmodding), `moddbPath` (ModDB)                                              |
+| `requirements`                                                                | no       | The adopter's requirement table, for install routing and installed-detection                                                                                                                                                   |
+| `installRequirement`                                                          | no       | `(api, gameSpec, requirement) => Promise` — adopter injects its requirement downloader                                                                                                                                         |
+| `packageAttribute`                                                            | no       | Mod attribute holding the package key (default `thunderstorePackage` / `gamebananaItem`)                                                                                                                                       |
+| `versionAttribute`                                                            | no       | Mod attribute holding the installed version (default `thunderstoreVersion` / `gamebananaVersion`)                                                                                                                              |
+| `allowedHosts`                                                                | no       | Hosts the embedded view may navigate to                                                                                                                                                                                        |
+| `confirmExternal`                                                             | no       | Show the external-content confirmation before the site loads (default true). Answering it is remembered per page for the rest of the Vortex session, so leaving the page and coming back does not re-ask; a restart asks again |
+| `pageId` / `pageTitle` / `hotkey` / `icon` / `mdi` / `priority` / `pageGroup` | no       | Page identity                                                                                                                                                                                                                  |
 
 Fields only one source needs stay on that source's adapter:
 
-| Field | Module | Purpose |
-| --- | --- | --- |
-| `hideAds` / `adSelectors` | any source with an `adSelectors` default (`gamebanana_browser.js`, `modworkshop_browser.js`, `moddb_browser.js`) | Hide the site's ad slots in the embedded view (default on). `adSelectors` replaces the adapter's list rather than extending it; a source with no list injects nothing |
-| `blockAdPopups` / `blockedHosts` | any source with a `blockedHosts` default (`gamebanana_browser.js`, `moddb_browser.js`) | Drop links that lead to an ad network instead of opening them in the system browser (default on) |
-| `gbSection` | `gamebanana_browser.js` | Section the page opens on, e.g. `mods` (default) or `tools` — GameBanana listings are `/{section}/games/{gameId}` |
-| `fcGame` | `fcmodding_browser.js` | Section the page opens on — `fc3`, `fc4`, `fc5`, `fc6`, `fcnd` or `fcp`, the same slug the extension already uses |
-| `homeUrl` | `gamebanana_browser.js` | Full override for the home URL, e.g. the game's hub page instead of one section |
-| `fileIdAttribute` | `gamebanana_browser.js`, `modworkshop_browser.js`, `moddb_browser.js` | Mod attribute holding the installed file id (default `gamebananaFileId` / `modworkshopFileId` / `moddbFileId`, the same one that source's downloader tracks) |
-| `moddbPath` | `moddb_browser.js` | The game on moddb.com (`games/deus-ex`, `mods/realrtcw-realism-mod`) — the same field and value `moddb_downloader.js` takes |
-| `homePath` | `moddb_browser.js` | Where the page opens, if not `{moddbPath}/mods`. The mods list, not the file index: a game's `/downloads` page carries only the files uploaded to the game page itself, while the mods list is where the community actually is and every mod page links to its own files. |
-| `browseKey` | `moddb_browser.js` (on a **requirement**, not the config) | The browse key of the one file a requirement installs. Without it the requirement is not routed, because a ModDB requirement names a mod page and a key names a single file on that page |
-| `versionPattern` | `gamebanana_browser.js` | RegExp whose group 1 is a version inside an update title, for submissions that leave `_sVersion` empty |
+| Field                            | Module                                                                                                           | Purpose                                                                                                                                                                                                                                                                   |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `hideAds` / `adSelectors`        | any source with an `adSelectors` default (`gamebanana_browser.js`, `modworkshop_browser.js`, `moddb_browser.js`) | Hide the site's ad slots in the embedded view (default on). `adSelectors` replaces the adapter's list rather than extending it; a source with no list injects nothing                                                                                                     |
+| `blockAdPopups` / `blockedHosts` | any source with a `blockedHosts` default (`gamebanana_browser.js`, `moddb_browser.js`)                           | Drop links that lead to an ad network instead of opening them in the system browser (default on)                                                                                                                                                                          |
+| `gbSection`                      | `gamebanana_browser.js`                                                                                          | Section the page opens on, e.g. `mods` (default) or `tools` — GameBanana listings are `/{section}/games/{gameId}`                                                                                                                                                         |
+| `fcGame`                         | `fcmodding_browser.js`                                                                                           | Section the page opens on — `fc3`, `fc4`, `fc5`, `fc6`, `fcnd` or `fcp`, the same slug the extension already uses                                                                                                                                                         |
+| `homeUrl`                        | `gamebanana_browser.js`                                                                                          | Full override for the home URL, e.g. the game's hub page instead of one section                                                                                                                                                                                           |
+| `fileIdAttribute`                | `gamebanana_browser.js`, `modworkshop_browser.js`, `moddb_browser.js`                                            | Mod attribute holding the installed file id (default `gamebananaFileId` / `modworkshopFileId` / `moddbFileId`, the same one that source's downloader tracks)                                                                                                              |
+| `moddbPath`                      | `moddb_browser.js`                                                                                               | The game on moddb.com (`games/deus-ex`, `mods/realrtcw-realism-mod`) — the same field and value `moddb_downloader.js` takes                                                                                                                                               |
+| `homePath`                       | `moddb_browser.js`                                                                                               | Where the page opens, if not `{moddbPath}/mods`. The mods list, not the file index: a game's `/downloads` page carries only the files uploaded to the game page itself, while the mods list is where the community actually is and every mod page links to its own files. |
+| `browseKey`                      | `moddb_browser.js` (on a **requirement**, not the config)                                                        | The browse key of the one file a requirement installs. Without it the requirement is not routed, because a ModDB requirement names a mod page and a key names a single file on that page                                                                                  |
+| `versionPattern`                 | `gamebanana_browser.js`                                                                                          | RegExp whose group 1 is a version inside an update title, for submissions that leave `_sVersion` empty                                                                                                                                                                    |
 
 ## Exports and where they are called
 
-| Export | Called from | Does |
-| --- | --- | --- |
-| `registerThunderstoreBrowser(context, gameSpec, config)` | `applyGame()` | `registerMainPage`, gated on the active game |
-| `onceThunderstoreBrowser(api, gameSpec, config)` | `context.once()` | Installs the `did-finish-download`, `did-install-mod` and `check-mods-version` handlers |
-| `installThunderstorePackage(api, gameSpec, config, ref, options)` | Anywhere | Downloads and installs one package by reference |
-| `resolveThunderstorePackage(config, namespace, name)` | Anywhere | Current version, download URL and dependencies |
-| `isThunderstorePackageInstalled(api, gameId, config, key)` | Anywhere | Installed-detection by attribute or requirement mod type |
-| `checkThunderstoreModUpdates(api, gameSpec, config)` | `check-mods-version` | Update notifications for browsed mods |
-| `makeThunderstoreBrowsePage(gameSpec, config)` | Rarely | The page component, for an extension that registers it itself |
+| Export                                                            | Called from          | Does                                                                                    |
+| ----------------------------------------------------------------- | -------------------- | --------------------------------------------------------------------------------------- |
+| `registerThunderstoreBrowser(context, gameSpec, config)`          | `applyGame()`        | `registerMainPage`, gated on the active game                                            |
+| `onceThunderstoreBrowser(api, gameSpec, config)`                  | `context.once()`     | Installs the `did-finish-download`, `did-install-mod` and `check-mods-version` handlers |
+| `installThunderstorePackage(api, gameSpec, config, ref, options)` | Anywhere             | Downloads and installs one package by reference                                         |
+| `resolveThunderstorePackage(config, namespace, name)`             | Anywhere             | Current version, download URL and dependencies                                          |
+| `isThunderstorePackageInstalled(api, gameId, config, key)`        | Anywhere             | Installed-detection by attribute or requirement mod type                                |
+| `checkThunderstoreModUpdates(api, gameSpec, config)`              | `check-mods-version` | Update notifications for browsed mods                                                   |
+| `makeThunderstoreBrowsePage(gameSpec, config)`                    | Rarely               | The page component, for an extension that registers it itself                           |
 
 Registration goes in the main path, event handlers go in `context.once()` — the same split every
 other Vortex extension follows.
@@ -282,7 +282,7 @@ Thunderstore is the easy case: both `thunderstore.io/package/download/{ns}/{name
 `gcdn` zip it redirects to spell out namespace, name and version, so a claim needs no state at all.
 
 GameBanana is the other case, and it is the one to design for. `gamebanana.com/dl/{fileId}` names a
-*file*, its CDN redirect (`files.gamebanana.com/{section}/{fileName}`, then a numbered
+_file_, its CDN redirect (`files.gamebanana.com/{section}/{fileName}`, then a numbered
 `filecacheNN.gamebanana.com` mirror) names only a section and a file name, and **no API endpoint maps a
 file id back to the submission that owns it** — `apiv11/File/{fileId}` returns the file record with no
 parent, and the legacy Core API's `Url().sProfileUrl()` for a file returns a broken URL.
@@ -330,21 +330,21 @@ Copy `template_base_browser.js` to `<source>_browser.js`, fill in the adapter, a
 host allow-list, confirmation gate, claim handler, attribute stamping, install driver, dependency
 prompt and update check all come from the base. What a new source must supply:
 
-| Piece | Notes |
-| --- | --- |
-| Home URL | Built from the config's source key |
-| Allowed hosts | Site plus its CDN; an off-list navigation is bounced and opened externally |
-| Download-URL pattern | What `parseClaim` matches; include the CDN form |
-| Reference parser | URL (and the site's "install with mod manager" protocol link, if it has one) → identity + version. When the download URL cannot carry the identity, `identify` has to supply it — see above |
-| Key format | The string stored in the package attribute, and the rule for splitting it back apart. Thunderstore's `Namespace-Name` splits at the first hyphen only because its ids are `[a-zA-Z0-9_]`; a source with numeric ids or hyphenated slugs needs its own scheme rather than that rule |
-| Dependency resolver | **Optional.** Some sources have no dependency graph, and `dependencies: false` means the base never asks for one |
-| Version resolver | For update checks and for installs where the click gave no version. Allow a fallback endpoint: Thunderstore's resolver tries the community listing first, then the community-independent package endpoint, because a package can be installed from a community it is not listed in |
-| Update comparison | Only when the source's versions are not semver — override `installedInfo`, `compareInstalled`, `isUpdate` and `updateRef` together, since they describe one ordering |
+| Piece                | Notes                                                                                                                                                                                                                                                                              |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Home URL             | Built from the config's source key                                                                                                                                                                                                                                                 |
+| Allowed hosts        | Site plus its CDN; an off-list navigation is bounced and opened externally                                                                                                                                                                                                         |
+| Download-URL pattern | What `parseClaim` matches; include the CDN form                                                                                                                                                                                                                                    |
+| Reference parser     | URL (and the site's "install with mod manager" protocol link, if it has one) → identity + version. When the download URL cannot carry the identity, `identify` has to supply it — see above                                                                                        |
+| Key format           | The string stored in the package attribute, and the rule for splitting it back apart. Thunderstore's `Namespace-Name` splits at the first hyphen only because its ids are `[a-zA-Z0-9_]`; a source with numeric ids or hyphenated slugs needs its own scheme rather than that rule |
+| Dependency resolver  | **Optional.** Some sources have no dependency graph, and `dependencies: false` means the base never asks for one                                                                                                                                                                   |
+| Version resolver     | For update checks and for installs where the click gave no version. Allow a fallback endpoint: Thunderstore's resolver tries the community listing first, then the community-independent package endpoint, because a package can be installed from a community it is not listed in |
+| Update comparison    | Only when the source's versions are not semver — override `installedInfo`, `compareInstalled`, `isUpdate` and `updateRef` together, since they describe one ordering                                                                                                               |
 
 Three traps the two live adapters already hit:
 
 - **Do not name a field on the resolved record after what the base might want it for.** Thunderstore's
-  `name` is a *package* name, GameBanana's is a *human title*; the base treats neither as a display
+  `name` is a _package_ name, GameBanana's is a _human title_; the base treats neither as a display
   name, so a source with a title opts in through `displayName`.
 - **The file name must end in `browser.js`** — see the adopter model above.
 - **Trace the source's real mark for `defaults.mdi` rather than picking a generic glyph.** Every site so
@@ -398,25 +398,25 @@ base skips both.
 
 ## Adopters
 
-| Module | Source | Adopters |
-| --- | --- | --- |
-| `base_browser.js` | — | every adopter of every source below |
-| `thunderstore_browser.js` | thunderstore.io | `game-hades2` |
-| `gamebanana_browser.js` | gamebanana.com | `game-doometernal` |
-| `modworkshop_browser.js` | modworkshop.net | `game-roadtovostok` |
-| `fcmodding_browser.js` | downloads.fcmodding.com | `game-farcry3`, `game-farcry4`, `game-farcry5`, `game-farcry6`, `game-farcrynewdawn`, `game-farcryprimal`, `template-farcry` |
-| `moddb_browser.js` | moddb.com | `game-darkmessiahofmightandmagic`, `game-returntocastlewolfenstein`, `game-deusex`, `game-deusexinvisiblewar`, `game-doom3`, `game-gzdoom` (two pages), `game-painkillerblackedition`, `game-redfactionguerrillaremarstered`, `game-systemshock225thanniversaryremaster` (classic game only), `game-unrealtournament2004`, `game-wolfenstein2009` |
+| Module                    | Source                  | Adopters                                                                                                                                                                                                                                                                                                                                          |
+| ------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `base_browser.js`         | —                       | every adopter of every source below                                                                                                                                                                                                                                                                                                               |
+| `thunderstore_browser.js` | thunderstore.io         | `game-hades2`                                                                                                                                                                                                                                                                                                                                     |
+| `gamebanana_browser.js`   | gamebanana.com          | `game-doometernal`                                                                                                                                                                                                                                                                                                                                |
+| `modworkshop_browser.js`  | modworkshop.net         | `game-roadtovostok`                                                                                                                                                                                                                                                                                                                               |
+| `fcmodding_browser.js`    | downloads.fcmodding.com | `game-farcry3`, `game-farcry4`, `game-farcry5`, `game-farcry6`, `game-farcrynewdawn`, `game-farcryprimal`, `template-farcry`                                                                                                                                                                                                                      |
+| `moddb_browser.js`        | moddb.com               | `game-darkmessiahofmightandmagic`, `game-returntocastlewolfenstein`, `game-deusex`, `game-deusexinvisiblewar`, `game-doom3`, `game-gzdoom` (two pages), `game-painkillerblackedition`, `game-redfactionguerrillaremarstered`, `game-systemshock225thanniversaryremaster` (classic game only), `game-unrealtournament2004`, `game-wolfenstein2009` |
 
 ### Quirks per source
 
-- **GameBanana** has no dependency *graph*, so nothing is offered alongside an install — the dependency
+- **GameBanana** has no dependency _graph_, so nothing is offered alongside an install — the dependency
   prompt is skipped rather than stubbed. It does publish `_aRequirements`, a structured
   `[[label, url], …]` array whose URL usually parses to a submission, but it is sparse, unversioned
   and sometimes off-site: enough for a best-effort requirement list, not enough to resolve a closure
   (see `GAMEBANANA_API.md`). Its submission key is `Model-itemId` (`Mod-428520`,
   `Tool-7475`), parsed with a strict `letters-digits` pattern instead of Thunderstore's split-at-the-
   first-hyphen rule. A **stale file id is not an error**: `gamebanana.com/dl/{fileId}` for a file that
-  has been superseded redirects to the submission's download *page*, so a download built from a
+  has been superseded redirects to the submission's download _page_, so a download built from a
   hardcoded file id silently fetches HTML once the submission is updated. Resolve the current file
   through the API and keep any hardcoded id as a fallback only.
 - **Thunderstore** is the only source with a dependency closure, and the only one whose versions are
@@ -448,7 +448,7 @@ base skips both.
 - **ModDB** is the only source Vortex cannot download from itself, so it is the only one running
   `fetchStrategy: 'click'`. It is also the only source that mints a **new file id for every release**,
   which rules out keying on the file id: the id a key resolves to is by definition the one already
-  installed, so an update could never be found. The key is therefore the mod's *page* plus a second
+  installed, so an update could never be found. The key is therefore the mod's _page_ plus a second
   half naming which file on it — `mods/realrtcw-realism-mod#realrtcw` — since a ModDB page hosts
   language packs, demos and localisations beside its releases, and keying on the page alone would
   offer "Real RTCW Czech Localization" as an update to "RealRTCW 5.44" for being newer.

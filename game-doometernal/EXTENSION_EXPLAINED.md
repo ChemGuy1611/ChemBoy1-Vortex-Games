@@ -2,21 +2,21 @@
 
 ## Overview
 
-| Property | Value |
-| --- | --- |
-| Name | DOOM Eternal Vortex Extension |
-| Engine / Structure | 3rd party mod loader |
-| Author | ChemBoy1 |
+| Property           | Value                         |
+| ------------------ | ----------------------------- |
+| Name               | DOOM Eternal Vortex Extension |
+| Engine / Structure | 3rd party mod loader          |
+| Author             | ChemBoy1                      |
 
 ## Key Identifiers
 
-| Property | Value |
-| --- | --- |
-| Game ID | `doometernal` |
-| Executable | `launcher/idTechLauncher.exe` |
-| Executable (Xbox) | `gamelaunchhelper.exe` |
-| Extension Page | [https://www.nexusmods.com/site/mods/865](https://www.nexusmods.com/site/mods/865) |
-| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Doom_Eternal](https://www.pcgamingwiki.com/wiki/Doom_Eternal) |
+| Property          | Value                                                                                            |
+| ----------------- | ------------------------------------------------------------------------------------------------ |
+| Game ID           | `doometernal`                                                                                    |
+| Executable        | `launcher/idTechLauncher.exe`                                                                    |
+| Executable (Xbox) | `gamelaunchhelper.exe`                                                                           |
+| Extension Page    | [https://www.nexusmods.com/site/mods/865](https://www.nexusmods.com/site/mods/865)               |
+| PCGamingWiki      | [https://www.pcgamingwiki.com/wiki/Doom_Eternal](https://www.pcgamingwiki.com/wiki/Doom_Eternal) |
 
 ## Supported Stores
 
@@ -27,31 +27,31 @@
 
 ## Feature Flags
 
-| Flag | Value | Description |
-| --- | --- | --- |
+| Flag                | Value  | Description                           |
+| ------------------- | ------ | ------------------------------------- |
 | `gamebananaBrowser` | `true` | register the "Browse GameBanana" page |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
-| Name | ID | Priority | Target Path |
-| --- | --- | --- | --- |
-| Binaries / Root Folder | `doometernal-binaries` | high | `{gamePath}` |
-| SandBox (Modded Binaries) | `doometernal-sandbox` | high | `{gamePath}/doomSandBox` |
-| EternalModInjector | `doometernal-injector` | low | `{gamePath}` |
+| Name                      | ID                     | Priority | Target Path              |
+| ------------------------- | ---------------------- | -------- | ------------------------ |
+| Binaries / Root Folder    | `doometernal-binaries` | high     | `{gamePath}`             |
+| SandBox (Modded Binaries) | `doometernal-sandbox`  | high     | `{gamePath}/doomSandBox` |
+| EternalModInjector        | `doometernal-injector` | low      | `{gamePath}`             |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID | Priority |
-| --- | --- |
-| `doometernal-rollback` | 25 |
-| `doometernal-injector` | 30 |
-| `doometernal-ktde` | 35 |
-| `doometernal-meathook` | 40 |
-| `doometernal-zip-mod` | 45 |
+| Installer ID           | Priority |
+| ---------------------- | -------- |
+| `doometernal-rollback` | 25       |
+| `doometernal-injector` | 30       |
+| `doometernal-ktde`     | 35       |
+| `doometernal-meathook` | 40       |
+| `doometernal-zip-mod`  | 45       |
 
 ## Registered Tools
 
@@ -77,4 +77,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-

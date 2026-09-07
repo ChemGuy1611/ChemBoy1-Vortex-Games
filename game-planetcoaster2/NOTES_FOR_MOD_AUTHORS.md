@@ -6,13 +6,13 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| ACSE (mod loader) | a `ACSE` file | `Win64\ovldata` |
-| Root / Game Folder Mods | a `Win64` folder | the game folder itself (no subfolder) |
-| ACSE Mods | a `Main.ovl` file | `Win64\ovldata` |
-| OVL Data Mods | a `ovldata` file | `Win64` |
-| Save Game Files | a `.blpr2` file | `USER_HOME\Saved Games\Frontier Developments\Planet Coaster 2\USERID_FOLDER\Saves` |
+| Mod Type                | Archive must contain | Installs to                                                                        |
+| ----------------------- | -------------------- | ---------------------------------------------------------------------------------- |
+| ACSE (mod loader)       | a `ACSE` file        | `Win64\ovldata`                                                                    |
+| Root / Game Folder Mods | a `Win64` folder     | the game folder itself (no subfolder)                                              |
+| ACSE Mods               | a `Main.ovl` file    | `Win64\ovldata`                                                                    |
+| OVL Data Mods           | a `ovldata` file     | `Win64`                                                                            |
+| Save Game Files         | a `.blpr2` file      | `USER_HOME\Saved Games\Frontier Developments\Planet Coaster 2\USERID_FOLDER\Saves` |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
@@ -92,4 +92,3 @@ Installs to: `USER_HOME\Saved Games\Frontier Developments\Planet Coaster 2\USERI
 
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

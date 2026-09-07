@@ -2,22 +2,22 @@
 
 ## Overview
 
-| Property | Value |
-| --- | --- |
-| Name | S.T.A.L.K.E.R. 2: Heart of Chornobyl Vortex Extension |
-| Engine / Structure | UE5 (Xbox-Integrated) |
-| Author | ChemBoy1 |
+| Property           | Value                                                 |
+| ------------------ | ----------------------------------------------------- |
+| Name               | S.T.A.L.K.E.R. 2: Heart of Chornobyl Vortex Extension |
+| Engine / Structure | UE5 (Xbox-Integrated)                                 |
+| Author             | ChemBoy1                                              |
 
 ## Key Identifiers
 
-| Property | Value |
-| --- | --- |
-| Game ID | `stalker2heartofchornobyl` |
-| Executable | `Stalker2.exe` |
-| Executable (Xbox) | `gamelaunchhelper.exe` |
-| Executable (GOG) | `Stalker2.exe` |
-| Extension Page | [https://www.nexusmods.com/site/mods/958](https://www.nexusmods.com/site/mods/958) |
-| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/S.T.A.L.K.E.R._2:_Heart_of_Chornobyl](https://www.pcgamingwiki.com/wiki/S.T.A.L.K.E.R._2:_Heart_of_Chornobyl) |
+| Property          | Value                                                                                                                                              |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Game ID           | `stalker2heartofchornobyl`                                                                                                                         |
+| Executable        | `Stalker2.exe`                                                                                                                                     |
+| Executable (Xbox) | `gamelaunchhelper.exe`                                                                                                                             |
+| Executable (GOG)  | `Stalker2.exe`                                                                                                                                     |
+| Extension Page    | [https://www.nexusmods.com/site/mods/958](https://www.nexusmods.com/site/mods/958)                                                                 |
+| PCGamingWiki      | [https://www.pcgamingwiki.com/wiki/S.T.A.L.K.E.R.\_2:\_Heart_of_Chornobyl](https://www.pcgamingwiki.com/wiki/S.T.A.L.K.E.R._2:_Heart_of_Chornobyl) |
 
 ## Supported Stores
 
@@ -28,63 +28,63 @@
 
 ## Feature Flags
 
-| Flag | Value | Description |
-| --- | --- | --- |
-| `mod_update_all_profile` | `false` | for mod update to keep them in the load order and not uncheck them |
-| `updating_mod` | `false` | used to see if it's a mod update or not |
-| `CHECK_CONFIG` | `false` |  |
-| `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
-| `writeEngineVersion` | `false` | toggle to write ENGINE_VERSION into UE4SS-settings.ini (EngineVersionOverride) on deploy, when UE4SS is installed |
-| `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
-| `PAKMOD_LOADORDER` | `true` | set to false if you don't want loadOrder |
-| `FBLO` | `true` | set to false to use legacy load order page |
-| `ue4ssLoadOrder` | `true` | master toggle for UE4SS support: UE4SS/Scripts/DLL/LogicMods mod types and installers, UE4SS buttons, load order page, and mods.txt writing |
-| `logicModsLoadOrder` | `true` | enable load order page and load_order.txt writing for LogicMods/Blueprint pak mods |
-| `collectionsLoadOrder` | `true` | include UE4SS and LogicMods load orders in collections (ANDed with the toggles above) |
-| `autoDeployMerge` | `false` | automatically run the merge tool on deploy (takes a long time and requires user input) |
-| `debug` | `false` | enables verbose debug logging |
-| `enableNewPak` | `false` |  |
+| Flag                     | Value   | Description                                                                                                                                 |
+| ------------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mod_update_all_profile` | `false` | for mod update to keep them in the load order and not uncheck them                                                                          |
+| `updating_mod`           | `false` | used to see if it's a mod update or not                                                                                                     |
+| `CHECK_CONFIG`           | `false` |                                                                                                                                             |
+| `IO_STORE`               | `true`  | true if the Paks folder contains .ucas and .utoc files                                                                                      |
+| `writeEngineVersion`     | `false` | toggle to write ENGINE_VERSION into UE4SS-settings.ini (EngineVersionOverride) on deploy, when UE4SS is installed                           |
+| `SYM_LINKS`              | `true`  | true if symlink deployment is enabled for this game                                                                                         |
+| `PAKMOD_LOADORDER`       | `true`  | set to false if you don't want loadOrder                                                                                                    |
+| `FBLO`                   | `true`  | set to false to use legacy load order page                                                                                                  |
+| `ue4ssLoadOrder`         | `true`  | master toggle for UE4SS support: UE4SS/Scripts/DLL/LogicMods mod types and installers, UE4SS buttons, load order page, and mods.txt writing |
+| `logicModsLoadOrder`     | `true`  | enable load order page and load_order.txt writing for LogicMods/Blueprint pak mods                                                          |
+| `collectionsLoadOrder`   | `true`  | include UE4SS and LogicMods load orders in collections (ANDed with the toggles above)                                                       |
+| `autoDeployMerge`        | `false` | automatically run the merge tool on deploy (takes a long time and requires user input)                                                      |
+| `debug`                  | `false` | enables verbose debug logging                                                                                                               |
+| `enableNewPak`           | `false` |                                                                                                                                             |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
-| Name | ID | Priority | Target Path |
-| --- | --- | --- | --- |
-| UE4SS LogicMods (Blueprint) | `stalker2heartofchornobyl-logicmods` | high | `{gamePath}/Stalker2/Content/Paks/LogicMods` |
-| UE4SS Script-LogicMod Combo | `stalker2heartofchornobyl-ue4sscombo` | high | `{gamePath}` |
-| Root Game Folder | `stalker2heartofchornobyl-root` | high | `{gamePath}` |
-| UE5 Paks | `stalker2heartofchornobyl-ue5` | high | `{gamePath}/Stalker2/Content/Paks/~mods` |
-| 2.0 Pak | `stalker2heartofchornobyl-newpak` | high | `{gamePath}/Stalker2/Content/Paks/~mods` |
-| UE5 Paks (no ~mods) | `stalker2heartofchornobyl-pakalt` | high | `{gamePath}/Stalker2/Content/Paks` |
-| Herbata Mod (GameLite) | `stalker2heartofchornobyl-herbatamod` | high | `{gamePath}/Stalker2/Content` |
-| Simple Mod Merger | `stalker2heartofchornobyl-merger` | low | `{gamePath}/Stalker2SimpleModMerger` |
-| UE5 Sortable Mod | `stalker2heartofchornobyl-ue5-sortable-modtype` | 25 | `?` |
-| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
-| UE4SS Scripts | `stalker2heartofchornobyl-scripts` | 40 | `?` |
-| UE4SS DLL Mod | `stalker2heartofchornobyl-ue4ssdll` | 42 | `?` |
-| Config (LocalAppData) | `stalker2heartofchornobyl-config` | 44 | `?` |
-| Saves (LocalAppData) | `stalker2heartofchornobyl-save` | 46 | `?` |
-| Binaries (Engine Injector) | `stalker2heartofchornobyl-binaries` | 48 | `?` |
-| UE4SS | `stalker2heartofchornobyl-ue4ss` | 50 | `?` |
+| Name                          | ID                                              | Priority | Target Path                                  |
+| ----------------------------- | ----------------------------------------------- | -------- | -------------------------------------------- |
+| UE4SS LogicMods (Blueprint)   | `stalker2heartofchornobyl-logicmods`            | high     | `{gamePath}/Stalker2/Content/Paks/LogicMods` |
+| UE4SS Script-LogicMod Combo   | `stalker2heartofchornobyl-ue4sscombo`           | high     | `{gamePath}`                                 |
+| Root Game Folder              | `stalker2heartofchornobyl-root`                 | high     | `{gamePath}`                                 |
+| UE5 Paks                      | `stalker2heartofchornobyl-ue5`                  | high     | `{gamePath}/Stalker2/Content/Paks/~mods`     |
+| 2.0 Pak                       | `stalker2heartofchornobyl-newpak`               | high     | `{gamePath}/Stalker2/Content/Paks/~mods`     |
+| UE5 Paks (no ~mods)           | `stalker2heartofchornobyl-pakalt`               | high     | `{gamePath}/Stalker2/Content/Paks`           |
+| Herbata Mod (GameLite)        | `stalker2heartofchornobyl-herbatamod`           | high     | `{gamePath}/Stalker2/Content`                |
+| Simple Mod Merger             | `stalker2heartofchornobyl-merger`               | low      | `{gamePath}/Stalker2SimpleModMerger`         |
+| UE5 Sortable Mod              | `stalker2heartofchornobyl-ue5-sortable-modtype` | 25       | `?`                                          |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype`                          | 65       | `?`                                          |
+| UE4SS Scripts                 | `stalker2heartofchornobyl-scripts`              | 40       | `?`                                          |
+| UE4SS DLL Mod                 | `stalker2heartofchornobyl-ue4ssdll`             | 42       | `?`                                          |
+| Config (LocalAppData)         | `stalker2heartofchornobyl-config`               | 44       | `?`                                          |
+| Saves (LocalAppData)          | `stalker2heartofchornobyl-save`                 | 46       | `?`                                          |
+| Binaries (Engine Injector)    | `stalker2heartofchornobyl-binaries`             | 48       | `?`                                          |
+| UE4SS                         | `stalker2heartofchornobyl-ue4ss`                | 50       | `?`                                          |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID | Priority |
-| --- | --- |
-| `stalker2heartofchornobyl-merger` | 25 |
-| `stalker2heartofchornobyl-ue4sscombo` | 29 |
-| `stalker2heartofchornobyl-logicmods` | 31 |
-| `stalker2heartofchornobyl-herbatamod` | 33 |
-| `stalker2heartofchornobyl-ue4ss` | 37 |
-| `stalker2heartofchornobyl-scripts` | 39 |
-| `stalker2heartofchornobyl-ue4ssdll` | 41 |
-| `stalker2heartofchornobyl-root` | 43 |
-| `stalker2heartofchornobyl-config` | 45 |
-| `stalker2heartofchornobyl-save` | 47 |
-| `stalker2heartofchornobyl-binaries` | 49 |
+| Installer ID                          | Priority |
+| ------------------------------------- | -------- |
+| `stalker2heartofchornobyl-merger`     | 25       |
+| `stalker2heartofchornobyl-ue4sscombo` | 29       |
+| `stalker2heartofchornobyl-logicmods`  | 31       |
+| `stalker2heartofchornobyl-herbatamod` | 33       |
+| `stalker2heartofchornobyl-ue4ss`      | 37       |
+| `stalker2heartofchornobyl-scripts`    | 39       |
+| `stalker2heartofchornobyl-ue4ssdll`   | 41       |
+| `stalker2heartofchornobyl-root`       | 43       |
+| `stalker2heartofchornobyl-config`     | 45       |
+| `stalker2heartofchornobyl-save`       | 47       |
+| `stalker2heartofchornobyl-binaries`   | 49       |
 
 ## Registered Tools
 
@@ -119,8 +119,8 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-| --- | --- | --- |
-| UE4SS | — | — |
+| ---------- | ------- | ------- |
+| UE4SS      | —       | —       |
 
 ## Special Features
 
@@ -134,4 +134,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **GOG Support** — detects GOG version with adjusted executable/data paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-

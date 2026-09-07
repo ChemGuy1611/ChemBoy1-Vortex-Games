@@ -4,6 +4,11 @@
 
 - None
 
+## [1.0.3] - 2026-09-06
+
+- Fixed: Locked load order entries could be moved out of position when using "Move to Top", "Move to Bottom" or the position number box on another entry. Locked entries now keep their place.
+- Fixed: The load order position number box now accepts low numbers even when a locked entry is further down the list.
+
 ## [1.0.2] - 2026-09-02
 
 - Fixed: A required mod loader or tool is no longer matched against downloads belonging to other games, which could report the wrong installed version or check for updates against the wrong file
@@ -47,7 +52,7 @@
 - Fixed UE4SS installer performance issue. UE4SS should now install in seconds.
 - Fixed pak mod installer to avoid hijacking any mod that had a .json file without a .pak file.
 - UE4SS downloader function now points to the custom version for Stellar Blade (<https://github.com/Chrisr0/RE-UE4SS/releases>). This function can be run using the button within the folder icon on the Mods toolbar.
-- Added support for Menu Video Randomizer and Improvements (<https://www.nexusmods.com/stellarblade/mods/529>) and mods that depend on it. Mods must include "Menu" folder and at least one .webm or .bk2 video file to trigger the installer.  Otherwise, the user must change the Mod Type to "Menu Mod (.bk2/.webm)" manually.
+- Added support for Menu Video Randomizer and Improvements (<https://www.nexusmods.com/stellarblade/mods/529>) and mods that depend on it. Mods must include "Menu" folder and at least one .webm or .bk2 video file to trigger the installer. Otherwise, the user must change the Mod Type to "Menu Mod (.bk2/.webm)" manually.
 
 ## [0.1.6] - 2025-07-24
 

@@ -2,22 +2,22 @@
 
 ## Overview
 
-| Property | Value |
-| --- | --- |
-| Name | Resident Evil 2 Vortex Extension |
+| Property           | Value                            |
+| ------------------ | -------------------------------- |
+| Name               | Resident Evil 2 Vortex Extension |
 | Engine / Structure | Fluffy + REFramework (RE Engine) |
-| Author | ChemBoy1 |
+| Author             | ChemBoy1                         |
 
 ## Key Identifiers
 
-| Property | Value |
-| --- | --- |
-| Game ID | `residentevil22019` |
-| Executable | `re2.exe` |
-| Executable (Xbox) | `gamelaunchhelper.exe` |
-| Executable (Demo) | `re2.exe` |
-| Extension Page | [https://www.nexusmods.com/site/mods/432](https://www.nexusmods.com/site/mods/432) |
-| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Resident_Evil_2_(2019)](https://www.pcgamingwiki.com/wiki/Resident_Evil_2_(2019)) |
+| Property          | Value                                                                                                                  |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Game ID           | `residentevil22019`                                                                                                    |
+| Executable        | `re2.exe`                                                                                                              |
+| Executable (Xbox) | `gamelaunchhelper.exe`                                                                                                 |
+| Executable (Demo) | `re2.exe`                                                                                                              |
+| Extension Page    | [https://www.nexusmods.com/site/mods/432](https://www.nexusmods.com/site/mods/432)                                     |
+| PCGamingWiki      | [https://www.pcgamingwiki.com/wiki/Resident*Evil_2*(2019)](<https://www.pcgamingwiki.com/wiki/Resident_Evil_2_(2019)>) |
 
 ## Supported Stores
 
@@ -26,41 +26,41 @@
 
 ## Feature Flags
 
-| Flag | Value | Description |
-| --- | --- | --- |
-| `useRefNightly` | `false` | toggle for using the REFramework nightly instead of Nexus release |
-| `hasXbox` | `true` | toggle for Xbox version logic |
-| `reZip` | `true` | ! NOT WORKING YET - KEEP AS TRUE FOR NOW - set to true to re-zip Fluffy Mods (possibly not necessary for FLUFFY v3.069+) |
-| `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
-| `multiExe` | `true` | set to true if there are multiple executables (and multiple FLUFFY_FOLDERs) (typically for Demo) |
-| `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
-| `debug` | `false` | toggle for debug mode |
+| Flag                | Value   | Description                                                                                                                                 |
+| ------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `useRefNightly`     | `false` | toggle for using the REFramework nightly instead of Nexus release                                                                           |
+| `hasXbox`           | `true`  | toggle for Xbox version logic                                                                                                               |
+| `reZip`             | `true`  | ! NOT WORKING YET - KEEP AS TRUE FOR NOW - set to true to re-zip Fluffy Mods (possibly not necessary for FLUFFY v3.069+)                    |
+| `allowSymlinks`     | `true`  | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
+| `multiExe`          | `true`  | set to true if there are multiple executables (and multiple FLUFFY_FOLDERs) (typically for Demo)                                            |
+| `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below)                                                            |
+| `debug`             | `false` | toggle for debug mode                                                                                                                       |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
-| Name | ID | Priority | Target Path |
-| --- | --- | --- | --- |
-| Binaries / Root Folder | `residentevil22019-root` | high | `{gamePath}` |
-| Loose Lua/Plugin (REFramework) | `residentevil22019-looselua` | high | `{gamePath}/.` |
-| Fluffy Mod Manager | `residentevil22019-fluffymanager` | low | `{gamePath}` |
-| REFramework | `residentevil22019-reframework` | low | `{gamePath}` |
-| Fluffy Mod | `residentevil22019-fluffymod` | 25 | `?` |
-| Fluffy Preset | `residentevil22019-preset` | 40 | `?` |
+| Name                           | ID                                | Priority | Target Path    |
+| ------------------------------ | --------------------------------- | -------- | -------------- |
+| Binaries / Root Folder         | `residentevil22019-root`          | high     | `{gamePath}`   |
+| Loose Lua/Plugin (REFramework) | `residentevil22019-looselua`      | high     | `{gamePath}/.` |
+| Fluffy Mod Manager             | `residentevil22019-fluffymanager` | low      | `{gamePath}`   |
+| REFramework                    | `residentevil22019-reframework`   | low      | `{gamePath}`   |
+| Fluffy Mod                     | `residentevil22019-fluffymod`     | 25       | `?`            |
+| Fluffy Preset                  | `residentevil22019-preset`        | 40       | `?`            |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID | Priority |
-| --- | --- |
-| `residentevil22019-fluffymanager` | 25 |
-| `residentevil22019-reframework` | 27 |
-| `residentevil22019-looselua` | 29 |
-| `residentevil22019-root` | 31 |
-| `residentevil22019-preset` | 33 |
-| `residentevil22019-fluffymodzip` | 49 |
+| Installer ID                      | Priority |
+| --------------------------------- | -------- |
+| `residentevil22019-fluffymanager` | 25       |
+| `residentevil22019-reframework`   | 27       |
+| `residentevil22019-looselua`      | 29       |
+| `residentevil22019-root`          | 31       |
+| `residentevil22019-preset`        | 33       |
+| `residentevil22019-fluffymodzip`  | 49       |
 
 ## Registered Tools
 
@@ -83,17 +83,17 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 ## Auto-Downloaded Dependencies
 
-| Dependency | Version | Details |
-| --- | --- | --- |
-| Fluffy Mod Manager | — | — |
-| REFramework | — | — |
+| Dependency         | Version | Details |
+| ------------------ | ------- | ------- |
+| Fluffy Mod Manager | —       | —       |
+| REFramework        | —       | —       |
 
 ## Config & Save Paths
 
-| Type | Path |
-| --- | --- |
-| Config | `.` |
-| Save | `/userdata` |
+| Type   | Path        |
+| ------ | ----------- |
+| Config | `.`         |
+| Save   | `/userdata` |
 
 ## Special Features
 
@@ -103,4 +103,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-

@@ -2,21 +2,21 @@
 
 ## Overview
 
-| Property | Value |
-| --- | --- |
-| Name | Europa Universalis IV Vortex Extension |
-| Engine / Structure | Basic Game |
-| Author | ChemBoy1 |
+| Property           | Value                                  |
+| ------------------ | -------------------------------------- |
+| Name               | Europa Universalis IV Vortex Extension |
+| Engine / Structure | Basic Game                             |
+| Author             | ChemBoy1                               |
 
 ## Key Identifiers
 
-| Property | Value |
-| --- | --- |
-| Game ID | `europauniversalisiv` |
-| Executable | `./eu4.exe` |
-| Executable (Xbox) | `gamelaunchhelper.exe` |
-| Extension Page | [https://www.nexusmods.com/site/mods/1526](https://www.nexusmods.com/site/mods/1526) |
-| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Europa_Universalis_IV](https://www.pcgamingwiki.com/wiki/Europa_Universalis_IV) |
+| Property          | Value                                                                                                              |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Game ID           | `europauniversalisiv`                                                                                              |
+| Executable        | `./eu4.exe`                                                                                                        |
+| Executable (Xbox) | `gamelaunchhelper.exe`                                                                                             |
+| Extension Page    | [https://www.nexusmods.com/site/mods/1526](https://www.nexusmods.com/site/mods/1526)                               |
+| PCGamingWiki      | [https://www.pcgamingwiki.com/wiki/Europa_Universalis_IV](https://www.pcgamingwiki.com/wiki/Europa_Universalis_IV) |
 
 ## Supported Stores
 
@@ -28,19 +28,19 @@
 
 Mod types define where each category of mod gets deployed:
 
-| Name | ID | Priority | Target Path |
-| --- | --- | --- | --- |
-| Mod (Documents) | `europauniversalisiv-mod` | high | `game/mod` |
-| Root Folder | `europauniversalisiv-root` | high | `{gamePath}` |
-| Binaries (Engine Injector) | `europauniversalisiv-binaries` | high | `{gamePath}/.` |
+| Name                       | ID                             | Priority | Target Path    |
+| -------------------------- | ------------------------------ | -------- | -------------- |
+| Mod (Documents)            | `europauniversalisiv-mod`      | high     | `game/mod`     |
+| Root Folder                | `europauniversalisiv-root`     | high     | `{gamePath}`   |
+| Binaries (Engine Injector) | `europauniversalisiv-binaries` | high     | `{gamePath}/.` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID | Priority |
-| --- | --- |
-| `europauniversalisiv-mod` | 25 |
+| Installer ID              | Priority |
+| ------------------------- | -------- |
+| `europauniversalisiv-mod` | 25       |
 
 ## Registered Tools
 

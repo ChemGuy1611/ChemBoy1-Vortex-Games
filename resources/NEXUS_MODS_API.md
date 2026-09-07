@@ -8,10 +8,10 @@ Covers the v1 and v3 Nexus Mods APIs as used by the release pipeline and extensi
 
 The v3 spec's global `security` block lists two schemes; either one satisfies a request:
 
-| Scheme | Header | Notes |
-| --- | --- | --- |
-| `ApiKeyAuth` | `apikey: {key}` | What this repo's pipeline uses. Key comes from the `NEXUS_API_KEY` environment variable (with an HKCU registry fallback); personal keys are issued at `https://www.nexusmods.com/settings/api-keys`. |
-| `BearerJwtAuth` | `Authorization: Bearer {jwt}` | Signed JWT — the OAuth path Vortex itself uses. Not used by this repo. |
+| Scheme          | Header                        | Notes                                                                                                                                                                                                |
+| --------------- | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ApiKeyAuth`    | `apikey: {key}`               | What this repo's pipeline uses. Key comes from the `NEXUS_API_KEY` environment variable (with an HKCU registry fallback); personal keys are issued at `https://www.nexusmods.com/settings/api-keys`. |
+| `BearerJwtAuth` | `Authorization: Bearer {jwt}` | Signed JWT — the OAuth path Vortex itself uses. Not used by this repo.                                                                                                                               |
 
 Three v3 operations declare `security: []` and need no credentials at all:
 `GET /vortex/extensions`, `GET /games/{game_domain}/dlcs`, and
@@ -42,36 +42,36 @@ Response: direct object/array (no wrapper). Full spec (Swagger 2.0) is published
 
 **Currently used by this repo:**
 
-| Endpoint | Description |
-| --- | --- |
-| `GET /games.json` | All 4500+ games with domain names |
-| `GET /games/{domain}.json` | Single game info |
-| `GET /games/{domain}/mods/{mod_id}.json` | Mod details — includes `uid` for v3 bridge |
-| `GET /games/{domain}/mods/{mod_id}/files.json` | Returns `{ files: ModFile[], file_updates: FileUpdate[] }` |
-| `GET /games/{domain}/mods/{mod_id}/files/{file_id}.json` | Returns bare `ModFile` (no wrapper) |
-| `GET /users/validate.json` | Validate API key |
+| Endpoint                                                 | Description                                                |
+| -------------------------------------------------------- | ---------------------------------------------------------- |
+| `GET /games.json`                                        | All 4500+ games with domain names                          |
+| `GET /games/{domain}.json`                               | Single game info                                           |
+| `GET /games/{domain}/mods/{mod_id}.json`                 | Mod details — includes `uid` for v3 bridge                 |
+| `GET /games/{domain}/mods/{mod_id}/files.json`           | Returns `{ files: ModFile[], file_updates: FileUpdate[] }` |
+| `GET /games/{domain}/mods/{mod_id}/files/{file_id}.json` | Returns bare `ModFile` (no wrapper)                        |
+| `GET /users/validate.json`                               | Validate API key                                           |
 
 `domain_name` = game identifier in URLs (`GAME_ID`). Match by `startswith`. Cache full games
 list per run to stay under rate limit.
 
 **Rest of the v1 surface (not currently used by this repo, documented for completeness):**
 
-| Endpoint | Description |
-| --- | --- |
-| `GET /games/{domain}/mods/updated.json` | Mods updated for a game in a given period (query params control the period) |
-| `GET /games/{domain}/mods/latest_added.json` | Latest 10 added mods |
-| `GET /games/{domain}/mods/latest_updated.json` | Latest 10 updated mods |
-| `GET /games/{domain}/mods/trending.json` | Trending 10 mods |
-| `GET /games/{domain}/mods/md5_search/{md5_hash}.json` | Look up mods/files by an MD5 hash of the archive |
-| `GET /games/{domain}/mods/{mod_id}/changelogs.json` | Read-side counterpart to the new v3 `POST /mods/{id}/changelogs` (write) — returns all changelog entries for a mod |
-| `POST /games/{domain}/mods/{id}/endorse.json` | Endorse a mod. Form field `version?` |
-| `POST /games/{domain}/mods/{id}/abstain.json` | Un-endorse/abstain from a mod |
+| Endpoint                                                          | Description                                                                                                                                                                                                                                                                                                                                                                                           |
+| ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /games/{domain}/mods/updated.json`                           | Mods updated for a game in a given period (query params control the period)                                                                                                                                                                                                                                                                                                                           |
+| `GET /games/{domain}/mods/latest_added.json`                      | Latest 10 added mods                                                                                                                                                                                                                                                                                                                                                                                  |
+| `GET /games/{domain}/mods/latest_updated.json`                    | Latest 10 updated mods                                                                                                                                                                                                                                                                                                                                                                                |
+| `GET /games/{domain}/mods/trending.json`                          | Trending 10 mods                                                                                                                                                                                                                                                                                                                                                                                      |
+| `GET /games/{domain}/mods/md5_search/{md5_hash}.json`             | Look up mods/files by an MD5 hash of the archive                                                                                                                                                                                                                                                                                                                                                      |
+| `GET /games/{domain}/mods/{mod_id}/changelogs.json`               | Read-side counterpart to the new v3 `POST /mods/{id}/changelogs` (write) — returns all changelog entries for a mod                                                                                                                                                                                                                                                                                    |
+| `POST /games/{domain}/mods/{id}/endorse.json`                     | Endorse a mod. Form field `version?`                                                                                                                                                                                                                                                                                                                                                                  |
+| `POST /games/{domain}/mods/{id}/abstain.json`                     | Un-endorse/abstain from a mod                                                                                                                                                                                                                                                                                                                                                                         |
 | `GET /games/{domain}/mods/{mod_id}/files/{id}/download_link.json` | Generate a download URL for a file. Query `key`/`expires` — **required for non-premium API keys**, and must come from the `.nxm` link the website issued (extract before calling); premium keys can omit them but the endpoint 403s for premium-gated direct use without visiting the site first. Premium responses return an array of mirrors, preferred one first. 410 if the link/key has expired. |
-| `GET /user/tracked_mods.json` | List the current user's tracked mods |
-| `POST /user/tracked_mods.json` | Track a mod — query `domain_name`, form `mod_id` |
-| `DELETE /user/tracked_mods.json` | Untrack a mod — same params |
-| `GET /user/endorsements.json` | All endorsements for the current API key |
-| `GET /colourschemes.json` | Site colour schemes (cosmetic, no known use case here) |
+| `GET /user/tracked_mods.json`                                     | List the current user's tracked mods                                                                                                                                                                                                                                                                                                                                                                  |
+| `POST /user/tracked_mods.json`                                    | Track a mod — query `domain_name`, form `mod_id`                                                                                                                                                                                                                                                                                                                                                      |
+| `DELETE /user/tracked_mods.json`                                  | Untrack a mod — same params                                                                                                                                                                                                                                                                                                                                                                           |
+| `GET /user/endorsements.json`                                     | All endorsements for the current API key                                                                                                                                                                                                                                                                                                                                                              |
+| `GET /colourschemes.json`                                         | Site colour schemes (cosmetic, no known use case here)                                                                                                                                                                                                                                                                                                                                                |
 
 ---
 
@@ -90,11 +90,11 @@ header needed. `info.version` in that document is `3.0.0`.
 The spec assigns every operation one of three stability tiers via an `x-badges` entry, and states
 a different deprecation guarantee for each:
 
-| Tier | Badge | Guarantee |
-| --- | --- | --- |
-| **Stable** | *(none)* | Production ready. Breaking changes get a minimum **90-day** deprecation period with migration guidance. Additive changes (new optional fields/parameters) can land at any time. |
-| **Beta** | `Beta` | Feature complete, minor changes still possible. Minimum **10-day** deprecation period. No v3 operation currently carries this badge. |
-| **Experimental** | `Experimental` | *"May change significantly or be removed. Not recommended for production."* No deprecation period is promised. |
+| Tier             | Badge          | Guarantee                                                                                                                                                                       |
+| ---------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Stable**       | _(none)_       | Production ready. Breaking changes get a minimum **90-day** deprecation period with migration guidance. Additive changes (new optional fields/parameters) can land at any time. |
+| **Beta**         | `Beta`         | Feature complete, minor changes still possible. Minimum **10-day** deprecation period. No v3 operation currently carries this badge.                                            |
+| **Experimental** | `Experimental` | _"May change significantly or be removed. Not recommended for production."_ No deprecation period is promised.                                                                  |
 
 The **Tier** column in each catalog table below records this per operation. Two facts worth
 knowing before building on v3:
@@ -103,7 +103,7 @@ knowing before building on v3:
   `mod-file-versions`, and `vortex` operation is Experimental.
 - **That includes both endpoints the file-upload flow depends on** — Step 2
   (`GET /mods/{id}/files`) and Step 8 (`POST /mod-files/{id}/versions`). The deprecated legacy
-  Step 8 (`POST /mod-file-update-groups/{group_id}/versions`) is a *Stable*-tier endpoint, so
+  Step 8 (`POST /mod-file-update-groups/{group_id}/versions`) is a _Stable_-tier endpoint, so
   migrating off it moved the upload flow onto endpoints with no notice guarantee. This is
   unavoidable — the legacy path is scheduled for removal — but it means the upload flow should be
   re-verified against the live spec more often than a Stable-only integration would need.
@@ -115,10 +115,10 @@ repo does that and reports any drift against the counts recorded here.
 
 The spec's `info.description` carries a table of scheduled breaking changes. As of 2026-09-04:
 
-| Date | Change | Pipeline impact |
-| --- | --- | --- |
-| 2026-09-09 | `POST /mod-file-update-groups/{group_id}/versions` (`createUpdateGroupVersion`) removed — deprecated since 2026-06-11, 90-day Stable notice period ends. | None. Pipeline migrated to `POST /mod-files/{id}/versions` on 2026-07-24. Doc section below kept for historical reference until the path actually 404s. |
-| 2026-12-01 | `md5` becomes **required** on `POST /uploads` (single-part upload) — uploads omitting it are rejected. | None yet. This pipeline uses `/uploads/multipart` (`createMultipartUpload`), which does not carry this field or requirement. Re-check before 2026-12-01 whether Nexus extends it to the multipart flow. |
+| Date       | Change                                                                                                                                                   | Pipeline impact                                                                                                                                                                                         |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-09 | `POST /mod-file-update-groups/{group_id}/versions` (`createUpdateGroupVersion`) removed — deprecated since 2026-06-11, 90-day Stable notice period ends. | None. Pipeline migrated to `POST /mod-files/{id}/versions` on 2026-07-24. Doc section below kept for historical reference until the path actually 404s.                                                 |
+| 2026-12-01 | `md5` becomes **required** on `POST /uploads` (single-part upload) — uploads omitting it are rejected.                                                   | None yet. This pipeline uses `/uploads/multipart` (`createMultipartUpload`), which does not carry this field or requirement. Re-check before 2026-12-01 whether Nexus extends it to the multipart flow. |
 
 ### V1 to V3 Identifier Bridge
 
@@ -154,69 +154,69 @@ in `{ "data": ... }`. The **Tier** column carries the operation's stability badg
 
 #### Mods
 
-| Method | Path | Operation | Tier | Notes |
-| --- | --- | --- | --- | --- |
-| GET | `/games/{game_domain}/trending-mods` | `getTrendingMods` | Experimental | **No auth** (`security: []`). Public trending feed. Response: `{ mods: TrendingMod[] }` (`name`, `author?`, `summary?`, `picture_url?`, `mod_page_url`). |
-| GET | `/games/{game_domain}/mods/{game_scoped_id}` | `getMod` | Experimental | v3-native mod lookup — see identifier bridge above. |
-| GET | `/mods/{id}/files` | `getModFiles` | Experimental | The file-group listing this pipeline already uses (upload flow Step 2). |
-| PUT | `/mods/{id}/toggle-legacy-mod-requirements` | `toggleLegacyModRequirements` | Experimental | Body `{ enabled: boolean }`, 204 on success. Switches a mod between mod-level and file-to-file requirements. |
-| POST | `/mods/batch` | `getModsBatch` | Experimental | Body `{ mod_ids: string[] }` (composite uids). Returns `{ data: { mods: ModDetail[] } }` — name/summary/status/thumbnail/adult_content per id; unknown ids simply contribute no row. |
-| POST | `/mods/{id}/changelogs` | `addModChangelogEntries` | Experimental | Body `{ version, entries: string[] }` (1-50 entries, each non-empty; `version` matches `^[a-zA-Z0-9.-]+$`, max 50 chars). **Additive only** — repeated calls for the same version append further entries rather than replacing them. 201 response echoes `{ version, entries }`. This is the first public way to write mod-page changelog text; previously (per the "Documents editor" note below) it could only be done by hand on the site. Not yet wired into `release_extension.py --edit-changelog`, which still opens a browser. |
-| GET | `/games/{game_domain}/dlcs` | `getGameDlcs` | Experimental | **No auth** (`security: []`). Response `{ dlcs: [{ id, name, thumbnail_url }] }` — the DLC catalog for a game, used as the target list for the DLC-dependency endpoints below. |
-| POST | `/mod-file-versions/{id}/download-repacked` | `downloadRepackedModFileVersion` | Experimental | Found 2026-09-04. Path lives under `mod-file-versions` but is tagged `mods` in the spec. `id` = mod file version id; optional `Application-Name` header, recorded against the download. No request body. **Unwrapped response**: `{ download_url: string, expires_at: date-time }` — a time-limited link to Nexus's repacked archive of that version. 403/404 otherwise. Not used by this pipeline. |
+| Method | Path                                         | Operation                        | Tier         | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ------ | -------------------------------------------- | -------------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/games/{game_domain}/trending-mods`         | `getTrendingMods`                | Experimental | **No auth** (`security: []`). Public trending feed. Response: `{ mods: TrendingMod[] }` (`name`, `author?`, `summary?`, `picture_url?`, `mod_page_url`).                                                                                                                                                                                                                                                                                                                                                                               |
+| GET    | `/games/{game_domain}/mods/{game_scoped_id}` | `getMod`                         | Experimental | v3-native mod lookup — see identifier bridge above.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| GET    | `/mods/{id}/files`                           | `getModFiles`                    | Experimental | The file-group listing this pipeline already uses (upload flow Step 2).                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| PUT    | `/mods/{id}/toggle-legacy-mod-requirements`  | `toggleLegacyModRequirements`    | Experimental | Body `{ enabled: boolean }`, 204 on success. Switches a mod between mod-level and file-to-file requirements.                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| POST   | `/mods/batch`                                | `getModsBatch`                   | Experimental | Body `{ mod_ids: string[] }` (composite uids). Returns `{ data: { mods: ModDetail[] } }` — name/summary/status/thumbnail/adult_content per id; unknown ids simply contribute no row.                                                                                                                                                                                                                                                                                                                                                   |
+| POST   | `/mods/{id}/changelogs`                      | `addModChangelogEntries`         | Experimental | Body `{ version, entries: string[] }` (1-50 entries, each non-empty; `version` matches `^[a-zA-Z0-9.-]+$`, max 50 chars). **Additive only** — repeated calls for the same version append further entries rather than replacing them. 201 response echoes `{ version, entries }`. This is the first public way to write mod-page changelog text; previously (per the "Documents editor" note below) it could only be done by hand on the site. Not yet wired into `release_extension.py --edit-changelog`, which still opens a browser. |
+| GET    | `/games/{game_domain}/dlcs`                  | `getGameDlcs`                    | Experimental | **No auth** (`security: []`). Response `{ dlcs: [{ id, name, thumbnail_url }] }` — the DLC catalog for a game, used as the target list for the DLC-dependency endpoints below.                                                                                                                                                                                                                                                                                                                                                         |
+| POST   | `/mod-file-versions/{id}/download-repacked`  | `downloadRepackedModFileVersion` | Experimental | Found 2026-09-04. Path lives under `mod-file-versions` but is tagged `mods` in the spec. `id` = mod file version id; optional `Application-Name` header, recorded against the download. No request body. **Unwrapped response**: `{ download_url: string, expires_at: date-time }` — a time-limited link to Nexus's repacked archive of that version. 403/404 otherwise. Not used by this pipeline.                                                                                                                                    |
 
 #### Mod Files
 
 A "mod file" is an update group/chain; `id` = group id.
 
-| Method | Path | Operation | Tier | Notes |
-| --- | --- | --- | --- | --- |
-| GET | `/mod-files/{id}` | `getModFile` | Experimental | Returns `ModFileWithAggregates` (same shape as one entry of `getModFiles`). |
-| PUT | `/mod-files/{id}` | `updateModFile` | Experimental | Body `{ name: string }`, 204 on success. Renames the file group. |
-| GET | `/mod-files/{id}/versions` | `getModFileVersions` | Experimental | `{ data: { versions: ModFileVersion[] } }`. |
-| POST | `/mod-files/{id}/versions` | `createModFileVersion` | Experimental | **Current, non-deprecated way to publish a new file version** (upload flow Step 8). See "V3 Multipart File Upload Flow" below — this replaces the deprecated legacy Step 8. |
-| POST | `/mod-files` | `createModFile` | Experimental | Creates a brand-new file group (not a new version of an existing one) from a finalised upload. Body: `CreateModFileRequest` — required `upload_id`, `mod_id` (uid), `name`, `version`, `file_category`; optional `description?`, `primary_mod_manager_download` (default `false`), `allow_mod_manager_download` (default **`true`**), `show_requirements_pop_up` (default `false`), `update_mod_version` (default `false`). Same `name`/`version` patterns and 50-char caps as `createModFileVersion`. |
+| Method | Path                       | Operation              | Tier         | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ------ | -------------------------- | ---------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| GET    | `/mod-files/{id}`          | `getModFile`           | Experimental | Returns `ModFileWithAggregates` (same shape as one entry of `getModFiles`).                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| PUT    | `/mod-files/{id}`          | `updateModFile`        | Experimental | Body `{ name: string }`, 204 on success. Renames the file group.                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| GET    | `/mod-files/{id}/versions` | `getModFileVersions`   | Experimental | `{ data: { versions: ModFileVersion[] } }`.                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| POST   | `/mod-files/{id}/versions` | `createModFileVersion` | Experimental | **Current, non-deprecated way to publish a new file version** (upload flow Step 8). See "V3 Multipart File Upload Flow" below — this replaces the deprecated legacy Step 8.                                                                                                                                                                                                                                                                                                                            |
+| POST   | `/mod-files`               | `createModFile`        | Experimental | Creates a brand-new file group (not a new version of an existing one) from a finalised upload. Body: `CreateModFileRequest` — required `upload_id`, `mod_id` (uid), `name`, `version`, `file_category`; optional `description?`, `primary_mod_manager_download` (default `false`), `allow_mod_manager_download` (default **`true`**), `show_requirements_pop_up` (default `false`), `update_mod_version` (default `false`). Same `name`/`version` patterns and 50-char caps as `createModFileVersion`. |
 
 #### Mod File Versions
 
-| Method | Path | Operation | Tier | Notes |
-| --- | --- | --- | --- | --- |
-| GET | `/mod-file-versions/{id}` | `getModFileVersion` | Experimental | Single `ModFileVersion`. |
-| GET | `/games/{game_domain}/mod-file-versions/{game_scoped_id}` | `getModFileVersionByGameScopedId` | Experimental | Same shape, looked up by the game-scoped id shown in Nexus URLs. |
-| POST | `/mod-file-versions/move` | `moveModFileVersions` | Experimental | **Unwrapped response.** Reorders/moves versions (possibly across file groups) relative to a target version. Body: `{ version_ids: string[], target: { target_version_id, relative_placement: "before"\|"after" } }`. |
-| POST | `/mod-file-versions/move-to-new-mod-file` | `moveModFileVersionsToNewModFile` | Experimental | **Unwrapped response.** Same idea but spins up a brand-new file group named `mod_file_name` for the moved versions. |
-| POST | `/mod-file-versions/batch` | `getModFileVersionsBatch` | Experimental | Body `{ version_ids: string[] }`. Resolves each to its owning file group + name/version/position — only for versions on visible mods. |
-| GET | `/mod-file-versions/{id}/dependencies` | `getModFileVersionDependencies` | Experimental | **Unwrapped response.** Combined view: `{ dependency_definitions: [...], dlc_dependency_definitions: [...] }` — both mod-file range deps and DLC deps for one version in a single call. |
-| GET | `/mod-file-versions/{id}/dependencies/ranges` | `getModFileVersionDependencyRanges` | Experimental | **Unwrapped response.** Declared dependency ranges only (min/max version id pairs; OR within a definition, AND across definitions). |
-| PUT | `/mod-file-versions/{id}/dependencies/ranges` | `setModFileVersionDependencyRanges` | Experimental | Replaces all range definitions for a version. 204 on success. |
-| GET | `/mod-file-versions/{id}/dependencies/ranges/materialized` | `getModFileVersionDependencyRangesMaterialized` | Experimental | **Unwrapped response.** Ranges resolved into concrete candidate file+version lists, for one version. |
-| POST | `/mod-file-versions/dependencies/ranges/materialized/batch` | `getModFileVersionDependencyRangesMaterializedBatch` | Experimental | Current batch variant — paginated (`page`/`page_size`, default 1/1000), response includes `meta: PaginationMeta`. Batch-resolves install/recommend candidates for a set of source versions. |
-| POST | `/mod-file-versions/dependencies/materialized/batch` | `getModFileVersionDependencyCandidatesBatch` | Deprecated | Still no removal date published as of 2026-09-04, unlike the group-version endpoint below. Superseded by the `ranges/materialized/batch` row above — same purpose, same request/response shape, just renamed. |
-| GET | `/mod-file-versions/{id}/dependencies/dlc` | `getModFileVersionDlcDependencies` | Experimental | **Unwrapped response.** `{ dlc_dependency_definitions: [{ id, dlc_targets: [{ id, dlc_id, name }] }] }` — declared DLC-dependency definitions (OR-alternatives within `dlc_targets`). |
-| PUT | `/mod-file-versions/{id}/dependencies/dlc` | `setModFileVersionDependencyDlc` | Experimental | Body `{ dlc_dependency_definitions: [{ dlc_ids: string[] }] }` — replaces the full set; empty array clears all DLC dependencies. `dlc_ids` must reference DLCs from `getGameDlcs` for that version's game. |
-| POST | `/mod-file-update-groups/{group_id}/versions` | `createUpdateGroupVersion` | Stable (deprecated) | **Deprecated 2026-06-11, removal on/after 2026-09-09** — a Stable-tier endpoint, so it gets the full 90-day notice. See deprecation notice below. |
+| Method | Path                                                        | Operation                                            | Tier                | Notes                                                                                                                                                                                                                |
+| ------ | ----------------------------------------------------------- | ---------------------------------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/mod-file-versions/{id}`                                   | `getModFileVersion`                                  | Experimental        | Single `ModFileVersion`.                                                                                                                                                                                             |
+| GET    | `/games/{game_domain}/mod-file-versions/{game_scoped_id}`   | `getModFileVersionByGameScopedId`                    | Experimental        | Same shape, looked up by the game-scoped id shown in Nexus URLs.                                                                                                                                                     |
+| POST   | `/mod-file-versions/move`                                   | `moveModFileVersions`                                | Experimental        | **Unwrapped response.** Reorders/moves versions (possibly across file groups) relative to a target version. Body: `{ version_ids: string[], target: { target_version_id, relative_placement: "before"\|"after" } }`. |
+| POST   | `/mod-file-versions/move-to-new-mod-file`                   | `moveModFileVersionsToNewModFile`                    | Experimental        | **Unwrapped response.** Same idea but spins up a brand-new file group named `mod_file_name` for the moved versions.                                                                                                  |
+| POST   | `/mod-file-versions/batch`                                  | `getModFileVersionsBatch`                            | Experimental        | Body `{ version_ids: string[] }`. Resolves each to its owning file group + name/version/position — only for versions on visible mods.                                                                                |
+| GET    | `/mod-file-versions/{id}/dependencies`                      | `getModFileVersionDependencies`                      | Experimental        | **Unwrapped response.** Combined view: `{ dependency_definitions: [...], dlc_dependency_definitions: [...] }` — both mod-file range deps and DLC deps for one version in a single call.                              |
+| GET    | `/mod-file-versions/{id}/dependencies/ranges`               | `getModFileVersionDependencyRanges`                  | Experimental        | **Unwrapped response.** Declared dependency ranges only (min/max version id pairs; OR within a definition, AND across definitions).                                                                                  |
+| PUT    | `/mod-file-versions/{id}/dependencies/ranges`               | `setModFileVersionDependencyRanges`                  | Experimental        | Replaces all range definitions for a version. 204 on success.                                                                                                                                                        |
+| GET    | `/mod-file-versions/{id}/dependencies/ranges/materialized`  | `getModFileVersionDependencyRangesMaterialized`      | Experimental        | **Unwrapped response.** Ranges resolved into concrete candidate file+version lists, for one version.                                                                                                                 |
+| POST   | `/mod-file-versions/dependencies/ranges/materialized/batch` | `getModFileVersionDependencyRangesMaterializedBatch` | Experimental        | Current batch variant — paginated (`page`/`page_size`, default 1/1000), response includes `meta: PaginationMeta`. Batch-resolves install/recommend candidates for a set of source versions.                          |
+| POST   | `/mod-file-versions/dependencies/materialized/batch`        | `getModFileVersionDependencyCandidatesBatch`         | Deprecated          | Still no removal date published as of 2026-09-04, unlike the group-version endpoint below. Superseded by the `ranges/materialized/batch` row above — same purpose, same request/response shape, just renamed.        |
+| GET    | `/mod-file-versions/{id}/dependencies/dlc`                  | `getModFileVersionDlcDependencies`                   | Experimental        | **Unwrapped response.** `{ dlc_dependency_definitions: [{ id, dlc_targets: [{ id, dlc_id, name }] }] }` — declared DLC-dependency definitions (OR-alternatives within `dlc_targets`).                                |
+| PUT    | `/mod-file-versions/{id}/dependencies/dlc`                  | `setModFileVersionDependencyDlc`                     | Experimental        | Body `{ dlc_dependency_definitions: [{ dlc_ids: string[] }] }` — replaces the full set; empty array clears all DLC dependencies. `dlc_ids` must reference DLCs from `getGameDlcs` for that version's game.           |
+| POST   | `/mod-file-update-groups/{group_id}/versions`               | `createUpdateGroupVersion`                           | Stable (deprecated) | **Deprecated 2026-06-11, removal on/after 2026-09-09** — a Stable-tier endpoint, so it gets the full 90-day notice. See deprecation notice below.                                                                    |
 
 #### Uploads
 
 The only Stable-tier family alongside Collections — the whole upload half of the publish flow is
 Stable; only the two mod-file endpoints that bracket it are Experimental.
 
-| Method | Path | Operation | Tier | Notes |
-| --- | --- | --- | --- | --- |
-| POST | `/uploads` | `createUpload` | Stable (badged `md5 required from 2026-12-01`) | Single-part upload (files ≤100 MiB). Body `{ filename, size_bytes, md5? }` — `md5` (hex digest) is optional today, becomes **required on/after 2026-12-01**; when sent, the paired `PUT` must also carry a base64 `Content-MD5` header matching it. Response adds one `presigned_url` (PUT your whole file there, then finalise) — this pipeline always uses the multipart variant below instead, even for small files, and that variant has no `md5` field. |
-| POST | `/uploads/multipart` | `createMultipartUpload` | Stable | What this pipeline uses; see Upload Flow below. |
-| GET | `/uploads/{id}` | `getUpload` | Stable | Poll target. |
-| POST | `/uploads/{id}/finalise` | `finaliseUpload` | Stable | |
+| Method | Path                     | Operation               | Tier                                           | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ------ | ------------------------ | ----------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| POST   | `/uploads`               | `createUpload`          | Stable (badged `md5 required from 2026-12-01`) | Single-part upload (files ≤100 MiB). Body `{ filename, size_bytes, md5? }` — `md5` (hex digest) is optional today, becomes **required on/after 2026-12-01**; when sent, the paired `PUT` must also carry a base64 `Content-MD5` header matching it. Response adds one `presigned_url` (PUT your whole file there, then finalise) — this pipeline always uses the multipart variant below instead, even for small files, and that variant has no `md5` field. |
+| POST   | `/uploads/multipart`     | `createMultipartUpload` | Stable                                         | What this pipeline uses; see Upload Flow below.                                                                                                                                                                                                                                                                                                                                                                                                              |
+| GET    | `/uploads/{id}`          | `getUpload`             | Stable                                         | Poll target.                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| POST   | `/uploads/{id}/finalise` | `finaliseUpload`        | Stable                                         |                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 
 #### Collections
 
 Not currently used by this repo's pipeline — documented for completeness.
 
-| Method | Path | Operation | Tier | Notes |
-| --- | --- | --- | --- | --- |
-| POST | `/collections` | `createCollection` | Stable | Body `{ upload_id, collection_data: CollectionPayload }` claims a finalised upload (the collection's `.json`/binary manifest) into a new collection. `CollectionPayload` = `{ adult_content, collection_schema_id, collection_manifest: { info: {...}, mods: CollectionManifestMod[] } }`. |
-| POST | `/collections/{id}/revisions` | `createCollectionRevision` | Stable | Same body shape, adds a new revision to an existing collection. |
-| PATCH | `/collections/{id}` | `editCollection` | Stable | Body `{ name?, summary?, description?, category_id? }`, 204 on success. |
+| Method | Path                          | Operation                  | Tier   | Notes                                                                                                                                                                                                                                                                                      |
+| ------ | ----------------------------- | -------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| POST   | `/collections`                | `createCollection`         | Stable | Body `{ upload_id, collection_data: CollectionPayload }` claims a finalised upload (the collection's `.json`/binary manifest) into a new collection. `CollectionPayload` = `{ adult_content, collection_schema_id, collection_manifest: { info: {...}, mods: CollectionManifestMod[] } }`. |
+| POST   | `/collections/{id}/revisions` | `createCollectionRevision` | Stable | Same body shape, adds a new revision to an existing collection.                                                                                                                                                                                                                            |
+| PATCH  | `/collections/{id}`           | `editCollection`           | Stable | Body `{ name?, summary?, description?, category_id? }`, 204 on success.                                                                                                                                                                                                                    |
 
 422 responses on the two collection-create endpoints may return either a plain `ProblemDetails`
 or a `ValidationProblem` (`ProblemDetails` + `errors: [{ detail, pointer }]` — `pointer` is an
@@ -225,9 +225,9 @@ RFC 6901 JSON Pointer into the request body, e.g.
 
 #### Vortex
 
-| Method | Path | Operation | Tier | Notes |
-| --- | --- | --- | --- | --- |
-| GET | `/vortex/extensions` | `getVortexExtensions` | Experimental | **No auth** (`security: []`). Nexus's published index of every Vortex extension, theme, and translation. Optional query `game_ids` — comma-separated Nexus *numeric* game IDs (e.g. `1,2,3`) — filters the `extensions` list to game extensions for those games; themes and translations are always returned in full. |
+| Method | Path                 | Operation             | Tier         | Notes                                                                                                                                                                                                                                                                                                                 |
+| ------ | -------------------- | --------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/vortex/extensions` | `getVortexExtensions` | Experimental | **No auth** (`security: []`). Nexus's published index of every Vortex extension, theme, and translation. Optional query `game_ids` — comma-separated Nexus _numeric_ game IDs (e.g. `1,2,3`) — filters the `extensions` list to game extensions for those games; themes and translations are always returned in full. |
 
 Response is `{ "data": { extensions: VortexExtension[], themes: VortexAsset[], translations: VortexAsset[] } }`.
 All three lists are built from Nexus mod pages, so entries are keyed by `mod_id` + `file_id`
@@ -235,16 +235,16 @@ All three lists are built from Nexus mod pages, so entries are keyed by `mod_id`
 
 ```json
 {
-  "name": "STAR WARS Battlefront 2 (2017) Vortex Extension CB1",
-  "version": "1.0.3",
-  "author_name": "ChemBoy1",
-  "author_user_id": "3263034",
-  "uploaded_at": "2026-07-02T13:50:47.000Z",
-  "mod_id": "112",
-  "file_id": "8398",
-  "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/co3wi7.jpg",
-  "type": "game",
-  "game_id": "2229"
+    "name": "STAR WARS Battlefront 2 (2017) Vortex Extension CB1",
+    "version": "1.0.3",
+    "author_name": "ChemBoy1",
+    "author_user_id": "3263034",
+    "uploaded_at": "2026-07-02T13:50:47.000Z",
+    "mod_id": "112",
+    "file_id": "8398",
+    "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/co3wi7.jpg",
+    "type": "game",
+    "game_id": "2229"
 }
 ```
 
@@ -285,16 +285,16 @@ Full working flow confirmed 2026-05-26. Used by `release_extension.py --upload`.
 
 ### Upload Steps
 
-| Step | Auth | Method | URL | Notes |
-| --- | --- | --- | --- | --- |
-| 1 | apikey | GET | `/v1/games/{domain}/mods/{mod_id}.json` | Extract `uid` |
-| 2 | apikey | GET | `/v3/mods/{uid}/files` | List file groups under `mod_files[]` (id, name, is_active, versions_count...); pick one. `mod_files[].id` IS the group id. (The old `/v3/mods/{uid}/file-update-groups` path now 404s) |
-| 3 | apikey | POST | `/v3/uploads/multipart` | Create upload session |
-| 4 | none | PUT | `{part_presigned_url}` (S3) | Upload binary chunk; capture `ETag` |
-| 5 | none | POST | `{complete_presigned_url}` (S3) | Send XML to assemble parts |
-| 6 | apikey | POST | `/v3/uploads/{upload_id}/finalise` | Notify Nexus assembly complete |
-| 7 | apikey | GET | `/v3/uploads/{upload_id}` | Poll until `state == "available"` |
-| 8 | apikey | POST | `/v3/mod-files/{group_id}/versions` (current, what this repo calls as of 2026-07-24) — legacy `/v3/mod-file-update-groups/{group_id}/versions` deprecated, removal on/after 2026-09-09 | Create file version entry |
+| Step | Auth   | Method | URL                                                                                                                                                                                    | Notes                                                                                                                                                                                  |
+| ---- | ------ | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | apikey | GET    | `/v1/games/{domain}/mods/{mod_id}.json`                                                                                                                                                | Extract `uid`                                                                                                                                                                          |
+| 2    | apikey | GET    | `/v3/mods/{uid}/files`                                                                                                                                                                 | List file groups under `mod_files[]` (id, name, is_active, versions_count...); pick one. `mod_files[].id` IS the group id. (The old `/v3/mods/{uid}/file-update-groups` path now 404s) |
+| 3    | apikey | POST   | `/v3/uploads/multipart`                                                                                                                                                                | Create upload session                                                                                                                                                                  |
+| 4    | none   | PUT    | `{part_presigned_url}` (S3)                                                                                                                                                            | Upload binary chunk; capture `ETag`                                                                                                                                                    |
+| 5    | none   | POST   | `{complete_presigned_url}` (S3)                                                                                                                                                        | Send XML to assemble parts                                                                                                                                                             |
+| 6    | apikey | POST   | `/v3/uploads/{upload_id}/finalise`                                                                                                                                                     | Notify Nexus assembly complete                                                                                                                                                         |
+| 7    | apikey | GET    | `/v3/uploads/{upload_id}`                                                                                                                                                              | Poll until `state == "available"`                                                                                                                                                      |
+| 8    | apikey | POST   | `/v3/mod-files/{group_id}/versions` (current, what this repo calls as of 2026-07-24) — legacy `/v3/mod-file-update-groups/{group_id}/versions` deprecated, removal on/after 2026-09-09 | Create file version entry                                                                                                                                                              |
 
 ---
 
@@ -302,19 +302,19 @@ Full working flow confirmed 2026-05-26. Used by `release_extension.py --upload`.
 
 ```json
 {
-  "data": {
-    "mod_files": [
-      {
-        "id": "7216945",
-        "name": "My Extension",
-        "is_active": true,
-        "last_file_uploaded_at": "2026-05-20T10:00:00.000Z",
-        "versions_count": 12,
-        "archived_count": 3,
-        "removed_count": 0
-      }
-    ]
-  }
+    "data": {
+        "mod_files": [
+            {
+                "id": "7216945",
+                "name": "My Extension",
+                "is_active": true,
+                "last_file_uploaded_at": "2026-05-20T10:00:00.000Z",
+                "versions_count": 12,
+                "archived_count": 3,
+                "removed_count": 0
+            }
+        ]
+    }
 }
 ```
 
@@ -330,8 +330,8 @@ step 8. If multiple active groups exist, prompt the user to choose. (The retired
 
 ```json
 {
-  "filename": "game-mygame.zip",
-  "size_bytes": "123456"
+    "filename": "game-mygame.zip",
+    "size_bytes": "123456"
 }
 ```
 
@@ -341,12 +341,12 @@ step 8. If multiple active groups exist, prompt the user to choose. (The retired
 
 ```json
 {
-  "id": "abc123-upload-id",
-  "part_presigned_urls": ["https://s3.amazonaws.com/...?partNumber=1&...", "..."],
-  "part_size_bytes": 52428800,
-  "complete_presigned_url": "https://s3.amazonaws.com/...?uploadId=...",
-  "state": "created",
-  "user": { "id": "3263034" }
+    "id": "abc123-upload-id",
+    "part_presigned_urls": ["https://s3.amazonaws.com/...?partNumber=1&...", "..."],
+    "part_size_bytes": 52428800,
+    "complete_presigned_url": "https://s3.amazonaws.com/...?uploadId=...",
+    "state": "created",
+    "user": { "id": "3263034" }
 }
 ```
 
@@ -423,15 +423,15 @@ Content-Type: application/json
 
 ```json
 {
-  "upload_id": "abc123-upload-id",
-  "name": "My Extension",
-  "description": "2026-05-26\n- Fixed mod detection\n- Added support for DLC",
-  "version": "1.2.3",
-  "file_category": "main",
-  "archive_existing_file": true,
-  "primary_mod_manager_download": true,
-  "allow_mod_manager_download": true,
-  "show_requirements_pop_up": true
+    "upload_id": "abc123-upload-id",
+    "name": "My Extension",
+    "description": "2026-05-26\n- Fixed mod detection\n- Added support for DLC",
+    "version": "1.2.3",
+    "file_category": "main",
+    "archive_existing_file": true,
+    "primary_mod_manager_download": true,
+    "allow_mod_manager_download": true,
+    "show_requirements_pop_up": true
 }
 ```
 
@@ -458,10 +458,10 @@ Content-Type: application/json
 
 ```json
 {
-  "id": "9876543210",
-  "game_scoped_id": 12345,
-  "name": "My Extension",
-  "file_category": "main"
+    "id": "9876543210",
+    "game_scoped_id": 12345,
+    "name": "My Extension",
+    "file_category": "main"
 }
 ```
 
@@ -485,16 +485,16 @@ Step 2). Confirmed as the endpoint Nexus's own `upload-action` uses since 2026-0
 
 ```json
 {
-  "upload_id": "abc123-upload-id",
-  "name": "My Extension",
-  "description": "2026-05-26\n- Fixed mod detection\n- Added support for DLC",
-  "version": "1.2.3",
-  "file_category": "main",
-  "archive_existing_file": true,
-  "primary_mod_manager_download": true,
-  "allow_mod_manager_download": true,
-  "show_requirements_pop_up": true,
-  "update_mod_version": true
+    "upload_id": "abc123-upload-id",
+    "name": "My Extension",
+    "description": "2026-05-26\n- Fixed mod detection\n- Added support for DLC",
+    "version": "1.2.3",
+    "file_category": "main",
+    "archive_existing_file": true,
+    "primary_mod_manager_download": true,
+    "allow_mod_manager_download": true,
+    "show_requirements_pop_up": true,
+    "update_mod_version": true
 }
 ```
 
@@ -515,23 +515,23 @@ for example when publishing out of order or backfilling a version.
 `archive_existing_file` defaults to `false` and `update_mod_version` defaults to `false`. The
 remaining booleans (`primary_mod_manager_download`, `allow_mod_manager_download`,
 `show_requirements_pop_up`) declare no default on this endpoint — send them explicitly. Note that
-`createModFile` (the new-file-group sibling) declares a *different* default set, including
+`createModFile` (the new-file-group sibling) declares a _different_ default set, including
 `allow_mod_manager_download: true`; don't carry assumptions between the two.
 
 **Response `data`** — nested, unlike the legacy flat shape:
 
 ```json
 {
-  "file": {
-    "id": "9876543210",
-    "game_scoped_id": 12345,
-    "name": "My Extension",
-    "file_category": "main"
-  },
-  "version": {
-    "id": "<new version id>",
-    "position": "12.0"
-  }
+    "file": {
+        "id": "9876543210",
+        "game_scoped_id": 12345,
+        "name": "My Extension",
+        "file_category": "main"
+    },
+    "version": {
+        "id": "<new version id>",
+        "position": "12.0"
+    }
 }
 ```
 
@@ -587,14 +587,14 @@ repo always unwraps `["data"]`, which would raise `KeyError` if pointed at any o
 
 ### Known Broken V3 Endpoints (all six re-verified live 2026-09-04)
 
-| Endpoint | Problem |
-| --- | --- |
-| `GET /v3/mods/{v1_mod_id}/file-update-groups` | 404 — must use `uid`, not `mod_id` |
-| `GET /v3/games/{domain}/mods/{mod_id}/file-update-groups` | 404 (was 500 as of 2026-05-26) |
-| `GET /v3/mod-file-update-groups/{group_id}` | 404 (was 500 as of 2026-05-26) |
-| `GET /v3/mods/{uid}/file-update-groups` | 404 even with correct `uid` — endpoint now defunct. **Use `GET /v3/mods/{uid}/files` instead** (returns the same group list under `mod_files[]`) |
-| `GET /v3/openapi.yaml` | 404 — **not actually broken, wrong path.** The live spec is at the domain root, `GET https://api.nexusmods.com/openapi.yaml` (no `/v3/` prefix), confirmed reachable 2026-09-04 (HTTP 200, 31 paths, `info.version: "3.0.0"`). Corrected from an earlier note in this doc that called it dead. |
-| `GET /v3/mods/{uid}` (mod-level, fetch by uid directly) | 404 — **not a bug; this path was never part of the spec.** The only mod-level GET in the live spec is `GET /v3/games/{game_domain}/mods/{game_scoped_id}` (by domain + game-scoped id, not uid). Confirmed against the live 31-path catalog 2026-09-04. |
+| Endpoint                                                  | Problem                                                                                                                                                                                                                                                                                        |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /v3/mods/{v1_mod_id}/file-update-groups`             | 404 — must use `uid`, not `mod_id`                                                                                                                                                                                                                                                             |
+| `GET /v3/games/{domain}/mods/{mod_id}/file-update-groups` | 404 (was 500 as of 2026-05-26)                                                                                                                                                                                                                                                                 |
+| `GET /v3/mod-file-update-groups/{group_id}`               | 404 (was 500 as of 2026-05-26)                                                                                                                                                                                                                                                                 |
+| `GET /v3/mods/{uid}/file-update-groups`                   | 404 even with correct `uid` — endpoint now defunct. **Use `GET /v3/mods/{uid}/files` instead** (returns the same group list under `mod_files[]`)                                                                                                                                               |
+| `GET /v3/openapi.yaml`                                    | 404 — **not actually broken, wrong path.** The live spec is at the domain root, `GET https://api.nexusmods.com/openapi.yaml` (no `/v3/` prefix), confirmed reachable 2026-09-04 (HTTP 200, 31 paths, `info.version: "3.0.0"`). Corrected from an earlier note in this doc that called it dead. |
+| `GET /v3/mods/{uid}` (mod-level, fetch by uid directly)   | 404 — **not a bug; this path was never part of the spec.** The only mod-level GET in the live spec is `GET /v3/games/{game_domain}/mods/{game_scoped_id}` (by domain + game-scoped id, not uid). Confirmed against the live 31-path catalog 2026-09-04.                                        |
 
 The `/v3/mods/{uid}` and `/v3/openapi.yaml` rows were flagged broken in earlier passes based on
 probing the wrong path or an unreachable mirror; re-checking against the real, fetchable spec

@@ -6,19 +6,19 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `Painkiller` |
-| Blueprint Mods (LogicMods) | a `LogicMods` folder | `Painkiller\Content\Paks\LogicMods\LogicMods` |
-| Pak Mods | a `.pak` file | `Painkiller\Content\Paks\~mods` |
-| UE4SS Itself | a `dwmapi.dll` file | `Painkiller\Binaries\Win64` |
-| UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `Painkiller\Binaries\Win64\ue4ss\Mods` |
-| UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | `Painkiller\Binaries\Win64\ue4ss\Mods` |
-| Root / Game Folder Mods | a top-level folder such as `Painkiller` | the game folder itself (no subfolder) |
-| Contentfolder | a file or folder named `Content` | `Painkiller` |
-| Config File Mods | a config file such as `engine.ini` or `game.ini` | `CONFIGMOD_LOCATION\Painkiller\Saved\Config\Windows` |
-| Save Game Files | a `.sav` file | - |
-| Fallback Installer | anything unrecognised with no pak file | `Painkiller\Binaries\Win64` |
+| Mod Type                                     | Archive must contain                             | Installs to                                          |
+| -------------------------------------------- | ------------------------------------------------ | ---------------------------------------------------- |
+| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder         | `Painkiller`                                         |
+| Blueprint Mods (LogicMods)                   | a `LogicMods` folder                             | `Painkiller\Content\Paks\LogicMods\LogicMods`        |
+| Pak Mods                                     | a `.pak` file                                    | `Painkiller\Content\Paks\~mods`                      |
+| UE4SS Itself                                 | a `dwmapi.dll` file                              | `Painkiller\Binaries\Win64`                          |
+| UE4SS Script Mods (Lua)                      | a `.lua` file and a `Scripts` folder             | `Painkiller\Binaries\Win64\ue4ss\Mods`               |
+| UE4SS DLL Mods (C++)                         | a `.dll` file and a `dlls` folder                | `Painkiller\Binaries\Win64\ue4ss\Mods`               |
+| Root / Game Folder Mods                      | a top-level folder such as `Painkiller`          | the game folder itself (no subfolder)                |
+| Contentfolder                                | a file or folder named `Content`                 | `Painkiller`                                         |
+| Config File Mods                             | a config file such as `engine.ini` or `game.ini` | `CONFIGMOD_LOCATION\Painkiller\Saved\Config\Windows` |
+| Save Game Files                              | a `.sav` file                                    | -                                                    |
+| Fallback Installer                           | anything unrecognised with no pak file           | `Painkiller\Binaries\Win64`                          |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
@@ -235,4 +235,3 @@ Installs to: `Painkiller\Binaries\Win64`
 
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

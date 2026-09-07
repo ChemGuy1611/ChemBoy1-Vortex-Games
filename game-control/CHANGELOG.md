@@ -6,7 +6,7 @@
 
 ## [2.0.2] - 2025-12-01
 
-- Fixed another potential  undefined variable error for the Steam version.
+- Fixed another potential undefined variable error for the Steam version.
 
 ## [2.0.1] - 2025-11-30
 

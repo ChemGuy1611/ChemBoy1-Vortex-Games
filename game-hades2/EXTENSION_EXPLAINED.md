@@ -2,21 +2,21 @@
 
 ## Overview
 
-| Property | Value |
-| --- | --- |
-| Name | Hades II Vortex Extension |
-| Engine / Structure | 3rd-Party Mod Installer |
-| Author | ChemBoy1 |
+| Property           | Value                     |
+| ------------------ | ------------------------- |
+| Name               | Hades II Vortex Extension |
+| Engine / Structure | 3rd-Party Mod Installer   |
+| Author             | ChemBoy1                  |
 
 ## Key Identifiers
 
-| Property | Value |
-| --- | --- |
-| Game ID | `hades2` |
-| Executable | `Ship/Hades2.exe` |
-| Executable (Xbox) | `gamelaunchhelper.exe` |
-| Extension Page | [https://www.nexusmods.com/site/mods/1138](https://www.nexusmods.com/site/mods/1138) |
-| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Hades_II](https://www.pcgamingwiki.com/wiki/Hades_II) |
+| Property          | Value                                                                                    |
+| ----------------- | ---------------------------------------------------------------------------------------- |
+| Game ID           | `hades2`                                                                                 |
+| Executable        | `Ship/Hades2.exe`                                                                        |
+| Executable (Xbox) | `gamelaunchhelper.exe`                                                                   |
+| Extension Page    | [https://www.nexusmods.com/site/mods/1138](https://www.nexusmods.com/site/mods/1138)     |
+| PCGamingWiki      | [https://www.pcgamingwiki.com/wiki/Hades_II](https://www.pcgamingwiki.com/wiki/Hades_II) |
 
 ## Supported Stores
 
@@ -26,33 +26,33 @@
 
 ## Feature Flags
 
-| Flag | Value | Description |
-| --- | --- | --- |
+| Flag                  | Value  | Description                             |
+| --------------------- | ------ | --------------------------------------- |
 | `thunderstoreBrowser` | `true` | register the "Browse Thunderstore" page |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
-| Name | ID | Priority | Target Path |
-| --- | --- | --- | --- |
-| Mod | `hades2-mod` | high | `{gamePath}/Content/Mods` |
-| Root Game Folder | `hades2-root` | high | `{gamePath}` |
-| Mod Importer | `hades2-manager` | low | `{gamePath}/Content` |
-| Mod Utility | `hades2-modutility` | low | `{gamePath}/Content/Mods/ModUtil` |
-| Binaries | `hades2-binaries` | 50 | `?` |
-| Mod Loader (Hell2Modding) | `hades2-loader` | 51 | `?` |
+| Name                      | ID                  | Priority | Target Path                       |
+| ------------------------- | ------------------- | -------- | --------------------------------- |
+| Mod                       | `hades2-mod`        | high     | `{gamePath}/Content/Mods`         |
+| Root Game Folder          | `hades2-root`       | high     | `{gamePath}`                      |
+| Mod Importer              | `hades2-manager`    | low      | `{gamePath}/Content`              |
+| Mod Utility               | `hades2-modutility` | low      | `{gamePath}/Content/Mods/ModUtil` |
+| Binaries                  | `hades2-binaries`   | 50       | `?`                               |
+| Mod Loader (Hell2Modding) | `hades2-loader`     | 51       | `?`                               |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID | Priority |
-| --- | --- |
-| `hades2-manager` | 25 |
-| `hades2-modutility` | 27 |
-| `hades2-loader` | 29 |
-| `hades2-plugin` | 31 |
+| Installer ID        | Priority |
+| ------------------- | -------- |
+| `hades2-manager`    | 25       |
+| `hades2-modutility` | 27       |
+| `hades2-loader`     | 29       |
+| `hades2-plugin`     | 31       |
 
 ## Registered Tools
 
@@ -73,9 +73,9 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 ## Auto-Downloaded Dependencies
 
-| Dependency | Version | Details |
-| --- | --- | --- |
-| Mod Loader (Hell2Modding) | — | — |
+| Dependency                | Version | Details |
+| ------------------------- | ------- | ------- |
+| Mod Loader (Hell2Modding) | —       | —       |
 
 ## Special Features
 
@@ -84,4 +84,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-

@@ -2,21 +2,21 @@
 
 ## Overview
 
-| Property | Value |
-| --- | --- |
-| Name | Blue Prince Vortex Extension |
+| Property           | Value                            |
+| ------------------ | -------------------------------- |
+| Name               | Blue Prince Vortex Extension     |
 | Engine / Structure | Unity BepinEx/MelonLoader Hybrid |
-| Author | ChemBoy1 |
+| Author             | ChemBoy1                         |
 
 ## Key Identifiers
 
-| Property | Value |
-| --- | --- |
-| Game ID | `blueprince` |
-| Executable | `BLUE PRINCE.exe` |
-| Executable (Xbox) | `gamelaunchhelper.exe` |
-| Extension Page | [https://www.nexusmods.com/site/mods/1519](https://www.nexusmods.com/site/mods/1519) |
-| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Blue_Prince](https://www.pcgamingwiki.com/wiki/Blue_Prince) |
+| Property          | Value                                                                                          |
+| ----------------- | ---------------------------------------------------------------------------------------------- |
+| Game ID           | `blueprince`                                                                                   |
+| Executable        | `BLUE PRINCE.exe`                                                                              |
+| Executable (Xbox) | `gamelaunchhelper.exe`                                                                         |
+| Extension Page    | [https://www.nexusmods.com/site/mods/1519](https://www.nexusmods.com/site/mods/1519)           |
+| PCGamingWiki      | [https://www.pcgamingwiki.com/wiki/Blue_Prince](https://www.pcgamingwiki.com/wiki/Blue_Prince) |
 
 ## Supported Stores
 
@@ -25,49 +25,49 @@
 
 ## Feature Flags
 
-| Flag | Value | Description |
-| --- | --- | --- |
-| `allowBepCfgMan` | `false` | should BepInExConfigManager be downloaded? |
-| `allowMelPrefMan` | `false` | should MelonPreferencesManager be downloaded? False until figure out UniverseLib dependency |
-| `allowBepinexNexus` | `false` | set false until bugs are fixed |
-| `allowMelonNexus` | `false` | set false until bugs are fixed |
+| Flag                | Value   | Description                                                                                 |
+| ------------------- | ------- | ------------------------------------------------------------------------------------------- |
+| `allowBepCfgMan`    | `false` | should BepInExConfigManager be downloaded?                                                  |
+| `allowMelPrefMan`   | `false` | should MelonPreferencesManager be downloaded? False until figure out UniverseLib dependency |
+| `allowBepinexNexus` | `false` | set false until bugs are fixed                                                              |
+| `allowMelonNexus`   | `false` | set false until bugs are fixed                                                              |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
-| Name | ID | Priority | Target Path |
-| --- | --- | --- | --- |
-| BepInEx Mod | `blueprince-bepinexmod` | high | `{gamePath}/BepInEx` |
-| MelonLoader Mod | `blueprince-melonmod` | high | `{gamePath}/.` |
-| BepInEx Plugins | `blueprince-bepinex-plugins` | high | `{gamePath}/BepInEx/plugins` |
-| BepInEx Patchers | `blueprince-bepinex-patchers` | high | `{gamePath}/BepInEx/patchers` |
-| BepInEx Config | `blueprince-bepinex-config` | high | `{gamePath}/BepInEx/config` |
-| MelonLoader Mods | `blueprince-melonloader-mods` | high | `{gamePath}/Mods` |
-| MelonLoader Plugins | `blueprince-melonloader-plugins` | high | `{gamePath}/Plugins` |
-| MelonLoader Config | `blueprince-melonloader-config` | high | `{gamePath}/UserData` |
-| Assembly DLL Mod | `blueprince-assemblydll` | high | `{gamePath}/.` |
-| BepInExConfigManager | `blueprince-bepcfgman` | high | `{gamePath}/BepInEx` |
-| MelonPreferencesManager | `blueprince-melonprefman` | high | `{gamePath}/Mods` |
-| Assets/Resources File | `blueprince-assets` | high | `{gamePath}/BLUE PRINCE_Data` |
-| Root Game Folder | `blueprince-root` | high | `{gamePath}` |
-| BepInEx Injector | `blueprince-bepinex` | low | `{gamePath}` |
-| MelonLoader | `blueprince-melonloader` | low | `{gamePath}` |
+| Name                    | ID                               | Priority | Target Path                   |
+| ----------------------- | -------------------------------- | -------- | ----------------------------- |
+| BepInEx Mod             | `blueprince-bepinexmod`          | high     | `{gamePath}/BepInEx`          |
+| MelonLoader Mod         | `blueprince-melonmod`            | high     | `{gamePath}/.`                |
+| BepInEx Plugins         | `blueprince-bepinex-plugins`     | high     | `{gamePath}/BepInEx/plugins`  |
+| BepInEx Patchers        | `blueprince-bepinex-patchers`    | high     | `{gamePath}/BepInEx/patchers` |
+| BepInEx Config          | `blueprince-bepinex-config`      | high     | `{gamePath}/BepInEx/config`   |
+| MelonLoader Mods        | `blueprince-melonloader-mods`    | high     | `{gamePath}/Mods`             |
+| MelonLoader Plugins     | `blueprince-melonloader-plugins` | high     | `{gamePath}/Plugins`          |
+| MelonLoader Config      | `blueprince-melonloader-config`  | high     | `{gamePath}/UserData`         |
+| Assembly DLL Mod        | `blueprince-assemblydll`         | high     | `{gamePath}/.`                |
+| BepInExConfigManager    | `blueprince-bepcfgman`           | high     | `{gamePath}/BepInEx`          |
+| MelonPreferencesManager | `blueprince-melonprefman`        | high     | `{gamePath}/Mods`             |
+| Assets/Resources File   | `blueprince-assets`              | high     | `{gamePath}/BLUE PRINCE_Data` |
+| Root Game Folder        | `blueprince-root`                | high     | `{gamePath}`                  |
+| BepInEx Injector        | `blueprince-bepinex`             | low      | `{gamePath}`                  |
+| MelonLoader             | `blueprince-melonloader`         | low      | `{gamePath}`                  |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID | Priority |
-| --- | --- |
-| `blueprince-bepinex` | 25 |
-| `blueprince-melonloader` | 26 |
-| `blueprince-root` | 27 |
-| `blueprince-bepcfgman` | 29 |
-| `blueprince-melonprefman` | 30 |
-| `blueprince-assemblydll` | 31 |
-| `blueprince-plugin` | 33 |
-| `blueprince-assets` | 37 |
+| Installer ID              | Priority |
+| ------------------------- | -------- |
+| `blueprince-bepinex`      | 25       |
+| `blueprince-melonloader`  | 26       |
+| `blueprince-root`         | 27       |
+| `blueprince-bepcfgman`    | 29       |
+| `blueprince-melonprefman` | 30       |
+| `blueprince-assemblydll`  | 31       |
+| `blueprince-plugin`       | 33       |
+| `blueprince-assets`       | 37       |
 
 ## Registered Tools
 
@@ -93,15 +93,15 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 ## Auto-Downloaded Dependencies
 
-| Dependency | Version | Details |
-| --- | --- | --- |
-| BepInEx | 5.4.23.5 | il2cpp |
-| BepInEx Configuration Manager | 18.4.1 | — |
+| Dependency                    | Version  | Details |
+| ----------------------------- | -------- | ------- |
+| BepInEx                       | 5.4.23.5 | il2cpp  |
+| BepInEx Configuration Manager | 18.4.1   | —       |
 
 ## Config & Save Paths
 
-| Type | Path |
-| --- | --- |
+| Type              | Path                                                 |
+| ----------------- | ---------------------------------------------------- |
 | Config (Registry) | `HKEY_CURRENT_USER\\Software\\Dogubomb\\BLUE PRINCE` |
 
 ## Special Features
@@ -111,4 +111,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-

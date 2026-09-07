@@ -23,16 +23,16 @@ function buildSymbolTable(src) {
   const raw = [];
 
   // Strip block comments to avoid picking up commented-out declarations
-  const stripped = src.replace(/(?<!\/)\/\*[\s\S]*?\*\//g, '');
+  const stripped = src.replace(/(?<!\/)\/\*[\s\S]*?\*\//g, "");
 
   // Harvest all const/let declarations
-  const lines = stripped.split('\n');
+  const lines = stripped.split("\n");
   for (const line of lines) {
     const trimmed = line.trim();
     // Skip line comments
-    if (trimmed.startsWith('//')) continue;
+    if (trimmed.startsWith("//")) continue;
     // Remove inline comments for parsing but keep them for later
-    const noComment = trimmed.replace(/(?<!:)\/\/.*$/, '').trim();
+    const noComment = trimmed.replace(/(?<!:)\/\/.*$/, "").trim();
 
     // Match: const/let NAME = VALUE;
     const m = noComment.match(/^(?:const|let)\s+([A-Za-z_$]\w*)\s*=\s*(.+?)\s*;?\s*$/);
@@ -48,7 +48,7 @@ function buildSymbolTable(src) {
   while ((objM = objDeclRe.exec(stripped)) !== null) {
     const objName = objM[1];
     const braceOpenPos = objM.index + objM[0].length - 1;
-    const braceClosePos = scanToMatchingClose(stripped, braceOpenPos, '{', '}');
+    const braceClosePos = scanToMatchingClose(stripped, braceOpenPos, "{", "}");
     if (braceClosePos === -1) continue;
     const objBody = stripped.slice(braceOpenPos + 1, braceClosePos);
     // Split on commas that are at depth 0 (not inside parentheses)
@@ -80,8 +80,8 @@ function buildSymbolTable(src) {
   while ((declM = declPosRe.exec(stripped)) !== null) {
     if (findInnermostBlockHead(stripped, declM.index) === null) topLevelDeclared.add(declM[1]);
   }
-  const declaredNames = new Set(raw.map(d => d.name).filter(n => topLevelDeclared.has(n)));
-  const flagValues = new Map(discoverFlags(src).map(f => [f.name, f.value === 'true']));
+  const declaredNames = new Set(raw.map((d) => d.name).filter((n) => topLevelDeclared.has(n)));
+  const flagValues = new Map(discoverFlags(src).map((f) => [f.name, f.value === "true"]));
   const reassignRe = /^[ \t]*([A-Za-z_$]\w*)\s*=\s*([^=][^;\n]*?)\s*;[ \t]*$/gm;
   let reM;
   while ((reM = reassignRe.exec(stripped)) !== null) {
@@ -100,7 +100,10 @@ function buildSymbolTable(src) {
     }
     if (!active) continue;
     for (let k = raw.length - 1; k >= 0; k--) {
-      if (raw[k].name === name) { raw[k].rawValue = reM[2].trim(); break; }
+      if (raw[k].name === name) {
+        raw[k].rawValue = reM[2].trim();
+        break;
+      }
     }
   }
 
@@ -111,15 +114,29 @@ function buildSymbolTable(src) {
     const sqMatch = v.match(/^'([^']*)'$/);
     const dqMatch = v.match(/^"([^"]*)"$/);
     const strMatch = sqMatch || dqMatch;
-    if (strMatch) { table.set(decl.name, strMatch[1]); continue; }
+    if (strMatch) {
+      table.set(decl.name, strMatch[1]);
+      continue;
+    }
     // Numeric literal
-    if (/^\d+$/.test(v)) { table.set(decl.name, v); continue; }
+    if (/^\d+$/.test(v)) {
+      table.set(decl.name, v);
+      continue;
+    }
     // Unary plus numeric: +VARNAME
-    if (/^\+\w+$/.test(v)) { /* skip, derived value */ continue; }
+    if (/^\+\w+$/.test(v)) {
+      /* skip, derived value */ continue;
+    }
     // Boolean/null
-    if (v === 'true' || v === 'false' || v === 'null') { table.set(decl.name, v); continue; }
+    if (v === "true" || v === "false" || v === "null") {
+      table.set(decl.name, v);
+      continue;
+    }
     // Empty array
-    if (v === '[]') { table.set(decl.name, '[]'); continue; }
+    if (v === "[]") {
+      table.set(decl.name, "[]");
+      continue;
+    }
   }
 
   // Passes 2-6: resolve references, templates, and path.join
@@ -137,7 +154,7 @@ function buildSymbolTable(src) {
       }
 
       // Template literal: `...${VAR}...`
-      if (v.startsWith('`') && v.endsWith('`')) {
+      if (v.startsWith("`") && v.endsWith("`")) {
         const inner = v.slice(1, -1);
         let resolved = inner;
         let allResolved = true;
@@ -145,7 +162,7 @@ function buildSymbolTable(src) {
           const val = table.get(varName.trim());
           if (val !== undefined) return val;
           allResolved = false;
-          return '${' + varName + '}';
+          return "${" + varName + "}";
         });
         if (allResolved) {
           table.set(decl.name, resolved);
@@ -159,7 +176,7 @@ function buildSymbolTable(src) {
       if (pjMatch) {
         const args = splitPathJoinArgs(pjMatch[1]);
         let allResolved = true;
-        const resolved = args.map(arg => {
+        const resolved = args.map((arg) => {
           const a = arg.trim();
           // String literal. Backreference the opening quote so the body may contain
           // the other quote character -- path.join("Don's Folder", X) previously
@@ -169,14 +186,14 @@ function buildSymbolTable(src) {
           // Variable reference (including property access)
           if (/^[A-Za-z_$][\w.]*$/.test(a) && table.has(a)) return table.get(a);
           // Template literal
-          if (a.startsWith('`') && a.endsWith('`')) {
+          if (a.startsWith("`") && a.endsWith("`")) {
             const inner = a.slice(1, -1);
             let r = inner;
             r = r.replace(/\$\{([^}]+)\}/g, (_, vn) => {
               const val = table.get(vn.trim());
               if (val !== undefined) return val;
               allResolved = false;
-              return '${' + vn + '}';
+              return "${" + vn + "}";
             });
             return r;
           }
@@ -184,7 +201,7 @@ function buildSymbolTable(src) {
           return a;
         });
         if (allResolved) {
-          table.set(decl.name, resolved.join('/'));
+          table.set(decl.name, resolved.join("/"));
           changed = true;
         }
         continue;
@@ -202,14 +219,14 @@ function buildSymbolTable(src) {
 function splitPathJoinArgs(argsStr) {
   const args = [];
   let depth = 0;
-  let current = '';
+  let current = "";
   for (let i = 0; i < argsStr.length; i++) {
     const ch = argsStr[i];
-    if (ch === '(') depth++;
-    else if (ch === ')') depth--;
-    else if (ch === ',' && depth === 0) {
+    if (ch === "(") depth++;
+    else if (ch === ")") depth--;
+    else if (ch === "," && depth === 0) {
       args.push(current.trim());
-      current = '';
+      current = "";
       continue;
     }
     current += ch;
@@ -224,32 +241,32 @@ function splitPathJoinArgs(argsStr) {
 function splitAtTopLevelCommas(str) {
   const parts = [];
   let depth = 0;
-  let inStr = '';  // '', "'", '"', or '`'
-  let current = '';
+  let inStr = ""; // '', "'", '"', or '`'
+  let current = "";
   for (let i = 0; i < str.length; i++) {
     const ch = str[i];
     if (inStr) {
       current += ch;
-      if (ch === '\\') {
+      if (ch === "\\") {
         i++;
         if (i < str.length) current += str[i];
       } else if (ch === inStr) {
-        inStr = '';
+        inStr = "";
       }
       continue;
     }
-    if (ch === "'" || ch === '"' || ch === '`') {
+    if (ch === "'" || ch === '"' || ch === "`") {
       inStr = ch;
       current += ch;
-    } else if (ch === '(' || ch === '[' || ch === '{') {
+    } else if (ch === "(" || ch === "[" || ch === "{") {
       depth++;
       current += ch;
-    } else if (ch === ')' || ch === ']' || ch === '}') {
+    } else if (ch === ")" || ch === "]" || ch === "}") {
       depth--;
       current += ch;
-    } else if (ch === ',' && depth === 0) {
+    } else if (ch === "," && depth === 0) {
       parts.push(current);
-      current = '';
+      current = "";
     } else {
       current += ch;
     }
@@ -291,10 +308,10 @@ function getGuardFlag(stripped, callIndex) {
   let i = callIndex - 1;
   while (i >= 0) {
     const ch = stripped[i];
-    if (ch === '}') depth++;
-    else if (ch === '{') {
+    if (ch === "}") depth++;
+    else if (ch === "{") {
       if (depth === 0) {
-        const lineStart = stripped.lastIndexOf('\n', i);
+        const lineStart = stripped.lastIndexOf("\n", i);
         const lineText = stripped.substring(lineStart + 1, i + 1).trim();
         const m = lineText.match(/^if\s*\(\s*([A-Za-z_$]\w*)\s*(?:===\s*true\s*)?\)\s*\{?$/);
         if (m) return m[1];
@@ -320,10 +337,10 @@ function findInnermostBlockHead(stripped, idx) {
   let i = idx - 1;
   while (i >= 0) {
     const ch = stripped[i];
-    if (ch === '}') depth++;
-    else if (ch === '{') {
+    if (ch === "}") depth++;
+    else if (ch === "{") {
       if (depth === 0) {
-        const lineStart = stripped.lastIndexOf('\n', i);
+        const lineStart = stripped.lastIndexOf("\n", i);
         return stripped.substring(lineStart + 1, i + 1).trim();
       }
       depth--;
@@ -357,11 +374,11 @@ function getGuardCondition(stripped, idx) {
 
   // `} else {` - walk back over the if-block it closes and read that block's own head.
   if (/^\}\s*else\s*\{$/.test(head)) {
-    const elseBraceIdx = stripped.lastIndexOf('}', idx);
+    const elseBraceIdx = stripped.lastIndexOf("}", idx);
     if (elseBraceIdx === -1) return null;
     const ifOpenIdx = scanToMatchingOpen(stripped, elseBraceIdx);
     if (ifOpenIdx === -1) return null;
-    const lineStart = stripped.lastIndexOf('\n', ifOpenIdx);
+    const lineStart = stripped.lastIndexOf("\n", ifOpenIdx);
     const ifHead = stripped.substring(lineStart + 1, ifOpenIdx + 1).trim();
     const ifM = ifHead.match(/^if\s*\(\s*([A-Za-z_$]\w*)\s*(?:===\s*true\s*)?\)\s*\{$/);
     if (ifM) return { flag: ifM[1], negated: true };
@@ -378,8 +395,8 @@ function scanToMatchingOpen(stripped, closeIdx) {
   let depth = 0;
   for (let i = closeIdx; i >= 0; i--) {
     const ch = stripped[i];
-    if (ch === '}') depth++;
-    else if (ch === '{') {
+    if (ch === "}") depth++;
+    else if (ch === "{") {
       depth--;
       if (depth === 0) return i;
     }
@@ -394,8 +411,8 @@ function scanToMatchingOpen(stripped, closeIdx) {
 function isGuardActive(guard, table) {
   if (!guard) return true;
   const val = table.get(guard.flag);
-  if (val !== 'true' && val !== 'false') return true;
-  return guard.negated ? (val === 'false') : (val === 'true');
+  if (val !== "true" && val !== "false") return true;
+  return guard.negated ? val === "false" : val === "true";
 }
 
 /**
@@ -411,7 +428,7 @@ function resolveValue(expr, table) {
   if (sm) return sm[2];
 
   // Template literal with interpolation
-  if (e.startsWith('`') && e.endsWith('`')) {
+  if (e.startsWith("`") && e.endsWith("`")) {
     const inner = e.slice(1, -1);
     return inner.replace(/\$\{([^}]+)\}/g, (_, varName) => {
       const k = varName.trim();
@@ -423,7 +440,7 @@ function resolveValue(expr, table) {
   const pjMatch = e.match(/^path\.join\((.+)\)$/);
   if (pjMatch) {
     const args = splitPathJoinArgs(pjMatch[1]);
-    return args.map(a => resolveValue(a, table) || a).join('/');
+    return args.map((a) => resolveValue(a, table) || a).join("/");
   }
 
   // Variable reference (including property access like OBJ.prop)
@@ -446,7 +463,7 @@ function resolveWithFallback(expr, table, src) {
   const pjMatch = e.match(/^path\.join\((.+)\)$/);
   if (pjMatch) {
     const args = splitPathJoinArgs(pjMatch[1]);
-    return args.map(a => resolveWithFallback(a, table, src) || a).join('/');
+    return args.map((a) => resolveWithFallback(a, table, src) || a).join("/");
   }
   const resolved = resolveValue(expr, table);
   if (resolved !== e || !/^[A-Za-z_$]\w*$/.test(e)) return resolved;
@@ -471,10 +488,10 @@ function resolveWithFallback(expr, table, src) {
   // was captured one paren short of balanced and recursed into a malformed expression.
   const pjStart = src.match(new RegExp(`(?:const|let)\\s+${e}\\s*=\\s*path\\.join\\s*\\(`));
   if (pjStart) {
-    const parenOpen = src.indexOf('(', pjStart.index + pjStart[0].length - 1);
-    const parenClose = scanToMatchingClose(src, parenOpen, '(', ')');
+    const parenOpen = src.indexOf("(", pjStart.index + pjStart[0].length - 1);
+    const parenClose = scanToMatchingClose(src, parenOpen, "(", ")");
     if (parenClose !== -1) {
-      const expr = src.slice(pjStart.index + pjStart[0].indexOf('path.'), parenClose + 1);
+      const expr = src.slice(pjStart.index + pjStart[0].indexOf("path."), parenClose + 1);
       return resolveWithFallback(expr, table, src);
     }
   }
@@ -491,7 +508,7 @@ function resolveWithFallback(expr, table, src) {
 function isRealValue(v) {
   if (v == null) return false;
   const s = String(v).trim();
-  return s !== '' && s !== 'null' && s !== 'XXX' && s !== 'N/A';
+  return s !== "" && s !== "null" && s !== "XXX" && s !== "N/A";
 }
 
 // ── extractors ──────────────────────────────────────────────────────────────
@@ -516,9 +533,9 @@ function parseHeader(src) {
   if (dateMatch) result.date = dateMatch[1].trim();
   // Extract note lines (starting with - or *)
   const notes = [];
-  for (const line of block.split('\n')) {
-    const trimmed = line.replace(/^\s*\*?\s?/, '').trim();
-    if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+  for (const line of block.split("\n")) {
+    const trimmed = line.replace(/^\s*\*?\s?/, "").trim();
+    if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
       notes.push(trimmed);
     }
   }
@@ -532,24 +549,36 @@ function parseHeader(src) {
 function discoverFlags(src) {
   const flags = [];
   // Strip block comments
-  const stripped = src.replace(/(?<!\/)\/\*[\s\S]*?\*\//g, '');
+  const stripped = src.replace(/(?<!\/)\/\*[\s\S]*?\*\//g, "");
   const specIdx = stripped.search(/^(?:const|let)\s+spec\s*=/m);
   const headerSrc = specIdx !== -1 ? stripped.slice(0, specIdx) : stripped;
-  const lines = headerSrc.split('\n');
+  const lines = headerSrc.split("\n");
   for (const line of lines) {
     const trimmed = line.trim();
-    if (trimmed.startsWith('//')) continue;
-    const m = trimmed.match(/^(?:const|let)\s+([A-Za-z_$]\w*)\s*=\s*(true|false)\s*;?\s*(?:\/\/(.*))?$/);
+    if (trimmed.startsWith("//")) continue;
+    const m = trimmed.match(
+      /^(?:const|let)\s+([A-Za-z_$]\w*)\s*=\s*(true|false)\s*;?\s*(?:\/\/(.*))?$/,
+    );
     if (m) {
       // Skip well-known non-flag booleans
       const name = m[1];
-      const skipNames = ['supported', 'allResolved', 'changed', 'isInstalled',
-        'bepinexInstalled', 'melonInstalled', 'isBepinex', 'isBepinexPatcher', 'isMelon', 'isMelonPlugin'];
+      const skipNames = [
+        "supported",
+        "allResolved",
+        "changed",
+        "isInstalled",
+        "bepinexInstalled",
+        "melonInstalled",
+        "isBepinex",
+        "isBepinexPatcher",
+        "isMelon",
+        "isMelonPlugin",
+      ];
       if (skipNames.includes(name)) continue;
       flags.push({
         name: name,
         value: m[2],
-        comment: m[3] ? m[3].trim() : null
+        comment: m[3] ? m[3].trim() : null,
       });
     }
   }
@@ -568,64 +597,78 @@ function extractModTypes(src, table) {
   const modTypesStart = src.match(/"modTypes"\s*:\s*\[/);
   if (!modTypesStart) return results;
   const bracketOpen = modTypesStart.index + modTypesStart[0].length - 1;
-  const bracketClose = scanToMatchingClose(src, bracketOpen, '[', ']');
+  const bracketClose = scanToMatchingClose(src, bracketOpen, "[", "]");
   if (bracketClose === -1) return results;
 
   // Split into individual object entries
   const block = src.slice(bracketOpen + 1, bracketClose);
   const entries = [];
   let depth = 0;
-  let current = '';
+  let current = "";
   for (let i = 0; i < block.length; i++) {
     const ch = block[i];
-    if (ch === '{') { depth++; if (depth === 1) { current = ''; continue; } }
-    if (ch === '}') { depth--; if (depth === 0) { entries.push(current); continue; } }
+    if (ch === "{") {
+      depth++;
+      if (depth === 1) {
+        current = "";
+        continue;
+      }
+    }
+    if (ch === "}") {
+      depth--;
+      if (depth === 0) {
+        entries.push(current);
+        continue;
+      }
+    }
     if (depth > 0) current += ch;
   }
 
   for (const entry of entries) {
-    const idRaw = extractField(entry, 'id');
-    const nameRaw = extractField(entry, 'name');
-    const priorityRaw = extractField(entry, 'priority');
-    const targetPathRaw = extractFieldRaw(entry, 'targetPath');
+    const idRaw = extractField(entry, "id");
+    const nameRaw = extractField(entry, "name");
+    const priorityRaw = extractField(entry, "priority");
+    const targetPathRaw = extractFieldRaw(entry, "targetPath");
 
     results.push({
       id: resolveWithFallback(idRaw, table, src),
       name: resolveWithFallback(nameRaw, table, src),
       priority: resolveValue(priorityRaw, table),
-      targetPath: resolveWithFallback(targetPathRaw, table, src)
+      targetPath: resolveWithFallback(targetPathRaw, table, src),
     });
   }
 
   // Also capture spec.modTypes.push({...}) entries (conditional/guarded additions)
-  const stripped = src.replace(/(?<!\/)\/\*[\s\S]*?\*\//g, '');
+  const stripped = src.replace(/(?<!\/)\/\*[\s\S]*?\*\//g, "");
   const pushRe = /spec\.modTypes\.push\(\s*\{/g;
   let pm;
   while ((pm = pushRe.exec(stripped)) !== null) {
-    const lineStart = stripped.lastIndexOf('\n', pm.index);
+    const lineStart = stripped.lastIndexOf("\n", pm.index);
     const linePrefix = stripped.substring(lineStart + 1, pm.index).trim();
-    if (linePrefix.startsWith('//')) continue;
+    if (linePrefix.startsWith("//")) continue;
     const guardFlagPush = getGuardFlag(stripped, pm.index);
-    if (guardFlagPush && table.get(guardFlagPush) === 'false') continue;
+    if (guardFlagPush && table.get(guardFlagPush) === "false") continue;
     let depth = 1;
     let i = pm.index + pm[0].length;
-    let entry = '';
+    let entry = "";
     while (i < stripped.length && depth > 0) {
       const ch = stripped[i];
-      if (ch === '{') depth++;
-      else if (ch === '}') { if (--depth === 0) break; }
+      if (ch === "{") depth++;
+      else if (ch === "}") {
+        if (--depth === 0) break;
+      }
       entry += ch;
       i++;
     }
-    const idRaw = extractField(entry, 'id');
-    const nameRaw = extractField(entry, 'name');
-    const priorityRaw = extractField(entry, 'priority');
-    const targetPathRaw = extractFieldRaw(entry, 'targetPath');
+    const idRaw = extractField(entry, "id");
+    const nameRaw = extractField(entry, "name");
+    const priorityRaw = extractField(entry, "priority");
+    const targetPathRaw = extractFieldRaw(entry, "targetPath");
     results.push({
       id: resolveWithFallback(idRaw, table, src),
       name: resolveWithFallback(nameRaw, table, src),
       priority: resolveValue(priorityRaw, table),
-      targetPath: resolveWithFallback(targetPathRaw, table, src)
+      targetPath: resolveWithFallback(targetPathRaw, table, src),
     });
   }
 
@@ -638,23 +681,25 @@ function extractModTypes(src, table) {
  */
 function extractRegisterModTypes(src, table) {
   const results = [];
-  const stripped = src.replace(/(?<!\/)\/\*[\s\S]*?\*\//g, '');
+  const stripped = src.replace(/(?<!\/)\/\*[\s\S]*?\*\//g, "");
   const re = /context\.registerModType\(/g;
   let m;
   while ((m = re.exec(stripped)) !== null) {
-    const lineStart = stripped.lastIndexOf('\n', m.index);
+    const lineStart = stripped.lastIndexOf("\n", m.index);
     const linePrefix = stripped.substring(lineStart + 1, m.index).trim();
-    if (linePrefix.startsWith('//')) continue;
+    if (linePrefix.startsWith("//")) continue;
     const guardFlagMT = getGuardFlag(stripped, m.index);
-    if (guardFlagMT && table.get(guardFlagMT) === 'false') continue;
+    if (guardFlagMT && table.get(guardFlagMT) === "false") continue;
     // Extract full args by depth tracking
     let depth = 1;
     let i = m.index + m[0].length;
-    let argsStr = '';
+    let argsStr = "";
     while (i < stripped.length && depth > 0) {
       const ch = stripped[i];
-      if (ch === '(') depth++;
-      else if (ch === ')') { if (--depth === 0) break; }
+      if (ch === "(") depth++;
+      else if (ch === ")") {
+        if (--depth === 0) break;
+      }
       argsStr += ch;
       i++;
     }
@@ -662,14 +707,14 @@ function extractRegisterModTypes(src, table) {
     if (args.length < 2) continue;
     const idRaw = args[0].trim();
     // Skip forEach iteration variables like type.id
-    if (idRaw.includes('.')) continue;
+    if (idRaw.includes(".")) continue;
     const priorityRaw = args[1].trim();
     const priority = /^\d+$/.test(priorityRaw) ? priorityRaw : null;
     const id = resolveWithFallback(idRaw, table, src);
     // Name from last arg if it's an options object { name: ... }
     let name = null;
     const lastArg = args[args.length - 1].trim();
-    if (lastArg.startsWith('{')) {
+    if (lastArg.startsWith("{")) {
       const nameM = lastArg.match(/(?:"name"|name)\s*:\s*([^,}\n]+)/);
       if (nameM) name = resolveWithFallback(nameM[1].trim(), table, src);
     }
@@ -696,12 +741,12 @@ function extractField(objStr, fieldName) {
   const key = keyPattern(fieldName);
 
   // Try double-quoted value
-  const dqRe = new RegExp(`${key}\\s*:\\s*"([^"]*)"`, 's');
+  const dqRe = new RegExp(`${key}\\s*:\\s*"([^"]*)"`, "s");
   const dqM = objStr.match(dqRe);
   if (dqM) return '"' + dqM[1] + '"';
 
   // Try single-quoted value (may contain double quotes)
-  const sqRe = new RegExp(`${key}\\s*:\\s*'([^']*)'`, 's');
+  const sqRe = new RegExp(`${key}\\s*:\\s*'([^']*)'`, "s");
   const sqM = objStr.match(sqRe);
   if (sqM) return "'" + sqM[1] + "'";
 
@@ -728,9 +773,9 @@ function extractFieldRaw(objStr, fieldName) {
   const pjM = pjStartRe.exec(objStr);
   if (pjM) {
     const parenOpenPos = pjM.index + pjM[0].length - 1;
-    const parenClosePos = scanToMatchingClose(objStr, parenOpenPos, '(', ')');
+    const parenClosePos = scanToMatchingClose(objStr, parenOpenPos, "(", ")");
     if (parenClosePos !== -1) {
-      return 'path.join(' + objStr.slice(parenOpenPos + 1, parenClosePos) + ')';
+      return "path.join(" + objStr.slice(parenOpenPos + 1, parenClosePos) + ")";
     }
   }
   // Fall back to regular extraction
@@ -751,14 +796,14 @@ function extractFieldRaw(objStr, fieldName) {
 function extractInstallers(src, table) {
   const results = [];
   // Strip block comments but preserve line structure
-  const stripped = src.replace(/(?<!\/)\/\*[\s\S]*?\*\//g, '');
+  const stripped = src.replace(/(?<!\/)\/\*[\s\S]*?\*\//g, "");
   const re = /context\.registerInstaller\(\s*([^,]+),\s*(\d+)/g;
   let m;
   while ((m = re.exec(stripped)) !== null) {
     // Check this isn't in a comment
-    const lineStart = stripped.lastIndexOf('\n', m.index);
+    const lineStart = stripped.lastIndexOf("\n", m.index);
     const linePrefix = stripped.substring(lineStart + 1, m.index).trim();
-    if (linePrefix.startsWith('//')) continue;
+    if (linePrefix.startsWith("//")) continue;
     const guardInst = getGuardCondition(stripped, m.index);
     if (!isGuardActive(guardInst, table)) continue;
     const guardFlagInst = guardInst ? guardInst.flag : null;
@@ -770,8 +815,8 @@ function extractInstallers(src, table) {
     // Third argument is the test function. Read the remaining args by
     // depth-tracked scan so arrow-function install args don't confuse the split.
     let testFn = null;
-    const argsOpen = stripped.indexOf('(', m.index);
-    const argsClose = scanToMatchingClose(stripped, argsOpen, '(', ')');
+    const argsOpen = stripped.indexOf("(", m.index);
+    const argsClose = scanToMatchingClose(stripped, argsOpen, "(", ")");
     if (argsClose !== -1) {
       const args = splitAtTopLevelCommas(stripped.slice(argsOpen + 1, argsClose));
       if (args.length >= 3) {

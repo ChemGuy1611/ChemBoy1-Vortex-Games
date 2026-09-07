@@ -1,0 +1,15 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "sortPackageJson": false,
+  "embeddedLanguageFormatting": "auto",
+  "ignorePatterns": [
+    "**/node_modules/**",
+    "package-lock.json",
+    "resources/snippets.js",
+    "resources/extensions-manifest.json",
+    "resources/*.d.ts",
+    "**/*.min.js",
+    "**/*.zip",
+    "**/*.md"
+  ]
+}

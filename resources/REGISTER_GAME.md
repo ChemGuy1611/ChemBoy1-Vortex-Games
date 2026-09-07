@@ -3,7 +3,7 @@
 Registers a game with Vortex. Must be called synchronously inside `main()` (or inside `applyGame()` called from `main()`). Called once per game extension.
 
 ```js
-context.registerGame(game);  // game: IGame
+context.registerGame(game); // game: IGame
 ```
 
 ---
@@ -14,52 +14,52 @@ IGame extends ITool. Fields marked **required** will cause discovery or deployme
 
 ### From ITool (required)
 
-| Field | Type | Notes |
-| --- | --- | --- |
-| `id` | `string` | **Required.** Unique game id; must match `GAME_ID` constant. Lowercase slug. |
-| `name` | `string` | **Required.** Full display name. |
-| `executable` | `(discoveredPath?) => string` | **Required.** Returns exe path relative to game dir. Must be sync. |
-| `requiredFiles` | `string[]` | **Required.** Files used to verify game discovery; relative to game dir. |
+| Field           | Type                          | Notes                                                                        |
+| --------------- | ----------------------------- | ---------------------------------------------------------------------------- |
+| `id`            | `string`                      | **Required.** Unique game id; must match `GAME_ID` constant. Lowercase slug. |
+| `name`          | `string`                      | **Required.** Full display name.                                             |
+| `executable`    | `(discoveredPath?) => string` | **Required.** Returns exe path relative to game dir. Must be sync.           |
+| `requiredFiles` | `string[]`                    | **Required.** Files used to verify game discovery; relative to game dir.     |
 
 ### From ITool (optional)
 
-| Field | Type | Notes |
-| --- | --- | --- |
-| `shortName` | `string` | Up to ~8 chars; used in tight UI spaces. |
-| `logo` | `string` | Image path. Conventionally `${GAME_ID}.jpg`. **2:3 portrait (400×600)** — see note below. |
-| `queryPath` | `() => string \| Promise<string \| IGameStoreEntry>` | Auto-resolve install path. In templates this is built by `makeFindGame()`. |
-| `parameters` | `string[]` | CLI args passed at launch. Omit (not empty array) to avoid sending blank arg. |
-| `environment` | `{ [key: string]: string }` | Extra env vars set at launch. Commonly contains store app IDs. |
-| `detach` | `boolean` | Launch outside Vortex process tree. |
-| `shell` | `boolean` | Launch via shell. |
-| `exclusive` | `boolean` | Blocks other Vortex-launched apps until done. |
-| `onStart` | `"hide" \| "hide_recover" \| "close"` | What Vortex does when this game launches. |
-| `supportedTools` | `ITool[]` | Additional launchable tools shown in Vortex. |
+| Field            | Type                                                 | Notes                                                                                     |
+| ---------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `shortName`      | `string`                                             | Up to ~8 chars; used in tight UI spaces.                                                  |
+| `logo`           | `string`                                             | Image path. Conventionally `${GAME_ID}.jpg`. **2:3 portrait (400×600)** — see note below. |
+| `queryPath`      | `() => string \| Promise<string \| IGameStoreEntry>` | Auto-resolve install path. In templates this is built by `makeFindGame()`.                |
+| `parameters`     | `string[]`                                           | CLI args passed at launch. Omit (not empty array) to avoid sending blank arg.             |
+| `environment`    | `{ [key: string]: string }`                          | Extra env vars set at launch. Commonly contains store app IDs.                            |
+| `detach`         | `boolean`                                            | Launch outside Vortex process tree.                                                       |
+| `shell`          | `boolean`                                            | Launch via shell.                                                                         |
+| `exclusive`      | `boolean`                                            | Blocks other Vortex-launched apps until done.                                             |
+| `onStart`        | `"hide" \| "hide_recover" \| "close"`                | What Vortex does when this game launches.                                                 |
+| `supportedTools` | `ITool[]`                                            | Additional launchable tools shown in Vortex.                                              |
 
 ### IGame-specific (required)
 
-| Field | Type | Notes |
-| --- | --- | --- |
-| `queryModPath` | `(gamePath: string) => string` | **Required.** Where mods live. Use `.` for in-place (game root). In templates built by `makeGetModPath()`. |
-| `mergeMods` | `boolean \| ((mod: IMod) => string)` | **Required.** `true` = all mods share one dir. `false` = each mod gets its own subdir. Function = custom subdir name per mod. |
+| Field          | Type                                 | Notes                                                                                                                         |
+| -------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `queryModPath` | `(gamePath: string) => string`       | **Required.** Where mods live. Use `.` for in-place (game root). In templates built by `makeGetModPath()`.                    |
+| `mergeMods`    | `boolean \| ((mod: IMod) => string)` | **Required.** `true` = all mods share one dir. `false` = each mod gets its own subdir. Function = custom subdir name per mod. |
 
 ### IGame-specific (optional)
 
-| Field | Type | Notes |
-| --- | --- | --- |
-| `setup` | `async (discovery: IDiscoveryResult) => Promise<void>` | Runs every time game mode activates. Use to ensure directories exist (`fs.ensureDirWritableAsync`). |
-| `requiresLauncher` | `(gamePath, store?) => Promise<{ launcher, addInfo? }>` | Force launch via Steam / Epic / Xbox. See `REQUIRES_LAUNCHER.md` for full reference. |
-| `details` | `{ [key: string]: any }` | Freeform bag. Standard keys below. |
-| `compatible` | `{ [key: string]: boolean }` | Feature flags: `{ dinput, enb, symlinks }`. |
-| `queryArgs` | `{ [storeId]: IStoreQuery[] }` | Declarative store-based discovery alternative to `queryPath`. Store ids: `steam gog xbox epic registry`. |
-| `mergeArchive` | `(filePath) => boolean` | Which archives get content-merged on deploy. |
-| `requiresCleanup` | `boolean` | If `true`, empty dirs are cleaned up on deploy. |
-| `directoryCleaning` | `"tag" \| "all"` | `"tag"` (default) = only tagged dirs. `"all"` = any empty dir. |
-| `contributed` | `string` | Community contributor name. Leave `undefined` for official games. |
-| `final` | `boolean` | Mark extension as fully tested. |
-| `version` | `string` | Extension version string. |
-| `overrides` | `string[]` | Game ids to disable when this is discovered in the same location. |
-| `deploymentGate` | `() => Promise<void>` | Delay auto-deployment until this resolves. |
+| Field               | Type                                                    | Notes                                                                                                    |
+| ------------------- | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `setup`             | `async (discovery: IDiscoveryResult) => Promise<void>`  | Runs every time game mode activates. Use to ensure directories exist (`fs.ensureDirWritableAsync`).      |
+| `requiresLauncher`  | `(gamePath, store?) => Promise<{ launcher, addInfo? }>` | Force launch via Steam / Epic / Xbox. See `REQUIRES_LAUNCHER.md` for full reference.                     |
+| `details`           | `{ [key: string]: any }`                                | Freeform bag. Standard keys below.                                                                       |
+| `compatible`        | `{ [key: string]: boolean }`                            | Feature flags: `{ dinput, enb, symlinks }`.                                                              |
+| `queryArgs`         | `{ [storeId]: IStoreQuery[] }`                          | Declarative store-based discovery alternative to `queryPath`. Store ids: `steam gog xbox epic registry`. |
+| `mergeArchive`      | `(filePath) => boolean`                                 | Which archives get content-merged on deploy.                                                             |
+| `requiresCleanup`   | `boolean`                                               | If `true`, empty dirs are cleaned up on deploy.                                                          |
+| `directoryCleaning` | `"tag" \| "all"`                                        | `"tag"` (default) = only tagged dirs. `"all"` = any empty dir.                                           |
+| `contributed`       | `string`                                                | Community contributor name. Leave `undefined` for official games.                                        |
+| `final`             | `boolean`                                               | Mark extension as fully tested.                                                                          |
+| `version`           | `string`                                                | Extension version string.                                                                                |
+| `overrides`         | `string[]`                                              | Game ids to disable when this is discovered in the same location.                                        |
+| `deploymentGate`    | `() => Promise<void>`                                   | Delay auto-deployment until this resolves.                                                               |
 
 ### Standard `details` keys
 
@@ -160,14 +160,14 @@ function main(context) {
 ```js
 // typical makeFindGame pattern
 function makeFindGame(api, gameSpec) {
-  return async () => {
-    try {
-      const game = await util.GameStoreHelper.findByAppId(gameSpec.discovery.ids);
-      return game.gamePath;
-    } catch (err) {
-      return winapi.RegGetValue('HKEY_LOCAL_MACHINE', REG_KEY, 'InstallLocation');
-    }
-  };
+    return async () => {
+        try {
+            const game = await util.GameStoreHelper.findByAppId(gameSpec.discovery.ids);
+            return game.gamePath;
+        } catch (err) {
+            return winapi.RegGetValue("HKEY_LOCAL_MACHINE", REG_KEY, "InstallLocation");
+        }
+    };
 }
 ```
 
@@ -183,7 +183,7 @@ Runs every time the user activates this game in Vortex. Typical uses:
 
 ```js
 async function setup(discovery, api, gameSpec) {
-  await fs.ensureDirWritableAsync(path.join(discovery.path, MOD_PATH_DEFAULT));
+    await fs.ensureDirWritableAsync(path.join(discovery.path, MOD_PATH_DEFAULT));
 }
 ```
 
@@ -195,18 +195,18 @@ Tool entries in `supportedTools` appear in the Vortex toolbar for the game. Comm
 
 ```js
 supportedTools: [
-  {
-    id: `${GAME_ID}-customlaunch`,
-    name: 'Custom Launch',
-    logo: 'exec.png',
-    executable: () => EXEC,
-    requiredFiles: [EXEC],
-    detach: true,
-    relative: true,   // path is relative to game dir
-    exclusive: true,
-    shell: true,
-  },
-]
+    {
+        id: `${GAME_ID}-customlaunch`,
+        name: "Custom Launch",
+        logo: "exec.png",
+        executable: () => EXEC,
+        requiredFiles: [EXEC],
+        detach: true,
+        relative: true, // path is relative to game dir
+        exclusive: true,
+        shell: true,
+    },
+];
 ```
 
 `queryPath` on a tool is used when the tool lives outside the game dir (e.g. a separate ModKit install).
@@ -222,13 +222,14 @@ be reported as a live install.
 
 ```js
 function getToolFolder() {
-  try {
-    const winapi = require('winapi-bindings');
-    const installPath = winapi.RegGetValue('HKEY_CURRENT_USER', 'SOFTWARE\SomeTool', '');
-    return installPath?.value ?? '';
-  } catch { //RegGetValue throws when the key is missing, see WINAPI_BINDINGS.md
-    return '';
-  }
+    try {
+        const winapi = require("winapi-bindings");
+        const installPath = winapi.RegGetValue("HKEY_CURRENT_USER", "SOFTWARE\SomeTool", "");
+        return installPath?.value ?? "";
+    } catch {
+        //RegGetValue throws when the key is missing, see WINAPI_BINDINGS.md
+        return "";
+    }
 }
 ```
 
@@ -257,26 +258,26 @@ with `path.join()`, which emits forward slashes off Windows.
 
 ## Extension manifest (info.json)
 
-`info.json` is the extension *package manifest* read by Vortex's extension loader at startup. It is
+`info.json` is the extension _package manifest_ read by Vortex's extension loader at startup. It is
 separate from the runtime `IGame` object registered by `registerGame()` — the loader uses it to
 list and version the extension before `main()` ever runs. Every game extension ships one at its
 root alongside `index.js`.
 
 ```json
 {
-  "name": "Game: Warhammer 40,000: Darktide",
-  "author": "ChemBoy1",
-  "version": "1.0.0",
-  "description": "Vortex support for Warhammer 40,000: Darktide"
+    "name": "Game: Warhammer 40,000: Darktide",
+    "author": "ChemBoy1",
+    "version": "1.0.0",
+    "description": "Vortex support for Warhammer 40,000: Darktide"
 }
 ```
 
-| Field | Type | Notes |
-| --- | --- | --- |
-| `name` | `string` | Display name in the Extensions list. Convention: `"Game: <Full Game Name>"`. |
-| `author` | `string` | Extension author — `"ChemBoy1"` for this repo. |
-| `version` | `string` | Semver `MAJOR.MINOR.PATCH`. **Must match the latest `## [x.x.x]` entry in `CHANGELOG.md`.** New extensions start at `1.0.0`. |
-| `description` | `string` | One-line summary. Convention: `"Vortex support for <Full Game Name>"`. |
+| Field         | Type     | Notes                                                                                                                        |
+| ------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `name`        | `string` | Display name in the Extensions list. Convention: `"Game: <Full Game Name>"`.                                                 |
+| `author`      | `string` | Extension author — `"ChemBoy1"` for this repo.                                                                               |
+| `version`     | `string` | Semver `MAJOR.MINOR.PATCH`. **Must match the latest `## [x.x.x]` entry in `CHANGELOG.md`.** New extensions start at `1.0.0`. |
+| `description` | `string` | One-line summary. Convention: `"Vortex support for <Full Game Name>"`.                                                       |
 
 Notes:
 

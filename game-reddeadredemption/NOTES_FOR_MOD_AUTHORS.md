@@ -6,14 +6,14 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| Scripthook | a file or folder named `dinput8.dll` and a file or folder named `scripthookrdr.dll` | - |
-| Modloader | a file or folder named `kml.asi` | - |
-| Magicrdr | - | - |
-| Magicmod | a file with one of these extensions: `.wtd`, `.was`, `.dds`, `.mtl` or `.wsc` | `MagicRDR_Mods` |
-| Rpf | a file with the `.rpf` extension | `kml\rpf` |
-| Asiplugin | a file with the `.asi` extension | - |
+| Mod Type   | Archive must contain                                                                | Installs to     |
+| ---------- | ----------------------------------------------------------------------------------- | --------------- |
+| Scripthook | a file or folder named `dinput8.dll` and a file or folder named `scripthookrdr.dll` | -               |
+| Modloader  | a file or folder named `kml.asi`                                                    | -               |
+| Magicrdr   | -                                                                                   | -               |
+| Magicmod   | a file with one of these extensions: `.wtd`, `.was`, `.dds`, `.mtl` or `.wsc`       | `MagicRDR_Mods` |
+| Rpf        | a file with the `.rpf` extension                                                    | `kml\rpf`       |
+| Asiplugin  | a file with the `.asi` extension                                                    | -               |
 
 Paths are relative to the game's install folder.
 
@@ -50,4 +50,3 @@ Recognised when the archive contains a file with the `.asi` extension.
 - Archives that contain a FOMOD installer (a `fomod` folder with `ModuleConfig.xml`) are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

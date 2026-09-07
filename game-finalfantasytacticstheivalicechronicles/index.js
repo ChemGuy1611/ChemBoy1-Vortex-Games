@@ -7,9 +7,9 @@ Date: 2025-10-28
 /////////////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require('vortex-api');
-const path = require('path');
-const template = require('string-template');
+const { actions, fs, util, selectors, log } = require("vortex-api");
+const path = require("path");
+const template = require("string-template");
 //const { parseStringPromise } = require('xml2js');
 
 //const USER_HOME = util.getVortexPath("home");
@@ -30,18 +30,18 @@ const GAME_NAME = "FINAL FANTASY TACTICS - The Ivalice Chronicles";
 const GAME_NAME_SHORT = "FF TACTICS IVC";
 const EXEC = "FFT_enhanced.exe";
 const EXEC_CLASSIC = "FFT_classic.exe";
-const EXEC_XBOX = 'gamelaunchhelper.exe';
+const EXEC_XBOX = "gamelaunchhelper.exe";
 
 const MOD_LOADER_FOLDER = "FFTIVC_Mod_Loader";
 const RELOADEDMODLOADER_FILE = "fftivc.utility.modloader.dll";
 const RELOADEDMODLOADER_PAGE_NO = 4;
 const RELOADEDMODLOADER_FILE_NO = 91;
 
-let GAME_PATH = '';
-let GAME_VERSION = '';
-let STAGING_FOLDER = '';
-let DOWNLOAD_FOLDER = '';
-const APPMANIFEST_FILE = 'appxmanifest.xml';
+let GAME_PATH = "";
+let GAME_VERSION = "";
+let STAGING_FOLDER = "";
+let DOWNLOAD_FOLDER = "";
+const APPMANIFEST_FILE = "appxmanifest.xml";
 
 //Data for mod types, tools, and installers
 const RELOADED_ID = `${GAME_ID}-reloadedmanager`;
@@ -52,7 +52,7 @@ const RELOADED_EXEC_PATH = path.join(RELOADED_PATH, RELOADED_EXEC);
 const RELOADED_URL_LATEST = `https://github.com/Reloaded-Project/Reloaded-II/releases/latest/download/Release.zip`;
 const RELOADED_URL_MANUAL = `https://github.com/Reloaded-Project/Reloaded-II/releases`;
 
-const ELEVATOR_PATH = path.join(util.getVortexPath('application'), 'resources');
+const ELEVATOR_PATH = path.join(util.getVortexPath("application"), "resources");
 const ELEVATOR_EXEC = "elevate.exe";
 
 const RELOADEDMOD_ID = `${GAME_ID}-reloadedmod`;
@@ -66,7 +66,12 @@ const RELOADEDMODLOADER_PATH = path.join(RELOADEDMOD_PATH, MOD_LOADER_FOLDER);
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Save File";
-const SAVE_FOLDER = path.join(DOCUMENTS, 'My Games', 'FINAL FANTASY TACTICS - The Ivalice Chronicles', 'Steam');
+const SAVE_FOLDER = path.join(
+  DOCUMENTS,
+  "My Games",
+  "FINAL FANTASY TACTICS - The Ivalice Chronicles",
+  "Steam",
+);
 let USERID_FOLDER = "";
 function isDir(folder, file) {
   const stats = fs.statSync(path.join(folder, file));
@@ -82,62 +87,61 @@ if (USERID_FOLDER === undefined) {
   USERID_FOLDER = "";
 } //*/
 const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
-const SAVE_EXTS = ['.vdf'];
+const SAVE_EXTS = [".vdf"];
 
-const MOD_PATH_DEFAULT = '.';
+const MOD_PATH_DEFAULT = ".";
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1515"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Final_Fantasy_Tactics_-_The_Ivalice_Chronicles";
-const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
-const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const PCGAMINGWIKI_URL =
+  "https://www.pcgamingwiki.com/wiki/Final_Fantasy_Tactics_-_The_Ivalice_Chronicles";
+const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
 const spec = {
-  "game": {
-    "id": GAME_ID,
-    "name": GAME_NAME,
-    "shortName": GAME_NAME_SHORT,
-    "executable": EXEC,
-    "logo": `${GAME_ID}.jpg`,
-    "mergeMods": true,
-    "requiresCleanup": true,
-    "modPath": MOD_PATH_DEFAULT,
-    "modPathIsRelative": true,
-    "requiredFiles": [
-      EXEC
-    ],
-    "details": {
-      "steamAppId": +STEAMAPP_ID,
-      "gogAppId": GOGAPP_ID,
-      "epicAppId": EPICAPP_ID,
-      "xboxAppId": XBOXAPP_ID,
-      "supportsSymlinks": false,
-      "ignoreConflicts": IGNORE_CONFLICTS,
-      "ignoreDeploy": IGNORE_DEPLOY,
+  game: {
+    id: GAME_ID,
+    name: GAME_NAME,
+    shortName: GAME_NAME_SHORT,
+    executable: EXEC,
+    logo: `${GAME_ID}.jpg`,
+    mergeMods: true,
+    requiresCleanup: true,
+    modPath: MOD_PATH_DEFAULT,
+    modPathIsRelative: true,
+    requiredFiles: [EXEC],
+    details: {
+      steamAppId: +STEAMAPP_ID,
+      gogAppId: GOGAPP_ID,
+      epicAppId: EPICAPP_ID,
+      xboxAppId: XBOXAPP_ID,
+      supportsSymlinks: false,
+      ignoreConflicts: IGNORE_CONFLICTS,
+      ignoreDeploy: IGNORE_DEPLOY,
     },
-    "environment": {
-      "SteamAPPId": STEAMAPP_ID,
-      "GogAPPId": GOGAPP_ID,
-      "EpicAPPId": EPICAPP_ID,
-      "XboxAPPId": XBOXAPP_ID
-    }
+    environment: {
+      SteamAPPId: STEAMAPP_ID,
+      GogAPPId: GOGAPP_ID,
+      EpicAPPId: EPICAPP_ID,
+      XboxAPPId: XBOXAPP_ID,
+    },
   },
-  "modTypes": [
+  modTypes: [
     {
-      "id": RELOADEDMOD_ID,
-      "name": RELOADEDMOD_NAME,
-      "priority": "high",
-      "targetPath": path.join("{gamePath}", RELOADEDMOD_PATH)
+      id: RELOADEDMOD_ID,
+      name: RELOADEDMOD_NAME,
+      priority: "high",
+      targetPath: path.join("{gamePath}", RELOADEDMOD_PATH),
     },
     {
-      "id": RELOADEDMODLOADER_ID,
-      "name": RELOADEDMODLOADER_NAME,
-      "priority": "low",
-      "targetPath": path.join("{gamePath}", RELOADEDMODLOADER_PATH)
+      id: RELOADEDMODLOADER_ID,
+      name: RELOADEDMODLOADER_NAME,
+      priority: "low",
+      targetPath: path.join("{gamePath}", RELOADEDMODLOADER_PATH),
     },
     {
-      "id": RELOADED_ID,
-      "name": RELOADED_NAME,
-      "priority": "low",
-      "targetPath": "{gamePath}"
+      id: RELOADED_ID,
+      name: RELOADED_NAME,
+      priority: "low",
+      targetPath: "{gamePath}",
     },
     /*{
       "id": SAVE_ID,
@@ -146,10 +150,10 @@ const spec = {
       "targetPath": path.join("{gamePath}", SAVE_PATH)
     }, //*/
   ],
-  "discovery": {
-    "ids": DISCOVERY_IDS_ACTIVE,
-    "names": []
-  }
+  discovery: {
+    ids: DISCOVERY_IDS_ACTIVE,
+    names: [],
+  },
 };
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
@@ -159,8 +163,7 @@ function statCheckSync(gamePath, file) {
   try {
     fs.statSync(path.join(gamePath, file));
     return true;
-  }
-  catch {
+  } catch {
     return false;
   }
 }
@@ -169,8 +172,7 @@ async function statCheckAsync(gamePath, file) {
   try {
     await fs.statAsync(path.join(gamePath, file));
     return true;
-  }
-  catch {
+  } catch {
     return false;
   }
 }
@@ -182,15 +184,17 @@ async function getAllFiles(dirPath) {
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
       const stats = await fs.statAsync(fullPath);
-      if (stats.isDirectory()) { // Recursively get files from subdirectories
+      if (stats.isDirectory()) {
+        // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
         results = results.concat(subDirFiles);
-      } else { // Add file to results
+      } else {
+        // Add file to results
         results.push(fullPath);
       }
     }
   } catch (err) {
-    log('warn', `Error reading directory ${dirPath}: ${err.message}`);
+    log("warn", `Error reading directory ${dirPath}: ${err.message}`);
   }
   return results;
 }
@@ -206,30 +210,34 @@ function modTypePriority(priority) {
 function pathPattern(api, game, pattern) {
   var _a;
   return template(pattern, {
-    gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
-    documents: util.getVortexPath('documents'),
-    localAppData: util.getVortexPath('localAppData'),
-    appData: util.getVortexPath('appData'),
+    gamePath:
+      (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0
+        ? void 0
+        : _a.path,
+    documents: util.getVortexPath("documents"),
+    localAppData: util.getVortexPath("localAppData"),
+    appData: util.getVortexPath("appData"),
   });
 }
 
 //Set the mod path for the game
 function makeGetModPath(api, gameSpec) {
-  return () => gameSpec.game.modPathIsRelative !== false
-    ? gameSpec.game.modPath || '.'
-    : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
+  return () =>
+    gameSpec.game.modPathIsRelative !== false
+      ? gameSpec.game.modPath || "."
+      : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
 }
 
 //Find game installation directory
 function makeFindGame(api, gameSpec) {
-  return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
-    .then((game) => game.gamePath);
+  return () =>
+    util.GameStoreHelper.findByAppId(gameSpec.discovery.ids).then((game) => game.gamePath);
 }
 
 async function requiresLauncher(gamePath, store) {
-  if ((store === 'xbox') && DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) {
+  if (store === "xbox" && DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) {
     return Promise.resolve({
-      launcher: 'xbox',
+      launcher: "xbox",
       addInfo: {
         appId: XBOXAPP_ID,
         parameters: [{ appExecName: XBOXEXECNAME }],
@@ -237,12 +245,12 @@ async function requiresLauncher(gamePath, store) {
     });
   } //*/
   //*
-  if ((store === 'epic') && DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID)) {
+  if (store === "epic" && DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID)) {
     return Promise.resolve({
-        launcher: 'epic',
-        addInfo: {
-            appId: EPICAPP_ID,
-        },
+      launcher: "epic",
+      addInfo: {
+        appId: EPICAPP_ID,
+      },
     });
   } //*/
   /*
@@ -260,18 +268,17 @@ async function setGameVersion(discoveryPath) {
     try {
       fs.statSync(path.join(discoveryPath, exec));
       return true;
-    }
-    catch {
+    } catch {
       return false;
     }
   };
 
   if (isCorrectExec(EXEC_XBOX)) {
-    GAME_VERSION = 'xbox';
+    GAME_VERSION = "xbox";
     return GAME_VERSION;
   }
 
-  GAME_VERSION = 'steam';
+  GAME_VERSION = "steam";
   return GAME_VERSION;
 }
 
@@ -282,12 +289,15 @@ const getDiscoveryPath = (api) => {
 };
 
 async function purge(api) {
-  return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));
+  return new Promise((resolve, reject) =>
+    api.events.emit("purge-mods", true, (err) => (err ? reject(err) : resolve())),
+  );
 }
 async function deploy(api) {
-  return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
+  return new Promise((resolve, reject) =>
+    api.events.emit("deploy-mods", (err) => (err ? reject(err) : resolve())),
+  );
 }
-
 
 // AUTO-DOWNLOADER FUNCTIONS ///////////////////////////////////////////////////
 
@@ -295,14 +305,14 @@ async function deploy(api) {
 function isModManagerInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === RELOADED_ID);
+  return Object.keys(mods).some((id) => mods[id]?.type === RELOADED_ID);
 }
 
 //Check if mod injector is installed
 function isModLoaderInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === RELOADEDMODLOADER_ID);
+  return Object.keys(mods).some((id) => mods[id]?.type === RELOADEDMODLOADER_ID);
 }
 
 //Function to auto-download Reloaded-II Mod Loader
@@ -310,12 +320,12 @@ async function downloadModManager(api, gameSpec) {
   let modLoaderInstalled = isModManagerInstalled(api, gameSpec);
   if (!modLoaderInstalled) {
     //notification indicating install process
-    const MOD_NAME = 'Reloaded Mod Manager';
+    const MOD_NAME = "Reloaded Mod Manager";
     const NOTIF_ID = `${GAME_ID}-${MOD_NAME}-installing`;
     api.sendNotification({
       id: NOTIF_ID,
       message: `Installing-${MOD_NAME}`,
-      type: 'activity',
+      type: "activity",
       noDismiss: true,
       allowSuppress: false,
     });
@@ -327,10 +337,14 @@ async function downloadModManager(api, gameSpec) {
         name: MOD_NAME,
       };
       const URL = RELOADED_URL_LATEST;
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const dlId = await util.toPromise((cb) =>
+        api.events.emit("start-download", [URL], dlInfo, undefined, cb, undefined, {
+          allowInstall: false,
+        }),
+      );
+      const modId = await util.toPromise((cb) =>
+        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+      );
       const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
       const batched = [
         actions.setModsEnabled(api, profileId, [modId], true, {
@@ -340,7 +354,7 @@ async function downloadModManager(api, gameSpec) {
         actions.setModType(gameSpec.game.id, modId, RELOADED_ID), // Set the mod type
       ];
       util.batchDispatch(api.store, batched); // Will dispatch both actions.
-    //Show the user the download page if the download, install process fails
+      //Show the user the download page if the download, install process fails
     } catch (err) {
       const errPage = RELOADED_URL_MANUAL;
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
@@ -354,12 +368,12 @@ async function downloadModManager(api, gameSpec) {
 //Function to auto-download Reloaded-II Mod Loader from GitHub (no check, for button)
 async function downloadModManagerNoCheck(api, gameSpec) {
   //notification indicating install process
-  const MOD_NAME = 'Reloaded Mod Manager';
+  const MOD_NAME = "Reloaded Mod Manager";
   const NOTIF_ID = `${GAME_ID}-${MOD_NAME}-installing`;
   api.sendNotification({
     id: NOTIF_ID,
     message: `Installing-${MOD_NAME}`,
-    type: 'activity',
+    type: "activity",
     noDismiss: true,
     allowSuppress: false,
   });
@@ -371,10 +385,14 @@ async function downloadModManagerNoCheck(api, gameSpec) {
       name: MOD_NAME,
     };
     const URL = RELOADED_URL_LATEST;
-    const dlId = await util.toPromise(cb =>
-      api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-    const modId = await util.toPromise(cb =>
-      api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+    const dlId = await util.toPromise((cb) =>
+      api.events.emit("start-download", [URL], dlInfo, undefined, cb, undefined, {
+        allowInstall: false,
+      }),
+    );
+    const modId = await util.toPromise((cb) =>
+      api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+    );
     const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
     const batched = [
       actions.setModsEnabled(api, profileId, [modId], true, {
@@ -384,7 +402,7 @@ async function downloadModManagerNoCheck(api, gameSpec) {
       actions.setModType(gameSpec.game.id, modId, RELOADED_ID), // Set the mod type
     ];
     util.batchDispatch(api.store, batched); // Will dispatch both actions.
-  //Show the user the download page if the download, install process fails
+    //Show the user the download page if the download, install process fails
   } catch (err) {
     const errPage = RELOADED_URL_MANUAL;
     api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
@@ -401,27 +419,30 @@ async function downloadModLoader(api, gameSpec) {
     const MOD_NAME = RELOADEDMODLOADER_NAME;
     const MOD_TYPE = RELOADEDMODLOADER_ID;
     const NOTIF_ID = `${MOD_TYPE}-installing`;
-    let FILE_ID = RELOADEDMODLOADER_FILE_NO;  //If using a specific file id because "input" below gives an error
+    let FILE_ID = RELOADEDMODLOADER_FILE_NO; //If using a specific file id because "input" below gives an error
     const PAGE_ID = RELOADEDMODLOADER_PAGE_NO;
     const GAME_DOMAIN = gameSpec.game.id;
-    api.sendNotification({ //notification indicating install process
+    api.sendNotification({
+      //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
-      type: 'activity',
+      type: "activity",
       noDismiss: true,
       allowSuppress: false,
     });
-    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
+    if (api.ext?.ensureLoggedIn !== undefined) {
+      //make sure user is logged into Nexus Mods account in Vortex
       await api.ext.ensureLoggedIn();
     }
     try {
       let FILE = FILE_ID; //use the FILE_ID directly for the correct game store version
       let URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      try { //get the mod files information from Nexus
+      try {
+        //get the mod files information from Nexus
         const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
         const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
         const file = modFiles
-          .filter(file => file.category_id === 1)
+          .filter((file) => file.category_id === 1)
           .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
           .reverse()[0];
         if (file === undefined) {
@@ -429,18 +450,24 @@ async function downloadModLoader(api, gameSpec) {
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch { // use defined file ID if input is undefined above
+      } catch {
+        // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       } //*/
-      const dlInfo = { //Download the mod
+      const dlInfo = {
+        //Download the mod
         game: GAME_DOMAIN,
         name: MOD_NAME,
       };
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const dlId = await util.toPromise((cb) =>
+        api.events.emit("start-download", [URL], dlInfo, undefined, cb, undefined, {
+          allowInstall: false,
+        }),
+      );
+      const modId = await util.toPromise((cb) =>
+        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+      );
       const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
       const batched = [
         actions.setModsEnabled(api, profileId, [modId], true, {
@@ -450,7 +477,8 @@ async function downloadModLoader(api, gameSpec) {
         actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
       ];
       util.batchDispatch(api.store, batched); // Will dispatch both actions
-    } catch (err) { //Show the user the download page if the download, install process fails
+    } catch (err) {
+      //Show the user the download page if the download, install process fails
       const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
       util.opn(errPage).catch(() => null);
@@ -464,8 +492,8 @@ async function downloadModLoader(api, gameSpec) {
 
 //Installer test for Fluffy Mod Manager files
 function testModManger(files, gameId) {
-  const isMod = files.some(file => path.basename(file).toLowerCase() === RELOADED_EXEC);
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => path.basename(file).toLowerCase() === RELOADED_EXEC);
+  let supported = gameId === spec.game.id && isMod;
 
   return Promise.resolve({
     supported,
@@ -475,19 +503,19 @@ function testModManger(files, gameId) {
 
 //Installer install Fluffy Mod Manger files
 function installModManager(files) {
-  const modFile = files.find(file => path.basename(file).toLowerCase() === RELOADED_EXEC);
+  const modFile = files.find((file) => path.basename(file).toLowerCase() === RELOADED_EXEC);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: RELOADED_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: RELOADED_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(RELOADED_PATH, file.substr(idx)),
     };
@@ -498,14 +526,21 @@ function installModManager(files) {
 
 //Test for Mod Loaderfiles
 function testReloadedLoader(files, gameId) {
-  const isMod = files.some(file => (path.basename(file).toLowerCase() === RELOADEDMOD_FILE));
-  const isLoader = files.some(file => (path.basename(file).toLowerCase() === RELOADEDMODLOADER_FILE));
-  let supported = (gameId === spec.game.id) && isMod && isLoader;
+  const isMod = files.some((file) => path.basename(file).toLowerCase() === RELOADEDMOD_FILE);
+  const isLoader = files.some(
+    (file) => path.basename(file).toLowerCase() === RELOADEDMODLOADER_FILE,
+  );
+  let supported = gameId === spec.game.id && isMod && isLoader;
 
   // Test for a mod installer
-  if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -517,19 +552,19 @@ function testReloadedLoader(files, gameId) {
 
 //Install Mod Loader files
 function installReloadedLoader(files) {
-  const modFile = files.find(file => path.basename(file).toLowerCase() === RELOADEDMOD_FILE);
+  const modFile = files.find((file) => path.basename(file).toLowerCase() === RELOADEDMOD_FILE);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: RELOADEDMODLOADER_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: RELOADEDMODLOADER_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -540,13 +575,18 @@ function installReloadedLoader(files) {
 
 //Test for Reloaded Mod files
 function testReloadedMod(files, gameId) {
-  const isMod = files.some(file => (path.basename(file).toLowerCase() === RELOADEDMOD_FILE));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => path.basename(file).toLowerCase() === RELOADEDMOD_FILE);
+  let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer
-  if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -558,29 +598,29 @@ function testReloadedMod(files, gameId) {
 
 //Install Reloaded Mod files
 function installReloadedMod(files, fileName) {
-  const modFile = files.find(file => path.basename(file).toLowerCase() === RELOADEDMOD_FILE);
+  const modFile = files.find((file) => path.basename(file).toLowerCase() === RELOADEDMOD_FILE);
   let idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: RELOADEDMOD_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: RELOADEDMOD_ID };
 
-  let MOD_FOLDER = '.';
+  let MOD_FOLDER = ".";
   const ROOT_PATH = path.basename(path.dirname(modFile));
   const MOD_NAME = path.basename(fileName);
-  if (ROOT_PATH !== '.' && ROOT_PATH !== undefined) {
+  if (ROOT_PATH !== "." && ROOT_PATH !== undefined) {
     idx = modFile.indexOf(`${path.basename(ROOT_PATH)}${path.sep}`);
   }
-  if (ROOT_PATH === '.') {
-    MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
+  if (ROOT_PATH === ".") {
+    MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, "");
   }
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(MOD_FOLDER, file.substr(idx)),
     };
@@ -591,13 +631,18 @@ function installReloadedMod(files, fileName) {
 
 //Installer test for Save (.bin) files
 function testSave(files, gameId) {
-  const isMod = files.some(file => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer
-  if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -609,19 +654,19 @@ function testSave(files, gameId) {
 
 //Installer install Save (.bin) files
 function installSave(files) {
-  const modFile = files.find(file => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
+  const modFile = files.find((file) => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: SAVE_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: SAVE_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(RELOADED_PATH, file.substr(idx)),
     };
@@ -635,51 +680,59 @@ function installSave(files) {
 //Notify User of Setup instructions for Reloaded-II
 function setupNotify(api) {
   const NOTIF_ID = `${GAME_ID}-setup`;
-  const MESSAGE = 'Reloaded Mod Manager Setup Required';
+  const MESSAGE = "Reloaded Mod Manager Setup Required";
   api.sendNotification({
     id: NOTIF_ID,
-    type: 'warning',
+    type: "warning",
     message: MESSAGE,
     allowSuppress: true,
     actions: [
       {
-        title: 'More',
+        title: "More",
         action: (dismiss) => {
-          api.showDialog('question', MESSAGE, {
-            text: 'The Reloaded-II Mod Manager tool downloaded by this extension requires setup.\n'
-                + '\n'
-                + `Please launch the tool and set the location of the ${GAME_NAME} executable.\n`
-                + '\n'
-                + 'You must also enable mods in Reloaded using the "Manage Mods" button on the left hand side of the Reloaded window.\n'
-                + '\n'
-                + 'You must launch the game from Reloaded for mods to load in the game.\n'
-                + '\n'
-                + '\n'
-                + `IMPORTANT: You may need to run Reloaded-II as Administrator for setup and dependency updates.\n`
-                + '\n'
-                + 'If you get a message about missing mod dependencies or .NET Runtimes, you may need to run Reloaded as an Administrator to allow dependencies to download.\n'
-                + '\n'
-                + 'You can launch Reloaded as Admin using the button below.\n'
-                + '\n'
-          }, [
+          api.showDialog(
+            "question",
+            MESSAGE,
             {
-              label: `Run Reloaded-II as Admin`, action: () => {
-                runReloadedAdmin(api);
-                dismiss();
-              }
+              text:
+                "The Reloaded-II Mod Manager tool downloaded by this extension requires setup.\n" +
+                "\n" +
+                `Please launch the tool and set the location of the ${GAME_NAME} executable.\n` +
+                "\n" +
+                'You must also enable mods in Reloaded using the "Manage Mods" button on the left hand side of the Reloaded window.\n' +
+                "\n" +
+                "You must launch the game from Reloaded for mods to load in the game.\n" +
+                "\n" +
+                "\n" +
+                `IMPORTANT: You may need to run Reloaded-II as Administrator for setup and dependency updates.\n` +
+                "\n" +
+                "If you get a message about missing mod dependencies or .NET Runtimes, you may need to run Reloaded as an Administrator to allow dependencies to download.\n" +
+                "\n" +
+                "You can launch Reloaded as Admin using the button below.\n" +
+                "\n",
             },
-            { label: 'Acknowledge', action: () => dismiss() },
-            {
-              label: 'Never Show Again', action: () => {
-                api.suppressNotification(NOTIF_ID);
-                dismiss();
-              }
-            },
-          ]);
+            [
+              {
+                label: `Run Reloaded-II as Admin`,
+                action: () => {
+                  runReloadedAdmin(api);
+                  dismiss();
+                },
+              },
+              { label: "Acknowledge", action: () => dismiss() },
+              {
+                label: "Never Show Again",
+                action: () => {
+                  api.suppressNotification(NOTIF_ID);
+                  dismiss();
+                },
+              },
+            ],
+          );
         },
       },
     ],
-  });    
+  });
 }
 
 //Run Reloaded-II as Admin (allow dependency download in priviledged folders)
@@ -687,21 +740,35 @@ function runReloadedAdmin(api) {
   const TOOL_ID = RELOADED_ID;
   const TOOL_NAME = RELOADED_NAME;
   const state = api.store.getState();
-  const tool = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'tools', TOOL_ID], undefined);
+  const tool = util.getSafe(
+    state,
+    ["settings", "gameMode", "discovered", GAME_ID, "tools", TOOL_ID],
+    undefined,
+  );
 
   try {
     const TOOL_PATH = tool.path;
     if (TOOL_PATH !== undefined) {
-      return api.runExecutable(path.join(ELEVATOR_PATH, ELEVATOR_EXEC), [TOOL_PATH], { suggestDeploy: false, detached: true })
-        .catch(err => api.showErrorNotification(`Failed to run ${TOOL_NAME} as Admin`, err,
-          { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 })
+      return api
+        .runExecutable(path.join(ELEVATOR_PATH, ELEVATOR_EXEC), [TOOL_PATH], {
+          suggestDeploy: false,
+          detached: true,
+        })
+        .catch((err) =>
+          api.showErrorNotification(`Failed to run ${TOOL_NAME} as Admin`, err, {
+            allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+          }),
         );
-    }
-    else {
-      return api.showErrorNotification(`Failed to run ${TOOL_NAME} as Admin`, `Path to ${TOOL_NAME} executable could not be found. Ensure ${TOOL_NAME} is installed through Vortex.`);
+    } else {
+      return api.showErrorNotification(
+        `Failed to run ${TOOL_NAME} as Admin`,
+        `Path to ${TOOL_NAME} executable could not be found. Ensure ${TOOL_NAME} is installed through Vortex.`,
+      );
     }
   } catch (err) {
-    return api.showErrorNotification(`Failed to run ${TOOL_NAME} as Admin`, err, { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
+    return api.showErrorNotification(`Failed to run ${TOOL_NAME} as Admin`, err, {
+      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+    });
   }
 }
 
@@ -745,9 +812,7 @@ async function setup(discovery, api, gameSpec) {
   //await fs.ensureDirWritableAsync(path.join(GAME_PATH, SAVE_PATH));
   await downloadModManager(api, gameSpec);
   await downloadModLoader(api, gameSpec);
-  return fs.ensureFileAsync(
-    path.join(GAME_PATH, RELOADED_PATH, "portable.txt")
-  );
+  return fs.ensureFileAsync(path.join(GAME_PATH, RELOADED_PATH, "portable.txt"));
 }
 
 //Let Vortex know about the game
@@ -793,11 +858,23 @@ function applyGame(context, gameSpec) {
 
   //register mod types
   (gameSpec.modTypes || []).forEach((type, idx) => {
-    context.registerModType(type.id, modTypePriority(type.priority) + idx, (gameId) => {
-      var _a;
-      return (gameId === gameSpec.game.id)
-        && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
+    context.registerModType(
+      type.id,
+      modTypePriority(type.priority) + idx,
+      (gameId) => {
+        var _a;
+        return (
+          gameId === gameSpec.game.id &&
+          !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+          _a === void 0
+            ? void 0
+            : _a.path)
+        );
+      },
+      (game) => pathPattern(context.api, game, type.targetPath),
+      () => Promise.resolve(false),
+      { name: type.name },
+    );
   });
 
   //register mod installers
@@ -807,37 +884,69 @@ function applyGame(context, gameSpec) {
   //context.registerInstaller(SAVE_ID, 49, testSave, installSave);
 
   //register actions
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download Reloaded Mod Manager', () => {
-    downloadModManagerNoCheck(context.api, gameSpec).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
-    const openPath = SAVE_PATH;
-    util.opn(openPath).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
-    const openPath = path.join(__dirname, 'CHANGELOG.md');
-    util.opn(openPath).catch(() => null);
-    }, () => {
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Download Reloaded Mod Manager",
+    () => {
+      downloadModManagerNoCheck(context.api, gameSpec).catch(() => null);
+    },
+    () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    const openPath = DOWNLOAD_FOLDER;
-    util.opn(openPath).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
+    },
+  ); //*/
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Save Folder",
+    () => {
+      const openPath = SAVE_PATH;
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  ); //*/
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "View Changelog",
+    () => {
+      const openPath = path.join(__dirname, "CHANGELOG.md");
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Downloads Folder",
+    () => {
+      const openPath = DOWNLOAD_FOLDER;
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
 
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
     util.opn(CONFIG_PATH).catch(() => null);
@@ -846,28 +955,45 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
-    util.opn(PCGAMINGWIKI_URL).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
-    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open PCGamingWiki Page",
+    () => {
+      util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Submit Bug Report",
+    () => {
+      util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
 }
 
 //main function
 function main(context) {
   applyGame(context, spec);
-  context.once(() => { // put code here that should be run (once) when Vortex starts up
+  context.once(() => {
+    // put code here that should be run (once) when Vortex starts up
     const api = context.api;
-    context.api.onAsync('did-deploy', async (profileId, deployment) => {
+    context.api.onAsync("did-deploy", async (profileId, deployment) => {
       const lastActiveProfile = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== lastActiveProfile) return;
       return deployNotify(context.api);
@@ -883,42 +1009,50 @@ function deployNotify(api) {
   const MESSAGE = `Run ${MOD_NAME} as Admin`;
   api.sendNotification({
     id: NOTIF_ID,
-    type: 'warning',
+    type: "warning",
     message: MESSAGE,
     allowSuppress: true,
     actions: [
       {
-        title: 'Run Reloaded (Admin)',
+        title: "Run Reloaded (Admin)",
         action: (dismiss) => {
           runReloadedAdmin(api);
           dismiss();
         },
       },
       {
-        title: 'More',
+        title: "More",
         action: (dismiss) => {
-          api.showDialog('question', MESSAGE, {
-            text: `If your game is installed in a protected folder, such as "C:\\Program Files (x86)" (default for Steam), you must run ${MOD_NAME} as Administrator.\n`
-                + '\n'
-                + `Use the button below to launch ${MOD_NAME} as Administrator.\n`
-                + '\n'
-                + `If your game is NOT installed in a priviledged folder, you can suppress this notification with the "Never Show Again" button below.\n`
-                + '\n'
-          }, [
+          api.showDialog(
+            "question",
+            MESSAGE,
             {
-              label: 'Run Reloaded (Admin)', action: () => {
-                runReloadedAdmin(api);
-                dismiss();
-              }
+              text:
+                `If your game is installed in a protected folder, such as "C:\\Program Files (x86)" (default for Steam), you must run ${MOD_NAME} as Administrator.\n` +
+                "\n" +
+                `Use the button below to launch ${MOD_NAME} as Administrator.\n` +
+                "\n" +
+                `If your game is NOT installed in a priviledged folder, you can suppress this notification with the "Never Show Again" button below.\n` +
+                "\n",
             },
-            { label: 'Continue', action: () => dismiss() },
-            {
-              label: 'Never Show Again', action: () => {
-                api.suppressNotification(NOTIF_ID);
-                dismiss();
-              }
-            },
-          ]);
+            [
+              {
+                label: "Run Reloaded (Admin)",
+                action: () => {
+                  runReloadedAdmin(api);
+                  dismiss();
+                },
+              },
+              { label: "Continue", action: () => dismiss() },
+              {
+                label: "Never Show Again",
+                action: () => {
+                  api.suppressNotification(NOTIF_ID);
+                  dismiss();
+                },
+              },
+            ],
+          );
         },
       },
     ],

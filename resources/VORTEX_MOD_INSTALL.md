@@ -78,18 +78,18 @@ The chosen `install()` returns an `IInstallResult` = a list of `IInstruction`s. 
 sorts them into buckets via `transformInstructions(...)` → an **`InstructionGroups`** object with
 one array per instruction type:
 
-| Type | Effect |
-| --- | --- |
-| `copy` | Copy a file from the archive into staging |
-| `mkdir` | Create an (often empty, stop-folder) directory |
-| `generatefile` | Write a file from in-memory data |
-| `iniedit` | Apply an INI tweak |
-| `setmodtype` | Route the mod to a non-default destination (modtype) |
-| `attribute` | Set a mod attribute in state |
-| `rule` | Add a mod rule (dependency/conflict) |
-| `submodule` | Recurse — install a nested archive as its own mod |
-| `enableallplugins` | Enable all Gamebryo plugins the mod ships |
-| `unsupported` / `error` | Collected for reporting |
+| Type                    | Effect                                               |
+| ----------------------- | ---------------------------------------------------- |
+| `copy`                  | Copy a file from the archive into staging            |
+| `mkdir`                 | Create an (often empty, stop-folder) directory       |
+| `generatefile`          | Write a file from in-memory data                     |
+| `iniedit`               | Apply an INI tweak                                   |
+| `setmodtype`            | Route the mod to a non-default destination (modtype) |
+| `attribute`             | Set a mod attribute in state                         |
+| `rule`                  | Add a mod rule (dependency/conflict)                 |
+| `submodule`             | Recurse — install a nested archive as its own mod    |
+| `enableallplugins`      | Enable all Gamebryo plugins the mod ships            |
+| `unsupported` / `error` | Collected for reporting                              |
 
 ### Override instructions
 
@@ -148,12 +148,12 @@ installer, and returns the instructions).
 
 ## Events (runtime)
 
-| Event | Purpose |
-| --- | --- |
-| `start-install` (archivePath) | Kick off an install for a downloaded archive |
-| `will-install-dependencies` (gameId, modId, isRecommended, cb) | Collection/dependency tree about to install |
-| `did-install-mod` (gameId, archiveId, modId, modInfo) | A mod finished installing |
-| `did-install-dependencies` / related | Dependency/collection completion |
+| Event                                                          | Purpose                                      |
+| -------------------------------------------------------------- | -------------------------------------------- |
+| `start-install` (archivePath)                                  | Kick off an install for a downloaded archive |
+| `will-install-dependencies` (gameId, modId, isRecommended, cb) | Collection/dependency tree about to install  |
+| `did-install-mod` (gameId, archiveId, modId, modInfo)          | A mod finished installing                    |
+| `did-install-dependencies` / related                           | Dependency/collection completion             |
 
 ### What is already true when `did-install-mod` fires
 

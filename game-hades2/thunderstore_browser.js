@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 // Shared Thunderstore browser page for Vortex game extensions.
 //
@@ -41,23 +41,24 @@
 // resolveThunderstorePackage, isThunderstorePackageInstalled,
 // checkThunderstoreModUpdates.
 
-const { log, util } = require('vortex-api');
-const { createBrowserModule } = require('./base_browser');
+const { log, util } = require("vortex-api");
+const { createBrowserModule } = require("./base_browser");
 
-const API_BASE = 'https://thunderstore.io';
+const API_BASE = "https://thunderstore.io";
 
 // Mod attributes. Dedicated attributes rather than the standard 'version' one because
 // Vortex's md5 meta lookup can overwrite 'version' with data from an unrelated Nexus match.
-const DEFAULT_PACKAGE_ATTRIBUTE = 'thunderstorePackage';
-const DEFAULT_VERSION_ATTRIBUTE = 'thunderstoreVersion';
+const DEFAULT_PACKAGE_ATTRIBUTE = "thunderstorePackage";
+const DEFAULT_VERSION_ATTRIBUTE = "thunderstoreVersion";
 
 // Hosts the embedded view stays on. gcdn is where package downloads redirect to.
-const DEFAULT_ALLOWED_HOSTS = ['thunderstore.io', 'gcdn.thunderstore.io'];
+const DEFAULT_ALLOWED_HOSTS = ["thunderstore.io", "gcdn.thunderstore.io"];
 
 // Sidebar icon: Thunderstore's own bolt mark, taken from the brand SVG
 // (thunderstore-io/Thunderstore, django/static/ts-logo-horizontal.svg) and scaled from its
 // 504x76 viewBox to the 24x24 one Vortex icons use. Two subpaths, no fill-rule dependency.
-const DEFAULT_MDI = 'M0.43 13.16L5.09 21.27 7.24 16.81 4.89 12.71C4.63 12.26 4.63 11.74 4.89 11.28L7.83 6.18C8.09 5.72 8.54 5.46 9.06 5.46H10.64L7.58 12.34H11.36L6.22 22.3 16.54 9.94H13.37L15.54 5.46H19.33 21.53L23.89 1.36H17.14 12.64 7.22C6.37 1.36 5.63 1.78 5.21 2.52L0.43 10.84C0 11.58 0 12.43 0.43 13.16ZM7.57 22.64H16.78C17.63 22.64 18.37 22.22 18.79 21.48L23.58 13.16C24 12.43 24 11.58 23.58 10.84L21.66 7.51H16.94L19.11 11.28C19.37 11.74 19.37 12.26 19.11 12.71L16.18 17.82C15.91 18.28 15.46 18.54 14.94 18.54H12.8L11.32 18.52 7.57 22.64Z';
+const DEFAULT_MDI =
+  "M0.43 13.16L5.09 21.27 7.24 16.81 4.89 12.71C4.63 12.26 4.63 11.74 4.89 11.28L7.83 6.18C8.09 5.72 8.54 5.46 9.06 5.46H10.64L7.58 12.34H11.36L6.22 22.3 16.54 9.94H13.37L15.54 5.46H19.33 21.53L23.89 1.36H17.14 12.64 7.22C6.37 1.36 5.63 1.78 5.21 2.52L0.43 10.84C0 11.58 0 12.43 0.43 13.16ZM7.57 22.64H16.78C17.63 22.64 18.37 22.22 18.79 21.48L23.58 13.16C24 12.43 24 11.58 23.58 10.84L21.66 7.51H16.94L19.11 11.28C19.37 11.74 19.37 12.26 19.11 12.71L16.18 17.82C15.91 18.28 15.46 18.54 14.94 18.54H12.8L11.32 18.52 7.57 22.64Z";
 
 // --- URLs and keys --------------------------------------------------------
 
@@ -82,7 +83,7 @@ function packageDownloadUrl(ref) {
 //ends in a slash and the CDN it redirects to sends no Content-Disposition, so Vortex can derive no
 //name of its own and needs this one.
 function packageArchiveName(ref) {
-  return (ref.namespace && ref.name && ref.version)
+  return ref.namespace && ref.name && ref.version
     ? `${ref.namespace}-${ref.name}-${ref.version}.zip`
     : undefined;
 }
@@ -94,7 +95,7 @@ function packageKey(ref) {
 
 //Thunderstore namespaces and package names are [a-zA-Z0-9_] only, so the first hyphen splits them
 function parsePackageKey(key) {
-  const idx = String(key || '').indexOf('-');
+  const idx = String(key || "").indexOf("-");
   if (idx <= 0) {
     return null;
   }
@@ -114,19 +115,18 @@ const ARCHIVE_NAME_RE = /^([^-]+)-([^-]+)-(\d[^-]*)\.zip$/i;
 
 //Parse a package reference out of a URL (returns null when it is not a Thunderstore package URL)
 function parsePackageRef(url) {
-  const input = String(url || '');
-  const matched = DOWNLOAD_URL_RE.exec(input)
-    || CDN_URL_RE.exec(input)
-    || ROR2MM_URL_RE.exec(input);
+  const input = String(url || "");
+  const matched =
+    DOWNLOAD_URL_RE.exec(input) || CDN_URL_RE.exec(input) || ROR2MM_URL_RE.exec(input);
   if (!matched) {
     return null;
   }
-  return { namespace: matched[1], name: matched[2], version: matched[3].replace(/\/$/, '') };
+  return { namespace: matched[1], name: matched[2], version: matched[3].replace(/\/$/, "") };
 }
 
 //Parse a package reference out of an archive file name
 function parseArchiveRef(fileName) {
-  const matched = ARCHIVE_NAME_RE.exec(String(fileName || ''));
+  const matched = ARCHIVE_NAME_RE.exec(String(fileName || ""));
   if (!matched) {
     return null;
   }
@@ -135,23 +135,27 @@ function parseArchiveRef(fileName) {
 
 //A dependency, however the API spelled it, as { namespace, name, version }
 function parseDependency(entry) {
-  if (entry && (typeof entry === 'object')) {
+  if (entry && typeof entry === "object") {
     if (entry.namespace && entry.name) {
-      return { namespace: entry.namespace, name: entry.name, version: entry.version_number || entry.version };
+      return {
+        namespace: entry.namespace,
+        name: entry.name,
+        version: entry.version_number || entry.version,
+      };
     }
     return parseDependency(entry.full_name || entry.package_name);
   }
-  const parts = String(entry || '').split('-');
+  const parts = String(entry || "").split("-");
   if (parts.length < 3) {
     return null;
   }
   const version = parts.pop();
   const name = parts.pop();
-  return { namespace: parts.join('-'), name, version };
+  return { namespace: parts.join("-"), name, version };
 }
 
 function dependencyRefs(dependencies) {
-  return (dependencies || []).map(parseDependency).filter(ref => ref !== null);
+  return (dependencies || []).map(parseDependency).filter((ref) => ref !== null);
 }
 
 // --- Thunderstore API -----------------------------------------------------
@@ -160,7 +164,9 @@ function dependencyRefs(dependencies) {
 async function resolveThunderstorePackage(config, namespace, name) {
   if (config.tsCommunity) {
     try {
-      const listing = await util.jsonRequest(`${API_BASE}/api/cyberstorm/listing/${config.tsCommunity}/${namespace}/${name}/`);
+      const listing = await util.jsonRequest(
+        `${API_BASE}/api/cyberstorm/listing/${config.tsCommunity}/${namespace}/${name}/`,
+      );
       if (listing?.latest_version_number) {
         const version = String(listing.latest_version_number);
         return {
@@ -173,12 +179,15 @@ async function resolveThunderstorePackage(config, namespace, name) {
           isDeprecated: !!listing.is_deprecated,
         };
       }
-    } catch (err) { //not listed in this community - the community-independent endpoint still works
-      log('debug', `Thunderstore listing lookup failed for ${namespace}/${name}: ${err}`);
+    } catch (err) {
+      //not listed in this community - the community-independent endpoint still works
+      log("debug", `Thunderstore listing lookup failed for ${namespace}/${name}: ${err}`);
     }
   }
   try {
-    const data = await util.jsonRequest(`${API_BASE}/api/experimental/package/${namespace}/${name}/`);
+    const data = await util.jsonRequest(
+      `${API_BASE}/api/experimental/package/${namespace}/${name}/`,
+    );
     const latest = data?.latest;
     if (latest?.version_number) {
       const version = String(latest.version_number);
@@ -193,22 +202,22 @@ async function resolveThunderstorePackage(config, namespace, name) {
       };
     }
   } catch (err) {
-    log('warn', `Could not resolve Thunderstore package ${namespace}/${name}: ${err}`);
+    log("warn", `Could not resolve Thunderstore package ${namespace}/${name}: ${err}`);
   }
   return null;
 }
 
 //Recognise a finished download as a Thunderstore package (returns null when it is anything else)
 function downloadPackageRef(download) {
-  for (const url of (download.urls || [])) {
+  for (const url of download.urls || []) {
     const ref = parsePackageRef(url);
     if (ref !== null) {
       return ref;
     }
   }
-  const fromThunderstore = (download.urls || []).some(url => {
+  const fromThunderstore = (download.urls || []).some((url) => {
     try {
-      return new URL(url).hostname.toLowerCase().endsWith('thunderstore.io');
+      return new URL(url).hostname.toLowerCase().endsWith("thunderstore.io");
     } catch {
       return false;
     }
@@ -219,19 +228,19 @@ function downloadPackageRef(download) {
 // --- the adapter ----------------------------------------------------------
 
 const adapter = {
-  id: 'thunderstore',
-  label: 'Thunderstore',
+  id: "thunderstore",
+  label: "Thunderstore",
   defaults: {
     packageAttribute: DEFAULT_PACKAGE_ATTRIBUTE,
     versionAttribute: DEFAULT_VERSION_ATTRIBUTE,
     allowedHosts: DEFAULT_ALLOWED_HOSTS,
-    icon: 'flash',
+    icon: "flash",
     mdi: DEFAULT_MDI,
-    pageTitle: 'Browse Mods',
-    homeTooltip: 'Back to the community page',
+    pageTitle: "Browse Mods",
+    homeTooltip: "Back to the community page",
   },
   dependencies: true, //packages declare what they need, so an install offers to bring it along
-  unresolvedMessage: 'The Thunderstore API is unreachable and no version was given',
+  unresolvedMessage: "The Thunderstore API is unreachable and no version was given",
 
   homeUrl,
   refKey: packageKey,
@@ -245,15 +254,16 @@ const adapter = {
 
   //A reference that names its version already names its download URL, so the install path
   //never needs the API for it. The dependency walk and the update check use resolve() instead.
-  resolveForInstall: (config, ref) => ((ref.version !== undefined) && (ref.version !== null))
-    ? Promise.resolve({
-      namespace: ref.namespace,
-      name: ref.name,
-      version: ref.version,
-      downloadUrl: packageDownloadUrl(ref),
-      pageUrl: packagePageUrl(config, ref),
-    })
-    : resolveThunderstorePackage(config, ref.namespace, ref.name),
+  resolveForInstall: (config, ref) =>
+    ref.version !== undefined && ref.version !== null
+      ? Promise.resolve({
+          namespace: ref.namespace,
+          name: ref.name,
+          version: ref.version,
+          downloadUrl: packageDownloadUrl(ref),
+          pageUrl: packagePageUrl(config, ref),
+        })
+      : resolveThunderstorePackage(config, ref.namespace, ref.name),
 
   //The "Install with Mod Manager" link installs directly; a download URL is handed to the
   //capture chain rather than being pushed into the page's history

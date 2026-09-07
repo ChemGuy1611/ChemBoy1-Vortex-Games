@@ -2,48 +2,48 @@
 
 ## Overview
 
-| Property | Value |
-| --- | --- |
-| Name | Doom I & II (UZDoom) Vortex Extension |
-| Engine / Structure | Mod Loader (Any Folder) |
-| Author | ChemBoy1 |
+| Property           | Value                                 |
+| ------------------ | ------------------------------------- |
+| Name               | Doom I & II (UZDoom) Vortex Extension |
+| Engine / Structure | Mod Loader (Any Folder)               |
+| Author             | ChemBoy1                              |
 
 ## Key Identifiers
 
-| Property | Value |
-| --- | --- |
-| Game ID | `gzdoom` |
-| Executable | `N/A` |
+| Property       | Value                                                                                |
+| -------------- | ------------------------------------------------------------------------------------ |
+| Game ID        | `gzdoom`                                                                             |
+| Executable     | `N/A`                                                                                |
 | Extension Page | [https://www.nexusmods.com/site/mods/1319](https://www.nexusmods.com/site/mods/1319) |
 
 ## Feature Flags
 
-| Flag | Value | Description |
-| --- | --- | --- |
+| Flag           | Value  | Description                                                                   |
+| -------------- | ------ | ----------------------------------------------------------------------------- |
 | `moddbBrowser` | `true` | register the "Browse ModDB" pages (moddb.com) - one for Doom, one for Doom II |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
-| Name | ID | Priority | Target Path |
-| --- | --- | --- | --- |
-| Mod | `gzdoom-mod` | high | `{gamePath}/DML/FILE/PWAD` |
-| IWAD (Game) | `gzdoom-wad` | high | `{gamePath}/DML/FILE/IWAD` |
-| UZDoom | `gzdoom-gzdoom` | low | `{gamePath}/DML/FILE/PORT/gzdoom` |
-| Doom Mod Loader | `gzdoom-dml` | low | `{gamePath}/DML` |
+| Name            | ID              | Priority | Target Path                       |
+| --------------- | --------------- | -------- | --------------------------------- |
+| Mod             | `gzdoom-mod`    | high     | `{gamePath}/DML/FILE/PWAD`        |
+| IWAD (Game)     | `gzdoom-wad`    | high     | `{gamePath}/DML/FILE/IWAD`        |
+| UZDoom          | `gzdoom-gzdoom` | low      | `{gamePath}/DML/FILE/PORT/gzdoom` |
+| Doom Mod Loader | `gzdoom-dml`    | low      | `{gamePath}/DML`                  |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID | Priority |
-| --- | --- |
-| `gzdoom-dml` | 25 |
-| `gzdoom-gzdoom` | 27 |
-| `gzdoom-wad` | 29 |
-| `gzdoom-mod` | 31 |
-| `gzdoom-zipmod` | 33 |
+| Installer ID    | Priority |
+| --------------- | -------- |
+| `gzdoom-dml`    | 25       |
+| `gzdoom-gzdoom` | 27       |
+| `gzdoom-wad`    | 29       |
+| `gzdoom-mod`    | 31       |
+| `gzdoom-zipmod` | 33       |
 
 ## Toolbar Actions
 
@@ -61,8 +61,8 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 ## Config & Save Paths
 
-| Type | Path |
-| --- | --- |
+| Type   | Path         |
+| ------ | ------------ |
 | Config | `DML/CONFIG` |
 
 ## Special Features
@@ -71,4 +71,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-

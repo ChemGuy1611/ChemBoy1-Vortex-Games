@@ -7,10 +7,10 @@ Date: 07/25/2024
 */
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require('vortex-api');
-const path = require('path');
-const template = require('string-template');
-const winapi = require('winapi-bindings');
+const { actions, fs, util, selectors, log } = require("vortex-api");
+const path = require("path");
+const template = require("string-template");
+const winapi = require("winapi-bindings");
 
 //Specify all the information about the game
 const UPLAYAPP_ID = "54";
@@ -20,41 +20,39 @@ const GAME_NAME = "Assassin's Creed III";
 const GAME_NAME_SHORT = "AC III";
 const EXEC = "AC3SP.exe";
 const ATK_ID = "assassinscreediii-atk";
-const ATK_EXEC = 'anviltoolkit.exe';
+const ATK_EXEC = "anviltoolkit.exe";
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/978"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_III";
-let STAGING_FOLDER = ''; //Vortex staging folder path
-let DOWNLOAD_FOLDER = ''; //Vortex download folder path
-let GAME_PATH = ''; //Game installation path
-let GAME_VERSION = ''; //Game version
-const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
-const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+let STAGING_FOLDER = ""; //Vortex staging folder path
+let DOWNLOAD_FOLDER = ""; //Vortex download folder path
+let GAME_PATH = ""; //Game installation path
+let GAME_VERSION = ""; //Game version
+const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
 const spec = {
-  "game": {
-    "id": GAME_ID,
-    "name": GAME_NAME,
-    "shortName": GAME_NAME_SHORT,
-    "executable": EXEC,
-    "logo": `${GAME_ID}.jpg`,
-    "mergeMods": true,
-    "modPath": ".",
-    "modPathIsRelative": true,
-    "requiredFiles": [
-      EXEC
-    ],
-    "details": {
-      "steamAppId": +STEAMAPP_ID,
-      "uPlayAppId": UPLAYAPP_ID,
-      "ignoreConflicts": IGNORE_CONFLICTS,
-      "ignoreDeploy": IGNORE_DEPLOY,
+  game: {
+    id: GAME_ID,
+    name: GAME_NAME,
+    shortName: GAME_NAME_SHORT,
+    executable: EXEC,
+    logo: `${GAME_ID}.jpg`,
+    mergeMods: true,
+    modPath: ".",
+    modPathIsRelative: true,
+    requiredFiles: [EXEC],
+    details: {
+      steamAppId: +STEAMAPP_ID,
+      uPlayAppId: UPLAYAPP_ID,
+      ignoreConflicts: IGNORE_CONFLICTS,
+      ignoreDeploy: IGNORE_DEPLOY,
     },
-    "environment": {
-      "SteamAPPId": STEAMAPP_ID,
-      "UPlayAPPId": UPLAYAPP_ID
-    }
+    environment: {
+      SteamAPPId: STEAMAPP_ID,
+      UPlayAPPId: UPLAYAPP_ID,
+    },
   },
-  "modTypes": [
+  modTypes: [
     /*
     {
       "id": "assassinscreediii-binaries",
@@ -64,34 +62,29 @@ const spec = {
     },
     */
     {
-      "id": ATK_ID,
-      "name": "AnvilToolKit",
-      "priority": "low",
-      "targetPath": "{gamePath}"
-    }
+      id: ATK_ID,
+      name: "AnvilToolKit",
+      priority: "low",
+      targetPath: "{gamePath}",
+    },
   ],
-  "discovery": {
-    "ids": [
-      UPLAYAPP_ID,
-      STEAMAPP_ID
-    ],
-    "names": []
-  }
+  discovery: {
+    ids: [UPLAYAPP_ID, STEAMAPP_ID],
+    names: [],
+  },
 };
 
 //3rd party tools and launchers
 const tools = [
   {
-    id: 'AnvilToolkit',
-    name: 'AnvilToolkit',
-    logo: 'anvil.png',
+    id: "AnvilToolkit",
+    name: "AnvilToolkit",
+    logo: "anvil.png",
     executable: () => ATK_EXEC,
-    requiredFiles: [
-      ATK_EXEC,
-    ],
+    requiredFiles: [ATK_EXEC],
     relative: true,
     exclusive: true,
-  }
+  },
 ];
 
 //Set mod type priorities
@@ -104,8 +97,7 @@ function statCheckSync(gamePath, file) {
   try {
     fs.statSync(path.join(gamePath, file));
     return true;
-  }
-  catch {
+  } catch {
     return false;
   }
 }
@@ -114,8 +106,7 @@ async function statCheckAsync(gamePath, file) {
   try {
     await fs.statAsync(path.join(gamePath, file));
     return true;
-  }
-  catch {
+  } catch {
     return false;
   }
 }
@@ -127,31 +118,38 @@ async function getAllFiles(dirPath) {
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
       const stats = await fs.statAsync(fullPath);
-      if (stats.isDirectory()) { // Recursively get files from subdirectories
+      if (stats.isDirectory()) {
+        // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
         results = results.concat(subDirFiles);
-      } else { // Add file to results
+      } else {
+        // Add file to results
         results.push(fullPath);
       }
     }
   } catch (err) {
-    log('warn', `Error reading directory ${dirPath}: ${err.message}`);
+    log("warn", `Error reading directory ${dirPath}: ${err.message}`);
   }
   return results;
 }
 
-const getDiscoveryPath = (api) => { //get the game's discovered path
+const getDiscoveryPath = (api) => {
+  //get the game's discovered path
   const state = api.getState();
   const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
 
 async function purge(api) {
-  return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));
+  return new Promise((resolve, reject) =>
+    api.events.emit("purge-mods", true, (err) => (err ? reject(err) : resolve())),
+  );
 }
 
 async function deploy(api) {
-  return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
+  return new Promise((resolve, reject) =>
+    api.events.emit("deploy-mods", (err) => (err ? reject(err) : resolve())),
+  );
 }
 
 function modTypePriority(priority) {
@@ -165,10 +163,13 @@ function modTypePriority(priority) {
 function pathPattern(api, game, pattern) {
   var _a;
   return template(pattern, {
-    gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
-    documents: util.getVortexPath('documents'),
-    localAppData: util.getVortexPath('localAppData'),
-    appData: util.getVortexPath('appData'),
+    gamePath:
+      (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0
+        ? void 0
+        : _a.path,
+    documents: util.getVortexPath("documents"),
+    localAppData: util.getVortexPath("localAppData"),
+    appData: util.getVortexPath("appData"),
   });
 }
 
@@ -176,38 +177,43 @@ function pathPattern(api, game, pattern) {
 function makeFindGame(api, gameSpec) {
   try {
     const instPath = winapi.RegGetValue(
-      'HKEY_LOCAL_MACHINE',
+      "HKEY_LOCAL_MACHINE",
       `SOFTWARE\\WOW6432Node\\Ubisoft\\Launcher\\Installs\\${UPLAYAPP_ID}`,
-        'InstallDir');
+      "InstallDir",
+    );
     if (!instPath) {
-      throw new Error('empty registry key');
+      throw new Error("empty registry key");
     }
     return () => Promise.resolve(instPath.value);
   } catch {
-    return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
-      .then((game) => game.gamePath);
+    return () =>
+      util.GameStoreHelper.findByAppId(gameSpec.discovery.ids).then((game) => game.gamePath);
   }
 }
 
 //Set the mod path for the game
 function makeGetModPath(api, gameSpec) {
-  return () => gameSpec.game.modPathIsRelative !== false
-    ? gameSpec.game.modPath || '.'
-    : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
+  return () =>
+    gameSpec.game.modPathIsRelative !== false
+      ? gameSpec.game.modPath || "."
+      : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
 }
 
 //Setup launcher requirements (Steam, Epic, GOG, GamePass, etc.). More parameters required for Epic and GamePass
 function makeRequiresLauncher(api, gameSpec) {
-  return () => Promise.resolve((gameSpec.game.requiresLauncher !== undefined)
-    ? { launcher: gameSpec.game.requiresLauncher }
-    : undefined);
+  return () =>
+    Promise.resolve(
+      gameSpec.game.requiresLauncher !== undefined
+        ? { launcher: gameSpec.game.requiresLauncher }
+        : undefined,
+    );
 }
 
 //Check if AnvilToolkit is installed
 function isAnvilInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === ATK_ID);
+  return Object.keys(mods).some((id) => mods[id]?.type === ATK_ID);
 }
 
 //Function to auto-download AnvilToolkit
@@ -221,7 +227,7 @@ async function downloadAnvil(discovery, api, gameSpec) {
     api.sendNotification({
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
-      type: 'activity',
+      type: "activity",
       noDismiss: true,
       allowSuppress: false,
     });
@@ -234,26 +240,30 @@ async function downloadAnvil(discovery, api, gameSpec) {
     const modPageId = 455;
     try {
       //get the mod files information from Nexus
-      const modFiles = await api.ext.nexusGetModFiles('site', modPageId);
+      const modFiles = await api.ext.nexusGetModFiles("site", modPageId);
       //const modFiles = await api.ext.nexusGetModFiles(gameSpec.game.id, modPageId);
       const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
       const file = modFiles
-        .filter(file => file.category_id === 1)
+        .filter((file) => file.category_id === 1)
         .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
       if (file === undefined) {
         throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
       }
       //Download the mod
       const dlInfo = {
-        game: 'site',
+        game: "site",
         name: MOD_NAME,
       };
       const nxmUrl = `nxm://site/mods/${modPageId}/files/${file.file_id}`;
       //const nxmUrl = `nxm://${gameSpec.game.id}/mods/${modPageId}/files/${file.file_id}`;
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [nxmUrl], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const dlId = await util.toPromise((cb) =>
+        api.events.emit("start-download", [nxmUrl], dlInfo, undefined, cb, undefined, {
+          allowInstall: false,
+        }),
+      );
+      const modId = await util.toPromise((cb) =>
+        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+      );
       const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
       const batched = [
         actions.setModsEnabled(api, profileId, [modId], true, {
@@ -263,7 +273,7 @@ async function downloadAnvil(discovery, api, gameSpec) {
         actions.setModType(gameSpec.game.id, modId, ATK_ID), // Set the modType
       ];
       util.batchDispatch(api.store, batched); // Will dispatch both actions.
-    //Show the user the download page if the download/install process fails
+      //Show the user the download page if the download/install process fails
     } catch (err) {
       const errPage = `https://www.nexusmods.com/site/mods/${modPageId}/files/?tab=files`;
       //const errPage = `https://www.nexusmods.com/${gameSpec.game.id}/mods/${modPageId}/files/?tab=files`;
@@ -277,8 +287,8 @@ async function downloadAnvil(discovery, api, gameSpec) {
 
 //Installer test for ATK files
 function testATK(files, gameId) {
-  const isMod = files.some(file => path.basename(file).toLowerCase() === ATK_EXEC);
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => path.basename(file).toLowerCase() === ATK_EXEC);
+  let supported = gameId === spec.game.id && isMod;
 
   return Promise.resolve({
     supported,
@@ -288,19 +298,19 @@ function testATK(files, gameId) {
 
 //Installer install ATK files
 function installATK(files) {
-  const modFile = files.find(file => path.basename(file).toLowerCase() === ATK_EXEC);
+  const modFile = files.find((file) => path.basename(file).toLowerCase() === ATK_EXEC);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: ATK_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: ATK_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -337,11 +347,23 @@ function applyGame(context, gameSpec) {
 
   //register mod types
   (gameSpec.modTypes || []).forEach((type, idx) => {
-    context.registerModType(type.id, modTypePriority(type.priority) + idx, (gameId) => {
-      var _a;
-      return (gameId === gameSpec.game.id)
-        && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
+    context.registerModType(
+      type.id,
+      modTypePriority(type.priority) + idx,
+      (gameId) => {
+        var _a;
+        return (
+          gameId === gameSpec.game.id &&
+          !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+          _a === void 0
+            ? void 0
+            : _a.path)
+        );
+      },
+      (game) => pathPattern(context.api, game, type.targetPath),
+      () => Promise.resolve(false),
+      { name: type.name },
+    );
   });
 
   //register mod installers
@@ -363,35 +385,67 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
-    util.opn(PCGAMINGWIKI_URL).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
-    const openPath = path.join(__dirname, 'CHANGELOG.md');
-    util.opn(openPath).catch(() => null);
-    }, () => {
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open PCGamingWiki Page",
+    () => {
+      util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
-    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    util.opn(DOWNLOAD_FOLDER).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "View Changelog",
+    () => {
+      const openPath = path.join(__dirname, "CHANGELOG.md");
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Submit Bug Report",
+    () => {
+      util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Downloads Folder",
+    () => {
+      util.opn(DOWNLOAD_FOLDER).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
 }
 
 //main function
@@ -400,7 +454,6 @@ function main(context) {
   context.once(() => {
     const api = context.api;
     // put code here that should be run (once) when Vortex starts up
-
   });
   return true;
 }

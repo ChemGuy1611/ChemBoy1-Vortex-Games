@@ -4,6 +4,11 @@
 
 - None Planned
 
+## [1.1.1] - 2026-09-06
+
+- Fixed: Locked load order entries could be moved out of position when using "Move to Top", "Move to Bottom" or the position number box on another entry. Locked entries now keep their place.
+- Fixed: The load order position number box now accepts low numbers even when a locked entry is further down the list.
+
 ## [1.1.0] - 2026-09-05
 
 - Changed: Disabled Config mod installer and modType since this can lead to bans due to NetEase change of policy.

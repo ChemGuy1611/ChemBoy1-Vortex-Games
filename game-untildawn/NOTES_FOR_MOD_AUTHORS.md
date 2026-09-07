@@ -6,14 +6,14 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `Bates` |
-| Blueprint Mods (LogicMods) | a `LogicMods` folder | `Windows\Bates\Content\Paks\LogicMods\LogicMods` |
-| Pak Mods | a `'.pak` file | `Windows\Bates\Content\Paks\~mods` |
-| UE4SS Itself | a `dwmapi.dll` file | `Windows\Bates\Binaries\Win64` |
-| UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `Windows\Bates\Binaries\Win64\ue4ss\Mods` |
-| Root / Game Folder Mods | a top-level folder such as `Bates` | the game folder itself (no subfolder) |
+| Mod Type                                     | Archive must contain                     | Installs to                                      |
+| -------------------------------------------- | ---------------------------------------- | ------------------------------------------------ |
+| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `Bates`                                          |
+| Blueprint Mods (LogicMods)                   | a `LogicMods` folder                     | `Windows\Bates\Content\Paks\LogicMods\LogicMods` |
+| Pak Mods                                     | a `'.pak` file                           | `Windows\Bates\Content\Paks\~mods`               |
+| UE4SS Itself                                 | a `dwmapi.dll` file                      | `Windows\Bates\Binaries\Win64`                   |
+| UE4SS Script Mods (Lua)                      | a `.lua` file and a `Scripts` folder     | `Windows\Bates\Binaries\Win64\ue4ss\Mods`        |
+| Root / Game Folder Mods                      | a top-level folder such as `Bates`       | the game folder itself (no subfolder)            |
 
 Paths are relative to the game's install folder.
 
@@ -158,4 +158,3 @@ Installs to: the game folder itself (no subfolder)
 
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

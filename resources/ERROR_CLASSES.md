@@ -9,18 +9,18 @@ Throwing the correct error class changes how Vortex handles failures. Wrong clas
 These ten are what to throw today. Since v2.5.0 Vortex folds them into a single `VortexError`
 class — see the section further down — but they keep working and their constructors are unchanged.
 
-| Class | Constructor | Vortex behavior when thrown |
-| --- | --- | --- |
-| `util.UserCanceled(skipped?)` | `new util.UserCanceled()` | Silently aborts; no error shown. User chose to cancel. |
-| `util.ProcessCanceled(message, extraInfo?)` | `new util.ProcessCanceled('reason')` | Silently aborts with optional log message. Code cancelled it. |
-| `util.DataInvalid(message)` | `new util.DataInvalid('bad data')` | Shows error notification. Input data is malformed. |
-| `util.SetupError(message, component?)` | `new util.SetupError('missing file')` | Shows setup/config error. User action required to fix. |
-| `util.MissingInterpreter(message, url?)` | `new util.MissingInterpreter('msg', url)` | Shows "install interpreter" prompt; url opens download page. |
-| `util.NotFound(what)` | `new util.NotFound('config.ini')` | Shows not-found error. Expected resource absent. |
-| `util.NotSupportedError()` | `new util.NotSupportedError()` | Shows "not supported" error. |
-| `util.ArgumentInvalid(argument)` | `new util.ArgumentInvalid('gameId')` | Shows internal argument error. For programming errors. |
-| `util.CycleError` | `new util.CycleError()` | Circular dependency detected. |
-| `util.GameNotFound` | `new util.GameNotFound()` | Game lookup failed in `GameStoreHelper`. |
+| Class                                       | Constructor                               | Vortex behavior when thrown                                   |
+| ------------------------------------------- | ----------------------------------------- | ------------------------------------------------------------- |
+| `util.UserCanceled(skipped?)`               | `new util.UserCanceled()`                 | Silently aborts; no error shown. User chose to cancel.        |
+| `util.ProcessCanceled(message, extraInfo?)` | `new util.ProcessCanceled('reason')`      | Silently aborts with optional log message. Code cancelled it. |
+| `util.DataInvalid(message)`                 | `new util.DataInvalid('bad data')`        | Shows error notification. Input data is malformed.            |
+| `util.SetupError(message, component?)`      | `new util.SetupError('missing file')`     | Shows setup/config error. User action required to fix.        |
+| `util.MissingInterpreter(message, url?)`    | `new util.MissingInterpreter('msg', url)` | Shows "install interpreter" prompt; url opens download page.  |
+| `util.NotFound(what)`                       | `new util.NotFound('config.ini')`         | Shows not-found error. Expected resource absent.              |
+| `util.NotSupportedError()`                  | `new util.NotSupportedError()`            | Shows "not supported" error.                                  |
+| `util.ArgumentInvalid(argument)`            | `new util.ArgumentInvalid('gameId')`      | Shows internal argument error. For programming errors.        |
+| `util.CycleError`                           | `new util.CycleError()`                   | Circular dependency detected.                                 |
+| `util.GameNotFound`                         | `new util.GameNotFound()`                 | Game lookup failed in `GameStoreHelper`.                      |
 
 ---
 
@@ -50,34 +50,34 @@ All ten classes now `extend VortexError<kind>` and carry `@deprecated Use Vortex
 unchanged. What is new is that a caught error also exposes a discriminated `data` field:
 
 ```js
-const { VortexError } = require('vortex-api');
+const { VortexError } = require("vortex-api");
 
 try {
-  await somethingThatMayFail();
+    await somethingThatMayFail();
 } catch (err) {
-  if (err instanceof VortexError && err.data.kind === 'fs:no-permissions') {
-    // err.data is narrowed to the fs payload: { path, originalCode?, errno?, syscall? }
-    api.showErrorNotification('No write access', err.data.path, { allowReport: false });
-    return;
-  }
-  throw err;
+    if (err instanceof VortexError && err.data.kind === "fs:no-permissions") {
+        // err.data is narrowed to the fs payload: { path, originalCode?, errno?, syscall? }
+        api.showErrorNotification("No write access", err.data.path, { allowReport: false });
+        return;
+    }
+    throw err;
 }
 ```
 
 Kind → class mapping for the ten exported classes:
 
-| Kind | Class | Payload |
-| --- | --- | --- |
-| `user-canceled` | `UserCanceled` | `{ skipped: boolean }` |
-| `process-canceled` | `ProcessCanceled` | `{ extraInfo?: unknown }` |
-| `data-invalid` | `DataInvalid` | `{ field?: string }` |
-| `setup-error` | `SetupError` | `{ component?: string }` |
-| `missing-interpreter` | `MissingInterpreter` | `{ url?: string }` |
-| `not-found` | `NotFound` | `{ resourceType?: string }` |
-| `not-supported` | `NotSupportedError` | `{ feature?: string }` |
-| `argument-invalid` | `ArgumentInvalid` | `{ argument: string }` |
-| `cycle-error` | `CycleError` | `{ cycles: string[][] }` |
-| `game-not-found` | `GameNotFound` | `{ gameId: string }` |
+| Kind                  | Class                | Payload                     |
+| --------------------- | -------------------- | --------------------------- |
+| `user-canceled`       | `UserCanceled`       | `{ skipped: boolean }`      |
+| `process-canceled`    | `ProcessCanceled`    | `{ extraInfo?: unknown }`   |
+| `data-invalid`        | `DataInvalid`        | `{ field?: string }`        |
+| `setup-error`         | `SetupError`         | `{ component?: string }`    |
+| `missing-interpreter` | `MissingInterpreter` | `{ url?: string }`          |
+| `not-found`           | `NotFound`           | `{ resourceType?: string }` |
+| `not-supported`       | `NotSupportedError`  | `{ feature?: string }`      |
+| `argument-invalid`    | `ArgumentInvalid`    | `{ argument: string }`      |
+| `cycle-error`         | `CycleError`         | `{ cycles: string[][] }`    |
+| `game-not-found`      | `GameNotFound`       | `{ gameId: string }`        |
 
 Beyond those, the kind catalog also covers filesystem (`fs:not-found`, `fs:no-permissions`,
 `fs:no-space`, `fs:already-exists`, `fs:not-a-file`, `fs:not-a-directory`,
@@ -107,7 +107,7 @@ Source: `Vortex/src/shared/src/errors/base.ts` (class + `VortexErrorKindMap`),
 throw new util.UserCanceled();
 
 // Code determined the operation cannot proceed (not a user action)
-throw new util.ProcessCanceled('Game not in active mode');
+throw new util.ProcessCanceled("Game not in active mode");
 ```
 
 Both are silent — no crash dialog or error notification. The difference is semantic (who caused it) and may affect logging.
@@ -115,10 +115,10 @@ Both are silent — no crash dialog or error notification. The difference is sem
 ### registerStartHook — cancel a game launch
 
 ```js
-context.registerStartHook(50, 'my-hook', async (call) => {
-  const ready = await checkPrerequisites();
-  if (!ready) throw new util.ProcessCanceled('Prerequisites not met');
-  return call;
+context.registerStartHook(50, "my-hook", async (call) => {
+    const ready = await checkPrerequisites();
+    if (!ready) throw new util.ProcessCanceled("Prerequisites not met");
+    return call;
 });
 ```
 
@@ -132,13 +132,13 @@ Throwing `ProcessCanceled` or `UserCanceled` inside a start hook prevents the ga
 // Inside an install function:
 
 // Non-fatal: mark specific files as unsupported
-instructions.push({ type: 'unsupported', source: filePath });
+instructions.push({ type: "unsupported", source: filePath });
 
 // Fatal: abort the entire installation
-instructions.push({ type: 'error', value: 'Cannot install: missing required file' });
+instructions.push({ type: "error", value: "Cannot install: missing required file" });
 
 // Alternative: throw to abort immediately
-throw new util.DataInvalid('Archive contains no valid mod files');
+throw new util.DataInvalid("Archive contains no valid mod files");
 ```
 
 ---
@@ -148,13 +148,10 @@ throw new util.DataInvalid('Archive contains no valid mod files');
 ```js
 // In IGame.setup() — shown to user as a config problem
 async function setup(discovery) {
-  const execPath = path.join(discovery.path, 'modmanager.exe');
-  if (!await fs.statSilentAsync(execPath).catch(() => false)) {
-    throw new util.SetupError(
-      'ModManager not found. Install it first.',
-      'ModManager'
-    );
-  }
+    const execPath = path.join(discovery.path, "modmanager.exe");
+    if (!(await fs.statSilentAsync(execPath).catch(() => false))) {
+        throw new util.SetupError("ModManager not found. Install it first.", "ModManager");
+    }
 }
 ```
 

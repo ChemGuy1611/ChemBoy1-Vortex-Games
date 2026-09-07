@@ -9,7 +9,7 @@ Date: 2026-05-10
 const { fs, util, actions, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
-const { parseStringPromise } = require('xml2js');
+const { parseStringPromise } = require("xml2js");
 
 //Specify all the information about the game
 const STEAMAPP_ID = "480490";
@@ -23,17 +23,17 @@ const MOD_PATH = path.join("GameSDK", "Precache");
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/711"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Prey_%282017%29";
 
-let execFolder = '';
-let BINARIES_TARGET = '';
-let GAME_VERSION = '';
-let GAME_PATH = '';
-let STAGING_FOLDER = '';
-let DOWNLOAD_FOLDER = '';
-const APPMANIFEST_FILE = 'appxmanifest.xml';
+let execFolder = "";
+let BINARIES_TARGET = "";
+let GAME_VERSION = "";
+let GAME_PATH = "";
+let STAGING_FOLDER = "";
+let DOWNLOAD_FOLDER = "";
+const APPMANIFEST_FILE = "appxmanifest.xml";
 const FIND_FILE = "GameSDK";
 const requiredFiles = [FIND_FILE];
-const STEAM_EXEC= path.join("Binaries", "Danielle", "x64", "Release", "Prey.exe");
-const GOG_EXEC= path.join("Binaries", "Danielle", "x64-GOG", "Release", "Prey.exe");
+const STEAM_EXEC = path.join("Binaries", "Danielle", "x64", "Release", "Prey.exe");
+const GOG_EXEC = path.join("Binaries", "Danielle", "x64-GOG", "Release", "Prey.exe");
 const EPIC_EXEC = path.join("Binaries", "Danielle", "x64-Epic", "Release", "Prey.exe");
 const XBOX_EXEC = path.join("Binaries", "Danielle", "Gaming.Desktop.x64", "Release", "Prey.exe");
 const STEAM_EXEC_FOLDER = "x64";
@@ -60,7 +60,7 @@ const ROOT_NAME = "Root Game Folder";
 
 const BINARIES_ID = "prey2017-binaries";
 const BINARIES_NAME = "Binaries (Engine Injector)";
-const BINARIES_EXTS = ['.exe', '.dll', '.asi', '.addon64'];
+const BINARIES_EXTS = [".exe", ".dll", ".asi", ".addon64"];
 
 const PRIC_ID = `${GAME_ID}-pric`;
 const PRIC_NAME = "Prey Interface Customizer";
@@ -110,41 +110,46 @@ const tools = [
 
 //Convert path placeholders to actual values
 function pathPattern(api, game, pattern) {
-  try{
+  try {
     var _a;
     return template(pattern, {
-      gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
-      documents: util.getVortexPath('documents'),
-      localAppData: util.getVortexPath('localAppData'),
-      appData: util.getVortexPath('appData'),
+      gamePath:
+        (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0
+          ? void 0
+          : _a.path,
+      documents: util.getVortexPath("documents"),
+      localAppData: util.getVortexPath("localAppData"),
+      appData: util.getVortexPath("appData"),
     });
-  }
-  catch(err){
-    api.showErrorNotification('Failed to locate executable. Please launch the game at least once.', err);
+  } catch (err) {
+    api.showErrorNotification(
+      "Failed to locate executable. Please launch the game at least once.",
+      err,
+    );
   }
 }
 
 async function requiresLauncher(gamePath, store) {
-  if (store === 'xbox') {
+  if (store === "xbox") {
     return Promise.resolve({
-        launcher: 'xbox',
-        addInfo: {
-          appId: XBOXAPP_ID,
-          parameters: [{ appExecName: XBOXEXECNAME }],
-        },
+      launcher: "xbox",
+      addInfo: {
+        appId: XBOXAPP_ID,
+        parameters: [{ appExecName: XBOXEXECNAME }],
+      },
     });
   }
-  if (store === 'epic') {
+  if (store === "epic") {
     return Promise.resolve({
-      launcher: 'epic',
+      launcher: "epic",
       addInfo: {
         appId: EPICAPP_ID,
       },
     });
   }
-  if (store === 'steam') {
+  if (store === "steam") {
     return Promise.resolve({
-      launcher: 'steam',
+      launcher: "steam",
     });
   }
   return Promise.resolve(undefined);
@@ -152,40 +157,50 @@ async function requiresLauncher(gamePath, store) {
 
 //Get the executable and add to required files
 function getExecutable(discoveryPath) {
-
   const isCorrectExec = (exec) => {
     try {
       fs.statSync(path.join(discoveryPath, exec));
       return true;
-    }
-    catch {
+    } catch {
       return false;
     }
   };
 
   if (isCorrectExec(XBOX_EXEC)) {
     execFolder = XBOX_EXEC_FOLDER;
-    BINARIES_TARGET = path.join('{gamePath}', path.join("Binaries", "Danielle", execFolder, "Release"));
+    BINARIES_TARGET = path.join(
+      "{gamePath}",
+      path.join("Binaries", "Danielle", execFolder, "Release"),
+    );
     return XBOX_EXEC;
-  };
+  }
 
   if (isCorrectExec(STEAM_EXEC)) {
     execFolder = STEAM_EXEC_FOLDER;
-    BINARIES_TARGET = path.join('{gamePath}', path.join("Binaries", "Danielle", execFolder, "Release"));
+    BINARIES_TARGET = path.join(
+      "{gamePath}",
+      path.join("Binaries", "Danielle", execFolder, "Release"),
+    );
     return STEAM_EXEC;
-  };
+  }
 
   if (isCorrectExec(EPIC_EXEC)) {
     execFolder = EPIC_EXEC_FOLDER;
-    BINARIES_TARGET = path.join('{gamePath}', path.join("Binaries", "Danielle", execFolder, "Release"));
+    BINARIES_TARGET = path.join(
+      "{gamePath}",
+      path.join("Binaries", "Danielle", execFolder, "Release"),
+    );
     return EPIC_EXEC;
-  };
+  }
 
   if (isCorrectExec(GOG_EXEC)) {
     execFolder = GOG_EXEC_FOLDER;
-    BINARIES_TARGET = path.join('{gamePath}', path.join("Binaries", "Danielle", execFolder, "Release"));
+    BINARIES_TARGET = path.join(
+      "{gamePath}",
+      path.join("Binaries", "Danielle", execFolder, "Release"),
+    );
     return GOG_EXEC;
-  };
+  }
 
   return STEAM_EXEC;
 }
@@ -196,36 +211,35 @@ async function setGameVersion(gamePath) {
     try {
       fs.statSync(path.join(gamePath, exec));
       return true;
-    }
-    catch {
+    } catch {
       return false;
     }
   };
 
   if (isCorrectExec(EXEC_XBOX)) {
-    GAME_VERSION = 'xbox';
+    GAME_VERSION = "xbox";
     return GAME_VERSION;
-  };
+  }
   if (isCorrectExec(EXEC_STEAM)) {
-    GAME_VERSION = 'steam';
+    GAME_VERSION = "steam";
     return GAME_VERSION;
-  };
+  }
   if (isCorrectExec(EXEC_GOG)) {
-    GAME_VERSION = 'gog';
+    GAME_VERSION = "gog";
     return GAME_VERSION;
-  };
+  }
   if (isCorrectExec(EXEC_EPIC)) {
-    GAME_VERSION = 'epic';
+    GAME_VERSION = "epic";
     return GAME_VERSION;
-  };
+  }
 }
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
 //Installer test for Fluffy Mod Manager files
 function testPric(files, gameId) {
-  const isMod = files.some(file => path.basename(file).toLowerCase() === PRIC_FILE);
-  let supported = (gameId === GAME_ID) && isMod;
+  const isMod = files.some((file) => path.basename(file).toLowerCase() === PRIC_FILE);
+  let supported = gameId === GAME_ID && isMod;
 
   return Promise.resolve({
     supported,
@@ -235,19 +249,19 @@ function testPric(files, gameId) {
 
 //Installer install Fluffy Mod Manger files
 function installPric(files) {
-  const modFile = files.find(file => path.basename(file).toLowerCase() === PRIC_FILE);
+  const modFile = files.find((file) => path.basename(file).toLowerCase() === PRIC_FILE);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: PRIC_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: PRIC_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) &&
-      (!file.endsWith(path.sep))));
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+  );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -259,8 +273,8 @@ function installPric(files) {
 
 //Installer test for Fluffy Mod Manager files
 function testChair(files, gameId) {
-  const isMod = files.some(file => path.basename(file).toLowerCase() === CHAIR_FILE);
-  let supported = (gameId === GAME_ID) && isMod;
+  const isMod = files.some((file) => path.basename(file).toLowerCase() === CHAIR_FILE);
+  let supported = gameId === GAME_ID && isMod;
 
   return Promise.resolve({
     supported,
@@ -270,19 +284,19 @@ function testChair(files, gameId) {
 
 //Installer install Fluffy Mod Manger files
 function installChair(files) {
-  const modFile = files.find(file => path.basename(file).toLowerCase() === CHAIR_FILE);
+  const modFile = files.find((file) => path.basename(file).toLowerCase() === CHAIR_FILE);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: CHAIR_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: CHAIR_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) &&
-      (!file.endsWith(path.sep))));
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+  );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -294,25 +308,25 @@ function installChair(files) {
 
 //test for zips
 function testChairModZip(files, gameId) {
-  const isMod = files.some(file => path.basename(file).toLowerCase() === CHAIRMOD_FILE);
+  const isMod = files.some((file) => path.basename(file).toLowerCase() === CHAIRMOD_FILE);
   return Promise.resolve({
-    supported: (gameId === GAME_ID) && isMod,
-    requiredFiles: []
+    supported: gameId === GAME_ID && isMod,
+    requiredFiles: [],
   });
 }
 
 //install zips
 async function installChairModZip(files, destinationPath) {
-  const zipFiles = files.filter(file => ['.zip', '.7z', '.rar'].includes(path.extname(file)));
-  const setModTypeInstruction = { type: 'setmodtype', value: CHAIRMOD_ID};
-  // If it's a double zip, we don't need to repack. 
+  const zipFiles = files.filter((file) => [".zip", ".7z", ".rar"].includes(path.extname(file)));
+  const setModTypeInstruction = { type: "setmodtype", value: CHAIRMOD_ID };
+  // If it's a double zip, we don't need to repack.
   if (zipFiles.length > 0) {
-    const instructions = zipFiles.map(file => {
+    const instructions = zipFiles.map((file) => {
       return {
-        type: 'copy',
+        type: "copy",
         source: file,
         destination: path.basename(file),
-      }
+      };
     });
     instructions.push(setModTypeInstruction);
     return Promise.resolve({ instructions });
@@ -320,15 +334,21 @@ async function installChairModZip(files, destinationPath) {
   // Repack the ZIP
   else {
     const szip = new util.SevenZip();
-    const archiveName = path.basename(destinationPath, '.installing') + '.zip';
+    const archiveName = path.basename(destinationPath, ".installing") + ".zip";
     const archivePath = path.join(destinationPath, archiveName);
     const rootRelPaths = await fs.readdirAsync(destinationPath);
-    await szip.add(archivePath, rootRelPaths.map(relPath => path.join(destinationPath, relPath)), { raw: ['-r'] });
-    const instructions = [{
-      type: 'copy',
-      source: archiveName,
-      destination: path.basename(archivePath),
-    }];
+    await szip.add(
+      archivePath,
+      rootRelPaths.map((relPath) => path.join(destinationPath, relPath)),
+      { raw: ["-r"] },
+    );
+    const instructions = [
+      {
+        type: "copy",
+        source: archiveName,
+        destination: path.basename(archivePath),
+      },
+    ];
     instructions.push(setModTypeInstruction);
     return Promise.resolve({ instructions });
   }
@@ -336,8 +356,8 @@ async function installChairModZip(files, destinationPath) {
 
 //Installer test for Chairloader mod files
 function testChairMod(files, gameId) {
-  const isMod = files.some(file => path.basename(file).toLowerCase() === CHAIRMOD_FILE);
-  let supported = (gameId === GAME_ID) && isMod;
+  const isMod = files.some((file) => path.basename(file).toLowerCase() === CHAIRMOD_FILE);
+  let supported = gameId === GAME_ID && isMod;
 
   return Promise.resolve({
     supported,
@@ -347,24 +367,24 @@ function testChairMod(files, gameId) {
 
 //Installer install Chairload mod files
 function installChairMod(files, fileName) {
-  const modFile = files.find(file => path.basename(file).toLowerCase() === CHAIRMOD_FILE);
+  const modFile = files.find((file) => path.basename(file).toLowerCase() === CHAIRMOD_FILE);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: CHAIRMOD_ID};
+  const setModTypeInstruction = { type: "setmodtype", value: CHAIRMOD_ID };
   // Update folder naming
   const MOD_NAME = path.basename(fileName);
-  const MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
+  const MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, "");
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) &&
-      (!file.endsWith(path.sep))));
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+  );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
-      destination: path.join(MOD_FOLDER, file.substr(idx)), 
+      destination: path.join(MOD_FOLDER, file.substr(idx)),
     };
   });
   instructions.push(setModTypeInstruction);
@@ -374,13 +394,19 @@ function installChairMod(files, fileName) {
 //test whether to use mod installer
 function testChairModLegacy(files, gameId) {
   // Make sure we're able to support this mod.
-  let supported = (gameId === GAME_ID) &&
-      (files.find(file => path.extname(file).toLowerCase() === CHAIRMODLEGACY_EXT) !== undefined);
+  let supported =
+    gameId === GAME_ID &&
+    files.find((file) => path.extname(file).toLowerCase() === CHAIRMODLEGACY_EXT) !== undefined;
 
   // Test for a mod installer.
-  if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -392,19 +418,19 @@ function testChairModLegacy(files, gameId) {
 
 //mod installer instructions
 function installChairModLegacy(files) {
-  const modFile = files.find(file => path.extname(file).toLowerCase() === CHAIRMODLEGACY_EXT);
+  const modFile = files.find((file) => path.extname(file).toLowerCase() === CHAIRMODLEGACY_EXT);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: CHAIRMODLEGACY_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: CHAIRMODLEGACY_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) &&
-      (!file.endsWith(path.sep))));
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+  );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -415,8 +441,8 @@ function installChairModLegacy(files) {
 
 //Installer test for Fluffy Mod Manager files
 function testRoot(files, gameId) {
-  const isMod = files.some(file => ROOT_FOLDERS.includes(path.basename(file)));
-  let supported = (gameId === GAME_ID) && isMod;
+  const isMod = files.some((file) => ROOT_FOLDERS.includes(path.basename(file)));
+  let supported = gameId === GAME_ID && isMod;
 
   return Promise.resolve({
     supported,
@@ -426,19 +452,19 @@ function testRoot(files, gameId) {
 
 //Installer install Fluffy Mod Manger files
 function installRoot(files) {
-  const modFile = files.find(file => ROOT_FOLDERS.includes(path.basename(file)));
+  const modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file)));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -449,13 +475,18 @@ function installRoot(files) {
 
 //Fallback installer to Binaries folder
 function testBinaries(files, gameId) {
-  const isMod = files.some(file => BINARIES_EXTS.includes(path.extname(file).toLowerCase()));
-  let supported = (gameId === GAME_ID) && isMod;
+  const isMod = files.some((file) => BINARIES_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = gameId === GAME_ID && isMod;
 
   // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -467,14 +498,12 @@ function testBinaries(files, gameId) {
 
 //Fallback installer to Binaries folder
 function installBinaries(files) {
-  const setModTypeInstruction = { type: 'setmodtype', value: BINARIES_ID };
-  
-  const filtered = files.filter(file =>
-    (!file.endsWith(path.sep))
-  );
-  const instructions = filtered.map(file => {
+  const setModTypeInstruction = { type: "setmodtype", value: BINARIES_ID };
+
+  const filtered = files.filter((file) => !file.endsWith(path.sep));
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: file,
     };
@@ -492,75 +521,86 @@ function setupNotify(api) {
   const MESSAGE = `Chairloader Mod Manager Mod Installation`;
   api.sendNotification({
     id: NOTIF_ID,
-    type: 'warning',
+    type: "warning",
     message: MESSAGE,
     allowSuppress: true,
     actions: [
       {
-        title: 'More',
+        title: "More",
         action: (dismiss) => {
-          api.showDialog('question', MESSAGE, {
-            text: `If you use ${MOD_NAME}, you must install mod zips from the "Mods" folder in the Chairloader GUI.\n`
-                + `This is necessary for the mods to install properly and cannot be automated.\n`
-                + `Select "Install Mod From File" and navigate to the "Mods" folder inside the game folder to locate the zips.\n`
-                + `You must import the zips one at a time. Then you can select which mods to enable and choose "Deploy Mods".\n`
-          }, [
-            { label: 'Acknowledge', action: () => dismiss() },
+          api.showDialog(
+            "question",
+            MESSAGE,
             {
-              label: 'Never Show Again', action: () => {
-                api.suppressNotification(NOTIF_ID);
-                dismiss();
-              }
+              text:
+                `If you use ${MOD_NAME}, you must install mod zips from the "Mods" folder in the Chairloader GUI.\n` +
+                `This is necessary for the mods to install properly and cannot be automated.\n` +
+                `Select "Install Mod From File" and navigate to the "Mods" folder inside the game folder to locate the zips.\n` +
+                `You must import the zips one at a time. Then you can select which mods to enable and choose "Deploy Mods".\n`,
             },
-          ]);
+            [
+              { label: "Acknowledge", action: () => dismiss() },
+              {
+                label: "Never Show Again",
+                action: () => {
+                  api.suppressNotification(NOTIF_ID);
+                  dismiss();
+                },
+              },
+            ],
+          );
         },
       },
     ],
-  });    
+  });
 }
 
 //*
 async function resolveGameVersion(gamePath) {
   GAME_VERSION = await setGameVersion(gamePath);
-  let version = '0.0.0';
-  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+  let version = "0.0.0";
+  if (GAME_VERSION === "xbox") {
+    // use appxmanifest.xml for Xbox version
     try {
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
     } catch (err) {
-      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      log("error", `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
       return Promise.resolve(version);
     }
   }
-  if (GAME_VERSION === 'steam') { // use exe
+  if (GAME_VERSION === "steam") {
+    // use exe
     try {
-      const exeVersion = require('exe-version');
+      const exeVersion = require("exe-version");
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC_STEAM));
-      return Promise.resolve(version); 
+      return Promise.resolve(version);
     } catch (err) {
-      log('error', `Could not read ${EXEC_STEAM} file to get Steam game version: ${err}`);
+      log("error", `Could not read ${EXEC_STEAM} file to get Steam game version: ${err}`);
       return Promise.resolve(version);
     }
   }
-  if (GAME_VERSION === 'gog') { // use exe
+  if (GAME_VERSION === "gog") {
+    // use exe
     try {
-      const exeVersion = require('exe-version');
+      const exeVersion = require("exe-version");
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC_GOG));
-      return Promise.resolve(version); 
+      return Promise.resolve(version);
     } catch (err) {
-      log('error', `Could not read ${EXEC_GOG} file to get Steam game version: ${err}`);
+      log("error", `Could not read ${EXEC_GOG} file to get Steam game version: ${err}`);
       return Promise.resolve(version);
     }
   }
-  if (GAME_VERSION === 'epic') { // use exe
+  if (GAME_VERSION === "epic") {
+    // use exe
     try {
-      const exeVersion = require('exe-version');
+      const exeVersion = require("exe-version");
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC_EPIC));
-      return Promise.resolve(version); 
+      return Promise.resolve(version);
     } catch (err) {
-      log('error', `Could not read ${EXEC_EPIC} file to get Steam game version: ${err}`);
+      log("error", `Could not read ${EXEC_EPIC} file to get Steam game version: ${err}`);
       return Promise.resolve(version);
     }
   }
@@ -596,7 +636,7 @@ function main(context) {
       SteamAPPId: STEAMAPP_ID,
       GogAPPId: GOGAPP_ID,
       EpicAPPId: EPICAPP_ID,
-      XboxAPPId: XBOXAPP_ID
+      XboxAPPId: XBOXAPP_ID,
     },
     requiresCleanup: true,
     queryArgs: gameFinderQuery,
@@ -611,59 +651,107 @@ function main(context) {
   context.registerGame(game);
 
   //register mod types
-  context.registerModType(ROOT_ID, 25, 
+  context.registerModType(
+    ROOT_ID,
+    25,
     (gameId) => {
       var _a;
-      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, ROOT_PATH), 
-    () => Promise.resolve(false), 
-    { name: ROOT_NAME }
+      return (
+        gameId === GAME_ID &&
+        !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+        _a === void 0
+          ? void 0
+          : _a.path)
+      );
+    },
+    (game) => pathPattern(context.api, game, ROOT_PATH),
+    () => Promise.resolve(false),
+    { name: ROOT_NAME },
   );
-  context.registerModType(BINARIES_ID, 30, 
+  context.registerModType(
+    BINARIES_ID,
+    30,
     (gameId) => {
       var _a;
-      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, BINARIES_TARGET), 
-    () => Promise.resolve(false), 
-    { name: BINARIES_NAME }
+      return (
+        gameId === GAME_ID &&
+        !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+        _a === void 0
+          ? void 0
+          : _a.path)
+      );
+    },
+    (game) => pathPattern(context.api, game, BINARIES_TARGET),
+    () => Promise.resolve(false),
+    { name: BINARIES_NAME },
   );
-  context.registerModType(CHAIRMOD_ID, 35, 
+  context.registerModType(
+    CHAIRMOD_ID,
+    35,
     (gameId) => {
       var _a;
-      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, CHAIRMOD_PATH), 
-    () => Promise.resolve(false), 
-    { name: CHAIRMOD_NAME }
+      return (
+        gameId === GAME_ID &&
+        !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+        _a === void 0
+          ? void 0
+          : _a.path)
+      );
+    },
+    (game) => pathPattern(context.api, game, CHAIRMOD_PATH),
+    () => Promise.resolve(false),
+    { name: CHAIRMOD_NAME },
   );
-  context.registerModType(CHAIRMODLEGACY_ID, 35, 
+  context.registerModType(
+    CHAIRMODLEGACY_ID,
+    35,
     (gameId) => {
       var _a;
-      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, CHAIRMODLEGACY_PATH), 
-    () => Promise.resolve(false), 
-    { name: CHAIRMODLEGACY_NAME }
+      return (
+        gameId === GAME_ID &&
+        !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+        _a === void 0
+          ? void 0
+          : _a.path)
+      );
+    },
+    (game) => pathPattern(context.api, game, CHAIRMODLEGACY_PATH),
+    () => Promise.resolve(false),
+    { name: CHAIRMODLEGACY_NAME },
   );
-  context.registerModType(PRIC_ID, 70, 
+  context.registerModType(
+    PRIC_ID,
+    70,
     (gameId) => {
       var _a;
-      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, BINARIES_TARGET), 
-    () => Promise.resolve(false), 
-    { name: PRIC_NAME }
+      return (
+        gameId === GAME_ID &&
+        !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+        _a === void 0
+          ? void 0
+          : _a.path)
+      );
+    },
+    (game) => pathPattern(context.api, game, BINARIES_TARGET),
+    () => Promise.resolve(false),
+    { name: PRIC_NAME },
   );
-  context.registerModType(CHAIR_ID, 75, 
+  context.registerModType(
+    CHAIR_ID,
+    75,
     (gameId) => {
       var _a;
-      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, CHAIR_PATH), 
-    () => Promise.resolve(false), 
-    { name: CHAIR_NAME }
+      return (
+        gameId === GAME_ID &&
+        !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+        _a === void 0
+          ? void 0
+          : _a.path)
+      );
+    },
+    (game) => pathPattern(context.api, game, CHAIR_PATH),
+    () => Promise.resolve(false),
+    { name: CHAIR_NAME },
   );
 
   //register mod installers
@@ -678,7 +766,6 @@ function main(context) {
   context.once(() => {
     const api = context.api;
     // put code here that should be run (once) when Vortex starts up
-    
   });
 
   return true;

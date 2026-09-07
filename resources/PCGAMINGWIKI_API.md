@@ -5,11 +5,11 @@ extension. There is no bespoke REST API — everything useful is reached through
 MediaWiki endpoint, either as structured Cargo rows or as raw page wikitext. Official policy page:
 `https://www.pcgamingwiki.com/wiki/PCGamingWiki:API`.
 
-| Surface | Base URL | Reachable programmatically |
-| --- | --- | --- |
-| MediaWiki API | `https://www.pcgamingwiki.com/w/api.php` | Yes |
-| Redirect API | `https://www.pcgamingwiki.com/api/appid.php`, `/api/gog.php` | No — see below |
-| Article HTML | `https://www.pcgamingwiki.com/wiki/{Page_Title}` | No — Cloudflare challenge |
+| Surface       | Base URL                                                     | Reachable programmatically |
+| ------------- | ------------------------------------------------------------ | -------------------------- |
+| MediaWiki API | `https://www.pcgamingwiki.com/w/api.php`                     | Yes                        |
+| Redirect API  | `https://www.pcgamingwiki.com/api/appid.php`, `/api/gog.php` | No — see below             |
+| Article HTML  | `https://www.pcgamingwiki.com/wiki/{Page_Title}`             | No — Cloudflare challenge  |
 
 All endpoints and behaviours below were verified live (August 2026) against `Doom: The Dark Ages`
 (page ID `195569`) and `Elden Ring` (page ID `146683`).
@@ -26,12 +26,12 @@ PCGamingWiki is a small community-run site and enforces both of these:
 
 Verified User-Agent behaviour against `api.php`:
 
-| User-Agent sent | Result |
-| --- | --- |
-| Descriptive UA with contact info | `200` |
-| `Mozilla/5.0` | `200` (currently tolerated, but it is exactly the kind of generic string the site warns it may block) |
-| `Python-urllib/3.11` | `403 Forbidden` |
-| Any UA, against `/wiki/...` or `/api/*.php` | `403` / Cloudflare interstitial |
+| User-Agent sent                             | Result                                                                                                |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Descriptive UA with contact info            | `200`                                                                                                 |
+| `Mozilla/5.0`                               | `200` (currently tolerated, but it is exactly the kind of generic string the site warns it may block) |
+| `Python-urllib/3.11`                        | `403 Forbidden`                                                                                       |
+| Any UA, against `/wiki/...` or `/api/*.php` | `403` / Cloudflare interstitial                                                                       |
 
 A default-library User-Agent is therefore a hard failure, not a soft one — the header must be set
 explicitly on every request.
@@ -48,7 +48,7 @@ Two surfaces documented on the official API page cannot be used from a script:
 
 Both have API equivalents: use a Cargo query on `Infobox_game.Steam_AppID` / `Infobox_game.GOGcom_ID`
 instead of the redirect API, and the `cargotables` / `cargofields` actions instead of the special
-page. Article URLs are still the right thing to *link a user to* — they render fine in a browser —
+page. Article URLs are still the right thing to _link a user to_ — they render fine in a browser —
 they just cannot be fetched.
 
 ## Finding a Page
@@ -68,7 +68,7 @@ A miss returns a page keyed `-1` carrying a `"missing"` property. First-letter c
 MediaWiki; nothing else is.
 
 **`action=opensearch` — prefix match only.** The official API page describes this as a case
-insensitive search returning all matching results; in practice it matches on a *prefix* of the
+insensitive search returning all matching results; in practice it matches on a _prefix_ of the
 title. `DOOM: The Dark` resolves, `Doom The Dark Ages` (missing the colon) returns no results. Use it
 for autocomplete-style input, not for reconciling a store title.
 
@@ -115,11 +115,11 @@ The `page` parameter is **case sensitive** — resolve the exact title first. Wi
 
 Cargo turns wiki template calls into queryable SQL-ish tables. Three actions:
 
-| Action | Purpose |
-| --- | --- |
-| `action=cargotables` | List every table |
+| Action                       | Purpose                                           |
+| ---------------------------- | ------------------------------------------------- |
+| `action=cargotables`         | List every table                                  |
 | `action=cargofields&table=X` | List a table's fields, types, and list delimiters |
-| `action=cargoquery` | Run the query |
+| `action=cargoquery`          | Run the query                                     |
 
 `cargoquery` parameters: `tables`, `fields`, `where`, `join_on`, `group_by`, `having`, `order_by`,
 `limit` (default 50, max 500), `offset`.
@@ -150,16 +150,16 @@ VR_support, Video, XDG, _pageData, assigneeNotes
 
 The main game record. Selected fields (`List (,)` unless noted):
 
-| Field | Type | Notes |
-| --- | --- | --- |
-| `Steam_AppID` | List of String | All related AppIDs, base game first |
-| `GOGcom_ID` | List of String | `null` when the game is not on GOG |
-| `Engines` | List of Page | e.g. `Engine:id Tech 8`, `Engine:Unreal Engine 5` |
-| `Developers`, `Publishers` | List of Page | `Company:FromSoftware` form |
-| `Released` | List (;) of Date | |
-| `Available_on` | List of String | OS list (`Windows`, `OS X`, `Linux`) |
-| `Cover_URL` | URL | Direct image URL on `images.pcgamingwiki.com` |
-| `Release_State`, `Series`, `Genres`, `Modes`, `Wikipedia`, `License` | | |
+| Field                                                                | Type             | Notes                                             |
+| -------------------------------------------------------------------- | ---------------- | ------------------------------------------------- |
+| `Steam_AppID`                                                        | List of String   | All related AppIDs, base game first               |
+| `GOGcom_ID`                                                          | List of String   | `null` when the game is not on GOG                |
+| `Engines`                                                            | List of Page     | e.g. `Engine:id Tech 8`, `Engine:Unreal Engine 5` |
+| `Developers`, `Publishers`                                           | List of Page     | `Company:FromSoftware` form                       |
+| `Released`                                                           | List (;) of Date |                                                   |
+| `Available_on`                                                       | List of String   | OS list (`Windows`, `OS X`, `Linux`)              |
+| `Cover_URL`                                                          | URL              | Direct image URL on `images.pcgamingwiki.com`     |
+| `Release_State`, `Series`, `Genres`, `Modes`, `Wikipedia`, `License` |                  |                                                   |
 
 There are no Epic or Microsoft Store ID columns here — see the next section.
 
@@ -176,7 +176,7 @@ Per-store DRM and subscription data, **not** store product IDs. Field families:
 - Subscription/entitlement flags as plain strings: `Xbox_Game_Pass`, `Xbox_Play_Anywhere`,
   `EA_Play`, `EA_Play_Pro`, `Ubisoft_Plus_Premium`, `Apple_Arcade`.
 
-Store *identifiers* (the Epic slug, the Microsoft Store product ID, the Humble slug) are not stored
+Store _identifiers_ (the Epic slug, the Microsoft Store product ID, the Humble slug) are not stored
 in Cargo at all. Getting them requires parsing the page wikitext.
 
 ### Other tables worth knowing
@@ -205,24 +205,24 @@ Positional parameters: `1` store alias, `2` store-specific ID or slug, `3` DRM, 
 Parameter 1 is an alias, not the canonical store name — matching on the display name from
 `Available_from` will miss rows. Alias -> product URL, from `Template:Availability/store`:
 
-| Aliases (case-insensitive) | Product URL |
-| --- | --- |
-| `steam` | `https://store.steampowered.com/app/{id}/` (also `steam-sub`, `steam-bundle` -> `/sub/`, `/bundle/`) |
-| `gog`, `gog.com` | `https://gog.com/game/{slug}` |
-| `egs`, `epic`, `epic games store` | `https://www.epicgames.com/p/{slug}` (`store.epicgames.com/en-US/p/{slug}` also resolves) |
-| `ms store`, `microsoft store` | `https://apps.microsoft.com/detail/{id}` |
-| `ea app`, `ea desktop`, `origin` | `https://www.ea.com/games/{slug}` |
-| `uplay`, `ubisoft`, `ubisoft store` | `https://store.ubi.com/{slug}.html` |
-| `battle.net` | `https://battle.net/shop/product/{slug}` |
-| `bethesda.net` | `https://bethesda.net/en/store/product/{slug}` |
-| `humble`, `humble store` | `https://www.humblebundle.com/store/{slug}` |
-| `gmg` | `https://www.greenmangaming.com/games/{slug}` |
-| `gamesplanet` | `https://gamesplanet.com/game/{id}` |
-| `itch.io` | parameter 2 is the full URL |
-| `oculus`, `meta`, `meta store` | `https://www.meta.com/experiences/pcvr/{id}/` |
-| `macapp`, `mac app store` | `https://apps.apple.com/app/{id}` |
-| `viveport`, `zoom`, `zoom platform`, `discord`, `twitch`, `gamersgate`, `amazon*` | see the template |
-| `retail`, `developer`, `publisher`, `official` | no product ID; the last three take a full URL |
+| Aliases (case-insensitive)                                                        | Product URL                                                                                          |
+| --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `steam`                                                                           | `https://store.steampowered.com/app/{id}/` (also `steam-sub`, `steam-bundle` -> `/sub/`, `/bundle/`) |
+| `gog`, `gog.com`                                                                  | `https://gog.com/game/{slug}`                                                                        |
+| `egs`, `epic`, `epic games store`                                                 | `https://www.epicgames.com/p/{slug}` (`store.epicgames.com/en-US/p/{slug}` also resolves)            |
+| `ms store`, `microsoft store`                                                     | `https://apps.microsoft.com/detail/{id}`                                                             |
+| `ea app`, `ea desktop`, `origin`                                                  | `https://www.ea.com/games/{slug}`                                                                    |
+| `uplay`, `ubisoft`, `ubisoft store`                                               | `https://store.ubi.com/{slug}.html`                                                                  |
+| `battle.net`                                                                      | `https://battle.net/shop/product/{slug}`                                                             |
+| `bethesda.net`                                                                    | `https://bethesda.net/en/store/product/{slug}`                                                       |
+| `humble`, `humble store`                                                          | `https://www.humblebundle.com/store/{slug}`                                                          |
+| `gmg`                                                                             | `https://www.greenmangaming.com/games/{slug}`                                                        |
+| `gamesplanet`                                                                     | `https://gamesplanet.com/game/{id}`                                                                  |
+| `itch.io`                                                                         | parameter 2 is the full URL                                                                          |
+| `oculus`, `meta`, `meta store`                                                    | `https://www.meta.com/experiences/pcvr/{id}/`                                                        |
+| `macapp`, `mac app store`                                                         | `https://apps.apple.com/app/{id}`                                                                    |
+| `viveport`, `zoom`, `zoom platform`, `discord`, `twitch`, `gamersgate`, `amazon*` | see the template                                                                                     |
+| `retail`, `developer`, `publisher`, `official`                                    | no product ID; the last three take a full URL                                                        |
 
 The wiki's own links carry affiliate parameters (`?epic_affiliate=pcgamingwiki`, `af.gog.com`,
 `?tag=pcgamingwik0e-20`). Build clean URLs from the ID rather than copying the rendered link.

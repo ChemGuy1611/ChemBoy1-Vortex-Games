@@ -7,9 +7,9 @@ Date: 2026-08-03
 ////////////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require('vortex-api');
-const path = require('path');
-const template = require('string-template');
+const { actions, fs, util, selectors, log } = require("vortex-api");
+const path = require("path");
+const template = require("string-template");
 //const winapi = require('winapi-bindings');
 
 //Specify all the information about the game
@@ -19,83 +19,79 @@ const GOGAPP_ID = "1946916562";
 const XBOXAPP_ID = null;
 const XBOXEXECNAME = null;
 const GAME_ID = "diplomacyisnotanoption";
-const GAME_NAME = "Diplomacy is Not an Option"
-const GAME_NAME_SHORT = "Diplomacy INAO"
+const GAME_NAME = "Diplomacy is Not an Option";
+const GAME_NAME_SHORT = "Diplomacy INAO";
 const EXEC = "Diplomacy is Not an Option.exe";
 
 const ROOT_ID = `${GAME_ID}-root`;
 
 const BEPMOD_ID = `${GAME_ID}-bepmods`;
-const BEPMOD_PATH = path.join("BepinEx", "plugins")
+const BEPMOD_PATH = path.join("BepinEx", "plugins");
 const modFileExt = ".dll";
 
 const LOADER_ID = `${GAME_ID}-modloader`;
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1070"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Diplomacy_Is_Not_an_Option";
-let STAGING_FOLDER = ''; //Vortex staging folder path
-let DOWNLOAD_FOLDER = ''; //Vortex download folder path
-let GAME_PATH = ''; //Game installation path
-let GAME_VERSION = ''; //Game version
-const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
-const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+let STAGING_FOLDER = ""; //Vortex staging folder path
+let DOWNLOAD_FOLDER = ""; //Vortex download folder path
+let GAME_PATH = ""; //Game installation path
+let GAME_VERSION = ""; //Game version
+const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
 const spec = {
-  "game": {
-    "id": GAME_ID,
-    "name": GAME_NAME,
-    "shortName": GAME_NAME_SHORT,
-    "executable": EXEC,
-    "logo": `${GAME_ID}.jpg`,
-    "mergeMods": true,
-    "modPath": ".",
-    "modPathIsRelative": true,
-    "requiredFiles": [
-      EXEC
-    ],
-    "details": {
-      "steamAppId": +STEAMAPP_ID,
-      "gogAppId": GOGAPP_ID,
-      "epicAppId": EPICAPP_ID,
-      "xboxAppId": XBOXAPP_ID,
-      "ignoreConflicts": IGNORE_CONFLICTS,
-      "ignoreDeploy": IGNORE_DEPLOY,
+  game: {
+    id: GAME_ID,
+    name: GAME_NAME,
+    shortName: GAME_NAME_SHORT,
+    executable: EXEC,
+    logo: `${GAME_ID}.jpg`,
+    mergeMods: true,
+    modPath: ".",
+    modPathIsRelative: true,
+    requiredFiles: [EXEC],
+    details: {
+      steamAppId: +STEAMAPP_ID,
+      gogAppId: GOGAPP_ID,
+      epicAppId: EPICAPP_ID,
+      xboxAppId: XBOXAPP_ID,
+      ignoreConflicts: IGNORE_CONFLICTS,
+      ignoreDeploy: IGNORE_DEPLOY,
     },
-    "environment": {
-      "SteamAPPId": STEAMAPP_ID,
-      "GogAPPId": GOGAPP_ID,
-      "EpicAPPId": EPICAPP_ID,
-      "XboxAPPId": XBOXAPP_ID
-    }
+    environment: {
+      SteamAPPId: STEAMAPP_ID,
+      GogAPPId: GOGAPP_ID,
+      EpicAPPId: EPICAPP_ID,
+      XboxAPPId: XBOXAPP_ID,
+    },
   },
-  "modTypes": [
+  modTypes: [
     {
-      "id": ROOT_ID,
-      "name": "Root Game Folder",
-      "priority": "high",
-      "targetPath": "{gamePath}"
+      id: ROOT_ID,
+      name: "Root Game Folder",
+      priority: "high",
+      targetPath: "{gamePath}",
     },
     {
-      "id": BEPMOD_ID,
-      "name": "BepinEx Mod",
-      "priority": "high",
-      "targetPath": path.join('{gamePath}', BEPMOD_PATH)
+      id: BEPMOD_ID,
+      name: "BepinEx Mod",
+      priority: "high",
+      targetPath: path.join("{gamePath}", BEPMOD_PATH),
     },
   ],
-  "discovery": {
-    "ids": [
+  discovery: {
+    ids: [
       STEAMAPP_ID,
       EPICAPP_ID,
       GOGAPP_ID,
       //XBOXAPP_ID
     ],
-    "names": []
-  }
+    names: [],
+  },
 };
 
 //3rd party tools and launchers
-const tools = [
-  
-];
+const tools = [];
 
 //Set mod type priorities
 function isDir(folder, file) {
@@ -107,8 +103,7 @@ function statCheckSync(gamePath, file) {
   try {
     fs.statSync(path.join(gamePath, file));
     return true;
-  }
-  catch {
+  } catch {
     return false;
   }
 }
@@ -117,8 +112,7 @@ async function statCheckAsync(gamePath, file) {
   try {
     await fs.statAsync(path.join(gamePath, file));
     return true;
-  }
-  catch {
+  } catch {
     return false;
   }
 }
@@ -130,31 +124,38 @@ async function getAllFiles(dirPath) {
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
       const stats = await fs.statAsync(fullPath);
-      if (stats.isDirectory()) { // Recursively get files from subdirectories
+      if (stats.isDirectory()) {
+        // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
         results = results.concat(subDirFiles);
-      } else { // Add file to results
+      } else {
+        // Add file to results
         results.push(fullPath);
       }
     }
   } catch (err) {
-    log('warn', `Error reading directory ${dirPath}: ${err.message}`);
+    log("warn", `Error reading directory ${dirPath}: ${err.message}`);
   }
   return results;
 }
 
-const getDiscoveryPath = (api) => { //get the game's discovered path
+const getDiscoveryPath = (api) => {
+  //get the game's discovered path
   const state = api.getState();
   const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
 
 async function purge(api) {
-  return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));
+  return new Promise((resolve, reject) =>
+    api.events.emit("purge-mods", true, (err) => (err ? reject(err) : resolve())),
+  );
 }
 
 async function deploy(api) {
-  return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
+  return new Promise((resolve, reject) =>
+    api.events.emit("deploy-mods", (err) => (err ? reject(err) : resolve())),
+  );
 }
 
 function modTypePriority(priority) {
@@ -168,18 +169,22 @@ function modTypePriority(priority) {
 function pathPattern(api, game, pattern) {
   var _a;
   return template(pattern, {
-    gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
-    documents: util.getVortexPath('documents'),
-    localAppData: util.getVortexPath('localAppData'),
-    appData: util.getVortexPath('appData'),
+    gamePath:
+      (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0
+        ? void 0
+        : _a.path,
+    documents: util.getVortexPath("documents"),
+    localAppData: util.getVortexPath("localAppData"),
+    appData: util.getVortexPath("appData"),
   });
 }
 
 //Set the mod path for the game
 function makeGetModPath(api, gameSpec) {
-  return () => gameSpec.game.modPathIsRelative !== false
-    ? gameSpec.game.modPath || '.'
-    : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
+  return () =>
+    gameSpec.game.modPathIsRelative !== false
+      ? gameSpec.game.modPath || "."
+      : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
 }
 
 //Find game information by API utility
@@ -188,7 +193,7 @@ async function queryGame() {
   return game;
 }
 
-//Find game install location 
+//Find game install location
 async function queryPath() {
   let game = await queryGame();
   return game.gamePath;
@@ -242,7 +247,7 @@ async function setup(discovery, api, gameSpec) {
 //Let Vortex know about the game
 function applyGame(context, gameSpec) {
   //Require BepinEx Mod Installer extension
-  context.requireExtension('modtype-bepinex');
+  context.requireExtension("modtype-bepinex");
 
   //register game
   const game = {
@@ -259,11 +264,23 @@ function applyGame(context, gameSpec) {
 
   //register mod types
   (gameSpec.modTypes || []).forEach((type, idx) => {
-    context.registerModType(type.id, modTypePriority(type.priority) + idx, (gameId) => {
-      var _a;
-      return (gameId === gameSpec.game.id)
-        && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
+    context.registerModType(
+      type.id,
+      modTypePriority(type.priority) + idx,
+      (gameId) => {
+        var _a;
+        return (
+          gameId === gameSpec.game.id &&
+          !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+          _a === void 0
+            ? void 0
+            : _a.path)
+        );
+      },
+      (game) => pathPattern(context.api, game, type.targetPath),
+      () => Promise.resolve(false),
+      { name: type.name },
+    );
   });
 
   //register mod installers
@@ -283,35 +300,67 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
-    util.opn(PCGAMINGWIKI_URL).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
-    const openPath = path.join(__dirname, 'CHANGELOG.md');
-    util.opn(openPath).catch(() => null);
-    }, () => {
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open PCGamingWiki Page",
+    () => {
+      util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
-    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    util.opn(DOWNLOAD_FOLDER).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "View Changelog",
+    () => {
+      const openPath = path.join(__dirname, "CHANGELOG.md");
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Submit Bug Report",
+    () => {
+      util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Downloads Folder",
+    () => {
+      util.opn(DOWNLOAD_FOLDER).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
 }
 
 //main function
@@ -326,15 +375,16 @@ function main(context) {
         gameId: GAME_ID,
         autoDownloadBepInEx: true,
         ///*
-        customPackDownloader: () => { // <--- This will download from a Nexus Mods page
+        customPackDownloader: () => {
+          // <--- This will download from a Nexus Mods page
           return {
             gameId: GAME_ID, // The game extension's domain Id/gameId as defined when registering the extension
             domainId: GAME_ID, // Nexus Mods site domain for the BepinEx package's mod page
-            modId: '1', // Nexus Mods site page number for the BepinEx package's mod page
-            fileId: '1', // We extracted this one by hovering over the download buttons on the site
-            archiveName: 'BepInEx-5.4.23.2_with_ConfigurationManager.zip', // What we want to call the archive of the downloaded pack.
+            modId: "1", // Nexus Mods site page number for the BepinEx package's mod page
+            fileId: "1", // We extracted this one by hovering over the download buttons on the site
+            archiveName: "BepInEx-5.4.23.2_with_ConfigurationManager.zip", // What we want to call the archive of the downloaded pack.
             allowAutoInstall: true, // Whether we want this to be installed automatically - should always be true
-          }
+          };
         },
         //*/
         //architecture: 'x64', // <--- This will download version for 64-bit games

@@ -6,12 +6,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| Manager | a file or folder named `sottrmodmanager.exe` | - |
-| Trmodmanager | a file or folder named `trreboottools.modmanager.exe` | - |
-| Binaries | a file with one of these extensions: `.dll`, `.exe`, `.tiger`, `.asi` or `.addon64` | - |
-| Modmanagermod | a file with one of these extensions: `.tr11dtp`, `.tr11material`, `.tr11modeldata`, `.t11script`, `.t11shaderlib`, `.tr11sound`, `.dds`, `.tr11objectref`, `.tr11dtp` or `.tr11anim` | `Mods` |
+| Mod Type      | Archive must contain                                                                                                                                                                 | Installs to |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------- |
+| Manager       | a file or folder named `sottrmodmanager.exe`                                                                                                                                         | -           |
+| Trmodmanager  | a file or folder named `trreboottools.modmanager.exe`                                                                                                                                | -           |
+| Binaries      | a file with one of these extensions: `.dll`, `.exe`, `.tiger`, `.asi` or `.addon64`                                                                                                  | -           |
+| Modmanagermod | a file with one of these extensions: `.tr11dtp`, `.tr11material`, `.tr11modeldata`, `.t11script`, `.t11shaderlib`, `.tr11sound`, `.dds`, `.tr11objectref`, `.tr11dtp` or `.tr11anim` | `Mods`      |
 
 Paths are relative to the game's install folder.
 
@@ -37,4 +37,3 @@ Installs to: `Mods`
 
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

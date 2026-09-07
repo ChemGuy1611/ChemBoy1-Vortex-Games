@@ -2,20 +2,20 @@
 
 ## Overview
 
-| Property | Value |
-| --- | --- |
-| Name | AC III Remastered Vortex Extension |
-| Engine / Structure | Ubisoft AnvilToolkit |
-| Author | ChemBoy1 |
+| Property           | Value                              |
+| ------------------ | ---------------------------------- |
+| Name               | AC III Remastered Vortex Extension |
+| Engine / Structure | Ubisoft AnvilToolkit               |
+| Author             | ChemBoy1                           |
 
 ## Key Identifiers
 
-| Property | Value |
-| --- | --- |
-| Game ID | `assassinscreediiiremastered` |
-| Executable | `ACIII.exe` |
-| Extension Page | [https://www.nexusmods.com/site/mods/979](https://www.nexusmods.com/site/mods/979) |
-| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_III_Remastered](https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_III_Remastered) |
+| Property       | Value                                                                                                                                      |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Game ID        | `assassinscreediiiremastered`                                                                                                              |
+| Executable     | `ACIII.exe`                                                                                                                                |
+| Extension Page | [https://www.nexusmods.com/site/mods/979](https://www.nexusmods.com/site/mods/979)                                                         |
+| PCGamingWiki   | [https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_III_Remastered](https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_III_Remastered) |
 
 ## Supported Stores
 
@@ -27,10 +27,10 @@
 
 Mod types define where each category of mod gets deployed:
 
-| Name | ID | Priority | Target Path |
-| --- | --- | --- | --- |
-| Binaries / Root Game Folder | `assassinscreediii-binaries` | high | `{gamePath}` |
-| AnvilToolKit | `assassinscreediiiremastered-atk` | low | `{gamePath}` |
+| Name                        | ID                                | Priority | Target Path  |
+| --------------------------- | --------------------------------- | -------- | ------------ |
+| Binaries / Root Game Folder | `assassinscreediii-binaries`      | high     | `{gamePath}` |
+| AnvilToolKit                | `assassinscreediiiremastered-atk` | low      | `{gamePath}` |
 
 ## Registered Tools
 
@@ -52,4 +52,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
-

@@ -2,23 +2,23 @@
 
 ## Overview
 
-| Property | Value |
-| --- | --- |
-| Name | CODE VEIN II Vortex Extension |
-| Engine / Structure | Unreal Engine Game |
-| Author | ChemBoy1 |
+| Property           | Value                         |
+| ------------------ | ----------------------------- |
+| Name               | CODE VEIN II Vortex Extension |
+| Engine / Structure | Unreal Engine Game            |
+| Author             | ChemBoy1                      |
 
 ## Key Identifiers
 
-| Property | Value |
-| --- | --- |
-| Game ID | `codevein2` |
-| Executable | `CodeVein2.exe` |
-| Executable (Xbox) | `gamelaunchhelper.exe` |
-| Executable (GOG) | `CodeVein2.exe` |
-| Executable (Demo) | `CodeVein2.exe` |
-| Extension Page | [https://www.nexusmods.com/site/mods/1646](https://www.nexusmods.com/site/mods/1646) |
-| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Code_Vein_II](https://www.pcgamingwiki.com/wiki/Code_Vein_II) |
+| Property          | Value                                                                                            |
+| ----------------- | ------------------------------------------------------------------------------------------------ |
+| Game ID           | `codevein2`                                                                                      |
+| Executable        | `CodeVein2.exe`                                                                                  |
+| Executable (Xbox) | `gamelaunchhelper.exe`                                                                           |
+| Executable (GOG)  | `CodeVein2.exe`                                                                                  |
+| Executable (Demo) | `CodeVein2.exe`                                                                                  |
+| Extension Page    | [https://www.nexusmods.com/site/mods/1646](https://www.nexusmods.com/site/mods/1646)             |
+| PCGamingWiki      | [https://www.pcgamingwiki.com/wiki/Code_Vein_II](https://www.pcgamingwiki.com/wiki/Code_Vein_II) |
 
 ## Supported Stores
 
@@ -26,57 +26,57 @@
 
 ## Feature Flags
 
-| Flag | Value | Description |
-| --- | --- | --- |
-| `hasXbox` | `false` | toggle for Xbox version logic. |
-| `multiExe` | `false` | toggle for multiple executables (Epic/GOG/Demo don't match Steam) |
-| `hasModKit` | `false` | toggle for UE ModKit mod support |
-| `preferHardlinks` | `true` | set true to perform partition check for Config/Save modtypes so that hardlinks available to more users |
-| `autoDownloadUe4ss` | `false` | toggle for auto downloading UE4SS |
-| `SIGBYPASS_REQUIRED` | `false` | set true if there are .sig files in the Paks folder |
-| `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
-| `PAKMOD_LOADORDER` | `true` | set to false if you don't want loadOrder. If must be in "Paks" root, also disable loadOrder. |
-| `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
-| `CHECK_CONFIG` | `false` | boolean to check if game, staging folder, and config and save folders are on the same drive |
-| `CHECK_SAVE` | `false` | secondary same as above (if save and config are in different locations) |
+| Flag                 | Value   | Description                                                                                            |
+| -------------------- | ------- | ------------------------------------------------------------------------------------------------------ |
+| `hasXbox`            | `false` | toggle for Xbox version logic.                                                                         |
+| `multiExe`           | `false` | toggle for multiple executables (Epic/GOG/Demo don't match Steam)                                      |
+| `hasModKit`          | `false` | toggle for UE ModKit mod support                                                                       |
+| `preferHardlinks`    | `true`  | set true to perform partition check for Config/Save modtypes so that hardlinks available to more users |
+| `autoDownloadUe4ss`  | `false` | toggle for auto downloading UE4SS                                                                      |
+| `SIGBYPASS_REQUIRED` | `false` | set true if there are .sig files in the Paks folder                                                    |
+| `IO_STORE`           | `true`  | true if the Paks folder contains .ucas and .utoc files                                                 |
+| `PAKMOD_LOADORDER`   | `true`  | set to false if you don't want loadOrder. If must be in "Paks" root, also disable loadOrder.           |
+| `SYM_LINKS`          | `true`  | true if symlink deployment is enabled for this game                                                    |
+| `CHECK_CONFIG`       | `false` | boolean to check if game, staging folder, and config and save folders are on the same drive            |
+| `CHECK_SAVE`         | `false` | secondary same as above (if save and config are in different locations)                                |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
-| Name | ID | Priority | Target Path |
-| --- | --- | --- | --- |
-| UE4SS Script-LogicMod Combo | `codevein2-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `codevein2-logicmods` | high | `{gamePath}/CodeVein2/Content/Paks` |
-| Paks (no "~mods") | `codevein2-pakalt` | high | `{gamePath}/CodeVein2/Content/Paks` |
-| Root Game Folder | `codevein2-root` | high | `{gamePath}` |
-| Root Sub-Folders | `codevein2-rootsubfolders` | high | `{gamePath}/CodeVein2` |
-| RHFF Framework | `codevein2-rhff` | high | `{gamePath}/CodeVein2/Binaries/Win64` |
-| UE Sortable Pak Mod | `codevein2-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `codevein2-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `codevein2-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `codevein2-binaries` | 54 | `?` |
-| UE4SS | `codevein2-ue4ss` | 56 | `?` |
-| Config (Local AppData) | `codevein2-config` | 62 | `?` |
-| Saves (Local AppData) | `codevein2-save` | 64 | `?` |
+| Name                        | ID                         | Priority | Target Path                           |
+| --------------------------- | -------------------------- | -------- | ------------------------------------- |
+| UE4SS Script-LogicMod Combo | `codevein2-ue4sscombo`     | high     | `{gamePath}`                          |
+| UE4SS LogicMods (Blueprint) | `codevein2-logicmods`      | high     | `{gamePath}/CodeVein2/Content/Paks`   |
+| Paks (no "~mods")           | `codevein2-pakalt`         | high     | `{gamePath}/CodeVein2/Content/Paks`   |
+| Root Game Folder            | `codevein2-root`           | high     | `{gamePath}`                          |
+| Root Sub-Folders            | `codevein2-rootsubfolders` | high     | `{gamePath}/CodeVein2`                |
+| RHFF Framework              | `codevein2-rhff`           | high     | `{gamePath}/CodeVein2/Binaries/Win64` |
+| UE Sortable Pak Mod         | `codevein2-uesortablepak`  | 25       | `?`                                   |
+| UE4SS Script Mod            | `codevein2-scripts`        | 50       | `?`                                   |
+| UE4SS DLL Mod               | `codevein2-ue4ssdll`       | 52       | `?`                                   |
+| Binaries (Engine Injector)  | `codevein2-binaries`       | 54       | `?`                                   |
+| UE4SS                       | `codevein2-ue4ss`          | 56       | `?`                                   |
+| Config (Local AppData)      | `codevein2-config`         | 62       | `?`                                   |
+| Saves (Local AppData)       | `codevein2-save`           | 64       | `?`                                   |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID | Priority |
-| --- | --- |
-| `ue5-pak-installer` | 29 |
-| `codevein2-rhff` | 26 |
-| `codevein2-ue4sscombo` | 27 |
-| `codevein2-logicmods` | 28 |
-| `codevein2-ue4ss` | 31 |
-| `codevein2-scripts` | 35 |
-| `codevein2-ue4ssdll` | 37 |
-| `codevein2-root` | 39 |
-| `codevein2-config` | 41 |
-| `codevein2-save` | 43 |
-| `codevein2-binaries` | 49 |
+| Installer ID           | Priority |
+| ---------------------- | -------- |
+| `ue5-pak-installer`    | 29       |
+| `codevein2-rhff`       | 26       |
+| `codevein2-ue4sscombo` | 27       |
+| `codevein2-logicmods`  | 28       |
+| `codevein2-ue4ss`      | 31       |
+| `codevein2-scripts`    | 35       |
+| `codevein2-ue4ssdll`   | 37       |
+| `codevein2-root`       | 39       |
+| `codevein2-config`     | 41       |
+| `codevein2-save`       | 43       |
+| `codevein2-binaries`   | 49       |
 
 ## Toolbar Actions
 
@@ -97,8 +97,8 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-| --- | --- | --- |
-| UE4SS | — | — |
+| ---------- | ------- | ------- |
+| UE4SS      | —       | —       |
 
 ## Special Features
 
@@ -108,4 +108,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-

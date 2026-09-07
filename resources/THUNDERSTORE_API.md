@@ -1,19 +1,19 @@
 # Thunderstore API
 
 Thunderstore (`https://thunderstore.io`) hosts mods for hundreds of Unity and non-Unity games, one
-*community* per game. Its read APIs are public JSON — no API key, no session, no bot protection
+_community_ per game. Its read APIs are public JSON — no API key, no session, no bot protection
 (a plain HTTP client with a default user agent works, unlike ModDB). Authentication is only needed
 for write operations (rating, package submission, wiki edits, media upload).
 
 Swagger UI: `https://thunderstore.io/api/docs/`. Machine-readable spec:
 `https://thunderstore.io/api/docs/?format=openapi`.
 
-| Family | Base path | Status |
-| --- | --- | --- |
-| v1 | `/api/v1/…`, `/c/{community}/api/v1/…` | Original public API; several endpoints marked deprecated but still served |
-| experimental | `/api/experimental/…` | Despite the name, the most complete and widely used surface |
-| cyberstorm | `/api/cyberstorm/…` | Powers the current site frontend; lightest payloads, paginated, filterable |
-| ecosystem schema | `/api/experimental/schema/dev/latest/` | Single JSON describing every community, game, store ID, and mod loader |
+| Family           | Base path                              | Status                                                                     |
+| ---------------- | -------------------------------------- | -------------------------------------------------------------------------- |
+| v1               | `/api/v1/…`, `/c/{community}/api/v1/…` | Original public API; several endpoints marked deprecated but still served  |
+| experimental     | `/api/experimental/…`                  | Despite the name, the most complete and widely used surface                |
+| cyberstorm       | `/api/cyberstorm/…`                    | Powers the current site frontend; lightest payloads, paginated, filterable |
+| ecosystem schema | `/api/experimental/schema/dev/latest/` | Single JSON describing every community, game, store ID, and mod loader     |
 
 All examples below were verified live on 2026-08-04 against the Hades II community
 (`hades-ii`) and the `Hell2Modding-Hell2Modding` / `SGG_Modding-ENVY` packages.
@@ -27,19 +27,19 @@ All examples below were verified live on 2026-08-04 against the Hades II communi
 - **Package** — a mod, identified by `{namespace}/{name}`. `full_name` = `Namespace-Name`.
 - **Version** — semver-ish string. A version's `full_name` = `Namespace-Name-Version`
   (e.g. `SGG_Modding-ENVY-1.2.0`), which is also the format used inside `dependencies`.
-- Packages are global to Thunderstore and *listed* into one or more communities; the same package
+- Packages are global to Thunderstore and _listed_ into one or more communities; the same package
   can appear under several games.
 
 ## Reading package data
 
 ### Community metadata
 
-| Endpoint | Returns |
-| --- | --- |
-| `GET /api/experimental/community/` | Cursor-paginated list of communities: `identifier`, `name`, `discord_url`, `wiki_url`, `require_package_listing_approval` |
-| `GET /api/cyberstorm/community/{community}/` | Richer record: display `name`, image URLs, `total_download_count`, `total_package_count`, `has_mod_manager_support`, `is_listed` |
-| `GET /api/experimental/community/{community}/category/` | Category list (`name`, `slug`) |
-| `GET /api/cyberstorm/community/{community}/filters/` | Categories with numeric `id`s plus `sections` (each with a `uuid`) — the values the listing endpoint's filter parameters expect |
+| Endpoint                                                | Returns                                                                                                                          |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/experimental/community/`                      | Cursor-paginated list of communities: `identifier`, `name`, `discord_url`, `wiki_url`, `require_package_listing_approval`        |
+| `GET /api/cyberstorm/community/{community}/`            | Richer record: display `name`, image URLs, `total_download_count`, `total_package_count`, `has_mod_manager_support`, `is_listed` |
+| `GET /api/experimental/community/{community}/category/` | Category list (`name`, `slug`)                                                                                                   |
+| `GET /api/cyberstorm/community/{community}/filters/`    | Categories with numeric `id`s plus `sections` (each with a `uuid`) — the values the listing endpoint's filter parameters expect  |
 
 ```text
 https://thunderstore.io/api/cyberstorm/community/hades-ii/
@@ -49,33 +49,33 @@ https://thunderstore.io/api/cyberstorm/community/hades-ii/
 
 ### Package detail
 
-| Endpoint | Notes |
-| --- | --- |
-| `GET /api/experimental/package/{namespace}/{name}/` | Package plus its `latest` version object and `community_listings[]` (`community`, `categories`, `review_status`) |
-| `GET /api/experimental/package/{namespace}/{name}/{version}/` | One version |
-| `GET /api/experimental/package/{namespace}/{name}/{version}/readme/` | `{"markdown": "…"}` |
-| `GET /api/experimental/package/{namespace}/{name}/{version}/changelog/` | `{"markdown": null}` when the package ships no changelog |
-| `GET /api/cyberstorm/listing/{community}/{namespace}/{name}/` | Listing view: adds `install_url`, `download_url`, `latest_version_number`, `version_count`, `dependency_count`, `dependant_count`, `size`, `team` |
-| `GET /api/cyberstorm/package/{namespace}/{name}/versions/` | Every version: `version_number`, `datetime_created`, `download_count`, `download_url`, `install_url` |
-| `GET /api/v1/package-metrics/{namespace}/{name}/` | `{"downloads", "rating_score", "latest_version"}` |
-| `GET /api/v1/package-metrics/{namespace}/{name}/{version}/` | `{"downloads"}` |
+| Endpoint                                                                | Notes                                                                                                                                             |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/experimental/package/{namespace}/{name}/`                     | Package plus its `latest` version object and `community_listings[]` (`community`, `categories`, `review_status`)                                  |
+| `GET /api/experimental/package/{namespace}/{name}/{version}/`           | One version                                                                                                                                       |
+| `GET /api/experimental/package/{namespace}/{name}/{version}/readme/`    | `{"markdown": "…"}`                                                                                                                               |
+| `GET /api/experimental/package/{namespace}/{name}/{version}/changelog/` | `{"markdown": null}` when the package ships no changelog                                                                                          |
+| `GET /api/cyberstorm/listing/{community}/{namespace}/{name}/`           | Listing view: adds `install_url`, `download_url`, `latest_version_number`, `version_count`, `dependency_count`, `dependant_count`, `size`, `team` |
+| `GET /api/cyberstorm/package/{namespace}/{name}/versions/`              | Every version: `version_number`, `datetime_created`, `download_count`, `download_url`, `install_url`                                              |
+| `GET /api/v1/package-metrics/{namespace}/{name}/`                       | `{"downloads", "rating_score", "latest_version"}`                                                                                                 |
+| `GET /api/v1/package-metrics/{namespace}/{name}/{version}/`             | `{"downloads"}`                                                                                                                                   |
 
 Version objects (experimental) look like:
 
 ```json
 {
-  "namespace": "Hell2Modding",
-  "name": "Hell2Modding",
-  "version_number": "1.0.107",
-  "full_name": "Hell2Modding-Hell2Modding-1.0.107",
-  "description": "Lua Mod Loader for Hades 2",
-  "icon": "https://gcdn.thunderstore.io/live/repository/icons/Hell2Modding-Hell2Modding-1.0.107.png",
-  "dependencies": [],
-  "download_url": "https://thunderstore.io/package/download/Hell2Modding/Hell2Modding/1.0.107/",
-  "downloads": 3461,
-  "date_created": "2026-07-21T17:19:47.133777Z",
-  "website_url": "https://github.com/SGG-Modding/Hell2Modding/",
-  "is_active": true
+    "namespace": "Hell2Modding",
+    "name": "Hell2Modding",
+    "version_number": "1.0.107",
+    "full_name": "Hell2Modding-Hell2Modding-1.0.107",
+    "description": "Lua Mod Loader for Hades 2",
+    "icon": "https://gcdn.thunderstore.io/live/repository/icons/Hell2Modding-Hell2Modding-1.0.107.png",
+    "dependencies": [],
+    "download_url": "https://thunderstore.io/package/download/Hell2Modding/Hell2Modding/1.0.107/",
+    "downloads": 3461,
+    "date_created": "2026-07-21T17:19:47.133777Z",
+    "website_url": "https://github.com/SGG-Modding/Hell2Modding/",
+    "is_active": true
 }
 ```
 
@@ -90,15 +90,15 @@ The v1 listing shape adds `uuid4` and `file_size` per version, which the experim
 `GET /api/cyberstorm/listing/{community}/` is the practical way to search a community. It is
 page-paginated (`count`, `next`, `previous`, `results`) and cheap — roughly 11 KB per page.
 
-| Parameter | Values |
-| --- | --- |
-| `q` | Free-text search over package name/description |
-| `ordering` | `last-updated` (default), `newest`, `most-downloaded`, `top-rated` |
-| `page` | 1-based page number |
-| `deprecated` | `True` / `False` (default `False`) |
-| `nsfw` | `True` / `False` (default `False`) |
-| `includedCategories` / `excludedCategories` | Category slug or id |
-| `section` | Section **UUID** from `/api/cyberstorm/community/{community}/filters/` — a slug is rejected with `{"section":["Must be a valid UUID."]}` |
+| Parameter                                   | Values                                                                                                                                   |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `q`                                         | Free-text search over package name/description                                                                                           |
+| `ordering`                                  | `last-updated` (default), `newest`, `most-downloaded`, `top-rated`                                                                       |
+| `page`                                      | 1-based page number                                                                                                                      |
+| `deprecated`                                | `True` / `False` (default `False`)                                                                                                       |
+| `nsfw`                                      | `True` / `False` (default `False`)                                                                                                       |
+| `includedCategories` / `excludedCategories` | Category slug or id                                                                                                                      |
+| `section`                                   | Section **UUID** from `/api/cyberstorm/community/{community}/filters/` — a slug is rejected with `{"section":["Must be a valid UUID."]}` |
 
 `GET /api/cyberstorm/listing/{community}/{namespace}/` narrows the same listing to one team.
 
@@ -111,23 +111,23 @@ Each result carries `namespace`, `name`, `description`, `icon_url`, `download_co
 These exist for mod managers that mirror the whole catalogue. They are large — do not call them
 from a per-mod code path.
 
-| Endpoint | Payload |
-| --- | --- |
-| `GET /c/{community}/api/v1/package/` | Every package in the community with **every** version inlined. 1.2 MB for the 205-package Hades II community; several hundred MB for the largest communities |
-| `GET /api/v1/package/` | Same, across all communities |
-| `GET /api/experimental/package-index/` | 302 redirect to a gzipped newline-delimited JSON dump on `cache.thunderstore.io` (~79 MB compressed). Each line: `{namespace, name, version_number, file_format, file_size, dependencies}` |
-| `GET /c/{community}/api/v1/package-listing-index/` | 302 to a gzipped JSON array of blob URLs; each blob holds a chunk of the community's listing data. This is the index r2modman consumes |
+| Endpoint                                           | Payload                                                                                                                                                                                    |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET /c/{community}/api/v1/package/`               | Every package in the community with **every** version inlined. 1.2 MB for the 205-package Hades II community; several hundred MB for the largest communities                               |
+| `GET /api/v1/package/`                             | Same, across all communities                                                                                                                                                               |
+| `GET /api/experimental/package-index/`             | 302 redirect to a gzipped newline-delimited JSON dump on `cache.thunderstore.io` (~79 MB compressed). Each line: `{namespace, name, version_number, file_format, file_size, dependencies}` |
+| `GET /c/{community}/api/v1/package-listing-index/` | 302 to a gzipped JSON array of blob URLs; each blob holds a chunk of the community's listing data. This is the index r2modman consumes                                                     |
 
 Both index endpoints redirect cross-host, so follow redirects explicitly (`curl -L`, or
 `redirect: 'follow'`).
 
 ## Downloading
 
-| URL | Behavior |
-| --- | --- |
-| `https://thunderstore.io/package/download/{namespace}/{name}/{version}/` | 302 → `https://gcdn.thunderstore.io/live/repository/packages/{Namespace}-{Name}-{Version}.zip` |
-| `ror2mm://v1/install/thunderstore.io/{namespace}/{name}/{version}/` | Mod-manager install link (`install_url` in cyberstorm responses); the protocol Vortex's Thunderstore handler extension registers |
-| `https://thunderstore.io/c/{community}/p/{namespace}/{name}/` | Human-readable package page |
+| URL                                                                      | Behavior                                                                                                                         |
+| ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| `https://thunderstore.io/package/download/{namespace}/{name}/{version}/` | 302 → `https://gcdn.thunderstore.io/live/repository/packages/{Namespace}-{Name}-{Version}.zip`                                   |
+| `ror2mm://v1/install/thunderstore.io/{namespace}/{name}/{version}/`      | Mod-manager install link (`install_url` in cyberstorm responses); the protocol Vortex's Thunderstore handler extension registers |
+| `https://thunderstore.io/c/{community}/p/{namespace}/{name}/`            | Human-readable package page                                                                                                      |
 
 Every package is a zip with a fixed root layout:
 
@@ -141,19 +141,19 @@ CHANGELOG.md      (optional)
 
 ```json
 {
-  "namespace": "SGG_Modding",
-  "name": "ENVY",
-  "description": "A plugin to allow ReturnOfModding plugins greater control of their environment.",
-  "version_number": "1.2.0",
-  "dependencies": ["LuaENVY-ENVY-1.2.0"],
-  "website_url": "https://github.com/SGG-Modding/ENVY",
-  "FullName": "SGG_Modding-ENVY"
+    "namespace": "SGG_Modding",
+    "name": "ENVY",
+    "description": "A plugin to allow ReturnOfModding plugins greater control of their environment.",
+    "version_number": "1.2.0",
+    "dependencies": ["LuaENVY-ENVY-1.2.0"],
+    "website_url": "https://github.com/SGG-Modding/ENVY",
+    "FullName": "SGG_Modding-ENVY"
 }
 ```
 
 `manifest.json` at the archive root is a reliable `testSupported` signal for a Thunderstore
 package, and `dependencies[]` (version-pinned `Namespace-Name-Version` strings) is what a
-dependency-resolving installer walks. Note that dependency entries name a *specific* version;
+dependency-resolving installer walks. Note that dependency entries name a _specific_ version;
 resolving to the newest instead requires a second lookup per dependency.
 
 ## Ecosystem schema
@@ -196,7 +196,7 @@ A `games` entry contains everything needed to bind a community to a Vortex game 
   maps closely onto Vortex mod types.
 - `modloaderPackages[]` lists `{ packageId, rootFolder, loader }` for every loader package, e.g.
   `{"packageId": "bbepis-BepInExPack", "rootFolder": "BepInExPack", "loader": "bepinex"}`. This is
-  how a manager recognises that a downloaded package *is* the loader and must be installed to the
+  how a manager recognises that a downloaded package _is_ the loader and must be installed to the
   game root rather than the mods folder.
 - Vortex's official Thunderstore handler extension fetches exactly this URL (cached for 24 hours)
   as its `thunderstoreGames.json`.
@@ -221,18 +221,18 @@ Not needed for read-only extension work, listed for completeness. All require a 
 `util.jsonRequest<T>(url)` from `vortex-api` covers every read call — no extra dependency:
 
 ```js
-const { util } = require('vortex-api');
+const { util } = require("vortex-api");
 
 // Resolve the current version + direct download URL for a Thunderstore package.
 async function getLatestThunderstorePackage(community, namespace, name) {
-  const url = `https://thunderstore.io/api/cyberstorm/listing/${community}/${namespace}/${name}/`;
-  const listing = await util.jsonRequest(url);
-  return {
-    version: listing.latest_version_number,   // '1.0.107'
-    downloadUrl: listing.download_url,        // .../package/download/ns/name/1.0.107/
-    fileSize: listing.size,
-    updated: listing.version_created,
-  };
+    const url = `https://thunderstore.io/api/cyberstorm/listing/${community}/${namespace}/${name}/`;
+    const listing = await util.jsonRequest(url);
+    return {
+        version: listing.latest_version_number, // '1.0.107'
+        downloadUrl: listing.download_url, // .../package/download/ns/name/1.0.107/
+        fileSize: listing.size,
+        updated: listing.version_created,
+    };
 }
 ```
 
@@ -269,7 +269,7 @@ newer version is published.
 It is the least configurable of the five, because Thunderstore removes the two things the others
 have to work around: versions are plain semver on the package record, and every version has a
 predictable direct download URL. There is no archive-name pattern to write, no version-resolve
-strategy to choose, no renderer-fetch route, and a hardcoded fallback *version* is enough to build a
+strategy to choose, no renderer-fetch route, and a hardcoded fallback _version_ is enough to build a
 working download URL by itself. Externals are `semver` and `vortex-api` only.
 
 As with the other downloader modules, the canonical copy lives in `resources/downloader/` and each
@@ -282,17 +282,17 @@ be propagated manually. Consumer wiring snippets live in
 The entry points take an array of requirement objects (conventionally a `TS_REQUIREMENTS` constant
 in `index.js`), each describing one Thunderstore-hosted requirement:
 
-| Field | Required | Meaning |
-| --- | --- | --- |
-| `tsNamespace` | yes | Team/uploader, the first path segment of the package page (`SGG_Modding`). |
-| `tsName` | yes | Package name, the second path segment (`ENVY`). |
-| `modType` | yes | Vortex mod type id the requirement installs as; also the installed-detection key (any mod with this type counts as installed). |
-| `userFacingName` | yes | Display name in notifications, on the download, and in the mod list (stamped as the mod's `customFileName`). |
-| `tsCommunity` | optional | Community slug (`hades-ii`). With it, the community listing endpoint is used, which also reports size, deprecation, and resolved dependencies. Without it — or when the package is not listed in that community — resolution falls back to the community-independent package endpoint. |
-| `fallbackVersion` | optional | Version used to build a download URL when the API is unreachable, and recorded as the version attribute. Without it, an unreachable API fails the install with a manual-download error. |
-| `versionAttribute` | optional | Mod attribute tracking the installed version for update checks. Default `'thunderstoreVersion'`. |
-| `pageUrl` | optional | Manual-download page opened on install failure. Default is the community package page when `tsCommunity` is set, the bare package page otherwise. |
-| `autoInstall` | optional | `false` -> never install this requirement unattended; only an explicit user action (a toolbar button) installs it. Default installs a missing requirement automatically when the update check runs. |
+| Field              | Required | Meaning                                                                                                                                                                                                                                                                                |
+| ------------------ | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tsNamespace`      | yes      | Team/uploader, the first path segment of the package page (`SGG_Modding`).                                                                                                                                                                                                             |
+| `tsName`           | yes      | Package name, the second path segment (`ENVY`).                                                                                                                                                                                                                                        |
+| `modType`          | yes      | Vortex mod type id the requirement installs as; also the installed-detection key (any mod with this type counts as installed).                                                                                                                                                         |
+| `userFacingName`   | yes      | Display name in notifications, on the download, and in the mod list (stamped as the mod's `customFileName`).                                                                                                                                                                           |
+| `tsCommunity`      | optional | Community slug (`hades-ii`). With it, the community listing endpoint is used, which also reports size, deprecation, and resolved dependencies. Without it — or when the package is not listed in that community — resolution falls back to the community-independent package endpoint. |
+| `fallbackVersion`  | optional | Version used to build a download URL when the API is unreachable, and recorded as the version attribute. Without it, an unreachable API fails the install with a manual-download error.                                                                                                |
+| `versionAttribute` | optional | Mod attribute tracking the installed version for update checks. Default `'thunderstoreVersion'`.                                                                                                                                                                                       |
+| `pageUrl`          | optional | Manual-download page opened on install failure. Default is the community package page when `tsCommunity` is set, the bare package page otherwise.                                                                                                                                      |
+| `autoInstall`      | optional | `false` -> never install this requirement unattended; only an explicit user action (a toolbar button) installs it. Default installs a missing requirement automatically when the update check runs.                                                                                    |
 
 | `pinVersion` | optional | Hold the requirement at this package version instead of tracking the newest. Needs no companion field — every version has a predictable download URL. See **Version pinning** below. |
 
@@ -305,22 +305,22 @@ exactly one artifact, always a `.zip`.
 
 While the tracked `thunderstoreVersion` equals the pin, `checkForThunderstoreUpdate` returns **before making any request** — a pinned requirement costs nothing against the API. The comparison is exact-string first, falling back to coerced-semver equality so `1.2` and `1.2.0` match. A pinned install skips the API too, building the download URL directly.
 
-When the installed version is not the pinned one — including when nothing is installed — the module installs the *pinned* version, never the newest. The notification reads "pinned version available" rather than "update available", because the user may be *ahead* of the pin and installing it is then a deliberate downgrade. `autoInstall` stays orthogonal: the pin says which version, `autoInstall` says whether anything installs unattended. Since a pinned install makes no API call, a pinned requirement also logs no dependency list — pin each dependency's own requirement entry alongside it.
+When the installed version is not the pinned one — including when nothing is installed — the module installs the _pinned_ version, never the newest. The notification reads "pinned version available" rather than "update available", because the user may be _ahead_ of the pin and installing it is then a deliberate downgrade. `autoInstall` stays orthogonal: the pin says which version, `autoInstall` says whether anything installs unattended. Since a pinned install makes no API call, a pinned requirement also logs no dependency list — pin each dependency's own requirement entry alongside it.
 
 The same field name and behavior exist in all five downloader modules; `DOWNLOADER.md` has the cross-module table.
 
 ### Exports
 
-| Export | Role |
-| --- | --- |
-| `downloadThunderstore(api, gameSpec, requirements, check = true)` | Download + install each requirement in the array (sequentially), then enable it, set its mod type, and record the version attributes. With `check = true` (default) it is a no-op for requirements already installed; pass `false` to (re)install/update. Main entry point — call in `setup()`. |
-| `checkForThunderstoreUpdate(api, gameSpec, requirements)` | For each requirement: install it if it is missing (unless `autoInstall: false`), otherwise compare the tracked version against the current one; raise a warning notification with a Download action when newer. Call from a `check-mods-version` handler and after the `setup()` download. |
-| `downloadThunderstoreRequirement(api, gameSpec, requirement, check = true)` | Single-requirement variant of `downloadThunderstore`. |
-| `checkForThunderstoreUpdateRequirement(api, gameSpec, requirement)` | Single-requirement variant of `checkForThunderstoreUpdate`. |
-| `isThunderstoreRequirementInstalled(api, gameId, requirement)` | Whether any mod with the requirement's mod type exists. |
-| `getLatestThunderstorePackage(requirement)` | `{ version, downloadUrl, dependencies, isDeprecated, size, updated }`, or `null` if the API is unreachable and the package cannot be resolved. |
-| `getLatestThunderstoreVersion(requirement, pkg)` | Current version string, or `null`. Resolves the package itself when `pkg` is omitted. |
-| `getThunderstoreDependencies(requirement, pkg)` | The current version's dependencies as `Namespace-Name-Version` strings (empty array when unavailable). |
+| Export                                                                      | Role                                                                                                                                                                                                                                                                                            |
+| --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `downloadThunderstore(api, gameSpec, requirements, check = true)`           | Download + install each requirement in the array (sequentially), then enable it, set its mod type, and record the version attributes. With `check = true` (default) it is a no-op for requirements already installed; pass `false` to (re)install/update. Main entry point — call in `setup()`. |
+| `checkForThunderstoreUpdate(api, gameSpec, requirements)`                   | For each requirement: install it if it is missing (unless `autoInstall: false`), otherwise compare the tracked version against the current one; raise a warning notification with a Download action when newer. Call from a `check-mods-version` handler and after the `setup()` download.      |
+| `downloadThunderstoreRequirement(api, gameSpec, requirement, check = true)` | Single-requirement variant of `downloadThunderstore`.                                                                                                                                                                                                                                           |
+| `checkForThunderstoreUpdateRequirement(api, gameSpec, requirement)`         | Single-requirement variant of `checkForThunderstoreUpdate`.                                                                                                                                                                                                                                     |
+| `isThunderstoreRequirementInstalled(api, gameId, requirement)`              | Whether any mod with the requirement's mod type exists.                                                                                                                                                                                                                                         |
+| `getLatestThunderstorePackage(requirement)`                                 | `{ version, downloadUrl, dependencies, isDeprecated, size, updated }`, or `null` if the API is unreachable and the package cannot be resolved.                                                                                                                                                  |
+| `getLatestThunderstoreVersion(requirement, pkg)`                            | Current version string, or `null`. Resolves the package itself when `pkg` is omitted.                                                                                                                                                                                                           |
+| `getThunderstoreDependencies(requirement, pkg)`                             | The current version's dependencies as `Namespace-Name-Version` strings (empty array when unavailable).                                                                                                                                                                                          |
 
 ### Behaviors worth knowing
 
@@ -397,7 +397,7 @@ Thunderstore-specific pieces of that module:
 - No documented rate limit and no rate-limit response headers, but the site is Cloudflare-fronted —
   keep request volume low and cache community-wide payloads rather than re-fetching per mod.
 - "Experimental" is a misnomer: those endpoints are the stable ones. Several endpoints marked
-  *deprecated* in the OpenAPI spec (`/api/experimental/package/`, `/api/v1/package/{uuid4}/`, the
+  _deprecated_ in the OpenAPI spec (`/api/experimental/package/`, `/api/v1/package/{uuid4}/`, the
   `frontend/*` group) still respond — do not build on them.
 - Cyberstorm endpoints back the live site and are not covered by the published OpenAPI spec, so
   their shapes can change without a spec revision. Tolerate missing fields.

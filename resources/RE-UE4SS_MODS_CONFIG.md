@@ -36,16 +36,16 @@ Located at `assets/Mods/mods.json` in the RE-UE4SS repo. Structurally mirrors `m
 ```json
 [
     { "mod_name": "ConsoleEnablerMod", "mod_enabled": true },
-    { "mod_name": "ActorDumperMod",    "mod_enabled": false }
+    { "mod_name": "ActorDumperMod", "mod_enabled": false }
 ]
 ```
 
 In the RE-UE4SS repo itself it is used by `tools/buildscripts/release.py` during release packaging:
 
-| Function | What it does |
-| --- | --- |
-| `modify_mods_txt()` | Rewrites `mods.txt`: injects C++ mod entries, strips dev-only mods, flips disabled states |
-| `modify_mods_json()` | Mirrors those same changes into `mods.json` to keep the two files in sync |
+| Function             | What it does                                                                              |
+| -------------------- | ----------------------------------------------------------------------------------------- |
+| `modify_mods_txt()`  | Rewrites `mods.txt`: injects C++ mod entries, strips dev-only mods, flips disabled states |
+| `modify_mods_json()` | Mirrors those same changes into `mods.json` to keep the two files in sync                 |
 
 `mods.json` is never read by the UE4SS C++ runtime.
 
@@ -63,14 +63,14 @@ Vortex extensions should use `mods.json` as an **intermediary** and then convert
 **Conversion snippet (JS):**
 
 ```js
-const { fs, path } = require('vortex-api');
+const { fs, path } = require("vortex-api");
 
 async function writeModysTxt(modsJsonPath) {
-  const raw = await fs.readFileAsync(modsJsonPath, 'utf8');
-  const entries = JSON.parse(raw);
-  const lines = entries.map(e => `${e.mod_name} : ${e.mod_enabled ? 1 : 0}`);
-  const txtPath = path.join(path.dirname(modsJsonPath), 'mods.txt');
-  await fs.writeFileAsync(txtPath, lines.join('\n') + '\n');
+    const raw = await fs.readFileAsync(modsJsonPath, "utf8");
+    const entries = JSON.parse(raw);
+    const lines = entries.map((e) => `${e.mod_name} : ${e.mod_enabled ? 1 : 0}`);
+    const txtPath = path.join(path.dirname(modsJsonPath), "mods.txt");
+    await fs.writeFileAsync(txtPath, lines.join("\n") + "\n");
 }
 ```
 
@@ -78,29 +78,29 @@ async function writeModysTxt(modsJsonPath) {
 
 ## Default bundled mods (from `assets/Mods/mods.json`)
 
-| Mod | Enabled by default |
-| --- | --- |
-| CheatManagerEnablerMod | true |
-| ActorDumperMod | false |
-| ConsoleCommandsMod | true |
-| ConsoleEnablerMod | true |
-| SplitScreenMod | false |
-| LineTraceMod | true |
-| BPML_GenericFunctions | true |
-| BPModLoaderMod | true |
-| jsbLuaProfilerMod | false |
-| Keybinds | true |
+| Mod                    | Enabled by default |
+| ---------------------- | ------------------ |
+| CheatManagerEnablerMod | true               |
+| ActorDumperMod         | false              |
+| ConsoleCommandsMod     | true               |
+| ConsoleEnablerMod      | true               |
+| SplitScreenMod         | false              |
+| LineTraceMod           | true               |
+| BPML_GenericFunctions  | true               |
+| BPModLoaderMod         | true               |
+| jsbLuaProfilerMod      | false              |
+| Keybinds               | true               |
 
 ---
 
 ## Key source locations (RE-UE4SS repo)
 
-| File | Role |
-| --- | --- |
-| `assets/Mods/mods.txt` | Runtime config shipped with releases |
-| `assets/Mods/mods.json` | Build-time source of truth |
-| `UE4SS/src/UE4SSProgram.cpp` | `start_mods()`, `start_lua_mods()`, `start_cpp_mods()` |
-| `tools/buildscripts/release.py` | `modify_mods_txt()` + `modify_mods_json()` |
+| File                            | Role                                                   |
+| ------------------------------- | ------------------------------------------------------ |
+| `assets/Mods/mods.txt`          | Runtime config shipped with releases                   |
+| `assets/Mods/mods.json`         | Build-time source of truth                             |
+| `UE4SS/src/UE4SSProgram.cpp`    | `start_mods()`, `start_lua_mods()`, `start_cpp_mods()` |
+| `tools/buildscripts/release.py` | `modify_mods_txt()` + `modify_mods_json()`             |
 
 ---
 

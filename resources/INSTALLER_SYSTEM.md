@@ -14,12 +14,12 @@ The built-in FOMOD installer is registered at a fixed high priority. Custom inst
 context.registerInstaller(id, priority, testFn, installFn);
 ```
 
-| Param | Type | Notes |
-| --- | --- | --- |
-| `id` | `string` | Unique installer id; conventionally a `GAME_ID`-prefixed constant. |
-| `priority` | `number` | Lower = tested first. Fallbacks always use 49. See [Priority Reference](#priority-ordering-reference). |
-| `testFn` | `(files, gameId) => Promise<{ supported, requiredFiles }>` | Synchronous test wrapped in `Promise.resolve`. |
-| `installFn` | `(files, destinationPath, gameId, progress) => Promise<{ instructions }>` | May be sync or async. May be a wrapper closure to inject `api`. |
+| Param       | Type                                                                      | Notes                                                                                                  |
+| ----------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `id`        | `string`                                                                  | Unique installer id; conventionally a `GAME_ID`-prefixed constant.                                     |
+| `priority`  | `number`                                                                  | Lower = tested first. Fallbacks always use 49. See [Priority Reference](#priority-ordering-reference). |
+| `testFn`    | `(files, gameId) => Promise<{ supported, requiredFiles }>`                | Synchronous test wrapped in `Promise.resolve`.                                                         |
+| `installFn` | `(files, destinationPath, gameId, progress) => Promise<{ instructions }>` | May be sync or async. May be a wrapper closure to inject `api`.                                        |
 
 Call `registerInstaller` inside `applyGame()`, after `context.registerGame()`.
 
@@ -52,10 +52,15 @@ function testFoo(files, gameId) {
 Every `testSupported` function must include this check. If `moduleconfig.xml` lives inside a `fomod` folder, set `supported = false` to let the built-in FOMOD installer handle it.
 
 ```js
-if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
-  supported = false;
+if (
+    supported &&
+    files.find(
+        (file) =>
+            path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+            path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+) {
+    supported = false;
 }
 ```
 
@@ -82,7 +87,7 @@ The second parameter is frequently mistaken for the archive file name. It is not
 the archive before any installer runs and passes the extraction directory, `<staging>/<modId>.installing`.
 Source: `InstallManager.ts`, which calls `installer.install(fileList, tempPath, gameId, progress)`.
 
-That makes the archive's *contents* readable inside `install`, not only its file names. Anything that
+That makes the archive's _contents_ readable inside `install`, not only its file names. Anything that
 needs to look inside a file to decide what to install — a bundled manifest, a config, an embedded
 version string, an image to show the user — can read it with `path.join(destinationPath, relativePath)`.
 Vortex's own FOMOD wizard works this way, rendering option images with
@@ -102,7 +107,8 @@ Two rules when reading from it:
 
 ```js
 context.registerInstaller(MOD_ID, 35, testMod, (files, destinationPath) =>
-  installMod(context.api, files, destinationPath));
+    installMod(context.api, files, destinationPath),
+);
 ```
 
 ---
@@ -142,18 +148,18 @@ type InstructionType =
 
 ## Instruction Type Reference
 
-| Type | Purpose | Relevant Fields |
-| --- | --- | --- |
-| `copy` | Copy a file from archive to staging folder | `source`, `destination` |
-| `mkdir` | Create a directory | `path` |
-| `submodule` | Install a submodule or framework | `submoduleType` |
-| `generatefile` | Write generated content as a new file | `destination`, `data` (string or Buffer) |
-| `iniedit` | Patch a key-value pair in an INI file | `path`, `section`, `key`, `value` |
-| `unsupported` | Mark the mod as unsupported | - |
-| `attribute` | Set a metadata attribute on the mod | `key`, `value` |
-| `setmodtype` | Override the mod type after installation | `value` (mod type id string) |
-| `error` | Abort installation with an error message | `value` (message string) |
-| `rule` | Add a dependency or conflict rule | `rule` (IRule from modmeta-db) |
+| Type           | Purpose                                    | Relevant Fields                          |
+| -------------- | ------------------------------------------ | ---------------------------------------- |
+| `copy`         | Copy a file from archive to staging folder | `source`, `destination`                  |
+| `mkdir`        | Create a directory                         | `path`                                   |
+| `submodule`    | Install a submodule or framework           | `submoduleType`                          |
+| `generatefile` | Write generated content as a new file      | `destination`, `data` (string or Buffer) |
+| `iniedit`      | Patch a key-value pair in an INI file      | `path`, `section`, `key`, `value`        |
+| `unsupported`  | Mark the mod as unsupported                | -                                        |
+| `attribute`    | Set a metadata attribute on the mod        | `key`, `value`                           |
+| `setmodtype`   | Override the mod type after installation   | `value` (mod type id string)             |
+| `error`        | Abort installation with an error message   | `value` (message string)                 |
+| `rule`         | Add a dependency or conflict rule          | `rule` (IRule from modmeta-db)           |
 
 ---
 
@@ -211,33 +217,38 @@ Detects mods by file extension array `MOD_EXTS`. Path stripping uses `idx` to re
 
 ```js
 function testMod(files, gameId) {
-  const isMod = files.some(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && isMod;
-  if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
-    supported = false;
-  }
-  return Promise.resolve({ supported, requiredFiles: [] });
+    const isMod = files.some((file) => MOD_EXTS.includes(path.extname(file).toLowerCase()));
+    let supported = gameId === spec.game.id && isMod;
+    if (
+        supported &&
+        files.find(
+            (file) =>
+                path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+                path.basename(path.dirname(file)).toLowerCase() === "fomod",
+        )
+    ) {
+        supported = false;
+    }
+    return Promise.resolve({ supported, requiredFiles: [] });
 }
 
 function installMod(files) {
-  const modFile = files.find(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
-  const rootPrefix = (rootPath === '.') ? '' : rootPath + path.sep;
-  const setModTypeInstruction = { type: 'setmodtype', value: MOD_ID };
+    const modFile = files.find((file) => MOD_EXTS.includes(path.extname(file).toLowerCase()));
+    const idx = modFile.indexOf(path.basename(modFile));
+    const rootPath = path.dirname(modFile);
+    const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
+    const setModTypeInstruction = { type: "setmodtype", value: MOD_ID };
 
-  const filtered = files.filter(file =>
-    ((!file.endsWith(path.sep)) && file.startsWith(rootPrefix))
-  );
-  const instructions = filtered.map(file => ({
-    type: 'copy',
-    source: file,
-    destination: path.join(file.substr(idx)),
-  }));
-  instructions.push(setModTypeInstruction);
-  return Promise.resolve({ instructions });
+    const filtered = files.filter(
+        (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
+    );
+    const instructions = filtered.map((file) => ({
+        type: "copy",
+        source: file,
+        destination: path.join(file.substr(idx)),
+    }));
+    instructions.push(setModTypeInstruction);
+    return Promise.resolve({ instructions });
 }
 ```
 
@@ -247,10 +258,10 @@ Detects a specific loader file (e.g. `dinput8.dll`, `winmm.dll`).
 
 ```js
 function testLoader(files, gameId) {
-  const isMod = files.some(file => path.basename(file) === LOADER_FILE);
-  let supported = (gameId === spec.game.id) && isMod;
-  // ... FOMOD check ...
-  return Promise.resolve({ supported, requiredFiles: [] });
+    const isMod = files.some((file) => path.basename(file) === LOADER_FILE);
+    let supported = gameId === spec.game.id && isMod;
+    // ... FOMOD check ...
+    return Promise.resolve({ supported, requiredFiles: [] });
 }
 ```
 
@@ -260,29 +271,37 @@ Detects archives containing known root or sub-root folders (e.g. `Data`, `Plugin
 
 ```js
 function testRoot(files, gameId) {
-  const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map(s => s.toLowerCase());
-  const ROOTSUB_FOLDERS_LOWER = ROOTSUB_FOLDERS.map(s => s.toLowerCase());
-  const isMod = files.some(file => ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
-  const isSub = files.some(file => ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && (isMod || isSub);
-  // ... FOMOD check ...
-  return Promise.resolve({ supported, requiredFiles: [] });
+    const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map((s) => s.toLowerCase());
+    const ROOTSUB_FOLDERS_LOWER = ROOTSUB_FOLDERS.map((s) => s.toLowerCase());
+    const isMod = files.some((file) =>
+        ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
+    );
+    const isSub = files.some((file) =>
+        ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
+    );
+    let supported = gameId === spec.game.id && (isMod || isSub);
+    // ... FOMOD check ...
+    return Promise.resolve({ supported, requiredFiles: [] });
 }
 
 function installRoot(files) {
-  const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map(s => s.toLowerCase());
-  const ROOTSUB_FOLDERS_LOWER = ROOTSUB_FOLDERS.map(s => s.toLowerCase());
-  let folder = '';
-  let modFile = files.find(file => ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
-  if (modFile === undefined) {
-    modFile = files.find(file => ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
-    folder = ROOTSUB_PATH;  // prepend sub-path for deployment
-  }
-  const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(ROOT_IDX);
-  const rootPath = path.dirname(modFile);
-  const rootPrefix = (rootPath === '.') ? '' : rootPath + path.sep;
-  // ...
+    const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map((s) => s.toLowerCase());
+    const ROOTSUB_FOLDERS_LOWER = ROOTSUB_FOLDERS.map((s) => s.toLowerCase());
+    let folder = "";
+    let modFile = files.find((file) =>
+        ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
+    );
+    if (modFile === undefined) {
+        modFile = files.find((file) =>
+            ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
+        );
+        folder = ROOTSUB_PATH; // prepend sub-path for deployment
+    }
+    const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
+    const idx = modFile.indexOf(ROOT_IDX);
+    const rootPath = path.dirname(modFile);
+    const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
+    // ...
 }
 ```
 
@@ -292,22 +311,22 @@ Priority 49. Catches any archive that passed all earlier tests without matching.
 
 ```js
 function testFallback(files, gameId) {
-  let supported = (gameId === spec.game.id);
-  // ... FOMOD check ...
-  return Promise.resolve({ supported, requiredFiles: [] });
+    let supported = gameId === spec.game.id;
+    // ... FOMOD check ...
+    return Promise.resolve({ supported, requiredFiles: [] });
 }
 
 function installFallback(api, files, destinationPath) {
-  fallbackInstallerNotify(api, destinationPath);
-  const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
-  const filtered = files.filter(file => (!file.endsWith(path.sep)));
-  const instructions = filtered.map(file => ({
-    type: 'copy',
-    source: file,
-    destination: file,
-  }));
-  instructions.push(setModTypeInstruction);
-  return Promise.resolve({ instructions });
+    fallbackInstallerNotify(api, destinationPath);
+    const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
+    const filtered = files.filter((file) => !file.endsWith(path.sep));
+    const instructions = filtered.map((file) => ({
+        type: "copy",
+        source: file,
+        destination: file,
+    }));
+    instructions.push(setModTypeInstruction);
+    return Promise.resolve({ instructions });
 }
 ```
 
@@ -355,11 +374,9 @@ const rootPath = path.dirname(modFile);
 // every file is already inside the root and no scoping is needed. An empty prefix makes
 // startsWith() accept everything. path.join() cannot build this prefix - it strips the
 // trailing separator the comparison depends on.
-const rootPrefix = (rootPath === '.') ? '' : rootPath + path.sep;
+const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
 
-const filtered = files.filter(file =>
-  ((!file.endsWith(path.sep)) && file.startsWith(rootPrefix))
-);
+const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 ```
 
 ### Why not `indexOf`
@@ -406,31 +423,31 @@ Lower number = tested first. Leave gaps between priorities for future insertions
 
 ### template-basic priorities
 
-| Priority | Installer | Trigger |
-| --- | --- | --- |
-| 25 | Loader | Exact filename match (`LOADER_FILE`) |
-| 27 | Root | Known root/sub-root folder names |
-| 29 | Binaries | Binary file extensions (`BINARIES_EXTS`) |
-| 33 | Saves | Save file extensions (`SAVE_EXTS`) |
-| 35 | Mods | Mod file extensions (`MOD_EXTS`) |
-| 49 | Fallback | Any archive for this game |
+| Priority | Installer | Trigger                                  |
+| -------- | --------- | ---------------------------------------- |
+| 25       | Loader    | Exact filename match (`LOADER_FILE`)     |
+| 27       | Root      | Known root/sub-root folder names         |
+| 29       | Binaries  | Binary file extensions (`BINARIES_EXTS`) |
+| 33       | Saves     | Save file extensions (`SAVE_EXTS`)       |
+| 35       | Mods      | Mod file extensions (`MOD_EXTS`)         |
+| 49       | Fallback  | Any archive for this game                |
 
 ### template-ue4-5 priorities (example of a dense set)
 
-| Priority | Installer | Trigger |
-| --- | --- | --- |
-| 25 | ModKit Mods | ModKit asset markers (conditional on `hasModKit`) |
-| 26 | UE4SS Combo | `.zip` + UE4SS folder markers |
-| 27 | Logic Mods | `LogicMods` folder |
-| 29 | Pak / UE5 Sortable | `.pak` / `.utoc` / `.ucas` files |
-| 31 | UE4SS | UE4SS DLL or script markers |
-| 33 | Signature Bypass | Sig-bypass DLL (conditional on `SIGBYPASS_REQUIRED`) |
-| 35 | Scripts | Lua script files |
-| 37 | DLLs | `.dll` files |
-| 39 | Root | Known root folders |
-| 41 | Config | Config file extensions |
-| 43 | Saves | Save file extensions |
-| 49 | Binaries | Fallback binary/pak catch-all |
+| Priority | Installer          | Trigger                                              |
+| -------- | ------------------ | ---------------------------------------------------- |
+| 25       | ModKit Mods        | ModKit asset markers (conditional on `hasModKit`)    |
+| 26       | UE4SS Combo        | `.zip` + UE4SS folder markers                        |
+| 27       | Logic Mods         | `LogicMods` folder                                   |
+| 29       | Pak / UE5 Sortable | `.pak` / `.utoc` / `.ucas` files                     |
+| 31       | UE4SS              | UE4SS DLL or script markers                          |
+| 33       | Signature Bypass   | Sig-bypass DLL (conditional on `SIGBYPASS_REQUIRED`) |
+| 35       | Scripts            | Lua script files                                     |
+| 37       | DLLs               | `.dll` files                                         |
+| 39       | Root               | Known root folders                                   |
+| 41       | Config             | Config file extensions                               |
+| 43       | Saves              | Save file extensions                                 |
+| 49       | Binaries           | Fallback binary/pak catch-all                        |
 
 ---
 
@@ -441,14 +458,14 @@ Wrap `registerInstaller` calls in a toggle guard when the installer only applies
 ```js
 // Toggle-gated installer
 if (hasModKit === true) {
-  context.registerInstaller(MODKITMOD_ID, 25, testModKitMod, installModKitMod);
+    context.registerInstaller(MODKITMOD_ID, 25, testModKitMod, installModKitMod);
 }
 
 // Store-variant gate
 if (!reZip) {
-  context.registerInstaller(FLUFFYMOD_ID, 49, testFluffyMod, installFluffyMod);
+    context.registerInstaller(FLUFFYMOD_ID, 49, testFluffyMod, installFluffyMod);
 } else {
-  context.registerInstaller(`${FLUFFYMOD_ID}zip`, 49, testZipContent, installZipContent);
+    context.registerInstaller(`${FLUFFYMOD_ID}zip`, 49, testZipContent, installZipContent);
 }
 ```
 

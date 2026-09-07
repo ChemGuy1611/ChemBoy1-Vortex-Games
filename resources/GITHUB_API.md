@@ -1,6 +1,6 @@
 # GitHub REST API (Releases, Assets, and CI Artifacts)
 
-GitHub is where most modding requirements live — script loaders, frameworks, runtimes, ASI plugins, and the CI builds that precede their releases. It is the only source `downloader.js` talks to, and every other downloader module in `resources/downloader/` exists because some upstream publishes *somewhere else*.
+GitHub is where most modding requirements live — script loaders, frameworks, runtimes, ASI plugins, and the CI builds that precede their releases. It is the only source `downloader.js` talks to, and every other downloader module in `resources/downloader/` exists because some upstream publishes _somewhere else_.
 
 This document covers the API itself: which endpoints answer, what they return, what the download hosts do, and where an unauthenticated client gets bitten. The module that consumes it — requirement objects, version resolution, update notifications — is documented separately in `DOWNLOADER.md`.
 
@@ -10,15 +10,15 @@ Everything below was probed live against public repositories (`UE4SS-RE/RE-UE4SS
 
 ## Surface Map
 
-| Host | Role | Auth |
-| --- | --- | --- |
-| `https://api.github.com` | The REST API. Releases, tags, contents, Actions runs, rate limit. | Optional; unauthenticated works for public repos |
-| `https://github.com/{owner}/{repo}/releases/download/{tag}/{file}` | Public asset download. `302`s to the storage host. | None |
-| `https://release-assets.githubusercontent.com` | Where release-asset downloads actually land, behind a short-lived signed URL. | Signature in the URL |
-| `https://raw.githubusercontent.com` | Raw file content from a branch or tag. Not part of the REST API and not rate-limited by it. | None |
-| `https://codeload.github.com` | Source zip/tarball downloads, which `zipball_url` / `tarball_url` redirect to. | None |
-| `https://nightly.link` | Third-party service that hands out GitHub Actions artifacts without a token. | None |
-| `https://api.github.com/graphql` | GraphQL v4. **Requires authentication** — unusable from an extension. | Required |
+| Host                                                               | Role                                                                                        | Auth                                             |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| `https://api.github.com`                                           | The REST API. Releases, tags, contents, Actions runs, rate limit.                           | Optional; unauthenticated works for public repos |
+| `https://github.com/{owner}/{repo}/releases/download/{tag}/{file}` | Public asset download. `302`s to the storage host.                                          | None                                             |
+| `https://release-assets.githubusercontent.com`                     | Where release-asset downloads actually land, behind a short-lived signed URL.               | Signature in the URL                             |
+| `https://raw.githubusercontent.com`                                | Raw file content from a branch or tag. Not part of the REST API and not rate-limited by it. | None                                             |
+| `https://codeload.github.com`                                      | Source zip/tarball downloads, which `zipball_url` / `tarball_url` redirect to.              | None                                             |
+| `https://nightly.link`                                             | Third-party service that hands out GitHub Actions artifacts without a token.                | None                                             |
+| `https://api.github.com/graphql`                                   | GraphQL v4. **Requires authentication** — unusable from an extension.                       | Required                                         |
 
 The REST API is versioned by date. Requests carry `X-GitHub-Api-Version: 2022-11-28` implicitly; responses echo the choice as `x-github-api-version-selected`. There is no need to send it, and no newer version to opt into as of writing.
 
@@ -26,19 +26,19 @@ The REST API is versioned by date. Requests carry `X-GitHub-Api-Version: 2022-11
 
 ## Endpoints That Matter Here
 
-| Endpoint | Returns |
-| --- | --- |
-| `GET /repos/{owner}/{repo}/releases/latest` | The newest release that is neither a draft nor a pre-release. One object. |
-| `GET /repos/{owner}/{repo}/releases?per_page=N` | Newest-first array of releases, **including pre-releases**. |
-| `GET /repos/{owner}/{repo}/releases/tags/{tag}` | One release by its tag name. The only way to reach a rolling tag. |
-| `GET /repos/{owner}/{repo}/releases/assets/{id}` | One asset — metadata as JSON, or the file itself with `Accept: application/octet-stream`. |
-| `GET /repos/{owner}/{repo}/tags?per_page=N` | Tag names with their commit SHAs. No release data. |
-| `GET /repos/{owner}/{repo}/contents/{path}` | One file, base64-encoded, plus a `download_url` pointing at the raw host. |
-| `GET /repos/{owner}/{repo}/actions/workflows/{file}/runs` | Workflow run listing. Filterable by `branch`, `status`, `event`. |
-| `GET /repos/{owner}/{repo}/actions/runs/{id}/artifacts` | Artifacts a run produced. Metadata is public; the download is not. |
-| `GET /repos/{owner}/{repo}/actions/artifacts/{id}/zip` | The artifact itself. **`401` without a token.** |
-| `GET /repos/{owner}/{repo}` | Repo metadata — `default_branch`, `archived`, `license`, `pushed_at`. |
-| `GET /rate_limit` | Current budget for every bucket. Does not itself consume budget. |
+| Endpoint                                                  | Returns                                                                                   |
+| --------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `GET /repos/{owner}/{repo}/releases/latest`               | The newest release that is neither a draft nor a pre-release. One object.                 |
+| `GET /repos/{owner}/{repo}/releases?per_page=N`           | Newest-first array of releases, **including pre-releases**.                               |
+| `GET /repos/{owner}/{repo}/releases/tags/{tag}`           | One release by its tag name. The only way to reach a rolling tag.                         |
+| `GET /repos/{owner}/{repo}/releases/assets/{id}`          | One asset — metadata as JSON, or the file itself with `Accept: application/octet-stream`. |
+| `GET /repos/{owner}/{repo}/tags?per_page=N`               | Tag names with their commit SHAs. No release data.                                        |
+| `GET /repos/{owner}/{repo}/contents/{path}`               | One file, base64-encoded, plus a `download_url` pointing at the raw host.                 |
+| `GET /repos/{owner}/{repo}/actions/workflows/{file}/runs` | Workflow run listing. Filterable by `branch`, `status`, `event`.                          |
+| `GET /repos/{owner}/{repo}/actions/runs/{id}/artifacts`   | Artifacts a run produced. Metadata is public; the download is not.                        |
+| `GET /repos/{owner}/{repo}/actions/artifacts/{id}/zip`    | The artifact itself. **`401` without a token.**                                           |
+| `GET /repos/{owner}/{repo}`                               | Repo metadata — `default_branch`, `archived`, `license`, `pushed_at`.                     |
+| `GET /rate_limit`                                         | Current budget for every bucket. Does not itself consume budget.                          |
 
 ---
 
@@ -66,7 +66,7 @@ Trimmed to the fields worth reading, from `UE4SS-RE/RE-UE4SS`:
 Field notes that change code:
 
 - **`tag_name` is the identity; `name` is a title.** They match on most repos and diverge on plenty — `name` is free text and is sometimes empty, sometimes a headline ("Hotfix for the crash on startup"). Version parsing belongs on `tag_name`, never on `name`. Vortex's own release check is the counter-example, and only because Nexus controls both fields on its own repo.
-- **`created_at` is the commit/tag date, `published_at` is when the release went public.** They differ by minutes on a normal release and by *months* on a draft that sat unpublished. Anything comparing release recency wants `published_at`.
+- **`created_at` is the commit/tag date, `published_at` is when the release went public.** They differ by minutes on a normal release and by _months_ on a draft that sat unpublished. Anything comparing release recency wants `published_at`.
 - **`target_commitish` is only meaningful for a draft.** Once published it is frozen at the branch name the release was cut from, which is not where the tag necessarily points now.
 - **`tarball_url` / `zipball_url` are not assets.** GitHub attaches auto-generated source archives to every release; they never appear in `assets[]`. A mod requirement never wants them — they hold source, not the built artifact.
 - **`immutable`** marks a release using GitHub's immutable-releases feature (tag and assets locked after publish). Informational only.
@@ -74,12 +74,12 @@ Field notes that change code:
 
 ### Which endpoint for which release strategy
 
-| Upstream publishing habit | Endpoint | Notes |
-| --- | --- | --- |
-| Ordinary versioned releases | `/releases/latest` | Excludes drafts and pre-releases automatically. |
-| Ships pre-releases users want | `/releases` | Newest-first; scan past releases that carry no matching asset. |
-| Rolling tag that upstream *moves* (UE4SS `experimental-latest`, EntityAtlan `ModLoader`) | `/releases/tags/{tag}` | `/releases/latest` cannot see it: a moved tag is usually flagged pre-release, and even when it is not, its `published_at` may be older than a real release. |
-| One specific known-good version | `/releases/tags/{tag}` | Tags are inconsistent about a leading `v`; retry the other spelling on a `404`. |
+| Upstream publishing habit                                                                | Endpoint               | Notes                                                                                                                                                       |
+| ---------------------------------------------------------------------------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ordinary versioned releases                                                              | `/releases/latest`     | Excludes drafts and pre-releases automatically.                                                                                                             |
+| Ships pre-releases users want                                                            | `/releases`            | Newest-first; scan past releases that carry no matching asset.                                                                                              |
+| Rolling tag that upstream _moves_ (UE4SS `experimental-latest`, EntityAtlan `ModLoader`) | `/releases/tags/{tag}` | `/releases/latest` cannot see it: a moved tag is usually flagged pre-release, and even when it is not, its `published_at` may be older than a real release. |
+| One specific known-good version                                                          | `/releases/tags/{tag}` | Tags are inconsistent about a leading `v`; retry the other spelling on a `404`.                                                                             |
 
 `/releases/latest` does not mean "the most recently published release". It means "the newest release, by tag ordering, that is neither draft nor pre-release". A repo that publishes only pre-releases has a `/releases/latest` that returns `404` — the same status a nonexistent repo returns.
 
@@ -89,18 +89,18 @@ Field notes that change code:
 
 ```json
 {
-  "id": 151575008,
-  "name": "UE4SS_v3.0.1.zip",
-  "label": null,
-  "content_type": "application/zip",
-  "state": "uploaded",
-  "size": 5523402,
-  "download_count": 1252041,
-  "digest": null,
-  "created_at": "2024-02-14T19:59:38Z",
-  "updated_at": "2024-02-14T19:59:39Z",
-  "url": "https://api.github.com/repos/UE4SS-RE/RE-UE4SS/releases/assets/151575008",
-  "browser_download_url": "https://github.com/UE4SS-RE/RE-UE4SS/releases/download/v3.0.1/UE4SS_v3.0.1.zip"
+    "id": 151575008,
+    "name": "UE4SS_v3.0.1.zip",
+    "label": null,
+    "content_type": "application/zip",
+    "state": "uploaded",
+    "size": 5523402,
+    "download_count": 1252041,
+    "digest": null,
+    "created_at": "2024-02-14T19:59:38Z",
+    "updated_at": "2024-02-14T19:59:39Z",
+    "url": "https://api.github.com/repos/UE4SS-RE/RE-UE4SS/releases/assets/151575008",
+    "browser_download_url": "https://github.com/UE4SS-RE/RE-UE4SS/releases/download/v3.0.1/UE4SS_v3.0.1.zip"
 }
 ```
 
@@ -147,11 +147,11 @@ What this means in practice:
 
 This is the part that actually bites an extension, because an extension cannot authenticate — there is nowhere to put a token that is not shipped to every user.
 
-| Bucket | Unauthenticated | With a personal access token |
-| --- | --- | --- |
-| `core` (everything below) | **60 / hour**, per IP | 5,000 / hour, per token |
-| `search` | 10 / minute | 30 / minute |
-| `graphql` | **0** — GraphQL is closed to anonymous callers | 5,000 points / hour |
+| Bucket                    | Unauthenticated                                | With a personal access token |
+| ------------------------- | ---------------------------------------------- | ---------------------------- |
+| `core` (everything below) | **60 / hour**, per IP                          | 5,000 / hour, per token      |
+| `search`                  | 10 / minute                                    | 30 / minute                  |
+| `graphql`                 | **0** — GraphQL is closed to anonymous callers | 5,000 points / hour          |
 
 Every response carries the accounting:
 
@@ -165,12 +165,12 @@ X-RateLimit-Resource: core
 
 ### Recognising a rate-limited response
 
-A rate-limited request comes back as **`403`, or sometimes `404`** — not `429`. The status alone is useless; the discriminator is `x-ratelimit-remaining: 0` being present on the response. Treat a `403`/`404` as rate limiting *only* when that header exists and reads zero, because plenty of other failures share the status:
+A rate-limited request comes back as **`403`, or sometimes `404`** — not `429`. The status alone is useless; the discriminator is `x-ratelimit-remaining: 0` being present on the response. Treat a `403`/`404` as rate limiting _only_ when that header exists and reads zero, because plenty of other failures share the status:
 
 - A missing `User-Agent` header returns `403` with an HTML body and **no** rate-limit headers.
 - A repo that exists but has no releases returns `404` from `/releases/latest`, with a full budget.
 - A private, deleted, or moved-away repo returns `404`, indistinguishable from a typo.
-- Anonymous GraphQL returns `403 rate limit exceeded` with `X-RateLimit-Limit: 0` — which *is* the rate limiter, just permanently at zero.
+- Anonymous GraphQL returns `403 rate limit exceeded` with `X-RateLimit-Limit: 0` — which _is_ the rate limiter, just permanently at zero.
 
 Secondary ("abuse detection") limits are separate from the primary budget and fire on burst concurrency rather than volume. They answer `403` or `429` with a `retry-after` header in seconds. Sequential requests at extension pace never reach them.
 
@@ -178,12 +178,12 @@ Secondary ("abuse detection") limits are separate from the primary budget and fi
 
 The standard advice is to send `If-None-Match` with a stored `ETag` and let a `304 Not Modified` come back free. Probed against `/releases/latest`, that holds **only when authenticated**:
 
-| Call | `X-RateLimit-Used` before → after |
-| --- | --- |
-| Unauthenticated `304` | 6 → 7, and again 7 → 8 |
-| Authenticated `304` | 8 → 8 |
+| Call                  | `X-RateLimit-Used` before → after |
+| --------------------- | --------------------------------- |
+| Unauthenticated `304` | 6 → 7, and again 7 → 8            |
+| Authenticated `304`   | 8 → 8                             |
 
-So for an extension — always anonymous — an ETag saves bandwidth and parsing, not budget. The 60/hour ceiling is spent by *requests*, and the only way to spend fewer is to make fewer. Also note the `ETag` returned for the same release differed between the authenticated and unauthenticated responses, so an ETag captured in one auth context is not portable to the other.
+So for an extension — always anonymous — an ETag saves bandwidth and parsing, not budget. The 60/hour ceiling is spent by _requests_, and the only way to spend fewer is to make fewer. Also note the `ETag` returned for the same release differed between the authenticated and unauthenticated responses, so an ETag captured in one auth context is not portable to the other.
 
 ### Budgeting for an extension
 
@@ -242,21 +242,23 @@ GET /repos/LavaGang/MelonLoader/actions/workflows/build.yml/runs
 
 ```json
 {
-  "total_count": 171,
-  "workflow_runs": [{
-    "id": 31688879682,
-    "name": "0.8.0-ci.2576 | Changed Portable Dotnet Handling …",
-    "run_number": 2576,
-    "run_attempt": 1,
-    "head_branch": "alpha-development",
-    "head_sha": "…",
-    "event": "push",
-    "status": "completed",
-    "conclusion": "success",
-    "created_at": "2026-08-13T09:56:42Z",
-    "updated_at": "2026-08-13T10:01:46Z",
-    "artifacts_url": "https://api.github.com/repos/LavaGang/MelonLoader/actions/runs/31688879682/artifacts"
-  }]
+    "total_count": 171,
+    "workflow_runs": [
+        {
+            "id": 31688879682,
+            "name": "0.8.0-ci.2576 | Changed Portable Dotnet Handling …",
+            "run_number": 2576,
+            "run_attempt": 1,
+            "head_branch": "alpha-development",
+            "head_sha": "…",
+            "event": "push",
+            "status": "completed",
+            "conclusion": "success",
+            "created_at": "2026-08-13T09:56:42Z",
+            "updated_at": "2026-08-13T10:01:46Z",
+            "artifacts_url": "https://api.github.com/repos/LavaGang/MelonLoader/actions/runs/31688879682/artifacts"
+        }
+    ]
 }
 ```
 
@@ -269,20 +271,20 @@ The artifact listing is public too:
 
 ```json
 {
-  "id": 9176623144,
-  "name": "MelonLoader.Windows.x64.CI.Release",
-  "size_in_bytes": 19411843,
-  "expired": false,
-  "created_at": "2026-08-13T10:00:52Z",
-  "expires_at": "2026-11-11T09:56:42Z",
-  "archive_download_url": "https://api.github.com/repos/…/actions/artifacts/9176623144/zip"
+    "id": 9176623144,
+    "name": "MelonLoader.Windows.x64.CI.Release",
+    "size_in_bytes": 19411843,
+    "expired": false,
+    "created_at": "2026-08-13T10:00:52Z",
+    "expires_at": "2026-11-11T09:56:42Z",
+    "archive_download_url": "https://api.github.com/repos/…/actions/artifacts/9176623144/zip"
 }
 ```
 
 **But the download is not.** `GET /actions/artifacts/{id}/zip` returns `401 Unauthorized` without a token, on a fully public repository. That single fact is why the nightly route exists at all in the shape it does:
 
 - Artifacts also **expire** — 90 days by default, visible as `expires_at`, after which `expired: true` and the bytes are gone. A CI build is not an archive; it is a window.
-- [`nightly.link`](https://nightly.link) is a third-party service that holds a GitHub App installation and re-serves artifacts anonymously. A `nightly.link` URL is *stable and predictable* — `https://nightly.link/{owner}/{repo}/workflows/{workflow}/{branch}/{artifact}.zip` — and always points at the newest successful run:
+- [`nightly.link`](https://nightly.link) is a third-party service that holds a GitHub App installation and re-serves artifacts anonymously. A `nightly.link` URL is _stable and predictable_ — `https://nightly.link/{owner}/{repo}/workflows/{workflow}/{branch}/{artifact}.zip` — and always points at the newest successful run:
 
 ```text
 GET https://nightly.link/LavaGang/MelonLoader/workflows/build/alpha-development/MelonLoader.Windows.x64.CI.Release.zip
@@ -301,10 +303,10 @@ It redirects to a short-lived Azure blob URL, the same way a release asset redir
 
 Two ways to read a file out of a repo, with very different costs:
 
-| Route | Cost | Shape |
-| --- | --- | --- |
-| `GET https://raw.githubusercontent.com/{owner}/{repo}/{ref}/{path}` | **No REST rate limit** — the response carries no `x-ratelimit-*` headers at all; `cache-control: max-age=300` with an `ETag` | The file, as-is |
-| `GET /repos/{owner}/{repo}/contents/{path}` | Counts against the 60/hour `core` budget | JSON: `name`, `path`, `size`, `sha`, `encoding: "base64"`, `content`, plus a `download_url` pointing back at the raw host |
+| Route                                                               | Cost                                                                                                                         | Shape                                                                                                                     |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `GET https://raw.githubusercontent.com/{owner}/{repo}/{ref}/{path}` | **No REST rate limit** — the response carries no `x-ratelimit-*` headers at all; `cache-control: max-age=300` with an `ETag` | The file, as-is                                                                                                           |
+| `GET /repos/{owner}/{repo}/contents/{path}`                         | Counts against the 60/hour `core` budget                                                                                     | JSON: `name`, `path`, `size`, `sha`, `encoding: "base64"`, `content`, plus a `download_url` pointing back at the raw host |
 
 For reading a version file, a manifest, or a config blob, the raw host is the right choice: it is free, cached for five minutes, and needs no JSON decode. The `/contents` route earns its cost only when the SHA or the directory listing is what is wanted (passing a directory path returns an array of entries).
 

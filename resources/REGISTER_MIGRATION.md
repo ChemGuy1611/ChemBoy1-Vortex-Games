@@ -4,7 +4,7 @@ Registers a function that runs when the extension version changes. Use it to mig
 
 > **Disambiguation.** This is the **`registerMigration` API** — an extension's own state migration
 > that runs when its `info.json` version bumps. It is **not** `VORTEX_2_MIGRATION.md`, which covers
-> porting extension *code* from Vortex 1.16 to 2.0 (build tooling, dependency management, page
+> porting extension _code_ from Vortex 1.16 to 2.0 (build tooling, dependency management, page
 > priorities). Different thing entirely.
 
 ---
@@ -21,13 +21,13 @@ context.registerMigration(
 
 ## Key facts
 
-| Fact | Detail |
-| --- | --- |
-| **When it runs** | When the stored extension version differs from the current `info.json` version |
-| **Process** | Main process — NOT the renderer. `api.store` is not available. Use `context.api.store.getState()` only after `context.api.awaitUI()` if you need state. |
-| **`oldVersion`** | Previous stored version. `"0.0.0"` if first run or state was damaged. |
-| **Multiple registrations** | Each `registerMigration` call registers independently. All run if versions differ. Each gate its own version range. |
-| **Version update** | Stored version is updated to current **after** the promise resolves. |
+| Fact                       | Detail                                                                                                                                                  |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **When it runs**           | When the stored extension version differs from the current `info.json` version                                                                          |
+| **Process**                | Main process — NOT the renderer. `api.store` is not available. Use `context.api.store.getState()` only after `context.api.awaitUI()` if you need state. |
+| **`oldVersion`**           | Previous stored version. `"0.0.0"` if first run or state was damaged.                                                                                   |
+| **Multiple registrations** | Each `registerMigration` call registers independently. All run if versions differ. Each gate its own version range.                                     |
+| **Version update**         | Stored version is updated to current **after** the promise resolves.                                                                                    |
 
 ---
 
@@ -36,21 +36,21 @@ context.registerMigration(
 Always version-gate with a semver check — skip if the stored version is already past the target.
 
 ```js
-const semver = require('semver');
+const semver = require("semver");
 
 async function migrate100(api, oldVersion) {
-  if (semver.gte(oldVersion, '1.0.0')) return;
-  // ... migration logic for < 1.0.0 to 1.0.0
+    if (semver.gte(oldVersion, "1.0.0")) return;
+    // ... migration logic for < 1.0.0 to 1.0.0
 }
 
 async function migrate200(api, oldVersion) {
-  if (semver.gte(oldVersion, '2.0.0')) return;
-  // ... migration logic for < 2.0.0 to 2.0.0
+    if (semver.gte(oldVersion, "2.0.0")) return;
+    // ... migration logic for < 2.0.0 to 2.0.0
 }
 
 // In main(context):
-context.registerMigration(old => migrate100(context.api, old));
-context.registerMigration(old => migrate200(context.api, old));
+context.registerMigration((old) => migrate100(context.api, old));
+context.registerMigration((old) => migrate200(context.api, old));
 ```
 
 ---
@@ -61,9 +61,9 @@ context.registerMigration(old => migrate200(context.api, old));
 
 ```js
 async function migrateFirstRun(api, oldVersion) {
-  if (oldVersion !== '0.0.0') return;
-  // First install — create initial config
-  await fs.ensureDirWritableAsync(CONFIG_DIR);
+    if (oldVersion !== "0.0.0") return;
+    // First install — create initial config
+    await fs.ensureDirWritableAsync(CONFIG_DIR);
 }
 ```
 
@@ -73,11 +73,11 @@ async function migrateFirstRun(api, oldVersion) {
 
 ```js
 async function migrate110(api, oldVersion) {
-  if (semver.gte(oldVersion, '1.1.0')) return;
+    if (semver.gte(oldVersion, "1.1.0")) return;
 
-  // Old versions wrote cache files to the wrong location
-  const stalePath = path.join(OLD_CACHE_DIR, 'cache.json');
-  await fs.removeAsync(stalePath).catch(() => null);
+    // Old versions wrote cache files to the wrong location
+    const stalePath = path.join(OLD_CACHE_DIR, "cache.json");
+    await fs.removeAsync(stalePath).catch(() => null);
 }
 ```
 
@@ -87,14 +87,19 @@ async function migrate110(api, oldVersion) {
 
 ```js
 async function migrate200(api, oldVersion) {
-  if (semver.gte(oldVersion, '2.0.0')) return;
+    if (semver.gte(oldVersion, "2.0.0")) return;
 
-  await api.awaitUI();  // wait for renderer to be ready before showing dialogs
-  await api.showDialog('info', 'Extension Updated', {
-    text: 'The mod layout has changed. Your mods will need to be redeployed.',
-  }, [{ label: 'OK' }]);
+    await api.awaitUI(); // wait for renderer to be ready before showing dialogs
+    await api.showDialog(
+        "info",
+        "Extension Updated",
+        {
+            text: "The mod layout has changed. Your mods will need to be redeployed.",
+        },
+        [{ label: "OK" }],
+    );
 
-  api.store.dispatch(actions.setDeploymentNecessary(GAME_ID, true));
+    api.store.dispatch(actions.setDeploymentNecessary(GAME_ID, true));
 }
 ```
 
@@ -106,16 +111,20 @@ Migration runs in the main process. You can read state but UI is not guaranteed 
 
 ```js
 async function migrate100(api, oldVersion) {
-  if (semver.gte(oldVersion, '1.0.0')) return;
+    if (semver.gte(oldVersion, "1.0.0")) return;
 
-  // Safe: read state directly
-  const state = api.store.getState();
-  const discovery = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID], undefined);
-  if (!discovery?.path) return;
+    // Safe: read state directly
+    const state = api.store.getState();
+    const discovery = util.getSafe(
+        state,
+        ["settings", "gameMode", "discovered", GAME_ID],
+        undefined,
+    );
+    if (!discovery?.path) return;
 
-  // Need UI (dialogs, notifications): await first
-  await api.awaitUI();
-  api.sendNotification({ type: 'info', message: 'Migration complete', displayMS: 3000 });
+    // Need UI (dialogs, notifications): await first
+    await api.awaitUI();
+    api.sendNotification({ type: "info", message: "Migration complete", displayMS: 3000 });
 }
 ```
 

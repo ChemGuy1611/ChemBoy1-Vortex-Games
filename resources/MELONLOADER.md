@@ -4,10 +4,10 @@
 both of Unity's scripting backends (Mono and IL2CPP) from a single archive. It occupies the same
 niche as BepInEx and is the usual alternative to it.
 
-**MelonLoader is Unity-only.** Its own wiki opens with *"MelonLoader is a Universal Mod-Loader for
-Games built in the Unity Engine"*, and the loader ships exactly two support modules — `Mono.dll` and
+**MelonLoader is Unity-only.** Its own wiki opens with _"MelonLoader is a Universal Mod-Loader for
+Games built in the Unity Engine"_, and the loader ships exactly two support modules — `Mono.dll` and
 `Il2Cpp.dll`. There is no XNA, FNA or MonoGame support and no non-Unity engine module. The `net472`
-folder in its archive is a *target framework*, not an engine: it is the reference build for mods
+folder in its archive is a _target framework_, not an engine: it is the reference build for mods
 compiled against Unity's newer "Mono BleedingEdge" runtime. A game on XNA/FNA/MonoGame needs
 BepInEx's `NET.Framework` build instead — see `BEPINEX.md`.
 
@@ -18,11 +18,11 @@ BepInEx's `NET.Framework` build instead — see `BEPINEX.md`.
 Releases are ordinary GitHub releases, with an installer application published alongside the
 loader archives.
 
-| Asset | Purpose |
-| --- | --- |
-| `MelonLoader.x64.zip` | the loader, 64-bit Windows games |
-| `MelonLoader.x86.zip` | the loader, 32-bit Windows games |
-| `MelonLoader.Linux.x64.zip`, `MelonLoader.macOS.x64.zip` | the non-Windows builds |
+| Asset                                                                                         | Purpose                                                                                                                                         |
+| --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MelonLoader.x64.zip`                                                                         | the loader, 64-bit Windows games                                                                                                                |
+| `MelonLoader.x86.zip`                                                                         | the loader, 32-bit Windows games                                                                                                                |
+| `MelonLoader.Linux.x64.zip`, `MelonLoader.macOS.x64.zip`                                      | the non-Windows builds                                                                                                                          |
 | `MelonLoader.Installer.exe`, `MelonLoader.Installer.Linux`, `MelonLoader.Installer.MacOS.dmg` | a GUI installer that enumerates installed Unity games (Steam, Epic, GOG on Windows; Steam on Linux) and installs, updates or removes the loader |
 
 Newest release at the time of writing: `v0.7.3` (2026-05-14). Tags are plain semver with a leading
@@ -137,7 +137,7 @@ IL2CPP archive — MelonLoader looks for one on the machine. It searches, in ord
 
 If none is found it downloads and runs the official installer from
 `https://aka.ms/dotnet/6.0/dotnet-runtime-win-x64.exe` (or the `x86` URL for 32-bit games). That is
-what the README means by *"On Windows, the .NET 6.0 Desktop Runtime will be installed automatically"*
+what the README means by _"On Windows, the .NET 6.0 Desktop Runtime will be installed automatically"_
 — a silent elevated install on first launch, which is worth surfacing to a user rather than letting
 it surprise them.
 
@@ -153,11 +153,11 @@ MelonLoader installs.
 
 ## Mod Formats
 
-MelonLoader calls every loadable assembly a *Melon*, and splits them into two kinds by base class.
+MelonLoader calls every loadable assembly a _Melon_, and splits them into two kinds by base class.
 
-| Kind | Folder | Base class | Loaded |
-| --- | --- | --- | --- |
-| Mod | `Mods/` | `MelonMod` | after the engine and the support module are up |
+| Kind   | Folder     | Base class    | Loaded                                                         |
+| ------ | ---------- | ------------- | -------------------------------------------------------------- |
+| Mod    | `Mods/`    | `MelonMod`    | after the engine and the support module are up                 |
 | Plugin | `Plugins/` | `MelonPlugin` | far earlier, as soon as the managed part of MelonLoader starts |
 
 Plugins exist to manage MelonLoader and other Melons; ordinary game modifications are Mods.
@@ -226,10 +226,10 @@ needs one. MelonLoader checks existence only; it does not parse the file at scan
 
 Two `Loader.cfg` options change this, both user-controlled and both defaulting to false:
 
-| Option | Launch argument | Effect |
-| --- | --- | --- |
-| `disable_subfolder_load` | `--melonloader.nosfload` | no subfolder is scanned at all; every wrapped mod disappears |
-| `disable_subfolder_manifest` | `--melonloader.nosfmanifest` | drops the `manifest.json` requirement |
+| Option                       | Launch argument              | Effect                                                       |
+| ---------------------------- | ---------------------------- | ------------------------------------------------------------ |
+| `disable_subfolder_load`     | `--melonloader.nosfload`     | no subfolder is scanned at all; every wrapped mod disappears |
+| `disable_subfolder_manifest` | `--melonloader.nosfmanifest` | drops the `manifest.json` requirement                        |
 
 Folder names are not neutral. `_nameExclusions` skips any folder whose name starts with `~` or `.`, or is
 exactly `Broken`, `Retired` or `Disabled`. A subfolder named `UserLibs`, `Plugins` or `Mods` switches the
@@ -249,7 +249,7 @@ Three stages, in this order:
    lower loads earlier. LINQ `OrderBy` is a stable sort, so discovery order survives as the tiebreaker
    within each priority band.
 
-So folder names *do* influence order here, unlike BepInEx — but weakly. A `.dll` sitting flat in `Mods/`
+So folder names _do_ influence order here, unlike BepInEx — but weakly. A `.dll` sitting flat in `Mods/`
 always loads before every subfolder mod, any mod declaring a non-default `[MelonPriority]` moves regardless
 of where it sits, and `disable_subfolder_load` takes the whole scheme away. Numbered folder prefixes are a
 hint, not a guarantee.
@@ -258,13 +258,13 @@ hint, not a guarantee.
 
 Chosen from the game, exactly as with any Unity modding:
 
-| Game | Template | Framework |
-| --- | --- | --- |
-| any IL2CPP | Class Library | .NET 6.0 |
-| Mono, Unity 2021.2+ | Class Library | .NET Standard 2.1 |
-| Mono, Unity 2018.1+ | Class Library (.NET Framework) | .NET Framework 4.7.2 |
+| Game                | Template                       | Framework                   |
+| ------------------- | ------------------------------ | --------------------------- |
+| any IL2CPP          | Class Library                  | .NET 6.0                    |
+| Mono, Unity 2021.2+ | Class Library                  | .NET Standard 2.1           |
+| Mono, Unity 2018.1+ | Class Library (.NET Framework) | .NET Framework 4.7.2        |
 | Mono, Unity 2017.1+ | Class Library (.NET Framework) | .NET Framework 3.5 or 4.7.2 |
-| older | Class Library (.NET Framework) | .NET Framework 3.5 |
+| older               | Class Library (.NET Framework) | .NET Framework 3.5          |
 
 ### Distribution
 
@@ -284,7 +284,7 @@ Two separate config systems live in `UserData/`, both TOML (via Tomlet):
 - **`UserData/Loader.cfg`** — MelonLoader's own settings, generated on first run. Every entry mirrors
   a launch option: `[loader] disable`, `debug_mode`, `capture_player_logs`, `harmony_log_level`,
   `force_quit`, `disable_start_screen`, `theme`; `[console]` visibility and title options; `[logs]
-  max_logs`; `[mono_debug_server]`; `[unityengine] version_override`, `disable_console_log_cleaner`
+max_logs`; `[mono_debug_server]`; `[unityengine] version_override`, `disable_console_log_cleaner`
   and the assembly-generator forcing options.
 - **`UserData/MelonPreferences.cfg`** — mod preferences, written through the `MelonPreferences` API.
   A mod creates a category, creates typed entries in it, and reads or writes `entry.Value`. Values
@@ -300,16 +300,16 @@ in-game editor for preferences, published as a naked `.dll` in Mono and IL2CPP v
 Every option has a `Loader.cfg` equivalent, so these are for one-off use. The ones that matter most
 in practice:
 
-| Argument | Effect |
-| --- | --- |
-| `--no-mods` | start the game with the loader present but nothing loaded — the cleanest "is a mod at fault?" test |
-| `--quitfix` | fixes games that hang on exit with MelonLoader installed |
-| `--melonloader.debug` | debug mode, much more verbose logging |
-| `--melonloader.hideconsole` | hide the console window |
-| `--melonloader.disablestartscreen` | skip the loading splash |
-| `--melonloader.basedir` | relocate `Mods`, `Plugins`, `UserData`, `UserLibs` and `MelonLoader` |
-| `--melonloader.agfoffline`, `--melonloader.agfregenerate` | IL2CPP assembly generation: never contact the remote API; force a rebuild |
-| `--melonloader.unityversion` | override the detected Unity version when detection fails |
+| Argument                                                  | Effect                                                                                             |
+| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `--no-mods`                                               | start the game with the loader present but nothing loaded — the cleanest "is a mod at fault?" test |
+| `--quitfix`                                               | fixes games that hang on exit with MelonLoader installed                                           |
+| `--melonloader.debug`                                     | debug mode, much more verbose logging                                                              |
+| `--melonloader.hideconsole`                               | hide the console window                                                                            |
+| `--melonloader.disablestartscreen`                        | skip the loading splash                                                                            |
+| `--melonloader.basedir`                                   | relocate `Mods`, `Plugins`, `UserData`, `UserLibs` and `MelonLoader`                               |
+| `--melonloader.agfoffline`, `--melonloader.agfregenerate` | IL2CPP assembly generation: never contact the remote API; force a rebuild                          |
+| `--melonloader.unityversion`                              | override the detected Unity version when detection fails                                           |
 
 Logs are written to `MelonLoader/Logs/`, capped at ten files by default (`--melonloader.maxlogs`,
 `0` for no cap).
@@ -318,13 +318,13 @@ Logs are written to `MelonLoader/Logs/`, capped at ten files by default (`--melo
 
 ## Files MelonLoader Creates That Nobody Installed
 
-| Path | When |
-| --- | --- |
-| `UserData/Loader.cfg` | first run |
-| `UserData/MelonPreferences.cfg` | first run of any mod with preferences |
-| `MelonLoader/Logs/` | every run |
-| `MelonLoader/Il2CppAssemblies/` | IL2CPP first run, and again after a game update |
-| `Mods/`, `Plugins/`, `UserLibs/`, `UserData/` | created empty on first run if absent |
+| Path                                          | When                                            |
+| --------------------------------------------- | ----------------------------------------------- |
+| `UserData/Loader.cfg`                         | first run                                       |
+| `UserData/MelonPreferences.cfg`               | first run of any mod with preferences           |
+| `MelonLoader/Logs/`                           | every run                                       |
+| `MelonLoader/Il2CppAssemblies/`               | IL2CPP first run, and again after a game update |
+| `Mods/`, `Plugins/`, `UserLibs/`, `UserData/` | created empty on first run if absent            |
 
 ---
 

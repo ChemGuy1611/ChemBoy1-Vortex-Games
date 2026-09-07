@@ -15,9 +15,9 @@ Each row is an `IModWithState` (`IMod & IProfileMod`):
 
 ```ts
 newModsWithState[modId] = {
-  ...mods[modId],       // IMod fields first
-  enabled: false,       // safe default
-  ...modState[modId],   // IProfileMod fields override enabled/enabledTime/disabledTime
+    ...mods[modId], // IMod fields first
+    enabled: false, // safe default
+    ...modState[modId], // IProfileMod fields override enabled/enabledTime/disabledTime
 };
 ```
 
@@ -39,16 +39,16 @@ falling back to `mod.installationPath` when all four are empty. `fileName` is st
 
 Columns are plain objects matching `ITableAttribute` (calc/customRenderer, filter, sort, group, edit). Key columns defined in `ModList.tsx`:
 
-| Column | Placement | Sort / Group / Filter | Notes |
-|---|---|---|---|
-| `picture` | detail | — | `ZoomableImage` + description |
-| `enabled` | table | groupable; filter = `OptionsFilter` (Enabled/Disabled/Uninstalled) | inline-editable; cycles mod state via `setModState`/`cycleModState` |
-| `name` | both | sortable (locale collator); default filter target; filter = `TextFilter` | editable filename unless mod is only downloaded |
-| `version` | table | groupable (function: "Up-to-date" vs "Update available"); filter = `VersionFilter` | shows version dropdown for alternate installed versions; CSS class driven by update state |
-| `author` | both | sortable; groupable; hidden by default | unions `attributes.author` + `attributes.uploader` |
-| `archiveName` | both | sortable; groupable; hidden by default | looks up the source download's local path |
-| `modSize` | table | sortable; hidden by default | on-demand folder-size calculation |
-| `enabledTime` / `installTime` / `downloadTime` | both; hidden by default | sortable; filter = `DateTimeFilter` | date columns |
+| Column                                         | Placement               | Sort / Group / Filter                                                              | Notes                                                                                     |
+| ---------------------------------------------- | ----------------------- | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `picture`                                      | detail                  | —                                                                                  | `ZoomableImage` + description                                                             |
+| `enabled`                                      | table                   | groupable; filter = `OptionsFilter` (Enabled/Disabled/Uninstalled)                 | inline-editable; cycles mod state via `setModState`/`cycleModState`                       |
+| `name`                                         | both                    | sortable (locale collator); default filter target; filter = `TextFilter`           | editable filename unless mod is only downloaded                                           |
+| `version`                                      | table                   | groupable (function: "Up-to-date" vs "Update available"); filter = `VersionFilter` | shows version dropdown for alternate installed versions; CSS class driven by update state |
+| `author`                                       | both                    | sortable; groupable; hidden by default                                             | unions `attributes.author` + `attributes.uploader`                                        |
+| `archiveName`                                  | both                    | sortable; groupable; hidden by default                                             | looks up the source download's local path                                                 |
+| `modSize`                                      | table                   | sortable; hidden by default                                                        | on-demand folder-size calculation                                                         |
+| `enabledTime` / `installTime` / `downloadTime` | both; hidden by default | sortable; filter = `DateTimeFilter`                                                | date columns                                                                              |
 
 Other extensions contribute more columns to the same table (see "Cross-extension columns" below): category, endorsement/tracking/game/modId/collectionId, mod type, mod source/URL, INI edits, installer, collection membership.
 
@@ -64,9 +64,9 @@ A column only participates in filtering if it has a `filter` object. For each ro
 
 1. `dataId = attribute.filter.dataId || attribute.id` — which property to read off the row.
 2. The value handed to `matches()` depends on `raw`:
-   - `raw === false` → the **calculated** value (`calc()` output, cached).
-   - `raw === true` → the **raw row value**: whole row object if `dataId === "$"`, else `row[dataId]`.
-   - `raw` is a string → reach into a named sub-object first: `(row[raw] || {})[dataId]` (e.g. category filter uses `raw: "attributes"`).
+    - `raw === false` → the **calculated** value (`calc()` output, cached).
+    - `raw === true` → the **raw row value**: whole row object if `dataId === "$"`, else `row[dataId]`.
+    - `raw` is a string → reach into a named sub-object first: `(row[raw] || {})[dataId]` (e.g. category filter uses `raw: "attributes"`).
 3. Row survives only if every active filter's `matches(filterValue, value, state)` returns non-false. `state` is the full Redux store state, so filters can consult other rows/global data (e.g. counting sibling mods, resolving category trees).
 
 ### Sorting
@@ -95,13 +95,13 @@ The gear-icon menu lists all `isToggleable` columns. Toggling one dispatches `se
 
 ## Filter widget reference
 
-| Filter | `raw` | Typical `dataId` | Matches against |
-|---|---|---|---|
-| `TextFilter` | `false` | attribute id | calculated display string, substring search (optional case-insensitive) |
-| `OptionsFilter` | `true` (can be forced `false`) | attribute id | raw value against a fixed choice list; supports single/multi-select and array-valued rows |
-| `VersionFilter` | `true` | `"$"` (whole row) | preset tokens (`has-update`, `missing-meta`) plus arbitrary version strings |
-| `DateTimeFilter` | `false` | attribute id | calculated `Date`, rounded to day, against `{ comparison: "eq"\|"ge"\|"le", value }` |
-| `CategoryFilter` | `"attributes"` (string form) | `"category"` | category parent chain, plus `*`-prefixed free-text search |
+| Filter           | `raw`                          | Typical `dataId`  | Matches against                                                                           |
+| ---------------- | ------------------------------ | ----------------- | ----------------------------------------------------------------------------------------- |
+| `TextFilter`     | `false`                        | attribute id      | calculated display string, substring search (optional case-insensitive)                   |
+| `OptionsFilter`  | `true` (can be forced `false`) | attribute id      | raw value against a fixed choice list; supports single/multi-select and array-valued rows |
+| `VersionFilter`  | `true`                         | `"$"` (whole row) | preset tokens (`has-update`, `missing-meta`) plus arbitrary version strings               |
+| `DateTimeFilter` | `false`                        | attribute id      | calculated `Date`, rounded to day, against `{ comparison: "eq"\|"ge"\|"le", value }`      |
+| `CategoryFilter` | `"attributes"` (string form)   | `"category"`      | category parent chain, plus `*`-prefixed free-text search                                 |
 
 ---
 

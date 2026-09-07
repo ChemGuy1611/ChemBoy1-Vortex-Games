@@ -6,11 +6,11 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| Manager | a file or folder named `mod manager re-mars-tered.exe` | - |
-| Managerlegacy | a file or folder named `modmanager.exe` | - |
-| Mod | a file or folder named one of: `modinfo.xml` | `mods` |
+| Mod Type      | Archive must contain                                   | Installs to |
+| ------------- | ------------------------------------------------------ | ----------- |
+| Manager       | a file or folder named `mod manager re-mars-tered.exe` | -           |
+| Managerlegacy | a file or folder named `modmanager.exe`                | -           |
+| Mod           | a file or folder named one of: `modinfo.xml`           | `mods`      |
 
 Paths are relative to the game's install folder.
 
@@ -33,4 +33,3 @@ Installs to: `mods`
 - Archives that contain a FOMOD installer (a `fomod` folder with `ModuleConfig.xml`) are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

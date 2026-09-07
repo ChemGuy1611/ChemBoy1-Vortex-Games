@@ -3,7 +3,7 @@
 Native Node bindings exposing Win32 API functions not otherwise available to Node/Electron. Windows-only. Used across extensions mainly for registry lookups (install-path fallback, dependency detection) and INI file access (the latter wrapped by `vortex-parse-ini` — see `resources/FILE_PARSING.md`).
 
 ```js
-const winapi = require('winapi-bindings');
+const winapi = require("winapi-bindings");
 ```
 
 ---
@@ -12,14 +12,14 @@ const winapi = require('winapi-bindings');
 
 ```js
 try {
-  const result = winapi.RegGetValue(
-    'HKEY_LOCAL_MACHINE',
-    'SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{...}',
-    'InstallLocation'
-  );
-  return result.value; // string | number | number[] (MULTI_SZ) | Buffer, depending on registry type
+    const result = winapi.RegGetValue(
+        "HKEY_LOCAL_MACHINE",
+        "SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{...}",
+        "InstallLocation",
+    );
+    return result.value; // string | number | number[] (MULTI_SZ) | Buffer, depending on registry type
 } catch (err) {
-  // key or value not found, or path doesn't exist — RegGetValue THROWS, it never returns undefined
+    // key or value not found, or path doesn't exist — RegGetValue THROWS, it never returns undefined
 }
 ```
 
@@ -29,14 +29,14 @@ Real usage (install path fallback pattern used across most game extensions):
 
 ```js
 function makeFindGame(api, gameSpec) {
-  try {
-    const instPath = winapi.RegGetValue(INSTALL_HIVE, INSTALL_KEY, INSTALL_VALUE);
-    if (!instPath) throw new Error('empty registry key');
-    return () => Promise.resolve(instPath.value);
-  } catch {
-    return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
-      .then((game) => game.gamePath);
-  }
+    try {
+        const instPath = winapi.RegGetValue(INSTALL_HIVE, INSTALL_KEY, INSTALL_VALUE);
+        if (!instPath) throw new Error("empty registry key");
+        return () => Promise.resolve(instPath.value);
+    } catch {
+        return () =>
+            util.GameStoreHelper.findByAppId(gameSpec.discovery.ids).then((game) => game.gamePath);
+    }
 }
 ```
 
@@ -49,18 +49,22 @@ Enumeration (`RegEnumKeys`, `RegEnumValues`) needs an open key handle, obtained 
 ```js
 let values;
 try {
-  winapi.WithRegOpen('HKEY_LOCAL_MACHINE', 'SOFTWARE\\Microsoft\\NET Framework Setup\\NDP', (hkey) => {
-    values = winapi.RegEnumValues(hkey); // [{ type, key }, ...] — value NAMES only, not the data
-  });
-  const found = values.map(v => v.key).some(key => key.startsWith('v4'));
+    winapi.WithRegOpen(
+        "HKEY_LOCAL_MACHINE",
+        "SOFTWARE\\Microsoft\\NET Framework Setup\\NDP",
+        (hkey) => {
+            values = winapi.RegEnumValues(hkey); // [{ type, key }, ...] — value NAMES only, not the data
+        },
+    );
+    const found = values.map((v) => v.key).some((key) => key.startsWith("v4"));
 } catch (err) {
-  // hive/path doesn't exist, or access denied — thrown before the callback ever runs
+    // hive/path doesn't exist, or access denied — thrown before the callback ever runs
 }
 ```
 
 ```js
-winapi.WithRegOpen('HKEY_LOCAL_MACHINE', 'SOFTWARE\\Python\\PythonCore', (hkey) => {
-  const keys = winapi.RegEnumKeys(hkey); // [{ class, key, lastWritten }, ...] — subkey NAMES
+winapi.WithRegOpen("HKEY_LOCAL_MACHINE", "SOFTWARE\\Python\\PythonCore", (hkey) => {
+    const keys = winapi.RegEnumKeys(hkey); // [{ class, key, lastWritten }, ...] — subkey NAMES
 });
 ```
 
@@ -82,16 +86,16 @@ winapi.WithRegOpen('HKEY_LOCAL_MACHINE', 'SOFTWARE\\Python\\PythonCore', (hkey) 
 
 Not currently used anywhere in this codebase, but available if a need comes up:
 
-| Group | Functions |
-| --- | --- |
-| Filesystem | `SetFileAttributes`, `GetDiskFreeSpaceEx`, `GetVolumePathName`, `GetFileVersionInfo` |
-| Shell | `SHGetKnownFolderPath`, `ShellExecuteEx` |
-| Language | `GetSystemPreferredUILanguages`, `GetUserPreferredUILanguages`, `GetProcessPreferredUILanguages`, `SetProcessPreferredUILanguages` |
-| Task Scheduler | `CreateTask`, `GetTasks`, `DeleteTask`, `RunTask`, `StopTask` |
-| Processes | `GetProcessList`, `GetModuleList`, `GetProcessToken`, `GetProcessWindowList`, `SetForegroundWindow`, `CreateProcessWithIntegrity` |
-| Permissions | `AddFileACE`, `GetUserSID`, `LookupAccountName`, `CheckYourPrivilege`, `GetUserPrivilege`, `AddUserPrivilege`, `RemoveUserPrivilege` |
-| App Container | `SupportsAppContainer`, `CreateAppContainer`, `DeleteAppContainer`, `GrantAppContainer`, `RunInContainer` |
-| Auxiliary | `IsThisWine`, `WhoLocks`, `WalkDir`, `GetNativeArch`, `InitiateSystemShutdown`, `AbortSystemShutdown` |
+| Group          | Functions                                                                                                                            |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Filesystem     | `SetFileAttributes`, `GetDiskFreeSpaceEx`, `GetVolumePathName`, `GetFileVersionInfo`                                                 |
+| Shell          | `SHGetKnownFolderPath`, `ShellExecuteEx`                                                                                             |
+| Language       | `GetSystemPreferredUILanguages`, `GetUserPreferredUILanguages`, `GetProcessPreferredUILanguages`, `SetProcessPreferredUILanguages`   |
+| Task Scheduler | `CreateTask`, `GetTasks`, `DeleteTask`, `RunTask`, `StopTask`                                                                        |
+| Processes      | `GetProcessList`, `GetModuleList`, `GetProcessToken`, `GetProcessWindowList`, `SetForegroundWindow`, `CreateProcessWithIntegrity`    |
+| Permissions    | `AddFileACE`, `GetUserSID`, `LookupAccountName`, `CheckYourPrivilege`, `GetUserPrivilege`, `AddUserPrivilege`, `RemoveUserPrivilege` |
+| App Container  | `SupportsAppContainer`, `CreateAppContainer`, `DeleteAppContainer`, `GrantAppContainer`, `RunInContainer`                            |
+| Auxiliary      | `IsThisWine`, `WhoLocks`, `WalkDir`, `GetNativeArch`, `InitiateSystemShutdown`, `AbortSystemShutdown`                                |
 
 Full signatures: `node_modules/winapi-bindings/index.d.ts`.
 

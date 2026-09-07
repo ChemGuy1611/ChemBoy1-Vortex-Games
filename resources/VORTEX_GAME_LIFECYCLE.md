@@ -10,12 +10,12 @@ Almost everything here lives in the `gamemode_management` core extension
 
 ## Two registries: "can manage" vs "found on disk"
 
-| Concept | Where | Meaning |
-| --- | --- | --- |
-| Known games | `GameModeManager.mKnownGames` (`IGame[]`) | Every `context.registerGame(...)` from a bundled or third-party extension. What Vortex *could* manage. |
-| Game stubs | `GameModeManager.mGameStubs` | Registered-but-not-installed game extensions (downloadable on demand). |
-| Known game stores | `GameModeManager.mKnownGameStores` (`IGameStore[]`) | `Steam`, `EpicGamesLauncher`, plus `gamestore-*` extensions. Used during discovery. |
-| Discovered games | `state.settings.gameMode.discovered[gameId]` (`IDiscoveryResult`) | What was actually *found on disk* — has a `path`, `store`, `tools`, `environment`. |
+| Concept           | Where                                                             | Meaning                                                                                                |
+| ----------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Known games       | `GameModeManager.mKnownGames` (`IGame[]`)                         | Every `context.registerGame(...)` from a bundled or third-party extension. What Vortex _could_ manage. |
+| Game stubs        | `GameModeManager.mGameStubs`                                      | Registered-but-not-installed game extensions (downloadable on demand).                                 |
+| Known game stores | `GameModeManager.mKnownGameStores` (`IGameStore[]`)               | `Steam`, `EpicGamesLauncher`, plus `gamestore-*` extensions. Used during discovery.                    |
+| Discovered games  | `state.settings.gameMode.discovered[gameId]` (`IDiscoveryResult`) | What was actually _found on disk_ — has a `path`, `store`, `tools`, `environment`.                     |
 
 A game is manageable only when it is **both** a known game **and** discovered with a valid `path`
 (`isValidGame`). `mKnownGames` answers "is this game supported"; `discovered` answers "do we know
@@ -56,20 +56,20 @@ Activation is **driven by the active profile**, not selected directly. The trigg
 1. Reject early if `newGameId` is undefined or `getGame(newGameId)` is unknown.
 2. Show a **"Preparing game for modding"** `activity` notification (dismissed in `finally`).
 3. **`GameModeManager.setupGameMode(newGameId)`** — the per-game setup:
-   - `assertToolDir` + `fs.statAsync(gameDiscovery.path)` confirm the folder still exists.
-   - `game.getInstalledVersion(gameDiscovery)` is called **before** `game.setup` (so the
-     gameversion-hash extension can read files before `setup` may lock them).
-   - `game.setup(gameDiscovery)` runs the extension's setup (typically
-     `fs.ensureDirWritableAsync` on the staging dir, requirement downloads, etc.). If a
-     `contributed` (third-party) game's setup throws, `allowReport` is forced off.
+    - `assertToolDir` + `fs.statAsync(gameDiscovery.path)` confirm the folder still exists.
+    - `game.getInstalledVersion(gameDiscovery)` is called **before** `game.setup` (so the
+      gameversion-hash extension can read files before `setup` may lock them).
+    - `game.setup(gameDiscovery)` runs the extension's setup (typically
+      `fs.ensureDirWritableAsync` on the staging dir, requirement downloads, etc.). If a
+      `contributed` (third-party) game's setup throws, `allowReport` is forced off.
 4. Verify the mod path is still resolvable: `getGame(newGameId).getModPaths(discovery.path)`.
 5. **`GameModeManager.setGameMode(oldMode, newMode, profileId)`**:
-   - Resolve `modPath` via `game.queryModPath(path)` (made absolute if relative).
-   - `assertToolDir` → `fs.statAsync(modPath)` → `ensureWritable(modPath)` → `getNormalizeFunc` →
-     `discoverRelativeTools`.
-   - **Only if the profile is still the active one** (`activeProfile(state).id === profileId`):
-     call the activation callback, which **emits `gamemode-activated`** with the game id, and set
-     the default `primaryTool` if one tool is flagged `defaultPrimary` and none is set yet.
+    - Resolve `modPath` via `game.queryModPath(path)` (made absolute if relative).
+    - `assertToolDir` → `fs.statAsync(modPath)` → `ensureWritable(modPath)` → `getNormalizeFunc` →
+      `discoverRelativeTools`.
+    - **Only if the profile is still the active one** (`activeProfile(state).id === profileId`):
+      call the activation callback, which **emits `gamemode-activated`** with the game id, and set
+      the default `primaryTool` if one tool is flagged `defaultPrimary` and none is set yet.
 6. On failure: `UserCanceled` / `ProcessCanceled` are silent (logged only); `SetupError` /
    `DataInvalid` show a non-reportable error; `ENOENT` shows a "missing file" dialog explaining
    partial-install / store / run-once / unknown-variant causes. **Any failure** ends with
@@ -89,9 +89,9 @@ whatever game was activated, because there is one shared event bus and no per-ga
 game extension's handler therefore has to gate on the id before doing anything at all:
 
 ```js
-api.events.on('gamemode-activated', (gameId) => {
-  if (gameId !== GAME_ID) return;   // FIRST line - not after the side effects
-  // ...
+api.events.on("gamemode-activated", (gameId) => {
+    if (gameId !== GAME_ID) return; // FIRST line - not after the side effects
+    // ...
 });
 ```
 
@@ -110,33 +110,33 @@ runs; `setGameMode` seeds it from a tool's `defaultPrimary` flag. Launching the 
 
 ## State paths touched
 
-| Path | Role |
-| --- | --- |
-| `settings.gameMode.discovered[gameId]` | `IDiscoveryResult` per discovered game (path, store, tools, environment, hidden) |
-| `settings.gameMode.searchPaths` | Drives to scan in `searchDiscovery` |
-| `settings.profiles.activeProfileId` | Drives game activation (watched) |
-| `persistent.profiles[id].gameId` | Maps the active profile to its game |
-| `settings.interface.primaryTool[gameId]` | Default-launched tool |
+| Path                                     | Role                                                                             |
+| ---------------------------------------- | -------------------------------------------------------------------------------- |
+| `settings.gameMode.discovered[gameId]`   | `IDiscoveryResult` per discovered game (path, store, tools, environment, hidden) |
+| `settings.gameMode.searchPaths`          | Drives to scan in `searchDiscovery`                                              |
+| `settings.profiles.activeProfileId`      | Drives game activation (watched)                                                 |
+| `persistent.profiles[id].gameId`         | Maps the active profile to its game                                              |
+| `settings.interface.primaryTool[gameId]` | Default-launched tool                                                            |
 
 ## Events (runtime)
 
-| Event | Direction | Purpose |
-| --- | --- | --- |
-| `gamemode-activated` (gameId) | emitted | Game is now managed — the universal "ready" signal |
-| `discover-game` (gameId) | `onAsync` in | Quick-discover a single game on demand |
-| `start-quick-discovery` (cb?) | on | Re-run quick discovery (also refreshes tools) |
-| `discover-tools` (gameId) | `onAsync` in | Re-run tool discovery for a game |
-| `start-discovery` | on | Open the drive-selection dialog, then `searchDiscovery` |
-| `cancel-discovery` | on | Abort an in-progress search |
-| `refresh-game-info` (gameId, cb) | on | Re-query game metadata |
-| `manually-set-game-location` (gameId, cb) | on | User browses to the game folder |
+| Event                                     | Direction    | Purpose                                                 |
+| ----------------------------------------- | ------------ | ------------------------------------------------------- |
+| `gamemode-activated` (gameId)             | emitted      | Game is now managed — the universal "ready" signal      |
+| `discover-game` (gameId)                  | `onAsync` in | Quick-discover a single game on demand                  |
+| `start-quick-discovery` (cb?)             | on           | Re-run quick discovery (also refreshes tools)           |
+| `discover-tools` (gameId)                 | `onAsync` in | Re-run tool discovery for a game                        |
+| `start-discovery`                         | on           | Open the drive-selection dialog, then `searchDiscovery` |
+| `cancel-discovery`                        | on           | Abort an in-progress search                             |
+| `refresh-game-info` (gameId, cb)          | on           | Re-query game metadata                                  |
+| `manually-set-game-location` (gameId, cb) | on           | User browses to the game folder                         |
 
 ## Gotchas
 
 - Quick discovery is suppressed under `VORTEX_E2E=1`; tests set paths explicitly.
 - `setupGameMode` can be called for a game whose discovery was reset between startup and the
   switch (e.g. uninstalled after `--game xyz`) — it rejects with `ProcessCanceled("game not
-  discovered")` rather than crashing.
+discovered")` rather than crashing.
 - The profile may change again mid-activation; `setGameMode` re-checks `activeProfile` before
   emitting `gamemode-activated`, and `changeGameMode`'s comment block warns handlers about this.
 - A failed activation always clears the next profile (`setNextProfile(undefined)`) — the visible

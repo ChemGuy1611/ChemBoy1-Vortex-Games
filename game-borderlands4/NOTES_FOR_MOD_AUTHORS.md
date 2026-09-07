@@ -6,21 +6,21 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `OakGame` |
-| Pysdk | a file or folder named `unrealsdk.dll` and a file or folder named `sdk_mods` | the game folder itself (no subfolder) |
-| Pysdkmod | a file with one of these extensions: `.py` or `.sdkmod` | `sdk_mods` |
-| Blueprint Mods (LogicMods) | a `LogicMods` folder | `OakGame\Content\Paks\LogicMods\LogicMods` |
-| Pak Mods | a `.pak` file | `OakGame\Content\Paks` |
-| UE4SS Itself | a `dwmapi.dll` file | `OakGame\Binaries\Win64` |
-| UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `OakGame\Binaries\Win64\ue4ss\Mods` |
-| UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | `OakGame\Binaries\Win64\ue4ss\Mods` |
-| Root / Game Folder Mods | a top-level folder such as `OakGame` | the game folder itself (no subfolder) |
-| Contentfolder | a file or folder named `Content` | `OakGame` |
-| Config File Mods | a config file such as `engine.ini` or `game.ini` | `DOCUMENTS\My Games\Borderlands 4\Saved\Config\Windows` |
-| Save Game Files | a `.sav` or `.yaml` file | - |
-| Fallback Installer | anything unrecognised with no pak file | `OakGame\Binaries\Win64` |
+| Mod Type                                     | Archive must contain                                                         | Installs to                                             |
+| -------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------- |
+| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder                                     | `OakGame`                                               |
+| Pysdk                                        | a file or folder named `unrealsdk.dll` and a file or folder named `sdk_mods` | the game folder itself (no subfolder)                   |
+| Pysdkmod                                     | a file with one of these extensions: `.py` or `.sdkmod`                      | `sdk_mods`                                              |
+| Blueprint Mods (LogicMods)                   | a `LogicMods` folder                                                         | `OakGame\Content\Paks\LogicMods\LogicMods`              |
+| Pak Mods                                     | a `.pak` file                                                                | `OakGame\Content\Paks`                                  |
+| UE4SS Itself                                 | a `dwmapi.dll` file                                                          | `OakGame\Binaries\Win64`                                |
+| UE4SS Script Mods (Lua)                      | a `.lua` file and a `Scripts` folder                                         | `OakGame\Binaries\Win64\ue4ss\Mods`                     |
+| UE4SS DLL Mods (C++)                         | a `.dll` file and a `dlls` folder                                            | `OakGame\Binaries\Win64\ue4ss\Mods`                     |
+| Root / Game Folder Mods                      | a top-level folder such as `OakGame`                                         | the game folder itself (no subfolder)                   |
+| Contentfolder                                | a file or folder named `Content`                                             | `OakGame`                                               |
+| Config File Mods                             | a config file such as `engine.ini` or `game.ini`                             | `DOCUMENTS\My Games\Borderlands 4\Saved\Config\Windows` |
+| Save Game Files                              | a `.sav` or `.yaml` file                                                     | -                                                       |
+| Fallback Installer                           | anything unrecognised with no pak file                                       | `OakGame\Binaries\Win64`                                |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
@@ -249,4 +249,3 @@ Installs to: `OakGame\Binaries\Win64`
 
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

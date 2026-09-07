@@ -2,20 +2,20 @@
 
 ## Overview
 
-| Property | Value |
-| --- | --- |
-| Name | Metro Exodus Vortex Extension |
-| Engine / Structure | Basic Game |
-| Author | ChemBoy1 |
+| Property           | Value                         |
+| ------------------ | ----------------------------- |
+| Name               | Metro Exodus Vortex Extension |
+| Engine / Structure | Basic Game                    |
+| Author             | ChemBoy1                      |
 
 ## Key Identifiers
 
-| Property | Value |
-| --- | --- |
-| Game ID | `metroexodus` |
-| Executable | `MetroExodus.exe` |
-| Extension Page | [https://www.nexusmods.com/site/mods/907](https://www.nexusmods.com/site/mods/907) |
-| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Metro_Exodus](https://www.pcgamingwiki.com/wiki/Metro_Exodus) |
+| Property       | Value                                                                                            |
+| -------------- | ------------------------------------------------------------------------------------------------ |
+| Game ID        | `metroexodus`                                                                                    |
+| Executable     | `MetroExodus.exe`                                                                                |
+| Extension Page | [https://www.nexusmods.com/site/mods/907](https://www.nexusmods.com/site/mods/907)               |
+| PCGamingWiki   | [https://www.pcgamingwiki.com/wiki/Metro_Exodus](https://www.pcgamingwiki.com/wiki/Metro_Exodus) |
 
 ## Supported Stores
 
@@ -41,4 +41,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Special Features
 
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
-

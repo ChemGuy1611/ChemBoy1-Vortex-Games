@@ -1,17 +1,17 @@
-const { actions, fs, util, selectors, log } = require('vortex-api');
-const path = require('path');
-const GAME_ID = 'placeholder';
-const api = require('vortex-api'); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
+const { actions, fs, util, selectors, log } = require("vortex-api");
+const path = require("path");
+const GAME_ID = "placeholder";
+const api = require("vortex-api"); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 const spec = { game: { id: GAME_ID } }; //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 const context = { api }; //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 
 // MODDB REQUIREMENT /////////////////////////////////////////////////////
-const { downloadModDb, checkForModDbUpdate } = require('./moddb_downloader');
+const { downloadModDb, checkForModDbUpdate } = require("./moddb_downloader");
 const XXX_ID = `${GAME_ID}-XXX`; //mod type id for the requirement (register the mod type + installer in index.js as usual)
 const XXX_NAME = "XXX";
-const XXX_MODDB_PATH = 'games/placeholder-game'; //or 'mods/placeholder-mod' - https://www.moddb.com/{path}/downloads
-const XXX_REV = '0.0.0'; //fallback version if the ModDB RSS feed is unreachable
-const XXX_DL_ID = '000000'; //fallback file id if the RSS feed is unreachable - resolved via https://www.moddb.com/downloads/start/000000
+const XXX_MODDB_PATH = "games/placeholder-game"; //or 'mods/placeholder-mod' - https://www.moddb.com/{path}/downloads
+const XXX_REV = "0.0.0"; //fallback version if the ModDB RSS feed is unreachable
+const XXX_DL_ID = "000000"; //fallback file id if the RSS feed is unreachable - resolved via https://www.moddb.com/downloads/start/000000
 const MODDB_REQUIREMENTS = [
   {
     moddbPath: XXX_MODDB_PATH,
@@ -43,18 +43,27 @@ async function setup(api, gameSpec) {
 }
 
 // *** In context.once() function ////////////////////
-  api.onAsync('check-mods-version', (gameId, mods, forced) => {
-    if (gameId !== GAME_ID) return;
-    return checkForModDbUpdate(api, spec, MODDB_REQUIREMENTS)
-      .catch(err => log('warn', `Failed to check for ${XXX_NAME} update: ${err}`));
-  }); //*/
+api.onAsync("check-mods-version", (gameId, mods, forced) => {
+  if (gameId !== GAME_ID) return;
+  return checkForModDbUpdate(api, spec, MODDB_REQUIREMENTS).catch((err) =>
+    log("warn", `Failed to check for ${XXX_NAME} update: ${err}`),
+  );
+}); //*/
 
 // *** In applyGame() function ////////////////////
-  //register a toolbar button to (re)download the latest file
-  context.registerAction('mod-icons', 300, 'open-ext', {}, `Download Latest ${XXX_NAME}`, () => {
+//register a toolbar button to (re)download the latest file
+context.registerAction(
+  "mod-icons",
+  300,
+  "open-ext",
+  {},
+  `Download Latest ${XXX_NAME}`,
+  () => {
     downloadModDb(context.api, spec, MODDB_REQUIREMENTS, false);
-  }, () => {
+  },
+  () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
-  }); //*/
+  },
+); //*/

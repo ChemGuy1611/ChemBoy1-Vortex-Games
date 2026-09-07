@@ -928,14 +928,28 @@ def get_discovery_ids(src):
     return names if names else ['STEAMAPP_ID']
 
 
+# Canonical order for store IDs added to DISCOVERY_IDS_ACTIVE: Steam (the scaffold
+# base) first, then GOG, Epic, Xbox, then the Demo/other tail. A fresh scaffold
+# starts as [STEAMAPP_ID], so appending the resolved IDs in this order yields the
+# canonical array. Pre-existing out-of-order arrays are left alone here - that is
+# a separate audit/cleanup concern, not something to churn on every scaffold run.
+DISCOVERY_ID_APPEND_ORDER = (
+    "GOGAPP_ID", "EPICAPP_ID", "XBOXAPP_ID", "STEAMAPP_ID_DEMO", "UPLAYAPP_ID", "EAAPP_ID",
+)
+
+
 def add_to_discovery_ids(src):
     """Add store ID variables to DISCOVERY_IDS_ACTIVE as needed.
 
     Reads each store ID constant directly from src. A variable is added only
     if its current value is a real resolved ID (not null, '', or 'XXX') and
-    it is not already present in the array.
+    it is not already present in the array (a commented-out entry counts as
+    present, so a deliberately parked store stays parked).
 
-    Handled variables (in order): STEAMAPP_ID_DEMO, GOGAPP_ID, EPICAPP_ID, XBOXAPP_ID, UPLAYAPP_ID, EAAPP_ID.
+    Handled variables are appended in DISCOVERY_ID_APPEND_ORDER: GOGAPP_ID,
+    EPICAPP_ID, XBOXAPP_ID, then the Demo/other tail STEAMAPP_ID_DEMO,
+    UPLAYAPP_ID, EAAPP_ID. Applied to a fresh [STEAMAPP_ID] scaffold this gives
+    the canonical order Steam, GOG, Epic, Xbox, Demo/other.
 
     Returns the updated source string.
     """
@@ -959,7 +973,7 @@ def add_to_discovery_ids(src):
         v = const_value(s, var_name)
         return is_real_value(v)
 
-    for var in ("STEAMAPP_ID_DEMO", "GOGAPP_ID", "EPICAPP_ID", "XBOXAPP_ID", "UPLAYAPP_ID", "EAAPP_ID"):
+    for var in DISCOVERY_ID_APPEND_ORDER:
         if _has_real_value(src, var):
             src = _append(src, var)
 

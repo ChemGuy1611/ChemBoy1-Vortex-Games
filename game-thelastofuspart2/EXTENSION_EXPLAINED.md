@@ -2,20 +2,20 @@
 
 ## Overview
 
-| Property | Value |
-| --- | --- |
-| Name | The Last of Us Part II Remastered Vortex Extension |
+| Property           | Value                                                       |
+| ------------------ | ----------------------------------------------------------- |
+| Name               | The Last of Us Part II Remastered Vortex Extension          |
 | Engine / Structure | Generic Game w/ File Extraction, Mod Loader, and Load Order |
-| Author | ChemBoy1 |
+| Author             | ChemBoy1                                                    |
 
 ## Key Identifiers
 
-| Property | Value |
-| --- | --- |
-| Game ID | `thelastofuspart2` |
-| Executable | `launcher.exe` |
-| Extension Page | [https://www.nexusmods.com/site/mods/1250](https://www.nexusmods.com/site/mods/1250) |
-| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/The_Last_of_Us_Part_II_Remastered](https://www.pcgamingwiki.com/wiki/The_Last_of_Us_Part_II_Remastered) |
+| Property       | Value                                                                                                                                      |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Game ID        | `thelastofuspart2`                                                                                                                         |
+| Executable     | `launcher.exe`                                                                                                                             |
+| Extension Page | [https://www.nexusmods.com/site/mods/1250](https://www.nexusmods.com/site/mods/1250)                                                       |
+| PCGamingWiki   | [https://www.pcgamingwiki.com/wiki/The_Last_of_Us_Part_II_Remastered](https://www.pcgamingwiki.com/wiki/The_Last_of_Us_Part_II_Remastered) |
 
 ## Supported Stores
 
@@ -24,42 +24,42 @@
 
 ## Feature Flags
 
-| Flag | Value | Description |
-| --- | --- | --- |
-| `LOAD_ORDER_ENABLED` | `true` | enables load order sorting |
-| `mod_update_all_profile` | `false` |  |
-| `updating_mod` | `false` | used to see if it's a mod update or not |
+| Flag                     | Value   | Description                             |
+| ------------------------ | ------- | --------------------------------------- |
+| `LOAD_ORDER_ENABLED`     | `true`  | enables load order sorting              |
+| `mod_update_all_profile` | `false` |                                         |
+| `updating_mod`           | `false` | used to see if it's a mod update or not |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
-| Name | ID | Priority | Target Path |
-| --- | --- | --- | --- |
-| .psarc (Mod Loader) | `thelastofuspart2-psarc` | high | `{gamePath}/mods` |
-| Build Folder | `thelastofuspart2-buildfolder` | high | `{gamePath}/.` |
-| bin Folder | `thelastofuspart2-binfolder` | high | `{gamePath}/build/pc/main` |
-| Pak (actor97) | `thelastofuspart2-pak` | high | `{gamePath}/build/pc/main` |
-| Save | `thelastofuspart2-save` | high | `DOCUMENTS/The Last of Us Part II/USERID_FOLDER/savedata` |
-| Config | `thelastofuspart2-config` | high | `USER_HOME/SOFTWARE/Naughty Dog/The Last of Us Part II` |
-| ndarc Tool | `thelastofuspart2-psarctoolndarc` | low | `{gamePath}/build/pc/main` |
-| ND Mod Loader | `thelastofuspart2-modloader` | low | `{gamePath}/.` |
+| Name                | ID                                | Priority | Target Path                                               |
+| ------------------- | --------------------------------- | -------- | --------------------------------------------------------- |
+| .psarc (Mod Loader) | `thelastofuspart2-psarc`          | high     | `{gamePath}/mods`                                         |
+| Build Folder        | `thelastofuspart2-buildfolder`    | high     | `{gamePath}/.`                                            |
+| bin Folder          | `thelastofuspart2-binfolder`      | high     | `{gamePath}/build/pc/main`                                |
+| Pak (actor97)       | `thelastofuspart2-pak`            | high     | `{gamePath}/build/pc/main`                                |
+| Save                | `thelastofuspart2-save`           | high     | `DOCUMENTS/The Last of Us Part II/USERID_FOLDER/savedata` |
+| Config              | `thelastofuspart2-config`         | high     | `USER_HOME/SOFTWARE/Naughty Dog/The Last of Us Part II`   |
+| ndarc Tool          | `thelastofuspart2-psarctoolndarc` | low      | `{gamePath}/build/pc/main`                                |
+| ND Mod Loader       | `thelastofuspart2-modloader`      | low      | `{gamePath}/.`                                            |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID | Priority |
-| --- | --- |
-| `thelastofuspart2-modloader` | 25 |
-| `thelastofuspart2-psarc` | 27 |
-| `thelastofuspart2-buildfolderpakbin` | 29 |
-| `thelastofuspart2-binfolder` | 31 |
-| `thelastofuspart2-pak` | 33 |
-| `thelastofuspart2-buildfolder` | 35 |
-| `thelastofuspart2-save` | 37 |
-| `thelastofuspart2-config` | 39 |
-| `thelastofuspart2-psarctoolndarc` | 41 |
+| Installer ID                         | Priority |
+| ------------------------------------ | -------- |
+| `thelastofuspart2-modloader`         | 25       |
+| `thelastofuspart2-psarc`             | 27       |
+| `thelastofuspart2-buildfolderpakbin` | 29       |
+| `thelastofuspart2-binfolder`         | 31       |
+| `thelastofuspart2-pak`               | 33       |
+| `thelastofuspart2-buildfolder`       | 35       |
+| `thelastofuspart2-save`              | 37       |
+| `thelastofuspart2-config`            | 39       |
+| `thelastofuspart2-psarctoolndarc`    | 41       |
 
 ## Registered Tools
 
@@ -89,4 +89,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
-

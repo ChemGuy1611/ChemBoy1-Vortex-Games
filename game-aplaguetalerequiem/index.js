@@ -7,10 +7,10 @@ Date: 2025-11-18
 ////////////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require('vortex-api');
-const path = require('path');
-const template = require('string-template');
-const { parseStringPromise } = require('xml2js');
+const { actions, fs, util, selectors, log } = require("vortex-api");
+const path = require("path");
+const template = require("string-template");
+const { parseStringPromise } = require("xml2js");
 
 const DOCUMENTS = util.getVortexPath("documents");
 //const LOCALAPPDATA = util.getVortexPath("localAppData");
@@ -25,10 +25,21 @@ const XBOXAPP_ID = "FocusHomeInteractiveSA.APlagueTaleRequiem-Windows";
 const XBOXEXECNAME = "Game";
 const GAME_NAME = "A Plague Tale: Requiem";
 const GAME_NAME_SHORT = "APT Requiem";
-const COMMON_FILE = path.join('DATAS', 'P_AMICIA.DPC');
+const COMMON_FILE = path.join("DATAS", "P_AMICIA.DPC");
 
-const ROOT_FOLDERS = ['DATAS', 'FONT', 'INPUT', 'LEVELS', 'RTC', 'Shaders', 'SOUNDBANKS', 'TRTEXT', 'UPDATE', 'VIDEOS'];
-const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map(folder => folder.toLowerCase());
+const ROOT_FOLDERS = [
+  "DATAS",
+  "FONT",
+  "INPUT",
+  "LEVELS",
+  "RTC",
+  "Shaders",
+  "SOUNDBANKS",
+  "TRTEXT",
+  "UPDATE",
+  "VIDEOS",
+];
+const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map((folder) => folder.toLowerCase());
 
 const gameFinderQuery = {
   steam: [{ id: STEAMAPP_ID, prefer: 0 }],
@@ -43,16 +54,16 @@ const EXEC_GOG = EXEC;
 const EXEC_EPIC = "APlagueTaleRequiem_x64.exe";
 const EXEC_XBOX = "APT2_WinStore.x64.Submission.exe";
 const EXEC_XBOX_ALT = "gamelaunchhelper.exe";
-const GOG_FILE = 'Galaxy64.dll';
-const STEAM_FILE = 'steam_api64.dll';
+const GOG_FILE = "Galaxy64.dll";
+const STEAM_FILE = "steam_api64.dll";
 const XBOX_FILE = EXEC_XBOX_ALT;
 const EPIC_FILE = EXEC;
 
-let GAME_VERSION = '';
-let GAME_PATH = '';
-let STAGING_FOLDER = '';
-let DOWNLOAD_FOLDER = '';
-const APPMANIFEST_FILE = 'appxmanifest.xml';
+let GAME_VERSION = "";
+let GAME_PATH = "";
+let STAGING_FOLDER = "";
+let DOWNLOAD_FOLDER = "";
+const APPMANIFEST_FILE = "appxmanifest.xml";
 
 //Information for mod types and installers
 const ROOT_ID = `${GAME_ID}-root`;
@@ -62,9 +73,9 @@ const ROOT_NAME = "Root Folder";
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config";
 const CONFIG_EXTS = [".ini"];
-const CONFIG_FILES = ["ENGINESETTINGS"]; 
-const CONFIG_PATH_STEAM = path.join(APPDATA, 'A Plague Tale Requiem');
-const CONFIG_PATH_GOG = path.join(DOCUMENTS, 'My Games', 'A Plague Tale Requiem');
+const CONFIG_FILES = ["ENGINESETTINGS"];
+const CONFIG_PATH_STEAM = path.join(APPDATA, "A Plague Tale Requiem");
+const CONFIG_PATH_GOG = path.join(DOCUMENTS, "My Games", "A Plague Tale Requiem");
 const CONFIG_PATH_XBOX = CONFIG_PATH_GOG;
 const CONFIG_PATH_EPIC = CONFIG_PATH_GOG;
 let CONFIG_PATH = CONFIG_PATH_STEAM;
@@ -94,47 +105,45 @@ const SAVE_EXTS = [".sav"]; //*/
 const MOD_PATH_DEFAULT = ".";
 const REQ_FILE = COMMON_FILE;
 const PARAMETERS = [];
-let MODTYPE_FOLDERS = ['.'];
+let MODTYPE_FOLDERS = ["."];
 
 //This information will be filled in from the data above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/837"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/A_Plague_Tale%3A_Requiem";
-const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
-const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
 const spec = {
-  "game": {
-    "id": GAME_ID,
-    "name": GAME_NAME,
-    "shortName": GAME_NAME_SHORT,
-    "logo": `${GAME_ID}.jpg`,
+  game: {
+    id: GAME_ID,
+    name: GAME_NAME,
+    shortName: GAME_NAME_SHORT,
+    logo: `${GAME_ID}.jpg`,
     //"parameters": PARAMETERS,
-    "mergeMods": true,
-    "modPath": MOD_PATH_DEFAULT,
-    "modPathIsRelative": true,
-    "requiredFiles": [
-      REQ_FILE
-    ],
-    "details": {
-      "steamAppId": +STEAMAPP_ID,
-      "gogAppId": GOGAPP_ID,
-      "epicAppId": EPICAPP_ID,
-      "xboxAppId": XBOXAPP_ID,
-      "ignoreConflicts": IGNORE_CONFLICTS,
-      "ignoreDeploy": IGNORE_DEPLOY,
+    mergeMods: true,
+    modPath: MOD_PATH_DEFAULT,
+    modPathIsRelative: true,
+    requiredFiles: [REQ_FILE],
+    details: {
+      steamAppId: +STEAMAPP_ID,
+      gogAppId: GOGAPP_ID,
+      epicAppId: EPICAPP_ID,
+      xboxAppId: XBOXAPP_ID,
+      ignoreConflicts: IGNORE_CONFLICTS,
+      ignoreDeploy: IGNORE_DEPLOY,
     },
-    "environment": {
-      "SteamAPPId": STEAMAPP_ID,
-      "GogAPPId": GOGAPP_ID,
-      "EpicAPPId": EPICAPP_ID,
-      "XboxAPPId": XBOXAPP_ID
-    }
+    environment: {
+      SteamAPPId: STEAMAPP_ID,
+      GogAPPId: GOGAPP_ID,
+      EpicAPPId: EPICAPP_ID,
+      XboxAPPId: XBOXAPP_ID,
+    },
   },
-  "modTypes": [
+  modTypes: [
     {
-      "id": ROOT_ID,
-      "name": ROOT_NAME,
-      "priority": "high",
-      "targetPath": "{gamePath}"
+      id: ROOT_ID,
+      name: ROOT_NAME,
+      priority: "high",
+      targetPath: "{gamePath}",
     },
     /*{
       "id": CONFIG_ID,
@@ -186,8 +195,7 @@ function statCheckSync(gamePath, file) {
   try {
     fs.statSync(path.join(gamePath, file));
     return true;
-  }
-  catch {
+  } catch {
     return false;
   }
 }
@@ -195,8 +203,7 @@ async function statCheckAsync(gamePath, file) {
   try {
     await fs.statAsync(path.join(gamePath, file));
     return true;
-  }
-  catch {
+  } catch {
     return false;
   }
 }
@@ -209,15 +216,17 @@ async function getAllFiles(dirPath) {
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
       const stats = await fs.statAsync(fullPath);
-      if (stats.isDirectory()) { // Recursively get files from subdirectories
+      if (stats.isDirectory()) {
+        // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
         results = results.concat(subDirFiles);
-      } else { // Add file to results
+      } else {
+        // Add file to results
         results.push(fullPath);
       }
     }
   } catch (err) {
-    log('warn', `Error reading directory ${dirPath}: ${err.message}`);
+    log("warn", `Error reading directory ${dirPath}: ${err.message}`);
   }
   return results;
 }
@@ -234,25 +243,31 @@ function pathPattern(api, game, pattern) {
   try {
     var _a;
     return template(pattern, {
-      gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
-      documents: util.getVortexPath('documents'),
-      localAppData: util.getVortexPath('localAppData'),
-      appData: util.getVortexPath('appData'),
+      gamePath:
+        (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0
+          ? void 0
+          : _a.path,
+      documents: util.getVortexPath("documents"),
+      localAppData: util.getVortexPath("localAppData"),
+      appData: util.getVortexPath("appData"),
     });
-  }
-  catch (err) { //this happens if the executable comes back as "undefined", usually caused by another app locking down the folder
-    api.showErrorNotification('Failed to locate executable. Please launch the game at least once.', err);
+  } catch (err) {
+    //this happens if the executable comes back as "undefined", usually caused by another app locking down the folder
+    api.showErrorNotification(
+      "Failed to locate executable. Please launch the game at least once.",
+      err,
+    );
   }
 }
 
 async function requiresLauncher(gamePath, store) {
-  if (store === 'xbox') {
+  if (store === "xbox") {
     return Promise.resolve({
-        launcher: 'xbox',
-        addInfo: {
-            appId: XBOXAPP_ID,
-            parameters: [{ appExecName: XBOXEXECNAME }],
-        },
+      launcher: "xbox",
+      addInfo: {
+        appId: XBOXAPP_ID,
+        parameters: [{ appExecName: XBOXEXECNAME }],
+      },
     });
   }
   /*
@@ -271,7 +286,7 @@ async function requiresLauncher(gamePath, store) {
 function getExecutable(discoveryPath) {
   if (statCheckSync(discoveryPath, EXEC_XBOX)) {
     return EXEC_XBOX;
-  };
+  }
   /*
   if (statCheckSync(discoveryPath, EXEC_EPIC)) {
     return EXEC_EPIC;
@@ -282,22 +297,22 @@ function getExecutable(discoveryPath) {
 //Get correct game version
 async function setGameVersion(gamePath) {
   if (await statCheckAsync(gamePath, STEAM_FILE)) {
-    GAME_VERSION = 'steam';
+    GAME_VERSION = "steam";
     CONFIG_PATH = setConfigPath(GAME_VERSION);
     return GAME_VERSION;
   }
   if (await statCheckAsync(gamePath, XBOX_FILE)) {
-    GAME_VERSION = 'xbox';
+    GAME_VERSION = "xbox";
     CONFIG_PATH = setConfigPath(GAME_VERSION);
     return GAME_VERSION;
   }
   if (await statCheckAsync(gamePath, GOG_FILE)) {
-    GAME_VERSION = 'gog';
+    GAME_VERSION = "gog";
     CONFIG_PATH = setConfigPath(GAME_VERSION);
     return GAME_VERSION;
   }
   if (await statCheckAsync(gamePath, EPIC_FILE)) {
-    GAME_VERSION = 'epic';
+    GAME_VERSION = "epic";
     CONFIG_PATH = setConfigPath(GAME_VERSION);
     return GAME_VERSION;
   }
@@ -305,45 +320,59 @@ async function setGameVersion(gamePath) {
 
 //Get correct config path for game version
 async function setConfigPath(GAME_VERSION) {
-  if (GAME_VERSION === 'steam') {
+  if (GAME_VERSION === "steam") {
     CONFIG_PATH = CONFIG_PATH_STEAM;
   }
-  if (GAME_VERSION === 'xbox') {
+  if (GAME_VERSION === "xbox") {
     CONFIG_PATH = CONFIG_PATH_XBOX;
   }
-  if (GAME_VERSION === 'gog') {
+  if (GAME_VERSION === "gog") {
     CONFIG_PATH = CONFIG_PATH_GOG;
   }
-  if (GAME_VERSION === 'epic') {
+  if (GAME_VERSION === "epic") {
     CONFIG_PATH = CONFIG_PATH_EPIC;
   }
   return CONFIG_PATH;
 }
 
-const getDiscoveryPath = (api) => { //get the game's discovered path
+const getDiscoveryPath = (api) => {
+  //get the game's discovered path
   const state = api.getState();
   const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
 
-async function purge(api) { //useful to clear out mods prior to doing some action
-  return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));
+async function purge(api) {
+  //useful to clear out mods prior to doing some action
+  return new Promise((resolve, reject) =>
+    api.events.emit("purge-mods", true, (err) => (err ? reject(err) : resolve())),
+  );
 }
-async function deploy(api) { //useful to deploy mods after doing some action
-  return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
+async function deploy(api) {
+  //useful to deploy mods after doing some action
+  return new Promise((resolve, reject) =>
+    api.events.emit("deploy-mods", (err) => (err ? reject(err) : resolve())),
+  );
 }
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
 //Test for root folders
 function testRoot(files, gameId) {
-  const isFolder = files.some(file => ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && isFolder;
+  const isFolder = files.some((file) =>
+    ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
+  );
+  let supported = gameId === spec.game.id && isFolder;
 
   // Test for a mod installer
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -355,19 +384,21 @@ function testRoot(files, gameId) {
 
 //Install root folders
 function installRoot(files) {
-  const modFile = files.find(file => ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
+  const modFile = files.find((file) =>
+    ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
+  );
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -380,61 +411,72 @@ function installRoot(files) {
 
 //Send notification for Reshade
 function reshadeNotify(api) {
-  const NOTIF_ID = 'reshade-notification-aplaguetalerequiem';
+  const NOTIF_ID = "reshade-notification-aplaguetalerequiem";
   api.sendNotification({
     id: NOTIF_ID,
-    type: 'warning',
-    message: 'Reshade mod may be required.',
+    type: "warning",
+    message: "Reshade mod may be required.",
     allowSuppress: true,
     actions: [
       {
-        title: 'More',
+        title: "More",
         action: (dismiss) => {
-          api.showDialog('question', 'Action required', {
-            text: "A Plague Tale: Requiem requires Reshades for most mods available on Nexus Mods.\n"
-                + 'Please use the button below to download and install Reshade\n'
-                + 'if you haven\'t already and plan to use those mods.'
-          }, [
-            { label: 'Continue', action: () => dismiss() },
-            { label: 'Download Reshade', action: () => {
-                util.opn('https://www.reshade.me/').catch(err => undefined);
-                dismiss();
-            }},
+          api.showDialog(
+            "question",
+            "Action required",
             {
-              label: 'Never Show Again', action: () => {
-                api.suppressNotification(NOTIF_ID);
-                dismiss();
-              }
+              text:
+                "A Plague Tale: Requiem requires Reshades for most mods available on Nexus Mods.\n" +
+                "Please use the button below to download and install Reshade\n" +
+                "if you haven't already and plan to use those mods.",
             },
-          ]);
+            [
+              { label: "Continue", action: () => dismiss() },
+              {
+                label: "Download Reshade",
+                action: () => {
+                  util.opn("https://www.reshade.me/").catch((err) => undefined);
+                  dismiss();
+                },
+              },
+              {
+                label: "Never Show Again",
+                action: () => {
+                  api.suppressNotification(NOTIF_ID);
+                  dismiss();
+                },
+              },
+            ],
+          );
         },
       },
     ],
-  });    
+  });
 }
 
 //*
 async function resolveGameVersion(gamePath) {
   GAME_VERSION = await setGameVersion(gamePath);
-  let version = '0.0.0';
-  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+  let version = "0.0.0";
+  if (GAME_VERSION === "xbox") {
+    // use appxmanifest.xml for Xbox version
     try {
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
     } catch (err) {
-      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      log("error", `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
       return Promise.resolve(version);
     }
-  }
-  else { // use exe
+  } else {
+    // use exe
     try {
-      const exeVersion = require('exe-version');
+      const exeVersion = require("exe-version");
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
-      return Promise.resolve(version); 
+      return Promise.resolve(version);
     } catch (err) {
-      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      log("error", `Could not read ${EXEC} file to get Steam game version: ${err}`);
       return Promise.resolve(version);
     }
   }
@@ -447,7 +489,7 @@ async function modFoldersEnsureWritable(gamePath, relPaths) {
 }
 
 //Setup function
-async function setup(discovery, api, gameSpec){
+async function setup(discovery, api, gameSpec) {
   // SYNCHRONOUS CODE ////////////////////////////////////
   const state = api.getState();
   GAME_PATH = discovery.path;
@@ -479,25 +521,45 @@ function applyGame(context, gameSpec) {
 
   //register mod types
   (gameSpec.modTypes || []).forEach((type, idx) => {
-    context.registerModType(type.id, modTypePriority(type.priority) + idx, (gameId) => {
-      var _a;
-      return (gameId === gameSpec.game.id)
-        && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
+    context.registerModType(
+      type.id,
+      modTypePriority(type.priority) + idx,
+      (gameId) => {
+        var _a;
+        return (
+          gameId === gameSpec.game.id &&
+          !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+          _a === void 0
+            ? void 0
+            : _a.path)
+        );
+      },
+      (game) => pathPattern(context.api, game, type.targetPath),
+      () => Promise.resolve(false),
+      { name: type.name },
+    );
   });
 
   //register mod installers
   context.registerInstaller(ROOT_ID, 25, testRoot, installRoot);
 
   //register actions
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', async () => {
-    CONFIG_PATH = await setConfigPath(GAME_VERSION);
-    util.opn(CONFIG_PATH).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Config Folder",
+    async () => {
+      CONFIG_PATH = await setConfigPath(GAME_VERSION);
+      util.opn(CONFIG_PATH).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Saves Folder', async () => {
     //SAVE_PATH = await setSavePath();
     util.opn(SAVE_PATH).catch(() => null);
@@ -506,22 +568,38 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
-    const openPath = path.join(__dirname, 'CHANGELOG.md');
-    util.opn(openPath).catch(() => null);
-    }, () => {
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "View Changelog",
+    () => {
+      const openPath = path.join(__dirname, "CHANGELOG.md");
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    const openPath = DOWNLOAD_FOLDER;
-    util.opn(openPath).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Downloads Folder",
+    () => {
+      const openPath = DOWNLOAD_FOLDER;
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
 
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
     util.opn(SAVE_PATH).catch(() => null);
@@ -530,28 +608,44 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
-    util.opn(PCGAMINGWIKI_URL).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
-    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open PCGamingWiki Page",
+    () => {
+      util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Submit Bug Report",
+    () => {
+      util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
 }
 
 //Main function
 function main(context) {
   applyGame(context, spec);
-  context.once(() => { // put code here that should be run (once) when Vortex starts up
+  context.once(() => {
+    // put code here that should be run (once) when Vortex starts up
     const api = context.api;
-
   });
   return true;
 }

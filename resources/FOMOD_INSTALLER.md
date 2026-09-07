@@ -8,10 +8,10 @@ The FOMOD installer is a built-in Vortex extension that handles mod archives con
 
 The `fomod-installer` package exposes two modes:
 
-| Mode | Entry | Supports |
-| --- | --- | --- |
+| Mode             | Entry                                          | Supports                         |
+| ---------------- | ---------------------------------------------- | -------------------------------- |
 | **Native (AOT)** | `NativeModInstaller` (.NET compiled to native) | XML scripts (FOMOD 1.0–5.0) only |
-| **IPC** | Spawns a .NET process | XML scripts + C# scripts |
+| **IPC**          | Spawns a .NET process                          | XML scripts + C# scripts         |
 
 Vortex uses the **Native** mode exclusively. C# script support (rare; used by some older Bethesda mods) is not currently enabled in production.
 
@@ -27,10 +27,10 @@ Vortex uses the **Native** mode exclusively. C# script support (rare; used by so
 
 The `installer_fomod_native` extension registers **two** installers:
 
-| id | Priority | Type |
-| --- | --- | --- |
-| `fomod` | 10 | `XmlScript` — handles standard FOMOD XML |
-| `fomod` (Basic) | 100 | `Basic` — fallback for unsupported script types |
+| id              | Priority | Type                                            |
+| --------------- | -------- | ----------------------------------------------- |
+| `fomod`         | 10       | `XmlScript` — handles standard FOMOD XML        |
+| `fomod` (Basic) | 100      | `Basic` — fallback for unsupported script types |
 
 Priority 10 means FOMOD runs **before** all custom game-extension installers (which typically range 25–49). A mod archive with `fomod/ModuleConfig.xml` will match at priority 10 and custom installers never see it — unless they explicitly return `supported: false` first (they cannot, since priority 10 is lower).
 
@@ -75,19 +75,19 @@ Returned by the native FOMOD library; transformed to `IInstruction` by Vortex.
 ```typescript
 // fomod-installer/src/.../types/InstallResult.ts
 interface InstallInstruction {
-  type: string;         // 'copy', 'mkdir', 'generatefile', 'iniedit', etc.
-  source?: string;      // archive-relative source path
-  destination?: string; // staging-relative destination path
-  section?: string;     // for iniedit
-  key?: string;         // for iniedit / attribute
-  value?: string;       // for iniedit / attribute / setmodtype
-  data?: Uint8Array;    // for generatefile (converted to Buffer by Vortex)
-  priority?: number;    // install priority hint
+    type: string; // 'copy', 'mkdir', 'generatefile', 'iniedit', etc.
+    source?: string; // archive-relative source path
+    destination?: string; // staging-relative destination path
+    section?: string; // for iniedit
+    key?: string; // for iniedit / attribute
+    value?: string; // for iniedit / attribute / setmodtype
+    data?: Uint8Array; // for generatefile (converted to Buffer by Vortex)
+    priority?: number; // install priority hint
 }
 
 interface InstallResult {
-  message?: string;
-  instructions: InstallInstruction[];
+    message?: string;
+    instructions: InstallInstruction[];
 }
 ```
 
@@ -115,25 +115,25 @@ Source: `Vortex/src/renderer/src/extensions/installer_fomod_native/installer.ts:
 
 `NativeModInstaller` takes 7 callbacks at construction:
 
-| Callback | Purpose |
-| --- | --- |
-| `pluginsGetAll(activeOnly)` | Returns list of active plugins from `state.session.plugins.pluginList`; used for condition checks |
-| `contextGetAppVersion()` | Returns Vortex app version string |
-| `contextGetCurrentGameVersion()` | Returns game version from discovery state |
-| `contextGetExtenderVersion()` | Returns script extender version (e.g. SKSE); falls back to game version |
-| `uiStartDialog(installSteps, ...)` | Opens the FOMOD wizard dialog; no-op if `unattended=true` |
-| `uiUpdateState(installSteps, ...)` | Updates wizard step state via Redux; no-op if `unattended=true` |
-| `uiEndDialog()` | Closes the wizard dialog; no-op if `unattended=true` |
+| Callback                           | Purpose                                                                                           |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `pluginsGetAll(activeOnly)`        | Returns list of active plugins from `state.session.plugins.pluginList`; used for condition checks |
+| `contextGetAppVersion()`           | Returns Vortex app version string                                                                 |
+| `contextGetCurrentGameVersion()`   | Returns game version from discovery state                                                         |
+| `contextGetExtenderVersion()`      | Returns script extender version (e.g. SKSE); falls back to game version                           |
+| `uiStartDialog(installSteps, ...)` | Opens the FOMOD wizard dialog; no-op if `unattended=true`                                         |
+| `uiUpdateState(installSteps, ...)` | Updates wizard step state via Redux; no-op if `unattended=true`                                   |
+| `uiEndDialog()`                    | Closes the wizard dialog; no-op if `unattended=true`                                              |
 
 Source: `Vortex/src/renderer/src/extensions/installer_fomod_native/utils/VortexModInstaller.ts:43-195`
 
 `NativeFileSystem` takes 3 callbacks:
 
-| Callback | Purpose |
-| --- | --- |
+| Callback                                | Purpose                                                                               |
+| --------------------------------------- | ------------------------------------------------------------------------------------- |
 | `readFileContent(path, offset, length)` | Reads bytes from archive; `offset=-1` means full file; returns `Uint8Array` or `null` |
-| `readDirectoryFileList(path)` | Lists files (non-recursive) in directory; returns full paths or `null` |
-| `readDirectoryList(path)` | Lists subdirectories in directory; returns full paths or `null` |
+| `readDirectoryFileList(path)`           | Lists files (non-recursive) in directory; returns full paths or `null`                |
+| `readDirectoryList(path)`               | Lists subdirectories in directory; returns full paths or `null`                       |
 
 Source: `Vortex/src/renderer/src/extensions/installer_fomod_native/utils/VortexModInstallerFileSystem.ts:17-81`
 
@@ -146,10 +146,10 @@ Source: `Vortex/src/renderer/src/extensions/installer_fomod_native/utils/VortexM
 ```typescript
 // Vortex/src/renderer/src/extensions/installer_fomod_shared/utils/gameSupport.ts
 interface GameSupport {
-  iniPath?: string;
-  stopPatterns: string[];   // regex; stops path traversal / determines mod root
-  pluginPath?: string;      // e.g. "Data" for Bethesda games; null for non-plugin games
-  nativePlugins?: string[]; // game-owned plugins that should not be managed
+    iniPath?: string;
+    stopPatterns: string[]; // regex; stops path traversal / determines mod root
+    pluginPath?: string; // e.g. "Data" for Bethesda games; null for non-plugin games
+    nativePlugins?: string[]; // game-owned plugins that should not be managed
 }
 ```
 
@@ -180,28 +180,28 @@ Parsed by the native library. Key types from the fomod-installer TypeScript type
 ```typescript
 // fomod-installer/src/.../types/index.ts
 interface IPlugin {
-  id: string;
-  selected: boolean;
-  preset: boolean;
-  name: string;
-  description: string;
-  image: string;
-  type: PluginType;       // 'Required' | 'Optional' | 'Recommended' | 'CouldBeUsable' | 'NotUsable'
-  conditionMsg: string;
+    id: string;
+    selected: boolean;
+    preset: boolean;
+    name: string;
+    description: string;
+    image: string;
+    type: PluginType; // 'Required' | 'Optional' | 'Recommended' | 'CouldBeUsable' | 'NotUsable'
+    conditionMsg: string;
 }
 
 interface IGroup {
-  id: string;
-  name: string;
-  type: GroupType;         // 'SelectAll' | 'SelectAny' | 'SelectExactlyOne' | 'SelectAtMostOne' | 'SelectAtLeastOne'
-  options: IPlugin[];      // available plugins in this group
+    id: string;
+    name: string;
+    type: GroupType; // 'SelectAll' | 'SelectAny' | 'SelectExactlyOne' | 'SelectAtMostOne' | 'SelectAtLeastOne'
+    options: IPlugin[]; // available plugins in this group
 }
 
 interface IInstallStep {
-  id: string;
-  name: string;
-  visible: boolean;
-  optionalFileGroups: IGroup[];
+    id: string;
+    name: string;
+    visible: boolean;
+    optionalFileGroups: IGroup[];
 }
 ```
 
@@ -220,15 +220,15 @@ The extended `testSupported` signature includes an optional `details` parameter:
 ```typescript
 // node_modules/vortex-api/lib/api.d.ts
 interface ITestSupportedDetails {
-  hasXmlConfigXML?: boolean;   // true if archive contains fomod/ModuleConfig.xml
-  hasCSScripts?: boolean;      // true if archive contains C# script files
+    hasXmlConfigXML?: boolean; // true if archive contains fomod/ModuleConfig.xml
+    hasCSScripts?: boolean; // true if archive contains C# script files
 }
 
 type TestSupported = (
-  files: string[],
-  gameId: string,
-  archivePath?: string,
-  details?: ITestSupportedDetails
+    files: string[],
+    gameId: string,
+    archivePath?: string,
+    details?: ITestSupportedDetails,
 ) => PromiseLike<ISupportedResult>;
 ```
 

@@ -2,20 +2,20 @@
 
 ## Overview
 
-| Property | Value |
-| --- | --- |
-| Name | Need for Speed Unbound Vortex Extension |
-| Engine / Structure | Frostbite Engine - Frosty Mod Manager |
-| Author | ChemBoy1 |
+| Property           | Value                                   |
+| ------------------ | --------------------------------------- |
+| Name               | Need for Speed Unbound Vortex Extension |
+| Engine / Structure | Frostbite Engine - Frosty Mod Manager   |
+| Author             | ChemBoy1                                |
 
 ## Key Identifiers
 
-| Property | Value |
-| --- | --- |
-| Game ID | `needforspeedunbound` |
-| Executable | `NeedForSpeedUnbound.exe` |
-| Extension Page | [https://www.nexusmods.com/site/mods/1993](https://www.nexusmods.com/site/mods/1993) |
-| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Need_for_Speed_Unbound](https://www.pcgamingwiki.com/wiki/Need_for_Speed_Unbound) |
+| Property       | Value                                                                                                                |
+| -------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Game ID        | `needforspeedunbound`                                                                                                |
+| Executable     | `NeedForSpeedUnbound.exe`                                                                                            |
+| Extension Page | [https://www.nexusmods.com/site/mods/1993](https://www.nexusmods.com/site/mods/1993)                                 |
+| PCGamingWiki   | [https://www.pcgamingwiki.com/wiki/Need_for_Speed_Unbound](https://www.pcgamingwiki.com/wiki/Need_for_Speed_Unbound) |
 
 ## Supported Stores
 
@@ -25,39 +25,39 @@
 
 ## Feature Flags
 
-| Flag | Value | Description |
-| --- | --- | --- |
-| `hasArchives` | `false` | toggle for .archive file support |
-| `needsKey` | `true` | toggle for encryption key logic |
-| `allowSymlinks` | `false` | Frosty handles its own deployment; symlinks not typical |
-| `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
-| `setupNotification` | `true` | enable to show the user a notification with special instructions (specify below) |
-| `hasUserIdFolder` | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
-| `debug` | `false` | toggle for debug mode |
+| Flag                | Value   | Description                                                                                    |
+| ------------------- | ------- | ---------------------------------------------------------------------------------------------- |
+| `hasArchives`       | `false` | toggle for .archive file support                                                               |
+| `needsKey`          | `true`  | toggle for encryption key logic                                                                |
+| `allowSymlinks`     | `false` | Frosty handles its own deployment; symlinks not typical                                        |
+| `fallbackInstaller` | `true`  | enable fallback installer. Set false if you need to avoid installer collisions                 |
+| `setupNotification` | `true`  | enable to show the user a notification with special instructions (specify below)               |
+| `hasUserIdFolder`   | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
+| `debug`             | `false` | toggle for debug mode                                                                          |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
-| Name | ID | Priority | Target Path |
-| --- | --- | --- | --- |
-| Binaries / Root Folder | `needforspeedunbound-root` | high | `{gamePath}` |
-| Frosty Mod | `needforspeedunbound-frostymod` | high | `{gamePath}/FrostyModManager/Mods/NeedForSpeedUnbound` |
-| Plugin (FMM) | `needforspeedunbound-plugin` | high | `{gamePath}/FrostyModManager/Plugins` |
-| Frosty Mod Manager | `needforspeedunbound-frostymodmanager` | low | `{gamePath}` |
-| Key (FMM) | `needforspeedunbound-key` | low | `{gamePath}/FrostyModManager` |
+| Name                   | ID                                     | Priority | Target Path                                            |
+| ---------------------- | -------------------------------------- | -------- | ------------------------------------------------------ |
+| Binaries / Root Folder | `needforspeedunbound-root`             | high     | `{gamePath}`                                           |
+| Frosty Mod             | `needforspeedunbound-frostymod`        | high     | `{gamePath}/FrostyModManager/Mods/NeedForSpeedUnbound` |
+| Plugin (FMM)           | `needforspeedunbound-plugin`           | high     | `{gamePath}/FrostyModManager/Plugins`                  |
+| Frosty Mod Manager     | `needforspeedunbound-frostymodmanager` | low      | `{gamePath}`                                           |
+| Key (FMM)              | `needforspeedunbound-key`              | low      | `{gamePath}/FrostyModManager`                          |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID | Priority |
-| --- | --- |
-| `needforspeedunbound-frostymodmanager` | 25 |
-| `needforspeedunbound-frostymod` | 30 |
-| `needforspeedunbound-plugin` | 35 |
-| `needforspeedunbound-key` | 40 |
-| `needforspeedunbound-fallback` | 49 |
+| Installer ID                           | Priority |
+| -------------------------------------- | -------- |
+| `needforspeedunbound-frostymodmanager` | 25       |
+| `needforspeedunbound-frostymod`        | 30       |
+| `needforspeedunbound-plugin`           | 35       |
+| `needforspeedunbound-key`              | 40       |
+| `needforspeedunbound-fallback`         | 49       |
 
 ## Registered Tools
 
@@ -84,8 +84,8 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 ## Config & Save Paths
 
-| Type | Path |
-| --- | --- |
+| Type   | Path                                  |
+| ------ | ------------------------------------- |
 | Config | `Need For Speed(TM) Unbound/settings` |
 
 ## Special Features
@@ -96,4 +96,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Symlinks Disabled** — hardlink or copy deployment is used instead of symlinks.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
-

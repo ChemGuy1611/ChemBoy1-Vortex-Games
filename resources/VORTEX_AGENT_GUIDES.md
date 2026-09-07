@@ -19,13 +19,13 @@ the same content.
 `build`, `test`, `lint`, and `format` on the affected package. Everything else is conditional — it
 routes to one of the topic files below depending on the work.
 
-| File | Read it when | Substance |
-| --- | --- | --- |
-| `AGENTS-DIRECTORIES.md` | Navigating or searching the repo | Per-directory map of `src/`, `extensions/`, `packages/`, plus a "Start Here" table by task type and a list of build-output dirs to ignore |
-| `AGENTS-TESTING.md` | Writing or running tests | The vitest layer only: `pnpm run test -- <path>` for one file; tests colocated as `src/**/*.test.ts`; how to alias `vortex-api` to a local `__mocks__` module in an extension's `vitest.config.ts`, mocking only the exports the test uses. It says nothing about the Playwright suite — those rules live in `packages/e2e/E2E-BEST-PRACTICES.md` and the `e2e-test` skill, and are collected in `VORTEX_TESTING.md` |
-| `AGENTS-FRONTEND.md` | Any renderer/UI change | The substantial one — React 16 constraints, component/props conventions, auto-enforced prop and class ordering, Redux selector discipline, i18n rules, icon conventions, accessibility, testing. Distilled into `VORTEX_CODESTYLE.md` |
-| `AGENTS-DEBUGGING.md` | Debugging a running app | VS Code F5 debugs both processes, build first; `VORTEX_TRACE_DB_WRITES=1` for per-write persistence breadcrumbs |
-| `AGENTS-COLLECTIONS.md` | Touching collection install logic | Phased-installation invariants — the rules below are the valuable part |
+| File                    | Read it when                      | Substance                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ----------------------- | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AGENTS-DIRECTORIES.md` | Navigating or searching the repo  | Per-directory map of `src/`, `extensions/`, `packages/`, plus a "Start Here" table by task type and a list of build-output dirs to ignore                                                                                                                                                                                                                                                                            |
+| `AGENTS-TESTING.md`     | Writing or running tests          | The vitest layer only: `pnpm run test -- <path>` for one file; tests colocated as `src/**/*.test.ts`; how to alias `vortex-api` to a local `__mocks__` module in an extension's `vitest.config.ts`, mocking only the exports the test uses. It says nothing about the Playwright suite — those rules live in `packages/e2e/E2E-BEST-PRACTICES.md` and the `e2e-test` skill, and are collected in `VORTEX_TESTING.md` |
+| `AGENTS-FRONTEND.md`    | Any renderer/UI change            | The substantial one — React 16 constraints, component/props conventions, auto-enforced prop and class ordering, Redux selector discipline, i18n rules, icon conventions, accessibility, testing. Distilled into `VORTEX_CODESTYLE.md`                                                                                                                                                                                |
+| `AGENTS-DEBUGGING.md`   | Debugging a running app           | VS Code F5 debugs both processes, build first; `VORTEX_TRACE_DB_WRITES=1` for per-write persistence breadcrumbs                                                                                                                                                                                                                                                                                                      |
+| `AGENTS-COLLECTIONS.md` | Touching collection install logic | Phased-installation invariants — the rules below are the valuable part                                                                                                                                                                                                                                                                                                                                               |
 
 ---
 
@@ -38,7 +38,7 @@ modifying `InstallManager`:
 - Never bypass phase gating, even for optional or recommended mods. Optionals map to a dedicated
   trailing `OPTIONAL_PHASE` and install through the same engine, just last — there is no separate
   optional round.
-- An optional un-ignored *after* the initial gather is not in that pass, so the completion poll
+- An optional un-ignored _after_ the initial gather is not in that pass, so the completion poll
   re-drives it: `driveSelectedOptionals` (called each `pollAllPhasesComplete` tick) downloads or
   imports it, then `handleDownloadFinished` queues the install at `OPTIONAL_PHASE`. The dialog's
   "Install optional mods" clears `ignored` and re-runs the normal `install-dependencies` pass.
@@ -56,11 +56,11 @@ invariants — those comments, not the guide, are the authority.
 
 Under `.claude/skills/`, each a self-contained workflow:
 
-| Skill | Purpose |
-| --- | --- |
+| Skill       | Purpose                                                                                                                                                                                                                                                                                                                                                                     |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `changelog` | Drafts the next `CHANGELOG.md` entry from PRs merged since a tag: auto-detects the release branch, pulls PR titles/bodies with `gh`, dedupes against the existing changelog, applies exclusion rules (internal CI/infra, telemetry, docs-only, minor dependency bumps), and writes only after review. Also exposed as the `/changelog` command with `[version] [date]` args |
-| `e2e-test` | Scaffolds a Playwright E2E spec from a plain description or a Linear issue ID, inspecting the live app through Chrome DevTools. It drives the `llmBreakpoint` inspector loop described in `VORTEX_TESTING.md` |
-| `watch-log` | Log investigation router with six modes — live tail, session/crash/error investigation, persistence integrity, log-line-to-code correlation, single lifecycle trace (download/install/collection/deploy), and a collection-install audit. Rotation- and session-aware; defaults to the dev log |
+| `e2e-test`  | Scaffolds a Playwright E2E spec from a plain description or a Linear issue ID, inspecting the live app through Chrome DevTools. It drives the `llmBreakpoint` inspector loop described in `VORTEX_TESTING.md`                                                                                                                                                               |
+| `watch-log` | Log investigation router with six modes — live tail, session/crash/error investigation, persistence integrity, log-line-to-code correlation, single lifecycle trace (download/install/collection/deploy), and a collection-install audit. Rotation- and session-aware; defaults to the dev log                                                                              |
 
 ---
 
@@ -68,11 +68,11 @@ Under `.claude/skills/`, each a self-contained workflow:
 
 Verified against the current tree — these paths do not exist as written:
 
-| Claim | Where | Reality |
-| --- | --- | --- |
-| `src/extensions/mod_management/InstallManager.ts` | `AGENTS-COLLECTIONS.md` | Lives at `src/renderer/src/extensions/mod_management/InstallManager.ts` |
-| `__tests__/PhasedInstaller.test.ts` | `AGENTS-COLLECTIONS.md` | No such file. Nearest current coverage is `src/renderer/src/extensions/mod_management/util/InstallPhaseTracker.test.ts` |
-| `samples/sample-extension/` | `AGENTS-DIRECTORIES.md` | No `samples/` directory |
+| Claim                                                                                                      | Where                   | Reality                                                                                                                                                                                                                 |
+| ---------------------------------------------------------------------------------------------------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/extensions/mod_management/InstallManager.ts`                                                          | `AGENTS-COLLECTIONS.md` | Lives at `src/renderer/src/extensions/mod_management/InstallManager.ts`                                                                                                                                                 |
+| `__tests__/PhasedInstaller.test.ts`                                                                        | `AGENTS-COLLECTIONS.md` | No such file. Nearest current coverage is `src/renderer/src/extensions/mod_management/util/InstallPhaseTracker.test.ts`                                                                                                 |
+| `samples/sample-extension/`                                                                                | `AGENTS-DIRECTORIES.md` | No `samples/` directory                                                                                                                                                                                                 |
 | `packages/paths/`, `packages/paths-node/`, `packages/game-extension-helpers/`, `packages/install-entries/` | `AGENTS-DIRECTORIES.md` | Not present. Current packages: `adaptor-api`, `adaptors`, `e2e`, `exe-version`, `extension-test-mocks`, `file-dependency-resolver`, `game-extension-test`, `icon-extract`, `nexus-api-v3`, `pe-resources`, `vortex-api` |
 
 `AGENTS-DEBUGGING.md` additionally says to run `pnpm run build` before F5 — correct, unlike

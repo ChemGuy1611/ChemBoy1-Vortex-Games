@@ -6,15 +6,15 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `MK12` |
-| Blueprint Mods (LogicMods) | a `LogicMods` folder | `MK12\Content\Paks\LogicMods\LogicMods` |
-| Pak Mods | a `'.pak` file | `MK12\Content\Paks\~mods` |
-| UE4SS Itself | a `dwmapi.dll` file | `MK12\Binaries\Win64` |
-| Signature Bypass | `dsound.dll` and `UniversalSigBypasser.asi` | `MK12\Binaries\Win64` |
-| UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `MK12\Binaries\Win64\ue4ss\Mods` |
-| Root / Game Folder Mods | a top-level folder such as `MK12` | the game folder itself (no subfolder) |
+| Mod Type                                     | Archive must contain                        | Installs to                             |
+| -------------------------------------------- | ------------------------------------------- | --------------------------------------- |
+| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder    | `MK12`                                  |
+| Blueprint Mods (LogicMods)                   | a `LogicMods` folder                        | `MK12\Content\Paks\LogicMods\LogicMods` |
+| Pak Mods                                     | a `'.pak` file                              | `MK12\Content\Paks\~mods`               |
+| UE4SS Itself                                 | a `dwmapi.dll` file                         | `MK12\Binaries\Win64`                   |
+| Signature Bypass                             | `dsound.dll` and `UniversalSigBypasser.asi` | `MK12\Binaries\Win64`                   |
+| UE4SS Script Mods (Lua)                      | a `.lua` file and a `Scripts` folder        | `MK12\Binaries\Win64\ue4ss\Mods`        |
+| Root / Game Folder Mods                      | a top-level folder such as `MK12`           | the game folder itself (no subfolder)   |
 
 Paths are relative to the game's install folder.
 
@@ -173,4 +173,3 @@ Installs to: the game folder itself (no subfolder)
 
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

@@ -12,12 +12,12 @@ administrator rights to hook the game process.
 `<game>.modloader.dll`, `SAVE_FOLDER` `gamedata/savedata`, and the two elevation constants:
 `ELEVATOR_PATH` = `util.getVortexPath('application')/resources` and `ELEVATOR_EXEC` `elevate.exe`.
 
-| Mod type | Target |
-| --- | --- |
-| `RELOADEDMOD_ID` | `Reloaded/Mods` |
+| Mod type               | Target                            |
+| ---------------------- | --------------------------------- |
+| `RELOADEDMOD_ID`       | `Reloaded/Mods`                   |
 | `RELOADEDMODLOADER_ID` | `Reloaded/Mods/<game>_Mod_Loader` |
-| `RELOADED_ID` | `{gamePath}`, spec `low` |
-| `SAVE_ID` | `gamedata/savedata/<userId>` |
+| `RELOADED_ID`          | `{gamePath}`, spec `low`          |
+| `SAVE_ID`              | `gamedata/savedata/<userId>`      |
 
 **Installers:** `RELOADED` (manager) 25 → `RELOADEDMODLOADER` 27 → `RELOADEDMOD` 29 → fallback 49.
 

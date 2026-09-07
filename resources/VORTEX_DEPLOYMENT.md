@@ -15,12 +15,12 @@ Deployment is pluggable. Each method is an `IDeploymentMethod` registered with
 **`registerDeploymentMethod(activator)`**, which pushes into a module-level `activators` array and
 re-sorts it ascending by `priority` (`byPriority = lhs.priority - rhs.priority`).
 
-| Activator | priority | Mechanism | Notes |
-| --- | --- | --- | --- |
-| `null_activator` | 3 | no-op | For games that read mods straight from staging; only "supported" when the game opts in. Does **not** extend `LinkingDeployment`. |
-| `hardlink_activator` | 5 | hard links | The usual default. Requires staging + game on the **same volume**. |
-| `symlink_activator` (+ `_elevate`) | 10 | symbolic links | `_elevate` variant runs an elevated helper for permission-restricted targets. |
-| `move_activator` | 50 | moves files | Cross-volume; no link support. |
+| Activator                          | priority | Mechanism      | Notes                                                                                                                            |
+| ---------------------------------- | -------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `null_activator`                   | 3        | no-op          | For games that read mods straight from staging; only "supported" when the game opts in. Does **not** extend `LinkingDeployment`. |
+| `hardlink_activator`               | 5        | hard links     | The usual default. Requires staging + game on the **same volume**.                                                               |
+| `symlink_activator` (+ `_elevate`) | 10       | symbolic links | `_elevate` variant runs an elevated helper for permission-restricted targets.                                                    |
+| `move_activator`                   | 50       | moves files    | Cross-volume; no link support.                                                                                                   |
 
 All except `null` extend `LinkingDeployment` / `LinkingActivator`.
 
@@ -87,15 +87,15 @@ set, so once a higher-priority mod has placed a file, lower-priority mods skip i
 
 ## Events (runtime)
 
-| Event | Direction | Purpose |
-| --- | --- | --- |
-| `will-deploy` (profileId, lastDeployment, opts) | `emitAndAwait` | Pre-deploy hook (may change state) |
-| `did-deploy` (profileId, newDeployment, progressCB, opts) | `emitAndAwait` | Post-deploy hook |
-| `mods-did-deploy` (profileId, newDeployment) | emit | Fire-and-forget post-deploy |
-| `deploy-single-mod` | `onAsync` | Deploy one mod |
-| `purge-mods` (allowFallback, cb) | on | Purge everything |
-| `purge-mods-in-path` (gameId, modType, modPath) | `onAsync` | Targeted purge |
-| `await-activation` (cb) | on | Wait for any in-flight deployment |
+| Event                                                     | Direction      | Purpose                            |
+| --------------------------------------------------------- | -------------- | ---------------------------------- |
+| `will-deploy` (profileId, lastDeployment, opts)           | `emitAndAwait` | Pre-deploy hook (may change state) |
+| `did-deploy` (profileId, newDeployment, progressCB, opts) | `emitAndAwait` | Post-deploy hook                   |
+| `mods-did-deploy` (profileId, newDeployment)              | emit           | Fire-and-forget post-deploy        |
+| `deploy-single-mod`                                       | `onAsync`      | Deploy one mod                     |
+| `purge-mods` (allowFallback, cb)                          | on             | Purge everything                   |
+| `purge-mods-in-path` (gameId, modType, modPath)           | `onAsync`      | Targeted purge                     |
+| `await-activation` (cb)                                   | on             | Wait for any in-flight deployment  |
 
 ## Gotchas
 
@@ -105,7 +105,7 @@ set, so once a higher-priority mod has placed a file, lower-priority mods skip i
   must wait.
 - The manifest is the source of truth for "what Vortex owns"; editing the game folder by hand
   surfaces as an external change on the next deploy.
-- `null_activator` (priority 3) is preferred *by number* but only reports supported for opt-in
+- `null_activator` (priority 3) is preferred _by number_ but only reports supported for opt-in
   games, so it doesn't pre-empt hardlink in normal cases.
 
 ## See also

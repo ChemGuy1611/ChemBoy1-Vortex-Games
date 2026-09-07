@@ -24,15 +24,15 @@ in the registry. Uncomment and fill the three constants.
 `EPIC_FILE` (`EOSSDK-Win64-Shipping.dll`), `XBOX_FILE` (`appxmanifest.xml`) — the marker files other
 templates probe to tell which store's build is installed.
 
-| Mod type | Priority | Target |
-| --- | --- | --- |
-| `ROOT_ID` | spec `high` | `{gamePath}` |
-| `MOD_ID` | spec `high`, when `needsModInstaller` | `{gamePath}/<MOD_PATH>` |
-| `SAVE_ID` | spec `high`, when `saveInstaller` | `{gamePath}/<SAVE_PATH>` |
-| `CONFIG_ID` | 60, commented out | `<CONFIG_PATH>` |
-| `SAVE_ID` | 62, commented out | `<SAVE_PATH>` |
-| `LOADER_ID` | 70, when `hasLoader` | `{gamePath}/<BINARIES_PATH>` |
-| `BINARIES_ID` | 72, when `binariesInstaller` | `{gamePath}/<BINARIES_PATH>` |
+| Mod type      | Priority                              | Target                       |
+| ------------- | ------------------------------------- | ---------------------------- |
+| `ROOT_ID`     | spec `high`                           | `{gamePath}`                 |
+| `MOD_ID`      | spec `high`, when `needsModInstaller` | `{gamePath}/<MOD_PATH>`      |
+| `SAVE_ID`     | spec `high`, when `saveInstaller`     | `{gamePath}/<SAVE_PATH>`     |
+| `CONFIG_ID`   | 60, commented out                     | `<CONFIG_PATH>`              |
+| `SAVE_ID`     | 62, commented out                     | `<SAVE_PATH>`                |
+| `LOADER_ID`   | 70, when `hasLoader`                  | `{gamePath}/<BINARIES_PATH>` |
+| `BINARIES_ID` | 72, when `binariesInstaller`          | `{gamePath}/<BINARIES_PATH>` |
 
 **Installers:** `LOADER` 25 → `ROOT` 27 → `MOD` 29 → `BINARIES` 31 → (`CONFIG` 33, commented) →
 `SAVE` 35 → fallback 49.

@@ -1,18 +1,18 @@
-const { actions, fs, util, selectors, log } = require('vortex-api');
-const path = require('path');
-const GAME_ID = 'placeholder';
-const api = require('vortex-api'); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
+const { actions, fs, util, selectors, log } = require("vortex-api");
+const path = require("path");
+const GAME_ID = "placeholder";
+const api = require("vortex-api"); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 const spec = { game: { id: GAME_ID } }; //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 const context = { api }; //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 
 // GAMEBANANA REQUIREMENT /////////////////////////////////////////////////
-const { downloadGameBanana, checkForGameBananaUpdate } = require('./gamebanana_downloader');
+const { downloadGameBanana, checkForGameBananaUpdate } = require("./gamebanana_downloader");
 const XXX_ID = `${GAME_ID}-XXX`; //mod type id for the requirement (register the mod type + installer in index.js as usual)
 const XXX_NAME = "XXX";
-const XXX_GB_ITEM_TYPE = 'Tool'; //apiv11 model name: 'Tool', 'Mod', ...
-const XXX_GB_ITEM_ID = '0000'; //GameBanana item id - https://gamebanana.com/tools/0000
-const XXX_REV = '0.0.0'; //fallback version if the GameBanana API is unreachable
-const XXX_DL_ID = '000000'; //fallback file id if the GameBanana API is unreachable - builds https://gamebanana.com/dl/000000
+const XXX_GB_ITEM_TYPE = "Tool"; //apiv11 model name: 'Tool', 'Mod', ...
+const XXX_GB_ITEM_ID = "0000"; //GameBanana item id - https://gamebanana.com/tools/0000
+const XXX_REV = "0.0.0"; //fallback version if the GameBanana API is unreachable
+const XXX_DL_ID = "000000"; //fallback file id if the GameBanana API is unreachable - builds https://gamebanana.com/dl/000000
 const GB_REQUIREMENTS = [
   {
     gbItemType: XXX_GB_ITEM_TYPE,
@@ -43,18 +43,27 @@ async function setup(api, gameSpec) {
 }
 
 // *** In context.once() function ////////////////////
-  api.onAsync('check-mods-version', (gameId, mods, forced) => {
-    if (gameId !== GAME_ID) return;
-    return checkForGameBananaUpdate(api, spec, GB_REQUIREMENTS)
-      .catch(err => log('warn', `Failed to check for ${XXX_NAME} update: ${err}`));
-  }); //*/
+api.onAsync("check-mods-version", (gameId, mods, forced) => {
+  if (gameId !== GAME_ID) return;
+  return checkForGameBananaUpdate(api, spec, GB_REQUIREMENTS).catch((err) =>
+    log("warn", `Failed to check for ${XXX_NAME} update: ${err}`),
+  );
+}); //*/
 
 // *** In applyGame() function ////////////////////
-  //register a toolbar button to (re)download the latest file
-  context.registerAction('mod-icons', 300, 'open-ext', {}, `Download Latest ${XXX_NAME}`, () => {
+//register a toolbar button to (re)download the latest file
+context.registerAction(
+  "mod-icons",
+  300,
+  "open-ext",
+  {},
+  `Download Latest ${XXX_NAME}`,
+  () => {
     downloadGameBanana(context.api, spec, GB_REQUIREMENTS, false);
-  }, () => {
+  },
+  () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
-  }); //*/
+  },
+); //*/

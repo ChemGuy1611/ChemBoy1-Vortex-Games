@@ -3,13 +3,13 @@
 ## Overview
 
 | Property | Value |
-| --- | --- |
+| -------- | ----- |
 
 ## Key Identifiers
 
-| Property | Value |
-| --- | --- |
-| Game ID | `warhammer40kdarktide` |
+| Property   | Value                   |
+| ---------- | ----------------------- |
+| Game ID    | `warhammer40kdarktide`  |
 | Executable | `binaries/Darktide.exe` |
 
 ## Supported Stores
@@ -19,26 +19,27 @@
 
 ## Feature Flags
 
-| Flag | Value | Description |
-| --- | --- | --- |
+| Flag                     | Value   | Description                                                        |
+| ------------------------ | ------- | ------------------------------------------------------------------ |
 | `mod_update_all_profile` | `false` | for mod update to keep them in the load order and not uncheck them |
-| `updating_mod` | `false` | used to see if it's a mod update or not |
+| `updating_mod`           | `false` | used to see if it's a mod update or not                            |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
-| Name | ID | Priority | Target Path |
-| --- | --- | --- | --- |
-| Binaries | `darktide-binaries` | 25 | `?` |
-| Config | `darktide-config` | 30 | `?` |
+| Name     | ID                  | Priority | Target Path |
+| -------- | ------------------- | -------- | ----------- |
+| Binaries | `darktide-binaries` | 25       | `?`         |
+| Config   | `darktide-config`   | 30       | `?`         |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-| --- | --- |
+| ------------ | -------- |
+
 | `//covers DML and LOFM
     "warhammer40kdarktide-dmfdml"` | 25 |
 | `//regular mods & DMF
@@ -70,4 +71,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-

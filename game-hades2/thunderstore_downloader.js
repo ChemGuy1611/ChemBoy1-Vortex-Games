@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 // Shared Thunderstore requirements auto-downloader for Vortex game extensions.
 //
@@ -29,17 +29,17 @@
 // isThunderstoreRequirementInstalled, getLatestThunderstorePackage,
 // getLatestThunderstoreVersion, getThunderstoreDependencies.
 
-const semver = require('semver');
-const { actions, log, selectors, util } = require('vortex-api');
+const semver = require("semver");
+const { actions, log, selectors, util } = require("vortex-api");
 
-const API_BASE = 'https://thunderstore.io';
+const API_BASE = "https://thunderstore.io";
 
 // --- requirement helpers --------------------------------------------------
 
 // Mod attribute used to track the installed Thunderstore version. A dedicated
 // attribute is used rather than the standard 'version' one because Vortex's md5
 // meta lookup can overwrite 'version' with data from an unrelated Nexus match.
-const DEFAULT_VERSION_ATTRIBUTE = 'thunderstoreVersion';
+const DEFAULT_VERSION_ATTRIBUTE = "thunderstoreVersion";
 
 function versionAttribute(requirement) {
   return requirement.versionAttribute || DEFAULT_VERSION_ATTRIBUTE;
@@ -81,7 +81,7 @@ function archiveName(requirement, version) {
 // Versions are semver by convention but authors still ship "v"-prefixed and
 // short forms, so coerce before comparing.
 function normalizeVersion(raw) {
-  const coerced = semver.coerce(String(raw || '').replace(/^v/i, ''));
+  const coerced = semver.coerce(String(raw || "").replace(/^v/i, ""));
   return coerced ? coerced.version : null;
 }
 
@@ -104,7 +104,7 @@ function isAtPinnedVersion(api, gameId, requirement) {
   const mods = state.persistent.mods[gameId] || {};
   const attr = versionAttribute(requirement);
   const pinNormalized = normalizeVersion(requirement.pinVersion);
-  return Object.values(mods).some(mod => {
+  return Object.values(mods).some((mod) => {
     if (mod?.type !== requirement.modType) {
       return false;
     }
@@ -117,7 +117,7 @@ function isAtPinnedVersion(api, gameId, requirement) {
     }
     // versions stamped in a different shape than the pin is written in ('1.2' vs '1.2.0')
     const trackedNormalized = normalizeVersion(tracked);
-    return !!pinNormalized && (trackedNormalized === pinNormalized);
+    return !!pinNormalized && trackedNormalized === pinNormalized;
   });
 }
 
@@ -125,9 +125,11 @@ function isAtPinnedVersion(api, gameId, requirement) {
 // returns objects, the experimental endpoint returns "Namespace-Name-Version"
 // strings. Both are normalised to the string form.
 function dependencyStrings(dependencies) {
-  return (dependencies || []).map(entry => (typeof entry === 'string')
-    ? entry
-    : `${entry?.namespace}-${entry?.name}-${entry?.version_number}`);
+  return (dependencies || []).map((entry) =>
+    typeof entry === "string"
+      ? entry
+      : `${entry?.namespace}-${entry?.name}-${entry?.version_number}`,
+  );
 }
 
 // --- Thunderstore API -----------------------------------------------------
@@ -141,15 +143,20 @@ async function getLatestThunderstorePackage(requirement) {
       if (listing?.latest_version_number) {
         pkg = {
           version: String(listing.latest_version_number),
-          downloadUrl: listing.download_url || downloadUrl(requirement, listing.latest_version_number),
+          downloadUrl:
+            listing.download_url || downloadUrl(requirement, listing.latest_version_number),
           dependencies: dependencyStrings(listing.dependencies),
           isDeprecated: !!listing.is_deprecated,
           size: listing.size,
           updated: listing.version_created,
         };
       }
-    } catch (err) { //not listed in this community, or the endpoint moved - the package endpoint still works
-      log('debug', `Could not get ${requirement.userFacingName} from the Thunderstore ${requirement.tsCommunity} listing: ${err}`);
+    } catch (err) {
+      //not listed in this community, or the endpoint moved - the package endpoint still works
+      log(
+        "debug",
+        `Could not get ${requirement.userFacingName} from the Thunderstore ${requirement.tsCommunity} listing: ${err}`,
+      );
     }
   }
   if (pkg === null) {
@@ -167,25 +174,31 @@ async function getLatestThunderstorePackage(requirement) {
         };
       }
     } catch (err) {
-      log('warn', `Could not get latest ${requirement.userFacingName} version from Thunderstore API: ${err}`);
+      log(
+        "warn",
+        `Could not get latest ${requirement.userFacingName} version from Thunderstore API: ${err}`,
+      );
       return null;
     }
   }
   if (pkg?.isDeprecated) {
-    log('warn', `${requirement.userFacingName}: the Thunderstore package ${requirement.tsNamespace}/${requirement.tsName} is marked deprecated by its author.`);
+    log(
+      "warn",
+      `${requirement.userFacingName}: the Thunderstore package ${requirement.tsNamespace}/${requirement.tsName} is marked deprecated by its author.`,
+    );
   }
   return pkg;
 }
 
 //Get the version string for the requirement (returns null if unavailable)
 async function getLatestThunderstoreVersion(requirement, pkg) {
-  const resolved = (pkg !== undefined) ? pkg : await getLatestThunderstorePackage(requirement);
+  const resolved = pkg !== undefined ? pkg : await getLatestThunderstorePackage(requirement);
   return resolved ? resolved.version : null;
 }
 
 //Get the latest version's dependencies as "Namespace-Name-Version" strings (empty array if unavailable)
 async function getThunderstoreDependencies(requirement, pkg) {
-  const resolved = (pkg !== undefined) ? pkg : await getLatestThunderstorePackage(requirement);
+  const resolved = pkg !== undefined ? pkg : await getLatestThunderstorePackage(requirement);
   return resolved ? resolved.dependencies : [];
 }
 
@@ -201,7 +214,7 @@ const activeInstalls = new Set();
 function requirementModIds(api, gameId, requirement) {
   const state = api.getState();
   const mods = state.persistent.mods[gameId] || {};
-  return Object.keys(mods).filter(id => mods[id]?.type === requirement.modType);
+  return Object.keys(mods).filter((id) => mods[id]?.type === requirement.modType);
 }
 
 //Check if the requirement is installed (any mod with the requirement's mod type)
@@ -216,32 +229,49 @@ async function downloadThunderstoreRequirement(api, gameSpec, requirement, check
     return;
   }
   if (activeInstalls.has(requirement.modType)) {
-    log('debug', `${requirement.userFacingName} install already running - skipping duplicate request`);
+    log(
+      "debug",
+      `${requirement.userFacingName} install already running - skipping duplicate request`,
+    );
     return;
   }
   activeInstalls.add(requirement.modType);
   const NOTIF_ID = `${requirement.modType}-installing`;
-  api.sendNotification({ //notification indicating install process
+  api.sendNotification({
+    //notification indicating install process
     id: NOTIF_ID,
     message: `Installing ${requirement.userFacingName}`,
-    type: 'activity',
+    type: "activity",
     noDismiss: true,
     allowSuppress: false,
   });
   //captured before the install: these are the versions being replaced
   const previousModIds = requirementModIds(api, gameSpec.game.id, requirement);
   const pinned = isPinned(requirement);
-  try { //Download the mod
+  try {
+    //Download the mod
     //A pin overrides newest-version selection, and skips the API entirely: the pinned version's
     //download URL is predictable, so a pinned install makes no API request.
     const latestPackage = pinned ? null : await getLatestThunderstorePackage(requirement); //resolve current version from Thunderstore API
     //fall back to the hardcoded version if the API is unreachable - every version has a predictable download URL
-    const fallbackUrl = requirement.fallbackVersion ? downloadUrl(requirement, requirement.fallbackVersion) : undefined;
-    const URL = pinned ? downloadUrl(requirement, requirement.pinVersion) : (latestPackage ? latestPackage.downloadUrl : fallbackUrl);
+    const fallbackUrl = requirement.fallbackVersion
+      ? downloadUrl(requirement, requirement.fallbackVersion)
+      : undefined;
+    const URL = pinned
+      ? downloadUrl(requirement, requirement.pinVersion)
+      : latestPackage
+        ? latestPackage.downloadUrl
+        : fallbackUrl;
     if (!URL) {
-      throw new util.ProcessCanceled('Thunderstore API is unreachable and no fallback version is set');
+      throw new util.ProcessCanceled(
+        "Thunderstore API is unreachable and no fallback version is set",
+      );
     }
-    const latestVersion = pinned ? requirement.pinVersion : (latestPackage ? latestPackage.version : requirement.fallbackVersion);
+    const latestVersion = pinned
+      ? requirement.pinVersion
+      : latestPackage
+        ? latestPackage.version
+        : requirement.fallbackVersion;
     const dlInfo = {
       game: gameSpec.game.id,
       name: requirement.userFacingName,
@@ -252,10 +282,14 @@ async function downloadThunderstoreRequirement(api, gameSpec, requirement, check
     //the old behaviour of always fetching a fresh copy, which a named download would otherwise
     //refuse when the archive is already in the download folder.
     const archive = latestVersion ? archiveName(requirement, latestVersion) : undefined;
-    const dlId = await util.toPromise(cb =>
-      api.events.emit('start-download', [URL], dlInfo, archive, cb, 'replace', { allowInstall: false }));
-    const modId = await util.toPromise(cb =>
-      api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+    const dlId = await util.toPromise((cb) =>
+      api.events.emit("start-download", [URL], dlInfo, archive, cb, "replace", {
+        allowInstall: false,
+      }),
+    );
+    const modId = await util.toPromise((cb) =>
+      api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+    );
     const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
     const batched = [
       actions.setModsEnabled(api, profileId, [modId], true, {
@@ -263,23 +297,42 @@ async function downloadThunderstoreRequirement(api, gameSpec, requirement, check
         installed: true,
       }),
       actions.setModType(gameSpec.game.id, modId, requirement.modType), // Set the modType
-      actions.setModAttribute(gameSpec.game.id, modId, 'version', latestVersion || ''),
-      actions.setModAttribute(gameSpec.game.id, modId, versionAttribute(requirement), latestVersion || ''), // Track the installed version for update checks
-      actions.setModAttribute(gameSpec.game.id, modId, 'source', 'website'),
-      actions.setModAttribute(gameSpec.game.id, modId, 'url', pageUrl(requirement)), // Shown as the mod's "Source" link in the mod details (only rendered when source === 'website')
-      actions.setModAttribute(gameSpec.game.id, modId, 'customFileName', requirement.userFacingName), // Vortex renders a mod as customFileName || logicalFileName || fileName || name, and the install pipeline stamps fileName with the archive name - without this the mod list shows the raw archive
+      actions.setModAttribute(gameSpec.game.id, modId, "version", latestVersion || ""),
+      actions.setModAttribute(
+        gameSpec.game.id,
+        modId,
+        versionAttribute(requirement),
+        latestVersion || "",
+      ), // Track the installed version for update checks
+      actions.setModAttribute(gameSpec.game.id, modId, "source", "website"),
+      actions.setModAttribute(gameSpec.game.id, modId, "url", pageUrl(requirement)), // Shown as the mod's "Source" link in the mod details (only rendered when source === 'website')
+      actions.setModAttribute(
+        gameSpec.game.id,
+        modId,
+        "customFileName",
+        requirement.userFacingName,
+      ), // Vortex renders a mod as customFileName || logicalFileName || fileName || name, and the install pipeline stamps fileName with the archive name - without this the mod list shows the raw archive
     ];
-    for (const oldModId of previousModIds) { // Disable the version this install replaces, so only one copy deploys
+    for (const oldModId of previousModIds) {
+      // Disable the version this install replaces, so only one copy deploys
       if (oldModId !== modId) {
         batched.push(actions.setModEnabled(profileId, oldModId, false));
       }
     }
     util.batchDispatch(api.store, batched); // Will dispatch all actions.
-    if (latestPackage && (latestPackage.dependencies.length > 0)) { //dependencies are not installed automatically - each one needs its own requirement entry
-      log('info', `${requirement.userFacingName} declares Thunderstore dependencies: ${latestPackage.dependencies.join(', ')}`);
+    if (latestPackage && latestPackage.dependencies.length > 0) {
+      //dependencies are not installed automatically - each one needs its own requirement entry
+      log(
+        "info",
+        `${requirement.userFacingName} declares Thunderstore dependencies: ${latestPackage.dependencies.join(", ")}`,
+      );
     }
-  } catch (err) { //Show the user the download page if the download/install process fails
-    api.showErrorNotification(`Failed to download/install ${requirement.userFacingName}. You must download manually.`, err);
+  } catch (err) {
+    //Show the user the download page if the download/install process fails
+    api.showErrorNotification(
+      `Failed to download/install ${requirement.userFacingName}. You must download manually.`,
+      err,
+    );
     util.opn(pageUrl(requirement)).catch(() => null);
   } finally {
     activeInstalls.delete(requirement.modType);
@@ -307,7 +360,7 @@ async function checkForThunderstoreUpdateRequirement(api, gameSpec, requirement)
     if (requirement.autoInstall === false) {
       return;
     }
-    log('info', `${requirement.userFacingName} is not installed - installing it`);
+    log("info", `${requirement.userFacingName} is not installed - installing it`);
     return downloadThunderstoreRequirement(api, gameSpec, requirement);
   }
   if (isPinned(requirement)) {
@@ -315,12 +368,12 @@ async function checkForThunderstoreUpdateRequirement(api, gameSpec, requirement)
     // as well as behind it - installing it from that state is a deliberate downgrade.
     api.sendNotification({
       id: `${requirement.modType}-update`,
-      type: 'warning',
+      type: "warning",
       message: `${requirement.userFacingName} pinned version available (${requirement.pinVersion})`,
       allowSuppress: true,
       actions: [
         {
-          title: 'Download',
+          title: "Download",
           action: (dismiss) => {
             downloadThunderstoreRequirement(api, gameSpec, requirement, false);
             dismiss();
@@ -336,37 +389,38 @@ async function checkForThunderstoreUpdateRequirement(api, gameSpec, requirement)
   }
   const state = api.getState();
   const mods = state.persistent.mods[gameSpec.game.id] || {};
-  const requirementMods = Object.values(mods).filter(mod => mod?.type === requirement.modType);
+  const requirementMods = Object.values(mods).filter((mod) => mod?.type === requirement.modType);
   const attr = versionAttribute(requirement);
   const latestVersion = latestPackage.version;
   const latestNormalized = normalizeVersion(latestVersion);
   const latestArchive = archiveName(requirement, latestVersion).toLowerCase();
-  const isCurrent = requirementMods.some(mod => {
+  const isCurrent = requirementMods.some((mod) => {
     const tracked = mod?.attributes?.[attr];
     if (tracked) {
       if (String(tracked) === String(latestVersion)) {
         return true;
       }
       const trackedNormalized = normalizeVersion(tracked);
-      if (trackedNormalized && latestNormalized) { //an installed version newer than the listing (pre-release testing) is not an update
+      if (trackedNormalized && latestNormalized) {
+        //an installed version newer than the listing (pre-release testing) is not an update
         return !semver.gt(latestNormalized, trackedNormalized);
       }
     }
     // archive name for mods installed before version tracking - Thunderstore always
     // serves Namespace-Name-Version.zip, so the name identifies the version exactly
-    return String(mod?.attributes?.fileName || '').toLowerCase() === latestArchive;
+    return String(mod?.attributes?.fileName || "").toLowerCase() === latestArchive;
   });
   if (isCurrent) {
     return;
   }
   api.sendNotification({
     id: `${requirement.modType}-update`,
-    type: 'warning',
+    type: "warning",
     message: `${requirement.userFacingName} update available (${latestVersion})`,
     allowSuppress: true,
     actions: [
       {
-        title: 'Download',
+        title: "Download",
         action: (dismiss) => {
           downloadThunderstoreRequirement(api, gameSpec, requirement, false);
           dismiss();

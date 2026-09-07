@@ -6,15 +6,15 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| Moddingeditormod | a file or folder named `mod.json` and a file with the `.uplugin` extension | `MW5Clans\Mods` |
-| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `MW5Clans` |
-| Blueprint Mods (LogicMods) | a `LogicMods` folder | `MW5Clans\Content\Paks\LogicMods\LogicMods` |
-| Pak Mods | a `'.pak` file | `MW5Clans\Content\Paks\~mods` |
-| UE4SS Itself | a `dwmapi.dll` file | - |
-| UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | - |
-| Root / Game Folder Mods | a top-level folder such as `MW5Clans` | the game folder itself (no subfolder) |
+| Mod Type                                     | Archive must contain                                                       | Installs to                                 |
+| -------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------- |
+| Moddingeditormod                             | a file or folder named `mod.json` and a file with the `.uplugin` extension | `MW5Clans\Mods`                             |
+| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder                                   | `MW5Clans`                                  |
+| Blueprint Mods (LogicMods)                   | a `LogicMods` folder                                                       | `MW5Clans\Content\Paks\LogicMods\LogicMods` |
+| Pak Mods                                     | a `'.pak` file                                                             | `MW5Clans\Content\Paks\~mods`               |
+| UE4SS Itself                                 | a `dwmapi.dll` file                                                        | -                                           |
+| UE4SS Script Mods (Lua)                      | a `.lua` file and a `Scripts` folder                                       | -                                           |
+| Root / Game Folder Mods                      | a top-level folder such as `MW5Clans`                                      | the game folder itself (no subfolder)       |
 
 Paths are relative to the game's install folder.
 
@@ -161,4 +161,3 @@ Installs to: the game folder itself (no subfolder)
 
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

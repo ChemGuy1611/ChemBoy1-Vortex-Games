@@ -1,8 +1,8 @@
 # BepInEx
 
 `https://github.com/BepInEx/BepInEx` — a plugin and preload-time patcher framework for .NET games.
-Its own description is *"a plugin / modding framework for Unity Mono, IL2CPP and .NET framework
-games (XNA, FNA, MonoGame, etc.)"*, and that sentence is the single most important fact about it:
+Its own description is _"a plugin / modding framework for Unity Mono, IL2CPP and .NET framework
+games (XNA, FNA, MonoGame, etc.)"_, and that sentence is the single most important fact about it:
 one project name covers **three unrelated runtimes**, each with its own build, its own bootstrap
 mechanism, its own folder layout, and its own plugin base class. Anything that treats "BepInEx" as
 one thing will get at least one of those wrong.
@@ -19,9 +19,9 @@ BepInEx has never shipped a stable 6.x release. The consequence is that the stab
 and the continuous-integration builds are not "old version / new version" — they are **different
 products covering different runtimes**.
 
-| Line | Where | Runtimes covered | Newest |
-| --- | --- | --- | --- |
-| 5.x (stable) | GitHub releases | Unity Mono only | `v5.4.23.5` (2026-02-08) |
+| Line                | Where                | Runtimes covered                                    | Newest                        |
+| ------------------- | -------------------- | --------------------------------------------------- | ----------------------------- |
+| 5.x (stable)        | GitHub releases      | Unity Mono only                                     | `v5.4.23.5` (2026-02-08)      |
 | 6.x (bleeding edge) | `builds.bepinex.dev` | Unity Mono, Unity IL2CPP, .NET Framework, .NET Core | build `#785` (`6.0.0-be.785`) |
 
 A game on Unity's IL2CPP scripting backend, or any non-Unity .NET game, therefore has **no stable
@@ -44,7 +44,7 @@ The version is four segments (`5.4.23.5`), which is **not** semver — `semver.c
 or segment by segment.
 
 `BepInEx_Patcher_5.4.23.5.zip` contains exactly one file, `BepInEx.Patcher.exe`. It is the
-*hardpatcher*: instead of relying on a proxy DLL being loaded at startup, it permanently rewrites
+_hardpatcher_: instead of relying on a proxy DLL being loaded at startup, it permanently rewrites
 the game's own assembly so the entrypoint call is baked in. It exists for environments where the
 proxy route does not work (some Wine/Proton setups, some launchers). It is a different install shape
 from everything else described here, and a store file-validation pass reverts it.
@@ -81,11 +81,11 @@ starts a .NET runtime and calls into the assembly named in its config.
 
 Three files land in the game root for this:
 
-| File | Role |
-| --- | --- |
-| `winhttp.dll` | the proxy that Windows loads instead of the system DLL |
-| `doorstop_config.ini` | tells Doorstop what to run and how |
-| `.doorstop_version` | Doorstop version marker (`4.5.0` in BepInEx 5.4.23.5) |
+| File                  | Role                                                   |
+| --------------------- | ------------------------------------------------------ |
+| `winhttp.dll`         | the proxy that Windows loads instead of the system DLL |
+| `doorstop_config.ini` | tells Doorstop what to run and how                     |
+| `.doorstop_version`   | Doorstop version marker (`4.5.0` in BepInEx 5.4.23.5)  |
 
 The config's operative line is short:
 
@@ -150,7 +150,7 @@ nothing else:
 - There is no per-game config in the archive; the launcher locates the game by convention from its
   own folder.
 
-The launcher is the *stock* answer, not the only one. A .NET Core game can also be entered through
+The launcher is the _stock_ answer, not the only one. A .NET Core game can also be entered through
 `DOTNET_STARTUP_HOOKS`, or through a proxy DLL named after something the game itself loads. Both
 show up in game-specific forks — see [Game-Specific Forks](#game-specific-forks-the-custom-net-case)
 below.
@@ -179,12 +179,12 @@ arrives populated; `plugins` and `patchers` are empty directories waiting for mo
 
 What lands in `core/` is the clearest signal of which build is installed:
 
-| Build | Marker assemblies in `BepInEx/core` |
-| --- | --- |
-| 5.x Unity Mono | `BepInEx.dll`, `BepInEx.Preloader.dll`, `BepInEx.Harmony.dll`, `0Harmony.dll`, `Mono.Cecil.*` |
-| 6.x Unity Mono | `BepInEx.Core.dll`, `BepInEx.Preloader.Core.dll`, `BepInEx.Unity.Mono.dll` |
-| 6.x Unity IL2CPP | `BepInEx.Core.dll`, `BepInEx.Unity.IL2CPP.dll`, `Il2CppInterop.*`, `Cpp2IL.Core.dll`, `dobby.dll` |
-| 6.x .NET Framework | `BepInEx.Core.dll`, `BepInEx.NET.Common.dll`, `BepInEx.NET.Framework.Launcher.xml` |
+| Build              | Marker assemblies in `BepInEx/core`                                                               |
+| ------------------ | ------------------------------------------------------------------------------------------------- |
+| 5.x Unity Mono     | `BepInEx.dll`, `BepInEx.Preloader.dll`, `BepInEx.Harmony.dll`, `0Harmony.dll`, `Mono.Cecil.*`     |
+| 6.x Unity Mono     | `BepInEx.Core.dll`, `BepInEx.Preloader.Core.dll`, `BepInEx.Unity.Mono.dll`                        |
+| 6.x Unity IL2CPP   | `BepInEx.Core.dll`, `BepInEx.Unity.IL2CPP.dll`, `Il2CppInterop.*`, `Cpp2IL.Core.dll`, `dobby.dll` |
+| 6.x .NET Framework | `BepInEx.Core.dll`, `BepInEx.NET.Common.dll`, `BepInEx.NET.Framework.Launcher.xml`                |
 
 The IL2CPP archive additionally ships a **complete private .NET 6 runtime** in a top-level `dotnet/`
 folder — roughly 170 files including `coreclr.dll`, `hostpolicy.dll` and
@@ -203,7 +203,7 @@ Order matters, because each stage can only see what the previous one has not yet
    `BepInEx.Preloader.dll`.
 2. **The preloader** initialises logging and the config system, then runs the assembly patcher.
 3. **Preload-time patchers** in `BepInEx/patchers` are loaded and given raw `AssemblyDefinition`
-   objects via Mono.Cecil, *before* the runtime has loaded those assemblies.
+   objects via Mono.Cecil, _before_ the runtime has loaded those assemblies.
 4. **The chainloader** starts once the game's runtime is up, scans `BepInEx/plugins` recursively for
    assemblies carrying `[BepInPlugin]`, sorts them by GUID and then by dependency, and instantiates
    each one. See [What decides plugin load order](#what-decides-plugin-load-order) — the sort key is
@@ -225,11 +225,11 @@ works). It must carry `[BepInPlugin]`; without it BepInEx ignores the file entir
 The base class differs per runtime, which is why a plugin built for one BepInEx variant does not
 load on another:
 
-| Runtime | `using` | Base class | Entry point |
-| --- | --- | --- | --- |
-| Unity Mono | `BepInEx.Unity.Mono` | `BaseUnityPlugin` | Unity messages (`Awake`, `Update`, …) — it inherits `MonoBehaviour` |
-| Unity IL2CPP | `BepInEx.Unity.IL2CPP` | `BasePlugin` | `public override void Load()` |
-| .NET Framework / CoreCLR | `BepInEx.NET.Common` | `BasePlugin` | `public override void Load()` |
+| Runtime                  | `using`                | Base class        | Entry point                                                         |
+| ------------------------ | ---------------------- | ----------------- | ------------------------------------------------------------------- |
+| Unity Mono               | `BepInEx.Unity.Mono`   | `BaseUnityPlugin` | Unity messages (`Awake`, `Update`, …) — it inherits `MonoBehaviour` |
+| Unity IL2CPP             | `BepInEx.Unity.IL2CPP` | `BasePlugin`      | `public override void Load()`                                       |
+| .NET Framework / CoreCLR | `BepInEx.NET.Common`   | `BasePlugin`      | `public override void Load()`                                       |
 
 ```csharp
 using BepInEx;
@@ -244,11 +244,11 @@ public class ExamplePlugin : BaseUnityPlugin
 
 `[BepInPlugin]` takes three strings:
 
-| Parameter | Meaning |
-| --- | --- |
-| `GUID` | Unique identifier. BepInEx uses it for duplicate detection, dependency sorting and the config filename. Reverse-domain notation by convention. Changing it after release breaks every dependent. |
-| `Name` | Human-readable name. |
-| `Version` | Must parse as semver. |
+| Parameter | Meaning                                                                                                                                                                                          |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GUID`    | Unique identifier. BepInEx uses it for duplicate detection, dependency sorting and the config filename. Reverse-domain notation by convention. Changing it after release breaks every dependent. |
+| `Name`    | Human-readable name.                                                                                                                                                                             |
+| `Version` | Must parse as semver.                                                                                                                                                                            |
 
 Supporting attributes, all optional and all repeatable:
 
@@ -387,11 +387,11 @@ proxy assemblies that forward into the native code, and plugins reference those.
 
 That first run is expensive and has a network dependency:
 
-| Path | Contents |
-| --- | --- |
-| `BepInEx/unity-libs/` | managed Unity base libraries, **downloaded as a zip** from a URL set in `BepInEx.cfg` |
-| `BepInEx/interop/` | the generated proxy assemblies — this is what plugins reference |
-| `BepInEx/DeobfuscationMap.csv.gz` | optional rename map for obfuscated games |
+| Path                              | Contents                                                                              |
+| --------------------------------- | ------------------------------------------------------------------------------------- |
+| `BepInEx/unity-libs/`             | managed Unity base libraries, **downloaded as a zip** from a URL set in `BepInEx.cfg` |
+| `BepInEx/interop/`                | the generated proxy assemblies — this is what plugins reference                       |
+| `BepInEx/DeobfuscationMap.csv.gz` | optional rename map for obfuscated games                                              |
 
 The base-libraries download can be avoided by placing the correctly named `.zip` in `unity-libs`
 manually and setting the config value to just the filename; BepInEx then never contacts the network.
@@ -477,13 +477,13 @@ requires.
 
 Every version publishes **five packages**, and picking the wrong one is the first failure mode:
 
-| Package | For | Entry mechanism |
-| --- | --- | --- |
-| `… Mod Loader (Windows)` | client, win-x64 | `d3d11.dll` shim |
-| `… Mod Loader (Linux)` | client under Proton — there is no native Linux build | the same Windows `d3d11.dll` shim |
-| `… Mod Loader (Windows Installer)` | client, win-x64 | same, wrapped in a one-click installer (~12 MB against ~1 MB) |
-| `… Server Mod Loader (Windows)` | dedicated server | `STARTUP_HOOKS` in `Server.runtimeconfig.json` |
-| `… Server Mod Loader (Linux)` | dedicated server | same |
+| Package                            | For                                                  | Entry mechanism                                               |
+| ---------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------- |
+| `… Mod Loader (Windows)`           | client, win-x64                                      | `d3d11.dll` shim                                              |
+| `… Mod Loader (Linux)`             | client under Proton — there is no native Linux build | the same Windows `d3d11.dll` shim                             |
+| `… Mod Loader (Windows Installer)` | client, win-x64                                      | same, wrapped in a one-click installer (~12 MB against ~1 MB) |
+| `… Server Mod Loader (Windows)`    | dedicated server                                     | `STARTUP_HOOKS` in `Server.runtimeconfig.json`                |
+| `… Server Mod Loader (Linux)`      | dedicated server                                     | same                                                          |
 
 The client archive is 28 entries and unpacks straight into the game folder:
 
@@ -510,7 +510,7 @@ first; the uninstaller restores the backup and removes the root loader files whi
 Two details from this case generalise to any developer-published fork:
 
 - **The client and server packages target different files.** Romestead's client explicitly does
-  *not* need `Romestead.runtimeconfig.json` edited; the server edits `Server.runtimeconfig.json`.
+  _not_ need `Romestead.runtimeconfig.json` edited; the server edits `Server.runtimeconfig.json`.
   Older client installs may still carry a leftover `STARTUP_HOOKS` entry from an earlier package
   that did use that route — a stale entry pointing at a since-moved DLL is its own failure mode.
 - **Launch through the storefront, not the executable.** The whole point of the proxy route is that
@@ -536,14 +536,14 @@ have no machine-readable version endpoint — the file list on the mod page is t
 Anything managing BepInEx as an installed mod should expect these to appear afterwards, outside its
 own bookkeeping:
 
-| Path | When |
-| --- | --- |
-| `BepInEx/config/BepInEx.cfg` | first run |
-| `BepInEx/config/<GUID>.cfg` | first run of each plugin that declares config entries |
-| `BepInEx/cache/` | preloader assembly cache |
-| `BepInEx/LogOutput.log` | every run (the 6.x docs also refer to it as `LogOutput.txt`) |
-| `BepInEx/interop/`, `BepInEx/unity-libs/` | IL2CPP first run |
-| `<Game>_Data/output_log.txt` | only when `redirect_output_log = true` |
+| Path                                      | When                                                         |
+| ----------------------------------------- | ------------------------------------------------------------ |
+| `BepInEx/config/BepInEx.cfg`              | first run                                                    |
+| `BepInEx/config/<GUID>.cfg`               | first run of each plugin that declares config entries        |
+| `BepInEx/cache/`                          | preloader assembly cache                                     |
+| `BepInEx/LogOutput.log`                   | every run (the 6.x docs also refer to it as `LogOutput.txt`) |
+| `BepInEx/interop/`, `BepInEx/unity-libs/` | IL2CPP first run                                             |
+| `<Game>_Data/output_log.txt`              | only when `redirect_output_log = true`                       |
 
 None of them belong to any mod. Deleting `interop/` costs a slow regeneration, not data.
 

@@ -17,13 +17,13 @@ Vortex depends on several native Node modules that are compiled locally during i
 `@nexusmods/fomod-installer-native`). Without a working C++ toolchain the install fails partway
 through the rebuild step.
 
-| Tool | Notes |
-| --- | --- |
+| Tool                               | Notes                                                                                                                                                                                                 |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Visual Studio 2022 Build Tools** | Workload "Desktop development with C++", plus the ATL, MFC, and Windows 11 SDK individual components. The default workload alone is not enough for `node-gyp`. Use the 2022 toolset, not a newer one. |
-| **Python 3.12+** | Needed by `node-gyp`. On 3.12+ also run `python -m pip install --upgrade setuptools`. |
-| **CMake** | Used by some native build steps. |
-| **.NET 9 SDK** | Used by the FOMOD installer components. |
-| **Git** | Clone with `--recurse-submodules`. |
+| **Python 3.12+**                   | Needed by `node-gyp`. On 3.12+ also run `python -m pip install --upgrade setuptools`.                                                                                                                 |
+| **CMake**                          | Used by some native build steps.                                                                                                                                                                      |
+| **.NET 9 SDK**                     | Used by the FOMOD installer components.                                                                                                                                                               |
+| **Git**                            | Clone with `--recurse-submodules`.                                                                                                                                                                    |
 
 Verify with:
 
@@ -79,11 +79,11 @@ pnpm install
 Roughly five minutes on a cold store, producing a multi-gigabyte `node_modules`. Three lifecycle
 scripts run as part of it:
 
-| Hook | What it does |
-| --- | --- |
-| root `preinstall` | `scripts/create-env-file.mjs` writes `.local.env` with `NX_PARALLEL=<cpu core count>` |
-| root `prepare` | `husky` installs the git hooks (pre-commit runs `oxfmt` on staged files) |
-| `src/main` `postinstall` | `postinstall.mjs` rebuilds the native modules listed above against Electron |
+| Hook                     | What it does                                                                          |
+| ------------------------ | ------------------------------------------------------------------------------------- |
+| root `preinstall`        | `scripts/create-env-file.mjs` writes `.local.env` with `NX_PARALLEL=<cpu core count>` |
+| root `prepare`           | `husky` installs the git hooks (pre-commit runs `oxfmt` on staged files)              |
+| `src/main` `postinstall` | `postinstall.mjs` rebuilds the native modules listed above against Electron           |
 
 Expected noise during the rebuild:
 
@@ -137,10 +137,10 @@ never collide.
 
 Note that `--shared` is not an isolation flag — it selects the ProgramData multi-user location. If
 the installed Vortex runs in multi-user mode, the dev instance does not inherit it: `Application.ts`
-reads the `multiUser` flag from the *per-user* database, and a dev run's per-user database is its
+reads the `multiUser` flag from the _per-user_ database, and a dev run's per-user database is its
 own fresh one, so `%ProgramData%\vortex` is left alone.
 
-Whatever the data directory, avoid deploying the *same game* from two running instances; they
+Whatever the data directory, avoid deploying the _same game_ from two running instances; they
 share the game folder and its deployment manifest even when their app data is separate.
 
 ---
@@ -164,13 +164,13 @@ several minutes and later ones to be near-instant from the nx cache (`test*` is 
 
 Repo-wide equivalents:
 
-| Command | Effect |
-| --- | --- |
-| `pnpm run typecheck` | `tsc` across every project |
-| `pnpm run lint` / `lint:verbose` | ESLint across every project (`--quiet` hides warnings) |
-| `pnpm run test` | vitest unit + integration, excluding the Playwright E2E package |
-| `pnpm run e2e` | Playwright E2E (`@vortex/e2e`); the variants are `pnpm -F @vortex/e2e run e2e:headed` and `run e2e:ui` — the root `e2e:debug` and `e2e:report` scripts name nx targets that do not exist |
-| `pnpm oxfmt --check <paths>` | Formatting check; drop `--check` to rewrite. `pnpm run format` does the whole tree |
+| Command                          | Effect                                                                                                                                                                                   |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm run typecheck`             | `tsc` across every project                                                                                                                                                               |
+| `pnpm run lint` / `lint:verbose` | ESLint across every project (`--quiet` hides warnings)                                                                                                                                   |
+| `pnpm run test`                  | vitest unit + integration, excluding the Playwright E2E package                                                                                                                          |
+| `pnpm run e2e`                   | Playwright E2E (`@vortex/e2e`); the variants are `pnpm -F @vortex/e2e run e2e:headed` and `run e2e:ui` — the root `e2e:debug` and `e2e:report` scripts name nx targets that do not exist |
+| `pnpm oxfmt --check <paths>`     | Formatting check; drop `--check` to rewrite. `pnpm run format` does the whole tree                                                                                                       |
 
 Unit tests are colocated with the code as `src/**/*.test.ts(x)` and run under vitest, so a change to
 a renderer utility can usually be covered by a test file placed next to it.
@@ -184,13 +184,13 @@ exercised locally with `pnpm run e2e`. Writing tests for either layer is covered
 
 ## 6. Troubleshooting
 
-| Symptom | Cause / fix |
-| --- | --- |
-| `Unsupported engine` at install | Active Node does not match the exact `engines` pin; `engineStrict: true` makes this fatal |
-| `pnpm` not found | Corepack not enabled, or the shim was created for a different Node install — re-run `corepack enable pnpm` under the pinned Node |
-| Editor floods with `Cannot find module 'react'` / `Cannot find namespace 'JSX'` | Dependencies were never installed (or were installed for a different Node); run `pnpm install` |
-| `node-gyp` failures mentioning MSVC, ATL, MFC, or the Windows SDK | Build Tools workload incomplete — add the individual components listed in section 1 |
-| A stale target keeps passing after an edit | nx served it from cache; the inputs list in `nx.json` decides invalidation. `pnpm nx reset` clears the cache |
+| Symptom                                                                         | Cause / fix                                                                                                                      |
+| ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `Unsupported engine` at install                                                 | Active Node does not match the exact `engines` pin; `engineStrict: true` makes this fatal                                        |
+| `pnpm` not found                                                                | Corepack not enabled, or the shim was created for a different Node install — re-run `corepack enable pnpm` under the pinned Node |
+| Editor floods with `Cannot find module 'react'` / `Cannot find namespace 'JSX'` | Dependencies were never installed (or were installed for a different Node); run `pnpm install`                                   |
+| `node-gyp` failures mentioning MSVC, ATL, MFC, or the Windows SDK               | Build Tools workload incomplete — add the individual components listed in section 1                                              |
+| A stale target keeps passing after an edit                                      | nx served it from cache; the inputs list in `nx.json` decides invalidation. `pnpm nx reset` clears the cache                     |
 
 ---
 

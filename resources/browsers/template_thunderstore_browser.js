@@ -1,12 +1,12 @@
-const { selectors, log } = require('vortex-api');
-const path = require('path');
-const GAME_ID = 'placeholder';
-const api = require('vortex-api'); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
+const { selectors, log } = require("vortex-api");
+const path = require("path");
+const GAME_ID = "placeholder";
+const api = require("vortex-api"); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 const spec = { game: { id: GAME_ID } }; //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 const context = { api }; //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 const TS_REQUIREMENTS = []; //DUMMY PLACEHOLDER - the array from template_thunderstore_downloader.js
 const downloadThunderstoreRequirement = () => null; //DUMMY PLACEHOLDER - imported from thunderstore_downloader.js
-const PLUGIN_PATH = path.join('Mods'); //DUMMY PLACEHOLDER - the adopter's mod folder
+const PLUGIN_PATH = path.join("Mods"); //DUMMY PLACEHOLDER - the adopter's mod folder
 
 // THUNDERSTORE BROWSER ////////////////////////////////////////////////
 // A sidebar page that embeds the live thunderstore.io community site. The user browses the
@@ -15,15 +15,16 @@ const PLUGIN_PATH = path.join('Mods'); //DUMMY PLACEHOLDER - the adopter's mod f
 // The adopter must carry TWO files beside index.js: thunderstore_browser.js and base_browser.js,
 // which it requires from beside itself. Copying only the first fails at require time.
 const thunderstoreBrowser = true; //toggle - set false to leave the page unregistered
-const { registerThunderstoreBrowser, onceThunderstoreBrowser } = require('./thunderstore_browser');
-const TS_COMMUNITY = 'community-slug'; //Thunderstore community for this game - https://thunderstore.io/c/community-slug/
+const { registerThunderstoreBrowser, onceThunderstoreBrowser } = require("./thunderstore_browser");
+const TS_COMMUNITY = "community-slug"; //Thunderstore community for this game - https://thunderstore.io/c/community-slug/
 const TS_BROWSER_CONFIG = {
   tsCommunity: TS_COMMUNITY,
   requirements: TS_REQUIREMENTS, //optional - packages the extension manages itself, so they install to their own mod type
-  installRequirement: (api, gameSpec, requirement) => //optional - required only when requirements is set
+  installRequirement: (api, gameSpec, requirement) =>
+    //optional - required only when requirements is set
     downloadThunderstoreRequirement(api, gameSpec, requirement, true),
   pageId: `${GAME_ID}-thunderstore-browse`, //optional (default shown)
-  pageTitle: 'Browse Thunderstore', //optional - sidebar label
+  pageTitle: "Browse Thunderstore", //optional - sidebar label
   //hotkey: 'G', //optional - Ctrl+Shift+<key>. Pick a free one: Vortex logs "hotkey already used" and drops the second claim (B is taken)
   //priority: 40, //optional - sidebar position, lower is higher up
   //pageGroup: 'per-game', //optional - 'per-game' hides the page while another game is active
@@ -50,28 +51,36 @@ const TS_BROWSER_CONFIG = {
 
 // *** In setup() function ////////////////////
 async function setup(discovery) {
-  const fs = require('vortex-api').fs; //DUMMY PLACEHOLDER - use the extension's existing import
+  const fs = require("vortex-api").fs; //DUMMY PLACEHOLDER - use the extension's existing import
   await fs.ensureDirWritableAsync(path.join(discovery.path, PLUGIN_PATH)); //browsed mods need their target folder to exist
 }
 
 // *** In applyGame() function ////////////////////
-  if (thunderstoreBrowser) {
-    registerThunderstoreBrowser(context, spec, TS_BROWSER_CONFIG);
-  } //*/
+if (thunderstoreBrowser) {
+  registerThunderstoreBrowser(context, spec, TS_BROWSER_CONFIG);
+} //*/
 
 // *** In context.once() function ////////////////////
-  if (thunderstoreBrowser) {
-    onceThunderstoreBrowser(context.api, spec, TS_BROWSER_CONFIG);
-  } //*/
+if (thunderstoreBrowser) {
+  onceThunderstoreBrowser(context.api, spec, TS_BROWSER_CONFIG);
+} //*/
 
 // *** Optional: a toolbar button that opens the page's site in the system browser ////////////////////
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Thunderstore Page', () => {
-    const { util } = require('vortex-api');
+context.registerAction(
+  "mod-icons",
+  300,
+  "open-ext",
+  {},
+  "Open Thunderstore Page",
+  () => {
+    const { util } = require("vortex-api");
     util.opn(`https://thunderstore.io/c/${TS_COMMUNITY}/`).catch(() => null);
-  }, () => {
+  },
+  () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
-  }); //*/
+  },
+); //*/
 
-log('debug', `${setup}`); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
+log("debug", `${setup}`); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT

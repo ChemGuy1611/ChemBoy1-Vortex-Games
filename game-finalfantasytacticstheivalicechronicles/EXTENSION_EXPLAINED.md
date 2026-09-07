@@ -2,21 +2,21 @@
 
 ## Overview
 
-| Property | Value |
-| --- | --- |
-| Name | FINAL FANTASY TACTICS - The Ivalice Chronicles Vortex Extension |
-| Engine / Structure | Reloaded-II Game (Mod Installer) |
-| Author | ChemBoy1 |
+| Property           | Value                                                           |
+| ------------------ | --------------------------------------------------------------- |
+| Name               | FINAL FANTASY TACTICS - The Ivalice Chronicles Vortex Extension |
+| Engine / Structure | Reloaded-II Game (Mod Installer)                                |
+| Author             | ChemBoy1                                                        |
 
 ## Key Identifiers
 
-| Property | Value |
-| --- | --- |
-| Game ID | `finalfantasytacticstheivalicechronicles` |
-| Executable | `FFT_enhanced.exe` |
-| Executable (Xbox) | `gamelaunchhelper.exe` |
-| Extension Page | [https://www.nexusmods.com/site/mods/1515](https://www.nexusmods.com/site/mods/1515) |
-| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Final_Fantasy_Tactics_-_The_Ivalice_Chronicles](https://www.pcgamingwiki.com/wiki/Final_Fantasy_Tactics_-_The_Ivalice_Chronicles) |
+| Property          | Value                                                                                                                                                                 |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Game ID           | `finalfantasytacticstheivalicechronicles`                                                                                                                             |
+| Executable        | `FFT_enhanced.exe`                                                                                                                                                    |
+| Executable (Xbox) | `gamelaunchhelper.exe`                                                                                                                                                |
+| Extension Page    | [https://www.nexusmods.com/site/mods/1515](https://www.nexusmods.com/site/mods/1515)                                                                                  |
+| PCGamingWiki      | [https://www.pcgamingwiki.com/wiki/Final*Fantasy_Tactics*-\_The_Ivalice_Chronicles](https://www.pcgamingwiki.com/wiki/Final_Fantasy_Tactics_-_The_Ivalice_Chronicles) |
 
 ## Supported Stores
 
@@ -26,22 +26,22 @@
 
 Mod types define where each category of mod gets deployed:
 
-| Name | ID | Priority | Target Path |
-| --- | --- | --- | --- |
-| Reloaded Mod | `finalfantasytacticstheivalicechronicles-reloadedmod` | high | `{gamePath}/Reloaded/Mods` |
-| Mod Loader | `finalfantasytacticstheivalicechronicles-reloadedmodloader` | low | `{gamePath}/Reloaded/Mods/FFTIVC_Mod_Loader` |
-| Reloaded-II Mod Manager | `finalfantasytacticstheivalicechronicles-reloadedmanager` | low | `{gamePath}` |
-| Save File | `finalfantasytacticstheivalicechronicles-save` | high | `{gamePath}/DOCUMENTS/My Games/FINAL FANTASY TACTICS - The Ivalice Chronicles/Steam/USERID_FOLDER` |
+| Name                    | ID                                                          | Priority | Target Path                                                                                        |
+| ----------------------- | ----------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------- |
+| Reloaded Mod            | `finalfantasytacticstheivalicechronicles-reloadedmod`       | high     | `{gamePath}/Reloaded/Mods`                                                                         |
+| Mod Loader              | `finalfantasytacticstheivalicechronicles-reloadedmodloader` | low      | `{gamePath}/Reloaded/Mods/FFTIVC_Mod_Loader`                                                       |
+| Reloaded-II Mod Manager | `finalfantasytacticstheivalicechronicles-reloadedmanager`   | low      | `{gamePath}`                                                                                       |
+| Save File               | `finalfantasytacticstheivalicechronicles-save`              | high     | `{gamePath}/DOCUMENTS/My Games/FINAL FANTASY TACTICS - The Ivalice Chronicles/Steam/USERID_FOLDER` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID | Priority |
-| --- | --- |
-| `finalfantasytacticstheivalicechronicles-reloadedmanager` | 25 |
-| `finalfantasytacticstheivalicechronicles-reloadedmodloader` | 27 |
-| `finalfantasytacticstheivalicechronicles-reloadedmod` | 29 |
+| Installer ID                                                | Priority |
+| ----------------------------------------------------------- | -------- |
+| `finalfantasytacticstheivalicechronicles-reloadedmanager`   | 25       |
+| `finalfantasytacticstheivalicechronicles-reloadedmodloader` | 27       |
+| `finalfantasytacticstheivalicechronicles-reloadedmod`       | 29       |
 
 ## Toolbar Actions
 
@@ -56,9 +56,9 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 ## Auto-Downloaded Dependencies
 
-| Dependency | Version | Details |
-| --- | --- | --- |
-| Reloaded-II | — | — |
+| Dependency  | Version | Details |
+| ----------- | ------- | ------- |
+| Reloaded-II | —       | —       |
 
 ## Special Features
 
@@ -66,4 +66,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-

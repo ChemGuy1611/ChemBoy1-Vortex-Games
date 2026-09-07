@@ -6,13 +6,13 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| Root / Game Folder Mods | a `Bin` folder | the game folder itself (no subfolder) |
-| Mod | a file with one of these extensions: `.pak` or `.pkm` and a file or folder named one of: `models`, `movies` or `music` | `Data` |
-| Config File Mods | a `config.ini` file | `Bin` |
-| Save Game Files | a `.dat` file | `SaveGames` |
-| Binaries | - | `Bin` |
+| Mod Type                | Archive must contain                                                                                                   | Installs to                           |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| Root / Game Folder Mods | a `Bin` folder                                                                                                         | the game folder itself (no subfolder) |
+| Mod                     | a file with one of these extensions: `.pak` or `.pkm` and a file or folder named one of: `models`, `movies` or `music` | `Data`                                |
+| Config File Mods        | a `config.ini` file                                                                                                    | `Bin`                                 |
+| Save Game Files         | a `.dat` file                                                                                                          | `SaveGames`                           |
+| Binaries                | -                                                                                                                      | `Bin`                                 |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
@@ -81,4 +81,3 @@ Installs to: `Bin`
 - Archives that contain a FOMOD installer (a `fomod` folder with `ModuleConfig.xml`) are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

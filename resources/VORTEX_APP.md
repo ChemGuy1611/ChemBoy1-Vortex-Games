@@ -7,19 +7,19 @@ How the Vortex application and its monorepo are put together, for orientation wh
 
 ## Top-level layout
 
-| Path | Role |
-| --- | --- |
-| `src/` | The Electron app itself, split by process (see Process Model) |
-| `packages/` | Internal workspace packages (the published `vortex-api` lives here, plus PE-parsing and test helpers) |
-| `extensions/` | Bundled feature + game extensions shipped inside Vortex |
-| `docs/` | Architecture, debugging, release, and i18n docs |
-| `scripts/` | Workspace build/automation scripts (env file, dependency report, query-type codegen, rolldown for extensions) |
-| `tools/` | One-off build/icon/sourcemap helpers |
-| `locales/` | Translations (`translation-strings.txt` is the extracted source string list at repo root) |
-| `assets/`, `icons/` | Static bundled assets |
-| `etc/` | Generated reference (`vortex.api.md`, `Dependency Report.md`) |
-| `playwright/` | E2E specs (older location; the `@vortex/e2e` package under `packages/e2e/` is the current runner) |
-| `AGENTS*.md` | Short agent-facing guides (see AGENTS docs below) |
+| Path                | Role                                                                                                          |
+| ------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `src/`              | The Electron app itself, split by process (see Process Model)                                                 |
+| `packages/`         | Internal workspace packages (the published `vortex-api` lives here, plus PE-parsing and test helpers)         |
+| `extensions/`       | Bundled feature + game extensions shipped inside Vortex                                                       |
+| `docs/`             | Architecture, debugging, release, and i18n docs                                                               |
+| `scripts/`          | Workspace build/automation scripts (env file, dependency report, query-type codegen, rolldown for extensions) |
+| `tools/`            | One-off build/icon/sourcemap helpers                                                                          |
+| `locales/`          | Translations (`translation-strings.txt` is the extracted source string list at repo root)                     |
+| `assets/`, `icons/` | Static bundled assets                                                                                         |
+| `etc/`              | Generated reference (`vortex.api.md`, `Dependency Report.md`)                                                 |
+| `playwright/`       | E2E specs (older location; the `@vortex/e2e` package under `packages/e2e/` is the current runner)             |
+| `AGENTS*.md`        | Short agent-facing guides (see AGENTS docs below)                                                             |
 
 ## Monorepo & build system
 
@@ -29,25 +29,25 @@ Vortex is an **nx + pnpm-workspace** monorepo.
 - **Task runner:** [nx](https://nx.dev) (`nx.json`). `neverConnectToCloud: true`, analytics off, default base branch `master`. Targets are cached: `build`, `typecheck`, `lint*` cache; `test*` does not. `build`/`typecheck`/`lint` all `dependsOn: ["^build"]` so dependency packages build first.
 - **Dependency versions are centralised** in the pnpm **catalog** (`pnpm-workspace.yaml`). Almost every `devDependency` in the root `package.json` is `"catalog:"`. When checking a dependency version, read the catalog, not the individual `package.json`.
 - **Bundlers:**
-  - `rolldown` (`rolldown.base.mjs`) is the primary bundler. `scripts/extensions-rolldown.mjs` bundles the bundled extensions.
-  - `tsdown` is used by some packages (e.g. `vortex-api`).
-  - `webpack` is still present (legacy paths / some extensions); `ts-loader`, `terser-webpack-plugin`, `webpack-node-externals` remain in devDeps.
+    - `rolldown` (`rolldown.base.mjs`) is the primary bundler. `scripts/extensions-rolldown.mjs` bundles the bundled extensions.
+    - `tsdown` is used by some packages (e.g. `vortex-api`).
+    - `webpack` is still present (legacy paths / some extensions); `ts-loader`, `terser-webpack-plugin`, `webpack-node-externals` remain in devDeps.
 - **Lint/format:** `oxlint` + `oxfmt` (Oxc toolchain) are the fast primary tools (`oxlint.base.config.json`, `.oxfmtrc.json`). ESLint is still configured (`eslint.config.base.mjs`, custom rules in `eslint-rules/`) for rules Oxc doesn't cover.
 - **Type checking:** layered `tsconfig.base.json` -> `tsconfig.strict.json` / `tsconfig.node.json`; per-project `tsconfig*.json`. `ts-to-zod` (`ts-to-zod.config.mjs`) generates Zod schemas from TS types.
 - **Tests:** `vitest` (`vitest.base.config.ts`), tests colocated as `src/**/*.test.ts`. Playwright for E2E.
 
 ### Common commands (run from repo root)
 
-| Command | Effect |
-| --- | --- |
-| `pnpm run start` | Launch dev app (`nx run @vortex/main:start`) |
-| `pnpm run build` | `nx run-many -t build lint typecheck` + dependency-report assets. This is the full build to run before `start` / F5 debugging — `CONTRIBUTE.md` still calls it `build:all`, but no such script exists in `package.json` |
-| `pnpm run package` / `package:nosign` | Production build + Electron package (signed / unsigned) |
-| `pnpm run api` | Build the `vortex-api` package only |
-| `pnpm run test` | Run all unit + integration tests except `@vortex/e2e` |
-| `pnpm run e2e[:headed/:debug/:report]` | Playwright E2E |
-| `pnpm run lint` / `format` / `format:check` | oxlint / oxfmt |
-| `pnpm run generate:query-types` | Regenerate typed query bindings (see Persistence) |
+| Command                                     | Effect                                                                                                                                                                                                                  |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm run start`                            | Launch dev app (`nx run @vortex/main:start`)                                                                                                                                                                            |
+| `pnpm run build`                            | `nx run-many -t build lint typecheck` + dependency-report assets. This is the full build to run before `start` / F5 debugging — `CONTRIBUTE.md` still calls it `build:all`, but no such script exists in `package.json` |
+| `pnpm run package` / `package:nosign`       | Production build + Electron package (signed / unsigned)                                                                                                                                                                 |
+| `pnpm run api`                              | Build the `vortex-api` package only                                                                                                                                                                                     |
+| `pnpm run test`                             | Run all unit + integration tests except `@vortex/e2e`                                                                                                                                                                   |
+| `pnpm run e2e[:headed/:debug/:report]`      | Playwright E2E                                                                                                                                                                                                          |
+| `pnpm run lint` / `format` / `format:check` | oxlint / oxfmt                                                                                                                                                                                                          |
+| `pnpm run generate:query-types`             | Regenerate typed query bindings (see Persistence)                                                                                                                                                                       |
 
 `scripts/create-env-file.mjs` runs on `preinstall`; it writes `.local.env` containing `NX_PARALLEL=<cpu core count>`, which nx reads to size its task parallelism.
 
@@ -57,14 +57,14 @@ Full prerequisites, install walkthrough, and per-project task invocation are in 
 
 The app under `src/` is split by Electron process plus shared and query layers:
 
-| Dir | Process | Responsibility |
-| --- | --- | --- |
-| `src/main/src/` | Main | App startup, windows, IPC, downloads, telemetry, extension loading, persistence |
-| `src/renderer/src/` | Renderer | React UI, Redux store, core extensions, controls/views |
-| `src/preload/src/` | Preload | Context-bridge between renderer and main (`index.ts`) |
-| `src/shared/src/` | Both | Shared APIs, types, constants, error (de)serialization, telemetry, IPC contracts |
-| `src/queries/` | Main DB | SQL for the query layer (`select/*.sql`, `setup/tables.sql`) |
-| `src/stylesheets/` | Renderer | Shared Sass / Tailwind inputs |
+| Dir                 | Process  | Responsibility                                                                   |
+| ------------------- | -------- | -------------------------------------------------------------------------------- |
+| `src/main/src/`     | Main     | App startup, windows, IPC, downloads, telemetry, extension loading, persistence  |
+| `src/renderer/src/` | Renderer | React UI, Redux store, core extensions, controls/views                           |
+| `src/preload/src/`  | Preload  | Context-bridge between renderer and main (`index.ts`)                            |
+| `src/shared/src/`   | Both     | Shared APIs, types, constants, error (de)serialization, telemetry, IPC contracts |
+| `src/queries/`      | Main DB  | SQL for the query layer (`select/*.sql`, `setup/tables.sql`)                     |
+| `src/stylesheets/`  | Renderer | Shared Sass / Tailwind inputs                                                    |
 
 ### Main process
 
@@ -94,25 +94,25 @@ Vortex 2.x has a notable persistence/query architecture under `src/main/src/stor
 - **IPC persistence bridge** — `ReduxPersistorIPC.ts`, `persistenceIPC.ts`, `mainPersistence.ts`, `SubPersistor.ts` move state between processes.
 - Renderer side mirrors with `store/persistDiffMiddleware.ts` (diff-based persistence) and `stateDiff.ts`.
 
-For the data *shapes* exposed to extensions (`IState`, profiles, mods), see the declarations in `node_modules/vortex-api/lib/api.d.ts`. For state helper functions (`getSafe`/`setSafe`/`batchDispatch`), see `STATE_HELPERS.md`.
+For the data _shapes_ exposed to extensions (`IState`, profiles, mods), see the declarations in `node_modules/vortex-api/lib/api.d.ts`. For state helper functions (`getSafe`/`setSafe`/`batchDispatch`), see `STATE_HELPERS.md`.
 
 ## Extension system — two layers
 
 Vortex has **two** extension directories. Do not confuse them.
 
 1. **Core extensions** — `src/renderer/src/extensions/`. These are first-party feature modules compiled into the renderer (not separately packaged). ~50 of them, e.g.:
-   - Mod pipeline: `mod_management`, `download_management`, `installer_fomod_native` / `installer_fomod_ipc` / `installer_fomod_shared` / `installer_nested_fomod`, `installer_dotnet`, `mod_load_order`, `file_based_loadorder`.
-   - Deployment methods: `hardlink_activator`, `symlink_activator` (+ `_elevate`), `move_activator`, `null_activator`.
-   - Platform/integration: `nexus_integration`, `browse_nexus`, `gamemode_management`, `gameversion_management`, `profile_management`, `category_management`, `collections`, `updater`, `health_check`, `recovery`. (`collections_integration` was folded into `collections` during the install-session rework; its install-session types now live at `src/renderer/src/types/collections/ICollectionInstallSession.ts`.)
-   - UI/dashlets: `dashboard`, `*_dashlet` (announcement, firststeps, news, starter, mod_spotlights, onboarding), `settings_*`.
-   - Note: `extensions/collections/` phased-install logic actually lives at `src/renderer/src/extensions/mod_management/InstallManager.ts` (see Collections below) — the `AGENTS-COLLECTIONS.md` path `src/extensions/...` is stale.
+    - Mod pipeline: `mod_management`, `download_management`, `installer_fomod_native` / `installer_fomod_ipc` / `installer_fomod_shared` / `installer_nested_fomod`, `installer_dotnet`, `mod_load_order`, `file_based_loadorder`.
+    - Deployment methods: `hardlink_activator`, `symlink_activator` (+ `_elevate`), `move_activator`, `null_activator`.
+    - Platform/integration: `nexus_integration`, `browse_nexus`, `gamemode_management`, `gameversion_management`, `profile_management`, `category_management`, `collections`, `updater`, `health_check`, `recovery`. (`collections_integration` was folded into `collections` during the install-session rework; its install-session types now live at `src/renderer/src/types/collections/ICollectionInstallSession.ts`.)
+    - UI/dashlets: `dashboard`, `*_dashlet` (announcement, firststeps, news, starter, mod*spotlights, onboarding), `settings*\*`.
+    - Note: `extensions/collections/` phased-install logic actually lives at `src/renderer/src/extensions/mod_management/InstallManager.ts` (see Collections below) — the `AGENTS-COLLECTIONS.md` path `src/extensions/...` is stale.
 
 2. **Bundled extensions** — `extensions/` at repo root. Separately-bundled extensions shipped with the app (rolldown via `scripts/extensions-rolldown.mjs`). Includes:
-   - Gamebryo/Bethesda stack: `gamebryo-plugin-management`, `gamebryo-archive-*`, `gamebryo-bsa-support`, `gamebryo-savegame-management`, etc.
-   - Game-store integrations: `gamestore-gog`, `gamestore-origin`, `gamestore-uplay`, `gamestore-xbox`, `gameinfo-steam`.
-   - Modtypes: `modtype-bepinex`, `modtype-dazip`, `modtype-dinput`, `modtype-enb`, `modtype-gedosato`, `modtype-umm`.
-   - Tooling: `collections`, `mod-dependency-manager`, `fnis-integration`, `script-extender-installer`, `nmm-import-tool`, `mo-import`, `meta-editor`, `quickbms-support`, `mtframework-arc-support`, and more.
-   - **`extensions/games/`** — 86 first-party `game-*` extensions (one folder per game). These are the in-tree equivalents of the third-party extensions in `ChemBoy1-Vortex-Games`.
+    - Gamebryo/Bethesda stack: `gamebryo-plugin-management`, `gamebryo-archive-*`, `gamebryo-bsa-support`, `gamebryo-savegame-management`, etc.
+    - Game-store integrations: `gamestore-gog`, `gamestore-origin`, `gamestore-uplay`, `gamestore-xbox`, `gameinfo-steam`.
+    - Modtypes: `modtype-bepinex`, `modtype-dazip`, `modtype-dinput`, `modtype-enb`, `modtype-gedosato`, `modtype-umm`.
+    - Tooling: `collections`, `mod-dependency-manager`, `fnis-integration`, `script-extender-installer`, `nmm-import-tool`, `mo-import`, `meta-editor`, `quickbms-support`, `mtframework-arc-support`, and more.
+    - **`extensions/games/`** — 86 first-party `game-*` extensions (one folder per game). These are the in-tree equivalents of the third-party extensions in `ChemBoy1-Vortex-Games`.
 
 A reference scaffold for new extensions lives at `samples/sample-extension/` (per AGENTS-DIRECTORIES). Extension authoring against the published API: see `REGISTER_GAME.md` and the `vortex-api` type declarations.
 
@@ -122,7 +122,7 @@ Collections install in **phases**; each phase must complete and deploy before th
 
 ## How Vortex works (runtime flow)
 
-This is the practical orchestration that happens inside the app at runtime. The *contracts* extensions implement (`IGame`, `TestSupported`/`InstallFunc`, `IDeploymentMethod`, manifest shapes) are covered by the authoring docs in this folder — pointers inline. What follows is how the app drives them. Almost all of this lives in two core extensions: `gamemode_management/` and `mod_management/` (under `src/renderer/src/extensions/`).
+This is the practical orchestration that happens inside the app at runtime. The _contracts_ extensions implement (`IGame`, `TestSupported`/`InstallFunc`, `IDeploymentMethod`, manifest shapes) are covered by the authoring docs in this folder — pointers inline. What follows is how the app drives them. Almost all of this lives in two core extensions: `gamemode_management/` and `mod_management/` (under `src/renderer/src/extensions/`).
 
 > **Each runtime subsystem now has its own deep-dive doc** (this section is the summary). Per-topic
 > full docs: `VORTEX_GAME_LIFECYCLE.md` · `VORTEX_MOD_INSTALL.md` · `VORTEX_DEPLOYMENT.md` ·
@@ -134,12 +134,12 @@ This is the practical orchestration that happens inside the app at runtime. The 
 
 - **Known games registry.** Every `context.registerGame(...)` (from a bundled or third-party extension) adds an `IGame` to `GameModeManager`'s `mKnownGames`. Game stores (`gamestore-steam`/`gog`/`xbox`/...) register as `IGameStore` in `mKnownGameStores`. (`gamemode_management/GameModeManager.ts`, registration contract: `REGISTER_GAME.md`.)
 - **Discovery** — finding where a game is installed. Three paths in `gamemode_management/util/discovery.ts`:
-  - `quickDiscovery` — asks each game's store/`queryPath` + each registered game store; fast, runs on startup. Calls back `onDiscoveredGame` -> writes an `IDiscoveryResult` into state.
-  - `searchDiscovery` — full filesystem walk of chosen drives (user-triggered "Scan" when quick discovery misses).
-  - `quickDiscoveryTools` / `discoverRelativeTools` — locate tools/script extenders relative to the game.
-  - `suggestStagingPath` picks the default mod staging folder for a freshly discovered game.
+    - `quickDiscovery` — asks each game's store/`queryPath` + each registered game store; fast, runs on startup. Calls back `onDiscoveredGame` -> writes an `IDiscoveryResult` into state.
+    - `searchDiscovery` — full filesystem walk of chosen drives (user-triggered "Scan" when quick discovery misses).
+    - `quickDiscoveryTools` / `discoverRelativeTools` — locate tools/script extenders relative to the game.
+    - `suggestStagingPath` picks the default mod staging folder for a freshly discovered game.
 - **Activating a game** (managing it) — `GameModeManager.setGameMode(old, new, profileId)` -> `setupGameMode()` runs the game's `setup()` (creates staging dir via `fs.ensureDirWritableAsync`, etc.), then the app emits **`gamemode-activated`** with the game id. This is the signal nearly every feature waits on (deploy validators, load-order pages, plugin management all hook it). `requiresLauncher` resolution happens here too (see `REQUIRES_LAUNCHER.md`).
-- **Discovery results vs known games:** `mKnownGames` = what *can* be managed; `state.settings.gameMode.discovered` = what was *found on disk*. A game is manageable only when discovered + valid (`isValidGame`).
+- **Discovery results vs known games:** `mKnownGames` = what _can_ be managed; `state.settings.gameMode.discovered` = what was _found on disk_. A game is manageable only when discovered + valid (`isValidGame`).
 
 ### 2. Mod install pipeline
 
@@ -149,7 +149,7 @@ Driven by `mod_management/InstallManager.ts` (large file; phased-install invaria
 2. **Game id** — `util/queryGameId.ts` decides which game the archive belongs to (download metadata, active game, or user prompt).
 3. **Pick an installer** — `InstallManager.installInner` runs registered installers in **priority order** (lower number first). Each installer is a `{ priority, testSupported, install }` triple added via `context.registerInstaller` / `addInstaller`. First `testSupported` returning `{ supported: true }` wins. FOMOD (`installer_fomod_*`) is the high-priority fallback for `ModuleConfig.xml`; the generic `basicInstaller` (`util/basicInstaller.ts`) is the catch-all. (Contract: `INSTALLER_SYSTEM.md`, `FOMOD_INSTALLER.md`.)
 4. **Run install** — the chosen `install()` returns `IInstallResult` = a list of `IInstruction`s (copy, mkdir, generatefile, iniedit, setmodtype, attribute, rule, submodule, enableallplugins, …). `InstallManager`'s instruction-collector class buckets them by type.
-5. **Stage** — the archive is extracted and instructions applied into the **staging folder** (`util/getInstallPath.ts`, `stagingDirectory.ts`) under a per-mod `installationPath` folder. Variant mods append `+variant` to the folder name. The mod is now *installed* (in state) but **not yet on disk in the game** — that's deployment.
+5. **Stage** — the archive is extracted and instructions applied into the **staging folder** (`util/getInstallPath.ts`, `stagingDirectory.ts`) under a per-mod `installationPath` folder. Variant mods append `+variant` to the folder name. The mod is now _installed_ (in state) but **not yet on disk in the game** — that's deployment.
 6. **Modtype** — `setmodtype` instructions / modtype extensions (`modtype-*`) route a mod's files to a destination other than the game's data dir (e.g. BepInEx, ENB). Each modtype supplies its own target path.
 7. **Collections** install in phases (Phase 0 framework -> Phase 1+ content); each phase must deploy before the next (`COLLECTIONS_FEATURE.md`, AGENTS-COLLECTIONS).
 
@@ -161,21 +161,21 @@ Deployment is what makes staged mods actually present in the game folder. Method
 
 - **Activator registry** — `util/deploymentMethods.ts`: `registerDeploymentMethod(activator)` adds an `IDeploymentMethod`; `getSupportedActivators` filters by `isSupported(state, gameId, modType)`; `getCurrentActivator` / `getSelectedActivator` pick the one in use. Sorted by `priority` (lower = preferred).
 - **Built-in activators** (each `extensions/<name>/index.ts`, all but null extend `LinkingDeployment` / `LinkingActivator`):
-  - `hardlink_activator` (priority 5) — hard links staging files into the game dir (same volume required). Default when supported.
-  - `symlink_activator` (+ `symlink_activator_elevate` for permission elevation) — symbolic links.
-  - `move_activator` — moves files (cross-volume, no link support).
-  - `null_activator` — no-op (for games that read mods from the staging folder directly).
+    - `hardlink_activator` (priority 5) — hard links staging files into the game dir (same volume required). Default when supported.
+    - `symlink_activator` (+ `symlink_activator_elevate` for permission elevation) — symbolic links.
+    - `move_activator` — moves files (cross-volume, no link support).
+    - `null_activator` — no-op (for games that read mods from the staging folder directly).
 - **Deploy sequence** — `modActivation.ts` `deployMods()`:
-  1. `ensureWritable` + `getNormalizeFunc` on the destination.
-  2. `method.prepare(dest, clean, lastActivation, normalize)`.
-  3. For each enabled mod: `method.activate(modPath, mod.installationPath, subDir(mod), skipFiles)`. `fileOverrides` add to `skipFiles` so a higher-priority mod's file wins (conflict resolution).
-  4. Activate the **merged** folder (`MERGED_PATH[.typeId]`) holding `registerMerge` outputs (see `REGISTER_MERGE.md`).
-  5. `method.finalize(...)` -> writes the **deployment manifest** (list of `IDeployedFile`) and reports progress.
+    1. `ensureWritable` + `getNormalizeFunc` on the destination.
+    2. `method.prepare(dest, clean, lastActivation, normalize)`.
+    3. For each enabled mod: `method.activate(modPath, mod.installationPath, subDir(mod), skipFiles)`. `fileOverrides` add to `skipFiles` so a higher-priority mod's file wins (conflict resolution).
+    4. Activate the **merged** folder (`MERGED_PATH[.typeId]`) holding `registerMerge` outputs (see `REGISTER_MERGE.md`).
+    5. `method.finalize(...)` -> writes the **deployment manifest** (list of `IDeployedFile`) and reports progress.
 - **Event flow** around deploy (wired in `mod_management/index.ts`):
-  - `will-deploy` (emitAndAwait) -> handlers may adjust state before files move.
-  - actual deploy -> `did-deploy` (emitAndAwait) + `mods-did-deploy`.
-  - `deploy-single-mod`, `purge-mods`, `purge-mods-in-path`, `await-activation` for targeted ops.
-- **Deployment is triggered** by `mods-enabled` / `mod-enabled` events (debounced), on `gamemode-activated`, and manually. The manifest lets Vortex know what *it* put there so it can purge/redeploy and detect **external changes** (`util/externalChanges.ts`). Manifest shape + caching: `DEPLOYMENT_MANIFEST.md`.
+    - `will-deploy` (emitAndAwait) -> handlers may adjust state before files move.
+    - actual deploy -> `did-deploy` (emitAndAwait) + `mods-did-deploy`.
+    - `deploy-single-mod`, `purge-mods`, `purge-mods-in-path`, `await-activation` for targeted ops.
+- **Deployment is triggered** by `mods-enabled` / `mod-enabled` events (debounced), on `gamemode-activated`, and manually. The manifest lets Vortex know what _it_ put there so it can purge/redeploy and detect **external changes** (`util/externalChanges.ts`). Manifest shape + caching: `DEPLOYMENT_MANIFEST.md`.
 - **Purge** (`util/deploy.ts` `purgeMods` / `purgeModsInPath`) removes everything Vortex deployed, restoring the game folder, using the manifest. Always purge-before-redeploy when switching activators or profiles.
 
 ### 4. Profiles
@@ -224,18 +224,18 @@ Notifications are session-state entries deduped by `id` (re-send updates in plac
 
 ## Internal packages (`packages/`)
 
-| Package | npm name | Role |
-| --- | --- | --- |
-| `vortex-api` | `@nexusmods/vortex-api` | The published extension-facing API (build with `pnpm run api`) |
-| `adaptor-api` | `@nexusmods/adaptor-api` | Adaptor API surface |
-| `adaptors` | — | Adaptor implementations |
-| `nexus-api-v3` | `@vortex/nexus-api-v3` | Nexus Mods v3 API client |
-| `exe-version` | `exe-version` | Read version info from Windows PE executables (pure TS) |
-| `icon-extract` | `icon-extract` | Extract icons from Windows PE executables (pure TS) |
-| `pe-resources` | `pe-resources` | Shared PE resource-section parser (backs `exe-version` + `icon-extract`) |
-| `extension-test-mocks` | `@vortex/extension-test-mocks` | Mocks for testing extensions |
-| `game-extension-test` | `@vortex/game-extension-test` | Test harness for game extensions |
-| `e2e` | `@vortex/e2e` | Playwright E2E runner |
+| Package                | npm name                       | Role                                                                     |
+| ---------------------- | ------------------------------ | ------------------------------------------------------------------------ |
+| `vortex-api`           | `@nexusmods/vortex-api`        | The published extension-facing API (build with `pnpm run api`)           |
+| `adaptor-api`          | `@nexusmods/adaptor-api`       | Adaptor API surface                                                      |
+| `adaptors`             | —                              | Adaptor implementations                                                  |
+| `nexus-api-v3`         | `@vortex/nexus-api-v3`         | Nexus Mods v3 API client                                                 |
+| `exe-version`          | `exe-version`                  | Read version info from Windows PE executables (pure TS)                  |
+| `icon-extract`         | `icon-extract`                 | Extract icons from Windows PE executables (pure TS)                      |
+| `pe-resources`         | `pe-resources`                 | Shared PE resource-section parser (backs `exe-version` + `icon-extract`) |
+| `extension-test-mocks` | `@vortex/extension-test-mocks` | Mocks for testing extensions                                             |
+| `game-extension-test`  | `@vortex/game-extension-test`  | Test harness for game extensions                                         |
+| `e2e`                  | `@vortex/e2e`                  | Playwright E2E runner                                                    |
 
 > The `AGENTS-DIRECTORIES.md` "Packages" section lists `paths`, `paths-node`, `game-extension-helpers`, `install-entries` — those do **not** exist in the current tree; use the table above.
 
@@ -262,14 +262,14 @@ Notifications are session-state entries deduped by `id` (re-send updates in plac
 
 ## AGENTS docs in-repo (quick map)
 
-| File | Use |
-| --- | --- |
-| `AGENTS.md` | Entry: use `pnpm run`; run build/test/lint/format after changes |
-| `AGENTS-DIRECTORIES.md` | Navigation map (note stale Packages section) |
-| `AGENTS-TESTING.md` | vitest + mock-alias conventions (says nothing about the E2E suite) |
-| `AGENTS-DEBUGGING.md` | F5 debug both processes; `VORTEX_TRACE_DB_WRITES` |
-| `AGENTS-COLLECTIONS.md` | Phased install (note stale `src/extensions/...` path) |
-| `CONTRIBUTE.md` / `CODESTYLE.md` | Setup + code standards |
+| File                             | Use                                                                |
+| -------------------------------- | ------------------------------------------------------------------ |
+| `AGENTS.md`                      | Entry: use `pnpm run`; run build/test/lint/format after changes    |
+| `AGENTS-DIRECTORIES.md`          | Navigation map (note stale Packages section)                       |
+| `AGENTS-TESTING.md`              | vitest + mock-alias conventions (says nothing about the E2E suite) |
+| `AGENTS-DEBUGGING.md`            | F5 debug both processes; `VORTEX_TRACE_DB_WRITES`                  |
+| `AGENTS-COLLECTIONS.md`          | Phased install (note stale `src/extensions/...` path)              |
+| `CONTRIBUTE.md` / `CODESTYLE.md` | Setup + code standards                                             |
 
 ## See also (extension-API docs)
 

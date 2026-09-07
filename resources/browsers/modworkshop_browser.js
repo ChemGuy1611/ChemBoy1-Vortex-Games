@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 // Shared ModWorkshop browser page for Vortex game extensions.
 //
@@ -50,34 +50,34 @@
 // makeModWorkshopBrowsePage, installModWorkshopMod, resolveModWorkshopMod,
 // isModWorkshopModInstalled, checkModWorkshopModUpdates.
 
-const { log, util } = require('vortex-api');
-const { createBrowserModule } = require('./base_browser');
+const { log, util } = require("vortex-api");
+const { createBrowserModule } = require("./base_browser");
 
-const SITE_BASE = 'https://modworkshop.net';
-const API_BASE = 'https://api.modworkshop.net';
+const SITE_BASE = "https://modworkshop.net";
+const API_BASE = "https://api.modworkshop.net";
 
 // Mod attributes. Dedicated attributes rather than the standard 'version' one because
 // Vortex's md5 meta lookup can overwrite 'version' with data from an unrelated Nexus match.
 // The file id attribute is deliberately the same one modworkshop_downloader.js tracks, so a
 // requirement installed by either route is recognised by both.
-const DEFAULT_PACKAGE_ATTRIBUTE = 'modworkshopMod';
-const DEFAULT_VERSION_ATTRIBUTE = 'modworkshopVersion';
-const DEFAULT_FILE_ID_ATTRIBUTE = 'modworkshopFileId';
+const DEFAULT_PACKAGE_ATTRIBUTE = "modworkshopMod";
+const DEFAULT_VERSION_ATTRIBUTE = "modworkshopVersion";
+const DEFAULT_FILE_ID_ATTRIBUTE = "modworkshopFileId";
 
 // Hosts the embedded view stays on: the site, and the storage host its downloads redirect to.
-const DEFAULT_ALLOWED_HOSTS = ['modworkshop.net', 'storage.modworkshop.net'];
+const DEFAULT_ALLOWED_HOSTS = ["modworkshop.net", "storage.modworkshop.net"];
 
 // Ad slots hidden in the embedded view, verified against a live ModWorkshop mod page in August
 // 2026: every slot carries the generic ".ad" wrapper class, and the specific ids below are its
 // server-rendered containers (#mws-ads-left, #mws-ads-mod-pane, ...). Cosmetic only - the
 // requests still happen, this just stops showing the result.
 const DEFAULT_AD_SELECTORS = [
-  '.ad',
-  '#mws-ads-top',
-  '#mws-ads-top-mobile',
-  '#mws-ads-left',
-  '#mws-ads-right',
-  '#mws-ads-mod-pane',
+  ".ad",
+  "#mws-ads-top",
+  "#mws-ads-top-mobile",
+  "#mws-ads-left",
+  "#mws-ads-right",
+  "#mws-ads-mod-pane",
 ];
 
 // Sidebar icon: ModWorkshop's own mark - a hexagonal frame around an isometric cube - traced
@@ -86,7 +86,8 @@ const DEFAULT_AD_SELECTORS = [
 // viewBox to the 24x24 one mdi paths use: the layer's translate(-23.375834,-34.820791) applied,
 // then scaled by 24/14. Only the logo's monochrome outline path is used - the three coloured
 // cube faces are separate paths in the source and have no meaning in a single-colour icon.
-const DEFAULT_MDI = 'M12.05,0.64L9.97,1.84L10.4,2.58L4.74,5.85L4.31,5.1L2.23,6.31L2.23,8.71L3.09,8.71L3.09,15.24L2.23,15.24L2.23,17.64L4.31,18.85L4.74,18.1L10.4,21.37L9.97,22.11L12.05,23.31L14.13,22.11L13.7,21.37L19.36,18.1L19.79,18.85L21.87,17.64L21.87,15.24L21.01,15.24L21.01,8.71L21.87,8.71L21.87,6.31L19.79,5.1L19.36,5.85L13.7,2.58L14.13,1.84ZM12.05,1.63L12.24,1.74L12.24,4.65L18.3,8.15L20.82,6.69L21.01,6.8L21.01,7.02L18.49,8.47L18.49,15.48L21.01,16.93L21.01,17.15L20.82,17.26L18.3,15.8L12.24,19.3L12.24,22.21L12.05,22.32L11.86,22.21L11.86,19.3L5.8,15.8L3.28,17.26L3.09,17.15L3.09,16.93L5.61,15.48L5.61,8.47L3.09,7.02L3.09,6.8L3.28,6.69L5.8,8.15L11.86,4.65L11.86,1.74ZM12.05,5.28L6.25,8.63L6.25,15.32L12.05,18.67L17.85,15.32L17.85,8.63ZM11.86,5.76L11.86,7.67L8.41,9.66L6.76,8.7ZM12.24,5.76L17.34,8.7L15.69,9.66L12.24,7.67ZM6.57,9.03L8.22,9.99L8.22,13.96L6.57,14.92ZM17.53,9.03L17.53,14.92L15.88,13.96L15.88,9.99ZM8.41,14.29L11.86,16.28L11.86,18.19L6.76,15.25ZM15.69,14.29L17.34,15.25L12.24,18.19L12.24,16.28Z';
+const DEFAULT_MDI =
+  "M12.05,0.64L9.97,1.84L10.4,2.58L4.74,5.85L4.31,5.1L2.23,6.31L2.23,8.71L3.09,8.71L3.09,15.24L2.23,15.24L2.23,17.64L4.31,18.85L4.74,18.1L10.4,21.37L9.97,22.11L12.05,23.31L14.13,22.11L13.7,21.37L19.36,18.1L19.79,18.85L21.87,17.64L21.87,15.24L21.01,15.24L21.01,8.71L21.87,8.71L21.87,6.31L19.79,5.1L19.36,5.85L13.7,2.58L14.13,1.84ZM12.05,1.63L12.24,1.74L12.24,4.65L18.3,8.15L20.82,6.69L21.01,6.8L21.01,7.02L18.49,8.47L18.49,15.48L21.01,16.93L21.01,17.15L20.82,17.26L18.3,15.8L12.24,19.3L12.24,22.21L12.05,22.32L11.86,22.21L11.86,19.3L5.8,15.8L3.28,17.26L3.09,17.15L3.09,16.93L5.61,15.48L5.61,8.47L3.09,7.02L3.09,6.8L3.28,6.69L5.8,8.15L11.86,4.65L11.86,1.74ZM12.05,5.28L6.25,8.63L6.25,15.32L12.05,18.67L17.85,15.32L17.85,8.63ZM11.86,5.76L11.86,7.67L8.41,9.66L6.76,8.7ZM12.24,5.76L17.34,8.7L15.69,9.66L12.24,7.67ZM6.57,9.03L8.22,9.99L8.22,13.96L6.57,14.92ZM17.53,9.03L17.53,14.92L15.88,13.96L15.88,9.99ZM8.41,14.29L11.86,16.28L11.86,18.19L6.76,15.25ZM15.69,14.29L17.34,15.25L12.24,18.19L12.24,16.28Z";
 
 // --- config helpers -------------------------------------------------------
 
@@ -112,8 +113,8 @@ function modKey(ref) {
 const MOD_KEY_RE = /^(\d+)$/;
 
 function parseModKey(key) {
-  const matched = MOD_KEY_RE.exec(String(key || ''));
-  return (matched !== null) ? { modId: matched[1] } : null;
+  const matched = MOD_KEY_RE.exec(String(key || ""));
+  return matched !== null ? { modId: matched[1] } : null;
 }
 
 // --- URL parsing ----------------------------------------------------------
@@ -125,7 +126,8 @@ const STORAGE_URL_RE = /storage\.modworkshop\.net\/mods\/files\/(\d+)_/i;
 // api.modworkshop.net/mods/{id}/download and the /files/latest|primary/download variants -
 // all 302 to the storage URL above (modworkshop.net itself has no such path - verified live,
 // it 404s - the API host is what a browser click actually reaches)
-const API_MOD_DOWNLOAD_RE = /api\.modworkshop\.net\/mods\/(\d+)\/(?:download|files\/(?:latest|primary)\/download)/i;
+const API_MOD_DOWNLOAD_RE =
+  /api\.modworkshop\.net\/mods\/(\d+)\/(?:download|files\/(?:latest|primary)\/download)/i;
 // api.modworkshop.net/files/{fileId}/download - carries a file id but not the mod it belongs to
 const API_FILE_DOWNLOAD_RE = /api\.modworkshop\.net\/files\/(\d+)\/download/i;
 // the "Install with Mod Organizer 2" button's protocol link - mod id is in the URL itself
@@ -135,7 +137,7 @@ const MANAGER_URL_RE = /^mws-manager:\/\/mws\/install\/(\d+)/i;
 
 //Parse what a download URL reveals: a mod id when the URL carries one, else a file id
 function parseDownloadRef(url) {
-  const input = String(url || '');
+  const input = String(url || "");
   const storage = STORAGE_URL_RE.exec(input);
   if (storage !== null) {
     return { modId: storage[1] };
@@ -158,7 +160,7 @@ async function fetchMod(ref) {
   try {
     return await util.jsonRequest(`${API_BASE}/mods/${ref.modId}`);
   } catch (err) {
-    log('debug', `ModWorkshop mod lookup failed for ${modKey(ref)}: ${err}`);
+    log("debug", `ModWorkshop mod lookup failed for ${modKey(ref)}: ${err}`);
     return null;
   }
 }
@@ -168,8 +170,9 @@ async function fetchMod(ref) {
 async function fetchPrimaryFile(ref) {
   try {
     return await util.jsonRequest(`${API_BASE}/mods/${ref.modId}/files/primary`);
-  } catch (err) { //404 when the mod has no files at all
-    log('debug', `ModWorkshop primary file lookup failed for ${modKey(ref)}: ${err}`);
+  } catch (err) {
+    //404 when the mod has no files at all
+    log("debug", `ModWorkshop primary file lookup failed for ${modKey(ref)}: ${err}`);
     return null;
   }
 }
@@ -180,7 +183,7 @@ async function resolveFileOwner(fileId) {
     const file = await util.jsonRequest(`${API_BASE}/files/${fileId}`);
     return file?.mod_id ? String(file.mod_id) : null;
   } catch (err) {
-    log('warn', `Could not resolve which ModWorkshop mod file ${fileId} belongs to: ${err}`);
+    log("warn", `Could not resolve which ModWorkshop mod file ${fileId} belongs to: ${err}`);
     return null;
   }
 }
@@ -198,14 +201,14 @@ function parseDependency(entry) {
 //dependency is offered, same as Thunderstore. The flag matters at a different layer instead:
 //the standing requirements check (plan wave W8) treats "optional" as not-a-failure.
 function dependencyRefs(dependencies) {
-  return (dependencies || []).map(parseDependency).filter(ref => ref !== null);
+  return (dependencies || []).map(parseDependency).filter((ref) => ref !== null);
 }
 
 //Resolve a mod's current file, version, page URL and dependencies (null when unreachable,
 //unapproved, suspended, or carrying nothing downloadable)
 async function resolveModWorkshopMod(config, ref) {
   const mod = await fetchMod(ref);
-  if ((mod === null) || !mod.has_download || !mod.approved || mod.suspended) {
+  if (mod === null || !mod.has_download || !mod.approved || mod.suspended) {
     return null;
   }
   const file = await fetchPrimaryFile(ref);
@@ -226,7 +229,7 @@ async function resolveModWorkshopMod(config, ref) {
 
 //Recognise a finished download as a ModWorkshop mod (returns null when it is anything else)
 function downloadRef(download) {
-  for (const url of (download.urls || [])) {
+  for (const url of download.urls || []) {
     const ref = parseDownloadRef(url);
     if (ref !== null) {
       return ref;
@@ -245,7 +248,7 @@ async function identifyModWorkshopDownload(config, adapterState, partial) {
   }
   if (partial.fileId !== undefined) {
     const modId = await resolveFileOwner(partial.fileId);
-    return (modId !== null) ? { modId } : null;
+    return modId !== null ? { modId } : null;
   }
   return null;
 }
@@ -260,17 +263,27 @@ async function identifyModWorkshopDownload(config, adapterState, partial) {
 //The plain Download button is unaffected either way: the flag governs one-click manager
 //installs, not a normal file download.
 function installIfManagersAllowed(ctx, ref) {
-  resolveModWorkshopMod(ctx.config, ref).then((resolved) => {
-    if (resolved === null) {
-      return;
-    }
-    if (resolved.disableModManagers) {
-      log('info', `ModWorkshop mod ${modKey(ref)} opts out of mod-manager installs - `
-        + 'ignoring the manager link (the plain Download button still works)');
-      return;
-    }
-    ctx.install(ref);
-  }).catch(err => log('warn', `Failed to resolve ModWorkshop mod ${modKey(ref)} for a manager-link install: ${err}`));
+  resolveModWorkshopMod(ctx.config, ref)
+    .then((resolved) => {
+      if (resolved === null) {
+        return;
+      }
+      if (resolved.disableModManagers) {
+        log(
+          "info",
+          `ModWorkshop mod ${modKey(ref)} opts out of mod-manager installs - ` +
+            "ignoring the manager link (the plain Download button still works)",
+        );
+        return;
+      }
+      ctx.install(ref);
+    })
+    .catch((err) =>
+      log(
+        "warn",
+        `Failed to resolve ModWorkshop mod ${modKey(ref)} for a manager-link install: ${err}`,
+      ),
+    );
 }
 
 // --- update comparison ----------------------------------------------------
@@ -281,10 +294,11 @@ function installIfManagersAllowed(ctx, ref) {
 function isNewerFile(latestFileId, installedFileId, latestVersion, installedVersion) {
   const latest = Number(latestFileId);
   const installed = Number(installedFileId);
-  if (Number.isFinite(latest) && Number.isFinite(installed) && (installed > 0)) {
+  if (Number.isFinite(latest) && Number.isFinite(installed) && installed > 0) {
     return latest > installed;
   }
-  if (!latestVersion || !installedVersion) { //installed before file ids were tracked
+  if (!latestVersion || !installedVersion) {
+    //installed before file ids were tracked
     return false;
   }
   return String(latestVersion) !== String(installedVersion);
@@ -293,20 +307,21 @@ function isNewerFile(latestFileId, installedFileId, latestVersion, installedVers
 // --- the adapter ----------------------------------------------------------
 
 const adapter = {
-  id: 'modworkshop',
-  label: 'ModWorkshop',
+  id: "modworkshop",
+  label: "ModWorkshop",
   defaults: {
     packageAttribute: DEFAULT_PACKAGE_ATTRIBUTE,
     versionAttribute: DEFAULT_VERSION_ATTRIBUTE,
     allowedHosts: DEFAULT_ALLOWED_HOSTS,
-    icon: 'plugin',
+    icon: "plugin",
     mdi: DEFAULT_MDI,
-    pageTitle: 'Browse Mods',
-    homeTooltip: 'Back to the game page',
+    pageTitle: "Browse Mods",
+    homeTooltip: "Back to the game page",
     adSelectors: DEFAULT_AD_SELECTORS,
   },
   dependencies: true, //dependency entries embed the dependency's own mod record, at no extra cost
-  unresolvedMessage: 'The ModWorkshop API is unreachable, the mod has no files, or it is unapproved/suspended',
+  unresolvedMessage:
+    "The ModWorkshop API is unreachable, the mod has no files, or it is unapproved/suspended",
 
   homeUrl,
   refKey: modKey,
@@ -339,8 +354,8 @@ const adapter = {
     const manager = MANAGER_URL_RE.exec(url);
     if (manager !== null) {
       identifyModWorkshopDownload(ctx.config, ctx.adapterState, { fileId: manager[1] })
-        .then(ref => ((ref !== null) ? installIfManagersAllowed(ctx, ref) : undefined))
-        .catch(err => log('warn', `Failed to resolve ModWorkshop file ${manager[1]}: ${err}`));
+        .then((ref) => (ref !== null ? installIfManagersAllowed(ctx, ref) : undefined))
+        .catch((err) => log("warn", `Failed to resolve ModWorkshop file ${manager[1]}: ${err}`));
       return true;
     }
     return false;

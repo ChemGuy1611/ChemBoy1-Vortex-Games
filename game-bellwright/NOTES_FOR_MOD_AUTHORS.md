@@ -6,17 +6,17 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `Bellwright` |
-| Blueprint Mods (LogicMods) | a `LogicMods` folder | `Bellwright\Content\Paks\LogicMods\LogicMods` |
-| Pak Mods | a `.pak` file | `Bellwright\Content\Mods` |
-| Pak Mods | a `.pak` file | `Bellwright\Content\Mods` |
-| UE4SS Itself | a `dwmapi.dll` file | `Bellwright\Binaries\Win64` |
-| Signature Bypass | `dsound.dll` and `sig.lua` | `Bellwright\Binaries\Win64` |
-| UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `Bellwright\Binaries\Win64\Mods` |
-| UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | `Bellwright\Binaries\Win64\Mods` |
-| Root / Game Folder Mods | a top-level folder such as `Bellwright` | the game folder itself (no subfolder) |
+| Mod Type                                     | Archive must contain                     | Installs to                                   |
+| -------------------------------------------- | ---------------------------------------- | --------------------------------------------- |
+| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `Bellwright`                                  |
+| Blueprint Mods (LogicMods)                   | a `LogicMods` folder                     | `Bellwright\Content\Paks\LogicMods\LogicMods` |
+| Pak Mods                                     | a `.pak` file                            | `Bellwright\Content\Mods`                     |
+| Pak Mods                                     | a `.pak` file                            | `Bellwright\Content\Mods`                     |
+| UE4SS Itself                                 | a `dwmapi.dll` file                      | `Bellwright\Binaries\Win64`                   |
+| Signature Bypass                             | `dsound.dll` and `sig.lua`               | `Bellwright\Binaries\Win64`                   |
+| UE4SS Script Mods (Lua)                      | a `.lua` file and a `Scripts` folder     | `Bellwright\Binaries\Win64\Mods`              |
+| UE4SS DLL Mods (C++)                         | a `.dll` file and a `dlls` folder        | `Bellwright\Binaries\Win64\Mods`              |
+| Root / Game Folder Mods                      | a top-level folder such as `Bellwright`  | the game folder itself (no subfolder)         |
 
 Paths are relative to the game's install folder.
 
@@ -219,4 +219,3 @@ Installs to: the game folder itself (no subfolder)
 
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

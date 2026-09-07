@@ -14,8 +14,10 @@ Implementation: `Vortex/src/renderer/src/ExtensionManager.ts` (the `api.events` 
 `api.events` **is** the raw `EventEmitter` (`mEventEmitter`, `setMaxListeners(100)`):
 
 ```ts
-api.events.on('event-name', (args) => { /* fire and forget */ });
-api.events.emit('event-name', args);
+api.events.on("event-name", (args) => {
+    /* fire and forget */
+});
+api.events.emit("event-name", args);
 ```
 
 No back-pressure: the emitter doesn't wait for listeners. Used for notifications like
@@ -44,7 +46,7 @@ Mechanism (`emitAndAwait`):
   gathered.
 
 **Handlers run concurrently, not in sequence.** `pending` is a plain array awaited with
-`Promise.all`, so one handler's async work never delays another's. What *is* ordered is the
+`Promise.all`, so one handler's async work never delays another's. What _is_ ordered is the
 synchronous head of each handler: `mEventEmitter.emit` invokes listeners in **registration order**,
 and core/bundled extensions register before dynamic ones. So a core handler reliably executes
 everything up to its first `await` before a game extension's handler starts at all. Never rely on
@@ -66,10 +68,10 @@ Vortex 2.4.x introduced a typed registry for event names, in
 
 ```ts
 export interface ApiEvents {
-  'start-download': (rawUrls, modInfo, fileName?, callback?, redownload?, options?) => string;
-  'remove-download': (downloadId, callback?) => void;
-  'pause-download': (downloadId, callback?) => void;
-  'resume-download': (downloadId, callback?, options?) => void;
+    "start-download": (rawUrls, modInfo, fileName?, callback?, redownload?, options?) => string;
+    "remove-download": (downloadId, callback?) => void;
+    "pause-download": (downloadId, callback?) => void;
+    "resume-download": (downloadId, callback?, options?) => void;
 }
 ```
 

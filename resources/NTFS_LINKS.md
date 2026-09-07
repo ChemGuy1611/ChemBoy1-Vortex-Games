@@ -10,17 +10,17 @@ This is the layer underneath `VORTEX_DEPLOYMENT.md` — that doc covers the surr
 
 ## Windows link types
 
-| | Hard link | Symbolic link | Directory junction |
-| --- | --- | --- | --- |
-| Windows API | `CreateHardLinkW` | `CreateSymbolicLinkW` | reparse point set via `DeviceIoControl` |
-| `mklink` flag | `/H` | none (files) / `/D` (dirs) | `/J` |
-| Can target | files only | files or directories | directories only |
-| Target path form | n/a — points at the data | absolute, relative, or UNC | absolute local path only |
-| Cross-volume | no | yes | yes |
-| Privilege to create | none | `SeCreateSymbolicLinkPrivilege`, or Developer Mode | none |
-| Can dangle | no | yes | yes |
-| Detectable by an app | no | yes (reparse tag) | yes (reparse tag) |
-| Node API | `fs.link` | `fs.symlink` | `fs.symlink(src, dst, 'junction')` |
+|                      | Hard link                | Symbolic link                                      | Directory junction                      |
+| -------------------- | ------------------------ | -------------------------------------------------- | --------------------------------------- |
+| Windows API          | `CreateHardLinkW`        | `CreateSymbolicLinkW`                              | reparse point set via `DeviceIoControl` |
+| `mklink` flag        | `/H`                     | none (files) / `/D` (dirs)                         | `/J`                                    |
+| Can target           | files only               | files or directories                               | directories only                        |
+| Target path form     | n/a — points at the data | absolute, relative, or UNC                         | absolute local path only                |
+| Cross-volume         | no                       | yes                                                | yes                                     |
+| Privilege to create  | none                     | `SeCreateSymbolicLinkPrivilege`, or Developer Mode | none                                    |
+| Can dangle           | no                       | yes                                                | yes                                     |
+| Detectable by an app | no                       | yes (reparse tag)                                  | yes (reparse tag)                       |
+| Node API             | `fs.link`                | `fs.symlink`                                       | `fs.symlink(src, dst, 'junction')`      |
 
 Hard links and symbolic links are NTFS features. FAT32 and exFAT support neither — that is the
 reason Vortex ships a move-based method at all.
@@ -69,7 +69,7 @@ with `FILE_FLAG_OPEN_REPARSE_POINT`.
   passes `SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE`.
 - Cross-machine evaluation (remote link to remote target, and similar combinations) is disabled by
   default; `fsutil behavior query SymlinkEvaluation` reports the current policy.
-- Applications *can* tell a symlink apart from a real file. Some games, launchers and anti-cheat
+- Applications _can_ tell a symlink apart from a real file. Some games, launchers and anti-cheat
   layers refuse to load through one, which is the main practical downside.
 
 ### Directory junctions
@@ -86,18 +86,18 @@ that of the volume the junction points at, not the volume the junction lives on.
 
 ## What each deployment method creates
 
-| Method (id) | Priority | Creates | Same volume | Elevation | `canRestore()` | Fallback-purge safe |
-| --- | --- | --- | --- | --- | --- | --- |
-| Null (`null-deployment`) | 3 | nothing | n/a | no | n/a | yes |
-| Hardlink (`hardlink_activator`) | 5 | one hard link per file | required | no | yes | yes |
-| Symlink (`symlink_activator`) | 10 | one file symlink per file | not required | privilege required | no | yes |
-| Symlink elevated (`symlink_activator_elevated`) | 20 | one file symlink per file | not required | UAC per deploy, or a task | no | yes |
-| Move (`move_activator`) | 50 | moves the file, leaves a `.vortex_lnk` stub | required in practice | no | yes | no |
+| Method (id)                                     | Priority | Creates                                     | Same volume          | Elevation                 | `canRestore()` | Fallback-purge safe |
+| ----------------------------------------------- | -------- | ------------------------------------------- | -------------------- | ------------------------- | -------------- | ------------------- |
+| Null (`null-deployment`)                        | 3        | nothing                                     | n/a                  | no                        | n/a            | yes                 |
+| Hardlink (`hardlink_activator`)                 | 5        | one hard link per file                      | required             | no                        | yes            | yes                 |
+| Symlink (`symlink_activator`)                   | 10       | one file symlink per file                   | not required         | privilege required        | no             | yes                 |
+| Symlink elevated (`symlink_activator_elevated`) | 20       | one file symlink per file                   | not required         | UAC per deploy, or a task | no             | yes                 |
+| Move (`move_activator`)                         | 50       | moves the file, leaves a `.vortex_lnk` stub | required in practice | no                        | yes            | no                  |
 
 Every method except the null one extends `LinkingDeployment`, which owns the deploy/purge skeleton
 and delegates to the subclass: `linkFile`, `unlinkFile`, `isLink`, `purgeLinks` and `canRestore`.
 
-`canRestore()` reports whether the method can put a file back after the *staging* copy is deleted.
+`canRestore()` reports whether the method can put a file back after the _staging_ copy is deleted.
 True for hard links (the data survives under the game-folder name) and for move deployment (the
 file is physically there); false for symlinks (deleting the source leaves a dangling link). It
 drives whether external-change handling offers a source-deleted file as restorable.
@@ -149,7 +149,7 @@ Identical on-disk result, different executor: the links are created by a separat
 - While waiting for consent, Vortex sets a UI blocker and polls the process list for `consent.exe`,
   bringing its window to the front. If it disappears without the helper ever connecting, the deploy
   is cancelled with a "system refused or failed to elevate" message.
-- `isSupported` deliberately reports *unavailable* when the account already holds the privilege
+- `isSupported` deliberately reports _unavailable_ when the account already holds the privilege
   ("no need to use the elevated variant"). `FORCE_ALLOW_ELEVATED_SYMLINKING=true` overrides that
   for testing.
 - It cannot run the filesystem probe — creating the test link would itself need elevation — so an
@@ -207,25 +207,26 @@ as `"supportsSymlinks": SYM_LINKS`.
 ### Same-volume checks in extensions
 
 Because hardlink deployment needs staging and the game on one volume, an extension that also
-deploys to a *third* location — config or save folders under the user profile — has to verify all
+deploys to a _third_ location — config or save folders under the user profile — has to verify all
 three before offering those mod types:
 
 ```javascript
 function checkPartitions(folder, discoveryPath) {
-  if (!preferHardlinks && !IO_STORE) { // symlinks are fine here, so no constraint
-    return true;
-  }
-  try {
-    fs.ensureDirSync(discoveryPath);
-    fs.ensureDirSync(STAGING_FOLDER);
-    fs.ensureDirSync(folder);
-    const a = fs.statSync(discoveryPath).dev;
-    const b = fs.statSync(STAGING_FOLDER).dev;
-    const c = fs.statSync(folder).dev;
-    return (a === b) && (b === c);
-  } catch {
-    return false;
-  }
+    if (!preferHardlinks && !IO_STORE) {
+        // symlinks are fine here, so no constraint
+        return true;
+    }
+    try {
+        fs.ensureDirSync(discoveryPath);
+        fs.ensureDirSync(STAGING_FOLDER);
+        fs.ensureDirSync(folder);
+        const a = fs.statSync(discoveryPath).dev;
+        const b = fs.statSync(STAGING_FOLDER).dev;
+        const c = fs.statSync(folder).dev;
+        return a === b && b === c;
+    } catch {
+        return false;
+    }
 }
 ```
 
@@ -237,13 +238,13 @@ another drive reports that drive: you cannot junction your way around the constr
 
 ## Files Vortex leaves behind
 
-| Name | Written by | Purpose |
-| --- | --- | --- |
-| `<file>.vortex_backup` | any linking method | A pre-existing game file renamed out of the way before a link took its place. Restored during purge; if the real name reappeared meanwhile, the user is asked which copy to keep. |
-| `__folder_managed_by_vortex` (`.`-prefixed off Windows) | `ensureDir` during deploy | Marks a directory as created by Vortex so purge may remove it once empty. |
-| `__delete_if_empty` | older versions | Previous name of the same tag; still recognised. |
-| `__vortex_canary.tmp` and `.tmp.link` | support probes | Temporary; deleted immediately, retried once after 100 ms if an anti-virus holds them. |
-| `<name>.vortex_lnk` | move deployment only | JSON stub in staging recording where the real file was moved to. |
+| Name                                                    | Written by                | Purpose                                                                                                                                                                           |
+| ------------------------------------------------------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `<file>.vortex_backup`                                  | any linking method        | A pre-existing game file renamed out of the way before a link took its place. Restored during purge; if the real name reappeared meanwhile, the user is asked which copy to keep. |
+| `__folder_managed_by_vortex` (`.`-prefixed off Windows) | `ensureDir` during deploy | Marks a directory as created by Vortex so purge may remove it once empty.                                                                                                         |
+| `__delete_if_empty`                                     | older versions            | Previous name of the same tag; still recognised.                                                                                                                                  |
+| `__vortex_canary.tmp` and `.tmp.link`                   | support probes            | Temporary; deleted immediately, retried once after 100 ms if an anti-virus holds them.                                                                                            |
+| `<name>.vortex_lnk`                                     | move deployment only      | JSON stub in staging recording where the real file was moved to.                                                                                                                  |
 
 Directory cleanup honours `game.directoryCleaning`: `'tag'` (the default) removes only directories
 carrying the tag file, `'all'` removes any directory that ends up empty.
@@ -252,12 +253,12 @@ carrying the tag file, `'all'` removes any directory that ends up empty.
 
 ## Purge, per method
 
-| Method | Mechanism |
-| --- | --- |
-| Hardlink | Walk staging with `turbowalk({ details: true })` collecting `idStr` for every entry with `linkCount > 1`, then walk the game folder and unlink every entry whose `idStr` is in that set. Manifest-independent. `idStr` (a string) is used instead of the numeric `id` because NTFS file ids exceed `Number.MAX_SAFE_INTEGER`. |
-| Symlink | Walk the game folder; for each symbolic link, `readlink` it and unlink it if the target resolves inside the staging folder. |
-| Symlink elevated | The same walk, but every removal is routed through the elevated helper. |
-| Move | Walk staging for `*.vortex_lnk` stubs and rename each recorded target back. |
+| Method           | Mechanism                                                                                                                                                                                                                                                                                                                     |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Hardlink         | Walk staging with `turbowalk({ details: true })` collecting `idStr` for every entry with `linkCount > 1`, then walk the game folder and unlink every entry whose `idStr` is in that set. Manifest-independent. `idStr` (a string) is used instead of the numeric `id` because NTFS file ids exceed `Number.MAX_SAFE_INTEGER`. |
+| Symlink          | Walk the game folder; for each symbolic link, `readlink` it and unlink it if the target resolves inside the staging folder.                                                                                                                                                                                                   |
+| Symlink elevated | The same walk, but every removal is routed through the elevated helper.                                                                                                                                                                                                                                                       |
+| Move             | Walk staging for `*.vortex_lnk` stubs and rename each recorded target back.                                                                                                                                                                                                                                                   |
 
 A manifest-based **fallback purge** deletes exactly what the manifest lists. Vortex switches to it
 when the deployed path no longer matches the manifest's `targetPath` — the "game folder was moved,
@@ -299,4 +300,5 @@ leave identical symlinks on disk; nothing else does.
 (manifest shape, including the recorded `deploymentMethod` and `targetPath`), `REGISTER_GAME.md`
 (where `details`/`compatible` live in the game spec), `WINAPI_BINDINGS.md` (`GetVolumePathName`,
 the privilege functions, the Task Scheduler functions), `FILE_SEARCH.md` (turbowalk options and
-`IEntry` fields the purge walks depend on).
+`IEntry` fields the purge walks depend on), `NODE_FS.md` (`fsp.symlink` and its `'junction'` type
+argument, `fsp.link`, and why `Stats.ino`/`nlink` need `{ bigint: true }` when identity matters).

@@ -6,17 +6,17 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| Mlue4ss | a file or folder named `ae_bp` and a file with the `.pak` extension | the game folder itself (no subfolder) |
-| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `ManorLords` |
-| Blueprint Mods (LogicMods) | a `LogicMods` folder | `ManorLords\Content\Paks\LogicMods\LogicMods` |
-| UE4SS Itself | a `dwmapi.dll` file | - |
-| UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | - |
-| UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | - |
-| Root / Game Folder Mods | a top-level folder such as `ManorLords` | the game folder itself (no subfolder) |
-| Config File Mods | a config file such as `engine.ini` or `game.ini` | - |
-| Save Game Files | a `.sav` file | - |
+| Mod Type                                     | Archive must contain                                                | Installs to                                   |
+| -------------------------------------------- | ------------------------------------------------------------------- | --------------------------------------------- |
+| Mlue4ss                                      | a file or folder named `ae_bp` and a file with the `.pak` extension | the game folder itself (no subfolder)         |
+| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder                            | `ManorLords`                                  |
+| Blueprint Mods (LogicMods)                   | a `LogicMods` folder                                                | `ManorLords\Content\Paks\LogicMods\LogicMods` |
+| UE4SS Itself                                 | a `dwmapi.dll` file                                                 | -                                             |
+| UE4SS Script Mods (Lua)                      | a `.lua` file and a `Scripts` folder                                | -                                             |
+| UE4SS DLL Mods (C++)                         | a `.dll` file and a `dlls` folder                                   | -                                             |
+| Root / Game Folder Mods                      | a top-level folder such as `ManorLords`                             | the game folder itself (no subfolder)         |
+| Config File Mods                             | a config file such as `engine.ini` or `game.ini`                    | -                                             |
+| Save Game Files                              | a `.sav` file                                                       | -                                             |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
@@ -186,4 +186,3 @@ Save files are deployed to the game's save folder in your user profile.
 
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

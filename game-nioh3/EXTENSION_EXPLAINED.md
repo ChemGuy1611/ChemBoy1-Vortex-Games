@@ -2,23 +2,23 @@
 
 ## Overview
 
-| Property | Value |
-| --- | --- |
-| Name | Nioh 3 Vortex Extension |
-| Engine / Structure | Basic Game |
-| Author | ChemBoy1 |
+| Property           | Value                   |
+| ------------------ | ----------------------- |
+| Name               | Nioh 3 Vortex Extension |
+| Engine / Structure | Basic Game              |
+| Author             | ChemBoy1                |
 
 ## Key Identifiers
 
-| Property | Value |
-| --- | --- |
-| Game ID | `nioh3` |
-| Executable | `Nioh3.exe` |
-| Executable (Xbox) | `gamelaunchhelper.exe` |
-| Executable (GOG) | `Nioh3.exe` |
-| Executable (Demo) | `Nioh3.exe` |
-| Extension Page | [https://www.nexusmods.com/site/mods/1676](https://www.nexusmods.com/site/mods/1676) |
-| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Nioh_3](https://www.pcgamingwiki.com/wiki/Nioh_3) |
+| Property          | Value                                                                                |
+| ----------------- | ------------------------------------------------------------------------------------ |
+| Game ID           | `nioh3`                                                                              |
+| Executable        | `Nioh3.exe`                                                                          |
+| Executable (Xbox) | `gamelaunchhelper.exe`                                                               |
+| Executable (GOG)  | `Nioh3.exe`                                                                          |
+| Executable (Demo) | `Nioh3.exe`                                                                          |
+| Extension Page    | [https://www.nexusmods.com/site/mods/1676](https://www.nexusmods.com/site/mods/1676) |
+| PCGamingWiki      | [https://www.pcgamingwiki.com/wiki/Nioh_3](https://www.pcgamingwiki.com/wiki/Nioh_3) |
 
 ## Supported Stores
 
@@ -26,50 +26,50 @@
 
 ## Feature Flags
 
-| Flag | Value | Description |
-| --- | --- | --- |
-| `reZip` | `true` | rezip mods for ModManager |
-| `modInstallerEnabled` | `true` | enable mod installer (once mod loader is added) |
-| `hasLoader` | `true` | for DLL Loader |
-| `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
-| `rootInstaller` | `false` | enable root installer. Set false if you need to avoid installer collisions |
-| `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
-| `setupNotification` | `true` | enable to show the user a notification with special instructions (specify below) |
-| `hasUserIdFolder` | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
-| `debug` | `false` | toggle for debug mode |
+| Flag                  | Value   | Description                                                                                                                                 |
+| --------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `reZip`               | `true`  | rezip mods for ModManager                                                                                                                   |
+| `modInstallerEnabled` | `true`  | enable mod installer (once mod loader is added)                                                                                             |
+| `hasLoader`           | `true`  | for DLL Loader                                                                                                                              |
+| `allowSymlinks`       | `true`  | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
+| `rootInstaller`       | `false` | enable root installer. Set false if you need to avoid installer collisions                                                                  |
+| `fallbackInstaller`   | `true`  | enable fallback installer. Set false if you need to avoid installer collisions                                                              |
+| `setupNotification`   | `true`  | enable to show the user a notification with special instructions (specify below)                                                            |
+| `hasUserIdFolder`     | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)                                              |
+| `debug`               | `false` | toggle for debug mode                                                                                                                       |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
-| Name | ID | Priority | Target Path |
-| --- | --- | --- | --- |
-| Root Folder | `nioh3-root` | high | `{gamePath}` |
-| Plugin Mod | `nioh3-loadermod` | high | `{gamePath}/plugins` |
-| Loose File Loader | `nioh3-looseloader` | low | `{gamePath}/plugins` |
-| .fdata Package (Yumia) | `nioh3-fdatayumia` | high | `{gamePath}/.` |
-| Loose Mod (RDBExplorer) | `nioh3-rdbmod` | high | `{gamePath}/package/RDBExplorer_Mods` |
-| Yumia fdata Tools | `nioh3-yumia` | low | `{gamePath}/package` |
-| RDBExplorer | `nioh3-rdbexplorer` | low | `{gamePath}/package` |
-| ModManager | `nioh3-modmanager` | low | `{gamePath}/.` |
-| DLL Plugin Loader | `nioh3-dllloader` | 70 | `?` |
-| ModManager Loose Mod | `nioh3-mod` | 25 | `?` |
+| Name                    | ID                  | Priority | Target Path                           |
+| ----------------------- | ------------------- | -------- | ------------------------------------- |
+| Root Folder             | `nioh3-root`        | high     | `{gamePath}`                          |
+| Plugin Mod              | `nioh3-loadermod`   | high     | `{gamePath}/plugins`                  |
+| Loose File Loader       | `nioh3-looseloader` | low      | `{gamePath}/plugins`                  |
+| .fdata Package (Yumia)  | `nioh3-fdatayumia`  | high     | `{gamePath}/.`                        |
+| Loose Mod (RDBExplorer) | `nioh3-rdbmod`      | high     | `{gamePath}/package/RDBExplorer_Mods` |
+| Yumia fdata Tools       | `nioh3-yumia`       | low      | `{gamePath}/package`                  |
+| RDBExplorer             | `nioh3-rdbexplorer` | low      | `{gamePath}/package`                  |
+| ModManager              | `nioh3-modmanager`  | low      | `{gamePath}/.`                        |
+| DLL Plugin Loader       | `nioh3-dllloader`   | 70       | `?`                                   |
+| ModManager Loose Mod    | `nioh3-mod`         | 25       | `?`                                   |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID | Priority |
-| --- | --- |
-| `nioh3-dllloader` | 25 |
-| `nioh3-rdbexplorer` | 26 |
-| `nioh3-yumia` | 27 |
-| `nioh3-looseloader` | 28 |
-| `nioh3-modmanager` | 29 |
-| `nioh3-mod` | 31 |
-| `nioh3-loadermod` | 33 |
-| `nioh3-fdatayumia` | 35 |
-| `nioh3-fallback` | 49 |
+| Installer ID        | Priority |
+| ------------------- | -------- |
+| `nioh3-dllloader`   | 25       |
+| `nioh3-rdbexplorer` | 26       |
+| `nioh3-yumia`       | 27       |
+| `nioh3-looseloader` | 28       |
+| `nioh3-modmanager`  | 29       |
+| `nioh3-mod`         | 31       |
+| `nioh3-loadermod`   | 33       |
+| `nioh3-fdatayumia`  | 35       |
+| `nioh3-fallback`    | 49       |
 
 ## Registered Tools
 
@@ -93,9 +93,9 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 ## Auto-Downloaded Dependencies
 
-| Dependency | Version | Details |
-| --- | --- | --- |
-| DLL Plugin Loader | — | — |
+| Dependency        | Version | Details |
+| ----------------- | ------- | ------- |
+| DLL Plugin Loader | —       | —       |
 
 ## Special Features
 
@@ -105,4 +105,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-

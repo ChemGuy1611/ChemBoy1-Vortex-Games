@@ -6,19 +6,19 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `man` |
-| Blueprint Mods (LogicMods) | a `LogicMods` folder | `man\Content\Paks\LogicMods\LogicMods` |
-| Pak Mods | a `.pak` file | `man\Content\Paks\~mods` |
-| UE4SS Itself | a `dwmapi.dll` file | `man\Binaries\Win64` |
-| Signature Bypass | `d3d9.dll` and `bypasssignature.lua` | `man\Binaries\Win64` |
-| UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `man\Binaries\Win64\ue4ss\Mods` |
-| UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | `man\Binaries\Win64\ue4ss\Mods` |
-| Root / Game Folder Mods | a top-level folder such as `man` | the game folder itself (no subfolder) |
-| Config File Mods | a config file such as `engine.ini` or `game.ini` | `LOCALAPPDATA\MandragoraWotWT\Saved\Config\WindowsNoEditor` |
-| Save Game Files | a `.sav` file | - |
-| Fallback Installer | anything unrecognised with no pak file | `man\Binaries\Win64` |
+| Mod Type                                     | Archive must contain                             | Installs to                                                 |
+| -------------------------------------------- | ------------------------------------------------ | ----------------------------------------------------------- |
+| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder         | `man`                                                       |
+| Blueprint Mods (LogicMods)                   | a `LogicMods` folder                             | `man\Content\Paks\LogicMods\LogicMods`                      |
+| Pak Mods                                     | a `.pak` file                                    | `man\Content\Paks\~mods`                                    |
+| UE4SS Itself                                 | a `dwmapi.dll` file                              | `man\Binaries\Win64`                                        |
+| Signature Bypass                             | `d3d9.dll` and `bypasssignature.lua`             | `man\Binaries\Win64`                                        |
+| UE4SS Script Mods (Lua)                      | a `.lua` file and a `Scripts` folder             | `man\Binaries\Win64\ue4ss\Mods`                             |
+| UE4SS DLL Mods (C++)                         | a `.dll` file and a `dlls` folder                | `man\Binaries\Win64\ue4ss\Mods`                             |
+| Root / Game Folder Mods                      | a top-level folder such as `man`                 | the game folder itself (no subfolder)                       |
+| Config File Mods                             | a config file such as `engine.ini` or `game.ini` | `LOCALAPPDATA\MandragoraWotWT\Saved\Config\WindowsNoEditor` |
+| Save Game Files                              | a `.sav` file                                    | -                                                           |
+| Fallback Installer                           | anything unrecognised with no pak file           | `man\Binaries\Win64`                                        |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
@@ -243,4 +243,3 @@ Installs to: `man\Binaries\Win64`
 
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

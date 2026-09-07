@@ -6,16 +6,16 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| Xboxmodloader | a file or folder named `tmx_ngloader.exe` | - |
-| Ninjagaidensigma Steammodloader | a file or folder named `ninja gaiden sigma.exe` | - |
-| Ninjagaidensigma2 Steammodloader | a file or folder named `ninja gaiden sigma2.exe` | - |
-| Ninjagaiden3razorsedge Steammodloader | a file or folder named `ninja gaiden 3 razor's edge.exe` | - |
-| Mlmod | a file with the `.dat` extension | `mods` |
-| Databinfolder | a file or folder named `databin` | - |
-| Databinsubfolder1 | a file or folder named one of: `bgm` or `movie` | `databin` |
-| Databinsubfolder23 | a file or folder named one of: `sound` or `movie` | - |
+| Mod Type                              | Archive must contain                                     | Installs to |
+| ------------------------------------- | -------------------------------------------------------- | ----------- |
+| Xboxmodloader                         | a file or folder named `tmx_ngloader.exe`                | -           |
+| Ninjagaidensigma Steammodloader       | a file or folder named `ninja gaiden sigma.exe`          | -           |
+| Ninjagaidensigma2 Steammodloader      | a file or folder named `ninja gaiden sigma2.exe`         | -           |
+| Ninjagaiden3razorsedge Steammodloader | a file or folder named `ninja gaiden 3 razor's edge.exe` | -           |
+| Mlmod                                 | a file with the `.dat` extension                         | `mods`      |
+| Databinfolder                         | a file or folder named `databin`                         | -           |
+| Databinsubfolder1                     | a file or folder named one of: `bgm` or `movie`          | `databin`   |
+| Databinsubfolder23                    | a file or folder named one of: `sound` or `movie`        | -           |
 
 Paths are relative to the game's install folder.
 
@@ -59,4 +59,3 @@ Recognised when the archive contains a file or folder named one of: `sound` or `
 
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

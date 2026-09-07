@@ -7,7 +7,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 ## Quick Reference
 
 | Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
+| -------- | -------------------- | ----------- |
 
 Paths are relative to the game's install folder.
 
@@ -15,4 +15,3 @@ Paths are relative to the game's install folder.
 
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

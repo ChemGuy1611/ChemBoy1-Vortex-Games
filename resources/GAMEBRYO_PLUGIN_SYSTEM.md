@@ -8,20 +8,20 @@ Covers how Vortex manages plugin load ordering for Bethesda/Gamebryo games, incl
 
 ## 1. Supported Games
 
-| Game | Format | ESL Support | Plugin Path |
-| --- | --- | --- | --- |
-| Oblivion | original | No | `%LOCALAPPDATA%\oblivion\` |
-| Fallout 3 | original | No | `%LOCALAPPDATA%\Fallout3\` |
-| Fallout: New Vegas | original | No | `%LOCALAPPDATA%\FalloutNV\` |
-| Skyrim (original) | original | No | `%LOCALAPPDATA%\Skyrim\` |
-| Skyrim Special Edition | fallout4 | Yes | `%LOCALAPPDATA%\Skyrim Special Edition\` |
-| Skyrim VR | fallout4 | No | `%LOCALAPPDATA%\Skyrim VR\` |
-| Fallout 4 | fallout4 | Yes | `%LOCALAPPDATA%\Fallout4\` |
-| Fallout 4 VR | fallout4 | No | `%LOCALAPPDATA%\Fallout4VR\` |
-| Starfield | fallout4 | Yes (+Medium, +Blueprint) | `%LOCALAPPDATA%\Starfield\` |
-| Enderal | original | No | `%LOCALAPPDATA%\enderal\` |
-| Enderal Special Edition | fallout4 | Yes | `%LOCALAPPDATA%\Enderal Special Edition\` |
-| Oblivion Remastered | original | No | (UE5 game — custom plugins path) |
+| Game                    | Format   | ESL Support               | Plugin Path                               |
+| ----------------------- | -------- | ------------------------- | ----------------------------------------- |
+| Oblivion                | original | No                        | `%LOCALAPPDATA%\oblivion\`                |
+| Fallout 3               | original | No                        | `%LOCALAPPDATA%\Fallout3\`                |
+| Fallout: New Vegas      | original | No                        | `%LOCALAPPDATA%\FalloutNV\`               |
+| Skyrim (original)       | original | No                        | `%LOCALAPPDATA%\Skyrim\`                  |
+| Skyrim Special Edition  | fallout4 | Yes                       | `%LOCALAPPDATA%\Skyrim Special Edition\`  |
+| Skyrim VR               | fallout4 | No                        | `%LOCALAPPDATA%\Skyrim VR\`               |
+| Fallout 4               | fallout4 | Yes                       | `%LOCALAPPDATA%\Fallout4\`                |
+| Fallout 4 VR            | fallout4 | No                        | `%LOCALAPPDATA%\Fallout4VR\`              |
+| Starfield               | fallout4 | Yes (+Medium, +Blueprint) | `%LOCALAPPDATA%\Starfield\`               |
+| Enderal                 | original | No                        | `%LOCALAPPDATA%\enderal\`                 |
+| Enderal Special Edition | fallout4 | Yes                       | `%LOCALAPPDATA%\Enderal Special Edition\` |
+| Oblivion Remastered     | original | No                        | (UE5 game — custom plugins path)          |
 
 Game support config: `gamebryo-plugin-management\src\util\gameSupport.ts`
 
@@ -29,12 +29,12 @@ Game support config: `gamebryo-plugin-management\src\util\gameSupport.ts`
 
 ## 2. Plugin File Types
 
-| Extension | Meaning | Flag Bit |
-| --- | --- | --- |
-| `.esm` | Master file | `0x00000001` (FLAG_MASTER) |
-| `.esp` | Plugin file | (no dedicated flag) |
-| `.esl` | Light plugin (ESL) | `0x00000200` (or `0x00000100` Starfield) |
-| `.ghost` | Ghosted/disabled plugin | Appended to base filename (e.g. `Mod.esp.ghost`) |
+| Extension | Meaning                 | Flag Bit                                         |
+| --------- | ----------------------- | ------------------------------------------------ |
+| `.esm`    | Master file             | `0x00000001` (FLAG_MASTER)                       |
+| `.esp`    | Plugin file             | (no dedicated flag)                              |
+| `.esl`    | Light plugin (ESL)      | `0x00000200` (or `0x00000100` Starfield)         |
+| `.ghost`  | Ghosted/disabled plugin | Appended to base filename (e.g. `Mod.esp.ghost`) |
 
 Starfield adds two extra types:
 
@@ -107,12 +107,12 @@ Source: `gamebryo-plugin-management\src\esp\ESPFile.ts`
 
 Vortex reads only the `TES4` record header (first ~50-200 bytes) — not the full file. Subrecords parsed:
 
-| Subrecord | Content |
-| --- | --- |
-| `HEDR` | Version and record count (numRecords == 0 means "dummy/empty") |
-| `MAST` | Master file dependency list |
-| `CNAM` | Author string |
-| `SNAM` | Description string |
+| Subrecord | Content                                                        |
+| --------- | -------------------------------------------------------------- |
+| `HEDR`    | Version and record count (numRecords == 0 means "dummy/empty") |
+| `MAST`    | Master file dependency list                                    |
+| `CNAM`    | Author string                                                  |
+| `SNAM`    | Description string                                             |
 
 Flags extracted from TES4 record header:
 
@@ -202,8 +202,8 @@ Implements `types.IPersistor`. Responsibilities:
 2. Skip Blueprint plugins (Starfield only)
 3. Write `loadorder.txt` (all plugins, UTF-8)
 4. Write `plugins.txt` — format depends on game:
-   - original: only enabled, latin1
-   - fallout4: all with `*` prefix for enabled, latin1
+    - original: only enabled, latin1
+    - fallout4: all with `*` prefix for enabled, latin1
 5. original format only: set file mtimes sequentially if controlling order
 
 ---
@@ -225,22 +225,22 @@ Triggered by `gamemode-activated` event:
 
 **LOOT list file paths:**
 
-| File | Path |
-| --- | --- |
+| File       | Path                                                   |
+| ---------- | ------------------------------------------------------ |
 | masterlist | `{vortexUserData}/{gameId}/masterlist/masterlist.yaml` |
-| userlist | `{vortexUserData}/{gameId}/userlist.yaml` |
-| prelude | `{vortexUserData}/loot_prelude/prelude.yaml` |
+| userlist   | `{vortexUserData}/{gameId}/userlist.yaml`              |
+| prelude    | `{vortexUserData}/loot_prelude/prelude.yaml`           |
 
 ### 9b. Game ID Mapping for LOOT
 
 Some game IDs are remapped to their parent masterlist:
 
-| Vortex game ID | LOOT masterlist |
-| --- | --- |
-| `fallout4vr` | `fallout4` |
-| `skyrimvr` | `skyrimse` |
-| `oblivionremastered` | `oblivion` |
-| `enderal` | `enderal` (own masterlist) |
+| Vortex game ID          | LOOT masterlist              |
+| ----------------------- | ---------------------------- |
+| `fallout4vr`            | `fallout4`                   |
+| `skyrimvr`              | `skyrimse`                   |
+| `oblivionremastered`    | `oblivion`                   |
+| `enderal`               | `enderal` (own masterlist)   |
 | `enderalspecialedition` | `enderalse` (own masterlist) |
 
 ### 9c. Sorting Flow
@@ -292,19 +292,19 @@ Userlist is loaded with the masterlist and affects LOOT sort output. Vortex moni
 
 ## 10. Key Source Files
 
-| File | Role |
-| --- | --- |
-| `gamebryo-plugin-management\src\index.ts` | Extension entry, event wiring, registration |
-| `gamebryo-plugin-management\src\util\PluginPersistor.ts` | Read/write plugins.txt + loadorder.txt |
-| `gamebryo-plugin-management\src\autosort.ts` | LOOT init, sort trigger, plugin details |
-| `gamebryo-plugin-management\src\util\gameSupport.ts` | Per-game config, native plugin lists |
-| `gamebryo-plugin-management\src\util\UserlistPersistor.ts` | userlist.yaml I/O |
-| `gamebryo-plugin-management\src\util\masterlist.ts` | masterlist download/versioning |
-| `gamebryo-plugin-management\src\esp\ESPFile.ts` | Binary TES4 record parser |
-| `gamebryo-plugin-management\src\types\ILoadOrder.ts` | ILoadOrder interface |
-| `gamebryo-plugin-management\src\types\IPlugins.ts` | IPlugin, IPluginCombined |
-| `gamebryo-plugin-management\src\types\ILOOTList.ts` | LOOT masterlist/userlist structures |
-| `gamebryo-plugin-management\src\reducers\` | Redux reducers for load order + plugin state |
+| File                                                       | Role                                         |
+| ---------------------------------------------------------- | -------------------------------------------- |
+| `gamebryo-plugin-management\src\index.ts`                  | Extension entry, event wiring, registration  |
+| `gamebryo-plugin-management\src\util\PluginPersistor.ts`   | Read/write plugins.txt + loadorder.txt       |
+| `gamebryo-plugin-management\src\autosort.ts`               | LOOT init, sort trigger, plugin details      |
+| `gamebryo-plugin-management\src\util\gameSupport.ts`       | Per-game config, native plugin lists         |
+| `gamebryo-plugin-management\src\util\UserlistPersistor.ts` | userlist.yaml I/O                            |
+| `gamebryo-plugin-management\src\util\masterlist.ts`        | masterlist download/versioning               |
+| `gamebryo-plugin-management\src\esp\ESPFile.ts`            | Binary TES4 record parser                    |
+| `gamebryo-plugin-management\src\types\ILoadOrder.ts`       | ILoadOrder interface                         |
+| `gamebryo-plugin-management\src\types\IPlugins.ts`         | IPlugin, IPluginCombined                     |
+| `gamebryo-plugin-management\src\types\ILOOTList.ts`        | LOOT masterlist/userlist structures          |
+| `gamebryo-plugin-management\src\reducers\`                 | Redux reducers for load order + plugin state |
 
 All paths relative to `Vortex\extensions\`.
 

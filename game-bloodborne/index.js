@@ -7,30 +7,56 @@ Date: 2026-09-02
 ////////////////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require('vortex-api');
-const path = require('path');
-const template = require('string-template');
-const { download, findModByFile, findDownloadIdByFile, resolveVersionByPattern, testRequirementVersion } = require('./downloader');
+const { actions, fs, util, selectors, log } = require("vortex-api");
+const path = require("path");
+const template = require("string-template");
+const {
+  download,
+  findModByFile,
+  findDownloadIdByFile,
+  resolveVersionByPattern,
+  testRequirementVersion,
+} = require("./downloader");
 
 //Specify all the information about the game
 const GAME_ID = "bloodborne";
-const PS_ID = "CUSA03173";   // <--- CHANGE THIS IF YOU ARE USING A DIFFERENT VERSION OF THE GAME
+const PS_ID = "CUSA03173"; // <--- CHANGE THIS IF YOU ARE USING A DIFFERENT VERSION OF THE GAME
 const GAME_FILE = path.join(PS_ID, "eboot.bin");
 const GAME_NAME = "Bloodborne";
 const GAME_NAME_SHORT = "Bloodborne";
 const MOD_PATH = "."; //Set default mod path
 const EXTENSION_URL = "https://www.nexusmods.com/bloodborne/mods/64"; //Nexus link to this extension. Used for links
 
-let GAME_PATH = '';
-let GAME_VERSION = ''; //Game version
-let STAGING_FOLDER = ''; //Vortex staging folder path
-let DOWNLOAD_FOLDER = ''; //Vortex download folder path
+let GAME_PATH = "";
+let GAME_VERSION = ""; //Game version
+let STAGING_FOLDER = ""; //Vortex staging folder path
+let DOWNLOAD_FOLDER = ""; //Vortex download folder path
 
 //Info for mod types and installers
 const DVDROOTPS4_ID = `${GAME_ID}-dvdroot_ps4`;
 const DVDROOTPS4_NAME = `Game Data (dvdroot_ps4)`;
 const DVDROOTPS4_PATH = path.join(PS_ID, "dvdroot_ps4");
-const DVDROOTPS4_FOLDERS = ["action", "chr", "event", "facegen", "map", "menu", "movie", "msg","mtd", "obj", "other", "param", "paramdef", "parts", "remo", "script", "sfx", "shader", "sound"];
+const DVDROOTPS4_FOLDERS = [
+  "action",
+  "chr",
+  "event",
+  "facegen",
+  "map",
+  "menu",
+  "movie",
+  "msg",
+  "mtd",
+  "obj",
+  "other",
+  "param",
+  "paramdef",
+  "parts",
+  "remo",
+  "script",
+  "sfx",
+  "shader",
+  "sound",
+];
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Folder";
@@ -39,26 +65,27 @@ const ROOT_NAME = "Root Folder";
 const SHADPS4_ID = `${GAME_ID}-shadps4`;
 const SHADPS4_NAME = "shadPS4";
 const SHADPS4_EXEC = "shadps4.exe";
-const SHADPS4_VERSION = '0.16.0';
+const SHADPS4_VERSION = "0.16.0";
 const SHADPS4_ARC_NAME = `shadps4-win64-sdl-${SHADPS4_VERSION}.zip`;
 const SHADPS4_URL = `https://github.com/shadps4-emu/shadPS4/releases/download/v.${SHADPS4_VERSION}/${SHADPS4_ARC_NAME}`;
 const SHADPS4_URL_MAIN = `https://api.github.com/repos/shadps4-emu/shadPS4`;
-const SHADPS4_FILE = 'shadPS4.exe'; // <-- CASE SENSITIVE! Must match name exactly or downloader will download the file again.
+const SHADPS4_FILE = "shadPS4.exe"; // <-- CASE SENSITIVE! Must match name exactly or downloader will download the file again.
 
 const SHADLAUNCHER_ID = `${GAME_ID}-shadps4qtlauncher`;
 const SHADLAUNCHER_NAME = "shadPS4QtLauncher";
 const SHADLAUNCHER_EXEC = "shadps4qtlauncher.exe";
-const SHADLAUNCHER_VERSION = '2026-06-20-cead95c';
+const SHADLAUNCHER_VERSION = "2026-06-20-cead95c";
 const SHADLAUNCHER_ARC_NAME = `shadPS4QtLauncher-win64-qt-${SHADLAUNCHER_VERSION}.zip`;
 const SHADLAUNCHER_URL = `https://github.com/shadps4-emu/shadPS4/releases/download/v.${SHADLAUNCHER_VERSION}/${SHADLAUNCHER_ARC_NAME}`;
 const SHADLAUNCHER_URL_MAIN = `https://api.github.com/repos/shadps4-emu/shadps4-qtlauncher`;
 const SHADLAUNCHER_FILE = "shadPS4QtLauncher.exe"; // <-- CASE SENSITIVE! Must match name exactly or downloader will download the file again.
 
 const SHADLAUNCHER_URL_REL = `https://github.com/shadps4-emu/shadps4-qtlauncher/releases`;
-const SHADLAUNCHER_DL_STRING = 'shadPS4QtLauncher-win64-qt-';
+const SHADLAUNCHER_DL_STRING = "shadPS4QtLauncher-win64-qt-";
 
 const REQUIREMENTS = [
-  { //shadPS4
+  {
+    //shadPS4
     archiveFileName: SHADPS4_ARC_NAME,
     modType: SHADPS4_ID,
     assemblyFileName: SHADPS4_FILE,
@@ -66,7 +93,7 @@ const REQUIREMENTS = [
     githubUrl: SHADPS4_URL_MAIN,
     findMod: (api) => findModByFile(api, SHADPS4_ID, SHADPS4_FILE),
     findDownloadId: (api) => findDownloadIdByFile(api, SHADPS4_ARC_NAME),
-    fileArchivePattern: new RegExp(/^shadps4-win64-sdl-(\d+\.\d+\.\d+)/, 'i'),
+    fileArchivePattern: new RegExp(/^shadps4-win64-sdl-(\d+\.\d+\.\d+)/, "i"),
     resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[0]),
   },
   /*{ //QtLauncher
@@ -94,64 +121,60 @@ const PARAMETERS = [GAME_FILE];
 
 //Filled in from info above
 const PCGAMINGWIKI_URL = "XXX";
-const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
-const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
 const spec = {
-  "game": {
-    "id": GAME_ID,
-    "name": GAME_NAME,
-    "shortName": GAME_NAME_SHORT,
-    "executable": SHADPS4_EXEC,
-    "parameters": PARAMETERS,
-    "logo": `${GAME_ID}.jpg`,
-    "mergeMods": true,
-    "requiresCleanup": true,
-    "modPath": MOD_PATH,
-    "modPathIsRelative": true,
-    "requiredFiles": [
-      GAME_FILE,
-    ],
-    "details": {      "ignoreConflicts": IGNORE_CONFLICTS,
-      "ignoreDeploy": IGNORE_DEPLOY,
-    },
-    "environment": {}
+  game: {
+    id: GAME_ID,
+    name: GAME_NAME,
+    shortName: GAME_NAME_SHORT,
+    executable: SHADPS4_EXEC,
+    parameters: PARAMETERS,
+    logo: `${GAME_ID}.jpg`,
+    mergeMods: true,
+    requiresCleanup: true,
+    modPath: MOD_PATH,
+    modPathIsRelative: true,
+    requiredFiles: [GAME_FILE],
+    details: { ignoreConflicts: IGNORE_CONFLICTS, ignoreDeploy: IGNORE_DEPLOY },
+    environment: {},
   },
-  "modTypes": [
+  modTypes: [
     {
-      "id": DVDROOTPS4_ID,
-      "name": DVDROOTPS4_NAME,
-      "priority": "high",
-      "targetPath": path.join('{gamePath}', DVDROOTPS4_PATH)
+      id: DVDROOTPS4_ID,
+      name: DVDROOTPS4_NAME,
+      priority: "high",
+      targetPath: path.join("{gamePath}", DVDROOTPS4_PATH),
     },
     {
-      "id": SAVE_ID,
-      "name": SAVE_NAME,
-      "priority": "high",
-      "targetPath": path.join('{gamePath}', SAVE_PATH)
+      id: SAVE_ID,
+      name: SAVE_NAME,
+      priority: "high",
+      targetPath: path.join("{gamePath}", SAVE_PATH),
     },
     {
-      "id": ROOT_ID,
-      "name": ROOT_NAME,
-      "priority": "high",
-      "targetPath": `{gamePath}`
+      id: ROOT_ID,
+      name: ROOT_NAME,
+      priority: "high",
+      targetPath: `{gamePath}`,
     },
     {
-      "id": SHADPS4_ID,
-      "name": SHADPS4_NAME,
-      "priority": "low",
-      "targetPath": `{gamePath}`
+      id: SHADPS4_ID,
+      name: SHADPS4_NAME,
+      priority: "low",
+      targetPath: `{gamePath}`,
     },
     {
-      "id": SHADLAUNCHER_ID,
-      "name": SHADLAUNCHER_NAME,
-      "priority": "low",
-      "targetPath": `{gamePath}`
+      id: SHADLAUNCHER_ID,
+      name: SHADLAUNCHER_NAME,
+      priority: "low",
+      targetPath: `{gamePath}`,
     },
   ],
-  "discovery": {
-    "ids": [],
-    "names": []
-  }
+  discovery: {
+    ids: [],
+    names: [],
+  },
 };
 
 //3rd party tools and launchers
@@ -218,8 +241,7 @@ function statCheckSync(gamePath, file) {
   try {
     fs.statSync(path.join(gamePath, file));
     return true;
-  }
-  catch {
+  } catch {
     return false;
   }
 }
@@ -228,8 +250,7 @@ async function statCheckAsync(gamePath, file) {
   try {
     await fs.statAsync(path.join(gamePath, file));
     return true;
-  }
-  catch {
+  } catch {
     return false;
   }
 }
@@ -241,15 +262,17 @@ async function getAllFiles(dirPath) {
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
       const stats = await fs.statAsync(fullPath);
-      if (stats.isDirectory()) { // Recursively get files from subdirectories
+      if (stats.isDirectory()) {
+        // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
         results = results.concat(subDirFiles);
-      } else { // Add file to results
+      } else {
+        // Add file to results
         results.push(fullPath);
       }
     }
   } catch (err) {
-    log('warn', `Error reading directory ${dirPath}: ${err.message}`);
+    log("warn", `Error reading directory ${dirPath}: ${err.message}`);
   }
   return results;
 }
@@ -265,24 +288,28 @@ function modTypePriority(priority) {
 function pathPattern(api, game, pattern) {
   var _a;
   return template(pattern, {
-    gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
-    documents: util.getVortexPath('documents'),
-    localAppData: util.getVortexPath('localAppData'),
-    appData: util.getVortexPath('appData'),
+    gamePath:
+      (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0
+        ? void 0
+        : _a.path,
+    documents: util.getVortexPath("documents"),
+    localAppData: util.getVortexPath("localAppData"),
+    appData: util.getVortexPath("appData"),
   });
 }
 
 //Set the mod path for the game
 function makeGetModPath(api, gameSpec) {
-  return () => gameSpec.game.modPathIsRelative !== false
-    ? gameSpec.game.modPath || '.'
-    : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
+  return () =>
+    gameSpec.game.modPathIsRelative !== false
+      ? gameSpec.game.modPath || "."
+      : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
 }
 
 //Find game installation directory
 function makeFindGame(api, gameSpec) {
-  return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
-    .then((game) => game.gamePath);
+  return () =>
+    util.GameStoreHelper.findByAppId(gameSpec.discovery.ids).then((game) => game.gamePath);
 }
 
 //Set launcher requirements
@@ -290,25 +317,30 @@ async function requiresLauncher() {
   return Promise.resolve(undefined);
 }
 
-const getDiscoveryPath = (api) => { //get the game's discovered path
+const getDiscoveryPath = (api) => {
+  //get the game's discovered path
   const state = api.getState();
   const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
 
 async function purge(api) {
-  return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));
+  return new Promise((resolve, reject) =>
+    api.events.emit("purge-mods", true, (err) => (err ? reject(err) : resolve())),
+  );
 }
 async function deploy(api) {
-  return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
+  return new Promise((resolve, reject) =>
+    api.events.emit("deploy-mods", (err) => (err ? reject(err) : resolve())),
+  );
 }
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
 //Installer test for ShadPS4 files
 function testShadPs4(files, gameId) {
-  const isMod = files.some(file => (path.basename(file).toLowerCase() === SHADPS4_EXEC));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => path.basename(file).toLowerCase() === SHADPS4_EXEC);
+  let supported = gameId === spec.game.id && isMod;
 
   return Promise.resolve({
     supported,
@@ -318,18 +350,18 @@ function testShadPs4(files, gameId) {
 
 //Installer install ShadPS4 files
 function installShadPs4(files) {
-  const modFile = files.find(file => (path.basename(file).toLowerCase() === SHADPS4_EXEC));
+  const modFile = files.find((file) => path.basename(file).toLowerCase() === SHADPS4_EXEC);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: SHADPS4_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: SHADPS4_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -340,8 +372,8 @@ function installShadPs4(files) {
 
 //Installer test for ShadPS4 Qt Launcherfiles
 function testShadLauncher(files, gameId) {
-  const isMod = files.some(file => (path.basename(file).toLowerCase() === SHADLAUNCHER_EXEC));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => path.basename(file).toLowerCase() === SHADLAUNCHER_EXEC);
+  let supported = gameId === spec.game.id && isMod;
 
   return Promise.resolve({
     supported,
@@ -351,18 +383,18 @@ function testShadLauncher(files, gameId) {
 
 //Installer install ShadPS4 Qt Launcher files
 function installShadLauncher(files) {
-  const modFile = files.find(file => (path.basename(file).toLowerCase() === SHADLAUNCHER_EXEC));
+  const modFile = files.find((file) => path.basename(file).toLowerCase() === SHADLAUNCHER_EXEC);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: SHADLAUNCHER_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: SHADLAUNCHER_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -373,8 +405,8 @@ function installShadLauncher(files) {
 
 //Installer test for Smithbox files
 function testSmithbox(files, gameId) {
-  const isMod = files.some(file => (path.basename(file).toLowerCase() === SMITHBOX_EXEC));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => path.basename(file).toLowerCase() === SMITHBOX_EXEC);
+  let supported = gameId === spec.game.id && isMod;
 
   return Promise.resolve({
     supported,
@@ -384,18 +416,18 @@ function testSmithbox(files, gameId) {
 
 //Installer install Smithbox files
 function installSmithbox(files) {
-  const modFile = files.find(file => path.basename(file).toLowerCase() === SMITHBOX_EXEC);
+  const modFile = files.find((file) => path.basename(file).toLowerCase() === SMITHBOX_EXEC);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   //const setModTypeInstruction = { type: 'setmodtype', value: SHADPS4_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join("Smithbox", file.substr(idx)),
     };
@@ -406,8 +438,8 @@ function installSmithbox(files) {
 
 //Installer test for Flver Editor files
 function testFlver(files, gameId) {
-  const isMod = files.some(file => (path.basename(file).toLowerCase() === FLVER_EXEC));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => path.basename(file).toLowerCase() === FLVER_EXEC);
+  let supported = gameId === spec.game.id && isMod;
 
   return Promise.resolve({
     supported,
@@ -417,18 +449,18 @@ function testFlver(files, gameId) {
 
 //Installer install Flver Editor files
 function installFlver(files) {
-  const modFile = files.find(file => (path.basename(file).toLowerCase() === FLVER_EXEC));
+  const modFile = files.find((file) => path.basename(file).toLowerCase() === FLVER_EXEC);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   //const setModTypeInstruction = { type: 'setmodtype', value: SHADPS4_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join("Flver Editor", file.substr(idx)),
     };
@@ -439,8 +471,8 @@ function installFlver(files) {
 
 //Installer test for game data files
 function testDvdRootPs4(files, gameId) {
-  const isMod = files.some(file => DVDROOTPS4_FOLDERS.includes(path.basename(file)));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => DVDROOTPS4_FOLDERS.includes(path.basename(file)));
+  let supported = gameId === spec.game.id && isMod;
 
   return Promise.resolve({
     supported,
@@ -450,18 +482,18 @@ function testDvdRootPs4(files, gameId) {
 
 //Installer install game data files
 function installDvdRootPs4(files) {
-  const modFile = files.find(file => DVDROOTPS4_FOLDERS.includes(path.basename(file)));
+  const modFile = files.find((file) => DVDROOTPS4_FOLDERS.includes(path.basename(file)));
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: DVDROOTPS4_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: DVDROOTPS4_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -472,8 +504,8 @@ function installDvdRootPs4(files) {
 
 //Installer test for save files
 function testSave(files, gameId) {
-  const isMod = files.some(file => (path.basename(file).toLowerCase() === SAVE_FILE));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => path.basename(file).toLowerCase() === SAVE_FILE);
+  let supported = gameId === spec.game.id && isMod;
 
   return Promise.resolve({
     supported,
@@ -483,18 +515,18 @@ function testSave(files, gameId) {
 
 //Installer install save files
 function installSave(files) {
-  const modFile = files.find(file => (path.basename(file).toLowerCase() === SAVE_FILE));
+  const modFile = files.find((file) => path.basename(file).toLowerCase() === SAVE_FILE);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: SAVE_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: SAVE_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -523,9 +555,9 @@ async function asyncForEachCheck(api, requirements) {
 async function onCheckModVersion(api, gameId, mods, forced) {
   try {
     await asyncForEachTestVersion(api, REQUIREMENTS);
-    log('warn', 'Checked requirements versions');
+    log("warn", "Checked requirements versions");
   } catch (err) {
-    log('warn', `failed to test requirements versions: ${err}`);
+    log("warn", `failed to test requirements versions: ${err}`);
   }
 }
 
@@ -538,7 +570,7 @@ async function checkForRequirements(api) {
 async function isShadPS4Installed(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
-  let check = Object.keys(mods).some(id => mods[id]?.type === SHADPS4_ID);
+  let check = Object.keys(mods).some((id) => mods[id]?.type === SHADPS4_ID);
   if (!check) {
     try {
       GAME_PATH = getDiscoveryPath(api);
@@ -555,11 +587,11 @@ async function downloadShadPS4(api, gameSpec) {
   let modLoaderInstalled = await isShadPS4Installed(api, gameSpec);
   if (!modLoaderInstalled) {
     //notification indicating install process
-    const NOTIF_ID = 'bloodborne-shadps4-installing';
+    const NOTIF_ID = "bloodborne-shadps4-installing";
     api.sendNotification({
       id: NOTIF_ID,
-      message: 'Installing shadPS4',
-      type: 'activity',
+      message: "Installing shadPS4",
+      type: "activity",
       noDismiss: true,
       allowSuppress: false,
     });
@@ -571,10 +603,14 @@ async function downloadShadPS4(api, gameSpec) {
         name: `shadPS4 v${SHADPS4_VERSION}`,
       };
       const URL = SHADPS4_URL;
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const dlId = await util.toPromise((cb) =>
+        api.events.emit("start-download", [URL], dlInfo, undefined, cb, undefined, {
+          allowInstall: false,
+        }),
+      );
+      const modId = await util.toPromise((cb) =>
+        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+      );
       const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
       const batched = [
         actions.setModsEnabled(api, profileId, [modId], true, {
@@ -584,10 +620,10 @@ async function downloadShadPS4(api, gameSpec) {
         actions.setModType(gameSpec.game.id, modId, SHADPS4_ID), // Set the mod type
       ];
       util.batchDispatch(api.store, batched); // Will dispatch both actions.
-    //Show the user the download page if the download, install process fails
+      //Show the user the download page if the download, install process fails
     } catch (err) {
       const errPage = `https://github.com/shadps4-emu/shadPS4/releases`;
-      api.showErrorNotification('Failed to download/install shadPS4', err);
+      api.showErrorNotification("Failed to download/install shadPS4", err);
       util.opn(errPage).catch(() => null);
     } finally {
       api.dismissNotification(NOTIF_ID);
@@ -598,7 +634,7 @@ async function downloadShadPS4(api, gameSpec) {
 async function isShadLauncherInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
-  let check = Object.keys(mods).some(id => mods[id]?.type === SHADLAUNCHER_ID);
+  let check = Object.keys(mods).some((id) => mods[id]?.type === SHADLAUNCHER_ID);
   if (!check) {
     GAME_PATH = getDiscoveryPath(api);
     try {
@@ -619,61 +655,85 @@ async function downloadShadLauncher(api, gameSpec, check) {
   const MOD_NAME = SHADLAUNCHER_NAME;
   const MOD_TYPE = SHADLAUNCHER_ID;
   const ARCHIVE_NAME = SHADLAUNCHER_DL_STRING;
-  const instructions = api.translate(`Click on Continue below to open the browser. - `
-    + `Navigate to the latest experimental version of ${MOD_NAME} on the GitHub releases page and `
-    + `click on the appropriate file to download and install the mod.`
+  const instructions = api.translate(
+    `Click on Continue below to open the browser. - ` +
+      `Navigate to the latest experimental version of ${MOD_NAME} on the GitHub releases page and ` +
+      `click on the appropriate file to download and install the mod.`,
   );
 
   if (!isInstalled || !check) {
-    return new Promise((resolve, reject) => { //Browse and download the mod
-      return api.emitAndAwait('browse-for-download', URL, instructions)
-      .then((result) => { //result is an array with the URL to the downloaded file as the only element
-        if (!result || !result.length) { //user clicks outside the window without downloading
-          return reject(new util.UserCanceled());
-        }
-        if (!result[0].includes(ARCHIVE_NAME)) { //if user downloads the wrong file
-          return reject(new util.UserCanceled('Selected wrong download'));
-        } //*/
-        return Promise.resolve(result);
-      })
-      .catch((error) => {
-        return reject(error);
-      })
-      .then((result) => {
-        const dlInfo = {game: gameSpec.game.id, name: MOD_NAME};
-        api.events.emit('start-download', result, {}, undefined,
-          async (error, id) => { //callback function to check for errors and pass id to and call 'start-install-download' event
-            if (error !== null && (error.name !== 'AlreadyDownloaded')) {
-              return reject(error);
-            }
-            api.events.emit('start-install-download', id, { allowAutoEnable: true }, async (error) => { //callback function to complete the installation
-              if (error !== null) {
+    return new Promise((resolve, reject) => {
+      //Browse and download the mod
+      return api
+        .emitAndAwait("browse-for-download", URL, instructions)
+        .then((result) => {
+          //result is an array with the URL to the downloaded file as the only element
+          if (!result || !result.length) {
+            //user clicks outside the window without downloading
+            return reject(new util.UserCanceled());
+          }
+          if (!result[0].includes(ARCHIVE_NAME)) {
+            //if user downloads the wrong file
+            return reject(new util.UserCanceled("Selected wrong download"));
+          } //*/
+          return Promise.resolve(result);
+        })
+        .catch((error) => {
+          return reject(error);
+        })
+        .then((result) => {
+          const dlInfo = { game: gameSpec.game.id, name: MOD_NAME };
+          api.events.emit(
+            "start-download",
+            result,
+            {},
+            undefined,
+            async (error, id) => {
+              //callback function to check for errors and pass id to and call 'start-install-download' event
+              if (error !== null && error.name !== "AlreadyDownloaded") {
                 return reject(error);
               }
-              const profileId = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
-              const batched = [
-                actions.setModsEnabled(api, profileId, result, true, {
-                  allowAutoDeploy: true,
-                  installed: true,
-                }),
-                actions.setModType(GAME_ID, result[0], MOD_TYPE), // Set the mod type
-              ];
-              util.batchDispatch(api.store, batched); // Will dispatch both actions.
-              return resolve();
-            });
-          },
-          'never',
-          { allowInstall: false },
-        );
-      });
-    })
-    .catch(err => {
+              api.events.emit(
+                "start-install-download",
+                id,
+                { allowAutoEnable: true },
+                async (error) => {
+                  //callback function to complete the installation
+                  if (error !== null) {
+                    return reject(error);
+                  }
+                  const profileId = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
+                  const batched = [
+                    actions.setModsEnabled(api, profileId, result, true, {
+                      allowAutoDeploy: true,
+                      installed: true,
+                    }),
+                    actions.setModType(GAME_ID, result[0], MOD_TYPE), // Set the mod type
+                  ];
+                  util.batchDispatch(api.store, batched); // Will dispatch both actions.
+                  return resolve();
+                },
+              );
+            },
+            "never",
+            { allowInstall: false },
+          );
+        });
+    }).catch((err) => {
       if (err instanceof util.UserCanceled) {
-        api.showErrorNotification(`User cancelled download/install of ${MOD_NAME}. Please re-launch Vortex and try again.`, err, { allowReport: false });
+        api.showErrorNotification(
+          `User cancelled download/install of ${MOD_NAME}. Please re-launch Vortex and try again.`,
+          err,
+          { allowReport: false },
+        );
         //util.opn(URL).catch(() => null);
         return Promise.resolve();
       } else if (err instanceof util.ProcessCanceled) {
-        api.showErrorNotification(`Failed to download/install ${MOD_NAME}. Please re-launch Vortex and try again or download manually from modDB at the opened paged and install the zip in Vortex.`, err, { allowReport: false });
+        api.showErrorNotification(
+          `Failed to download/install ${MOD_NAME}. Please re-launch Vortex and try again or download manually from modDB at the opened paged and install the zip in Vortex.`,
+          err,
+          { allowReport: false },
+        );
         util.opn(URL).catch(() => null);
         return Promise.reject(err);
       } else {
@@ -688,28 +748,35 @@ async function downloadShadLauncher(api, gameSpec, check) {
 //Notify User of Setup instructions
 function setupNotify(api) {
   const NOTIF_ID = `${GAME_ID}-setup`;
-  const MESSAGE = 'Bloodborne Game Files Required';
+  const MESSAGE = "Bloodborne Game Files Required";
   api.sendNotification({
-    id: 'setup-notification-bloodborne',
-    type: 'warning',
+    id: "setup-notification-bloodborne",
+    type: "warning",
     message: MESSAGE,
     allowSuppress: true,
     actions: [
       {
-        title: 'More',
+        title: "More",
         action: (dismiss) => {
-          api.showDialog('question', MESSAGE, {
-            text: 'Neither the extension developer nor Nexus Mods endorse piracy. You must own a legitimate copy of Bloodborne to use this extension.\n'
-                + 'You must have the extracted Bloodorne game (CUSA03173) files installed from your PS4 or a .pkg file for the extension to work.\n'
-          }, [
-            { label: 'Acknowledge', action: () => dismiss() },
+          api.showDialog(
+            "question",
+            MESSAGE,
             {
-              label: 'Never Show Again', action: () => {
-                api.suppressNotification(NOTIF_ID);
-                dismiss();
-              }
+              text:
+                "Neither the extension developer nor Nexus Mods endorse piracy. You must own a legitimate copy of Bloodborne to use this extension.\n" +
+                "You must have the extracted Bloodorne game (CUSA03173) files installed from your PS4 or a .pkg file for the extension to work.\n",
             },
-          ]);
+            [
+              { label: "Acknowledge", action: () => dismiss() },
+              {
+                label: "Never Show Again",
+                action: () => {
+                  api.suppressNotification(NOTIF_ID);
+                  dismiss();
+                },
+              },
+            ],
+          );
         },
       },
     ],
@@ -749,11 +816,23 @@ function applyGame(context, gameSpec) {
 
   //register mod types
   (gameSpec.modTypes || []).forEach((type, idx) => {
-    context.registerModType(type.id, modTypePriority(type.priority) + idx, (gameId) => {
-      var _a;
-      return (gameId === gameSpec.game.id)
-        && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
+    context.registerModType(
+      type.id,
+      modTypePriority(type.priority) + idx,
+      (gameId) => {
+        var _a;
+        return (
+          gameId === gameSpec.game.id &&
+          !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+          _a === void 0
+            ? void 0
+            : _a.path)
+        );
+      },
+      (game) => pathPattern(context.api, game, type.targetPath),
+      () => Promise.resolve(false),
+      { name: type.name },
+    );
   });
 
   //register mod installers
@@ -765,34 +844,66 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(`${GAME_ID}-save`, 35, testSave, installSave);
 
   //register actions
-  context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${SHADLAUNCHER_NAME}`, () => {
-    downloadShadLauncher(context.api, spec, false);
-    }, () => {
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    `Download ${SHADLAUNCHER_NAME}`,
+    () => {
+      downloadShadLauncher(context.api, spec, false);
+    },
+    () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
-    util.opn(path.join(__dirname, 'CHANGELOG.md')).catch(() => null);
-    }, () => {
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "View Changelog",
+    () => {
+      util.opn(path.join(__dirname, "CHANGELOG.md")).catch(() => null);
+    },
+    () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
-    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    util.opn(DOWNLOAD_FOLDER).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Submit Bug Report",
+    () => {
+      util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Downloads Folder",
+    () => {
+      util.opn(DOWNLOAD_FOLDER).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
 
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
     util.opn(CONFIG_PATH).catch(() => null);
@@ -808,21 +919,30 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
-    util.opn(PCGAMINGWIKI_URL).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open PCGamingWiki Page",
+    () => {
+      util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
 }
 
 //main function
 function main(context) {
   applyGame(context, spec);
-  context.once(() => { // put code here that should be run (once) when Vortex starts up
+  context.once(() => {
+    // put code here that should be run (once) when Vortex starts up
     const api = context.api;
-    context.api.onAsync('check-mods-version', (gameId, mods, forced) => {
+    context.api.onAsync("check-mods-version", (gameId, mods, forced) => {
       if (gameId !== GAME_ID) return;
       return onCheckModVersion(context.api, gameId, mods, forced);
     }); //*/

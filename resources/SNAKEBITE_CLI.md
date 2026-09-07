@@ -1,6 +1,6 @@
 # SnakeBite Command Line
 
-SnakeBite is the mod loader for *Metal Gear Solid V: The Phantom Pain*. It does not deploy loose
+SnakeBite is the mod loader for _Metal Gear Solid V: The Phantom Pain_. It does not deploy loose
 files: it repacks a mod's contents **into the game's own `.dat` archives** and records what it did
 in a database. A file sitting in a folder is therefore not an installed mod, and no amount of
 deploying makes it one — SnakeBite has to be run over it.
@@ -16,15 +16,15 @@ Everything below was verified against SnakeBite 0.9.2.5 and a game reporting ver
 
 ## Arguments
 
-| Argument | Effect |
-| --- | --- |
-| `-i` | Install. This is the default, so bare paths are installed |
-| `-u` | Uninstall. The arguments are mod **names**, not file paths |
-| `-c` | Skip the conflict check entirely |
-| `-d` | Silently reset the stored archive hash |
-| `-s` | Skip database cleanup |
-| `-x` | Close when finished. Without it the window opens and stays open |
-| `-completeuninstall` | Only honoured when it is the **only** argument |
+| Argument             | Effect                                                          |
+| -------------------- | --------------------------------------------------------------- |
+| `-i`                 | Install. This is the default, so bare paths are installed       |
+| `-u`                 | Uninstall. The arguments are mod **names**, not file paths      |
+| `-c`                 | Skip the conflict check entirely                                |
+| `-d`                 | Silently reset the stored archive hash                          |
+| `-s`                 | Skip database cleanup                                           |
+| `-x`                 | Close when finished. Without it the window opens and stays open |
+| `-completeuninstall` | Only honoured when it is the **only** argument                  |
 
 Install and uninstall cannot be mixed in one run: the mode is a single flag, so the last one wins.
 Removing and installing in the same operation means two separate invocations, uninstall first.
@@ -120,11 +120,11 @@ A `.mgsv` file is a plain zip archive with `metadata.xml` at its root. The root 
 **The file name is not the mod name.** Uninstall takes names, so the mapping has to be read from
 each archive:
 
-| File | `Name` in its metadata |
-| --- | --- |
+| File                   | `Name` in its metadata  |
+| ---------------------- | ----------------------- |
 | `Bionic Arm (DD).mgsv` | `V Awakened Bionic Arm` |
-| `PlaySWolf.mgsv` | `SWolfPlayable` |
-| `VAW Camos.mgsv` | `V Awakened Camos` |
+| `PlaySWolf.mgsv`       | `SWolfPlayable`         |
+| `VAW Camos.mgsv`       | `V Awakened Camos`      |
 
 Archives run large — 86 MB is ordinary and 1.18 GB happens — so extract the single entry rather
 than the archive. A minimal zip reader (locate the end-of-central-directory record, walk the
@@ -171,11 +171,11 @@ This is a deliberate "put the game back" button, not a purge hook.
 
 Measured on the reference install:
 
-| Operation | Time |
-| --- | --- |
-| Install, one mod, with `-c` | ~6 s |
-| Uninstall, one mod | ~65 s |
-| Install pointed at an empty folder | ~1 s, exits clean |
+| Operation                                      | Time                                           |
+| ---------------------------------------------- | ---------------------------------------------- |
+| Install, one mod, with `-c`                    | ~6 s                                           |
+| Uninstall, one mod                             | ~65 s                                          |
+| Install pointed at an empty folder             | ~1 s, exits clean                              |
 | Reading `metadata.xml` out of an 86 MB archive | ~200 ms with `7z.exe`, ~3 ms with a zip reader |
 
 Every install and uninstall also writes an autosave preset (`RevertChanges.MGSVPreset`, ~32 MB)

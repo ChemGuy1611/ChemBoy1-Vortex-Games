@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 // Shared Codeberg (Forgejo/Gitea) requirements auto-downloader for Vortex game extensions.
 //
@@ -31,20 +31,20 @@
 // variants), isCodebergRequirementInstalled, getLatestCodebergAsset,
 // getLatestCodebergVersion.
 
-const semver = require('semver');
-const { actions, log, selectors, util } = require('vortex-api');
+const semver = require("semver");
+const { actions, log, selectors, util } = require("vortex-api");
 
-const DEFAULT_API_BASE = 'https://codeberg.org/api/v1';
+const DEFAULT_API_BASE = "https://codeberg.org/api/v1";
 // Releases are listed newest-first; this only caps how far back a scan for a matching asset
 // reaches when allowPrerelease is set.
 const RELEASE_PAGE_LIMIT = 20;
 // Mod attribute recording the asset's Forgejo upload time, for trackByAssetDate requirements.
-const ASSET_DATE_ATTRIBUTE = 'codebergAssetDate';
+const ASSET_DATE_ATTRIBUTE = "codebergAssetDate";
 
 // --- requirement helpers --------------------------------------------------
 
 function apiBase(requirement) {
-  return String(requirement.apiBase || DEFAULT_API_BASE).replace(/\/+$/, '');
+  return String(requirement.apiBase || DEFAULT_API_BASE).replace(/\/+$/, "");
 }
 
 // REST base for one repository, e.g. https://codeberg.org/api/v1/repos/Lyall/MGSVFix.
@@ -58,7 +58,7 @@ function pageUrl(requirement) {
   if (requirement.pageUrl) {
     return requirement.pageUrl;
   }
-  const webBase = apiBase(requirement).replace(/\/api\/v\d+$/, '');
+  const webBase = apiBase(requirement).replace(/\/api\/v\d+$/, "");
   return `${webBase}/${requirement.repo}/releases`;
 }
 
@@ -74,7 +74,7 @@ function normalizeVersion(version) {
   if (version === null || version === undefined) {
     return version;
   }
-  return String(version).replace(/(\d)[-_](?=\d)/g, '$1.');
+  return String(version).replace(/(\d)[-_](?=\d)/g, "$1.");
 }
 
 // Parse a release/asset version into something semver can compare, most-trustworthy
@@ -119,18 +119,20 @@ function toComparableVersion(version) {
 // so the other spelling is retried once - most repos therefore need no pinTag at all. With
 // pinVersion unset - the default - none of this code runs.
 function isPinned(requirement) {
-  return (requirement?.pinVersion !== undefined)
-    && (requirement.pinVersion !== null)
-    && (requirement.pinVersion !== '');
+  return (
+    requirement?.pinVersion !== undefined &&
+    requirement.pinVersion !== null &&
+    requirement.pinVersion !== ""
+  );
 }
 
 // Pin comparison. Exact string match first, so version shapes semver cannot represent compare
 // as written (a 4-segment 5.4.23.5, a 2-segment 19.0); semver equality as a fallback for
 // versions stamped before the pin was set, which were coerced on the way in.
 function isSamePinVersion(pinVersion, installed) {
-  const pinned = String(pinVersion ?? '');
-  const current = String(installed ?? '');
-  if ((pinned === '') || (current === '')) {
+  const pinned = String(pinVersion ?? "");
+  const current = String(installed ?? "");
+  if (pinned === "" || current === "") {
     return false;
   }
   if (pinned === current) {
@@ -138,7 +140,7 @@ function isSamePinVersion(pinVersion, installed) {
   }
   const coercedPin = toComparableVersion(pinned);
   const coercedCurrent = toComparableVersion(current);
-  return (coercedPin !== undefined) && (coercedPin === coercedCurrent);
+  return coercedPin !== undefined && coercedPin === coercedCurrent;
 }
 
 // Installed identity of a pinned requirement, read from the `version` attribute stamped at
@@ -148,8 +150,8 @@ function isSamePinVersion(pinVersion, installed) {
 function installedPinVersion(api, gameId, requirement) {
   const state = api.getState();
   const mods = state.persistent.mods[gameId] || {};
-  const mod = Object.values(mods).find(entry => entry?.type === requirement.modType);
-  return util.getSafe(mod, ['attributes', 'version'], '');
+  const mod = Object.values(mods).find((entry) => entry?.type === requirement.modType);
+  return util.getSafe(mod, ["attributes", "version"], "");
 }
 
 // Whether the installed copy already sits on the pin. True short-circuits the update check
@@ -175,7 +177,7 @@ function latestAssetVersion(requirement, asset) {
   }
   if (requirement.trackByAssetDate === true) {
     // Forgejo assets have no updated_at - created_at is the only timestamp available.
-    return asset.created_at ?? '';
+    return asset.created_at ?? "";
   }
   // Rolling-tag repos carry the version in the asset filename rather than the tag - prefer
   // the assetPattern capture group when there is one. Patterns without a capture group (or
@@ -187,7 +189,7 @@ function latestAssetVersion(requirement, asset) {
       return fromAsset;
     }
   }
-  return toComparableVersion(asset.release?.tag_name) ?? '0.0.0';
+  return toComparableVersion(asset.release?.tag_name) ?? "0.0.0";
 }
 
 // Whether the fetched asset is newer than the installed marker. Asset-date mode compares
@@ -195,26 +197,26 @@ function latestAssetVersion(requirement, asset) {
 // treated as "update available".
 function isUpdateAvailable(requirement, asset, installed) {
   if (requirement.trackByAssetDate === true) {
-    const latestTime = Date.parse(asset.created_at ?? '');
+    const latestTime = Date.parse(asset.created_at ?? "");
     if (Number.isNaN(latestTime)) {
       return false;
     }
-    const installedTime = Date.parse(installed ?? '');
+    const installedTime = Date.parse(installed ?? "");
     return Number.isNaN(installedTime) ? true : latestTime > installedTime;
   }
   // semver.gt throws on an unparseable version, so fall to the 0.0.0 floor, which reads as
   // "update available" like any other missing marker. Both sides go through the same helper:
   // if one kept a prerelease identifier and the other coerced it away, every check would
   // compare 3.1.0-6 against 3.1.0 and report "up to date" forever.
-  const installedVersion = toComparableVersion(installed) ?? '0.0.0';
+  const installedVersion = toComparableVersion(installed) ?? "0.0.0";
   return semver.gt(latestAssetVersion(requirement, asset), installedVersion);
 }
 
 // The marker an installed requirement is compared on, stamped at install time.
 function installedMarker(mod, requirement) {
-  return (requirement.trackByAssetDate === true)
-    ? util.getSafe(mod, ['attributes', ASSET_DATE_ATTRIBUTE], '')
-    : util.getSafe(mod, ['attributes', 'version'], '');
+  return requirement.trackByAssetDate === true
+    ? util.getSafe(mod, ["attributes", ASSET_DATE_ATTRIBUTE], "")
+    : util.getSafe(mod, ["attributes", "version"], "");
 }
 
 // --- Codeberg API ---------------------------------------------------------
@@ -226,7 +228,7 @@ async function getLatestCodebergAsset(api, requirement) {
   const chooseAsset = (release) => {
     const assets = release.assets ?? [];
     if (requirement.assetPattern) {
-      const asset = assets.find(entry => requirement.assetPattern.test(entry.name));
+      const asset = assets.find((entry) => requirement.assetPattern.test(entry.name));
       return asset ? { ...asset, release } : undefined;
     }
     const asset = assets[0];
@@ -242,11 +244,18 @@ async function getLatestCodebergAsset(api, requirement) {
   const candidateUrls = [];
   const repoUrl = repoApiUrl(requirement);
   if (isPinned(requirement)) {
-    if (requirement.releaseTag || (requirement.allowPrerelease === true) || (requirement.trackByAssetDate === true)) {
-      log('warn', `${requirement.userFacingName} is pinned to ${requirement.pinVersion} - ignoring allowPrerelease/releaseTag/trackByAssetDate`);
+    if (
+      requirement.releaseTag ||
+      requirement.allowPrerelease === true ||
+      requirement.trackByAssetDate === true
+    ) {
+      log(
+        "warn",
+        `${requirement.userFacingName} is pinned to ${requirement.pinVersion} - ignoring allowPrerelease/releaseTag/trackByAssetDate`,
+      );
     }
     const pinnedTag = String(requirement.pinTag ?? requirement.pinVersion);
-    const altTag = pinnedTag.startsWith('v') ? pinnedTag.slice(1) : `v${pinnedTag}`;
+    const altTag = pinnedTag.startsWith("v") ? pinnedTag.slice(1) : `v${pinnedTag}`;
     candidateUrls.push(`${repoUrl}/releases/tags/${pinnedTag}`);
     candidateUrls.push(`${repoUrl}/releases/tags/${altTag}`);
   } else if (requirement.releaseTag) {
@@ -271,14 +280,17 @@ async function getLatestCodebergAsset(api, requirement) {
     }
   }
   if (lastError !== undefined) {
-    log('warn', `Could not get latest ${requirement.userFacingName} release from ${pageUrl(requirement)}: ${lastError}`);
+    log(
+      "warn",
+      `Could not get latest ${requirement.userFacingName} release from ${pageUrl(requirement)}: ${lastError}`,
+    );
     return null;
   }
   // /releases returns an array (newest-first); /releases/latest and /releases/tags/* a single
   // object. Scan on past releases that carry no matching asset rather than giving up on the
   // newest one - a source-only or partially uploaded release would otherwise hide an asset
   // that does exist further down.
-  const releases = (Array.isArray(data) ? data : [data]).filter(rel => !!rel && !rel.draft);
+  const releases = (Array.isArray(data) ? data : [data]).filter((rel) => !!rel && !rel.draft);
   for (const release of releases) {
     const asset = chooseAsset(release);
     if (asset?.browser_download_url) {
@@ -287,15 +299,21 @@ async function getLatestCodebergAsset(api, requirement) {
   }
   // Nothing matched anywhere. This is what an upstream asset rename looks like, and it is
   // otherwise completely silent - name the pattern and what the release actually ships.
-  const available = (releases[0]?.assets ?? []).map(asset => asset.name);
+  const available = (releases[0]?.assets ?? []).map((asset) => asset.name);
   const reason = requirement.assetPattern
     ? `no asset matched ${requirement.assetPattern}`
-    : 'the latest release carries no files';
-  log('warn', `No usable Codeberg asset for ${requirement.userFacingName}`, { reason, releasesChecked: releases.length, available });
-  api.showErrorNotification('Could not find a download for {{repName}}',
-    `${reason}. The latest release ${available.length > 0 ? `contains: ${available.join(', ')}` : 'contains no files'}. `
-    + 'The file was most likely renamed by its author, in which case this extension needs an update.',
-    { allowReport: false, replace: { repName: requirement.userFacingName } });
+    : "the latest release carries no files";
+  log("warn", `No usable Codeberg asset for ${requirement.userFacingName}`, {
+    reason,
+    releasesChecked: releases.length,
+    available,
+  });
+  api.showErrorNotification(
+    "Could not find a download for {{repName}}",
+    `${reason}. The latest release ${available.length > 0 ? `contains: ${available.join(", ")}` : "contains no files"}. ` +
+      "The file was most likely renamed by its author, in which case this extension needs an update.",
+    { allowReport: false, replace: { repName: requirement.userFacingName } },
+  );
   return null;
 }
 
@@ -316,7 +334,7 @@ const activeInstalls = new Set();
 function requirementModIds(api, gameId, requirement) {
   const state = api.getState();
   const mods = state.persistent.mods[gameId] || {};
-  return Object.keys(mods).filter(id => mods[id]?.type === requirement.modType);
+  return Object.keys(mods).filter((id) => mods[id]?.type === requirement.modType);
 }
 
 // Check if the requirement is installed (any mod with the requirement's mod type)
@@ -331,24 +349,29 @@ async function downloadCodebergRequirement(api, gameSpec, requirement, check = t
     return;
   }
   if (activeInstalls.has(requirement.modType)) {
-    log('debug', `${requirement.userFacingName} install already running - skipping duplicate request`);
+    log(
+      "debug",
+      `${requirement.userFacingName} install already running - skipping duplicate request`,
+    );
     return;
   }
   activeInstalls.add(requirement.modType);
   const NOTIF_ID = `${requirement.modType}-installing`;
-  api.sendNotification({ //notification indicating install process
+  api.sendNotification({
+    //notification indicating install process
     id: NOTIF_ID,
     message: `Installing ${requirement.userFacingName}`,
-    type: 'activity',
+    type: "activity",
     noDismiss: true,
     allowSuppress: false,
   });
   //captured before the install: these are the versions being replaced
   const previousModIds = requirementModIds(api, gameSpec.game.id, requirement);
-  try { //Download the mod
+  try {
+    //Download the mod
     const asset = await getLatestCodebergAsset(api, requirement);
     if (!asset) {
-      throw new util.ProcessCanceled('No downloadable release asset found');
+      throw new util.ProcessCanceled("No downloadable release asset found");
     }
     const latestVersion = await getLatestCodebergVersion(requirement, asset);
     const dlInfo = {
@@ -356,10 +379,20 @@ async function downloadCodebergRequirement(api, gameSpec, requirement, check = t
       name: requirement.userFacingName,
     };
     //the asset URL is a plain unauthenticated 200 - it goes straight to the download manager
-    const dlId = await util.toPromise(cb =>
-      api.events.emit('start-download', [asset.browser_download_url], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-    const modId = await util.toPromise(cb =>
-      api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+    const dlId = await util.toPromise((cb) =>
+      api.events.emit(
+        "start-download",
+        [asset.browser_download_url],
+        dlInfo,
+        undefined,
+        cb,
+        undefined,
+        { allowInstall: false },
+      ),
+    );
+    const modId = await util.toPromise((cb) =>
+      api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+    );
     const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
     const batched = [
       actions.setModsEnabled(api, profileId, [modId], true, {
@@ -367,20 +400,40 @@ async function downloadCodebergRequirement(api, gameSpec, requirement, check = t
         installed: true,
       }),
       actions.setModType(gameSpec.game.id, modId, requirement.modType), // Set the modType
-      actions.setModAttribute(gameSpec.game.id, modId, 'version', latestVersion || requirement.fallbackVersion || ''),
-      actions.setModAttribute(gameSpec.game.id, modId, ASSET_DATE_ATTRIBUTE, asset.created_at || ''), // Track the asset upload time for trackByAssetDate update checks
-      actions.setModAttribute(gameSpec.game.id, modId, 'source', 'website'),
-      actions.setModAttribute(gameSpec.game.id, modId, 'url', pageUrl(requirement)), // Shown as the mod's "Source" link in the mod details (only rendered when source === 'website')
-      actions.setModAttribute(gameSpec.game.id, modId, 'customFileName', requirement.userFacingName), // Vortex renders a mod as customFileName || logicalFileName || fileName || name, and the install pipeline stamps fileName with the archive name - without this the mod list shows the raw archive
+      actions.setModAttribute(
+        gameSpec.game.id,
+        modId,
+        "version",
+        latestVersion || requirement.fallbackVersion || "",
+      ),
+      actions.setModAttribute(
+        gameSpec.game.id,
+        modId,
+        ASSET_DATE_ATTRIBUTE,
+        asset.created_at || "",
+      ), // Track the asset upload time for trackByAssetDate update checks
+      actions.setModAttribute(gameSpec.game.id, modId, "source", "website"),
+      actions.setModAttribute(gameSpec.game.id, modId, "url", pageUrl(requirement)), // Shown as the mod's "Source" link in the mod details (only rendered when source === 'website')
+      actions.setModAttribute(
+        gameSpec.game.id,
+        modId,
+        "customFileName",
+        requirement.userFacingName,
+      ), // Vortex renders a mod as customFileName || logicalFileName || fileName || name, and the install pipeline stamps fileName with the archive name - without this the mod list shows the raw archive
     ];
-    for (const oldModId of previousModIds) { // Disable the version this install replaces, so only one copy deploys
+    for (const oldModId of previousModIds) {
+      // Disable the version this install replaces, so only one copy deploys
       if (oldModId !== modId) {
         batched.push(actions.setModEnabled(profileId, oldModId, false));
       }
     }
     util.batchDispatch(api.store, batched); // Will dispatch all actions.
-  } catch (err) { //Show the user the download page if the download/install process fails
-    api.showErrorNotification(`Failed to download/install ${requirement.userFacingName}. You must download manually.`, err);
+  } catch (err) {
+    //Show the user the download page if the download/install process fails
+    api.showErrorNotification(
+      `Failed to download/install ${requirement.userFacingName}. You must download manually.`,
+      err,
+    );
     util.opn(pageUrl(requirement)).catch(() => null);
   } finally {
     activeInstalls.delete(requirement.modType);
@@ -409,7 +462,7 @@ async function checkForCodebergUpdateRequirement(api, gameSpec, requirement) {
     if (requirement.autoInstall === false) {
       return;
     }
-    log('info', `${requirement.userFacingName} is not installed - installing it`);
+    log("info", `${requirement.userFacingName} is not installed - installing it`);
     return downloadCodebergRequirement(api, gameSpec, requirement);
   }
   if (isPinned(requirement)) {
@@ -417,12 +470,12 @@ async function checkForCodebergUpdateRequirement(api, gameSpec, requirement) {
     // as well as behind it - installing it from that state is a deliberate downgrade.
     api.sendNotification({
       id: `${requirement.modType}-update`,
-      type: 'warning',
+      type: "warning",
       message: `${requirement.userFacingName} pinned version available (${requirement.pinVersion})`,
       allowSuppress: true,
       actions: [
         {
-          title: 'Download',
+          title: "Download",
           action: (dismiss) => {
             downloadCodebergRequirement(api, gameSpec, requirement, false);
             dismiss();
@@ -438,20 +491,22 @@ async function checkForCodebergUpdateRequirement(api, gameSpec, requirement) {
   }
   const state = api.getState();
   const mods = state.persistent.mods[gameSpec.game.id] || {};
-  const requirementMods = Object.values(mods).filter(mod => mod?.type === requirement.modType);
-  const isOutdated = requirementMods.every(mod => isUpdateAvailable(requirement, asset, installedMarker(mod, requirement)));
+  const requirementMods = Object.values(mods).filter((mod) => mod?.type === requirement.modType);
+  const isOutdated = requirementMods.every((mod) =>
+    isUpdateAvailable(requirement, asset, installedMarker(mod, requirement)),
+  );
   if (!isOutdated) {
     return;
   }
   const latestVersion = await getLatestCodebergVersion(requirement, asset);
   api.sendNotification({
     id: `${requirement.modType}-update`,
-    type: 'warning',
-    message: `${requirement.userFacingName} update available${latestVersion ? ` (${latestVersion})` : ''}`,
+    type: "warning",
+    message: `${requirement.userFacingName} update available${latestVersion ? ` (${latestVersion})` : ""}`,
     allowSuppress: true,
     actions: [
       {
-        title: 'Download',
+        title: "Download",
         action: (dismiss) => {
           downloadCodebergRequirement(api, gameSpec, requirement, false);
           dismiss();

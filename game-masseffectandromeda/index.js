@@ -7,11 +7,11 @@ Date: 2026-07-19
 /////////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require('vortex-api');
-const path = require('path');
-const template = require('string-template');
-const winapi = require('winapi-bindings');
-const fsPromises = require('fs/promises');
+const { actions, fs, util, selectors, log } = require("vortex-api");
+const path = require("path");
+const template = require("string-template");
+const winapi = require("winapi-bindings");
+const fsPromises = require("fs/promises");
 
 const DOCUMENTS = util.getVortexPath("documents");
 const LOCALAPPDATA = util.getVortexPath("localAppData");
@@ -28,10 +28,10 @@ const MOD_PATH_DEFAULT = path.join(".");
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Mass_Effect:_Andromeda";
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/877";
 
-let GAME_PATH = '';
-let GAME_VERSION = ''; //Game version
-let STAGING_FOLDER = '';
-let DOWNLOAD_FOLDER = '';
+let GAME_PATH = "";
+let GAME_VERSION = ""; //Game version
+let STAGING_FOLDER = "";
+let DOWNLOAD_FOLDER = "";
 
 //Info for modtypes, installers, and tools
 const BINARIES_ID = "masseffectandromeda-binaries";
@@ -46,116 +46,108 @@ const FROSTYMOD_PATH = path.join("FrostyModManager", "Mods", FROSTYMOD_FOLDER);
 const FROSTY_ID = `${GAME_ID}-frostymodmanager`;
 const FROSTY_NAME = "Frosty Mod Manager";
 const FROSTY_FOLDER = "FrostyModManager";
-const FROSTY_EXEC = 'frostymodmanager.exe';
-const FROSTY_TOOL_ID = 'FrostyModManager';
-const MODDATA_FOLDER = 'ModData';
-const FROSTY_CONFIG_FILE = 'manager_config.json';
+const FROSTY_EXEC = "frostymodmanager.exe";
+const FROSTY_TOOL_ID = "FrostyModManager";
+const MODDATA_FOLDER = "ModData";
+const FROSTY_CONFIG_FILE = "manager_config.json";
 const FROSTY_CONFIG_PATH = path.join(LOCALAPPDATA, "Frosty", FROSTY_CONFIG_FILE);
 
 const PATCH_ID = `${GAME_ID}-patch`; //!NOT registered as a modType since the plugin must be copied in as it is not in an archive
 const PATCH_NAME = "DatapathFix Plugin";
 const PATCH_PATH = path.join(FROSTY_FOLDER, "Plugins");
-const PATCH_FILE = 'DatapathFixPlugin.dll';
+const PATCH_FILE = "DatapathFixPlugin.dll";
 const PATCH_URL = `https://github.com/Dyvinia/DatapathFixPlugin/releases/download/v1.7.1/DatapathFixPlugin.dll`;
 const PATCH_URL_ERR = `https://github.com/Dyvinia/DatapathFixPlugin/releases`;
-const PATCH_KEY = 'GlobalOptions.DatapathFixEnabled';
+const PATCH_KEY = "GlobalOptions.DatapathFixEnabled";
 
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config Folder";
 const CONFIG_PATH = path.join(DOCUMENTS, "BioWare", "Mass Effect Andromeda", "Save");
 
 // Filled in from data above
-const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
-const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
 const spec = {
-  "game": {
-    "id": GAME_ID,
-    "name": GAME_NAME,
-    "shortName": GAME_NAME_SHORT,
-    "executable": EXEC,
-    "logo": `${GAME_ID}.jpg`,
-    "mergeMods": true,
-    "requiresCleanup": true,
-    "modPath": MOD_PATH_DEFAULT,
-    "modPathIsRelative": true,
-    "requiredFiles": [
-      EXEC
-    ],
-    "details": {
-      "steamAppId": +STEAMAPP_ID,
+  game: {
+    id: GAME_ID,
+    name: GAME_NAME,
+    shortName: GAME_NAME_SHORT,
+    executable: EXEC,
+    logo: `${GAME_ID}.jpg`,
+    mergeMods: true,
+    requiresCleanup: true,
+    modPath: MOD_PATH_DEFAULT,
+    modPathIsRelative: true,
+    requiredFiles: [EXEC],
+    details: {
+      steamAppId: +STEAMAPP_ID,
       //"EAAppId": EAAPP_ID,
-      "epicAppId": EPICAPP_ID,
-      "ignoreConflicts": IGNORE_CONFLICTS,
-      "ignoreDeploy": IGNORE_DEPLOY,
+      epicAppId: EPICAPP_ID,
+      ignoreConflicts: IGNORE_CONFLICTS,
+      ignoreDeploy: IGNORE_DEPLOY,
     },
-    "environment": {
-      "SteamAPPId": STEAMAPP_ID,
+    environment: {
+      SteamAPPId: STEAMAPP_ID,
       //"EAAPPId": EAAPP_ID
-      "EpicAPPId": EPICAPP_ID,
-    }
+      EpicAPPId: EPICAPP_ID,
+    },
   },
-  "modTypes": [
+  modTypes: [
     {
-      "id": BINARIES_ID,
-      "name": BINARIES_NAME,
-      "priority": "high",
-      "targetPath": "{gamePath}"
+      id: BINARIES_ID,
+      name: BINARIES_NAME,
+      priority: "high",
+      targetPath: "{gamePath}",
     },
     {
-      "id": FROSTYMOD_ID,
-      "name": FROSTYMOD_NAME,
-      "priority": "high",
-      "targetPath": path.join('{gamePath}', FROSTYMOD_PATH)
+      id: FROSTYMOD_ID,
+      name: FROSTYMOD_NAME,
+      priority: "high",
+      targetPath: path.join("{gamePath}", FROSTYMOD_PATH),
     },
     {
-      "id": FROSTY_ID,
-      "name": FROSTY_NAME,
-      "priority": "low",
-      "targetPath": `{gamePath}`
+      id: FROSTY_ID,
+      name: FROSTY_NAME,
+      priority: "low",
+      targetPath: `{gamePath}`,
     },
   ],
-  "discovery": {
-    "ids": [
+  discovery: {
+    ids: [
       STEAMAPP_ID,
       EPICAPP_ID,
       //EAAPP_ID
     ],
-    "names": []
-  }
+    names: [],
+  },
 };
 
 //3rd party tools and launchers
 const tools = [
   {
-    id: 'FrostyModManagerLaunch',
-    name: 'Launch Modded Game',
-    logo: 'exec.png',
+    id: "FrostyModManagerLaunch",
+    name: "Launch Modded Game",
+    logo: "exec.png",
     executable: () => FROSTY_EXEC,
-    requiredFiles: [
-      FROSTY_EXEC,
-    ],
+    requiredFiles: [FROSTY_EXEC],
     relative: true,
     detach: true,
     exclusive: true,
     //shell: true,
-    parameters: [
-      '-launch Default',
-    ],
+    parameters: ["-launch Default"],
     defaultPrimary: true,
   },
   {
     id: FROSTY_TOOL_ID,
     name: FROSTY_NAME,
-    logo: 'frosty.png',
+    logo: "frosty.png",
     executable: () => FROSTY_EXEC,
-    requiredFiles: [
-      FROSTY_EXEC,
-    ],
+    requiredFiles: [FROSTY_EXEC],
     relative: true,
     detach: true,
     exclusive: true,
     //parameters: [],
-  }
+  },
 ];
 
 // BASIC FUNCTIONS //////////////////////////////////////////////////////////////////////////
@@ -170,8 +162,7 @@ function statCheckSync(gamePath, file) {
   try {
     fs.statSync(path.join(gamePath, file));
     return true;
-  }
-  catch {
+  } catch {
     return false;
   }
 }
@@ -180,8 +171,7 @@ async function statCheckAsync(gamePath, file) {
   try {
     await fs.statAsync(path.join(gamePath, file));
     return true;
-  }
-  catch {
+  } catch {
     return false;
   }
 }
@@ -193,25 +183,31 @@ async function getAllFiles(dirPath) {
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
       const stats = await fs.statAsync(fullPath);
-      if (stats.isDirectory()) { // Recursively get files from subdirectories
+      if (stats.isDirectory()) {
+        // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
         results = results.concat(subDirFiles);
-      } else { // Add file to results
+      } else {
+        // Add file to results
         results.push(fullPath);
       }
     }
   } catch (err) {
-    log('warn', `Error reading directory ${dirPath}: ${err.message}`);
+    log("warn", `Error reading directory ${dirPath}: ${err.message}`);
   }
   return results;
 }
 
 async function purge(api) {
-  return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));
+  return new Promise((resolve, reject) =>
+    api.events.emit("purge-mods", true, (err) => (err ? reject(err) : resolve())),
+  );
 }
 
 async function deploy(api) {
-  return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
+  return new Promise((resolve, reject) =>
+    api.events.emit("deploy-mods", (err) => (err ? reject(err) : resolve())),
+  );
 }
 
 function modTypePriority(priority) {
@@ -225,10 +221,13 @@ function modTypePriority(priority) {
 function pathPattern(api, game, pattern) {
   var _a;
   return template(pattern, {
-    gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
-    documents: util.getVortexPath('documents'),
-    localAppData: util.getVortexPath('localAppData'),
-    appData: util.getVortexPath('appData'),
+    gamePath:
+      (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0
+        ? void 0
+        : _a.path,
+    documents: util.getVortexPath("documents"),
+    localAppData: util.getVortexPath("localAppData"),
+    appData: util.getVortexPath("appData"),
   });
 }
 
@@ -236,38 +235,40 @@ function pathPattern(api, game, pattern) {
 function makeFindGame(api, gameSpec) {
   try {
     const instPath = winapi.RegGetValue(
-      'HKEY_LOCAL_MACHINE',
-      'SOFTWARE\\WOW6432Node\\BioWare\\Mass Effect Andromeda',
-        'Install Dir');
+      "HKEY_LOCAL_MACHINE",
+      "SOFTWARE\\WOW6432Node\\BioWare\\Mass Effect Andromeda",
+      "Install Dir",
+    );
     if (!instPath) {
-      throw new Error('empty registry key');
+      throw new Error("empty registry key");
     }
     return () => Promise.resolve(instPath.value);
   } catch {
-    return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
-      .then((game) => game.gamePath);
+    return () =>
+      util.GameStoreHelper.findByAppId(gameSpec.discovery.ids).then((game) => game.gamePath);
   }
 }
 
 //Set the mod path for the game
 function makeGetModPath(api, gameSpec) {
-  return () => gameSpec.game.modPathIsRelative !== false
-    ? gameSpec.game.modPath || '.'
-    : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
+  return () =>
+    gameSpec.game.modPathIsRelative !== false
+      ? gameSpec.game.modPath || "."
+      : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
 }
 
 async function requiresLauncher(gamePath, store) {
-  if (store === 'epic') {
+  if (store === "epic") {
     return Promise.resolve({
-        launcher: 'epic',
-        addInfo: {
-            appId: EPICAPP_ID,
-        },
+      launcher: "epic",
+      addInfo: {
+        appId: EPICAPP_ID,
+      },
     });
   } //*/
-  if (store === 'steam') {
+  if (store === "steam") {
     return Promise.resolve({
-        launcher: 'steam'
+      launcher: "steam",
     });
   } //*/
   return Promise.resolve(undefined);
@@ -285,31 +286,37 @@ const getDiscoveryPath = (api) => {
 function isFrostyInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === BINARIES_ID);
+  return Object.keys(mods).some((id) => mods[id]?.type === BINARIES_ID);
 }
 
 //Function to auto-download Frosty Mod Manager
 async function downloadFrosty(discovery, api, gameSpec) {
   let modLoaderInstalled = isFrostyInstalled(api, gameSpec);
   if (!modLoaderInstalled) {
-    const NOTIF_ID = 'masseffectandromeda-frosty-installing'
-    api.sendNotification({ //notification indicating install process
+    const NOTIF_ID = "masseffectandromeda-frosty-installing";
+    api.sendNotification({
+      //notification indicating install process
       id: NOTIF_ID,
-      message: 'Installing Frosty Mod Manager',
-      type: 'activity',
+      message: "Installing Frosty Mod Manager",
+      type: "activity",
       noDismiss: true,
       allowSuppress: false,
     });
-    try { //Download the mod
+    try {
+      //Download the mod
       const dlInfo = {
         game: gameSpec.game.id,
-        name: 'Frosty Mod Manager',
+        name: "Frosty Mod Manager",
       };
       const URL = `https://github.com/CadeEvs/FrostyToolsuite/releases/download/v1.0.6.3/FrostyModManager.zip`;
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const dlId = await util.toPromise((cb) =>
+        api.events.emit("start-download", [URL], dlInfo, undefined, cb, undefined, {
+          allowInstall: false,
+        }),
+      );
+      const modId = await util.toPromise((cb) =>
+        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+      );
       const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
       const batched = [
         actions.setModsEnabled(api, profileId, [modId], true, {
@@ -319,9 +326,10 @@ async function downloadFrosty(discovery, api, gameSpec) {
         actions.setModType(gameSpec.game.id, modId, BINARIES_ID), // Set the modType
       ];
       util.batchDispatch(api.store, batched); // Will dispatch both actions.
-    } catch (err) { //Show the user the download page if the download and install process fails
+    } catch (err) {
+      //Show the user the download page if the download and install process fails
       const errPage = `https://github.com/CadeEvs/FrostyToolsuite/releases/tag/v1.0.6.3`;
-      api.showErrorNotification('Failed to download/install Frosty Mod Manager', err);
+      api.showErrorNotification("Failed to download/install Frosty Mod Manager", err);
       util.opn(errPage).catch(() => null);
     } finally {
       api.dismissNotification(NOTIF_ID);
@@ -333,7 +341,7 @@ async function downloadFrosty(discovery, api, gameSpec) {
 async function isPatchInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
-  let test = Object.keys(mods).some(id => mods[id]?.type === PATCH_ID);
+  let test = Object.keys(mods).some((id) => mods[id]?.type === PATCH_ID);
   if (!test) {
     try {
       await fs.statAsync(path.join(GAME_PATH, PATCH_PATH, PATCH_FILE));
@@ -349,8 +357,12 @@ async function isPatchInstalled(api, spec) {
 async function downloadPatch(api, gameSpec, check = true) {
   GAME_PATH = getDiscoveryPath(api);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(api.getState(), GAME_ID);
-  if (GAME_VERSION === 'steam') {
-    api.showErrorNotification(`${PATCH_NAME} is not needed for the Steam version of the game`, undefined, { allowReport: false });
+  if (GAME_VERSION === "steam") {
+    api.showErrorNotification(
+      `${PATCH_NAME} is not needed for the Steam version of the game`,
+      undefined,
+      { allowReport: false },
+    );
     return;
   }
   let isInstalled = await isPatchInstalled(api, gameSpec);
@@ -361,36 +373,46 @@ async function downloadPatch(api, gameSpec, check = true) {
     const GAME_DOMAIN = gameSpec.game.id;
     const URL = PATCH_URL;
     const URL_ERR = PATCH_URL_ERR;
-    api.sendNotification({ //notification indicating install process
+    api.sendNotification({
+      //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
-      type: 'activity',
+      type: "activity",
       noDismiss: true,
       allowSuppress: false,
     });
     try {
-      const dlInfo = { //Download the mod
+      const dlInfo = {
+        //Download the mod
         game: GAME_DOMAIN,
         name: MOD_NAME,
       };
       //*Only start-download with Promise
       return new Promise((resolve, reject) => {
-        api.events.emit('start-download', [URL], dlInfo, undefined,
-          async (error, dlid) => { //callback function to check for errors and pass id to and call 'start-install-download' event
-            if (error !== null && (error.name !== 'AlreadyDownloaded')) {
+        api.events.emit(
+          "start-download",
+          [URL],
+          dlInfo,
+          undefined,
+          async (error, dlid) => {
+            //callback function to check for errors and pass id to and call 'start-install-download' event
+            if (error !== null && error.name !== "AlreadyDownloaded") {
               return reject(error);
             }
-            try { //find the file in Download and copy it to the game folder
-              api.sendNotification({ //notification indicating copy process
+            try {
+              //find the file in Download and copy it to the game folder
+              api.sendNotification({
+                //notification indicating copy process
                 id: `${NOTIF_ID}-copy`,
                 message: `Copying ${MOD_NAME} dll to game folder`,
-                type: 'activity',
+                type: "activity",
                 noDismiss: true,
                 allowSuppress: false,
               });
               let files = await fs.readdirAsync(DOWNLOAD_FOLDER);
-              files = files.filter(file => ( path.basename(file).includes(path.basename(PATCH_FILE, 'dll'))))
-                .sort((a,b) => a.toLowerCase().localeCompare(b.toLowerCase()))
+              files = files
+                .filter((file) => path.basename(file).includes(path.basename(PATCH_FILE, "dll")))
+                .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))
                 .reverse();
               const copyFile = files[0];
               await fs.statAsync(path.join(DOWNLOAD_FOLDER, copyFile));
@@ -399,30 +421,35 @@ async function downloadPatch(api, gameSpec, check = true) {
               await fs.copyAsync(source, destination, { overwrite: true });
               api.dismissNotification(NOTIF_ID);
               api.dismissNotification(`${NOTIF_ID}-copy`);
-              api.sendNotification({ //notification copy success
+              api.sendNotification({
+                //notification copy success
                 id: `${NOTIF_ID}-success`,
                 message: `Successfully copied ${MOD_NAME} dll to game folder`,
-                type: 'success',
+                type: "success",
                 noDismiss: false,
                 allowSuppress: true,
               });
             } catch (err) {
-              api.showErrorNotification(`Failed to download and copy ${MOD_NAME} dll`, err, { allowReport: false });
+              api.showErrorNotification(`Failed to download and copy ${MOD_NAME} dll`, err, {
+                allowReport: false,
+              });
               util.opn(URL_ERR).catch(() => null);
               return reject(err);
-            }
-            finally {
+            } finally {
               api.dismissNotification(NOTIF_ID);
               api.dismissNotification(`${NOTIF_ID}-copy`);
               return resolve();
             }
           },
-          'never',
+          "never",
           { allowInstall: false },
         );
       });
-    } catch (err) { //Show the user the download page if the download and copy process fails
-      api.showErrorNotification(`Failed to download and copy ${MOD_NAME} dll`, err, { allowReport: false });
+    } catch (err) {
+      //Show the user the download page if the download and copy process fails
+      api.showErrorNotification(`Failed to download and copy ${MOD_NAME} dll`, err, {
+        allowReport: false,
+      });
       util.opn(URL_ERR).catch(() => null);
       api.dismissNotification(NOTIF_ID);
       api.dismissNotification(`${NOTIF_ID}-copy`);
@@ -434,13 +461,18 @@ async function downloadPatch(api, gameSpec, check = true) {
 
 //Test for Frosty Manager files
 function testFrosty(files, gameId) {
-  const isFrosty = files.some(file => (path.basename(file).toLowerCase() === FROSTY_EXEC));
-  let supported = (gameId === spec.game.id) && isFrosty;
+  const isFrosty = files.some((file) => path.basename(file).toLowerCase() === FROSTY_EXEC);
+  let supported = gameId === spec.game.id && isFrosty;
 
   // Test for a mod installer.
-  if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -452,18 +484,18 @@ function testFrosty(files, gameId) {
 
 //Install Frosty Manager files
 function installFrosty(files) {
-  const modFile = files.find(file => (path.basename(file).toLowerCase() === FROSTY_EXEC));
+  const modFile = files.find((file) => path.basename(file).toLowerCase() === FROSTY_EXEC);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: BINARIES_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: BINARIES_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(FROSTY_FOLDER, file.substr(idx)),
     };
@@ -474,13 +506,18 @@ function installFrosty(files) {
 
 //Test for .fbmod files
 function testFbmod(files, gameId) {
-  const isMod = files.some(file => FROSTYMOD_EXTS.includes(path.extname(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => FROSTYMOD_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer.
-  if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -492,16 +529,18 @@ function testFbmod(files, gameId) {
 
 //Install .fbmod files
 function installFbmod(files) {
-  const modFile = files.find(file => FROSTYMOD_EXTS.includes(path.extname(file).toLowerCase()));
+  const modFile = files.find((file) => FROSTYMOD_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: FROSTYMOD_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: FROSTYMOD_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file => ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep))));
-  const instructions = filtered.map(file => {
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+  );
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -515,58 +554,66 @@ function installFbmod(files) {
 //Notify User about DatapathFix Plugin for Steam/Epic versions
 function setupNotify(api, gameSpec) {
   const NOTIF_ID = `${GAME_ID}-setup-notify`;
-  const MESSAGE = 'IMPORTANT: DatapathFix for Steam/Epic Versions';
+  const MESSAGE = "IMPORTANT: DatapathFix for Steam/Epic Versions";
   api.sendNotification({
     id: NOTIF_ID,
-    type: 'warning',
+    type: "warning",
     message: MESSAGE,
     allowSuppress: true,
     actions: [
       {
-        title: 'Download DatapathFix',
+        title: "Download DatapathFix",
         action: (dismiss) => {
           downloadPatch(api, gameSpec, true);
           dismiss();
-        }
+        },
       },
       {
-        title: 'More',
+        title: "More",
         action: (dismiss) => {
           const replace = {
             game: gameSpec.game.shortName,
-            bl: '[br][/br][br][/br]',
+            bl: "[br][/br][br][/br]",
           };
           const t = api.translate;
-          api.showDialog('info', MESSAGE, {
-            bbcode: t('[br][/br]'
-              + `If you have the license for {{game}} from Steam or Epic, you need to use the ${PATCH_NAME}.{{bl}}`
-              + `You can download the plugin using the button below or within the folder icon on the Mods page toolbar.{{bl}}`
-              + `Once downloaded, start Frosty and go to Options > DatapathFix Options > set "Enabled" checkbox.{{bl}}`
-              + `Without this step, your mods will NOT load in the game on Steam and Epic versions.{{bl}}`
-              + `You can determine if you need the plugin by checking for a "accessed through Steam/Epic" message on the game's EA App page.{{bl}}`
-              + `[img]https://live.staticflickr.com/65535/55239690302_da1f8ec95b_z.jpg[/img]`
-              + '[br][/br]'
-              + `[img]https://live.staticflickr.com/65535/55239407657_9cb28562aa_n.jpg[/img]`
-              + '[br][/br]'
-              + `[img]https://live.staticflickr.com/65535/55240681830_e246926ca6.jpg[/img]`
-              + '[br][/br]',
-              { replace }
-            ),
-          }, [
-          { label: 'Continue', action: () => dismiss() },
-          {
-            label: 'Download DatapathFix', action: () => {
-              downloadPatch(api, gameSpec, true);
-              dismiss();
-            }
-          },
-          {
-            label: 'Never Show Again', action: () => {
-              api.suppressNotification(NOTIF_ID);
-              dismiss();
-            }
-          },
-        ]);
+          api.showDialog(
+            "info",
+            MESSAGE,
+            {
+              bbcode: t(
+                "[br][/br]" +
+                  `If you have the license for {{game}} from Steam or Epic, you need to use the ${PATCH_NAME}.{{bl}}` +
+                  `You can download the plugin using the button below or within the folder icon on the Mods page toolbar.{{bl}}` +
+                  `Once downloaded, start Frosty and go to Options > DatapathFix Options > set "Enabled" checkbox.{{bl}}` +
+                  `Without this step, your mods will NOT load in the game on Steam and Epic versions.{{bl}}` +
+                  `You can determine if you need the plugin by checking for a "accessed through Steam/Epic" message on the game's EA App page.{{bl}}` +
+                  `[img]https://live.staticflickr.com/65535/55239690302_da1f8ec95b_z.jpg[/img]` +
+                  "[br][/br]" +
+                  `[img]https://live.staticflickr.com/65535/55239407657_9cb28562aa_n.jpg[/img]` +
+                  "[br][/br]" +
+                  `[img]https://live.staticflickr.com/65535/55240681830_e246926ca6.jpg[/img]` +
+                  "[br][/br]",
+                { replace },
+              ),
+            },
+            [
+              { label: "Continue", action: () => dismiss() },
+              {
+                label: "Download DatapathFix",
+                action: () => {
+                  downloadPatch(api, gameSpec, true);
+                  dismiss();
+                },
+              },
+              {
+                label: "Never Show Again",
+                action: () => {
+                  api.suppressNotification(NOTIF_ID);
+                  dismiss();
+                },
+              },
+            ],
+          );
         },
       },
     ],
@@ -580,38 +627,46 @@ function deployNotify(api) {
   const MESSAGE = `Run ${MOD_NAME}`;
   api.sendNotification({
     id: NOTIF_ID,
-    type: 'warning',
+    type: "warning",
     message: MESSAGE,
     allowSuppress: true,
     actions: [
       {
-        title: 'Run Frosty',
+        title: "Run Frosty",
         action: (dismiss) => {
           runFrosty(api);
           dismiss();
         },
       },
       {
-        title: 'More',
+        title: "More",
         action: (dismiss) => {
-          api.showDialog('question', MESSAGE, {
-            text: `After installing new mods, you must run ${MOD_NAME} to install them to the game's data files.\n`
-                + `Use the included tool to launch ${MOD_NAME} (button on notification or in "Dashboard" tab).\n`
-          }, [
+          api.showDialog(
+            "question",
+            MESSAGE,
             {
-              label: 'Run Frosty', action: () => {
-                runFrosty(api);
-                dismiss();
-              }
+              text:
+                `After installing new mods, you must run ${MOD_NAME} to install them to the game's data files.\n` +
+                `Use the included tool to launch ${MOD_NAME} (button on notification or in "Dashboard" tab).\n`,
             },
-            { label: 'Continue', action: () => dismiss() },
-            {
-              label: 'Never Show Again', action: () => {
-                api.suppressNotification(NOTIF_ID);
-                dismiss();
-              }
-            },
-          ]);
+            [
+              {
+                label: "Run Frosty",
+                action: () => {
+                  runFrosty(api);
+                  dismiss();
+                },
+              },
+              { label: "Continue", action: () => dismiss() },
+              {
+                label: "Never Show Again",
+                action: () => {
+                  api.suppressNotification(NOTIF_ID);
+                  dismiss();
+                },
+              },
+            ],
+          );
         },
       },
     ],
@@ -622,21 +677,30 @@ function runFrosty(api) {
   const TOOL_ID = FROSTY_TOOL_ID;
   const TOOL_NAME = FROSTY_NAME;
   const state = api.store.getState();
-  const tool = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'tools', TOOL_ID], undefined);
+  const tool = util.getSafe(
+    state,
+    ["settings", "gameMode", "discovered", GAME_ID, "tools", TOOL_ID],
+    undefined,
+  );
 
   try {
     const TOOL_PATH = tool.path;
     if (TOOL_PATH !== undefined) {
-      return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false })
-        .catch(err => api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err,
-          { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 })
-        );
-    }
-    else {
-      return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, `Path to ${TOOL_NAME} executable could not be found. Ensure ${TOOL_NAME} is installed through Vortex.`);
+      return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false }).catch((err) =>
+        api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
+          allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+        }),
+      );
+    } else {
+      return api.showErrorNotification(
+        `Failed to run ${TOOL_NAME}`,
+        `Path to ${TOOL_NAME} executable could not be found. Ensure ${TOOL_NAME} is installed through Vortex.`,
+      );
     }
   } catch (err) {
-    return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
+    return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
+      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+    });
   }
 }
 
@@ -649,7 +713,7 @@ async function setup(discovery, api, gameSpec) {
   setupNotify(api, gameSpec);
   await fs.ensureDirWritableAsync(path.join(discovery.path, FROSTYMOD_PATH));
   await fs.ensureDirWritableAsync(path.join(discovery.path, PATCH_PATH));
-  return downloadFrosty(discovery, api, gameSpec)
+  return downloadFrosty(discovery, api, gameSpec);
 }
 
 //Let Vortex know about the game
@@ -668,11 +732,23 @@ function applyGame(context, gameSpec) {
 
   //register mod types
   (gameSpec.modTypes || []).forEach((type, idx) => {
-    context.registerModType(type.id, modTypePriority(type.priority) + idx, (gameId) => {
-      var _a;
-      return (gameId === gameSpec.game.id)
-        && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
+    context.registerModType(
+      type.id,
+      modTypePriority(type.priority) + idx,
+      (gameId) => {
+        var _a;
+        return (
+          gameId === gameSpec.game.id &&
+          !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+          _a === void 0
+            ? void 0
+            : _a.path)
+        );
+      },
+      (game) => pathPattern(context.api, game, type.targetPath),
+      () => Promise.resolve(false),
+      { name: type.name },
+    );
   });
 
   //register mod installers
@@ -680,95 +756,191 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(FROSTYMOD_ID, 30, testFbmod, installFbmod);
 
   //register actions
-  context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${PATCH_NAME}`, () => {
-    downloadPatch(context.api, gameSpec, false);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, `Remove ${PATCH_NAME}`, () => {
-    removePatch(context.api);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Delete ModData Folder', () => {
-    deleteModData(context.api);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, `Open Frosty ${FROSTY_CONFIG_FILE}`, () => {
-    const openPath = FROSTY_CONFIG_PATH;
-    util.opn(openPath).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, `Set ${PATCH_NAME} Enabled`, () => {
-    togglePatch(context.api, true);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, `Set ${PATCH_NAME} Disabled`, () => {
-    togglePatch(context.api, false);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
-    const openPath = CONFIG_PATH;
-    util.opn(openPath).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Frosty Mods Folder', () => {
-    const state = context.api.getState();
-    const discovery = selectors.discoveryByGame(state, GAME_ID);
-    const openPath = path.join(discovery.path, FROSTYMOD_PATH);
-    util.opn(openPath).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
-    util.opn(PCGAMINGWIKI_URL).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
-    util.opn(path.join(__dirname, 'CHANGELOG.md')).catch(() => null);
-    }, () => {
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    `Download ${PATCH_NAME}`,
+    () => {
+      downloadPatch(context.api, gameSpec, false);
+    },
+    () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
-    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    util.opn(DOWNLOAD_FOLDER).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
+    },
+  ); //*/
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    `Remove ${PATCH_NAME}`,
+    () => {
+      removePatch(context.api);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  ); //*/
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Delete ModData Folder",
+    () => {
+      deleteModData(context.api);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  ); //*/
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    `Open Frosty ${FROSTY_CONFIG_FILE}`,
+    () => {
+      const openPath = FROSTY_CONFIG_PATH;
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  ); //*/
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    `Set ${PATCH_NAME} Enabled`,
+    () => {
+      togglePatch(context.api, true);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  ); //*/
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    `Set ${PATCH_NAME} Disabled`,
+    () => {
+      togglePatch(context.api, false);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  ); //*/
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Config Folder",
+    () => {
+      const openPath = CONFIG_PATH;
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  ); //*/
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Frosty Mods Folder",
+    () => {
+      const state = context.api.getState();
+      const discovery = selectors.discoveryByGame(state, GAME_ID);
+      const openPath = path.join(discovery.path, FROSTYMOD_PATH);
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open PCGamingWiki Page",
+    () => {
+      util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "View Changelog",
+    () => {
+      util.opn(path.join(__dirname, "CHANGELOG.md")).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Submit Bug Report",
+    () => {
+      util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Downloads Folder",
+    () => {
+      util.opn(DOWNLOAD_FOLDER).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
 
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
     util.opn(SAVE_PATH).catch(() => null);
@@ -782,9 +954,10 @@ function applyGame(context, gameSpec) {
 //main function
 function main(context) {
   applyGame(context, spec);
-  context.once(() => { // put code here that should be run (once) when Vortex starts up
+  context.once(() => {
+    // put code here that should be run (once) when Vortex starts up
     const api = context.api;
-    api.onAsync('did-deploy', async (profileId, deployment) => {
+    api.onAsync("did-deploy", async (profileId, deployment) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
       return deployNotify(api);
@@ -795,17 +968,20 @@ function main(context) {
 
 async function deleteModData(api) {
   const t = api.translate;
-  let choices = [
-    { label: t("Continue") },
-    { label: t("Cancel") },
-  ];
-  const result = await api.showDialog('question', `Delete ModData Folder`, {
-    text: `\n`
-      + `Are you sure you want to delete the ModData folder?\n`
-      + `\n`
-      + `Frosty will rebuild the ModData folder on next launch.`,
-  }, choices)
-  if (result === undefined  || result.action === "Cancel") {
+  let choices = [{ label: t("Continue") }, { label: t("Cancel") }];
+  const result = await api.showDialog(
+    "question",
+    `Delete ModData Folder`,
+    {
+      text:
+        `\n` +
+        `Are you sure you want to delete the ModData folder?\n` +
+        `\n` +
+        `Frosty will rebuild the ModData folder on next launch.`,
+    },
+    choices,
+  );
+  if (result === undefined || result.action === "Cancel") {
     return;
   }
   GAME_PATH = getDiscoveryPath(api);
@@ -814,28 +990,28 @@ async function deleteModData(api) {
     await fsPromises.rm(modDataPath, { recursive: true });
     api.sendNotification({
       id: `${GAME_ID}-deletemoddata`,
-      type: 'success',
+      type: "success",
       message: `Successfully Deleted ModData Folder`,
       allowSuppress: true,
       actions: [],
     });
   } catch (err) {
-    api.showErrorNotification('Failed to delete ModData folder', err, { allowReport: false });
+    api.showErrorNotification("Failed to delete ModData folder", err, { allowReport: false });
   }
 }
 
 async function removePatch(api) {
   const t = api.translate;
-  let choices = [
-    { label: t("Continue") },
-    { label: t("Cancel") },
-  ];
-  const result = await api.showDialog('question', `Remove ${PATCH_NAME}`, {
-    text: `\n`
-      + `Are you sure you want to remove the ${PATCH_NAME}?\n`
-      + `\n`
-  }, choices)
-  if (result === undefined  || result.action === "Cancel") {
+  let choices = [{ label: t("Continue") }, { label: t("Cancel") }];
+  const result = await api.showDialog(
+    "question",
+    `Remove ${PATCH_NAME}`,
+    {
+      text: `\n` + `Are you sure you want to remove the ${PATCH_NAME}?\n` + `\n`,
+    },
+    choices,
+  );
+  if (result === undefined || result.action === "Cancel") {
     return;
   }
   GAME_PATH = getDiscoveryPath(api);
@@ -844,7 +1020,7 @@ async function removePatch(api) {
     await fs.unlinkAsync(pluginPath);
     api.sendNotification({
       id: `${GAME_ID}-removepatch`,
-      type: 'success',
+      type: "success",
       message: `Successfully Removed ${PATCH_NAME}`,
       allowSuppress: true,
       actions: [],
@@ -863,13 +1039,13 @@ async function togglePatch(api, toggle) {
     MESSAGE_ERR = `Failed to disable ${PATCH_NAME}`;
   }
   try {
-    const data = await fs.readFileAsync(filePath, 'utf8');
+    const data = await fs.readFileAsync(filePath, "utf8");
     const json = JSON.parse(data);
     json.GlobalOptions.DatapathFixEnabled = toggle;
     await fs.writeFileAsync(filePath, JSON.stringify(json, null, 2));
     api.sendNotification({
       id: `${GAME_ID}-togglepatch`,
-      type: 'success',
+      type: "success",
       message: MESSAGE,
       allowSuppress: true,
       actions: [],

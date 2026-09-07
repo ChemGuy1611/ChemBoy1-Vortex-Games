@@ -9,13 +9,17 @@ Notes:
 ///////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require('vortex-api');
-const React = require('react');
-const path = require('path');
-const zlib = require('zlib');
-const template = require('string-template');
-const { parseStringPromise } = require('xml2js');
-const { downloadCodeberg, checkForCodebergUpdate, isCodebergRequirementInstalled } = require('./codeberg_downloader');
+const { actions, fs, util, selectors, log } = require("vortex-api");
+const React = require("react");
+const path = require("path");
+const zlib = require("zlib");
+const template = require("string-template");
+const { parseStringPromise } = require("xml2js");
+const {
+  downloadCodeberg,
+  checkForCodebergUpdate,
+  isCodebergRequirementInstalled,
+} = require("./codeberg_downloader");
 //const winapi = require('winapi-bindings');
 //const fsPromises = require('fs/promises'); //.rm() for recursive folder deletion
 //const fsExtra = require('fs-extra');
@@ -35,14 +39,14 @@ const GOGAPP_ID = null;
 const XBOXAPP_ID = null;
 const XBOXEXECNAME = "XXX";
 const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const INSTALL_HIVE = 'HKEY_LOCAL_MACHINE'; //typically HKEY_LOCAL_MACHINE or HKEY_CURRENT_USER
+const INSTALL_HIVE = "HKEY_LOCAL_MACHINE"; //typically HKEY_LOCAL_MACHINE or HKEY_CURRENT_USER
 const INSTALL_KEY = `SOFTWARE\\WOW6432Node\\XXX\\XXX`; //for finding install in registry - requires winapi-bindings
 const INSTALL_VALUE = "XXX"; //often InstallDir or InstallPath
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const GAME_NAME = "METAL GEAR SOLID V: THE PHANTOM PAIN";
 const GAME_NAME_SHORT = "MGSV";
-const BINARIES_PATH = '.';
+const BINARIES_PATH = ".";
 const EXEC_NAME = "mgsvtpp.exe";
 const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
 const EXEC_EGS = EXEC; //change other versions if different than Steam/default
@@ -70,75 +74,84 @@ const hasUserIdFolder = true; //true if there is a folder in the Save path that 
 const debug = false; //toggle for debug mode
 
 //info for modtypes, installers, tools, and actions
-const DATA_FOLDER = 'master';
+const DATA_FOLDER = "master";
 let ROOT_FOLDERS = [DATA_FOLDER];
-if (BINARIES_PATH !== '.') ROOT_FOLDERS.push(BINARIES_PATH.split(path.sep)[0]);
+if (BINARIES_PATH !== ".") ROOT_FOLDERS.push(BINARIES_PATH.split(path.sep)[0]);
 const ROOTSUB_FOLDERS = [];
 const ROOTSUB_PATH = DATA_FOLDER;
 
 const CONFIGMOD_LOCATION = DOCUMENTS;
 const SAVEMOD_LOCATION = DOCUMENTS;
-const APPDATA_FOLDER = path.join('XXX');
-const CONFIG_FOLDERNAME = 'XXX';
-const SAVE_FOLDERNAME = 'XXX';
+const APPDATA_FOLDER = path.join("XXX");
+const CONFIG_FOLDERNAME = "XXX";
+const SAVE_FOLDERNAME = "XXX";
 
-let GAME_PATH = '';
-let GAME_VERSION = '';
-let STAGING_FOLDER = '';
-let DOWNLOAD_FOLDER = '';
-const APPMANIFEST_FILE = 'appxmanifest.xml';
-const EXEC_XBOX = 'gamelaunchhelper.exe';
+let GAME_PATH = "";
+let GAME_VERSION = "";
+let STAGING_FOLDER = "";
+let DOWNLOAD_FOLDER = "";
+const APPMANIFEST_FILE = "appxmanifest.xml";
+const EXEC_XBOX = "gamelaunchhelper.exe";
 
-const STEAM_FILE = 'steam_api64.dll';
-const GOG_FILE = 'Galaxy64.dll';
-const EPIC_FILE = 'EOSSDK-Win64-Shipping.dll';
+const STEAM_FILE = "steam_api64.dll";
+const GOG_FILE = "Galaxy64.dll";
+const EPIC_FILE = "EOSSDK-Win64-Shipping.dll";
 const XBOX_FILE = APPMANIFEST_FILE;
 
 const LOADER_ID = `${GAME_ID}-loader`;
 const LOADER_NAME = "Snakebite Mod Manager";
 const LOADER_NAME_SHORT = "SnakeBite";
 const LOADER_PATH = BINARIES_PATH;
-const LOADER_FILE = 'SnakeBite Installer.exe';
+const LOADER_FILE = "SnakeBite Installer.exe";
 const LOADER_INST_EXEC = LOADER_FILE;
-const LOADER_EXEC = 'SnakeBite.exe';
+const LOADER_EXEC = "SnakeBite.exe";
 const LOADER_PAGE_NO = 106;
 const LOADER_FILE_NO = 0;
 const LOADER_DOMAIN = GAME_ID;
-const LOADER_REG_HIVE = 'HKEY_CURRENT_USER';
-const LOADER_REG_KEY = 'SOFTWARE\\SnakeBite'; //registry path, not a file path - always backslash-separated
-const LOADER_REG_VALUE = ''; //the installer records its install folder as this key's default (unnamed) value
-const LOADER_SILENT_PARAMS = ['/S']; //silent switch for the installer
-const LOADER_SETTINGS_FILE = 'snakebite.xml'; //the mod loader's database, written to the game folder
-const LOADER_LOG_PATH = path.join('Logs', 'log.txt'); //relative to the mod loader's install folder - rotated on every launch
+const LOADER_REG_HIVE = "HKEY_CURRENT_USER";
+const LOADER_REG_KEY = "SOFTWARE\\SnakeBite"; //registry path, not a file path - always backslash-separated
+const LOADER_REG_VALUE = ""; //the installer records its install folder as this key's default (unnamed) value
+const LOADER_SILENT_PARAMS = ["/S"]; //silent switch for the installer
+const LOADER_SETTINGS_FILE = "snakebite.xml"; //the mod loader's database, written to the game folder
+const LOADER_LOG_PATH = path.join("Logs", "log.txt"); //relative to the mod loader's install folder - rotated on every launch
 const LOADER_LEDGER_FILE = `${GAME_ID}-snakebite.json`; //record of the mods this extension installed through the mod loader
 //both of these turn a long archive repack into something that happens on its own, so they are the
 //user's call and default to off
-const SETTING_AUTO_SYNC = 'autoSyncOnDeploy';
-const SETTING_UNINSTALL_ON_PURGE = 'uninstallOnPurge';
+const SETTING_AUTO_SYNC = "autoSyncOnDeploy";
+const SETTING_UNINSTALL_ON_PURGE = "uninstallOnPurge";
 const SET_AUTO_SYNC = `SET_${GAME_ID.toUpperCase()}_AUTO_SYNC`;
-function setAutoSyncOnDeploy(value) { return { type: SET_AUTO_SYNC, payload: value }; }
+function setAutoSyncOnDeploy(value) {
+  return { type: SET_AUTO_SYNC, payload: value };
+}
 setAutoSyncOnDeploy.toString = () => SET_AUTO_SYNC;
 const SET_UNINSTALL_ON_PURGE = `SET_${GAME_ID.toUpperCase()}_UNINSTALL_ON_PURGE`;
-function setUninstallOnPurge(value) { return { type: SET_UNINSTALL_ON_PURGE, payload: value }; }
+function setUninstallOnPurge(value) {
+  return { type: SET_UNINSTALL_ON_PURGE, payload: value };
+}
 setUninstallOnPurge.toString = () => SET_UNINSTALL_ON_PURGE;
-const LOADER_ARG_INSTALL = '-i';
-const LOADER_ARG_UNINSTALL = '-u'; //takes mod names, not file paths
-const LOADER_ARG_SKIP_CHECKS = '-c';
-const LOADER_ARG_CLOSE = '-x'; //without this the mod loader leaves its own window open when it is done
-const LOADER_ARG_RESTORE = '-completeuninstall'; //only honoured when it is the only argument passed
-const LOADER_ICON_NAME = 'snakebite-sync'; //toolbar buttons are grouped by icon, so this one is its own
-const LOADER_ICON = 'M9.7 2h4.6l-0.9 13.2h-2.8L9.7 2z M12 17.1c1.4 0 2.5 1.1 2.5 2.5S13.4 22.1 12 22.1 9.5 21 9.5 19.6 10.6 17.1 12 17.1z'; //traced from the mod loader's own logo
-const RESTORE_ICON_NAME = 'snakebite-restore';
-const RESTORE_ICON = 'M13,3A9,9 0 0,0 4,12H1L4.89,15.89L4.96,16.03L9,12H6A7,7 0 0,1 13,5A7,7 0 0,1 20,12A7,7 0 0,1 13,19C11.07,19 9.32,18.21 8.06,16.94L6.64,18.36C8.27,20 10.51,21 13,21A9,9 0 0,0 22,12A9,9 0 0,0 13,3M12,8V13L16.28,15.54L17,14.33L13.5,12.25V8H12Z';
-const LOADER_ICONS = [{ name: LOADER_ICON_NAME, path: LOADER_ICON }, { name: RESTORE_ICON_NAME, path: RESTORE_ICON }];
+const LOADER_ARG_INSTALL = "-i";
+const LOADER_ARG_UNINSTALL = "-u"; //takes mod names, not file paths
+const LOADER_ARG_SKIP_CHECKS = "-c";
+const LOADER_ARG_CLOSE = "-x"; //without this the mod loader leaves its own window open when it is done
+const LOADER_ARG_RESTORE = "-completeuninstall"; //only honoured when it is the only argument passed
+const LOADER_ICON_NAME = "snakebite-sync"; //toolbar buttons are grouped by icon, so this one is its own
+const LOADER_ICON =
+  "M9.7 2h4.6l-0.9 13.2h-2.8L9.7 2z M12 17.1c1.4 0 2.5 1.1 2.5 2.5S13.4 22.1 12 22.1 9.5 21 9.5 19.6 10.6 17.1 12 17.1z"; //traced from the mod loader's own logo
+const RESTORE_ICON_NAME = "snakebite-restore";
+const RESTORE_ICON =
+  "M13,3A9,9 0 0,0 4,12H1L4.89,15.89L4.96,16.03L9,12H6A7,7 0 0,1 13,5A7,7 0 0,1 20,12A7,7 0 0,1 13,19C11.07,19 9.32,18.21 8.06,16.94L6.64,18.36C8.27,20 10.51,21 13,21A9,9 0 0,0 22,12A9,9 0 0,0 13,3M12,8V13L16.28,15.54L17,14.33L13.5,12.25V8H12Z";
+const LOADER_ICONS = [
+  { name: LOADER_ICON_NAME, path: LOADER_ICON },
+  { name: RESTORE_ICON_NAME, path: RESTORE_ICON },
+];
 
 const MGSVFIX_ID = `${GAME_ID}-mgsvfix`;
 const MGSVFIX_NAME = "MGSVFix";
 const MGSVFIX_PATH = BINARIES_PATH;
-const MGSVFIX_FILES = ['mgsvfix.asi']; //lowercased - marker file identifying the archive
-const MGSVFIX_IGNORE_FILES = ['extract_to_game_folder']; //lowercased - empty marker file shipped in the archive, not wanted in the game folder
-const MGSVFIX_REPO = 'Lyall/MGSVFix'; //https://codeberg.org/Lyall/MGSVFix
-const MGSVFIX_VER = '0.0.3'; //fallback version if the Codeberg API is unreachable
+const MGSVFIX_FILES = ["mgsvfix.asi"]; //lowercased - marker file identifying the archive
+const MGSVFIX_IGNORE_FILES = ["extract_to_game_folder"]; //lowercased - empty marker file shipped in the archive, not wanted in the game folder
+const MGSVFIX_REPO = "Lyall/MGSVFix"; //https://codeberg.org/Lyall/MGSVFix
+const MGSVFIX_VER = "0.0.3"; //fallback version if the Codeberg API is unreachable
 const MGSVFIX_ARC_PATTERN = /^MGSVFix_(\d+\.\d+(?:\.\d+)?)/i; //capture group 1 is the version
 const CODEBERG_REQUIREMENTS = [
   {
@@ -155,10 +168,10 @@ const MOD_ID = `${GAME_ID}-mod`;
 const MOD_NAME = "SnakeBite Mod (.mgsv)";
 const MOD_PATH = "SnakeBite_Mods";
 const MOD_PATH_XBOX = MOD_PATH;
-const MOD_EXTS = ['.mgsv', '.MGSVPreset'];
-const MOD_INSTALL_EXT = '.mgsv'; //the only extension the mod loader installs - presets are loaded through its own interface
-const MOD_META_FILE = 'metadata.xml'; //every .mgsv carries one at its root
-const MOD_MIN_LOADER_VERSION = '0.8.0.0'; //the mod loader refuses mods built with anything older
+const MOD_EXTS = [".mgsv", ".MGSVPreset"];
+const MOD_INSTALL_EXT = ".mgsv"; //the only extension the mod loader installs - presets are loaded through its own interface
+const MOD_META_FILE = "metadata.xml"; //every .mgsv carries one at its root
+const MOD_MIN_LOADER_VERSION = "0.8.0.0"; //the mod loader refuses mods built with anything older
 
 //zip structures, enough of them to pull one named file out of a very large archive
 const ZIP_EOCD_SIG = 0x06054b50;
@@ -175,8 +188,8 @@ const ZIP_METHOD_STORE = 0;
 const ZIP_METHOD_DEFLATE = 8;
 const ZIP64_EXTRA_ID = 0x0001;
 const ZIP64_MARKER = 0xffffffff; //stands in for a value too large for its field
-const MOD_ATTR_KEY = 'mgsvFiles';
-const MOD_ATTR_META_KEY = 'mgsvMetadata'; //name and versions read out of each .mgsv, kept so they are read once
+const MOD_ATTR_KEY = "mgsvFiles";
+const MOD_ATTR_META_KEY = "mgsvMetadata"; //name and versions read out of each .mgsv, kept so they are read once
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Folder";
@@ -197,7 +210,13 @@ if (hasUserIdFolder) {
   }
 }
 let SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
-const SAVE_FOLDER_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_PUB_ID}`, "SystemAppData", "wgs");
+const SAVE_FOLDER_XBOX = path.join(
+  LOCALAPPDATA,
+  "Packages",
+  `${XBOXAPP_ID}_${XBOX_PUB_ID}`,
+  "SystemAppData",
+  "wgs",
+);
 if (hasUserIdFolder) {
   try {
     const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER_XBOX);
@@ -231,89 +250,86 @@ const TOOL_EXEC_PATH = path.join(TOOL_EXEC_FOLDER, TOOL_EXEC);
 let MOD_PATH_DEFAULT = MOD_PATH;
 //if (!needsModInstaller) MOD_PATH_DEFAULT = '.';
 const REQ_FILE = EXEC;
-const PARAMETERS_STRING = '';
+const PARAMETERS_STRING = "";
 const PARAMETERS = [PARAMETERS_STRING];
 
 let MODTYPE_FOLDERS = [BINARIES_PATH];
 if (needsModInstaller) MODTYPE_FOLDERS.push(MOD_PATH);
 if (saveInstaller) MODTYPE_FOLDERS.push(SAVE_PATH);
-const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
-const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
 
 //filled in from data above
 const spec = {
-  "game": {
-    "id": GAME_ID,
-    "name": GAME_NAME,
-    "shortName": GAME_NAME_SHORT,
+  game: {
+    id: GAME_ID,
+    name: GAME_NAME,
+    shortName: GAME_NAME_SHORT,
     //"parameters": PARAMETERS, //commented out by default to avoid passing empty string parameter
-    "logo": `${GAME_ID}.jpg`,
-    "mergeMods": true,
-    "requiresCleanup": true,
-    "requiredFiles": [
-      REQ_FILE
-    ],
-    "compatible": {
-      "dinput": false,
-      "enb": false,
+    logo: `${GAME_ID}.jpg`,
+    mergeMods: true,
+    requiresCleanup: true,
+    requiredFiles: [REQ_FILE],
+    compatible: {
+      dinput: false,
+      enb: false,
     },
-    "details": {
-      "steamAppId": +STEAMAPP_ID,
-      "gogAppId": GOGAPP_ID,
-      "epicAppId": EPICAPP_ID,
-      "xboxAppId": XBOXAPP_ID,
-      "supportsSymlinks": allowSymlinks,
-      "ignoreConflicts": IGNORE_CONFLICTS,
-      "ignoreDeploy": IGNORE_DEPLOY,
+    details: {
+      steamAppId: +STEAMAPP_ID,
+      gogAppId: GOGAPP_ID,
+      epicAppId: EPICAPP_ID,
+      xboxAppId: XBOXAPP_ID,
+      supportsSymlinks: allowSymlinks,
+      ignoreConflicts: IGNORE_CONFLICTS,
+      ignoreDeploy: IGNORE_DEPLOY,
     },
-    "environment": {
-      "SteamAPPId": STEAMAPP_ID,
-      "GogAPPId": GOGAPP_ID,
-      "EpicAPPId": EPICAPP_ID,
-      "XboxAPPId": XBOXAPP_ID,
-    }
+    environment: {
+      SteamAPPId: STEAMAPP_ID,
+      GogAPPId: GOGAPP_ID,
+      EpicAPPId: EPICAPP_ID,
+      XboxAPPId: XBOXAPP_ID,
+    },
   },
-  "modTypes": [
+  modTypes: [
     {
-      "id": ROOT_ID,
-      "name": ROOT_NAME,
-      "priority": "high",
-      "targetPath": `{gamePath}`
+      id: ROOT_ID,
+      name: ROOT_NAME,
+      priority: "high",
+      targetPath: `{gamePath}`,
     },
   ],
-  "discovery": {
-    "ids": DISCOVERY_IDS_ACTIVE,
-    "names": []
-  }
+  discovery: {
+    ids: DISCOVERY_IDS_ACTIVE,
+    names: [],
+  },
 };
 //? think of a way to tell if the mod path is not in the game folder, only add ROOT modType if it is
 if (needsModInstaller) {
   spec.modTypes.push({
-    "id": MOD_ID,
-    "name": MOD_NAME,
-    "priority": "high",
-    "targetPath": path.join('{gamePath}', MOD_PATH)
+    id: MOD_ID,
+    name: MOD_NAME,
+    priority: "high",
+    targetPath: path.join("{gamePath}", MOD_PATH),
   });
 }
 if (saveInstaller) {
   spec.modTypes.push({
-    "id": SAVE_ID,
-    "name": SAVE_NAME,
-    "priority": "high",
-    "targetPath": path.join("{gamePath}", SAVE_PATH)
+    id: SAVE_ID,
+    name: SAVE_NAME,
+    priority: "high",
+    targetPath: path.join("{gamePath}", SAVE_PATH),
   });
 }
 
 //3rd party tools and launchers
-const tools = [ //accepts: exe, jar, py, vbs, bat
+const tools = [
+  //accepts: exe, jar, py, vbs, bat
   {
     id: `${GAME_ID}-customlaunch`,
-    name: 'Custom Launch',
-    logo: 'exec.png',
+    name: "Custom Launch",
+    logo: "exec.png",
     executable: () => EXEC,
-    requiredFiles: [
-      EXEC,
-    ],
+    requiredFiles: [EXEC],
     relative: true,
     exclusive: true,
     shell: true,
@@ -324,12 +340,10 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
   {
     id: LOADER_ID,
     name: LOADER_NAME,
-    logo: 'snakebite.png',
+    logo: "snakebite.png",
     queryPath: getSnakeBite,
     executable: () => LOADER_EXEC,
-    requiredFiles: [
-      LOADER_EXEC,
-    ],
+    requiredFiles: [LOADER_EXEC],
     relative: true,
     exclusive: true,
     //shell: true,
@@ -343,12 +357,13 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
 //empty string when the key is absent, which is how a tool reports that it could not be found.
 function getSnakeBite() {
   try {
-    const winapi = require('winapi-bindings');
+    const winapi = require("winapi-bindings");
     const installPath = winapi.RegGetValue(LOADER_REG_HIVE, LOADER_REG_KEY, LOADER_REG_VALUE);
-    return installPath?.value ?? '';
-  } catch (err) { //RegGetValue throws when the key is missing rather than returning undefined
-    log('debug', `Could not read the ${LOADER_NAME} install folder from the registry: ${err}`);
-    return '';
+    return installPath?.value ?? "";
+  } catch (err) {
+    //RegGetValue throws when the key is missing rather than returning undefined
+    log("debug", `Could not read the ${LOADER_NAME} install folder from the registry: ${err}`);
+    return "";
   }
 }
 
@@ -363,8 +378,7 @@ function statCheckSync(gamePath, file) {
   try {
     fs.statSync(path.join(gamePath, file));
     return true;
-  }
-  catch {
+  } catch {
     return false;
   }
 }
@@ -372,8 +386,7 @@ async function statCheckAsync(gamePath, file) {
   try {
     await fs.statAsync(path.join(gamePath, file));
     return true;
-  }
-  catch {
+  } catch {
     return false;
   }
 }
@@ -391,14 +404,20 @@ function pathPattern(api, game, pattern) {
   try {
     var _a;
     return template(pattern, {
-      gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
-      documents: util.getVortexPath('documents'),
-      localAppData: util.getVortexPath('localAppData'),
-      appData: util.getVortexPath('appData'),
+      gamePath:
+        (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0
+          ? void 0
+          : _a.path,
+      documents: util.getVortexPath("documents"),
+      localAppData: util.getVortexPath("localAppData"),
+      appData: util.getVortexPath("appData"),
     });
-  }
-  catch (err) { //this happens if the executable comes back as "undefined", usually caused by the Xbox app locking down the folder
-    api.showErrorNotification('Failed to locate executable. Please launch the game at least once.', err);
+  } catch (err) {
+    //this happens if the executable comes back as "undefined", usually caused by the Xbox app locking down the folder
+    api.showErrorNotification(
+      "Failed to locate executable. Please launch the game at least once.",
+      err,
+    );
   }
 }
 
@@ -408,11 +427,11 @@ function getModPath(discoveryPath) {
     return () => MOD_PATH_DEFAULT;
   }
   if (statCheckSync(discoveryPath, EXEC_XBOX)) {
-    GAME_VERSION = 'xbox';
+    GAME_VERSION = "xbox";
     return () => MOD_PATH_XBOX;
-  };
+  }
   //add GOG/EGS/Demo versions here if needed
-  GAME_VERSION = 'default';
+  GAME_VERSION = "default";
   return () => MOD_PATH_DEFAULT;
 } //*/
 
@@ -430,21 +449,21 @@ function makeFindGame(api, gameSpec) {
     }
     return () => Promise.resolve(instPath.value);
   } catch { //*/
-    return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
-      .then((game) => game.gamePath);
+  return () =>
+    util.GameStoreHelper.findByAppId(gameSpec.discovery.ids).then((game) => game.gamePath);
   //}
 } //*/
 
 //Set launcher requirements
 async function requiresLauncher(gamePath, store) {
-  if (store === 'steam') {
+  if (store === "steam") {
     return Promise.resolve({
-      launcher: 'steam',
+      launcher: "steam",
     });
   } //*/
-  if (store === 'xbox' && (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID))) {
+  if (store === "xbox" && DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) {
     return Promise.resolve({
-      launcher: 'xbox',
+      launcher: "xbox",
       addInfo: {
         appId: XBOXAPP_ID,
         parameters: [{ appExecName: XBOXEXECNAME }],
@@ -453,9 +472,9 @@ async function requiresLauncher(gamePath, store) {
       },
     });
   } //*/
-  if (store === 'epic' && (DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID))) {
+  if (store === "epic" && DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID)) {
     return Promise.resolve({
-      launcher: 'epic',
+      launcher: "epic",
       addInfo: {
         appId: EPICAPP_ID,
         //parameters: PARAMETERS,
@@ -472,29 +491,29 @@ function getExecutable(discoveryPath) {
     return EXEC;
   }
   if (hasXbox && statCheckSync(discoveryPath, EXEC_XBOX)) {
-    GAME_VERSION = 'xbox';
+    GAME_VERSION = "xbox";
     SAVE_PATH = SAVE_PATH_XBOX;
     CONFIG_PATH = CONFIG_PATH_XBOX;
     return EXEC_XBOX;
-  };
+  }
   //add GOG/EGS/Demo versions here if needed
-  GAME_VERSION = 'default';
+  GAME_VERSION = "default";
   return EXEC;
 }
 
 //Get correct game version
 async function setGameVersion(gamePath) {
   if (!multiExe && !hasXbox) {
-    GAME_VERSION = 'default';
+    GAME_VERSION = "default";
     return GAME_VERSION;
   }
   if (await statCheckAsync(gamePath, EXEC_XBOX)) {
-    GAME_VERSION = 'xbox';
+    GAME_VERSION = "xbox";
     SAVE_PATH = SAVE_PATH_XBOX;
     CONFIG_PATH = CONFIG_PATH_XBOX;
     return GAME_VERSION;
   } else {
-    GAME_VERSION = 'default';
+    GAME_VERSION = "default";
     return GAME_VERSION;
   }
 }
@@ -506,43 +525,57 @@ async function getAllFiles(dirPath) {
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
       const stats = await fs.statAsync(fullPath);
-      if (stats.isDirectory()) { // Recursively get files from subdirectories
+      if (stats.isDirectory()) {
+        // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
         results = results.concat(subDirFiles);
-      } else { // Add file to results
+      } else {
+        // Add file to results
         results.push(fullPath);
       }
     }
   } catch (err) {
-    log('warn', `Error reading directory ${dirPath}: ${err.message}`);
+    log("warn", `Error reading directory ${dirPath}: ${err.message}`);
   }
   return results;
 }
 
-const getDiscoveryPath = (api) => { //get the game's discovered path
+const getDiscoveryPath = (api) => {
+  //get the game's discovered path
   const state = api.getState();
   const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
 
-async function purge(api) { //useful to clear out mods prior to doing some action
-  return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));
+async function purge(api) {
+  //useful to clear out mods prior to doing some action
+  return new Promise((resolve, reject) =>
+    api.events.emit("purge-mods", true, (err) => (err ? reject(err) : resolve())),
+  );
 }
-async function deploy(api) { //useful to deploy mods after doing some action
-  return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
+async function deploy(api) {
+  //useful to deploy mods after doing some action
+  return new Promise((resolve, reject) =>
+    api.events.emit("deploy-mods", (err) => (err ? reject(err) : resolve())),
+  );
 }
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
 //Test for mod loader files
 function testLoader(files, gameId) {
-  const isMod = files.some(file => path.basename(file) === LOADER_FILE);
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => path.basename(file) === LOADER_FILE);
+  let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer
-  if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -555,18 +588,18 @@ function testLoader(files, gameId) {
 //Install mod loader files
 function installLoader(files) {
   const MOD_TYPE = LOADER_ID;
-  const modFile = files.find(file => path.basename(file) === LOADER_FILE);
+  const modFile = files.find((file) => path.basename(file) === LOADER_FILE);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+  const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -577,13 +610,18 @@ function installLoader(files) {
 
 //Test for MGSVFix files
 function testMgsvFix(files, gameId) {
-  const isMod = files.some(file => MGSVFIX_FILES.includes(path.basename(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => MGSVFIX_FILES.includes(path.basename(file).toLowerCase()));
+  let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer
-  if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -596,20 +634,22 @@ function testMgsvFix(files, gameId) {
 //Install MGSVFix files
 function installMgsvFix(files) {
   const MOD_TYPE = MGSVFIX_ID;
-  const modFile = files.find(file => MGSVFIX_FILES.includes(path.basename(file).toLowerCase()));
+  const modFile = files.find((file) => MGSVFIX_FILES.includes(path.basename(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+  const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   // Remove directories, anything that isn't in the rootPath, and the archive's own
   // "extract here" marker file, which has no business in the game folder.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep))
-      && (!MGSVFIX_IGNORE_FILES.includes(path.basename(file).toLowerCase())))
+  const filtered = files.filter(
+    (file) =>
+      file.indexOf(rootPath) !== -1 &&
+      !file.endsWith(path.sep) &&
+      !MGSVFIX_IGNORE_FILES.includes(path.basename(file).toLowerCase()),
   );
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -620,14 +660,19 @@ function installMgsvFix(files) {
 
 //Test for mod files
 function testMod(files, gameId) {
-  const MOD_EXTS_LOWER = MOD_EXTS.map(ext => ext.toLowerCase());
-  const isMod = files.some(file => MOD_EXTS_LOWER.includes(path.extname(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && isMod;
+  const MOD_EXTS_LOWER = MOD_EXTS.map((ext) => ext.toLowerCase());
+  const isMod = files.some((file) => MOD_EXTS_LOWER.includes(path.extname(file).toLowerCase()));
+  let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer
-  if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -646,28 +691,25 @@ function normalizeModFileName(fileName) {
 
 //install pak mods
 async function installMod(api, files, fileName) {
-  const fileExts = MOD_EXTS.map(ext => ext.toLowerCase());
-  const modFiles = files.filter(file => (
-    fileExts.includes(path.extname(file).toLowerCase())
-  ));
+  const fileExts = MOD_EXTS.map((ext) => ext.toLowerCase());
+  const modFiles = files.filter((file) => fileExts.includes(path.extname(file).toLowerCase()));
   //const folder = path.basename(fileName).slice(0, 20);
   const modType = {
-    type: 'setmodtype',
+    type: "setmodtype",
     value: MOD_ID,
   };
-  const installFiles = (modFiles.length > 1)
-    ? await chooseFilesToInstall(api, modFiles, fileExts)
-    : modFiles;
+  const installFiles =
+    modFiles.length > 1 ? await chooseFilesToInstall(api, modFiles, fileExts) : modFiles;
   const mgsvModFiles = {
-    type: 'attribute',
+    type: "attribute",
     key: MOD_ATTR_KEY,
-    value: installFiles.map(f => normalizeModFileName(path.basename(f)))
+    value: installFiles.map((f) => normalizeModFileName(path.basename(f))),
   };
-  let instructions = installFiles.map(file => {
+  let instructions = installFiles.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
-      destination: normalizeModFileName(path.basename(file))
+      destination: normalizeModFileName(path.basename(file)),
       //destination: path.join(folder, path.basename(file))
     };
   });
@@ -679,45 +721,64 @@ async function installMod(api, files, fileName) {
 //file selection dialog for .mgsv mods
 async function chooseFilesToInstall(api, files, fileExts) {
   const t = api.translate;
-  return api.showDialog('question', t('Multiple {{exts}} files', { replace: { exts: fileExts.join('/') } }), {
-    text: t('The mod you are installing contains {{x}} {{exts}} files.', { replace: { x: files.length, exts: fileExts.join('/') } }) +
-        `This can be because the author intended for you to chose one of several options. Please select which files to install below:`,
-    checkboxes: files.map((mgsv) => {
-      return {
-          id: mgsv,
-          text: mgsv,
-          subtext: path.basename(mgsv),
-          value: false
-      };
-    })
-    }, [
-      { label: 'Cancel' },
-      { label: 'Install Selected' },
-      { label: 'Install All_plural' }
-  ]).then((result) => {
-      if (result.action === 'Cancel')
-          return Promise.reject(new util.UserCanceled('User cancelled.'));
+  return api
+    .showDialog(
+      "question",
+      t("Multiple {{exts}} files", { replace: { exts: fileExts.join("/") } }),
+      {
+        text:
+          t("The mod you are installing contains {{x}} {{exts}} files.", {
+            replace: { x: files.length, exts: fileExts.join("/") },
+          }) +
+          `This can be because the author intended for you to chose one of several options. Please select which files to install below:`,
+        checkboxes: files.map((mgsv) => {
+          return {
+            id: mgsv,
+            text: mgsv,
+            subtext: path.basename(mgsv),
+            value: false,
+          };
+        }),
+      },
+      [{ label: "Cancel" }, { label: "Install Selected" }, { label: "Install All_plural" }],
+    )
+    .then((result) => {
+      if (result.action === "Cancel")
+        return Promise.reject(new util.UserCanceled("User cancelled."));
       else {
-          const installAll = (result.action === 'Install All' || result.action === 'Install All_plural');
-          const installMgsvs = installAll ? files : Object.keys(result.input).filter(s => result.input[s])
-            .map(file => files.find(f => f === file));
-          return installMgsvs;
+        const installAll =
+          result.action === "Install All" || result.action === "Install All_plural";
+        const installMgsvs = installAll
+          ? files
+          : Object.keys(result.input)
+              .filter((s) => result.input[s])
+              .map((file) => files.find((f) => f === file));
+        return installMgsvs;
       }
-  });
+    });
 }
 
 //Installer test for Root folder files
 function testRoot(files, gameId) {
-  const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map(str => str.toLowerCase());
-  const ROOTSUB_FOLDERS_LOWER = ROOTSUB_FOLDERS.map(str => str.toLowerCase());
-  const isMod = files.some(file => ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
-  const isSub = files.some(file => ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && ( isMod || isSub );
+  const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map((str) => str.toLowerCase());
+  const ROOTSUB_FOLDERS_LOWER = ROOTSUB_FOLDERS.map((str) => str.toLowerCase());
+  const isMod = files.some((file) =>
+    ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
+  );
+  const isSub = files.some((file) =>
+    ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
+  );
+  let supported = gameId === spec.game.id && (isMod || isSub);
 
   // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -729,26 +790,30 @@ function testRoot(files, gameId) {
 
 //Installer install Root folder files
 function installRoot(files) {
-  const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map(str => str.toLowerCase());
-  const ROOTSUB_FOLDERS_LOWER = ROOTSUB_FOLDERS.map(str => str.toLowerCase());
-  let folder = '';
-  let modFile = files.find(file => ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
+  const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map((str) => str.toLowerCase());
+  const ROOTSUB_FOLDERS_LOWER = ROOTSUB_FOLDERS.map((str) => str.toLowerCase());
+  let folder = "";
+  let modFile = files.find((file) =>
+    ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
+  );
   if (modFile === undefined) {
-    modFile = files.find(file => ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
+    modFile = files.find((file) =>
+      ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
+    );
     folder = ROOTSUB_PATH;
   }
-  const ROOT_IDX = `${path.basename(modFile)}${path.sep}`
+  const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
   const idx = modFile.indexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(folder, file.substr(idx)),
     };
@@ -759,13 +824,18 @@ function installRoot(files) {
 
 //Test for save files
 function testSave(files, gameId) {
-  const isMod = files.some(file => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer
-  if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -778,18 +848,18 @@ function testSave(files, gameId) {
 //Install save files
 function installSave(files) {
   const MOD_TYPE = SAVE_ID;
-  const modFile = files.find(file => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
+  const modFile = files.find((file) => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+  const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -800,12 +870,17 @@ function installSave(files) {
 
 //Fallback installer to root folder
 function testFallback(files, gameId) {
-  let supported = (gameId === spec.game.id);
+  let supported = gameId === spec.game.id;
 
   // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -818,14 +893,12 @@ function testFallback(files, gameId) {
 //Fallback installer to root folder
 function installFallback(api, files, destinationPath) {
   fallbackInstallerNotify(api, destinationPath);
-  const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
 
-  const filtered = files.filter(file =>
-    (!file.endsWith(path.sep))
-  );
-  const instructions = filtered.map(file => {
+  const filtered = files.filter((file) => !file.endsWith(path.sep));
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: file,
     };
@@ -837,53 +910,69 @@ function installFallback(api, files, destinationPath) {
 function fallbackInstallerNotify(api, modName) {
   const state = api.getState();
   STAGING_FOLDER = selectors.installPathForGame(state, spec.game.id);
-  modName = path.basename(modName, '.installing');
-  const id = modName.replace(/[^a-zA-Z0-9\s]*( )*/gi, '').slice(0, 20);
+  modName = path.basename(modName, ".installing");
+  const id = modName.replace(/[^a-zA-Z0-9\s]*( )*/gi, "").slice(0, 20);
   const NOTIF_ID = `${GAME_ID}-${id}-fallback`;
-  const MESSAGE = 'Fallback installer reached for ' + modName;
+  const MESSAGE = "Fallback installer reached for " + modName;
   api.sendNotification({
     id: NOTIF_ID,
-    type: 'info',
+    type: "info",
     message: MESSAGE,
     allowSuppress: true,
     actions: [
       {
-        title: 'More',
+        title: "More",
         action: (dismiss) => {
-          api.showDialog('question', MESSAGE, {
-            text: `The mod you just installed reached the fallback installer. This means Vortex could not determine where to place these mod files.\n`
-                + `Please check the mod page description and review the files in the mod staging folder to determine if manual file manipulation is required.\n`
-                + `\n`
-                + `If you think that Vortex should be capable to install this mod to a specific folder, please contact the extension developer for support at the link below.\n`
-                + `\n`
-                + `Mod Name: ${modName}.\n`
-                + `\n`
-          }, [
-            { label: 'Continue', action: () => dismiss() },
+          api.showDialog(
+            "question",
+            MESSAGE,
             {
-              label: 'Contact Ext. Developer', action: () => {
-                util.opn(`${EXTENSION_URL}?tab=posts`).catch(() => null);
-                dismiss();
-              }
-            }, //*/
-            //*
-            { label: `Open Mod Page + Staging Folder`, action: () => {
-              util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
-              const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
-              const modMatch = Object.values(mods).find(mod => mod.installationPath === modName);
-              log('warn', `Found ${modMatch?.id} for ${modName}`);
-              let PAGE = ``;
-              if (modMatch) {
-                const MOD_ID = modMatch.attributes.modId;
-                if (MOD_ID !== undefined) {
-                  PAGE = `${MOD_ID}?tab=description`;
-                }
-              }
-              const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
-              util.opn(MOD_PAGE_URL).catch(() => null);
-              dismiss();
-            }}, //*/
-          ]);
+              text:
+                `The mod you just installed reached the fallback installer. This means Vortex could not determine where to place these mod files.\n` +
+                `Please check the mod page description and review the files in the mod staging folder to determine if manual file manipulation is required.\n` +
+                `\n` +
+                `If you think that Vortex should be capable to install this mod to a specific folder, please contact the extension developer for support at the link below.\n` +
+                `\n` +
+                `Mod Name: ${modName}.\n` +
+                `\n`,
+            },
+            [
+              { label: "Continue", action: () => dismiss() },
+              {
+                label: "Contact Ext. Developer",
+                action: () => {
+                  util.opn(`${EXTENSION_URL}?tab=posts`).catch(() => null);
+                  dismiss();
+                },
+              }, //*/
+              //*
+              {
+                label: `Open Mod Page + Staging Folder`,
+                action: () => {
+                  util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
+                  const mods = util.getSafe(
+                    api.store.getState(),
+                    ["persistent", "mods", spec.game.id],
+                    {},
+                  );
+                  const modMatch = Object.values(mods).find(
+                    (mod) => mod.installationPath === modName,
+                  );
+                  log("warn", `Found ${modMatch?.id} for ${modName}`);
+                  let PAGE = ``;
+                  if (modMatch) {
+                    const MOD_ID = modMatch.attributes.modId;
+                    if (MOD_ID !== undefined) {
+                      PAGE = `${MOD_ID}?tab=description`;
+                    }
+                  }
+                  const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
+                  util.opn(MOD_PAGE_URL).catch(() => null);
+                  dismiss();
+                },
+              }, //*/
+            ],
+          );
         },
       },
     ],
@@ -896,7 +985,7 @@ function fallbackInstallerNotify(api, modName) {
 function isLoaderInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === LOADER_ID);
+  return Object.keys(mods).some((id) => mods[id]?.type === LOADER_ID);
 }
 
 //The mod loader uses four-part version numbers, while the version published on the mod page may
@@ -906,11 +995,11 @@ function normalizeLoaderVersion(version) {
   if (!version) {
     return undefined;
   }
-  const parts = String(version).trim().split('.').slice(0, 4);
+  const parts = String(version).trim().split(".").slice(0, 4);
   while (parts.length < 4) {
-    parts.push('0');
+    parts.push("0");
   }
-  return parts.join('.');
+  return parts.join(".");
 }
 
 //Read the version of the mod loader that is currently installed on the system. Its executable
@@ -922,10 +1011,12 @@ function getLoaderInstalledVersion() {
     return undefined; //not installed, so there is no version to read
   }
   try {
-    const exeVersion = require('exe-version');
-    return normalizeLoaderVersion(exeVersion.getProductVersion(path.join(installPath, LOADER_EXEC)));
+    const exeVersion = require("exe-version");
+    return normalizeLoaderVersion(
+      exeVersion.getProductVersion(path.join(installPath, LOADER_EXEC)),
+    );
   } catch (err) {
-    log('debug', `Could not read the installed ${LOADER_NAME} version: ${err}`);
+    log("debug", `Could not read the installed ${LOADER_NAME} version: ${err}`);
     return undefined;
   }
 }
@@ -941,9 +1032,9 @@ async function runLoaderInstaller(api, modId, silent) {
   }
   const stagingFolder = selectors.installPathForGame(state, GAME_ID);
   const runPath = path.join(stagingFolder, mod.installationPath ?? modId, LOADER_INST_EXEC);
-  log('info', `Running the ${LOADER_NAME} installer at ${runPath}`);
+  log("info", `Running the ${LOADER_NAME} installer at ${runPath}`);
   await api.runExecutable(runPath, silent ? LOADER_SILENT_PARAMS : [], { suggestDeploy: false });
-  log('info', `The ${LOADER_NAME} installer completed`);
+  log("info", `The ${LOADER_NAME} installer completed`);
 }
 
 //Guards against launching the installer twice for the same mod, since the install event and the
@@ -964,28 +1055,30 @@ async function syncLoaderInstall(api, modId) {
   }
   const staged = normalizeLoaderVersion(mod.attributes?.version);
   const installed = getLoaderInstalledVersion();
-  if ((staged !== undefined) && (installed !== undefined) && (staged === installed)) {
+  if (staged !== undefined && installed !== undefined && staged === installed) {
     return; //already applied - nothing was updated
   }
   loaderSyncInFlight.add(modId);
   const NOTIF_ID = `${LOADER_ID}-updating`;
   api.sendNotification({
     id: NOTIF_ID,
-    type: 'activity',
+    type: "activity",
     //a first install has no recorded folder, so the user has to be warned about the directory page
-    message: (installed === undefined)
-      ? `Installing ${LOADER_NAME} - DO NOT CHANGE THE INSTALL DIRECTORY`
-      : `Updating ${LOADER_NAME} to ${staged ?? 'the staged version'}`,
+    message:
+      installed === undefined
+        ? `Installing ${LOADER_NAME} - DO NOT CHANGE THE INSTALL DIRECTORY`
+        : `Updating ${LOADER_NAME} to ${staged ?? "the staged version"}`,
     noDismiss: true,
     allowSuppress: false,
   });
   try {
     //an update re-uses the folder recorded in the registry, so it can run unattended; a first
     //install has no folder to re-use and must show its directory page
-    await runLoaderInstaller(api, modId, loaderSilentUpdate && (installed !== undefined));
+    await runLoaderInstaller(api, modId, loaderSilentUpdate && installed !== undefined);
   } catch (err) {
-    api.showErrorNotification(`Failed to run the ${LOADER_NAME} installer`, err,
-      { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
+    api.showErrorNotification(`Failed to run the ${LOADER_NAME} installer`, err, {
+      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+    });
   } finally {
     loaderSyncInFlight.delete(modId);
     api.dismissNotification(NOTIF_ID);
@@ -1000,66 +1093,76 @@ async function downloadLoader(api, gameSpec, check = true) {
     const MOD_TYPE = LOADER_ID;
     const NOTIF_ID = `${MOD_TYPE}-installing`;
     const PAGE_ID = LOADER_PAGE_NO;
-    const FILE_ID = LOADER_FILE_NO;  //If using a specific file id because "input" below gives an error
+    const FILE_ID = LOADER_FILE_NO; //If using a specific file id because "input" below gives an error
     const GAME_DOMAIN = LOADER_DOMAIN;
-    api.sendNotification({ //notification indicating install process
+    api.sendNotification({
+      //notification indicating install process
       id: NOTIF_ID,
       message: `Downloading ${MOD_NAME}`, //the installer run that follows puts up its own notification
-      type: 'activity',
+      type: "activity",
       noDismiss: true,
       allowSuppress: false,
     });
-    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
+    if (api.ext?.ensureLoggedIn !== undefined) {
+      //make sure user is logged into Nexus Mods account in Vortex
       await api.ext.ensureLoggedIn();
     }
+    try {
+      let FILE = null;
+      let URL = null;
       try {
-        let FILE = null;
-        let URL = null;
-        try { //get the mod files information from Nexus
-          const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
-          const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
-          const file = modFiles
-            .filter(file => file.category_id === 1)
-            .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
-            .reverse()[0];
-          if (file === undefined) {
-            throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
-          }
-          FILE = file.file_id;
-          URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-        } catch { // use defined file ID if input is undefined above
-          FILE = FILE_ID;
-          URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+        //get the mod files information from Nexus
+        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
+        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
+        const file = modFiles
+          .filter((file) => file.category_id === 1)
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
+          .reverse()[0];
+        if (file === undefined) {
+          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
         }
-        const dlInfo = { //Download the mod
-          game: GAME_DOMAIN,
-          name: MOD_NAME,
-        };
-        const dlId = await util.toPromise(cb =>
-          api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-        const modId = await util.toPromise(cb =>
-          api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-        const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-        const batched = [
-          actions.setModsEnabled(api, profileId, [modId], true, {
-            allowAutoDeploy: true,
-            installed: true,
-          }),
-          actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
-        ];
-        await util.batchDispatch(api.store, batched); // Will dispatch both actions
-        await syncLoaderInstall(api, modId); //run the installer exe from staging
-        //return new Promise((resolve, reject) => { //download, install, run installer exe
-        //return resolve();
-        //});
-      } catch (err) { //Show the user the download page if the download, install process fails
-        const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
-        api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-        util.opn(errPage).catch(() => null);
-        //return reject(err);
-      } finally {
-        api.dismissNotification(NOTIF_ID);
+        FILE = file.file_id;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } catch {
+        // use defined file ID if input is undefined above
+        FILE = FILE_ID;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       }
+      const dlInfo = {
+        //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      const dlId = await util.toPromise((cb) =>
+        api.events.emit("start-download", [URL], dlInfo, undefined, cb, undefined, {
+          allowInstall: false,
+        }),
+      );
+      const modId = await util.toPromise((cb) =>
+        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+      );
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      await util.batchDispatch(api.store, batched); // Will dispatch both actions
+      await syncLoaderInstall(api, modId); //run the installer exe from staging
+      //return new Promise((resolve, reject) => { //download, install, run installer exe
+      //return resolve();
+      //});
+    } catch (err) {
+      //Show the user the download page if the download, install process fails
+      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.opn(errPage).catch(() => null);
+      //return reject(err);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
   }
 } //*/
 
@@ -1078,41 +1181,49 @@ function downloadMgsvFixNotify(api) {
   const MESSAGE = `Would you like to download ${MOD_NAME}?`;
   api.sendNotification({
     id: NOTIF_ID,
-    type: 'warning',
+    type: "warning",
     message: MESSAGE,
     allowSuppress: true,
     actions: [
       {
-        title: 'Download Fix',
+        title: "Download Fix",
         action: (dismiss) => {
           downloadCodeberg(api, spec, CODEBERG_REQUIREMENTS);
           dismiss();
         },
       },
       {
-        title: 'More',
+        title: "More",
         action: (dismiss) => {
-          api.showDialog('question', MESSAGE, {
-            text: `${MOD_NAME} is an ASI plugin that skips the intro logos, unlocks the framerate and the resolution options, fixes HUD and graphical effects at ultrawide resolutions, and lets you tweak LOD distances.\n`
-                + `Click the button below to download and install ${MOD_NAME}.\n`
-                + `Once installed, open "MGSVFix.ini" in the game folder to change its settings.\n`
-                + `\n`
-                + `You can also install it at any time with the "Download Latest ${MOD_NAME}" button above the mod list.\n`
-          }, [
+          api.showDialog(
+            "question",
+            MESSAGE,
             {
-              label: `Download ${MOD_NAME}`, action: () => {
-                downloadCodeberg(api, spec, CODEBERG_REQUIREMENTS);
-                dismiss();
-              }
+              text:
+                `${MOD_NAME} is an ASI plugin that skips the intro logos, unlocks the framerate and the resolution options, fixes HUD and graphical effects at ultrawide resolutions, and lets you tweak LOD distances.\n` +
+                `Click the button below to download and install ${MOD_NAME}.\n` +
+                `Once installed, open "MGSVFix.ini" in the game folder to change its settings.\n` +
+                `\n` +
+                `You can also install it at any time with the "Download Latest ${MOD_NAME}" button above the mod list.\n`,
             },
-            { label: 'Not Now', action: () => dismiss() },
-            {
-              label: 'Never Show Again', action: () => {
-                api.suppressNotification(NOTIF_ID);
-                dismiss();
-              }
-            },
-          ]);
+            [
+              {
+                label: `Download ${MOD_NAME}`,
+                action: () => {
+                  downloadCodeberg(api, spec, CODEBERG_REQUIREMENTS);
+                  dismiss();
+                },
+              },
+              { label: "Not Now", action: () => dismiss() },
+              {
+                label: "Never Show Again",
+                action: () => {
+                  api.suppressNotification(NOTIF_ID);
+                  dismiss();
+                },
+              },
+            ],
+          );
         },
       },
     ],
@@ -1123,31 +1234,33 @@ function downloadMgsvFixNotify(api) {
 
 function setupNotify(api) {
   const NOTIF_ID = `${GAME_ID}-setup-notify`;
-  const MESSAGE = 'Special Setup Instructions';
+  const MESSAGE = "Special Setup Instructions";
   api.sendNotification({
     id: NOTIF_ID,
-    type: 'warning',
+    type: "warning",
     message: MESSAGE,
     allowSuppress: true,
     actions: [
       {
-        title: 'More',
+        title: "More",
         action: (dismiss) => {
-          api.showDialog('question', MESSAGE, {
-            text: `\n`
-                + `TEXT HERE.\n`
-                + `\n`
-                + `TEXT HERE.\n`
-                + `\n`
-          }, [
-            { label: 'Acknowledge', action: () => dismiss() },
+          api.showDialog(
+            "question",
+            MESSAGE,
             {
-              label: 'Never Show Again', action: () => {
-                api.suppressNotification(NOTIF_ID);
-                dismiss();
-              }
+              text: `\n` + `TEXT HERE.\n` + `\n` + `TEXT HERE.\n` + `\n`,
             },
-          ]);
+            [
+              { label: "Acknowledge", action: () => dismiss() },
+              {
+                label: "Never Show Again",
+                action: () => {
+                  api.suppressNotification(NOTIF_ID);
+                  dismiss();
+                },
+              },
+            ],
+          );
         },
       },
     ],
@@ -1157,26 +1270,27 @@ function setupNotify(api) {
 //* Resolve game version dynamically for different game versions
 async function resolveGameVersion(gamePath) {
   GAME_VERSION = await setGameVersion(gamePath);
-  let version = '0.0.0';
-  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+  let version = "0.0.0";
+  if (GAME_VERSION === "xbox") {
+    // use appxmanifest.xml for Xbox version
     try {
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
     } catch (err) {
-      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      log("error", `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
       return Promise.resolve(version);
     }
-  }
-  else { // use exe
+  } else {
+    // use exe
     try {
-      const exeVersion = require('exe-version');
+      const exeVersion = require("exe-version");
       const EXEC = getExecutable(gamePath);
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC)); //can also use getFileVersion if this doesn't return the correct number (rare)
       return Promise.resolve(version);
     } catch (err) {
-      log('error', `Could not read executable file to get game version: ${err}`);
+      log("error", `Could not read executable file to get game version: ${err}`);
       return Promise.resolve(version);
     }
   }
@@ -1196,41 +1310,50 @@ async function resolveGameVersion(gamePath) {
 //disk, and the deploy script carries nothing but the scripts - so the symbol is added directly.
 function installLoaderIcons() {
   try {
-    const container = globalThis.document.getElementById('icon-sets');
+    const container = globalThis.document.getElementById("icon-sets");
     if (container === null) {
       return;
     }
-    const missing = LOADER_ICONS.filter((icon) => globalThis.document.getElementById(`icon-${icon.name}`) === null);
+    const missing = LOADER_ICONS.filter(
+      (icon) => globalThis.document.getElementById(`icon-${icon.name}`) === null,
+    );
     if (missing.length === 0) {
       return;
     }
-    const holder = globalThis.document.createElement('div');
-    holder.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg">'
-      + missing.map((icon) => `<symbol id="icon-${icon.name}" viewBox="0 0 24 24"><path d="${icon.path}"/></symbol>`).join('')
-      + '</svg>';
+    const holder = globalThis.document.createElement("div");
+    holder.innerHTML =
+      '<svg xmlns="http://www.w3.org/2000/svg">' +
+      missing
+        .map(
+          (icon) =>
+            `<symbol id="icon-${icon.name}" viewBox="0 0 24 24"><path d="${icon.path}"/></symbol>`,
+        )
+        .join("") +
+      "</svg>";
     container.appendChild(holder);
-  } catch (err) { //the buttons still work, they just draw without an icon
-    log('warn', `Could not install the ${LOADER_NAME} icons: ${err}`);
+  } catch (err) {
+    //the buttons still work, they just draw without an icon
+    log("warn", `Could not install the ${LOADER_NAME} icons: ${err}`);
   }
 }
 
 function getLoaderExecutable() {
   const installPath = getSnakeBite();
-  return installPath ? path.join(installPath, LOADER_EXEC) : '';
+  return installPath ? path.join(installPath, LOADER_EXEC) : "";
 }
 
 function isAutoSyncEnabled(api) {
-  return util.getSafe(api.getState(), ['settings', GAME_ID, SETTING_AUTO_SYNC], false);
+  return util.getSafe(api.getState(), ["settings", GAME_ID, SETTING_AUTO_SYNC], false);
 }
 
 function isUninstallOnPurgeEnabled(api) {
-  return util.getSafe(api.getState(), ['settings', GAME_ID, SETTING_UNINSTALL_ON_PURGE], false);
+  return util.getSafe(api.getState(), ["settings", GAME_ID, SETTING_UNINSTALL_ON_PURGE], false);
 }
 
 //These versions have four parts and are not semver, so compare them part by part.
 function compareLoaderVersions(left, right) {
-  const leftParts = String(left ?? '').split('.');
-  const rightParts = String(right ?? '').split('.');
+  const leftParts = String(left ?? "").split(".");
+  const rightParts = String(right ?? "").split(".");
   for (let index = 0; index < 4; index++) {
     const diff = (parseInt(leftParts[index], 10) || 0) - (parseInt(rightParts[index], 10) || 0);
     if (diff !== 0) {
@@ -1242,7 +1365,10 @@ function compareLoaderVersions(left, right) {
 
 //Recorded paths use either slash and any case, so flatten them before comparing.
 function normalizeEntryPath(entryPath) {
-  return String(entryPath ?? '').replace(/\\/g, '/').replace(/^\/+/, '').toLowerCase();
+  return String(entryPath ?? "")
+    .replace(/\\/g, "/")
+    .replace(/^\/+/, "")
+    .toLowerCase();
 }
 
 //A mod records the game files it replaces in three lists, and two mods conflict when they claim
@@ -1252,7 +1378,7 @@ function getEntryPaths(entry) {
   const paths = [];
   (entry?.QarEntries?.[0]?.QarEntry ?? []).forEach((item) => {
     const filePath = item?.$?.FilePath;
-    if ((filePath === undefined) || /\.fpkd?$/i.test(filePath)) {
+    if (filePath === undefined || /\.fpkd?$/i.test(filePath)) {
       return;
     }
     paths.push(normalizeEntryPath(filePath));
@@ -1278,9 +1404,9 @@ function getEntryPaths(entry) {
 async function readInstalledMods(gamePath) {
   let data;
   try {
-    data = await fs.readFileAsync(path.join(gamePath, LOADER_SETTINGS_FILE), 'utf8');
+    data = await fs.readFileAsync(path.join(gamePath, LOADER_SETTINGS_FILE), "utf8");
   } catch (err) {
-    if (err.code === 'ENOENT') {
+    if (err.code === "ENOENT") {
       return undefined;
     }
     throw err;
@@ -1288,16 +1414,16 @@ async function readInstalledMods(gamePath) {
   const parsed = await parseStringPromise(data);
   return (parsed?.Settings?.Mods?.[0]?.ModEntry ?? [])
     .map((entry) => ({
-      name: entry?.$?.Name ?? '',
-      version: entry?.$?.Version ?? '',
+      name: entry?.$?.Name ?? "",
+      version: entry?.$?.Version ?? "",
       paths: getEntryPaths(entry),
     }))
-    .filter((mod) => mod.name !== '');
+    .filter((mod) => mod.name !== "");
 }
 
 //XML written by .NET usually starts with a byte order mark, which the parser will not accept.
 function stripBom(text) {
-  return (text.charCodeAt(0) === 0xfeff) ? text.slice(1) : text;
+  return text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
 }
 
 //Read `length` bytes at `position` without pulling the rest of the file into memory.
@@ -1321,7 +1447,7 @@ function findEndOfCentralDirectory(tail) {
 //Sizes and offsets that do not fit in four bytes are parked in a zip64 extra field instead.
 function applyZip64Extra(entry, extra) {
   let offset = 0;
-  while ((offset + 4) <= extra.length) {
+  while (offset + 4 <= extra.length) {
     const fieldSize = extra.readUInt16LE(offset + 2);
     if (extra.readUInt16LE(offset) === ZIP64_EXTRA_ID) {
       let field = offset + 4;
@@ -1345,20 +1471,25 @@ function applyZip64Extra(entry, extra) {
 
 function findDirectoryEntry(directory, wantedName) {
   let offset = 0;
-  while (((offset + ZIP_CENTRAL_SIZE) <= directory.length)
-      && (directory.readUInt32LE(offset) === ZIP_CENTRAL_SIG)) {
+  while (
+    offset + ZIP_CENTRAL_SIZE <= directory.length &&
+    directory.readUInt32LE(offset) === ZIP_CENTRAL_SIG
+  ) {
     const nameLength = directory.readUInt16LE(offset + 28);
     const extraLength = directory.readUInt16LE(offset + 30);
     const commentLength = directory.readUInt16LE(offset + 32);
     const nameStart = offset + ZIP_CENTRAL_SIZE;
-    const name = directory.toString('utf8', nameStart, nameStart + nameLength);
+    const name = directory.toString("utf8", nameStart, nameStart + nameLength);
     if (path.basename(name).toLowerCase() === wantedName) {
-      return applyZip64Extra({
-        method: directory.readUInt16LE(offset + 10),
-        compressedSize: directory.readUInt32LE(offset + 20),
-        uncompressedSize: directory.readUInt32LE(offset + 24),
-        localOffset: directory.readUInt32LE(offset + 42),
-      }, directory.slice(nameStart + nameLength, nameStart + nameLength + extraLength));
+      return applyZip64Extra(
+        {
+          method: directory.readUInt16LE(offset + 10),
+          compressedSize: directory.readUInt32LE(offset + 20),
+          uncompressedSize: directory.readUInt32LE(offset + 24),
+          localOffset: directory.readUInt32LE(offset + 42),
+        },
+        directory.slice(nameStart + nameLength, nameStart + nameLength + extraLength),
+      );
     }
     offset += ZIP_CENTRAL_SIZE + nameLength + extraLength + commentLength;
   }
@@ -1374,11 +1505,15 @@ async function readZip64Directory(fd, tail, eocdOffset) {
     }
   }
   if (locator === -1) {
-    throw new Error('the archive claims to be zip64 but carries no zip64 locator');
+    throw new Error("the archive claims to be zip64 but carries no zip64 locator");
   }
-  const record = await readFileChunk(fd, Number(tail.readBigUInt64LE(locator + 8)), ZIP_EOCD64_SIZE);
+  const record = await readFileChunk(
+    fd,
+    Number(tail.readBigUInt64LE(locator + 8)),
+    ZIP_EOCD64_SIZE,
+  );
   if (record.readUInt32LE(0) !== ZIP_EOCD64_SIG) {
-    throw new Error('the zip64 end of central directory record is missing');
+    throw new Error("the zip64 end of central directory record is missing");
   }
   return {
     directorySize: Number(record.readBigUInt64LE(40)),
@@ -1391,28 +1526,31 @@ async function readZip64Directory(fd, tail, eocdOffset) {
 async function readZipEntry(archivePath, entryName) {
   const wantedName = entryName.toLowerCase();
   const stats = await fs.statAsync(archivePath);
-  const fd = await fs.openAsync(archivePath, 'r');
+  const fd = await fs.openAsync(archivePath, "r");
   try {
     const tailLength = Math.min(stats.size, ZIP_EOCD_SEARCH);
     const tail = await readFileChunk(fd, stats.size - tailLength, tailLength);
     const eocdOffset = findEndOfCentralDirectory(tail);
     if (eocdOffset === -1) {
-      throw new Error('not a zip archive');
+      throw new Error("not a zip archive");
     }
     let directorySize = tail.readUInt32LE(eocdOffset + 12);
     let directoryOffset = tail.readUInt32LE(eocdOffset + 16);
-    if ((directorySize === ZIP64_MARKER) || (directoryOffset === ZIP64_MARKER)) {
+    if (directorySize === ZIP64_MARKER || directoryOffset === ZIP64_MARKER) {
       ({ directorySize, directoryOffset } = await readZip64Directory(fd, tail, eocdOffset));
     }
-    const entry = findDirectoryEntry(await readFileChunk(fd, directoryOffset, directorySize), wantedName);
+    const entry = findDirectoryEntry(
+      await readFileChunk(fd, directoryOffset, directorySize),
+      wantedName,
+    );
     if (entry === undefined) {
       throw new Error(`${entryName} is not in the archive`);
     }
     //the local header repeats the name and extra fields, so where the data starts is only known
     //once it has been read
     const header = await readFileChunk(fd, entry.localOffset, ZIP_LOCAL_SIZE);
-    const dataOffset = entry.localOffset + ZIP_LOCAL_SIZE
-      + header.readUInt16LE(26) + header.readUInt16LE(28);
+    const dataOffset =
+      entry.localOffset + ZIP_LOCAL_SIZE + header.readUInt16LE(26) + header.readUInt16LE(28);
     const compressed = await readFileChunk(fd, dataOffset, entry.compressedSize);
     if (entry.method === ZIP_METHOD_STORE) {
       return compressed;
@@ -1428,13 +1566,13 @@ async function readZipEntry(archivePath, entryName) {
 
 //A .mgsv is a zip carrying a metadata.xml at its root, and that one file names the mod.
 async function readModMetadata(mgsvPath) {
-  const data = stripBom((await readZipEntry(mgsvPath, MOD_META_FILE)).toString('utf8'));
+  const data = stripBom((await readZipEntry(mgsvPath, MOD_META_FILE)).toString("utf8"));
   const entry = (await parseStringPromise(data))?.ModEntry;
   return {
-    name: entry?.$?.Name ?? '',
-    version: entry?.$?.Version ?? '',
-    loaderVersion: entry?.SBVersion?.[0]?.$?.Version ?? '',
-    gameVersion: entry?.MGSVersion?.[0]?.$?.Version ?? '',
+    name: entry?.$?.Name ?? "",
+    version: entry?.$?.Version ?? "",
+    loaderVersion: entry?.SBVersion?.[0]?.$?.Version ?? "",
+    gameVersion: entry?.MGSVersion?.[0]?.$?.Version ?? "",
     paths: getEntryPaths(entry),
   };
 }
@@ -1442,8 +1580,11 @@ async function readModMetadata(mgsvPath) {
 //Find the Vortex mod a deployed file came from, so what was read out of it can be kept there.
 function findModForFile(api, fileName) {
   const mods = api.getState().persistent.mods[GAME_ID] ?? {};
-  return Object.values(mods).find((mod) => (mod.attributes?.[MOD_ATTR_KEY] ?? [])
-    .some((entry) => entry.toLowerCase() === fileName.toLowerCase()));
+  return Object.values(mods).find((mod) =>
+    (mod.attributes?.[MOD_ATTR_KEY] ?? []).some(
+      (entry) => entry.toLowerCase() === fileName.toLowerCase(),
+    ),
+  );
 }
 
 //Opening every deployed archive on every sync would be wasteful, so the name and versions are
@@ -1463,11 +1604,13 @@ async function getModMetadataCached(api, mgsvPath) {
     loaderVersion: metadata.loaderVersion,
     gameVersion: metadata.gameVersion,
   };
-  if ((mod !== undefined) && (summary.name !== '')) {
-    api.store.dispatch(actions.setModAttribute(GAME_ID, mod.id, MOD_ATTR_META_KEY, {
-      ...(mod.attributes?.[MOD_ATTR_META_KEY] ?? {}),
-      [fileName]: summary,
-    }));
+  if (mod !== undefined && summary.name !== "") {
+    api.store.dispatch(
+      actions.setModAttribute(GAME_ID, mod.id, MOD_ATTR_META_KEY, {
+        ...(mod.attributes?.[MOD_ATTR_META_KEY] ?? {}),
+        [fileName]: summary,
+      }),
+    );
   }
   return summary;
 }
@@ -1476,12 +1619,12 @@ async function getModMetadataCached(api, mgsvPath) {
 //recorded outside the mod list. Any installed mod missing from this record was installed by hand
 //and is never touched.
 function getLedgerPath() {
-  return path.join(util.getVortexPath('userData'), GAME_ID, LOADER_LEDGER_FILE);
+  return path.join(util.getVortexPath("userData"), GAME_ID, LOADER_LEDGER_FILE);
 }
 
 async function readLedger() {
   try {
-    const parsed = JSON.parse(await fs.readFileAsync(getLedgerPath(), 'utf8'));
+    const parsed = JSON.parse(await fs.readFileAsync(getLedgerPath(), "utf8"));
     return Array.isArray(parsed?.names) ? parsed.names : [];
   } catch {
     return []; //no record yet, so nothing here counts as ours
@@ -1500,7 +1643,7 @@ async function getDeployedModFiles(gamePath) {
   try {
     entries = await fs.readdirAsync(modsPath);
   } catch (err) {
-    if (err.code === 'ENOENT') {
+    if (err.code === "ENOENT") {
       return [];
     }
     throw err;
@@ -1514,8 +1657,10 @@ async function getDeployedModFiles(gamePath) {
 async function planSync(api, gamePath) {
   const installed = await readInstalledMods(gamePath);
   if (installed === undefined) {
-    throw new util.ProcessCanceled(`${LOADER_NAME} has not been set up for this game yet. `
-      + `Run it once and finish its setup wizard, then try again.`);
+    throw new util.ProcessCanceled(
+      `${LOADER_NAME} has not been set up for this game yet. ` +
+        `Run it once and finish its setup wizard, then try again.`,
+    );
   }
   const deployed = [];
   const unreadable = [];
@@ -1523,12 +1668,12 @@ async function planSync(api, gamePath) {
   for (const file of files) {
     try {
       const metadata = await getModMetadataCached(api, file);
-      if (metadata.name === '') {
-        throw new Error('the archive carries no mod name');
+      if (metadata.name === "") {
+        throw new Error("the archive carries no mod name");
       }
       deployed.push({ ...metadata, file });
     } catch (err) {
-      log('warn', `Could not read mod information from ${path.basename(file)}: ${err}`);
+      log("warn", `Could not read mod information from ${path.basename(file)}: ${err}`);
       unreadable.push(path.basename(file));
     }
   }
@@ -1541,10 +1686,14 @@ async function planSync(api, gamePath) {
     unreadable,
     deployedNames,
     toInstall: deployed.filter((mod) => !installedNames.includes(mod.name)),
-    toUninstall: ledger.filter((name) => installedNames.includes(name) && !deployedNames.includes(name)),
+    toUninstall: ledger.filter(
+      (name) => installedNames.includes(name) && !deployedNames.includes(name),
+    ),
     //installed by hand and not deployed by Vortex: reported so the drift is visible, never removed
     //on their own, since the user may well have installed them deliberately
-    unmanaged: installedNames.filter((name) => !ledger.includes(name) && !deployedNames.includes(name)),
+    unmanaged: installedNames.filter(
+      (name) => !ledger.includes(name) && !deployedNames.includes(name),
+    ),
   };
 }
 
@@ -1555,11 +1704,13 @@ async function planSync(api, gamePath) {
 async function checkInstallCandidates(candidates, installed) {
   const loaderVersion = getLoaderInstalledVersion();
   const owners = new Map();
-  installed.forEach((mod) => mod.paths.forEach((entryPath) => {
-    if (!owners.has(entryPath)) {
-      owners.set(entryPath, mod.name);
-    }
-  }));
+  installed.forEach((mod) =>
+    mod.paths.forEach((entryPath) => {
+      if (!owners.has(entryPath)) {
+        owners.set(entryPath, mod.name);
+      }
+    }),
+  );
   const accepted = [];
   const refused = [];
   const conflicts = [];
@@ -1568,7 +1719,10 @@ async function checkInstallCandidates(candidates, installed) {
     try {
       metadata = await readModMetadata(candidate.file); //read again: the file lists are not cached
     } catch (err) {
-      refused.push({ name: candidate.name, reason: `its mod information could not be read (${err.message})` });
+      refused.push({
+        name: candidate.name,
+        reason: `its mod information could not be read (${err.message})`,
+      });
       continue;
     }
     if (compareLoaderVersions(metadata.loaderVersion, MOD_MIN_LOADER_VERSION) < 0) {
@@ -1578,7 +1732,10 @@ async function checkInstallCandidates(candidates, installed) {
       });
       continue;
     }
-    if ((loaderVersion !== undefined) && (compareLoaderVersions(metadata.loaderVersion, loaderVersion) > 0)) {
+    if (
+      loaderVersion !== undefined &&
+      compareLoaderVersions(metadata.loaderVersion, loaderVersion) > 0
+    ) {
       refused.push({
         name: candidate.name,
         reason: `it needs ${LOADER_NAME} ${metadata.loaderVersion} or newer, but ${loaderVersion} is installed`,
@@ -1588,14 +1745,15 @@ async function checkInstallCandidates(candidates, installed) {
     const clashesWith = [];
     metadata.paths.forEach((entryPath) => {
       const owner = owners.get(entryPath);
-      if ((owner !== undefined) && (owner !== candidate.name) && !clashesWith.includes(owner)) {
+      if (owner !== undefined && owner !== candidate.name && !clashesWith.includes(owner)) {
         clashesWith.push(owner);
       }
     });
     if (clashesWith.length > 0) {
       conflicts.push({ name: candidate.name, clashesWith });
     }
-    metadata.paths.forEach((entryPath) => { //also catches two mods in this batch claiming one file
+    metadata.paths.forEach((entryPath) => {
+      //also catches two mods in this batch claiming one file
       if (!owners.has(entryPath)) {
         owners.set(entryPath, candidate.name);
       }
@@ -1610,32 +1768,38 @@ async function checkInstallCandidates(candidates, installed) {
 async function confirmConflicts(api, conflicts) {
   const t = api.translate;
   const details = conflicts
-    .map((conflict) => `- ${conflict.name} replaces files already replaced by: ${conflict.clashesWith.join(', ')}`)
-    .join('\n');
-  const result = await api.showDialog('question', t('Mod conflicts found'), {
-    text: `${conflicts.length} of the mods about to be installed replace game files that an installed mod already replaced. `
-        + `The last mod installed wins, and undoing the overlap later means removing every mod involved.\n\n${details}`,
-  }, [
-    { label: 'Cancel' },
-    { label: 'Install Anyway' },
-  ]);
-  if (result.action === 'Cancel') {
+    .map(
+      (conflict) =>
+        `- ${conflict.name} replaces files already replaced by: ${conflict.clashesWith.join(", ")}`,
+    )
+    .join("\n");
+  const result = await api.showDialog(
+    "question",
+    t("Mod conflicts found"),
+    {
+      text:
+        `${conflicts.length} of the mods about to be installed replace game files that an installed mod already replaced. ` +
+        `The last mod installed wins, and undoing the overlap later means removing every mod involved.\n\n${details}`,
+    },
+    [{ label: "Cancel" }, { label: "Install Anyway" }],
+  );
+  if (result.action === "Cancel") {
     throw new util.UserCanceled();
   }
 }
 
 async function runLoaderCommand(api, args, message, options) {
   const executable = getLoaderExecutable();
-  if (executable === '') {
+  if (executable === "") {
     throw new util.ProcessCanceled(`${LOADER_NAME} is not installed`);
   }
   //most commands get the switch that closes the mod loader when it is done, but the arguments that
   //have to stand alone are ignored as soon as anything is passed alongside them
-  const allArgs = (options?.close === false) ? [...args] : [...args, LOADER_ARG_CLOSE];
+  const allArgs = options?.close === false ? [...args] : [...args, LOADER_ARG_CLOSE];
   const NOTIF_ID = `${LOADER_ID}-running`;
   api.sendNotification({
     id: NOTIF_ID,
-    type: 'activity',
+    type: "activity",
     message,
     noDismiss: true,
     allowSuppress: false,
@@ -1652,53 +1816,69 @@ function notifySyncResult(api, result) {
   const problems = result.failed.length + result.refused.length + result.unreadable.length;
   const lines = [];
   if (result.installed.length > 0) {
-    lines.push(`Installed: ${result.installed.join(', ')}`);
+    lines.push(`Installed: ${result.installed.join(", ")}`);
   }
   if (result.removed.length > 0) {
-    lines.push(`Removed: ${result.removed.join(', ')}`);
+    lines.push(`Removed: ${result.removed.join(", ")}`);
   }
   result.refused.forEach((item) => lines.push(`Skipped ${item.name} because ${item.reason}.`));
-  result.unreadable.forEach((fileName) => lines.push(`Skipped ${fileName} because it contains no mod information.`));
+  result.unreadable.forEach((fileName) =>
+    lines.push(`Skipped ${fileName} because it contains no mod information.`),
+  );
   if (result.failed.length > 0) {
-    lines.push(`${LOADER_NAME} did not install: ${result.failed.join(', ')}. Its log records why.`);
+    lines.push(`${LOADER_NAME} did not install: ${result.failed.join(", ")}. Its log records why.`);
   }
   if (result.unmanaged.length > 0) {
-    lines.push(`Installed in ${LOADER_NAME} but not deployed by Vortex, so left alone: `
-      + `${result.unmanaged.join(', ')}.`);
+    lines.push(
+      `Installed in ${LOADER_NAME} but not deployed by Vortex, so left alone: ` +
+        `${result.unmanaged.join(", ")}.`,
+    );
   }
   const changed = result.installed.length + result.removed.length;
   api.sendNotification({
     id: NOTIF_ID,
-    type: problems > 0 ? 'warning' : 'success',
-    message: (changed === 0)
-      ? (problems === 0
-        ? `Mods already match ${LOADER_NAME}`
-        : `Nothing installed - ${problems} mod(s) skipped`)
-      : `Installed ${result.installed.length}, removed ${result.removed.length}`,
+    type: problems > 0 ? "warning" : "success",
+    message:
+      changed === 0
+        ? problems === 0
+          ? `Mods already match ${LOADER_NAME}`
+          : `Nothing installed - ${problems} mod(s) skipped`
+        : `Installed ${result.installed.length}, removed ${result.removed.length}`,
     displayMS: problems > 0 ? undefined : 8000,
     allowSuppress: false,
-    actions: (lines.length === 0) ? undefined : [
-      {
-        title: 'Details',
-        action: (dismiss) => {
-          api.showDialog('info', `${LOADER_NAME} Results`, { text: lines.join('\n') }, [
-            ...((result.unmanaged.length === 0) ? [] : [{
-              label: 'Remove Those', action: () => {
-                removeUnmanagedMods(api, result.unmanaged).catch((err) => reportSyncError(api, err));
-                dismiss();
-              }
-            }]),
+    actions:
+      lines.length === 0
+        ? undefined
+        : [
             {
-              label: 'Open Log', action: () => {
-                util.opn(path.join(getSnakeBite(), LOADER_LOG_PATH)).catch(() => null);
-                dismiss();
-              }
+              title: "Details",
+              action: (dismiss) => {
+                api.showDialog("info", `${LOADER_NAME} Results`, { text: lines.join("\n") }, [
+                  ...(result.unmanaged.length === 0
+                    ? []
+                    : [
+                        {
+                          label: "Remove Those",
+                          action: () => {
+                            removeUnmanagedMods(api, result.unmanaged).catch((err) =>
+                              reportSyncError(api, err),
+                            );
+                            dismiss();
+                          },
+                        },
+                      ]),
+                  {
+                    label: "Open Log",
+                    action: () => {
+                      util.opn(path.join(getSnakeBite(), LOADER_LOG_PATH)).catch(() => null);
+                      dismiss();
+                    },
+                  },
+                  { label: "Close", action: () => dismiss() },
+                ]);
+              },
             },
-            { label: 'Close', action: () => dismiss() },
-          ]);
-        },
-      },
-    ],
+          ],
   });
 }
 
@@ -1714,40 +1894,59 @@ async function syncMods(api) {
   if (check.conflicts.length > 0) {
     await confirmConflicts(api, check.conflicts);
   }
-  if ((plan.toUninstall.length === 0) && (check.accepted.length === 0)) {
+  if (plan.toUninstall.length === 0 && check.accepted.length === 0) {
     notifySyncResult(api, {
-      installed: [], removed: [], failed: [], refused: check.refused,
-      unreadable: plan.unreadable, unmanaged: plan.unmanaged,
+      installed: [],
+      removed: [],
+      failed: [],
+      refused: check.refused,
+      unreadable: plan.unreadable,
+      unmanaged: plan.unmanaged,
     });
     return;
   }
   if (plan.toUninstall.length > 0) {
-    await runLoaderCommand(api, [LOADER_ARG_UNINSTALL, ...plan.toUninstall],
-      `Removing ${plan.toUninstall.length} mod(s) with ${LOADER_NAME}`);
+    await runLoaderCommand(
+      api,
+      [LOADER_ARG_UNINSTALL, ...plan.toUninstall],
+      `Removing ${plan.toUninstall.length} mod(s) with ${LOADER_NAME}`,
+    );
   }
   if (check.accepted.length > 0) {
     //the checks are skipped here on purpose - see the note at the top of this section
-    await runLoaderCommand(api,
+    await runLoaderCommand(
+      api,
       [LOADER_ARG_INSTALL, ...check.accepted.map((mod) => mod.file), LOADER_ARG_SKIP_CHECKS],
-      `Installing ${check.accepted.length} mod(s) with ${LOADER_NAME}`);
+      `Installing ${check.accepted.length} mod(s) with ${LOADER_NAME}`,
+    );
   }
   //a mod that is dropped is not reported anywhere, so the database is the only way to tell
   const afterNames = ((await readInstalledMods(gamePath)) ?? []).map((mod) => mod.name);
-  const installed = check.accepted.filter((mod) => afterNames.includes(mod.name)).map((mod) => mod.name);
-  const failed = check.accepted.filter((mod) => !afterNames.includes(mod.name)).map((mod) => mod.name);
+  const installed = check.accepted
+    .filter((mod) => afterNames.includes(mod.name))
+    .map((mod) => mod.name);
+  const failed = check.accepted
+    .filter((mod) => !afterNames.includes(mod.name))
+    .map((mod) => mod.name);
   const removed = plan.toUninstall.filter((name) => !afterNames.includes(name));
   const ledger = plan.ledger.filter((name) => !removed.includes(name));
   //anything both deployed and installed is a mod Vortex is managing, whoever installed it first -
   //adopting it means a later removal in Vortex takes it back out of the game
-  afterNames.filter((name) => plan.deployedNames.includes(name)).forEach((name) => {
-    if (!ledger.includes(name)) {
-      ledger.push(name);
-    }
-  });
+  afterNames
+    .filter((name) => plan.deployedNames.includes(name))
+    .forEach((name) => {
+      if (!ledger.includes(name)) {
+        ledger.push(name);
+      }
+    });
   await writeLedger(ledger);
   notifySyncResult(api, {
-    installed, removed, failed, refused: check.refused,
-    unreadable: plan.unreadable, unmanaged: plan.unmanaged,
+    installed,
+    removed,
+    failed,
+    refused: check.refused,
+    unreadable: plan.unreadable,
+    unmanaged: plan.unmanaged,
   });
 }
 
@@ -1760,29 +1959,36 @@ async function removeUnmanagedMods(api, names) {
     throw new util.ProcessCanceled(`${GAME_NAME_SHORT} has not been discovered yet`);
   }
   const t = api.translate;
-  const result = await api.showDialog('question', t('Remove mods Vortex does not manage?'), {
-    text: `${LOADER_NAME} has these mods installed, but Vortex has not deployed them and did not `
-        + `install them:\n\n${names.map((name) => `- ${name}`).join('\n')}\n\n`
-        + `Removing them leaves the game with only the mods Vortex has deployed. Keep them if you `
-        + `installed them deliberately.`,
-  }, [
-    { label: 'Cancel' },
-    { label: 'Remove Them' },
-  ]);
-  if (result.action === 'Cancel') {
+  const result = await api.showDialog(
+    "question",
+    t("Remove mods Vortex does not manage?"),
+    {
+      text:
+        `${LOADER_NAME} has these mods installed, but Vortex has not deployed them and did not ` +
+        `install them:\n\n${names.map((name) => `- ${name}`).join("\n")}\n\n` +
+        `Removing them leaves the game with only the mods Vortex has deployed. Keep them if you ` +
+        `installed them deliberately.`,
+    },
+    [{ label: "Cancel" }, { label: "Remove Them" }],
+  );
+  if (result.action === "Cancel") {
     return;
   }
-  await runLoaderCommand(api, [LOADER_ARG_UNINSTALL, ...names],
-    `Removing ${names.length} mod(s) with ${LOADER_NAME}`);
+  await runLoaderCommand(
+    api,
+    [LOADER_ARG_UNINSTALL, ...names],
+    `Removing ${names.length} mod(s) with ${LOADER_NAME}`,
+  );
   const afterNames = ((await readInstalledMods(gamePath)) ?? []).map((mod) => mod.name);
   const removed = names.filter((name) => !afterNames.includes(name));
   api.sendNotification({
     id: `${GAME_ID}-sync`,
-    type: (removed.length === names.length) ? 'success' : 'warning',
-    message: (removed.length === names.length)
-      ? `Removed ${removed.length} mod(s)`
-      : `Removed ${removed.length} of ${names.length} mod(s) - ${LOADER_NAME}'s log records why`,
-    displayMS: (removed.length === names.length) ? 8000 : undefined,
+    type: removed.length === names.length ? "success" : "warning",
+    message:
+      removed.length === names.length
+        ? `Removed ${removed.length} mod(s)`
+        : `Removed ${removed.length} of ${names.length} mod(s) - ${LOADER_NAME}'s log records why`,
+    displayMS: removed.length === names.length ? 8000 : undefined,
   });
 }
 
@@ -1805,42 +2011,50 @@ async function purgeInstalledMods(api) {
     return;
   }
   const t = api.translate;
-  const result = await api.showDialog('question', t('Remove these mods from the game as well?'), {
-    text: `Vortex is about to remove the mod files it deployed, but ${names.length} of them are `
-        + `installed inside the game's own archives and would be left in the game:\n\n`
-        + `${names.map((name) => `- ${name}`).join('\n')}\n\n`
-        + `${LOADER_NAME} can take them out first. That repacks the game archives, so it takes a `
-        + `while. Mods installed outside Vortex are left alone either way.`,
-  }, [
-    { label: 'Leave Them Installed' },
-    { label: 'Remove Them' },
-  ]);
-  if (result.action === 'Leave Them Installed') {
+  const result = await api.showDialog(
+    "question",
+    t("Remove these mods from the game as well?"),
+    {
+      text:
+        `Vortex is about to remove the mod files it deployed, but ${names.length} of them are ` +
+        `installed inside the game's own archives and would be left in the game:\n\n` +
+        `${names.map((name) => `- ${name}`).join("\n")}\n\n` +
+        `${LOADER_NAME} can take them out first. That repacks the game archives, so it takes a ` +
+        `while. Mods installed outside Vortex are left alone either way.`,
+    },
+    [{ label: "Leave Them Installed" }, { label: "Remove Them" }],
+  );
+  if (result.action === "Leave Them Installed") {
     return;
   }
-  await runLoaderCommand(api, [LOADER_ARG_UNINSTALL, ...names],
-    `Removing ${names.length} mod(s) with ${LOADER_NAME}`);
+  await runLoaderCommand(
+    api,
+    [LOADER_ARG_UNINSTALL, ...names],
+    `Removing ${names.length} mod(s) with ${LOADER_NAME}`,
+  );
   const afterNames = ((await readInstalledMods(gamePath)) ?? []).map((mod) => mod.name);
   const removed = names.filter((name) => !afterNames.includes(name));
   await writeLedger(ledger.filter((name) => !removed.includes(name)));
   api.sendNotification({
     id: `${GAME_ID}-sync`,
-    type: (removed.length === names.length) ? 'success' : 'warning',
-    message: (removed.length === names.length)
-      ? `Removed ${removed.length} mod(s) from the game`
-      : `Removed ${removed.length} of ${names.length} mod(s) - ${LOADER_NAME}'s log records why`,
-    displayMS: (removed.length === names.length) ? 8000 : undefined,
+    type: removed.length === names.length ? "success" : "warning",
+    message:
+      removed.length === names.length
+        ? `Removed ${removed.length} mod(s) from the game`
+        : `Removed ${removed.length} of ${names.length} mod(s) - ${LOADER_NAME}'s log records why`,
+    displayMS: removed.length === names.length ? 8000 : undefined,
   });
 }
 
 async function willPurge(api, profileId) {
   const profile = selectors.profileById(api.getState(), profileId);
-  if ((profile?.gameId !== GAME_ID) || !isUninstallOnPurgeEnabled(api)) {
+  if (profile?.gameId !== GAME_ID || !isUninstallOnPurgeEnabled(api)) {
     return;
   }
   try {
     await purgeInstalledMods(api);
-  } catch (err) { //a failure here must not stop the purge itself
+  } catch (err) {
+    //a failure here must not stop the purge itself
     reportSyncError(api, err, `Failed to remove mods with ${LOADER_NAME}`);
   }
 }
@@ -1857,50 +2071,52 @@ async function didPurge(api, profileId) {
   if (gamePath === undefined) {
     return;
   }
-  const installed = await readInstalledMods(gamePath)
-    .catch(err => { //nothing here is worth interrupting a purge over
-      log('warn', `Could not read what ${LOADER_NAME} has installed: ${err}`);
-      return undefined;
-    });
-  if ((installed === undefined) || (installed.length === 0)) {
+  const installed = await readInstalledMods(gamePath).catch((err) => {
+    //nothing here is worth interrupting a purge over
+    log("warn", `Could not read what ${LOADER_NAME} has installed: ${err}`);
+    return undefined;
+  });
+  if (installed === undefined || installed.length === 0) {
     return;
   }
   const NOTIF_ID = `${GAME_ID}-purge`;
   const MESSAGE = `${LOADER_NAME} still has ${installed.length} mod(s) installed in the game`;
   const MORE_TEXT =
-    `Purging removed the mod files Vortex deployed, but those may be installed stil in the game archives. `
-    + `"Restore Vanilla Game Files" button will clear the game files: ${LOADER_NAME_SHORT} puts the game archives back to `
-    + `a vanilla state. It removes every mod, including any installed outside Vortex, `
-    + `and ${LOADER_NAME_SHORT} runs its setup wizard the next time it is started.\n\n`
-    + `If you would rather keep the game as it is, no action is required - deploy again and use `
-    + `"Install Mods with ${LOADER_NAME_SHORT}" to get back in sync. To have future purges restore vanilla game files automatically, `
-    + `turn on "Remove mods from the game when purging" under Settings > Mods.`;
+    `Purging removed the mod files Vortex deployed, but those may be installed stil in the game archives. ` +
+    `"Restore Vanilla Game Files" button will clear the game files: ${LOADER_NAME_SHORT} puts the game archives back to ` +
+    `a vanilla state. It removes every mod, including any installed outside Vortex, ` +
+    `and ${LOADER_NAME_SHORT} runs its setup wizard the next time it is started.\n\n` +
+    `If you would rather keep the game as it is, no action is required - deploy again and use ` +
+    `"Install Mods with ${LOADER_NAME_SHORT}" to get back in sync. To have future purges restore vanilla game files automatically, ` +
+    `turn on "Remove mods from the game when purging" under Settings > Mods.`;
   const startRestore = (dismiss) => {
-    restoreOriginalFiles(api)
-      .catch((err) => reportSyncError(api, err, 'Failed to restore vanilla game files'));
+    restoreOriginalFiles(api).catch((err) =>
+      reportSyncError(api, err, "Failed to restore vanilla game files"),
+    );
     dismiss();
   };
   api.sendNotification({
     id: NOTIF_ID,
-    type: 'warning',
+    type: "warning",
     message: MESSAGE,
     allowSuppress: true,
     actions: [
       {
-        title: 'Restore',
+        title: "Restore",
         action: startRestore,
       },
       {
-        title: 'More',
+        title: "More",
         action: (dismiss) => {
-          api.showDialog('question', MESSAGE, { text: MORE_TEXT }, [
-            { label: 'Restore Vanilla Game Files', action: () => startRestore(dismiss) },
-            { label: 'Continue', action: () => dismiss() },
+          api.showDialog("question", MESSAGE, { text: MORE_TEXT }, [
+            { label: "Restore Vanilla Game Files", action: () => startRestore(dismiss) },
+            { label: "Continue", action: () => dismiss() },
             {
-              label: 'Never Show Again', action: () => {
+              label: "Never Show Again",
+              action: () => {
                 api.suppressNotification(NOTIF_ID);
                 dismiss();
-              }
+              },
             },
           ]);
         },
@@ -1914,34 +2130,42 @@ async function didPurge(api, profileId) {
 //so it runs its setup again the next time it is started. Always the user's own decision.
 async function restoreOriginalFiles(api) {
   const t = api.translate;
-  const result = await api.showDialog('question', t('Restore vanilla game files?'), {
-    text: `${LOADER_NAME} will put the game archives back the way they were before any mod was `
-        + `installed. This removes every installed mod, including any installed outside Vortex, and `
-        + `clears ${LOADER_NAME}'s record of them, so it runs its setup again the next time it is `
-        + `started.\n\n`
-        + `Nothing in Vortex is deleted. The deployed mod files stay where they are and can be put `
-        + `back into the game with "Install Mods with ${LOADER_NAME_SHORT}".`,
-  }, [
-    { label: 'Cancel' },
-    { label: 'Restore Vanilla' },
-  ]);
-  if (result.action === 'Cancel') {
+  const result = await api.showDialog(
+    "question",
+    t("Restore vanilla game files?"),
+    {
+      text:
+        `${LOADER_NAME} will put the game archives back the way they were before any mod was ` +
+        `installed. This removes every installed mod, including any installed outside Vortex, and ` +
+        `clears ${LOADER_NAME}'s record of them, so it runs its setup again the next time it is ` +
+        `started.\n\n` +
+        `Nothing in Vortex is deleted. The deployed mod files stay where they are and can be put ` +
+        `back into the game with "Install Mods with ${LOADER_NAME_SHORT}".`,
+    },
+    [{ label: "Cancel" }, { label: "Restore Vanilla" }],
+  );
+  if (result.action === "Cancel") {
     return;
   }
   //this argument only works on its own, so the switch that closes the mod loader is left off and
   //its window may stay open until it is closed by hand
-  await runLoaderCommand(api, [LOADER_ARG_RESTORE],
-    `Restoring vanilla game files with ${LOADER_NAME}`, { close: false });
+  await runLoaderCommand(
+    api,
+    [LOADER_ARG_RESTORE],
+    `Restoring vanilla game files with ${LOADER_NAME}`,
+    { close: false },
+  );
   await writeLedger([]);
   const gamePath = getDiscoveryPath(api);
-  const remaining = (gamePath === undefined) ? [] : ((await readInstalledMods(gamePath)) ?? []);
+  const remaining = gamePath === undefined ? [] : ((await readInstalledMods(gamePath)) ?? []);
   api.sendNotification({
     id: `${GAME_ID}-sync`,
-    type: (remaining.length === 0) ? 'success' : 'warning',
-    message: (remaining.length === 0)
-      ? 'Vanilla game files have been restored'
-      : `${LOADER_NAME} still has ${remaining.length} mod(s) installed - its log records why`,
-    displayMS: (remaining.length === 0) ? 8000 : undefined,
+    type: remaining.length === 0 ? "success" : "warning",
+    message:
+      remaining.length === 0
+        ? "Vanilla game files have been restored"
+        : `${LOADER_NAME} still has ${remaining.length} mod(s) installed - its log records why`,
+    displayMS: remaining.length === 0 ? 8000 : undefined,
   });
 }
 
@@ -1951,11 +2175,12 @@ function reportSyncError(api, err, title) {
     return;
   }
   if (err instanceof util.ProcessCanceled) {
-    api.sendNotification({ type: 'warning', message: err.message, displayMS: 10000 });
+    api.sendNotification({ type: "warning", message: err.message, displayMS: 10000 });
     return;
   }
-  api.showErrorNotification(title ?? `Failed to sync mods with ${LOADER_NAME}`, err,
-    { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
+  api.showErrorNotification(title ?? `Failed to sync mods with ${LOADER_NAME}`, err, {
+    allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+  });
 }
 
 function startSync(api) {
@@ -1965,31 +2190,53 @@ function startSync(api) {
 //Both switches live under Settings > Mods rather than being fixed behaviour: each one makes the
 //game archives repack without being asked, which takes minutes, so it has to be the user's choice.
 function GameSettings() {
-  const { Toggle, More } = require('vortex-api');
-  const { useSelector, useDispatch } = require('react-redux');
+  const { Toggle, More } = require("vortex-api");
+  const { useSelector, useDispatch } = require("react-redux");
   const dispatch = useDispatch();
-  const autoSync = useSelector((state) => util.getSafe(state, ['settings', GAME_ID, SETTING_AUTO_SYNC], false));
-  const purgeSync = useSelector((state) => util.getSafe(state, ['settings', GAME_ID, SETTING_UNINSTALL_ON_PURGE], false));
-  const onToggleAutoSync = React.useCallback((checked) => dispatch(setAutoSyncOnDeploy(checked)), [dispatch]);
-  const onTogglePurgeSync = React.useCallback((checked) => dispatch(setUninstallOnPurge(checked)), [dispatch]);
-  return React.createElement('form', null,
-    React.createElement('div', { className: 'settings-group' },
-      React.createElement(Toggle, { checked: autoSync, onToggle: onToggleAutoSync },
+  const autoSync = useSelector((state) =>
+    util.getSafe(state, ["settings", GAME_ID, SETTING_AUTO_SYNC], false),
+  );
+  const purgeSync = useSelector((state) =>
+    util.getSafe(state, ["settings", GAME_ID, SETTING_UNINSTALL_ON_PURGE], false),
+  );
+  const onToggleAutoSync = React.useCallback(
+    (checked) => dispatch(setAutoSyncOnDeploy(checked)),
+    [dispatch],
+  );
+  const onTogglePurgeSync = React.useCallback(
+    (checked) => dispatch(setUninstallOnPurge(checked)),
+    [dispatch],
+  );
+  return React.createElement(
+    "form",
+    null,
+    React.createElement(
+      "div",
+      { className: "settings-group" },
+      React.createElement(
+        Toggle,
+        { checked: autoSync, onToggle: onToggleAutoSync },
         `Install mods with ${LOADER_NAME_SHORT} after deploying`,
-        React.createElement(More, { id: `${GAME_ID}-auto-sync-more`, name: 'Install After Deploying' },
-          `Runs the same sync as the "Install Mods with ${LOADER_NAME_SHORT}" button every time mods are `
-          + `deployed, instead of showing a notification with a button on it.\n\n`
-          + `A sync repacks the game archives, so leaving this off keeps deploying quick and puts the `
-          + `sync on your schedule.`,
+        React.createElement(
+          More,
+          { id: `${GAME_ID}-auto-sync-more`, name: "Install After Deploying" },
+          `Runs the same sync as the "Install Mods with ${LOADER_NAME_SHORT}" button every time mods are ` +
+            `deployed, instead of showing a notification with a button on it.\n\n` +
+            `A sync repacks the game archives, so leaving this off keeps deploying quick and puts the ` +
+            `sync on your schedule.`,
         ),
       ),
-      React.createElement(Toggle, { checked: purgeSync, onToggle: onTogglePurgeSync },
+      React.createElement(
+        Toggle,
+        { checked: purgeSync, onToggle: onTogglePurgeSync },
         `Restore vanilla game files when purging (${LOADER_NAME_SHORT})`,
-        React.createElement(More, { id: `${GAME_ID}-purge-sync-more`, name: 'Remove When Purging' },
-          `Purging removes the deployed mod files, but by then those mods are inside the game archives, `
-          + `so the game stays modded with the files that would undo it gone. With this on, `
-          + `${LOADER_NAME_SHORT} is asked to take them out first.\n\n`
-          + `Only mods installed through Vortex are removed, and you are asked before anything happens.`,
+        React.createElement(
+          More,
+          { id: `${GAME_ID}-purge-sync-more`, name: "Remove When Purging" },
+          `Purging removes the deployed mod files, but by then those mods are inside the game archives, ` +
+            `so the game stays modded with the files that would undo it gone. With this on, ` +
+            `${LOADER_NAME_SHORT} is asked to take them out first.\n\n` +
+            `Only mods installed through Vortex are removed, and you are asked before anything happens.`,
         ),
       ),
     ),
@@ -2004,21 +2251,21 @@ function deployNotify(api) {
     ? `Sync Mods to ${MOD_NAME} to Finish Installing`
     : `Run ${MOD_NAME} to Install Mods`;
   const MORE_TEXT = snakeBiteCliSync
-    ? `Deploying only places mods in "<GameFolder>\\${MOD_PATH}". They are not in the game until `
-      + `${MOD_NAME} installs them into the game archives.\n\n`
-      + `"Sync" does that for you: it installs everything Vortex has deployed and is not installed yet, `
-      + `and removes the mods it previously installed that Vortex no longer has. Mods you installed `
-      + `yourself in ${MOD_NAME} are left alone - Sync reports them but never removes them on its own.\n\n`
-      + `Syncing repacks the game archives, so it can take a while for large mods. The same button is on `
-      + `the Mods toolbar, and ${MOD_NAME} can still be run by hand from the "Tools" tab.\n`
-    : `For most mods, you must use ${MOD_NAME} to install the mod to the game files after installing with Vortex.\n`
-      + `Mods requiring installation will be found in the folder: "<GameFolder>\\${MOD_PATH}".\n`
-      + `If you don't see your mod's folder there, check in the root game folder.\n`
-      + `Use the included tool to launch ${MOD_NAME} (button on notification or in "Tools" tab).\n`;
+    ? `Deploying only places mods in "<GameFolder>\\${MOD_PATH}". They are not in the game until ` +
+      `${MOD_NAME} installs them into the game archives.\n\n` +
+      `"Sync" does that for you: it installs everything Vortex has deployed and is not installed yet, ` +
+      `and removes the mods it previously installed that Vortex no longer has. Mods you installed ` +
+      `yourself in ${MOD_NAME} are left alone - Sync reports them but never removes them on its own.\n\n` +
+      `Syncing repacks the game archives, so it can take a while for large mods. The same button is on ` +
+      `the Mods toolbar, and ${MOD_NAME} can still be run by hand from the "Tools" tab.\n`
+    : `For most mods, you must use ${MOD_NAME} to install the mod to the game files after installing with Vortex.\n` +
+      `Mods requiring installation will be found in the folder: "<GameFolder>\\${MOD_PATH}".\n` +
+      `If you don't see your mod's folder there, check in the root game folder.\n` +
+      `Use the included tool to launch ${MOD_NAME} (button on notification or in "Tools" tab).\n`;
   const actions = [];
   if (snakeBiteCliSync) {
     actions.push({
-      title: 'Sync',
+      title: "Sync",
       action: (dismiss) => {
         startSync(api);
         dismiss();
@@ -2026,43 +2273,46 @@ function deployNotify(api) {
     });
   }
   actions.push({
-    title: 'Run SB',
+    title: "Run SB",
     action: (dismiss) => {
       runModManager(api);
       dismiss();
     },
   });
   actions.push({
-    title: 'More',
+    title: "More",
     action: (dismiss) => {
       const buttons = [];
       if (snakeBiteCliSync) {
         buttons.push({
-          label: 'Sync', action: () => {
+          label: "Sync",
+          action: () => {
             startSync(api);
             dismiss();
-          }
+          },
         });
       }
       buttons.push({
-        label: 'Run SB', action: () => {
+        label: "Run SB",
+        action: () => {
           runModManager(api);
           dismiss();
-        }
+        },
       });
-      buttons.push({ label: 'Continue', action: () => dismiss() });
+      buttons.push({ label: "Continue", action: () => dismiss() });
       buttons.push({
-        label: 'Never Show Again', action: () => {
+        label: "Never Show Again",
+        action: () => {
           api.suppressNotification(NOTIF_ID);
           dismiss();
-        }
+        },
       });
-      api.showDialog('question', MESSAGE, { text: MORE_TEXT }, buttons);
+      api.showDialog("question", MESSAGE, { text: MORE_TEXT }, buttons);
     },
   });
   api.sendNotification({
     id: NOTIF_ID,
-    type: 'warning',
+    type: "warning",
     message: MESSAGE,
     allowSuppress: true,
     actions,
@@ -2073,21 +2323,30 @@ function runModManager(api) {
   const TOOL_ID = LOADER_ID;
   const TOOL_NAME = LOADER_NAME;
   const state = api.store.getState();
-  const tool = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'tools', TOOL_ID], undefined);
+  const tool = util.getSafe(
+    state,
+    ["settings", "gameMode", "discovered", GAME_ID, "tools", TOOL_ID],
+    undefined,
+  );
 
   try {
     const TOOL_PATH = tool.path;
     if (TOOL_PATH !== undefined) {
-      return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false })
-        .catch(err => api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err,
-          { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 })
-        );
-    }
-    else {
-      return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, `Path to ${TOOL_NAME} executable could not be found. Ensure ${TOOL_NAME} is installed through Vortex.`);
+      return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false }).catch((err) =>
+        api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
+          allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+        }),
+      );
+    } else {
+      return api.showErrorNotification(
+        `Failed to run ${TOOL_NAME}`,
+        `Path to ${TOOL_NAME} executable could not be found. Ensure ${TOOL_NAME} is installed through Vortex.`,
+      );
     }
   } catch (err) {
-    return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
+    return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
+      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+    });
   }
 }
 
@@ -2114,8 +2373,9 @@ async function setup(discovery, api, gameSpec) {
     await downloadLoader(api, gameSpec);
     //catches an update that was installed while another game was active, and a mod loader that was
     //uninstalled outside of Vortex
-    const loaderMod = Object.values(api.getState().persistent.mods[GAME_ID] ?? {})
-      .find(mod => mod.type === LOADER_ID);
+    const loaderMod = Object.values(api.getState().persistent.mods[GAME_ID] ?? {}).find(
+      (mod) => mod.type === LOADER_ID,
+    );
     if (loaderMod !== undefined) {
       await syncLoaderInstall(api, loaderMod.id);
     }
@@ -2126,7 +2386,8 @@ async function setup(discovery, api, gameSpec) {
 
 //Let Vortex know about the game
 function applyGame(context, gameSpec) {
-  const game = { //register game
+  const game = {
+    //register game
     ...gameSpec.game,
     queryPath: makeFindGame(context.api, gameSpec),
     executable: getExecutable,
@@ -2140,11 +2401,23 @@ function applyGame(context, gameSpec) {
 
   //register mod types
   (gameSpec.modTypes || []).forEach((type, idx) => {
-    context.registerModType(type.id, modTypePriority(type.priority) + idx, (gameId) => {
-      var _a;
-      return (gameId === gameSpec.game.id)
-        && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
+    context.registerModType(
+      type.id,
+      modTypePriority(type.priority) + idx,
+      (gameId) => {
+        var _a;
+        return (
+          gameId === gameSpec.game.id &&
+          !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+          _a === void 0
+            ? void 0
+            : _a.path)
+        );
+      },
+      (game) => pathPattern(context.api, game, type.targetPath),
+      () => Promise.resolve(false),
+      { name: type.name },
+    );
   });
 
   /*register mod types explicitly
@@ -2168,25 +2441,41 @@ function applyGame(context, gameSpec) {
   ); //*/
 
   if (hasLoader) {
-    context.registerModType(LOADER_ID, 70,
+    context.registerModType(
+      LOADER_ID,
+      70,
       (gameId) => {
         var _a;
-        return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+        return (
+          gameId === GAME_ID &&
+          !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+          _a === void 0
+            ? void 0
+            : _a.path)
+        );
       },
-      (game) => pathPattern(context.api, game, path.join('{gamePath}', LOADER_PATH)),
+      (game) => pathPattern(context.api, game, path.join("{gamePath}", LOADER_PATH)),
       () => Promise.resolve(false),
-      { name: LOADER_NAME }
+      { name: LOADER_NAME },
     );
   }
   if (allowMgsvFix) {
-    context.registerModType(MGSVFIX_ID, 72,
+    context.registerModType(
+      MGSVFIX_ID,
+      72,
       (gameId) => {
         var _a;
-        return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+        return (
+          gameId === GAME_ID &&
+          !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+          _a === void 0
+            ? void 0
+            : _a.path)
+        );
       },
-      (game) => pathPattern(context.api, game, path.join('{gamePath}', MGSVFIX_PATH)),
+      (game) => pathPattern(context.api, game, path.join("{gamePath}", MGSVFIX_PATH)),
       () => Promise.resolve(false),
-      { name: MGSVFIX_NAME }
+      { name: MGSVFIX_NAME },
     );
   }
 
@@ -2201,65 +2490,109 @@ function applyGame(context, gameSpec) {
     context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
   }
   if (needsModInstaller) {
-    context.registerInstaller(MOD_ID, 29, testMod, (files, fileName) => installMod(context.api, files, fileName));
+    context.registerInstaller(MOD_ID, 29, testMod, (files, fileName) =>
+      installMod(context.api, files, fileName),
+    );
   }
   //context.registerInstaller(CONFIG_ID, 33, testConfig, installConfig);
   if (saveInstaller) {
     context.registerInstaller(SAVE_ID, 35, testSave, installSave);
   }
   if (fallbackInstaller) {
-    context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
+    context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) =>
+      installFallback(context.api, files, destinationPath),
+    );
   }
 
   //register settings
   if (snakeBiteCliSync) {
-    context.registerReducer(['settings', GAME_ID], {
+    context.registerReducer(["settings", GAME_ID], {
       reducers: {
-        [setAutoSyncOnDeploy.toString()]: (state, payload) => util.setSafe(state, [SETTING_AUTO_SYNC], payload),
-        [setUninstallOnPurge.toString()]: (state, payload) => util.setSafe(state, [SETTING_UNINSTALL_ON_PURGE], payload),
+        [setAutoSyncOnDeploy.toString()]: (state, payload) =>
+          util.setSafe(state, [SETTING_AUTO_SYNC], payload),
+        [setUninstallOnPurge.toString()]: (state, payload) =>
+          util.setSafe(state, [SETTING_UNINSTALL_ON_PURGE], payload),
       },
       defaults: { [SETTING_AUTO_SYNC]: false, [SETTING_UNINSTALL_ON_PURGE]: false },
     });
-    context.registerSettings('Mods', GameSettings, () => ({}),
-      () => selectors.activeGameId(context.api.getState()) === GAME_ID, 150
+    context.registerSettings(
+      "Mods",
+      GameSettings,
+      () => ({}),
+      () => selectors.activeGameId(context.api.getState()) === GAME_ID,
+      150,
     );
   }
 
   //register actions
   if (snakeBiteCliSync) {
-    context.registerAction('mod-icons', 300, LOADER_ICON_NAME, {}, `Install Mods with ${LOADER_NAME_SHORT}`, () => {
-      startSync(context.api);
-    }, () => {
-      const state = context.api.getState();
-      const gameId = selectors.activeGameId(state);
-      return gameId === GAME_ID;
-    });
-    context.registerAction('mod-icons', 300, RESTORE_ICON_NAME, {}, `Restore Game Files (${LOADER_NAME_SHORT})`, () => {
-      restoreOriginalFiles(context.api)
-        .catch((err) => reportSyncError(context.api, err, 'Failed to restore vanilla game files'));
-    }, () => {
-      const state = context.api.getState();
-      const gameId = selectors.activeGameId(state);
-      return gameId === GAME_ID;
-    });
+    context.registerAction(
+      "mod-icons",
+      300,
+      LOADER_ICON_NAME,
+      {},
+      `Install Mods with ${LOADER_NAME_SHORT}`,
+      () => {
+        startSync(context.api);
+      },
+      () => {
+        const state = context.api.getState();
+        const gameId = selectors.activeGameId(state);
+        return gameId === GAME_ID;
+      },
+    );
+    context.registerAction(
+      "mod-icons",
+      300,
+      RESTORE_ICON_NAME,
+      {},
+      `Restore Game Files (${LOADER_NAME_SHORT})`,
+      () => {
+        restoreOriginalFiles(context.api).catch((err) =>
+          reportSyncError(context.api, err, "Failed to restore vanilla game files"),
+        );
+      },
+      () => {
+        const state = context.api.getState();
+        const gameId = selectors.activeGameId(state);
+        return gameId === GAME_ID;
+      },
+    );
   }
-  if (allowMgsvFix) { //the notification is otherwise the only install path, and "Never Show Again" would leave no way back
-    context.registerAction('mod-icons', 300, 'open-ext', {}, `Download Latest ${MGSVFIX_NAME}`, () => {
-      downloadCodeberg(context.api, spec, CODEBERG_REQUIREMENTS, false);
-    }, () => {
+  if (allowMgsvFix) {
+    //the notification is otherwise the only install path, and "Never Show Again" would leave no way back
+    context.registerAction(
+      "mod-icons",
+      300,
+      "open-ext",
+      {},
+      `Download Latest ${MGSVFIX_NAME}`,
+      () => {
+        downloadCodeberg(context.api, spec, CODEBERG_REQUIREMENTS, false);
+      },
+      () => {
+        const state = context.api.getState();
+        const gameId = selectors.activeGameId(state);
+        return gameId === GAME_ID;
+      },
+    );
+  }
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    `Open ${LOADER_NAME} Folder`,
+    () => {
+      const folder = getSnakeBite(context.api);
+      util.opn(folder).catch(() => null);
+    },
+    () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-    });
-  }
-  context.registerAction('mod-icons', 300, 'open-ext', {}, `Open ${LOADER_NAME} Folder`, () => {
-    const folder = getSnakeBite(context.api);
-    util.opn(folder).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
+    },
+  );
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
     util.opn(CONFIG_PATH).catch(() => null);
     }, () => {
@@ -2274,67 +2607,104 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
-    util.opn(PCGAMINGWIKI_URL).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
-    const openPath = path.join(__dirname, 'CHANGELOG.md');
-    util.opn(openPath).catch(() => null);
-    }, () => {
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open PCGamingWiki Page",
+    () => {
+      util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
-    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    util.opn(DOWNLOAD_FOLDER).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "View Changelog",
+    () => {
+      const openPath = path.join(__dirname, "CHANGELOG.md");
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Submit Bug Report",
+    () => {
+      util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Downloads Folder",
+    () => {
+      util.opn(DOWNLOAD_FOLDER).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
 }
 
 //main function
 function main(context) {
   applyGame(context, spec);
-  context.once(() => { // put code here that should be run (once) when Vortex starts up
+  context.once(() => {
+    // put code here that should be run (once) when Vortex starts up
     const api = context.api;
     if (snakeBiteCliSync) {
       installLoaderIcons();
     }
-    api.onAsync('did-deploy', async (profileId) => {
+    api.onAsync("did-deploy", async (profileId) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
-      if (snakeBiteCliSync && isAutoSyncEnabled(api)) { //the sync reports what it did, so the reminder would only repeat it
-        return syncMods(api).catch(err => reportSyncError(api, err));
+      if (snakeBiteCliSync && isAutoSyncEnabled(api)) {
+        //the sync reports what it did, so the reminder would only repeat it
+        return syncMods(api).catch((err) => reportSyncError(api, err));
       }
       return deployNotify(api);
     });
     if (snakeBiteCliSync) {
-      api.onAsync('will-purge', (profileId) => willPurge(api, profileId));
-      api.onAsync('did-purge', (profileId) => didPurge(api, profileId));
+      api.onAsync("will-purge", (profileId) => willPurge(api, profileId));
+      api.onAsync("did-purge", (profileId) => didPurge(api, profileId));
     }
-    api.onAsync('check-mods-version', (gameId, mods, forced) => {
+    api.onAsync("check-mods-version", (gameId, mods, forced) => {
       if (gameId !== GAME_ID) return;
-      return checkForCodebergUpdate(api, spec, CODEBERG_REQUIREMENTS)
-        .catch(err => log('warn', `Failed to check for ${MGSVFIX_NAME} update: ${err}`));
+      return checkForCodebergUpdate(api, spec, CODEBERG_REQUIREMENTS).catch((err) =>
+        log("warn", `Failed to check for ${MGSVFIX_NAME} update: ${err}`),
+      );
     });
-    if (hasLoader) { //updating the mod loader in Vortex only stages the installer, so run it afterwards
-      api.events.on('did-install-mod', (gameId, archiveId, modId) => {
+    if (hasLoader) {
+      //updating the mod loader in Vortex only stages the installer, so run it afterwards
+      api.events.on("did-install-mod", (gameId, archiveId, modId) => {
         if (gameId !== GAME_ID) return;
-        syncLoaderInstall(api, modId)
-          .catch(err => log('warn', `Failed to apply the ${LOADER_NAME} install: ${err}`));
+        syncLoaderInstall(api, modId).catch((err) =>
+          log("warn", `Failed to apply the ${LOADER_NAME} install: ${err}`),
+        );
       });
     }
   });

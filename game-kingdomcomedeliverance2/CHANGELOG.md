@@ -4,6 +4,11 @@
 
 - Changed launcher settings so that Steam version launches through Steam (so that Steam launch arguments are used).
 
+## [1.0.5] - 2026-09-06
+
+- Fixed: Locked load order entries could be moved out of position when using "Move to Top", "Move to Bottom" or the position number box on another entry. Locked entries now keep their place.
+- Fixed: The load order position number box now accepts low numbers even when a locked entry is further down the list.
+
 ## [1.0.4] - 2026-09-05
 
 - Fixed: A locked load order entry no longer unlocks itself after deploying or reopening the load order page.

@@ -7,10 +7,10 @@ Date: 2026-08-11
 ////////////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require('vortex-api');
-const path = require('path');
-const template = require('string-template');
-const winapi = require('winapi-bindings');
+const { actions, fs, util, selectors, log } = require("vortex-api");
+const path = require("path");
+const template = require("string-template");
+const winapi = require("winapi-bindings");
 
 //Specify all the information about the game
 const GAME_ID = "assassinscreedshadows";
@@ -20,44 +20,55 @@ const EPICAPP_ID = "a1a86c2450de45989bda712385f66c9d";
 const GAME_NAME = "Assassin's Creed Shadows";
 const GAME_NAME_SHORT = "AC Shadows";
 const EXEC = "ACShadows.exe";
-let GAME_PATH = ''; //patched in the setup function to the discovered game path
-let GAME_VERSION = ''; //Game version
-let STAGING_FOLDER = '';
-let DOWNLOAD_FOLDER = '';
+let GAME_PATH = ""; //patched in the setup function to the discovered game path
+let GAME_VERSION = ""; //Game version
+let STAGING_FOLDER = "";
+let DOWNLOAD_FOLDER = "";
 
 const DLCSTRING10 = "_10_";
 const DLCSTRING26 = "_26_";
 const DLCSTRING28 = "_28_";
 const DLCSTRING29 = "_29_";
 
-const DLCFOLDER10 = 'dlc_10';
-const DLCFOLDER26 = 'dlc_26';
-const DLCFOLDER28 = 'dlc_28';
-const DLCFOLDER29 = 'dlc_29';
+const DLCFOLDER10 = "dlc_10";
+const DLCFOLDER26 = "dlc_26";
+const DLCFOLDER28 = "dlc_28";
+const DLCFOLDER29 = "dlc_29";
 const DLC_FOLDERS = [DLCFOLDER10, DLCFOLDER26, DLCFOLDER28, DLCFOLDER29];
-const ROOT_FOLDERS = ['videos', 'resources'];
+const ROOT_FOLDERS = ["videos", "resources"];
 const FIXES_FILES = ["version.dll"];
 const LOOSE_EXTS = [".data"];
-const IGNORE_DEPLOY = [path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
-const IGNORE_CONFLICTS = [path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
+const IGNORE_DEPLOY = [
+  path.join("**", "readme.txt"),
+  path.join("**", "README.txt"),
+  path.join("**", "ReadMe.txt"),
+  path.join("**", "Readme.txt"),
+];
+const IGNORE_CONFLICTS = [
+  path.join("**", "readme.txt"),
+  path.join("**", "README.txt"),
+  path.join("**", "ReadMe.txt"),
+  path.join("**", "Readme.txt"),
+];
 
 //Information for installers, mod types, and tools
 const ATK_ID = `${GAME_ID}-atk`;
 const ATK_NAME = "AnvilToolkit";
-const ATK_EXEC = 'anviltoolkit.exe';
+const ATK_EXEC = "anviltoolkit.exe";
 const ATK_DOMAIN = `site`;
 const ATK_PAGE = 455;
 const ATK_FILE = 3699;
 
 const FORGER_ID = `${GAME_ID}-forgerpatchmanager`;
 const FORGER_NAME = "Forger Patch Manager";
-const FORGER_EXEC = 'forger.exe';
+const FORGER_EXEC = "forger.exe";
 const FORGER_DOMAIN = "assassinscreedodyssey";
 const FORGER_PAGE = 42;
 const FORGER_FILE = 716;
 
-const FORGER_NEW_EXEC = 'forger mod.exe';
-const FORGER_NEW_URL = 'https://drive.usercontent.google.com/download?id=1MctosQuCK1FNmTbaDl4GVWnka1r_0FJl&export=download&authuser=0&confirm=t&uuid=88e66bba-2858-4bf1-ae98-d2df9e8b7a76&at=AEz70l6ooFkHoL-8hKGoUG3sjmnx%3A1742334203674';
+const FORGER_NEW_EXEC = "forger mod.exe";
+const FORGER_NEW_URL =
+  "https://drive.usercontent.google.com/download?id=1MctosQuCK1FNmTbaDl4GVWnka1r_0FJl&export=download&authuser=0&confirm=t&uuid=88e66bba-2858-4bf1-ae98-d2df9e8b7a76&at=AEz70l6ooFkHoL-8hKGoUG3sjmnx%3A1742334203674";
 
 const PATCH_ID = `${GAME_ID}-forgerpatch`;
 const PATCH_NAME = "Forger Patch";
@@ -74,18 +85,18 @@ const DLC_NAME = "DLC Folder";
 const DLC_PATH = path.join(".");
 
 const EXTRACTED_ID = `${GAME_ID}-extractedfolder`;
-const EXTRACTED_NAME = "Extracted Folder"
+const EXTRACTED_NAME = "Extracted Folder";
 const EXTRACTED_PATH = path.join(".");
 const EXTRACTED_FOLDER = "Extracted";
 const RENAME_FOLDER = "RENAME_ME_TO_FORGE_NAME.forge";
 
 const FORGEFOLDER_ID = `${GAME_ID}-forgefolder`;
-const FORGEFOLDER_NAME = ".forge Folder"
+const FORGEFOLDER_NAME = ".forge Folder";
 const FORGEFOLDER_PATH = path.join(".");
 const FORGEFOLDER_STRING = ".forge";
 
 const DATAFOLDER_ID = `${GAME_ID}-datafolder`;
-const DATAFOLDER_NAME = ".data Folder"
+const DATAFOLDER_NAME = ".data Folder";
 const DATAFOLDER_PATH = path.join(".");
 const DATAFOLDER_STRING = ".data";
 
@@ -173,138 +184,132 @@ const MOD_PATH_DEFAULT = path.join(".");
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/973"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_Shadows";
 const spec = {
-  "game": {
-    "id": GAME_ID,
-    "name": GAME_NAME,
-    "shortName": GAME_NAME_SHORT,
-    "executable": EXEC,
-    "logo": `${GAME_ID}.jpg`,
-    "mergeMods": true,
-    "requiresCleanup": true,
-    "modPath": MOD_PATH_DEFAULT,
-    "modPathIsRelative": true,
-    "requiredFiles": [
-      EXEC
-    ],
-    "details": {
-      "steamAppId": +STEAMAPP_ID,
-      "epicAppId": EPICAPP_ID,
-      "uPlayAppId": UPLAYAPP_ID,
-      "ignoreDeploy": IGNORE_DEPLOY,
-      "ignoreConflicts": IGNORE_CONFLICTS,
+  game: {
+    id: GAME_ID,
+    name: GAME_NAME,
+    shortName: GAME_NAME_SHORT,
+    executable: EXEC,
+    logo: `${GAME_ID}.jpg`,
+    mergeMods: true,
+    requiresCleanup: true,
+    modPath: MOD_PATH_DEFAULT,
+    modPathIsRelative: true,
+    requiredFiles: [EXEC],
+    details: {
+      steamAppId: +STEAMAPP_ID,
+      epicAppId: EPICAPP_ID,
+      uPlayAppId: UPLAYAPP_ID,
+      ignoreDeploy: IGNORE_DEPLOY,
+      ignoreConflicts: IGNORE_CONFLICTS,
     },
-    "environment": {
-      "SteamAPPId": STEAMAPP_ID,
-      "EpicAPPId": EPICAPP_ID,
-      "UPlayAPPId": UPLAYAPP_ID
-    }
+    environment: {
+      SteamAPPId: STEAMAPP_ID,
+      EpicAPPId: EPICAPP_ID,
+      UPlayAPPId: UPLAYAPP_ID,
+    },
   },
-  "modTypes": [
+  modTypes: [
     {
-      "id": PATCH_ID,
-      "name": PATCH_NAME,
-      "priority": "high",
-      "targetPath": path.join('{gamePath}', PATCH_PATH)
+      id: PATCH_ID,
+      name: PATCH_NAME,
+      priority: "high",
+      targetPath: path.join("{gamePath}", PATCH_PATH),
     },
     {
-      "id": PATCH_TEXTURES_ID,
-      "name": PATCH_TEXTURES_NAME,
-      "priority": "high",
-      "targetPath": path.join('{gamePath}', PATCH_TEXTURES_PATH)
+      id: PATCH_TEXTURES_ID,
+      name: PATCH_TEXTURES_NAME,
+      priority: "high",
+      targetPath: path.join("{gamePath}", PATCH_TEXTURES_PATH),
     },
     {
-      "id": ROOT_ID,
-      "name": ROOT_NAME,
-      "priority": "high",
-      "targetPath": `{gamePath}`
+      id: ROOT_ID,
+      name: ROOT_NAME,
+      priority: "high",
+      targetPath: `{gamePath}`,
     },
     {
-      "id": DLC_ID,
-      "name": DLC_NAME,
-      "priority": "high",
-      "targetPath": path.join('{gamePath}', DLC_PATH)
+      id: DLC_ID,
+      name: DLC_NAME,
+      priority: "high",
+      targetPath: path.join("{gamePath}", DLC_PATH),
     },
     {
-      "id": EXTRACTED_ID,
-      "name": EXTRACTED_NAME,
-      "priority": "high",
-      "targetPath": path.join('{gamePath}', EXTRACTED_PATH)
+      id: EXTRACTED_ID,
+      name: EXTRACTED_NAME,
+      priority: "high",
+      targetPath: path.join("{gamePath}", EXTRACTED_PATH),
     },
     {
-      "id": FORGEFOLDER_ID,
-      "name": FORGEFOLDER_NAME,
-      "priority": "high",
-      "targetPath": path.join('{gamePath}', FORGEFOLDER_PATH)
+      id: FORGEFOLDER_ID,
+      name: FORGEFOLDER_NAME,
+      priority: "high",
+      targetPath: path.join("{gamePath}", FORGEFOLDER_PATH),
     },
     {
-      "id": DATAFOLDER_ID,
-      "name": DATAFOLDER_NAME,
-      "priority": "high",
-      "targetPath": path.join('{gamePath}', DATAFOLDER_PATH)
+      id: DATAFOLDER_ID,
+      name: DATAFOLDER_NAME,
+      priority: "high",
+      targetPath: path.join("{gamePath}", DATAFOLDER_PATH),
     },
     {
-      "id": LOOSE_ID,
-      "name": LOOSE_NAME,
-      "priority": "high",
-      "targetPath": path.join('{gamePath}', LOOSE_PATH)
+      id: LOOSE_ID,
+      name: LOOSE_NAME,
+      priority: "high",
+      targetPath: path.join("{gamePath}", LOOSE_PATH),
     },
     {
-      "id": FORGE_ID,
-      "name": FORGE_NAME,
-      "priority": "high",
-      "targetPath": path.join('{gamePath}', FORGE_PATH)
+      id: FORGE_ID,
+      name: FORGE_NAME,
+      priority: "high",
+      targetPath: path.join("{gamePath}", FORGE_PATH),
     },
     {
-      "id": FORGEDLC10_ID,
-      "name": FORGEDLC10_NAME,
-      "priority": "low",
-      "targetPath": path.join('{gamePath}', FORGEDLC10_PATH)
+      id: FORGEDLC10_ID,
+      name: FORGEDLC10_NAME,
+      priority: "low",
+      targetPath: path.join("{gamePath}", FORGEDLC10_PATH),
     },
     {
-      "id": FORGEDLC26_ID,
-      "name": FORGEDLC26_NAME,
-      "priority": "low",
-      "targetPath": path.join('{gamePath}', FORGEDLC26_PATH)
+      id: FORGEDLC26_ID,
+      name: FORGEDLC26_NAME,
+      priority: "low",
+      targetPath: path.join("{gamePath}", FORGEDLC26_PATH),
     },
     {
-      "id": FORGEDLC28_ID,
-      "name": FORGEDLC28_NAME,
-      "priority": "low",
-      "targetPath": path.join('{gamePath}', FORGEDLC28_PATH)
+      id: FORGEDLC28_ID,
+      name: FORGEDLC28_NAME,
+      priority: "low",
+      targetPath: path.join("{gamePath}", FORGEDLC28_PATH),
     },
     {
-      "id": FORGEDLC29_ID,
-      "name": FORGEDLC29_NAME,
-      "priority": "low",
-      "targetPath": path.join('{gamePath}', FORGEDLC29_PATH)
+      id: FORGEDLC29_ID,
+      name: FORGEDLC29_NAME,
+      priority: "low",
+      targetPath: path.join("{gamePath}", FORGEDLC29_PATH),
     },
     {
-      "id": FIXES_ID,
-      "name": FIXES_NAME,
-      "priority": "low",
-      "targetPath": path.join('{gamePath}', FIXES_PATH)
+      id: FIXES_ID,
+      name: FIXES_NAME,
+      priority: "low",
+      targetPath: path.join("{gamePath}", FIXES_PATH),
     },
     {
-      "id": ATK_ID,
-      "name": ATK_NAME,
-      "priority": "low",
-      "targetPath": "{gamePath}"
+      id: ATK_ID,
+      name: ATK_NAME,
+      priority: "low",
+      targetPath: "{gamePath}",
     },
     {
-      "id": FORGER_ID,
-      "name": FORGER_NAME,
-      "priority": "low",
-      "targetPath": "{gamePath}"
+      id: FORGER_ID,
+      name: FORGER_NAME,
+      priority: "low",
+      targetPath: "{gamePath}",
     },
   ],
-  "discovery": {
-    "ids": [
-      UPLAYAPP_ID,
-      STEAMAPP_ID,
-      EPICAPP_ID,
-    ],
-    "names": []
-  }
+  discovery: {
+    ids: [UPLAYAPP_ID, STEAMAPP_ID, EPICAPP_ID],
+    names: [],
+  },
 };
 
 //3rd party tools and launchers
@@ -312,7 +317,7 @@ const tools = [
   {
     id: ATK_ID,
     name: ATK_NAME,
-    logo: 'anvil.png',
+    logo: "anvil.png",
     executable: () => ATK_EXEC,
     requiredFiles: [ATK_EXEC],
     relative: true,
@@ -321,16 +326,16 @@ const tools = [
   {
     id: FORGER_ID,
     name: FORGER_NAME,
-    logo: 'forger.png',
+    logo: "forger.png",
     executable: () => FORGER_EXEC,
     requiredFiles: [FORGER_EXEC],
     relative: true,
     exclusive: true,
   },
   {
-    id: FORGER_ID + 'new',
-    name: FORGER_NAME + ' (New)',
-    logo: 'forger.png',
+    id: FORGER_ID + "new",
+    name: FORGER_NAME + " (New)",
+    logo: "forger.png",
     executable: () => FORGER_NEW_EXEC,
     requiredFiles: [FORGER_NEW_EXEC],
     relative: true,
@@ -348,8 +353,7 @@ function statCheckSync(gamePath, file) {
   try {
     fs.statSync(path.join(gamePath, file));
     return true;
-  }
-  catch {
+  } catch {
     return false;
   }
 }
@@ -358,8 +362,7 @@ async function statCheckAsync(gamePath, file) {
   try {
     await fs.statAsync(path.join(gamePath, file));
     return true;
-  }
-  catch {
+  } catch {
     return false;
   }
 }
@@ -371,31 +374,38 @@ async function getAllFiles(dirPath) {
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
       const stats = await fs.statAsync(fullPath);
-      if (stats.isDirectory()) { // Recursively get files from subdirectories
+      if (stats.isDirectory()) {
+        // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
         results = results.concat(subDirFiles);
-      } else { // Add file to results
+      } else {
+        // Add file to results
         results.push(fullPath);
       }
     }
   } catch (err) {
-    log('warn', `Error reading directory ${dirPath}: ${err.message}`);
+    log("warn", `Error reading directory ${dirPath}: ${err.message}`);
   }
   return results;
 }
 
-const getDiscoveryPath = (api) => { //get the game's discovered path
+const getDiscoveryPath = (api) => {
+  //get the game's discovered path
   const state = api.getState();
   const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
 
 async function purge(api) {
-  return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));
+  return new Promise((resolve, reject) =>
+    api.events.emit("purge-mods", true, (err) => (err ? reject(err) : resolve())),
+  );
 }
 
 async function deploy(api) {
-  return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
+  return new Promise((resolve, reject) =>
+    api.events.emit("deploy-mods", (err) => (err ? reject(err) : resolve())),
+  );
 }
 
 function modTypePriority(priority) {
@@ -409,10 +419,13 @@ function modTypePriority(priority) {
 function pathPattern(api, game, pattern) {
   var _a;
   return template(pattern, {
-    gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
-    documents: util.getVortexPath('documents'),
-    localAppData: util.getVortexPath('localAppData'),
-    appData: util.getVortexPath('appData'),
+    gamePath:
+      (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0
+        ? void 0
+        : _a.path,
+    documents: util.getVortexPath("documents"),
+    localAppData: util.getVortexPath("localAppData"),
+    appData: util.getVortexPath("appData"),
   });
 }
 
@@ -420,36 +433,38 @@ function pathPattern(api, game, pattern) {
 function makeFindGame(api, gameSpec) {
   try {
     const instPath = winapi.RegGetValue(
-      'HKEY_LOCAL_MACHINE',
+      "HKEY_LOCAL_MACHINE",
       `SOFTWARE\\WOW6432Node\\Ubisoft\\Launcher\\Installs\\${UPLAYAPP_ID}`,
-        'InstallDir');
+      "InstallDir",
+    );
     if (!instPath) {
-      throw new Error('empty registry key');
+      throw new Error("empty registry key");
     }
     return () => Promise.resolve(instPath.value);
   } catch {
-    return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
-      .then((game) => game.gamePath);
+    return () =>
+      util.GameStoreHelper.findByAppId(gameSpec.discovery.ids).then((game) => game.gamePath);
   }
 }
 
 //Set the mod path for the game
 function makeGetModPath(api, gameSpec) {
-  return () => gameSpec.game.modPathIsRelative !== false
-    ? gameSpec.game.modPath || '.'
-    : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
+  return () =>
+    gameSpec.game.modPathIsRelative !== false
+      ? gameSpec.game.modPath || "."
+      : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
 }
 
 //Set launcher requirements
 async function requiresLauncher(gamePath, store) {
-  if (store === 'steam') {
+  if (store === "steam") {
     return Promise.resolve({
-      launcher: 'steam',
+      launcher: "steam",
     });
   } //*/
-  if (store === 'epic') {
+  if (store === "epic") {
     return Promise.resolve({
-      launcher: 'epic',
+      launcher: "epic",
       addInfo: {
         appId: EPICAPP_ID,
       },
@@ -479,14 +494,14 @@ async function requiresLauncher(gamePath, store) {
 function isAnvilInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === ATK_ID);
+  return Object.keys(mods).some((id) => mods[id]?.type === ATK_ID);
 }
 
 //Check if Forger Patch Manager is installed
 function isForgerInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === FORGER_ID);
+  return Object.keys(mods).some((id) => mods[id]?.type === FORGER_ID);
 }
 
 //Function to auto-download AnvilToolkit
@@ -497,44 +512,53 @@ async function downloadAnvil(api, gameSpec) {
     const MOD_TYPE = ATK_ID;
     const NOTIF_ID = `${GAME_ID}-${MOD_TYPE}-installing`;
     const PAGE_ID = ATK_PAGE;
-    const FILE_ID = ATK_FILE;  //If using a specific file id because "input" below gives an error
+    const FILE_ID = ATK_FILE; //If using a specific file id because "input" below gives an error
     const GAME_DOMAIN = ATK_DOMAIN;
-    api.sendNotification({ //notification indicating install process
+    api.sendNotification({
+      //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
-      type: 'activity',
+      type: "activity",
       noDismiss: true,
       allowSuppress: false,
     });
-    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
+    if (api.ext?.ensureLoggedIn !== undefined) {
+      //make sure user is logged into Nexus Mods account in Vortex
       await api.ext.ensureLoggedIn();
     }
-    try { //Try to automatically download the mod
+    try {
+      //Try to automatically download the mod
       let FILE = null;
       let URL = null;
-      try { //get the mod files information from Nexus
+      try {
+        //get the mod files information from Nexus
         const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
         const fileTime = (input) => Number.parseInt(input.uploaded_time, 10); //sometimes errors on 'input'
         const file = modFiles
-          .filter(file => file.category_id === 1)
+          .filter((file) => file.category_id === 1)
           .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
           .reverse()[0];
         if (file === undefined) {
           throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
         }
         FILE = file.file_id;
-      } catch { //Use specific file id because "input" above gives an error
-        FILE = FILE_ID; 
+      } catch {
+        //Use specific file id because "input" above gives an error
+        FILE = FILE_ID;
       }
       const dlInfo = {
         game: GAME_DOMAIN,
         name: MOD_NAME,
       };
       URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const dlId = await util.toPromise((cb) =>
+        api.events.emit("start-download", [URL], dlInfo, undefined, cb, undefined, {
+          allowInstall: false,
+        }),
+      );
+      const modId = await util.toPromise((cb) =>
+        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+      );
       const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
       const batched = [
         actions.setModsEnabled(api, profileId, [modId], true, {
@@ -544,7 +568,8 @@ async function downloadAnvil(api, gameSpec) {
         actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
       ];
       util.batchDispatch(api.store, batched); // Will dispatch both actions.
-    } catch (err) { //Show the user the download page if the process fails
+    } catch (err) {
+      //Show the user the download page if the process fails
       const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
       util.opn(errPage).catch(() => null);
@@ -562,26 +587,29 @@ async function downloadForger(api, gameSpec) {
     const MOD_TYPE = FORGER_ID;
     const NOTIF_ID = `${GAME_ID}-${MOD_TYPE}-installing`;
     const PAGE_ID = FORGER_PAGE;
-    const FILE_ID = FORGER_FILE;  //If using a specific file id because "input" below gives an error
+    const FILE_ID = FORGER_FILE; //If using a specific file id because "input" below gives an error
     const GAME_DOMAIN = FORGER_DOMAIN;
-    api.sendNotification({ //notification indicating install process
+    api.sendNotification({
+      //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
-      type: 'activity',
+      type: "activity",
       noDismiss: true,
       allowSuppress: false,
     });
-    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
+    if (api.ext?.ensureLoggedIn !== undefined) {
+      //make sure user is logged into Nexus Mods account in Vortex
       await api.ext.ensureLoggedIn();
     }
     try {
       let FILE = null;
       let URL = null;
-      try { //get the mod files information from Nexus
+      try {
+        //get the mod files information from Nexus
         const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
         const fileTime = (input) => Number.parseInt(input.uploaded_time, 10); //sometimes errors on 'input'
         const file = modFiles
-          .filter(file => file.category_id === 1)
+          .filter((file) => file.category_id === 1)
           .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
           .reverse()[0];
         if (file === undefined) {
@@ -596,10 +624,14 @@ async function downloadForger(api, gameSpec) {
         name: MOD_NAME,
       };
       URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const dlId = await util.toPromise((cb) =>
+        api.events.emit("start-download", [URL], dlInfo, undefined, cb, undefined, {
+          allowInstall: false,
+        }),
+      );
+      const modId = await util.toPromise((cb) =>
+        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+      );
       const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
       const batched = [
         actions.setModsEnabled(api, profileId, [modId], true, {
@@ -609,7 +641,8 @@ async function downloadForger(api, gameSpec) {
         actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
       ];
       util.batchDispatch(api.store, batched); // Will dispatch both actions.
-    } catch (err) { //Show the user the download page if the download, install process fails
+    } catch (err) {
+      //Show the user the download page if the download, install process fails
       const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
       util.opn(errPage).catch(() => null);
@@ -623,8 +656,8 @@ async function downloadForger(api, gameSpec) {
 
 //Installer test for AnvilToolkit files
 function testATK(files, gameId) {
-  const isMod = files.some(file => path.basename(file).toLowerCase() === ATK_EXEC);
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => path.basename(file).toLowerCase() === ATK_EXEC);
+  let supported = gameId === spec.game.id && isMod;
 
   return Promise.resolve({
     supported,
@@ -634,19 +667,19 @@ function testATK(files, gameId) {
 
 //Installer install AnvilToolkit files
 function installATK(files) {
-  const modFile = files.find(file => path.basename(file).toLowerCase() === ATK_EXEC);
+  const modFile = files.find((file) => path.basename(file).toLowerCase() === ATK_EXEC);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: ATK_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: ATK_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -657,8 +690,12 @@ function installATK(files) {
 
 //Installer test for Forger Patch Manager files
 function testForger(files, gameId) {
-  const isMod = files.some(file => ((path.basename(file).toLowerCase() === FORGER_EXEC) || (path.basename(file).toLowerCase() === FORGER_NEW_EXEC)));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some(
+    (file) =>
+      path.basename(file).toLowerCase() === FORGER_EXEC ||
+      path.basename(file).toLowerCase() === FORGER_NEW_EXEC,
+  );
+  let supported = gameId === spec.game.id && isMod;
 
   return Promise.resolve({
     supported,
@@ -668,19 +705,23 @@ function testForger(files, gameId) {
 
 //Installer install Forger Patch Manager files
 function installForger(files) {
-  const modFile = files.find(file => ((path.basename(file).toLowerCase() === FORGER_EXEC) || (path.basename(file).toLowerCase() === FORGER_NEW_EXEC)));
+  const modFile = files.find(
+    (file) =>
+      path.basename(file).toLowerCase() === FORGER_EXEC ||
+      path.basename(file).toLowerCase() === FORGER_NEW_EXEC,
+  );
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: FORGER_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: FORGER_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -690,16 +731,20 @@ function installForger(files) {
   return Promise.resolve({ instructions });
 }
 
-
 //Test for .forger2 files
 function testPatch(files, gameId) {
-  const isMod = files.find(file => path.extname(file).toLowerCase() === PATCH_EXT) !== undefined;
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.find((file) => path.extname(file).toLowerCase() === PATCH_EXT) !== undefined;
+  let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer.
-  if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -711,20 +756,20 @@ function testPatch(files, gameId) {
 
 //Install .forger2 files
 function installPatch(files) {
-  const modFile = files.find(file => path.extname(file).toLowerCase() === PATCH_EXT);
+  const modFile = files.find((file) => path.extname(file).toLowerCase() === PATCH_EXT);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const MODTYPE_ID = PATCH_ID;
-  const setModTypeInstruction = { type: 'setmodtype', value: MODTYPE_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: MODTYPE_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -735,13 +780,18 @@ function installPatch(files) {
 
 //Test for Forger Patch .dds files
 function testPatchTextures(files, gameId) {
-  const isMod = files.some(file => (path.extname(file).toLowerCase() === PATCH_TEXTURES_EXT));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => path.extname(file).toLowerCase() === PATCH_TEXTURES_EXT);
+  let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer
-  if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -753,15 +803,13 @@ function testPatchTextures(files, gameId) {
 
 //Fallback installer for binaries folder
 function installPatchTextures(files) {
-  const setModTypeInstruction = { type: 'setmodtype', value: PATCH_TEXTURES_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: PATCH_TEXTURES_ID };
   // Remove empty directories
-  const filtered = files.filter(file =>
-    (!file.endsWith(path.sep))
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep));
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file),
     };
@@ -772,13 +820,18 @@ function installPatchTextures(files) {
 
 //Installer test for DLC folder files
 function testDlc(files, gameId) {
-  const isMod = files.some(file => DLC_FOLDERS.includes(path.basename(file)));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => DLC_FOLDERS.includes(path.basename(file)));
+  let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer
-  if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -790,19 +843,19 @@ function testDlc(files, gameId) {
 
 //Installer install DLC folder files
 function installDlc(files) {
-  const modFile = files.find(file => DLC_FOLDERS.includes(path.basename(file)));
-  const MODFILE_IDX = `${path.basename(modFile)}${path.sep}`
+  const modFile = files.find((file) => DLC_FOLDERS.includes(path.basename(file)));
+  const MODFILE_IDX = `${path.basename(modFile)}${path.sep}`;
   const idx = modFile.indexOf(MODFILE_IDX);
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: DLC_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: DLC_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -813,13 +866,18 @@ function installDlc(files) {
 
 //Test for "Extracted" folder
 function testExtracted(files, gameId) {
-  const isMod = files.some(file => (path.basename(file) === EXTRACTED_FOLDER));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => path.basename(file) === EXTRACTED_FOLDER);
+  let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer
-  if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -831,20 +889,20 @@ function testExtracted(files, gameId) {
 
 //Install "Extracted" folder
 function installExtracted(files) {
-  const modFile = files.find(file => (path.basename(file) === EXTRACTED_FOLDER));
-  const MODFILE_IDX = `${path.basename(modFile)}${path.sep}`
+  const modFile = files.find((file) => path.basename(file) === EXTRACTED_FOLDER);
+  const MODFILE_IDX = `${path.basename(modFile)}${path.sep}`;
   const idx = modFile.indexOf(MODFILE_IDX);
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: EXTRACTED_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: EXTRACTED_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -855,13 +913,18 @@ function installExtracted(files) {
 
 //Test for ".forge" containing folder name
 function testForgeFolder(files, gameId) {
-  const isMod = files.some(file => path.dirname(file).includes(FORGEFOLDER_STRING));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => path.dirname(file).includes(FORGEFOLDER_STRING));
+  let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer
-  if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -873,20 +936,20 @@ function testForgeFolder(files, gameId) {
 
 //Install ".forge" containing folder name
 function installForgeFolder(files) {
-  const modFile = files.find(file => path.basename(file).includes(FORGEFOLDER_STRING));
-  const MODFILE_IDX = `${path.basename(modFile)}${path.sep}`
+  const modFile = files.find((file) => path.basename(file).includes(FORGEFOLDER_STRING));
+  const MODFILE_IDX = `${path.basename(modFile)}${path.sep}`;
   const idx = modFile.indexOf(MODFILE_IDX);
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: FORGEFOLDER_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: FORGEFOLDER_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(EXTRACTED_FOLDER, file.substr(idx)),
       //destination: path.join(file.substr(idx)),
@@ -898,13 +961,18 @@ function installForgeFolder(files) {
 
 //Test for ".forge" containing folder name
 function testDataFolder(files, gameId) {
-  const isMod = files.some(file => path.dirname(file).includes(DATAFOLDER_STRING));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => path.dirname(file).includes(DATAFOLDER_STRING));
+  let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer
-  if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -916,20 +984,20 @@ function testDataFolder(files, gameId) {
 
 //Install ".forge" containing folder name
 function installDataFolder(files) {
-  const modFile = files.find(file => path.basename(file).includes(DATAFOLDER_STRING));
-  const MODFILE_IDX = `${path.basename(modFile)}${path.sep}`
+  const modFile = files.find((file) => path.basename(file).includes(DATAFOLDER_STRING));
+  const MODFILE_IDX = `${path.basename(modFile)}${path.sep}`;
   const idx = modFile.indexOf(MODFILE_IDX);
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: DATAFOLDER_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: DATAFOLDER_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(EXTRACTED_FOLDER, RENAME_FOLDER, file.substr(idx)),
       //destination: path.join(file.substr(idx)),
@@ -941,13 +1009,18 @@ function installDataFolder(files) {
 
 //Test for loose .data files
 function testLoose(files, gameId) {
-  const isMod = files.some(file => LOOSE_EXTS.includes(path.extname(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => LOOSE_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer
-  if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -959,20 +1032,19 @@ function testLoose(files, gameId) {
 
 //Install loose .data files
 function installLoose(files) {
-  const modFile = files.find(file => LOOSE_EXTS.includes(path.extname(file).toLowerCase()));
+  const modFile = files.find((file) => LOOSE_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: LOOSE_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: LOOSE_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) &&
-      (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(EXTRACTED_FOLDER, RENAME_FOLDER, file.substr(idx)),
     };
@@ -983,13 +1055,18 @@ function installLoose(files) {
 
 //Test for Fixes files
 function testFixes(files, gameId) {
-  const isMod = files.some(file => FIXES_FILES.includes(path.basename(file)));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => FIXES_FILES.includes(path.basename(file)));
+  let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer
-  if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -1001,20 +1078,19 @@ function testFixes(files, gameId) {
 
 //Install Fixes files
 function installFixes(files) {
-  const modFile = files.find(file => FIXES_FILES.includes(path.basename(file)));
+  const modFile = files.find((file) => FIXES_FILES.includes(path.basename(file)));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: FIXES_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: FIXES_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) &&
-      (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -1025,13 +1101,18 @@ function installFixes(files) {
 
 //Test for .forge files
 function testForge(files, gameId) {
-  const isMod = files.some(file => (path.extname(file).toLowerCase() === FORGE_EXT));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => path.extname(file).toLowerCase() === FORGE_EXT);
+  let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer
-  if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -1043,33 +1124,29 @@ function testForge(files, gameId) {
 
 //Install .forge files
 function installForge(files) {
-  const modFile = files.find(file => (path.extname(file).toLowerCase() === FORGE_EXT));
+  const modFile = files.find((file) => path.extname(file).toLowerCase() === FORGE_EXT);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
 
-  let setModTypeInstruction = { type: 'setmodtype', value: FORGE_ID };
+  let setModTypeInstruction = { type: "setmodtype", value: FORGE_ID };
   if (path.basename(modFile).includes(DLCSTRING10)) {
-    setModTypeInstruction = { type: 'setmodtype', value: FORGEDLC10_ID };
-  }
-  else if (path.basename(modFile).includes(DLCSTRING26)) {
-    setModTypeInstruction = { type: 'setmodtype', value: FORGEDLC26_ID };
-  }
-  else if (path.basename(modFile).includes(DLCSTRING28)) {
-    setModTypeInstruction = { type: 'setmodtype', value: FORGEDLC28_ID };
-  }
-  else if (path.basename(modFile).includes(DLCSTRING29)) {
-    setModTypeInstruction = { type: 'setmodtype', value: FORGEDLC29_ID };
+    setModTypeInstruction = { type: "setmodtype", value: FORGEDLC10_ID };
+  } else if (path.basename(modFile).includes(DLCSTRING26)) {
+    setModTypeInstruction = { type: "setmodtype", value: FORGEDLC26_ID };
+  } else if (path.basename(modFile).includes(DLCSTRING28)) {
+    setModTypeInstruction = { type: "setmodtype", value: FORGEDLC28_ID };
+  } else if (path.basename(modFile).includes(DLCSTRING29)) {
+    setModTypeInstruction = { type: "setmodtype", value: FORGEDLC29_ID };
   }
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) &&
-      (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -1080,8 +1157,8 @@ function installForge(files) {
 
 //Installer test for Root folder files
 function testRoot(files, gameId) {
-  const isMod = files.some(file => ROOT_FOLDERS.includes(path.basename(file)));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => ROOT_FOLDERS.includes(path.basename(file)));
+  let supported = gameId === spec.game.id && isMod;
 
   return Promise.resolve({
     supported,
@@ -1091,20 +1168,20 @@ function testRoot(files, gameId) {
 
 //Installer install Root folder files
 function installRoot(files) {
-  const modFile = files.find(file => ROOT_FOLDERS.includes(path.basename(file)));
-  const MODFILE_IDX = `${path.basename(modFile)}${path.sep}`
+  const modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file)));
+  const MODFILE_IDX = `${path.basename(modFile)}${path.sep}`;
   const idx = modFile.indexOf(MODFILE_IDX);
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -1120,30 +1197,37 @@ function setupNotify(api) {
   const NOTIF_ID = `${GAME_ID}-setup-notification`;
   api.sendNotification({
     id: NOTIF_ID,
-    type: 'warning',
-    message: 'Forger Setup Required',
+    type: "warning",
+    message: "Forger Setup Required",
     allowSuppress: true,
     actions: [
       {
-        title: 'More',
+        title: "More",
         action: (dismiss) => {
-          api.showDialog('question', 'Action required', {
-            text: 'Some of the most popular mods for AC Shadows require a software called Forger Patch Manager.\n'
-                + 'This software has been automatically downloaded and installed for you by the extension. \n'
-                + 'You need to run the tool on the Dashboard to apply the patches to the game files.'
-          }, [
-            { label: 'Continue', action: (dismiss) => dismiss() },
+          api.showDialog(
+            "question",
+            "Action required",
             {
-              label: 'Never Show Again', action: () => {
-                api.suppressNotification(NOTIF_ID);
-                dismiss();
-              }
+              text:
+                "Some of the most popular mods for AC Shadows require a software called Forger Patch Manager.\n" +
+                "This software has been automatically downloaded and installed for you by the extension. \n" +
+                "You need to run the tool on the Dashboard to apply the patches to the game files.",
             },
-          ]);
+            [
+              { label: "Continue", action: (dismiss) => dismiss() },
+              {
+                label: "Never Show Again",
+                action: () => {
+                  api.suppressNotification(NOTIF_ID);
+                  dismiss();
+                },
+              },
+            ],
+          );
         },
       },
     ],
-  });    
+  });
 }
 
 //Notify User to run Fluffy Mod Manager after deployment
@@ -1153,58 +1237,67 @@ function deployNotify(api) {
   const MESSAGE = `Run Tools to Complete Mod Installation`;
   api.sendNotification({
     id: NOTIF_ID,
-    type: 'warning',
+    type: "warning",
     message: MESSAGE,
     allowSuppress: true,
     actions: [
       {
-        title: 'Run ATK',
+        title: "Run ATK",
         action: (dismiss) => {
           runAtk(api);
           dismiss();
         },
       },
       {
-        title: 'Run Forger',
+        title: "Run Forger",
         action: (dismiss) => {
           runForger(api);
           dismiss();
         },
       },
       {
-        title: 'More',
+        title: "More",
         action: (dismiss) => {
-          api.showDialog('question', MESSAGE, {
-            text: `For most mods, you must use either AnvilToolkit or Forger Patch Manager to complet mod installation after installing with Vortex.\n`
-                + `Use the included tools to launch these programs (button on notification or in "Dashboard" tab) if your mod requires them.\n`
-                + `Read your mod's instructions to determine if one of these tools is required.\n`
-                + `\n`
-                + `For ATK Mods:\n`
-                + `Read your mod's instructions to determine which .forge file(s) need to be unpacked and repacked.\n`
-                + `You may need to do some manual folder manipulation in the mod staging folder if the extension could not do it automatically for your mod.\n`
-                + `Right click on the mod in the "Mods" tab and select "Open in File Manager" to open the mod's staging folder and verify the folder structure is correct.\n`
-                + `The folder structure should look something like this: "Extracted/{FORGE_FILE_NAME}.forge/{DATA_FILE}.data" or "{DLC_FOLDER}/Extracted/{FORGE_FILE_NAME}.forge/{DATA_FILE}.data".\n`
-          }, [
+          api.showDialog(
+            "question",
+            MESSAGE,
             {
-              label: 'Run ATK', action: () => {
-                runForger(api);
-                dismiss();
-              }
+              text:
+                `For most mods, you must use either AnvilToolkit or Forger Patch Manager to complet mod installation after installing with Vortex.\n` +
+                `Use the included tools to launch these programs (button on notification or in "Dashboard" tab) if your mod requires them.\n` +
+                `Read your mod's instructions to determine if one of these tools is required.\n` +
+                `\n` +
+                `For ATK Mods:\n` +
+                `Read your mod's instructions to determine which .forge file(s) need to be unpacked and repacked.\n` +
+                `You may need to do some manual folder manipulation in the mod staging folder if the extension could not do it automatically for your mod.\n` +
+                `Right click on the mod in the "Mods" tab and select "Open in File Manager" to open the mod's staging folder and verify the folder structure is correct.\n` +
+                `The folder structure should look something like this: "Extracted/{FORGE_FILE_NAME}.forge/{DATA_FILE}.data" or "{DLC_FOLDER}/Extracted/{FORGE_FILE_NAME}.forge/{DATA_FILE}.data".\n`,
             },
-            {
-              label: 'Run Forger', action: () => {
-                runForger(api);
-                dismiss();
-              }
-            },
-            { label: 'Continue', action: () => dismiss() },
-            {
-              label: 'Never Show Again', action: () => {
-                api.suppressNotification(NOTIF_ID);
-                dismiss();
-              }
-            },
-          ]);
+            [
+              {
+                label: "Run ATK",
+                action: () => {
+                  runForger(api);
+                  dismiss();
+                },
+              },
+              {
+                label: "Run Forger",
+                action: () => {
+                  runForger(api);
+                  dismiss();
+                },
+              },
+              { label: "Continue", action: () => dismiss() },
+              {
+                label: "Never Show Again",
+                action: () => {
+                  api.suppressNotification(NOTIF_ID);
+                  dismiss();
+                },
+              },
+            ],
+          );
         },
       },
     ],
@@ -1215,21 +1308,30 @@ function runAtk(api) {
   const TOOL_ID = ATK_ID;
   const TOOL_NAME = ATK_NAME;
   const state = api.store.getState();
-  const tool = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'tools', TOOL_ID], undefined);
+  const tool = util.getSafe(
+    state,
+    ["settings", "gameMode", "discovered", GAME_ID, "tools", TOOL_ID],
+    undefined,
+  );
 
   try {
     const TOOL_PATH = tool.path;
     if (TOOL_PATH !== undefined) {
-      return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false })
-        .catch(err => api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err,
-          { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 })
-        );
-    }
-    else {
-      return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, `Path to ${TOOL_NAME} executable could not be found. Ensure ${TOOL_NAME} is installed through Vortex.`);
+      return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false }).catch((err) =>
+        api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
+          allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+        }),
+      );
+    } else {
+      return api.showErrorNotification(
+        `Failed to run ${TOOL_NAME}`,
+        `Path to ${TOOL_NAME} executable could not be found. Ensure ${TOOL_NAME} is installed through Vortex.`,
+      );
     }
   } catch (err) {
-    return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
+    return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
+      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+    });
   }
 }
 
@@ -1237,21 +1339,30 @@ function runForger(api) {
   const TOOL_ID = FORGER_ID;
   const TOOL_NAME = FORGER_NAME;
   const state = api.store.getState();
-  const tool = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'tools', TOOL_ID], undefined);
+  const tool = util.getSafe(
+    state,
+    ["settings", "gameMode", "discovered", GAME_ID, "tools", TOOL_ID],
+    undefined,
+  );
 
   try {
     const TOOL_PATH = tool.path;
     if (TOOL_PATH !== undefined) {
-      return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false })
-        .catch(err => api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err,
-          { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 })
-        );
-    }
-    else {
-      return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, `Path to ${TOOL_NAME} executable could not be found. Ensure ${TOOL_NAME} is installed through Vortex.`);
+      return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false }).catch((err) =>
+        api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
+          allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+        }),
+      );
+    } else {
+      return api.showErrorNotification(
+        `Failed to run ${TOOL_NAME}`,
+        `Path to ${TOOL_NAME} executable could not be found. Ensure ${TOOL_NAME} is installed through Vortex.`,
+      );
     }
   } catch (err) {
-    return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
+    return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
+      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+    });
   }
 }
 
@@ -1291,16 +1402,28 @@ function applyGame(context, gameSpec) {
 
   //register mod types
   (gameSpec.modTypes || []).forEach((type, idx) => {
-    context.registerModType(type.id, modTypePriority(type.priority) + idx, (gameId) => {
-      var _a;
-      return (gameId === gameSpec.game.id)
-        && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
+    context.registerModType(
+      type.id,
+      modTypePriority(type.priority) + idx,
+      (gameId) => {
+        var _a;
+        return (
+          gameId === gameSpec.game.id &&
+          !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+          _a === void 0
+            ? void 0
+            : _a.path)
+        );
+      },
+      (game) => pathPattern(context.api, game, type.targetPath),
+      () => Promise.resolve(false),
+      { name: type.name },
+    );
   });
 
   //register mod installers
-  context.registerInstaller(ATK_ID, 25, testATK, installATK); 
-  context.registerInstaller(FORGER_ID, 30, testForger, installForger); 
+  context.registerInstaller(ATK_ID, 25, testATK, installATK);
+  context.registerInstaller(FORGER_ID, 30, testForger, installForger);
   //context.registerInstaller(PATCH_ID, 35, testPatch, installPatch);
   //context.registerInstaller(PATCH_TEXTURES_ID, 37, testPatchTextures, installPatchTextures);
   context.registerInstaller(DLC_ID, 40, testDlc, installDlc); //DLC folder names, installed to root
@@ -1309,7 +1432,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(FORGEFOLDER_ID, 50, testForgeFolder, installForgeFolder);
   context.registerInstaller(DATAFOLDER_ID, 55, testDataFolder, installDataFolder);
   context.registerInstaller(LOOSE_ID, 60, testLoose, installLoose); //*/
-  //context.registerInstaller(FIXES_ID, 62, testFixes, installFixes); // Disabled until there is a mod that would use it. 
+  //context.registerInstaller(FIXES_ID, 62, testFixes, installFixes); // Disabled until there is a mod that would use it.
   context.registerInstaller(FORGE_ID, 65, testForge, installForge); // Installs .forge to root or dlc folders based on file list
   context.registerInstaller(ROOT_ID, 69, testRoot, installRoot); // NICE
 
@@ -1328,41 +1451,74 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
-    util.opn(PCGAMINGWIKI_URL).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
-    const openPath = path.join(__dirname, 'CHANGELOG.md');
-    util.opn(openPath).catch(() => null);
-    }, () => {
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open PCGamingWiki Page",
+    () => {
+      util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
-    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    util.opn(DOWNLOAD_FOLDER).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "View Changelog",
+    () => {
+      const openPath = path.join(__dirname, "CHANGELOG.md");
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Submit Bug Report",
+    () => {
+      util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Downloads Folder",
+    () => {
+      util.opn(DOWNLOAD_FOLDER).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
 }
 
 //main function
 function main(context) {
   applyGame(context, spec);
-  context.once(() => { // put code here that should be run (once) when Vortex starts up
+  context.once(() => {
+    // put code here that should be run (once) when Vortex starts up
     const api = context.api;
     /* Disabled until ATK is compatible with Shadows
     context.api.onAsync('did-deploy', async (profileId, deployment) => { //notification to run tools after deployment

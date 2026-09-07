@@ -9,7 +9,7 @@ consumes `modId` + `downloadGame` and will offer, and on request download, the "
 whatever mod page those two values point at.
 
 > **Disambiguation.** The meta database is the npm package `modmeta-db` — a local LevelDB cache in
-> front of remote *metadata servers*. It has nothing to do with **ModDB.com**, the mod hosting
+> front of remote _metadata servers_. It has nothing to do with **ModDB.com**, the mod hosting
 > site covered in `MODDB_API.md`.
 
 ---
@@ -18,10 +18,10 @@ whatever mod page those two values point at.
 
 Two separate stores, filled at different times, by different code:
 
-| Store | State path | Filled by | Survives |
-| --- | --- | --- | --- |
-| Download meta | `persistent.downloads.files[dlId].modInfo` | download finalize, import, retro-scans | until the archive is deleted |
-| Mod attributes | `persistent.mods[gameId][modId].attributes` | install (attribute extractors) | until the mod is removed |
+| Store          | State path                                  | Filled by                              | Survives                     |
+| -------------- | ------------------------------------------- | -------------------------------------- | ---------------------------- |
+| Download meta  | `persistent.downloads.files[dlId].modInfo`  | download finalize, import, retro-scans | until the archive is deleted |
+| Mod attributes | `persistent.mods[gameId][modId].attributes` | install (attribute extractors)         | until the mod is removed     |
 
 The download store is the upstream one. Mod attributes are derived from it at install time, so a
 bad `modInfo` becomes a bad set of mod attributes a few seconds later.
@@ -43,7 +43,7 @@ Keys that matter for the update checker:
 Behaviour worth knowing:
 
 1. **MD5 is the only real key.** If `fileMD5` is absent, the file is hashed first. `fileName` and
-   `gameId` never *select* a result — they only sort and filter results that MD5 already produced.
+   `gameId` never _select_ a result — they only sort and filter results that MD5 already produced.
 2. **Local cache first.** Results are keyed `hash:<md5>:<size>:<gameId>:` in a LevelDB under
    `userData/metadb`, filtered by game, and honoured until expiry.
 3. **Then remote servers,** in priority order. Vortex registers exactly one by default: the Nexus
@@ -51,7 +51,7 @@ Behaviour worth knowing:
    Settings → Download → Metaserver.
 4. **The Nexus query is game-agnostic.** MD5 requests are debounced into a batch and sent as the
    `fileHashes(md5s: [...])` GraphQL v2 query. That query searches **every game domain on Nexus**.
-   The `gameId` passed to `lookupModMeta` is *not* forwarded — it is only used afterwards, to label
+   The `gameId` passed to `lookupModMeta` is _not_ forwarded — it is only used afterwards, to label
    the cache key and to break ties.
 5. **Stale-but-expired results are reused.** If the remote returns nothing, `getAllByKey` falls
    back to the expired local entries rather than to "no match".
@@ -127,11 +127,30 @@ Detail per path:
 On a match it dispatches `meta`, then — if `sourceURI` parses as an `nxm://` URL —
 `source: "nexus"`, `nexus.ids.gameId`, `nexus.ids.fileId`, `nexus.ids.modId`.
 
-The single guard is: *if the download already has a `nexus.ids.fileId` and it differs from the
-looked-up one, discard everything.* That protects real Nexus downloads from a bad server response.
+`meta` is written **before** any of the guards below, so a download can end up carrying a foreign
+`meta` blob (and therefore a foreign `meta.domainName`) even when every guard correctly refused the
+matching ids. Anything reading `meta.domainName` back later has to account for that.
+
+The single guard is: _if the download already has a `nexus.ids.fileId` and it differs from the
+looked-up one, discard everything._ That protects real Nexus downloads from a bad server response.
 It does **not** protect a GitHub download, which has no `fileId` to compare against — so an
 extension-supplied `modInfo` with `source: "website"` or a custom value is overwritten with
 `source: "nexus"`.
+
+### Which `nexus.ids` an nxm download actually carries
+
+Not every Nexus download gets the same id shape, and the difference decides whether the guard above
+can fire at all:
+
+| Route                                                                                                                                          | `nexus.ids` written                       |
+| ---------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| `startDownloadMod` — clicking an nxm link, the `nexus-download` event                                                                          | `gameId` (the page id), `modId`, `fileId` |
+| nxm-protocol resolve — `InstallManager.downloadURL`, which is how **collection members** and fuzzy-version `downloadMatching` deps are fetched | `modId`, `fileId` only — **no `gameId`**  |
+
+So a collection's Nexus-hosted dependency has a trustworthy `modId`/`fileId` but no game stamped
+alongside them. Its game lives only in the download's own `game` array. Code deriving a game for
+those ids must not silently substitute `meta.domainName`: on an MD5 collision that domain belongs
+to a different mod entirely, while the ids are still correct.
 
 Finally, if the resolved domain differs from the download's game, `queryInfo` emits
 `set-download-games` with `[metaGameId, gameId]`, which **moves the archive on disk** into the
@@ -147,13 +166,13 @@ other game's download folder and rewrites its compatible-games list.
 
 The merge order is a common source of confusion:
 
-| Priority | Extractor | Supplies (selected) |
-| --- | --- | --- |
-| 150 | `mod_management` core | `version`, `source` (from `meta.source`), `category`, `author`, `homepage` |
-| 100 | `download_management` | `fileName`, `fileMD5`, `fileSize`, `source`, `downloadGame`, `logicalFileName` |
-| 50 | `nexus_integration` | `modId`, `fileId`, `modName`, `version`, `uploader`, `pictureUrl`, … |
-| 25 | `download_management` custom | anything under `modInfo.custom` |
-| 10 | `mod_management` upgrade | `category`, `notes`, `icon`, `color` carried from a previous install |
+| Priority | Extractor                    | Supplies (selected)                                                            |
+| -------- | ---------------------------- | ------------------------------------------------------------------------------ |
+| 150      | `mod_management` core        | `version`, `source` (from `meta.source`), `category`, `author`, `homepage`     |
+| 100      | `download_management`        | `fileName`, `fileMD5`, `fileSize`, `source`, `downloadGame`, `logicalFileName` |
+| 50       | `nexus_integration`          | `modId`, `fileId`, `modName`, `version`, `uploader`, `pictureUrl`, …           |
+| 25       | `download_management` custom | anything under `modInfo.custom`                                                |
+| 10       | `mod_management` upgrade     | `category`, `notes`, `icon`, `color` carried from a previous install           |
 
 Extractors are sorted **descending** by priority and merged with `Object.assign` in that order, so
 **the lowest priority number wins** any key collision. Nullish values are stripped before merging,
@@ -175,16 +194,31 @@ Two consequences:
 `checkModVersion` is gated on one thing only:
 
 ```js
-const nexusModId = parseInt(getSafe(mod.attributes, ['modId'], undefined), 10);
-if (isNaN(nexusModId)) { return PromiseBB.resolve(); }
-const gameId = getSafe(mod.attributes, ['downloadGame'], undefined) || gameMode;
+const nexusModId = parseInt(getSafe(mod.attributes, ["modId"], undefined), 10);
+if (isNaN(nexusModId)) {
+    return PromiseBB.resolve();
+}
+const gameId = getSafe(mod.attributes, ["downloadGame"], undefined) || gameMode;
 return nexus.getModFiles(nexusModId, nexusGameId(game, fallBackGameId));
 ```
 
-There is no check that `attributes.source === 'nexus'`, no check that the stored `fileMD5` still
-matches anything on that page, and no check that the mod page's files resemble what is installed.
-Whatever `getModFiles` returns is written to `newestVersion` / `newestFileId`, which is what drives
-the update badge and the "Update" action.
+Inside `checkModVersion` there is no check that the stored `fileMD5` still matches anything on that
+page, and no check that the mod page's files resemble what is installed. Whatever `getModFiles`
+returns is written to `newestVersion` / `newestFileId`, which is what drives the update badge and
+the "Update" action.
+
+`checkModVersion` itself does not test `attributes.source`, but **its callers differ**, which
+decides how much an extension-set `source` actually protects a mod:
+
+- **Bulk path** — `checkModVersionsImpl` (the "Check for updates" toolbar action and the startup
+  check) filters to `attributes.source === 'nexus'` _before_ calling through, so a mod stamped
+  `website`/`other` is never version-checked in bulk.
+- **Single-mod paths** — the Mods-table row action and the "Fix IDs" flow call `checkModVersion`
+  directly, with no source filter. A non-Nexus mod that still carries a stray `modId` is checked
+  here.
+
+That is why clearing `attributes.modId` is the reliable kill switch and setting a non-Nexus
+`attributes.source` is only a partial one.
 
 ---
 
@@ -199,11 +233,11 @@ Worked example, verified against the live Nexus GraphQL API:
 `BepInEx.ConfigurationManager_BepInEx5_v18.4.1.zip` — MD5 `03494de0ee386cb47d0f160259036810`,
 44,926 bytes — resolves to exactly one Nexus file:
 
-| Field | Value |
-| --- | --- |
-| domain | `megastoresimulator` |
-| `modId` | 7 |
-| `fileId` | 8 |
+| Field    | Value                 |
+| -------- | --------------------- |
+| domain   | `megastoresimulator`  |
+| `modId`  | 7                     |
+| `fileId` | 8                     |
 | mod name | Configuration Manager |
 
 Installed while managing Hollow Knight: Silksong, the mod ends up with `modId: 7`. If

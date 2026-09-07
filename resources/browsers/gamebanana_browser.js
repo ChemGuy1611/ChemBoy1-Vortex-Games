@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 // Shared GameBanana browser page for Vortex game extensions.
 //
@@ -50,27 +50,27 @@
 // makeGameBananaBrowsePage, installGameBananaItem, resolveGameBananaItem,
 // isGameBananaItemInstalled, checkGameBananaModUpdates.
 
-const { log, util } = require('vortex-api');
-const { createBrowserModule } = require('./base_browser');
+const { log, util } = require("vortex-api");
+const { createBrowserModule } = require("./base_browser");
 
-const SITE_BASE = 'https://gamebanana.com';
-const API_BASE = 'https://gamebanana.com/apiv11';
+const SITE_BASE = "https://gamebanana.com";
+const API_BASE = "https://gamebanana.com/apiv11";
 
 // Mod attributes. Dedicated attributes rather than the standard 'version' one because
 // Vortex's md5 meta lookup can overwrite 'version' with data from an unrelated Nexus match.
 // The file id attribute is deliberately the same one gamebanana_downloader.js tracks, so a
 // requirement installed by either route is recognised by both.
-const DEFAULT_PACKAGE_ATTRIBUTE = 'gamebananaItem';
-const DEFAULT_VERSION_ATTRIBUTE = 'gamebananaVersion';
-const DEFAULT_FILE_ID_ATTRIBUTE = 'gamebananaFileId';
+const DEFAULT_PACKAGE_ATTRIBUTE = "gamebananaItem";
+const DEFAULT_VERSION_ATTRIBUTE = "gamebananaVersion";
+const DEFAULT_FILE_ID_ATTRIBUTE = "gamebananaFileId";
 
 // Hosts the embedded view stays on. One entry covers the whole site: downloads redirect to
 // files.gamebanana.com and then to a numbered filecacheNN.gamebanana.com mirror, and images
 // come from images.gamebanana.com - all of which end in ".gamebanana.com".
-const DEFAULT_ALLOWED_HOSTS = ['gamebanana.com'];
+const DEFAULT_ALLOWED_HOSTS = ["gamebanana.com"];
 
 // Section the page opens on. GameBanana section listings are /{section}/games/{gameId}.
-const DEFAULT_SECTION = 'mods';
+const DEFAULT_SECTION = "mods";
 
 // Version embedded in an update title, e.g. "2026-05-20 (Update 6.66 Rev 3 N)". Same default
 // as gamebanana_downloader.js - submitters who fill in _sVersion make this unnecessary.
@@ -81,7 +81,8 @@ const DEFAULT_VERSION_PATTERN = /\(Update\s+(.+?)\)/;
 // pixel-art sprite, so the silhouette is traced on the sprite's grid and placed in a 20x20 box
 // inside the 24x24 viewBox - every coordinate is a multiple of 1.25, and the steps are the
 // sprite's own, not an approximation of them.
-const DEFAULT_MDI = 'M9.5 14.5V13.25H13.25V12H14.5V8.25H15.75V4.5H14.5V2H18.25V4.5H19.5V5.75H20.75V7H22V15.75H20.75V18.25H19.5V19.5H18.25V20.75H15.75V22H7V20.75H4.5V19.5H3.25V18.25H2V14.5z';
+const DEFAULT_MDI =
+  "M9.5 14.5V13.25H13.25V12H14.5V8.25H15.75V4.5H14.5V2H18.25V4.5H19.5V5.75H20.75V7H22V15.75H20.75V18.25H19.5V19.5H18.25V20.75H15.75V22H7V20.75H4.5V19.5H3.25V18.25H2V14.5z";
 
 // Ad slots hidden in the embedded view, verified against a live GameBanana mod page in August 2026.
 // .AdTagModule is the wrapper GameBanana puts on both its leaderboard and square units, the Playwire
@@ -90,11 +91,11 @@ const DEFAULT_MDI = 'M9.5 14.5V13.25H13.25V12H14.5V8.25H15.75V4.5H14.5V2H18.25V4
 // This is cosmetic only: the requests still happen, the page just stops showing the result. Blocking
 // the requests themselves would mean reaching into the session Vortex downloads through.
 const DEFAULT_AD_SELECTORS = [
-  '.AdTagModule',
-  '#AdBlockAppealModule',
-  '[data-pw-desk]',
+  ".AdTagModule",
+  "#AdBlockAppealModule",
+  "[data-pw-desk]",
   '[id^="pwDesk"]',
-  'ins.adsbygoogle',
+  "ins.adsbygoogle",
   'iframe[src*="doubleclick"]',
   'iframe[src*="googlesyndication"]',
 ];
@@ -102,10 +103,21 @@ const DEFAULT_AD_SELECTORS = [
 // Hosts an ad click or pop-under leads to. Without this they reach util.opn and open in the user's
 // real browser, which is worse than the ad itself.
 const DEFAULT_BLOCKED_HOSTS = [
-  'doubleclick.net', 'googlesyndication.com', 'googletagservices.com', 'adnxs.com',
-  'rubiconproject.com', 'playwire.com', 'pubmatic.com', 'openx.net', 'amazon-adsystem.com',
-  'criteo.com', 'taboola.com', 'outbrain.com', 'adsafeprotected.com', 'moatads.com',
-  'scorecardresearch.com',
+  "doubleclick.net",
+  "googlesyndication.com",
+  "googletagservices.com",
+  "adnxs.com",
+  "rubiconproject.com",
+  "playwire.com",
+  "pubmatic.com",
+  "openx.net",
+  "amazon-adsystem.com",
+  "criteo.com",
+  "taboola.com",
+  "outbrain.com",
+  "adsafeprotected.com",
+  "moatads.com",
+  "scorecardresearch.com",
 ];
 
 // How many recently visited submissions a claimed download may be matched against.
@@ -119,8 +131,9 @@ function fileIdAttribute(config) {
 
 //Section listing for this game - what the embedded view opens on, and what Home returns to
 function homeUrl(config) {
-  return config.homeUrl
-    || `${SITE_BASE}/${config.gbSection || DEFAULT_SECTION}/games/${config.gbGameId}`;
+  return (
+    config.homeUrl || `${SITE_BASE}/${config.gbSection || DEFAULT_SECTION}/games/${config.gbGameId}`
+  );
 }
 
 // GameBanana URL slugs are the lower-cased plural of the apiv11 model name, the same rule
@@ -132,21 +145,21 @@ function sectionForModel(model) {
 // The inverse, as an explicit map: de-pluralising an arbitrary path segment would turn
 // /games/8756 into the "Game" model and claim a listing page as a submission.
 const SECTION_MODELS = {
-  mods: 'Mod',
-  tools: 'Tool',
-  sounds: 'Sound',
-  wips: 'Wip',
-  scripts: 'Script',
-  sprays: 'Spray',
-  models: 'Model',
-  wares: 'Ware',
-  tutorials: 'Tutorial',
-  concepts: 'Concept',
-  effects: 'Effect',
-  skins: 'Skin',
-  maps: 'Map',
-  guis: 'Gui',
-  threads: 'Thread',
+  mods: "Mod",
+  tools: "Tool",
+  sounds: "Sound",
+  wips: "Wip",
+  scripts: "Script",
+  sprays: "Spray",
+  models: "Model",
+  wares: "Ware",
+  tutorials: "Tutorial",
+  concepts: "Concept",
+  effects: "Effect",
+  skins: "Skin",
+  maps: "Map",
+  guis: "Gui",
+  threads: "Thread",
 };
 
 function modelForSection(section) {
@@ -172,7 +185,7 @@ function itemKey(ref) {
 const ITEM_KEY_RE = /^([A-Za-z]+)-(\d+)$/;
 
 function parseItemKey(key) {
-  const matched = ITEM_KEY_RE.exec(String(key || ''));
+  const matched = ITEM_KEY_RE.exec(String(key || ""));
   if (matched === null) {
     return null;
   }
@@ -193,7 +206,7 @@ const CDN_URL_RE = /\/\/(?:files|filecache\d*)\.gamebanana\.com\/([^/?#]+)\/([^/
 
 //Parse a submission reference out of a page URL (returns null when it is not a submission page)
 function parseItemRef(url) {
-  const matched = ITEM_URL_RE.exec(String(url || ''));
+  const matched = ITEM_URL_RE.exec(String(url || ""));
   if (matched === null) {
     return null;
   }
@@ -207,10 +220,10 @@ function parseItemRef(url) {
 //Parse what a download URL reveals: a file id, and sometimes the submission (returns null
 //when the URL is not a GameBanana download at all)
 function parseDownloadRef(url) {
-  const input = String(url || '');
+  const input = String(url || "");
   const mmdl = MMDL_URL_RE.exec(input);
   if (mmdl !== null) {
-    return (mmdl[2] !== undefined)
+    return mmdl[2] !== undefined
       ? { fileId: mmdl[1], model: mmdl[2], itemId: mmdl[3] }
       : { fileId: mmdl[1] };
   }
@@ -219,9 +232,10 @@ function parseDownloadRef(url) {
     return { fileId: direct[1] };
   }
   const cdn = CDN_URL_RE.exec(input);
-  if (cdn !== null) { //the CDN path's first segment is the section, which gives the model
+  if (cdn !== null) {
+    //the CDN path's first segment is the section, which gives the model
     const model = modelForSection(cdn[1]);
-    return (model !== null) ? { model, fileName: cdn[2] } : { fileName: cdn[2] };
+    return model !== null ? { model, fileName: cdn[2] } : { fileName: cdn[2] };
   }
   return null;
 }
@@ -233,9 +247,11 @@ function parseDownloadRef(url) {
 // against. They live in the base's per-page adapter state, so two games never share a ring.
 
 function noteVisitedItem(adapterState, ref) {
-  const previous = (adapterState.visited || [])
-    .filter(entry => itemKey(entry) !== itemKey(ref));
-  adapterState.visited = [{ ...ref, visitedAt: Date.now() }, ...previous].slice(0, VISITED_ITEMS_CAP);
+  const previous = (adapterState.visited || []).filter((entry) => itemKey(entry) !== itemKey(ref));
+  adapterState.visited = [{ ...ref, visitedAt: Date.now() }, ...previous].slice(
+    0,
+    VISITED_ITEMS_CAP,
+  );
 }
 
 function visitedCandidates(adapterState) {
@@ -253,10 +269,14 @@ function visitedCandidates(adapterState) {
 const GB_CONTENT_TYPE = /^(application\/json|text\/html|text\/plain)/;
 
 async function gamebananaJson(url) {
-  if (util.rawRequest === undefined) { //older Vortex builds: no worse than before
+  if (util.rawRequest === undefined) {
+    //older Vortex builds: no worse than before
     return util.jsonRequest(url);
   }
-  const raw = await util.rawRequest(url, { expectedContentType: GB_CONTENT_TYPE, encoding: 'utf-8' });
+  const raw = await util.rawRequest(url, {
+    expectedContentType: GB_CONTENT_TYPE,
+    encoding: "utf-8",
+  });
   return JSON.parse(String(raw));
 }
 
@@ -265,7 +285,7 @@ async function fetchItemProfile(ref) {
   try {
     return await gamebananaJson(`${API_BASE}/${ref.model}/${ref.itemId}/ProfilePage`);
   } catch (err) {
-    log('debug', `GameBanana profile lookup failed for ${itemKey(ref)}: ${err}`);
+    log("debug", `GameBanana profile lookup failed for ${itemKey(ref)}: ${err}`);
     return null;
   }
 }
@@ -276,7 +296,7 @@ async function fetchItemFiles(ref) {
     const data = await gamebananaJson(`${API_BASE}/${ref.model}/${ref.itemId}/DownloadPage`);
     return data?._aFiles || [];
   } catch (err) {
-    log('debug', `GameBanana file lookup failed for ${itemKey(ref)}: ${err}`);
+    log("debug", `GameBanana file lookup failed for ${itemKey(ref)}: ${err}`);
     return [];
   }
 }
@@ -284,18 +304,20 @@ async function fetchItemFiles(ref) {
 //Version from the newest update title, for submissions that leave _sVersion empty
 async function fetchUpdateVersion(config, ref) {
   try {
-    const data = await gamebananaJson(`${API_BASE}/${ref.model}/${ref.itemId}/Updates?_nPage=1&_nPerpage=1`);
-    const title = data?._aRecords?.[0]?._sName || '';
+    const data = await gamebananaJson(
+      `${API_BASE}/${ref.model}/${ref.itemId}/Updates?_nPage=1&_nPerpage=1`,
+    );
+    const title = data?._aRecords?.[0]?._sName || "";
     const matched = title.match(config.versionPattern || DEFAULT_VERSION_PATTERN);
     return matched ? matched[1] : null;
   } catch (err) {
-    log('debug', `GameBanana update lookup failed for ${itemKey(ref)}: ${err}`);
+    log("debug", `GameBanana update lookup failed for ${itemKey(ref)}: ${err}`);
     return null;
   }
 }
 
 function newestFile(files) {
-  const usable = (files || []).filter(file => file?._idRow);
+  const usable = (files || []).filter((file) => file?._idRow);
   if (usable.length === 0) {
     return null;
   }
@@ -305,14 +327,15 @@ function newestFile(files) {
 //The file a reference points at: the one it names, else the submission's newest
 function pickFile(files, ref) {
   if (ref.fileId !== undefined) {
-    const byId = (files || []).find(file => String(file?._idRow) === String(ref.fileId));
+    const byId = (files || []).find((file) => String(file?._idRow) === String(ref.fileId));
     if (byId !== undefined) {
       return byId;
     }
   }
   if (ref.fileName !== undefined) {
-    const byName = (files || []).find(file =>
-      String(file?._sFile || '').toLowerCase() === String(ref.fileName).toLowerCase());
+    const byName = (files || []).find(
+      (file) => String(file?._sFile || "").toLowerCase() === String(ref.fileName).toLowerCase(),
+    );
     if (byName !== undefined) {
       return byName;
     }
@@ -323,7 +346,7 @@ function pickFile(files, ref) {
 //A date-stamped version for a submission that publishes neither a version nor an update title
 function fileDateVersion(file) {
   const seconds = Number(file?._tsDateAdded);
-  if (!Number.isFinite(seconds) || (seconds <= 0)) {
+  if (!Number.isFinite(seconds) || seconds <= 0) {
     return null;
   }
   return new Date(seconds * 1000).toISOString().slice(0, 10);
@@ -333,7 +356,7 @@ function fileDateVersion(file) {
 //ref is { model, itemId, fileId?, fileName? }; fileId/fileName select a specific file.
 async function resolveGameBananaItem(config, ref) {
   const profile = await fetchItemProfile(ref);
-  const files = (profile?._aFiles?.length > 0) ? profile._aFiles : await fetchItemFiles(ref);
+  const files = profile?._aFiles?.length > 0 ? profile._aFiles : await fetchItemFiles(ref);
   const file = pickFile(files, ref);
   if (file === null) {
     return null;
@@ -365,13 +388,13 @@ async function resolveGameBananaItem(config, ref) {
 //redirect: 'manual' yields an opaque filtered response in Chromium with Location unreadable.
 async function resolveCdnUrl(url) {
   try {
-    const response = await fetch(url, { method: 'HEAD' });
+    const response = await fetch(url, { method: "HEAD" });
     if (!response.ok) {
       throw new Error(`Request failed with status code ${response.status}`);
     }
     return response.url || null;
   } catch (err) {
-    log('debug', `Could not resolve the GameBanana CDN URL for ${url}: ${err}`);
+    log("debug", `Could not resolve the GameBanana CDN URL for ${url}: ${err}`);
     return null;
   }
 }
@@ -380,10 +403,12 @@ async function resolveCdnUrl(url) {
 
 //Whether a submission's files include the file the download delivered
 function filesContain(files, partial) {
-  return (files || []).some(file =>
-    ((partial.fileId !== undefined) && (String(file?._idRow) === String(partial.fileId)))
-    || ((partial.fileName !== undefined)
-      && (String(file?._sFile || '').toLowerCase() === String(partial.fileName).toLowerCase())));
+  return (files || []).some(
+    (file) =>
+      (partial.fileId !== undefined && String(file?._idRow) === String(partial.fileId)) ||
+      (partial.fileName !== undefined &&
+        String(file?._sFile || "").toLowerCase() === String(partial.fileName).toLowerCase()),
+  );
 }
 
 //Work out which submission a claimed download came from. The URL alone cannot say, so the
@@ -391,38 +416,57 @@ function filesContain(files, partial) {
 //confirms it - the user navigated on before the download finished, or the submission's files
 //changed - the most recently visited one is used, since that is where the click came from.
 async function identifyClaimedItem(config, adapterState, partial) {
-  if ((partial.model !== undefined) && (partial.itemId !== undefined)) {
-    return { model: partial.model, itemId: partial.itemId, fileId: partial.fileId, fileName: partial.fileName };
+  if (partial.model !== undefined && partial.itemId !== undefined) {
+    return {
+      model: partial.model,
+      itemId: partial.itemId,
+      fileId: partial.fileId,
+      fileName: partial.fileName,
+    };
   }
-  const candidates = visitedCandidates(adapterState)
-    .filter(entry => (partial.model === undefined) || (entry.model === partial.model));
+  const candidates = visitedCandidates(adapterState).filter(
+    (entry) => partial.model === undefined || entry.model === partial.model,
+  );
   for (const candidate of candidates) {
     const files = await fetchItemFiles(candidate);
     if (filesContain(files, partial)) {
-      return { model: candidate.model, itemId: candidate.itemId, fileId: partial.fileId, fileName: partial.fileName };
+      return {
+        model: candidate.model,
+        itemId: candidate.itemId,
+        fileId: partial.fileId,
+        fileName: partial.fileName,
+      };
     }
   }
   const fallback = candidates[0];
   if (fallback === undefined) {
     return null;
   }
-  log('warn', `Could not confirm which GameBanana submission file ${partial.fileId || partial.fileName} belongs to - assuming ${itemKey(fallback)}`);
-  return { model: fallback.model, itemId: fallback.itemId, fileId: partial.fileId, fileName: partial.fileName };
+  log(
+    "warn",
+    `Could not confirm which GameBanana submission file ${partial.fileId || partial.fileName} belongs to - assuming ${itemKey(fallback)}`,
+  );
+  return {
+    model: fallback.model,
+    itemId: fallback.itemId,
+    fileId: partial.fileId,
+    fileName: partial.fileName,
+  };
 }
 
 //Recognise a finished download as a GameBanana file (returns null when it is anything else)
 function downloadPartialRef(download) {
-  for (const url of (download.urls || [])) {
+  for (const url of download.urls || []) {
     const partial = parseDownloadRef(url);
     if (partial !== null) {
-      return (partial.fileName === undefined)
+      return partial.fileName === undefined
         ? { ...partial, fileName: download.localPath || undefined }
         : partial;
     }
   }
-  const fromGameBanana = (download.urls || []).some(url => {
+  const fromGameBanana = (download.urls || []).some((url) => {
     try {
-      return new URL(url).hostname.toLowerCase().endsWith('gamebanana.com');
+      return new URL(url).hostname.toLowerCase().endsWith("gamebanana.com");
     } catch {
       return false;
     }
@@ -437,10 +481,11 @@ function downloadPartialRef(download) {
 function isNewerFile(latestFileId, installedFileId, latestVersion, installedVersion) {
   const latest = Number(latestFileId);
   const installed = Number(installedFileId);
-  if (Number.isFinite(latest) && Number.isFinite(installed) && (installed > 0)) {
+  if (Number.isFinite(latest) && Number.isFinite(installed) && installed > 0) {
     return latest > installed;
   }
-  if (!latestVersion || !installedVersion) { //installed before file ids were tracked
+  if (!latestVersion || !installedVersion) {
+    //installed before file ids were tracked
     return false;
   }
   return String(latestVersion) !== String(installedVersion);
@@ -449,23 +494,23 @@ function isNewerFile(latestFileId, installedFileId, latestVersion, installedVers
 // --- the adapter ----------------------------------------------------------
 
 const adapter = {
-  id: 'gamebanana',
-  label: 'GameBanana',
+  id: "gamebanana",
+  label: "GameBanana",
   defaults: {
     packageAttribute: DEFAULT_PACKAGE_ATTRIBUTE,
     versionAttribute: DEFAULT_VERSION_ATTRIBUTE,
     allowedHosts: DEFAULT_ALLOWED_HOSTS,
-    icon: 'search',
+    icon: "search",
     mdi: DEFAULT_MDI,
-    pageTitle: 'Browse Mods',
-    homeTooltip: 'Back to the game page',
+    pageTitle: "Browse Mods",
+    homeTooltip: "Back to the game page",
     adSelectors: DEFAULT_AD_SELECTORS,
     blockedHosts: DEFAULT_BLOCKED_HOSTS,
   },
   //_aRequirements is structured ([[label, url], ...]) but sparse, unversioned, and its URL may point
   //off-site, so it is a best-effort requirement list rather than a resolvable graph
   dependencies: false,
-  unresolvedMessage: 'The GameBanana API is unreachable or the submission has no files',
+  unresolvedMessage: "The GameBanana API is unreachable or the submission has no files",
 
   homeUrl,
   refKey: itemKey,
@@ -485,7 +530,7 @@ const adapter = {
       return null;
     }
     const cdnUrl = await resolveCdnUrl(resolved.downloadUrl);
-    return (cdnUrl !== null) ? { ...resolved, downloadUrl: cdnUrl } : resolved;
+    return cdnUrl !== null ? { ...resolved, downloadUrl: cdnUrl } : resolved;
   },
 
   //Submissions carry a human title, so the mod list shows that rather than "Mod-428520"
@@ -505,7 +550,7 @@ const adapter = {
   routeUrl: (ctx, url, navigated) => {
     const download = parseDownloadRef(url);
     if (download !== null) {
-      if ((download.model !== undefined) && (download.itemId !== undefined)) {
+      if (download.model !== undefined && download.itemId !== undefined) {
         ctx.install(download); //a 1-click link naming its submission needs no page context
       } else {
         ctx.requestDownload(url, navigated);
@@ -513,7 +558,8 @@ const adapter = {
       return true;
     }
     const item = parseItemRef(url);
-    if (item !== null) { //remember it: a claimed download is matched against these
+    if (item !== null) {
+      //remember it: a claimed download is matched against these
       noteVisitedItem(ctx.adapterState, item);
     }
     return false; //not consumed - the base decides whether the view may stay on this URL

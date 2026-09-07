@@ -2,20 +2,20 @@
 
 ## Overview
 
-| Property | Value |
-| --- | --- |
-| Name | AC Unity Vortex Extension |
-| Engine / Structure | Ubisoft AnvilToolkit |
-| Author | ChemBoy1 |
+| Property           | Value                     |
+| ------------------ | ------------------------- |
+| Name               | AC Unity Vortex Extension |
+| Engine / Structure | Ubisoft AnvilToolkit      |
+| Author             | ChemBoy1                  |
 
 ## Key Identifiers
 
-| Property | Value |
-| --- | --- |
-| Game ID | `assassinscreedunity` |
-| Executable | `ACU.exe` |
-| Extension Page | [https://www.nexusmods.com/site/mods/878](https://www.nexusmods.com/site/mods/878) |
-| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_Unity](https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_Unity) |
+| Property       | Value                                                                                                                    |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Game ID        | `assassinscreedunity`                                                                                                    |
+| Executable     | `ACU.exe`                                                                                                                |
+| Extension Page | [https://www.nexusmods.com/site/mods/878](https://www.nexusmods.com/site/mods/878)                                       |
+| PCGamingWiki   | [https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_Unity](https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_Unity) |
 
 ## Supported Stores
 
@@ -27,38 +27,38 @@
 
 Mod types define where each category of mod gets deployed:
 
-| Name | ID | Priority | Target Path |
-| --- | --- | --- | --- |
-| Binaries / Root Folder | `assassinscreedunity-binaries` | high | `{gamePath}` |
-| DLC Folder | `assassinscreedunity-dlcfolder` | high | `{gamePath}/.` |
-| Extracted Folder | `assassinscreedunity-extractedfolder` | high | `{gamePath}/.` |
-| .forge Folder | `assassinscreedunity-forgefolder` | high | `{gamePath}/.` |
-| .data Folder | `assassinscreedunity-datafolder` | high | `{gamePath}/.` |
-| Loose Data Files | `assassinscreedunity-loosedata` | high | `{gamePath}/.` |
-| Forge Replacement | `assassinscreedunity-forgefile` | high | `{gamePath}/.` |
-| Root Folder | `assassinscreedunity-root` | high | `{gamePath}` |
-| ResoRep Textures | `assassinscreedunity-resoreptextures` | high | `{gamePath}/ResoRep/modded` |
-| Fixes | `assassinscreedunity-fixes` | low | `{gamePath}/.` |
-| ResoRep DLL | `assassinscreedunity-resorep` | low | `{gamePath}/.` |
-| AnvilToolkit | `assassinscreedunity-atk` | low | `{gamePath}` |
+| Name                   | ID                                    | Priority | Target Path                 |
+| ---------------------- | ------------------------------------- | -------- | --------------------------- |
+| Binaries / Root Folder | `assassinscreedunity-binaries`        | high     | `{gamePath}`                |
+| DLC Folder             | `assassinscreedunity-dlcfolder`       | high     | `{gamePath}/.`              |
+| Extracted Folder       | `assassinscreedunity-extractedfolder` | high     | `{gamePath}/.`              |
+| .forge Folder          | `assassinscreedunity-forgefolder`     | high     | `{gamePath}/.`              |
+| .data Folder           | `assassinscreedunity-datafolder`      | high     | `{gamePath}/.`              |
+| Loose Data Files       | `assassinscreedunity-loosedata`       | high     | `{gamePath}/.`              |
+| Forge Replacement      | `assassinscreedunity-forgefile`       | high     | `{gamePath}/.`              |
+| Root Folder            | `assassinscreedunity-root`            | high     | `{gamePath}`                |
+| ResoRep Textures       | `assassinscreedunity-resoreptextures` | high     | `{gamePath}/ResoRep/modded` |
+| Fixes                  | `assassinscreedunity-fixes`           | low      | `{gamePath}/.`              |
+| ResoRep DLL            | `assassinscreedunity-resorep`         | low      | `{gamePath}/.`              |
+| AnvilToolkit           | `assassinscreedunity-atk`             | low      | `{gamePath}`                |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID | Priority |
-| --- | --- |
-| `assassinscreedunity-atk` | 25 |
-| `assassinscreedunity-dlcfolder` | 30 |
-| `assassinscreedunity-extractedfolder` | 35 |
-| `assassinscreedunity-forgefolder` | 40 |
-| `assassinscreedunity-datafolder` | 45 |
-| `assassinscreedunity-loosedata` | 50 |
-| `assassinscreedunity-fixes` | 55 |
-| `assassinscreedunity-resorep` | 57 |
-| `assassinscreedunity-forgefile` | 60 |
-| `assassinscreedunity-root` | 65 |
-| `assassinscreedunity-resoreptextures` | 70 |
+| Installer ID                          | Priority |
+| ------------------------------------- | -------- |
+| `assassinscreedunity-atk`             | 25       |
+| `assassinscreedunity-dlcfolder`       | 30       |
+| `assassinscreedunity-extractedfolder` | 35       |
+| `assassinscreedunity-forgefolder`     | 40       |
+| `assassinscreedunity-datafolder`      | 45       |
+| `assassinscreedunity-loosedata`       | 50       |
+| `assassinscreedunity-fixes`           | 55       |
+| `assassinscreedunity-resorep`         | 57       |
+| `assassinscreedunity-forgefile`       | 60       |
+| `assassinscreedunity-root`            | 65       |
+| `assassinscreedunity-resoreptextures` | 70       |
 
 ## Toolbar Actions
 
@@ -77,4 +77,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
-

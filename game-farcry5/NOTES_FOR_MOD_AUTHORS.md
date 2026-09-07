@@ -6,15 +6,15 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| Mod Installer (tool) | a `fcmodinstaller.exe` file | `FCModInstaller` |
-| Root / Game Folder Mods | a `bin` folder or a `''` file | the game folder itself (no subfolder) |
-| Data File Mods | a `.dat` file | `data_final\pc` |
-| Binaries | a file with the `.dll` extension | `bin` |
-| Mimoda3 | a file or folder named `info.xml` | `FCModInstaller\ModifiedFilesFC5` |
-| Mod Installer Mods | a `.a2` file | `FCModInstaller\ModifiedFilesFC5` |
-| Xml | a file or folder named `gamerprofile.xml` and a file with the `.xml` extension | `DOCUMENTS\My Games\Far Cry 5\USERID_FOLDER` |
+| Mod Type                | Archive must contain                                                           | Installs to                                  |
+| ----------------------- | ------------------------------------------------------------------------------ | -------------------------------------------- |
+| Mod Installer (tool)    | a `fcmodinstaller.exe` file                                                    | `FCModInstaller`                             |
+| Root / Game Folder Mods | a `bin` folder or a `''` file                                                  | the game folder itself (no subfolder)        |
+| Data File Mods          | a `.dat` file                                                                  | `data_final\pc`                              |
+| Binaries                | a file with the `.dll` extension                                               | `bin`                                        |
+| Mimoda3                 | a file or folder named `info.xml`                                              | `FCModInstaller\ModifiedFilesFC5`            |
+| Mod Installer Mods      | a `.a2` file                                                                   | `FCModInstaller\ModifiedFilesFC5`            |
+| Xml                     | a file or folder named `gamerprofile.xml` and a file with the `.xml` extension | `DOCUMENTS\My Games\Far Cry 5\USERID_FOLDER` |
 
 Paths are relative to the game's install folder.
 
@@ -100,4 +100,3 @@ Installs to: `DOCUMENTS\My Games\Far Cry 5\USERID_FOLDER`
 - Archives that contain a FOMOD installer (a `fomod` folder with `ModuleConfig.xml`) are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

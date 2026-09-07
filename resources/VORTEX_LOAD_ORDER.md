@@ -8,11 +8,11 @@ are the authoring view: see `LOAD_ORDER_REGISTRATION.md`, `LOAD_ORDER_ITEM_RENDE
 
 There are **two distinct** load-order systems plus a legacy page:
 
-| System | Where | For |
-| --- | --- | --- |
-| **File-based load order (FBLO)** | `file_based_loadorder` core ext | The modern, generic system most games use |
-| **Gamebryo plugins** | `gamebryo-plugin-management` bundled ext | Bethesda `.esp`/`.esl` (LOOT sort, `plugins.txt`) — separate |
-| Legacy `mod_load_order` | `mod_load_order` core ext | Older renderer-page variant |
+| System                           | Where                                    | For                                                          |
+| -------------------------------- | ---------------------------------------- | ------------------------------------------------------------ |
+| **File-based load order (FBLO)** | `file_based_loadorder` core ext          | The modern, generic system most games use                    |
+| **Gamebryo plugins**             | `gamebryo-plugin-management` bundled ext | Bethesda `.esp`/`.esl` (LOOT sort, `plugins.txt`) — separate |
+| Legacy `mod_load_order`          | `mod_load_order` core ext                | Older renderer-page variant                                  |
 
 This doc is about **FBLO**. Gamebryo plugins are a parallel system (`GAMEBRYO_PLUGIN_SYSTEM.md`).
 
@@ -46,12 +46,12 @@ drag-and-drop list (`ItemRenderer.tsx`).
    is non-empty**, so nothing seeds the load order during a collection install.
 2. **Reorder** — the user drags items; `setFBLoadOrder` changes `persistent.loadOrder[profileId]`.
    An `onStateChange` on that path computes prev vs new and calls **`applyNewLoadOrder`**, which:
-   - `findGameEntry(profile.gameId)` (warns if the game isn't registered),
-   - `gameEntry.serializeLoadOrder(newLO, prev)` — **writes the game's order file** (e.g.
-     `mods.txt`), then
-   - `validateLoadOrder(api, profile, newLO)` — game-specific validation; failures go through
-     `errorHandler`.
-   It must **never** dispatch `setFBLoadOrder` itself (infinite loop).
+    - `findGameEntry(profile.gameId)` (warns if the game isn't registered),
+    - `gameEntry.serializeLoadOrder(newLO, prev)` — **writes the game's order file** (e.g.
+      `mods.txt`), then
+    - `validateLoadOrder(api, profile, newLO)` — game-specific validation; failures go through
+      `errorHandler`.
+      It must **never** dispatch `setFBLoadOrder` itself (infinite loop).
 3. **Deploy / purge** — `did-deploy`, `will-purge`, `did-purge` each route through
    `genDeploymentEvent(api, profileId, type)`, which re-`deserializeLoadOrder()`s and re-seeds
    state. On **`did-deploy`** the deserialized order is passed through `updateSet.restore(...)` so
@@ -63,7 +63,7 @@ drag-and-drop list (`ItemRenderer.tsx`).
 `persistent.loadOrder[profileId]` via `setFBLoadOrder` — no filtering, no merging against the
 previous order, no validation on that path (`validate` runs on the reorder and start-up paths, not
 here). A deserializer that returns a stand-in value — a placeholder row, a truncated list, an empty
-array on a transient read failure — has *replaced* the user's load order, and the state persists, so
+array on a transient read failure — has _replaced_ the user's load order, and the state persists, so
 it survives until the next successful deserialize. To decline to rebuild (e.g. while a mod update is
 in flight) return the currently stored order unchanged; that is a no-op dispatch and leaves the page
 showing the real order.
@@ -73,7 +73,7 @@ every listener concurrently — it emits synchronously, each listener enqueues a
 caller `Promise.all`s them. Listeners are invoked in registration order, and the core
 file_based_loadorder extension registers before any game extension, so `genDeploymentEvent` calls
 `deserializeLoadOrder()` before a game extension's `did-deploy` handler has run a single line. Any
-module-level flag that handler sets or clears is therefore read in its *pre-handler* state by that
+module-level flag that handler sets or clears is therefore read in its _pre-handler_ state by that
 deserialize. An extension that needs the order re-read after its handler has done its work must do
 it itself: call its own deserializer and dispatch `actions.setFBLoadOrder(profileId, lo)` (exported
 through the public `actions` barrel). Dispatching it feeds `genLoadOrderChange`, which diffs against
@@ -82,7 +82,7 @@ reaches disk.
 
 **Rejecting leaves the order unset, not preserved.** On the three swallowing call sites a rejection
 means `setFBLoadOrder` is never dispatched, so `persistent.loadOrder[profileId]` keeps whatever it
-had — which on a profile that has never deserialized successfully is *nothing at all*. A deserializer
+had — which on a profile that has never deserialized successfully is _nothing at all_. A deserializer
 that reads its order file outside its `try` block therefore turns one unwritable game folder or one
 damaged order file into a load order that stays unset for the whole session. Read the file inside the
 try and fall back to the stored order (never to `[]`, which would diff against the stored order and
@@ -92,7 +92,7 @@ serialize straight back over the file).
 profile-change seed, `genLoadOrderChange`, and `genDeploymentEvent` — wrap the call in
 `try { … } catch { /* nop */ }` and simply skip the dispatch. But `onStartUp` routes a throw through
 `errorHandler`, which calls `reportError` and shows the user a "Failed load order operation" error.
-`ProcessCanceled` / `DataInvalid` / `UserCanceled` only suppress the *report* button, not the
+`ProcessCanceled` / `DataInvalid` / `UserCanceled` only suppress the _report_ button, not the
 notification.
 
 ## UpdateSet — surviving mod updates and purge cycles
@@ -138,12 +138,12 @@ Two core behaviours matter to an extension author:
   `mod-update` alone will not arm for bulk updates; the core protection still applies.
 - **Only FBLO state is covered.** All of the above operates on
   `state.persistent.loadOrder[profileId]` and the game entry registered through
-  `registerLoadOrder`. A *sidecar* order — a custom `registerMainPage` list with its own reducer and
+  `registerLoadOrder`. A _sidecar_ order — a custom `registerMainPage` list with its own reducer and
   its own order file, e.g. the UE4SS and LogicMods pages in the Unreal templates — is invisible to
   core: no arming, no serialize suppression, no restore. Such a page has to guard itself while an
   update is in flight (`LOAD_ORDER_REGISTRATION.md`, "Sidecar orders get none of the core update
   protections").
-- **One known gap:** if a deployment completes *mid-batch* (collection installs, `autoDeploy` off,
+- **One known gap:** if a deployment completes _mid-batch_ (collection installs, `autoDeploy` off,
   or a manual deploy), `restore()` disarms, the resulting `setFBLoadOrder` re-seeds the `UpdateSet`
   through the `SET_FB_LOAD_ORDER` action check — dropping the remembered index of a mod that is
   still mid-update — and the next state diff serializes the shortened order to disk. In the normal
@@ -166,18 +166,18 @@ load order into a collection and restores it on install (`genCollectionLoadOrder
 
 ## Events / state
 
-| Thing | Role |
-| --- | --- |
-| `state.persistent.loadOrder[profileId]` | The order (watched for reorders) |
+| Thing                                     | Role                              |
+| ----------------------------------------- | --------------------------------- |
+| `state.persistent.loadOrder[profileId]`   | The order (watched for reorders)  |
 | `did-deploy` / `will-purge` / `did-purge` | Re-serialize/deserialize triggers |
-| `gamemode-activated` / profile change | Initial deserialize + seed |
+| `gamemode-activated` / profile change     | Initial deserialize + seed        |
 
 ## Gotchas
 
 - **`persistent.loadOrder[profileId]` may not exist, and may not be an array.** It is written only
   by the triggers listed above, so a fresh profile — or any profile whose first deployment comes out
   of a collection install, where those triggers are all suppressed — reaches deploy time with no key
-  at all. Installs carried over from the deprecated `registerLoadOrderPage` hold the *legacy object*
+  at all. Installs carried over from the deprecated `registerLoadOrderPage` hold the _legacy object_
   (`{ modId: { pos, enabled } }`) at the same state path. Core defends itself
   (`if (!Array.isArray(currentStoredLO)) currentStoredLO = []` in `genDeploymentEvent`); extension
   code reading the path must do the same. Branch on `Array.isArray`, not on a local "am I FBLO"

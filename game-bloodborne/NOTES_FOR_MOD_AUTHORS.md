@@ -6,14 +6,14 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| Shadps4 | a file or folder named `shadps4.exe` | - |
-| Shadlauncher | a file or folder named `shadps4qtlauncher.exe` | - |
-| Smithbox | a file or folder named `smithbox.exe` | - |
-| Flver | a file or folder named `flver_editor.exe` | - |
-| Dvdroot Ps4 | a file or folder named one of: `action`, `chr`, `event`, `facegen`, `map`, `menu`, `movie`, `msg`, `mtd`, `obj`, `other`, `param`, `paramdef`, `parts`, `remo`, `script`, `sfx`, `shader` or `sound` | `CUSA03173\dvdroot_ps4` |
-| Save | a file or folder named `userdata0000` | `user\savedata\1\CUSA03173\SPRJ0005` |
+| Mod Type     | Archive must contain                                                                                                                                                                                 | Installs to                          |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| Shadps4      | a file or folder named `shadps4.exe`                                                                                                                                                                 | -                                    |
+| Shadlauncher | a file or folder named `shadps4qtlauncher.exe`                                                                                                                                                       | -                                    |
+| Smithbox     | a file or folder named `smithbox.exe`                                                                                                                                                                | -                                    |
+| Flver        | a file or folder named `flver_editor.exe`                                                                                                                                                            | -                                    |
+| Dvdroot Ps4  | a file or folder named one of: `action`, `chr`, `event`, `facegen`, `map`, `menu`, `movie`, `msg`, `mtd`, `obj`, `other`, `param`, `paramdef`, `parts`, `remo`, `script`, `sfx`, `shader` or `sound` | `CUSA03173\dvdroot_ps4`              |
+| Save         | a file or folder named `userdata0000`                                                                                                                                                                | `user\savedata\1\CUSA03173\SPRJ0005` |
 
 Paths are relative to the game's install folder.
 
@@ -49,4 +49,3 @@ Installs to: `user\savedata\1\CUSA03173\SPRJ0005`
 
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

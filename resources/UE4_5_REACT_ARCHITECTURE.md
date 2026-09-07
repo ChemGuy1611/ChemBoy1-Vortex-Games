@@ -48,12 +48,12 @@ Three consequences that the whole React layer depends on:
 
 ### Special-cased module ids
 
-| Required id | What the extension actually receives |
-| --- | --- |
+| Required id                            | What the extension actually receives                                                                               |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | `vortex-api` / `@nexusmods/vortex-api` | A `Proxy` around the api module, per extension. `log()` is wrapped to prefix messages with the extension namespace |
-| `redux-act` | A `Proxy` whose `createAction` injects `{ extension: <name> }` into action metadata |
-| `react-select` | Vortex's `ReactSelectWrap`, not the upstream package |
-| anything else | Raw Node require resolved from the application bundle, then from the extension folder |
+| `redux-act`                            | A `Proxy` whose `createAction` injects `{ extension: <name> }` into action metadata                                |
+| `react-select`                         | Vortex's `ReactSelectWrap`, not the upstream package                                                               |
+| anything else                          | Raw Node require resolved from the application bundle, then from the extension folder                              |
 
 The `vortex-api` proxy is why `log('warn', ...)` inside an extension shows up namespaced in the
 Vortex log with no extra work.
@@ -78,29 +78,29 @@ Fifteen components, two React contexts, one custom hook and three shared helpers
 `main()` and before `module.exports`. Function declarations hoist, so registration calls inside
 `main()` can reference components defined further down the file.
 
-| Identifier | Kind | Mounted by |
-| --- | --- | --- |
-| `LoadOrderInstructions` | component | Vortex FBLO page, via `usageInstructions` |
-| `LoadOrderItemRenderer` | component | Vortex FBLO page, via `customItemRenderer` |
-| `PakContextMenu` | component | `LoadOrderItemRenderer` (conditional child) |
-| `StatusPills` | component | `LoadOrderInstructions` |
-| `LoadOrderStatusFilter` | component | `Ue4ssLoadOrderPage`, `LogicModsLoadOrderPage` headers |
-| `GameSettings` | component | Settings dialog, via `registerSettings` |
-| `Ue4ssLoadOrderPage` | component (page) | Sidebar, via `registerMainPage` |
-| `Ue4ssItemRenderer` | component | `DraggableList` inside `Ue4ssLoadOrderPage` |
-| `Ue4ssContextMenu` | component | `Ue4ssItemRenderer` (conditional child) |
-| `Ue4ssLoadOrderInfoPanel` | component | `Ue4ssLoadOrderPage` |
-| `LogicModsLoadOrderPage` | component (page) | Sidebar, via `registerMainPage` |
-| `LogicModsItemRenderer` | component | `DraggableList` inside `LogicModsLoadOrderPage` |
-| `LogicModsContextMenu` | component | `LogicModsItemRenderer` (conditional child) |
-| `LogicModsLoadOrderInfoPanel` | component | `LogicModsLoadOrderPage` |
-| `CollectionsDataView` | component | Collection workshop tab, via `registerCollectionFeature` |
-| `Ue4ssSelectionContext` | React context | Provider in `Ue4ssLoadOrderPage` |
-| `LogicModsSelectionContext` | React context | Provider in `LogicModsLoadOrderPage` |
-| `usePakLOState` | custom hook | `LoadOrderInstructions` + every `LoadOrderItemRenderer` row |
-| `matchesStatus` | helper | all three surfaces |
-| `getModPageURL` | helper | all three context menus |
-| `getModStagingFolder` | helper | all three context menus |
+| Identifier                    | Kind             | Mounted by                                                  |
+| ----------------------------- | ---------------- | ----------------------------------------------------------- |
+| `LoadOrderInstructions`       | component        | Vortex FBLO page, via `usageInstructions`                   |
+| `LoadOrderItemRenderer`       | component        | Vortex FBLO page, via `customItemRenderer`                  |
+| `PakContextMenu`              | component        | `LoadOrderItemRenderer` (conditional child)                 |
+| `StatusPills`                 | component        | `LoadOrderInstructions`                                     |
+| `LoadOrderStatusFilter`       | component        | `Ue4ssLoadOrderPage`, `LogicModsLoadOrderPage` headers      |
+| `GameSettings`                | component        | Settings dialog, via `registerSettings`                     |
+| `Ue4ssLoadOrderPage`          | component (page) | Sidebar, via `registerMainPage`                             |
+| `Ue4ssItemRenderer`           | component        | `DraggableList` inside `Ue4ssLoadOrderPage`                 |
+| `Ue4ssContextMenu`            | component        | `Ue4ssItemRenderer` (conditional child)                     |
+| `Ue4ssLoadOrderInfoPanel`     | component        | `Ue4ssLoadOrderPage`                                        |
+| `LogicModsLoadOrderPage`      | component (page) | Sidebar, via `registerMainPage`                             |
+| `LogicModsItemRenderer`       | component        | `DraggableList` inside `LogicModsLoadOrderPage`             |
+| `LogicModsContextMenu`        | component        | `LogicModsItemRenderer` (conditional child)                 |
+| `LogicModsLoadOrderInfoPanel` | component        | `LogicModsLoadOrderPage`                                    |
+| `CollectionsDataView`         | component        | Collection workshop tab, via `registerCollectionFeature`    |
+| `Ue4ssSelectionContext`       | React context    | Provider in `Ue4ssLoadOrderPage`                            |
+| `LogicModsSelectionContext`   | React context    | Provider in `LogicModsLoadOrderPage`                        |
+| `usePakLOState`               | custom hook      | `LoadOrderInstructions` + every `LoadOrderItemRenderer` row |
+| `matchesStatus`               | helper           | all three surfaces                                          |
+| `getModPageURL`               | helper           | all three context menus                                     |
+| `getModStagingFolder`         | helper           | all three context menus                                     |
 
 ---
 
@@ -109,18 +109,18 @@ Fifteen components, two React contexts, one custom hook and three shared helpers
 The template manages three unrelated orderings, each with its own page, state and on-disk format.
 The single most useful mental model is which side owns the page shell.
 
-| Aspect | Pak mods | UE4SS script/DLL mods | LogicMods (Blueprint paks) |
-| --- | --- | --- | --- |
-| Page shell owner | Vortex (`registerLoadOrder`) | Extension (`registerMainPage`) | Extension (`registerMainPage`) |
-| Redux path | `persistent.loadOrder.<profileId>` | `persistent.ue4ssLoadOrder.<profileId>.loadOrder` | `persistent.logicModsLoadOrder.<profileId>.loadOrder` |
-| Action creator | `actions.setFBLoadOrder` (core) | `setUe4ssLoadOrder` (extension) | `setLogicModsLoadOrder` (extension) |
-| Sidecar file | `<profileId>_loadOrder.json` in game dir | `<profileId>_ue4ss_loadOrder.json` in UE4SS Mods dir | `<profileId>_logicMods_loadOrder.json` in `BPModLoaderMod` |
-| Game-facing file | folder-name prefixes applied on deploy | `mods.txt` | `BPModLoaderMod\load_order.txt` |
-| Ordering applied | on deploy (folder rename) | immediately on change | immediately on change |
-| Selection state | module-level pub-sub (`usePakLOState`) | React context (`Ue4ssSelectionContext`) | React context (`LogicModsSelectionContext`) |
-| Status filter UI | inline pills in info panel | dropdown beside search box | dropdown beside search box |
-| Per-entry `enabled` | checkbox suppressed (`toggleableEntries: false`) | real, written to `mods.txt` | absent; enable/disable means the Vortex mod |
-| Feature toggle | `PAKMOD_LOADORDER` + `FBLO` | `ue4ssLoadOrder` + settings toggle | `logicModsLoadOrder` |
+| Aspect              | Pak mods                                         | UE4SS script/DLL mods                                | LogicMods (Blueprint paks)                                 |
+| ------------------- | ------------------------------------------------ | ---------------------------------------------------- | ---------------------------------------------------------- |
+| Page shell owner    | Vortex (`registerLoadOrder`)                     | Extension (`registerMainPage`)                       | Extension (`registerMainPage`)                             |
+| Redux path          | `persistent.loadOrder.<profileId>`               | `persistent.ue4ssLoadOrder.<profileId>.loadOrder`    | `persistent.logicModsLoadOrder.<profileId>.loadOrder`      |
+| Action creator      | `actions.setFBLoadOrder` (core)                  | `setUe4ssLoadOrder` (extension)                      | `setLogicModsLoadOrder` (extension)                        |
+| Sidecar file        | `<profileId>_loadOrder.json` in game dir         | `<profileId>_ue4ss_loadOrder.json` in UE4SS Mods dir | `<profileId>_logicMods_loadOrder.json` in `BPModLoaderMod` |
+| Game-facing file    | folder-name prefixes applied on deploy           | `mods.txt`                                           | `BPModLoaderMod\load_order.txt`                            |
+| Ordering applied    | on deploy (folder rename)                        | immediately on change                                | immediately on change                                      |
+| Selection state     | module-level pub-sub (`usePakLOState`)           | React context (`Ue4ssSelectionContext`)              | React context (`LogicModsSelectionContext`)                |
+| Status filter UI    | inline pills in info panel                       | dropdown beside search box                           | dropdown beside search box                                 |
+| Per-entry `enabled` | checkbox suppressed (`toggleableEntries: false`) | real, written to `mods.txt`                          | absent; enable/disable means the Vortex mod                |
+| Feature toggle      | `PAKMOD_LOADORDER` + `FBLO`                      | `ue4ssLoadOrder` + settings toggle                   | `logicModsLoadOrder`                                       |
 
 ---
 
@@ -130,13 +130,13 @@ The single most useful mental model is which side owns the page shell.
 
 ```js
 context.registerLoadOrder({
-  gameId: spec.game.id,
-  validate: async () => Promise.resolve(undefined),
-  deserializeLoadOrder: async () => await deserializeLoadOrder(context),
-  serializeLoadOrder: async (loadOrder) => await serializeLoadOrder(context, loadOrder),
-  toggleableEntries: false,
-  usageInstructions: LoadOrderInstructions,
-  customItemRenderer: LoadOrderItemRenderer,
+    gameId: spec.game.id,
+    validate: async () => Promise.resolve(undefined),
+    deserializeLoadOrder: async () => await deserializeLoadOrder(context),
+    serializeLoadOrder: async (loadOrder) => await serializeLoadOrder(context, loadOrder),
+    toggleableEntries: false,
+    usageInstructions: LoadOrderInstructions,
+    customItemRenderer: LoadOrderItemRenderer,
 });
 ```
 
@@ -170,12 +170,12 @@ an unrelated re-render reuses the same row objects and leaves each row's `React.
 
 ```ts
 interface IItemRendererProps {
-  loEntry: ILoadOrderEntry;
-  displayCheckboxes: boolean;
-  invalidEntries?: IInvalidResult[];
-  position?: number;            // 1-based, over the FULL order, computed before filtering
-  lockedEntriesCount?: number;  // count of locked entries in the full order
-  setRef?: (ref: any) => void;  // present in the type, not supplied by DraggableListItem
+    loEntry: ILoadOrderEntry;
+    displayCheckboxes: boolean;
+    invalidEntries?: IInvalidResult[];
+    position?: number; // 1-based, over the FULL order, computed before filtering
+    lockedEntriesCount?: number; // count of locked entries in the full order
+    setRef?: (ref: any) => void; // present in the type, not supplied by DraggableListItem
 }
 ```
 
@@ -227,15 +227,19 @@ let _pakSelectedIds = new Set();
 let _pakContextMenu = null;
 let _pakStatusFilter = new Set();
 const _pakListeners = new Set();
-function _notifyPak() { _pakListeners.forEach(l => l()); }
+function _notifyPak() {
+    _pakListeners.forEach((l) => l());
+}
 
 function usePakLOState() {
-  const [, forceUpdate] = React.useReducer(x => x + 1, 0);
-  React.useEffect(() => {
-    _pakListeners.add(forceUpdate);
-    return () => _pakListeners.delete(forceUpdate);
-  }, []);
-  return { /* current values + setters that mutate then notify */ };
+    const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
+    React.useEffect(() => {
+        _pakListeners.add(forceUpdate);
+        return () => _pakListeners.delete(forceUpdate);
+    }, []);
+    return {
+        /* current values + setters that mutate then notify */
+    };
 }
 ```
 
@@ -260,7 +264,11 @@ Two structural details worth flagging:
 
 ```js
 if (!matchesStatus(loEntry, statusFilter, () => isModEnabled, isLocked)) {
-  return React.createElement(ListGroupItem, { key: loEntry.id, className: 'lo-row-hidden', style: { display: 'none' } });
+    return React.createElement(ListGroupItem, {
+        key: loEntry.id,
+        className: "lo-row-hidden",
+        style: { display: "none" },
+    });
 }
 ```
 
@@ -269,7 +277,9 @@ extension cannot reach, and their spacing leaves visible gaps. The injected styl
 wrapper instead:
 
 ```css
-.file-based-load-order-list .list-group > div:has(.lo-row-hidden) { display: none !important; }
+.file-based-load-order-list .list-group > div:has(.lo-row-hidden) {
+    display: none !important;
+}
 ```
 
 Rendered row contents, in order: drag handle (hidden via `visibility` when locked, which preserves
@@ -313,11 +323,11 @@ profile id, the load order for that profile, and the `ue4ssLoEnabled` setting.
 
 Three effects:
 
-| Effect | Dependencies | Purpose |
-| --- | --- | --- |
-| context-menu dismiss | `[contextMenu]` | document-level click/contextmenu listeners while a menu is open |
-| load order refresh | `[profileId]` | guard on `activeGameId`, then `deserializeUe4ss` -> dispatch, clear selection |
-| stylesheet injection | `[]` | index-input focus colours + scroll container fix, id-guarded |
+| Effect               | Dependencies    | Purpose                                                                       |
+| -------------------- | --------------- | ----------------------------------------------------------------------------- |
+| context-menu dismiss | `[contextMenu]` | document-level click/contextmenu listeners while a menu is open               |
+| load order refresh   | `[profileId]`   | guard on `activeGameId`, then `deserializeUe4ss` -> dispatch, clear selection |
+| stylesheet injection | `[]`            | index-input focus colours + scroll container fix, id-guarded                  |
 
 Rendering short-circuits twice before the main tree: a "disabled in Settings" message when the
 toggle is off, and a "No UE4SS mods are installed" message when the order is empty. Both are placed
@@ -349,19 +359,27 @@ mapped onto positions in the full order:
 ```js
 const isFiltered = !!filterText || statusFilter.size > 0;
 
-const onApply = React.useCallback((reordered) => {
-  let newLO;
-  if (isFiltered) {
-    const filteredIds = new Set(reordered.map(e => e.id));
-    const positions = loadOrder.reduce((acc, e, i) => { if (filteredIds.has(e.id)) acc.push(i); return acc; }, []);
-    newLO = [...loadOrder];
-    positions.forEach((pos, i) => { newLO[pos] = reordered[i]; });
-  } else {
-    newLO = reordered;
-  }
-  dispatch(setUe4ssLoadOrder(profileId, newLO));
-  serializeUe4ss(api, newLO);
-}, [dispatch, loadOrder, isFiltered, profileId]);
+const onApply = React.useCallback(
+    (reordered) => {
+        let newLO;
+        if (isFiltered) {
+            const filteredIds = new Set(reordered.map((e) => e.id));
+            const positions = loadOrder.reduce((acc, e, i) => {
+                if (filteredIds.has(e.id)) acc.push(i);
+                return acc;
+            }, []);
+            newLO = [...loadOrder];
+            positions.forEach((pos, i) => {
+                newLO[pos] = reordered[i];
+            });
+        } else {
+            newLO = reordered;
+        }
+        dispatch(setUe4ssLoadOrder(profileId, newLO));
+        serializeUe4ss(api, newLO);
+    },
+    [dispatch, loadOrder, isFiltered, profileId],
+);
 ```
 
 Visible entries are permuted among the slots they already occupied; hidden entries keep their
@@ -429,10 +447,10 @@ basenames, so one mod may own several entries):
 
 ```js
 const makeEntry = (pakName, prev) => ({
-  id: pakName,
-  name: modName ? `${modName} (${pakName}.pak)` : `Manual Mod (${pakName}.pak)`,
-  modId: getModId(pakName),
-  ...(prev?.locked !== undefined ? { locked: prev.locked } : {}),
+    id: pakName,
+    name: modName ? `${modName} (${pakName}.pak)` : `Manual Mod (${pakName}.pak)`,
+    modId: getModId(pakName),
+    ...(prev?.locked !== undefined ? { locked: prev.locked } : {}),
 });
 ```
 
@@ -475,7 +493,7 @@ DraggableList (class, DropTarget-wrapped, cached per itemTypeId)
 - **Two wrapper `<div>`s exist between the `ListGroup` and the row.** They are unreachable from the
   renderer, which is why row-hiding needs the `:has()` stylesheet rather than a style on the row.
 - **The wrapper owns an `onClick`.** A click therefore updates `DraggableList`'s internal ctrl/shift
-  selection *and* the template's own selection (set on the row element). The internal selection
+  selection _and_ the template's own selection (set on the row element). The internal selection
   drives multi-row dragging; the template's drives context-menu targeting. They are maintained
   independently and can disagree — for example after a context-menu action clears one but not the
   other.
@@ -520,16 +538,16 @@ renames the staged folders during deployment.
 
 ### Refresh triggers
 
-| Trigger | Effect |
-| --- | --- |
-| Page mount / profile change | `deserialize*` -> dispatch, selection cleared (custom pages, effect keyed on `profileId`) |
-| FBLO page mount | Vortex calls `deserializeLoadOrder` itself and dispatches the result |
-| Drag end | `onApply` -> dispatch + serialize |
-| Index input (Enter) | `onApplyIndex` -> dispatch + serialize |
-| Checkbox / lock / context action | dispatch + serialize |
-| Enable/Disable Vortex mod | `actions.setModEnabled` (batched via `util.batchDispatch` for multi-select) + `requestDeployment` |
-| `did-deploy` | `didDeploy` -> `deserialize*` -> dispatch -> `serialize*`, with a fallback to store state on error |
-| Status filter change | pub-sub notify (pak) or local state (custom pages); `isFiltered` arms the reorder remap |
+| Trigger                          | Effect                                                                                             |
+| -------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Page mount / profile change      | `deserialize*` -> dispatch, selection cleared (custom pages, effect keyed on `profileId`)          |
+| FBLO page mount                  | Vortex calls `deserializeLoadOrder` itself and dispatches the result                               |
+| Drag end                         | `onApply` -> dispatch + serialize                                                                  |
+| Index input (Enter)              | `onApplyIndex` -> dispatch + serialize                                                             |
+| Checkbox / lock / context action | dispatch + serialize                                                                               |
+| Enable/Disable Vortex mod        | `actions.setModEnabled` (batched via `util.batchDispatch` for multi-select) + `requestDeployment`  |
+| `did-deploy`                     | `didDeploy` -> `deserialize*` -> dispatch -> `serialize*`, with a fallback to store state on error |
+| Status filter change             | pub-sub notify (pak) or local state (custom pages); `isFiltered` arms the reorder remap            |
 
 `didDeploy` runs the deserialize/dispatch/serialize cycle for both sidecar orders and is the point
 where externally added or removed mod folders enter the load order. It also releases the
@@ -556,13 +574,13 @@ touched through a success notification.
 
 ```js
 context.optional.registerCollectionFeature(
-  `${GAME_ID}_ue4ss_collection_data`,
-  (gameId, includedMods) => genUe4ssCollectionsData(context.api, gameId, includedMods),
-  (gameId, collection) => parseUe4ssCollectionsData(context.api, gameId, collection),
-  () => Promise.resolve(),
-  (t) => t('UE4SS Load Orders'),
-  (state, gameId) => gameId === GAME_ID,
-  CollectionsDataView,
+    `${GAME_ID}_ue4ss_collection_data`,
+    (gameId, includedMods) => genUe4ssCollectionsData(context.api, gameId, includedMods),
+    (gameId, collection) => parseUe4ssCollectionsData(context.api, gameId, collection),
+    () => Promise.resolve(),
+    (t) => t("UE4SS Load Orders"),
+    (state, gameId) => gameId === GAME_ID,
+    CollectionsDataView,
 );
 ```
 
@@ -598,9 +616,9 @@ Three pieces of behaviour repeat across every load order surface, so they live a
 of the React block rather than being copied into each component:
 
 ```js
-useInjectStyleOnce(styleId, css)      // <style> into document.head, guarded by a fixed id
-useDismissOnOutside(onClose)          // click / contextmenu / Escape close the context menu
-useClampedMenuPosition(x, y)          // -> [position, measureRef] for the context menus
+useInjectStyleOnce(styleId, css); // <style> into document.head, guarded by a fixed id
+useDismissOnOutside(onClose); // click / contextmenu / Escape close the context menu
+useClampedMenuPosition(x, y); // -> [position, measureRef] for the context menus
 ```
 
 `useInjectStyleOnce` exists because extensions cannot ship CSS: the rules are injected from a mount
@@ -693,7 +711,7 @@ dropdown in the header of the custom pages. The dropdown is hand-built rather th
   or the click also reaches the row's `onSelect` and changes the selection. The lock icon is the
   case that bit: it called `onClick: onLock` bare, so locking a row selected it too.
 - A locked entry never moves. Both the single-item and the multi-select move actions have to honour
-  that, and the multi-select "move to bottom" must count locked entries into its *rest* array — if it
+  that, and the multi-select "move to bottom" must count locked entries into its _rest_ array — if it
   only excludes them from the moved selection, they fall out of both arrays and vanish from the
   order.
 

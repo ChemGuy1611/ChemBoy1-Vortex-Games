@@ -6,10 +6,15 @@ Date: 11/07/2024
 */
 
 //import libraries
-const { actions, fs, util, selectors, log } = require('vortex-api');
-const path = require('path');
-const template = require('string-template');
-const { download, findModByFile, resolveVersionByModVersion, testRequirementVersion } = require('./downloader');
+const { actions, fs, util, selectors, log } = require("vortex-api");
+const path = require("path");
+const template = require("string-template");
+const {
+  download,
+  findModByFile,
+  resolveVersionByModVersion,
+  testRequirementVersion,
+} = require("./downloader");
 //const winapi = require('winapi-bindings'); //gives access to the Windows registry
 
 //Specify all the information about the game
@@ -26,19 +31,19 @@ const GAME_NAME_SHORT = "Horizon ZD Remastered";
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1077"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Horizon_Zero_Dawn_Remastered";
 
-let STAGING_FOLDER = ''; //Vortex staging folder path
-let DOWNLOAD_FOLDER = ''; //Vortex download folder path
-let GAME_PATH = ''; //Game installation path
-let GAME_VERSION = ''; //Game version
+let STAGING_FOLDER = ""; //Vortex staging folder path
+let DOWNLOAD_FOLDER = ""; //Vortex download folder path
+let GAME_PATH = ""; //Game installation path
+let GAME_VERSION = ""; //Game version
 let modManagerInstalled = false;
 
 //Info for mod types and installers
 const MODMANAGER_ID = `${GAME_ID}-modmanager`;
 const MODMANAGER_NAME = "DS2 Mod Manager";
-const MODMANAGER_EXEC = 'HFW_MM.exe';
+const MODMANAGER_EXEC = "HFW_MM.exe";
 const MODMANAGER_PAGE_NO = 137;
 const MODMANAGER_FILE_NO = 762;
-const MODMANAGER_DOMAIN = 'horizonforbiddenwest';
+const MODMANAGER_DOMAIN = "horizonforbiddenwest";
 
 // The Mod Manager is published only on Nexus, on the Horizon Forbidden West page rather than this
 // game's, and as a naked .exe rather than an archive. The requirement therefore takes the module's
@@ -70,15 +75,15 @@ const MODMANAGER_REQUIREMENTS = [
 
 const MANAGERMOD_ID = `${GAME_ID}-managermod`;
 const MANAGERMOD_NAME = "DS2 Manager Mod";
-const MANAGERMOD_PATH = path.join('mods');
-const MANAGERMOD_EXTS = ['.core', '.stream'];
-const MANAGERMOD_FILES = ['modinfo.json'];
+const MANAGERMOD_PATH = path.join("mods");
+const MANAGERMOD_EXTS = [".core", ".stream"];
+const MANAGERMOD_FILES = ["modinfo.json"];
 
-const SAVE_ID = `${GAME_ID}-save`
-const SAVE_EXT = '.dat'
-const userDocsValue = util.getVortexPath('documents');
-const userDocsPathString = userDocsValue.replace(/x00s/g, '');
-const SAVE_FOLDER = path.join(userDocsPathString, 'Horizon Zero Dawn Remastered');
+const SAVE_ID = `${GAME_ID}-save`;
+const SAVE_EXT = ".dat";
+const userDocsValue = util.getVortexPath("documents");
+const userDocsPathString = userDocsValue.replace(/x00s/g, "");
+const SAVE_FOLDER = path.join(userDocsPathString, "Horizon Zero Dawn Remastered");
 let USERID_FOLDER = "";
 function isDir(folder, file) {
   const stats = fs.statSync(path.join(folder, file));
@@ -96,77 +101,73 @@ if (USERID_FOLDER === undefined) {
 const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
 const CONFIG_PATH = SAVE_PATH;
 
-const MOD_PATH_DEFAULT = '.';
+const MOD_PATH_DEFAULT = ".";
 const REQ_FILE = EXEC;
-const PARAMETERS_STRING = '';
+const PARAMETERS_STRING = "";
 const PARAMETERS = [PARAMETERS_STRING];
 
 let MODTYPE_FOLDERS = [MANAGERMOD_PATH];
-const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
-const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
 
 const spec = {
-  "game": {
-    "id": GAME_ID,
-    "name": GAME_NAME,
-    "shortName": GAME_NAME_SHORT,
-    "executable": EXEC,
-    "logo": `${GAME_ID}.jpg`,
-    "mergeMods": true,
-    "modPath": MOD_PATH_DEFAULT,
-    "modPathIsRelative": true,
-    "requiredFiles": [
-      EXEC
-    ],
-    "details": {
-      "steamAppId": +STEAMAPP_ID,
-      "epicAppId": EPICAPP_ID,
-      "compatibleDownloads": ['horizonzerodawn'],
-      "supportsSymlinks": true,
-      "ignoreConflicts": IGNORE_CONFLICTS,
-      "ignoreDeploy": IGNORE_DEPLOY,
+  game: {
+    id: GAME_ID,
+    name: GAME_NAME,
+    shortName: GAME_NAME_SHORT,
+    executable: EXEC,
+    logo: `${GAME_ID}.jpg`,
+    mergeMods: true,
+    modPath: MOD_PATH_DEFAULT,
+    modPathIsRelative: true,
+    requiredFiles: [EXEC],
+    details: {
+      steamAppId: +STEAMAPP_ID,
+      epicAppId: EPICAPP_ID,
+      compatibleDownloads: ["horizonzerodawn"],
+      supportsSymlinks: true,
+      ignoreConflicts: IGNORE_CONFLICTS,
+      ignoreDeploy: IGNORE_DEPLOY,
     },
-    "environment": {
-      "SteamAPPId": STEAMAPP_ID,
-      "EpicAPPId": EPICAPP_ID,
+    environment: {
+      SteamAPPId: STEAMAPP_ID,
+      EpicAPPId: EPICAPP_ID,
     },
   },
-  "modTypes": [
+  modTypes: [
     {
-      "id": MANAGERMOD_ID,
-      "name": MANAGERMOD_NAME,
-      "priority": "high",
-      "targetPath": path.join('{gamePath}', MANAGERMOD_PATH)
+      id: MANAGERMOD_ID,
+      name: MANAGERMOD_NAME,
+      priority: "high",
+      targetPath: path.join("{gamePath}", MANAGERMOD_PATH),
     },
     {
-      "id": MODMANAGER_ID,
-      "name": MODMANAGER_NAME,
-      "priority": "low",
-      "targetPath": '{gamePath}'
+      id: MODMANAGER_ID,
+      name: MODMANAGER_NAME,
+      priority: "low",
+      targetPath: "{gamePath}",
     },
     {
-      "id": SAVE_ID,
-      "name": "Save Game (Documents)",
-      "priority": "high",
-      "targetPath": SAVE_PATH
+      id: SAVE_ID,
+      name: "Save Game (Documents)",
+      priority: "high",
+      targetPath: SAVE_PATH,
     },
   ],
-  "discovery": {
-    "ids": DISCOVERY_IDS_ACTIVE,
-    "names": []
-  }
+  discovery: {
+    ids: DISCOVERY_IDS_ACTIVE,
+    names: [],
+  },
 };
 
 //3rd party tools and launchers
 const tools = [
   {
     id: `${GAME_ID}-customlaunch`,
-    name: 'Custom Launch',
-    logo: 'exec.png',
+    name: "Custom Launch",
+    logo: "exec.png",
     executable: () => EXEC,
-    requiredFiles: [
-      EXEC,
-    ],
+    requiredFiles: [EXEC],
     relative: true,
     exclusive: true,
     shell: true,
@@ -193,8 +194,7 @@ function statCheckSync(gamePath, file) {
   try {
     fs.statSync(path.join(gamePath, file));
     return true;
-  }
-  catch {
+  } catch {
     return false;
   }
 }
@@ -203,8 +203,7 @@ async function statCheckAsync(gamePath, file) {
   try {
     await fs.statAsync(path.join(gamePath, file));
     return true;
-  }
-  catch {
+  } catch {
     return false;
   }
 }
@@ -216,31 +215,38 @@ async function getAllFiles(dirPath) {
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
       const stats = await fs.statAsync(fullPath);
-      if (stats.isDirectory()) { // Recursively get files from subdirectories
+      if (stats.isDirectory()) {
+        // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
         results = results.concat(subDirFiles);
-      } else { // Add file to results
+      } else {
+        // Add file to results
         results.push(fullPath);
       }
     }
   } catch (err) {
-    log('warn', `Error reading directory ${dirPath}: ${err.message}`);
+    log("warn", `Error reading directory ${dirPath}: ${err.message}`);
   }
   return results;
 }
 
-const getDiscoveryPath = (api) => { //get the game's discovered path
+const getDiscoveryPath = (api) => {
+  //get the game's discovered path
   const state = api.getState();
   const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
 
 async function purge(api) {
-  return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));
+  return new Promise((resolve, reject) =>
+    api.events.emit("purge-mods", true, (err) => (err ? reject(err) : resolve())),
+  );
 }
 
 async function deploy(api) {
-  return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
+  return new Promise((resolve, reject) =>
+    api.events.emit("deploy-mods", (err) => (err ? reject(err) : resolve())),
+  );
 }
 
 function modTypePriority(priority) {
@@ -254,18 +260,22 @@ function modTypePriority(priority) {
 function pathPattern(api, game, pattern) {
   var _a;
   return template(pattern, {
-    gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
-    documents: util.getVortexPath('documents'),
-    localAppData: util.getVortexPath('localAppData'),
-    appData: util.getVortexPath('appData'),
+    gamePath:
+      (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0
+        ? void 0
+        : _a.path,
+    documents: util.getVortexPath("documents"),
+    localAppData: util.getVortexPath("localAppData"),
+    appData: util.getVortexPath("appData"),
   });
 }
 
 //Get mod path
 function makeGetModPath(api, gameSpec) {
-  return () => gameSpec.game.modPathIsRelative !== false
-    ? gameSpec.game.modPath || '.'
-    : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
+  return () =>
+    gameSpec.game.modPathIsRelative !== false
+      ? gameSpec.game.modPath || "."
+      : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
 }
 
 //Find game installation directory
@@ -282,16 +292,16 @@ function makeFindGame(api, gameSpec) {
     }
     return () => Promise.resolve(instPath.value);
   } catch { //*/
-    return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
-      .then((game) => game.gamePath);
+  return () =>
+    util.GameStoreHelper.findByAppId(gameSpec.discovery.ids).then((game) => game.gamePath);
   //}
 } //*/
 
 //Set launcher requirements
 async function requiresLauncher(gamePath, store) {
-  if (store === 'xbox' && (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID))) {
+  if (store === "xbox" && DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) {
     return Promise.resolve({
-      launcher: 'xbox',
+      launcher: "xbox",
       addInfo: {
         appId: XBOXAPP_ID,
         parameters: [{ appExecName: XBOXEXECNAME }],
@@ -300,9 +310,9 @@ async function requiresLauncher(gamePath, store) {
       },
     });
   } //*/
-  if (store === 'epic' && (DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID))) {
+  if (store === "epic" && DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID)) {
     return Promise.resolve({
-      launcher: 'epic',
+      launcher: "epic",
       addInfo: {
         appId: EPICAPP_ID,
         //parameters: PARAMETERS,
@@ -310,9 +320,9 @@ async function requiresLauncher(gamePath, store) {
       },
     });
   } //*/
-  if (store === 'steam') {
+  if (store === "steam") {
     return Promise.resolve({
-      launcher: 'steam',
+      launcher: "steam",
     });
   } //*/
   return Promise.resolve(undefined);
@@ -322,36 +332,40 @@ async function requiresLauncher(gamePath, store) {
 
 //test for HFW MM files/exts
 function testManagerMod(files, gameId) {
-  const isInfo = files.some(file => MANAGERMOD_FILES.includes(path.basename(file).toLowerCase()));
-  const isExt = files.some(file => MANAGERMOD_EXTS.includes(path.extname(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && ( isInfo || isExt );
+  const isInfo = files.some((file) => MANAGERMOD_FILES.includes(path.basename(file).toLowerCase()));
+  const isExt = files.some((file) => MANAGERMOD_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = gameId === spec.game.id && (isInfo || isExt);
 
   // Test for a mod installer
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
-  supported = false;
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
   }
 
   return Promise.resolve({
     supported,
-    requiredFiles: []
+    requiredFiles: [],
   });
 }
 
 //Install Mod Manager mod (unzipped in folder)
 function installManagerMod(files, fileName) {
   const MOD_NAME = path.basename(fileName);
-  let MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*/gi, '');
-  const setModTypeInstruction = { type: 'setmodtype', value: MANAGERMOD_ID };
+  let MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*/gi, "");
+  const setModTypeInstruction = { type: "setmodtype", value: MANAGERMOD_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    (!file.endsWith(path.sep)));
+  const filtered = files.filter((file) => !file.endsWith(path.sep));
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(MOD_FOLDER, file),
     };
@@ -362,13 +376,18 @@ function installManagerMod(files, fileName) {
 
 //test whether to use mod installer
 function testSave(files, gameId) {
-  const isMod = files.find(file => path.extname(file).toLowerCase() === SAVE_EXT) !== undefined;
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.find((file) => path.extname(file).toLowerCase() === SAVE_EXT) !== undefined;
+  let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer.
-  if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -380,22 +399,19 @@ function testSave(files, gameId) {
 
 //mod installer instructions
 function installSave(files) {
-  const modFile = files.find(file => path.extname(file).toLowerCase() === SAVE_EXT);
+  const modFile = files.find((file) => path.extname(file).toLowerCase() === SAVE_EXT);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: SAVE_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: SAVE_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    (
-     (file.indexOf(rootPath) !== -1) &&
-     (!file.endsWith(path.sep))
-    )
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -436,11 +452,11 @@ async function downloadModManager(api, check = true) {
 //Notify User to run Mod Manager after deployment
 function deployNotify(api) {
   const NOTIF_ID = `${GAME_ID}-deploy-notification`;
-  const MOD_NAME = 'HFW MM';
+  const MOD_NAME = "HFW MM";
   const MESSAGE = `Run ${MOD_NAME} after Deploy`;
   api.sendNotification({
     id: NOTIF_ID,
-    type: 'warning',
+    type: "warning",
     message: MESSAGE,
     allowSuppress: true,
     actions: [
@@ -452,28 +468,36 @@ function deployNotify(api) {
         },
       },
       {
-        title: 'More',
+        title: "More",
         action: (dismiss) => {
-          api.showDialog('question', MESSAGE, {
-            text: `You must use ${MOD_NAME} to install .core/.stream mods after installing with Vortex.\n`
-                + `\n`
-                + `Use the included tool to launch ${MOD_NAME} (button on notification or in "Dashboard" tab).\n`
-                + `Select the mod options you want, then click the "Pack Mods" button.\n`
-          }, [
-            { 
-              label: `Run ${MOD_NAME}`, action: () => {
-                runManager(api);
-                dismiss();
-              }
-            }, //*/
-            { label: 'Continue', action: () => dismiss() },
+          api.showDialog(
+            "question",
+            MESSAGE,
             {
-              label: 'Never Show Again', action: () => {
-                api.suppressNotification(NOTIF_ID);
-                dismiss();
-              }
+              text:
+                `You must use ${MOD_NAME} to install .core/.stream mods after installing with Vortex.\n` +
+                `\n` +
+                `Use the included tool to launch ${MOD_NAME} (button on notification or in "Dashboard" tab).\n` +
+                `Select the mod options you want, then click the "Pack Mods" button.\n`,
             },
-          ]);
+            [
+              {
+                label: `Run ${MOD_NAME}`,
+                action: () => {
+                  runManager(api);
+                  dismiss();
+                },
+              }, //*/
+              { label: "Continue", action: () => dismiss() },
+              {
+                label: "Never Show Again",
+                action: () => {
+                  api.suppressNotification(NOTIF_ID);
+                  dismiss();
+                },
+              },
+            ],
+          );
         },
       },
     ],
@@ -483,11 +507,11 @@ function deployNotify(api) {
 //Notify User to run Mod Manager to restore vanilla files on purge
 function purgeNotify(api) {
   const NOTIF_ID = `${GAME_ID}-purge-notification`;
-  const MOD_NAME = 'HFW MM';
+  const MOD_NAME = "HFW MM";
   const MESSAGE = `Run ${MOD_NAME} To Restore Files`;
   api.sendNotification({
     id: NOTIF_ID,
-    type: 'warning',
+    type: "warning",
     message: MESSAGE,
     allowSuppress: true,
     actions: [
@@ -499,29 +523,37 @@ function purgeNotify(api) {
         },
       },
       {
-        title: 'More',
+        title: "More",
         action: (dismiss) => {
-          api.showDialog('question', MESSAGE, {
-            text: `\n`
-                + `Vortex just detected that you have purged mods.\n`
-                + `If you wish to restore the game to a vanilla state, you must run ${MOD_NAME} and click the "Restore Files" button.\n`
-                + `\n`
-                + `Use the included tool to launch ${MOD_NAME} (button on notification or in "Dashboard" tab).\n`
-          }, [
-            { 
-              label: `Run ${MOD_NAME}`, action: () => {
-                runManager(api);
-                dismiss();
-              }
-            }, //*/
-            { label: 'Continue', action: () => dismiss() },
+          api.showDialog(
+            "question",
+            MESSAGE,
             {
-              label: 'Never Show Again', action: () => {
-                api.suppressNotification(NOTIF_ID);
-                dismiss();
-              }
+              text:
+                `\n` +
+                `Vortex just detected that you have purged mods.\n` +
+                `If you wish to restore the game to a vanilla state, you must run ${MOD_NAME} and click the "Restore Files" button.\n` +
+                `\n` +
+                `Use the included tool to launch ${MOD_NAME} (button on notification or in "Dashboard" tab).\n`,
             },
-          ]);
+            [
+              {
+                label: `Run ${MOD_NAME}`,
+                action: () => {
+                  runManager(api);
+                  dismiss();
+                },
+              }, //*/
+              { label: "Continue", action: () => dismiss() },
+              {
+                label: "Never Show Again",
+                action: () => {
+                  api.suppressNotification(NOTIF_ID);
+                  dismiss();
+                },
+              },
+            ],
+          );
         },
       },
     ],
@@ -529,31 +561,41 @@ function purgeNotify(api) {
 }
 
 function runManager(api) {
-  let TOOL_ID =  MODMANAGER_ID;
+  let TOOL_ID = MODMANAGER_ID;
   let TOOL_NAME = MODMANAGER_NAME;
   const state = api.store.getState();
-  const tool = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'tools', TOOL_ID], undefined);
+  const tool = util.getSafe(
+    state,
+    ["settings", "gameMode", "discovered", GAME_ID, "tools", TOOL_ID],
+    undefined,
+  );
 
   try {
     const TOOL_PATH = tool.path;
     if (TOOL_PATH !== undefined) {
-      return api.runExecutable(TOOL_PATH, [], 
-        { 
+      return api
+        .runExecutable(TOOL_PATH, [], {
           //cwd: path.dirname(TOOL_PATH),
-          detach: true, 
+          detach: true,
           //env: { 'PATH': process.env.PATH },
-          //shell: true, 
-          suggestDeploy: false 
+          //shell: true,
+          suggestDeploy: false,
         })
-        .catch(err => api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err,
-          { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 })
+        .catch((err) =>
+          api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
+            allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+          }),
         );
-    }
-    else {
-      return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, `Path to ${TOOL_NAME} executable could not be found. Ensure ${TOOL_NAME} is installed through Vortex.`);
+    } else {
+      return api.showErrorNotification(
+        `Failed to run ${TOOL_NAME}`,
+        `Path to ${TOOL_NAME} executable could not be found. Ensure ${TOOL_NAME} is installed through Vortex.`,
+      );
     }
   } catch (err) {
-    return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
+    return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
+      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+    });
   }
 }
 
@@ -591,11 +633,23 @@ function applyGame(context, gameSpec) {
 
   //register mod types
   (gameSpec.modTypes || []).forEach((type, idx) => {
-    context.registerModType(type.id, modTypePriority(type.priority) + idx, (gameId) => {
-      var _a;
-      return (gameId === gameSpec.game.id)
-        && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
+    context.registerModType(
+      type.id,
+      modTypePriority(type.priority) + idx,
+      (gameId) => {
+        var _a;
+        return (
+          gameId === gameSpec.game.id &&
+          !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+          _a === void 0
+            ? void 0
+            : _a.path)
+        );
+      },
+      (game) => pathPattern(context.api, game, type.targetPath),
+      () => Promise.resolve(false),
+      { name: type.name },
+    );
   });
 
   //register mod installers
@@ -610,60 +664,104 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config/Save Folder', () => {
-    util.opn(SAVE_PATH).catch(() => null);
-    }, () => {
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Config/Save Folder",
+    () => {
+      util.opn(SAVE_PATH).catch(() => null);
+    },
+    () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-  }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
-    util.opn(PCGAMINGWIKI_URL).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
-    const openPath = path.join(__dirname, 'CHANGELOG.md');
-    util.opn(openPath).catch(() => null);
-    }, () => {
+    },
+  ); //*/
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open PCGamingWiki Page",
+    () => {
+      util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
-    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    util.opn(DOWNLOAD_FOLDER).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "View Changelog",
+    () => {
+      const openPath = path.join(__dirname, "CHANGELOG.md");
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Submit Bug Report",
+    () => {
+      util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Downloads Folder",
+    () => {
+      util.opn(DOWNLOAD_FOLDER).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
 }
 
 //Main function
 function main(context) {
   applyGame(context, spec);
-  context.once(() => { // put code here that should be run (once) when Vortex starts up
+  context.once(() => {
+    // put code here that should be run (once) when Vortex starts up
     const api = context.api;
-    context.api.onAsync('check-mods-version', async (gameId, mods, forced) => {
+    context.api.onAsync("check-mods-version", async (gameId, mods, forced) => {
       if (gameId !== GAME_ID) return;
       try {
         await testRequirementVersion(api, MODMANAGER_REQUIREMENTS[0]);
       } catch (err) {
-        log('warn', `Failed to test requirement version: ${err}`);
+        log("warn", `Failed to test requirement version: ${err}`);
       }
       return Promise.resolve();
     });
-    context.api.onAsync('did-deploy', async (profileId, deployment) => {
-      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
+    context.api.onAsync("did-deploy", async (profileId, deployment) => {
+      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(
+        context.api.getState(),
+        GAME_ID,
+      );
       if (profileId !== LAST_ACTIVE_PROFILE) return;
       modManagerInstalled = await isModManagerInstalled(context.api);
       if (!modManagerInstalled) {
@@ -672,8 +770,11 @@ function main(context) {
       deployNotify(context.api);
       return Promise.resolve();
     });
-    context.api.onAsync('did-purge', async (profileId) => { 
-      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
+    context.api.onAsync("did-purge", async (profileId) => {
+      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(
+        context.api.getState(),
+        GAME_ID,
+      );
       if (profileId !== LAST_ACTIVE_PROFILE) return;
       modManagerInstalled = await isModManagerInstalled(context.api);
       if (!modManagerInstalled) {

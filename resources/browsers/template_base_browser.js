@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 // Skeleton for a new browser module - copy this to <source>_browser.js and fill it in.
 //
@@ -21,24 +21,24 @@
 //   - Keep the public export names in the source module's own vocabulary
 //     (registerXBrowser, onceXBrowser, ...), so an adopter's index.js reads naturally.
 
-const { log, util } = require('vortex-api'); //util for API calls, log for diagnostics
-const { createBrowserModule } = require('./base_browser');
+const { log, util } = require("vortex-api"); //util for API calls, log for diagnostics
+const { createBrowserModule } = require("./base_browser");
 
-const SITE_BASE = 'https://example.com';
-const API_BASE = 'https://example.com/api';
+const SITE_BASE = "https://example.com";
+const API_BASE = "https://example.com/api";
 
 // Dedicated mod attributes rather than the standard 'version' one, because Vortex's md5 meta
 // lookup can overwrite 'version' with data from an unrelated Nexus match.
-const DEFAULT_PACKAGE_ATTRIBUTE = 'examplePackage';
-const DEFAULT_VERSION_ATTRIBUTE = 'exampleVersion';
+const DEFAULT_PACKAGE_ATTRIBUTE = "examplePackage";
+const DEFAULT_VERSION_ATTRIBUTE = "exampleVersion";
 
 // Hosts the embedded view stays on: the site and whatever CDN its downloads redirect to.
 // Anything else is opened in the system browser instead.
-const DEFAULT_ALLOWED_HOSTS = ['example.com'];
+const DEFAULT_ALLOWED_HOSTS = ["example.com"];
 
 // Raw 24x24 SVG path for the sidebar icon. Trace it from the site's own mark, and render it
 // (render_svg.py --js-const) before shipping - an icon nobody has looked at is a bug.
-const DEFAULT_MDI = 'M12 2L2 22h20z';
+const DEFAULT_MDI = "M12 2L2 22h20z";
 
 // --- URLs and keys --------------------------------------------------------
 
@@ -56,8 +56,8 @@ function itemKey(ref) {
 //another source's rule (Thunderstore's "split at the first hyphen" is valid only because its
 //ids cannot contain one).
 function parseItemKey(key) {
-  const matched = /^(\d+)$/.exec(String(key || ''));
-  return (matched !== null) ? { itemId: matched[1] } : null;
+  const matched = /^(\d+)$/.exec(String(key || ""));
+  return matched !== null ? { itemId: matched[1] } : null;
 }
 
 //What a download click hits
@@ -75,12 +75,12 @@ async function resolveExampleItem(config, ref) {
     return {
       itemId: String(ref.itemId),
       name: data?.name || null,
-      version: String(data?.version || ''),
+      version: String(data?.version || ""),
       downloadUrl: data?.download_url,
       pageUrl: `${SITE_BASE}/mods/${ref.itemId}`,
     };
   } catch (err) {
-    log('warn', `Could not resolve example mod ${itemKey(ref)}: ${err}`);
+    log("warn", `Could not resolve example mod ${itemKey(ref)}: ${err}`);
     return null;
   }
 }
@@ -88,8 +88,8 @@ async function resolveExampleItem(config, ref) {
 //Recognise a finished download as this source's. Return null for anything else - this runs on
 //every download Vortex finishes for the game, including ones from Nexus.
 function downloadRef(download) {
-  for (const url of (download.urls || [])) {
-    const matched = DOWNLOAD_URL_RE.exec(String(url || ''));
+  for (const url of download.urls || []) {
+    const matched = DOWNLOAD_URL_RE.exec(String(url || ""));
     if (matched !== null) {
       return { itemId: matched[1] };
     }
@@ -101,8 +101,8 @@ function downloadRef(download) {
 
 const adapter = {
   // --- required ---
-  id: 'example', //namespaces the page id (<gameId>-example-browse) and the per-source state
-  label: 'Example', //appears in messages, notifications and log lines
+  id: "example", //namespaces the page id (<gameId>-example-browse) and the per-source state
+  label: "Example", //appears in messages, notifications and log lines
   homeUrl,
   refKey: itemKey,
   parseKey: parseItemKey,
@@ -115,10 +115,10 @@ const adapter = {
     packageAttribute: DEFAULT_PACKAGE_ATTRIBUTE,
     versionAttribute: DEFAULT_VERSION_ATTRIBUTE,
     allowedHosts: DEFAULT_ALLOWED_HOSTS,
-    icon: 'search', //fallback icon name, used when mdi is absent
+    icon: "search", //fallback icon name, used when mdi is absent
     mdi: DEFAULT_MDI,
-    pageTitle: 'Browse Mods', //sidebar label
-    homeTooltip: 'Back to the game page',
+    pageTitle: "Browse Mods", //sidebar label
+    homeTooltip: "Back to the game page",
     adSelectors: [], //CSS hidden in the view - per source, they describe one site's markup
     blockedHosts: [], //ad hosts whose links are dropped instead of opening the system browser
   },
@@ -130,7 +130,7 @@ const adapter = {
   dependencies: false,
 
   //shown when a reference cannot be resolved
-  unresolvedMessage: 'The Example API is unreachable or this mod has no downloadable file',
+  unresolvedMessage: "The Example API is unreachable or this mod has no downloadable file",
 
   //Skip the API when a reference already names the file it wants. Omit when every install
   //needs a lookup anyway; the base then uses resolve().
@@ -168,7 +168,7 @@ const adapter = {
   //'capture' (the default) means Vortex's own download manager fetches the bytes once the
   //view requests the URL. Use 'click' only for a source whose downloads Vortex cannot fetch
   //itself - it fetches in the renderer instead and imports the finished file.
-  fetchStrategy: 'capture',
+  fetchStrategy: "capture",
   //fetchToFile: (config, url) => downloadInRenderer(url), //required by 'click'
 
   //Update-check hooks. The defaults compare semver-coerced version strings; override all four

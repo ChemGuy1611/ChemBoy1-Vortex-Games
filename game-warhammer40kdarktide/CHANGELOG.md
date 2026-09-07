@@ -4,6 +4,11 @@
 
 - None
 
+## [0.2.5] - 2026-09-06
+
+- Fixed: Locked load order entries could be moved out of position when using "Move to Top", "Move to Bottom" or the position number box on another entry. Locked entries now keep their place.
+- Fixed: The load order position number box now accepts low numbers even when a locked entry is further down the list.
+
 ## [0.2.4] - 2026-07-29
 
 - Fixed: The load order could disappear after deploying while a mod update was in progress, and only came back after deploying a second time.

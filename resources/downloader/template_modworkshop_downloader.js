@@ -1,17 +1,17 @@
-const { actions, fs, util, selectors, log } = require('vortex-api');
-const path = require('path');
-const GAME_ID = 'placeholder';
-const api = require('vortex-api'); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
+const { actions, fs, util, selectors, log } = require("vortex-api");
+const path = require("path");
+const GAME_ID = "placeholder";
+const api = require("vortex-api"); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 const spec = { game: { id: GAME_ID } }; //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 const context = { api }; //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 
 // MODWORKSHOP REQUIREMENT ////////////////////////////////////////////////
-const { downloadModWorkshop, checkForModWorkshopUpdate } = require('./modworkshop_downloader');
+const { downloadModWorkshop, checkForModWorkshopUpdate } = require("./modworkshop_downloader");
 const XXX_ID = `${GAME_ID}-XXX`; //mod type id for the requirement (register the mod type + installer in index.js as usual)
 const XXX_NAME = "XXX";
-const XXX_MWS_MOD_ID = '00000'; //ModWorkshop mod id - https://modworkshop.net/mod/00000
-const XXX_REV = '0.0.0'; //fallback version if the ModWorkshop API is unreachable
-const XXX_DL_ID = '000000'; //fallback file id if the ModWorkshop API is unreachable - builds https://api.modworkshop.net/files/000000/download
+const XXX_MWS_MOD_ID = "00000"; //ModWorkshop mod id - https://modworkshop.net/mod/00000
+const XXX_REV = "0.0.0"; //fallback version if the ModWorkshop API is unreachable
+const XXX_DL_ID = "000000"; //fallback file id if the ModWorkshop API is unreachable - builds https://api.modworkshop.net/files/000000/download
 const MWS_REQUIREMENTS = [
   {
     mwsModId: XXX_MWS_MOD_ID,
@@ -47,18 +47,27 @@ async function setup(api, gameSpec) {
 }
 
 // *** In context.once() function ////////////////////
-  api.onAsync('check-mods-version', (gameId, mods, forced) => {
-    if (gameId !== GAME_ID) return;
-    return checkForModWorkshopUpdate(api, spec, MWS_REQUIREMENTS)
-      .catch(err => log('warn', `Failed to check for ${XXX_NAME} update: ${err}`));
-  }); //*/
+api.onAsync("check-mods-version", (gameId, mods, forced) => {
+  if (gameId !== GAME_ID) return;
+  return checkForModWorkshopUpdate(api, spec, MWS_REQUIREMENTS).catch((err) =>
+    log("warn", `Failed to check for ${XXX_NAME} update: ${err}`),
+  );
+}); //*/
 
 // *** In applyGame() function ////////////////////
-  //register a toolbar button to (re)download the latest file
-  context.registerAction('mod-icons', 300, 'open-ext', {}, `Download Latest ${XXX_NAME}`, () => {
+//register a toolbar button to (re)download the latest file
+context.registerAction(
+  "mod-icons",
+  300,
+  "open-ext",
+  {},
+  `Download Latest ${XXX_NAME}`,
+  () => {
     downloadModWorkshop(context.api, spec, MWS_REQUIREMENTS, false);
-  }, () => {
+  },
+  () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
-  }); //*/
+  },
+); //*/

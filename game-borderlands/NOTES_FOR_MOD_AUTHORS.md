@@ -6,17 +6,17 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| TFC Installer (tool) | a `tfcinstaller.exe` file | the game folder itself (no subfolder) |
-| UPK Explorer (tool) | a `upk explorer.exe` file | the game folder itself (no subfolder) |
-| TFC Mods | a `gameprofile.xml` file or a `.packagepatch` file | `TFCInstaller\Mods` |
-| Sdk | a file or folder named `unrealsdk.dll` and a file or folder named `sdk_mods` | the game folder itself (no subfolder) |
-| Sdkmod | a file with the `.py` extension and a file with the `.sdkmod` extension | `sdk_mods` |
-| Root / Game Folder Mods | a `WillowGame` folder | the game folder itself (no subfolder) |
-| Cooked Content Mods | a `DLC` folder or a `.upk` file | `WillowGame\CookedPC` |
-| Movie / Cutscene Replacements | a `.bik` file | `WillowGame\Movies` |
-| Binaries / Injector Mods | a `Borderlands.exe` file or a `.dll` file | - |
+| Mod Type                      | Archive must contain                                                         | Installs to                           |
+| ----------------------------- | ---------------------------------------------------------------------------- | ------------------------------------- |
+| TFC Installer (tool)          | a `tfcinstaller.exe` file                                                    | the game folder itself (no subfolder) |
+| UPK Explorer (tool)           | a `upk explorer.exe` file                                                    | the game folder itself (no subfolder) |
+| TFC Mods                      | a `gameprofile.xml` file or a `.packagepatch` file                           | `TFCInstaller\Mods`                   |
+| Sdk                           | a file or folder named `unrealsdk.dll` and a file or folder named `sdk_mods` | the game folder itself (no subfolder) |
+| Sdkmod                        | a file with the `.py` extension and a file with the `.sdkmod` extension      | `sdk_mods`                            |
+| Root / Game Folder Mods       | a `WillowGame` folder                                                        | the game folder itself (no subfolder) |
+| Cooked Content Mods           | a `DLC` folder or a `.upk` file                                              | `WillowGame\CookedPC`                 |
+| Movie / Cutscene Replacements | a `.bik` file                                                                | `WillowGame\Movies`                   |
+| Binaries / Injector Mods      | a `Borderlands.exe` file or a `.dll` file                                    | -                                     |
 
 Paths are relative to the game's install folder.
 
@@ -134,4 +134,3 @@ DLL injectors and other files that belong next to the game executable.
 - Archives that contain a FOMOD installer (a `fomod` folder with `ModuleConfig.xml`) are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

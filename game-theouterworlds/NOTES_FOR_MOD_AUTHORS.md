@@ -6,10 +6,10 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| Config File Mods | a config file such as `engine.ini` or `input.ini` | - |
-| Root / Game Folder Mods | a top-level folder such as `Indiana` | the game folder itself (no subfolder) |
+| Mod Type                | Archive must contain                              | Installs to                           |
+| ----------------------- | ------------------------------------------------- | ------------------------------------- |
+| Config File Mods        | a config file such as `engine.ini` or `input.ini` | -                                     |
+| Root / Game Folder Mods | a top-level folder such as `Indiana`              | the game folder itself (no subfolder) |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
@@ -50,4 +50,3 @@ Installs to: the game folder itself (no subfolder)
 
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

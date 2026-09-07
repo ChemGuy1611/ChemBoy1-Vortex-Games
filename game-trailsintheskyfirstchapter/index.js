@@ -7,11 +7,11 @@ Date: 2026-01-19
 ///////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require('vortex-api');
-const path = require('path');
-const template = require('string-template');
-const winapi = require('winapi-bindings');
-const fsPromises = require('fs/promises');
+const { actions, fs, util, selectors, log } = require("vortex-api");
+const path = require("path");
+const template = require("string-template");
+const winapi = require("winapi-bindings");
+const fsPromises = require("fs/promises");
 
 const USER_HOME = util.getVortexPath("home");
 //const DOCUMENTS = util.getVortexPath("documents");
@@ -29,51 +29,53 @@ const XBOXEXECNAME = null;
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, STEAMAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "Trails in the Sky 1st Chapter";
 const GAME_NAME_SHORT = "Trails 1st";
-const BINARIES_PATH = path.join('.');
+const BINARIES_PATH = path.join(".");
 const EXEC_NAME = "sora_1st.exe";
 const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
-const EXEC_XBOX = 'gamelaunchhelper.exe';
+const EXEC_XBOX = "gamelaunchhelper.exe";
 
-const DATA_FOLDER = 'asset';
-const ROOT_FOLDERS = [DATA_FOLDER, 'pac',
-  'asset_de',
-  'asset_en',
-  'asset_es',
-  'asset_fr',
-  'bgm1',
-  'bgm2',
-  'bgm3',
-  'layout',
-  'movie',
-  'movie_en',
-  'scene',
-  'script',
-  'script_de',
-  'script_en',
-  'script_es',
-  'script_fr',
-  'se',
-  'ssytem',
-  'table',
-  'table_de',
-  'table_en',
-  'table_es',
-  'table_fr',
-  'vfx',
-  'voice',
-  'voice_en',
+const DATA_FOLDER = "asset";
+const ROOT_FOLDERS = [
+  DATA_FOLDER,
+  "pac",
+  "asset_de",
+  "asset_en",
+  "asset_es",
+  "asset_fr",
+  "bgm1",
+  "bgm2",
+  "bgm3",
+  "layout",
+  "movie",
+  "movie_en",
+  "scene",
+  "script",
+  "script_de",
+  "script_en",
+  "script_es",
+  "script_fr",
+  "se",
+  "ssytem",
+  "table",
+  "table_de",
+  "table_en",
+  "table_es",
+  "table_fr",
+  "vfx",
+  "voice",
+  "voice_en",
 ];
 
-let GAME_PATH = '';
-let GAME_VERSION = '';
-let STAGING_FOLDER = '';
-let DOWNLOAD_FOLDER = '';
-const APPMANIFEST_FILE = 'appxmanifest.xml';
+let GAME_PATH = "";
+let GAME_VERSION = "";
+let STAGING_FOLDER = "";
+let DOWNLOAD_FOLDER = "";
+const APPMANIFEST_FILE = "appxmanifest.xml";
 
 const PAC_ID = `${GAME_ID}-pac`;
 const PAC_NAME = "Pac Files";
-const PAC_PATH = path.join('pac', 'steam');
-const PAC_EXT = '.pac';
+const PAC_PATH = path.join("pac", "steam");
+const PAC_EXT = ".pac";
 const PAC_EXTS = [PAC_EXT];
 
 const ROOT_ID = `${GAME_ID}-root`;
@@ -82,97 +84,94 @@ const ROOT_NAME = "Root Folder";
 //* Config and Saves
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config";
-const CONFIG_PATH = path.join(USER_HOME, 'Saved Games', 'FALCOM', 'Trails in the Sky 1st Chapter');
+const CONFIG_PATH = path.join(USER_HOME, "Saved Games", "FALCOM", "Trails in the Sky 1st Chapter");
 const CONFIG_EXTS = [".json"];
 const CONFIG_FILES = ["settings.json"];
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Save";
-const SAVE_PATH = path.join(CONFIG_PATH, 'savedata');
+const SAVE_PATH = path.join(CONFIG_PATH, "savedata");
 const SAVE_EXTS = [".dat"];
 const SAVE_FILES = ["user.dat"];
 
 const PACTOOL_ID = `${GAME_ID}-pacextract`;
 const PACTOOL_NAME = "Pac Extractor (Python)";
-const PACTOOL_PY = 'sky_extract_pac.py';
+const PACTOOL_PY = "sky_extract_pac.py";
 const PACTOOL_EXEC = path.join(PAC_PATH, PACTOOL_PY);
-const BUNDLED_PACTOOL_PATH = path.join(__dirname, 'assets', PACTOOL_PY);
+const BUNDLED_PACTOOL_PATH = path.join(__dirname, "assets", PACTOOL_PY);
 const DESTINATION_PACTOOL_PATH = path.join(PAC_PATH, PACTOOL_PY);
 let pythonInstalled = false;
 const runInShell = false;
-const BAK_EXT = '.bak';
+const BAK_EXT = ".bak";
 
-const MOD_PATH_DEFAULT = '.';
+const MOD_PATH_DEFAULT = ".";
 const REQ_FILE = EXEC;
-const PARAMETERS_STRING = '';
+const PARAMETERS_STRING = "";
 const PARAMETERS = [PARAMETERS_STRING];
 const MODTYPE_FOLDERS = [PAC_PATH];
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1530"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Trails_in_the_Sky_1st_Chapter";
-const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
-const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
 const spec = {
-  "game": {
-    "id": GAME_ID,
-    "name": GAME_NAME,
-    "shortName": GAME_NAME_SHORT,
-    "executable": EXEC,
+  game: {
+    id: GAME_ID,
+    name: GAME_NAME,
+    shortName: GAME_NAME_SHORT,
+    executable: EXEC,
     //"parameters": PARAMETERS,
-    "logo": `${GAME_ID}.jpg`,
-    "mergeMods": true,
-    "requiresCleanup": true,
-    "modPath": MOD_PATH_DEFAULT,
-    "modPathIsRelative": true,
-    "requiredFiles": [
-      REQ_FILE
-    ],
-    "details": {
-      "steamAppId": +STEAMAPP_ID,
-      "gogAppId": GOGAPP_ID,
-      "epicAppId": EPICAPP_ID,
-      "xboxAppId": XBOXAPP_ID,
+    logo: `${GAME_ID}.jpg`,
+    mergeMods: true,
+    requiresCleanup: true,
+    modPath: MOD_PATH_DEFAULT,
+    modPathIsRelative: true,
+    requiredFiles: [REQ_FILE],
+    details: {
+      steamAppId: +STEAMAPP_ID,
+      gogAppId: GOGAPP_ID,
+      epicAppId: EPICAPP_ID,
+      xboxAppId: XBOXAPP_ID,
       //"supportsSymlinks": false,
-      "ignoreConflicts": IGNORE_CONFLICTS,
-      "ignoreDeploy": IGNORE_DEPLOY,
+      ignoreConflicts: IGNORE_CONFLICTS,
+      ignoreDeploy: IGNORE_DEPLOY,
     },
-    "environment": {
-      "SteamAPPId": STEAMAPP_ID,
-      "GogAPPId": GOGAPP_ID,
-      "EpicAPPId": EPICAPP_ID,
-      "XboxAPPId": XBOXAPP_ID,
-    }
+    environment: {
+      SteamAPPId: STEAMAPP_ID,
+      GogAPPId: GOGAPP_ID,
+      EpicAPPId: EPICAPP_ID,
+      XboxAPPId: XBOXAPP_ID,
+    },
   },
-  "modTypes": [
+  modTypes: [
     {
-      "id": PAC_ID,
-      "name": PAC_NAME,
-      "priority": "high",
-      "targetPath": path.join("{gamePath}", PAC_PATH)
+      id: PAC_ID,
+      name: PAC_NAME,
+      priority: "high",
+      targetPath: path.join("{gamePath}", PAC_PATH),
     },
     {
-      "id": ROOT_ID,
-      "name": ROOT_NAME,
-      "priority": "high",
-      "targetPath": `{gamePath}`
+      id: ROOT_ID,
+      name: ROOT_NAME,
+      priority: "high",
+      targetPath: `{gamePath}`,
     },
   ],
-  "discovery": {
-    "ids": DISCOVERY_IDS_ACTIVE,
-    "names": []
-  }
+  discovery: {
+    ids: DISCOVERY_IDS_ACTIVE,
+    names: [],
+  },
 };
 
 //3rd party tools and launchers
-const tools = [ //accepts: exe, jar, py, vbs, bat
+const tools = [
+  //accepts: exe, jar, py, vbs, bat
   {
     id: `${GAME_ID}-customlaunch`,
-    name: 'Custom Launch',
-    logo: 'exec.png',
+    name: "Custom Launch",
+    logo: "exec.png",
     executable: () => EXEC,
-    requiredFiles: [
-      EXEC,
-    ],
+    requiredFiles: [EXEC],
     relative: true,
     exclusive: true,
     shell: true,
@@ -206,7 +205,7 @@ function isDir(folder, file) {
     const stats = fs.statSync(readFile);
     return stats.isDirectory();
   } catch (err) {
-    log('error', `Could not check if "${path.join(folder, file)}" is a folder: ${err}`);
+    log("error", `Could not check if "${path.join(folder, file)}" is a folder: ${err}`);
   }
 }
 
@@ -218,15 +217,17 @@ async function getAllFiles(dirPath) {
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
       const stats = await fs.statAsync(fullPath);
-      if (stats.isDirectory()) { // Recursively get files from subdirectories
+      if (stats.isDirectory()) {
+        // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
         results = results.concat(subDirFiles);
-      } else { // Add file to results
+      } else {
+        // Add file to results
         results.push(fullPath);
       }
     }
   } catch (err) {
-    log('warn', `Error reading directory ${dirPath}: ${err.message}`);
+    log("warn", `Error reading directory ${dirPath}: ${err.message}`);
   }
   return results;
 }
@@ -243,51 +244,58 @@ function pathPattern(api, game, pattern) {
   try {
     var _a;
     return template(pattern, {
-      gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
-      documents: util.getVortexPath('documents'),
-      localAppData: util.getVortexPath('localAppData'),
-      appData: util.getVortexPath('appData'),
+      gamePath:
+        (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0
+          ? void 0
+          : _a.path,
+      documents: util.getVortexPath("documents"),
+      localAppData: util.getVortexPath("localAppData"),
+      appData: util.getVortexPath("appData"),
     });
-  }
-  catch (err) { //this happens if the executable comes back as "undefined", usually caused by the Xbox app locking down the folder
-    api.showErrorNotification('Failed to locate executable. Please launch the game at least once.', err);
+  } catch (err) {
+    //this happens if the executable comes back as "undefined", usually caused by the Xbox app locking down the folder
+    api.showErrorNotification(
+      "Failed to locate executable. Please launch the game at least once.",
+      err,
+    );
   }
 }
 
 //Set the mod path for the game
 function makeGetModPath(api, gameSpec) {
-  return () => gameSpec.game.modPathIsRelative !== false
-    ? gameSpec.game.modPath || '.'
-    : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
+  return () =>
+    gameSpec.game.modPathIsRelative !== false
+      ? gameSpec.game.modPath || "."
+      : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
 }
 
 //Find game installation directory
 function makeFindGame(api, gameSpec) {
-  return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
-    .then((game) => game.gamePath);
+  return () =>
+    util.GameStoreHelper.findByAppId(gameSpec.discovery.ids).then((game) => game.gamePath);
 }
 
 //Set launcher requirements
 async function requiresLauncher(gamePath, store) {
-  if (store === 'xbox' && (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID))) {
-      return Promise.resolve({
-        launcher: 'xbox',
-        addInfo: {
-          appId: XBOXAPP_ID,
-          parameters: [{ appExecName: XBOXEXECNAME }],
-          //parameters: [{ appExecName: XBOXEXECNAME }, PARAMETERS_STRING],
-          //launchType: 'gamestore',
-        },
-      });
-  } //*/
-  if (store === 'epic' && (DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID))) {
+  if (store === "xbox" && DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) {
     return Promise.resolve({
-        launcher: 'epic',
-        addInfo: {
-          appId: EPICAPP_ID,
-          //parameters: PARAMETERS,
-          //launchType: 'gamestore',
-        },
+      launcher: "xbox",
+      addInfo: {
+        appId: XBOXAPP_ID,
+        parameters: [{ appExecName: XBOXEXECNAME }],
+        //parameters: [{ appExecName: XBOXEXECNAME }, PARAMETERS_STRING],
+        //launchType: 'gamestore',
+      },
+    });
+  } //*/
+  if (store === "epic" && DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID)) {
+    return Promise.resolve({
+      launcher: "epic",
+      addInfo: {
+        appId: EPICAPP_ID,
+        //parameters: PARAMETERS,
+        //launchType: 'gamestore',
+      },
     });
   } //*/
   /*
@@ -308,8 +316,7 @@ function statCheckSync(gamePath, file) {
   try {
     fs.statSync(path.join(gamePath, file));
     return true;
-  }
-  catch {
+  } catch {
     return false;
   }
 }
@@ -317,8 +324,7 @@ async function statCheckAsync(gamePath, file) {
   try {
     await fs.statAsync(path.join(gamePath, file));
     return true;
-  }
-  catch {
+  } catch {
     return false;
   }
 }
@@ -326,38 +332,50 @@ async function statCheckAsync(gamePath, file) {
 async function setGameVersion(gamePath) {
   const CHECK = await statCheckAsync(gamePath, EXEC_XBOX);
   if (CHECK) {
-    GAME_VERSION = 'xbox';
+    GAME_VERSION = "xbox";
     return GAME_VERSION;
   } else {
-    GAME_VERSION = 'default';
+    GAME_VERSION = "default";
     return GAME_VERSION;
   }
 }
 
-const getDiscoveryPath = async (api) => { //get the game's discovered path
+const getDiscoveryPath = async (api) => {
+  //get the game's discovered path
   const state = api.getState();
   const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
 
-async function purge(api) { //useful to clear out mods prior to doing some action
-  return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));
+async function purge(api) {
+  //useful to clear out mods prior to doing some action
+  return new Promise((resolve, reject) =>
+    api.events.emit("purge-mods", true, (err) => (err ? reject(err) : resolve())),
+  );
 }
-async function deploy(api) { //useful to deploy mods after doing some action
-  return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
+async function deploy(api) {
+  //useful to deploy mods after doing some action
+  return new Promise((resolve, reject) =>
+    api.events.emit("deploy-mods", (err) => (err ? reject(err) : resolve())),
+  );
 }
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
 //Test for mod files
 function testPac(files, gameId) {
-  const isMod = files.some(file => PAC_EXTS.includes(path.extname(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => PAC_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer
-  if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -370,19 +388,19 @@ function testPac(files, gameId) {
 //Install mod files
 function installPac(files) {
   const MOD_TYPE = PAC_ID;
-  const modFile = files.find(file => PAC_EXTS.includes(path.extname(file).toLowerCase()));
+  const modFile = files.find((file) => PAC_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+  const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-  ((file.indexOf(rootPath) !== -1) &&
-    (!file.endsWith(path.sep))));
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+  );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -393,13 +411,18 @@ function installPac(files) {
 
 //Installer test for Root folder files
 function testRoot(files, gameId) {
-  const isMod = files.some(file => ROOT_FOLDERS.includes(path.basename(file)));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => ROOT_FOLDERS.includes(path.basename(file)));
+  let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -411,20 +434,20 @@ function testRoot(files, gameId) {
 
 //Installer install Root folder files
 function installRoot(files) {
-  const modFile = files.find(file => ROOT_FOLDERS.includes(path.basename(file)));
-  const ROOT_IDX = `${path.basename(modFile)}${path.sep}`
+  const modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file)));
+  const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
   const idx = modFile.indexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -440,12 +463,13 @@ async function filesRename(workingPath, files) {
   for (let index = 0; index < files.length; index++) {
     const file = path.join(workingPath, files[index]); //original name
     const newName = file + BAK_EXT;
-    try { //rename extracted files
+    try {
+      //rename extracted files
       await fs.statAsync(file);
       await fs.renameAsync(file, newName);
       //log('warn', `Renamed file "${path.basename(file)}" to "${path.basename(newName)}"`);
     } catch (err) {
-      log('error', `Could not rename extracted ${PAC_EXT} file "${path.basename(file)}": ${err}`);
+      log("error", `Could not rename extracted ${PAC_EXT} file "${path.basename(file)}": ${err}`);
     }
   }
 }
@@ -454,18 +478,21 @@ async function filesRename(workingPath, files) {
 async function filesRestore(workingPath, files) {
   for (let index = 0; index < files.length; index++) {
     const file = path.join(workingPath, files[index]);
-    const newName = file.replace(BAK_EXT, ''); //original name
-    try { //restore file names
-      try { //make sure no vanilla file - this usually means the game was updated
+    const newName = file.replace(BAK_EXT, ""); //original name
+    try {
+      //restore file names
+      try {
+        //make sure no vanilla file - this usually means the game was updated
         await fs.statAsync(newName);
         await fs.unlinkAsync(file); //delete backup since original present
-      } catch { //no vanilla file, safe to rename
+      } catch {
+        //no vanilla file, safe to rename
         await fs.statAsync(file);
         await fs.renameAsync(file, newName);
         //log('warn', `Renamed file "${path.basename(file)}" to "${path.basename(newName)}"`);
       }
     } catch (err) {
-      log('error', `Could not restore filename for "${path.basename(file)}": ${err}`);
+      log("error", `Could not restore filename for "${path.basename(file)}": ${err}`);
     }
   }
 }
@@ -476,28 +503,36 @@ async function pacExtract(GAME_PATH, api) {
   const WORK_PATH = path.join(GAME_PATH, PAC_PATH);
   const EXTRACTED_FOLDER = path.join(WORK_PATH, DATA_FOLDER);
   const ARGUMENTS = [];
-  try { //extract pac files
-    try { //copy python script to pac folder if it's not already there
+  try {
+    //extract pac files
+    try {
+      //copy python script to pac folder if it's not already there
       await fs.statAsync(RUN_PATH);
     } catch (err) {
       try {
         await fs.copyAsync(BUNDLED_PACTOOL_PATH, RUN_PATH);
       } catch (err) {
-        log('error', `Could not copy ${PACTOOL_PY} to ${PAC_PATH}: ${err}`);
+        log("error", `Could not copy ${PACTOOL_PY} to ${PAC_PATH}: ${err}`);
         return false;
       }
     }
-    await api.runExecutable(RUN_PATH, ARGUMENTS, { shell: runInShell, detached: true, suggestDeploy: false });
-    log('warn', `Ran extraction for ${PAC_EXT} files`);
+    await api.runExecutable(RUN_PATH, ARGUMENTS, {
+      shell: runInShell,
+      detached: true,
+      suggestDeploy: false,
+    });
+    log("warn", `Ran extraction for ${PAC_EXT} files`);
   } catch (err) {
-    log('error', `Could not extract ${PAC_EXT} files: ${err}`);
+    log("error", `Could not extract ${PAC_EXT} files: ${err}`);
     return false;
   }
 
-  try { //stat an extracted folder
+  try {
+    //stat an extracted folder
     await fs.statAsync(EXTRACTED_FOLDER);
     return true;
-  } catch { //if the folder isn't there, the user probably interrupted somehow
+  } catch {
+    //if the folder isn't there, the user probably interrupted somehow
     return false;
   }
 }
@@ -515,7 +550,7 @@ async function foldersCopy(gamePath, workingPath) {
       await fs.statAsync(folderRoot);
       //log('warn', `Copied extracted folder "${folder}" to "${folderRoot}"`);
     } catch (err) {
-      log('error', `Could not copy extracted folder "${folder}": ${err}`);
+      log("error", `Could not copy extracted folder "${folder}": ${err}`);
     }
   }
 }
@@ -527,26 +562,29 @@ async function foldersCleanup(gamePath, workingPath) {
   for (let index = 0; index < folders.length; index++) {
     const folder = path.join(workingPath, folders[index]);
     const folderRoot = path.join(gamePath, folders[index]);
-    try { //remove extracted folders
+    try {
+      //remove extracted folders
       await fs.statAsync(folder);
       await fsPromises.rm(folder, { recursive: true });
       await fs.statAsync(folderRoot);
       await fsPromises.rm(folderRoot, { recursive: true });
       //log('warn', `Deleted extracted folders "${folder}" and "${folderRoot}"`);
     } catch (err) {
-      log('error', `Could not delete extracted folder "${folder}": ${err}`);
+      log("error", `Could not delete extracted folder "${folder}": ${err}`);
     }
   }
 }
 
 //Setup files for modding - Extract, copy folder, rename files
-async function pacSetup(api) { //run through setup notification or button
+async function pacSetup(api) {
+  //run through setup notification or button
   const NOTIF_ID = `${GAME_ID}-gamesetup`;
   const NOTIF_ID_SUC = `${GAME_ID}-gamesetupsuccess`;
-  api.sendNotification({ //notification indicating setup process
+  api.sendNotification({
+    //notification indicating setup process
     id: NOTIF_ID,
     message: `Extracting and Renaming ${PAC_EXT} files and copying data folders to game root. This will take a while.`,
-    type: 'activity',
+    type: "activity",
     noDismiss: true,
     allowSuppress: false,
   });
@@ -554,28 +592,37 @@ async function pacSetup(api) { //run through setup notification or button
   const WORK_PATH = path.join(GAME_PATH, PAC_PATH);
   await purge(api);
   let EXTRACTED = await pacExtract(GAME_PATH, api);
-  if (EXTRACTED) { //copy folder and rename files
-    log('warn', `Extraction of all ${PAC_EXT} files complete. Copying data folders to game root...`);
+  if (EXTRACTED) {
+    //copy folder and rename files
+    log(
+      "warn",
+      `Extraction of all ${PAC_EXT} files complete. Copying data folders to game root...`,
+    );
     await foldersCopy(GAME_PATH, WORK_PATH);
-    log('warn', `Copy of data folders to game root complete. Renaming files...`);
+    log("warn", `Copy of data folders to game root complete. Renaming files...`);
     try {
       let RENAME_FILES = await fs.readdirAsync(WORK_PATH);
-      RENAME_FILES = RENAME_FILES.filter(file => file.endsWith(PAC_EXT));
+      RENAME_FILES = RENAME_FILES.filter((file) => file.endsWith(PAC_EXT));
       await filesRename(WORK_PATH, RENAME_FILES);
-      log('warn', `Renamed all ${PAC_EXT} files`);
+      log("warn", `Renamed all ${PAC_EXT} files`);
     } catch (err) {
-      log('error', `Could not rename ${PAC_EXT} files: ${err}`);
+      log("error", `Could not rename ${PAC_EXT} files: ${err}`);
       await deploy(api);
       api.dismissNotification(NOTIF_ID);
-      api.showErrorNotification(`Could not complete extraction of ${PAC_EXT} files. Please try again.`, `Could not complete extraction of ${PAC_EXT} files. Please try again. This error likely occured due to closing the terminal window before extraction was complete.\n\n${err}`, { allowReport: false });
+      api.showErrorNotification(
+        `Could not complete extraction of ${PAC_EXT} files. Please try again.`,
+        `Could not complete extraction of ${PAC_EXT} files. Please try again. This error likely occured due to closing the terminal window before extraction was complete.\n\n${err}`,
+        { allowReport: false },
+      );
       return;
     }
     await deploy(api);
     api.dismissNotification(NOTIF_ID);
-    api.sendNotification({ //notification indicating success
+    api.sendNotification({
+      //notification indicating success
       id: NOTIF_ID_SUC,
       message: `Successfully Extracted and Renamed ${PAC_EXT} files and copied data folders to game root.`,
-      type: 'success',
+      type: "success",
       noDismiss: false,
       allowSuppress: true,
     });
@@ -583,7 +630,11 @@ async function pacSetup(api) { //run through setup notification or button
   }
   await deploy(api);
   api.dismissNotification(NOTIF_ID);
-  api.showErrorNotification(`Could not complete extraction of ${PAC_EXT} files. Please try again.`, `Could not complete extraction of ${PAC_EXT} files. Please try again. This error likely occured due to closing the terminal window before extraction was complete.`, { allowReport: false });
+  api.showErrorNotification(
+    `Could not complete extraction of ${PAC_EXT} files. Please try again.`,
+    `Could not complete extraction of ${PAC_EXT} files. Please try again. This error likely occured due to closing the terminal window before extraction was complete.`,
+    { allowReport: false },
+  );
   return;
 }
 
@@ -591,37 +642,44 @@ async function pacSetup(api) { //run through setup notification or button
 async function pacCleanup(api) {
   const NOTIF_ID = `${GAME_ID}-gamecleanup`;
   const NOTIF_ID_SUC = `${GAME_ID}-gamecleanupsuccess`;
-  api.sendNotification({ //notification indicating cleanup process
+  api.sendNotification({
+    //notification indicating cleanup process
     id: NOTIF_ID,
     message: `Cleaning up extracted folders and restoring ${PAC_EXT} file names. This will take a few seconds.`,
-    type: 'activity',
+    type: "activity",
     noDismiss: true,
     allowSuppress: false,
   });
   await purge(api);
   GAME_PATH = await getDiscoveryPath(api);
   const WORK_PATH = path.join(GAME_PATH, PAC_PATH);
-  try { //delete extracted folder and restore file names
-    log('warn', `Cleaning up extracted data folders...`);
+  try {
+    //delete extracted folder and restore file names
+    log("warn", `Cleaning up extracted data folders...`);
     await foldersCleanup(GAME_PATH, WORK_PATH);
     let RESTORE_FILES = await fs.readdirAsync(WORK_PATH);
-    RESTORE_FILES = RESTORE_FILES.filter(file => file.endsWith(BAK_EXT));
+    RESTORE_FILES = RESTORE_FILES.filter((file) => file.endsWith(BAK_EXT));
     await filesRestore(WORK_PATH, RESTORE_FILES);
-    log('warn', `Restored all ${PAC_EXT} file names`);
+    log("warn", `Restored all ${PAC_EXT} file names`);
   } catch (err) {
-    log('error', `Could not restore names of all ${PAC_EXT} files: ${err}`);
+    log("error", `Could not restore names of all ${PAC_EXT} files: ${err}`);
     await setupNotify(api);
     await deploy(api);
-    api.showErrorNotification(`Could not restore ${PAC_EXT} files. Please try again.`, `Could not complete restoration of ${PAC_EXT} files. Please try again.\n\n${err}`, { allowReport: false });
+    api.showErrorNotification(
+      `Could not restore ${PAC_EXT} files. Please try again.`,
+      `Could not complete restoration of ${PAC_EXT} files. Please try again.\n\n${err}`,
+      { allowReport: false },
+    );
     return;
   }
   await setupNotify(api);
   await deploy(api);
   api.dismissNotification(NOTIF_ID);
-  api.sendNotification({ //notification indicating success
+  api.sendNotification({
+    //notification indicating success
     id: NOTIF_ID_SUC,
     message: `Successfully Cleaned Extracted game data folders and restored ${PAC_EXT} file names.`,
-    type: 'success',
+    type: "success",
     noDismiss: false,
     allowSuppress: true,
   });
@@ -630,25 +688,31 @@ async function pacCleanup(api) {
 
 //Cleanup extracted asset folder and restore file names - for Purge event
 async function pacCleanupPurge(api) {
-  const NOTIF_ID = `${GAME_ID}-gamecleanup`
-  api.sendNotification({ //notification indicating cleanup process
+  const NOTIF_ID = `${GAME_ID}-gamecleanup`;
+  api.sendNotification({
+    //notification indicating cleanup process
     id: NOTIF_ID,
     message: `Cleaning up extracted data folders and restoring ${PAC_EXT} file names. This will take a few seconds.`,
-    type: 'activity',
+    type: "activity",
     noDismiss: true,
     allowSuppress: false,
   });
   GAME_PATH = await getDiscoveryPath(api);
   const WORK_PATH = path.join(GAME_PATH, PAC_PATH);
-  try { //delete extracted folders and restore file names
+  try {
+    //delete extracted folders and restore file names
     await foldersCleanup(GAME_PATH, WORK_PATH);
     let RESTORE_FILES = await fs.readdirAsync(WORK_PATH);
-    RESTORE_FILES = RESTORE_FILES.filter(file => file.endsWith(BAK_EXT));
+    RESTORE_FILES = RESTORE_FILES.filter((file) => file.endsWith(BAK_EXT));
     await filesRestore(WORK_PATH, RESTORE_FILES);
-    log('warn', `Restored all ${PAC_EXT} file names`);
+    log("warn", `Restored all ${PAC_EXT} file names`);
   } catch (err) {
-    log('error', `Could not restore names of all ${PAC_EXT} files: ${err}`);
-    api.showErrorNotification(`Could not restore ${PAC_EXT} files. Please try again.`, `Could not complete restoration of ${PAC_EXT} files. Please try again.\n\n${err}`, { allowReport: false });
+    log("error", `Could not restore names of all ${PAC_EXT} files: ${err}`);
+    api.showErrorNotification(
+      `Could not restore ${PAC_EXT} files. Please try again.`,
+      `Could not complete restoration of ${PAC_EXT} files. Please try again.\n\n${err}`,
+      { allowReport: false },
+    );
   }
   await setupNotify(api);
   api.dismissNotification(NOTIF_ID);
@@ -657,56 +721,65 @@ async function pacCleanupPurge(api) {
 //Notify User of Setup instructions
 async function setupNotify(api) {
   GAME_PATH = await getDiscoveryPath(api);
-  try { //see if extracted folder is present. Skip notification if it is.
+  try {
+    //see if extracted folder is present. Skip notification if it is.
     await fs.statAsync(path.join(GAME_PATH, DATA_FOLDER));
-    log('warn', `"${DATA_FOLDER}" folder found. Skipping setup notification.`);
-  }
-  catch { //*/
+    log("warn", `"${DATA_FOLDER}" folder found. Skipping setup notification.`);
+  } catch {
+    //*/
     const NOTIF_ID = `${GAME_ID}-setuprequired`;
     const MESSAGE = `Game Data Extraction Required`;
     api.sendNotification({
       id: NOTIF_ID,
-      type: 'warning',
+      type: "warning",
       message: MESSAGE,
       allowSuppress: true,
       actions: [
         {
-          title: 'Extract Game Files',
+          title: "Extract Game Files",
           action: (dismiss) => {
             dismiss();
             pacSetup(api);
           },
         },
         {
-          title: 'More',
+          title: "More",
           action: (dismiss) => {
-            api.showDialog('question', MESSAGE, {
-              text: `For mods to work properly, you must extract the game ${PAC_EXT} files, rename those files, and copy the extracted "${DATA_FOLDER}" folder to the game root.\n`
-                  + `\n`
-                  + `This process must be done initially and after any game updates. The process will take a while. Do not close the terminal window.\n`
-                  + `\n`
-                  + `Click the button below to run the Python script "${PACTOOL_PY}" to extract ${PAC_EXT} files, rename them, and copy the "${DATA_FOLDER}" folder.\n`
-                  + `\n`
-                  + `You must have Python installed for this to work. You can download Python from the Microsoft Store if you don't have it installed.\n`
-            }, [
+            api.showDialog(
+              "question",
+              MESSAGE,
+              {
+                text:
+                  `For mods to work properly, you must extract the game ${PAC_EXT} files, rename those files, and copy the extracted "${DATA_FOLDER}" folder to the game root.\n` +
+                  `\n` +
+                  `This process must be done initially and after any game updates. The process will take a while. Do not close the terminal window.\n` +
+                  `\n` +
+                  `Click the button below to run the Python script "${PACTOOL_PY}" to extract ${PAC_EXT} files, rename them, and copy the "${DATA_FOLDER}" folder.\n` +
+                  `\n` +
+                  `You must have Python installed for this to work. You can download Python from the Microsoft Store if you don't have it installed.\n`,
+              },
+              [
                 {
-                  label: 'Extract Game Files', action: () => {
+                  label: "Extract Game Files",
+                  action: () => {
                     dismiss();
                     pacSetup(api);
-                  }
+                  },
                 },
-                { label: 'Not Now', action: () => dismiss() },
+                { label: "Not Now", action: () => dismiss() },
                 {
-                  label: 'Never Show Again', action: () => {
+                  label: "Never Show Again",
+                  action: () => {
                     api.suppressNotification(NOTIF_ID);
                     dismiss();
-                  }
+                  },
                 },
-              ]);
+              ],
+            );
           },
         },
       ],
-    });    
+    });
   }
 }
 
@@ -728,13 +801,14 @@ async function setup(discovery, api, gameSpec) {
   /*await fs.ensureDirWritableAsync(CONFIG_PATH);
   await fs.ensureDirWritableAsync(SAVE_PATH); //*/
   await setupNotify(api);
-  try { //copy python script to pac folder if it's not already there
+  try {
+    //copy python script to pac folder if it's not already there
     await fs.statAsync(path.join(GAME_PATH, DESTINATION_PACTOOL_PATH));
   } catch (err) {
     try {
       await fs.copyAsync(BUNDLED_PACTOOL_PATH, path.join(GAME_PATH, DESTINATION_PACTOOL_PATH));
     } catch (err) {
-      log('error', `Could not copy ${PACTOOL_PY} to ${PAC_PATH}: ${err}`);
+      log("error", `Could not copy ${PACTOOL_PY} to ${PAC_PATH}: ${err}`);
     }
   }
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
@@ -756,11 +830,23 @@ function applyGame(context, gameSpec) {
 
   //register mod types
   (gameSpec.modTypes || []).forEach((type, idx) => {
-    context.registerModType(type.id, modTypePriority(type.priority) + idx, (gameId) => {
-      var _a;
-      return (gameId === gameSpec.game.id)
-        && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
+    context.registerModType(
+      type.id,
+      modTypePriority(type.priority) + idx,
+      (gameId) => {
+        var _a;
+        return (
+          gameId === gameSpec.game.id &&
+          !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+          _a === void 0
+            ? void 0
+            : _a.path)
+        );
+      },
+      (game) => pathPattern(context.api, game, type.targetPath),
+      () => Promise.resolve(false),
+      { name: type.name },
+    );
   });
 
   /*register mod types explicitly
@@ -782,82 +868,146 @@ function applyGame(context, gameSpec) {
     () => Promise.resolve(false), 
     { name: SAVE_NAME }
   ); //*/
-  
+
   //register mod installers
   context.registerInstaller(PAC_ID, 25, testPac, installPac);
   context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
   //context.registerInstaller(CONFIG_ID, 43, testConfig, installConfig);
   //context.registerInstaller(SAVE_ID, 45, testSave, installSave);
-  
 
   //register actions
-  context.registerAction('mod-icons', 300, 'open-ext', {}, `Extract Game Files`, async () => {
-    await pacSetup(context.api);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, `Cleanup Extracted Game Files`, async () => {
-    await pacCleanup(context.api);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
-    const openPath = CONFIG_PATH;
-    util.opn(openPath).catch(() => null);
-    }, () => {
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    `Extract Game Files`,
+    async () => {
+      await pacSetup(context.api);
+    },
+    () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-    });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
-    const openPath = SAVE_PATH;
-    util.opn(openPath).catch(() => null);
-    }, () => {
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    `Cleanup Extracted Game Files`,
+    async () => {
+      await pacCleanup(context.api);
+    },
+    () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-  }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
-    const openPath = path.join(__dirname, 'CHANGELOG.md');
-    util.opn(openPath).catch(() => null);
-    }, () => {
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Config Folder",
+    () => {
+      const openPath = CONFIG_PATH;
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    const openPath = DOWNLOAD_FOLDER;
-    util.opn(openPath).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Save Folder",
+    () => {
+      const openPath = SAVE_PATH;
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  ); //*/
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "View Changelog",
+    () => {
+      const openPath = path.join(__dirname, "CHANGELOG.md");
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Downloads Folder",
+    () => {
+      const openPath = DOWNLOAD_FOLDER;
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
 
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
-    util.opn(PCGAMINGWIKI_URL).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
-    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open PCGamingWiki Page",
+    () => {
+      util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Submit Bug Report",
+    () => {
+      util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
 }
 
 //Main function
 function main(context) {
   applyGame(context, spec);
-  context.once(() => { // put code here that should be run (once) when Vortex starts up
+  context.once(() => {
+    // put code here that should be run (once) when Vortex starts up
     const api = context.api;
     /*context.api.onAsync('did-purge', async (profileId, deployment) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
@@ -869,13 +1019,14 @@ function main(context) {
   return true;
 }
 
-async function didPurge(api, profileId) { //run on mod purge
+async function didPurge(api, profileId) {
+  //run on mod purge
   GAME_PATH = await getDiscoveryPath(api);
   try {
     await fs.statAsync(path.join(GAME_PATH, DATA_FOLDER));
     await pacCleanupPurge(api);
   } catch {
-    log('warn', `Skipping "${DATA_FOLDER}" folder cleanup. Folder not found.`);
+    log("warn", `Skipping "${DATA_FOLDER}" folder cleanup. Folder not found.`);
   }
   return Promise.resolve();
 }

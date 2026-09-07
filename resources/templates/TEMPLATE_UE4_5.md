@@ -35,28 +35,28 @@ of a pak mod, for custom frameworks that add `.toml` or `.json` sidecars).
 
 ### Mod types and installers
 
-| Mod type | Priority | Target |
-| --- | --- | --- |
-| `UE4SSCOMBO_ID` | spec | `{gamePath}` |
-| `LOGICMODS_ID` | spec | `<code>/Content/Paks` |
-| `PAK_ALT_ID` | spec | `<code>/Content/Paks` |
-| `ROOT_ID` | spec | `{gamePath}` |
-| `MODKITMOD_ID` | spec, when `hasModKit` | `<code>/Mods` |
-| `UE5_SORTABLE_ID` | 25 | pak mods folder |
-| `SCRIPTS_ID` | 50 | `<binaries>/ue4ss/Mods` |
-| `DLL_ID` | 52 | `<binaries>/ue4ss/Mods` |
-| `BINARIES_ID` | 54 | `<code>/Binaries/Win64` |
-| `UE4SS_ID` | 56 | `<code>/Binaries/Win64` |
-| `SIGBYPASS_ID` | 58 | binaries folder |
-| `CONFIG_ID` | 62 | absolute config path |
-| `SAVE_ID` | 64 | absolute save path |
+| Mod type          | Priority               | Target                  |
+| ----------------- | ---------------------- | ----------------------- |
+| `UE4SSCOMBO_ID`   | spec                   | `{gamePath}`            |
+| `LOGICMODS_ID`    | spec                   | `<code>/Content/Paks`   |
+| `PAK_ALT_ID`      | spec                   | `<code>/Content/Paks`   |
+| `ROOT_ID`         | spec                   | `{gamePath}`            |
+| `MODKITMOD_ID`    | spec, when `hasModKit` | `<code>/Mods`           |
+| `UE5_SORTABLE_ID` | 25                     | pak mods folder         |
+| `SCRIPTS_ID`      | 50                     | `<binaries>/ue4ss/Mods` |
+| `DLL_ID`          | 52                     | `<binaries>/ue4ss/Mods` |
+| `BINARIES_ID`     | 54                     | `<code>/Binaries/Win64` |
+| `UE4SS_ID`        | 56                     | `<code>/Binaries/Win64` |
+| `SIGBYPASS_ID`    | 58                     | binaries folder         |
+| `CONFIG_ID`       | 62                     | absolute config path    |
+| `SAVE_ID`         | 64                     | absolute save path      |
 
 `UE5_SORTABLE_ID` keeps its exact name across every UE4-5 extension on purpose, so pak mods stay
 interchangeable between them.
 
 **Installers:** `MODKITMOD` 25 → `UE4SSCOMBO` 26 → `LOGICMODS` 27 → `UE5_SORTABLE` 29 (paks) →
 `UE4SS` 31 → `SIGBYPASS` 33 → `SCRIPTS` 35 → `DLL` 37 → `ROOT` 39 → `CONFIG` 41 → `SAVE` 43 →
-`BINARIES` 49. There is no separate fallback installer — `BINARIES` at 49 *is* it: `testBinaries`
+`BINARIES` 49. There is no separate fallback installer — `BINARIES` at 49 _is_ it: `testBinaries`
 claims anything that is not a pak and not a FOMOD, and `installBinaries` fires
 `fallbackInstallerNotify` unless the `updating_mod` guard says this install is a mod update.
 
@@ -70,11 +70,11 @@ combos it also handles any mod that ships both a `Binaries` and a `Content` fold
 Three separate ordering systems run side by side, each with its own toggle, storage, and sidecar
 file:
 
-| Surface | Toggle | Redux path | Written to |
-| --- | --- | --- | --- |
-| Pak load order | `PAKMOD_LOADORDER` + `FBLO` | Vortex's own FBLO state | `AAA`/`AAB`/… folder-name prefixes |
-| UE4SS Mods | `ue4ssLoadOrder` (default `true`) | `persistent.ue4ssLoadOrder` | `ue4ss/Mods/mods.txt` |
-| LogicMods | `logicModsLoadOrder` (default `true`) | `persistent.logicModsLoadOrder` | `BPModLoaderMod/load_order.txt` |
+| Surface        | Toggle                                | Redux path                      | Written to                         |
+| -------------- | ------------------------------------- | ------------------------------- | ---------------------------------- |
+| Pak load order | `PAKMOD_LOADORDER` + `FBLO`           | Vortex's own FBLO state         | `AAA`/`AAB`/… folder-name prefixes |
+| UE4SS Mods     | `ue4ssLoadOrder` (default `true`)     | `persistent.ue4ssLoadOrder`     | `ue4ss/Mods/mods.txt`              |
+| LogicMods      | `logicModsLoadOrder` (default `true`) | `persistent.logicModsLoadOrder` | `BPModLoaderMod/load_order.txt`    |
 
 The pak order is registered through `registerLoadOrder` with `toggleableEntries: false`, a custom
 `LoadOrderItemRenderer`, and `LoadOrderInstructions`; `preSort` / `makePrefix` / `loadOrderPrefix`
@@ -107,7 +107,7 @@ a different one, which would drop it to the bottom of the load order. The templa
 - `mod-update` records the ID directly. `fileId` matters because it is what distinguishes the
   incoming version from the installed one — without it, every not-yet-updated mod still looks
   "already installed".
-- `mods-update` covers the "Update all" button, which emits *local* mod IDs and never emits
+- `mods-update` covers the "Update all" button, which emits _local_ mod IDs and never emits
   `mod-update`; each is resolved back to its Nexus ID out of state before being tracked.
 - `remove-mod` matches on `attributes.modId` from state rather than parsing the local mod ID string,
   because the local naming convention changed over time (older dash-delimited versus current

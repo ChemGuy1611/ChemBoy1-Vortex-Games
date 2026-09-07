@@ -26,8 +26,8 @@ type MergeTest = (game: IGame, gameDiscovery: IDiscoveryResult) => IMergeFilter 
 type MergeFunc = (filePath: string, mergePath: string) => PromiseLike<void>;
 
 interface IMergeFilter {
-  baseFiles: (deployedFiles: IDeployedFile[]) => Array<{ in: string; out: string }>;
-  filter: (fileName: string) => boolean;
+    baseFiles: (deployedFiles: IDeployedFile[]) => Array<{ in: string; out: string }>;
+    filter: (fileName: string) => boolean;
 }
 ```
 
@@ -37,11 +37,11 @@ interface IMergeFilter {
 
 1. `test(game, discovery)` is called — return `undefined` to skip, or an `IMergeFilter` to apply.
 2. `baseFiles(deployedFiles)` returns seed file pairs:
-   - `in` — absolute path of the file to start from (can be a game file, or a file from a mod; can be non-existent — you'll get an empty file)
-   - `out` — relative path in the working directory (controls final output location when combined with `modType`)
+    - `in` — absolute path of the file to start from (can be a game file, or a file from a mod; can be non-existent — you'll get an empty file)
+    - `out` — relative path in the working directory (controls final output location when combined with `modType`)
 3. For every installed mod file where `filter(fileName)` returns `true`, `merge(filePath, mergePath)` is called.
-   - `filePath` — absolute path to the mod's version of the file
-   - `mergePath` — absolute path to the working directory containing the seed file (write your merged result here)
+    - `filePath` — absolute path to the mod's version of the file
+    - `mergePath` — absolute path to the working directory containing the seed file (write your merged result here)
 4. The final merged file in the working directory is deployed as a regular file of the specified `modType`.
 
 **Edge case:** If `in` was from one of the deployed mods, `merge` is called with that file again — guard against duplicating its content.
@@ -51,28 +51,30 @@ interface IMergeFilter {
 ## Example — XML config merge (Dragon Age pattern)
 
 ```js
-const ADDINS_FILE = 'AddIns.xml';
+const ADDINS_FILE = "AddIns.xml";
 
 function test(game) {
-  if (game.id !== GAME_ID) return undefined;
+    if (game.id !== GAME_ID) return undefined;
 
-  return {
-    baseFiles: () => [{
-      in: addinsPath(),                         // existing game XML (or empty if missing)
-      out: path.join('Settings', ADDINS_FILE),  // relative path in working dir
-    }],
-    filter: filePath => path.basename(filePath).toLowerCase() === 'manifest.xml',
-  };
+    return {
+        baseFiles: () => [
+            {
+                in: addinsPath(), // existing game XML (or empty if missing)
+                out: path.join("Settings", ADDINS_FILE), // relative path in working dir
+            },
+        ],
+        filter: (filePath) => path.basename(filePath).toLowerCase() === "manifest.xml",
+    };
 }
 
 async function merge(filePath, mergePath) {
-  const modXml = await parseXml(filePath);
-  const baseXml = await parseXmlOrEmpty(path.join(mergePath, 'Settings', ADDINS_FILE));
-  mergeEntries(baseXml, modXml);
-  await writeXml(path.join(mergePath, 'Settings', ADDINS_FILE), baseXml);
+    const modXml = await parseXml(filePath);
+    const baseXml = await parseXmlOrEmpty(path.join(mergePath, "Settings", ADDINS_FILE));
+    mergeEntries(baseXml, modXml);
+    await writeXml(path.join(mergePath, "Settings", ADDINS_FILE), baseXml);
 }
 
-context.registerMerge(test, merge, 'dazip');
+context.registerMerge(test, merge, "dazip");
 ```
 
 ---
@@ -81,23 +83,25 @@ context.registerMerge(test, merge, 'dazip');
 
 ```js
 function test(game) {
-  if (game.id !== GAME_ID) return undefined;
-  return {
-    baseFiles: () => [{
-      in: path.join(game.path, 'Engine.ini'),
-      out: 'Engine.ini',
-    }],
-    filter: f => path.basename(f).toLowerCase() === 'engine_patch.ini',
-  };
+    if (game.id !== GAME_ID) return undefined;
+    return {
+        baseFiles: () => [
+            {
+                in: path.join(game.path, "Engine.ini"),
+                out: "Engine.ini",
+            },
+        ],
+        filter: (f) => path.basename(f).toLowerCase() === "engine_patch.ini",
+    };
 }
 
 async function merge(filePath, mergePath) {
-  const patchContent = await fs.readFileAsync(filePath, 'utf8');
-  const dest = path.join(mergePath, 'Engine.ini');
-  await fs.appendFileAsync(dest, '\n' + patchContent);
+    const patchContent = await fs.readFileAsync(filePath, "utf8");
+    const dest = path.join(mergePath, "Engine.ini");
+    await fs.appendFileAsync(dest, "\n" + patchContent);
 }
 
-context.registerMerge(test, merge, '');  // '' = default mod type
+context.registerMerge(test, merge, ""); // '' = default mod type
 ```
 
 ---

@@ -12,16 +12,16 @@ standard has drifted".
 
 ## Naming
 
-| Kind | Convention | Example |
-| --- | --- | --- |
-| Interface | `I` prefix, PascalCase | `IBaseProps`, `IMainPageOptions` |
-| Type alias / union | PascalCase, no prefix | `Severity`, `NotificationFunc` |
-| Enum + enum values | PascalCase | `enum Decision { … }` |
-| React component | PascalCase | `<TestComponent />` |
-| Function | camelCase | `fetchReduxState()` |
-| Local variable, property | camelCase | `visibleLineCount` |
-| Exported / global constant | UPPER_SNAKE_CASE | `NEXUS_MEMBERSHIP_URL` |
-| **Private class property** | **`m` prefix** | `private mWindow: BrowserWindow` |
+| Kind                       | Convention             | Example                          |
+| -------------------------- | ---------------------- | -------------------------------- |
+| Interface                  | `I` prefix, PascalCase | `IBaseProps`, `IMainPageOptions` |
+| Type alias / union         | PascalCase, no prefix  | `Severity`, `NotificationFunc`   |
+| Enum + enum values         | PascalCase             | `enum Decision { … }`            |
+| React component            | PascalCase             | `<TestComponent />`              |
+| Function                   | camelCase              | `fetchReduxState()`              |
+| Local variable, property   | camelCase              | `visibleLineCount`               |
+| Exported / global constant | UPPER_SNAKE_CASE       | `NEXUS_MEMBERSHIP_URL`           |
+| **Private class property** | **`m` prefix**         | `private mWindow: BrowserWindow` |
 
 The `m` prefix stands for "member". It is the repo's substitute for the more common `_` prefix, and
 comes from the same C# heritage as the `I` on interfaces. It applies to private instance fields
@@ -133,12 +133,12 @@ Playwright conventions `AGENTS-TESTING.md` is silent about.
 
 ## The enforcement layer
 
-| Tool | Config | What it decides |
-| --- | --- | --- |
-| `oxfmt` | `.oxfmtrc.json` | All formatting: line wrapping, quotes, import grouping and order, Tailwind class order |
-| `oxlint` | `oxlint.base.config.json` | Fast pass; `correctness` + `suspicious` are errors, `perf` warns; type-aware |
-| ESLint | `eslint.config.base.mjs` + per-project `eslint.config.mjs` | Type-checked rules, React rules, perfectionist sorting, and the custom `vortex/*` rules in `eslint-rules/` |
-| `.editorconfig` | — | LF endings, UTF-8, final newline; 2-space indent for JS/TS/JSON/YAML, 4 elsewhere |
+| Tool            | Config                                                     | What it decides                                                                                            |
+| --------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `oxfmt`         | `.oxfmtrc.json`                                            | All formatting: line wrapping, quotes, import grouping and order, Tailwind class order                     |
+| `oxlint`        | `oxlint.base.config.json`                                  | Fast pass; `correctness` + `suspicious` are errors, `perf` warns; type-aware                               |
+| ESLint          | `eslint.config.base.mjs` + per-project `eslint.config.mjs` | Type-checked rules, React rules, perfectionist sorting, and the custom `vortex/*` rules in `eslint-rules/` |
+| `.editorconfig` | —                                                          | LF endings, UTF-8, final newline; 2-space indent for JS/TS/JSON/YAML, 4 elsewhere                          |
 
 Commands: `pnpm run format` (or `pnpm oxfmt --check <paths>`), `pnpm run lint`, `pnpm run
 lint:verbose` to see warnings that `--quiet` hides. Husky runs `oxfmt` on staged files at commit

@@ -2,20 +2,20 @@
 
 ## Overview
 
-| Property | Value |
-| --- | --- |
-| Name | AC Origins Vortex Extension |
-| Engine / Structure | Ubisoft AnvilToolkit |
-| Author | ChemBoy1 |
+| Property           | Value                       |
+| ------------------ | --------------------------- |
+| Name               | AC Origins Vortex Extension |
+| Engine / Structure | Ubisoft AnvilToolkit        |
+| Author             | ChemBoy1                    |
 
 ## Key Identifiers
 
-| Property | Value |
-| --- | --- |
-| Game ID | `assassinscreedorigins` |
-| Executable | `ACOrigins.exe` |
-| Extension Page | [https://www.nexusmods.com/site/mods/887](https://www.nexusmods.com/site/mods/887) |
-| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_Origins](https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_Origins) |
+| Property       | Value                                                                                                                        |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Game ID        | `assassinscreedorigins`                                                                                                      |
+| Executable     | `ACOrigins.exe`                                                                                                              |
+| Extension Page | [https://www.nexusmods.com/site/mods/887](https://www.nexusmods.com/site/mods/887)                                           |
+| PCGamingWiki   | [https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_Origins](https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_Origins) |
 
 ## Supported Stores
 
@@ -27,23 +27,23 @@
 
 Mod types define where each category of mod gets deployed:
 
-| Name | ID | Priority | Target Path |
-| --- | --- | --- | --- |
-| Binaries / Root Game Folder | `assassinscreedorigins-binaries` | high | `{gamePath}` |
-| Forger Patch | `assassinscreedorigins-forgerpatch` | high | `{gamePath}/ForgerPatches` |
-| Resorep Textures (Documents) | `assassinscreedorigins-textures` | high | `userDocsPathString/Resorep/modded` |
-| Resorep Textures (Game Folder) | `assassinscreedorigins-texturesgamefolder` | high | `{gamePath}/Resorep` |
-| AnvilToolKit | `assassinscreedorigins-ATK` | low | `{gamePath}` |
-| Forger Patch Manager | `assassinscreedorigins-forger` | low | `{gamePath}` |
+| Name                           | ID                                         | Priority | Target Path                         |
+| ------------------------------ | ------------------------------------------ | -------- | ----------------------------------- |
+| Binaries / Root Game Folder    | `assassinscreedorigins-binaries`           | high     | `{gamePath}`                        |
+| Forger Patch                   | `assassinscreedorigins-forgerpatch`        | high     | `{gamePath}/ForgerPatches`          |
+| Resorep Textures (Documents)   | `assassinscreedorigins-textures`           | high     | `userDocsPathString/Resorep/modded` |
+| Resorep Textures (Game Folder) | `assassinscreedorigins-texturesgamefolder` | high     | `{gamePath}/Resorep`                |
+| AnvilToolKit                   | `assassinscreedorigins-ATK`                | low      | `{gamePath}`                        |
+| Forger Patch Manager           | `assassinscreedorigins-forger`             | low      | `{gamePath}`                        |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID | Priority |
-| --- | --- |
-| `assassinscreedorigins-forger` | 25 |
-| `assassinscreedorigins-atk` | 25 |
+| Installer ID                   | Priority |
+| ------------------------------ | -------- |
+| `assassinscreedorigins-forger` | 25       |
+| `assassinscreedorigins-atk`    | 25       |
 
 ## Registered Tools
 
@@ -67,4 +67,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
-

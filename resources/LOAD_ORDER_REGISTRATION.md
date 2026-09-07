@@ -14,24 +14,24 @@
 
 ## 0. At a glance — legacy vs. FBLO
 
-| Aspect | Legacy `registerLoadOrderPage` | Modern `registerLoadOrder` (FBLO) |
-| --- | --- | --- |
-| Source extension | `mod_load_order` | `file_based_loadorder` |
-| Status | Deprecated | Current — use for all new work |
-| State shape | Dict `{ [profileId]: { [modId]: { pos, enabled, prefix } } }` | Array `{ [profileId]: IFBLoadOrderEntry[] }` |
-| State path | `persistent.loadOrder[profileId][modId]` | `persistent.loadOrder[profileId]` (same root, different child) |
-| Order encoding | `pos: number` field on each entry | Array index |
-| Entry discovery | `filter(mods)` — Vortex queries installed mods and passes them in | `deserializeLoadOrder()` — extension owns what appears |
-| Entry shape | `ILoadOrderDisplayItem` (`id`, `name`, `imgUrl`) | `IFBLoadOrderEntry` (`id`, `name`, `enabled`, `locked`, `modId`) |
-| File I/O | Extension handles in `callback` or `did-deploy` hook | Extension provides `serializeLoadOrder` + `deserializeLoadOrder` |
-| Lifecycle | `callback(loadOrder, updateType)` fires on every change | `serialize` / `deserialize` called at defined lifecycle points |
-| Info panel | `createInfoPanel(props: { refresh })` — returns string or component | `usageInstructions` — string or component (no props) |
-| Item renderer prop | `{ className, item: ILoadOrderDisplayItem, onRef }` | `{ className, item: { loEntry, displayCheckboxes, invalidEntries } }` |
-| Validation | None | `validate(prev, current) => IValidationResult` |
-| Enable/disable row | `displayCheckboxes` (default renderer) | `toggleableEntries` (default renderer) |
-| Deployment trigger | Extension calls `setDeploymentNecessary` in `callback` | Extension calls `setDeploymentNecessary` in `serializeLoadOrder` or item renderer |
-| Sort direction | `preSort(items, direction, updateType)` called before render | Not provided — extension orders in `deserializeLoadOrder` |
-| Collections support | Via `noCollectionGeneration` | Via `noCollectionGeneration` |
+| Aspect              | Legacy `registerLoadOrderPage`                                      | Modern `registerLoadOrder` (FBLO)                                                 |
+| ------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Source extension    | `mod_load_order`                                                    | `file_based_loadorder`                                                            |
+| Status              | Deprecated                                                          | Current — use for all new work                                                    |
+| State shape         | Dict `{ [profileId]: { [modId]: { pos, enabled, prefix } } }`       | Array `{ [profileId]: IFBLoadOrderEntry[] }`                                      |
+| State path          | `persistent.loadOrder[profileId][modId]`                            | `persistent.loadOrder[profileId]` (same root, different child)                    |
+| Order encoding      | `pos: number` field on each entry                                   | Array index                                                                       |
+| Entry discovery     | `filter(mods)` — Vortex queries installed mods and passes them in   | `deserializeLoadOrder()` — extension owns what appears                            |
+| Entry shape         | `ILoadOrderDisplayItem` (`id`, `name`, `imgUrl`)                    | `IFBLoadOrderEntry` (`id`, `name`, `enabled`, `locked`, `modId`)                  |
+| File I/O            | Extension handles in `callback` or `did-deploy` hook                | Extension provides `serializeLoadOrder` + `deserializeLoadOrder`                  |
+| Lifecycle           | `callback(loadOrder, updateType)` fires on every change             | `serialize` / `deserialize` called at defined lifecycle points                    |
+| Info panel          | `createInfoPanel(props: { refresh })` — returns string or component | `usageInstructions` — string or component (no props)                              |
+| Item renderer prop  | `{ className, item: ILoadOrderDisplayItem, onRef }`                 | `{ className, item: { loEntry, displayCheckboxes, invalidEntries } }`             |
+| Validation          | None                                                                | `validate(prev, current) => IValidationResult`                                    |
+| Enable/disable row  | `displayCheckboxes` (default renderer)                              | `toggleableEntries` (default renderer)                                            |
+| Deployment trigger  | Extension calls `setDeploymentNecessary` in `callback`              | Extension calls `setDeploymentNecessary` in `serializeLoadOrder` or item renderer |
+| Sort direction      | `preSort(items, direction, updateType)` called before render        | Not provided — extension orders in `deserializeLoadOrder`                         |
+| Collections support | Via `noCollectionGeneration`                                        | Via `noCollectionGeneration`                                                      |
 
 ---
 
@@ -96,7 +96,7 @@ context.registerLoadOrderPage({
 
 ### `ILoadOrderEntry` — what Vortex stores in Redux
 
-The item *displayed* (`ILoadOrderDisplayItem`) is different from what Vortex *persists* (`ILoadOrderEntry`):
+The item _displayed_ (`ILoadOrderDisplayItem`) is different from what Vortex _persists_ (`ILoadOrderEntry`):
 
 ```ts
 {
@@ -137,39 +137,40 @@ Extension has **no** serialize/deserialize callbacks. File I/O must happen in `c
 // In main():
 let previousLO;
 context.registerLoadOrderPage({
-  gameId: spec.game.id,
-  gameArtURL: path.join(__dirname, spec.game.logo),
-  preSort: (items, direction) => preSort(context.api, items, direction),
-  filter: mods => mods.filter(mod => mod.type === UE5_SORTABLE_ID),
-  displayCheckboxes: false,
-  callback: (loadOrder) => {
-    if (previousLO === undefined) previousLO = loadOrder;
-    if (loadOrder === previousLO) return;
-    requestDeployment(context.api, spec); // shared helper: setDeploymentNecessary + "Deploy" notification
-    previousLO = loadOrder;
-  },
-  createInfoPanel: () =>
-    context.api.translate(`Drag and drop the mods on the left to change the order...`),
+    gameId: spec.game.id,
+    gameArtURL: path.join(__dirname, spec.game.logo),
+    preSort: (items, direction) => preSort(context.api, items, direction),
+    filter: (mods) => mods.filter((mod) => mod.type === UE5_SORTABLE_ID),
+    displayCheckboxes: false,
+    callback: (loadOrder) => {
+        if (previousLO === undefined) previousLO = loadOrder;
+        if (loadOrder === previousLO) return;
+        requestDeployment(context.api, spec); // shared helper: setDeploymentNecessary + "Deploy" notification
+        previousLO = loadOrder;
+    },
+    createInfoPanel: () =>
+        context.api.translate(`Drag and drop the mods on the left to change the order...`),
 });
 ```
 
 ```js
 // Typical preSort helper (maps Vortex mods to display items):
 async function preSort(api, items, direction) {
-  const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', GAME_ID], {});
-  const loadOrder = items.map(mod => {
-    const modInfo = mods[mod.id];
-    const name = modInfo?.attributes?.customFileName
-      ?? modInfo?.attributes?.logicalFileName
-      ?? modInfo?.attributes?.name
-      ?? mod.name;
-    return {
-      id: mod.id,
-      name,
-      imgUrl: modInfo?.attributes?.pictureUrl ?? path.join(__dirname, spec.game.logo),
-    };
-  });
-  return direction === 'descending' ? loadOrder.reverse() : loadOrder;
+    const mods = util.getSafe(api.store.getState(), ["persistent", "mods", GAME_ID], {});
+    const loadOrder = items.map((mod) => {
+        const modInfo = mods[mod.id];
+        const name =
+            modInfo?.attributes?.customFileName ??
+            modInfo?.attributes?.logicalFileName ??
+            modInfo?.attributes?.name ??
+            mod.name;
+        return {
+            id: mod.id,
+            name,
+            imgUrl: modInfo?.attributes?.pictureUrl ?? path.join(__dirname, spec.game.logo),
+        };
+    });
+    return direction === "descending" ? loadOrder.reverse() : loadOrder;
 }
 ```
 
@@ -228,27 +229,39 @@ Add it when:
 Minimum useful migration — user notification + mark deployment necessary:
 
 ```js
-const semver = require('semver');
+const semver = require("semver");
 
 async function migrateLegacyToFBLO(api, oldVersion) {
-  if (semver.gte(oldVersion, TARGET_VERSION)) return;
-  // State reads are safe before awaitUI; dispatches that update session state are too.
-  const state = api.store.getState();
-  const gamePath = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'path'], undefined);
-  if (!gamePath) return; // game not discovered, nothing to migrate
-  api.store.dispatch(actions.setDeploymentNecessary(GAME_ID, true));
-  await api.awaitUI(); // required before showDialog / sendNotification
-  api.sendNotification({
-    id: `${GAME_ID}-lo-migration`,
-    type: 'info',
-    title: 'Load Order upgraded',
-    message: 'Deploy your mods once to confirm load order is preserved in the new format.',
-    actions: [{ title: 'Deploy', action: (dismiss) => { deploy(api); dismiss(); } }],
-  });
+    if (semver.gte(oldVersion, TARGET_VERSION)) return;
+    // State reads are safe before awaitUI; dispatches that update session state are too.
+    const state = api.store.getState();
+    const gamePath = util.getSafe(
+        state,
+        ["settings", "gameMode", "discovered", GAME_ID, "path"],
+        undefined,
+    );
+    if (!gamePath) return; // game not discovered, nothing to migrate
+    api.store.dispatch(actions.setDeploymentNecessary(GAME_ID, true));
+    await api.awaitUI(); // required before showDialog / sendNotification
+    api.sendNotification({
+        id: `${GAME_ID}-lo-migration`,
+        type: "info",
+        title: "Load Order upgraded",
+        message: "Deploy your mods once to confirm load order is preserved in the new format.",
+        actions: [
+            {
+                title: "Deploy",
+                action: (dismiss) => {
+                    deploy(api);
+                    dismiss();
+                },
+            },
+        ],
+    });
 }
 
 // In main():
-context.registerMigration(old => migrateLegacyToFBLO(context.api, old));
+context.registerMigration((old) => migrateLegacyToFBLO(context.api, old));
 ```
 
 Replace `TARGET_VERSION` with the MINOR version being introduced (e.g. `'0.4.0'`).
@@ -281,16 +294,16 @@ The legacy `itemRenderer` received `{ className, item: ILoadOrderDisplayItem, on
 
 ### Summary of what changes per game
 
-| Legacy code | FBLO replacement |
-| --- | --- |
-| `registerLoadOrderPage({ ... })` | `registerLoadOrder({ ... })` |
-| `preSort(items, direction)` | Logic moves into `deserializeLoadOrder` (initial ordering from prefixes/JSON) |
-| `filter(mods)` | Filtering moves into `deserializeLoadOrder` (return only mods of the right type) |
+| Legacy code                                      | FBLO replacement                                                                                                          |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `registerLoadOrderPage({ ... })`                 | `registerLoadOrder({ ... })`                                                                                              |
+| `preSort(items, direction)`                      | Logic moves into `deserializeLoadOrder` (initial ordering from prefixes/JSON)                                             |
+| `filter(mods)`                                   | Filtering moves into `deserializeLoadOrder` (return only mods of the right type)                                          |
 | `callback(loadOrder)` + `setDeploymentNecessary` | `serializeLoadOrder` writes files; `requestDeployment` / `setDeploymentNecessary` called from item renderer or serializer |
-| `createInfoPanel(props)` | `usageInstructions` (no props — remove any usage of `props.refresh`) |
-| `itemRenderer` (optional) | `customItemRenderer` (different prop shape) |
-| `displayCheckboxes: false` | `toggleableEntries: false` |
-| No migration | `registerMigration` gated to the new MINOR version |
+| `createInfoPanel(props)`                         | `usageInstructions` (no props — remove any usage of `props.refresh`)                                                      |
+| `itemRenderer` (optional)                        | `customItemRenderer` (different prop shape)                                                                               |
+| `displayCheckboxes: false`                       | `toggleableEntries: false`                                                                                                |
+| No migration                                     | `registerMigration` gated to the new MINOR version                                                                        |
 
 ---
 
@@ -303,12 +316,12 @@ types.ts:81                 interface ILoadOrderGameInfo { ... }
 
 ### Required fields
 
-| Field | Type | Purpose |
-| --- | --- | --- |
-| `gameId` | `string` | Nexus/Vortex game domain ID |
-| `serializeLoadOrder` | `(lo, prev) => Promise<void>` | Write the current LO to disk |
-| `deserializeLoadOrder` | `() => Promise<LoadOrder>` | Read LO from disk, return sorted array |
-| `validate` | `(prev, current) => Promise<IValidationResult>` | Check for invalid entries |
+| Field                  | Type                                            | Purpose                                |
+| ---------------------- | ----------------------------------------------- | -------------------------------------- |
+| `gameId`               | `string`                                        | Nexus/Vortex game domain ID            |
+| `serializeLoadOrder`   | `(lo, prev) => Promise<void>`                   | Write the current LO to disk           |
+| `deserializeLoadOrder` | `() => Promise<LoadOrder>`                      | Read LO from disk, return sorted array |
+| `validate`             | `(prev, current) => Promise<IValidationResult>` | Check for invalid entries              |
 
 ### `deserializeLoadOrder` must tolerate a missing load order file
 
@@ -325,7 +338,7 @@ and shows the user a `Vortex tried to access "<file>" but it doesn't exist` dial
 // Plain text load order file: creating an empty one is harmless, and ensureFileAsync also
 // creates the parent folder.
 await fs.ensureFileAsync(loadOrderPath);
-let loadOrderFile = await fs.readFileAsync(loadOrderPath, { encoding: 'utf8' });
+let loadOrderFile = await fs.readFileAsync(loadOrderPath, { encoding: "utf8" });
 ```
 
 Two caveats:
@@ -343,15 +356,15 @@ See also [LOAD_ORDER_ITEM_RENDERER.md](LOAD_ORDER_ITEM_RENDERER.md) and
 
 ### Optional fields
 
-| Field | Default | Purpose |
-| --- | --- | --- |
-| `toggleableEntries` | `true` | Show enable/disable checkbox per row |
-| `clearStateOnPurge` | `true` | Wipe Redux state when mods are purged |
-| `usageInstructions` | Vortex default | String or `React.ComponentType` shown in the info panel -- always rendered on the **right side** of the list in a `FlexLayout type="row"`; position is hardcoded and not configurable via this API |
-| `customItemRenderer` | Vortex default | `React.ComponentType` for each row in the list |
-| `uniformRowHeight` | `false` | Declare that a custom renderer produces equal-height rows, re-enabling list windowing |
-| `noCollectionGeneration` | `false` | Opt out of automatic Vortex Collections integration |
-| `condition` | `undefined` | `() => boolean` -- hide the LO page when returns `false` |
+| Field                    | Default        | Purpose                                                                                                                                                                                            |
+| ------------------------ | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `toggleableEntries`      | `true`         | Show enable/disable checkbox per row                                                                                                                                                               |
+| `clearStateOnPurge`      | `true`         | Wipe Redux state when mods are purged                                                                                                                                                              |
+| `usageInstructions`      | Vortex default | String or `React.ComponentType` shown in the info panel -- always rendered on the **right side** of the list in a `FlexLayout type="row"`; position is hardcoded and not configurable via this API |
+| `customItemRenderer`     | Vortex default | `React.ComponentType` for each row in the list                                                                                                                                                     |
+| `uniformRowHeight`       | `false`        | Declare that a custom renderer produces equal-height rows, re-enabling list windowing                                                                                                              |
+| `noCollectionGeneration` | `false`        | Opt out of automatic Vortex Collections integration                                                                                                                                                |
+| `condition`              | `undefined`    | `() => boolean` -- hide the LO page when returns `false`                                                                                                                                           |
 
 Two behaviours behind that table:
 
@@ -381,9 +394,9 @@ Two behaviours behind that table:
 
 ```js
 {
-  invalid: [
-    { id: string, reason: string },  // one per bad entry
-  ]
+    invalid: [
+        { id: string, reason: string }, // one per bad entry
+    ];
 }
 // Return undefined (not null) to signal "all valid"
 ```
@@ -398,13 +411,13 @@ Two behaviours behind that table:
 
 ```js
 context.registerLoadOrder({
-  gameId: spec.game.id,
-  validate: async () => Promise.resolve(undefined), // no validation implemented
-  deserializeLoadOrder: async () => await deserializeLoadOrder(context),
-  serializeLoadOrder: async (loadOrder) => await serializeLoadOrder(context, loadOrder),
-  toggleableEntries: false,
-  usageInstructions: LoadOrderInstructions,
-  customItemRenderer: LoadOrderItemRenderer,
+    gameId: spec.game.id,
+    validate: async () => Promise.resolve(undefined), // no validation implemented
+    deserializeLoadOrder: async () => await deserializeLoadOrder(context),
+    serializeLoadOrder: async (loadOrder) => await serializeLoadOrder(context, loadOrder),
+    toggleableEntries: false,
+    usageInstructions: LoadOrderInstructions,
+    customItemRenderer: LoadOrderItemRenderer,
 });
 ```
 
@@ -529,17 +542,17 @@ Reducers are registered at:
 
 ### Actions (`file_based_loadorder\actions\loadOrder.ts`)
 
-| Action | Use case |
-| --- | --- |
-| `setFBLoadOrder(profileId, loadOrder)` | Replace entire LO array |
-| `setFBLoadOrderEntry(profileId, loEntry)` | Update a single entry |
-| `setFBForceUpdate(profileId)` | Trigger a re-render without data change |
-| `setValidationResult(profileId, result)` | Write validation errors to session state |
+| Action                                    | Use case                                 |
+| ----------------------------------------- | ---------------------------------------- |
+| `setFBLoadOrder(profileId, loadOrder)`    | Replace entire LO array                  |
+| `setFBLoadOrderEntry(profileId, loEntry)` | Update a single entry                    |
+| `setFBForceUpdate(profileId)`             | Trigger a re-render without data change  |
+| `setValidationResult(profileId, result)`  | Write validation errors to session state |
 
 Import from `vortex-api`:
 
 ```js
-const { actions } = require('vortex-api');
+const { actions } = require("vortex-api");
 // setFBLoadOrder is re-exported as actions.setFBLoadOrder
 ```
 
@@ -547,15 +560,15 @@ const { actions } = require('vortex-api');
 
 ## 6. Lifecycle trigger map
 
-| Trigger | What fires | Handler called |
-| --- | --- | --- |
-| Load Order page mounts | `componentDidMount` -> `onStartUp` prop | `deserializeLoadOrder` + `validate` |
-| User drags/drops or toggles a row | Redux state change on `persistent.loadOrder` | `serializeLoadOrder` -> `validate` |
-| Profile switch | Redux state change on `persistent.profiles` | `deserializeLoadOrder` |
-| Game or tool exits | Redux state change on `session.base.toolsRunning` | `deserializeLoadOrder` |
-| `did-deploy` event | `api.onAsync('did-deploy', ...)` | `deserializeLoadOrder` (UpdateSet rebuild) |
-| `will-purge` event | `api.onAsync('will-purge', ...)` | `deserializeLoadOrder` |
-| `did-purge` event | `api.onAsync('did-purge', ...)` | `deserializeLoadOrder` |
+| Trigger                           | What fires                                        | Handler called                             |
+| --------------------------------- | ------------------------------------------------- | ------------------------------------------ |
+| Load Order page mounts            | `componentDidMount` -> `onStartUp` prop           | `deserializeLoadOrder` + `validate`        |
+| User drags/drops or toggles a row | Redux state change on `persistent.loadOrder`      | `serializeLoadOrder` -> `validate`         |
+| Profile switch                    | Redux state change on `persistent.profiles`       | `deserializeLoadOrder`                     |
+| Game or tool exits                | Redux state change on `session.base.toolsRunning` | `deserializeLoadOrder`                     |
+| `did-deploy` event                | `api.onAsync('did-deploy', ...)`                  | `deserializeLoadOrder` (UpdateSet rebuild) |
+| `will-purge` event                | `api.onAsync('will-purge', ...)`                  | `deserializeLoadOrder`                     |
+| `did-purge` event                 | `api.onAsync('did-purge', ...)`                   | `deserializeLoadOrder`                     |
 
 Serialize is **never** called directly by events -- it is only called after a user-driven
 LO state change (`onStateChange persistent.loadOrder`). Deploy/purge events only call
@@ -568,14 +581,23 @@ deserialize, not serialize.
 ### Key constants (`template-ue4-5\index.js`, grep `UE4SS_NAME` for the block)
 
 ```js
-const UE4SS_MODSTXT_FILE  = 'mods.txt';
-const UE4SS_LO_FILE       = 'ue4ss_loadOrder.json';
-const LO_ATTRIBUTE_UE4SS  = 'ue4ssModFolder'; // installer sets this on each mod
-const UE4SS_CONFIG_FILES  = ['config.txt', 'settings.json', 'config.lua']; // triggers Configure button
-const UE4SS_NATIVE_MODS   = [ // must match the folders RE-UE4SS ships - see RE-UE4SS_MODS_CONFIG.md
-  'ActorDumperMod', 'BPML_GenericFunctions', 'BPModLoaderMod',
-  'CheatManagerEnablerMod', 'ConsoleCommandsMod', 'ConsoleEnablerMod',
-  'jsbLuaProfilerMod', 'Keybinds', 'LineTraceMod', 'shared', 'SplitScreenMod'
+const UE4SS_MODSTXT_FILE = "mods.txt";
+const UE4SS_LO_FILE = "ue4ss_loadOrder.json";
+const LO_ATTRIBUTE_UE4SS = "ue4ssModFolder"; // installer sets this on each mod
+const UE4SS_CONFIG_FILES = ["config.txt", "settings.json", "config.lua"]; // triggers Configure button
+const UE4SS_NATIVE_MODS = [
+    // must match the folders RE-UE4SS ships - see RE-UE4SS_MODS_CONFIG.md
+    "ActorDumperMod",
+    "BPML_GenericFunctions",
+    "BPModLoaderMod",
+    "CheatManagerEnablerMod",
+    "ConsoleCommandsMod",
+    "ConsoleEnablerMod",
+    "jsbLuaProfilerMod",
+    "Keybinds",
+    "LineTraceMod",
+    "shared",
+    "SplitScreenMod",
 ];
 ```
 
@@ -591,8 +613,14 @@ Same directory as `mods.txt`.
 
 ```json
 [
-  { "id": "MyScriptMod",  "name": "My Mod (MyScriptMod)",  "modId": "abc123", "enabled": true },
-  { "id": "AnotherMod",   "name": "Manual Mod (AnotherMod)", "modId": null,   "enabled": false, "locked": true }
+    { "id": "MyScriptMod", "name": "My Mod (MyScriptMod)", "modId": "abc123", "enabled": true },
+    {
+        "id": "AnotherMod",
+        "name": "Manual Mod (AnotherMod)",
+        "modId": null,
+        "enabled": false,
+        "locked": true
+    }
 ]
 ```
 
@@ -604,11 +632,11 @@ the UE4SS sidecar are **two separate systems**:
 - FBLO uses `<profile>_loadOrder.json` for **PAK-style** mods (sortable via prefix renaming).
 - `ue4ss_loadOrder.json` is used by the `Ue4ssLoadOrderPage` custom React page and
 
-  written to disk by `serializeUe4ss`, which also rewrites `mods.txt` directly.
+    written to disk by `serializeUe4ss`, which also rewrites `mods.txt` directly.
 
 - Setting `ue4ssLoadOrder = false` disables the UE4SS sidecar entirely --
 
-  the FBLO page still works for PAK mods.
+    the FBLO page still works for PAK mods.
 
 `mods.txt` line format: `ModFolderName : 1` (enabled) or `ModFolderName : 0` (disabled).
 `serializeUe4ss` writes user-managed mods between the `BPModLoaderMod` and `Keybinds`
@@ -634,7 +662,7 @@ What that means in practice for a sidecar order:
   `deserialize*` return **the currently stored order for the profile, unchanged** and `serialize*`
   return early (this is what the `mod_update_all_profile` flag in the ChemBoy1 templates does).
   Returning a placeholder entry instead is a bug: the caller dispatches whatever a deserializer
-  returns into the order's reducer, so the placeholder *replaces* the visible order and — because
+  returns into the order's reducer, so the placeholder _replaces_ the visible order and — because
   the matching `serialize*` is suppressed — it stays replaced until the next successful deserialize.
   The same rule applies to the game's core FBLO order, see `VORTEX_LOAD_ORDER.md`
   ("`deserializeLoadOrder` contract"). Since the page then still shows a real, draggable order,
@@ -654,12 +682,28 @@ Enabled/Disabled, Locked/Unlocked, Unmanaged. AND across groups, OR within a gro
 the text search ANDs on top. All the pieces are module-level in the template:
 
 ```js
-const STATUS_GROUP_TOKENS = { enabled: ['enabled', 'disabled'], locked: ['locked', 'unlocked'], unmanaged: ['unmanaged'] };
-const STATUS_TOKEN_LABELS = { enabled: 'Enabled', disabled: 'Disabled', locked: 'Locked', unlocked: 'Unlocked', unmanaged: 'Unmanaged' };
+const STATUS_GROUP_TOKENS = {
+    enabled: ["enabled", "disabled"],
+    locked: ["locked", "unlocked"],
+    unmanaged: ["unmanaged"],
+};
+const STATUS_TOKEN_LABELS = {
+    enabled: "Enabled",
+    disabled: "Disabled",
+    locked: "Locked",
+    unlocked: "Unlocked",
+    unmanaged: "Unmanaged",
+};
 
-function matchesStatus(entry, active, isEnabledFn, isLockedFn) { /* AND across groups, OR within */ }
-function StatusPills({ active, setActive, groups, count }) { /* pill row -- core FBLO InfoPanel */ }
-function LoadOrderStatusFilter({ active, setActive, groups, count }) { /* dropdown -- custom pages */ }
+function matchesStatus(entry, active, isEnabledFn, isLockedFn) {
+    /* AND across groups, OR within */
+}
+function StatusPills({ active, setActive, groups, count }) {
+    /* pill row -- core FBLO InfoPanel */
+}
+function LoadOrderStatusFilter({ active, setActive, groups, count }) {
+    /* dropdown -- custom pages */
+}
 ```
 
 - `isEnabledFn` per surface: core FBLO row = Vortex mod state; UE4SS page =
@@ -700,8 +744,18 @@ LO-entry flag.
 
 ```js
 // top-level import in index.js
-const { actions, fs, util, selectors, log,
-        MainPage, FlexLayout, DNDContainer, DraggableList, Spinner } = require('vortex-api');
+const {
+    actions,
+    fs,
+    util,
+    selectors,
+    log,
+    MainPage,
+    FlexLayout,
+    DNDContainer,
+    DraggableList,
+    Spinner,
+} = require("vortex-api");
 // inline-required inside component functions:
 // Icon, LoadOrderIndexInput, MainContext, Toggle, More  <- from 'vortex-api'
 // Checkbox, FormControl  <- from 'react-bootstrap'
@@ -716,12 +770,16 @@ internally; do NOT import it from npm.
 ```js
 // UE4SS load order state (per-profile, persistent)
 const SET_UE4SS_LOAD_ORDER = `SET_${GAME_ID.toUpperCase()}_UE4SS_LOAD_ORDER`;
-function setUe4ssLoadOrder(profileId, lo) { return { type: SET_UE4SS_LOAD_ORDER, payload: { profileId, loadOrder: lo } }; }
+function setUe4ssLoadOrder(profileId, lo) {
+    return { type: SET_UE4SS_LOAD_ORDER, payload: { profileId, loadOrder: lo } };
+}
 setUe4ssLoadOrder.toString = () => SET_UE4SS_LOAD_ORDER;
 
 // UE4SS LO enabled toggle (settings)
 const SET_UE4SS_LO_ENABLED = `SET_${GAME_ID.toUpperCase()}_UE4SS_LO_ENABLED`;
-function setUe4ssLoEnabled(value) { return { type: SET_UE4SS_LO_ENABLED, payload: value }; }
+function setUe4ssLoEnabled(value) {
+    return { type: SET_UE4SS_LO_ENABLED, payload: value };
+}
 setUe4ssLoEnabled.toString = () => SET_UE4SS_LO_ENABLED;
 ```
 
@@ -799,28 +857,41 @@ toggling on calls `reconcileEnabledTxt(api, false)` to delete them.
 
 ```js
 function GameSettings() {
-  const { Toggle, More, MainContext } = require('vortex-api');
-  const { useSelector, useDispatch } = require('react-redux');
-  const dispatch = useDispatch();
-  const { api } = React.useContext(MainContext);
-  const ue4ssLoEnabled = useSelector(state =>
-    util.getSafe(state, ['settings', GAME_ID, 'ue4ssLoEnabled'], true));
-  const onToggle = React.useCallback((checked) => {
-    dispatch(setUe4ssLoEnabled(checked));
-    reconcileEnabledTxt(api, !checked)
-      .catch(err => log('warn', `UE4SS LO reconcile failed: ${err.message}`));
-  }, [api, dispatch]);
-  return React.createElement('form', null,
-    React.createElement('div', { className: 'settings-group' },
-      React.createElement(Toggle, { checked: ue4ssLoEnabled, onToggle },
-        'UE4SS Load Order',
-        React.createElement(More, { id: `${GAME_ID}-ue4ss-lo-more`, name: 'UE4SS Load Order' },
-          'Enable the UE4SS mod load order page and mods.txt management. '
-          + `Disabling will have the extension write ${ENABLEDTXT_FILE} files with no Load Order control.`,
+    const { Toggle, More, MainContext } = require("vortex-api");
+    const { useSelector, useDispatch } = require("react-redux");
+    const dispatch = useDispatch();
+    const { api } = React.useContext(MainContext);
+    const ue4ssLoEnabled = useSelector((state) =>
+        util.getSafe(state, ["settings", GAME_ID, "ue4ssLoEnabled"], true),
+    );
+    const onToggle = React.useCallback(
+        (checked) => {
+            dispatch(setUe4ssLoEnabled(checked));
+            reconcileEnabledTxt(api, !checked).catch((err) =>
+                log("warn", `UE4SS LO reconcile failed: ${err.message}`),
+            );
+        },
+        [api, dispatch],
+    );
+    return React.createElement(
+        "form",
+        null,
+        React.createElement(
+            "div",
+            { className: "settings-group" },
+            React.createElement(
+                Toggle,
+                { checked: ue4ssLoEnabled, onToggle },
+                "UE4SS Load Order",
+                React.createElement(
+                    More,
+                    { id: `${GAME_ID}-ue4ss-lo-more`, name: "UE4SS Load Order" },
+                    "Enable the UE4SS mod load order page and mods.txt management. " +
+                        `Disabling will have the extension write ${ENABLEDTXT_FILE} files with no Load Order control.`,
+                ),
+            ),
         ),
-      ),
-    ),
-  );
+    );
 }
 ```
 
@@ -841,7 +912,9 @@ folder and writes or deletes `enabled.txt` files in every UE4SS mod folder:
 parameter, injected via a closure at `registerInstaller`:
 
 ```js
-context.registerInstaller(SCRIPTS_ID, 35, testScripts, (files, fileName) => installScripts(context.api, files, fileName));
+context.registerInstaller(SCRIPTS_ID, 35, testScripts, (files, fileName) =>
+    installScripts(context.api, files, fileName),
+);
 ```
 
 When LO is enabled (`ue4ssLoadOrder && ue4ssLoEnabled`): filter any bundled `enabled.txt`
@@ -866,19 +939,19 @@ async function deserializeUe4ss(api) {
 
 ```js
 async function serializeUe4ss(api, loadOrder) {
-  const state = api.getState();
-  if (selectors.activeGameId(state) !== GAME_ID) return; // guard: wrong game active
-  // ...
+    const state = api.getState();
+    if (selectors.activeGameId(state) !== GAME_ID) return; // guard: wrong game active
+    // ...
 }
 ```
 
 ```js
 // Ue4ssLoadOrderPage useEffect:
 React.useEffect(() => {
-  if (!profileId) return;
-  if (selectors.activeGameId(api.getState()) !== GAME_ID) return; // guard: page mounted after game switch
-  deserializeUe4ss(api).then(lo => dispatch(setUe4ssLoadOrder(profileId, lo)));
-  setSelectedIds(new Set());
+    if (!profileId) return;
+    if (selectors.activeGameId(api.getState()) !== GAME_ID) return; // guard: page mounted after game switch
+    deserializeUe4ss(api).then((lo) => dispatch(setUe4ssLoadOrder(profileId, lo)));
+    setSelectedIds(new Set());
 }, [profileId]);
 ```
 
@@ -896,27 +969,35 @@ transitional state. Without the catch, a throw propagates silently and
 
 ```js
 async function didDeploy(api, profileId) {
-  const state = api.getState();
-  const profile = selectors.profileById(state, profileId);
-  if (profile?.gameId !== GAME_ID) return Promise.resolve();
-  if (ue4ssLoadOrder && isUe4ssInstalled(api, spec)) {
-    const loEnabled = util.getSafe(state, ['settings', GAME_ID, 'ue4ssLoEnabled'], true);
-    if (loEnabled) {
-      let UE4SS_LOAD_ORDER;
-      try {
-        UE4SS_LOAD_ORDER = await deserializeUe4ss(api);
-        api.store.dispatch(setUe4ssLoadOrder(profileId, UE4SS_LOAD_ORDER));
-      } catch (err) {
-        log('error', `[${GAME_ID}] didDeploy: deserializeUe4ss failed, falling back to store state`, err);
-        UE4SS_LOAD_ORDER = util.getSafe(state, ['persistent', 'ue4ssLoadOrder', profileId, 'loadOrder'], []);
-      }
-      if (UE4SS_LOAD_ORDER.length > 0) {
-        await serializeUe4ss(api, UE4SS_LOAD_ORDER);
-      }
+    const state = api.getState();
+    const profile = selectors.profileById(state, profileId);
+    if (profile?.gameId !== GAME_ID) return Promise.resolve();
+    if (ue4ssLoadOrder && isUe4ssInstalled(api, spec)) {
+        const loEnabled = util.getSafe(state, ["settings", GAME_ID, "ue4ssLoEnabled"], true);
+        if (loEnabled) {
+            let UE4SS_LOAD_ORDER;
+            try {
+                UE4SS_LOAD_ORDER = await deserializeUe4ss(api);
+                api.store.dispatch(setUe4ssLoadOrder(profileId, UE4SS_LOAD_ORDER));
+            } catch (err) {
+                log(
+                    "error",
+                    `[${GAME_ID}] didDeploy: deserializeUe4ss failed, falling back to store state`,
+                    err,
+                );
+                UE4SS_LOAD_ORDER = util.getSafe(
+                    state,
+                    ["persistent", "ue4ssLoadOrder", profileId, "loadOrder"],
+                    [],
+                );
+            }
+            if (UE4SS_LOAD_ORDER.length > 0) {
+                await serializeUe4ss(api, UE4SS_LOAD_ORDER);
+            }
+        }
     }
-  }
-  api.dismissNotification(`${GAME_ID}-loadorderdeploy-notif`);
-  return Promise.resolve();
+    api.dismissNotification(`${GAME_ID}-loadorderdeploy-notif`);
+    return Promise.resolve();
 }
 ```
 
@@ -930,11 +1011,11 @@ FBLO styles are scoped to `#page-file-based-loadorder`. On a custom page (differ
 ID), `.load-order-entry`, `.load-order-name`, and page-scoped `.layout-flex` overrides
 **do not apply**. Global styles that DO apply:
 
-| Class | Global style |
-| --- | --- |
-| `.layout-container` | `display: flex` |
-| `.layout-flex` | `flex: 1 1 0; position: relative; overflow: hidden` |
-| `.layout-fixed` | `position: relative` (no flex sizing) |
+| Class               | Global style                                        |
+| ------------------- | --------------------------------------------------- |
+| `.layout-container` | `display: flex`                                     |
+| `.layout-flex`      | `flex: 1 1 0; position: relative; overflow: hidden` |
+| `.layout-fixed`     | `position: relative` (no flex sizing)               |
 
 Fix: apply all critical styles inline on `div` elements.
 
@@ -949,121 +1030,189 @@ Fix: apply all critical styles inline on `div` elements.
 
 ```js
 function Ue4ssLoadOrderPage({ api }) {
-  const { useSelector, useDispatch } = require('react-redux');
-  const { FormControl } = require('react-bootstrap');
+    const { useSelector, useDispatch } = require("react-redux");
+    const { FormControl } = require("react-bootstrap");
 
-  const profileId = useSelector(state => selectors.activeProfile(state)?.id);
-  const loadOrder = useSelector(state =>
-    util.getSafe(state, ['persistent', 'ue4ssLoadOrder', profileId, 'loadOrder'], []));
-  const loEnabled = useSelector(state => util.getSafe(state, ['settings', GAME_ID, 'ue4ssLoEnabled'], true));
-  const dispatch = useDispatch();
-  const [filterText, setFilterText] = React.useState('');
-  const [statusFilter, setStatusFilter] = React.useState(new Set());
-  const [selectedIds, setSelectedIds] = React.useState(new Set());
-  const [contextMenu, setContextMenu] = React.useState(null);
+    const profileId = useSelector((state) => selectors.activeProfile(state)?.id);
+    const loadOrder = useSelector((state) =>
+        util.getSafe(state, ["persistent", "ue4ssLoadOrder", profileId, "loadOrder"], []),
+    );
+    const loEnabled = useSelector((state) =>
+        util.getSafe(state, ["settings", GAME_ID, "ue4ssLoEnabled"], true),
+    );
+    const dispatch = useDispatch();
+    const [filterText, setFilterText] = React.useState("");
+    const [statusFilter, setStatusFilter] = React.useState(new Set());
+    const [selectedIds, setSelectedIds] = React.useState(new Set());
+    const [contextMenu, setContextMenu] = React.useState(null);
 
-  // Dismiss context menu on any click/right-click outside
-  React.useEffect(() => {
-    if (!contextMenu) return;
-    const dismiss = () => setContextMenu(null);
-    globalThis.document.addEventListener('click', dismiss);
-    globalThis.document.addEventListener('contextmenu', dismiss);
-    return () => {
-      globalThis.document.removeEventListener('click', dismiss);
-      globalThis.document.removeEventListener('contextmenu', dismiss);
-    };
-  }, [contextMenu]);
+    // Dismiss context menu on any click/right-click outside
+    React.useEffect(() => {
+        if (!contextMenu) return;
+        const dismiss = () => setContextMenu(null);
+        globalThis.document.addEventListener("click", dismiss);
+        globalThis.document.addEventListener("contextmenu", dismiss);
+        return () => {
+            globalThis.document.removeEventListener("click", dismiss);
+            globalThis.document.removeEventListener("contextmenu", dismiss);
+        };
+    }, [contextMenu]);
 
-  // Load on profile change; guard against wrong game
-  React.useEffect(() => {
-    if (!profileId) return;
-    if (selectors.activeGameId(api.getState()) !== GAME_ID) return;
-    deserializeUe4ss(api).then(lo => dispatch(setUe4ssLoadOrder(profileId, lo)));
-    setSelectedIds(new Set());
-  }, [profileId]);
+    // Load on profile change; guard against wrong game
+    React.useEffect(() => {
+        if (!profileId) return;
+        if (selectors.activeGameId(api.getState()) !== GAME_ID) return;
+        deserializeUe4ss(api).then((lo) => dispatch(setUe4ssLoadOrder(profileId, lo)));
+        setSelectedIds(new Set());
+    }, [profileId]);
 
-  // Either filter active -> drag results must be remapped through the filter
-  const isFiltered = !!filterText || statusFilter.size > 0;
-  const isEntryEnabled = (e) => e.enabled !== false;
-  const isEntryLocked = (e) => [true, 'true', 'always'].includes(e?.locked);
+    // Either filter active -> drag results must be remapped through the filter
+    const isFiltered = !!filterText || statusFilter.size > 0;
+    const isEntryEnabled = (e) => e.enabled !== false;
+    const isEntryLocked = (e) => [true, "true", "always"].includes(e?.locked);
 
-  const onApply = React.useCallback((reordered) => {
-    let newLO;
-    if (isFiltered) {
-      // merge reordered filtered subset back into full list at the same positions
-      const filteredIds = new Set(reordered.map(e => e.id));
-      const positions = loadOrder.reduce((acc, e, i) => { if (filteredIds.has(e.id)) acc.push(i); return acc; }, []);
-      newLO = [...loadOrder];
-      positions.forEach((pos, i) => { newLO[pos] = reordered[i]; });
-    } else {
-      newLO = reordered;
+    const onApply = React.useCallback(
+        (reordered) => {
+            let newLO;
+            if (isFiltered) {
+                // merge reordered filtered subset back into full list at the same positions
+                const filteredIds = new Set(reordered.map((e) => e.id));
+                const positions = loadOrder.reduce((acc, e, i) => {
+                    if (filteredIds.has(e.id)) acc.push(i);
+                    return acc;
+                }, []);
+                newLO = [...loadOrder];
+                positions.forEach((pos, i) => {
+                    newLO[pos] = reordered[i];
+                });
+            } else {
+                newLO = reordered;
+            }
+            dispatch(setUe4ssLoadOrder(profileId, newLO));
+            serializeUe4ss(api, newLO); // writes mods.txt + sidecar directly -- no deploy needed
+        },
+        [dispatch, loadOrder, isFiltered, profileId],
+    );
+
+    const filteredOrder = loadOrder.filter(
+        (e) =>
+            (!filterText || e.name.toLowerCase().includes(filterText.toLowerCase())) &&
+            matchesStatus(e, statusFilter, isEntryEnabled, isEntryLocked),
+    );
+
+    const allIds = filteredOrder.map((e) => e.id);
+
+    // Empty-state checks: loEnabled first, then no mods
+    if (!loEnabled) {
+        return React.createElement(
+            MainPage,
+            null,
+            React.createElement(
+                MainPage.Body,
+                null,
+                React.createElement(
+                    "p",
+                    { style: { padding: "12px", fontWeight: "bold", color: "yellow" } },
+                    "UE4SS load order is disabled in Settings.",
+                ),
+            ),
+        );
     }
-    dispatch(setUe4ssLoadOrder(profileId, newLO));
-    serializeUe4ss(api, newLO); // writes mods.txt + sidecar directly -- no deploy needed
-  }, [dispatch, loadOrder, isFiltered, profileId]);
+    if (!loadOrder.length) {
+        return React.createElement(
+            MainPage,
+            null,
+            React.createElement(
+                MainPage.Body,
+                null,
+                React.createElement(
+                    "p",
+                    { style: { padding: "12px", fontWeight: "bold", color: "yellow" } },
+                    "No UE4SS mods are installed.",
+                ),
+            ),
+        );
+    }
 
-  const filteredOrder = loadOrder.filter(e =>
-    (!filterText || e.name.toLowerCase().includes(filterText.toLowerCase()))
-    && matchesStatus(e, statusFilter, isEntryEnabled, isEntryLocked));
-
-  const allIds = filteredOrder.map(e => e.id);
-
-  // Empty-state checks: loEnabled first, then no mods
-  if (!loEnabled) {
-    return React.createElement(MainPage, null,
-      React.createElement(MainPage.Body, null,
-        React.createElement('p', { style: { padding: '12px', fontWeight: 'bold', color: 'yellow' } },
-          'UE4SS load order is disabled in Settings.')));
-  }
-  if (!loadOrder.length) {
-    return React.createElement(MainPage, null,
-      React.createElement(MainPage.Body, null,
-        React.createElement('p', { style: { padding: '12px', fontWeight: 'bold', color: 'yellow' } },
-          'No UE4SS mods are installed.')));
-  }
-
-  return React.createElement(MainPage, null,
-    React.createElement(MainPage.Header, null,
-      // Flex row: search box + status-filter dropdown (see section 7a)
-      React.createElement('div', { style: { display: 'flex', alignItems: 'center', width: '100%' } },
-        React.createElement(FormControl, {
-          type: 'search', placeholder: 'Filter mods...',
-          className: 'file-based-load-order-filter',
-          style: { flex: 1 },
-          value: filterText, onChange: (evt) => setFilterText(evt.target.value),
-        }),
-        React.createElement(LoadOrderStatusFilter, {
-          active: statusFilter, setActive: setStatusFilter, groups: ['enabled', 'locked', 'unmanaged'],
-          count: statusFilter.size > 0 ? { matched: filteredOrder.length, total: loadOrder.length } : null,
-        }),
-      )
-    ),
-    React.createElement(MainPage.Body, null,
-      React.createElement(DNDContainer, { style: { height: '95%' } },
-        React.createElement(FlexLayout, { type: 'column',
-          className: 'file-based-load-order-container', style: { height: '100%' } },
-          React.createElement(FlexLayout.Flex,
-            { className: 'file-based-load-order-list', style: { overflowY: 'auto', minHeight: 0 } },
-            React.createElement(Ue4ssSelectionContext.Provider,
-              { value: { selectedIds, setSelectedIds, allIds, contextMenu, setContextMenu } },
-              React.createElement(DraggableList, {
-                itemTypeId: `${GAME_ID}-ue4ss-lo-entry`,
-                id: `${GAME_ID}-ue4ss-loadorder-list`,
-                items: filteredOrder,
-                itemRenderer: Ue4ssItemRenderer,
-                apply: onApply,
-                idFunc: entry => entry.id,
-                isLocked: item => [true, 'true', 'always'].includes(item?.locked),
-              })
-            )
-          ),
-          React.createElement('div', { style: { flexShrink: 0 } },
-            React.createElement(Ue4ssLoadOrderInfoPanel)
-          )
-        )
-      )
-    )
-  );
+    return React.createElement(
+        MainPage,
+        null,
+        React.createElement(
+            MainPage.Header,
+            null,
+            // Flex row: search box + status-filter dropdown (see section 7a)
+            React.createElement(
+                "div",
+                { style: { display: "flex", alignItems: "center", width: "100%" } },
+                React.createElement(FormControl, {
+                    type: "search",
+                    placeholder: "Filter mods...",
+                    className: "file-based-load-order-filter",
+                    style: { flex: 1 },
+                    value: filterText,
+                    onChange: (evt) => setFilterText(evt.target.value),
+                }),
+                React.createElement(LoadOrderStatusFilter, {
+                    active: statusFilter,
+                    setActive: setStatusFilter,
+                    groups: ["enabled", "locked", "unmanaged"],
+                    count:
+                        statusFilter.size > 0
+                            ? { matched: filteredOrder.length, total: loadOrder.length }
+                            : null,
+                }),
+            ),
+        ),
+        React.createElement(
+            MainPage.Body,
+            null,
+            React.createElement(
+                DNDContainer,
+                { style: { height: "95%" } },
+                React.createElement(
+                    FlexLayout,
+                    {
+                        type: "column",
+                        className: "file-based-load-order-container",
+                        style: { height: "100%" },
+                    },
+                    React.createElement(
+                        FlexLayout.Flex,
+                        {
+                            className: "file-based-load-order-list",
+                            style: { overflowY: "auto", minHeight: 0 },
+                        },
+                        React.createElement(
+                            Ue4ssSelectionContext.Provider,
+                            {
+                                value: {
+                                    selectedIds,
+                                    setSelectedIds,
+                                    allIds,
+                                    contextMenu,
+                                    setContextMenu,
+                                },
+                            },
+                            React.createElement(DraggableList, {
+                                itemTypeId: `${GAME_ID}-ue4ss-lo-entry`,
+                                id: `${GAME_ID}-ue4ss-loadorder-list`,
+                                items: filteredOrder,
+                                itemRenderer: Ue4ssItemRenderer,
+                                apply: onApply,
+                                idFunc: (entry) => entry.id,
+                                isLocked: (item) => [true, "true", "always"].includes(item?.locked),
+                            }),
+                        ),
+                    ),
+                    React.createElement(
+                        "div",
+                        { style: { flexShrink: 0 } },
+                        React.createElement(Ue4ssLoadOrderInfoPanel),
+                    ),
+                ),
+            ),
+        ),
+    );
 }
 ```
 
@@ -1073,11 +1222,11 @@ Defined at module level (outside components):
 
 ```js
 const Ue4ssSelectionContext = React.createContext({
-  selectedIds: new Set(),
-  setSelectedIds: () => {},
-  allIds: [],
-  contextMenu: null,
-  setContextMenu: () => {},
+    selectedIds: new Set(),
+    setSelectedIds: () => {},
+    allIds: [],
+    contextMenu: null,
+    setContextMenu: () => {},
 });
 ```
 
@@ -1096,149 +1245,240 @@ block display needs page-scoped CSS that won't fire on a custom page.
 
 ```js
 function Ue4ssItemRenderer({ className, item }) {
-  const { Icon, LoadOrderIndexInput, MainContext } = require('vortex-api');
-  const { useSelector, useDispatch } = require('react-redux');
+    const { Icon, LoadOrderIndexInput, MainContext } = require("vortex-api");
+    const { useSelector, useDispatch } = require("react-redux");
 
-  const vortexContext = React.useContext(MainContext);
-  const dispatch = useDispatch();
+    const vortexContext = React.useContext(MainContext);
+    const dispatch = useDispatch();
 
-  const profileId = useSelector(state => selectors.activeProfile(state)?.id);
-  const loadOrder = useSelector(state =>
-    util.getSafe(state, ['persistent', 'ue4ssLoadOrder', profileId, 'loadOrder'], []));
-  const mods = useSelector(state => util.getSafe(state, ['persistent', 'mods', GAME_ID], {}));
-  const pictureUrl = mods[item.modId]?.attributes?.pictureUrl;
-  const gamePath = useSelector(state =>
-    util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'path'], ''));
+    const profileId = useSelector((state) => selectors.activeProfile(state)?.id);
+    const loadOrder = useSelector((state) =>
+        util.getSafe(state, ["persistent", "ue4ssLoadOrder", profileId, "loadOrder"], []),
+    );
+    const mods = useSelector((state) => util.getSafe(state, ["persistent", "mods", GAME_ID], {}));
+    const pictureUrl = mods[item.modId]?.attributes?.pictureUrl;
+    const gamePath = useSelector((state) =>
+        util.getSafe(state, ["settings", "gameMode", "discovered", GAME_ID, "path"], ""),
+    );
 
-  const currentIdx = loadOrder.findIndex((e) => e.id === item.id) + 1;
-  const isLocked = (entry) => [true, 'true', 'always'].includes(entry?.locked);
-  const lockedCount = loadOrder.filter(isLocked).length;
-  const isEntryLocked = isLocked(item);
+    const currentIdx = loadOrder.findIndex((e) => e.id === item.id) + 1;
+    const isLocked = (entry) => [true, "true", "always"].includes(entry?.locked);
+    const lockedCount = loadOrder.filter(isLocked).length;
+    const isEntryLocked = isLocked(item);
 
-  const onApplyIndex = React.useCallback((idx) => {
-    if (currentIdx === idx) return;
-    const newLO = loadOrder.filter((e) => e.id !== item.id);
-    newLO.splice(idx - 1, 0, item);
-    dispatch(setUe4ssLoadOrder(profileId, newLO));
-    serializeUe4ss(vortexContext.api, newLO);
-  }, [dispatch, vortexContext, profileId, loadOrder, item, currentIdx]);
+    const onApplyIndex = React.useCallback(
+        (idx) => {
+            if (currentIdx === idx) return;
+            const newLO = loadOrder.filter((e) => e.id !== item.id);
+            newLO.splice(idx - 1, 0, item);
+            dispatch(setUe4ssLoadOrder(profileId, newLO));
+            serializeUe4ss(vortexContext.api, newLO);
+        },
+        [dispatch, vortexContext, profileId, loadOrder, item, currentIdx],
+    );
 
-  const onLock = React.useCallback(() => {
-    const newLO = loadOrder.map(e => e.id === item.id ? { ...e, locked: !isEntryLocked } : e);
-    dispatch(setUe4ssLoadOrder(profileId, newLO));
-    serializeUe4ss(vortexContext.api, newLO);
-  }, [dispatch, vortexContext, profileId, loadOrder, item, isEntryLocked]);
+    const onLock = React.useCallback(() => {
+        const newLO = loadOrder.map((e) =>
+            e.id === item.id ? { ...e, locked: !isEntryLocked } : e,
+        );
+        dispatch(setUe4ssLoadOrder(profileId, newLO));
+        serializeUe4ss(vortexContext.api, newLO);
+    }, [dispatch, vortexContext, profileId, loadOrder, item, isEntryLocked]);
 
-  const onToggle = React.useCallback((evt) => {
-    const newLO = loadOrder.map(e => e.id === item.id ? { ...e, enabled: evt.target.checked } : e);
-    dispatch(setUe4ssLoadOrder(profileId, newLO));
-    serializeUe4ss(vortexContext.api, newLO);
-  }, [dispatch, vortexContext, loadOrder, item, profileId]);
+    const onToggle = React.useCallback(
+        (evt) => {
+            const newLO = loadOrder.map((e) =>
+                e.id === item.id ? { ...e, enabled: evt.target.checked } : e,
+            );
+            dispatch(setUe4ssLoadOrder(profileId, newLO));
+            serializeUe4ss(vortexContext.api, newLO);
+        },
+        [dispatch, vortexContext, loadOrder, item, profileId],
+    );
 
-  // Detect config file for "Configure" button
-  const [configFilePath, setConfigFilePath] = React.useState('');
-  React.useEffect(() => {
-    if (!gamePath || !item.id) { setConfigFilePath(''); return; }
-    const modFolder = path.join(gamePath, BINARIES_PATH, UE4SS_MOD_PATH, item.id);
-    const localConfigFiles = [...UE4SS_CONFIG_FILES, `${item.id}.txt`, `${item.id}.ini`, `${item.id}.json`];
-    let found = '';
-    util.walk(modFolder, (iterPath, stats) => {
-      if (found === '' && !stats.isDirectory() && localConfigFiles.includes(path.basename(iterPath))) {
-        found = iterPath;
-      }
-      return Promise.resolve();
-    })
-      .then(() => setConfigFilePath(found))
-      .catch(() => setConfigFilePath(''));
-  }, [gamePath, item.id]);
+    // Detect config file for "Configure" button
+    const [configFilePath, setConfigFilePath] = React.useState("");
+    React.useEffect(() => {
+        if (!gamePath || !item.id) {
+            setConfigFilePath("");
+            return;
+        }
+        const modFolder = path.join(gamePath, BINARIES_PATH, UE4SS_MOD_PATH, item.id);
+        const localConfigFiles = [
+            ...UE4SS_CONFIG_FILES,
+            `${item.id}.txt`,
+            `${item.id}.ini`,
+            `${item.id}.json`,
+        ];
+        let found = "";
+        util.walk(modFolder, (iterPath, stats) => {
+            if (
+                found === "" &&
+                !stats.isDirectory() &&
+                localConfigFiles.includes(path.basename(iterPath))
+            ) {
+                found = iterPath;
+            }
+            return Promise.resolve();
+        })
+            .then(() => setConfigFilePath(found))
+            .catch(() => setConfigFilePath(""));
+    }, [gamePath, item.id]);
 
-  const { selectedIds, setSelectedIds, allIds, contextMenu, setContextMenu } =
-    React.useContext(Ue4ssSelectionContext);
-  const isSelected = selectedIds.has(item.id);
+    const { selectedIds, setSelectedIds, allIds, contextMenu, setContextMenu } =
+        React.useContext(Ue4ssSelectionContext);
+    const isSelected = selectedIds.has(item.id);
 
-  const onContextMenu = React.useCallback((evt) => {
-    evt.preventDefault();
-    evt.stopPropagation();
-    setContextMenu({ x: evt.clientX, y: evt.clientY, itemId: item.id });
-  }, [item.id, setContextMenu]);
+    const onContextMenu = React.useCallback(
+        (evt) => {
+            evt.preventDefault();
+            evt.stopPropagation();
+            setContextMenu({ x: evt.clientX, y: evt.clientY, itemId: item.id });
+        },
+        [item.id, setContextMenu],
+    );
 
-  const onSelect = React.useCallback((evt) => {
-    const ctrlKey = evt.ctrlKey || evt.metaKey; // capture before entering updater
-    const shiftKey = evt.shiftKey;
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-      if (ctrlKey) {
-        next.has(item.id) ? next.delete(item.id) : next.add(item.id);
-      } else if (shiftKey) {
-        const lastId = [...prev].at(-1);
-        const start = allIds.indexOf(lastId ?? item.id);
-        const end = allIds.indexOf(item.id);
-        const [lo, hi] = [Math.min(start, end), Math.max(start, end)];
-        for (let i = lo; i <= hi; i++) next.add(allIds[i]);
-      } else { next.clear(); next.add(item.id); }
-      return next;
-    });
-  }, [item.id, setSelectedIds, allIds]);
+    const onSelect = React.useCallback(
+        (evt) => {
+            const ctrlKey = evt.ctrlKey || evt.metaKey; // capture before entering updater
+            const shiftKey = evt.shiftKey;
+            setSelectedIds((prev) => {
+                const next = new Set(prev);
+                if (ctrlKey) {
+                    next.has(item.id) ? next.delete(item.id) : next.add(item.id);
+                } else if (shiftKey) {
+                    const lastId = [...prev].at(-1);
+                    const start = allIds.indexOf(lastId ?? item.id);
+                    const end = allIds.indexOf(item.id);
+                    const [lo, hi] = [Math.min(start, end), Math.max(start, end)];
+                    for (let i = lo; i <= hi; i++) next.add(allIds[i]);
+                } else {
+                    next.clear();
+                    next.add(item.id);
+                }
+                return next;
+            });
+        },
+        [item.id, setSelectedIds, allIds],
+    );
 
-  const classes = ['load-order-entry'];
-  if (className) classes.push(...className.split(' ').filter(Boolean));
+    const classes = ["load-order-entry"];
+    if (className) classes.push(...className.split(" ").filter(Boolean));
 
-  return React.createElement('div', {
-    key: item.id,
-    className: classes.join(' '),
-    onClick: onSelect,
-    onContextMenu: onContextMenu,
-    style: {
-      display: 'flex', flexDirection: 'row', alignItems: 'center',
-      gap: 8, padding: '4px 12px', margin: 0,
-      border: '1px solid rgba(255,255,255,0.15)', borderRadius: 4, minHeight: 52,
-      outline: isSelected ? '2px solid #337ab7' : 'none', outlineOffset: '-1px',
-    },
-  },
-    React.createElement('div', { style: { visibility: isEntryLocked ? 'hidden' : 'visible' } },
-      React.createElement(Icon, { className: 'drag-handle-icon', name: 'drag-handle' }),
-    ),
-    React.createElement('div', { style: { width: 24, flexShrink: 0, overflow: 'hidden' } },
-      React.createElement(LoadOrderIndexInput, {
-        className: 'load-order-index', api: vortexContext.api, item: item,
-        currentPosition: currentIdx, lockedEntriesCount: lockedCount,
-        loadOrder: loadOrder, isLocked: isLocked, onApplyIndex: onApplyIndex,
-      }),
-    ),
-    React.createElement('div', {
-      style: { cursor: 'pointer', display: 'flex', alignItems: 'center' },
-      title: isEntryLocked ? 'Unlock position' : 'Lock position', onClick: onLock,
-    },
-      React.createElement(Icon, { name: isEntryLocked ? 'locked' : 'unlocked',
-        style: { color: isEntryLocked ? '#e2c04c' : 'inherit' } }),
-    ),
-    React.createElement('div', { className: 'load-order-thumb-slot',
-      style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, flexShrink: 0 } },
-      pictureUrl ? React.createElement('img', {
-        className: 'load-order-thumb', src: pictureUrl, draggable: false,
-        style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT,
-                 objectFit: 'cover', borderRadius: 2, pointerEvents: 'none' },
-      }) : null,
-    ),
-    React.createElement('p', { className: 'load-order-name',
-      style: { flex: '1 1 0', margin: 0, whiteSpace: 'normal', wordBreak: 'break-word' } }, item.name),
-    configFilePath ? React.createElement('button', {
-      className: 'btn btn-default btn-sm', style: { margin: '0 4px' },
-      onClick: () => util.opn(configFilePath).catch(() => null),
-    }, 'Configure') : null,
-    React.createElement('input', {
-      type: 'checkbox',
-      style: { alignSelf: 'center', cursor: 'pointer' },
-      checked: item.enabled ?? true,
-      onChange: onToggle,
-    }),
-    contextMenu?.itemId === item.id ? React.createElement(Ue4ssContextMenu, {
-      x: contextMenu.x, y: contextMenu.y,
-      item, loadOrder, profileId, dispatch,
-      api: vortexContext.api, gamePath, configFilePath, selectedIds,
-      onClose: () => setContextMenu(null),
-    }) : null,
-  );
+    return React.createElement(
+        "div",
+        {
+            key: item.id,
+            className: classes.join(" "),
+            onClick: onSelect,
+            onContextMenu: onContextMenu,
+            style: {
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+                padding: "4px 12px",
+                margin: 0,
+                border: "1px solid rgba(255,255,255,0.15)",
+                borderRadius: 4,
+                minHeight: 52,
+                outline: isSelected ? "2px solid #337ab7" : "none",
+                outlineOffset: "-1px",
+            },
+        },
+        React.createElement(
+            "div",
+            { style: { visibility: isEntryLocked ? "hidden" : "visible" } },
+            React.createElement(Icon, { className: "drag-handle-icon", name: "drag-handle" }),
+        ),
+        React.createElement(
+            "div",
+            { style: { width: 24, flexShrink: 0, overflow: "hidden" } },
+            React.createElement(LoadOrderIndexInput, {
+                className: "load-order-index",
+                api: vortexContext.api,
+                item: item,
+                currentPosition: currentIdx,
+                lockedEntriesCount: lockedCount,
+                loadOrder: loadOrder,
+                isLocked: isLocked,
+                onApplyIndex: onApplyIndex,
+            }),
+        ),
+        React.createElement(
+            "div",
+            {
+                style: { cursor: "pointer", display: "flex", alignItems: "center" },
+                title: isEntryLocked ? "Unlock position" : "Lock position",
+                onClick: onLock,
+            },
+            React.createElement(Icon, {
+                name: isEntryLocked ? "locked" : "unlocked",
+                style: { color: isEntryLocked ? "#e2c04c" : "inherit" },
+            }),
+        ),
+        React.createElement(
+            "div",
+            {
+                className: "load-order-thumb-slot",
+                style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, flexShrink: 0 },
+            },
+            pictureUrl
+                ? React.createElement("img", {
+                      className: "load-order-thumb",
+                      src: pictureUrl,
+                      draggable: false,
+                      style: {
+                          width: LO_IMAGE_WIDTH,
+                          height: LO_IMAGE_HEIGHT,
+                          objectFit: "cover",
+                          borderRadius: 2,
+                          pointerEvents: "none",
+                      },
+                  })
+                : null,
+        ),
+        React.createElement(
+            "p",
+            {
+                className: "load-order-name",
+                style: { flex: "1 1 0", margin: 0, whiteSpace: "normal", wordBreak: "break-word" },
+            },
+            item.name,
+        ),
+        configFilePath
+            ? React.createElement(
+                  "button",
+                  {
+                      className: "btn btn-default btn-sm",
+                      style: { margin: "0 4px" },
+                      onClick: () => util.opn(configFilePath).catch(() => null),
+                  },
+                  "Configure",
+              )
+            : null,
+        React.createElement("input", {
+            type: "checkbox",
+            style: { alignSelf: "center", cursor: "pointer" },
+            checked: item.enabled ?? true,
+            onChange: onToggle,
+        }),
+        contextMenu?.itemId === item.id
+            ? React.createElement(Ue4ssContextMenu, {
+                  x: contextMenu.x,
+                  y: contextMenu.y,
+                  item,
+                  loadOrder,
+                  profileId,
+                  dispatch,
+                  api: vortexContext.api,
+                  gamePath,
+                  configFilePath,
+                  selectedIds,
+                  onClose: () => setContextMenu(null),
+              })
+            : null,
+    );
 }
 ```
 
@@ -1258,33 +1498,33 @@ window edges).
 
 **Single-item menu:**
 
-| Item | Condition | Action |
-| --- | --- | --- |
-| Enable / Disable | always | Toggle `enabled` on this entry (mods.txt flag); serialize |
-| Lock / Unlock Position | always | Toggle `locked`; serialize |
-| Configure | `configFilePath` non-empty | `util.opn(configFilePath)` |
-| *(separator)* | always | |
-| Move to Top | always | Re-insert after locked entries; serialize |
-| Move to Bottom | always | Re-insert at end; serialize |
-| *(separator)* | always | |
-| Open Mod Folder | always | `util.opn(gamePath/binaries/ue4ss/Mods/item.id)` |
-| Open Staging Folder | `getModStagingFolder` resolves | `util.opn` on the mod's Vortex staging folder |
-| Open Mod Page | `getModPageURL` resolves | `util.opn` on the mod page URL |
-| *(separator)* | `item.modId` set | |
-| Disable / Enable Vortex Mod | `item.modId` set | Two-way toggle: `setVortexModsEnabled([item], !isModEnabled)` |
+| Item                        | Condition                      | Action                                                        |
+| --------------------------- | ------------------------------ | ------------------------------------------------------------- |
+| Enable / Disable            | always                         | Toggle `enabled` on this entry (mods.txt flag); serialize     |
+| Lock / Unlock Position      | always                         | Toggle `locked`; serialize                                    |
+| Configure                   | `configFilePath` non-empty     | `util.opn(configFilePath)`                                    |
+| _(separator)_               | always                         |                                                               |
+| Move to Top                 | always                         | Re-insert after locked entries; serialize                     |
+| Move to Bottom              | always                         | Re-insert at end; serialize                                   |
+| _(separator)_               | always                         |                                                               |
+| Open Mod Folder             | always                         | `util.opn(gamePath/binaries/ue4ss/Mods/item.id)`              |
+| Open Staging Folder         | `getModStagingFolder` resolves | `util.opn` on the mod's Vortex staging folder                 |
+| Open Mod Page               | `getModPageURL` resolves       | `util.opn` on the mod page URL                                |
+| _(separator)_               | `item.modId` set               |                                                               |
+| Disable / Enable Vortex Mod | `item.modId` set               | Two-way toggle: `setVortexModsEnabled([item], !isModEnabled)` |
 
 **Multi-item menu** (`selectedIds.size >= 2 && selectedIds.has(item.id)`):
 
-| Item | Action |
-| --- | --- |
-| Enable Selected (n) | Set `enabled: true` on all selected; serialize |
-| Disable Selected (n) | Set `enabled: false` on all selected; serialize |
-| Lock Selected (n) | Set `locked: true` on all selected; serialize |
-| Unlock Selected (n) | Set `locked: false` on all selected; serialize |
-| Move to Top (n) / Move to Bottom (n) | Bulk reorder; serialize |
-| Open Mod Folders (n) | Opens each selected mod's folder |
-| Open Staging Folders (n) | Shown when any target has a `modId`; opens each resolvable staging folder |
-| Disable Vortex Mod (n) | `setVortexModsEnabled(targets, false)` |
+| Item                                 | Action                                                                    |
+| ------------------------------------ | ------------------------------------------------------------------------- |
+| Enable Selected (n)                  | Set `enabled: true` on all selected; serialize                            |
+| Disable Selected (n)                 | Set `enabled: false` on all selected; serialize                           |
+| Lock Selected (n)                    | Set `locked: true` on all selected; serialize                             |
+| Unlock Selected (n)                  | Set `locked: false` on all selected; serialize                            |
+| Move to Top (n) / Move to Bottom (n) | Bulk reorder; serialize                                                   |
+| Open Mod Folders (n)                 | Opens each selected mod's folder                                          |
+| Open Staging Folders (n)             | Shown when any target has a `modId`; opens each resolvable staging folder |
+| Disable Vortex Mod (n)               | `setVortexModsEnabled(targets, false)`                                    |
 
 LO-entry actions call `dispatch(setUe4ssLoadOrder(profileId, newLO))` and
 `serializeUe4ss(api, newLO)` -- changes write to `mods.txt` immediately. The
@@ -1294,18 +1534,18 @@ they change deployment state, not mods.txt.
 
 ### Hook integration summary
 
-| Event | Response |
-| --- | --- |
-| Page mounts / profile switches | `useEffect([profileId])` -> guard GAME_ID -> `deserializeUe4ss` -> dispatch + clear selection |
-| User drags row | `DraggableList.apply` -> merge filter subset -> dispatch -> `serializeUe4ss` |
-| User types position | `onApplyIndex` -> splice -> dispatch -> `serializeUe4ss` |
-| User toggles checkbox | `onToggle` -> map new enabled state -> dispatch -> `serializeUe4ss` |
-| User locks entry | `onLock` -> map new locked state -> dispatch -> `serializeUe4ss` |
-| User right-clicks | `onContextMenu` -> `setContextMenu({ x, y, itemId })` |
-| User toggles a status filter | `LoadOrderStatusFilter` -> `setStatusFilter` -> `filteredOrder` recomputes (and `isFiltered` arms the `onApply` remap) |
-| User clicks row | `onSelect` -> `setSelectedIds` (plain/Ctrl/Shift) |
-| Context menu dismissed | click/contextmenu/Escape listeners -> `setContextMenu(null)` |
-| `did-deploy` | `didDeploy` -> `deserializeUe4ss` (with fallback) -> dispatch + `serializeUe4ss` |
+| Event                          | Response                                                                                                               |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| Page mounts / profile switches | `useEffect([profileId])` -> guard GAME_ID -> `deserializeUe4ss` -> dispatch + clear selection                          |
+| User drags row                 | `DraggableList.apply` -> merge filter subset -> dispatch -> `serializeUe4ss`                                           |
+| User types position            | `onApplyIndex` -> splice -> dispatch -> `serializeUe4ss`                                                               |
+| User toggles checkbox          | `onToggle` -> map new enabled state -> dispatch -> `serializeUe4ss`                                                    |
+| User locks entry               | `onLock` -> map new locked state -> dispatch -> `serializeUe4ss`                                                       |
+| User right-clicks              | `onContextMenu` -> `setContextMenu({ x, y, itemId })`                                                                  |
+| User toggles a status filter   | `LoadOrderStatusFilter` -> `setStatusFilter` -> `filteredOrder` recomputes (and `isFiltered` arms the `onApply` remap) |
+| User clicks row                | `onSelect` -> `setSelectedIds` (plain/Ctrl/Shift)                                                                      |
+| Context menu dismissed         | click/contextmenu/Escape listeners -> `setContextMenu(null)`                                                           |
+| `did-deploy`                   | `didDeploy` -> `deserializeUe4ss` (with fallback) -> dispatch + `serializeUe4ss`                                       |
 
 ---
 

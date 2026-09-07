@@ -19,21 +19,33 @@ file, or collection surface.
 
 ## Endpoint and Transport
 
-| Property | Value |
-| --- | --- |
-| URL | `https://api.nexusmods.com/v2/graphql` |
-| Method | `POST` only — `GET` with a `?query=` string returns **404** |
-| Content type | `application/json` |
-| Body | `{"query": "...", "variables": {...}, "operationName": "..."}` |
-| Fronting | Cloudflare (sets `__cf_bm` / `__cflb` cookies; `cf-cache-status: DYNAMIC`) |
+| Property     | Value                                                                      |
+| ------------ | -------------------------------------------------------------------------- |
+| URL          | `https://api.nexusmods.com/v2/graphql`                                     |
+| Method       | `POST` only — `GET` with a `?query=` string returns **404**                |
+| Content type | `application/json`                                                         |
+| Body         | `{"query": "...", "variables": {...}, "operationName": "..."}`             |
+| Fronting     | Cloudflare (sets `__cf_bm` / `__cflb` cookies; `cf-cache-status: DYNAMIC`) |
 
 Standard GraphQL aliasing works and is the practical way to batch, since most single-entity queries
 take no list argument:
 
 ```graphql
 query {
-  m1166: mod(gameId: 2295, modId: 1166) { name tags { id name } }
-  m1960: mod(gameId: 2295, modId: 1960) { name tags { id name } }
+    m1166: mod(gameId: 2295, modId: 1166) {
+        name
+        tags {
+            id
+            name
+        }
+    }
+    m1960: mod(gameId: 2295, modId: 1960) {
+        name
+        tags {
+            id
+            name
+        }
+    }
 }
 ```
 
@@ -62,18 +74,67 @@ Introspection is open, unauthenticated, and complete. This is the only real refe
 
 ```graphql
 # every query field with its arguments and return type
-query { __schema { queryType { fields(includeDeprecated: true) {
-  name isDeprecated deprecationReason
-  args { name type { kind name ofType { kind name } } }
-  type { kind name ofType { kind name } }
-} } } }
+query {
+    __schema {
+        queryType {
+            fields(includeDeprecated: true) {
+                name
+                isDeprecated
+                deprecationReason
+                args {
+                    name
+                    type {
+                        kind
+                        name
+                        ofType {
+                            kind
+                            name
+                        }
+                    }
+                }
+                type {
+                    kind
+                    name
+                    ofType {
+                        kind
+                        name
+                    }
+                }
+            }
+        }
+    }
+}
 
 # one type
-query { __type(name: "Mod") { kind description
-  fields(includeDeprecated: true) { name isDeprecated type { kind name ofType { kind name } } }
-  inputFields { name type { kind name } defaultValue }
-  enumValues { name }
-} }
+query {
+    __type(name: "Mod") {
+        kind
+        description
+        fields(includeDeprecated: true) {
+            name
+            isDeprecated
+            type {
+                kind
+                name
+                ofType {
+                    kind
+                    name
+                }
+            }
+        }
+        inputFields {
+            name
+            type {
+                kind
+                name
+            }
+            defaultValue
+        }
+        enumValues {
+            name
+        }
+    }
+}
 ```
 
 **Pass `includeDeprecated: true`.** Without it the schema silently hides 4 queries and 22 mutations —
@@ -86,11 +147,17 @@ Errors are **not** signalled by HTTP status. A failed operation still returns `2
 top-level `errors` array and `null` in the corresponding `data` slot:
 
 ```json
-{ "errors": [ { "message": "You must be logged in to retrieve user preferences",
-                "locations": [ { "line": 1, "column": 3 } ],
-                "path": [ "preferences" ],
-                "extensions": { "code": "UNAUTHORIZED" } } ],
-  "data": { "preferences": null } }
+{
+    "errors": [
+        {
+            "message": "You must be logged in to retrieve user preferences",
+            "locations": [{ "line": 1, "column": 3 }],
+            "path": ["preferences"],
+            "extensions": { "code": "UNAUTHORIZED" }
+        }
+    ],
+    "data": { "preferences": null }
+}
 ```
 
 Observed `extensions.code` values include `UNAUTHORIZED`, `undefinedField`, `argumentNotAccepted`,
@@ -148,27 +215,37 @@ in the base type) and an `op`:
 
 ```graphql
 query {
-  mods(
-    filter: {
-      uploaderId: [{ value: "3263034", op: EQUALS }]
-      gameDomainName: [{ value: "site", op: EQUALS }]
-      op: AND
+    mods(
+        filter: {
+            uploaderId: [{ value: "3263034", op: EQUALS }]
+            gameDomainName: [{ value: "site", op: EQUALS }]
+            op: AND
+        }
+        sort: [{ createdAt: { direction: DESC } }]
+        count: 80
+    ) {
+        totalCount
+        nodes {
+            modId
+            name
+            tags {
+                id
+                name
+            }
+        }
     }
-    sort: [{ createdAt: { direction: DESC } }]
-    count: 80
-  ) { totalCount nodes { modId name tags { id name } } }
 }
 ```
 
 Operator enums, narrowed per field:
 
-| Enum | Values | Applies to |
-| --- | --- | --- |
-| `FilterComparisonOperator` | `EQUALS` `NOT_EQUALS` `MATCHES` `WILDCARD` `GT` `GTE` `LT` `LTE` | `BaseFilterValue`, `BooleanFilterValue`, `IntFilterValue` |
-| `FilterComparisonOperatorEqualsWildcard` | `EQUALS` `NOT_EQUALS` `WILDCARD` | `Mod.name` |
-| `FilterComparisonOperatorEqualsMatches` | `EQUALS` `NOT_EQUALS` `MATCHES` | `Mod.description` |
-| `FilterLogicalOperator` | `AND` `OR` | the `op` key on a filter object |
-| `SortDirection` | `ASC` `DESC` | `BaseSortValue.direction` |
+| Enum                                     | Values                                                           | Applies to                                                |
+| ---------------------------------------- | ---------------------------------------------------------------- | --------------------------------------------------------- |
+| `FilterComparisonOperator`               | `EQUALS` `NOT_EQUALS` `MATCHES` `WILDCARD` `GT` `GTE` `LT` `LTE` | `BaseFilterValue`, `BooleanFilterValue`, `IntFilterValue` |
+| `FilterComparisonOperatorEqualsWildcard` | `EQUALS` `NOT_EQUALS` `WILDCARD`                                 | `Mod.name`                                                |
+| `FilterComparisonOperatorEqualsMatches`  | `EQUALS` `NOT_EQUALS` `MATCHES`                                  | `Mod.description`                                         |
+| `FilterLogicalOperator`                  | `AND` `OR`                                                       | the `op` key on a filter object                           |
+| `SortDirection`                          | `ASC` `DESC`                                                     | `BaseSortValue.direction`                                 |
 
 Filters nest: a `ModsFilter` has its own `filter: [ModsFilter!]` plus `op`, so arbitrary AND/OR
 trees are expressible. `postFilter` takes the same shape and is applied after faceting, which is
@@ -194,19 +271,19 @@ enumerate every Vortex-supporting mod, or every mod carrying a given tag, withou
 
 ### Mods and files
 
-| Query | Notes |
-| --- | --- |
-| `mod(modId: ID!, gameId: ID!): Mod!` | Single mod. **`gameId` is the numeric game id, not the domain string** — `site` is `2295`. Passing a domain errors with `argumentNotAccepted`. |
-| `mods(filter, postFilter, facets, sort, offset, count, viewUploaderHidden, viewUserBlockedContent): ModPage!` | The main search. See the filter grammar above. |
-| `modsByUid(uids: [ID!]!, offset, count): ModPage!` | Batch by composite uid (`gameId << 32 \| modId`). |
-| `legacyMods(ids: [CompositeIdInput!]!, offset, count): ModPage!` | Batch by `{gameId, modId}` pairs. |
-| `legacyModsByDomain(ids: [CompositeDomainWithIdInput!]!, offset, count): ModPage!` | Batch by `{gameDomain, modId}` pairs — the one place a domain string is accepted for mod lookup. |
-| `modFiles(modId: ID!, gameId: ID!): [ModFile!]!` | All files for a mod, unpaginated. |
-| `modFilesByUid(uids: [ID!]!, offset, count): ModFilePage!` | Batch file lookup. |
-| `modFileContents(filter, sort, offset, count): ModFileContentPage!` | Search *inside* mod archives by path/name/extension/size. |
-| `modEndorsers(modUid: ID!, first, last, after, before): ModEndorserConnection!` | Relay-paginated, max 100/page. |
-| `fileHash(md5: String!): [FileHash!]!` / `fileHashes(md5s: [String!]!): [FileHash!]` | MD5 → `ModFile`. The lookup behind Vortex's archive-identification. |
-| `optedInMods(accountId: Int!): OptedInMods!` | DP opt-in state. |
+| Query                                                                                                         | Notes                                                                                                                                          |
+| ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mod(modId: ID!, gameId: ID!): Mod!`                                                                          | Single mod. **`gameId` is the numeric game id, not the domain string** — `site` is `2295`. Passing a domain errors with `argumentNotAccepted`. |
+| `mods(filter, postFilter, facets, sort, offset, count, viewUploaderHidden, viewUserBlockedContent): ModPage!` | The main search. See the filter grammar above.                                                                                                 |
+| `modsByUid(uids: [ID!]!, offset, count): ModPage!`                                                            | Batch by composite uid (`gameId << 32 \| modId`).                                                                                              |
+| `legacyMods(ids: [CompositeIdInput!]!, offset, count): ModPage!`                                              | Batch by `{gameId, modId}` pairs.                                                                                                              |
+| `legacyModsByDomain(ids: [CompositeDomainWithIdInput!]!, offset, count): ModPage!`                            | Batch by `{gameDomain, modId}` pairs — the one place a domain string is accepted for mod lookup.                                               |
+| `modFiles(modId: ID!, gameId: ID!): [ModFile!]!`                                                              | All files for a mod, unpaginated.                                                                                                              |
+| `modFilesByUid(uids: [ID!]!, offset, count): ModFilePage!`                                                    | Batch file lookup.                                                                                                                             |
+| `modFileContents(filter, sort, offset, count): ModFileContentPage!`                                           | Search _inside_ mod archives by path/name/extension/size.                                                                                      |
+| `modEndorsers(modUid: ID!, first, last, after, before): ModEndorserConnection!`                               | Relay-paginated, max 100/page.                                                                                                                 |
+| `fileHash(md5: String!): [FileHash!]!` / `fileHashes(md5s: [String!]!): [FileHash!]`                          | MD5 → `ModFile`. The lookup behind Vortex's archive-identification.                                                                            |
+| `optedInMods(accountId: Int!): OptedInMods!`                                                                  | DP opt-in state.                                                                                                                               |
 
 ### Games and categories
 
@@ -216,12 +293,12 @@ offset, count): GamePage!`, `collectionGames`, `favouriteGames`, `gameArtwork`,
 
 ### Tags
 
-| Query | Returns |
-| --- | --- |
-| `legacyTags(gameId: ID, onlyAdult: Boolean, excludeAdult: Boolean): [LegacyTag!]` | **Mod** tags — 113 entries in the global pool. |
+| Query                                                                                           | Returns                                                                              |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `legacyTags(gameId: ID, onlyAdult: Boolean, excludeAdult: Boolean): [LegacyTag!]`               | **Mod** tags — 113 entries in the global pool.                                       |
 | `tags(gameId: Int, categoryId: Int, includeGlobal: Boolean, includeDiscarded: Boolean): [Tag!]` | **Collection** tags — 24 entries. `Tag` is marked deprecated in its own description. |
-| `tag(id: ID!)`, `tagCategories`, `tagCategory(id: ID!)` | Collection-tag definitions and their categories. |
-| `blockedTags(excludeAdult: Boolean): [LegacyTag!]` | Tags the calling user has hidden from their own feed. |
+| `tag(id: ID!)`, `tagCategories`, `tagCategory(id: ID!)`                                         | Collection-tag definitions and their categories.                                     |
+| `blockedTags(excludeAdult: Boolean): [LegacyTag!]`                                              | Tags the calling user has hidden from their own feed.                                |
 
 See "Mod Tags vs Collection Tags" below — the two systems are easy to confuse and only one applies
 to mods.
@@ -231,7 +308,7 @@ to mods.
 `collection(slug, domainName, viewAdultContent)`, `collectionRevision(slug, revision, domainName,
 viewAdultContent)`, `collectionsV2(facets, filter, postFilter, sort, offset, count,
 viewUserBlockedContent)`, `collectionRevisionUploadUrl`, and `myCollections(...)`
-*(deprecated — use `collectionsV2`)*.
+_(deprecated — use `collectionsV2`)_.
 
 ### Comments and media
 
@@ -266,13 +343,13 @@ Most of these are staff-scoped and return `UNAUTHORIZED` for ordinary accounts.
 
 ### Mods — the entire mod-level write surface
 
-| Mutation | Effect |
-| --- | --- |
-| `createModEndorsement(modUid: String!)` | Endorse. |
-| `abstainFromModEndorsement(modUid: String!)` | Abstain. |
-| `trackMod(modUid: ID!)` / `untrackMod(modUid: ID!)` | Track / untrack. |
-| `updateModDirectDownloadEnabled(modUid: ID!, directDownloadEnabled: Boolean!)` | Toggle non-premium direct download. |
-| `blockModsFromEarningDp(userId)` / `unblockModsFromEarningDp(userId)` | Donation-point blocking, applied per uploader. |
+| Mutation                                                                       | Effect                                         |
+| ------------------------------------------------------------------------------ | ---------------------------------------------- |
+| `createModEndorsement(modUid: String!)`                                        | Endorse.                                       |
+| `abstainFromModEndorsement(modUid: String!)`                                   | Abstain.                                       |
+| `trackMod(modUid: ID!)` / `untrackMod(modUid: ID!)`                            | Track / untrack.                               |
+| `updateModDirectDownloadEnabled(modUid: ID!, directDownloadEnabled: Boolean!)` | Toggle non-premium direct download.            |
+| `blockModsFromEarningDp(userId)` / `unblockModsFromEarningDp(userId)`          | Donation-point blocking, applied per uploader. |
 
 **That is the complete list.** There is no mutation to edit a mod's name, description, category,
 tags, media, or page permissions. See "What you cannot do" below.
@@ -381,14 +458,14 @@ Interfaces: `Node` (`id`), `GloballyIdentifiable` (`globalId`, `id`), `Attachabl
 
 Two separate tag systems share the word "tag", and mixing them up is the main trap in this area.
 
-| | Mod tags | Collection tags |
-| --- | --- | --- |
-| Type | `LegacyTag` | `Tag` (+ `TagCategory`) |
-| Query | `legacyTags(gameId, onlyAdult, excludeAdult)` | `tags(gameId, categoryId, includeGlobal, includeDiscarded)` |
-| Pool size | 113 | 24 |
-| Read from a mod | `Mod.tags` | n/a |
-| Write | **impossible via API** | `addTagToCollection` / `removeTagFromCollection` |
-| Schema status | current | `Tag`/`TagCategory` self-describe as deprecated, "will be removed in a future release in favour of domain specific tag queries/mutations" |
+|                 | Mod tags                                      | Collection tags                                                                                                                           |
+| --------------- | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Type            | `LegacyTag`                                   | `Tag` (+ `TagCategory`)                                                                                                                   |
+| Query           | `legacyTags(gameId, onlyAdult, excludeAdult)` | `tags(gameId, categoryId, includeGlobal, includeDiscarded)`                                                                               |
+| Pool size       | 113                                           | 24                                                                                                                                        |
+| Read from a mod | `Mod.tags`                                    | n/a                                                                                                                                       |
+| Write           | **impossible via API**                        | `addTagToCollection` / `removeTagFromCollection`                                                                                          |
+| Schema status   | current                                       | `Tag`/`TagCategory` self-describe as deprecated, "will be removed in a future release in favour of domain specific tag queries/mutations" |
 
 `LegacyTag` fields: `id`, `name`, `global`, `blockable`, `searchable`, `parentId`,
 `games` (Relay connection).
@@ -396,7 +473,15 @@ Two separate tag systems share the word "tag", and mixing them up is the main tr
 Reading the tags on a mod:
 
 ```graphql
-query { mod(gameId: 2295, modId: 1166) { name tags { id name } } }
+query {
+    mod(gameId: 2295, modId: 1166) {
+        name
+        tags {
+            id
+            name
+        }
+    }
+}
 ```
 
 Useful ids in the mod pool: `4694` Game Extension, `4902` AI Assisted, `4488` AI-Generated Content,
@@ -417,7 +502,7 @@ or v3 REST):
 - **Edit a mod's name, summary, description, or category.**
 
 All of these are website-only operations. For bulk work the realistic pattern is: use GraphQL to
-*audit* current state across many mods in a few requests, generate a worklist, then apply the
+_audit_ current state across many mods in a few requests, generate a worklist, then apply the
 changes by hand through the mod pages.
 
 ## Gotchas

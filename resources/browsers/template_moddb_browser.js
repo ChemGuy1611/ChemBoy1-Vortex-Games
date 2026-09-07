@@ -1,12 +1,12 @@
-const { selectors, log } = require('vortex-api');
-const path = require('path');
-const GAME_ID = 'placeholder';
-const api = require('vortex-api'); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
+const { selectors, log } = require("vortex-api");
+const path = require("path");
+const GAME_ID = "placeholder";
+const api = require("vortex-api"); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 const spec = { game: { id: GAME_ID } }; //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 const context = { api }; //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 const MODDB_REQUIREMENTS = []; //DUMMY PLACEHOLDER - the array from template_moddb_downloader.js
 const downloadModDbRequirement = () => null; //DUMMY PLACEHOLDER - imported from moddb_downloader.js
-const MOD_PATH = path.join('Mods'); //DUMMY PLACEHOLDER - the adopter's mod folder
+const MOD_PATH = path.join("Mods"); //DUMMY PLACEHOLDER - the adopter's mod folder
 
 // MODDB BROWSER ////////////////////////////////////////////////
 // A sidebar page that embeds the live moddb.com section for this game. The user browses the
@@ -15,15 +15,16 @@ const MOD_PATH = path.join('Mods'); //DUMMY PLACEHOLDER - the adopter's mod fold
 // The adopter must carry TWO files beside index.js: moddb_browser.js and base_browser.js,
 // which it requires from beside itself. Copying only the first fails at require time.
 const moddbBrowser = true; //toggle - set false to leave the page unregistered
-const { registerModDbBrowser, onceModDbBrowser } = require('./moddb_browser');
-const MODDB_PATH = 'games/placeholder'; //the game on moddb.com - https://www.moddb.com/games/placeholder
+const { registerModDbBrowser, onceModDbBrowser } = require("./moddb_browser");
+const MODDB_PATH = "games/placeholder"; //the game on moddb.com - https://www.moddb.com/games/placeholder
 const MODDB_BROWSER_CONFIG = {
   moddbPath: MODDB_PATH,
   requirements: MODDB_REQUIREMENTS, //optional - mods the extension manages itself, so they install to their own mod type
-  installRequirement: (api, gameSpec, requirement) => //optional - required only when requirements is set
+  installRequirement: (api, gameSpec, requirement) =>
+    //optional - required only when requirements is set
     downloadModDbRequirement(api, gameSpec, requirement, true),
   pageId: `${GAME_ID}-moddb-browse`, //optional (default shown)
-  pageTitle: 'Browse ModDB', //optional - sidebar label. Keep it short - the sidebar truncates past ~20 characters
+  pageTitle: "Browse ModDB", //optional - sidebar label. Keep it short - the sidebar truncates past ~20 characters
   //hotkey: 'D', //optional - Ctrl+Shift+<key>. Pick a free one: Vortex logs "hotkey already used" and drops the second claim (B is taken)
   //priority: 40, //optional - sidebar position, lower is higher up
   //pageGroup: 'per-game', //optional - 'per-game' hides the page while another game is active
@@ -58,10 +59,11 @@ const MODDB_BROWSER_CONFIG = {
 // it installs - a requirement names a mod page, and a key names a single file on that page.
 // Read the key off the file's own URL: https://www.moddb.com/{path}/downloads/{slug} becomes
 // '{path}#' plus the slug with everything but letters stripped.
-const MODDB_REQUIREMENTS_WITH_BROWSE_KEY = [ //DUMMY PLACEHOLDER - the shape, not a second array
+const MODDB_REQUIREMENTS_WITH_BROWSE_KEY = [
+  //DUMMY PLACEHOLDER - the shape, not a second array
   {
-    moddbPath: 'games/placeholder',
-    browseKey: 'games/placeholder#placeholdermod', //optional - routes this file to installRequirement
+    moddbPath: "games/placeholder",
+    browseKey: "games/placeholder#placeholdermod", //optional - routes this file to installRequirement
   },
 ];
 
@@ -71,28 +73,36 @@ const MODDB_REQUIREMENTS_WITH_BROWSE_KEY = [ //DUMMY PLACEHOLDER - the shape, no
 
 // *** In setup() function ////////////////////
 async function setup(discovery) {
-  const fs = require('vortex-api').fs; //DUMMY PLACEHOLDER - use the extension's existing import
+  const fs = require("vortex-api").fs; //DUMMY PLACEHOLDER - use the extension's existing import
   await fs.ensureDirWritableAsync(path.join(discovery.path, MOD_PATH)); //browsed mods need their target folder to exist
 }
 
 // *** In applyGame() function ////////////////////
-  if (moddbBrowser) {
-    registerModDbBrowser(context, spec, MODDB_BROWSER_CONFIG);
-  } //*/
+if (moddbBrowser) {
+  registerModDbBrowser(context, spec, MODDB_BROWSER_CONFIG);
+} //*/
 
 // *** In context.once() function ////////////////////
-  if (moddbBrowser) {
-    onceModDbBrowser(context.api, spec, MODDB_BROWSER_CONFIG);
-  } //*/
+if (moddbBrowser) {
+  onceModDbBrowser(context.api, spec, MODDB_BROWSER_CONFIG);
+} //*/
 
 // *** Optional: a toolbar button that opens the page's site in the system browser ////////////////////
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open ModDB Page', () => {
-    const { util } = require('vortex-api');
+context.registerAction(
+  "mod-icons",
+  300,
+  "open-ext",
+  {},
+  "Open ModDB Page",
+  () => {
+    const { util } = require("vortex-api");
     util.opn(`https://www.moddb.com/${MODDB_PATH}`).catch(() => null);
-  }, () => {
+  },
+  () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
-  }); //*/
+  },
+); //*/
 
-log('debug', `${setup}${MODDB_REQUIREMENTS_WITH_BROWSE_KEY}`); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
+log("debug", `${setup}${MODDB_REQUIREMENTS_WITH_BROWSE_KEY}`); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT

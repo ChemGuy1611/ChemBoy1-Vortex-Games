@@ -6,12 +6,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| Modmanager | a file or folder named `shinryumodmanager.exe` | `runtime\media` |
-| Mod | a file or folder named one of: `mod-meta.yaml` or `modinfo.ini` | `runtime\media\mods` |
-| Root / Game Folder Mods | a `nvngx_dlss.dll` file or a `.exe` file | the game folder itself (no subfolder) |
-| Data | a file with one of these extensions: `.par` | `runtime\media\data` |
+| Mod Type                | Archive must contain                                            | Installs to                           |
+| ----------------------- | --------------------------------------------------------------- | ------------------------------------- |
+| Modmanager              | a file or folder named `shinryumodmanager.exe`                  | `runtime\media`                       |
+| Mod                     | a file or folder named one of: `mod-meta.yaml` or `modinfo.ini` | `runtime\media\mods`                  |
+| Root / Game Folder Mods | a `nvngx_dlss.dll` file or a `.exe` file                        | the game folder itself (no subfolder) |
+| Data                    | a file with one of these extensions: `.par`                     | `runtime\media\data`                  |
 
 Paths are relative to the game's install folder.
 
@@ -53,4 +53,3 @@ Installs to: `runtime\media\data`
 - Archives that contain a FOMOD installer (a `fomod` folder with `ModuleConfig.xml`) are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

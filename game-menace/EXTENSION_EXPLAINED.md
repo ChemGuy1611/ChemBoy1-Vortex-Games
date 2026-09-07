@@ -2,22 +2,22 @@
 
 ## Overview
 
-| Property | Value |
-| --- | --- |
-| Name | MENACE Vortex Extension |
+| Property           | Value                            |
+| ------------------ | -------------------------------- |
+| Name               | MENACE Vortex Extension          |
 | Engine / Structure | Unity BepinEx/MelonLoader Hybrid |
-| Author | ChemBoy1 |
+| Author             | ChemBoy1                         |
 
 ## Key Identifiers
 
-| Property | Value |
-| --- | --- |
-| Game ID | `menace` |
-| Executable | `Menace.exe` |
-| Executable (Xbox) | `gamelaunchhelper.exe` |
-| Executable (GOG) | `Menace.exe` |
-| Extension Page | [https://www.nexusmods.com/site/mods/1686](https://www.nexusmods.com/site/mods/1686) |
-| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Menace](https://www.pcgamingwiki.com/wiki/Menace) |
+| Property          | Value                                                                                |
+| ----------------- | ------------------------------------------------------------------------------------ |
+| Game ID           | `menace`                                                                             |
+| Executable        | `Menace.exe`                                                                         |
+| Executable (Xbox) | `gamelaunchhelper.exe`                                                               |
+| Executable (GOG)  | `Menace.exe`                                                                         |
+| Extension Page    | [https://www.nexusmods.com/site/mods/1686](https://www.nexusmods.com/site/mods/1686) |
+| PCGamingWiki      | [https://www.pcgamingwiki.com/wiki/Menace](https://www.pcgamingwiki.com/wiki/Menace) |
 
 ## Supported Stores
 
@@ -28,75 +28,75 @@
 
 ## Feature Flags
 
-| Flag | Value | Description |
-| --- | --- | --- |
-| `enableLoadOrder` | `true` | true if you want to use load order sorting |
-| `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
-| `multiExe` | `false` | set to true if there are multiple executables (typically for Xbox/EGS) |
-| `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
-| `preventPluginInstall` | `true` | set to true if you want to prevent plugins not for the current mod loader from installing. Disable if using cross-compatibility plugins. |
-| `loaderSwitchRestart` | `false` | set to true if you need to restart the extension after switching mod loaders |
-| `enableSaveInstaller` | `false` | set to true if you want to enable the save installer (only recommended if saves are stored in the game's folder) |
-| `hasCustomMods` | `false` | set to true if there are modTypes with folder paths dependent on which mod loader is installed |
-| `hasCustomLoader` | `false` | set to true if there is a custom mod loader |
-| `customLoaderInstaller` | `false` | set true if the custom loader uses an installer |
-| `allowBepCfgMan` | `false` | should BepInExConfigManager be downloaded? |
-| `allowMelPrefMan` | `false` | should MelonPreferencesManager be downloaded? False until figure out UniverseLib dependency |
-| `allowBepinexNexus` | `false` | set false until bugs are fixed |
-| `allowMelonNexus` | `false` | set false until bugs are fixed |
-| `customInstalled` | `false` |  |
-| `mod_update_all_profile` | `false` |  |
-| `updating_mod` | `false` | used to see if it's a mod update or not |
+| Flag                     | Value   | Description                                                                                                                                 |
+| ------------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enableLoadOrder`        | `true`  | true if you want to use load order sorting                                                                                                  |
+| `allowSymlinks`          | `true`  | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
+| `multiExe`               | `false` | set to true if there are multiple executables (typically for Xbox/EGS)                                                                      |
+| `fallbackInstaller`      | `true`  | enable fallback installer. Set false if you need to avoid installer collisions                                                              |
+| `preventPluginInstall`   | `true`  | set to true if you want to prevent plugins not for the current mod loader from installing. Disable if using cross-compatibility plugins.    |
+| `loaderSwitchRestart`    | `false` | set to true if you need to restart the extension after switching mod loaders                                                                |
+| `enableSaveInstaller`    | `false` | set to true if you want to enable the save installer (only recommended if saves are stored in the game's folder)                            |
+| `hasCustomMods`          | `false` | set to true if there are modTypes with folder paths dependent on which mod loader is installed                                              |
+| `hasCustomLoader`        | `false` | set to true if there is a custom mod loader                                                                                                 |
+| `customLoaderInstaller`  | `false` | set true if the custom loader uses an installer                                                                                             |
+| `allowBepCfgMan`         | `false` | should BepInExConfigManager be downloaded?                                                                                                  |
+| `allowMelPrefMan`        | `false` | should MelonPreferencesManager be downloaded? False until figure out UniverseLib dependency                                                 |
+| `allowBepinexNexus`      | `false` | set false until bugs are fixed                                                                                                              |
+| `allowMelonNexus`        | `false` | set false until bugs are fixed                                                                                                              |
+| `customInstalled`        | `false` |                                                                                                                                             |
+| `mod_update_all_profile` | `false` |                                                                                                                                             |
+| `updating_mod`           | `false` | used to see if it's a mod update or not                                                                                                     |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
-| Name | ID | Priority | Target Path |
-| --- | --- | --- | --- |
-| ModpackLoader | `menace-modpackloader` | low | `{gamePath}/.` |
-| Modpack Mod | `menace-modpackmod` | high | `{gamePath}/Mods` |
-| Custom Leaders Mod | `menace-customleaders` | high | `{gamePath}/Mods/customleaders` |
-| Menace ModKit | `menace-modkit` | low | `{gamePath}/.` |
-| BepInEx Mod | `menace-bepinexmod` | high | `{gamePath}/BepInEx` |
-| MelonLoader Mod | `menace-melonmod` | high | `{gamePath}/.` |
-| BepInEx Plugins | `menace-bepinex-plugins` | high | `{gamePath}/BepInEx/plugins` |
-| BepInEx Patchers | `menace-bepinex-patchers` | high | `{gamePath}/BepInEx/patchers` |
-| BepInEx Config | `menace-bepinex-config` | high | `{gamePath}/BepInEx/config` |
-| MelonLoader Mods | `menace-melonloader-mods` | high | `{gamePath}/Mods` |
-| MelonLoader Plugins | `menace-melonloader-plugins` | high | `{gamePath}/Plugins` |
-| MelonLoader Config | `menace-melonloader-config` | high | `{gamePath}/UserData` |
-| BepInExConfigManager | `menace-bepcfgman` | high | `{gamePath}/BepInEx` |
-| MelonPreferencesManager | `menace-melonprefman` | high | `{gamePath}/Mods` |
-| Root Game Folder | `menace-root` | high | `{gamePath}` |
-| BepInEx Injector | `menace-bepinex` | low | `{gamePath}` |
-| MelonLoader | `menace-melonloader` | low | `{gamePath}` |
-| Jiangyu Loader | `menace-jiangyu` | low | `{gamePath}/Mods` |
-| Jiangyu Mod | `menace-jiangyumod` | 29 | `?` |
-| Assembly DLL Mod | `menace-assemblydll` | 60 | `?` |
-| Assets/Resources File | `menace-assets` | 62 | `?` |
+| Name                    | ID                           | Priority | Target Path                     |
+| ----------------------- | ---------------------------- | -------- | ------------------------------- |
+| ModpackLoader           | `menace-modpackloader`       | low      | `{gamePath}/.`                  |
+| Modpack Mod             | `menace-modpackmod`          | high     | `{gamePath}/Mods`               |
+| Custom Leaders Mod      | `menace-customleaders`       | high     | `{gamePath}/Mods/customleaders` |
+| Menace ModKit           | `menace-modkit`              | low      | `{gamePath}/.`                  |
+| BepInEx Mod             | `menace-bepinexmod`          | high     | `{gamePath}/BepInEx`            |
+| MelonLoader Mod         | `menace-melonmod`            | high     | `{gamePath}/.`                  |
+| BepInEx Plugins         | `menace-bepinex-plugins`     | high     | `{gamePath}/BepInEx/plugins`    |
+| BepInEx Patchers        | `menace-bepinex-patchers`    | high     | `{gamePath}/BepInEx/patchers`   |
+| BepInEx Config          | `menace-bepinex-config`      | high     | `{gamePath}/BepInEx/config`     |
+| MelonLoader Mods        | `menace-melonloader-mods`    | high     | `{gamePath}/Mods`               |
+| MelonLoader Plugins     | `menace-melonloader-plugins` | high     | `{gamePath}/Plugins`            |
+| MelonLoader Config      | `menace-melonloader-config`  | high     | `{gamePath}/UserData`           |
+| BepInExConfigManager    | `menace-bepcfgman`           | high     | `{gamePath}/BepInEx`            |
+| MelonPreferencesManager | `menace-melonprefman`        | high     | `{gamePath}/Mods`               |
+| Root Game Folder        | `menace-root`                | high     | `{gamePath}`                    |
+| BepInEx Injector        | `menace-bepinex`             | low      | `{gamePath}`                    |
+| MelonLoader             | `menace-melonloader`         | low      | `{gamePath}`                    |
+| Jiangyu Loader          | `menace-jiangyu`             | low      | `{gamePath}/Mods`               |
+| Jiangyu Mod             | `menace-jiangyumod`          | 29       | `?`                             |
+| Assembly DLL Mod        | `menace-assemblydll`         | 60       | `?`                             |
+| Assets/Resources File   | `menace-assets`              | 62       | `?`                             |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID | Priority |
-| --- | --- |
-| `menace-melonloader` | 26 |
-| `menace-bepinex` | 27 |
-| `menace-modkit` | 28 |
-| `menace-jiangyu` | 29 |
-| `menace-jiangyumod` | 30 |
-| `menace-modpackloader` | 31 |
-| `menace-modpackmod` | 32 |
-| `menace-root` | 33 |
-| `menace-bepcfgman` | 34 |
-| `menace-melonprefman` | 35 |
-| `menace-assemblydll` | 36 |
-| `menace-plugin` | 37 |
-| `menace-customleaders` | 38 |
-| `menace-assets` | 39 |
-| `menace-fallback` | 49 |
+| Installer ID           | Priority |
+| ---------------------- | -------- |
+| `menace-melonloader`   | 26       |
+| `menace-bepinex`       | 27       |
+| `menace-modkit`        | 28       |
+| `menace-jiangyu`       | 29       |
+| `menace-jiangyumod`    | 30       |
+| `menace-modpackloader` | 31       |
+| `menace-modpackmod`    | 32       |
+| `menace-root`          | 33       |
+| `menace-bepcfgman`     | 34       |
+| `menace-melonprefman`  | 35       |
+| `menace-assemblydll`   | 36       |
+| `menace-plugin`        | 37       |
+| `menace-customleaders` | 38       |
+| `menace-assets`        | 39       |
+| `menace-fallback`      | 49       |
 
 ## Registered Tools
 
@@ -122,10 +122,10 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 ## Auto-Downloaded Dependencies
 
-| Dependency | Version | Details |
-| --- | --- | --- |
-| BepInEx | 5.4.23.5 | il2cpp |
-| BepInEx Configuration Manager | 18.4.1 | — |
+| Dependency                    | Version  | Details |
+| ----------------------------- | -------- | ------- |
+| BepInEx                       | 5.4.23.5 | il2cpp  |
+| BepInEx Configuration Manager | 18.4.1   | —       |
 
 ## Special Features
 
@@ -138,4 +138,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **GOG Support** — detects GOG version with adjusted executable/data paths.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-

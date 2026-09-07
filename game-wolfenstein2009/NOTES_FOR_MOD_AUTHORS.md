@@ -6,14 +6,14 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| Base | a file or folder named `base`, a file or folder named `SP` and a file or folder named `MP` | - |
-| Maps | a file or folder named `maps`, a file or folder named `SP` and a file or folder named `MP` | - |
-| Streampacks | a file or folder named `streampacks`, a file or folder named `SP` and a file or folder named `MP` | - |
-| Videos | a file or folder named `videos`, a file or folder named `SP` and a file or folder named `MP` | - |
-| Pk4 | a file or folder named `SP`, a file or folder named `MP` and a file with the `.pk4` extension | - |
-| Exe | a file or folder named `SP`, a file or folder named `MP` and a file with the `.exe` extension | - |
+| Mod Type    | Archive must contain                                                                              | Installs to |
+| ----------- | ------------------------------------------------------------------------------------------------- | ----------- |
+| Base        | a file or folder named `base`, a file or folder named `SP` and a file or folder named `MP`        | -           |
+| Maps        | a file or folder named `maps`, a file or folder named `SP` and a file or folder named `MP`        | -           |
+| Streampacks | a file or folder named `streampacks`, a file or folder named `SP` and a file or folder named `MP` | -           |
+| Videos      | a file or folder named `videos`, a file or folder named `SP` and a file or folder named `MP`      | -           |
+| Pk4         | a file or folder named `SP`, a file or folder named `MP` and a file with the `.pk4` extension     | -           |
+| Exe         | a file or folder named `SP`, a file or folder named `MP` and a file with the `.exe` extension     | -           |
 
 Paths are relative to the game's install folder.
 
@@ -46,4 +46,3 @@ Recognised when the archive contains a file or folder named `SP`, a file or fold
 - Archives that contain a FOMOD installer (a `fomod` folder with `ModuleConfig.xml`) are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

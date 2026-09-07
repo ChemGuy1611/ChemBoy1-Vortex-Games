@@ -7,11 +7,11 @@ managers defined it, and mod authors have been shipping it for years.
 
 Three versions exist, and a file's version is decided by one property:
 
-| Version | How it is recognised | Who defined it |
-| --- | --- | --- |
-| Legacy | no numeric `Version` property | `teutinsa/HD2ModManager` (WPF, superseded) |
-| V1 | `"Version": 1` | `teutinsa/Helldivers2ModManager` |
-| V2 | `"Version": 2` | HD2 Arsenal (`rsnl.gg`) |
+| Version | How it is recognised          | Who defined it                             |
+| ------- | ----------------------------- | ------------------------------------------ |
+| Legacy  | no numeric `Version` property | `teutinsa/HD2ModManager` (WPF, superseded) |
+| V1      | `"Version": 1`                | `teutinsa/Helldivers2ModManager`           |
+| V2      | `"Version": 2`                | HD2 Arsenal (`rsnl.gg`)                    |
 
 `Helldivers2ModManager` treats `Version: 2` as end-of-life and refuses it; Arsenal owns that
 version. A manager that supports all three — as the Vortex extension does — reads the version
@@ -27,11 +27,11 @@ The file always sits at the **root of the mod archive**, alongside the option fo
 
 ```jsonc
 {
-  "Guid": "…",
-  "Name": "…",
-  "Description": "…",
-  "IconPath": null,
-  "Options": ["Folder A", "Folder B"]   // folder names; EXACTLY ONE is installed
+    "Guid": "…",
+    "Name": "…",
+    "Description": "…",
+    "IconPath": null,
+    "Options": ["Folder A", "Folder B"], // folder names; EXACTLY ONE is installed
 }
 ```
 
@@ -44,22 +44,28 @@ picks one folder and that folder's patch files are the mod.
 
 ```jsonc
 {
-  "Version": 1,
-  "Guid": "…",
-  "Name": "…",
-  "Description": "…",
-  "IconPath": null,
-  "Options": [{
+    "Version": 1,
+    "Guid": "…",
     "Name": "…",
     "Description": "…",
-    "Image": "rel/path.png",          // relative to the archive root
-    "Include": ["dir", "…"],          // taken whenever the option is enabled
-    "SubOptions": [{
-      "Name": "…", "Description": "…", "Image": "…",
-      "Include": ["dir", "…"]         // EXACTLY ONE sub-option is installed per enabled option
-    }]
-  }],
-  "NexusData": { "ModId": 123, "Version": "1.0" }
+    "IconPath": null,
+    "Options": [
+        {
+            "Name": "…",
+            "Description": "…",
+            "Image": "rel/path.png", // relative to the archive root
+            "Include": ["dir", "…"], // taken whenever the option is enabled
+            "SubOptions": [
+                {
+                    "Name": "…",
+                    "Description": "…",
+                    "Image": "…",
+                    "Include": ["dir", "…"], // EXACTLY ONE sub-option is installed per enabled option
+                },
+            ],
+        },
+    ],
+    "NexusData": { "ModId": 123, "Version": "1.0" },
 }
 ```
 
@@ -80,9 +86,9 @@ V1 plus grouping and identity:
 This is the part that is easy to get wrong, because the two levels behave differently. The rules
 below are the ones the reference managers implement:
 
-| Version | `Options` | `SubOptions` |
-| --- | --- | --- |
-| Legacy | exactly one, a radio list | n/a |
+| Version | `Options`                          | `SubOptions`                                 |
+| ------- | ---------------------------------- | -------------------------------------------- |
+| Legacy  | exactly one, a radio list          | n/a                                          |
 | V1 / V2 | any number, independent checkboxes | exactly one per enabled option, a radio list |
 
 Two further rules matter as much as the table:
@@ -90,7 +96,7 @@ Two further rules matter as much as the table:
 - **`Options` absent or empty means there is no question.** The mod is installed from the archive
   root and the manifest is only carrying its name and description.
 - **`Include` folders are read without recursion.** An `Include` entry names a folder that
-  *directly* contains patch files. Files in a subfolder of an included folder are not installed.
+  _directly_ contains patch files. Files in a subfolder of an included folder are not installed.
   Authors who nest their patch files one level deeper than the folder they list end up shipping a
   mod that installs nothing.
 
@@ -123,7 +129,7 @@ option B folder:  bbb….patch_0               ->  bbb….patch_0
 
 The consequence for mod authors: **hand-numbering across option folders does not control priority.**
 Numbers are assigned by the manager, in option order, and the only ordering an author can rely on is
-the relative order of patch indices *inside a single folder* — that ordering is preserved.
+the relative order of patch indices _inside a single folder_ — that ordering is preserved.
 
 ---
 
@@ -134,7 +140,7 @@ plain-folder case into one internal option tree, so the same picker and the same
 all four.
 
 - The manifest is read from the installer's extraction directory — see `INSTALLER_SYSTEM.md` for why
-  an installer can read file *contents* and not just names.
+  an installer can read file _contents_ and not just names.
 - **A manifest is never allowed to fail an install.** Missing, truncated, malformed, or listing
   options that resolve to nothing: each of those is logged as a warning and the extension falls back
   to inferring options from the archive's folder layout. The mod still installs.

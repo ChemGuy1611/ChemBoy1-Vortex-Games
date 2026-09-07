@@ -2,16 +2,16 @@
 
 ModDB (moddb.com) has no official public API. Two site-provided mechanisms cover requirements auto-download without scraping the full page:
 
-| Mechanism | Base URL | Purpose |
-| --- | --- | --- |
-| RSS feed | `https://rss.moddb.com/{path}/downloads/feed/rss.xml` | File discovery, newest-first, structured XML |
-| Download-start page | `https://www.moddb.com/downloads/start/{fileId}` | Resolves the current mirror URL for a file id |
+| Mechanism           | Base URL                                              | Purpose                                       |
+| ------------------- | ----------------------------------------------------- | --------------------------------------------- |
+| RSS feed            | `https://rss.moddb.com/{path}/downloads/feed/rss.xml` | File discovery, newest-first, structured XML  |
+| Download-start page | `https://www.moddb.com/downloads/start/{fileId}`      | Resolves the current mirror URL for a file id |
 
 `{path}` is the page's URL path relative to moddb.com, e.g. `games/dark-messiah-of-might-magic` or `mods/edain-mod`.
 
 ## Bot Protection Caveat
 
-`www.moddb.com` blocks non-browser HTTP clients (verified: a `curl` request with a full browser header set — matching User-Agent, Accept, Accept-Language, Sec-Fetch-* — still returns `403`). This is a TLS/request-fingerprint-level block, not a missing-header issue. `rss.moddb.com` is not behind the same block and responds normally to any client.
+`www.moddb.com` blocks non-browser HTTP clients (verified: a `curl` request with a full browser header set — matching User-Agent, Accept, Accept-Language, Sec-Fetch-\* — still returns `403`). This is a TLS/request-fingerprint-level block, not a missing-header issue. `rss.moddb.com` is not behind the same block and responds normally to any client.
 
 The block covers the **whole** www host, static paths included: `www.moddb.com/favicon.ico` returns `403` like every other path, so the "an unrouted static file slips the challenge" trick that works on some Cloudflare sites does not work here. Site assets are reachable on `media.moddb.com`, which answers any client — `media.moddb.com/favicon.ico`, `/images/global/moddb.png` and `/safari-pinned-tab.svg` all return `200`. That last one is the site's vector mark, a single-path potrace on a clean ten-by-ten pixel grid, and is where the browser module's sidebar icon comes from.
 
@@ -57,8 +57,8 @@ https://rss.moddb.com/games/{slug}/downloads/feed/rss.xml
 Everything else is shut. `www.moddb.com` returns `403` to any non-browser client (the fingerprint
 block above), and the sibling **mods** feed — `rss.moddb.com/games/{slug}/mods/feed/rss.xml` —
 returns a Cloudflare challenge rather than XML, so only the downloads feed answers. Since the feed
-caps at ten items with no paging, the only activity metric available is *ten items divided by the
-days they span*, i.e. files per month. That is enough to tell a live scene from a dead page and
+caps at ten items with no paging, the only activity metric available is _ten items divided by the
+days they span_, i.e. files per month. That is enough to tell a live scene from a dead page and
 nothing more.
 
 A `200` with items means the slug is real. A `404` means it is not. A `301` means the slug is real
@@ -70,13 +70,13 @@ and matching page paths against a non-canonical slug silently matches nothing.
 A ModDB slug must be confirmed against the feed, never constructed. Three failure modes, all found
 in real adoptions:
 
-| Guess | Actual | Why |
-| --- | --- | --- |
-| `games/doom-3` | `games/doom-iii` | Roman numerals. The guessed form `301`s to the real one |
+| Guess                         | Actual                       | Why                                                                                                    |
+| ----------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `games/doom-3`                | `games/doom-iii`             | Roman numerals. The guessed form `301`s to the real one                                                |
 | `games/red-faction-guerrilla` | `games/red-faction-guerilla` | The site misspells it — one `r` in "guerilla". The correctly-spelled form `301`s to the misspelled one |
-| `games/doom` | — | Resolves, but to **1993 Doom**, not the 2016 game, whose slug is `doom-4` |
+| `games/doom`                  | —                            | Resolves, but to **1993 Doom**, not the 2016 game, whose slug is `doom-4`                              |
 
-The last is the dangerous shape: a slug that resolves to a *different game* than intended fails no
+The last is the dangerous shape: a slug that resolves to a _different game_ than intended fails no
 check and produces a page full of mods for the wrong title. Read a few `<title>` values out of the
 feed and confirm they are the game you meant before adopting. Other confirmed cases of this kind:
 `games/wolfenstein` is the 2009 game, `games/painkiller` is the classic rather than the 2026 reboot
@@ -130,44 +130,44 @@ As with the other downloader modules, the canonical copy lives in `resources/dow
 
 The entry points take an array of requirement objects (conventionally a `MODDB_REQUIREMENTS` constant in `index.js`), each describing one ModDB-hosted requirement:
 
-| Field | Required | Meaning |
-| --- | --- | --- |
-| `moddbPath` | yes | URL path relative to moddb.com, e.g. `'games/dark-messiah-of-might-magic'` or `'mods/edain-mod'`. Builds the RSS feed URL and the default `pageUrl`. |
-| `modType` | yes | Vortex mod type id the requirement installs as; also the installed-detection key (any mod with this type counts as installed). |
-| `userFacingName` | yes | Display name in notifications, on the download, and in the mod list (stamped as the mod's `customFileName`). |
-| `filePattern` | optional | RegExp tested against RSS item titles, narrowing the feed to this requirement's files. Default: the newest item in the feed. |
-| `fallbackVersion` | optional | Version attribute to record when the feed is unreachable. |
-| `fallbackFileId` | optional | File id used to resolve a download when the feed is unreachable. Without it, an unreachable feed fails the install with a manual-download error. |
-| `skipDownloadManager` | optional | When `true`, skip the download-manager route and fetch the file directly in the renderer before importing it. Use for pages where the www-host bot-block is confirmed for mirror URLs (the verified steady state). Default `false`. |
-| `fileIdAttribute` | optional | Mod attribute tracking the installed ModDB file id for update checks. Default `'moddbFileId'`. |
-| `versionPattern` | optional | RegExp whose capture group 1 is the version, run against the RSS item title. Default `/\[([^[\]]+)\]\s*$/` (matches titles like `"[wOS] Dark Messiah Mod Launcher [R1-08.16]"`). |
-| `pageUrl` | optional | Manual-download page opened on install failure. Default derived from `moddbPath` (`https://www.moddb.com/{moddbPath}/downloads`). |
-| `autoInstall` | optional | `false` -> never install this requirement unattended; only an explicit user action (a toolbar button) installs it. Default installs a missing requirement automatically when the update check runs. |
-| `archiveFileName` | optional | Fallback name for the temp file used only by the direct-fetch fallback route, when neither the response URL nor `content-disposition` yields a usable name. |
-| `pinVersion` | optional | Hold the requirement at this file revision instead of tracking the newest feed item. Requires `pinFileId`; without it the pin is ignored with a warning. See **Version pinning** below. |
-| `pinFileId` | with `pinVersion` | The file id to install for the pinned revision — the feed is newest-first with no version index, so the pin cannot be resolved without it. |
-| `browseKey` | optional | Read only by `moddb_browser.js`: the browse key of the one file this requirement installs, e.g. `'mods/realrtcw-realism-mod#realrtcw'`. Without it the browse page installs that file as an ordinary mod instead of routing it to the requirement installer. |
+| Field                 | Required          | Meaning                                                                                                                                                                                                                                                      |
+| --------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `moddbPath`           | yes               | URL path relative to moddb.com, e.g. `'games/dark-messiah-of-might-magic'` or `'mods/edain-mod'`. Builds the RSS feed URL and the default `pageUrl`.                                                                                                         |
+| `modType`             | yes               | Vortex mod type id the requirement installs as; also the installed-detection key (any mod with this type counts as installed).                                                                                                                               |
+| `userFacingName`      | yes               | Display name in notifications, on the download, and in the mod list (stamped as the mod's `customFileName`).                                                                                                                                                 |
+| `filePattern`         | optional          | RegExp tested against RSS item titles, narrowing the feed to this requirement's files. Default: the newest item in the feed.                                                                                                                                 |
+| `fallbackVersion`     | optional          | Version attribute to record when the feed is unreachable.                                                                                                                                                                                                    |
+| `fallbackFileId`      | optional          | File id used to resolve a download when the feed is unreachable. Without it, an unreachable feed fails the install with a manual-download error.                                                                                                             |
+| `skipDownloadManager` | optional          | When `true`, skip the download-manager route and fetch the file directly in the renderer before importing it. Use for pages where the www-host bot-block is confirmed for mirror URLs (the verified steady state). Default `false`.                          |
+| `fileIdAttribute`     | optional          | Mod attribute tracking the installed ModDB file id for update checks. Default `'moddbFileId'`.                                                                                                                                                               |
+| `versionPattern`      | optional          | RegExp whose capture group 1 is the version, run against the RSS item title. Default `/\[([^[\]]+)\]\s*$/` (matches titles like `"[wOS] Dark Messiah Mod Launcher [R1-08.16]"`).                                                                             |
+| `pageUrl`             | optional          | Manual-download page opened on install failure. Default derived from `moddbPath` (`https://www.moddb.com/{moddbPath}/downloads`).                                                                                                                            |
+| `autoInstall`         | optional          | `false` -> never install this requirement unattended; only an explicit user action (a toolbar button) installs it. Default installs a missing requirement automatically when the update check runs.                                                          |
+| `archiveFileName`     | optional          | Fallback name for the temp file used only by the direct-fetch fallback route, when neither the response URL nor `content-disposition` yields a usable name.                                                                                                  |
+| `pinVersion`          | optional          | Hold the requirement at this file revision instead of tracking the newest feed item. Requires `pinFileId`; without it the pin is ignored with a warning. See **Version pinning** below.                                                                      |
+| `pinFileId`           | with `pinVersion` | The file id to install for the pinned revision — the feed is newest-first with no version index, so the pin cannot be resolved without it.                                                                                                                   |
+| `browseKey`           | optional          | Read only by `moddb_browser.js`: the browse key of the one file this requirement installs, e.g. `'mods/realrtcw-realism-mod#realrtcw'`. Without it the browse page installs that file as an ordinary mod instead of routing it to the requirement installer. |
 
 ### Version pinning
 
 `pinVersion` + `pinFileId` hold the requirement at one file revision instead of following the newest one. It is opt-in and unset by default. While the tracked `moddbFileId` equals `pinFileId`, `checkForModDbUpdate` returns **before making any request** — a pinned requirement costs nothing against the feed. A pinned install skips the feed too; only the mirror-URL resolution still runs, since a ModDB file id always has to be turned into a mirror link.
 
-When the installed file is not the pinned one — including when nothing is installed — the module resolves the *pinned* file, never the newest. The notification reads "pinned version available" rather than "update available", because the user may be *ahead* of the pin and installing it is then a deliberate downgrade. `autoInstall` stays orthogonal: the pin says which file, `autoInstall` says whether anything installs unattended.
+When the installed file is not the pinned one — including when nothing is installed — the module resolves the _pinned_ file, never the newest. The notification reads "pinned version available" rather than "update available", because the user may be _ahead_ of the pin and installing it is then a deliberate downgrade. `autoInstall` stays orthogonal: the pin says which file, `autoInstall` says whether anything installs unattended.
 
 The same field name and behavior exist in all five downloader modules; `DOWNLOADER.md` has the cross-module table.
 
 ### Exports
 
-| Export | Role |
-| --- | --- |
-| `downloadModDb(api, gameSpec, requirements, check = true)` | Download + install each requirement in the array (sequentially) — mirror URL via the download manager, falling back to a direct fetch + import if that fails — then enable it, set its mod type, and record version + file id attributes. With `check = true` (default) it is a no-op for requirements already installed; pass `false` to (re)install/update. Main entry point — call in `setup()`. |
-| `checkForModDbUpdate(api, gameSpec, requirements)` | For each requirement in the array: install it if it is missing (unless `autoInstall: false`), otherwise compare the tracked file id against the latest RSS feed item; raise a warning notification with a Download action when newer. Call from a `check-mods-version` handler and after the `setup()` download. |
-| `downloadModDbRequirement(api, gameSpec, requirement, check = true)` | Single-requirement variant of `downloadModDb`. |
-| `checkForModDbUpdateRequirement(api, gameSpec, requirement)` | Single-requirement variant of `checkForModDbUpdate`. |
-| `isModDbRequirementInstalled(api, gameId, requirement)` | Whether any mod with the requirement's mod type exists. |
-| `getLatestModDbFile(requirement)` | Newest matching RSS item (`{ id, title, link, date }`), or `null` if the feed is unreachable. |
-| `getLatestModDbVersion(requirement, file)` | Version parsed from the given file's title via `versionPattern`, or `null`. |
-| `resolveModDbDownloadUrl(fileId)` | Resolves a file id to its current mirror download URL, or `null` if unreachable. |
+| Export                                                               | Role                                                                                                                                                                                                                                                                                                                                                                                                |
+| -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `downloadModDb(api, gameSpec, requirements, check = true)`           | Download + install each requirement in the array (sequentially) — mirror URL via the download manager, falling back to a direct fetch + import if that fails — then enable it, set its mod type, and record version + file id attributes. With `check = true` (default) it is a no-op for requirements already installed; pass `false` to (re)install/update. Main entry point — call in `setup()`. |
+| `checkForModDbUpdate(api, gameSpec, requirements)`                   | For each requirement in the array: install it if it is missing (unless `autoInstall: false`), otherwise compare the tracked file id against the latest RSS feed item; raise a warning notification with a Download action when newer. Call from a `check-mods-version` handler and after the `setup()` download.                                                                                    |
+| `downloadModDbRequirement(api, gameSpec, requirement, check = true)` | Single-requirement variant of `downloadModDb`.                                                                                                                                                                                                                                                                                                                                                      |
+| `checkForModDbUpdateRequirement(api, gameSpec, requirement)`         | Single-requirement variant of `checkForModDbUpdate`.                                                                                                                                                                                                                                                                                                                                                |
+| `isModDbRequirementInstalled(api, gameId, requirement)`              | Whether any mod with the requirement's mod type exists.                                                                                                                                                                                                                                                                                                                                             |
+| `getLatestModDbFile(requirement)`                                    | Newest matching RSS item (`{ id, title, link, date }`), or `null` if the feed is unreachable.                                                                                                                                                                                                                                                                                                       |
+| `getLatestModDbVersion(requirement, file)`                           | Version parsed from the given file's title via `versionPattern`, or `null`.                                                                                                                                                                                                                                                                                                                         |
+| `resolveModDbDownloadUrl(fileId)`                                    | Resolves a file id to its current mirror download URL, or `null` if unreachable.                                                                                                                                                                                                                                                                                                                    |
 
 ### Behaviors worth knowing
 
@@ -194,7 +194,7 @@ differently is below.
 **It is the only browser module that fetches its own bytes.** Every other source hands its download
 URL to Vortex's download manager. That is impossible here, so the adapter sets
 `fetchStrategy: 'click'` and supplies a `fetchToFile`, which fetches in the renderer and hands the
-base a local path. The base imports it, which *moves* the file into the download folder, and the
+base a local path. The base imports it, which _moves_ the file into the download folder, and the
 install proceeds normally. Same trade-off as `skipDownloadManager`: no progress bar, just an
 "Installing …" notification for the whole transfer.
 
@@ -209,13 +209,14 @@ guessable from the site's URL shapes:
   download and hands the URL to Vortex.
 - **The URL Vortex is handed is not a moddb.com URL.** A download resolves out to DBolical's CDN:
 
-  ```text
-  https://fmt5.dl.dbolical.com/dl/2026/04/04/wOS_RogueArena.1.rar?st=<signature>&e=<expiry>
-  ```
+    ```text
+    https://fmt5.dl.dbolical.com/dl/2026/04/04/wOS_RogueArena.1.rar?st=<signature>&e=<expiry>
+    ```
 
-  Signed, short-lived, and carrying an archive name and **nothing else** — no mod, no file id. Any
-  claim rule written against `/downloads/start/{id}` or `/downloads/mirror/{id}` will never match a
-  real captured download.
+    Signed, short-lived, and carrying an archive name and **nothing else** — no mod, no file id. Any
+    claim rule written against `/downloads/start/{id}` or `/downloads/mirror/{id}` will never match a
+    real captured download.
+
 - **The CDN refuses the main process too**, exactly as the www host does: the download manager fails
   with `DownloadError: Network request failed` about 450ms in. The bot-block is one hop further out
   than the "Bot Protection Caveat" section above describes.
@@ -234,7 +235,7 @@ The file id is then recovered by reading the file page the download was started 
 
 ModDB mints a **new file id for every release**. Keying a browsed mod on its file id would therefore
 make an update impossible to detect — the id such a key resolves to is by definition the one already
-installed. The key is the mod's *page*, plus a second half naming which file on that page it is:
+installed. The key is the mod's _page_, plus a second half naming which file on that page it is:
 
 ```text
 mods/realrtcw-realism-mod#realrtcw
@@ -249,12 +250,12 @@ its releases; keying on the page alone would offer "Real RTCW 5.0 Czech Localiza
 stem and push the version into digits, so stripping everything but letters collapses a file's
 releases and separates its neighbours:
 
-| Slugs on one page | Letters only | Result |
-| --- | --- | --- |
-| `realrtcw-50`, `realrtcw-40`, `realrtcw-31` | `realrtcw` | three releases of one file, merged |
-| `realrtcw-50-additional-languages-pack` | `realrtcwadditionallanguagespack` | separate file, kept apart |
-| `real-rtcw-czech-localization` | `realrtcwczechlocalization` | separate file, kept apart |
-| `endrv-0140`, `endrv-0131`, `endrv-0120`, `endrv` | `endrv` | four releases, merged |
+| Slugs on one page                                 | Letters only                      | Result                             |
+| ------------------------------------------------- | --------------------------------- | ---------------------------------- |
+| `realrtcw-50`, `realrtcw-40`, `realrtcw-31`       | `realrtcw`                        | three releases of one file, merged |
+| `realrtcw-50-additional-languages-pack`           | `realrtcwadditionallanguagespack` | separate file, kept apart          |
+| `real-rtcw-czech-localization`                    | `realrtcwczechlocalization`       | separate file, kept apart          |
+| `endrv-0140`, `endrv-0131`, `endrv-0120`, `endrv` | `endrv`                           | four releases, merged              |
 
 Titles do not survive the same treatment, which is why they are not used: "[wOS] Rogue - Combat
 Arena" is slugged `rogue-combat-arena-wos` (different word order), "2027" has no letters at all, and

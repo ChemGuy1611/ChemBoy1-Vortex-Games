@@ -16,18 +16,18 @@ place, `ROOT_FILES` an engine-DLL allowlist (`nvngx_dlss.dll`, `dstorage*.dll`, 
 
 `hasUserIdFolder` defaults to `true` here — the only template where it does.
 
-| Mod type | Target |
-| --- | --- |
-| `ROOT_ID` | `runtime/media` |
-| `MODMANAGERMOD_ID` | `runtime/media/mods` |
-| `DATAMOD_ID` | `runtime/media/data` |
-| `MODMANAGER_ID` | `runtime/media`, spec `low` |
+| Mod type           | Target                      |
+| ------------------ | --------------------------- |
+| `ROOT_ID`          | `runtime/media`             |
+| `MODMANAGERMOD_ID` | `runtime/media/mods`        |
+| `DATAMOD_ID`       | `runtime/media/data`        |
+| `MODMANAGER_ID`    | `runtime/media`, spec `low` |
 
 **Installers:** `MODMANAGER` 25 → `MODMANAGERMOD` 27 (behind `needsModInstaller`) → `DATAMOD` 29 →
 `ROOT` 27 (behind `rootInstaller`). There is no fallback installer.
 
 **Priority collision to watch.** `MODMANAGERMOD` and `ROOT` both register at 27, and `ROOT` is
-registered *after* `DATAMOD` in source order. With equal priority the registration order decides
+registered _after_ `DATAMOD` in source order. With equal priority the registration order decides
 which is tested first, so changing the order of those `registerInstaller` lines silently changes
 which installer claims an ambiguous archive.
 

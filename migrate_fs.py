@@ -53,6 +53,7 @@ Usage:
     python migrate_fs.py --all --dry-run            # preview every change, write nothing
     python migrate_fs.py --all --report             # print the method census + residual counts, write nothing
     python migrate_fs.py GAME_ID --dry-run
+    python migrate_fs.py GAME_ID --no-node-check    # skip the per-file node syntax check before writing
 
 With no GAME_ID and no scope flag, --report implies --all; a bare run errors.
 """

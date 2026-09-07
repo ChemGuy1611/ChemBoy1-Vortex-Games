@@ -16,7 +16,7 @@ Driver: the `nexus_integration` core extension (`index.tsx`, `util/`, `eventHand
   `oauthCallback(api, oauthCode, oauthState)`.
 - Credentials live in **`state.confidential.account.nexus.OAuthCredentials`** (a legacy `apiKey`
   path is still honoured). On load the ext reads them once; `loggedIn = apiKey !== undefined ||
-  oauthCred !== undefined`. `updateToken(api, nexus, oauthCred)` refreshes the token into the
+oauthCred !== undefined`. `updateToken(api, nexus, oauthCred)` refreshes the token into the
   nexus-node client.
 - Helpers: `ensureLoggedIn(api)`, `requestLogin(nexus, api, callback)` (also exposed as the
   `request-nexus-login` event and `nexusRequestNexusLogin` API).
@@ -27,7 +27,7 @@ Two clients back the integration: the **v1 nexus-node** client (`NexusT`) and th
 (`nexusV3Client.ts`, backed by `packages/nexus-api-v3`). Different features use different ones
 (v3 for GraphQL-style queries, v1 for legacy endpoints). The v1 nexus-node client is the
 `@nexusmods/nexus-api` package — full method/type catalog: `NODE_NEXUS_API_CLIENT.md`. That
-package itself covers v1 REST *and* v2 GraphQL *and* a GraphQL-backed Collections API, which is a
+package itself covers v1 REST _and_ v2 GraphQL _and_ a GraphQL-backed Collections API, which is a
 separate transport from the v3 REST Collections endpoints in `NEXUS_MODS_API.md`.
 
 ## `nxm://` links
@@ -48,15 +48,15 @@ instead of downloading.
   managed mod against its Nexus file's latest version, writing `newestFileId` etc. into the mod's
   attributes. Bulk checking goes through the async **`check-mods-version`** event
   (`onCheckModsVersion`).
-- **Checking is separate from updating.** `mod-update` and `mods-update` *perform* an update —
+- **Checking is separate from updating.** `mod-update` and `mods-update` _perform_ an update —
   resolve the newest file, download it, and install it over the existing mod.
 
 ### `mod-update` vs `mods-update`
 
-| Event | Emitted by | Payload | Handler |
-| --- | --- | --- | --- |
-| `mod-update` | the per-row update button (`VersionIconButton`) | `(gameId, nexusModId, fileId, source)` | `onModUpdate` |
-| `mods-update` | the "Update all" flow (`CheckModVersionsButton`) | `(gameId, localModIds[])` | `onModsUpdate` |
+| Event         | Emitted by                                       | Payload                                | Handler        |
+| ------------- | ------------------------------------------------ | -------------------------------------- | -------------- |
+| `mod-update`  | the per-row update button (`VersionIconButton`)  | `(gameId, nexusModId, fileId, source)` | `onModUpdate`  |
+| `mods-update` | the "Update all" flow (`CheckModVersionsButton`) | `(gameId, localModIds[])`              | `onModsUpdate` |
 
 `onModsUpdate` resolves each **local** mod id to its `attributes.modId` / `newestFileId` and then
 calls `onModUpdate(...)` **as a function** — it never re-emits `mod-update`. So an extension that
@@ -66,14 +66,14 @@ means for load order is covered in `VORTEX_LOAD_ORDER.md`.
 
 ## Endorsements, categories, feedback
 
-| Capability | Wiring |
-| --- | --- |
-| Endorse | `endorse-mod` event → `endorseMod` (`util/endorseMod.ts`); also a registered `endorseMod` action |
-| Categories | `retrieve-category-list` (isUpdate) → `retrieveCategories` (`util/retrieveCategories.ts`) → `nexusRetrieveCategoryList` API |
-| Feedback | `submit-feedback` → `onSubmitFeedback` |
-| Collections | `submit-collection`, `open-collection-page`, `request-own-issues` |
-| User info | `refresh-user-info` → `onRefreshUserInfo` (premium status, etc.) |
-| Open pages | `open-mod-page`, `open-collection-page` |
+| Capability  | Wiring                                                                                                                      |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Endorse     | `endorse-mod` event → `endorseMod` (`util/endorseMod.ts`); also a registered `endorseMod` action                            |
+| Categories  | `retrieve-category-list` (isUpdate) → `retrieveCategories` (`util/retrieveCategories.ts`) → `nexusRetrieveCategoryList` API |
+| Feedback    | `submit-feedback` → `onSubmitFeedback`                                                                                      |
+| Collections | `submit-collection`, `open-collection-page`, `request-own-issues`                                                           |
+| User info   | `refresh-user-info` → `onRefreshUserInfo` (premium status, etc.)                                                            |
+| Open pages  | `open-mod-page`, `open-collection-page`                                                                                     |
 
 Most are wired in `index.tsx`'s `once()` via handlers in `eventHandlers.ts` (`eh.*`).
 
@@ -84,18 +84,18 @@ Via the extend-API pattern, `nexus_integration` adds methods other extensions ca
 
 ## Events (runtime)
 
-| Event | Purpose |
-| --- | --- |
-| `request-nexus-login` (cb) | Start login |
-| `refresh-user-info` | Re-fetch account/premium info |
-| `endorse-mod` | Endorse a mod |
-| `check-mods-version` (gameId, modIds?) | Check managed mods for newer versions |
-| `mod-update` (gameId, nexusModId, fileId, source) | Update one mod to a newer file |
-| `mods-update` (gameId, localModIds[]) | Update several mods ("Update all"); calls the single-mod handler directly |
-| `retrieve-category-list` (isUpdate) | Pull Nexus categories |
-| `submit-feedback` / `submit-collection` | Submit to Nexus |
-| `open-mod-page` / `open-collection-page` | Open a Nexus page |
-| `gamemode-activated` | Triggers version checks for the game |
+| Event                                             | Purpose                                                                   |
+| ------------------------------------------------- | ------------------------------------------------------------------------- |
+| `request-nexus-login` (cb)                        | Start login                                                               |
+| `refresh-user-info`                               | Re-fetch account/premium info                                             |
+| `endorse-mod`                                     | Endorse a mod                                                             |
+| `check-mods-version` (gameId, modIds?)            | Check managed mods for newer versions                                     |
+| `mod-update` (gameId, nexusModId, fileId, source) | Update one mod to a newer file                                            |
+| `mods-update` (gameId, localModIds[])             | Update several mods ("Update all"); calls the single-mod handler directly |
+| `retrieve-category-list` (isUpdate)               | Pull Nexus categories                                                     |
+| `submit-feedback` / `submit-collection`           | Submit to Nexus                                                           |
+| `open-mod-page` / `open-collection-page`          | Open a Nexus page                                                         |
+| `gamemode-activated`                              | Triggers version checks for the game                                      |
 
 ## Gotchas
 

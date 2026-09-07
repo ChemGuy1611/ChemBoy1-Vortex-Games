@@ -6,14 +6,14 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| Fluffy Mod Manager (tool) | a `modmanager.exe` file | - |
-| Loose Lua Scripts | a `.lua` file outside the REFramework folders | - |
-| REFramework (mod loader) | a `dinput8.dll` file | - |
-| Root / Game Folder Mods | a `nvngx_dlss.dll` file or a `.exe` file | the game folder itself (no subfolder) |
-| Preset Files | a `.prt` file | `Games\DeadRisingRemaster\Presets` |
-| Fluffy-Format Mods | anything not matched above | - |
+| Mod Type                  | Archive must contain                          | Installs to                           |
+| ------------------------- | --------------------------------------------- | ------------------------------------- |
+| Fluffy Mod Manager (tool) | a `modmanager.exe` file                       | -                                     |
+| Loose Lua Scripts         | a `.lua` file outside the REFramework folders | -                                     |
+| REFramework (mod loader)  | a `dinput8.dll` file                          | -                                     |
+| Root / Game Folder Mods   | a `nvngx_dlss.dll` file or a `.exe` file      | the game folder itself (no subfolder) |
+| Preset Files              | a `.prt` file                                 | `Games\DeadRisingRemaster\Presets`    |
+| Fluffy-Format Mods        | anything not matched above                    | -                                     |
 
 Paths are relative to the game's install folder.
 
@@ -96,4 +96,3 @@ The catch-all for RE Engine mods packaged in the normal Fluffy Mod Manager layou
 
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

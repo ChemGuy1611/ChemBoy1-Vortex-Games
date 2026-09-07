@@ -2,20 +2,20 @@
 
 ## Overview
 
-| Property | Value |
-| --- | --- |
-| Name | Helldivers 2 Vortex Extension |
-| Engine / Structure | Custom Game Data |
-| Author | ChemBoy1 |
+| Property           | Value                         |
+| ------------------ | ----------------------------- |
+| Name               | Helldivers 2 Vortex Extension |
+| Engine / Structure | Custom Game Data              |
+| Author             | ChemBoy1                      |
 
 ## Key Identifiers
 
-| Property | Value |
-| --- | --- |
-| Game ID | `helldivers2` |
-| Executable | `bin/helldivers2.exe` |
-| Extension Page | [https://www.nexusmods.com/site/mods/845](https://www.nexusmods.com/site/mods/845) |
-| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Helldivers_2](https://www.pcgamingwiki.com/wiki/Helldivers_2) |
+| Property       | Value                                                                                            |
+| -------------- | ------------------------------------------------------------------------------------------------ |
+| Game ID        | `helldivers2`                                                                                    |
+| Executable     | `bin/helldivers2.exe`                                                                            |
+| Extension Page | [https://www.nexusmods.com/site/mods/845](https://www.nexusmods.com/site/mods/845)               |
+| PCGamingWiki   | [https://www.pcgamingwiki.com/wiki/Helldivers_2](https://www.pcgamingwiki.com/wiki/Helldivers_2) |
 
 ## Supported Stores
 
@@ -23,35 +23,35 @@
 
 ## Feature Flags
 
-| Flag | Value | Description |
-| --- | --- | --- |
+| Flag                     | Value   | Description                                                        |
+| ------------------------ | ------- | ------------------------------------------------------------------ |
 | `mod_update_all_profile` | `false` | for mod update to keep them in the load order and not uncheck them |
-| `updating_mod` | `false` | used to see if it's a mod update or not |
+| `updating_mod`           | `false` | used to see if it's a mod update or not                            |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
-| Name | ID | Priority | Target Path |
-| --- | --- | --- | --- |
-| Root Folder | `helldivers2-root` | high | `{gamePath}` |
-| Game Data (.dl_bin) | `helldivers2-data` | high | `{gamePath}/data/game` |
-| Data Stream File (.stream) | `helldivers2-stream` | high | `{gamePath}/data` |
-| Binaries (Engine Injector) | `helldivers2-binaries` | high | `{gamePath}/bin` |
-| helldivers2-patch--MergedMods--This-is-fine--Ignore-this--SELECT-APPLY-CHANGES--DO-NOT-ENABLE | `helldivers2-patch--MergedMods--This-is-fine--Ignore-this--SELECT-APPLY-CHANGES--DO-NOT-ENABLE` | 25 | `?` |
-| helldivers2-soundpatch | `helldivers2-soundpatch` | 30 | `?` |
+| Name                                                                                          | ID                                                                                              | Priority | Target Path            |
+| --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | -------- | ---------------------- |
+| Root Folder                                                                                   | `helldivers2-root`                                                                              | high     | `{gamePath}`           |
+| Game Data (.dl_bin)                                                                           | `helldivers2-data`                                                                              | high     | `{gamePath}/data/game` |
+| Data Stream File (.stream)                                                                    | `helldivers2-stream`                                                                            | high     | `{gamePath}/data`      |
+| Binaries (Engine Injector)                                                                    | `helldivers2-binaries`                                                                          | high     | `{gamePath}/bin`       |
+| helldivers2-patch--MergedMods--This-is-fine--Ignore-this--SELECT-APPLY-CHANGES--DO-NOT-ENABLE | `helldivers2-patch--MergedMods--This-is-fine--Ignore-this--SELECT-APPLY-CHANGES--DO-NOT-ENABLE` | 25       | `?`                    |
+| helldivers2-soundpatch                                                                        | `helldivers2-soundpatch`                                                                        | 30       | `?`                    |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID | Priority |
-| --- | --- |
-| `helldivers2-patch--MergedMods--This-is-fine--Ignore-this--SELECT-APPLY-CHANGES--DO-NOT-ENABLE` | 25 |
-| `helldivers2-data` | 27 |
-| `helldivers2-stream` | 29 |
-| `helldivers2-binaries` | 31 |
-| `helldivers2-fallback` | 49 |
+| Installer ID                                                                                    | Priority |
+| ----------------------------------------------------------------------------------------------- | -------- |
+| `helldivers2-patch--MergedMods--This-is-fine--Ignore-this--SELECT-APPLY-CHANGES--DO-NOT-ENABLE` | 25       |
+| `helldivers2-data`                                                                              | 27       |
+| `helldivers2-stream`                                                                            | 29       |
+| `helldivers2-binaries`                                                                          | 31       |
+| `helldivers2-fallback`                                                                          | 49       |
 
 ## Toolbar Actions
 
@@ -67,4 +67,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
-

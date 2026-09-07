@@ -4,12 +4,12 @@ ModWorkshop (`modworkshop.net`) publishes a real, self-documenting REST API. Unl
 hand-written surface or ModDB's non-existent one, it ships a machine-readable OpenAPI description
 and its read endpoints need no authentication.
 
-| Resource | URL |
-| --- | --- |
-| API base | `https://api.modworkshop.net` |
-| Interactive docs | `https://api.modworkshop.net/` (Scalar UI) |
-| OpenAPI spec | `https://api.modworkshop.net/.openapi` (OpenAPI 3.0.3, **YAML** despite the extension) |
-| Usage rules | `https://api.modworkshop.net/documents/api-rules` |
+| Resource         | URL                                                                                    |
+| ---------------- | -------------------------------------------------------------------------------------- |
+| API base         | `https://api.modworkshop.net`                                                          |
+| Interactive docs | `https://api.modworkshop.net/` (Scalar UI)                                             |
+| OpenAPI spec     | `https://api.modworkshop.net/.openapi` (OpenAPI 3.0.3, **YAML** despite the extension) |
+| Usage rules      | `https://api.modworkshop.net/documents/api-rules`                                      |
 
 The spec covers 80 paths across 21 tags (Mods, Files, Games, Categories, Tags, Comments, Threads,
 Users, Images, Links, Mod Managers, Reports, Roles, and more). Everything below was verified live
@@ -26,7 +26,7 @@ The rules document is short enough to matter in full. Summarised:
   keys. The `POST`/`PUT`/`PATCH`/`DELETE` operations present in the spec back the site's own
   session-authenticated front end — treat them as unavailable to third-party clients.
 - Integrating the API into mod managers, update tools, and downloaders — including mod browsing —
-  **is explicitly allowed**, provided the software is open source *and* community-led/community-maintained.
+  **is explicitly allowed**, provided the software is open source _and_ community-led/community-maintained.
 - Strictly forbidden: official integration by a game's developer or studio, or into first-party
   tools. That case requires contacting ModWorkshop directly.
 
@@ -65,8 +65,8 @@ Validation failures return `422` with a field-keyed error map:
 
 ```json
 {
-  "message": "The selected game id is invalid. (and 1 more error)",
-  "errors": { "game_id": ["The selected game id is invalid."] }
+    "message": "The selected game id is invalid. (and 1 more error)",
+    "errors": { "game_id": ["The selected game id is invalid."] }
 }
 ```
 
@@ -110,34 +110,34 @@ fetched (`/documents/api-rules`), and it works when the corresponding `modworksh
 
 `GET /games/{game_id}/mods` — the search endpoint. Parameters:
 
-| Parameter | Type | Notes |
-| --- | --- | --- |
-| `query` | string | Free-text search, max 150 chars |
-| `limit` | integer | 1–50 |
-| `ids[]` | integer[] | Restrict to specific mod ids |
-| `category_id` | integer | Single category |
-| `categories[]` | integer[] | Multiple categories |
-| `tags[]` / `block_tags[]` | integer[] | Require / exclude tags |
-| `user_id` | integer | Mods by an author |
-| `exclude_game_ids[]` | integer[] | Exclude game sections |
-| `collab` / `including_collab` / `including_ignored` / `liked` | boolean | Membership and visibility filters |
-| `sort` | enum | `bumped_at`, `published_at`, `likes`, `downloads`, `views`, `score`, `weekly_score`, `daily_score`, `random`, `best_match`, `name` |
+| Parameter                                                     | Type      | Notes                                                                                                                              |
+| ------------------------------------------------------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `query`                                                       | string    | Free-text search, max 150 chars                                                                                                    |
+| `limit`                                                       | integer   | 1–50                                                                                                                               |
+| `ids[]`                                                       | integer[] | Restrict to specific mod ids                                                                                                       |
+| `category_id`                                                 | integer   | Single category                                                                                                                    |
+| `categories[]`                                                | integer[] | Multiple categories                                                                                                                |
+| `tags[]` / `block_tags[]`                                     | integer[] | Require / exclude tags                                                                                                             |
+| `user_id`                                                     | integer   | Mods by an author                                                                                                                  |
+| `exclude_game_ids[]`                                          | integer[] | Exclude game sections                                                                                                              |
+| `collab` / `including_collab` / `including_ignored` / `liked` | boolean   | Membership and visibility filters                                                                                                  |
+| `sort`                                                        | enum      | `bumped_at`, `published_at`, `likes`, `downloads`, `views`, `score`, `weekly_score`, `daily_score`, `random`, `best_match`, `name` |
 
 `GET /mods/{id}` returns a single mod. Fields that matter to a mod manager:
 
-| Field | Meaning |
-| --- | --- |
-| `id`, `name`, `game_id`, `category_id`, `user_id` | Identity |
-| `version` | The mod record's own version string — the one shown on the site |
-| `desc`, `short_desc`, `changelog`, `instructions` | Markdown text |
-| `repo_url`, `donation`, `license` | Author-supplied metadata |
-| `download_id`, `download_type` | The mod's primary download target (`download_type` is `"file"` for a hosted file, or a link type) |
-| `has_download`, `approved`, `suspended` | Availability gates — check all three before offering an install |
-| `disable_mod_managers` | Author opt-out of mod-manager integration; honour it |
-| `downloads`, `likes`, `views`, `score` | Counters |
-| `published_at`, `bumped_at`, `updated_at` | Timestamps |
-| `thumbnail`, `banner_id`, `background_id` | Image records (see Images) |
-| `user`, `game`, `category`, `tags`, `tag_ids` | Embedded relations |
+| Field                                             | Meaning                                                                                           |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `id`, `name`, `game_id`, `category_id`, `user_id` | Identity                                                                                          |
+| `version`                                         | The mod record's own version string — the one shown on the site                                   |
+| `desc`, `short_desc`, `changelog`, `instructions` | Markdown text                                                                                     |
+| `repo_url`, `donation`, `license`                 | Author-supplied metadata                                                                          |
+| `download_id`, `download_type`                    | The mod's primary download target (`download_type` is `"file"` for a hosted file, or a link type) |
+| `has_download`, `approved`, `suspended`           | Availability gates — check all three before offering an install                                   |
+| `disable_mod_managers`                            | Author opt-out of mod-manager integration; honour it                                              |
+| `downloads`, `likes`, `views`, `score`            | Counters                                                                                          |
+| `published_at`, `bumped_at`, `updated_at`         | Timestamps                                                                                        |
+| `thumbnail`, `banner_id`, `background_id`         | Image records (see Images)                                                                        |
+| `user`, `game`, `category`, `tags`, `tag_ids`     | Embedded relations                                                                                |
 
 `GET /mods/{mod_id}/version` returns the mod's `version` field as plain text.
 
@@ -153,29 +153,29 @@ silently `302`-redirects to the API root instead of returning a validation error
 
 ## Files
 
-| Endpoint | Returns |
-| --- | --- |
-| `GET /mods/{mod_id}/files` | Paginated file list (`query`, `limit`, `ids[]`) |
-| `GET /files/{id}` | Single file |
-| `GET /mods/{mod_id}/files/primary` | The mod's primary file |
-| `GET /mods/{mod_id}/files/latest` | "Latest" file — see the warning below |
-| `GET /mods/{mod_id}/files/{version}` | File matching an exact semver |
-| `GET /files/{file_id}/version`, `GET /mods/{mod_id}/files/latest/version`, `GET /mods/{mod_id}/files/primary/version` | Plain-text version |
-| `GET /files/{file_id}/download`, `GET /mods/{mod_id}/download`, `GET /mods/{mod_id}/files/latest/download` | `302` to the storage URL |
+| Endpoint                                                                                                              | Returns                                         |
+| --------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| `GET /mods/{mod_id}/files`                                                                                            | Paginated file list (`query`, `limit`, `ids[]`) |
+| `GET /files/{id}`                                                                                                     | Single file                                     |
+| `GET /mods/{mod_id}/files/primary`                                                                                    | The mod's primary file                          |
+| `GET /mods/{mod_id}/files/latest`                                                                                     | "Latest" file — see the warning below           |
+| `GET /mods/{mod_id}/files/{version}`                                                                                  | File matching an exact semver                   |
+| `GET /files/{file_id}/version`, `GET /mods/{mod_id}/files/latest/version`, `GET /mods/{mod_id}/files/primary/version` | Plain-text version                              |
+| `GET /files/{file_id}/download`, `GET /mods/{mod_id}/download`, `GET /mods/{mod_id}/files/latest/download`            | `302` to the storage URL                        |
 
 The file object:
 
-| Field | Meaning |
-| --- | --- |
-| `id`, `mod_id`, `user_id` | Identity |
-| `name` | Display name (no extension) |
-| `file` | Stored filename, e.g. `55623_220962_Ot0Qrq….zip` |
-| `type` | Extension without the dot (`zip`, `7z`, …) |
-| `size` | Bytes |
-| `version` | Author-entered version string — **not normalised**, may carry a `v` prefix |
-| `label`, `desc`, `display_order` | Presentation |
-| `downloads`, `created_at`, `updated_at` | Counters and timestamps |
-| `download_url` | Fully-formed direct download link (see below) |
+| Field                                   | Meaning                                                                    |
+| --------------------------------------- | -------------------------------------------------------------------------- |
+| `id`, `mod_id`, `user_id`               | Identity                                                                   |
+| `name`                                  | Display name (no extension)                                                |
+| `file`                                  | Stored filename, e.g. `55623_220962_Ot0Qrq….zip`                           |
+| `type`                                  | Extension without the dot (`zip`, `7z`, …)                                 |
+| `size`                                  | Bytes                                                                      |
+| `version`                               | Author-entered version string — **not normalised**, may carry a `v` prefix |
+| `label`, `desc`, `display_order`        | Presentation                                                               |
+| `downloads`, `created_at`, `updated_at` | Counters and timestamps                                                    |
+| `download_url`                          | Fully-formed direct download link (see below)                              |
 
 ### Picking the right "latest" file
 
@@ -183,13 +183,13 @@ The file object:
 author-controlled `display_order` field, and only falls back to semver comparison among files that
 share an order value. Verified against mod 55623, whose files are:
 
-| File id | `version` | `display_order` | Uploaded |
-| --- | --- | --- | --- |
-| 98157 | `3.2.1` | 0 | 2026-05-26 |
-| 95818 | `3.1.1` | 0 | 2026-04-25 |
-| 95748 | `3.1.0` | **1** | 2026-04-24 |
-| 93491 | `2.0.0` | -1 | 2026-03-16 |
-| 93372 | `1.0.0` | -2 | 2026-03-11 |
+| File id | `version` | `display_order` | Uploaded   |
+| ------- | --------- | --------------- | ---------- |
+| 98157   | `3.2.1`   | 0               | 2026-05-26 |
+| 95818   | `3.1.1`   | 0               | 2026-04-25 |
+| 95748   | `3.1.0`   | **1**           | 2026-04-24 |
+| 93491   | `2.0.0`   | -1              | 2026-03-16 |
+| 93372   | `1.0.0`   | -2              | 2026-03-11 |
 
 `/mods/55623/files/latest` returns **3.1.0** — the file with the highest `display_order`, not the
 highest version and not the newest upload. Adding `?prerelease=1` changes nothing. On mods where
@@ -212,7 +212,7 @@ Prefer, in order:
 { "message": "Invalid semver" }
 ```
 
-...returned as `422`. But many authors store versions *with* the prefix (mod 53713's files are all
+...returned as `422`. But many authors store versions _with_ the prefix (mod 53713's files are all
 `v2.9.0`, `v2.8.3`, …), and a bare-semver lookup against those returns `200` with an **empty body**.
 So for `v`-prefixed mods, by-version lookup can never match: the prefixed form is refused and the
 unprefixed form finds nothing. List the files and compare yourself.
@@ -269,20 +269,20 @@ be propagated manually. Consumer wiring snippets live in
 The entry points take an array of requirement objects (conventionally an `MWS_REQUIREMENTS` constant
 in `index.js`), each describing one ModWorkshop-hosted requirement:
 
-| Field | Required | Meaning |
-| --- | --- | --- |
-| `mwsModId` | yes | ModWorkshop numeric mod id, e.g. `'55623'` for `https://modworkshop.net/mod/55623`. Builds every API URL and the default `pageUrl`. |
-| `modType` | yes | Vortex mod type id the requirement installs as; also the installed-detection key (any mod with this type counts as installed). |
-| `userFacingName` | yes | Display name in notifications, on the download, and in the mod list (stamped as the mod's `customFileName`). |
-| `fileType` | optional | File extension to require (`'zip'`). **Set this on any mod that also uploads a non-archive format.** Without it the primary file is used, which may be a `.vmz` Vortex cannot treat as an archive. |
-| `filePattern` | optional | RegExp tested against the file's display name, narrowing multi-file submissions further. Combines with `fileType`. |
-| `fallbackVersion` | optional | Version attribute to record when the API is unreachable. |
-| `fallbackFileId` | optional | File id used to build `https://api.modworkshop.net/files/{id}/download` when the API is unreachable. Without it, an unreachable API fails the install with a manual-download error. |
-| `fileIdAttribute` | optional | Mod attribute tracking the installed ModWorkshop file id for update checks. Default `'modworkshopFileId'`. |
-| `pageUrl` | optional | Manual-download page opened on install failure. Default `https://modworkshop.net/mod/{mwsModId}`. |
-| `autoInstall` | optional | `false` -> never install this requirement unattended; only an explicit user action (a toolbar button) installs it. Default installs a missing requirement automatically when the update check runs. |
-| `pinVersion` | optional | Hold the requirement at this file version instead of tracking the current one. Requires `pinFileId`; without it the pin is ignored with a warning. See **Version pinning** below. |
-| `pinFileId` | with `pinVersion` | The file id to install for the pinned version — a pinned version cannot be looked up by version string alone. |
+| Field             | Required          | Meaning                                                                                                                                                                                             |
+| ----------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mwsModId`        | yes               | ModWorkshop numeric mod id, e.g. `'55623'` for `https://modworkshop.net/mod/55623`. Builds every API URL and the default `pageUrl`.                                                                 |
+| `modType`         | yes               | Vortex mod type id the requirement installs as; also the installed-detection key (any mod with this type counts as installed).                                                                      |
+| `userFacingName`  | yes               | Display name in notifications, on the download, and in the mod list (stamped as the mod's `customFileName`).                                                                                        |
+| `fileType`        | optional          | File extension to require (`'zip'`). **Set this on any mod that also uploads a non-archive format.** Without it the primary file is used, which may be a `.vmz` Vortex cannot treat as an archive.  |
+| `filePattern`     | optional          | RegExp tested against the file's display name, narrowing multi-file submissions further. Combines with `fileType`.                                                                                  |
+| `fallbackVersion` | optional          | Version attribute to record when the API is unreachable.                                                                                                                                            |
+| `fallbackFileId`  | optional          | File id used to build `https://api.modworkshop.net/files/{id}/download` when the API is unreachable. Without it, an unreachable API fails the install with a manual-download error.                 |
+| `fileIdAttribute` | optional          | Mod attribute tracking the installed ModWorkshop file id for update checks. Default `'modworkshopFileId'`.                                                                                          |
+| `pageUrl`         | optional          | Manual-download page opened on install failure. Default `https://modworkshop.net/mod/{mwsModId}`.                                                                                                   |
+| `autoInstall`     | optional          | `false` -> never install this requirement unattended; only an explicit user action (a toolbar button) installs it. Default installs a missing requirement automatically when the update check runs. |
+| `pinVersion`      | optional          | Hold the requirement at this file version instead of tracking the current one. Requires `pinFileId`; without it the pin is ignored with a warning. See **Version pinning** below.                   |
+| `pinFileId`       | with `pinVersion` | The file id to install for the pinned version — a pinned version cannot be looked up by version string alone.                                                                                       |
 
 There is no `versionPattern` equivalent — ModWorkshop stores a version string on the file record
 itself, so no parsing out of a title is needed.
@@ -291,21 +291,21 @@ itself, so no parsing out of a title is needed.
 
 `pinVersion` + `pinFileId` hold the requirement at one file instead of following the current one. It is opt-in and unset by default. While the tracked `modworkshopFileId` equals `pinFileId`, `checkForModWorkshopUpdate` returns **before making any request** — a pinned requirement costs nothing against the API. A pinned install skips the API entirely as well, since `https://api.modworkshop.net/files/{id}/download` is a complete URL on its own.
 
-When the installed file is not the pinned one — including when nothing is installed — the module resolves the *pinned* file, never the current one. The notification reads "pinned version available" rather than "update available", because the user may be *ahead* of the pin and installing it is then a deliberate downgrade. `autoInstall` stays orthogonal: the pin says which file, `autoInstall` says whether anything installs unattended. Note that a pin bypasses `fileType`/`filePattern` selection — the pinned file id is taken as given, so pin the id of a file Vortex can actually treat as an archive.
+When the installed file is not the pinned one — including when nothing is installed — the module resolves the _pinned_ file, never the current one. The notification reads "pinned version available" rather than "update available", because the user may be _ahead_ of the pin and installing it is then a deliberate downgrade. `autoInstall` stays orthogonal: the pin says which file, `autoInstall` says whether anything installs unattended. Note that a pin bypasses `fileType`/`filePattern` selection — the pinned file id is taken as given, so pin the id of a file Vortex can actually treat as an archive.
 
 The same field name and behavior exist in all five downloader modules; `DOWNLOADER.md` has the cross-module table.
 
 ### Exports
 
-| Export | Role |
-| --- | --- |
-| `downloadModWorkshop(api, gameSpec, requirements, check = true)` | Download + install each requirement in the array (sequentially), then enable it, set its mod type, and record version + file id attributes. With `check = true` (default) it is a no-op for requirements already installed; pass `false` to (re)install/update. Main entry point — call in `setup()`. |
-| `checkForModWorkshopUpdate(api, gameSpec, requirements)` | For each requirement: install it if it is missing (unless `autoInstall: false`), otherwise compare the tracked file id against the current API file; raise a warning notification with a Download action when newer. Call from a `check-mods-version` handler and after the `setup()` download. |
-| `downloadModWorkshopRequirement(api, gameSpec, requirement, check = true)` | Single-requirement variant of `downloadModWorkshop`. |
-| `checkForModWorkshopUpdateRequirement(api, gameSpec, requirement)` | Single-requirement variant of `checkForModWorkshopUpdate`. |
-| `isModWorkshopRequirementInstalled(api, gameId, requirement)` | Whether any mod with the requirement's mod type exists. |
-| `getLatestModWorkshopFile(requirement)` | The requirement's current file record, or `null` if the API is unreachable or nothing matches the filters. |
-| `getLatestModWorkshopVersion(requirement, file)` | Normalised version for the given file, falling back to the mod record's own `version`, or `null`. |
+| Export                                                                     | Role                                                                                                                                                                                                                                                                                                  |
+| -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `downloadModWorkshop(api, gameSpec, requirements, check = true)`           | Download + install each requirement in the array (sequentially), then enable it, set its mod type, and record version + file id attributes. With `check = true` (default) it is a no-op for requirements already installed; pass `false` to (re)install/update. Main entry point — call in `setup()`. |
+| `checkForModWorkshopUpdate(api, gameSpec, requirements)`                   | For each requirement: install it if it is missing (unless `autoInstall: false`), otherwise compare the tracked file id against the current API file; raise a warning notification with a Download action when newer. Call from a `check-mods-version` handler and after the `setup()` download.       |
+| `downloadModWorkshopRequirement(api, gameSpec, requirement, check = true)` | Single-requirement variant of `downloadModWorkshop`.                                                                                                                                                                                                                                                  |
+| `checkForModWorkshopUpdateRequirement(api, gameSpec, requirement)`         | Single-requirement variant of `checkForModWorkshopUpdate`.                                                                                                                                                                                                                                            |
+| `isModWorkshopRequirementInstalled(api, gameId, requirement)`              | Whether any mod with the requirement's mod type exists.                                                                                                                                                                                                                                               |
+| `getLatestModWorkshopFile(requirement)`                                    | The requirement's current file record, or `null` if the API is unreachable or nothing matches the filters.                                                                                                                                                                                            |
+| `getLatestModWorkshopVersion(requirement, file)`                           | Normalised version for the given file, falling back to the mod record's own `version`, or `null`.                                                                                                                                                                                                     |
 
 ### Behaviors worth knowing
 
@@ -396,9 +396,9 @@ viewBox Vortex's `mdi:` option expects, as its sidebar icon.
 Image records (`thumbnail`, and the entries from `GET /mods/{mod_id}/images`) expose a `file` field
 holding a stored filename. Resolve it against the storage host:
 
-| Kind | URL |
-| --- | --- |
-| Mod image | `https://storage.modworkshop.net/mods/images/{file}` |
+| Kind                  | URL                                                   |
+| --------------------- | ----------------------------------------------------- |
+| Mod image             | `https://storage.modworkshop.net/mods/images/{file}`  |
 | Game thumbnail/banner | `https://storage.modworkshop.net/games/images/{file}` |
 
 Both verified returning the image bytes anonymously. Image records also carry `has_thumb`,
@@ -409,9 +409,9 @@ Both verified returning the image bytes anonymously. Image records also carry `h
 The game object embeds a `mod_managers[]` array of registered managers, each with a URI template in
 its `download_url`:
 
-| Manager | Template |
-| --- | --- |
-| MWS Manager | `mws-manager://mws/install/:file_id` |
+| Manager         | Template                                              |
+| --------------- | ----------------------------------------------------- |
+| MWS Manager     | `mws-manager://mws/install/:file_id`                  |
 | Mod Organizer 2 | `mws-mo2://install/:game_short_name/:mod_id/:file_id` |
 
 Placeholders are `:file_id`, `:mod_id`, and `:game_short_name`. This is how the site's "Install with

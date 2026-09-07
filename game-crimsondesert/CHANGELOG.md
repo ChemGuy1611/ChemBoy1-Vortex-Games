@@ -10,7 +10,7 @@
 
 ## [0.4.1] - 2026-05-22
 
-- Fixed: Remove "__folder_managed_by_vortex" marker files from "mods" folder on deploy - avoid unnecessary conflicts in DMM.
+- Fixed: Remove "\_\_folder_managed_by_vortex" marker files from "mods" folder on deploy - avoid unnecessary conflicts in DMM.
 - Added: Notification to download Ultimate ASI Loader if no plugin loader installed (checks for version.dll and winmm.dll).
 
 ## [0.4.0] - 2026-05-19

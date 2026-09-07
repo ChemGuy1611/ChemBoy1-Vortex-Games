@@ -6,9 +6,9 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| Pak Mods | a `'.pak` file | `detnoir\Content\Paks\~mods` |
+| Mod Type                | Archive must contain                 | Installs to                           |
+| ----------------------- | ------------------------------------ | ------------------------------------- |
+| Pak Mods                | a `'.pak` file                       | `detnoir\Content\Paks\~mods`          |
 | Root / Game Folder Mods | a top-level folder such as `detnoir` | the game folder itself (no subfolder) |
 
 Paths are relative to the game's install folder.
@@ -59,4 +59,3 @@ Installs to: the game folder itself (no subfolder)
 
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

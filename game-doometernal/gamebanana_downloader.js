@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 // Shared GameBanana requirements auto-downloader for Vortex game extensions.
 //
@@ -20,12 +20,12 @@
 // (single-requirement variants), isGameBananaRequirementInstalled,
 // getLatestGameBananaFile, getLatestGameBananaVersion.
 
-const { actions, log, selectors, util } = require('vortex-api');
+const { actions, log, selectors, util } = require("vortex-api");
 
 // --- requirement helpers --------------------------------------------------
 
 // Mod attribute used to track the installed GameBanana file id.
-const DEFAULT_FILE_ID_ATTRIBUTE = 'gamebananaFileId';
+const DEFAULT_FILE_ID_ATTRIBUTE = "gamebananaFileId";
 // Version parsed from the Updates title, e.g. "2026-05-20 (Update 6.66 Rev 3 N)".
 const DEFAULT_VERSION_PATTERN = /\(Update\s+(.+?)\)/;
 
@@ -36,7 +36,10 @@ function fileIdAttribute(requirement) {
 // GameBanana page for manual downloads, e.g. https://gamebanana.com/tools/7475.
 // The URL slug is the lower-cased plural of the apiv11 model name (Tool -> tools).
 function pageUrl(requirement) {
-  return requirement.pageUrl || `https://gamebanana.com/${requirement.gbItemType.toLowerCase()}s/${requirement.gbItemId}`;
+  return (
+    requirement.pageUrl ||
+    `https://gamebanana.com/${requirement.gbItemType.toLowerCase()}s/${requirement.gbItemId}`
+  );
 }
 
 function filesUrl(requirement) {
@@ -59,13 +62,13 @@ function fileDownloadUrl(fileId) {
 // Chromium, status 0 with the headers emptied, so Location cannot be read at all.
 async function resolveCdnUrl(url) {
   try {
-    const response = await fetch(url, { method: 'HEAD' });
+    const response = await fetch(url, { method: "HEAD" });
     if (!response.ok) {
       throw new Error(`Request failed with status code ${response.status}`);
     }
     return response.url || null;
   } catch (err) {
-    log('debug', `Could not resolve the GameBanana CDN URL for ${url}: ${err}`);
+    log("debug", `Could not resolve the GameBanana CDN URL for ${url}: ${err}`);
     return null;
   }
 }
@@ -80,7 +83,10 @@ function isPinned(requirement) {
     return false;
   }
   if (!requirement.pinFileId) {
-    log('warn', `${requirement.userFacingName} sets pinVersion without pinFileId - ignoring the pin`);
+    log(
+      "warn",
+      `${requirement.userFacingName} sets pinVersion without pinFileId - ignoring the pin`,
+    );
     return false;
   }
   return true;
@@ -95,8 +101,11 @@ function isAtPinnedVersion(api, gameId, requirement) {
   const state = api.getState();
   const mods = state.persistent.mods[gameId] || {};
   const attr = fileIdAttribute(requirement);
-  return Object.values(mods).some(mod => (mod?.type === requirement.modType)
-    && (String(mod?.attributes?.[attr]) === String(requirement.pinFileId)));
+  return Object.values(mods).some(
+    (mod) =>
+      mod?.type === requirement.modType &&
+      String(mod?.attributes?.[attr]) === String(requirement.pinFileId),
+  );
 }
 
 // --- GameBanana API -------------------------------------------------------
@@ -110,10 +119,14 @@ function isAtPinnedVersion(api, gameId, requirement) {
 const GB_CONTENT_TYPE = /^(application\/json|text\/html|text\/plain)/;
 
 async function gamebananaJson(url) {
-  if (util.rawRequest === undefined) { //older Vortex builds: no worse than before
+  if (util.rawRequest === undefined) {
+    //older Vortex builds: no worse than before
     return util.jsonRequest(url);
   }
-  const raw = await util.rawRequest(url, { expectedContentType: GB_CONTENT_TYPE, encoding: 'utf-8' });
+  const raw = await util.rawRequest(url, {
+    expectedContentType: GB_CONTENT_TYPE,
+    encoding: "utf-8",
+  });
   return JSON.parse(String(raw));
 }
 
@@ -121,9 +134,10 @@ async function gamebananaJson(url) {
 async function getLatestGameBananaFile(requirement) {
   try {
     const data = await gamebananaJson(filesUrl(requirement));
-    let files = (data?._aFiles || []).filter(file => (file?._idRow && file?._sDownloadUrl));
-    if (requirement.fileNamePattern) { //narrow multi-file submissions (e.g. Windows/Linux variants) to this requirement's file
-      files = files.filter(file => requirement.fileNamePattern.test(String(file._sFile || '')));
+    let files = (data?._aFiles || []).filter((file) => file?._idRow && file?._sDownloadUrl);
+    if (requirement.fileNamePattern) {
+      //narrow multi-file submissions (e.g. Windows/Linux variants) to this requirement's file
+      files = files.filter((file) => requirement.fileNamePattern.test(String(file._sFile || "")));
     }
     if (files.length === 0) {
       return null;
@@ -131,7 +145,10 @@ async function getLatestGameBananaFile(requirement) {
     files.sort((a, b) => (b._tsDateAdded || 0) - (a._tsDateAdded || 0)); //newest file first
     return files[0];
   } catch (err) {
-    log('warn', `Could not get latest ${requirement.userFacingName} file from GameBanana API: ${err}`);
+    log(
+      "warn",
+      `Could not get latest ${requirement.userFacingName} file from GameBanana API: ${err}`,
+    );
     return null;
   }
 }
@@ -140,11 +157,14 @@ async function getLatestGameBananaFile(requirement) {
 async function getLatestGameBananaVersion(requirement) {
   try {
     const data = await gamebananaJson(updatesUrl(requirement));
-    const title = data?._aRecords?.[0]?._sName || '';
+    const title = data?._aRecords?.[0]?._sName || "";
     const match = title.match(requirement.versionPattern || DEFAULT_VERSION_PATTERN);
     return match ? match[1] : null;
   } catch (err) {
-    log('warn', `Could not get latest ${requirement.userFacingName} version from GameBanana API: ${err}`);
+    log(
+      "warn",
+      `Could not get latest ${requirement.userFacingName} version from GameBanana API: ${err}`,
+    );
     return null;
   }
 }
@@ -161,7 +181,7 @@ const activeInstalls = new Set();
 function requirementModIds(api, gameId, requirement) {
   const state = api.getState();
   const mods = state.persistent.mods[gameId] || {};
-  return Object.keys(mods).filter(id => mods[id]?.type === requirement.modType);
+  return Object.keys(mods).filter((id) => mods[id]?.type === requirement.modType);
 }
 
 //Check if the requirement is installed (any mod with the requirement's mod type)
@@ -176,35 +196,50 @@ async function downloadGameBananaRequirement(api, gameSpec, requirement, check =
     return;
   }
   if (activeInstalls.has(requirement.modType)) {
-    log('debug', `${requirement.userFacingName} install already running - skipping duplicate request`);
+    log(
+      "debug",
+      `${requirement.userFacingName} install already running - skipping duplicate request`,
+    );
     return;
   }
   activeInstalls.add(requirement.modType);
   const NOTIF_ID = `${requirement.modType}-installing`;
-  api.sendNotification({ //notification indicating install process
+  api.sendNotification({
+    //notification indicating install process
     id: NOTIF_ID,
     message: `Installing ${requirement.userFacingName}`,
-    type: 'activity',
+    type: "activity",
     noDismiss: true,
     allowSuppress: false,
   });
   //captured before the install: these are the versions being replaced
   const previousModIds = requirementModIds(api, gameSpec.game.id, requirement);
   const pinned = isPinned(requirement);
-  try { //Download the mod
+  try {
+    //Download the mod
     //A pin overrides newest-file selection, and skips the API entirely: /dl/{fileId} is a
     //complete download URL on its own, so a pinned install needs no request to resolve.
     const latestFile = pinned ? null : await getLatestGameBananaFile(requirement); //resolve current file from GameBanana API
-    const latestVersion = pinned ? requirement.pinVersion : await getLatestGameBananaVersion(requirement);
+    const latestVersion = pinned
+      ? requirement.pinVersion
+      : await getLatestGameBananaVersion(requirement);
     const dlInfo = {
       game: gameSpec.game.id,
       name: requirement.userFacingName,
     };
     //fall back to the hardcoded file id if the API is unreachable
-    const fallbackUrl = requirement.fallbackFileId ? fileDownloadUrl(requirement.fallbackFileId) : undefined;
-    const URL = pinned ? fileDownloadUrl(requirement.pinFileId) : (latestFile ? latestFile._sDownloadUrl : fallbackUrl);
+    const fallbackUrl = requirement.fallbackFileId
+      ? fileDownloadUrl(requirement.fallbackFileId)
+      : undefined;
+    const URL = pinned
+      ? fileDownloadUrl(requirement.pinFileId)
+      : latestFile
+        ? latestFile._sDownloadUrl
+        : fallbackUrl;
     if (!URL) {
-      throw new util.ProcessCanceled('GameBanana API is unreachable and no fallback file id is set');
+      throw new util.ProcessCanceled(
+        "GameBanana API is unreachable and no fallback file id is set",
+      );
     }
     //Hand Vortex the CDN URL rather than the /dl/{fileId} one. Vortex names an archive from the
     //server's Content-Disposition, failing that from the last path segment of the URL it was given,
@@ -219,11 +254,20 @@ async function downloadGameBananaRequirement(api, gameSpec, requirement, check =
     //with it: naming a download makes Vortex check the download folder first and hand an archive
     //already sitting there back through the callback as an error rather than a download id.
     const archive = latestFile?._sFile || undefined;
-    const dlId = await util.toPromise(cb =>
-      api.events.emit('start-download', [downloadUrl], dlInfo, archive, cb,
-        (archive !== undefined) ? 'replace' : undefined, { allowInstall: false }));
-    const modId = await util.toPromise(cb =>
-      api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+    const dlId = await util.toPromise((cb) =>
+      api.events.emit(
+        "start-download",
+        [downloadUrl],
+        dlInfo,
+        archive,
+        cb,
+        archive !== undefined ? "replace" : undefined,
+        { allowInstall: false },
+      ),
+    );
+    const modId = await util.toPromise((cb) =>
+      api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+    );
     const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
     const batched = [
       actions.setModsEnabled(api, profileId, [modId], true, {
@@ -231,20 +275,44 @@ async function downloadGameBananaRequirement(api, gameSpec, requirement, check =
         installed: true,
       }),
       actions.setModType(gameSpec.game.id, modId, requirement.modType), // Set the modType
-      actions.setModAttribute(gameSpec.game.id, modId, 'version', latestVersion || requirement.fallbackVersion || ''),
-      actions.setModAttribute(gameSpec.game.id, modId, fileIdAttribute(requirement), pinned ? Number(requirement.pinFileId) : (latestFile ? latestFile._idRow : Number(requirement.fallbackFileId))), // Track the installed file id for update checks
-      actions.setModAttribute(gameSpec.game.id, modId, 'source', 'website'),
-      actions.setModAttribute(gameSpec.game.id, modId, 'url', pageUrl(requirement)), // Shown as the mod's "Source" link in the mod details (only rendered when source === 'website')
-      actions.setModAttribute(gameSpec.game.id, modId, 'customFileName', requirement.userFacingName), // Vortex renders a mod as customFileName || logicalFileName || fileName || name, and the install pipeline stamps fileName with the archive name - without this the mod list shows the raw archive
+      actions.setModAttribute(
+        gameSpec.game.id,
+        modId,
+        "version",
+        latestVersion || requirement.fallbackVersion || "",
+      ),
+      actions.setModAttribute(
+        gameSpec.game.id,
+        modId,
+        fileIdAttribute(requirement),
+        pinned
+          ? Number(requirement.pinFileId)
+          : latestFile
+            ? latestFile._idRow
+            : Number(requirement.fallbackFileId),
+      ), // Track the installed file id for update checks
+      actions.setModAttribute(gameSpec.game.id, modId, "source", "website"),
+      actions.setModAttribute(gameSpec.game.id, modId, "url", pageUrl(requirement)), // Shown as the mod's "Source" link in the mod details (only rendered when source === 'website')
+      actions.setModAttribute(
+        gameSpec.game.id,
+        modId,
+        "customFileName",
+        requirement.userFacingName,
+      ), // Vortex renders a mod as customFileName || logicalFileName || fileName || name, and the install pipeline stamps fileName with the archive name - without this the mod list shows the raw archive
     ];
-    for (const oldModId of previousModIds) { // Disable the version this install replaces, so only one copy deploys
+    for (const oldModId of previousModIds) {
+      // Disable the version this install replaces, so only one copy deploys
       if (oldModId !== modId) {
         batched.push(actions.setModEnabled(profileId, oldModId, false));
       }
     }
     util.batchDispatch(api.store, batched); // Will dispatch all actions.
-  } catch (err) { //Show the user the download page if the download/install process fails
-    api.showErrorNotification(`Failed to download/install ${requirement.userFacingName}. You must download manually.`, err);
+  } catch (err) {
+    //Show the user the download page if the download/install process fails
+    api.showErrorNotification(
+      `Failed to download/install ${requirement.userFacingName}. You must download manually.`,
+      err,
+    );
     util.opn(pageUrl(requirement)).catch(() => null);
   } finally {
     activeInstalls.delete(requirement.modType);
@@ -272,7 +340,7 @@ async function checkForGameBananaUpdateRequirement(api, gameSpec, requirement) {
     if (requirement.autoInstall === false) {
       return;
     }
-    log('info', `${requirement.userFacingName} is not installed - installing it`);
+    log("info", `${requirement.userFacingName} is not installed - installing it`);
     return downloadGameBananaRequirement(api, gameSpec, requirement);
   }
   if (isPinned(requirement)) {
@@ -280,12 +348,12 @@ async function checkForGameBananaUpdateRequirement(api, gameSpec, requirement) {
     // well as behind it - installing it from that state is a deliberate downgrade.
     api.sendNotification({
       id: `${requirement.modType}-update`,
-      type: 'warning',
+      type: "warning",
       message: `${requirement.userFacingName} pinned version available (${requirement.pinVersion})`,
       allowSuppress: true,
       actions: [
         {
-          title: 'Download',
+          title: "Download",
           action: (dismiss) => {
             downloadGameBananaRequirement(api, gameSpec, requirement, false);
             dismiss();
@@ -301,12 +369,19 @@ async function checkForGameBananaUpdateRequirement(api, gameSpec, requirement) {
   }
   const state = api.getState();
   const mods = state.persistent.mods[gameSpec.game.id] || {};
-  const requirementMods = Object.values(mods).filter(mod => mod?.type === requirement.modType);
-  const latestArchive = String(latestFile._sFile || '').toLowerCase().replace(/\.[^.]+$/, ''); //strip the archive extension (.zip, .7z, ...)
+  const requirementMods = Object.values(mods).filter((mod) => mod?.type === requirement.modType);
+  const latestArchive = String(latestFile._sFile || "")
+    .toLowerCase()
+    .replace(/\.[^.]+$/, ""); //strip the archive extension (.zip, .7z, ...)
   const attr = fileIdAttribute(requirement);
-  const isCurrent = requirementMods.some(mod => // match on tracked file id, or archive name for mods installed before id tracking
-    (String(mod?.attributes?.[attr]) === String(latestFile._idRow))
-    || ((latestArchive.length > 0) && String(mod?.attributes?.fileName || '').toLowerCase().includes(latestArchive))
+  const isCurrent = requirementMods.some(
+    (mod) =>
+      // match on tracked file id, or archive name for mods installed before id tracking
+      String(mod?.attributes?.[attr]) === String(latestFile._idRow) ||
+      (latestArchive.length > 0 &&
+        String(mod?.attributes?.fileName || "")
+          .toLowerCase()
+          .includes(latestArchive)),
   );
   if (isCurrent) {
     return;
@@ -314,12 +389,12 @@ async function checkForGameBananaUpdateRequirement(api, gameSpec, requirement) {
   const latestVersion = await getLatestGameBananaVersion(requirement);
   api.sendNotification({
     id: `${requirement.modType}-update`,
-    type: 'warning',
-    message: `${requirement.userFacingName} update available${latestVersion ? ` (${latestVersion})` : ''}`,
+    type: "warning",
+    message: `${requirement.userFacingName} update available${latestVersion ? ` (${latestVersion})` : ""}`,
     allowSuppress: true,
     actions: [
       {
-        title: 'Download',
+        title: "Download",
         action: (dismiss) => {
           downloadGameBananaRequirement(api, gameSpec, requirement, false);
           dismiss();

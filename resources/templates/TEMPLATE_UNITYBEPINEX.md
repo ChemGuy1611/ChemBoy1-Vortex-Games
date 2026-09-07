@@ -34,13 +34,13 @@ equality check, because this family uses two vocabularies interchangeably: `mono
 `downloadCfgMan`; when that toggle is off, `getRequirements()` returns an empty array so the update
 check cannot back-door install it.
 
-| Mod type | Priority | Target |
-| --- | --- | --- |
-| `ROOT_ID` | spec | `{gamePath}` |
-| `BEPCFGMAN_ID` | spec | `Bepinex` |
-| `BEPMOD_ID` | spec | `BepinEx/plugins` |
-| `ASSEMBLY_ID` | 60 | `<data>/Managed` or `.` |
-| `ASSETS_ID` | 62 | `<data>` |
+| Mod type       | Priority | Target                  |
+| -------------- | -------- | ----------------------- |
+| `ROOT_ID`      | spec     | `{gamePath}`            |
+| `BEPCFGMAN_ID` | spec     | `Bepinex`               |
+| `BEPMOD_ID`    | spec     | `BepinEx/plugins`       |
+| `ASSEMBLY_ID`  | 60       | `<data>/Managed` or `.` |
+| `ASSETS_ID`    | 62       | `<data>`                |
 
 **Installers:** `ROOT` 8 → `BEPCFGMAN` 9 → `ASSEMBLY` 25 → `ASSETS` 27 → fallback 49.
 ConfigurationManager **must** stay at 9: the BepInEx helper extension's own mod types start at 10 and

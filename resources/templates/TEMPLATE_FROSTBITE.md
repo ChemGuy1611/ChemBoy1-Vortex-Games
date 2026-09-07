@@ -19,20 +19,19 @@ FrostyToolsuite `v1.0.6.3` release zip, `FROSTY_CONFIG_PATH`
 `DatapathFixPlugin` `v1.7.1` release, `PLUGIN_PATH` and `PATCH_PATH` both `FrostyModManager/Plugins`,
 `KEY_PATH` `FrostyModManager`.
 
-| Mod type | Gate | Target |
-| --- | --- | --- |
-| `ROOT_ID` | always | `{gamePath}` |
-| `FROSTYMOD_ID` | always | `FrostyModManager/Mods/<game>` |
-| `PLUGIN_ID` | always | `FrostyModManager/Plugins` |
-| `FROSTY_ID` | always, spec `low` | `{gamePath}` |
-| `KEY_ID` | `needsKey` | `FrostyModManager` |
+| Mod type       | Gate               | Target                         |
+| -------------- | ------------------ | ------------------------------ |
+| `ROOT_ID`      | always             | `{gamePath}`                   |
+| `FROSTYMOD_ID` | always             | `FrostyModManager/Mods/<game>` |
+| `PLUGIN_ID`    | always             | `FrostyModManager/Plugins`     |
+| `FROSTY_ID`    | always, spec `low` | `{gamePath}`                   |
+| `KEY_ID`       | `needsKey`         | `FrostyModManager`             |
 
 `PATCH_ID` is deliberately **not** a mod type. The DatapathFix plugin is published as a naked `.dll`
 rather than an archive, so it cannot be staged as a mod — `downloadPatch` downloads it, then finds
 it in the download folder and copies it straight into `FrostyModManager/Plugins`.
 
-**Installers:** `FROSTY` 25 → `FROSTYMOD` 30 → `PLUGIN` 35 → `KEY` 40 (behind `needsKey`) → fallback
-49. This template steps by 5 rather than 2.
+**Installers:** `FROSTY` 25 → `FROSTYMOD` 30 → `PLUGIN` 35 → `KEY` 40 (behind `needsKey`) → fallback 49. This template steps by 5 rather than 2.
 
 **Multi-mod archives.** `chooseFilesToInstall` prompts when an archive contains several `.fbmod`
 files, and `packInstructionsNotify` explains the choice.

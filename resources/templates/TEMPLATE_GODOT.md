@@ -30,12 +30,12 @@ Godot 3 version**, which the shipped `LOADER_ARC_NAME` and `ARCHIVE_PATTERN` cur
 **Constants:** `MOD_EXTS` `['.gd']`, `OVERRIDE_FILE` `override.cfg`, `DATA_FOLDER`
 `Godot/app_userdata/<game>` (the Godot user-data root that config and saves hang off).
 
-| Mod type | Priority | Target |
-| --- | --- | --- |
-| `MOD_ID` | spec `high` | `mods-unpacked` or `mods` |
-| `LOADER_ID` | spec `low` | `{gamePath}` |
-| `CONFIG_ID` | 60 | absolute `CONFIG_PATH` — scaffolded commented out |
-| `SAVE_ID` | 60 | absolute `SAVE_PATH` — scaffolded commented out |
+| Mod type    | Priority    | Target                                            |
+| ----------- | ----------- | ------------------------------------------------- |
+| `MOD_ID`    | spec `high` | `mods-unpacked` or `mods`                         |
+| `LOADER_ID` | spec `low`  | `{gamePath}`                                      |
+| `CONFIG_ID` | 60          | absolute `CONFIG_PATH` — scaffolded commented out |
+| `SAVE_ID`   | 60          | absolute `SAVE_PATH` — scaffolded commented out   |
 
 **Installers:** `LOADER` 25 → `MOD` 27 (zip or unpack variant) → fallback 49.
 

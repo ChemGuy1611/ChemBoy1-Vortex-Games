@@ -64,8 +64,8 @@ context.registerArchiveType(
 
 ```typescript
 type ArchiveHandlerCreator = (
-  fileName: string,          // absolute path to the archive file on disk
-  options: IArchiveOptions
+    fileName: string, // absolute path to the archive file on disk
+    options: IArchiveOptions,
 ) => PromiseBB<IArchiveHandler>;
 ```
 
@@ -79,10 +79,10 @@ Source: line 293
 
 ```typescript
 interface IArchiveOptions {
-  verify?:  boolean;   // run integrity check (CRC) when opening
-  gameId?:  string;    // hint for game context
-  version?: string;    // hint for format version
-  create?:  boolean;   // open in write/create mode
+    verify?: boolean; // run integrity check (CRC) when opening
+    gameId?: string; // hint for game context
+    version?: string; // hint for format version
+    create?: boolean; // open in write/create mode
 }
 ```
 
@@ -96,25 +96,25 @@ Source: line 313
 
 ```typescript
 interface IArchiveHandler {
-  readDir(archPath: string):                         PromiseBB<string[]>; // REQUIRED
-  extractAll(outputPath: string):                    PromiseBB<void>;     // REQUIRED
-  readFile?(filePath: string):                       NodeJS.ReadableStream;
-  extractFile?(filePath: string, outputPath: string): PromiseBB<void>;
-  addFile?(filePath: string, sourcePath: string):    PromiseBB<void>;
-  create?(sourcePath: string):                       PromiseBB<void>;
-  write?():                                          PromiseBB<void>;
+    readDir(archPath: string): PromiseBB<string[]>; // REQUIRED
+    extractAll(outputPath: string): PromiseBB<void>; // REQUIRED
+    readFile?(filePath: string): NodeJS.ReadableStream;
+    extractFile?(filePath: string, outputPath: string): PromiseBB<void>;
+    addFile?(filePath: string, sourcePath: string): PromiseBB<void>;
+    create?(sourcePath: string): PromiseBB<void>;
+    write?(): PromiseBB<void>;
 }
 ```
 
-| Method | Required | Description |
-| --- | --- | --- |
-| `readDir(archPath)` | YES | List all file paths in the archive. `archPath` may be a subdirectory filter or the archive root — handling both is safest. Return flat list of relative paths. |
-| `extractAll(outputPath)` | YES | Extract entire archive to `outputPath`. |
-| `readFile(filePath)` | no | Return a readable stream for a single file. Used by FOMOD reader and preview features. |
-| `extractFile(filePath, outputPath)` | no | Extract a single file. Called when Vortex only needs one item. |
-| `addFile(filePath, sourcePath)` | no | Add/update a file in the archive. Only needed for mutable archives. |
-| `create(sourcePath)` | no | Create a new archive from a directory. Only needed if `options.create` mode matters. |
-| `write()` | no | Flush pending changes. Called after a series of `addFile` calls. |
+| Method                              | Required | Description                                                                                                                                                    |
+| ----------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `readDir(archPath)`                 | YES      | List all file paths in the archive. `archPath` may be a subdirectory filter or the archive root — handling both is safest. Return flat list of relative paths. |
+| `extractAll(outputPath)`            | YES      | Extract entire archive to `outputPath`.                                                                                                                        |
+| `readFile(filePath)`                | no       | Return a readable stream for a single file. Used by FOMOD reader and preview features.                                                                         |
+| `extractFile(filePath, outputPath)` | no       | Extract a single file. Called when Vortex only needs one item.                                                                                                 |
+| `addFile(filePath, sourcePath)`     | no       | Add/update a file in the archive. Only needed for mutable archives.                                                                                            |
+| `create(sourcePath)`                | no       | Create a new archive from a directory. Only needed if `options.create` mode matters.                                                                           |
+| `write()`                           | no       | Flush pending changes. Called after a series of `addFile` calls.                                                                                               |
 
 `readDir` and `extractAll` are the two methods `Archive` always exposes, so implement both.
 They run when something opens the archive through `api.openArchive` — not on every mod install
@@ -128,34 +128,36 @@ requires them.
 Some games use a custom extension that is structurally identical to a ZIP file (e.g., `.vmz` in Road to Vostok). Register the extension and delegate to `util.SevenZip` (the bundled `node-7z` bindings), which handles ZIP natively.
 
 ```js
-context.registerArchiveType('vmz', (fileName, options) => {
-  const szip = new util.SevenZip();
-  const handler = {
-    readDir: (archPath) => new Promise((resolve, reject) => {
-      const files = [];
-      const stream = szip.list(fileName);
-      stream.on('data', (data) => files.push(data.file));
-      stream.on('end', () => resolve(files));
-      stream.on('error', reject);
-    }),
-    extractAll: (outputPath) => new Promise((resolve, reject) => {
-      const stream = szip.extractFull(fileName, outputPath);
-      stream.on('end', resolve);
-      stream.on('error', reject);
-    }),
-  };
-  return Promise.resolve(handler);
+context.registerArchiveType("vmz", (fileName, options) => {
+    const szip = new util.SevenZip();
+    const handler = {
+        readDir: (archPath) =>
+            new Promise((resolve, reject) => {
+                const files = [];
+                const stream = szip.list(fileName);
+                stream.on("data", (data) => files.push(data.file));
+                stream.on("end", () => resolve(files));
+                stream.on("error", reject);
+            }),
+        extractAll: (outputPath) =>
+            new Promise((resolve, reject) => {
+                const stream = szip.extractFull(fileName, outputPath);
+                stream.on("end", resolve);
+                stream.on("error", reject);
+            }),
+    };
+    return Promise.resolve(handler);
 });
 ```
 
 ### util.SevenZip (node-7z) method signatures used above
 
-| Method | Signature | Notes |
-| --- | --- | --- |
-| `szip.list(archivePath, opts?)` | returns stream | `data` event: `{ file, size, compressedSize, ... }` |
-| `szip.extractFull(archivePath, destPath, opts?)` | returns stream | Extracts with full directory structure |
-| `szip.extract(archivePath, destPath, opts?)` | returns stream | Extracts flat (no paths) |
-| `szip.add(archivePath, files, opts?)` | returns stream | Add files; `opts.raw: ['-r']` for recursive |
+| Method                                           | Signature      | Notes                                               |
+| ------------------------------------------------ | -------------- | --------------------------------------------------- |
+| `szip.list(archivePath, opts?)`                  | returns stream | `data` event: `{ file, size, compressedSize, ... }` |
+| `szip.extractFull(archivePath, destPath, opts?)` | returns stream | Extracts with full directory structure              |
+| `szip.extract(archivePath, destPath, opts?)`     | returns stream | Extracts flat (no paths)                            |
+| `szip.add(archivePath, files, opts?)`            | returns stream | Add files; `opts.raw: ['-r']` for recursive         |
 
 ### `opts.raw` does not work as a file filter on extraction
 
@@ -172,8 +174,8 @@ All node-7z streams are thenable — you can `await szip.add(...)` directly, or 
 When the format requires a dedicated tool (e.g., MT Framework `.arc`), delegate to the tool executable:
 
 ```js
-context.registerArchiveType('arc', (fileName, options) =>
-  createARCHandler(context.api, fileName, options)
+context.registerArchiveType("arc", (fileName, options) =>
+    createARCHandler(context.api, fileName, options),
 );
 ```
 
@@ -193,19 +195,19 @@ When a game distributes mods as renamed zips (`.vmz`), the installer pipeline ne
 
 ### Why two installers are needed
 
-Vortex extracts the download into a temp folder before running installer tests. If the mod *is
-itself* a renamed zip (no wrapper folder), the installers see the raw contents — e.g. `mod.txt`,
+Vortex extracts the download into a temp folder before running installer tests. If the mod _is
+itself_ a renamed zip (no wrapper folder), the installers see the raw contents — e.g. `mod.txt`,
 `mod_data/`, etc.
 
 The game's mod loader expects a `.vmz` file in the mods folder, not extracted contents. So the installer must repack the files back into a zip and rename it `.vmz`.
 
 ### Installer 1 — testMod / installMod (pass-through, for .vmz inside a wrapper zip)
 
-Fires when the *outer* download is a zip that contains `.vmz` files inside it. Detects by checking file extensions, copies `.vmz` files flat to the mod type destination.
+Fires when the _outer_ download is a zip that contains `.vmz` files inside it. Detects by checking file extensions, copies `.vmz` files flat to the mod type destination.
 
 ```js
 // testMod: fires if any extracted file has .vmz extension
-const isMod = files.some(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
+const isMod = files.some((file) => MOD_EXTS.includes(path.extname(file).toLowerCase()));
 ```
 
 ### Installer 2 — testRezip / installRezip (repack, for naked .vmz)
@@ -214,7 +216,7 @@ Fires when the `.vmz` was downloaded directly. After `registerArchiveType` extra
 
 ```js
 // testRezip: fires if mod.txt is present in extracted contents
-const isMod = files.some(file => MOD_FILES.includes(path.basename(file).toLowerCase()));
+const isMod = files.some((file) => MOD_FILES.includes(path.basename(file).toLowerCase()));
 // MOD_FILES = ["mod.txt"]
 ```
 
@@ -222,18 +224,22 @@ const isMod = files.some(file => MOD_FILES.includes(path.basename(file).toLowerC
 
 ```js
 async function installRezip(files, destinationPath) {
-  const szip = new util.SevenZip();
-  const modName = path.basename(destinationPath, '.installing');
-  const archiveName = modName.split('-')[0] + '.zip';
-  const archivePath = path.join(destinationPath, archiveName);
-  const rootRelPaths = await fs.readdirAsync(destinationPath);
-  await szip.add(archivePath, rootRelPaths.map(p => path.join(destinationPath, p)), { raw: ['-r'] });
-  return Promise.resolve({
-    instructions: [
-      { type: 'copy', source: archiveName, destination: path.basename(archivePath) },
-      { type: 'setmodtype', value: MOD_ID },
-    ]
-  });
+    const szip = new util.SevenZip();
+    const modName = path.basename(destinationPath, ".installing");
+    const archiveName = modName.split("-")[0] + ".zip";
+    const archivePath = path.join(destinationPath, archiveName);
+    const rootRelPaths = await fs.readdirAsync(destinationPath);
+    await szip.add(
+        archivePath,
+        rootRelPaths.map((p) => path.join(destinationPath, p)),
+        { raw: ["-r"] },
+    );
+    return Promise.resolve({
+        instructions: [
+            { type: "copy", source: archiveName, destination: path.basename(archivePath) },
+            { type: "setmodtype", value: MOD_ID },
+        ],
+    });
 }
 ```
 
@@ -263,4 +269,5 @@ Working example: `game-roadtovostok/index.js`
 described above). `UNDERUSED_API_FUNCTIONS.md` (§5 `api.openArchive` — the one caller of the
 handlers registered here). `DOWNLOADER.md` (auto-downloading requirements from GitHub releases —
 why the asset it fetches should carry a standard archive extension). `VORTEX_APP.md` (overview of
-where archive handling fits among other extension systems).
+where archive handling fits among other extension systems). `NODE_FS.md` (the plain-disk `fs` reads
+and writes on either side of an extraction — reading an archive's bytes, and staging what comes out).

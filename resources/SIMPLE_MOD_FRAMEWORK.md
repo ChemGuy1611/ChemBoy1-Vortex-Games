@@ -1,6 +1,6 @@
 # Simple Mod Framework
 
-Simple Mod Framework (SMF) is the mod loader for *HITMAN World of Assassination*. It is not a
+Simple Mod Framework (SMF) is the mod loader for _HITMAN World of Assassination_. It is not a
 file-copy loader: mods live inside the framework's own directory tree, are registered in the
 framework's config, and are applied to the game by the framework's deploy step. A mod folder that
 appears in the right place without going through the framework's own ingest path is not an installed
@@ -21,13 +21,13 @@ Verified against `atampy25/simple-mod-framework` at 2.33.42 (2026-08-28) and
 
 The framework installs into `<GameFolder>\Simple Mod Framework`:
 
-| Path | Role |
-| --- | --- |
-| `Deploy.exe` | The deploy step that writes mods into the game |
-| `Mod Manager\Mod Manager.exe` | The Electron GUI the user drives |
-| `Mods\` | Where installed mods live. **Framework-owned** |
-| `config.json` | `loadOrder` and `knownMods` — the framework's record of what is installed |
-| `Third-Party\7z.exe` | Used to unpack archives handed to Add a Mod |
+| Path                          | Role                                                                      |
+| ----------------------------- | ------------------------------------------------------------------------- |
+| `Deploy.exe`                  | The deploy step that writes mods into the game                            |
+| `Mod Manager\Mod Manager.exe` | The Electron GUI the user drives                                          |
+| `Mods\`                       | Where installed mods live. **Framework-owned**                            |
+| `config.json`                 | `loadOrder` and `knownMods` — the framework's record of what is installed |
+| `Third-Party\7z.exe`          | Used to unpack archives handed to Add a Mod                               |
 
 `config.json` ships seeded with `loadOrder: []` and `knownMods: []`, so a fresh install applies
 nothing to the game until the user enables mods in the GUI.
@@ -40,7 +40,7 @@ Nothing outside the framework may write into `<GameFolder>\Simple Mod Framework\
 separate checks enforce this, and each one fails loudly:
 
 - **Startup, Mod Manager main page.** It reads the folder, drops the marker file by exact name, and
-  if *any remaining entry is a file* it raises a blocking "There's a file in the Mods folder" modal.
+  if _any remaining entry is a file_ it raises a blocking "There's a file in the Mods folder" modal.
   The file test is a plain `statSync(...).isFile()`, which **follows symlinks** — so a deployed link
   counts as a file just as much as a real one. Deploying mod archives here disables the GUI outright.
 - **Startup, mod list page.** Any mod present in the folder but absent from `config.json`'s

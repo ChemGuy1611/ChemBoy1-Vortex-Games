@@ -1,6 +1,6 @@
 # Lobotomy BaseMod
 
-BaseMod is the mod loader for *Lobotomy Corporation*. It ships inside the **Lobotomy Mod Manager**
+BaseMod is the mod loader for _Lobotomy Corporation_. It ships inside the **Lobotomy Mod Manager**
 (LMM), a standalone Unity application that both installs the loader and browses/downloads mods.
 There is no separate "loader only" download.
 
@@ -16,26 +16,26 @@ shipped `LobotomyPatcher.exe` and the loader's own `Add_On` sources.
 
 ## The game
 
-| | |
-| --- | --- |
-| Steam AppID | `568220` |
-| Executable | `LobotomyCorp.exe` |
-| Data folder | `LobotomyCorp_Data` |
-| Nexus domain | `lobotomycorporation` |
-| Stores | Steam only — LMM resolves the install directory through `SteamApps.GetAppInstallDir` and has no other lookup |
-| Save data | `%USERPROFILE%\AppData\LocalLow\Project_Moon\Lobotomy` |
-| Loader log | `…\LocalLow\Project_Moon\Lobotomy\LobotomyBaseMod\Log.txt` |
+|              |                                                                                                              |
+| ------------ | ------------------------------------------------------------------------------------------------------------ |
+| Steam AppID  | `568220`                                                                                                     |
+| Executable   | `LobotomyCorp.exe`                                                                                           |
+| Data folder  | `LobotomyCorp_Data`                                                                                          |
+| Nexus domain | `lobotomycorporation`                                                                                        |
+| Stores       | Steam only — LMM resolves the install directory through `SteamApps.GetAppInstallDir` and has no other lookup |
+| Save data    | `%USERPROFILE%\AppData\LocalLow\Project_Moon\Lobotomy`                                                       |
+| Loader log   | `…\LocalLow\Project_Moon\Lobotomy\LobotomyBaseMod\Log.txt`                                                   |
 
 ## Loader source
 
-| | |
-| --- | --- |
-| Repository | `github.com/LobotomyBaseMod/LMM` |
-| Release tags | `Update<version>` — e.g. `Update1.3.9` |
-| Asset | `Lobotomy.Mod.Manager.<version>.zip` (~85 MB) |
-| Sibling asset | `Updater.<version>.zip` — the self-updater, not wanted |
-| Version | Reads off the **asset** name, so no tag-prefix stripping is needed |
-| Nexus mirror | site mod 765 — same tool, but GitHub has been the update channel since LMM 1.2.0, so the build there trails the releases |
+|               |                                                                                                                          |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Repository    | `github.com/LobotomyBaseMod/LMM`                                                                                         |
+| Release tags  | `Update<version>` — e.g. `Update1.3.9`                                                                                   |
+| Asset         | `Lobotomy.Mod.Manager.<version>.zip` (~85 MB)                                                                            |
+| Sibling asset | `Updater.<version>.zip` — the self-updater, not wanted                                                                   |
+| Version       | Reads off the **asset** name, so no tag-prefix stripping is needed                                                       |
+| Nexus mirror  | site mod 765 — same tool, but GitHub has been the update channel since LMM 1.2.0, so the build there trails the releases |
 
 The version lives in the asset filename, so an archive-name pattern resolves it directly. Anchor
 that pattern on the `.zip` extension and the `Lobotomy.Mod.Manager.` prefix, or the `Updater` asset
@@ -108,18 +108,18 @@ Patchwork, or a runtime patch step.
 Every destination is `LobotomyCorp_Data\Managed\`. Sources are relative to
 `LobotomyModManager_Data\PatchFiles\` inside the release archive.
 
-| Source | Destination | Notes |
-| --- | --- | --- |
-| `Assembly-CSharp_patched.dll` | `Assembly-CSharp.dll` | 4,329,472 bytes — **renamed on copy** |
-| `Assembly-CSharp.dll` | `Assembly-CSharp.dll` | 4,121,088 bytes — the bundled *vanilla* copy. The patcher writes it first only so Paste has something to overwrite; deploying it is pointless and, for a mod manager, harmful |
-| `Lobotomypatch.dll` | *not copied* | Patchwork's input, used only in Patch mode |
-| `0Harmony.dll` | same name | |
-| `LobotomyBaseModLib.dll` | same name | the loader library — the file to test an install against |
-| `Newtonsoft.Json.dll` | same name | |
-| `NAudio.dll` | same name | |
-| `Facepunch.Steamworks.Win64.dll` | same name | |
-| `steam_api64.dll` | same name | copied into `Managed\` even though the game's own copy lives at the game root — this is what the patcher does |
-| `BaseMod\` (recursive, 591 files) | `Managed\BaseMod\` | base game data the loader reads |
+| Source                            | Destination           | Notes                                                                                                                                                                         |
+| --------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Assembly-CSharp_patched.dll`     | `Assembly-CSharp.dll` | 4,329,472 bytes — **renamed on copy**                                                                                                                                         |
+| `Assembly-CSharp.dll`             | `Assembly-CSharp.dll` | 4,121,088 bytes — the bundled _vanilla_ copy. The patcher writes it first only so Paste has something to overwrite; deploying it is pointless and, for a mod manager, harmful |
+| `Lobotomypatch.dll`               | _not copied_          | Patchwork's input, used only in Patch mode                                                                                                                                    |
+| `0Harmony.dll`                    | same name             |                                                                                                                                                                               |
+| `LobotomyBaseModLib.dll`          | same name             | the loader library — the file to test an install against                                                                                                                      |
+| `Newtonsoft.Json.dll`             | same name             |                                                                                                                                                                               |
+| `NAudio.dll`                      | same name             |                                                                                                                                                                               |
+| `Facepunch.Steamworks.Win64.dll`  | same name             |                                                                                                                                                                               |
+| `steam_api64.dll`                 | same name             | copied into `Managed\` even though the game's own copy lives at the game root — this is what the patcher does                                                                 |
+| `BaseMod\` (recursive, 591 files) | `Managed\BaseMod\`    | base game data the loader reads                                                                                                                                               |
 
 `BaseMod\` holds `BaseList.txt`, `BaseCreatureGen.xml`, `BaseEquipment.txt`, `BaseIsolate.txt`,
 `BaseMapGraph.txt`, `NewMap.xml`, `BackUp.dll`, and the `BaseCreatures\`, `StoryData\` and `Image\`
@@ -155,10 +155,10 @@ a mod packed inside a wrapper folder still installs flat.
 
 ### Mod metadata
 
-| File | Fields read |
-| --- | --- |
-| `Info\<lang>\info.xml` | `/info/name`, `/info/descs/desc`, `/info/ID` |
-| `Info\GlobalInfo.xml` | `/info/ID`, repeated `/info/Require` (dependencies), `/info/Option` (Toggle / Slider settings) |
+| File                   | Fields read                                                                                    |
+| ---------------------- | ---------------------------------------------------------------------------------------------- |
+| `Info\<lang>\info.xml` | `/info/name`, `/info/descs/desc`, `/info/ID`                                                   |
+| `Info\GlobalInfo.xml`  | `/info/ID`, repeated `/info/Require` (dependencies), `/info/Option` (Toggle / Slider settings) |
 
 The loader probes languages in the order: the current language, then `en`, then `kr`.
 
@@ -236,6 +236,6 @@ release, including the archive-name version pattern this loader relies on).
 folder after its archive).
 `HEALTH_CHECK.md` (the built-in Nexus requirements check whose matching rules the enabled
 placeholder mod above is built to satisfy).
-`SIMPLE_MOD_FRAMEWORK.md` and `SNAKEBITE_CLI.md` (the two loaders in this collection that are *not*
+`SIMPLE_MOD_FRAMEWORK.md` and `SNAKEBITE_CLI.md` (the two loaders in this collection that are _not_
 file-copy installs, for contrast — both require the loader's own tooling to ingest a mod).
 `UNITY_MOD_MANAGER.md` and `MELONLOADER.md` (the other Unity-side loaders documented here).

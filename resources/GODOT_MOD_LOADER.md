@@ -10,7 +10,7 @@ Two things about GML shape every Vortex extension built on it, and both are easy
 - **Its release stream carries two incompatible product lines under one tag sequence** — Godot 3 and
   Godot 4 — with completely different asset naming.
 - **Its two mod folders live in different filesystems.** `mods/` is on disk next to the executable;
-  `mods-unpacked/` is `res://`, which in an exported game means *inside the game's `.pck`*. Only one
+  `mods-unpacked/` is `res://`, which in an exported game means _inside the game's `.pck`_. Only one
   of the two is a place a mod manager can deploy to.
 
 ---
@@ -19,10 +19,10 @@ Two things about GML shape every Vortex extension built on it, and both are easy
 
 GML publishes both engine lines from a single repository, newest-first in one `/releases` stream:
 
-| Engine | Branch | Newest release | Asset name |
-| --- | --- | --- | --- |
-| Godot 4 (4.1–4.3) | `4.x-dev` | `v7.0.1` (2025-06-11) | `ModLoader-Self-Setup_7.0.1-WIN.zip` |
-| Godot 3 (3.5+) | `3.x-dev` | `v6.3.0` (2025-01-27) | `godot-mod-loader_v6.3.0_self-setup.zip` |
+| Engine            | Branch    | Newest release        | Asset name                               |
+| ----------------- | --------- | --------------------- | ---------------------------------------- |
+| Godot 4 (4.1–4.3) | `4.x-dev` | `v7.0.1` (2025-06-11) | `ModLoader-Self-Setup_7.0.1-WIN.zip`     |
+| Godot 3 (3.5+)    | `3.x-dev` | `v6.3.0` (2025-01-27) | `godot-mod-loader_v6.3.0_self-setup.zip` |
 
 Three consequences for any downloader that resolves GML from the GitHub API:
 
@@ -62,10 +62,10 @@ folder, no wrapper directory. They are copied verbatim into the game's install f
 
 The bulk of the download is one bundled binary:
 
-| Release line | Bundled tool | Size | Purpose |
-| --- | --- | --- | --- |
-| Godot 4 (7.0.1) | `addons/mod_loader/vendor/GDRE/gdre_tools.exe` (+ `.pck`) | ~67 MB | patches `project.binary` into the game's pack |
-| Godot 3 (6.3.0) | `addons/mod_loader/vendor/godotpcktool/godotpcktool.exe` | ~1.6 MB | same, older tool |
+| Release line    | Bundled tool                                              | Size    | Purpose                                       |
+| --------------- | --------------------------------------------------------- | ------- | --------------------------------------------- |
+| Godot 4 (7.0.1) | `addons/mod_loader/vendor/GDRE/gdre_tools.exe` (+ `.pck`) | ~67 MB  | patches `project.binary` into the game's pack |
+| Godot 3 (6.3.0) | `addons/mod_loader/vendor/godotpcktool/godotpcktool.exe`  | ~1.6 MB | same, older tool                              |
 
 That is why the Godot 4 archive is ~24 MB compressed against ~660 KB for Godot 3. The tool is
 **Windows-only**: `get_gdre_path()` returns the executable path on Windows and an empty string
@@ -119,13 +119,13 @@ script detects that the autoloads are already in position and hands straight off
 Read by `mod_loader_setup.gd` and `_ModLoaderCLI`. All accept `--arg=value`, `--arg="value"`, or
 `--arg value` form:
 
-| Argument | Effect |
-| --- | --- |
-| `--script addons/mod_loader/mod_loader_setup.gd` | runs the setup; the one argument a user must add |
-| `--setup-create-override-cfg` | use `override.cfg` instead of pack injection |
-| `--only-setup` | `quit(0)` when setup finishes instead of alerting and restarting |
-| `--exe-name=<name>` | override the assumed executable base name |
-| `--pck-name=<name>` | override the assumed pack base name (defaults to the exe's base name) |
+| Argument                                         | Effect                                                                |
+| ------------------------------------------------ | --------------------------------------------------------------------- |
+| `--script addons/mod_loader/mod_loader_setup.gd` | runs the setup; the one argument a user must add                      |
+| `--setup-create-override-cfg`                    | use `override.cfg` instead of pack injection                          |
+| `--only-setup`                                   | `quit(0)` when setup finishes instead of alerting and restarting      |
+| `--exe-name=<name>`                              | override the assumed executable base name                             |
+| `--pck-name=<name>`                              | override the assumed pack base name (defaults to the exe's base name) |
 
 `--only-setup` is the useful one for a mod manager: it turns first-run setup into a headless,
 non-interactive step that can be registered as its own tool instead of ambushing the user with an
@@ -140,16 +140,16 @@ to find it, concludes the pack is embedded, and tries to patch the executable in
 This is the section that decides whether a Vortex extension works at all. GML has three mod sources,
 and they do not live in the same place:
 
-| Source | Path resolved by GML | Real location in an exported game | Deployable by a mod manager |
-| --- | --- | --- | --- |
-| Packed mods | `get_local_folder_dir("mods")` → `OS.get_executable_path().get_base_dir()` + `/mods` | `<game>/mods/*.zip` on disk | **Yes** |
-| Unpacked mods | `ModLoaderStore.UNPACKED_DIR` = `"res://mods-unpacked/"` | inside the game's `.pck` | **No** |
-| Steam Workshop | Steam's workshop content directory | Steam library | No (Steam owns it) |
+| Source         | Path resolved by GML                                                                 | Real location in an exported game | Deployable by a mod manager |
+| -------------- | ------------------------------------------------------------------------------------ | --------------------------------- | --------------------------- |
+| Packed mods    | `get_local_folder_dir("mods")` → `OS.get_executable_path().get_base_dir()` + `/mods` | `<game>/mods/*.zip` on disk       | **Yes**                     |
+| Unpacked mods  | `ModLoaderStore.UNPACKED_DIR` = `"res://mods-unpacked/"`                             | inside the game's `.pck`          | **No**                      |
+| Steam Workshop | Steam's workshop content directory                                                   | Steam library                     | No (Steam owns it)          |
 
 The asymmetry is deliberate on GML's side and forced by Godot. In an exported project, loading a
 resource pack calls
 `DirAccess::make_default<DirAccessPack>(DirAccess::ACCESS_RESOURCES)` — the Godot source comments it
-as *"if data.pck is found, all directory access will be from here"*. `FileAccess::open()` is not
+as _"if data.pck is found, all directory access will be from here"_. `FileAccess::open()` is not
 swapped the same way: it tries the pack first and then falls back to the real filesystem. So for a
 `res://` path in an exported game:
 
@@ -202,13 +202,13 @@ load with a validation error.
 surface, not a user one, but four options change where mods are read from and are worth knowing when
 diagnosing "my mods do not load":
 
-| Option | Default | Effect |
-| --- | --- | --- |
-| `enable_mods` | `true` | master switch; `false` disables all mod loading |
-| `load_from_local` | `true` | read `<game>/mods/*.zip` |
-| `load_from_unpacked` | `true` | read `res://mods-unpacked` (see above for why that is not the game folder) |
-| `load_from_steam_workshop` | `false` | read Steam Workshop content instead of `mods/` |
-| `override_path_to_mods` | `""` | replaces the `mods` folder path entirely |
+| Option                     | Default | Effect                                                                     |
+| -------------------------- | ------- | -------------------------------------------------------------------------- |
+| `enable_mods`              | `true`  | master switch; `false` disables all mod loading                            |
+| `load_from_local`          | `true`  | read `<game>/mods/*.zip`                                                   |
+| `load_from_unpacked`       | `true`  | read `res://mods-unpacked` (see above for why that is not the game folder) |
+| `load_from_steam_workshop` | `false` | read Steam Workshop content instead of `mods/`                             |
+| `override_path_to_mods`    | `""`    | replaces the `mods` folder path entirely                                   |
 
 Also useful: `disabled_mods` (mod IDs skipped at load) and `locked_mods` (mod IDs the user cannot
 toggle in a profile). A game shipping a non-empty `override_path_to_mods` moves the deployment
@@ -219,13 +219,13 @@ target somewhere a generic extension will not find.
 None of these come from a mod archive, so a mod manager neither deploys nor purges them. They do
 show up as unmanaged files in the game directory:
 
-| Path | Created by | Notes |
-| --- | --- | --- |
-| `override.cfg` | `--setup-create-override-cfg` | project settings override |
-| `godot/` | `--setup-create-override-cfg` | public copy of the project data dir |
-| `<game>-vanilla.pck` / `-vanilla.exe` | injection setup | the original, renamed aside |
-| `mod-hooks.zip` | GML 7 at runtime | generated hook pack; a new one triggers a restart prompt |
-| `addons/mod_loader/setup/temp/` | injection setup | created and removed within the run |
+| Path                                  | Created by                    | Notes                                                    |
+| ------------------------------------- | ----------------------------- | -------------------------------------------------------- |
+| `override.cfg`                        | `--setup-create-override-cfg` | project settings override                                |
+| `godot/`                              | `--setup-create-override-cfg` | public copy of the project data dir                      |
+| `<game>-vanilla.pck` / `-vanilla.exe` | injection setup               | the original, renamed aside                              |
+| `mod-hooks.zip`                       | GML 7 at runtime              | generated hook pack; a new one triggers a restart prompt |
+| `addons/mod_loader/setup/temp/`       | injection setup               | created and removed within the run                       |
 
 `user://mod_configs` (`%APPDATA%\Godot\app_userdata\<game>\mod_configs` on Windows) holds per-mod
 config JSON. GML 7 renames the pre-7.0 `user://configs` directory on first run.

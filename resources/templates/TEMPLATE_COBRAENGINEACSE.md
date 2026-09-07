@@ -11,15 +11,15 @@ depend on.
 `Win64/ovldata`, `ACSE_FILE` `ACSE`, `ACSE_MOD_FILE` `Main.ovl`, `MOVIES_EXTS` `['.webm']`,
 `SAVE_EXTS` `['.blpr2', '.prk2']`.
 
-| Mod type | Target |
-| --- | --- |
-| `ACSE_ID` | `Win64/ovldata` |
-| `ROOT_ID` | `{gamePath}` |
-| `ACSE_MOD_ID` | `Win64/ovldata` |
-| `OVLDATA_ID` | `Win64` |
-| `LOCALISED_ID` | `Win64/ovldata/ACSE` |
-| `MOVIES_ID` | `Movies` |
-| `SAVE_ID` | absolute `SAVE_PATH` (outside the game folder) |
+| Mod type       | Target                                         |
+| -------------- | ---------------------------------------------- |
+| `ACSE_ID`      | `Win64/ovldata`                                |
+| `ROOT_ID`      | `{gamePath}`                                   |
+| `ACSE_MOD_ID`  | `Win64/ovldata`                                |
+| `OVLDATA_ID`   | `Win64`                                        |
+| `LOCALISED_ID` | `Win64/ovldata/ACSE`                           |
+| `MOVIES_ID`    | `Movies`                                       |
+| `SAVE_ID`      | absolute `SAVE_PATH` (outside the game folder) |
 
 **Installers:** `ACSE` 25 → `ROOT` 27 → `ACSE_MOD` 28 → `LOCALISED` 29 → `MOVIES` 31 → `OVLDATA` 33
 → `SAVE` 49 → fallback 49. Two departures from the usual pattern: `ACSE_MOD` sits at 28 rather than

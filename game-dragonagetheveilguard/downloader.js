@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 // Shared GitHub/Nexus requirements auto-downloader for Vortex game extensions.
 //
@@ -22,14 +22,14 @@
 // resolveVersionByDirectCopyMarker, resolveVersionByNightlyRun, getMods,
 // testRequirementVersion, default(init).
 
-const path = require('path');
-const semver = require('semver');
-const { createWriteStream } = require('fs'); //node's fs directly - vortex-api's createWriteStream re-export is deprecated
-const { finished } = require('stream/promises');
-const { actions, fs, log, selectors, util } = require('vortex-api');
+const path = require("path");
+const semver = require("semver");
+const { createWriteStream } = require("fs"); //node's fs directly - vortex-api's createWriteStream re-export is deprecated
+const { finished } = require("stream/promises");
+const { actions, fs, log, selectors, util } = require("vortex-api");
 
 // --- common ---------------------------------------------------------------
-const NOTIF_ID_REQUIREMENTS = 'vortex-downloader-requirements-download-notification';
+const NOTIF_ID_REQUIREMENTS = "vortex-downloader-requirements-download-notification";
 
 // Dragon Age: The Veilguard (Frosty/DAV) mods tag releases as dates
 // (YYYY.MM.DD.build), not semver. Convert e.g. '2026.02.01.0' -> '26.2.1' so
@@ -38,16 +38,16 @@ function normalizeFrostyVersion(version) {
   if (version === null || version === undefined) {
     return version;
   }
-  const versionSplit = version.split('.'); // ['2026','02','01','0']
-  versionSplit[0] = versionSplit[0].replace('20', ''); // ['26','02','01','0']
-  if (versionSplit[1].startsWith('0')) {
-    versionSplit[1] = versionSplit[1].replace('0', ''); // ['26','2','01','0']
+  const versionSplit = version.split("."); // ['2026','02','01','0']
+  versionSplit[0] = versionSplit[0].replace("20", ""); // ['26','02','01','0']
+  if (versionSplit[1].startsWith("0")) {
+    versionSplit[1] = versionSplit[1].replace("0", ""); // ['26','2','01','0']
   }
-  if (versionSplit[2].startsWith('0')) {
-    versionSplit[2] = versionSplit[2].replace('0', ''); // ['26','2','1','0']
+  if (versionSplit[2].startsWith("0")) {
+    versionSplit[2] = versionSplit[2].replace("0", ""); // ['26','2','1','0']
   }
   versionSplit.pop(); // drop build -> ['26','2','1']
-  return versionSplit.join('.'); // '26.2.1'
+  return versionSplit.join("."); // '26.2.1'
 }
 
 // Parse a release/asset version into something semver can compare, most-trustworthy
@@ -94,16 +94,18 @@ function toComparableVersion(version) {
 // Whether a requirement tracks a GitHub Actions CI artifact instead of a release. Setting
 // nightlyUrl is what switches the mode on; see the nightly section further down.
 function isNightly(requirement) {
-  return (requirement?.nightlyUrl !== undefined)
-    && (requirement.nightlyUrl !== null)
-    && (requirement.nightlyUrl !== '');
+  return (
+    requirement?.nightlyUrl !== undefined &&
+    requirement.nightlyUrl !== null &&
+    requirement.nightlyUrl !== ""
+  );
 }
 
 // Whether a requirement is hosted on a Nexus Mods page instead of a GitHub repository. Setting
 // nexusModId is what switches the mode on; see the Nexus section further down. githubUrl is not
 // read at all in this mode.
 function isNexusRequirement(requirement) {
-  return (requirement?.nexusModId !== undefined) && (requirement.nexusModId !== null);
+  return requirement?.nexusModId !== undefined && requirement.nexusModId !== null;
 }
 
 // Loose direct-copy mode: the asset is written straight to directCopyPath and never becomes a
@@ -111,7 +113,7 @@ function isNexusRequirement(requirement) {
 // behind by an older build, cleaned up once), so it must be excluded here - every behavioral
 // test for loose mode goes through this helper rather than reading the field directly.
 function isDirectCopy(requirement) {
-  return (requirement?.directCopyPath !== undefined) && (requirement.directCopyAsMod !== true);
+  return requirement?.directCopyPath !== undefined && requirement.directCopyAsMod !== true;
 }
 
 // Managed-mod direct-copy mode: a naked asset placed into a mod's staging folder, where Vortex
@@ -127,9 +129,11 @@ function isDirectCopyAsMod(requirement) {
 // toggled on a 404). With pinVersion unset - the default - none of this code runs and the
 // module behaves exactly as it does without the feature.
 function isPinned(requirement) {
-  return (requirement?.pinVersion !== undefined)
-    && (requirement.pinVersion !== null)
-    && (requirement.pinVersion !== '');
+  return (
+    requirement?.pinVersion !== undefined &&
+    requirement.pinVersion !== null &&
+    requirement.pinVersion !== ""
+  );
 }
 
 // Installed identity of a pinned requirement, read from the `version` attribute stamped at
@@ -139,10 +143,10 @@ function isPinned(requirement) {
 async function installedPinVersion(api, requirement) {
   if (isDirectCopy(requirement)) {
     const marker = await readDirectCopyMarker(requirement);
-    return marker?.version ?? '';
+    return marker?.version ?? "";
   }
   const mod = requirement.findMod ? await requirement.findMod(api) : undefined;
-  return util.getSafe(mod, ['attributes', 'version'], '');
+  return util.getSafe(mod, ["attributes", "version"], "");
 }
 
 // Pin comparison. Exact string match first, so version shapes semver cannot represent compare
@@ -150,9 +154,9 @@ async function installedPinVersion(api, requirement) {
 // equality as a fallback for versions stamped before the pin was set, which were coerced on
 // the way in ('19.0' -> '19.0.0').
 function isSamePinVersion(pinVersion, installed) {
-  const pinned = String(pinVersion ?? '');
-  const current = String(installed ?? '');
-  if ((pinned === '') || (current === '')) {
+  const pinned = String(pinVersion ?? "");
+  const current = String(installed ?? "");
+  if (pinned === "" || current === "") {
     return false;
   }
   if (pinned === current) {
@@ -160,7 +164,7 @@ function isSamePinVersion(pinVersion, installed) {
   }
   const coercedPin = toComparableVersion(pinned);
   const coercedCurrent = toComparableVersion(current);
-  return (coercedPin !== undefined) && (coercedPin === coercedCurrent);
+  return coercedPin !== undefined && coercedPin === coercedCurrent;
 }
 
 // Whether the installed copy already sits on the pin. True short-circuits the update check
@@ -184,13 +188,13 @@ function latestAssetVersion(requirement, latest) {
   // workflow run number is the only identity it has. It is also what the update check compares,
   // and the two must agree or every check would report an update.
   if (isNightly(requirement)) {
-    return String(latest.nightlyRunNumber ?? '');
+    return String(latest.nightlyRunNumber ?? "");
   }
   if (isPinned(requirement)) {
     return String(requirement.pinVersion);
   }
   if (requirement.trackByAssetDate === true) {
-    return latest.updated_at ?? latest.created_at ?? '';
+    return latest.updated_at ?? latest.created_at ?? "";
   }
   // Rolling-tag repos (e.g. EntityAtlan 'ModLoader') carry the version in the asset
   // filename, not the tag - prefer the fileArchivePattern capture group when present.
@@ -202,7 +206,7 @@ function latestAssetVersion(requirement, latest) {
       return fromAsset;
     }
   }
-  return toComparableVersion(latest.release.tag_name) ?? '0.0.0';
+  return toComparableVersion(latest.release.tag_name) ?? "0.0.0";
 }
 
 // Whether the fetched `latest` asset is newer than the `installed` marker. Asset-date mode
@@ -218,14 +222,14 @@ function isUpdateAvailable(requirement, latest, installed) {
       return false;
     }
     const installedRun = Number(installed);
-    return !Number.isFinite(installedRun) || (latestRun > installedRun);
+    return !Number.isFinite(installedRun) || latestRun > installedRun;
   }
   if (requirement.trackByAssetDate === true) {
-    const latestTime = Date.parse(latest.updated_at ?? latest.created_at ?? '');
+    const latestTime = Date.parse(latest.updated_at ?? latest.created_at ?? "");
     if (Number.isNaN(latestTime)) {
       return false;
     }
-    const installedTime = Date.parse(installed ?? '');
+    const installedTime = Date.parse(installed ?? "");
     return Number.isNaN(installedTime) ? true : latestTime > installedTime;
   }
   // semver.gt throws on an unparseable version, and ?? does not catch the '' that a
@@ -233,7 +237,7 @@ function isUpdateAvailable(requirement, latest, installed) {
   // "update available" like any other missing marker. Parsed through the same helper as the
   // latest side: if one side kept a prerelease identifier and the other coerced it away, every
   // check would compare 3.1.0-6 against 3.1.0 and report "up to date" forever.
-  const installedVersion = toComparableVersion(installed) ?? '0.0.0';
+  const installedVersion = toComparableVersion(installed) ?? "0.0.0";
   return semver.gt(latestAssetVersion(requirement, latest), installedVersion);
 }
 
@@ -245,7 +249,7 @@ function repoPageUrl(requirement, api) {
   if (isNexusRequirement(requirement)) {
     return nexusPageUrl(nexusDomain(api, requirement), requirement.nexusModId);
   }
-  return requirement.githubUrl?.replace('https://api.github.com/repos/', 'https://github.com/');
+  return requirement.githubUrl?.replace("https://api.github.com/repos/", "https://github.com/");
 }
 
 // --- downloader -----------------------------------------------------------
@@ -260,8 +264,8 @@ async function download(api, requirements, force) {
   const gameId = selectors.activeGameId(state);
   api.sendNotification({
     id: NOTIF_ID_REQUIREMENTS,
-    message: 'Installing Requirements',
-    type: 'activity',
+    message: "Installing Requirements",
+    type: "activity",
     noDismiss: true,
     allowSuppress: false,
   });
@@ -276,7 +280,7 @@ async function download(api, requirements, force) {
     for (const req of requirements) {
       const guardKey = req.modType ?? req.archiveFileName;
       if (activeInstalls.has(guardKey)) {
-        log('debug', `${req.userFacingName} install already running - skipping duplicate request`);
+        log("debug", `${req.userFacingName} install already running - skipping duplicate request`);
         continue;
       }
       activeInstalls.add(guardKey);
@@ -305,7 +309,9 @@ async function download(api, requirements, force) {
             continue;
           }
           const pinned = isPinned(req);
-          const version = pinned ? await installedPinVersion(api, req) : await req.resolveVersion(api);
+          const version = pinned
+            ? await installedPinVersion(api, req)
+            : await req.resolveVersion(api);
           asset = await resolveLatestAsset(api, req);
           if (!asset) {
             continue;
@@ -313,7 +319,11 @@ async function download(api, requirements, force) {
           // A pin replaces the newest-release comparison outright: the fetched asset IS the
           // pinned release, so anything else installed - older or newer - is a mismatch, and
           // installing over a newer version is the deliberate downgrade the pin asks for.
-          if (pinned ? !isSamePinVersion(req.pinVersion, version) : isUpdateAvailable(req, asset, version)) {
+          if (
+            pinned
+              ? !isSamePinVersion(req.pinVersion, version)
+              : isUpdateAvailable(req, asset, version)
+          ) {
             versionMismatch = true;
             // Disable the outgoing version NOW, not via the batch dispatched at the end of the
             // run. installDownload enables the incoming mod as soon as it lands, so deferring
@@ -326,9 +336,10 @@ async function download(api, requirements, force) {
             // versions pile up and any one of them left enabled keeps deploying over the new
             // one. installDownload re-enables the incoming mod immediately afterwards, so a
             // same-mod-id replacement still ends up enabled.
-            const outgoing = (req.modType && req.assemblyFileName)
-              ? await findModsByFile(api, req.modType, req.assemblyFileName)
-              : [mod];
+            const outgoing =
+              req.modType && req.assemblyFileName
+                ? await findModsByFile(api, req.modType, req.assemblyFileName)
+                : [mod];
             for (const stale of outgoing) {
               api.store.dispatch(actions.setModEnabled(profileId, stale.id, false));
             }
@@ -338,13 +349,22 @@ async function download(api, requirements, force) {
           }
         } else if (force !== true && mod?.id !== undefined) {
           batchActions.push(actions.setModEnabled(profileId, mod.id, true));
-          batchActions.push(actions.setModAttribute(gameId, mod.id, 'customFileName', req.userFacingName));
-          batchActions.push(actions.setModAttribute(gameId, mod.id, 'description', 'This is a modding requirement for this game - leave it enabled.'));
+          batchActions.push(
+            actions.setModAttribute(gameId, mod.id, "customFileName", req.userFacingName),
+          );
+          batchActions.push(
+            actions.setModAttribute(
+              gameId,
+              mod.id,
+              "description",
+              "This is a modding requirement for this game - leave it enabled.",
+            ),
+          );
           continue;
         }
         // findDownloadId is not required of a nightly requirement - the shortcut below never
         // applies to one, so declaring the field there would be dead weight.
-        const dlId = req.findDownloadId ? req.findDownloadId(api) : '';
+        const dlId = req.findDownloadId ? req.findDownloadId(api) : "";
         // A nightly artifact's filename is constant across every CI run, so a local archive
         // matching it is precisely what must NOT be reused - always re-resolve the newest run.
         // A naked asset has no archive to reuse at all (the module never creates a Downloads-tab
@@ -352,15 +372,21 @@ async function download(api, requirements, force) {
         // excluded for the nightly reason: reusing a stale archive is exactly what the page's
         // file listing exists to prevent, and re-requesting a file already downloaded costs
         // nothing (Vortex reuses the local copy itself).
-        if (!versionMismatch && !force && dlId && !isNightly(req) && !isDirectCopyAsMod(req)
-            && !isNexusRequirement(req)) {
+        if (
+          !versionMismatch &&
+          !force &&
+          dlId &&
+          !isNightly(req) &&
+          !isDirectCopyAsMod(req) &&
+          !isNexusRequirement(req)
+        ) {
           // Archive already downloaded - resolve the version locally (archive filename/version
           // file) rather than hitting the GitHub API, keeping this shortcut path network-free.
           // A failed resolve ('' or the '0.0.0' sentinel) is left unstamped rather than recorded,
           // so the next forced update stamps the real release version instead of a bogus floor
           // that would suppress nothing and misreport the installed version.
           let shortcutVersion = req.resolveVersion ? await req.resolveVersion(api) : undefined;
-          if (!shortcutVersion || shortcutVersion === '0.0.0') {
+          if (!shortcutVersion || shortcutVersion === "0.0.0") {
             shortcutVersion = undefined;
           }
           await installDownload(api, dlId, {
@@ -402,7 +428,7 @@ async function download(api, requirements, force) {
           installedAny = true;
           continue;
         }
-        const tempPath = path.join(util.getVortexPath('temp'), asset.name);
+        const tempPath = path.join(util.getVortexPath("temp"), asset.name);
         try {
           await doDownload(asset.browser_download_url, tempPath);
           await importAndInstall(api, tempPath, {
@@ -423,27 +449,29 @@ async function download(api, requirements, force) {
         // Keep going: one unreachable repo or broken archive must not silently drop every
         // remaining requirement in the array.
         if (err instanceof util.ProcessCanceled) {
-          log('warn', `Skipped requirement ${req.userFacingName}`, err.message);
+          log("warn", `Skipped requirement ${req.userFacingName}`, err.message);
         } else {
-          api.showErrorNotification(`Failed to install ${req.userFacingName}`, err, { allowReport: false });
+          api.showErrorNotification(`Failed to install ${req.userFacingName}`, err, {
+            allowReport: false,
+          });
         }
       } finally {
         activeInstalls.delete(guardKey);
       }
     }
   } catch (err) {
-    log('error', 'failed to download requirements', err);
+    log("error", "failed to download requirements", err);
   } finally {
     if (batchActions.length > 0) {
       util.batchDispatch(api.store, batchActions);
     }
     api.dismissNotification(NOTIF_ID_REQUIREMENTS);
   }
-  if ((force === true) && !installedAny && (upToDate.length > 0)) {
+  if (force === true && !installedAny && upToDate.length > 0) {
     api.sendNotification({
       id: `${NOTIF_ID_REQUIREMENTS}-current`,
-      type: 'success',
-      message: `Already up to date: ${upToDate.join(', ')}`,
+      type: "success",
+      message: `Already up to date: ${upToDate.join(", ")}`,
       displayMS: 5000,
     });
   }
@@ -454,9 +482,9 @@ async function installDownload(api, dlId, info) {
   const state = api.getState();
   const gameId = selectors.activeGameId(state);
   return new Promise((resolve, reject) => {
-    api.events.emit('start-install-download', dlId, true, (err, modId) => {
+    api.events.emit("start-install-download", dlId, true, (err, modId) => {
       if (err !== null) {
-        api.showErrorNotification('Failed to install requirement', err, { allowReport: false });
+        api.showErrorNotification("Failed to install requirement", err, { allowReport: false });
         return reject(err);
       }
       const state = api.getState();
@@ -475,7 +503,7 @@ async function installDownload(api, dlId, info) {
       // source: 'website' + url makes Vortex show a clickable "Source" link to the repo
       // page in the mod details panel (mod_management customRenderer gates on this pair).
       if (info.pageUrl !== undefined) {
-        attributes.source = 'website';
+        attributes.source = "website";
         attributes.url = info.pageUrl;
       }
       if (info.version !== undefined) {
@@ -506,13 +534,13 @@ async function installDownload(api, dlId, info) {
 
 async function importAndInstall(api, filePath, info) {
   return new Promise((resolve, reject) => {
-    api.events.emit('import-downloads', [filePath], async (dlIds) => {
+    api.events.emit("import-downloads", [filePath], async (dlIds) => {
       const id = dlIds[0];
       if (id === undefined) {
         return reject(new util.NotFound(filePath));
       }
       const batched = [];
-      batched.push(actions.setDownloadModInfo(id, 'source', 'other'));
+      batched.push(actions.setDownloadModInfo(id, "source", "other"));
       util.batchDispatch(api.store, batched);
       try {
         await installDownload(api, id, info);
@@ -528,10 +556,11 @@ async function getLatestGithubReleaseAsset(api, requirement) {
   const chooseAsset = (release) => {
     const assets = release.assets ?? [];
     if (requirement.fileArchivePattern) {
-      const asset = assets.find(asset => requirement.fileArchivePattern.exec(asset.name));
+      const asset = assets.find((asset) => requirement.fileArchivePattern.exec(asset.name));
       return asset ? { ...asset, release } : undefined;
     }
-    const asset = assets.find((asset) => asset.name.includes(requirement.archiveFileName)) ?? assets[0];
+    const asset =
+      assets.find((asset) => asset.name.includes(requirement.archiveFileName)) ?? assets[0];
     return asset ? { ...asset, release } : undefined;
   };
   // Pick the GitHub releases endpoint based on the requirement:
@@ -543,11 +572,18 @@ async function getLatestGithubReleaseAsset(api, requirement) {
   // tags, so the other form is tried once when the first returns 404.
   const candidateUrls = [];
   if (isPinned(requirement)) {
-    if (requirement.prereleaseTag || (requirement.allowPrerelease === true) || (requirement.trackByAssetDate === true)) {
-      log('warn', `${requirement.userFacingName} is pinned to ${requirement.pinVersion} - ignoring allowPrerelease/prereleaseTag/trackByAssetDate`);
+    if (
+      requirement.prereleaseTag ||
+      requirement.allowPrerelease === true ||
+      requirement.trackByAssetDate === true
+    ) {
+      log(
+        "warn",
+        `${requirement.userFacingName} is pinned to ${requirement.pinVersion} - ignoring allowPrerelease/prereleaseTag/trackByAssetDate`,
+      );
     }
     const pinnedTag = String(requirement.pinTag ?? requirement.pinVersion);
-    const altTag = pinnedTag.startsWith('v') ? pinnedTag.slice(1) : `v${pinnedTag}`;
+    const altTag = pinnedTag.startsWith("v") ? pinnedTag.slice(1) : `v${pinnedTag}`;
     candidateUrls.push(`${requirement.githubUrl}/releases/tags/${pinnedTag}`);
     candidateUrls.push(`${requirement.githubUrl}/releases/tags/${altTag}`);
   } else if (requirement.prereleaseTag) {
@@ -568,15 +604,21 @@ async function getLatestGithubReleaseAsset(api, requirement) {
       // error notification. Only treat as rate limit when the header is actually present - a
       // 403/404 from a host that does not send x-ratelimit-* must fall through to the error
       // path below.
-      const remainingHeader = response.headers.get('x-ratelimit-remaining');
-      if ([403, 404].includes(response.status) && (remainingHeader !== null) && (parseInt(remainingHeader, 10) === 0)) {
-        const resetDate = parseInt(response.headers.get('x-ratelimit-reset') ?? '0', 10);
-        log('info', 'GitHub rate limit exceeded', { reset_at: (new Date(resetDate * 1000)).toString() });
-        return Promise.reject(new util.ProcessCanceled('GitHub rate limit exceeded'));
+      const remainingHeader = response.headers.get("x-ratelimit-remaining");
+      if (
+        [403, 404].includes(response.status) &&
+        remainingHeader !== null &&
+        parseInt(remainingHeader, 10) === 0
+      ) {
+        const resetDate = parseInt(response.headers.get("x-ratelimit-reset") ?? "0", 10);
+        log("info", "GitHub rate limit exceeded", {
+          reset_at: new Date(resetDate * 1000).toString(),
+        });
+        return Promise.reject(new util.ProcessCanceled("GitHub rate limit exceeded"));
       }
       // Only a missing tag is worth retrying with the other 'v' spelling; any other status
       // means the next candidate would fail the same way.
-      if (response.ok || (response.status !== 404)) {
+      if (response.ok || response.status !== 404) {
         break;
       }
     }
@@ -588,7 +630,7 @@ async function getLatestGithubReleaseAsset(api, requirement) {
     // Scan on past releases that carry no matching asset rather than giving up on the newest
     // one - a source-only or partially uploaded release would otherwise hide an asset that
     // does exist further down. Single-release endpoints simply yield a one-entry list.
-    const releases = (Array.isArray(data) ? data : [data]).filter(rel => !!rel && !rel.draft);
+    const releases = (Array.isArray(data) ? data : [data]).filter((rel) => !!rel && !rel.draft);
     for (const release of releases) {
       const asset = chooseAsset(release);
       if (asset) {
@@ -597,17 +639,26 @@ async function getLatestGithubReleaseAsset(api, requirement) {
     }
     // Nothing matched anywhere. This is what an upstream asset rename looks like, and it is
     // otherwise completely silent - name the pattern and what the release actually ships.
-    const available = (releases[0]?.assets ?? []).map(asset => asset.name);
+    const available = (releases[0]?.assets ?? []).map((asset) => asset.name);
     const reason = requirement.fileArchivePattern
       ? `no asset matched ${requirement.fileArchivePattern}`
       : `no asset matched "${requirement.archiveFileName}"`;
-    log('warn', `No usable GitHub asset for ${requirement.userFacingName}`, { reason, releasesChecked: releases.length, available });
-    api.showErrorNotification('Could not find a download for {{repName}}',
-      `${reason}. The latest release ${available.length > 0 ? `contains: ${available.join(', ')}` : 'contains no files'}. `
-      + 'The file was most likely renamed by its author, in which case this extension needs an update.',
-      { allowReport: false, replace: { repName: requirement.userFacingName } });
+    log("warn", `No usable GitHub asset for ${requirement.userFacingName}`, {
+      reason,
+      releasesChecked: releases.length,
+      available,
+    });
+    api.showErrorNotification(
+      "Could not find a download for {{repName}}",
+      `${reason}. The latest release ${available.length > 0 ? `contains: ${available.join(", ")}` : "contains no files"}. ` +
+        "The file was most likely renamed by its author, in which case this extension needs an update.",
+      { allowReport: false, replace: { repName: requirement.userFacingName } },
+    );
   } catch (error) {
-    api.showErrorNotification('Error fetching the latest release url for {{repName}}', error, { allowReport: false, replace: { repName: requirement.archiveFileName } });
+    api.showErrorNotification("Error fetching the latest release url for {{repName}}", error, {
+      allowReport: false,
+      replace: { repName: requirement.archiveFileName },
+    });
   }
   return null;
 }
@@ -632,19 +683,29 @@ async function getLatestGithubReleaseAsset(api, requirement) {
 // the compare key and rides along on the same object.
 async function getLatestNightlyArtifact(api, requirement) {
   if (isPinned(requirement)) {
-    log('warn', `${requirement.userFacingName} tracks a nightly CI artifact - ignoring pinVersion (only the newest run is reachable)`);
+    log(
+      "warn",
+      `${requirement.userFacingName} tracks a nightly CI artifact - ignoring pinVersion (only the newest run is reachable)`,
+    );
   }
-  const runsUrl = `${requirement.githubUrl}/actions/workflows/${requirement.nightlyWorkflow}/runs`
-    + `?branch=${requirement.nightlyBranch}&status=success&per_page=1`;
+  const runsUrl =
+    `${requirement.githubUrl}/actions/workflows/${requirement.nightlyWorkflow}/runs` +
+    `?branch=${requirement.nightlyBranch}&status=success&per_page=1`;
   try {
     const response = await fetch(runsUrl);
     // Same rate-limit contract as the release path: a rate-limited 403/404 must yield
     // ProcessCanceled for the caller to skip on, not the generic error notification.
-    const remainingHeader = response.headers.get('x-ratelimit-remaining');
-    if ([403, 404].includes(response.status) && (remainingHeader !== null) && (parseInt(remainingHeader, 10) === 0)) {
-      const resetDate = parseInt(response.headers.get('x-ratelimit-reset') ?? '0', 10);
-      log('info', 'GitHub rate limit exceeded', { reset_at: (new Date(resetDate * 1000)).toString() });
-      return Promise.reject(new util.ProcessCanceled('GitHub rate limit exceeded'));
+    const remainingHeader = response.headers.get("x-ratelimit-remaining");
+    if (
+      [403, 404].includes(response.status) &&
+      remainingHeader !== null &&
+      parseInt(remainingHeader, 10) === 0
+    ) {
+      const resetDate = parseInt(response.headers.get("x-ratelimit-reset") ?? "0", 10);
+      log("info", "GitHub rate limit exceeded", {
+        reset_at: new Date(resetDate * 1000).toString(),
+      });
+      return Promise.reject(new util.ProcessCanceled("GitHub rate limit exceeded"));
     }
     if (!response.ok) {
       throw new Error(`Request failed with status code ${response.status} (${runsUrl})`);
@@ -655,10 +716,12 @@ async function getLatestNightlyArtifact(api, requirement) {
       // A renamed workflow file or a retired branch looks exactly like this, and is otherwise
       // completely silent - name what was asked for.
       const reason = `no successful run of ${requirement.nightlyWorkflow} on branch ${requirement.nightlyBranch}`;
-      log('warn', `No usable nightly build for ${requirement.userFacingName}`, { reason, runsUrl });
-      api.showErrorNotification('Could not find a nightly build for {{repName}}',
+      log("warn", `No usable nightly build for ${requirement.userFacingName}`, { reason, runsUrl });
+      api.showErrorNotification(
+        "Could not find a nightly build for {{repName}}",
         `${reason}. The workflow or branch was most likely renamed by its author, in which case this extension needs an update.`,
-        { allowReport: false, replace: { repName: requirement.userFacingName } });
+        { allowReport: false, replace: { repName: requirement.userFacingName } },
+      );
       return null;
     }
     return {
@@ -669,7 +732,10 @@ async function getLatestNightlyArtifact(api, requirement) {
       release: { tag_name: String(run.run_number) },
     };
   } catch (error) {
-    api.showErrorNotification('Error fetching the latest nightly build for {{repName}}', error, { allowReport: false, replace: { repName: requirement.userFacingName } });
+    api.showErrorNotification("Error fetching the latest nightly build for {{repName}}", error, {
+      allowReport: false,
+      replace: { repName: requirement.userFacingName },
+    });
   }
   return null;
 }
@@ -716,7 +782,9 @@ function nexusPageUrl(domain, modId) {
 // Failure on this route sends the user to the page as well as notifying: an account that cannot
 // auto-download, or a page whose files were reorganised, still leaves the file one click away.
 function reportNexusFailure(api, requirement, domain, error) {
-  api.showErrorNotification(`Failed to download ${requirement.userFacingName}`, error, { allowReport: false });
+  api.showErrorNotification(`Failed to download ${requirement.userFacingName}`, error, {
+    allowReport: false,
+  });
   util.opn(`${nexusPageUrl(domain, requirement.nexusModId)}/files/?tab=files`).catch(() => null);
 }
 
@@ -728,14 +796,18 @@ function reportNexusFailure(api, requirement, domain, error) {
 // carrying both strings - installing the wrong build is worse than installing nothing.
 function matchesNexusFileName(requirement, file) {
   const names = [file.file_name, file.name]
-    .filter(name => typeof name === 'string')
-    .map(name => name.toLowerCase());
-  if ((requirement.nexusFileExclude !== undefined)
-      && names.some(name => name.includes(String(requirement.nexusFileExclude).toLowerCase()))) {
+    .filter((name) => typeof name === "string")
+    .map((name) => name.toLowerCase());
+  if (
+    requirement.nexusFileExclude !== undefined &&
+    names.some((name) => name.includes(String(requirement.nexusFileExclude).toLowerCase()))
+  ) {
     return false;
   }
-  if ((requirement.nexusFileMatch !== undefined)
-      && !names.some(name => name.includes(String(requirement.nexusFileMatch).toLowerCase()))) {
+  if (
+    requirement.nexusFileMatch !== undefined &&
+    !names.some((name) => name.includes(String(requirement.nexusFileMatch).toLowerCase()))
+  ) {
     return false;
   }
   if (requirement.nexusFilePattern === undefined) {
@@ -744,7 +816,7 @@ function matchesNexusFileName(requirement, file) {
   // test() and exec() are both stateful on a /g-flagged RegExp, so a pattern authored with /g
   // would carry lastIndex from one file to the next inside .filter() and drop matches at random.
   requirement.nexusFilePattern.lastIndex = 0;
-  return names.some(name => requirement.nexusFilePattern.test(name));
+  return names.some((name) => requirement.nexusFilePattern.test(name));
 }
 
 // The newest allowed main file of a Nexus page, shaped like a release asset. The filters run
@@ -759,14 +831,17 @@ async function getLatestNexusFile(api, requirement) {
     if (requirement.nexusFileId === undefined) {
       return undefined;
     }
-    log('warn', `Could not read the Nexus file listing for ${requirement.userFacingName} - falling back to the configured file id`,
-      { domain, modId: requirement.nexusModId, fileId: requirement.nexusFileId });
+    log(
+      "warn",
+      `Could not read the Nexus file listing for ${requirement.userFacingName} - falling back to the configured file id`,
+      { domain, modId: requirement.nexusModId, fileId: requirement.nexusFileId },
+    );
     return {
       name: requirement.archiveFileName,
       nexusFileId: requirement.nexusFileId,
       nexusModId: requirement.nexusModId,
       nexusDomain: domain,
-      release: { tag_name: '' },
+      release: { tag_name: "" },
     };
   };
   if (api.ext?.nexusGetModFiles === undefined) {
@@ -774,7 +849,7 @@ async function getLatestNexusFile(api, requirement) {
     if (fallback !== undefined) {
       return fallback;
     }
-    const err = new Error('Nexus integration is unavailable in this Vortex build');
+    const err = new Error("Nexus integration is unavailable in this Vortex build");
     reportNexusFailure(api, requirement, domain, err);
     return Promise.reject(new util.ProcessCanceled(err.message));
   }
@@ -799,20 +874,20 @@ async function getLatestNexusFile(api, requirement) {
   // reaches later, which is exactly what a requirement must never install.
   const categoryIds = [].concat(requirement.nexusCategoryId ?? 1);
   const candidates = (files ?? [])
-    .filter(file => categoryIds.includes(file.category_id))
-    .filter(file => matchesNexusFileName(requirement, file))
+    .filter((file) => categoryIds.includes(file.category_id))
+    .filter((file) => matchesNexusFileName(requirement, file))
     // uploaded_timestamp is the numeric upload time. uploaded_time is an ISO string, and
     // parseInt-ing that yields the year - which is what made the hand-rolled copies of this
     // sort almost a no-op.
     .sort((lhs, rhs) => Number(rhs.uploaded_timestamp ?? 0) - Number(lhs.uploaded_timestamp ?? 0));
   const file = isPinned(requirement)
-    ? (candidates.find(entry => isSamePinVersion(requirement.pinVersion, entry.version))
-      ?? candidates.find(entry => entry.file_id === requirement.nexusFileId))
+    ? (candidates.find((entry) => isSamePinVersion(requirement.pinVersion, entry.version)) ??
+      candidates.find((entry) => entry.file_id === requirement.nexusFileId))
     : candidates[0];
   if (file === undefined) {
     // Filters that match nothing and a page that stopped publishing look identical from here,
     // and both are otherwise completely silent - name what was asked for and what is on offer.
-    const applied = [`file category ${categoryIds.join(' or ')}`];
+    const applied = [`file category ${categoryIds.join(" or ")}`];
     if (requirement.nexusFileExclude !== undefined) {
       applied.push(`name not containing "${requirement.nexusFileExclude}"`);
     }
@@ -825,14 +900,20 @@ async function getLatestNexusFile(api, requirement) {
     if (isPinned(requirement)) {
       applied.push(`version "${requirement.pinVersion}"`);
     }
-    const available = (files ?? []).map(entry => entry.file_name);
-    log('warn', `No usable Nexus file for ${requirement.userFacingName}`,
-      { domain, modId: requirement.nexusModId, applied, available });
-    api.showErrorNotification('Could not find a download for {{repName}}',
-      `No file on the mod page matched: ${applied.join('; ')}. `
-      + `${available.length > 0 ? `The page currently offers: ${available.join(', ')}` : 'The page offers no files'}. `
-      + 'The files were most likely renamed or recategorised by their author, in which case this extension needs an update.',
-      { allowReport: false, replace: { repName: requirement.userFacingName } });
+    const available = (files ?? []).map((entry) => entry.file_name);
+    log("warn", `No usable Nexus file for ${requirement.userFacingName}`, {
+      domain,
+      modId: requirement.nexusModId,
+      applied,
+      available,
+    });
+    api.showErrorNotification(
+      "Could not find a download for {{repName}}",
+      `No file on the mod page matched: ${applied.join("; ")}. ` +
+        `${available.length > 0 ? `The page currently offers: ${available.join(", ")}` : "The page offers no files"}. ` +
+        "The files were most likely renamed or recategorised by their author, in which case this extension needs an update.",
+      { allowReport: false, replace: { repName: requirement.userFacingName } },
+    );
     return null;
   }
   return {
@@ -842,7 +923,7 @@ async function getLatestNexusFile(api, requirement) {
     nexusDomain: domain,
     uploadedTimestamp: file.uploaded_timestamp,
     updated_at: file.uploaded_time,
-    release: { tag_name: file.version ?? file.mod_version ?? '' },
+    release: { tag_name: file.version ?? file.mod_version ?? "" },
   };
 }
 
@@ -857,8 +938,11 @@ async function downloadNexusFile(api, requirement, asset) {
   }
   const nxmUrl = `nxm://${asset.nexusDomain}/mods/${asset.nexusModId}/files/${asset.nexusFileId}`;
   const dlInfo = { game: asset.nexusDomain, name: requirement.userFacingName };
-  const dlId = await util.toPromise(cb =>
-    api.events.emit('start-download', [nxmUrl], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+  const dlId = await util.toPromise((cb) =>
+    api.events.emit("start-download", [nxmUrl], dlInfo, undefined, cb, undefined, {
+      allowInstall: false,
+    }),
+  );
   if (!dlId) {
     // A dismissed free-user download dialog and a link refused for this account both land here.
     // Neither is an error worth a stack trace; download() reports the skip.
@@ -873,7 +957,7 @@ async function downloadNexusFile(api, requirement, asset) {
 // the download's own first game id.
 function downloadLocalPath(api, dlId) {
   const state = api.getState();
-  const dl = util.getSafe(state, ['persistent', 'downloads', 'files', dlId], undefined);
+  const dl = util.getSafe(state, ["persistent", "downloads", "files", dlId], undefined);
   if (dl?.localPath === undefined) {
     return undefined;
   }
@@ -895,7 +979,7 @@ async function fetchNexusAsset(api, requirement, asset, destination) {
   await fs.copyAsync(source, destination, { overwrite: true });
   // Guarded: the event exists in every current Vortex version, but failing to tidy up the row
   // must not fail an install that already succeeded.
-  await util.toPromise(cb => api.events.emit('remove-download', dlId, cb)).catch(() => null);
+  await util.toPromise((cb) => api.events.emit("remove-download", dlId, cb)).catch(() => null);
 }
 
 // How the bytes of a resolved asset are obtained. GitHub and nightly assets carry a fetchable
@@ -933,12 +1017,19 @@ async function streamToFile(body, targetPath) {
       if (done) {
         break;
       }
-      if (!out.write(value)) { //respect backpressure instead of queueing the whole file in memory
+      if (!out.write(value)) {
+        //respect backpressure instead of queueing the whole file in memory
         await new Promise((resolve, reject) => {
-          const onDrain = () => { out.off('error', onError); resolve(); };
-          const onError = (err) => { out.off('drain', onDrain); reject(err); };
-          out.once('drain', onDrain);
-          out.once('error', onError);
+          const onDrain = () => {
+            out.off("error", onError);
+            resolve();
+          };
+          const onError = (err) => {
+            out.off("drain", onDrain);
+            reject(err);
+          };
+          out.once("drain", onDrain);
+          out.once("error", onError);
         });
       }
     }
@@ -956,11 +1047,15 @@ async function doDownload(downloadUrl, destination) {
   // (the old axios browser build silently dropped them too). Redirects (GitHub asset
   // 302 -> objects.githubusercontent.com) are followed automatically.
   const response = await fetch(downloadUrl);
-  const remainingHeader = response.headers.get('x-ratelimit-remaining');
-  if ([403, 404].includes(response.status) && (remainingHeader !== null) && (parseInt(remainingHeader, 10) === 0)) {
-    const resetDate = parseInt(response.headers.get('x-ratelimit-reset') ?? '0', 10);
-    log('info', 'GitHub rate limit exceeded', { reset_at: (new Date(resetDate * 1000)).toString() });
-    return Promise.reject(new util.ProcessCanceled('GitHub rate limit exceeded'));
+  const remainingHeader = response.headers.get("x-ratelimit-remaining");
+  if (
+    [403, 404].includes(response.status) &&
+    remainingHeader !== null &&
+    parseInt(remainingHeader, 10) === 0
+  ) {
+    const resetDate = parseInt(response.headers.get("x-ratelimit-reset") ?? "0", 10);
+    log("info", "GitHub rate limit exceeded", { reset_at: new Date(resetDate * 1000).toString() });
+    return Promise.reject(new util.ProcessCanceled("GitHub rate limit exceeded"));
   }
   if (!response.ok) {
     throw new Error(`Request failed with status code ${response.status} (${downloadUrl})`);
@@ -1003,7 +1098,7 @@ function directCopyMarkerPath(requirement) {
 
 async function readDirectCopyMarker(requirement) {
   try {
-    const raw = await fs.readFileAsync(directCopyMarkerPath(requirement), { encoding: 'utf8' });
+    const raw = await fs.readFileAsync(directCopyMarkerPath(requirement), { encoding: "utf8" });
     return JSON.parse(raw);
   } catch {
     return undefined; //never installed, hand-deleted, or unreadable - all mean "re-resolve"
@@ -1016,19 +1111,19 @@ async function readDirectCopyMarker(requirement) {
 async function resolveVersionByDirectCopyMarker(api, requirement) {
   const marker = await readDirectCopyMarker(requirement);
   if (marker === undefined) {
-    return (requirement.trackByAssetDate === true) ? '' : '0.0.0';
+    return requirement.trackByAssetDate === true ? "" : "0.0.0";
   }
   if (requirement.trackByAssetDate === true) {
-    return marker.assetDate ?? '';
+    return marker.assetDate ?? "";
   }
-  return toComparableVersion(marker.version) ?? '0.0.0';
+  return toComparableVersion(marker.version) ?? "0.0.0";
 }
 
 async function isDirectCopyInstalled(api, requirement) {
   // An archived build installed as an ordinary mod (the user took it from Nexus instead)
   // counts as installed - Vortex deploys the file in that case and the direct copy must not
   // fight it.
-  if (requirement.directCopyModType && (getMods(api, requirement.directCopyModType).length > 0)) {
+  if (requirement.directCopyModType && getMods(api, requirement.directCopyModType).length > 0) {
     return true;
   }
   try {
@@ -1044,7 +1139,7 @@ async function isDirectCopyInstalled(api, requirement) {
 // structurally cannot be installed. Returns true when a file was written.
 async function downloadDirectCopy(api, requirement, force) {
   const installed = await isDirectCopyInstalled(api, requirement);
-  if (installed && (force !== true)) {
+  if (installed && force !== true) {
     if (requirement.resolveVersion) {
       await testRequirementVersion(api, requirement);
     }
@@ -1061,10 +1156,14 @@ async function downloadDirectCopy(api, requirement, force) {
       version: latestAssetVersion(requirement, asset),
       assetDate: asset.updated_at ?? asset.created_at,
     };
-    await fs.writeFileAsync(directCopyMarkerPath(requirement), JSON.stringify(marker), { encoding: 'utf8' });
+    await fs.writeFileAsync(directCopyMarkerPath(requirement), JSON.stringify(marker), {
+      encoding: "utf8",
+    });
     return true;
   } catch (err) {
-    api.showErrorNotification(`Failed to install ${requirement.userFacingName}`, err, { allowReport: false });
+    api.showErrorNotification(`Failed to install ${requirement.userFacingName}`, err, {
+      allowReport: false,
+    });
   }
   return false;
 }
@@ -1073,14 +1172,14 @@ async function downloadDirectCopy(api, requirement, force) {
 // are replaced because the id is also a folder name (the same idiom the Witcher 3 and Stardew
 // Valley synthetic mods use).
 function directCopyModName(requirement) {
-  return requirement.userFacingName.replace(/[\\/:*?"<>|]/g, '_');
+  return requirement.userFacingName.replace(/[\\/:*?"<>|]/g, "_");
 }
 
 // Promisified create-mod. Vortex's handler dispatches addMod and creates the staging folder;
 // both are needed before anything can be written into it.
 async function createRequirementMod(api, gameId, mod) {
   return new Promise((resolve, reject) => {
-    api.events.emit('create-mod', gameId, mod, (err) => (err ? reject(err) : resolve()));
+    api.events.emit("create-mod", gameId, mod, (err) => (err ? reject(err) : resolve()));
   });
 }
 
@@ -1095,7 +1194,7 @@ async function removeLegacyDirectCopy(requirement) {
   for (const target of [requirement.directCopyPath, directCopyMarkerPath(requirement)]) {
     try {
       await fs.removeAsync(target);
-      log('info', `Removed legacy direct copy ${target} - now managed as a mod`);
+      log("info", `Removed legacy direct copy ${target} - now managed as a mod`);
     } catch {
       //never installed in the old mode, or already gone - both fine
     }
@@ -1121,14 +1220,15 @@ async function installAssetAsMod(api, requirement, asset, fetchAsset) {
   const gameId = selectors.activeGameId(state);
   const profileId = selectors.lastActiveProfileForGame(state, gameId);
   const stagingRoot = selectors.installPathForGame(state, gameId);
-  const existing = (await findModByFile(api, requirement.modType, requirement.assemblyFileName))
-    ?? getMods(api, requirement.modType)[0];
+  const existing =
+    (await findModByFile(api, requirement.modType, requirement.assemblyFileName)) ??
+    getMods(api, requirement.modType)[0];
   // A user can install an archived build of the same loader by hand and the extension's own
   // installer types it the same way, so ownership is decided by the marker this module stamps,
   // not by the mod type. Someone else's mod may hold a readme, a config or several files -
   // leave it completely alone and treat the requirement as installed.
-  if ((existing !== undefined) && (existing.attributes?.directCopyAsMod !== true)) {
-    log('info', `${requirement.userFacingName} is installed as an ordinary mod - leaving it alone`);
+  if (existing !== undefined && existing.attributes?.directCopyAsMod !== true) {
+    log("info", `${requirement.userFacingName} is installed as an ordinary mod - leaving it alone`);
     return false;
   }
   const modId = existing?.id ?? directCopyModName(requirement);
@@ -1137,13 +1237,13 @@ async function installAssetAsMod(api, requirement, asset, fetchAsset) {
     await removeLegacyDirectCopy(requirement);
     await createRequirementMod(api, gameId, {
       id: modId,
-      state: 'installed',
+      state: "installed",
       installationPath: modId,
       type: requirement.modType,
       attributes: {
         name: requirement.userFacingName,
         customFileName: requirement.userFacingName,
-        description: 'This is a modding requirement for this game - leave it enabled.',
+        description: "This is a modding requirement for this game - leave it enabled.",
         installTime: new Date(),
         directCopyAsMod: true,
       },
@@ -1163,7 +1263,7 @@ async function installAssetAsMod(api, requirement, asset, fetchAsset) {
     customFileName: requirement.userFacingName,
     version: latestAssetVersion(requirement, asset),
     directCopyAsMod: true,
-    source: 'website',
+    source: "website",
     url: repoPageUrl(requirement, api),
   };
   if (asset.updated_at !== undefined) {
@@ -1183,7 +1283,7 @@ async function installAssetAsMod(api, requirement, asset, fetchAsset) {
   ]);
   // Enabling through a dispatch alone leaves Vortex unaware: onModsEnabled is what schedules the
   // deployment (or raises the "deployment necessary" banner when auto-deploy is off).
-  api.events.emit('mods-enabled', [modId], true, gameId);
+  api.events.emit("mods-enabled", [modId], true, gameId);
   return true;
 }
 
@@ -1196,7 +1296,7 @@ async function installAssetAsMod(api, requirement, asset, fetchAsset) {
 function getMods(api, modType) {
   const state = api.getState();
   const gameId = selectors.activeGameId(state);
-  const mods = util.getSafe(state, ['persistent', 'mods', gameId], {});
+  const mods = util.getSafe(state, ["persistent", "mods", gameId], {});
   return Object.values(mods).filter((mod) => mod.type === modType);
 }
 
@@ -1216,7 +1316,7 @@ async function findModsByFile(api, modType, fileName) {
   for (const mod of mods) {
     const modPath = path.join(installationPath, mod.installationPath);
     const files = await walkPath(modPath);
-    if (files.find(file => file.filePath.toLowerCase().endsWith(needle))) {
+    if (files.find((file) => file.filePath.toLowerCase().endsWith(needle))) {
       matches.push(mod);
     }
   }
@@ -1235,8 +1335,8 @@ async function findModByFile(api, modType, fileName) {
   // enabled in the active profile is the one actually in use; fall back to the first match
   // when none is enabled, which is what a single-copy install always yields anyway.
   const profileId = selectors.lastActiveProfileForGame(state, gameId);
-  const modState = util.getSafe(state, ['persistent', 'profiles', profileId, 'modState'], {});
-  return matches.find(mod => util.getSafe(modState, [mod.id, 'enabled'], false)) ?? matches[0];
+  const modState = util.getSafe(state, ["persistent", "profiles", profileId, "modState"], {});
+  return matches.find((mod) => util.getSafe(modState, [mod.id, "enabled"], false)) ?? matches[0];
 }
 
 // Compatible game ids recorded on a download. IDownload.game is an array in current Vortex,
@@ -1263,7 +1363,7 @@ function isDownloadForGame(dl, gameId) {
 function findDownloadIdByFile(api, fileName) {
   const state = api.getState();
   const gameId = selectors.activeGameId(state);
-  const downloads = util.getSafe(state, ['persistent', 'downloads', 'files'], {});
+  const downloads = util.getSafe(state, ["persistent", "downloads", "files"], {});
   return Object.entries(downloads).reduce((prev, [dlId, dl]) => {
     // localPath is optional on IDownload - entries still initialising, redirects and failed
     // downloads have none, and path.basename throws on undefined.
@@ -1274,13 +1374,13 @@ function findDownloadIdByFile(api, fileName) {
       prev = dlId;
     }
     return prev;
-  }, '');
+  }, "");
 }
 
 async function resolveVersionByPattern(api, requirement) {
   const state = api.getState();
   const gameId = selectors.activeGameId(state);
-  const files = util.getSafe(state, ['persistent', 'downloads', 'files'], []);
+  const files = util.getSafe(state, ["persistent", "downloads", "files"], []);
   const latestVersion = Object.values(files).reduce((prev, file) => {
     //not every download entry has a local file yet, and archives belonging to another game say
     //nothing about the version installed for this one
@@ -1294,7 +1394,7 @@ async function resolveVersionByPattern(api, requirement) {
       prev = version;
     }
     return prev;
-  }, '0.0.0');
+  }, "0.0.0");
   return latestVersion;
 }
 
@@ -1304,7 +1404,7 @@ async function resolveVersionByPattern(api, requirement) {
 // "update available".
 async function resolveVersionByAssetDate(api, requirement) {
   const mod = await requirement.findMod(api);
-  return util.getSafe(mod, ['attributes', 'githubAssetDate'], '');
+  return util.getSafe(mod, ["attributes", "githubAssetDate"], "");
 }
 
 // resolveVersion implementation reading the `version` attribute stamped on the installed
@@ -1318,8 +1418,8 @@ async function resolveVersionByAssetDate(api, requirement) {
 // "update available".
 async function resolveVersionByModVersion(api, requirement) {
   const mod = await requirement.findMod(api);
-  const stamped = util.getSafe(mod, ['attributes', 'version'], '');
-  return toComparableVersion(stamped) ?? '0.0.0';
+  const stamped = util.getSafe(mod, ["attributes", "version"], "");
+  return toComparableVersion(stamped) ?? "0.0.0";
 }
 
 // resolveVersion implementation for nightly requirements: reads back the workflow run number
@@ -1328,7 +1428,7 @@ async function resolveVersionByModVersion(api, requirement) {
 // "update available" - one notification, and the forced install stamps it.
 async function resolveVersionByNightlyRun(api, requirement) {
   const mod = await requirement.findMod(api);
-  return String(util.getSafe(mod, ['attributes', 'nightlyRunNumber'], ''));
+  return String(util.getSafe(mod, ["attributes", "nightlyRunNumber"], ""));
 }
 
 async function walkPath(dirPath, walkOptions) {
@@ -1337,15 +1437,19 @@ async function walkPath(dirPath, walkOptions) {
   // (filePath/isDirectory/size/mtime) so callers keep using `.filePath`.
   // ignoreErrors: true swallows per-subtree EACCES/ENOENT (walk handles ENOENT too).
   const walkResults = [];
-  await util.walk(dirPath, (iterPath, stats) => {
-    walkResults.push({
-      filePath: iterPath,
-      isDirectory: stats.isDirectory(),
-      size: stats.size,
-      mtime: stats.mtime,
-    });
-    return Promise.resolve();
-  }, { ignoreErrors: true, ...walkOptions });
+  await util.walk(
+    dirPath,
+    (iterPath, stats) => {
+      walkResults.push({
+        filePath: iterPath,
+        isDirectory: stats.isDirectory(),
+        size: stats.size,
+        mtime: stats.mtime,
+      });
+      return Promise.resolve();
+    },
+    { ignoreErrors: true, ...walkOptions },
+  );
   return walkResults;
 }
 
@@ -1367,12 +1471,12 @@ async function testRequirementVersion(api, requirement) {
   // installs manually (optional loaders behind a toolbar button) opt out with autoInstall: false.
   const missing = isDirectCopy(requirement)
     ? !(await isDirectCopyInstalled(api, requirement))
-    : (!!requirement.findMod && ((await requirement.findMod(api)) === undefined));
+    : !!requirement.findMod && (await requirement.findMod(api)) === undefined;
   if (missing) {
     if (requirement.autoInstall === false) {
       return;
     }
-    log('info', `${requirement.userFacingName} is not installed - installing it`);
+    log("info", `${requirement.userFacingName} is not installed - installing it`);
     return download(api, [requirement]);
   }
   const pinned = isPinned(requirement);
@@ -1390,39 +1494,65 @@ async function testRequirementVersion(api, requirement) {
   }
   const latestLabel = latestAssetVersion(requirement, latest);
   const more = (dismiss) => {
-    api.showDialog('question', pinned ? 'Install Pinned Requirement' : 'Update Requirement', {
-      // The pinned wording has to cover a user who is ahead of the pin as well as behind it -
-      // installing it from that state is a deliberate downgrade, so it says so.
-      bbcode: pinned
-        ? t('This extension pins "{{reqName}}" to "v{{latestVersion}}" - your modding environment is currently set to "v{{currentVersion}}".[br][/br][br][/br]'
-          + 'Would you like to install the pinned version? (if your installed version is the newer one, this will downgrade it.)', { replace: { reqName: requirement.userFacingName, currentVersion, latestVersion: latestLabel } })
-        : t('A new "{{reqName}}" update has been released "v{{latestVersion}}" - your modding environment is currently set to "v{{currentVersion}}".[br][/br][br][/br]'
-          + 'Would you like to update? (if your modding environment is functioning correctly, there may be no reason to update.)', { replace: { reqName: requirement.userFacingName, currentVersion, latestVersion: latestLabel } }),
-    }, [
+    api.showDialog(
+      "question",
+      pinned ? "Install Pinned Requirement" : "Update Requirement",
       {
-        label: 'Download', default: true, action: () => {
-          download(api, [requirement], true);
-          dismiss();
-        }
+        // The pinned wording has to cover a user who is ahead of the pin as well as behind it -
+        // installing it from that state is a deliberate downgrade, so it says so.
+        bbcode: pinned
+          ? t(
+              'This extension pins "{{reqName}}" to "v{{latestVersion}}" - your modding environment is currently set to "v{{currentVersion}}".[br][/br][br][/br]' +
+                "Would you like to install the pinned version? (if your installed version is the newer one, this will downgrade it.)",
+              {
+                replace: {
+                  reqName: requirement.userFacingName,
+                  currentVersion,
+                  latestVersion: latestLabel,
+                },
+              },
+            )
+          : t(
+              'A new "{{reqName}}" update has been released "v{{latestVersion}}" - your modding environment is currently set to "v{{currentVersion}}".[br][/br][br][/br]' +
+                "Would you like to update? (if your modding environment is functioning correctly, there may be no reason to update.)",
+              {
+                replace: {
+                  reqName: requirement.userFacingName,
+                  currentVersion,
+                  latestVersion: latestLabel,
+                },
+              },
+            ),
       },
-      { label: 'Close', action: () => dismiss() }
-    ]);
+      [
+        {
+          label: "Download",
+          default: true,
+          action: () => {
+            download(api, [requirement], true);
+            dismiss();
+          },
+        },
+        { label: "Close", action: () => dismiss() },
+      ],
+    );
   };
   const notificationId = `${requirement.archiveFileName}-update`;
   api.sendNotification({
-    message: `${requirement.userFacingName} ${pinned ? 'pinned version available' : 'update available'}`,
-    type: 'warning',
+    message: `${requirement.userFacingName} ${pinned ? "pinned version available" : "update available"}`,
+    type: "warning",
     allowSuppress: true,
     id: notificationId,
     actions: [
-      { title: 'More', action: more },
+      { title: "More", action: more },
       {
-        title: 'Download', action: (dismiss) => {
+        title: "Download",
+        action: (dismiss) => {
           download(api, [requirement], true);
           dismiss();
-        }
-      }
-    ]
+        },
+      },
+    ],
   });
 }
 

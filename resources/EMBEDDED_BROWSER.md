@@ -14,35 +14,34 @@ handlers). Types: `Webview`, `IWebviewProps`, `IWebView` in `resources/api.d.ts`
 
 ## Two ways to show a web page
 
-| | `browse-for-download` | `Webview` control |
-| --- | --- | --- |
-| Shape | Modal dialog owned by core | A component you place in your own page |
-| Lifetime | One shot — closes on the first captured download URL | Lives as long as your page is mounted |
-| Result | Resolves with the download URL | Nothing; downloads flow through the normal capture chain |
-| Chrome | Core's: back/forward, breadcrumb, instructions, Cancel/Skip | Yours to build |
-| Use it for | "Send the user to a release page and take whatever they click" | A browsing experience — search, categories, mod pages |
+|            | `browse-for-download`                                          | `Webview` control                                        |
+| ---------- | -------------------------------------------------------------- | -------------------------------------------------------- |
+| Shape      | Modal dialog owned by core                                     | A component you place in your own page                   |
+| Lifetime   | One shot — closes on the first captured download URL           | Lives as long as your page is mounted                    |
+| Result     | Resolves with the download URL                                 | Nothing; downloads flow through the normal capture chain |
+| Chrome     | Core's: back/forward, breadcrumb, instructions, Cancel/Skip    | Yours to build                                           |
+| Use it for | "Send the user to a release page and take whatever they click" | A browsing experience — search, categories, mod pages    |
 
 Both render the same underlying content, and both feed the same download capture chain.
 
 ## 1. `browse-for-download` — the supported one-shot
 
 ```js
-api.emitAndAwait('browse-for-download', url, instructions)
-  .then((result) => {
+api.emitAndAwait("browse-for-download", url, instructions).then((result) => {
     // result is an array; result[0] is the URL of the file the user clicked
     if (!result || !result.length) {
-      return Promise.reject(new util.UserCanceled()); // window closed without a download
+        return Promise.reject(new util.UserCanceled()); // window closed without a download
     }
-    api.events.emit('start-download', result, { game: gameId }, undefined, (err, dlId) => {
-      api.events.emit('start-install-download', dlId, { allowAutoEnable: true }, () => null);
+    api.events.emit("start-download", result, { game: gameId }, undefined, (err, dlId) => {
+        api.events.emit("start-install-download", dlId, { allowAutoEnable: true }, () => null);
     });
-  });
+});
 ```
 
 Behaviour worth knowing:
 
 - The event takes `(url, instructions, skippable?)`. Core appends its own line to `instructions`:
-  *"This window will close as soon as you click a valid download link."*
+  _"This window will close as soon as you click a valid download link."_
 - Calls are queued (core wraps `doBrowse` in a queue), so two extensions asking at once take turns
   rather than fighting over one modal.
 - Cancelling rejects with `UserCanceled`. With `skippable: true` the promise resolves with the
@@ -61,14 +60,14 @@ predictable download URL — see `DOWNLOADER.md` for where it sits among the aut
 in the renderer. vortex-api exports the wrapper as `Webview`:
 
 ```js
-const { Webview } = require('vortex-api');
+const { Webview } = require("vortex-api");
 
 React.createElement(Webview, {
-  src: 'https://example.com/',
-  style: { width: '100%', height: '100%' },
-  onLoading: (loading) => setLoading(loading),
-  onNewWindow: (url, disposition) => handlePopup(url),
-  ref: (ref) => attachEvents(ref),
+    src: "https://example.com/",
+    style: { width: "100%", height: "100%" },
+    onLoading: (loading) => setLoading(loading),
+    onNewWindow: (url, disposition) => handlePopup(url),
+    ref: (ref) => attachEvents(ref),
 });
 ```
 
@@ -76,10 +75,10 @@ React.createElement(Webview, {
 
 `Webview.tsx` defines both, and its own header comment is candid about the trade-off:
 
-| Class | Mechanism | Behaviour | Exported to extensions |
-| --- | --- | --- | --- |
-| `WebviewEmbed` (default export, and what vortex-api calls `Webview`) | Chrome `<webview>` tag | Integrates with the DOM, scrolls and clips like any element, but "doesn't seem to forward all events correctly" — their example is Google Drive's download button | **Yes** |
-| `WebviewOverlay` | Electron `WebContentsView`, positioned over a placeholder div | Browser behaviour is better, but it renders as a separate layer on top of everything, cannot be overlaid by other UI, and stays visible until unmounted | No |
+| Class                                                                | Mechanism                                                     | Behaviour                                                                                                                                                         | Exported to extensions |
+| -------------------------------------------------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| `WebviewEmbed` (default export, and what vortex-api calls `Webview`) | Chrome `<webview>` tag                                        | Integrates with the DOM, scrolls and clips like any element, but "doesn't seem to forward all events correctly" — their example is Google Drive's download button | **Yes**                |
+| `WebviewOverlay`                                                     | Electron `WebContentsView`, positioned over a placeholder div | Browser behaviour is better, but it renders as a separate layer on top of everything, cannot be overlaid by other UI, and stays visible until unmounted           | No                     |
 
 So an extension gets the embed variant. That is usually the right one for a page anyway: the
 overlay's "draws above all other UI until unmounted" property is exactly what a tabbed page must
@@ -91,12 +90,12 @@ awkward the alternative is.
 
 `IWebviewProps` — the wrapper's own:
 
-| Prop | Purpose |
-| --- | --- |
-| `onLoading(loading)` | Fired from `did-start-loading` / `did-stop-loading` |
+| Prop                            | Purpose                                                       |
+| ------------------------------- | ------------------------------------------------------------- |
+| `onLoading(loading)`            | Fired from `did-start-loading` / `did-stop-loading`           |
 | `onNewWindow(url, disposition)` | A popup or `target=_blank` link was blocked and handed to you |
-| `onFullscreen(fullscreen)` | HTML fullscreen entered/left |
-| `events` | Extra event map — honoured by the overlay variant only |
+| `onFullscreen(fullscreen)`      | HTML fullscreen entered/left                                  |
+| `events`                        | Extra event map — honoured by the overlay variant only        |
 
 `IWebView` — passed through to the tag: `src`, `style`, `autosize`, `nodeintegration`, `plugins`,
 `preload`, `httpreferrer`, `useragent`, `disablewebsecurity`, `partition`, `webpreferences`,
@@ -114,11 +113,11 @@ node:
 
 ```js
 const attachEvents = (ref) => {
-  const node = ReactDOM.findDOMNode(ref);
-  if (node) {
-    node.addEventListener('did-navigate', onNavigate);
-    node.addEventListener('did-navigate-in-page', onNavigate);
-  }
+    const node = ReactDOM.findDOMNode(ref);
+    if (node) {
+        node.addEventListener("did-navigate", onNavigate);
+        node.addEventListener("did-navigate-in-page", onNavigate);
+    }
 };
 ```
 
@@ -137,13 +136,13 @@ behind a 100 ms debouncer so a fast load doesn't flicker.
 This chain already exists in core. Content that triggers a download does **not** need an extension
 to intercept anything.
 
-| Step | Where | What happens |
-| --- | --- | --- |
-| 1 | `MainWindow.ts`, `will-download` on the window's session | `event.preventDefault()`, then `signalUrl(item)` |
-| 2 | `signalUrl` | Sends `received-url` to the renderer with the item's URL and filename |
-| 3 | Core browser extension's `received-url` listener | If a `browse-for-download` subscriber is active, hands it the URL and closes the modal; otherwise emits `start-download-url` |
-| 4 | `startDownloadFromURL` in `renderer.tsx` | Looks up a protocol handler for the URL's scheme |
-| 5 | `download_management` | Its `registerProtocol('https', …)` (and `http`) handler emits `start-download` with empty mod info and `install` false |
+| Step | Where                                                    | What happens                                                                                                                 |
+| ---- | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 1    | `MainWindow.ts`, `will-download` on the window's session | `event.preventDefault()`, then `signalUrl(item)`                                                                             |
+| 2    | `signalUrl`                                              | Sends `received-url` to the renderer with the item's URL and filename                                                        |
+| 3    | Core browser extension's `received-url` listener         | If a `browse-for-download` subscriber is active, hands it the URL and closes the modal; otherwise emits `start-download-url` |
+| 4    | `startDownloadFromURL` in `renderer.tsx`                 | Looks up a protocol handler for the URL's scheme                                                                             |
+| 5    | `download_management`                                    | Its `registerProtocol('https', …)` (and `http`) handler emits `start-download` with empty mod info and `install` false       |
 
 Consequences to design around:
 

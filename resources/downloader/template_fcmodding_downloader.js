@@ -1,12 +1,12 @@
-const { actions, fs, util, selectors, log } = require('vortex-api');
-const path = require('path');
-const GAME_ID = 'placeholder';
-const api = require('vortex-api'); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
+const { actions, fs, util, selectors, log } = require("vortex-api");
+const path = require("path");
+const GAME_ID = "placeholder";
+const api = require("vortex-api"); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 const spec = { game: { id: GAME_ID } }; //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 const context = { api }; //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 
 // FCMODDING REQUIREMENT /////////////////////////////////////////////////////
-const { downloadFcModding, checkForFcModdingUpdate } = require('./fcmodding_downloader');
+const { downloadFcModding, checkForFcModdingUpdate } = require("./fcmodding_downloader");
 const XXX_ID = `${GAME_ID}-XXX`; //mod type id for the requirement (register the mod type + installer in index.js as usual)
 const XXX_NAME = "XXX";
 const XXX_FILENAME = "FCModInstaller.zip"; //file name on the host - https://downloads.fcmodding.com/files/{fileName}
@@ -41,18 +41,27 @@ async function setup(api, gameSpec) {
 }
 
 // *** In context.once() function ////////////////////
-  api.onAsync('check-mods-version', (gameId, mods, forced) => {
-    if (gameId !== GAME_ID) return;
-    return checkForFcModdingUpdate(api, spec, FCMODDING_REQUIREMENTS)
-      .catch(err => log('warn', `Failed to check for ${XXX_NAME} update: ${err}`));
-  }); //*/
+api.onAsync("check-mods-version", (gameId, mods, forced) => {
+  if (gameId !== GAME_ID) return;
+  return checkForFcModdingUpdate(api, spec, FCMODDING_REQUIREMENTS).catch((err) =>
+    log("warn", `Failed to check for ${XXX_NAME} update: ${err}`),
+  );
+}); //*/
 
 // *** In applyGame() function ////////////////////
-  //register a toolbar button to (re)download the latest build
-  context.registerAction('mod-icons', 300, 'open-ext', {}, `Download Latest ${XXX_NAME}`, () => {
+//register a toolbar button to (re)download the latest build
+context.registerAction(
+  "mod-icons",
+  300,
+  "open-ext",
+  {},
+  `Download Latest ${XXX_NAME}`,
+  () => {
     downloadFcModding(context.api, spec, FCMODDING_REQUIREMENTS, false);
-  }, () => {
+  },
+  () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
-  }); //*/
+  },
+); //*/

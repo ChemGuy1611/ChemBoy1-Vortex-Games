@@ -1,5 +1,11 @@
 # template-ue4-5 Changelog
 
+## [2026-09-06]
+
+- Fixed: the load order context menu no longer drags locked entries out of position. "Move to Top", "Move to Bottom" (single and multi-select) and the type-a-number index input all rebuilt the whole order with every locked entry hoisted into a block at the front. They now reorder only the unlocked entries and lay them back into the unlocked slots, so a locked row keeps its absolute index. "Move to Top"/"Move to Bottom" on a locked row are no-ops, and `onApplyIndex` bails when the target is locked. Applies to all three pages (Pak, UE4SS, LogicMods). Drag-and-drop was already correct — core's `DraggableListItem` blocks dragging a locked row or dropping onto one; only the menu path bypassed it.
+- Fixed: with a lock anywhere in the order, the index input's minimum was `lockedEntriesCount + 1`, making low row numbers untypable even when the leading rows were unlocked. Core's `LoadOrderIndexInput` derives its floor from `lockedEntriesCount` on the assumption that locks sit at the top; the template now passes only the count of the _leading_ locked run (`leadingLockedCount`), so a lock further down no longer raises the floor.
+- Ported from `game-subnautica2` 0.5.6 and `game-menace` (live-tested there first). Propagated to all 17 games at template parity plus 11 non-parity games carrying the hand-ported menu (`game-helldivers2` with its `isEntryLocked`/`entry`/`target` naming, `game-kingdomcomedeliverance2`, `game-lobotomycorporation`, `game-marvelrivals`, `game-mewgenics`, `game-middleearthshadowofwar`, `game-thelastofuspart2`, `game-warhammer40000spacemarine2`, `game-warhammer40kdarkheresy`, `game-warhammer40kdarktide`, `game-warhammer40kroguetrader`).
+
 ## [2026-08-24]
 
 - Fixed: `loadOrderPrefix` no longer throws `TypeError: loadOrder.findIndex is not a function` when `persistent.loadOrder[profileId]` is not an array. It now branches on the shape of the stored value rather than on the `FBLO` toggle: an array takes `findIndex`, a plain object takes the legacy `Object.keys(...).indexOf` path, and anything else (including the missing key) falls through to the existing `ZZZZ-` "not in load order" prefix. The key is genuinely absent more often than it looks — Vortex's own `gamemode-activated` deserialize is commented out, and both remaining write paths (`genProfilesChange`, `genDeploymentEvent`) bail out while `installing_dependencies` is non-empty, so a collection install deploys before any load order state exists. Vortex rethrows a `mergeMods` error for a real mod, so the deployment died. Reported against `game-stalker2heartofchornobyl` 2.0.0.
@@ -18,13 +24,13 @@
 ## [2026-08-10]
 
 - Changed: `ue4ssLoadOrder` is now the master toggle for UE4SS support, not just for the load order page. Its comment says so. When it is off, the template no longer registers any of the UE4SS pieces:
-  - Mod types: `SCRIPTS_ID`, `DLL_ID`, `UE4SS_ID` and the declarative `LOGICMODS_ID` entry (removed from `spec.modTypes` by a filter next to the existing `hasModKit` block).
-  - Installers: `LOGICMODS_ID`, `UE4SS_ID`, `SCRIPTS_ID`, `DLL_ID`.
-  - Folders created by `setup()`: the UE4SS Mods folder, its `BPModLoaderMod` subfolder, and the LogicMods entry in `MODTYPE_FOLDERS`.
-  - The UE4SS auto-download in `setup()`: `autoDownloadUe4ss` keeps its own toggle but now only applies when `ue4ssLoadOrder` is on, so a game with UE4SS support off cannot download UE4SS on setup.
-  - Toolbar buttons: "Open UE4SS Mods Folder", "Open LogicMods Folder", "Download UE4SS", "Open UE4SS Settings INI", "Open UE4SS mods.txt".
+    - Mod types: `SCRIPTS_ID`, `DLL_ID`, `UE4SS_ID` and the declarative `LOGICMODS_ID` entry (removed from `spec.modTypes` by a filter next to the existing `hasModKit` block).
+    - Installers: `LOGICMODS_ID`, `UE4SS_ID`, `SCRIPTS_ID`, `DLL_ID`.
+    - Folders created by `setup()`: the UE4SS Mods folder, its `BPModLoaderMod` subfolder, and the LogicMods entry in `MODTYPE_FOLDERS`.
+    - The UE4SS auto-download in `setup()`: `autoDownloadUe4ss` keeps its own toggle but now only applies when `ue4ssLoadOrder` is on, so a game with UE4SS support off cannot download UE4SS on setup.
+    - Toolbar buttons: "Open UE4SS Mods Folder", "Open LogicMods Folder", "Download UE4SS", "Open UE4SS Settings INI", "Open UE4SS mods.txt".
 
-  `UE4SSCOMBO_ID` is deliberately left ungated - that installer also handles mods with both Binaries and Content folders that have nothing to do with UE4SS. LogicMods is gated on `ue4ssLoadOrder` rather than `logicModsLoadOrder` because LogicMods are blueprint paks loaded by UE4SS's `BPModLoaderMod`. Button order is unchanged: the guards wrap the buttons where they already sat, so no button moves relative to the ungated ones. Propagated to all 11 games at template parity; no behavior change there, since every one of them has `ue4ssLoadOrder = true`.
+    `UE4SSCOMBO_ID` is deliberately left ungated - that installer also handles mods with both Binaries and Content folders that have nothing to do with UE4SS. LogicMods is gated on `ue4ssLoadOrder` rather than `logicModsLoadOrder` because LogicMods are blueprint paks loaded by UE4SS's `BPModLoaderMod`. Button order is unchanged: the guards wrap the buttons where they already sat, so no button moves relative to the ungated ones. Propagated to all 11 games at template parity; no behavior change there, since every one of them has `ue4ssLoadOrder = true`.
 
 ## [2026-07-29] (2)
 

@@ -3,10 +3,10 @@
 Reading and writing structured config/data files from extension code — game config INI files, FOMOD/appxmanifest XML, load-order YAML, mod-loader TOML, mod-kit JSON manifests. Each format has its own library (JSON is the exception — built into the JS runtime); none of them go through `vortex-api` directly, they're plain `require()`s.
 
 ```js
-const { default: IniParser, WinapiFormat } = require('vortex-parse-ini'); // .ini
-const { parseStringPromise, Builder } = require('xml2js');                // .xml
-const YAML = require('js-yaml');                                          // .yaml/.yml
-const TOML = require('@iarna/toml');                                      // .toml
+const { default: IniParser, WinapiFormat } = require("vortex-parse-ini"); // .ini
+const { parseStringPromise, Builder } = require("xml2js"); // .xml
+const YAML = require("js-yaml"); // .yaml/.yml
+const TOML = require("@iarna/toml"); // .toml
 // JSON.parse / JSON.stringify — no require() needed, global on every JS runtime
 ```
 
@@ -16,14 +16,14 @@ const TOML = require('@iarna/toml');                                      // .to
 
 These packages aren't dependencies of this repo — they resolve at runtime because the extension executes inside Vortex's own process, which bundles them. Checked against the Vortex monorepo's actual `package.json` files:
 
-| Package | Declared by | Guaranteed? |
-| --- | --- | --- |
-| `JSON` (built-in) | Node/V8 itself | Yes — always available, no `require()`, no version to track |
-| `xml2js` | `src/main` (also a direct dep of this repo, for local dev/lint) | Yes — core app dependency |
-| `vortex-parse-ini` | `src/main` | Yes — core app dependency |
-| `winapi-bindings` | `src/main` | Yes — core app dependency |
-| `js-yaml` | Only the bundled `gamebryo-plugin-management` extension | No — works today only because Node hoists it somewhere `require()` can find; not a stable contract |
-| `@iarna/toml` | Only the bundled `modtype-bepinex` extension | No — same caveat |
+| Package            | Declared by                                                     | Guaranteed?                                                                                        |
+| ------------------ | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `JSON` (built-in)  | Node/V8 itself                                                  | Yes — always available, no `require()`, no version to track                                        |
+| `xml2js`           | `src/main` (also a direct dep of this repo, for local dev/lint) | Yes — core app dependency                                                                          |
+| `vortex-parse-ini` | `src/main`                                                      | Yes — core app dependency                                                                          |
+| `winapi-bindings`  | `src/main`                                                      | Yes — core app dependency                                                                          |
+| `js-yaml`          | Only the bundled `gamebryo-plugin-management` extension         | No — works today only because Node hoists it somewhere `require()` can find; not a stable contract |
+| `@iarna/toml`      | Only the bundled `modtype-bepinex` extension                    | No — same caveat                                                                                   |
 
 **Practical effect:** `xml2js`, `vortex-parse-ini`, `winapi-bindings` are safe to depend on in any extension. `js-yaml` and `@iarna/toml` currently work (multiple shipping extensions in this repo use `js-yaml` this way already), but a future Vortex release that changes those two bundled extensions' dependencies could silently break resolution. There's no first-party alternative for YAML/TOML today, so this is a known, accepted risk rather than something to work around.
 
@@ -34,11 +34,11 @@ These packages aren't dependencies of this repo — they resolve at runtime beca
 ```js
 const parser = new IniParser(new WinapiFormat());
 
-const contents = await parser.read(iniPath);   // returns an IniFile wrapper
-const data = contents.data;                     // { SectionName: { Key: 'value', ... }, ... }
+const contents = await parser.read(iniPath); // returns an IniFile wrapper
+const data = contents.data; // { SectionName: { Key: 'value', ... }, ... }
 
-data.SectionName.SomeKey = 'newValue';          // mutate in place — nested keys must already exist
-await parser.write(iniPath, contents);          // pass the IniFile wrapper, not `data`
+data.SectionName.SomeKey = "newValue"; // mutate in place — nested keys must already exist
+await parser.write(iniPath, contents); // pass the IniFile wrapper, not `data`
 ```
 
 - `parser.read(path)` resolves to an `IniFile` instance, not a plain object. `.data` is a getter that lazily deep-clones the parsed sections into a mutable copy the first time it's accessed, then returns that same reference on every subsequent access — so grabbing `const data = contents.data` once and mutating nested properties on it is tracked correctly.
@@ -52,12 +52,12 @@ If you can't guarantee a section exists in the target file (a third-party config
 ```js
 let content = await parser.read(iniPath);
 try {
-  content.data[SECTION][KEY] = SET_VALUE;
+    content.data[SECTION][KEY] = SET_VALUE;
 } catch {
-  content.data = {
-    ...content.data,
-    [SECTION]: { [KEY]: SET_VALUE },
-  };
+    content.data = {
+        ...content.data,
+        [SECTION]: { [KEY]: SET_VALUE },
+    };
 }
 await parser.write(iniPath, content);
 ```
@@ -66,8 +66,8 @@ If the section is known to always ship with the default keys present (e.g. a too
 
 ```js
 const contents = await parser.read(iniPath);
-contents.data.EngineVersionOverride.MajorVersion = '5';
-contents.data.EngineVersionOverride.MinorVersion = '7';
+contents.data.EngineVersionOverride.MajorVersion = "5";
+contents.data.EngineVersionOverride.MinorVersion = "7";
 await parser.write(iniPath, contents);
 ```
 
@@ -75,21 +75,21 @@ await parser.write(iniPath, contents);
 
 ### Native binding notes (winapi-bindings)
 
-| Behavior | Detail |
-| --- | --- |
-| Writing `null`/`undefined` as a value | Deletes the key (maps to Win32 passing a `NULL` value string) |
-| Missing file on write | `WritePrivateProfileString` creates the file if the parent directory exists |
-| Missing file on read | Resolves with no sections / empty string, does not throw |
-| Section/key-name buffer size | `GetPrivateProfileSection` / `GetPrivateProfileSectionNames` use a fixed ~32K wide-char buffer with no resize — extremely large sections or very many section names can silently truncate |
+| Behavior                              | Detail                                                                                                                                                                                    |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Writing `null`/`undefined` as a value | Deletes the key (maps to Win32 passing a `NULL` value string)                                                                                                                             |
+| Missing file on write                 | `WritePrivateProfileString` creates the file if the parent directory exists                                                                                                               |
+| Missing file on read                  | Resolves with no sections / empty string, does not throw                                                                                                                                  |
+| Section/key-name buffer size          | `GetPrivateProfileSection` / `GetPrivateProfileSectionNames` use a fixed ~32K wide-char buffer with no resize — extremely large sections or very many section names can silently truncate |
 
 ---
 
 ## XML — `xml2js`
 
 ```js
-const { parseStringPromise, Builder } = require('xml2js');
+const { parseStringPromise, Builder } = require("xml2js");
 
-const xmlText = await fs.readFileAsync(manifestPath, 'utf8');
+const xmlText = await fs.readFileAsync(manifestPath, "utf8");
 const parsed = await parseStringPromise(xmlText);
 const version = parsed?.Package?.Identity?.[0]?.$?.Version;
 ```
@@ -97,7 +97,7 @@ const version = parsed?.Package?.Identity?.[0]?.$?.Version;
 Real example from this codebase — reading a Xbox `appxmanifest.xml` for the installed game version:
 
 ```js
-const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
 const parsed = await parseStringPromise(appManifest);
 const version = parsed?.Package?.Identity?.[0]?.$?.Version;
 ```
@@ -111,7 +111,7 @@ const version = parsed?.Package?.Identity?.[0]?.$?.Version;
 
 ```js
 const builder = new Builder();
-const xmlString = builder.buildObject({ Root: { Item: [{ $: { id: '1' } }] } });
+const xmlString = builder.buildObject({ Root: { Item: [{ $: { id: "1" } }] } });
 ```
 
 `Builder#buildObject` expects the same shape `parseStringPromise` produces (arrays for repeatable elements, `$` for attributes) — build the object as if you'd just parsed the desired output.
@@ -121,23 +121,23 @@ const xmlString = builder.buildObject({ Root: { Item: [{ $: { id: '1' } }] } });
 ## YAML — `js-yaml`
 
 ```js
-const YAML = require('js-yaml');
-const parsed = YAML.load(fileText);   // string -> JS value (object/array/scalar)
-const text = YAML.dump(value);        // JS value -> string
+const YAML = require("js-yaml");
+const parsed = YAML.load(fileText); // string -> JS value (object/array/scalar)
+const text = YAML.dump(value); // JS value -> string
 ```
 
 Real example from this codebase — a pak-based load order file (`pak_config.yaml`) storing an ordered array of `{ pak, disabled }` entries:
 
 ```js
-const loadOrderFile = await fs.readFileAsync(loadOrderPath, { encoding: 'utf8' });
+const loadOrderFile = await fs.readFileAsync(loadOrderPath, { encoding: "utf8" });
 let modEntries = YAML.load(loadOrderFile);
 if (modEntries === undefined) modEntries = []; // YAML.load returns undefined for an empty file
 
 // ...mutate the array...
 
-const loadOrderMapped = loadOrder.map(mod => ({ pak: mod.id, disabled: !mod.enabled }));
+const loadOrderMapped = loadOrder.map((mod) => ({ pak: mod.id, disabled: !mod.enabled }));
 const output = YAML.dump(loadOrderMapped);
-await fs.writeFileAsync(loadOrderPath, output, { encoding: 'utf8' });
+await fs.writeFileAsync(loadOrderPath, output, { encoding: "utf8" });
 ```
 
 No wrapper class like `vortex-parse-ini`'s `IniFile` — `load`/`dump` operate on plain strings/values, so read the file yourself with `fs.readFileAsync`/`writeFileAsync` around the calls. `YAML.load` on an empty string returns `undefined`, not `{}`/`[]` — guard for that before using array/object methods on the result.
@@ -149,9 +149,9 @@ No wrapper class like `vortex-parse-ini`'s `IniFile` — `load`/`dump` operate o
 ## TOML — `@iarna/toml`
 
 ```js
-const TOML = require('@iarna/toml');
-const parsed = TOML.parse(fileText);   // string -> JS object
-const text = TOML.stringify(value);    // JS object -> string
+const TOML = require("@iarna/toml");
+const parsed = TOML.parse(fileText); // string -> JS object
+const text = TOML.stringify(value); // JS object -> string
 ```
 
 Same plain read/parse/mutate/stringify/write cycle as YAML above — no wrapper, no diffing, round-trip the whole file. Used by mod-loader-style config files (e.g. BepInEx `.cfg`-adjacent TOML configs) in the wider Vortex ecosystem; no live example in this repo yet beyond the prototype in `resources/snippets.js`.
@@ -161,8 +161,8 @@ Same plain read/parse/mutate/stringify/write cycle as YAML above — no wrapper,
 ## JSON — built-in `JSON.parse` / `JSON.stringify`
 
 ```js
-const parsed = JSON.parse(fs.readFileSync(jsonPath));    // no encoding needed — JSON.parse stringifies a Buffer for you
-fs.writeFileSync(jsonPath, JSON.stringify(value, null, 2), { encoding: 'utf8' }); // 2-space indent = human-readable convention
+const parsed = JSON.parse(fs.readFileSync(jsonPath)); // no encoding needed — JSON.parse stringifies a Buffer for you
+fs.writeFileSync(jsonPath, JSON.stringify(value, null, 2), { encoding: "utf8" }); // 2-space indent = human-readable convention
 ```
 
 No import, no availability question — it's part of the language, not a package. Two real patterns from this codebase:
@@ -171,11 +171,11 @@ No import, no availability question — it's part of the language, not a package
 
 ```js
 try {
-  const JSON_OBJECT = JSON.parse(fs.readFileSync(path.join(fileName, rootPath, MODKITMOD_FILE)));
-  MOD_FOLDER = JSON_OBJECT['modPluginName'];
+    const JSON_OBJECT = JSON.parse(fs.readFileSync(path.join(fileName, rootPath, MODKITMOD_FILE)));
+    MOD_FOLDER = JSON_OBJECT["modPluginName"];
 } catch {
-  log('error', `Could not read mod.json file for mod ${MOD_NAME}.`);
-  // fall through to a folder name derived from the archive name instead
+    log("error", `Could not read mod.json file for mod ${MOD_NAME}.`);
+    // fall through to a folder name derived from the archive name instead
 }
 ```
 
@@ -183,14 +183,14 @@ try {
 
 ```js
 try {
-  fs.statSync(path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE));
-  JSONFILES_JSON = JSON.parse(fs.readFileSync(path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE)));
+    fs.statSync(path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE));
+    JSONFILES_JSON = JSON.parse(fs.readFileSync(path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE)));
 } catch {
-  await fs.writeFileAsync(
-    path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE),
-    `${JSON.stringify(DEFAULT_JSON, null, 2)}`,
-    { encoding: 'utf8' },
-  );
+    await fs.writeFileAsync(
+        path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE),
+        `${JSON.stringify(DEFAULT_JSON, null, 2)}`,
+        { encoding: "utf8" },
+    );
 }
 ```
 
@@ -215,4 +215,6 @@ try {
 
 `WINAPI_BINDINGS.md` (the native INI functions `vortex-parse-ini`'s `WinapiFormat` backs onto).
 
-`ARCHIVE_HANDLER.md` (reading a file that lives *inside* an archive — including why `util.SevenZip`'s `raw` option cannot cherry-pick a single member, and how to read ZIP structures directly instead).
+`ARCHIVE_HANDLER.md` (reading a file that lives _inside_ an archive — including why `util.SevenZip`'s `raw` option cannot cherry-pick a single member, and how to read ZIP structures directly instead).
+
+`NODE_FS.md` (the `fs` reads and writes every parser above is wrapped around — the native `fsp.readFile`/`fsp.writeFile` idiom, the `ENOENT`-vs-malformed distinction, and creating the parent directory before a write).

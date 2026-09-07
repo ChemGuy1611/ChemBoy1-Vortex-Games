@@ -6,13 +6,13 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| Rollback | a file or folder named `doometernalx64vk.exe` | - |
-| Injector | a file or folder named `eternalmodmanager.exe` | - |
-| Ktde | a file or folder named `keep the dead eternal - readme - install instructions.rtf` | - |
-| Meathook | a file or folder named `xinput1_3.dll` | - |
-| Zip Mod | - | - |
+| Mod Type | Archive must contain                                                               | Installs to |
+| -------- | ---------------------------------------------------------------------------------- | ----------- |
+| Rollback | a file or folder named `doometernalx64vk.exe`                                      | -           |
+| Injector | a file or folder named `eternalmodmanager.exe`                                     | -           |
+| Ktde     | a file or folder named `keep the dead eternal - readme - install instructions.rtf` | -           |
+| Meathook | a file or folder named `xinput1_3.dll`                                             | -           |
+| Zip Mod  | -                                                                                  | -           |
 
 Paths are relative to the game's install folder.
 
@@ -40,4 +40,3 @@ Handled by the `testZipContent` installer. Inspect the extension source for the 
 
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

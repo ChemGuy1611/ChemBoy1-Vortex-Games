@@ -7,14 +7,14 @@ Date: 2025-11-16
 ////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require('vortex-api');
-const path = require('path');
-const template = require('string-template');
+const { actions, fs, util, selectors, log } = require("vortex-api");
+const path = require("path");
+const template = require("string-template");
 //const winapi = require('winapi-bindings');
-const { parseStringPromise } = require('xml2js');
+const { parseStringPromise } = require("xml2js");
 
-const USERHOME = util.getVortexPath('home');
-const LOCALAPPDATA = util.getVortexPath('localAppData');
+const USERHOME = util.getVortexPath("home");
+const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
 const STEAMAPP_ID = "403640";
@@ -26,16 +26,16 @@ const GAME_ID = "dishonored2";
 const GAME_NAME = "Dishonored 2";
 const GAME_NAME_SHORT = "Dishonored 2";
 const MOD_PATH = ".";
-const XBOX_SAVE_STRING = '3275kfvn8vcwc'; //string after "ID_"
+const XBOX_SAVE_STRING = "3275kfvn8vcwc"; //string after "ID_"
 const ROOT_FOLDER = "base";
 const ROOT_FOLDERS = [ROOT_FOLDER];
 
-let GAME_PATH = ''; //patched in the setup function to the discovered game path
-let GAME_VERSION = '';
-let STAGING_FOLDER = '';
-let DOWNLOAD_FOLDER = '';
+let GAME_PATH = ""; //patched in the setup function to the discovered game path
+let GAME_VERSION = "";
+let STAGING_FOLDER = "";
+let DOWNLOAD_FOLDER = "";
 let CHECK_DATA = false;
-const APPMANIFEST_FILE = 'appxmanifest.xml';
+const APPMANIFEST_FILE = "appxmanifest.xml";
 
 const gameFinderQuery = {
   steam: [{ id: STEAMAPP_ID, prefer: 0 }],
@@ -58,9 +58,24 @@ const ROOT_NAME = "Root Game Folder";
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Save Game";
-const SAVE_PATH_DEFAULT = path.join(USERHOME, "Saved Games", "Arkane Studios", "Dishonored2", "base", "savegame");
+const SAVE_PATH_DEFAULT = path.join(
+  USERHOME,
+  "Saved Games",
+  "Arkane Studios",
+  "Dishonored2",
+  "base",
+  "savegame",
+);
 //const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_SAVE_STRING}`, "SystemAppData", "wgs"); //XBOX Version
-let SAVE_PATH_XBOX = path.join(USERHOME, "Saved Games", "Arkane Studios", "Dishonored2", "base", "savegame", ".xbuser");
+let SAVE_PATH_XBOX = path.join(
+  USERHOME,
+  "Saved Games",
+  "Arkane Studios",
+  "Dishonored2",
+  "base",
+  "savegame",
+  ".xbuser",
+);
 let USERID_FOLDER = "";
 function isDir(folder, file) {
   const stats = fs.statSync(path.join(folder, file));
@@ -77,7 +92,7 @@ if (USERID_FOLDER === undefined) {
 } //*/
 SAVE_PATH_XBOX = path.join(SAVE_PATH_XBOX, USERID_FOLDER);
 const SAVE_EXT = ".sav";
-const SAVE_FILE = 'profile.bin';
+const SAVE_FILE = "profile.bin";
 let SAVE_PATH = SAVE_PATH_DEFAULT;
 
 const CONFIG_ID = `${GAME_ID}-config`;
@@ -89,86 +104,86 @@ const VOID_ID = `${GAME_ID}-voidinstaller`;
 const VOID_NAME = "Void Installer";
 const VOID_EXEC = "voidinstaller.exe";
 const VOID_FOLDER = "Void Installer";
-const VOID_PATH = path.join('.');
+const VOID_PATH = path.join(".");
 
 const VOIDEXPLORER_ID = `${GAME_ID}-voidexplorer`;
 const VOIDEXPLORER_NAME = "Void Explorer";
 const VOIDEXPLORER_EXEC = "voidexplorer.exe";
 const VOIDEXPLORER_FOLDER = "Void Explorer";
-const VOIDEXPLORER_PATH = path.join('.');
+const VOIDEXPLORER_PATH = path.join(".");
 
 const VOIDMOD_ID = `${GAME_ID}-voidmod`;
 const VOIDMOD_NAME = "Void Mod";
 const VOIDMOD_FILE = "modinfo.xml";
-const VOIDMOD_EXTS = ['.voidindex', '.voidresources'];
-const VOIDMOD_PATH = path.join(VOID_FOLDER, 'Mods');
+const VOIDMOD_EXTS = [".voidindex", ".voidresources"];
+const VOIDMOD_PATH = path.join(VOID_FOLDER, "Mods");
 
 const VIDEO_ID = `${GAME_ID}-video`;
 const VIDEO_NAME = "Video Mod";
-const VIDEO_PATH = path.join('base', 'video');
-const VIDEO_EXTS = ['.bk2'];
+const VIDEO_PATH = path.join("base", "video");
+const VIDEO_EXTS = [".bk2"];
 
 const MODTYPE_FOLDERS = [VOIDMOD_PATH, VIDEO_PATH];
 
 //Filled in from the data above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/925"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Dishonored_2";
-const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
-const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
 const spec = {
-  "game": {
-    "id": GAME_ID,
-    "name": GAME_NAME,
-    "shortName": GAME_NAME_SHORT,
-    "logo": `${GAME_ID}.jpg`,
-    "mergeMods": true,
-    "modPath": MOD_PATH,
-    "modPathIsRelative": true,
-    "details": {
-      "steamAppId": +STEAMAPP_ID,
-      "gogAppId": GOGAPP_ID,
-      "epicAppId": EPICAPP_ID,
-      "xboxAppId": XBOXAPP_ID,
-      "ignoreConflicts": IGNORE_CONFLICTS,
-      "ignoreDeploy": IGNORE_DEPLOY,
+  game: {
+    id: GAME_ID,
+    name: GAME_NAME,
+    shortName: GAME_NAME_SHORT,
+    logo: `${GAME_ID}.jpg`,
+    mergeMods: true,
+    modPath: MOD_PATH,
+    modPathIsRelative: true,
+    details: {
+      steamAppId: +STEAMAPP_ID,
+      gogAppId: GOGAPP_ID,
+      epicAppId: EPICAPP_ID,
+      xboxAppId: XBOXAPP_ID,
+      ignoreConflicts: IGNORE_CONFLICTS,
+      ignoreDeploy: IGNORE_DEPLOY,
     },
-    "environment": {
-      "SteamAPPId": STEAMAPP_ID,
-      "GogAPPId": GOGAPP_ID,
-      "EpicAPPId": EPICAPP_ID,
-      "XboxAPPId": XBOXAPP_ID
-    }
+    environment: {
+      SteamAPPId: STEAMAPP_ID,
+      GogAPPId: GOGAPP_ID,
+      EpicAPPId: EPICAPP_ID,
+      XboxAPPId: XBOXAPP_ID,
+    },
   },
-  "modTypes": [
+  modTypes: [
     {
-      "id": VOIDMOD_ID,
-      "name": VOIDMOD_NAME,
-      "priority": "high",
-      "targetPath": path.join('{gamePath}', VOIDMOD_PATH)
+      id: VOIDMOD_ID,
+      name: VOIDMOD_NAME,
+      priority: "high",
+      targetPath: path.join("{gamePath}", VOIDMOD_PATH),
     },
     {
-      "id": VOID_ID,
-      "name": VOID_NAME,
-      "priority": "low",
-      "targetPath": path.join('{gamePath}', VOID_PATH)
+      id: VOID_ID,
+      name: VOID_NAME,
+      priority: "low",
+      targetPath: path.join("{gamePath}", VOID_PATH),
     },
     {
-      "id": ROOT_ID,
-      "name": ROOT_NAME,
-      "priority": "high",
-      "targetPath": '{gamePath}'
-    },
-    { 
-      "id": VIDEO_ID,
-      "name": VIDEO_NAME,
-      "priority": "high",
-      "targetPath": path.join('{gamePath}', VIDEO_PATH)
+      id: ROOT_ID,
+      name: ROOT_NAME,
+      priority: "high",
+      targetPath: "{gamePath}",
     },
     {
-      "id": VOIDEXPLORER_ID,
-      "name": VOIDEXPLORER_NAME,
-      "priority": "low",
-      "targetPath": path.join('{gamePath}', VOIDEXPLORER_PATH)
+      id: VIDEO_ID,
+      name: VIDEO_NAME,
+      priority: "high",
+      targetPath: path.join("{gamePath}", VIDEO_PATH),
+    },
+    {
+      id: VOIDEXPLORER_ID,
+      name: VOIDEXPLORER_NAME,
+      priority: "low",
+      targetPath: path.join("{gamePath}", VOIDEXPLORER_PATH),
     },
   ],
 };
@@ -186,7 +201,7 @@ const tools = [
     exclusive: true,
     shell: true,
     //defaultPrimary: true,
-    parameters: []
+    parameters: [],
   }, //*/
   {
     id: `${GAME_ID}-customlaunchxbox`,
@@ -199,7 +214,7 @@ const tools = [
     exclusive: true,
     shell: true,
     //defaultPrimary: true,
-    parameters: []
+    parameters: [],
   }, //*/
   {
     id: VOID_ID,
@@ -233,15 +248,17 @@ async function getAllFiles(dirPath) {
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
       const stats = await fs.statAsync(fullPath);
-      if (stats.isDirectory()) { // Recursively get files from subdirectories
+      if (stats.isDirectory()) {
+        // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
         results = results.concat(subDirFiles);
-      } else { // Add file to results
+      } else {
+        // Add file to results
         results.push(fullPath);
       }
     }
   } catch (err) {
-    log('warn', `Error reading directory ${dirPath}: ${err.message}`);
+    log("warn", `Error reading directory ${dirPath}: ${err.message}`);
   }
   return results;
 }
@@ -257,30 +274,33 @@ function modTypePriority(priority) {
 function pathPattern(api, game, pattern) {
   var _a;
   return template(pattern, {
-    gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
-    documents: util.getVortexPath('documents'),
-    localAppData: util.getVortexPath('localAppData'),
-    appData: util.getVortexPath('appData'),
+    gamePath:
+      (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0
+        ? void 0
+        : _a.path,
+    documents: util.getVortexPath("documents"),
+    localAppData: util.getVortexPath("localAppData"),
+    appData: util.getVortexPath("appData"),
   });
 }
 
 async function requiresLauncher(gamePath, store) {
-  if (store === 'xbox') {
-      return Promise.resolve({
-          launcher: 'xbox',
-          addInfo: {
-              appId: XBOXAPP_ID,
-              parameters: [{ appExecName: XBOXEXECNAME }],
-          },
-      });
+  if (store === "xbox") {
+    return Promise.resolve({
+      launcher: "xbox",
+      addInfo: {
+        appId: XBOXAPP_ID,
+        parameters: [{ appExecName: XBOXEXECNAME }],
+      },
+    });
   }
   //*
-  if (store === 'epic') {
+  if (store === "epic") {
     return Promise.resolve({
-        launcher: 'epic',
-        addInfo: {
-            appId: EPICAPP_ID,
-        },
+      launcher: "epic",
+      addInfo: {
+        appId: EPICAPP_ID,
+      },
     });
   } //*/
   return Promise.resolve(undefined);
@@ -292,15 +312,14 @@ function getExecutable(discoveryPath) {
     try {
       fs.statSync(path.join(discoveryPath, exec));
       return true;
-    }
-    catch {
+    } catch {
       return false;
     }
   };
   if (isCorrectExec(XBOX_EXEC)) {
     SAVE_PATH = SAVE_PATH_XBOX;
     return XBOX_EXEC;
-  };
+  }
   return EXEC;
 }
 
@@ -308,8 +327,7 @@ function statCheckSync(gamePath, file) {
   try {
     fs.statSync(path.join(gamePath, file));
     return true;
-  }
-  catch {
+  } catch {
     return false;
   }
 }
@@ -318,8 +336,7 @@ async function statCheckAsync(gamePath, file) {
   try {
     await fs.statAsync(path.join(gamePath, file));
     return true;
-  }
-  catch {
+  } catch {
     return false;
   }
 }
@@ -328,10 +345,10 @@ async function statCheckAsync(gamePath, file) {
 async function setGameVersion(gamePath) {
   const CHECK = await statCheckAsync(gamePath, EXEC_XBOX);
   if (CHECK) {
-    GAME_VERSION = 'xbox';
+    GAME_VERSION = "xbox";
     return GAME_VERSION;
   } else {
-    GAME_VERSION = 'default';
+    GAME_VERSION = "default";
     return GAME_VERSION;
   }
 }
@@ -349,17 +366,24 @@ async function getSavePath(api) {
   }
 }
 
-const getDiscoveryPath = (api) => { //get the game's discovered path
+const getDiscoveryPath = (api) => {
+  //get the game's discovered path
   const state = api.getState();
   const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
 
-async function purge(api) { //useful to clear out mods prior to doing some action
-  return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));
+async function purge(api) {
+  //useful to clear out mods prior to doing some action
+  return new Promise((resolve, reject) =>
+    api.events.emit("purge-mods", true, (err) => (err ? reject(err) : resolve())),
+  );
 }
-async function deploy(api) { //useful to deploy mods after doing some action
-  return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
+async function deploy(api) {
+  //useful to deploy mods after doing some action
+  return new Promise((resolve, reject) =>
+    api.events.emit("deploy-mods", (err) => (err ? reject(err) : resolve())),
+  );
 }
 
 // AUTOMATIC MOD DOWNLOADERS ///////////////////////////////////////////////////
@@ -368,7 +392,7 @@ async function deploy(api) { //useful to deploy mods after doing some action
 function isVoidInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === VOID_ID);
+  return Object.keys(mods).some((id) => mods[id]?.type === VOID_ID);
 }
 
 //Function to auto-download Void
@@ -379,12 +403,13 @@ async function downloadVoid(api, gameSpec) {
     const MOD_NAME = VOID_NAME;
     const NOTIF_ID = `${GAME_ID}-${MOD_TYPE}-installing`;
     const modPageId = 31;
-    const FILE_ID = 224;  //If using a specific file id because "input" below gives an error
+    const FILE_ID = 224; //If using a specific file id because "input" below gives an error
     const GAME_DOMAIN = GAME_ID;
-    api.sendNotification({ //notification indicating install process
+    api.sendNotification({
+      //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
-      type: 'activity',
+      type: "activity",
       noDismiss: true,
       allowSuppress: false,
     });
@@ -397,7 +422,7 @@ async function downloadVoid(api, gameSpec) {
       const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, modPageId);
       const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
       const file = modFiles
-        .filter(file => file.category_id === 1)
+        .filter((file) => file.category_id === 1)
         .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
       if (file === undefined) {
         throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
@@ -410,10 +435,14 @@ async function downloadVoid(api, gameSpec) {
       };
       const nxmUrl = `nxm://${GAME_DOMAIN}/mods/${modPageId}/files/${file.file_id}`;
       //const nxmUrl = `nxm://${GAME_DOMAIN}/mods/${modPageId}/files/${FILE_ID}`;
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [nxmUrl], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const dlId = await util.toPromise((cb) =>
+        api.events.emit("start-download", [nxmUrl], dlInfo, undefined, cb, undefined, {
+          allowInstall: false,
+        }),
+      );
+      const modId = await util.toPromise((cb) =>
+        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+      );
       const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
       const batched = [
         actions.setModsEnabled(api, profileId, [modId], true, {
@@ -423,7 +452,7 @@ async function downloadVoid(api, gameSpec) {
         actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the modType
       ];
       util.batchDispatch(api.store, batched); // Will dispatch both actions.
-    //Show the user the download page if the download/install process fails
+      //Show the user the download page if the download/install process fails
     } catch (err) {
       const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${modPageId}/files/?tab=files`;
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
@@ -438,8 +467,8 @@ async function downloadVoid(api, gameSpec) {
 
 //Installer test for Void Installer
 function testVoid(files, gameId) {
-  const isMod = files.some(file => (path.basename(file).toLowerCase() === VOID_EXEC));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => path.basename(file).toLowerCase() === VOID_EXEC);
+  let supported = gameId === spec.game.id && isMod;
 
   return Promise.resolve({
     supported,
@@ -449,19 +478,18 @@ function testVoid(files, gameId) {
 
 //Installer install Overstrike
 function installVoid(files) {
-  const modFile = files.find(file => (path.basename(file).toLowerCase() === VOID_EXEC));
+  const modFile = files.find((file) => path.basename(file).toLowerCase() === VOID_EXEC);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: VOID_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: VOID_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) &&
-      (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(VOID_FOLDER, file.substr(idx)),
     };
@@ -472,8 +500,8 @@ function installVoid(files) {
 
 //Installer test for Void Installer
 function testVoidExplorer(files, gameId) {
-  const isMod = files.some(file => (path.basename(file).toLowerCase() === VOIDEXPLORER_EXEC));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => path.basename(file).toLowerCase() === VOIDEXPLORER_EXEC);
+  let supported = gameId === spec.game.id && isMod;
 
   return Promise.resolve({
     supported,
@@ -483,19 +511,18 @@ function testVoidExplorer(files, gameId) {
 
 //Installer install Overstrike
 function installVoidExplorer(files) {
-  const modFile = files.find(file => (path.basename(file).toLowerCase() === VOIDEXPLORER_EXEC));
+  const modFile = files.find((file) => path.basename(file).toLowerCase() === VOIDEXPLORER_EXEC);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: VOIDEXPLORER_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: VOIDEXPLORER_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) &&
-      (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(VOIDEXPLORER_FOLDER, file.substr(idx)),
     };
@@ -506,14 +533,19 @@ function installVoidExplorer(files) {
 
 //test for Void Mods
 function testVoidMod(files, gameId) {
-  const isExt = files.some(file => VOIDMOD_EXTS.includes(path.extname(file).toLowerCase()));
-  const isXml = files.some(file => (path.basename(file).toLowerCase() === VOIDMOD_FILE));
-  let supported = (gameId === spec.game.id) && ( isExt || isXml );
+  const isExt = files.some((file) => VOIDMOD_EXTS.includes(path.extname(file).toLowerCase()));
+  const isXml = files.some((file) => path.basename(file).toLowerCase() === VOIDMOD_FILE);
+  let supported = gameId === spec.game.id && (isExt || isXml);
 
   // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -526,32 +558,30 @@ function testVoidMod(files, gameId) {
 //Installer for Void Mods
 function installVoidMod(files, fileName) {
   const MOD_NAME = path.basename(fileName);
-  let MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
-  const setModTypeInstruction = { type: 'setmodtype', value: VOIDMOD_ID };
-  let modFile = files.find(file => (path.basename(file).toLowerCase() === VOIDMOD_FILE)); //try xml file first
+  let MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, "");
+  const setModTypeInstruction = { type: "setmodtype", value: VOIDMOD_ID };
+  let modFile = files.find((file) => path.basename(file).toLowerCase() === VOIDMOD_FILE); //try xml file first
   if (modFile === undefined) {
-    modFile = files.find(file => VOIDMOD_EXTS.includes(path.extname(file).toLowerCase())); //fallback to exts
+    modFile = files.find((file) => VOIDMOD_EXTS.includes(path.extname(file).toLowerCase())); //fallback to exts
   }
   let rootPath = path.dirname(modFile);
   const ROOT_PATH = path.basename(rootPath);
-  if (ROOT_PATH !== '.') {
-    MOD_FOLDER = '.'; //no top level folder needed if it's already included in the archive
+  if (ROOT_PATH !== ".") {
+    MOD_FOLDER = "."; //no top level folder needed if it's already included in the archive
     modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
     rootPath = path.dirname(modFile);
     /*const indexFolder = path.basename(modFile); //index to catch other folders in the same directory
     //idx = modFile.indexOf(`${indexFolder}${path.sep}`); //index on the folder with path separator //*/
   }
   const idx = modFile.indexOf(path.basename(modFile));
-  
-  
+
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-  ((file.indexOf(rootPath) !== -1) &&
-    (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(MOD_FOLDER, file),
     };
@@ -562,13 +592,18 @@ function installVoidMod(files, fileName) {
 
 //Installer test for Root folder files
 function testRoot(files, gameId) {
-  const isMod = files.some(file => ROOT_FOLDERS.includes(path.basename(file)));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => ROOT_FOLDERS.includes(path.basename(file)));
+  let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -580,20 +615,20 @@ function testRoot(files, gameId) {
 
 //Installer install Root folder files
 function installRoot(files) {
-  const modFile = files.find(file => ROOT_FOLDERS.includes(path.basename(file)));
-  const ROOT_IDX = `${path.basename(modFile)}${path.sep}`
+  const modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file)));
+  const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
   const idx = modFile.indexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -604,13 +639,18 @@ function installRoot(files) {
 
 //test whether to use mod installer
 function testVideo(files, gameId) {
-  const isMod = files.some(file => VIDEO_EXTS.includes(path.extname(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => VIDEO_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer.
-  if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -622,17 +662,17 @@ function testVideo(files, gameId) {
 
 //mod installer instructions
 function installVideo(files) {
-  const modFile = files.find(file => VIDEO_EXTS.includes(path.extname(file).toLowerCase()));
+  const modFile = files.find((file) => VIDEO_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: VIDEO_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: VIDEO_ID };
 
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -643,14 +683,19 @@ function installVideo(files) {
 
 //test whether to use mod installer
 function testSave(files, gameId) {
-  const isMod = files.some(file => (path.extname(file).toLowerCase() === SAVE_EXT));
-  const isFile = files.some(file => (path.basename(file).toLowerCase() === SAVE_FILE));
-  let supported = (gameId === spec.game.id) && ( isMod || isFile );
+  const isMod = files.some((file) => path.extname(file).toLowerCase() === SAVE_EXT);
+  const isFile = files.some((file) => path.basename(file).toLowerCase() === SAVE_FILE);
+  let supported = gameId === spec.game.id && (isMod || isFile);
 
   // Test for a mod installer.
-  if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -662,20 +707,20 @@ function testSave(files, gameId) {
 
 //mod installer instructions
 function installSave(files) {
-  let  modFile = files.find(file => (path.extname(file).toLowerCase() === SAVE_EXT));
+  let modFile = files.find((file) => path.extname(file).toLowerCase() === SAVE_EXT);
   if (modFile === undefined) {
-    modFile = files.find(file => (path.basename(file).toLowerCase() === SAVE_FILE));
+    modFile = files.find((file) => path.basename(file).toLowerCase() === SAVE_FILE);
   }
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: SAVE_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: SAVE_ID };
 
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -687,13 +732,18 @@ function installSave(files) {
 
 //test whether to use mod installer
 function testConfig(files, gameId) {
-  const isMod = files.some(file => CONFIG_FILES.includes(path.basename(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => CONFIG_FILES.includes(path.basename(file).toLowerCase()));
+  let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer.
-  if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
     supported = false;
   }
 
@@ -705,17 +755,17 @@ function testConfig(files, gameId) {
 
 //mod installer instructions
 function installConfig(files) {
-  const modFile = files.find(file => CONFIG_FILES.includes(path.basename(file).toLowerCase()));
+  const modFile = files.find((file) => CONFIG_FILES.includes(path.basename(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: CONFIG_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: CONFIG_ID };
 
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -734,38 +784,46 @@ function setupNotify(api) {
   const MESSAGE = `${MOD_NAME} Setup Required`;
   api.sendNotification({
     id: NOTIF_ID,
-    type: 'warning',
+    type: "warning",
     message: MESSAGE,
     allowSuppress: true,
     actions: [
       {
-        title: 'More',
+        title: "More",
         action: (dismiss) => {
-          api.showDialog('question', MESSAGE, {
-            text: `The ${MOD_NAME} tool downloaded by this extension requires setup.\n`
-                + `Please launch the tool and set the Game Folder.\n`
-                + `Mods to install with ${MOD_NAME} will be found at this folder: "[RootGameFolder]\\${VOID_FOLDER}\\Mods".\n`
-                + `If you don't see your mod's folder there, check in the root game folder.\n`   
-                + `You must use ${MOD_NAME} to install and uninstall those mods after installing with Vortex.\n`
-          }, [
-            { label: 'Acknowledge', action: () => dismiss() },
+          api.showDialog(
+            "question",
+            MESSAGE,
             {
-              label: 'Run Void', action: () => {
-                runModManager(api);
-                dismiss();
-              }
+              text:
+                `The ${MOD_NAME} tool downloaded by this extension requires setup.\n` +
+                `Please launch the tool and set the Game Folder.\n` +
+                `Mods to install with ${MOD_NAME} will be found at this folder: "[RootGameFolder]\\${VOID_FOLDER}\\Mods".\n` +
+                `If you don't see your mod's folder there, check in the root game folder.\n` +
+                `You must use ${MOD_NAME} to install and uninstall those mods after installing with Vortex.\n`,
             },
-            {
-              label: 'Never Show Again', action: () => {
-                api.suppressNotification(NOTIF_ID);
-                dismiss();
-              }
-            },
-          ]);
+            [
+              { label: "Acknowledge", action: () => dismiss() },
+              {
+                label: "Run Void",
+                action: () => {
+                  runModManager(api);
+                  dismiss();
+                },
+              },
+              {
+                label: "Never Show Again",
+                action: () => {
+                  api.suppressNotification(NOTIF_ID);
+                  dismiss();
+                },
+              },
+            ],
+          );
         },
       },
     ],
-  });    
+  });
 }
 
 //Notify User to run Void after deployment
@@ -775,40 +833,48 @@ function deployNotify(api) {
   const MESSAGE = `Run ${MOD_NAME} to Install Mods`;
   api.sendNotification({
     id: NOTIF_ID,
-    type: 'warning',
+    type: "warning",
     message: MESSAGE,
     allowSuppress: true,
     actions: [
       {
-        title: 'Run Void',
+        title: "Run Void",
         action: (dismiss) => {
           runModManager(api);
           dismiss();
         },
       },
       {
-        title: 'More',
+        title: "More",
         action: (dismiss) => {
-          api.showDialog('question', MESSAGE, {
-            text: `For most mods, you must use ${MOD_NAME} to install the mod to the game files after installing with Vortex.\n`
-                + `Mods to install with ${MOD_NAME} will be found at this folder: "[RootGameFolder]\\${VOID_FOLDER}\\Mods".\n`
-                + `If you don't see your mod's folder there, check in the root game folder.\n`   
-                + `Use the included tool to launch ${MOD_NAME} (button on notification or in "Dashboard" tab).\n`
-          }, [
+          api.showDialog(
+            "question",
+            MESSAGE,
             {
-              label: 'Run Void', action: () => {
-                runModManager(api);
-                dismiss();
-              }
+              text:
+                `For most mods, you must use ${MOD_NAME} to install the mod to the game files after installing with Vortex.\n` +
+                `Mods to install with ${MOD_NAME} will be found at this folder: "[RootGameFolder]\\${VOID_FOLDER}\\Mods".\n` +
+                `If you don't see your mod's folder there, check in the root game folder.\n` +
+                `Use the included tool to launch ${MOD_NAME} (button on notification or in "Dashboard" tab).\n`,
             },
-            { label: 'Continue', action: () => dismiss() },
-            {
-              label: 'Never Show Again', action: () => {
-                api.suppressNotification(NOTIF_ID);
-                dismiss();
-              }
-            },
-          ]);
+            [
+              {
+                label: "Run Void",
+                action: () => {
+                  runModManager(api);
+                  dismiss();
+                },
+              },
+              { label: "Continue", action: () => dismiss() },
+              {
+                label: "Never Show Again",
+                action: () => {
+                  api.suppressNotification(NOTIF_ID);
+                  dismiss();
+                },
+              },
+            ],
+          );
         },
       },
     ],
@@ -819,46 +885,56 @@ function runModManager(api) {
   const TOOL_ID = VOID_ID;
   const TOOL_NAME = VOID_NAME;
   const state = api.store.getState();
-  const tool = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'tools', TOOL_ID], undefined);
+  const tool = util.getSafe(
+    state,
+    ["settings", "gameMode", "discovered", GAME_ID, "tools", TOOL_ID],
+    undefined,
+  );
 
   try {
     const TOOL_PATH = tool.path;
     if (TOOL_PATH !== undefined) {
-      return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false })
-        .catch(err => api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err,
-          { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 })
-        );
-    }
-    else {
-      return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, `Path to ${TOOL_NAME} executable could not be found. Ensure ${TOOL_NAME} is installed through Vortex.`);
+      return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false }).catch((err) =>
+        api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
+          allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+        }),
+      );
+    } else {
+      return api.showErrorNotification(
+        `Failed to run ${TOOL_NAME}`,
+        `Path to ${TOOL_NAME} executable could not be found. Ensure ${TOOL_NAME} is installed through Vortex.`,
+      );
     }
   } catch (err) {
-    return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
+    return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
+      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+    });
   }
 }
 
 //*
 async function resolveGameVersion(gamePath) {
   GAME_VERSION = await setGameVersion(gamePath);
-  let version = '0.0.0';
-  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+  let version = "0.0.0";
+  if (GAME_VERSION === "xbox") {
+    // use appxmanifest.xml for Xbox version
     try {
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
     } catch (err) {
-      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      log("error", `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
       return Promise.resolve(version);
     }
-  }
-  else { // use exe
+  } else {
+    // use exe
     try {
-      const exeVersion = require('exe-version');
+      const exeVersion = require("exe-version");
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
-      return Promise.resolve(version); 
+      return Promise.resolve(version);
     } catch (err) {
-      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      log("error", `Could not read ${EXEC} file to get Steam game version: ${err}`);
       return Promise.resolve(version);
     }
   }
@@ -885,9 +961,7 @@ async function setup(discovery, api, gameSpec) {
   await fs.ensureDirWritableAsync(SAVE_PATH);
   await fs.ensureDirWritableAsync(CONFIG_PATH);
   await modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
-  return fs.ensureFileAsync(
-    path.join(GAME_PATH, VOIDMOD_PATH, "VoidInstaller_Mods_Go_Here.txt")
-  );
+  return fs.ensureFileAsync(path.join(GAME_PATH, VOIDMOD_PATH, "VoidInstaller_Mods_Go_Here.txt"));
 }
 
 //Let Vortex know about the game
@@ -909,38 +983,54 @@ function applyGame(context, gameSpec) {
 
   //register mod types recursively
   (gameSpec.modTypes || []).forEach((type, idx) => {
-    context.registerModType(type.id, modTypePriority(type.priority) + idx, (gameId) => {
-      var _a;
-      return (gameId === gameSpec.game.id)
-        && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
+    context.registerModType(
+      type.id,
+      modTypePriority(type.priority) + idx,
+      (gameId) => {
+        var _a;
+        return (
+          gameId === gameSpec.game.id &&
+          !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+          _a === void 0
+            ? void 0
+            : _a.path)
+        );
+      },
+      (game) => pathPattern(context.api, game, type.targetPath),
+      () => Promise.resolve(false),
+      { name: type.name },
+    );
   });
 
   //* register mod types explicitly
-  context.registerModType(SAVE_ID, 62, 
+  context.registerModType(
+    SAVE_ID,
+    62,
     (gameId) => {
       /*GAME_PATH = getDiscoveryPath(context.api);
       GAME_VERSION = setGameVersion(GAME_PATH);
       if (GAME_PATH !== undefined) {
         CHECK_DATA = checkPartitions(USERHOME, GAME_PATH);
       } //*/
-      return ((gameId === GAME_ID));
+      return gameId === GAME_ID;
     },
-    (game) => pathPattern(context.api, game, SAVE_PATH), 
-    () => Promise.resolve(false), 
-    { name: SAVE_NAME }
+    (game) => pathPattern(context.api, game, SAVE_PATH),
+    () => Promise.resolve(false),
+    { name: SAVE_NAME },
   ); //*/
-  context.registerModType(CONFIG_ID, 63, 
+  context.registerModType(
+    CONFIG_ID,
+    63,
     (gameId) => {
       /*GAME_PATH = getDiscoveryPath(context.api);
       if (GAME_PATH !== undefined) {
         CHECK_DATA = checkPartitions(USERHOME, GAME_PATH);
       } //*/
-      return ((gameId === GAME_ID));
+      return gameId === GAME_ID;
     },
-    (game) => pathPattern(context.api, game, CONFIG_PATH), 
-    () => Promise.resolve(false), 
-    { name: CONFIG_NAME }
+    (game) => pathPattern(context.api, game, CONFIG_PATH),
+    () => Promise.resolve(false),
+    { name: CONFIG_NAME },
   ); //*/
 
   //register mod installers
@@ -950,68 +1040,120 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(ROOT_ID, 31, testRoot, installRoot);
   context.registerInstaller(VIDEO_ID, 33, testVideo, installVideo);
   //if (GAME_VERSION !== 'xbox') {
-    context.registerInstaller(SAVE_ID, 35, testSave, installSave);
+  context.registerInstaller(SAVE_ID, 35, testSave, installSave);
   //} //*/
   context.registerInstaller(CONFIG_ID, 37, testConfig, installConfig);
 
   //register actions
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
-    const openPath = CONFIG_PATH;
-    util.opn(openPath).catch(() => null);
-    }, () => {
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Config Folder",
+    () => {
+      const openPath = CONFIG_PATH;
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', async () => {
-    //SAVE_PATH = await getSavePath(context.api);
-    const openPath = SAVE_PATH;
-    util.opn(openPath).catch(() => null);
-    }, () => {
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Save Folder",
+    async () => {
+      //SAVE_PATH = await getSavePath(context.api);
+      const openPath = SAVE_PATH;
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
-    const openPath = path.join(__dirname, 'CHANGELOG.md');
-    util.opn(openPath).catch(() => null);
-    }, () => {
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "View Changelog",
+    () => {
+      const openPath = path.join(__dirname, "CHANGELOG.md");
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    const openPath = DOWNLOAD_FOLDER;
-    util.opn(openPath).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Downloads Folder",
+    () => {
+      const openPath = DOWNLOAD_FOLDER;
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
 
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
-    util.opn(PCGAMINGWIKI_URL).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
-    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open PCGamingWiki Page",
+    () => {
+      util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Submit Bug Report",
+    () => {
+      util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
 }
 
 //main function
 function main(context) {
   applyGame(context, spec);
-  context.once(() => { // put code here that should be run (once) when Vortex starts up
+  context.once(() => {
+    // put code here that should be run (once) when Vortex starts up
     const api = context.api;
-    context.api.onAsync('did-deploy', async (profileId, deployment) => {
-      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
+    context.api.onAsync("did-deploy", async (profileId, deployment) => {
+      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(
+        context.api.getState(),
+        GAME_ID,
+      );
       if (profileId !== LAST_ACTIVE_PROFILE) return;
       return deployNotify(context.api);
     });

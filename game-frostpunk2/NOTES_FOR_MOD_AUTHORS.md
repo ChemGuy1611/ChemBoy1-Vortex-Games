@@ -6,17 +6,17 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `Frostpunk2` |
-| Blueprint Mods (LogicMods) | a `LogicMods` folder | `Frostpunk2\Content\Paks\LogicMods\LogicMods` |
-| Pak Mods | a `'.pak` file | `Frostpunk2\Content\Paks\~mods` |
-| UE4SS Itself | a `dwmapi.dll` file | - |
-| Signature Bypass | `dsound.dll` and `sig.lua` | - |
-| UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | - |
-| Root / Game Folder Mods | a top-level folder such as `Frostpunk2` | the game folder itself (no subfolder) |
-| Config File Mods | a config file such as `engine.ini` or `game.ini` | - |
-| Save Game Files | a `.profile` file | - |
+| Mod Type                                     | Archive must contain                             | Installs to                                   |
+| -------------------------------------------- | ------------------------------------------------ | --------------------------------------------- |
+| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder         | `Frostpunk2`                                  |
+| Blueprint Mods (LogicMods)                   | a `LogicMods` folder                             | `Frostpunk2\Content\Paks\LogicMods\LogicMods` |
+| Pak Mods                                     | a `'.pak` file                                   | `Frostpunk2\Content\Paks\~mods`               |
+| UE4SS Itself                                 | a `dwmapi.dll` file                              | -                                             |
+| Signature Bypass                             | `dsound.dll` and `sig.lua`                       | -                                             |
+| UE4SS Script Mods (Lua)                      | a `.lua` file and a `Scripts` folder             | -                                             |
+| Root / Game Folder Mods                      | a top-level folder such as `Frostpunk2`          | the game folder itself (no subfolder)         |
+| Config File Mods                             | a config file such as `engine.ini` or `game.ini` | -                                             |
+| Save Game Files                              | a `.profile` file                                | -                                             |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
@@ -193,4 +193,3 @@ Save files are deployed to the game's save folder in your user profile.
 
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

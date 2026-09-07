@@ -9,15 +9,15 @@ Diagrams are Mermaid, which renders natively on GitHub and in most Markdown view
 
 ## Contents
 
-| Diagram | Source doc |
-| --- | --- |
-| [1. Mod install pipeline](#1-mod-install-pipeline) | `VORTEX_MOD_INSTALL.md` |
-| [2. Mod update / version check](#2-mod-update--version-check) | `VORTEX_NEXUS_INTEGRATION.md`, `NEXUS_FILE_PROPERTIES.md` |
-| [3. Load order handling (FBLO)](#3-load-order-handling-fblo) | `VORTEX_LOAD_ORDER.md` |
-| [4. Deployment and purge](#4-deployment-and-purge) | `VORTEX_DEPLOYMENT.md` |
-| [5. Game discovery and activation](#5-game-discovery-and-activation) | `VORTEX_GAME_LIFECYCLE.md` |
-| [6. Profile switch](#6-profile-switch) | `VORTEX_PROFILES.md` |
-| [7. Extension loading and init](#7-extension-loading-and-init) | `VORTEX_EXTENSION_LOADING.md` |
+| Diagram                                                              | Source doc                                                |
+| -------------------------------------------------------------------- | --------------------------------------------------------- |
+| [1. Mod install pipeline](#1-mod-install-pipeline)                   | `VORTEX_MOD_INSTALL.md`                                   |
+| [2. Mod update / version check](#2-mod-update--version-check)        | `VORTEX_NEXUS_INTEGRATION.md`, `NEXUS_FILE_PROPERTIES.md` |
+| [3. Load order handling (FBLO)](#3-load-order-handling-fblo)         | `VORTEX_LOAD_ORDER.md`                                    |
+| [4. Deployment and purge](#4-deployment-and-purge)                   | `VORTEX_DEPLOYMENT.md`                                    |
+| [5. Game discovery and activation](#5-game-discovery-and-activation) | `VORTEX_GAME_LIFECYCLE.md`                                |
+| [6. Profile switch](#6-profile-switch)                               | `VORTEX_PROFILES.md`                                      |
+| [7. Extension loading and init](#7-extension-loading-and-init)       | `VORTEX_EXTENSION_LOADING.md`                             |
 
 ## How to read these
 
@@ -31,7 +31,7 @@ Diagrams are Mermaid, which renders natively on GitHub and in most Markdown view
 
 - **No cycles or self-loops in a `flowchart`.** An edge back to an already-visited node (a real
   loop, or a diamond branch pointing at itself) can trigger `Could not find a suitable point for
-  the given distance` on GitHub's rendering pipeline — a known dagre-layout bug. It reproduces even
+the given distance` on GitHub's rendering pipeline — a known dagre-layout bug. It reproduces even
   when the same diagram renders fine locally under a current Mermaid build, because GitHub pins its
   own bundled version, which lags and differs from whatever `npm i mermaid` gives you. Express
   repetition as label text instead ("continue the walk with the next item in the list") or a dotted
@@ -41,7 +41,7 @@ Diagrams are Mermaid, which renders natively on GitHub and in most Markdown view
   `npm i @mermaid-js/mermaid-cli` (it bundles Puppeteer / real headless Chrome — jsdom cannot stand
   in here, it's missing browser primitives like `SVGElement.getBBox`/`CSSStyleSheet` that dagre's
   label sizing needs), write each fenced block to its own `.mmd` file, then `npx mmdc -i block.mmd
-  -o block.svg` per block. A clean render is much stronger evidence than a clean parse.
+-o block.svg` per block. A clean render is much stronger evidence than a clean parse.
 - **No standalone bold line as a pseudo-heading (MD036).** A line like `**Key branch points**` on
   its own reads as a heading to markdownlint even though it isn't one — use a real `###` heading.
 - **Repeated heading text across sections needs disambiguation (MD024).** Headings must be unique
@@ -109,7 +109,7 @@ flowchart LR
 
 ### Key branch points — install pipeline
 
-- Installer selection is *first match wins* on an ascending-priority list, so a low number
+- Installer selection is _first match wins_ on an ascending-priority list, so a low number
   pre-empts everything below it.
 - A `testSupported` returning `undefined` is a bug — it is logged and the installer is skipped.
 - Override instructions are intentionally disabled inside collection installs.
@@ -217,7 +217,7 @@ flowchart TD
 
 ### Key branch points — load order
 
-- Reorders flow *through Redux*: the UI writes state, and a state watcher — not the UI — performs
+- Reorders flow _through Redux_: the UI writes state, and a state watcher — not the UI — performs
   serialization and validation.
 - `serializeLoadOrder` is the single write point for the on-disk order file.
 - `UpdateSet` exists because the order file can gain or lose entries outside the page (a mod added
@@ -369,7 +369,7 @@ flowchart TD
 
 ### Key branch points — discovery and activation
 
-- `getInstalledVersion` deliberately runs *before* `setup`.
+- `getInstalledVersion` deliberately runs _before_ `setup`.
 - The profile can change again mid-activation, so `setGameMode` re-checks before emitting.
 - Any activation failure ends in `setNextProfile(undefined)` — "Vortex bounced me back to the
   dashboard" traces to exactly this.
@@ -420,7 +420,7 @@ flowchart TD
 
 ### Key branch points — profile switch
 
-- `nextProfileId` is the *request*, `activeProfileId` is the *fact* — two separate state paths.
+- `nextProfileId` is the _request_, `activeProfileId` is the _fact_ — two separate state paths.
 - The switch is cancellable: another `nextProfileId` change mid-flight makes the older switch bail.
 - Both the outgoing and incoming profile deploy, in that order.
 

@@ -6,18 +6,18 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| AnvilToolkit (tool) | a `anviltoolkit.exe` file | - |
-| Dlcfolder | a file or folder named one of: `dlc_1`, `dlc_2`, `dlc_3`, `dlc_4`, `dlc_5`, `dlc_6`, `dlc_7`, `dlc_8`, `dlc_9` or `dlc_10` | the game folder itself (no subfolder) |
-| Extracted Forge Content | a `Extracted` folder | the game folder itself (no subfolder) |
-| Forgefolder | - | the game folder itself (no subfolder) |
-| Datafolder | - | the game folder itself (no subfolder) |
-| Loose Data Files | a `.data` file | the game folder itself (no subfolder) |
-| Resorep | a file or folder named one of: `d3d11.dll` | the game folder itself (no subfolder) |
-| Forge File Mods | a `.forge` file | the game folder itself (no subfolder) |
-| Root / Game Folder Mods | a `videos` folder | the game folder itself (no subfolder) |
-| Resoreptextures | a file with the `.dds` extension | `ResoRep\modded` |
+| Mod Type                | Archive must contain                                                                                                       | Installs to                           |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| AnvilToolkit (tool)     | a `anviltoolkit.exe` file                                                                                                  | -                                     |
+| Dlcfolder               | a file or folder named one of: `dlc_1`, `dlc_2`, `dlc_3`, `dlc_4`, `dlc_5`, `dlc_6`, `dlc_7`, `dlc_8`, `dlc_9` or `dlc_10` | the game folder itself (no subfolder) |
+| Extracted Forge Content | a `Extracted` folder                                                                                                       | the game folder itself (no subfolder) |
+| Forgefolder             | -                                                                                                                          | the game folder itself (no subfolder) |
+| Datafolder              | -                                                                                                                          | the game folder itself (no subfolder) |
+| Loose Data Files        | a `.data` file                                                                                                             | the game folder itself (no subfolder) |
+| Resorep                 | a file or folder named one of: `d3d11.dll`                                                                                 | the game folder itself (no subfolder) |
+| Forge File Mods         | a `.forge` file                                                                                                            | the game folder itself (no subfolder) |
+| Root / Game Folder Mods | a `videos` folder                                                                                                          | the game folder itself (no subfolder) |
+| Resoreptextures         | a file with the `.dds` extension                                                                                           | `ResoRep\modded`                      |
 
 Paths are relative to the game's install folder.
 
@@ -121,4 +121,3 @@ Installs to: `ResoRep\modded`
 
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

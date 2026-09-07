@@ -1,18 +1,18 @@
-const { actions, fs, util, selectors, log } = require('vortex-api');
-const path = require('path');
-const GAME_ID = 'placeholder';
-const api = require('vortex-api'); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
+const { actions, fs, util, selectors, log } = require("vortex-api");
+const path = require("path");
+const GAME_ID = "placeholder";
+const api = require("vortex-api"); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 const spec = { game: { id: GAME_ID } }; //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 const context = { api }; //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 
 // THUNDERSTORE REQUIREMENT ////////////////////////////////////////////////
-const { downloadThunderstore, checkForThunderstoreUpdate } = require('./thunderstore_downloader');
+const { downloadThunderstore, checkForThunderstoreUpdate } = require("./thunderstore_downloader");
 const XXX_ID = `${GAME_ID}-XXX`; //mod type id for the requirement (register the mod type + installer in index.js as usual)
 const XXX_NAME = "XXX";
-const XXX_TS_COMMUNITY = 'community-slug'; //Thunderstore community for this game - https://thunderstore.io/c/community-slug/
-const XXX_TS_NAMESPACE = 'Namespace'; //team/uploader, first path segment of the package page
-const XXX_TS_NAME = 'PackageName'; //package name, second path segment
-const XXX_REV = '0.0.0'; //fallback version if the Thunderstore API is unreachable - also builds the fallback download URL
+const XXX_TS_COMMUNITY = "community-slug"; //Thunderstore community for this game - https://thunderstore.io/c/community-slug/
+const XXX_TS_NAMESPACE = "Namespace"; //team/uploader, first path segment of the package page
+const XXX_TS_NAME = "PackageName"; //package name, second path segment
+const XXX_REV = "0.0.0"; //fallback version if the Thunderstore API is unreachable - also builds the fallback download URL
 const TS_REQUIREMENTS = [
   {
     tsCommunity: XXX_TS_COMMUNITY, //optional - omit to resolve through the community-independent package endpoint
@@ -53,18 +53,27 @@ async function setup(api, gameSpec) {
 }
 
 // *** In context.once() function ////////////////////
-  api.onAsync('check-mods-version', (gameId, mods, forced) => {
-    if (gameId !== GAME_ID) return;
-    return checkForThunderstoreUpdate(api, spec, TS_REQUIREMENTS)
-      .catch(err => log('warn', `Failed to check for ${XXX_NAME} update: ${err}`));
-  }); //*/
+api.onAsync("check-mods-version", (gameId, mods, forced) => {
+  if (gameId !== GAME_ID) return;
+  return checkForThunderstoreUpdate(api, spec, TS_REQUIREMENTS).catch((err) =>
+    log("warn", `Failed to check for ${XXX_NAME} update: ${err}`),
+  );
+}); //*/
 
 // *** In applyGame() function ////////////////////
-  //register a toolbar button to (re)download the latest version
-  context.registerAction('mod-icons', 300, 'open-ext', {}, `Download Latest ${XXX_NAME}`, () => {
+//register a toolbar button to (re)download the latest version
+context.registerAction(
+  "mod-icons",
+  300,
+  "open-ext",
+  {},
+  `Download Latest ${XXX_NAME}`,
+  () => {
     downloadThunderstore(context.api, spec, TS_REQUIREMENTS, false);
-  }, () => {
+  },
+  () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
-  }); //*/
+  },
+); //*/

@@ -2,83 +2,83 @@
 
 ## Overview
 
-| Property | Value |
-| --- | --- |
-| Name | XXX Vortex Extension |
+| Property           | Value                  |
+| ------------------ | ---------------------- |
+| Name               | XXX Vortex Extension   |
 | Engine / Structure | Unreal Engine 4-5 Game |
-| Author | ChemBoy1 |
+| Author             | ChemBoy1               |
 
 ## Key Identifiers
 
-| Property | Value |
-| --- | --- |
-| Game ID | `XXX` |
-| Executable | `XXX.exe` |
+| Property          | Value                  |
+| ----------------- | ---------------------- |
+| Game ID           | `XXX`                  |
+| Executable        | `XXX.exe`              |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
-| Executable (GOG) | `XXX.exe` |
-| Executable (Demo) | `XXX.exe` |
+| Executable (GOG)  | `XXX.exe`              |
+| Executable (Demo) | `XXX.exe`              |
 
 ## Feature Flags
 
-| Flag | Value | Description |
-| --- | --- | --- |
-| `hasXbox` | `false` | toggle for Xbox version logic. |
-| `multiExe` | `false` | toggle for multiple executables (Epic/GOG/Demo don't match Steam) |
-| `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
-| `hasModKit` | `false` | toggle for UE ModKit mod support |
-| `hasServer` | `false` | toggle for server pak mod logic |
-| `preferHardlinks` | `true` | set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users |
-| `autoDownloadUe4ss` | `false` | toggle for auto downloading UE4SS (only applies when ue4ssLoadOrder is enabled) |
-| `writeEngineVersion` | `false` | toggle to write ENGINE_VERSION into UE4SS-settings.ini (EngineVersionOverride) on deploy, when UE4SS is installed |
-| `SIGBYPASS_REQUIRED` | `false` | set true if there are .sig files in the Paks folder |
-| `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
-| `hasUserIdFolder` | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
-| `debug` | `false` | toggle for debug mode |
-| `PAKMOD_LOADORDER` | `true` | set to false if you don't want loadOrder. If must be in "Paks" root, disable loadOrder. |
-| `FBLO` | `true` | set to false to use legacy load order page |
-| `ue4ssLoadOrder` | `true` | master toggle for UE4SS support: UE4SS/Scripts/DLL/LogicMods mod types and installers, UE4SS buttons, load order page, and mods.txt writing |
-| `logicModsLoadOrder` | `true` | enable load order page and load_order.txt writing for LogicMods/Blueprint pak mods |
-| `collectionsLoadOrder` | `true` | include UE4SS and LogicMods load orders in collections (ANDed with the toggles above) |
-| `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
-| `CHECK_CONFIG` | `false` | boolean to check if game, staging folder, and config and save folders are on the same drive |
-| `CHECK_SAVE` | `false` | secondary same as above (if save and config are in different locations) |
-| `mod_update_all_profile` | `false` | for mod update to keep them in the load order and not uncheck them |
-| `updating_mod` | `false` | used to see if it's a mod update or not |
+| Flag                     | Value   | Description                                                                                                                                 |
+| ------------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `hasXbox`                | `false` | toggle for Xbox version logic.                                                                                                              |
+| `multiExe`               | `false` | toggle for multiple executables (Epic/GOG/Demo don't match Steam)                                                                           |
+| `setupNotification`      | `false` | enable to show the user a notification with special instructions (specify below)                                                            |
+| `hasModKit`              | `false` | toggle for UE ModKit mod support                                                                                                            |
+| `hasServer`              | `false` | toggle for server pak mod logic                                                                                                             |
+| `preferHardlinks`        | `true`  | set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users                 |
+| `autoDownloadUe4ss`      | `false` | toggle for auto downloading UE4SS (only applies when ue4ssLoadOrder is enabled)                                                             |
+| `writeEngineVersion`     | `false` | toggle to write ENGINE_VERSION into UE4SS-settings.ini (EngineVersionOverride) on deploy, when UE4SS is installed                           |
+| `SIGBYPASS_REQUIRED`     | `false` | set true if there are .sig files in the Paks folder                                                                                         |
+| `IO_STORE`               | `true`  | true if the Paks folder contains .ucas and .utoc files                                                                                      |
+| `hasUserIdFolder`        | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)                                              |
+| `debug`                  | `false` | toggle for debug mode                                                                                                                       |
+| `PAKMOD_LOADORDER`       | `true`  | set to false if you don't want loadOrder. If must be in "Paks" root, disable loadOrder.                                                     |
+| `FBLO`                   | `true`  | set to false to use legacy load order page                                                                                                  |
+| `ue4ssLoadOrder`         | `true`  | master toggle for UE4SS support: UE4SS/Scripts/DLL/LogicMods mod types and installers, UE4SS buttons, load order page, and mods.txt writing |
+| `logicModsLoadOrder`     | `true`  | enable load order page and load_order.txt writing for LogicMods/Blueprint pak mods                                                          |
+| `collectionsLoadOrder`   | `true`  | include UE4SS and LogicMods load orders in collections (ANDed with the toggles above)                                                       |
+| `SYM_LINKS`              | `true`  | true if symlink deployment is enabled for this game                                                                                         |
+| `CHECK_CONFIG`           | `false` | boolean to check if game, staging folder, and config and save folders are on the same drive                                                 |
+| `CHECK_SAVE`             | `false` | secondary same as above (if save and config are in different locations)                                                                     |
+| `mod_update_all_profile` | `false` | for mod update to keep them in the load order and not uncheck them                                                                          |
+| `updating_mod`           | `false` | used to see if it's a mod update or not                                                                                                     |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
-| Name | ID | Priority | Target Path |
-| --- | --- | --- | --- |
-| UE4SS Script-LogicMod Combo | `XXX-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `XXX-logicmods` | high | `{gamePath}/XXX/Content/Paks` |
-| Paks (no "~mods") | `XXX-pakalt` | high | `{gamePath}/XXX/Content/Paks` |
-| Root Folder | `XXX-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `XXX-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `XXX-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `XXX-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `XXX-binaries` | 54 | `?` |
-| UE4SS | `XXX-ue4ss` | 56 | `?` |
-| Config (Local AppData) | `XXX-config` | 62 | `?` |
-| Saves (Local AppData) | `XXX-save` | 64 | `?` |
+| Name                        | ID                  | Priority | Target Path                   |
+| --------------------------- | ------------------- | -------- | ----------------------------- |
+| UE4SS Script-LogicMod Combo | `XXX-ue4sscombo`    | high     | `{gamePath}`                  |
+| UE4SS LogicMods (Blueprint) | `XXX-logicmods`     | high     | `{gamePath}/XXX/Content/Paks` |
+| Paks (no "~mods")           | `XXX-pakalt`        | high     | `{gamePath}/XXX/Content/Paks` |
+| Root Folder                 | `XXX-root`          | high     | `{gamePath}`                  |
+| UE Sortable Pak Mod         | `XXX-uesortablepak` | 25       | `?`                           |
+| UE4SS Script Mod            | `XXX-scripts`       | 50       | `?`                           |
+| UE4SS DLL Mod               | `XXX-ue4ssdll`      | 52       | `?`                           |
+| Binaries (Engine Injector)  | `XXX-binaries`      | 54       | `?`                           |
+| UE4SS                       | `XXX-ue4ss`         | 56       | `?`                           |
+| Config (Local AppData)      | `XXX-config`        | 62       | `?`                           |
+| Saves (Local AppData)       | `XXX-save`          | 64       | `?`                           |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID | Priority |
-| --- | --- |
-| `XXX-ue4sscombo` | 26 |
-| `XXX-logicmods` | 27 |
-| `XXX-uesortablepak` | 29 |
-| `XXX-ue4ss` | 31 |
-| `XXX-scripts` | 35 |
-| `XXX-ue4ssdll` | 37 |
-| `XXX-root` | 39 |
-| `XXX-config` | 41 |
-| `XXX-save` | 43 |
-| `XXX-binaries` | 49 |
+| Installer ID        | Priority |
+| ------------------- | -------- |
+| `XXX-ue4sscombo`    | 26       |
+| `XXX-logicmods`     | 27       |
+| `XXX-uesortablepak` | 29       |
+| `XXX-ue4ss`         | 31       |
+| `XXX-scripts`       | 35       |
+| `XXX-ue4ssdll`      | 37       |
+| `XXX-root`          | 39       |
+| `XXX-config`        | 41       |
+| `XXX-save`          | 43       |
+| `XXX-binaries`      | 49       |
 
 ## Toolbar Actions
 
@@ -101,8 +101,8 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-| --- | --- | --- |
-| UE4SS | — | — |
+| ---------- | ------- | ------- |
+| UE4SS      | —       | —       |
 
 ## Special Features
 
@@ -113,4 +113,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-

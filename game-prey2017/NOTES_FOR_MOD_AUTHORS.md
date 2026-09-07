@@ -6,13 +6,13 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| Pric | a file or folder named `preyinterfacecustomizergui.exe` | - |
-| Chairloader | a file or folder named `chairmanager.exe` | - |
-| Chairmodzip | a file or folder named `modinfo.xml` | - |
-| Root / Game Folder Mods | a `GameSDK` folder | the game folder itself (no subfolder) |
-| Binaries | a file with one of these extensions: `.exe`, `.dll`, `.asi` or `.addon64` | - |
+| Mod Type                | Archive must contain                                                      | Installs to                           |
+| ----------------------- | ------------------------------------------------------------------------- | ------------------------------------- |
+| Pric                    | a file or folder named `preyinterfacecustomizergui.exe`                   | -                                     |
+| Chairloader             | a file or folder named `chairmanager.exe`                                 | -                                     |
+| Chairmodzip             | a file or folder named `modinfo.xml`                                      | -                                     |
+| Root / Game Folder Mods | a `GameSDK` folder                                                        | the game folder itself (no subfolder) |
+| Binaries                | a file with one of these extensions: `.exe`, `.dll`, `.asi` or `.addon64` | -                                     |
 
 Paths are relative to the game's install folder.
 
@@ -56,4 +56,3 @@ Recognised when the archive contains a file with one of these extensions: `.exe`
 
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

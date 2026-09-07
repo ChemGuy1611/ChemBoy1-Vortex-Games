@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 // Shared ModDB requirements auto-downloader for Vortex game extensions.
 //
@@ -27,15 +27,15 @@
 // variants), isModDbRequirementInstalled, getLatestModDbFile,
 // getLatestModDbVersion, resolveModDbDownloadUrl.
 
-const path = require('path');
-const { createWriteStream } = require('fs'); //node's fs directly - vortex-api's createWriteStream re-export is deprecated
-const { finished } = require('stream/promises');
-const { actions, fs, log, selectors, util } = require('vortex-api');
+const path = require("path");
+const { createWriteStream } = require("fs"); //node's fs directly - vortex-api's createWriteStream re-export is deprecated
+const { finished } = require("stream/promises");
+const { actions, fs, log, selectors, util } = require("vortex-api");
 
 // --- requirement helpers --------------------------------------------------
 
 // Mod attribute used to track the installed ModDB file id.
-const DEFAULT_FILE_ID_ATTRIBUTE = 'moddbFileId';
+const DEFAULT_FILE_ID_ATTRIBUTE = "moddbFileId";
 // Version parsed from the RSS item title, e.g. "[wOS] Dark Messiah Mod Launcher [R1-08.16]".
 const DEFAULT_VERSION_PATTERN = /\[([^[\]]+)\]\s*$/;
 
@@ -63,7 +63,10 @@ function isPinned(requirement) {
     return false;
   }
   if (!requirement.pinFileId) {
-    log('warn', `${requirement.userFacingName} sets pinVersion without pinFileId - ignoring the pin`);
+    log(
+      "warn",
+      `${requirement.userFacingName} sets pinVersion without pinFileId - ignoring the pin`,
+    );
     return false;
   }
   return true;
@@ -78,20 +81,23 @@ function isAtPinnedVersion(api, gameId, requirement) {
   const state = api.getState();
   const mods = state.persistent.mods[gameId] || {};
   const attr = fileIdAttribute(requirement);
-  return Object.values(mods).some(mod => (mod?.type === requirement.modType)
-    && (String(mod?.attributes?.[attr]) === String(requirement.pinFileId)));
+  return Object.values(mods).some(
+    (mod) =>
+      mod?.type === requirement.modType &&
+      String(mod?.attributes?.[attr]) === String(requirement.pinFileId),
+  );
 }
 
 // --- ModDB RSS feed --------------------------------------------------------
 
 function decodeEntities(text) {
-  return String(text || '')
-    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
+  return String(text || "")
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
     .replace(/&#x([0-9a-f]+);/gi, (_, code) => String.fromCodePoint(parseInt(code, 16)))
     .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(parseInt(code, 10)))
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
     .replace(/&apos;/g, "'");
 }
@@ -130,7 +136,7 @@ async function getLatestModDbFile(requirement) {
     const xml = await response.text();
     let items = parseModDbRssItems(xml);
     if (requirement.filePattern) {
-      items = items.filter(item => requirement.filePattern.test(item.title));
+      items = items.filter((item) => requirement.filePattern.test(item.title));
     }
     if (items.length === 0) {
       return null;
@@ -138,7 +144,10 @@ async function getLatestModDbFile(requirement) {
     items.sort((a, b) => b.date - a.date); //newest file first
     return items[0];
   } catch (err) {
-    log('warn', `Could not get latest ${requirement.userFacingName} file from ModDB RSS feed: ${err}`);
+    log(
+      "warn",
+      `Could not get latest ${requirement.userFacingName} file from ModDB RSS feed: ${err}`,
+    );
     return null;
   }
 }
@@ -165,15 +174,15 @@ async function resolveModDbDownloadUrl(fileId) {
       return null;
     }
     const href = decodeEntities(match[1]); //hrefs in HTML may carry entity-encoded characters (e.g. &amp;)
-    return href.startsWith('http') ? href : `https://www.moddb.com${href}`;
+    return href.startsWith("http") ? href : `https://www.moddb.com${href}`;
   } catch (err) {
-    log('warn', `Could not resolve ModDB mirror URL for file ${fileId}: ${err}`);
+    log("warn", `Could not resolve ModDB mirror URL for file ${fileId}: ${err}`);
     return null;
   }
 }
 
 function filenameFromResponse(response, requirement) {
-  const disposition = response.headers.get('content-disposition');
+  const disposition = response.headers.get("content-disposition");
   if (disposition) {
     const match = disposition.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/i);
     if (match) {
@@ -206,12 +215,19 @@ async function streamToFile(body, targetPath) {
       if (done) {
         break;
       }
-      if (!out.write(value)) { //respect backpressure instead of queueing the whole file in memory
+      if (!out.write(value)) {
+        //respect backpressure instead of queueing the whole file in memory
         await new Promise((resolve, reject) => {
-          const onDrain = () => { out.off('error', onError); resolve(); };
-          const onError = (err) => { out.off('drain', onDrain); reject(err); };
-          out.once('drain', onDrain);
-          out.once('error', onError);
+          const onDrain = () => {
+            out.off("error", onError);
+            resolve();
+          };
+          const onError = (err) => {
+            out.off("drain", onDrain);
+            reject(err);
+          };
+          out.once("drain", onDrain);
+          out.once("error", onError);
         });
       }
     }
@@ -232,7 +248,10 @@ async function fetchAndImportModDbFile(api, requirement, url, cause) {
   if (!response.ok) {
     throw new Error(`Request failed with status code ${response.status} (${url})`, { cause });
   }
-  const tempPath = path.join(util.getVortexPath('temp'), filenameFromResponse(response, requirement));
+  const tempPath = path.join(
+    util.getVortexPath("temp"),
+    filenameFromResponse(response, requirement),
+  );
   try {
     // streamToFile is inside the try so a mid-stream failure still hits the cleanup below -
     // otherwise a partially written file is left behind in the temp folder.
@@ -240,13 +259,14 @@ async function fetchAndImportModDbFile(api, requirement, url, cause) {
     // 'import-downloads' calls back with (dlIds) - no error argument - unlike
     // 'start-download'/'start-install-download', so it can't go through util.toPromise.
     const dlId = await new Promise((resolve, reject) => {
-      api.events.emit('import-downloads', [tempPath], (dlIds) => {
+      api.events.emit("import-downloads", [tempPath], (dlIds) => {
         const id = dlIds?.[0];
         return id === undefined ? reject(new util.NotFound(tempPath)) : resolve(id);
       });
     });
-    return await util.toPromise(cb =>
-      api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+    return await util.toPromise((cb) =>
+      api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+    );
   } finally {
     await fs.removeAsync(tempPath).catch(() => null);
   }
@@ -264,7 +284,7 @@ const activeInstalls = new Set();
 function requirementModIds(api, gameId, requirement) {
   const state = api.getState();
   const mods = state.persistent.mods[gameId] || {};
-  return Object.keys(mods).filter(id => mods[id]?.type === requirement.modType);
+  return Object.keys(mods).filter((id) => mods[id]?.type === requirement.modType);
 }
 
 //Check if the requirement is installed (any mod with the requirement's mod type)
@@ -279,15 +299,19 @@ async function downloadModDbRequirement(api, gameSpec, requirement, check = true
     return;
   }
   if (activeInstalls.has(requirement.modType)) {
-    log('debug', `${requirement.userFacingName} install already running - skipping duplicate request`);
+    log(
+      "debug",
+      `${requirement.userFacingName} install already running - skipping duplicate request`,
+    );
     return;
   }
   activeInstalls.add(requirement.modType);
   const NOTIF_ID = `${requirement.modType}-installing`;
-  api.sendNotification({ //notification indicating install process
+  api.sendNotification({
+    //notification indicating install process
     id: NOTIF_ID,
     message: `Installing ${requirement.userFacingName}`,
-    type: 'activity',
+    type: "activity",
     noDismiss: true,
     allowSuppress: false,
   });
@@ -298,31 +322,49 @@ async function downloadModDbRequirement(api, gameSpec, requirement, check = true
     //A pin overrides newest-file selection, and skips the feed entirely: the pinned file id is
     //all the mirror lookup below needs, so a pinned install makes no feed request.
     const latestFile = pinned ? null : await getLatestModDbFile(requirement); //resolve current file from the ModDB RSS feed
-    const latestVersion = pinned ? requirement.pinVersion : getLatestModDbVersion(requirement, latestFile);
+    const latestVersion = pinned
+      ? requirement.pinVersion
+      : getLatestModDbVersion(requirement, latestFile);
     //fall back to the hardcoded file id if the feed is unreachable
-    const fileId = pinned ? requirement.pinFileId : (latestFile ? latestFile.id : requirement.fallbackFileId);
+    const fileId = pinned
+      ? requirement.pinFileId
+      : latestFile
+        ? latestFile.id
+        : requirement.fallbackFileId;
     if (!fileId) {
-      throw new util.ProcessCanceled('ModDB RSS feed is unreachable and no fallback file id is set');
+      throw new util.ProcessCanceled(
+        "ModDB RSS feed is unreachable and no fallback file id is set",
+      );
     }
     const mirrorUrl = await resolveModDbDownloadUrl(fileId);
     if (!mirrorUrl) {
-      throw new util.ProcessCanceled('Could not resolve a ModDB mirror URL for the file');
+      throw new util.ProcessCanceled("Could not resolve a ModDB mirror URL for the file");
     }
     const dlInfo = {
       game: gameSpec.game.id,
       name: requirement.userFacingName,
     };
     let modId;
-    if (requirement.skipDownloadManager) { //opt-out for hosts where the download-manager route is confirmed blocked
+    if (requirement.skipDownloadManager) {
+      //opt-out for hosts where the download-manager route is confirmed blocked
       modId = await fetchAndImportModDbFile(api, requirement, mirrorUrl);
     } else {
-      try { //primary route: hand the mirror URL to Vortex's download manager
-        const dlId = await util.toPromise(cb =>
-          api.events.emit('start-download', [mirrorUrl], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-        modId = await util.toPromise(cb =>
-          api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-      } catch (dlErr) { //fallback route: ModDB's www host blocks some non-browser clients - fetch it directly instead
-        log('warn', `start-download failed for ${requirement.userFacingName}, falling back to direct fetch: ${dlErr}`);
+      try {
+        //primary route: hand the mirror URL to Vortex's download manager
+        const dlId = await util.toPromise((cb) =>
+          api.events.emit("start-download", [mirrorUrl], dlInfo, undefined, cb, undefined, {
+            allowInstall: false,
+          }),
+        );
+        modId = await util.toPromise((cb) =>
+          api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+        );
+      } catch (dlErr) {
+        //fallback route: ModDB's www host blocks some non-browser clients - fetch it directly instead
+        log(
+          "warn",
+          `start-download failed for ${requirement.userFacingName}, falling back to direct fetch: ${dlErr}`,
+        );
         const retryUrl = (await resolveModDbDownloadUrl(fileId)) || mirrorUrl; //mirror links can be single-use
         modId = await fetchAndImportModDbFile(api, requirement, retryUrl, dlErr);
       }
@@ -334,20 +376,40 @@ async function downloadModDbRequirement(api, gameSpec, requirement, check = true
         installed: true,
       }),
       actions.setModType(gameSpec.game.id, modId, requirement.modType), // Set the modType
-      actions.setModAttribute(gameSpec.game.id, modId, 'version', latestVersion || requirement.fallbackVersion || ''),
-      actions.setModAttribute(gameSpec.game.id, modId, fileIdAttribute(requirement), latestFile ? Number(latestFile.id) : Number(fileId)), // Track the installed file id for update checks
-      actions.setModAttribute(gameSpec.game.id, modId, 'source', 'website'),
-      actions.setModAttribute(gameSpec.game.id, modId, 'url', pageUrl(requirement)), // Shown as the mod's "Source" link in the mod details (only rendered when source === 'website')
-      actions.setModAttribute(gameSpec.game.id, modId, 'customFileName', requirement.userFacingName), // Vortex renders a mod as customFileName || logicalFileName || fileName || name, and the install pipeline stamps fileName with the archive name - without this the mod list shows the raw archive
+      actions.setModAttribute(
+        gameSpec.game.id,
+        modId,
+        "version",
+        latestVersion || requirement.fallbackVersion || "",
+      ),
+      actions.setModAttribute(
+        gameSpec.game.id,
+        modId,
+        fileIdAttribute(requirement),
+        latestFile ? Number(latestFile.id) : Number(fileId),
+      ), // Track the installed file id for update checks
+      actions.setModAttribute(gameSpec.game.id, modId, "source", "website"),
+      actions.setModAttribute(gameSpec.game.id, modId, "url", pageUrl(requirement)), // Shown as the mod's "Source" link in the mod details (only rendered when source === 'website')
+      actions.setModAttribute(
+        gameSpec.game.id,
+        modId,
+        "customFileName",
+        requirement.userFacingName,
+      ), // Vortex renders a mod as customFileName || logicalFileName || fileName || name, and the install pipeline stamps fileName with the archive name - without this the mod list shows the raw archive
     ];
-    for (const oldModId of previousModIds) { // Disable the version this install replaces, so only one copy deploys
+    for (const oldModId of previousModIds) {
+      // Disable the version this install replaces, so only one copy deploys
       if (oldModId !== modId) {
         batched.push(actions.setModEnabled(profileId, oldModId, false));
       }
     }
     util.batchDispatch(api.store, batched); // Will dispatch all actions.
-  } catch (err) { //Show the user the download page if the download/install process fails
-    api.showErrorNotification(`Failed to download/install ${requirement.userFacingName}. You must download manually.`, err);
+  } catch (err) {
+    //Show the user the download page if the download/install process fails
+    api.showErrorNotification(
+      `Failed to download/install ${requirement.userFacingName}. You must download manually.`,
+      err,
+    );
     util.opn(pageUrl(requirement)).catch(() => null);
   } finally {
     activeInstalls.delete(requirement.modType);
@@ -375,7 +437,7 @@ async function checkForModDbUpdateRequirement(api, gameSpec, requirement) {
     if (requirement.autoInstall === false) {
       return;
     }
-    log('info', `${requirement.userFacingName} is not installed - installing it`);
+    log("info", `${requirement.userFacingName} is not installed - installing it`);
     return downloadModDbRequirement(api, gameSpec, requirement);
   }
   if (isPinned(requirement)) {
@@ -383,12 +445,12 @@ async function checkForModDbUpdateRequirement(api, gameSpec, requirement) {
     // well as behind it - installing it from that state is a deliberate downgrade.
     api.sendNotification({
       id: `${requirement.modType}-update`,
-      type: 'warning',
+      type: "warning",
       message: `${requirement.userFacingName} pinned version available (${requirement.pinVersion})`,
       allowSuppress: true,
       actions: [
         {
-          title: 'Download',
+          title: "Download",
           action: (dismiss) => {
             downloadModDbRequirement(api, gameSpec, requirement, false);
             dismiss();
@@ -404,21 +466,23 @@ async function checkForModDbUpdateRequirement(api, gameSpec, requirement) {
   }
   const state = api.getState();
   const mods = state.persistent.mods[gameSpec.game.id] || {};
-  const requirementMods = Object.values(mods).filter(mod => mod?.type === requirement.modType);
+  const requirementMods = Object.values(mods).filter((mod) => mod?.type === requirement.modType);
   const attr = fileIdAttribute(requirement);
-  const isCurrent = requirementMods.some(mod => String(mod?.attributes?.[attr]) === String(latestFile.id));
+  const isCurrent = requirementMods.some(
+    (mod) => String(mod?.attributes?.[attr]) === String(latestFile.id),
+  );
   if (isCurrent) {
     return;
   }
   const latestVersion = getLatestModDbVersion(requirement, latestFile);
   api.sendNotification({
     id: `${requirement.modType}-update`,
-    type: 'warning',
-    message: `${requirement.userFacingName} update available${latestVersion ? ` (${latestVersion})` : ''}`,
+    type: "warning",
+    message: `${requirement.userFacingName} update available${latestVersion ? ` (${latestVersion})` : ""}`,
     allowSuppress: true,
     actions: [
       {
-        title: 'Download',
+        title: "Download",
         action: (dismiss) => {
           downloadModDbRequirement(api, gameSpec, requirement, false);
           dismiss();

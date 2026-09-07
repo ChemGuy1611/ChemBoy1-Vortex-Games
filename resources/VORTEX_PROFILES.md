@@ -2,7 +2,7 @@
 
 How the app represents a "playthrough" and how it switches between them. A profile is the unit
 that owns **which mods are enabled**, the **load order**, and (for Gamebryo) **plugin enablement**
-— so a profile captures a full setup. Registering custom profile *features* is the authoring view:
+— so a profile captures a full setup. Registering custom profile _features_ is the authoring view:
 see `SETTINGS_REDUCER.md` and `IProfileFeature`.
 
 Driver: the `profile_management` core extension (`index.ts`, `sync.ts`, `util/manage.ts`).
@@ -11,25 +11,25 @@ Driver: the `profile_management` core extension (`index.ts`, `sync.ts`, `util/ma
 
 `IProfile` (`profile_management/types/IProfile.ts`), stored at `state.persistent.profiles[id]`:
 
-| Field | Meaning |
-| --- | --- |
-| `id` | Profile id |
-| `gameId` | Which game this profile is for |
-| `name` | Display name |
-| `modState` | `{ [modId]: { enabled, enabledTime } }` — **per-profile** mod enablement |
-| `lastActivated` | Timestamp |
-| `pendingRemove?` | Marked for deletion |
-| `features?` | `{ [featureId]: value }` — extension-contributed profile features |
+| Field            | Meaning                                                                  |
+| ---------------- | ------------------------------------------------------------------------ |
+| `id`             | Profile id                                                               |
+| `gameId`         | Which game this profile is for                                           |
+| `name`           | Display name                                                             |
+| `modState`       | `{ [modId]: { enabled, enabledTime } }` — **per-profile** mod enablement |
+| `lastActivated`  | Timestamp                                                                |
+| `pendingRemove?` | Marked for deletion                                                      |
+| `features?`      | `{ [featureId]: value }` — extension-contributed profile features        |
 
 Mod enablement lives in `modState`, **per profile, not global**. Switching profiles changes which
 mods deploy. The same is true of load order and Gamebryo plugin state, which are keyed by profile.
 
 ## Two state keys: requested vs active
 
-| Path | Role |
-| --- | --- |
-| `settings.profiles.nextProfileId` | The profile a switch was **requested** to |
-| `settings.profiles.activeProfileId` | The profile actually **active** now |
+| Path                                | Role                                      |
+| ----------------------------------- | ----------------------------------------- |
+| `settings.profiles.nextProfileId`   | The profile a switch was **requested** to |
+| `settings.profiles.activeProfileId` | The profile actually **active** now       |
 
 `setNextProfile(gameId, profileId)` requests a switch (writing `nextProfileId`). A watcher on
 `nextProfileId` runs the switch flow; on success `confirmProfile` calls `setCurrentProfile(...)`,
@@ -83,11 +83,11 @@ the profile editor and stored under `profile.features`. Registration: `SETTINGS_
 
 ## Events (runtime)
 
-| Event | Direction | Purpose |
-| --- | --- | --- |
-| `profile-will-change` (profileId, enqueue) | emit | Pre-switch; listeners enqueue async work |
-| `profile-did-change` (profileId) | emit | Switch committed |
-| `activate-game` / `setNextProfile` (action) | — | Request a switch |
+| Event                                       | Direction | Purpose                                  |
+| ------------------------------------------- | --------- | ---------------------------------------- |
+| `profile-will-change` (profileId, enqueue)  | emit      | Pre-switch; listeners enqueue async work |
+| `profile-did-change` (profileId)            | emit      | Switch committed                         |
+| `activate-game` / `setNextProfile` (action) | —         | Request a switch                         |
 
 ## Gotchas
 

@@ -1,18 +1,28 @@
-const { actions, fs, util, selectors, log } = require('vortex-api');
-const path = require('path');
-const GAME_ID = 'placeholder';
-const api = require('vortex-api'); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
+const { actions, fs, util, selectors, log } = require("vortex-api");
+const path = require("path");
+const GAME_ID = "placeholder";
+const api = require("vortex-api"); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 
 // REQUIREMENTS ///////////////////////////////////////////////////
-const { download, findModByFile, findDownloadIdByFile, resolveVersionByPattern, resolveVersionByAssetDate, resolveVersionByModVersion, resolveVersionByDirectCopyMarker, resolveVersionByNightlyRun, testRequirementVersion } = require('./downloader');
-const semver = require('semver');
+const {
+  download,
+  findModByFile,
+  findDownloadIdByFile,
+  resolveVersionByPattern,
+  resolveVersionByAssetDate,
+  resolveVersionByModVersion,
+  resolveVersionByDirectCopyMarker,
+  resolveVersionByNightlyRun,
+  testRequirementVersion,
+} = require("./downloader");
+const semver = require("semver");
 const XXX_ID = `${GAME_ID}-XXX`;
 const XXX_NAME = "XXX";
-const VER = '0.0.0';
+const VER = "0.0.0";
 const XXX_ARC_NAME = `XXX${VER}.zip`;
-const XXX_FILE = 'XXX.exe'; // assembly/marker file used to detect an installed requirement (matched case-insensitively)
-const AUTHOR = 'XXX'; // Author of the repo
-const REPO = 'XXX'; // Repository name on GitHub
+const XXX_FILE = "XXX.exe"; // assembly/marker file used to detect an installed requirement (matched case-insensitively)
+const AUTHOR = "XXX"; // Author of the repo
+const REPO = "XXX"; // Repository name on GitHub
 const XXX_URL_API = `https://api.github.com/repos/${AUTHOR}/${REPO}`; //api url
 const REQUIREMENTS = [
   {
@@ -23,7 +33,7 @@ const REQUIREMENTS = [
     githubUrl: XXX_URL_API,
     findMod: (api) => findModByFile(api, XXX_ID, XXX_FILE),
     findDownloadId: (api) => findDownloadIdByFile(api, XXX_ARC_NAME),
-    fileArchivePattern: new RegExp(/^XXX(\d+\.\d+\.\d+)/, 'i'), //from ARC_NAME
+    fileArchivePattern: new RegExp(/^XXX(\d+\.\d+\.\d+)/, "i"), //from ARC_NAME
     resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[0]), //*/
     //versionFile: 'version.txt', //file to check for version number (needed if version is not in the archive name)
     //resolveVersion: (api) => resolveVersionByFile(api, REQUIREMENTS[0]),
@@ -178,61 +188,66 @@ const NEXUS_REQUIREMENTS = [
 // file name. Finds the newest matching downloaded archive, extracts it to a temp dir,
 // then reads requirement.versionFile (e.g. 'version.txt') for the installed version.
 async function resolveVersionByFile(api, requirement) {
-    const state = api.getState();
-    const gameId = selectors.activeGameId(state);
-    const downloadPath = selectors.downloadPath(state);
-    const files = util.getSafe(state, ['persistent', 'downloads', 'files'], {});
-    // Archives matching this requirement (version is not in the name, so match the pattern),
-    // restricted to the game being managed. Requirement archives often share a generic name
-    // across games, and downloadPath only points at this game's folder anyway - an entry from
-    // another game would either be the wrong mod or a path that does not exist.
-    const matches = Object.values(files)
-        .filter(file => !!file.localPath
-            && (Array.isArray(file.game) ? file.game : [file.game]).includes(gameId)
-            && requirement.fileArchivePattern.exec(file.localPath));
-    if (matches.length === 0) {
-        return '0.0.0';
-    }
-    // newest matching archive by file mtime (proxy for "current" download)
-    let newest = null;
-    let newestTime = -1;
-    for (const file of matches) {
-        const archivePath = path.join(downloadPath, file.localPath);
-        try {
-            const stat = await fs.statAsync(archivePath);
-            if (stat.mtime.getTime() > newestTime) {
-                newestTime = stat.mtime.getTime();
-                newest = archivePath;
-            }
-        } catch {
-            // archive missing/unreadable -> skip
-        }
-    }
-    if (!newest) {
-        return '0.0.0';
-    }
-    // extract into an auto-cleaned temp dir, read the version file, parse the version
+  const state = api.getState();
+  const gameId = selectors.activeGameId(state);
+  const downloadPath = selectors.downloadPath(state);
+  const files = util.getSafe(state, ["persistent", "downloads", "files"], {});
+  // Archives matching this requirement (version is not in the name, so match the pattern),
+  // restricted to the game being managed. Requirement archives often share a generic name
+  // across games, and downloadPath only points at this game's folder anyway - an entry from
+  // another game would either be the wrong mod or a path that does not exist.
+  const matches = Object.values(files).filter(
+    (file) =>
+      !!file.localPath &&
+      (Array.isArray(file.game) ? file.game : [file.game]).includes(gameId) &&
+      requirement.fileArchivePattern.exec(file.localPath),
+  );
+  if (matches.length === 0) {
+    return "0.0.0";
+  }
+  // newest matching archive by file mtime (proxy for "current" download)
+  let newest = null;
+  let newestTime = -1;
+  for (const file of matches) {
+    const archivePath = path.join(downloadPath, file.localPath);
     try {
-        return await util.withTmpDir(async (tmpPath) => {
-            const szip = new util.SevenZip();
-            await szip.extractFull(newest, tmpPath);
-            // NOTE: requirement.versionFile may live in a subfolder of the archive ->
-            // adjust this join per game if so.
-            const versionFilePath = path.join(tmpPath, requirement.versionFile);
-            const raw = await fs.readFileAsync(versionFilePath, { encoding: 'utf8' });
-            // *** PER-GAME CUSTOMIZATION ***
-            // version.txt contents differ per mod - parse the version string out of `raw`.
-            // examples:
-            //   const parsed = raw.trim();                       // file is just "1.2.3"
-            //   const parsed = /(\d+\.\d+\.\d+)/.exec(raw)?.[1];  // version embedded in text
-            //   const parsed = JSON.parse(raw).version;          // json file
-            const parsed = raw.trim();
-            return semver.coerce(parsed)?.version ?? '0.0.0';
-        }, { cleanup: true });
-    } catch (err) {
-        log('warn', `resolveVersionByFile failed: ${err}`);
-        return '0.0.0';
+      const stat = await fs.statAsync(archivePath);
+      if (stat.mtime.getTime() > newestTime) {
+        newestTime = stat.mtime.getTime();
+        newest = archivePath;
+      }
+    } catch {
+      // archive missing/unreadable -> skip
     }
+  }
+  if (!newest) {
+    return "0.0.0";
+  }
+  // extract into an auto-cleaned temp dir, read the version file, parse the version
+  try {
+    return await util.withTmpDir(
+      async (tmpPath) => {
+        const szip = new util.SevenZip();
+        await szip.extractFull(newest, tmpPath);
+        // NOTE: requirement.versionFile may live in a subfolder of the archive ->
+        // adjust this join per game if so.
+        const versionFilePath = path.join(tmpPath, requirement.versionFile);
+        const raw = await fs.readFileAsync(versionFilePath, { encoding: "utf8" });
+        // *** PER-GAME CUSTOMIZATION ***
+        // version.txt contents differ per mod - parse the version string out of `raw`.
+        // examples:
+        //   const parsed = raw.trim();                       // file is just "1.2.3"
+        //   const parsed = /(\d+\.\d+\.\d+)/.exec(raw)?.[1];  // version embedded in text
+        //   const parsed = JSON.parse(raw).version;          // json file
+        const parsed = raw.trim();
+        return semver.coerce(parsed)?.version ?? "0.0.0";
+      },
+      { cleanup: true },
+    );
+  } catch (err) {
+    log("warn", `resolveVersionByFile failed: ${err}`);
+    return "0.0.0";
+  }
 } //*/
 
 // AUTO-DOWNLOADER FUNCTIONS ///////////////////////////////////////////////
@@ -255,9 +270,9 @@ async function asyncForEachCheck(api, requirements) {
 async function onCheckModVersion(api, gameId, mods, forced) {
   try {
     await asyncForEachTestVersion(api, REQUIREMENTS);
-    log('warn', 'Checked requirements versions');
+    log("warn", "Checked requirements versions");
   } catch (err) {
-    log('warn', `Failed to test requirement version: ${err}`);
+    log("warn", `Failed to test requirement version: ${err}`);
   }
 }
 
@@ -270,12 +285,12 @@ async function checkForRequirements(api) {
 async function setup(api) {
   const requirementsInstalled = await checkForRequirements(api);
   if (!requirementsInstalled) {
-      await download(api, REQUIREMENTS);
+    await download(api, REQUIREMENTS);
   } //*/
 }
 
 // *** In context.once() function ////////////////////
-  api.onAsync('check-mods-version', (gameId, mods, forced) => {
-      if (gameId !== GAME_ID) return;
-      return onCheckModVersion(api, gameId, mods, forced);
-  }); //*/
+api.onAsync("check-mods-version", (gameId, mods, forced) => {
+  if (gameId !== GAME_ID) return;
+  return onCheckModVersion(api, gameId, mods, forced);
+}); //*/

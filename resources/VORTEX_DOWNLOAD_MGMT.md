@@ -4,17 +4,17 @@ How Vortex fetches mod archives — `nxm://` links, browser hand-offs, the downl
 parallel downloads, pause/resume, and the speed limit.
 
 > **Disambiguation.** This is **Vortex's built-in download manager** (the app subsystem). It is
-> **not** `DOWNLOADER.md`, which covers the third-party *requirements
-> auto-downloader* (`downloader.js`) that game extensions in `ChemBoy1-Vortex-Games` embed to pull
+> **not** `DOWNLOADER.md`, which covers the third-party _requirements
+> auto-downloader_ (`downloader.js`) that game extensions in `ChemBoy1-Vortex-Games` embed to pull
 > their dependencies. Different thing entirely.
 
 ## Architecture — three layers across two processes
 
-| Layer | Where | Role |
-| --- | --- | --- |
-| **Engine (main)** | `Vortex/src/main/src/downloading/` | The actual transfer: `DownloadManager` (`manager.ts`), `downloader.ts` (chunked download), `resolver.ts`, `retry.ts`, `progress.ts`, `ipc.ts` |
-| **State + UI (renderer)** | `download_management` core ext | Redux state (`persistent.downloads.files`), download views, protocol handler registration, metadata (`queryDLInfo`), speed-limit math (`util/throttle.ts`) |
-| **Bridge** | `IPCDownloadAdapter.ts` (renderer) | Connects renderer actions/events to the main-process `window.api.downloader` |
+| Layer                     | Where                              | Role                                                                                                                                                       |
+| ------------------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Engine (main)**         | `Vortex/src/main/src/downloading/` | The actual transfer: `DownloadManager` (`manager.ts`), `downloader.ts` (chunked download), `resolver.ts`, `retry.ts`, `progress.ts`, `ipc.ts`              |
+| **State + UI (renderer)** | `download_management` core ext     | Redux state (`persistent.downloads.files`), download views, protocol handler registration, metadata (`queryDLInfo`), speed-limit math (`util/throttle.ts`) |
+| **Bridge**                | `IPCDownloadAdapter.ts` (renderer) | Connects renderer actions/events to the main-process `window.api.downloader`                                                                               |
 
 The renderer **does not** do the transfer; it dispatches to the main process over IPC and mirrors
 progress back into Redux.
@@ -79,14 +79,14 @@ nxm:// link (or browser/CLI URL)
 
 ## Events (runtime)
 
-| Event | Purpose |
-| --- | --- |
-| `start-download-url` (url, …, install) | Begin a download from a URL |
-| `import-downloads` (paths, cb) | Adopt existing archive files |
-| `start-install-download` (dlId, …) | Hand a finished download to the installer |
-| `download-finished` | Download completed (notification group) |
-| `pause-download` / `resume-download` (id) | Pause/resume (via checkpoint) |
-| `did-import-downloads` / `downloads-refreshed` | Bookkeeping |
+| Event                                          | Purpose                                   |
+| ---------------------------------------------- | ----------------------------------------- |
+| `start-download-url` (url, …, install)         | Begin a download from a URL               |
+| `import-downloads` (paths, cb)                 | Adopt existing archive files              |
+| `start-install-download` (dlId, …)             | Hand a finished download to the installer |
+| `download-finished`                            | Download completed (notification group)   |
+| `pause-download` / `resume-download` (id)      | Pause/resume (via checkpoint)             |
+| `did-import-downloads` / `downloads-refreshed` | Bookkeeping                               |
 
 `queryDLInfo` fills missing download metadata (game, mod info) after the fact.
 
@@ -101,23 +101,23 @@ wrong argument shape simply does nothing. The only evidence is a
 
 What each tuple accepts:
 
-| Event | Positional args |
-| --- | --- |
-| `start-download` | `urls: (string \| URL)[]`, `modInfo: object`, `fileName?: string`, `callback?: fn`, `redownload?: 'never'\|'ask'\|'replace'\|'always'`, `options?: { allowInstall?: boolean \| 'force' }` |
-| `remove-download` | `downloadId: string`, `callback?: fn` |
-| `pause-download` | `downloadId: string`, `callback?: fn` |
-| `resume-download` | `downloadId: string`, `callback?: fn`, `options?: { allowInstall?: boolean \| 'force' }` |
+| Event             | Positional args                                                                                                                                                                           |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `start-download`  | `urls: (string \| URL)[]`, `modInfo: object`, `fileName?: string`, `callback?: fn`, `redownload?: 'never'\|'ask'\|'replace'\|'always'`, `options?: { allowInstall?: boolean \| 'force' }` |
+| `remove-download` | `downloadId: string`, `callback?: fn`                                                                                                                                                     |
+| `pause-download`  | `downloadId: string`, `callback?: fn`                                                                                                                                                     |
+| `resume-download` | `downloadId: string`, `callback?: fn`, `options?: { allowInstall?: boolean \| 'force' }`                                                                                                  |
 
 The traps in practice:
 
 - **`start-download` arg 0 must be an array.** Passing a bare URL string is the single most common
   way to get a silent no-op. `api.events.emit('start-download', [url], modInfo, ...)`.
-- **`redownload` is a closed enum.** Any other string fails the *whole* tuple, so the download
+- **`redownload` is a closed enum.** Any other string fails the _whole_ tuple, so the download
   doesn't start at all — it isn't just that argument being ignored.
 - `modInfo` is a loose object with a `.catch()` fallback, so it never fails validation. Extra keys
   pass through.
 - **`modInfo.game` decides where the download is filed, and the install target follows the
-  *active* game.** `#resolveDownloadTarget` computes
+  _active_ game.** `#resolveDownloadTarget` computes
   `toInternalGameId(api, modInfo.game ?? activeGameId(state))`, which picks the download folder and
   stamps the download. A Nexus domain that is not itself a game - `site`, the domain for site-wide
   tools - is the normal, intended value there: one shared `downloads/site/` copy serves every game.
@@ -125,14 +125,14 @@ The traps in practice:
   `Game extension for download not installed`, and installs into `currentProfile.gameId`. That
   fallback is exactly what makes a site-hosted tool land in the game being managed.
 - **The trap is ordering, and it sits in Vortex, not the extension.** Vortex calls a game's
-  `setup()` while the *previously* active game is still current - `set game mode` is logged after
+  `setup()` while the _previously_ active game is still current - `set game mode` is logged after
   the install finishes. A download started from `setup()`, which is where every requirement download
   in this repo starts, therefore resolves `currentProfile.gameId` to the old game: the archive
   installs into that game's staging folder, that game's installers are the ones tested (so the
   intended extension's `testSupported` is never called with its own id and the archive falls through
   to a plain copy with no mod type), and any follow-up `setModType` / `setModsEnabled` aimed at the
   intended game throws `Cannot read properties of undefined` in a state-change handler, because the
-  mod id does not exist there. Repeating the same action once the game *is* active works correctly.
+  mod id does not exist there. Repeating the same action once the game _is_ active works correctly.
   Observed 2026-08-23.
 
 Note that these schemas, not the `ApiEvents` interface in `IExtensionContext.ts`, are what actually
@@ -172,13 +172,13 @@ a non-empty last segment. That splits sources into two cases that need different
   the installed mod keeps its meaningless name.
 
 The fix for the second case is to resolve the redirect and hand `start-download` the URL it lands
-on, whose last segment *is* the file name. A `HEAD` with the redirect followed is enough, and the
+on, whose last segment _is_ the file name. A `HEAD` with the redirect followed is enough, and the
 redirect must be followed rather than read: `redirect: 'manual'` returns an opaque filtered response
 in Chromium — status 0, headers emptied — so `Location` cannot be read at all.
 
 ```js
-const response = await fetch(url, { method: 'HEAD' });
-const resolved = response.ok ? response.url : null;   // .../tools/eternalmodinjector_19e3b.zip
+const response = await fetch(url, { method: "HEAD" });
+const resolved = response.ok ? response.url : null; // .../tools/eternalmodinjector_19e3b.zip
 ```
 
 Pass `fileName` as well wherever the real name is known — it costs nothing and covers the
@@ -210,12 +210,12 @@ anything.
 An extension that has to react to a failed download therefore watches the state instead:
 
 ```js
-api.onStateChange(['persistent', 'downloads', 'files'], (previous, current) => {
-  for (const dlId of Object.keys(current || {})) {
-    if ((current[dlId]?.state === 'failed') && (previous?.[dlId]?.state !== 'failed')) {
-      // ... only the transition into failure, and only once
+api.onStateChange(["persistent", "downloads", "files"], (previous, current) => {
+    for (const dlId of Object.keys(current || {})) {
+        if (current[dlId]?.state === "failed" && previous?.[dlId]?.state !== "failed") {
+            // ... only the transition into failure, and only once
+        }
     }
-  }
 });
 ```
 

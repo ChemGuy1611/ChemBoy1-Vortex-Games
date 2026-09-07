@@ -13,18 +13,18 @@ lifecycle, `IItemRendererProps`, virtualization). Everything here is stated as a
 
 ## 1. The landscape
 
-| Game | Engine / loader | Tier | React surface |
-| --- | --- | --- | --- |
-| `game-kingdomcomedeliverance2` | CryEngine | G | Full FBLO renderer + context menu + status filter |
-| `game-warhammer40kdarktide` | Stingray / DMF | G | Full FBLO renderer + context menu + status filter |
-| `game-menace` | — | B | Minimal renderer |
-| `game-mewgenics` | — | B | Minimal renderer |
-| `game-middleearthshadowofwar` | LithTech-derived | B | Minimal renderer |
-| `game-thelastofuspart2` | Naughty Dog engine | B | Minimal renderer |
-| `game-warhammer40000spacemarine2` | Swarm | B | Minimal renderer |
-| `game-warhammer40kdarkheresy` | — | B | Minimal renderer |
-| `game-warhammer40kroguetrader` | Unity | B | Minimal renderer |
-| `game-helldivers2` | Autodesk Stingray | G | Full FBLO renderer + context menu + status filter |
+| Game                              | Engine / loader    | Tier | React surface                                     |
+| --------------------------------- | ------------------ | ---- | ------------------------------------------------- |
+| `game-kingdomcomedeliverance2`    | CryEngine          | G    | Full FBLO renderer + context menu + status filter |
+| `game-warhammer40kdarktide`       | Stingray / DMF     | G    | Full FBLO renderer + context menu + status filter |
+| `game-menace`                     | —                  | B    | Minimal renderer                                  |
+| `game-mewgenics`                  | —                  | B    | Minimal renderer                                  |
+| `game-middleearthshadowofwar`     | LithTech-derived   | B    | Minimal renderer                                  |
+| `game-thelastofuspart2`           | Naughty Dog engine | B    | Minimal renderer                                  |
+| `game-warhammer40000spacemarine2` | Swarm              | B    | Minimal renderer                                  |
+| `game-warhammer40kdarkheresy`     | —                  | B    | Minimal renderer                                  |
+| `game-warhammer40kroguetrader`    | Unity              | B    | Minimal renderer                                  |
+| `game-helldivers2`                | Autodesk Stingray  | G    | Full FBLO renderer + context menu + status filter |
 
 Two Unreal games also sit in tier B (`game-fantasylifeithegirlwhostealstime`, `game-tekken8`) —
 they carry the minimal renderer without the UE4SS stack, so tier B guidance applies to them too.
@@ -46,7 +46,7 @@ position at deploy time. That reasoning does not hold: how a game consumes its o
 of which API registers the page. Version 1.0.0 moved it to tier G and left the merge step untouched.
 A future merge-based game belongs in tier G too.
 
-`game-nioh3` is *not* a load order game. It used to carry a `registerLoadOrderPage` call gated behind
+`game-nioh3` is _not_ a load order game. It used to carry a `registerLoadOrderPage` call gated behind
 `const loadOrderEnabled = false`, which never registered; that block and its helpers (`preSort`,
 `loadOrderPrefix`, `makePrefix`, the loose-file `installMod` variant) were removed in 0.3.1, and the
 mod type now merges with `mergeMods: () => ""` unconditionally. Because the categoriser matches the
@@ -63,15 +63,15 @@ canonical implementation with two skins.
 
 ### Components
 
-| Identifier | Role |
-| --- | --- |
-| `LoadOrderInstructions` | `usageInstructions` component: status pills, matched/total counter, injects the row-hiding stylesheet |
-| `useFbloState` | Module-level pub-sub for selection, context menu and status filter |
-| `StatusPills` | Inline filter pills for the info panel |
-| `matchesStatus` + `STATUS_GROUP_TOKENS` + `STATUS_TOKEN_LABELS` | Shared status-filter predicate and labels |
-| `LoadOrderItemRenderer` | `customItemRenderer` for the core FBLO page |
-| `FbloContextMenu` | Right-click menu, single and multi-select variants |
-| `getModPageURL` / `getModStagingFolder` | Menu target resolvers |
+| Identifier                                                      | Role                                                                                                  |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `LoadOrderInstructions`                                         | `usageInstructions` component: status pills, matched/total counter, injects the row-hiding stylesheet |
+| `useFbloState`                                                  | Module-level pub-sub for selection, context menu and status filter                                    |
+| `StatusPills`                                                   | Inline filter pills for the info panel                                                                |
+| `matchesStatus` + `STATUS_GROUP_TOKENS` + `STATUS_TOKEN_LABELS` | Shared status-filter predicate and labels                                                             |
+| `LoadOrderItemRenderer`                                         | `customItemRenderer` for the core FBLO page                                                           |
+| `FbloContextMenu`                                               | Right-click menu, single and multi-select variants                                                    |
+| `getModPageURL` / `getModStagingFolder`                         | Menu target resolvers                                                                                 |
 
 Names differ from the UE4-5 template only by prefix: `useFbloState` / `_fbloListeners` /
 `_fbloSelectedIds` where the template says `usePakLOState` / `_pakListeners` / `_pakSelectedIds`,
@@ -81,16 +81,16 @@ variables plus a listener `Set` of `forceUpdate` callbacks, because rows rendere
 
 ### Deltas against the UE4-5 pak surface
 
-| Aspect | UE4-5 pak surface | Tier G |
-| --- | --- | --- |
-| `toggleableEntries` | `false` — checkbox never renders | `true` — checkbox is live |
-| Meaning of `enabled` | unused; ordering comes from folder renames at deploy | written to the game's load order file as a comment marker |
-| Status filter "enabled" predicate | Vortex `modState` lookup | `(e) => e.enabled !== false`, the LO entry flag |
-| Row buttons | Enable/Disable button that toggles the Vortex mod | none; enable/disable lives on the checkbox and in the menu |
-| Toggling a Vortex mod | `util.batchDispatch` + custom `requestDeployment` notification | `actions.setModsEnabled(api, profileId, modIds, enable, { allowAutoDeploy: true })` |
-| Lock icon click | plain `onClick` — also selects the row | `evt.stopPropagation()` first, so locking does not change selection |
-| Sidecar orders | UE4SS + LogicMods pages, reducers, collection feature | none |
-| Ordering applied | at deploy, via folder-name prefixes | immediately, on write of the LO file |
+| Aspect                            | UE4-5 pak surface                                              | Tier G                                                                              |
+| --------------------------------- | -------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `toggleableEntries`               | `false` — checkbox never renders                               | `true` — checkbox is live                                                           |
+| Meaning of `enabled`              | unused; ordering comes from folder renames at deploy           | written to the game's load order file as a comment marker                           |
+| Status filter "enabled" predicate | Vortex `modState` lookup                                       | `(e) => e.enabled !== false`, the LO entry flag                                     |
+| Row buttons                       | Enable/Disable button that toggles the Vortex mod              | none; enable/disable lives on the checkbox and in the menu                          |
+| Toggling a Vortex mod             | `util.batchDispatch` + custom `requestDeployment` notification | `actions.setModsEnabled(api, profileId, modIds, enable, { allowAutoDeploy: true })` |
+| Lock icon click                   | plain `onClick` — also selects the row                         | `evt.stopPropagation()` first, so locking does not change selection                 |
+| Sidecar orders                    | UE4SS + LogicMods pages, reducers, collection feature          | none                                                                                |
+| Ordering applied                  | at deploy, via folder-name prefixes                            | immediately, on write of the LO file                                                |
 
 The last row is the important one. These games write a real load order file the game reads directly,
 so a reorder takes effect without a deployment, and a disabled entry is expressed by commenting the
@@ -98,11 +98,11 @@ line out:
 
 ```js
 // warhammer40kdarktide — <gameDir>/<MOD_FOLDER>/<LO_FILE>
-loadOrder.map((mod) => (mod.enabled ? mod.id : `-- ${mod.id}`)).join('\n')
+loadOrder.map((mod) => (mod.enabled ? mod.id : `-- ${mod.id}`)).join("\n");
 // written with a `-- File managed by Vortex mod manager` header
 
 // kingdomcomedeliverance2 — <gameDir>/<LO_PATH>, or the absolute LO_PATH_XBOX on Xbox
-loadOrder.map((mod) => (mod.enabled ? mod.id : `#${mod.id}`)).join('\n')
+loadOrder.map((mod) => (mod.enabled ? mod.id : `#${mod.id}`)).join("\n");
 ```
 
 Both serializers early-return while a batch mod update is in flight (`mod_update_all_profile`), the
@@ -129,7 +129,7 @@ Options are `{ installed?, allowAutoDeploy?, willBeReplaced?, reason? }`. `reaso
 `mods_state_changed` analytics event and defaults to `user_manual`; programmatic callers are expected
 to set it.
 
-`allowAutoDeploy: true` does not force a deployment — it only declines to *suppress* one. The
+`allowAutoDeploy: true` does not force a deployment — it only declines to _suppress_ one. The
 downstream `mods-enabled` handler
 (`Vortex\src\renderer\src\extensions\mod_management\index.ts`, `onModsEnabled`) branches like this:
 
@@ -184,7 +184,7 @@ position is the thing that takes effect. `game-helldivers2` is the exception wor
 before copying its shape.
 
 It patches archives by adding files named `<archive hash>.patch_N` beside the archive they modify.
-Order only matters between two mods patching the *same* archive, and the numbering for one archive
+Order only matters between two mods patching the _same_ archive, and the numbering for one archive
 has to run `0..N-1` with no gaps — a hole does not reorder the mods, it stops them loading. So the
 load order page presents a single list of every patch mod, and each archive derives its own
 numbering from that one list by walking it and handing out consecutive numbers to whichever mods

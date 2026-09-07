@@ -36,8 +36,8 @@ Called in `StarterInfo.run()` in `StarterInfo.ts`:
 2. If the promise rejects with `UserCanceled`, Vortex logs a warning and falls back to direct launch.
 3. If the promise rejects with any other error, Vortex shows an error notification (with report option if it's an official extension) and falls back to direct launch.
 4. If the result is non-`undefined`, Vortex calls `StarterInfo.runThroughLauncher(res.launcher, info, api, infoObj)`.
-   - `infoObj` = `res.addInfo` if present, otherwise `game.details`, otherwise the game directory path.
-   - If the store extension throws `GameEntryNotFound` or `GameStoreNotFound`, Vortex silently falls back to direct launch.
+    - `infoObj` = `res.addInfo` if present, otherwise `game.details`, otherwise the game directory path.
+    - If the store extension throws `GameEntryNotFound` or `GameStoreNotFound`, Vortex silently falls back to direct launch.
 5. If the result is `undefined`, Vortex calls `StarterInfo.runDirectly()`.
 
 The `store` parameter comes from `IDiscoveryResult.store` — the store ID that Vortex used during game discovery. It can be `undefined` if discovery was path-based rather than store-based.
@@ -46,12 +46,12 @@ The `store` parameter comes from `IDiscoveryResult.store` — the store ID that 
 
 ## Return Value by Store
 
-| Store | `launcher` | `addInfo` |
-| --- | --- | --- |
-| Steam | `'steam'` | omit or `undefined` |
-| Epic Games Store | `'epic'` | `{ appId: string }` — the Epic catalog item ID |
-| Xbox / MS Store | `'xbox'` | `{ appId: string, parameters: [{ appExecName: string }] }` |
-| GOG | `'gog'` | omit or `undefined` |
+| Store            | `launcher` | `addInfo`                                                  |
+| ---------------- | ---------- | ---------------------------------------------------------- |
+| Steam            | `'steam'`  | omit or `undefined`                                        |
+| Epic Games Store | `'epic'`   | `{ appId: string }` — the Epic catalog item ID             |
+| Xbox / MS Store  | `'xbox'`   | `{ appId: string, parameters: [{ appExecName: string }] }` |
+| GOG              | `'gog'`    | omit or `undefined`                                        |
 
 **Xbox `appId`** — the Microsoft Store application ID (same one used in `GameStoreHelper.findByAppId()`).
 
@@ -68,13 +68,13 @@ The `store` parameter comes from `IDiscoveryResult.store` — the store ID that 
 Use when the game supports both Steam and non-Steam installs. Check for `steam_api64.dll` or `steam_api.dll` in the game directory.
 
 ```js
-const STEAM_DLL = 'steam_api64.dll';
+const STEAM_DLL = "steam_api64.dll";
 
 async function requiresLauncher(gamePath) {
-  const files = await fs.readdirAsync(gamePath).catch(() => []);
-  return files.some(f => f.toLowerCase() === STEAM_DLL)
-    ? Promise.resolve({ launcher: 'steam' })
-    : Promise.resolve(undefined);
+    const files = await fs.readdirAsync(gamePath).catch(() => []);
+    return files.some((f) => f.toLowerCase() === STEAM_DLL)
+        ? Promise.resolve({ launcher: "steam" })
+        : Promise.resolve(undefined);
 }
 ```
 
@@ -86,16 +86,16 @@ Use when the game is only on one non-Steam store (e.g., Xbox only). Trust the `s
 
 ```js
 async function requiresLauncher(gamePath, store) {
-  if (store === 'xbox') {
-    return Promise.resolve({
-      launcher: 'xbox',
-      addInfo: {
-        appId: XBOXAPP_ID,
-        parameters: [{ appExecName: XBOXEXECNAME }],
-      },
-    });
-  }
-  return Promise.resolve(undefined);
+    if (store === "xbox") {
+        return Promise.resolve({
+            launcher: "xbox",
+            addInfo: {
+                appId: XBOXAPP_ID,
+                parameters: [{ appExecName: XBOXEXECNAME }],
+            },
+        });
+    }
+    return Promise.resolve(undefined);
 }
 ```
 
@@ -107,35 +107,35 @@ Use when the game is on multiple stores. If `store` is set from discovery, use i
 
 ```js
 async function requiresLauncher(gamePath, store) {
-  const xboxConfig = {
-    launcher: 'xbox',
-    addInfo: {
-      appId: XBOXAPP_ID,
-      parameters: [{ appExecName: XBOXEXECNAME }],
-    },
-  };
+    const xboxConfig = {
+        launcher: "xbox",
+        addInfo: {
+            appId: XBOXAPP_ID,
+            parameters: [{ appExecName: XBOXEXECNAME }],
+        },
+    };
 
-  const epicConfig = {
-    launcher: 'epic',
-    addInfo: { appId: EPIC_ID },
-  };
+    const epicConfig = {
+        launcher: "epic",
+        addInfo: { appId: EPIC_ID },
+    };
 
-  if (store !== undefined) {
-    if (store === 'xbox') return xboxConfig;
-    if (store === 'epic') return epicConfig;
-    return undefined;  // 'steam' or 'gog' — launch directly
-  }
+    if (store !== undefined) {
+        if (store === "xbox") return xboxConfig;
+        if (store === "epic") return epicConfig;
+        return undefined; // 'steam' or 'gog' — launch directly
+    }
 
-  // No store from discovery — try matching the game path against Xbox
-  try {
-    const game = await util.GameStoreHelper.findByAppId([XBOXAPP_ID], 'xbox');
-    const normalize = await util.getNormalizeFunc(gamePath);
-    if (normalize(game.gamePath) === normalize(gamePath)) return xboxConfig;
-  } catch (err) {
-    // Xbox not installed or game not found — fall through
-  }
+    // No store from discovery — try matching the game path against Xbox
+    try {
+        const game = await util.GameStoreHelper.findByAppId([XBOXAPP_ID], "xbox");
+        const normalize = await util.getNormalizeFunc(gamePath);
+        if (normalize(game.gamePath) === normalize(gamePath)) return xboxConfig;
+    } catch (err) {
+        // Xbox not installed or game not found — fall through
+    }
 
-  return undefined;
+    return undefined;
 }
 ```
 
@@ -145,13 +145,13 @@ async function requiresLauncher(gamePath, store) {
 
 ```js
 async function requiresLauncher(gamePath, store) {
-  if (store === 'epic') {
-    return Promise.resolve({
-      launcher: 'epic',
-      addInfo: { appId: EPIC_ID },
-    });
-  }
-  return Promise.resolve(undefined);
+    if (store === "epic") {
+        return Promise.resolve({
+            launcher: "epic",
+            addInfo: { appId: EPIC_ID },
+        });
+    }
+    return Promise.resolve(undefined);
 }
 ```
 
@@ -163,15 +163,15 @@ Pass `requiresLauncher` as a property when building the game object:
 
 ```js
 function applyGame(context, gameSpec) {
-  const game = {
-    ...gameSpec.game,
-    executable: getExecutable,
-    queryModPath: () => MOD_PATH,
-    requiredFiles,
-    setup: async (discovery) => setup(discovery, context.api, gameSpec),
-    requiresLauncher,
-  };
-  context.registerGame(game);
+    const game = {
+        ...gameSpec.game,
+        executable: getExecutable,
+        queryModPath: () => MOD_PATH,
+        requiredFiles,
+        setup: async (discovery) => setup(discovery, context.api, gameSpec),
+        requiresLauncher,
+    };
+    context.registerGame(game);
 }
 ```
 

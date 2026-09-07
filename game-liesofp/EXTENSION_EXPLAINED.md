@@ -2,21 +2,21 @@
 
 ## Overview
 
-| Property | Value |
-| --- | --- |
-| Name | Lies of P Vortex Extension |
-| Engine / Structure | UE4 (XBOX Integrated) |
-| Author | ChemBoy1 |
+| Property           | Value                      |
+| ------------------ | -------------------------- |
+| Name               | Lies of P Vortex Extension |
+| Engine / Structure | UE4 (XBOX Integrated)      |
+| Author             | ChemBoy1                   |
 
 ## Key Identifiers
 
-| Property | Value |
-| --- | --- |
-| Game ID | `liesofp` |
-| Executable | `N/A` |
-| Executable (Xbox) | `gamelaunchhelper.exe` |
-| Extension Page | [https://www.nexusmods.com/site/mods/852](https://www.nexusmods.com/site/mods/852) |
-| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Lies_of_P](https://www.pcgamingwiki.com/wiki/Lies_of_P) |
+| Property          | Value                                                                                      |
+| ----------------- | ------------------------------------------------------------------------------------------ |
+| Game ID           | `liesofp`                                                                                  |
+| Executable        | `N/A`                                                                                      |
+| Executable (Xbox) | `gamelaunchhelper.exe`                                                                     |
+| Extension Page    | [https://www.nexusmods.com/site/mods/852](https://www.nexusmods.com/site/mods/852)         |
+| PCGamingWiki      | [https://www.pcgamingwiki.com/wiki/Lies_of_P](https://www.pcgamingwiki.com/wiki/Lies_of_P) |
 
 ## Supported Stores
 
@@ -28,23 +28,23 @@
 
 Mod types define where each category of mod gets deployed:
 
-| Name | ID | Priority | Target Path |
-| --- | --- | --- | --- |
-| Paks | `liesofp-pak` | low | `{gamePath}/LiesofP/Content/Paks/~mods` |
-| Root Game Folder | `liesofp-root` | high | `{gamePath}` |
-| Binaries (Engine Injector) | `liesofp-binaries` | 40 | `?` |
-| Config (LocalAppData) | `liesofp-config` | 45 | `?` |
-| Save | `liesofp-save` | 50 | `?` |
+| Name                       | ID                 | Priority | Target Path                             |
+| -------------------------- | ------------------ | -------- | --------------------------------------- |
+| Paks                       | `liesofp-pak`      | low      | `{gamePath}/LiesofP/Content/Paks/~mods` |
+| Root Game Folder           | `liesofp-root`     | high     | `{gamePath}`                            |
+| Binaries (Engine Injector) | `liesofp-binaries` | 40       | `?`                                     |
+| Config (LocalAppData)      | `liesofp-config`   | 45       | `?`                                     |
+| Save                       | `liesofp-save`     | 50       | `?`                                     |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID | Priority |
-| --- | --- |
-| `liesofp-config` | 27 |
-| `liesofp-save` | 29 |
-| `liesofp-root` | 31 |
+| Installer ID     | Priority |
+| ---------------- | -------- |
+| `liesofp-config` | 27       |
+| `liesofp-save`   | 29       |
+| `liesofp-root`   | 31       |
 
 ## Toolbar Actions
 
@@ -62,13 +62,13 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-| --- | --- | --- |
-| UE4SS | — | — |
+| ---------- | ------- | ------- |
+| UE4SS      | —       | —       |
 
 ## Config & Save Paths
 
-| Type | Path |
-| --- | --- |
+| Type   | Path                                   |
+| ------ | -------------------------------------- |
 | Config | `LiesofP/Saved/Config/WindowsNoEditor` |
 
 ## Special Features
@@ -79,4 +79,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 - **Required Extensions** — depends on: `Unreal Engine Mod Installer`.
-

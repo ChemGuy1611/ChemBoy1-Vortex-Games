@@ -36,10 +36,17 @@ Date: 2026-09-02
 //*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require('vortex-api');
-const path = require('path');
-const template = require('string-template');
-const { download, findModByFile, findDownloadIdByFile, resolveVersionByPattern, resolveVersionByModVersion, testRequirementVersion } = require('./downloader');
+const { actions, fs, util, selectors, log } = require("vortex-api");
+const path = require("path");
+const template = require("string-template");
+const {
+  download,
+  findModByFile,
+  findDownloadIdByFile,
+  resolveVersionByPattern,
+  resolveVersionByModVersion,
+  testRequirementVersion,
+} = require("./downloader");
 
 //Specify all the information about the game
 const STEAMAPP_ID = "379720";
@@ -47,10 +54,10 @@ const GOGAPP_ID = "1390579243";
 const GAME_ID = "doom";
 const GAME_NAME = "DOOM (2016)";
 const EXEC = "DOOMx64vk.exe";
-let GAME_PATH = '';
-let GAME_VERSION = ''; //Game version
-let STAGING_FOLDER = '';
-let DOWNLOAD_FOLDER = '';
+let GAME_PATH = "";
+let GAME_VERSION = ""; //Game version
+let STAGING_FOLDER = "";
+let DOWNLOAD_FOLDER = "";
 
 // Information for installers, modtypes, and tools
 const USER_HOME = util.getVortexPath("home");
@@ -66,36 +73,37 @@ const LOADERMOD_PATH = `Mods`;
 
 const LOADER_ID = `${GAME_ID}-modloader`;
 const LOADER_NAME = "DOOMModLoader";
-const LOADER_FILE = 'doommodloader.exe';
+const LOADER_FILE = "doommodloader.exe";
 
 const LAUNCHER_ID = `${GAME_ID}-launcher`;
 const LAUNCHER_NAME = "DOOMLauncher";
-const LAUNCHER_FILE = 'doomlauncher.exe';
+const LAUNCHER_FILE = "doomlauncher.exe";
 
 const LEGACY_ID = `${GAME_ID}-legacy`;
 const LEGACY_NAME = "DOOM Legacy Mod";
-const LEGACY_FILE = 'dinput8.dll';
+const LEGACY_FILE = "dinput8.dll";
 
 const ROLLBACK_ID = `${GAME_ID}-rollback`;
 const ROLLBACK_NAME = "Version Rollback Files";
-const ROLLBACK_FILE = 'doomx64vk.exe';
+const ROLLBACK_FILE = "doomx64vk.exe";
 
 const COMMANDLINE_ARGS = "+devMode_enable 1 +com_skipIntroVideo 1";
 
 // REQUIREMENTS //////////////////////////////////////////////////////////////
-const LOADER_AUTHOR = 'ZwipZwapZapony';
-const LOADER_REPO = 'DOOMModLoader';
-const LOADER_ARC_NAME = 'DOOMModLoader-Windows-x64.zip';
+const LOADER_AUTHOR = "ZwipZwapZapony";
+const LOADER_REPO = "DOOMModLoader";
+const LOADER_ARC_NAME = "DOOMModLoader-Windows-x64.zip";
 const LOADER_URL_API = `https://api.github.com/repos/${LOADER_AUTHOR}/${LOADER_REPO}`;
 
-const LAUNCHER_AUTHOR = 'brunoanc';
-const LAUNCHER_REPO = 'DOOMLauncher';
-const LAUNCHER_VER = '3.0.0';
+const LAUNCHER_AUTHOR = "brunoanc";
+const LAUNCHER_REPO = "DOOMLauncher";
+const LAUNCHER_VER = "3.0.0";
 const LAUNCHER_ARC_NAME = `DOOMLauncher-v${LAUNCHER_VER}.zip`;
 const LAUNCHER_URL_API = `https://api.github.com/repos/${LAUNCHER_AUTHOR}/${LAUNCHER_REPO}`;
 
 const REQUIREMENTS = [
-  { //DOOMModLoader
+  {
+    //DOOMModLoader
     archiveFileName: LOADER_ARC_NAME,
     modType: LOADER_ID,
     assemblyFileName: LOADER_FILE,
@@ -103,10 +111,11 @@ const REQUIREMENTS = [
     githubUrl: LOADER_URL_API,
     findMod: (api) => findModByFile(api, LOADER_ID, LOADER_FILE),
     findDownloadId: (api) => findDownloadIdByFile(api, LOADER_ARC_NAME),
-    fileArchivePattern: new RegExp(/^DOOMModLoader-Windows-x64/, 'i'), //picks the Windows x64 asset; the file name carries no version
+    fileArchivePattern: new RegExp(/^DOOMModLoader-Windows-x64/, "i"), //picks the Windows x64 asset; the file name carries no version
     resolveVersion: (api) => resolveVersionByModVersion(api, REQUIREMENTS[0]), //version only exists in the release tag, so read it back off the installed mod
   },
-  { //DOOMLauncher
+  {
+    //DOOMLauncher
     archiveFileName: LAUNCHER_ARC_NAME,
     modType: LAUNCHER_ID,
     assemblyFileName: LAUNCHER_FILE,
@@ -114,89 +123,84 @@ const REQUIREMENTS = [
     githubUrl: LAUNCHER_URL_API,
     findMod: (api) => findModByFile(api, LAUNCHER_ID, LAUNCHER_FILE),
     findDownloadId: (api) => findDownloadIdByFile(api, LAUNCHER_ARC_NAME),
-    fileArchivePattern: new RegExp(/^DOOMLauncher-v(\d+\.\d+\.\d+)/, 'i'),
+    fileArchivePattern: new RegExp(/^DOOMLauncher-v(\d+\.\d+\.\d+)/, "i"),
     resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[1]),
   },
 ];
 
-const CONFIG_PATH = path.join(USER_HOME, 'Saved Games', 'id Software', 'DOOM', 'base');
-const SAVE_PATH  = path.join(CONFIG_PATH, 'savegame');
+const CONFIG_PATH = path.join(USER_HOME, "Saved Games", "id Software", "DOOM", "base");
+const SAVE_PATH = path.join(CONFIG_PATH, "savegame");
 
 // Filled in from data above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/677"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Doom_%282016%29";
-const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
-const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
 const spec = {
-  "game": {
-    "id": GAME_ID,
-    "name": "DOOM (2016)",
-    "shortName": "DOOM",
-    "executable": EXEC,
-    "logo": `${GAME_ID}.jpg`,
-    "mergeMods": true,
-    "requiresCleanup": true,
-    "modPath": LOADERMOD_PATH,
-    "modPathIsRelative": true,
-    "requiredFiles": [
-      EXEC
-    ],
-    "details": {
-      "steamAppId": +STEAMAPP_ID,
-      "gogAppId": +GOGAPP_ID,
-      "ignoreConflicts": IGNORE_CONFLICTS,
-      "ignoreDeploy": IGNORE_DEPLOY,
+  game: {
+    id: GAME_ID,
+    name: "DOOM (2016)",
+    shortName: "DOOM",
+    executable: EXEC,
+    logo: `${GAME_ID}.jpg`,
+    mergeMods: true,
+    requiresCleanup: true,
+    modPath: LOADERMOD_PATH,
+    modPathIsRelative: true,
+    requiredFiles: [EXEC],
+    details: {
+      steamAppId: +STEAMAPP_ID,
+      gogAppId: +GOGAPP_ID,
+      ignoreConflicts: IGNORE_CONFLICTS,
+      ignoreDeploy: IGNORE_DEPLOY,
     },
-    "environment": {
-      "SteamAPPId": STEAMAPP_ID,
-      "GogAPPId": GOGAPP_ID,
-    }
+    environment: {
+      SteamAPPId: STEAMAPP_ID,
+      GogAPPId: GOGAPP_ID,
+    },
   },
-  "modTypes": [
+  modTypes: [
     {
-      "id": BINARIES_ID,
-      "name": BINARIES_NAME,
-      "priority": "high",
-      "targetPath": "{gamePath}"
+      id: BINARIES_ID,
+      name: BINARIES_NAME,
+      priority: "high",
+      targetPath: "{gamePath}",
     },
     {
-      "id": LOADERMOD_ID,
-      "name": LOADERMOD_NAME,
-      "priority": "high",
-      "targetPath": path.join('{gamePath}', LOADERMOD_PATH)
+      id: LOADERMOD_ID,
+      name: LOADERMOD_NAME,
+      priority: "high",
+      targetPath: path.join("{gamePath}", LOADERMOD_PATH),
     },
     {
-      "id": LEGACY_ID,
-      "name": LEGACY_NAME,
-      "priority": "high",
-      "targetPath": "{gamePath}"
+      id: LEGACY_ID,
+      name: LEGACY_NAME,
+      priority: "high",
+      targetPath: "{gamePath}",
     },
     {
-      "id": ROLLBACK_ID,
-      "name": ROLLBACK_NAME,
-      "priority": "low",
-      "targetPath": "{gamePath}"
+      id: ROLLBACK_ID,
+      name: ROLLBACK_NAME,
+      priority: "low",
+      targetPath: "{gamePath}",
     },
     {
-      "id": LOADER_ID,
-      "name": LOADER_NAME,
-      "priority": "low",
-      "targetPath": "{gamePath}"
+      id: LOADER_ID,
+      name: LOADER_NAME,
+      priority: "low",
+      targetPath: "{gamePath}",
     },
     {
-      "id": LAUNCHER_ID,
-      "name": LAUNCHER_NAME,
-      "priority": "low",
-      "targetPath": "{gamePath}"
+      id: LAUNCHER_ID,
+      name: LAUNCHER_NAME,
+      priority: "low",
+      targetPath: "{gamePath}",
     },
   ],
-  "discovery": {
-    "ids": [
-      STEAMAPP_ID,
-      GOGAPP_ID,
-    ],
-    "names": []
-  }
+  discovery: {
+    ids: [STEAMAPP_ID, GOGAPP_ID],
+    names: [],
+  },
 };
 
 //launchers and 3rd party tools
@@ -220,29 +224,25 @@ const tools = [
     name: "DOOMLauncher",
     logo: "launcher.png",
     executable: () => LAUNCHER_FILE,
-    requiredFiles: [
-      LAUNCHER_FILE,
-    ],
+    requiredFiles: [LAUNCHER_FILE],
     detach: true,
     shell: true,
     relative: true,
     exclusive: true,
     defaultPrimary: true,
-    parameters: []
+    parameters: [],
   },
   {
     id: LOADER_ID,
     name: LOADER_NAME,
     logo: "modloader.png",
     executable: () => LOADER_FILE,
-    requiredFiles: [
-      LOADER_FILE,
-    ],
+    requiredFiles: [LOADER_FILE],
     detach: true,
     shell: true,
     relative: true,
     exclusive: true,
-    parameters: []
+    parameters: [],
   },
 ];
 
@@ -256,8 +256,7 @@ function statCheckSync(gamePath, file) {
   try {
     fs.statSync(path.join(gamePath, file));
     return true;
-  }
-  catch {
+  } catch {
     return false;
   }
 }
@@ -266,8 +265,7 @@ async function statCheckAsync(gamePath, file) {
   try {
     await fs.statAsync(path.join(gamePath, file));
     return true;
-  }
-  catch {
+  } catch {
     return false;
   }
 }
@@ -279,31 +277,38 @@ async function getAllFiles(dirPath) {
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
       const stats = await fs.statAsync(fullPath);
-      if (stats.isDirectory()) { // Recursively get files from subdirectories
+      if (stats.isDirectory()) {
+        // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
         results = results.concat(subDirFiles);
-      } else { // Add file to results
+      } else {
+        // Add file to results
         results.push(fullPath);
       }
     }
   } catch (err) {
-    log('warn', `Error reading directory ${dirPath}: ${err.message}`);
+    log("warn", `Error reading directory ${dirPath}: ${err.message}`);
   }
   return results;
 }
 
-const getDiscoveryPath = (api) => { //get the game's discovered path
+const getDiscoveryPath = (api) => {
+  //get the game's discovered path
   const state = api.getState();
   const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
 
 async function purge(api) {
-  return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));
+  return new Promise((resolve, reject) =>
+    api.events.emit("purge-mods", true, (err) => (err ? reject(err) : resolve())),
+  );
 }
 
 async function deploy(api) {
-  return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
+  return new Promise((resolve, reject) =>
+    api.events.emit("deploy-mods", (err) => (err ? reject(err) : resolve())),
+  );
 }
 
 function modTypePriority(priority) {
@@ -317,30 +322,34 @@ function modTypePriority(priority) {
 function pathPattern(api, game, pattern) {
   var _a;
   return template(pattern, {
-    gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
-    documents: util.getVortexPath('documents'),
-    localAppData: util.getVortexPath('localAppData'),
-    appData: util.getVortexPath('appData'),
+    gamePath:
+      (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0
+        ? void 0
+        : _a.path,
+    documents: util.getVortexPath("documents"),
+    localAppData: util.getVortexPath("localAppData"),
+    appData: util.getVortexPath("appData"),
   });
 }
 
 //Set the mod path for the game
 function makeGetModPath(api, gameSpec) {
-  return () => gameSpec.game.modPathIsRelative !== false
-    ? gameSpec.game.modPath || '.'
-    : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
+  return () =>
+    gameSpec.game.modPathIsRelative !== false
+      ? gameSpec.game.modPath || "."
+      : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
 }
 
 //Find game installation directory
 function makeFindGame(api, gameSpec) {
-  return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
-    .then((game) => game.gamePath);
+  return () =>
+    util.GameStoreHelper.findByAppId(gameSpec.discovery.ids).then((game) => game.gamePath);
 }
 
 async function requiresLauncher(gamePath, store) {
-  if (store === 'steam') {
+  if (store === "steam") {
     return Promise.resolve({
-        launcher: 'steam'
+      launcher: "steam",
     });
   } //*/
   return Promise.resolve(undefined);
@@ -366,9 +375,9 @@ async function asyncForEachCheck(api, requirements) {
 async function onCheckModVersion(api, gameId, mods, forced) {
   try {
     await asyncForEachTestVersion(api, REQUIREMENTS);
-    log('warn', 'Checked requirements versions');
+    log("warn", "Checked requirements versions");
   } catch (err) {
-    log('warn', `Failed to test requirement version: ${err}`);
+    log("warn", `Failed to test requirement version: ${err}`);
   }
 }
 
@@ -381,8 +390,8 @@ async function checkForRequirements(api) {
 
 //Installer test for DOOMModLoader files
 function testModLoader(files, gameId) {
-  const isMod = files.some(file => (path.basename(file).toLowerCase() === LOADER_FILE));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => path.basename(file).toLowerCase() === LOADER_FILE);
+  let supported = gameId === spec.game.id && isMod;
 
   return Promise.resolve({
     supported,
@@ -392,18 +401,18 @@ function testModLoader(files, gameId) {
 
 //Installer install DOOMModLoader files
 function installModLoader(files) {
-  const modFile = files.find(file => (path.basename(file).toLowerCase() === LOADER_FILE));
+  const modFile = files.find((file) => path.basename(file).toLowerCase() === LOADER_FILE);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: LOADER_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: LOADER_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -414,8 +423,8 @@ function installModLoader(files) {
 
 //Installer test for DOOMLauncher files
 function testLauncher(files, gameId) {
-  const isMod = files.some(file => (path.basename(file).toLowerCase() === LAUNCHER_FILE));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => path.basename(file).toLowerCase() === LAUNCHER_FILE);
+  let supported = gameId === spec.game.id && isMod;
 
   return Promise.resolve({
     supported,
@@ -425,19 +434,19 @@ function testLauncher(files, gameId) {
 
 //Installer install DOOMLauncher files
 function installLauncher(files) {
-  const modFile = files.find(file => (path.basename(file).toLowerCase() === LAUNCHER_FILE));
+  const modFile = files.find((file) => path.basename(file).toLowerCase() === LAUNCHER_FILE);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: LAUNCHER_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: LAUNCHER_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) &&
-      (!file.endsWith(path.sep))));
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+  );
 
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -448,8 +457,8 @@ function installLauncher(files) {
 
 //Installer test for DoomLegacyMod
 function testLegacy(files, gameId) {
-  const isMod = files.some(file => (path.basename(file).toLowerCase() === LEGACY_FILE));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => path.basename(file).toLowerCase() === LEGACY_FILE);
+  let supported = gameId === spec.game.id && isMod;
 
   return Promise.resolve({
     supported,
@@ -459,18 +468,18 @@ function testLegacy(files, gameId) {
 
 //Installer install DoomLegacyMod files
 function installLegacy(files) {
-  const modFile = files.find(file => (path.basename(file).toLowerCase() === LEGACY_FILE));
+  const modFile = files.find((file) => path.basename(file).toLowerCase() === LEGACY_FILE);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: LEGACY_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: LEGACY_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -481,8 +490,8 @@ function installLegacy(files) {
 
 //Installer test for game version rollback
 function testRollback(files, gameId) {
-  const isMod = files.some(file => path.basename(file).toLowerCase() === ROLLBACK_FILE);
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some((file) => path.basename(file).toLowerCase() === ROLLBACK_FILE);
+  let supported = gameId === spec.game.id && isMod;
 
   return Promise.resolve({
     supported,
@@ -492,18 +501,18 @@ function testRollback(files, gameId) {
 
 //Installer install game version rollback files
 function installRollback(files) {
-  const modFile = files.find(file => path.basename(file).toLowerCase() === ROLLBACK_FILE);
+  const modFile = files.find((file) => path.basename(file).toLowerCase() === ROLLBACK_FILE);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: ROLLBACK_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: ROLLBACK_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  const filtered = files.filter(
+    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
-  const instructions = filtered.map(file => {
+  const instructions = filtered.map((file) => {
     return {
-      type: 'copy',
+      type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
     };
@@ -514,40 +523,46 @@ function installRollback(files) {
 
 //test for zips
 async function testZipContent(files, gameId) {
-  let supported = (gameId === spec.game.id);
+  let supported = gameId === spec.game.id;
 
   return Promise.resolve({
     supported,
-    requiredFiles: []
+    requiredFiles: [],
   });
 }
 
 //Install zips
 async function installZipContent(files, destinationPath) {
-  const zipFiles = files.filter(file => ['.zip', '.7z', '.rar'].includes(path.extname(file)));
+  const zipFiles = files.filter((file) => [".zip", ".7z", ".rar"].includes(path.extname(file)));
   // If it's a double zip, we don't need to repack.
   if (zipFiles.length > 0) {
-    const instructions = zipFiles.map(file => {
+    const instructions = zipFiles.map((file) => {
       return {
-        type: 'copy',
+        type: "copy",
         source: file,
         destination: path.basename(file),
-      }
+      };
     });
     return Promise.resolve({ instructions });
   }
   // Repack the ZIP
   else {
     const szip = new util.SevenZip();
-    const archiveName = path.basename(destinationPath, '.installing') + '.zip';
+    const archiveName = path.basename(destinationPath, ".installing") + ".zip";
     const archivePath = path.join(destinationPath, archiveName);
     const rootRelPaths = await fs.readdirAsync(destinationPath);
-    await szip.add(archivePath, rootRelPaths.map(relPath => path.join(destinationPath, relPath)), { raw: ['-r'] });
-    const instructions = [{
-      type: 'copy',
-      source: archiveName,
-      destination: path.basename(archivePath),
-    }];
+    await szip.add(
+      archivePath,
+      rootRelPaths.map((relPath) => path.join(destinationPath, relPath)),
+      { raw: ["-r"] },
+    );
+    const instructions = [
+      {
+        type: "copy",
+        source: archiveName,
+        destination: path.basename(archivePath),
+      },
+    ];
     return Promise.resolve({ instructions });
   }
 }
@@ -561,39 +576,47 @@ function deployNotify(api) {
   const MESSAGE = `Run ${MOD_NAME}`;
   api.sendNotification({
     id: NOTIF_ID,
-    type: 'warning',
+    type: "warning",
     message: MESSAGE,
     allowSuppress: true,
     actions: [
       {
-        title: 'Run Loader',
+        title: "Run Loader",
         action: (dismiss) => {
           runLoader(api);
           dismiss();
         },
       },
       {
-        title: 'More',
+        title: "More",
         action: (dismiss) => {
-          api.showDialog('question', MESSAGE, {
-            text: `After installing new mods, you must run ${MOD_NAME} to install them to the game's data files.\n`
-                + `Use the included tool to launch ${MOD_NAME} (button on notification or in "Dashboard" tab).\n`
-                + `The process of installing the mods may take a few minutes.\n`
-          }, [
+          api.showDialog(
+            "question",
+            MESSAGE,
             {
-              label: 'Run Loader', action: () => {
-                runLoader(api);
-                dismiss();
-              }
+              text:
+                `After installing new mods, you must run ${MOD_NAME} to install them to the game's data files.\n` +
+                `Use the included tool to launch ${MOD_NAME} (button on notification or in "Dashboard" tab).\n` +
+                `The process of installing the mods may take a few minutes.\n`,
             },
-            { label: 'Close Notification', action: () => dismiss() },
-            {
-              label: 'Never Show Again', action: () => {
-                api.suppressNotification(NOTIF_ID);
-                dismiss();
-              }
-            },
-          ]);
+            [
+              {
+                label: "Run Loader",
+                action: () => {
+                  runLoader(api);
+                  dismiss();
+                },
+              },
+              { label: "Close Notification", action: () => dismiss() },
+              {
+                label: "Never Show Again",
+                action: () => {
+                  api.suppressNotification(NOTIF_ID);
+                  dismiss();
+                },
+              },
+            ],
+          );
         },
       },
     ],
@@ -604,21 +627,30 @@ function runLoader(api) {
   const TOOL_ID = LOADER_ID;
   const TOOL_NAME = LOADER_NAME;
   const state = api.store.getState();
-  const tool = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'tools', TOOL_ID], undefined);
+  const tool = util.getSafe(
+    state,
+    ["settings", "gameMode", "discovered", GAME_ID, "tools", TOOL_ID],
+    undefined,
+  );
 
   try {
     const TOOL_PATH = tool.path;
     if (TOOL_PATH !== undefined) {
-      return api.runExecutable(TOOL_PATH, [], { shell: true, suggestDeploy: false })
-        .catch(err => api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err,
-          { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 })
-        );
-    }
-    else {
-      return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, `Path to ${TOOL_NAME} executable could not be found. Ensure ${TOOL_NAME} is installed through Vortex.`);
+      return api.runExecutable(TOOL_PATH, [], { shell: true, suggestDeploy: false }).catch((err) =>
+        api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
+          allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+        }),
+      );
+    } else {
+      return api.showErrorNotification(
+        `Failed to run ${TOOL_NAME}`,
+        `Path to ${TOOL_NAME} executable could not be found. Ensure ${TOOL_NAME} is installed through Vortex.`,
+      );
     }
   } catch (err) {
-    return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
+    return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
+      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+    });
   }
 }
 
@@ -651,11 +683,23 @@ function applyGame(context, gameSpec) {
 
   //register mod types
   (gameSpec.modTypes || []).forEach((type, idx) => {
-    context.registerModType(type.id, modTypePriority(type.priority) + idx, (gameId) => {
-      var _a;
-      return (gameId === gameSpec.game.id)
-        && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
+    context.registerModType(
+      type.id,
+      modTypePriority(type.priority) + idx,
+      (gameId) => {
+        var _a;
+        return (
+          gameId === gameSpec.game.id &&
+          !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+          _a === void 0
+            ? void 0
+            : _a.path)
+        );
+      },
+      (game) => pathPattern(context.api, game, type.targetPath),
+      () => Promise.resolve(false),
+      { name: type.name },
+    );
   });
 
   //register mod installers
@@ -666,35 +710,67 @@ function applyGame(context, gameSpec) {
   //context.registerInstaller(`${GAME_ID}-zipmod`, 33, testZipContent, installZipContent); //zip installer removed because mods did not work in zips
 
   //register actions
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
-    util.opn(CONFIG_PATH).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Saves Folder', () => {
-    util.opn(SAVE_PATH).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
-    const openPath = path.join(__dirname, 'CHANGELOG.md');
-    util.opn(openPath).catch(() => null);
-    }, () => {
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Config Folder",
+    () => {
+      util.opn(CONFIG_PATH).catch(() => null);
+    },
+    () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    util.opn(DOWNLOAD_FOLDER).catch(() => null);
-    }, () => {
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Saves Folder",
+    () => {
+      util.opn(SAVE_PATH).catch(() => null);
+    },
+    () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-  });
+    },
+  ); //*/
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "View Changelog",
+    () => {
+      const openPath = path.join(__dirname, "CHANGELOG.md");
+      util.opn(openPath).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Downloads Folder",
+    () => {
+      util.opn(DOWNLOAD_FOLDER).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
 
   //register actions
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
@@ -704,33 +780,53 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
-    util.opn(PCGAMINGWIKI_URL).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
-    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open PCGamingWiki Page",
+    () => {
+      util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Submit Bug Report",
+    () => {
+      util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
 }
 
 //main function
 function main(context) {
   applyGame(context, spec);
-  context.once(() => { // put code here that should be run (once) when Vortex starts up
+  context.once(() => {
+    // put code here that should be run (once) when Vortex starts up
     const api = context.api;
-    context.api.onAsync('check-mods-version', (gameId, mods, forced) => {
+    context.api.onAsync("check-mods-version", (gameId, mods, forced) => {
       if (gameId !== GAME_ID) return;
       return onCheckModVersion(context.api, gameId, mods, forced);
     });
-    context.api.onAsync('did-deploy', async (profileId, deployment) => {
-      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
+    context.api.onAsync("did-deploy", async (profileId, deployment) => {
+      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(
+        context.api.getState(),
+        GAME_ID,
+      );
       if (profileId !== LAST_ACTIVE_PROFILE) return;
       return deployNotify(context.api);
     });

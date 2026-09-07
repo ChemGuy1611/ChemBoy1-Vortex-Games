@@ -13,14 +13,14 @@ patching.
 `FCModInstaller/FCSavegameManager.exe`, `DB_URL` `https://mods.farcry.info/<code>`, `XML_FILE`
 `gamerprofile.xml`.
 
-| Mod type | Target |
-| --- | --- |
-| `ROOT_ID` | `{gamePath}` |
-| `BIN_ID` | `bin` |
-| `DATA_ID` | `data_win32` |
-| `MI_ID` | `FCModInstaller` |
-| `MIMOD_ID`, `MIMODA3_ID` | `FCModInstaller/ModifiedFilesFC<code>` |
-| `XML_ID` | absolute `Documents/My Games/<Far Cry N>/<userId>` |
+| Mod type                 | Target                                             |
+| ------------------------ | -------------------------------------------------- |
+| `ROOT_ID`                | `{gamePath}`                                       |
+| `BIN_ID`                 | `bin`                                              |
+| `DATA_ID`                | `data_win32`                                       |
+| `MI_ID`                  | `FCModInstaller`                                   |
+| `MIMOD_ID`, `MIMODA3_ID` | `FCModInstaller/ModifiedFilesFC<code>`             |
+| `XML_ID`                 | absolute `Documents/My Games/<Far Cry N>/<userId>` |
 
 **Installers:** `MI` 25 → `ROOT` 27 → `DATA` 29 → `BIN` 31 → `MIMODA3` 33 → `MIMOD` 35 → `XML` 37 →
 fallback 49.

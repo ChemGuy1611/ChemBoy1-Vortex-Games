@@ -22,15 +22,15 @@ otherwise be misrouted into the installer's folder. `TFCMOD_FILES` catches the m
 `gameprofile.xml`, `gameprofile.idremappings.xml`, `objectdescriptors.xml`, `packageextensions.xml`,
 `texturepack`, `game`.
 
-| Mod type | Priority | Target |
-| --- | --- | --- |
-| `TFCMOD_ID` | spec | `TFCInstaller/Mods` |
-| `ROOT_ID` | spec | `{gamePath}` |
-| `COOKEDSUB_ID` | spec | `<code>/CookedPC` |
-| `MOVIES_ID` | spec | `<code>/Movies` |
-| `TFC_ID` | spec `low` | `{gamePath}` |
-| `UPKEXPLORER_ID` | spec | `{gamePath}` |
-| `BINARIES_ID` | spec, plus explicit at 40 | `Binaries/Win<BITS>` |
+| Mod type         | Priority                  | Target               |
+| ---------------- | ------------------------- | -------------------- |
+| `TFCMOD_ID`      | spec                      | `TFCInstaller/Mods`  |
+| `ROOT_ID`        | spec                      | `{gamePath}`         |
+| `COOKEDSUB_ID`   | spec                      | `<code>/CookedPC`    |
+| `MOVIES_ID`      | spec                      | `<code>/Movies`      |
+| `TFC_ID`         | spec `low`                | `{gamePath}`         |
+| `UPKEXPLORER_ID` | spec                      | `{gamePath}`         |
+| `BINARIES_ID`    | spec, plus explicit at 40 | `Binaries/Win<BITS>` |
 
 **Installers:** `TFC` 25 → `UPKEXPLORER` 27 → `TFCMOD` 29 → `ROOT` 31 → `COOKEDSUB` 33 → `MOVIES` 35
 → `BINARIES` 37 → fallback 49.

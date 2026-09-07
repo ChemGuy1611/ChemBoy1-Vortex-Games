@@ -106,7 +106,7 @@ Entries marked **(2.4.x)** were added during the Vortex 2.4 line and are absent 
 
 ```js
 context.once(() => {
-  api.setStylesheet('my-ext-style', path.join(__dirname, 'style.scss'));
+    api.setStylesheet("my-ext-style", path.join(__dirname, "style.scss"));
 });
 ```
 
@@ -300,8 +300,8 @@ Priority guide: first-party check-deployment hook runs at 100. Use 50-90 for ext
 
 ```js
 await util.withTmpDir(async (tmpPath) => {
-  await someExtractOperation(archive, tmpPath);
-  // tmpPath auto-deleted after return
+    await someExtractOperation(archive, tmpPath);
+    // tmpPath auto-deleted after return
 });
 ```
 
@@ -329,7 +329,7 @@ await util.withTmpDir(async (tmpPath) => {
 
 ```js
 const limiter = new util.ConcurrencyLimiter(5); // max 5 concurrent
-await Promise.all(modFiles.map(f => limiter.do(() => processFile(f))));
+await Promise.all(modFiles.map((f) => limiter.do(() => processFile(f))));
 ```
 
 ---
@@ -341,7 +341,7 @@ await Promise.all(modFiles.map(f => limiter.do(() => processFile(f))));
 ```js
 const archive = await api.openArchive(downloadPath);
 const entries = await archive.list();
-const data = await archive.extractFile('data/config.json');
+const data = await archive.extractFile("data/config.json");
 ```
 
 **Use case:** Inspect mod archive contents during installation without extracting everything — preview what files a mod contains before committing to a mod type.
@@ -356,8 +356,11 @@ const data = await archive.extractFile('data/config.json');
 const GB_CONTENT_TYPE = /^(application\/json|text\/html|text\/plain)/;
 
 async function apiJson(url) {
-  const raw = await util.rawRequest(url, { expectedContentType: GB_CONTENT_TYPE, encoding: 'utf-8' });
-  return JSON.parse(String(raw));
+    const raw = await util.rawRequest(url, {
+        expectedContentType: GB_CONTENT_TYPE,
+        encoding: "utf-8",
+    });
+    return JSON.parse(String(raw));
 }
 ```
 
@@ -389,18 +392,18 @@ async function apiJson(url) {
 
 All are sync (NodeJS.EventEmitter). Subscribe in `context.once()`.
 
-| Event | Args | When fired |
-| --- | --- | --- |
-| `'gamemode-activated'` | `(gameId: string)` | User switches active game |
-| `'profile-did-change'` | `(profileId: string)` | Profile switch completed |
-| `'will-deploy'` | `(profileId, deployment)` | Before deployment starts |
-| `'did-deploy'` | `(profileId, deployment, setProgress)` | After deployment completes |
-| `'will-purge'` | `(profileId)` | Before purge |
-| `'did-purge'` | `(profileId)` | After purge |
-| `'mod-enabled'` | `(profileId, modId)` | Mod enabled by user |
-| `'mod-disabled'` | `(profileId, modId)` | Mod disabled by user |
-| `'startup-complete'` | — | Vortex fully started |
-| `'check-mods-version'` | `(gameId, mods, forced)` | Version check triggered |
+| Event                  | Args                                   | When fired                 |
+| ---------------------- | -------------------------------------- | -------------------------- |
+| `'gamemode-activated'` | `(gameId: string)`                     | User switches active game  |
+| `'profile-did-change'` | `(profileId: string)`                  | Profile switch completed   |
+| `'will-deploy'`        | `(profileId, deployment)`              | Before deployment starts   |
+| `'did-deploy'`         | `(profileId, deployment, setProgress)` | After deployment completes |
+| `'will-purge'`         | `(profileId)`                          | Before purge               |
+| `'did-purge'`          | `(profileId)`                          | After purge                |
+| `'mod-enabled'`        | `(profileId, modId)`                   | Mod enabled by user        |
+| `'mod-disabled'`       | `(profileId, modId)`                   | Mod disabled by user       |
+| `'startup-complete'`   | —                                      | Vortex fully started       |
+| `'check-mods-version'` | `(gameId, mods, forced)`               | Version check triggered    |
 
 ---
 
@@ -546,30 +549,30 @@ kind catalog.
 
 **Key `ITableAttribute` fields:**
 
-| Field | Purpose |
-| --- | --- |
-| `id` | Unique attribute id |
-| `name` | Column header text |
-| `placement` | `'table'` (column), `'detail'` (side panel), or `'both'` |
-| `calc(mod, t)` | Returns the display value from a mod object |
-| `customRenderer(mod, detailCell, t)` | Optional React component renderer |
-| `isSortable` | Allow column sort |
-| `isToggleable` | Allow user to hide column |
-| `isGroupable` | Allow grouping rows by this attribute |
-| `isDefaultVisible` | Whether column is visible by default (default `true`) |
-| `filter` | `ITableFilter` instance for column filter UI |
-| `position` | Default column order (lower = further left; default 100) |
+| Field                                | Purpose                                                  |
+| ------------------------------------ | -------------------------------------------------------- |
+| `id`                                 | Unique attribute id                                      |
+| `name`                               | Column header text                                       |
+| `placement`                          | `'table'` (column), `'detail'` (side panel), or `'both'` |
+| `calc(mod, t)`                       | Returns the display value from a mod object              |
+| `customRenderer(mod, detailCell, t)` | Optional React component renderer                        |
+| `isSortable`                         | Allow column sort                                        |
+| `isToggleable`                       | Allow user to hide column                                |
+| `isGroupable`                        | Allow grouping rows by this attribute                    |
+| `isDefaultVisible`                   | Whether column is visible by default (default `true`)    |
+| `filter`                             | `ITableFilter` instance for column filter UI             |
+| `position`                           | Default column order (lower = further left; default 100) |
 
 ```js
-context.registerTableAttribute('mods', {
-  id: 'my-game-version',
-  name: 'Game Version',
-  description: 'Minimum game version required by this mod',
-  placement: 'both',
-  calc: (mod) => mod.attributes?.['minGameVersion'] ?? '',
-  isSortable: true,
-  isToggleable: true,
-  isDefaultVisible: false,
+context.registerTableAttribute("mods", {
+    id: "my-game-version",
+    name: "Game Version",
+    description: "Minimum game version required by this mod",
+    placement: "both",
+    calc: (mod) => mod.attributes?.["minGameVersion"] ?? "",
+    isSortable: true,
+    isToggleable: true,
+    isDefaultVisible: false,
 });
 ```
 
@@ -602,30 +605,30 @@ Two options there are easy to miss — both **(v2.5.0+)**:
 
 **`IOpenOptions` / `ISaveOptions` fields:**
 
-| Field | Purpose |
-| --- | --- |
-| `title` | Dialog window title |
-| `defaultPath` | Initial directory or file path |
-| `filters` | `IFileFilter[]` — each `{ name, extensions: string[] }` |
+| Field         | Purpose                                                 |
+| ------------- | ------------------------------------------------------- |
+| `title`       | Dialog window title                                     |
+| `defaultPath` | Initial directory or file path                          |
+| `filters`     | `IFileFilter[]` — each `{ name, extensions: string[] }` |
 
 ```js
 const filePath = await api.selectFile({
-  title: 'Select mod config',
-  defaultPath: util.getVortexPath('userData'),
-  filters: [{ name: 'JSON', extensions: ['json'] }],
+    title: "Select mod config",
+    defaultPath: util.getVortexPath("userData"),
+    filters: [{ name: "JSON", extensions: ["json"] }],
 });
 if (filePath !== undefined) {
-  // user selected a file
+    // user selected a file
 }
 
 const savePath = await api.saveFile({
-  title: 'Save merged config',
-  filters: [{ name: 'INI', extensions: ['ini'] }],
+    title: "Save merged config",
+    filters: [{ name: "INI", extensions: ["ini"] }],
 });
 
-const dir = await api.selectDir({ title: 'Select game folder' });
+const dir = await api.selectDir({ title: "Select game folder" });
 
-const exe = await api.selectExecutable({ title: 'Select launcher' });
+const exe = await api.selectExecutable({ title: "Select launcher" });
 ```
 
 **Use case:** Any settings page that needs a user-picked path should use these rather than a free-text input — avoids typos and normalizes path format.

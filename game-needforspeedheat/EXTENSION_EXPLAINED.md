@@ -2,20 +2,20 @@
 
 ## Overview
 
-| Property | Value |
-| --- | --- |
-| Name | Need for Speed Heat Vortex Extension |
+| Property           | Value                                 |
+| ------------------ | ------------------------------------- |
+| Name               | Need for Speed Heat Vortex Extension  |
 | Engine / Structure | Frostbite Engine - Frosty Mod Manager |
-| Author | ChemBoy1 |
+| Author             | ChemBoy1                              |
 
 ## Key Identifiers
 
-| Property | Value |
-| --- | --- |
-| Game ID | `needforspeedheat` |
-| Executable | `NeedForSpeedHeat.exe` |
-| Extension Page | [https://www.nexusmods.com/site/mods/1994](https://www.nexusmods.com/site/mods/1994) |
-| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Need_for_Speed_Heat](https://www.pcgamingwiki.com/wiki/Need_for_Speed_Heat) |
+| Property       | Value                                                                                                          |
+| -------------- | -------------------------------------------------------------------------------------------------------------- |
+| Game ID        | `needforspeedheat`                                                                                             |
+| Executable     | `NeedForSpeedHeat.exe`                                                                                         |
+| Extension Page | [https://www.nexusmods.com/site/mods/1994](https://www.nexusmods.com/site/mods/1994)                           |
+| PCGamingWiki   | [https://www.pcgamingwiki.com/wiki/Need_for_Speed_Heat](https://www.pcgamingwiki.com/wiki/Need_for_Speed_Heat) |
 
 ## Supported Stores
 
@@ -25,39 +25,39 @@
 
 ## Feature Flags
 
-| Flag | Value | Description |
-| --- | --- | --- |
-| `hasArchives` | `false` | toggle for .archive file support |
-| `needsKey` | `true` | toggle for encryption key logic |
-| `allowSymlinks` | `false` | Frosty handles its own deployment; symlinks not typical |
-| `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
-| `setupNotification` | `true` | enable to show the user a notification with special instructions (specify below) |
-| `hasUserIdFolder` | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
-| `debug` | `false` | toggle for debug mode |
+| Flag                | Value   | Description                                                                                    |
+| ------------------- | ------- | ---------------------------------------------------------------------------------------------- |
+| `hasArchives`       | `false` | toggle for .archive file support                                                               |
+| `needsKey`          | `true`  | toggle for encryption key logic                                                                |
+| `allowSymlinks`     | `false` | Frosty handles its own deployment; symlinks not typical                                        |
+| `fallbackInstaller` | `true`  | enable fallback installer. Set false if you need to avoid installer collisions                 |
+| `setupNotification` | `true`  | enable to show the user a notification with special instructions (specify below)               |
+| `hasUserIdFolder`   | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
+| `debug`             | `false` | toggle for debug mode                                                                          |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
-| Name | ID | Priority | Target Path |
-| --- | --- | --- | --- |
-| Binaries / Root Folder | `needforspeedheat-root` | high | `{gamePath}` |
-| Frosty Mod | `needforspeedheat-frostymod` | high | `{gamePath}/FrostyModManager/Mods/NeedForSpeedHeat` |
-| Plugin (FMM) | `needforspeedheat-plugin` | high | `{gamePath}/FrostyModManager/Plugins` |
-| Frosty Mod Manager | `needforspeedheat-frostymodmanager` | low | `{gamePath}` |
-| Key (FMM) | `needforspeedheat-key` | low | `{gamePath}/FrostyModManager` |
+| Name                   | ID                                  | Priority | Target Path                                         |
+| ---------------------- | ----------------------------------- | -------- | --------------------------------------------------- |
+| Binaries / Root Folder | `needforspeedheat-root`             | high     | `{gamePath}`                                        |
+| Frosty Mod             | `needforspeedheat-frostymod`        | high     | `{gamePath}/FrostyModManager/Mods/NeedForSpeedHeat` |
+| Plugin (FMM)           | `needforspeedheat-plugin`           | high     | `{gamePath}/FrostyModManager/Plugins`               |
+| Frosty Mod Manager     | `needforspeedheat-frostymodmanager` | low      | `{gamePath}`                                        |
+| Key (FMM)              | `needforspeedheat-key`              | low      | `{gamePath}/FrostyModManager`                       |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID | Priority |
-| --- | --- |
-| `needforspeedheat-frostymodmanager` | 25 |
-| `needforspeedheat-frostymod` | 30 |
-| `needforspeedheat-plugin` | 35 |
-| `needforspeedheat-key` | 40 |
-| `needforspeedheat-fallback` | 49 |
+| Installer ID                        | Priority |
+| ----------------------------------- | -------- |
+| `needforspeedheat-frostymodmanager` | 25       |
+| `needforspeedheat-frostymod`        | 30       |
+| `needforspeedheat-plugin`           | 35       |
+| `needforspeedheat-key`              | 40       |
+| `needforspeedheat-fallback`         | 49       |
 
 ## Registered Tools
 
@@ -84,8 +84,8 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 ## Config & Save Paths
 
-| Type | Path |
-| --- | --- |
+| Type   | Path                           |
+| ------ | ------------------------------ |
 | Config | `Need For Speed Heat/settings` |
 
 ## Special Features
@@ -96,4 +96,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Symlinks Disabled** — hardlink or copy deployment is used instead of symlinks.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
-

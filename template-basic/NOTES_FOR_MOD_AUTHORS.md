@@ -6,10 +6,10 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| XXX Root | - | - |
-| Fallback Installer | anything not matched above | - |
+| Mod Type           | Archive must contain       | Installs to |
+| ------------------ | -------------------------- | ----------- |
+| XXX Root           | -                          | -           |
+| Fallback Installer | anything not matched above | -           |
 
 Paths are relative to the game's install folder.
 
@@ -37,4 +37,3 @@ The catch-all. Any archive that matched none of the installers above lands here 
 - Archives that contain a FOMOD installer (a `fomod` folder with `ModuleConfig.xml`) are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

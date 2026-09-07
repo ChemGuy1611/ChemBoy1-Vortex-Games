@@ -6,11 +6,11 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| Fluffy Mod Manager (tool) | a `modmanager.exe` file | - |
-| Psarc | a file with the `.psarc` extension | - |
-| Fluffy-Format Mods | anything not matched above | - |
+| Mod Type                  | Archive must contain               | Installs to |
+| ------------------------- | ---------------------------------- | ----------- |
+| Fluffy Mod Manager (tool) | a `modmanager.exe` file            | -           |
+| Psarc                     | a file with the `.psarc` extension | -           |
+| Fluffy-Format Mods        | anything not matched above         | -           |
 
 Paths are relative to the game's install folder.
 
@@ -47,4 +47,3 @@ The catch-all for RE Engine mods packaged in the normal Fluffy Mod Manager layou
 
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

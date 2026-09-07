@@ -4,6 +4,11 @@
 
 - None Planned
 
+## [2.0.4] - 2026-09-06
+
+- Fixed: Locked load order entries could be moved out of position when using "Move to Top", "Move to Bottom" or the position number box on another entry. Locked entries now keep their place.
+- Fixed: The load order position number box now accepts low numbers even when a locked entry is further down the list.
+
 ## [2.0.3] - 2026-09-02
 
 - Changed: Removed the 2.0 Pak mod installer as it is not necessary.

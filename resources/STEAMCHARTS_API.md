@@ -3,15 +3,15 @@
 [SteamCharts](https://steamcharts.com) tracks concurrent-player counts for every game on Steam.
 There is no official API, no documentation, and no key — but the site's own chart is fed by a plain
 JSON endpoint that answers unauthenticated requests, and the rest of the data is server-rendered
-HTML. That JSON endpoint is the only free source of *hourly* player history: Steam's own Web API
+HTML. That JSON endpoint is the only free source of _hourly_ player history: Steam's own Web API
 reports the current player count and nothing else, and SteamDB (which does keep full history) sits
 behind a Cloudflare challenge that no script gets through.
 
-| Surface | URL | Returns |
-| --- | --- | --- |
-| Player history | `https://steamcharts.com/app/{appid}/chart-data.json` | JSON `[[unix_ms, players], ...]` |
-| App page | `https://steamcharts.com/app/{appid}` | HTML — current/peak stats plus a month-by-month table |
-| Top list | `https://steamcharts.com/top`, `/top/p.{n}` | HTML — 25 ranked games per page |
+| Surface        | URL                                                   | Returns                                               |
+| -------------- | ----------------------------------------------------- | ----------------------------------------------------- |
+| Player history | `https://steamcharts.com/app/{appid}/chart-data.json` | JSON `[[unix_ms, players], ...]`                      |
+| App page       | `https://steamcharts.com/app/{appid}`                 | HTML — current/peak stats plus a month-by-month table |
+| Top list       | `https://steamcharts.com/top`, `/top/p.{n}`           | HTML — 25 ranked games per page                       |
 
 Everything below was verified live (August 2026) against Counter-Strike 2 (`730`), Dota 2 (`570`),
 Elden Ring (`1245620`), and a handful of unreleased 2026 titles.
@@ -50,11 +50,11 @@ Each element is `[timestamp_ms, concurrent_players]`. Timestamps are UTC millise
 The series is **not** uniform. It is downsampled by age, which matters whenever you compute a
 statistic across a window that spans a tier boundary:
 
-| Age of data | Interval | Points (app `730`) |
-| --- | --- | --- |
-| Last 30 days | Hourly | 719 |
-| 30–90 days | Daily | 59 |
-| Older than 90 days | Monthly, first of month at 00:00 UTC | 167 |
+| Age of data        | Interval                             | Points (app `730`) |
+| ------------------ | ------------------------------------ | ------------------ |
+| Last 30 days       | Hourly                               | 719                |
+| 30–90 days         | Daily                                | 59                 |
+| Older than 90 days | Monthly, first of month at 00:00 UTC | 167                |
 
 So a 7-day window is entirely hourly (167 points), a 60-day window mixes hourly and daily samples,
 and anything past 90 days is one point per month. An average taken naively across tiers weights a
@@ -67,11 +67,11 @@ test apps). It lags real time by up to an hour, since the series is written hour
 
 ### Status codes
 
-| Response | Meaning |
-| --- | --- |
-| `200` + populated array | Normal. |
-| `200` + `[]` | SteamCharts knows the appid but has no player history — typically an unreleased game. |
-| `404` (HTML body) | SteamCharts has no record of the appid. |
+| Response                | Meaning                                                                               |
+| ----------------------- | ------------------------------------------------------------------------------------- |
+| `200` + populated array | Normal.                                                                               |
+| `200` + `[]`            | SteamCharts knows the appid but has no player history — typically an unreleased game. |
+| `404` (HTML body)       | SteamCharts has no record of the appid.                                               |
 
 The `404` body is an HTML error page, not JSON, so parse only after checking the status. Note the
 asymmetry: an unreleased game returns `[]` here while its **app page returns `404`**.
@@ -80,10 +80,10 @@ asymmetry: an unreleased game returns `[]` here while its **app page returns `40
 
 The site's own published peak figures are `max()` over this same series. Verified on app `730`:
 
-| Figure | Page value | `max()` of the JSON over that window |
-| --- | --- | --- |
-| "Last 30 Days" peak | 1275415 | 1275415 |
-| "July 2026" peak | 1420896 | 1420896 |
+| Figure              | Page value | `max()` of the JSON over that window |
+| ------------------- | ---------- | ------------------------------------ |
+| "Last 30 Days" peak | 1275415    | 1275415                              |
+| "July 2026" peak    | 1420896    | 1420896                              |
 
 So a peak computed from this endpoint matches the site's published methodology — it is not an
 independent approximation of it.
@@ -129,11 +129,11 @@ Three `<span class="num">` values follow, in this order:
 
 Below that sits a `common-table` with one header row and one row per period, newest first:
 
-| Month | Avg. Players | Gain | % Gain | Peak Players |
-| --- | --- | --- | --- | --- |
-| Last 30 Days | 820479.22 | -32753.2 | -3.84% | 1275415 |
-| July 2026 | 853232.45 | -63422.08 | -6.92% | 1420896 |
-| June 2026 | 916654.53 | -16066.51 | -1.72% | 1573727 |
+| Month        | Avg. Players | Gain      | % Gain | Peak Players |
+| ------------ | ------------ | --------- | ------ | ------------ |
+| Last 30 Days | 820479.22    | -32753.2  | -3.84% | 1275415      |
+| July 2026    | 853232.45    | -63422.08 | -6.92% | 1420896      |
+| June 2026    | 916654.53    | -16066.51 | -1.72% | 1573727      |
 
 The first data row is always `Last 30 Days`; the rest are calendar months back to the game's launch
 (170 rows for Counter-Strike 2). Numbers carry no thousands separators, and a positive `Gain` is
@@ -176,14 +176,14 @@ of 10 titles; on a sample weighted toward older catalogue titles it resolved 17 
 The misses are worth understanding, because most of them are the rule working rather than failing.
 Six unmatched titles, checked by hand against what the search actually returned:
 
-| Query | Top results | Why no exact match |
-| --- | --- | --- |
-| `Yakuza 0` | `Yakuza 0 Director's Cut` only | A different SKU with its own appid and its own player count. |
-| `Divinity: Original Sin` | Two *Original Sin 2* editions | The original is not even in the top results; the sequel is. |
-| `Lobotomy Corporation` | `LobotomyCorporation_ArtBook`, then the game | The DLC art book outranks the game. |
-| `Grand Theft Auto IV` | `Grand Theft Auto IV: The Complete Edition` | Genuine miss — same game, renamed on Steam. |
-| `Final Fantasy XIV` | `FINAL FANTASY XIV Online` | Genuine miss — same game, renamed on Steam. |
-| `FIFA 23` | `total: 0` | Delisted from Steam. A blank is the correct answer. |
+| Query                    | Top results                                  | Why no exact match                                           |
+| ------------------------ | -------------------------------------------- | ------------------------------------------------------------ |
+| `Yakuza 0`               | `Yakuza 0 Director's Cut` only               | A different SKU with its own appid and its own player count. |
+| `Divinity: Original Sin` | Two _Original Sin 2_ editions                | The original is not even in the top results; the sequel is.  |
+| `Lobotomy Corporation`   | `LobotomyCorporation_ArtBook`, then the game | The DLC art book outranks the game.                          |
+| `Grand Theft Auto IV`    | `Grand Theft Auto IV: The Complete Edition`  | Genuine miss — same game, renamed on Steam.                  |
+| `Final Fantasy XIV`      | `FINAL FANTASY XIV Online`                   | Genuine miss — same game, renamed on Steam.                  |
+| `FIFA 23`                | `total: 0`                                   | Delisted from Steam. A blank is the correct answer.          |
 
 Three of the six would have returned a **wrong** number under a "take the top result" or prefix-match
 rule — a director's cut, a sequel, and an art book. Only two are true rename misses, and one is not a
@@ -197,16 +197,16 @@ expensive half of the pair.
 
 ## Choosing a source
 
-| Source | Gives you | Cost |
-| --- | --- | --- |
-| SteamCharts `chart-data.json` | Hourly history (30 d), daily (90 d), monthly (all time) | Unofficial, undocumented |
-| Steam `ISteamUserStats/GetNumberOfCurrentPlayers/v1` | Current players only, no history | Official, keyless |
-| Steam `ISteamChartsService/GetGamesByConcurrentPlayers` | Top 100 games only | Official, keyless |
-| SteamSpy `appdetails` (`ccu` field) | Yesterday's peak only | Unofficial, no history |
-| SteamDB | Full history at finer resolution | Cloudflare challenge — not scriptable |
+| Source                                                  | Gives you                                               | Cost                                  |
+| ------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------- |
+| SteamCharts `chart-data.json`                           | Hourly history (30 d), daily (90 d), monthly (all time) | Unofficial, undocumented              |
+| Steam `ISteamUserStats/GetNumberOfCurrentPlayers/v1`    | Current players only, no history                        | Official, keyless                     |
+| Steam `ISteamChartsService/GetGamesByConcurrentPlayers` | Top 100 games only                                      | Official, keyless                     |
+| SteamSpy `appdetails` (`ccu` field)                     | Yesterday's peak only                                   | Unofficial, no history                |
+| SteamDB                                                 | Full history at finer resolution                        | Cloudflare challenge — not scriptable |
 
 For "how popular is this game right now", the official current-players endpoint is the honest
-choice. For anything involving a *window* — a weekly peak, a trend, a launch curve — SteamCharts is
+choice. For anything involving a _window_ — a weekly peak, a trend, a launch curve — SteamCharts is
 the only free option.
 
 ---
@@ -231,5 +231,5 @@ every lookup here is the same `steamAppId` that extension registers).
 `REGISTER_GAME.md` (`details.steamAppId` on `IGame` — where that appid comes from in an extension).
 `PCGAMINGWIKI_API.md` (game metadata and Steam AppID lists, useful when the store search cannot
 resolve a title).
-`MODDB_API.md` (a third-party site that *does* enforce a bot check, and the fallback routes needed
+`MODDB_API.md` (a third-party site that _does_ enforce a bot check, and the fallback routes needed
 to work around one — the contrast with this host's open access).

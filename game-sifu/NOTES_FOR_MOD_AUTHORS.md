@@ -6,17 +6,17 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `Sifu` |
-| Blueprint Mods (LogicMods) | a `LogicMods` folder | `Sifu\Content\Paks\LogicMods\LogicMods` |
-| Pak Mods | a `'.pak` file | `Sifu\Content\Paks\~mods` |
-| UE4SS Itself | a `dwmapi.dll` file | - |
-| UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | - |
-| Root / Game Folder Mods | a top-level folder such as `Sifu` | the game folder itself (no subfolder) |
-| Config File Mods | a config file such as `engine.ini` or `game.ini` | - |
-| Save Game Files | a `.sav` file | - |
-| Fallback Installer | anything unrecognised with no pak file | - |
+| Mod Type                                     | Archive must contain                             | Installs to                             |
+| -------------------------------------------- | ------------------------------------------------ | --------------------------------------- |
+| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder         | `Sifu`                                  |
+| Blueprint Mods (LogicMods)                   | a `LogicMods` folder                             | `Sifu\Content\Paks\LogicMods\LogicMods` |
+| Pak Mods                                     | a `'.pak` file                                   | `Sifu\Content\Paks\~mods`               |
+| UE4SS Itself                                 | a `dwmapi.dll` file                              | -                                       |
+| UE4SS Script Mods (Lua)                      | a `.lua` file and a `Scripts` folder             | -                                       |
+| Root / Game Folder Mods                      | a top-level folder such as `Sifu`                | the game folder itself (no subfolder)   |
+| Config File Mods                             | a config file such as `engine.ini` or `game.ini` | -                                       |
+| Save Game Files                              | a `.sav` file                                    | -                                       |
+| Fallback Installer                           | anything unrecognised with no pak file           | -                                       |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
@@ -196,4 +196,3 @@ This is the catch-all. Any archive with no `.pak` file that matched none of the 
 
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

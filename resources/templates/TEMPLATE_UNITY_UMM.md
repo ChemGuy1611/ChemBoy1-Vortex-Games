@@ -25,13 +25,13 @@ marker only appears after a deploy.
 
 `installUmm()` turns one archive into three sets of instructions:
 
-| What | Destination |
-| --- | --- |
-| The whole `UnityModManagerInstaller` folder, verbatim | `UnityModManagerInstaller/` |
-| `winhttp_<arch>.dll` | `winhttp.dll` |
-| Manager libraries | `<data>/Managed/UnityModManager/` |
-| Generated `doorstop_config.ini` | game folder |
-| Generated `Config.xml` | `<data>/Managed/UnityModManager/` |
+| What                                                  | Destination                       |
+| ----------------------------------------------------- | --------------------------------- |
+| The whole `UnityModManagerInstaller` folder, verbatim | `UnityModManagerInstaller/`       |
+| `winhttp_<arch>.dll`                                  | `winhttp.dll`                     |
+| Manager libraries                                     | `<data>/Managed/UnityModManager/` |
+| Generated `doorstop_config.ini`                       | game folder                       |
+| Generated `Config.xml`                                | `<data>/Managed/UnityModManager/` |
 
 Points worth keeping when adapting it:
 
@@ -56,8 +56,8 @@ values. Both are gated by `seedUmmParams` and make the tool open already pointed
 Both loaders read from `<gamePath>/Mods/<ModName>`, so there is one `Mod` mod type and two
 installers that differ only in the manifest they key on:
 
-| Installer | Manifest | Folder name comes from |
-| --- | --- | --- |
+| Installer    | Manifest                                     | Folder name comes from                      |
+| ------------ | -------------------------------------------- | ------------------------------------------- |
 | `UMM_MOD_ID` | `info.json` (case-insensitive) plus a `.dll` | the wrapping folder, or the manifest's `Id` |
 
 `modsFolderInstructions()` rebuilds every archive shape — `Mods/<Name>/...`, a bare `<Name>/...`, or
@@ -81,13 +81,13 @@ path.
 
 **Toggles:** `autoDownloadUmm` (default on), `seedUmmParams` (default on).
 
-| Mod type | Priority | Target |
-| --- | --- | --- |
-| `UMM_ID` | 8 | `{gamePath}` |
-| `MODS_ID` | 10 | `{gamePath}/Mods` |
-| `ROOT_ID` | spec | `{gamePath}` |
-| `ASSEMBLY_ID` | 60 | `<data>/Managed` (mono) or `.` (IL2CPP) |
-| `ASSETS_ID` | 62 | `<data>` |
+| Mod type      | Priority | Target                                  |
+| ------------- | -------- | --------------------------------------- |
+| `UMM_ID`      | 8        | `{gamePath}`                            |
+| `MODS_ID`     | 10       | `{gamePath}/Mods`                       |
+| `ROOT_ID`     | spec     | `{gamePath}`                            |
+| `ASSEMBLY_ID` | 60       | `<data>/Managed` (mono) or `.` (IL2CPP) |
+| `ASSETS_ID`   | 62       | `<data>`                                |
 
 The assembly and assets types are registered explicitly rather than through `spec.modTypes` because
 `DATA_FOLDER` can differ per store build and their paths are recomputed at runtime. `UMM_MARKER` and

@@ -33,14 +33,14 @@ bleeding-edge requirements are deliberately excluded from it and served by a sep
 
 ### Requirement sets
 
-| Set | Source | Version strategy | Note |
-| --- | --- | --- | --- |
-| `MELON_REQUIREMENTS` | GitHub releases | `resolveVersionByModVersion` | The tag carries the version, the asset name does not, so the pattern has no capture group; the regex is anchored so a future `MelonLoader.x64.CI.zip` cannot be selected |
+| Set                          | Source                                          | Version strategy             | Note                                                                                                                                                                                                                     |
+| ---------------------------- | ----------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `MELON_REQUIREMENTS`         | GitHub releases                                 | `resolveVersionByModVersion` | The tag carries the version, the asset name does not, so the pattern has no capture group; the regex is anchored so a future `MelonLoader.x64.CI.zip` cannot be selected                                                 |
 | `MELON_NIGHTLY_REQUIREMENTS` | nightly.link CI artifact of `alpha-development` | `resolveVersionByNightlyRun` | Not a release, so identity comes from the newest successful workflow run, compared by run number. No `findDownloadId` — the artifact filename never changes, so a local copy is always stale. `pinVersion` has no effect |
-| `BEPINEX_REQUIREMENTS` | GitHub releases, mono only | pattern match | Four-segment `5.4.23.5` defeats `semver.coerce` |
-| `BEPINEX_BE_REQUIREMENTS` | `builds.bepinex.dev`, IL2CPP | build number | Owned by `bepinexbe_downloader.js` |
-| `BEPCFGMAN_REQUIREMENTS` | GitHub releases | `resolveVersionByPattern` | Variant `BepInEx5` vs `IL2CPP` |
-| `MELONPREFMAN_REQUIREMENTS` | GitHub releases | direct copy | A naked `.dll`, not an archive |
+| `BEPINEX_REQUIREMENTS`       | GitHub releases, mono only                      | pattern match                | Four-segment `5.4.23.5` defeats `semver.coerce`                                                                                                                                                                          |
+| `BEPINEX_BE_REQUIREMENTS`    | `builds.bepinex.dev`, IL2CPP                    | build number                 | Owned by `bepinexbe_downloader.js`                                                                                                                                                                                       |
+| `BEPCFGMAN_REQUIREMENTS`     | GitHub releases                                 | `resolveVersionByPattern`    | Variant `BepInEx5` vs `IL2CPP`                                                                                                                                                                                           |
+| `MELONPREFMAN_REQUIREMENTS`  | GitHub releases                                 | direct copy                  | A naked `.dll`, not an archive                                                                                                                                                                                           |
 
 All of them set `autoInstall: false`: the loader-choice dialog and the toolbar buttons own installs,
 never the update check.

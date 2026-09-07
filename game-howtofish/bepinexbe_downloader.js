@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 // Shared BepInEx bleeding-edge (BE) requirements auto-downloader for Vortex game extensions.
 //
@@ -34,16 +34,16 @@
 // (single-requirement variants), isBepinexBeInstalled, getLatestBepinexBeBuild,
 // getBepinexBeBuild, parseBepinexBeArtifacts.
 
-const { actions, log, selectors, util } = require('vortex-api');
+const { actions, log, selectors, util } = require("vortex-api");
 
-const BASE_URL = 'https://builds.bepinex.dev';
+const BASE_URL = "https://builds.bepinex.dev";
 
 // --- requirement helpers --------------------------------------------------
 
 // Project whose build index is parsed, relative to BASE_URL.
-const DEFAULT_PROJECT_PATH = 'projects/bepinex_be';
+const DEFAULT_PROJECT_PATH = "projects/bepinex_be";
 // Mod attribute used to track the installed build number.
-const DEFAULT_BUILD_ATTRIBUTE = 'bepinexBeBuild';
+const DEFAULT_BUILD_ATTRIBUTE = "bepinexBeBuild";
 
 function buildAttribute(requirement) {
   return requirement.buildAttribute || DEFAULT_BUILD_ATTRIBUTE;
@@ -66,7 +66,7 @@ function pageUrl(requirement) {
 // artifactPattern fallback keeps a requirement that omits it from colliding
 // with every other one.
 function guardKey(requirement) {
-  return requirement.modType ?? requirement.artifactPattern?.source ?? 'bepinex-be';
+  return requirement.modType ?? requirement.artifactPattern?.source ?? "bepinex-be";
 }
 
 // --- version pinning ------------------------------------------------------
@@ -89,8 +89,11 @@ function isAtPinnedVersion(api, gameId, requirement) {
   const state = api.getState();
   const mods = state.persistent.mods[gameId] || {};
   const attr = buildAttribute(requirement);
-  return Object.values(mods).some(mod => (mod?.type === requirement.modType)
-    && (String(mod?.attributes?.[attr]) === String(requirement.pinVersion)));
+  return Object.values(mods).some(
+    (mod) =>
+      mod?.type === requirement.modType &&
+      String(mod?.attributes?.[attr]) === String(requirement.pinVersion),
+  );
 }
 
 // --- build index page ------------------------------------------------------
@@ -108,7 +111,7 @@ function absoluteUrl(href) {
   try {
     // The href is already percent-encoded - the '+' separating build from commit arrives as
     // %2B - so URL() is used only to resolve the leading slash. Do not re-encode the result.
-    return new URL(href.replace(/&amp;/g, '&'), BASE_URL).href;
+    return new URL(href.replace(/&amp;/g, "&"), BASE_URL).href;
   } catch {
     return null;
   }
@@ -117,7 +120,9 @@ function absoluteUrl(href) {
 //Parse the build index page into build records, newest first:
 //{ build, commit, date, artifacts: [{ name, url }] }
 function parseBepinexBeArtifacts(html) {
-  const blocks = String(html || '').split(ARTIFACT_ITEM_SEPARATOR).slice(1);
+  const blocks = String(html || "")
+    .split(ARTIFACT_ITEM_SEPARATOR)
+    .slice(1);
   const builds = [];
   for (const block of blocks) {
     const idMatch = block.match(BUILD_ID_RE);
@@ -135,8 +140,8 @@ function parseBepinexBeArtifacts(html) {
     }
     builds.push({
       build: idMatch[1],
-      commit: (block.match(COMMIT_RE) || [])[1] || '',
-      date: (block.match(BUILD_DATE_RE) || [])[1] || '',
+      commit: (block.match(COMMIT_RE) || [])[1] || "",
+      date: (block.match(BUILD_DATE_RE) || [])[1] || "",
       artifacts,
     });
   }
@@ -153,14 +158,19 @@ async function getBepinexBeBuilds(requirement) {
     }
     return parseBepinexBeArtifacts(await response.text());
   } catch (err) {
-    log('warn', `Could not get ${requirement.userFacingName} builds from builds.bepinex.dev: ${err}`);
+    log(
+      "warn",
+      `Could not get ${requirement.userFacingName} builds from builds.bepinex.dev: ${err}`,
+    );
     return null;
   }
 }
 
 //The artifact in this build matching the requirement's pattern (returns null if none does)
 function matchArtifact(requirement, build) {
-  return build.artifacts.find(artifact => requirement.artifactPattern.test(artifact.name)) || null;
+  return (
+    build.artifacts.find((artifact) => requirement.artifactPattern.test(artifact.name)) || null
+  );
 }
 
 function buildResult(entry, artifact) {
@@ -183,7 +193,10 @@ async function getLatestBepinexBeBuild(requirement) {
       return buildResult(entry, artifact);
     }
   }
-  log('warn', `No builds.bepinex.dev artifact matches ${requirement.artifactPattern} for ${requirement.userFacingName}`);
+  log(
+    "warn",
+    `No builds.bepinex.dev artifact matches ${requirement.artifactPattern} for ${requirement.userFacingName}`,
+  );
   return null;
 }
 
@@ -194,7 +207,7 @@ async function getBepinexBeBuild(requirement, buildNumber) {
   if (builds === null) {
     return null;
   }
-  const entry = builds.find(candidate => String(candidate.build) === String(buildNumber));
+  const entry = builds.find((candidate) => String(candidate.build) === String(buildNumber));
   if (entry === undefined) {
     return null;
   }
@@ -214,7 +227,7 @@ const activeInstalls = new Set();
 function requirementModIds(api, gameId, requirement) {
   const state = api.getState();
   const mods = state.persistent.mods[gameId] || {};
-  return Object.keys(mods).filter(id => mods[id]?.type === requirement.modType);
+  return Object.keys(mods).filter((id) => mods[id]?.type === requirement.modType);
 }
 
 //Check if the requirement is installed (any mod with the requirement's mod type)
@@ -229,9 +242,9 @@ function installedBuild(api, gameId, requirement) {
   const mods = state.persistent.mods[gameId] || {};
   const attr = buildAttribute(requirement);
   const builds = Object.values(mods)
-    .filter(mod => mod?.type === requirement.modType)
-    .map(mod => Number(mod?.attributes?.[attr]))
-    .filter(value => Number.isFinite(value));
+    .filter((mod) => mod?.type === requirement.modType)
+    .map((mod) => Number(mod?.attributes?.[attr]))
+    .filter((value) => Number.isFinite(value));
   return builds.length > 0 ? Math.max(...builds) : null;
 }
 
@@ -244,15 +257,19 @@ async function downloadBepinexBeRequirement(api, gameSpec, requirement, check = 
   }
   const key = guardKey(requirement);
   if (activeInstalls.has(key)) {
-    log('debug', `${requirement.userFacingName} install already running - skipping duplicate request`);
+    log(
+      "debug",
+      `${requirement.userFacingName} install already running - skipping duplicate request`,
+    );
     return;
   }
   activeInstalls.add(key);
   const NOTIF_ID = `${key}-installing`;
-  api.sendNotification({ //notification indicating install process
+  api.sendNotification({
+    //notification indicating install process
     id: NOTIF_ID,
     message: `Installing ${requirement.userFacingName}`,
-    type: 'activity',
+    type: "activity",
     noDismiss: true,
     allowSuppress: false,
   });
@@ -278,22 +295,30 @@ async function downloadBepinexBeRequirement(api, gameSpec, requirement, check = 
         url = resolved.artifact.url;
       } else if (pinned) {
         //never silently install the newest build in place of the pinned one
-        throw new util.ProcessCanceled(`Build ${requirement.pinVersion} could not be resolved from the `
-          + 'builds.bepinex.dev index - set pinArtifactUrl to reach a build that has scrolled off it');
-      } else { //fall back to the hardcoded build if the index page is unreachable
+        throw new util.ProcessCanceled(
+          `Build ${requirement.pinVersion} could not be resolved from the ` +
+            "builds.bepinex.dev index - set pinArtifactUrl to reach a build that has scrolled off it",
+        );
+      } else {
+        //fall back to the hardcoded build if the index page is unreachable
         buildNumber = requirement.fallbackBuild;
         url = requirement.fallbackArtifactUrl;
       }
     }
     if (!url) {
-      throw new util.ProcessCanceled('builds.bepinex.dev is unreachable and no fallbackArtifactUrl is set');
+      throw new util.ProcessCanceled(
+        "builds.bepinex.dev is unreachable and no fallbackArtifactUrl is set",
+      );
     }
     const dlInfo = {
       game: gameId,
       name: requirement.userFacingName,
     };
-    const dlId = await util.toPromise(cb =>
-      api.events.emit('start-download', [url], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+    const dlId = await util.toPromise((cb) =>
+      api.events.emit("start-download", [url], dlInfo, undefined, cb, undefined, {
+        allowInstall: false,
+      }),
+    );
     // Disable the outgoing build NOW, not in the batch below: the install enables the incoming
     // mod as soon as it lands, so a deferred disable leaves both enabled across the install -
     // and if Vortex reuses the mod id, it lands on the copy that was just installed. Done after
@@ -301,23 +326,28 @@ async function downloadBepinexBeRequirement(api, gameSpec, requirement, check = 
     for (const oldModId of previousModIds) {
       api.store.dispatch(actions.setModEnabled(profileId, oldModId, false));
     }
-    const modId = await util.toPromise(cb =>
-      api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+    const modId = await util.toPromise((cb) =>
+      api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+    );
     const batched = [
       actions.setModsEnabled(api, profileId, [modId], true, {
         allowAutoDeploy: true,
         installed: true,
       }),
       actions.setModType(gameId, modId, requirement.modType), // Set the modType
-      actions.setModAttribute(gameId, modId, 'version', String(buildNumber || '')),
+      actions.setModAttribute(gameId, modId, "version", String(buildNumber || "")),
       actions.setModAttribute(gameId, modId, buildAttribute(requirement), Number(buildNumber)), // Track the installed build for update checks
-      actions.setModAttribute(gameId, modId, 'source', 'website'),
-      actions.setModAttribute(gameId, modId, 'url', pageUrl(requirement)), // Shown as the mod's "Source" link in the mod details (only rendered when source === 'website')
-      actions.setModAttribute(gameId, modId, 'customFileName', requirement.userFacingName), // Vortex renders a mod as customFileName || logicalFileName || fileName || name, and the install pipeline stamps fileName with the archive name - without this the mod list shows the raw artifact
+      actions.setModAttribute(gameId, modId, "source", "website"),
+      actions.setModAttribute(gameId, modId, "url", pageUrl(requirement)), // Shown as the mod's "Source" link in the mod details (only rendered when source === 'website')
+      actions.setModAttribute(gameId, modId, "customFileName", requirement.userFacingName), // Vortex renders a mod as customFileName || logicalFileName || fileName || name, and the install pipeline stamps fileName with the archive name - without this the mod list shows the raw artifact
     ];
     util.batchDispatch(api.store, batched); // Will dispatch all actions.
-  } catch (err) { //Show the user the build index if the download/install process fails
-    api.showErrorNotification(`Failed to download/install ${requirement.userFacingName}. You must download manually.`, err);
+  } catch (err) {
+    //Show the user the build index if the download/install process fails
+    api.showErrorNotification(
+      `Failed to download/install ${requirement.userFacingName}. You must download manually.`,
+      err,
+    );
     util.opn(pageUrl(requirement)).catch(() => null);
   } finally {
     activeInstalls.delete(key);
@@ -346,7 +376,7 @@ async function checkForBepinexBeUpdateRequirement(api, gameSpec, requirement) {
     if (requirement.autoInstall === false) {
       return;
     }
-    log('info', `${requirement.userFacingName} is not installed - installing it`);
+    log("info", `${requirement.userFacingName} is not installed - installing it`);
     return downloadBepinexBeRequirement(api, gameSpec, requirement);
   }
   if (isPinned(requirement)) {
@@ -354,12 +384,12 @@ async function checkForBepinexBeUpdateRequirement(api, gameSpec, requirement) {
     // well as behind it - installing it from that state is a deliberate downgrade.
     api.sendNotification({
       id: `${guardKey(requirement)}-update`,
-      type: 'warning',
+      type: "warning",
       message: `${requirement.userFacingName} pinned version available (build ${requirement.pinVersion})`,
       allowSuppress: true,
       actions: [
         {
-          title: 'Download',
+          title: "Download",
           action: (dismiss) => {
             downloadBepinexBeRequirement(api, gameSpec, requirement, false);
             dismiss();
@@ -377,17 +407,17 @@ async function checkForBepinexBeUpdateRequirement(api, gameSpec, requirement) {
   // the same 6.0.0. A copy installed before build tracking has no attribute and reads as null,
   // so it draws one notification and the resulting install stamps it - self-healing.
   const installed = installedBuild(api, gameId, requirement);
-  if ((installed !== null) && (installed >= Number(latest.build))) {
+  if (installed !== null && installed >= Number(latest.build)) {
     return;
   }
   api.sendNotification({
     id: `${guardKey(requirement)}-update`,
-    type: 'warning',
+    type: "warning",
     message: `${requirement.userFacingName} update available (build ${latest.build})`,
     allowSuppress: true,
     actions: [
       {
-        title: 'Download',
+        title: "Download",
         action: (dismiss) => {
           downloadBepinexBeRequirement(api, gameSpec, requirement, false);
           dismiss();

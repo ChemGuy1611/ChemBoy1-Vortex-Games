@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 // Shared base for the embedded mod-site browser pages.
 //
@@ -63,9 +63,19 @@
 //
 // Public API: createBrowserModule(adapter), isNewerVersion, normalizeVersion.
 
-const semver = require('semver');
-const React = require('react');
-const { actions, log, selectors, util, MainPage, FlexLayout, Spinner, Webview, tooltip } = require('vortex-api');
+const semver = require("semver");
+const React = require("react");
+const {
+  actions,
+  log,
+  selectors,
+  util,
+  MainPage,
+  FlexLayout,
+  Spinner,
+  Webview,
+  tooltip,
+} = require("vortex-api");
 
 // Claimed downloads that never produced an install (the user cancelled it) are pruned this old.
 const CLAIM_MAX_AGE_MS = 60 * 60 * 1000;
@@ -79,7 +89,7 @@ const DEPENDENCY_DEPTH_CAP = 5;
 // ship "v"-prefixed and short forms. A source whose versions are not semver at all overrides
 // the update-check hooks instead of relying on these.
 function normalizeVersion(raw) {
-  const coerced = semver.coerce(String(raw || '').replace(/^v/i, ''));
+  const coerced = semver.coerce(String(raw || "").replace(/^v/i, ""));
   return coerced ? coerced.version : null;
 }
 
@@ -149,15 +159,19 @@ function sourceState(adapter, gameSpec) {
 
 function adapterDefault(adapter, name, fallback) {
   const value = (adapter.defaults || {})[name];
-  return (value !== undefined) ? value : fallback;
+  return value !== undefined ? value : fallback;
 }
 
 function packageAttribute(adapter, config) {
-  return config.packageAttribute || adapterDefault(adapter, 'packageAttribute', `${adapter.id}Package`);
+  return (
+    config.packageAttribute || adapterDefault(adapter, "packageAttribute", `${adapter.id}Package`)
+  );
 }
 
 function versionAttribute(adapter, config) {
-  return config.versionAttribute || adapterDefault(adapter, 'versionAttribute', `${adapter.id}Version`);
+  return (
+    config.versionAttribute || adapterDefault(adapter, "versionAttribute", `${adapter.id}Version`)
+  );
 }
 
 function browserPageId(adapter, gameSpec, config) {
@@ -165,15 +179,16 @@ function browserPageId(adapter, gameSpec, config) {
 }
 
 function allowedHosts(adapter, config) {
-  return config.allowedHosts || adapterDefault(adapter, 'allowedHosts', []);
+  return config.allowedHosts || adapterDefault(adapter, "allowedHosts", []);
 }
 
 //Whether the embedded view is allowed to stay on this URL
 function isHostAllowed(adapter, config, url) {
   try {
     const host = new URL(url).hostname.toLowerCase();
-    return allowedHosts(adapter, config).some(allowed =>
-      (host === allowed) || host.endsWith(`.${allowed}`));
+    return allowedHosts(adapter, config).some(
+      (allowed) => host === allowed || host.endsWith(`.${allowed}`),
+    );
   } catch {
     return false;
   }
@@ -182,12 +197,10 @@ function isHostAllowed(adapter, config, url) {
 //The stylesheet injected into every page the view loads (empty string disables the injection)
 function adHidingCss(adapter, config) {
   if (config.hideAds === false) {
-    return '';
+    return "";
   }
-  const list = config.adSelectors || adapterDefault(adapter, 'adSelectors', []);
-  return (list.length > 0)
-    ? `${list.join(',\n')} { display: none !important; }`
-    : '';
+  const list = config.adSelectors || adapterDefault(adapter, "adSelectors", []);
+  return list.length > 0 ? `${list.join(",\n")} { display: none !important; }` : "";
 }
 
 //Whether a URL leads somewhere that only exists to serve an ad
@@ -195,13 +208,13 @@ function isBlockedHost(adapter, config, url) {
   if (config.blockAdPopups === false) {
     return false;
   }
-  const list = config.blockedHosts || adapterDefault(adapter, 'blockedHosts', []);
+  const list = config.blockedHosts || adapterDefault(adapter, "blockedHosts", []);
   if (list.length === 0) {
     return false;
   }
   try {
     const host = new URL(url).hostname.toLowerCase();
-    return list.some(blocked => (host === blocked) || host.endsWith(`.${blocked}`));
+    return list.some((blocked) => host === blocked || host.endsWith(`.${blocked}`));
   } catch {
     return false;
   }
@@ -217,7 +230,7 @@ function resolveRef(adapter, config, ref) {
 //The lookup used before an install, which may skip the API when the reference already
 //names the file it wants
 function resolveRefForInstall(adapter, config, ref) {
-  return (adapter.resolveForInstall !== undefined)
+  return adapter.resolveForInstall !== undefined
     ? adapter.resolveForInstall(config, ref)
     : adapter.resolve(config, ref);
 }
@@ -249,7 +262,7 @@ function archiveNameFor(adapter, resolved, key) {
 
 //The adopter's requirement entry for a key, if it manages that mod itself
 function findRequirement(adapter, config, key) {
-  return (config.requirements || []).find(req => adapter.requirementKey(req) === key);
+  return (config.requirements || []).find((req) => adapter.requirementKey(req) === key);
 }
 
 //Mod ids carrying a key - by attribute for browsed mods, by mod type for managed requirements
@@ -258,8 +271,11 @@ function keyModIds(adapter, api, gameId, config, key) {
   const mods = state.persistent.mods?.[gameId] || {};
   const attr = packageAttribute(adapter, config);
   const requirement = findRequirement(adapter, config, key);
-  return Object.keys(mods).filter(id => (mods[id]?.attributes?.[attr] === key)
-    || ((requirement !== undefined) && (mods[id]?.type === requirement.modType)));
+  return Object.keys(mods).filter(
+    (id) =>
+      mods[id]?.attributes?.[attr] === key ||
+      (requirement !== undefined && mods[id]?.type === requirement.modType),
+  );
 }
 
 //Check if a mod is installed. Keyed on the package attribute (and the requirement's mod type),
@@ -280,18 +296,25 @@ function stampMod(adapter, api, gameSpec, config, modId, resolved, previousModId
       allowAutoDeploy: true,
       installed: true,
     }),
-    actions.setModAttribute(gameId, modId, 'version', resolved.version || ''),
-    actions.setModAttribute(gameId, modId, versionAttribute(adapter, config), resolved.version || ''),
+    actions.setModAttribute(gameId, modId, "version", resolved.version || ""),
+    actions.setModAttribute(
+      gameId,
+      modId,
+      versionAttribute(adapter, config),
+      resolved.version || "",
+    ),
     actions.setModAttribute(gameId, modId, packageAttribute(adapter, config), key),
-    actions.setModAttribute(gameId, modId, 'source', 'website'),
-    actions.setModAttribute(gameId, modId, 'url', resolved.pageUrl || ''), // shown as the mod's "Source" link (only rendered when source === 'website')
-    actions.setModAttribute(gameId, modId, 'customFileName', displayName(adapter, resolved, key)), // Vortex renders customFileName || logicalFileName || fileName || name - without this the mod list shows the raw archive name
+    actions.setModAttribute(gameId, modId, "source", "website"),
+    actions.setModAttribute(gameId, modId, "url", resolved.pageUrl || ""), // shown as the mod's "Source" link (only rendered when source === 'website')
+    actions.setModAttribute(gameId, modId, "customFileName", displayName(adapter, resolved, key)), // Vortex renders customFileName || logicalFileName || fileName || name - without this the mod list shows the raw archive name
   ];
-  const extra = (adapter.extraAttributes !== undefined) ? adapter.extraAttributes(config, resolved) : [];
+  const extra =
+    adapter.extraAttributes !== undefined ? adapter.extraAttributes(config, resolved) : [];
   for (const [name, value] of extra) {
     batched.push(actions.setModAttribute(gameId, modId, name, value));
   }
-  for (const oldModId of previousModIds) { // an update installs a second mod entry rather than replacing the first
+  for (const oldModId of previousModIds) {
+    // an update installs a second mod entry rather than replacing the first
     if (oldModId !== modId) {
       batched.push(actions.setModEnabled(profileId, oldModId, false));
     }
@@ -308,7 +331,7 @@ function stampMod(adapter, api, gameSpec, config, modId, resolved, previousModId
 // uses the real Chromium network stack, and returns a local path.
 
 function usesClickFetch(adapter) {
-  return (adapter.fetchStrategy === 'click') && (adapter.fetchToFile !== undefined);
+  return adapter.fetchStrategy === "click" && adapter.fetchToFile !== undefined;
 }
 
 // The fetched file is handed to Vortex as an imported download, so everything downstream - the
@@ -318,13 +341,13 @@ function usesClickFetch(adapter) {
 // cannot go through util.toPromise - that would read the id array as the error and reject.
 async function importFetchedFile(adapter, api, config, url) {
   const filePath = await adapter.fetchToFile(config, url);
-  if ((filePath === null) || (filePath === undefined)) {
+  if (filePath === null || filePath === undefined) {
     throw new util.ProcessCanceled(`Could not fetch ${url}`);
   }
   return new Promise((resolve, reject) => {
-    api.events.emit('import-downloads', [filePath], (dlIds) => {
+    api.events.emit("import-downloads", [filePath], (dlIds) => {
       const dlId = dlIds?.[0];
-      return (dlId === undefined) ? reject(new util.NotFound(filePath)) : resolve(dlId);
+      return dlId === undefined ? reject(new util.NotFound(filePath)) : resolve(dlId);
     });
   });
 }
@@ -338,7 +361,7 @@ async function installRef(adapter, api, gameSpec, config, ref, options = {}) {
   const pageId = browserPageId(adapter, gameSpec, config);
   const key = adapter.refKey(ref);
   const requirement = findRequirement(adapter, config, key);
-  if ((requirement !== undefined) && (config.installRequirement !== undefined)) {
+  if (requirement !== undefined && config.installRequirement !== undefined) {
     if (!options.force && isKeyInstalled(adapter, api, gameId, config, key)) {
       return undefined;
     }
@@ -349,11 +372,15 @@ async function installRef(adapter, api, gameSpec, config, ref, options = {}) {
     return undefined;
   }
   const resolved = await resolveRefForInstall(adapter, config, ref);
-  if ((resolved === null) || (resolved === undefined) || !resolved.downloadUrl) {
-    api.showErrorNotification(`Failed to install ${key}`,
-      new util.ProcessCanceled(adapter.unresolvedMessage
-        || `The ${adapter.label} API is unreachable or this mod has no downloadable file`),
-      { allowReport: false });
+  if (resolved === null || resolved === undefined || !resolved.downloadUrl) {
+    api.showErrorNotification(
+      `Failed to install ${key}`,
+      new util.ProcessCanceled(
+        adapter.unresolvedMessage ||
+          `The ${adapter.label} API is unreachable or this mod has no downloadable file`,
+      ),
+      { allowReport: false },
+    );
     return undefined;
   }
   const name = displayName(adapter, resolved, key);
@@ -365,25 +392,38 @@ async function installRef(adapter, api, gameSpec, config, ref, options = {}) {
   api.sendNotification({
     id: NOTIF_ID,
     message: `Installing ${name}`,
-    type: 'activity',
+    type: "activity",
     noDismiss: true,
     allowSuppress: false,
   });
   try {
     const dlId = usesClickFetch(adapter) //a source the download manager cannot fetch for us
       ? await importFetchedFile(adapter, api, config, resolved.downloadUrl)
-      : await util.toPromise(cb =>
-        api.events.emit('start-download', [resolved.downloadUrl], { game: gameId, name },
-          //'replace' goes with a supplied name and nothing else: naming a download makes Vortex
-          //check the download folder first and report an archive already sitting there back as a
-          //failure. Without a name that check never runs, so the call stays as it was.
-          archive, cb, (archive !== undefined) ? 'replace' : undefined, { allowInstall: false }));
-    const modId = await util.toPromise(cb =>
-      api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      : await util.toPromise((cb) =>
+          api.events.emit(
+            "start-download",
+            [resolved.downloadUrl],
+            { game: gameId, name },
+            //'replace' goes with a supplied name and nothing else: naming a download makes Vortex
+            //check the download folder first and report an archive already sitting there back as a
+            //failure. Without a name that check never runs, so the call stays as it was.
+            archive,
+            cb,
+            archive !== undefined ? "replace" : undefined,
+            { allowInstall: false },
+          ),
+        );
+    const modId = await util.toPromise((cb) =>
+      api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+    );
     stampMod(adapter, api, gameSpec, config, modId, resolved, previousModIds);
     return modId;
-  } catch (err) { //show the user the mod page if the download/install fails
-    api.showErrorNotification(`Failed to download/install ${name}. You must download it manually.`, err);
+  } catch (err) {
+    //show the user the mod page if the download/install fails
+    api.showErrorNotification(
+      `Failed to download/install ${name}. You must download it manually.`,
+      err,
+    );
     if (resolved.pageUrl) {
       util.opn(resolved.pageUrl).catch(() => null);
     }
@@ -402,7 +442,7 @@ async function collectMissingDependencies(adapter, api, gameSpec, config, ref, r
     return [];
   }
   const gameId = gameSpec.game.id;
-  const root = resolved || await resolveRef(adapter, config, ref);
+  const root = resolved || (await resolveRef(adapter, config, ref));
   if (!root) {
     return [];
   }
@@ -410,7 +450,7 @@ async function collectMissingDependencies(adapter, api, gameSpec, config, ref, r
   const missing = [];
   let frontier = root.dependencies || [];
   let depth = 0;
-  while ((frontier.length > 0) && (depth < DEPENDENCY_DEPTH_CAP)) {
+  while (frontier.length > 0 && depth < DEPENDENCY_DEPTH_CAP) {
     const next = [];
     for (const dependency of frontier) {
       const key = adapter.refKey(dependency);
@@ -439,27 +479,35 @@ async function promptDependencies(adapter, api, gameSpec, config, ref, resolved)
   if (missing.length === 0) {
     return;
   }
-  const result = await api.showDialog('question', 'Install Dependencies', {
-    text: `${adapter.refKey(ref)} needs the following ${adapter.label} packages, which are not installed yet. `
-        + 'Deselect any you would rather install yourself.',
-    checkboxes: missing.map(dependency => ({
-      id: adapter.refKey(dependency),
-      text: `${adapter.refKey(dependency)} (${dependency.version || 'latest'})`,
-      value: true,
-    })),
-  }, [
-    { label: 'Cancel' },
-    { label: 'Install' },
-  ]);
-  if (result.action !== 'Install') {
+  const result = await api.showDialog(
+    "question",
+    "Install Dependencies",
+    {
+      text:
+        `${adapter.refKey(ref)} needs the following ${adapter.label} packages, which are not installed yet. ` +
+        "Deselect any you would rather install yourself.",
+      checkboxes: missing.map((dependency) => ({
+        id: adapter.refKey(dependency),
+        text: `${adapter.refKey(dependency)} (${dependency.version || "latest"})`,
+        value: true,
+      })),
+    },
+    [{ label: "Cancel" }, { label: "Install" }],
+  );
+  if (result.action !== "Install") {
     return;
   }
-  for (const dependency of missing) { //sequentially - parallel requirement installs are unsafe against the downloader module's guard
+  for (const dependency of missing) {
+    //sequentially - parallel requirement installs are unsafe against the downloader module's guard
     if (result.input?.[adapter.refKey(dependency)] === false) {
       continue;
     }
-    await installRef(adapter, api, gameSpec, config, dependency).catch(err =>
-      log('warn', `Failed to install ${adapter.label} dependency ${adapter.refKey(dependency)}: ${err}`));
+    await installRef(adapter, api, gameSpec, config, dependency).catch((err) =>
+      log(
+        "warn",
+        `Failed to install ${adapter.label} dependency ${adapter.refKey(dependency)}: ${err}`,
+      ),
+    );
   }
 }
 
@@ -485,7 +533,7 @@ function identifyClaim(adapter, config, state, partial) {
 
 //did-finish-download handler: claim this source's downloads and make sure they get installed once
 function claimDownload(adapter, api, gameSpec, config, dlId, dlState) {
-  if (dlState !== 'finished') {
+  if (dlState !== "finished") {
     return;
   }
   const state = api.getState();
@@ -498,11 +546,11 @@ function claimDownload(adapter, api, gameSpec, config, dlId, dlState) {
     return;
   }
   const pstate = sourceState(adapter, gameSpec);
-  if ((download.urls || []).some(url => pstate.selfStartedUrls.has(url))) {
+  if ((download.urls || []).some((url) => pstate.selfStartedUrls.has(url))) {
     return; //started by installRef, which drives its own install
   }
   const partial = adapter.parseClaim(download);
-  if ((partial === null) || (partial === undefined)) {
+  if (partial === null || partial === undefined) {
     return;
   }
   pruneClaims(pstate.claimedDownloads);
@@ -512,29 +560,33 @@ function claimDownload(adapter, api, gameSpec, config, dlId, dlState) {
   pstate.claimedDownloads.set(dlId, {
     claimedAt,
     identified: identifyClaim(adapter, config, pstate, partial)
-      .then((ref) => { //timings: the claim path may run against a rate-limited API, so name the slow half
-        log('info', `identified a browsed ${adapter.label} download`, {
+      .then((ref) => {
+        //timings: the claim path may run against a rate-limited API, so name the slow half
+        log("info", `identified a browsed ${adapter.label} download`, {
           dlId,
           claim: partial,
-          item: ((ref !== null) && (ref !== undefined)) ? adapter.refKey(ref) : 'unknown',
+          item: ref !== null && ref !== undefined ? adapter.refKey(ref) : "unknown",
           elapsedMS: Date.now() - claimedAt,
         });
         return ref;
       })
-      .catch(err => {
-        log('warn', `Failed to identify a claimed ${adapter.label} download: ${err}`);
+      .catch((err) => {
+        log("warn", `Failed to identify a claimed ${adapter.label} download: ${err}`);
         return null;
       }),
   });
   // Core installs the download itself when "Install mods when downloaded" is on and the download
   // carries no allowInstall override - which is exactly the shape of a browser capture. Starting a
   // second install here would install the archive twice, so only start one when core will not.
-  const autoInstall = util.getSafe(state, ['settings', 'automation', 'install'], false);
-  log('info', `claimed a ${adapter.label} download from the browse page`, {
-    dlId, claim: partial, autoInstall, installStartedBy: autoInstall ? 'core' : 'browser module',
+  const autoInstall = util.getSafe(state, ["settings", "automation", "install"], false);
+  log("info", `claimed a ${adapter.label} download from the browse page`, {
+    dlId,
+    claim: partial,
+    autoInstall,
+    installStartedBy: autoInstall ? "core" : "browser module",
   });
   if (!autoInstall) {
-    api.events.emit('start-install-download', dlId, { allowAutoEnable: false });
+    api.events.emit("start-install-download", dlId, { allowAutoEnable: false });
   }
 }
 
@@ -552,7 +604,7 @@ async function recoverFailedDownload(adapter, api, gameSpec, config, dlId, downl
     return;
   }
   const partial = adapter.parseClaim(download);
-  if ((partial === null) || (partial === undefined)) {
+  if (partial === null || partial === undefined) {
     return; //a failed download from somewhere else entirely
   }
   const pstate = sourceState(adapter, gameSpec);
@@ -562,17 +614,22 @@ async function recoverFailedDownload(adapter, api, gameSpec, config, dlId, downl
   pstate.recovering.add(dlId);
   try {
     const ref = await identifyClaim(adapter, config, pstate, partial);
-    if ((ref === null) || (ref === undefined)) {
-      log('warn', `A failed ${adapter.label} download could not be identified - leaving it alone`,
-        { dlId, claim: partial });
+    if (ref === null || ref === undefined) {
+      log("warn", `A failed ${adapter.label} download could not be identified - leaving it alone`, {
+        dlId,
+        claim: partial,
+      });
       return;
     }
-    log('info', `taking over a ${adapter.label} download the download manager could not fetch`,
-      { dlId, item: adapter.refKey(ref) });
+    log("info", `taking over a ${adapter.label} download the download manager could not fetch`, {
+      dlId,
+      item: adapter.refKey(ref),
+    });
     // The failed entry is removed first: the install that follows produces its own download, and
     // leaving the failure behind would show the user two rows for one click.
-    await util.toPromise(cb => api.events.emit('remove-download', dlId, cb))
-      .catch(err => log('warn', `Could not remove the failed ${adapter.label} download: ${err}`));
+    await util
+      .toPromise((cb) => api.events.emit("remove-download", dlId, cb))
+      .catch((err) => log("warn", `Could not remove the failed ${adapter.label} download: ${err}`));
     // force, because the user clicked download on a mod they may already have
     await installRef(adapter, api, gameSpec, config, ref, { force: true });
   } finally {
@@ -592,28 +649,36 @@ async function adoptMod(adapter, api, gameSpec, config, gameId, archiveId, modId
   }
   pstate.claimedDownloads.delete(archiveId);
   const ref = await claim.identified;
-  if ((ref === null) || (ref === undefined)) {
+  if (ref === null || ref === undefined) {
     return; //nothing to stamp it with - the archive stays a plain mod
   }
   const resolveStart = Date.now();
   const resolved = await resolveRefForInstall(adapter, config, ref);
-  if ((resolved === null) || (resolved === undefined)) {
-    log('warn', `Installed a browsed ${adapter.label} mod but could not resolve ${adapter.refKey(ref)} - it stays unstamped`);
+  if (resolved === null || resolved === undefined) {
+    log(
+      "warn",
+      `Installed a browsed ${adapter.label} mod but could not resolve ${adapter.refKey(ref)} - it stays unstamped`,
+    );
     return;
   }
-  log('info', `stamping a browsed ${adapter.label} mod`, {
-    modId, item: adapter.refKey(resolved), version: resolved.version,
-    resolveMS: Date.now() - resolveStart, sinceClaimMS: Date.now() - claim.claimedAt,
+  log("info", `stamping a browsed ${adapter.label} mod`, {
+    modId,
+    item: adapter.refKey(resolved),
+    version: resolved.version,
+    resolveMS: Date.now() - resolveStart,
+    sinceClaimMS: Date.now() - claim.claimedAt,
   });
   // No setModType here: the adopter's own installers decide the type, and a blanket assignment
   // would drop a mod loader into the plugin folder.
   const key = adapter.refKey(resolved);
-  const previousModIds = keyModIds(adapter, api, gameId, config, key).filter(id => id !== modId);
+  const previousModIds = keyModIds(adapter, api, gameId, config, key).filter((id) => id !== modId);
   stampMod(adapter, api, gameSpec, config, modId, resolved, previousModIds);
-  if (adapter.dependencies === true) { //no resolved record passed: the dependency walk needs the
+  if (adapter.dependencies === true) {
+    //no resolved record passed: the dependency walk needs the
     //authoritative lookup, which resolveForInstall is allowed to skip
-    promptDependencies(adapter, api, gameSpec, config, resolved).catch(err =>
-      log('warn', `Failed to resolve ${adapter.label} dependencies for ${key}: ${err}`));
+    promptDependencies(adapter, api, gameSpec, config, resolved).catch((err) =>
+      log("warn", `Failed to resolve ${adapter.label} dependencies for ${key}: ${err}`),
+    );
   }
 }
 
@@ -626,23 +691,25 @@ function installedInfo(adapter, config, mod) {
       version: versionAttribute(adapter, config),
     });
   }
-  return { version: mod?.attributes?.[versionAttribute(adapter, config)] || mod?.attributes?.version };
+  return {
+    version: mod?.attributes?.[versionAttribute(adapter, config)] || mod?.attributes?.version,
+  };
 }
 
 function compareInstalled(adapter, candidate, known) {
-  return (adapter.compareInstalled !== undefined)
+  return adapter.compareInstalled !== undefined
     ? adapter.compareInstalled(candidate, known)
     : isNewerVersion(candidate.version, known.version);
 }
 
 function isUpdate(adapter, resolved, installed) {
-  return (adapter.isUpdate !== undefined)
+  return adapter.isUpdate !== undefined
     ? adapter.isUpdate(resolved, installed)
     : isNewerVersion(resolved.version, installed.version);
 }
 
 function updateRef(adapter, parsed, resolved) {
-  return (adapter.updateRef !== undefined)
+  return adapter.updateRef !== undefined
     ? adapter.updateRef(parsed, resolved)
     : { ...parsed, version: resolved.version };
 }
@@ -658,18 +725,19 @@ async function checkModUpdates(adapter, api, gameSpec, config) {
   const tracked = new Map();
   for (const mod of Object.values(mods)) {
     const key = mod?.attributes?.[attr];
-    if (!key || (findRequirement(adapter, config, key) !== undefined)) {
+    if (!key || findRequirement(adapter, config, key) !== undefined) {
       continue;
     }
     const installed = installedInfo(adapter, config, mod);
     const known = tracked.get(key);
-    if ((known === undefined) || compareInstalled(adapter, installed, known)) { //compare against the newest copy installed
+    if (known === undefined || compareInstalled(adapter, installed, known)) {
+      //compare against the newest copy installed
       tracked.set(key, installed);
     }
   }
   for (const [key, installed] of tracked) {
     const parsed = adapter.parseKey(key);
-    if ((parsed === null) || (parsed === undefined)) {
+    if (parsed === null || parsed === undefined) {
       continue;
     }
     const resolved = await resolveRef(adapter, config, parsed);
@@ -679,12 +747,12 @@ async function checkModUpdates(adapter, api, gameSpec, config) {
     const ref = updateRef(adapter, parsed, resolved);
     api.sendNotification({
       id: `${pageId}-update-${key}`,
-      type: 'warning',
+      type: "warning",
       message: `${displayName(adapter, resolved, key)} update available (${resolved.version})`,
       allowSuppress: true,
       actions: [
         {
-          title: 'Download',
+          title: "Download",
           action: (dismiss) => {
             installRef(adapter, api, gameSpec, config, ref, { force: true }).catch(() => null);
             dismiss();
@@ -703,92 +771,127 @@ function makeBrowsePage(adapter, gameSpec, config) {
   const PAGE_ID = browserPageId(adapter, gameSpec, config);
   const VIEW_ID = `${PAGE_ID}-webview`;
   const AD_CSS = adHidingCss(adapter, config);
-  const HOME_TOOLTIP = config.homeTooltip || adapterDefault(adapter, 'homeTooltip', `Back to the ${adapter.label} home page`);
+  const HOME_TOOLTIP =
+    config.homeTooltip ||
+    adapterDefault(adapter, "homeTooltip", `Back to the ${adapter.label} home page`);
 
   return function BrowsePage(props) {
-    const { Button } = require('react-bootstrap');
+    const { Button } = require("react-bootstrap");
     const api = props.api;
     const pstate = sourceState(adapter, gameSpec);
-    const [confirmed, setConfirmed] = React.useState(pstate.confirmed || (config.confirmExternal === false));
+    const [confirmed, setConfirmed] = React.useState(
+      pstate.confirmed || config.confirmExternal === false,
+    );
     const [loading, setLoading] = React.useState(false);
     const [nav, setNav] = React.useState({ entries: [HOME_URL], idx: 0 });
     const viewRef = React.useRef(null);
     const navRef = React.useRef(nav);
 
-    React.useEffect(() => { navRef.current = nav; }, [nav]);
+    React.useEffect(() => {
+      navRef.current = nav;
+    }, [nav]);
 
     //The control exposes loadURL but no history API, so history is kept here
     const loadUrl = React.useCallback((url) => {
       try {
         viewRef.current?.loadURL?.(url);
       } catch (err) {
-        log('warn', `Failed to navigate the ${adapter.label} browser to ${url}: ${err}`);
+        log("warn", `Failed to navigate the ${adapter.label} browser to ${url}: ${err}`);
       }
     }, []);
 
-    const pushUrl = React.useCallback((url) => setNav(prev => {
-      const clean = String(url).replace(/\/+$/, '');
-      if (clean === String(prev.entries[prev.idx]).replace(/\/+$/, '')) {
-        return prev;
-      }
-      const entries = prev.entries.slice(0, prev.idx + 1).concat(url);
-      return { entries, idx: entries.length - 1 };
-    }), []);
+    const pushUrl = React.useCallback(
+      (url) =>
+        setNav((prev) => {
+          const clean = String(url).replace(/\/+$/, "");
+          if (clean === String(prev.entries[prev.idx]).replace(/\/+$/, "")) {
+            return prev;
+          }
+          const entries = prev.entries.slice(0, prev.idx + 1).concat(url);
+          return { entries, idx: entries.length - 1 };
+        }),
+      [],
+    );
 
-    const install = React.useCallback((ref) => {
-      installRef(adapter, api, gameSpec, config, ref)
-        .then(() => ((adapter.dependencies === true)
-          ? promptDependencies(adapter, api, gameSpec, config, ref)
-          : undefined))
-        .catch(err => log('warn', `${adapter.label} install from the browser page failed: ${err}`));
-    }, [api]);
+    const install = React.useCallback(
+      (ref) => {
+        installRef(adapter, api, gameSpec, config, ref)
+          .then(() =>
+            adapter.dependencies === true
+              ? promptDependencies(adapter, api, gameSpec, config, ref)
+              : undefined,
+          )
+          .catch((err) =>
+            log("warn", `${adapter.label} install from the browser page failed: ${err}`),
+          );
+      },
+      [api],
+    );
 
     // A download URL is not a page: with the default 'capture' strategy the view is simply
     // asked for it, so Vortex's own chain turns it into a download the claim handler then sees.
     // A 'click' source - one whose bytes Vortex's download manager cannot fetch itself - hands
     // the URL to the adapter, which fetches it in the renderer and imports the result.
-    const requestDownload = React.useCallback((url, navigated) => {
-      if (usesClickFetch(adapter)) {
-        //An imported download carries no source URL, so the claim handler will never see it -
-        //this drives the install itself. An adapter that wants the mod stamped routes the click
-        //through ctx.install(ref) instead, which is installRef and does the whole job.
-        importFetchedFile(adapter, api, config, url)
-          .then(dlId => api.events.emit('start-install-download', dlId, { allowAutoEnable: false }))
-          .catch(err => log('warn', `Failed to fetch a ${adapter.label} download: ${err}`));
-        return;
-      }
-      if (!navigated) { //keep it out of the history the Back button walks
-        loadUrl(url);
-      }
-    }, [api, loadUrl]);
+    const requestDownload = React.useCallback(
+      (url, navigated) => {
+        if (usesClickFetch(adapter)) {
+          //An imported download carries no source URL, so the claim handler will never see it -
+          //this drives the install itself. An adapter that wants the mod stamped routes the click
+          //through ctx.install(ref) instead, which is installRef and does the whole job.
+          importFetchedFile(adapter, api, config, url)
+            .then((dlId) =>
+              api.events.emit("start-install-download", dlId, { allowAutoEnable: false }),
+            )
+            .catch((err) => log("warn", `Failed to fetch a ${adapter.label} download: ${err}`));
+          return;
+        }
+        if (!navigated) {
+          //keep it out of the history the Back button walks
+          loadUrl(url);
+        }
+      },
+      [api, loadUrl],
+    );
 
     //Where every URL the page is asked to open is decided: the adapter gets first refusal,
     //then an allowed host stays in the view and anything else leaves it
-    const handleUrl = React.useCallback((url, navigated) => {
-      if (adapter.routeUrl !== undefined) {
-        const ctx = { config, adapterState: pstate.adapterState, install, loadUrl, requestDownload, navigated };
-        if (adapter.routeUrl(ctx, url, navigated) === true) {
+    const handleUrl = React.useCallback(
+      (url, navigated) => {
+        if (adapter.routeUrl !== undefined) {
+          const ctx = {
+            config,
+            adapterState: pstate.adapterState,
+            install,
+            loadUrl,
+            requestDownload,
+            navigated,
+          };
+          if (adapter.routeUrl(ctx, url, navigated) === true) {
+            return;
+          }
+        }
+        if (isHostAllowed(adapter, config, url)) {
+          if (navigated) {
+            pushUrl(url);
+          } else {
+            loadUrl(url);
+            pushUrl(url);
+          }
           return;
         }
-      }
-      if (isHostAllowed(adapter, config, url)) {
-        if (navigated) {
-          pushUrl(url);
+        if (isBlockedHost(adapter, config, url)) {
+          //an ad click or pop-under: drop it rather than open a browser
+          log("debug", `Blocked an ad destination from the ${adapter.label} browser: ${url}`);
         } else {
-          loadUrl(url);
-          pushUrl(url);
+          util.opn(url).catch(() => null); //off-site links open in the system browser, never in the page
         }
-        return;
-      }
-      if (isBlockedHost(adapter, config, url)) { //an ad click or pop-under: drop it rather than open a browser
-        log('debug', `Blocked an ad destination from the ${adapter.label} browser: ${url}`);
-      } else {
-        util.opn(url).catch(() => null); //off-site links open in the system browser, never in the page
-      }
-      if (navigated) { //the view already left the allow-list - bring it back
-        loadUrl(navRef.current.entries[navRef.current.idx]);
-      }
-    }, [install, loadUrl, pushUrl, requestDownload]);
+        if (navigated) {
+          //the view already left the allow-list - bring it back
+          loadUrl(navRef.current.entries[navRef.current.idx]);
+        }
+      },
+      [install, loadUrl, pushUrl, requestDownload],
+    );
 
     //The control wires only a fixed event set, so navigation events are attached to the DOM node
     React.useEffect(() => {
@@ -799,114 +902,158 @@ function makeBrowsePage(adapter, gameSpec, config) {
       if (node === null) {
         return undefined;
       }
-      const onNavigate = (evt) => handleUrl((typeof evt === 'string') ? evt : evt.url, true);
+      const onNavigate = (evt) => handleUrl(typeof evt === "string" ? evt : evt.url, true);
       //Injected CSS lasts for one document, so it goes on every dom-ready rather than once on mount
       const onDomReady = () => {
-        if ((AD_CSS === '') || (typeof node.insertCSS !== 'function')) {
+        if (AD_CSS === "" || typeof node.insertCSS !== "function") {
           return;
         }
-        Promise.resolve(node.insertCSS(AD_CSS))
-          .catch(err => log('debug', `Could not hide ads in the ${adapter.label} browser: ${err}`));
+        Promise.resolve(node.insertCSS(AD_CSS)).catch((err) =>
+          log("debug", `Could not hide ads in the ${adapter.label} browser: ${err}`),
+        );
       };
-      node.addEventListener('did-navigate', onNavigate);
-      node.addEventListener('did-navigate-in-page', onNavigate);
-      node.addEventListener('dom-ready', onDomReady);
-      return () => { //a listener left on a destroyed guest is a leak
-        node.removeEventListener('did-navigate', onNavigate);
-        node.removeEventListener('did-navigate-in-page', onNavigate);
-        node.removeEventListener('dom-ready', onDomReady);
+      node.addEventListener("did-navigate", onNavigate);
+      node.addEventListener("did-navigate-in-page", onNavigate);
+      node.addEventListener("dom-ready", onDomReady);
+      return () => {
+        //a listener left on a destroyed guest is a leak
+        node.removeEventListener("did-navigate", onNavigate);
+        node.removeEventListener("did-navigate-in-page", onNavigate);
+        node.removeEventListener("dom-ready", onDomReady);
       };
     }, [confirmed, handleUrl]);
 
-    const goTo = React.useCallback((idx) => {
-      const entries = navRef.current.entries;
-      const clamped = Math.min(Math.max(idx, 0), entries.length - 1);
-      loadUrl(entries[clamped]);
-      setNav(prev => ({ ...prev, idx: clamped }));
-    }, [loadUrl]);
+    const goTo = React.useCallback(
+      (idx) => {
+        const entries = navRef.current.entries;
+        const clamped = Math.min(Math.max(idx, 0), entries.length - 1);
+        loadUrl(entries[clamped]);
+        setNav((prev) => ({ ...prev, idx: clamped }));
+      },
+      [loadUrl],
+    );
 
     const currentUrl = nav.entries[nav.idx];
 
     if (!confirmed) {
-      return React.createElement(MainPage, null,
-        React.createElement(MainPage.Body, null,
-          React.createElement('div', { style: { padding: '16px', maxWidth: '720px' } },
-            React.createElement('h4', null, 'Attention'),
-            React.createElement('p', null, 'Vortex is about to open an external web page:'),
-            React.createElement('p', null, React.createElement('b', null, HOME_URL)),
-            React.createElement('p', null,
-              'Vortex is based on Electron, which is based on Chrome but will not always be the newest '
-              + 'version, and we cannot rule out security issues in the embedded browser itself.'),
-            React.createElement('p', null,
-              'If you have security concerns or do not fully trust this page, please do not continue.'),
-            React.createElement(Button, {
-              onClick: () => { //remembered for the session, so leaving and returning does not re-ask
-                pstate.confirmed = true;
-                setConfirmed(true);
+      return React.createElement(
+        MainPage,
+        null,
+        React.createElement(
+          MainPage.Body,
+          null,
+          React.createElement(
+            "div",
+            { style: { padding: "16px", maxWidth: "720px" } },
+            React.createElement("h4", null, "Attention"),
+            React.createElement("p", null, "Vortex is about to open an external web page:"),
+            React.createElement("p", null, React.createElement("b", null, HOME_URL)),
+            React.createElement(
+              "p",
+              null,
+              "Vortex is based on Electron, which is based on Chrome but will not always be the newest " +
+                "version, and we cannot rule out security issues in the embedded browser itself.",
+            ),
+            React.createElement(
+              "p",
+              null,
+              "If you have security concerns or do not fully trust this page, please do not continue.",
+            ),
+            React.createElement(
+              Button,
+              {
+                onClick: () => {
+                  //remembered for the session, so leaving and returning does not re-ask
+                  pstate.confirmed = true;
+                  setConfirmed(true);
+                },
               },
-            }, 'Continue'),
-          )
-        )
+              "Continue",
+            ),
+          ),
+        ),
       );
     }
 
-    return React.createElement(MainPage, null,
-      React.createElement(MainPage.Header, null,
-        React.createElement('div', { style: { display: 'flex', alignItems: 'center', width: '100%' } },
+    return React.createElement(
+      MainPage,
+      null,
+      React.createElement(
+        MainPage.Header,
+        null,
+        React.createElement(
+          "div",
+          { style: { display: "flex", alignItems: "center", width: "100%" } },
           React.createElement(tooltip.IconButton, {
-            icon: 'nav-back',
-            tooltip: 'Back',
+            icon: "nav-back",
+            tooltip: "Back",
             disabled: nav.idx === 0,
             onClick: () => goTo(navRef.current.idx - 1),
           }),
           React.createElement(tooltip.IconButton, {
-            icon: 'nav-forward',
-            tooltip: 'Forward',
+            icon: "nav-forward",
+            tooltip: "Forward",
             disabled: nav.idx === nav.entries.length - 1,
             onClick: () => goTo(navRef.current.idx + 1),
           }),
           React.createElement(tooltip.IconButton, {
-            icon: 'refresh',
-            tooltip: 'Reload',
+            icon: "refresh",
+            tooltip: "Reload",
             onClick: () => loadUrl(currentUrl),
           }),
-          React.createElement(tooltip.Button, {
-            id: `${VIEW_ID}-home`,
-            tooltip: HOME_TOOLTIP,
-            onClick: () => handleUrl(HOME_URL, false),
-          }, 'Home'),
-          React.createElement('div', {
-            style: {
-              flex: 1,
-              padding: '0 8px',
-              overflow: 'hidden',
-              whiteSpace: 'nowrap',
-              textOverflow: 'ellipsis',
-              opacity: 0.8,
+          React.createElement(
+            tooltip.Button,
+            {
+              id: `${VIEW_ID}-home`,
+              tooltip: HOME_TOOLTIP,
+              onClick: () => handleUrl(HOME_URL, false),
             },
-          }, currentUrl),
+            "Home",
+          ),
+          React.createElement(
+            "div",
+            {
+              style: {
+                flex: 1,
+                padding: "0 8px",
+                overflow: "hidden",
+                whiteSpace: "nowrap",
+                textOverflow: "ellipsis",
+                opacity: 0.8,
+              },
+            },
+            currentUrl,
+          ),
           loading ? React.createElement(Spinner, null) : null,
           React.createElement(tooltip.IconButton, {
-            icon: 'open-ext',
-            tooltip: 'Open in your browser',
+            icon: "open-ext",
+            tooltip: "Open in your browser",
             onClick: () => util.opn(currentUrl).catch(() => null),
           }),
-        )
+        ),
       ),
-      React.createElement(MainPage.Body, null,
-        React.createElement(FlexLayout, { type: 'column', style: { height: '100%' } },
-          React.createElement(FlexLayout.Flex, { style: { height: '100%' } },
+      React.createElement(
+        MainPage.Body,
+        null,
+        React.createElement(
+          FlexLayout,
+          { type: "column", style: { height: "100%" } },
+          React.createElement(
+            FlexLayout.Flex,
+            { style: { height: "100%" } },
             React.createElement(Webview, {
               id: VIEW_ID,
               src: HOME_URL,
-              style: { width: '100%', height: '100%' },
+              style: { width: "100%", height: "100%" },
               onLoading: setLoading,
               onNewWindow: (url) => handleUrl(url, false),
-              ref: (ref) => { viewRef.current = ref; },
-            })
-          )
-        )
-      )
+              ref: (ref) => {
+                viewRef.current = ref;
+              },
+            }),
+          ),
+        ),
+      ),
     );
   };
 }
@@ -916,17 +1063,20 @@ function makeBrowsePage(adapter, gameSpec, config) {
 //Register the browse page. Called from applyGame().
 function registerBrowser(adapter, context, gameSpec, config) {
   const gameId = gameSpec.game.id;
-  context.registerMainPage(config.icon || adapterDefault(adapter, 'icon', 'search'),
-    config.pageTitle || adapterDefault(adapter, 'pageTitle', 'Browse Mods'),
-    makeBrowsePage(adapter, gameSpec, config), {
+  context.registerMainPage(
+    config.icon || adapterDefault(adapter, "icon", "search"),
+    config.pageTitle || adapterDefault(adapter, "pageTitle", "Browse Mods"),
+    makeBrowsePage(adapter, gameSpec, config),
+    {
       id: browserPageId(adapter, gameSpec, config),
-      priority: (config.priority !== undefined) ? config.priority : 40,
-      group: config.pageGroup || 'per-game',
+      priority: config.priority !== undefined ? config.priority : 40,
+      group: config.pageGroup || "per-game",
       hotkey: config.hotkey,
-      mdi: config.mdi || adapterDefault(adapter, 'mdi', undefined),
+      mdi: config.mdi || adapterDefault(adapter, "mdi", undefined),
       visible: () => selectors.activeGameId(context.api.getState()) === gameId,
       props: () => ({ api: context.api }),
-    });
+    },
+  );
 }
 
 // onceBrowser installs its listeners per source (game id + adapter id), not per page:
@@ -943,43 +1093,52 @@ function onceBrowser(adapter, api, gameSpec, config) {
     // A sibling page on a source already wired. Listeners route the install path through
     // config.requirements, and only the first config registered is consulted - so a sibling
     // that carries a different requirements table is a latent bug worth a log line.
-    if (JSON.stringify(wiredConfig.requirements || []) !== JSON.stringify(config.requirements || [])) {
-      log('warn', `${adapter.label}: a second browse page for ${gameSpec.game.id} declares a `
-        + 'different requirements table; install routing follows the page registered first');
+    if (
+      JSON.stringify(wiredConfig.requirements || []) !== JSON.stringify(config.requirements || [])
+    ) {
+      log(
+        "warn",
+        `${adapter.label}: a second browse page for ${gameSpec.game.id} declares a ` +
+          "different requirements table; install routing follows the page registered first",
+      );
     }
     return;
   }
   wiredSources.set(sourceKey, config);
-  api.events.on('did-finish-download', (dlId, dlState) => {
+  api.events.on("did-finish-download", (dlId, dlState) => {
     try {
       claimDownload(adapter, api, gameSpec, config, dlId, dlState);
     } catch (err) {
-      log('warn', `Failed to claim a ${adapter.label} download: ${err}`);
+      log("warn", `Failed to claim a ${adapter.label} download: ${err}`);
     }
   });
   //the promise is returned rather than dropped: an event emitter ignores it, but it is what
   //makes the claim -> stamp path awaitable from a test
-  api.events.on('did-install-mod', (gameId, archiveId, modId) =>
-    adoptMod(adapter, api, gameSpec, config, gameId, archiveId, modId)
-      .catch(err => log('warn', `Failed to adopt a ${adapter.label} mod: ${err}`)));
-  api.onAsync('check-mods-version', (gameId) => {
+  api.events.on("did-install-mod", (gameId, archiveId, modId) =>
+    adoptMod(adapter, api, gameSpec, config, gameId, archiveId, modId).catch((err) =>
+      log("warn", `Failed to adopt a ${adapter.label} mod: ${err}`),
+    ),
+  );
+  api.onAsync("check-mods-version", (gameId) => {
     if (gameId !== gameSpec.game.id) {
       return Promise.resolve();
     }
-    return checkModUpdates(adapter, api, gameSpec, config)
-      .catch(err => log('warn', `Failed to check for ${adapter.label} mod updates: ${err}`));
+    return checkModUpdates(adapter, api, gameSpec, config).catch((err) =>
+      log("warn", `Failed to check for ${adapter.label} mod updates: ${err}`),
+    );
   });
   // A click source's downloads reach this module as failures rather than as finished downloads,
   // and there is no event for a failed one - see recoverFailedDownload. onStateChange is optional
   // on IExtensionApi, so an older host simply does not get the recovery.
-  if (usesClickFetch(adapter) && (typeof api.onStateChange === 'function')) {
-    api.onStateChange(['persistent', 'downloads', 'files'], (previous, current) => {
+  if (usesClickFetch(adapter) && typeof api.onStateChange === "function") {
+    api.onStateChange(["persistent", "downloads", "files"], (previous, current) => {
       for (const dlId of Object.keys(current || {})) {
-        if ((current[dlId]?.state !== 'failed') || (previous?.[dlId]?.state === 'failed')) {
+        if (current[dlId]?.state !== "failed" || previous?.[dlId]?.state === "failed") {
           continue; //only the transition into failure, and only once
         }
-        recoverFailedDownload(adapter, api, gameSpec, config, dlId, current[dlId])
-          .catch(err => log('warn', `Failed to take over a ${adapter.label} download: ${err}`));
+        recoverFailedDownload(adapter, api, gameSpec, config, dlId, current[dlId]).catch((err) =>
+          log("warn", `Failed to take over a ${adapter.label} download: ${err}`),
+        );
       }
     });
   }
@@ -993,16 +1152,13 @@ function createBrowserModule(adapter) {
   return {
     registerBrowser: (context, gameSpec, config) =>
       registerBrowser(adapter, context, gameSpec, config),
-    onceBrowser: (api, gameSpec, config) =>
-      onceBrowser(adapter, api, gameSpec, config),
-    makeBrowsePage: (gameSpec, config) =>
-      makeBrowsePage(adapter, gameSpec, config),
+    onceBrowser: (api, gameSpec, config) => onceBrowser(adapter, api, gameSpec, config),
+    makeBrowsePage: (gameSpec, config) => makeBrowsePage(adapter, gameSpec, config),
     installItem: (api, gameSpec, config, ref, options) =>
       installRef(adapter, api, gameSpec, config, ref, options),
     isItemInstalled: (api, gameId, config, key) =>
       isKeyInstalled(adapter, api, gameId, config, key),
-    checkModUpdates: (api, gameSpec, config) =>
-      checkModUpdates(adapter, api, gameSpec, config),
+    checkModUpdates: (api, gameSpec, config) => checkModUpdates(adapter, api, gameSpec, config),
     promptDependencies: (api, gameSpec, config, ref, resolved) =>
       promptDependencies(adapter, api, gameSpec, config, ref, resolved),
     // exposed for adapters and their tests

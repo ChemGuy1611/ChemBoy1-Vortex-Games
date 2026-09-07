@@ -30,13 +30,13 @@ Inside `main()`, FBLO is registered like this (grep `registerLoadOrder` in `temp
 
 ```js
 context.registerLoadOrder({
-  gameId: spec.game.id,
-  validate: async () => Promise.resolve(undefined),
-  deserializeLoadOrder: async () => await deserializeLoadOrder(context),
-  serializeLoadOrder: async (loadOrder) => await serializeLoadOrder(context, loadOrder),
-  toggleableEntries: false,
-  usageInstructions: LoadOrderInstructions,
-  customItemRenderer: LoadOrderItemRenderer,   // <-- this file's function
+    gameId: spec.game.id,
+    validate: async () => Promise.resolve(undefined),
+    deserializeLoadOrder: async () => await deserializeLoadOrder(context),
+    serializeLoadOrder: async (loadOrder) => await serializeLoadOrder(context, loadOrder),
+    toggleableEntries: false,
+    usageInstructions: LoadOrderInstructions,
+    customItemRenderer: LoadOrderItemRenderer, // <-- this file's function
 });
 ```
 
@@ -44,16 +44,16 @@ Key points:
 
 - `context.registerLoadOrder` is the **current API** for file-based load orders.
 
-  The older `context.registerLoadOrderPage` is deprecated -- do not use it for new
-  extensions.
+    The older `context.registerLoadOrderPage` is deprecated -- do not use it for new
+    extensions.
 
 - `customItemRenderer` is passed **by reference**, not invoked. Vortex calls it
 
-  internally once per row, per render cycle.
+    internally once per row, per render cycle.
 
 - `toggleableEntries: false` controls whether per-row enable/disable checkboxes
 
-  appear. See section 4b for why UE4-5 games set this to `false`.
+    appear. See section 4b for why UE4-5 games set this to `false`.
 
 ---
 
@@ -90,14 +90,18 @@ page, `DraggableList` wraps every row inside a `<ListGroup>`, so the real DOM
 structure is:
 
 ```html
-<ul>          <!-- ListGroup (DraggableList.tsx:71) -->
-  <div>         <!-- react-dnd drag-preview wrapper (DraggableListItem.tsx:164) -->
-    <div>         <!-- react-dnd drag-source / drop-target ref (DraggableListItem.tsx:165) -->
-      <li class="list-group-item load-order-entry ...">  <!-- ListGroupItem -->
-        ...row children...
-      </li>
+<ul>
+    <!-- ListGroup (DraggableList.tsx:71) -->
+    <div>
+        <!-- react-dnd drag-preview wrapper (DraggableListItem.tsx:164) -->
+        <div>
+            <!-- react-dnd drag-source / drop-target ref (DraggableListItem.tsx:165) -->
+            <li class="list-group-item load-order-entry ...">
+                <!-- ListGroupItem -->
+                ...row children...
+            </li>
+        </div>
     </div>
-  </div>
 </ul>
 ```
 
@@ -116,13 +120,13 @@ require re-implementing those styles manually.
 
 **Props passed to it:**
 
-| Prop | Value | Notes |
-| --- | --- | --- |
-| `key` | `loEntry.id` | React reconciliation key; must be unique within the list |
-| `className` | `classes.join(' ')` | Merged string; see below |
-| `onClick` | `onSelect` | Updates shared selection state via `usePakLOState` |
-| `onContextMenu` | `onContextMenu` | Opens `PakContextMenu` at cursor position |
-| `style` | `{ outline: isSelected ? '2px solid #337ab7' : 'none', outlineOffset: '-1px' }` | Selection highlight |
+| Prop            | Value                                                                           | Notes                                                    |
+| --------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| `key`           | `loEntry.id`                                                                    | React reconciliation key; must be unique within the list |
+| `className`     | `classes.join(' ')`                                                             | Merged string; see below                                 |
+| `onClick`       | `onSelect`                                                                      | Updates shared selection state via `usePakLOState`       |
+| `onContextMenu` | `onContextMenu`                                                                 | Opens `PakContextMenu` at cursor position                |
+| `style`         | `{ outline: isSelected ? '2px solid #337ab7' : 'none', outlineOffset: '-1px' }` | Selection highlight                                      |
 
 **How `className` gets built:**
 
@@ -132,8 +136,8 @@ passes them to your renderer as the `className` prop. The renderer prepends its
 own base class before joining:
 
 ```js
-const classes = ['load-order-entry'];
-if (className) classes.push(...className.split(' '));
+const classes = ["load-order-entry"];
+if (className) classes.push(...className.split(" "));
 // result: "load-order-entry", "load-order-entry selected", "load-order-entry dragging", etc.
 ```
 
@@ -167,14 +171,14 @@ the selection highlight stops working.
 
 An object (`IItemRendererProps`) with:
 
-| Field | Type | What it is |
-| --- | --- | --- |
-| `loEntry` | `ILoadOrderEntry_2` | The actual mod entry |
-| `displayCheckboxes` | `boolean` | Whether to show the enable/disable checkbox |
-| `invalidEntries` | `IInvalidResult[]` | Optional; validation failures, for the warning tooltip |
-| `position` | `number` | Optional; 1-based position in the **full** order, computed before filtering |
-| `lockedEntriesCount` | `number` | Optional; number of locked entries in the full order |
-| `setRef` | `(ref) => void` | Declared in the type but **never passed** by `DraggableListItem` |
+| Field                | Type                | What it is                                                                  |
+| -------------------- | ------------------- | --------------------------------------------------------------------------- |
+| `loEntry`            | `ILoadOrderEntry_2` | The actual mod entry                                                        |
+| `displayCheckboxes`  | `boolean`           | Whether to show the enable/disable checkbox                                 |
+| `invalidEntries`     | `IInvalidResult[]`  | Optional; validation failures, for the warning tooltip                      |
+| `position`           | `number`            | Optional; 1-based position in the **full** order, computed before filtering |
+| `lockedEntriesCount` | `number`            | Optional; number of locked entries in the full order                        |
+| `setRef`             | `(ref) => void`     | Declared in the type but **never passed** by `DraggableListItem`            |
 
 `position` and `lockedEntriesCount` exist precisely to feed `LoadOrderIndexInput`. The UE4-5
 template ignores both and recomputes them from a `useSelector` over the whole load order — correct,
@@ -196,14 +200,14 @@ heights. UE4-5 rows wrap long names, so the template leaves it off and every row
 
 `loEntry` fields:
 
-| Field | Type | Notes |
-| --- | --- | --- |
-| `id` | `string` | Unique within the load order |
-| `name` | `string` | Display name |
-| `enabled` | `boolean` | Whether the mod is "on" in the load order |
-| `locked` | `boolean \| 'always'` | Optional; if truthy, the row cannot be reordered |
-| `modId` | `string` | Vortex internal mod id -- used to look up the thumbnail |
-| `data` | `any` | Extension-specific extra data |
+| Field     | Type                  | Notes                                                   |
+| --------- | --------------------- | ------------------------------------------------------- |
+| `id`      | `string`              | Unique within the load order                            |
+| `name`    | `string`              | Display name                                            |
+| `enabled` | `boolean`             | Whether the mod is "on" in the load order               |
+| `locked`  | `boolean \| 'always'` | Optional; if truthy, the row cannot be reordered        |
+| `modId`   | `string`              | Vortex internal mod id -- used to look up the thumbnail |
+| `data`    | `any`                 | Extension-specific extra data                           |
 
 ### The null guard
 
@@ -287,9 +291,9 @@ The full function is in `template-ue4-5/index.js` (grep `function LoadOrderItemR
 ### Chunk A -- Imports inside the function body
 
 ```js
-const { ListGroupItem, Checkbox } = require('react-bootstrap');
-const { Icon, LoadOrderIndexInput, MainContext } = require('vortex-api');
-const { useSelector, useDispatch } = require('react-redux');
+const { ListGroupItem, Checkbox } = require("react-bootstrap");
+const { Icon, LoadOrderIndexInput, MainContext } = require("vortex-api");
+const { useSelector, useDispatch } = require("react-redux");
 ```
 
 **Why `require` inside the function body?**
@@ -324,7 +328,7 @@ actions.
 ```js
 const profile = useSelector((state) => selectors.activeProfile(state));
 const loadOrder = useSelector((state) =>
-  util.getSafe(state, ['persistent', 'loadOrder', profile?.id], []),
+    util.getSafe(state, ["persistent", "loadOrder", profile?.id], []),
 );
 ```
 
@@ -347,7 +351,7 @@ active profile ID is needed first.
 
 ```js
 const { loEntry, displayCheckboxes } = item;
-const mods = useSelector((state) => util.getSafe(state, ['persistent', 'mods', GAME_ID], {}));
+const mods = useSelector((state) => util.getSafe(state, ["persistent", "mods", GAME_ID], {}));
 const pictureUrl = mods[loEntry.modId]?.attributes?.pictureUrl;
 const currentIdx = loadOrder.findIndex((e) => e.id === loEntry.id) + 1;
 ```
@@ -369,7 +373,7 @@ Adding 1 converts between the two systems.
 ### Chunk E -- Locked entries
 
 ```js
-const isLocked = (entry) => [true, 'true', 'always'].includes(entry?.locked);
+const isLocked = (entry) => [true, "true", "always"].includes(entry?.locked);
 const lockedCount = loadOrder.filter(isLocked).length;
 ```
 
@@ -390,12 +394,15 @@ can clamp the user's input to the valid reorderable range:
 ### Chunk F -- The reorder callback (onApplyIndex)
 
 ```js
-const onApplyIndex = React.useCallback((idx) => {
-  if (currentIdx === idx) return;
-  const newLO = loadOrder.filter((e) => e.id !== loEntry.id);
-  newLO.splice(idx - 1, 0, loEntry);
-  dispatch(actions.setFBLoadOrder(profile.id, newLO));
-}, [dispatch, profile, loadOrder, loEntry, currentIdx]);
+const onApplyIndex = React.useCallback(
+    (idx) => {
+        if (currentIdx === idx) return;
+        const newLO = loadOrder.filter((e) => e.id !== loEntry.id);
+        newLO.splice(idx - 1, 0, loEntry);
+        dispatch(actions.setFBLoadOrder(profile.id, newLO));
+    },
+    [dispatch, profile, loadOrder, loEntry, currentIdx],
+);
 ```
 
 **How does the splice work?**
@@ -411,9 +418,14 @@ The early return when `currentIdx === idx` avoids unnecessary serialize cycles.
 ### Chunk G -- The toggle callback (onToggle)
 
 ```js
-const onToggle = React.useCallback((evt) => {
-  dispatch(actions.setFBLoadOrderEntry(profile.id, { ...loEntry, enabled: evt.target.checked }));
-}, [dispatch, profile, loEntry]);
+const onToggle = React.useCallback(
+    (evt) => {
+        dispatch(
+            actions.setFBLoadOrderEntry(profile.id, { ...loEntry, enabled: evt.target.checked }),
+        );
+    },
+    [dispatch, profile, loEntry],
+);
 ```
 
 Dispatches `setFBLoadOrderEntry` when the per-row Checkbox fires. Dormant for UE4-5
@@ -424,13 +436,18 @@ Dispatches `setFBLoadOrderEntry` when the per-row Checkbox fires. Dormant for UE
 ### Chunk G2 -- Vortex-mod toggle (isModEnabled / onModToggle)
 
 ```js
-const isModEnabled = useSelector(state =>
-  util.getSafe(state, ['persistent', 'profiles', profile?.id, 'modState', loEntry.modId, 'enabled'], false));
+const isModEnabled = useSelector((state) =>
+    util.getSafe(
+        state,
+        ["persistent", "profiles", profile?.id, "modState", loEntry.modId, "enabled"],
+        false,
+    ),
+);
 
 const onModToggle = React.useCallback(() => {
-  if (!loEntry.modId) return;
-  dispatch(actions.setModEnabled(profile.id, loEntry.modId, !isModEnabled));
-  requestDeployment(context.api, spec);
+    if (!loEntry.modId) return;
+    dispatch(actions.setModEnabled(profile.id, loEntry.modId, !isModEnabled));
+    requestDeployment(context.api, spec);
 }, [dispatch, profile, loEntry.modId, isModEnabled, context]);
 ```
 
@@ -446,9 +463,11 @@ menu can decide whether to show "Disable Vortex Mod".
 
 ```js
 const onLock = React.useCallback(() => {
-  const newLO = loadOrder.map(e => e.id === loEntry.id ? { ...e, locked: !isEntryLocked } : e);
-  dispatch(actions.setFBLoadOrder(profile.id, newLO));
-  serializeLoadOrder(context, newLO);
+    const newLO = loadOrder.map((e) =>
+        e.id === loEntry.id ? { ...e, locked: !isEntryLocked } : e,
+    );
+    dispatch(actions.setFBLoadOrder(profile.id, newLO));
+    serializeLoadOrder(context, newLO);
 }, [dispatch, context, profile, loadOrder, loEntry, isEntryLocked]);
 ```
 
@@ -467,34 +486,40 @@ and dispatching `setFBLoadOrder` + calling serialize explicitly is the only safe
 ```js
 const { selectedIds, setSelectedIds, contextMenu, setContextMenu, statusFilter } = usePakLOState();
 const isSelected = selectedIds.has(loEntry.id);
-const allIds = loadOrder.map(e => e.id);
+const allIds = loadOrder.map((e) => e.id);
 
-const onSelect = React.useCallback((evt) => {
-  const ctrlKey = evt.ctrlKey || evt.metaKey;
-  const shiftKey = evt.shiftKey;
-  setSelectedIds(prev => {
-    const next = new Set(prev);
-    if (ctrlKey) {
-      next.has(loEntry.id) ? next.delete(loEntry.id) : next.add(loEntry.id);
-    } else if (shiftKey) {
-      const lastId = [...prev].at(-1);
-      const start = allIds.indexOf(lastId ?? loEntry.id);
-      const end = allIds.indexOf(loEntry.id);
-      const [lo, hi] = [Math.min(start, end), Math.max(start, end)];
-      for (let i = lo; i <= hi; i++) next.add(allIds[i]);
-    } else {
-      next.clear();
-      next.add(loEntry.id);
-    }
-    return next;
-  });
-}, [loEntry.id, setSelectedIds, allIds]);
+const onSelect = React.useCallback(
+    (evt) => {
+        const ctrlKey = evt.ctrlKey || evt.metaKey;
+        const shiftKey = evt.shiftKey;
+        setSelectedIds((prev) => {
+            const next = new Set(prev);
+            if (ctrlKey) {
+                next.has(loEntry.id) ? next.delete(loEntry.id) : next.add(loEntry.id);
+            } else if (shiftKey) {
+                const lastId = [...prev].at(-1);
+                const start = allIds.indexOf(lastId ?? loEntry.id);
+                const end = allIds.indexOf(loEntry.id);
+                const [lo, hi] = [Math.min(start, end), Math.max(start, end)];
+                for (let i = lo; i <= hi; i++) next.add(allIds[i]);
+            } else {
+                next.clear();
+                next.add(loEntry.id);
+            }
+            return next;
+        });
+    },
+    [loEntry.id, setSelectedIds, allIds],
+);
 
-const onContextMenu = React.useCallback((evt) => {
-  evt.preventDefault();
-  evt.stopPropagation();
-  setContextMenu({ x: evt.clientX, y: evt.clientY, itemId: loEntry.id });
-}, [loEntry.id, setContextMenu]);
+const onContextMenu = React.useCallback(
+    (evt) => {
+        evt.preventDefault();
+        evt.stopPropagation();
+        setContextMenu({ x: evt.clientX, y: evt.clientY, itemId: loEntry.id });
+    },
+    [loEntry.id, setContextMenu],
+);
 ```
 
 See section 5b for the pub-sub mechanism behind `usePakLOState`.
@@ -508,8 +533,8 @@ extract them into local variables (`ctrlKey`, `shiftKey`) before calling `setSel
 ### Chunk J -- CSS class assembly
 
 ```js
-const classes = ['load-order-entry'];
-if (className) classes.push(...className.split(' '));
+const classes = ["load-order-entry"];
+if (className) classes.push(...className.split(" "));
 ```
 
 Always start with your own base class, then append what Vortex sends. Vortex may
@@ -528,7 +553,11 @@ return would violate the Rules of Hooks), the renderer checks the shared status 
 // The 'lo-row-hidden' marker lets the injected CSS collapse the whole DraggableListItem wrapper
 // (the two dnd <div>s the renderer can't reach), otherwise their spacing leaves visible gaps.
 if (!matchesStatus(loEntry, statusFilter, () => isModEnabled, isLocked)) {
-  return React.createElement(ListGroupItem, { key: loEntry.id, className: 'lo-row-hidden', style: { display: 'none' } });
+    return React.createElement(ListGroupItem, {
+        key: loEntry.id,
+        className: "lo-row-hidden",
+        style: { display: "none" },
+    });
 }
 ```
 
@@ -576,22 +605,33 @@ let _pakSelectedIds = new Set();
 let _pakContextMenu = null;
 let _pakStatusFilter = new Set();
 const _pakListeners = new Set();
-function _notifyPak() { _pakListeners.forEach(l => l()); }
+function _notifyPak() {
+    _pakListeners.forEach((l) => l());
+}
 
 function usePakLOState() {
-  const [, forceUpdate] = React.useReducer(x => x + 1, 0);
-  React.useEffect(() => {
-    _pakListeners.add(forceUpdate);
-    return () => _pakListeners.delete(forceUpdate);
-  }, []);
-  return {
-    selectedIds: _pakSelectedIds,
-    setSelectedIds: (fn) => { _pakSelectedIds = fn(_pakSelectedIds); _notifyPak(); },
-    contextMenu: _pakContextMenu,
-    setContextMenu: (val) => { _pakContextMenu = val; _notifyPak(); },
-    statusFilter: _pakStatusFilter,
-    setStatusFilter: (next) => { _pakStatusFilter = next; _notifyPak(); },
-  };
+    const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
+    React.useEffect(() => {
+        _pakListeners.add(forceUpdate);
+        return () => _pakListeners.delete(forceUpdate);
+    }, []);
+    return {
+        selectedIds: _pakSelectedIds,
+        setSelectedIds: (fn) => {
+            _pakSelectedIds = fn(_pakSelectedIds);
+            _notifyPak();
+        },
+        contextMenu: _pakContextMenu,
+        setContextMenu: (val) => {
+            _pakContextMenu = val;
+            _notifyPak();
+        },
+        statusFilter: _pakStatusFilter,
+        setStatusFilter: (next) => {
+            _pakStatusFilter = next;
+            _notifyPak();
+        },
+    };
 }
 ```
 
@@ -601,11 +641,11 @@ function usePakLOState() {
 2. The hook registers a `forceUpdate` reducer as a listener in `_pakListeners`.
 3. When `setSelectedIds`, `setContextMenu`, or `setStatusFilter` is called (from any
 
-   instance), it mutates the module-level variable and then calls `_notifyPak()`.
+    instance), it mutates the module-level variable and then calls `_notifyPak()`.
 
 4. `_notifyPak` calls every registered `forceUpdate`, which increments a counter
 
-   and causes all instances to re-render, picking up the new shared state.
+    and causes all instances to re-render, picking up the new shared state.
 
 5. On unmount, the `useEffect` cleanup removes the listener.
 
@@ -638,8 +678,8 @@ event fires instead of the react-dnd event, and the row appears to do nothing.
 - `draggable: false` disables native image drag.
 - `pointerEvents: 'none'` makes the image transparent to all mouse events. The drag
 
-  gesture lands on the parent `ListGroupItem` instead, which react-dnd's FBLO
-  wrapper intercepts correctly.
+    gesture lands on the parent `ListGroupItem` instead, which react-dnd's FBLO
+    wrapper intercepts correctly.
 
 Always include both when rendering an `<img>` inside a custom FBLO renderer.
 
@@ -686,20 +726,20 @@ return (
 
 **Comparison table:**
 
-| Feature | Witcher 3 | UE4-5 template |
-| --- | --- | --- |
-| Language | TypeScript + JSX | JavaScript + `React.createElement` |
-| `ref={props.item.setRef}` | Yes (legacy, now dead) | No (correctly omitted) |
-| Validation error display | Yes | No |
-| External mod banner | Yes | No |
-| View-mod icon | Yes | No |
-| Lock icon | Yes | Yes -- amber `#e2c04c` when locked; drag handle hides |
-| Nexus thumbnail | No | Yes |
-| Checkbox | Yes (`toggleableEntries: true`) | Yes (conditional, usually dormant) |
-| `displayCheckboxes` check | Not used | Yes -- guards the Checkbox branch |
-| Multi-select | No | Yes -- `usePakLOState` pub-sub |
-| Context menu | No | Yes -- `PakContextMenu` on right-click |
-| Reorder mechanism | `onApplyIndex` -> `setFBLoadOrder` | Same |
+| Feature                   | Witcher 3                          | UE4-5 template                                        |
+| ------------------------- | ---------------------------------- | ----------------------------------------------------- |
+| Language                  | TypeScript + JSX                   | JavaScript + `React.createElement`                    |
+| `ref={props.item.setRef}` | Yes (legacy, now dead)             | No (correctly omitted)                                |
+| Validation error display  | Yes                                | No                                                    |
+| External mod banner       | Yes                                | No                                                    |
+| View-mod icon             | Yes                                | No                                                    |
+| Lock icon                 | Yes                                | Yes -- amber `#e2c04c` when locked; drag handle hides |
+| Nexus thumbnail           | No                                 | Yes                                                   |
+| Checkbox                  | Yes (`toggleableEntries: true`)    | Yes (conditional, usually dormant)                    |
+| `displayCheckboxes` check | Not used                           | Yes -- guards the Checkbox branch                     |
+| Multi-select              | No                                 | Yes -- `usePakLOState` pub-sub                        |
+| Context menu              | No                                 | Yes -- `PakContextMenu` on right-click                |
+| Reorder mechanism         | `onApplyIndex` -> `setFBLoadOrder` | Same                                                  |
 
 ---
 
@@ -710,9 +750,9 @@ return (
 These must be defined before the function body (the renderer closes over them):
 
 ```js
-const GAME_ID = '...';                // your game ID
-const React = require('react');       // top-level require is fine for React itself
-const { selectors, util, actions } = require('vortex-api');
+const GAME_ID = "..."; // your game ID
+const React = require("react"); // top-level require is fine for React itself
+const { selectors, util, actions } = require("vortex-api");
 const LO_IMAGE_WIDTH = 96;
 const LO_IMAGE_HEIGHT = LO_IMAGE_WIDTH * 0.5625;
 // Also required if using context menu / selection:
@@ -726,7 +766,7 @@ const LO_IMAGE_HEIGHT = LO_IMAGE_WIDTH * 0.5625;
 - [ ] Set `toggleableEntries: false` if your FBLO is rename-based (UE4-5/windrose-style).
 - [ ] Set `toggleableEntries: true` if your FBLO writes real enabled/disabled state
 
-  to disk -- the per-row checkbox will appear automatically.
+    to disk -- the per-row checkbox will appear automatically.
 
 - [ ] Confirm your `serializeLoadOrder` and `deserializeLoadOrder` functions are correct.
 - [ ] Copy the `usePakLOState` pub-sub block and `PakContextMenu` if you want context menus.
@@ -743,23 +783,23 @@ even though it appears later. Standard code structure: imports -> toggles -> con
 
 ## 10. Gotchas recap
 
-| Rule | Why |
-| --- | --- |
-| Never pass `ref={item.setRef}` | Always `undefined` in current FBLO; emits React warnings |
-| `<img>` always needs `draggable: false` and `pointerEvents: 'none'` | Native browser image drag hijacks react-dnd; rows won't move without this |
-| One `setFBLoadOrder` call for the whole reorder | Never dispatch entry-by-entry in a loop; a single action is atomic |
-| `onLock` must call `serializeLoadOrder` explicitly | Vortex FBLO auto-serialize may not write `locked` to the JSON -- always use `setFBLoadOrder` + explicit `serializeLoadOrder(context, newLO)` |
-| Name `<p>` needs `whiteSpace:'normal'` and `wordBreak:'break-word'` | Vortex's default CSS applies `white-space:nowrap` to `.load-order-name`; without the override, long mod names are clipped |
-| `serializeLoadOrder` accepts React `MainContext` as `context` | It only uses `context.api`, so the React `MainContext` from `useContext(MainContext)` works directly |
-| `require` calls go inside the function body | Top-level require of Vortex-bundled modules fails before the renderer is ready |
-| Merge `className`, don't replace it | Vortex injects `"selected"` and other state classes; overwriting them breaks the selection highlight |
-| Use `registerLoadOrder`, not `registerLoadOrderPage` | The older call is deprecated |
-| `toggleableEntries: false` for rename-based FBLO | The `enabled` bit has no on-disk representation; checkbox would be a lie |
-| Capture modifier keys before calling `setSelectedIds` | React 16 event pooling nullifies `evt.ctrlKey`/`evt.shiftKey` before the updater runs |
-| PAK selection uses pub-sub, not React context | No API hook exists to wrap FBLO's `DraggableList` in a context provider from outside |
-| `FlexLayout.Flex` ignores `flex: '0 0 Npx'` height in column mode | Use a plain `div { flexShrink: 0 }` for fixed-height children in a column `FlexLayout` |
-| react-bootstrap `Checkbox` breaks flex row centering | The `div > label > input` wrapper stack prevents `alignItems: 'center'`; use plain `input[type=checkbox]` with `alignSelf: 'center'` |
-| `ul` needs `listStyleType: 'disc'` | Vortex's global CSS resets `list-style: none` on all `ul` elements |
+| Rule                                                                | Why                                                                                                                                          |
+| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Never pass `ref={item.setRef}`                                      | Always `undefined` in current FBLO; emits React warnings                                                                                     |
+| `<img>` always needs `draggable: false` and `pointerEvents: 'none'` | Native browser image drag hijacks react-dnd; rows won't move without this                                                                    |
+| One `setFBLoadOrder` call for the whole reorder                     | Never dispatch entry-by-entry in a loop; a single action is atomic                                                                           |
+| `onLock` must call `serializeLoadOrder` explicitly                  | Vortex FBLO auto-serialize may not write `locked` to the JSON -- always use `setFBLoadOrder` + explicit `serializeLoadOrder(context, newLO)` |
+| Name `<p>` needs `whiteSpace:'normal'` and `wordBreak:'break-word'` | Vortex's default CSS applies `white-space:nowrap` to `.load-order-name`; without the override, long mod names are clipped                    |
+| `serializeLoadOrder` accepts React `MainContext` as `context`       | It only uses `context.api`, so the React `MainContext` from `useContext(MainContext)` works directly                                         |
+| `require` calls go inside the function body                         | Top-level require of Vortex-bundled modules fails before the renderer is ready                                                               |
+| Merge `className`, don't replace it                                 | Vortex injects `"selected"` and other state classes; overwriting them breaks the selection highlight                                         |
+| Use `registerLoadOrder`, not `registerLoadOrderPage`                | The older call is deprecated                                                                                                                 |
+| `toggleableEntries: false` for rename-based FBLO                    | The `enabled` bit has no on-disk representation; checkbox would be a lie                                                                     |
+| Capture modifier keys before calling `setSelectedIds`               | React 16 event pooling nullifies `evt.ctrlKey`/`evt.shiftKey` before the updater runs                                                        |
+| PAK selection uses pub-sub, not React context                       | No API hook exists to wrap FBLO's `DraggableList` in a context provider from outside                                                         |
+| `FlexLayout.Flex` ignores `flex: '0 0 Npx'` height in column mode   | Use a plain `div { flexShrink: 0 }` for fixed-height children in a column `FlexLayout`                                                       |
+| react-bootstrap `Checkbox` breaks flex row centering                | The `div > label > input` wrapper stack prevents `alignItems: 'center'`; use plain `input[type=checkbox]` with `alignSelf: 'center'`         |
+| `ul` needs `listStyleType: 'disc'`                                  | Vortex's global CSS resets `list-style: none` on all `ul` elements                                                                           |
 
 ---
 
@@ -783,7 +823,7 @@ section order**, each section separator-delimited:
 - Rendered by: `LoadOrderItemRenderer` when `contextMenu?.itemId === loEntry.id`
 - Dismissed by: click anywhere (`document.addEventListener('click', dismiss)`),
 
-  right-click anywhere (`contextmenu` event), or Escape key
+    right-click anywhere (`contextmenu` event), or Escape key
 
 - Inline `<style>` injection: on first render, injects `.ue4ss-ctx-item:hover { background: rgba(255,255,255,0.1); }` via `globalThis.document.head` if not already present
 
@@ -791,38 +831,38 @@ section order**, each section separator-delimited:
 
 **Single-item menu** (one entry selected, or right-clicking an unselected entry):
 
-| Item | Action |
-| --- | --- |
-| Lock / Unlock Position | Toggle `locked` on this entry; serializes LO |
-| *(separator)* | |
-| Move to Top | Re-inserts after all locked entries |
-| Move to Bottom | Re-inserts at end of array |
-| *(separator)* | Only shown when Open Staging Folder or Open Mod Page is visible |
-| Open Staging Folder | Only when `getModStagingFolder` resolves; `util.opn` on the mod's Vortex staging folder |
-| Open Mod Page | Only when `getModPageURL` resolves; `util.opn` on the mod page URL |
-| *(separator)* | Only shown when Disable Vortex Mod is visible |
-| Disable Vortex Mod | Only shown when `item.modId` set AND mod is currently enabled; calls `setModsEnabled([item], false)` on the underlying Vortex mod (one-way -- re-enable on the Mods tab or via the row button) |
+| Item                   | Action                                                                                                                                                                                         |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Lock / Unlock Position | Toggle `locked` on this entry; serializes LO                                                                                                                                                   |
+| _(separator)_          |                                                                                                                                                                                                |
+| Move to Top            | Re-inserts after all locked entries                                                                                                                                                            |
+| Move to Bottom         | Re-inserts at end of array                                                                                                                                                                     |
+| _(separator)_          | Only shown when Open Staging Folder or Open Mod Page is visible                                                                                                                                |
+| Open Staging Folder    | Only when `getModStagingFolder` resolves; `util.opn` on the mod's Vortex staging folder                                                                                                        |
+| Open Mod Page          | Only when `getModPageURL` resolves; `util.opn` on the mod page URL                                                                                                                             |
+| _(separator)_          | Only shown when Disable Vortex Mod is visible                                                                                                                                                  |
+| Disable Vortex Mod     | Only shown when `item.modId` set AND mod is currently enabled; calls `setModsEnabled([item], false)` on the underlying Vortex mod (one-way -- re-enable on the Mods tab or via the row button) |
 
 **Multi-item menu** (`selectedIds.size >= 2 && selectedIds.has(item.id)`):
 
-| Item | Action |
-| --- | --- |
-| Lock Selected (n) | Set `locked: true` on all selected entries; serializes |
-| Unlock Selected (n) | Set `locked: false` on all selected entries; serializes |
-| *(separator)* | |
-| Move to Top (n) | Selected entries (relative order) placed after locked entries; non-selected unlocked entries follow |
-| Move to Bottom (n) | Non-selected entries first, then selected entries (relative order) |
-| *(separator)* | |
+| Item                 | Action                                                                                                   |
+| -------------------- | -------------------------------------------------------------------------------------------------------- |
+| Lock Selected (n)    | Set `locked: true` on all selected entries; serializes                                                   |
+| Unlock Selected (n)  | Set `locked: false` on all selected entries; serializes                                                  |
+| _(separator)_        |                                                                                                          |
+| Move to Top (n)      | Selected entries (relative order) placed after locked entries; non-selected unlocked entries follow      |
+| Move to Bottom (n)   | Non-selected entries first, then selected entries (relative order)                                       |
+| _(separator)_        |                                                                                                          |
 | Disable Selected (n) | Call `setModsEnabled(targets, false)`; Enable Selected is commented out (no effect on deployed pak mods) |
 
 ### applyToTargets helper
 
 ```js
 const applyToTargets = (transform, serialize = false) => {
-  const newLO = transform(loadOrder, targets);
-  dispatch(actions.setFBLoadOrder(profile.id, newLO));
-  if (serialize) serializeLoadOrder(context, newLO);
-  onClose();
+    const newLO = transform(loadOrder, targets);
+    dispatch(actions.setFBLoadOrder(profile.id, newLO));
+    if (serialize) serializeLoadOrder(context, newLO);
+    onClose();
 };
 ```
 
@@ -833,10 +873,16 @@ the prefix rename).
 
 ```js
 const menuStyle = {
-  position: 'fixed', left: x, top: y, zIndex: 9999,
-  background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.2)',
-  borderRadius: 4, padding: '4px 0', minWidth: 180,
-  boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
+    position: "fixed",
+    left: x,
+    top: y,
+    zIndex: 9999,
+    background: "#1e1e1e",
+    border: "1px solid rgba(255,255,255,0.2)",
+    borderRadius: 4,
+    padding: "4px 0",
+    minWidth: 180,
+    boxShadow: "0 4px 12px rgba(0,0,0,0.6)",
 };
 ```
 
@@ -850,12 +896,12 @@ right-click near the bottom or right edge of the window does not cut the menu of
 
 ```js
 const clampRef = (el) => {
-  if (!el) return;
-  const rect = el.getBoundingClientRect();
-  const vw = globalThis.window.innerWidth;
-  const vh = globalThis.window.innerHeight;
-  if (x + rect.width > vw) el.style.left = `${Math.max(8, vw - rect.width - 8)}px`;
-  if (y + rect.height > vh) el.style.top = `${Math.max(8, vh - rect.height - 8)}px`;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const vw = globalThis.window.innerWidth;
+    const vh = globalThis.window.innerHeight;
+    if (x + rect.width > vw) el.style.left = `${Math.max(8, vw - rect.width - 8)}px`;
+    if (y + rect.height > vh) el.style.top = `${Math.max(8, vh - rect.height - 8)}px`;
 };
 ```
 
@@ -871,16 +917,18 @@ search box (`FormControl`, `style: { flex: 1 }`) and the `LoadOrderStatusFilter`
 dropdown (see section 12b). Page-level state includes both filters:
 
 ```js
-const [filterText, setFilterText] = React.useState('');
+const [filterText, setFilterText] = React.useState("");
 const [statusFilter, setStatusFilter] = React.useState(new Set());
 
 const isFiltered = !!filterText || statusFilter.size > 0;
 const isEntryEnabled = (e) => e.enabled !== false;
-const isEntryLocked = (e) => [true, 'true', 'always'].includes(e?.locked);
+const isEntryLocked = (e) => [true, "true", "always"].includes(e?.locked);
 
-const filteredOrder = loadOrder.filter(e =>
-  (!filterText || e.name.toLowerCase().includes(filterText.toLowerCase()))
-  && matchesStatus(e, statusFilter, isEntryEnabled, isEntryLocked));
+const filteredOrder = loadOrder.filter(
+    (e) =>
+        (!filterText || e.name.toLowerCase().includes(filterText.toLowerCase())) &&
+        matchesStatus(e, statusFilter, isEntryEnabled, isEntryLocked),
+);
 ```
 
 `onApply` remaps drag results through the filter whenever **either** filter is
@@ -893,9 +941,11 @@ with a React context (`Ue4ssSelectionContext`) for shared selection and context 
 
 ```js
 const Ue4ssSelectionContext = React.createContext({
-  selectedIds: new Set(), setSelectedIds: () => {},
-  allIds: [],
-  contextMenu: null, setContextMenu: () => {},
+    selectedIds: new Set(),
+    setSelectedIds: () => {},
+    allIds: [],
+    contextMenu: null,
+    setContextMenu: () => {},
 });
 ```
 
@@ -925,18 +975,18 @@ separator. Current bullets (4):
 1. Drag-and-drop reorder -- changes write to `mods.txt` immediately.
 2. Checkboxes to enable/disable each mod -- all changes write to `mods.txt` immediately.
 3. Mods with a `config.lua`/`settings.json`/etc. file have a **Configure** button to open it externally.
-4. *(italic, yellow, bold)* Note: this page manages UE4SS mods only; pak mod LO is on the Load Order page.
+4. _(italic, yellow, bold)_ Note: this page manages UE4SS mods only; pak mod LO is on the Load Order page.
 
 ### Ue4ssItemRenderer row details
 
 The renderer uses a plain `div` (not `ListGroupItem` -- no page-scoped CSS). Key elements:
 
-| Element | Key note |
-| --- | --- |
-| Root `div` | `display:flex, flexDirection:row, alignItems:center, gap:8, padding:'4px 12px', border, borderRadius, minHeight:52`, outline for selection |
+| Element          | Key note                                                                                                                                                                               |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Root `div`       | `display:flex, flexDirection:row, alignItems:center, gap:8, padding:'4px 12px', border, borderRadius, minHeight:52`, outline for selection                                             |
 | Configure button | Only rendered when `configFilePath` is non-empty (detected by `useEffect` + `util.walk`); `style: { margin: '0 4px' }`; `title: path.basename(configFilePath)` shows filename on hover |
-| Enable checkbox | Plain `input[type=checkbox]` with `alignSelf: 'center', cursor: 'pointer'` -- react-bootstrap `Checkbox` wrapper breaks flex centering |
-| Context menu | `Ue4ssContextMenu` rendered last when `contextMenu?.itemId === item.id` |
+| Enable checkbox  | Plain `input[type=checkbox]` with `alignSelf: 'center', cursor: 'pointer'` -- react-bootstrap `Checkbox` wrapper breaks flex centering                                                 |
+| Context menu     | `Ue4ssContextMenu` rendered last when `contextMenu?.itemId === item.id`                                                                                                                |
 
 ### Ue4ssContextMenu
 
@@ -969,30 +1019,40 @@ across groups, OR within a group**, and the text search ANDs on top.
 ### Shared predicate and token maps
 
 ```js
-const STATUS_GROUP_TOKENS = { enabled: ['enabled', 'disabled'], locked: ['locked', 'unlocked'], unmanaged: ['unmanaged'] };
-const STATUS_TOKEN_LABELS = { enabled: 'Enabled', disabled: 'Disabled', locked: 'Locked', unlocked: 'Unlocked', unmanaged: 'Unmanaged' };
+const STATUS_GROUP_TOKENS = {
+    enabled: ["enabled", "disabled"],
+    locked: ["locked", "unlocked"],
+    unmanaged: ["unmanaged"],
+};
+const STATUS_TOKEN_LABELS = {
+    enabled: "Enabled",
+    disabled: "Disabled",
+    locked: "Locked",
+    unlocked: "Unlocked",
+    unmanaged: "Unmanaged",
+};
 
 function matchesStatus(entry, active, isEnabledFn, isLockedFn) {
-  if (active.has('enabled') || active.has('disabled')) {
-    const en = isEnabledFn(entry);
-    if (!((active.has('enabled') && en) || (active.has('disabled') && !en))) return false;
-  }
-  if (active.has('locked') || active.has('unlocked')) {
-    const lk = isLockedFn(entry);
-    if (!((active.has('locked') && lk) || (active.has('unlocked') && !lk))) return false;
-  }
-  if (active.has('unmanaged') && entry.modId !== undefined) return false;
-  return true;
+    if (active.has("enabled") || active.has("disabled")) {
+        const en = isEnabledFn(entry);
+        if (!((active.has("enabled") && en) || (active.has("disabled") && !en))) return false;
+    }
+    if (active.has("locked") || active.has("unlocked")) {
+        const lk = isLockedFn(entry);
+        if (!((active.has("locked") && lk) || (active.has("unlocked") && !lk))) return false;
+    }
+    if (active.has("unmanaged") && entry.modId !== undefined) return false;
+    return true;
 }
 ```
 
 `isEnabledFn` differs per surface -- pass whatever the row's enable actually reflects:
 
-| Surface | isEnabledFn |
-| --- | --- |
-| PAK FBLO (rename-based) | Vortex mod state (`isModEnabled`) |
-| UE4SS page (mods.txt) | `(e) => e.enabled !== false` (LO-entry flag) |
-| LogicMods page | Vortex mod state via `modState[e.modId].enabled` |
+| Surface                 | isEnabledFn                                      |
+| ----------------------- | ------------------------------------------------ |
+| PAK FBLO (rename-based) | Vortex mod state (`isModEnabled`)                |
+| UE4SS page (mods.txt)   | `(e) => e.enabled !== false` (LO-entry flag)     |
+| LogicMods page          | Vortex mod state via `modState[e.modId].enabled` |
 
 Unmanaged = `entry.modId === undefined`; Locked = the usual
 `[true, 'true', 'always'].includes(entry?.locked)` -- same everywhere.
@@ -1047,23 +1107,31 @@ Module-level helpers used by the context menus and rows (defined near `usePakLOS
 ```js
 // Mod page URL: homepage attribute first, else compose the Nexus URL.
 function getModPageURL(api, vortexModId) {
-  if (vortexModId === undefined) return undefined;
-  const attributes = util.getSafe(api.getState(), ['persistent', 'mods', GAME_ID, vortexModId, 'attributes'], {});
-  if (attributes.homepage) return attributes.homepage;
-  if (attributes.source === 'nexus' && attributes.modId !== undefined) {
-    return `https://www.nexusmods.com/${GAME_ID}/mods/${attributes.modId}`;
-  }
-  return undefined;
+    if (vortexModId === undefined) return undefined;
+    const attributes = util.getSafe(
+        api.getState(),
+        ["persistent", "mods", GAME_ID, vortexModId, "attributes"],
+        {},
+    );
+    if (attributes.homepage) return attributes.homepage;
+    if (attributes.source === "nexus" && attributes.modId !== undefined) {
+        return `https://www.nexusmods.com/${GAME_ID}/mods/${attributes.modId}`;
+    }
+    return undefined;
 }
 
 // Vortex staging folder of a managed entry.
 function getModStagingFolder(api, vortexModId) {
-  if (vortexModId === undefined) return undefined;
-  const state = api.getState();
-  const installationPath = util.getSafe(state, ['persistent', 'mods', GAME_ID, vortexModId, 'installationPath'], undefined);
-  const stagingPath = selectors.installPathForGame(state, GAME_ID);
-  if (!installationPath || !stagingPath) return undefined;
-  return path.join(stagingPath, installationPath);
+    if (vortexModId === undefined) return undefined;
+    const state = api.getState();
+    const installationPath = util.getSafe(
+        state,
+        ["persistent", "mods", GAME_ID, vortexModId, "installationPath"],
+        undefined,
+    );
+    const stagingPath = selectors.installPathForGame(state, GAME_ID);
+    if (!installationPath || !stagingPath) return undefined;
+    return path.join(stagingPath, installationPath);
 }
 ```
 
@@ -1082,35 +1150,35 @@ every "Disable/Enable Vortex Mod" menu item.
 ## 13. Related reading
 
 - **Template source:** `template-ue4-5/index.js` -- grep these names:
-  - `usePakLOState` (pub-sub: selection + context menu + status filter)
-  - `LoadOrderInstructions` (info panel: StatusPills + matched/total + CSS inject)
-  - `LoadOrderItemRenderer` / `PakContextMenu`
-  - `matchesStatus` / `STATUS_GROUP_TOKENS` / `StatusPills` / `LoadOrderStatusFilter`
-  - `getModPageURL` / `getModStagingFolder`
-  - `Ue4ssSelectionContext` / `Ue4ssItemRenderer` / `Ue4ssContextMenu` (+ `setVortexModsEnabled`) / `Ue4ssLoadOrderPage`
-  - `LogicModsItemRenderer` / `LogicModsContextMenu` / `LogicModsLoadOrderPage`
-  - Registration site: `registerLoadOrder` inside `main()`
-  - `makePrefix` / `loadOrderPrefix`
-  - `serializeLoadOrder` / `deserializeLoadOrder`
+    - `usePakLOState` (pub-sub: selection + context menu + status filter)
+    - `LoadOrderInstructions` (info panel: StatusPills + matched/total + CSS inject)
+    - `LoadOrderItemRenderer` / `PakContextMenu`
+    - `matchesStatus` / `STATUS_GROUP_TOKENS` / `StatusPills` / `LoadOrderStatusFilter`
+    - `getModPageURL` / `getModStagingFolder`
+    - `Ue4ssSelectionContext` / `Ue4ssItemRenderer` / `Ue4ssContextMenu` (+ `setVortexModsEnabled`) / `Ue4ssLoadOrderPage`
+    - `LogicModsItemRenderer` / `LogicModsContextMenu` / `LogicModsLoadOrderPage`
+    - Registration site: `registerLoadOrder` inside `main()`
+    - `makePrefix` / `loadOrderPrefix`
+    - `serializeLoadOrder` / `deserializeLoadOrder`
 - **Witcher 3 ItemRenderer (inspiration, TSX):**
 
-  `Vortex/extensions/games/game-witcher3/src/views/ItemRenderer.tsx`
+    `Vortex/extensions/games/game-witcher3/src/views/ItemRenderer.tsx`
 
 - **Vortex core ItemRenderer (default, TSX):**
 
-  `Vortex/src/renderer/src/extensions/file_based_loadorder/views/ItemRenderer.tsx`
+    `Vortex/src/renderer/src/extensions/file_based_loadorder/views/ItemRenderer.tsx`
 
 - **`LoadOrderIndexInput` source:**
 
-  `Vortex/src/renderer/src/extensions/file_based_loadorder/views/loadOrderIndex.tsx`
+    `Vortex/src/renderer/src/extensions/file_based_loadorder/views/loadOrderIndex.tsx`
 
 - **FBLO type definitions:**
 
-  `Vortex/src/renderer/src/extensions/file_based_loadorder/types/types.ts`
+    `Vortex/src/renderer/src/extensions/file_based_loadorder/types/types.ts`
 
 - **`context.registerLoadOrder` declaration:**
 
-  `Vortex/src/renderer/src/types/IExtensionContext.ts`
+    `Vortex/src/renderer/src/types/IExtensionContext.ts`
 
 ---
 

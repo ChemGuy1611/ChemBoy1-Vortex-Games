@@ -18,16 +18,16 @@ api.runExecutable(
 
 ## IRunOptions fields
 
-| Field | Type | Default | Description |
-| --- | --- | --- | --- |
-| `cwd` | `string` | exe directory | Working directory for the process |
-| `env` | `{ [key: string]: string }` | — | Additional environment variables (merged with process.env) |
-| `suggestDeploy` | `boolean` | `true` | If true, Vortex prompts to deploy before running if needed |
-| `shell` | `boolean` | `false` | Run through OS shell (enables pipes, env expansion) |
-| `detach` | `boolean` | `false` | Also `unref()` the child so it can outlive Vortex. Does **not** resolve the promise early |
-| `expectSuccess` | `boolean` | `false` | Show error notification if process exits with non-zero code |
-| `onSpawned` | `(pid?: number) => void` | — | Callback immediately after process spawns; receives PID |
-| `onExit` | `(code: number \| null) => void` | — | Callback when the process exits; `null` when terminated by a signal |
+| Field           | Type                             | Default       | Description                                                                               |
+| --------------- | -------------------------------- | ------------- | ----------------------------------------------------------------------------------------- |
+| `cwd`           | `string`                         | exe directory | Working directory for the process                                                         |
+| `env`           | `{ [key: string]: string }`      | —             | Additional environment variables (merged with process.env)                                |
+| `suggestDeploy` | `boolean`                        | `true`        | If true, Vortex prompts to deploy before running if needed                                |
+| `shell`         | `boolean`                        | `false`       | Run through OS shell (enables pipes, env expansion)                                       |
+| `detach`        | `boolean`                        | `false`       | Also `unref()` the child so it can outlive Vortex. Does **not** resolve the promise early |
+| `expectSuccess` | `boolean`                        | `false`       | Show error notification if process exits with non-zero code                               |
+| `onSpawned`     | `(pid?: number) => void`         | —             | Callback immediately after process spawns; receives PID                                   |
+| `onExit`        | `(code: number \| null) => void` | —             | Callback when the process exits; `null` when terminated by a signal                       |
 
 `onSpawned` receives no pid when Vortex doesn't know it — chiefly when the target runs elevated.
 
@@ -52,14 +52,14 @@ Two caveats:
 
 ```js
 await api.runExecutable(exePath, args, {
-  cwd: path.dirname(exePath),
-  onSpawned: (pid) => log('info', 'tool started', { pid }),
-  onExit: (code) => {
-    if (code !== 0) {
-      log('warn', 'tool exited badly', { code });   // null => killed by signal
-    }
-    refreshAfterToolRun();
-  },
+    cwd: path.dirname(exePath),
+    onSpawned: (pid) => log("info", "tool started", { pid }),
+    onExit: (code) => {
+        if (code !== 0) {
+            log("warn", "tool exited badly", { code }); // null => killed by signal
+        }
+        refreshAfterToolRun();
+    },
 });
 ```
 
@@ -71,9 +71,9 @@ Used in `registerInterpreter` and `registerStartHook` to pass or modify launch p
 
 ```ts
 interface IRunParameters {
-  executable: string;
-  args: string[];
-  options: IRunOptions;
+    executable: string;
+    args: string[];
+    options: IRunOptions;
 }
 ```
 
@@ -84,20 +84,21 @@ interface IRunParameters {
 ### Launch a tool (no deploy prompt)
 
 ```js
-api.runExecutable(toolPath, [], { suggestDeploy: false })
-  .catch(err => api.showErrorNotification('Failed to run tool', err, {
-    allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1,
-  }));
+api.runExecutable(toolPath, [], { suggestDeploy: false }).catch((err) =>
+    api.showErrorNotification("Failed to run tool", err, {
+        allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+    }),
+);
 ```
 
 ### Launch with custom environment variables
 
 ```js
-api.runExecutable(exePath, ['--mod-path', modPath], {
-  cwd: gamePath,
-  env: { GAME_ROOT: gamePath, DEBUG: '1' },
-  suggestDeploy: false,
-  expectSuccess: true,
+api.runExecutable(exePath, ["--mod-path", modPath], {
+    cwd: gamePath,
+    env: { GAME_ROOT: gamePath, DEBUG: "1" },
+    suggestDeploy: false,
+    expectSuccess: true,
 });
 ```
 
@@ -105,8 +106,8 @@ api.runExecutable(exePath, ['--mod-path', modPath], {
 
 ```js
 api.runExecutable(launcherPath, [], {
-  detach: true,
-  suggestDeploy: false,
+    detach: true,
+    suggestDeploy: false,
 });
 // Not awaited — so execution continues here right away, and the unref'd
 // launcher can outlive Vortex. The promise itself still settles on exit.
@@ -117,8 +118,10 @@ api.runExecutable(launcherPath, [], {
 ```js
 let gamePid;
 await api.runExecutable(exePath, [], {
-  suggestDeploy: false,
-  onSpawned: (pid) => { gamePid = pid; },
+    suggestDeploy: false,
+    onSpawned: (pid) => {
+        gamePid = pid;
+    },
 });
 ```
 
@@ -127,15 +130,15 @@ await api.runExecutable(exePath, [], {
 ## registerStartHook — intercept and modify launch
 
 ```js
-context.registerStartHook(50, 'inject-env', async (call) => {
-  if (path.basename(call.executable) !== 'game.exe') return call;
-  return {
-    ...call,
-    options: {
-      ...call.options,
-      env: { ...call.options.env, MOD_LOADER: '1' },
-    },
-  };
+context.registerStartHook(50, "inject-env", async (call) => {
+    if (path.basename(call.executable) !== "game.exe") return call;
+    return {
+        ...call,
+        options: {
+            ...call.options,
+            env: { ...call.options.env, MOD_LOADER: "1" },
+        },
+    };
 });
 ```
 
