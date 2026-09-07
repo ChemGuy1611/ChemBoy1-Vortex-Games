@@ -9,7 +9,9 @@ Notes:
 /////////////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 //const { parseStringPromise } = require('xml2js');
@@ -86,6 +88,14 @@ const SAVE_NAME = "Save File";
 const SAVE_FOLDER = path.join("gamedata", "savedata");
 //const SAVE_PATH = path.join(DOCUMENTS, PUBLISHER_FOLDER, DATA_FOLDER);
 let USERID_FOLDER = "";
+
+// vortex-api's fs.ensureFileAsync is deprecated; this is the node equivalent.
+async function ensureFileAsync(filePath) {
+  await fsp.mkdir(path.dirname(filePath), { recursive: true });
+  const handle = await fsp.open(filePath, "a");
+  await handle.close();
+}
+
 function isDir(folder, file) {
   const stats = fs.statSync(path.join(folder, file));
   return stats.isDirectory();
@@ -187,7 +197,7 @@ function statCheckSync(gamePath, file) {
 }
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -921,7 +931,7 @@ async function resolveGameVersion(gamePath) {
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
-    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+    await vfs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
   }
 }
 
@@ -937,7 +947,7 @@ async function setup(discovery, api, gameSpec) {
   await modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
   await downloadModManager(api, gameSpec);
   //await downloadModLoader(api, gameSpec);
-  return fs.ensureFileAsync(path.join(GAME_PATH, RELOADED_PATH, "portable.txt"));
+  return ensureFileAsync(path.join(GAME_PATH, RELOADED_PATH, "portable.txt"));
 }
 
 //Let Vortex know about the game

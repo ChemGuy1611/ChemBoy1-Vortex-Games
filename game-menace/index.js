@@ -7,7 +7,9 @@ Date: 2026-09-05
 //////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const fsExtra = require("fs-extra");
@@ -728,7 +730,7 @@ function statCheckSync(gamePath, file) {
 }
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -890,10 +892,10 @@ function getCustomFolder(api, game) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -1168,7 +1170,7 @@ async function installJiangyuMod(files, destinationPath) {
     folder = ROOT_PATH;
   }
   try {
-    const contents = await fs.readFileAsync(path.join(destinationPath, modFile), "utf8");
+    const contents = await fsp.readFile(path.join(destinationPath, modFile), "utf8");
     const manifestName = JSON.parse(contents).name;
     if (typeof manifestName === "string" && manifestName.trim() !== "") {
       folder = manifestName.trim();
@@ -1858,7 +1860,7 @@ async function installPlugin(api, gameSpec, files, workingDir) {
     files.map(async (file) => {
       if (PLUGIN_EXTS.includes(path.extname(file).toLowerCase())) {
         try {
-          const content = await fs.readFileAsync(path.join(workingDir, file), "utf8");
+          const content = await fsp.readFile(path.join(workingDir, file), "utf8");
           if (hasCustomLoader && content.includes(CUSTOM_PLUGIN_STRING)) {
             isCustom = true;
           } else if (content.includes(BEP_STRING)) {
@@ -2262,7 +2264,7 @@ async function readLoadOrderPosition(modFolderPath, folder) {
     const filePath = path.join(modFolderPath, folder, MODPACKMOD_FILE);
     let number;
     try {
-      number = JSON.parse(await fs.readFileAsync(filePath, "utf8"))[LO_JSON_KEY];
+      number = JSON.parse(await fsp.readFile(filePath, "utf8"))[LO_JSON_KEY];
     } catch (err) {
       log("error", `Failed to read load order file ${filePath}: ${err}`);
       return LO_UNSORTED_POS;
@@ -2321,8 +2323,8 @@ async function deserializeLoadOrder(context) {
   //Get all mod folders from MelonLoader "Mods" folder
   let modFolders = [];
   try {
-    await fs.ensureDirWritableAsync(modFolderPath); //may not exist yet on a fresh install
-    modFolders = await fs.readdirAsync(modFolderPath);
+    await vfs.ensureDirWritableAsync(modFolderPath); //may not exist yet on a fresh install
+    modFolders = await fsp.readdir(modFolderPath);
     modFolders = modFolders.filter((file) => isDir(modFolderPath, file));
     modFolders = modFolders.filter(
       (file) => file.toLowerCase() !== CUSTOMLEADERS_FOLDER.toLowerCase(),
@@ -2423,8 +2425,8 @@ async function writeToFiles(entries) {
   for (const entry of entries) {
     let contents;
     try {
-      await fs.statAsync(entry.filePath);
-      contents = await fs.readFileAsync(entry.filePath, "utf8");
+      await fsp.stat(entry.filePath);
+      contents = await fsp.readFile(entry.filePath, "utf8");
     } catch (err) {
       log(
         "error",
@@ -2435,7 +2437,7 @@ async function writeToFiles(entries) {
     const json = JSON.parse(contents);
     json[LO_JSON_KEY] = setNumber(entry.position);
     const loadOrderOutput = JSON.stringify(json, null, 2);
-    await fs.writeFileAsync(entry.filePath, loadOrderOutput, { encoding: "utf8" });
+    await fsp.writeFile(entry.filePath, loadOrderOutput, { encoding: "utf8" });
   }
 }
 
@@ -2456,10 +2458,8 @@ async function serializeLoadOrder(context, loadOrder) {
   //those still carry whatever prefix the last deployment gave them.
   let modFolders = [];
   try {
-    await fs.ensureDirWritableAsync(modFolderPath); //may not exist yet on a fresh install
-    modFolders = (await fs.readdirAsync(modFolderPath)).filter((file) =>
-      isDir(modFolderPath, file),
-    );
+    await vfs.ensureDirWritableAsync(modFolderPath); //may not exist yet on a fresh install
+    modFolders = (await fsp.readdir(modFolderPath)).filter((file) => isDir(modFolderPath, file));
   } catch (err) {
     if (err.code !== "ENOENT") {
       log("error", `Failed to read "Mods" folder: ${err}`);
@@ -2519,7 +2519,7 @@ async function resolveModFolder(api, id) {
   }
   const modFolderPath = path.join(gamePath, MODPACKMOD_PATH);
   try {
-    const folders = await fs.readdirAsync(modFolderPath);
+    const folders = await fsp.readdir(modFolderPath);
     const match = folders.find(
       (folder) => stripLoadOrderPrefix(folder).toLowerCase() === String(id).toLowerCase(),
     );
@@ -2737,7 +2737,7 @@ async function removeCustomFiles(api, gameSpec) {
 async function deleteFiles(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
     try {
-      await fs.unlinkAsync(path.join(gamePath, relPaths[index]));
+      await vfs.unlinkAsync(path.join(gamePath, relPaths[index]));
     } catch (err) {
       log("warn", `Failed to remove ${path.join(gamePath, relPaths[index])}: ${err}`);
     }
@@ -2751,7 +2751,7 @@ async function resolveGameVersion(gamePath) {
   if (GAME_VERSION === "xbox") {
     // use appxmanifest.xml for Xbox version
     try {
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
+      const appManifest = await fsp.readFile(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
@@ -2903,7 +2903,7 @@ async function downloadMelonPrefManNotify(api) {
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
-    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+    await vfs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
   }
 }
 

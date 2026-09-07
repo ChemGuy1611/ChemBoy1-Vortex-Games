@@ -9,7 +9,7 @@ Notes:
 ////////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const winapi = require("winapi-bindings");
@@ -613,7 +613,7 @@ function setupNotify(api) {
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
-    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+    await vfs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
   }
 }
 
@@ -627,7 +627,7 @@ async function setup(discovery, api, gameSpec) {
   // ASYNC CODE //////////////////////////////////////////
   if (setupNotification) setupNotify(api);
   await downloadModLoader(api, gameSpec);
-  await fs.ensureDirWritableAsync(path.join(CONFIG_PATH));
+  await vfs.ensureDirWritableAsync(path.join(CONFIG_PATH));
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 

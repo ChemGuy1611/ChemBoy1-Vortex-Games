@@ -9,7 +9,9 @@ Notes:
 ///////////////////////////////////////*/
 
 //import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const { parseStringPromise } = require("xml2js");
@@ -237,7 +239,7 @@ function statCheckSync(gamePath, file) {
 }
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -886,7 +888,7 @@ async function resolveGameVersion(gamePath) {
   if (GAME_VERSION === "xbox") {
     // use appxmanifest.xml for Xbox version
     try {
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
+      const appManifest = await fsp.readFile(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
@@ -910,7 +912,7 @@ async function resolveGameVersion(gamePath) {
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
-    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+    await vfs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
   }
 }
 
@@ -925,7 +927,7 @@ async function setup(discovery, api, gameSpec) {
   if (setupNotification) setupNotify(api);
   //GAME_VERSION = await setGameVersion(GAME_PATH);
   await downloadACSE(api, gameSpec);
-  await fs.ensureDirWritableAsync(SAVE_PATH);
+  await vfs.ensureDirWritableAsync(SAVE_PATH);
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 

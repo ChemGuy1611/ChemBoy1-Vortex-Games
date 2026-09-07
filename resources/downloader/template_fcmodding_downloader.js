@@ -1,4 +1,4 @@
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const { actions, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const GAME_ID = "placeholder";
 const api = require("vortex-api"); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT

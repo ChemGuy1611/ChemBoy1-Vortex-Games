@@ -9,7 +9,9 @@ Notes:
 //////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const winapi = require("winapi-bindings");
@@ -290,7 +292,7 @@ function statCheckSync(gamePath, file) {
 }
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -443,10 +445,10 @@ async function setGameVersion(gamePath) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -584,7 +586,7 @@ async function readUmmGameInfo(files, workingDir) {
   if (configFile === undefined) {
     throw new util.DataInvalid(`${UMM_CONFIG_FILE} is missing from the ${UMM_NAME} archive`);
   }
-  const data = await fs.readFileAsync(path.join(workingDir, configFile), { encoding: "utf8" });
+  const data = await fsp.readFile(path.join(workingDir, configFile), { encoding: "utf8" });
   const parsed = await parseStringPromise(data);
   const root = parsed[Object.keys(parsed)[0]] || {};
   const games = root.GameInfo || [];
@@ -729,7 +731,7 @@ async function writeUmmParams(api) {
     let root = {};
     try {
       //never clobber the file, the user may have other games registered with UMM
-      const data = await fs.readFileAsync(UMM_PARAMS_FILE, { encoding: "utf8" });
+      const data = await fsp.readFile(UMM_PARAMS_FILE, { encoding: "utf8" });
       const parsed = await parseStringPromise(data);
       root = parsed?.Param || {};
     } catch (err) {
@@ -749,8 +751,8 @@ async function writeUmmParams(api) {
     entry.InstallType = ["DoorstopProxy"];
     root.GameParams = [container];
     const builder = new Builder({ rootName: "Param" });
-    await fs.ensureDirWritableAsync(UMM_PARAMS_FOLDER);
-    await fs.writeFileAsync(UMM_PARAMS_FILE, builder.buildObject(root), { encoding: "utf8" });
+    await vfs.ensureDirWritableAsync(UMM_PARAMS_FOLDER);
+    await fsp.writeFile(UMM_PARAMS_FILE, builder.buildObject(root), { encoding: "utf8" });
   } catch (err) {
     log("warn", `Could not write ${UMM_NAME} Params.xml: ${err}`);
   }
@@ -843,7 +845,7 @@ function runUmm(api) {
 //Read a mod folder name out of a manifest, falling back to the archive name
 async function readModName(manifestPath, key, fallback) {
   try {
-    const data = await fs.readFileAsync(manifestPath, { encoding: "utf8" });
+    const data = await fsp.readFile(manifestPath, { encoding: "utf8" });
     const parsed = JSON.parse(data);
     const name =
       parsed[key] ||
@@ -995,9 +997,9 @@ async function installRoot(files, workingDir) {
 
   if (GAME_VERSION === ALT_VERSION) {
     try {
-      await fs.statAsync(path.join(workingDir, modFile));
+      await fsp.stat(path.join(workingDir, modFile));
       if (path.basename(modFile) === DATA_FOLDER_DEFAULT) {
-        await fs.renameAsync(
+        await fsp.rename(
           path.join(workingDir, modFile),
           path.join(workingDir, rootPath, DATA_FOLDER_ALT),
         );
@@ -1190,7 +1192,7 @@ async function resolveGameVersion(gamePath) {
   if (GAME_VERSION === "xbox") {
     // use appxmanifest.xml for Xbox version
     try {
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
+      const appManifest = await fsp.readFile(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
@@ -1202,7 +1204,7 @@ async function resolveGameVersion(gamePath) {
     //use text file
     const versionFilepath = path.join(gamePath, VERSION_FILE_PATH);
     try {
-      const data = await fs.readFileAsync(versionFilepath, { encoding: "utf8" });
+      const data = await fsp.readFile(versionFilepath, { encoding: "utf8" });
       const segments = data.split(" ");
       return segments[3]
         ? Promise.resolve(segments[3])
@@ -1261,7 +1263,7 @@ function setupNotify(api) {
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
-    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+    await vfs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
   }
 }
 

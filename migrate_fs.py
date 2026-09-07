@@ -43,6 +43,8 @@ Also folds partial native imports into the rebind:
   - const fsNative = require('fs')                -> folded into const fs = require('fs')
   - const fsPromises = require('fs/promises')     -> renamed to fsp (fs.promises)
 `fs-extra` is left untouched here; its retirement is a separate later step.
+Inserted code follows the quote style the file already uses for require(), so the
+output survives the repo's oxfmt formatting unchanged.
 
 Usage:
     python migrate_fs.py GAME_ID [GAME_ID ...]      # migrate game-<id>/ (index.js + downloader/browser siblings)
@@ -133,14 +135,26 @@ CENSUS_ORDER = [
     "ensureDirAsync", "symlinkAsync", "moveAsync", "openAsync", "readAsync", "closeAsync",
 ]
 
-ENSURE_FILE_HELPER = (
-    "// vortex-api's fs.ensureFileAsync is deprecated; this is the node equivalent.\n"
-    "async function ensureFileAsync(filePath) {\n"
-    "  await fsp.mkdir(path.dirname(filePath), { recursive: true });\n"
-    "  const handle = await fsp.open(filePath, 'a');\n"
-    "  await handle.close();\n"
-    "}\n"
-)
+
+def quote_style(stripped):
+    """Return the quote char this file uses for require(), so inserted code
+    matches the surrounding style. The repo is oxfmt-formatted to double
+    quotes, but oxfmt-ignored files (resources/snippets.js) keep their own."""
+    dq = len(re.findall(r'require\(\s*"', stripped))
+    sq = len(re.findall(r"require\(\s*'", stripped))
+    return '"' if dq >= sq else "'"
+
+
+def ensure_file_helper(q):
+    return (
+        "// vortex-api's fs.ensureFileAsync is deprecated; this is the node equivalent.\n"
+        "async function ensureFileAsync(filePath) {\n"
+        "  await fsp.mkdir(path.dirname(filePath), { recursive: true });\n"
+        f"  const handle = await fsp.open(filePath, {q}a{q});\n"
+        "  await handle.close();\n"
+        "}\n"
+    )
+
 
 FS_CALL_RE = re.compile(r"(?<![\w.$])fs\.([A-Za-z][A-Za-z0-9]*)\s*\(")
 VORTEX_DESTRUCTURE_RE = re.compile(
@@ -308,9 +322,13 @@ def migrate_source(src, rel):
 
     # --- decide what bindings the migrated file needs -------------------
     needs_vfs = any(name in KEEP_ON_VFS for name in live)
-    needs_native = any(name in NEEDS_NATIVE_FS for name in live) \
-        or has_create_write_stream or has_fs_native or fs_promises_live or uses_fs_promises
     needs_fsp = any(name in NEEDS_FSP for name in live) or uses_fs_promises
+    # `const fsp = fs.promises;` dereferences `fs`, so anything needing fsp needs the
+    # native binding too - including a file that calls no sync method at all and drops
+    # the vortex-api import entirely.
+    needs_native = any(name in NEEDS_NATIVE_FS for name in live) \
+        or has_create_write_stream or has_fs_native or fs_promises_live or uses_fs_promises \
+        or needs_fsp
 
     # ordered list of (start, end, replacement) against `work` offsets
     edits = []
@@ -366,9 +384,10 @@ def migrate_source(src, rel):
     # --- insert native bindings --------------------------------------
     have_native_decl = bool(re.search(r"(?:const|let)\s+fs\s*=\s*require\(\s*['\"](?:node:)?fs['\"]\s*\)", stripped))
     have_fsp_decl = bool(re.search(r"(?:const|let)\s+fsp\s*=\s*fs\.promises", stripped))
+    quote = quote_style(stripped)
     binding_lines = []
     if needs_native and not have_native_decl:
-        binding_lines.append("const fs = require('fs');")
+        binding_lines.append(f"const fs = require({quote}fs{quote});")
     if needs_fsp and not have_fsp_decl:
         binding_lines.append("const fsp = fs.promises;")
     if binding_lines:
@@ -386,7 +405,7 @@ def migrate_source(src, rel):
         else:
             reqs = list(re.finditer(r"^(?:const|let|var)\s.*=\s*require\([^\n]*\n", work, re.M))
             anchor = reqs[-1].end() if reqs else 0
-        edits.append((anchor, anchor, "\n" + ENSURE_FILE_HELPER + "\n"))
+        edits.append((anchor, anchor, "\n" + ensure_file_helper(quote) + "\n"))
 
     # --- rewrite fs.<method>( call sites --------------------------
     for name, matches in live.items():
@@ -547,7 +566,11 @@ def run_report(files):
             tag = "  (kept on vfs)" if name in KEEP_ON_VFS else ""
             print(f"  fs.{name:<23} {totals[name]:>15}{tag}")
     for name in sorted(set(totals) - set(CENSUS_ORDER)):
-        print(f"  fs.{name:<23} {totals[name]:>15}   (not in survey table)")
+        # native members appear here once a wave lands (fs.mkdirSync from
+        # ensureDirSync, fs.createWriteStream from the import fold); they sit in
+        # kept_only, so they never feed the migratable total.
+        tag = "   (native, not migratable)" if name in kept_only else "   (not in survey table)"
+        print(f"  fs.{name:<23} {totals[name]:>15}{tag}")
     print(f"\n  migratable call sites still on fs.* (0 == wave complete): {migratable}")
     print(f"  vfs.* call sites: {orphan['vfs']}    fsp.* call sites: {orphan['fsp']}")
     if per_file_resid:

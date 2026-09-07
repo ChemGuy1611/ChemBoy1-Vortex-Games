@@ -1,5 +1,11 @@
 # template-ue4-5 Changelog
 
+## [2026-09-06] (2)
+
+- Changed: migrated off the deprecated `vortex-api` `fs` wrapper onto native node `fs`. `fs` now means node's own module (`const fs = require("fs")`, plus `const fsp = fs.promises` for the async calls), and the vortex-api wrapper is still imported alongside it as `vfs`. Call sites move across 1:1 - `fs.statAsync` becomes `fsp.stat`, `fs.readdirAsync` becomes `fsp.readdir`, `fs.readFileAsync`/`fs.writeFileAsync` become `fsp.readFile`/`fsp.writeFile`, `fs.renameAsync` becomes `fsp.rename` - while the two that need options change shape: `fs.ensureDirSync(p)` becomes `fs.mkdirSync(p, { recursive: true })` and `fs.removeAsync(p)` becomes `fsp.rm(p, { recursive: true, force: true })`. `fs.copyAsync` becomes `fsp.cp` and always gains `recursive: true`, because native `cp` throws `ERR_FS_EISDIR` on a directory without it.
+- Note: `ensureDirWritableAsync` stays on the wrapper as `vfs.ensureDirWritableAsync` - it has no native equivalent, and it is the call that creates a mod folder inside the game install and offers the elevation prompt when that folder is not writable. `vfs.unlinkAsync` is kept for the same reason where it appears. Everything else loses the wrapper's retry-and-elevate handling, which upstream deprecated deliberately; reach for `vfs.forcePerm` if a migrated write turns out to need it.
+- Added: a local `ensureFileAsync` helper, replacing `fs.ensureFileAsync`. It does `fsp.mkdir(path.dirname(filePath), { recursive: true })` followed by an `fsp.open(filePath, "a")` and a `close`, which creates the file when missing and leaves an existing file's contents untouched.
+
 ## [2026-09-06]
 
 - Fixed: the load order context menu no longer drags locked entries out of position. "Move to Top", "Move to Bottom" (single and multi-select) and the type-a-number index input all rebuilt the whole order with every locked entry hoisted into a block at the front. They now reorder only the unlocked entries and lay them back into the unlocked slots, so a locked row keeps its absolute index. "Move to Top"/"Move to Bottom" on a locked row are no-ops, and `onApplyIndex` bails when the target is locked. Applies to all three pages (Pak, UE4SS, LogicMods). Drag-and-drop was already correct — core's `DraggableListItem` blocks dragging a locked row or dropping onto one; only the menu path bypassed it.

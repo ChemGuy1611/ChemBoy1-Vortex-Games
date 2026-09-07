@@ -13,7 +13,9 @@ Notes:
 ///////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const { parseStringPromise } = require("xml2js");
@@ -26,7 +28,6 @@ const {
 } = require("./downloader");
 const React = require("react");
 //const winapi = require('winapi-bindings');
-//const fsPromises = require('fs/promises'); //.rm() for recursive folder deletion
 //const fsExtra = require('fs-extra');
 
 const USER_HOME = util.getVortexPath("home");
@@ -58,7 +59,7 @@ const EXEC_EGS = EXEC; //change other versions if different than Steam/default
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Lobotomy_Corporation";
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/2278"; //Nexus link to this extension. Used for links
 
 //feature toggles
 const hasLoader = true; //true if game needs a mod loader
@@ -392,7 +393,7 @@ function statCheckSync(gamePath, file) {
 }
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -529,10 +530,10 @@ async function setGameVersion(gamePath) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -695,14 +696,14 @@ async function getModDisplayName(destinationPath, rootPath) {
   };
   let folders = [];
   try {
-    folders = await fs.readdirAsync(INFO_PATH);
+    folders = await fsp.readdir(INFO_PATH);
   } catch {
     return undefined;
   }
   folders.sort((lhs, rhs) => langRank(lhs) - langRank(rhs));
   for (const folder of folders) {
     try {
-      const data = await fs.readFileAsync(path.join(INFO_PATH, folder, MOD_INFO_FILE), "utf8");
+      const data = await fsp.readFile(path.join(INFO_PATH, folder, MOD_INFO_FILE), "utf8");
       const parsed = await parseStringPromise(data.replace(/^\uFEFF/, ""));
       const name = parsed?.info?.name?.[0];
       if (typeof name === "string" && name.trim() !== "") {
@@ -1224,7 +1225,7 @@ function escapeXml(value) {
 async function readLoadOrderFile(loadOrderPath) {
   let parsed = null;
   try {
-    const data = await fs.readFileAsync(loadOrderPath, "utf8");
+    const data = await fsp.readFile(loadOrderPath, "utf8");
     parsed = await parseStringPromise(data.replace(/^\uFEFF/, ""));
   } catch (err) {
     if (err.code !== "ENOENT") {
@@ -1306,7 +1307,7 @@ async function deserializeLoadOrder(context) {
   //the folders on disk decide what exists - the file only decides order and enabled state
   let modFolders = [];
   try {
-    modFolders = await fs.readdirAsync(modFolderPath);
+    modFolders = await fsp.readdir(modFolderPath);
     modFolders = modFolders.filter((file) => isDir(modFolderPath, file));
     modFolders = modFolders.sort((lhs, rhs) => lhs.toLowerCase().localeCompare(rhs.toLowerCase()));
   } catch (err) {
@@ -1379,8 +1380,8 @@ async function serializeLoadOrder(context, loadOrder) {
   if (modFolderPath === undefined) {
     return;
   }
-  await fs.ensureDirWritableAsync(modFolderPath);
-  return fs.writeFileAsync(path.join(modFolderPath, LO_FILE), buildLoadOrderFile(loadOrder), {
+  await vfs.ensureDirWritableAsync(modFolderPath);
+  return fsp.writeFile(path.join(modFolderPath, LO_FILE), buildLoadOrderFile(loadOrder), {
     encoding: "utf8",
   });
 }
@@ -2139,7 +2140,7 @@ async function resolveGameVersion(gamePath) {
   if (GAME_VERSION === "xbox") {
     // use appxmanifest.xml for Xbox version
     try {
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
+      const appManifest = await fsp.readFile(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
@@ -2163,7 +2164,7 @@ async function resolveGameVersion(gamePath) {
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
-    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+    await vfs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
   }
 }
 

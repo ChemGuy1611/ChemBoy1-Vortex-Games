@@ -309,7 +309,7 @@ _UTILITY_FUNCTIONS = [
         r'^async\s+function\s+statCheckAsync\b',
         "async function statCheckAsync(gamePath, file) {\n"
         "  try {\n"
-        "    await fs.statAsync(path.join(gamePath, file));\n"
+        "    await fsp.stat(path.join(gamePath, file));\n"
         "    return true;\n"
         "  }\n"
         "  catch (err) {\n"
@@ -323,10 +323,10 @@ _UTILITY_FUNCTIONS = [
         "async function getAllFiles(dirPath) {\n"
         "  let results = [];\n"
         "  try {\n"
-        "    const entries = await fs.readdirAsync(dirPath);\n"
+        "    const entries = await fsp.readdir(dirPath);\n"
         "    for (const entry of entries) {\n"
         "      const fullPath = path.join(dirPath, entry);\n"
-        "      const stats = await fs.statAsync(fullPath);\n"
+        "      const stats = await fsp.stat(fullPath);\n"
         "      if (stats.isDirectory()) { // Recursively get files from subdirectories\n"
         "        const subDirFiles = await getAllFiles(fullPath);\n"
         "        results = results.concat(subDirFiles);\n"
@@ -366,6 +366,41 @@ _UTILITY_FUNCTIONS = [
 ]
 
 
+# Matches `const fs = require('fs')` / `require("node:fs")` - the marker that a file has
+# been through migrate_fs.py, where `fs` means native node fs and the vortex-api wrapper
+# has been rebound to `vfs`. An un-migrated extension binds `fs` to the wrapper instead.
+_NATIVE_FS_DECL_RE = re.compile(
+    r"(?:const|let)\s+fs\s*=\s*require\(\s*['\"](?:node:)?fs['\"]\s*\)"
+)
+_FSP_DECL_RE = re.compile(r"(?:const|let)\s+fsp\s*=\s*fs\.promises")
+
+
+def _fs_idiom(block, src):
+    """Adapt an injected utility body to the fs convention the target file uses.
+
+    Bodies in _UTILITY_FUNCTIONS are written in the migrated idiom: `fs` is native
+    node fs and `fsp` is `fs.promises`. Three cases:
+
+      - not migrated  -> rewrite the async calls back to the vortex-api wrapper
+                         (`fs.statAsync`, `fs.readdirAsync`), which is what `fs`
+                         still means in that file.
+      - migrated      -> use as-is.
+      - migrated but with no `fsp` binding (the file had no async fs use before)
+                      -> fall back to `fs.promises.`, always available off the
+                         native binding and needing no new import.
+
+    `fs.statSync` in isDir/statCheckSync is left alone - the wrapper and native fs
+    both export it, so it is correct either way. Once the node-fs migration finishes
+    (plan node-fs-migration-copper-crucible), the un-migrated branch is dead.
+    """
+    if not _NATIVE_FS_DECL_RE.search(src):
+        return (block.replace("await fsp.stat(", "await fs.statAsync(")
+                     .replace("await fsp.readdir(", "await fs.readdirAsync("))
+    if not _FSP_DECL_RE.search(src):
+        return block.replace("fsp.", "fs.promises.")
+    return block
+
+
 def patch_utility_functions(game_id, src, context):
     """
     Insert standard utility functions (isDir, statCheckSync, statCheckAsync,
@@ -381,7 +416,7 @@ def patch_utility_functions(game_id, src, context):
     if not m:
         return src, False, "could not find modTypePriority anchor"
 
-    block = "\n".join(code for _, code in missing)
+    block = "\n".join(_fs_idiom(code, src) for _, code in missing)
     new_src = src[:m.start()] + block + "\n" + src[m.start():]
     return new_src, True, f"inserted {', '.join(name for name, _ in missing)}"
 

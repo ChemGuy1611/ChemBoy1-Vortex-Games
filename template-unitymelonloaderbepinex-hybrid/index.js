@@ -9,13 +9,14 @@ Notes:
 //////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const fsExtra = require("fs-extra");
 const { parseStringPromise } = require("xml2js");
 const winapi = require("winapi-bindings");
-//const fsPromises = require('fs/promises'); //.rm() for recursive folder deletion
 //Auto-downloader modules. MONO-ONLY EXTENSIONS: delete the bepinexbe_downloader require (and the
 //module file itself) - builds.bepinex.dev only publishes IL2CPP builds.
 const {
@@ -761,7 +762,7 @@ function statCheckSync(gamePath, file) {
 }
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -947,10 +948,10 @@ function getCustomFolder(api, game) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -1349,9 +1350,9 @@ async function installRoot(files, workingDir) {
 
   if (GAME_VERSION === ALT_VERSION) {
     try {
-      await fs.statAsync(path.join(workingDir, modFile));
+      await fsp.stat(path.join(workingDir, modFile));
       if (path.basename(modFile) === DATA_FOLDER_DEFAULT) {
-        await fs.renameAsync(
+        await fsp.rename(
           path.join(workingDir, modFile),
           path.join(workingDir, rootPath, DATA_FOLDER_ALT),
         );
@@ -1533,7 +1534,7 @@ async function installPlugin(api, gameSpec, files, workingDir) {
     files.map(async (file) => {
       if (PLUGIN_EXTS.includes(path.extname(file).toLowerCase())) {
         try {
-          const content = await fs.readFileAsync(path.join(workingDir, file), "utf8");
+          const content = await fsp.readFile(path.join(workingDir, file), "utf8");
           if (hasCustomLoader && content.includes(CUSTOM_PLUGIN_STRING)) {
             isCustom = true;
           } else if (content.includes(BEP_STRING)) {
@@ -2260,7 +2261,7 @@ async function removeMelonPrefMan(api) {
 async function deleteFiles(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
     try {
-      await fs.unlinkAsync(path.join(gamePath, relPaths[index]));
+      await vfs.unlinkAsync(path.join(gamePath, relPaths[index]));
     } catch (err) {
       log("warn", `Failed to remove ${path.join(gamePath, relPaths[index])}: ${err}`);
     }
@@ -2275,7 +2276,7 @@ async function resolveGameVersion(gamePath) {
     //use text file - Not many games have a Version.info file with the version in it
     const versionFilePath = path.join(gamePath, VERSION_FILE_PATH);
     try {
-      const data = await fs.readFileAsync(versionFilePath, { encoding: "utf8" });
+      const data = await fsp.readFile(versionFilePath, { encoding: "utf8" });
       const segments = data.split(VER_SPLIT); //space is usually the split for Version.info files
       return segments[VER_IDX]
         ? Promise.resolve(segments[VER_IDX])
@@ -2288,7 +2289,7 @@ async function resolveGameVersion(gamePath) {
   if (GAME_VERSION === "xbox") {
     // use appxmanifest.xml for Xbox version
     try {
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
+      const appManifest = await fsp.readFile(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
@@ -2463,7 +2464,7 @@ function setupNotify(api) {
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
-    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+    await vfs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
   }
 }
 

@@ -51,8 +51,8 @@ const TS_BROWSER_CONFIG = {
 
 // *** In setup() function ////////////////////
 async function setup(discovery) {
-  const fs = require("vortex-api").fs; //DUMMY PLACEHOLDER - use the extension's existing import
-  await fs.ensureDirWritableAsync(path.join(discovery.path, PLUGIN_PATH)); //browsed mods need their target folder to exist
+  const vfs = require("vortex-api").fs; //DUMMY PLACEHOLDER - use the extension's existing import
+  await vfs.ensureDirWritableAsync(path.join(discovery.path, PLUGIN_PATH)); //browsed mods need their target folder to exist
 }
 
 // *** In applyGame() function ////////////////////

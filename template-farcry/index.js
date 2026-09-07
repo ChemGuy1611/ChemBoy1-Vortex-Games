@@ -9,7 +9,9 @@ Notes:
 ///////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const winapi = require("winapi-bindings");
@@ -425,7 +427,7 @@ async function installMiModA3(files, destinationPath) {
   const szip = new util.SevenZip();
   const archiveName = path.basename(destinationPath, ".installing") + MIMOD_EXTA3;
   const archivePath = path.join(destinationPath, archiveName);
-  const rootRelPaths = await fs.readdirAsync(destinationPath);
+  const rootRelPaths = await fsp.readdir(destinationPath);
   await szip.add(
     archivePath,
     rootRelPaths.map((relPath) => path.join(destinationPath, relPath)),
@@ -958,7 +960,7 @@ function setupNotify(api) {
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
-    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+    await vfs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
   }
 }
 
@@ -975,7 +977,7 @@ async function setup(discovery, api, gameSpec) {
   await downloadFcModding(api, gameSpec, MI_REQUIREMENTS); //install if missing
   await checkForFcModdingUpdate(api, gameSpec, MI_REQUIREMENTS).catch(() => null); //update check should never block setup
   //await downloadXml(api, gameSpec);
-  await fs.ensureDirWritableAsync(XML_PATH);
+  await vfs.ensureDirWritableAsync(XML_PATH);
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 

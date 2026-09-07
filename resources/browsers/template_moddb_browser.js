@@ -73,8 +73,8 @@ const MODDB_REQUIREMENTS_WITH_BROWSE_KEY = [
 
 // *** In setup() function ////////////////////
 async function setup(discovery) {
-  const fs = require("vortex-api").fs; //DUMMY PLACEHOLDER - use the extension's existing import
-  await fs.ensureDirWritableAsync(path.join(discovery.path, MOD_PATH)); //browsed mods need their target folder to exist
+  const vfs = require("vortex-api").fs; //DUMMY PLACEHOLDER - use the extension's existing import
+  await vfs.ensureDirWritableAsync(path.join(discovery.path, MOD_PATH)); //browsed mods need their target folder to exist
 }
 
 // *** In applyGame() function ////////////////////

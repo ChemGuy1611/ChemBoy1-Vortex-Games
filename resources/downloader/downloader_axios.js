@@ -13,7 +13,9 @@
 
 const path = require("path");
 const semver = require("semver");
-const { actions, fs, log, selectors, util } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, log, selectors, util } = require("vortex-api");
 
 // --- common ---------------------------------------------------------------
 const NOTIF_ID_REQUIREMENTS = "vortex-downloader-requirements-download-notification";
@@ -263,7 +265,7 @@ async function doDownload(downloadUrl, destination) {
     log("info", "GitHub rate limit exceeded", { reset_at: new Date(resetDate).toString() });
     return Promise.reject(new util.ProcessCanceled("GitHub rate limit exceeded"));
   }
-  await fs.writeFileAsync(destination, Buffer.from(response.data));
+  await fsp.writeFile(destination, Buffer.from(response.data));
 }
 
 // --- util -----------------------------------------------------------------

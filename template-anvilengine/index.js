@@ -9,7 +9,9 @@ Notes:
 //////////////////////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const winapi = require("winapi-bindings");
@@ -526,7 +528,7 @@ function statCheckSync(gamePath, file) {
 
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -536,10 +538,10 @@ async function statCheckAsync(gamePath, file) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         const subDirFiles = await getAllFiles(fullPath);
         results = results.concat(subDirFiles);
@@ -990,7 +992,7 @@ async function downloadReforger(api, gameSpec, force = false) {
           }
           try {
             const RUN_PATH = path.join(DOWNLOAD_FOLDER, REFORGER_INSTALLER);
-            await fs.statAsync(RUN_PATH);
+            await fsp.stat(RUN_PATH);
             await api.runExecutable(RUN_PATH, [], { suggestDeploy: false });
             log("info", `${REFORGER_NAME} installer started from the downloads folder`);
           } catch (runErr) {
@@ -1880,7 +1882,7 @@ async function rename(api, EXISTING, NEW) {
   await purge(api);
   try {
     fs.statSync(EXISTING);
-    await fs.renameAsync(EXISTING, NEW);
+    await fsp.rename(EXISTING, NEW);
   } catch (err) {
     api.showErrorNotification(
       "Failed to rename .forge folder. You will have to rename the folder manually.",
@@ -2109,7 +2111,7 @@ async function resorepSettingsWrite(api, gameSpec) {
   try {
     fs.statSync(path.join(GAME_PATH, RESOREP_INI_FILE));
   } catch {
-    await fs.writeFileAsync(
+    await fsp.writeFile(
       path.join(GAME_PATH, RESOREP_INI_FILE),
       pathPattern(api, gameSpec.game, RESOREP_INI_TEXT),
       (err) => {
@@ -2172,7 +2174,7 @@ async function resorepScriptCheck(api, gameSpec) {
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
-    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+    await vfs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
   }
 }
 

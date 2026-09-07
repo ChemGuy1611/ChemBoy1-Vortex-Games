@@ -1,13 +1,14 @@
 // TOP-LEVEL VARIABLES ///////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const { parseStringPromise } = require("xml2js");
 const winapi = require("winapi-bindings");
 const turbowalk = require("turbowalk");
 const Bluebird = require("bluebird"); //avoid using as it is deprecated
-const fsPromises = require("fs/promises");
 const fsExtra = require("fs-extra");
 const exeVersion = require("exe-version");
 const semver = require("semver");
@@ -56,7 +57,7 @@ const selectUDF = async (api) => {
   if (res.action !== "Select UDF") {
     return Promise.reject(new util.UserCanceled("Cannot proceed without UDF"));
   }
-  await fs.ensureDirWritableAsync(path.dirname(launcherSettings));
+  await vfs.ensureDirWritableAsync(path.dirname(launcherSettings));
   await ensureLOFile(api);
   let directory = await api.selectDir({
     title: "Select User Data Folder",
@@ -83,11 +84,11 @@ const selectUDF = async (api) => {
       )
       .then(() => selectUDF(context));
   }
-  await fs.ensureDirWritableAsync(path.join(directory, "Mods"));
+  await vfs.ensureDirWritableAsync(path.join(directory, "Mods"));
   const launcher = DEFAULT_LAUNCHER_SETTINGS;
   launcher.DefaultRunConfig.AdditionalParameters = `-UserDataFolder="${directory}"`;
   const launcherData = JSON.stringify(launcher, null, 2);
-  await fs.writeFileAsync(launcherSettings, launcherData, { encoding: "utf8" });
+  await fsp.writeFile(launcherSettings, launcherData, { encoding: "utf8" });
   api.store.dispatch(setUDF(directory));
   return relaunchExt(api);
 };
@@ -288,9 +289,9 @@ function checkPartitions(folder, discoveryPath) {
     const path2 = STAGING_FOLDER;
     const path3 = folder;
     // Ensure all folders exist
-    fs.ensureDirSync(path1);
-    fs.ensureDirSync(path2);
-    fs.ensureDirSync(path3);
+    fs.mkdirSync(path1, { recursive: true });
+    fs.mkdirSync(path2, { recursive: true });
+    fs.mkdirSync(path3, { recursive: true });
     // Get the stats for all folders
     const stats1 = fs.statSync(path1);
     const stats2 = fs.statSync(path2);
@@ -446,7 +447,7 @@ async function installZipContent(files, destinationPath) {
     const szip = new util.SevenZip();
     const archiveName = path.basename(destinationPath, ".installing") + ".zip";
     const archivePath = path.join(destinationPath, archiveName);
-    const rootRelPaths = await fs.readdirAsync(destinationPath);
+    const rootRelPaths = await fsp.readdir(destinationPath);
     await szip.add(
       archivePath,
       rootRelPaths.map((relPath) => path.join(destinationPath, relPath)),
@@ -698,7 +699,7 @@ async function rename(api, EXISTING, NEW) {
   await purge(api); //purge mods before renaming folder
   try {
     fs.statSync(EXISTING); //make sure the folder exists
-    await fs.renameAsync(EXISTING, NEW); //rename the folder
+    await fsp.rename(EXISTING, NEW); //rename the folder
   } catch (err) {
     api.showErrorNotification(
       "Failed to rename .forge folder. You will have to rename the folder manually.",
@@ -1191,7 +1192,7 @@ async function downloadModManager(api, check) {
                 noDismiss: true,
                 allowSuppress: false,
               });
-              let files = await fs.readdirAsync(DOWNLOAD_FOLDER);
+              let files = await fsp.readdir(DOWNLOAD_FOLDER);
               //let files = fs.readdirSync(DOWNLOAD_FOLDER);
               files = files
                 .filter(
@@ -1202,12 +1203,12 @@ async function downloadModManager(api, check) {
                 .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))
                 .reverse();
               const copyFile = files[0];
-              await fs.statAsync(path.join(DOWNLOAD_FOLDER, copyFile));
+              await fsp.stat(path.join(DOWNLOAD_FOLDER, copyFile));
               //fs.statSync(path.join(DOWNLOAD_FOLDER, copyFile));
               const source = path.join(DOWNLOAD_FOLDER, copyFile);
               const destination = path.join(GAME_PATH, MODMANAGER_EXEC);
-              await fs.copyAsync(source, destination, { overwrite: true });
-              //fs.copySync(source, destination, { overwrite: true });
+              await fsp.cp(source, destination, { recursive: true });
+              //fs.cpSync(source, destination, { recursive: true });
               api.dismissNotification(NOTIF_ID);
               api.dismissNotification(`${NOTIF_ID}-copy`);
               api.sendNotification({
@@ -2039,12 +2040,12 @@ async function deserializeLoadOrder(context) {
   }
   const mods = util.getSafe(context.api.store.getState(), ["persistent", "mods", spec.game.id], {});
   const loadOrderPath = path.join(gameDir, PLUGINSTXT_PATH);
-  let loadOrderFile = await fs.readFileAsync(loadOrderPath, { encoding: "utf8" });
+  let loadOrderFile = await fsp.readFile(loadOrderPath, { encoding: "utf8" });
   //Get all .esm/esp/esl files from Data folder
   let modFolderPath = path.join(gameDir, PLUGINS_PATH);
   let modFiles = [];
   try {
-    modFiles = await fs.readdirAsync(modFolderPath);
+    modFiles = await fsp.readdir(modFolderPath);
     modFiles = modFiles.filter((file) =>
       PLUGINS_EXTS_FILTER.includes(path.extname(file).toLowerCase()),
     );
@@ -2130,7 +2131,7 @@ async function serializeLoadOrder(context, loadOrder) {
   .join(", ");
   log('warn', `Load Order: ${loadOrderLog}`); //*/
   const header = `# File generated by Vortex. Please do not edit this file.\n`;
-  return fs.writeFileAsync(
+  return fsp.writeFile(
     loadOrderPath,
     `${header + PLUGINSTXT_DEFAULT_CONTENT + loadOrderOutput}`, //empty line included in default plugins list to avoid overlap
     { encoding: "utf8" },
@@ -2143,7 +2144,7 @@ async function validate(context, prev, current) {
   const dataPath = path.join(GAME_PATH, PLUGINS_PATH);
   for (const entry of current) {
     try {
-      await fs.statAsync(path.join(dataPath, entry.id));
+      await fsp.stat(path.join(dataPath, entry.id));
     } catch {
       invalid.push({ id: entry.id, reason: "File not found in Data folder" });
     }
@@ -2186,7 +2187,7 @@ async function deserializeLoadOrder(context) {
   }
   const mods = util.getSafe(context.api.store.getState(), ["persistent", "mods", spec.game.id], {});
   let loadOrderPath = path.join(gameDir, LO_FILE);
-  let loadOrderFile = await fs.readFileAsync(loadOrderPath, { encoding: "utf8" });
+  let loadOrderFile = await fsp.readFile(loadOrderPath, { encoding: "utf8" });
   let loadOrderSplit = loadOrderFile.split("\n");
   let LO_LINE = loadOrderSplit.find((line) => line.startsWith(LO_LINE_START)); //we are putting the list on one line. should be element [1], but doing find just in case that ever changes.
   LO_LINE = LO_LINE.replace(LO_LINE_START, "");
@@ -2194,7 +2195,7 @@ async function deserializeLoadOrder(context) {
   //Get all .psarc files from mods folder
   let modFiles = [];
   try {
-    modFiles = await fs.readdirAsync(modFolderPath);
+    modFiles = await fsp.readdir(modFolderPath);
     modFiles = modFiles.filter((file) => path.extname(file) === PSARC_EXT);
     modFiles.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
   } catch {
@@ -2282,7 +2283,7 @@ async function serializeLoadOrder(context, loadOrder) {
     return Promise.reject(new util.NotFound("Game not found"));
   }
   let loadOrderPath = path.join(gameDir, LO_FILE);
-  let loadOrderFile = await fs.readFileAsync(loadOrderPath, { encoding: "utf8" });
+  let loadOrderFile = await fsp.readFile(loadOrderPath, { encoding: "utf8" });
   let loadOrderSplit = loadOrderFile.split("\n");
   let LO_LINE = loadOrderSplit.find((line) => line.startsWith(LO_LINE_START)); //we are putting the list on one line. should be element [1], but doing find just in case that ever changes.
   let index = loadOrderSplit.indexOf(LO_LINE);
@@ -2302,12 +2303,12 @@ async function serializeLoadOrder(context, loadOrder) {
     loadOrderName[offset] = `${loadOrderName[offset]} ${line}`;
   }
   let loadOrderJoinedChunks = loadOrderName.join(`\n`);
-  await fs.writeFileAsync(chunksPath, `${CHUNKS_DEFAULT_CONTENT}` + `${loadOrderJoinedChunks}`, {
+  await fsp.writeFile(chunksPath, `${CHUNKS_DEFAULT_CONTENT}` + `${loadOrderJoinedChunks}`, {
     encoding: "utf8",
   });
   //write to modloader.ini file
   let loadOrderOutput = loadOrderSplit.join("\n");
-  return fs.writeFileAsync(loadOrderPath, `${loadOrderOutput}`, { encoding: "utf8" });
+  return fsp.writeFile(loadOrderPath, `${loadOrderOutput}`, { encoding: "utf8" });
 }
 //remove load order list from modloader.ini on purge
 async function clearModOrder(api) {
@@ -2316,13 +2317,13 @@ async function clearModOrder(api) {
     return Promise.reject(new util.NotFound("Game not found"));
   }
   let loadOrderPath = path.join(gameDir, LO_FILE);
-  let loadOrderFile = await fs.readFileAsync(loadOrderPath, { encoding: "utf8" });
+  let loadOrderFile = await fsp.readFile(loadOrderPath, { encoding: "utf8" });
   let loadOrderSplit = loadOrderFile.split("\n");
   let LO_LINE = loadOrderSplit.find((line) => line.startsWith(LO_LINE_START)); //we are putting the list on one line. should be element [1], but doing find just in case that ever changes.
   let index = loadOrderSplit.indexOf(LO_LINE);
   loadOrderSplit[index] = LO_LINE_START; //set the line to the default "blank" text
   let loadOrderOutput = loadOrderSplit.join("\n");
-  return fs.writeFileAsync(loadOrderPath, `${loadOrderOutput}`, { encoding: "utf8" });
+  return fsp.writeFile(loadOrderPath, `${loadOrderOutput}`, { encoding: "utf8" });
 }
 //remove load order list from chunks.txt on purge
 async function clearChunksTxt(api) {
@@ -2331,7 +2332,7 @@ async function clearChunksTxt(api) {
     return Promise.reject(new util.NotFound("Game not found"));
   }
   let chunksPath = path.join(gameDir, CHUNKS_PATH);
-  return fs.writeFileAsync(chunksPath, `${CHUNKS_DEFAULT_CONTENT}`, { encoding: "utf8" });
+  return fsp.writeFile(chunksPath, `${CHUNKS_DEFAULT_CONTENT}`, { encoding: "utf8" });
 }
 
 // GAME REGISTRATION FUNCTIONS ///////////////////////////////////////////////////////////////////////
@@ -2580,7 +2581,7 @@ const trySetPrimaryTool = async (api) => {
 //Setup function - ensure modType Folders are writable /////////////////////
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
-    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+    await vfs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
   }
 }
 
@@ -2803,7 +2804,7 @@ async function psarcSetup(api) {
     try {
       //rename sp-common.psarc
       fs.statSync(path.join(GAME_PATH, PSARCTOOL_PATH, SPCOMPSARC_FILE));
-      fs.renameAsync(
+      fsp.rename(
         path.join(GAME_PATH, PSARCTOOL_PATH, SPCOMPSARC_FILE),
         path.join(GAME_PATH, PSARCTOOL_PATH, BAK_SPCOMPSARC_FILE),
       );
@@ -2814,7 +2815,7 @@ async function psarcSetup(api) {
     try {
       //rename bin.psarc
       fs.statSync(path.join(GAME_PATH, PSARCTOOL_PATH, BINPSARC_FILE));
-      fs.renameAsync(
+      fsp.rename(
         path.join(GAME_PATH, PSARCTOOL_PATH, BINPSARC_FILE),
         path.join(GAME_PATH, PSARCTOOL_PATH, BAK_BINPSARC_FILE),
       );
@@ -2846,7 +2847,7 @@ async function psarcCleanup(api) {
     try {
       //remove extracted .psarc folders
       fs.statSync(path.join(FOLDERS_PATH, folder));
-      fsPromises.rm(path.join(FOLDERS_PATH, folder), { recursive: true });
+      fsp.rm(path.join(FOLDERS_PATH, folder), { recursive: true });
       //log('warn', `Deleted extracted .psarc folder "${folder}"`);
     } catch (err) {
       log("error", `Could not delete extracted .psarc folder "${folder}": ${err}`);
@@ -2858,10 +2859,10 @@ async function psarcCleanup(api) {
     try {
       //make sure vanilla file is not in place - this usually means the game was updated
       fs.statSync(path.join(GAME_PATH, PSARCTOOL_PATH, SPCOMPSARC_FILE));
-      fs.unlinkAsync(path.join(GAME_PATH, PSARCTOOL_PATH, BAK_SPCOMPSARC_FILE));
+      vfs.unlinkAsync(path.join(GAME_PATH, PSARCTOOL_PATH, BAK_SPCOMPSARC_FILE));
     } catch {
       //vanilla file not present, safe to rename
-      await fs.renameAsync(
+      await fsp.rename(
         path.join(GAME_PATH, PSARCTOOL_PATH, BAK_SPCOMPSARC_FILE),
         path.join(GAME_PATH, PSARCTOOL_PATH, SPCOMPSARC_FILE),
       );
@@ -2876,9 +2877,9 @@ async function psarcCleanup(api) {
     try {
       //make sure vanilla file is not in place - this usually means the game was updated
       fs.statSync(path.join(GAME_PATH, PSARCTOOL_PATH, BINPSARC_FILE));
-      fs.unlinkAsync(path.join(GAME_PATH, PSARCTOOL_PATH, BAK_BINPSARC_FILE));
+      vfs.unlinkAsync(path.join(GAME_PATH, PSARCTOOL_PATH, BAK_BINPSARC_FILE));
     } catch {
-      await fs.renameAsync(
+      await fsp.rename(
         path.join(GAME_PATH, PSARCTOOL_PATH, BAK_BINPSARC_FILE),
         path.join(GAME_PATH, PSARCTOOL_PATH, BINPSARC_FILE),
       );
@@ -2919,7 +2920,7 @@ async function resolveGameVersion(gamePath) {
     // use appxmanifest.xml for Xbox version
     try {
       //try to parse appxmanifest.xml
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
+      const appManifest = await fsp.readFile(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
@@ -3095,7 +3096,7 @@ async function writeCfgDeploy(api) {
   const AUTOEXEC_CFG_PATH = path.join(GAME_PATH, CONFIG_PATH, AUTOEXEC_CFG_FILE);
   const CFG_PATH = path.join(GAME_PATH, CONFIG_PATH);
 
-  let EXISTING_CONTENT = await fs.readFileAsync(AUTOEXEC_CFG_PATH, { encoding: "utf8" });
+  let EXISTING_CONTENT = await fsp.readFile(AUTOEXEC_CFG_PATH, { encoding: "utf8" });
   let EXISTING_CONTENT_ARRAY = EXISTING_CONTENT.split("\n");
   EXISTING_CONTENT_ARRAY = EXISTING_CONTENT_ARRAY.filter((line) => !line.startsWith("exec"));
   EXISTING_CONTENT_ARRAY = EXISTING_CONTENT_ARRAY.filter((line) => line !== ``);
@@ -3105,14 +3106,14 @@ async function writeCfgDeploy(api) {
   const CFG_EXT_FILTER = CONFIG_EXTS;
   const CFG_FILE_FILTER = [AUTOEXEC_CFG_FILE, "candidate.cfg", "default.cfg", "disclayout.cfg"];
   try {
-    modFiles = await fs.readdirAsync(CFG_PATH);
+    modFiles = await fsp.readdir(CFG_PATH);
     modFiles = modFiles.filter((file) => CFG_EXT_FILTER.includes(path.extname(file).toLowerCase()));
     modFiles = modFiles.filter((file) => !CFG_FILE_FILTER.includes(path.basename(file)));
     modFiles = modFiles.map((file) => `exec ${file}`);
   } catch {
     return Promise.reject(new Error("Failed to read Data folder"));
   }
-  return fs.writeFileAsync(AUTOEXEC_CFG_PATH, `${EXISTING_CONTENT + "\n" + modFiles.join("\n")}`, {
+  return fsp.writeFile(AUTOEXEC_CFG_PATH, `${EXISTING_CONTENT + "\n" + modFiles.join("\n")}`, {
     encoding: "utf8",
   });
 } //*/
@@ -3124,13 +3125,13 @@ async function writeCfgPurge(api) {
   }
   const AUTOEXEC_CFG_PATH = path.join(GAME_PATH, CONFIG_PATH, AUTOEXEC_CFG_FILE);
 
-  let EXISTING_CONTENT = await fs.readFileAsync(AUTOEXEC_CFG_PATH, { encoding: "utf8" });
+  let EXISTING_CONTENT = await fsp.readFile(AUTOEXEC_CFG_PATH, { encoding: "utf8" });
   let EXISTING_CONTENT_ARRAY = EXISTING_CONTENT.split("\n");
   EXISTING_CONTENT_ARRAY = EXISTING_CONTENT_ARRAY.filter((line) => !line.startsWith("exec"));
   EXISTING_CONTENT_ARRAY = EXISTING_CONTENT_ARRAY.filter((line) => line !== ``);
   EXISTING_CONTENT = EXISTING_CONTENT_ARRAY.join("\n");
 
-  return fs.writeFileAsync(AUTOEXEC_CFG_PATH, EXISTING_CONTENT, { encoding: "utf8" });
+  return fsp.writeFile(AUTOEXEC_CFG_PATH, EXISTING_CONTENT, { encoding: "utf8" });
 } //*/
 
 // Did deploy/purge boilerplate //////////////////////////////////////////////////////
@@ -3180,14 +3181,14 @@ async function updateJsonFiles(api) {
       fs.statSync(path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE));
       JSONFILES_JSON = JSON.parse(fs.readFileSync(path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE)));
     } catch {
-      await fs.writeFileAsync(
+      await fsp.writeFile(
         path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE),
         `${JSON.stringify(DEFAULT_JSON, null, 2)}`,
         { encoding: "utf8" },
       );
       JSONFILES_JSON = JSON.parse(fs.readFileSync(path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE)));
     } //*/
-    const JSON_FOLDER_FILES = await fsPromises.readdir(path.join(GAME_PATH, JSON_PATH), {
+    const JSON_FOLDER_FILES = await fsp.readdir(path.join(GAME_PATH, JSON_PATH), {
       recursive: true,
     });
     const JSON_FILES = JSON_FOLDER_FILES.filter(
@@ -3199,7 +3200,7 @@ async function updateJsonFiles(api) {
     );
     const JSON_FILE_NAMES = JSON_FILES.map((file) => path.basename(file, path.extname(file)));
     JSONFILES_JSON[JSONFILES_KEY] = JSON_FILE_NAMES;
-    await fs.writeFileAsync(
+    await fsp.writeFile(
       path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE),
       `${JSON.stringify(JSONFILES_JSON, null, 2)}`,
       { encoding: "utf8" },
@@ -3222,7 +3223,7 @@ async function resetJsonFiles(api) {
       fs.statSync(path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE));
       JSONFILES_JSON = JSON.parse(fs.readFileSync(path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE)));
     } catch {
-      await fs.writeFileAsync(
+      await fsp.writeFile(
         path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE),
         `${JSON.stringify(DEFAULT_JSON, null, 2)}`,
         { encoding: "utf8" },
@@ -3230,7 +3231,7 @@ async function resetJsonFiles(api) {
       JSONFILES_JSON = JSON.parse(fs.readFileSync(path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE)));
     } //*/
     JSONFILES_JSON[JSONFILES_KEY] = [];
-    await fs.writeFileAsync(
+    await fsp.writeFile(
       path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE),
       `${JSON.stringify(JSONFILES_JSON, null, 2)}`,
       { encoding: "utf8" },

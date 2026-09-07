@@ -1,4 +1,6 @@
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const GAME_ID = "placeholder";
 const api = require("vortex-api"); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
@@ -211,7 +213,7 @@ async function resolveVersionByFile(api, requirement) {
   for (const file of matches) {
     const archivePath = path.join(downloadPath, file.localPath);
     try {
-      const stat = await fs.statAsync(archivePath);
+      const stat = await fsp.stat(archivePath);
       if (stat.mtime.getTime() > newestTime) {
         newestTime = stat.mtime.getTime();
         newest = archivePath;
@@ -232,7 +234,7 @@ async function resolveVersionByFile(api, requirement) {
         // NOTE: requirement.versionFile may live in a subfolder of the archive ->
         // adjust this join per game if so.
         const versionFilePath = path.join(tmpPath, requirement.versionFile);
-        const raw = await fs.readFileAsync(versionFilePath, { encoding: "utf8" });
+        const raw = await fsp.readFile(versionFilePath, { encoding: "utf8" });
         // *** PER-GAME CUSTOMIZATION ***
         // version.txt contents differ per mod - parse the version string out of `raw`.
         // examples:
