@@ -19,10 +19,11 @@ module.exports = defineConfig([
       // rebound, `fs` is native node fs and the vortex-api wrapper lives under `vfs`,
       // kept only for ensureDirWritableAsync / unlinkAsync / the fd-based calls. Any
       // other wrapper member has a native replacement - reach for that instead.
-      // fsExtra is a Vortex-bundled dep, not an extension dep; its two used members
-      // are native too. Both groups land at "warn"; flip to "error" in W7.
+      // fsExtra was a Vortex-bundled dep, not an extension dep; it is retired and its
+      // two used members map to native fs. The migration is complete, so this is at
+      // "error" - new code must not reach for either wrapper.
       "no-restricted-properties": [
-        "warn",
+        "error",
         { object: "vfs", property: "statSync", message: "use native fs.statSync (fs is node fs)" },
         { object: "vfs", property: "statAsync", message: "use native fsp.stat" },
         { object: "vfs", property: "readdirSync", message: "use native fs.readdirSync" },

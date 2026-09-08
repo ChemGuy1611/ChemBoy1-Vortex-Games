@@ -42,7 +42,9 @@ Also folds partial native imports into the rebind:
   - const { createWriteStream } = require('fs')   -> call sites become fs.createWriteStream
   - const fsNative = require('fs')                -> folded into const fs = require('fs')
   - const fsPromises = require('fs/promises')     -> renamed to fsp (fs.promises)
-`fs-extra` is left untouched here; its retirement is a separate later step.
+`fs-extra` is not touched here. It was retired separately (plan W7 step 1):
+`fsExtra.unlinkSync`/`copyFileSync` are native `fs.*` once `fs` is rebound, so the
+calls were renamed and the `require("fs-extra")` line dropped from every extension.
 Inserted code follows the quote style the file already uses for require(), so the
 output survives the repo's oxfmt formatting unchanged.
 

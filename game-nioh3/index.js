@@ -14,7 +14,6 @@ const path = require("path");
 const template = require("string-template");
 const { parseStringPromise } = require("xml2js");
 const { load } = require("js-yaml");
-//const fsExtra = require('fs-extra');
 //const winapi = require('winapi-bindings');
 
 /*const USER_HOME = util.getVortexPath("home");

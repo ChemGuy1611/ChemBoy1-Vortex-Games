@@ -15,7 +15,6 @@ const fsp = fs.promises;
 const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
-const fsExtra = require("fs-extra");
 const { parseStringPromise } = require("xml2js");
 const winapi = require("winapi-bindings");
 
@@ -768,7 +767,7 @@ function getCustomFolder(api, game) {
     CUSTOM_PATH = CUSTOM_PATH_BEPINEX;
     try {
       fs.statSync(path.join(GAME_PATH, CUSTOM_DEPLOYFILE_MELON));
-      fsExtra.unlinkSync(path.join(GAME_PATH, CUSTOM_DEPLOYFILE_MELON));
+      fs.unlinkSync(path.join(GAME_PATH, CUSTOM_DEPLOYFILE_MELON));
     } catch (err) {
       //log('warn', `Failed to remove ${CUSTOMCHAR_DEPLOYFILE_MELON}: ${err.message}`);
     }
@@ -778,7 +777,7 @@ function getCustomFolder(api, game) {
     CUSTOM_PATH = CUSTOM_PATH_MELON;
     try {
       fs.statSync(path.join(GAME_PATH, CUSTOM_DEPLOYFILE_BEPINEX));
-      fsExtra.unlinkSync(path.join(GAME_PATH, CUSTOM_DEPLOYFILE_BEPINEX));
+      fs.unlinkSync(path.join(GAME_PATH, CUSTOM_DEPLOYFILE_BEPINEX));
     } catch {
       //log('warn', `Failed to remove ${CUSTOMCHAR_DEPLOYFILE_BEPINEX}: ${err.message}`);
     }

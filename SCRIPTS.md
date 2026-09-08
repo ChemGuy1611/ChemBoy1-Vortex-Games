@@ -1286,7 +1286,7 @@ Import convention A: after a file is rewritten, `fs` means native node fs. The v
 
 Method mapping: `statAsync`→`fsp.stat`, `readdirAsync`→`fsp.readdir`, `readFileAsync`→`fsp.readFile`, `writeFileAsync`→`fsp.writeFile`, `renameAsync`→`fsp.rename`, `symlinkAsync`→`fsp.symlink`, `ensureDirSync`→`fs.mkdirSync(p, { recursive: true })`, `ensureDirAsync`→`fsp.mkdir(p, { recursive: true })`, `removeAsync`→`fsp.rm(p, { recursive: true, force: true })`, `copyAsync`→`fsp.cp(s, d, { recursive: true })` (a trailing `{ overwrite: true }` is dropped; a dangling comma on a multi-line 2-arg call is absorbed rather than skipped), `ensureFileAsync`→a local `ensureFileAsync()` helper injected once per file before the first top-level function. `statSync`/`readdirSync`/`readFileSync`/`writeFileSync` are unchanged — they are native once `fs` is rebound. `moveAsync` is not scripted; it is reported for hand migration (the only occurrence in the repo is commented out).
 
-Also folds partial native imports into the rebind: `const { createWriteStream } = require('fs')` (call sites become `fs.createWriteStream`), `const fsNative = require('fs')`, and `const fsPromises = require('fs/promises')` (renamed to `fsp` = `fs.promises`; the commented scaffold line is dropped when `fsp` is added). `fs-extra` is left untouched — its retirement is a separate later step.
+Also folds partial native imports into the rebind: `const { createWriteStream } = require('fs')` (call sites become `fs.createWriteStream`), `const fsNative = require('fs')`, and `const fsPromises = require('fs/promises')` (renamed to `fsp` = `fs.promises`; the commented scaffold line is dropped when `fsp` is added). `fs-extra` is not touched by this script; it was retired separately (W7 step 1) — `fsExtra.unlinkSync`/`copyFileSync` became native `fs.*` and the `require("fs-extra")` line was dropped from every extension.
 
 A file that needs `fsp` always gets the `const fs = require("fs");` binding too, even when it calls no sync method and drops the vortex-api import entirely — `const fsp = fs.promises;` dereferences `fs`, and a missing binding there is `fs is not defined` at load, which `node --check` accepts as valid syntax. Run `npx eslint` on the touched set after every wave; `lint_extensions.js` only walks `game-*`/`template-*` `index.js` and will not see a broken module under `resources/`.
 
@@ -1298,7 +1298,7 @@ Runs a **cleanup pass** on a file that already carries the migration markers (`f
 
 Skips (reported, never written) any file that binds `fs` to something other than `require('fs')` — e.g. the `const fs = require('vortex-api').fs` DUMMY-placeholder line in `resources/browsers/template_*_browser.js` — plus `resources/snippets.js` (hand-fixed). Idempotent: re-running produces no further change.
 
-The ESLint guard for this migration lives in `eslint.config.js` as a `no-restricted-properties` block restricting the 17 migrated `vfs.<method>` names and `fsExtra.unlinkSync`/`copyFileSync`, at `warn` (flipped to `error` in the final wave).
+The ESLint guard for this migration lives in `eslint.config.js` as a `no-restricted-properties` block restricting the 17 migrated `vfs.<method>` names and `fsExtra.unlinkSync`/`copyFileSync`. It is at `error` — the migration is complete and new code must reach for native `fs` instead of either wrapper.
 
 ### migrate_fs.py — Usage
 

@@ -22,7 +22,6 @@ const {
   testRequirementVersion,
 } = require("./downloader");
 //const winapi = require('winapi-bindings');
-//const fsExtra = require('fs-extra');
 
 /*const USER_HOME = util.getVortexPath("home");
 const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow'); //*/

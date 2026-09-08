@@ -9,7 +9,6 @@ const { parseStringPromise } = require("xml2js");
 const winapi = require("winapi-bindings");
 const turbowalk = require("turbowalk");
 const Bluebird = require("bluebird"); //avoid using as it is deprecated
-const fsExtra = require("fs-extra");
 const exeVersion = require("exe-version");
 const semver = require("semver");
 

@@ -13,7 +13,6 @@ const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 //const { parseStringPromise } = require('xml2js');
-//const fsExtra = require('fs-extra');
 const winapi = require("winapi-bindings");
 const { registerModDbBrowser, onceModDbBrowser } = require("./moddb_browser");
 

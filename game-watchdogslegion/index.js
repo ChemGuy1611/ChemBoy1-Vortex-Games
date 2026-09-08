@@ -15,7 +15,6 @@ const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const winapi = require("winapi-bindings");
-//const fsExtra = require('fs-extra');
 
 const DOCUMENTS = util.getVortexPath("documents");
 
