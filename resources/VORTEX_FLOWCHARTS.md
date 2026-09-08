@@ -343,7 +343,7 @@ flowchart TD
     N --> SG["GameModeManager.setupGameMode(newGameId)"]
     SG --> SG1["assertToolDir + fs.statAsync(gameDiscovery.path)<br/>confirm the folder still exists"]
     SG1 --> SG2["game.getInstalledVersion(gameDiscovery)<br/>called BEFORE setup, so the gameversion-hash ext<br/>can read files before setup may lock them"]
-    SG2 --> SG3["game.setup(gameDiscovery)<br/>typically fs.ensureDirWritableAsync on staging,<br/>requirement downloads, etc."]
+    SG2 --> SG3["game.setup(gameDiscovery)<br/>typically vfs.ensureDirWritableAsync on staging,<br/>requirement downloads, etc."]
 
     SG3 -- "throws" --> FAIL{"error class?"}
     FAIL -- "UserCanceled / ProcessCanceled" --> F1["silent — logged only"]

@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [1.3.1] - 2026-09-08
+
+- Fixed: the "Install Mods with SnakeBite" and "Restore Game Files" buttons on the Mods toolbar showed a generic icon in Vortex 2.7. They now use standard toolbar icons
+
 ## [1.3.0] - 2026-08-30
 
 - Added: two settings under Settings > Mods, both off by default. One installs mods with SnakeBite automatically every time mods are deployed; the other removes them from the game when purging

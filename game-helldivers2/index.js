@@ -7,7 +7,9 @@ Date: 2026-09-06
 /////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log, MainPage } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log, MainPage } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const React = require("react");
@@ -186,7 +188,7 @@ function statCheckSync(gamePath, file) {
 
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -196,10 +198,10 @@ async function statCheckAsync(gamePath, file) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -289,7 +291,7 @@ function getDataFolder() {
 
 async function readJsonFile(filePath, fallback) {
   try {
-    const data = await fs.readFileAsync(filePath, { encoding: "utf8" });
+    const data = await fsp.readFile(filePath, { encoding: "utf8" });
     return JSON.parse(data);
   } catch (err) {
     if (err.code !== "ENOENT") {
@@ -301,8 +303,8 @@ async function readJsonFile(filePath, fallback) {
 
 async function writeJsonFile(filePath, data) {
   try {
-    await fs.ensureDirWritableAsync(path.dirname(filePath));
-    await fs.writeFileAsync(filePath, JSON.stringify(data, undefined, 2), { encoding: "utf8" });
+    await vfs.ensureDirWritableAsync(path.dirname(filePath));
+    await fsp.writeFile(filePath, JSON.stringify(data, undefined, 2), { encoding: "utf8" });
   } catch (err) {
     log("warn", `[${GAME_ID}] could not write ${filePath}: ${err.message}`);
   }
@@ -355,7 +357,7 @@ async function scanBaseArchives(gamePath) {
   const dataPath = path.join(gamePath, "data");
   let entries = [];
   try {
-    entries = await fs.readdirAsync(dataPath);
+    entries = await fsp.readdir(dataPath);
   } catch (err) {
     log("warn", `[${GAME_ID}] could not read ${dataPath}: ${err.message}`);
     return result;
@@ -610,7 +612,7 @@ async function readManifest(files, destinationPath) {
   );
   if (entry === undefined) return undefined;
   try {
-    const raw = await fs.readFileAsync(path.join(destinationPath, entry), { encoding: "utf8" });
+    const raw = await fsp.readFile(path.join(destinationPath, entry), { encoding: "utf8" });
     //JS counts a byte-order mark as whitespace, so trimming is enough to survive one.
     return { file: entry, data: JSON.parse(raw.trim()) };
   } catch (err) {
@@ -1556,7 +1558,7 @@ const mergeOperation = async (filePath, mergePath, context) => {
   const targetFileName = `${parsed.hash}.patch_${assigned}${parsed.suffix}`;
   const mergeTarget = path.join(mergePath, targetFileName);
 
-  await fs.ensureDirWritableAsync(path.dirname(mergeTarget));
+  await vfs.ensureDirWritableAsync(path.dirname(mergeTarget));
   try {
     await util.copyFileAtomic(filePath, mergeTarget);
   } catch (err) {
@@ -1591,7 +1593,7 @@ async function verifyMergedOutput(api, plan) {
 
   let entries = [];
   try {
-    entries = await fs.readdirAsync(mergedPath);
+    entries = await fsp.readdir(mergedPath);
   } catch (err) {
     if (err.code === "ENOENT") return; //nothing was merged, nothing to check
     log("warn", `[${GAME_ID}] could not read ${mergedPath}: ${err.message}`);
@@ -1739,8 +1741,8 @@ async function setup(discovery, api, gameSpec) {
   await ensureBaseArchives(api);
   /*const isAutoDeployOn = api.getState().settings.automation.deploy;
   if (isAutoDeployOn) autoDeployNotification(api); //*/
-  await fs.ensureDirWritableAsync(path.join(GAME_PATH, BINARIES_PATH));
-  return fs.ensureDirWritableAsync(path.join(GAME_PATH, DATA_PATH));
+  await vfs.ensureDirWritableAsync(path.join(GAME_PATH, BINARIES_PATH));
+  return vfs.ensureDirWritableAsync(path.join(GAME_PATH, DATA_PATH));
 }
 
 //Sound patches used to be a mod type of their own, installed unmerged and numbered by hand. They are

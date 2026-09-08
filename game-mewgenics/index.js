@@ -7,12 +7,13 @@ Date: 2026-09-06
 ///////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const { parseStringPromise } = require("xml2js");
 const React = require("react");
-//const fsPromises = require('fs/promises'); //.rm() for recursive folder deletion
 //const fsExtra = require('fs-extra');
 //const winapi = require('winapi-bindings');
 
@@ -245,6 +246,13 @@ const spec = {
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
+// vortex-api's fs.ensureFileAsync is deprecated; this is the node equivalent.
+async function ensureFileAsync(filePath) {
+  await fsp.mkdir(path.dirname(filePath), { recursive: true });
+  const handle = await fsp.open(filePath, "a");
+  await handle.close();
+}
+
 function isDir(folder, file) {
   const stats = fs.statSync(path.join(folder, file));
   return stats.isDirectory();
@@ -260,7 +268,7 @@ function statCheckSync(gamePath, file) {
 }
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -380,10 +388,10 @@ async function setGameVersion(gamePath) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -969,8 +977,8 @@ async function deserializeLoadOrder(context) {
   let loadOrderPath = path.join(GAME_PATH, LO_FILE_PATH);
   //The load order page can mount before setup has created the file, so make sure it exists
   //before reading it. Also creates the mods folder, which the read below depends on.
-  await fs.ensureFileAsync(loadOrderPath);
-  let loadOrderFile = await fs.readFileAsync(loadOrderPath, { encoding: "utf8" });
+  await ensureFileAsync(loadOrderPath);
+  let loadOrderFile = await fsp.readFile(loadOrderPath, { encoding: "utf8" });
   let LO_MOD_ARRAY = loadOrderFile.split("\n");
   if (debug) {
     log("warn", `LO_MOD_ARRAY: ${LO_MOD_ARRAY.join(", ")}`);
@@ -979,7 +987,7 @@ async function deserializeLoadOrder(context) {
   //Get all mod files from mods folder
   let modFolders = [];
   try {
-    modFolders = await fs.readdirAsync(modFolderPath);
+    modFolders = await fsp.readdir(modFolderPath);
     modFolders = modFolders
       .filter((file) => isDir(modFolderPath, file))
       .filter((file) => path.basename(file) !== "modexample1");
@@ -990,8 +998,8 @@ async function deserializeLoadOrder(context) {
 
   //Determine if mod is managed by Vortex (async version)
   const isVortexManaged = async (modId) => {
-    return fs
-      .statAsync(path.join(modFolderPath, modId, `__folder_managed_by_vortex`))
+    return fsp
+      .stat(path.join(modFolderPath, modId, `__folder_managed_by_vortex`))
       .then(() => true)
       .catch(() => false);
   };
@@ -1082,7 +1090,7 @@ echo Using parameters: ${PARAMETERS.join(" ")}
 "${path.join(GAME_PATH, EXEC)}" ${PARAMETERS.join(" ")}
 exit`; //*/
   //const contents = `"${path.join(GAME_PATH, EXEC)}" ${param1} ${param2}`;
-  await fs.writeFileAsync(
+  await fsp.writeFile(
     //write to .bat file
     path.join(GAME_PATH, LAUNCH_BAT),
     contents,
@@ -1112,7 +1120,7 @@ async function serializeLoadOrder(context, loadOrder) {
 
   //write to modlist.txt file
   let loadOrderOutput = loadOrderMapped.join("\n");
-  return fs.writeFileAsync(loadOrderPath, loadOrderOutput, { encoding: "utf8" });
+  return fsp.writeFile(loadOrderPath, loadOrderOutput, { encoding: "utf8" });
 }
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
@@ -1164,7 +1172,7 @@ async function resolveGameVersion(gamePath) {
   if (GAME_VERSION === "xbox") {
     // use appxmanifest.xml for Xbox version
     try {
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
+      const appManifest = await fsp.readFile(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
@@ -1273,7 +1281,7 @@ function runModManager(api) {
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
-    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+    await vfs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
   }
 }
 
@@ -1295,18 +1303,18 @@ async function setup(discovery, api, gameSpec) {
     await downloadLoader(api, gameSpec);
   } //*/
   //ensure LO file
-  await fs.ensureFileAsync(path.join(GAME_PATH, LO_FILE_PATH), { encoding: "utf8" });
+  await ensureFileAsync(path.join(GAME_PATH, LO_FILE_PATH), { encoding: "utf8" });
   if (hasLoader) {
     //set paths in config.json
     const configPath = path.join(GAME_PATH, "config.json");
     try {
-      await fs.ensureFileAsync(configPath, { encoding: "utf8" });
-      const contents = await fs.readFileAsync(configPath, "utf8");
+      await ensureFileAsync(configPath, { encoding: "utf8" });
+      const contents = await fsp.readFile(configPath, "utf8");
       const json = JSON.parse(contents);
       json.game_install_dir = GAME_PATH;
       json.mod_folder = path.join(GAME_PATH, MOD_PATH);
       const configOutput = JSON.stringify(json, null, 2);
-      await fs.writeFileAsync(configPath, configOutput, { encoding: "utf8" });
+      await fsp.writeFile(configPath, configOutput, { encoding: "utf8" });
     } catch (err) {
       log("error", `Could not write paths to config.json file: ${err}`);
     }

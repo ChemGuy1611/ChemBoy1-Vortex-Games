@@ -2201,8 +2201,8 @@ async function deserializeUe4ss(api) {
 
   //Determine if mod is managed by Vortex (async version)
   const isVortexManaged = async (modId) => {
-    return fs
-      .statAsync(path.join(modFolderPath, modId, `__folder_managed_by_vortex`))
+    return fsp
+      .stat(path.join(modFolderPath, modId, `__folder_managed_by_vortex`))
       .then(() => true)
       .catch(() => false);
   };

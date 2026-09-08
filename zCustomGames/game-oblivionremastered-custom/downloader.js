@@ -23,9 +23,10 @@
 
 const path = require("path");
 const semver = require("semver");
-const { createWriteStream } = require("fs"); //node's fs directly - vortex-api's createWriteStream re-export is deprecated
 const { finished } = require("stream/promises");
-const { actions, fs, log, selectors, util } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, log, selectors, util } = require("vortex-api");
 
 // --- common ---------------------------------------------------------------
 const NOTIF_ID_REQUIREMENTS = "vortex-downloader-requirements-download-notification";
@@ -396,7 +397,7 @@ async function download(api, requirements, force) {
         } finally {
           // import-downloads moves the file into the download folder on success; this only
           // removes it when the run did not get that far, so a failure leaves no stray temp file.
-          await fs.removeAsync(tempPath).catch(() => null);
+          await fsp.rm(tempPath, { recursive: true, force: true }).catch(() => null);
         }
       } catch (err) {
         // Keep going: one unreachable repo or broken archive must not silently drop every
@@ -709,7 +710,7 @@ async function resolveLatestAsset(api, requirement) {
 //Received an instance of ReadableStream").
 async function streamToFile(body, targetPath) {
   const reader = body.getReader();
-  const out = createWriteStream(targetPath);
+  const out = fs.createWriteStream(targetPath);
   try {
     for (;;) {
       const { done, value } = await reader.read();
@@ -797,7 +798,7 @@ function directCopyMarkerPath(requirement) {
 
 async function readDirectCopyMarker(requirement) {
   try {
-    const raw = await fs.readFileAsync(directCopyMarkerPath(requirement), { encoding: "utf8" });
+    const raw = await fsp.readFile(directCopyMarkerPath(requirement), { encoding: "utf8" });
     return JSON.parse(raw);
   } catch {
     return undefined; //never installed, hand-deleted, or unreadable - all mean "re-resolve"
@@ -826,7 +827,7 @@ async function isDirectCopyInstalled(api, requirement) {
     return true;
   }
   try {
-    await fs.statAsync(requirement.directCopyPath);
+    await fsp.stat(requirement.directCopyPath);
     return true;
   } catch {
     return false;
@@ -849,13 +850,13 @@ async function downloadDirectCopy(api, requirement, force) {
     return false;
   }
   try {
-    await fs.ensureDirWritableAsync(path.dirname(requirement.directCopyPath));
+    await vfs.ensureDirWritableAsync(path.dirname(requirement.directCopyPath));
     await doDownload(asset.browser_download_url, requirement.directCopyPath);
     const marker = {
       version: latestAssetVersion(requirement, asset),
       assetDate: asset.updated_at ?? asset.created_at,
     };
-    await fs.writeFileAsync(directCopyMarkerPath(requirement), JSON.stringify(marker), {
+    await fsp.writeFile(directCopyMarkerPath(requirement), JSON.stringify(marker), {
       encoding: "utf8",
     });
     return true;
@@ -892,7 +893,7 @@ async function removeLegacyDirectCopy(requirement) {
   }
   for (const target of [requirement.directCopyPath, directCopyMarkerPath(requirement)]) {
     try {
-      await fs.removeAsync(target);
+      await fsp.rm(target, { recursive: true, force: true });
       log("info", `Removed legacy direct copy ${target} - now managed as a mod`);
     } catch {
       //never installed in the old mode, or already gone - both fine
@@ -939,11 +940,11 @@ async function installAssetAsMod(api, requirement, asset) {
   } else {
     // Our own folder, and it only ever holds the asset - clear it so an asset whose name carries
     // the version does not leave the previous release behind, still deploying.
-    for (const entry of await fs.readdirAsync(modPath).catch(() => [])) {
-      await fs.removeAsync(path.join(modPath, entry)).catch(() => null);
+    for (const entry of await fsp.readdir(modPath).catch(() => [])) {
+      await fsp.rm(path.join(modPath, entry), { recursive: true, force: true }).catch(() => null);
     }
   }
-  await fs.ensureDirWritableAsync(modPath);
+  await vfs.ensureDirWritableAsync(modPath);
   await doDownload(asset.browser_download_url, path.join(modPath, asset.name));
   const attributes = {
     installTime: new Date(),

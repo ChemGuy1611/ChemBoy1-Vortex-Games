@@ -7,7 +7,9 @@ Date: 2026-09-06
 ///////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const React = require("react");
@@ -368,6 +370,14 @@ const tools = [
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
 //Set mod type priorities
+
+// vortex-api's fs.ensureFileAsync is deprecated; this is the node equivalent.
+async function ensureFileAsync(filePath) {
+  await fsp.mkdir(path.dirname(filePath), { recursive: true });
+  const handle = await fsp.open(filePath, "a");
+  await handle.close();
+}
+
 function isDir(folder, file) {
   const stats = fs.statSync(path.join(folder, file));
   return stats.isDirectory();
@@ -376,10 +386,10 @@ function isDir(folder, file) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -480,7 +490,7 @@ function statCheckSync(gamePath, file) {
 }
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -1270,7 +1280,7 @@ async function clearModOrder(api) {
     return Promise.reject(new util.NotFound("Game not found"));
   }
   let loadOrderPath = path.join(gameDir, LO_FILE_PATH);
-  return fs.writeFileAsync(loadOrderPath, LO_FILE_STARTUP, { encoding: "utf8" });
+  return fsp.writeFile(loadOrderPath, LO_FILE_STARTUP, { encoding: "utf8" });
 }
 
 //Reordering is ignored while a mod update is in flight: the deserializers below freeze the stored
@@ -1316,8 +1326,8 @@ async function deserializeLoadOrder(context) {
   let loadOrderPath = path.join(gameDir, LO_FILE_PATH);
   //The load order page can mount before setup has created the file, so make sure it exists
   //before reading it.
-  await fs.ensureFileAsync(loadOrderPath);
-  let loadOrderFile = await fs.readFileAsync(loadOrderPath, { encoding: "utf8" });
+  await ensureFileAsync(loadOrderPath);
+  let loadOrderFile = await fsp.readFile(loadOrderPath, { encoding: "utf8" });
   let loadOrderSplit = loadOrderFile.split(LO_FILE_SPLITSTRING);
   let MOD_ENTRIES = loadOrderSplit.slice(1);
   MOD_ENTRIES = MOD_ENTRIES.map((entry) => entry.split("\n")[0]);
@@ -1327,7 +1337,7 @@ async function deserializeLoadOrder(context) {
   //Get all .arch06 files from mods folder
   let modFiles = [];
   try {
-    modFiles = await fs.readdirAsync(modFolderPath);
+    modFiles = await fsp.readdir(modFolderPath);
     modFiles = modFiles.filter((file) => MOD_EXTS.includes(path.extname(file).toLowerCase()));
     modFiles = modFiles.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
   } catch {
@@ -1427,14 +1437,14 @@ async function serializeLoadOrder(context, loadOrder) {
 
   //write to default.archcfg file
   let loadOrderOutput = `${LO_FILE_STARTUP}` + `\n` + `${loadOrderJoined}`;
-  return fs.writeFileAsync(loadOrderPath, `${loadOrderOutput}`, { encoding: "utf8" });
+  return fsp.writeFile(loadOrderPath, `${loadOrderOutput}`, { encoding: "utf8" });
 }
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
-    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+    await vfs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
   }
 }
 
@@ -1451,11 +1461,11 @@ async function setup(discovery, api, gameSpec) {
   //await fs.ensureDirWritableAsync(CONFIG_PATH);
   try {
     //read contents of LO file
-    const LO_FILE_READ = await fs.readFileAsync(path.join(GAME_PATH, LO_FILE_PATH), "utf8");
+    const LO_FILE_READ = await fsp.readFile(path.join(GAME_PATH, LO_FILE_PATH), "utf8");
     LO_FILE_STARTUP = LO_FILE_READ.split(LO_FILE_SPLITSTRING)[0];
   } catch (err) {
     //write the file if it doesn't exist
-    await fs.writeFileAsync(path.join(GAME_PATH, LO_FILE_PATH), LO_FILE_STARTUP, "utf8");
+    await fsp.writeFile(path.join(GAME_PATH, LO_FILE_PATH), LO_FILE_STARTUP, "utf8");
     //api.showErrorNotification('Failed to read LO file. Please verify your game files.', err, { allowReport: false });
   }
   dllLoaderInstalled = isDllLoaderInstalled(api, gameSpec);

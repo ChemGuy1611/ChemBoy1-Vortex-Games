@@ -4,8 +4,9 @@
 
 - None Planned
 
-## [0.3.1] - 2026-07-29
+## [0.3.1] - 2026-09-08
 
+- Fixed: The loose file loader folder is now created correctly during setup.
 - Changed: Removed the unused load order code. The load order page was never registered for this game, so mod installation and deployment are unchanged.
 
 ## [0.3.0] - 2026-03-10

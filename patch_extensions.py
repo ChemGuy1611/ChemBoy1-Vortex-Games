@@ -369,33 +369,21 @@ _UTILITY_FUNCTIONS = [
 # Matches `const fs = require('fs')` / `require("node:fs")` - the marker that a file has
 # been through migrate_fs.py, where `fs` means native node fs and the vortex-api wrapper
 # has been rebound to `vfs`. An un-migrated extension binds `fs` to the wrapper instead.
-_NATIVE_FS_DECL_RE = re.compile(
-    r"(?:const|let)\s+fs\s*=\s*require\(\s*['\"](?:node:)?fs['\"]\s*\)"
-)
 _FSP_DECL_RE = re.compile(r"(?:const|let)\s+fsp\s*=\s*fs\.promises")
 
 
 def _fs_idiom(block, src):
-    """Adapt an injected utility body to the fs convention the target file uses.
+    """Adapt an injected utility body to the target file's fs bindings.
 
     Bodies in _UTILITY_FUNCTIONS are written in the migrated idiom: `fs` is native
-    node fs and `fsp` is `fs.promises`. Three cases:
-
-      - not migrated  -> rewrite the async calls back to the vortex-api wrapper
-                         (`fs.statAsync`, `fs.readdirAsync`), which is what `fs`
-                         still means in that file.
-      - migrated      -> use as-is.
-      - migrated but with no `fsp` binding (the file had no async fs use before)
-                      -> fall back to `fs.promises.`, always available off the
-                         native binding and needing no new import.
-
-    `fs.statSync` in isDir/statCheckSync is left alone - the wrapper and native fs
-    both export it, so it is correct either way. Once the node-fs migration finishes
-    (plan node-fs-migration-copper-crucible), the un-migrated branch is dead.
+    node fs and `fsp` is `fs.promises`. The node-fs migration
+    (node-fs-migration-copper-crucible) is complete, so every extension file carries
+    `const fs = require("fs")`. The one adaptation still needed: a file that had no
+    async fs use before the migration carries no `fsp` binding, so fall back to
+    `fs.promises.`, which is always available off the native binding and needs no
+    new import. `fs.statSync` in isDir/statCheckSync is left alone - correct off the
+    native binding.
     """
-    if not _NATIVE_FS_DECL_RE.search(src):
-        return (block.replace("await fsp.stat(", "await fs.statAsync(")
-                     .replace("await fsp.readdir(", "await fs.readdirAsync("))
     if not _FSP_DECL_RE.search(src):
         return block.replace("fsp.", "fs.promises.")
     return block

@@ -7,7 +7,9 @@ Date: 2026-09-02
 ////////////////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const winapi = require("winapi-bindings");
@@ -18,7 +20,6 @@ const {
   resolveVersionByPattern,
   testRequirementVersion,
 } = require("./downloader");
-const fsPromises = require("fs/promises");
 
 //Specify all the information about the game
 const EAAPP_ID = "";
@@ -251,7 +252,7 @@ function statCheckSync(gamePath, file) {
 }
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -354,10 +355,10 @@ function getExecutable(discoveryPath) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -427,7 +428,7 @@ async function isSdkPatchInstalled(api, spec) {
   let test = Object.keys(mods).some((id) => mods[id]?.type === SDKPATCH_ID);
   if (!test) {
     try {
-      await fs.statAsync(path.join(GAME_PATH, SDKPATCH_PATH, SDKPATCH_FILE));
+      await fsp.stat(path.join(GAME_PATH, SDKPATCH_PATH, SDKPATCH_FILE));
       test = true;
     } catch {
       test = false;
@@ -598,16 +599,16 @@ async function downloadSdkPatch(api, gameSpec, check) {
                 noDismiss: true,
                 allowSuppress: false,
               });
-              let files = await fs.readdirAsync(DOWNLOAD_FOLDER);
+              let files = await fsp.readdir(DOWNLOAD_FOLDER);
               files = files
                 .filter((file) => path.basename(file).includes(path.basename(SDKPATCH_FILE, "dll")))
                 .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))
                 .reverse();
               const copyFile = files[0];
-              await fs.statAsync(path.join(DOWNLOAD_FOLDER, copyFile));
+              await fsp.stat(path.join(DOWNLOAD_FOLDER, copyFile));
               const source = path.join(DOWNLOAD_FOLDER, copyFile);
               const destination = path.join(GAME_PATH, SDKPATCH_PATH, SDKPATCH_FILE);
-              await fs.copyAsync(source, destination, { overwrite: true });
+              await fsp.cp(source, destination, { recursive: true });
               api.dismissNotification(NOTIF_ID);
               api.dismissNotification(`${NOTIF_ID}-copy`);
               api.sendNotification({
@@ -970,11 +971,11 @@ async function setup(discovery, api, gameSpec) {
   setupNotify(api, gameSpec);
   GAME_VERSION = await setGameVersion(GAME_PATH);
   //await downloadDavex(api, gameSpec);
-  await fs.ensureDirWritableAsync(path.join(GAME_PATH, SDKPATCH_PATH));
+  await vfs.ensureDirWritableAsync(path.join(GAME_PATH, SDKPATCH_PATH));
   if (GAME_VERSION === "ea" || GAME_VERSION === "epic") {
     await downloadSdkPatch(api, gameSpec, true);
   }
-  await fs.ensureDirWritableAsync(path.join(GAME_PATH, FROSTYMOD_PATH));
+  await vfs.ensureDirWritableAsync(path.join(GAME_PATH, FROSTYMOD_PATH));
   const FrostyInstalled = await checkForFrosty(api);
   return FrostyInstalled ? Promise.resolve() : download(api, REQUIREMENTS);
 }
@@ -1256,7 +1257,7 @@ async function deleteModData(api) {
   GAME_PATH = getDiscoveryPath(api);
   const modDataPath = path.join(GAME_PATH, MODDATA_FOLDER);
   try {
-    await fsPromises.rm(modDataPath, { recursive: true });
+    await fsp.rm(modDataPath, { recursive: true });
     api.sendNotification({
       id: `${GAME_ID}-deletemoddata`,
       type: "success",
@@ -1286,7 +1287,7 @@ async function removeSdkPatch(api) {
   GAME_PATH = getDiscoveryPath(api);
   const patchPath = path.join(GAME_PATH, SDKPATCH_PATH, SDKPATCH_FILE);
   try {
-    await fs.unlinkAsync(patchPath);
+    await vfs.unlinkAsync(patchPath);
     api.sendNotification({
       id: `${GAME_ID}-removesdkpatch`,
       type: "success",

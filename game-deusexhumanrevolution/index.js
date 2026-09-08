@@ -7,10 +7,11 @@ Date: 2025-12-03
 ///////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
-const fsPromises = require("fs/promises");
 //const winapi = require('winapi-bindings');
 
 const DOCUMENTS = util.getVortexPath("documents");
@@ -180,7 +181,7 @@ function statCheckSync(gamePath, file) {
 
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -579,10 +580,10 @@ async function installPatcher(files, tempFolder) {
   try {
     // copy DFEngine.dll file to root
     const source = path.join(tempFolder, "compatable_modhook", HOOK_FILE);
-    await fs.statAsync(source);
+    await fsp.stat(source);
     const destination = path.join(tempFolder, HOOK_FILE);
-    await fs.copyAsync(source, destination);
-    await fsPromises.rm(path.join(tempFolder, "compatable_modhook"), { recursive: true });
+    await fsp.cp(source, destination, { recursive: true });
+    await fsp.rm(path.join(tempFolder, "compatable_modhook"), { recursive: true });
     //const paths = [destination];
     const paths = await getAllFiles(tempFolder);
     //files = [ ...files, ...paths.map(p => p.replace(`${tempFolder}${path.sep}`, ''))];
@@ -609,10 +610,10 @@ async function installPatcher(files, tempFolder) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -642,7 +643,7 @@ async function setup(discovery, api, gameSpec) {
   if (GAME_VERSION === "directorscut") {
     await downloadHook(api, gameSpec);
   }
-  return fs.ensureDirWritableAsync(path.join(GAME_PATH, MOD_PATH));
+  return vfs.ensureDirWritableAsync(path.join(GAME_PATH, MOD_PATH));
 }
 
 //Let Vortex know about the game

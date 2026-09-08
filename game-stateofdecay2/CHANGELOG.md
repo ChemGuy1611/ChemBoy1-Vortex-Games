@@ -4,6 +4,10 @@
 
 - None
 
+## [2.2.1] - 2026-09-08
+
+- Fixed: The Binaries mod folder is now created correctly during setup.
+
 ## [2.2.0] - 2026-01-31
 
 - Fixed: path strings

@@ -7,7 +7,9 @@ Date: 2026-09-02
 ////////////////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const {
@@ -248,7 +250,7 @@ function statCheckSync(gamePath, file) {
 
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -258,10 +260,10 @@ async function statCheckAsync(gamePath, file) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -574,7 +576,7 @@ async function isShadPS4Installed(api, spec) {
   if (!check) {
     try {
       GAME_PATH = getDiscoveryPath(api);
-      await fs.statAsync(path.join(GAME_PATH, SHADPS4_EXEC));
+      await fsp.stat(path.join(GAME_PATH, SHADPS4_EXEC));
       check = true;
     } catch {
       //do nothing
@@ -639,7 +641,7 @@ async function isShadLauncherInstalled(api, spec) {
     GAME_PATH = getDiscoveryPath(api);
     try {
       GAME_PATH = getDiscoveryPath(api);
-      await fs.statAsync(path.join(GAME_PATH, SHADLAUNCHER_EXEC));
+      await fsp.stat(path.join(GAME_PATH, SHADLAUNCHER_EXEC));
       check = true;
     } catch {
       //do nothing
@@ -796,8 +798,8 @@ async function setup(discovery, api, gameSpec) {
     await download(api, REQUIREMENTS);
   }
   await downloadShadLauncher(api, gameSpec, true);
-  await fs.ensureDirWritableAsync(path.join(discovery.path, SAVE_PATH));
-  return fs.ensureDirWritableAsync(path.join(discovery.path, DVDROOTPS4_PATH));
+  await vfs.ensureDirWritableAsync(path.join(discovery.path, SAVE_PATH));
+  return vfs.ensureDirWritableAsync(path.join(discovery.path, DVDROOTPS4_PATH));
 }
 
 //Let Vortex know about the game

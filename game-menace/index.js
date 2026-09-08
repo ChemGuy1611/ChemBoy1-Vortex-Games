@@ -2354,8 +2354,8 @@ async function deserializeLoadOrder(context) {
 
   //Determine if mod is managed by Vortex - keyed on the folder as deployed, prefix included
   const isVortexManaged = async (folder) => {
-    return fs
-      .statAsync(path.join(modFolderPath, folder, `__folder_managed_by_vortex`))
+    return fsp
+      .stat(path.join(modFolderPath, folder, `__folder_managed_by_vortex`))
       .then(() => true)
       .catch(() => false);
   };

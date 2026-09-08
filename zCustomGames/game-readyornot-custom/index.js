@@ -7,7 +7,7 @@ Date: 08/01/2024
 */
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 
@@ -512,10 +512,10 @@ function installVo(files) {
 
 //Setup function
 async function setup(discovery, api, gameSpec) {
-  await fs.ensureDirWritableAsync(path.join(process.env["LOCALAPPDATA"], CONFIG_PATH));
-  await fs.ensureDirWritableAsync(path.join(process.env["LOCALAPPDATA"], SAVE_PATH));
-  await fs.ensureDirWritableAsync(path.join(discovery.path, VO_PATH));
-  return fs.ensureDirWritableAsync(path.join(discovery.path, UE5_PATH));
+  await vfs.ensureDirWritableAsync(path.join(process.env["LOCALAPPDATA"], CONFIG_PATH));
+  await vfs.ensureDirWritableAsync(path.join(process.env["LOCALAPPDATA"], SAVE_PATH));
+  await vfs.ensureDirWritableAsync(path.join(discovery.path, VO_PATH));
+  return vfs.ensureDirWritableAsync(path.join(discovery.path, UE5_PATH));
 }
 
 ///*

@@ -7,7 +7,9 @@ Date: 2026-09-02
 ////////////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const {
@@ -17,7 +19,6 @@ const {
   resolveVersionByPattern,
   testRequirementVersion,
 } = require("./downloader");
-const fsPromises = require("fs/promises");
 
 //Specify all information about the game
 const STEAMAPP_ID = "1888930";
@@ -270,7 +271,7 @@ function statCheckSync(gamePath, file) {
 
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -280,10 +281,10 @@ async function statCheckAsync(gamePath, file) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -716,7 +717,7 @@ function isFluffyInstalled(api, spec) {
 async function setupNotify(api) {
   GAME_PATH = getDiscoveryPath(api);
   try {
-    await fs.statAsync(path.join(GAME_PATH, PSARCTOOL_PATH, "pak68"));
+    await fsp.stat(path.join(GAME_PATH, PSARCTOOL_PATH, "pak68"));
     log("warn", `Extracted folder found. Suppressing setup notification.`);
   } catch {
     //*/
@@ -828,7 +829,7 @@ async function psarcExtract(GAME_PATH, api) {
   try {
     const TARGET_FILE = path.join(WORK_PATH, SPCOMPSARC_FILE);
     const EXTRACT_PATH = WORK_PATH;
-    await fs.statAsync(TARGET_FILE);
+    await fsp.stat(TARGET_FILE);
     const ARGUMENTS = `"${TARGET_FILE}" "${EXTRACT_PATH}"`;
     await api.runExecutable(RUN_PATH, [ARGUMENTS], {
       shell: true,
@@ -844,7 +845,7 @@ async function psarcExtract(GAME_PATH, api) {
   try {
     const TARGET_FILE = path.join(WORK_PATH, BINPSARC_FILE);
     const EXTRACT_PATH = path.join(WORK_PATH, BIN_FOLDER);
-    await fs.statAsync(TARGET_FILE);
+    await fsp.stat(TARGET_FILE);
     const ARGUMENTS = `"${TARGET_FILE}" "${EXTRACT_PATH}"`; //unPSARC arguments
     await api.runExecutable(RUN_PATH, [ARGUMENTS], {
       shell: true,
@@ -858,8 +859,8 @@ async function psarcExtract(GAME_PATH, api) {
   }
   //stat extracted folders to make sure they are there
   try {
-    await fs.statAsync(path.join(WORK_PATH, BIN_FOLDER));
-    await fs.statAsync(path.join(WORK_PATH, "pak68"));
+    await fsp.stat(path.join(WORK_PATH, BIN_FOLDER));
+    await fsp.stat(path.join(WORK_PATH, "pak68"));
     return true;
   } catch {
     //if the folders aren't there, the user probably closed the terminal windows early
@@ -900,8 +901,8 @@ async function psarcSetup(api) {
     log("warn", `Extraction of all .psarc files complete. Renaming files...`);
     //rename sp-common.psarc
     try {
-      await fs.statAsync(path.join(WORK_PATH, SPCOMPSARC_FILE));
-      await fs.renameAsync(
+      await fsp.stat(path.join(WORK_PATH, SPCOMPSARC_FILE));
+      await fsp.rename(
         path.join(WORK_PATH, SPCOMPSARC_FILE),
         path.join(WORK_PATH, BAK_SPCOMPSARC_FILE),
       );
@@ -911,8 +912,8 @@ async function psarcSetup(api) {
     }
     //rename bin.psarc
     try {
-      await fs.statAsync(path.join(WORK_PATH, BINPSARC_FILE));
-      await fs.renameAsync(
+      await fsp.stat(path.join(WORK_PATH, BINPSARC_FILE));
+      await fsp.rename(
         path.join(WORK_PATH, BINPSARC_FILE),
         path.join(WORK_PATH, BAK_BINPSARC_FILE),
       );
@@ -942,8 +943,8 @@ async function foldersCleanup(workingPath, folders) {
     const folder = path.join(workingPath, folders[index]);
     try {
       //remove extracted .psarc folders
-      await fs.statAsync(folder);
-      await fsPromises.rm(folder, { recursive: true });
+      await fsp.stat(folder);
+      await fsp.rm(folder, { recursive: true });
     } catch (err) {
       log("error", `Could not delete extracted .psarc folder "${folder}": ${err}`);
     }
@@ -977,14 +978,14 @@ async function psarcCleanup(api) {
   await foldersCleanup(WORK_PATH, CLEANUP_FOLDERS);
   //restore name of sp-common.psarc
   try {
-    await fs.statAsync(path.join(WORK_PATH, BAK_SPCOMPSARC_FILE));
+    await fsp.stat(path.join(WORK_PATH, BAK_SPCOMPSARC_FILE));
     try {
       //make sure vanilla file is not in place - this usually means the game was updated
-      await fs.statAsync(path.join(WORK_PATH, SPCOMPSARC_FILE));
-      await fs.unlinkAsync(path.join(WORK_PATH, BAK_SPCOMPSARC_FILE));
+      await fsp.stat(path.join(WORK_PATH, SPCOMPSARC_FILE));
+      await vfs.unlinkAsync(path.join(WORK_PATH, BAK_SPCOMPSARC_FILE));
     } catch {
       //vanilla file not present, safe to rename
-      await fs.renameAsync(
+      await fsp.rename(
         path.join(WORK_PATH, BAK_SPCOMPSARC_FILE),
         path.join(WORK_PATH, SPCOMPSARC_FILE),
       );
@@ -995,13 +996,13 @@ async function psarcCleanup(api) {
   }
   //restore name of bin.psarc
   try {
-    await fs.statAsync(path.join(WORK_PATH, BAK_BINPSARC_FILE));
+    await fsp.stat(path.join(WORK_PATH, BAK_BINPSARC_FILE));
     try {
       //make sure vanilla file is not in place - this usually means the game was updated
-      await fs.statAsync(path.join(WORK_PATH, BINPSARC_FILE));
-      await fs.unlinkAsync(path.join(WORK_PATH, BAK_BINPSARC_FILE));
+      await fsp.stat(path.join(WORK_PATH, BINPSARC_FILE));
+      await vfs.unlinkAsync(path.join(WORK_PATH, BAK_BINPSARC_FILE));
     } catch {
-      await fs.renameAsync(
+      await fsp.rename(
         path.join(WORK_PATH, BAK_BINPSARC_FILE),
         path.join(WORK_PATH, BINPSARC_FILE),
       );
@@ -1012,8 +1013,8 @@ async function psarcCleanup(api) {
   }
   //stat vanilla files to make sure they are there
   try {
-    await fs.statAsync(path.join(WORK_PATH, BINPSARC_FILE));
-    await fs.statAsync(path.join(WORK_PATH, SPCOMPSARC_FILE));
+    await fsp.stat(path.join(WORK_PATH, BINPSARC_FILE));
+    await fsp.stat(path.join(WORK_PATH, SPCOMPSARC_FILE));
     api.dismissNotification(NOTIF_ID);
     cleanupSuccessNotify(api);
     setupNotify(api);
@@ -1043,25 +1044,25 @@ async function setup(discovery, api, gameSpec) {
   }
   // ASYNCHRONOUS CODE ///////////////////////////////////
   await setupNotify(api);
-  await fs.ensureDirWritableAsync(CONFIG_PATH);
-  await fs.ensureDirWritableAsync(SAVE_PATH);
-  await fs.ensureDirWritableAsync(path.join(GAME_PATH, PAK_PATH));
+  await vfs.ensureDirWritableAsync(CONFIG_PATH);
+  await vfs.ensureDirWritableAsync(SAVE_PATH);
+  await vfs.ensureDirWritableAsync(path.join(GAME_PATH, PAK_PATH));
   try {
     //copy oo2core_9_win64.dll to PSARCTOOL_PATH and PSARCTOOL_EXT_PATH if not present
-    await fs.statAsync(path.join(GAME_PATH, PSARCTOOL_PATH, OO2_DLL));
+    await fsp.stat(path.join(GAME_PATH, PSARCTOOL_PATH, OO2_DLL));
     //log('warn', `Found ${OO2_DLL} in ${PSARCTOOL_PATH}`);
-    await fs.statAsync(path.join(__dirname, PSARCTOOL_EXT_PATH, OO2_DLL));
+    await fsp.stat(path.join(__dirname, PSARCTOOL_EXT_PATH, OO2_DLL));
     //log('warn', `Found ${OO2_DLL} in ${path.join(__dirname, 'UnPSARC', OO2_DLL)}`);
   } catch (err) {
     try {
-      await fs.copyAsync(
-        path.join(GAME_PATH, OO2_DLL),
-        path.join(GAME_PATH, PSARCTOOL_PATH, OO2_DLL),
-      );
+      await fsp.cp(path.join(GAME_PATH, OO2_DLL), path.join(GAME_PATH, PSARCTOOL_PATH, OO2_DLL), {
+        recursive: true,
+      });
       //log('warn', `${OO2_DLL} copied successfully to ${PSARCTOOL_PATH}`);
-      await fs.copyAsync(
+      await fsp.cp(
         path.join(GAME_PATH, OO2_DLL),
         path.join(__dirname, PSARCTOOL_EXT_PATH, OO2_DLL),
+        { recursive: true },
       );
       //log('warn', `${OO2_DLL} copied successfully to ${path.join(__dirname, PSARCTOOL_EXT_PATH)}`);
     } catch (err) {
@@ -1295,8 +1296,8 @@ async function didPurge(api, profileId) {
   }
   GAME_PATH = await getDiscoveryPath(api);
   try {
-    await fs.statAsync(path.join(GAME_PATH, PSARCTOOL_PATH, "pak68"));
-    await fs.statAsync(path.join(GAME_PATH, PSARCTOOL_PATH, BIN_FOLDER));
+    await fsp.stat(path.join(GAME_PATH, PSARCTOOL_PATH, "pak68"));
+    await fsp.stat(path.join(GAME_PATH, PSARCTOOL_PATH, BIN_FOLDER));
     await psarcCleanup(api);
   } catch {
     log("warn", `Skipping purge cleanup because cleanup folders not found.`);

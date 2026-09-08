@@ -82,9 +82,10 @@
 // installModDbFile, resolveModDbFile, isModDbFileInstalled, checkModDbModUpdates.
 
 const path = require("path");
-const { createWriteStream } = require("fs"); //node's fs directly - vortex-api's createWriteStream re-export is deprecated
 const { finished } = require("stream/promises");
-const { fs, log, util } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { log, util } = require("vortex-api");
 const { createBrowserModule } = require("./base_browser");
 
 const SITE_BASE = "https://www.moddb.com";
@@ -512,7 +513,7 @@ function filenameFromResponse(response, fallback) {
 //instance of ReadableStream. Received an instance of ReadableStream").
 async function streamToFile(body, targetPath) {
   const reader = body.getReader();
-  const out = createWriteStream(targetPath);
+  const out = fs.createWriteStream(targetPath);
   try {
     for (;;) {
       const { done, value } = await reader.read();
@@ -559,7 +560,7 @@ async function fetchModDbToFile(config, url) {
     await streamToFile(response.body, target);
   } catch (err) {
     //a half-written file must not be left for the importer to pick up
-    await fs.removeAsync(target).catch(() => null);
+    await fsp.rm(target, { recursive: true, force: true }).catch(() => null);
     throw err;
   }
   return target;

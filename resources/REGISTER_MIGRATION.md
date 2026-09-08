@@ -63,7 +63,7 @@ context.registerMigration((old) => migrate200(context.api, old));
 async function migrateFirstRun(api, oldVersion) {
     if (oldVersion !== "0.0.0") return;
     // First install — create initial config
-    await fs.ensureDirWritableAsync(CONFIG_DIR);
+    await vfs.ensureDirWritableAsync(CONFIG_DIR);
 }
 ```
 
@@ -77,7 +77,7 @@ async function migrate110(api, oldVersion) {
 
     // Old versions wrote cache files to the wrong location
     const stalePath = path.join(OLD_CACHE_DIR, "cache.json");
-    await fs.removeAsync(stalePath).catch(() => null);
+    await fsp.rm(stalePath, { recursive: true, force: true }).catch(() => null);
 }
 ```
 

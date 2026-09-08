@@ -7,10 +7,11 @@ Date: 2026-09-06
 ////////////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
-const fsPromises = require("fs/promises");
 const YAML = require("js-yaml"); //YAML.load (parse) and YAML.dump (stringify)
 const { parseStringPromise } = require("xml2js");
 const React = require("react");
@@ -287,6 +288,13 @@ const tools = [
 
 // BASIC FUNCTIONS //////////////////////////////////////////////////////////////
 
+// vortex-api's fs.ensureFileAsync is deprecated; this is the node equivalent.
+async function ensureFileAsync(filePath) {
+  await fsp.mkdir(path.dirname(filePath), { recursive: true });
+  const handle = await fsp.open(filePath, "a");
+  await handle.close();
+}
+
 function isDir(folder, file) {
   const stats = fs.statSync(path.join(folder, file));
   return stats.isDirectory();
@@ -301,7 +309,7 @@ function statCheckSync(gamePath, file) {
 }
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -721,16 +729,16 @@ async function installIntegrationStudio(files, tempFolder, api) {
   try {
     // copy tools folder to root
     const source = path.join(tempFolder, "ModEditor");
-    await fs.statAsync(source);
+    await fsp.stat(source);
     try {
-      await fs.statAsync(path.join(source, "mods_source"));
-      await fsPromises.rm(path.join(source, "mods_source"), { recursive: true });
+      await fsp.stat(path.join(source, "mods_source"));
+      await fsp.rm(path.join(source, "mods_source"), { recursive: true });
     } catch (err) {
       log("error", 'Error deleting Integration Studio bundled "mods_source" folder: ' + err);
     }
     const destination = tempFolder;
-    await fs.copyAsync(source, destination);
-    await fsPromises.rm(source, { recursive: true });
+    await fsp.cp(source, destination, { recursive: true });
+    await fsp.rm(source, { recursive: true });
     const paths = await getAllFiles(tempFolder);
     //files = [ ...files, ...paths.map(p => p.replace(`${tempFolder}${path.sep}`, ''))];
     files = [...paths.map((p) => p.replace(`${tempFolder}${path.sep}`, ""))];
@@ -739,7 +747,7 @@ async function installIntegrationStudio(files, tempFolder, api) {
   }
   try {
     //extract client default_other.pak
-    await fs.statAsync(resourcePath);
+    await fsp.stat(resourcePath);
     const sevenZip = new util.SevenZip();
     const destination = path.join(tempFolder, "mods_source");
     const zipOp = await sevenZip.extractFull(resourcePath, destination);
@@ -751,7 +759,7 @@ async function installIntegrationStudio(files, tempFolder, api) {
   }
   try {
     //extract server default_other.pak
-    await fs.statAsync(resourcePathServer);
+    await fsp.stat(resourcePathServer);
     const sevenZip = new util.SevenZip();
     const destination = path.join(tempFolder, "mods_source");
     const zipOp = await sevenZip.extractFull(resourcePathServer, destination);
@@ -779,10 +787,10 @@ async function installIntegrationStudio(files, tempFolder, api) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -1106,8 +1114,8 @@ async function deserializeLoadOrder(context) {
   const mods = util.getSafe(context.api.store.getState(), ["persistent", "mods", spec.game.id], {});
   let modFolderPath = path.join(gameDir, PAK_PATH);
   let loadOrderPath = path.join(gameDir, LO_FILE_PATH);
-  await fs.ensureFileAsync(loadOrderPath);
-  let loadOrderFile = await fs.readFileAsync(loadOrderPath, { encoding: "utf8" });
+  await ensureFileAsync(loadOrderPath);
+  let loadOrderFile = await fsp.readFile(loadOrderPath, { encoding: "utf8" });
 
   //* yaml with "disabled" parameter
   let MOD_ENTRIES = YAML.load(loadOrderFile);
@@ -1117,7 +1125,7 @@ async function deserializeLoadOrder(context) {
   //Get all .pak files from mods folder
   let modFiles = [];
   try {
-    modFiles = await fs.readdirAsync(modFolderPath);
+    modFiles = await fsp.readdir(modFolderPath);
     modFiles = modFiles.filter((file) => PAK_EXTS.includes(path.extname(file).toLowerCase()));
     modFiles = modFiles.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
   } catch {
@@ -1219,7 +1227,7 @@ async function serializeLoadOrder(context, loadOrder) {
   const loadOrderOutput = YAML.dump(loadOrderMapped); //*/
 
   //write to file
-  return fs.writeFileAsync(loadOrderPath, loadOrderOutput, { encoding: "utf8" });
+  return fsp.writeFile(loadOrderPath, loadOrderOutput, { encoding: "utf8" });
 }
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
@@ -1340,7 +1348,7 @@ async function resolveGameVersion(gamePath, exePath) {
     // use appxmanifest.xml for Xbox version
     try {
       //try to parse appxmanifest.xml
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
+      const appManifest = await fsp.readFile(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
@@ -1366,7 +1374,7 @@ async function copyCustomStratToPaks(api) {
   GAME_PATH = getDiscoveryPath(api);
   const readFolder = path.join(GAME_PATH, CUSTOMSTRAT_PAK_PATH);
   try {
-    const paks = await fs.readdirAsync(readFolder);
+    const paks = await fsp.readdir(readFolder);
     log("warn", `Found CS pak files: ${paks.join(", ")}`);
     const copyPak = paks
       .filter(
@@ -1386,7 +1394,7 @@ async function copyCustomStratToPaks(api) {
     log("warn", `Copying newest CS pak file: ${copyPak}`);
     const source = path.join(readFolder, copyPak);
     const destination = path.join(GAME_PATH, PAK_PATH, copyPak);
-    await fs.copyAsync(source, destination);
+    await fsp.cp(source, destination, { recursive: true });
     deploy(api);
   } catch (err) {
     //log('error', 'Could not copy Custom Stratagems to Pak Mods folder: ' + err);
@@ -1402,7 +1410,7 @@ async function clearCsPaks(api) {
   try {
     GAME_PATH = getDiscoveryPath(api);
     const readFolder = path.join(GAME_PATH, PAK_PATH);
-    const files = await fs.readdirAsync(readFolder);
+    const files = await fsp.readdir(readFolder);
     const csPaks = files.filter(
       (file) =>
         path.basename(file).startsWith(CUSTOMSTRAT_PAK_STRING) &&
@@ -1411,7 +1419,7 @@ async function clearCsPaks(api) {
     log("warn", `Found CS pak files to delete on purge: ${csPaks.join(", ")}`);
     for (let file of csPaks) {
       const source = path.join(readFolder, file);
-      await fs.unlinkAsync(source);
+      await vfs.unlinkAsync(source);
     }
   } catch (err) {
     log("error", "Could not clear Custom Stratagems Paks from Mods folder: " + err);
@@ -1420,7 +1428,7 @@ async function clearCsPaks(api) {
 
 async function backupSaves(api) {
   try {
-    const files = await fs.readdirAsync(SAVE_PATH);
+    const files = await fsp.readdir(SAVE_PATH);
     const saveFiles = files.filter((file) => path.extname(file).toLowerCase() === SAVE_EXT);
     if (saveFiles.length === 0) {
       api.showErrorNotification("No saves to backup", `No saves found in "${SAVE_PATH}"`, {
@@ -1431,11 +1439,11 @@ async function backupSaves(api) {
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-"); // Replace : and . with -
     const backupFolder = path.join(SAVE_PATH, `Backup_${timestamp}`);
     //log('warn', `Backup folder: ${backupFolder}`);
-    await fs.ensureDirWritableAsync(backupFolder);
+    await vfs.ensureDirWritableAsync(backupFolder);
     for (let file of saveFiles) {
       const source = path.join(SAVE_PATH, file);
       const destination = path.join(backupFolder, file);
-      await fs.copyAsync(source, destination, { overwrite: true });
+      await fsp.cp(source, destination, { recursive: true });
     }
     api.sendNotification({
       id: `${GAME_ID}-backupsaves${timestamp}`,
@@ -1453,7 +1461,7 @@ async function backupSaves(api) {
 async function restoreSaves(api) {
   try {
     //await backupSaves(api);
-    let files = await fs.readdirAsync(SAVE_PATH);
+    let files = await fsp.readdir(SAVE_PATH);
     let backupFolders = files.filter(
       (file) => isDir(SAVE_PATH, file) && file.startsWith("Backup_"),
     );
@@ -1476,7 +1484,7 @@ async function restoreSaves(api) {
       .reverse()[0];
     //IDEA - Show user a popup list to choose which backup to restore
     //log('warn', `Restore folder: ${restoreFolder}`);
-    let saveFiles = await fs.readdirAsync(path.join(SAVE_PATH, restoreFolder));
+    let saveFiles = await fsp.readdir(path.join(SAVE_PATH, restoreFolder));
     saveFiles = saveFiles.filter((file) => path.extname(file).toLowerCase() === SAVE_EXT);
     //show confirmation dialog
     const t = api.translate;
@@ -1496,11 +1504,11 @@ async function restoreSaves(api) {
     if (result === undefined || result.action === "Cancel") {
       return;
     }
-    await fs.ensureDirWritableAsync(SAVE_PATH);
+    await vfs.ensureDirWritableAsync(SAVE_PATH);
     for (let file of saveFiles) {
       const source = path.join(SAVE_PATH, restoreFolder, file);
       const destination = path.join(SAVE_PATH, file);
-      await fs.copyAsync(source, destination, { overwrite: true });
+      await fsp.cp(source, destination, { recursive: true });
     }
     api.sendNotification({
       id: `${GAME_ID}-restoresaves${restoreFolder}`,
@@ -1519,12 +1527,12 @@ async function clearLocal(api) {
   try {
     GAME_PATH = getDiscoveryPath(api);
     const readFolder = path.join(GAME_PATH, LOCAL_PATH, LOCAL_FILE);
-    const files = await fs.readdirAsync(readFolder);
+    const files = await fsp.readdir(readFolder);
     const localFolders = files.filter((file) => isDir(readFolder, file));
     log("warn", `Found ${localFolders.length} folders to remove on purge in "${readFolder}"`);
     for (let folder of localFolders) {
       const source = path.join(readFolder, folder);
-      await fs.removeAsync(source);
+      await fsp.rm(source, { recursive: true, force: true });
     }
     if (localFolders.length > 0) {
       api.sendNotification({
@@ -1550,17 +1558,17 @@ async function setup(discovery, api, gameSpec) {
   GAME_VERSION = await setGameVersionAsync(GAME_PATH);
   //notifySaves(api);
   notifyIntegrationStudio(api);
-  await fs.ensureDirWritableAsync(path.join(GAME_PATH, BINARIES_PATH));
-  await fs.ensureDirWritableAsync(path.join(GAME_PATH, LOCALSUB_PATH));
-  await fs.ensureDirWritableAsync(path.join(GAME_PATH, PAK_PATH));
-  await fs.ensureFileAsync(path.join(GAME_PATH, LO_FILE_PATH), "utf8");
+  await vfs.ensureDirWritableAsync(path.join(GAME_PATH, BINARIES_PATH));
+  await vfs.ensureDirWritableAsync(path.join(GAME_PATH, LOCALSUB_PATH));
+  await vfs.ensureDirWritableAsync(path.join(GAME_PATH, PAK_PATH));
+  await ensureFileAsync(path.join(GAME_PATH, LO_FILE_PATH), "utf8");
   //* Make .bat file to launch the game (EXPERIMENTAL)
   const batPath = path.join(GAME_PATH, NOEAC_LAUNCH_BAT_PATH);
   try {
-    await fs.statAsync(batPath);
+    await fsp.stat(batPath);
   } catch (err) {
     try {
-      await fs.writeFileAsync(batPath, NOEAC_LAUNCH_SCRIPT, { encoding: "utf-8" });
+      await fsp.writeFile(batPath, NOEAC_LAUNCH_SCRIPT, { encoding: "utf-8" });
     } catch (err) {
       api.showErrorNotification("Failed to write No-EAC rungame.bat", err, { allowReport: false });
     }

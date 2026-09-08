@@ -46,6 +46,12 @@ Also folds partial native imports into the rebind:
 Inserted code follows the quote style the file already uses for require(), so the
 output survives the repo's oxfmt formatting unchanged.
 
+Call-site matching tolerates whitespace around the dot, so a fluent line break
+(`return fs\n  .statAsync(...)`) is rewritten like any other call. A file that
+already carries the migration markers but still has a stray migratable call gets
+a cleanup pass (residual call sites rewritten, bindings left alone) instead of a
+skip.
+
 Usage:
     python migrate_fs.py GAME_ID [GAME_ID ...]      # migrate game-<id>/ (index.js + downloader/browser siblings)
     python migrate_fs.py --templates                # also migrate template-*/
@@ -156,7 +162,9 @@ def ensure_file_helper(q):
     )
 
 
-FS_CALL_RE = re.compile(r"(?<![\w.$])fs\.([A-Za-z][A-Za-z0-9]*)\s*\(")
+# `\s*` around the dot catches fluent-style line breaks: `fs\n  .statAsync(...)`.
+# (comments are blanked to whitespace before this runs, so `fs./* x */foo(` matches too.)
+FS_CALL_RE = re.compile(r"(?<![\w.$])fs\s*\.\s*([A-Za-z][A-Za-z0-9]*)\s*\(")
 VORTEX_DESTRUCTURE_RE = re.compile(
     r"(?:const|let)\s*\{[^{}]*?\}\s*=\s*require\(\s*['\"]vortex-api['\"]\s*\)\s*;?",
     re.DOTALL,
@@ -166,7 +174,7 @@ NAMESPACE_VORTEX_RE = re.compile(
 )
 OVERWRITE_TRUE_RE = re.compile(r"^\{\s*overwrite\s*:\s*true\s*\}$")
 RESIDUAL_RE = re.compile(
-    r"(?<![\w.$])fs\.(?:\w+Async|ensure[A-Z]\w*|remove[A-Z]\w*|copy(?:Async|Sync)|move\w*|mkdirs\w*)\b"
+    r"(?<![\w.$])fs\s*\.\s*(?:\w+Async|ensure[A-Z]\w*|remove[A-Z]\w*|copy(?:Async|Sync)|move\w*|mkdirs\w*)\b"
 )
 
 NAMED_SKIP = {
@@ -315,8 +323,18 @@ def migrate_source(src, rel):
     if not method_work and not fold_work and not vortex_spans and ns_match is None:
         return src, notes
 
+    # A file with the migration markers (`fs: vfs` in the destructure, or a native
+    # `const fs = require('fs')`) but still carrying migratable `fs.*` calls is a
+    # PARTIALLY migrated file - an earlier run missed a call site (e.g. the
+    # fluent-split `fs\n  .statAsync(...)` form). Finish it: rewrite the residual
+    # call sites, leave the already-rebound bindings alone.
+    cleanup_pass = False
     if not vortex_spans and ns_match is None:
-        raise SkipFile("uses migratable fs.* but no vortex-api `fs` binding found")
+        if re.search(r"\bfs\s*:\s*vfs\b", stripped) or \
+                re.search(r"(?:const|let)\s+fs\s*=\s*require\(\s*['\"](?:node:)?fs['\"]\s*\)", stripped):
+            cleanup_pass = True
+        else:
+            raise SkipFile("uses migratable fs.* but no vortex-api `fs` binding found")
     if len(vortex_spans) > 1:
         raise SkipFile(f"{len(vortex_spans)} vortex-api destructures bind fs - hand migrate")
 
@@ -334,7 +352,13 @@ def migrate_source(src, rel):
     edits = []
 
     # --- rewrite the vortex-api binding --------------------------------
-    if vortex_spans:
+    if cleanup_pass:
+        # bindings already in place; anchor any (unlikely) binding insert after the
+        # existing `const fsp = fs.promises;`, else after the last require line, else BOF.
+        fsp_line = re.search(r"(?:const|let)\s+fsp\s*=\s*fs\.promises\s*;?[^\n]*\n", work)
+        reqs = list(re.finditer(r"^(?:const|let|var)\s.*=\s*require\([^\n]*\n", work, re.M))
+        insert_at = fsp_line.end() if fsp_line else (reqs[-1].end() if reqs else 0)
+    elif vortex_spans:
         m = vortex_spans[0]
         s, e = m.start(), m.end()
         orig = work[s:e]
@@ -418,7 +442,8 @@ def migrate_source(src, rel):
                 notes.append(f"{rel}:{ln}  fs.{name} - NOT scripted, hand-migrate")
                 continue
             if name in KEEP_ON_VFS:
-                edits.append((m.start(), m.start() + 2, "vfs"))
+                # replace `fs.` (or `fs\n  .`) up to the method name with `vfs.`
+                edits.append((m.start(), m.start(1), "vfs."))
                 continue
             if name in SIMPLE_RENAME:
                 edits.append((m.start(), m.end() - 1, SIMPLE_RENAME[name]))
@@ -439,8 +464,17 @@ def migrate_source(src, rel):
                 close = _match_paren(work, call_open)
                 if close == -1:
                     raise SkipFile("unbalanced parens on fs.copyAsync")
-                args = _split_top_level(work[call_open + 1:close])
+                raw_args = _split_top_level(work[call_open + 1:close])
+                args = list(raw_args)
+                while args and args[-1].strip() == "":
+                    args.pop()  # trailing comma on a multi-line call -> phantom empty arg
+                had_trailing_comma = len(args) != len(raw_args)
                 if len(args) == 3 and OVERWRITE_TRUE_RE.match(args[2].strip()):
+                    edits.append((m.start(), m.end() - 1, "fsp.cp"))  # keep the original '('
+                    edits.append((call_open + 1, close,
+                                  f"{args[0].strip()}, {args[1].strip()}, {{ recursive: true }}"))
+                elif len(args) == 2 and had_trailing_comma:
+                    # rewrite the whole arg list so the dangling comma goes with it
                     edits.append((m.start(), m.end() - 1, "fsp.cp"))  # keep the original '('
                     edits.append((call_open + 1, close,
                                   f"{args[0].strip()}, {args[1].strip()}, {{ recursive: true }}"))

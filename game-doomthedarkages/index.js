@@ -36,7 +36,9 @@ Date: 2026-09-02
 //*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const {
@@ -322,7 +324,7 @@ function statCheckSync(gamePath, file) {
 
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -332,10 +334,10 @@ async function statCheckAsync(gamePath, file) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -1013,7 +1015,7 @@ async function installZipContent(files, destinationPath) {
     const szip = new util.SevenZip();
     const archiveName = path.basename(destinationPath, ".installing") + ".zip";
     const archivePath = path.join(destinationPath, archiveName);
-    const rootRelPaths = await fs.readdirAsync(destinationPath);
+    const rootRelPaths = await fsp.readdir(destinationPath);
     await szip.add(
       archivePath,
       rootRelPaths.map((relPath) => path.join(destinationPath, relPath)),
@@ -1162,7 +1164,7 @@ async function resolveGameVersion(gamePath) {
   if (GAME_VERSION === "xbox") {
     // use appxmanifest.xml for Xbox version
     try {
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
+      const appManifest = await fsp.readFile(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
@@ -1195,7 +1197,7 @@ async function setup(discovery, api, gameSpec) {
   try {
     fs.statSync(AUTOEXEC_CFG_PATH);
   } catch {
-    await fs.writeFileAsync(AUTOEXEC_CFG_PATH, ``, { encoding: "utf8" });
+    await fsp.writeFile(AUTOEXEC_CFG_PATH, ``, { encoding: "utf8" });
   }
   if (GAME_VERSION === "steam") {
     const requirementsInstalled = await checkForRequirements(api);
@@ -1204,10 +1206,10 @@ async function setup(discovery, api, gameSpec) {
     }
     //await downloadPatcher(api, gameSpec);
   }
-  await fs.ensureDirAsync(path.join(GAME_PATH, "DisabledMods")); //avoid popup from Atlan Mod Loader
-  await fs.ensureDirWritableAsync(path.join(GAME_PATH, SOUND_PATH));
+  await fsp.mkdir(path.join(GAME_PATH, "DisabledMods"), { recursive: true }); //avoid popup from Atlan Mod Loader
+  await vfs.ensureDirWritableAsync(path.join(GAME_PATH, SOUND_PATH));
   //await fs.ensureDirWritableAsync(path.join(SAVE_PATH));
-  return fs.ensureDirWritableAsync(path.join(GAME_PATH, MOD_PATH_DEFAULT));
+  return vfs.ensureDirWritableAsync(path.join(GAME_PATH, MOD_PATH_DEFAULT));
 }
 
 //Let Vortex know about the game
@@ -1473,7 +1475,7 @@ async function writeCfgDeploy(api) {
   const AUTOEXEC_CFG_PATH = path.join(GAME_PATH, CONFIG_PATH, AUTOEXEC_CFG_FILE);
   const CFG_PATH = path.join(GAME_PATH, CONFIG_PATH);
 
-  let EXISTING_CONTENT = await fs.readFileAsync(AUTOEXEC_CFG_PATH, { encoding: "utf8" });
+  let EXISTING_CONTENT = await fsp.readFile(AUTOEXEC_CFG_PATH, { encoding: "utf8" });
   let EXISTING_CONTENT_ARRAY = EXISTING_CONTENT.split("\n");
   EXISTING_CONTENT_ARRAY = EXISTING_CONTENT_ARRAY.filter((line) => !line.startsWith("exec"));
   EXISTING_CONTENT_ARRAY = EXISTING_CONTENT_ARRAY.filter((line) => line !== ``);
@@ -1483,14 +1485,14 @@ async function writeCfgDeploy(api) {
   const CFG_EXT_FILTER = CONFIG_EXTS;
   const CFG_FILE_FILTER = [AUTOEXEC_CFG_FILE, "candidate.cfg", "default.cfg", "disclayout.cfg"];
   try {
-    modFiles = await fs.readdirAsync(CFG_PATH);
+    modFiles = await fsp.readdir(CFG_PATH);
     modFiles = modFiles.filter((file) => CFG_EXT_FILTER.includes(path.extname(file).toLowerCase()));
     modFiles = modFiles.filter((file) => !CFG_FILE_FILTER.includes(path.basename(file)));
     modFiles = modFiles.map((file) => `exec ${file}`);
   } catch {
     return Promise.reject(new Error("Failed to read Data folder"));
   }
-  return fs.writeFileAsync(AUTOEXEC_CFG_PATH, `${EXISTING_CONTENT + "\n" + modFiles.join("\n")}`, {
+  return fsp.writeFile(AUTOEXEC_CFG_PATH, `${EXISTING_CONTENT + "\n" + modFiles.join("\n")}`, {
     encoding: "utf8",
   });
 } //*/
@@ -1503,13 +1505,13 @@ async function writeCfgPurge(api) {
   }
   const AUTOEXEC_CFG_PATH = path.join(GAME_PATH, CONFIG_PATH, AUTOEXEC_CFG_FILE);
 
-  let EXISTING_CONTENT = await fs.readFileAsync(AUTOEXEC_CFG_PATH, { encoding: "utf8" });
+  let EXISTING_CONTENT = await fsp.readFile(AUTOEXEC_CFG_PATH, { encoding: "utf8" });
   let EXISTING_CONTENT_ARRAY = EXISTING_CONTENT.split("\n");
   EXISTING_CONTENT_ARRAY = EXISTING_CONTENT_ARRAY.filter((line) => !line.startsWith("exec"));
   EXISTING_CONTENT_ARRAY = EXISTING_CONTENT_ARRAY.filter((line) => line !== ``);
   EXISTING_CONTENT = EXISTING_CONTENT_ARRAY.join("\n");
 
-  return fs.writeFileAsync(AUTOEXEC_CFG_PATH, EXISTING_CONTENT, { encoding: "utf8" });
+  return fsp.writeFile(AUTOEXEC_CFG_PATH, EXISTING_CONTENT, { encoding: "utf8" });
 } //*/
 
 //export to Vortex

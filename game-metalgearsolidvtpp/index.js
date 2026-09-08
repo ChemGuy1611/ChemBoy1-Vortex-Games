@@ -2,14 +2,16 @@
 Name: METAL GEAR SOLID V: THE PHANTOM PAIN Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 1.3.0
-Date: 2026-08-30
+Version: 1.3.1
+Date: 2026-09-08
 Notes:
 -
 ///////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const React = require("react");
 const path = require("path");
 const zlib = require("zlib");
@@ -21,7 +23,6 @@ const {
   isCodebergRequirementInstalled,
 } = require("./codeberg_downloader");
 //const winapi = require('winapi-bindings');
-//const fsPromises = require('fs/promises'); //.rm() for recursive folder deletion
 //const fsExtra = require('fs-extra');
 
 /*const USER_HOME = util.getVortexPath("home");
@@ -134,16 +135,14 @@ const LOADER_ARG_UNINSTALL = "-u"; //takes mod names, not file paths
 const LOADER_ARG_SKIP_CHECKS = "-c";
 const LOADER_ARG_CLOSE = "-x"; //without this the mod loader leaves its own window open when it is done
 const LOADER_ARG_RESTORE = "-completeuninstall"; //only honoured when it is the only argument passed
-const LOADER_ICON_NAME = "snakebite-sync"; //toolbar buttons are grouped by icon, so this one is its own
-const LOADER_ICON =
-  "M9.7 2h4.6l-0.9 13.2h-2.8L9.7 2z M12 17.1c1.4 0 2.5 1.1 2.5 2.5S13.4 22.1 12 22.1 9.5 21 9.5 19.6 10.6 17.1 12 17.1z"; //traced from the mod loader's own logo
-const RESTORE_ICON_NAME = "snakebite-restore";
-const RESTORE_ICON =
-  "M13,3A9,9 0 0,0 4,12H1L4.89,15.89L4.96,16.03L9,12H6A7,7 0 0,1 13,5A7,7 0 0,1 20,12A7,7 0 0,1 13,19C11.07,19 9.32,18.21 8.06,16.94L6.64,18.36C8.27,20 10.51,21 13,21A9,9 0 0,0 22,12A9,9 0 0,0 13,3M12,8V13L16.28,15.54L17,14.33L13.5,12.25V8H12Z";
-const LOADER_ICONS = [
-  { name: LOADER_ICON_NAME, path: LOADER_ICON },
-  { name: RESTORE_ICON_NAME, path: RESTORE_ICON },
-];
+//The mods toolbar resolves an action's icon through a fixed set of built-in names -
+//anything outside that set draws as a generic puzzle piece - so these name two of the
+//built-ins (a custom traced glyph is no longer an option there): "swap" for the sync
+//action, "undo" for the restore. Kept distinct from each other so each button stays
+//on its own, and clear of "deploy"/"history" so neither collides with Vortex's own
+//Deploy and History buttons on the same bar.
+const LOADER_ICON_NAME = "swap";
+const RESTORE_ICON_NAME = "undo";
 
 const MGSVFIX_ID = `${GAME_ID}-mgsvfix`;
 const MGSVFIX_NAME = "MGSVFix";
@@ -384,7 +383,7 @@ function statCheckSync(gamePath, file) {
 }
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -521,10 +520,10 @@ async function setGameVersion(gamePath) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -1274,7 +1273,7 @@ async function resolveGameVersion(gamePath) {
   if (GAME_VERSION === "xbox") {
     // use appxmanifest.xml for Xbox version
     try {
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
+      const appManifest = await fsp.readFile(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
@@ -1304,38 +1303,6 @@ async function resolveGameVersion(gamePath) {
 //exact match - which almost none are - while also treating an already-installed mod as
 //conflicting with itself. Those checks are therefore skipped, and the two worth keeping are done
 //here instead.
-
-//A toolbar icon is resolved to an svg symbol by id, so the mod loader's mark has to be in the
-//document before the button renders. Vortex can install an icon set, but only from a file on
-//disk, and the deploy script carries nothing but the scripts - so the symbol is added directly.
-function installLoaderIcons() {
-  try {
-    const container = globalThis.document.getElementById("icon-sets");
-    if (container === null) {
-      return;
-    }
-    const missing = LOADER_ICONS.filter(
-      (icon) => globalThis.document.getElementById(`icon-${icon.name}`) === null,
-    );
-    if (missing.length === 0) {
-      return;
-    }
-    const holder = globalThis.document.createElement("div");
-    holder.innerHTML =
-      '<svg xmlns="http://www.w3.org/2000/svg">' +
-      missing
-        .map(
-          (icon) =>
-            `<symbol id="icon-${icon.name}" viewBox="0 0 24 24"><path d="${icon.path}"/></symbol>`,
-        )
-        .join("") +
-      "</svg>";
-    container.appendChild(holder);
-  } catch (err) {
-    //the buttons still work, they just draw without an icon
-    log("warn", `Could not install the ${LOADER_NAME} icons: ${err}`);
-  }
-}
 
 function getLoaderExecutable() {
   const installPath = getSnakeBite();
@@ -1404,7 +1371,7 @@ function getEntryPaths(entry) {
 async function readInstalledMods(gamePath) {
   let data;
   try {
-    data = await fs.readFileAsync(path.join(gamePath, LOADER_SETTINGS_FILE), "utf8");
+    data = await fsp.readFile(path.join(gamePath, LOADER_SETTINGS_FILE), "utf8");
   } catch (err) {
     if (err.code === "ENOENT") {
       return undefined;
@@ -1429,7 +1396,7 @@ function stripBom(text) {
 //Read `length` bytes at `position` without pulling the rest of the file into memory.
 async function readFileChunk(fd, position, length) {
   const buffer = Buffer.allocUnsafe(length);
-  await fs.readAsync(fd, buffer, 0, length, position);
+  await vfs.readAsync(fd, buffer, 0, length, position);
   return buffer;
 }
 
@@ -1525,8 +1492,8 @@ async function readZip64Directory(fd, tail, eocdOffset) {
 //an ordinary zip, and they run past a gigabyte, so nothing here unpacks the archive.
 async function readZipEntry(archivePath, entryName) {
   const wantedName = entryName.toLowerCase();
-  const stats = await fs.statAsync(archivePath);
-  const fd = await fs.openAsync(archivePath, "r");
+  const stats = await fsp.stat(archivePath);
+  const fd = await vfs.openAsync(archivePath, "r");
   try {
     const tailLength = Math.min(stats.size, ZIP_EOCD_SEARCH);
     const tail = await readFileChunk(fd, stats.size - tailLength, tailLength);
@@ -1560,7 +1527,7 @@ async function readZipEntry(archivePath, entryName) {
     }
     throw new Error(`${entryName} uses unsupported compression method ${entry.method}`);
   } finally {
-    await fs.closeAsync(fd);
+    await vfs.closeAsync(fd);
   }
 }
 
@@ -1624,7 +1591,7 @@ function getLedgerPath() {
 
 async function readLedger() {
   try {
-    const parsed = JSON.parse(await fs.readFileAsync(getLedgerPath(), "utf8"));
+    const parsed = JSON.parse(await fsp.readFile(getLedgerPath(), "utf8"));
     return Array.isArray(parsed?.names) ? parsed.names : [];
   } catch {
     return []; //no record yet, so nothing here counts as ours
@@ -1633,15 +1600,15 @@ async function readLedger() {
 
 async function writeLedger(names) {
   const ledgerPath = getLedgerPath();
-  await fs.ensureDirWritableAsync(path.dirname(ledgerPath));
-  await fs.writeFileAsync(ledgerPath, JSON.stringify({ names }, undefined, 2));
+  await vfs.ensureDirWritableAsync(path.dirname(ledgerPath));
+  await fsp.writeFile(ledgerPath, JSON.stringify({ names }, undefined, 2));
 }
 
 async function getDeployedModFiles(gamePath) {
   const modsPath = path.join(gamePath, MOD_PATH);
   let entries;
   try {
-    entries = await fs.readdirAsync(modsPath);
+    entries = await fsp.readdir(modsPath);
   } catch (err) {
     if (err.code === "ENOENT") {
       return [];
@@ -2352,7 +2319,7 @@ function runModManager(api) {
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
-    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+    await vfs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
   }
 }
 
@@ -2676,9 +2643,6 @@ function main(context) {
   context.once(() => {
     // put code here that should be run (once) when Vortex starts up
     const api = context.api;
-    if (snakeBiteCliSync) {
-      installLoaderIcons();
-    }
     api.onAsync("did-deploy", async (profileId) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;

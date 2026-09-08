@@ -286,15 +286,17 @@ Priority guide: first-party check-deployment hook runs at 100. Use 50-90 for ext
 
 ## 5. File Operations Beyond fs Basics
 
-### `fs.forcePerm(t, op, filePath?, maxTries?)`
+These live on the `vortex-api` `fs` wrapper — kept bound as `vfs` after the node-fs migration — not on native `fs`.
 
-**Why useful:** Retries a file operation while temporarily granting write permissions (read-only files, protected directories). Falls back to elevation if needed.
+### `vfs.forcePerm(t, op, filePath?, maxTries?)`
 
-**Use case:** Before unlinking or renaming a file in a game's protected directory, wrap the operation in `fs.forcePerm(t, () => fs.unlinkAsync(path), path)` instead of failing silently.
+**Why useful:** Retries a file operation while temporarily granting write permissions (read-only files, protected directories). Falls back to elevation if needed. This is the escape hatch when a migrated native-`fs` write turns out to need the elevation the wrapper used to give.
+
+**Use case:** Before unlinking or renaming a file in a game's protected directory, wrap the operation in `vfs.forcePerm(t, () => fsp.unlink(path), path)` instead of failing silently.
 
 ---
 
-### `util.withTmpDir` / `fs.withTmpFile`
+### `util.withTmpDir` / `vfs.withTmpFile`
 
 **Why useful:** Scoped temporary directory/file that is auto-deleted when the callback resolves or rejects. No manual cleanup.
 
@@ -311,7 +313,7 @@ await util.withTmpDir(async (tmpPath) => {
 
 **Why useful:** Write-via-temp-then-rename pattern — crash-safe for config files. If the process dies mid-write, the original file is unaffected.
 
-**Use case:** Any extension config or state file written to disk should use `writeFileAtomic` rather than `fs.writeFileAsync` directly.
+**Use case:** Any extension config or state file written to disk should use `writeFileAtomic` rather than `fsp.writeFile` directly.
 
 ---
 

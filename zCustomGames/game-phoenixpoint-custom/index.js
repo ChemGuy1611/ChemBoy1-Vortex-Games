@@ -3,7 +3,7 @@ const EGS_CODENAME = "Iris";
 const STEAMAPP_ID = "839770";
 
 const path = require("path");
-const { fs, log, util } = require("vortex-api");
+const { fs: vfs, log, util } = require("vortex-api");
 
 function PhoenixPoint(context) {
   context.registerGame({
@@ -31,7 +31,7 @@ async function prepareForModding(discovery) {
   let gamePath = discovery.path;
   let modsDir = path.join(gamePath, "Mods");
 
-  return fs.ensureDirWritableAsync(modsDir);
+  return vfs.ensureDirWritableAsync(modsDir);
 }
 
 module.exports = {

@@ -7,7 +7,9 @@ Date: 2025-07-09
 //////////////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const winapi = require("winapi-bindings");
@@ -187,8 +189,8 @@ async function makeLink(api, src, dest, type) {
     fs.statSync(dest); //check if linked staging folder already exists
     return; //exit if it does
   } catch {
-    await fs
-      .symlinkAsync(src, dest, type) //make directory link
+    await fsp
+      .symlink(src, dest, type) //make directory link
       //return api.runExecutable('cmd.exe', [`mklink`, `/D`, `"${dest}"`, `"${src}"`], { shell: true, detached: true }) run through cmd.exe
       //return api.runExecutable('makelink.bat', [`mklink`, `/D`, `"${dest}"`, `"${src}"`], { shell: true, detached: true }) run through .bat file (close and restart Vortex)
       .then(() =>
@@ -326,9 +328,9 @@ async function isFolonModType(api, instructions, files) {
 async function checkPartitions(path1, path2, path3) {
   try {
     // Ensure all folders exist
-    fs.ensureDirSync(path1);
-    fs.ensureDirSync(path2);
-    fs.ensureDirSync(path3);
+    fs.mkdirSync(path1, { recursive: true });
+    fs.mkdirSync(path2, { recursive: true });
+    fs.mkdirSync(path3, { recursive: true });
     // Get the stats for all folders
     const stats1 = fs.statSync(path1);
     const stats2 = fs.statSync(path2);

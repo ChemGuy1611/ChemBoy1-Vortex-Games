@@ -335,10 +335,10 @@ A rejected `deserializeLoadOrder` fails the whole page: Vortex logs `Failed load
 and shows the user a `Vortex tried to access "<file>" but it doesn't exist` dialog. Guard the read:
 
 ```javascript
-// Plain text load order file: creating an empty one is harmless, and ensureFileAsync also
-// creates the parent folder.
-await fs.ensureFileAsync(loadOrderPath);
-let loadOrderFile = await fs.readFileAsync(loadOrderPath, { encoding: "utf8" });
+// Plain text load order file: creating an empty one is harmless, and the local
+// ensureFileAsync helper also creates the parent folder.
+await ensureFileAsync(loadOrderPath);
+let loadOrderFile = await fsp.readFile(loadOrderPath, { encoding: "utf8" });
 ```
 
 Two caveats:
@@ -918,7 +918,7 @@ context.registerInstaller(SCRIPTS_ID, 35, testScripts, (files, fileName) =>
 ```
 
 When LO is enabled (`ue4ssLoadOrder && ue4ssLoEnabled`): filter any bundled `enabled.txt`
-out of `files` before building instructions. When disabled: `await fs.writeFileAsync(...)`
+out of `files` before building instructions. When disabled: `await fsp.writeFile(...)`
 to create `enabled.txt` (async -- no `writeFileSync`).
 
 ### Cross-game guard pattern
@@ -932,7 +932,7 @@ async function deserializeUe4ss(api) {
   // read-only; do NOT use ensureFileAsync -- that creates empty files on wrong-game calls
   let LO_MOD_ARRAY = [];
   try {
-    const raw = await fs.readFileAsync(loadOrderPath, { encoding: 'utf8' });
+    const raw = await fsp.readFile(loadOrderPath, { encoding: 'utf8' });
     if (raw.length > 0) LO_MOD_ARRAY = JSON.parse(util.deBOM(raw));
   } catch { /* file doesn't exist yet; start empty */ }
 ```

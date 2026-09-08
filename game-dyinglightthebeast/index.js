@@ -2,12 +2,14 @@
 Name: Dying Light The Beast Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.5.0
-Date: 2026-03-16
+Version: 0.5.1
+Date: 2026-09-08
 ///////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 //const shortid = require('shortid');
 const template = require("string-template");
@@ -248,7 +250,7 @@ function statCheckSync(gamePath, file) {
 
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -258,10 +260,10 @@ async function statCheckAsync(gamePath, file) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -1135,7 +1137,7 @@ async function setup(discovery, api, gameSpec) {
   } catch {
     //do nothing
   } //*/
-  return fs.ensureDirWritableAsync(path.join(GAME_PATH, MOD_PATH_DEFAULT));
+  return vfs.ensureDirWritableAsync(path.join(GAME_PATH, MOD_PATH_DEFAULT));
 }
 
 //Let Vortex know about the game
@@ -1332,7 +1334,7 @@ function main(context) {
 async function didPurge(api) {
   GAME_PATH = getDiscoveryPath(api);
   const PAK_DIRECTORY = path.join(GAME_PATH, VANILLA_PAK_PATH);
-  let FILES = await fs.readdirAsync(PAK_DIRECTORY);
+  let FILES = await fsp.readdir(PAK_DIRECTORY);
   try {
     //clear non-vanilla pak files
     FILES = FILES.filter(
@@ -1340,9 +1342,9 @@ async function didPurge(api) {
         path.extname(file).toLowerCase() === PAK_EXT && !VANILLA_PAKS.includes(path.basename(file)),
     );
     //log('warn', `Removing pak files on purge: ${FILES.join(', ')}`);
-    FILES.forEach(async (file) => {
-      await fs.unlinkAsync(path.join(PAK_DIRECTORY, file));
-    });
+    for (const file of FILES) {
+      await vfs.unlinkAsync(path.join(PAK_DIRECTORY, file));
+    }
   } catch (err) {
     log("error", `Failed to remove merged pak files: ${FILES.join(", ")} - ${err.message}`);
   }

@@ -7,7 +7,9 @@ Date: 2026-XX-XX
 ///////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 //const { parseStringPromise } = require('xml2js');
@@ -372,7 +374,7 @@ function statCheckSync(gamePath, file) {
 }
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -383,10 +385,10 @@ async function statCheckAsync(gamePath, file) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -760,7 +762,7 @@ async function installMod(api, files, workingDir) {
   let folder = MOD_NAME;
   let nameFolder = undefined;
   try {
-    const contents = await fs.readFileAsync(path.join(workingDir, manifest));
+    const contents = await fsp.readFile(path.join(workingDir, manifest));
     const json = JSON.parse(contents);
     folder = json.UniqueName;
     //* index on the folder with the uniqueName if it is in the archive
@@ -1118,7 +1120,7 @@ async function checkForRequirements(api) {
 
 //remove load order list from default.archcfg on purge
 async function clearModOrder(api) {
-  return fs.writeFileAsync(LO_FILE_PATH, JSON.stringify(LO_FILE_EMPTY, null, 2), {
+  return fsp.writeFile(LO_FILE_PATH, JSON.stringify(LO_FILE_EMPTY, null, 2), {
     encoding: "utf8",
   });
 }
@@ -1139,7 +1141,7 @@ function notifyLoadOrderPaused(api, gameId) {
 //empty on a fresh install. Returns an empty object so the load order page still loads.
 async function readOwlcatSettings(filePath) {
   try {
-    return JSON.parse(await fs.readFileAsync(filePath, { encoding: "utf8" }));
+    return JSON.parse(await fsp.readFile(filePath, { encoding: "utf8" }));
   } catch {
     return {};
   }
@@ -1181,7 +1183,7 @@ async function deserializeLoadOrder(context) {
   //Get all mod files from mods folder
   let modFolders = [];
   try {
-    modFolders = await fs.readdirAsync(modFolderPath);
+    modFolders = await fsp.readdir(modFolderPath);
     modFolders = modFolders.filter((file) => isDir(modFolderPath, file));
     modFolders = modFolders.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
   } catch {
@@ -1190,8 +1192,8 @@ async function deserializeLoadOrder(context) {
 
   //Determine if mod is managed by Vortex (async version)
   const isVortexManaged = async (modId) => {
-    return fs
-      .statAsync(path.join(modFolderPath, modId, `__folder_managed_by_vortex`))
+    return fsp
+      .stat(path.join(modFolderPath, modId, `__folder_managed_by_vortex`))
       .then(() => true)
       .catch(() => false);
   };
@@ -1289,7 +1291,7 @@ async function serializeLoadOrder(context, loadOrder) {
 
   //write to OwlcatModificationManagerSettings.json file
   let loadOrderOutput = JSON.stringify(json, null, 2);
-  return fs.writeFileAsync(loadOrderPath, loadOrderOutput, { encoding: "utf8" });
+  return fsp.writeFile(loadOrderPath, loadOrderOutput, { encoding: "utf8" });
 }
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
@@ -1339,7 +1341,7 @@ async function resolveGameVersion(gamePath) {
   GAME_VERSION = await setGameVersion(gamePath);
   const versionFilepath = path.join(gamePath, VERSION_FILE_PATH);
   try {
-    const data = await fs.readFileAsync(versionFilepath, { encoding: "utf8" });
+    const data = await fsp.readFile(versionFilepath, { encoding: "utf8" });
     const segments = data.split(" ");
     return segments[3]
       ? Promise.resolve(segments[3])
@@ -1351,7 +1353,7 @@ async function resolveGameVersion(gamePath) {
 
 async function modFoldersEnsureWritable(paths) {
   for (let index = 0; index < paths.length; index++) {
-    await fs.ensureDirWritableAsync(path.join(paths[index]));
+    await vfs.ensureDirWritableAsync(path.join(paths[index]));
   }
 }
 
@@ -1369,16 +1371,16 @@ async function setup(discovery, api, gameSpec) {
   }
   if (LOAD_ORDER_ENABLED) {
     try {
-      await fs.statAsync(LO_FILE_PATH);
-      let contents = await fs.readFileAsync(LO_FILE_PATH, "utf8");
+      await fsp.stat(LO_FILE_PATH);
+      let contents = await fsp.readFile(LO_FILE_PATH, "utf8");
       let json = JSON.parse(contents);
       if (json.EnabledModifications === undefined) {
-        await fs.writeFileAsync(LO_FILE_PATH, JSON.stringify(LO_FILE_EMPTY, null, 2), {
+        await fsp.writeFile(LO_FILE_PATH, JSON.stringify(LO_FILE_EMPTY, null, 2), {
           encoding: "utf8",
         });
       }
     } catch {
-      await fs.writeFileAsync(LO_FILE_PATH, JSON.stringify(LO_FILE_EMPTY, null, 2), {
+      await fsp.writeFile(LO_FILE_PATH, JSON.stringify(LO_FILE_EMPTY, null, 2), {
         encoding: "utf8",
       });
     }
@@ -1603,8 +1605,8 @@ function applyGame(context, gameSpec) {
 
 async function deleteMarkerFile(api) {
   try {
-    await fs.statAsync(TOYBOX_LOC_MARKER_FILE);
-    await fs.unlinkAsync(TOYBOX_LOC_MARKER_FILE);
+    await fsp.stat(TOYBOX_LOC_MARKER_FILE);
+    await vfs.unlinkAsync(TOYBOX_LOC_MARKER_FILE);
   } catch (err) {
     if (err.code !== "ENOENT") {
       log(

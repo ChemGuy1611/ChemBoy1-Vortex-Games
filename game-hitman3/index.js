@@ -9,12 +9,13 @@ Notes:
 ///////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const { parseStringPromise } = require("xml2js");
 //const winapi = require('winapi-bindings');
-//const fsPromises = require('fs/promises'); //.rm() for recursive folder deletion
 //const fsExtra = require('fs-extra');
 const {
   download,
@@ -333,7 +334,7 @@ function isDir(folder, file) {
 
 async function isDirAsync(folder, file) {
   try {
-    const stats = await fs.statAsync(path.join(folder, file));
+    const stats = await fsp.stat(path.join(folder, file));
     return stats.isDirectory();
   } catch {
     return false;
@@ -350,7 +351,7 @@ function statCheckSync(gamePath, file) {
 }
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -487,10 +488,10 @@ async function setGameVersion(gamePath) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -611,7 +612,7 @@ function testMod(files, gameId) {
 async function hasModManifest(folderPath) {
   const MOD_FILES_LOWER = MOD_FILES.map((file) => file.toLowerCase());
   try {
-    const entries = await fs.readdirAsync(folderPath);
+    const entries = await fsp.readdir(folderPath);
     return entries.some((entry) => MOD_FILES_LOWER.includes(entry.toLowerCase()));
   } catch {
     return false;
@@ -622,12 +623,12 @@ async function hasModManifest(folderPath) {
 async function readModName(folderPath) {
   const MOD_FILES_LOWER = MOD_FILES.map((file) => file.toLowerCase());
   try {
-    const entries = await fs.readdirAsync(folderPath);
+    const entries = await fsp.readdir(folderPath);
     const manifest = entries.find((entry) => MOD_FILES_LOWER.includes(entry.toLowerCase()));
     if (manifest === undefined) {
       return undefined;
     }
-    const data = await fs.readFileAsync(path.join(folderPath, manifest), "utf8");
+    const data = await fsp.readFile(path.join(folderPath, manifest), "utf8");
     return JSON.parse(data)?.name; //manifests are read as JSON5 by the framework, so this can fail on a valid manifest
   } catch {
     return undefined;
@@ -680,7 +681,7 @@ async function installMod(files, destinationPath) {
   }
 
   // Sort the archive root into folders and loose files, then work out what has to be packed.
-  const rootEntries = await fs.readdirAsync(destinationPath);
+  const rootEntries = await fsp.readdir(destinationPath);
   const rootDirs = [];
   for (const entry of rootEntries) {
     if (await isDirAsync(destinationPath, entry)) {
@@ -714,9 +715,9 @@ async function installMod(files, destinationPath) {
       wrapper = `${wrapper}_`;
     }
     const wrapperPath = path.join(destinationPath, wrapper);
-    await fs.ensureDirWritableAsync(wrapperPath);
+    await vfs.ensureDirWritableAsync(wrapperPath);
     for (const entry of rootEntries) {
-      await fs.renameAsync(path.join(destinationPath, entry), path.join(wrapperPath, entry));
+      await fsp.rename(path.join(destinationPath, entry), path.join(wrapperPath, entry));
     }
     packPaths = [wrapperPath];
   }
@@ -1136,7 +1137,7 @@ async function resolveGameVersion(gamePath) {
   if (GAME_VERSION === "xbox") {
     // use appxmanifest.xml for Xbox version
     try {
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
+      const appManifest = await fsp.readFile(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
@@ -1264,7 +1265,7 @@ function deployNotify(api) {
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
-    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+    await vfs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
   }
 }
 
@@ -1280,7 +1281,7 @@ async function setup(discovery, api, gameSpec) {
     GAME_VERSION = await setGameVersion(GAME_PATH);
   }
   if (setupNotification) setupNotify(api);
-  //await fs.ensureDirWritableAsync(CONFIG_PATH);
+  //await vfs.ensureDirWritableAsync(CONFIG_PATH);
   if (hasLoader) {
     if (nexusCreditDownload) {
       //has its own once-only guard, so it does not ride on whether the loader is missing

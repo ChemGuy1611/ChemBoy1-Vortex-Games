@@ -2,17 +2,18 @@
 Name: Nioh 3 Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.3.0
-Date: 2026-03-09
+Version: 0.3.1
+Date: 2026-09-08
 ///////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const { parseStringPromise } = require("xml2js");
 const { load } = require("js-yaml");
-//const fsPromises = require('fs/promises'); //.rm() for recursive folder deletion
 //const fsExtra = require('fs-extra');
 //const winapi = require('winapi-bindings');
 
@@ -351,7 +352,7 @@ function statCheckSync(gamePath, file) {
 }
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -459,10 +460,10 @@ async function setGameVersion(gamePath) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -1009,7 +1010,7 @@ async function installModZip(files, destinationPath) {
     const szip = new util.SevenZip();
     const archiveName = path.basename(destinationPath, ".installing") + ".zip";
     const archivePath = path.join(destinationPath, archiveName);
-    const rootRelPaths = await fs.readdirAsync(destinationPath);
+    const rootRelPaths = await fsp.readdir(destinationPath);
     await szip.add(
       archivePath,
       rootRelPaths.map((relPath) => path.join(destinationPath, relPath)),
@@ -1735,7 +1736,7 @@ async function resolveGameVersion(gamePath) {
   if (GAME_VERSION === "xbox") {
     // use appxmanifest.xml for Xbox version
     try {
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
+      const appManifest = await fsp.readFile(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
@@ -1758,7 +1759,7 @@ async function resolveGameVersion(gamePath) {
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
-    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+    await vfs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
   }
 }
 
@@ -1779,7 +1780,7 @@ async function setup(discovery, api, gameSpec) {
   if (hasLoader) {
     await downloadLoader(api, gameSpec);
   }
-  await fs.ensureDirWritableAsync(GAME_PATH, LOOSELOADER_PATH);
+  await vfs.ensureDirWritableAsync(path.join(GAME_PATH, LOOSELOADER_PATH));
   await downloadLooseLoader(api, gameSpec);
   await downloadModManager(api, gameSpec);
   //await downloadYumia(api, gameSpec);
@@ -1787,7 +1788,7 @@ async function setup(discovery, api, gameSpec) {
   const source = path.join(__dirname, "yumia", YUMIA_FILE);
   const destination = path.join(GAME_PATH, YUMIA_MOD_FOLDER, YUMIA_FILE);
   try {
-    await fs.copyAsync(source, destination, { overwrite: true });
+    await fsp.cp(source, destination, { recursive: true });
   } catch (err) {
     api.showErrorNotification("Failed to copy Yumia executable to game folder", err, {
       allowReport: false,
@@ -2108,9 +2109,9 @@ async function copyRdbFiles(api, folder, files, target) {
     const source = path.join(folder, files[index]);
     const dest = path.join(folder, target[index]);
     try {
-      await fs.statAsync(source);
-      await fs.copyAsync(source, dest, { overwrite: true });
-      await fs.unlinkAsync(source);
+      await fsp.stat(source);
+      await fsp.cp(source, dest, { recursive: true });
+      await vfs.unlinkAsync(source);
     } catch (err) {
       api.showErrorNotification("Failed to restore root.rdb/rdx files", err);
     }

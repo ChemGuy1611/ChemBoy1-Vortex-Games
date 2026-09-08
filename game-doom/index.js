@@ -36,7 +36,9 @@ Date: 2026-09-02
 //*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const {
@@ -263,7 +265,7 @@ function statCheckSync(gamePath, file) {
 
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -273,10 +275,10 @@ async function statCheckAsync(gamePath, file) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -550,7 +552,7 @@ async function installZipContent(files, destinationPath) {
     const szip = new util.SevenZip();
     const archiveName = path.basename(destinationPath, ".installing") + ".zip";
     const archivePath = path.join(destinationPath, archiveName);
-    const rootRelPaths = await fs.readdirAsync(destinationPath);
+    const rootRelPaths = await fsp.readdir(destinationPath);
     await szip.add(
       archivePath,
       rootRelPaths.map((relPath) => path.join(destinationPath, relPath)),
@@ -664,7 +666,7 @@ async function setup(discovery, api, gameSpec) {
   if (!requirementsInstalled) {
     await download(api, REQUIREMENTS);
   }
-  return fs.ensureDirWritableAsync(path.join(discovery.path, gameSpec.game.modPath));
+  return vfs.ensureDirWritableAsync(path.join(discovery.path, gameSpec.game.modPath));
 }
 
 //Let Vortex know about the game

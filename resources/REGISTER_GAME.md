@@ -47,7 +47,7 @@ IGame extends ITool. Fields marked **required** will cause discovery or deployme
 
 | Field               | Type                                                    | Notes                                                                                                    |
 | ------------------- | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `setup`             | `async (discovery: IDiscoveryResult) => Promise<void>`  | Runs every time game mode activates. Use to ensure directories exist (`fs.ensureDirWritableAsync`).      |
+| `setup`             | `async (discovery: IDiscoveryResult) => Promise<void>`  | Runs every time game mode activates. Use to ensure directories exist (`vfs.ensureDirWritableAsync`).     |
 | `requiresLauncher`  | `(gamePath, store?) => Promise<{ launcher, addInfo? }>` | Force launch via Steam / Epic / Xbox. See `REQUIRES_LAUNCHER.md` for full reference.                     |
 | `details`           | `{ [key: string]: any }`                                | Freeform bag. Standard keys below.                                                                       |
 | `compatible`        | `{ [key: string]: boolean }`                            | Feature flags: `{ dinput, enb, symlinks }`.                                                              |
@@ -177,13 +177,13 @@ function makeFindGame(api, gameSpec) {
 
 Runs every time the user activates this game in Vortex. Typical uses:
 
-- Create mod subdirectories with `fs.ensureDirWritableAsync()`
+- Create mod subdirectories with `vfs.ensureDirWritableAsync()`
 - Copy default config files if missing
 - Write `mods.txt` for UE4SS mods
 
 ```js
 async function setup(discovery, api, gameSpec) {
-    await fs.ensureDirWritableAsync(path.join(discovery.path, MOD_PATH_DEFAULT));
+    await vfs.ensureDirWritableAsync(path.join(discovery.path, MOD_PATH_DEFAULT));
 }
 ```
 

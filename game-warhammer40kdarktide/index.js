@@ -1,5 +1,7 @@
 const path = require("path");
-const { fs, actions, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { fs: vfs, actions, util, selectors, log } = require("vortex-api");
 const template = require("string-template");
 const { parseStringPromise } = require("xml2js");
 const React = require("react");
@@ -70,6 +72,13 @@ const tools = [
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
+// vortex-api's fs.ensureFileAsync is deprecated; this is the node equivalent.
+async function ensureFileAsync(filePath) {
+  await fsp.mkdir(path.dirname(filePath), { recursive: true });
+  const handle = await fsp.open(filePath, "a");
+  await handle.close();
+}
+
 function pathPattern(api, game, pattern) {
   var _a;
   return template(pattern, {
@@ -91,7 +100,7 @@ const getDiscoveryPath = (api) => {
 
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -402,20 +411,20 @@ async function deserializeLoadOrder(context) {
   const loadOrderPath = path.join(gameDir, "mods", LO_FILE);
   //The load order page can mount before setup has created the file, so make sure it exists
   //before reading it.
-  await fs.ensureFileAsync(loadOrderPath);
-  let loadOrderFile = await fs.readFileAsync(loadOrderPath, { encoding: "utf8" });
+  await ensureFileAsync(loadOrderPath);
+  let loadOrderFile = await fsp.readFile(loadOrderPath, { encoding: "utf8" });
 
   //read and filter mod folders
   const ignoredFolders = ["dmf", "base"];
   const ignoredExtensions = [".txt", ".bat"];
   let modFolderPath = path.join(gameDir, MOD_FOLDER);
   async function isValidModFolder(folder) {
-    return fs
-      .statAsync(path.join(modFolderPath, folder, `${folder}.mod`))
+    return fsp
+      .stat(path.join(modFolderPath, folder, `${folder}.mod`))
       .then(() => true)
       .catch(() => false);
   }
-  let modFoldersRaw = await fs.readdirAsync(modFolderPath);
+  let modFoldersRaw = await fsp.readdir(modFolderPath);
   let modFolders = await modFoldersRaw
     .filter(
       (folder) =>
@@ -517,17 +526,15 @@ async function serializeLoadOrder(context, loadOrder) {
 
   let loadOrderOutput = loadOrder.map((mod) => (mod.enabled ? mod.id : `-- ${mod.id}`)).join("\n");
 
-  return fs.writeFileAsync(
-    loadOrderPath,
-    `-- File managed by Vortex mod manager\n${loadOrderOutput}`,
-    { encoding: "utf8" },
-  );
+  return fsp.writeFile(loadOrderPath, `-- File managed by Vortex mod manager\n${loadOrderOutput}`, {
+    encoding: "utf8",
+  });
 }
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
 async function checkForDMF(api, mod_framework) {
-  return fs.statAsync(mod_framework).catch(() => {
+  return fsp.stat(mod_framework).catch(() => {
     api.sendNotification({
       id: "darktide-mod-framework-missing",
       type: "warning",
@@ -547,7 +554,7 @@ async function checkForDMF(api, mod_framework) {
 }
 
 async function checkForDML(api, toggle_mods_path) {
-  return fs.statAsync(toggle_mods_path).catch(() => {
+  return fsp.stat(toggle_mods_path).catch(() => {
     api.sendNotification({
       id: "toggle_darktide_mods-missing",
       type: "warning",
@@ -573,7 +580,7 @@ async function resolveGameVersion(gamePath) {
   if (GAME_VERSION === "xbox") {
     // use appxmanifest.xml for Xbox version
     try {
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
+      const appManifest = await fsp.readFile(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
@@ -600,9 +607,9 @@ async function setup(discovery, api) {
   GAME_PATH = discovery.path;
   //STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
-  await fs.ensureDirWritableAsync(path.join(GAME_PATH, MOD_FOLDER)); // Ensure the mods directory exists
-  await fs.ensureDirWritableAsync(CONFIG_PATH);
-  await fs.ensureFileAsync(path.join(GAME_PATH, MOD_FOLDER, LO_FILE)); // Ensure the mod load order file exists
+  await vfs.ensureDirWritableAsync(path.join(GAME_PATH, MOD_FOLDER)); // Ensure the mods directory exists
+  await vfs.ensureDirWritableAsync(CONFIG_PATH);
+  await ensureFileAsync(path.join(GAME_PATH, MOD_FOLDER, LO_FILE)); // Ensure the mod load order file exists
   await checkForDMF(api, path.join(GAME_PATH, MOD_FOLDER, DMF_FOLDER)); // Check if DMF is installed
   return checkForDML(api, path.join(GAME_PATH, DML_FILE)); // Check if DML is installed
 }

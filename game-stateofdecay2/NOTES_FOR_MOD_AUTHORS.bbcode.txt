@@ -15,15 +15,11 @@ Config:
 
 Handled by the "testConfig" installer. Inspect the extension source for the exact archive layout it expects.
 
-  Installs to: "{localAppData}\StateOfDecay2\Saved\Config\WindowsNoEditor"
-
 ========================================================================
 
 Cooked:
 
 Recognised when the archive contains a file or folder named "Cooked".
-
-  Installs to: "{localAppData}\StateOfDecay2\Saved"
 
 ========================================================================
 

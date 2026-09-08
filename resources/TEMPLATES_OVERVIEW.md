@@ -110,7 +110,7 @@ them.
 | `resolveGameVersion`                         | Xbox reads `appxmanifest.xml`; everything else reads the exe with `exe-version`                                        |
 | `getDiscoveryPath`                           | Reads the discovered game path out of state                                                                            |
 | `purge` / `deploy`                           | Promise wrappers over the `purge-mods` / `deploy-mods` events                                                          |
-| `modFoldersEnsureWritable`                   | `fs.ensureDirWritableAsync()` over every mod-type folder, called at the end of `setup()`                               |
+| `modFoldersEnsureWritable`                   | `vfs.ensureDirWritableAsync()` over every mod-type folder, called at the end of `setup()`                              |
 | `setup`                                      | Caches game path, staging folder, download folder; detects version; fires setup notification; kicks off auto-downloads |
 
 ### Universal feature toggles

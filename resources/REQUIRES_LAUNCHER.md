@@ -71,7 +71,7 @@ Use when the game supports both Steam and non-Steam installs. Check for `steam_a
 const STEAM_DLL = "steam_api64.dll";
 
 async function requiresLauncher(gamePath) {
-    const files = await fs.readdirAsync(gamePath).catch(() => []);
+    const files = await fsp.readdir(gamePath).catch(() => []);
     return files.some((f) => f.toLowerCase() === STEAM_DLL)
         ? Promise.resolve({ launcher: "steam" })
         : Promise.resolve(undefined);

@@ -6,7 +6,9 @@ Date: 2026-05-10
 */
 
 //Import libraries
-const { fs, util, actions, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { fs: vfs, util, actions, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const { parseStringPromise } = require("xml2js");
@@ -336,7 +338,7 @@ async function installChairModZip(files, destinationPath) {
     const szip = new util.SevenZip();
     const archiveName = path.basename(destinationPath, ".installing") + ".zip";
     const archivePath = path.join(destinationPath, archiveName);
-    const rootRelPaths = await fs.readdirAsync(destinationPath);
+    const rootRelPaths = await fsp.readdir(destinationPath);
     await szip.add(
       archivePath,
       rootRelPaths.map((relPath) => path.join(destinationPath, relPath)),
@@ -562,7 +564,7 @@ async function resolveGameVersion(gamePath) {
   if (GAME_VERSION === "xbox") {
     // use appxmanifest.xml for Xbox version
     try {
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
+      const appManifest = await fsp.readFile(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
@@ -613,8 +615,8 @@ async function setup(discovery, api) {
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   setupNotify(api);
-  await fs.ensureDirWritableAsync(path.join(discovery.path, "Mods", "Legacy"));
-  return fs.ensureDirWritableAsync(path.join(discovery.path, MOD_PATH));
+  await vfs.ensureDirWritableAsync(path.join(discovery.path, "Mods", "Legacy"));
+  return vfs.ensureDirWritableAsync(path.join(discovery.path, MOD_PATH));
 }
 
 //Main function

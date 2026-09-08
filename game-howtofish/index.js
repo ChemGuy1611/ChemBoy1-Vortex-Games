@@ -9,13 +9,14 @@ Notes:
 //////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const fsExtra = require("fs-extra");
 const { parseStringPromise } = require("xml2js");
 const winapi = require("winapi-bindings");
-//const fsPromises = require('fs/promises'); //.rm() for recursive folder deletion
 //Auto-downloader modules. MONO-ONLY EXTENSIONS: delete the bepinexbe_downloader require (and the
 //module file itself) - builds.bepinex.dev only publishes IL2CPP builds.
 const {
@@ -25,7 +26,6 @@ const {
   resolveVersionByPattern,
   resolveVersionByAssetDate,
   resolveVersionByModVersion,
-  resolveVersionByDirectCopyMarker,
   resolveVersionByNightlyRun,
   testRequirementVersion,
 } = require("./downloader");
@@ -402,20 +402,26 @@ const BEPCFGMAN_REQUIREMENTS = [
   },
 ];
 
-//MelonPreferencesManager ships a naked .dll, which Vortex's archive install pipeline cannot handle -
-//direct-copy mode fetches it straight to the MelonLoader Mods folder instead.
+//MelonPreferencesManager ships a naked .dll, which Vortex's archive install pipeline cannot handle.
+//directCopyAsMod puts the file in a managed mod's staging folder instead, so it deploys through
+//MELONPREFMAN_ID and shows up in the mod list like any other mod - with its version, an
+//enable/disable toggle and a working Remove.
 const MELONPREFMAN_REQUIREMENTS = [
   {
     archiveFileName: MELONPREFMAN_ARC_NAME,
     userFacingName: MELONPREFMAN_NAME,
     githubUrl: MELONPREFMAN_URL_API,
-    //placeholder only: GAME_PATH is '' at module load, so setup() reassigns this
-    directCopyPath: path.join(GAME_PATH, MELON_MODS_PATH, MELONPREFMAN_FILE),
-    //counts as installed if the user got an archived build from Nexus instead
-    directCopyModType: MELONPREFMAN_ID,
+    directCopyAsMod: true,
+    modType: MELONPREFMAN_ID, //required in this mode - the mod type is what decides where the file deploys
+    assemblyFileName: MELONPREFMAN_FILE,
+    findMod: (api) => findModByFile(api, MELONPREFMAN_ID, MELONPREFMAN_FILE),
     //both assets differ only by variant - anchor both ends
     fileArchivePattern: new RegExp(`^MelonPrefManager\\.${MELON_STRING}\\.dll$`, "i"),
-    resolveVersion: (api) => resolveVersionByDirectCopyMarker(api, MELONPREFMAN_REQUIREMENTS[0]),
+    resolveVersion: (api) => resolveVersionByModVersion(api, MELONPREFMAN_REQUIREMENTS[0]),
+    //legacy loose copy written by the old direct-copy mode and the pre-port hand-rolled code -
+    //deleted once, when the managed mod is created. Placeholder only: GAME_PATH is '' at module
+    //load, so setup() reassigns it.
+    directCopyPath: path.join(GAME_PATH, MELON_MODS_PATH, MELONPREFMAN_FILE),
     autoInstall: false,
     //pinVersion: '1.3.1', //this repo's tags have no 'v' prefix
   },
@@ -719,7 +725,7 @@ function statCheckSync(gamePath, file) {
 }
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -905,10 +911,10 @@ function getCustomFolder(api, game) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -1307,9 +1313,9 @@ async function installRoot(files, workingDir) {
 
   if (GAME_VERSION === ALT_VERSION) {
     try {
-      await fs.statAsync(path.join(workingDir, modFile));
+      await fsp.stat(path.join(workingDir, modFile));
       if (path.basename(modFile) === DATA_FOLDER_DEFAULT) {
-        await fs.renameAsync(
+        await fsp.rename(
           path.join(workingDir, modFile),
           path.join(workingDir, rootPath, DATA_FOLDER_ALT),
         );
@@ -1462,6 +1468,38 @@ function testPlugin(files, gameId) {
   });
 }
 
+//Folder name to wrap a loose plugin in. The dll's own subfolder if it has one, otherwise the dll's
+//base name. Sanitised for the filesystem and for MelonLoader, which hides folders that start with
+//~ or . and reassigns the scan type for a folder literally named Mods/Plugins/UserLibs.
+function pluginFolderName(modFile, rootPath, workingDir) {
+  const raw =
+    rootPath === "." ? path.basename(modFile, path.extname(modFile)) : path.basename(rootPath);
+  let name = raw.replace(/[<>:"/\\|?*]/g, "_").trim();
+  if (/^[~.]/.test(name) || /^(broken|retired|disabled|mods|plugins|userlibs)$/i.test(name)) {
+    name = `${GAME_ID}-${name}`;
+  }
+  if (name === "") {
+    name = path.basename(workingDir).replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*/gi, "");
+  }
+  return name;
+}
+
+//A wrapped MelonLoader mod does not load without a manifest.json in its folder. MelonLoader only
+//checks that the file exists, but write a valid one so a MelonLoader build that parses it is not
+//handed garbage. Never emitted when the archive already ships its own manifest.
+function melonManifest(name) {
+  return JSON.stringify(
+    {
+      name,
+      version_number: "1.0.0",
+      description: `${name} (installed by Vortex)`,
+      dependencies: [],
+    },
+    null,
+    2,
+  );
+}
+
 //Installer install plugin files
 async function installPlugin(api, gameSpec, files, workingDir) {
   const modFile = files.find((file) => PLUGIN_EXTS.includes(path.extname(file).toLowerCase()));
@@ -1491,7 +1529,7 @@ async function installPlugin(api, gameSpec, files, workingDir) {
     files.map(async (file) => {
       if (PLUGIN_EXTS.includes(path.extname(file).toLowerCase())) {
         try {
-          const content = await fs.readFileAsync(path.join(workingDir, file), "utf8");
+          const content = await fsp.readFile(path.join(workingDir, file), "utf8");
           if (hasCustomLoader && content.includes(CUSTOM_PLUGIN_STRING)) {
             isCustom = true;
           } else if (content.includes(BEP_STRING)) {
@@ -1722,17 +1760,41 @@ async function installPlugin(api, gameSpec, files, workingDir) {
     setModTypeInstruction = { type: 'setmodtype', value: MELON_PLUGINS_ID };
   } //*/
 
+  // Wrap a loose plugin (a BepInEx plugin/patcher or MelonLoader Mod/Plugin with no loader folder
+  // of its own in the archive) in a per-mod folder, so secondary files - READMEs, icons, same-named
+  // dependency DLLs - from two different mods cannot overwrite each other in the loader folder. An
+  // archive that already carries plugins/ patchers/ mods/ is left exactly as-is.
+  const wrapTypes = [BEPINEX_PLUGINS_ID, BEPINEX_PATCHERS_ID, MELON_MODS_ID, MELON_PLUGINS_ID];
+  let wrapFolder = "";
+  if (wrapTypes.includes(setModTypeInstruction.value)) {
+    wrapFolder = pluginFolderName(modFile, rootPath, workingDir);
+  }
+  const melonWrap =
+    wrapFolder !== "" &&
+    (setModTypeInstruction.value === MELON_MODS_ID ||
+      setModTypeInstruction.value === MELON_PLUGINS_ID);
+  const hasManifest = files.some((file) => path.basename(file).toLowerCase() === "manifest.json");
+
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(
     (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
   );
   const instructions = filtered.map((file) => {
+    const relPath = file.substr(idx);
     return {
       type: "copy",
       source: file,
-      destination: path.join(file.substr(idx)),
+      destination: wrapFolder ? path.join(wrapFolder, relPath) : path.join(relPath),
     };
   });
+  // a wrapped MelonLoader mod is skipped silently unless its folder holds a manifest.json
+  if (melonWrap && !hasManifest) {
+    instructions.push({
+      type: "generatefile",
+      data: melonManifest(wrapFolder),
+      destination: path.join(wrapFolder, "manifest.json"),
+    });
+  }
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
 }
@@ -2198,27 +2260,10 @@ async function removeCustomFiles(api, gameSpec) {
   );
   await deleteFiles(GAME_PATH, files);
 }
-//Remove MelonPreferencesManager. It is direct-copied rather than installed as a mod, so it has no
-//mod-list row and therefore no Remove button - this action is the only way to get rid of it. The
-//marker file goes with the dll, or a later reinstall reads a version for a file that is not there.
-async function removeMelonPrefMan(api) {
-  GAME_PATH = getDiscoveryPath(api);
-  //deleteFiles logs and swallows per-file failures, so an already-absent file is not an error -
-  //the point of the action is to reach a known-clean state either way
-  const relPath = path.join(MELON_MODS_PATH, MELONPREFMAN_FILE);
-  log("warn", `Removing ${MELONPREFMAN_NAME}: [${relPath}]`);
-  await deleteFiles(GAME_PATH, [relPath, `${relPath}.version.json`]);
-  api.sendNotification({
-    id: `${MELONPREFMAN_ID}-removed`,
-    type: "success",
-    message: `${MELONPREFMAN_NAME} removed`,
-    displayMS: 4000,
-  });
-}
 async function deleteFiles(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
     try {
-      await fs.unlinkAsync(path.join(gamePath, relPaths[index]));
+      await vfs.unlinkAsync(path.join(gamePath, relPaths[index]));
     } catch (err) {
       log("warn", `Failed to remove ${path.join(gamePath, relPaths[index])}: ${err}`);
     }
@@ -2233,7 +2278,7 @@ async function resolveGameVersion(gamePath) {
     //use text file - Not many games have a Version.info file with the version in it
     const versionFilePath = path.join(gamePath, VERSION_FILE_PATH);
     try {
-      const data = await fs.readFileAsync(versionFilePath, { encoding: "utf8" });
+      const data = await fsp.readFile(versionFilePath, { encoding: "utf8" });
       const segments = data.split(VER_SPLIT); //space is usually the split for Version.info files
       return segments[VER_IDX]
         ? Promise.resolve(segments[VER_IDX])
@@ -2246,7 +2291,7 @@ async function resolveGameVersion(gamePath) {
   if (GAME_VERSION === "xbox") {
     // use appxmanifest.xml for Xbox version
     try {
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
+      const appManifest = await fsp.readFile(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
@@ -2357,7 +2402,7 @@ async function downloadMelonPrefManNotify(api) {
                   `Click the button below to download and install ${MOD_NAME}.\n` +
                   `Once installed, the default key to show the configuration menu is F5.\n` +
                   "\n" +
-                  `Note that due to the way the file is packaged on GitHub, the .dll will be copied directly to the Mods folder, not installed as a mod in Vortex.\n`,
+                  `${MOD_NAME} is installed as a managed mod: it appears in your mod list with its version, and you can disable or remove it from there.\n`,
               },
               [
                 {
@@ -2421,7 +2466,7 @@ function setupNotify(api) {
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
-    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+    await vfs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
   }
 }
 
@@ -2803,21 +2848,6 @@ function applyGame(context, gameSpec) {
         return gameId === GAME_ID;
       },
     ); //*/
-    context.registerAction(
-      "mod-icons",
-      300,
-      "open-ext",
-      {},
-      "Remove MelonPreferencesManager",
-      () => {
-        removeMelonPrefMan(context.api);
-      },
-      () => {
-        const state = context.api.getState();
-        const gameId = selectors.activeGameId(state);
-        return gameId === GAME_ID;
-      },
-    ); //*/
   }
   context.registerAction(
     "mod-icons",
@@ -3191,7 +3221,9 @@ function isBepCfgManInstalled(api, spec) {
   return Object.keys(mods).some((id) => mods[id]?.type === BEPCFGMAN_ID);
 }
 
-//Test if MelonPreferences Manager is installed - file read
+//Test if MelonPreferencesManager is installed. The mod-type check is the real test now that it
+//installs as a managed mod (directCopyAsMod); the disk stat is the fallback that still catches a
+//not-yet-migrated legacy loose copy at Mods\melonprefmanager.<build>.dll.
 function isMelonPrefManInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};

@@ -7,10 +7,11 @@ Date: 2026-08-11
 ///////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
-const fsPromises = require("fs/promises");
 //const winapi = require('winapi-bindings');
 
 //const USER_HOME = util.getVortexPath("home");
@@ -191,7 +192,7 @@ function statCheckSync(gamePath, file) {
 
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -201,10 +202,10 @@ async function statCheckAsync(gamePath, file) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -381,10 +382,10 @@ async function installJsFolder(files, fileName) {
   try {
     //Add mod to plugins.js file
     const listPath = path.join(GAME_PATH, JSLIST_FILE_PATH);
-    let plugins = await fsPromises.readdir(fileName, { recursive: true });
+    let plugins = await fsp.readdir(fileName, { recursive: true });
     plugins = plugins.filter((file) => file.endsWith(JSFILE_EXT)); //.js files
     plugins = plugins.map((file) => path.basename(file, JSFILE_EXT)); //map array to plugin names
-    let data = await fs.readFileAsync(listPath);
+    let data = await fsp.readFile(listPath);
     data = data.toString();
     data = data.slice(data.indexOf("["), data.indexOf(";"));
     let dataArray = JSON.parse(data);
@@ -409,7 +410,7 @@ async function installJsFolder(files, fileName) {
     log("warn", `plugins to write: ${pluginsToWrite}`);
     const writeArray = dataArray.concat(pluginObjectArray);
     const writeData = JSON.stringify(writeArray, null, 2);
-    await fs.writeFileAsync(listPath, `${JSLIST_HEADER}${writeData};`);
+    await fsp.writeFile(listPath, `${JSLIST_HEADER}${writeData};`);
   } catch (err) {
     log("error", `Could not add mod to plugins.js file. You will have to add it manually: ${err}`);
   }
@@ -465,10 +466,10 @@ async function installJsFile(files, fileName) {
   try {
     //Add mod to plugins.js file
     const listPath = path.join(GAME_PATH, JSLIST_FILE_PATH);
-    let plugins = await fsPromises.readdir(fileName, { recursive: true });
+    let plugins = await fsp.readdir(fileName, { recursive: true });
     plugins = plugins.filter((file) => file.endsWith(JSFILE_EXT)); //.js files
     plugins = plugins.map((file) => path.basename(file, JSFILE_EXT)); //map array to plugin names
-    let data = await fs.readFileAsync(listPath);
+    let data = await fsp.readFile(listPath);
     data = data.toString();
     data = data.slice(data.indexOf("["), data.indexOf(";"));
     let dataArray = JSON.parse(data);
@@ -493,7 +494,7 @@ async function installJsFile(files, fileName) {
     log("warn", `plugins to write: ${pluginsToWrite}`);
     const writeArray = dataArray.concat(pluginObjectArray);
     const writeData = JSON.stringify(writeArray, null, 2);
-    await fs.writeFileAsync(listPath, `${JSLIST_HEADER}${writeData};`);
+    await fsp.writeFile(listPath, `${JSLIST_HEADER}${writeData};`);
   } catch (err) {
     log("error", `Could not add mod to plugins.js file. You will have to add it manually: ${err}`);
   }
@@ -653,7 +654,7 @@ async function setup(discovery, api, gameSpec) {
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   setupNotify(api);
   // ASYNC CODE //////////////////////////////////////////
-  return fs.ensureDirWritableAsync(path.join(GAME_PATH, JSFILE_PATH));
+  return vfs.ensureDirWritableAsync(path.join(GAME_PATH, JSFILE_PATH));
 }
 
 //Let Vortex know about the game

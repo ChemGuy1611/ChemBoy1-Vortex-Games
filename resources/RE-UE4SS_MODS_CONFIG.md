@@ -63,14 +63,15 @@ Vortex extensions should use `mods.json` as an **intermediary** and then convert
 **Conversion snippet (JS):**
 
 ```js
-const { fs, path } = require("vortex-api");
+const fsp = require("fs").promises;
+const path = require("path");
 
 async function writeModysTxt(modsJsonPath) {
-    const raw = await fs.readFileAsync(modsJsonPath, "utf8");
+    const raw = await fsp.readFile(modsJsonPath, "utf8");
     const entries = JSON.parse(raw);
     const lines = entries.map((e) => `${e.mod_name} : ${e.mod_enabled ? 1 : 0}`);
     const txtPath = path.join(path.dirname(modsJsonPath), "mods.txt");
-    await fs.writeFileAsync(txtPath, lines.join("\n") + "\n");
+    await fsp.writeFile(txtPath, lines.join("\n") + "\n");
 }
 ```
 

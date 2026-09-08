@@ -138,7 +138,7 @@ This is the practical orchestration that happens inside the app at runtime. The 
     - `searchDiscovery` — full filesystem walk of chosen drives (user-triggered "Scan" when quick discovery misses).
     - `quickDiscoveryTools` / `discoverRelativeTools` — locate tools/script extenders relative to the game.
     - `suggestStagingPath` picks the default mod staging folder for a freshly discovered game.
-- **Activating a game** (managing it) — `GameModeManager.setGameMode(old, new, profileId)` -> `setupGameMode()` runs the game's `setup()` (creates staging dir via `fs.ensureDirWritableAsync`, etc.), then the app emits **`gamemode-activated`** with the game id. This is the signal nearly every feature waits on (deploy validators, load-order pages, plugin management all hook it). `requiresLauncher` resolution happens here too (see `REQUIRES_LAUNCHER.md`).
+- **Activating a game** (managing it) — `GameModeManager.setGameMode(old, new, profileId)` -> `setupGameMode()` runs the game's `setup()` (creates staging dir via `vfs.ensureDirWritableAsync`, etc.), then the app emits **`gamemode-activated`** with the game id. This is the signal nearly every feature waits on (deploy validators, load-order pages, plugin management all hook it). `requiresLauncher` resolution happens here too (see `REQUIRES_LAUNCHER.md`).
 - **Discovery results vs known games:** `mKnownGames` = what _can_ be managed; `state.settings.gameMode.discovered` = what was _found on disk_. A game is manageable only when discovered + valid (`isValidGame`).
 
 ### 2. Mod install pipeline

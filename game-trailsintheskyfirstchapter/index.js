@@ -7,11 +7,12 @@ Date: 2026-01-19
 ///////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const winapi = require("winapi-bindings");
-const fsPromises = require("fs/promises");
 
 const USER_HOME = util.getVortexPath("home");
 //const DOCUMENTS = util.getVortexPath("documents");
@@ -213,10 +214,10 @@ function isDir(folder, file) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -322,7 +323,7 @@ function statCheckSync(gamePath, file) {
 }
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -465,8 +466,8 @@ async function filesRename(workingPath, files) {
     const newName = file + BAK_EXT;
     try {
       //rename extracted files
-      await fs.statAsync(file);
-      await fs.renameAsync(file, newName);
+      await fsp.stat(file);
+      await fsp.rename(file, newName);
       //log('warn', `Renamed file "${path.basename(file)}" to "${path.basename(newName)}"`);
     } catch (err) {
       log("error", `Could not rename extracted ${PAC_EXT} file "${path.basename(file)}": ${err}`);
@@ -483,12 +484,12 @@ async function filesRestore(workingPath, files) {
       //restore file names
       try {
         //make sure no vanilla file - this usually means the game was updated
-        await fs.statAsync(newName);
-        await fs.unlinkAsync(file); //delete backup since original present
+        await fsp.stat(newName);
+        await vfs.unlinkAsync(file); //delete backup since original present
       } catch {
         //no vanilla file, safe to rename
-        await fs.statAsync(file);
-        await fs.renameAsync(file, newName);
+        await fsp.stat(file);
+        await fsp.rename(file, newName);
         //log('warn', `Renamed file "${path.basename(file)}" to "${path.basename(newName)}"`);
       }
     } catch (err) {
@@ -507,10 +508,10 @@ async function pacExtract(GAME_PATH, api) {
     //extract pac files
     try {
       //copy python script to pac folder if it's not already there
-      await fs.statAsync(RUN_PATH);
+      await fsp.stat(RUN_PATH);
     } catch (err) {
       try {
-        await fs.copyAsync(BUNDLED_PACTOOL_PATH, RUN_PATH);
+        await fsp.cp(BUNDLED_PACTOOL_PATH, RUN_PATH, { recursive: true });
       } catch (err) {
         log("error", `Could not copy ${PACTOOL_PY} to ${PAC_PATH}: ${err}`);
         return false;
@@ -529,7 +530,7 @@ async function pacExtract(GAME_PATH, api) {
 
   try {
     //stat an extracted folder
-    await fs.statAsync(EXTRACTED_FOLDER);
+    await fsp.stat(EXTRACTED_FOLDER);
     return true;
   } catch {
     //if the folder isn't there, the user probably interrupted somehow
@@ -539,15 +540,15 @@ async function pacExtract(GAME_PATH, api) {
 
 //Copy Extracted folders from pac path to game root
 async function foldersCopy(gamePath, workingPath) {
-  const files = await fs.readdirAsync(workingPath);
+  const files = await fsp.readdir(workingPath);
   const folders = files.filter((file) => isDir(workingPath, file));
   for (let index = 0; index < folders.length; index++) {
     const folder = path.join(workingPath, folders[index]);
     const folderRoot = path.join(gamePath, folders[index]);
     try {
-      await fs.statAsync(folder);
-      await fs.copyAsync(folder, folderRoot);
-      await fs.statAsync(folderRoot);
+      await fsp.stat(folder);
+      await fsp.cp(folder, folderRoot, { recursive: true });
+      await fsp.stat(folderRoot);
       //log('warn', `Copied extracted folder "${folder}" to "${folderRoot}"`);
     } catch (err) {
       log("error", `Could not copy extracted folder "${folder}": ${err}`);
@@ -557,17 +558,17 @@ async function foldersCopy(gamePath, workingPath) {
 
 //Cleanup extracted folders in game root and pac path
 async function foldersCleanup(gamePath, workingPath) {
-  const files = await fs.readdirAsync(workingPath);
+  const files = await fsp.readdir(workingPath);
   const folders = files.filter((file) => isDir(workingPath, file));
   for (let index = 0; index < folders.length; index++) {
     const folder = path.join(workingPath, folders[index]);
     const folderRoot = path.join(gamePath, folders[index]);
     try {
       //remove extracted folders
-      await fs.statAsync(folder);
-      await fsPromises.rm(folder, { recursive: true });
-      await fs.statAsync(folderRoot);
-      await fsPromises.rm(folderRoot, { recursive: true });
+      await fsp.stat(folder);
+      await fsp.rm(folder, { recursive: true });
+      await fsp.stat(folderRoot);
+      await fsp.rm(folderRoot, { recursive: true });
       //log('warn', `Deleted extracted folders "${folder}" and "${folderRoot}"`);
     } catch (err) {
       log("error", `Could not delete extracted folder "${folder}": ${err}`);
@@ -601,7 +602,7 @@ async function pacSetup(api) {
     await foldersCopy(GAME_PATH, WORK_PATH);
     log("warn", `Copy of data folders to game root complete. Renaming files...`);
     try {
-      let RENAME_FILES = await fs.readdirAsync(WORK_PATH);
+      let RENAME_FILES = await fsp.readdir(WORK_PATH);
       RENAME_FILES = RENAME_FILES.filter((file) => file.endsWith(PAC_EXT));
       await filesRename(WORK_PATH, RENAME_FILES);
       log("warn", `Renamed all ${PAC_EXT} files`);
@@ -657,7 +658,7 @@ async function pacCleanup(api) {
     //delete extracted folder and restore file names
     log("warn", `Cleaning up extracted data folders...`);
     await foldersCleanup(GAME_PATH, WORK_PATH);
-    let RESTORE_FILES = await fs.readdirAsync(WORK_PATH);
+    let RESTORE_FILES = await fsp.readdir(WORK_PATH);
     RESTORE_FILES = RESTORE_FILES.filter((file) => file.endsWith(BAK_EXT));
     await filesRestore(WORK_PATH, RESTORE_FILES);
     log("warn", `Restored all ${PAC_EXT} file names`);
@@ -702,7 +703,7 @@ async function pacCleanupPurge(api) {
   try {
     //delete extracted folders and restore file names
     await foldersCleanup(GAME_PATH, WORK_PATH);
-    let RESTORE_FILES = await fs.readdirAsync(WORK_PATH);
+    let RESTORE_FILES = await fsp.readdir(WORK_PATH);
     RESTORE_FILES = RESTORE_FILES.filter((file) => file.endsWith(BAK_EXT));
     await filesRestore(WORK_PATH, RESTORE_FILES);
     log("warn", `Restored all ${PAC_EXT} file names`);
@@ -723,7 +724,7 @@ async function setupNotify(api) {
   GAME_PATH = await getDiscoveryPath(api);
   try {
     //see if extracted folder is present. Skip notification if it is.
-    await fs.statAsync(path.join(GAME_PATH, DATA_FOLDER));
+    await fsp.stat(path.join(GAME_PATH, DATA_FOLDER));
     log("warn", `"${DATA_FOLDER}" folder found. Skipping setup notification.`);
   } catch {
     //*/
@@ -785,7 +786,7 @@ async function setupNotify(api) {
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
-    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+    await vfs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
   }
 }
 
@@ -803,10 +804,12 @@ async function setup(discovery, api, gameSpec) {
   await setupNotify(api);
   try {
     //copy python script to pac folder if it's not already there
-    await fs.statAsync(path.join(GAME_PATH, DESTINATION_PACTOOL_PATH));
+    await fsp.stat(path.join(GAME_PATH, DESTINATION_PACTOOL_PATH));
   } catch (err) {
     try {
-      await fs.copyAsync(BUNDLED_PACTOOL_PATH, path.join(GAME_PATH, DESTINATION_PACTOOL_PATH));
+      await fsp.cp(BUNDLED_PACTOOL_PATH, path.join(GAME_PATH, DESTINATION_PACTOOL_PATH), {
+        recursive: true,
+      });
     } catch (err) {
       log("error", `Could not copy ${PACTOOL_PY} to ${PAC_PATH}: ${err}`);
     }
@@ -1023,7 +1026,7 @@ async function didPurge(api, profileId) {
   //run on mod purge
   GAME_PATH = await getDiscoveryPath(api);
   try {
-    await fs.statAsync(path.join(GAME_PATH, DATA_FOLDER));
+    await fsp.stat(path.join(GAME_PATH, DATA_FOLDER));
     await pacCleanupPurge(api);
   } catch {
     log("warn", `Skipping "${DATA_FOLDER}" folder cleanup. Folder not found.`);

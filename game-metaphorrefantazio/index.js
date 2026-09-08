@@ -7,7 +7,9 @@ Date: 2025-10-05
 /////////////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const { parseStringPromise } = require("xml2js");
@@ -109,6 +111,14 @@ const spec = {
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
 //Set mod type priorities
+
+// vortex-api's fs.ensureFileAsync is deprecated; this is the node equivalent.
+async function ensureFileAsync(filePath) {
+  await fsp.mkdir(path.dirname(filePath), { recursive: true });
+  const handle = await fsp.open(filePath, "a");
+  await handle.close();
+}
+
 function isDir(folder, file) {
   const stats = fs.statSync(path.join(folder, file));
   return stats.isDirectory();
@@ -125,7 +135,7 @@ function statCheckSync(gamePath, file) {
 
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -135,10 +145,10 @@ async function statCheckAsync(gamePath, file) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -655,7 +665,7 @@ async function resolveGameVersion(gamePath) {
   if (GAME_VERSION === "xbox") {
     try {
       //try to parse appxmanifest.xml
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
+      const appManifest = await fsp.readFile(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
@@ -683,10 +693,10 @@ async function setup(discovery, api, gameSpec) {
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   setupNotify(api);
-  await fs.ensureDirWritableAsync(path.join(discovery.path, RELOADEDMODLOADER_PATH));
+  await vfs.ensureDirWritableAsync(path.join(discovery.path, RELOADEDMODLOADER_PATH));
   await downloadModManager(api, gameSpec);
   await downloadModLoader(api, gameSpec);
-  return fs.ensureFileAsync(path.join(discovery.path, RELOADED_PATH, "portable.txt"));
+  return ensureFileAsync(path.join(discovery.path, RELOADED_PATH, "portable.txt"));
 }
 
 //Let Vortex know about the game

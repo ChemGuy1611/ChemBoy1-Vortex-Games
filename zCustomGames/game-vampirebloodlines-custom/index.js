@@ -1,7 +1,9 @@
 const Promise = require("bluebird");
 const path = require("path");
 const winapi = require("winapi-bindings");
-const { fs, util, actions, selectors } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { fs: vfs, util, actions, selectors } = require("vortex-api");
 const { default: IniParser, WinapiFormat } = require("vortex-parse-ini");
 
 const GAME_ID = "vampirebloodlines";
@@ -61,8 +63,8 @@ function getUnofficialModPath(api) {
 }
 
 function isUPModType(api, instructions) {
-  return fs
-    .statAsync(getUnofficialModPath(api))
+  return fsp
+    .stat(getUnofficialModPath(api))
     .then(() => Promise.resolve(true))
     .catch(() => Promise.resolve(false));
 }
@@ -87,7 +89,7 @@ function requiresLauncher(gamePath, store) {
 }
 
 async function setup(discovery, api) {
-  return fs.ensureDirWritableAsync(path.join(discovery.path, "Unofficial_Patch"));
+  return vfs.ensureDirWritableAsync(path.join(discovery.path, "Unofficial_Patch"));
 }
 
 function main(context) {

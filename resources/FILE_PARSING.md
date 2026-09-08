@@ -71,7 +71,7 @@ contents.data.EngineVersionOverride.MinorVersion = "7";
 await parser.write(iniPath, contents);
 ```
 
-`parser.read()` on a missing file resolves to an empty object rather than throwing, so check existence first (`fs.statAsync`) if you need to distinguish "file missing" from "file empty".
+`parser.read()` on a missing file resolves to an empty object rather than throwing, so check existence first (`fsp.stat`) if you need to distinguish "file missing" from "file empty".
 
 ### Native binding notes (winapi-bindings)
 
@@ -89,7 +89,7 @@ await parser.write(iniPath, contents);
 ```js
 const { parseStringPromise, Builder } = require("xml2js");
 
-const xmlText = await fs.readFileAsync(manifestPath, "utf8");
+const xmlText = await fsp.readFile(manifestPath, "utf8");
 const parsed = await parseStringPromise(xmlText);
 const version = parsed?.Package?.Identity?.[0]?.$?.Version;
 ```
@@ -97,7 +97,7 @@ const version = parsed?.Package?.Identity?.[0]?.$?.Version;
 Real example from this codebase — reading a Xbox `appxmanifest.xml` for the installed game version:
 
 ```js
-const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
+const appManifest = await fsp.readFile(path.join(gamePath, APPMANIFEST_FILE), "utf8");
 const parsed = await parseStringPromise(appManifest);
 const version = parsed?.Package?.Identity?.[0]?.$?.Version;
 ```
@@ -129,7 +129,7 @@ const text = YAML.dump(value); // JS value -> string
 Real example from this codebase — a pak-based load order file (`pak_config.yaml`) storing an ordered array of `{ pak, disabled }` entries:
 
 ```js
-const loadOrderFile = await fs.readFileAsync(loadOrderPath, { encoding: "utf8" });
+const loadOrderFile = await fsp.readFile(loadOrderPath, { encoding: "utf8" });
 let modEntries = YAML.load(loadOrderFile);
 if (modEntries === undefined) modEntries = []; // YAML.load returns undefined for an empty file
 
@@ -137,10 +137,10 @@ if (modEntries === undefined) modEntries = []; // YAML.load returns undefined fo
 
 const loadOrderMapped = loadOrder.map((mod) => ({ pak: mod.id, disabled: !mod.enabled }));
 const output = YAML.dump(loadOrderMapped);
-await fs.writeFileAsync(loadOrderPath, output, { encoding: "utf8" });
+await fsp.writeFile(loadOrderPath, output, { encoding: "utf8" });
 ```
 
-No wrapper class like `vortex-parse-ini`'s `IniFile` — `load`/`dump` operate on plain strings/values, so read the file yourself with `fs.readFileAsync`/`writeFileAsync` around the calls. `YAML.load` on an empty string returns `undefined`, not `{}`/`[]` — guard for that before using array/object methods on the result.
+No wrapper class like `vortex-parse-ini`'s `IniFile` — `load`/`dump` operate on plain strings/values, so read the file yourself with `fsp.readFile`/`fsp.writeFile` around the calls. `YAML.load` on an empty string returns `undefined`, not `{}`/`[]` — guard for that before using array/object methods on the result.
 
 `js-yaml` v4's `load`/`dump` are the safe-by-default versions (the old `safeLoad`/`safeDump` names from v3 no longer exist).
 
@@ -186,7 +186,7 @@ try {
     fs.statSync(path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE));
     JSONFILES_JSON = JSON.parse(fs.readFileSync(path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE)));
 } catch {
-    await fs.writeFileAsync(
+    await fsp.writeFile(
         path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE),
         `${JSON.stringify(DEFAULT_JSON, null, 2)}`,
         { encoding: "utf8" },

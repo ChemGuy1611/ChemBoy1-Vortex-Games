@@ -735,7 +735,7 @@ context.registerMainPage("", "My Page", MyPage, {
 
 - When `mdi` is set, the first `icon` string argument to `registerMainPage` is ignored.
 - Store as a `const` at file top; reuse across multiple page registrations.
-- `mdi` is **only** for `registerMainPage` — `registerAction` icon strings are from Vortex's own icon font (e.g. `'open-ext'`, `'gamepad'`), not MDI.
+- `mdi` is **only** for `registerMainPage`. `registerAction` takes an icon _name_ string, not MDI path data. On the classic `IconBar` the name resolves against Vortex's icon font (`'open-ext'`, `'gamepad'`). On the modern Mods toolbar (default since 2.7) `'mod-icons'` names resolve through a fixed table (`iconMap.ts`) — `'gamepad'` is not in it, use `'game'`; an unknown name draws a puzzle piece. See `TOOLBAR_ACTIONS.md` §"The Modern Mods Toolbar".
 
 Real examples: `mdi: mdiViewDashboard` (Dashboard page), `mdi: mdiMagnify` (Browse Nexus page), `mdi: UE4SS_ICON` (UE4SS Load Order pages in CB1 extensions).
 

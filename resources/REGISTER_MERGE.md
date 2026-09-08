@@ -96,9 +96,9 @@ function test(game) {
 }
 
 async function merge(filePath, mergePath) {
-    const patchContent = await fs.readFileAsync(filePath, "utf8");
+    const patchContent = await fsp.readFile(filePath, "utf8");
     const dest = path.join(mergePath, "Engine.ini");
-    await fs.appendFileAsync(dest, "\n" + patchContent);
+    await fsp.appendFile(dest, "\n" + patchContent);
 }
 
 context.registerMerge(test, merge, ""); // '' = default mod type

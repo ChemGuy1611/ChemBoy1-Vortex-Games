@@ -7,10 +7,11 @@ Date: 2026-09-06
 ////////////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
-const fsPromises = require("fs/promises");
 const React = require("react");
 
 //Specify all information about the game
@@ -139,6 +140,14 @@ const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Save";
 const SAVE_FOLDER = path.join(DOCUMENTS, "The Last of Us Part II");
 let USERID_FOLDER = "";
+
+// vortex-api's fs.ensureFileAsync is deprecated; this is the node equivalent.
+async function ensureFileAsync(filePath) {
+  await fsp.mkdir(path.dirname(filePath), { recursive: true });
+  const handle = await fsp.open(filePath, "a");
+  await handle.close();
+}
+
 function isDir(folder, file) {
   const stats = fs.statSync(path.join(folder, file));
   return stats.isDirectory();
@@ -326,7 +335,7 @@ function statCheckSync(gamePath, file) {
 
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -336,10 +345,10 @@ async function statCheckAsync(gamePath, file) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -1095,8 +1104,8 @@ async function deserializeLoadOrder(context) {
   let loadOrderPath = path.join(gameDir, LO_FILE);
   //The load order page can mount before setup has created the file, so make sure it exists
   //before reading it.
-  await fs.ensureFileAsync(loadOrderPath);
-  let loadOrderFile = await fs.readFileAsync(loadOrderPath, { encoding: "utf8" });
+  await ensureFileAsync(loadOrderPath);
+  let loadOrderFile = await fsp.readFile(loadOrderPath, { encoding: "utf8" });
   let loadOrderSplit = loadOrderFile.split("\n");
   let LO_LINE = loadOrderSplit.find((line) => line.startsWith(LO_LINE_START)); //we are putting the list on one line. should be element [1], but doing find just in case that ever changes.
   //A fresh install can have no MountOrder line yet, which leaves nothing to strip.
@@ -1107,7 +1116,7 @@ async function deserializeLoadOrder(context) {
   let modFolderPath = path.join(gameDir, PSARC_PATH);
   let modFiles = [];
   try {
-    modFiles = await fs.readdirAsync(modFolderPath);
+    modFiles = await fsp.readdir(modFolderPath);
     modFiles = modFiles.filter((file) => path.extname(file) === PSARC_EXT);
     modFiles.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
   } catch {
@@ -1199,8 +1208,8 @@ async function serializeLoadOrder(context, loadOrder) {
   let loadOrderPath = path.join(gameDir, LO_FILE);
   //The load order page can mount before setup has created the file, so make sure it exists
   //before reading it.
-  await fs.ensureFileAsync(loadOrderPath);
-  let loadOrderFile = await fs.readFileAsync(loadOrderPath, { encoding: "utf8" });
+  await ensureFileAsync(loadOrderPath);
+  let loadOrderFile = await fsp.readFile(loadOrderPath, { encoding: "utf8" });
   let loadOrderSplit = loadOrderFile.split("\n");
   let LO_LINE = loadOrderSplit.find((line) => line.startsWith(LO_LINE_START)); //we are putting the list on one line. should be element [1], but doing find just in case that ever changes.
   //With no MountOrder line to replace, append one instead of writing to index -1,
@@ -1221,13 +1230,13 @@ async function serializeLoadOrder(context, loadOrder) {
     loadOrderName[offset] = `${loadOrderName[offset]} ${line}`;
   }
   let loadOrderJoinedChunks = loadOrderName.join(`\n`);
-  await fs.writeFileAsync(chunksPath, CHUNKS_DEFAULT_CONTENT + loadOrderJoinedChunks, {
+  await fsp.writeFile(chunksPath, CHUNKS_DEFAULT_CONTENT + loadOrderJoinedChunks, {
     encoding: "utf8",
   });
 
   //write to modloader.ini file
   let loadOrderOutput = loadOrderSplit.join("\n");
-  return fs.writeFileAsync(loadOrderPath, loadOrderOutput, { encoding: "utf8" });
+  return fsp.writeFile(loadOrderPath, loadOrderOutput, { encoding: "utf8" });
 }
 
 //remove load order list from modloader.ini on purge
@@ -1239,11 +1248,11 @@ async function clearModOrder(api) {
 
   let loadOrderPath = path.join(gameDir, LO_FILE);
   try {
-    await fs.statAsync(loadOrderPath);
+    await fsp.stat(loadOrderPath);
   } catch (err) {
     return Promise.reject(err);
   }
-  let loadOrderFile = await fs.readFileAsync(loadOrderPath, { encoding: "utf8" });
+  let loadOrderFile = await fsp.readFile(loadOrderPath, { encoding: "utf8" });
   let loadOrderSplit = loadOrderFile.split("\n");
   let LO_LINE = loadOrderSplit.find((line) => line.startsWith(LO_LINE_START)); //we are putting the list on one line. should be element [1], but doing find just in case that ever changes.
   //Nothing to clear if the file has no MountOrder line.
@@ -1252,7 +1261,7 @@ async function clearModOrder(api) {
   }
 
   let loadOrderOutput = loadOrderSplit.join("\n");
-  return fs.writeFileAsync(loadOrderPath, loadOrderOutput, { encoding: "utf8" });
+  return fsp.writeFile(loadOrderPath, loadOrderOutput, { encoding: "utf8" });
 }
 
 //remove load order list from chunks.txt on purge
@@ -1263,7 +1272,7 @@ async function clearChunksTxt(api) {
   }
 
   let chunksPath = path.join(gameDir, CHUNKS_PATH);
-  return fs.writeFileAsync(chunksPath, `${CHUNKS_DEFAULT_CONTENT}`, { encoding: "utf8" });
+  return fsp.writeFile(chunksPath, `${CHUNKS_DEFAULT_CONTENT}`, { encoding: "utf8" });
 }
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
@@ -1272,7 +1281,7 @@ async function clearChunksTxt(api) {
 async function setupNotify(api) {
   GAME_PATH = getDiscoveryPath(api);
   try {
-    await fs.statAsync(path.join(GAME_PATH, PSARCTOOL_PATH, "pak68"));
+    await fsp.stat(path.join(GAME_PATH, PSARCTOOL_PATH, "pak68"));
     log("warn", `Extracted folder found. Suppressing setup notification.`);
   } catch {
     //*/
@@ -1345,7 +1354,7 @@ async function psarcExtract(GAME_PATH, api) {
   try {
     const TARGET_FILE = path.join(WORK_PATH, SPCOMPSARC_FILE);
     const EXTRACT_PATH = WORK_PATH;
-    await fs.statAsync(TARGET_FILE);
+    await fsp.stat(TARGET_FILE);
     //const ARGUMENTS = `"${TARGET_FILE}" "${EXTRACT_PATH}"`; //unPSARC arguments
     const ARGUMENTS = `-e "${TARGET_FILE}" -o "${EXTRACT_PATH}"`; //ndarc arguments
     await api.runExecutable(RUN_PATH, [ARGUMENTS], {
@@ -1362,7 +1371,7 @@ async function psarcExtract(GAME_PATH, api) {
   try {
     const TARGET_FILE = path.join(WORK_PATH, BINPSARC_FILE);
     const EXTRACT_PATH = path.join(WORK_PATH, BIN_FOLDER);
-    await fs.statAsync(TARGET_FILE);
+    await fsp.stat(TARGET_FILE);
     //const ARGUMENTS = `"${TARGET_FILE}" "${EXTRACT_PATH}"`; //unPSARC arguments
     const ARGUMENTS = `-e "${TARGET_FILE}" -o "${EXTRACT_PATH}"`; //ndarc arguments
     await api.runExecutable(RUN_PATH, [ARGUMENTS], {
@@ -1377,8 +1386,8 @@ async function psarcExtract(GAME_PATH, api) {
   }
   //stat extracted folders to make sure they are there
   try {
-    await fs.statAsync(path.join(WORK_PATH, BIN_FOLDER));
-    await fs.statAsync(path.join(WORK_PATH, "pak68"));
+    await fsp.stat(path.join(WORK_PATH, BIN_FOLDER));
+    await fsp.stat(path.join(WORK_PATH, "pak68"));
     return true;
   } catch {
     //if the folders aren't there, the user probably closed the terminal windows early
@@ -1419,8 +1428,8 @@ async function psarcSetup(api) {
     log("warn", `Extraction of all .psarc files complete. Renaming files...`);
     //rename sp-common.psarc
     try {
-      await fs.statAsync(path.join(WORK_PATH, SPCOMPSARC_FILE));
-      await fs.renameAsync(
+      await fsp.stat(path.join(WORK_PATH, SPCOMPSARC_FILE));
+      await fsp.rename(
         path.join(WORK_PATH, SPCOMPSARC_FILE),
         path.join(WORK_PATH, BAK_SPCOMPSARC_FILE),
       );
@@ -1430,8 +1439,8 @@ async function psarcSetup(api) {
     }
     //rename bin.psarc
     try {
-      await fs.statAsync(path.join(WORK_PATH, BINPSARC_FILE));
-      await fs.renameAsync(
+      await fsp.stat(path.join(WORK_PATH, BINPSARC_FILE));
+      await fsp.rename(
         path.join(WORK_PATH, BINPSARC_FILE),
         path.join(WORK_PATH, BAK_BINPSARC_FILE),
       );
@@ -1461,8 +1470,8 @@ async function foldersCleanup(workingPath, folders) {
     const folder = path.join(workingPath, folders[index]);
     try {
       //remove extracted .psarc folders
-      await fs.statAsync(folder);
-      await fsPromises.rm(folder, { recursive: true });
+      await fsp.stat(folder);
+      await fsp.rm(folder, { recursive: true });
     } catch (err) {
       log("error", `Could not delete extracted .psarc folder "${folder}": ${err}`);
     }
@@ -1496,14 +1505,14 @@ async function psarcCleanup(api) {
   await foldersCleanup(WORK_PATH, CLEANUP_FOLDERS);
   //restore name of sp-common.psarc
   try {
-    await fs.statAsync(path.join(WORK_PATH, BAK_SPCOMPSARC_FILE));
+    await fsp.stat(path.join(WORK_PATH, BAK_SPCOMPSARC_FILE));
     try {
       //make sure vanilla file is not in place - this usually means the game was updated
-      await fs.statAsync(path.join(WORK_PATH, SPCOMPSARC_FILE));
-      await fs.unlinkAsync(path.join(WORK_PATH, BAK_SPCOMPSARC_FILE));
+      await fsp.stat(path.join(WORK_PATH, SPCOMPSARC_FILE));
+      await vfs.unlinkAsync(path.join(WORK_PATH, BAK_SPCOMPSARC_FILE));
     } catch {
       //vanilla file not present, safe to rename
-      await fs.renameAsync(
+      await fsp.rename(
         path.join(WORK_PATH, BAK_SPCOMPSARC_FILE),
         path.join(WORK_PATH, SPCOMPSARC_FILE),
       );
@@ -1514,13 +1523,13 @@ async function psarcCleanup(api) {
   }
   //restore name of bin.psarc
   try {
-    await fs.statAsync(path.join(WORK_PATH, BAK_BINPSARC_FILE));
+    await fsp.stat(path.join(WORK_PATH, BAK_BINPSARC_FILE));
     try {
       //make sure vanilla file is not in place - this usually means the game was updated
-      await fs.statAsync(path.join(WORK_PATH, BINPSARC_FILE));
-      await fs.unlinkAsync(path.join(WORK_PATH, BAK_BINPSARC_FILE));
+      await fsp.stat(path.join(WORK_PATH, BINPSARC_FILE));
+      await vfs.unlinkAsync(path.join(WORK_PATH, BAK_BINPSARC_FILE));
     } catch {
-      await fs.renameAsync(
+      await fsp.rename(
         path.join(WORK_PATH, BAK_BINPSARC_FILE),
         path.join(WORK_PATH, BINPSARC_FILE),
       );
@@ -1531,8 +1540,8 @@ async function psarcCleanup(api) {
   }
   //stat vanilla files to make sure they are there
   try {
-    await fs.statAsync(path.join(WORK_PATH, BINPSARC_FILE));
-    await fs.statAsync(path.join(WORK_PATH, SPCOMPSARC_FILE));
+    await fsp.stat(path.join(WORK_PATH, BINPSARC_FILE));
+    await fsp.stat(path.join(WORK_PATH, SPCOMPSARC_FILE));
     api.dismissNotification(NOTIF_ID);
     cleanupSuccessNotify(api);
     setupNotify(api);
@@ -1559,16 +1568,16 @@ async function setup(discovery, api, gameSpec) {
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   // ASYNCHRONOUS CODE ///////////////////////////////////
   await setupNotify(api);
-  await fs.ensureDirWritableAsync(CONFIG_PATH);
-  await fs.ensureDirWritableAsync(SAVE_PATH);
-  await fs.ensureDirWritableAsync(path.join(GAME_PATH, PAK_PATH));
-  await fs.ensureDirWritableAsync(path.join(GAME_PATH, PSARC_PATH));
+  await vfs.ensureDirWritableAsync(CONFIG_PATH);
+  await vfs.ensureDirWritableAsync(SAVE_PATH);
+  await vfs.ensureDirWritableAsync(path.join(GAME_PATH, PAK_PATH));
+  await vfs.ensureDirWritableAsync(path.join(GAME_PATH, PSARC_PATH));
   await downloadModLoader(api, gameSpec);
   if (LOAD_ORDER_ENABLED) {
     //ensure LO file present
     const LO_FILE_PATH = path.join(GAME_PATH, LO_FILE);
     try {
-      await fs.statAsync(LO_FILE_PATH);
+      await fsp.stat(LO_FILE_PATH);
     } catch {
       const modFolder = path.join(GAME_PATH, PSARC_PATH);
       const LO_FILE_LINES = [
@@ -1578,7 +1587,7 @@ async function setup(discovery, api, gameSpec) {
         `ModFolder=${modFolder}`,
       ];
       const LO_FILE_CONTENT = LO_FILE_LINES.join("\n");
-      await fs.writeFileAsync(LO_FILE_PATH, LO_FILE_CONTENT, { encoding: "utf8" });
+      await fsp.writeFile(LO_FILE_PATH, LO_FILE_CONTENT, { encoding: "utf8" });
     }
   }
   return downloadPsarcTool(api, gameSpec);
@@ -1964,8 +1973,8 @@ async function didPurge(api, profileId) {
   }
   GAME_PATH = await getDiscoveryPath(api);
   try {
-    await fs.statAsync(path.join(GAME_PATH, PSARCTOOL_PATH, "pak68"));
-    await fs.statAsync(path.join(GAME_PATH, PSARCTOOL_PATH, BIN_FOLDER));
+    await fsp.stat(path.join(GAME_PATH, PSARCTOOL_PATH, "pak68"));
+    await fsp.stat(path.join(GAME_PATH, PSARCTOOL_PATH, BIN_FOLDER));
     await psarcCleanup(api);
   } catch {
     log("warn", `Skipping purge cleanup because cleanup folders not found.`);

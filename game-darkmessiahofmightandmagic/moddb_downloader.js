@@ -28,9 +28,10 @@
 // getLatestModDbVersion, resolveModDbDownloadUrl.
 
 const path = require("path");
-const { createWriteStream } = require("fs"); //node's fs directly - vortex-api's createWriteStream re-export is deprecated
 const { finished } = require("stream/promises");
-const { actions, fs, log, selectors, util } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, log, selectors, util } = require("vortex-api");
 
 // --- requirement helpers --------------------------------------------------
 
@@ -208,7 +209,7 @@ function filenameFromResponse(response, requirement) {
 //instance of ReadableStream. Received an instance of ReadableStream").
 async function streamToFile(body, targetPath) {
   const reader = body.getReader();
-  const out = createWriteStream(targetPath);
+  const out = fs.createWriteStream(targetPath);
   try {
     for (;;) {
       const { done, value } = await reader.read();
@@ -268,7 +269,7 @@ async function fetchAndImportModDbFile(api, requirement, url, cause) {
       api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
     );
   } finally {
-    await fs.removeAsync(tempPath).catch(() => null);
+    await fsp.rm(tempPath, { recursive: true, force: true }).catch(() => null);
   }
 }
 

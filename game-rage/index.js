@@ -7,11 +7,12 @@ Date: 2026-01-19
 ///////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 //const { parseStringPromise } = require('xml2js');
-const fsPromises = require("fs/promises");
 //const fsExtra = require('fs-extra');
 const winapi = require("winapi-bindings");
 
@@ -256,6 +257,13 @@ const tools = [
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
+// vortex-api's fs.ensureFileAsync is deprecated; this is the node equivalent.
+async function ensureFileAsync(filePath) {
+  await fsp.mkdir(path.dirname(filePath), { recursive: true });
+  const handle = await fsp.open(filePath, "a");
+  await handle.close();
+}
+
 function isDir(folder, file) {
   const stats = fs.statSync(path.join(folder, file));
   return stats.isDirectory();
@@ -271,7 +279,7 @@ function statCheckSync(gamePath, file) {
 }
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -364,10 +372,10 @@ async function requiresLauncher(gamePath, store) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -440,15 +448,15 @@ async function installLoader(files, tempFolder) {
     // copy dinput8.dll file to root and remove folders
     const source = dllPath;
     const source2 = iniPath;
-    await fs.statAsync(source);
-    await fs.statAsync(source2);
+    await fsp.stat(source);
+    await fsp.stat(source2);
     const destination = path.join(tempFolder, LOADER_FILE);
     const destination2 = path.join(tempFolder, LOADER_INI);
-    await fs.copyAsync(source, destination);
-    await fs.copyAsync(source2, destination2);
-    await fsPromises.rm(path.join(tempFolder, "id5Tweaker", LOADER_FOLDER), { recursive: true });
-    await fsPromises.rm(path.join(tempFolder, "id5Tweaker", "32bit_RAGE"), { recursive: true });
-    await fs.unlinkAsync(iniPath);
+    await fsp.cp(source, destination, { recursive: true });
+    await fsp.cp(source2, destination2, { recursive: true });
+    await fsp.rm(path.join(tempFolder, "id5Tweaker", LOADER_FOLDER), { recursive: true });
+    await fsp.rm(path.join(tempFolder, "id5Tweaker", "32bit_RAGE"), { recursive: true });
+    await vfs.unlinkAsync(iniPath);
     const paths = await getAllFiles(tempFolder);
     files = paths.map((p) => p.replace(`${tempFolder}${path.sep}`, ""));
   } catch (err) {
@@ -872,7 +880,7 @@ function launchNotify(api) {
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
-    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+    await vfs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
   }
 }
 
@@ -890,11 +898,11 @@ async function setup(discovery, api, gameSpec) {
     launchNotify(api);
   }
   //fs.ensureDirWritableAsync(SAVE_PATH);
-  await fs.ensureDirAsync(CACHE_PATH);
+  await fsp.mkdir(CACHE_PATH, { recursive: true });
 
   //* Make .bat file to launch the game (EXPERIMENTAL)
   try {
-    await fs.ensureFileAsync(LAUNCH_BAT_PATH);
+    await ensureFileAsync(LAUNCH_BAT_PATH);
     try {
       steamPath = await winapi.RegGetValue(
         "HKEY_LOCAL_MACHINE",
@@ -908,7 +916,7 @@ async function setup(discovery, api, gameSpec) {
       steamPath = path.join("C:", "Program Files (x86)", "Steam");
     }
     PARAMETERS = [`steam.exe`].concat([PARAM_STRING]).concat(PARAMETERS);
-    await fs.writeFileAsync(LAUNCH_BAT_PATH, `cd "${steamPath}"\n${PARAMETERS.join(" ")}\nexit`, {
+    await fsp.writeFile(LAUNCH_BAT_PATH, `cd "${steamPath}"\n${PARAMETERS.join(" ")}\nexit`, {
       encoding: "utf-8",
     });
   } catch (err) {
@@ -917,8 +925,8 @@ async function setup(discovery, api, gameSpec) {
 
   //* Make .txt file with command line parameters to paste into Steam Launch Options
   try {
-    await fs.ensureFileAsync(LAUNCH_TXT_PATH);
-    await fs.writeFileAsync(LAUNCH_TXT_PATH, `${PARAMS_SHORT.join(" ")}\n`, { encoding: "utf-8" });
+    await ensureFileAsync(LAUNCH_TXT_PATH);
+    await fsp.writeFile(LAUNCH_TXT_PATH, `${PARAMS_SHORT.join(" ")}\n`, { encoding: "utf-8" });
   } catch (err) {
     api.showErrorNotification("Failed to write launch.bat", err, { allowReport: false });
   } //*/

@@ -12,13 +12,14 @@ Notes:
 ///////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const { parseStringPromise } = require("xml2js");
 //const winapi = require('winapi-bindings');
 //const semver = require('semver');
-//const fsPromises = require('fs/promises'); //.rm() for recursive folder deletion
 //const fsExtra = require('fs-extra');
 
 /*const USER_HOME = util.getVortexPath("home");
@@ -508,7 +509,7 @@ function statCheckSync(gamePath, file) {
 }
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -656,10 +657,10 @@ async function setGameVersion(gamePath) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -1513,7 +1514,7 @@ async function isBrowserInstalled(api, spec) {
   if (test === false) {
     try {
       GAME_PATH = getDiscoveryPath(api);
-      await fs.statAsync(path.join(GAME_PATH, BROWSER_EXEC));
+      await fsp.stat(path.join(GAME_PATH, BROWSER_EXEC));
       test = true;
     } catch {
       test = false;
@@ -1708,7 +1709,7 @@ async function isJsonManagerInstalled(api, spec) {
   if (test === false) {
     try {
       GAME_PATH = getDiscoveryPath(api);
-      await fs.statAsync(path.join(GAME_PATH, JSON_MANAGER_EXEC));
+      await fsp.stat(path.join(GAME_PATH, JSON_MANAGER_EXEC));
       test = true;
     } catch {
       test = false;
@@ -1725,7 +1726,7 @@ async function isDmmInstalled(api, spec) {
   if (test === false) {
     try {
       GAME_PATH = getDiscoveryPath(api);
-      let files = await fs.readdirAsync(GAME_PATH);
+      let files = await fsp.readdir(GAME_PATH);
       files = files.filter(
         (file) =>
           path.basename(file).startsWith(DMM_EXEC_STRING) &&
@@ -1767,7 +1768,7 @@ async function isSaveEditorInstalled(api, spec) {
   if (test === false) {
     try {
       GAME_PATH = getDiscoveryPath(api);
-      await fs.statAsync(path.join(GAME_PATH, SAVE_EDITOR_EXEC));
+      await fsp.stat(path.join(GAME_PATH, SAVE_EDITOR_EXEC));
       test = true;
     } catch {
       test = false;
@@ -2201,7 +2202,7 @@ async function resolveGameVersion(gamePath) {
   if (GAME_VERSION === "xbox") {
     // use appxmanifest.xml for Xbox version
     try {
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
+      const appManifest = await fsp.readFile(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
@@ -2224,7 +2225,7 @@ async function resolveGameVersion(gamePath) {
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
-    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+    await vfs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
   }
 }
 
@@ -2234,7 +2235,7 @@ async function checkForUal(api, gameSpec) {
   for (let index = 0; index < UAL_FILES.length; index++) {
     const file = UAL_FILES[index];
     try {
-      await fs.statAsync(path.join(GAME_PATH, BINARIES_PATH, file));
+      await fsp.stat(path.join(GAME_PATH, BINARIES_PATH, file));
       results.push(true);
     } catch {
       results.push(false);
@@ -2734,7 +2735,7 @@ async function deleteMarkerFiles(api) {
   );
   for (const markerPath of markerPaths) {
     try {
-      await fs.removeAsync(markerPath);
+      await fsp.rm(markerPath, { recursive: true, force: true });
     } catch {
       /* ignore */
     }
@@ -2853,7 +2854,7 @@ async function runDmm(api, file, args = []) {
   const TOOL_NAME = DMM_NAME;
   try {
     GAME_PATH = getDiscoveryPath(api);
-    let files = await fs.readdirAsync(GAME_PATH);
+    let files = await fsp.readdir(GAME_PATH);
     files = files.filter(
       (file) =>
         path.basename(file).startsWith(DMM_EXEC_STRING) &&

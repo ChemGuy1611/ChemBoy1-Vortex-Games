@@ -228,7 +228,7 @@ async function installRezip(files, destinationPath) {
     const modName = path.basename(destinationPath, ".installing");
     const archiveName = modName.split("-")[0] + ".zip";
     const archivePath = path.join(destinationPath, archiveName);
-    const rootRelPaths = await fs.readdirAsync(destinationPath);
+    const rootRelPaths = await fsp.readdir(destinationPath);
     await szip.add(
         archivePath,
         rootRelPaths.map((p) => path.join(destinationPath, p)),

@@ -311,11 +311,6 @@ const tools = [
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
-async function isDir(folder, file) {
-  const stats = await fsp.stat(path.join(folder, file));
-  return stats.isDirectory();
-}
-
 //Set mod type priority
 function statCheckSync(gamePath, file) {
   try {

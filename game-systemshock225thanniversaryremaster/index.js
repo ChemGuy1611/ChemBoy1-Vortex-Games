@@ -7,13 +7,13 @@ Date: 2026-09-04
 ////////////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
-const fsPromises = require("fs/promises");
 const child_process = require("child_process");
 const winapi = require("winapi-bindings");
-const fsNative = require("fs");
 const { registerModDbBrowser, onceModDbBrowser } = require("./moddb_browser");
 
 //feature toggles
@@ -248,7 +248,7 @@ function statCheckSync(gamePath, file) {
 
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -258,10 +258,10 @@ async function statCheckAsync(gamePath, file) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -927,9 +927,10 @@ function convertSuccessNotify(api, name, file) {
 
 async function asyncForEachCopy(relPaths, destinationPath, rootPath) {
   for (let index = 0; index < relPaths.length; index++) {
-    await fs.copyAsync(
+    await fsp.cp(
       path.join(destinationPath, rootPath, relPaths[index]),
       path.join(destinationPath, relPaths[index]),
+      { recursive: true },
     );
   }
 }
@@ -955,11 +956,11 @@ async function installLegacy(files, destinationPath) {
   const convertName = MOD_NAME_TRUNCATED + ".kpf";
   const archivePath = path.join(destinationPath, archiveName);
   const convertPath = path.join(destinationPath, convertName);
-  const relPaths = await fs.readdirAsync(path.join(destinationPath, rootPath));
+  const relPaths = await fsp.readdir(path.join(destinationPath, rootPath));
   if (rootPath !== "") {
     try {
       await asyncForEachCopy(relPaths, destinationPath, rootPath);
-      await fsPromises.rm(path.join(destinationPath, rootPath), { recursive: true });
+      await fsp.rm(path.join(destinationPath, rootPath), { recursive: true });
     } catch (err) {
       log("error", `Failed to convert legacy SS2 mod files to .kpf format: ${err}`);
     }
@@ -969,7 +970,7 @@ async function installLegacy(files, destinationPath) {
     relPaths.map((relPath) => path.join(destinationPath, relPath)),
     { raw: ["-r"] },
   ); //*/
-  await fs.renameAsync(archivePath, convertPath); //rename archive from .zip to .kpf extension
+  await fsp.rename(archivePath, convertPath); //rename archive from .zip to .kpf extension
   //convertSuccessNotify(api, MOD_NAME, modFile);
   const instructions = [
     {
@@ -1189,7 +1190,7 @@ async function setup(discovery, api, gameSpec) {
   GAME_VERSION = getVersion(api, gameSpec);
   STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
-  return fs.ensureDirWritableAsync(path.join(GAME_PATH, MOD_PATH));
+  return vfs.ensureDirWritableAsync(path.join(GAME_PATH, MOD_PATH));
 }
 
 //Setup function
@@ -1206,7 +1207,7 @@ async function setupClassic(discovery, api, gameSpec) {
   } catch (err) {
     try {
       fs.statSync(SS2TOOL_SOURCEPATH);
-      await fs.copyAsync(SS2TOOL_SOURCEPATH, SS2TOOL_RUNPATH);
+      await fsp.cp(SS2TOOL_SOURCEPATH, SS2TOOL_RUNPATH, { recursive: true });
       log(
         "warn",
         `Suucessfully copied SS2Tool from "${DOWNLOAD_FOLDER_CLASSIC}" to "${SS2TOOL_RUNPATH}"`,
@@ -1218,7 +1219,7 @@ async function setupClassic(discovery, api, gameSpec) {
       );
     }
   }
-  return fs.ensureDirWritableAsync(path.join(GAME_PATH_CLASSIC, CLASSIC_PATH));
+  return vfs.ensureDirWritableAsync(path.join(GAME_PATH_CLASSIC, CLASSIC_PATH));
 }
 
 //Let Vortex know about the game
@@ -1474,7 +1475,7 @@ function applyGameClassic(context, gameSpec) {
       } catch (err) {
         try {
           fs.statSync(SS2TOOL_SOURCEPATH);
-          fs.copyAsync(SS2TOOL_SOURCEPATH, SS2TOOL_RUNPATH);
+          fsp.cp(SS2TOOL_SOURCEPATH, SS2TOOL_RUNPATH, { recursive: true });
           context.api.runExecutable(SS2TOOL_RUNPATH, [], { suggestDeploy: false });
         } catch (err) {
           context.api.showErrorNotification("Failed to run SS2Tool.", err, { allowReport: false });

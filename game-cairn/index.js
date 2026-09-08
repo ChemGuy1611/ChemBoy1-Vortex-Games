@@ -7,7 +7,9 @@ Date: 2026-04-10
 //////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const fsExtra = require("fs-extra");
@@ -487,7 +489,7 @@ function statCheckSync(gamePath, file) {
 }
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -650,10 +652,10 @@ function getCustomFolder(api, game) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -1050,9 +1052,9 @@ async function installRoot(files, workingDir) {
 
   if (GAME_VERSION === ALT_VERSION) {
     try {
-      await fs.statAsync(path.join(workingDir, modFile));
+      await fsp.stat(path.join(workingDir, modFile));
       if (path.basename(modFile) === DATA_FOLDER_DEFAULT) {
-        await fs.renameAsync(
+        await fsp.rename(
           path.join(workingDir, modFile),
           path.join(workingDir, rootPath, DATA_FOLDER_ALT),
         );
@@ -1234,7 +1236,7 @@ async function installPlugin(api, gameSpec, files, workingDir) {
     files.map(async (file) => {
       if (PLUGIN_EXTS.includes(path.extname(file).toLowerCase())) {
         try {
-          const content = await fs.readFileAsync(path.join(workingDir, file), "utf8");
+          const content = await fsp.readFile(path.join(workingDir, file), "utf8");
           if (hasCustomLoader && content.includes(CUSTOM_PLUGIN_STRING)) {
             isCustom = true;
           } else if (content.includes(BEP_STRING)) {
@@ -1795,7 +1797,7 @@ async function removeCustomFiles(api, gameSpec) {
 async function deleteFiles(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
     try {
-      await fs.unlinkAsync(path.join(gamePath, relPaths[index]));
+      await vfs.unlinkAsync(path.join(gamePath, relPaths[index]));
     } catch (err) {
       log("warn", `Failed to remove ${path.join(gamePath, relPaths[index])}: ${err}`);
     }
@@ -1809,7 +1811,7 @@ async function resolveGameVersion(gamePath) {
   if (GAME_VERSION === "xbox") {
     // use appxmanifest.xml for Xbox version
     try {
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
+      const appManifest = await fsp.readFile(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
@@ -1820,7 +1822,7 @@ async function resolveGameVersion(gamePath) {
   } else {
     const versionFilepath = path.join(gamePath, DATA_FOLDER, VERSION_FILE_PATH);
     try {
-      const data = await fs.readFileAsync(versionFilepath, { encoding: "utf8" });
+      const data = await fsp.readFile(versionFilepath, { encoding: "utf8" });
       const segments = data.split(" ");
       return segments[3]
         ? Promise.resolve(segments[3])
@@ -1950,7 +1952,7 @@ async function downloadMelonPrefManNotify(api) {
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
-    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+    await vfs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
   }
 }
 

@@ -60,7 +60,7 @@ Activation is **driven by the active profile**, not selected directly. The trigg
     - `game.getInstalledVersion(gameDiscovery)` is called **before** `game.setup` (so the
       gameversion-hash extension can read files before `setup` may lock them).
     - `game.setup(gameDiscovery)` runs the extension's setup (typically
-      `fs.ensureDirWritableAsync` on the staging dir, requirement downloads, etc.). If a
+      `vfs.ensureDirWritableAsync` on the staging dir, requirement downloads, etc.). If a
       `contributed` (third-party) game's setup throws, `allowReport` is forced off.
 4. Verify the mod path is still resolvable: `getGame(newGameId).getModPaths(discovery.path)`.
 5. **`GameModeManager.setGameMode(oldMode, newMode, profileId)`**:

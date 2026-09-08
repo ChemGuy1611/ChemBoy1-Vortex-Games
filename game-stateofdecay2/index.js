@@ -2,8 +2,8 @@
 Name: State of Decay 2 Vortex Extension
 Structure: UE4 (Local AppData)
 Author: ChemBoy1
-Version: 2.2.0
-Date: 2026-01-31
+Version: 2.2.1
+Date: 2026-09-08
 /////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -815,7 +815,7 @@ async function setup(discovery, api, gameSpec) {
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   //await downloadModManager(api, gameSpec);
   setupNotify(api);
-  await vfs.ensureDirWritableAsync(GAME_PATH, BINARIES_PATH);
+  await vfs.ensureDirWritableAsync(path.join(GAME_PATH, BINARIES_PATH));
   await vfs.ensureDirWritableAsync(path.join(LOCALAPPDATA, COOKED_PATH));
   await vfs.ensureDirWritableAsync(path.join(LOCALAPPDATA, CONFIG_PATH));
   return vfs.ensureDirWritableAsync(path.join(LOCALAPPDATA, PAK_PATH));

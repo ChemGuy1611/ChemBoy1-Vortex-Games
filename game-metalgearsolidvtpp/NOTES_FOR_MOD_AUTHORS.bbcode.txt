@@ -41,8 +41,6 @@ Mod:
 
 Recognised when the archive contains a file with one of these extensions: ".mgsv" or ".MGSVPreset".
 
-  Installs to: "SnakeBite_Mods"
-
 ========================================================================
 
 Rules That Apply To Every Mod Type:

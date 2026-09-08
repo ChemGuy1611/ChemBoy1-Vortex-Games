@@ -11,7 +11,115 @@ How to add buttons to toolbars, context menus, and custom page toolbars using `r
 | `context.registerAction(group, ...)` | Adding buttons to built-in toolbars (Mods, Downloads, Load Order). Allows other extensions to add to the same group. |
 | `staticElements` on `IconBar`        | Hardcoded buttons in a custom page's own header. Not extensible.                                                     |
 
-Both are rendered by `IconBar`. `registerAction` populates the action registry; `IconBar` reads from it by group name.
+`registerAction` populates the action registry; a renderer reads from it by group name. On the
+**classic** UI that renderer is always `IconBar`. Since Vortex 2.7 the **Mods page** (`'mod-icons'`
+group) renders through a different component with its own rules — see
+[The Modern Mods Toolbar](#the-modern-mods-toolbar-vortex-27) below. Every other group still uses
+`IconBar` on both layouts.
+
+---
+
+## The Modern Mods Toolbar (Vortex 2.7+)
+
+Since **2.7.0-beta.1** ([PR #23940](https://github.com/Nexus-Mods/Vortex/pull/23940)) the Mods page
+renders its toolbar with a new component (`ModsToolbar` → `useModToolbarActions` → `ToolbarGroup`)
+instead of `IconBar`. The modern layout is the **default** (`settings.window.useModernLayout ?? true`);
+the classic `IconBar` toolbar only appears when the user has switched back to the classic layout.
+
+**This applies only to the `'mod-icons'` group.** `'mod-context-icons'`, `'mods-multirow-actions'`,
+`'fb-load-order-icons'`, `'global-icons'`, the downloads groups, and any custom `registerMainPage`
+toolbar still render through `IconBar` and behave as documented in the rest of this file.
+
+### Icon names resolve through a fixed table
+
+The modern toolbar maps the action's `icon` string through a hardcoded lookup
+(`Vortex/src/renderer/src/views/components/iconMap.ts`) of ~28 names to Material Design Icon paths.
+**A name that is not in the table renders as a generic puzzle-piece icon** (`mdiPuzzleOutline`).
+
+There is no registration API for this map. An extension cannot add an entry, pass raw MDI path
+data, or reference an SVG symbol id. Injecting a `<symbol>` into `#icon-sets`, or calling
+`util.installIconSet` — the way to ship a custom toolbar glyph on a classic `IconBar` — **has no
+effect here**.
+
+The full name set as of 2.7.0-beta.1: `dashboard`, `mods`, `settings`, `download`, `game`,
+`health`, `support`, `about`, `menu`, `show`, `feedback`, `nexus`, `palette`, `plugins`, `savegame`,
+`tools`, `tune`, `categories`, `changelog`, `deploy`, `history`, `import`, `open-ext`, `purge`,
+`refresh`, `rules`, `swap`, `undo`.
+
+- `open-ext` and `import` also change layout — they fold into a menu (see below).
+- Spoken for by a core Mods button or a bundled extension: `deploy` (Deploy), `purge` (Purge),
+  `refresh` (Check for Updates), `categories` (Categories), `history` (History), `rules` (Manage
+  Rules), `undo` (recovery's "Reset to manifest", which sits in the overflow menu).
+- Free for a standalone extension button: `changelog`, `swap`, `tune`, `tools`, `download`,
+  `about`, `nexus`, `feedback`, `savegame`, `health`, `show`, `palette`, `plugins`, `game`.
+
+Names like `swap` / `changelog` / `refresh` / `undo` are also real symbols in the classic icon font
+(`Vortex/assets/fonts/icons.svg`), so an icon-string action that uses one renders correctly on
+**both** toolbars. A name in `iconMap` but not the classic font would draw blank on classic.
+
+### `open-ext` and `import` fold into a menu
+
+An action registered into `'mod-icons'` with icon `'open-ext'` is collected into a single **"Open"**
+dropdown button; with icon `'import'`, into an **"Import"** dropdown. Every other icon renders as its
+own standalone button.
+
+This is the *only* icon-based grouping the modern toolbar does. Unlike the classic `IconBar`, two
+`'mod-icons'` actions that share some other icon render as **two separate buttons** (both drawing the
+same glyph), not one dropdown. A menu that collects exactly one action renders as that action
+directly; a menu that collects none is not shown.
+
+Practical effect: keep folder- and link-opening buttons on icon `'open-ext'` — they land tidily in
+the "Open" menu, which is pinned to the bar by default.
+
+### Component-form actions are dropped
+
+`registerAction` with a React component instead of an icon name is shown **only on the classic
+toolbar**. The modern toolbar logs a debug line ("toolbar action registered as a component is shown
+only in the classic UI") and skips it — a component cannot be measured, pinned, or collapsed into
+the overflow menu.
+
+To provide a custom control on both layouts: register the component with `{ isClassicOnly: true }`,
+and register a plain icon-string action with `{ isModernOnly: true }` that does the same thing.
+
+### Pinning and overflow
+
+The modern toolbar measures the width it has and collapses what does not fit into a "…" overflow
+menu. The Mods toolbar also offers **pinning**: the bar shows the *pinned* actions, the "…" menu
+holds the full list, and the user pins/unpins from that menu. Decisions persist in
+`state.settings.toolbars.mods.pinned`, keyed by the action's registered title.
+
+**A `'mod-icons'` action is unpinned by default** — it starts in the "…" menu, not on the bar (same
+as the core Deploy and Purge buttons). Pass `{ pinned: true }` to start it on the bar (same as
+Install From File and Check for Updates). Actions folded into the "Open" menu ride on that menu
+button, which is pinned by default.
+
+### `IActionOptions` on the modern toolbar
+
+| Option          | Modern Mods toolbar                                                    |
+| --------------- | ---------------------------------------------------------------------- |
+| `condition`     | honored — `false` hides, a string disables with that tooltip           |
+| `position`      | honored — orders against the core buttons too                          |
+| `pinned`        | honored — see above (new in 2.7)                                       |
+| `notice`        | honored — bracketed after the label, re-read every render (new in 2.7) |
+| `namespace`     | honored — used for click attribution                                   |
+| `isClassicOnly` | honored — drops the action from the modern toolbar                     |
+| `isModernOnly`  | honored — the *classic* bar drops it                                   |
+| `noCollapse`    | **ignored** — overflow is user-controlled pinning now                  |
+| `hollowIcon`    | **ignored** — the icon is a solid MDI path                             |
+
+### Example — a standalone modern-toolbar button
+
+```js
+context.registerAction(
+    "mod-icons",
+    300,
+    "changelog", // in iconMap — mdiTextBoxOutline on modern, icon-changelog on classic
+    { pinned: true }, // sit on the bar by default rather than in the "..." menu
+    "View Changelog",
+    () => util.opn(path.join(__dirname, "CHANGELOG.md")).catch(() => null),
+    () => selectors.activeGameId(context.api.getState()) === GAME_ID,
+);
+```
 
 ---
 
@@ -92,6 +200,11 @@ context.registerAction(
 ## 5. Component Form (Custom Button UI)
 
 Use when you need more than an icon + label — e.g. a dropdown, a toggle, or a custom layout.
+
+> **Modern Mods toolbar (2.7+) drops component-form actions** in the `'mod-icons'` group — they
+> render only on the classic `IconBar`. See
+> [The Modern Mods Toolbar](#the-modern-mods-toolbar-vortex-27). Component form still works for
+> every other group and for custom `registerMainPage` toolbars.
 
 ```js
 context.registerAction(
@@ -354,6 +467,9 @@ context.registerAction(
 - `IconBar` renders `noCollapse` actions in an "uncollapsed" array that always renders.
 - Without `noCollapse`, low-priority (high position number) actions collapse first.
 - `collapse="force"` on `IconBar` overrides `noCollapse` and collapses everything.
+- **The modern Mods toolbar (2.7+) ignores `noCollapse`.** What sits on the bar is the user's
+  pinning choice; use `{ pinned: true }` to make a `'mod-icons'` action bar-resident by default.
+  See [The Modern Mods Toolbar](#the-modern-mods-toolbar-vortex-27).
 
 ---
 
@@ -481,6 +597,8 @@ context.registerAction(
 | Single-row context        | `Vortex/src/renderer/src/controls/table/TableRow.tsx:435`                                      | `ActionDropdown` with `group="${tableId}-action-icons"`            |
 | Badge on page icon        | `Vortex/src/renderer/src/extensions/download_management/index.ts`                              | `new ReduxProp(...)` passed as `badge:` to `registerMainPage`      |
 | noCollapse example        | Any CB1 extension with `'mod-icons'`                                                           | See `mod-icons` calls in game-\* index.js files                    |
+| Modern Mods toolbar       | `Vortex/src/renderer/src/extensions/mod_management/hooks/useModToolbarActions.hook.tsx`        | `iconMap` resolution, `open-ext`/`import` folding, pinning         |
+| Modern toolbar icon map   | `Vortex/src/renderer/src/views/components/iconMap.ts`                                          | fixed name → MDI path, `mdiPuzzleOutline` fallback                 |
 
 ---
 

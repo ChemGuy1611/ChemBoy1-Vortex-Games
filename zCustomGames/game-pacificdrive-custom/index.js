@@ -8,7 +8,8 @@ const EXEC_XBOX = "gamelaunchhelper.exe";
 
 //Import some assets from Vortex we'll need.
 const path = require("path");
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 
 //Get correct executable for game version
 function getExecutable(discoveryPath) {
@@ -76,7 +77,7 @@ function findGame() {
 }
 
 function prepareForModding(discovery) {
-  return fs.ensureDirWritableAsync(
+  return vfs.ensureDirWritableAsync(
     path.join(discovery.path, "PenDriverPro", "Content", "Paks", "~mods"),
   );
 }

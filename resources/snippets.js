@@ -256,8 +256,8 @@ async function makeLink(api, src, dest, type) {
     fs.statSync(dest); //check if linked staging folder already exists
     return; //exit if it does
   } catch {
-    await fs
-      .symlinkAsync(src, dest, type) //make directory link
+    await fsp
+      .symlink(src, dest, type) //make directory link
       //return api.runExecutable('cmd.exe', [`mklink`, `/D`, `"${dest}"`, `"${src}"`], { shell: true, detached: true }) run through cmd.exe
       //return api.runExecutable('makelink.bat', [`mklink`, `/D`, `"${dest}"`, `"${src}"`], { shell: true, detached: true }) run through .bat file (close and restart Vortex)
       .then(() =>

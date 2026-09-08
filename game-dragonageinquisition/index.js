@@ -7,11 +7,12 @@ Date: 2026-07-19
 /////////////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const winapi = require("winapi-bindings");
-const fsPromises = require("fs/promises");
 
 const EAAPP_ID = "";
 const EPICAPP_ID = "verdi";
@@ -214,7 +215,7 @@ function statCheckSync(gamePath, file) {
 
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -224,10 +225,10 @@ async function statCheckAsync(gamePath, file) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -443,7 +444,7 @@ async function isPatchInstalled(api, spec) {
   let test = Object.keys(mods).some((id) => mods[id]?.type === PATCH_ID);
   if (!test) {
     try {
-      await fs.statAsync(path.join(GAME_PATH, PATCH_PATH, PATCH_FILE));
+      await fsp.stat(path.join(GAME_PATH, PATCH_PATH, PATCH_FILE));
       test = true;
     } catch {
       test = false;
@@ -508,16 +509,16 @@ async function downloadPatch(api, gameSpec, check = true) {
                 noDismiss: true,
                 allowSuppress: false,
               });
-              let files = await fs.readdirAsync(DOWNLOAD_FOLDER);
+              let files = await fsp.readdir(DOWNLOAD_FOLDER);
               files = files
                 .filter((file) => path.basename(file).includes(path.basename(PATCH_FILE, "dll")))
                 .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))
                 .reverse();
               const copyFile = files[0];
-              await fs.statAsync(path.join(DOWNLOAD_FOLDER, copyFile));
+              await fsp.stat(path.join(DOWNLOAD_FOLDER, copyFile));
               const source = path.join(DOWNLOAD_FOLDER, copyFile);
               const destination = path.join(GAME_PATH, PATCH_PATH, PATCH_FILE);
-              await fs.copyAsync(source, destination, { overwrite: true });
+              await fsp.cp(source, destination, { recursive: true });
               api.dismissNotification(NOTIF_ID);
               api.dismissNotification(`${NOTIF_ID}-copy`);
               api.sendNotification({
@@ -1051,11 +1052,11 @@ async function setup(discovery, api, gameSpec) {
   await downloadDAIMod(discovery, api, gameSpec);
   setupNotify(api);
   setupNotifyPatch(api, gameSpec);
-  await fs.ensureDirWritableAsync(path.join(discovery.path, DAI_PATH));
+  await vfs.ensureDirWritableAsync(path.join(discovery.path, DAI_PATH));
   //await fs.ensureDirWritableAsync(path.join(CONFIG_PATH));
-  await fs.ensureDirWritableAsync(path.join(discovery.path, UPDATE_PATH));
-  await fs.ensureDirWritableAsync(path.join(discovery.path, FROSTYPLUGIN_PATH));
-  return fs.ensureDirWritableAsync(path.join(discovery.path, FROSTY_PATH));
+  await vfs.ensureDirWritableAsync(path.join(discovery.path, UPDATE_PATH));
+  await vfs.ensureDirWritableAsync(path.join(discovery.path, FROSTYPLUGIN_PATH));
+  return vfs.ensureDirWritableAsync(path.join(discovery.path, FROSTY_PATH));
 }
 
 //Let Vortex know about the game
@@ -1324,7 +1325,7 @@ async function deleteModData(api) {
   GAME_PATH = getDiscoveryPath(api);
   const modDataPath = path.join(GAME_PATH, MODDATA_FOLDER);
   try {
-    await fsPromises.rm(modDataPath, { recursive: true });
+    await fsp.rm(modDataPath, { recursive: true });
     api.sendNotification({
       id: `${GAME_ID}-deletemoddata`,
       type: "success",
@@ -1354,7 +1355,7 @@ async function removePatch(api) {
   GAME_PATH = getDiscoveryPath(api);
   const pluginPath = path.join(GAME_PATH, PATCH_PATH, PATCH_FILE);
   try {
-    await fs.unlinkAsync(pluginPath);
+    await vfs.unlinkAsync(pluginPath);
     api.sendNotification({
       id: `${GAME_ID}-removepatch`,
       type: "success",
@@ -1376,10 +1377,10 @@ async function togglePatch(api, toggle) {
     MESSAGE_ERR = `Failed to disable ${PATCH_NAME}`;
   }
   try {
-    const data = await fs.readFileAsync(filePath, "utf8");
+    const data = await fsp.readFile(filePath, "utf8");
     const json = JSON.parse(data);
     json.GlobalOptions.DatapathFixEnabled = toggle;
-    await fs.writeFileAsync(filePath, JSON.stringify(json, null, 2));
+    await fsp.writeFile(filePath, JSON.stringify(json, null, 2));
     api.sendNotification({
       id: `${GAME_ID}-togglepatch`,
       type: "success",

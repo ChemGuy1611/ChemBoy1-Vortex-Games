@@ -1,6 +1,7 @@
 //Import some assets from Vortex we'll need.
 const path = require("path");
-const { fs, log, util } = require("vortex-api");
+const fs = require("fs");
+const { fs: vfs, log, util } = require("vortex-api");
 
 // Nexus Mods domain for the game. e.g. nexusmods.com/aliensfireteamelite
 const GAME_ID = "aliensfireteamelite";
@@ -17,7 +18,7 @@ function findGame() {
 }
 
 function prepareForModding(discovery) {
-  return fs.ensureDirWritableAsync(
+  return vfs.ensureDirWritableAsync(
     path.join(discovery.path, "Endeavor", "Content", "Paks", "~mods"),
   );
 }

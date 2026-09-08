@@ -7,10 +7,11 @@ Date: 2026-09-02
 /////////////////////////////////////////*/
 
 //import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
-const fsPromises = require("fs/promises"); //.readdir() for recursive folder reading
 const {
   download,
   findModByFile,
@@ -218,7 +219,7 @@ function statCheckSync(gamePath, file) {
 
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -228,10 +229,10 @@ async function statCheckAsync(gamePath, file) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -685,7 +686,7 @@ async function updateBootOptions(api) {
     //read files and write to boot-options.json file
     //.texpack files
     //const PATCH_FOLDER_FILES = await fs.readdirAsync(path.join(GAME_PATH, PACK_PATH));
-    const PATCH_FOLDER_FILES = await fsPromises.readdir(path.join(GAME_PATH, READ_PAK_PATH), {
+    const PATCH_FOLDER_FILES = await fsp.readdir(path.join(GAME_PATH, READ_PAK_PATH), {
       recursive: true,
     });
     const TEX_FILES = PATCH_FOLDER_FILES.filter(
@@ -711,7 +712,7 @@ async function updateBootOptions(api) {
     BOOT_OPTIONS_JSON.allcontentidarray[0][BOOT_LOD_KEY] = LOD_FILE_NAMES_CONV;
     BOOT_ORDER_TEX = BOOT_OPTIONS_JSON.allcontentidarray[0][BOOT_TEX_KEY];
     BOOT_ORDER_LOD = BOOT_OPTIONS_JSON.allcontentidarray[0][BOOT_LOD_KEY];
-    await fs.writeFileAsync(
+    await fsp.writeFile(
       path.join(GAME_PATH, BOOT_OPTIONS_FILEPATH),
       JSON.stringify(BOOT_OPTIONS_JSON, null, 2),
       { encoding: "utf8" },
@@ -730,7 +731,7 @@ async function resetBootOptions(api) {
     BOOT_OPTIONS_JSON.allcontentidarray[0][BOOT_LOD_KEY] = [];
     BOOT_ORDER_TEX = BOOT_OPTIONS_JSON.allcontentidarray[0][BOOT_TEX_KEY];
     BOOT_ORDER_LOD = BOOT_OPTIONS_JSON.allcontentidarray[0][BOOT_LOD_KEY];
-    await fs.writeFileAsync(
+    await fsp.writeFile(
       path.join(GAME_PATH, BOOT_OPTIONS_FILEPATH),
       JSON.stringify(BOOT_OPTIONS_JSON, null, 2),
       { encoding: "utf8" },
@@ -752,7 +753,7 @@ async function setup(discovery, api, gameSpec) {
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   try {
     //read boot-options.json file to get current tex and lod order
-    const contents = await fs.readFileAsync(path.join(GAME_PATH, BOOT_OPTIONS_FILEPATH), "utf8");
+    const contents = await fsp.readFile(path.join(GAME_PATH, BOOT_OPTIONS_FILEPATH), "utf8");
     BOOT_OPTIONS_JSON = JSON.parse(contents);
     //log('warn', `Boot-options.json file read successfully: ${BOOT_OPTIONS_JSON}`);
     BOOT_ORDER_TEX = BOOT_OPTIONS_JSON.allcontentidarray[0][BOOT_TEX_KEY];
@@ -766,9 +767,9 @@ async function setup(discovery, api, gameSpec) {
       { allowReport: false },
     );
   }
-  await fs.ensureDirWritableAsync(SAVE_PATH);
-  await fs.ensureDirWritableAsync(path.join(discovery.path, LUAMOD_PATH));
-  return fs.ensureDirWritableAsync(path.join(discovery.path, PACK_PATH));
+  await vfs.ensureDirWritableAsync(SAVE_PATH);
+  await vfs.ensureDirWritableAsync(path.join(discovery.path, LUAMOD_PATH));
+  return vfs.ensureDirWritableAsync(path.join(discovery.path, PACK_PATH));
 }
 
 //Let Vortex know about the game

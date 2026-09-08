@@ -7,11 +7,12 @@ Date: 2026-09-03
 ///////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 //const { parseStringPromise } = require('xml2js');
-//const fsPromises = require('fs/promises'); //.rm() for recursive folder deletion
 //const fsExtra = require('fs-extra');
 const winapi = require("winapi-bindings");
 const { registerModDbBrowser, onceModDbBrowser } = require("./moddb_browser");
@@ -252,7 +253,7 @@ function statCheckSync(gamePath, file) {
 }
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -319,10 +320,10 @@ function makeFindGame(api, gameSpec) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -698,7 +699,7 @@ async function resolveGameVersion(gamePath) {
   const versionFile = path.join(gamePath, BINARIES_PATH, "Build.ini");
   let data = "";
   try {
-    data = await fs.readFileAsync(versionFile, { encoding: "utf8" });
+    data = await fsp.readFile(versionFile, { encoding: "utf8" });
   } catch (err) {
     log("error", `Could not read ${BINARIES_PATH}/Build.ini file to get game version: ${err}`);
     return Promise.resolve(undefined);
@@ -721,7 +722,7 @@ async function setup(discovery, api, gameSpec) {
   if (setupNotification) {
     setupNotify(api);
   }
-  return fs.ensureDirWritableAsync(GAME_PATH);
+  return vfs.ensureDirWritableAsync(GAME_PATH);
 }
 
 //Let Vortex know about the game

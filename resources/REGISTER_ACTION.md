@@ -29,8 +29,8 @@ context.registerAction(
 | `hollowIcon`    | `boolean`                   | Outline-only icon style                                                                                                                           |
 | `isClassicOnly` | `boolean`                   | Visible only in classic layout                                                                                                                    |
 | `isModernOnly`  | `boolean`                   | Visible only in modern layout                                                                                                                     |
-| `notice`        | `() => string \| undefined` | Extra text read on render, shown bracketed after the title. Unreleased (Vortex `master`, past v2.6.3).                                            |
-| `pinned`        | `boolean`                   | Action stays on a pinning-aware toolbar until the user removes it; toolbars without pinning ignore it. Unreleased (Vortex `master`, past v2.6.3). |
+| `notice`        | `() => string \| undefined` | Extra text read on render, shown bracketed after the title. Since Vortex 2.7.0-beta.1.                                                            |
+| `pinned`        | `boolean`                   | Action stays on a pinning-aware toolbar until the user removes it; toolbars without pinning ignore it. Since Vortex 2.7.0-beta.1.                 |
 
 ---
 
@@ -57,7 +57,7 @@ Full group list (incl. `global-icons`, `downloads-*`, `categories-icons`, `game-
 etc.) and the dynamic `${tableId}-action-icons` / `${tableId}-multirow-actions` table-group
 patterns: see `TOOLBAR_ACTIONS.md` §6.
 
-### Actions in a group are collapsed by icon
+### Actions in a group are collapsed by icon (classic `IconBar`)
 
 `IconBar` buckets the actions of a group by their icon name, so **every action sharing an icon
 renders as one dropdown button** rather than as separate buttons. This is why a set of actions all
@@ -69,7 +69,18 @@ or give it a distinct one to surface it on its own. When choosing a distinct ico
 already used by a core button in the same bar — a duplicate reads as two buttons that do the same
 thing.
 
-Vortex resolves an icon name to an SVG `<symbol id="icon-NAME">` in the document. `util.installIconSet(setName, filePath)` adds a set, but it only reads from a **file on disk**, so an extension shipping its own icon must ensure that file actually reaches the installed extension folder. An extension can otherwise append its own `<symbol>` to the `#icon-sets` container at startup and then use that name like any built-in.
+Vortex's `IconBar` resolves an icon name to an SVG `<symbol id="icon-NAME">` in the document.
+`util.installIconSet(setName, filePath)` adds a set, but it only reads from a **file on disk**, so
+an extension shipping its own icon must ensure that file actually reaches the installed extension
+folder. An extension can otherwise append its own `<symbol>` to the `#icon-sets` container at
+startup and then use that name like any built-in.
+
+### The modern Mods toolbar behaves differently
+
+Since Vortex 2.7 the Mods page (`'mod-icons'`) renders through a new toolbar, not `IconBar`. There,
+icon names resolve through a fixed `iconMap` table (unknown name → puzzle piece), only `'open-ext'`
+and `'import'` fold into a menu, custom `<symbol>` / `installIconSet` icons do not apply, and
+component-form actions are dropped. Full behaviour: `TOOLBAR_ACTIONS.md` §"The Modern Mods Toolbar".
 
 ---
 

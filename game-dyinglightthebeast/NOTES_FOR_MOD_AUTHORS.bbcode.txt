@@ -9,23 +9,17 @@ Mergerutility:
 
 Handled by the "testMergerUtility" installer. Inspect the extension source for the exact archive layout it expects.
 
-  Installs to: "ph_ft"
-
 ========================================================================
 
 Supermerger:
 
 Handled by the "testSuperMerger" installer. Inspect the extension source for the exact archive layout it expects.
 
-  Installs to: "ph_ft"
-
 ========================================================================
 
 Pak:
 
 Recognised when the archive contains a file with the ".pak" extension.
-
-  Installs to: "ph_ft\mods"
 
 ========================================================================
 
@@ -52,8 +46,6 @@ MyRootMod.zip
 Binaries:
 
 Recognised when the archive contains a file with the ".pak" extension.
-
-  Installs to: "ph_ft\work\bin\x64"
 
 ========================================================================
 

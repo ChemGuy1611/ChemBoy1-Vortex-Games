@@ -7,7 +7,9 @@ Date: 2026-04-19
 /////////////////////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const winapi = require("winapi-bindings");
@@ -337,7 +339,7 @@ function statCheckSync(gamePath, file) {
 
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -347,10 +349,10 @@ async function statCheckAsync(gamePath, file) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -1445,7 +1447,7 @@ async function browseForAsio4all(
               }
               try {
                 //run installer from downloads folder with elevation
-                const dlFiles = await fs.readdirAsync(DOWNLOAD_FOLDER);
+                const dlFiles = await fsp.readdir(DOWNLOAD_FOLDER);
                 const FOUND_INSTALLER = dlFiles.find(
                   (file) =>
                     //need to find file since exe name will change on updates
@@ -1627,7 +1629,7 @@ async function browseForDlcBuilder(
               }
               try {
                 //run installer from downloads folder with elevation
-                const dlFiles = await fs.readdirAsync(DOWNLOAD_FOLDER);
+                const dlFiles = await fsp.readdir(DOWNLOAD_FOLDER);
                 const FOUND_INSTALLER = dlFiles.find(
                   (file) =>
                     //need to find file since exe name will change on updates
@@ -1920,12 +1922,12 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
-  await fs.ensureDirWritableAsync(path.join(discovery.path, CDLCMOD_PATH));
-  await fs.ensureDirWritableAsync(path.join(discovery.path, EOF_PATH));
+  await vfs.ensureDirWritableAsync(path.join(discovery.path, CDLCMOD_PATH));
+  await vfs.ensureDirWritableAsync(path.join(discovery.path, EOF_PATH));
   setupNotify(discovery, api, gameSpec);
   downloadRequired(discovery, api, gameSpec);
   downloadOptional(discovery, api, gameSpec);
-  return fs.ensureDirWritableAsync(path.join(discovery.path, MOD_PATH_DEFAULT));
+  return vfs.ensureDirWritableAsync(path.join(discovery.path, MOD_PATH_DEFAULT));
 }
 
 //Let Vortex know about the game

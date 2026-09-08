@@ -5,6 +5,10 @@
 - ? handle .rpack files? - <https://www.nexusmods.com/dyinglightthebeast/mods/99>
 - ? handle dataen.pak file?
 
+## [0.5.1] - 2026-09-08
+
+- Fixed: Non-vanilla .pak files are now reliably removed when you purge mods.
+
 ## [0.5.0] - 2026-03-22
 
 - Improved: Users are now presented a choice of which merger to use (Super or Unleashed) when no merger is installed.

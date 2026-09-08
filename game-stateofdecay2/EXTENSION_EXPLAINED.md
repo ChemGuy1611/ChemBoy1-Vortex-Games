@@ -2,21 +2,21 @@
 
 ## Overview
 
-| Property           | Value                             |
-| ------------------ | --------------------------------- |
-| Name               | State of Decay 2 Vortex Extension |
-| Engine / Structure | UE4 (Local AppData)               |
-| Author             | ChemBoy1                          |
+| Property | Value |
+| --- | --- |
+| Name | State of Decay 2 Vortex Extension |
+| Engine / Structure | UE4 (Local AppData) |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property          | Value                                                                                                    |
-| ----------------- | -------------------------------------------------------------------------------------------------------- |
-| Game ID           | `stateofdecay2`                                                                                          |
-| Executable        | `StateOfDecay2.exe`                                                                                      |
-| Executable (Xbox) | `gamelaunchhelper.exe`                                                                                   |
-| Extension Page    | [https://www.nexusmods.com/site/mods/946](https://www.nexusmods.com/site/mods/946)                       |
-| PCGamingWiki      | [https://www.pcgamingwiki.com/wiki/State_of_Decay_2](https://www.pcgamingwiki.com/wiki/State_of_Decay_2) |
+| Property | Value |
+| --- | --- |
+| Game ID | `stateofdecay2` |
+| Executable | `StateOfDecay2.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/946](https://www.nexusmods.com/site/mods/946) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/State_of_Decay_2](https://www.pcgamingwiki.com/wiki/State_of_Decay_2) |
 
 ## Supported Stores
 
@@ -28,26 +28,21 @@
 
 Mod types define where each category of mod gets deployed:
 
-| Name                       | ID                         | Priority | Target Path                                                 |
-| -------------------------- | -------------------------- | -------- | ----------------------------------------------------------- |
-| Config (LocalAppData)      | `stateofdecay2-config`     | high     | `{localAppData}/StateOfDecay2/Saved/Config/WindowsNoEditor` |
-| Paks                       | `stateofdecay2-pak`        | high     | `{localAppData}/StateOfDecay2/Saved/Paks`                   |
-| Cooked Mods                | `stateofdecay2-cooked`     | high     | `{localAppData}/StateOfDecay2/Saved`                        |
-| Root Game Folder           | `stateofdecay2-root`       | high     | `{gamePath}`                                                |
-| SoD2 Mod Manager           | `stateofdecay2-modmanager` | low      | `{gamePath}`                                                |
-| Binaries (Engine Injector) | `stateofdecay2-binaries`   | 45       | `?`                                                         |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Binaries (Engine Injector) | `stateofdecay2-binaries` | 45 | `?` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID               | Priority |
-| -------------------------- | -------- |
-| `stateofdecay2-modmanager` | 30       |
-| `stateofdecay2-config`     | 35       |
-| `stateofdecay2-cooked`     | 40       |
-| `stateofdecay2-root`       | 45       |
-| `stateofdecay2-binaries`   | 49       |
+| Installer ID | Priority |
+| --- | --- |
+| `stateofdecay2-modmanager` | 30 |
+| `stateofdecay2-config` | 35 |
+| `stateofdecay2-cooked` | 40 |
+| `stateofdecay2-root` | 45 |
+| `stateofdecay2-binaries` | 49 |
 
 ## Registered Tools
 
@@ -71,8 +66,8 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 ## Config & Save Paths
 
-| Type   | Path                                         |
-| ------ | -------------------------------------------- |
+| Type | Path |
+| --- | --- |
 | Config | `StateOfDecay2/Saved/Config/WindowsNoEditor` |
 
 ## Special Features
@@ -83,3 +78,4 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 - **Required Extensions** — depends on: `Unreal Engine Mod Installer`.
+

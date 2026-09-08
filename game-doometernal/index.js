@@ -36,7 +36,9 @@ Date: 2026-08-30
 //*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const { parseStringPromise } = require("xml2js");
@@ -237,10 +239,10 @@ function isDir(folder, file) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -347,7 +349,7 @@ function statCheckSync(gamePath, file) {
 }
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -549,7 +551,7 @@ async function installZipContent(files, destinationPath) {
     const szip = new util.SevenZip();
     const archiveName = path.basename(destinationPath, ".installing") + ".zip";
     const archivePath = path.join(destinationPath, archiveName);
-    const rootRelPaths = await fs.readdirAsync(destinationPath);
+    const rootRelPaths = await fsp.readdir(destinationPath);
     await szip.add(
       archivePath,
       rootRelPaths.map((relPath) => path.join(destinationPath, relPath)),
@@ -660,7 +662,7 @@ async function resolveGameVersion(gamePath) {
   if (GAME_VERSION === "xbox") {
     // use appxmanifest.xml for Xbox version
     try {
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
+      const appManifest = await fsp.readFile(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
@@ -738,8 +740,8 @@ async function setup(discovery, api, gameSpec) {
   }
   await downloadGameBanana(api, gameSpec, GB_REQUIREMENTS);
   await checkForGameBananaUpdate(api, gameSpec, GB_REQUIREMENTS).catch(() => null); //update check should never block setup
-  await fs.ensureDirWritableAsync(path.join(discovery.path, "doomSandBox"));
-  return fs.ensureDirWritableAsync(path.join(discovery.path, gameSpec.game.modPath));
+  await vfs.ensureDirWritableAsync(path.join(discovery.path, "doomSandBox"));
+  return vfs.ensureDirWritableAsync(path.join(discovery.path, gameSpec.game.modPath));
 }
 
 //Let Vortex know about the game

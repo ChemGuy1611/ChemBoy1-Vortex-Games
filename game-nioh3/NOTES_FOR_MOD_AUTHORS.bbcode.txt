@@ -15,15 +15,11 @@ Rdbexplorer:
 
 Recognised when the archive contains a file or folder named "RDBExplorer.exe".
 
-  Installs to: "package"
-
 ========================================================================
 
 Yumia:
 
 Recognised when the archive contains a file or folder named "yumia_mod_insert_into_rdb.exe".
-
-  Installs to: "package"
 
 ========================================================================
 
@@ -31,15 +27,11 @@ Looseloader:
 
 Recognised when the archive contains a file or folder named "LooseFileLoader.dll".
 
-  Installs to: "plugins"
-
 ========================================================================
 
 Modmanager:
 
 Recognised when the archive contains a file or folder named "Nioh3ModManager.exe".
-
-  Installs to: the game folder itself (no subfolder)
 
 ========================================================================
 
@@ -53,15 +45,11 @@ Loadermod:
 
 Recognised when the archive contains a file with one of these extensions: ".dll" or ".asi".
 
-  Installs to: "plugins"
-
 ========================================================================
 
 Fdatayumia:
 
 Recognised when the archive contains a file or folder named "package" and a file with one of these extensions: ".fdata" or ".yumiamod.json".
-
-  Installs to: the game folder itself (no subfolder)
 
 ========================================================================
 

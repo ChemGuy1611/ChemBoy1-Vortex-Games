@@ -36,7 +36,9 @@ Date: 2026-09-03
 //*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const {
@@ -274,7 +276,7 @@ function statCheckSync(gamePath, file) {
 
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -284,10 +286,10 @@ async function statCheckAsync(gamePath, file) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -585,7 +587,7 @@ async function installZipContent(files, destinationPath) {
     const szip = new util.SevenZip();
     const archiveName = path.basename(destinationPath, ".installing") + ".zip";
     const archivePath = path.join(destinationPath, archiveName);
-    const rootRelPaths = await fs.readdirAsync(destinationPath);
+    const rootRelPaths = await fsp.readdir(destinationPath);
     await szip.add(
       archivePath,
       rootRelPaths.map((relPath) => path.join(destinationPath, relPath)),
@@ -1029,10 +1031,10 @@ async function setup(discovery, api, gameSpec) {
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   setupNotify(api);
   //ASYNC CODE //////////////////////////////////////////
-  await fs.ensureDirWritableAsync(path.join(GAME_PATH, MOD_PATH));
-  await fs.ensureDirWritableAsync(path.join(GAME_PATH, WAD_PATH));
-  await fs.ensureDirWritableAsync(path.join(GAME_PATH, CONFIG_PATH));
-  await fs.ensureDirWritableAsync(path.join(GAME_PATH, UZDOOM_PATH));
+  await vfs.ensureDirWritableAsync(path.join(GAME_PATH, MOD_PATH));
+  await vfs.ensureDirWritableAsync(path.join(GAME_PATH, WAD_PATH));
+  await vfs.ensureDirWritableAsync(path.join(GAME_PATH, CONFIG_PATH));
+  await vfs.ensureDirWritableAsync(path.join(GAME_PATH, UZDOOM_PATH));
   await downloadDML(api, gameSpec);
 
   //write ini files for DML
@@ -1311,7 +1313,7 @@ async function writePortIniDeploy(api) {
   }
   const PORT_CONFIG = path.join(GAME_PATH, PORT_CONFIG_PATH);
 
-  await fs.writeFileAsync(PORT_CONFIG, path.join(GAME_PATH, UZDOOM_EXEC_PATH), {
+  await fsp.writeFile(PORT_CONFIG, path.join(GAME_PATH, UZDOOM_EXEC_PATH), {
     encoding: "utf8",
   });
 }
