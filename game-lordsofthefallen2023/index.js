@@ -7,7 +7,9 @@ Date: 2026-05-10
 ////////////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const { parseStringPromise } = require("xml2js");
@@ -193,12 +195,12 @@ async function bypassEac(api) {
   let success2 = false;
   //Create EAC.bat
   try {
-    await fs.statAsync(path.join(GAME_PATH, EAC_BAT));
+    await fsp.stat(path.join(GAME_PATH, EAC_BAT));
     success1 = true;
   } catch {
     //file DNE - Write
     try {
-      await fs.writeFileAsync(path.join(GAME_PATH, EAC_BAT), EAC_BAT_CONTENTS, {
+      await fsp.writeFile(path.join(GAME_PATH, EAC_BAT), EAC_BAT_CONTENTS, {
         encoding: "utf8",
       });
       success1 = true;
@@ -215,12 +217,12 @@ async function bypassEac(api) {
   try {
     const parser = new IniParser(new WinapiFormat());
     try {
-      await fs.ensureDirWritableAsync(path.dirname(EAC_CONFIG_FILEPATH));
-      await fs.statAsync(EAC_CONFIG_FILEPATH);
+      await vfs.ensureDirWritableAsync(path.dirname(EAC_CONFIG_FILEPATH));
+      await fsp.stat(EAC_CONFIG_FILEPATH);
     } catch (err) {
       //file DNE - Write
       try {
-        await fs.writeFileAsync(
+        await fsp.writeFile(
           EAC_CONFIG_FILEPATH,
           `[${EAC_CONFIG_KEY}]\n${EAC_CONFIG_VALUE}=${EAC_CONFIG_SET}\n`,
           { encoding: "utf8" },
@@ -234,10 +236,10 @@ async function bypassEac(api) {
         );
       }
     }
-    stat = await fs.statAsync(EAC_CONFIG_FILEPATH);
+    stat = await fsp.stat(EAC_CONFIG_FILEPATH);
     if (stat.size === 0) {
       //if Engine.ini exists, but is empty, write it
-      await fs.writeFileAsync(
+      await fsp.writeFile(
         EAC_CONFIG_FILEPATH,
         `[${EAC_CONFIG_KEY}]\n${EAC_CONFIG_VALUE}=${EAC_CONFIG_SET}\n`,
         { encoding: "utf8" },
@@ -401,7 +403,7 @@ function statCheckSync(gamePath, file) {
 
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -411,10 +413,10 @@ async function statCheckAsync(gamePath, file) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -1527,9 +1529,9 @@ function checkPartitions(folder, discoveryPath) {
     const path2 = STAGING_FOLDER;
     const path3 = folder;
     // Ensure all folders exist
-    fs.ensureDirSync(path1);
-    fs.ensureDirSync(path2);
-    fs.ensureDirSync(path3);
+    fs.mkdirSync(path1, { recursive: true });
+    fs.mkdirSync(path2, { recursive: true });
+    fs.mkdirSync(path3, { recursive: true });
     // Get the stats for all folders
     const stats1 = fs.statSync(path1);
     const stats2 = fs.statSync(path2);
@@ -1653,7 +1655,7 @@ async function resolveGameVersion(gamePath, exePath) {
     // use appxmanifest.xml for Xbox version
     try {
       //try to parse appxmanifest.xml
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
+      const appManifest = await fsp.readFile(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
@@ -1747,7 +1749,7 @@ async function setup(discovery, api, gameSpec) {
   // ASYCRONOUS CODE ///////////////////////////////////
   if (CHECK_DATA) {
     //if game, staging folder, and config and save folders are on the same drive
-    await fs.ensureDirWritableAsync(path.join(CONFIG_PATH));
+    await vfs.ensureDirWritableAsync(path.join(CONFIG_PATH));
     //await fs.ensureDirWritableAsync(SAVE_PATH);
   } //*/
   //await downloadUe4ss(api, gameSpec);
@@ -1757,9 +1759,9 @@ async function setup(discovery, api, gameSpec) {
       antiCheatNotify(api);
     }
   }
-  await fs.ensureDirWritableAsync(path.join(GAME_PATH, SCRIPTS_PATH));
-  await fs.ensureDirWritableAsync(path.join(GAME_PATH, LOGICMODS_PATH));
-  return fs.ensureDirWritableAsync(path.join(GAME_PATH, UE5_PATH));
+  await vfs.ensureDirWritableAsync(path.join(GAME_PATH, SCRIPTS_PATH));
+  await vfs.ensureDirWritableAsync(path.join(GAME_PATH, LOGICMODS_PATH));
+  return vfs.ensureDirWritableAsync(path.join(GAME_PATH, UE5_PATH));
 }
 
 //Let vortex know about the game

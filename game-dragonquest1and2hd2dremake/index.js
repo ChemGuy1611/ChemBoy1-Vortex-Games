@@ -7,7 +7,9 @@ Date: 2026-03-27
 //////////////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 
@@ -329,7 +331,7 @@ function statCheckSync(gamePath, file) {
 
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -339,10 +341,10 @@ async function statCheckAsync(gamePath, file) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -1581,9 +1583,9 @@ function checkPartitions(folder, discoveryPath) {
     const path2 = STAGING_FOLDER;
     const path3 = folder;
     // Ensure all folders exist
-    fs.ensureDirSync(path1);
-    fs.ensureDirSync(path2);
-    fs.ensureDirSync(path3);
+    fs.mkdirSync(path1, { recursive: true });
+    fs.mkdirSync(path2, { recursive: true });
+    fs.mkdirSync(path3, { recursive: true });
     // Get the stats for all folders
     const stats1 = fs.statSync(path1);
     const stats2 = fs.statSync(path2);
@@ -1650,7 +1652,7 @@ function partitionCheckNotify(api, CHECK_DATA) {
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
-    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+    await vfs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
   }
 }
 
@@ -1672,8 +1674,8 @@ async function setup(discovery, api, gameSpec) {
   // ASYNC CODE //////////////////////////////////////////
   if (CHECK_DATA) {
     //if game, staging folder, and config and save folders are on the same drive
-    await fs.ensureDirWritableAsync(CONFIG_PATH);
-    await fs.ensureDirWritableAsync(SAVE_PATH);
+    await vfs.ensureDirWritableAsync(CONFIG_PATH);
+    await vfs.ensureDirWritableAsync(SAVE_PATH);
   }
   /*if (CHECK_DOCS) { //if game, staging folder, and config and save folders are on the same drive
     await fs.ensureDirWritableAsync(SAVE_PATH);

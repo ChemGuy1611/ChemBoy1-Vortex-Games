@@ -11,9 +11,11 @@ Notes:
 ////////////////////////////////////////////////*/
 
 //Import libraries
+const fs = require("fs");
+const fsp = fs.promises;
 const {
   actions,
-  fs,
+  fs: vfs,
   util,
   selectors,
   log,
@@ -27,7 +29,6 @@ const template = require("string-template");
 const { parseStringPromise } = require("xml2js");
 const { default: IniParser, WinapiFormat } = require("vortex-parse-ini");
 const React = require("react");
-//const fsPromises = require('fs/promises'); //.rm() for recursive folder deletion
 
 // -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -318,6 +319,14 @@ const UE4SS_NATIVE_MODS = [
 const ENABLEDTXT_FILE = "enabled.txt";
 
 const SET_UE4SS_LOAD_ORDER = `SET_${GAME_ID.toUpperCase()}_UE4SS_LOAD_ORDER`;
+
+// vortex-api's fs.ensureFileAsync is deprecated; this is the node equivalent.
+async function ensureFileAsync(filePath) {
+  await fsp.mkdir(path.dirname(filePath), { recursive: true });
+  const handle = await fsp.open(filePath, "a");
+  await handle.close();
+}
+
 function setUe4ssLoadOrder(profileId, loadOrder) {
   return { type: SET_UE4SS_LOAD_ORDER, payload: { profileId, loadOrder } };
 }
@@ -659,7 +668,7 @@ function statCheckSync(gamePath, file) {
 }
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -977,7 +986,7 @@ function setGameVersionSync(gamePath) {
 async function setConfigPath(version) {
   const DATA_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER);
   try {
-    const ARRAY = await fs.readdirAsync(DATA_PATH);
+    const ARRAY = await fsp.readdir(DATA_PATH);
     STORE_FOLDER = ARRAY.find((entry) => isDir(DATA_PATH, entry));
   } catch {
     STORE_FOLDER = "";
@@ -1010,7 +1019,7 @@ async function setConfigPath(version) {
 async function setSavePath() {
   const DATA_PATH = path.join(SAVEMOD_LOCATION, DATA_FOLDER);
   try {
-    const ARRAY = await fs.readdirAsync(DATA_PATH);
+    const ARRAY = await fsp.readdir(DATA_PATH);
     STORE_FOLDER = ARRAY.find((entry) => isDir(DATA_PATH, entry));
   } catch {
     STORE_FOLDER = "";
@@ -1026,10 +1035,10 @@ async function setSavePath() {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -1166,8 +1175,8 @@ async function installUe4ssCombo(api, files, workingDir, gameId) {
     try {
       /*await fs.statAsync(path.join(workingDir, modFile, 'Binaries', 'Win64'));
       await fs.renameAsync(path.join(workingDir, modFile, 'Binaries', 'Win64'), path.join(workingDir, modFile, 'Binaries', 'WinGDK')); //*/
-      await fs.statAsync(path.join(workingDir, modFile, "Win64"));
-      await fs.renameAsync(
+      await fsp.stat(path.join(workingDir, modFile, "Win64"));
+      await fsp.rename(
         path.join(workingDir, modFile, "Win64"),
         path.join(workingDir, modFile, "WinGDK"),
       ); //*/
@@ -1195,10 +1204,10 @@ async function installUe4ssCombo(api, files, workingDir, gameId) {
     const modFolderPath = path.dirname(scriptsFile);
     const ENABLEDTXT_PATH = path.join(workingDir, modFolderPath, ENABLEDTXT_FILE);
     try {
-      await fs.statAsync(ENABLEDTXT_PATH);
+      await fsp.stat(ENABLEDTXT_PATH);
     } catch (err) {
       try {
-        await fs.writeFileAsync(ENABLEDTXT_PATH, "", { encoding: "utf8" });
+        await fsp.writeFile(ENABLEDTXT_PATH, "", { encoding: "utf8" });
         files.push(path.join(modFolderPath, ENABLEDTXT_FILE));
         log(
           "info",
@@ -2123,7 +2132,7 @@ async function ensureLOFile(context, profileId, props) {
   }
   const targetPath = path.join(props.discovery.path, props.profile.id + "_" + LO_FILE_NAME);
   try {
-    await fs.ensureFileAsync(targetPath);
+    await ensureFileAsync(targetPath);
     return targetPath;
   } catch (err) {
     return Promise.reject(err);
@@ -2169,7 +2178,7 @@ async function deserializeLoadOrder(context) {
   let data = [];
   try {
     const loFilePath = await ensureLOFile(context, props.profile.gameId, props);
-    const fileData = await fs.readFileAsync(loFilePath, { encoding: "utf8" });
+    const fileData = await fsp.readFile(loFilePath, { encoding: "utf8" });
     if (fileData.length > 0) {
       data = JSON.parse(fileData);
     }
@@ -2247,7 +2256,7 @@ async function serializeLoadOrder(context, loadOrder) {
   const loFilePath = await ensureLOFile(context, props.profile.id, props);
   //loadOrder = loadOrder.map(mod => mod.id);
   // Write the prefixed LO to file
-  await fs.writeFileAsync(loFilePath, JSON.stringify(loadOrder, null, 4), { encoding: "utf8" });
+  await fsp.writeFile(loFilePath, JSON.stringify(loadOrder, null, 4), { encoding: "utf8" });
   //await fs.writeFileAsync(loFilePath, loadOrder.join('\n'), { encoding: 'utf8' });
   // something has changed so we need to tell vortex that a deployment will be necessary
   requestDeployment(context.api, spec);
@@ -2572,7 +2581,7 @@ async function ensureLOFileServer(context, profileId, props) {
   }
   const targetPath = path.join(props.discovery.path, props.profile.id + "_" + LO_FILE_NAME);
   try {
-    await fs.ensureFileAsync(targetPath);
+    await ensureFileAsync(targetPath);
     return targetPath;
   } catch (err) {
     return Promise.reject(err);
@@ -2598,7 +2607,7 @@ async function deserializeLoadOrderServer(context) {
   let data = [];
   try {
     const loFilePath = await ensureLOFileServer(context, props.profile.gameId, props);
-    const fileData = await fs.readFileAsync(loFilePath, { encoding: "utf8" });
+    const fileData = await fsp.readFile(loFilePath, { encoding: "utf8" });
     if (fileData.length > 0) {
       data = JSON.parse(fileData);
     }
@@ -2647,7 +2656,7 @@ async function serializeLoadOrderServer(context, loadOrder) {
     return Promise.reject(new util.ProcessCanceled("invalid props"));
   }
   const loFilePath = await ensureLOFileServer(context, props.profile.id, props);
-  await fs.writeFileAsync(loFilePath, JSON.stringify(loadOrder, null, 4), { encoding: "utf8" });
+  await fsp.writeFile(loFilePath, JSON.stringify(loadOrder, null, 4), { encoding: "utf8" });
   requestDeployment(context.api, specServer);
   return Promise.resolve();
 }
@@ -2692,7 +2701,7 @@ async function deserializeUe4ss(api) {
   let loadOrderPath = path.join(modFolderPath, filename);
   let LO_MOD_ARRAY = [];
   try {
-    const raw = await fs.readFileAsync(loadOrderPath, { encoding: "utf8" });
+    const raw = await fsp.readFile(loadOrderPath, { encoding: "utf8" });
     if (raw.length > 0) LO_MOD_ARRAY = JSON.parse(util.deBOM(raw));
   } catch {
     /* file doesn't exist yet; start with empty array */
@@ -2701,7 +2710,7 @@ async function deserializeUe4ss(api) {
   //Get all mod files from mods folder
   let modFolders = [];
   try {
-    modFolders = await fs.readdirAsync(modFolderPath);
+    modFolders = await fsp.readdir(modFolderPath);
     modFolders = modFolders
       .filter((file) => isDir(modFolderPath, file) && !UE4SS_NATIVE_MODS.includes(file))
       .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
@@ -2802,12 +2811,12 @@ async function serializeUe4ss(api, loadOrder) {
   const profile = selectors.activeProfile(state);
   const filename = profile.id + "_" + UE4SS_LO_FILE;
   const jsonPath = path.join(GAME_PATH, BINARIES_PATH, UE4SS_MOD_PATH, filename);
-  await fs.writeFileAsync(jsonPath, JSON.stringify(loadOrder, null, 2), { encoding: "utf8" });
+  await fsp.writeFile(jsonPath, JSON.stringify(loadOrder, null, 2), { encoding: "utf8" });
 
   let loadOrderPath = path.join(GAME_PATH, BINARIES_PATH, UE4SS_MOD_PATH, UE4SS_MODSTXT_FILE);
-  await fs.ensureFileAsync(loadOrderPath);
+  await ensureFileAsync(loadOrderPath);
   let loadOrderMapped = loadOrder.map((mod) => `${mod.id} : ${mod.enabled ? 1 : 0}`);
-  let contents = await fs.readFileAsync(loadOrderPath, "utf8");
+  let contents = await fsp.readFile(loadOrderPath, "utf8");
   const lines = contents.split("\n");
   const bpIdx = lines.findIndex((l) => l.trim().startsWith("BPModLoaderMod"));
   const kbIdx = lines.findIndex((l) => l.trim().startsWith("Keybinds"));
@@ -2827,7 +2836,7 @@ async function serializeUe4ss(api, loadOrder) {
     ...bandKeep,
     ...lines.slice(tailStart),
   ].join("\n");
-  return fs.writeFileAsync(loadOrderPath, loadOrderOutput, { encoding: "utf8" });
+  return fsp.writeFile(loadOrderPath, loadOrderOutput, { encoding: "utf8" });
 }
 
 async function deserializeLogicMods(api) {
@@ -2854,7 +2863,7 @@ async function deserializeLogicMods(api) {
 
   let LO_MOD_ARRAY = [];
   try {
-    const raw = await fs.readFileAsync(jsonPath, { encoding: "utf8" });
+    const raw = await fsp.readFile(jsonPath, { encoding: "utf8" });
     if (raw.length > 0) LO_MOD_ARRAY = JSON.parse(util.deBOM(raw));
   } catch {
     /* file doesn't exist yet; start with empty array */
@@ -2947,11 +2956,11 @@ async function serializeLogicMods(api, loadOrder) {
   const profile = selectors.activeProfile(state);
   const bpmlFolder = path.join(GAME_PATH, BINARIES_PATH, UE4SS_MOD_PATH, BPML_FOLDER);
   const jsonPath = path.join(bpmlFolder, profile.id + "_" + LOGICMODS_LO_FILE);
-  await fs.writeFileAsync(jsonPath, JSON.stringify(loadOrder, null, 2), { encoding: "utf8" });
+  await fsp.writeFile(jsonPath, JSON.stringify(loadOrder, null, 2), { encoding: "utf8" });
 
   const loTxtPath = path.join(bpmlFolder, BPML_LO_FILE);
-  await fs.ensureFileAsync(loTxtPath);
-  await fs.writeFileAsync(loTxtPath, loadOrder.map((e) => e.id).join("\n"), { encoding: "utf8" });
+  await ensureFileAsync(loTxtPath);
+  await fsp.writeFile(loTxtPath, loadOrder.map((e) => e.id).join("\n"), { encoding: "utf8" });
 }
 
 //Generate UE4SS + LogicMods load order data for inclusion in a collection
@@ -3001,8 +3010,8 @@ async function parseUe4ssCollectionsData(api, gameId, collection) {
       //write per-profile json file so deserializeUe4ss picks up the ordering on next deploy
       try {
         const modFolderPath = path.join(GAME_PATH, BINARIES_PATH, UE4SS_MOD_PATH);
-        await fs.ensureDirWritableAsync(modFolderPath);
-        await fs.writeFileAsync(
+        await vfs.ensureDirWritableAsync(modFolderPath);
+        await fsp.writeFile(
           path.join(modFolderPath, profileId + "_" + UE4SS_LO_FILE),
           JSON.stringify(ue4ssLO, null, 2),
           { encoding: "utf8" },
@@ -3017,8 +3026,8 @@ async function parseUe4ssCollectionsData(api, gameId, collection) {
     if (GAME_PATH !== undefined) {
       try {
         const bpmlFolder = path.join(GAME_PATH, BINARIES_PATH, UE4SS_MOD_PATH, BPML_FOLDER);
-        await fs.ensureDirWritableAsync(bpmlFolder);
-        await fs.writeFileAsync(
+        await vfs.ensureDirWritableAsync(bpmlFolder);
+        await fsp.writeFile(
           path.join(bpmlFolder, profileId + "_" + LOGICMODS_LO_FILE),
           JSON.stringify(logicLO, null, 2),
           { encoding: "utf8" },
@@ -3045,9 +3054,9 @@ function checkPartitions(folder, discoveryPath) {
     const path2 = STAGING_FOLDER;
     const path3 = folder;
     // Ensure all folders exist
-    fs.ensureDirSync(path1);
-    fs.ensureDirSync(path2);
-    fs.ensureDirSync(path3);
+    fs.mkdirSync(path1, { recursive: true });
+    fs.mkdirSync(path2, { recursive: true });
+    fs.mkdirSync(path3, { recursive: true });
     // Get the stats for all folders
     const stats1 = fs.statSync(path1);
     const stats2 = fs.statSync(path2);
@@ -3208,7 +3217,7 @@ async function resolveGameVersion(gamePath, exePath) {
     // use appxmanifest.xml for Xbox version
     try {
       //try to parse appxmanifest.xml
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
+      const appManifest = await fsp.readFile(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
@@ -3232,7 +3241,7 @@ async function resolveGameVersion(gamePath, exePath) {
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
-    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+    await vfs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
   }
 }
 
@@ -3259,17 +3268,17 @@ async function setup(discovery, api, gameSpec) {
   GAME_VERSION = await setGameVersionAsync(GAME_PATH);
   if (CHECK_CONFIG) {
     //if game, staging folder, and config and save folders are on the same drive
-    await fs.ensureDirWritableAsync(CONFIG_PATH);
+    await vfs.ensureDirWritableAsync(CONFIG_PATH);
     if (SAVE_COMPAT_VERSIONS.includes(GAME_VERSION)) {
       if (configSaveMatch) {
-        await fs.ensureDirWritableAsync(SAVE_PATH);
+        await vfs.ensureDirWritableAsync(SAVE_PATH);
       }
     }
   } //*/
   if (!configSaveMatch) {
     if (CHECK_SAVE) {
       //if game, staging folder, and config and save folders are on the same drive
-      await fs.ensureDirWritableAsync(SAVE_PATH);
+      await vfs.ensureDirWritableAsync(SAVE_PATH);
     }
   }
   if (ue4ssLoadOrder && autoDownloadUe4ss) {
@@ -4368,7 +4377,7 @@ async function didDeploy(api, profileId) {
     try {
       GAME_PATH = getDiscoveryPath(api, gameId);
       const INI_PATH = path.join(GAME_PATH, BINARIES_PATH, UE4SS_SETTINGS_FILEPATH);
-      await fs.statAsync(INI_PATH); //check if UE4SS settings file exists
+      await fsp.stat(INI_PATH); //check if UE4SS settings file exists
       let engineMajor = MAJOR_VERSION;
       let engineMinor = MINOR_VERSION;
       try {
@@ -5362,16 +5371,16 @@ async function reconcileEnabledTxt(api, gameId, write) {
     try {
       if (write) {
         try {
-          await fs.statAsync(marker);
+          await fsp.stat(marker);
         } catch {
-          await fs.writeFileAsync(marker, "");
+          await fsp.writeFile(marker, "");
           touched++;
         }
       } else {
         //removeAsync never reports a missing file, so stat first to keep the count honest
         try {
-          await fs.statAsync(marker);
-          await fs.removeAsync(marker);
+          await fsp.stat(marker);
+          await fsp.rm(marker, { recursive: true, force: true });
           touched++;
         } catch (err) {
           if (err.code !== "ENOENT") throw err;
@@ -5481,7 +5490,7 @@ function Ue4ssItemRenderer({ className, item }) {
     (async () => {
       for (const candidate of candidates) {
         try {
-          await fs.statAsync(candidate);
+          await fsp.stat(candidate);
           if (!cancelled) setConfigFilePath(candidate);
           return;
         } catch {

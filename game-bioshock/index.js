@@ -7,7 +7,9 @@ Date: 2026-05-06
 /////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 //const winapi = require('winapi-bindings');
@@ -278,6 +280,14 @@ const tools = [
 ];
 
 //Set mod type priorities
+
+// vortex-api's fs.ensureFileAsync is deprecated; this is the node equivalent.
+async function ensureFileAsync(filePath) {
+  await fsp.mkdir(path.dirname(filePath), { recursive: true });
+  const handle = await fsp.open(filePath, "a");
+  await handle.close();
+}
+
 function isDir(folder, file) {
   const stats = fs.statSync(path.join(folder, file));
   return stats.isDirectory();
@@ -294,7 +304,7 @@ function statCheckSync(gamePath, file) {
 
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -304,10 +314,10 @@ async function statCheckAsync(gamePath, file) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -996,7 +1006,7 @@ function runModManager(api) {
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
-    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+    await vfs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
   }
 }
 
@@ -1010,7 +1020,7 @@ async function setup(discovery, api, gameSpec) {
   await downloadTfc(api, gameSpec);
   MODTYPE_FOLDERS.push(BINARIES_FOLDER);
   await modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
-  return fs.ensureFileAsync(path.join(GAME_PATH, TFCMOD_PATH, "TFC_Mods_Go_Here.txt"));
+  return ensureFileAsync(path.join(GAME_PATH, TFCMOD_PATH, "TFC_Mods_Go_Here.txt"));
 }
 
 //Let Vortex know about the game

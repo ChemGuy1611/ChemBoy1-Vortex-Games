@@ -7,10 +7,11 @@ Date: 2026-02-05
 /////////////////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
-const fsPromises = require("fs/promises");
 
 //Specify all information about the game
 const GAME_ID = "dragonballsparkingzero";
@@ -319,7 +320,7 @@ function statCheckSync(gamePath, file) {
 
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -329,10 +330,10 @@ async function statCheckAsync(gamePath, file) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -1558,17 +1559,17 @@ async function updateJsonFiles(api) {
     //write to JsonFiles.json file (on deploy)
     try {
       //read JsonFiles.json file to get current list
-      await fs.statAsync(JSONFILES_FILEPATH);
-      const contents = await fs.readFileAsync(JSONFILES_FILEPATH);
+      await fsp.stat(JSONFILES_FILEPATH);
+      const contents = await fsp.readFile(JSONFILES_FILEPATH);
       JSONFILES_JSON = JSON.parse(contents);
     } catch {
       //write the file with default content if it doesn't exist
-      await fs.writeFileAsync(JSONFILES_FILEPATH, JSON.stringify(DEFAULT_JSON, null, 2), {
+      await fsp.writeFile(JSONFILES_FILEPATH, JSON.stringify(DEFAULT_JSON, null, 2), {
         encoding: "utf8",
       });
       JSONFILES_JSON = DEFAULT_JSON;
     } //*/
-    const JSON_FOLDER_FILES = await fsPromises.readdir(JSONFILES_FOLDERPATH, { recursive: true });
+    const JSON_FOLDER_FILES = await fsp.readdir(JSONFILES_FOLDERPATH, { recursive: true });
     const IGNORED_FILES = [
       JSONFILES_FILE.toLowerCase(),
       "mod.json",
@@ -1581,7 +1582,7 @@ async function updateJsonFiles(api) {
     );
     const JSON_FILE_NAMES = JSON_FILES.map((file) => path.basename(file, path.extname(file)));
     JSONFILES_JSON[JSONFILES_KEY] = JSON_FILE_NAMES;
-    await fs.writeFileAsync(JSONFILES_FILEPATH, JSON.stringify(JSONFILES_JSON, null, 2), {
+    await fsp.writeFile(JSONFILES_FILEPATH, JSON.stringify(JSONFILES_JSON, null, 2), {
       encoding: "utf8",
     });
   } catch (err) {
@@ -1602,18 +1603,18 @@ async function resetJsonFiles(api) {
     //reset JsonFiles.json file
     try {
       //read JsonFiles.json file to get current list
-      await fs.statAsync(JSONFILES_FILEPATH);
-      const contents = await fs.readFileAsync(JSONFILES_FILEPATH);
+      await fsp.stat(JSONFILES_FILEPATH);
+      const contents = await fsp.readFile(JSONFILES_FILEPATH);
       JSONFILES_JSON = JSON.parse(contents);
     } catch {
       //write the file with default content if it doesn't exist
-      await fs.writeFileAsync(JSONFILES_FILEPATH, JSON.stringify(DEFAULT_JSON, null, 2), {
+      await fsp.writeFile(JSONFILES_FILEPATH, JSON.stringify(DEFAULT_JSON, null, 2), {
         encoding: "utf8",
       });
       JSONFILES_JSON = DEFAULT_JSON;
     } //*/
     JSONFILES_JSON[JSONFILES_KEY] = []; //clear out the list
-    await fs.writeFileAsync(JSONFILES_FILEPATH, JSON.stringify(JSONFILES_JSON, null, 2), {
+    await fsp.writeFile(JSONFILES_FILEPATH, JSON.stringify(JSONFILES_JSON, null, 2), {
       encoding: "utf8",
     });
   } catch (err) {
@@ -1637,9 +1638,9 @@ function checkPartitions(folder, discoveryPath) {
     const path2 = STAGING_FOLDER;
     const path3 = folder;
     // Ensure all folders exist
-    fs.ensureDirSync(path1);
-    fs.ensureDirSync(path2);
-    fs.ensureDirSync(path3);
+    fs.mkdirSync(path1, { recursive: true });
+    fs.mkdirSync(path2, { recursive: true });
+    fs.mkdirSync(path3, { recursive: true });
     // Get the stats for all folders
     const stats1 = fs.statSync(path1);
     const stats2 = fs.statSync(path2);
@@ -1780,14 +1781,14 @@ async function setup(discovery, api, gameSpec) {
   if (USERID_FOLDER === undefined) {
     USERID_FOLDER = "";
   } //*/
-  await fs.ensureDirWritableAsync(path.join(discovery.path, JSON_PATH)); //MUST CREATE THE FOLDER BEFOER WRITING JSONFILES.JSON FILE
+  await vfs.ensureDirWritableAsync(path.join(discovery.path, JSON_PATH)); //MUST CREATE THE FOLDER BEFOER WRITING JSONFILES.JSON FILE
   try {
     //read JsonFiles.json file to get current list
     fs.statSync(path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE));
     JSONFILES_JSON = JSON.parse(fs.readFileSync(path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE)));
     DEFAULT_ARRAY = JSONFILES_JSON[JSONFILES_KEY];
   } catch {
-    await fs.writeFileAsync(
+    await fsp.writeFile(
       path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE),
       `${JSON.stringify(DEFAULT_JSON, null, 2)}`,
       { encoding: "utf8" },
@@ -1800,16 +1801,16 @@ async function setup(discovery, api, gameSpec) {
   }
   if (CHECK_DATA) {
     //if game, staging folder, and config and save folders are on the same drive
-    await fs.ensureDirWritableAsync(CONFIG_PATH);
+    await vfs.ensureDirWritableAsync(CONFIG_PATH);
   }
 
   //await downloadUe4ss(api, gameSpec);
   await downloadSigBypass(api, gameSpec);
   await downloadModLoader(api, gameSpec);
-  await fs.ensureDirWritableAsync(path.join(discovery.path, SAVE_PATH, USERID_FOLDER));
-  await fs.ensureDirWritableAsync(path.join(discovery.path, SCRIPTS_PATH));
-  await fs.ensureDirWritableAsync(path.join(discovery.path, LOGICMODS_PATH));
-  return fs.ensureDirWritableAsync(path.join(discovery.path, UE5_PATH));
+  await vfs.ensureDirWritableAsync(path.join(discovery.path, SAVE_PATH, USERID_FOLDER));
+  await vfs.ensureDirWritableAsync(path.join(discovery.path, SCRIPTS_PATH));
+  await vfs.ensureDirWritableAsync(path.join(discovery.path, LOGICMODS_PATH));
+  return vfs.ensureDirWritableAsync(path.join(discovery.path, UE5_PATH));
 }
 
 //Let vortex know about the game

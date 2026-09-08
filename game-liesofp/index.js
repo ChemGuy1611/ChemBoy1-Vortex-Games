@@ -7,7 +7,9 @@ Date: 2026-08-11
 */ /////////////////////////////////////////////////
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const { parseStringPromise } = require("xml2js");
@@ -176,7 +178,7 @@ function statCheckSync(gamePath, file) {
 
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -186,10 +188,10 @@ async function statCheckAsync(gamePath, file) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -521,7 +523,7 @@ async function resolveGameVersion(gamePath, exePath) {
     // use appxmanifest.xml for Xbox version
     try {
       //try to parse appxmanifest.xml
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
+      const appManifest = await fsp.readFile(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
@@ -549,10 +551,10 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
-  await fs.ensureDirWritableAsync(path.join(CONFIG_PATH));
-  await fs.ensureDirWritableAsync(path.join(SAVE_PATH));
-  await fs.ensureDirWritableAsync(path.join(discovery.path, MOD_PATH));
-  return fs.ensureDirWritableAsync(path.join(discovery.path, PAK_PATH));
+  await vfs.ensureDirWritableAsync(path.join(CONFIG_PATH));
+  await vfs.ensureDirWritableAsync(path.join(SAVE_PATH));
+  await vfs.ensureDirWritableAsync(path.join(discovery.path, MOD_PATH));
+  return vfs.ensureDirWritableAsync(path.join(discovery.path, PAK_PATH));
 }
 
 //Let Vortex know about the game

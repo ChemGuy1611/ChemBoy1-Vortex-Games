@@ -9,7 +9,9 @@ Notes:
 /////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const { parseStringPromise } = require("xml2js");
@@ -254,6 +256,13 @@ const tools = [
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
+// vortex-api's fs.ensureFileAsync is deprecated; this is the node equivalent.
+async function ensureFileAsync(filePath) {
+  await fsp.mkdir(path.dirname(filePath), { recursive: true });
+  const handle = await fsp.open(filePath, "a");
+  await handle.close();
+}
+
 function statCheckSync(gamePath, file) {
   try {
     fs.statSync(path.join(gamePath, file));
@@ -264,7 +273,7 @@ function statCheckSync(gamePath, file) {
 }
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -280,10 +289,10 @@ function isDir(folder, file) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -1125,7 +1134,7 @@ async function resolveGameVersion(gamePath) {
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
-    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+    await vfs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
   }
 }
 
@@ -1140,7 +1149,7 @@ async function setup(discovery, api, gameSpec) {
   // ASYNC CODE //////////////////////////////////////////
   await downloadTfc(api, gameSpec);
   await modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
-  return fs.ensureFileAsync(
+  return ensureFileAsync(
     path.join(GAME_PATH, TFCMOD_PATH, "TFC_Mods_Go_Here.txt"), //this is added to prevent TFC Installer from deleting an empty "Mods" folder.
   );
 }

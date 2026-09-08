@@ -7,10 +7,11 @@ Date: 2026-04-22
 ////////////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
-const fsPromises = require("fs/promises");
 const winapi = require("winapi-bindings");
 
 //Specify all information about the game
@@ -314,7 +315,7 @@ function statCheckSync(gamePath, file) {
 
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -324,10 +325,10 @@ async function statCheckAsync(gamePath, file) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -2019,9 +2020,9 @@ function checkPartitions(folder1, folder2) {
     const path2 = folder2;
     const path3 = STAGING_FOLDER;
     // Ensure all folders exist
-    fs.ensureDirSync(path1);
-    fs.ensureDirSync(path2);
-    fs.ensureDirSync(path3);
+    fs.mkdirSync(path1, { recursive: true });
+    fs.mkdirSync(path2, { recursive: true });
+    fs.mkdirSync(path3, { recursive: true });
     // Get the stats for all folders
     const stats1 = fs.statSync(path1);
     const stats2 = fs.statSync(path2);
@@ -2092,7 +2093,7 @@ function partitionCheckNotify(api, CHECK_CONFIG, CHECK_DOCS) {
 //Enable MODKit mods on deployment
 async function setModkitModsEnabled(api) {
   let paths = [];
-  const raw = await fsPromises.readdir(UE5KITMOD_PATH, { recursive: true });
+  const raw = await fsp.readdir(UE5KITMOD_PATH, { recursive: true });
   for (let entry of raw) {
     if (path.basename(entry).toLowerCase() === UE5KITMOD_FILE) {
       const path_select = path.join(UE5KITMOD_PATH, entry);
@@ -2101,7 +2102,7 @@ async function setModkitModsEnabled(api) {
   }
 
   for (let path of paths) {
-    let content = await fs.readFileAsync(path);
+    let content = await fsp.readFile(path);
     content = content.toString();
     content = content.slice(content.indexOf("{"), content.indexOf("}")) + "\n}";
     let json;
@@ -2110,7 +2111,7 @@ async function setModkitModsEnabled(api) {
       if (json.bEnable === false || json.bEnable === undefined) {
         json.bEnable = true;
         content = JSON.stringify(json, null, 2);
-        await fs.writeFileAsync(path, content, { encoding: "utf8" });
+        await fsp.writeFile(path, content, { encoding: "utf8" });
       }
     } catch (err) {
       log("error", `[inZOI] Could not parse/write ${path}: ${err} - ${err.message}`);
@@ -2189,27 +2190,27 @@ async function setup(discovery, api, gameSpec) {
   }
   if (CHECK_CONFIG === true) {
     //if Local AppData folder is on same drive as, staging folder, and Config folders are on the same drive
-    await fs.ensureDirWritableAsync(CONFIG_PATH);
+    await vfs.ensureDirWritableAsync(CONFIG_PATH);
   }
   if (CHECK_DOCS === true) {
     //if game folder is on same drive as Documents folder and Staging Folder
-    await fs.ensureDirWritableAsync(path.join(GAME_PATH, PAK_PATH));
-    await fs.ensureDirWritableAsync(path.join(GAME_PATH, SCRIPTS_PATH));
-    await fs.ensureDirWritableAsync(path.join(GAME_PATH, LOGICMODS_PATH));
+    await vfs.ensureDirWritableAsync(path.join(GAME_PATH, PAK_PATH));
+    await vfs.ensureDirWritableAsync(path.join(GAME_PATH, SCRIPTS_PATH));
+    await vfs.ensureDirWritableAsync(path.join(GAME_PATH, LOGICMODS_PATH));
   }
   //Documents folders. Safe to write-check since they are all in Documents (default install location)
-  await fs.ensureDirWritableAsync(SAVE_PATH);
-  await fs.ensureDirWritableAsync(CREATIONS_PATH);
-  await fs.ensureDirWritableAsync(AIGENERATED_PATH);
-  await fs.ensureDirWritableAsync(CANVAS_PATH);
-  await fs.ensureDirWritableAsync(MY3DPRINTER_PATH);
-  await fs.ensureDirWritableAsync(MYAPPEARANCES_PATH);
-  await fs.ensureDirWritableAsync(ANIMATIONS_PATH);
-  await fs.ensureDirWritableAsync(TEXTURES_PATH);
+  await vfs.ensureDirWritableAsync(SAVE_PATH);
+  await vfs.ensureDirWritableAsync(CREATIONS_PATH);
+  await vfs.ensureDirWritableAsync(AIGENERATED_PATH);
+  await vfs.ensureDirWritableAsync(CANVAS_PATH);
+  await vfs.ensureDirWritableAsync(MY3DPRINTER_PATH);
+  await vfs.ensureDirWritableAsync(MYAPPEARANCES_PATH);
+  await vfs.ensureDirWritableAsync(ANIMATIONS_PATH);
+  await vfs.ensureDirWritableAsync(TEXTURES_PATH);
   //await downloadModEnabler(api, gameSpec); //Disabled due to mod installs properly cancelling now. Users can still install from the mod page
   //await downloadUe4ss(api, gameSpec);
   //await downloadUe4ssNexus(api, gameSpec);
-  return fs.ensureDirWritableAsync(path.join(MOD_PATH_DEFAULT));
+  return vfs.ensureDirWritableAsync(path.join(MOD_PATH_DEFAULT));
 } //*/
 
 //*Get MODKit install path with GameStoreHelper

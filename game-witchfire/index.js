@@ -7,7 +7,9 @@ Date: 2026-07-20
 //////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const { default: IniParser, WinapiFormat } = require("vortex-parse-ini");
@@ -252,7 +254,7 @@ function statCheckSync(gamePath, file) {
 
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -262,10 +264,10 @@ async function statCheckAsync(gamePath, file) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -927,11 +929,11 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(api.getState(), GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(api.getState(), GAME_ID);
-  await fs.ensureDirWritableAsync(path.join(LOCALAPPDATA, CONFIG_PATH));
-  await fs.ensureDirWritableAsync(path.join(LOCALAPPDATA, SAVE_PATH));
-  await fs.ensureDirWritableAsync(path.join(GAME_PATH, SCRIPTS_PATH));
-  await fs.ensureDirWritableAsync(path.join(GAME_PATH, LOGICMODS_PATH));
-  return fs.ensureDirWritableAsync(path.join(GAME_PATH, PAK_PATH));
+  await vfs.ensureDirWritableAsync(path.join(LOCALAPPDATA, CONFIG_PATH));
+  await vfs.ensureDirWritableAsync(path.join(LOCALAPPDATA, SAVE_PATH));
+  await vfs.ensureDirWritableAsync(path.join(GAME_PATH, SCRIPTS_PATH));
+  await vfs.ensureDirWritableAsync(path.join(GAME_PATH, LOGICMODS_PATH));
+  return vfs.ensureDirWritableAsync(path.join(GAME_PATH, PAK_PATH));
 }
 
 //Let Vortex know about the game
@@ -1262,7 +1264,7 @@ async function didDeploy(api, profileId) {
     try {
       GAME_PATH = getDiscoveryPath(api);
       const INI_PATH = path.join(GAME_PATH, BINARIES_PATH, UE4SS_SETTINGS_FILEPATH);
-      await fs.statAsync(INI_PATH); //check if UE4SS settings file exists
+      await fsp.stat(INI_PATH); //check if UE4SS settings file exists
       const parser = new IniParser(new WinapiFormat());
       const contents = await parser.read(INI_PATH);
       const data = contents.data;

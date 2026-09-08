@@ -7,7 +7,9 @@ Date: 2026-05-07
 ////////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const { parseStringPromise } = require("xml2js");
@@ -392,7 +394,7 @@ function statCheckSync(gamePath, file) {
 
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -402,10 +404,10 @@ async function statCheckAsync(gamePath, file) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -2321,9 +2323,9 @@ function checkPartitions(folder, game, staging) {
     const path2 = staging;
     const path3 = folder;
     // Ensure all folders exist
-    fs.ensureDirSync(path1);
-    fs.ensureDirSync(path2);
-    fs.ensureDirSync(path3);
+    fs.mkdirSync(path1, { recursive: true });
+    fs.mkdirSync(path2, { recursive: true });
+    fs.mkdirSync(path3, { recursive: true });
     // Get the stats for all folders
     const stats1 = fs.statSync(path1);
     const stats2 = fs.statSync(path2);
@@ -2397,7 +2399,7 @@ async function resolveGameVersion(gamePath, exePath) {
     // use appxmanifest.xml for Xbox version
     try {
       //try to parse appxmanifest.xml
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
+      const appManifest = await fsp.readFile(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
@@ -2491,13 +2493,13 @@ async function setup(discovery, api, gameSpec) {
   // ASYCRONOUS CODE ///////////////////////////////////
   if (CHECK_DATA) {
     //if game, staging folder, and config and save folders are on the same drive
-    await fs.ensureDirWritableAsync(CONFIG_PATH);
-    await fs.ensureDirWritableAsync(SAVE_PATH);
+    await vfs.ensureDirWritableAsync(CONFIG_PATH);
+    await vfs.ensureDirWritableAsync(SAVE_PATH);
   } //*/
   //await downloadUe4ss(api, gameSpec, UE4SS_ID);
-  await fs.ensureDirWritableAsync(path.join(GAME_PATH, SCRIPTS_PATH));
-  await fs.ensureDirWritableAsync(path.join(GAME_PATH, LOGICMODS_PATH));
-  return fs.ensureDirWritableAsync(path.join(GAME_PATH, UE5_PATH));
+  await vfs.ensureDirWritableAsync(path.join(GAME_PATH, SCRIPTS_PATH));
+  await vfs.ensureDirWritableAsync(path.join(GAME_PATH, LOGICMODS_PATH));
+  return vfs.ensureDirWritableAsync(path.join(GAME_PATH, UE5_PATH));
 }
 
 //Setup function
@@ -2527,13 +2529,13 @@ async function setupUnfinished(discovery, api, gameSpec) {
   // ASYCRONOUS CODE ///////////////////////////////////
   if (CHECK_DATA_UNFINISHED) {
     //if game, staging folder, and config and save folders are on the same drive
-    await fs.ensureDirWritableAsync(CONFIG_PATH_UNFINISHED);
-    await fs.ensureDirWritableAsync(SAVE_PATH_UNFINISHED);
+    await vfs.ensureDirWritableAsync(CONFIG_PATH_UNFINISHED);
+    await vfs.ensureDirWritableAsync(SAVE_PATH_UNFINISHED);
   } //*/
   //await downloadUe4ss(api, gameSpec, UE4SS_ID_UNFINISHED);
-  await fs.ensureDirWritableAsync(path.join(GAME_PATH_UNFINISHED, SCRIPTS_PATH_UNFINISHED));
-  await fs.ensureDirWritableAsync(path.join(GAME_PATH_UNFINISHED, LOGICMODS_PATH));
-  return fs.ensureDirWritableAsync(path.join(GAME_PATH_UNFINISHED, UE5_PATH));
+  await vfs.ensureDirWritableAsync(path.join(GAME_PATH_UNFINISHED, SCRIPTS_PATH_UNFINISHED));
+  await vfs.ensureDirWritableAsync(path.join(GAME_PATH_UNFINISHED, LOGICMODS_PATH));
+  return vfs.ensureDirWritableAsync(path.join(GAME_PATH_UNFINISHED, UE5_PATH));
 }
 
 //Let vortex know about the game

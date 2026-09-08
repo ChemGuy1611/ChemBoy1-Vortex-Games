@@ -7,7 +7,9 @@ Date: 2025-10-21
 //////////////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 
@@ -310,7 +312,7 @@ const tools = [
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
 async function isDir(folder, file) {
-  const stats = await fs.statAsync(path.join(folder, file));
+  const stats = await fsp.stat(path.join(folder, file));
   return stats.isDirectory();
 }
 
@@ -326,7 +328,7 @@ function statCheckSync(gamePath, file) {
 
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -336,10 +338,10 @@ async function statCheckAsync(gamePath, file) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -419,7 +421,7 @@ async function setConfigPath() {
   const DATA_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER);
   let STORE_FOLDER = "";
   try {
-    const ARRAY = await fs.readdirAsync(DATA_PATH);
+    const ARRAY = await fsp.readdir(DATA_PATH);
     STORE_FOLDER = ARRAY.find((entry) => isDir(DATA_PATH, entry));
   } catch {
     STORE_FOLDER = "";
@@ -452,7 +454,7 @@ async function setSavePath() {
   const DATA_PATH = path.join(SAVEMOD_LOCATION, DATA_FOLDER);
   let STORE_FOLDER = "";
   try {
-    const ARRAY = await fs.readdirAsync(DATA_PATH);
+    const ARRAY = await fsp.readdir(DATA_PATH);
     STORE_FOLDER = ARRAY.find((entry) => isDir(DATA_PATH, entry));
   } catch {
     STORE_FOLDER = "";
@@ -1656,9 +1658,9 @@ function checkPartitions(folder, discoveryPath) {
     const path2 = STAGING_FOLDER;
     const path3 = folder;
     // Ensure all folders exist
-    fs.ensureDirSync(path1);
-    fs.ensureDirSync(path2);
-    fs.ensureDirSync(path3);
+    fs.mkdirSync(path1, { recursive: true });
+    fs.mkdirSync(path2, { recursive: true });
+    fs.mkdirSync(path3, { recursive: true });
     // Get the stats for all folders
     const stats1 = fs.statSync(path1);
     const stats2 = fs.statSync(path2);
@@ -1741,7 +1743,7 @@ async function resolveGameVersion(gamePath, exePath) {
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
-    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+    await vfs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
   }
 }
 
@@ -1761,8 +1763,8 @@ async function setup(discovery, api, gameSpec) {
   SAVE_PATH = await setSavePath(api);
   if (CHECK_DATA) {
     //if game, staging folder, and config and save folders are on the same drive
-    await fs.ensureDirWritableAsync(CONFIG_PATH);
-    await fs.ensureDirWritableAsync(SAVE_PATH);
+    await vfs.ensureDirWritableAsync(CONFIG_PATH);
+    await vfs.ensureDirWritableAsync(SAVE_PATH);
   } //*/
   /*if (UE4SS_PAGE_NO !== 0) {
     await downloadUe4ssNexus(api, gameSpec);

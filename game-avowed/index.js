@@ -7,7 +7,9 @@ Date: 2026-02-06
 //////////////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const { parseStringPromise } = require("xml2js");
@@ -270,7 +272,7 @@ function statCheckSync(gamePath, file) {
 }
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -385,10 +387,10 @@ async function setGameVersionPath(gamePath) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -463,8 +465,8 @@ async function installUe4ssCombo(files, workingDir) {
 
   if (GAME_VERSION === "xbox") {
     try {
-      await fs.statAsync(path.join(workingDir, modFile, "Binaries", "Win64"));
-      await fs.renameAsync(
+      await fsp.stat(path.join(workingDir, modFile, "Binaries", "Win64"));
+      await fsp.rename(
         path.join(workingDir, modFile, "Binaries", "Win64"),
         path.join(workingDir, modFile, "Binaries", "WinGDK"),
       );
@@ -1234,7 +1236,7 @@ async function resolveGameVersion(gamePath, exePath) {
     // use appxmanifest.xml for Xbox version
     try {
       //try to parse appxmanifest.xml
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
+      const appManifest = await fsp.readFile(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
@@ -1320,9 +1322,9 @@ async function setup(discovery, api, gameSpec) {
   }
   //await downloadUe4ss(api, gameSpec);
   GAME_VERSION = await setGameVersionPath(GAME_PATH);
-  await fs.ensureDirWritableAsync(path.join(discovery.path, SCRIPTS_PATH));
-  await fs.ensureDirWritableAsync(path.join(discovery.path, LOGICMODS_PATH));
-  return fs.ensureDirWritableAsync(path.join(discovery.path, UE5_PATH));
+  await vfs.ensureDirWritableAsync(path.join(discovery.path, SCRIPTS_PATH));
+  await vfs.ensureDirWritableAsync(path.join(discovery.path, LOGICMODS_PATH));
+  return vfs.ensureDirWritableAsync(path.join(discovery.path, UE5_PATH));
 }
 
 //Let vortex know about the game

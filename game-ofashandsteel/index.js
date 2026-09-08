@@ -7,7 +7,9 @@ Date: 2026-01-07
 ////////////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const { parseStringPromise } = require("xml2js");
@@ -351,7 +353,7 @@ function statCheckSync(gamePath, file) {
 }
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -362,10 +364,10 @@ async function statCheckAsync(gamePath, file) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -667,7 +669,7 @@ function setGameVersionSync(gamePath) {
 async function setConfigPath(version) {
   const DATA_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER);
   try {
-    const ARRAY = await fs.readdirAsync(DATA_PATH);
+    const ARRAY = await fsp.readdir(DATA_PATH);
     STORE_FOLDER = ARRAY.find((entry) => isDir(DATA_PATH, entry));
   } catch {
     STORE_FOLDER = "";
@@ -700,7 +702,7 @@ async function setConfigPath(version) {
 async function setSavePath() {
   const DATA_PATH = path.join(SAVEMOD_LOCATION, DATA_FOLDER);
   try {
-    const ARRAY = await fs.readdirAsync(DATA_PATH);
+    const ARRAY = await fsp.readdir(DATA_PATH);
     STORE_FOLDER = ARRAY.find((entry) => isDir(DATA_PATH, entry));
   } catch {
     STORE_FOLDER = "";
@@ -2020,9 +2022,9 @@ function checkPartitions(folder, discoveryPath) {
     const path2 = STAGING_FOLDER;
     const path3 = folder;
     // Ensure all folders exist
-    fs.ensureDirSync(path1);
-    fs.ensureDirSync(path2);
-    fs.ensureDirSync(path3);
+    fs.mkdirSync(path1, { recursive: true });
+    fs.mkdirSync(path2, { recursive: true });
+    fs.mkdirSync(path3, { recursive: true });
     // Get the stats for all folders
     const stats1 = fs.statSync(path1);
     const stats2 = fs.statSync(path2);
@@ -2099,7 +2101,7 @@ async function resolveGameVersion(gamePath, exePath) {
     // use appxmanifest.xml for Xbox version
     try {
       //try to parse appxmanifest.xml
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), "utf8");
+      const appManifest = await fsp.readFile(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
@@ -2123,7 +2125,7 @@ async function resolveGameVersion(gamePath, exePath) {
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
-    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+    await vfs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
   }
 }
 
@@ -2146,9 +2148,9 @@ async function setup(discovery, api, gameSpec) {
   GAME_VERSION = await setGameVersionAsync(GAME_PATH);
   if (CHECK_DATA) {
     //if game, staging folder, and config and save folders are on the same drive
-    await fs.ensureDirWritableAsync(CONFIG_PATH);
+    await vfs.ensureDirWritableAsync(CONFIG_PATH);
     if (SAVE_COMPAT_VERSIONS.includes(GAME_VERSION)) {
-      await fs.ensureDirWritableAsync(SAVE_PATH);
+      await vfs.ensureDirWritableAsync(SAVE_PATH);
     }
   } //*/
   /*if (CHECK_DOCS) { //if game, staging folder, and config and save folders are on the same drive

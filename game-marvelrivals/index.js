@@ -7,7 +7,9 @@ Date: 2026-09-06
 ////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require("vortex-api");
+const fs = require("fs");
+const fsp = fs.promises;
+const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const React = require("react");
@@ -209,6 +211,14 @@ const tools = [
 // BASIC EXTENSION FUNCTIONS //////////////////////////////////////////////////////////////////////////////////
 
 //Set mod type priorities
+
+// vortex-api's fs.ensureFileAsync is deprecated; this is the node equivalent.
+async function ensureFileAsync(filePath) {
+  await fsp.mkdir(path.dirname(filePath), { recursive: true });
+  const handle = await fsp.open(filePath, "a");
+  await handle.close();
+}
+
 function isDir(folder, file) {
   const stats = fs.statSync(path.join(folder, file));
   return stats.isDirectory();
@@ -225,7 +235,7 @@ function statCheckSync(gamePath, file) {
 
 async function statCheckAsync(gamePath, file) {
   try {
-    await fs.statAsync(path.join(gamePath, file));
+    await fsp.stat(path.join(gamePath, file));
     return true;
   } catch {
     return false;
@@ -235,10 +245,10 @@ async function statCheckAsync(gamePath, file) {
 async function getAllFiles(dirPath) {
   let results = [];
   try {
-    const entries = await fs.readdirAsync(dirPath);
+    const entries = await fsp.readdir(dirPath);
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
-      const stats = await fs.statAsync(fullPath);
+      const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
@@ -636,7 +646,7 @@ async function ensureLOFile(context, profileId, props) {
   }
   const targetPath = path.join(props.discovery.path, props.profile.id + "_" + LO_FILE_NAME);
   try {
-    await fs.ensureFileAsync(targetPath);
+    await ensureFileAsync(targetPath);
     return targetPath;
   } catch (err) {
     return Promise.reject(err);
@@ -683,7 +693,7 @@ async function deserializeLoadOrder(context) {
   let data = [];
   try {
     const loFilePath = await ensureLOFile(context, props.profile.gameId, props);
-    const fileData = await fs.readFileAsync(loFilePath, { encoding: "utf8" });
+    const fileData = await fsp.readFile(loFilePath, { encoding: "utf8" });
     if (fileData.length > 0) {
       data = JSON.parse(fileData);
     }
@@ -735,7 +745,7 @@ async function serializeLoadOrder(context, loadOrder) {
   // Make sure the LO file is created and ready to be written to.
   const loFilePath = await ensureLOFile(context, props.profile.id, props);
   // Write the prefixed LO to file
-  await fs.writeFileAsync(loFilePath, JSON.stringify(loadOrder, null, 4), { encoding: "utf8" });
+  await fsp.writeFile(loFilePath, JSON.stringify(loadOrder, null, 4), { encoding: "utf8" });
   // something has changed so we need to tell vortex that a deployment will be necessary
   requestDeployment(context.api, spec);
   return Promise.resolve();
@@ -905,9 +915,9 @@ function checkPartitions(folder, discoveryPath) {
     const path2 = STAGING_FOLDER;
     const path3 = folder;
     // Ensure all folders exist
-    fs.ensureDirSync(path1);
-    fs.ensureDirSync(path2);
-    fs.ensureDirSync(path3);
+    fs.mkdirSync(path1, { recursive: true });
+    fs.mkdirSync(path2, { recursive: true });
+    fs.mkdirSync(path3, { recursive: true });
     // Get the stats for all folders
     const stats1 = fs.statSync(path1);
     const stats2 = fs.statSync(path2);
@@ -1049,7 +1059,7 @@ async function resolveGameVersion(gamePath, exePath) {
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
-    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+    await vfs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
   }
 }
 
