@@ -194,15 +194,11 @@ Menu:
 
 Recognised when the archive contains a file or folder named "menu" and a file with one of these extensions: ".bk2" or ".webm".
 
-  Installs to: "SB\Content\Movies\Menu"
-
 ========================================================================
 
 Movie:
 
 Recognised when the archive contains a file with the ".bk2" extension.
-
-  Installs to: "SB\Content\Movies"
 
 ========================================================================
 
@@ -210,15 +206,11 @@ Splash:
 
 Recognised when the archive contains a file or folder named "splash.bmp".
 
-  Installs to: "SB\Content\Splash"
-
 ========================================================================
 
 Cnsjson:
 
 Recognised when the archive contains a file with the ".json" extension.
-
-  Installs to: "SB\Content\Paks\~mods\CustomNanosuitSystem"
 
 ========================================================================
 

@@ -9,15 +9,11 @@ Dml:
 
 Handled by the "testDML" installer. Inspect the extension source for the exact archive layout it expects.
 
-  Installs to: "DML"
-
 ========================================================================
 
 Gzdoom:
 
 Recognised when the archive contains a file or folder named "uzdoom.exe".
-
-  Installs to: "DML\FILE\PORT\gzdoom"
 
 ========================================================================
 
@@ -25,15 +21,11 @@ Wad:
 
 Recognised when the archive contains a file or folder named one of: "doom.wad", "doom2.wad", "freedoom.wad" or "nerve.wad" and a file with one of these extensions: ".iwad" or ".ipk3".
 
-  Installs to: "DML\FILE\IWAD"
-
 ========================================================================
 
 Mod:
 
 Recognised when the archive contains a file with one of these extensions: ".wad", ".pk3", ".zip", ".pak", ".pk7", ".grp", ".rff", ".deh", ".iwad" or ".ipk3".
-
-  Installs to: "DML\FILE\PWAD"
 
 ========================================================================
 

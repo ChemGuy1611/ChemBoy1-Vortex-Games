@@ -41,8 +41,6 @@ Launchermod:
 
 Recognised when the archive contains a file or folder named "info.json".
 
-  Installs to: "_mods"
-
 ========================================================================
 
 Data:
@@ -55,15 +53,11 @@ Datasub:
 
 Recognised when the archive contains a file or folder named one of: "materials", "maps", "bin", "cfg", "media", "resource", "scripts" or "SAVE".
 
-  Installs to: "mm"
-
 ========================================================================
 
 Vpk:
 
 Recognised when the archive contains a file with the ".vpk" extension.
-
-  Installs to: "vpks"
 
 ========================================================================
 
@@ -71,15 +65,11 @@ Materialssub:
 
 Recognised when the archive contains a file or folder named one of: "models", "fx", "sprites", "cloth", "console", "correction", "decals", "detail", "effects", "engine", "envcubemaps", "generic", "hud", "nature", "overlays", "sun", "vgui" or "voice".
 
-  Installs to: "mm\materials"
-
 ========================================================================
 
 Maps:
 
 Recognised when the archive contains a file with the ".bsp" extension.
-
-  Installs to: "mm\maps"
 
 ========================================================================
 
@@ -89,8 +79,6 @@ Save files, deployed to the game's save folder.
 
   Requirements:
     - Recognised by any file with the ".sav" extension.
-
-  Installs to: "mm\SAVE"
 
   Common mistakes:
     - Including an example save alongside a normal mod makes the archive install as a save.

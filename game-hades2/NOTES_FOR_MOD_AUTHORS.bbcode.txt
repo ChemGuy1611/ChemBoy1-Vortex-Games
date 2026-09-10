@@ -9,15 +9,11 @@ Manager:
 
 Recognised when the archive contains a file or folder named "modimporter.exe".
 
-  Installs to: "Content"
-
 ========================================================================
 
 Modutility:
 
 Recognised when the archive contains a file or folder named "modutil.lua" and a file or folder named "main.lua".
-
-  Installs to: "Content\Mods\ModUtil"
 
 ========================================================================
 

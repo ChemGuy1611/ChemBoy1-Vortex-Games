@@ -33,15 +33,11 @@ Sound:
 
 Recognised when the archive contains a file with one of these extensions: ".snd" or ".pck".
 
-  Installs to: "base\sound\soundbanks\pc"
-
 ========================================================================
 
 Config:
 
 Recognised when the archive contains a file with one of these extensions: ".cfg".
-
-  Installs to: "base"
 
 ========================================================================
 

@@ -9,18 +9,25 @@ This extension adds Borderlands 4 modding support to Vortex Mod Manager.
 [b]🛠️ Mod Installation Notes:[/b]
 [list]
 [*]Installs mods with both a "Content" and a "Binaries" folder to the "OakGame" folder.[/*]
-[*]Installs mods with a file or folder named "unrealsdk.dll" and a file or folder named "sdk_mods" to the game folder itself (no subfolder).[/*]
-[*]Installs mods with a file with one of these extensions: ".py" or ".sdkmod" to the "sdk_mods" folder.[/*]
+[*]Installs mods with a file or folder named "unrealsdk.dll" and a file or folder named "sdk_mods".[/*]
+[*]Installs mods with a file with one of these extensions: ".py" or ".sdkmod".[/*]
 [*]Installs mods with a "LogicMods" folder to the "OakGame\Content\Paks\LogicMods\LogicMods" folder.[/*]
 [*]Installs mods with a ".pak" file to the "OakGame\Content\Paks" folder.[/*]
 [*]Installs mods with a "dwmapi.dll" file to the "OakGame\Binaries\Win64" folder.[/*]
 [*]Installs mods with a ".lua" file and a "Scripts" folder to the "OakGame\Binaries\Win64\ue4ss\Mods" folder.[/*]
 [*]Installs mods with a ".dll" file and a "dlls" folder to the "OakGame\Binaries\Win64\ue4ss\Mods" folder.[/*]
 [*]Installs mods with a top-level folder such as "OakGame" to the game folder itself (no subfolder).[/*]
-[*]Installs mods with a file or folder named "Content" to the "OakGame" folder.[/*]
-[*]Installs mods with a config file such as "engine.ini" or "game.ini" to the "DOCUMENTS\My Games\Borderlands 4\Saved\Config\Windows" folder.[/*]
+[*]Installs mods with a file or folder named "Content".[/*]
+[*]Installs mods with a config file such as "engine.ini" or "game.ini" to the "path.join(
+  CONFIGMOD_LOCATION,
+  DATA_FOLDER,
+  "Saved",
+  "Config",
+  CONFIG_FOLDERNAME,
+)" folder.[/*]
 [*]Installs mods with a ".sav" or ".yaml" file.[/*]
 [*]Installs mods with anything unrecognised with no pak file to the "OakGame\Binaries\Win64" folder.[/*]
+[*]Archives with a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to Vortex's built-in FOMOD installer instead.[/*]
 [/list]
 [b]📋 Usage Notes:[/b]
 [list]

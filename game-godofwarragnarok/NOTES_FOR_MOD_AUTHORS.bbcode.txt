@@ -21,15 +21,11 @@ Patchfolder:
 
 Recognised when the archive contains a file or folder named "patch".
 
-  Installs to: "exec"
-
 ========================================================================
 
 Execsub:
 
 Recognised when the archive contains a file or folder named one of: "ActivityFeed", "cinematics", "dc", "languages", "sound" or "wad".
-
-  Installs to: "exec"
 
 ========================================================================
 
@@ -37,23 +33,17 @@ Pack:
 
 Recognised when the archive contains a file with one of these extensions: ".texpack" or ".lodpack".
 
-  Installs to: "exec\patch\pc_le"
-
 ========================================================================
 
 Luamod:
 
 Recognised when the archive contains a file or folder named "int9" and a file with one of these extensions: ".lua".
 
-  Installs to: "mod"
-
 ========================================================================
 
 Save:
 
 Handled by the "testSave" installer. Inspect the extension source for the exact archive layout it expects.
-
-  Installs to: "userHomePathSanitize\Saved Games\God of War Ragnar\u00F6k\USERID_FOLDER"
 
 ========================================================================
 

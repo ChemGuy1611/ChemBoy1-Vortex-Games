@@ -2,8 +2,8 @@
 Name: DEATH STRANDING 2: ON THE BEACH Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.2.2
-Date: 2026-09-02
+Version: 0.2.3
+Date: 2026-09-08
 Notes:
 -
 ///////////////////////////////////////////*/

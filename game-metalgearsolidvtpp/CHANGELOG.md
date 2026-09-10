@@ -4,6 +4,11 @@
 
 - None Planned
 
+## [1.3.2] - 2026-09-08
+
+- Fixed: A required mod loader or tool is no longer mistaken for an unrelated Nexus mod that shares the same file, which could show the wrong mod details or offer a bogus update for it
+- Fixed: Downloads fetched for a required mod loader or tool now show "Website" as their source instead of being left blank
+
 ## [1.3.1] - 2026-09-08
 
 - Fixed: the "Install Mods with SnakeBite" and "Restore Game Files" buttons on the Mods toolbar showed a generic icon in Vortex 2.7. They now use standard toolbar icons

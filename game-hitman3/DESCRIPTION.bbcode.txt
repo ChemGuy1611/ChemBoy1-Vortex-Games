@@ -10,7 +10,7 @@ This extension adds HITMAN World of Assassination modding support to Vortex Mod 
 [b]🛠️ Mod Installation Notes:[/b]
 [list]
 [*]Installs mods with a file or folder named "Deploy.exe".[/*]
-[*]Installs mods with a file or folder named one of: "manifest.json" and a file with one of these extensions: ".rpkg" to the "Vortex_Mods" folder.[/*]
+[*]Installs mods with a file or folder named one of: "manifest.json" and a file with one of these extensions: ".rpkg".[/*]
 [*]Any other mod not described above is installed to the game folder itself (no subfolder).[/*]
 [*]Archives with a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to Vortex's built-in FOMOD installer instead.[/*]
 [/list]

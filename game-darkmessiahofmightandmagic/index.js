@@ -2,8 +2,8 @@
 Name: Dark Messiah of Might & Magic Vortex Extension
 Structure: Basic (Launcher)
 Author: ChemBoy1
-Version: 0.5.0
-Date: 2026-08-29
+Version: 0.5.1
+Date: 2026-09-08
 //////////////////////////////////////////////////////*/
 
 //Import libraries

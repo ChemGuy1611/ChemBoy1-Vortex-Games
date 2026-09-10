@@ -2,8 +2,8 @@
 Name: Far Cry 3 Vortex Extension
 Structure: Basic Game (Mod Installer)
 Author: ChemBoy1
-Version: 1.1.0
-Date: 2026-08-25
+Version: 1.1.1
+Date: 2026-09-08
 ///////////////////////////////////////////*/
 
 //Import libraries

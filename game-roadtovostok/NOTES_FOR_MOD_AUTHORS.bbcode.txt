@@ -15,15 +15,11 @@ Mcm:
 
 Recognised when the archive contains a file or folder named "ModConfigurationMenu".
 
-  Installs to: "mods"
-
 ========================================================================
 
 Mod:
 
 Recognised when the archive contains a file with one of these extensions: ".vmz".
-
-  Installs to: "mods"
 
 ========================================================================
 

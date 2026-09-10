@@ -15,15 +15,11 @@ Steammodded:
 
 Recognised when the archive contains a file or folder named "tk_debug_window.py".
 
-  Installs to: "STEAMMODDED_PATH"
-
 ========================================================================
 
 Malverk:
 
 Recognised when the archive contains a file or folder named "malverk.lua".
-
-  Installs to: "MALVERK_PATH"
 
 ========================================================================
 

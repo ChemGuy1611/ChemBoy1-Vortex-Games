@@ -12,8 +12,6 @@ This installer handles Frosty Mod Manager itself, not mods for it. It exists so 
   Requirements:
     - Recognised by a file named "frostymodmanager.exe" in the archive.
 
-  Installs to: "FrostyModManager"
-
   Common mistakes:
     - If you bundle Frosty Mod Manager inside your mod archive, Vortex treats the whole download as Frosty Mod Manager rather than as your mod. Ship the mod alone and list Frosty Mod Manager as a requirement.
 
@@ -23,15 +21,11 @@ Davex:
 
 Recognised when the archive contains a file or folder named "d3d11.dll".
 
-  Installs to: the game folder itself (no subfolder)
-
 ========================================================================
 
 Sdkpatch:
 
 Recognised when the archive contains a file or folder named "DragonAgeTheVeilguardSDK.dll".
-
-  Installs to: "FrostyModManager\Profiles"
 
 ========================================================================
 
@@ -41,8 +35,6 @@ Frostbite mods in Frosty Mod Manager format. Vortex stages them for Frosty rathe
 
   Requirements:
     - Recognised by any file with the ".fbmod" or ".archive" extensions.
-
-  Installs to: "FrostyModManager\Mods\Dragon Age The Veilguard"
 
   Common mistakes:
     - These mods still have to be applied through Frosty Mod Manager - installing in Vortex alone does not patch the game.

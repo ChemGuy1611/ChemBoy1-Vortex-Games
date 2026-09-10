@@ -12,8 +12,6 @@ This installer handles the TFC Installer itself, not mods for it. It exists so u
   Requirements:
     - Recognised by a file named "tfcinstaller.exe" in the archive.
 
-  Installs to: the game folder itself (no subfolder)
-
   Common mistakes:
     - If you bundle the TFC Installer inside your mod archive, Vortex treats the whole download as the TFC Installer rather than as your mod. Ship the mod alone and list the TFC Installer as a requirement.
 
@@ -25,8 +23,6 @@ This installer handles UPK Explorer itself, not mods for it. It exists so users 
 
   Requirements:
     - Recognised by a file named "upk explorer.exe" in the archive.
-
-  Installs to: the game folder itself (no subfolder)
 
   Common mistakes:
     - If you bundle UPK Explorer inside your mod archive, Vortex treats the whole download as UPK Explorer rather than as your mod. Ship the mod alone and list UPK Explorer as a requirement.
@@ -41,8 +37,6 @@ Texture/content mods handled through the TFC system.
     - Recognised by any file named "gameprofile.xml", "gameprofile.idremappings.xml", "objectdescriptors.xml", "packageextensions.xml", "texturepack" or "game".
     - Recognised by any file with the ".packagepatch", ".descriptor", ".tfcmapping" or ".inipatch" extensions.
 
-  Installs to: "TFCInstaller\Mods"
-
   Common mistakes:
     - Keep the original file names - the TFC system matches them by name.
 
@@ -52,15 +46,11 @@ Sdk:
 
 Recognised when the archive contains a file or folder named "unrealsdk.dll" and a file or folder named "sdk_mods".
 
-  Installs to: the game folder itself (no subfolder)
-
 ========================================================================
 
 Sdkmod:
 
 Recognised when the archive contains a file with the ".py" extension and a file with the ".sdkmod" extension.
-
-  Installs to: "sdk_mods"
 
 ========================================================================
 
@@ -92,8 +82,6 @@ Packaged content deployed into the game's cooked content folder.
     - Recognised by a folder named "DLC", "Maps", "Mods", "Packages", "Patch", "Test" or "UI" in the archive.
     - Recognised by any file with the ".upk" or ".u" extensions.
 
-  Installs to: "WillowGame\CookedPC"
-
 ========================================================================
 
 Movie / Cutscene Replacements:
@@ -102,8 +90,6 @@ Replacement video files, deployed into the game's movies folder.
 
   Requirements:
     - Recognised by any file with the ".bik" extension.
-
-  Installs to: "WillowGame\Movies"
 
   Common mistakes:
     - The replacement must keep the original file name, or the game will not pick it up.

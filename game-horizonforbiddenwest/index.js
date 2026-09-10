@@ -1,8 +1,8 @@
 /*////////////////////////////////////////////////
 Name: Horizon Forbidden West Vortex Extension
 Author: ChemBoy1
-Version: 0.2.6
-Date: 2026-09-02
+Version: 0.2.7
+Date: 2026-09-08
 ////////////////////////////////////////////////*/
 
 //import libraries
@@ -775,7 +775,9 @@ function applyGame(context, gameSpec) {
     context.registerInstaller(REPACKER_ID, 25, testRepacker, installRepacker);
   }
   context.registerInstaller(MANAGERMOD_ID, 27, testManagerMod, installManagerMod);
-  context.registerInstaller(SAVE_ID, 25, testSave, installSave);
+  //matches on a file extension, so it sits behind the repacker installer above, which
+  //matches a specific executable - a marker match is the more certain of the two
+  context.registerInstaller(SAVE_ID, 26, testSave, installSave);
 
   //register actions
   context.registerAction(

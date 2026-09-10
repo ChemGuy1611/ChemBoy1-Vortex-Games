@@ -2,19 +2,19 @@
 
 ## Overview
 
-| Property | Value                                   |
-| -------- | --------------------------------------- |
-| Name     | Horizon Forbidden West Vortex Extension |
-| Author   | ChemBoy1                                |
+| Property | Value |
+| --- | --- |
+| Name | Horizon Forbidden West Vortex Extension |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property       | Value                                                                                                                |
-| -------------- | -------------------------------------------------------------------------------------------------------------------- |
-| Game ID        | `horizonforbiddenwest`                                                                                               |
-| Executable     | `HorizonForbiddenWest.exe`                                                                                           |
-| Extension Page | [https://www.nexusmods.com/site/mods/844](https://www.nexusmods.com/site/mods/844)                                   |
-| PCGamingWiki   | [https://www.pcgamingwiki.com/wiki/Horizon_Forbidden_West](https://www.pcgamingwiki.com/wiki/Horizon_Forbidden_West) |
+| Property | Value |
+| --- | --- |
+| Game ID | `horizonforbiddenwest` |
+| Executable | `HorizonForbiddenWest.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/844](https://www.nexusmods.com/site/mods/844) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Horizon_Forbidden_West](https://www.pcgamingwiki.com/wiki/Horizon_Forbidden_West) |
 
 ## Supported Stores
 
@@ -23,31 +23,20 @@
 
 ## Feature Flags
 
-| Flag                  | Value   | Description                     |
-| --------------------- | ------- | ------------------------------- |
-| `modManagerInstalled` | `false` |                                 |
-| `repackerInstalled`   | `false` |                                 |
-| `loaderChoice`        | `false` | toggle for choice of mod packer |
-
-## Mod Types
-
-Mod types define where each category of mod gets deployed:
-
-| Name                  | ID                                | Priority | Target Path                                                                |
-| --------------------- | --------------------------------- | -------- | -------------------------------------------------------------------------- |
-| HFW Manager Mod       | `horizonforbiddenwest-managermod` | high     | `{gamePath}/mods`                                                          |
-| HFW Mod Manager       | `horizonforbiddenwest-modmanager` | low      | `{gamePath}`                                                               |
-| Repacker              | `horizonforbiddenwest-repacker`   | low      | `{gamePath}`                                                               |
-| Save Game (Documents) | `horizonforbiddenwest-save`       | low      | `userDocsPathString/Horizon Forbidden West Complete Edition/USERID_FOLDER` |
+| Flag | Value | Description |
+| --- | --- | --- |
+| `modManagerInstalled` | `false` |  |
+| `repackerInstalled` | `false` |  |
+| `loaderChoice` | `false` | toggle for choice of mod packer |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID                      | Priority |
-| --------------------------------- | -------- |
-| `horizonforbiddenwest-managermod` | 27       |
-| `horizonforbiddenwest-save`       | 25       |
+| Installer ID | Priority |
+| --- | --- |
+| `horizonforbiddenwest-managermod` | 27 |
+| `horizonforbiddenwest-save` | 26 |
 
 ## Toolbar Actions
 
@@ -68,3 +57,4 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+

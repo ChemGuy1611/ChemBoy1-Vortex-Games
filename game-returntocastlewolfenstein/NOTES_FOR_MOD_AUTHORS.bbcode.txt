@@ -21,15 +21,11 @@ Mainfolder:
 
 Recognised when the archive contains a file or folder named "Main".
 
-  Installs to: the game folder itself (no subfolder)
-
 ========================================================================
 
 Main:
 
 Recognised when the archive contains a file with the ".pk3" extension.
-
-  Installs to: "Main"
 
 ========================================================================
 

@@ -6,12 +6,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type  | Archive must contain                       | Installs to |
-| --------- | ------------------------------------------ | ----------- |
-| Modloader | a file or folder named `doommodloader.exe` | -           |
-| Launcher  | a file or folder named `doomlauncher.exe`  | -           |
-| Legacy    | a file or folder named `dinput8.dll`       | -           |
-| Rollback  | a file or folder named `doomx64vk.exe`     | -           |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Modloader | a file or folder named `doommodloader.exe` | - |
+| Launcher | a file or folder named `doomlauncher.exe` | - |
+| Legacy | a file or folder named `dinput8.dll` | - |
+| Rollback | a file or folder named `doomx64vk.exe` | - |
 
 Paths are relative to the game's install folder.
 
@@ -35,3 +35,4 @@ Recognised when the archive contains a file or folder named `doomx64vk.exe`.
 
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
+

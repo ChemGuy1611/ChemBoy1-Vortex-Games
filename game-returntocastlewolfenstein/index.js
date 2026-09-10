@@ -2,8 +2,8 @@
 Name: Return to Castle Wolfenstein Vortex Extension
 Structure: Generic Game with Custom Engine Mod (RealRTCW)
 Author: ChemBoy1
-Version: 1.1.0
-Date: 2026-08-29
+Version: 1.1.1
+Date: 2026-09-08
 ////////////////////////////////////////////////////////*/
 
 //Import libraries

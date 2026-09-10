@@ -27,15 +27,11 @@ Magicmod:
 
 Recognised when the archive contains a file with one of these extensions: ".wtd", ".was", ".dds", ".mtl" or ".wsc".
 
-  Installs to: "MagicRDR_Mods"
-
 ========================================================================
 
 Rpf:
 
 Recognised when the archive contains a file with the ".rpf" extension.
-
-  Installs to: "kml\rpf"
 
 ========================================================================
 

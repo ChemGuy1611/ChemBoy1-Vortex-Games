@@ -4,6 +4,11 @@
 
 - None planned at this time
 
+## [0.8.2] - 2026-09-08
+
+- Fixed: A required mod loader or tool is no longer mistaken for an unrelated Nexus mod that shares the same file, which could show the wrong mod details or offer a bogus update for it
+- Fixed: Downloads fetched for a required mod loader or tool now show "Website" as their source instead of being left blank
+
 ## [0.8.1] - 2026-09-05
 
 - Added: Right-click menu on load order entries - lock or unlock a position, move to top or bottom, open the mod folder, staging folder or mod page, and disable the Vortex mod. Works on a single entry or a multi-selection.

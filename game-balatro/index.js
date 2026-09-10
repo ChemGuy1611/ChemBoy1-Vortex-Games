@@ -2,8 +2,8 @@
 Name: Balatro Vortex Extension
 Structure: Mod Loader (Mods in AppData Folder)
 Author: ChemBoy1
-Version: 0.3.3
-Date: 2026-09-02
+Version: 0.3.4
+Date: 2026-09-08
 ///////////////////////////////////////*/
 
 //Import libraries
@@ -891,7 +891,9 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(LOVELY_ID, 25, testLovely, installLovely);
   context.registerInstaller(STEAMMODDED_ID, 27, testSteamModded, installSteamModded);
   context.registerInstaller(MALVERK_ID, 29, testMalverk, installMalverk);
-  context.registerInstaller(MOD_ID, 29, testMod, installMod);
+  //generic catch-all (mod extensions or mod folders), so it must sit behind every
+  //installer that matches a specific marker file - Malverk above being one of them
+  context.registerInstaller(MOD_ID, 30, testMod, installMod);
   //context.registerInstaller(CONFIG_ID, 31, testConfig, installConfig);
 
   //register actions

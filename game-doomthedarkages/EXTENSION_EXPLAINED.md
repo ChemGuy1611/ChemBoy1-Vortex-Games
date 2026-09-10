@@ -2,56 +2,41 @@
 
 ## Overview
 
-| Property           | Value                                |
-| ------------------ | ------------------------------------ |
-| Name               | DOOM: The Dark Ages Vortex Extension |
-| Engine / Structure | 3rd-Party Mod Loader                 |
-| Author             | ChemBoy1                             |
+| Property | Value |
+| --- | --- |
+| Name | DOOM: The Dark Ages Vortex Extension |
+| Engine / Structure | 3rd-Party Mod Loader |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property          | Value                                                                                                              |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Game ID           | `doomthedarkages`                                                                                                  |
-| Executable        | `DOOMTheDarkAges.exe`                                                                                              |
-| Executable (Xbox) | `gamelaunchhelper.exe`                                                                                             |
-| Extension Page    | [https://www.nexusmods.com/site/mods/1254](https://www.nexusmods.com/site/mods/1254)                               |
-| PCGamingWiki      | [https://www.pcgamingwiki.com/wiki/Doom%3A_The_Dark_Ages](https://www.pcgamingwiki.com/wiki/Doom%3A_The_Dark_Ages) |
+| Property | Value |
+| --- | --- |
+| Game ID | `doomthedarkages` |
+| Executable | `DOOMTheDarkAges.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1254](https://www.nexusmods.com/site/mods/1254) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Doom%3A_The_Dark_Ages](https://www.pcgamingwiki.com/wiki/Doom%3A_The_Dark_Ages) |
 
 ## Supported Stores
 
 - **Steam** — `3017860`
 - **Xbox / Microsoft Store** — `BethesdaSoftworks.ProjectTitan`
 
-## Mod Types
-
-Mod types define where each category of mod gets deployed:
-
-| Name                     | ID                               | Priority | Target Path                           |
-| ------------------------ | -------------------------------- | -------- | ------------------------------------- |
-| Injector Mod             | `doomthedarkages-mods`           | high     | `{gamePath}/mods`                     |
-| Config                   | `doomthedarkages-config`         | high     | `{gamePath}/base`                     |
-| Binaries / Root Folder   | `doomthedarkages-binaries`       | high     | `{gamePath}`                          |
-| Sound                    | `doomthedarkages-sound`          | high     | `{gamePath}/base/sound/soundbanks/pc` |
-| Atlan Mod Loader         | `doomthedarkages-modmanager`     | low      | `{gamePath}`                          |
-| DarkAgesPatcher          | `doomthedarkages-patcher`        | low      | `{gamePath}`                          |
-| Atlan Resource Extractor | `doomthedarkages-atlanextractor` | low      | `{gamePath}`                          |
-| Valen                    | `doomthedarkages-valen`          | low      | `{gamePath}`                          |
-
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID                     | Priority |
-| -------------------------------- | -------- |
-| `doomthedarkages-modmanager`     | 25       |
-| `doomthedarkages-atlanextractor` | 27       |
-| `doomthedarkages-valen`          | 28       |
-| `doomthedarkages-patcher`        | 29       |
-| `doomthedarkages-sound`          | 31       |
-| `doomthedarkages-config`         | 33       |
-| `doomthedarkages-zipmod`         | 37       |
-| `doomthedarkages-binaries`       | 39       |
+| Installer ID | Priority |
+| --- | --- |
+| `doomthedarkages-modmanager` | 25 |
+| `doomthedarkages-atlanextractor` | 27 |
+| `doomthedarkages-valen` | 28 |
+| `doomthedarkages-patcher` | 29 |
+| `doomthedarkages-sound` | 31 |
+| `doomthedarkages-config` | 33 |
+| `doomthedarkages-zipmod` | 37 |
+| `doomthedarkages-binaries` | 39 |
 
 ## Registered Tools
 
@@ -74,8 +59,8 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 ## Config & Save Paths
 
-| Type   | Path   |
-| ------ | ------ |
+| Type | Path |
+| --- | --- |
 | Config | `base` |
 
 ## Special Features
@@ -86,3 +71,4 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
+

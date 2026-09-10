@@ -2,52 +2,38 @@
 
 ## Overview
 
-| Property           | Value                                |
-| ------------------ | ------------------------------------ |
-| Name               | Red Dead Redemption Vortex Extension |
-| Engine / Structure | 3rd-Party Mod Installer              |
-| Author             | ChemBoy1                             |
+| Property | Value |
+| --- | --- |
+| Name | Red Dead Redemption Vortex Extension |
+| Engine / Structure | 3rd-Party Mod Installer |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property       | Value                                                                                                          |
-| -------------- | -------------------------------------------------------------------------------------------------------------- |
-| Game ID        | `reddeadredemption`                                                                                            |
-| Executable     | `RDR.exe`                                                                                                      |
-| Extension Page | [https://www.nexusmods.com/site/mods/1079](https://www.nexusmods.com/site/mods/1079)                           |
-| PCGamingWiki   | [https://www.pcgamingwiki.com/wiki/Red_Dead_Redemption](https://www.pcgamingwiki.com/wiki/Red_Dead_Redemption) |
+| Property | Value |
+| --- | --- |
+| Game ID | `reddeadredemption` |
+| Executable | `RDR.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1079](https://www.nexusmods.com/site/mods/1079) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Red_Dead_Redemption](https://www.pcgamingwiki.com/wiki/Red_Dead_Redemption) |
 
 ## Supported Stores
 
 - **Steam** — `2668510`
 - **Epic Games Store** — `c180bd9859624278aa20f1333918498a`
 
-## Mod Types
-
-Mod types define where each category of mod gets deployed:
-
-| Name                 | ID                             | Priority | Target Path                |
-| -------------------- | ------------------------------ | -------- | -------------------------- |
-| Root Game Folder     | `reddeadredemption-root`       | high     | `{gamePath}`               |
-| RPF File             | `reddeadredemption-rpf`        | high     | `{gamePath}/kml/rpf`       |
-| MagicRDR Mod (Loose) | `reddeadredemption-magicmod`   | high     | `{gamePath}/MagicRDR_Mods` |
-| ASI Script / Plugin  | `reddeadredemption-asiplugin`  | high     | `{gamePath}`               |
-| ScriptHookRDR        | `reddeadredemption-scripthook` | low      | `{gamePath}`               |
-| kepmehz Mod Loader   | `reddeadredemption-modloader`  | low      | `{gamePath}`               |
-| Magic RDR            | `reddeadredemption-magicrdr`   | low      | `{gamePath}`               |
-
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID                   | Priority |
-| ------------------------------ | -------- |
-| `reddeadredemption-scripthook` | 25       |
-| `reddeadredemption-modloader`  | 27       |
-| `reddeadredemption-magicrdr`   | 28       |
-| `reddeadredemption-magicmod`   | 29       |
-| `reddeadredemption-rpf`        | 33       |
-| `reddeadredemption-asiplugin`  | 35       |
+| Installer ID | Priority |
+| --- | --- |
+| `reddeadredemption-scripthook` | 25 |
+| `reddeadredemption-modloader` | 27 |
+| `reddeadredemption-magicrdr` | 28 |
+| `reddeadredemption-magicmod` | 29 |
+| `reddeadredemption-rpf` | 33 |
+| `reddeadredemption-asiplugin` | 35 |
 
 ## Registered Tools
 
@@ -72,3 +58,4 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+

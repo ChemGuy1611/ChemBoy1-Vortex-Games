@@ -233,6 +233,15 @@ async function downloadFcModdingRequirement(api, gameSpec, requirement, check = 
         allowInstall: false,
       }),
     );
+    // Declare the origin before the install pipeline reads it. InstallManager re-reads the
+    // download from live state right before running the attribute extractors, and
+    // processAttributes gates its whole Nexus fetch on modInfo.source === 'nexus' - so a
+    // value written here is the one it sees, and writing it after the install is too late.
+    // Any md5 match against Nexus for a file from this host is by definition a false one.
+    // 'website' is the registered mod source id; 'other' is NOT one (the id behind the
+    // "Other" label is 'unsupported'), and an unregistered id leaves the Source column
+    // blank. See https://github.com/Nexus-Mods/Vortex/issues/21979.
+    api.store.dispatch(actions.setDownloadModInfo(dlId, "source", "website"));
     const modId = await util.toPromise((cb) =>
       api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
     );
@@ -248,6 +257,16 @@ async function downloadFcModdingRequirement(api, gameSpec, requirement, check = 
       actions.setModAttribute(gameId, modId, "source", "website"),
       actions.setModAttribute(gameId, modId, "url", pageUrl(requirement)), // Shown as the mod's "Source" link in the mod details (only rendered when source === 'website')
       actions.setModAttribute(gameId, modId, "customFileName", requirement.userFacingName), // Vortex renders a mod as customFileName || logicalFileName || fileName || name, and the install pipeline stamps fileName with the archive name - without this the mod list shows the raw archive
+      // Vortex md5-matches every finished download against Nexus, game-agnostically, so a
+      // shared third-party asset can be matched to an unrelated Nexus upload and have that
+      // upload's modId/fileId stamped onto this mod. The update check then queries
+      // <managed game>/mods/<foreign modId> and offers a completely unrelated mod as an update.
+      // Deleting modId is the deterministic kill: checkModVersion bails on a non-numeric one.
+      // Singular setModAttribute is required - the plural setModAttributes merges, and a merge
+      // can never delete a key. The module's own file-id attribute is namespaced and untouched.
+      // Do not "tidy" these away. See https://github.com/Nexus-Mods/Vortex/issues/21979.
+      actions.setModAttribute(gameId, modId, "modId", undefined),
+      actions.setModAttribute(gameId, modId, "fileId", undefined),
     ];
     for (const oldModId of previousModIds) {
       // Disable the build this install replaces, so only one copy deploys

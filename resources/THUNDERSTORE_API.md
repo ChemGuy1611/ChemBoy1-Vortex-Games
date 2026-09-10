@@ -350,6 +350,25 @@ The same field name and behavior exist in all five downloader modules; `DOWNLOAD
 - **Source attribution.** A successful install sets the mod's `source` attribute to `'website'` and
   `url` to `pageUrl(requirement)` — Vortex renders this as a clickable "Source" link in the mod
   details panel.
+- **Foreign Nexus ids are cleared at install.** Vortex md5-matches every finished download
+  against Nexus, game-agnostically, so an archive byte-identical to something re-uploaded to
+  Nexus for an unrelated game gets that upload's `modId`/`fileId` stamped onto the mod — and
+  Vortex's own update check then offers that unrelated mod as an update for the requirement.
+  The install batch therefore deletes both attributes, using the **singular**
+  `setModAttribute` with an `undefined` value: the mods reducer deletes on that, while the
+  plural `setModAttributes` merges and can never delete. The module's own file-id tracking
+  attribute is namespaced and unaffected. Background: `VORTEX_MOD_METADATA.md`.
+- **The download declares its origin before the install pipeline reads it.** The install
+  dispatches `setDownloadModInfo(dlId, 'source', 'website')` _before_ emitting
+  `start-install-download`. Placement is the point: `InstallManager` re-reads the download
+  from live state immediately before running the attribute extractors, and
+  `processAttributes` gates its entire Nexus fetch on `modInfo.source === 'nexus'`, so a value
+  written here is the one it sees and writing it afterwards is too late. It also permanently
+  exempts the download from the startup "downloads missing meta" sweep, which only re-queries
+  entries whose `modInfo.source` is undefined. It does race `queryInfo`, which
+  `finalizeDownload` fires without awaiting, so on stock Vortex the md5 lookup often lands
+  afterwards and stamps `'nexus'` back over it; it holds outright on an already-downloaded
+  archive, and becomes authoritative on a Vortex carrying the #21979 fix.
 - **No silent auto-update.** `checkForThunderstoreUpdate` only notifies; the user-driven Download
   action performs the update via `downloadThunderstoreRequirement(..., false)`.
 - **Overlap guard.** A requirement whose install is already running is skipped (e.g. double-clicked

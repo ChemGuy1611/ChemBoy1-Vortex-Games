@@ -4,6 +4,11 @@
 
 - None Planned
 
+## [0.2.7] - 2026-09-08
+
+- Fixed: A required mod loader or tool is no longer mistaken for an unrelated Nexus mod that shares the same file, which could show the wrong mod details or offer a bogus update for it
+- Fixed: Downloads fetched for a required mod loader or tool now show "Website" as their source instead of being left blank
+
 ## [0.2.6] - 2026-09-02
 
 - Changed: HFW Mod Manager now appears in the mod list with its version, and can be disabled or removed from there

@@ -9,15 +9,11 @@ Openhotfixloader:
 
 Recognised when the archive contains a file or folder named "openhotfixloader.dll" and a file or folder named "b3hm.exe".
 
-  Installs to: "OakGame\Binaries\Win64\Plugins"
-
 ========================================================================
 
 Sdk:
 
 Recognised when the archive contains a file or folder named "unrealsdk.dll" and a file or folder named "sdk_mods".
-
-  Installs to: the game folder itself (no subfolder)
 
 ========================================================================
 
@@ -25,23 +21,17 @@ Sdkmod:
 
 Recognised when the archive contains a file with the ".py" extension and a file with the ".sdkmod" extension.
 
-  Installs to: "sdk_mods"
-
 ========================================================================
 
 Pluginloader:
 
 Recognised when the archive contains a file or folder named "d3d11.dll".
 
-  Installs to: "OakGame\Binaries\Win64"
-
 ========================================================================
 
 Hotfix:
 
 Recognised when the archive contains a file with the ".bl3hotfix" extension.
-
-  Installs to: "OakGame\Binaries\Win64\Plugins\ohl-mods"
 
 ========================================================================
 
@@ -69,23 +59,17 @@ Pak:
 
 Recognised when the archive contains a file with the ".pak" extension.
 
-  Installs to: "OakGame\Content\Paks"
-
 ========================================================================
 
 Movies:
 
 Recognised when the archive contains a file with the ".mp4" extension.
 
-  Installs to: "OakGame\Content\Movies"
-
 ========================================================================
 
 Binaries:
 
 Handled by the "testBinaries" installer. Inspect the extension source for the exact archive layout it expects.
-
-  Installs to: "OakGame\Binaries\Win64"
 
 ========================================================================
 

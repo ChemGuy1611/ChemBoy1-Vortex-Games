@@ -2,8 +2,8 @@
 Name: MENACE Vortex Extension
 Structure: Unity BepinEx/MelonLoader Hybrid
 Author: ChemBoy1
-Version: 0.8.1
-Date: 2026-09-05
+Version: 0.8.2
+Date: 2026-09-08
 //////////////////////////////////////////*/
 
 //Import libraries

@@ -15,15 +15,11 @@ Binfolder:
 
 Recognised when the archive contains a file or folder named "bin", a file with the ".pak" extension and a file with the ".bin" extension.
 
-  Installs to: "build\pc\main"
-
 ========================================================================
 
 Pak:
 
 Recognised when the archive contains a file with the ".pak" extension.
-
-  Installs to: "build\pc\main"
 
 ========================================================================
 
@@ -31,15 +27,11 @@ Buildfolder:
 
 Recognised when the archive contains a file or folder named "build".
 
-  Installs to: the game folder itself (no subfolder)
-
 ========================================================================
 
 Save:
 
 Recognised when the archive contains a file or folder named "USR-DATA".
-
-  Installs to: "USER_HOME\Saved Games\The Last of Us Part I\users\USERID_FOLDER\savedata"
 
 ========================================================================
 
@@ -50,7 +42,13 @@ Configuration tweaks, deployed to the game's config location.
   Requirements:
     - Recognised by any file named "screeninfo.cfg".
 
-  Installs to: "USER_HOME\Saved Games\The Last of Us Part I\users\USERID_FOLDER"
+  Installs to: "path.join(
+  USER_HOME,
+  "Saved Games",
+  "The Last of Us Part I",
+  "users",
+  USERID_FOLDER,
+)"
 
   Common mistakes:
     - Shipping a config file with one of these names inside an unrelated mod makes the whole archive install as a config mod.
@@ -60,8 +58,6 @@ Configuration tweaks, deployed to the game's config location.
 Psarctool:
 
 Recognised when the archive contains a file or folder named "UnPSARC.exe".
-
-  Installs to: "build\pc\main"
 
 ========================================================================
 

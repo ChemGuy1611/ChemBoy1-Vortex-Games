@@ -12,8 +12,6 @@ This installer handles the Far Cry Mod Installer itself, not mods for it. It exi
   Requirements:
     - Recognised by a file named "fcmodinstaller.exe" in the archive.
 
-  Installs to: "FCModInstaller"
-
   Common mistakes:
     - If you bundle the Far Cry Mod Installer inside your mod archive, Vortex treats the whole download as the Far Cry Mod Installer rather than as your mod. Ship the mod alone and list the Far Cry Mod Installer as a requirement.
 
@@ -31,7 +29,7 @@ MyRootMod.zip
 
   Requirements:
     - Recognised by a folder named "bin", "data_win32" or "Support" in the archive.
-    - Recognised by a file named "''".
+    - Recognised by a file named """".
 
   Installs to: the game folder itself (no subfolder)
 
@@ -47,23 +45,17 @@ Packed game data replacements.
   Requirements:
     - Recognised by any file with the ".dat" or ".fat" extensions.
 
-  Installs to: "data_win32"
-
 ========================================================================
 
 Binaries:
 
 Recognised when the archive contains a file with the ".dll" extension.
 
-  Installs to: "bin"
-
 ========================================================================
 
 Mimoda3:
 
 Recognised when the archive contains a file or folder named "info.xml".
-
-  Installs to: "FCModInstaller\ModifiedFilesFC4"
 
 ========================================================================
 
@@ -74,8 +66,6 @@ Mods packaged for the Far Cry Mod Installer.
   Requirements:
     - Recognised by any file with the ".a2", ".a3", ".a4", ".a5" or ".bin" extensions.
 
-  Installs to: "FCModInstaller\ModifiedFilesFC4"
-
   Common mistakes:
     - These are applied through the Mod Installer tool, not deployed straight into the game.
 
@@ -84,8 +74,6 @@ Mods packaged for the Far Cry Mod Installer.
 Xml:
 
 Recognised when the archive contains a file or folder named "gamerprofile.xml" and a file with the ".xml" extension.
-
-  Installs to: "DOCUMENTS\My Games\Far Cry 4\USERID_FOLDER"
 
 ========================================================================
 

@@ -40,8 +40,6 @@ Mod:
 
 Recognised when the archive contains a file with one of these extensions: ".gd".
 
-  Installs to: "mods-unpacked"
-
 ========================================================================
 
 Fallback Installer:

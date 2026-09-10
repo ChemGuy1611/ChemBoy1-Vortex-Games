@@ -6,21 +6,27 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                                     | Archive must contain                                                         | Installs to                                             |
-| -------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------- |
-| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder                                     | `OakGame`                                               |
-| Pysdk                                        | a file or folder named `unrealsdk.dll` and a file or folder named `sdk_mods` | the game folder itself (no subfolder)                   |
-| Pysdkmod                                     | a file with one of these extensions: `.py` or `.sdkmod`                      | `sdk_mods`                                              |
-| Blueprint Mods (LogicMods)                   | a `LogicMods` folder                                                         | `OakGame\Content\Paks\LogicMods\LogicMods`              |
-| Pak Mods                                     | a `.pak` file                                                                | `OakGame\Content\Paks`                                  |
-| UE4SS Itself                                 | a `dwmapi.dll` file                                                          | `OakGame\Binaries\Win64`                                |
-| UE4SS Script Mods (Lua)                      | a `.lua` file and a `Scripts` folder                                         | `OakGame\Binaries\Win64\ue4ss\Mods`                     |
-| UE4SS DLL Mods (C++)                         | a `.dll` file and a `dlls` folder                                            | `OakGame\Binaries\Win64\ue4ss\Mods`                     |
-| Root / Game Folder Mods                      | a top-level folder such as `OakGame`                                         | the game folder itself (no subfolder)                   |
-| Contentfolder                                | a file or folder named `Content`                                             | `OakGame`                                               |
-| Config File Mods                             | a config file such as `engine.ini` or `game.ini`                             | `DOCUMENTS\My Games\Borderlands 4\Saved\Config\Windows` |
-| Save Game Files                              | a `.sav` or `.yaml` file                                                     | -                                                       |
-| Fallback Installer                           | anything unrecognised with no pak file                                       | `OakGame\Binaries\Win64`                                |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `OakGame` |
+| Pysdk | a file or folder named `unrealsdk.dll` and a file or folder named `sdk_mods` | - |
+| Pysdkmod | a file with one of these extensions: `.py` or `.sdkmod` | - |
+| Blueprint Mods (LogicMods) | a `LogicMods` folder | `OakGame\Content\Paks\LogicMods\LogicMods` |
+| Pak Mods | a `.pak` file | `OakGame\Content\Paks` |
+| UE4SS Itself | a `dwmapi.dll` file | `OakGame\Binaries\Win64` |
+| UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `OakGame\Binaries\Win64\ue4ss\Mods` |
+| UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | `OakGame\Binaries\Win64\ue4ss\Mods` |
+| Root / Game Folder Mods | a top-level folder such as `OakGame` | the game folder itself (no subfolder) |
+| Contentfolder | a file or folder named `Content` | - |
+| Config File Mods | a config file such as `engine.ini` or `game.ini` | `path.join(
+  CONFIGMOD_LOCATION,
+  DATA_FOLDER,
+  "Saved",
+  "Config",
+  CONFIG_FOLDERNAME,
+)` |
+| Save Game Files | a `.sav` or `.yaml` file | - |
+| Fallback Installer | anything unrecognised with no pak file | `OakGame\Binaries\Win64` |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
@@ -60,13 +66,9 @@ Installs to: `OakGame`
 
 Recognised when the archive contains a file or folder named `unrealsdk.dll` and a file or folder named `sdk_mods`.
 
-Installs to: the game folder itself (no subfolder)
-
 ## Pysdkmod
 
 Recognised when the archive contains a file with one of these extensions: `.py` or `.sdkmod`.
-
-Installs to: `sdk_mods`
 
 ## Blueprint Mods (LogicMods)
 
@@ -199,8 +201,6 @@ Installs to: the game folder itself (no subfolder)
 
 Recognised when the archive contains a file or folder named `Content`.
 
-Installs to: `OakGame`
-
 ## Config File Mods
 
 Config tweaks are deployed to the game's config folder in your user profile, not into the game installation.
@@ -208,9 +208,21 @@ Config tweaks are deployed to the game's config folder in your user profile, not
 **Requirements:**
 
 - Recognised by any of these filenames in the archive: `engine.ini`, `game.ini`, `gameusersettings.ini`, `input.ini`, `scalability.ini`, `hardware.ini`, `deviceprofiles.ini`, `compat.ini`, `runtimeoptions.ini`, `gameplaytags.ini`, `enhancedinput.ini` or `consolevariables.ini`.
-- Installed to `DOCUMENTS\My Games\Borderlands 4\Saved\Config\Windows`.
+- Installed to `path.join(
+  CONFIGMOD_LOCATION,
+  DATA_FOLDER,
+  "Saved",
+  "Config",
+  CONFIG_FOLDERNAME,
+)`.
 
-Installs to: `DOCUMENTS\My Games\Borderlands 4\Saved\Config\Windows`
+Installs to: `path.join(
+  CONFIGMOD_LOCATION,
+  DATA_FOLDER,
+  "Saved",
+  "Config",
+  CONFIG_FOLDERNAME,
+)`
 
 **Common mistakes:**
 
@@ -247,5 +259,7 @@ Installs to: `OakGame\Binaries\Win64`
 
 ## Rules That Apply To Every Mod Type
 
+- Archives that contain a FOMOD installer (a `fomod` folder with `ModuleConfig.xml`) are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
+

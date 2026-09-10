@@ -4,6 +4,11 @@
 
 - Config and save modtypes, installers, and open buttons.
 
+## [1.0.2] - 2026-09-08
+
+- Fixed: A required mod loader or tool is no longer mistaken for an unrelated Nexus mod that shares the same file, which could show the wrong mod details or offer a bogus update for it
+- Fixed: Downloads fetched for a required mod loader or tool now show "Website" as their source instead of being left blank
+
 ## [1.0.1] - 2026-08-30
 
 - Fixed: EternalModInjector and mods installed from the Browse GameBanana page are now saved under their real file name. They previously used the numeric GameBanana file id, which left the mod folder unrecognisable and caused Vortex to delete the downloaded archive afterwards.

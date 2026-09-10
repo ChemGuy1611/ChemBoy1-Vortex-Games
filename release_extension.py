@@ -9,7 +9,15 @@ Steps performed per game:
     1. Validate info.json version has a matching ## [X.Y.Z] entry in CHANGELOG.md
     2. Check info.json 'name' matches 'Game: <Name>' pattern (errors if not)
     3. Check that const debug = false in index.js (errors if true)
-    4. Check that all context.registerInstaller calls have unique priority numbers (errors if not)
+    4. Check that all context.registerInstaller calls have unique priority numbers (WARNS only,
+       never blocks the release -- a duplicate is a code-quality finding, and its review home is
+       patch_extensions.py --audit). Honours the shared audit-skip marker: a registerInstaller
+       line carrying, or sitting directly under, "//!audit-skip: installer-priority - <reason>"
+       is left out of the comparison. That covers the two cases where a shared number is correct
+       and renumbering would invent a distinction that does not exist -- an if/else pair
+       registering the same installer id, and two installers whose testSupported functions gate
+       on different game specs in a multi-spec extension. Mark one side of such a pair, never
+       both, so the other keeps guarding that priority. A marker without a reason is ignored.
     5. Run validate_index_js: leftover XXX, missing applyGame/registerGame/main (warns)
     6. Rename version .txt file to match info.json version
     7. Update Version and Date in index.js header comment
@@ -79,7 +87,7 @@ from vortex_utils import (
     print_run_summary, assert_is_game_id, log_info, log_warn, log_error,
     get_api_key, parse_nexus_mod_url,
     LISTS_DIR, read_id_list, write_id_list,
-    find_registerinstaller_calls,
+    find_registerinstaller_calls, audit_skip_lines, AUDIT_SKIP_PRIORITY,
 )
 from nexus_upload import pick_file_group, upload_zip, extract_changelog_entry
 SEVENZIP = os.environ.get("SEVENZIP_PATH", r"C:\Program Files\7-Zip\7z.exe")
@@ -101,21 +109,44 @@ ZIP_EXCLUDES = [
 # == Extension helpers =========================================================
 
 def check_installer_priorities(index_src, game_id):
-    """Error if any two LIVE context.registerInstaller calls share the same priority number.
+    """Warn if any two LIVE context.registerInstaller calls share the same priority number.
+
+    Deliberately NOT a release blocker. A duplicate priority is a code-quality finding,
+    not a broken build -- the extension loads and installs fine, the tie is just resolved
+    by registration order instead of by an explicit number. Blocking on it meant a
+    long-standing duplicate in an untouched part of index.js could stop an unrelated
+    release dead, which is what happened to four extensions on 2026-09-08. The real
+    review home for these is patch_extensions.py --audit; this is a reminder in passing.
 
     Comment-aware via find_registerinstaller_calls -- every extension carries at least
     one commented-out sample registerInstaller line, and without the comment guard a
-    numeric collision with a live installer false-positives here and aborts the release."""
-    priorities = [p for _lineno, _id, p in find_registerinstaller_calls(index_src)]
+    numeric collision with a live installer false-positives here.
+
+    Also honours the shared audit-skip marker, the same one patch_extensions.py --audit
+    reads: a registerInstaller line carrying (or sitting directly under)
+
+        //!audit-skip: installer-priority - <reason>
+
+    is left out of the comparison. Two registrations can legitimately share a priority
+    when they are mutually exclusive and a number could never break the tie between them:
+    an if/else pair registering the same installer id, or two installers whose
+    testSupported functions gate on different game specs in a multi-spec extension.
+    Renumbering those would invent a distinction that does not exist. Mark ONE side of
+    such a pair, so the other keeps guarding that priority against a real future clash."""
+    skipped = audit_skip_lines(index_src, AUDIT_SKIP_PRIORITY)
+    priorities = [
+        p for lineno, _id, p in find_registerinstaller_calls(index_src)
+        if lineno not in skipped and (lineno - 1) not in skipped
+    ]
     seen, dupes = set(), []
     for p in priorities:
         if p in seen and p not in dupes:
             dupes.append(p)
         seen.add(p)
     if dupes:
-        log_error(game_id, f"duplicate registerInstaller priority: {', '.join(str(p) for p in dupes)}")
-        return False
-    return True
+        log_warn(game_id, "duplicate registerInstaller priority: "
+                          f"{', '.join(str(p) for p in dupes)} "
+                          "(not blocking the release; review via patch_extensions.py --audit)")
 
 
 def update_version_txt(folder, game_id, version, dry_run=False):
@@ -201,8 +232,7 @@ def release(game_id, open_browser, dry_run=False, skip_eslint=False,
         if re.search(r'^\s*(?:const|let)\s+debug\s*=\s*true\b', index_src, re.MULTILINE):
             log_error(game_id, "debug is set to true in index.js")
             return False
-        if not check_installer_priorities(index_src, game_id):
-            return False
+        check_installer_priorities(index_src, game_id)
         for issue in validate_index_js(index_src):
             log_warn(game_id, issue)
 

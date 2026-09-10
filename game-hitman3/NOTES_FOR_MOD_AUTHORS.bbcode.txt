@@ -15,8 +15,6 @@ Mod:
 
 Recognised when the archive contains a file or folder named one of: "manifest.json" and a file with one of these extensions: ".rpkg".
 
-  Installs to: "Vortex_Mods"
-
 ========================================================================
 
 Fallback Installer:

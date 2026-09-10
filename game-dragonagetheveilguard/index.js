@@ -2,8 +2,8 @@
 Name: Dragon Age: The Veilguard Vortex Extension
 Structure: 3rd Party Mod Manager (Frosty)
 Author: ChemBoy1
-Version: 0.5.3
-Date: 2026-09-02
+Version: 0.5.4
+Date: 2026-09-08
 ////////////////////////////////////////////////////*/
 
 //Import libraries

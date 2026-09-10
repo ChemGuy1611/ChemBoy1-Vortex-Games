@@ -425,6 +425,11 @@ async function download(api, requirements, force) {
             pageUrl: repoPageUrl(req, api),
             version: latestAssetVersion(req, asset),
             modType: req.modType,
+            // The one route where a Nexus md5 match is correct - this file really did come from
+            // that page - so the #21979 guards are skipped: the download keeps declaring itself
+            // Nexus-sourced (the install picks up the page's real author/picture/description) and
+            // the resolved modId/fileId are the genuine ones, worth keeping.
+            nexusSourced: true,
           });
           installedAny = true;
           continue;
@@ -478,10 +483,30 @@ async function download(api, requirements, force) {
   }
 }
 
-// info: { name, assetDate, pageUrl, version, nightlyRunNumber, modType } - all optional except name.
+// info: { name, assetDate, pageUrl, version, nightlyRunNumber, modType, nexusSourced } - all
+// optional except name.
 async function installDownload(api, dlId, info) {
   const state = api.getState();
   const gameId = selectors.activeGameId(state);
+  // A Nexus-page requirement is the one route here where an md5 match against Nexus is CORRECT -
+  // the file really did come from that page - so the ids it yields are the genuine ones and both
+  // of the #21979 guards below are skipped for it. Everywhere else the file came from GitHub or a
+  // CI artifact, where any Nexus match is by definition a false one.
+  const nexusSourced = info.nexusSourced === true;
+  // Declare where the archive came from BEFORE the install pipeline reads it. InstallManager
+  // re-reads the download from live state immediately before running the attribute extractors, so
+  // a value written here is the one processAttributes sees - and processAttributes gates its whole
+  // Nexus fetch on modInfo.source === 'nexus'. Writing it afterwards is too late to prevent that.
+  // It also permanently exempts the download from the startup "downloads missing meta" sweep,
+  // which only re-queries entries whose modInfo.source is undefined.
+  // This races queryInfo, which finalizeDownload fires without awaiting: on stock Vortex the md5
+  // lookup usually lands after this and stamps 'nexus' back over it. It sticks on an archive that
+  // was already downloaded (that lookup ran long ago), and on a Vortex carrying the #21979 fix it
+  // is authoritative - that fix returns early when a download already declares a non-nexus source,
+  // which is exactly the signal being set here.
+  if (!nexusSourced) {
+    api.store.dispatch(actions.setDownloadModInfo(dlId, "source", "website"));
+  }
   return new Promise((resolve, reject) => {
     api.events.emit("start-install-download", dlId, true, (err, modId) => {
       if (err !== null) {
@@ -503,8 +528,11 @@ async function installDownload(api, dlId, info) {
       }
       // source: 'website' + url makes Vortex show a clickable "Source" link to the repo
       // page in the mod details panel (mod_management customRenderer gates on this pair).
+      // The source stamp is deliberately unconditional while the link is not: a file this
+      // module fetched came from a GitHub release or a Nexus mod PAGE, never a Nexus mod FILE,
+      // and it must not be left looking like one even when there is no page to link to.
+      attributes.source = "website";
       if (info.pageUrl !== undefined) {
-        attributes.source = "website";
         attributes.url = info.pageUrl;
       }
       if (info.version !== undefined) {
@@ -519,6 +547,24 @@ async function installDownload(api, dlId, info) {
         actions.setModAttributes(gameId, modId, attributes),
         actions.setModEnabled(profileId, modId, true),
       ];
+      // Vortex md5-matches every finished download against Nexus, game-agnostically. A shared
+      // third-party dependency (BepInEx, a config manager) is routinely byte-identical to a copy
+      // somebody re-uploaded to Nexus for an unrelated game, so that match stamps a FOREIGN
+      // modId/fileId onto this mod. The update check then queries
+      // <managed game>/mods/<foreign modId>, which resolves to a completely unrelated mod and
+      // offers it as an update for the requirement - accepting it overwrites the dependency.
+      // Deleting modId is the deterministic kill: checkModVersion bails on a non-numeric one.
+      // These must be SINGULAR setModAttribute calls and cannot be folded into `attributes`
+      // above - the plural setModAttributes merges, and a merge can never delete a key.
+      // Do not "tidy" them away. See https://github.com/Nexus-Mods/Vortex/issues/21979.
+      // Skipped for a Nexus-page requirement: there the ids are the real ones for the page the
+      // file was fetched from, so they are worth keeping. Nothing runs away with them either -
+      // the mod is still stamped source: 'website', and the bulk update check filters on
+      // source === 'nexus', so this module stays the only thing updating it.
+      if (!nexusSourced) {
+        batch.push(actions.setModAttribute(gameId, modId, "modId", undefined));
+        batch.push(actions.setModAttribute(gameId, modId, "fileId", undefined));
+      }
       // The extension's own installer normally assigns the mod type through a setmodtype
       // instruction, but findModByFile only considers mods carrying the requirement's type -
       // an installer that fails to fire would leave the mod invisible to it and get the
@@ -541,7 +587,12 @@ async function importAndInstall(api, filePath, info) {
         return reject(new util.NotFound(filePath));
       }
       const batched = [];
-      batched.push(actions.setDownloadModInfo(id, "source", "other"));
+      // Declare the origin before the install pipeline reads it: an md5 metadata lookup that
+      // matches this file to an unrelated Nexus upload would otherwise stamp source 'nexus' and
+      // a foreign modId/fileId on the mod (see installDownload and issue #21979). 'website' is
+      // the registered mod source id - 'other' is NOT one (the id behind the "Other" label is
+      // 'unsupported'), and an unregistered id leaves the Source column blank.
+      batched.push(actions.setDownloadModInfo(id, "source", "website"));
       util.batchDispatch(api.store, batched);
       try {
         await installDownload(api, id, info);

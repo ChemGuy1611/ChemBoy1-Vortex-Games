@@ -39,8 +39,6 @@ Modkit:
 
 Recognised when the archive contains a file or folder named "Menace.Modkit.App.exe".
 
-  Installs to: the game folder itself (no subfolder)
-
 ========================================================================
 
 Jiangyu Loader:
@@ -86,15 +84,11 @@ Modpackloader:
 
 Recognised when the archive contains a file or folder named "Menace.ModpackLoader.dll" and a file or folder named "UserLibs".
 
-  Installs to: the game folder itself (no subfolder)
-
 ========================================================================
 
 Modpackmod:
 
 Recognised when the archive contains a file or folder named "modpack.json".
-
-  Installs to: "Mods"
 
 ========================================================================
 
@@ -185,8 +179,6 @@ MyPlugin.zip
 Customleaders:
 
 Handled by the "testCustomLeaders" installer. Inspect the extension source for the exact archive layout it expects.
-
-  Installs to: "Mods\customleaders"
 
 ========================================================================
 

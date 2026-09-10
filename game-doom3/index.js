@@ -2,8 +2,8 @@
 Name: DOOM 3 & DOOM 3: BFG Edition Vortex Extension
 Structure: Basic multi-game with multiple exes
 Author: ChemBoy1
-Version: 0.5.7
-Date: 2026-09-03
+Version: 0.5.8
+Date: 2026-09-08
 /////////////////////////////////////////*/
 /*
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣠⣤⣤⣤⡴⣦⡴⣖⠶⣴⠶⡶⣖⡶⣶⢶⣲⡾⠿⢿⡷⣾⢿⣷⣦⢾⣷⣾⣶⣤⣀⣰⣤⣀⡀⠀⠀⢀⣴⣿⡿⡿⣿⣿⣦⣄⠀⠀⣠⣴⣿⡿⢿⡿⣷⣦⡄⠀⠀⢀⣀⣤⣦⣀⣤⣶⣶⣷⣦⣴⡿⢿⡷⣿⠿⡿⣿⣷⢶⣦⢴⡲⣦⢶⡶⢶⡲⣖⡶⣦⣤⣤⣤⣤⣤⣤⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -1177,6 +1177,7 @@ function applyGameBfg(context, gameSpec) {
   });
 
   //register mod installers
+  //!audit-skip: installer-priority - shares 25 with the classic game's dhewm3 installer, but the two testSupported functions gate on different game specs (specBfg vs spec) so they can never both match; a priority could not break a tie that never happens
   context.registerInstaller(ROOT_ID_BFG, 25, testRootBfg, installRootBfg);
 
   //register actions

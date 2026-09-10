@@ -2,8 +2,8 @@
 Name: Bloodthief Vortex Extension
 Structure: Godot Engine Game
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-09-02
+Version: 1.0.2
+Date: 2026-09-08
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -856,6 +856,7 @@ function applyGame(context, gameSpec) {
   if (keepZips) {
     context.registerInstaller(MOD_ID, 27, testMod, installModZip); //keep in zips
   } else {
+    //!audit-skip: installer-priority - the same installer id at the same priority as the keepZips branch above; they are the two arms of one if/else so exactly one is ever registered, and giving them different numbers would imply an ordering that cannot exist
     context.registerInstaller(MOD_ID, 27, testMod, installMod); //unzip
   }
   if (fallbackInstaller) {

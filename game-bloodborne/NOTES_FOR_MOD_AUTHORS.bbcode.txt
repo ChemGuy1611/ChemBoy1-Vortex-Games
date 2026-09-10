@@ -33,15 +33,11 @@ Dvdroot Ps4:
 
 Recognised when the archive contains a file or folder named one of: "action", "chr", "event", "facegen", "map", "menu", "movie", "msg", "mtd", "obj", "other", "param", "paramdef", "parts", "remo", "script", "sfx", "shader" or "sound".
 
-  Installs to: "CUSA03173\dvdroot_ps4"
-
 ========================================================================
 
 Save:
 
 Recognised when the archive contains a file or folder named "userdata0000".
-
-  Installs to: "user\savedata\1\CUSA03173\SPRJ0005"
 
 ========================================================================
 

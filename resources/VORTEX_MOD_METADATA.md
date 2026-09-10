@@ -273,6 +273,34 @@ mitigations:
 - Set `attributes.source` to a non-Nexus value **after** install completes, and clear
   `attributes.modId` / `attributes.fileId`. `checkModVersion` bails on a non-numeric `modId`, so
   clearing `modId` is the effective kill switch for the bad update check.
+- Clear those two with the **singular** `setModAttribute(gameId, modId, 'modId', undefined)`. The
+  mods reducer routes an `undefined` value to `deleteOrNop` and actually removes the key; the
+  plural `setModAttributes` merges its object in, and a merge can never delete.
+- Use a **registered** source id. `mod_management` registers `user-generated`, `website` and
+  `unsupported`, and `nexus_integration` adds `nexus`. Note that `unsupported` is the id whose
+  display name is "Other" — `'other'` itself is not a registered id at all, and `getModSource`
+  returns `undefined` for it, which leaves the mod list's Source column blank. `'website'` is the
+  value core itself writes for a non-Nexus install.
+- The **download** entry's `modInfo.source` shares that same id namespace, so the same rule
+  applies there. The mod list's Source column proves it: its `onChangeValue` writes the selected
+  id through `setDownloadModInfo` for a download row and `setModAttribute` for an installed one.
+- **Declare it on the download _before_ starting the install.** `InstallManager` re-reads the
+  download from live state immediately before running the attribute extractors ("refresh download
+  data from current state"), so a value written at that moment is the one `processAttributes` sees
+  — and `processAttributes` gates its whole Nexus fetch on `modInfo.source === 'nexus'`. Writing it
+  after the install completes is too late to prevent any of that. Setting it also permanently
+  exempts the download from the startup "downloads missing meta" sweep, which only re-queries
+  entries whose `modInfo.source` is undefined.
+- That write **races `queryInfo`**, which `finalizeDownload` fires without awaiting. On stock
+  Vortex the md5 lookup usually completes after the declaration and stamps `'nexus'` back over it.
+  It holds outright on an archive that was already downloaded (that lookup ran long ago), and it
+  becomes authoritative on a Vortex whose `queryInfo` returns early when a download already
+  declares a non-Nexus source.
+- Clearing the ids is **not** always right. Where the md5 match is genuinely correct — the file
+  really did come from the Nexus page the extension fetched it from — the resolved `modId`/`fileId`
+  are the real ones and should be kept, and the download should stay Nexus-sourced so the install
+  picks up the page's true author, picture and description. Stamping the mod `source: 'website'` is
+  enough to keep Vortex's bulk update check off it, since that path filters on `source === 'nexus'`.
 - Do not rely on passing `source` in the `start-download` `dlInfo` — `queryInfo` overwrites it.
 - Prefer installing dependencies as their own mod type with a distinct name, so a mistaken update
   is at least visible in the mod list.

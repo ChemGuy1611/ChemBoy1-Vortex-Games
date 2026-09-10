@@ -6,22 +6,22 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                                     | Archive must contain                                                                     | Installs to                                    |
-| -------------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder                                                 | `SB`                                           |
-| Blueprint Mods (LogicMods)                   | a `LogicMods` folder                                                                     | `SB\Content\Paks\LogicMods\LogicMods`          |
-| UE4SS Itself                                 | a `dwmapi.dll` file                                                                      | `SB\Binaries\Win64`                            |
-| UE4SS Script Mods (Lua)                      | a `.lua` file and a `Scripts` folder                                                     | `SB\Binaries\Win64\ue4ss\Mods`                 |
-| UE4SS DLL Mods (C++)                         | a `.dll` file and a `dlls` folder                                                        | `SB\Binaries\Win64\ue4ss\Mods`                 |
-| Pak Mods                                     | a `.pak` file                                                                            | -                                              |
-| Root / Game Folder Mods                      | a top-level folder such as `SB`                                                          | the game folder itself (no subfolder)          |
-| Config File Mods                             | a config file such as `engine.ini` or `game.ini`                                         | `LOCALAPPDATA\SB\Saved\Config\WindowsNoEditor` |
-| Save Game Files                              | a `.sav` file                                                                            | -                                              |
-| Menu                                         | a file or folder named `menu` and a file with one of these extensions: `.bk2` or `.webm` | `SB\Content\Movies\Menu`                       |
-| Movie                                        | a file with the `.bk2` extension                                                         | `SB\Content\Movies`                            |
-| Splash                                       | a file or folder named `splash.bmp`                                                      | `SB\Content\Splash`                            |
-| Cnsjson                                      | a file with the `.json` extension                                                        | `SB\Content\Paks\~mods\CustomNanosuitSystem`   |
-| Fallback Installer                           | anything unrecognised with no pak file                                                   | `SB\Binaries\Win64`                            |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `SB` |
+| Blueprint Mods (LogicMods) | a `LogicMods` folder | `SB\Content\Paks\LogicMods\LogicMods` |
+| UE4SS Itself | a `dwmapi.dll` file | `SB\Binaries\Win64` |
+| UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `SB\Binaries\Win64\ue4ss\Mods` |
+| UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | `SB\Binaries\Win64\ue4ss\Mods` |
+| Pak Mods | a `.pak` file | - |
+| Root / Game Folder Mods | a top-level folder such as `SB` | the game folder itself (no subfolder) |
+| Config File Mods | a config file such as `engine.ini` or `game.ini` | `LOCALAPPDATA\SB\Saved\Config\WindowsNoEditor` |
+| Save Game Files | a `.sav` file | - |
+| Menu | a file or folder named `menu` and a file with one of these extensions: `.bk2` or `.webm` | - |
+| Movie | a file with the `.bk2` extension | - |
+| Splash | a file or folder named `splash.bmp` | - |
+| Cnsjson | a file with the `.json` extension | - |
+| Fallback Installer | anything unrecognised with no pak file | `SB\Binaries\Win64` |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
@@ -214,25 +214,17 @@ Save files are deployed to the game's save folder in your user profile.
 
 Recognised when the archive contains a file or folder named `menu` and a file with one of these extensions: `.bk2` or `.webm`.
 
-Installs to: `SB\Content\Movies\Menu`
-
 ## Movie
 
 Recognised when the archive contains a file with the `.bk2` extension.
-
-Installs to: `SB\Content\Movies`
 
 ## Splash
 
 Recognised when the archive contains a file or folder named `splash.bmp`.
 
-Installs to: `SB\Content\Splash`
-
 ## Cnsjson
 
 Recognised when the archive contains a file with the `.json` extension.
-
-Installs to: `SB\Content\Paks\~mods\CustomNanosuitSystem`
 
 ## Fallback Installer
 
@@ -256,3 +248,4 @@ Installs to: `SB\Binaries\Win64`
 - Archives that contain a FOMOD installer (a `fomod` folder with `ModuleConfig.xml`) are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
+

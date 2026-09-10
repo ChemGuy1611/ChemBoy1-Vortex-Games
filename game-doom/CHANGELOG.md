@@ -4,6 +4,11 @@
 
 - Config and save modtypes, installers, and open buttons.
 
+## [0.6.4] - 2026-09-08
+
+- Fixed: A required mod loader or tool is no longer mistaken for an unrelated Nexus mod that shares the same file, which could show the wrong mod details or offer a bogus update for it
+- Fixed: Downloads fetched for a required mod loader or tool now show "Website" as their source instead of being left blank
+
 ## [0.6.3] - 2026-09-02
 
 - Fixed: A required mod loader or tool is no longer matched against downloads belonging to other games, which could report the wrong installed version or check for updates against the wrong file

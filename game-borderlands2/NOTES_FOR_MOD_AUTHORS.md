@@ -6,19 +6,19 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                      | Archive must contain                                                         | Installs to                           |
-| ----------------------------- | ---------------------------------------------------------------------------- | ------------------------------------- |
-| TFC Installer (tool)          | a `tfcinstaller.exe` file                                                    | the game folder itself (no subfolder) |
-| Blcmm                         | a file or folder named `openblcmm.exe`                                       | the game folder itself (no subfolder) |
-| TFC Mods                      | a `gameprofile.xml` file or a `.packagepatch` file                           | `TFCInstaller\Mods`                   |
-| UPK Explorer (tool)           | a `upk explorer.exe` file                                                    | the game folder itself (no subfolder) |
-| Sdk                           | a file or folder named `unrealsdk.dll` and a file or folder named `sdk_mods` | the game folder itself (no subfolder) |
-| Sdkmod                        | a file with the `.py` extension and a file with the `.sdkmod` extension      | `sdk_mods`                            |
-| Blcmfile                      | a file with the `.blcm` extension                                            | `Binaries`                            |
-| Root / Game Folder Mods       | a `WillowGame` folder                                                        | the game folder itself (no subfolder) |
-| Cooked Content Mods           | a `English(US)` folder or a `.tfc` file                                      | `WillowGame\CookedPCConsole`          |
-| Movie / Cutscene Replacements | a `.bik` file                                                                | `WillowGame\Movies`                   |
-| Binaries / Injector Mods      | a `Borderlands2.exe` file or a `.dll` file                                   | `Binaries\Win32`                      |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| TFC Installer (tool) | a `tfcinstaller.exe` file | - |
+| Blcmm | a file or folder named `openblcmm.exe` | - |
+| TFC Mods | a `gameprofile.xml` file or a `.packagepatch` file | - |
+| UPK Explorer (tool) | a `upk explorer.exe` file | - |
+| Sdk | a file or folder named `unrealsdk.dll` and a file or folder named `sdk_mods` | - |
+| Sdkmod | a file with the `.py` extension and a file with the `.sdkmod` extension | - |
+| Blcmfile | a file with the `.blcm` extension | - |
+| Root / Game Folder Mods | a `WillowGame` folder | the game folder itself (no subfolder) |
+| Cooked Content Mods | a `English(US)` folder or a `.tfc` file | - |
+| Movie / Cutscene Replacements | a `.bik` file | - |
+| Binaries / Injector Mods | a `Borderlands2.exe` file or a `.dll` file | - |
 
 Paths are relative to the game's install folder.
 
@@ -30,8 +30,6 @@ This installer handles the TFC Installer itself, not mods for it. It exists so u
 
 - Recognised by a file named `tfcinstaller.exe` in the archive.
 
-Installs to: the game folder itself (no subfolder)
-
 **Common mistakes:**
 
 - If you bundle the TFC Installer inside your mod archive, Vortex treats the whole download as the TFC Installer rather than as your mod. Ship the mod alone and list the TFC Installer as a requirement.
@@ -39,8 +37,6 @@ Installs to: the game folder itself (no subfolder)
 ## Blcmm
 
 Recognised when the archive contains a file or folder named `openblcmm.exe`.
-
-Installs to: the game folder itself (no subfolder)
 
 ## TFC Mods
 
@@ -50,8 +46,6 @@ Texture/content mods handled through the TFC system.
 
 - Recognised by any file named `gameprofile.xml`, `gameprofile.idremappings.xml`, `objectdescriptors.xml`, `packageextensions.xml`, `texturepack` or `game`.
 - Recognised by any file with the `.packagepatch`, `.descriptor`, `.tfcmapping` or `.inipatch` extensions.
-
-Installs to: `TFCInstaller\Mods`
 
 **Common mistakes:**
 
@@ -65,8 +59,6 @@ This installer handles UPK Explorer itself, not mods for it. It exists so users 
 
 - Recognised by a file named `upk explorer.exe` in the archive.
 
-Installs to: the game folder itself (no subfolder)
-
 **Common mistakes:**
 
 - If you bundle UPK Explorer inside your mod archive, Vortex treats the whole download as UPK Explorer rather than as your mod. Ship the mod alone and list UPK Explorer as a requirement.
@@ -75,19 +67,13 @@ Installs to: the game folder itself (no subfolder)
 
 Recognised when the archive contains a file or folder named `unrealsdk.dll` and a file or folder named `sdk_mods`.
 
-Installs to: the game folder itself (no subfolder)
-
 ## Sdkmod
 
 Recognised when the archive contains a file with the `.py` extension and a file with the `.sdkmod` extension.
 
-Installs to: `sdk_mods`
-
 ## Blcmfile
 
 Recognised when the archive contains a file with the `.blcm` extension.
-
-Installs to: `Binaries`
 
 ## Root / Game Folder Mods
 
@@ -118,8 +104,6 @@ Packaged content deployed into the game's cooked content folder.
 - Recognised by a folder named `English(US)` in the archive.
 - Recognised by any file with the `.tfc`, `.upk` or `.pck` extensions.
 
-Installs to: `WillowGame\CookedPCConsole`
-
 ## Movie / Cutscene Replacements
 
 Replacement video files, deployed into the game's movies folder.
@@ -127,8 +111,6 @@ Replacement video files, deployed into the game's movies folder.
 **Requirements:**
 
 - Recognised by any file with the `.bik` extension.
-
-Installs to: `WillowGame\Movies`
 
 **Common mistakes:**
 
@@ -143,10 +125,9 @@ DLL injectors and other files that belong next to the game executable.
 - Recognised by any file named `Borderlands2.exe`.
 - Recognised by any file with the `.dll`, `.asi` or `.addon64` extensions.
 
-Installs to: `Binaries\Win32`
-
 ## Rules That Apply To Every Mod Type
 
 - Archives that contain a FOMOD installer (a `fomod` folder with `ModuleConfig.xml`) are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
+

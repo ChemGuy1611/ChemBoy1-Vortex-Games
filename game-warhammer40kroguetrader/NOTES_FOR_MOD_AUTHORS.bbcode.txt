@@ -9,8 +9,6 @@ Micropatches:
 
 Recognised when the archive contains a file or folder named "MicroPatches.dll".
 
-  Installs to: "MICROPATCHES_PATH"
-
 ========================================================================
 
 Modfinder:
@@ -35,23 +33,17 @@ Mod:
 
 Recognised when the archive contains a file or folder named one of: "owlcatmodificationmanifest.json", a file or folder named one of: "Assemblies", "Blueprints", "Bundles" or "Localization" and a file with one of these extensions: ".dll".
 
-  Installs to: "USER_HOME\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\Modifications"
-
 ========================================================================
 
 Plugin:
 
 Recognised when the archive contains a file with one of these extensions: ".dll".
 
-  Installs to: "USER_HOME\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\UnityModManager"
-
 ========================================================================
 
 Portrait:
 
 Recognised when the archive contains a file or folder named one of: "fulllength.png", "medium.png" or "small.png".
-
-  Installs to: "USER_HOME\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\Portraits"
 
 ========================================================================
 
@@ -61,8 +53,6 @@ Save files, deployed to the game's save folder.
 
   Requirements:
     - Recognised by any file with the ".zks" extension.
-
-  Installs to: "USER_HOME\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\Saved Games"
 
   Common mistakes:
     - Including an example save alongside a normal mod makes the archive install as a save.

@@ -4,6 +4,11 @@
 
 - Config and save modtypes, installers, and open buttons.
 
+## [0.5.8] - 2026-09-08
+
+- Fixed: A required mod loader or tool is no longer mistaken for an unrelated Nexus mod that shares the same file, which could show the wrong mod details or offer a bogus update for it
+- Fixed: Downloads fetched for a required mod loader or tool now show "Website" as their source instead of being left blank
+
 ## [0.5.7] - 2026-09-03
 
 - Added: A "Browse ModDB" page in the sidebar. Browse the classic Doom 3 ModDB mod list inside Vortex and install mods with a click.

@@ -41,15 +41,11 @@ Pysdk:
 
 Recognised when the archive contains a file or folder named "unrealsdk.dll" and a file or folder named "sdk_mods".
 
-  Installs to: the game folder itself (no subfolder)
-
 ========================================================================
 
 Pysdkmod:
 
 Recognised when the archive contains a file with one of these extensions: ".py" or ".sdkmod".
-
-  Installs to: "sdk_mods"
 
 ========================================================================
 
@@ -184,8 +180,6 @@ Contentfolder:
 
 Recognised when the archive contains a file or folder named "Content".
 
-  Installs to: "OakGame"
-
 ========================================================================
 
 Config File Mods:
@@ -194,9 +188,21 @@ Config tweaks are deployed to the game's config folder in your user profile, not
 
   Requirements:
     - Recognised by any of these filenames in the archive: "engine.ini", "game.ini", "gameusersettings.ini", "input.ini", "scalability.ini", "hardware.ini", "deviceprofiles.ini", "compat.ini", "runtimeoptions.ini", "gameplaytags.ini", "enhancedinput.ini" or "consolevariables.ini".
-    - Installed to "DOCUMENTS\My Games\Borderlands 4\Saved\Config\Windows".
+    - Installed to "path.join(
+  CONFIGMOD_LOCATION,
+  DATA_FOLDER,
+  "Saved",
+  "Config",
+  CONFIG_FOLDERNAME,
+)".
 
-  Installs to: "DOCUMENTS\My Games\Borderlands 4\Saved\Config\Windows"
+  Installs to: "path.join(
+  CONFIGMOD_LOCATION,
+  DATA_FOLDER,
+  "Saved",
+  "Config",
+  CONFIG_FOLDERNAME,
+)"
 
   Common mistakes:
     - Shipping a config file with one of these names inside an unrelated mod - the whole archive is then treated as a config mod.
@@ -234,5 +240,6 @@ This is the catch-all. Any archive with no ".pak" file that matched none of the 
 
 Rules That Apply To Every Mod Type:
 
+    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
     - Folder and file name matching is case-insensitive.
     - Extra wrapper folders around a recognised folder are generally fine.
