@@ -3,6 +3,7 @@
 ## Planned Improvements (Not Yet Released)
 
 - tool to launch bl4-crypt (by Cr4nkSt4r, naked exe file)
+- Fixed: Mod files with no file extension were skipped during installation
 
 ## [0.4.4] - 2026-09-08
 

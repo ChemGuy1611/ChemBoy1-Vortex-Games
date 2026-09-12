@@ -2,7 +2,7 @@
 
 ## Planned Improvements (Not Yet Released)
 
-- None
+- Fixed: Mod files with no file extension were skipped during installation
 
 ## [2.2.1] - 2026-09-08
 

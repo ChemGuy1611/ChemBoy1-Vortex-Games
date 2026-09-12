@@ -3,6 +3,7 @@
 ## Planned Improvements (Not Yet Released)
 
 - Installer for Save (.bin) files (no mods of this type yet).
+- Fixed: Mod files with no file extension were skipped during installation
 
 ## [0.1.2] - 2025-10-14
 

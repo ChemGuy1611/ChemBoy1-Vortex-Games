@@ -3,6 +3,7 @@
 ## Planned Improvements (Not Yet Released)
 
 - ModKit?
+- Fixed: Mod files with no file extension were skipped during installation
 
 ## [0.5.6] - 2026-09-06
 

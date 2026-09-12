@@ -3,6 +3,7 @@
 ## Planned Improvements (Not Yet Released)
 
 - Config and save installers (partition check)
+- Fixed: Mod files with no file extension were skipped during installation
 
 ## [0.5.4] - 2026-09-08
 

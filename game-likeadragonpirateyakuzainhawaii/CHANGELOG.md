@@ -3,6 +3,7 @@
 ## Planned Improvements (Not Yet Released)
 
 - Add: Xbox version support - NOTE: Xbox currently crashes on launch with SRMM injector installed.
+- Fixed: Mod files with no file extension were skipped during installation
 
 ## [0.2.0] - 2026-04-17
 

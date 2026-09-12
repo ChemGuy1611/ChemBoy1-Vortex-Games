@@ -479,6 +479,7 @@ function installMod(files, fileName) {
   const modFile = findModRootFile(files);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   let MOD_FOLDER = path.basename(rootPath);
@@ -495,7 +496,7 @@ function installMod(files, fileName) {
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
 
   const instructions = filtered.map((file) => {
@@ -590,6 +591,7 @@ function installMaps(files, fileName) {
   const mapFile = findMapFile(files);
   const idx = mapFile.indexOf(path.basename(mapFile));
   const rootPath = path.dirname(mapFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   let MAP_FOLDER = path.basename(rootPath);
@@ -601,7 +603,7 @@ function installMaps(files, fileName) {
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
 
   const instructions = filtered.map((file) => {

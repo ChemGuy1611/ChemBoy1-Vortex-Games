@@ -3,6 +3,7 @@
 ## Planned Improvements (Not Yet Released)
 
 - Added tool to launch ModKit (Epic Games).
+- Fixed: Mod files with no file extension were skipped during installation
 
 ## [0.4.0] - 2026-05-07
 

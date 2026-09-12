@@ -18,6 +18,7 @@ const winapi = require("winapi-bindings");
 const React = require("react");
 
 const DOCUMENTS = util.getVortexPath("documents");
+const APPDATA = util.getVortexPath("appData");
 
 //Specify all the information about the game
 const GAME_ID = "watchdogs";
@@ -77,11 +78,21 @@ const LOADER_PAGE_NO = 491;
 const LOADER_FILE_NO = 1666;
 const LOADER_DOMAIN = GAME_ID;
 
-//Experimental: NexusTools reads a "cmdline.ini" file next to its dinput8.dll/ModManager.exe as a
-//stand-in for real command line args. "-prelaunch_never" is meant to suppress its in-game confirm
-//popup. Found by reading the shipped binary (v1.1.12) - never verified against a running game.
-const CMDLINE_INI_FILE = "cmdline.ini";
-const CMDLINE_INI_TEXT = "-prelaunch_never";
+//Experimental: NexusTools persists its own settings (confirmed against a live install) at
+//%APPDATA%\Troplo\Nexus\settings.json, a JSON object with a "commands" map. Setting
+//"ModLoader_DisablePrelaunchWindow" true there is meant to suppress its in-game mod confirm popup.
+//The path/key are verified live; whether the popup can actually be skipped without also blocking
+//the mod mount is not.
+const NEXUSTOOLS_SETTINGS_FOLDER = path.join("Troplo", "Nexus");
+const NEXUSTOOLS_SETTINGS_FILE = "settings.json";
+const NEXUSTOOLS_PRELAUNCH_KEY = "ModLoader_DisablePrelaunchWindow";
+
+//Experimental: NexusTools' own load order + enable state, also confirmed live at
+//%APPDATA%\Troplo\Nexus\localmodsconfig.json - { "mods": [{ friendlyId, enabled, priority,
+//enableWorkspaces }] }, one entry per data_win64\mods\<folder>. Whether writing this actually
+//changes in-game mount order (rather than NexusTools just reading it for its own GUI) is what
+//this load order page exists to test.
+const NEXUSTOOLS_MODSCONFIG_FILE = "localmodsconfig.json";
 
 const MOD_ID = `${GAME_ID}-mod`;
 const MOD_NAME = "Mod";
@@ -408,11 +419,12 @@ function installLoader(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === "bin");
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
   const instructions = filtered.map((file) => {
     return {
@@ -466,8 +478,9 @@ function installMod(files, fileName) {
   const idx = modFile.indexOf(path.basename(modFile));
 
   // Remove directories and anything that isn't in the rootPath.
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
   const instructions = filtered.map((file) => {
     return {
@@ -527,11 +540,12 @@ function installRoot(files) {
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
   const idx = modFile.indexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
   const instructions = filtered.map((file) => {
     return {
@@ -781,30 +795,28 @@ async function downloadLoader(api, gameSpec, check = true) {
   }
 } //*/
 
-//Experimental: write/remove bin\cmdline.ini so NexusTools may skip its in-game confirm popup.
-//Never overwrites a cmdline.ini it did not write itself.
-async function reconcileCmdlineIni(api, enabled) {
-  const CMDLINE_PATH = path.join(GAME_PATH, BINARIES_PATH, CMDLINE_INI_FILE);
+//Experimental: patch NexusTools' own settings.json so it may skip its in-game mod confirm popup.
+//Only ever sets the key to true - never resets it, since we cannot tell "we set this" apart from
+//"the user turned it on themselves in NexusTools' own Settings". Never touches the file if it does
+//not exist yet (NexusTools has never been run) or does not parse as JSON - patching a file whose
+//shape we cannot confirm risks corrupting real user settings (hotkeys, camera/trainer prefs).
+async function reconcileNexusToolsPrelaunchSetting(api, enabled) {
+  if (!enabled) return;
+  const SETTINGS_PATH = path.join(APPDATA, NEXUSTOOLS_SETTINGS_FOLDER, NEXUSTOOLS_SETTINGS_FILE);
   try {
-    if (enabled) {
-      try {
-        await fsp.stat(CMDLINE_PATH);
-      } catch {
-        await fsp.writeFile(CMDLINE_PATH, CMDLINE_INI_TEXT);
-      }
-    } else {
-      let existing;
-      try {
-        existing = await fsp.readFile(CMDLINE_PATH, "utf8");
-      } catch {
-        existing = undefined;
-      }
-      if (existing === CMDLINE_INI_TEXT) {
-        await fsp.unlink(CMDLINE_PATH);
-      }
+    let raw;
+    try {
+      raw = await fsp.readFile(SETTINGS_PATH, "utf8");
+    } catch {
+      return; //NexusTools has not created its settings file yet - nothing to patch
     }
+    const parsed = JSON.parse(raw);
+    if (parsed?.commands?.[NEXUSTOOLS_PRELAUNCH_KEY] === true) return; //already set
+    parsed.commands = parsed.commands || {};
+    parsed.commands[NEXUSTOOLS_PRELAUNCH_KEY] = true;
+    await fsp.writeFile(SETTINGS_PATH, JSON.stringify(parsed, null, 4));
   } catch (err) {
-    api.showErrorNotification(`Failed to update ${CMDLINE_INI_FILE}`, err);
+    api.showErrorNotification(`Failed to update NexusTools ${NEXUSTOOLS_SETTINGS_FILE}`, err);
   }
 }
 
@@ -812,6 +824,101 @@ function setNexusToolsAutoConfirm(value) {
   return { type: "SET_NEXUSTOOLS_AUTOCONFIRM_WATCHDOGS", payload: value };
 }
 setNexusToolsAutoConfirm.toString = () => "SET_NEXUSTOOLS_AUTOCONFIRM_WATCHDOGS";
+
+//Experimental: mirrors NexusTools' own load order + enable state (localmodsconfig.json) as a
+//Vortex Load Order page, so the two can be tested against each other - does reordering here
+//actually change in-game mount order, or does NexusTools only read this file for its own GUI?
+
+//List actual mod folders on disk - the ground truth of what's physically deployed.
+async function listModFolders(gamePath) {
+  const modsPath = path.join(gamePath, MOD_PATH);
+  const result = [];
+  try {
+    const entries = await fsp.readdir(modsPath);
+    for (const entry of entries) {
+      try {
+        const stat = await fsp.stat(path.join(modsPath, entry));
+        if (stat.isDirectory()) result.push(entry);
+      } catch {
+        //unreadable entry - skip it
+      }
+    }
+  } catch {
+    //mods folder doesn't exist yet
+  }
+  return result;
+}
+
+async function readNexusToolsModsConfig() {
+  const CONFIG_PATH = path.join(APPDATA, NEXUSTOOLS_SETTINGS_FOLDER, NEXUSTOOLS_MODSCONFIG_FILE);
+  try {
+    const raw = await fsp.readFile(CONFIG_PATH, "utf8");
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed?.mods) ? parsed.mods : [];
+  } catch {
+    return [];
+  }
+}
+
+async function deserializeWatchdogsLoadOrder(api) {
+  const state = api.getState();
+  if (selectors.activeGameId(state) !== GAME_ID) return [];
+  const discovery = util.getSafe(state, ["settings", "gameMode", "discovered", GAME_ID], undefined);
+  if (!discovery?.path) return [];
+  const [folders, modsConfig] = await Promise.all([
+    listModFolders(discovery.path),
+    readNexusToolsModsConfig(),
+  ]);
+  const byId = new Map(modsConfig.map((mod) => [mod.friendlyId, mod]));
+  const entries = folders.map((folder) => {
+    const existing = byId.get(folder);
+    return {
+      id: folder,
+      priority: existing?.priority ?? Number.MAX_SAFE_INTEGER,
+      enabled: existing?.enabled !== false,
+    };
+  });
+  entries.sort((lhs, rhs) => lhs.priority - rhs.priority);
+  return entries.map((entry) => ({ id: entry.id, name: entry.id, enabled: entry.enabled }));
+}
+
+async function serializeWatchdogsLoadOrder(api, loadOrder) {
+  const state = api.getState();
+  if (selectors.activeGameId(state) !== GAME_ID) return;
+  const CONFIG_PATH = path.join(APPDATA, NEXUSTOOLS_SETTINGS_FOLDER, NEXUSTOOLS_MODSCONFIG_FILE);
+  let parsed;
+  try {
+    const raw = await fsp.readFile(CONFIG_PATH, "utf8");
+    parsed = JSON.parse(raw);
+  } catch {
+    parsed = {};
+  }
+  const existingMods = Array.isArray(parsed.mods) ? parsed.mods : [];
+  const byId = new Map(existingMods.map((mod) => [mod.friendlyId, mod]));
+  const managedIds = new Set(loadOrder.map((entry) => entry.id));
+  const newMods = loadOrder.map((entry, index) => {
+    const existing = byId.get(entry.id);
+    return {
+      friendlyId: entry.id,
+      enabled: entry.enabled,
+      priority: index,
+      enableWorkspaces: existing?.enableWorkspaces ?? true,
+    };
+  });
+  //keep any mod NexusTools already knows about that Vortex isn't currently managing (folder
+  //removed, or a mod installed by hand outside Vortex) - never silently drop its bookkeeping.
+  const unmanaged = existingMods.filter((mod) => !managedIds.has(mod.friendlyId));
+  parsed.mods = newMods.concat(unmanaged);
+  try {
+    await fsp.writeFile(CONFIG_PATH, JSON.stringify(parsed, null, 4));
+  } catch (err) {
+    api.showErrorNotification(`Failed to update NexusTools ${NEXUSTOOLS_MODSCONFIG_FILE}`, err);
+  }
+}
+
+function validateWatchdogsLoadOrder() {
+  return Promise.resolve(undefined);
+}
 
 function GameSettings() {
   const { Toggle, More, MainContext } = require("vortex-api");
@@ -824,8 +931,8 @@ function GameSettings() {
   const onToggle = React.useCallback(
     (checked) => {
       dispatch(setNexusToolsAutoConfirm(checked));
-      reconcileCmdlineIni(api, checked).catch((err) =>
-        log("warn", `NexusTools cmdline.ini reconcile failed: ${err.message}`),
+      reconcileNexusToolsPrelaunchSetting(api, checked).catch((err) =>
+        log("warn", `NexusTools settings.json reconcile failed: ${err.message}`),
       );
     },
     [api, dispatch],
@@ -843,10 +950,11 @@ function GameSettings() {
         React.createElement(
           More,
           { id: `${GAME_ID}-nexustools-autoconfirm-more`, name: "Skip NexusTools Confirm Window" },
-          "Unverified - writes bin\\cmdline.ini with -prelaunch_never so NexusTools may apply mod " +
-            "changes without its in-game popup. Test that mods still take effect after enabling " +
-            "this before relying on it. Disabling removes the file again (only if this extension " +
-            "wrote it).",
+          "Unverified - sets NexusTools' own ModLoader_DisablePrelaunchWindow setting to true in " +
+            "its settings.json so it may apply mod changes without its in-game popup. Test that " +
+            "mods still take effect after enabling this before relying on it. Disabling this does " +
+            "NOT turn the popup back on - re-enable it yourself in NexusTools' own Settings if you " +
+            "want it back.",
         ),
       ),
     ),
@@ -993,7 +1101,7 @@ async function setup(discovery, api, gameSpec) {
   if (setupNotification) setupNotify(api);
   if (hasLoader) {
     await downloadLoader(api, gameSpec);
-    await reconcileCmdlineIni(
+    await reconcileNexusToolsPrelaunchSetting(
       api,
       util.getSafe(state, ["settings", GAME_ID, "nexusToolsAutoConfirmEnabled"], false),
     );
@@ -1204,6 +1312,19 @@ function applyGame(context, gameSpec) {
       () => selectors.activeGameId(context.api.getState()) === GAME_ID,
       150,
     );
+    context.registerLoadOrder({
+      gameId: GAME_ID,
+      toggleableEntries: true,
+      noCollectionGeneration: true,
+      usageInstructions:
+        "Experimental: this mirrors NexusTools' own load order file " +
+        `(${NEXUSTOOLS_MODSCONFIG_FILE}) directly. Whether reordering here actually changes ` +
+        "in-game mount order, or NexusTools only reads that file for its own GUI, has not been " +
+        "confirmed - this page exists to test that.",
+      deserializeLoadOrder: () => deserializeWatchdogsLoadOrder(context.api),
+      serializeLoadOrder: (loadOrder) => serializeWatchdogsLoadOrder(context.api, loadOrder),
+      validate: () => validateWatchdogsLoadOrder(),
+    });
   }
 }
 

@@ -3,6 +3,7 @@
 ## Planned Improvements (Not Yet Released)
 
 - Add full Xbox version support (not on Game Pass) - discovery (need appxmanifest.xml), binaries folders
+- Fixed: Mod files with no file extension were skipped during installation
 
 ## [0.3.1] - 2026-02-07
 

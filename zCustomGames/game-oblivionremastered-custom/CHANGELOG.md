@@ -4,6 +4,7 @@
 
 - Load order support for pak mods
 - ?Gamebryo extension integration?
+- Fixed: Mod files with no file extension were skipped during installation
 
 ## [0.2.0] - 2025-04-23
 

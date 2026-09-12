@@ -482,12 +482,13 @@ function forgerInstallContent(files) {
   const modFile = files.find((file) => path.extname(file).toLowerCase() === forgerModFileExt);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const MODTYPE_ID = PATCH_ID;
   const setModTypeInstruction = { type: "setmodtype", value: MODTYPE_ID };
   ///*
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
   //*/
   const instructions = filtered.map((file) => {
@@ -517,11 +518,12 @@ function installATK(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === ATK_EXEC);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ATK_ID };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
 
   const instructions = filtered.map((file) => {

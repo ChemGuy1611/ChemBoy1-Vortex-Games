@@ -3,6 +3,7 @@
 ## Planned Improvements (Not Yet Released)
 
 - AC extension re-vamp (WIP)
+- Fixed: Mod files with no file extension were skipped during installation
 
 ## [0.4.4] - 2026-08-11
 

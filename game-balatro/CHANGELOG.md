@@ -3,6 +3,7 @@
 ## Planned Improvements (Not Yet Released)
 
 - Xbox support - waiting on stable (and easy to install) mod injector for Xbox version
+- Fixed: Mod files with no file extension were skipped during installation
 
 ## [0.3.4] - 2026-09-08
 

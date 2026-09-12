@@ -3,6 +3,7 @@
 ## Planned Improvements (Not Yet Released)
 
 - Loose Files loader support (once added)
+- Fixed: Mod files with no file extension were skipped during installation
 
 ## [0.3.4] - 2026-09-08
 

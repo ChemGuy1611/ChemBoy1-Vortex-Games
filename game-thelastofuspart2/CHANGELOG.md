@@ -3,6 +3,7 @@
 ## Planned Improvements (Not Yet Released)
 
 - Added check for if sp-common.psarc and bin.psarc files exist in the game folder (indicator of update and need to extract).
+- Fixed: Mod files with no file extension were skipped during installation
 
 ## [0.11.4] - 2026-09-06
 

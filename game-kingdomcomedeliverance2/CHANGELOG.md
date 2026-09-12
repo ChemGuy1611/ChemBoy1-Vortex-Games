@@ -3,6 +3,7 @@
 ## Planned Improvements (Not Yet Released)
 
 - Changed launcher settings so that Steam version launches through Steam (so that Steam launch arguments are used).
+- Fixed: Mod files with no file extension were skipped during installation
 
 ## [1.0.5] - 2026-09-06
 
