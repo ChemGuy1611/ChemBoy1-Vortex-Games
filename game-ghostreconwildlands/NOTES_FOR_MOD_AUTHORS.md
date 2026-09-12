@@ -6,10 +6,10 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                | Archive must contain                                  | Installs to                           |
-| ----------------------- | ----------------------------------------------------- | ------------------------------------- |
-| Root / Game Folder Mods | a `sounddata` folder                                  | the game folder itself (no subfolder) |
-| Mod                     | a file with one of these extensions: `.pck` or `.bk2` | the game folder itself (no subfolder) |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Root / Game Folder Mods | a `sounddata` folder | the game folder itself (no subfolder) |
+| Mod | a file with one of these extensions: `.pck` or `.bk2` | the game folder itself (no subfolder) |
 
 Paths are relative to the game's install folder.
 

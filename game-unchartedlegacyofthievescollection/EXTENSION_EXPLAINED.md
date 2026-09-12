@@ -2,20 +2,19 @@
 
 ## Overview
 
-| Property           | Value                                                    |
-| ------------------ | -------------------------------------------------------- |
-| Name               | Uncharted: Legacy of Thieves Collection Vortex Extension |
-| Engine / Structure | 3rd Party Mod Manager (Fluffy)                           |
-| Author             | ChemBoy1                                                 |
+| Property | Value |
+| --- | --- |
+| Name | Uncharted: Legacy of Thieves Collection Vortex Extension |
+| Engine / Structure | 3rd Party Mod Manager (Fluffy) |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property       | Value                                                                                                                                                      |
-| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Game ID        | `unchartedlegacyofthievescollection`                                                                                                                       |
-| Executable     | `u4-l.exe`                                                                                                                                                 |
-| Extension Page | [https://www.nexusmods.com/site/mods/1048](https://www.nexusmods.com/site/mods/1048)                                                                       |
-| PCGamingWiki   | [https://www.pcgamingwiki.com/wiki/Uncharted%3A_Legacy_of_Thieves_Collection](https://www.pcgamingwiki.com/wiki/Uncharted%3A_Legacy_of_Thieves_Collection) |
+| Property | Value |
+| --- | --- |
+| Game ID | `unchartedlegacyofthievescollection` |
+| Executable | `u4-l.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1048](https://www.nexusmods.com/site/mods/1048) |
 
 ## Supported Stores
 
@@ -27,21 +26,21 @@
 
 Mod types define where each category of mod gets deployed:
 
-| Name                        | ID                                                    | Priority | Target Path  |
-| --------------------------- | ----------------------------------------------------- | -------- | ------------ |
-| Binaries / Game Root Folder | `unchartedlegacyofthievescollection-root`             | high     | `{gamePath}` |
-| PSARC Files                 | `unchartedlegacyofthievescollection-psarc`            | high     | `{gamePath}` |
-| Fluffy Mod Manager          | `unchartedlegacyofthievescollection-fluffymodmanager` | low      | `{gamePath}` |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Binaries / Game Root Folder | `unchartedlegacyofthievescollection-root` | high | `{gamePath}` |
+| PSARC Files | `unchartedlegacyofthievescollection-psarc` | high | `{gamePath}` |
+| Fluffy Mod Manager | `unchartedlegacyofthievescollection-fluffymodmanager` | low | `{gamePath}` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID                                          | Priority |
-| ----------------------------------------------------- | -------- |
-| `unchartedlegacyofthievescollection-fluffymodmanager` | 25       |
-| `unchartedlegacyofthievescollection-psarc`            | 30       |
-| `unchartedlegacyofthievescollection-mods`             | 40       |
+| Installer ID | Priority |
+| --- | --- |
+| `unchartedlegacyofthievescollection-fluffymodmanager` | 25 |
+| `unchartedlegacyofthievescollection-psarc` | 30 |
+| `unchartedlegacyofthievescollection-mods` | 40 |
 
 ## Registered Tools
 
@@ -62,9 +61,9 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 ## Auto-Downloaded Dependencies
 
-| Dependency         | Version | Details |
-| ------------------ | ------- | ------- |
-| Fluffy Mod Manager | —       | —       |
+| Dependency | Version | Details |
+| --- | --- | --- |
+| Fluffy Mod Manager | — | — |
 
 ## Special Features
 

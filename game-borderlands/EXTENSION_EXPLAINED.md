@@ -27,6 +27,15 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
+| Python SDK | `borderlands-sdk` | high | `{gamePath}/.` |
+| SDK Mod | `borderlands-sdkmod` | high | `{gamePath}/sdk_mods` |
+| TFC Mod | `borderlands-tfcmod` | high | `{gamePath}/TFCInstaller/Mods` |
+| Root Folder | `borderlands-root` | high | `{gamePath}` |
+| Root Sub Folder | `borderlands-rootsub` | high | `{gamePath}/WillowGame` |
+| Cooked Sub Folder | `borderlands-cookedsub` | high | `{gamePath}/WillowGame/CookedPC` |
+| Movies | `borderlands-movies` | high | `{gamePath}/WillowGame/Movies` |
+| TFC Installer | `borderlands-tfcinstaller` | low | `{gamePath}/.` |
+| UPK Explorer | `borderlands-tfcexplorer` | low | `{gamePath}/.` |
 | Binaries (Engine Injector) | `borderlands-binaries` | 50 | `?` |
 
 ## Mod Installers
@@ -69,4 +78,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
-

@@ -6,12 +6,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                | Archive must contain              | Installs to                           |
-| ----------------------- | --------------------------------- | ------------------------------------- |
-| Jsfolder                | a file or folder named `js`       | the game folder itself (no subfolder) |
-| Jsfile                  | a file with the `.js` extension   | `js\plugins`                          |
-| Root / Game Folder Mods | a `LookOutside` folder            | the game folder itself (no subfolder) |
-| Json                    | a file with the `.json` extension | `data`                                |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Jsfolder | a file or folder named `js` | the game folder itself (no subfolder) |
+| Jsfile | a file with the `.js` extension | `js\plugins` |
+| Root / Game Folder Mods | a `LookOutside` folder | the game folder itself (no subfolder) |
+| Json | a file with the `.json` extension | `data` |
 
 Paths are relative to the game's install folder.
 

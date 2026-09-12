@@ -2,8 +2,8 @@
 Name: Warhammer 40,000: Rogue Trader Vortex Extension
 Structure: Game with Integrated Mod Loader (UnityModManager)
 Author: ChemBoy1
-Version: 0.5.8
-Date: 2026-09-08
+Version: 0.5.9
+Date: 2026-09-12
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -543,13 +543,14 @@ function installMicroPatches(files) {
   const modFile = files.find((file) => path.basename(file) === MICROPATCHES_FILE);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   let folder = path.basename(modFile, PLUGIN_EXTS[0]);
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
   const instructions = filtered.map((file) => {
     return {
@@ -594,10 +595,11 @@ function installModFinder(files) {
   );
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
   const instructions = filtered.map((file) => {
     return {
@@ -641,10 +643,11 @@ function installSaveEditor(files) {
   );
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
   const instructions = filtered.map((file) => {
     return {
@@ -688,10 +691,11 @@ function installPortraitManager(files) {
   );
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
   const instructions = filtered.map((file) => {
     return {
@@ -737,11 +741,10 @@ async function installMod(api, files, workingDir) {
   const MOD_TYPE = MOD_ID;
   let modFile = files.find((file) => MOD_FILES.includes(path.basename(file).toLowerCase()));
   let idx = modFile.indexOf(path.basename(modFile));
-  let rootPath = path.dirname(modFile); //this is often "." because mods are frequently not in top-level folders
-  const ROOT_PATH = path.basename(rootPath);
-  let filtered = files.filter(
-    (file) => !file.endsWith(path.sep), //! CANNOT do rootPath filtering since there are files without extensions - cannot do this if the rootPath is "." as it will remove the "Bundles" files without extensions
-  ); //*/
+  const rootPath = path.dirname(modFile); //this is often "." because mods are frequently not in top-level folders
+  //an empty prefix when rootPath is "." keeps the extension-less "Bundles" payload
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   //read manifest to get uniqueName and set folder name
@@ -820,7 +823,8 @@ function installPlugin(files) {
   const MOD_TYPE = PLUGIN_ID;
   const modFile = files.find((file) => PLUGIN_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
-  //const rootPath = path.dirname(modFile);
+  const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   let folder = path.basename(modFile, PLUGIN_EXTS[0]);
@@ -838,9 +842,7 @@ function installPlugin(files) {
   }
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep), //! CANNOT do rootPath filtering since there are files without extensions
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -892,8 +894,9 @@ function installPortrait(files) {
   const idx = modFile.indexOf(path.basename(modFile));
 
   // Remove directories and anything that isn't in the rootPath.
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
   const instructions = filtered.map((file) => {
     return {
@@ -935,11 +938,12 @@ function installSave(files) {
   const modFile = files.find((file) => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
   const instructions = filtered.map((file) => {
     return {

@@ -2,22 +2,22 @@
 
 ## Overview
 
-| Property           | Value                                        |
-| ------------------ | -------------------------------------------- |
-| Name               | Middle-earth: Shadow of War Vortex Extension |
-| Engine / Structure | Mod Loaders + Mods folder w/ LO support      |
-| Author             | ChemBoy1                                     |
+| Property | Value |
+| --- | --- |
+| Name | Middle-earth: Shadow of War Vortex Extension |
+| Engine / Structure | Mod Loaders + Mods folder w/ LO support |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property          | Value                                                                                                                           |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| Game ID           | `middleearthshadowofwar`                                                                                                        |
-| Executable        | `x64/ShadowOfWar.exe`                                                                                                           |
-| Executable (Xbox) | `gamelaunchhelper.exe`                                                                                                          |
-| Executable (GOG)  | `x64/ShadowOfWar.exe`                                                                                                           |
-| Extension Page    | [https://www.nexusmods.com/site/mods/375](https://www.nexusmods.com/site/mods/375)                                              |
-| PCGamingWiki      | [https://www.pcgamingwiki.com/wiki/Middle-earth:\_Shadow_of_War](https://www.pcgamingwiki.com/wiki/Middle-earth:_Shadow_of_War) |
+| Property | Value |
+| --- | --- |
+| Game ID | `middleearthshadowofwar` |
+| Executable | `x64/ShadowOfWar.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+| Executable (GOG) | `x64/ShadowOfWar.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/375](https://www.nexusmods.com/site/mods/375) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Middle-earth:_Shadow_of_War](https://www.pcgamingwiki.com/wiki/Middle-earth:_Shadow_of_War) |
 
 ## Supported Stores
 
@@ -26,41 +26,41 @@
 
 ## Feature Flags
 
-| Flag                     | Value   | Description                             |
-| ------------------------ | ------- | --------------------------------------- |
-| `LOAD_ORDER_ENABLED`     | `true`  | enables load order sorting              |
-| `dllLoaderInstalled`     | `false` |                                         |
-| `modLoaderInstalled`     | `false` |                                         |
-| `mod_update_all_profile` | `false` |                                         |
-| `updating_mod`           | `false` | used to see if it's a mod update or not |
+| Flag | Value | Description |
+| --- | --- | --- |
+| `LOAD_ORDER_ENABLED` | `true` | enables load order sorting |
+| `dllLoaderInstalled` | `false` |  |
+| `modLoaderInstalled` | `false` |  |
+| `mod_update_all_profile` | `false` |  |
+| `updating_mod` | `false` | used to see if it's a mod update or not |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
-| Name                       | ID                                         | Priority | Target Path              |
-| -------------------------- | ------------------------------------------ | -------- | ------------------------ |
-| .arch06 Mod                | `middleearthshadowofwar-arch06mod`         | high     | `{gamePath}/Mods`        |
-| Plugins / Packets          | `middleearthshadowofwar-pluginsandpackets` | high     | `{gamePath}/x64/plugins` |
-| Root Folder                | `middleearthshadowofwar-root`              | high     | `{gamePath}`             |
-| Binaries (Engine Injector) | `middleearthshadowofwar-binaries`          | high     | `{gamePath}/x64`         |
-| Packet Loader              | `middleearthshadowofwar-packetloader`      | low      | `{gamePath}/x64/plugins` |
-| DLL Loader                 | `middleearthshadowofwar-dllloader`         | low      | `{gamePath}/x64`         |
-| Middle-Earth-Mod-Loader    | `middleearthshadowofwar-modloader`         | low      | `{gamePath}/x64`         |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| .arch06 Mod | `middleearthshadowofwar-arch06mod` | high | `{gamePath}/Mods` |
+| Plugins / Packets | `middleearthshadowofwar-pluginsandpackets` | high | `{gamePath}/x64/plugins` |
+| Root Folder | `middleearthshadowofwar-root` | high | `{gamePath}` |
+| Binaries (Engine Injector) | `middleearthshadowofwar-binaries` | high | `{gamePath}/x64` |
+| Packet Loader | `middleearthshadowofwar-packetloader` | low | `{gamePath}/x64/plugins` |
+| DLL Loader | `middleearthshadowofwar-dllloader` | low | `{gamePath}/x64` |
+| Middle-Earth-Mod-Loader | `middleearthshadowofwar-modloader` | low | `{gamePath}/x64` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID                               | Priority |
-| ------------------------------------------ | -------- |
-| `middleearthshadowofwar-packetloader`      | 25       |
-| `middleearthshadowofwar-dllloader`         | 27       |
-| `middleearthshadowofwar-modloader`         | 29       |
-| `middleearthshadowofwar-arch06mod`         | 31       |
-| `middleearthshadowofwar-pluginsandpackets` | 33       |
-| `middleearthshadowofwar-root`              | 35       |
-| `middleearthshadowofwar-fallback`          | 49       |
+| Installer ID | Priority |
+| --- | --- |
+| `middleearthshadowofwar-packetloader` | 25 |
+| `middleearthshadowofwar-dllloader` | 27 |
+| `middleearthshadowofwar-modloader` | 29 |
+| `middleearthshadowofwar-arch06mod` | 31 |
+| `middleearthshadowofwar-pluginsandpackets` | 33 |
+| `middleearthshadowofwar-root` | 35 |
+| `middleearthshadowofwar-fallback` | 49 |
 
 ## Registered Tools
 

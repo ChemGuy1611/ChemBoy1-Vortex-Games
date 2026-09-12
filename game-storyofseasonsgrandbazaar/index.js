@@ -2,8 +2,8 @@
 Name: STORY OF SEASONS: Grand Bazaar Vortex Extension
 Structure: Unity BepinEx
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-04-03
+Version: 0.1.1
+Date: 2026-09-12
 Notes:
 - 
 //////////////////////////////////////////*/
@@ -525,11 +525,12 @@ function installBepCfgMan(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === "plugins");
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
   const instructions = filtered.map((file) => {
     return {
@@ -571,11 +572,12 @@ function installAssembly(files) {
   const modFile = files.find((file) => ASSEMBLY_FILES.includes(path.basename(file)));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
   const instructions = filtered.map((file) => {
     return {
@@ -617,6 +619,7 @@ async function installRoot(files, workingDir) {
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
   const idx = modFile.indexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
 
   if (GAME_VERSION === ALT_VERSION) {
@@ -638,8 +641,10 @@ async function installRoot(files, workingDir) {
     }
   }
 
-  // Don't use rootPath filter since it removes files without extensions
-  const filtered = files.filter((file) => !file.endsWith(path.sep));
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
+  );
 
   const instructions = filtered.map((file) => {
     return {
@@ -680,11 +685,12 @@ function installAssets(files) {
   const modFile = files.find((file) => ASSETS_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ASSETS_ID };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
 
   const instructions = filtered.map((file) => {

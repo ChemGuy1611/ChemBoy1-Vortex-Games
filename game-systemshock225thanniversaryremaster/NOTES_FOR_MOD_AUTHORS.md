@@ -6,13 +6,13 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                | Archive must contain                                                                                                                                                                                         | Installs to                           |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------- |
-| Kpfmod                  | a file with one of these extensions: `.kpf`                                                                                                                                                                  | `mods`                                |
-| Convertedlegacy         | a file or folder named one of: `obj`, `mesh`, `bitmap`, `motions`, `sq_scripts`, `sdn2`, `strings`, `iface`, `intrface`, `misdml` or `snd` and a file with one of these extensions: `.dml`, `.gam` or `.mis` | `mods`                                |
-| Rootfolder              | a file or folder named one of: `mods` or `cutscenes`                                                                                                                                                         | -                                     |
-| Root / Game Folder Mods | a `mods` folder                                                                                                                                                                                              | the game folder itself (no subfolder) |
-| Systemshock2 Classicmod | -                                                                                                                                                                                                            | -                                     |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Kpfmod | a file with one of these extensions: `.kpf` | `mods` |
+| Convertedlegacy | a file or folder named one of: `obj`, `mesh`, `bitmap`, `motions`, `sq_scripts`, `sdn2`, `strings`, `iface`, `intrface`, `misdml` or `snd` and a file with one of these extensions: `.dml`, `.gam` or `.mis` | `mods` |
+| Rootfolder | a file or folder named one of: `mods` or `cutscenes` | - |
+| Root / Game Folder Mods | a `mods` folder | the game folder itself (no subfolder) |
+| Systemshock2 Classicmod | - | - |
 
 Paths are relative to the game's install folder.
 

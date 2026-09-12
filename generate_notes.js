@@ -5,8 +5,8 @@
  * installer to recognise it. template-* folders are included only with --templates.
  *
  * Two files are written per extension, always:
- *   NOTES_FOR_MOD_AUTHORS.md          markdown, for the repo / GitHub
- *   NOTES_FOR_MOD_AUTHORS.bbcode.txt  BBCode, paste-ready for a Nexus mod page
+ *   NOTES_FOR_MOD_AUTHORS.md       markdown, for the repo / GitHub
+ *   NOTES_FOR_MOD_AUTHORS.bbcode  BBCode, paste-ready for a Nexus mod page
  *
  * Both are always overwritten.
  *
@@ -17,7 +17,7 @@
  * Flags:
  *   --json       Write machine-readable JSON to stdout; progress goes to stderr.
  *   --templates  Also process template-* folders (when no GAME_ID args given).
- *   --description  Write DESCRIPTION.bbcode.txt, the Nexus mod page description, in
+ *   --description  Write DESCRIPTION.bbcode, the Nexus mod page description, in
  *                  place of the notes files. Two lists on the page are generated: the
  *                  "Mod Installation Notes" list, one line per installer, trigger +
  *                  destination ("Installs mods with an "info.json" file to the "Mods"
@@ -1753,7 +1753,9 @@ function renderMarkdown(ctx) {
   md += `- Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.\n`;
   if (fallbackNote) md += `- ${fallbackNote}\n`;
   md += `\n`;
-  return md;
+  // Collapse to a single trailing newline -- every section above ends with its own
+  // blank-line separator, so the last one leaves a stray double-blank at EOF.
+  return md.replace(/\n+$/, "\n");
 }
 
 function renderBBCode(ctx) {
@@ -1840,7 +1842,7 @@ function fixArticle(s) {
  * Loader installers (the ones whose section carries a tool lead) are marked so the
  * author can move them to the top of the list, where the house style puts them.
  */
-const DESCRIPTION_FILE = "DESCRIPTION.bbcode.txt";
+const DESCRIPTION_FILE = "DESCRIPTION.bbcode";
 const INSTALL_HEADING = "[b]🛠️ Mod Installation Notes:[/b]";
 const SUPPORTED_HEADING = "[b]✅ Supported Versions:[/b]";
 
@@ -1945,7 +1947,7 @@ const SUPPORT_BLOCK = [
 ].join("\n");
 
 /**
- * Whole-page scaffold, used only when no DESCRIPTION.bbcode.txt exists yet. Follows
+ * Whole-page scaffold, used only when no DESCRIPTION.bbcode exists yet. Follows
  * the section order every published extension page uses. The parts a generator cannot
  * know - loader warnings, per-game usage notes, credits - are left for the author.
  */
@@ -2221,7 +2223,7 @@ for (const dir of extDirs) {
       continue;
     }
     writeFileAtomic(path.join(ROOT, dir, "NOTES_FOR_MOD_AUTHORS.md"), md);
-    writeFileAtomic(path.join(ROOT, dir, "NOTES_FOR_MOD_AUTHORS.bbcode.txt"), bbcode);
+    writeFileAtomic(path.join(ROOT, dir, "NOTES_FOR_MOD_AUTHORS.bbcode"), bbcode);
     created++;
     tier1Total += tier1;
     tier2Total += tier2;

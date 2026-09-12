@@ -8,14 +8,14 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Micropatches | a file or folder named `MicroPatches.dll` | - |
+| Micropatches | a file or folder named `MicroPatches.dll` | `MICROPATCHES_PATH` |
 | Modfinder | - | - |
 | Saveeditor | - | - |
 | Portraitmanager | - | - |
-| Mod | a file or folder named one of: `owlcatmodificationmanifest.json`, a file or folder named one of: `Assemblies`, `Blueprints`, `Bundles` or `Localization` and a file with one of these extensions: `.dll` | - |
-| Plugin | a file with one of these extensions: `.dll` | - |
-| Portrait | a file or folder named one of: `fulllength.png`, `medium.png` or `small.png` | - |
-| Save Game Files | a `.zks` file | - |
+| Mod | a file or folder named one of: `owlcatmodificationmanifest.json`, a file or folder named one of: `Assemblies`, `Blueprints`, `Bundles` or `Localization` and a file with one of these extensions: `.dll` | `USER_HOME\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\Modifications` |
+| Plugin | a file with one of these extensions: `.dll` | `USER_HOME\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\UnityModManager` |
+| Portrait | a file or folder named one of: `fulllength.png`, `medium.png` or `small.png` | `USER_HOME\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\Portraits` |
+| Save Game Files | a `.zks` file | `USER_HOME\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\Saved Games` |
 | Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
@@ -23,6 +23,8 @@ Paths are relative to the game's install folder. Config and save mods deploy int
 ## Micropatches
 
 Recognised when the archive contains a file or folder named `MicroPatches.dll`.
+
+Installs to: `MICROPATCHES_PATH`
 
 ## Modfinder
 
@@ -40,13 +42,19 @@ Handled by the `testPortraitManager` installer. Inspect the extension source for
 
 Recognised when the archive contains a file or folder named one of: `owlcatmodificationmanifest.json`, a file or folder named one of: `Assemblies`, `Blueprints`, `Bundles` or `Localization` and a file with one of these extensions: `.dll`.
 
+Installs to: `USER_HOME\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\Modifications`
+
 ## Plugin
 
 Recognised when the archive contains a file with one of these extensions: `.dll`.
 
+Installs to: `USER_HOME\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\UnityModManager`
+
 ## Portrait
 
 Recognised when the archive contains a file or folder named one of: `fulllength.png`, `medium.png` or `small.png`.
+
+Installs to: `USER_HOME\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\Portraits`
 
 ## Save Game Files
 
@@ -55,6 +63,8 @@ Save files, deployed to the game's save folder.
 **Requirements:**
 
 - Recognised by any file with the `.zks` extension.
+
+Installs to: `USER_HOME\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\Saved Games`
 
 **Common mistakes:**
 
@@ -80,4 +90,3 @@ The catch-all. Any archive that matched none of the installers above lands here 
 - Archives that contain a FOMOD installer (a `fomod` folder with `ModuleConfig.xml`) are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

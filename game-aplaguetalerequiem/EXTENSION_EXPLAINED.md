@@ -2,22 +2,22 @@
 
 ## Overview
 
-| Property           | Value                                  |
-| ------------------ | -------------------------------------- |
-| Name               | A Plague Tale Requiem Vortex Extension |
-| Engine / Structure | Basic Game (XBOX Integrated)           |
-| Author             | ChemBoy1                               |
+| Property | Value |
+| --- | --- |
+| Name | A Plague Tale Requiem Vortex Extension |
+| Engine / Structure | Basic Game (XBOX Integrated) |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property          | Value                                                                                                                    |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Game ID           | `aplaguetalerequiem`                                                                                                     |
-| Executable        | `APlagueTaleRequiem_x64.exe`                                                                                             |
-| Executable (Xbox) | `APT2_WinStore.x64.Submission.exe`                                                                                       |
-| Executable (GOG)  | `APlagueTaleRequiem_x64.exe`                                                                                             |
-| Extension Page    | [https://www.nexusmods.com/site/mods/837](https://www.nexusmods.com/site/mods/837)                                       |
-| PCGamingWiki      | [https://www.pcgamingwiki.com/wiki/A_Plague_Tale%3A_Requiem](https://www.pcgamingwiki.com/wiki/A_Plague_Tale%3A_Requiem) |
+| Property | Value |
+| --- | --- |
+| Game ID | `aplaguetalerequiem` |
+| Executable | `APlagueTaleRequiem_x64.exe` |
+| Executable (Xbox) | `APT2_WinStore.x64.Submission.exe` |
+| Executable (GOG) | `APlagueTaleRequiem_x64.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/837](https://www.nexusmods.com/site/mods/837) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/A_Plague_Tale%3A_Requiem](https://www.pcgamingwiki.com/wiki/A_Plague_Tale%3A_Requiem) |
 
 ## Supported Stores
 
@@ -30,18 +30,18 @@
 
 Mod types define where each category of mod gets deployed:
 
-| Name        | ID                          | Priority | Target Path   |
-| ----------- | --------------------------- | -------- | ------------- |
-| Root Folder | `aplaguetalerequiem-root`   | high     | `{gamePath}`  |
-| Config      | `aplaguetalerequiem-config` | high     | `CONFIG_PATH` |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Root Folder | `aplaguetalerequiem-root` | high | `{gamePath}` |
+| Config | `aplaguetalerequiem-config` | high | `CONFIG_PATH` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID              | Priority |
-| ------------------------- | -------- |
-| `aplaguetalerequiem-root` | 25       |
+| Installer ID | Priority |
+| --- | --- |
+| `aplaguetalerequiem-root` | 25 |
 
 ## Registered Tools
 

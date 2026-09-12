@@ -2,19 +2,19 @@
 
 ## Overview
 
-| Property | Value                        |
-| -------- | ---------------------------- |
-| Name     | AC Valhalla Vortex Extension |
-| Author   | ChemBoy1                     |
+| Property | Value |
+| --- | --- |
+| Name | AC Valhalla Vortex Extension |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property       | Value                                                                                                                          |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| Game ID        | `assassinscreedvalhalla`                                                                                                       |
-| Executable     | `ACValhalla.exe`                                                                                                               |
-| Extension Page | [https://www.nexusmods.com/site/mods/931](https://www.nexusmods.com/site/mods/931)                                             |
-| PCGamingWiki   | [https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_Valhalla](https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_Valhalla) |
+| Property | Value |
+| --- | --- |
+| Game ID | `assassinscreedvalhalla` |
+| Executable | `ACValhalla.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/931](https://www.nexusmods.com/site/mods/931) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_Valhalla](https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_Valhalla) |
 
 ## Supported Stores
 
@@ -26,19 +26,19 @@
 
 Mod types define where each category of mod gets deployed:
 
-| Name                 | ID                                   | Priority | Target Path                |
-| -------------------- | ------------------------------------ | -------- | -------------------------- |
-| Forger Patch         | `assassinscreedvalhalla-forgerpatch` | high     | `{gamePath}/ForgerPatches` |
-| AnvilToolKit         | `assassinscreedvalhalla-ATK`         | low      | `{gamePath}`               |
-| Forger Patch Manager | `assassinscreedvalhalla-forger`      | low      | `{gamePath}`               |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Forger Patch | `assassinscreedvalhalla-forgerpatch` | high | `{gamePath}/ForgerPatches` |
+| AnvilToolKit | `assassinscreedvalhalla-ATK` | low | `{gamePath}` |
+| Forger Patch Manager | `assassinscreedvalhalla-forger` | low | `{gamePath}` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID                    | Priority |
-| ------------------------------- | -------- |
-| `assassinscreedvalhalla-forger` | 25       |
+| Installer ID | Priority |
+| --- | --- |
+| `assassinscreedvalhalla-forger` | 25 |
 
 ## Registered Tools
 

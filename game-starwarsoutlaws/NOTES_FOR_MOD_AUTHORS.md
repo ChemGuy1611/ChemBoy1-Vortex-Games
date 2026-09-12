@@ -6,12 +6,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type         | Archive must contain                                                          | Installs to                  |
-| ---------------- | ----------------------------------------------------------------------------- | ---------------------------- |
-| Modloader        | a file or folder named `version.dll`                                          | -                            |
-| Data             | a file or folder named `helix`                                                | -                            |
-| Datasub          | a file or folder named one of: `baked`, `graph objects` or `game system data` | `helix`                      |
-| Config File Mods | a `graphic settings.cfg` file                                                 | `DOCUMENTS\My Games\Outlaws` |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Modloader | a file or folder named `version.dll` | - |
+| Data | a file or folder named `helix` | - |
+| Datasub | a file or folder named one of: `baked`, `graph objects` or `game system data` | `helix` |
+| Config File Mods | a `graphic settings.cfg` file | `DOCUMENTS\My Games\Outlaws` |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 

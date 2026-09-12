@@ -6,10 +6,10 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                | Archive must contain       | Installs to                           |
-| ----------------------- | -------------------------- | ------------------------------------- |
-| Root / Game Folder Mods | a `res` folder             | the game folder itself (no subfolder) |
-| Fallback Installer      | anything not matched above | -                                     |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Root / Game Folder Mods | a `res` folder | the game folder itself (no subfolder) |
+| Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
 

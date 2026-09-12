@@ -6,11 +6,11 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                | Archive must contain                                   | Installs to                            |
-| ----------------------- | ------------------------------------------------------ | -------------------------------------- |
-| Root / Game Folder Mods | a top-level folder such as `Marvel`                    | the game folder itself (no subfolder)  |
-| Pak Mods                | a `.pak` file                                          | `MarvelGame\Marvel\Content\Paks\~mods` |
-| Signature Bypass        | `dsound.dll` and `marvelrivalsutocsignaturebypass.asi` | `MarvelGame\Marvel\Binaries\Win64`     |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Root / Game Folder Mods | a top-level folder such as `Marvel` | the game folder itself (no subfolder) |
+| Pak Mods | a `.pak` file | `MarvelGame\Marvel\Content\Paks\~mods` |
+| Signature Bypass | `dsound.dll` and `marvelrivalsutocsignaturebypass.asi` | `MarvelGame\Marvel\Binaries\Win64` |
 
 Paths are relative to the game's install folder.
 

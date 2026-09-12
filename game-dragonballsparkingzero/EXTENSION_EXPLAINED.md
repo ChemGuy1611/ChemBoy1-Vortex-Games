@@ -2,20 +2,20 @@
 
 ## Overview
 
-| Property           | Value                                        |
-| ------------------ | -------------------------------------------- |
-| Name               | Dragon Ball: Sparking! Zero Vortex Extension |
-| Engine / Structure | UE5                                          |
-| Author             | ChemBoy1                                     |
+| Property | Value |
+| --- | --- |
+| Name | Dragon Ball: Sparking! Zero Vortex Extension |
+| Engine / Structure | UE5 |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property       | Value                                                                                                                            |
-| -------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Game ID        | `dragonballsparkingzero`                                                                                                         |
-| Executable     | `SparkingZERO.exe`                                                                                                               |
-| Extension Page | [https://www.nexusmods.com/site/mods/1055](https://www.nexusmods.com/site/mods/1055)                                             |
-| PCGamingWiki   | [https://www.pcgamingwiki.com/wiki/Dragon_Ball:\_Sparking!\_Zero](https://www.pcgamingwiki.com/wiki/Dragon_Ball:_Sparking!_Zero) |
+| Property | Value |
+| --- | --- |
+| Game ID | `dragonballsparkingzero` |
+| Executable | `SparkingZERO.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1055](https://www.nexusmods.com/site/mods/1055) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Dragon_Ball:_Sparking!_Zero](https://www.pcgamingwiki.com/wiki/Dragon_Ball:_Sparking!_Zero) |
 
 ## Supported Stores
 
@@ -23,57 +23,57 @@
 
 ## Feature Flags
 
-| Flag         | Value   | Description                                                                         |
-| ------------ | ------- | ----------------------------------------------------------------------------------- |
-| `IO_STORE`   | `true`  | true if the Paks folder contains .ucas and .utoc files                              |
+| Flag | Value | Description |
+| --- | --- | --- |
+| `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
 | `CHECK_DATA` | `false` | true if game, staging, and save folders are all on the same drive (partition check) |
-| `SYM_LINKS`  | `true`  | true if symlink deployment is enabled for this game                                 |
+| `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
-| Name                          | ID                                            | Priority | Target Path                                         |
-| ----------------------------- | --------------------------------------------- | -------- | --------------------------------------------------- |
-| UE4SS Scripts                 | `dragonballsparkingzero-scripts`              | high     | `{gamePath}/SparkingZERO/Binaries/Win64/ue4ss/Mods` |
-| UE4SS DLL Mod                 | `dragonballsparkingzero-ue4ssdll`             | high     | `{gamePath}/SparkingZERO/Binaries/Win64/ue4ss/Mods` |
-| UE4SS LogicMods (Blueprint)   | `dragonballsparkingzero-logicmods`            | high     | `{gamePath}/SparkingZERO/Content/Paks/LogicMods`    |
-| UE4SS Script-LogicMod Combo   | `dragonballsparkingzero-ue4sscombo`           | high     | `{gamePath}`                                        |
-| SZModLoader Mod               | `dragonballsparkingzero-modloadermod`         | high     | `{gamePath}/SparkingZERO/Mods`                      |
-| SZModLoader JSON              | `dragonballsparkingzero-json`                 | high     | `{gamePath}/SparkingZERO/Mods/ZeroSpark/Json`       |
-| Root Game Folder              | `dragonballsparkingzero-root`                 | high     | `{gamePath}`                                        |
-| UE5 Paks                      | `dragonballsparkingzero-ue5`                  | high     | `{gamePath}/SparkingZERO/Content/Paks/~mods`        |
-| UE5 Paks (no "~mods")         | `dragonballsparkingzero-pakalt`               | high     | `{gamePath}/SparkingZERO/Content/Paks`              |
-| Binaries (Engine Injector)    | `dragonballsparkingzero-binaries`             | high     | `{gamePath}/SparkingZERO/Binaries/Win64`            |
-| UE4SS                         | `dragonballsparkingzero-ue4ss`                | low      | `{gamePath}/SparkingZERO/Binaries/Win64`            |
-| Signature Bypass              | `dragonballsparkingzero-sigbypass`            | low      | `{gamePath}/SparkingZERO/Binaries/Win64`            |
-| SZModLoader                   | `dragonballsparkingzero-modloader`            | low      | `{gamePath}/SparkingZERO/Mods`                      |
-| LFSE                          | `dragonballsparkingzero-lfse`                 | low      | `{gamePath}/SparkingZERO/Mods`                      |
-| UE5 Sortable Mod              | `dragonballsparkingzero-ue5-sortable-modtype` | 25       | `?`                                                 |
-| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype`                        | 65       | `?`                                                 |
-| Saves (Game Directory)        | `dragonballsparkingzero-save`                 | 55       | `?`                                                 |
-| Config (LocalAppData)         | `dragonballsparkingzero-config`               | 60       | `?`                                                 |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| UE4SS Scripts | `dragonballsparkingzero-scripts` | high | `{gamePath}/SparkingZERO/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `dragonballsparkingzero-ue4ssdll` | high | `{gamePath}/SparkingZERO/Binaries/Win64/ue4ss/Mods` |
+| UE4SS LogicMods (Blueprint) | `dragonballsparkingzero-logicmods` | high | `{gamePath}/SparkingZERO/Content/Paks/LogicMods` |
+| UE4SS Script-LogicMod Combo | `dragonballsparkingzero-ue4sscombo` | high | `{gamePath}` |
+| SZModLoader Mod | `dragonballsparkingzero-modloadermod` | high | `{gamePath}/SparkingZERO/Mods` |
+| SZModLoader JSON | `dragonballsparkingzero-json` | high | `{gamePath}/SparkingZERO/Mods/ZeroSpark/Json` |
+| Root Game Folder | `dragonballsparkingzero-root` | high | `{gamePath}` |
+| UE5 Paks | `dragonballsparkingzero-ue5` | high | `{gamePath}/SparkingZERO/Content/Paks/~mods` |
+| UE5 Paks (no "~mods") | `dragonballsparkingzero-pakalt` | high | `{gamePath}/SparkingZERO/Content/Paks` |
+| Binaries (Engine Injector) | `dragonballsparkingzero-binaries` | high | `{gamePath}/SparkingZERO/Binaries/Win64` |
+| UE4SS | `dragonballsparkingzero-ue4ss` | low | `{gamePath}/SparkingZERO/Binaries/Win64` |
+| Signature Bypass | `dragonballsparkingzero-sigbypass` | low | `{gamePath}/SparkingZERO/Binaries/Win64` |
+| SZModLoader | `dragonballsparkingzero-modloader` | low | `{gamePath}/SparkingZERO/Mods` |
+| LFSE | `dragonballsparkingzero-lfse` | low | `{gamePath}/SparkingZERO/Mods` |
+| UE5 Sortable Mod | `dragonballsparkingzero-ue5-sortable-modtype` | 25 | `?` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
+| Saves (Game Directory) | `dragonballsparkingzero-save` | 55 | `?` |
+| Config (LocalAppData) | `dragonballsparkingzero-config` | 60 | `?` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID                                    | Priority |
-| ----------------------------------------------- | -------- |
-| `ue5-pak-installer`                             | 37       |
-| `dragonballsparkingzero-modloader`              | 25       |
-| `dragonballsparkingzero-lfse`                   | 27       |
-| `dragonballsparkingzero-modloadermod`           | 29       |
-| `dragonballsparkingzero-json`                   | 31       |
-| `dragonballsparkingzero-ue4ss-logicscriptcombo` | 33       |
-| `dragonballsparkingzero-ue4ss-logicmod`         | 35       |
-| `dragonballsparkingzero-ue4ss`                  | 39       |
-| `dragonballsparkingzero-ue4ss-scripts`          | 41       |
-| `dragonballsparkingzero-ue4ssdll`               | 42       |
-| `dragonballsparkingzero-root`                   | 43       |
-| `dragonballsparkingzero-config`                 | 45       |
-| `dragonballsparkingzero-save`                   | 47       |
-| `dragonballsparkingzero-sigbypass`              | 49       |
+| Installer ID | Priority |
+| --- | --- |
+| `ue5-pak-installer` | 37 |
+| `dragonballsparkingzero-modloader` | 25 |
+| `dragonballsparkingzero-lfse` | 27 |
+| `dragonballsparkingzero-modloadermod` | 29 |
+| `dragonballsparkingzero-json` | 31 |
+| `dragonballsparkingzero-ue4ss-logicscriptcombo` | 33 |
+| `dragonballsparkingzero-ue4ss-logicmod` | 35 |
+| `dragonballsparkingzero-ue4ss` | 39 |
+| `dragonballsparkingzero-ue4ss-scripts` | 41 |
+| `dragonballsparkingzero-ue4ssdll` | 42 |
+| `dragonballsparkingzero-root` | 43 |
+| `dragonballsparkingzero-config` | 45 |
+| `dragonballsparkingzero-save` | 47 |
+| `dragonballsparkingzero-sigbypass` | 49 |
 
 ## Registered Tools
 
@@ -99,13 +99,13 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-| ---------- | ------- | ------- |
-| UE4SS      | —       | —       |
+| --- | --- | --- |
+| UE4SS | — | — |
 
 ## Config & Save Paths
 
-| Type | Path       |
-| ---- | ---------- |
+| Type | Path |
+| --- | --- |
 | Save | `SaveGame` |
 
 ## Special Features

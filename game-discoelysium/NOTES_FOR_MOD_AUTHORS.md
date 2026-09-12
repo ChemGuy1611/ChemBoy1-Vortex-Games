@@ -6,12 +6,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                      | Archive must contain              | Installs to                           |
-| ----------------------------- | --------------------------------- | ------------------------------------- |
-| Root / Game Folder Mods       | a `disco_Data` folder             | the game folder itself (no subfolder) |
-| BepInEx Configuration Manager | a `configurationmanager.dll` file | `Bepinex`                             |
-| Assembly Replacement Mods     | a `Assembly-CSharp.dll` file      | `disco_Data\Managed`                  |
-| Asset Replacement Mods        | a `.assets` file                  | `disco_Data`                          |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Root / Game Folder Mods | a `disco_Data` folder | the game folder itself (no subfolder) |
+| BepInEx Configuration Manager | a `configurationmanager.dll` file | `Bepinex` |
+| Assembly Replacement Mods | a `Assembly-CSharp.dll` file | `disco_Data\Managed` |
+| Asset Replacement Mods | a `.assets` file | `disco_Data` |
 
 Paths are relative to the game's install folder.
 

@@ -2,20 +2,20 @@
 
 ## Overview
 
-| Property           | Value                     |
-| ------------------ | ------------------------- |
-| Name               | AC Rogue Vortex Extension |
-| Engine / Structure | Ubisoft AnvilToolkit      |
-| Author             | ChemBoy1                  |
+| Property | Value |
+| --- | --- |
+| Name | AC Rogue Vortex Extension |
+| Engine / Structure | Ubisoft AnvilToolkit |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property       | Value                                                                                                                    |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Game ID        | `assassinscreedrogue`                                                                                                    |
-| Executable     | `ACC.exe`                                                                                                                |
-| Extension Page | [https://www.nexusmods.com/site/mods/988](https://www.nexusmods.com/site/mods/988)                                       |
-| PCGamingWiki   | [https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_Rogue](https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_Rogue) |
+| Property | Value |
+| --- | --- |
+| Game ID | `assassinscreedrogue` |
+| Executable | `ACC.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/988](https://www.nexusmods.com/site/mods/988) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_Rogue](https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_Rogue) |
 
 ## Supported Stores
 
@@ -27,18 +27,18 @@
 
 Mod types define where each category of mod gets deployed:
 
-| Name                        | ID                           | Priority | Target Path  |
-| --------------------------- | ---------------------------- | -------- | ------------ |
-| Binaries / Root Game Folder | `assassinscreediii-binaries` | high     | `{gamePath}` |
-| AnvilToolKit                | `assassinscreedrogue-atk`    | low      | `{gamePath}` |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Binaries / Root Game Folder | `assassinscreediii-binaries` | high | `{gamePath}` |
+| AnvilToolKit | `assassinscreedrogue-atk` | low | `{gamePath}` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID              | Priority |
-| ------------------------- | -------- |
-| `assassinscreedrogue-atk` | 25       |
+| Installer ID | Priority |
+| --- | --- |
+| `assassinscreedrogue-atk` | 25 |
 
 ## Registered Tools
 

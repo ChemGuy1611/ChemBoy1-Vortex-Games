@@ -6,15 +6,15 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                      | Archive must contain                    | Installs to                           |
-| ----------------------------- | --------------------------------------- | ------------------------------------- |
-| BepInEx (mod loader)          | a `BepInEx.dll` file                    | the game folder itself (no subfolder) |
-| MelonLoader (mod loader)      | a `MelonLoader.dll` file                | the game folder itself (no subfolder) |
-| Root                          | a file or folder named `CloverPit_Data` | -                                     |
-| BepInEx Configuration Manager | a `configurationmanager.dll` file       | `Bepinex`                             |
-| Assembly Replacement Mods     | a `Assembly-CSharp.dll` file            | `CloverPit_Data\Managed`              |
-| Plugin Mods                   | a `.dll` file                           | `BepInEx`                             |
-| Asset Replacement Mods        | a `.assets` file                        | `CloverPit_Data`                      |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| BepInEx (mod loader) | a `BepInEx.dll` file | the game folder itself (no subfolder) |
+| MelonLoader (mod loader) | a `MelonLoader.dll` file | the game folder itself (no subfolder) |
+| Root | a file or folder named `CloverPit_Data` | - |
+| BepInEx Configuration Manager | a `configurationmanager.dll` file | `Bepinex` |
+| Assembly Replacement Mods | a `Assembly-CSharp.dll` file | `CloverPit_Data\Managed` |
+| Plugin Mods | a `.dll` file | `BepInEx` |
+| Asset Replacement Mods | a `.assets` file | `CloverPit_Data` |
 
 Paths are relative to the game's install folder.
 

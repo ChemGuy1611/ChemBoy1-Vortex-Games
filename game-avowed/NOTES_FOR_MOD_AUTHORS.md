@@ -6,16 +6,16 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                                     | Archive must contain                     | Installs to                                |
-| -------------------------------------------- | ---------------------------------------- | ------------------------------------------ |
-| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `Alabama`                                  |
-| Blueprint Mods (LogicMods)                   | a `LogicMods` folder                     | `Alabama\Content\Paks\LogicMods\LogicMods` |
-| Pak Mods                                     | a `'.pak` file                           | `Alabama\Content\Paks\~mods`               |
-| UE4SS Itself                                 | a `dwmapi.dll` file                      | -                                          |
-| UE4SS Script Mods (Lua)                      | a `.lua` file and a `Scripts` folder     | -                                          |
-| UE4SS DLL Mods (C++)                         | a `.dll` file and a `dlls` folder        | -                                          |
-| Root / Game Folder Mods                      | a top-level folder such as `Alabama`     | the game folder itself (no subfolder)      |
-| Fallback Installer                           | anything unrecognised with no pak file   | -                                          |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `Alabama` |
+| Blueprint Mods (LogicMods) | a `LogicMods` folder | `Alabama\Content\Paks\LogicMods\LogicMods` |
+| Pak Mods | a `".pak` file | `Alabama\Content\Paks\~mods` |
+| UE4SS Itself | a `dwmapi.dll` file | - |
+| UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | - |
+| UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | - |
+| Root / Game Folder Mods | a top-level folder such as `Alabama` | the game folder itself (no subfolder) |
+| Fallback Installer | anything unrecognised with no pak file | - |
 
 Paths are relative to the game's install folder.
 
@@ -78,16 +78,16 @@ Installs to: `Alabama\Content\Paks\LogicMods\LogicMods`
 
 ## Pak Mods
 
-Standard content mods: one or more `'.pak` files. Vortex installs the mod files themselves, so the folder structure around them in the archive does not matter.
+Standard content mods: one or more `".pak` files. Vortex installs the mod files themselves, so the folder structure around them in the archive does not matter.
 
 ```text
 MyPakMod.zip
-└── MyPakMod'.pak
+└── MyPakMod".pak
 ```
 
 **Requirements:**
 
-- Recognised by any file with the `'.pak` extension.
+- Recognised by any file with the `".pak` extension.
 - Surrounding folders are discarded - only the mod files are installed.
 - If the archive holds several mod files, Vortex asks the user which to install, which is useful for shipping optional variants in one download.
 

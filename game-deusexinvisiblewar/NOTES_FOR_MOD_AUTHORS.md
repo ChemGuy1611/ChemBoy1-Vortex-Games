@@ -6,11 +6,11 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                | Archive must contain                                                                                                                                                                                                                           | Installs to                           |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| Root / Game Folder Mods | a `System` folder                                                                                                                                                                                                                              | the game folder itself (no subfolder) |
-| Datamodfolder           | a file or folder named one of: `AcquiredDataText`, `Bitmaps`, `Conversations`, `Flags`, `LipsincData`, `Maps`, `MatLib`, `SkeletalAnimations`, `SkeletalMeshes`, `Sounds`, `StaticMeshes`, `TagDatabase`, `Textures`, `UTX` or `VideoTextures` | `content\DX2`                         |
-| Binaries                | -                                                                                                                                                                                                                                              | `System`                              |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Root / Game Folder Mods | a `System` folder | the game folder itself (no subfolder) |
+| Datamodfolder | a file or folder named one of: `AcquiredDataText`, `Bitmaps`, `Conversations`, `Flags`, `LipsincData`, `Maps`, `MatLib`, `SkeletalAnimations`, `SkeletalMeshes`, `Sounds`, `StaticMeshes`, `TagDatabase`, `Textures`, `UTX` or `VideoTextures` | `content\DX2` |
+| Binaries | - | `System` |
 
 Paths are relative to the game's install folder.
 

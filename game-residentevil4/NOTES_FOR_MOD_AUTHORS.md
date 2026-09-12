@@ -6,12 +6,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                | Archive must contain                                                      | Installs to                           |
-| ----------------------- | ------------------------------------------------------------------------- | ------------------------------------- |
-| Binaries                | a file with one of these extensions: `.exe`, `.dll`, `.asi` or `.addon64` | -                                     |
-| Root / Game Folder Mods | a `BIO4` folder                                                           | the game folder itself (no subfolder) |
-| Save Game Files         | a `.sav` file                                                             | `Bin32\profile\player\saves`          |
-| Fallback Installer      | anything not matched above                                                | -                                     |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Binaries | a file with one of these extensions: `.exe`, `.dll`, `.asi` or `.addon64` | - |
+| Root / Game Folder Mods | a `BIO4` folder | the game folder itself (no subfolder) |
+| Save Game Files | a `.sav` file | `Bin32\profile\player\saves` |
+| Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 

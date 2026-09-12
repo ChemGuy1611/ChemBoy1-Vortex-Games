@@ -2,21 +2,21 @@
 
 ## Overview
 
-| Property           | Value                             |
-| ------------------ | --------------------------------- |
-| Name               | Planet Coaster 2 Vortex Extension |
-| Engine / Structure | Cobra Engine (ACSE)               |
-| Author             | ChemBoy1                          |
+| Property | Value |
+| --- | --- |
+| Name | Planet Coaster 2 Vortex Extension |
+| Engine / Structure | Cobra Engine (ACSE) |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property          | Value                                                                                                    |
-| ----------------- | -------------------------------------------------------------------------------------------------------- |
-| Game ID           | `planetcoaster2`                                                                                         |
-| Executable        | `PlanetCoaster2.exe`                                                                                     |
-| Executable (Xbox) | `gamelaunchhelper.exe`                                                                                   |
-| Extension Page    | [https://www.nexusmods.com/site/mods/1103](https://www.nexusmods.com/site/mods/1103)                     |
-| PCGamingWiki      | [https://www.pcgamingwiki.com/wiki/Planet_Coaster_2](https://www.pcgamingwiki.com/wiki/Planet_Coaster_2) |
+| Property | Value |
+| --- | --- |
+| Game ID | `planetcoaster2` |
+| Executable | `PlanetCoaster2.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1103](https://www.nexusmods.com/site/mods/1103) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Planet_Coaster_2](https://www.pcgamingwiki.com/wiki/Planet_Coaster_2) |
 
 ## Supported Stores
 
@@ -28,25 +28,25 @@
 
 Mod types define where each category of mod gets deployed:
 
-| Name              | ID                       | Priority | Target Path                                                                        |
-| ----------------- | ------------------------ | -------- | ---------------------------------------------------------------------------------- |
-| ACSE              | `planetcoaster2-acse`    | high     | `{gamePath}/Win64/ovldata`                                                         |
-| Root Game Folder  | `planetcoaster2-root`    | high     | `{gamePath}`                                                                       |
-| ACSE Mod          | `planetcoaster2-acsemod` | high     | `{gamePath}/Win64/ovldata`                                                         |
-| ovldata Subfolder | `planetcoaster2-ovldata` | high     | `{gamePath}/Win64`                                                                 |
-| Saves             | `planetcoaster2-save`    | high     | `USER_HOME/Saved Games/Frontier Developments/Planet Coaster 2/USERID_FOLDER/Saves` |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| ACSE | `planetcoaster2-acse` | high | `{gamePath}/Win64/ovldata` |
+| Root Game Folder | `planetcoaster2-root` | high | `{gamePath}` |
+| ACSE Mod | `planetcoaster2-acsemod` | high | `{gamePath}/Win64/ovldata` |
+| ovldata Subfolder | `planetcoaster2-ovldata` | high | `{gamePath}/Win64` |
+| Saves | `planetcoaster2-save` | high | `USER_HOME/Saved Games/Frontier Developments/Planet Coaster 2/USERID_FOLDER/Saves` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID             | Priority |
-| ------------------------ | -------- |
-| `planetcoaster2-acse`    | 25       |
-| `planetcoaster2-root`    | 27       |
-| `planetcoaster2-acsemod` | 28       |
-| `planetcoaster2-ovldata` | 29       |
-| `planetcoaster2-save`    | 49       |
+| Installer ID | Priority |
+| --- | --- |
+| `planetcoaster2-acse` | 25 |
+| `planetcoaster2-root` | 27 |
+| `planetcoaster2-acsemod` | 28 |
+| `planetcoaster2-ovldata` | 29 |
+| `planetcoaster2-save` | 49 |
 
 ## Registered Tools
 
@@ -68,8 +68,8 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-| ---------- | ------- | ------- |
-| ACSE       | —       | —       |
+| --- | --- | --- |
+| ACSE | — | — |
 
 ## Special Features
 

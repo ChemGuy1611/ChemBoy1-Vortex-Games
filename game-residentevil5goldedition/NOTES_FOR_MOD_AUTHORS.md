@@ -6,8 +6,8 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                | Archive must contain   | Installs to                           |
-| ----------------------- | ---------------------- | ------------------------------------- |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
 | Root / Game Folder Mods | a `nativePC_MT` folder | the game folder itself (no subfolder) |
 
 Paths are relative to the game's install folder.

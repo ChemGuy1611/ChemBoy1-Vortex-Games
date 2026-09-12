@@ -2,20 +2,20 @@
 
 ## Overview
 
-| Property           | Value                              |
-| ------------------ | ---------------------------------- |
-| Name               | Final Fantasy XVI Vortex Extension |
-| Engine / Structure | 3rd-Party Mod Installer            |
-| Author             | ChemBoy1                           |
+| Property | Value |
+| --- | --- |
+| Name | Final Fantasy XVI Vortex Extension |
+| Engine / Structure | 3rd-Party Mod Installer |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property       | Value                                                                                                      |
-| -------------- | ---------------------------------------------------------------------------------------------------------- |
-| Game ID        | `finalfantasy16`                                                                                           |
-| Executable     | `ffxvi.exe`                                                                                                |
-| Extension Page | [https://www.nexusmods.com/site/mods/1041](https://www.nexusmods.com/site/mods/1041)                       |
-| PCGamingWiki   | [https://www.pcgamingwiki.com/wiki/Final_Fantasy_XVI](https://www.pcgamingwiki.com/wiki/Final_Fantasy_XVI) |
+| Property | Value |
+| --- | --- |
+| Game ID | `finalfantasy16` |
+| Executable | `ffxvi.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1041](https://www.nexusmods.com/site/mods/1041) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Final_Fantasy_XVI](https://www.pcgamingwiki.com/wiki/Final_Fantasy_XVI) |
 
 ## Supported Stores
 
@@ -26,19 +26,19 @@
 
 Mod types define where each category of mod gets deployed:
 
-| Name                 | ID                               | Priority | Target Path           |
-| -------------------- | -------------------------------- | -------- | --------------------- |
-| Reloaded Mod         | `finalfantasy16-reloadedmod`     | high     | `{gamePath}/Reloaded` |
-| Reloaded Mod Manager | `finalfantasy16-reloadedmanager` | low      | `{gamePath}`          |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Reloaded Mod | `finalfantasy16-reloadedmod` | high | `{gamePath}/Reloaded` |
+| Reloaded Mod Manager | `finalfantasy16-reloadedmanager` | low | `{gamePath}` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID                     | Priority |
-| -------------------------------- | -------- |
-| `finalfantasy16-reloadedmanager` | 25       |
-| `finalfantasy16-reloadedmod`     | 30       |
+| Installer ID | Priority |
+| --- | --- |
+| `finalfantasy16-reloadedmanager` | 25 |
+| `finalfantasy16-reloadedmod` | 30 |
 
 ## Toolbar Actions
 
@@ -51,9 +51,9 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 ## Auto-Downloaded Dependencies
 
-| Dependency  | Version | Details |
-| ----------- | ------- | ------- |
-| Reloaded-II | —       | —       |
+| Dependency | Version | Details |
+| --- | --- | --- |
+| Reloaded-II | — | — |
 
 ## Special Features
 

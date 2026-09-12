@@ -36,6 +36,10 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
+| Mod | `hades2-mod` | high | `{gamePath}/Content/Mods` |
+| Root Game Folder | `hades2-root` | high | `{gamePath}` |
+| Mod Importer | `hades2-manager` | low | `{gamePath}/Content` |
+| Mod Utility | `hades2-modutility` | low | `{gamePath}/Content/Mods/ModUtil` |
 | Binaries | `hades2-binaries` | 50 | `?` |
 | Mod Loader (Hell2Modding) | `hades2-loader` | 51 | `?` |
 
@@ -80,4 +84,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-

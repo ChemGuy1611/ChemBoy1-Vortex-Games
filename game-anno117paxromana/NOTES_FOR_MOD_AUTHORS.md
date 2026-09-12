@@ -6,11 +6,11 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                | Archive must contain                                                                    | Installs to                           |
-| ----------------------- | --------------------------------------------------------------------------------------- | ------------------------------------- |
-| Mod                     | a file with one of these extensions: `.jsonc` and a file or folder named one of: `data` | `mods`                                |
-| Root / Game Folder Mods | a `Bin` folder                                                                          | the game folder itself (no subfolder) |
-| Binaries                | -                                                                                       | `Bin\Win64`                           |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Mod | a file with one of these extensions: `.jsonc` and a file or folder named one of: `data` | `mods` |
+| Root / Game Folder Mods | a `Bin` folder | the game folder itself (no subfolder) |
+| Binaries | - | `Bin\Win64` |
 
 Paths are relative to the game's install folder.
 

@@ -6,12 +6,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                                     | Archive must contain                                     | Installs to                           |
-| -------------------------------------------- | -------------------------------------------------------- | ------------------------------------- |
-| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder                 | `Game`                                |
-| Pak Mods                                     | a `.pak` file                                            | `Game\Content\Paks\~mods`             |
-| Root / Game Folder Mods                      | a top-level folder such as `Game`, `Engine` or `Content` | the game folder itself (no subfolder) |
-| Fallback Installer                           | anything unrecognised with no pak file                   | `Game\Binaries\Win64`                 |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `Game` |
+| Pak Mods | a `.pak` file | `Game\Content\Paks\~mods` |
+| Root / Game Folder Mods | a top-level folder such as `Game`, `Engine` or `Content` | the game folder itself (no subfolder) |
+| Fallback Installer | anything unrecognised with no pak file | `Game\Binaries\Win64` |
 
 Paths are relative to the game's install folder.
 

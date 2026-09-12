@@ -6,17 +6,17 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type          | Archive must contain                                                                                      | Installs to                                               |
-| ----------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| Modloader         | a file or folder named `winmm.dll`                                                                        | the game folder itself (no subfolder)                     |
-| Psarc             | a file with the `.psarc` extension, a file with the `.pak` extension and a file with the `.bin` extension | `mods`                                                    |
-| Buildfolderpakbin | a file or folder named `build`, a file with the `.pak` extension and a file with the `.bin` extension     | -                                                         |
-| Binfolder         | a file or folder named `bin`, a file with the `.pak` extension and a file with the `.bin` extension       | `build\pc\main`                                           |
-| Pak               | a file with the `.pak` extension                                                                          | `build\pc\main`                                           |
-| Buildfolder       | a file or folder named `build`                                                                            | the game folder itself (no subfolder)                     |
-| Save              | a file or folder named `USR-DATA`                                                                         | `DOCUMENTS\The Last of Us Part II\USERID_FOLDER\savedata` |
-| Config File Mods  | a `screeninfo.cfg` file                                                                                   | `USER_HOME\SOFTWARE\Naughty Dog\The Last of Us Part II`   |
-| Psarctoolndarc    | a file or folder named `ndarc.exe`                                                                        | `build\pc\main`                                           |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Modloader | a file or folder named `winmm.dll` | the game folder itself (no subfolder) |
+| Psarc | a file with the `.psarc` extension, a file with the `.pak` extension and a file with the `.bin` extension | `mods` |
+| Buildfolderpakbin | a file or folder named `build`, a file with the `.pak` extension and a file with the `.bin` extension | - |
+| Binfolder | a file or folder named `bin`, a file with the `.pak` extension and a file with the `.bin` extension | `build\pc\main` |
+| Pak | a file with the `.pak` extension | `build\pc\main` |
+| Buildfolder | a file or folder named `build` | the game folder itself (no subfolder) |
+| Save | a file or folder named `USR-DATA` | `DOCUMENTS\The Last of Us Part II\USERID_FOLDER\savedata` |
+| Config File Mods | a `screeninfo.cfg` file | `USER_HOME\SOFTWARE\Naughty Dog\The Last of Us Part II` |
+| Psarctoolndarc | a file or folder named `ndarc.exe` | `build\pc\main` |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 

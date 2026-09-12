@@ -2,8 +2,8 @@
 Name: Burglin' Gnomes Vortex Extension
 Structure: Unity BepinEx/MelonLoader Hybrid
 Author: ChemBoy1
-Version: 0.1.1
-Date: 2026-04-10
+Version: 0.1.2
+Date: 2026-09-12
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -766,11 +766,12 @@ function installBepinex(files) {
   const modFile = files.find((file) => path.basename(file) === BEPINEX_FOLDER);
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
   const instructions = filtered.map((file) => {
     return {
@@ -813,11 +814,12 @@ function installMelon(files) {
   const modFile = files.find((file) => path.basename(file) === MELON_FOLDER);
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
   const instructions = filtered.map((file) => {
     return {
@@ -859,11 +861,12 @@ function installCustomLoader(files) {
   const modFile = files.find((file) => path.basename(file) === CUSTOMLOADER_FILE);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
   const instructions = filtered.map((file) => {
     return {
@@ -905,11 +908,12 @@ if (customLoaderInstaller) {
     const modFile = files.find((file) => path.basename(file) === CUSTOMLOADER_EXEC);
     const idx = modFile.indexOf(path.basename(modFile));
     const rootPath = path.dirname(modFile);
+    const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
     const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
     // Remove directories and anything that isn't in the rootPath.
     const filtered = files.filter(
-      (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+      (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
     );
     const instructions = filtered.map((file) => {
       return {
@@ -953,11 +957,12 @@ function installBepCfgMan(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === "plugins");
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
   const instructions = filtered.map((file) => {
     return {
@@ -999,11 +1004,12 @@ function installMelonPrefMan(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === MELONPREFMAN_FILE);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
   const instructions = filtered.map((file) => {
     return {
@@ -1045,11 +1051,12 @@ function installAssembly(files) {
   const modFile = files.find((file) => ASSEMBLY_FILES.includes(path.basename(file)));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
   const instructions = filtered.map((file) => {
     return {
@@ -1091,6 +1098,7 @@ async function installRoot(files, workingDir) {
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
   const idx = modFile.indexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
 
   if (GAME_VERSION === ALT_VERSION) {
@@ -1112,8 +1120,10 @@ async function installRoot(files, workingDir) {
     }
   } //*/
 
-  // Don't use rootPath filter since it removes files without extensions
-  const filtered = files.filter((file) => !file.endsWith(path.sep));
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
+  );
 
   const instructions = filtered.map((file) => {
     return {
@@ -1154,11 +1164,12 @@ function installAssets(files) {
   const modFile = files.find((file) => ASSETS_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ASSETS_ID };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
 
   const instructions = filtered.map((file) => {
@@ -1210,10 +1221,11 @@ function installCustom(files) {
   const DATA_FILE = path.basename(modFile, ".custom.json");
   const idx = modFile.indexOf(DATA_FILE);
   const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
   const instructions = filtered.map((file) => {
     return {
@@ -1512,8 +1524,9 @@ async function installPlugin(api, gameSpec, files, workingDir) {
   } //*/
 
   // Remove directories and anything that isn't in the rootPath.
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
   const instructions = filtered.map((file) => {
     return {

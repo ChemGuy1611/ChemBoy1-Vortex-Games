@@ -165,8 +165,9 @@ Likewise, `CODESTYLE.md` is silent on React because it predates the function-com
 
 ## See also
 
-`VORTEX_DEV_BUILD.md` (how to run the formatter, linter, and type checker) · `VORTEX_TESTING.md`
-(the test layers these conventions apply to, and what a PR has to ship) · `VORTEX_AGENT_GUIDES.md`
-(the repo's own instruction files, which these conventions are drawn from) · `VORTEX_APP.md` (repo
-layout and where each toolchain config lives) · `VORTEX_2_MIGRATION.md` (API-level changes for
-extension authors).
+`VORTEX_DEV_BUILD.md` (how to run the formatter, linter, and type checker) · `OXFMT.md` (the
+formatter itself — config, defaults, and the lighter setup this repo shares with the extension repo)
+· `VORTEX_TESTING.md` (the test layers these conventions apply to, and what a PR has to ship) ·
+`VORTEX_AGENT_GUIDES.md` (the repo's own instruction files, which these conventions are drawn from)
+· `VORTEX_APP.md` (repo layout and where each toolchain config lives) · `VORTEX_2_MIGRATION.md`
+(API-level changes for extension authors).

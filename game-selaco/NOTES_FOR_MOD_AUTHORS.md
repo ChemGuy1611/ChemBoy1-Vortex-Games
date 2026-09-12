@@ -6,11 +6,11 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                | Archive must contain                        | Installs to                           |
-| ----------------------- | ------------------------------------------- | ------------------------------------- |
-| Mod                     | a file with one of these extensions: `.pk3` | `Mods`                                |
-| Root / Game Folder Mods | a `fm_banks` folder                         | the game folder itself (no subfolder) |
-| Binaries                | -                                           | -                                     |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Mod | a file with one of these extensions: `.pk3` | `Mods` |
+| Root / Game Folder Mods | a `fm_banks` folder | the game folder itself (no subfolder) |
+| Binaries | - | - |
 
 Paths are relative to the game's install folder.
 

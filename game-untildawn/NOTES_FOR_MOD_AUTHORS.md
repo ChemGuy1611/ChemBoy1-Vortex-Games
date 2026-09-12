@@ -6,14 +6,14 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                                     | Archive must contain                     | Installs to                                      |
-| -------------------------------------------- | ---------------------------------------- | ------------------------------------------------ |
-| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `Bates`                                          |
-| Blueprint Mods (LogicMods)                   | a `LogicMods` folder                     | `Windows\Bates\Content\Paks\LogicMods\LogicMods` |
-| Pak Mods                                     | a `'.pak` file                           | `Windows\Bates\Content\Paks\~mods`               |
-| UE4SS Itself                                 | a `dwmapi.dll` file                      | `Windows\Bates\Binaries\Win64`                   |
-| UE4SS Script Mods (Lua)                      | a `.lua` file and a `Scripts` folder     | `Windows\Bates\Binaries\Win64\ue4ss\Mods`        |
-| Root / Game Folder Mods                      | a top-level folder such as `Bates`       | the game folder itself (no subfolder)            |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `Bates` |
+| Blueprint Mods (LogicMods) | a `LogicMods` folder | `Windows\Bates\Content\Paks\LogicMods\LogicMods` |
+| Pak Mods | a `".pak` file | `Windows\Bates\Content\Paks\~mods` |
+| UE4SS Itself | a `dwmapi.dll` file | `Windows\Bates\Binaries\Win64` |
+| UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `Windows\Bates\Binaries\Win64\ue4ss\Mods` |
+| Root / Game Folder Mods | a top-level folder such as `Bates` | the game folder itself (no subfolder) |
 
 Paths are relative to the game's install folder.
 
@@ -76,16 +76,16 @@ Installs to: `Windows\Bates\Content\Paks\LogicMods\LogicMods`
 
 ## Pak Mods
 
-Standard content mods: one or more `'.pak` files. Vortex installs the mod files themselves, so the folder structure around them in the archive does not matter.
+Standard content mods: one or more `".pak` files. Vortex installs the mod files themselves, so the folder structure around them in the archive does not matter.
 
 ```text
 MyPakMod.zip
-└── MyPakMod'.pak
+└── MyPakMod".pak
 ```
 
 **Requirements:**
 
-- Recognised by any file with the `'.pak` extension.
+- Recognised by any file with the `".pak` extension.
 - Surrounding folders are discarded - only the mod files are installed.
 - If the archive holds several mod files, Vortex asks the user which to install, which is useful for shipping optional variants in one download.
 

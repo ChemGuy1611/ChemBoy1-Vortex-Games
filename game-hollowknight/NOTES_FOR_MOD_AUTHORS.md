@@ -6,13 +6,13 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                      | Archive must contain                        | Installs to                  |
-| ----------------------------- | ------------------------------------------- | ---------------------------- |
-| Root                          | a file or folder named `hollow_knight_Data` | -                            |
-| BepInEx Configuration Manager | a `configurationmanager.dll` file           | `Bepinex`                    |
-| Assembly Replacement Mods     | a `Assembly-CSharp.dll` file                | `hollow_knight_Data\Managed` |
-| Asset Replacement Mods        | a `.assets` file                            | `hollow_knight_Data`         |
-| Fallback Installer            | anything not matched above                  | -                            |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Root | a file or folder named `hollow_knight_Data` | - |
+| BepInEx Configuration Manager | a `configurationmanager.dll` file | `Bepinex` |
+| Assembly Replacement Mods | a `Assembly-CSharp.dll` file | `hollow_knight_Data\Managed` |
+| Asset Replacement Mods | a `.assets` file | `hollow_knight_Data` |
+| Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
 

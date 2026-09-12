@@ -4,6 +4,10 @@
 
 - Add???: Support for installing MelonLoader plugins. Need the compatibility loader for MelonLoader mods to work (<https://github.com/BepInEx/BepInEx.MelonLoader.Loader>) - there are very few MelonLoader mods.
 
+## [0.3.1] - 2026-09-12
+
+- Fixed: Mod files with no file extension, such as Unity asset bundles, were skipped during installation
+
 ## [0.3.0] - 2026-03-29
 
 - Added: Support for .png skin mod packs that install to the "Hollow Knight Silksong_Data\Mods\Customizer" folder.

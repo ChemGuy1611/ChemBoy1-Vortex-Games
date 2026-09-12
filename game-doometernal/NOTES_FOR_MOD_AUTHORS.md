@@ -40,4 +40,3 @@ Handled by the `testZipContent` installer. Inspect the extension source for the 
 
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

@@ -2,21 +2,20 @@
 
 ## Overview
 
-| Property           | Value                                                                   |
-| ------------------ | ----------------------------------------------------------------------- |
-| Name               | System Shock 2 (Classic AND 25th Anniversary Remaster) Vortex Extension |
-| Engine / Structure | Basic game w/ mods folder                                               |
-| Author             | ChemBoy1                                                                |
+| Property | Value |
+| --- | --- |
+| Name | System Shock 2 (Classic AND 25th Anniversary Remaster) Vortex Extension |
+| Engine / Structure | Basic game w/ mods folder |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property         | Value                                                                                                                                                          |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Game ID          | `systemshock225thanniversaryremaster`                                                                                                                          |
-| Executable       | `N/A`                                                                                                                                                          |
-| Executable (GOG) | `hathor_Shipping_Playfab_Galaxy_x64.exe`                                                                                                                       |
-| Extension Page   | [https://www.nexusmods.com/site/mods/1359](https://www.nexusmods.com/site/mods/1359)                                                                           |
-| PCGamingWiki     | [https://www.pcgamingwiki.com/wiki/System_Shock_2%3A_25th_Anniversary_Remaster](https://www.pcgamingwiki.com/wiki/System_Shock_2%3A_25th_Anniversary_Remaster) |
+| Property | Value |
+| --- | --- |
+| Game ID | `systemshock225thanniversaryremaster` |
+| Executable | `N/A` |
+| Executable (GOG) | `hathor_Shipping_Playfab_Galaxy_x64.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1359](https://www.nexusmods.com/site/mods/1359) |
 
 ## Supported Stores
 
@@ -26,31 +25,31 @@
 
 ## Feature Flags
 
-| Flag           | Value  | Description                                                      |
-| -------------- | ------ | ---------------------------------------------------------------- |
+| Flag | Value | Description |
+| --- | --- | --- |
 | `moddbBrowser` | `true` | register the "Browse ModDB" page (moddb.com) on the classic game |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
-| Name                   | ID                                                    | Priority | Target Path       |
-| ---------------------- | ----------------------------------------------------- | -------- | ----------------- |
-| Mod .kpf               | `systemshock225thanniversaryremaster-kpfmod`          | high     | `{gamePath}/mods` |
-| Converted Legacy Mod   | `systemshock225thanniversaryremaster-convertedlegacy` | high     | `{gamePath}/mods` |
-| Binaries / Root Folder | `systemshock225thanniversaryremaster-root`            | high     | `{gamePath}`      |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Mod .kpf | `systemshock225thanniversaryremaster-kpfmod` | high | `{gamePath}/mods` |
+| Converted Legacy Mod | `systemshock225thanniversaryremaster-convertedlegacy` | high | `{gamePath}/mods` |
+| Binaries / Root Folder | `systemshock225thanniversaryremaster-root` | high | `{gamePath}` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID                                          | Priority |
-| ----------------------------------------------------- | -------- |
-| `systemshock225thanniversaryremaster-kpfmod`          | 25       |
-| `systemshock225thanniversaryremaster-convertedlegacy` | 27       |
-| `systemshock225thanniversaryremaster-rootfolder`      | 29       |
-| `systemshock225thanniversaryremaster-root`            | 31       |
-| `systemshock2-classicmod`                             | 33       |
+| Installer ID | Priority |
+| --- | --- |
+| `systemshock225thanniversaryremaster-kpfmod` | 25 |
+| `systemshock225thanniversaryremaster-convertedlegacy` | 27 |
+| `systemshock225thanniversaryremaster-rootfolder` | 29 |
+| `systemshock225thanniversaryremaster-root` | 31 |
+| `systemshock2-classicmod` | 33 |
 
 ## Toolbar Actions
 

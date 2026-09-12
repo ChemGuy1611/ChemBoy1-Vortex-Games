@@ -6,14 +6,14 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                | Archive must contain                                                                  | Installs to                           |
-| ----------------------- | ------------------------------------------------------------------------------------- | ------------------------------------- |
-| Integrationstudio       | a file or folder named `IntegrationStudio.exe`                                        | `client_pc\root`                      |
-| Pak                     | a file with one of these extensions: `.pak`                                           | `client_pc\root\mods`                 |
-| Root / Game Folder Mods | a `client_pc` folder                                                                  | the game folder itself (no subfolder) |
-| Local                   | a file or folder named `local`                                                        | `client_pc\root`                      |
-| Localsub                | a file or folder named one of: `ssl`, `video`, `textures`, `presets`, `texts` or `ui` | `client_pc\root\local`                |
-| Binaries                | -                                                                                     | `client_pc\root\bin\pc`               |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Integrationstudio | a file or folder named `IntegrationStudio.exe` | `client_pc\root` |
+| Pak | a file with one of these extensions: `.pak` | `client_pc\root\mods` |
+| Root / Game Folder Mods | a `client_pc` folder | the game folder itself (no subfolder) |
+| Local | a file or folder named `local` | `client_pc\root` |
+| Localsub | a file or folder named one of: `ssl`, `video`, `textures`, `presets`, `texts` or `ui` | `client_pc\root\local` |
+| Binaries | - | `client_pc\root\bin\pc` |
 
 Paths are relative to the game's install folder.
 

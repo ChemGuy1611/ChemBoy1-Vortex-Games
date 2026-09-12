@@ -377,11 +377,12 @@ function installACSE(files) {
   const modFile = files.find((file) => path.basename(file) === ACSE_FILE);
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ACSE_ID };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
 
   const instructions = filtered.map((file) => {
@@ -423,11 +424,12 @@ function installSave(files) {
   const modFile = files.find((file) => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: SAVE_ID };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
 
   const instructions = filtered.map((file) => {
@@ -470,11 +472,12 @@ function installRoot(files) {
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
   const idx = modFile.indexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
 
   const instructions = filtered.map((file) => {
@@ -504,11 +507,12 @@ function installOvlData(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === OVLDATA_FILE);
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: OVLDATA_ID };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
 
   const instructions = filtered.map((file) => {
@@ -554,8 +558,9 @@ function installAcseMod(files, fileName) {
   const idx = modFile.indexOf(path.basename(modFile));
 
   // Remove directories and anything that isn't in the rootPath.
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
 
   const instructions = filtered.map((file) => {
@@ -585,11 +590,12 @@ function installLocalised(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === LOCALISED_FILE);
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: LOCALISED_ID };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
 
   const instructions = filtered.map((file) => {
@@ -631,11 +637,12 @@ function installMovies(files) {
   const modFile = files.find((file) => MOVIES_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOVIES_ID };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
 
   const instructions = filtered.map((file) => {

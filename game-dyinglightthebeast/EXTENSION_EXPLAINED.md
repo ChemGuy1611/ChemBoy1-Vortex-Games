@@ -31,6 +31,18 @@
 | `superMergerInstalled` | `false` |  |
 | `mergerInstalled` | `false` |  |
 
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Pak Mod (Merged) | `dyinglightthebeast-pak` | high | `{gamePath}/ph_ft/mods` |
+| Root Folder | `dyinglightthebeast-root` | high | `{gamePath}` |
+| Binaries (Engine Injector) | `dyinglightthebeast-binaries` | high | `{gamePath}/ph_ft/work/bin/x64` |
+| UTM Mod Merger Utility | `dyinglightthebeast-mergerutility` | low | `{gamePath}/ph_ft` |
+| Super Mod Merger | `dyinglightthebeast-supermerger` | low | `{gamePath}/ph_ft` |
+
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
@@ -53,7 +65,7 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- Download Super Mod Merger 
+- Download Super Mod Merger
 - View Changelog
 - Open Downloads Folder
 - Open PCGamingWiki Page
@@ -67,4 +79,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
-

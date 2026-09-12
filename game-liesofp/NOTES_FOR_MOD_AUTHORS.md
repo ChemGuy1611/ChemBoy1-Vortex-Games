@@ -6,11 +6,11 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                | Archive must contain                             | Installs to                           |
-| ----------------------- | ------------------------------------------------ | ------------------------------------- |
-| Config File Mods        | a config file such as `engine.ini` or `game.ini` | -                                     |
-| Save Game Files         | a `.sav` file                                    | -                                     |
-| Root / Game Folder Mods | a top-level folder such as `LiesofP`             | the game folder itself (no subfolder) |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Config File Mods | a config file such as `engine.ini` or `game.ini` | - |
+| Save Game Files | a `.sav` file | - |
+| Root / Game Folder Mods | a top-level folder such as `LiesofP` | the game folder itself (no subfolder) |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 

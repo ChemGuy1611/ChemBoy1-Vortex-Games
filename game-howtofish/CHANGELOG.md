@@ -1,8 +1,12 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.0.3] - 2026-09-12
 
-- None
+- Fixed: A required mod loader or tool is no longer mistaken for an unrelated Nexus mod that shares the same file, which could show the wrong mod details or offer a bogus update for it
+- Fixed: Downloads fetched for a required mod loader or tool now show "Website" as their source instead of being left blank
+- Changed: MelonPreferencesManager now installs as a mod, so it appears in the mods list with its own version and Remove button instead of being copied in as a loose file
+- Changed: Plugins that don't already ship their own folder are now installed into one of their own, so two mods with a same-named file no longer overwrite each other
+- Fixed: Mod files with no file extension, such as Unity asset bundles, were skipped during installation
 
 ## [1.0.2] - 2026-09-02
 

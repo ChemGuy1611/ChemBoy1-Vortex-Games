@@ -2,20 +2,20 @@
 
 ## Overview
 
-| Property           | Value                   |
-| ------------------ | ----------------------- |
-| Name               | AC III Vortex Extension |
-| Engine / Structure | Ubisoft AnvilToolkit    |
-| Author             | ChemBoy1                |
+| Property | Value |
+| --- | --- |
+| Name | AC III Vortex Extension |
+| Engine / Structure | Ubisoft AnvilToolkit |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property       | Value                                                                                                                |
-| -------------- | -------------------------------------------------------------------------------------------------------------------- |
-| Game ID        | `assassinscreediii`                                                                                                  |
-| Executable     | `AC3SP.exe`                                                                                                          |
-| Extension Page | [https://www.nexusmods.com/site/mods/978](https://www.nexusmods.com/site/mods/978)                                   |
-| PCGamingWiki   | [https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_III](https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_III) |
+| Property | Value |
+| --- | --- |
+| Game ID | `assassinscreediii` |
+| Executable | `AC3SP.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/978](https://www.nexusmods.com/site/mods/978) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_III](https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_III) |
 
 ## Supported Stores
 
@@ -26,18 +26,18 @@
 
 Mod types define where each category of mod gets deployed:
 
-| Name                        | ID                           | Priority | Target Path  |
-| --------------------------- | ---------------------------- | -------- | ------------ |
-| Binaries / Root Game Folder | `assassinscreediii-binaries` | high     | `{gamePath}` |
-| AnvilToolKit                | `assassinscreediii-atk`      | low      | `{gamePath}` |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Binaries / Root Game Folder | `assassinscreediii-binaries` | high | `{gamePath}` |
+| AnvilToolKit | `assassinscreediii-atk` | low | `{gamePath}` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID            | Priority |
-| ----------------------- | -------- |
-| `assassinscreediii-atk` | 25       |
+| Installer ID | Priority |
+| --- | --- |
+| `assassinscreediii-atk` | 25 |
 
 ## Registered Tools
 

@@ -1,5 +1,9 @@
 # template-ue4-5 Changelog
 
+## [2026-09-12]
+
+- Fixed: installers scoped their file list to the mod root with `file.indexOf(rootPath) !== -1`, a substring test that silently dropped every extension-less file. `path.dirname()` returns `"."` when the mod file sits at the archive root, which collapses the test to "the path contains a dot", so extension-less payloads never reached the staging folder; the same test also matched sibling folders that happen to share a name prefix. All 10 installers now derive `const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;` and filter with `file.startsWith(rootPrefix)`. `installScripts` and `installDll` reassign `rootPath` in a branch before the filter runs, so their `rootPrefix` is declared immediately above the filter rather than beside the `rootPath` declaration, to pick up the final value.
+
 ## [2026-09-06] (2)
 
 - Changed: migrated off the deprecated `vortex-api` `fs` wrapper onto native node `fs`. `fs` now means node's own module (`const fs = require("fs")`, plus `const fsp = fs.promises` for the async calls), and the vortex-api wrapper is still imported alongside it as `vfs`. Call sites move across 1:1 - `fs.statAsync` becomes `fsp.stat`, `fs.readdirAsync` becomes `fsp.readdir`, `fs.readFileAsync`/`fs.writeFileAsync` become `fsp.readFile`/`fsp.writeFile`, `fs.renameAsync` becomes `fsp.rename` - while the two that need options change shape: `fs.ensureDirSync(p)` becomes `fs.mkdirSync(p, { recursive: true })` and `fs.removeAsync(p)` becomes `fsp.rm(p, { recursive: true, force: true })`. `fs.copyAsync` becomes `fsp.cp` and always gains `recursive: true`, because native `cp` throws `ERR_FS_EISDIR` on a directory without it.
@@ -30,11 +34,11 @@
 ## [2026-08-10]
 
 - Changed: `ue4ssLoadOrder` is now the master toggle for UE4SS support, not just for the load order page. Its comment says so. When it is off, the template no longer registers any of the UE4SS pieces:
-    - Mod types: `SCRIPTS_ID`, `DLL_ID`, `UE4SS_ID` and the declarative `LOGICMODS_ID` entry (removed from `spec.modTypes` by a filter next to the existing `hasModKit` block).
-    - Installers: `LOGICMODS_ID`, `UE4SS_ID`, `SCRIPTS_ID`, `DLL_ID`.
-    - Folders created by `setup()`: the UE4SS Mods folder, its `BPModLoaderMod` subfolder, and the LogicMods entry in `MODTYPE_FOLDERS`.
-    - The UE4SS auto-download in `setup()`: `autoDownloadUe4ss` keeps its own toggle but now only applies when `ue4ssLoadOrder` is on, so a game with UE4SS support off cannot download UE4SS on setup.
-    - Toolbar buttons: "Open UE4SS Mods Folder", "Open LogicMods Folder", "Download UE4SS", "Open UE4SS Settings INI", "Open UE4SS mods.txt".
+  - Mod types: `SCRIPTS_ID`, `DLL_ID`, `UE4SS_ID` and the declarative `LOGICMODS_ID` entry (removed from `spec.modTypes` by a filter next to the existing `hasModKit` block).
+  - Installers: `LOGICMODS_ID`, `UE4SS_ID`, `SCRIPTS_ID`, `DLL_ID`.
+  - Folders created by `setup()`: the UE4SS Mods folder, its `BPModLoaderMod` subfolder, and the LogicMods entry in `MODTYPE_FOLDERS`.
+  - The UE4SS auto-download in `setup()`: `autoDownloadUe4ss` keeps its own toggle but now only applies when `ue4ssLoadOrder` is on, so a game with UE4SS support off cannot download UE4SS on setup.
+  - Toolbar buttons: "Open UE4SS Mods Folder", "Open LogicMods Folder", "Download UE4SS", "Open UE4SS Settings INI", "Open UE4SS mods.txt".
 
     `UE4SSCOMBO_ID` is deliberately left ungated - that installer also handles mods with both Binaries and Content folders that have nothing to do with UE4SS. LogicMods is gated on `ue4ssLoadOrder` rather than `logicModsLoadOrder` because LogicMods are blueprint paks loaded by UE4SS's `BPModLoaderMod`. Button order is unchanged: the guards wrap the buttons where they already sat, so no button moves relative to the ungated ones. Propagated to all 11 games at template parity; no behavior change there, since every one of them has `ue4ssLoadOrder = true`.
 

@@ -23,6 +23,18 @@
 - **Epic Games Store** — `chamaelejp`
 - **EA** — `Registry`
 
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Binaries / Root Folder | `dragonagetheveilguard-root` | high | `{gamePath}` |
+| DAVExtender | `dragonagetheveilguard-davex` | low | `{gamePath}/.` |
+| SDK Patch (EA/Epic) | `dragonagetheveilguard-sdkpatch` | low | `{gamePath}/FrostyModManager/Profiles` |
+| Frosty .fbmod/.archive | `dragonagetheveilguard-frostymod` | high | `{gamePath}/FrostyModManager/Mods/Dragon Age The Veilguard` |
+| Frosty Mod Manager | `dragonagetheveilguard-frostymanager` | low | `{gamePath}/FrostyModManager` |
+
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
@@ -66,4 +78,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-

@@ -2,20 +2,20 @@
 
 ## Overview
 
-| Property           | Value                                |
-| ------------------ | ------------------------------------ |
-| Name               | XCOM: Enemy Unknown Vortex Extension |
-| Engine / Structure | UE 2-3 Game + TFC Installer          |
-| Author             | ChemBoy1                             |
+| Property | Value |
+| --- | --- |
+| Name | XCOM: Enemy Unknown Vortex Extension |
+| Engine / Structure | UE 2-3 Game + TFC Installer |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property          | Value                                                                                                              |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Game ID           | `xcom`                                                                                                             |
-| Executable        | `Binaries/Win32/XXX.exe`                                                                                           |
-| Executable (Xbox) | `gamelaunchhelper.exe`                                                                                             |
-| PCGamingWiki      | [https://www.pcgamingwiki.com/wiki/XCOM%3A_Enemy_Unknown](https://www.pcgamingwiki.com/wiki/XCOM%3A_Enemy_Unknown) |
+| Property | Value |
+| --- | --- |
+| Game ID | `xcom` |
+| Executable | `Binaries/Win32/XXX.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/XCOM%3A_Enemy_Unknown](https://www.pcgamingwiki.com/wiki/XCOM%3A_Enemy_Unknown) |
 
 ## Supported Stores
 
@@ -24,42 +24,42 @@
 
 ## Feature Flags
 
-| Flag                | Value   | Description                                                                                                                                 |
-| ------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `hasXbox`           | `false` | toggle for Xbox version logic                                                                                                               |
-| `has64Bit`          | `false` | toggle for 64-bit version logic                                                                                                             |
-| `allowSymlinks`     | `true`  | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
-| `fallbackInstaller` | `true`  | enable fallback installer. Set false if you need to avoid installer collisions                                                              |
-| `debug`             | `false` | toggle for debug mode                                                                                                                       |
+| Flag | Value | Description |
+| --- | --- | --- |
+| `hasXbox` | `false` | toggle for Xbox version logic |
+| `has64Bit` | `false` | toggle for 64-bit version logic |
+| `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
+| `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
+| `debug` | `false` | toggle for debug mode |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
-| Name                       | ID                  | Priority | Target Path                    |
-| -------------------------- | ------------------- | -------- | ------------------------------ |
-| TFC Mod                    | `xcom-tfcmod`       | high     | `{gamePath}/TFCInstaller/Mods` |
-| Root Folder                | `xcom-root`         | high     | `{gamePath}`                   |
-| Cooked Sub Folder          | `xcom-cookedsub`    | high     | `{gamePath}/XXX/CookedPC`      |
-| Binaries (Engine Injector) | `xcom-binaries`     | high     | `{gamePath}/Binaries/Win32`    |
-| Movies Mod                 | `xcom-movies`       | high     | `{gamePath}/XXX/Movies`        |
-| TFC Installer              | `xcom-tfcinstaller` | low      | `{gamePath}/.`                 |
-| UPK Explorer               | `xcom-tfcexplorer`  | low      | `{gamePath}/.`                 |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| TFC Mod | `xcom-tfcmod` | high | `{gamePath}/TFCInstaller/Mods` |
+| Root Folder | `xcom-root` | high | `{gamePath}` |
+| Cooked Sub Folder | `xcom-cookedsub` | high | `{gamePath}/XXX/CookedPC` |
+| Binaries (Engine Injector) | `xcom-binaries` | high | `{gamePath}/Binaries/Win32` |
+| Movies Mod | `xcom-movies` | high | `{gamePath}/XXX/Movies` |
+| TFC Installer | `xcom-tfcinstaller` | low | `{gamePath}/.` |
+| UPK Explorer | `xcom-tfcexplorer` | low | `{gamePath}/.` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID        | Priority |
-| ------------------- | -------- |
-| `xcom-tfcinstaller` | 25       |
-| `xcom-tfcexplorer`  | 27       |
-| `xcom-tfcmod`       | 29       |
-| `xcom-root`         | 31       |
-| `xcom-cookedsub`    | 33       |
-| `xcom-movies`       | 35       |
-| `xcom-binaries`     | 37       |
-| `xcom-fallback`     | 49       |
+| Installer ID | Priority |
+| --- | --- |
+| `xcom-tfcinstaller` | 25 |
+| `xcom-tfcexplorer` | 27 |
+| `xcom-tfcmod` | 29 |
+| `xcom-root` | 31 |
+| `xcom-cookedsub` | 33 |
+| `xcom-movies` | 35 |
+| `xcom-binaries` | 37 |
+| `xcom-fallback` | 49 |
 
 ## Registered Tools
 

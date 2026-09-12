@@ -16,7 +16,7 @@ Xbox `Packages/<appId>_<pubId>/SystemAppData/wgs` variant, `MODKITMOD_PATH` `<co
 `mod.json` / `.uplugin`, and the sig-bypass pair `dsound.dll` + `UniversalSigBypasser.asi` from the
 Nexus `site` page.
 
-### Structural toggles
+## Structural toggles
 
 `IO_STORE` (default `true`) is the highest-consequence toggle. When on, it forces `SYM_LINKS` off
 and expands `PAKMOD_EXTS` to `['.pak', '.ucas', '.utoc']`, raising `PAK_FILE_MIN` to 3 — the pak
@@ -33,7 +33,7 @@ Others: `SIGBYPASS_REQUIRED` (games that validate `.sig` files), `hasModKit`, `h
 `LO_IMAGE_WIDTH`, `SPECIAL_LO_INSTRUCTIONS`, `PAKMOD_EXTRA_EXTS` (extra extensions to treat as part
 of a pak mod, for custom frameworks that add `.toml` or `.json` sidecars).
 
-### Mod types and installers
+## Mod types and installers
 
 | Mod type          | Priority               | Target                  |
 | ----------------- | ---------------------- | ----------------------- |
@@ -65,7 +65,7 @@ combos it also handles any mod that ships both a `Binaries` and a `Content` fold
 
 `chooseFilesToInstall` prompts when a pak archive contains several independent mods.
 
-### Load order surfaces
+## Load order surfaces
 
 Three separate ordering systems run side by side, each with its own toggle, storage, and sidecar
 file:
@@ -98,7 +98,7 @@ turns the load order off in settings, so it can be turned back on.
 `parseUe4ssCollectionsData` and a `CollectionsDataView`, so both the UE4SS and LogicMods orders
 travel with a collection.
 
-### Runtime behavior
+## Runtime behavior
 
 **Mod-update load-order guard.** Updating a mod normally looks like removing one mod and installing
 a different one, which would drop it to the bottom of the load order. The template keeps an

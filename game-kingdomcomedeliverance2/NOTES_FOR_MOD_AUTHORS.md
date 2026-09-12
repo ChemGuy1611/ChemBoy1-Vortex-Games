@@ -6,13 +6,13 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                | Archive must contain                                                                                                                                          | Installs to                           |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| Mod                     | a file or folder named `mod.cfg`, a file or folder named one of: `mod.manifest` and a file or folder named one of: `data`, `localization`, `engine` or `KCSE` | -                                     |
-| Root / Game Folder Mods | a `bin` folder                                                                                                                                                | the game folder itself (no subfolder) |
-| Cfg                     | a file with the `.cfg` extension                                                                                                                              | -                                     |
-| Binaries                | a file with the `.dll` extension and a file with the `.exe` extension                                                                                         | -                                     |
-| Fallback Installer      | anything not matched above                                                                                                                                    | -                                     |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Mod | a file or folder named `mod.cfg`, a file or folder named one of: `mod.manifest` and a file or folder named one of: `data`, `localization`, `engine` or `KCSE` | - |
+| Root / Game Folder Mods | a `bin` folder | the game folder itself (no subfolder) |
+| Cfg | a file with the `.cfg` extension | - |
+| Binaries | a file with the `.dll` extension and a file with the `.exe` extension | - |
+| Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
 

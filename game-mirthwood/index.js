@@ -2,8 +2,8 @@
 Name: Mirthwood Vortex Extension
 Structure: Unity BepinEx
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2026-08-03
+Version: 0.2.1
+Date: 2026-09-12
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -252,11 +252,12 @@ function installBepMod(files) {
   const modFile = files.find((file) => path.extname(file).toLowerCase() === modFileExt);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: BEPMOD_ID };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
   const instructions = filtered.map((file) => {
     return {

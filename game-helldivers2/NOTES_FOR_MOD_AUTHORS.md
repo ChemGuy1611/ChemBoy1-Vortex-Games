@@ -6,13 +6,13 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type              | Archive must contain                                                      | Installs to |
-| --------------------- | ------------------------------------------------------------------------- | ----------- |
-| Patch Mods (.patch_0) | a file named `<archive hash>.patch_0`                                     | -           |
-| Data                  | a file with the `.dl_bin` extension                                       | `data\game` |
-| Stream                | a file with the `.stream` extension                                       | `data`      |
-| Binaries              | a file with one of these extensions: `.exe`, `.dll`, `.asi` or `.addon64` | `bin`       |
-| Fallback Installer    | anything not matched above                                                | -           |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Patch Mods (.patch_0) | a file named `<archive hash>.patch_0` | - |
+| Data | a file with the `.dl_bin` extension | `data\game` |
+| Stream | a file with the `.stream` extension | `data` |
+| Binaries | a file with one of these extensions: `.exe`, `.dll`, `.asi` or `.addon64` | `bin` |
+| Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
 

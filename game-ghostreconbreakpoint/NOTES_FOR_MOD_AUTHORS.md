@@ -6,18 +6,18 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                | Archive must contain                                                                        | Installs to                                                             |
-| ----------------------- | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| AnvilToolkit (tool)     | a `anviltoolkit.exe` file                                                                   | -                                                                       |
-| Sound                   | a file with the `.pck` extension                                                            | `sounddata\pc`                                                          |
-| Buildtable              | a file or folder named `Individual Buildtables` and a file with the `.buildtable` extension | `Extracted\DataPC_patch_01.forge\Extracted\23_-_TEAMMATE_Template.data` |
-| Extracted Forge Content | a `Extracted` folder                                                                        | the game folder itself (no subfolder)                                   |
-| Forgefolder             | -                                                                                           | the game folder itself (no subfolder)                                   |
-| Datafolder              | -                                                                                           | the game folder itself (no subfolder)                                   |
-| Loose Data Files        | a `.data` file                                                                              | the game folder itself (no subfolder)                                   |
-| Forge File Mods         | a `.forge` file                                                                             | the game folder itself (no subfolder)                                   |
-| Root / Game Folder Mods | a `videos` folder                                                                           | the game folder itself (no subfolder)                                   |
-| Fallback Installer      | anything not matched above                                                                  | -                                                                       |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| AnvilToolkit (tool) | a `anviltoolkit.exe` file | - |
+| Sound | a file with the `.pck` extension | `sounddata\pc` |
+| Buildtable | a file or folder named `Individual Buildtables` and a file with the `.buildtable` extension | `Extracted\DataPC_patch_01.forge\Extracted\23_-_TEAMMATE_Template.data` |
+| Extracted Forge Content | a `Extracted` folder | the game folder itself (no subfolder) |
+| Forgefolder | - | the game folder itself (no subfolder) |
+| Datafolder | - | the game folder itself (no subfolder) |
+| Loose Data Files | a `.data` file | the game folder itself (no subfolder) |
+| Forge File Mods | a `.forge` file | the game folder itself (no subfolder) |
+| Root / Game Folder Mods | a `videos` folder | the game folder itself (no subfolder) |
+| Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
 

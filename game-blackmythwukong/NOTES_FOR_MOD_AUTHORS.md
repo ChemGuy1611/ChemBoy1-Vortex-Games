@@ -6,18 +6,18 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                                     | Archive must contain                             | Installs to                            |
-| -------------------------------------------- | ------------------------------------------------ | -------------------------------------- |
-| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder         | `b1`                                   |
-| Blueprint Mods (LogicMods)                   | a `LogicMods` folder                             | `b1\Content\Paks\LogicMods\LogicMods`  |
-| Pak Mods                                     | a `.pak` file                                    | `b1\Content\Paks\~mods`                |
-| UE4SS Itself                                 | a `dwmapi.dll` file                              | `b1\Binaries\Win64`                    |
-| Signature Bypass                             | `dsound.dll` and `sig.lua`                       | `b1\Binaries\Win64`                    |
-| UE4SS Script Mods (Lua)                      | a `.lua` file and a `Scripts` folder             | `b1\Binaries\Win64\ue4ss\Mods`         |
-| UE4SS DLL Mods (C++)                         | a `.dll` file and a `dlls` folder                | `b1\Binaries\Win64\ue4ss\Mods`         |
-| Root / Game Folder Mods                      | a top-level folder such as `b1`                  | the game folder itself (no subfolder)  |
-| Config File Mods                             | a config file such as `engine.ini` or `game.ini` | `LOCALAPPDATA\b1\Saved\Config\Windows` |
-| Save Game Files                              | a `.sav` file                                    | -                                      |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `b1` |
+| Blueprint Mods (LogicMods) | a `LogicMods` folder | `b1\Content\Paks\LogicMods\LogicMods` |
+| Pak Mods | a `.pak` file | `b1\Content\Paks\~mods` |
+| UE4SS Itself | a `dwmapi.dll` file | `b1\Binaries\Win64` |
+| Signature Bypass | `dsound.dll` and `sig.lua` | `b1\Binaries\Win64` |
+| UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `b1\Binaries\Win64\ue4ss\Mods` |
+| UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | `b1\Binaries\Win64\ue4ss\Mods` |
+| Root / Game Folder Mods | a top-level folder such as `b1` | the game folder itself (no subfolder) |
+| Config File Mods | a config file such as `engine.ini` or `game.ini` | `LOCALAPPDATA\b1\Saved\Config\Windows` |
+| Save Game Files | a `.sav` file | - |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 

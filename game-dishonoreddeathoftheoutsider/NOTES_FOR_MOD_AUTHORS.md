@@ -6,15 +6,15 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                | Archive must contain                                                                                           | Installs to                                              |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| Voidinstaller           | a file or folder named `voidinstaller.exe`                                                                     | the game folder itself (no subfolder)                    |
-| Voidexplorer            | a file or folder named `voidexplorer.exe`                                                                      | the game folder itself (no subfolder)                    |
-| Voidmod                 | a file or folder named `modinfo.xml` and a file with one of these extensions: `.voidindex` or `.voidresources` | `Void Installer\Mods`                                    |
-| Root / Game Folder Mods | a `base` folder                                                                                                | the game folder itself (no subfolder)                    |
-| Video                   | a file with one of these extensions: `.bk2`                                                                    | `base\video`                                             |
-| Save Game Files         | a `.sav` file                                                                                                  | -                                                        |
-| Config File Mods        | a `dishonored_doconfig.cfg` file                                                                               | `USERHOME\Saved Games\Arkane Studios\Dishonored_DO\base` |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Voidinstaller | a file or folder named `voidinstaller.exe` | the game folder itself (no subfolder) |
+| Voidexplorer | a file or folder named `voidexplorer.exe` | the game folder itself (no subfolder) |
+| Voidmod | a file or folder named `modinfo.xml` and a file with one of these extensions: `.voidindex` or `.voidresources` | `Void Installer\Mods` |
+| Root / Game Folder Mods | a `base` folder | the game folder itself (no subfolder) |
+| Video | a file with one of these extensions: `.bk2` | `base\video` |
+| Save Game Files | a `.sav` file | - |
+| Config File Mods | a `dishonored_doconfig.cfg` file | `USERHOME\Saved Games\Arkane Studios\Dishonored_DO\base` |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 

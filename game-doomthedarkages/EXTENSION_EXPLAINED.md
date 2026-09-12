@@ -23,6 +23,21 @@
 - **Steam** — `3017860`
 - **Xbox / Microsoft Store** — `BethesdaSoftworks.ProjectTitan`
 
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Injector Mod | `doomthedarkages-mods` | high | `{gamePath}/mods` |
+| Config | `doomthedarkages-config` | high | `{gamePath}/base` |
+| Binaries / Root Folder | `doomthedarkages-binaries` | high | `{gamePath}` |
+| Sound | `doomthedarkages-sound` | high | `{gamePath}/base/sound/soundbanks/pc` |
+| Atlan Mod Loader | `doomthedarkages-modmanager` | low | `{gamePath}` |
+| DarkAgesPatcher | `doomthedarkages-patcher` | low | `{gamePath}` |
+| Atlan Resource Extractor | `doomthedarkages-atlanextractor` | low | `{gamePath}` |
+| Valen | `doomthedarkages-valen` | low | `{gamePath}` |
+
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
@@ -71,4 +86,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-

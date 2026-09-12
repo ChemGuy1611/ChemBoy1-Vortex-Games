@@ -6,11 +6,11 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type           | Archive must contain                                                                                     | Installs to                           |
-| ------------------ | -------------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| Loader             | a file or folder named `d3d11.dll`                                                                       | the game folder itself (no subfolder) |
-| Mod                | a file with the `.ini` extension and a file with one of these extensions: `.fmt`, `.vb`, `.ib` or `.dds` | `Mods`                                |
-| Fallback Installer | anything not matched above                                                                               | -                                     |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Loader | a file or folder named `d3d11.dll` | the game folder itself (no subfolder) |
+| Mod | a file with the `.ini` extension and a file with one of these extensions: `.fmt`, `.vb`, `.ib` or `.dds` | `Mods` |
+| Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
 

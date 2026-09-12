@@ -8,7 +8,7 @@ Notes:
 - The BaseMod loader is the Lobotomy Mod Manager (LMM) release archive, downloaded from GitHub.
   Only the patcher's PatchFiles folder is deployed, and the prebuilt patched assembly is used in
   place of the vanilla one, so Vortex never has to run the Patchwork/Cecil patch step.
-- Mods install to LobotomyCorp_Data/BaseMods/<Archive Name>/ and are enabled and ordered through
+- Mods install to LobotomyCorp_Data/BaseMods/`<Archive Name>`/ and are enabled and ordered through
   LobotomyCorp_Data/BaseMods/BaseModList_v2.xml.
 ///////////////////////////////////////////*/
 

@@ -35,4 +35,3 @@ Recognised when the archive contains a file or folder named `doomx64vk.exe`.
 
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

@@ -27,6 +27,23 @@
 | --- | --- | --- |
 | `moddbBrowser` | `true` | register the "Browse ModDB" page (moddb.com) |
 
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Root Folder | `darkmessiahofmightandmagic-root` | high | `{gamePath}` |
+| Game Data Folder | `darkmessiahofmightandmagic-data` | high | `{gamePath}` |
+| Data Subfolder | `darkmessiahofmightandmagic-datasub` | high | `{gamePath}/mm` |
+| Materials Subfolder | `darkmessiahofmightandmagic-materialssub` | high | `{gamePath}/mm/materials` |
+| VPK Files | `darkmessiahofmightandmagic-vpk` | high | `{gamePath}/vpks` |
+| Maps (.bsp) | `darkmessiahofmightandmagic-maps` | high | `{gamePath}/mm/maps` |
+| Save | `darkmessiahofmightandmagic-save` | high | `{gamePath}/mm/SAVE` |
+| Config | `darkmessiahofmightandmagic-config` | high | `{gamePath}/mm/cfg` |
+| Launcher Mod | `darkmessiahofmightandmagic-launchermod` | high | `{gamePath}/_mods` |
+| wiltOS Mod Launcher | `darkmessiahofmightandmagic-launcher` | low | `{gamePath}` |
+
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
@@ -76,4 +93,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
-

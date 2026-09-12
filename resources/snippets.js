@@ -492,9 +492,12 @@ function installPk4(api, files) {
       if (result.action === SP_BUT) {
         const idx = modFile.indexOf(path.basename(modFile));
         const rootPath = path.dirname(modFile);
+        const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
         const setModTypeInstruction = { type: "setmodtype", value: SPBASE_ID };
         // Remove directories and anything that isn't in the rootPath.
-        const filtered = files.filter((file) => file.indexOf(rootPath) !== -1);
+        const filtered = files.filter(
+          (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
+        );
         const instructions = filtered.map((file) => {
           return {
             type: "copy",
@@ -508,9 +511,12 @@ function installPk4(api, files) {
       if (result.action === MP_BUT) {
         const idx = modFile.indexOf(path.basename(modFile));
         const rootPath = path.dirname(modFile);
+        const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
         const setModTypeInstruction = { type: "setmodtype", value: MPBASE_ID };
         // Remove directories and anything that isn't in the rootPath.
-        const filtered = files.filter((file) => file.indexOf(rootPath) !== -1);
+        const filtered = files.filter(
+          (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
+        );
         const instructions = filtered.map((file) => {
           return {
             type: "copy",

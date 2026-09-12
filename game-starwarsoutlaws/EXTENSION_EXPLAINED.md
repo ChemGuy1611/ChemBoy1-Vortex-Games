@@ -2,20 +2,20 @@
 
 ## Overview
 
-| Property           | Value                              |
-| ------------------ | ---------------------------------- |
-| Name               | Star Wars Outlaws Vortex Extension |
-| Engine / Structure | Snowdrop Mod Loader                |
-| Author             | ChemBoy1                           |
+| Property | Value |
+| --- | --- |
+| Name | Star Wars Outlaws Vortex Extension |
+| Engine / Structure | Snowdrop Mod Loader |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property       | Value                                                                                                      |
-| -------------- | ---------------------------------------------------------------------------------------------------------- |
-| Game ID        | `starwarsoutlaws`                                                                                          |
-| Executable     | `Outlaws.exe`                                                                                              |
-| Extension Page | [https://www.nexusmods.com/site/mods/970](https://www.nexusmods.com/site/mods/970)                         |
-| PCGamingWiki   | [https://www.pcgamingwiki.com/wiki/Star_Wars_Outlaws](https://www.pcgamingwiki.com/wiki/Star_Wars_Outlaws) |
+| Property | Value |
+| --- | --- |
+| Game ID | `starwarsoutlaws` |
+| Executable | `Outlaws.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/970](https://www.nexusmods.com/site/mods/970) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Star_Wars_Outlaws](https://www.pcgamingwiki.com/wiki/Star_Wars_Outlaws) |
 
 ## Supported Stores
 
@@ -27,23 +27,23 @@
 
 Mod types define where each category of mod gets deployed:
 
-| Name                | ID                          | Priority | Target Path                  |
-| ------------------- | --------------------------- | -------- | ---------------------------- |
-| Config (Documents)  | `starwarsoutlaws-config`    | high     | `DOCUMENTS/My Games/Outlaws` |
-| Game Data Folder    | `starwarsoutlaws-data`      | high     | `{gamePath}`                 |
-| Game Data Subfolder | `starwarsoutlaws-datasub`   | high     | `{gamePath}/helix`           |
-| Snowdrop ModLoader  | `starwarsoutlaws-modloader` | low      | `{gamePath}`                 |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Config (Documents) | `starwarsoutlaws-config` | high | `DOCUMENTS/My Games/Outlaws` |
+| Game Data Folder | `starwarsoutlaws-data` | high | `{gamePath}` |
+| Game Data Subfolder | `starwarsoutlaws-datasub` | high | `{gamePath}/helix` |
+| Snowdrop ModLoader | `starwarsoutlaws-modloader` | low | `{gamePath}` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID                | Priority |
-| --------------------------- | -------- |
-| `starwarsoutlaws-modloader` | 25       |
-| `starwarsoutlaws-data`      | 27       |
-| `starwarsoutlaws-datasub`   | 29       |
-| `starwarsoutlaws-config`    | 31       |
+| Installer ID | Priority |
+| --- | --- |
+| `starwarsoutlaws-modloader` | 25 |
+| `starwarsoutlaws-data` | 27 |
+| `starwarsoutlaws-datasub` | 29 |
+| `starwarsoutlaws-config` | 31 |
 
 ## Registered Tools
 

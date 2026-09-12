@@ -30,6 +30,10 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
+| Root Folder | `balatro-root` | high | `{gamePath}` |
+| Lovely-Injector | `balatro-LOVELY` | low | `{gamePath}` |
+| SteamModded | `balatro-steammodded` | low | `STEAMMODDED_PATH` |
+| Malverk (Texture Pack Manager) | `balatro-malverk` | low | `MALVERK_PATH` |
 | Mod | `balatro-mod` | 25 | `?` |
 
 ## Mod Installers
@@ -63,4 +67,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-

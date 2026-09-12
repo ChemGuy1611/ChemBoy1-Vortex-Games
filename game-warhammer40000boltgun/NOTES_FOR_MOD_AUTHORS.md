@@ -6,16 +6,16 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                                     | Archive must contain                     | Installs to                           |
-| -------------------------------------------- | ---------------------------------------- | ------------------------------------- |
-| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `Boltgun`                             |
-| Blueprint Mods (LogicMods)                   | a `LogicMods` folder                     | `Boltgun\Content\Paks\LogicMods`      |
-| Pak Mods                                     | a `.pak` file                            | -                                     |
-| UE4SS Itself                                 | a `dwmapi.dll` file                      | `Boltgun\Binaries\Win64`              |
-| UE4SS Script Mods (Lua)                      | a `.lua` file and a `Scripts` folder     | `Boltgun\Binaries\Win64\ue4ss\Mods`   |
-| UE4SS DLL Mods (C++)                         | a `.dll` file and a `dlls` folder        | `Boltgun\Binaries\Win64\ue4ss\Mods`   |
-| Root / Game Folder Mods                      | a top-level folder such as `Boltgun`     | the game folder itself (no subfolder) |
-| Root / Game Folder Mods                      | a top-level folder such as `Boltgun`     | the game folder itself (no subfolder) |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `Boltgun` |
+| Blueprint Mods (LogicMods) | a `LogicMods` folder | `Boltgun\Content\Paks\LogicMods` |
+| Pak Mods | a `.pak` file | - |
+| UE4SS Itself | a `dwmapi.dll` file | `Boltgun\Binaries\Win64` |
+| UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `Boltgun\Binaries\Win64\ue4ss\Mods` |
+| UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | `Boltgun\Binaries\Win64\ue4ss\Mods` |
+| Root / Game Folder Mods | a top-level folder such as `Boltgun` | the game folder itself (no subfolder) |
+| Root / Game Folder Mods | a top-level folder such as `Boltgun` | the game folder itself (no subfolder) |
 
 Paths are relative to the game's install folder.
 

@@ -6,13 +6,13 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                      | Archive must contain              | Installs to                           |
-| ----------------------------- | --------------------------------- | ------------------------------------- |
-| Root / Game Folder Mods       | a `SOSGrandBazaar_Data` folder    | the game folder itself (no subfolder) |
-| BepInEx Configuration Manager | a `configurationmanager.dll` file | `Bepinex`                             |
-| Assembly Replacement Mods     | a `Assembly-CSharp.dll` file      | `SOSGrandBazaar_Data\Managed`         |
-| Asset Replacement Mods        | a `.assets` file                  | `SOSGrandBazaar_Data`                 |
-| Fallback Installer            | anything not matched above        | -                                     |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Root / Game Folder Mods | a `SOSGrandBazaar_Data` folder | the game folder itself (no subfolder) |
+| BepInEx Configuration Manager | a `configurationmanager.dll` file | `Bepinex` |
+| Assembly Replacement Mods | a `Assembly-CSharp.dll` file | `SOSGrandBazaar_Data\Managed` |
+| Asset Replacement Mods | a `.assets` file | `SOSGrandBazaar_Data` |
+| Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
 

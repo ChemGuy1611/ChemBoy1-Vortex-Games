@@ -6,17 +6,17 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type           | Archive must contain                                                                                                                                                                                     | Installs to                                                                            |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| Micropatches       | a file or folder named `MicroPatches.dll`                                                                                                                                                                | `MICROPATCHES_PATH`                                                                    |
-| Modfinder          | -                                                                                                                                                                                                        | -                                                                                      |
-| Saveeditor         | -                                                                                                                                                                                                        | -                                                                                      |
-| Portraitmanager    | -                                                                                                                                                                                                        | -                                                                                      |
-| Mod                | a file or folder named one of: `owlcatmodificationmanifest.json`, a file or folder named one of: `Assemblies`, `Blueprints`, `Bundles` or `Localization` and a file with one of these extensions: `.dll` | `USER_HOME\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\Modifications`   |
-| Plugin             | a file with one of these extensions: `.dll`                                                                                                                                                              | `USER_HOME\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\UnityModManager` |
-| Portrait           | a file or folder named one of: `fulllength.png`, `medium.png` or `small.png`                                                                                                                             | `USER_HOME\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\Portraits`       |
-| Save Game Files    | a `.zks` file                                                                                                                                                                                            | `USER_HOME\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\Saved Games`     |
-| Fallback Installer | anything not matched above                                                                                                                                                                               | -                                                                                      |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Micropatches | a file or folder named `MicroPatches.dll` | `MICROPATCHES_PATH` |
+| Modfinder | - | - |
+| Saveeditor | - | - |
+| Portraitmanager | - | - |
+| Mod | a file or folder named one of: `owlcatmodificationmanifest.json`, a file or folder named one of: `Assemblies`, `Blueprints`, `Bundles` or `Localization` and a file with one of these extensions: `.dll` | `USER_HOME\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\Modifications` |
+| Plugin | a file with one of these extensions: `.dll` | `USER_HOME\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\UnityModManager` |
+| Portrait | a file or folder named one of: `fulllength.png`, `medium.png` or `small.png` | `USER_HOME\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\Portraits` |
+| Save Game Files | a `.zks` file | `USER_HOME\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\Saved Games` |
+| Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 

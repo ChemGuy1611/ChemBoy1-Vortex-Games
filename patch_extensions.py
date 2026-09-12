@@ -22,6 +22,7 @@ Usage:
     python patch_extensions.py --only PATCH_NAME              # run only the named patch (bypasses enabled flag)
     python patch_extensions.py --only gog_app_id              # resolve GOGAPP_ID from gogdb.org (registered disabled: several requests per unresolved game)
     python patch_extensions.py GAME_ID --only plan_b_lo_region --dry-run   # Plan B FBLO load order port: splice darktide's LO region into one target game (registered disabled; one game at a time; see PLAN_B_LO_GAMES)
+    python patch_extensions.py GAME_ID [GAME_ID ...] --only rootpath_prefix_scope --dry-run   # installer mod-root scoping fix: file.indexOf(rootPath) !== -1 -> file.startsWith(rootPrefix) (registered disabled; apply to one wave of games at a time)
     python patch_extensions.py GAME_ID [GAME_ID ...] --only PATCH_NAME
     python patch_extensions.py --audit                        # run the read-only audits (installer priorities + FOMOD checks + store ID wiring) then exit
     python patch_extensions.py GAME_ID [GAME_ID ...] --audit  # scope audits to specific games only
@@ -476,37 +477,124 @@ def patch_setup_vars(game_id, src, context):
     return new_src, True, f"inserted {', '.join(missing_names)} in setup()"
 
 
+def _matching_paren(text, open_idx):
+    """Return the index of the ')' closing the '(' at open_idx, or None."""
+    depth = 0
+    for i in range(open_idx, len(text)):
+        if text[i] == '(':
+            depth += 1
+        elif text[i] == ')':
+            depth -= 1
+            if depth == 0:
+                return i
+    return None
+
+
+DIR_ENTRY_GUARD = "!file.endsWith(path.sep)"
+ROOT_SCOPE_TEST = "file.startsWith(rootPrefix)"
+
+
 def patch_filtered_empty_dirs(game_id, src, context):
     """
-    Ensure every `const filtered = files.filter(...)` block in an installer
-    includes `!file.endsWith(path.sep)` to skip directory entries emitted by Vortex.
-    Canonical form: template-basic:495-497.
+    Ensure every files.filter() that scopes to the mod root also drops the directory
+    entries Vortex emits. A predicate testing file.startsWith(rootPrefix) without a
+    !file.endsWith(path.sep) guard gets one. Canonical form: resources/INSTALLER_SYSTEM.md.
     """
-    if not re.search(r'\bconst\s+filtered\s*=\s*files\.filter\(', src):
+    if ROOT_SCOPE_TEST not in src:
         return src, False, SKIP_ALREADY_SET
 
-    # Shape A: commented canonical line above simplified active line — replace both with canonical
-    shape_a = re.compile(
-        r'([ \t]*)//\(\(file\.indexOf\(rootPath\) !== -1\) && \(!file\.endsWith\(path\.sep\)\)\)\n'
-        r'\1\(\(file\.indexOf\(rootPath\) !== -1\)\)'
-    )
-    new_src = shape_a.sub(
-        r'\1((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))',
-        src
-    )
+    # Comment-stripped copy keeps character offsets, so positions found here index src.
+    bare = strip_js_comments(src)
+    positions = []
+    for m in re.finditer(r'\.filter\(', bare):
+        open_idx = m.end() - 1
+        close_idx = _matching_paren(bare, open_idx)
+        if close_idx is None:
+            continue
+        predicate = bare[open_idx + 1:close_idx]
+        if ROOT_SCOPE_TEST not in predicate or "endsWith(path.sep)" in predicate:
+            continue
+        positions.append(bare.index(ROOT_SCOPE_TEST, open_idx, close_idx))
 
-    # Shape B: bare simplified line not already followed by && guard
-    shape_b = re.compile(
-        r'\(\(file\.indexOf\(rootPath\) !== -1\)\)(?!\s*&&\s*\(!file\.endsWith)'
-    )
-    new_src = shape_b.sub(
-        '((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))',
-        new_src
-    )
-
-    if new_src == src:
+    if not positions:
         return src, False, SKIP_ALREADY_SET
-    return new_src, True, "added !file.endsWith(path.sep) guard to filtered block(s)"
+
+    for pos in sorted(positions, reverse=True):
+        src = src[:pos] + f"{DIR_ENTRY_GUARD} && " + src[pos:]
+    return src, True, f"added {DIR_ENTRY_GUARD} guard to {len(positions)} filter(s)"
+
+
+# Scope test rewrite. The substring form is the defect; the prefix form is the fix.
+ROOTPATH_SUBSTRING_TEST = "file.indexOf(rootPath) !== -1"
+ROOTPREFIX_DECL_TEXT = 'const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;'
+# The shape oxfmt normalised almost every site to: the whole predicate on its own line.
+ROOTPATH_CANONICAL_LINE = re.compile(
+    r'^(\s*)\(file\) => file\.indexOf\(rootPath\) !== -1 && !file\.endsWith\(path\.sep\),\s*$'
+)
+ROOTPATH_DECL = re.compile(r'^(\s*)(?:const|let|var)\s+rootPath\s*=')
+ROOTPATH_REASSIGN = re.compile(r'^\s*rootPath\s*=[^=]')
+ROOTPREFIX_DECL = re.compile(r'(?:const|let|var)\s+rootPrefix\s*=')
+FILTER_HEAD = re.compile(r'\.filter\(')
+
+
+def patch_rootpath_prefix_scope(game_id, src, context):
+    """
+    Replace the substring mod-root scope test with a prefix test.
+
+    `file.indexOf(rootPath) !== -1` is a substring search. When the mod file sits at
+    the archive root path.dirname() returns ".", so the test collapses to "path
+    contains a dot" and silently drops every extension-less file; it also matches
+    sibling folders sharing a name prefix. Each live site becomes
+    `file.startsWith(rootPrefix)`, with rootPrefix declared after the rootPath
+    declaration - or immediately above the filter when rootPath is reassigned in
+    between, since the prefix has to be built from the final value.
+    Commented-out sites are left untouched.
+    """
+    if ROOTPATH_SUBSTRING_TEST not in src:
+        return src, False, SKIP_ALREADY_SET
+
+    lines = src.split("\n")
+    bare_lines = strip_js_comments(src).split("\n")
+    sites = [i for i, bare in enumerate(bare_lines) if ROOTPATH_SUBSTRING_TEST in bare]
+    if not sites:
+        return src, False, SKIP_ALREADY_SET
+
+    inserts = {}
+    for i in sites:
+        decl = next((j for j in range(i, -1, -1) if ROOTPATH_DECL.match(bare_lines[j])), None)
+        if decl is None:
+            return src, False, f"line {i + 1}: no rootPath declaration above the scope test"
+        if any(ROOTPREFIX_DECL.search(bare_lines[j]) for j in range(decl, i + 1)):
+            continue
+        if any(ROOTPATH_REASSIGN.match(bare_lines[j]) for j in range(decl + 1, i + 1)):
+            head = next((j for j in range(i, decl, -1) if FILTER_HEAD.search(bare_lines[j])), None)
+            if head is None:
+                return src, False, f"line {i + 1}: rootPath reassigned but no filter head found"
+            indent = re.match(r'\s*', lines[head]).group(0)
+            inserts[head] = ("before", indent + ROOTPREFIX_DECL_TEXT)
+        else:
+            inserts[decl] = ("after", ROOTPATH_DECL.match(lines[decl]).group(1) + ROOTPREFIX_DECL_TEXT)
+
+    for i in sites:
+        canonical = ROOTPATH_CANONICAL_LINE.match(lines[i])
+        if canonical:
+            lines[i] = f"{canonical.group(1)}(file) => {DIR_ENTRY_GUARD} && {ROOT_SCOPE_TEST},"
+            continue
+        # Odd shapes keep their structure; only the live occurrences of the test are
+        # swapped, so a commented copy on the same line stays as it is.
+        for col in sorted(
+            (m.start() for m in re.finditer(re.escape(ROOTPATH_SUBSTRING_TEST), bare_lines[i])),
+            reverse=True,
+        ):
+            lines[i] = lines[i][:col] + ROOT_SCOPE_TEST + lines[i][col + len(ROOTPATH_SUBSTRING_TEST):]
+
+    for idx in sorted(inserts, reverse=True):
+        where, text = inserts[idx]
+        lines.insert(idx + 1 if where == "after" else idx, text)
+
+    return "\n".join(lines), True, (
+        f"rewrote {len(sites)} scope test(s); inserted {len(inserts)} rootPrefix declaration(s)"
+    )
 
 
 def patch_ignore_conflicts_deploy_constants(game_id, src, context):
@@ -913,6 +1001,7 @@ PATCHES = [
     {"name": "setup_vars",                       "enabled": True, "fn": patch_setup_vars},
     {"name": "register_actions",                 "enabled": True, "fn": patch_register_actions},
     {"name": "context_once_api",                 "enabled": True, "fn": patch_context_once_api},
+    {"name": "rootpath_prefix_scope",            "enabled": False,"fn": patch_rootpath_prefix_scope},
     {"name": "filtered_empty_dirs",              "enabled": True, "fn": patch_filtered_empty_dirs},
     {"name": "ignore_conflicts_deploy_constants","enabled": True, "fn": patch_ignore_conflicts_deploy_constants},
     {"name": "spec_ignore_fields",              "enabled": True, "fn": patch_spec_ignore_fields},

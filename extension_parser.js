@@ -7,7 +7,7 @@
  *
  * Consumed by:
  *   generate_explained.js  -> EXTENSION_EXPLAINED.md
- *   generate_notes.js      -> NOTES_FOR_MOD_AUTHORS.md / .bbcode.txt
+ *   generate_notes.js      -> NOTES_FOR_MOD_AUTHORS.md / .bbcode
  *
  * These functions are pure string parsers: no fs, no path, no side effects.
  */
@@ -436,8 +436,10 @@ function resolveValue(expr, table) {
     });
   }
 
-  // path.join(...)
-  const pjMatch = e.match(/^path\.join\((.+)\)$/);
+  // path.join(...) -- dotAll so a call written across multiple lines (one arg per
+  // line, common repo style) still matches instead of falling through to the raw
+  // unparsed source with its embedded newlines.
+  const pjMatch = e.match(/^path\.join\((.+)\)$/s);
   if (pjMatch) {
     const args = splitPathJoinArgs(pjMatch[1]);
     return args.map((a) => resolveValue(a, table) || a).join("/");
@@ -459,8 +461,8 @@ function resolveValue(expr, table) {
 function resolveWithFallback(expr, table, src) {
   if (!expr) return null;
   const e = expr.trim();
-  // Handle path.join with fallback-aware arg resolution
-  const pjMatch = e.match(/^path\.join\((.+)\)$/);
+  // Handle path.join with fallback-aware arg resolution (dotAll -- see resolveValue)
+  const pjMatch = e.match(/^path\.join\((.+)\)$/s);
   if (pjMatch) {
     const args = splitPathJoinArgs(pjMatch[1]);
     return args.map((a) => resolveWithFallback(a, table, src) || a).join("/");
@@ -594,7 +596,10 @@ function extractModTypes(src, table) {
   // /\[([\s\S]*?)\]\s*[,}]/ ends at the first ']' followed by ',' or '}', so any
   // array-valued property inside an entry (an "exclusions": [...], say) truncated
   // the block and silently dropped every modType after it.
-  const modTypesStart = src.match(/"modTypes"\s*:\s*\[/);
+  // Repo convention writes this key bare (modTypes: [...]) far more often than quoted --
+  // a quote-only match here left every spec.modTypes array undetected and silently
+  // dropped its entries (e.g. Content/Root folder installers) from both generated docs.
+  const modTypesStart = src.match(new RegExp(keyPattern("modTypes") + "\\s*:\\s*\\["));
   if (!modTypesStart) return results;
   const bracketOpen = modTypesStart.index + modTypesStart[0].length - 1;
   const bracketClose = scanToMatchingClose(src, bracketOpen, "[", "]");
@@ -797,7 +802,10 @@ function extractInstallers(src, table) {
   const results = [];
   // Strip block comments but preserve line structure
   const stripped = src.replace(/(?<!\/)\/\*[\s\S]*?\*\//g, "");
-  const re = /context\.registerInstaller\(\s*([^,]+),\s*(\d+)/g;
+  // Skip a leading `//comment` line some extensions put right after the opening
+  // paren to document the installer -- without this the comment text itself gets
+  // captured as the id (see game-warhammer40kdarktide's `//covers DML and LOFM`).
+  const re = /context\.registerInstaller\(\s*(?:\/\/[^\n]*\n\s*)*([^,]+),\s*(\d+)/g;
   let m;
   while ((m = re.exec(stripped)) !== null) {
     // Check this isn't in a comment

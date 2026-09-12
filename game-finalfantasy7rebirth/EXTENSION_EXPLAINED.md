@@ -2,20 +2,20 @@
 
 ## Overview
 
-| Property           | Value                                      |
-| ------------------ | ------------------------------------------ |
-| Name               | Final Fantasy VII Rebirth Vortex Extension |
-| Engine / Structure | UE4 with IO Store                          |
-| Author             | ChemBoy1                                   |
+| Property | Value |
+| --- | --- |
+| Name | Final Fantasy VII Rebirth Vortex Extension |
+| Engine / Structure | UE4 with IO Store |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property       | Value                                                                                                                      |
-| -------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Game ID        | `finalfantasy7rebirth`                                                                                                     |
-| Executable     | `ff7rebirth.exe`                                                                                                           |
-| Extension Page | [https://www.nexusmods.com/site/mods/1150](https://www.nexusmods.com/site/mods/1150)                                       |
-| PCGamingWiki   | [https://www.pcgamingwiki.com/wiki/Final_Fantasy_VII_Rebirth](https://www.pcgamingwiki.com/wiki/Final_Fantasy_VII_Rebirth) |
+| Property | Value |
+| --- | --- |
+| Game ID | `finalfantasy7rebirth` |
+| Executable | `ff7rebirth.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1150](https://www.nexusmods.com/site/mods/1150) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Final_Fantasy_VII_Rebirth](https://www.pcgamingwiki.com/wiki/Final_Fantasy_VII_Rebirth) |
 
 ## Supported Stores
 
@@ -24,51 +24,51 @@
 
 ## Feature Flags
 
-| Flag         | Value   | Description                                            |
-| ------------ | ------- | ------------------------------------------------------ |
-| `CHECK_DOCS` | `false` |                                                        |
-| `IO_STORE`   | `true`  | true if the Paks folder contains .ucas and .utoc files |
-| `SYM_LINKS`  | `true`  | true if symlink deployment is enabled for this game    |
+| Flag | Value | Description |
+| --- | --- | --- |
+| `CHECK_DOCS` | `false` |  |
+| `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
+| `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
-| Name                          | ID                                          | Priority | Target Path                                |
-| ----------------------------- | ------------------------------------------- | -------- | ------------------------------------------ |
-| FF7RML Mod                    | `finalfantasy7rebirth-modloadermod`         | high     | `{gamePath}/End/Mods`                      |
-| UE4SS Script-LogicMod Combo   | `finalfantasy7rebirth-ue4sscombo`           | high     | `{gamePath}`                               |
-| UE4SS LogicMods (Blueprint)   | `finalfantasy7rebirth-logicmods`            | high     | `{gamePath}/End/Content/Paks/LogicMods`    |
-| UE4SS                         | `finalfantasy7rebirth-ue4ss`                | high     | `{gamePath}/End/Binaries/Win64`            |
-| UE4SS Script Mod              | `finalfantasy7rebirth-scripts`              | high     | `{gamePath}/End/Binaries/Win64/ue4ss/Mods` |
-| UE4SS DLL Mod                 | `finalfantasy7rebirth-ue4ssdll`             | high     | `{gamePath}/End/Binaries/Win64/ue4ss/Mods` |
-| Paks (no ~mods)               | `finalfantasy7rebirth-pak`                  | low      | `{gamePath}/End/Content/Paks`              |
-| Root Folder                   | `finalfantasy7rebirth-root`                 | high     | `{gamePath}`                               |
-| Binaries (Engine Injector)    | `finalfantasy7rebirth-binaries`             | high     | `{gamePath}/End/Binaries/Win64`            |
-| FF7R Mod Loader               | `finalfantasy7rebirth-modloader`            | low      | `{gamePath}/End/Mods`                      |
-| UE5 Sortable Mod              | `finalfantasy7rebirth-ue5-sortable-modtype` | 25       | `?`                                        |
-| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype`                      | 65       | `?`                                        |
-| Config (Documents)            | `finalfantasy7rebirth-config`               | 45       | `?`                                        |
-| Saves (Documents)             | `finalfantasy7rebirth-save`                 | 47       | `?`                                        |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| FF7RML Mod | `finalfantasy7rebirth-modloadermod` | high | `{gamePath}/End/Mods` |
+| UE4SS Script-LogicMod Combo | `finalfantasy7rebirth-ue4sscombo` | high | `{gamePath}` |
+| UE4SS LogicMods (Blueprint) | `finalfantasy7rebirth-logicmods` | high | `{gamePath}/End/Content/Paks/LogicMods` |
+| UE4SS | `finalfantasy7rebirth-ue4ss` | high | `{gamePath}/End/Binaries/Win64` |
+| UE4SS Script Mod | `finalfantasy7rebirth-scripts` | high | `{gamePath}/End/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `finalfantasy7rebirth-ue4ssdll` | high | `{gamePath}/End/Binaries/Win64/ue4ss/Mods` |
+| Paks (no ~mods) | `finalfantasy7rebirth-pak` | low | `{gamePath}/End/Content/Paks` |
+| Root Folder | `finalfantasy7rebirth-root` | high | `{gamePath}` |
+| Binaries (Engine Injector) | `finalfantasy7rebirth-binaries` | high | `{gamePath}/End/Binaries/Win64` |
+| FF7R Mod Loader | `finalfantasy7rebirth-modloader` | low | `{gamePath}/End/Mods` |
+| UE5 Sortable Mod | `finalfantasy7rebirth-ue5-sortable-modtype` | 25 | `?` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
+| Config (Documents) | `finalfantasy7rebirth-config` | 45 | `?` |
+| Saves (Documents) | `finalfantasy7rebirth-save` | 47 | `?` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID                        | Priority |
-| ----------------------------------- | -------- |
-| `ue5-pak-installer`                 | 29       |
-| `finalfantasy7rebirth-ue4sscombo`   | 25       |
-| `finalfantasy7rebirth-logicmods`    | 26       |
-| `finalfantasy7rebirth-modloader`    | 27       |
-| `finalfantasy7rebirth-modloadermod` | 28       |
-| `finalfantasy7rebirth-ue4ss`        | 31       |
-| `finalfantasy7rebirth-scripts`      | 33       |
-| `finalfantasy7rebirth-ue4ssdll`     | 35       |
-| `finalfantasy7rebirth-root`         | 37       |
-| `finalfantasy7rebirth-config`       | 39       |
-| `finalfantasy7rebirth-save`         | 41       |
-| `finalfantasy7rebirth-binaries`     | 43       |
+| Installer ID | Priority |
+| --- | --- |
+| `ue5-pak-installer` | 29 |
+| `finalfantasy7rebirth-ue4sscombo` | 25 |
+| `finalfantasy7rebirth-logicmods` | 26 |
+| `finalfantasy7rebirth-modloader` | 27 |
+| `finalfantasy7rebirth-modloadermod` | 28 |
+| `finalfantasy7rebirth-ue4ss` | 31 |
+| `finalfantasy7rebirth-scripts` | 33 |
+| `finalfantasy7rebirth-ue4ssdll` | 35 |
+| `finalfantasy7rebirth-root` | 37 |
+| `finalfantasy7rebirth-config` | 39 |
+| `finalfantasy7rebirth-save` | 41 |
+| `finalfantasy7rebirth-binaries` | 43 |
 
 ## Registered Tools
 
@@ -95,8 +95,8 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-| ---------- | ------- | ------- |
-| UE4SS      | —       | —       |
+| --- | --- | --- |
+| UE4SS | — | — |
 
 ## Special Features
 

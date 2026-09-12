@@ -2,41 +2,42 @@
 
 ## Overview
 
-| Property | Value                          |
-| -------- | ------------------------------ |
-| Name     | Battlefield 1 Vortex Extension |
-| Author   | ChemBoy1                       |
+| Property | Value |
+| --- | --- |
+| Name | Battlefield 1 Vortex Extension |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property       | Value                                                                                              |
-| -------------- | -------------------------------------------------------------------------------------------------- |
-| Game ID        | `battlefield1`                                                                                     |
-| Executable     | `bf1.exe`                                                                                          |
-| Extension Page | [https://www.nexusmods.com/site/mods/847](https://www.nexusmods.com/site/mods/847)                 |
-| PCGamingWiki   | [https://www.pcgamingwiki.com/wiki/Battlefield_1](https://www.pcgamingwiki.com/wiki/Battlefield_1) |
+| Property | Value |
+| --- | --- |
+| Game ID | `battlefield1` |
+| Executable | `bf1.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/847](https://www.nexusmods.com/site/mods/847) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Battlefield_1](https://www.pcgamingwiki.com/wiki/Battlefield_1) |
 
 ## Supported Stores
 
 - **Steam** — `1238840`
+- **EA** — `Registry`
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
-| Name                       | ID                       | Priority | Target Path                            |
-| -------------------------- | ------------------------ | -------- | -------------------------------------- |
-| Binaries (Engine Injector) | `battlefield1-binaries`  | high     | `{gamePath}`                           |
-| Frosty .fbmod              | `battlefield1-frostymod` | high     | `{gamePath}/FrostyModManager/Mods/bf1` |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Binaries (Engine Injector) | `battlefield1-binaries` | high | `{gamePath}` |
+| Frosty .fbmod | `battlefield1-frostymod` | high | `{gamePath}/FrostyModManager/Mods/bf1` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID                           | Priority |
-| -------------------------------------- | -------- |
-| `masseffectandromeda-frostymodmanager` | 25       |
-| `masseffectandromeda-fbmod`            | 30       |
+| Installer ID | Priority |
+| --- | --- |
+| `masseffectandromeda-frostymodmanager` | 25 |
+| `masseffectandromeda-fbmod` | 30 |
 
 ## Registered Tools
 

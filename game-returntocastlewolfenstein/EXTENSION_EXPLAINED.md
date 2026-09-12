@@ -30,6 +30,17 @@
 | --- | --- | --- |
 | `moddbBrowser` | `true` | register the "Browse ModDB" page (moddb.com) |
 
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| .pk3 Data (Main) | `returntocastlewolfenstein-main` | high | `{gamePath}/Main` |
+| Main Folder | `returntocastlewolfenstein-mainfolder` | high | `{gamePath}/.` |
+| RealRTCW | `returntocastlewolfenstein-realrtcw` | low | `{gamePath}` |
+| ioRTCW | `returntocastlewolfenstein-iortcw` | low | `{gamePath}` |
+
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
@@ -64,4 +75,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-

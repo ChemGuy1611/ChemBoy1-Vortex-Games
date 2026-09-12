@@ -2,20 +2,20 @@
 
 ## Overview
 
-| Property           | Value                                     |
-| ------------------ | ----------------------------------------- |
-| Name               | Deus Ex: Mankind Divided Vortex Extension |
-| Engine / Structure | Basic Game                                |
-| Author             | ChemBoy1                                  |
+| Property | Value |
+| --- | --- |
+| Name | Deus Ex: Mankind Divided Vortex Extension |
+| Engine / Structure | Basic Game |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property       | Value                                                                                                                  |
-| -------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| Game ID        | `deusexmankinddivided`                                                                                                 |
-| Executable     | `retail/DXMD.exe`                                                                                                      |
-| Extension Page | [https://www.nexusmods.com/site/mods/1466](https://www.nexusmods.com/site/mods/1466)                                   |
-| PCGamingWiki   | [https://www.pcgamingwiki.com/wiki/Deus_Ex_Mankind_Divided](https://www.pcgamingwiki.com/wiki/Deus_Ex_Mankind_Divided) |
+| Property | Value |
+| --- | --- |
+| Game ID | `deusexmankinddivided` |
+| Executable | `retail/DXMD.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1466](https://www.nexusmods.com/site/mods/1466) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Deus_Ex_Mankind_Divided](https://www.pcgamingwiki.com/wiki/Deus_Ex_Mankind_Divided) |
 
 ## Supported Stores
 
@@ -27,23 +27,23 @@
 
 Mod types define where each category of mod gets deployed:
 
-| Name                       | ID                                | Priority | Target Path              |
-| -------------------------- | --------------------------------- | -------- | ------------------------ |
-| runtime file               | `deusexmankinddivided-runtime`    | high     | `{gamePath}/runtime`     |
-| DLC runtime file           | `deusexmankinddivided-dlcruntime` | high     | `{gamePath}/DLC/runtime` |
-| Root Folder                | `deusexmankinddivided-root`       | high     | `{gamePath}`             |
-| Binaries (Engine Injector) | `deusexmankinddivided-binaries`   | high     | `{gamePath}/retail`      |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| runtime file | `deusexmankinddivided-runtime` | high | `{gamePath}/runtime` |
+| DLC runtime file | `deusexmankinddivided-dlcruntime` | high | `{gamePath}/DLC/runtime` |
+| Root Folder | `deusexmankinddivided-root` | high | `{gamePath}` |
+| Binaries (Engine Injector) | `deusexmankinddivided-binaries` | high | `{gamePath}/retail` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID                      | Priority |
-| --------------------------------- | -------- |
-| `deusexmankinddivided-root`       | 25       |
-| `deusexmankinddivided-runtime`    | 27       |
-| `deusexmankinddivided-dlcruntime` | 29       |
-| `deusexmankinddivided-binaries`   | 29       |
+| Installer ID | Priority |
+| --- | --- |
+| `deusexmankinddivided-root` | 25 |
+| `deusexmankinddivided-runtime` | 27 |
+| `deusexmankinddivided-dlcruntime` | 29 |
+| `deusexmankinddivided-binaries` | 29 |
 
 ## Registered Tools
 

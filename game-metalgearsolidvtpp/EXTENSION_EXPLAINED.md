@@ -50,6 +50,8 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
+| Root Folder | `metalgearsolidvtpp-root` | high | `{gamePath}` |
+| SnakeBite | `metalgearsolidvtpp-mod` | high | `{gamePath}/SnakeBite_Mods` |
 | Snakebite Mod Manager | `metalgearsolidvtpp-loader` | 70 | `?` |
 | MGSVFix | `metalgearsolidvtpp-mgsvfix` | 72 | `?` |
 
@@ -97,4 +99,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-

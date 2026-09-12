@@ -2,21 +2,21 @@
 
 ## Overview
 
-| Property           | Value                   |
-| ------------------ | ----------------------- |
-| Name               | Hades Vortex Extension  |
+| Property | Value |
+| --- | --- |
+| Name | Hades Vortex Extension |
 | Engine / Structure | 3rd-Party Mod Installer |
-| Author             | ChemBoy1                |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property          | Value                                                                                |
-| ----------------- | ------------------------------------------------------------------------------------ |
-| Game ID           | `hades`                                                                              |
-| Executable        | `x64/Hades.exe`                                                                      |
-| Executable (Xbox) | `gamelaunchhelper.exe`                                                               |
-| Extension Page    | [https://www.nexusmods.com/site/mods/1137](https://www.nexusmods.com/site/mods/1137) |
-| PCGamingWiki      | [https://www.pcgamingwiki.com/wiki/Hades](https://www.pcgamingwiki.com/wiki/Hades)   |
+| Property | Value |
+| --- | --- |
+| Game ID | `hades` |
+| Executable | `x64/Hades.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1137](https://www.nexusmods.com/site/mods/1137) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Hades](https://www.pcgamingwiki.com/wiki/Hades) |
 
 ## Supported Stores
 
@@ -28,23 +28,23 @@
 
 Mod types define where each category of mod gets deployed:
 
-| Name              | ID                 | Priority | Target Path               |
-| ----------------- | ------------------ | -------- | ------------------------- |
-| Mod               | `hades-mod`        | high     | `{gamePath}/Content/Mods` |
-| Binaries          | `hades-binaries`   | high     | `{gamePath}/x64`          |
-| Binaries (Vulkan) | `hades-binariesvk` | high     | `{gamePath}/x64Vk`        |
-| Root Game Folder  | `hades-root`       | high     | `{gamePath}`              |
-| Mod Importer      | `hades-manager`    | low      | `{gamePath}/Content`      |
-| Mod Utility       | `hades-modutility` | low      | `{gamePath}/Content/Mods` |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Mod | `hades-mod` | high | `{gamePath}/Content/Mods` |
+| Binaries | `hades-binaries` | high | `{gamePath}/x64` |
+| Binaries (Vulkan) | `hades-binariesvk` | high | `{gamePath}/x64Vk` |
+| Root Game Folder | `hades-root` | high | `{gamePath}` |
+| Mod Importer | `hades-manager` | low | `{gamePath}/Content` |
+| Mod Utility | `hades-modutility` | low | `{gamePath}/Content/Mods` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID       | Priority |
-| ------------------ | -------- |
-| `hades-manager`    | 25       |
-| `hades-modutility` | 30       |
+| Installer ID | Priority |
+| --- | --- |
+| `hades-manager` | 25 |
+| `hades-modutility` | 30 |
 
 ## Registered Tools
 

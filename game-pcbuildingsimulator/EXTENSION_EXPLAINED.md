@@ -2,21 +2,21 @@
 
 ## Overview
 
-| Property           | Value                                  |
-| ------------------ | -------------------------------------- |
-| Name               | PC Building Simulator Vortex Extension |
-| Engine / Structure | Unity BepinEx                          |
-| Author             | ChemBoy1                               |
+| Property | Value |
+| --- | --- |
+| Name | PC Building Simulator Vortex Extension |
+| Engine / Structure | Unity BepinEx |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property          | Value                                                                                                              |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Game ID           | `pcbuildingsimulator`                                                                                              |
-| Executable        | `PCBS.exe`                                                                                                         |
-| Executable (Xbox) | `gamelaunchhelper.exe`                                                                                             |
-| Extension Page    | [https://www.nexusmods.com/site/mods/1493](https://www.nexusmods.com/site/mods/1493)                               |
-| PCGamingWiki      | [https://www.pcgamingwiki.com/wiki/PC_Building_Simulator](https://www.pcgamingwiki.com/wiki/PC_Building_Simulator) |
+| Property | Value |
+| --- | --- |
+| Game ID | `pcbuildingsimulator` |
+| Executable | `PCBS.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1493](https://www.nexusmods.com/site/mods/1493) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/PC_Building_Simulator](https://www.pcgamingwiki.com/wiki/PC_Building_Simulator) |
 
 ## Supported Stores
 
@@ -26,33 +26,33 @@
 
 ## Feature Flags
 
-| Flag                | Value   | Description                                |
-| ------------------- | ------- | ------------------------------------------ |
-| `allowBepinexNexus` | `false` | set false until bugs are fixed             |
-| `downloadCfgMan`    | `false` | should BepInExConfigManager be downloaded? |
+| Flag | Value | Description |
+| --- | --- | --- |
+| `allowBepinexNexus` | `false` | set false until bugs are fixed |
+| `downloadCfgMan` | `false` | should BepInExConfigManager be downloaded? |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
-| Name                          | ID                                | Priority | Target Path                    |
-| ----------------------------- | --------------------------------- | -------- | ------------------------------ |
-| Root Game Folder              | `pcbuildingsimulator-root`        | high     | `{gamePath}`                   |
-| Assembly DLL Mod              | `pcbuildingsimulator-assemblydll` | high     | `{gamePath}/PCBS_Data/Managed` |
-| BepInEx Configuration Manager | `pcbuildingsimulator-bepcfgman`   | high     | `{gamePath}/Bepinex`           |
-| BepInEx Mod                   | `pcbuildingsimulator-bepmods`     | high     | `{gamePath}/BepinEx/plugins`   |
-| Save                          | `pcbuildingsimulator-save`        | high     | `{gamePath}/Saves`             |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Root Game Folder | `pcbuildingsimulator-root` | high | `{gamePath}` |
+| Assembly DLL Mod | `pcbuildingsimulator-assemblydll` | high | `{gamePath}/PCBS_Data/Managed` |
+| BepInEx Configuration Manager | `pcbuildingsimulator-bepcfgman` | high | `{gamePath}/Bepinex` |
+| BepInEx Mod | `pcbuildingsimulator-bepmods` | high | `{gamePath}/BepinEx/plugins` |
+| Save | `pcbuildingsimulator-save` | high | `{gamePath}/Saves` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID                      | Priority |
-| --------------------------------- | -------- |
-| `pcbuildingsimulator-root`        | 8        |
-| `pcbuildingsimulator-bepcfgman`   | 9        |
-| `pcbuildingsimulator-assemblydll` | 48       |
-| `pcbuildingsimulator-save`        | 49       |
+| Installer ID | Priority |
+| --- | --- |
+| `pcbuildingsimulator-root` | 8 |
+| `pcbuildingsimulator-bepcfgman` | 9 |
+| `pcbuildingsimulator-assemblydll` | 48 |
+| `pcbuildingsimulator-save` | 49 |
 
 ## Registered Tools
 
@@ -74,17 +74,17 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 ## Auto-Downloaded Dependencies
 
-| Dependency                    | Version  | Details        |
-| ----------------------------- | -------- | -------------- |
-| BepInEx                       | 5.4.23.5 | unitymono, x64 |
-| BepInEx Configuration Manager | 18.4.1   | —              |
+| Dependency | Version | Details |
+| --- | --- | --- |
+| BepInEx | 5.4.23.5 | unitymono, x64 |
+| BepInEx Configuration Manager | 18.4.1 | — |
 
 ## Config & Save Paths
 
-| Type              | Path                                                                     |
-| ----------------- | ------------------------------------------------------------------------ |
+| Type | Path |
+| --- | --- |
 | Config (Registry) | `HKEY_CURRENT_USER\\Software\\The Irregular Corp\\PC Building Simulator` |
-| Save              | `Saves`                                                                  |
+| Save | `Saves` |
 
 ## Special Features
 

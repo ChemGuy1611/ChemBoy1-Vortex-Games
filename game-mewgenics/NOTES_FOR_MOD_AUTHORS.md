@@ -6,14 +6,14 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type           | Archive must contain                                                                                                                            | Installs to                           |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| Mewtator           | a file or folder named `Mewtator.exe`                                                                                                           | -                                     |
-| Saveeeditor        | a file or folder named `MewgenicsSaveEditor.exe`                                                                                                | -                                     |
-| Mewjector          | a file or folder named `version.dll`                                                                                                            | the game folder itself (no subfolder) |
-| Mod                | a file or folder named one of: `description.json` and a file or folder named one of: `data`, `audio`, `levels`, `shaders`, `swfs` or `textures` | `mods`                                |
-| Mewjectormod       | a file with one of these extensions: `.dll`                                                                                                     | `mods`                                |
-| Fallback Installer | anything not matched above                                                                                                                      | -                                     |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Mewtator | a file or folder named `Mewtator.exe` | - |
+| Saveeeditor | a file or folder named `MewgenicsSaveEditor.exe` | - |
+| Mewjector | a file or folder named `version.dll` | the game folder itself (no subfolder) |
+| Mod | a file or folder named one of: `description.json` and a file or folder named one of: `data`, `audio`, `levels`, `shaders`, `swfs` or `textures` | `mods` |
+| Mewjectormod | a file with one of these extensions: `.dll` | `mods` |
+| Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
 

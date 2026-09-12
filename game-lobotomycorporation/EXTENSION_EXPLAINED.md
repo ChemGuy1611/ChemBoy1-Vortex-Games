@@ -11,7 +11,7 @@
 ### Notes
 
 - The BaseMod loader is the Lobotomy Mod Manager (LMM) release archive, downloaded from GitHub.
-- Mods install to LobotomyCorp_Data/BaseMods/<Archive Name>/ and are enabled and ordered through
+- Mods install to LobotomyCorp_Data/BaseMods/`<Archive Name>`/ and are enabled and ordered through
 
 ## Key Identifiers
 
@@ -57,6 +57,8 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
+| Root Folder | `lobotomycorporation-root` | high | `{gamePath}` |
+| BaseMod | `lobotomycorporation-mod` | high | `{gamePath}/LobotomyCorp_Data/BaseMods` |
 | BaseMod Loader | `lobotomycorporation-loader` | 70 | `?` |
 
 ## Mod Installers
@@ -103,4 +105,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-

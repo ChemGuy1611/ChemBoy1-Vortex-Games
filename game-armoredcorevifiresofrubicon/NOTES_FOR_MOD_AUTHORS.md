@@ -6,12 +6,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type           | Archive must contain                        | Installs to                           |
-| ------------------ | ------------------------------------------- | ------------------------------------- |
-| Me3                | a file or folder named `XXX.dll`            | the game folder itself (no subfolder) |
-| Root               | -                                           | -                                     |
-| Mod                | a file with one of these extensions: `.XXX` | `mods`                                |
-| Fallback Installer | anything not matched above                  | -                                     |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Me3 | a file or folder named `XXX.dll` | the game folder itself (no subfolder) |
+| Root | - | - |
+| Mod | a file with one of these extensions: `.XXX` | `mods` |
+| Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
 

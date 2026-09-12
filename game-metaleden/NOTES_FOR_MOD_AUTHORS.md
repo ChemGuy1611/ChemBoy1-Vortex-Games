@@ -6,20 +6,20 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                                     | Archive must contain                             | Installs to                                         |
-| -------------------------------------------- | ------------------------------------------------ | --------------------------------------------------- |
-| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder         | `MetalEden`                                         |
-| Blueprint Mods (LogicMods)                   | a `LogicMods` folder                             | `MetalEden\Content\Paks\LogicMods\LogicMods`        |
-| Pak Mods                                     | a `.pak` file                                    | `MetalEden\Content\Paks\~mods`                      |
-| UE4SS Itself                                 | a `dwmapi.dll` file                              | `MetalEden\Binaries\Win64`                          |
-| Signature Bypass                             | `dsound.dll` and `UniversalSigBypasser.asi`      | `MetalEden\Binaries\Win64`                          |
-| UE4SS Script Mods (Lua)                      | a `.lua` file and a `Scripts` folder             | `MetalEden\Binaries\Win64\ue4ss\Mods`               |
-| UE4SS DLL Mods (C++)                         | a `.dll` file and a `dlls` folder                | `MetalEden\Binaries\Win64\ue4ss\Mods`               |
-| Root / Game Folder Mods                      | a top-level folder such as `MetalEden`           | the game folder itself (no subfolder)               |
-| Contentfolder                                | a file or folder named `Content`                 | `MetalEden`                                         |
-| Config File Mods                             | a config file such as `engine.ini` or `game.ini` | `CONFIGMOD_LOCATION\MetalEden\Saved\Config\Windows` |
-| Save Game Files                              | a `.sav` file                                    | -                                                   |
-| Fallback Installer                           | anything unrecognised with no pak file           | `MetalEden\Binaries\Win64`                          |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `MetalEden` |
+| Blueprint Mods (LogicMods) | a `LogicMods` folder | `MetalEden\Content\Paks\LogicMods\LogicMods` |
+| Pak Mods | a `.pak` file | `MetalEden\Content\Paks\~mods` |
+| UE4SS Itself | a `dwmapi.dll` file | `MetalEden\Binaries\Win64` |
+| Signature Bypass | `dsound.dll` and `UniversalSigBypasser.asi` | `MetalEden\Binaries\Win64` |
+| UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `MetalEden\Binaries\Win64\ue4ss\Mods` |
+| UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | `MetalEden\Binaries\Win64\ue4ss\Mods` |
+| Root / Game Folder Mods | a top-level folder such as `MetalEden` | the game folder itself (no subfolder) |
+| Contentfolder | a file or folder named `Content` | `MetalEden` |
+| Config File Mods | a config file such as `engine.ini` or `game.ini` | `CONFIGMOD_LOCATION\MetalEden\Saved\Config\Windows` |
+| Save Game Files | a `.sav` file | - |
+| Fallback Installer | anything unrecognised with no pak file | `MetalEden\Binaries\Win64` |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 

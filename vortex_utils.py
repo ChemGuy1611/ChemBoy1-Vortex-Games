@@ -1744,7 +1744,7 @@ def run_generate_notes_batch(game_ids):
 def run_generate_description_batch(game_ids):
     """Run generate_notes.js --description for multiple game IDs in a single node
     invocation, refreshing the "Mod Installation Notes" and "Supported Versions" lists
-    inside each extension's DESCRIPTION.bbcode.txt (the Nexus mod page description) and
+    inside each extension's DESCRIPTION.bbcode (the Nexus mod page description) and
     scaffolding that file for extensions that do not have one yet. Everything else on an
     existing page is left as the author wrote it.
     Returns (ok: bool, stderr: str). No-op (ok=True) for empty input."""

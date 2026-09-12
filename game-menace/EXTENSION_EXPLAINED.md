@@ -54,6 +54,24 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
+| ModpackLoader | `menace-modpackloader` | low | `{gamePath}/.` |
+| Modpack Mod | `menace-modpackmod` | high | `{gamePath}/Mods` |
+| Custom Leaders Mod | `menace-customleaders` | high | `{gamePath}/Mods/customleaders` |
+| Menace ModKit | `menace-modkit` | low | `{gamePath}/.` |
+| BepInEx Mod | `menace-bepinexmod` | high | `{gamePath}/BepInEx` |
+| MelonLoader Mod | `menace-melonmod` | high | `{gamePath}/.` |
+| BepInEx Plugins | `menace-bepinex-plugins` | high | `{gamePath}/BepInEx/plugins` |
+| BepInEx Patchers | `menace-bepinex-patchers` | high | `{gamePath}/BepInEx/patchers` |
+| BepInEx Config | `menace-bepinex-config` | high | `{gamePath}/BepInEx/config` |
+| MelonLoader Mods | `menace-melonloader-mods` | high | `{gamePath}/Mods` |
+| MelonLoader Plugins | `menace-melonloader-plugins` | high | `{gamePath}/Plugins` |
+| MelonLoader Config | `menace-melonloader-config` | high | `{gamePath}/UserData` |
+| BepInExConfigManager | `menace-bepcfgman` | high | `{gamePath}/BepInEx` |
+| MelonPreferencesManager | `menace-melonprefman` | high | `{gamePath}/Mods` |
+| Root Game Folder | `menace-root` | high | `{gamePath}` |
+| BepInEx Injector | `menace-bepinex` | low | `{gamePath}` |
+| MelonLoader | `menace-melonloader` | low | `{gamePath}` |
+| Jiangyu Loader | `menace-jiangyu` | low | `{gamePath}/Mods` |
 | Jiangyu Mod | `menace-jiangyumod` | 29 | `?` |
 | Assembly DLL Mod | `menace-assemblydll` | 60 | `?` |
 | Assets/Resources File | `menace-assets` | 62 | `?` |
@@ -120,4 +138,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **GOG Support** — detects GOG version with adjusted executable/data paths.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-

@@ -2,19 +2,19 @@
 
 ## Overview
 
-| Property | Value                            |
-| -------- | -------------------------------- |
-| Name     | Alien Isolation Vortex Extension |
-| Author   | ChemBoy1                         |
+| Property | Value |
+| --- | --- |
+| Name | Alien Isolation Vortex Extension |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property       | Value                                                                                                  |
-| -------------- | ------------------------------------------------------------------------------------------------------ |
-| Game ID        | `alienisolation`                                                                                       |
-| Executable     | `AI.exe`                                                                                               |
-| Extension Page | [https://www.nexusmods.com/site/mods/968](https://www.nexusmods.com/site/mods/968)                     |
-| PCGamingWiki   | [https://www.pcgamingwiki.com/wiki/Alien_Isolation](https://www.pcgamingwiki.com/wiki/Alien_Isolation) |
+| Property | Value |
+| --- | --- |
+| Game ID | `alienisolation` |
+| Executable | `AI.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/968](https://www.nexusmods.com/site/mods/968) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Alien_Isolation](https://www.pcgamingwiki.com/wiki/Alien_Isolation) |
 
 ## Supported Stores
 
@@ -26,19 +26,19 @@
 
 Mod types define where each category of mod gets deployed:
 
-| Name                        | ID                         | Priority | Target Path       |
-| --------------------------- | -------------------------- | -------- | ----------------- |
-| Data Files                  | `alienisolation-datafiles` | high     | `{gamePath}/DATA` |
-| Binaries / Root Game Folder | `alienisolation-root`      | high     | `{gamePath}`      |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Data Files | `alienisolation-datafiles` | high | `{gamePath}/DATA` |
+| Binaries / Root Game Folder | `alienisolation-root` | high | `{gamePath}` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID                | Priority |
-| --------------------------- | -------- |
-| `alienisolation-datafolder` | 25       |
-| `alienisolation-datafiles`  | 30       |
+| Installer ID | Priority |
+| --- | --- |
+| `alienisolation-datafolder` | 25 |
+| `alienisolation-datafiles` | 30 |
 
 ## Toolbar Actions
 

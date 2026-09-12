@@ -1042,7 +1042,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         print("[generate_notes.js]")
         ok, err = run_generate_notes_batch([game_id])
         if ok:
-            print(f"  NOTES_FOR_MOD_AUTHORS.md + .bbcode.txt written.\n")
+            print(f"  NOTES_FOR_MOD_AUTHORS.md + .bbcode written.\n")
         else:
             print(f"  FAILED -run manually: node generate_notes.js {game_id}")
             if err:

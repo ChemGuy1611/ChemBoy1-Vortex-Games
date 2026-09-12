@@ -22,6 +22,22 @@
 - **Steam** — `397540`
 - **Epic Games Store** — `Catnip`
 
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Python SDK | `borderlands3-sdk` | high | `{gamePath}/.` |
+| SDK Mod | `borderlands3-sdkmod` | high | `{gamePath}/sdk_mods` |
+| OpenHotfixLoader | `borderlands3-openhotfixloader` | low | `{gamePath}/OakGame/Binaries/Win64/Plugins` |
+| Plugin Loader | `borderlands3-pluginloader` | low | `{gamePath}/OakGame/Binaries/Win64` |
+| Hotfix Mod | `borderlands3-hotfix` | high | `{gamePath}/OakGame/Binaries/Win64/Plugins/ohl-mods` |
+| Root Folder | `borderlands3-root` | high | `{gamePath}` |
+| Binaries (Engine Injector) | `borderlands3-binaries` | high | `{gamePath}/OakGame/Binaries/Win64` |
+| Movies | `borderlands3-movies` | high | `{gamePath}/OakGame/Content/Movies` |
+| Pak Mod | `borderlands3-pak` | high | `{gamePath}/OakGame/Content/Paks` |
+
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
@@ -62,4 +78,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
-

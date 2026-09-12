@@ -200,6 +200,7 @@ exercised locally with `pnpm run e2e`. Writing tests for either layer is covered
 `VORTEX_TESTING.md` (both test layers in depth: what a PR has to ship, and how to write vitest and
 Playwright tests for this app) ·
 `VORTEX_CODESTYLE.md` (the conventions the code these commands check is written to) ·
+`OXFMT.md` (the formatter behind `pnpm run format` and the pre-commit hook) ·
 `VORTEX_AGENT_GUIDES.md` (the repo's own contributor/assistant instruction files) ·
 `BOOTSTRAP.md` (the separate, much lighter environment needed for the extension-authoring scripts) ·
 `VORTEX_2_MIGRATION.md` (what changed for extension authors between the 1.16 and 2.x app lines).

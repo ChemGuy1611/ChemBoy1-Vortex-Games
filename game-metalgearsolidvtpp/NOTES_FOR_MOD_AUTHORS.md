@@ -11,7 +11,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Loader | a file or folder named `SnakeBite Installer.exe` | - |
 | Mgsvfix | a file or folder named one of: `mgsvfix.asi` | - |
 | Root / Game Folder Mods | a `master` folder | the game folder itself (no subfolder) |
-| Mod | a file with one of these extensions: `.mgsv` or `.MGSVPreset` | - |
+| Mod | a file with one of these extensions: `.mgsv` or `.MGSVPreset` | `SnakeBite_Mods` |
 
 Paths are relative to the game's install folder.
 
@@ -47,9 +47,10 @@ Installs to: the game folder itself (no subfolder)
 
 Recognised when the archive contains a file with one of these extensions: `.mgsv` or `.MGSVPreset`.
 
+Installs to: `SnakeBite_Mods`
+
 ## Rules That Apply To Every Mod Type
 
 - Archives that contain a FOMOD installer (a `fomod` folder with `ModuleConfig.xml`) are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

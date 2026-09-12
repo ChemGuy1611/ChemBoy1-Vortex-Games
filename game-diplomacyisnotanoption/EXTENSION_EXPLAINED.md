@@ -2,20 +2,20 @@
 
 ## Overview
 
-| Property           | Value                                       |
-| ------------------ | ------------------------------------------- |
-| Name               | Diplomacy Is Not An Option Vortex Extension |
-| Engine / Structure | Unity BepinEx (Custom Nexus Download)       |
-| Author             | ChemBoy1                                    |
+| Property | Value |
+| --- | --- |
+| Name | Diplomacy Is Not An Option Vortex Extension |
+| Engine / Structure | Unity BepinEx (Custom Nexus Download) |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property       | Value                                                                                                                        |
-| -------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| Game ID        | `diplomacyisnotanoption`                                                                                                     |
-| Executable     | `Diplomacy is Not an Option.exe`                                                                                             |
-| Extension Page | [https://www.nexusmods.com/site/mods/1070](https://www.nexusmods.com/site/mods/1070)                                         |
-| PCGamingWiki   | [https://www.pcgamingwiki.com/wiki/Diplomacy_Is_Not_an_Option](https://www.pcgamingwiki.com/wiki/Diplomacy_Is_Not_an_Option) |
+| Property | Value |
+| --- | --- |
+| Game ID | `diplomacyisnotanoption` |
+| Executable | `Diplomacy is Not an Option.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1070](https://www.nexusmods.com/site/mods/1070) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Diplomacy_Is_Not_an_Option](https://www.pcgamingwiki.com/wiki/Diplomacy_Is_Not_an_Option) |
 
 ## Supported Stores
 
@@ -27,10 +27,10 @@
 
 Mod types define where each category of mod gets deployed:
 
-| Name             | ID                               | Priority | Target Path                  |
-| ---------------- | -------------------------------- | -------- | ---------------------------- |
-| Root Game Folder | `diplomacyisnotanoption-root`    | high     | `{gamePath}`                 |
-| BepinEx Mod      | `diplomacyisnotanoption-bepmods` | high     | `{gamePath}/BepinEx/plugins` |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Root Game Folder | `diplomacyisnotanoption-root` | high | `{gamePath}` |
+| BepinEx Mod | `diplomacyisnotanoption-bepmods` | high | `{gamePath}/BepinEx/plugins` |
 
 ## Toolbar Actions
 

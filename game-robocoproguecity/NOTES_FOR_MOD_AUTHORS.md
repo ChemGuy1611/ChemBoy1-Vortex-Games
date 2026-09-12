@@ -6,30 +6,30 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                                     | Archive must contain                                                                                                                                                                                                                                         | Installs to                             |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------- |
-| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder                                                                                                                                                                                                                     | `Game`                                  |
-| Unfinishedbusiness Ue4sscombo                | a file with the `.lua` extension and a file with the `.pak` extension                                                                                                                                                                                        | -                                       |
-| Blueprint Mods (LogicMods)                   | a `LogicMods` folder                                                                                                                                                                                                                                         | `Game\Content\Paks\LogicMods\LogicMods` |
-| Unfinishedbusiness Logicmods                 | -                                                                                                                                                                                                                                                            | -                                       |
-| Pak Mods                                     | a `'.pak` file                                                                                                                                                                                                                                               | `Game\Content\Paks\~mods`               |
-| Pak Mods                                     | a `'.pak` file                                                                                                                                                                                                                                               | `Game\Content\Paks\~mods`               |
-| UE4SS Itself                                 | a `dwmapi.dll` file                                                                                                                                                                                                                                          | -                                       |
-| Unfinishedbusiness Ue4ss                     | a file or folder named `dwmapi.dll`                                                                                                                                                                                                                          | -                                       |
-| UE4SS Script Mods (Lua)                      | a `.lua` file and a `Scripts` folder                                                                                                                                                                                                                         | -                                       |
-| Unfinishedbusiness Scripts                   | a file with the `.lua` extension                                                                                                                                                                                                                             | -                                       |
-| UE4SS DLL Mods (C++)                         | a `.dll` file and a `dlls` folder                                                                                                                                                                                                                            | -                                       |
-| Unfinishedbusiness Ue4ssdll                  | a file with the `.dll` extension                                                                                                                                                                                                                             | -                                       |
-| Root / Game Folder Mods                      | a top-level folder such as `Game`                                                                                                                                                                                                                            | the game folder itself (no subfolder)   |
-| Unfinishedbusiness Root                      | -                                                                                                                                                                                                                                                            | -                                       |
-| Contentfolder                                | a file or folder named `Content`                                                                                                                                                                                                                             | `Game`                                  |
-| Unfinishedbusiness Contentfolder             | a file or folder named `Content`                                                                                                                                                                                                                             | -                                       |
-| Config File Mods                             | a config file such as `engine.ini` or `game.ini`                                                                                                                                                                                                             | -                                       |
-| Unfinishedbusiness Config                    | a file or folder named one of: `engine.ini`, `game.ini`, `gameusersettings.ini`, `input.ini`, `scalability.ini`, `hardware.ini`, `deviceprofiles.ini`, `compat.ini`, `runtimeoptions.ini`, `gameplaytags.ini`, `enhancedinput.ini` or `consolevariables.ini` | -                                       |
-| Save Game Files                              | a `.sav` file                                                                                                                                                                                                                                                | -                                       |
-| Unfinishedbusiness Save                      | a file with the `.sav` extension                                                                                                                                                                                                                             | -                                       |
-| Fallback Installer                           | anything unrecognised with no pak file                                                                                                                                                                                                                       | -                                       |
-| Unfinishedbusiness Binaries                  | a file with the `.pak` extension                                                                                                                                                                                                                             | -                                       |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `Game` |
+| Unfinishedbusiness Ue4sscombo | a file with the `.lua` extension and a file with the `.pak` extension | - |
+| Blueprint Mods (LogicMods) | a `LogicMods` folder | `Game\Content\Paks\LogicMods\LogicMods` |
+| Unfinishedbusiness Logicmods | - | - |
+| Pak Mods | a `".pak` file | `Game\Content\Paks\~mods` |
+| Pak Mods | a `".pak` file | `Game\Content\Paks\~mods` |
+| UE4SS Itself | a `dwmapi.dll` file | - |
+| Unfinishedbusiness Ue4ss | a file or folder named `dwmapi.dll` | - |
+| UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | - |
+| Unfinishedbusiness Scripts | a file with the `.lua` extension | - |
+| UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | - |
+| Unfinishedbusiness Ue4ssdll | a file with the `.dll` extension | - |
+| Root / Game Folder Mods | a top-level folder such as `Game` | the game folder itself (no subfolder) |
+| Unfinishedbusiness Root | - | - |
+| Contentfolder | a file or folder named `Content` | `Game` |
+| Unfinishedbusiness Contentfolder | a file or folder named `Content` | - |
+| Config File Mods | a config file such as `engine.ini` or `game.ini` | - |
+| Unfinishedbusiness Config | a file or folder named one of: `engine.ini`, `game.ini`, `gameusersettings.ini`, `input.ini`, `scalability.ini`, `hardware.ini`, `deviceprofiles.ini`, `compat.ini`, `runtimeoptions.ini`, `gameplaytags.ini`, `enhancedinput.ini` or `consolevariables.ini` | - |
+| Save Game Files | a `.sav` file | - |
+| Unfinishedbusiness Save | a file with the `.sav` extension | - |
+| Fallback Installer | anything unrecognised with no pak file | - |
+| Unfinishedbusiness Binaries | a file with the `.pak` extension | - |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
@@ -100,16 +100,16 @@ Handled by the `testLogicUnfinished` installer. Inspect the extension source for
 
 ## Pak Mods
 
-Standard content mods: one or more `'.pak` files. Vortex installs the mod files themselves, so the folder structure around them in the archive does not matter.
+Standard content mods: one or more `".pak` files. Vortex installs the mod files themselves, so the folder structure around them in the archive does not matter.
 
 ```text
 MyPakMod.zip
-└── MyPakMod'.pak
+└── MyPakMod".pak
 ```
 
 **Requirements:**
 
-- Recognised by any file with the `'.pak` extension.
+- Recognised by any file with the `".pak` extension.
 - Surrounding folders are discarded - only the mod files are installed.
 - If the archive holds several mod files, Vortex asks the user which to install, which is useful for shipping optional variants in one download.
 
@@ -121,16 +121,16 @@ Installs to: `Game\Content\Paks\~mods`
 
 ## Pak Mods
 
-Standard content mods: one or more `'.pak` files. Vortex installs the mod files themselves, so the folder structure around them in the archive does not matter.
+Standard content mods: one or more `".pak` files. Vortex installs the mod files themselves, so the folder structure around them in the archive does not matter.
 
 ```text
 MyPakMod.zip
-└── MyPakMod'.pak
+└── MyPakMod".pak
 ```
 
 **Requirements:**
 
-- Recognised by any file with the `'.pak` extension.
+- Recognised by any file with the `".pak` extension.
 - Surrounding folders are discarded - only the mod files are installed.
 - If the archive holds several mod files, Vortex asks the user which to install, which is useful for shipping optional variants in one download.
 

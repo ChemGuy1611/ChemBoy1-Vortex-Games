@@ -22,6 +22,19 @@
 - **Steam** — `1888930`
 - **Epic Games Store** — `7e988ba04889404197fdf06c994326ed`
 
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Build Folder | `thelastofuspart1-buildfolder` | high | `{gamePath}/.` |
+| bin Folder | `thelastofuspart1-binfolder` | high | `{gamePath}/build/pc/main` |
+| Pak (actor97) | `thelastofuspart1-pak` | high | `{gamePath}/build/pc/main` |
+| Save | `thelastofuspart1-save` | high | `USER_HOME/Saved Games/The Last of Us Part I/users/USERID_FOLDER/savedata` |
+| Config | `thelastofuspart1-config` | high | `USER_HOME/Saved Games/The Last of Us Part I/users/USERID_FOLDER` |
+| UnPSARC Tool | `thelastofuspart1-psarctool` | low | `{gamePath}/build/pc/main` |
+
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
@@ -61,4 +74,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
-

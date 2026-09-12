@@ -29,6 +29,20 @@
 | --- | --- | --- |
 | `fcmoddingBrowser` | `true` | register the "Browse Far Cry Mods" page (downloads.fcmodding.com) |
 
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Root Folder | `farcrynewdawn-root` | high | `{gamePath}` |
+| Binaries (Engine Injector) | `farcrynewdawn-binaries` | high | `{gamePath}/bin` |
+| Game Data | `farcrynewdawn-data` | high | `{gamePath}/data_final/pc` |
+| FC Mod Installer | `farcrynewdawn-modinstaller` | high | `{gamePath}/FCModInstaller` |
+| FCMI Mod (.a2/.a3/.a4/.a5/.bin) | `farcrynewdawn-mimod` | high | `{gamePath}/FCModInstaller/ModifiedFilesFCND` |
+| Repacked FCMI Mod | `farcrynewdawn-mimoda3` | high | `{gamePath}/FCModInstaller/ModifiedFilesFCND` |
+| XML Settings Mod | `farcrynewdawn-xml` | high | `DOCUMENTS/My Games/Far Cry New Dawn/USERID_FOLDER` |
+
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
@@ -76,4 +90,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
-

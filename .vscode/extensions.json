@@ -2,6 +2,7 @@
   "recommendations": [
     "dbaeumer.vscode-eslint",
     "oxc.oxc-vscode",
+    "davidanson.vscode-markdownlint",
     "eamodio.gitlens",
     "ms-python.python"
   ]

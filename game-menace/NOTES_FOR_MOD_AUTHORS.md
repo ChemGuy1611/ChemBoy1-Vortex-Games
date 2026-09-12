@@ -10,17 +10,17 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | MelonLoader (mod loader) | a `MelonLoader.dll` file | the game folder itself (no subfolder) |
 | BepInEx (mod loader) | a `BepInEx.Core.dll` file | the game folder itself (no subfolder) |
-| Modkit | a file or folder named `Menace.Modkit.App.exe` | - |
+| Modkit | a file or folder named `Menace.Modkit.App.exe` | the game folder itself (no subfolder) |
 | Jiangyu Loader | a `Jiangyu.Loader.dll` file | `Mods` |
 | Jiangyu Mods | a `jiangyu.json` file | `Mods` |
-| Modpackloader | a file or folder named `Menace.ModpackLoader.dll` and a file or folder named `UserLibs` | - |
-| Modpackmod | a file or folder named `modpack.json` | - |
+| Modpackloader | a file or folder named `Menace.ModpackLoader.dll` and a file or folder named `UserLibs` | the game folder itself (no subfolder) |
+| Modpackmod | a file or folder named `modpack.json` | `Mods` |
 | Root / Game Folder Mods | a `Menace_Data` folder | the game folder itself (no subfolder) |
 | BepInEx Configuration Manager | a `configurationmanager.dll` file | `BepInEx` |
 | MelonLoader Preferences Manager | a `melonprefmanager.il2cpp.dll` file | `Mods` |
 | Assembly Replacement Mods | a `GameAssembly.dll` file | the game folder itself (no subfolder) |
 | Plugin Mods | a `.dll` file | `BepInEx` |
-| Customleaders | - | - |
+| Customleaders | - | `Mods\customleaders` |
 | Asset Replacement Mods | a `.assets` file | `Menace_Data` |
 | Fallback Installer | anything not matched above | - |
 
@@ -59,6 +59,8 @@ Installs to: the game folder itself (no subfolder)
 ## Modkit
 
 Recognised when the archive contains a file or folder named `Menace.Modkit.App.exe`.
+
+Installs to: the game folder itself (no subfolder)
 
 ## Jiangyu Loader
 
@@ -103,9 +105,13 @@ Installs to: `Mods`
 
 Recognised when the archive contains a file or folder named `Menace.ModpackLoader.dll` and a file or folder named `UserLibs`.
 
+Installs to: the game folder itself (no subfolder)
+
 ## Modpackmod
 
 Recognised when the archive contains a file or folder named `modpack.json`.
+
+Installs to: `Mods`
 
 ## Root / Game Folder Mods
 
@@ -195,6 +201,8 @@ Installs to: `BepInEx`
 
 Handled by the `testCustomLeaders` installer. Inspect the extension source for the exact archive layout it expects.
 
+Installs to: `Mods\customleaders`
+
 ## Asset Replacement Mods
 
 Mods that replace packed Unity asset files, deployed into the game's data folder.
@@ -229,4 +237,3 @@ The catch-all. Any archive that matched none of the installers above lands here 
 - Archives that contain a FOMOD installer (a `fomod` folder with `ModuleConfig.xml`) are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

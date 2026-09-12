@@ -2,20 +2,20 @@
 
 ## Overview
 
-| Property           | Value                    |
-| ------------------ | ------------------------ |
-| Name               | Deus Ex Vortex Extension |
-| Engine / Structure | Basic Game               |
-| Author             | ChemBoy1                 |
+| Property | Value |
+| --- | --- |
+| Name | Deus Ex Vortex Extension |
+| Engine / Structure | Basic Game |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property       | Value                                                                                  |
-| -------------- | -------------------------------------------------------------------------------------- |
-| Game ID        | `deusex`                                                                               |
-| Executable     | `System/DeusEx.exe`                                                                    |
-| Extension Page | [https://www.nexusmods.com/site/mods/1462](https://www.nexusmods.com/site/mods/1462)   |
-| PCGamingWiki   | [https://www.pcgamingwiki.com/wiki/Deus_Ex](https://www.pcgamingwiki.com/wiki/Deus_Ex) |
+| Property | Value |
+| --- | --- |
+| Game ID | `deusex` |
+| Executable | `System/DeusEx.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1462](https://www.nexusmods.com/site/mods/1462) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Deus_Ex](https://www.pcgamingwiki.com/wiki/Deus_Ex) |
 
 ## Supported Stores
 
@@ -24,31 +24,31 @@
 
 ## Feature Flags
 
-| Flag           | Value  | Description                                  |
-| -------------- | ------ | -------------------------------------------- |
+| Flag | Value | Description |
+| --- | --- | --- |
 | `moddbBrowser` | `true` | register the "Browse ModDB" page (moddb.com) |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
-| Name                       | ID                | Priority | Target Path         |
-| -------------------------- | ----------------- | -------- | ------------------- |
-| Deus Exe (Launcher)        | `deusex-launcher` | high     | `{gamePath}/System` |
-| Mod Folder                 | `deusex-mod`      | high     | `{gamePath}/.`      |
-| Root Folder                | `deusex-root`     | high     | `{gamePath}`        |
-| Binaries (Engine Injector) | `deusex-binaries` | high     | `{gamePath}/System` |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Deus Exe (Launcher) | `deusex-launcher` | high | `{gamePath}/System` |
+| Mod Folder | `deusex-mod` | high | `{gamePath}/.` |
+| Root Folder | `deusex-root` | high | `{gamePath}` |
+| Binaries (Engine Injector) | `deusex-binaries` | high | `{gamePath}/System` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID      | Priority |
-| ----------------- | -------- |
-| `deusex-mod`      | 25       |
-| `deusex-root`     | 27       |
-| `deusex-launcher` | 29       |
-| `deusex-binaries` | 49       |
+| Installer ID | Priority |
+| --- | --- |
+| `deusex-mod` | 25 |
+| `deusex-root` | 27 |
+| `deusex-launcher` | 29 |
+| `deusex-binaries` | 49 |
 
 ## Registered Tools
 

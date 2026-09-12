@@ -6,17 +6,17 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                                     | Archive must contain                             | Installs to                             |
-| -------------------------------------------- | ------------------------------------------------ | --------------------------------------- |
-| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder         | `Sifu`                                  |
-| Blueprint Mods (LogicMods)                   | a `LogicMods` folder                             | `Sifu\Content\Paks\LogicMods\LogicMods` |
-| Pak Mods                                     | a `'.pak` file                                   | `Sifu\Content\Paks\~mods`               |
-| UE4SS Itself                                 | a `dwmapi.dll` file                              | -                                       |
-| UE4SS Script Mods (Lua)                      | a `.lua` file and a `Scripts` folder             | -                                       |
-| Root / Game Folder Mods                      | a top-level folder such as `Sifu`                | the game folder itself (no subfolder)   |
-| Config File Mods                             | a config file such as `engine.ini` or `game.ini` | -                                       |
-| Save Game Files                              | a `.sav` file                                    | -                                       |
-| Fallback Installer                           | anything unrecognised with no pak file           | -                                       |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `Sifu` |
+| Blueprint Mods (LogicMods) | a `LogicMods` folder | `Sifu\Content\Paks\LogicMods\LogicMods` |
+| Pak Mods | a `".pak` file | `Sifu\Content\Paks\~mods` |
+| UE4SS Itself | a `dwmapi.dll` file | - |
+| UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | - |
+| Root / Game Folder Mods | a top-level folder such as `Sifu` | the game folder itself (no subfolder) |
+| Config File Mods | a config file such as `engine.ini` or `game.ini` | - |
+| Save Game Files | a `.sav` file | - |
+| Fallback Installer | anything unrecognised with no pak file | - |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
@@ -79,16 +79,16 @@ Installs to: `Sifu\Content\Paks\LogicMods\LogicMods`
 
 ## Pak Mods
 
-Standard content mods: one or more `'.pak` files. Vortex installs the mod files themselves, so the folder structure around them in the archive does not matter.
+Standard content mods: one or more `".pak` files. Vortex installs the mod files themselves, so the folder structure around them in the archive does not matter.
 
 ```text
 MyPakMod.zip
-└── MyPakMod'.pak
+└── MyPakMod".pak
 ```
 
 **Requirements:**
 
-- Recognised by any file with the `'.pak` extension.
+- Recognised by any file with the `".pak` extension.
 - Surrounding folders are discarded - only the mod files are installed.
 - If the archive holds several mod files, Vortex asks the user which to install, which is useful for shipping optional variants in one download.
 

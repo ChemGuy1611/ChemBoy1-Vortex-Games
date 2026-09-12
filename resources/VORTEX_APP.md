@@ -29,9 +29,9 @@ Vortex is an **nx + pnpm-workspace** monorepo.
 - **Task runner:** [nx](https://nx.dev) (`nx.json`). `neverConnectToCloud: true`, analytics off, default base branch `master`. Targets are cached: `build`, `typecheck`, `lint*` cache; `test*` does not. `build`/`typecheck`/`lint` all `dependsOn: ["^build"]` so dependency packages build first.
 - **Dependency versions are centralised** in the pnpm **catalog** (`pnpm-workspace.yaml`). Almost every `devDependency` in the root `package.json` is `"catalog:"`. When checking a dependency version, read the catalog, not the individual `package.json`.
 - **Bundlers:**
-    - `rolldown` (`rolldown.base.mjs`) is the primary bundler. `scripts/extensions-rolldown.mjs` bundles the bundled extensions.
-    - `tsdown` is used by some packages (e.g. `vortex-api`).
-    - `webpack` is still present (legacy paths / some extensions); `ts-loader`, `terser-webpack-plugin`, `webpack-node-externals` remain in devDeps.
+  - `rolldown` (`rolldown.base.mjs`) is the primary bundler. `scripts/extensions-rolldown.mjs` bundles the bundled extensions.
+  - `tsdown` is used by some packages (e.g. `vortex-api`).
+  - `webpack` is still present (legacy paths / some extensions); `ts-loader`, `terser-webpack-plugin`, `webpack-node-externals` remain in devDeps.
 - **Lint/format:** `oxlint` + `oxfmt` (Oxc toolchain) are the fast primary tools (`oxlint.base.config.json`, `.oxfmtrc.json`). ESLint is still configured (`eslint.config.base.mjs`, custom rules in `eslint-rules/`) for rules Oxc doesn't cover.
 - **Type checking:** layered `tsconfig.base.json` -> `tsconfig.strict.json` / `tsconfig.node.json`; per-project `tsconfig*.json`. `ts-to-zod` (`ts-to-zod.config.mjs`) generates Zod schemas from TS types.
 - **Tests:** `vitest` (`vitest.base.config.ts`), tests colocated as `src/**/*.test.ts`. Playwright for E2E.
@@ -134,10 +134,10 @@ This is the practical orchestration that happens inside the app at runtime. The 
 
 - **Known games registry.** Every `context.registerGame(...)` (from a bundled or third-party extension) adds an `IGame` to `GameModeManager`'s `mKnownGames`. Game stores (`gamestore-steam`/`gog`/`xbox`/...) register as `IGameStore` in `mKnownGameStores`. (`gamemode_management/GameModeManager.ts`, registration contract: `REGISTER_GAME.md`.)
 - **Discovery** — finding where a game is installed. Three paths in `gamemode_management/util/discovery.ts`:
-    - `quickDiscovery` — asks each game's store/`queryPath` + each registered game store; fast, runs on startup. Calls back `onDiscoveredGame` -> writes an `IDiscoveryResult` into state.
-    - `searchDiscovery` — full filesystem walk of chosen drives (user-triggered "Scan" when quick discovery misses).
-    - `quickDiscoveryTools` / `discoverRelativeTools` — locate tools/script extenders relative to the game.
-    - `suggestStagingPath` picks the default mod staging folder for a freshly discovered game.
+  - `quickDiscovery` — asks each game's store/`queryPath` + each registered game store; fast, runs on startup. Calls back `onDiscoveredGame` -> writes an `IDiscoveryResult` into state.
+  - `searchDiscovery` — full filesystem walk of chosen drives (user-triggered "Scan" when quick discovery misses).
+  - `quickDiscoveryTools` / `discoverRelativeTools` — locate tools/script extenders relative to the game.
+  - `suggestStagingPath` picks the default mod staging folder for a freshly discovered game.
 - **Activating a game** (managing it) — `GameModeManager.setGameMode(old, new, profileId)` -> `setupGameMode()` runs the game's `setup()` (creates staging dir via `vfs.ensureDirWritableAsync`, etc.), then the app emits **`gamemode-activated`** with the game id. This is the signal nearly every feature waits on (deploy validators, load-order pages, plugin management all hook it). `requiresLauncher` resolution happens here too (see `REQUIRES_LAUNCHER.md`).
 - **Discovery results vs known games:** `mKnownGames` = what _can_ be managed; `state.settings.gameMode.discovered` = what was _found on disk_. A game is manageable only when discovered + valid (`isValidGame`).
 
@@ -161,10 +161,10 @@ Deployment is what makes staged mods actually present in the game folder. Method
 
 - **Activator registry** — `util/deploymentMethods.ts`: `registerDeploymentMethod(activator)` adds an `IDeploymentMethod`; `getSupportedActivators` filters by `isSupported(state, gameId, modType)`; `getCurrentActivator` / `getSelectedActivator` pick the one in use. Sorted by `priority` (lower = preferred).
 - **Built-in activators** (each `extensions/<name>/index.ts`, all but null extend `LinkingDeployment` / `LinkingActivator`):
-    - `hardlink_activator` (priority 5) — hard links staging files into the game dir (same volume required). Default when supported.
-    - `symlink_activator` (+ `symlink_activator_elevate` for permission elevation) — symbolic links.
-    - `move_activator` — moves files (cross-volume, no link support).
-    - `null_activator` — no-op (for games that read mods from the staging folder directly).
+  - `hardlink_activator` (priority 5) — hard links staging files into the game dir (same volume required). Default when supported.
+  - `symlink_activator` (+ `symlink_activator_elevate` for permission elevation) — symbolic links.
+  - `move_activator` — moves files (cross-volume, no link support).
+  - `null_activator` — no-op (for games that read mods from the staging folder directly).
 - **Deploy sequence** — `modActivation.ts` `deployMods()`:
     1. `ensureWritable` + `getNormalizeFunc` on the destination.
     2. `method.prepare(dest, clean, lastActivation, normalize)`.
@@ -172,9 +172,9 @@ Deployment is what makes staged mods actually present in the game folder. Method
     4. Activate the **merged** folder (`MERGED_PATH[.typeId]`) holding `registerMerge` outputs (see `REGISTER_MERGE.md`).
     5. `method.finalize(...)` -> writes the **deployment manifest** (list of `IDeployedFile`) and reports progress.
 - **Event flow** around deploy (wired in `mod_management/index.ts`):
-    - `will-deploy` (emitAndAwait) -> handlers may adjust state before files move.
-    - actual deploy -> `did-deploy` (emitAndAwait) + `mods-did-deploy`.
-    - `deploy-single-mod`, `purge-mods`, `purge-mods-in-path`, `await-activation` for targeted ops.
+  - `will-deploy` (emitAndAwait) -> handlers may adjust state before files move.
+  - actual deploy -> `did-deploy` (emitAndAwait) + `mods-did-deploy`.
+  - `deploy-single-mod`, `purge-mods`, `purge-mods-in-path`, `await-activation` for targeted ops.
 - **Deployment is triggered** by `mods-enabled` / `mod-enabled` events (debounced), on `gamemode-activated`, and manually. The manifest lets Vortex know what _it_ put there so it can purge/redeploy and detect **external changes** (`util/externalChanges.ts`). Manifest shape + caching: `DEPLOYMENT_MANIFEST.md`.
 - **Purge** (`util/deploy.ts` `purgeMods` / `purgeModsInPath`) removes everything Vortex deployed, restoring the game folder, using the manifest. Always purge-before-redeploy when switching activators or profiles.
 

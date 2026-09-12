@@ -1150,16 +1150,16 @@ every "Disable/Enable Vortex Mod" menu item.
 ## 13. Related reading
 
 - **Template source:** `template-ue4-5/index.js` -- grep these names:
-    - `usePakLOState` (pub-sub: selection + context menu + status filter)
-    - `LoadOrderInstructions` (info panel: StatusPills + matched/total + CSS inject)
-    - `LoadOrderItemRenderer` / `PakContextMenu`
-    - `matchesStatus` / `STATUS_GROUP_TOKENS` / `StatusPills` / `LoadOrderStatusFilter`
-    - `getModPageURL` / `getModStagingFolder`
-    - `Ue4ssSelectionContext` / `Ue4ssItemRenderer` / `Ue4ssContextMenu` (+ `setVortexModsEnabled`) / `Ue4ssLoadOrderPage`
-    - `LogicModsItemRenderer` / `LogicModsContextMenu` / `LogicModsLoadOrderPage`
-    - Registration site: `registerLoadOrder` inside `main()`
-    - `makePrefix` / `loadOrderPrefix`
-    - `serializeLoadOrder` / `deserializeLoadOrder`
+  - `usePakLOState` (pub-sub: selection + context menu + status filter)
+  - `LoadOrderInstructions` (info panel: StatusPills + matched/total + CSS inject)
+  - `LoadOrderItemRenderer` / `PakContextMenu`
+  - `matchesStatus` / `STATUS_GROUP_TOKENS` / `StatusPills` / `LoadOrderStatusFilter`
+  - `getModPageURL` / `getModStagingFolder`
+  - `Ue4ssSelectionContext` / `Ue4ssItemRenderer` / `Ue4ssContextMenu` (+ `setVortexModsEnabled`) / `Ue4ssLoadOrderPage`
+  - `LogicModsItemRenderer` / `LogicModsContextMenu` / `LogicModsLoadOrderPage`
+  - Registration site: `registerLoadOrder` inside `main()`
+  - `makePrefix` / `loadOrderPrefix`
+  - `serializeLoadOrder` / `deserializeLoadOrder`
 - **Witcher 3 ItemRenderer (inspiration, TSX):**
 
     `Vortex/extensions/games/game-witcher3/src/views/ItemRenderer.tsx`

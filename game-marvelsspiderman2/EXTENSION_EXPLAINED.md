@@ -2,20 +2,20 @@
 
 ## Overview
 
-| Property           | Value                                  |
-| ------------------ | -------------------------------------- |
-| Name               | Marvel's Spider-Man 2 Vortex Extension |
-| Engine / Structure | 3rd-Party Mod Manager (Overstrike)     |
-| Author             | ChemBoy1                               |
+| Property | Value |
+| --- | --- |
+| Name | Marvel's Spider-Man 2 Vortex Extension |
+| Engine / Structure | 3rd-Party Mod Manager (Overstrike) |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property       | Value                                                                                                              |
-| -------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Game ID        | `marvelsspiderman2`                                                                                                |
-| Executable     | `Spider-Man2.exe`                                                                                                  |
-| Extension Page | [https://www.nexusmods.com/site/mods/1166](https://www.nexusmods.com/site/mods/1166)                               |
-| PCGamingWiki   | [https://www.pcgamingwiki.com/wiki/Marvel's_Spider-Man_2](https://www.pcgamingwiki.com/wiki/Marvel's_Spider-Man_2) |
+| Property | Value |
+| --- | --- |
+| Game ID | `marvelsspiderman2` |
+| Executable | `Spider-Man2.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1166](https://www.nexusmods.com/site/mods/1166) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Marvel's_Spider-Man_2](https://www.pcgamingwiki.com/wiki/Marvel's_Spider-Man_2) |
 
 ## Supported Stores
 
@@ -26,20 +26,20 @@
 
 Mod types define where each category of mod gets deployed:
 
-| Name                   | ID                             | Priority | Target Path               |
-| ---------------------- | ------------------------------ | -------- | ------------------------- |
-| Binaries / Root Folder | `marvelsspiderman2-root`       | high     | `{gamePath}`              |
-| Overstrike Mod         | `marvelsspiderman2-osmod`      | high     | `{gamePath}/Mods Library` |
-| Overstrike             | `marvelsspiderman2-overstrike` | low      | `{gamePath}`              |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Binaries / Root Folder | `marvelsspiderman2-root` | high | `{gamePath}` |
+| Overstrike Mod | `marvelsspiderman2-osmod` | high | `{gamePath}/Mods Library` |
+| Overstrike | `marvelsspiderman2-overstrike` | low | `{gamePath}` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID                   | Priority |
-| ------------------------------ | -------- |
-| `marvelsspiderman2-overstrike` | 25       |
-| `marvelsspiderman2-osmod`      | 30       |
+| Installer ID | Priority |
+| --- | --- |
+| `marvelsspiderman2-overstrike` | 25 |
+| `marvelsspiderman2-osmod` | 30 |
 
 ## Toolbar Actions
 

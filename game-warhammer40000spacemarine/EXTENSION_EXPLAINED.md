@@ -2,21 +2,21 @@
 
 ## Overview
 
-| Property           | Value                               |
-| ------------------ | ----------------------------------- |
-| Name               | WH40k Space Marine Vortex Extension |
-| Engine / Structure | Basic Game                          |
-| Author             | ChemBoy1                            |
+| Property | Value |
+| --- | --- |
+| Name | WH40k Space Marine Vortex Extension |
+| Engine / Structure | Basic Game |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property          | Value                                                                                                                                        |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Game ID           | `warhammer40000spacemarine`                                                                                                                  |
-| Executable        | `SpaceMarine.exe`                                                                                                                            |
-| Executable (Xbox) | `gamelaunchhelper.exe`                                                                                                                       |
-| Extension Page    | [https://www.nexusmods.com/site/mods/894](https://www.nexusmods.com/site/mods/894)                                                           |
-| PCGamingWiki      | [https://www.pcgamingwiki.com/wiki/Warhammer_40%2C000%3A_Space_Marine](https://www.pcgamingwiki.com/wiki/Warhammer_40%2C000%3A_Space_Marine) |
+| Property | Value |
+| --- | --- |
+| Game ID | `warhammer40000spacemarine` |
+| Executable | `SpaceMarine.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/894](https://www.nexusmods.com/site/mods/894) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Warhammer_40%2C000%3A_Space_Marine](https://www.pcgamingwiki.com/wiki/Warhammer_40%2C000%3A_Space_Marine) |
 
 ## Supported Stores
 
@@ -27,9 +27,9 @@
 
 Mod types define where each category of mod gets deployed:
 
-| Name           | ID                                  | Priority | Target Path          |
-| -------------- | ----------------------------------- | -------- | -------------------- |
-| Preview Folder | `warhammer40000spacemarine-preview` | high     | `{gamePath}/preview` |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Preview Folder | `warhammer40000spacemarine-preview` | high | `{gamePath}/preview` |
 
 ## Registered Tools
 

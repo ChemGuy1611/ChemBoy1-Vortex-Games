@@ -2,21 +2,21 @@
 
 ## Overview
 
-| Property           | Value                    |
-| ------------------ | ------------------------ |
-| Name               | Control Vortex Extension |
-| Engine / Structure | Basic Game               |
-| Author             | ChemBoy1                 |
+| Property | Value |
+| --- | --- |
+| Name | Control Vortex Extension |
+| Engine / Structure | Basic Game |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property          | Value                                                                                  |
-| ----------------- | -------------------------------------------------------------------------------------- |
-| Game ID           | `control`                                                                              |
-| Executable        | `Control.exe`                                                                          |
-| Executable (Xbox) | `gamelaunchhelper.exe`                                                                 |
-| Extension Page    | [https://www.nexusmods.com/site/mods/162](https://www.nexusmods.com/site/mods/162)     |
-| PCGamingWiki      | [https://www.pcgamingwiki.com/wiki/Control](https://www.pcgamingwiki.com/wiki/Control) |
+| Property | Value |
+| --- | --- |
+| Game ID | `control` |
+| Executable | `Control.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/162](https://www.nexusmods.com/site/mods/162) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Control](https://www.pcgamingwiki.com/wiki/Control) |
 
 ## Supported Stores
 
@@ -29,24 +29,24 @@
 
 Mod types define where each category of mod gets deployed:
 
-| Name                       | ID                        | Priority | Target Path                 |
-| -------------------------- | ------------------------- | -------- | --------------------------- |
-| Mod Folder                 | `control-modfolder`       | high     | `{gamePath}`                |
-| Mod Files (data_packfiles) | `control-modpack`         | high     | `{gamePath}/data_packfiles` |
-| Root Folder                | `control-root`            | high     | `{gamePath}`                |
-| Plugin Loader              | `control-pluginloader`    | low      | `{gamePath}`                |
-| Loose File Loader          | `control-loosefileloader` | low      | `{gamePath}`                |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Mod Folder | `control-modfolder` | high | `{gamePath}` |
+| Mod Files (data_packfiles) | `control-modpack` | high | `{gamePath}/data_packfiles` |
+| Root Folder | `control-root` | high | `{gamePath}` |
+| Plugin Loader | `control-pluginloader` | low | `{gamePath}` |
+| Loose File Loader | `control-loosefileloader` | low | `{gamePath}` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID              | Priority |
-| ------------------------- | -------- |
-| `control-modfolder`       | 25       |
-| `control-modpack`         | 30       |
-| `control-loosefileloader` | 35       |
-| `control-pluginloader`    | 40       |
+| Installer ID | Priority |
+| --- | --- |
+| `control-modfolder` | 25 |
+| `control-modpack` | 30 |
+| `control-loosefileloader` | 35 |
+| `control-pluginloader` | 40 |
 
 ## Toolbar Actions
 

@@ -1,5 +1,10 @@
 # template-unitybepinex Changelog
 
+## [2026-09-11]
+
+- Fixed: installers scoped their file list to the mod root with `file.indexOf(rootPath) !== -1`, a substring test that silently dropped every extension-less file. `path.dirname()` returns `"."` when the mod file sits at the archive root, which collapses the test to "the path contains a dot", so asset bundles and other extension-less payloads never reached the staging folder; the same test also matched sibling folders that happen to share a name prefix. Each installer now derives `const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;` and filters with `file.startsWith(rootPrefix)`.
+- Fixed: `installRoot` had its scoping filter removed entirely as a workaround for that bug, so it copied every file in the archive - including anything sitting outside the mod root - and only dropped directory entries. It now scopes to `rootPrefix` like the other installers, which keeps the extension-less files the workaround was protecting.
+
 ## [2026-09-08]
 
 - Removed: the dead `//const fsExtra = require('fs-extra');` import comment. `fs-extra` is retired across the repo — `fs.unlinkSync` / `fs.copyFileSync` are native.

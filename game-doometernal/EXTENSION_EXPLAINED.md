@@ -31,6 +31,16 @@
 | --- | --- | --- |
 | `gamebananaBrowser` | `true` | register the "Browse GameBanana" page |
 
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Binaries / Root Folder | `doometernal-binaries` | high | `{gamePath}` |
+| SandBox (Modded Binaries) | `doometernal-sandbox` | high | `{gamePath}/doomSandBox` |
+| EternalModInjector | `doometernal-injector` | low | `{gamePath}` |
+
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
@@ -67,4 +77,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-

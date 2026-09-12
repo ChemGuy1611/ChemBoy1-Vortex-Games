@@ -2,20 +2,20 @@
 
 ## Overview
 
-| Property           | Value                                              |
-| ------------------ | -------------------------------------------------- |
-| Name               | Rocksmith 2014 Edition REMASTERED Vortex Extension |
-| Engine / Structure | Basic Game with Tools & Launchers                  |
-| Author             | ChemBoy1                                           |
+| Property | Value |
+| --- | --- |
+| Name | Rocksmith 2014 Edition REMASTERED Vortex Extension |
+| Engine / Structure | Basic Game with Tools & Launchers |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property       | Value                                                                                                |
-| -------------- | ---------------------------------------------------------------------------------------------------- |
-| Game ID        | `rocksmith2014editionremastered`                                                                     |
-| Executable     | `Rocksmith2014.exe`                                                                                  |
-| Extension Page | [https://www.nexusmods.com/site/mods/1240](https://www.nexusmods.com/site/mods/1240)                 |
-| PCGamingWiki   | [https://www.pcgamingwiki.com/wiki/Rocksmith_2014](https://www.pcgamingwiki.com/wiki/Rocksmith_2014) |
+| Property | Value |
+| --- | --- |
+| Game ID | `rocksmith2014editionremastered` |
+| Executable | `Rocksmith2014.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1240](https://www.nexusmods.com/site/mods/1240) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Rocksmith_2014](https://www.pcgamingwiki.com/wiki/Rocksmith_2014) |
 
 ## Supported Stores
 
@@ -23,54 +23,54 @@
 
 ## Feature Flags
 
-| Flag                      | Value   | Description                                            |
-| ------------------------- | ------- | ------------------------------------------------------ |
-| `RSMODS_IS_ARCHIVE`       | `false` | the tool is distributed as an archive (zip/7z)         |
-| `RSMODS_IS_INSTALLER`     | `true`  | the tool is distributed as an installer executable     |
-| `RSMODS_IS_ELEVATED`      | `false` | the tool requires elevated/admin privileges to install |
-| `CDLC_IS_ARCHIVE`         | `false` | the tool is distributed as an archive (zip/7z)         |
-| `CDLC_IS_INSTALLER`       | `true`  | the tool is distributed as an installer executable     |
-| `CDLC_IS_ELEVATED`        | `false` | the tool requires elevated/admin privileges to install |
-| `CFSM_IS_ARCHIVE`         | `true`  | the tool is distributed as an archive (zip/7z)         |
-| `CFSM_IS_INSTALLER`       | `true`  | the tool is distributed as an installer executable     |
-| `CFSM_IS_ELEVATED`        | `false` | the tool requires elevated/admin privileges to install |
-| `NOCABLE_IS_ARCHIVE`      | `true`  | the tool is distributed as an archive (zip/7z)         |
-| `NOCABLE_IS_INSTALLER`    | `false` | the tool is distributed as an installer executable     |
-| `NOCABLE_IS_ELEVATED`     | `false` | the tool requires elevated/admin privileges to install |
-| `RSASIO_IS_ARCHIVE`       | `true`  | the tool is distributed as an archive (zip/7z)         |
-| `RSASIO_IS_INSTALLER`     | `false` | the tool is distributed as an installer executable     |
-| `RSASIO_IS_ELEVATED`      | `false` | the tool requires elevated/admin privileges to install |
-| `ASIO4ALL_IS_ARCHIVE`     | `false` | the tool is distributed as an archive (zip/7z)         |
-| `ASIO4ALL_IS_INSTALLER`   | `true`  | the tool is distributed as an installer executable     |
-| `ASIO4ALL_IS_ELEVATED`    | `true`  | the tool requires elevated/admin privileges to install |
-| `EOF_IS_ARCHIVE`          | `true`  | the tool is distributed as an archive (zip/7z)         |
-| `EOF_IS_INSTALLER`        | `false` | the tool is distributed as an installer executable     |
-| `EOF_IS_ELEVATED`         | `false` | the tool requires elevated/admin privileges to install |
-| `DLCBUILDER_IS_ARCHIVE`   | `false` | the tool is distributed as an archive (zip/7z)         |
-| `DLCBUILDER_IS_INSTALLER` | `true`  | the tool is distributed as an installer executable     |
-| `DLCBUILDER_IS_ELEVATED`  | `false` | the tool requires elevated/admin privileges to install |
+| Flag | Value | Description |
+| --- | --- | --- |
+| `RSMODS_IS_ARCHIVE` | `false` | the tool is distributed as an archive (zip/7z) |
+| `RSMODS_IS_INSTALLER` | `true` | the tool is distributed as an installer executable |
+| `RSMODS_IS_ELEVATED` | `false` | the tool requires elevated/admin privileges to install |
+| `CDLC_IS_ARCHIVE` | `false` | the tool is distributed as an archive (zip/7z) |
+| `CDLC_IS_INSTALLER` | `true` | the tool is distributed as an installer executable |
+| `CDLC_IS_ELEVATED` | `false` | the tool requires elevated/admin privileges to install |
+| `CFSM_IS_ARCHIVE` | `true` | the tool is distributed as an archive (zip/7z) |
+| `CFSM_IS_INSTALLER` | `true` | the tool is distributed as an installer executable |
+| `CFSM_IS_ELEVATED` | `false` | the tool requires elevated/admin privileges to install |
+| `NOCABLE_IS_ARCHIVE` | `true` | the tool is distributed as an archive (zip/7z) |
+| `NOCABLE_IS_INSTALLER` | `false` | the tool is distributed as an installer executable |
+| `NOCABLE_IS_ELEVATED` | `false` | the tool requires elevated/admin privileges to install |
+| `RSASIO_IS_ARCHIVE` | `true` | the tool is distributed as an archive (zip/7z) |
+| `RSASIO_IS_INSTALLER` | `false` | the tool is distributed as an installer executable |
+| `RSASIO_IS_ELEVATED` | `false` | the tool requires elevated/admin privileges to install |
+| `ASIO4ALL_IS_ARCHIVE` | `false` | the tool is distributed as an archive (zip/7z) |
+| `ASIO4ALL_IS_INSTALLER` | `true` | the tool is distributed as an installer executable |
+| `ASIO4ALL_IS_ELEVATED` | `true` | the tool requires elevated/admin privileges to install |
+| `EOF_IS_ARCHIVE` | `true` | the tool is distributed as an archive (zip/7z) |
+| `EOF_IS_INSTALLER` | `false` | the tool is distributed as an installer executable |
+| `EOF_IS_ELEVATED` | `false` | the tool requires elevated/admin privileges to install |
+| `DLCBUILDER_IS_ARCHIVE` | `false` | the tool is distributed as an archive (zip/7z) |
+| `DLCBUILDER_IS_INSTALLER` | `true` | the tool is distributed as an installer executable |
+| `DLCBUILDER_IS_ELEVATED` | `false` | the tool requires elevated/admin privileges to install |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
-| Name             | ID                                       | Priority | Target Path               |
-| ---------------- | ---------------------------------------- | -------- | ------------------------- |
-| CDLC Mod         | `rocksmith2014editionremastered-cdlcmod` | high     | `{gamePath}/dlc`          |
-| NoCableLauncher  | `rocksmith2014editionremastered-nocable` | high     | `{gamePath}`              |
-| RS ASIO          | `rocksmith2014editionremastered-rsasio`  | high     | `{gamePath}`              |
-| Editor On Fire   | `rocksmith2014editionremastered-eof`     | high     | `{gamePath}/EditorOnFire` |
-| Root Game Folder | `rocksmith2014editionremastered-root`    | high     | `{gamePath}`              |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| CDLC Mod | `rocksmith2014editionremastered-cdlcmod` | high | `{gamePath}/dlc` |
+| NoCableLauncher | `rocksmith2014editionremastered-nocable` | high | `{gamePath}` |
+| RS ASIO | `rocksmith2014editionremastered-rsasio` | high | `{gamePath}` |
+| Editor On Fire | `rocksmith2014editionremastered-eof` | high | `{gamePath}/EditorOnFire` |
+| Root Game Folder | `rocksmith2014editionremastered-root` | high | `{gamePath}` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID                             | Priority |
-| ---------------------------------------- | -------- |
-| `rocksmith2014editionremastered-root`    | 25       |
-| `rocksmith2014editionremastered-cdlcmod` | 27       |
-| `rocksmith2014editionremastered-eof`     | 29       |
+| Installer ID | Priority |
+| --- | --- |
+| `rocksmith2014editionremastered-root` | 25 |
+| `rocksmith2014editionremastered-cdlcmod` | 27 |
+| `rocksmith2014editionremastered-eof` | 29 |
 
 ## Registered Tools
 
@@ -85,9 +85,6 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open Game Settings INI
 - Open RSMods Settings INI
 - Open NoCableLauncher Settings XML
-
----
-
 - Download CDLC Songs
 - Download RSMods
 - Download CDLC Enabler
@@ -97,9 +94,6 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Download ASIO4ALL
 - Download Editor On Fire
 - Download DLC Builder
-
----
-
 - Open PCGamingWiki Page
 - View Changelog
 - Submit Bug Report

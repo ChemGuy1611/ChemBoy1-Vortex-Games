@@ -2328,7 +2328,7 @@ class MainWindow(QMainWindow):
                   "categorize_games.py")
 
     def _on_generate_description(self):
-        """Refresh DESCRIPTION.bbcode.txt, the Nexus mod page description, for the
+        """Refresh DESCRIPTION.bbcode, the Nexus mod page description, for the
         selected games. An existing page keeps everything the author wrote -- only its
         install-notes list is rewritten; a game with no page yet gets a scaffold."""
         if not self._require_selection():

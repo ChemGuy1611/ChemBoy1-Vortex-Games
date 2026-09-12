@@ -6,22 +6,22 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                                     | Archive must contain                                                                          | Installs to                                      |
-| -------------------------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| Modloader                                    | a file or folder named `SZModLib`                                                             | `SparkingZERO\Mods`                              |
-| Lfse                                         | a file or folder named `LFSE`                                                                 | `SparkingZERO\Mods`                              |
-| Modloadermod                                 | a file with the `.uplugin` extension                                                          | `SparkingZERO\Mods`                              |
-| Json                                         | a file with the `.json` extension                                                             | `SparkingZERO\Mods\ZeroSpark\Json`               |
-| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder                                                      | `SparkingZERO`                                   |
-| Blueprint Mods (LogicMods)                   | a `LogicMods` folder                                                                          | `SparkingZERO\Content\Paks\LogicMods\LogicMods`  |
-| Pak Mods                                     | a `'.pak` file                                                                                | `SparkingZERO\Content\Paks\~mods`                |
-| UE4SS Itself                                 | a `dwmapi.dll` file                                                                           | `SparkingZERO\Binaries\Win64`                    |
-| UE4SS Script Mods (Lua)                      | a `.lua` file and a `Scripts` folder                                                          | `SparkingZERO\Binaries\Win64\ue4ss\Mods`         |
-| UE4SS DLL Mods (C++)                         | a `.dll` file and a `dlls` folder                                                             | `SparkingZERO\Binaries\Win64\ue4ss\Mods`         |
-| Root / Game Folder Mods                      | a top-level folder such as `SparkingZERO`                                                     | the game folder itself (no subfolder)            |
-| Config File Mods                             | a config file such as `engine.ini` or `game.ini`                                              | `LOCALAPPDATA\SparkingZERO\Saved\Config\Windows` |
-| Save                                         | -                                                                                             | -                                                |
-| Sigbypass                                    | a file or folder named `dsound.dll` and a file or folder named `dbsparkingzeroutocbypass.asi` | `SparkingZERO\Binaries\Win64`                    |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Modloader | a file or folder named `SZModLib` | `SparkingZERO\Mods` |
+| Lfse | a file or folder named `LFSE` | `SparkingZERO\Mods` |
+| Modloadermod | a file with the `.uplugin` extension | `SparkingZERO\Mods` |
+| Json | a file with the `.json` extension | `SparkingZERO\Mods\ZeroSpark\Json` |
+| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `SparkingZERO` |
+| Blueprint Mods (LogicMods) | a `LogicMods` folder | `SparkingZERO\Content\Paks\LogicMods\LogicMods` |
+| Pak Mods | a `".pak` file | `SparkingZERO\Content\Paks\~mods` |
+| UE4SS Itself | a `dwmapi.dll` file | `SparkingZERO\Binaries\Win64` |
+| UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `SparkingZERO\Binaries\Win64\ue4ss\Mods` |
+| UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | `SparkingZERO\Binaries\Win64\ue4ss\Mods` |
+| Root / Game Folder Mods | a top-level folder such as `SparkingZERO` | the game folder itself (no subfolder) |
+| Config File Mods | a config file such as `engine.ini` or `game.ini` | `LOCALAPPDATA\SparkingZERO\Saved\Config\Windows` |
+| Save | - | - |
+| Sigbypass | a file or folder named `dsound.dll` and a file or folder named `dbsparkingzeroutocbypass.asi` | `SparkingZERO\Binaries\Win64` |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
@@ -108,16 +108,16 @@ Installs to: `SparkingZERO\Content\Paks\LogicMods\LogicMods`
 
 ## Pak Mods
 
-Standard content mods: one or more `'.pak` files. Vortex installs the mod files themselves, so the folder structure around them in the archive does not matter.
+Standard content mods: one or more `".pak` files. Vortex installs the mod files themselves, so the folder structure around them in the archive does not matter.
 
 ```text
 MyPakMod.zip
-└── MyPakMod'.pak
+└── MyPakMod".pak
 ```
 
 **Requirements:**
 
-- Recognised by any file with the `'.pak` extension.
+- Recognised by any file with the `".pak` extension.
 - Surrounding folders are discarded - only the mod files are installed.
 - If the archive holds several mod files, Vortex asks the user which to install, which is useful for shipping optional variants in one download.
 

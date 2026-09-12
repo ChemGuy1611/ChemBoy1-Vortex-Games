@@ -6,15 +6,15 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                      | Archive must contain                               | Installs to                           |
-| ----------------------------- | -------------------------------------------------- | ------------------------------------- |
-| TFC Installer (tool)          | a `tfcinstaller.exe` file                          | the game folder itself (no subfolder) |
-| UPK Explorer (tool)           | a `upk explorer.exe` file                          | the game folder itself (no subfolder) |
-| TFC Mods                      | a `gameprofile.xml` file or a `.packagepatch` file | `TFCInstaller\Mods`                   |
-| Root / Game Folder Mods       | a `ContentBaked` folder                            | the game folder itself (no subfolder) |
-| Cooked Content Mods           | a `.blk` file                                      | `ContentBaked\pc\BulkContent`         |
-| Movie / Cutscene Replacements | a `.bik` file                                      | `ContentBaked\pc\BinkMovies`          |
-| Binaries / Injector Mods      | a `BioshockHD.exe` file or a `.dll` file           | -                                     |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| TFC Installer (tool) | a `tfcinstaller.exe` file | the game folder itself (no subfolder) |
+| UPK Explorer (tool) | a `upk explorer.exe` file | the game folder itself (no subfolder) |
+| TFC Mods | a `gameprofile.xml` file or a `.packagepatch` file | `TFCInstaller\Mods` |
+| Root / Game Folder Mods | a `ContentBaked` folder | the game folder itself (no subfolder) |
+| Cooked Content Mods | a `.blk` file | `ContentBaked\pc\BulkContent` |
+| Movie / Cutscene Replacements | a `.bik` file | `ContentBaked\pc\BinkMovies` |
+| Binaries / Injector Mods | a `BioshockHD.exe` file or a `.dll` file | - |
 
 Paths are relative to the game's install folder.
 

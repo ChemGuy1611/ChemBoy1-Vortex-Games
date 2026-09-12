@@ -38,6 +38,17 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
+| UE4SS Script-LogicMod Combo | `borderlands4-ue4sscombo` | high | `{gamePath}` |
+| UE4SS LogicMods (Blueprint) | `borderlands4-logicmods` | high | `{gamePath}/OakGame/Content/Paks/LogicMods` |
+| UE4SS | `borderlands4-ue4ss` | high | `{gamePath}/OakGame/Binaries/Win64` |
+| UE4SS Script Mod | `borderlands4-scripts` | high | `{gamePath}/OakGame/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `borderlands4-ue4ssdll` | high | `{gamePath}/OakGame/Binaries/Win64/ue4ss/Mods` |
+| Python SDK | `borderlands4-pysdk` | high | `{gamePath}/.` |
+| SDK Mod | `borderlands4-pysdkmod` | high | `{gamePath}/sdk_mods` |
+| Paks (no ~mods) | `borderlands4-pak` | low | `{gamePath}/OakGame/Content/Paks` |
+| Root Game Folder | `borderlands4-root` | high | `{gamePath}` |
+| Content Folder | `borderlands4-contentfolder` | high | `{gamePath}/OakGame` |
+| Binaries (Engine Injector) | `borderlands4-binaries` | high | `{gamePath}/OakGame/Binaries/Win64` |
 | UE Sortable Pak Mod | `borderlands4-uesortablepak` | 25 | `?` |
 | Config | `borderlands4-config` | 45 | `?` |
 | Saves | `borderlands4-save` | 47 | `?` |
@@ -97,4 +108,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-

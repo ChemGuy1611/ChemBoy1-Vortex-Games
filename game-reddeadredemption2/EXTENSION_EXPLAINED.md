@@ -2,18 +2,18 @@
 
 ## Overview
 
-| Property           | Value                                  |
-| ------------------ | -------------------------------------- |
-| Name               | Red Dead Redemption 2 Vortex Extension |
-| Engine / Structure | Basic Game                             |
-| Author             | ChemBoy1                               |
+| Property | Value |
+| --- | --- |
+| Name | Red Dead Redemption 2 Vortex Extension |
+| Engine / Structure | Basic Game |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property     | Value                                                                                                              |
-| ------------ | ------------------------------------------------------------------------------------------------------------------ |
-| Game ID      | `reddeadredemption2`                                                                                               |
-| Executable   | `./RDR2.exe`                                                                                                       |
+| Property | Value |
+| --- | --- |
+| Game ID | `reddeadredemption2` |
+| Executable | `./RDR2.exe` |
 | PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Red_Dead_Redemption_2](https://www.pcgamingwiki.com/wiki/Red_Dead_Redemption_2) |
 
 ## Supported Stores
@@ -25,18 +25,18 @@
 
 Mod types define where each category of mod gets deployed:
 
-| Name        | ID                        | Priority | Target Path       |
-| ----------- | ------------------------- | -------- | ----------------- |
-| Mod         | `reddeadredemption2-mod`  | high     | `{gamePath}/mods` |
-| Root Folder | `reddeadredemption2-root` | high     | `{gamePath}`      |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Mod | `reddeadredemption2-mod` | high | `{gamePath}/mods` |
+| Root Folder | `reddeadredemption2-root` | high | `{gamePath}` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID              | Priority |
-| ------------------------- | -------- |
-| `reddeadredemption2-root` | 47       |
+| Installer ID | Priority |
+| --- | --- |
+| `reddeadredemption2-root` | 47 |
 
 ## Registered Tools
 

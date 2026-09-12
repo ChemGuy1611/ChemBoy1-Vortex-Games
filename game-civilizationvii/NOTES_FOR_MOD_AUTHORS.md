@@ -6,9 +6,9 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain                 | Installs to                                                     |
-| -------- | ------------------------------------ | --------------------------------------------------------------- |
-| Mod      | a file with the `.modinfo` extension | `LOCALAPPDATA\Firaxis Games\Sid Meier\'s Civilization VII\Mods` |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Mod | a file with the `.modinfo` extension | `LOCALAPPDATA\Firaxis Games\Sid Meier's Civilization VII\Mods` |
 
 Paths are relative to the game's install folder.
 
@@ -16,7 +16,7 @@ Paths are relative to the game's install folder.
 
 Recognised when the archive contains a file with the `.modinfo` extension.
 
-Installs to: `LOCALAPPDATA\Firaxis Games\Sid Meier\'s Civilization VII\Mods`
+Installs to: `LOCALAPPDATA\Firaxis Games\Sid Meier's Civilization VII\Mods`
 
 ## Rules That Apply To Every Mod Type
 

@@ -6,14 +6,14 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                  | Archive must contain             | Installs to                           |
-| ------------------------- | -------------------------------- | ------------------------------------- |
-| Root / Game Folder Mods   | a `XXX_Data` folder              | the game folder itself (no subfolder) |
-| Unity Mod Manager (tool)  | a `UnityModManager.exe` file     | the game folder itself (no subfolder) |
-| Unity Mod Manager Mods    | an `info.json` file and a `.dll` | `Mods\<ModName>`                      |
-| Assembly Replacement Mods | a `Assembly-CSharp.dll` file     | `XXX_Data\Managed`                    |
-| Asset Replacement Mods    | a `.assets` file                 | `XXX_Data`                            |
-| Fallback Installer        | anything not matched above       | -                                     |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Root / Game Folder Mods | a `XXX_Data` folder | the game folder itself (no subfolder) |
+| Unity Mod Manager (tool) | a `UnityModManager.exe` file | the game folder itself (no subfolder) |
+| Unity Mod Manager Mods | an `info.json` file and a `.dll` | `Mods\<ModName>` |
+| Assembly Replacement Mods | a `Assembly-CSharp.dll` file | `XXX_Data\Managed` |
+| Asset Replacement Mods | a `.assets` file | `XXX_Data` |
+| Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
 

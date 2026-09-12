@@ -2,21 +2,21 @@
 
 ## Overview
 
-| Property           | Value                         |
-| ------------------ | ----------------------------- |
-| Name               | Dishonored 2 Vortex Extension |
-| Engine / Structure | Void Installer                |
-| Author             | ChemBoy1                      |
+| Property | Value |
+| --- | --- |
+| Name | Dishonored 2 Vortex Extension |
+| Engine / Structure | Void Installer |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property          | Value                                                                                            |
-| ----------------- | ------------------------------------------------------------------------------------------------ |
-| Game ID           | `dishonored2`                                                                                    |
-| Executable        | `Dishonored2.exe`                                                                                |
-| Executable (Xbox) | `gamelaunchhelper.exe`                                                                           |
-| Extension Page    | [https://www.nexusmods.com/site/mods/925](https://www.nexusmods.com/site/mods/925)               |
-| PCGamingWiki      | [https://www.pcgamingwiki.com/wiki/Dishonored_2](https://www.pcgamingwiki.com/wiki/Dishonored_2) |
+| Property | Value |
+| --- | --- |
+| Game ID | `dishonored2` |
+| Executable | `Dishonored2.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/925](https://www.nexusmods.com/site/mods/925) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Dishonored_2](https://www.pcgamingwiki.com/wiki/Dishonored_2) |
 
 ## Supported Stores
 
@@ -27,37 +27,37 @@
 
 ## Feature Flags
 
-| Flag         | Value   | Description                                                                         |
-| ------------ | ------- | ----------------------------------------------------------------------------------- |
+| Flag | Value | Description |
+| --- | --- | --- |
 | `CHECK_DATA` | `false` | true if game, staging, and save folders are all on the same drive (partition check) |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
-| Name             | ID                          | Priority | Target Path                      |
-| ---------------- | --------------------------- | -------- | -------------------------------- |
-| Void Mod         | `dishonored2-voidmod`       | high     | `{gamePath}/Void Installer/Mods` |
-| Void Installer   | `dishonored2-voidinstaller` | low      | `{gamePath}/.`                   |
-| Root Game Folder | `dishonored2-root`          | high     | `{gamePath}`                     |
-| Video Mod        | `dishonored2-video`         | high     | `{gamePath}/base/video`          |
-| Void Explorer    | `dishonored2-voidexplorer`  | low      | `{gamePath}/.`                   |
-| Save Game        | `dishonored2-save`          | 62       | `?`                              |
-| Config           | `dishonored2-config`        | 63       | `?`                              |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Void Mod | `dishonored2-voidmod` | high | `{gamePath}/Void Installer/Mods` |
+| Void Installer | `dishonored2-voidinstaller` | low | `{gamePath}/.` |
+| Root Game Folder | `dishonored2-root` | high | `{gamePath}` |
+| Video Mod | `dishonored2-video` | high | `{gamePath}/base/video` |
+| Void Explorer | `dishonored2-voidexplorer` | low | `{gamePath}/.` |
+| Save Game | `dishonored2-save` | 62 | `?` |
+| Config | `dishonored2-config` | 63 | `?` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID                | Priority |
-| --------------------------- | -------- |
-| `dishonored2-voidinstaller` | 25       |
-| `dishonored2-voidexplorer`  | 27       |
-| `dishonored2-voidmod`       | 29       |
-| `dishonored2-root`          | 31       |
-| `dishonored2-video`         | 33       |
-| `dishonored2-save`          | 35       |
-| `dishonored2-config`        | 37       |
+| Installer ID | Priority |
+| --- | --- |
+| `dishonored2-voidinstaller` | 25 |
+| `dishonored2-voidexplorer` | 27 |
+| `dishonored2-voidmod` | 29 |
+| `dishonored2-root` | 31 |
+| `dishonored2-video` | 33 |
+| `dishonored2-save` | 35 |
+| `dishonored2-config` | 37 |
 
 ## Registered Tools
 

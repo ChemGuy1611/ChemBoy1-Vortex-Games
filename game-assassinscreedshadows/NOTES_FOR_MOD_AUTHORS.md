@@ -6,13 +6,13 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                | Archive must contain                                                            | Installs to                           |
-| ----------------------- | ------------------------------------------------------------------------------- | ------------------------------------- |
-| AnvilToolkit (tool)     | a `anviltoolkit.exe` file                                                       | -                                     |
-| Forgerpatchmanager      | a file or folder named `forger.exe` and a file or folder named `forger mod.exe` | -                                     |
-| Dlcfolder               | a file or folder named one of: `dlc_10`, `dlc_26`, `dlc_28` or `dlc_29`         | the game folder itself (no subfolder) |
-| Forge File Mods         | a `.forge` file                                                                 | the game folder itself (no subfolder) |
-| Root / Game Folder Mods | a `videos` folder                                                               | the game folder itself (no subfolder) |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| AnvilToolkit (tool) | a `anviltoolkit.exe` file | - |
+| Forgerpatchmanager | a file or folder named `forger.exe` and a file or folder named `forger mod.exe` | - |
+| Dlcfolder | a file or folder named one of: `dlc_10`, `dlc_26`, `dlc_28` or `dlc_29` | the game folder itself (no subfolder) |
+| Forge File Mods | a `.forge` file | the game folder itself (no subfolder) |
+| Root / Game Folder Mods | a `videos` folder | the game folder itself (no subfolder) |
 
 Paths are relative to the game's install folder.
 

@@ -403,13 +403,42 @@ The IL2CPP signal in a game folder is a `<Game>_Data/il2cpp_data` directory; Mon
 
 ### .NET Framework (XNA, FNA, MonoGame)
 
-No Unity player, no scripting backend, no `_Data` folder. The game is a .NET Framework executable
-and its code usually lives in that executable itself, so plugins reference the game `.exe` directly
-rather than a separate assembly. `BepInEx/plugins`, `BepInEx/patchers` and `BepInEx/config` behave
-exactly as they do under Unity — only the bootstrap and the plugin base class differ.
+XNA itself is Microsoft's own managed game framework, last released in 2013 and abandoned since —
+no current Microsoft game uses it. What is still alive are two independent, API-compatible
+reimplementations of it: **FNA** (a thin wrapper over SDL2, used mostly to keep 2000s/2010s XNA
+titles running on a modern .NET) and **MonoGame** (a broader reimplementation, cross-platform, and
+still the base for new games as well as ports). All three share the same `Game` /
+`GraphicsDevice` / `SpriteBatch` API and the same absence of an editor: there is no scene graph, no
+prefab system, no component inspector, and no separate scripting backend to target — a game is a
+hand-written C# `Update`/`Draw` loop, compiled as an ordinary .NET Framework (or .NET Core/5+)
+executable, with assets precompiled at build time by the Content Pipeline into `.xnb` files instead
+of Unity's serialized `.assets`/`.bundle` containers. BepInEx does not distinguish between the
+three — its `NET.Framework` and `NET.CoreCLR` builds target the .NET runtime itself, not any one
+of these frameworks, so "XNA support" in BepInEx is really "support for any non-Unity managed .NET
+game."
 
-Because the launcher owns process startup, anything that starts the game some other way bypasses
-BepInEx completely. This is the most common failure mode on this runtime.
+That difference in what the engine even is drives every difference in how BepInEx attaches to it:
+
+| | Unity (Mono / IL2CPP) | XNA / FNA / MonoGame |
+| --- | --- | --- |
+| Authoring | Editor — scenes, prefabs, component inspector | Code only, no editor |
+| Game code | `<Game>_Data/Managed/Assembly-CSharp.dll` (Mono), or compiled into `GameAssembly.dll` (IL2CPP) | Directly in `<Game>.exe`, or a same-named managed `.dll` beside it |
+| Assets | Serialized `.assets`/`.bundle` under `<Game>_Data/` | Precompiled `.xnb` via the Content Pipeline; no `_Data` folder at all |
+| BepInEx build line | 5.x stable (Mono only) or 6.x BE (Mono/IL2CPP) | 6.x BE only — 5.x never covered this runtime |
+| Bootstrap | UnityDoorstop proxy DLL (`winhttp.dll`) | stock `BepInEx.NET.Framework.Launcher.exe`, or (game-specific fork) a proxy DLL / `DOTNET_STARTUP_HOOKS` |
+| Plugin base class | `BaseUnityPlugin` (a `MonoBehaviour`) | `BasePlugin` + `Load()` |
+| ConfigurationManager | Available (`BepInEx5` and `IL2CPP` builds) | No build exists |
+| MelonLoader as an alternative | Yes | No — MelonLoader is Unity-only |
+
+Plugins reference the game `.exe` directly rather than a separate assembly, since that is usually
+where the game's own code lives — though some titles instead ship it as a separate same-named
+managed `.dll` beside the executable, so this is worth confirming per game rather than assumed.
+`BepInEx/plugins`, `BepInEx/patchers` and `BepInEx/config` behave exactly as they do under Unity —
+only the bootstrap and the plugin base class differ.
+
+Because the launcher (or, for a fork, the proxy DLL) owns process startup, anything that starts the
+game some other way bypasses BepInEx completely. This is the most common failure mode on this
+runtime.
 
 ---
 
@@ -528,6 +557,40 @@ was built for, which is usually the reason the fork exists.
 
 Because these builds live on the game's own mod page rather than a versioned release feed, they
 have no machine-readable version endpoint — the file list on the mod page is the whole surface.
+
+---
+
+## Authoring a Vortex Extension for an XNA/FNA/MonoGame Game
+
+`template-unitymelonloaderbepinex-hybrid` (see
+`templates/TEMPLATE_UNITYMELONLOADERBEPINEX_HYBRID.md`) is the template used for this family of
+games, and it carries a single `isXna` toggle (default `false`) that rewires its BepInEx handling —
+and switches off several Unity-only features — for a non-Unity target:
+
+| Constant / behaviour | Unity (`isXna = false`) | XNA/FNA/MonoGame (`isXna = true`) |
+| --- | --- | --- |
+| `loaderChoice` | user picks BepInEx or MelonLoader | forced `false` — BepInEx only, since MelonLoader is Unity-only |
+| `recommendedLoader` | defaults to `"mel"` | forced `"bep"` |
+| MelonLoader installer, actions, mod types | registered | skipped entirely |
+| `allowBepCfgMan` / `allowMelPrefMan` | as configured | both forced `false` — neither in-game config editor has a non-Unity build |
+| `BEPINEX_DLL_FILE` | `winhttp.dll` (UnityDoorstop) | `d3d11.dll` — a placeholder for whatever proxy DLL the target game's own fork ships |
+| `BEPINEX_BE_ARTIFACT` | `BepInEx-Unity.IL2CPP-win-<arch>` | `BepInEx-NET.Framework-net452-win-x86` — change to whichever `net35`/`net40`/`NET.CoreCLR` row matches the game's actual target framework |
+| `ASSEMBLY_FILES` (the "Assembly DLL" mod type) | `Assembly-CSharp.dll` (+ `-firstpass`) under `<Game>_Data/Managed` | `<GAME_STRING>.dll` at the game root |
+| `<Game>_Data`-related installers, mod types and actions (`.assets`, "Open Game Data Folder", etc.) | registered | skipped — there is no Unity data folder to point at |
+
+Two things the toggle cannot decide on its own, because the template has no way to know them ahead
+of time:
+
+- **Whether the target uses the stock launcher or a fork.** The `d3d11.dll` default assumes a
+  developer-published fork with its own proxy DLL, the shape worked through in full above for
+  Romestead. A game with no such fork instead needs the stock
+  `BepInEx.NET.Framework.Launcher.exe` flow, which this toggle does not wire up on its own — that
+  means a different indicator file (the launcher executable, not a proxy DLL) and telling the
+  player to launch the launcher instead of the game.
+- **Whether the game's own code is one file or two.** Some .NET Framework/XNA games compile
+  everything into the executable, with no separate assembly to reference; others (Romestead among
+  them) ship a distinct `<Game>.dll` beside it. Confirm which shape the target game actually uses
+  before trusting the default `ASSEMBLY_FILES` value.
 
 ---
 

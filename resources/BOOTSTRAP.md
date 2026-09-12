@@ -136,7 +136,7 @@ From `ChemBoy1-Vortex-Games\`, run command below to install dev dependencies:
 npm install
 ```
 
-Installs dev dependencies: `eslint`, `oxfmt` (formatter, matches the Vortex app repo), `typescript`, and `source-map`.
+Installs dev dependencies: `eslint`, `oxfmt` (formatter, matches the Vortex app repo), `markdownlint-cli2` (doc linter), `typescript`, and `source-map`.
 
 ---
 
@@ -177,6 +177,8 @@ python -c "from PySide6.QtWidgets import QApplication; print('PySide6 OK')"
 # Check Node
 node --version
 npx eslint --version
+npx oxfmt --version
+npx markdownlint-cli2 --version
 
 # Check manifest path exists
 python -c "import os; p=os.path.join(os.environ.get('APPDATA',''), 'Vortex', 'temp', 'extensions-manifest.json'); print('manifest OK' if os.path.exists(p) else 'MISSING: ' + p)"
@@ -190,5 +192,7 @@ python -c "import os; [print(k, '=', 'SET' if os.environ.get(k) else 'MISSING') 
 ## See also
 
 `TEMPLATES_OVERVIEW.md` (what a working environment builds against). `REGISTER_GAME.md` (the
-required extension file set this environment is set up to develop). `VORTEX_DEV_BUILD.md` (the
-separate, much heavier toolchain needed to build the Vortex application itself from source).
+required extension file set this environment is set up to develop). `OXFMT.md` (the formatter this
+setup installs, and how to run it). `MARKDOWNLINT.md` (the doc linter, also installed by this
+setup). `VORTEX_DEV_BUILD.md` (the separate, much heavier toolchain needed to build the Vortex
+application itself from source).

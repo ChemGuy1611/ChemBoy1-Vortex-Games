@@ -7,26 +7,45 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 ## Quick Reference
 
 | Mod Type | Archive must contain | Installs to |
-| -------- | -------------------- | ----------- |
-
-| //Covers DML And LOFM
-"Warhammer40kdarktide Dmfdml" | a file with the `.bat` extension | - |
-| //Regular Mods & DMF
-"Warhammer40kdarktide Mod" | a file with the `.mod` extension | - |
+| --- | --- | --- |
+| Dmfdml | a file with the `.bat` extension | - |
+| Mod | a file with the `.mod` extension | - |
+| Root / Game Folder Mods | a `mods` folder | the game folder itself (no subfolder) |
+| Darktide Binaries | - | - |
 
 Paths are relative to the game's install folder.
 
-## //Covers DML And LOFM
-
-    "Warhammer40kdarktide Dmfdml"
+## Dmfdml
 
 Recognised when the archive contains a file with the `.bat` extension.
 
-## //Regular Mods & DMF
-
-    "Warhammer40kdarktide Mod"
+## Mod
 
 Recognised when the archive contains a file with the `.mod` extension.
+
+## Root / Game Folder Mods
+
+For mods laid out the same way the files appear inside the game folder. Vortex copies the matched folder and everything under it straight into the game.
+
+```text
+MyRootMod.zip
+└── mods\
+    └── ... files in their real relative locations
+```
+
+**Requirements:**
+
+- Recognised by a folder named `mods`, `binaries`, `bundle` or `launcher` in the archive.
+
+Installs to: the game folder itself (no subfolder)
+
+**Common mistakes:**
+
+- Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
+
+## Darktide Binaries
+
+Handled by the `testBinaries` installer. Inspect the extension source for the exact archive layout it expects.
 
 ## Rules That Apply To Every Mod Type
 

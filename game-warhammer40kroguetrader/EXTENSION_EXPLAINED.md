@@ -34,6 +34,18 @@
 | `mod_update_all_profile` | `false` |  |
 | `updating_mod` | `false` | used to see if it's a mod update or not |
 
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Plugin (UnityModManager) | `warhammer40kroguetrader-plugin` | high | `USER_HOME/AppData/LocalLow/Owlcat Games/Warhammer 40000 Rogue Trader/UnityModManager` |
+| Owlcat Mod | `warhammer40kroguetrader-mod` | high | `USER_HOME/AppData/LocalLow/Owlcat Games/Warhammer 40000 Rogue Trader/Modifications` |
+| Portraits | `warhammer40kroguetrader-portrait` | high | `USER_HOME/AppData/LocalLow/Owlcat Games/Warhammer 40000 Rogue Trader/Portraits` |
+| Save | `warhammer40kroguetrader-save` | high | `USER_HOME/AppData/LocalLow/Owlcat Games/Warhammer 40000 Rogue Trader/Saved Games` |
+| MicroPatches | `warhammer40kroguetrader-micropatches` | low | `MICROPATCHES_PATH` |
+
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
@@ -80,4 +92,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **GOG Support** — detects GOG version with adjusted executable/data paths.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-

@@ -2,21 +2,21 @@
 
 ## Overview
 
-| Property           | Value                       |
-| ------------------ | --------------------------- |
-| Name               | Dishonored Vortex Extension |
-| Engine / Structure | UE2/3 TFC                   |
-| Author             | ChemBoy1                    |
+| Property | Value |
+| --- | --- |
+| Name | Dishonored Vortex Extension |
+| Engine / Structure | UE2/3 TFC |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property          | Value                                                                                        |
-| ----------------- | -------------------------------------------------------------------------------------------- |
-| Game ID           | `dishonored`                                                                                 |
-| Executable        | `Binaries/Win32/Dishonored.exe`                                                              |
-| Executable (Xbox) | `gamelaunchhelper.exe`                                                                       |
-| Extension Page    | [https://www.nexusmods.com/site/mods/924](https://www.nexusmods.com/site/mods/924)           |
-| PCGamingWiki      | [https://www.pcgamingwiki.com/wiki/Dishonored](https://www.pcgamingwiki.com/wiki/Dishonored) |
+| Property | Value |
+| --- | --- |
+| Game ID | `dishonored` |
+| Executable | `Binaries/Win32/Dishonored.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/924](https://www.nexusmods.com/site/mods/924) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Dishonored](https://www.pcgamingwiki.com/wiki/Dishonored) |
 
 ## Supported Stores
 
@@ -29,30 +29,30 @@
 
 Mod types define where each category of mod gets deployed:
 
-| Name                       | ID                        | Priority | Target Path                                 |
-| -------------------------- | ------------------------- | -------- | ------------------------------------------- |
-| TFC Mod                    | `dishonored-tfcmod`       | high     | `{gamePath}/TFCInstaller/Mods`              |
-| Root Folder                | `dishonored-root`         | high     | `{gamePath}`                                |
-| Root Sub Folder            | `dishonored-rootsub`      | high     | `{gamePath}/DishonoredGame`                 |
-| Cooked Sub Folder          | `dishonored-cookedsub`    | high     | `{gamePath}/DishonoredGame/CookedPCConsole` |
-| Movies Mod                 | `dishonored-movies`       | high     | `{gamePath}/DishonoredGame/Movies`          |
-| TFC Installer              | `dishonored-tfcinstaller` | low      | `{gamePath}/.`                              |
-| UPK Explorer               | `dishonored-tfcexplorer`  | low      | `{gamePath}/.`                              |
-| Binaries (Engine Injector) | `dishonored-binaries`     | 40       | `?`                                         |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| TFC Mod | `dishonored-tfcmod` | high | `{gamePath}/TFCInstaller/Mods` |
+| Root Folder | `dishonored-root` | high | `{gamePath}` |
+| Root Sub Folder | `dishonored-rootsub` | high | `{gamePath}/DishonoredGame` |
+| Cooked Sub Folder | `dishonored-cookedsub` | high | `{gamePath}/DishonoredGame/CookedPCConsole` |
+| Movies Mod | `dishonored-movies` | high | `{gamePath}/DishonoredGame/Movies` |
+| TFC Installer | `dishonored-tfcinstaller` | low | `{gamePath}/.` |
+| UPK Explorer | `dishonored-tfcexplorer` | low | `{gamePath}/.` |
+| Binaries (Engine Injector) | `dishonored-binaries` | 40 | `?` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID              | Priority |
-| ------------------------- | -------- |
-| `dishonored-tfcinstaller` | 25       |
-| `dishonored-tfcexplorer`  | 27       |
-| `dishonored-tfcmod`       | 29       |
-| `dishonored-root`         | 31       |
-| `dishonored-cookedsub`    | 33       |
-| `dishonored-movies`       | 35       |
-| `dishonored-binaries`     | 37       |
+| Installer ID | Priority |
+| --- | --- |
+| `dishonored-tfcinstaller` | 25 |
+| `dishonored-tfcexplorer` | 27 |
+| `dishonored-tfcmod` | 29 |
+| `dishonored-root` | 31 |
+| `dishonored-cookedsub` | 33 |
+| `dishonored-movies` | 35 |
+| `dishonored-binaries` | 37 |
 
 ## Registered Tools
 

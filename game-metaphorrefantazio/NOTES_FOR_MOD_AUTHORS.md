@@ -6,11 +6,11 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                 | Archive must contain                                                                     | Installs to                      |
-| ------------------------ | ---------------------------------------------------------------------------------------- | -------------------------------- |
-| Reloaded-II (mod loader) | a `reloaded-ii.exe` file                                                                 | -                                |
-| Reloadedmodloader        | a file or folder named `modconfig.json` and a file or folder named `mrfpc.modloader.dll` | `Reloaded\Mods\MRFPC_Mod_Loader` |
-| Reloadedmod              | a file or folder named `modconfig.json`                                                  | `Reloaded\Mods`                  |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Reloaded-II (mod loader) | a `reloaded-ii.exe` file | - |
+| Reloadedmodloader | a file or folder named `modconfig.json` and a file or folder named `mrfpc.modloader.dll` | `Reloaded\Mods\MRFPC_Mod_Loader` |
+| Reloadedmod | a file or folder named `modconfig.json` | `Reloaded\Mods` |
 
 Paths are relative to the game's install folder.
 

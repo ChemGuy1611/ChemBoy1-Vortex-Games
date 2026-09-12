@@ -6,10 +6,10 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                  | Archive must contain               | Installs to |
-| ------------------------- | ---------------------------------- | ----------- |
-| Frosty Mod Manager (tool) | a `frostymodmanager.exe` file      | -           |
-| Masseffectandromeda Fbmod | a file with the `.fbmod` extension | -           |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Frosty Mod Manager (tool) | a `frostymodmanager.exe` file | - |
+| Masseffectandromeda Fbmod | a file with the `.fbmod` extension | - |
 
 Paths are relative to the game's install folder.
 

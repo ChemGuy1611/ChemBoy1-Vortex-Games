@@ -2,21 +2,21 @@
 
 ## Overview
 
-| Property           | Value                                 |
-| ------------------ | ------------------------------------- |
-| Name               | MechWarrior 5: Clans Vortex Extension |
-| Engine / Structure | UE5 (Xbox-Integrated)                 |
-| Author             | ChemBoy1                              |
+| Property | Value |
+| --- | --- |
+| Name | MechWarrior 5: Clans Vortex Extension |
+| Engine / Structure | UE5 (Xbox-Integrated) |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property          | Value                                                                                                                |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------- |
-| Game ID           | `mechwarrior5clans`                                                                                                  |
-| Executable        | `MechWarrior.exe`                                                                                                    |
-| Executable (Xbox) | `gamelaunchhelper.exe`                                                                                               |
-| Extension Page    | [https://www.nexusmods.com/site/mods/1074](https://www.nexusmods.com/site/mods/1074)                                 |
-| PCGamingWiki      | [https://www.pcgamingwiki.com/wiki/MechWarrior_5%3A_Clans](https://www.pcgamingwiki.com/wiki/MechWarrior_5%3A_Clans) |
+| Property | Value |
+| --- | --- |
+| Game ID | `mechwarrior5clans` |
+| Executable | `MechWarrior.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1074](https://www.nexusmods.com/site/mods/1074) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/MechWarrior_5%3A_Clans](https://www.pcgamingwiki.com/wiki/MechWarrior_5%3A_Clans) |
 
 ## Supported Stores
 
@@ -26,42 +26,42 @@
 
 ## Feature Flags
 
-| Flag        | Value  | Description                                            |
-| ----------- | ------ | ------------------------------------------------------ |
-| `IO_STORE`  | `true` | true if the Paks folder contains .ucas and .utoc files |
-| `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game    |
+| Flag | Value | Description |
+| --- | --- | --- |
+| `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
+| `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
-| Name                          | ID                                       | Priority | Target Path                                  |
-| ----------------------------- | ---------------------------------------- | -------- | -------------------------------------------- |
-| Modding Editor Mod            | `mechwarrior5clans-moddingeditormod`     | high     | `{gamePath}/MW5Clans/Mods`                   |
-| UE4SS LogicMods (Blueprint)   | `mechwarrior5clans-logicmods`            | high     | `{gamePath}/MW5Clans/Content/Paks/LogicMods` |
-| UE4SS Script-LogicMod Combo   | `mechwarrior5clans-ue4sscombo`           | high     | `{gamePath}`                                 |
-| Root Game Folder              | `mechwarrior5clans-root`                 | high     | `{gamePath}`                                 |
-| UE5 Paks                      | `mechwarrior5clans-ue5`                  | high     | `{gamePath}/MW5Clans/Content/Paks/~mods`     |
-| UE5 Paks (no "~mods")         | `mechwarrior5clans-pakalt`               | high     | `{gamePath}/MW5Clans/Content/Paks`           |
-| UE5 Sortable Mod              | `mechwarrior5clans-ue5-sortable-modtype` | 25       | `?`                                          |
-| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype`                   | 65       | `?`                                          |
-| UE4SS Scripts                 | `mechwarrior5clans-scripts`              | 40       | `?`                                          |
-| Binaries (Engine Injector)    | `mechwarrior5clans-binaries`             | 65       | `?`                                          |
-| UE4SS                         | `mechwarrior5clans-ue4ss`                | 70       | `?`                                          |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Modding Editor Mod | `mechwarrior5clans-moddingeditormod` | high | `{gamePath}/MW5Clans/Mods` |
+| UE4SS LogicMods (Blueprint) | `mechwarrior5clans-logicmods` | high | `{gamePath}/MW5Clans/Content/Paks/LogicMods` |
+| UE4SS Script-LogicMod Combo | `mechwarrior5clans-ue4sscombo` | high | `{gamePath}` |
+| Root Game Folder | `mechwarrior5clans-root` | high | `{gamePath}` |
+| UE5 Paks | `mechwarrior5clans-ue5` | high | `{gamePath}/MW5Clans/Content/Paks/~mods` |
+| UE5 Paks (no "~mods") | `mechwarrior5clans-pakalt` | high | `{gamePath}/MW5Clans/Content/Paks` |
+| UE5 Sortable Mod | `mechwarrior5clans-ue5-sortable-modtype` | 25 | `?` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
+| UE4SS Scripts | `mechwarrior5clans-scripts` | 40 | `?` |
+| Binaries (Engine Injector) | `mechwarrior5clans-binaries` | 65 | `?` |
+| UE4SS | `mechwarrior5clans-ue4ss` | 70 | `?` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID                               | Priority |
-| ------------------------------------------ | -------- |
-| `ue5-pak-installer`                        | 31       |
-| `mechwarrior5clans-moddingeditormod`       | 25       |
-| `mechwarrior5clans-ue4ss-logicscriptcombo` | 27       |
-| `mechwarrior5clans-ue4ss-logicmod`         | 29       |
-| `mechwarrior5clans-ue4ss`                  | 33       |
-| `mechwarrior5clans-ue4ss-scripts`          | 35       |
-| `mechwarrior5clans-root`                   | 37       |
+| Installer ID | Priority |
+| --- | --- |
+| `ue5-pak-installer` | 31 |
+| `mechwarrior5clans-moddingeditormod` | 25 |
+| `mechwarrior5clans-ue4ss-logicscriptcombo` | 27 |
+| `mechwarrior5clans-ue4ss-logicmod` | 29 |
+| `mechwarrior5clans-ue4ss` | 33 |
+| `mechwarrior5clans-ue4ss-scripts` | 35 |
+| `mechwarrior5clans-root` | 37 |
 
 ## Registered Tools
 
@@ -81,8 +81,8 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-| ---------- | ------- | ------- |
-| UE4SS      | —       | —       |
+| --- | --- | --- |
+| UE4SS | — | — |
 
 ## Special Features
 

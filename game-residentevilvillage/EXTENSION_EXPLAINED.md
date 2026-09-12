@@ -2,22 +2,22 @@
 
 ## Overview
 
-| Property           | Value                                  |
-| ------------------ | -------------------------------------- |
-| Name               | Resident Evil Village Vortex Extension |
-| Engine / Structure | Fluffy + REFramework (RE Engine)       |
-| Author             | ChemBoy1                               |
+| Property | Value |
+| --- | --- |
+| Name | Resident Evil Village Vortex Extension |
+| Engine / Structure | Fluffy + REFramework (RE Engine) |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property          | Value                                                                                                              |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Game ID           | `residentevilvillage`                                                                                              |
-| Executable        | `re8.exe`                                                                                                          |
-| Executable (Xbox) | `gamelaunchhelper.exe`                                                                                             |
-| Executable (Demo) | `re8GEDemo.exe`                                                                                                    |
-| Extension Page    | [https://www.nexusmods.com/site/mods/237](https://www.nexusmods.com/site/mods/237)                                 |
-| PCGamingWiki      | [https://www.pcgamingwiki.com/wiki/Resident_Evil_Village](https://www.pcgamingwiki.com/wiki/Resident_Evil_Village) |
+| Property | Value |
+| --- | --- |
+| Game ID | `residentevilvillage` |
+| Executable | `re8.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+| Executable (Demo) | `re8GEDemo.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/237](https://www.nexusmods.com/site/mods/237) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Resident_Evil_Village](https://www.pcgamingwiki.com/wiki/Resident_Evil_Village) |
 
 ## Supported Stores
 
@@ -26,41 +26,41 @@
 
 ## Feature Flags
 
-| Flag                | Value   | Description                                                                                                                                 |
-| ------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `useRefNightly`     | `false` | toggle for using the REFramework nightly instead of Nexus release                                                                           |
-| `hasXbox`           | `true`  | toggle for Xbox version logic                                                                                                               |
-| `reZip`             | `true`  | ! NOT WORKING YET - KEEP AS TRUE FOR NOW - set to true to re-zip Fluffy Mods (possibly not necessary for FLUFFY v3.069+)                    |
-| `allowSymlinks`     | `true`  | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
-| `multiExe`          | `true`  | set to true if there are multiple executables (and multiple FLUFFY_FOLDERs) (typically for Demo)                                            |
-| `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below)                                                            |
-| `debug`             | `false` | toggle for debug mode                                                                                                                       |
+| Flag | Value | Description |
+| --- | --- | --- |
+| `useRefNightly` | `false` | toggle for using the REFramework nightly instead of Nexus release |
+| `hasXbox` | `true` | toggle for Xbox version logic |
+| `reZip` | `true` | ! NOT WORKING YET - KEEP AS TRUE FOR NOW - set to true to re-zip Fluffy Mods (possibly not necessary for FLUFFY v3.069+) |
+| `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
+| `multiExe` | `true` | set to true if there are multiple executables (and multiple FLUFFY_FOLDERs) (typically for Demo) |
+| `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
+| `debug` | `false` | toggle for debug mode |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
-| Name                           | ID                                  | Priority | Target Path    |
-| ------------------------------ | ----------------------------------- | -------- | -------------- |
-| Binaries / Root Folder         | `residentevilvillage-root`          | high     | `{gamePath}`   |
-| Loose Lua/Plugin (REFramework) | `residentevilvillage-looselua`      | high     | `{gamePath}/.` |
-| Fluffy Mod Manager             | `residentevilvillage-fluffymanager` | low      | `{gamePath}`   |
-| REFramework                    | `residentevilvillage-reframework`   | low      | `{gamePath}`   |
-| Fluffy Mod                     | `residentevilvillage-fluffymod`     | 25       | `?`            |
-| Fluffy Preset                  | `residentevilvillage-preset`        | 40       | `?`            |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Binaries / Root Folder | `residentevilvillage-root` | high | `{gamePath}` |
+| Loose Lua/Plugin (REFramework) | `residentevilvillage-looselua` | high | `{gamePath}/.` |
+| Fluffy Mod Manager | `residentevilvillage-fluffymanager` | low | `{gamePath}` |
+| REFramework | `residentevilvillage-reframework` | low | `{gamePath}` |
+| Fluffy Mod | `residentevilvillage-fluffymod` | 25 | `?` |
+| Fluffy Preset | `residentevilvillage-preset` | 40 | `?` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID                        | Priority |
-| ----------------------------------- | -------- |
-| `residentevilvillage-fluffymanager` | 25       |
-| `residentevilvillage-reframework`   | 27       |
-| `residentevilvillage-looselua`      | 29       |
-| `residentevilvillage-root`          | 31       |
-| `residentevilvillage-preset`        | 33       |
-| `residentevilvillage-fluffymodzip`  | 49       |
+| Installer ID | Priority |
+| --- | --- |
+| `residentevilvillage-fluffymanager` | 25 |
+| `residentevilvillage-reframework` | 27 |
+| `residentevilvillage-looselua` | 29 |
+| `residentevilvillage-root` | 31 |
+| `residentevilvillage-preset` | 33 |
+| `residentevilvillage-fluffymodzip` | 49 |
 
 ## Registered Tools
 
@@ -83,17 +83,17 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 ## Auto-Downloaded Dependencies
 
-| Dependency         | Version | Details |
-| ------------------ | ------- | ------- |
-| Fluffy Mod Manager | —       | —       |
-| REFramework        | —       | —       |
+| Dependency | Version | Details |
+| --- | --- | --- |
+| Fluffy Mod Manager | — | — |
+| REFramework | — | — |
 
 ## Config & Save Paths
 
-| Type   | Path        |
-| ------ | ----------- |
-| Config | `.`         |
-| Save   | `/userdata` |
+| Type | Path |
+| --- | --- |
+| Config | `.` |
+| Save | `/userdata` |
 
 ## Special Features
 

@@ -6,11 +6,11 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type           | Archive must contain                       | Installs to     |
-| ------------------ | ------------------------------------------ | --------------- |
-| XXX Godotmodloader | a file or folder named `mod_loader.gd`     | -               |
-| XXX Mod            | a file with one of these extensions: `.gd` | `mods-unpacked` |
-| Fallback Installer | anything not matched above                 | -               |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| XXX Godotmodloader | a file or folder named `mod_loader.gd` | - |
+| XXX Mod | a file with one of these extensions: `.gd` | `mods-unpacked` |
+| Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
 

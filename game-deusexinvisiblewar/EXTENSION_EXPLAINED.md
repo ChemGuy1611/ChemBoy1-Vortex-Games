@@ -2,20 +2,20 @@
 
 ## Overview
 
-| Property           | Value                                   |
-| ------------------ | --------------------------------------- |
-| Name               | Deus Ex: Invisible War Vortex Extension |
-| Engine / Structure | Basic Game                              |
-| Author             | ChemBoy1                                |
+| Property | Value |
+| --- | --- |
+| Name | Deus Ex: Invisible War Vortex Extension |
+| Engine / Structure | Basic Game |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property       | Value                                                                                                                    |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Game ID        | `deusexinvisiblewar`                                                                                                     |
-| Executable     | `System/dx2.exe`                                                                                                         |
-| Extension Page | [https://www.nexusmods.com/site/mods/1463](https://www.nexusmods.com/site/mods/1463)                                     |
-| PCGamingWiki   | [https://www.pcgamingwiki.com/wiki/Deus_Ex%3A_Invisible_War](https://www.pcgamingwiki.com/wiki/Deus_Ex%3A_Invisible_War) |
+| Property | Value |
+| --- | --- |
+| Game ID | `deusexinvisiblewar` |
+| Executable | `System/dx2.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1463](https://www.nexusmods.com/site/mods/1463) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Deus_Ex%3A_Invisible_War](https://www.pcgamingwiki.com/wiki/Deus_Ex%3A_Invisible_War) |
 
 ## Supported Stores
 
@@ -24,29 +24,29 @@
 
 ## Feature Flags
 
-| Flag           | Value  | Description                                  |
-| -------------- | ------ | -------------------------------------------- |
+| Flag | Value | Description |
+| --- | --- | --- |
 | `moddbBrowser` | `true` | register the "Browse ModDB" page (moddb.com) |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
-| Name                       | ID                                 | Priority | Target Path              |
-| -------------------------- | ---------------------------------- | -------- | ------------------------ |
-| Data Mod Folder            | `deusexinvisiblewar-datamodfolder` | high     | `{gamePath}/content/DX2` |
-| Root Folder                | `deusexinvisiblewar-root`          | high     | `{gamePath}`             |
-| Binaries (Engine Injector) | `deusexinvisiblewar-binaries`      | high     | `{gamePath}/System`      |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Data Mod Folder | `deusexinvisiblewar-datamodfolder` | high | `{gamePath}/content/DX2` |
+| Root Folder | `deusexinvisiblewar-root` | high | `{gamePath}` |
+| Binaries (Engine Injector) | `deusexinvisiblewar-binaries` | high | `{gamePath}/System` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID                       | Priority |
-| ---------------------------------- | -------- |
-| `deusexinvisiblewar-root`          | 25       |
-| `deusexinvisiblewar-datamodfolder` | 27       |
-| `deusexinvisiblewar-binaries`      | 49       |
+| Installer ID | Priority |
+| --- | --- |
+| `deusexinvisiblewar-root` | 25 |
+| `deusexinvisiblewar-datamodfolder` | 27 |
+| `deusexinvisiblewar-binaries` | 49 |
 
 ## Registered Tools
 

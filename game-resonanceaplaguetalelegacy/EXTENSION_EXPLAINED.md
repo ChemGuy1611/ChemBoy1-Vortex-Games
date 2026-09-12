@@ -50,6 +50,12 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
+| Root Folder | `resonanceaplaguetalelegacy-root` | high | `{gamePath}` |
+| Resonance Framework | `resonanceaplaguetalelegacy-framework` | high | `{gamePath}` |
+| Resonance Framework Mod | `resonanceaplaguetalelegacy-frameworkmod` | high | `{gamePath}/Mods` |
+| ASI Loader | `resonanceaplaguetalelegacy-asiloader` | low | `{gamePath}` |
+| TextureStudio | `resonanceaplaguetalelegacy-texturestudio` | low | `{gamePath}/TextureStudio` |
+| Script Mod | `resonanceaplaguetalelegacy-mod` | high | `{gamePath}/Mods` |
 | Mod Merger | `resonanceaplaguetalelegacy-merger` | 70 | `?` |
 
 ## Mod Installers
@@ -103,4 +109,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-

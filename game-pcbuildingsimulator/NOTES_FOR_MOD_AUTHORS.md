@@ -6,12 +6,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                      | Archive must contain                   | Installs to         |
-| ----------------------------- | -------------------------------------- | ------------------- |
-| Root                          | a file or folder named `PCBS_Data`     | -                   |
-| BepInEx Configuration Manager | a `configurationmanager.dll` file      | `Bepinex`           |
-| Assembly Replacement Mods     | a `Assembly-CSharp-firstpass.dll` file | `PCBS_Data\Managed` |
-| Save Game Files               | a `.binary` file                       | `Saves`             |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Root | a file or folder named `PCBS_Data` | - |
+| BepInEx Configuration Manager | a `configurationmanager.dll` file | `Bepinex` |
+| Assembly Replacement Mods | a `Assembly-CSharp-firstpass.dll` file | `PCBS_Data\Managed` |
+| Save Game Files | a `.binary` file | `Saves` |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 

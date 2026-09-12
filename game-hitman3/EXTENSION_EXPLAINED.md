@@ -51,6 +51,8 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
+| Root Folder | `hitman3-root` | high | `{gamePath}` |
+| SMF Mod | `hitman3-mod` | high | `{gamePath}/Vortex_Mods` |
 | Simple Mod Framework | `hitman3-loader` | 70 | `?` |
 
 ## Mod Installers
@@ -99,4 +101,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-

@@ -2,17 +2,17 @@
 
 ## Overview
 
-| Property           | Value                                 |
-| ------------------ | ------------------------------------- |
-| Name               | XXX Vortex Extension                  |
+| Property | Value |
+| --- | --- |
+| Name | XXX Vortex Extension |
 | Engine / Structure | Frostbite Engine - Frosty Mod Manager |
-| Author             | ChemBoy1                              |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property   | Value     |
-| ---------- | --------- |
-| Game ID    | `XXX`     |
+| Property | Value |
+| --- | --- |
+| Game ID | `XXX` |
 | Executable | `XXX.exe` |
 
 ## Supported Stores
@@ -21,38 +21,38 @@
 
 ## Feature Flags
 
-| Flag                | Value   | Description                                                                                    |
-| ------------------- | ------- | ---------------------------------------------------------------------------------------------- |
-| `hasArchives`       | `false` | toggle for .archive file support                                                               |
-| `needsKey`          | `false` | toggle for encryption key logic                                                                |
-| `allowSymlinks`     | `false` | Frosty handles its own deployment; symlinks not typical                                        |
-| `fallbackInstaller` | `true`  | enable fallback installer. Set false if you need to avoid installer collisions                 |
-| `setupNotification` | `true`  | enable to show the user a notification with special instructions (specify below)               |
-| `hasUserIdFolder`   | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
-| `debug`             | `false` | toggle for debug mode                                                                          |
+| Flag | Value | Description |
+| --- | --- | --- |
+| `hasArchives` | `false` | toggle for .archive file support |
+| `needsKey` | `false` | toggle for encryption key logic |
+| `allowSymlinks` | `false` | Frosty handles its own deployment; symlinks not typical |
+| `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
+| `setupNotification` | `true` | enable to show the user a notification with special instructions (specify below) |
+| `hasUserIdFolder` | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
+| `debug` | `false` | toggle for debug mode |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
-| Name                   | ID                     | Priority | Target Path                            |
-| ---------------------- | ---------------------- | -------- | -------------------------------------- |
-| Binaries / Root Folder | `XXX-root`             | high     | `{gamePath}`                           |
-| Frosty Mod             | `XXX-frostymod`        | high     | `{gamePath}/FrostyModManager/Mods/XXX` |
-| Plugin (FMM)           | `XXX-plugin`           | high     | `{gamePath}/FrostyModManager/Plugins`  |
-| Frosty Mod Manager     | `XXX-frostymodmanager` | low      | `{gamePath}`                           |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Binaries / Root Folder | `XXX-root` | high | `{gamePath}` |
+| Frosty Mod | `XXX-frostymod` | high | `{gamePath}/FrostyModManager/Mods/XXX` |
+| Plugin (FMM) | `XXX-plugin` | high | `{gamePath}/FrostyModManager/Plugins` |
+| Frosty Mod Manager | `XXX-frostymodmanager` | low | `{gamePath}` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID           | Priority |
-| ---------------------- | -------- |
-| `XXX-frostymodmanager` | 25       |
-| `XXX-frostymod`        | 30       |
-| `XXX-plugin`           | 35       |
-| `XXX-key`              | 40       |
-| `XXX-fallback`         | 49       |
+| Installer ID | Priority |
+| --- | --- |
+| `XXX-frostymodmanager` | 25 |
+| `XXX-frostymod` | 30 |
+| `XXX-plugin` | 35 |
+| `XXX-key` | 40 |
+| `XXX-fallback` | 49 |
 
 ## Registered Tools
 
@@ -79,8 +79,8 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 ## Config & Save Paths
 
-| Type   | Path           |
-| ------ | -------------- |
+| Type | Path |
+| --- | --- |
 | Config | `XXX/settings` |
 
 ## Special Features

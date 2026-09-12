@@ -2,11 +2,11 @@
 
 ## Overview
 
-| Property           | Value                                       |
-| ------------------ | ------------------------------------------- |
-| Name               | Crimson Desert Vortex Extension             |
+| Property | Value |
+| --- | --- |
+| Name | Crimson Desert Vortex Extension |
 | Engine / Structure | Basic Game w/ 3rd Party Manager Integration |
-| Author             | ChemBoy1                                    |
+| Author | ChemBoy1 |
 
 ### Notes
 
@@ -17,13 +17,13 @@
 
 ## Key Identifiers
 
-| Property          | Value                                                                                                |
-| ----------------- | ---------------------------------------------------------------------------------------------------- |
-| Game ID           | `crimsondesert`                                                                                      |
-| Executable        | `bin64/CrimsonDesert.exe`                                                                            |
-| Executable (Xbox) | `gamelaunchhelper.exe`                                                                               |
-| Extension Page    | [https://www.nexusmods.com/site/mods/1746](https://www.nexusmods.com/site/mods/1746)                 |
-| PCGamingWiki      | [https://www.pcgamingwiki.com/wiki/Crimson_Desert](https://www.pcgamingwiki.com/wiki/Crimson_Desert) |
+| Property | Value |
+| --- | --- |
+| Game ID | `crimsondesert` |
+| Executable | `bin64/CrimsonDesert.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1746](https://www.nexusmods.com/site/mods/1746) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Crimson_Desert](https://www.pcgamingwiki.com/wiki/Crimson_Desert) |
 
 ## Supported Stores
 
@@ -32,49 +32,49 @@
 
 ## Feature Flags
 
-| Flag                | Value   | Description                                                                                                                                 |
-| ------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `loadOrder`         | `false` | true if game needs a load order                                                                                                             |
-| `hasLoader`         | `false` | true if game needs a mod loader                                                                                                             |
-| `allowSymlinks`     | `true`  | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
-| `needsModInstaller` | `false` | whether to install 0000-0035 folder mods to root - DISABLED since mod manager can handle                                                    |
-| `rootInstaller`     | `true`  | enable root installer. Set false if you need to avoid installer collisions                                                                  |
-| `fallbackInstaller` | `true`  | enable fallback installer. Set false if you need to avoid installer collisions                                                              |
-| `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below)                                                            |
-| `hasUserIdFolder`   | `true`  | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)                                              |
-| `debug`             | `false` | toggle for debug mode                                                                                                                       |
-| `binariesInstaller` | `true`  | only enable Binaries installer if not in root                                                                                               |
+| Flag | Value | Description |
+| --- | --- | --- |
+| `loadOrder` | `false` | true if game needs a load order |
+| `hasLoader` | `false` | true if game needs a mod loader |
+| `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
+| `needsModInstaller` | `false` | whether to install 0000-0035 folder mods to root - DISABLED since mod manager can handle |
+| `rootInstaller` | `true` | enable root installer. Set false if you need to avoid installer collisions |
+| `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
+| `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
+| `hasUserIdFolder` | `true` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
+| `debug` | `false` | toggle for debug mode |
+| `binariesInstaller` | `true` | only enable Binaries installer if not in root |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
-| Name                       | ID                         | Priority | Target Path        |
-| -------------------------- | -------------------------- | -------- | ------------------ |
-| Plugin Loader              | `crimsondesert-mod`        | high     | `{gamePath}/.`     |
-| Crimson Sharp Mod          | `crimsondesert-browsermod` | high     | `{gamePath}/mods`  |
-| Patch Mod                  | `crimsondesert-patchmod`   | high     | `{gamePath}/mods`  |
-| Root Folder                | `crimsondesert-root`       | high     | `{gamePath}`       |
-| Tools                      | `crimsondesert-tools`      | low      | `{gamePath}`       |
-| Definitive Mod Manager     | `crimsondesert-dmm`        | low      | `{gamePath}`       |
-| Binaries (Engine Injector) | `crimsondesert-binaries`   | high     | `{gamePath}/bin64` |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Plugin Loader | `crimsondesert-mod` | high | `{gamePath}/.` |
+| Crimson Sharp Mod | `crimsondesert-browsermod` | high | `{gamePath}/mods` |
+| Patch Mod | `crimsondesert-patchmod` | high | `{gamePath}/mods` |
+| Root Folder | `crimsondesert-root` | high | `{gamePath}` |
+| Tools | `crimsondesert-tools` | low | `{gamePath}` |
+| Definitive Mod Manager | `crimsondesert-dmm` | low | `{gamePath}` |
+| Binaries (Engine Injector) | `crimsondesert-binaries` | high | `{gamePath}/bin64` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID                    | Priority |
-| ------------------------------- | -------- |
-| `crimsondesert-root`            | 27       |
-| `crimsondesert-dmm`             | 28       |
-| `crimsondesert-tools`           | 29       |
-| `crimsondesert-specialpatchmod` | 31       |
-| `crimsondesert-browsermod`      | 32       |
-| `crimsondesert-patchmod`        | 33       |
-| `crimsondesert-texture`         | 34       |
-| `crimsondesert-json`            | 35       |
-| `crimsondesert-binaries`        | 37       |
-| `crimsondesert-fallback`        | 49       |
+| Installer ID | Priority |
+| --- | --- |
+| `crimsondesert-root` | 27 |
+| `crimsondesert-dmm` | 28 |
+| `crimsondesert-tools` | 29 |
+| `crimsondesert-specialpatchmod` | 31 |
+| `crimsondesert-browsermod` | 32 |
+| `crimsondesert-patchmod` | 33 |
+| `crimsondesert-texture` | 34 |
+| `crimsondesert-json` | 35 |
+| `crimsondesert-binaries` | 37 |
+| `crimsondesert-fallback` | 49 |
 
 ## Registered Tools
 
@@ -100,8 +100,8 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-| ---------- | ------- | ------- |
-| Mod Loader | —       | —       |
+| --- | --- | --- |
+| Mod Loader | — | — |
 
 ## Special Features
 

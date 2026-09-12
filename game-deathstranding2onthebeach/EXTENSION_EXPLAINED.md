@@ -43,6 +43,16 @@
 | `binariesInstaller` | `false` | enables the Binaries folder installer (for engine injectors) |
 | `modManagerInstalled` | `false` |  |
 
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| DS2 Manager Mod | `deathstranding2onthebeach-managermod` | high | `{gamePath}/mods` |
+| DS2 Mod Manager | `deathstranding2onthebeach-modmanager` | low | `{gamePath}` |
+| Root Folder | `deathstranding2onthebeach-root` | high | `{gamePath}` |
+
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
@@ -84,4 +94,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-

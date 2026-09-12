@@ -10,7 +10,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | Loader | a file or folder named `LobotomyBaseModLib.dll` | - |
 | Root / Game Folder Mods | a `LobotomyCorp_Data` folder | the game folder itself (no subfolder) |
-| Mod | a file or folder named `LobotomyBaseModLib.dll` | - |
+| Mod | a file or folder named `LobotomyBaseModLib.dll` | `LobotomyCorp_Data\BaseMods` |
 | Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
@@ -43,6 +43,8 @@ Installs to: the game folder itself (no subfolder)
 
 Recognised when the archive contains a file or folder named `LobotomyBaseModLib.dll`.
 
+Installs to: `LobotomyCorp_Data\BaseMods`
+
 ## Fallback Installer
 
 The catch-all. Any archive that matched none of the installers above lands here and is copied across unchanged.
@@ -63,4 +65,3 @@ The catch-all. Any archive that matched none of the installers above lands here 
 - Archives that contain a FOMOD installer (a `fomod` folder with `ModuleConfig.xml`) are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

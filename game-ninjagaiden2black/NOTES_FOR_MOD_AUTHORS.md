@@ -6,17 +6,17 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                                     | Archive must contain                           | Installs to                                          |
-| -------------------------------------------- | ---------------------------------------------- | ---------------------------------------------------- |
-| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder       | `NINJAGAIDEN2BLACK`                                  |
-| Blueprint Mods (LogicMods)                   | a `LogicMods` folder                           | `NINJAGAIDEN2BLACK\Content\Paks\LogicMods\LogicMods` |
-| Pak Mods                                     | a `'.pak` file                                 | `NINJAGAIDEN2BLACK\Content\Paks\~mods`               |
-| UE4SS Itself                                 | a `dwmapi.dll` file                            | -                                                    |
-| UE4SS Script Mods (Lua)                      | a `.lua` file and a `Scripts` folder           | -                                                    |
-| Root / Game Folder Mods                      | a top-level folder such as `NINJAGAIDEN2BLACK` | the game folder itself (no subfolder)                |
-| Modloader                                    | a file or folder named `d3d9.dll`              | -                                                    |
-| Mlmod                                        | a file or folder named `mods`                  | -                                                    |
-| Fallback Installer                           | anything unrecognised with no pak file         | -                                                    |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `NINJAGAIDEN2BLACK` |
+| Blueprint Mods (LogicMods) | a `LogicMods` folder | `NINJAGAIDEN2BLACK\Content\Paks\LogicMods\LogicMods` |
+| Pak Mods | a `".pak` file | `NINJAGAIDEN2BLACK\Content\Paks\~mods` |
+| UE4SS Itself | a `dwmapi.dll` file | - |
+| UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | - |
+| Root / Game Folder Mods | a top-level folder such as `NINJAGAIDEN2BLACK` | the game folder itself (no subfolder) |
+| Modloader | a file or folder named `d3d9.dll` | - |
+| Mlmod | a file or folder named `mods` | - |
+| Fallback Installer | anything unrecognised with no pak file | - |
 
 Paths are relative to the game's install folder.
 
@@ -79,16 +79,16 @@ Installs to: `NINJAGAIDEN2BLACK\Content\Paks\LogicMods\LogicMods`
 
 ## Pak Mods
 
-Standard content mods: one or more `'.pak` files. Vortex installs the mod files themselves, so the folder structure around them in the archive does not matter.
+Standard content mods: one or more `".pak` files. Vortex installs the mod files themselves, so the folder structure around them in the archive does not matter.
 
 ```text
 MyPakMod.zip
-└── MyPakMod'.pak
+└── MyPakMod".pak
 ```
 
 **Requirements:**
 
-- Recognised by any file with the `'.pak` extension.
+- Recognised by any file with the `".pak` extension.
 - Surrounding folders are discarded - only the mod files are installed.
 - If the archive holds several mod files, Vortex asks the user which to install, which is useful for shipping optional variants in one download.
 

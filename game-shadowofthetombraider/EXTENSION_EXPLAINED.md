@@ -2,21 +2,21 @@
 
 ## Overview
 
-| Property           | Value                                      |
-| ------------------ | ------------------------------------------ |
-| Name               | Shadow of the Tomb Raider Vortex Extension |
-| Engine / Structure | 3rd-Party Mod Installer                    |
-| Author             | ChemBoy1                                   |
+| Property | Value |
+| --- | --- |
+| Name | Shadow of the Tomb Raider Vortex Extension |
+| Engine / Structure | 3rd-Party Mod Installer |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property          | Value                                                                                                                      |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Game ID           | `shadowofthetombraider`                                                                                                    |
-| Executable        | `SOTTR.exe`                                                                                                                |
-| Executable (Xbox) | `gamelaunchhelper.exe`                                                                                                     |
-| Extension Page    | [https://www.nexusmods.com/site/mods/906](https://www.nexusmods.com/site/mods/906)                                         |
-| PCGamingWiki      | [https://www.pcgamingwiki.com/wiki/Shadow_of_the_Tomb_Raider](https://www.pcgamingwiki.com/wiki/Shadow_of_the_Tomb_Raider) |
+| Property | Value |
+| --- | --- |
+| Game ID | `shadowofthetombraider` |
+| Executable | `SOTTR.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/906](https://www.nexusmods.com/site/mods/906) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Shadow_of_the_Tomb_Raider](https://www.pcgamingwiki.com/wiki/Shadow_of_the_Tomb_Raider) |
 
 ## Supported Stores
 
@@ -29,25 +29,25 @@
 
 Mod types define where each category of mod gets deployed:
 
-| Name                   | ID                                    | Priority | Target Path                         |
-| ---------------------- | ------------------------------------- | -------- | ----------------------------------- |
-| Binaries / Root Folder | `shadowofthetombraider-binaries`      | high     | `{gamePath}`                        |
-| Mod Manager Mod        | `shadowofthetombraider-modmanagermod` | high     | `{gamePath}/Mods`                   |
-| Special K Texture Mod  | `shadowofthetombraider-sktexture`     | high     | `{gamePath}/SK_Res/inject/textures` |
-| SOTTR Mod Manager      | `shadowofthetombraider-manager`       | low      | `{gamePath}`                        |
-| TR Reboot Mod Manager  | `shadowofthetombraider-trmodmanager`  | low      | `{gamePath}`                        |
-| Special K Plugin       | `shadowofthetombraider-sk`            | low      | `{gamePath}`                        |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Binaries / Root Folder | `shadowofthetombraider-binaries` | high | `{gamePath}` |
+| Mod Manager Mod | `shadowofthetombraider-modmanagermod` | high | `{gamePath}/Mods` |
+| Special K Texture Mod | `shadowofthetombraider-sktexture` | high | `{gamePath}/SK_Res/inject/textures` |
+| SOTTR Mod Manager | `shadowofthetombraider-manager` | low | `{gamePath}` |
+| TR Reboot Mod Manager | `shadowofthetombraider-trmodmanager` | low | `{gamePath}` |
+| Special K Plugin | `shadowofthetombraider-sk` | low | `{gamePath}` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID                          | Priority |
-| ------------------------------------- | -------- |
-| `shadowofthetombraider-manager`       | 25       |
-| `shadowofthetombraider-trmodmanager`  | 30       |
-| `shadowofthetombraider-binaries`      | 35       |
-| `shadowofthetombraider-modmanagermod` | 40       |
+| Installer ID | Priority |
+| --- | --- |
+| `shadowofthetombraider-manager` | 25 |
+| `shadowofthetombraider-trmodmanager` | 30 |
+| `shadowofthetombraider-binaries` | 35 |
+| `shadowofthetombraider-modmanagermod` | 40 |
 
 ## Registered Tools
 

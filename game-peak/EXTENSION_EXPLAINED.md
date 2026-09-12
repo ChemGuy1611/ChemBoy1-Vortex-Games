@@ -2,20 +2,20 @@
 
 ## Overview
 
-| Property           | Value                 |
-| ------------------ | --------------------- |
-| Name               | PEAK Vortex Extension |
-| Engine / Structure | Unity BepinEx         |
-| Author             | ChemBoy1              |
+| Property | Value |
+| --- | --- |
+| Name | PEAK Vortex Extension |
+| Engine / Structure | Unity BepinEx |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property       | Value                                                                                |
-| -------------- | ------------------------------------------------------------------------------------ |
-| Game ID        | `peak`                                                                               |
-| Executable     | `PEAK.exe`                                                                           |
+| Property | Value |
+| --- | --- |
+| Game ID | `peak` |
+| Executable | `PEAK.exe` |
 | Extension Page | [https://www.nexusmods.com/site/mods/1356](https://www.nexusmods.com/site/mods/1356) |
-| PCGamingWiki   | [https://www.pcgamingwiki.com/wiki/Peak](https://www.pcgamingwiki.com/wiki/Peak)     |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Peak](https://www.pcgamingwiki.com/wiki/Peak) |
 
 ## Supported Stores
 
@@ -25,19 +25,19 @@
 
 Mod types define where each category of mod gets deployed:
 
-| Name                          | ID               | Priority | Target Path                  |
-| ----------------------------- | ---------------- | -------- | ---------------------------- |
-| Root Game Folder              | `peak-root`      | high     | `{gamePath}`                 |
-| BepInEx Configuration Manager | `peak-bepcfgman` | high     | `{gamePath}/Bepinex`         |
-| BepinEx Mod                   | `peak-bepmods`   | high     | `{gamePath}/BepinEx/plugins` |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Root Game Folder | `peak-root` | high | `{gamePath}` |
+| BepInEx Configuration Manager | `peak-bepcfgman` | high | `{gamePath}/Bepinex` |
+| BepinEx Mod | `peak-bepmods` | high | `{gamePath}/BepinEx/plugins` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID     | Priority |
-| ---------------- | -------- |
-| `peak-bepcfgman` | 9        |
+| Installer ID | Priority |
+| --- | --- |
+| `peak-bepcfgman` | 9 |
 
 ## Toolbar Actions
 
@@ -51,9 +51,9 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 ## Auto-Downloaded Dependencies
 
-| Dependency                    | Version | Details |
-| ----------------------------- | ------- | ------- |
-| BepInEx Configuration Manager | 18.4.1  | —       |
+| Dependency | Version | Details |
+| --- | --- | --- |
+| BepInEx Configuration Manager | 18.4.1 | — |
 
 ## Special Features
 

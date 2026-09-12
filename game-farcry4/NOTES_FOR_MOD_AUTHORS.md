@@ -8,13 +8,13 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Mod Installer (tool) | a `fcmodinstaller.exe` file | - |
+| Mod Installer (tool) | a `fcmodinstaller.exe` file | `FCModInstaller` |
 | Root / Game Folder Mods | a `bin` folder or a `""` file | the game folder itself (no subfolder) |
-| Data File Mods | a `.dat` file | - |
-| Binaries | a file with the `.dll` extension | - |
-| Mimoda3 | a file or folder named `info.xml` | - |
-| Mod Installer Mods | a `.a2` file | - |
-| Xml | a file or folder named `gamerprofile.xml` and a file with the `.xml` extension | - |
+| Data File Mods | a `.dat` file | `data_win32` |
+| Binaries | a file with the `.dll` extension | `bin` |
+| Mimoda3 | a file or folder named `info.xml` | `FCModInstaller\ModifiedFilesFC4` |
+| Mod Installer Mods | a `.a2` file | `FCModInstaller\ModifiedFilesFC4` |
+| Xml | a file or folder named `gamerprofile.xml` and a file with the `.xml` extension | `DOCUMENTS\My Games\Far Cry 4\USERID_FOLDER` |
 
 Paths are relative to the game's install folder.
 
@@ -25,6 +25,8 @@ This installer handles the Far Cry Mod Installer itself, not mods for it. It exi
 **Requirements:**
 
 - Recognised by a file named `fcmodinstaller.exe` in the archive.
+
+Installs to: `FCModInstaller`
 
 **Common mistakes:**
 
@@ -59,13 +61,19 @@ Packed game data replacements.
 
 - Recognised by any file with the `.dat` or `.fat` extensions.
 
+Installs to: `data_win32`
+
 ## Binaries
 
 Recognised when the archive contains a file with the `.dll` extension.
 
+Installs to: `bin`
+
 ## Mimoda3
 
 Recognised when the archive contains a file or folder named `info.xml`.
+
+Installs to: `FCModInstaller\ModifiedFilesFC4`
 
 ## Mod Installer Mods
 
@@ -75,6 +83,8 @@ Mods packaged for the Far Cry Mod Installer.
 
 - Recognised by any file with the `.a2`, `.a3`, `.a4`, `.a5` or `.bin` extensions.
 
+Installs to: `FCModInstaller\ModifiedFilesFC4`
+
 **Common mistakes:**
 
 - These are applied through the Mod Installer tool, not deployed straight into the game.
@@ -83,9 +93,10 @@ Mods packaged for the Far Cry Mod Installer.
 
 Recognised when the archive contains a file or folder named `gamerprofile.xml` and a file with the `.xml` extension.
 
+Installs to: `DOCUMENTS\My Games\Far Cry 4\USERID_FOLDER`
+
 ## Rules That Apply To Every Mod Type
 
 - Archives that contain a FOMOD installer (a `fomod` folder with `ModuleConfig.xml`) are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
-

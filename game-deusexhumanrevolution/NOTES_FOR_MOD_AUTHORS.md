@@ -6,11 +6,11 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain                          | Installs to                           |
-| -------- | --------------------------------------------- | ------------------------------------- |
-| Mod000   | a file with the `.000` extension              | `mods`                                |
-| Patcher  | a file or folder named `DXHR-Patcher_1.5.jar` | the game folder itself (no subfolder) |
-| Modhook  | a file or folder named `DFEngine.dll`         | the game folder itself (no subfolder) |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Mod000 | a file with the `.000` extension | `mods` |
+| Patcher | a file or folder named `DXHR-Patcher_1.5.jar` | the game folder itself (no subfolder) |
+| Modhook | a file or folder named `DFEngine.dll` | the game folder itself (no subfolder) |
 
 Paths are relative to the game's install folder.
 

@@ -22,6 +22,19 @@
 - **Steam** — `379720`
 - **GOG** — `1390579243`
 
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Binaries / Root Folder | `doom-binaries` | high | `{gamePath}` |
+| Loader Mods | `doom-mods` | high | `{gamePath}/Mods` |
+| DOOM Legacy Mod | `doom-legacy` | high | `{gamePath}` |
+| Version Rollback Files | `doom-rollback` | low | `{gamePath}` |
+| DOOMModLoader | `doom-modloader` | low | `{gamePath}` |
+| DOOMLauncher | `doom-launcher` | low | `{gamePath}` |
+
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
@@ -60,4 +73,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Special Features
 
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
-

@@ -22,6 +22,20 @@
 - **Steam** — `2668510`
 - **Epic Games Store** — `c180bd9859624278aa20f1333918498a`
 
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Root Game Folder | `reddeadredemption-root` | high | `{gamePath}` |
+| RPF File | `reddeadredemption-rpf` | high | `{gamePath}/kml/rpf` |
+| MagicRDR Mod (Loose) | `reddeadredemption-magicmod` | high | `{gamePath}/MagicRDR_Mods` |
+| ASI Script / Plugin | `reddeadredemption-asiplugin` | high | `{gamePath}` |
+| ScriptHookRDR | `reddeadredemption-scripthook` | low | `{gamePath}` |
+| kepmehz Mod Loader | `reddeadredemption-modloader` | low | `{gamePath}` |
+| Magic RDR | `reddeadredemption-magicrdr` | low | `{gamePath}` |
+
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
@@ -58,4 +72,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
-

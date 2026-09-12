@@ -6,16 +6,16 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                      | Archive must contain               | Installs to                                                           |
-| ----------------------------- | ---------------------------------- | --------------------------------------------------------------------- |
-| ACSE (mod loader)             | a `ACSE` file                      | `Win64\ovldata`                                                       |
-| Root / Game Folder Mods       | a `Win64` folder                   | the game folder itself (no subfolder)                                 |
-| ACSE Mods                     | a `Main.ovl` file                  | `Win64\ovldata`                                                       |
-| XXX Localised                 | a file or folder named `localised` | `Win64\ovldata\ACSE`                                                  |
-| Movie / Cutscene Replacements | a `.webm` file                     | `Movies`                                                              |
-| OVL Data Mods                 | a `ovldata` file                   | `Win64`                                                               |
-| Save Game Files               | a `.blpr2` file                    | `USER_HOME\Saved Games\Frontier Developments\XXX\USERID_FOLDER\Saves` |
-| Fallback Installer            | anything not matched above         | -                                                                     |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| ACSE (mod loader) | a `ACSE` file | `Win64\ovldata` |
+| Root / Game Folder Mods | a `Win64` folder | the game folder itself (no subfolder) |
+| ACSE Mods | a `Main.ovl` file | `Win64\ovldata` |
+| XXX Localised | a file or folder named `localised` | `Win64\ovldata\ACSE` |
+| Movie / Cutscene Replacements | a `.webm` file | `Movies` |
+| OVL Data Mods | a `ovldata` file | `Win64` |
+| Save Game Files | a `.blpr2` file | `USER_HOME\Saved Games\Frontier Developments\XXX\USERID_FOLDER\Saves` |
+| Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 

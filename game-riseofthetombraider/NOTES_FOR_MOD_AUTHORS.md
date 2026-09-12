@@ -6,12 +6,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type      | Archive must contain                                                                                                                                                                                                       | Installs to |
-| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
-| Manager       | a file or folder named `rottrmodmanager.exe`                                                                                                                                                                               | -           |
-| Trmodmanager  | a file or folder named `trreboottools.modmanager.exe`                                                                                                                                                                      | -           |
-| Binaries      | a file with one of these extensions: `.dll`, `.exe`, `.tiger`, `.asi` or `.addon64`                                                                                                                                        | -           |
-| Modmanagermod | a file with one of these extensions: `tr2mesh`, `.tr2pcd`, `.drm`, `.skl`, `.tr10dtp`, `.tr10material`, `.tr10modeldata`, `.t10script`, `.t10shaderlib`, `.tr10sound`, `.dds`, `.tr10objectref`, `.tr10dtp` or `.tr10anim` | `Mods`      |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Manager | a file or folder named `rottrmodmanager.exe` | - |
+| Trmodmanager | a file or folder named `trreboottools.modmanager.exe` | - |
+| Binaries | a file with one of these extensions: `.dll`, `.exe`, `.tiger`, `.asi` or `.addon64` | - |
+| Modmanagermod | a file with one of these extensions: `tr2mesh`, `.tr2pcd`, `.drm`, `.skl`, `.tr10dtp`, `.tr10material`, `.tr10modeldata`, `.t10script`, `.t10shaderlib`, `.tr10sound`, `.dds`, `.tr10objectref`, `.tr10dtp` or `.tr10anim` | `Mods` |
 
 Paths are relative to the game's install folder.
 

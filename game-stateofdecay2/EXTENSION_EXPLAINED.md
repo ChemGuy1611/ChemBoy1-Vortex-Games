@@ -30,6 +30,11 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
+| Config (LocalAppData) | `stateofdecay2-config` | high | `{localAppData}/StateOfDecay2/Saved/Config/WindowsNoEditor` |
+| Paks | `stateofdecay2-pak` | high | `{localAppData}/StateOfDecay2/Saved/Paks` |
+| Cooked Mods | `stateofdecay2-cooked` | high | `{localAppData}/StateOfDecay2/Saved` |
+| Root Game Folder | `stateofdecay2-root` | high | `{gamePath}` |
+| SoD2 Mod Manager | `stateofdecay2-modmanager` | low | `{gamePath}` |
 | Binaries (Engine Injector) | `stateofdecay2-binaries` | 45 | `?` |
 
 ## Mod Installers
@@ -78,4 +83,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 - **Required Extensions** — depends on: `Unreal Engine Mod Installer`.
-

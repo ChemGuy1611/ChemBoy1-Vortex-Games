@@ -22,6 +22,17 @@
 | --- | --- | --- |
 | `moddbBrowser` | `true` | register the "Browse ModDB" pages (moddb.com) - one for Doom, one for Doom II |
 
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Mod | `gzdoom-mod` | high | `{gamePath}/DML/FILE/PWAD` |
+| IWAD (Game) | `gzdoom-wad` | high | `{gamePath}/DML/FILE/IWAD` |
+| UZDoom | `gzdoom-gzdoom` | low | `{gamePath}/DML/FILE/PORT/gzdoom` |
+| Doom Mod Loader | `gzdoom-dml` | low | `{gamePath}/DML` |
+
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
@@ -60,4 +71,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-

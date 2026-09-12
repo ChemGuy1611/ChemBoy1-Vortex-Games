@@ -2,11 +2,11 @@
 
 ## Overview
 
-| Property           | Value                         |
-| ------------------ | ----------------------------- |
-| Name               | Subnautica 2 Vortex Extension |
-| Engine / Structure | Unreal Engine 4-5 Game        |
-| Author             | ChemBoy1                      |
+| Property | Value |
+| --- | --- |
+| Name | Subnautica 2 Vortex Extension |
+| Engine / Structure | Unreal Engine 4-5 Game |
+| Author | ChemBoy1 |
 
 ### Notes
 
@@ -16,14 +16,14 @@
 
 ## Key Identifiers
 
-| Property          | Value                                                                                            |
-| ----------------- | ------------------------------------------------------------------------------------------------ |
-| Game ID           | `subnautica2`                                                                                    |
-| Executable        | `Subnautica2.exe`                                                                                |
-| Executable (Xbox) | `gamelaunchhelper.exe`                                                                           |
-| Executable (GOG)  | `Subnautica2.exe`                                                                                |
-| Executable (Demo) | `Subnautica2.exe`                                                                                |
-| PCGamingWiki      | [https://www.pcgamingwiki.com/wiki/Subnautica_2](https://www.pcgamingwiki.com/wiki/Subnautica_2) |
+| Property | Value |
+| --- | --- |
+| Game ID | `subnautica2` |
+| Executable | `Subnautica2.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+| Executable (GOG) | `Subnautica2.exe` |
+| Executable (Demo) | `Subnautica2.exe` |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Subnautica_2](https://www.pcgamingwiki.com/wiki/Subnautica_2) |
 
 ## Supported Stores
 
@@ -33,65 +33,65 @@
 
 ## Feature Flags
 
-| Flag                     | Value   | Description                                                                                                                                 |
-| ------------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `hasXbox`                | `true`  | toggle for Xbox version logic.                                                                                                              |
-| `multiExe`               | `false` | toggle for multiple executables (Epic/GOG/Demo don't match Steam)                                                                           |
-| `setupNotification`      | `false` | enable to show the user a notification with special instructions (specify below)                                                            |
-| `hasModKit`              | `false` | !Very likely to have a modkit release by 1.0                                                                                                |
-| `hasServer`              | `false` | toggle for server pak mod logic                                                                                                             |
-| `preferHardlinks`        | `true`  | set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users                 |
-| `autoDownloadUe4ss`      | `true`  | toggle for auto downloading UE4SS (only applies when ue4ssLoadOrder is enabled)                                                             |
-| `writeEngineVersion`     | `false` | toggle to write ENGINE_VERSION into UE4SS-settings.ini (EngineVersionOverride) on deploy, when UE4SS is installed                           |
-| `SIGBYPASS_REQUIRED`     | `false` | set true if there are .sig files in the Paks folder                                                                                         |
-| `IO_STORE`               | `true`  | true if the Paks folder contains .ucas and .utoc files                                                                                      |
-| `hasUserIdFolder`        | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)                                              |
-| `debug`                  | `false` | toggle for debug mode                                                                                                                       |
-| `PAKMOD_LOADORDER`       | `true`  | set to false if you don't want loadOrder. If must be in "Paks" root, disable loadOrder.                                                     |
-| `FBLO`                   | `true`  | set to false to use legacy load order page                                                                                                  |
-| `ue4ssLoadOrder`         | `true`  | master toggle for UE4SS support: UE4SS/Scripts/DLL/LogicMods mod types and installers, UE4SS buttons, load order page, and mods.txt writing |
-| `logicModsLoadOrder`     | `true`  | enable load order page and load_order.txt writing for LogicMods/Blueprint pak mods                                                          |
-| `collectionsLoadOrder`   | `true`  | include UE4SS and LogicMods load orders in collections (ANDed with the toggles above)                                                       |
-| `SYM_LINKS`              | `true`  | true if symlink deployment is enabled for this game                                                                                         |
-| `CHECK_CONFIG`           | `false` | boolean to check if game, staging folder, and config and save folders are on the same drive                                                 |
-| `CHECK_SAVE`             | `false` | secondary same as above (if save and config are in different locations)                                                                     |
-| `mod_update_all_profile` | `false` | for mod update to keep them in the load order and not uncheck them                                                                          |
-| `updating_mod`           | `false` | used to see if it's a mod update or not                                                                                                     |
+| Flag | Value | Description |
+| --- | --- | --- |
+| `hasXbox` | `true` | toggle for Xbox version logic. |
+| `multiExe` | `false` | toggle for multiple executables (Epic/GOG/Demo don't match Steam) |
+| `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
+| `hasModKit` | `false` | !Very likely to have a modkit release by 1.0 |
+| `hasServer` | `false` | toggle for server pak mod logic |
+| `preferHardlinks` | `true` | set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users |
+| `autoDownloadUe4ss` | `true` | toggle for auto downloading UE4SS (only applies when ue4ssLoadOrder is enabled) |
+| `writeEngineVersion` | `false` | toggle to write ENGINE_VERSION into UE4SS-settings.ini (EngineVersionOverride) on deploy, when UE4SS is installed |
+| `SIGBYPASS_REQUIRED` | `false` | set true if there are .sig files in the Paks folder |
+| `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
+| `hasUserIdFolder` | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
+| `debug` | `false` | toggle for debug mode |
+| `PAKMOD_LOADORDER` | `true` | set to false if you don't want loadOrder. If must be in "Paks" root, disable loadOrder. |
+| `FBLO` | `true` | set to false to use legacy load order page |
+| `ue4ssLoadOrder` | `true` | master toggle for UE4SS support: UE4SS/Scripts/DLL/LogicMods mod types and installers, UE4SS buttons, load order page, and mods.txt writing |
+| `logicModsLoadOrder` | `true` | enable load order page and load_order.txt writing for LogicMods/Blueprint pak mods |
+| `collectionsLoadOrder` | `true` | include UE4SS and LogicMods load orders in collections (ANDed with the toggles above) |
+| `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
+| `CHECK_CONFIG` | `false` | boolean to check if game, staging folder, and config and save folders are on the same drive |
+| `CHECK_SAVE` | `false` | secondary same as above (if save and config are in different locations) |
+| `mod_update_all_profile` | `false` | for mod update to keep them in the load order and not uncheck them |
+| `updating_mod` | `false` | used to see if it's a mod update or not |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
-| Name                        | ID                          | Priority | Target Path                           |
-| --------------------------- | --------------------------- | -------- | ------------------------------------- |
-| UE4SS Script-LogicMod Combo | `subnautica2-ue4sscombo`    | high     | `{gamePath}`                          |
-| UE4SS LogicMods (Blueprint) | `subnautica2-logicmods`     | high     | `{gamePath}/Subnautica2/Content/Paks` |
-| Paks (no "~mods")           | `subnautica2-pakalt`        | high     | `{gamePath}/Subnautica2/Content/Paks` |
-| Root Game Folder            | `subnautica2-root`          | high     | `{gamePath}`                          |
-| UE Sortable Pak Mod         | `subnautica2-uesortablepak` | 25       | `?`                                   |
-| UE4SS Script Mod            | `subnautica2-scripts`       | 50       | `?`                                   |
-| UE4SS DLL Mod               | `subnautica2-ue4ssdll`      | 52       | `?`                                   |
-| Binaries (Engine Injector)  | `subnautica2-binaries`      | 54       | `?`                                   |
-| UE4SS                       | `subnautica2-ue4ss`         | 56       | `?`                                   |
-| Config (Local AppData)      | `subnautica2-config`        | 62       | `?`                                   |
-| Saves (Local AppData)       | `subnautica2-save`          | 64       | `?`                                   |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| UE4SS Script-LogicMod Combo | `subnautica2-ue4sscombo` | high | `{gamePath}` |
+| UE4SS LogicMods (Blueprint) | `subnautica2-logicmods` | high | `{gamePath}/Subnautica2/Content/Paks` |
+| Paks (no "~mods") | `subnautica2-pakalt` | high | `{gamePath}/Subnautica2/Content/Paks` |
+| Root Game Folder | `subnautica2-root` | high | `{gamePath}` |
+| UE Sortable Pak Mod | `subnautica2-uesortablepak` | 25 | `?` |
+| UE4SS Script Mod | `subnautica2-scripts` | 50 | `?` |
+| UE4SS DLL Mod | `subnautica2-ue4ssdll` | 52 | `?` |
+| Binaries (Engine Injector) | `subnautica2-binaries` | 54 | `?` |
+| UE4SS | `subnautica2-ue4ss` | 56 | `?` |
+| Config (Local AppData) | `subnautica2-config` | 62 | `?` |
+| Saves (Local AppData) | `subnautica2-save` | 64 | `?` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID                | Priority |
-| --------------------------- | -------- |
-| `subnautica2-ue4sscombo`    | 26       |
-| `subnautica2-logicmods`     | 27       |
-| `subnautica2-uesortablepak` | 29       |
-| `subnautica2-ue4ss`         | 31       |
-| `subnautica2-scripts`       | 35       |
-| `subnautica2-ue4ssdll`      | 37       |
-| `subnautica2-root`          | 39       |
-| `subnautica2-config`        | 41       |
-| `subnautica2-save`          | 43       |
-| `subnautica2-binaries`      | 49       |
+| Installer ID | Priority |
+| --- | --- |
+| `subnautica2-ue4sscombo` | 26 |
+| `subnautica2-logicmods` | 27 |
+| `subnautica2-uesortablepak` | 29 |
+| `subnautica2-ue4ss` | 31 |
+| `subnautica2-scripts` | 35 |
+| `subnautica2-ue4ssdll` | 37 |
+| `subnautica2-root` | 39 |
+| `subnautica2-config` | 41 |
+| `subnautica2-save` | 43 |
+| `subnautica2-binaries` | 49 |
 
 ## Toolbar Actions
 
@@ -114,8 +114,8 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-| ---------- | ------- | ------- |
-| UE4SS      | —       | —       |
+| --- | --- | --- |
+| UE4SS | — | — |
 
 ## Special Features
 

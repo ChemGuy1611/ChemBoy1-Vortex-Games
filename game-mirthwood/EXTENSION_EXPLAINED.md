@@ -2,18 +2,18 @@
 
 ## Overview
 
-| Property           | Value                      |
-| ------------------ | -------------------------- |
-| Name               | Mirthwood Vortex Extension |
-| Engine / Structure | Unity BepinEx              |
-| Author             | ChemBoy1                   |
+| Property | Value |
+| --- | --- |
+| Name | Mirthwood Vortex Extension |
+| Engine / Structure | Unity BepinEx |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property       | Value                                                                                |
-| -------------- | ------------------------------------------------------------------------------------ |
-| Game ID        | `mirthwood`                                                                          |
-| Executable     | `Mirthwood.exe`                                                                      |
+| Property | Value |
+| --- | --- |
+| Game ID | `mirthwood` |
+| Executable | `Mirthwood.exe` |
 | Extension Page | [https://www.nexusmods.com/site/mods/1272](https://www.nexusmods.com/site/mods/1272) |
 
 ## Supported Stores
@@ -24,10 +24,10 @@
 
 Mod types define where each category of mod gets deployed:
 
-| Name             | ID                  | Priority | Target Path                  |
-| ---------------- | ------------------- | -------- | ---------------------------- |
-| Root Game Folder | `mirthwood-root`    | high     | `{gamePath}`                 |
-| BepinEx Mod      | `mirthwood-bepmods` | high     | `{gamePath}/BepinEx/plugins` |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Root Game Folder | `mirthwood-root` | high | `{gamePath}` |
+| BepinEx Mod | `mirthwood-bepmods` | high | `{gamePath}/BepinEx/plugins` |
 
 ## Toolbar Actions
 

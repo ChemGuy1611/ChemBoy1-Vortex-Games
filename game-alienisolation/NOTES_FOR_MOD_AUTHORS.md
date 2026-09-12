@@ -6,10 +6,10 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type   | Archive must contain                                                  | Installs to |
-| ---------- | --------------------------------------------------------------------- | ----------- |
-| Datafolder | -                                                                     | -           |
-| Datafiles  | a file with one of these extensions: `.bin`, `.bml`, `.xml` or `.pak` | `DATA`      |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Datafolder | - | - |
+| Datafiles | a file with one of these extensions: `.bin`, `.bml`, `.xml` or `.pak` | `DATA` |
 
 Paths are relative to the game's install folder.
 

@@ -2,20 +2,20 @@
 
 ## Overview
 
-| Property           | Value                              |
-| ------------------ | ---------------------------------- |
-| Name               | God of War (2018) Vortex Extension |
-| Engine / Structure | Sony Port, Custom Game Data        |
-| Author             | ChemBoy1                           |
+| Property | Value |
+| --- | --- |
+| Name | God of War (2018) Vortex Extension |
+| Engine / Structure | Sony Port, Custom Game Data |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property       | Value                                                                                        |
-| -------------- | -------------------------------------------------------------------------------------------- |
-| Game ID        | `godofwar`                                                                                   |
-| Executable     | `GoW.exe`                                                                                    |
-| Extension Page | [https://www.nexusmods.com/site/mods/340](https://www.nexusmods.com/site/mods/340)           |
-| PCGamingWiki   | [https://www.pcgamingwiki.com/wiki/God_of_War](https://www.pcgamingwiki.com/wiki/God_of_War) |
+| Property | Value |
+| --- | --- |
+| Game ID | `godofwar` |
+| Executable | `GoW.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/340](https://www.nexusmods.com/site/mods/340) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/God_of_War](https://www.pcgamingwiki.com/wiki/God_of_War) |
 
 ## Supported Stores
 
@@ -27,30 +27,30 @@
 
 Mod types define where each category of mod gets deployed:
 
-| Name             | ID                      | Priority | Target Path                                      |
-| ---------------- | ----------------------- | -------- | ------------------------------------------------ |
-| exec folder      | `godofwar-data`         | high     | `{gamePath}`                                     |
-| patch Folder     | `godofwar-patchfolder`  | high     | `{gamePath}/exec`                                |
-| exec subfolder   | `godofwar-execsub`      | high     | `{gamePath}/exec`                                |
-| Texpack/Lodpack  | `godofwar-pack`         | high     | `{gamePath}/exec/patch/pc_le`                    |
-| Texpack/Lodpack  | `godofwar-pack`         | high     | `{gamePath}/exec/patch/pc_le`                    |
-| Lua Mod          | `godofwar-luamod`       | high     | `{gamePath}/mods`                                |
-| Save (User Home) | `godofwar-save`         | high     | `USER_HOME/Saved Games/God of War/USERID_FOLDER` |
-| Script Loader    | `godofwar-scriptloader` | low      | `{gamePath}`                                     |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| exec folder | `godofwar-data` | high | `{gamePath}` |
+| patch Folder | `godofwar-patchfolder` | high | `{gamePath}/exec` |
+| exec subfolder | `godofwar-execsub` | high | `{gamePath}/exec` |
+| Texpack/Lodpack | `godofwar-pack` | high | `{gamePath}/exec/patch/pc_le` |
+| Texpack/Lodpack | `godofwar-pack` | high | `{gamePath}/exec/patch/pc_le` |
+| Lua Mod | `godofwar-luamod` | high | `{gamePath}/mods` |
+| Save (User Home) | `godofwar-save` | high | `USER_HOME/Saved Games/God of War/USERID_FOLDER` |
+| Script Loader | `godofwar-scriptloader` | low | `{gamePath}` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID            | Priority |
-| ----------------------- | -------- |
-| `godofwar-scriptloader` | 25       |
-| `godofwar-data`         | 27       |
-| `godofwar-patchfolder`  | 29       |
-| `godofwar-execsub`      | 31       |
-| `godofwar-pack`         | 33       |
-| `godofwar-luamod`       | 35       |
-| `godofwar-save`         | 37       |
+| Installer ID | Priority |
+| --- | --- |
+| `godofwar-scriptloader` | 25 |
+| `godofwar-data` | 27 |
+| `godofwar-patchfolder` | 29 |
+| `godofwar-execsub` | 31 |
+| `godofwar-pack` | 33 |
+| `godofwar-luamod` | 35 |
+| `godofwar-save` | 37 |
 
 ## Registered Tools
 
@@ -73,9 +73,9 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 ## Auto-Downloaded Dependencies
 
-| Dependency    | Version | Details |
-| ------------- | ------- | ------- |
-| Script Loader | —       | —       |
+| Dependency | Version | Details |
+| --- | --- | --- |
+| Script Loader | — | — |
 
 ## Special Features
 

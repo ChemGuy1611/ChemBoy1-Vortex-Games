@@ -241,11 +241,12 @@ function installConfig(files) {
   const modFile = files.find((file) => CONFIG_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: CONFIG_ID };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
 
   const instructions = filtered.map((file) => {
@@ -275,13 +276,14 @@ function installModLoader(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === MODLOADER_FILE);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MODLOADER_ID };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(
     (file) =>
       //((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-      file.indexOf(rootPath) !== -1,
+      file.startsWith(rootPrefix),
   );
 
   const instructions = filtered.map((file) => {
@@ -325,11 +327,12 @@ function installData(files) {
   const DATA_IDX = `${path.basename(modFile)}${path.sep}`;
   const idx = modFile.indexOf(DATA_IDX);
   const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: DATA_ID };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
 
   const instructions = filtered.map((file) => {
@@ -361,11 +364,12 @@ function installDataSub(files) {
   const DATASUB_IDX = `${path.basename(modFile)}${path.sep}`;
   const idx = modFile.indexOf(DATASUB_IDX);
   const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: DATASUB_ID };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && !file.endsWith(path.sep),
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
   );
 
   const instructions = filtered.map((file) => {

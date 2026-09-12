@@ -2,8 +2,8 @@
 Name: Watch_Dogs Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-06-16
+Version: 0.2.0
+Date: 2026-09-12
 Notes:
 -
 ///////////////////////////////////////////*/
@@ -15,6 +15,7 @@ const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const winapi = require("winapi-bindings");
+const React = require("react");
 
 const DOCUMENTS = util.getVortexPath("documents");
 
@@ -75,6 +76,12 @@ const LOADER_FILE = "ModManager.exe";
 const LOADER_PAGE_NO = 491;
 const LOADER_FILE_NO = 1666;
 const LOADER_DOMAIN = GAME_ID;
+
+//Experimental: NexusTools reads a "cmdline.ini" file next to its dinput8.dll/ModManager.exe as a
+//stand-in for real command line args. "-prelaunch_never" is meant to suppress its in-game confirm
+//popup. Found by reading the shipped binary (v1.1.12) - never verified against a running game.
+const CMDLINE_INI_FILE = "cmdline.ini";
+const CMDLINE_INI_TEXT = "-prelaunch_never";
 
 const MOD_ID = `${GAME_ID}-mod`;
 const MOD_NAME = "Mod";
@@ -774,6 +781,78 @@ async function downloadLoader(api, gameSpec, check = true) {
   }
 } //*/
 
+//Experimental: write/remove bin\cmdline.ini so NexusTools may skip its in-game confirm popup.
+//Never overwrites a cmdline.ini it did not write itself.
+async function reconcileCmdlineIni(api, enabled) {
+  const CMDLINE_PATH = path.join(GAME_PATH, BINARIES_PATH, CMDLINE_INI_FILE);
+  try {
+    if (enabled) {
+      try {
+        await fsp.stat(CMDLINE_PATH);
+      } catch {
+        await fsp.writeFile(CMDLINE_PATH, CMDLINE_INI_TEXT);
+      }
+    } else {
+      let existing;
+      try {
+        existing = await fsp.readFile(CMDLINE_PATH, "utf8");
+      } catch {
+        existing = undefined;
+      }
+      if (existing === CMDLINE_INI_TEXT) {
+        await fsp.unlink(CMDLINE_PATH);
+      }
+    }
+  } catch (err) {
+    api.showErrorNotification(`Failed to update ${CMDLINE_INI_FILE}`, err);
+  }
+}
+
+function setNexusToolsAutoConfirm(value) {
+  return { type: "SET_NEXUSTOOLS_AUTOCONFIRM_WATCHDOGS", payload: value };
+}
+setNexusToolsAutoConfirm.toString = () => "SET_NEXUSTOOLS_AUTOCONFIRM_WATCHDOGS";
+
+function GameSettings() {
+  const { Toggle, More, MainContext } = require("vortex-api");
+  const { useSelector, useDispatch } = require("react-redux");
+  const dispatch = useDispatch();
+  const { api } = React.useContext(MainContext);
+  const autoConfirmEnabled = useSelector((state) =>
+    util.getSafe(state, ["settings", GAME_ID, "nexusToolsAutoConfirmEnabled"], false),
+  );
+  const onToggle = React.useCallback(
+    (checked) => {
+      dispatch(setNexusToolsAutoConfirm(checked));
+      reconcileCmdlineIni(api, checked).catch((err) =>
+        log("warn", `NexusTools cmdline.ini reconcile failed: ${err.message}`),
+      );
+    },
+    [api, dispatch],
+  );
+  return React.createElement(
+    "form",
+    null,
+    React.createElement(
+      "div",
+      { className: "settings-group" },
+      React.createElement(
+        Toggle,
+        { checked: autoConfirmEnabled, onToggle },
+        "Skip NexusTools Confirm Window (Experimental)",
+        React.createElement(
+          More,
+          { id: `${GAME_ID}-nexustools-autoconfirm-more`, name: "Skip NexusTools Confirm Window" },
+          "Unverified - writes bin\\cmdline.ini with -prelaunch_never so NexusTools may apply mod " +
+            "changes without its in-game popup. Test that mods still take effect after enabling " +
+            "this before relying on it. Disabling removes the file again (only if this extension " +
+            "wrote it).",
+        ),
+      ),
+    ),
+  );
+}
+
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
 function setupNotify(api) {
@@ -914,6 +993,10 @@ async function setup(discovery, api, gameSpec) {
   if (setupNotification) setupNotify(api);
   if (hasLoader) {
     await downloadLoader(api, gameSpec);
+    await reconcileCmdlineIni(
+      api,
+      util.getSafe(state, ["settings", GAME_ID, "nexusToolsAutoConfirmEnabled"], false),
+    );
   }
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
@@ -1105,6 +1188,23 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     },
   );
+
+  if (hasLoader) {
+    context.registerReducer(["settings", GAME_ID], {
+      reducers: {
+        [setNexusToolsAutoConfirm.toString()]: (state, payload) =>
+          util.setSafe(state, ["nexusToolsAutoConfirmEnabled"], payload),
+      },
+      defaults: { nexusToolsAutoConfirmEnabled: false },
+    });
+    context.registerSettings(
+      "Mods",
+      GameSettings,
+      () => ({}),
+      () => selectors.activeGameId(context.api.getState()) === GAME_ID,
+      150,
+    );
+  }
 }
 
 //main function

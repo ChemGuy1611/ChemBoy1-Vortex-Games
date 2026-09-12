@@ -6,13 +6,13 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                  | Archive must contain                                                             | Installs to                              |
-| ------------------------- | -------------------------------------------------------------------------------- | ---------------------------------------- |
-| Frosty Mod Manager (tool) | a `frostymodmanager.exe` file                                                    | -                                        |
-| Frosty Mods               | a `.fbmod` file                                                                  | `FrostyModManager\Mods\NeedForSpeedHeat` |
-| Plugin                    | a file with the `.exe` extension and a file with one of these extensions: `.dll` | `FrostyModManager\Plugins`               |
-| Key                       | -                                                                                | `FrostyModManager`                       |
-| Fallback Installer        | anything not matched above                                                       | -                                        |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Frosty Mod Manager (tool) | a `frostymodmanager.exe` file | - |
+| Frosty Mods | a `.fbmod` file | `FrostyModManager\Mods\NeedForSpeedHeat` |
+| Plugin | a file with the `.exe` extension and a file with one of these extensions: `.dll` | `FrostyModManager\Plugins` |
+| Key | - | `FrostyModManager` |
+| Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
 

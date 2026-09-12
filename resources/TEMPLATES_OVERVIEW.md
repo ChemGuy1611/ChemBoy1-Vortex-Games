@@ -34,7 +34,7 @@ comment banners. Everything outside those banners is derived and normally left a
 configured new-extension version, so the scaffold value is cosmetic.
 
 **Per-template docs.** Each template folder also carries `EXTENSION_EXPLAINED.md` and
-`NOTES_FOR_MOD_AUTHORS.md` (plus a `.bbcode.txt` form of the latter, for pasting into a Nexus mod
+`NOTES_FOR_MOD_AUTHORS.md` (plus a `.bbcode` form of the latter, for pasting into a Nexus mod
 page). Those are scaffold documents with `XXX` placeholders, regenerated per extension — they are
 not the place to record template mechanics.
 

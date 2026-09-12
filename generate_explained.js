@@ -200,9 +200,15 @@ function extractActions(src, table) {
     const labelArg = args[4].trim();
     const labelM = labelArg.match(/^[`'"]([^`'"]+)[`'"]$/);
     if (!labelM) continue;
+    // A dashes-only label is a cosmetic toolbar divider, not a real action -- listing
+    // it as a bullet also renders as a thematic break and breaks the surrounding list.
+    if (/^-+$/.test(labelM[1])) continue;
     // Backtick labels can interpolate constants (`Force Copy System ${RESOREP_DLL_FILE}`),
     // so resolve them against the symbol table instead of emitting the raw ${...}.
-    results.push(labelArg.startsWith("`") ? resolveWithFallback(labelArg, table, src) : labelM[1]);
+    const resolvedLabel = labelArg.startsWith("`")
+      ? resolveWithFallback(labelArg, table, src)
+      : labelM[1];
+    results.push(String(resolvedLabel).trim());
   }
   return results;
 }
@@ -725,7 +731,9 @@ function buildMarkdown(dirName, src) {
   for (const f of specialFeatures) md += `- ${f}\n`;
   md += `\n`;
 
-  return md;
+  // Collapse to a single trailing newline -- every section above ends with its own
+  // blank-line separator, so the last one leaves a stray double-blank at EOF.
+  return md.replace(/\n+$/, "\n");
 }
 
 // ── main ──────────────────────────────────────────────────────────────────────

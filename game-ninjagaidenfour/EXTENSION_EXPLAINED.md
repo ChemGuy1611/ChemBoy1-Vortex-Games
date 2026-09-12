@@ -2,21 +2,21 @@
 
 ## Overview
 
-| Property           | Value                           |
-| ------------------ | ------------------------------- |
-| Name               | NINJA GAIDEN 4 Vortex Extension |
-| Engine / Structure | Basic Game                      |
-| Author             | ChemBoy1                        |
+| Property | Value |
+| --- | --- |
+| Name | NINJA GAIDEN 4 Vortex Extension |
+| Engine / Structure | Basic Game |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property          | Value                                                                                                |
-| ----------------- | ---------------------------------------------------------------------------------------------------- |
-| Game ID           | `ninjagaidenfour`                                                                                    |
-| Executable        | `./NINJAGAIDEN4-Steam.exe`                                                                           |
-| Executable (Xbox) | `gamelaunchhelper.exe`                                                                               |
-| Extension Page    | [https://www.nexusmods.com/site/mods/1501](https://www.nexusmods.com/site/mods/1501)                 |
-| PCGamingWiki      | [https://www.pcgamingwiki.com/wiki/Ninja_Gaiden_4](https://www.pcgamingwiki.com/wiki/Ninja_Gaiden_4) |
+| Property | Value |
+| --- | --- |
+| Game ID | `ninjagaidenfour` |
+| Executable | `./NINJAGAIDEN4-Steam.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1501](https://www.nexusmods.com/site/mods/1501) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Ninja_Gaiden_4](https://www.pcgamingwiki.com/wiki/Ninja_Gaiden_4) |
 
 ## Supported Stores
 
@@ -27,20 +27,20 @@
 
 Mod types define where each category of mod gets deployed:
 
-| Name                       | ID                         | Priority | Target Path         |
-| -------------------------- | -------------------------- | -------- | ------------------- |
-| Asset Mod                  | `ninjagaidenfour-asset`    | high     | `{gamePath}/Assets` |
-| Root Folder                | `ninjagaidenfour-root`     | high     | `{gamePath}`        |
-| Binaries (Engine Injector) | `ninjagaidenfour-binaries` | high     | `{gamePath}/.`      |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Asset Mod | `ninjagaidenfour-asset` | high | `{gamePath}/Assets` |
+| Root Folder | `ninjagaidenfour-root` | high | `{gamePath}` |
+| Binaries (Engine Injector) | `ninjagaidenfour-binaries` | high | `{gamePath}/.` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID            | Priority |
-| ----------------------- | -------- |
-| `ninjagaidenfour-root`  | 25       |
-| `ninjagaidenfour-asset` | 27       |
+| Installer ID | Priority |
+| --- | --- |
+| `ninjagaidenfour-root` | 25 |
+| `ninjagaidenfour-asset` | 27 |
 
 ## Registered Tools
 

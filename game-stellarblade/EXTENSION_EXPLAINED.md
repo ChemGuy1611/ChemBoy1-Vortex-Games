@@ -47,6 +47,18 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
+| UE4SS Script-LogicMod Combo | `stellarblade-ue4sscombo` | high | `{gamePath}` |
+| UE4SS LogicMods (Blueprint) | `stellarblade-logicmods` | high | `{gamePath}/SB/Content/Paks/LogicMods` |
+| UE4SS | `stellarblade-ue4ss` | high | `{gamePath}/SB/Binaries/Win64` |
+| UE4SS Script Mod | `stellarblade-scripts` | high | `{gamePath}/SB/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `stellarblade-ue4ssdll` | high | `{gamePath}/SB/Binaries/Win64/ue4ss/Mods` |
+| Paks (no ~mods) | `stellarblade-pak` | low | `{gamePath}/SB/Content/Paks` |
+| Root Game Folder | `stellarblade-root` | high | `{gamePath}` |
+| Binaries (Engine Injector) | `stellarblade-binaries` | high | `{gamePath}/SB/Binaries/Win64` |
+| Movie Mod (.bk2) | `stellarblade-movie` | high | `{gamePath}/SB/Content/Movies` |
+| Menu Mod (.bk2/.webm) | `stellarblade-menu` | high | `{gamePath}/SB/Content/Movies/Menu` |
+| Splash Screen | `stellarblade-splash` | high | `{gamePath}/SB/Content/Splash` |
+| CNS JSON Mod | `stellarblade-cnsjson` | high | `{gamePath}/SB/Content/Paks/~mods/CustomNanosuitSystem` |
 | UE Sortable Pak Mod | `stellarblade-uesortablepak` | 25 | `?` |
 | Config | `stellarblade-config` | 45 | `?` |
 | Saves | `stellarblade-save` | 47 | `?` |
@@ -112,4 +124,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-

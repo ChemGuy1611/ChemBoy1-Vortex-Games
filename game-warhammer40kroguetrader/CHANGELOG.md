@@ -1,8 +1,9 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [0.5.9] - 2026-09-12
 
-- None Planned
+- Fixed: Mod files with no file extension, such as the contents of a mod's `Bundles` folder, were skipped during installation
+- Fixed: Files sitting outside the mod's own folder in an archive are no longer installed alongside it
 
 ## [0.5.8] - 2026-09-08
 

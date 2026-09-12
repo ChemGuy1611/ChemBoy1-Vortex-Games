@@ -25,7 +25,7 @@ Steps performed per game:
     9. node --check on index.js (warns on syntax error; use --skip-node-check to skip)
    10. eslint on index.js (warns on lint errors; use --skip-eslint to skip)
    11. Create game-{GAME_ID}.zip with 7-Zip, excluding the repo-facing generated docs
-       (EXTENSION_EXPLAINED.md, NOTES_FOR_MOD_AUTHORS.md, NOTES_FOR_MOD_AUTHORS.bbcode.txt)
+       (EXTENSION_EXPLAINED.md, NOTES_FOR_MOD_AUTHORS.md, NOTES_FOR_MOD_AUTHORS.bbcode)
    12. Optionally upload zip to Nexus Mods as a new file version (changelog entry as
        description; file group resolved via v1 uid -> v3 groups, or via index.js FILE_GROUP_ID
        override when the v3 list 404s); default: skip; use --upload to enable
@@ -41,12 +41,12 @@ Once per run, after every game has been processed:
     Skipped entirely with --dry-run.
 
     Run generate_notes.js over the same games, in a single Node invocation, to
-    regenerate their NOTES_FOR_MOD_AUTHORS.md and NOTES_FOR_MOD_AUTHORS.bbcode.txt.
+    regenerate their NOTES_FOR_MOD_AUTHORS.md and NOTES_FOR_MOD_AUTHORS.bbcode.
     Both are repo-only and always overwritten. Skipped with --dry-run.
 
     Run generate_notes.js --description over the same games, also in a single Node
     invocation, to refresh the "Mod Installation Notes" list inside each extension's
-    DESCRIPTION.bbcode.txt -- the BBCode Nexus mod page description. Only that list is
+    DESCRIPTION.bbcode -- the BBCode Nexus mod page description. Only that list is
     rewritten; everything the author wrote around it is preserved, and an extension
     with no description page yet gets a scaffold to fill in. Skipped with --dry-run.
 
@@ -95,14 +95,14 @@ NEXUS_SITE_URL = "https://www.nexusmods.com/games/site"
 UNRELEASED_LIST = "games-unreleased.txt"
 
 # Repo-facing documentation. Useful on GitHub, but dead weight inside the extension
-# Vortex installs, so it is kept out of the released zip. DESCRIPTION.bbcode.txt is the
+# Vortex installs, so it is kept out of the released zip. DESCRIPTION.bbcode is the
 # mod page description, written by hand except for its install-notes list, which
 # generate_notes.js --description refreshes at the end of every release run.
 ZIP_EXCLUDES = [
     "EXTENSION_EXPLAINED.md",
     "NOTES_FOR_MOD_AUTHORS.md",
-    "NOTES_FOR_MOD_AUTHORS.bbcode.txt",
-    "DESCRIPTION.bbcode.txt",
+    "NOTES_FOR_MOD_AUTHORS.bbcode",
+    "DESCRIPTION.bbcode",
 ]
 
 
@@ -281,8 +281,8 @@ def release(game_id, open_browser, dry_run=False, skip_eslint=False,
         if not skip_eslint:
             log_info(game_id, "[DRY RUN] Would run eslint on index.js")
         log_info(game_id, "[DRY RUN] Would generate EXTENSION_EXPLAINED.md")
-        log_info(game_id, "[DRY RUN] Would generate NOTES_FOR_MOD_AUTHORS.md + .bbcode.txt")
-        log_info(game_id, "[DRY RUN] Would generate DESCRIPTION.bbcode.txt")
+        log_info(game_id, "[DRY RUN] Would generate NOTES_FOR_MOD_AUTHORS.md + .bbcode")
+        log_info(game_id, "[DRY RUN] Would generate DESCRIPTION.bbcode")
         log_info(game_id, f"[DRY RUN] Would create: {zip_path}")
         log_info(game_id, f"[DRY RUN] Would exclude from zip: {', '.join(ZIP_EXCLUDES)}")
         api_key = get_api_key("NEXUS_API_KEY")
@@ -553,7 +553,7 @@ def main():
             if not ok:
                 print(f"  WARNING - generate_notes.js batch failed: {err}")
 
-            print(f"  Generating DESCRIPTION.bbcode.txt ({label})...")
+            print(f"  Generating DESCRIPTION.bbcode ({label})...")
             ok, err = run_generate_description_batch(saved)
             if not ok:
                 print(f"  WARNING - generate_notes.js --description batch failed: {err}")

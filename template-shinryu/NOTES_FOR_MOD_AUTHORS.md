@@ -6,12 +6,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                | Archive must contain                                            | Installs to                           |
-| ----------------------- | --------------------------------------------------------------- | ------------------------------------- |
-| XXX Modmanager          | a file or folder named `shinryumodmanager.exe`                  | `runtime\media`                       |
-| XXX Mod                 | a file or folder named one of: `mod-meta.yaml` or `modinfo.ini` | `runtime\media\mods`                  |
-| Root / Game Folder Mods | a `nvngx_dlss.dll` file or a `.exe` file                        | the game folder itself (no subfolder) |
-| XXX Data                | a file with one of these extensions: `.par`                     | `runtime\media\data`                  |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| XXX Modmanager | a file or folder named `shinryumodmanager.exe` | `runtime\media` |
+| XXX Mod | a file or folder named one of: `mod-meta.yaml` or `modinfo.ini` | `runtime\media\mods` |
+| Root / Game Folder Mods | a `nvngx_dlss.dll` file or a `.exe` file | the game folder itself (no subfolder) |
+| XXX Data | a file with one of these extensions: `.par` | `runtime\media\data` |
 
 Paths are relative to the game's install folder.
 

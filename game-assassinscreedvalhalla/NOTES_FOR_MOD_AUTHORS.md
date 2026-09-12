@@ -6,9 +6,9 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain                 | Installs to |
-| -------- | ------------------------------------ | ----------- |
-| Forger   | a file with the `.forger2` extension | -           |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Forger | a file with the `.forger2` extension | - |
 
 Paths are relative to the game's install folder.
 

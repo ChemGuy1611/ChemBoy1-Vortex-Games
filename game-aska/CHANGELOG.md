@@ -1,8 +1,8 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [0.1.4] - 2026-09-12
 
-- None
+- Fixed: Mod files with no file extension, such as Unity asset bundles, were skipped during installation
 
 ## [0.1.3] - 2026-04-03
 

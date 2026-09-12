@@ -2,21 +2,21 @@
 
 ## Overview
 
-| Property           | Value                                |
-| ------------------ | ------------------------------------ |
-| Name               | Football Manager 26 Vortex Extension |
-| Engine / Structure | Unity BepinEx/MelonLoader Hybrid     |
-| Author             | ChemBoy1                             |
+| Property | Value |
+| --- | --- |
+| Name | Football Manager 26 Vortex Extension |
+| Engine / Structure | Unity BepinEx/MelonLoader Hybrid |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property          | Value                                                                                                          |
-| ----------------- | -------------------------------------------------------------------------------------------------------------- |
-| Game ID           | `footballmanager26`                                                                                            |
-| Executable        | `fm.exe`                                                                                                       |
-| Executable (Xbox) | `gamelaunchhelper.exe`                                                                                         |
-| Extension Page    | [https://www.nexusmods.com/site/mods/1523](https://www.nexusmods.com/site/mods/1523)                           |
-| PCGamingWiki      | [https://www.pcgamingwiki.com/wiki/Football_Manager_26](https://www.pcgamingwiki.com/wiki/Football_Manager_26) |
+| Property | Value |
+| --- | --- |
+| Game ID | `footballmanager26` |
+| Executable | `fm.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1523](https://www.nexusmods.com/site/mods/1523) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Football_Manager_26](https://www.pcgamingwiki.com/wiki/Football_Manager_26) |
 
 ## Supported Stores
 
@@ -26,49 +26,49 @@
 
 ## Feature Flags
 
-| Flag                | Value   | Description                                                                                 |
-| ------------------- | ------- | ------------------------------------------------------------------------------------------- |
-| `allowBepCfgMan`    | `false` | should BepInExConfigManager be downloaded?                                                  |
-| `allowMelPrefMan`   | `false` | should MelonPreferencesManager be downloaded? False until figure out UniverseLib dependency |
-| `allowBepinexNexus` | `false` | set false until bugs are fixed                                                              |
-| `allowMelonNexus`   | `false` | set false until bugs are fixed                                                              |
+| Flag | Value | Description |
+| --- | --- | --- |
+| `allowBepCfgMan` | `false` | should BepInExConfigManager be downloaded? |
+| `allowMelPrefMan` | `false` | should MelonPreferencesManager be downloaded? False until figure out UniverseLib dependency |
+| `allowBepinexNexus` | `false` | set false until bugs are fixed |
+| `allowMelonNexus` | `false` | set false until bugs are fixed |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
-| Name                    | ID                                      | Priority | Target Path                   |
-| ----------------------- | --------------------------------------- | -------- | ----------------------------- |
-| BepInEx Mod             | `footballmanager26-bepinexmod`          | high     | `{gamePath}/BepInEx`          |
-| MelonLoader Mod         | `footballmanager26-melonmod`            | high     | `{gamePath}/.`                |
-| BepInEx Plugins         | `footballmanager26-bepinex-plugins`     | high     | `{gamePath}/BepInEx/plugins`  |
-| BepInEx Patchers        | `footballmanager26-bepinex-patchers`    | high     | `{gamePath}/BepInEx/patchers` |
-| BepInEx Config          | `footballmanager26-bepinex-config`      | high     | `{gamePath}/BepInEx/config`   |
-| MelonLoader Mods        | `footballmanager26-melonloader-mods`    | high     | `{gamePath}/Mods`             |
-| MelonLoader Plugins     | `footballmanager26-melonloader-plugins` | high     | `{gamePath}/Plugins`          |
-| MelonLoader Config      | `footballmanager26-melonloader-config`  | high     | `{gamePath}/UserData`         |
-| Assembly DLL Mod        | `footballmanager26-assemblydll`         | high     | `{gamePath}/.`                |
-| BepInExConfigManager    | `footballmanager26-bepcfgman`           | high     | `{gamePath}/BepInEx`          |
-| MelonPreferencesManager | `footballmanager26-melonprefman`        | high     | `{gamePath}/Mods`             |
-| Assets/Resources File   | `footballmanager26-assets`              | high     | `{gamePath}/fm_Data`          |
-| Root Game Folder        | `footballmanager26-root`                | high     | `{gamePath}`                  |
-| BepInEx Injector        | `footballmanager26-bepinex`             | low      | `{gamePath}`                  |
-| MelonLoader             | `footballmanager26-melonloader`         | low      | `{gamePath}`                  |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| BepInEx Mod | `footballmanager26-bepinexmod` | high | `{gamePath}/BepInEx` |
+| MelonLoader Mod | `footballmanager26-melonmod` | high | `{gamePath}/.` |
+| BepInEx Plugins | `footballmanager26-bepinex-plugins` | high | `{gamePath}/BepInEx/plugins` |
+| BepInEx Patchers | `footballmanager26-bepinex-patchers` | high | `{gamePath}/BepInEx/patchers` |
+| BepInEx Config | `footballmanager26-bepinex-config` | high | `{gamePath}/BepInEx/config` |
+| MelonLoader Mods | `footballmanager26-melonloader-mods` | high | `{gamePath}/Mods` |
+| MelonLoader Plugins | `footballmanager26-melonloader-plugins` | high | `{gamePath}/Plugins` |
+| MelonLoader Config | `footballmanager26-melonloader-config` | high | `{gamePath}/UserData` |
+| Assembly DLL Mod | `footballmanager26-assemblydll` | high | `{gamePath}/.` |
+| BepInExConfigManager | `footballmanager26-bepcfgman` | high | `{gamePath}/BepInEx` |
+| MelonPreferencesManager | `footballmanager26-melonprefman` | high | `{gamePath}/Mods` |
+| Assets/Resources File | `footballmanager26-assets` | high | `{gamePath}/fm_Data` |
+| Root Game Folder | `footballmanager26-root` | high | `{gamePath}` |
+| BepInEx Injector | `footballmanager26-bepinex` | low | `{gamePath}` |
+| MelonLoader | `footballmanager26-melonloader` | low | `{gamePath}` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID                     | Priority |
-| -------------------------------- | -------- |
-| `footballmanager26-bepinex`      | 25       |
-| `footballmanager26-melonloader`  | 26       |
-| `footballmanager26-root`         | 27       |
-| `footballmanager26-bepcfgman`    | 29       |
-| `footballmanager26-melonprefman` | 30       |
-| `footballmanager26-assemblydll`  | 31       |
-| `footballmanager26-plugin`       | 33       |
-| `footballmanager26-assets`       | 37       |
+| Installer ID | Priority |
+| --- | --- |
+| `footballmanager26-bepinex` | 25 |
+| `footballmanager26-melonloader` | 26 |
+| `footballmanager26-root` | 27 |
+| `footballmanager26-bepcfgman` | 29 |
+| `footballmanager26-melonprefman` | 30 |
+| `footballmanager26-assemblydll` | 31 |
+| `footballmanager26-plugin` | 33 |
+| `footballmanager26-assets` | 37 |
 
 ## Registered Tools
 
@@ -94,15 +94,15 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 ## Auto-Downloaded Dependencies
 
-| Dependency                    | Version  | Details |
-| ----------------------------- | -------- | ------- |
-| BepInEx                       | 5.4.23.5 | il2cpp  |
-| BepInEx Configuration Manager | 18.4.1   | —       |
+| Dependency | Version | Details |
+| --- | --- | --- |
+| BepInEx | 5.4.23.5 | il2cpp |
+| BepInEx Configuration Manager | 18.4.1 | — |
 
 ## Config & Save Paths
 
-| Type              | Path                                                                   |
-| ----------------- | ---------------------------------------------------------------------- |
+| Type | Path |
+| --- | --- |
 | Config (Registry) | `HKEY_CURRENT_USER\\Software\\Sports Interactive\\Football Manager 26` |
 
 ## Special Features

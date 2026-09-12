@@ -6,16 +6,16 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type                  | Archive must contain             | Installs to                           |
-| ------------------------- | -------------------------------- | ------------------------------------- |
-| Root / Game Folder Mods   | a `Railroader_Data` folder       | the game folder itself (no subfolder) |
-| Railloader (tool)         | a `railloader.exe` file          | the game folder itself (no subfolder) |
-| Unity Mod Manager (tool)  | a `UnityModManager.exe` file     | the game folder itself (no subfolder) |
-| Unity Mod Manager Mods    | an `info.json` file and a `.dll` | `Mods\<ModName>`                      |
-| Railloader Mods           | a `Definition.json` file         | `Mods\<ModName>`                      |
-| Assembly Replacement Mods | a `Assembly-CSharp.dll` file     | `Railroader_Data\Managed`             |
-| Asset Replacement Mods    | a `.assets` file                 | `Railroader_Data`                     |
-| Fallback Installer        | anything not matched above       | -                                     |
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| Root / Game Folder Mods | a `Railroader_Data` folder | the game folder itself (no subfolder) |
+| Railloader (tool) | a `railloader.exe` file | the game folder itself (no subfolder) |
+| Unity Mod Manager (tool) | a `UnityModManager.exe` file | the game folder itself (no subfolder) |
+| Unity Mod Manager Mods | an `info.json` file and a `.dll` | `Mods\<ModName>` |
+| Railloader Mods | a `Definition.json` file | `Mods\<ModName>` |
+| Assembly Replacement Mods | a `Assembly-CSharp.dll` file | `Railroader_Data\Managed` |
+| Asset Replacement Mods | a `.assets` file | `Railroader_Data` |
+| Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
 

@@ -2,20 +2,20 @@
 
 ## Overview
 
-| Property           | Value                             |
-| ------------------ | --------------------------------- |
-| Name               | AC IV Black Flag Vortex Extension |
-| Engine / Structure | Ubisoft AnvilToolkit              |
-| Author             | ChemBoy1                          |
+| Property | Value |
+| --- | --- |
+| Name | AC IV Black Flag Vortex Extension |
+| Engine / Structure | Ubisoft AnvilToolkit |
+| Author | ChemBoy1 |
 
 ## Key Identifiers
 
-| Property       | Value                                                                                                                                          |
-| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| Game ID        | `assassinscreedivblackflag`                                                                                                                    |
-| Executable     | `AC4BFSP.exe`                                                                                                                                  |
-| Extension Page | [https://www.nexusmods.com/site/mods/971](https://www.nexusmods.com/site/mods/971)                                                             |
-| PCGamingWiki   | [https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_IV%3A_Black_Flag](https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_IV%3A_Black_Flag) |
+| Property | Value |
+| --- | --- |
+| Game ID | `assassinscreedivblackflag` |
+| Executable | `AC4BFSP.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/971](https://www.nexusmods.com/site/mods/971) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_IV%3A_Black_Flag](https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_IV%3A_Black_Flag) |
 
 ## Supported Stores
 
@@ -26,37 +26,37 @@
 
 Mod types define where each category of mod gets deployed:
 
-| Name                   | ID                                          | Priority | Target Path                 |
-| ---------------------- | ------------------------------------------- | -------- | --------------------------- |
-| Binaries / Root Folder | `assassinscreedivblackflag-binaries`        | high     | `{gamePath}`                |
-| DLC Folder             | `assassinscreedivblackflag-dlcfolder`       | high     | `{gamePath}/.`              |
-| Extracted Folder       | `assassinscreedivblackflag-extractedfolder` | high     | `{gamePath}/.`              |
-| .forge Folder          | `assassinscreedivblackflag-forgefolder`     | high     | `{gamePath}/.`              |
-| .data Folder           | `assassinscreedivblackflag-datafolder`      | high     | `{gamePath}/.`              |
-| Loose Data Files       | `assassinscreedivblackflag-loosedata`       | high     | `{gamePath}/.`              |
-| Forge Replacement      | `assassinscreedivblackflag-forgefile`       | high     | `{gamePath}/.`              |
-| Root Folder            | `assassinscreedivblackflag-root`            | high     | `{gamePath}`                |
-| ResoRep Textures       | `assassinscreedivblackflag-resoreptextures` | high     | `{gamePath}/ResoRep/modded` |
-| Fixes                  | `assassinscreedivblackflag-fixes`           | low      | `{gamePath}/.`              |
-| ResoRep DLL            | `assassinscreedivblackflag-resorep`         | low      | `{gamePath}/.`              |
-| AnvilToolkit           | `assassinscreedivblackflag-atk`             | low      | `{gamePath}`                |
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| Binaries / Root Folder | `assassinscreedivblackflag-binaries` | high | `{gamePath}` |
+| DLC Folder | `assassinscreedivblackflag-dlcfolder` | high | `{gamePath}/.` |
+| Extracted Folder | `assassinscreedivblackflag-extractedfolder` | high | `{gamePath}/.` |
+| .forge Folder | `assassinscreedivblackflag-forgefolder` | high | `{gamePath}/.` |
+| .data Folder | `assassinscreedivblackflag-datafolder` | high | `{gamePath}/.` |
+| Loose Data Files | `assassinscreedivblackflag-loosedata` | high | `{gamePath}/.` |
+| Forge Replacement | `assassinscreedivblackflag-forgefile` | high | `{gamePath}/.` |
+| Root Folder | `assassinscreedivblackflag-root` | high | `{gamePath}` |
+| ResoRep Textures | `assassinscreedivblackflag-resoreptextures` | high | `{gamePath}/ResoRep/modded` |
+| Fixes | `assassinscreedivblackflag-fixes` | low | `{gamePath}/.` |
+| ResoRep DLL | `assassinscreedivblackflag-resorep` | low | `{gamePath}/.` |
+| AnvilToolkit | `assassinscreedivblackflag-atk` | low | `{gamePath}` |
 
 ## Mod Installers
 
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
-| Installer ID                                | Priority |
-| ------------------------------------------- | -------- |
-| `assassinscreedivblackflag-atk`             | 25       |
-| `assassinscreedivblackflag-dlcfolder`       | 30       |
-| `assassinscreedivblackflag-extractedfolder` | 35       |
-| `assassinscreedivblackflag-forgefolder`     | 40       |
-| `assassinscreedivblackflag-datafolder`      | 45       |
-| `assassinscreedivblackflag-loosedata`       | 50       |
-| `assassinscreedivblackflag-resorep`         | 57       |
-| `assassinscreedivblackflag-forgefile`       | 60       |
-| `assassinscreedivblackflag-root`            | 65       |
-| `assassinscreedivblackflag-resoreptextures` | 70       |
+| Installer ID | Priority |
+| --- | --- |
+| `assassinscreedivblackflag-atk` | 25 |
+| `assassinscreedivblackflag-dlcfolder` | 30 |
+| `assassinscreedivblackflag-extractedfolder` | 35 |
+| `assassinscreedivblackflag-forgefolder` | 40 |
+| `assassinscreedivblackflag-datafolder` | 45 |
+| `assassinscreedivblackflag-loosedata` | 50 |
+| `assassinscreedivblackflag-resorep` | 57 |
+| `assassinscreedivblackflag-forgefile` | 60 |
+| `assassinscreedivblackflag-root` | 65 |
+| `assassinscreedivblackflag-resoreptextures` | 70 |
 
 ## Toolbar Actions
 

@@ -10,7 +10,7 @@ It is the only template bundling two downloader modules: `downloader.js` and
 `bepinexbe_downloader.js`. Mono-only extensions delete the `bepinexbe_downloader.js` copy, its
 `require`, and the bleeding-edge requirement.
 
-### Loader selection
+## Loader selection
 
 `loaderChoice` (default `true`) enables the picker; `recommendedLoader` (`'bep'` / `'mel'`, default
 `'mel'`) is shown as "(Recommended)" in it, or, when `loaderChoice` is off, simply decides which
@@ -31,7 +31,7 @@ loader gets installed.
 bleeding-edge requirements are deliberately excluded from it and served by a separate
 `getBepinexBeRequirements(api)`, because they come from a different module with a different shape.
 
-### Requirement sets
+## Requirement sets
 
 | Set                          | Source                                          | Version strategy             | Note                                                                                                                                                                                                                     |
 | ---------------------------- | ----------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -53,7 +53,7 @@ module load, when `GAME_PATH` is still an empty string, so the copy destination 
 probes `HKLM\SOFTWARE\WOW6432Node\dotnet\Setup\InstalledVersions\x64\sharedfx\Microsoft.WindowsDesktop.App`
 and `dotNetMelonNotify` links the download when it is missing.
 
-### Mod types and installers
+## Mod types and installers
 
 Eleven mod types come from `spec` — `BEPINEX_MOD` (`BepInEx`), `MELON_MOD` (`.`),
 `BEPINEX_PLUGINS` / `BEPINEX_PATCHERS` / `BEPINEX_CONFIG` (`BepInEx/plugins|patchers|config`),
