@@ -22,6 +22,7 @@ const GAME_NAME_SHORT = "RE4";
 const EXEC = "re4.exe";
 const EXEC_DEMO = "re4demo.exe";
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Resident_Evil_4_(2023)";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/913"; //Nexus link to this extension. Used for links
 
 const FLUFFY_FOLDER = "RE4R";
@@ -1181,6 +1182,21 @@ function applyGame(context, gameSpec) {
     "Open PCGamingWiki Page",
     () => {
       util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
     },
     () => {
       const state = context.api.getState();

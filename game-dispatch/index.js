@@ -36,6 +36,7 @@ const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const EXEC_XBOX = "gamelaunchhelper.exe";
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Dispatch_(2025)";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 
 const hasXbox = false; //toggle for Xbox version logic (to unify templates)
 const multiExe = false; //toggle for multiple executables (Epic/GOG/Demo don't match Steam)
@@ -2364,6 +2365,21 @@ function applyGame(context, gameSpec) {
     "Open PCGamingWiki Page",
     () => {
       util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
     },
     () => {
       const state = context.api.getState();

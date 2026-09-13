@@ -39,6 +39,7 @@ const EXEC2 = path.join(TOPLEVEL_FOLDER, "yakuzakiwami3.exe");
 const GAME_NAME = "Yakuza Kiwami 3 & Dark Ties";
 const GAME_NAME_SHORT = "Yakuza Kiwami 3 & DT";
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Yakuza_Kiwami_3_%26_Dark_Ties";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1815"; //Nexus link to this extension. Used for links
 
 //config and save paths
@@ -1111,6 +1112,21 @@ function applyGame(context, gameSpec) {
     "Open PCGamingWiki Page",
     () => {
       util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
     },
     () => {
       const state = context.api.getState();

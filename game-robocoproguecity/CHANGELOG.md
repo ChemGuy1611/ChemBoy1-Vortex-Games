@@ -3,6 +3,7 @@
 ## Planned Improvements (Not Yet Released)
 
 - Fixed: Mod files with no file extension were skipped during installation
+- Added an "Open SteamDB Page" button for both editions, and an "Open PCGamingWiki Page" button for the Unfinished Business edition, which was missing one.
 
 ## [0.7.0] - 2026-05-07
 

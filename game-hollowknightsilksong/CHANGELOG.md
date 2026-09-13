@@ -3,6 +3,7 @@
 ## Planned Improvements (Not Yet Released)
 
 - Add???: Support for installing MelonLoader plugins. Need the compatibility loader for MelonLoader mods to work (<https://github.com/BepInEx/BepInEx.MelonLoader.Loader>) - there are very few MelonLoader mods.
+- Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 
 ## [0.3.1] - 2026-09-12
 

@@ -78,6 +78,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Download Middle-Earth-Mod-Loader
 - Get MEML Mods (GitHub)
 - Open PCGamingWiki Page
+- Open SteamDB Page
 - View Changelog
 - Open Downloads Folder
 - Submit Bug Report

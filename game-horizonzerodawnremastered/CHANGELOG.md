@@ -6,6 +6,7 @@
 - Added: Update check for HFW Mod Manager, with a notification when a new version is released
 - Fixed: HFW Mod Manager now installs the current version instead of an outdated one
 - Fixed: Mod files with no file extension were skipped during installation
+- Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 
 ## [0.2.0] - 2026-04-13
 

@@ -38,6 +38,7 @@ const EXEC_GOG = EXEC; //same as Steam
 const EXEC_XBOX = "gamelaunchhelper.exe";
 const EXEC_ALT = EXEC_EGS;
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Disco_Elysium";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 
 //feature toggles
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
@@ -889,6 +890,21 @@ function applyGame(context, gameSpec) {
     "Open PCGamingWiki Page",
     () => {
       util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
     },
     () => {
       const state = context.api.getState();

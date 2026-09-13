@@ -37,6 +37,7 @@ const REF_STRING = "REFramework"; //file name for nightly latest URL - constant 
 const GAME_NAME = "Onimusha: Way of the Sword";
 const GAME_NAME_SHORT = "Onimusha";
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Onimusha%3A_Way_of_the_Sword";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 
 const FLUFFY_FOLDER = "Onimusha5";
@@ -1343,6 +1344,21 @@ function applyGame(context, gameSpec) {
     "Open PCGamingWiki Page",
     () => {
       util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
     },
     () => {
       const state = context.api.getState();

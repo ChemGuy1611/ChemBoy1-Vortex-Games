@@ -27,6 +27,7 @@ const GAME_NAME = "Monster Hunter Stories 3: Twisted Reflection";
 const GAME_NAME_SHORT = "MH Stories 3: TR";
 const PCGAMINGWIKI_URL =
   "https://www.pcgamingwiki.com/wiki/Monster_Hunter_Stories_3:_Twisted_Reflection";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1740"; //Nexus link to this extension. Used for links
 
 const FLUFFY_FOLDER = "Monster Hunter Stories 3";
@@ -1231,6 +1232,21 @@ function applyGame(context, gameSpec) {
     "Open PCGamingWiki Page",
     () => {
       util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
     },
     () => {
       const state = context.api.getState();

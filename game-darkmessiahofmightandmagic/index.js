@@ -31,6 +31,7 @@ const GAME_NAME_SHORT = "Dark Messiah MM";
 const EXEC = "mm.exe";
 const ROOT_FOLDER = "mm";
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Dark_Messiah_of_Might_%26_Magic";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1056"; //Nexus link to this extension. Used for links
 
 let GAME_PATH = "";
@@ -1101,6 +1102,21 @@ function applyGame(context, gameSpec) {
     "Open PCGamingWiki Page",
     () => {
       util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
     },
     () => {
       const state = context.api.getState();

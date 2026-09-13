@@ -4,6 +4,7 @@
 
 - Added tool to launch ModKit (Epic Games).
 - Fixed: Mod files with no file extension were skipped during installation
+- Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 
 ## [0.4.0] - 2026-05-07
 

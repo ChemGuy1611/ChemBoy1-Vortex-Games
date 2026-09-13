@@ -40,6 +40,7 @@ let DOWNLOAD_FOLDER = "";
 const DOCUMENTS = util.getVortexPath("documents");
 const LOCALAPPDATA = util.getVortexPath("localAppData");
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Dragon_Age:_The_Veilguard";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1075"; //Nexus link to this extension. Used for links
 const INSTR_URL = `https://docs.google.com/document/d/1F6X8fjh6RS_IHX7cqx36lyhCEpLPZSYknki-M28w_K0`;
 
@@ -1177,6 +1178,21 @@ function applyGame(context, gameSpec) {
     "Open PCGamingWiki Page",
     () => {
       util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
     },
     () => {
       const state = context.api.getState();

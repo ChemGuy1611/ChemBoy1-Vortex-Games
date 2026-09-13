@@ -24,6 +24,7 @@ const GAME_NAME_SHORT = "SF6";
 const EXEC = "StreetFighter6.exe";
 const EXEC_DEMO = EXEC;
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Street_Fighter_6";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/956"; //Nexus link to this extension. Used for links
 
 const FLUFFY_FOLDER = "SF6";
@@ -1014,6 +1015,21 @@ function applyGame(context, gameSpec) {
     "Open PCGamingWiki Page",
     () => {
       util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
     },
     () => {
       const state = context.api.getState();

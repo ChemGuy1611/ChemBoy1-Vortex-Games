@@ -35,6 +35,7 @@ const DEV_REGSTRING = "Team Cherry";
 const GAME_REGSTRING = "Hollow Knight Silksong";
 const XBOX_SAVE_STRING = "y4jvztpgccj42";
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Hollow_Knight:_Silksong";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1420";
 
 const BEPINEX_PAGE_ID = "26";
@@ -946,6 +947,21 @@ function applyGame(context, gameSpec) {
     "Open PCGamingWiki Page",
     () => {
       util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
     },
     () => {
       const state = context.api.getState();

@@ -62,6 +62,7 @@ const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const PARAMETERS_STRING = ""; //launch arguments to pass when launching the game
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Windrose";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1752"; //Nexus link to this extension. Used for links
 
 //feature toggles
@@ -529,6 +530,7 @@ const STEAMAPP_ID_SERVER = "4129620"; //https://steamdb.info/app/4129620/
 const EPICAPP_ID_SERVER = "XXX"; //from egdata.app
 const DISCOVERY_IDS_ACTIVE_SERVER = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const EXEC_SERVER = "WindroseServer.exe";
+const STEAMDB_URL_SERVER = `https://steamdb.info/app/${STEAMAPP_ID_SERVER}/`;
 const UE5_SORTABLE_ID_SERVER = `${GAME_ID_SERVER}-uesortablepak`; //this should not be changed to be maintain consistency with other UE5 games
 let GAME_PATH_SERVER = ""; //game installation path
 let STAGING_FOLDER_SERVER = ""; //Vortex staging folder path
@@ -3731,6 +3733,21 @@ function applyGame(context, gameSpec) {
     300,
     "open-ext",
     {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
     "View Changelog",
     () => {
       util.opn(path.join(__dirname, "CHANGELOG.md")).catch(() => null);
@@ -3985,6 +4002,21 @@ function applyGameServer(context, gameSpec) {
     "Open PCGamingWiki Page",
     () => {
       util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID_SERVER;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL_SERVER).catch(() => null);
     },
     () => {
       const state = context.api.getState();

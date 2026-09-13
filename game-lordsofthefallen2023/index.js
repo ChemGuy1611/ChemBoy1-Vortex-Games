@@ -24,6 +24,7 @@ const XBOXAPP_ID = "CIGamesS.A.LordsoftheFallen-PC";
 const XBOXEXECNAME = "AppLordsoftheFallenShipping";
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1276"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Lords_of_the_Fallen_%282023%29";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 
 const GAME_NAME = "Lords of the Fallen (2023)";
 const GAME_NAME_SHORT = "Lords of the Fallen";
@@ -2069,6 +2070,21 @@ function applyGame(context, gameSpec) {
     "Open PCGamingWiki Page",
     () => {
       util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
     },
     () => {
       const state = context.api.getState();

@@ -239,6 +239,7 @@ let MODTYPE_FOLDERS = [
 //Filled in from info above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1545"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Ball_X_Pit";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const spec = {
   game: {
     id: GAME_ID,
@@ -1712,6 +1713,21 @@ function applyGame(context, gameSpec) {
     "Open PCGamingWiki Page",
     () => {
       util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
     },
     () => {
       const state = context.api.getState();

@@ -81,6 +81,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Download Latest MGSVFix
 - Open Snakebite Mod Manager Folder
 - Open PCGamingWiki Page
+- Open SteamDB Page
 - View Changelog
 - Submit Bug Report
 - Open Downloads Folder

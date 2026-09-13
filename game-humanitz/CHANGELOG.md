@@ -3,6 +3,7 @@
 ## Planned Improvements (Not Yet Released)
 
 - Fixed: Mod files with no file extension were skipped during installation
+- Added an "Open SteamDB Page" button.
 
 ## [2.0.1] - 2026-08-11
 

@@ -47,6 +47,7 @@ const EXEC_GOG = EXEC;
 const EXEC_XBOX = "gamelaunchhelper.exe";
 const EXEC_ALT = EXEC_XBOX; //or `${GAME_STRING_ALT}.exe`
 const PCGAMINGWIKI_URL = "https://railroader.fandom.com/wiki/Railroader_Wiki";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/2206"; //Nexus link to this extension. Used for links
 
 //UMM specific
@@ -1660,6 +1661,21 @@ function applyGame(context, gameSpec) {
     "Open PCGamingWiki Page",
     () => {
       util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
     },
     () => {
       const state = context.api.getState();

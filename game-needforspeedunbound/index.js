@@ -40,6 +40,7 @@ const GAME_NAME = "Need for Speed Unbound";
 const GAME_NAME_SHORT = "NFS Unbound";
 const EXEC = "NeedForSpeedUnbound.exe";
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Need_for_Speed_Unbound";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1993";
 
 const CONFIG_FOLDER = path.join("Need For Speed(TM) Unbound", "settings"); // Developer folder, game subfolder (e.g. "BioWare", "Mass Effect Andromeda")
@@ -1463,6 +1464,21 @@ function applyGame(context, gameSpec) {
     "Open PCGamingWiki Page",
     () => {
       util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
     },
     () => {
       const state = context.api.getState();

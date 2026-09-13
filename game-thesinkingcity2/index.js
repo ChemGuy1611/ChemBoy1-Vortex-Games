@@ -54,6 +54,7 @@ const EPIC_CODE_NAME = "PlayGround"; //Folder in root
 const EXEC_NAME = "TheSinkingCity2.exe"; //This is true ~80% of the time. Change if different
 const PARAMETERS_STRING = ""; //launch arguments to pass when launching the game
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/The_Sinking_City_2";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/2207"; //Nexus link to this extension. Used for links
 
 //feature toggles
@@ -3372,6 +3373,21 @@ function applyGame(context, gameSpec) {
     "Open PCGamingWiki Page",
     () => {
       util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
     },
     () => {
       const state = context.api.getState();

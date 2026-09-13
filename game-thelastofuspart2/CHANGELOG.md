@@ -4,6 +4,7 @@
 
 - Added check for if sp-common.psarc and bin.psarc files exist in the game folder (indicator of update and need to extract).
 - Fixed: Mod files with no file extension were skipped during installation
+- Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 
 ## [0.11.4] - 2026-09-06
 

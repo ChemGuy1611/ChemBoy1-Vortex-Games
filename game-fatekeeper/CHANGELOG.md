@@ -4,6 +4,7 @@
 
 - Fixed: Mod files with no file extension were skipped during installation
 - Fixed: Files sitting outside the mod's own folder in an archive are no longer installed alongside it
+- Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 
 ## [1.0.3] - 2026-09-06
 

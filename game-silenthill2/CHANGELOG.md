@@ -4,6 +4,7 @@
 
 - Add full Xbox version support (not on Game Pass) - discovery (need appxmanifest.xml), binaries folders
 - Fixed: Mod files with no file extension were skipped during installation
+- Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 
 ## [0.3.1] - 2026-02-07
 

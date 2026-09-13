@@ -1,5 +1,9 @@
 # Changelog
 
+## Planned Improvements (Not Yet Released)
+
+- Added an "Open SteamDB Page" button next to the PCGamingWiki one.
+
 ## [0.5.9] - 2026-09-12
 
 - Fixed: Mod files with no file extension, such as the contents of a mod's `Bundles` folder, were skipped during installation

@@ -40,6 +40,7 @@ const GAME_NAME = "Like a Dragon: Pirate Yakuza in Hawaii";
 const GAME_NAME_SHORT = "LaD: Pirate Yakuza iH";
 const PCGAMINGWIKI_URL =
   "https://www.pcgamingwiki.com/wiki/Like_a_Dragon%3A_Pirate_Yakuza_in_Hawaii";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1191"; //Nexus link to this extension. Used for links
 
 //config and save paths
@@ -1112,6 +1113,21 @@ function applyGame(context, gameSpec) {
     "Open PCGamingWiki Page",
     () => {
       util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
     },
     () => {
       const state = context.api.getState();

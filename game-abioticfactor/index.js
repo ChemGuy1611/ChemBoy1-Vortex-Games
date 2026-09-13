@@ -26,6 +26,7 @@ const GAME_NAME_SHORT = "Abiotic Factor"; //Try for 8-10 characters
 const EXEC_DEFAULT = "AbioticFactor.exe";
 const APPMANIFEST_FILE = "appxmanifest.xml";
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Abiotic_Factor";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1392"; //Nexus link to this extension. Used for links
 
 //Unreal Engine specific
@@ -2166,6 +2167,21 @@ function applyGame(context, gameSpec) {
     "Open PCGamingWiki Page",
     () => {
       util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
     },
     () => {
       const state = context.api.getState();

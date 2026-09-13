@@ -113,6 +113,7 @@ const MODTYPE_FOLDERS = [PAC_PATH];
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1530"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Trails_in_the_Sky_1st_Chapter";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
 const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
 const spec = {
@@ -984,6 +985,21 @@ function applyGame(context, gameSpec) {
     "Open PCGamingWiki Page",
     () => {
       util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
     },
     () => {
       const state = context.api.getState();

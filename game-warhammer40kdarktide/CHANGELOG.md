@@ -3,6 +3,7 @@
 ## Planned Improvements (Not Yet Released)
 
 - Fixed: Mod files with no file extension were skipped during installation
+- Added "Open PCGamingWiki Page" and "Open SteamDB Page" buttons.
 
 ## [0.2.5] - 2026-09-06
 

@@ -4,6 +4,7 @@
 
 - Xbox support - waiting on stable (and easy to install) mod injector for Xbox version
 - Fixed: Mod files with no file extension were skipped during installation
+- Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 
 ## [0.3.4] - 2026-09-08
 

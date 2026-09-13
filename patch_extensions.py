@@ -23,6 +23,7 @@ Usage:
     python patch_extensions.py --only gog_app_id              # resolve GOGAPP_ID from gogdb.org (registered disabled: several requests per unresolved game)
     python patch_extensions.py GAME_ID --only plan_b_lo_region --dry-run   # Plan B FBLO load order port: splice darktide's LO region into one target game (registered disabled; one game at a time; see PLAN_B_LO_GAMES)
     python patch_extensions.py GAME_ID [GAME_ID ...] --only rootpath_prefix_scope --dry-run   # installer mod-root scoping fix: file.indexOf(rootPath) !== -1 -> file.startsWith(rootPrefix) (registered disabled; apply to one wave of games at a time)
+    python patch_extensions.py --only steamdb_button --dry-run   # add "Open SteamDB Page" button after "Open PCGamingWiki Page" (registered disabled; one-off propagation)
     python patch_extensions.py GAME_ID [GAME_ID ...] --only PATCH_NAME
     python patch_extensions.py --audit                        # run the read-only audits (installer priorities + FOMOD checks + store ID wiring) then exit
     python patch_extensions.py GAME_ID [GAME_ID ...] --audit  # scope audits to specific games only
@@ -802,6 +803,118 @@ def patch_context_once_api(game_id, src, context):
     return new_src, True, f"inserted const api in {inserted} context.once block(s)"
 
 
+_STEAMDB_LABEL_RE = re.compile(r'''(['"])Open PCGamingWiki Page\1''')
+_STEAMDB_GAMEID_COND_RE = re.compile(r'gameId\s*===\s*(GAME_ID\w*)')
+
+
+def _steamdb_find_pcgw_blocks(src):
+    """Return [(start, end)] spans for every LIVE context.registerAction(...) call
+    whose label is 'Open PCGamingWiki Page'. start is the index of the literal text
+    'context.registerAction(' (no leading indentation); end is just past the call's
+    trailing ';' when present, else just past the closing ')'.
+
+    Searched against a comment-stripped copy of src (same length, so offsets line up
+    exactly) so a disabled '/* ... */' toggle block is invisible here - cloning a
+    commented-out call verbatim would otherwise land the new SteamDB block inside
+    that same still-open comment, producing dead code (found the hard way on
+    humanitz, the one game with a real STEAMAPP_ID but a commented-out PCGW button).
+    """
+    bare = strip_js_comments(src)
+    blocks = []
+    pos = 0
+    while True:
+        m = _STEAMDB_LABEL_RE.search(bare, pos)
+        if not m:
+            break
+        call_pos = bare.rfind('context.registerAction(', 0, m.start())
+        if call_pos == -1:
+            pos = m.end()
+            continue
+        open_idx = call_pos + len('context.registerAction(') - 1
+        close_idx = _matching_paren(bare, open_idx)
+        if close_idx is None:
+            pos = m.end()
+            continue
+        end = close_idx + 1
+        if end < len(bare) and bare[end] == ';':
+            end += 1
+        blocks.append((call_pos, end))
+        pos = end
+    return blocks
+
+
+def patch_steamdb_button(game_id, src, context):
+    """
+    Insert an 'Open SteamDB Page' context.registerAction right after every existing
+    'Open PCGamingWiki Page' one, opening https://steamdb.info/app/<id>/.
+
+    The app id comes from the STEAMAPP_ID constant matching that specific button's
+    own GAME_ID variant: a plain `gameId === GAME_ID` condition uses STEAMAPP_ID, a
+    `gameId === GAME_ID_SERVER` condition looks for STEAMAPP_ID_SERVER, `GAME_ID_BFG`
+    looks for STEAMAPP_ID_BFG, etc. - see is_multi_game_extension / games-multi-game.txt.
+    Falls back to the base STEAMAPP_ID if no per-variant one is declared. One
+    STEAMDB_URL(_suffix) constant is declared per variant actually used, anchored
+    right after PCGAMINGWIKI_URL for the base case or after the matching
+    STEAMAPP_ID_<suffix> declaration otherwise.
+
+    Skips extensions with no STEAMAPP_ID at all (no Steam release - alanwake2,
+    bloodborne) and extensions with no existing PCGamingWiki button at all
+    (ninjagaidenmastercollection - hand-fixed separately since it declares
+    PCGAMINGWIKI_URL but never wires it to any action).
+    """
+    if not re.search(r'\b(?:const|let)\s+STEAMAPP_ID\b', src):
+        return src, False, "no STEAMAPP_ID - not on Steam"
+
+    blocks = _steamdb_find_pcgw_blocks(src)
+    if not blocks:
+        return src, False, "no 'Open PCGamingWiki Page' button to anchor on"
+
+    if 'Open SteamDB Page' in src:
+        return src, False, SKIP_ALREADY_SET
+
+    new_src = src
+    offset = 0
+    url_consts_needed = {}  # suffix -> (url_const, steam_const)
+    inserted = 0
+
+    for start, end in blocks:
+        s, e = start + offset, end + offset
+        block = new_src[s:e]
+        cond_m = _STEAMDB_GAMEID_COND_RE.search(block)
+        game_id_var = cond_m.group(1) if cond_m else 'GAME_ID'
+        suffix = '' if game_id_var == 'GAME_ID' else game_id_var[len('GAME_ID'):]
+        steam_const = f'STEAMAPP_ID{suffix}'
+        if suffix and not re.search(rf'\b(?:const|let)\s+{re.escape(steam_const)}\b', src):
+            steam_const, suffix = 'STEAMAPP_ID', ''
+        url_const = f'STEAMDB_URL{suffix}'
+        url_consts_needed[suffix] = (url_const, steam_const)
+
+        new_block = (block.replace('Open PCGamingWiki Page', 'Open SteamDB Page')
+                          .replace('PCGAMINGWIKI_URL', url_const))
+        line_start = new_src.rfind('\n', 0, s) + 1
+        indent = new_src[line_start:s]
+        insertion = '\n' + indent + new_block
+        new_src = new_src[:e] + insertion + new_src[e:]
+        offset += len(insertion)
+        inserted += 1
+
+    for suffix, (url_const, steam_const) in url_consts_needed.items():
+        if re.search(rf'\b(?:const|let)\s+{re.escape(url_const)}\b', new_src):
+            continue
+        decl = f'const {url_const} = `https://steamdb.info/app/${{{steam_const}}}/`;\n'
+        if suffix == '':
+            anchor_re = r'^[ \t]*const\s+PCGAMINGWIKI_URL\s*=.*?;[ \t]*\n'
+        else:
+            anchor_re = rf'^[ \t]*(?:const|let)\s+{re.escape(steam_const)}\s*=.*?;[ \t]*\n'
+        m = re.search(anchor_re, new_src, re.MULTILINE | re.DOTALL)
+        if not m:
+            return src, False, f"could not find anchor for {url_const} declaration"
+        new_src = new_src[:m.end()] + decl + new_src[m.end():]
+
+    labels = ', '.join(sorted(u for u, _ in url_consts_needed.values()))
+    return new_src, True, f"inserted {inserted} SteamDB button(s): {labels}"
+
+
 # ── Plan B FBLO load order port ───────────────────────────────────────────────
 # Child of the memoized-moseying-journal Plan B. Splices the shared FBLO load order
 # region (multi-select, lock button, status pills, FbloContextMenu) from
@@ -1012,6 +1125,7 @@ PATCHES = [
     {"name": "gog_app_id",                       "enabled": False,"fn": patch_gog_app_id},
     {"name": "discovery_ids",                    "enabled": True, "fn": patch_discovery_ids},
     {"name": "plan_b_lo_region",                 "enabled": False,"fn": patch_plan_b_lo_region},
+    {"name": "steamdb_button",                   "enabled": False,"fn": patch_steamdb_button},
 ]
 
 

@@ -42,6 +42,7 @@ const BINARIES_PATH = "bin";
 const EXEC_NAME = "Watch_Dogs.exe";
 const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Watch_Dogs";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1995"; //Nexus link to this extension. Used for links
 
 //feature toggles
@@ -93,6 +94,14 @@ const NEXUSTOOLS_PRELAUNCH_KEY = "ModLoader_DisablePrelaunchWindow";
 //changes in-game mount order (rather than NexusTools just reading it for its own GUI) is what
 //this load order page exists to test.
 const NEXUSTOOLS_MODSCONFIG_FILE = "localmodsconfig.json";
+
+//Stamped onto each installed MOD_ID mod so the load order page can find its Vortex modId back from
+//a bare on-disk folder name - same LO_ATTRIBUTE pattern used across this repo's other FBLO games
+//(e.g. game-warhammer40kdarktide). Without it, entries have no modId and show "Not managed by
+//Vortex" even for mods Vortex itself installed.
+const LO_ATTRIBUTE = "nexusToolsFolder";
+const LO_IMAGE_WIDTH = 96; //Width of the load order thumbnail image
+const LO_IMAGE_HEIGHT = LO_IMAGE_WIDTH * 0.5625;
 
 const MOD_ID = `${GAME_ID}-mod`;
 const MOD_NAME = "Mod";
@@ -423,9 +432,7 @@ function installLoader(files) {
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -479,9 +486,7 @@ function installMod(files, fileName) {
 
   // Remove directories and anything that isn't in the rootPath.
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -490,6 +495,11 @@ function installMod(files, fileName) {
     };
   });
   instructions.push(setModTypeInstruction);
+  //Stamp the actual deployed top-level folder name so the load order page can match this mod back
+  //by folder without guessing - ROOT_PATH when the archive already ships its own folder, otherwise
+  //the sanitized MOD_FOLDER (mirrors the two branches above).
+  const FOLDER_NAME = ROOT_PATH !== "." ? ROOT_PATH : MOD_FOLDER;
+  instructions.push({ type: "attribute", key: LO_ATTRIBUTE, value: FOLDER_NAME });
   return Promise.resolve({ instructions });
 }
 
@@ -544,9 +554,7 @@ function installRoot(files) {
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -869,17 +877,40 @@ async function deserializeWatchdogsLoadOrder(api) {
     listModFolders(discovery.path),
     readNexusToolsModsConfig(),
   ]);
+  const mods = util.getSafe(state, ["persistent", "mods", GAME_ID], {});
+  //Seed lock state from the stored load order - localmodsconfig.json has no lock concept at all,
+  //so without this a locked entry would silently unlock on the next deploy/profile switch/page mount.
+  const prevLO = util.getSafe(
+    state,
+    ["persistent", "loadOrder", selectors.lastActiveProfileForGame(state, GAME_ID)],
+    [],
+  );
+  const prevById = new Map(prevLO.map((entry) => [entry.id, entry]));
+  function getModId(folder) {
+    const modMatch = Object.values(mods).find(
+      (mod) => util.getSafe(mod.attributes, [LO_ATTRIBUTE], "") === folder,
+    );
+    return modMatch?.id;
+  }
   const byId = new Map(modsConfig.map((mod) => [mod.friendlyId, mod]));
   const entries = folders.map((folder) => {
     const existing = byId.get(folder);
     return {
       id: folder,
+      modId: getModId(folder),
       priority: existing?.priority ?? Number.MAX_SAFE_INTEGER,
       enabled: existing?.enabled !== false,
+      locked: prevById.get(folder)?.locked ?? false,
     };
   });
   entries.sort((lhs, rhs) => lhs.priority - rhs.priority);
-  return entries.map((entry) => ({ id: entry.id, name: entry.id, enabled: entry.enabled }));
+  return entries.map((entry) => ({
+    id: entry.id,
+    name: entry.id,
+    modId: entry.modId,
+    enabled: entry.enabled,
+    locked: entry.locked,
+  }));
 }
 
 async function serializeWatchdogsLoadOrder(api, loadOrder) {
@@ -918,6 +949,700 @@ async function serializeWatchdogsLoadOrder(api, loadOrder) {
 
 function validateWatchdogsLoadOrder() {
   return Promise.resolve(undefined);
+}
+
+//Tier-G load order page: custom row renderer, right-click context menu, status filter, locking -
+//ported from game-warhammer40kdarktide/index.js (see atomic-seeking-magpie.md for the source-read
+//function list this was copied from). No mod_update_all_profile equivalent exists in this
+//extension, so the update-freeze guard darktide layers on top is not ported.
+
+//React load order instructions renderer
+function LoadOrderInstructions() {
+  const { statusFilter, setStatusFilter } = useFbloState();
+  const { useSelector } = require("react-redux");
+  const profile = useSelector((state) => selectors.activeProfile(state));
+  const loadOrder = useSelector((state) =>
+    util.getSafe(state, ["persistent", "loadOrder", profile?.id], []),
+  );
+  const isLocked = (entry) => [true, "true", "always"].includes(entry?.locked);
+  const total = loadOrder.length;
+  const matched =
+    statusFilter.size > 0
+      ? loadOrder.filter((e) =>
+          matchesStatus(e, statusFilter, (x) => x.enabled !== false, isLocked),
+        ).length
+      : total;
+  //Collapse the DraggableListItem wrapper of any filtered-out row - see LO_ROW_HIDDEN_CSS below.
+  useInjectStyleOnce("fblo-status-filter-hide-style", LO_ROW_HIDDEN_CSS);
+  return React.createElement(
+    "div",
+    null,
+    React.createElement(StatusPills, {
+      active: statusFilter,
+      setActive: setStatusFilter,
+      groups: ["enabled", "locked", "unmanaged"],
+      count: statusFilter.size > 0 ? { matched, total } : null,
+    }),
+    React.createElement(
+      "p",
+      { style: { fontStyle: "italic", color: "#7ec8e3" } },
+      "Filter the list above by status. Clear the filter before reordering mods.",
+    ),
+    React.createElement("br", null),
+    React.createElement(
+      "p",
+      null,
+      `Experimental: this mirrors NexusTools' own load order file (${NEXUSTOOLS_MODSCONFIG_FILE}) ` +
+        "directly.",
+    ),
+    React.createElement(
+      "p",
+      null,
+      "Whether reordering here actually changes in-game mount order, or NexusTools only reads " +
+        "that file for its own GUI, has not been confirmed - this page exists to test that.",
+    ),
+  );
+}
+
+//Module-level pub-sub for multi-select + context menu + status filter (Vortex FBLO page has no custom context provider)
+let _fbloSelectedIds = new Set();
+let _fbloContextMenu = null;
+let _fbloStatusFilter = new Set();
+const _fbloListeners = new Set();
+function _notifyFblo() {
+  _fbloListeners.forEach((listener) => listener());
+}
+function useFbloState() {
+  const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
+  React.useEffect(() => {
+    _fbloListeners.add(forceUpdate);
+    return () => _fbloListeners.delete(forceUpdate);
+  }, []);
+  return {
+    selectedIds: _fbloSelectedIds,
+    setSelectedIds: (fn) => {
+      _fbloSelectedIds = fn(_fbloSelectedIds);
+      _notifyFblo();
+    },
+    contextMenu: _fbloContextMenu,
+    setContextMenu: (val) => {
+      _fbloContextMenu = val;
+      _notifyFblo();
+    },
+    statusFilter: _fbloStatusFilter,
+    setStatusFilter: (next) => {
+      _fbloStatusFilter = next;
+      _notifyFblo();
+    },
+  };
+}
+
+//Resolve the mod page URL for a Vortex-managed load order entry (undefined when not resolvable).
+//Prefers the mod's homepage attribute; falls back to composing the Nexus URL from the numeric mod id.
+function getModPageURL(api, vortexModId) {
+  if (vortexModId === undefined) return undefined;
+  const attributes = util.getSafe(
+    api.getState(),
+    ["persistent", "mods", GAME_ID, vortexModId, "attributes"],
+    {},
+  );
+  if (attributes.homepage) return attributes.homepage;
+  if (attributes.source === "nexus" && attributes.modId !== undefined) {
+    return `https://www.nexusmods.com/${GAME_ID}/mods/${attributes.modId}`;
+  }
+  return undefined;
+}
+
+//Resolve the staging folder of a Vortex-managed load order entry (undefined when not resolvable)
+function getModStagingFolder(api, vortexModId) {
+  if (vortexModId === undefined) return undefined;
+  const state = api.getState();
+  const installationPath = util.getSafe(
+    state,
+    ["persistent", "mods", GAME_ID, vortexModId, "installationPath"],
+    undefined,
+  );
+  const stagingPath = selectors.installPathForGame(state, GAME_ID);
+  if (!installationPath || !stagingPath) return undefined;
+  return path.join(stagingPath, installationPath);
+}
+
+//Status filter shared helpers. Groups combine with AND across, OR within.
+const STATUS_GROUP_TOKENS = {
+  enabled: ["enabled", "disabled"],
+  locked: ["locked", "unlocked"],
+  unmanaged: ["unmanaged"],
+};
+const STATUS_TOKEN_LABELS = {
+  enabled: "Enabled",
+  disabled: "Disabled",
+  locked: "Locked",
+  unlocked: "Unlocked",
+  unmanaged: "Unmanaged",
+};
+
+function matchesStatus(entry, active, isEnabledFn, isLockedFn) {
+  if (active.has("enabled") || active.has("disabled")) {
+    const en = isEnabledFn(entry);
+    if (!((active.has("enabled") && en) || (active.has("disabled") && !en))) return false;
+  }
+  if (active.has("locked") || active.has("unlocked")) {
+    const lk = isLockedFn(entry);
+    if (!((active.has("locked") && lk) || (active.has("unlocked") && !lk))) return false;
+  }
+  if (active.has("unmanaged") && entry.modId !== undefined) return false;
+  return true;
+}
+
+//Style blocks injected by the load order surfaces (see useInjectStyleOnce below)
+const LO_INDEX_FOCUS_CSS =
+  ".load-order-index input:focus { background: white !important; color: black !important; } .layout-flex.file-based-load-order-list-outer { overflow: auto; }";
+const LO_ROW_HIDDEN_CSS =
+  ".file-based-load-order-list .list-group > div:has(.lo-row-hidden) { display: none !important; }";
+const LO_CTX_MENU_CSS = ".watchdogs-ctx-item:hover { background: rgba(255,255,255,0.1); }";
+
+//Extensions cannot ship CSS, so a component injects its styles into the document head on mount.
+//Guarded by a fixed id, so repeated mounts (every row, every page visit) never duplicate the block.
+function useInjectStyleOnce(styleId, css) {
+  React.useEffect(() => {
+    if (globalThis.document.getElementById(styleId)) return;
+    const style = globalThis.document.createElement("style");
+    style.id = styleId;
+    style.textContent = css;
+    globalThis.document.head.appendChild(style);
+  }, [styleId, css]);
+}
+
+//Shared dismiss behaviour for the context menu: any click or right-click outside closes the menu,
+//as does Escape. Menu items call stopPropagation, so their own clicks never reach these listeners.
+function useDismissOnOutside(onClose) {
+  React.useEffect(() => {
+    const dismiss = () => onClose();
+    const onKey = (evt) => {
+      if (evt.key === "Escape") onClose();
+    };
+    globalThis.document.addEventListener("click", dismiss);
+    globalThis.document.addEventListener("contextmenu", dismiss);
+    globalThis.document.addEventListener("keydown", onKey);
+    return () => {
+      globalThis.document.removeEventListener("click", dismiss);
+      globalThis.document.removeEventListener("contextmenu", dismiss);
+      globalThis.document.removeEventListener("keydown", onKey);
+    };
+  }, [onClose]);
+}
+
+//Viewport clamp for the context menu. The clamped position is measured once into state and then
+//rendered, rather than written onto el.style after the fact - a fresh callback ref every render
+//makes React detach and reattach it, and the next render would overwrite the mutated style anyway.
+function useClampedMenuPosition(x, y) {
+  const [position, setPosition] = React.useState({ left: x, top: y });
+  const measureRef = React.useCallback(
+    (el) => {
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const vw = globalThis.window.innerWidth;
+      const vh = globalThis.window.innerHeight;
+      const left = x + rect.width > vw ? Math.max(8, vw - rect.width - 8) : x;
+      const top = y + rect.height > vh ? Math.max(8, vh - rect.height - 8) : y;
+      setPosition((prev) => (prev.left === left && prev.top === top ? prev : { left, top }));
+    },
+    [x, y],
+  );
+  return [position, measureRef];
+}
+
+//Inline toggle pills for status filtering
+function StatusPills({ active, setActive, groups, count }) {
+  const { Button } = require("react-bootstrap");
+  const tokens = groups.reduce((acc, g) => acc.concat(STATUS_GROUP_TOKENS[g] || []), []);
+  const toggle = (token) => {
+    const next = new Set(active);
+    next.has(token) ? next.delete(token) : next.add(token);
+    setActive(next);
+  };
+  return React.createElement(
+    "div",
+    { style: { display: "flex", flexWrap: "wrap", gap: 4, alignItems: "center", marginBottom: 8 } },
+    React.createElement("span", { style: { fontWeight: "bold", marginRight: 4 } }, "Filter:"),
+    count != null
+      ? React.createElement(
+          "span",
+          { style: { color: "#7ec8e3", marginRight: 4 } },
+          `${count.matched} / ${count.total}`,
+        )
+      : null,
+    ...tokens.map((token) =>
+      React.createElement(
+        Button,
+        {
+          key: token,
+          bsSize: "xsmall",
+          bsStyle: active.has(token) ? "success" : "default",
+          style: active.has(token) ? { fontWeight: "bold" } : undefined,
+          onClick: () => toggle(token),
+        },
+        STATUS_TOKEN_LABELS[token],
+      ),
+    ),
+    active.size > 0
+      ? React.createElement(
+          Button,
+          {
+            key: "__clear",
+            bsSize: "xsmall",
+            bsStyle: "link",
+            onClick: () => setActive(new Set()),
+          },
+          "Clear",
+        )
+      : null,
+  );
+}
+
+//React line item renderer for load order
+function LoadOrderItemRenderer(props) {
+  const { className, item } = props;
+  if (item?.loEntry === undefined) return null;
+
+  const { ListGroupItem, Checkbox } = require("react-bootstrap");
+  const { Icon, LoadOrderIndexInput, MainContext } = require("vortex-api");
+  const { useSelector, useDispatch } = require("react-redux");
+
+  const { api } = React.useContext(MainContext);
+  const dispatch = useDispatch();
+
+  const profile = useSelector((state) => selectors.activeProfile(state));
+  const loadOrder = useSelector((state) =>
+    util.getSafe(state, ["persistent", "loadOrder", profile?.id], []),
+  );
+
+  const { loEntry, displayCheckboxes } = item;
+  const mods = useSelector((state) => util.getSafe(state, ["persistent", "mods", GAME_ID], {}));
+  const pictureUrl = mods[loEntry.modId]?.attributes?.pictureUrl;
+  //FBLO precomputes these on the item (memoized by its row cache); the fallbacks keep the
+  //renderer working if it is ever mounted outside the FBLO page.
+  const currentIdx = item.position ?? loadOrder.findIndex((e) => e.id === loEntry.id) + 1;
+
+  const isLocked = (entry) => [true, "true", "always"].includes(entry?.locked);
+  //Core derives the index input's minimum from this and assumes locked entries sit at the top.
+  //Only the LEADING locked run blocks row 1 - a lock further down must not raise the floor.
+  const firstUnlocked = loadOrder.findIndex((e) => !isLocked(e));
+  const leadingLockedCount = firstUnlocked === -1 ? loadOrder.length : firstUnlocked;
+
+  const onApplyIndex = React.useCallback(
+    (idx) => {
+      if (currentIdx === idx || isLocked(loEntry)) return;
+      //Locked entries hold their absolute index - the typed row picks a slot among the unlocked ones
+      const bound = idx - 1 + (idx > currentIdx ? 1 : 0);
+      const dest = loadOrder.filter(
+        (e, i) => !isLocked(e) && e.id !== loEntry.id && i < bound,
+      ).length;
+      const unlocked = loadOrder.filter((e) => !isLocked(e) && e.id !== loEntry.id);
+      unlocked.splice(dest, 0, loEntry);
+      let next = 0;
+      const newLO = loadOrder.map((e) => (isLocked(e) ? e : unlocked[next++]));
+      dispatch(actions.setFBLoadOrder(profile.id, newLO));
+    },
+    [dispatch, profile, loadOrder, loEntry, currentIdx],
+  );
+
+  const onToggle = React.useCallback(
+    (evt) => {
+      dispatch(
+        actions.setFBLoadOrderEntry(profile.id, { ...loEntry, enabled: evt.target.checked }),
+      );
+    },
+    [dispatch, profile, loEntry],
+  );
+
+  const isEntryLocked = isLocked(loEntry);
+  const { selectedIds, setSelectedIds, contextMenu, setContextMenu, statusFilter } = useFbloState();
+  const isSelected = selectedIds.has(loEntry.id);
+  //Shift-select must span visible rows only, so build the id list from the status-filtered order.
+  //Memoized: a bare filter here would run once per row, i.e. O(n^2) over the whole load order.
+  const allIds = React.useMemo(
+    () =>
+      loadOrder
+        .filter((e) => matchesStatus(e, statusFilter, (entry) => entry.enabled !== false, isLocked))
+        .map((e) => e.id),
+    [loadOrder, statusFilter],
+  );
+
+  const onSelect = React.useCallback(
+    (evt) => {
+      const ctrlKey = evt.ctrlKey || evt.metaKey;
+      const shiftKey = evt.shiftKey;
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        if (ctrlKey) {
+          next.has(loEntry.id) ? next.delete(loEntry.id) : next.add(loEntry.id);
+        } else if (shiftKey) {
+          const lastId = [...prev].at(-1);
+          const start = allIds.indexOf(lastId ?? loEntry.id);
+          const end = allIds.indexOf(loEntry.id);
+          const [lo, hi] = [Math.min(start, end), Math.max(start, end)];
+          for (let i = lo; i <= hi; i++) next.add(allIds[i]);
+        } else {
+          next.clear();
+          next.add(loEntry.id);
+        }
+        return next;
+      });
+    },
+    [loEntry.id, setSelectedIds, allIds],
+  );
+
+  const onContextMenu = React.useCallback(
+    (evt) => {
+      evt.preventDefault();
+      evt.stopPropagation();
+      setContextMenu({ x: evt.clientX, y: evt.clientY, itemId: loEntry.id });
+    },
+    [loEntry.id, setContextMenu],
+  );
+
+  const onLock = React.useCallback(() => {
+    const newLO = loadOrder.map((e) =>
+      e.id === loEntry.id ? { ...e, locked: !isEntryLocked } : e,
+    );
+    dispatch(actions.setFBLoadOrder(profile.id, newLO));
+    serializeWatchdogsLoadOrder(api, newLO);
+  }, [dispatch, api, profile, loadOrder, loEntry, isEntryLocked]);
+
+  useInjectStyleOnce("lo-index-focus-style", LO_INDEX_FOCUS_CSS);
+
+  const classes = ["load-order-entry"];
+  if (className) classes.push(...className.split(" "));
+
+  // Status filter: render hidden (but keep the DnD item count stable) when the entry is filtered out.
+  if (!matchesStatus(loEntry, statusFilter, (e) => e.enabled !== false, isLocked)) {
+    return React.createElement(ListGroupItem, {
+      key: loEntry.id,
+      className: "lo-row-hidden",
+      style: { display: "none" },
+    });
+  }
+
+  return React.createElement(
+    ListGroupItem,
+    {
+      key: loEntry.id,
+      className: classes.join(" "),
+      onClick: onSelect,
+      onContextMenu: onContextMenu,
+      style: { outline: isSelected ? "2px solid #337ab7" : "none", outlineOffset: "-1px" },
+    },
+    React.createElement(
+      "div",
+      { style: { visibility: isEntryLocked ? "hidden" : "visible" } },
+      React.createElement(Icon, { className: "drag-handle-icon", name: "drag-handle" }),
+    ),
+    React.createElement(
+      "div",
+      { style: { width: 24, flexShrink: 0, overflow: "hidden" } },
+      React.createElement(LoadOrderIndexInput, {
+        className: "load-order-index",
+        api: api,
+        item: loEntry,
+        currentPosition: currentIdx,
+        lockedEntriesCount: leadingLockedCount,
+        loadOrder: loadOrder,
+        isLocked: isLocked,
+        onApplyIndex: onApplyIndex,
+      }),
+    ),
+    React.createElement(
+      "div",
+      {
+        style: { cursor: "pointer", display: "flex", alignItems: "center" },
+        title: isEntryLocked ? "Unlock position" : "Lock position",
+        onClick: (evt) => {
+          evt.stopPropagation();
+          onLock();
+        },
+      },
+      React.createElement(Icon, {
+        name: isEntryLocked ? "locked" : "unlocked",
+        style: { color: isEntryLocked ? "#e2c04c" : "inherit" },
+      }),
+    ),
+    React.createElement(
+      "div",
+      {
+        className: "load-order-thumb-slot",
+        style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, marginRight: 4, flexShrink: 0 },
+      },
+      !loEntry.modId
+        ? React.createElement(
+            "div",
+            {
+              className: "load-order-unmanaged-banner",
+              title: "Not managed by Vortex",
+              style: {
+                width: LO_IMAGE_WIDTH,
+                height: LO_IMAGE_HEIGHT,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 2,
+                textAlign: "center",
+                borderRadius: 2,
+                border: "1px solid #e2c04c",
+                background: "rgba(226,192,76,0.12)",
+                color: "#e2c04c",
+                fontSize: 9,
+                lineHeight: 1.1,
+                padding: 2,
+                pointerEvents: "none",
+              },
+            },
+            React.createElement(Icon, {
+              className: "external-caution-logo",
+              name: "feedback-warning",
+              style: { color: "#e2c04c" },
+            }),
+            React.createElement("span", null, "Not managed by Vortex"),
+          )
+        : pictureUrl
+          ? React.createElement("img", {
+              className: "load-order-thumb",
+              src: pictureUrl,
+              draggable: false,
+              style: {
+                width: LO_IMAGE_WIDTH,
+                height: LO_IMAGE_HEIGHT,
+                objectFit: "cover",
+                borderRadius: 2,
+                pointerEvents: "none",
+              },
+            })
+          : null,
+    ),
+    React.createElement(
+      "p",
+      { className: "load-order-name", style: { whiteSpace: "normal", wordBreak: "break-word" } },
+      loEntry.name,
+    ),
+    displayCheckboxes
+      ? React.createElement(Checkbox, {
+          className: "entry-checkbox",
+          checked: loEntry.enabled,
+          disabled: isLocked(loEntry),
+          onChange: onToggle,
+        })
+      : null,
+    contextMenu?.itemId === loEntry.id
+      ? React.createElement(FbloContextMenu, {
+          x: contextMenu.x,
+          y: contextMenu.y,
+          item: loEntry,
+          loadOrder,
+          profile,
+          dispatch,
+          api,
+          selectedIds,
+          onClose: () => setContextMenu(null),
+        })
+      : null,
+  );
+}
+
+//Right-click context menu for load order entries (single + multi-select)
+function FbloContextMenu({ x, y, item, loadOrder, profile, dispatch, api, selectedIds, onClose }) {
+  useDismissOnOutside(onClose);
+
+  useInjectStyleOnce("watchdogs-ctx-menu-style", LO_CTX_MENU_CSS);
+
+  const [menuPosition, clampRef] = useClampedMenuPosition(x, y);
+
+  const isLocked = (e) => [true, "true", "always"].includes(e?.locked);
+  const isMulti = selectedIds.size >= 2 && selectedIds.has(item.id);
+  const targets = isMulti ? loadOrder.filter((e) => selectedIds.has(e.id)) : [item];
+
+  const applyToTargets = (transform, serialize = false) => {
+    const newLO = transform(loadOrder, targets);
+    dispatch(actions.setFBLoadOrder(profile.id, newLO));
+    if (serialize) serializeWatchdogsLoadOrder(api, newLO);
+    onClose();
+  };
+
+  const isEntryLocked = isLocked(item);
+  const isEntryEnabled = item.enabled ?? true;
+
+  const gameDir = getDiscoveryPath(api);
+  const isModEnabled = (e) => util.getSafe(profile, ["modState", e.modId, "enabled"], false);
+  const setVortexEnabled = (entries, enabled) => {
+    //One Vortex mod can only own one folder here, but a multi-select can still list it twice if
+    //selection logic ever changes - dedupe before dispatch to be safe.
+    const modIds = [...new Set(entries.filter((e) => e.modId !== undefined).map((e) => e.modId))];
+    if (modIds.length > 0) {
+      actions.setModsEnabled(api, profile.id, modIds, enabled, { allowAutoDeploy: true });
+    }
+    onClose();
+  };
+  const openModFolders = (entries) => {
+    entries
+      .filter((e) => e.id !== undefined)
+      .forEach((e) => util.opn(path.join(gameDir, MOD_PATH, e.id)).catch(() => null));
+    onClose();
+  };
+  const itemVortexEnabled = isModEnabled(item);
+  const modPageUrl = getModPageURL(api, item.modId);
+  const stagingFolder = getModStagingFolder(api, item.modId);
+
+  const menuStyle = {
+    position: "fixed",
+    left: menuPosition.left,
+    top: menuPosition.top,
+    zIndex: 9999,
+    background: "#1e1e1e",
+    border: "1px solid rgba(255,255,255,0.2)",
+    borderRadius: 4,
+    padding: "4px 0",
+    minWidth: 180,
+    boxShadow: "0 4px 12px rgba(0,0,0,0.6)",
+  };
+  const itemStyle = { padding: "6px 16px", cursor: "pointer", whiteSpace: "nowrap" };
+  const sepStyle = { borderTop: "1px solid rgba(255,255,255,0.1)", margin: "4px 0" };
+
+  const menuItem = (label, onClick) =>
+    React.createElement(
+      "div",
+      {
+        className: "watchdogs-ctx-item",
+        style: itemStyle,
+        onClick: (evt) => {
+          evt.stopPropagation();
+          onClick();
+        },
+      },
+      label,
+    );
+
+  if (isMulti) {
+    const n = targets.length;
+    return React.createElement(
+      "div",
+      { ref: clampRef, style: menuStyle },
+      menuItem(`Enable Selected (${n})`, () =>
+        applyToTargets((lo) =>
+          lo.map((e) => (targets.find((t) => t.id === e.id) ? { ...e, enabled: true } : e)),
+        ),
+      ),
+      menuItem(`Disable Selected (${n})`, () =>
+        applyToTargets((lo) =>
+          lo.map((e) => (targets.find((t) => t.id === e.id) ? { ...e, enabled: false } : e)),
+        ),
+      ),
+      React.createElement("div", { style: sepStyle }),
+      menuItem(`Lock Selected (${n})`, () =>
+        applyToTargets(
+          (lo) => lo.map((e) => (targets.find((t) => t.id === e.id) ? { ...e, locked: true } : e)),
+          true,
+        ),
+      ),
+      menuItem(`Unlock Selected (${n})`, () =>
+        applyToTargets(
+          (lo) => lo.map((e) => (targets.find((t) => t.id === e.id) ? { ...e, locked: false } : e)),
+          true,
+        ),
+      ),
+      React.createElement("div", { style: sepStyle }),
+      menuItem(`Move to Top (${n})`, () =>
+        applyToTargets((lo) => {
+          //Locked entries hold their absolute index - only the unlocked entries reorder into the slots between them
+          const selected = lo.filter((e) => targets.find((t) => t.id === e.id) && !isLocked(e));
+          const rest = lo.filter((e) => !isLocked(e) && !targets.find((t) => t.id === e.id));
+          const reordered = [...selected, ...rest];
+          let next = 0;
+          return lo.map((e) => (isLocked(e) ? e : reordered[next++]));
+        }),
+      ),
+      menuItem(`Move to Bottom (${n})`, () =>
+        applyToTargets((lo) => {
+          //Locked entries hold their absolute index - only the unlocked entries reorder into the slots between them
+          const selected = lo.filter((e) => targets.find((t) => t.id === e.id) && !isLocked(e));
+          const rest = lo.filter((e) => !isLocked(e) && !targets.find((t) => t.id === e.id));
+          const reordered = [...rest, ...selected];
+          let next = 0;
+          return lo.map((e) => (isLocked(e) ? e : reordered[next++]));
+        }),
+      ),
+      React.createElement("div", { style: sepStyle }),
+      menuItem(`Open Mod Folders (${n})`, () => openModFolders(targets)),
+      targets.some((t) => t.modId !== undefined)
+        ? menuItem(`Open Staging Folders (${n})`, () => {
+            //Several rows could in principle resolve to the same staging folder - dedupe so it opens once.
+            const folders = [
+              ...new Set(targets.map((t) => getModStagingFolder(api, t.modId)).filter(Boolean)),
+            ];
+            folders.forEach((folder) => util.opn(folder).catch(() => null));
+            onClose();
+          })
+        : null,
+      React.createElement("div", { style: sepStyle }),
+      menuItem(`Disable Vortex Mod (${n})`, () => setVortexEnabled(targets, false)),
+    );
+  }
+
+  return React.createElement(
+    "div",
+    { ref: clampRef, style: menuStyle },
+    menuItem(isEntryEnabled ? "Disable" : "Enable", () =>
+      applyToTargets((lo) =>
+        lo.map((e) => (e.id === item.id ? { ...e, enabled: !isEntryEnabled } : e)),
+      ),
+    ),
+    menuItem(isEntryLocked ? "Unlock Position" : "Lock Position", () =>
+      applyToTargets(
+        (lo) => lo.map((e) => (e.id === item.id ? { ...e, locked: !isEntryLocked } : e)),
+        true,
+      ),
+    ),
+    React.createElement("div", { style: sepStyle }),
+    menuItem("Move to Top", () =>
+      applyToTargets((lo) => {
+        if (isLocked(item)) return lo;
+        const moved = lo.filter((e) => !isLocked(e) && e.id === item.id);
+        const rest = lo.filter((e) => !isLocked(e) && e.id !== item.id);
+        const reordered = [...moved, ...rest];
+        let next = 0;
+        return lo.map((e) => (isLocked(e) ? e : reordered[next++]));
+      }),
+    ),
+    menuItem("Move to Bottom", () =>
+      applyToTargets((lo) => {
+        if (isLocked(item)) return lo;
+        const moved = lo.filter((e) => !isLocked(e) && e.id === item.id);
+        const rest = lo.filter((e) => !isLocked(e) && e.id !== item.id);
+        const reordered = [...rest, ...moved];
+        let next = 0;
+        return lo.map((e) => (isLocked(e) ? e : reordered[next++]));
+      }),
+    ),
+    React.createElement("div", { style: sepStyle }),
+    menuItem("Open Mod Folder", () => openModFolders([item])),
+    stagingFolder
+      ? menuItem("Open Staging Folder", () => {
+          util.opn(stagingFolder).catch(() => null);
+          onClose();
+        })
+      : null,
+    modPageUrl
+      ? menuItem("Open Mod Page", () => {
+          util.opn(modPageUrl).catch(() => null);
+          onClose();
+        })
+      : null,
+    item.modId !== undefined ? React.createElement("div", { style: sepStyle }) : null,
+    item.modId !== undefined
+      ? menuItem(itemVortexEnabled ? "Disable Vortex Mod" : "Enable Vortex Mod", () =>
+          setVortexEnabled([item], !itemVortexEnabled),
+        )
+      : null,
+  );
 }
 
 function GameSettings() {
@@ -1255,6 +1980,21 @@ function applyGame(context, gameSpec) {
     300,
     "open-ext",
     {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
     "View Changelog",
     () => {
       const openPath = path.join(__dirname, "CHANGELOG.md");
@@ -1316,11 +2056,8 @@ function applyGame(context, gameSpec) {
       gameId: GAME_ID,
       toggleableEntries: true,
       noCollectionGeneration: true,
-      usageInstructions:
-        "Experimental: this mirrors NexusTools' own load order file " +
-        `(${NEXUSTOOLS_MODSCONFIG_FILE}) directly. Whether reordering here actually changes ` +
-        "in-game mount order, or NexusTools only reads that file for its own GUI, has not been " +
-        "confirmed - this page exists to test that.",
+      usageInstructions: LoadOrderInstructions,
+      customItemRenderer: LoadOrderItemRenderer,
       deserializeLoadOrder: () => deserializeWatchdogsLoadOrder(context.api),
       serializeLoadOrder: (loadOrder) => serializeWatchdogsLoadOrder(context.api, loadOrder),
       validate: () => validateWatchdogsLoadOrder(),

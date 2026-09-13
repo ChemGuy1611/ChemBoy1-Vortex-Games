@@ -40,6 +40,7 @@ const DEV_REGSTRING = "amistech"; //developer name
 const GAME_REGSTRING = "My Winter Car"; //game name
 const XBOX_SAVE_STRING = ""; //string after "ID_"
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/My_Winter_Car";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 
 //feature toggles
 const hasCustomMods = false; //set to true if there are modTypes with folder paths dependent on which mod loader is installed
@@ -2278,6 +2279,21 @@ function applyGame(context, gameSpec) {
     "Open PCGamingWiki Page",
     () => {
       util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
     },
     () => {
       const state = context.api.getState();

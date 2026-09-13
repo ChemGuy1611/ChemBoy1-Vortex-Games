@@ -3,6 +3,7 @@
 ## [2026-09-12]
 
 - Fixed: installers scoped their file list to the mod root with `file.indexOf(rootPath) !== -1`, a substring test that silently dropped every extension-less file. `path.dirname()` returns `"."` when the mod file sits at the archive root, which collapses the test to "the path contains a dot", so extension-less payloads never reached the staging folder; the same test also matched sibling folders that happen to share a name prefix. 5 of the 6 installers now derive `const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;` and filter with `file.startsWith(rootPrefix)`; the 6th (`installRoot`'s alternate branch) was already commented out and stays that way.
+- Added an "Open SteamDB Page" button next to "Open PCGamingWiki Page", opening the game's `https://steamdb.info/app/<STEAMAPP_ID>/` page.
 
 ## [2026-09-06]
 

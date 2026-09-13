@@ -28,6 +28,7 @@ const GAME_NAME_SHORT = "DB Sparking! Zero";
 const EXEC = "SparkingZERO.exe";
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Dragon_Ball:_Sparking!_Zero";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1055";
 
 let GAME_PATH = "";
@@ -2031,6 +2032,21 @@ function applyGame(context, gameSpec) {
     "Open PCGamingWiki Page",
     () => {
       util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
     },
     () => {
       const state = context.api.getState();

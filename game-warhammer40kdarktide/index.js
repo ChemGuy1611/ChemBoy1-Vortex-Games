@@ -8,6 +8,8 @@ const React = require("react");
 
 const GAME_ID = "warhammer40kdarktide";
 const STEAMAPP_ID = "1361210";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Warhammer_40%2C000%3A_Darktide";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const XBOXAPP_ID = "FatsharkAB.Warhammer40000DarktideNew";
 const XBOXEXECNAME = "launcher.launcher";
 const MOD_FILE_EXT = ".mod";
@@ -818,6 +820,36 @@ function main(context) {
       GAME_PATH = getDiscoveryPath(context.api);
       const openPath = path.join(GAME_PATH, "launcher", "Launcher.exe.config");
       util.opn(openPath).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open PCGamingWiki Page",
+    () => {
+      util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
     },
     () => {
       const state = context.api.getState();

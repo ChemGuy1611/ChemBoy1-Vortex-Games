@@ -3,6 +3,7 @@
 ## Planned Improvements (Not Yet Released)
 
 - (UNCERTAIN) Installer for the preview folder???
+- Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 
 ## [0.3.0] - 2026-08-03
 

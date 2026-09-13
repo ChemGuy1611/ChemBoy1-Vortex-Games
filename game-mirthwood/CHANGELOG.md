@@ -1,5 +1,9 @@
 # Changelog
 
+## Planned Improvements (Not Yet Released)
+
+- Added an "Open SteamDB Page" button.
+
 ## [0.2.1] - 2026-09-12
 
 - Fixed: Mod files with no file extension, such as Unity asset bundles, were skipped during installation

@@ -2,7 +2,7 @@
 
 ## Planned Improvements (Not Yet Released)
 
-- None Planned
+- Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 
 ## [1.0.2] - 2026-09-08
 

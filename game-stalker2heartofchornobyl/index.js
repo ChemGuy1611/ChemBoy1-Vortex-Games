@@ -42,6 +42,7 @@ const EXEC_GOG = EXEC_DEFAULT;
 const EXEC_XBOX = `gamelaunchhelper.exe`;
 let SHIPPINGEXE_NAME = `Stalker2-Win64-Shipping.exe`;
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/S.T.A.L.K.E.R._2:_Heart_of_Chornobyl";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/958"; //Nexus link to this extension. Used for links
 
 let GAME_PATH = ""; //patched in the setup function to the discovered game path
@@ -3218,6 +3219,21 @@ function applyGame(context, gameSpec) {
     "Open PCGamingWiki Page",
     () => {
       util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
     },
     () => {
       const state = context.api.getState();

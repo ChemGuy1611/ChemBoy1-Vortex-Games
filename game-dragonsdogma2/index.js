@@ -23,6 +23,7 @@ const GAME_NAME_SHORT = "DD2";
 const FLUFFY_FOLDER = "DragonsDogma2";
 const MOD_PATH = path.join("Games", FLUFFY_FOLDER, "Mods");
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Dragon%27s_Dogma_II";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/851"; //Nexus link to this extension. Used for links
 
 let GAME_PATH = "";
@@ -958,6 +959,21 @@ function applyGame(context, gameSpec) {
     "Open PCGamingWiki Page",
     () => {
       util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
     },
     () => {
       const state = context.api.getState();

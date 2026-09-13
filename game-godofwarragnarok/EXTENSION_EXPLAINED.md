@@ -59,6 +59,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open boot-options.json
 - Open GoWR-Script-Loader Config
 - Open PCGamingWiki Page
+- Open SteamDB Page
 - View Changelog
 - Submit Bug Report
 - Open Downloads Folder

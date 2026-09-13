@@ -24,6 +24,7 @@ const GAME_NAME = "Prey (2017)";
 const MOD_PATH = path.join("GameSDK", "Precache");
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/711"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Prey_%282017%29";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 
 let execFolder = "";
 let BINARIES_TARGET = "";
@@ -769,6 +770,38 @@ function main(context) {
   context.registerInstaller(`${GAME_ID}-root`, 40, testRoot, installRoot);
   context.registerInstaller(BINARIES_ID, 45, testBinaries, installBinaries);
   //context.registerInstaller(`${GAME_ID}-chairmodlegacy`, 45, testChairModLegacy, installChairModLegacy);
+
+  //register actions
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open PCGamingWiki Page",
+    () => {
+      util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
 
   context.once(() => {
     const api = context.api;

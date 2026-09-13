@@ -1036,6 +1036,17 @@ REGISTER_ACTIONS = [
         "  });\n",
     ),
     (
+        'Open SteamDB Page',
+        False,
+        "  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open SteamDB Page', () => {\n"
+        "    util.opn(STEAMDB_URL).catch(() => null);\n"
+        "  }, () => {\n"
+        "    const state = context.api.getState();\n"
+        "    const gameId = selectors.activeGameId(state);\n"
+        "    return gameId === GAME_ID;\n"
+        "  });\n",
+    ),
+    (
         'View Changelog',
         False,
         "  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {\n"
@@ -2052,6 +2063,41 @@ def make_changelog():
     )
 
 
+def add_planned_improvement(folder, bullet):
+    """Append a bullet under CHANGELOG.md's '## Planned Improvements (Not Yet Released)'
+    section, creating the section right after the '# Changelog' header if it is
+    missing. bullet is the line text without a leading '- '. A pre-existing
+    '- None Planned' placeholder is dropped. Returns True if written, False if
+    CHANGELOG.md is missing or the exact bullet line is already present."""
+    path = os.path.join(folder, "CHANGELOG.md")
+    if not os.path.isfile(path):
+        return False
+    with open(path, encoding="utf-8") as f:
+        content = f.read()
+    line = f"- {bullet}"
+    if line in content:
+        return False
+
+    heading = "## Planned Improvements (Not Yet Released)"
+    if heading in content:
+        body_start = content.index(heading) + len(heading)
+        next_heading_m = re.search(r'^## ', content[body_start:], re.MULTILINE)
+        section_end = body_start + next_heading_m.start() if next_heading_m else len(content)
+        section = content[body_start:section_end].replace("- None Planned\n", "", 1)
+        existing_bullets = section.strip('\n')
+        new_section = "\n\n" + (existing_bullets + f"\n{line}" if existing_bullets else line) + "\n\n"
+        new_content = content[:body_start] + new_section + content[section_end:]
+    else:
+        m = re.search(r'^# Changelog[ \t]*\n', content, re.MULTILINE)
+        pos = m.end() if m else 0
+        rest = content[pos:].lstrip('\n')
+        new_content = content[:pos] + f"\n{heading}\n\n{line}\n\n" + rest
+
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(new_content)
+    return True
+
+
 def parse_changelog_latest(folder):
     """Return (version, date) from the most recent ## [X.Y.Z] - YYYY-MM-DD entry
     in CHANGELOG.md, or (None, None) if the file is missing or has no dated entry."""
@@ -2078,11 +2124,11 @@ def detect_engine(src):
         return 'UE4-5'
     if 'const TFC_ID =' in src or 'Structure: UE2/3' in head or 'TFC Installer' in head:
         return 'UE2-3'
-    if "requireExtension('modtype-bepinex')" in src and 'MelonLoader' not in head and 'Hybrid' not in head:
+    if re.search(r"""requireExtension\(['"]modtype-bepinex['"]\)""", src) and 'MelonLoader' not in head and 'Hybrid' not in head:
         return 'Unity+Bep'
     if 'MelonLoader' in head or 'Hybrid' in head:
         return 'Unity+Mel/Bep'
-    if "requireExtension('modtype-umm')" in src or 'UMM' in head:
+    if re.search(r"""requireExtension\(['"]modtype-umm['"]\)""", src) or 'UMM' in head:
         return 'Unity+UMM'
     if 'Far Cry' in head or 'Dunia' in head:
         return 'Dunia'
@@ -2738,6 +2784,24 @@ def touch_empty(path, force=False):
     os.replace(tmp, path)
 
 
+# Hardcoded aliases for extensions whose deployed Vortex folder name diverges
+# too far from game_id/GAME_NAME for the cleaning rules in find_vortex_plugin_folder
+# to bridge -- acronyms ("RFG" for "Red Faction Guerrilla", "WotWT" for "Whispers
+# of the Witch Tree"), abbreviations ("TPP" for "The Phantom Pain"), or a renamed
+# GAME_NAME with reordered words ("Classic and Remaster" folder vs current
+# "Remaster and Classic" name). Add an entry only after --all --dry-run shows a
+# spurious "create" for an already-published game (cross-check
+# reference_unreleased_extensions.md memory first -- most "create" hits are
+# legitimately unpublished extensions, not a matcher bug).
+_FOLDER_NAME_ALIASES = {
+    "metalgearsolidvtpp": "Metal Gear Solid V TPP",
+    "unchartedlegacyofthievescollection": "Uncharted Legacy of Thieves",
+    "mandragorawhispersofthewitchtree": "Mandragora WotWT",
+    "redfactionguerrillaremarstered": "RFG Re-Mars-tered",
+    "systemshock225thanniversaryremaster": "System Shock 2 Classic and Remaster",
+}
+
+
 def find_vortex_plugin_folder(game_id, game_name=None):
     """Return the deployed plugin folder path for game_id in Vortex's plugins dir, or None.
 
@@ -2748,6 +2812,12 @@ def find_vortex_plugin_folder(game_id, game_name=None):
          update) whose cleaned name portion equals the cleaned game_id or game_name
       3. Any folder whose cleaned name equals the cleaned game_id or game_name
       4. Substring hits, the update-folder form first, then any folder
+
+    A game_id in _FOLDER_NAME_ALIASES contributes its cleaned alias as a third
+    candidate string alongside game_id and game_name at every step above --
+    same priority, not a separate pass -- for the handful of extensions whose
+    deployed folder name is an acronym, abbreviation, or word-reordered rename
+    that the cleaning rules below cannot bridge on their own.
 
     Every exact form outranks every substring form, across the passes and not
     merely within one, so a game id contained in another game's id
@@ -2813,6 +2883,7 @@ def find_vortex_plugin_folder(game_id, game_name=None):
 
     gid_clean = _clean(game_id)
     name_clean = _clean(game_name) if game_name else None
+    alias_clean = _clean(_FOLDER_NAME_ALIASES[game_id]) if game_id in _FOLDER_NAME_ALIASES else None
 
     # An exact match always beats a substring one, and the whole listing is
     # scanned before a substring hit is accepted. A game id that is a prefix of
@@ -2829,12 +2900,13 @@ def find_vortex_plugin_folder(game_id, game_name=None):
         full = os.path.join(plugins_dir, entry)
         if not os.path.isdir(full):
             continue
-        if entry_name_clean and entry_name_clean in (gid_clean, name_clean):
+        if entry_name_clean and entry_name_clean in (gid_clean, name_clean, alias_clean):
             vu_exact = full
             break
         if vu_substr is None and (
                 (gid_clean and gid_clean in entry_name_clean)
-                or (name_clean and name_clean in entry_name_clean)):
+                or (name_clean and name_clean in entry_name_clean)
+                or (alias_clean and alias_clean in entry_name_clean)):
             vu_substr = full
     if vu_exact:
         return vu_exact
@@ -2850,11 +2922,12 @@ def find_vortex_plugin_folder(game_id, game_name=None):
         full = os.path.join(plugins_dir, entry)
         if not os.path.isdir(full):
             continue
-        if ec and ec in (gid_clean, name_clean):
+        if ec and ec in (gid_clean, name_clean, alias_clean):
             fuzzy_exact = full
             break
         if fuzzy_substr is None and (
-                (gid_clean and gid_clean in ec) or (name_clean and name_clean in ec)):
+                (gid_clean and gid_clean in ec) or (name_clean and name_clean in ec)
+                or (alias_clean and alias_clean in ec)):
             fuzzy_substr = full
 
     return fuzzy_exact or vu_substr or fuzzy_substr
@@ -2898,6 +2971,23 @@ def write_id_list(filepath, game_ids):
 def is_load_order_game(src):
     """Return True if the extension registers a load order and is not a UE4/5 game."""
     return "context.registerLoadOrder" in src and detect_engine(src) != "UE4-5"
+
+
+def is_multi_game_extension(src):
+    """Return True if the extension calls context.registerGame more than once.
+
+    A handful of extensions bundle several distinct games (or game variants with
+    their own store app ids) behind one Nexus page - windrose (base + dedicated
+    server), doom3 (standard + BFG edition), gzdoom (front end for several IWADs),
+    ninjagaidenmastercollection (three separate Sigma/Razor's Edge games), and
+    similar. Each registerGame call there gates its own GAME_ID variant, so
+    per-variant code (store links, action buttons) usually needs to key off the
+    matching variant's own constants rather than a single shared one.
+
+    Comments are stripped first so a disabled/example registerGame call in a
+    toggled-off block does not count.
+    """
+    return strip_js_comments(src).count("context.registerGame(") > 1
 
 
 def is_merge_game(src):

@@ -46,7 +46,7 @@ FileHookManager scanning mod workspace: Minimal GPS Markers path: ...\data_win64
 Mount succeeded for 50
 ```
 
-...repeated per mod. This is the opposite of SnakeBite ([[reference_snakebite]]), which repacks a
+...repeated per mod. This is the opposite of SnakeBite (`SNAKEBITE_CLI.md`), which repacks a
 mod's contents permanently into the game's `.dat` files — there is no batch "build" step here that
 produces new game archives, and no external process for Vortex to await.
 
@@ -74,7 +74,7 @@ the game's `bin\` folder:
 | File | Contents |
 | --- | --- |
 | `settings.json` | One JSON object, `{ "commands": {...}, "hotkeys": {}, "lua_cmds": {} }`. `commands` is a flat map of every tunable (camera/trainer/UX toggles, `ModLoader_AlwaysShowPrelaunchWindow`, `ModLoader_DisablePrelaunchWindow`, `ModLoader_ModInstallState`) — confirmed real, current values read off a live file. |
-| `localmodsconfig.json` | The mod list + load order + enable state: `{ "mods": [{ "friendlyId", "enabled", "priority", "enableWorkspaces" }, ...] }`, one entry per `data_win64\mods\<folder>`, `friendlyId` matching the folder name. This is NexusTools' load-order file — the direct analogue of Lobotomy BaseMod's `BaseModList_v2.xml` ([[reference_lobotomy_basemod]]). |
+| `localmodsconfig.json` | The mod list + load order + enable state: `{ "mods": [{ "friendlyId", "enabled", "priority", "enableWorkspaces" }, ...] }`, one entry per `data_win64\mods\<folder>`, `friendlyId` matching the folder name. This is NexusTools' load-order file — the direct analogue of Lobotomy BaseMod's `BaseModList_v2.xml` (`LOBOTOMY_BASEMOD.md`). |
 | `cout.log` | The in-game hook's runtime log — huge (tens of thousands of lines on a normal session, mostly Dunia Engine spam), but the mod-mount block near the top is unambiguous. |
 | `cout.ModManager.log` | The standalone `ModManager.exe`'s own log — much shorter, lists each mod with its friendly name and priority on open. |
 | `imgui.ini` | Plain ImGui window-layout state. Not interesting. |
@@ -91,7 +91,7 @@ for where to place one.
 
 `commands.ModLoader_DisablePrelaunchWindow` is a real key, observed `false` on a live install where
 the popup has never been suppressed. Setting it `true` is what NexusTools' own in-app Settings UI
-would do — flipping it from outside the app via a JSON merge-patch is the same lever the CLAUDE.md
+would do — flipping it from outside the app via a JSON merge-patch is the same lever the original
 `cmdline.ini` idea was reaching for, minus the unverified path and unverified file format. This is
 what `game-watchdogs/index.js` now does (behind an off-by-default, clearly-labeled-experimental
 toggle) rather than writing a `cmdline.ini` no one has ever seen NexusTools read.
@@ -127,11 +127,27 @@ this file drives the mount directly. The page exists specifically to settle that
 here, launch the actual game, and see whether the in-game result follows the file. If it doesn't,
 this page is read-only telemetry dressed up as a load order and should be re-scoped or pulled.
 
+The first build of this page showed every entry as "Not Managed by Vortex". Vortex's load order UI
+only shows a mod as managed when its entry carries a `modId` matching a real installed mod — the
+page never set one. Fixed by stamping the deployed folder name onto each installed mod as an
+attribute at install time (`installMod()`), then looking that attribute up when building the page's
+entries. Only affects mods installed after the fix — a mod installed earlier needs reinstalling
+through Vortex to pick up the attribute.
+
+The page has since been brought up to the fuller "tier G" standard described in
+`LOAD_ORDER_ITEM_RENDERER.md` and `NON_UE_LOAD_ORDER_PAGES.md` (already used by several other games
+in this collection): custom row rendering with a thumbnail, right-click context menu (enable/
+disable, lock position, move to top/bottom, open mod/staging folder, open mod page), position
+locking, and status filtering (enabled/locked/unmanaged). Ported from
+`game-warhammer40kdarktide/index.js`. This is still riding on the same unverified assumption as the
+base page itself - whether `localmodsconfig.json` actually drives in-game mount order - not yet
+live-tested.
+
 ---
 
 ## Why this is not a SnakeBite-style integration
 
-[[reference_snakebite]] is worth driving from an extension specifically because SnakeBite has a
+`SNAKEBITE_CLI.md` is worth driving from an extension specifically because SnakeBite has a
 real, documented external CLI (`-i`/`-u`/`-c`/`-x`) that repacks archives in a separate process
 Vortex can await via `api.runExecutable`. NexusTools has no external process step to await at all —
 the entire "install" happens inside the game's own process on launch, confirmed by the live log
@@ -150,3 +166,5 @@ here the way it is for SnakeBite, since there is no separate process to await).
 `NOTIFICATIONS_DIALOGS.md` (the current `deployNotify` pattern in `game-watchdogs/index.js`, which
 the confirmed steady-state-is-silent behavior above calls into question — it may be nagging users to
 do something the loader already does for them on ordinary next launch).
+`LOAD_ORDER_ITEM_RENDERER.md` and `NON_UE_LOAD_ORDER_PAGES.md` (the fuller custom-renderer/context-
+menu/status-filter pattern this page's planned follow-up would bring it up to).

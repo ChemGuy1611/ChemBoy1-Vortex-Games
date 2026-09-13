@@ -4,6 +4,7 @@
 
 - Installer for Save (.bin) files (no mods of this type yet).
 - Fixed: Mod files with no file extension were skipped during installation
+- Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 
 ## [0.1.2] - 2025-10-14
 

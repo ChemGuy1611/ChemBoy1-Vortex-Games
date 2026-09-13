@@ -42,6 +42,7 @@ const EXEC_EGS = EXEC; //change other versions if different than Steam/default
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Armored_Core_VI%3A_Fires_of_Rubicon";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 //for finding install in registry - requires winapi-bindings
 const INSTALL_HIVE = "HKEY_LOCAL_MACHINE"; //typically HKEY_LOCAL_MACHINE or HKEY_CURRENT_USER
@@ -1021,6 +1022,21 @@ function applyGame(context, gameSpec) {
     "Open PCGamingWiki Page",
     () => {
       util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
     },
     () => {
       const state = context.api.getState();

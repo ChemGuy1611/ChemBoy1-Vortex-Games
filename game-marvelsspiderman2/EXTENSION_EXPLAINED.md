@@ -49,6 +49,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - .NET 7 Download Page
 - Open Save Folder
 - Open PCGamingWiki Page
+- Open SteamDB Page
 - View Changelog
 - Submit Bug Report
 - Open Downloads Folder

@@ -36,6 +36,7 @@ const EXEC = "nioh2.exe";
 const EXEC_EGS = EXEC;
 const EXEC_XBOX = "gamelaunchhelper.exe";
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Nioh_2:_The_Complete_Edition";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 
 const ROOT_FOLDERS = ["movie", "sound", "mods"];
 
@@ -840,6 +841,21 @@ function applyGame(context, gameSpec) {
     "Open PCGamingWiki Page",
     () => {
       util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
     },
     () => {
       const state = context.api.getState();

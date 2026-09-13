@@ -4,6 +4,7 @@
 
 - ModKit?
 - Fixed: Mod files with no file extension were skipped during installation
+- Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 
 ## [0.5.6] - 2026-09-06
 

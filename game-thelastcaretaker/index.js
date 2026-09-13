@@ -41,6 +41,7 @@ const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const PARAMETERS_STRING = ""; //launch arguments to pass when launching the game
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/The_Last_Caretaker";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 
 //feature toggles
 const hasXbox = false; //toggle for Xbox version logic (to unify templates)
@@ -2574,6 +2575,21 @@ function applyGame(context, gameSpec) {
     "Open PCGamingWiki Page",
     () => {
       util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
     },
     () => {
       const state = context.api.getState();

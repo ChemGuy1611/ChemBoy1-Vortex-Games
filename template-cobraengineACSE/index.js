@@ -48,6 +48,7 @@ const ACSE_FILE_NO = 1;
 const DEV_FOLDER = "Frontier Developments";
 const GAME_FOLDER = "XXX";
 const PCGAMINGWIKI_URL = "XXX";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 
 //feature toggles
@@ -1027,6 +1028,21 @@ function applyGame(context, gameSpec) {
     "Open PCGamingWiki Page",
     () => {
       util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
     },
     () => {
       const state = context.api.getState();

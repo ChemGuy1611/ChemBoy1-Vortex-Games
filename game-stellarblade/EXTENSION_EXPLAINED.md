@@ -104,6 +104,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open UE4SS Settings INI
 - Open UE4SS mods.txt
 - Open PCGamingWiki Page
+- Open SteamDB Page
 - View Changelog
 - Open Downloads Folder
 - Submit Bug Report

@@ -4,6 +4,7 @@
 
 - Config and save modtypes, installers, and open buttons.
 - Fixed: Mod files with no file extension were skipped during installation
+- Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 
 ## [0.6.4] - 2026-09-08
 

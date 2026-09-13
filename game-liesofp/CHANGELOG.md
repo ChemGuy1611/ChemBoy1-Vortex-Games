@@ -5,6 +5,7 @@
 - UE4SS support
 - Remove UEMI dependency
 - Fixed: Mod files with no file extension were skipped during installation
+- Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 
 ## [0.5.1] - 2026-08-11
 

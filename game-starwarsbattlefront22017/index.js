@@ -39,6 +39,7 @@ const GAME_NAME = "STAR WARS Battlefront II (2017)";
 const GAME_NAME_SHORT = "SW Battlefront II";
 const EXEC = "starwarsbattlefrontii.exe";
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Star_Wars_Battlefront_II_(2017)";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/112";
 
 const CONFIG_FOLDER = path.join("STAR WARS Battlefront II", "settings"); // Developer folder, game subfolder (e.g. "BioWare", "Mass Effect Andromeda")
@@ -1220,6 +1221,21 @@ function applyGame(context, gameSpec) {
     "Open PCGamingWiki Page",
     () => {
       util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
     },
     () => {
       const state = context.api.getState();

@@ -27,6 +27,9 @@ independently of its engine category and of each other:
     games-unreleased.txt - games with no real Nexus page URL in EXTENSION_URL, i.e.
                            extensions that have never been published. Permanent test
                            beds are dropped via UNRELEASED_LIST_EXCLUDED_GAMES
+    games-multi-game.txt - extensions that call context.registerGame more than once,
+                           i.e. bundle several distinct games/variants behind one
+                           Nexus page (windrose, doom3, gzdoom, ninjagaidenmastercollection, ...)
 
 Usage:
     python categorize_games.py              # rebuild all category files from scratch
@@ -50,7 +53,7 @@ from vortex_utils import (
     has_moddb_downloader_js, has_modworkshop_downloader_js,
     has_thunderstore_downloader_js,
     requires_unreal_mod_installer, has_extension_dependency, has_ue4ss_load_order_parity,
-    is_unreleased_extension,
+    is_unreleased_extension, is_multi_game_extension,
     log_error, log_dry,
 )
 
@@ -140,6 +143,11 @@ FLAG_LISTS = [
     # test beds are dropped via UNRELEASED_LIST_EXCLUDED_GAMES - nothing in index.js
     # distinguishes one from an extension that is genuinely awaiting its first release.
     ("games-unreleased.txt", lambda src, folder: _in_unreleased_list(src, folder)),
+    # Extensions bundling 2+ distinct games/variants behind one Nexus page - each
+    # calls context.registerGame more than once, so per-variant code (store links,
+    # action buttons) usually needs to key off each variant's own constants rather
+    # than a single shared one.
+    ("games-multi-game.txt", lambda src, folder: is_multi_game_extension(src)),
 ]
 
 

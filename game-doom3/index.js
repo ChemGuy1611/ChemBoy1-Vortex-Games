@@ -59,6 +59,7 @@ const GAME_ID = "doom3";
 const GAME_ID_BFG = "doom3bfgedition";
 const STEAMAPP_ID = "9050";
 const STEAMAPP_ID_BFG = "208200";
+const STEAMDB_URL_BFG = `https://steamdb.info/app/${STEAMAPP_ID_BFG}/`;
 const GOGAPP_ID = "1492054092";
 const GOGAPP_ID_BFG = "1135892318";
 const XBOXAPP_ID_BFG = "BethesdaSoftworks.Doom32004"; //the xbox release is the BFG Edition only, so the classic spec carries no xbox ID
@@ -180,6 +181,7 @@ const IGNORE_CONFLICTS = [
 // Filled in from data above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/686"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Doom_3";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 
 //Embedded ModDB browser page - the user browses the live moddb.com section for this game and
 //installs from it. Vortex's download manager cannot fetch from this host, so the page fetches
@@ -1132,6 +1134,21 @@ function applyGame(context, gameSpec) {
     300,
     "open-ext",
     {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
     "Submit Bug Report",
     () => {
       util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
@@ -1199,6 +1216,36 @@ function applyGameBfg(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID_BFG;
     }); //*/
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open PCGamingWiki Page",
+    () => {
+      util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID_BFG;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL_BFG).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID_BFG;
+    },
+  );
   context.registerAction(
     "mod-icons",
     300,

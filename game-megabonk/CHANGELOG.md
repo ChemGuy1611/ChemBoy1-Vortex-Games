@@ -1,5 +1,9 @@
 # Changelog
 
+## Planned Improvements (Not Yet Released)
+
+- Added an "Open SteamDB Page" button next to the PCGamingWiki one.
+
 ## [1.0.1] - 2026-09-12
 
 - Fixed: A required mod loader or tool is no longer mistaken for an unrelated Nexus mod that shares the same file, which could show the wrong mod details or offer a bogus update for it

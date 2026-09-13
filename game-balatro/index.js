@@ -40,6 +40,7 @@ const DISCOVERY_IDS_ACTIVE = [
 const EXEC_STEAM = `Balatro.exe`;
 const EXEC_XBOX = `gamelaunchhelper.exe`;
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Balatro";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1315";
 
 let GAME_VERSION = "";
@@ -967,6 +968,21 @@ function applyGame(context, gameSpec) {
     "Open PCGamingWiki Page",
     () => {
       util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
     },
     () => {
       const state = context.api.getState();

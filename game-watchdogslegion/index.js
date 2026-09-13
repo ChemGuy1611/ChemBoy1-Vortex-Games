@@ -41,6 +41,7 @@ const BINARIES_PATH = "bin";
 const EXEC_NAME = "WatchDogsLegion.exe";
 const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Watch_Dogs%3A_Legion";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 
 //feature toggles
@@ -1001,6 +1002,21 @@ function applyGame(context, gameSpec) {
     "Open PCGamingWiki Page",
     () => {
       util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
     },
     () => {
       const state = context.api.getState();

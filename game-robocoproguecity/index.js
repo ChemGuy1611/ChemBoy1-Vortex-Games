@@ -46,6 +46,7 @@ const UNREALDATA = {
 //for Unfinished Business
 const GAME_ID_UNFINISHED = "robocoproguecityunfinishedbusiness";
 const STEAMAPP_ID_UNFINISHED = "3527760";
+const STEAMDB_URL_UNFINISHED = `https://steamdb.info/app/${STEAMAPP_ID_UNFINISHED}/`;
 const EPICAPP_ID_UNFINISHED = null;
 const GOGAPP_ID_UNFINISHED = "1318449508";
 const XBOXAPP_ID_UNFINISHED = "";
@@ -208,6 +209,7 @@ const MOD_PATH_DEFAULT_UNFINISHED = UE5_PATH;
 //Filled in from data above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/892"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/RoboCop%3A_Rogue_City";
+const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
 const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
 const spec = {
@@ -2872,6 +2874,21 @@ function applyGame(context, gameSpec) {
     300,
     "open-ext",
     {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
     "Submit Bug Report",
     () => {
       util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
@@ -3107,6 +3124,36 @@ function applyGameUnfinished(context, gameSpec) {
       return gameId === GAME_ID_UNFINISHED;
     },
   ); //*/
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open PCGamingWiki Page",
+    () => {
+      util.opn(PCGAMINGWIKI_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID_UNFINISHED;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL_UNFINISHED).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID_UNFINISHED;
+    },
+  );
   context.registerAction(
     "mod-icons",
     300,
