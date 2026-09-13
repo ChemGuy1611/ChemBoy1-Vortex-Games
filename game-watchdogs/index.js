@@ -81,18 +81,16 @@ const LOADER_DOMAIN = GAME_ID;
 
 //Experimental: NexusTools persists its own settings (confirmed against a live install) at
 //%APPDATA%\Troplo\Nexus\settings.json, a JSON object with a "commands" map. Setting
-//"ModLoader_DisablePrelaunchWindow" true there is meant to suppress its in-game mod confirm popup.
-//The path/key are verified live; whether the popup can actually be skipped without also blocking
-//the mod mount is not.
+//"ModLoader_DisablePrelaunchWindow" true there suppresses its in-game mod confirm popup - confirmed
+//live (2026-09-12) that mods still mount correctly with the popup skipped.
 const NEXUSTOOLS_SETTINGS_FOLDER = path.join("Troplo", "Nexus");
 const NEXUSTOOLS_SETTINGS_FILE = "settings.json";
 const NEXUSTOOLS_PRELAUNCH_KEY = "ModLoader_DisablePrelaunchWindow";
 
 //Experimental: NexusTools' own load order + enable state, also confirmed live at
 //%APPDATA%\Troplo\Nexus\localmodsconfig.json - { "mods": [{ friendlyId, enabled, priority,
-//enableWorkspaces }] }, one entry per data_win64\mods\<folder>. Whether writing this actually
-//changes in-game mount order (rather than NexusTools just reading it for its own GUI) is what
-//this load order page exists to test.
+//enableWorkspaces }] }, one entry per data_win64\mods\<folder>. Confirmed live (2026-09-12) that
+//writing this file actually drives in-game mount order, not just NexusTools' own GUI.
 const NEXUSTOOLS_MODSCONFIG_FILE = "localmodsconfig.json";
 
 //Stamped onto each installed MOD_ID mod so the load order page can find its Vortex modId back from
@@ -803,7 +801,8 @@ async function downloadLoader(api, gameSpec, check = true) {
   }
 } //*/
 
-//Experimental: patch NexusTools' own settings.json so it may skip its in-game mod confirm popup.
+//Experimental: patch NexusTools' own settings.json so it skips its in-game mod confirm popup -
+//confirmed live (2026-09-12) to work without blocking the mod mount.
 //Only ever sets the key to true - never resets it, since we cannot tell "we set this" apart from
 //"the user turned it on themselves in NexusTools' own Settings". Never touches the file if it does
 //not exist yet (NexusTools has never been run) or does not parse as JSON - patching a file whose
@@ -834,8 +833,8 @@ function setNexusToolsAutoConfirm(value) {
 setNexusToolsAutoConfirm.toString = () => "SET_NEXUSTOOLS_AUTOCONFIRM_WATCHDOGS";
 
 //Experimental: mirrors NexusTools' own load order + enable state (localmodsconfig.json) as a
-//Vortex Load Order page, so the two can be tested against each other - does reordering here
-//actually change in-game mount order, or does NexusTools only read this file for its own GUI?
+//Vortex Load Order page - confirmed live (2026-09-12) that reordering here changes in-game mount
+//order, not just NexusTools' own GUI display.
 
 //List actual mod folders on disk - the ground truth of what's physically deployed.
 async function listModFolders(gamePath) {
@@ -998,8 +997,8 @@ function LoadOrderInstructions() {
     React.createElement(
       "p",
       null,
-      "Whether reordering here actually changes in-game mount order, or NexusTools only reads " +
-        "that file for its own GUI, has not been confirmed - this page exists to test that.",
+      "Confirmed live: reordering here changes in-game mount order, not just NexusTools' own " +
+        "GUI display.",
     ),
   );
 }
@@ -1651,7 +1650,7 @@ function GameSettings() {
   const dispatch = useDispatch();
   const { api } = React.useContext(MainContext);
   const autoConfirmEnabled = useSelector((state) =>
-    util.getSafe(state, ["settings", GAME_ID, "nexusToolsAutoConfirmEnabled"], false),
+    util.getSafe(state, ["settings", GAME_ID, "nexusToolsAutoConfirmEnabled"], true),
   );
   const onToggle = React.useCallback(
     (checked) => {
@@ -1675,11 +1674,11 @@ function GameSettings() {
         React.createElement(
           More,
           { id: `${GAME_ID}-nexustools-autoconfirm-more`, name: "Skip NexusTools Confirm Window" },
-          "Unverified - sets NexusTools' own ModLoader_DisablePrelaunchWindow setting to true in " +
-            "its settings.json so it may apply mod changes without its in-game popup. Test that " +
-            "mods still take effect after enabling this before relying on it. Disabling this does " +
-            "NOT turn the popup back on - re-enable it yourself in NexusTools' own Settings if you " +
-            "want it back.",
+          "Confirmed working: sets NexusTools' own ModLoader_DisablePrelaunchWindow setting to " +
+            "true in its settings.json so it applies mod changes without its in-game popup. Also " +
+            "skips this extension's own 'Run NexusTools to Install Mods' deploy notification, " +
+            "since it is no longer needed once this is on. Disabling this does NOT turn the popup " +
+            "back on - re-enable it yourself in NexusTools' own Settings if you want it back.",
         ),
       ),
     ),
@@ -1828,7 +1827,7 @@ async function setup(discovery, api, gameSpec) {
     await downloadLoader(api, gameSpec);
     await reconcileNexusToolsPrelaunchSetting(
       api,
-      util.getSafe(state, ["settings", GAME_ID, "nexusToolsAutoConfirmEnabled"], false),
+      util.getSafe(state, ["settings", GAME_ID, "nexusToolsAutoConfirmEnabled"], true),
     );
   }
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
@@ -2043,7 +2042,7 @@ function applyGame(context, gameSpec) {
         [setNexusToolsAutoConfirm.toString()]: (state, payload) =>
           util.setSafe(state, ["nexusToolsAutoConfirmEnabled"], payload),
       },
-      defaults: { nexusToolsAutoConfirmEnabled: false },
+      defaults: { nexusToolsAutoConfirmEnabled: true },
     });
     context.registerSettings(
       "Mods",
@@ -2074,6 +2073,12 @@ function main(context) {
     api.onAsync("did-deploy", async (profileId, deployment) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
+      const AUTO_CONFIRM_ENABLED = util.getSafe(
+        api.getState(),
+        ["settings", GAME_ID, "nexusToolsAutoConfirmEnabled"],
+        true,
+      );
+      if (AUTO_CONFIRM_ENABLED) return;
       return deployNotify(api);
     }); //*/
   });

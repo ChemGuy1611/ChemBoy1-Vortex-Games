@@ -93,15 +93,15 @@ for where to place one.
 the popup has never been suppressed. Setting it `true` is what NexusTools' own in-app Settings UI
 would do — flipping it from outside the app via a JSON merge-patch is the same lever the original
 `cmdline.ini` idea was reaching for, minus the unverified path and unverified file format. This is
-what `game-watchdogs/index.js` now does (behind an off-by-default, clearly-labeled-experimental
-toggle) rather than writing a `cmdline.ini` no one has ever seen NexusTools read.
+what `game-watchdogs/index.js` does, behind a settings toggle ("Skip NexusTools Confirm Window")
+that defaults ON as of 2026-09-12.
 
-**Still unverified: whether setting this key actually skips the popup without also skipping the
-mount.** The live install used for this research has never had the setting on, because — per the
-prelaunch-gate finding above — its mod set has simply not changed recently enough to trigger the
-popup either way. Proving the flag live requires: flip it on, then change the deployed mod set
-(add/remove/reorder something) so the hash would normally trigger the window, and confirm both that
-no window appears _and_ that the changed mod set is actually active in-game.
+**Confirmed live 2026-09-12: setting this key skips the popup without skipping the mount.** Flipped
+the setting on, changed the deployed mod set so the hash would normally trigger the prelaunch
+window, and confirmed both that no window appeared _and_ that the changed mod set was actually
+active in-game. With this confirmed, the extension's `deployNotify()` "Run NexusTools to Install
+Mods" notification is now skipped whenever the toggle is on — it is no longer needed once NexusTools
+is applying changes silently on the game's own next launch.
 
 ---
 
@@ -118,14 +118,10 @@ JSON already knows about that Vortex is not currently managing (a hand-installed
 folder was since removed) — that entry is kept, appended after the managed ones, rather than
 silently disappearing from NexusTools' own bookkeeping.
 
-**This does not yet prove `localmodsconfig.json` is the real source of truth for mount order.**
-The live evidence so far only shows the file being _read_ — the standalone `ModManager.exe`'s own
-log lists mods with their recorded priority, and that order happens to match the in-game mount
-order in `cout.log`. That could equally be because both are derived from the same upstream state
-(e.g. the `ModLoader_ModInstallState` hash, or something in `versions/*.bin`) rather than because
-this file drives the mount directly. The page exists specifically to settle that: reorder a mod
-here, launch the actual game, and see whether the in-game result follows the file. If it doesn't,
-this page is read-only telemetry dressed up as a load order and should be re-scoped or pulled.
+**Confirmed live 2026-09-12: `localmodsconfig.json` is the real source of truth for mount order.**
+Reordering/enabling/disabling mods through this page, then launching the actual game, produces the
+in-game result the file describes — this is not just something NexusTools reads for its own GUI
+listing.
 
 The first build of this page showed every entry as "Not Managed by Vortex". Vortex's load order UI
 only shows a mod as managed when its entry carries a `modId` matching a real installed mod — the
@@ -139,9 +135,7 @@ The page has since been brought up to the fuller "tier G" standard described in
 in this collection): custom row rendering with a thumbnail, right-click context menu (enable/
 disable, lock position, move to top/bottom, open mod/staging folder, open mod page), position
 locking, and status filtering (enabled/locked/unmanaged). Ported from
-`game-warhammer40kdarktide/index.js`. This is still riding on the same unverified assumption as the
-base page itself - whether `localmodsconfig.json` actually drives in-game mount order - not yet
-live-tested.
+`game-warhammer40kdarktide/index.js`. Confirmed live 2026-09-12 alongside the base page's test.
 
 ---
 
@@ -163,8 +157,8 @@ contrast in every respect). `LOBOTOMY_BASEMOD.md` (its `BaseModList_v2.xml` is t
 to `localmodsconfig.json` here) and `SIMPLE_MOD_FRAMEWORK.md` (another loader needing its own
 manager to ingest a mod), for further contrast. `RUN_EXECUTABLE.md` (`api.runExecutable`, not usable
 here the way it is for SnakeBite, since there is no separate process to await).
-`NOTIFICATIONS_DIALOGS.md` (the current `deployNotify` pattern in `game-watchdogs/index.js`, which
-the confirmed steady-state-is-silent behavior above calls into question — it may be nagging users to
-do something the loader already does for them on ordinary next launch).
+`NOTIFICATIONS_DIALOGS.md` (the `deployNotify` pattern in `game-watchdogs/index.js`, now skipped
+whenever the popup-suppress toggle is on, since the loader already applies changes for the user on
+ordinary next launch in that case).
 `LOAD_ORDER_ITEM_RENDERER.md` and `NON_UE_LOAD_ORDER_PAGES.md` (the fuller custom-renderer/context-
 menu/status-filter pattern this page's planned follow-up would bring it up to).

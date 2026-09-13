@@ -7,9 +7,9 @@
 
 ## [0.2.0] - 2026-09-12
 
-- Added an experimental, off-by-default setting ("Skip NexusTools Confirm Window") that may let NexusTools apply mod changes without its in-game confirmation popup. Unverified - test before relying on it.
-- Added an experimental Load Order page that mirrors NexusTools' own mod order and enabled state. Unverified - test before relying on it.
-- Added right-click context menu (enable/disable, lock position, move to top/bottom, open mod/staging folder, open mod page), position locking, and status filtering (enabled/locked/unmanaged) to the experimental Load Order page.
+- Added a "Skip NexusTools Confirm Window" setting, enabled by default, that skips NexusTools' in-game mod confirmation popup and the "Run NexusTools to Install Mods" notification after deploying.
+- Added a Load Order page that controls NexusTools' own mod order and enabled state.
+- Added right-click context menu (enable/disable, lock position, move to top/bottom, open mod/staging folder, open mod page), position locking, and status filtering (enabled/locked/unmanaged) to the Load Order page.
 
 ## [0.1.0] - 2026-06-16
 

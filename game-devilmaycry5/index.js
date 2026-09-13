@@ -32,7 +32,7 @@ const XBOX_PUB_ID = "8fty0by30jkny"; //get from Save folder. '8wekyb3d8bbwe' if 
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const EXEC = "DevilMayCry5.exe";
-const EXEC_DEMO = null; //!set as null if no demo
+const EXEC_DEMO = ""; //!set as "" if no demo
 const REF_STRING = "REFramework"; //file name for nightly latest URL - constant in recent versions. Not named per game any longer.
 const GAME_NAME = "Devil May Cry 5";
 const GAME_NAME_SHORT = "DMC 5";
@@ -65,7 +65,7 @@ const reZip = true; //! NOT WORKING YET - KEEP AS TRUE FOR NOW - set to true to 
 //could index on modinfo.ini to avoid extra top level folder. should work?
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
 let multiExe = false; //set to true if there are multiple executables (and multiple FLUFFY_FOLDERs) (typically for Demo)
-if ((EXEC !== EXEC_DEMO && EXEC_DEMO !== null) || hasXbox) {
+if ((EXEC !== EXEC_DEMO && EXEC_DEMO !== "") || hasXbox) {
   multiExe = true;
 }
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
