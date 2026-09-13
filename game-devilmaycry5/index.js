@@ -32,7 +32,7 @@ const XBOX_PUB_ID = "8fty0by30jkny"; //get from Save folder. '8wekyb3d8bbwe' if 
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const EXEC = "DevilMayCry5.exe";
-const EXEC_DEMO = null;
+const EXEC_DEMO = null; //!set as null if no demo
 const REF_STRING = "REFramework"; //file name for nightly latest URL - constant in recent versions. Not named per game any longer.
 const GAME_NAME = "Devil May Cry 5";
 const GAME_NAME_SHORT = "DMC 5";
@@ -41,7 +41,7 @@ const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/434"; //Nexus link to this extension. Used for links
 
 const FLUFFY_FOLDER = "DMC5";
-const FLUFFY_FOLDER_DEMO = null; //!set as null if no demo
+const FLUFFY_FOLDER_DEMO = ""; //!set as "" if no demo
 const ROOT_FILES = [
   "nvngx_dlss.dll",
   "dstoragecore.dll",
@@ -699,9 +699,7 @@ function installFluffy(files) {
   const setModTypeInstruction = { type: "setmodtype", value: FLUFFY_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -746,9 +744,7 @@ function installREF(files) {
   const setModTypeInstruction = { type: "setmodtype", value: REF_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -843,9 +839,7 @@ function installLooseLua(files) {
   const setModTypeInstruction = { type: "setmodtype", value: LOOSELUA_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -895,9 +889,7 @@ function installRoot(files) {
   const idx = modFile.indexOf(path.basename(modFile));
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -942,9 +934,7 @@ function installPreset(files) {
   const setModTypeInstruction = { type: "setmodtype", value: PRESET_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
