@@ -2,8 +2,8 @@
 Name: S.T.A.L.K.E.R. 2: Heart of Chornobyl Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 2.0.4
-Date: 2026-09-06
+Version: 2.1.0
+Date: 2026-09-13
 //////////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -26,6 +26,14 @@ const template = require("string-template");
 const { parseStringPromise } = require("xml2js");
 const { default: IniParser, WinapiFormat } = require("vortex-parse-ini");
 const React = require("react");
+//Auto-downloader module
+const {
+  download,
+  findModByFile,
+  findDownloadIdByFile,
+  resolveVersionByModVersion,
+  testRequirementVersion,
+} = require("./downloader");
 
 //Specify all information about the game
 const GAME_ID = "stalker2heartofchornobyl";
@@ -255,7 +263,40 @@ const UE4SS_FILE = "dwmapi.dll";
 const UE4SS_PAGE_NO = 560;
 const UE4SS_FILE_NO = 4003;
 const UE4SS_DLFILE_STRING = "ue4ss_v";
-const UE4SS_URL = "https://github.com/UE4SS-RE/RE-UE4SS/releases";
+//anchored so the zDEV- dev-build sibling never matches; the capture group is the version the
+//mod is stamped with, e.g. UE4SS_v3.0.1-1133-gb4cefa18.zip -> 3.0.1-1133.
+//The trailing -g<hash> is deliberately NOT captured. It parses as valid semver, but it turns the
+//prerelease into ONE alphanumeric identifier ("1133-gb4cefa18") which semver compares as ASCII
+//text, so build 10000 would sort BELOW build 9999 and updates would stall for good at that
+//rollover. Captured bare, "1133" is a numeric identifier and compares numerically.
+const UE4SS_ARC_PATTERN = /^UE4SS_v(\d+\.\d+\.\d+(?:-\d+)?)/i;
+const UE4SS_URL_API = "https://api.github.com/repos/UE4SS-RE/RE-UE4SS";
+const UE4SS_REQUIREMENTS = [
+  {
+    //'ue4ss_v' is a prefix, not a basename, so findDownloadIdByFile (full-name compare) never
+    //matches and the already-downloaded shortcut never fires. That is correct here: a stale local
+    //archive must not satisfy a rolling tag. The value still names the update notification's id.
+    archiveFileName: UE4SS_DLFILE_STRING,
+    modType: UE4SS_ID,
+    assemblyFileName: UE4SS_FILE,
+    userFacingName: UE4SS_NAME,
+    githubUrl: UE4SS_URL_API,
+    findMod: (api) => findModByFile(api, UE4SS_ID, UE4SS_FILE),
+    findDownloadId: (api) => findDownloadIdByFile(api, UE4SS_DLFILE_STRING),
+    prereleaseTag: "experimental-latest", //NOT 'experimental' - that tag holds 857 archived builds
+    fileArchivePattern: UE4SS_ARC_PATTERN,
+    //UE4SS arrives from the Download UE4SS button, or from setup() when
+    //autoDownloadUe4ss is on - never as a side effect of an update check. Without this,
+    //testRequirementVersion's missing-branch calls download() and installs it unprompted:
+    //on a Nexus-route game that bypasses downloadUe4ssNexus and pulls from GitHub, and on a
+    //ue4ssLoadOrder = false game it installs UE4SS with every UE4SS surface switched off.
+    autoInstall: false,
+    //The version comes from the asset name, not the tag - the rolling tag never changes. Safe
+    //here only because prereleaseTag pins the fetch to that one tag, so the stable 3.0.1 release
+    //is never fetched and can never outrank an experimental 3.0.1-NNNN on the latest side.
+    resolveVersion: (api) => resolveVersionByModVersion(api, UE4SS_REQUIREMENTS[0]),
+  },
+];
 const UE4SS_SETTINGS_FILE = "UE4SS-settings.ini";
 const UE4SS_SETTINGS_FILEPATH = path.join("ue4ss", UE4SS_SETTINGS_FILE); //relative to Binaries folder
 const UE4SS_MODSTXT_FILE = "mods.txt";
@@ -2348,100 +2389,25 @@ async function downloadUe4ss(api, gameSpec) {
   }
 } //*/
 
-//* Download UE4SS from GitHub page (user browse for download)
-async function downloadUe4ss(api, gameSpec) {
-  let isInstalled = isUe4ssInstalled(api, gameSpec);
-  const URL = UE4SS_URL;
-  const MOD_NAME = UE4SS_NAME;
-  const MOD_TYPE = UE4SS_ID;
-  const ARCHIVE_NAME = UE4SS_DLFILE_STRING;
-  const instructions = api.translate(
-    `Click on Continue below to open the browser. - ` +
-      `Navigate to the latest experimental version of ${MOD_NAME} on the GitHub releases page and ` +
-      `click on the appropriate file to download and install the mod.`,
-  );
-
-  if (!isInstalled) {
-    return new Promise((resolve, reject) => {
-      //Browse and download the mod
-      return api
-        .emitAndAwait("browse-for-download", URL, instructions)
-        .then((result) => {
-          //result is an array with the URL to the downloaded file as the only element
-          if (!result || !result.length) {
-            //user clicks outside the window without downloading
-            return reject(new util.UserCanceled());
-          }
-          if (!result[0].toLowerCase().includes(ARCHIVE_NAME)) {
-            //if user downloads the wrong file
-            return reject(new util.UserCanceled("Selected wrong download"));
-          } //*/
-          return Promise.resolve(result);
-        })
-        .catch((error) => {
-          return reject(error);
-        })
-        .then((result) => {
-          //const dlInfo = {game: gameSpec.game.id, name: MOD_NAME};
-          api.events.emit(
-            "start-download",
-            result,
-            {},
-            undefined,
-            async (error, id) => {
-              //callback function to check for errors and pass id to and call 'start-install-download' event
-              if (error !== null && error.name !== "AlreadyDownloaded") {
-                return reject(error);
-              }
-              api.events.emit(
-                "start-install-download",
-                id,
-                { allowAutoEnable: true },
-                async (error) => {
-                  //callback function to complete the installation
-                  if (error !== null) {
-                    return reject(error);
-                  }
-                  const profileId = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
-                  const batched = [
-                    actions.setModsEnabled(api, profileId, result, true, {
-                      allowAutoDeploy: true,
-                      installed: true,
-                    }),
-                    actions.setModType(GAME_ID, result[0], MOD_TYPE), // Set the mod type
-                  ];
-                  util.batchDispatch(api.store, batched); // Will dispatch both actions.
-                  return resolve();
-                },
-              );
-            },
-            "never",
-            { allowInstall: false },
-          );
-        });
-    }).catch((err) => {
-      if (err instanceof util.UserCanceled) {
-        api.showErrorNotification(
-          `User cancelled download/install of ${MOD_NAME}. Please re-launch Vortex and try again.`,
-          err,
-          { allowReport: false },
-        );
-        //util.opn(URL).catch(() => null);
-        return Promise.resolve();
-      } else if (err instanceof util.ProcessCanceled) {
-        api.showErrorNotification(
-          `Failed to download/install ${MOD_NAME}. Please re-launch Vortex and try again or download manually from modDB at the opened paged and install the zip in Vortex.`,
-          err,
-          { allowReport: false },
-        );
-        util.opn(URL).catch(() => null);
-        return Promise.reject(err);
-      } else {
-        return Promise.reject(err);
-      }
-    });
-  }
+//* Download UE4SS from the RE-UE4SS GitHub releases, through the shared auto-downloader module.
+//check === false forces a re-download even when it is already installed.
+async function downloadUe4ss(api, gameSpec, check = true) {
+  return download(api, UE4SS_REQUIREMENTS, !check);
 } //*/
+
+async function asyncForEachTestVersion(api, requirements) {
+  for (let index = 0; index < requirements.length; index++) {
+    await testRequirementVersion(api, requirements[index]);
+  }
+}
+
+async function onCheckModVersion(api, gameId, mods, forced) {
+  try {
+    await asyncForEachTestVersion(api, UE4SS_REQUIREMENTS);
+  } catch (err) {
+    log("warn", `Failed to test requirement version: ${err}`);
+  }
+}
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
@@ -3153,7 +3119,7 @@ function applyGame(context, gameSpec) {
       {},
       "Download UE4SS",
       () => {
-        downloadUe4ss(context.api, gameSpec);
+        downloadUe4ss(context.api, gameSpec, false);
       },
       () => {
         const state = context.api.getState();
@@ -3384,6 +3350,16 @@ function main(context) {
   context.once(() => {
     // put code here that should be run (once) when Vortex starts up
     const api = context.api; //don't move from the top
+    api.onAsync("check-mods-version", (gameId, mods, forced) => {
+      //UE4SS_PAGE_NO !== 0 means this game installs UE4SS from its own Nexus page, and the
+      //update notification's Download action installs from GitHub - so an ungated check would
+      //quietly replace that curated copy with an upstream build. ue4ssLoadOrder is the master
+      //UE4SS toggle, and a live update check is a UE4SS surface like any other.
+      if (gameId !== GAME_ID || UE4SS_PAGE_NO !== 0 || !ue4ssLoadOrder) {
+        return Promise.resolve();
+      }
+      return onCheckModVersion(api, gameId, mods, forced);
+    });
     //* Ask user to enable toolbar on profile change
     context.api.events.on("profile-did-change", () => {
       if (isGameActive(api)) {

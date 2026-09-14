@@ -33,7 +33,7 @@
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
 | `multiExe` | `true` | set to true if there are multiple executables (e.g. for Xbox and PC) |
 | `allowBepinexNexus` | `false` | set false until bugs are fixed |
-| `downloadCfgMan` | `false` | should BepInExConfigManager be downloaded? |
+| `downloadCfgMan` | `true` | should BepInExConfigManager be downloaded? |
 | `bleedingEdge` | `true` | set to true to download bleeding edge builds of BepInEx (IL2CPP only) |
 
 ## Mod Types
@@ -86,7 +86,6 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 | Dependency | Version | Details |
 | --- | --- | --- |
 | BepInEx | 6.0.0 | unityil2cpp, x64 |
-| BepInEx Configuration Manager | 18.4.1 | — |
 
 ## Special Features
 

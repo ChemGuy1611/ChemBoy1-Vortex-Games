@@ -2,6 +2,11 @@
 
 ## Planned Improvements (Not Yet Released)
 
+- None
+
+## [2.1.3] - 2026-09-13
+
+- Updated: BepInExConfigManager now automatically checks for and installs the latest version instead of staying pinned to 18.4.1, and shows its proper name in the mod list
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 
 ## [2.1.2] - 2026-09-12

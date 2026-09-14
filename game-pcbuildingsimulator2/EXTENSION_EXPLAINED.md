@@ -27,7 +27,7 @@
 | Flag | Value | Description |
 | --- | --- | --- |
 | `allowBepinexNexus` | `false` | set false until bugs are fixed |
-| `downloadCfgMan` | `false` | should BepInExConfigManager be downloaded? |
+| `downloadCfgMan` | `true` | should BepInExConfigManager be downloaded? |
 
 ## Mod Types
 
@@ -81,7 +81,6 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 | Dependency | Version | Details |
 | --- | --- | --- |
 | BepInEx | 6.0.0 | il2cpp, x64 |
-| BepInEx Configuration Manager | 18.4.1 | — |
 
 ## Config & Save Paths
 

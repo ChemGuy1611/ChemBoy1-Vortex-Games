@@ -3,6 +3,10 @@
 ## Planned Improvements (Not Yet Released)
 
 - Add???: Support for installing MelonLoader plugins. Need the compatibility loader for MelonLoader mods to work (<https://github.com/BepInEx/BepInEx.MelonLoader.Loader>) - there are very few MelonLoader mods.
+
+## [0.3.2] - 2026-09-13
+
+- Updated: BepInExConfigManager now automatically checks for and installs the latest version instead of staying pinned to 18.4.1, and shows its proper name in the mod list
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 
 ## [0.3.1] - 2026-09-12

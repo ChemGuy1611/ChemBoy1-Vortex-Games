@@ -2054,7 +2054,6 @@ function applyGame(context, gameSpec) {
     context.registerLoadOrder({
       gameId: GAME_ID,
       toggleableEntries: true,
-      noCollectionGeneration: true,
       usageInstructions: LoadOrderInstructions,
       customItemRenderer: LoadOrderItemRenderer,
       deserializeLoadOrder: () => deserializeWatchdogsLoadOrder(context.api),

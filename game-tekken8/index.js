@@ -3323,7 +3323,7 @@ function applyGame(context, gameSpec) {
           //download from Nexus if the page exists
           downloadUe4ssNexus(context.api, gameSpec).catch(() => null);
         } else {
-          downloadUe4ss(context.api, gameSpec).catch(() => null);
+          downloadUe4ss(context.api, gameSpec, false).catch(() => null);
         }
       },
       () => {

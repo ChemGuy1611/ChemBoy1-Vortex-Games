@@ -87,8 +87,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 | Dependency | Version | Details |
 | --- | --- | --- |
-| BepInEx | 5.4.23.5 | il2cpp, x64 |
-| BepInEx Configuration Manager | 18.4.1 | — |
+| BepInEx | 6.0.0 | il2cpp, x64 |
 
 ## Config & Save Paths
 

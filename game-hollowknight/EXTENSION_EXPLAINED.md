@@ -83,7 +83,6 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 | Dependency | Version | Details |
 | --- | --- | --- |
 | BepInEx | 5.4.23.5 | unitymono, x64 |
-| BepInEx Configuration Manager | 18.4.1 | — |
 
 ## Config & Save Paths
 

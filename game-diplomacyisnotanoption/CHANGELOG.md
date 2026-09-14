@@ -3,6 +3,11 @@
 ## Planned Improvements (Not Yet Released)
 
 - None
+
+## [0.3.0] - 2026-09-13
+
+- Added: Support for BepInEx Configuration Manager, with a "Download BepInExConfigManager" button to install it
+- Updated: BepInEx now downloads a newer build
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 
 ## [0.2.0] - 2026-08-03

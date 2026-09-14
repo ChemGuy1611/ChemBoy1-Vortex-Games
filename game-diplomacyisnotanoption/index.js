@@ -2,8 +2,8 @@
 Name: Diplomacy Is Not An Option Vortex Extension
 Structure: Unity BepinEx (Custom Nexus Download)
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2026-08-03
+Version: 0.3.0
+Date: 2026-09-13
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -12,6 +12,14 @@ const fsp = fs.promises;
 const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
+//Auto-downloader module - BepInEx itself still comes from the modtype-bepinex extension below
+const {
+  download,
+  findModByFile,
+  findDownloadIdByFile,
+  resolveVersionByPattern,
+  testRequirementVersion,
+} = require("./downloader");
 //const winapi = require('winapi-bindings');
 
 //Specify all the information about the game
@@ -30,6 +38,54 @@ const ROOT_ID = `${GAME_ID}-root`;
 const BEPMOD_ID = `${GAME_ID}-bepmods`;
 const BEPMOD_PATH = path.join("BepinEx", "plugins");
 const modFileExt = ".dll";
+
+//feature toggles
+//OFF by default: ConfigurationManager is reached only from the toolbar button here. Turning this
+//on does NOT install it - there is no setup() call and the requirement sets autoInstall: false.
+//What it turns on is the update check for a ConfigurationManager the user already installed.
+const downloadCfgMan = false; //should BepInExConfigManager be update-checked?
+
+//Mirrors the unityBuild the BepInEx pack in main() provides. Declared separately on purpose: the
+//BepInEx route is not this constant's business, it only drives the ConfigurationManager variant.
+const BEPINEX_BUILD = "unitymono"; // 'unityil2cpp' or 'unitymono'
+
+const BEPCFGMAN_ID = `${GAME_ID}-bepcfgman`;
+const BEPCFGMAN_NAME = "BepInEx Configuration Manager";
+const BEPCFGMAN_PATH = "Bepinex";
+const BEPCFGMAN_FILE = `configurationmanager.dll`; //lowercased
+const BEPCFGMAN_VER = "19.0"; //set BepInExConfigManager version for direct URLs
+//mono games take the BepInEx 5 build of ConfigurationManager, IL2CPP games the IL2CPP build.
+//Matched with includes() because this family uses two vocabularies: 'mono'/'il2cpp' and
+//'unitymono'/'unityil2cpp'.
+const BEPCFGMAN_VARIANT = BEPINEX_BUILD.includes("mono") ? "BepInEx5" : "IL2CPP";
+const BEPCFGMAN_ARCHIVE_NAME = `BepInEx.ConfigurationManager_${BEPCFGMAN_VARIANT}_v`;
+const BEPCFGMAN_ARC_NAME = `${BEPCFGMAN_ARCHIVE_NAME}${BEPCFGMAN_VER}.zip`;
+const BEPCFGMAN_URL_API = `https://api.github.com/repos/BepInEx/BepInEx.ConfigurationManager`;
+
+// REQUIREMENTS ///////////////////////////////////////////////////////////////////////////////////////
+//BepInEx itself is NOT here - it stays on the modtype-bepinex extension's bepinexAddGame route.
+const BEPCFGMAN_REQUIREMENTS = [
+  {
+    archiveFileName: BEPCFGMAN_ARC_NAME,
+    modType: BEPCFGMAN_ID,
+    assemblyFileName: BEPCFGMAN_FILE,
+    userFacingName: BEPCFGMAN_NAME,
+    githubUrl: BEPCFGMAN_URL_API,
+    findMod: (api) => findModByFile(api, BEPCFGMAN_ID, BEPCFGMAN_FILE),
+    findDownloadId: (api) => findDownloadIdByFile(api, BEPCFGMAN_ARC_NAME),
+    //v19.0 is 2-segment; the third group stays optional for a future 19.0.1 style tag
+    fileArchivePattern: new RegExp(
+      `^BepInEx\\.ConfigurationManager_${BEPCFGMAN_VARIANT}_v(\\d+\\.\\d+(?:\\.\\d+)?)`,
+      "i",
+    ),
+    resolveVersion: (api) => resolveVersionByPattern(api, BEPCFGMAN_REQUIREMENTS[0]),
+    //This game's BepInEx comes from a pre-built Nexus pack that may already contain a copy of
+    //ConfigurationManager. autoInstall: false keeps the update check from ever adding a second
+    //one on its own - installing is strictly the toolbar button's job, i.e. the user's choice.
+    autoInstall: false,
+    //pinVersion: BEPCFGMAN_VER, //the tag is 'v<version>', reached by the automatic 'v' retry
+  },
+];
 
 const LOADER_ID = `${GAME_ID}-modloader`;
 
@@ -74,6 +130,12 @@ const spec = {
       name: "Root Game Folder",
       priority: "high",
       targetPath: "{gamePath}",
+    },
+    {
+      id: BEPCFGMAN_ID,
+      name: BEPCFGMAN_NAME,
+      priority: "high",
+      targetPath: path.join("{gamePath}", BEPCFGMAN_PATH),
     },
     {
       id: BEPMOD_ID,
@@ -235,6 +297,56 @@ async function requiresLauncher() {
   return undefined;
 }
 
+// MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
+
+//Test for BepinExConfigManager mod files
+function testBepCfgMan(files, gameId) {
+  const isMod = files.some((file) => path.basename(file).toLowerCase() === BEPCFGMAN_FILE);
+  const isFolder = files.some((file) => path.basename(file).toLowerCase() === "plugins");
+  let supported = gameId === spec.game.id && isMod && isFolder;
+
+  // Test for a mod installer.
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install BepinExConfigManager mod files
+function installBepCfgMan(files) {
+  const MOD_TYPE = BEPCFGMAN_ID;
+  const modFile = files.find((file) => path.basename(file).toLowerCase() === "plugins");
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
+  const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(
+    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
+  );
+  const instructions = filtered.map((file) => {
+    return {
+      type: "copy",
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   const state = api.getState();
@@ -287,8 +399,24 @@ function applyGame(context, gameSpec) {
   });
 
   //register mod installers
+  context.registerInstaller(BEPCFGMAN_ID, 9, testBepCfgMan, installBepCfgMan); //must be set to 9 since bepinex extension modtypes start at 10 and would hijack
 
   //register actions
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    `Download ${BEPCFGMAN_NAME}`,
+    () => {
+      downloadBepCfgMan(context.api, spec, false);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
     util.opn(CONFIG_PATH).catch(() => null);
     }, () => {
@@ -387,6 +515,10 @@ function main(context) {
 
   context.once(() => {
     const api = context.api;
+    api.onAsync("check-mods-version", (gameId, mods, forced) => {
+      if (gameId !== GAME_ID) return Promise.resolve();
+      return onCheckModVersion(api, gameId, mods, forced);
+    });
     //Download BepinEx and register with extension
     if (context.api.ext.bepinexAddGame !== undefined) {
       context.api.ext.bepinexAddGame({
@@ -399,8 +531,8 @@ function main(context) {
             gameId: GAME_ID, // The game extension's domain Id/gameId as defined when registering the extension
             domainId: GAME_ID, // Nexus Mods site domain for the BepinEx package's mod page
             modId: "1", // Nexus Mods site page number for the BepinEx package's mod page
-            fileId: "1", // We extracted this one by hovering over the download buttons on the site
-            archiveName: "BepInEx-5.4.23.2_with_ConfigurationManager.zip", // What we want to call the archive of the downloaded pack.
+            fileId: "6", // We extracted this one by hovering over the download buttons on the site
+            archiveName: "BepInEx-5.4.23.2-win64-with-UnityECS-Support.zip", // What we want to call the archive of the downloaded pack.
             allowAutoInstall: true, // Whether we want this to be installed automatically - should always be true
           };
         },
@@ -418,6 +550,35 @@ function main(context) {
 
   return true;
 }
+
+// AUTO-DOWNLOADER FUNCTIONS ///////////////////////////////////////////////////////////////////////
+
+async function asyncForEachTestVersion(api, requirements) {
+  for (let index = 0; index < requirements.length; index++) {
+    await testRequirementVersion(api, requirements[index]);
+  }
+}
+
+//Gated on downloadCfgMan so an extension with it switched off runs no ConfigurationManager update
+//check at all. With it on, the requirement's autoInstall: false still means only an ALREADY
+//installed ConfigurationManager is updated - a missing one is never pulled in by the check.
+function getRequirements(api) {
+  return downloadCfgMan ? BEPCFGMAN_REQUIREMENTS : [];
+}
+
+async function onCheckModVersion(api, gameId, mods, forced) {
+  try {
+    await asyncForEachTestVersion(api, getRequirements(api));
+    log("warn", "Checked requirements versions");
+  } catch (err) {
+    log("warn", `Failed to test requirement version: ${err}`);
+  }
+}
+
+//Download BepInExConfigManager from GitHub
+async function downloadBepCfgMan(api, gameSpec, check = true) {
+  return download(api, BEPCFGMAN_REQUIREMENTS, !check);
+} //*/
 
 //export to Vortex
 module.exports = {

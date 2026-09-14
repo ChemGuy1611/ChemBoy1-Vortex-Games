@@ -29,7 +29,7 @@
 | Flag | Value | Description |
 | --- | --- | --- |
 | `allowBepinexNexus` | `false` | set false until bugs are fixed |
-| `downloadCfgMan` | `false` | should BepInExConfigManager be downloaded? |
+| `downloadCfgMan` | `true` | should BepInExConfigManager be downloaded? |
 
 ## Mod Types
 
@@ -64,6 +64,7 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
+- Download BepInExConfigManager
 - Open BepInEx.cfg
 - Open Data Folder
 - Open Save Folder
@@ -78,7 +79,6 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 | Dependency | Version | Details |
 | --- | --- | --- |
 | BepInEx | 5.4.23.5 | unitymono, x64 |
-| BepInEx Configuration Manager | 18.4.1 | — |
 
 ## Config & Save Paths
 

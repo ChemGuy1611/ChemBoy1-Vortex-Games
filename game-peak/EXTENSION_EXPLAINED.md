@@ -21,6 +21,12 @@
 
 - **Steam** — `3527290`
 
+## Feature Flags
+
+| Flag | Value | Description |
+| --- | --- | --- |
+| `downloadCfgMan` | `true` | should BepInExConfigManager be downloaded? |
+
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
@@ -49,12 +55,6 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open PCGamingWiki Page
 - Open SteamDB Page
 - Submit Bug Report
-
-## Auto-Downloaded Dependencies
-
-| Dependency | Version | Details |
-| --- | --- | --- |
-| BepInEx Configuration Manager | 18.4.1 | — |
 
 ## Special Features
 
