@@ -1,5 +1,9 @@
 # template-unitymelonloaderbepinex-hybrid Changelog
 
+## [2026-09-15]
+
+- Fixed: `getRequirements()` pushed `BEPINEX_REQUIREMENTS`/`MELON_REQUIREMENTS` (GitHub-sourced) whenever the matching loader was installed, with no check for `bepinexFromNexus`/`melonFromNexus`. For a game whose loader is a Nexus-hosted fork - `bepinexFromNexus`/`melonFromNexus` true - the auto-update checker would have compared the installed Nexus build against the wrong upstream GitHub release. Now gated on those flags, matching the check `getBepinexBeRequirements()` already had. Found while porting `grimshire` (Wave 4 of `unity-loader-downloader-migration-amber-pinion`), the plan's first Nexus-sourced-loader game.
+
 ## [2026-09-14] (3)
 
 - Fixed: `allowMelPrefMan` default reverted to `false`. MelonPreferencesManager itself throws errors in-game once MelonLoader loads it - not a download or install failure, the managed-mod mechanism is unaffected - so it is no longer offered by default until that is fixed.

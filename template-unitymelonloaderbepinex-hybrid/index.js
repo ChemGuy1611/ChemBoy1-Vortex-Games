@@ -1034,9 +1034,7 @@ function installBepinex(files) {
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1083,9 +1081,7 @@ function installMelon(files) {
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1130,9 +1126,7 @@ function installCustomLoader(files) {
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1226,9 +1220,7 @@ function installBepCfgMan(files) {
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1273,9 +1265,7 @@ function installMelonPrefMan(files) {
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1320,9 +1310,7 @@ function installAssembly(files) {
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1431,9 +1419,7 @@ function installAssets(files) {
   const setModTypeInstruction = { type: "setmodtype", value: ASSETS_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -1487,9 +1473,7 @@ function installCustom(files) {
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1834,9 +1818,7 @@ async function installPlugin(api, gameSpec, files, workingDir) {
 
   // Remove directories and anything that isn't in the rootPath.
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     const relPath = file.substr(idx);
     return {
@@ -2074,9 +2056,7 @@ function installSave(files) {
   const setModTypeInstruction = { type: "setmodtype", value: ASSETS_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -3058,22 +3038,22 @@ function applyGame(context, gameSpec) {
         return gameId === GAME_ID;
       },
     );
-    context.registerAction(
-      "mod-icons",
-      300,
-      "open-ext",
-      {},
-      "Open SteamDB Page",
-      () => {
-        util.opn(STEAMDB_URL).catch(() => null);
-      },
-      () => {
-        const state = context.api.getState();
-        const gameId = selectors.activeGameId(state);
-        return gameId === GAME_ID;
-      },
-    );
   }
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open SteamDB Page",
+    () => {
+      util.opn(STEAMDB_URL).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
   context.registerAction(
     "mod-icons",
     300,
@@ -3362,13 +3342,17 @@ function isMelonPrefManInstalled(api, spec) {
 function getRequirements(api) {
   const requirements = [];
   if (isMelonInstalled(api, spec)) {
-    requirements.push(...(useMelonNightly ? MELON_NIGHTLY_REQUIREMENTS : MELON_REQUIREMENTS));
+    if (!melonFromNexus) {
+      //a game-specific fork on a Nexus page has no upstream release feed to check
+      requirements.push(...(useMelonNightly ? MELON_NIGHTLY_REQUIREMENTS : MELON_REQUIREMENTS));
+    }
     if (allowMelPrefMan) {
       requirements.push(...MELONPREFMAN_REQUIREMENTS);
     }
   } else if (isBepinexInstalled(api, spec)) {
-    if (BEPINEX_BUILD === "mono") {
-      //IL2CPP BepInEx comes from builds.bepinex.dev, not GitHub
+    if (BEPINEX_BUILD === "mono" && !bepinexFromNexus) {
+      //IL2CPP BepInEx comes from builds.bepinex.dev, not GitHub. A game-specific Nexus fork has no
+      //upstream release feed to check either.
       requirements.push(...BEPINEX_REQUIREMENTS);
     }
     if (allowBepCfgMan) {

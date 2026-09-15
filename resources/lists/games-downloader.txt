@@ -17,6 +17,7 @@ dragonagetheveilguard
 farfarwest
 fatekeeper
 godofwarragnarok
+grimshire
 gzdoom
 hellisus
 hitman3
@@ -35,6 +36,7 @@ mousepiforhire
 pcbuildingsimulator
 pcbuildingsimulator2
 peak
+prodeus
 reddeadredemption
 resonanceaplaguetalelegacy
 roadtovostok
