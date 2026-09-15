@@ -2,7 +2,12 @@
 
 ## Planned Improvements (Not Yet Released)
 
+- None
+
+## [1.0.2] - 2026-09-14
+
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
+- Fixed: MelonPreferencesManager was causing errors in-game, so it is no longer offered
 
 ## [1.0.1] - 2026-09-12
 

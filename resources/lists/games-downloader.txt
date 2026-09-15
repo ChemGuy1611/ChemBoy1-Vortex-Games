@@ -14,7 +14,6 @@ doom
 doom3
 doomthedarkages
 dragonagetheveilguard
-fantasylifeithegirlwhostealstime
 farfarwest
 fatekeeper
 godofwarragnarok
@@ -32,6 +31,7 @@ megabonk
 menace
 mirthwood
 misery
+mousepiforhire
 pcbuildingsimulator
 pcbuildingsimulator2
 peak
@@ -42,10 +42,10 @@ romestead
 rvthereyet
 stalker2heartofchornobyl
 starwarszerocompany
+stateofdecay2
 stellarblade
 storyofseasonsgrandbazaar
 subnautica2
-tekken8
 thebloodofdawnwalker
 thelastofuspart1
 thesinkingcity2

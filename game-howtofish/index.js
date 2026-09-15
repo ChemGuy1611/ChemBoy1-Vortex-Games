@@ -2,8 +2,8 @@
 Name: How to Fish Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
-Version: 1.0.3
-Date: 2026-09-12
+Version: 1.0.4
+Date: 2026-09-14
 Notes:
 -
 //////////////////////////////////////////*/
@@ -106,11 +106,11 @@ const recommendedLoader = "mel"; // bep/mel - If loaderChoice false, this determ
 const BEPINEX_BUILD = "mono"; // 'mono' or 'il2cpp' - check for "il2cpp_data" folder
 const ARCH = "x64"; //'x64' or 'x86' game architecture (64-bit or 32-bit)
 const BEP_VER = "5.4.23.5"; //set BepInEx version for mono URLs
-const BEP_BE_VER = "785"; //set BepInEx build for BE IL2CPP URLs
-const BEP_BE_COMMIT = "6abdba4"; //git commit number for BE IL2CPP builds
+const BEP_BE_VER = "788"; //set BepInEx build for BE IL2CPP URLs
+const BEP_BE_COMMIT = "5b766a3"; //git commit number for BE IL2CPP builds
 const BEPCFGMAN_VER = "19.0"; //set BepInExConfigManager version for direct URLs
 const allowBepCfgMan = true; //should BepInExConfigManager be downloaded (via notification)?
-const allowMelPrefMan = true; //should MelonPreferencesManager be downloaded (via notification)?
+const allowMelPrefMan = false; //should MelonPreferencesManager be downloaded (via notification)? disabled 2026-09-14 - plugin causes in-game errors, see amber-pinion plan
 const allowBepinexNexus = true; //allow Nexus Mods download of BepInEx/MelonLoader
 const allowMelonNexus = true;
 const BEPINEX_PAGE_NO = 0; //Only specify if there is a Nexus page for BepInEx/MelonLoader

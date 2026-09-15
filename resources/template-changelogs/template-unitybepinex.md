@@ -1,5 +1,9 @@
 # template-unitybepinex Changelog
 
+## [2026-09-14]
+
+- Fixed: `BEP_BE_VER`/`BEP_BE_COMMIT` fallback bumped from build 755/`3fab71a` (2026-08-05) to the current builds.bepinex.dev newest build 788/`5b766a3` (2026-09-01).
+
 ## [2026-09-12]
 
 - Added an "Open SteamDB Page" button next to "Open PCGamingWiki Page", opening the game's `https://steamdb.info/app/<STEAMAPP_ID>/` page.

@@ -13,6 +13,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | BepInEx Configuration Manager | a `configurationmanager.dll` file | `BepInEx` |
 | MelonLoader Preferences Manager | a `melonprefmanager.il2cpp.dll` file | `Mods` |
 | Assembly Replacement Mods | a `GameAssembly.dll` file | the game folder itself (no subfolder) |
+| Modsettingsmenu | a file or folder named `BepInEx` and a file or folder named `modsettingsmenu.dll` | - |
 | Plugin Mods | a `.dll` file | `BepInEx` |
 | Fallback Installer | anything not matched above | - |
 
@@ -96,6 +97,10 @@ Installs to: the game folder itself (no subfolder)
 
 - Assembly replacements cannot be combined with other assembly mods - state this clearly on the mod page.
 - Shipping an assembly alongside a plugin makes the whole archive install as an assembly mod.
+
+## Modsettingsmenu
+
+Recognised when the archive contains a file or folder named `BepInEx` and a file or folder named `modsettingsmenu.dll`.
 
 ## Plugin Mods
 

@@ -107,11 +107,11 @@ let recommendedLoader = "mel"; // bep/mel - If loaderChoice false, this determin
 let BEPINEX_BUILD = "il2cpp"; // 'mono' or 'il2cpp' - check for "il2cpp_data" folder
 const ARCH = "x64"; //'x64' or 'x86' game architecture (64-bit or 32-bit)
 const BEP_VER = "5.4.23.5"; //set BepInEx version for mono URLs
-const BEP_BE_VER = "785"; //set BepInEx build for BE IL2CPP URLs
-const BEP_BE_COMMIT = "6abdba4"; //git commit number for BE IL2CPP builds
+const BEP_BE_VER = "788"; //set BepInEx build for BE IL2CPP URLs
+const BEP_BE_COMMIT = "5b766a3"; //git commit number for BE IL2CPP builds
 const BEPCFGMAN_VER = "19.0"; //set BepInExConfigManager version for direct URLs
 let allowBepCfgMan = true; //should BepInExConfigManager be downloaded (via notification)?
-let allowMelPrefMan = true; //should MelonPreferencesManager be downloaded (via notification)?
+let allowMelPrefMan = false; //should MelonPreferencesManager be downloaded (via notification)? disabled 2026-09-14 - plugin causes in-game errors, see amber-pinion plan
 const allowBepinexNexus = true; //allow Nexus Mods download of BepInEx/MelonLoader
 let allowMelonNexus = true;
 const BEPINEX_PAGE_NO = 0; //Only specify if there is a Nexus page for BepInEx/MelonLoader
@@ -607,12 +607,6 @@ const spec = {
       targetPath: path.join("{gamePath}", BEPINEX_MOD_PATH),
     },
     {
-      id: MELON_MOD_ID,
-      name: MELON_MOD_NAME,
-      priority: "high",
-      targetPath: path.join("{gamePath}", MELON_MOD_PATH),
-    }, //*/
-    {
       id: BEPINEX_PLUGINS_ID,
       name: BEPINEX_PLUGINS_NAME,
       priority: "high",
@@ -631,40 +625,10 @@ const spec = {
       targetPath: path.join("{gamePath}", BEPINEX_CONFIG_PATH),
     },
     {
-      id: MELON_MODS_ID,
-      name: MELON_MODS_NAME,
-      priority: "high",
-      targetPath: path.join("{gamePath}", MELON_MODS_PATH),
-    },
-    {
-      id: MELON_PLUGINS_ID,
-      name: MELON_PLUGINS_NAME,
-      priority: "high",
-      targetPath: path.join("{gamePath}", MELON_PLUGINS_PATH),
-    },
-    {
-      id: MELON_CONFIG_ID,
-      name: MELON_CONFIG_NAME,
-      priority: "high",
-      targetPath: path.join("{gamePath}", MELON_CONFIG_PATH),
-    },
-    {
-      id: MELON_USERLIB_ID,
-      name: MELON_USERLIB_NAME,
-      priority: "high",
-      targetPath: path.join("{gamePath}", MELON_USERLIB_PATH),
-    },
-    {
       id: BEPCFGMAN_ID,
       name: BEPCFGMAN_NAME,
       priority: "high",
       targetPath: path.join("{gamePath}", BEPCFGMAN_PATH),
-    },
-    {
-      id: MELONPREFMAN_ID,
-      name: MELONPREFMAN_NAME,
-      priority: "high",
-      targetPath: path.join("{gamePath}", MELONPREFMAN_PATH),
     },
     {
       id: ROOT_ID,
@@ -678,18 +642,59 @@ const spec = {
       priority: "low",
       targetPath: "{gamePath}",
     },
-    {
-      id: MELON_ID,
-      name: MELON_NAME,
-      priority: "low",
-      targetPath: "{gamePath}",
-    },
   ],
   discovery: {
     ids: DISCOVERY_IDS_ACTIVE,
     names: [],
   },
 };
+
+//Append MelonLoader mod types when the game can actually run MelonLoader - registering them for a
+//loader the game cannot run would only add dead clutter (see the matching !isXna installer gate below)
+if (!isXna) {
+  spec.modTypes.push({
+    id: MELON_MOD_ID,
+    name: MELON_MOD_NAME,
+    priority: "high",
+    targetPath: path.join("{gamePath}", MELON_MOD_PATH),
+  });
+  spec.modTypes.push({
+    id: MELON_MODS_ID,
+    name: MELON_MODS_NAME,
+    priority: "high",
+    targetPath: path.join("{gamePath}", MELON_MODS_PATH),
+  });
+  spec.modTypes.push({
+    id: MELON_PLUGINS_ID,
+    name: MELON_PLUGINS_NAME,
+    priority: "high",
+    targetPath: path.join("{gamePath}", MELON_PLUGINS_PATH),
+  });
+  spec.modTypes.push({
+    id: MELON_CONFIG_ID,
+    name: MELON_CONFIG_NAME,
+    priority: "high",
+    targetPath: path.join("{gamePath}", MELON_CONFIG_PATH),
+  });
+  spec.modTypes.push({
+    id: MELON_USERLIB_ID,
+    name: MELON_USERLIB_NAME,
+    priority: "high",
+    targetPath: path.join("{gamePath}", MELON_USERLIB_PATH),
+  });
+  spec.modTypes.push({
+    id: MELONPREFMAN_ID,
+    name: MELONPREFMAN_NAME,
+    priority: "high",
+    targetPath: path.join("{gamePath}", MELONPREFMAN_PATH),
+  });
+  spec.modTypes.push({
+    id: MELON_ID,
+    name: MELON_NAME,
+    priority: "low",
+    targetPath: "{gamePath}",
+  });
+}
 
 //3rd party tools and launchers
 let tools = [

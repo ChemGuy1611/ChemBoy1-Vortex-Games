@@ -156,7 +156,7 @@ const SAVE_PATH_XBOX = path.join(
 ); //XBOX Version
 let SAVE_PATH = SAVE_PATH_DEFAULT;
 
-const BEPINEXIL2CPP_BE_URL = `https://builds.bepinex.dev/projects/bepinex_be/738/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.738%2Baf0cba7.zip`;
+const BEPINEXIL2CPP_BE_URL = `https://builds.bepinex.dev/projects/bepinex_be/788/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.788%2B5b766a3.zip`;
 
 const LOADER_ID = `${GAME_ID}-modloader`;
 

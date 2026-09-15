@@ -22,6 +22,7 @@
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `Romestead.exe` |
 | Executable (Demo) | `Romestead.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/2311](https://www.nexusmods.com/site/mods/2311) |
 
 ## Supported Stores
 
@@ -49,6 +50,7 @@
 | `loaderChoice` | `false` | true if loader choice is enabled |
 | `allowBepCfgMan` | `true` | should BepInExConfigManager be downloaded (via notification)? |
 | `allowMelPrefMan` | `true` | should MelonPreferencesManager be downloaded (via notification)? |
+| `allowModSettingsMenu` | `true` | should Mod Settings Menu be auto-downloaded on setup? |
 | `allowBepinexNexus` | `true` | allow Nexus Mods download of BepInEx/MelonLoader |
 | `allowMelonNexus` | `true` | allows MelonLoader to be downloaded from Nexus Mods |
 | `useMelonNightly` | `false` | use Nightly build of MelonLoader? |
@@ -61,18 +63,19 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | BepInEx Mod | `romestead-bepinexmod` | high | `{gamePath}/BepInEx` |
-| MelonLoader Mod | `romestead-melonmod` | high | `{gamePath}/.` |
 | BepInEx Plugins | `romestead-bepinex-plugins` | high | `{gamePath}/BepInEx/plugins` |
 | BepInEx Patchers | `romestead-bepinex-patchers` | high | `{gamePath}/BepInEx/patchers` |
 | BepInEx Config | `romestead-bepinex-config` | high | `{gamePath}/BepInEx/config` |
+| BepInExConfigManager | `romestead-bepcfgman` | high | `{gamePath}/BepInEx` |
+| Root Folder | `romestead-root` | high | `{gamePath}` |
+| Mod Settings Menu | `romestead-modsettingsmenu` | high | `{gamePath}` |
+| BepInEx Injector | `romestead-bepinex` | low | `{gamePath}` |
+| MelonLoader Mod | `romestead-melonmod` | high | `{gamePath}/.` |
 | MelonLoader Mods | `romestead-melonloader-mods` | high | `{gamePath}/Mods` |
 | MelonLoader Plugins | `romestead-melonloader-plugins` | high | `{gamePath}/Plugins` |
 | MelonLoader Config | `romestead-melonloader-config` | high | `{gamePath}/UserData` |
 | MelonLoader UserLibs | `romestead-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
-| BepInExConfigManager | `romestead-bepcfgman` | high | `{gamePath}/BepInEx` |
 | MelonPreferencesManager | `romestead-melonprefman` | high | `{gamePath}/Mods` |
-| Root Folder | `romestead-root` | high | `{gamePath}` |
-| BepInEx Injector | `romestead-bepinex` | low | `{gamePath}` |
 | MelonLoader | `romestead-melonloader` | low | `{gamePath}` |
 | Assembly DLL Mod | `romestead-assemblydll` | 60 | `?` |
 | Assets/Resources File | `romestead-assets` | 62 | `?` |
@@ -88,6 +91,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | `romestead-bepcfgman` | 29 |
 | `romestead-melonprefman` | 30 |
 | `romestead-assemblydll` | 31 |
+| `romestead-modsettingsmenu` | 32 |
 | `romestead-plugin` | 33 |
 | `romestead-fallback` | 49 |
 

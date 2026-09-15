@@ -65,10 +65,10 @@ const downloadCfgMan = true; //should BepInExConfigManager be downloaded?
 const bleedingEdge = false; //set to true to download bleeding edge builds of BepInEx (IL2CPP only)
 
 //info for download Bleeding Edge builds of BepInEx
-const BEPINEXIL2CPP_BE_URL = `https://builds.bepinex.dev/projects/bepinex_be/738/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.738%2Baf0cba7.zip`;
+const BEPINEXIL2CPP_BE_URL = `https://builds.bepinex.dev/projects/bepinex_be/788/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.788%2B5b766a3.zip`;
 const BEPINEXIL2CPP_BE_URL_ERR = `https://builds.bepinex.dev/projects/bepinex_be`;
 const BEPINEX_ID = "bepinex-injector";
-const BEPINEX_ZIP = "BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.738+af0cba7.zip";
+const BEPINEX_ZIP = "BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.788+5b766a3.zip";
 
 let GAME_PATH = "";
 let STAGING_FOLDER = "";

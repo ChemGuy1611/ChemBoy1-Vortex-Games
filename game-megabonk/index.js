@@ -2,8 +2,8 @@
 Name: Megabonk Vortex Extension
 Structure: Unity BepinEx/MelonLoader Hybrid (IL2CPP & x64)
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-09-12
+Version: 1.0.2
+Date: 2026-09-14
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -104,11 +104,11 @@ const recommendedLoader = "mel"; // bep/mel - If loaderChoice false, this determ
 const BEPINEX_BUILD = "il2cpp"; // 'mono' or 'il2cpp' - check for "il2cpp_data" folder
 const ARCH = "x64"; //'x64' or 'x86' game architecture (64-bit or 32-bit)
 const BEP_VER = "5.4.23.5"; //set BepInEx version for mono URLs
-const BEP_BE_VER = "755"; //set BepInEx build for BE IL2CPP URLs
-const BEP_BE_COMMIT = "3fab71a"; //git commit number for BE IL2CPP builds
+const BEP_BE_VER = "788"; //set BepInEx build for BE IL2CPP URLs
+const BEP_BE_COMMIT = "5b766a3"; //git commit number for BE IL2CPP builds
 const BEPCFGMAN_VER = "18.4.1"; //set BepInExConfigManager version for direct URLs
 const allowBepCfgMan = true; //should BepInExConfigManager be downloaded (via notification)?
-const allowMelPrefMan = true; //should MelonPreferencesManager be downloaded (via notification)?
+const allowMelPrefMan = false; //should MelonPreferencesManager be downloaded (via notification)? disabled 2026-09-14 - plugin causes in-game errors, see amber-pinion plan
 const allowBepinexNexus = true; //allow Nexus Mods download of BepInEx/MelonLoader
 const allowMelonNexus = true;
 const BEPINEX_PAGE_NO = 0; //Only specify if there is a Nexus page for BepInEx/MelonLoader

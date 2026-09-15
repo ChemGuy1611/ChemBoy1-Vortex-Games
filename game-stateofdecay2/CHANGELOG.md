@@ -2,8 +2,13 @@
 
 ## Planned Improvements (Not Yet Released)
 
+- None
+
+## [3.0.0] - 2026-09-14
+
 - Fixed: Mod files with no file extension were skipped during installation
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
+- Migrated the pak load order page to Vortex's newer file-based system, adding a lock button, multi-select, and a right-click context menu.
 
 ## [2.2.1] - 2026-09-08
 

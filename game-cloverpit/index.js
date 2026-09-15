@@ -52,9 +52,9 @@ const BEPINEX_FOLDER = "BepInEx";
 const BEP_STRING = "BepInEx";
 const BEP_PATCHER_STRING = "BaseUnityPlugin";
 
-let BEPINEX_URL = `https://builds.bepinex.dev/projects/bepinex_be/738/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.738%2Baf0cba7.zip`; //for IL2CPP builds
+let BEPINEX_URL = `https://builds.bepinex.dev/projects/bepinex_be/788/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.788%2B5b766a3.zip`; //for IL2CPP builds
 let BEPINEX_URL_ERR = `https://builds.bepinex.dev/projects/bepinex_be`;
-let BEPINEX_ZIP = "BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.738+af0cba7.zip";
+let BEPINEX_ZIP = "BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.788+5b766a3.zip";
 if (BEPINEX_BUILD === "mono") {
   BEPINEX_ZIP = `BepInEx_win_${ARCH}_${BEP_VER}.zip`;
   BEPINEX_URL = `https://github.com/BepInEx/BepInEx/releases/download/v${BEP_VER}/${BEPINEX_ZIP}`;

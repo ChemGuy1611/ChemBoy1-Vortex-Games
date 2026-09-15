@@ -2,8 +2,8 @@
 Name: Watch_Dogs Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2026-09-12
+Version: 0.2.3
+Date: 2026-09-15
 Notes:
 -
 ///////////////////////////////////////////*/
@@ -92,6 +92,8 @@ const NEXUSTOOLS_PRELAUNCH_KEY = "ModLoader_DisablePrelaunchWindow";
 //enableWorkspaces }] }, one entry per data_win64\mods\<folder>. Confirmed live (2026-09-12) that
 //writing this file actually drives in-game mount order, not just NexusTools' own GUI.
 const NEXUSTOOLS_MODSCONFIG_FILE = "localmodsconfig.json";
+const NEXUSTOOLS_FOLDER = path.join(APPDATA, NEXUSTOOLS_SETTINGS_FOLDER);
+const NEXUSTOOLS_MODSCONFIG_PATH = path.join(NEXUSTOOLS_FOLDER, NEXUSTOOLS_MODSCONFIG_FILE);
 
 //Stamped onto each installed MOD_ID mod so the load order page can find its Vortex modId back from
 //a bare on-disk folder name - same LO_ATTRIBUTE pattern used across this repo's other FBLO games
@@ -105,6 +107,7 @@ const MOD_ID = `${GAME_ID}-mod`;
 const MOD_NAME = "Mod";
 const MOD_PATH = path.join(DATA_FOLDER, "mods");
 const MOD_EXTS = [".dat", ".fat"];
+const MOD_FILE = "modconfig.json";
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Folder";
@@ -445,7 +448,8 @@ function installLoader(files) {
 //Test for mod files
 function testMod(files, gameId) {
   const isMod = files.some((file) => MOD_EXTS.includes(path.extname(file).toLowerCase()));
-  let supported = gameId === spec.game.id && isMod;
+  const isConfig = files.some((file) => path.basename(file).toLowerCase() === MOD_FILE);
+  let supported = gameId === spec.game.id && (isMod || isConfig);
 
   // Test for a mod installer
   if (
@@ -469,6 +473,9 @@ function testMod(files, gameId) {
 function installMod(files, fileName) {
   const MOD_TYPE = MOD_ID;
   let modFile = files.find((file) => MOD_EXTS.includes(path.extname(file).toLowerCase()));
+  if (modFile === undefined) {
+    modFile = files.find((file) => path.basename(file).toLowerCase() === MOD_FILE);
+  }
   let rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
@@ -480,7 +487,9 @@ function installMod(files, fileName) {
     modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
     rootPath = path.dirname(modFile);
   }
-  const idx = modFile.indexOf(path.basename(modFile));
+  //Positional, not a text search - avoids false-matching an outer wrapper folder that happens to
+  //start with the same string as the mod folder (e.g. VSE_Optional_Extra/VSE/modconfig.json).
+  const idx = rootPath === "." ? 0 : rootPath.length + path.sep.length;
 
   // Remove directories and anything that isn't in the rootPath.
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
@@ -1959,6 +1968,36 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     },
   ); //*/
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open NexusTools Folder",
+    () => {
+      util.opn(NEXUSTOOLS_FOLDER).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Load Order File",
+    () => {
+      util.opn(NEXUSTOOLS_MODSCONFIG_PATH).catch(() => null);
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
   context.registerAction(
     "mod-icons",
     300,

@@ -41,8 +41,8 @@ const XBOX_SAVE_STRING = "5w3tn6tb6stnm"; //string after "ID_"
 const BEPINEX_BUILD = "il2cpp"; // 'mono' or 'il2cpp' - check for "il2cpp_data" folder
 const ARCH = "x64"; //'x64' or 'x86' game architecture (64-bit or 32-bit)
 const BEP_VER = "5.4.23.5"; //set BepInEx version for mono URLs
-const BEP_BE_VER = "755"; //set BepInEx build for BE URLs
-const BEP_BE_COMMIT = "3fab71a"; //git commit number for BE builds
+const BEP_BE_VER = "788"; //set BepInEx build for BE URLs
+const BEP_BE_COMMIT = "5b766a3"; //git commit number for BE builds
 const allowBepCfgMan = false; //should BepInExConfigManager be downloaded?
 const allowMelPrefMan = false; //should MelonPreferencesManager be downloaded? False until figure out UniverseLib dependency
 const allowBepinexNexus = false; //set false until bugs are fixed
@@ -84,7 +84,7 @@ const BEPINEX_FOLDER = "BepInEx";
 const BEP_STRING = "BepInEx";
 const BEP_PATCHER_STRING = "BaseUnityPlugin";
 
-let BEPINEX_URL = `https://builds.bepinex.dev/projects/bepinex_be/738/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.${BEP_BE_VER}%2B${BEP_BE_COMMIT}.zip`;
+let BEPINEX_URL = `https://builds.bepinex.dev/projects/bepinex_be/${BEP_BE_VER}/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.${BEP_BE_VER}%2B${BEP_BE_COMMIT}.zip`;
 let BEPINEX_URL_ERR = `https://builds.bepinex.dev/projects/bepinex_be`;
 let BEPINEX_ZIP = `BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.${BEP_BE_VER}+${BEP_BE_COMMIT}.zip`;
 if (BEPINEX_BUILD === "mono") {

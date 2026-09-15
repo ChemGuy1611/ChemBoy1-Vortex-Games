@@ -9,7 +9,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Loader | a file or folder named `ModManager.exe` and a file or folder named `bin` | - |
-| Mod | a file with one of these extensions: `.dat` or `.fat` | `data_win64\mods` |
+| Mod | a file or folder named `modconfig.json` and a file with one of these extensions: `.dat` or `.fat` | `data_win64\mods` |
 | Root / Game Folder Mods | a `data_win64` folder | the game folder itself (no subfolder) |
 | Binaries | a file with one of these extensions: `.exe`, `.dll`, `.asi` or `.addon64` | - |
 | Fallback Installer | anything not matched above | - |
@@ -22,7 +22,7 @@ Recognised when the archive contains a file or folder named `ModManager.exe` and
 
 ## Mod
 
-Recognised when the archive contains a file with one of these extensions: `.dat` or `.fat`.
+Recognised when the archive contains a file or folder named `modconfig.json` and a file with one of these extensions: `.dat` or `.fat`.
 
 Installs to: `data_win64\mods`
 

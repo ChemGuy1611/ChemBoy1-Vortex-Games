@@ -2,6 +2,19 @@
 
 ## Planned Improvements (Not Yet Released)
 
+- None
+
+## [0.2.3] - 2026-09-15
+
+- Fixed: Mods packaged inside a subfolder could install to the wrong location if the archive also included an extra wrapper folder with a similar name.
+
+## [0.2.2] - 2026-09-14
+
+- Added "Open NexusTools Folder" and "Open Load Order File" buttons.
+
+## [0.2.1] - 2026-09-13
+
+- Fixed: Mods without .dat/.fat files are properly installed by detecting modconfig.json file.
 - Fixed: Mod files with no file extension were skipped during installation
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 

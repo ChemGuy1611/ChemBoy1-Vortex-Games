@@ -1,5 +1,17 @@
 # template-unitymelonloaderbepinex-hybrid Changelog
 
+## [2026-09-14] (3)
+
+- Fixed: `allowMelPrefMan` default reverted to `false`. MelonPreferencesManager itself throws errors in-game once MelonLoader loads it - not a download or install failure, the managed-mod mechanism is unaffected - so it is no longer offered by default until that is fixed.
+
+## [2026-09-14] (2)
+
+- Fixed: `BEP_BE_VER`/`BEP_BE_COMMIT` fallback bumped from build 785/`6abdba4` (2026-08-05) to the current builds.bepinex.dev newest build 788/`5b766a3` (2026-09-01). Propagated to every game carrying the constant except `mywintercar`, which keeps its hardcoded loader URLs frozen by the 2026-09-14 decision to drop it from the downloader-migration plan.
+
+## [2026-09-14]
+
+- Fixed: the seven MelonLoader mod types (`MELON_MOD_ID`, `MELON_MODS_ID`, `MELON_PLUGINS_ID`, `MELON_CONFIG_ID`, `MELON_USERLIB_ID`, `MELONPREFMAN_ID`, `MELON_ID`) were still registered via `context.registerModType` on an XNA game, even though the matching `MELON_ID` installer and `MODTYPE_FOLDERS` were already gated on `!isXna`. They now live in an `if (!isXna) { spec.modTypes.push(...) }` block after the `spec` object instead of sitting unconditionally in the `modTypes` array literal, matching the `spec.modTypes.push()` pattern used elsewhere in the codebase for optional mod types.
+
 ## [2026-09-12]
 
 - Added an "Open SteamDB Page" button next to "Open PCGamingWiki Page", opening the game's `https://steamdb.info/app/<STEAMAPP_ID>/` page.
