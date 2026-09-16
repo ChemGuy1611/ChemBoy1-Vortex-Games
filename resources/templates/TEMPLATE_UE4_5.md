@@ -42,7 +42,7 @@ of a pak mod, for custom frameworks that add `.toml` or `.json` sidecars).
 | `PAK_ALT_ID`      | spec                   | `<code>/Content/Paks`   |
 | `ROOT_ID`         | spec                   | `{gamePath}`            |
 | `MODKITMOD_ID`    | spec, when `hasModKit` | `<code>/Mods`           |
-| `UE5_SORTABLE_ID` | 25                     | pak mods folder         |
+| `UE5_SORTABLE_ID` | 29                     | pak mods folder         |
 | `SCRIPTS_ID`      | 50                     | `<binaries>/ue4ss/Mods` |
 | `DLL_ID`          | 52                     | `<binaries>/ue4ss/Mods` |
 | `BINARIES_ID`     | 54                     | `<code>/Binaries/Win64` |
@@ -115,6 +115,18 @@ a different one, which would drop it to the bottom of the load order. The templa
 - `will-install-mod` sets the `updating_mod` flag that suppresses the fallback-installer notification
   on an update.
 - `MAX_UPDATE_WAIT_MS` (5 minutes) releases a guard for an update that never lands.
+
+**FOMOD pak retag.** Vortex's built-in FOMOD installer never emits a `setmodtype` instruction, so a
+pak mod packaged with a FOMOD checkbox wizard (offering optional components) keeps modtype `''`
+forever and never shows up in the pak load order, which filters strictly on `UE5_SORTABLE_ID`. A
+`did-install-mod` handler (`retagFomodPakMod`) retags such a mod after the fact: it reruns the
+marker checks for every installer registered above the pak installer's priority — Mod Kit (25,
+when `hasModKit`), UE4SS Combo (26), LogicMods (27) — against the mod's staged files via
+`beatsPakInstaller()`/`pathSegments()`, and only retags when none of them would have claimed the
+archive first. It skips mods staged in full game-root layout (the pak installer only ever
+flattens a shallow-staged archive), and while a collection install is in progress it retags but
+skips the load-order refresh and deployment request, since core's own post-install deserialize
+picks up the corrected type once the collection finishes.
 
 **Partition checks.** When `IO_STORE` is off and `preferHardlinks` is on, `checkPartitions` verifies
 that the game folder, staging folder, and the config and save folders all sit on the same volume,

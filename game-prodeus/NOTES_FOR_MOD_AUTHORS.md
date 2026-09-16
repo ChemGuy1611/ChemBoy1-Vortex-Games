@@ -9,7 +9,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | BepInEx (mod loader) | a `BepInEx.Core.dll` file | the game folder itself (no subfolder) |
-| MelonLoader (mod loader) | a `MelonLoader.dll` file | the game folder itself (no subfolder) |
+| MelonLoader (mod loader) | a `version.dll` file | the game folder itself (no subfolder) |
 | Root / Game Folder Mods | a `Prodeus_Data` folder | the game folder itself (no subfolder) |
 | BepInEx Configuration Manager | a `configurationmanager.dll` file | `BepInEx` |
 | MelonLoader Preferences Manager | a `melonprefmanager.il2cpp.dll` file | `Mods` |
@@ -41,8 +41,8 @@ This installer handles MelonLoader itself, not mods for it. It exists so users c
 
 **Requirements:**
 
-- Recognised by a file named `MelonLoader.dll` in the archive.
-- Requires BOTH a folder named `MelonLoader` and the loader file `MelonLoader.dll`.
+- Recognised by a file named `version.dll` in the archive.
+- Requires BOTH a folder named `MelonLoader` and the loader file `version.dll`.
 
 Installs to: the game folder itself (no subfolder)
 

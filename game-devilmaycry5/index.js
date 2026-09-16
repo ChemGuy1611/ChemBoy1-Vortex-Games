@@ -2,8 +2,8 @@
 Name: Devil May Cry 5 Vortex Extension
 Structure: Fluffy + REFramework (RE Engine)
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-08-12
+Version: 2.0.0
+Date: 2026-09-15
 Notes:
 -
 ///////////////////////////////////////////*/
@@ -68,7 +68,7 @@ let multiExe = false; //set to true if there are multiple executables (and multi
 if ((EXEC !== EXEC_DEMO && EXEC_DEMO !== "") || hasXbox) {
   multiExe = true;
 }
-const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
+const setupNotification = true; //enable to show the user a notification with special instructions (specify below)
 const debug = false; //toggle for debug mode
 
 // -- END EDIT ZONE -- /////////////////////////////////////////////////////////////////////////////////

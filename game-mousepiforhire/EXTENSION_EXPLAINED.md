@@ -50,7 +50,7 @@
 | `loaderChoice` | `false` | true if loader choice is enabled |
 | `bepinexLoaderPatch` | `true` | should BepInEx Loader Patch be downloaded? |
 | `allowBepCfgMan` | `false` | ! Causes BepInEx to crash if installed! |
-| `allowMelPrefMan` | `false` | should MelonPreferencesManager be downloaded (via notification)? |
+| `allowMelPrefMan` | `false` | should MelonPreferencesManager be downloaded (via notification)? disabled 2026-09-14 - plugin causes in-game errors, see amber-pinion plan |
 | `allowBepinexNexus` | `true` | allow Nexus Mods download of BepInEx/MelonLoader |
 | `allowMelonNexus` | `true` | allows MelonLoader to be downloaded from Nexus Mods |
 | `useMelonNightly` | `false` | use Nightly build of MelonLoader? |
@@ -107,6 +107,8 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
+- Download Latest BepInEx BE
+- Download Latest MelonLoader
 - Open Data Folder
 - Open Save Folder
 - Open BepInEx Config

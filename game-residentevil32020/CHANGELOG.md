@@ -2,9 +2,8 @@
 
 ## Planned Improvements (Not Yet Released)
 
-- Fixed: Mod files with no file extension were skipped during installation
-- Added an "Open SteamDB Page" button next to the PCGamingWiki one.
+- None
 
-## [1.0.0] - 2026-08-12
+## [2.0.0] - 2026-09-15
 
-- Initial Release.
+- Migrated extension to new Fluffy-integrated system. Users of old versions must verify their game files and reinstall all mods in Vortex.

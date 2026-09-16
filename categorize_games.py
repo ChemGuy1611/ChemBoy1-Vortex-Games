@@ -30,6 +30,9 @@ independently of its engine category and of each other:
     games-multi-game.txt - extensions that call context.registerGame more than once,
                            i.e. bundle several distinct games/variants behind one
                            Nexus page (windrose, doom3, gzdoom, ninjagaidenmastercollection, ...)
+    games-no-steamappid.txt - games with no real STEAMAPP_ID (missing, null, or
+                           placeholder), i.e. no Steam release - Epic/Xbox/GOG-only
+                           titles or store-agnostic front ends like gzdoom
 
 Usage:
     python categorize_games.py              # rebuild all category files from scratch
@@ -53,7 +56,7 @@ from vortex_utils import (
     has_moddb_downloader_js, has_modworkshop_downloader_js,
     has_thunderstore_downloader_js,
     requires_unreal_mod_installer, has_extension_dependency, has_ue4ss_load_order_parity,
-    is_unreleased_extension, is_multi_game_extension,
+    is_unreleased_extension, is_multi_game_extension, has_any_steamapp_id,
     log_error, log_dry,
 )
 
@@ -148,6 +151,11 @@ FLAG_LISTS = [
     # action buttons) usually needs to key off each variant's own constants rather
     # than a single shared one.
     ("games-multi-game.txt", lambda src, folder: is_multi_game_extension(src)),
+    # No real Steam release: no STEAMAPP_ID-family const (bare or per-variant suffixed,
+    # e.g. multi-game extensions' STEAMAPP_ID1/2/3) has a real numeric value. Covers
+    # Epic/Xbox/GOG-only titles (alanwake2) and store-agnostic front ends that never
+    # carry one at all (gzdoom, bloodborne).
+    ("games-no-steamappid.txt", lambda src, folder: not has_any_steamapp_id(src)),
 ]
 
 

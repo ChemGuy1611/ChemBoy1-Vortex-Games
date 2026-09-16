@@ -40,8 +40,10 @@
 | `hasCustomMods` | `false` | set to true if there are modTypes with folder paths dependent on which mod loader is installed |
 | `hasCustomLoader` | `false` | set to true if there is a custom mod loader |
 | `customLoaderInstaller` | `false` | set true if the custom loader uses an installer |
+| `debug` | `false` | toggle for debug mode |
 | `hasVersionFile` | `false` | set to true if there is a Version.info file that contains the game version number |
 | `hasUserIdFolder` | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
+| `loaderChoice` | `false` | true if loader choice is enabled |
 | `allowBepCfgMan` | `true` | should BepInExConfigManager be downloaded? |
 | `allowMelPrefMan` | `false` | should MelonPreferencesManager be downloaded (via notification)? |
 | `allowBepinexNexus` | `true` | allow Nexus Mods download of BepInEx/MelonLoader |
@@ -98,10 +100,14 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
+- Download Latest BepInEx BE
+- Download BepInExConfigManager
 - Download Latest MelonLoader
 - Open Data Folder
 - Open Save Folder
 - Open Config Folder
+- Open BepInEx Config
+- Open BepInEx Log
 - Open MelonLoader Config
 - Open MelonLoader Log
 - Open PCGamingWiki Page

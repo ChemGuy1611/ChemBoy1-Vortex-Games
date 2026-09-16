@@ -62,7 +62,7 @@ MyBlueprintMod.zip
     - Everything from the "LogicMods" folder down is copied to the game, keeping its structure.
     - Extra folders above "LogicMods" are fine - the installer finds it at any depth.
 
-  Installs to: "ManorLords\Content\Paks\LogicMods\LogicMods"
+  Installs to: "ManorLords\Content\Paks\LogicMods"
 
   Common mistakes:
     - Putting the ".pak" at the top level of the archive with no "LogicMods" folder. Vortex then treats it as an ordinary pak mod, installs it to the wrong place, and the blueprint mod never loads.
@@ -76,6 +76,9 @@ This installer handles the UE4SS runtime package, not individual mods. Most auth
 
   Requirements:
     - Recognised by a file named "dwmapi.dll" at any level of the archive.
+    - Also recognised by any of the UE4SS support folders: "MapGenBP", "MemberVarLayoutTemplates", "UE4SS_Signatures" or "VTableLayoutTemplates".
+
+  Installs to: "ManorLords\Binaries\Win64"
 
   Common mistakes:
     - If your script mod archive happens to contain a file named "dwmapi.dll", it will be treated as a UE4SS install rather than as your mod.
@@ -98,6 +101,8 @@ MyScriptMod.zip
     - Wrap the "Scripts" folder in a folder named after your mod. That folder name becomes the mod's UE4SS name and is what gets written to the load order.
     - If you omit the wrapper folder, Vortex falls back to naming the mod after the archive file.
 
+  Installs to: "ManorLords\Binaries\Win64\ue4ss\Mods"
+
   Common mistakes:
     - Putting "main.lua" directly in the archive root with no "Scripts" folder - the mod is not recognised as a script mod.
     - Naming the wrapper folder something generic like "Mods" - that name is what appears in the load order.
@@ -119,6 +124,8 @@ MyDllMod.zip
     - The archive must contain a ".dll" file AND a folder named "dlls".
     - Wrap the "dlls" folder in a folder named after your mod - that name is used in the load order.
 
+  Installs to: "ManorLords\Binaries\Win64\ue4ss\Mods"
+
   Common mistakes:
     - A bare ".dll" with no "dlls" folder is not recognised as a UE4SS DLL mod and will reach the fallback installer.
 
@@ -135,7 +142,7 @@ MyRootMod.zip
 [/code]
 
   Requirements:
-    - Recognised by a top-level folder matching any of: "ManorLords".
+    - Recognised by a top-level folder matching any of: "ManorLords", "Engine", "Content", "Binaries", "Mods", "Paks" or "Movies".
     - The matched folder and everything below it is copied into the game folder, preserving structure.
 
   Installs to: the game folder itself (no subfolder)
@@ -169,7 +176,25 @@ Save files are deployed to the game's save folder in your user profile.
 
 ========================================================================
 
+Fallback Installer:
+
+This is the catch-all. Any archive with no ".pak" file that matched none of the installers above lands here and is copied, unchanged, into the game's binaries folder.
+
+[b][color=#ffff00]NOTE: Landing in the fallback installer is a signal your archive layout needs fixing.[/color][/b]
+
+  Requirements:
+    - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
+    - Vortex shows the user a notification when a mod installs through the fallback.
+
+  Installs to: "ManorLords\Binaries\Win64"
+
+  Common mistakes:
+    - If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report it as broken.
+
+========================================================================
+
 Rules That Apply To Every Mod Type:
 
+    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
     - Folder and file name matching is case-insensitive.
     - Extra wrapper folders around a recognised folder are generally fine.

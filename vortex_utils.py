@@ -327,6 +327,20 @@ def has_real_steamapp_id(src):
     return bool(extract_steamapp_id(src))
 
 
+def has_any_steamapp_id(src):
+    """Return True if any STEAMAPP_ID-family const (bare or suffixed) has a real
+    numeric value.
+
+    Multi-game extensions (is_multi_game_extension) give each registerGame call its
+    own per-variant id instead of a shared bare STEAMAPP_ID - e.g.
+    ninjagaidenmastercollection's STEAMAPP_ID1/2/3, doom3's STEAMAPP_ID + STEAMAPP_ID_BFG.
+    has_real_steamapp_id only checks the bare name, so it false-flags these games as
+    having no Steam release. Use this instead when a single-game bare id isn't
+    guaranteed, e.g. for the games-no-steamappid.txt flag list.
+    """
+    return bool(re.search(r"(?:const|let)\s+STEAMAPP_ID\w*\s*=\s*['\"]?(\d+)['\"]?", src))
+
+
 def extract_game_name(src):
     """Extract the game name from index.js source.
     Tries GAME_NAME constant first, then quoted 'name': in spec,
