@@ -26,10 +26,10 @@ const STEAMAPP_ID = "2638890"; // https://steamdb.info/app/2638890/
 const STEAMAPP_ID_DEMO = "3974650"; // https://steamdb.info/app/3974650/
 const EPICAPP_ID = "40ec84025ba440c290dd4c8dabfba36c"; // https://store.epicgames.com/en-US/p/onimusha-way-of-the-sword-3c2acc
 const GOGAPP_ID = null;
-const XBOXAPP_ID = "XXX"; // https://apps.microsoft.com/detail/9nh6pq3l7ttp
-const XBOXEXECNAME = "XXX";
+const XBOXAPP_ID = "F024294D.63383C66B8708"; // https://apps.microsoft.com/detail/9nh6pq3l7ttp
+const XBOXEXECNAME = "OnimushaWotS";
 const XBOX_PUB_ID = "8fty0by30jkny"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID, STEAMAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID, XBOXAPP_ID, STEAMAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
 
 const EXEC = "OnimushaWotS.exe";
 const EXEC_DEMO = "OnimushaWotS_Demo.exe";

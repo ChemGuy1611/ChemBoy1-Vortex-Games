@@ -2,7 +2,10 @@
 
 ## Planned Improvements (Not Yet Released)
 
+## [1.0.0] - 2026-09-17
+
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
+- Added: Two mods that each add a MelonLoader plugin with a same-named file (a README, an icon, a shared dependency) no longer conflict with each other — each mod now installs into its own folder.
 
 ## [0.8.3] - 2026-09-12
 

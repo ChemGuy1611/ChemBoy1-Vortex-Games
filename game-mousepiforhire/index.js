@@ -2,8 +2,8 @@
 Name: MOUSE: P.I. For Hire Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-09-15
+Version: 1.0.1
+Date: 2026-09-17
 Notes:
 - Need custom BepInEx patch due to stripped methods
 - Cannot install BepInExConfigManager - causes BepInEx crash
@@ -44,10 +44,10 @@ const STEAMAPP_ID = "2416450"; // https://steamdb.info/app/2416450/
 const STEAMAPP_ID_DEMO = null;
 const EPICAPP_ID = null;
 const GOGAPP_ID = null;
-const XBOXAPP_ID = "XXX"; // NOT on Game Pass - https://apps.microsoft.com/detail/9p7522hwd0nh
+const XBOXAPP_ID = "PlaySideStudiosLTD.MOUSEP.I.ForHire"; // NOT on Game Pass - https://apps.microsoft.com/detail/9p7522hwd0nh
 const XBOXEXECNAME = "Game";
-const XBOX_PUB_ID = "XXX"; //string after "ID_"
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const XBOX_PUB_ID = "xnzn2e73jvyg2"; //string after "ID_"
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const GAME_NAME = "MOUSE: P.I. For Hire";
 const GAME_NAME_SHORT = "MOUSE";
@@ -109,7 +109,7 @@ const BEP_BE_VER = "788"; //set BepInEx build for BE IL2CPP URLs - kept for a fu
 const BEP_BE_COMMIT = "5b766a3"; //git commit number for BE IL2CPP builds
 const BEPCFGMAN_VER = "19.0"; //set BepInExConfigManager version for direct URLs
 const allowBepCfgMan = false; //! Causes BepInEx to crash if installed!
-const allowMelPrefMan = false; //should MelonPreferencesManager be downloaded (via notification)? disabled 2026-09-14 - plugin causes in-game errors, see amber-pinion plan
+const allowMelPrefMan = false; //should MelonPreferencesManager be downloaded (via notification)? disabled 2026-09-14 - plugin causes in-game errors when loaded
 const allowBepinexNexus = true; //allow Nexus Mods download of BepInEx/MelonLoader
 const allowMelonNexus = true;
 const BEPINEX_PAGE_NO = 0; //7 - not using this one, using patch instead (for now)

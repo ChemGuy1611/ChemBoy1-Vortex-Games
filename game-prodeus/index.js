@@ -2,8 +2,8 @@
 Name: Prodeus Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-09-15
+Version: 1.0.1
+Date: 2026-09-17
 Notes:
 - 
 //////////////////////////////////////////*/
@@ -43,9 +43,9 @@ const STEAMAPP_ID = "964800"; // https://steamdb.info/app/964800/
 const STEAMAPP_ID_DEMO = null;
 const EPICAPP_ID = null;
 const GOGAPP_ID = "1549165795"; //https://www.gogdb.org/product/1549165795
-const XBOXAPP_ID = "XXX"; //NOT on Game Pass
+const XBOXAPP_ID = "HumbleBundle.Prodeus"; //NOT on Game Pass - https://www.xbox.com/en-US/games/store/prodeus/9MZRSLLWKWDV
 const XBOXEXECNAME = "Game";
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const GAME_NAME = "Prodeus";
 const GAME_NAME_SHORT = "Prodeus";
@@ -91,7 +91,7 @@ const VER_SPLIT = " "; //split character for the Version.info file - typically a
 
 const DEV_REGSTRING = "BoundingBoxSoftware"; //developer name
 const GAME_REGSTRING = "Prodeus"; //game name
-const XBOX_PUB_ID = "XXX"; //string after "ID_"
+const XBOX_PUB_ID = "q2mcdwmzx4qja"; //string after "ID_"
 const CONFIG_FOLDERNAME = "Settings";
 const SAVE_FOLDERNAME = "SaveGames";
 const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)

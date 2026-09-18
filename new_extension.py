@@ -25,7 +25,8 @@ Usage:
     --skip-eslint       Skip running eslint after writing index.js.
 
 Fills in all XXX fields it can resolve automatically from Steam, GOG, Epic,
-and PCGamingWiki. Remaining XXX fields are reported at the end for manual entry.
+PCGamingWiki, and (for Xbox titles) Microsoft's Store product catalog.
+Remaining XXX fields are reported at the end for manual entry.
 
 GAME_ID comes from the Nexus Mods domain name when the lookup succeeds, and is
 otherwise derived from the game name. Either way it never contains hyphens or
@@ -78,7 +79,7 @@ from vortex_utils import (
     roman_to_arabic, arabic_to_roman, name_lookup_variants,
     lookup_pcgamingwiki, pcgw_get_json, get_api_key, run_generate_explained_batch,
     run_generate_notes_batch, eslint_check,
-    fetch_epic_app_id, fetch_gog_app_id, add_to_discovery_ids,
+    fetch_epic_app_id, fetch_gog_app_id, fetch_xbox_identity, add_to_discovery_ids,
     download_exec_icon, download_cover_art, download_title_image, download_banner_image,
     update_index_header, sanitize_game_name, normalize_game_name, write_index_js,
     read_index_js, extract_steamapp_id, extract_game_name,
@@ -763,7 +764,20 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         print(f"  Epic     : {resolved_epic_id}")
     else:
         print(f"  Epic     : found (set ID manually)")
-    print(f"  Xbox     : {'found (set ID manually)' if xbox_found else 'not found'}")
+    resolved_xbox_app_id = None
+    resolved_xbox_exec_name = None
+    resolved_xbox_pub_id = None
+    if xbox_found and availability.get('xbox_url'):
+        time.sleep(0.3)
+        resolved_xbox_app_id, resolved_xbox_exec_name, resolved_xbox_pub_id = (
+            fetch_xbox_identity(availability['xbox_url'])
+        )
+    if not xbox_found:
+        print(f"  Xbox     : not found")
+    elif resolved_xbox_app_id:
+        print(f"  Xbox     : {resolved_xbox_app_id} (Store catalog - verify against a live install)")
+    else:
+        print(f"  Xbox     : found (set ID manually)")
     if engine_version:
         print(f"  UE build : {engine_version}")
 
@@ -772,7 +786,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         print(f"\n{'=' * 60}")
         print(f"  [DRY RUN] Would create: game-{game_id}/")
         print(f"  Template : {template_name}")
-        print(f"  Steam ID : {appid}  |  GOG: {gog_id or 'N/A'}  |  Epic: {resolved_epic_id or ('yes' if epic_found else 'N/A')}  |  Xbox: {'yes' if xbox_found else 'N/A'}")
+        print(f"  Steam ID : {appid}  |  GOG: {gog_id or 'N/A'}  |  Epic: {resolved_epic_id or ('yes' if epic_found else 'N/A')}  |  Xbox: {resolved_xbox_app_id or ('yes' if xbox_found else 'N/A')}")
         print(f"  Exec     : {exec_filename or 'XXX'}")
         if engine_version:
             print(f"  UE build : {engine_version}")
@@ -788,7 +802,8 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
                 "STEAMAPP_ID_DEMO": demo_appid,
                 "EPICAPP_ID":       None if not epic_found else (resolved_epic_id or "XXX"),
                 "GOGAPP_ID":        gog_id,
-                "XBOXAPP_ID":       None if not xbox_found else "XXX",
+                "XBOXAPP_ID":       None if not xbox_found else (resolved_xbox_app_id or "XXX"),
+                "XBOX_PUB_ID":      None if not xbox_found else (resolved_xbox_pub_id or "XXX"),
                 "GAME_NAME":        game_name,
                 "GAME_NAME_SHORT":  short_name,
                 **({"PCGAMINGWIKI_URL": pcgw_url} if pcgw_url else {}),
@@ -835,7 +850,8 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         "STEAMAPP_ID_DEMO": demo_appid,                        # from Steam demos array
         "EPICAPP_ID":       None if not epic_found else (resolved_epic_id or "XXX"), # null if not on Epic; resolved from egdata.app if possible
         "GOGAPP_ID":        gog_id,
-        "XBOXAPP_ID":       None if not xbox_found else "XXX", # null if not on Xbox PC store
+        "XBOXAPP_ID":       None if not xbox_found else (resolved_xbox_app_id or "XXX"), # null if not on Xbox; resolved from MS Store catalog if possible
+        "XBOX_PUB_ID":      None if not xbox_found else (resolved_xbox_pub_id or "XXX"), # null if not on Xbox; resolved from MS Store catalog if possible
         "GAME_NAME":        game_name,
         "GAME_NAME_SHORT":  short_name,
         **({"PCGAMINGWIKI_URL": pcgw_url} if pcgw_url else {}),
@@ -884,6 +900,14 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         src = sub_toggle(src, "hasXbox", True)
         if xbox_url:
             src = add_line_comment(src, "XBOXAPP_ID", xbox_url)
+        # XBOXEXECNAME ships with a real-looking template default (not "XXX"), so
+        # apply_substitutions()/sub() never touches it - only overwrite it when
+        # the catalog lookup actually resolved a value.
+        if resolved_xbox_exec_name:
+            src = replace_const_rhs(src, "XBOXEXECNAME", js_string_literal(resolved_xbox_exec_name))
+            src = add_line_comment(src, "XBOXEXECNAME", "resolved via MS Store catalog - verify against a live install")
+        if resolved_xbox_pub_id:
+            src = add_line_comment(src, "XBOX_PUB_ID", "resolved via MS Store catalog - verify against a live install")
     pcgw_epic_url = availability.get('epic_url')
     if epic_found and pcgw_epic_url:
         src = add_line_comment(src, "EPICAPP_ID", pcgw_epic_url)

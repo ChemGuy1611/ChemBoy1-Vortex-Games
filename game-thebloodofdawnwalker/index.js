@@ -2,8 +2,8 @@
 Name: The Blood of Dawnwalker Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-09-06
+Version: 1.0.2
+Date: 2026-09-17
 Notes:
 -
 ////////////////////////////////////////////////*/
@@ -51,10 +51,10 @@ const STEAMAPP_ID = "3751260"; // https://steamdb.info/app/3751260/
 const STEAMAPP_ID_DEMO = null; //VERIFY if the EPIC_CODE_NAME and EXEC_DEMO match Steam full game
 const EPICAPP_ID = null; //from egdata.app
 const GOGAPP_ID = "1889754300"; // https://www.gogdb.org/product/1889754300
-const XBOXAPP_ID = "XXX"; // https://apps.microsoft.com/detail/9NRKJPL74R13
-const XBOXEXECNAME = "AppUEGameShipping"; //from appxmanifest.xml
-const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const XBOXAPP_ID = "NAMCOBANDAIGamesInc.TheBloodofDawnwalker"; // https://apps.microsoft.com/detail/9NRKJPL74R13
+const XBOXEXECNAME = "AppDawnwalkerShipping"; //from appxmanifest.xml
+const XBOX_PUB_ID = "gdy2aq6ez762w"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const GAME_NAME = "The Blood of Dawnwalker";
 const GAME_NAME_SHORT = "The Blood of Dawnwalker"; //Try for 8-10 characters

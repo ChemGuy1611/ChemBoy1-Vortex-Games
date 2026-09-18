@@ -8,6 +8,10 @@
 - Added: Vortex now checks for UE4SS updates and notifies you when a newer build is available.
 - Fixed: The UE4SS download could accept the development build, a much larger debug version, in place of the normal one.
 
+## [1.0.2] - 2026-09-17
+
+- Fixed: The Xbox version of the game could not be launched through Vortex due to incorrect Xbox launch information.
+
 ## [1.0.1] - 2026-09-06
 
 - Fixed: Locked load order entries could be moved out of position when using "Move to Top", "Move to Bottom" or the position number box on another entry. Locked entries now keep their place.

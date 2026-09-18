@@ -34,7 +34,7 @@ const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, STEAMAPP_ID_DEMO, XBOXAPP_ID]; // UPD
 const EXEC = "re2.exe";
 const EXEC_DEMO = EXEC;
 const REF_STRING = "REFramework"; //file name for nightly latest URL - constant in recent versions. Not named per game any longer.
-const GAME_NAME = "Resident Evil 2";
+const GAME_NAME = "Resident Evil 2 (2019)";
 const GAME_NAME_SHORT = "RE 2";
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Resident_Evil_2_(2019)";
 const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
@@ -167,8 +167,8 @@ async function getSavePath() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 let REQ_FILE = EXEC;
-/*if (multiExe) {
-  REQ_FILE = 're_chunk_000.pak';
+if (multiExe) {
+  REQ_FILE = "re_chunk_000.pak";
 } //*/
 const PARAMETERS_STRING = "";
 const PARAMETERS = [PARAMETERS_STRING];
@@ -620,7 +620,7 @@ async function downloadREFramework(api, gameSpec) {
         const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, modPageId);
         const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
         const file = modFiles
-          .filter((file) => file.category_id === 1)
+          .filter((file) => file.category_id === 1 && !file.file_name.toLowerCase().includes("rt"))
           .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
           .reverse()[0];
         if (file === undefined) {
@@ -1011,8 +1011,7 @@ async function installZipContent(files, destinationPath) {
 //Notify User of Setup instructions
 function setupNotify(api) {
   const NOTIF_ID = `${GAME_ID}-setup-notification`;
-  const MOD_NAME = `Fluffy Mod Manager`;
-  const MESSAGE = `${MOD_NAME} Instructions`;
+  const MESSAGE = "Migration to Fluffy";
   api.sendNotification({
     id: `${GAME_ID}-setup-notification`,
     type: "warning",
@@ -1027,9 +1026,11 @@ function setupNotify(api) {
             MESSAGE,
             {
               text:
-                `You must use ${MOD_NAME} to enable mods after installing with Vortex.\n` +
-                `Use the included tool to launch ${MOD_NAME} (at top of window or in "Dashboard" tab).\n` +
-                `If your mod is not for ${MOD_NAME}, you must extract the zip file in the staging folder and change the mod type to "Binaries / Root Folder".\n`,
+                `If you used the Vortex extension prior to the 2.0.0 Fluffy migration, you MUST complete the following steps:\n` +
+                `1. Verify your game files in Steam (or other game store).\n` +
+                `2. Reinstall ALL mods in Vortex. You can use Shift+Click to select multiple mods and Reinstall them all at once using the blue bar at the bottom.\n` +
+                `3. Enable all mods in Fluffy Mod Manager to complete installation. You can launch Fluffy via the button on the deploy notification.\n` +
+                `If you have not used Vortex for this game prior to 2.0.0, you can safely ignore and suppress this notification using the "Never Show Again" button below.\n`,
             },
             [
               { label: "Acknowledge", action: () => dismiss() },

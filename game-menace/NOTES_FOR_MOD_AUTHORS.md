@@ -9,17 +9,16 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | MelonLoader (mod loader) | a `MelonLoader.dll` file | the game folder itself (no subfolder) |
-| BepInEx (mod loader) | a `BepInEx.Core.dll` file | the game folder itself (no subfolder) |
 | Modkit | a file or folder named `Menace.Modkit.App.exe` | the game folder itself (no subfolder) |
 | Jiangyu Loader | a `Jiangyu.Loader.dll` file | `Mods` |
 | Jiangyu Mods | a `jiangyu.json` file | `Mods` |
 | Modpackloader | a file or folder named `Menace.ModpackLoader.dll` and a file or folder named `UserLibs` | the game folder itself (no subfolder) |
 | Modpackmod | a file or folder named `modpack.json` | `Mods` |
 | Root / Game Folder Mods | a `Menace_Data` folder | the game folder itself (no subfolder) |
-| BepInEx Configuration Manager | a `configurationmanager.dll` file | `BepInEx` |
-| MelonLoader Preferences Manager | a `melonprefmanager.il2cpp.dll` file | `Mods` |
 | Assembly Replacement Mods | a `GameAssembly.dll` file | the game folder itself (no subfolder) |
-| Plugin Mods | a `.dll` file | `BepInEx` |
+| MelonLoader Preferences Manager | a `melonprefmanager.il2cpp.dll` file | `Mods` |
+| Customleadersplugin | a file or folder named `MenaceCustomLeader.dll` | `Mods` |
+| Plugin Mods | a `.dll` file | `Mods` |
 | Customleaders | - | `Mods\customleaders` |
 | Asset Replacement Mods | a `.assets` file | `Menace_Data` |
 | Fallback Installer | anything not matched above | - |
@@ -40,21 +39,6 @@ Installs to: the game folder itself (no subfolder)
 **Common mistakes:**
 
 - If you bundle MelonLoader inside your mod archive, Vortex treats the whole download as MelonLoader rather than as your mod. Ship the mod alone and list MelonLoader as a requirement.
-
-## BepInEx (mod loader)
-
-This installer handles BepInEx itself, not mods for it. It exists so users can install BepInEx through Vortex, and mod authors normally never package this.
-
-**Requirements:**
-
-- Recognised by a file named `BepInEx.Core.dll` in the archive.
-- Requires BOTH a folder named `BepInEx` and the loader file `BepInEx.Core.dll`.
-
-Installs to: the game folder itself (no subfolder)
-
-**Common mistakes:**
-
-- If you bundle BepInEx inside your mod archive, Vortex treats the whole download as BepInEx rather than as your mod. Ship the mod alone and list BepInEx as a requirement.
 
 ## Modkit
 
@@ -133,35 +117,6 @@ Installs to: the game folder itself (no subfolder)
 
 - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
 
-## BepInEx Configuration Manager
-
-This installer handles the BepInEx Configuration Manager plugin itself, not mods for it. It exists so users can install the BepInEx Configuration Manager plugin through Vortex, and mod authors normally never package this.
-
-**Requirements:**
-
-- Recognised by a file named `configurationmanager.dll` in the archive.
-- Requires the file `configurationmanager.dll` together with a `plugins` folder.
-
-Installs to: `BepInEx`
-
-**Common mistakes:**
-
-- If you bundle the BepInEx Configuration Manager plugin inside your mod archive, Vortex treats the whole download as the BepInEx Configuration Manager plugin rather than as your mod. Ship the mod alone and list the BepInEx Configuration Manager plugin as a requirement.
-
-## MelonLoader Preferences Manager
-
-This installer handles the MelonLoader Preferences Manager itself, not mods for it. It exists so users can install the MelonLoader Preferences Manager through Vortex, and mod authors normally never package this.
-
-**Requirements:**
-
-- Recognised by a file named `melonprefmanager.il2cpp.dll` in the archive.
-
-Installs to: `Mods`
-
-**Common mistakes:**
-
-- If you bundle the MelonLoader Preferences Manager inside your mod archive, Vortex treats the whole download as the MelonLoader Preferences Manager rather than as your mod. Ship the mod alone and list the MelonLoader Preferences Manager as a requirement.
-
 ## Assembly Replacement Mods
 
 Mods that replace a compiled game assembly outright. These overwrite core game files, so they conflict with any other mod touching the same assembly.
@@ -177,6 +132,26 @@ Installs to: the game folder itself (no subfolder)
 - Assembly replacements cannot be combined with other assembly mods - state this clearly on the mod page.
 - Shipping an assembly alongside a plugin makes the whole archive install as an assembly mod.
 
+## MelonLoader Preferences Manager
+
+This installer handles the MelonLoader Preferences Manager itself, not mods for it. It exists so users can install the MelonLoader Preferences Manager through Vortex, and mod authors normally never package this.
+
+**Requirements:**
+
+- Recognised by a file named `melonprefmanager.il2cpp.dll` in the archive.
+
+Installs to: `Mods`
+
+**Common mistakes:**
+
+- If you bundle the MelonLoader Preferences Manager inside your mod archive, Vortex treats the whole download as the MelonLoader Preferences Manager rather than as your mod. Ship the mod alone and list the MelonLoader Preferences Manager as a requirement.
+
+## Customleadersplugin
+
+Recognised when the archive contains a file or folder named `MenaceCustomLeader.dll`.
+
+Installs to: `Mods`
+
 ## Plugin Mods
 
 The normal shape for a Unity mod: a compiled plugin DLL. Vortex installs it into the loader's mod folder, so the archive does not need to reproduce the loader folder structure.
@@ -190,7 +165,7 @@ MyPlugin.zip
 
 - Recognised by any file with the `.dll` extension.
 
-Installs to: `BepInEx`
+Installs to: `Mods`
 
 **Common mistakes:**
 

@@ -2,10 +2,15 @@
 
 ## Planned Improvements (Not Yet Released)
 
-- UE4SS support
 - Remove UEMI dependency
-- Fixed: Mod files with no file extension were skipped during installation
-- Added an "Open SteamDB Page" button next to the PCGamingWiki one.
+
+## [1.0.0] - 2026-09-17
+
+- Overhauled Load Order: drag-and-drop reordering for Paks mods, replacing the old load order system
+- Added UE4SS script, DLL, and LogicMods (Blueprint) mod support, each with its own load order page
+- Added Save mod support
+- Fixed: mod files with no file extension were skipped during installation
+- Fixed: Config and Save mods on the Steam and Epic versions were installing to a folder that doesn't exist and had no effect in-game
 
 ## [0.5.1] - 2026-08-11
 

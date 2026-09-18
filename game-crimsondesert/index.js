@@ -2,8 +2,8 @@
 Name: Crimson Desert Vortex Extension
 Structure: Basic Game w/ 3rd Party Manager Integration
 Author: ChemBoy1
-Version: 0.4.2
-Date: 2026-05-24
+Version: 0.4.3
+Date: 2026-09-17
 Notes:
 - Supports plugin mods and data mods with "00XX" folders (XX <= 35)
 - Supports Crimson Browser (manifest.json and files folder) and JSON Mod Manager (.json or "0036+" folder) mods
@@ -33,10 +33,10 @@ const STEAMAPP_ID = "3321460"; //https://steamdb.info/app/3321460/depots/
 //const STEAMAPP_ID_DEMO = null;
 const EPICAPP_ID = "0230d0150e9f45d49dce401e1103c9fc"; // https://egdata.app/offers/93fa632bf25b4361abb3a79c86e3f822/builds
 const GOGAPP_ID = null;
-const XBOXAPP_ID = "XXX"; //not on Game Pass. Cannot get info
-const XBOXEXECNAME = "XXX";
-//const XBOX_PUB_ID = ""; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const XBOXAPP_ID = "PearlAbyss.CrimsonDesert"; // https://apps.microsoft.com/detail/9p6hvhdp2pgk
+const XBOXEXECNAME = "packages\\bin64\\CrimsonDesert";
+const XBOX_PUB_ID = "bs8qf1ajnj9cw"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "Crimson Desert";
 const GAME_NAME_SHORT = "Crimson Desert";
 const BINARIES_PATH = "bin64";

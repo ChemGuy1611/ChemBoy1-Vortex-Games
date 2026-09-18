@@ -198,3 +198,5 @@ Or inline in `context.registerGame()` — both work identically.
 `templates/TEMPLATE_FARCRY.md`, `templates/TEMPLATE_SNOWDROPENGINE.md`, and
 `templates/TEMPLATE_FROSTBITE.md` (the storefront-locked families — Ubisoft Connect and EA App —
 that need a non-default hand-off).
+`MICROSOFT_STORE_CATALOG_API.md` (resolving the xbox branch's `appId`/`appExecName` values from a
+Store product ID without an installed Game Pass copy).

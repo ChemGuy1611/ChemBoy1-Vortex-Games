@@ -264,3 +264,5 @@ values filled in at scaffold time).
 `NODE_FS.md` (the filesystem idiom every template is scaffolded with — native `fs`/`fs.promises`
 rebound as `fs`/`fsp`, with the `vortex-api` wrapper kept as `vfs` for `ensureDirWritableAsync`,
 which is what each template's `setup` calls).
+`MICROSOFT_STORE_CATALOG_API.md` (resolving `template-ue4-5`'s `XBOXAPP_ID`/`XBOXEXECNAME`/
+`XBOX_PUB_ID` constant block from a Store product ID without an installed Game Pass copy).

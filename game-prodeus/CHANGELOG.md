@@ -4,6 +4,10 @@
 
 - None
 
+## [1.0.1] - 2026-09-17
+
+- Added support for the Xbox version of the game.
+
 ## [1.0.0] - 2026-09-15
 
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.

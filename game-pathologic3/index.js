@@ -2,8 +2,8 @@
 Name: Pathologic 3 Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-01-14
+Version: 0.1.1
+Date: 2026-09-17
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -27,10 +27,10 @@ const STEAMAPP_ID = "3199650";
 const STEAMAPP_ID_DEMO = "4066100";
 const EPICAPP_ID = null;
 const GOGAPP_ID = "1567359699";
-const XBOXAPP_ID = "XXX"; //Not on Game Pass, so cannot get info
-const XBOXEXECNAME = "XXX";
-const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID, STEAMAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
+const XBOXAPP_ID = "HypeTrainDigital.Pathologic3"; // https://www.xbox.com/en-us/games/store/pathologic-3/9p352l301527
+const XBOXEXECNAME = "Game";
+const XBOX_PUB_ID = "7t701d8q7nf00"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID, XBOXAPP_ID, STEAMAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "Pathologic 3";
 const GAME_NAME_SHORT = GAME_NAME;
 const BINARIES_PATH = ".";

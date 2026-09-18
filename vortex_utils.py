@@ -3,8 +3,8 @@ vortex_utils.py
 
 Shared utility functions for Vortex extension developer scripts.
 Centralizes common patterns: index.js parsing, name processing,
-API key loading, HTTP helpers, PCGamingWiki lookups, egdata.app and gogdb.org
-lookups, and logging.
+API key loading, HTTP helpers, PCGamingWiki lookups, egdata.app, gogdb.org,
+and Microsoft Store catalog lookups, and logging.
 
 Usage:
     from vortex_utils import (
@@ -22,7 +22,8 @@ Usage:
         nexus_v3_get, nexus_v3_post_json,
         egdata_search_queries, normalize_title_for_match, store_title_matches,
         strip_edition_suffix, is_edition_variant_title,
-        fetch_epic_app_id, gogdb_search, fetch_gog_app_id, add_to_discovery_ids,
+        fetch_epic_app_id, gogdb_search, fetch_gog_app_id, fetch_xbox_identity,
+        add_to_discovery_ids,
         const_value, is_unset, is_missing, set_or_insert, replace_const_rhs,
         js_string_literal, strip_js_comments,
         audit_skip_rules, audit_skip_lines,
@@ -62,6 +63,7 @@ Usage:
         normalize_target_ids, read_id_list, write_id_list, is_load_order_game,
         is_merge_game, has_mergemods_callback,
         parse_nexus_mod_url, nexus_list_games, nexus_get_mod,
+        nexus_get_mod_files, nexus_get_file_download_link, nexus_download_file,
         download_exec_icon, download_cover_art,
         download_title_image, download_banner_image,
         write_text_atomic, open_in_default_app,
@@ -886,6 +888,97 @@ def fetch_gog_app_id(game_name, accept_edition_variant=False):
             if resolved:
                 return resolved, title
     return None, None
+
+
+# == Microsoft Store (Xbox) catalog helpers ====================================
+
+MS_STORE_CATALOG_API = "https://displaycatalog.mp.microsoft.com/v7.0/products"
+MS_STORE_EDGE_API = "https://storeedgefd.dsx.mp.microsoft.com/v9.0/products"
+
+_MS_STORE_PRODUCT_ID_RE = re.compile(r'([0-9A-Za-z]{10,14})/?(?:\?.*)?$')
+
+
+def _parse_catalog_product(data):
+    """Extract (xbox_app_id, xbox_exec_name, xbox_pub_id) from a v7.0/products
+    response. Returns (None, None, None) if the product carries no package
+    identity."""
+    props = data["Product"]["Properties"]
+    xbox_app_id = props.get("PackageIdentityName")
+    if not xbox_app_id:
+        return None, None, None
+    family_name = props.get("PackageFamilyName") or ""
+    xbox_pub_id = family_name.rsplit("_", 1)[1] if "_" in family_name else None
+    xbox_exec_name = None
+    for sku in data["Product"].get("DisplaySkuAvailabilities", []):
+        for pkg in sku.get("Sku", {}).get("Properties", {}).get("Packages", []):
+            apps = pkg.get("Applications") or []
+            if apps and apps[0].get("ApplicationId"):
+                xbox_exec_name = apps[0]["ApplicationId"]
+                break
+        if xbox_exec_name:
+            break
+    return xbox_app_id, xbox_exec_name, xbox_pub_id
+
+
+def fetch_xbox_identity(xbox_url_or_id):
+    """Resolve Xbox package identity from a Microsoft Store product ID or URL.
+
+    Accepts either a bare Store product ID ("9P402RWR63H4") or a full
+    apps.microsoft.com/detail/<id> URL - what fetch_pcgw_availability()'s
+    xbox_url already returns - and calls Microsoft's public product catalog
+    API. This is the same identity data a live appxmanifest.xml would show,
+    resolved without needing an installed Game Pass copy. See
+    resources/MICROSOFT_STORE_CATALOG_API.md for the endpoint and response
+    shape this was reverse-engineered from.
+
+    Returns (xbox_app_id, xbox_exec_name, xbox_pub_id):
+      - xbox_app_id    = Product.Properties.PackageIdentityName (XBOXAPP_ID)
+      - xbox_exec_name = ApplicationId of the first package whose Applications
+                         array is non-empty (XBOXEXECNAME). A title's package
+                         list routinely includes a framework/redistributable
+                         entry with an empty Applications array ahead of the
+                         real game package, so every package across every SKU
+                         is scanned rather than trusting index 0.
+      - xbox_pub_id    = the publisher-hash suffix on PackageFamilyName,
+                         after the last "_" (XBOX_PUB_ID / Packages folder
+                         suffix; '8wekyb3d8bbwe' for Microsoft-published titles)
+
+    For several AAA titles the apps.microsoft.com/detail/<id> URL is a
+    listing-page ID distinct from the base game's own catalog product ID, and
+    the primary lookup comes back with no package identity at all (Onimusha:
+    Way of the Sword, The Blood of Dawnwalker, Crimson Desert - found
+    2026-09-17). When that happens this falls back to
+    storeedgefd.dsx.mp.microsoft.com, which resolves the real product ID via
+    Payload.PrimaryPackageIdentity.ProductId, and retries the catalog lookup
+    against that ID.
+
+    Returns (None, None, None) if the product ID can't be parsed, the lookup
+    fails, or the product carries no package identity even after the
+    redirect fallback. This is store-metadata resolution, not a live read -
+    treat the result as static-verified-only until a real Xbox/Game Pass
+    install confirms it (precedent: hellisus and rvthereyet both needed a
+    live install for these values before this endpoint was known).
+    """
+    m = _MS_STORE_PRODUCT_ID_RE.search((xbox_url_or_id or "").strip())
+    if not m:
+        return None, None, None
+    product_id = m.group(1).upper()
+    try:
+        data = http_get_json(f"{MS_STORE_CATALOG_API}/{product_id}?market=US&languages=en-us")
+        xbox_app_id, xbox_exec_name, xbox_pub_id = _parse_catalog_product(data)
+        if xbox_app_id:
+            return xbox_app_id, xbox_exec_name, xbox_pub_id
+        edge_url = (f"{MS_STORE_EDGE_API}/{product_id}"
+                    "?market=US&locale=en-us&deviceFamily=Windows.Desktop")
+        edge_data = http_get_json(edge_url)
+        identity = (edge_data.get("Payload") or {}).get("PrimaryPackageIdentity")
+        real_id = identity.get("ProductId") if identity else None
+        if not real_id or real_id.upper() == product_id:
+            return None, None, None
+        data = http_get_json(f"{MS_STORE_CATALOG_API}/{real_id}?market=US&languages=en-us")
+        return _parse_catalog_product(data)
+    except Exception:
+        return None, None, None
 
 
 # == JS source helpers =========================================================
@@ -2741,6 +2834,69 @@ def nexus_v3_post_json(path, body, api_key):
         except Exception:
             pass
         raise RuntimeError(f"nexus_v3_post_json {path}: HTTP {e.code} {e.reason} - {body_txt[:400]}") from None
+
+
+def nexus_get_mod_files(domain, mod_id, api_key):
+    """Fetch the file list for a mod page from the Nexus v1 API.
+
+    Returns the list of file dicts (file_id, name, category_name, version,
+    uploaded_time, size_in_bytes, etc.) from the 'files' array. Retries up to
+    2 times on 429 / 5xx / network errors."""
+    req = urllib.request.Request(
+        f"https://api.nexusmods.com/v1/games/{domain}/mods/{mod_id}/files.json",
+        headers={"apikey": api_key, **_NEXUS_HEADERS},
+    )
+
+    def _do():
+        with urllib.request.urlopen(req, timeout=_HTTP_TIMEOUT) as resp:
+            return json.loads(resp.read())
+
+    data = _execute_with_retry(_do, respect_retry_after=True)
+    return data.get("files", [])
+
+
+def nexus_get_file_download_link(domain, mod_id, file_id, api_key):
+    """Get CDN download links for one mod file from the Nexus v1 API.
+
+    Only works for Premium accounts (or a non-premium account with a valid
+    nxm key/expires pair from an in-progress site download, not supported
+    here). Returns a list of {name, short_name, URI} dicts, one per mirror,
+    or raises RuntimeError on HTTP error (e.g. 403 for non-Premium)."""
+    req = urllib.request.Request(
+        f"https://api.nexusmods.com/v1/games/{domain}/mods/{mod_id}/files/{file_id}/download_link.json",
+        headers={"apikey": api_key, **_NEXUS_HEADERS},
+    )
+    try:
+        def _do():
+            with urllib.request.urlopen(req, timeout=_HTTP_TIMEOUT) as resp:
+                return json.loads(resp.read())
+        return _execute_with_retry(_do, respect_retry_after=True)
+    except urllib.error.HTTPError as e:
+        body = ""
+        try:
+            body = e.read().decode("utf-8", errors="replace")
+        except Exception:
+            pass
+        raise RuntimeError(
+            f"nexus_get_file_download_link {domain}/{mod_id}/{file_id}: HTTP {e.code} {e.reason} - {body[:200]}"
+        ) from None
+
+
+def nexus_download_file(domain, mod_id, file_id, api_key, dest_path):
+    """Download one mod file (by file_id) to dest_path via the first CDN mirror.
+
+    Requires Premium (see nexus_get_file_download_link). Streams to disk
+    rather than buffering in memory, so it's fine for large archives.
+    Returns dest_path."""
+    links = nexus_get_file_download_link(domain, mod_id, file_id, api_key)
+    if not links:
+        raise RuntimeError(f"nexus_download_file {domain}/{mod_id}/{file_id}: no download mirrors returned")
+    uri = links[0]["URI"]
+    req = urllib.request.Request(uri, headers={"User-Agent": NEXUS_USER_AGENT})
+    os.makedirs(os.path.dirname(dest_path) or ".", exist_ok=True)
+    with urllib.request.urlopen(req, timeout=60) as resp, open(dest_path, "wb") as out:
+        shutil.copyfileobj(resp, out)
+    return dest_path
 
 
 # == Platform / filesystem helpers =============================================

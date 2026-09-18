@@ -28,6 +28,7 @@
 ## Supported Stores
 
 - **Steam** — `2416450`
+- **Xbox / Microsoft Store** — `PlaySideStudiosLTD.MOUSEP.I.ForHire`
 
 ## Feature Flags
 
@@ -50,7 +51,7 @@
 | `loaderChoice` | `false` | true if loader choice is enabled |
 | `bepinexLoaderPatch` | `true` | should BepInEx Loader Patch be downloaded? |
 | `allowBepCfgMan` | `false` | ! Causes BepInEx to crash if installed! |
-| `allowMelPrefMan` | `false` | should MelonPreferencesManager be downloaded (via notification)? disabled 2026-09-14 - plugin causes in-game errors, see amber-pinion plan |
+| `allowMelPrefMan` | `false` | should MelonPreferencesManager be downloaded (via notification)? disabled 2026-09-14 - plugin causes in-game errors when loaded |
 | `allowBepinexNexus` | `true` | allow Nexus Mods download of BepInEx/MelonLoader |
 | `allowMelonNexus` | `true` | allows MelonLoader to be downloaded from Nexus Mods |
 | `useMelonNightly` | `false` | use Nightly build of MelonLoader? |
@@ -137,5 +138,6 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
+- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.

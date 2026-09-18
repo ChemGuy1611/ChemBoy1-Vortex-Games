@@ -7,6 +7,7 @@ borderlands
 borderlands2
 borderlands3
 borderlands4
+burglingnomes
 deathstranding2onthebeach
 diplomacyisnotanoption
 discoelysium
@@ -42,6 +43,7 @@ reddeadredemption
 resonanceaplaguetalelegacy
 roadtovostok
 romestead
+runescapedragonwilds
 rvthereyet
 stalker2heartofchornobyl
 starwarszerocompany
@@ -51,6 +53,7 @@ storyofseasonsgrandbazaar
 subnautica2
 thebloodofdawnwalker
 thelastofuspart1
+theouterworlds
 thesinkingcity2
 trepang2
 warhammer40kdarkheresy

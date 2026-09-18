@@ -5,7 +5,7 @@
 | Property | Value |
 | --- | --- |
 | Name | MENACE Vortex Extension |
-| Engine / Structure | Unity BepinEx/MelonLoader Hybrid |
+| Engine / Structure | Unity MelonLoader |
 | Author | ChemBoy1 |
 
 ## Key Identifiers
@@ -37,14 +37,9 @@
 | `preventPluginInstall` | `true` | set to true if you want to prevent plugins not for the current mod loader from installing. Disable if using cross-compatibility plugins. |
 | `loaderSwitchRestart` | `false` | set to true if you need to restart the extension after switching mod loaders |
 | `enableSaveInstaller` | `false` | set to true if you want to enable the save installer (only recommended if saves are stored in the game's folder) |
-| `hasCustomMods` | `false` | set to true if there are modTypes with folder paths dependent on which mod loader is installed |
-| `hasCustomLoader` | `false` | set to true if there is a custom mod loader |
-| `customLoaderInstaller` | `false` | set true if the custom loader uses an installer |
-| `allowBepCfgMan` | `false` | should BepInExConfigManager be downloaded? |
 | `allowMelPrefMan` | `false` | should MelonPreferencesManager be downloaded? False until figure out UniverseLib dependency |
-| `allowBepinexNexus` | `false` | set false until bugs are fixed |
-| `allowMelonNexus` | `false` | set false until bugs are fixed |
-| `customInstalled` | `false` |  |
+| `allowMelonNexus` | `true` | MelonLoader is sourced from this game's own Nexus page (current behavior). Flip false to switch to the GitHub release instead. |
+| `useMelonNightly` | `false` | use the GitHub Actions nightly build instead of the latest stable release? Only applies when allowMelonNexus is false. |
 | `mod_update_all_profile` | `false` |  |
 | `updating_mod` | `false` | used to see if it's a mod update or not |
 
@@ -57,19 +52,14 @@ Mod types define where each category of mod gets deployed:
 | ModpackLoader | `menace-modpackloader` | low | `{gamePath}/.` |
 | Modpack Mod | `menace-modpackmod` | high | `{gamePath}/Mods` |
 | Custom Leaders Mod | `menace-customleaders` | high | `{gamePath}/Mods/customleaders` |
+| Custom Leaders Plugin | `menace-customleadersplugin` | high | `{gamePath}/Mods` |
 | Menace ModKit | `menace-modkit` | low | `{gamePath}/.` |
-| BepInEx Mod | `menace-bepinexmod` | high | `{gamePath}/BepInEx` |
 | MelonLoader Mod | `menace-melonmod` | high | `{gamePath}/.` |
-| BepInEx Plugins | `menace-bepinex-plugins` | high | `{gamePath}/BepInEx/plugins` |
-| BepInEx Patchers | `menace-bepinex-patchers` | high | `{gamePath}/BepInEx/patchers` |
-| BepInEx Config | `menace-bepinex-config` | high | `{gamePath}/BepInEx/config` |
 | MelonLoader Mods | `menace-melonloader-mods` | high | `{gamePath}/Mods` |
 | MelonLoader Plugins | `menace-melonloader-plugins` | high | `{gamePath}/Plugins` |
 | MelonLoader Config | `menace-melonloader-config` | high | `{gamePath}/UserData` |
-| BepInExConfigManager | `menace-bepcfgman` | high | `{gamePath}/BepInEx` |
 | MelonPreferencesManager | `menace-melonprefman` | high | `{gamePath}/Mods` |
 | Root Game Folder | `menace-root` | high | `{gamePath}` |
-| BepInEx Injector | `menace-bepinex` | low | `{gamePath}` |
 | MelonLoader | `menace-melonloader` | low | `{gamePath}` |
 | Jiangyu Loader | `menace-jiangyu` | low | `{gamePath}/Mods` |
 | Jiangyu Mod | `menace-jiangyumod` | 29 | `?` |
@@ -83,16 +73,15 @@ Installers run in priority order (lower number = tested first). The first instal
 | Installer ID | Priority |
 | --- | --- |
 | `menace-melonloader` | 26 |
-| `menace-bepinex` | 27 |
 | `menace-modkit` | 28 |
 | `menace-jiangyu` | 29 |
 | `menace-jiangyumod` | 30 |
 | `menace-modpackloader` | 31 |
 | `menace-modpackmod` | 32 |
 | `menace-root` | 33 |
-| `menace-bepcfgman` | 34 |
+| `menace-assemblydll` | 34 |
 | `menace-melonprefman` | 35 |
-| `menace-assemblydll` | 36 |
+| `menace-customleadersplugin` | 36 |
 | `menace-plugin` | 37 |
 | `menace-customleaders` | 38 |
 | `menace-assets` | 39 |
@@ -104,7 +93,6 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 - **Custom Launch** (`Menace.exe`)
 - **Custom Launch** (`gamelaunchhelper.exe`)
-- **${CUSTOMLOADER_NAME} Installer** (`path.join(CUSTOMLOADER_FOLDER`)
 
 ## Toolbar Actions
 
@@ -121,17 +109,9 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Submit Bug Report
 - Open Downloads Folder
 
-## Auto-Downloaded Dependencies
-
-| Dependency | Version | Details |
-| --- | --- | --- |
-| BepInEx | 5.4.23.5 | il2cpp |
-| BepInEx Configuration Manager | 18.4.1 | — |
-
 ## Special Features
 
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
-- **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.

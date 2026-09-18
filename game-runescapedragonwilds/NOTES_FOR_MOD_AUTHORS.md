@@ -14,8 +14,8 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | UE4SS Itself | a `dwmapi.dll` file | `RSDragonwilds\Binaries\Win64` |
 | UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `RSDragonwilds\Binaries\Win64\ue4ss\Mods` |
 | UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | `RSDragonwilds\Binaries\Win64\ue4ss\Mods` |
-| Root / Game Folder Mods | a top-level folder such as `RSDragonwilds` | the game folder itself (no subfolder) |
-| Config File Mods | a config file such as `engine.ini` or `scalability.ini` | `LOCALAPPDATA\RSDragonwilds\Saved\Config\Windows` |
+| Root / Game Folder Mods | a top-level folder such as `RSDragonwilds`, `Engine` or `Content` | the game folder itself (no subfolder) |
+| Config File Mods | a config file such as `engine.ini` or `game.ini` | - |
 | Save Game Files | a `.sav` file | - |
 | Savecharacters | a file with the `.json` extension | - |
 | Fallback Installer | anything unrecognised with no pak file | `RSDragonwilds\Binaries\Win64` |
@@ -81,7 +81,7 @@ Installs to: `RSDragonwilds\Content\Paks\LogicMods\LogicMods`
 
 ## Pak Mods
 
-Standard content mods: one or more `.pak` files. Vortex installs the mod files themselves, so the folder structure around them in the archive does not matter.
+Standard content mods: one or more `.pak` files. Vortex copies just the pak files themselves, flattened, so the folder structure around them does not matter.
 
 ```text
 MyPakMod.zip
@@ -90,15 +90,16 @@ MyPakMod.zip
 
 **Requirements:**
 
-- Recognised by any file with the `.pak` extension.
-- Surrounding folders are discarded - only the mod files are installed.
-- If the archive holds several mod files, Vortex asks the user which to install, which is useful for shipping optional variants in one download.
+- Any archive containing a `.pak` file reaches this installer (unless an earlier one claimed it).
+- Only the pak files are installed - surrounding folders are discarded.
+- If the archive holds more than one pak, Vortex asks the user which to install - useful for optional variants.
 
 Installs to: `RSDragonwilds\Content\Paks\~mods`
 
 **Common mistakes:**
 
 - Shipping several unrelated paks in one archive when you meant them all to install - the user gets a choice dialog and may pick only one.
+- Blueprint mods belong in a `LogicMods` folder instead - see above.
 
 ## UE4SS Itself
 
@@ -107,6 +108,7 @@ This installer handles the UE4SS runtime package, not individual mods. Most auth
 **Requirements:**
 
 - Recognised by a file named `dwmapi.dll` at any level of the archive.
+- Also recognised by any of the UE4SS support folders: `MapGenBP`, `MemberVarLayoutTemplates`, `UE4SS_Signatures` or `VTableLayoutTemplates`.
 
 Installs to: `RSDragonwilds\Binaries\Win64`
 
@@ -172,7 +174,7 @@ MyRootMod.zip
 
 **Requirements:**
 
-- Recognised by a top-level folder matching any of: `RSDragonwilds`.
+- Recognised by a top-level folder matching any of: `RSDragonwilds`, `Engine`, `Content`, `Binaries`, `Mods`, `Paks` or `Movies`.
 - The matched folder and everything below it is copied into the game folder, preserving structure.
 
 Installs to: the game folder itself (no subfolder)
@@ -187,10 +189,7 @@ Config tweaks are deployed to the game's config folder in your user profile, not
 
 **Requirements:**
 
-- Recognised by any of these filenames in the archive: `engine.ini`, `scalability.ini` or `input.ini`.
-- Installed to `LOCALAPPDATA\RSDragonwilds\Saved\Config\Windows`.
-
-Installs to: `LOCALAPPDATA\RSDragonwilds\Saved\Config\Windows`
+- Recognised by any of these filenames in the archive: `engine.ini`, `game.ini`, `gameusersettings.ini`, `input.ini`, `scalability.ini`, `hardware.ini`, `deviceprofiles.ini`, `compat.ini`, `runtimeoptions.ini`, `gameplaytags.ini`, `enhancedinput.ini` or `consolevariables.ini`.
 
 **Common mistakes:**
 

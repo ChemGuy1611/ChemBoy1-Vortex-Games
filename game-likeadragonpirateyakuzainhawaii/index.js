@@ -5,7 +5,7 @@ Author: ChemBoy1
 Version: 0.2.0
 Date: 2026-XX-XX
 Notes:
-- 
+-
 ////////////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -28,9 +28,9 @@ const STEAMAPP_ID = "3061810";
 const STEAMAPP_ID_DEMO = "3352550";
 const EPICAPP_ID = "XXX";
 const GOGAPP_ID = "XXX";
-const XBOXAPP_ID = "XXX"; //"SEGAofAmericaInc.s1b05f489rw" - NOT ACTIVE YET- Crashes on launch with SRMM injector installed
+const XBOXAPP_ID = "SEGAofAmericaInc.s1b05f489rw"; //"SEGAofAmericaInc.s1b05f489rw" - NOT ACTIVE YET- Crashes on launch with SRMM injector installed
 const XBOXEXECNAME = "runtime.media.startup";
-const XBOX_PUB_ID = "XXX"; //get from Save folder
+const XBOX_PUB_ID = "s751p9cej88mt"; //get from Save folder
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, STEAMAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
 
 const TOPLEVEL_FOLDER = path.join("runtime", "media");
@@ -574,9 +574,7 @@ function installModManager(files) {
   const setModTypeInstruction = { type: "setmodtype", value: MODMANAGER_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -631,9 +629,7 @@ function installModManagerMod(files, fileName) {
 
   // Remove directories and anything that isn't in the rootPath.
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -678,9 +674,7 @@ function installData(files) {
   const setModTypeInstruction = { type: "setmodtype", value: DATAMOD_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -729,9 +723,7 @@ function installRoot(files) {
   const idx = modFile.indexOf(path.basename(modFile));
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",

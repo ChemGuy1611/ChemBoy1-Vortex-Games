@@ -20,21 +20,6 @@ This installer handles MelonLoader itself, not mods for it. It exists so users c
 
 ========================================================================
 
-BepInEx (mod loader):
-
-This installer handles BepInEx itself, not mods for it. It exists so users can install BepInEx through Vortex, and mod authors normally never package this.
-
-  Requirements:
-    - Recognised by a file named "BepInEx.Core.dll" in the archive.
-    - Requires BOTH a folder named "BepInEx" and the loader file "BepInEx.Core.dll".
-
-  Installs to: the game folder itself (no subfolder)
-
-  Common mistakes:
-    - If you bundle BepInEx inside your mod archive, Vortex treats the whole download as BepInEx rather than as your mod. Ship the mod alone and list BepInEx as a requirement.
-
-========================================================================
-
 Modkit:
 
 Recognised when the archive contains a file or folder named "Menace.Modkit.App.exe".
@@ -118,18 +103,18 @@ MyRootMod.zip
 
 ========================================================================
 
-BepInEx Configuration Manager:
+Assembly Replacement Mods:
 
-This installer handles the BepInEx Configuration Manager plugin itself, not mods for it. It exists so users can install the BepInEx Configuration Manager plugin through Vortex, and mod authors normally never package this.
+Mods that replace a compiled game assembly outright. These overwrite core game files, so they conflict with any other mod touching the same assembly.
 
   Requirements:
-    - Recognised by a file named "configurationmanager.dll" in the archive.
-    - Requires the file "configurationmanager.dll" together with a "plugins" folder.
+    - Recognised by any file named "GameAssembly.dll".
 
-  Installs to: "BepInEx"
+  Installs to: the game folder itself (no subfolder)
 
   Common mistakes:
-    - If you bundle the BepInEx Configuration Manager plugin inside your mod archive, Vortex treats the whole download as the BepInEx Configuration Manager plugin rather than as your mod. Ship the mod alone and list the BepInEx Configuration Manager plugin as a requirement.
+    - Assembly replacements cannot be combined with other assembly mods - state this clearly on the mod page.
+    - Shipping an assembly alongside a plugin makes the whole archive install as an assembly mod.
 
 ========================================================================
 
@@ -147,18 +132,11 @@ This installer handles the MelonLoader Preferences Manager itself, not mods for 
 
 ========================================================================
 
-Assembly Replacement Mods:
+Customleadersplugin:
 
-Mods that replace a compiled game assembly outright. These overwrite core game files, so they conflict with any other mod touching the same assembly.
+Recognised when the archive contains a file or folder named "MenaceCustomLeader.dll".
 
-  Requirements:
-    - Recognised by any file named "GameAssembly.dll".
-
-  Installs to: the game folder itself (no subfolder)
-
-  Common mistakes:
-    - Assembly replacements cannot be combined with other assembly mods - state this clearly on the mod page.
-    - Shipping an assembly alongside a plugin makes the whole archive install as an assembly mod.
+  Installs to: "Mods"
 
 ========================================================================
 
@@ -174,7 +152,7 @@ MyPlugin.zip
   Requirements:
     - Recognised by any file with the ".dll" extension.
 
-  Installs to: "BepInEx"
+  Installs to: "Mods"
 
   Common mistakes:
     - Wrapping the DLL in a "BepInEx\plugins" folder as well - it can end up nested one level too deep.

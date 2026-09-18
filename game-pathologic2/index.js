@@ -2,8 +2,8 @@
 Name: Pathologic 2 Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-01-14
+Version: 0.1.1
+Date: 2026-09-17
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -27,10 +27,10 @@ const STEAMAPP_ID = "505230";
 const STEAMAPP_ID_DEMO = null;
 const EPICAPP_ID = null;
 const GOGAPP_ID = "1076642617";
-const XBOXAPP_ID = "XXX"; //Not on Game Pass, so cannot get info
-const XBOXEXECNAME = "XXX";
-const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const XBOXAPP_ID = "tinyBuildGames.1058222EB8C68"; // https://www.microsoft.com/en-pm/p/pathologic-2/9phs5q7kqmjm
+const XBOXEXECNAME = "App";
+const XBOX_PUB_ID = "3sz1pp2ynv2xe"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "Pathologic 2";
 const GAME_NAME_SHORT = GAME_NAME;
 const BINARIES_PATH = ".";

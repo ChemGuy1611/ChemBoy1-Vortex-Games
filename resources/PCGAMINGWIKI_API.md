@@ -313,3 +313,5 @@ Two things to keep in mind when touching that code:
 queries, each with its own bot-protection behaviour and usage rules).
 `STEAMCHARTS_API.md` (concurrent-player history for a Steam AppID resolved here — and the store
 search endpoint that resolves a name to an AppID when the wiki cannot).
+`MICROSOFT_STORE_CATALOG_API.md` (turning the `xbox_url` resolved here into the actual
+`XBOXAPP_ID`/`XBOXEXECNAME`/`XBOX_PUB_ID` identity strings a Store product ID alone doesn't carry).

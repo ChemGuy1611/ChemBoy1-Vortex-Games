@@ -2,8 +2,13 @@
 
 ## Planned Improvements (Not Yet Released)
 
+- None
+
+## [0.4.3] - 2026-09-17
+
 - Fixed: Mod files with no file extension were skipped during installation
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
+- Added support for the Xbox version of the game.
 
 ## [0.4.2] - 2026-05-24
 

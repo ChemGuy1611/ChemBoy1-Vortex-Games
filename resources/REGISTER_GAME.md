@@ -304,3 +304,5 @@ reference for the `requiresLauncher` field above). `PCGAMINGWIKI_API.md` (lookin
 Epic/Microsoft Store IDs these fields need). `STEAM_FILE_DOWNLOADER.md` (`details.steamAppId`
 and the `details.hideSteamKit` opt-out, both read by the Steam file-verification extension).
 `STEAMCHARTS_API.md` (player-count history keyed by that same `steamAppId`).
+`MICROSOFT_STORE_CATALOG_API.md` (resolving `XBOXAPP_ID`/`XBOXEXECNAME`/`XBOX_PUB_ID` from a Store
+product ID without an installed Game Pass copy).
