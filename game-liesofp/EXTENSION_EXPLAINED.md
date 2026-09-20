@@ -11,8 +11,8 @@
 ### Notes
 
 - Rebuilt on the unified UE4-5 template (base file: game-trepang2/index.js), added UE4SS/LogicMods/Save mod support
-- Keeps Unreal Engine Mod Installer (UEMI) dependency for PAK installation - FBLO wired to UEMI's global 'ue4-sortable-modtype' via a loadOrderPrefixFunc wrapper
 - Fixed a latent bug from the pre-FBLO 0.5.x extension: its Steam/Epic Config/Save paths joined a relative "Saved\Config\..." string onto the game's own install path instead of %LocalAppData%, pointing at a folder that doesn't exist (confirmed against real save/config location via web search). Now uses the template's standard LocalAppData path, matching Xbox (which was already correct).
+- Dropped the Unreal Engine Mod Installer (UEMI) dependency - pak modtype/installer now self-owned per template-ue4-5; existing pak mods migrate automatically on update
 
 ## Key Identifiers
 
@@ -69,6 +69,7 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `liesofp-logicmods` | high | `{gamePath}/LiesofP/Content/Paks` |
 | Paks (no "~mods") | `liesofp-pakalt` | high | `{gamePath}/LiesofP/Content/Paks` |
 | Root Folder | `liesofp-root` | high | `{gamePath}` |
+| UE Sortable Pak Mod | `liesofp-uesortablepak` | 25 | `?` |
 | UE4SS Script Mod | `liesofp-scripts` | 50 | `?` |
 | UE4SS DLL Mod | `liesofp-ue4ssdll` | 52 | `?` |
 | Binaries (Engine Injector) | `liesofp-binaries` | 54 | `?` |
@@ -82,8 +83,9 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `liesofp-ue4sscombo` | 23 |
-| `liesofp-logicmods` | 24 |
+| `liesofp-ue4sscombo` | 26 |
+| `liesofp-logicmods` | 27 |
+| `liesofp-uesortablepak` | 29 |
 | `liesofp-ue4ss` | 31 |
 | `liesofp-scripts` | 35 |
 | `liesofp-ue4ssdll` | 37 |
@@ -128,4 +130,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-- **Required Extensions** — depends on: `Unreal Engine Mod Installer`.

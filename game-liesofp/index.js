@@ -2,12 +2,12 @@
 Name: Lies of P Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-09-17
+Version: 1.1.0
+Date: 2026-09-19
 Notes:
 - Rebuilt on the unified UE4-5 template (base file: game-trepang2/index.js), added UE4SS/LogicMods/Save mod support
-- Keeps Unreal Engine Mod Installer (UEMI) dependency for PAK installation - FBLO wired to UEMI's global 'ue4-sortable-modtype' via a loadOrderPrefixFunc wrapper
 - Fixed a latent bug from the pre-FBLO 0.5.x extension: its Steam/Epic Config/Save paths joined a relative "Saved\Config\..." string onto the game's own install path instead of %LocalAppData%, pointing at a folder that doesn't exist (confirmed against real save/config location via web search). Now uses the template's standard LocalAppData path, matching Xbox (which was already correct).
+- Dropped the Unreal Engine Mod Installer (UEMI) dependency - pak modtype/installer now self-owned per template-ue4-5; existing pak mods migrate automatically on update
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -88,10 +88,6 @@ const IO_STORE = false; //true if the Paks folder contains .ucas and .utoc files
 const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 const debug = false; //toggle for debug mode
 
-//UEMI - "Unreal Engine Mod Installer" external extension owns pak modtype/installer for this game (see Notes above).
-//Do not register a competing pak modtype/installer here - UE5_SORTABLE_ID is repointed to UEMI's literal global type
-//string further below instead of a game-specific id.
-
 //UE specific
 const ENGINE_VERSION = "5.X.X.0"; //Unreal Engine version. usually '4.27.2.0' or '5.X.X.0'. Written to UE4SS-settings.ini if writeEngineVersion is enabled
 const MAJOR_VERSION = ENGINE_VERSION.split(".")[0]; //major UE version
@@ -170,11 +166,13 @@ const SAVE_PATH_XBOX = path.join(
 //Settings related to the IO Store UE feature
 if (!PAKMOD_LOADORDER) PAKMOD_PATH = path.join(EPIC_CODE_NAME, "Content", "Paks"); //if loadOrder is disabled, Paks must be in root
 let PAKMOD_EXTS = [".pak"].concat(PAKMOD_EXTRA_EXTS);
+let PAK_FILE_MIN = PAKMOD_EXTS.length;
 let SYM_LINKS = true;
 if (IO_STORE) {
   //Set file number for pak installer file selection (needs to be 3 if IO Store is used to accomodate .ucas and .utoc files)
   SYM_LINKS = false;
   PAKMOD_EXTS = [".pak", ".ucas", ".utoc"].concat(PAKMOD_EXTRA_EXTS);
+  PAK_FILE_MIN = PAKMOD_EXTS.length;
 }
 
 //global variables to set later
@@ -198,19 +196,13 @@ const EXEC_FOLDER_DEFAULT = "Win64"; //almost never changes
 const EXEC_FOLDER_XBOX = "WinGDK"; //almost never changes
 
 //Unreal Engine Game Data
-//loadOrderPrefixFunc wraps this file's own FBLO-correct loadOrderPrefix(api, mod) helper - UEMI calls
-//loadOrderPrefixFunc(context, mod) (its own extension context, not api) when computing its sortable modtype's
-//mergeMods prefix, so without this override it falls back to its legacy Object.keys()-based indexing, which
-//does not work against FBLO's array-shaped persistent.loadOrder state.
 const UNREALDATA = {
   modsPath: PAKMOD_PATH,
   fileExt: PAKMOD_EXTS,
   loadOrder: PAKMOD_LOADORDER,
-  loadOrderPrefixFunc: uemiLoadOrderPrefix,
 };
-//UEMI ("Unreal Engine Mod Installer") registers this modtype id globally itself - do NOT register it here.
-//Kept as a literal (not a game-specific `${GAME_ID}-uesortablepak` id) so it matches UEMI's own registration exactly.
-const UE5_SORTABLE_ID = "ue4-sortable-modtype";
+const UE5_SORTABLE_ID = `${GAME_ID}-uesortablepak`; //should not be changed to maintain consistency with other UE5 games
+const UE5_SORTABLE_NAME = "UE Sortable Pak Mod";
 
 //Information for modtypes, installers, tools, and actions
 const BINARIES_ID = `${GAME_ID}-binaries`;
@@ -468,16 +460,13 @@ const spec = {
     compatible: {
       dinput: false,
       enb: false,
-      unrealEngine: true,
     },
     details: {
-      unrealEngine: UNREALDATA,
       steamAppId: +STEAMAPP_ID,
       gogAppId: GOGAPP_ID,
       epicAppId: EPICAPP_ID,
       xboxAppId: XBOXAPP_ID,
       supportsSymlinks: SYM_LINKS,
-      customOpenModsPath: UNREALDATA.absModsPath || UNREALDATA.modsPath,
       ignoreConflicts: IGNORE_CONFLICTS,
       ignoreDeploy: IGNORE_DEPLOY,
     },
@@ -2606,14 +2595,132 @@ function loadOrderPrefix(api, mod) {
   return makePrefix(pos) + "-";
 }
 
-//UEMI calls loadOrderPrefixFunc(context, mod) with its own extension context (not api) - context.api is the
-//same singleton, so just forward into this file's own FBLO-correct loadOrderPrefix helper above.
-function uemiLoadOrderPrefix(context, mod) {
-  return loadOrderPrefix(context.api, mod);
+//Split a list of paths into every path segment they contain, both separators, blanks dropped.
+//The test* functions above can get away with path.basename() because Vortex hands an installer
+//an archive listing that includes standalone directory entries ("LogicMods\"), whose basename
+//IS the folder name. A listing built by walking the staging folder (getAllFiles) has files only,
+//so a basename check there would reduce "LogicMods/foo.pak" to just "foo.pak" and never match a
+//folder marker. Matching segments works for both shapes - a directory entry splits to
+//["LogicMods", ""] and the blank is filtered out.
+function pathSegments(files) {
+  return files.flatMap((file) => file.split(/[\\/]+/)).filter(Boolean);
 }
 
-//NOTE: no testPak/installPak/chooseFilesToInstall here - UEMI ("Unreal Engine Mod Installer") owns pak mod
-//testing/installing entirely for this game (see requireExtension in applyGame() below).
+//Mirrors the registration-priority ladder in main() for just the installers that sit ABOVE the
+//pak installer's priority (UE5_SORTABLE_ID = 29): Mod Kit (25, only when hasModKit), UE4SS Combo
+//(26, always registered) and LogicMods (27, only when logicModsLoadOrder). An installer at or
+//below priority 29 never gets a turn once a pak-type file is present, since testPak's own check
+//is just "has a pak-type file" with no exclusivity - so lower-priority markers can't have
+//"actually" claimed the archive and are not checked here. Used by retagFomodPakMod() below to
+//work out, after the fact, what a FOMOD-installed mod would have been classified as had FOMOD
+//not intercepted it first. Pass paths relative to the staging folder when calling this on a
+//staged tree: an absolute path drags the staging root's own segments in, and a staging folder
+//living under the game's root folder name would then satisfy that check for every mod.
+function beatsPakInstaller(files) {
+  const segsLower = pathSegments(files).map((seg) => seg.toLowerCase());
+  if (hasModKit) {
+    const hasModKitExt = files.some(
+      (file) => path.extname(file).toLowerCase() === MODKITMOD_EXT,
+    );
+    const hasModKitFile = segsLower.includes(MODKITMOD_FILE.toLowerCase());
+    if (hasModKitExt && hasModKitFile) return true; //Mod Kit (25)
+  }
+  const hasBinariesFolder = segsLower.includes("binaries");
+  const hasContentFolder = segsLower.includes("content");
+  if (hasBinariesFolder && hasContentFolder) return true; //UE4SS Combo (26)
+  if (logicModsLoadOrder && segsLower.includes(LOGICMODS_FOLDER.toLowerCase())) return true; //LogicMods (27)
+  return false;
+}
+
+//Test for pak mods
+function testPak(files, gameId) {
+  const supportedGame = gameId === spec.game.id;
+  const isPak = files.some((file) => path.extname(file).toLowerCase() === PAK_EXT);
+  let supported = supportedGame && isPak;
+
+  // Test for a mod installer
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//install pak mods
+async function installPak(api, files) {
+  const fileExt = UNREALDATA.fileExt;
+  const modFiles = files.filter((file) => fileExt.includes(path.extname(file).toLowerCase()));
+  const modType = {
+    type: "setmodtype",
+    value: UE5_SORTABLE_ID,
+  };
+  const installFiles =
+    modFiles.length > PAK_FILE_MIN ? await chooseFilesToInstall(api, modFiles, fileExt) : modFiles;
+  const unrealModFiles = {
+    type: "attribute",
+    key: "unrealModFiles",
+    value: installFiles.map((f) => path.basename(f)),
+  };
+  let instructions = installFiles.map((file) => {
+    return {
+      type: "copy",
+      source: file,
+      destination: path.basename(file),
+    };
+  });
+  instructions.push(modType);
+  instructions.push(unrealModFiles);
+  return Promise.resolve({ instructions });
+}
+
+//file selection dialog for pak mods
+async function chooseFilesToInstall(api, files, fileExt) {
+  const t = api.translate;
+  return api
+    .showDialog(
+      "question",
+      t("Multiple {{PAK}} files", { replace: { PAK: fileExt } }),
+      {
+        text:
+          t("The mod you are installing contains {{x}} {{ext}} files.", {
+            replace: { x: files.length, ext: fileExt },
+          }) +
+          `This can be because the author intended for you to chose one of several options. Please select which files to install below:`,
+        checkboxes: files.map((pak) => {
+          return {
+            id: pak,
+            text: pak,
+            value: false,
+          };
+        }),
+      },
+      [{ label: "Cancel" }, { label: "Install Selected" }, { label: "Install All_plural" }],
+    )
+    .then((result) => {
+      if (result.action === "Cancel")
+        return Promise.reject(new util.UserCanceled("User cancelled."));
+      else {
+        const installAll =
+          result.action === "Install All" || result.action === "Install All_plural";
+        const installPAKS = installAll
+          ? files
+          : Object.keys(result.input)
+              .filter((s) => result.input[s])
+              .map((file) => files.find((f) => f === file));
+        return installPAKS;
+      }
+    });
+}
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
@@ -2848,7 +2955,6 @@ async function getModKitPath() {
 
 //Let Vortex know about the game
 function applyGame(context, gameSpec) {
-  context.requireExtension("Unreal Engine Mod Installer"); //require UEMI extension
   //register the game
   const game = {
     ...gameSpec.game,
@@ -2937,8 +3043,34 @@ function applyGame(context, gameSpec) {
     );
   });
 
-  //NOTE: no Pak modType registration here - UEMI ("Unreal Engine Mod Installer") registers UE5_SORTABLE_ID
-  //('ue4-sortable-modtype') globally itself, reading UNREALDATA via spec.game.details.unrealEngine below.
+  //Pak modType
+  context.registerModType(
+    UE5_SORTABLE_ID,
+    25,
+    (gameId) => {
+      var _a;
+      return (
+        gameId === GAME_ID &&
+        !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+        _a === void 0
+          ? void 0
+          : _a.path)
+      );
+    },
+    (game) => pathPattern(context.api, game, path.join("{gamePath}", UNREALDATA.modsPath)),
+    () => Promise.resolve(false),
+    {
+      name: UE5_SORTABLE_NAME,
+      mergeMods: (mod) => {
+        if (UNREALDATA.loadOrder === true) {
+          return loadOrderPrefix(context.api, mod) + mod.id;
+        } else {
+          //If load order is disabled, don't use sorting folders
+          return "";
+        }
+      }, //*/
+    },
+  );
 
   //register mod types explicitly (due to potentially dynamic Binaries folder)
   if (ue4ssLoadOrder) {
@@ -3073,16 +3205,17 @@ function applyGame(context, gameSpec) {
   ); //*/
 
   //register mod installers
-  //Priorities renumbered around UEMI's fixed ue4-pak-installer slot (prio 25, external). UE4SSCOMBO_ID/LOGICMODS_ID
-  //must run BEFORE UEMI's generic "any .pak present" test or their archives get intercepted by it - kept tight,
-  //consecutive, immediately below 25, same reasoning as game-witchfire/game-manorlords' sub-25 shift. Everything
-  //else doesn't test for .pak, so stays above 25 at template's original spacing.
   if (hasModKit === true) {
-    context.registerInstaller(MODKITMOD_ID, 22, testModKitMod, installModKitMod);
+    context.registerInstaller(MODKITMOD_ID, 25, testModKitMod, installModKitMod);
   }
-  context.registerInstaller(UE4SSCOMBO_ID, 23, testUe4ssCombo, installUe4ssCombo); //not gated on ue4ssLoadOrder - also handles mods with both Binaries and Content folders that are not for UE4SS
+  context.registerInstaller(UE4SSCOMBO_ID, 26, testUe4ssCombo, installUe4ssCombo); //not gated on ue4ssLoadOrder - also handles mods with both Binaries and Content folders that are not for UE4SS
   if (ue4ssLoadOrder) {
-    context.registerInstaller(LOGICMODS_ID, 24, testLogic, installLogic);
+    context.registerInstaller(LOGICMODS_ID, 27, testLogic, installLogic);
+  }
+  context.registerInstaller(UE5_SORTABLE_ID, 29, testPak, (files) =>
+    installPak(context.api, files),
+  ); //Pak installer
+  if (ue4ssLoadOrder) {
     context.registerInstaller(UE4SS_ID, 31, testUe4ss, installUe4ss);
   }
   if (SIGBYPASS_REQUIRED === true) {
@@ -3338,6 +3471,7 @@ function applyGame(context, gameSpec) {
 //Main function
 function main(context) {
   applyGame(context, spec);
+  context.registerMigration((old) => migrateUemiPakType110(context.api, old));
   if (UNREALDATA.loadOrder === true) {
     //UNREAL - mod load order
     if (FBLO) {
@@ -3513,6 +3647,25 @@ function main(context) {
           (id) => modId.includes("-" + id + "-") || modId.includes(" " + id + " "),
         );
     });
+    //Retag a FOMOD-installed plain pak mod as the sortable pak modtype so it shows up on
+    //the Load Order page - see retagFomodPakMod() for why this is needed. Covers both a
+    //first install and a mod update (did-install-mod fires for both).
+    api.events.on("did-install-mod", (gameId, archiveId, modId) => {
+      retagFomodPakMod(api, gameId, modId).catch((err) =>
+        log("warn", `[${GAME_ID}] retagFomodPakMod failed for "${modId}"`, err),
+      );
+    });
+    //Permanent idempotent safety net for the UEMI pak-modtype migration above - fires every
+    //activation regardless of registerMigration's version gate, catching a skipped version, a
+    //fresh discovery, or a mod restored from an old backup. gamemode-activated is a plain `emit`
+    //(not emitAndAwait, see reference_vortex_game_lifecycle) so it takes events.on, not onAsync -
+    //and it's a GLOBAL event (fires for every game), so the gameId guard must run first.
+    api.events.on("gamemode-activated", (gameId) => {
+      if (gameId !== GAME_ID) return;
+      migrateUemiPakType(api).catch((err) =>
+        log("warn", `[${GAME_ID}] migrateUemiPakType failed on gamemode-activated`, err),
+      );
+    });
   });
   return true;
 }
@@ -3535,6 +3688,113 @@ const requestDeployment = (api, spec) => {
     ],
   });
 };
+
+//FOMOD's built-in installer (and the generic basicInstaller fallback) never emit a
+//`setmodtype` instruction, so a mod they hand off keeps modtype '' forever - and
+//deserializeLoadOrder() above only ever pulls in enabled mods whose type is exactly
+//UE5_SORTABLE_ID. That's the entire reason a FOMOD-packaged pak mod (e.g. one built with
+//a checkbox wizard picking between pak variants) never shows up on the Load Order page:
+//it was never tagged as a sortable pak mod in the first place. did-install-mod fires after
+//Vortex's own processSetModType step has already run, so mod.type here is final for this
+//install - retag it here if it looks like a plain pak mod that just happened to go through
+//FOMOD instead of this extension's own testPak/installPak.
+async function retagFomodPakMod(api, gameId, modId) {
+  if (gameId !== GAME_ID || !PAKMOD_LOADORDER) return;
+  const mod = util.getSafe(api.getState(), ["persistent", "mods", GAME_ID, modId], undefined);
+  //Non-empty type means one of this extension's own installers already classified it
+  //correctly (or a previous run of this same handler already fixed it) - strict no-op for
+  //every mod that didn't go through FOMOD/basicInstaller, so normal installs can't regress.
+  if (mod === undefined || !!mod.type) return;
+  const stagingFolder = getModStagingFolder(api, modId);
+  if (!stagingFolder) return;
+  //Relative to the staging folder: beatsPakInstaller matches path segments, and the staging
+  //root's own segments are not part of the mod (see the note on that function).
+  const files = (await getAllFiles(stagingFolder)).map((file) =>
+    path.relative(stagingFolder, file),
+  );
+  const fileExt = UNREALDATA.fileExt;
+  const pakFiles = files.filter((file) => fileExt.includes(path.extname(file).toLowerCase()));
+  if (pakFiles.length === 0 || beatsPakInstaller(files)) return;
+  //installPak() flattens an archive down to just the pak-type files at the staging root, so
+  //retagging only reproduces what it would have done when the FOMOD staged its paks shallowly
+  //too. A mod staged in full game-root layout would deploy to a nested path this extension
+  //never produces itself - leave those with the empty type they already had rather than list
+  //them on the Load Order page implying they are sorted correctly.
+  const stagedAsGameRoot = pakFiles.some((file) =>
+    pathSegments([path.dirname(file)]).some(
+      (seg) => seg.toLowerCase() === ROOT_FOLDER.toLowerCase(),
+    ),
+  );
+  if (stagedAsGameRoot) return;
+  api.store.dispatch(actions.setModType(GAME_ID, modId, UE5_SORTABLE_ID));
+  if (debug)
+    log(
+      "debug",
+      `[${GAME_ID}] retagged FOMOD-installed mod "${modId}" as ${UE5_SORTABLE_ID} so it shows up on the Load Order page`,
+    );
+  //The retag above has to happen unconditionally - it touches no load order state, and a
+  //collection-installed FOMOD pak mod needs it just as much as a manually installed one. Only
+  //the refresh and the deployment request below are skipped mid-collection-install: core's
+  //file_based_loadorder skips every one of its own load triggers while installing_dependencies
+  //is non-empty, and the did-deploy at the end of the collection install re-deserializes anyway
+  //- by then with the type set here. (This key is core activity state; this extension never
+  //sets it.)
+  const state = api.getState();
+  const installingDependencies = util.getSafe(
+    state,
+    ["session", "base", "activity", "installing_dependencies"],
+    [],
+  );
+  if (
+    Array.isArray(installingDependencies)
+      ? installingDependencies.length > 0
+      : !!installingDependencies
+  )
+    return;
+  //deserializeLoadOrder builds its result from selectors.activeProfile (via generateProps), so
+  //resolve the profile the same way here: installing a mod for this game while a different game
+  //is active would otherwise have us dispatch against a profile the deserialize never saw.
+  const profile = selectors.activeProfile(state);
+  if (profile?.gameId !== GAME_ID) return;
+  //The core file_based_loadorder extension already deserialized before this handler ran (it
+  //registers first and did-install-mod listeners run concurrently), so it read the mod's old
+  //(empty) type. Re-read it ourselves now that the type is fixed and push the result into
+  //state - same pattern didDeploy() above uses after its own update guard clears.
+  try {
+    const refreshedLO = await deserializeLoadOrder({ api });
+    //did-install-mod is emitted right after setModsEnabled, which awaits will-enable-mods before
+    //the mod lands in profile.modState - so an extension with a slow handler there can leave the
+    //mod still disabled at this point, and deserializeLoadOrder filters strictly on enabled mods.
+    //Dispatching that result would drop the mod from the order and deploy it under a ZZZZ- prefix
+    //until the next deserialize, so leave the stored order alone and let that next one pick it up.
+    if (refreshedLO.some((entry) => entry.id === modId)) {
+      api.store.dispatch(actions.setFBLoadOrder(profile.id, refreshedLO));
+    }
+  } catch (err) {
+    log("warn", `[${GAME_ID}] load order refresh after retagging "${modId}" failed`, err);
+  }
+  requestDeployment(api, spec);
+}
+
+//One-time migration off UEMI's ("Unreal Engine Mod Installer") global pak modtype id
+//('ue4-sortable-modtype') onto this extension's own UE5_SORTABLE_ID, now that UEMI is no
+//longer required. Retag only - both ids resolve to the same UNREALDATA.modsPath folder, so
+//no files move. Idempotent: a mod already on the new type is a no-op check every time this runs.
+async function migrateUemiPakType(api) {
+  const state = api.getState();
+  const mods = util.getSafe(state, ["persistent", "mods", GAME_ID], {});
+  const legacyIds = Object.keys(mods).filter((id) => mods[id].type === "ue4-sortable-modtype");
+  if (legacyIds.length === 0) return;
+  const batch = legacyIds.map((id) => actions.setModType(GAME_ID, id, UE5_SORTABLE_ID));
+  util.batchDispatch(api.store, batch);
+  log("info", `[${GAME_ID}] migrated ${legacyIds.length} pak mod(s) off UEMI's global modtype`);
+}
+
+const semver = require("semver");
+async function migrateUemiPakType110(api, oldVersion) {
+  if (semver.gte(oldVersion, "1.1.0")) return;
+  await migrateUemiPakType(api);
+}
 
 async function didDeploy(api, profileId) {
   //run on mod deploy
