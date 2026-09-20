@@ -4,6 +4,11 @@
 
 - None
 
+## [1.1.1] - 2026-09-19
+
+- Removed the dependency on the Unreal Engine Mod Installer extension. Pak mods are now installed and managed directly by this extension; existing installs are migrated automatically, no action needed.
+- Fixed: A FOMOD-packaged MLUE4SS mod could be installed to the wrong location instead of the LogicMods folder.
+
 ## [1.0.0] - 2026-09-15
 
 - Fixed: Mod files with no file extension were skipped during installation

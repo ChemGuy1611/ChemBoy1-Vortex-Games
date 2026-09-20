@@ -9,6 +9,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `StateOfDecay2` |
+| Pak Mods | a `.pak` file | `LOCALAPPDATA\StateOfDecay2\Saved\Paks` |
 | Root / Game Folder Mods | a top-level folder such as `StateOfDecay2`, `Engine` or `Content` | the game folder itself (no subfolder) |
 | Config File Mods | a config file such as `engine.ini` or `game.ini` | - |
 | Save Game Files | a `.sav` file | - |
@@ -49,6 +50,28 @@ Installs to: `StateOfDecay2`
 
 - Including only one of `Content` or `Binaries` - the archive then falls through to a different installer.
 - Adding an extra wrapper folder between `Binaries` and `Win64`.
+
+## Pak Mods
+
+Standard content mods: one or more `.pak` files. Vortex copies just the pak files themselves, flattened, so the folder structure around them does not matter.
+
+```text
+MyPakMod.zip
+└── MyPakMod.pak
+```
+
+**Requirements:**
+
+- Any archive containing a `.pak` file reaches this installer (unless an earlier one claimed it).
+- Only the pak files are installed - surrounding folders are discarded.
+- If the archive holds more than one pak, Vortex asks the user which to install - useful for optional variants.
+
+Installs to: `LOCALAPPDATA\StateOfDecay2\Saved\Paks`
+
+**Common mistakes:**
+
+- Shipping several unrelated paks in one archive when you meant them all to install - the user gets a choice dialog and may pick only one.
+- Blueprint mods belong in a `LogicMods` folder instead - see above.
 
 ## Root / Game Folder Mods
 

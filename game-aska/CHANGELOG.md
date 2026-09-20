@@ -2,6 +2,12 @@
 
 ## Planned Improvements (Not Yet Released)
 
+- None
+
+## [1.0.0] - 2026-09-18
+
+- BepInEx and BepInExConfigManager downloads now automatically check for and install the latest version instead of a fixed one.
+- Changed: Plugins that don't already ship their own folder are now installed into one of their own, so two mods with a same-named file no longer overwrite each other.
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 
 ## [0.1.4] - 2026-09-12

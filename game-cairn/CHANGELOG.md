@@ -1,8 +1,12 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.0.0] - 2026-09-18
 
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
+- BepInEx and MelonLoader downloads now automatically check for and install the latest version instead of a fixed one.
+- BepInExConfigManager now notifies you to install it automatically once BepInEx is detected, instead of requiring the manual download button; also bumped to the latest version.
+- Plugin mods now install into their own per-mod subfolder instead of merging loose into the shared Mods/Plugins folder.
+- Added an "Open Save Folder" button.
 
 ## [0.1.3] - 2026-09-12
 

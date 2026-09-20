@@ -28,6 +28,11 @@ Fills in all XXX fields it can resolve automatically from Steam, GOG, Epic,
 PCGamingWiki, and (for Xbox titles) Microsoft's Store product catalog.
 Remaining XXX fields are reported at the end for manual entry.
 
+Config/save paths: PCGamingWiki's resolved path is auto-set for Unity templates
+only. For template-basic, -godot, -rpgmaker, -frostbite, and -snowdropengine it
+is added as a review comment on the placeholder const instead (path CONSTRUCTION
+varies too much per template to auto-set safely) - see PCGW_COMMENT_TEMPLATES.
+
 GAME_ID comes from the Nexus Mods domain name when the lookup succeeds, and is
 otherwise derived from the game name. Either way it never contains hyphens or
 spaces - only lowercase letters and digits. In the rare case that the Nexus
@@ -77,7 +82,8 @@ from vortex_utils import (
     REPO_ROOT, PCGW_API, TITLE_IMAGES_DIR, BANNER_IMAGES_DIR, js_string_literal,
     http_get, http_get_bytes, http_get_json,
     roman_to_arabic, arabic_to_roman, name_lookup_variants,
-    lookup_pcgamingwiki, pcgw_get_json, get_api_key, run_generate_explained_batch,
+    lookup_pcgamingwiki, pcgw_get_json, parse_pcgw_data_paths, format_pcgw_path,
+    get_api_key, run_generate_explained_batch,
     run_generate_notes_batch, eslint_check,
     fetch_epic_app_id, fetch_gog_app_id, fetch_xbox_identity, add_to_discovery_ids,
     download_exec_icon, download_cover_art, download_title_image, download_banner_image,
@@ -109,6 +115,32 @@ TEMPLATES = [
 
 # Short names accepted on the command line (strip the "template-" prefix)
 TEMPLATE_SHORT_NAMES = [t[len("template-"):] for t in TEMPLATES]
+
+# Templates whose config/save placeholder consts get a review comment (never a value change)
+# from PCGamingWiki's Game data/config + Game data/saves rows. Each entry names which const on
+# that template's scaffold gets the finding - None means the template has no matching line.
+PCGW_COMMENT_TEMPLATES = {
+    "template-basic": {
+        "config_var": "CONFIG_FOLDERNAME", "config_loc_var": "CONFIGMOD_LOCATION",
+        "save_var":   "SAVE_FOLDERNAME",   "save_loc_var":   "SAVEMOD_LOCATION",
+    },
+    "template-godot": {
+        "config_var": "CONFIG_FOLDERNAME", "config_loc_var": "CONFIGMOD_LOCATION",
+        "save_var":   "SAVE_FOLDERNAME",   "save_loc_var":   "SAVEMOD_LOCATION",
+    },
+    "template-rpgmaker": {
+        "config_var": "CONFIG_FOLDERNAME", "config_loc_var": "CONFIGMOD_LOCATION",
+        "save_var":   None,                "save_loc_var":   "SAVEMOD_LOCATION",
+    },
+    "template-frostbite": {
+        "config_var": "CONFIG_FOLDER", "config_loc_var": None,
+        "save_var":   None,            "save_loc_var":   None,
+    },
+    "template-snowdropengine": {
+        "config_var": "CONFIG_FOLDER", "config_loc_var": None,
+        "save_var":   None,            "save_loc_var":   None,
+    },
+}
 
 # ── Steam ─────────────────────────────────────────────────────────────────────
 
@@ -416,7 +448,8 @@ def fetch_pcgw_availability(page_title):
     """Fetch PCGamingWiki page wikitext and check the Availability section for store presence.
     Returns dict: {'xbox': bool, 'xbox_url': str|None, 'epic_url': str|None, 'engine_version': str|None}.
     engine_version is a 4-part string like '5.4.4.0' parsed from {{Infobox game/row/engine|...|build=X.Y.Z}}."""
-    result = {'xbox': False, 'xbox_url': None, 'epic_url': None, 'engine_version': None, 'unity_paths': {}}
+    result = {'xbox': False, 'xbox_url': None, 'epic_url': None, 'engine_version': None,
+              'unity_paths': {}, 'wikitext': None}
     if not page_title:
         return result
     try:
@@ -437,6 +470,7 @@ def fetch_pcgw_availability(page_title):
                 )
                 data = pcgw_get_json(url)
                 wikitext = data.get("parse", {}).get("wikitext", {}).get("*", "")
+        result['wikitext'] = wikitext
         if re.search(r'microsoft\s*store|xbox\s*(game\s*pass|store|app)', wikitext, re.IGNORECASE):
             result['xbox'] = True
         # Store aliases accepted by Template:Availability/store, not just the
@@ -591,6 +625,19 @@ def add_line_comment(src, var_name, comment):
     """Add or replace the trailing // comment on the const/let VAR_NAME = ...; line."""
     pattern = rf'^([ \t]*(?:const|let)\s+{re.escape(var_name)}\s*=[^;\n]*;?)[ \t]*(?://[^\n]*)?\n'
     return re.sub(pattern, lambda m: m.group(1) + f' // {comment}\n', src, count=1, flags=re.MULTILINE)
+
+
+def add_or_append_comment(src, var_name, comment):
+    """Like add_line_comment(), but appends to an existing trailing comment instead of
+    replacing it - some template lines (e.g. template-frostbite's CONFIG_FOLDER) ship real
+    hand-written guidance text that a PCGamingWiki finding shouldn't clobber."""
+    m = re.search(
+        rf'^[ \t]*(?:const|let)\s+{re.escape(var_name)}\s*=[^;\n]*;?[ \t]*//([^\n]*)\n',
+        src, re.MULTILINE
+    )
+    if m and m.group(1).strip():
+        comment = f"{m.group(1).strip()} | {comment}"
+    return add_line_comment(src, var_name, comment)
 
 
 def sub_binaries_path(src, dir_parts):
@@ -780,6 +827,12 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         print(f"  Xbox     : found (set ID manually)")
     if engine_version:
         print(f"  UE build : {engine_version}")
+    pcgw_data_paths = parse_pcgw_data_paths(availability.get('wikitext'))
+    if template_name in PCGW_COMMENT_TEMPLATES:
+        cfg_display = format_pcgw_path(pcgw_data_paths.get('config'))
+        save_display = format_pcgw_path(pcgw_data_paths.get('save'))
+        print(f"  Config   : {cfg_display or 'not found on PCGamingWiki'}")
+        print(f"  Save     : {save_display or 'not found on PCGamingWiki'}")
 
     # ── 6. Copy template folder ───────────────────────────────────────────────
     if dry_run:
@@ -917,6 +970,21 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
             rf"\g<1>'{engine_version}'",
             src, count=1, flags=re.MULTILINE,
         )
+    # PCGamingWiki config/save findings land as review comments only - never a value change.
+    # Path CONSTRUCTION (which base folder, how many subfolder segments) varies too much across
+    # the 16 templates to auto-set safely; a wrong auto-filled path looks correct and isn't.
+    pcgw_spec = PCGW_COMMENT_TEMPLATES.get(template_name)
+    if pcgw_spec:
+        cfg_info = pcgw_data_paths.get('config')
+        save_info = pcgw_data_paths.get('save')
+        if cfg_info and pcgw_spec['config_var']:
+            src = add_or_append_comment(src, pcgw_spec['config_var'], f"PCGW config: {format_pcgw_path(cfg_info)}")
+        if cfg_info and pcgw_spec['config_loc_var']:
+            src = add_or_append_comment(src, pcgw_spec['config_loc_var'], f"PCGW base: {cfg_info['base']}")
+        if save_info and pcgw_spec['save_var']:
+            src = add_or_append_comment(src, pcgw_spec['save_var'], f"PCGW save: {format_pcgw_path(save_info)}")
+        if save_info and pcgw_spec['save_loc_var']:
+            src = add_or_append_comment(src, pcgw_spec['save_loc_var'], f"PCGW base: {save_info['base']}")
     write_index_js(dest, src)
     print("  index.js written")
 

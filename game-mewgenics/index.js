@@ -2,8 +2,8 @@
 Name: Mewgenics Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.3.4
-Date: 2026-09-06
+Version: 0.3.5
+Date: 2026-09-18
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -604,7 +604,7 @@ function installMod(files, fileName) {
   }
   let rootPath = path.dirname(modFile);
   //*
-  let folder = path.basename(fileName).split("-")[0];
+  let folder = path.basename(fileName);
   const ROOT_PATH = path.basename(rootPath);
   if (ROOT_PATH !== ".") {
     folder = "";

@@ -2,8 +2,8 @@
 Name: Road to Vostok Vortex Extension
 Structure: Godot Engine Game
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-09-08
+Version: 1.0.3
+Date: 2026-09-18
 Notes:
 - 
 ///////////////////////////////////////////*/
@@ -515,8 +515,7 @@ async function installMcm(files, destinationPath) {
   //Repack .vmz files since Vortex forcibly extracts them as archives for some reason...
   const szip = new util.SevenZip();
   const modName = path.basename(destinationPath, ".installing");
-  const split = modName.split("-");
-  const archiveName = split[0] + REPACK_EXT;
+  const archiveName = modName + REPACK_EXT;
   const archivePath = path.join(destinationPath, archiveName);
   const rootRelPaths = await fsp.readdir(destinationPath);
   await szip.add(
@@ -651,8 +650,7 @@ async function installRezip(files, destinationPath) {
   //Repack .vmz files since Vortex forcibly extracts them as archives for some reason...
   const szip = new util.SevenZip();
   const modName = path.basename(destinationPath, ".installing");
-  const split = modName.split("-");
-  const archiveName = split[0] + REPACK_EXT;
+  const archiveName = modName + REPACK_EXT;
   const archivePath = path.join(destinationPath, archiveName);
   const rootRelPaths = await fsp.readdir(destinationPath);
   await szip.add(

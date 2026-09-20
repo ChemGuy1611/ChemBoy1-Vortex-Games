@@ -4,6 +4,10 @@
 
 - None
 
+## [1.2.0] - 2026-09-18
+
+- Removed the dependency on the Unreal Engine Mod Installer extension. Pak mods are now installed and managed directly by this extension; existing installs are migrated automatically, no action needed.
+
 ## [1.1.0] - 2026-09-13
 
 - Fixed: Mod files with no file extension were skipped during installation

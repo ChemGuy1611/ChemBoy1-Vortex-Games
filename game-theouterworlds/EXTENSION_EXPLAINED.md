@@ -11,7 +11,7 @@
 ### Notes
 
 - Rebuilt on the unified UE4-5 template, added UE4SS/Scripts/DLL/LogicMods support
-- Keeps Unreal Engine Mod Installer (UEMI) dependency for PAK installation - FBLO wired to UEMI's global 'ue4-sortable-modtype' via a loadOrderPrefixFunc wrapper (see game-trepang2 for reference wiring)
+- Dropped the Unreal Engine Mod Installer (UEMI) dependency - pak modtype/installer now self-owned (UE5_SORTABLE_ID), existing pak mods retag automatically on update; also added the FOMOD-pak-retag safety net
 - Two full editions ship under one Nexus page (Classic and Spacer's Choice), each with its own Steam/Epic/GOG/Xbox store ids and executable name - see getExecutable()
 
 ## Key Identifiers
@@ -70,6 +70,7 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `theouterworlds-logicmods` | high | `{gamePath}/Indiana/Content/Paks` |
 | Paks (no "~mods") | `theouterworlds-pakalt` | high | `{gamePath}/Indiana/Content/Paks` |
 | Root Folder | `theouterworlds-root` | high | `{gamePath}` |
+| UE Sortable Pak Mod | `theouterworlds-uesortablepak` | 25 | `?` |
 | UE4SS Script Mod | `theouterworlds-scripts` | 50 | `?` |
 | UE4SS DLL Mod | `theouterworlds-ue4ssdll` | 52 | `?` |
 | Binaries (Engine Injector) | `theouterworlds-binaries` | 54 | `?` |
@@ -83,8 +84,9 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `theouterworlds-ue4sscombo` | 23 |
-| `theouterworlds-logicmods` | 24 |
+| `theouterworlds-ue4sscombo` | 26 |
+| `theouterworlds-logicmods` | 27 |
+| `theouterworlds-uesortablepak` | 29 |
 | `theouterworlds-ue4ss` | 31 |
 | `theouterworlds-scripts` | 35 |
 | `theouterworlds-ue4ssdll` | 37 |
@@ -130,4 +132,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **GOG Support** — detects GOG version with adjusted executable/data paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-- **Required Extensions** — depends on: `Unreal Engine Mod Installer`.

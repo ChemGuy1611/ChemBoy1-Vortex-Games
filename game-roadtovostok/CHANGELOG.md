@@ -2,7 +2,10 @@
 
 ## Planned Improvements (Not Yet Released)
 
+## [1.0.3] - 2026-09-18
+
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
+- Fixed: Two different mods with similar names could end up sharing the same repacked file, causing one to silently overwrite the other.
 
 ## [1.0.2] - 2026-09-08
 

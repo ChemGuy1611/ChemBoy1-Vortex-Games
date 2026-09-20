@@ -618,6 +618,135 @@ def lookup_pcgamingwiki(game_name, debug=False):
         return None, None
 
 
+# == PCGamingWiki save/config path parsing =====================================
+
+_PCGW_BASE_DISPLAY = {
+    "DOCUMENTS":      r"%USERPROFILE%\Documents",
+    "LOCALAPPDATA":   "%LOCALAPPDATA%",
+    "ROAMINGAPPDATA": "%APPDATA%",
+    "LOCALLOW":       r"%USERPROFILE%\AppData\LocalLow",
+    "SAVED_GAMES":    r"%USERPROFILE%\Saved Games",
+    "USER_HOME":      "%USERPROFILE%",
+    "GAME_FOLDER":    "<game install folder>",
+}
+
+
+def classify_pcgw_path(path_str):
+    """Classify one PCGamingWiki Windows save/config path string (the wikitext value out of a
+    {{Game data/config|Windows|...}} or {{Game data/saves|Windows|...}} row) into a known Vortex
+    base folder + remaining path segments.
+
+    Recognizes the {{p|userprofile}}, {{p|localappdata}}, {{p|appdata}}, and {{p|game}} path
+    tokens (per resources/PCGAMINGWIKI_API.md). Returns base 'UNSUPPORTED' for anything else -
+    {{p|steam}} (Steam Cloud userdata) and {{p|hkcu}} (registry) point at locations this can't
+    resolve from string parsing alone (need a Steam library scan / registry read), and a path
+    with no recognized {{p|...}} token at all is equally unparseable.
+
+    Returns {'base': KEY, 'segments': [...], 'raw': path_str}, or None if path_str is empty."""
+    if not path_str:
+        return None
+    m = re.match(r"^\{\{p\|([a-z]+)\}\}\s*(.*)$", path_str.strip(), re.IGNORECASE)
+    if not m:
+        return {"base": "UNSUPPORTED", "segments": [], "raw": path_str}
+    token = m.group(1).lower()
+    rest = m.group(2)
+    segments = [s.strip() for s in re.split(r"[\\/]+", rest) if s.strip()]
+
+    if token == "localappdata":
+        if segments and segments[0].lower() == "locallow":
+            return {"base": "LOCALLOW", "segments": segments[1:], "raw": path_str}
+        return {"base": "LOCALAPPDATA", "segments": segments, "raw": path_str}
+    if token == "appdata":
+        return {"base": "ROAMINGAPPDATA", "segments": segments, "raw": path_str}
+    if token == "game":
+        return {"base": "GAME_FOLDER", "segments": segments, "raw": path_str}
+    if token == "userprofile":
+        if segments and segments[0].lower() in ("documents", "my documents"):
+            return {"base": "DOCUMENTS", "segments": segments[1:], "raw": path_str}
+        if segments and segments[0].lower() == "saved games":
+            return {"base": "SAVED_GAMES", "segments": segments[1:], "raw": path_str}
+        if len(segments) >= 2 and segments[0].lower() == "appdata":
+            sub = segments[1].lower()
+            if sub == "locallow":
+                return {"base": "LOCALLOW", "segments": segments[2:], "raw": path_str}
+            if sub == "local":
+                return {"base": "LOCALAPPDATA", "segments": segments[2:], "raw": path_str}
+            if sub == "roaming":
+                return {"base": "ROAMINGAPPDATA", "segments": segments[2:], "raw": path_str}
+        return {"base": "USER_HOME", "segments": segments, "raw": path_str}
+    # {{p|steam}}, {{p|hkcu}}, {{p|uid}} used as the leading token, or anything unrecognized
+    return {"base": "UNSUPPORTED", "segments": segments, "raw": path_str}
+
+
+def format_pcgw_path(info):
+    """Render a classify_pcgw_path()/parse_pcgw_data_paths() result as a human-readable Windows
+    path string, for use in review comments. UNSUPPORTED bases return the raw wikitext path
+    with a note instead of a resolved path. Returns None for a falsy/missing info dict."""
+    if not info:
+        return None
+    base = info.get("base")
+    segments = info.get("segments") or []
+    if base == "UNSUPPORTED":
+        raw = (info.get("raw") or "?").replace("\n", " ").strip()
+        return f"{raw} (unsupported base - set manually)"
+    prefix = _PCGW_BASE_DISPLAY.get(base, base)
+    return "\\".join([prefix, *segments]) if segments else prefix
+
+
+def _pcgw_data_rows(wikitext, kind):
+    """Yield (os_param, path_str) for every {{Game data/<kind>|OS|path}} row in wikitext.
+    kind is 'config' or 'saves'. Brace-depth scan (same technique as the extractor inside
+    fetch_pcgw_availability) handles nested {{p|...}} tokens inside the path argument, and
+    collects EVERY top-level pipe argument so both the OS/store label and the path are kept -
+    a page can carry several rows (Windows, Microsoft Store, Steam Cloud, ...)."""
+    rows = []
+    for start_m in re.finditer(rf"\{{{{Game data/{kind}\s*\|", wikitext, re.IGNORECASE):
+        pos = start_m.end()
+        depth = 1
+        cut = pos
+        args = []
+        closed = False
+        while pos < len(wikitext) and depth > 0:
+            two = wikitext[pos:pos + 2]
+            if two == "{{":
+                depth += 1
+                pos += 2
+            elif two == "}}":
+                depth -= 1
+                if depth == 0:
+                    args.append(wikitext[cut:pos])
+                    pos += 2
+                    closed = True
+                    break
+                pos += 2
+            elif wikitext[pos] == "|" and depth == 1:
+                args.append(wikitext[cut:pos])
+                pos += 1
+                cut = pos
+            else:
+                pos += 1
+        if closed and len(args) >= 2:
+            rows.append((args[0].strip(), args[-1].strip()))
+    return rows
+
+
+def parse_pcgw_data_paths(wikitext):
+    """Parse {{Game data/config}} and {{Game data/saves}} rows out of PCGamingWiki wikitext,
+    keeping only the row explicitly labeled 'Windows' (skips Mac/Linux rows and store-specific
+    cloud-sync rows - those often point at a different structure entirely, e.g. Steam userdata).
+
+    Returns {'config': classify_pcgw_path(...) result or None, 'save': same}."""
+    result = {"config": None, "save": None}
+    if not wikitext:
+        return result
+    for kind, key in (("config", "config"), ("saves", "save")):
+        for os_param, path_str in _pcgw_data_rows(wikitext, kind):
+            if os_param.strip().lower() == "windows":
+                result[key] = classify_pcgw_path(path_str)
+                break
+    return result
+
+
 # == egdata.app helpers ========================================================
 
 def egdata_search_queries(game_name):
@@ -1311,6 +1440,23 @@ def find_js_function(src, name):
     fn_start = m.start()
     body_start, body_end = find_fn_body(src, m.start())
     return fn_start, body_start, body_end
+
+
+def extract_index_header(src):
+    """Read Name, Version, and Date fields from an index.js header comment block.
+    Returns a dict with any of 'name', 'version', 'date' present in src (missing
+    fields are simply absent from the dict, never set to None)."""
+    fields = {}
+    m = re.search(r'^[/*\s]*Name:\s*(.+?)\s+Vortex Extension', src, flags=re.MULTILINE)
+    if m:
+        fields['name'] = m.group(1)
+    m = re.search(r'^[/*\s]*Version:\s*(\S+)', src, flags=re.MULTILINE)
+    if m:
+        fields['version'] = m.group(1)
+    m = re.search(r'^[/*\s]*Date:\s*(\S+)', src, flags=re.MULTILINE)
+    if m:
+        fields['date'] = m.group(1)
+    return fields
 
 
 def update_index_header(src, *, name=None, version=None, date=None):
@@ -3424,3 +3570,101 @@ def has_ue4ss_load_order_parity(src):
     template. Games still on the older FBLO-only load order never define it.
     """
     return "Ue4ssContextMenu" in src and detect_engine(src) == "UE4-5"
+
+
+_UNITY_TOP_LEVEL_FUNCTION_RE = re.compile(
+    r'^(?:async\s+)?function\s+(\w+)\s*\(|^const\s+(\w+)\s*=\s*(?:async\s+)?\(',
+    re.MULTILINE)
+_UNITY_TOP_LEVEL_BOOL_TOGGLE_RE = re.compile(
+    r'^(?:const|let)\s+(\w+)\s*=\s*(?:true|false)\s*;', re.MULTILINE)
+
+# isXna selects an engine variant (Unity vs. XNA), not an optional subsystem like every
+# other toggle-gated group - there is no future in which flipping it turns a Unity game
+# into an XNA game. Exempt from the Unity parity diff in both directions: template HEAD
+# carries the block, most games never will and never should, and that is by design, not
+# drift. See unity-loader-downloader-migration-amber-pinion.md, binding rule 2026-08-11.
+_UNITY_PARITY_TOGGLE_EXCEPTIONS = {"isXna"}
+
+# Extension folder names (game-* included) permanently excluded from Unity template
+# parity by explicit user decision - their divergence from template HEAD is deliberate
+# and permanent, not a pending port. folder basename -> reason.
+UNITY_PARITY_KNOWN_EXCEPTIONS = {
+    "game-menace": "MelonLoader-only forever, user decision 2026-09-17 - entire BepInEx "
+                   "subsystem (mod types, installer, config manager, detection) deleted, "
+                   "not toggled off, so it reports missing every BepInEx-side function "
+                   "and toggle against template-unitymelonloaderbepinex-hybrid forever",
+    "game-mywintercar": "dropped from the downloader-migration plan entirely, user "
+                        "decision 2026-09-14 - its users run MSCLoader, not BepInEx/"
+                        "MelonLoader, so the two download paths stay on hardcoded URLs "
+                        "and are accepted as permanently stale rather than ported",
+}
+
+_unity_template_src_cache = {}
+
+
+def _unity_template_src(template_folder_name):
+    """Read and cache a Unity template's index.js source by folder name (e.g.
+    'template-unitybepinex'). Cached because parity predicates run once per game."""
+    if template_folder_name not in _unity_template_src_cache:
+        _unity_template_src_cache[template_folder_name] = read_index_js(
+            os.path.join(REPO_ROOT, template_folder_name))
+    return _unity_template_src_cache[template_folder_name]
+
+
+def unity_top_level_functions(src):
+    """Return the set of top-level function names declared in a Unity template or game
+    index.js: both `function name(...)` and `const name = (...) =>` declaration styles,
+    at column 0."""
+    names = set()
+    for m in _UNITY_TOP_LEVEL_FUNCTION_RE.finditer(src):
+        names.add(m.group(1) or m.group(2))
+    return names
+
+
+def unity_bool_toggles(src):
+    """Return the set of boolean toggle const/let names declared at column 0."""
+    return set(_UNITY_TOP_LEVEL_BOOL_TOGGLE_RE.findall(src))
+
+
+def unity_template_diff(src, template_folder_name):
+    """Return (missing_functions, extra_functions, missing_toggles, extra_toggles) -
+    sorted lists - for a Unity game's index.js against the named template's HEAD.
+
+    isXna is exempted from the toggle diff in both directions (see
+    _UNITY_PARITY_TOGGLE_EXCEPTIONS). Full template parity means every list is empty.
+    """
+    template_src = _unity_template_src(template_folder_name)
+    game_funcs, tmpl_funcs = unity_top_level_functions(src), unity_top_level_functions(template_src)
+    game_toggles = unity_bool_toggles(src) | _UNITY_PARITY_TOGGLE_EXCEPTIONS
+    tmpl_toggles = unity_bool_toggles(template_src) | _UNITY_PARITY_TOGGLE_EXCEPTIONS
+    return (
+        sorted(tmpl_funcs - game_funcs),
+        sorted(game_funcs - tmpl_funcs),
+        sorted(tmpl_toggles - game_toggles),
+        sorted(game_toggles - tmpl_toggles),
+    )
+
+
+def has_unity_bepinex_parity(src, folder):
+    """Return True if a Unity+BepInEx extension has every function and toggle
+    template-unitybepinex HEAD has (isXna exempted both ways), and is not on
+    UNITY_PARITY_KNOWN_EXCEPTIONS.
+
+    Extra functions/toggles the game has beyond the template do NOT fail parity -
+    same as UE4-5 parity, this is "has the template's shape", not byte-identical.
+    A game's own legitimate unique code (e.g. mousepiforhire's BepLoader patch,
+    romestead's ModSettingsMenu) shows up as extras and is expected, not a defect.
+    """
+    if os.path.basename(os.path.normpath(folder)) in UNITY_PARITY_KNOWN_EXCEPTIONS:
+        return False
+    missing_f, _extra_f, missing_t, _extra_t = unity_template_diff(src, "template-unitybepinex")
+    return not (missing_f or missing_t)
+
+
+def has_unity_hybrid_parity(src, folder):
+    """Same as has_unity_bepinex_parity but against template-unitymelonloaderbepinex-hybrid."""
+    if os.path.basename(os.path.normpath(folder)) in UNITY_PARITY_KNOWN_EXCEPTIONS:
+        return False
+    missing_f, _extra_f, missing_t, _extra_t = unity_template_diff(
+        src, "template-unitymelonloaderbepinex-hybrid")
+    return not (missing_f or missing_t)

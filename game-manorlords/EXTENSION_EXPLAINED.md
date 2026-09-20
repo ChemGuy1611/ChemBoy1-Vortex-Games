@@ -11,7 +11,7 @@
 ### Notes
 
 - Rebuilt on the unified UE4-5 template
-- Keeps Unreal Engine Mod Installer (UEMI) dependency for PAK installation - FBLO wired to UEMI's global 'ue4-sortable-modtype' via a loadOrderPrefixFunc wrapper (see game-trepang2 for reference wiring)
+- Dropped Unreal Engine Mod Installer (UEMI) dependency - pak modtype/installer now self-owned; existing installs migrate automatically on update
 
 ## Key Identifiers
 
@@ -70,6 +70,7 @@ Mod types define where each category of mod gets deployed:
 | Paks (no "~mods") | `manorlords-pakalt` | high | `{gamePath}/ManorLords/Content/Paks` |
 | Root Folder | `manorlords-root` | high | `{gamePath}` |
 | MLUE4SS Mod | `manorlords-mlue4ss` | high | `{gamePath}/.` |
+| UE Sortable Pak Mod | `manorlords-uesortablepak` | 25 | `?` |
 | UE4SS Script Mod | `manorlords-scripts` | 50 | `?` |
 | UE4SS DLL Mod | `manorlords-ue4ssdll` | 52 | `?` |
 | Binaries (Engine Injector) | `manorlords-binaries` | 54 | `?` |
@@ -84,8 +85,9 @@ Installers run in priority order (lower number = tested first). The first instal
 | Installer ID | Priority |
 | --- | --- |
 | `manorlords-mlue4ss` | 20 |
-| `manorlords-ue4sscombo` | 23 |
-| `manorlords-logicmods` | 24 |
+| `manorlords-ue4sscombo` | 26 |
+| `manorlords-logicmods` | 27 |
+| `manorlords-uesortablepak` | 29 |
 | `manorlords-ue4ss` | 31 |
 | `manorlords-scripts` | 35 |
 | `manorlords-ue4ssdll` | 37 |
@@ -131,4 +133,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **GOG Support** — detects GOG version with adjusted executable/data paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-- **Required Extensions** — depends on: `Unreal Engine Mod Installer`.

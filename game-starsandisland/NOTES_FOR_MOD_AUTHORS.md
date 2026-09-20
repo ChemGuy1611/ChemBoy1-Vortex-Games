@@ -9,9 +9,9 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | BepInEx (mod loader) | a `BepInEx.Core.dll` file | the game folder itself (no subfolder) |
-| MelonLoader (mod loader) | a `MelonLoader.dll` file | the game folder itself (no subfolder) |
+| MelonLoader (mod loader) | a `version.dll` file | the game folder itself (no subfolder) |
 | Root / Game Folder Mods | a `StarsandIsland_Data` folder | the game folder itself (no subfolder) |
-| BepInEx Configuration Manager | a `ConfigManager.Il2Cpp.CoreCLR.dll` file | `BepInEx` |
+| BepInEx Configuration Manager | a `configurationmanager.dll` file | `BepInEx` |
 | MelonLoader Preferences Manager | a `melonprefmanager.il2cpp.dll` file | `Mods` |
 | Assembly Replacement Mods | a `GameAssembly.dll` file | the game folder itself (no subfolder) |
 | Plugin Mods | a `.dll` file | `BepInEx` |
@@ -41,8 +41,8 @@ This installer handles MelonLoader itself, not mods for it. It exists so users c
 
 **Requirements:**
 
-- Recognised by a file named `MelonLoader.dll` in the archive.
-- Requires BOTH a folder named `MelonLoader` and the loader file `MelonLoader.dll`.
+- Recognised by a file named `version.dll` in the archive.
+- Requires BOTH a folder named `MelonLoader` and the loader file `version.dll`.
 
 Installs to: the game folder itself (no subfolder)
 
@@ -76,8 +76,8 @@ This installer handles the BepInEx Configuration Manager plugin itself, not mods
 
 **Requirements:**
 
-- Recognised by a file named `ConfigManager.Il2Cpp.CoreCLR.dll` in the archive.
-- Requires the file `ConfigManager.Il2Cpp.CoreCLR.dll` together with a `plugins` folder.
+- Recognised by a file named `configurationmanager.dll` in the archive.
+- Requires the file `configurationmanager.dll` together with a `plugins` folder.
 
 Installs to: `BepInEx`
 

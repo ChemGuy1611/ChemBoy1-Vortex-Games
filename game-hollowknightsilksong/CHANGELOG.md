@@ -4,6 +4,10 @@
 
 - Add???: Support for installing MelonLoader plugins. Need the compatibility loader for MelonLoader mods to work (<https://github.com/BepInEx/BepInEx.MelonLoader.Loader>) - there are very few MelonLoader mods.
 
+## [0.3.3] - 2026-09-18
+
+- Fixed: Updating a skin mod could install it into a new folder instead of replacing the previous version.
+
 ## [0.3.2] - 2026-09-13
 
 - Updated: BepInExConfigManager now automatically checks for and installs the latest version instead of staying pinned to 18.4.1, and shows its proper name in the mod list

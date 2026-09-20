@@ -11,7 +11,7 @@
 ### Notes
 
 - Rebuilt on the unified UE4-5 template, migrated to file-based load order (FBLO)
-- Keeps Unreal Engine Mod Installer (UEMI) dependency for PAK installation - FBLO wired to UEMI's global 'ue4-sortable-modtype' via a loadOrderPrefixFunc wrapper (see trepang2/readyornot for reference wiring)
+- Dropped the Unreal Engine Mod Installer (UEMI) dependency - pak modtype/installer now self-owned per template-ue4-5; existing pak mods migrate automatically on update
 - Paks live entirely in LocalAppData (absModsPath), not under the game install folder - there is no in-gamePath Paks folder, so the template's PAK_ALT_ID "no ~mods" manual-reassign modtype is not registered for this game
 - UE4SS/LogicMods stack ported but shipped dormant (ue4ssLoadOrder = false) - this game had no prior UE4SS support
 
@@ -71,6 +71,7 @@ Mod types define where each category of mod gets deployed:
 | Root Folder | `stateofdecay2-root` | high | `{gamePath}` |
 | Cooked Mods | `stateofdecay2-cooked` | high | `{localAppData}/StateOfDecay2/Saved` |
 | SoD2 Mod Manager | `stateofdecay2-modmanager` | low | `{gamePath}` |
+| UE Sortable Pak Mod | `stateofdecay2-uesortablepak` | 25 | `?` |
 | Binaries (Engine Injector) | `stateofdecay2-binaries` | 54 | `?` |
 | Config (Local AppData) | `stateofdecay2-config` | 62 | `?` |
 | Saves (Local AppData) | `stateofdecay2-save` | 64 | `?` |
@@ -81,7 +82,8 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `stateofdecay2-ue4sscombo` | 23 |
+| `stateofdecay2-ue4sscombo` | 26 |
+| `stateofdecay2-uesortablepak` | 29 |
 | `stateofdecay2-root` | 39 |
 | `stateofdecay2-config` | 41 |
 | `stateofdecay2-save` | 43 |
@@ -120,4 +122,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-- **Required Extensions** — depends on: `Unreal Engine Mod Installer`.

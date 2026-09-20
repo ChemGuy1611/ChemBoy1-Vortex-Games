@@ -2,8 +2,11 @@
 
 ## Planned Improvements (Not Yet Released)
 
+## [0.3.5] - 2026-09-18
+
 - Fixed: Mod files with no file extension were skipped during installation
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
+- Fixed: A mod with no subfolder in its archive could get a garbled name in the load order after Nexus changed its download archive filenames.
 
 ## [0.3.4] - 2026-09-06
 

@@ -11,7 +11,7 @@
 ### Notes
 
 - Rebuilt on the unified UE4-5 template, added Xbox Game Pass version support
-- Keeps Unreal Engine Mod Installer (UEMI) dependency for PAK installation - FBLO wired to UEMI's global 'ue4-sortable-modtype' via a loadOrderPrefixFunc wrapper (see readyornot extension for reference wiring)
+- Dropped the Unreal Engine Mod Installer (UEMI) dependency - pak modtype/installer now self-owned per template-ue4-5; existing pak mods migrate automatically on update
 
 ## Key Identifiers
 
@@ -69,6 +69,7 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `trepang2-logicmods` | high | `{gamePath}/CPPFPS/Content/Paks` |
 | Paks (no "~mods") | `trepang2-pakalt` | high | `{gamePath}/CPPFPS/Content/Paks` |
 | Root Folder | `trepang2-root` | high | `{gamePath}` |
+| UE Sortable Pak Mod | `trepang2-uesortablepak` | 25 | `?` |
 | UE4SS Script Mod | `trepang2-scripts` | 50 | `?` |
 | UE4SS DLL Mod | `trepang2-ue4ssdll` | 52 | `?` |
 | Binaries (Engine Injector) | `trepang2-binaries` | 54 | `?` |
@@ -82,8 +83,9 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `trepang2-ue4sscombo` | 23 |
-| `trepang2-logicmods` | 24 |
+| `trepang2-ue4sscombo` | 26 |
+| `trepang2-logicmods` | 27 |
+| `trepang2-uesortablepak` | 29 |
 | `trepang2-ue4ss` | 31 |
 | `trepang2-scripts` | 35 |
 | `trepang2-ue4ssdll` | 37 |
@@ -129,4 +131,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **GOG Support** — detects GOG version with adjusted executable/data paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-- **Required Extensions** — depends on: `Unreal Engine Mod Installer`.

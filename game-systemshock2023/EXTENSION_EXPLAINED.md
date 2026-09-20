@@ -5,8 +5,13 @@
 | Property | Value |
 | --- | --- |
 | Name | System Shock Vortex Extension |
-| Engine / Structure | UE4 |
+| Engine / Structure | Unreal Engine 4-5 Game |
 | Author | ChemBoy1 |
+
+### Notes
+
+- Rebuilt on the unified UE4-5 template - added UE4SS/Scripts/DLL/LogicMods mod support and FBLO
+- Keeps Unreal Engine Mod Installer (UEMI) dependency for PAK installation - FBLO wired to UEMI's global 'ue4-sortable-modtype' via a loadOrderPrefixFunc wrapper (see readyornot extension for reference wiring)
 
 ## Key Identifiers
 
@@ -14,6 +19,9 @@
 | --- | --- |
 | Game ID | `systemshock2023` |
 | Executable | `SystemShock.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+| Executable (GOG) | `SystemShock.exe` |
+| Executable (Demo) | `SystemShock.exe` |
 | Extension Page | [https://www.nexusmods.com/site/mods/923](https://www.nexusmods.com/site/mods/923) |
 | PCGamingWiki | [https://www.pcgamingwiki.com/wiki/System_Shock_%282023%29](https://www.pcgamingwiki.com/wiki/System_Shock_%282023%29) |
 
@@ -23,17 +31,49 @@
 - **Epic Games Store** — `1d703aedb468494681ed9e5b657dca00`
 - **GOG** — `1439637285`
 
+## Feature Flags
+
+| Flag | Value | Description |
+| --- | --- | --- |
+| `hasXbox` | `false` | toggle for Xbox version logic. |
+| `multiExe` | `false` | toggle for multiple executables (Epic/GOG/Demo don't match Steam) |
+| `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
+| `hasModKit` | `false` | toggle for UE ModKit mod support |
+| `hasServer` | `false` | toggle for server pak mod logic |
+| `preferHardlinks` | `true` | set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users |
+| `autoDownloadUe4ss` | `false` | toggle for auto downloading UE4SS (only applies when ue4ssLoadOrder is enabled) |
+| `writeEngineVersion` | `false` | toggle to write ENGINE_VERSION into UE4SS-settings.ini (EngineVersionOverride) on deploy, when UE4SS is installed |
+| `SIGBYPASS_REQUIRED` | `false` | set true if there are .sig files in the Paks folder |
+| `IO_STORE` | `false` | true if the Paks folder contains .ucas and .utoc files |
+| `hasUserIdFolder` | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
+| `debug` | `false` | toggle for debug mode |
+| `PAKMOD_LOADORDER` | `true` | set to false if you don't want loadOrder. If must be in "Paks" root, disable loadOrder. |
+| `FBLO` | `true` | set to false to use legacy load order page |
+| `ue4ssLoadOrder` | `true` | master toggle for UE4SS support: UE4SS/Scripts/DLL/LogicMods mod types and installers, UE4SS buttons, load order page, and mods.txt writing |
+| `logicModsLoadOrder` | `true` | enable load order page and load_order.txt writing for LogicMods/Blueprint pak mods |
+| `collectionsLoadOrder` | `true` | include UE4SS and LogicMods load orders in collections (ANDed with the toggles above) |
+| `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
+| `CHECK_CONFIG` | `false` | boolean to check if game, staging folder, and config and save folders are on the same drive |
+| `CHECK_SAVE` | `false` | secondary same as above (if save and config are in different locations) |
+| `mod_update_all_profile` | `false` | for mod update to keep them in the load order and not uncheck them |
+| `updating_mod` | `false` | used to see if it's a mod update or not |
+
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| Binaries (Engine Injector) | `systemshock2023-binaries` | high | `{gamePath}/SystemShock/Binaries/Win64` |
-| Config (LocalAppData) | `systemshock2023-config` | high | `{localAppData}/SystemShock/Saved/Config/WindowsNoEditor` |
-| Saves (LocalAppData) | `systemshock2023-save` | high | `{localAppData}/SystemShock/Saved/SaveGames` |
-| Paks | `systemshock2023-pak` | high | `{gamePath}/SystemShock/Content/Paks/~mods` |
-| Root Game Folder | `systemshock2023-root` | high | `{gamePath}` |
+| UE4SS Script-LogicMod Combo | `systemshock2023-ue4sscombo` | high | `{gamePath}` |
+| UE4SS LogicMods (Blueprint) | `systemshock2023-logicmods` | high | `{gamePath}/SystemShock/Content/Paks` |
+| Paks (no "~mods") | `systemshock2023-pakalt` | high | `{gamePath}/SystemShock/Content/Paks` |
+| Root Folder | `systemshock2023-root` | high | `{gamePath}` |
+| UE4SS Script Mod | `systemshock2023-scripts` | 50 | `?` |
+| UE4SS DLL Mod | `systemshock2023-ue4ssdll` | 52 | `?` |
+| Binaries (Engine Injector) | `systemshock2023-binaries` | 54 | `?` |
+| UE4SS | `systemshock2023-ue4ss` | 56 | `?` |
+| Config (Local AppData) | `systemshock2023-config` | 62 | `?` |
+| Saves (Local AppData) | `systemshock2023-save` | 64 | `?` |
 
 ## Mod Installers
 
@@ -41,29 +81,50 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `systemshock2023-config` | 35 |
-| `systemshock2023-save` | 40 |
-| `systemshock2023-root` | 45 |
+| `systemshock2023-ue4sscombo` | 23 |
+| `systemshock2023-logicmods` | 24 |
+| `systemshock2023-ue4ss` | 31 |
+| `systemshock2023-scripts` | 35 |
+| `systemshock2023-ue4ssdll` | 37 |
+| `systemshock2023-root` | 39 |
+| `systemshock2023-config` | 41 |
+| `systemshock2023-save` | 43 |
+| `systemshock2023-binaries` | 49 |
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
+- Open Paks Folder
+- Open Binaries Folder
+- Open UE4SS Mods Folder
+- Open LogicMods Folder
+- Open Config Folder
+- Open Saves Folder
+- Download UE4SS
+- Open UE4SS Settings INI
+- Open UE4SS mods.txt
 - Open PCGamingWiki Page
 - Open SteamDB Page
 - View Changelog
 - Submit Bug Report
 - Open Downloads Folder
 
-## Config & Save Paths
+## Auto-Downloaded Dependencies
 
-| Type | Path |
-| --- | --- |
-| Config | `SystemShock/Saved/Config/WindowsNoEditor` |
-| Save | `SystemShock/Saved/SaveGames` |
+| Dependency | Version | Details |
+| --- | --- | --- |
+| UE4SS | — | — |
 
 ## Special Features
 
+- **Load Order** — mods are assigned numbered folder names or sorted based on their position in the load order.
+- **UE4SS Load Order** — manages UE4SS script/DLL mod load order via a dedicated page; serializes order to `mods.txt` on deploy.
+- **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
+- **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
+- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **GOG Support** — detects GOG version with adjusted executable/data paths.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 - **Required Extensions** — depends on: `Unreal Engine Mod Installer`.

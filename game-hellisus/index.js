@@ -2556,6 +2556,36 @@ function loadOrderPrefix(api, mod) {
   return makePrefix(pos) + "-";
 }
 
+//Split a list of paths into every path segment they contain, both separators, blanks dropped.
+//The test* functions above can get away with path.basename() because Vortex hands an installer
+//an archive listing that includes standalone directory entries ("LogicMods\\"), whose basename
+//IS the folder name. A listing built by walking the staging folder (getAllFiles) has files only,
+//so a basename check there would reduce "LogicMods/foo.pak" to just "foo.pak" and never match a
+//folder marker. Matching segments works for both shapes - a directory entry splits to
+//["LogicMods", ""] and the blank is filtered out.
+function pathSegments(files) {
+  return files.flatMap((file) => file.split(/[\\/]+/)).filter(Boolean);
+}
+
+//Mirrors the registration-priority ladder in main() for just the installers that sit ABOVE the
+//pak installer's priority (UE5_SORTABLE_ID = 29): UE4SS Combo (26, always registered) and
+//LogicMods (27, only when logicModsLoadOrder) - this game has no Mod Kit installer. An installer
+//at or below priority 29 never gets a turn once a pak-type file is present, since testPak's own
+//check is just "has a pak-type file" with no exclusivity - so lower-priority markers can't have
+//"actually" claimed the archive and are not checked here. Used by retagFomodPakMod() below to
+//work out, after the fact, what a FOMOD-installed mod would have been classified as had FOMOD
+//not intercepted it first. Pass paths relative to the staging folder when calling this on a
+//staged tree: an absolute path drags the staging root's own segments in, and a staging folder
+//living under the game's root folder name would then satisfy that check for every mod.
+function beatsPakInstaller(files) {
+  const segsLower = pathSegments(files).map((seg) => seg.toLowerCase());
+  const hasBinariesFolder = segsLower.includes("binaries");
+  const hasContentFolder = segsLower.includes("content");
+  if (hasBinariesFolder && hasContentFolder) return true; //UE4SS Combo (26)
+  if (logicModsLoadOrder && segsLower.includes(LOGICMODS_FOLDER.toLowerCase())) return true; //LogicMods (27)
+  return false;
+}
+
 //Test for pak mods
 function testPak(files, gameId) {
   const supportedGame = gameId === spec.game.id;
@@ -3534,6 +3564,14 @@ function main(context) {
           (id) => modId.includes("-" + id + "-") || modId.includes(" " + id + " "),
         );
     });
+    //Retag a FOMOD-installed plain pak mod as the sortable pak modtype so it shows up on
+    //the Load Order page - see retagFomodPakMod() for why this is needed. Covers both a
+    //first install and a mod update (did-install-mod fires for both).
+    api.events.on("did-install-mod", (gameId, archiveId, modId) => {
+      retagFomodPakMod(api, gameId, modId).catch((err) =>
+        log("warn", `[${GAME_ID}] retagFomodPakMod failed for "${modId}"`, err),
+      );
+    });
   });
   return true;
 }
@@ -3556,6 +3594,93 @@ const requestDeployment = (api, spec) => {
     ],
   });
 };
+
+//FOMOD's built-in installer (and the generic basicInstaller fallback) never emit a
+//`setmodtype` instruction, so a mod they hand off keeps modtype '' forever - and
+//deserializeLoadOrder() above only ever pulls in enabled mods whose type is exactly
+//UE5_SORTABLE_ID. That's the entire reason a FOMOD-packaged pak mod (e.g. one built with
+//a checkbox wizard picking between pak variants) never shows up on the Load Order page:
+//it was never tagged as a sortable pak mod in the first place. did-install-mod fires after
+//Vortex's own processSetModType step has already run, so mod.type here is final for this
+//install - retag it here if it looks like a plain pak mod that just happened to go through
+//FOMOD instead of this extension's own testPak/installPak.
+async function retagFomodPakMod(api, gameId, modId) {
+  if (gameId !== GAME_ID || !PAKMOD_LOADORDER) return;
+  const mod = util.getSafe(api.getState(), ["persistent", "mods", GAME_ID, modId], undefined);
+  //Non-empty type means one of this extension's own installers already classified it
+  //correctly (or a previous run of this same handler already fixed it) - strict no-op for
+  //every mod that didn't go through FOMOD/basicInstaller, so normal installs can't regress.
+  if (mod === undefined || !!mod.type) return;
+  const stagingFolder = getModStagingFolder(api, modId);
+  if (!stagingFolder) return;
+  //Relative to the staging folder: beatsPakInstaller matches path segments, and the staging
+  //root's own segments are not part of the mod (see the note on that function).
+  const files = (await getAllFiles(stagingFolder)).map((file) =>
+    path.relative(stagingFolder, file),
+  );
+  const fileExt = UNREALDATA.fileExt;
+  const pakFiles = files.filter((file) => fileExt.includes(path.extname(file).toLowerCase()));
+  if (pakFiles.length === 0 || beatsPakInstaller(files)) return;
+  //installPak() flattens an archive down to just the pak-type files at the staging root, so
+  //retagging only reproduces what it would have done when the FOMOD staged its paks shallowly
+  //too. A mod staged in full game-root layout would deploy to a nested path this extension
+  //never produces itself - leave those with the empty type they already had rather than list
+  //them on the Load Order page implying they are sorted correctly.
+  const stagedAsGameRoot = pakFiles.some((file) =>
+    pathSegments([path.dirname(file)]).some(
+      (seg) => seg.toLowerCase() === ROOT_FOLDER.toLowerCase(),
+    ),
+  );
+  if (stagedAsGameRoot) return;
+  api.store.dispatch(actions.setModType(GAME_ID, modId, UE5_SORTABLE_ID));
+  if (debug)
+    log(
+      "debug",
+      `[${GAME_ID}] retagged FOMOD-installed mod "${modId}" as ${UE5_SORTABLE_ID} so it shows up on the Load Order page`,
+    );
+  //The retag above has to happen unconditionally - it touches no load order state, and a
+  //collection-installed FOMOD pak mod needs it just as much as a manually installed one. Only
+  //the refresh and the deployment request below are skipped mid-collection-install: core's
+  //file_based_loadorder skips every one of its own load triggers while installing_dependencies
+  //is non-empty, and the did-deploy at the end of the collection install re-deserializes anyway
+  //- by then with the type set here. (This key is core activity state; this extension never
+  //sets it.)
+  const state = api.getState();
+  const installingDependencies = util.getSafe(
+    state,
+    ["session", "base", "activity", "installing_dependencies"],
+    [],
+  );
+  if (
+    Array.isArray(installingDependencies)
+      ? installingDependencies.length > 0
+      : !!installingDependencies
+  )
+    return;
+  //deserializeLoadOrder builds its result from selectors.activeProfile (via generateProps), so
+  //resolve the profile the same way here: installing a mod for this game while a different game
+  //is active would otherwise have us dispatch against a profile the deserialize never saw.
+  const profile = selectors.activeProfile(state);
+  if (profile?.gameId !== GAME_ID) return;
+  //The core file_based_loadorder extension already deserialized before this handler ran (it
+  //registers first and did-install-mod listeners run concurrently), so it read the mod's old
+  //(empty) type. Re-read it ourselves now that the type is fixed and push the result into
+  //state - same pattern didDeploy() above uses after its own update guard clears.
+  try {
+    const refreshedLO = await deserializeLoadOrder({ api });
+    //did-install-mod is emitted right after setModsEnabled, which awaits will-enable-mods before
+    //the mod lands in profile.modState - so an extension with a slow handler there can leave the
+    //mod still disabled at this point, and deserializeLoadOrder filters strictly on enabled mods.
+    //Dispatching that result would drop the mod from the order and deploy it under a ZZZZ- prefix
+    //until the next deserialize, so leave the stored order alone and let that next one pick it up.
+    if (refreshedLO.some((entry) => entry.id === modId)) {
+      api.store.dispatch(actions.setFBLoadOrder(profile.id, refreshedLO));
+    }
+  } catch (err) {
+    log("warn", `[${GAME_ID}] load order refresh after retagging "${modId}" failed`, err);
+  }
+  requestDeployment(api, spec);
+}
 
 async function didDeploy(api, profileId) {
   //run on mod deploy

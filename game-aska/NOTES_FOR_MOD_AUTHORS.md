@@ -9,8 +9,8 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | BepInEx (mod loader) | a `BepInEx.Core.dll` file | the game folder itself (no subfolder) |
-| MelonLoader (mod loader) | a `MelonLoader.dll` file | the game folder itself (no subfolder) |
-| Root | a file or folder named `Aska_Data` | - |
+| MelonLoader (mod loader) | a `version.dll` file | the game folder itself (no subfolder) |
+| Root / Game Folder Mods | a `Aska_Data` folder | the game folder itself (no subfolder) |
 | BepInEx Configuration Manager | a `configurationmanager.dll` file | `BepInEx` |
 | MelonLoader Preferences Manager | a `melonprefmanager.il2cpp.dll` file | `Mods` |
 | Assembly Replacement Mods | a `GameAssembly.dll` file | the game folder itself (no subfolder) |
@@ -41,8 +41,8 @@ This installer handles MelonLoader itself, not mods for it. It exists so users c
 
 **Requirements:**
 
-- Recognised by a file named `MelonLoader.dll` in the archive.
-- Requires BOTH a folder named `MelonLoader` and the loader file `MelonLoader.dll`.
+- Recognised by a file named `version.dll` in the archive.
+- Requires BOTH a folder named `MelonLoader` and the loader file `version.dll`.
 
 Installs to: the game folder itself (no subfolder)
 
@@ -50,9 +50,25 @@ Installs to: the game folder itself (no subfolder)
 
 - If you bundle MelonLoader inside your mod archive, Vortex treats the whole download as MelonLoader rather than as your mod. Ship the mod alone and list MelonLoader as a requirement.
 
-## Root
+## Root / Game Folder Mods
 
-Recognised when the archive contains a file or folder named `Aska_Data`.
+For mods laid out the same way the files appear inside the game folder. Vortex copies the matched folder and everything under it straight into the game.
+
+```text
+MyRootMod.zip
+└── Aska_Data\
+    └── ... files in their real relative locations
+```
+
+**Requirements:**
+
+- Recognised by a folder named `Aska_Data` or `Aska_Data` in the archive.
+
+Installs to: the game folder itself (no subfolder)
+
+**Common mistakes:**
+
+- Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
 
 ## BepInEx Configuration Manager
 

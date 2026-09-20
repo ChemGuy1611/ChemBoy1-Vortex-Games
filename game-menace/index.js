@@ -2,8 +2,8 @@
 Name: MENACE Vortex Extension
 Structure: Unity MelonLoader
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-09-17
+Version: 1.0.1
+Date: 2026-09-18
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -979,7 +979,7 @@ async function installJiangyuMod(files, destinationPath) {
 
   //Folder the mod deploys into. The manifest's "name" is the loader's own identity for the mod -
   //what other mods declare as a dependency - so it wins over anything derived from the archive.
-  let folder = path.basename(destinationPath).split("-")[0];
+  let folder = path.basename(destinationPath);
   const ROOT_PATH = path.basename(rootPath);
   if (ROOT_PATH !== ".") {
     folder = ROOT_PATH;
@@ -1319,7 +1319,7 @@ function installModpackMod(files, fileName) {
   let rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   //*
-  let folder = path.basename(fileName).split("-")[0];
+  let folder = path.basename(fileName);
   const ROOT_PATH = path.basename(rootPath);
   if (ROOT_PATH !== ".") {
     folder = ROOT_PATH;

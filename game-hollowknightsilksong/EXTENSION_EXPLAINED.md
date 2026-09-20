@@ -41,7 +41,7 @@ Mod types define where each category of mod gets deployed:
 | Assembly DLL Mod | `hollowknightsilksong-assemblydll` | high | `{gamePath}/Hollow Knight Silksong_Data/Managed` |
 | BepInEx Configuration Manager | `hollowknightsilksong-bepcfgman` | high | `{gamePath}/Bepinex` |
 | BepinEx Mod | `hollowknightsilksong-bepmods` | high | `{gamePath}/BepinEx/plugins` |
-| hollowknightsilksong-skin | `hollowknightsilksong-skin` | 50 | `?` |
+| Skin Mod | `hollowknightsilksong-skin` | 50 | `?` |
 
 ## Mod Installers
 

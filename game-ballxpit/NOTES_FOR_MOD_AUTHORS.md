@@ -9,13 +9,14 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | BepInEx (mod loader) | a `BepInEx.Core.dll` file | the game folder itself (no subfolder) |
-| MelonLoader (mod loader) | a `MelonLoader.dll` file | the game folder itself (no subfolder) |
-| Root | a file or folder named `Balls_Data` | - |
+| MelonLoader (mod loader) | a `version.dll` file | the game folder itself (no subfolder) |
+| Root / Game Folder Mods | a `Balls_Data` folder | the game folder itself (no subfolder) |
 | BepInEx Configuration Manager | a `configurationmanager.dll` file | `BepInEx` |
 | MelonLoader Preferences Manager | a `melonprefmanager.il2cpp.dll` file | `Mods` |
 | Assembly Replacement Mods | a `GameAssembly.dll` file | the game folder itself (no subfolder) |
 | Plugin Mods | a `.dll` file | `BepInEx` |
 | Asset Replacement Mods | a `.assets` file | `Balls_Data` |
+| Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
 
@@ -40,8 +41,8 @@ This installer handles MelonLoader itself, not mods for it. It exists so users c
 
 **Requirements:**
 
-- Recognised by a file named `MelonLoader.dll` in the archive.
-- Requires BOTH a folder named `MelonLoader` and the loader file `MelonLoader.dll`.
+- Recognised by a file named `version.dll` in the archive.
+- Requires BOTH a folder named `MelonLoader` and the loader file `version.dll`.
 
 Installs to: the game folder itself (no subfolder)
 
@@ -49,9 +50,25 @@ Installs to: the game folder itself (no subfolder)
 
 - If you bundle MelonLoader inside your mod archive, Vortex treats the whole download as MelonLoader rather than as your mod. Ship the mod alone and list MelonLoader as a requirement.
 
-## Root
+## Root / Game Folder Mods
 
-Recognised when the archive contains a file or folder named `Balls_Data`.
+For mods laid out the same way the files appear inside the game folder. Vortex copies the matched folder and everything under it straight into the game.
+
+```text
+MyRootMod.zip
+└── Balls_Data\
+    └── ... files in their real relative locations
+```
+
+**Requirements:**
+
+- Recognised by a folder named `Balls_Data` or `BALL x PIT_Data` in the archive.
+
+Installs to: the game folder itself (no subfolder)
+
+**Common mistakes:**
+
+- Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
 
 ## BepInEx Configuration Manager
 
@@ -130,6 +147,21 @@ Installs to: `Balls_Data`
 **Common mistakes:**
 
 - Asset files must keep their original names to replace the right bundle.
+
+## Fallback Installer
+
+The catch-all. Any archive that matched none of the installers above lands here and is copied across unchanged.
+
+> **NOTE:** Landing in the fallback installer is a signal your archive layout needs fixing.
+
+**Requirements:**
+
+- Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
+- Vortex shows the user a notification when a mod installs through the fallback.
+
+**Common mistakes:**
+
+- If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.
 
 ## Rules That Apply To Every Mod Type
 

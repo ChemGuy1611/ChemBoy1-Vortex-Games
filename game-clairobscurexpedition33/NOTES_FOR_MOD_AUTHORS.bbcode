@@ -64,7 +64,7 @@ MyBlueprintMod.zip
 
 Pak Mods:
 
-Standard content mods: one or more ".pak" files. Vortex installs the mod files themselves, so the folder structure around them in the archive does not matter.
+Standard content mods: one or more ".pak" files. Vortex copies just the pak files themselves, flattened, so the folder structure around them does not matter.
 
 [code]
 MyPakMod.zip
@@ -72,14 +72,15 @@ MyPakMod.zip
 [/code]
 
   Requirements:
-    - Recognised by any file with the ".pak" extension.
-    - Surrounding folders are discarded - only the mod files are installed.
-    - If the archive holds several mod files, Vortex asks the user which to install, which is useful for shipping optional variants in one download.
+    - Any archive containing a ".pak" file reaches this installer (unless an earlier one claimed it).
+    - Only the pak files are installed - surrounding folders are discarded.
+    - If the archive holds more than one pak, Vortex asks the user which to install - useful for optional variants.
 
   Installs to: "Sandfall\Content\Paks\~mods"
 
   Common mistakes:
     - Shipping several unrelated paks in one archive when you meant them all to install - the user gets a choice dialog and may pick only one.
+    - Blueprint mods belong in a "LogicMods" folder instead - see above.
 
 ========================================================================
 
@@ -89,6 +90,9 @@ This installer handles the UE4SS runtime package, not individual mods. Most auth
 
   Requirements:
     - Recognised by a file named "dwmapi.dll" at any level of the archive.
+    - Also recognised by any of the UE4SS support folders: "MapGenBP", "MemberVarLayoutTemplates", "UE4SS_Signatures" or "VTableLayoutTemplates".
+
+  Installs to: "Sandfall\Binaries\Win64"
 
   Common mistakes:
     - If your script mod archive happens to contain a file named "dwmapi.dll", it will be treated as a UE4SS install rather than as your mod.
@@ -111,6 +115,8 @@ MyScriptMod.zip
     - Wrap the "Scripts" folder in a folder named after your mod. That folder name becomes the mod's UE4SS name and is what gets written to the load order.
     - If you omit the wrapper folder, Vortex falls back to naming the mod after the archive file.
 
+  Installs to: "Sandfall\Binaries\Win64\ue4ss\Mods"
+
   Common mistakes:
     - Putting "main.lua" directly in the archive root with no "Scripts" folder - the mod is not recognised as a script mod.
     - Naming the wrapper folder something generic like "Mods" - that name is what appears in the load order.
@@ -132,8 +138,18 @@ MyDllMod.zip
     - The archive must contain a ".dll" file AND a folder named "dlls".
     - Wrap the "dlls" folder in a folder named after your mod - that name is used in the load order.
 
+  Installs to: "Sandfall\Binaries\Win64\ue4ss\Mods"
+
   Common mistakes:
     - A bare ".dll" with no "dlls" folder is not recognised as a UE4SS DLL mod and will reach the fallback installer.
+
+========================================================================
+
+Contentfolder:
+
+Recognised when the archive contains a file or folder named "Content".
+
+  Installs to: "Sandfall"
 
 ========================================================================
 
@@ -148,21 +164,13 @@ MyRootMod.zip
 [/code]
 
   Requirements:
-    - Recognised by a top-level folder matching any of: "Sandfall".
+    - Recognised by a top-level folder matching any of: "Sandfall", "Engine", "Content", "Binaries", "Mods", "Paks" or "Movies".
     - The matched folder and everything below it is copied into the game folder, preserving structure.
 
   Installs to: the game folder itself (no subfolder)
 
   Common mistakes:
     - Zipping the folder that CONTAINS the game folders instead of the game folders themselves adds an extra level and misplaces every file.
-
-========================================================================
-
-Contentfolder:
-
-Recognised when the archive contains a file or folder named "Content".
-
-  Installs to: "Sandfall"
 
 ========================================================================
 
@@ -199,6 +207,8 @@ This is the catch-all. Any archive with no ".pak" file that matched none of the 
   Requirements:
     - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
     - Vortex shows the user a notification when a mod installs through the fallback.
+
+  Installs to: "Sandfall\Binaries\Win64"
 
   Common mistakes:
     - If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report it as broken.

@@ -4,6 +4,11 @@
 
 - None
 
+## [1.1.0] - 2026-09-19
+
+- Dropped the Unreal Engine Mod Installer (UEMI) dependency - pak mod installation is now self-contained, and existing pak mods migrate automatically on update
+- Added support for a FOMOD-packaged pak mod to correctly appear on the Load Order page
+
 ## [1.0.0] - 2026-09-17
 
 - Migrated to file-based load order (FBLO) on the unified UE4-5 template; added lock button, multi-select, right-click context menu, UE4SS Load Order page

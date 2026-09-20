@@ -24,6 +24,9 @@ Substitution rules:
   - Constants not found in game -> left as template defaults (skipped list)
   - Constants in game but not in template -> listed for manual review
   - Trailing // comments preserved; a // inside a value (URLs) is not one
+  - Header comment: Name always updated; Version carried over from the game's own pre-port
+    header (a port is not a bump); Date set to today. Otherwise the template's own placeholder
+    header ("1.0.0" / "2026-XX-XX") would survive a rebuild unchanged.
 
 A .bak copy of the original index.js is written before overwriting.
 
@@ -56,8 +59,9 @@ import re
 import sys
 import shutil
 import argparse
+from datetime import date
 
-from vortex_utils import REPO_ROOT, run_generate_explained, node_check_source, get_discovery_ids, log_warn, write_text_atomic, const_array_value, is_placeholder_value, update_index_header
+from vortex_utils import REPO_ROOT, run_generate_explained, node_check_source, get_discovery_ids, log_warn, write_text_atomic, const_array_value, is_placeholder_value, update_index_header, extract_index_header
 
 # Template constant names that are boolean feature toggles.
 # These are intentionally left at template defaults, not transferred from the game.
@@ -296,9 +300,20 @@ def apply_port(template_src, game_consts, game_src):
                 new_src = replaced
                 substituted.append((name, tmpl_array.strip(), game_array.strip()))
 
-    # --- Pass 4: header comment Name field ---
+    # --- Pass 4: header comment fields ---
+    # A rebuild takes the template's whole body, including its own placeholder Version/Date
+    # ("1.0.0" / "2026-XX-XX") -- carry the game's real pre-port values through instead, so the
+    # header does not silently claim a version the game was never bumped to. Version stays
+    # whatever the game already had (a port is not a bump); Date becomes today, since the file
+    # genuinely is being rewritten today.
     game_name = game_consts.get('GAME_NAME', 'XXX').strip('"\'')
-    new_src = update_index_header(new_src, name=game_name)
+    old_header = extract_index_header(game_src)
+    new_src = update_index_header(
+        new_src,
+        name=game_name,
+        version=old_header.get('version'),
+        date=date.today().isoformat(),
+    )
 
     # --- Build review list: game consts not covered by any template constant ---
     template_names = set(template_consts.keys()) | ARRAY_CONSTS | {'DISCOVERY_IDS_ACTIVE'}

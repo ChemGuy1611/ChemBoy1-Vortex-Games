@@ -258,6 +258,17 @@ The behaviour is therefore not random and not a server fault — it is the docum
 ladder falling through to `filtered[0]`, combined with an update checker that trusts `modId`
 without re-validating it.
 
+### Fixed upstream
+
+Reported as [Nexus-Mods/Vortex#21979](https://github.com/Nexus-Mods/Vortex/issues/21979) and fixed
+by [PR #24195](https://github.com/Nexus-Mods/Vortex/pull/24195), merged 2026-09-16. The fix scopes
+the md5 hit list to the domains the download's game actually belongs to **before** the ladder above
+runs, so a re-uploaded copy on an unrelated game's page is never a candidate in the first place —
+this is a fix at the lookup layer, not the consumer layer, so it protects every download
+automatically, whether or not the extension that fetched it declares anything. The mitigations
+below still hold and cost nothing extra; keep using them until every user is on a Vortex build that
+carries this fix.
+
 ### Symptoms to look for
 
 - A requirement/dependency mod shows a Nexus author, picture, or description it should not have.

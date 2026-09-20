@@ -1,8 +1,12 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.0.0] - 2026-09-18
 
-- Fixed: Mod files with no file extension were skipped during installation
+- Migrated to file-based load order (FBLO); added lock button, multi-select, and right-click context menu.
+- Added a UE4SS Load Order page and a LogicMods Load Order page.
+- UE4SS now downloads automatically and checks for updates.
+- Fixed: GOG version could not install save mods.
+- Fixed: Mod files with no file extension were skipped during installation.
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 
 ## [0.2.1] - 2026-02-04

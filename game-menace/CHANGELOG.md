@@ -2,6 +2,10 @@
 
 ## Planned Improvements (Not Yet Released)
 
+## [1.0.1] - 2026-09-18
+
+- Fixed: Some mods could install using a garbled folder name after Nexus changed its download archive filenames.
+
 ## [1.0.0] - 2026-09-17
 
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.

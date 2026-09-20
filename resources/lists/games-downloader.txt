@@ -1,13 +1,18 @@
+aska
 atomicheart
 balatro
+ballxpit
 beastofreincarnation
 bloodborne
 bloodthief
+blueprince
 borderlands
 borderlands2
 borderlands3
 borderlands4
 burglingnomes
+cairn
+clairobscurexpedition33
 deathstranding2onthebeach
 diplomacyisnotanoption
 discoelysium
@@ -15,8 +20,10 @@ doom
 doom3
 doomthedarkages
 dragonagetheveilguard
+escapefromduckov
 farfarwest
 fatekeeper
+footballmanager26
 godofwarragnarok
 grimshire
 gzdoom
@@ -28,6 +35,7 @@ horizonforbiddenwest
 horizonzerodawnremastered
 howtofish
 legobatmanlegacyofthedarkknight
+liesofp
 lobotomycorporation
 manorlords
 megabonk
@@ -46,11 +54,13 @@ romestead
 runescapedragonwilds
 rvthereyet
 stalker2heartofchornobyl
+starsandisland
 starwarszerocompany
 stateofdecay2
 stellarblade
 storyofseasonsgrandbazaar
 subnautica2
+systemshock2023
 thebloodofdawnwalker
 thelastofuspart1
 theouterworlds
@@ -59,3 +69,4 @@ trepang2
 warhammer40kdarkheresy
 warhammer40kroguetrader
 windrose
+witchfire

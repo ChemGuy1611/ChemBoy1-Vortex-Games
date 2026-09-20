@@ -13,9 +13,10 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | UE4SS Itself | a `dwmapi.dll` file | `Witchfire\Binaries\Win64` |
 | UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `Witchfire\Binaries\Win64\ue4ss\Mods` |
 | UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | `Witchfire\Binaries\Win64\ue4ss\Mods` |
-| Config File Mods | a config file such as `engine.ini` or `input.ini` | `Witchfire\Saved\Config\WindowsNoEditor` |
-| Root / Game Folder Mods | a top-level folder such as `Witchfire` | the game folder itself (no subfolder) |
-| Save Game Files | a `.json` file | `{localAppData}\Witchfire\Saved\SaveGames` |
+| Root / Game Folder Mods | a top-level folder such as `Witchfire`, `Engine` or `Content` | the game folder itself (no subfolder) |
+| Config File Mods | a config file such as `engine.ini` or `game.ini` | - |
+| Save Game Files | a `.json` file | - |
+| Fallback Installer | anything unrecognised with no pak file | `Witchfire\Binaries\Win64` |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
@@ -83,6 +84,7 @@ This installer handles the UE4SS runtime package, not individual mods. Most auth
 **Requirements:**
 
 - Recognised by a file named `dwmapi.dll` at any level of the archive.
+- Also recognised by any of the UE4SS support folders: `MapGenBP`, `MemberVarLayoutTemplates`, `UE4SS_Signatures` or `VTableLayoutTemplates`.
 
 Installs to: `Witchfire\Binaries\Win64`
 
@@ -136,21 +138,6 @@ Installs to: `Witchfire\Binaries\Win64\ue4ss\Mods`
 
 - A bare `.dll` with no `dlls` folder is not recognised as a UE4SS DLL mod and will reach the fallback installer.
 
-## Config File Mods
-
-Config tweaks are deployed to the game's config folder in your user profile, not into the game installation.
-
-**Requirements:**
-
-- Recognised by any of these filenames in the archive: `engine.ini` or `input.ini`.
-- Installed to `Witchfire\Saved\Config\WindowsNoEditor`.
-
-Installs to: `Witchfire\Saved\Config\WindowsNoEditor`
-
-**Common mistakes:**
-
-- Shipping a config file with one of these names inside an unrelated mod - the whole archive is then treated as a config mod.
-
 ## Root / Game Folder Mods
 
 For mods that replace or add files inside the game installation, laid out the same way they appear in the game folder.
@@ -163,7 +150,7 @@ MyRootMod.zip
 
 **Requirements:**
 
-- Recognised by a top-level folder matching any of: `Witchfire`.
+- Recognised by a top-level folder matching any of: `Witchfire`, `Engine`, `Content`, `Binaries`, `Mods`, `Paks` or `Movies`.
 - The matched folder and everything below it is copied into the game folder, preserving structure.
 
 Installs to: the game folder itself (no subfolder)
@@ -171,6 +158,18 @@ Installs to: the game folder itself (no subfolder)
 **Common mistakes:**
 
 - Zipping the folder that CONTAINS the game folders instead of the game folders themselves adds an extra level and misplaces every file.
+
+## Config File Mods
+
+Config tweaks are deployed to the game's config folder in your user profile, not into the game installation.
+
+**Requirements:**
+
+- Recognised by any of these filenames in the archive: `engine.ini`, `game.ini`, `gameusersettings.ini`, `input.ini`, `scalability.ini`, `hardware.ini`, `deviceprofiles.ini`, `compat.ini`, `runtimeoptions.ini`, `gameplaytags.ini`, `enhancedinput.ini` or `consolevariables.ini`.
+
+**Common mistakes:**
+
+- Shipping a config file with one of these names inside an unrelated mod - the whole archive is then treated as a config mod.
 
 ## Save Game Files
 
@@ -180,13 +179,29 @@ Save files are deployed to the game's save folder in your user profile.
 
 - Recognised by any file with extension `.json`.
 
-Installs to: `{localAppData}\Witchfire\Saved\SaveGames`
-
 **Common mistakes:**
 
 - Including an example save alongside a normal mod - the archive is then treated as a save, not a mod.
 
+## Fallback Installer
+
+This is the catch-all. Any archive with no `.pak` file that matched none of the installers above lands here and is copied, unchanged, into the game's binaries folder.
+
+> **NOTE:** Landing in the fallback installer is a signal your archive layout needs fixing.
+
+**Requirements:**
+
+- Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
+- Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: `Witchfire\Binaries\Win64`
+
+**Common mistakes:**
+
+- If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report it as broken.
+
 ## Rules That Apply To Every Mod Type
 
+- Archives that contain a FOMOD installer (a `fomod` folder with `ModuleConfig.xml`) are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
