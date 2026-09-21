@@ -97,8 +97,8 @@ function loadList(name) {
 
 /**
  * Engine keys in precedence order, most specific first. Only genuine engine lists
- * appear here: games-unrealextension.txt, games-unreal4-5-xbox.txt and games-uemi.txt
- * are strict subsets of games-ue4-5.txt (they record features, not engines), and the
+ * appear here: games-unrealextension.txt and games-unreal4-5-xbox.txt are strict
+ * subsets of games-ue4-5.txt (they record features, not engines), and the
  * downloader/github/loadorder lists are cross-cutting. Under this order every game
  * resolves to exactly one engine.
  */

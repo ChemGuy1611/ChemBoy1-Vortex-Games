@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.0] - 2026-09-20
+
+- Added: "Browse Thunderstore" page, which opens the Cairn Thunderstore site inside Vortex. Downloads started from it are installed, enabled, and named automatically, and any mods they depend on can be installed with them.
+- Added: Update notifications for mods installed from the Thunderstore page.
+
 ## [1.0.0] - 2026-09-18
 
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.

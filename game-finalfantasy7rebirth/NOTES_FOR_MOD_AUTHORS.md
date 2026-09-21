@@ -1,6 +1,6 @@
-# Notes for Mod Authors - Final Fantasy VII Rebirth
+# Notes for Mod Authors - game-finalfantasy7rebirth
 
-Packaging rules for Final Fantasy VII Rebirth mods, so Vortex installs them to the right place.
+Packaging rules for game-finalfantasy7rebirth mods, so Vortex installs them to the right place.
 
 Vortex decides what a mod is by looking at the files and folders inside the archive. It tries each installer in order and the first one that matches wins, so archive layout is what determines where your mod ends up.
 
@@ -9,15 +9,13 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `End` |
-| Blueprint Mods (LogicMods) | a `LogicMods` folder | `End\Content\Paks\LogicMods\LogicMods` |
-| Modloader | a file or folder named `FF7RML` | `End\Mods` |
-| Modloadermod | a file with the `.uplugin` extension | `End\Mods` |
+| Blueprint Mods (LogicMods) | a `LogicMods` folder | `End\Content\Paks\LogicMods` |
 | Pak Mods | a `.pak` file | `End\Content\Paks\~mods` |
 | UE4SS Itself | a `dwmapi.dll` file | `End\Binaries\Win64` |
 | UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `End\Binaries\Win64\ue4ss\Mods` |
 | UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | `End\Binaries\Win64\ue4ss\Mods` |
-| Root / Game Folder Mods | a top-level folder such as `End` | the game folder itself (no subfolder) |
-| Config File Mods | a config file such as `engine.ini` or `scalability.ini` | `DOCUMENTS\My Games\FINAL FANTASY VII REBIRTH\Saved\Config\WindowsNoEditor` |
+| Root / Game Folder Mods | a top-level folder such as `End`, `Engine` or `Content` | the game folder itself (no subfolder) |
+| Config File Mods | a config file such as `engine.ini` or `game.ini` | - |
 | Save Game Files | a `.sav` file | - |
 | Fallback Installer | anything unrecognised with no pak file | `End\Binaries\Win64` |
 
@@ -73,28 +71,16 @@ MyBlueprintMod.zip
 - Everything from the `LogicMods` folder down is copied to the game, keeping its structure.
 - Extra folders above `LogicMods` are fine - the installer finds it at any depth.
 
-Installs to: `End\Content\Paks\LogicMods\LogicMods`
+Installs to: `End\Content\Paks\LogicMods`
 
 **Common mistakes:**
 
 - Putting the `.pak` at the top level of the archive with no `LogicMods` folder. Vortex then treats it as an ordinary pak mod, installs it to the wrong place, and the blueprint mod never loads.
 - Renaming the folder (`Logic_Mods`, `logicmod`, `BPMods`) - the name must be exactly `LogicMods`.
 
-## Modloader
-
-Recognised when the archive contains a file or folder named `FF7RML`.
-
-Installs to: `End\Mods`
-
-## Modloadermod
-
-Recognised when the archive contains a file with the `.uplugin` extension.
-
-Installs to: `End\Mods`
-
 ## Pak Mods
 
-Standard content mods: one or more `.pak` files. Vortex installs the mod files themselves, so the folder structure around them in the archive does not matter.
+Standard content mods: one or more `.pak` files. Vortex copies just the pak files themselves, flattened, so the folder structure around them does not matter.
 
 ```text
 MyPakMod.zip
@@ -103,15 +89,16 @@ MyPakMod.zip
 
 **Requirements:**
 
-- Recognised by any file with the `.pak` extension.
-- Surrounding folders are discarded - only the mod files are installed.
-- If the archive holds several mod files, Vortex asks the user which to install, which is useful for shipping optional variants in one download.
+- Any archive containing a `.pak` file reaches this installer (unless an earlier one claimed it).
+- Only the pak files are installed - surrounding folders are discarded.
+- If the archive holds more than one pak, Vortex asks the user which to install - useful for optional variants.
 
 Installs to: `End\Content\Paks\~mods`
 
 **Common mistakes:**
 
 - Shipping several unrelated paks in one archive when you meant them all to install - the user gets a choice dialog and may pick only one.
+- Blueprint mods belong in a `LogicMods` folder instead - see above.
 
 ## UE4SS Itself
 
@@ -120,6 +107,7 @@ This installer handles the UE4SS runtime package, not individual mods. Most auth
 **Requirements:**
 
 - Recognised by a file named `dwmapi.dll` at any level of the archive.
+- Also recognised by any of the UE4SS support folders: `MapGenBP`, `MemberVarLayoutTemplates`, `UE4SS_Signatures` or `VTableLayoutTemplates`.
 
 Installs to: `End\Binaries\Win64`
 
@@ -185,7 +173,7 @@ MyRootMod.zip
 
 **Requirements:**
 
-- Recognised by a top-level folder matching any of: `End`.
+- Recognised by a top-level folder matching any of: `End`, `Engine`, `Content`, `Binaries`, `Mods`, `Paks` or `Movies`.
 - The matched folder and everything below it is copied into the game folder, preserving structure.
 
 Installs to: the game folder itself (no subfolder)
@@ -200,10 +188,7 @@ Config tweaks are deployed to the game's config folder in your user profile, not
 
 **Requirements:**
 
-- Recognised by any of these filenames in the archive: `engine.ini`, `scalability.ini` or `input.ini`.
-- Installed to `DOCUMENTS\My Games\FINAL FANTASY VII REBIRTH\Saved\Config\WindowsNoEditor`.
-
-Installs to: `DOCUMENTS\My Games\FINAL FANTASY VII REBIRTH\Saved\Config\WindowsNoEditor`
+- Recognised by any of these filenames in the archive: `engine.ini`, `game.ini`, `gameusersettings.ini`, `input.ini`, `scalability.ini`, `hardware.ini`, `deviceprofiles.ini`, `compat.ini`, `runtimeoptions.ini`, `gameplaytags.ini`, `enhancedinput.ini` or `consolevariables.ini`.
 
 **Common mistakes:**
 

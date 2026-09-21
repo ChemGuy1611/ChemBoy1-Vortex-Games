@@ -50,12 +50,18 @@ Installers run in priority order (lower number = tested first). The first instal
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Open Config/Save Folder
+- Open PCGamingWiki Page
+- Open SteamDB Page
 - View Changelog
 - Open Downloads Folder
 - Open Config/Save Folder
+- Open PCGamingWiki Page
+- Open SteamDB Page
 - View Changelog
 - Open Downloads Folder
 - Open Config/Save Folder
+- Open PCGamingWiki Page
+- Open SteamDB Page
 - View Changelog
 - Open Downloads Folder
 

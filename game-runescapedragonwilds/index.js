@@ -2,8 +2,8 @@
 Name: RuneScape: Dragonwilds Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-09-17
+Version: 1.1.0
+Date: 2026-09-20
 Notes:
 -
 ////////////////////////////////////////////////*/
@@ -294,6 +294,12 @@ const DLL_NAME = "UE4SS DLL Mod";
 const DLL_EXT = ".dll";
 const DLL_FOLDER = "dlls";
 let DLL_PATH = SCRIPTS_PATH;
+
+const SCHEMA_ID = `${GAME_ID}-runeschema`;
+const SCHEMA_NAME = "RuneSchema Mod";
+const SCHEMA_EXTS = [".json", ".jsonc"];
+const SCHEMA_FOLDER = path.join("RuneSchema", "mods");
+let SCHEMA_PATH = path.join(DLL_PATH, SCHEMA_FOLDER);
 
 const LOGICMODS_ID = `${GAME_ID}-logicmods`;
 const LOGICMODS_NAME = "UE4SS LogicMods (Blueprint)";
@@ -649,6 +655,7 @@ function getExecutable(discoveryPath) {
       );
       SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
       DLL_PATH = SCRIPTS_PATH;
+      SCHEMA_PATH = path.join(SCRIPTS_PATH, SCHEMA_FOLDER);
       CONFIG_PATH = CONFIG_PATH_XBOX;
       //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
       SAVE_PATH = getUserIdFolder(SAVE_PATH_XBOX);
@@ -664,6 +671,7 @@ function getExecutable(discoveryPath) {
     );
     SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
     DLL_PATH = SCRIPTS_PATH;
+    SCHEMA_PATH = path.join(SCRIPTS_PATH, SCHEMA_FOLDER);
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
     //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
     //SAVE_PATH = setSavePath;
@@ -679,6 +687,7 @@ function getExecutable(discoveryPath) {
     );
     SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
     DLL_PATH = SCRIPTS_PATH;
+    SCHEMA_PATH = path.join(SCRIPTS_PATH, SCHEMA_FOLDER);
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
     //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
     //SAVE_PATH = setSavePath;
@@ -694,6 +703,7 @@ function getExecutable(discoveryPath) {
     );
     SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
     DLL_PATH = SCRIPTS_PATH;
+    SCHEMA_PATH = path.join(SCRIPTS_PATH, SCHEMA_FOLDER);
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
     //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
     //SAVE_PATH = setSavePath;
@@ -1801,6 +1811,45 @@ function characterInstallerNotify(api) {
       },
     ],
   });
+}
+
+//Test RuneSchema mod
+function testSchema(files, gameId) {
+  const isMod = files.some((file) => SCHEMA_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = gameId === spec.game.id && isMod;
+
+  // Test for a mod installer.
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install RuneSchema mod
+function installSchema(files) {
+  const setModTypeInstruction = { type: "setmodtype", value: SCHEMA_ID };
+
+  const filtered = files.filter((file) => !file.endsWith(path.sep));
+  const instructions = filtered.map((file) => {
+    return {
+      type: "copy",
+      source: file,
+      destination: file,
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
 }
 
 //Test Fallback installer to Binaries folder
@@ -3079,6 +3128,7 @@ async function setup(discovery, api, gameSpec) {
   }
   if (ue4ssLoadOrder) {
     MODTYPE_FOLDERS.push(SCRIPTS_PATH);
+    MODTYPE_FOLDERS.push(SCHEMA_PATH);
     if (logicModsLoadOrder) {
       MODTYPE_FOLDERS.push(path.join(SCRIPTS_PATH, BPML_FOLDER));
     }
@@ -3279,6 +3329,23 @@ function applyGame(context, gameSpec) {
       () => Promise.resolve(false),
       { name: DLL_NAME },
     );
+    context.registerModType(
+      SCHEMA_ID,
+      53,
+      (gameId) => {
+        var _a;
+        return (
+          gameId === GAME_ID &&
+          !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+          _a === void 0
+            ? void 0
+            : _a.path)
+        );
+      },
+      (game) => pathPattern(context.api, game, path.join("{gamePath}", SCHEMA_PATH)),
+      () => Promise.resolve(false),
+      { name: SCHEMA_NAME },
+    );
   }
   context.registerModType(
     BINARIES_ID,
@@ -3427,9 +3494,10 @@ function applyGame(context, gameSpec) {
     installConfig(context.api, files),
   );
   context.registerInstaller(SAVE_ID, 43, testSave, (files) => installSave(context.api, files));
-  context.registerInstaller(CHARACTER_ID, 45, testCharacter, (files) =>
+  /*context.registerInstaller(CHARACTER_ID, 45, testCharacter, (files) =>
     installCharacter(context.api, files),
-  );
+  ); //*/
+  context.registerInstaller(SCHEMA_ID, 48, testSchema, installSchema);
   context.registerInstaller(BINARIES_ID, 49, testBinaries, (files, fileName) =>
     installBinaries(context.api, files, fileName),
   );

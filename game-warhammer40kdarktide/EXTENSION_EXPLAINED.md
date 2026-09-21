@@ -11,6 +11,7 @@
 | --- | --- |
 | Game ID | `warhammer40kdarktide` |
 | Executable | `binaries/Darktide.exe` |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Warhammer_40%2C000%3A_Darktide](https://www.pcgamingwiki.com/wiki/Warhammer_40%2C000%3A_Darktide) |
 
 ## Supported Stores
 
@@ -62,6 +63,8 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open settings_common.ini
 - Open win32_settings.ini
 - Open Launcher.exe.config
+- Open PCGamingWiki Page
+- Open SteamDB Page
 - Open Downloads Folder
 
 ## Special Features

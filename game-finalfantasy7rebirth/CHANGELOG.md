@@ -1,7 +1,10 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [0.6.0] - 2026-09-20
 
+- Migrated to file-based load order (FBLO); added lock button, multi-select, and a right-click context menu to the Paks load order page.
+- Added a UE4SS Load Order page and a LogicMods Load Order page for Blueprint pak mods.
+- Added UE4SS load order support to Collections.
 - Fixed: Mod files with no file extension were skipped during installation
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 

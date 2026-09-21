@@ -2,8 +2,8 @@
 Name: PEAK Vortex Extension
 Structure: Unity BepinEx
 Author: ChemBoy1
-Version: 0.1.4
-Date: 2026-09-13
+Version: 0.2.0
+Date: 2026-09-20
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -20,7 +20,11 @@ const {
   resolveVersionByPattern,
   testRequirementVersion,
 } = require("./downloader");
+const { registerThunderstoreBrowser, onceThunderstoreBrowser } = require("./thunderstore_browser");
 //const winapi = require('winapi-bindings');
+
+//Feature toggles
+const thunderstoreBrowser = true; //register the "Browse Thunderstore" page
 
 //Specify all the information about the game
 const STEAMAPP_ID = "3527290";
@@ -29,6 +33,14 @@ const GOGAPP_ID = null;
 const XBOXAPP_ID = null;
 const XBOXEXECNAME = null;
 const GAME_ID = "peak";
+
+const TS_COMMUNITY = "peak"; //https://thunderstore.io/c/peak/
+const TS_BROWSER_CONFIG = {
+  tsCommunity: TS_COMMUNITY,
+  pageId: `${GAME_ID}-thunderstore-browse`,
+  pageTitle: "Browse Thunderstore",
+};
+
 const GAME_NAME = "PEAK";
 const GAME_NAME_SHORT = "PEAK";
 const EXEC = "PEAK.exe";
@@ -431,6 +443,11 @@ function applyGame(context, gameSpec) {
     );
   });
 
+  //register the embedded Thunderstore browser page
+  if (thunderstoreBrowser) {
+    registerThunderstoreBrowser(context, gameSpec, TS_BROWSER_CONFIG);
+  }
+
   //register mod installers
   context.registerInstaller(BEPCFGMAN_ID, 9, testBepCfgMan, installBepCfgMan);
   //context.registerInstaller(BEPINEX_ID, 25, testBepinex, installBepinex);
@@ -615,6 +632,10 @@ function main(context) {
       if (gameId !== GAME_ID) return Promise.resolve();
       return onCheckModVersion(api, gameId, mods, forced);
     });
+    if (thunderstoreBrowser) {
+      //claims downloads started from the browse page, and update-checks the mods installed through it
+      onceThunderstoreBrowser(api, spec, TS_BROWSER_CONFIG);
+    }
     //Download BepinEx and register with extension
     if (context.api.ext.bepinexAddGame !== undefined) {
       context.api.ext.bepinexAddGame({

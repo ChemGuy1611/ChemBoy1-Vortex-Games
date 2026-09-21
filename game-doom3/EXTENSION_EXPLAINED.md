@@ -60,6 +60,8 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open PCGamingWiki Page
 - Open SteamDB Page
 - Submit Bug Report
+- Open PCGamingWiki Page
+- Open SteamDB Page
 - View Changelog
 - Open Downloads Folder
 

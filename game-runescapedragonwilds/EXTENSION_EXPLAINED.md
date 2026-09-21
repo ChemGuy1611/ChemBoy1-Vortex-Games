@@ -67,6 +67,7 @@ Mod types define where each category of mod gets deployed:
 | Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
 | UE4SS Script Mod | `runescapedragonwilds-scripts` | 50 | `?` |
 | UE4SS DLL Mod | `runescapedragonwilds-ue4ssdll` | 52 | `?` |
+| RuneSchema Mod | `runescapedragonwilds-runeschema` | 53 | `?` |
 | Binaries (Engine Injector) | `runescapedragonwilds-binaries` | 54 | `?` |
 | UE4SS | `runescapedragonwilds-ue4ss` | 56 | `?` |
 | Config (Local AppData) | `runescapedragonwilds-config` | 62 | `?` |
@@ -88,7 +89,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | `runescapedragonwilds-root` | 39 |
 | `runescapedragonwilds-config` | 41 |
 | `runescapedragonwilds-save` | 43 |
-| `runescapedragonwilds-savecharacters` | 45 |
+| `runescapedragonwilds-runeschema` | 48 |
 | `runescapedragonwilds-binaries` | 49 |
 
 ## Toolbar Actions

@@ -4,6 +4,11 @@
 
 - Add???: Support for installing MelonLoader plugins. Need the compatibility loader for MelonLoader mods to work (<https://github.com/BepInEx/BepInEx.MelonLoader.Loader>) - there are very few MelonLoader mods.
 
+## [0.4.0] - 2026-09-20
+
+- Added: "Browse Thunderstore" page, which opens the Hollow Knight: Silksong Thunderstore site inside Vortex. Downloads started from it are installed, enabled, and named automatically, and any mods they depend on can be installed with them.
+- Added: Update notifications for mods installed from the Thunderstore page.
+
 ## [0.3.3] - 2026-09-18
 
 - Fixed: Updating a skin mod could install it into a new folder instead of replacing the previous version.

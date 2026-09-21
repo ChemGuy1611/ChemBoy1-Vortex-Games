@@ -32,6 +32,7 @@
 
 | Flag | Value | Description |
 | --- | --- | --- |
+| `thunderstoreBrowser` | `true` | register the "Browse Thunderstore" page |
 | `isXna` | `true` | set to true if game is XNA engine |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
 | `hasXbox` | `false` | toggle for Xbox version logic |
@@ -49,7 +50,7 @@
 | `hasUserIdFolder` | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
 | `loaderChoice` | `false` | true if loader choice is enabled |
 | `allowBepCfgMan` | `true` | should BepInExConfigManager be downloaded (via notification)? |
-| `allowMelPrefMan` | `true` | should MelonPreferencesManager be downloaded (via notification)? |
+| `allowMelPrefMan` | `false` | should MelonPreferencesManager be downloaded (via notification)? disabled 2026-09-14 - plugin causes in-game errors when loaded |
 | `allowModSettingsMenu` | `true` | should Mod Settings Menu be auto-downloaded on setup? |
 | `allowBepinexNexus` | `true` | allow Nexus Mods download of BepInEx/MelonLoader |
 | `allowMelonNexus` | `true` | allows MelonLoader to be downloaded from Nexus Mods |

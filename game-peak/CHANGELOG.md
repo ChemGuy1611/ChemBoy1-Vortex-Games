@@ -4,6 +4,11 @@
 
 - None
 
+## [0.2.0] - 2026-09-20
+
+- Added: "Browse Thunderstore" page, which opens the PEAK Thunderstore site inside Vortex. Downloads started from it are installed, enabled, and named automatically, and any mods they depend on can be installed with them.
+- Added: Update notifications for mods installed from the Thunderstore page.
+
 ## [0.1.4] - 2026-09-13
 
 - Updated: BepInExConfigManager now automatically checks for and installs the latest version instead of staying pinned to 18.4.1, and shows its proper name in the mod list

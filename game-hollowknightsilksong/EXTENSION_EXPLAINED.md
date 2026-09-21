@@ -28,6 +28,7 @@
 
 | Flag | Value | Description |
 | --- | --- | --- |
+| `thunderstoreBrowser` | `true` | register the "Browse Thunderstore" page |
 | `allowBepinexNexus` | `false` | set false until bugs are fixed |
 | `downloadCfgMan` | `true` | should BepInExConfigManager be downloaded? |
 

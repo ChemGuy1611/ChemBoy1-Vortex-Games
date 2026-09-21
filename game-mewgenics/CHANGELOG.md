@@ -2,6 +2,11 @@
 
 ## Planned Improvements (Not Yet Released)
 
+## [0.4.0] - 2026-09-20
+
+- Added: "Browse Thunderstore" page, which opens the Mewgenics Thunderstore site inside Vortex. Downloads started from it are installed, enabled, and named automatically, and any mods they depend on can be installed with them.
+- Added: Update notifications for mods installed from the Thunderstore page.
+
 ## [0.3.5] - 2026-09-18
 
 - Fixed: Mod files with no file extension were skipped during installation

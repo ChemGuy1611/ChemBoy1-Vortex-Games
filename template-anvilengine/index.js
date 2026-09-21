@@ -39,7 +39,7 @@ const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 const hasAtk = true; //true if game supports AnvilToolkit — also gates the Extracted/.forge/.data/loose workflow and the rename dialog
 const hasForger = false; //true if game supports Forger Patch Manager (.forger2 files) — typically older AC games
 const hasReforger = false; //true if game uses ReForger (Xbox package, found through the registry)
-const hasDlcFolders = false; //true if game has dlc_NN folders — adds the DLC mod type, per-DLC .forge mod types and .forge routing
+const hasDlcFolders = false; //true if game has dlc_NN folders — adds the DLC mod type and installer. Enumerate DLC_FOLDERS to match; .forge routing follows DLC_FOLDERS directly
 const hasResorep = false; //true if game uses ResoRep for runtime texture injection
 const autoCopyResorepDll = false; //true to copy the system d3d11.dll automatically instead of leaving the bundled .bat to the user
 const hasPatchTextures = false; //true if game takes loose .dds textures as Forger patches — mutually exclusive with hasResorep
@@ -166,7 +166,6 @@ const RESOREP_TEXTURES_EXTS = [".dds"];
 const RESOREP_INI_FILE = "dllsettings.ini";
 const RESOREP_DLL_FILE = "d3d11.dll";
 const RESOREP_ORIDLL_FILE = "ori_d3d11.dll";
-const RESOREP_SCRIPT_FILE = "copy_d3d11dll_vortex.bat";
 
 //Legacy mod types — retired types that a user may still have mods installed under.
 //These are deliberately NOT part of spec.modTypes and no installer routes to them. They stay
@@ -230,6 +229,21 @@ if (hasPatchTextures && hasResorep) {
   log(
     "error",
     `${GAME_ID}: hasPatchTextures and hasResorep cannot both be enabled - both claim "${RESOREP_TEXTURES_EXTS.join("/")}" files. Disable one of them.`,
+  );
+}
+
+//hasDlcFolders gates the DLC mod type and installer, while .forge routing and the dlc_NN\Extracted
+//folders follow DLC_FOLDERS directly. The two must be set together or the game gets half the feature.
+if (hasDlcFolders && DLC_FOLDERS.length === 0) {
+  log(
+    "error",
+    `${GAME_ID}: hasDlcFolders is enabled but DLC_FOLDERS is empty - the DLC mod type is registered but no .forge file will route to a DLC folder. Enumerate the game's dlc_NN folders.`,
+  );
+}
+if (!hasDlcFolders && DLC_FOLDERS.length > 0) {
+  log(
+    "error",
+    `${GAME_ID}: DLC_FOLDERS is set but hasDlcFolders is disabled - .forge files will route into DLC folders with no DLC mod type registered. Enable hasDlcFolders.`,
   );
 }
 
@@ -1428,6 +1442,17 @@ function testForger(files, gameId) {
   const isMod = files.some((file) => FORGER_FILES.includes(path.basename(file).toLowerCase()));
   let supported = gameId === spec.game.id && isMod;
 
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
   return Promise.resolve({
     supported,
     requiredFiles: [],
@@ -2125,16 +2150,17 @@ function setupNotify(api) {
 async function resorepSettingsWrite(api, gameSpec) {
   try {
     fs.statSync(path.join(GAME_PATH, RESOREP_INI_FILE));
+    return;
   } catch {
+    //no ini in the game folder yet, so write one
+  }
+  try {
     await fsp.writeFile(
       path.join(GAME_PATH, RESOREP_INI_FILE),
       pathPattern(api, gameSpec.game, RESOREP_INI_TEXT),
-      (err) => {
-        if (err) {
-          api.showErrorNotification(`Failed to write ResoRep ${RESOREP_INI_FILE} file`, err);
-        }
-      },
     );
+  } catch (err) {
+    api.showErrorNotification(`Failed to write ResoRep ${RESOREP_INI_FILE} file`, err);
   }
 }
 
@@ -2159,30 +2185,6 @@ async function resorepDllCopy(api, gameSpec, force = false) {
       return Promise.resolve();
     });
   }
-}
-
-//Run the bundled ResoRep copy script instead of copying the dll directly
-async function resorepScriptCheck(api, gameSpec) {
-  let isInstalled = isResoRepInstalled(api, gameSpec);
-  if (!isInstalled) {
-    log("info", "ResoRep not installed. File copy script not run.");
-    return Promise.resolve();
-  }
-  try {
-    fs.statSync(path.join(GAME_PATH, RESOREP_ORIDLL_FILE));
-    log("info", "ResoRep original dll already exists. File copy script not run.");
-  } catch {
-    try {
-      await api.runExecutable(path.join(GAME_PATH, RESOREP_SCRIPT_FILE), [], {
-        shell: true,
-        detached: true,
-      });
-      log("info", "ResoRep file copy script run.");
-    } catch (err) {
-      api.showErrorNotification("Failed to run ResoRep file copy script", err);
-    }
-  }
-  return Promise.resolve();
 }
 
 // SETUP AND REGISTRATION //////////////////////////////////////////////////////
@@ -2216,7 +2218,6 @@ async function setup(discovery, api, gameSpec) {
     await resorepSettingsWrite(api, gameSpec);
     if (autoCopyResorepDll) {
       await resorepDllCopy(api, gameSpec);
-      await resorepScriptCheck(api, gameSpec);
     }
   }
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);

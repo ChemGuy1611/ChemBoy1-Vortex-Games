@@ -30,6 +30,7 @@
 
 | Flag | Value | Description |
 | --- | --- | --- |
+| `thunderstoreBrowser` | `true` | register the "Browse Thunderstore" page |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
 | `multiExe` | `true` | set to true if there are multiple executables (e.g. for Xbox and PC) |
 | `allowBepinexNexus` | `false` | set false until bugs are fixed |

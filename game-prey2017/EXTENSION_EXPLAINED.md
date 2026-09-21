@@ -57,6 +57,13 @@ These tools appear in Vortex's Tools panel when this game is active:
 - **Prey Interface Customizer** (`preyinterfacecustomizergui.exe`)
 - **Chairloader** (`chairmanager.exe`)
 
+## Toolbar Actions
+
+These buttons appear in the Vortex mod-icons toolbar when this game is active:
+
+- Open PCGamingWiki Page
+- Open SteamDB Page
+
 ## Special Features
 
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.

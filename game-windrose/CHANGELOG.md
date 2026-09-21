@@ -2,7 +2,13 @@
 
 ## Planned Improvements (Not Yet Released)
 
-- Fixed: Mod files with no file extension were skipped during installation
+- None
+
+## [1.1.0] - 2026-09-20
+
+- Added: "Browse Thunderstore" page, which opens the Windrose Thunderstore site inside Vortex. Downloads started from it are installed, enabled, and named automatically, and any mods they depend on can be installed with them.
+- Added: Update notifications for mods installed from the Thunderstore page.
+- Fixed: Mod files with no file extension were skipped during installation.
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 
 ## [1.0.3] - 2026-09-06

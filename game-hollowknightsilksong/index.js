@@ -2,8 +2,8 @@
 Name: Hollow Knight: Silksong Vortex Extension
 Structure: Unity BepinEx
 Author: ChemBoy1
-Version: 0.3.3
-Date: 2026-09-18
+Version: 0.4.0
+Date: 2026-09-20
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -21,6 +21,10 @@ const {
   resolveVersionByPattern,
   testRequirementVersion,
 } = require("./downloader");
+const { registerThunderstoreBrowser, onceThunderstoreBrowser } = require("./thunderstore_browser");
+
+//Feature toggles
+const thunderstoreBrowser = true; //register the "Browse Thunderstore" page
 
 const USER_HOME = util.getVortexPath("home");
 //const DOCUMENTS = util.getVortexPath("documents");
@@ -34,6 +38,12 @@ const GOGAPP_ID = "1558393671";
 const XBOXAPP_ID = "TeamCherry.HollowKnightSilksong";
 const XBOXEXECNAME = "Hollow.Knight.Silksong";
 const GAME_ID = "hollowknightsilksong";
+const TS_COMMUNITY = "hollow-knight-silksong"; //https://thunderstore.io/c/hollow-knight-silksong/
+const TS_BROWSER_CONFIG = {
+  tsCommunity: TS_COMMUNITY,
+  pageId: `${GAME_ID}-thunderstore-browse`,
+  pageTitle: "Browse Thunderstore",
+};
 const GAME_NAME = "Hollow Knight: Silksong";
 const GAME_NAME_SHORT = "HK Silksong";
 const EXEC = "Hollow Knight Silksong.exe";
@@ -899,6 +909,11 @@ function applyGame(context, gameSpec) {
     }, //*/
   );
 
+  //register the embedded Thunderstore browser page
+  if (thunderstoreBrowser) {
+    registerThunderstoreBrowser(context, gameSpec, TS_BROWSER_CONFIG);
+  }
+
   //register mod installers
   context.registerInstaller(ROOT_ID, 8, testRoot, installRoot);
   context.registerInstaller(BEPCFGMAN_ID, 9, testBepCfgMan, installBepCfgMan);
@@ -1073,6 +1088,10 @@ function main(context) {
       if (gameId !== GAME_ID) return Promise.resolve();
       return onCheckModVersion(api, gameId, mods, forced);
     });
+    if (thunderstoreBrowser) {
+      //claims downloads started from the browse page, and update-checks the mods installed through it
+      onceThunderstoreBrowser(api, spec, TS_BROWSER_CONFIG);
+    }
     //Download BepinEx and register with extension
     if (context.api.ext.bepinexAddGame !== undefined) {
       context.api.ext.bepinexAddGame({

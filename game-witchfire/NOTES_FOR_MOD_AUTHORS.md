@@ -10,6 +10,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `Witchfire` |
 | Blueprint Mods (LogicMods) | a `LogicMods` folder | `Witchfire\Content\Paks\LogicMods` |
+| Pak Mods | a `.pak` file | `Witchfire\Content\Paks\~mods` |
 | UE4SS Itself | a `dwmapi.dll` file | `Witchfire\Binaries\Win64` |
 | UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `Witchfire\Binaries\Win64\ue4ss\Mods` |
 | UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | `Witchfire\Binaries\Win64\ue4ss\Mods` |
@@ -76,6 +77,28 @@ Installs to: `Witchfire\Content\Paks\LogicMods`
 
 - Putting the `.pak` at the top level of the archive with no `LogicMods` folder. Vortex then treats it as an ordinary pak mod, installs it to the wrong place, and the blueprint mod never loads.
 - Renaming the folder (`Logic_Mods`, `logicmod`, `BPMods`) - the name must be exactly `LogicMods`.
+
+## Pak Mods
+
+Standard content mods: one or more `.pak` files. Vortex copies just the pak files themselves, flattened, so the folder structure around them does not matter.
+
+```text
+MyPakMod.zip
+└── MyPakMod.pak
+```
+
+**Requirements:**
+
+- Any archive containing a `.pak` file reaches this installer (unless an earlier one claimed it).
+- Only the pak files are installed - surrounding folders are discarded.
+- If the archive holds more than one pak, Vortex asks the user which to install - useful for optional variants.
+
+Installs to: `Witchfire\Content\Paks\~mods`
+
+**Common mistakes:**
+
+- Shipping several unrelated paks in one archive when you meant them all to install - the user gets a choice dialog and may pick only one.
+- Blueprint mods belong in a `LogicMods` folder instead - see above.
 
 ## UE4SS Itself
 

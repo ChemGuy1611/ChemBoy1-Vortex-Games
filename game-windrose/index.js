@@ -2,8 +2,8 @@
 Name: Windrose Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
-Version: 1.0.3
-Date: 2026-09-06
+Version: 1.1.0
+Date: 2026-09-20
 Notes:
 - User selects where to install pak mods (SP or MP)
 - Dedicated Server registered as a separate game
@@ -37,6 +37,7 @@ const {
   resolveVersionByModVersion,
   testRequirementVersion,
 } = require("./downloader");
+const { registerThunderstoreBrowser, onceThunderstoreBrowser } = require("./thunderstore_browser");
 
 // -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -49,6 +50,9 @@ const {
 //const ROAMINGAPPDATA = util.getVortexPath('appData');
 const LOCALAPPDATA = util.getVortexPath("localAppData");
 
+//Feature toggles
+const thunderstoreBrowser = true; //register the "Browse Thunderstore" page
+
 //Specify all information about the game
 const GAME_ID = "windrose"; //same as Nexus domain
 const STEAMAPP_ID = "3041230"; //from steamdb.info
@@ -60,6 +64,13 @@ const XBOXAPP_ID = null; //from appxmanifest.xml
 const XBOXEXECNAME = "AppUEGameShipping"; //from appxmanifest.xml
 const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID, STEAMAPP_ID_DEMO, EPICAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
+
+const TS_COMMUNITY = "windrose"; //https://thunderstore.io/c/windrose/
+const TS_BROWSER_CONFIG = {
+  tsCommunity: TS_COMMUNITY,
+  pageId: `${GAME_ID}-thunderstore-browse`,
+  pageTitle: "Browse Thunderstore",
+};
 
 const GAME_NAME = "Windrose";
 const GAME_NAME_SHORT = GAME_NAME; //Try for 8-10 characters
@@ -3479,6 +3490,11 @@ function applyGame(context, gameSpec) {
     { name: SAVE_NAME },
   ); //*/
 
+  //register the embedded Thunderstore browser page
+  if (thunderstoreBrowser) {
+    registerThunderstoreBrowser(context, gameSpec, TS_BROWSER_CONFIG);
+  }
+
   //register mod installers
   if (hasModKit === true) {
     context.registerInstaller(MODKITMOD_ID, 25, testModKitMod, installModKitMod);
@@ -4226,6 +4242,10 @@ function main(context) {
       }
       return onCheckModVersion(api, gameId, mods, forced);
     });
+    if (thunderstoreBrowser) {
+      //claims downloads started from the browse page, and update-checks the mods installed through it
+      onceThunderstoreBrowser(api, spec, TS_BROWSER_CONFIG);
+    }
     api.onAsync("did-deploy", (profileId) => didDeploy(api, profileId)); //*/
     //api.onAsync('did-purge', (profileId) => didPurge(api, profileId)); //*/
     //detect mod update (to maintain LO position), per game

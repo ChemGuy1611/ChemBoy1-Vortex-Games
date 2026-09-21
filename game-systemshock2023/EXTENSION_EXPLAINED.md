@@ -11,7 +11,7 @@
 ### Notes
 
 - Rebuilt on the unified UE4-5 template - added UE4SS/Scripts/DLL/LogicMods mod support and FBLO
-- Keeps Unreal Engine Mod Installer (UEMI) dependency for PAK installation - FBLO wired to UEMI's global 'ue4-sortable-modtype' via a loadOrderPrefixFunc wrapper (see readyornot extension for reference wiring)
+- Dropped Unreal Engine Mod Installer (UEMI) dependency - pak modtype/installer now self-owned, existing installs migrated automatically on update
 
 ## Key Identifiers
 
@@ -68,6 +68,7 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `systemshock2023-logicmods` | high | `{gamePath}/SystemShock/Content/Paks` |
 | Paks (no "~mods") | `systemshock2023-pakalt` | high | `{gamePath}/SystemShock/Content/Paks` |
 | Root Folder | `systemshock2023-root` | high | `{gamePath}` |
+| UE Sortable Pak Mod | `systemshock2023-uesortablepak` | 25 | `?` |
 | UE4SS Script Mod | `systemshock2023-scripts` | 50 | `?` |
 | UE4SS DLL Mod | `systemshock2023-ue4ssdll` | 52 | `?` |
 | Binaries (Engine Injector) | `systemshock2023-binaries` | 54 | `?` |
@@ -81,8 +82,9 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `systemshock2023-ue4sscombo` | 23 |
-| `systemshock2023-logicmods` | 24 |
+| `systemshock2023-ue4sscombo` | 26 |
+| `systemshock2023-logicmods` | 27 |
+| `systemshock2023-uesortablepak` | 29 |
 | `systemshock2023-ue4ss` | 31 |
 | `systemshock2023-scripts` | 35 |
 | `systemshock2023-ue4ssdll` | 37 |
@@ -127,4 +129,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **GOG Support** — detects GOG version with adjusted executable/data paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-- **Required Extensions** — depends on: `Unreal Engine Mod Installer`.

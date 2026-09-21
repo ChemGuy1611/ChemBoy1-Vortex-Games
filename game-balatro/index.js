@@ -2,8 +2,8 @@
 Name: Balatro Vortex Extension
 Structure: Mod Loader (Mods in AppData Folder)
 Author: ChemBoy1
-Version: 0.3.4
-Date: 2026-09-08
+Version: 0.4.0
+Date: 2026-09-20
 ///////////////////////////////////////*/
 
 //Import libraries
@@ -20,9 +20,19 @@ const {
   testRequirementVersion,
 } = require("./downloader");
 const { parseStringPromise } = require("xml2js");
+const { registerThunderstoreBrowser, onceThunderstoreBrowser } = require("./thunderstore_browser");
+
+//Feature toggles
+const thunderstoreBrowser = true; //register the "Browse Thunderstore" page
 
 //Specify all the information about the game
 const GAME_ID = "balatro";
+const TS_COMMUNITY = "balatro"; //https://thunderstore.io/c/balatro/
+const TS_BROWSER_CONFIG = {
+  tsCommunity: TS_COMMUNITY,
+  pageId: `${GAME_ID}-thunderstore-browse`,
+  pageTitle: "Browse Thunderstore",
+};
 const GAME_NAME = "Balatro";
 const GAME_NAME_SHORT = "Balatro";
 const STEAMAPP_ID = "2379780";
@@ -890,6 +900,11 @@ function applyGame(context, gameSpec) {
     { name: MOD_NAME },
   );
 
+  //register the embedded Thunderstore browser page
+  if (thunderstoreBrowser) {
+    registerThunderstoreBrowser(context, gameSpec, TS_BROWSER_CONFIG);
+  }
+
   //register mod installers
   context.registerInstaller(LOVELY_ID, 25, testLovely, installLovely);
   context.registerInstaller(STEAMMODDED_ID, 27, testSteamModded, installSteamModded);
@@ -1062,6 +1077,10 @@ function main(context) {
       if (gameId !== GAME_ID) return;
       return onCheckModVersion(api, gameId, mods, forced);
     }); //*/
+    if (thunderstoreBrowser) {
+      //claims downloads started from the browse page, and update-checks the mods installed through it
+      onceThunderstoreBrowser(api, spec, TS_BROWSER_CONFIG);
+    }
   });
   return true;
 }

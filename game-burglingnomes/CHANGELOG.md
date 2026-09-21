@@ -4,6 +4,11 @@
 
 - None
 
+## [1.1.0] - 2026-09-20
+
+- Added: "Browse Thunderstore" page, which opens the Burglin' Gnomes Thunderstore site inside Vortex. Downloads started from it are installed, enabled, and named automatically, and any mods they depend on can be installed with them.
+- Added: Update notifications for mods installed from the Thunderstore page.
+
 ## [1.0.0] - 2026-09-17
 
 - Changed: No longer asks which mod loader to use on first install - BepInEx now installs automatically. MelonLoader still works if you install it yourself.

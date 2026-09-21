@@ -2,8 +2,8 @@
 Name: RV There Yet? Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.1.0
-Date: 2026-09-13
+Version: 1.2.0
+Date: 2026-09-20
 Notes:
 - Rebuilt on the unified UE4-5 template and added Xbox Game Pass version support
 ////////////////////////////////////////////////*/
@@ -35,6 +35,7 @@ const {
   resolveVersionByModVersion,
   testRequirementVersion,
 } = require("./downloader");
+const { registerThunderstoreBrowser, onceThunderstoreBrowser } = require("./thunderstore_browser");
 
 // -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -44,6 +45,9 @@ const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow'); //*/
 //const DOCUMENTS = util.getVortexPath('documents');
 //const ROAMINGAPPDATA = util.getVortexPath('appData');
 const LOCALAPPDATA = util.getVortexPath("localAppData");
+
+//Feature toggles
+const thunderstoreBrowser = true; //register the "Browse Thunderstore" page
 
 //Specify all information about the game
 const GAME_ID = "rvthereyet"; //same as Nexus domain
@@ -55,6 +59,13 @@ const XBOXAPP_ID = "NuggetsEntertainmentAB.RVThereYet"; //from appxmanifest.xml
 const XBOXEXECNAME = "AppRideShipping"; //from appxmanifest.xml
 const XBOX_PUB_ID = "4kh8ecef8wxy6"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+
+const TS_COMMUNITY = "rv-there-yet"; //https://thunderstore.io/c/rv-there-yet/
+const TS_BROWSER_CONFIG = {
+  tsCommunity: TS_COMMUNITY,
+  pageId: `${GAME_ID}-thunderstore-browse`,
+  pageTitle: "Browse Thunderstore",
+};
 
 const GAME_NAME = "RV There Yet?";
 const GAME_NAME_SHORT = "RV There Yet?"; //Try for 8-10 characters
@@ -3198,6 +3209,11 @@ function applyGame(context, gameSpec) {
     { name: SAVE_NAME },
   ); //*/
 
+  //register the embedded Thunderstore browser page
+  if (thunderstoreBrowser) {
+    registerThunderstoreBrowser(context, gameSpec, TS_BROWSER_CONFIG);
+  }
+
   //register mod installers
   if (hasModKit === true) {
     context.registerInstaller(MODKITMOD_ID, 25, testModKitMod, installModKitMod);
@@ -3586,6 +3602,10 @@ function main(context) {
       }
       return onCheckModVersion(api, gameId, mods, forced);
     });
+    if (thunderstoreBrowser) {
+      //claims downloads started from the browse page, and update-checks the mods installed through it
+      onceThunderstoreBrowser(api, spec, TS_BROWSER_CONFIG);
+    }
     api.onAsync("did-deploy", (profileId) => didDeploy(api, profileId)); //*/
     //api.onAsync('did-purge', (profileId) => didPurge(api, profileId)); //*/
     //detect mod update (to maintain LO position)

@@ -17,7 +17,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Root / Game Folder Mods | a top-level folder such as `RSDragonwilds`, `Engine` or `Content` | the game folder itself (no subfolder) |
 | Config File Mods | a config file such as `engine.ini` or `game.ini` | - |
 | Save Game Files | a `.sav` file | - |
-| Savecharacters | a file with the `.json` extension | - |
+| Runeschema | a file with one of these extensions: `.json` or `.jsonc` | - |
 | Fallback Installer | anything unrecognised with no pak file | `RSDragonwilds\Binaries\Win64` |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
@@ -207,9 +207,9 @@ Save files are deployed to the game's save folder in your user profile.
 
 - Including an example save alongside a normal mod - the archive is then treated as a save, not a mod.
 
-## Savecharacters
+## Runeschema
 
-Recognised when the archive contains a file with the `.json` extension.
+Recognised when the archive contains a file with one of these extensions: `.json` or `.jsonc`.
 
 ## Fallback Installer
 

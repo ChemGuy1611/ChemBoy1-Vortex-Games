@@ -11,7 +11,7 @@
 ### Notes
 
 - Rebuilt on the unified UE4-5 template (FBLO, UE4SS/LogicMods/collections support)
-- Keeps Unreal Engine Mod Installer (UEMI) dependency for PAK installation - FBLO wired to UEMI's global 'ue4-sortable-modtype' via a loadOrderPrefixFunc wrapper
+- Dropped Unreal Engine Mod Installer (UEMI) dependency - pak modtype/installer now self-owned, existing installs migrated automatically on update
 
 ## Key Identifiers
 
@@ -67,6 +67,7 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `witchfire-logicmods` | high | `{gamePath}/Witchfire/Content/Paks` |
 | Paks (no "~mods") | `witchfire-pakalt` | high | `{gamePath}/Witchfire/Content/Paks` |
 | Root Folder | `witchfire-root` | high | `{gamePath}` |
+| UE Sortable Pak Mod | `witchfire-uesortablepak` | 25 | `?` |
 | UE4SS Script Mod | `witchfire-scripts` | 50 | `?` |
 | UE4SS DLL Mod | `witchfire-ue4ssdll` | 52 | `?` |
 | Binaries (Engine Injector) | `witchfire-binaries` | 54 | `?` |
@@ -80,8 +81,9 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `witchfire-ue4sscombo` | 23 |
-| `witchfire-logicmods` | 24 |
+| `witchfire-ue4sscombo` | 26 |
+| `witchfire-logicmods` | 27 |
+| `witchfire-uesortablepak` | 29 |
 | `witchfire-ue4ss` | 31 |
 | `witchfire-scripts` | 35 |
 | `witchfire-ue4ssdll` | 37 |
@@ -125,4 +127,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-- **Required Extensions** — depends on: `Unreal Engine Mod Installer`.

@@ -25,6 +25,7 @@
 
 | Flag | Value | Description |
 | --- | --- | --- |
+| `thunderstoreBrowser` | `true` | register the "Browse Thunderstore" page |
 | `downloadCfgMan` | `true` | should BepInExConfigManager be downloaded? |
 
 ## Mod Types

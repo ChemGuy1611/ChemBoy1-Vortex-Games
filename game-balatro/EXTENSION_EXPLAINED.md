@@ -24,6 +24,12 @@
 - **Epic Games Store** — `0e66f423d20646b49440cfbb451bccca`
 - **Xbox / Microsoft Store** — `PlayStack.Balatro`
 
+## Feature Flags
+
+| Flag | Value | Description |
+| --- | --- | --- |
+| `thunderstoreBrowser` | `true` | register the "Browse Thunderstore" page |
+
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:

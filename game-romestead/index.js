@@ -2,8 +2,8 @@
 Name: Romestead Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-09-14
+Version: 1.1.0
+Date: 2026-09-20
 Notes:
 - Romestead is a .NET 8 / MonoGame game, not a Unity game: there is no `<Game>`_Data folder, no
   Managed folder and no MelonLoader support. isXna gates every Unity-only path off.
@@ -33,6 +33,7 @@ const {
   testRequirementVersion,
 } = require("./downloader");
 const { downloadBepinexBe, checkForBepinexBeUpdate } = require("./bepinexbe_downloader");
+const { registerThunderstoreBrowser, onceThunderstoreBrowser } = require("./thunderstore_browser");
 
 // -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -42,6 +43,9 @@ const LOCALLOW = path.join(USER_HOME, "AppData", "LocalLow");
 //const DOCUMENTS = util.getVortexPath("documents");
 //const ROAMINGAPPDATA = util.getVortexPath("appData");
 const LOCALAPPDATA = util.getVortexPath("localAppData");
+
+//Feature toggles
+const thunderstoreBrowser = true; //register the "Browse Thunderstore" page
 
 //Specify all the information about the game
 const GAME_ID = "romestead";
@@ -53,6 +57,13 @@ const XBOXAPP_ID = null;
 const XBOXEXECNAME = "Game";
 const XBOX_PUB_ID = "XXX"; //string after "ID_"
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+
+const TS_COMMUNITY = "romestead"; //https://thunderstore.io/c/romestead/
+const TS_BROWSER_CONFIG = {
+  tsCommunity: TS_COMMUNITY,
+  pageId: `${GAME_ID}-thunderstore-browse`,
+  pageTitle: "Browse Thunderstore",
+};
 
 const GAME_NAME = "Romestead";
 const GAME_NAME_SHORT = "Romestead";
@@ -2877,6 +2888,11 @@ function applyGame(context, gameSpec) {
     );
   }
 
+  //register the embedded Thunderstore browser page
+  if (thunderstoreBrowser) {
+    registerThunderstoreBrowser(context, gameSpec, TS_BROWSER_CONFIG);
+  }
+
   //register mod installers
   if (hasCustomLoader) {
     context.registerInstaller(CUSTOMLOADER_ID, 25, testCustomLoader, installCustomLoader);
@@ -3190,6 +3206,10 @@ function main(context) {
       if (gameId !== GAME_ID) return Promise.resolve();
       return onCheckModVersion(api, gameId, mods, forced);
     });
+    if (thunderstoreBrowser) {
+      //claims downloads started from the browse page, and update-checks the mods installed through it
+      onceThunderstoreBrowser(api, spec, TS_BROWSER_CONFIG);
+    }
     api.onAsync("did-deploy", async (profileId, deployment) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;

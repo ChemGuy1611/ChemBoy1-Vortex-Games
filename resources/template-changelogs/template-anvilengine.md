@@ -1,5 +1,14 @@
 # template-anvilengine Changelog
 
+## [2026-09-20]
+
+- Fixed: `resorepSettingsWrite` passed an error handler as the third argument to `fsp.writeFile`. `fs.promises` takes options there, not a callback, and silently discards a function, so the handler was dead code and a failed `dllsettings.ini` write rejected out of `setup` with no notification shown. The write is now wrapped in `try`/`catch` and reports through `showErrorNotification` as intended.
+- Fixed: `testForger` was the only installer test without a FOMOD guard, so a FOMOD archive containing `forger.exe` was claimed at priority 26 instead of reaching the FOMOD installer. It now returns unsupported when `fomod/ModuleConfig.xml` is present, matching every other test in the file.
+- Changed: `autoCopyResorepDll` now performs the direct DLL copy only. It previously also ran the ResoRep `.bat` afterwards, which could never do anything — both paths write the same `ori_d3d11.dll` and both skip when it already exists, so the script call was always a no-op. `resorepScriptCheck` and `RESOREP_SCRIPT_FILE` are removed; the toggle's two states are now simply "the extension copies the DLL" or "the user runs the bundled `.bat`".
+- Added: a startup error is logged when `hasDlcFolders` and `DLC_FOLDERS` disagree in either direction. The DLC mod type and installer follow the toggle, while `.forge` routing and the `dlc_NN\Extracted` folders follow `DLC_FOLDERS` directly, so setting only one of the two produced half the feature with no warning.
+- Added: `reforger.png` and `vulkan.png`, referenced by the ReForger and Vulkan launcher tool entries but previously missing from the template, so a scaffolded extension enabling `hasReforger` or `hasCustomLaunchers` had a broken tool icon.
+- Fixed: the `hasDlcFolders` comment still described per-DLC `.forge` mod types, which were replaced by destination-path routing.
+
 ## [2026-09-12]
 
 - Fixed: installers scoped their file list to the mod root with `file.indexOf(rootPath) !== -1`, a substring test that silently dropped every extension-less file. `path.dirname()` returns `"."` when the mod file sits at the archive root, which collapses the test to "the path contains a dot", so extension-less payloads never reached the staging folder; the same test also matched sibling folders that happen to share a name prefix. All 14 installers now derive `const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;` and filter with `file.startsWith(rootPrefix)`.

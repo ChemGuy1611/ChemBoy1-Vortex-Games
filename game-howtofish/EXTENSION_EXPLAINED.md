@@ -28,6 +28,7 @@
 
 | Flag | Value | Description |
 | --- | --- | --- |
+| `thunderstoreBrowser` | `true` | register the "Browse Thunderstore" page |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
 | `hasXbox` | `false` | toggle for Xbox version logic |
 | `multiExe` | `false` | set to true if there are multiple executables (typically for Xbox/EGS) |

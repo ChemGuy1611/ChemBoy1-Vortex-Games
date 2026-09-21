@@ -2,8 +2,8 @@
 Name: Mewgenics Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.3.5
-Date: 2026-09-18
+Version: 0.4.0
+Date: 2026-09-20
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -14,6 +14,7 @@ const path = require("path");
 const template = require("string-template");
 const { parseStringPromise } = require("xml2js");
 const React = require("react");
+const { registerThunderstoreBrowser, onceThunderstoreBrowser } = require("./thunderstore_browser");
 //const winapi = require('winapi-bindings');
 
 /*const USER_HOME = util.getVortexPath("home");
@@ -21,6 +22,9 @@ const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow'); //*/
 //const DOCUMENTS = util.getVortexPath("documents");
 const ROAMINGAPPDATA = util.getVortexPath("appData");
 //const LOCALAPPDATA = util.getVortexPath("localAppData");
+
+//Feature toggles
+const thunderstoreBrowser = true; //register the "Browse Thunderstore" page
 
 //Specify all the information about the game
 const GAME_ID = "mewgenics";
@@ -32,6 +36,14 @@ const XBOXAPP_ID = null;
 const XBOXEXECNAME = null;
 const XBOX_PUB_ID = ""; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+
+const TS_COMMUNITY = "mewgenics"; //https://thunderstore.io/c/mewgenics/
+const TS_BROWSER_CONFIG = {
+  tsCommunity: TS_COMMUNITY,
+  pageId: `${GAME_ID}-thunderstore-browse`,
+  pageTitle: "Browse Thunderstore",
+};
+
 const GAME_NAME = "Mewgenics";
 const GAME_NAME_SHORT = GAME_NAME;
 const BINARIES_PATH = ".";
@@ -1455,6 +1467,11 @@ function applyGame(context, gameSpec) {
     { name: LOADER_NAME },
   );
 
+  //register the embedded Thunderstore browser page
+  if (thunderstoreBrowser) {
+    registerThunderstoreBrowser(context, gameSpec, TS_BROWSER_CONFIG);
+  }
+
   //register mod installers
   context.registerInstaller(LOADER_ID, 25, testLoader, installLoader);
   context.registerInstaller(SAVE_EDITOR_ID, 26, testSaveEditor, installSaveEditor);
@@ -1607,6 +1624,10 @@ function main(context) {
   context.once(() => {
     // put code here that should be run (once) when Vortex starts up
     const api = context.api;
+    if (thunderstoreBrowser) {
+      //claims downloads started from the browse page, and update-checks the mods installed through it
+      onceThunderstoreBrowser(api, spec, TS_BROWSER_CONFIG);
+    }
     api.onAsync("did-deploy", async (profileId, deployment) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;

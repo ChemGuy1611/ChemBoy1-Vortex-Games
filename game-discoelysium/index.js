@@ -2,8 +2,8 @@
 Name: Disco Elysium Vortex Extension
 Structure: Unity BepinEx
 Author: ChemBoy1
-Version: 0.1.6
-Date: 2026-09-13
+Version: 0.2.0
+Date: 2026-09-20
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -22,12 +22,16 @@ const {
   resolveVersionByPattern,
   testRequirementVersion,
 } = require("./downloader");
+const { registerThunderstoreBrowser, onceThunderstoreBrowser } = require("./thunderstore_browser");
 
 const USER_HOME = util.getVortexPath("home");
 const LOCALLOW = path.join(USER_HOME, "AppData", "LocalLow");
 //const DOCUMENTS = util.getVortexPath("documents");
 //const ROAMINGAPPDATA = util.getVortexPath("appData");
 const LOCALAPPDATA = util.getVortexPath("localAppData");
+
+//Feature toggles
+const thunderstoreBrowser = true; //register the "Browse Thunderstore" page
 
 //Specify all the information about the game
 const GAME_ID = "discoelysium";
@@ -38,6 +42,14 @@ const GOGAPP_ID = "1771589310";
 const XBOXAPP_ID = "ZAUMStudioDiscoElysiumUKL.DiscoElysium-TheFinalCut";
 const XBOXEXECNAME = "Game";
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID, EPICAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+
+const TS_COMMUNITY = "disco-elysium"; //https://thunderstore.io/c/disco-elysium/
+const TS_BROWSER_CONFIG = {
+  tsCommunity: TS_COMMUNITY,
+  pageId: `${GAME_ID}-thunderstore-browse`,
+  pageTitle: "Browse Thunderstore",
+};
+
 const GAME_NAME = "Disco Elysium";
 const GAME_NAME_SHORT = "Disco Elysium";
 const EXEC = "disco.exe"; //steam
@@ -824,6 +836,11 @@ function applyGame(context, gameSpec) {
     { name: ASSETS_NAME },
   );
 
+  //register the embedded Thunderstore browser page
+  if (thunderstoreBrowser) {
+    registerThunderstoreBrowser(context, gameSpec, TS_BROWSER_CONFIG);
+  }
+
   //register mod installers
   context.registerInstaller(ROOT_ID, 8, testRoot, installRoot);
   context.registerInstaller(BEPCFGMAN_ID, 9, testBepCfgMan, installBepCfgMan); //must be set to 9 since bepinex extension modtypes start at 10 and would hijack
@@ -1002,6 +1019,10 @@ function main(context) {
       if (gameId !== GAME_ID) return Promise.resolve();
       return onCheckModVersion(api, gameId, mods, forced);
     });
+    if (thunderstoreBrowser) {
+      //claims downloads started from the browse page, and update-checks the mods installed through it
+      onceThunderstoreBrowser(api, spec, TS_BROWSER_CONFIG);
+    }
     if (context.api.ext.bepinexAddGame !== undefined) {
       if (BEPINEX_PAGE_ID !== "0" && allowBepinexNexus === true) {
         //if Nexus page exists and is allowed, download from Nexus

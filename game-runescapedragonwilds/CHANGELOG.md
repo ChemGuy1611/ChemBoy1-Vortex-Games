@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.0] - 2026-09-20
+
+- Added support for RuneSchema mods with .json/.jsonc files
+- Removed installer for character saves (to allow for RuneSchema installer to handle .json files)
+
 ## [1.0.0] - 2026-09-17
 
 - Added Xbox version support

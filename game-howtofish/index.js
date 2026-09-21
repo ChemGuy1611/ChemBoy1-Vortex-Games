@@ -2,8 +2,8 @@
 Name: How to Fish Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
-Version: 1.0.4
-Date: 2026-09-14
+Version: 1.1.0
+Date: 2026-09-20
 Notes:
 -
 //////////////////////////////////////////*/
@@ -28,7 +28,7 @@ const {
   resolveVersionByNightlyRun,
   testRequirementVersion,
 } = require("./downloader");
-const { downloadBepinexBe, checkForBepinexBeUpdate } = require("./bepinexbe_downloader");
+const { registerThunderstoreBrowser, onceThunderstoreBrowser } = require("./thunderstore_browser");
 
 // -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -38,6 +38,9 @@ const LOCALLOW = path.join(USER_HOME, "AppData", "LocalLow");
 //const DOCUMENTS = util.getVortexPath("documents");
 //const ROAMINGAPPDATA = util.getVortexPath("appData");
 const LOCALAPPDATA = util.getVortexPath("localAppData");
+
+//Feature toggles
+const thunderstoreBrowser = true; //register the "Browse Thunderstore" page
 
 //Specify all the information about the game
 const GAME_ID = "howtofish";
@@ -49,6 +52,13 @@ const XBOXAPP_ID = null;
 const XBOXEXECNAME = "Game";
 const XBOX_PUB_ID = "XXX"; //string after "ID_"
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+
+const TS_COMMUNITY = "how-to-fish"; //https://thunderstore.io/c/how-to-fish/
+const TS_BROWSER_CONFIG = {
+  tsCommunity: TS_COMMUNITY,
+  pageId: `${GAME_ID}-thunderstore-browse`,
+  pageTitle: "Browse Thunderstore",
+};
 
 const GAME_NAME = "How to Fish";
 const GAME_NAME_SHORT = "How to Fish";
@@ -106,8 +116,6 @@ const recommendedLoader = "mel"; // bep/mel - If loaderChoice false, this determ
 const BEPINEX_BUILD = "mono"; // 'mono' or 'il2cpp' - check for "il2cpp_data" folder
 const ARCH = "x64"; //'x64' or 'x86' game architecture (64-bit or 32-bit)
 const BEP_VER = "5.4.23.5"; //set BepInEx version for mono URLs
-const BEP_BE_VER = "788"; //set BepInEx build for BE IL2CPP URLs
-const BEP_BE_COMMIT = "5b766a3"; //git commit number for BE IL2CPP builds
 const BEPCFGMAN_VER = "19.0"; //set BepInExConfigManager version for direct URLs
 const allowBepCfgMan = true; //should BepInExConfigManager be downloaded (via notification)?
 const allowMelPrefMan = false; //should MelonPreferencesManager be downloaded (via notification)? disabled 2026-09-14 - plugin causes in-game errors when loaded
@@ -189,9 +197,6 @@ const BEP_PATCHER_STRING = "BepInEx.Preloader.Core.Patching";
 
 const BEPINEX_ARC_NAME = `BepInEx_win_${ARCH}_${BEP_VER}.zip`; //mono release asset - the auto-downloader matches the current one by pattern
 const BEPINEX_URL_API = `https://api.github.com/repos/BepInEx/BepInEx`;
-//Bleeding Edge artifact for the build recorded above. Only used as the fallback when the
-//builds.bepinex.dev index page cannot be reached - normally the newest build is resolved from it.
-const BEPINEX_URL = `https://builds.bepinex.dev/projects/bepinex_be/${BEP_BE_VER}/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.${BEP_BE_VER}%2B${BEP_BE_COMMIT}.zip`;
 
 let MELON_STRING = "IL2CPP";
 if (BEPINEX_BUILD === "mono") {
@@ -346,7 +351,7 @@ const MELON_NIGHTLY_REQUIREMENTS = [
   },
 ];
 
-//BepInEx mono (GitHub releases). IL2CPP games use BEPINEX_BE_REQUIREMENTS below instead.
+//BepInEx mono (GitHub releases)
 const BEPINEX_REQUIREMENTS = [
   {
     archiveFileName: BEPINEX_ARC_NAME,
@@ -364,21 +369,6 @@ const BEPINEX_REQUIREMENTS = [
     resolveVersion: (api) => resolveVersionByModVersion(api, BEPINEX_REQUIREMENTS[0]),
     autoInstall: false,
     //pinVersion: BEP_VER, //hold at this release - update checks go silent once it is installed
-  },
-];
-
-//BepInEx Bleeding Edge (builds.bepinex.dev). IL2CPP only - delete this block in a mono extension.
-const BEPINEX_BE_REQUIREMENTS = [
-  {
-    //no g flag - the module calls .test() per artifact and a stateful RegExp would misfire
-    artifactPattern: /^BepInEx-Unity\.IL2CPP-win-x64-/i,
-    modType: BEPINEX_ID,
-    userFacingName: BEPINEX_NAME,
-    fallbackBuild: BEP_BE_VER, //recorded when the index page is unreachable
-    fallbackArtifactUrl: BEPINEX_URL,
-    autoInstall: false,
-    //pinVersion: BEP_BE_VER, //hold at this build - update checks go silent once it is installed
-    //pinArtifactUrl: BEPINEX_URL, //only needed if the pinned build has scrolled off the index page
   },
 ];
 
@@ -2771,6 +2761,11 @@ function applyGame(context, gameSpec) {
     { name: ASSETS_NAME },
   );
 
+  //register the embedded Thunderstore browser page
+  if (thunderstoreBrowser) {
+    registerThunderstoreBrowser(context, gameSpec, TS_BROWSER_CONFIG);
+  }
+
   //register mod installers
   if (hasCustomLoader) {
     context.registerInstaller(CUSTOMLOADER_ID, 25, testCustomLoader, installCustomLoader);
@@ -3051,6 +3046,10 @@ function main(context) {
       if (gameId !== GAME_ID) return Promise.resolve();
       return onCheckModVersion(api, gameId, mods, forced);
     });
+    if (thunderstoreBrowser) {
+      //claims downloads started from the browse page, and update-checks the mods installed through it
+      onceThunderstoreBrowser(api, spec, TS_BROWSER_CONFIG);
+    }
     api.onAsync("did-deploy", async (profileId, deployment) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
@@ -3273,8 +3272,6 @@ function isMelonPrefManInstalled(api, spec) {
 
 //Requirements handled by downloader.js for the loader that is currently installed. NEVER returns
 //both loaders: a hybrid game runs exactly one, and installing the other alongside it breaks the game.
-//The Bleeding Edge requirement is deliberately absent - it belongs to a different module with a
-//different requirement shape, and is returned by getBepinexBeRequirements() instead.
 function getRequirements(api) {
   const requirements = [];
   if (isMelonInstalled(api, spec)) {
@@ -3283,23 +3280,12 @@ function getRequirements(api) {
       requirements.push(...MELONPREFMAN_REQUIREMENTS);
     }
   } else if (isBepinexInstalled(api, spec)) {
-    if (BEPINEX_BUILD === "mono") {
-      //IL2CPP BepInEx comes from builds.bepinex.dev, not GitHub
-      requirements.push(...BEPINEX_REQUIREMENTS);
-    }
+    requirements.push(...BEPINEX_REQUIREMENTS);
     if (allowBepCfgMan) {
       requirements.push(...BEPCFGMAN_REQUIREMENTS);
     }
   }
   return requirements;
-}
-
-//builds.bepinex.dev requirements, which the bepinexbe_downloader module owns
-function getBepinexBeRequirements(api) {
-  if (BEPINEX_BUILD === "mono" || !isBepinexInstalled(api, spec)) {
-    return [];
-  }
-  return BEPINEX_BE_REQUIREMENTS;
 }
 
 async function asyncForEachTestVersion(api, requirements) {
@@ -3311,23 +3297,15 @@ async function asyncForEachTestVersion(api, requirements) {
 async function onCheckModVersion(api, gameId, mods, forced) {
   try {
     await asyncForEachTestVersion(api, getRequirements(api));
-    const beRequirements = getBepinexBeRequirements(api);
-    if (beRequirements.length > 0) {
-      await checkForBepinexBeUpdate(api, spec, beRequirements);
-    }
     log("warn", "Checked requirements versions");
   } catch (err) {
     log("warn", `Failed to test requirement version: ${err}`);
   }
 }
 
-// Download BepInEx - the mono build comes from the GitHub release, IL2CPP from a
-// builds.bepinex.dev Bleeding Edge build.
+// Download BepInEx (mono build, from the GitHub release)
 async function downloadBepinex(api, gameSpec, check = true) {
-  if (BEPINEX_BUILD === "mono") {
-    return download(api, BEPINEX_REQUIREMENTS, !check);
-  }
-  return downloadBepinexBe(api, gameSpec, BEPINEX_BE_REQUIREMENTS, check);
+  return download(api, BEPINEX_REQUIREMENTS, !check);
 }
 
 //* Function to auto-download BepInEx from a Nexus Mods page

@@ -20,7 +20,6 @@ independently of its engine category and of each other:
     games-downloader-moddb.txt      - games with a bundled moddb_downloader.js module
     games-downloader-modworkshop.txt - games with a bundled modworkshop_downloader.js module
     games-downloader-thunderstore.txt - games with a bundled thunderstore_downloader.js module
-    games-uemi.txt       - games that require the "Unreal Engine Mod Installer" extension
     games-requires-extension.txt - games that declare any context.requireExtension
                            dependency on another Vortex extension, required or optional
     games-ue4-5-parity.txt - UE4-5 games carrying the full template-ue4-5 load order
@@ -59,7 +58,7 @@ from vortex_utils import (
     has_gamebanana_downloader_js,
     has_moddb_downloader_js, has_modworkshop_downloader_js,
     has_thunderstore_downloader_js,
-    requires_unreal_mod_installer, has_extension_dependency, has_ue4ss_load_order_parity,
+    has_extension_dependency, has_ue4ss_load_order_parity,
     has_unity_bepinex_parity, has_unity_hybrid_parity,
     is_unreleased_extension, is_multi_game_extension, has_any_steamapp_id,
     log_error, log_dry,
@@ -138,7 +137,6 @@ FLAG_LISTS = [
     ("games-downloader-moddb.txt",      lambda src, folder: has_moddb_downloader_js(folder)),
     ("games-downloader-modworkshop.txt", lambda src, folder: has_modworkshop_downloader_js(folder)),
     ("games-downloader-thunderstore.txt", lambda src, folder: has_thunderstore_downloader_js(folder)),
-    ("games-uemi.txt",       lambda src, folder: requires_unreal_mod_installer(src)),
     # Any declared dependency on another Vortex extension. A hard dependency (no third
     # argument) stops the extension loading at all when the other one is missing; an
     # optional one only prompts the user. Both land here.

@@ -2,8 +2,8 @@
 Name: ASKA Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-09-18
+Version: 1.1.0
+Date: 2026-09-20
 Notes:
 -
 //////////////////////////////////////////*/
@@ -29,6 +29,7 @@ const {
   testRequirementVersion,
 } = require("./downloader");
 const { downloadBepinexBe, checkForBepinexBeUpdate } = require("./bepinexbe_downloader");
+const { registerThunderstoreBrowser, onceThunderstoreBrowser } = require("./thunderstore_browser");
 
 // -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -50,6 +51,12 @@ const XBOXEXECNAME = "Game";
 const XBOX_PUB_ID = "XXX"; //string after "ID_"
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
+const TS_COMMUNITY = "aska"; //https://thunderstore.io/c/aska/
+const TS_BROWSER_CONFIG = {
+  tsCommunity: TS_COMMUNITY,
+  pageId: `${GAME_ID}-thunderstore-browse`,
+  pageTitle: "Browse Thunderstore",
+};
 const GAME_NAME = "ASKA";
 const GAME_NAME_SHORT = "ASKA";
 const GAME_STRING = "Aska"; //string for exe and data folder (seem to always match)
@@ -82,6 +89,7 @@ const hasCustomMods = false; //set to true if there are modTypes with folder pat
 const hasCustomLoader = false; //set to true if there is a custom mod loader
 const customLoaderInstaller = false; //set true if the custom loader uses an installer
 const debug = false; //toggle for debug mode
+const thunderstoreBrowser = true; //register the "Browse Thunderstore" page
 
 const DATA_FOLDER_DEFAULT = `${GAME_STRING}_Data`;
 let DATA_FOLDER = DATA_FOLDER_DEFAULT;
@@ -2808,6 +2816,11 @@ function applyGame(context, gameSpec) {
     );
   }
 
+  //register the embedded Thunderstore browser page
+  if (thunderstoreBrowser) {
+    registerThunderstoreBrowser(context, gameSpec, TS_BROWSER_CONFIG);
+  }
+
   //register mod installers
   if (hasCustomLoader) {
     context.registerInstaller(CUSTOMLOADER_ID, 25, testCustomLoader, installCustomLoader);
@@ -3121,6 +3134,10 @@ function main(context) {
       if (gameId !== GAME_ID) return Promise.resolve();
       return onCheckModVersion(api, gameId, mods, forced);
     });
+    if (thunderstoreBrowser) {
+      //claims downloads started from the browse page, and update-checks the mods installed through it
+      onceThunderstoreBrowser(api, spec, TS_BROWSER_CONFIG);
+    }
     api.onAsync("did-deploy", async (profileId, deployment) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;

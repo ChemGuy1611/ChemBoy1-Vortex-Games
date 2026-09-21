@@ -28,6 +28,7 @@
 
 | Flag | Value | Description |
 | --- | --- | --- |
+| `thunderstoreBrowser` | `true` | register the "Browse Thunderstore" page |
 | `enableLoadOrder` | `true` | true if you want to use load order sorting |
 | `hasLoader` | `false` | Disabled since it is not actually necessary. Installer and modType still works. |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |

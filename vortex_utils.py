@@ -54,7 +54,7 @@ Usage:
         has_moddb_downloader_js, has_modworkshop_downloader_js,
         has_thunderstore_downloader_js,
         requires_extensions, has_extension_dependency,
-        requires_unreal_mod_installer, has_ue4ss_load_order_parity,
+        has_ue4ss_load_order_parity,
         is_unreleased_extension,
         validate_index_js, find_registerinstaller_calls,
         log_info, log_error, log_warn,
@@ -3538,13 +3538,6 @@ def has_extension_dependency(src):
     """Return True if the extension declares any context.requireExtension dependency,
     required or optional."""
     return len(requires_extensions(src)) > 0
-
-
-def requires_unreal_mod_installer(src):
-    """Return True if the extension declares a dependency on the
-    'Unreal Engine Mod Installer' extension via context.requireExtension in applyGame."""
-    return any(name == "Unreal Engine Mod Installer"
-               for name, _optional in requires_extensions(src))
 
 
 def is_unreleased_extension(src):

@@ -33,6 +33,7 @@
 
 | Flag | Value | Description |
 | --- | --- | --- |
+| `thunderstoreBrowser` | `true` | register the "Browse Thunderstore" page |
 | `hasXbox` | `true` | toggle for Xbox version logic. |
 | `multiExe` | `false` | toggle for multiple executables (Epic/GOG/Demo don't match Steam) |
 | `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
