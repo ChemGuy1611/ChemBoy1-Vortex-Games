@@ -1211,14 +1211,53 @@ const PROSE = [
         : null,
   },
   {
+    fn: "testForger",
+    engine: "anvil",
+    build: (v) =>
+      v.FORGER_EXEC
+        ? toolBlock({
+            title: "Forger Patch Manager (tool)",
+            tool: "Forger Patch Manager",
+            marker: v.FORGER_EXEC,
+          })
+        : null,
+  },
+  {
+    fn: "testReforger",
+    engine: "anvil",
+    build: () => ({
+      title: "ReForger (tool)",
+      quick: "nothing - ReForger is not installed as a mod",
+      installsTo: null,
+      lead:
+        "ReForger ships as a Windows app package rather than loose files, so it is installed " +
+        "by its own installer instead of being managed as a mod. Vortex downloads the latest " +
+        "ReForgerInstaller.exe and runs it for you.",
+      rules: [
+        "There is nothing for a mod author to package here. Ship your patches alone and list " +
+          "ReForger as a requirement.",
+      ],
+      pitfalls: [],
+    }),
+  },
+  {
     fn: "testForge",
     engine: "anvil",
     build: (v) =>
       matchBlock({
         title: "Forge File Mods",
         lead: "Replacement `.forge` archives, deployed into the game's data folder.",
-        exts: v.FORGE_EXT ? [v.FORGE_EXT] : [],
-        pitfalls: ["Forge files must keep their original names to replace the right archive."],
+        exts: v.FORGE_EXTS && v.FORGE_EXTS.length ? v.FORGE_EXTS : v.FORGE_EXT ? [v.FORGE_EXT] : [],
+        pitfalls: [
+          "Forge files must keep their original names to replace the right archive.",
+          ...(v.DLC_FOLDERS && v.DLC_FOLDERS.length
+            ? [
+                "A forge file belonging to a DLC is routed to that DLC's folder by the `_NN_dlc` " +
+                  "segment in its name, so renaming that part of the file name sends it somewhere " +
+                  "else. One archive may carry forge files for several DLCs; each is routed on its own.",
+              ]
+            : []),
+        ],
       }),
   },
   {
@@ -1228,8 +1267,54 @@ const PROSE = [
       v.EXTRACTED_FOLDER
         ? matchBlock({
             title: "Extracted Forge Content",
-            lead: "Unpacked forge content for AnvilToolkit to repack.",
+            lead:
+              "Unpacked forge content for AnvilToolkit to repack. The mod is not live until the " +
+              "user runs AnvilToolkit and repacks - deploying it in Vortex only stages the files " +
+              "where the toolkit expects them.",
             folders: [v.EXTRACTED_FOLDER],
+            pitfalls: [
+              "Content unpacked with an AnvilToolkit older than 1.2.8 cannot be repacked by 1.2.8 " +
+                "or newer, which affects the pre-Unity titles. Repack on the old version first, " +
+                "delete the extracted folder, then unpack again on the new one.",
+            ],
+          })
+        : null,
+  },
+  {
+    fn: "testForgeFolder",
+    engine: "anvil",
+    build: (v) =>
+      v.FORGEFOLDER_STRING
+        ? matchBlock({
+            title: "Unpacked .forge Folder",
+            lead:
+              "A whole unpacked `.forge` archive, packaged as a folder named after the archive it " +
+              "came from. It is staged under the extracted-content folder for AnvilToolkit to repack.",
+            folders: [`<name>${v.FORGEFOLDER_STRING}`],
+            pitfalls: [
+              "Keep the folder named exactly after the `.forge` archive the content came from, " +
+                "extension included. The name is what tells AnvilToolkit which archive to repack into.",
+            ],
+          })
+        : null,
+  },
+  {
+    fn: "testDataFolder",
+    engine: "anvil",
+    build: (v) =>
+      v.DATAFOLDER_STRING
+        ? matchBlock({
+            title: "Unpacked .data Folder",
+            lead:
+              "An unpacked `.data` file, packaged as a folder named after it. Nothing in the " +
+              "archive says which `.forge` it belongs in, so Vortex stages it under a placeholder " +
+              "folder and asks the user to rename that folder to the right `.forge` name.",
+            folders: [`<name>${v.DATAFOLDER_STRING}`],
+            pitfalls: [
+              "Name the `.forge` archive your content belongs in somewhere the user will see it - " +
+                "the mod page, a readme, or the archive name. They have to type it into the rename " +
+                "prompt, and Vortex cannot work it out from the files.",
+            ],
           })
         : null,
   },
@@ -1239,9 +1324,133 @@ const PROSE = [
     build: (v) =>
       matchBlock({
         title: "Loose Data Files",
-        lead: "Individual data files deployed into the game folder.",
+        lead:
+          "Individual data files, staged under a placeholder folder for the user to rename to the " +
+          "`.forge` archive they belong in, the same way an unpacked `.data` folder is.",
         exts: v.LOOSE_EXTS,
+        pitfalls: [
+          "State which `.forge` archive the files belong in. The user is prompted for that name " +
+            "and has nothing else to go on.",
+        ],
       }),
+  },
+  {
+    fn: "testForgerPatch",
+    engine: "anvil",
+    build: (v) =>
+      matchBlock({
+        title: "Forger Patches",
+        lead: "Patch files for Forger Patch Manager to apply.",
+        exts: v.FORGER_EXTS,
+        pitfalls: [
+          "These are applied through Forger Patch Manager, not deployed into the game directly - " +
+            "installing in Vortex alone does not change the game.",
+        ],
+      }),
+  },
+  {
+    fn: "testPatchTextures",
+    engine: "anvil",
+    build: (v) =>
+      matchBlock({
+        title: "Forger Patch Textures",
+        lead: "Loose textures applied as a Forger patch.",
+        exts: v.PATCH_TEXTURES_EXTS,
+        pitfalls: [
+          "Textures have to keep the names the game uses; a renamed file replaces nothing.",
+        ],
+      }),
+  },
+  {
+    fn: "testResoRep",
+    engine: "anvil",
+    build: (v) =>
+      v.RESOREP_DLL_FILE
+        ? toolBlock({
+            title: "ResoRep (tool)",
+            tool: "ResoRep",
+            marker: v.RESOREP_DLL_FILE,
+            extra: [
+              "Vortex downloads the matching ResoRep package itself and writes its settings file, " +
+                "so this installer normally only ever runs on that automatic download.",
+            ],
+          })
+        : null,
+  },
+  {
+    fn: "testResoRepTextures",
+    engine: "anvil",
+    build: (v) =>
+      matchBlock({
+        title: "ResoRep Textures",
+        lead:
+          "Replacement textures injected at runtime by ResoRep, rather than packed back into a " +
+          "`.forge` archive.",
+        exts: v.RESOREP_TEXTURES_EXTS,
+        pitfalls: [
+          "ResoRep must be installed and its DLL in place for these to show up in game; the " +
+            "textures alone do nothing.",
+          "Each texture has to keep the name ResoRep dumped it under, or it replaces nothing.",
+        ],
+      }),
+  },
+  {
+    fn: "testSound",
+    engine: "anvil",
+    build: (v) =>
+      matchBlock({
+        title: "Sound Banks",
+        lead: "Replacement sound bank files, deployed into the game's sound data folder.",
+        exts: v.SOUND_EXTS,
+        pitfalls: ["Sound banks must keep their original names to replace the right bank."],
+      }),
+  },
+  {
+    fn: "testFixes",
+    engine: "anvil",
+    build: (v) =>
+      matchBlock({
+        title: "Fixes Package",
+        lead: "A community fixes package, deployed into the game folder.",
+        files: v.FIXES_FILES,
+      }),
+  },
+  {
+    fn: "testIndividualBuildtables",
+    game: "game-ghostreconbreakpoint",
+    build: (v) =>
+      v.BUILDTABLE_FOLDER && v.BUILDTABLE_EXTS && v.BUILDTABLE_EXTS.length
+        ? matchBlock({
+            title: "Individual Buildtables",
+            lead:
+              "Loose buildtable files, kept in their own folder so several mods can supply one " +
+              "each without overwriting one another.",
+            folders: [v.BUILDTABLE_FOLDER],
+            exts: v.BUILDTABLE_EXTS,
+            pitfalls: [
+              "Both are required: the archive needs the named folder AND at least one buildtable " +
+                "file inside it. A bare buildtable file with no folder around it is not recognised.",
+            ],
+          })
+        : null,
+  },
+  {
+    fn: "testDlc",
+    engine: "anvil",
+    build: (v) =>
+      v.DLC_FOLDERS && v.DLC_FOLDERS.length
+        ? matchBlock({
+            title: "DLC Folder Mods",
+            lead:
+              "Mods laid out as one or more of the game's DLC folders, copied into the game folder " +
+              "with that layout intact.",
+            folders: v.DLC_FOLDERS,
+            pitfalls: [
+              "Zip the DLC folders themselves, not the folder that contains them - an extra level " +
+                "misplaces every file.",
+            ],
+          })
+        : null,
   },
 
   // ── Frostbite ─────────────────────────────────────────────────────────────
@@ -1506,6 +1715,11 @@ function buildVars(src, table) {
     "FORGEFOLDER_STRING",
     "DATAFOLDER_STRING",
     "FORGE_EXT",
+    "FORGER_EXEC",
+    "FORGER_FOLDER",
+    "RESOREP_DLL_FILE",
+    "RESOREP_TEXTURES_PATH",
+    "BUILDTABLE_FOLDER",
     // Frostbite
     "FROSTY_EXEC",
     // Far Cry
@@ -1550,6 +1764,14 @@ function buildVars(src, table) {
     "PRESET_EXTS",
     "REF_FOLDERS",
     "LOOSE_EXTS",
+    "FORGE_EXTS",
+    "FORGER_EXTS",
+    "PATCH_TEXTURES_EXTS",
+    "RESOREP_TEXTURES_EXTS",
+    "SOUND_EXTS",
+    "FIXES_FILES",
+    "DLC_FOLDERS",
+    "BUILDTABLE_EXTS",
     "FROSTYMOD_EXTS",
     "DATA_EXTS",
     "MIMOD_EXTS",
@@ -1568,6 +1790,13 @@ function buildVars(src, table) {
     ["MOVIES_EXTS", "MOVIES_EXT"],
     ["DATA_EXTS", "DATA_EXT"],
     ["CONFIG_FILES", "CONFIG_FILE"],
+    ["FORGE_EXTS", "FORGE_EXT"],
+    ["FORGER_EXTS", "FORGER_EXT"],
+    ["SOUND_EXTS", "SOUND_EXT"],
+    ["PATCH_TEXTURES_EXTS", "PATCH_TEXTURES_EXT"],
+    ["RESOREP_TEXTURES_EXTS", "RESOREP_TEXTURES_EXT"],
+    ["FIXES_FILES", "FIXES_FILE"],
+    ["BUILDTABLE_EXTS", "BUILDTABLE_EXT"],
   ];
   for (const [arrName, scalarName] of singularFallbacks) {
     if (!v[arrName] || !v[arrName].length) {

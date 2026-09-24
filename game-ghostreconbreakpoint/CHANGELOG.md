@@ -1,8 +1,10 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.0.0] - 2026-09-21
 
-- Fixed: Mod files with no file extension were skipped during installation
+- Migrated to `template-anvilengine` (full DLC folder / .forge routing / ResoRep-ready toggle set).
+- Added: DLC folder support. `.forge` mods for the Gold Edition DLC (dlc_10) now install into the correct DLC folder automatically instead of the base game folder.
+- Fixed: Mod files with no file extension were skipped during installation.
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 
 ## [0.2.9] - 2026-08-11

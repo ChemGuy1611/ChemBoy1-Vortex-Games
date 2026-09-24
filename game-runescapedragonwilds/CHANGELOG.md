@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.1] - 2026-09-21
+
+- Improved: Pak mods still carrying the old shared mod type are now retagged automatically instead of prompting you to reinstall them.
+
 ## [1.1.0] - 2026-09-20
 
 - Added support for RuneSchema mods with .json/.jsonc files

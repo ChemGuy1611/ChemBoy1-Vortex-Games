@@ -114,4 +114,5 @@ Runtime siblings: `VORTEX_MOD_INSTALL.md`, `VORTEX_PROFILES.md`, `VORTEX_GAME_LI
 `VORTEX_EVENT_BUS.md`. Overview: `VORTEX_APP.md`. Authoring: `DEPLOYMENT_MANIFEST.md`,
 `REGISTER_MERGE.md`. Link mechanics behind each activator (hard links, symlinks, elevation,
 per-method purge): `NTFS_LINKS.md`. Diagram of deploy/purge: `VORTEX_FLOWCHARTS.md` §4. Third-party purge trigger that leaves
-`deploymentNecessary` set without re-deploying: `STEAM_FILE_DOWNLOADER.md`.
+`deploymentNecessary` set without re-deploying: `STEAM_FILE_DOWNLOADER.md`. A worked case of a mod
+type target chosen to keep mods on the staging volume so hardlinks stay available: `RESOREP.md`.

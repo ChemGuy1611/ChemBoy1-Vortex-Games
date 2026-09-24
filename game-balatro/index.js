@@ -2,8 +2,8 @@
 Name: Balatro Vortex Extension
 Structure: Mod Loader (Mods in AppData Folder)
 Author: ChemBoy1
-Version: 0.4.0
-Date: 2026-09-20
+Version: 1.0.1
+Date: 2026-09-23
 ///////////////////////////////////////*/
 
 //Import libraries
@@ -99,7 +99,7 @@ const ROOT_NAME = "Root Folder";
 
 const LOVELY_ID = `${GAME_ID}-LOVELY`;
 const LOVELY_NAME = "Lovely-Injector";
-const LOVELY_FILE = "version.dll"; // <-- CASE SENSITIVE! Must match name exactly or downloader will download the file again.
+const LOVELY_FILE = "winmm.dll"; // <-- CASE SENSITIVE! Must match name exactly or downloader will download the file again.
 const LOVELY_URL =
   "https://github.com/ethangreen-dev/lovely-injector/releases/download/v0.7.1/lovely-x86_64-pc-windows-msvc.zip";
 const LOVELY_URL_LATEST =
@@ -414,9 +414,7 @@ function installLovely(files) {
   const setModTypeInstruction = { type: "setmodtype", value: LOVELY_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -558,9 +556,7 @@ function installMod(files, fileName) {
 
   // Remove directories and anything that isn't in the rootPath.
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",

@@ -2,8 +2,8 @@
 Name: Atomic Heart Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.6
-Date: 2026-09-06
+Version: 1.0.7
+Date: 2026-09-21
 Notes:
 - 
 ////////////////////////////////////////////////*/

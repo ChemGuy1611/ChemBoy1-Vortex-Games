@@ -358,11 +358,37 @@ function extractDependencies(src, table) {
     });
   }
 
-  // AnvilToolkit / Forger
+  // AnvilToolkit (anvil-engine template): auto-downloaded whenever hasAtk is on
+  const atkName = table.get("ATK_NAME");
+  if (table.get("hasAtk") === "true" && isRealValue(atkName)) {
+    deps.push({
+      name: atkName,
+      version: null,
+      detail: null,
+    });
+  }
+
+  // Forger Patch Manager (anvil-engine template, older AC titles): gated on hasForger, not just
+  // on the constant's presence — every anvil port declares FORGER_NAME regardless of the toggle.
   const forgerName = table.get("FORGER_NAME");
-  if (isRealValue(forgerName)) {
+  if (table.get("hasForger") === "true" && isRealValue(forgerName)) {
     deps.push({
       name: forgerName,
+      version: null,
+      detail: null,
+    });
+  }
+
+  // ReForger (anvil-engine template): only auto-downloads when BOTH hasReforger and
+  // autoDownloadReforger are on. Older ports predate the second toggle, so its absence from the
+  // table defaults to "auto-downloads" (matching the template's own default).
+  const reforgerName = table.get("REFORGER_NAME");
+  const autoDownloadReforgerRaw = table.get("autoDownloadReforger");
+  const reforgerAutoDownloads =
+    autoDownloadReforgerRaw === undefined || autoDownloadReforgerRaw === "true";
+  if (table.get("hasReforger") === "true" && reforgerAutoDownloads && isRealValue(reforgerName)) {
+    deps.push({
+      name: reforgerName,
       version: null,
       detail: null,
     });

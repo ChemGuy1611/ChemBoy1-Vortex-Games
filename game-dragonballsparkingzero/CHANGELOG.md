@@ -1,9 +1,15 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.0.0] - 2026-09-22
 
-- Fixed: Mod files with no file extension were skipped during installation
+- Migrated to file-based load order (FBLO); added a lock button, multi-select, and a right-click context menu to the Paks load order page.
+- Added a UE4SS Load Order page and a LogicMods Load Order page for Blueprint pak mods.
+- Added UE4SS load order support to Collections.
+- Added a status filter to the load order pages.
+- Fixed: UE4SS auto-download was pointed at the wrong Nexus page and never worked; it now downloads from its GitHub releases and checks for updates.
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
+- Fixed: Mod files with no file extension were skipped during installation.
+- Improved: Pak mods still carrying the old shared mod type are now retagged automatically instead of prompting you to reinstall them.
 
 ## [0.5.1] - 2026-02-05
 

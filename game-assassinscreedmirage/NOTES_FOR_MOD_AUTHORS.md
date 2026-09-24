@@ -1,6 +1,6 @@
-# Notes for Mod Authors - AC Mirage
+# Notes for Mod Authors - Assassin's Creed Mirage
 
-Packaging rules for AC Mirage mods, so Vortex installs them to the right place.
+Packaging rules for Assassin's Creed Mirage mods, so Vortex installs them to the right place.
 
 Vortex decides what a mod is by looking at the files and folders inside the archive. It tries each installer in order and the first one that matches wins, so archive layout is what determines where your mod ends up.
 
@@ -9,7 +9,13 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | AnvilToolkit (tool) | a `anviltoolkit.exe` file | - |
-| Forger | a file with the `.forger2` extension | - |
+| Extracted Forge Content | a `Extracted` folder | - |
+| Unpacked .forge Folder | a `<name>.forge` folder | - |
+| Unpacked .data Folder | a `<name>.data` folder | - |
+| Loose Data Files | a `.data` file | - |
+| Forge File Mods | a `.forge` file | - |
+| Root / Game Folder Mods | a `videos` folder | the game folder itself (no subfolder) |
+| Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
 
@@ -25,11 +31,103 @@ This installer handles AnvilToolkit itself, not mods for it. It exists so users 
 
 - If you bundle AnvilToolkit inside your mod archive, Vortex treats the whole download as AnvilToolkit rather than as your mod. Ship the mod alone and list AnvilToolkit as a requirement.
 
-## Forger
+## Extracted Forge Content
 
-Recognised when the archive contains a file with the `.forger2` extension.
+Unpacked forge content for AnvilToolkit to repack. The mod is not live until the user runs AnvilToolkit and repacks - deploying it in Vortex only stages the files where the toolkit expects them.
+
+**Requirements:**
+
+- Recognised by a folder named `Extracted` in the archive.
+
+**Common mistakes:**
+
+- Content unpacked with an AnvilToolkit older than 1.2.8 cannot be repacked by 1.2.8 or newer, which affects the pre-Unity titles. Repack on the old version first, delete the extracted folder, then unpack again on the new one.
+
+## Unpacked .forge Folder
+
+A whole unpacked `.forge` archive, packaged as a folder named after the archive it came from. It is staged under the extracted-content folder for AnvilToolkit to repack.
+
+**Requirements:**
+
+- Recognised by a folder named `<name>.forge` in the archive.
+
+**Common mistakes:**
+
+- Keep the folder named exactly after the `.forge` archive the content came from, extension included. The name is what tells AnvilToolkit which archive to repack into.
+
+## Unpacked .data Folder
+
+An unpacked `.data` file, packaged as a folder named after it. Nothing in the archive says which `.forge` it belongs in, so Vortex stages it under a placeholder folder and asks the user to rename that folder to the right `.forge` name.
+
+**Requirements:**
+
+- Recognised by a folder named `<name>.data` in the archive.
+
+**Common mistakes:**
+
+- Name the `.forge` archive your content belongs in somewhere the user will see it - the mod page, a readme, or the archive name. They have to type it into the rename prompt, and Vortex cannot work it out from the files.
+
+## Loose Data Files
+
+Individual data files, staged under a placeholder folder for the user to rename to the `.forge` archive they belong in, the same way an unpacked `.data` folder is.
+
+**Requirements:**
+
+- Recognised by any file with the `.data` extension.
+
+**Common mistakes:**
+
+- State which `.forge` archive the files belong in. The user is prompted for that name and has nothing else to go on.
+
+## Forge File Mods
+
+Replacement `.forge` archives, deployed into the game's data folder.
+
+**Requirements:**
+
+- Recognised by any file with the `.forge` extension.
+
+**Common mistakes:**
+
+- Forge files must keep their original names to replace the right archive.
+
+## Root / Game Folder Mods
+
+For mods laid out the same way the files appear inside the game folder. Vortex copies the matched folder and everything under it straight into the game.
+
+```text
+MyRootMod.zip
+└── videos\
+    └── ... files in their real relative locations
+```
+
+**Requirements:**
+
+- Recognised by a folder named `videos` in the archive.
+
+Installs to: the game folder itself (no subfolder)
+
+**Common mistakes:**
+
+- Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
+
+## Fallback Installer
+
+The catch-all. Any archive that matched none of the installers above lands here and is copied across unchanged.
+
+> **NOTE:** Landing in the fallback installer is a signal your archive layout needs fixing.
+
+**Requirements:**
+
+- Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
+- Vortex shows the user a notification when a mod installs through the fallback.
+
+**Common mistakes:**
+
+- If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.
 
 ## Rules That Apply To Every Mod Type
 
+- Archives that contain a FOMOD installer (a `fomod` folder with `ModuleConfig.xml`) are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.

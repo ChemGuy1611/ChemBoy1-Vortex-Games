@@ -1,6 +1,6 @@
-# Notes for Mod Authors - game-finalfantasy7rebirth
+# Notes for Mod Authors - Final Fantasy VII Rebirth
 
-Packaging rules for game-finalfantasy7rebirth mods, so Vortex installs them to the right place.
+Packaging rules for Final Fantasy VII Rebirth mods, so Vortex installs them to the right place.
 
 Vortex decides what a mod is by looking at the files and folders inside the archive. It tries each installer in order and the first one that matches wins, so archive layout is what determines where your mod ends up.
 
@@ -10,10 +10,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `End` |
 | Blueprint Mods (LogicMods) | a `LogicMods` folder | `End\Content\Paks\LogicMods` |
+| Modloadermod | a file with the `.uplugin` extension | `End\Mods` |
 | Pak Mods | a `.pak` file | `End\Content\Paks\~mods` |
 | UE4SS Itself | a `dwmapi.dll` file | `End\Binaries\Win64` |
 | UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `End\Binaries\Win64\ue4ss\Mods` |
 | UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | `End\Binaries\Win64\ue4ss\Mods` |
+| Modloader | a file or folder named `FF7RML` | `End\Mods` |
 | Root / Game Folder Mods | a top-level folder such as `End`, `Engine` or `Content` | the game folder itself (no subfolder) |
 | Config File Mods | a config file such as `engine.ini` or `game.ini` | - |
 | Save Game Files | a `.sav` file | - |
@@ -77,6 +79,12 @@ Installs to: `End\Content\Paks\LogicMods`
 
 - Putting the `.pak` at the top level of the archive with no `LogicMods` folder. Vortex then treats it as an ordinary pak mod, installs it to the wrong place, and the blueprint mod never loads.
 - Renaming the folder (`Logic_Mods`, `logicmod`, `BPMods`) - the name must be exactly `LogicMods`.
+
+## Modloadermod
+
+Recognised when the archive contains a file with the `.uplugin` extension.
+
+Installs to: `End\Mods`
 
 ## Pak Mods
 
@@ -160,6 +168,12 @@ Installs to: `End\Binaries\Win64\ue4ss\Mods`
 **Common mistakes:**
 
 - A bare `.dll` with no `dlls` folder is not recognised as a UE4SS DLL mod and will reach the fallback installer.
+
+## Modloader
+
+Recognised when the archive contains a file or folder named `FF7RML`.
+
+Installs to: `End\Mods`
 
 ## Root / Game Folder Mods
 

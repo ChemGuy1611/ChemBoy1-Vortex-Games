@@ -8,7 +8,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| LOVELY | a file or folder named `version.dll` | - |
+| LOVELY | a file or folder named `winmm.dll` | - |
 | Steammodded | a file or folder named `tk_debug_window.py` | `STEAMMODDED_PATH` |
 | Malverk | a file or folder named `malverk.lua` | `MALVERK_PATH` |
 | Mod | a file with one of these extensions: `.lua` and a file or folder named one of: `assets`, `libs`, `localization`, `lovely`, `lsp_def`, `api` or `utils` | - |
@@ -17,7 +17,7 @@ Paths are relative to the game's install folder.
 
 ## LOVELY
 
-Recognised when the archive contains a file or folder named `version.dll`.
+Recognised when the archive contains a file or folder named `winmm.dll`.
 
 ## Steammodded
 

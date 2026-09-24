@@ -501,3 +501,5 @@ to `testSupported`/`install` is built). `ARCHIVE_HANDLER.md` (`registerArchiveTy
 
 `HELLDIVERS2_MOD_MANIFEST.md` (a worked example of an installer reading a manifest and its
 artwork out of the extraction directory to build an option picker).
+`RESOREP.md` (a worked example of a runtime texture-injection tool whose mod type target must
+match a config file the extension writes, and of retiring a mod type without stranding mods).

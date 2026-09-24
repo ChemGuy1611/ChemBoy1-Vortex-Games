@@ -1,5 +1,17 @@
 # template-anvilengine Changelog
 
+## [2026-09-22]
+
+- Added: `autoDownloadReforger` toggle (default `true`). `hasReforger` alone gated both the tool's registration AND its setup-time auto-fetch together; some games (valhalla) support both ReForger and legacy Forger Patch Manager and only want the legacy one auto-installed. `false` keeps the tool entry, registry lookup and "Download ReForger" button working, it just skips the unattended fetch during `setup()`.
+- Fixed: ReForger's registry lookup assumed an MSIX/Windows Store package (`AppModel\Repository\Packages\<GUID>_<version>_x64__<publisher>`, `PackageRootFolder` value). It is actually a regular application install that self-registers a similarly-shaped key (`AppModel\PackageRepository\Packages\...`, `Path` value) whose NAME embeds the exact installed version — a hardcoded key silently broke on every ReForger update. `getReforgerPath()` now enumerates the parent key's subkeys (`winapi.WithRegOpen` + `RegEnumKeys`) and matches on the stable prefix/suffix around the version segment instead, so it never needs a manual bump again.
+- Changed: `downloadReforger()` no longer skips `download()` when the registry says ReForger already looks installed — a non-forced call is always safe (it only raises an "update available" notification, never overwrites on its own), and skipping it silenced that notification forever after the first successful install. It now only actually RUNS the fetched installer when the deployed mod's version changed (a first-ever install counts), instead of either always running it (noisy, re-launches on every activation) or gating the run the same way as the fetch (would miss real updates).
+
+## [2026-09-21]
+
+- Changed: the comments on `autoCopyResorepDll` and `resorepDllCopy` said the DLL copy goes to the mod's staging folder, which is what the ResoRep package's own `.bat` does, while the code copies it into the game folder. The game folder is the intended target — the copy is live immediately, at the cost of not being a managed mod file — and the comments now say so, including that purging does not remove it.
+- Added: the post-deployment notification now names the DLC-folder example (`dlc_NN/Extracted/...`) when `hasDlcFolders` is enabled, alongside the existing root example. Found while porting `ghostreconbreakpoint` (W2 pilot) — its pre-template rename dialog spelled out both patterns by hand and the template version had dropped the DLC one.
+- Changed: the ReForger installer download mechanism now goes through the shared `downloader.js` module (added to this template) instead of a hand-rolled fetch. `ReForgerInstaller.exe` is a naked (non-archive) GitHub release asset, so it is wired as a `directCopyAsMod` requirement — a new `REFORGER_INSTALL_ID` synthetic mod type deploys it to `{gamePath}`, and `downloadReforger()` runs it from its deployed path after an explicit deploy. This adds real version tracking the old mechanism never had. `REFORGER_RELEASES_URL` removed (orphaned by the rewrite).
+
 ## [2026-09-20]
 
 - Fixed: `resorepSettingsWrite` passed an error handler as the third argument to `fsp.writeFile`. `fs.promises` takes options there, not a callback, and silently discards a function, so the handler was dead code and a failed `dllsettings.ini` write rejected out of `setup` with no notification shown. The write is now wrapped in `try`/`catch` and reports through `showErrorNotification` as intended.

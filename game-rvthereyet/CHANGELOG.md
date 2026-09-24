@@ -4,6 +4,10 @@
 
 - None
 
+## [1.2.1] - 2026-09-21
+
+- Fixed: A pak mod installed through a FOMOD wizard (checkbox installer) now shows up on the Load Order page and gets a proper sorted deployment position, instead of silently deploying unsorted with no way to reorder it against other pak mods.
+
 ## [1.2.0] - 2026-09-20
 
 - Added: "Browse Thunderstore" page, which opens the RV There Yet? Thunderstore site inside Vortex. Downloads started from it are installed, enabled, and named automatically, and any mods they depend on can be installed with them.

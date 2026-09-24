@@ -4,7 +4,7 @@
 
 | Property | Value |
 | --- | --- |
-| Name | XXX Vortex Extension |
+| Name | Final Fantasy VII Rebirth Vortex Extension |
 | Engine / Structure | Unreal Engine 4-5 Game |
 | Author | ChemBoy1 |
 
@@ -65,6 +65,7 @@ Mod types define where each category of mod gets deployed:
 | FF7RML Mod | `finalfantasy7rebirth-modloadermod` | high | `{gamePath}/End/Mods` |
 | FF7R Mod Loader | `finalfantasy7rebirth-modloader` | low | `{gamePath}/End/Mods` |
 | UE Sortable Pak Mod | `finalfantasy7rebirth-ue5-sortable-modtype` | 25 | `?` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
 | UE4SS Script Mod | `finalfantasy7rebirth-scripts` | 50 | `?` |
 | UE4SS DLL Mod | `finalfantasy7rebirth-ue4ssdll` | 52 | `?` |
 | Binaries (Engine Injector) | `finalfantasy7rebirth-binaries` | 54 | `?` |
@@ -80,10 +81,12 @@ Installers run in priority order (lower number = tested first). The first instal
 | --- | --- |
 | `finalfantasy7rebirth-ue4sscombo` | 26 |
 | `finalfantasy7rebirth-logicmods` | 27 |
+| `finalfantasy7rebirth-modloadermod` | 28 |
 | `finalfantasy7rebirth-ue5-sortable-modtype` | 29 |
 | `finalfantasy7rebirth-ue4ss` | 31 |
 | `finalfantasy7rebirth-scripts` | 35 |
 | `finalfantasy7rebirth-ue4ssdll` | 37 |
+| `finalfantasy7rebirth-modloader` | 38 |
 | `finalfantasy7rebirth-root` | 39 |
 | `finalfantasy7rebirth-config` | 41 |
 | `finalfantasy7rebirth-save` | 43 |

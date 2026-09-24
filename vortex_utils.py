@@ -55,6 +55,11 @@ Usage:
         has_thunderstore_downloader_js,
         requires_extensions, has_extension_dependency,
         has_ue4ss_load_order_parity,
+        top_level_functions, bool_toggles, template_shape_diff,
+        has_template_shape_parity, has_unity_bepinex_parity, has_unity_hybrid_parity,
+        has_anvil_template_parity, has_farcry_template_parity,
+        UNITY_PARITY_TOGGLE_EXCEPTIONS, UNITY_PARITY_KNOWN_EXCEPTIONS,
+        ANVIL_PARITY_KNOWN_EXCEPTIONS, FARCRY_PARITY_KNOWN_EXCEPTIONS,
         is_unreleased_extension,
         validate_index_js, find_registerinstaller_calls,
         log_info, log_error, log_warn,
@@ -747,6 +752,118 @@ def parse_pcgw_data_paths(wikitext):
     return result
 
 
+def _pcgw_engine_rows(wikitext):
+    """Yield {'engine': str, 'build': str or None, 'verified': bool} for every
+    {{Infobox game/row/engine|...}} row in wikitext. Brace-depth scan (same technique as
+    _pcgw_data_rows) so a |ref=<ref name="engineversion">{{Refcheck|...}}</ref> citation - which
+    commonly sits BETWEEN the engine name and |build=, e.g.
+    {{Infobox game/row/engine|Unreal Engine 5|ref=<ref...>{{Refcheck|...}}</ref>|build=5.3.2.0}} -
+    doesn't get mistaken for the row's closing brace or split build= off as a separate row.
+    'verified' is True when a |ref= argument is present (PCGamingWiki's community fact-check
+    marker on the build= claim), a weak signal the version was checked against a real source."""
+    rows = []
+    for start_m in re.finditer(r"\{\{Infobox game/row/engine\s*\|", wikitext, re.IGNORECASE):
+        pos = start_m.end()
+        depth = 1
+        cut = pos
+        args = []
+        closed = False
+        while pos < len(wikitext) and depth > 0:
+            two = wikitext[pos:pos + 2]
+            if two == "{{":
+                depth += 1
+                pos += 2
+            elif two == "}}":
+                depth -= 1
+                if depth == 0:
+                    args.append(wikitext[cut:pos])
+                    pos += 2
+                    closed = True
+                    break
+                pos += 2
+            elif wikitext[pos] == "|" and depth == 1:
+                args.append(wikitext[cut:pos])
+                pos += 1
+                cut = pos
+            else:
+                pos += 1
+        if not closed or not args:
+            continue
+        build = None
+        verified = False
+        for arg in args[1:]:
+            arg_stripped = arg.strip()
+            if arg_stripped.lower().startswith("build="):
+                build = arg_stripped.split("=", 1)[1].strip()
+            elif arg_stripped.lower().startswith("ref="):
+                verified = True
+        rows.append({"engine": args[0].strip(), "build": build, "verified": verified})
+    return rows
+
+
+def parse_ue_engine_version(wikitext):
+    """Parse the Unreal Engine build version out of already-fetched PCGamingWiki wikitext (for a
+    caller that already has the wikitext in hand, e.g. fetch_pcgw_availability - use
+    get_ue_engine_version() instead for a fresh standalone lookup).
+
+    Returns {'engine_version': '5.4.4.0' or None, 'engine_name': 'Unreal Engine 5' or None,
+    'verified': bool, 'raw_build': '5.4.4' or None}. engine_version is raw_build normalized to
+    the 4-segment 'X.X.X.X' shape template-ue4-5's ENGINE_VERSION constant expects (right-padded
+    with '.0'), or None if no Unreal Engine row was found or it carries no build= at all.
+
+    ADVISORY ONLY, like parse_pcgw_data_paths - PCGamingWiki's build= is community-maintained and
+    can be stale or simply wrong (game-finalfantasy7rebirth ships ENGINE_VERSION 4.27.2.0; the
+    wiki's build= said 4.26.0 as of 2026-09-21). Treat the result as a value to review, not one to
+    write unquestioned - check 'verified' and cross-reference before trusting it over a value
+    that's already shipping."""
+    result = {"engine_version": None, "engine_name": None, "verified": False, "raw_build": None}
+    if not wikitext:
+        return result
+    ue_rows = [r for r in _pcgw_engine_rows(wikitext) if "unreal engine" in r["engine"].lower()]
+    if not ue_rows:
+        return result
+    row = ue_rows[0]
+    result["engine_name"] = row["engine"]
+    result["verified"] = row["verified"]
+    result["raw_build"] = row["build"]
+    if row["build"]:
+        parts = row["build"].split(".")
+        while len(parts) < 4:
+            parts.append("0")
+        result["engine_version"] = ".".join(parts[:4])
+    return result
+
+
+def get_ue_engine_version(game_name, debug=False):
+    """Look up a game on PCGamingWiki and parse its Unreal Engine build version in one call -
+    the standalone entry point for verifying/filling in a UE4-5 template port's ENGINE_VERSION
+    constant (new_extension.py's own scaffolding flow already has the wikitext in hand from
+    fetch_pcgw_availability and should call parse_ue_engine_version() on it directly instead, to
+    avoid a redundant fetch).
+
+    Returns the same shape as parse_ue_engine_version(), plus 'page_url' (str or None).
+    Set debug=True to print the lookup and the engine row(s) found."""
+    page_url, title = lookup_pcgamingwiki(game_name, debug=debug)
+    result = {"engine_version": None, "engine_name": None, "verified": False,
+              "raw_build": None, "page_url": page_url}
+    if not title:
+        return result
+    time.sleep(0.2)
+    url = f"{PCGW_API}?action=parse&page={urllib.parse.quote(title)}&prop=wikitext&format=json"
+    try:
+        data = pcgw_get_json(url)
+    except Exception as e:
+        if debug:
+            print(f"    [debug] PCGamingWiki engine lookup error: {e}")
+        return result
+    wikitext = data.get("parse", {}).get("wikitext", {}).get("*", "")
+    parsed = parse_ue_engine_version(wikitext)
+    parsed["page_url"] = page_url
+    if debug:
+        print(f"    [debug] engine result: {parsed}")
+    return parsed
+
+
 # == egdata.app helpers ========================================================
 
 def egdata_search_queries(game_name):
@@ -1153,8 +1270,10 @@ def get_discovery_ids(src):
     """Parse the variable names referenced in the spec's discovery.ids array.
     Returns a list of variable name strings (e.g. ["STEAMAPP_ID", "EAAPP_ID"]).
     Falls back to ["STEAMAPP_ID"] if the block cannot be parsed.
-    Strips JS comments so commented-out IDs are excluded."""
-    m = re.search(r'"discovery"\s*:\s*\{.*?"ids"\s*:\s*\[([^\]]*)\]', src, re.DOTALL)
+    Strips JS comments so commented-out IDs are excluded.
+    Matches both quoted ("discovery": {"ids": [...]}) and the repo's actual
+    unquoted-key convention (discovery: {ids: [...]})."""
+    m = re.search(r'"?discovery"?\s*:\s*\{.*?"?ids"?\s*:\s*\[([^\]]*)\]', src, re.DOTALL)
     if not m:
         return ['STEAMAPP_ID']
     ids_block = m.group(1)
@@ -3565,10 +3684,10 @@ def has_ue4ss_load_order_parity(src):
     return "Ue4ssContextMenu" in src and detect_engine(src) == "UE4-5"
 
 
-_UNITY_TOP_LEVEL_FUNCTION_RE = re.compile(
+_TOP_LEVEL_FUNCTION_RE = re.compile(
     r'^(?:async\s+)?function\s+(\w+)\s*\(|^const\s+(\w+)\s*=\s*(?:async\s+)?\(',
     re.MULTILINE)
-_UNITY_TOP_LEVEL_BOOL_TOGGLE_RE = re.compile(
+_TOP_LEVEL_BOOL_TOGGLE_RE = re.compile(
     r'^(?:const|let)\s+(\w+)\s*=\s*(?:true|false)\s*;', re.MULTILINE)
 
 # isXna selects an engine variant (Unity vs. XNA), not an optional subsystem like every
@@ -3576,7 +3695,7 @@ _UNITY_TOP_LEVEL_BOOL_TOGGLE_RE = re.compile(
 # into an XNA game. Exempt from the Unity parity diff in both directions: template HEAD
 # carries the block, most games never will and never should, and that is by design, not
 # drift. See unity-loader-downloader-migration-amber-pinion.md, binding rule 2026-08-11.
-_UNITY_PARITY_TOGGLE_EXCEPTIONS = {"isXna"}
+UNITY_PARITY_TOGGLE_EXCEPTIONS = {"isXna"}
 
 # Extension folder names (game-* included) permanently excluded from Unity template
 # parity by explicit user decision - their divergence from template HEAD is deliberate
@@ -3592,44 +3711,51 @@ UNITY_PARITY_KNOWN_EXCEPTIONS = {
                         "and are accepted as permanently stale rather than ported",
 }
 
-_unity_template_src_cache = {}
+# Same idea for the Anvil and Far Cry families. Both are empty today: every divergence
+# from their template is a pending port, not a deliberate permanent one. Add an entry
+# only on an explicit user decision, with the reason, exactly as the Unity map above.
+ANVIL_PARITY_KNOWN_EXCEPTIONS = {}
+FARCRY_PARITY_KNOWN_EXCEPTIONS = {}
+
+_template_src_cache = {}
 
 
-def _unity_template_src(template_folder_name):
-    """Read and cache a Unity template's index.js source by folder name (e.g.
+def _template_src(template_folder_name):
+    """Read and cache a template's index.js source by folder name (e.g.
     'template-unitybepinex'). Cached because parity predicates run once per game."""
-    if template_folder_name not in _unity_template_src_cache:
-        _unity_template_src_cache[template_folder_name] = read_index_js(
+    if template_folder_name not in _template_src_cache:
+        _template_src_cache[template_folder_name] = read_index_js(
             os.path.join(REPO_ROOT, template_folder_name))
-    return _unity_template_src_cache[template_folder_name]
+    return _template_src_cache[template_folder_name]
 
 
-def unity_top_level_functions(src):
-    """Return the set of top-level function names declared in a Unity template or game
+def top_level_functions(src):
+    """Return the set of top-level function names declared in a template or game
     index.js: both `function name(...)` and `const name = (...) =>` declaration styles,
     at column 0."""
     names = set()
-    for m in _UNITY_TOP_LEVEL_FUNCTION_RE.finditer(src):
+    for m in _TOP_LEVEL_FUNCTION_RE.finditer(src):
         names.add(m.group(1) or m.group(2))
     return names
 
 
-def unity_bool_toggles(src):
+def bool_toggles(src):
     """Return the set of boolean toggle const/let names declared at column 0."""
-    return set(_UNITY_TOP_LEVEL_BOOL_TOGGLE_RE.findall(src))
+    return set(_TOP_LEVEL_BOOL_TOGGLE_RE.findall(src))
 
 
-def unity_template_diff(src, template_folder_name):
+def template_shape_diff(src, template_folder_name, toggle_exceptions=frozenset()):
     """Return (missing_functions, extra_functions, missing_toggles, extra_toggles) -
-    sorted lists - for a Unity game's index.js against the named template's HEAD.
+    sorted lists - for a game's index.js against the named template's HEAD.
 
-    isXna is exempted from the toggle diff in both directions (see
-    _UNITY_PARITY_TOGGLE_EXCEPTIONS). Full template parity means every list is empty.
+    Names in `toggle_exceptions` are dropped from the toggle diff in both directions,
+    for toggles that select an engine variant rather than an optional subsystem (see
+    UNITY_PARITY_TOGGLE_EXCEPTIONS). Full template parity means every list is empty.
     """
-    template_src = _unity_template_src(template_folder_name)
-    game_funcs, tmpl_funcs = unity_top_level_functions(src), unity_top_level_functions(template_src)
-    game_toggles = unity_bool_toggles(src) | _UNITY_PARITY_TOGGLE_EXCEPTIONS
-    tmpl_toggles = unity_bool_toggles(template_src) | _UNITY_PARITY_TOGGLE_EXCEPTIONS
+    template_src = _template_src(template_folder_name)
+    game_funcs, tmpl_funcs = top_level_functions(src), top_level_functions(template_src)
+    game_toggles = bool_toggles(src) | set(toggle_exceptions)
+    tmpl_toggles = bool_toggles(template_src) | set(toggle_exceptions)
     return (
         sorted(tmpl_funcs - game_funcs),
         sorted(game_funcs - tmpl_funcs),
@@ -3638,26 +3764,54 @@ def unity_template_diff(src, template_folder_name):
     )
 
 
-def has_unity_bepinex_parity(src, folder):
-    """Return True if a Unity+BepInEx extension has every function and toggle
-    template-unitybepinex HEAD has (isXna exempted both ways), and is not on
-    UNITY_PARITY_KNOWN_EXCEPTIONS.
+def has_template_shape_parity(src, folder, template_folder_name,
+                              known_exceptions=None, toggle_exceptions=frozenset()):
+    """Return True if a game's index.js declares every top-level function and boolean
+    toggle the named template's HEAD declares, and its folder is not carved out.
 
-    Extra functions/toggles the game has beyond the template do NOT fail parity -
-    same as UE4-5 parity, this is "has the template's shape", not byte-identical.
-    A game's own legitimate unique code (e.g. mousepiforhire's BepLoader patch,
-    romestead's ModSettingsMenu) shows up as extras and is expected, not a defect.
+    Extra functions/toggles the game has beyond the template do NOT fail parity - same
+    as UE4-5 parity, this is "has the template's shape", not byte-identical. A game's
+    own legitimate unique code (e.g. mousepiforhire's BepLoader patch, romestead's
+    ModSettingsMenu, ghostreconbreakpoint's buildtable installers) shows up as extras
+    and is expected, not a defect.
     """
-    if os.path.basename(os.path.normpath(folder)) in UNITY_PARITY_KNOWN_EXCEPTIONS:
+    if known_exceptions and os.path.basename(os.path.normpath(folder)) in known_exceptions:
         return False
-    missing_f, _extra_f, missing_t, _extra_t = unity_template_diff(src, "template-unitybepinex")
+    missing_f, _extra_f, missing_t, _extra_t = template_shape_diff(
+        src, template_folder_name, toggle_exceptions)
     return not (missing_f or missing_t)
+
+
+def has_unity_bepinex_parity(src, folder):
+    """Return True if a Unity+BepInEx extension is at template-unitybepinex shape parity
+    (isXna exempted both ways) and is not on UNITY_PARITY_KNOWN_EXCEPTIONS."""
+    return has_template_shape_parity(
+        src, folder, "template-unitybepinex",
+        UNITY_PARITY_KNOWN_EXCEPTIONS, UNITY_PARITY_TOGGLE_EXCEPTIONS)
 
 
 def has_unity_hybrid_parity(src, folder):
     """Same as has_unity_bepinex_parity but against template-unitymelonloaderbepinex-hybrid."""
-    if os.path.basename(os.path.normpath(folder)) in UNITY_PARITY_KNOWN_EXCEPTIONS:
+    return has_template_shape_parity(
+        src, folder, "template-unitymelonloaderbepinex-hybrid",
+        UNITY_PARITY_KNOWN_EXCEPTIONS, UNITY_PARITY_TOGGLE_EXCEPTIONS)
+
+
+def has_anvil_template_parity(src, folder):
+    """Return True if an Anvil extension is at template-anvilengine shape parity.
+
+    Anvil games carried no boolean feature toggles at all before the template gained its
+    EDIT ZONE, so a game reporting zero missing toggles has necessarily been ported.
+    """
+    if detect_engine(src) != 'Anvil':
         return False
-    missing_f, _extra_f, missing_t, _extra_t = unity_template_diff(
-        src, "template-unitymelonloaderbepinex-hybrid")
-    return not (missing_f or missing_t)
+    return has_template_shape_parity(
+        src, folder, "template-anvilengine", ANVIL_PARITY_KNOWN_EXCEPTIONS)
+
+
+def has_farcry_template_parity(src, folder):
+    """Return True if a Far Cry (Dunia) extension is at template-farcry shape parity."""
+    if detect_engine(src) != 'Dunia':
+        return False
+    return has_template_shape_parity(
+        src, folder, "template-farcry", FARCRY_PARITY_KNOWN_EXCEPTIONS)

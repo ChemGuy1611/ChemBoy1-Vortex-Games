@@ -380,3 +380,5 @@ including the chunked/resumable path that `accept-ranges` enables).
 installer is itself only a wrapper around that same asset).
 `LOBOTOMY_BASEMOD.md` (a release whose version lives in the asset filename rather than the tag, and
 which ships two similarly named assets only one of which is wanted).
+`templates/TEMPLATE_ANVILENGINE.md` (ReForger: a release carrying no ordinary archive at all, only
+a versionless installer executable that is downloaded and run rather than managed as a mod).

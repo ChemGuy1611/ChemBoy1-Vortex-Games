@@ -1,9 +1,11 @@
 /*//////////////////////////////////////////////////////////
 Name: Ghost Recon Breakpoint Vortex Extension
-Structure: Ubisoft AnvilToolkit
+Structure: Anvil Engine - AnvilToolkit/ForgerPatchManager
 Author: ChemBoy1
-Version: 0.2.9
-Date: 2026-08-11
+Version: 1.0.0
+Date: 2026-09-21
+Notes:
+-
 //////////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -14,53 +16,134 @@ const path = require("path");
 const template = require("string-template");
 const winapi = require("winapi-bindings");
 
+//////////////////////////////////////////////////////////////////////////////
+// EDIT ZONE — everything down to "END EDIT ZONE" is set per game
+//////////////////////////////////////////////////////////////////////////////
+
 //Specify all the information about the game
-const UPLAYAPP_ID = "11903";
-const STEAMAPP_ID = "2231380";
-const EPICAPP_ID = "Saffron";
 const GAME_ID = "ghostreconbreakpoint";
-const EXEC = "GRB.exe";
-const EXEC_PLUS = "GRB_UPP.exe";
-const EXEC_VULKAN = "GRB_vulkan.exe";
+const UPLAYAPP_ID = "11903"; //Ubisoft Connect App ID — from SOFTWARE\WOW6432Node\Ubisoft\Launcher\Installs\
+const STEAMAPP_ID = "2231380"; //https://steamdb.info/app/2231380/
+const EPICAPP_ID = "Saffron"; //Epic catalog item — Ubisoft games are usually installed through Ubisoft Connect instead
+const GOGAPP_ID = null; //not typically available for Ubisoft games
+const DISCOVERY_IDS_ACTIVE = [UPLAYAPP_ID, STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+
 const GAME_NAME = "Ghost Recon Breakpoint";
 const GAME_NAME_SHORT = "GR Breakpoint";
+const EXEC = "GRB.exe";
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Tom_Clancy%27s_Ghost_Recon_Breakpoint";
 const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/972"; //Nexus link to this extension. Used for links
 
-let GAME_PATH = ""; //patched in the setup function to the discovered game path
-let GAME_VERSION = ""; //Game version
-let STAGING_FOLDER = "";
-let DOWNLOAD_FOLDER = "";
+//Feature toggles
+const hasAtk = true; //true if game supports AnvilToolkit — also gates the Extracted/.forge/.data/loose workflow and the rename dialog
+const hasForger = false; //true if game supports Forger Patch Manager (.forger2 files) — typically older AC games
+const hasReforger = false; //true if game uses ReForger (Xbox package, found through the registry)
+const hasDlcFolders = true; //true if game has dlc_NN folders — adds the DLC mod type and installer. Enumerate DLC_FOLDERS to match; .forge routing follows DLC_FOLDERS directly
+const hasResorep = false; //true if game uses ResoRep for runtime texture injection
+const autoCopyResorepDll = false; //true to copy the system d3d11.dll into the game folder automatically instead of leaving the bundled .bat to the user. The copy is not a managed mod file, so purging does not remove it
+const hasPatchTextures = false; //true if game takes loose .dds textures as Forger patches — mutually exclusive with hasResorep
+const hasSound = true; //true if game takes .pck sound bank replacements
+const hasFixes = false; //true if game has a community "fixes" DLL package
+const hasBinariesType = true; //true if game ships a separate "-binaries" mod type alongside "-root"
+const hasCustomLaunchers = true; //true if game has extra launcher executables (Ubisoft Plus / Vulkan)
+const hasSettingsIni = true; //true to add an "Open Settings INI" toolbar button
+const setupNotification = false; //enable to show the user a notification with special instructions on first setup
+const deployNotification = true; //enable the post-deployment notification reminding the user to run the tools
+const allowSymlinks = false; //symlinks can cause issues when repacking with ATK — set to false when hasAtk = true
+const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
+const debug = false; //toggle for debug mode
 
-const ROOT_FOLDERS = ["videos"];
-const LOOSE_EXTS = [".data"];
-const IGNORE_DEPLOY = [
-  path.join("**", "readme.txt"),
-  path.join("**", "README.txt"),
-  path.join("**", "ReadMe.txt"),
-  path.join("**", "Readme.txt"),
-];
-const IGNORE_CONFLICTS = [
-  path.join("**", "readme.txt"),
-  path.join("**", "README.txt"),
-  path.join("**", "ReadMe.txt"),
-  path.join("**", "Readme.txt"),
-];
+const DOCUMENTS = util.getVortexPath("documents");
 
 //Info for mod types and installers
-const DOCUMENTS = util.getVortexPath("documents");
+const ROOT_FOLDERS = ["videos"];
+const LOOSE_EXTS = [".data"];
 
 const ATK_ID = `${GAME_ID}-atk`;
 const ATK_NAME = "AnvilToolkit";
-const ATK_EXEC = "anviltoolkit.exe";
+const ATK_EXEC = "anviltoolkit.exe"; //used for the tool entry
+const ATK_FILES = [ATK_EXEC]; //file names that identify an AnvilToolkit download
 const ATK_PAGE = 455;
 const ATK_FILE = 3699;
 const ATK_DOMAIN = "site";
 
+const EXTRACTED_ID = `${GAME_ID}-extracted`;
+const EXTRACTED_NAME = "Extracted Folder";
+const EXTRACTED_FOLDER = "Extracted"; //destination path component
+const EXTRACTED_FOLDERS = [EXTRACTED_FOLDER]; //folder names that identify an extracted-folder mod
+const RENAME_FOLDER = "RENAME_ME_TO_FORGE_NAME.forge";
+
+const FORGEFOLDER_ID = `${GAME_ID}-forgefolder`;
+const FORGEFOLDER_NAME = ".forge Folder";
+const FORGEFOLDER_STRING = ".forge";
+
+const DATAFOLDER_ID = `${GAME_ID}-datafolder`;
+const DATAFOLDER_NAME = ".data Folder";
+const DATAFOLDER_STRING = ".data";
+
+const LOOSE_ID = `${GAME_ID}-loosedata`;
+const LOOSE_NAME = "Loose Data Files";
+
+const FORGE_ID = `${GAME_ID}-forgefile`;
+const FORGE_NAME = "Forge Replacement";
+const FORGE_EXTS = [".forge"];
+
+const ROOT_ID = `${GAME_ID}-root`;
+const ROOT_NAME = "Binaries / Root Folder";
+
+//Forger Patch Manager — used when hasForger = true (older AC games)
+const FORGER_ID = `${GAME_ID}-forger`;
+const FORGER_NAME = "Forger Patch Manager";
+const FORGER_EXEC = "forger.exe"; //used for the tool entry
+const FORGER_FILES = [FORGER_EXEC]; //file names that identify a Forger download
+const FORGERPATCH_ID = `${GAME_ID}-forgerpatch`;
+const FORGERPATCH_NAME = "Forger Patch";
+const FORGER_EXTS = [".forger2"];
+const FORGER_FOLDER = "ForgerPatches";
+const FORGER_PAGE = 42;
+const FORGER_FILE = 716;
+const FORGER_DOMAIN = "assassinscreedodyssey"; //Forger is hosted on AC Odyssey page
+
+//ReForger — used when hasReforger = true. Installed as an Xbox (MSIX) package, so it is found
+//through the registry rather than in the game folder, and it cannot be managed as a Vortex mod.
+const REFORGER_ID = `${GAME_ID}-reforger`;
+const REFORGER_NAME = "ReForger";
+const REFORGER_EXEC = "ReForger.exe";
+const REFORGER_REG_HIVE = "HKEY_CLASSES_ROOT";
+const REFORGER_VERSION = "1.0.28.0";
+const REFORGER_REG_KEY = `Local Settings\\Software\\Microsoft\\Windows\\CurrentVersion\\AppModel\\PackageRepository\\Packages\\6e7137e4-333c-4a34-9da6-f129f667b612_${REFORGER_VERSION}_x64__9r43be93mcwwm`;
+const REFORGER_REG_VALUE = "Path";
+const REFORGER_GITHUB_API = "https://api.github.com/repos/QuilLeeR/ReForger";
+const REFORGER_RELEASES_URL = "https://github.com/QuilLeeR/ReForger/releases";
+const REFORGER_INSTALLER = "ReForgerInstaller.exe";
+
+//Forger patch textures — used when hasPatchTextures = true. Claims ".dds", so it cannot be combined with hasResorep.
+const PATCH_TEXTURES_ID = `${GAME_ID}-forgerpatchtextures`;
+const PATCH_TEXTURES_NAME = "Forger Patch Textures";
+const PATCH_TEXTURES_EXTS = [".dds"];
+
+//DLC folders — used when hasDlcFolders = true. Enumerate the real dlc_NN folders in the game directory, never guess.
+const DLC_FOLDERS = ["dlc_10"];
+const DLC_ID = `${GAME_ID}-dlcfolder`;
+const DLC_NAME = "DLC Folder";
+
+//Fixes package — used when hasFixes = true
+const FIXES_ID = `${GAME_ID}-fixes`;
+const FIXES_NAME = "Fixes";
+const FIXES_FILES = ["version.dll"]; //XXX — update to match the game's fixes package
+
+//Sound banks — used when hasSound = true
+const SOUND_ID = `${GAME_ID}-sound`;
+const SOUND_NAME = "Sound Data .pck";
+const SOUND_PATH = path.join("sounddata", "pc");
+const SOUND_EXTS = [".pck"];
+
+//Separate binaries mod type — used when hasBinariesType = true. No installer, the user assigns it manually.
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries / Root Folder";
 
+//Individual Buildtables — game-unique, not part of the shared template
 const BUILDTABLE_ID = `${GAME_ID}-buildtable`;
 const BUILDTABLE_NAME = "Individual Buildtables";
 const BUILDTABLE_FOLDER = "Individual Buildtables";
@@ -72,169 +155,314 @@ const BUILDTABLE_PATH = path.join(
 );
 const BUILDTABLE_EXT = ".buildtable";
 
-const SOUND_ID = `${GAME_ID}-sound`;
-const SOUND_NAME = "Sound Data .pck";
-const SOUND_PATH = path.join("sounddata", "pc");
-const SOUND_EXT = ".pck";
+//Extra launchers — used when hasCustomLaunchers = true
+const EXEC_PLUS = "GRB_UPP.exe";
+const EXEC_VULKAN = "GRB_vulkan.exe";
 
-const EXTRACTED_ID = `${GAME_ID}-extracted`;
-const EXTRACTED_NAME = "Extracted Folder";
-const EXTRACTED_PATH = path.join(".");
-const EXTRACTED_FOLDER = "Extracted";
-const RENAME_FOLDER = "RENAME_ME_TO_FORGE_NAME.forge";
-
-const FORGEFOLDER_ID = `${GAME_ID}-forgefolder`;
-const FORGEFOLDER_NAME = ".forge Folder";
-const FORGEFOLDER_PATH = path.join(".");
-const FORGEFOLDER_STRING = ".forge";
-
-const DATAFOLDER_ID = `${GAME_ID}-datafolder`;
-const DATAFOLDER_NAME = ".data Folder";
-const DATAFOLDER_PATH = path.join(".");
-const DATAFOLDER_STRING = ".data";
-
-const LOOSE_ID = `${GAME_ID}-loosedata`;
-const LOOSE_NAME = "Loose Data Files";
-const LOOSE_PATH = path.join(".");
-
-const FORGE_ID = `${GAME_ID}-forgefile`;
-const FORGE_NAME = "Forge Replacement";
-const FORGE_PATH = path.join(".");
-const FORGE_EXT = ".forge";
-
-const FIXES_ID = `${GAME_ID}-fixes`;
-const FIXES_NAME = "Fixes";
-const FIXES_PATH = path.join(".");
-
-const ROOT_ID = `${GAME_ID}-root`;
-const ROOT_NAME = "Root Folder";
-
+//Settings INI — used when hasSettingsIni = true
 const SETTINGS_FILE = path.join(DOCUMENTS, "My Games", "Ghost Recon Breakpoint", "GRB.ini");
 
-//This will fill in from info above
+//ResoRep — used when hasResorep = true. BITS drives the downloaded file, the system dll source and the hook suffix.
+const BITS = "BIT64"; // "BIT32" or "BIT64"
+const RESOREP_PAGE = 1215;
+const RESOREP_FILE_32BIT = 4854; //32BIT Vortex variant — NOT the Manual variant, which bundles a conflicting dllsettings.ini
+const RESOREP_FILE_64BIT = 8350; //64BIT Vortex variant — NOT the Manual variant, which bundles a conflicting dllsettings.ini
+const RESOREP_DOMAIN = "site";
+const RESOREP_ID = `${GAME_ID}-resorep`;
+const RESOREP_NAME = "ResoRep DLL";
+const RESOREP_FILES = ["d3d11.dll"];
+const RESOREP_TEXTURES_ID = `${GAME_ID}-resoreptextures`;
+const RESOREP_TEXTURES_NAME = "ResoRep Textures";
+const RESOREP_TEXTURES_PATH = path.join("ResoRep", "modded");
+const RESOREP_TEXTURES_EXTS = [".dds"];
+const RESOREP_INI_FILE = "dllsettings.ini";
+const RESOREP_DLL_FILE = "d3d11.dll";
+const RESOREP_ORIDLL_FILE = "ori_d3d11.dll";
+
+//Legacy mod types — retired types that a user may still have mods installed under.
+//These are deliberately NOT part of spec.modTypes and no installer routes to them. They stay
+//registered purely so Vortex can still resolve their target path, which is what lets purge and
+//deploy handle those mods instead of stranding their files. Only drop one once no user can
+//still be carrying it.
+const LEGACY_MODTYPES = [
+  /*{
+    id: `${GAME_ID}-textures`,
+    name: "ResoRep Textures (legacy)",
+    targetPath: path.join('{documents}', 'Resorep', 'modded'),
+  },
+  {
+    id: `${GAME_ID}-texturesgamefolder`,
+    name: "ResoRep Textures (legacy game folder)",
+    targetPath: path.join('{gamePath}', 'Resorep'),
+  }, //*/
+];
+
+//////////////////////////////////////////////////////////////////////////////
+// END EDIT ZONE
+//////////////////////////////////////////////////////////////////////////////
+
+let GAME_PATH = ""; //patched in setup to the discovered game path
+let GAME_VERSION = "";
+let STAGING_FOLDER = "";
+let DOWNLOAD_FOLDER = "";
+
+//Derived from the store IDs actually in use — no separate toggle needed
+const hasEpic = EPICAPP_ID !== null && DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID);
+const hasGog = GOGAPP_ID !== null && DISCOVERY_IDS_ACTIVE.includes(GOGAPP_ID);
+
+//BITS picks the ResoRep file, the system dll folder and the application_to_hook suffix
+const RESOREP_FILE = BITS === "BIT32" ? RESOREP_FILE_32BIT : RESOREP_FILE_64BIT;
+const WINDIR = process.env.SystemRoot || process.env.windir || path.join("C:", "Windows");
+const SYSTEM_DLL_FILE = path.join(
+  WINDIR,
+  BITS === "BIT32" ? "SysWOW64" : "System32",
+  RESOREP_DLL_FILE,
+);
+const RESOREP_INI_TEXT = `version=1.7.0
+modded_textures_folder={gamePath}\\${RESOREP_TEXTURES_PATH}
+mod_creator_mode_enabled=false
+dll_log_enabled=false
+dll_log_file={gamePath}\\resorepDll.log
+save_textures=false
+original_textures_folder={gamePath}\\ResoRep\\original
+application_to_hook={gamePath}\\${EXEC}|${BITS}`;
+
+//A .forge file belonging to a DLC carries the DLC number as a "_NN_dlc" segment in its name.
+//Root .forge files carry no such segment, which is what makes this a safe routing test.
+//Routing prefixes the destination path with the DLC folder, so every .forge mod stays on the
+//single root .forge mod type — there is no mod type per DLC folder.
+const DLC_FORGE_ROUTES = DLC_FOLDERS.map((folder) => ({
+  folder: folder,
+  token: `_${(folder.match(/(\d+)/) || [])[1]}_dlc`,
+}));
+
+//Both features claim ".dds" — enabling them together makes install routing depend on registration order
+if (hasPatchTextures && hasResorep) {
+  log(
+    "error",
+    `${GAME_ID}: hasPatchTextures and hasResorep cannot both be enabled - both claim "${RESOREP_TEXTURES_EXTS.join("/")}" files. Disable one of them.`,
+  );
+}
+
+//hasDlcFolders gates the DLC mod type and installer, while .forge routing and the dlc_NN\Extracted
+//folders follow DLC_FOLDERS directly. The two must be set together or the game gets half the feature.
+if (hasDlcFolders && DLC_FOLDERS.length === 0) {
+  log(
+    "error",
+    `${GAME_ID}: hasDlcFolders is enabled but DLC_FOLDERS is empty - the DLC mod type is registered but no .forge file will route to a DLC folder. Enumerate the game's dlc_NN folders.`,
+  );
+}
+if (!hasDlcFolders && DLC_FOLDERS.length > 0) {
+  log(
+    "error",
+    `${GAME_ID}: DLC_FOLDERS is set but hasDlcFolders is disabled - .forge files will route into DLC folders with no DLC mod type registered. Enable hasDlcFolders.`,
+  );
+}
+
+const MOD_PATH_DEFAULT = ".";
+const REQ_FILE = EXEC;
+const PARAMETERS_STRING = "";
+const PARAMETERS = [PARAMETERS_STRING];
+const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
+
+//Folders that must exist and be writable before mods are deployed
+let MODTYPE_FOLDERS = [EXTRACTED_FOLDER, BUILDTABLE_PATH];
+if (hasSound) MODTYPE_FOLDERS.push(SOUND_PATH);
+if (hasForger || hasPatchTextures) MODTYPE_FOLDERS.push(FORGER_FOLDER);
+if (hasResorep) MODTYPE_FOLDERS.push(RESOREP_TEXTURES_PATH);
+DLC_FORGE_ROUTES.forEach((route) =>
+  MODTYPE_FOLDERS.push(path.join(route.folder, EXTRACTED_FOLDER)),
+);
+
+//filled in from data above
 const spec = {
   game: {
     id: GAME_ID,
     name: GAME_NAME,
     shortName: GAME_NAME_SHORT,
-    executable: EXEC,
     logo: `${GAME_ID}.jpg`,
     mergeMods: true,
     requiresCleanup: true,
-    modPath: ".",
+    modPath: MOD_PATH_DEFAULT,
     modPathIsRelative: true,
-    requiredFiles: [EXEC],
+    requiredFiles: [REQ_FILE],
+    compatible: {
+      dinput: false,
+      enb: false,
+    },
     details: {
       steamAppId: +STEAMAPP_ID,
-      epicAppId: EPICAPP_ID,
       uPlayAppId: UPLAYAPP_ID,
-      supportsSymlinks: true,
+      supportsSymlinks: allowSymlinks,
       ignoreDeploy: IGNORE_DEPLOY,
       ignoreConflicts: IGNORE_CONFLICTS,
     },
     environment: {
       SteamAPPId: STEAMAPP_ID,
-      EpicAPPId: EPICAPP_ID,
       UPlayAPPId: UPLAYAPP_ID,
     },
   },
   modTypes: [
     {
-      id: SOUND_ID,
-      name: SOUND_NAME,
-      priority: "high",
-      targetPath: path.join("{gamePath}", SOUND_PATH),
-    },
-    {
-      id: BUILDTABLE_ID,
-      name: BUILDTABLE_NAME,
-      priority: "high",
-      targetPath: path.join("{gamePath}", BUILDTABLE_PATH),
-    },
-    {
-      id: BINARIES_ID,
-      name: BINARIES_NAME,
-      priority: "high",
-      targetPath: "{gamePath}",
-    },
-    {
       id: EXTRACTED_ID,
       name: EXTRACTED_NAME,
       priority: "high",
-      targetPath: path.join("{gamePath}", EXTRACTED_PATH),
+      targetPath: "{gamePath}",
     },
     {
       id: FORGEFOLDER_ID,
       name: FORGEFOLDER_NAME,
       priority: "high",
-      targetPath: path.join("{gamePath}", FORGEFOLDER_PATH),
+      targetPath: "{gamePath}",
     },
     {
       id: DATAFOLDER_ID,
       name: DATAFOLDER_NAME,
       priority: "high",
-      targetPath: path.join("{gamePath}", DATAFOLDER_PATH),
+      targetPath: "{gamePath}",
     },
     {
       id: LOOSE_ID,
       name: LOOSE_NAME,
       priority: "high",
-      targetPath: path.join("{gamePath}", LOOSE_PATH),
+      targetPath: "{gamePath}",
     },
     {
       id: FORGE_ID,
       name: FORGE_NAME,
       priority: "high",
-      targetPath: path.join("{gamePath}", FORGE_PATH),
+      targetPath: "{gamePath}",
     },
     {
       id: ROOT_ID,
       name: ROOT_NAME,
       priority: "high",
-      targetPath: `{gamePath}`,
-    },
-    {
-      id: ATK_ID,
-      name: ATK_NAME,
-      priority: "low",
       targetPath: "{gamePath}",
     },
   ],
   discovery: {
-    ids: [UPLAYAPP_ID, STEAMAPP_ID, EPICAPP_ID],
+    ids: DISCOVERY_IDS_ACTIVE,
     names: [],
   },
 };
 
+//Store IDs are only advertised when the matching store is actually in use
+if (hasEpic) {
+  spec.game.details.epicAppId = EPICAPP_ID;
+  spec.game.environment.EpicAPPId = EPICAPP_ID;
+}
+if (hasGog) {
+  spec.game.details.gogAppId = GOGAPP_ID;
+  spec.game.environment.GogAPPId = GOGAPP_ID;
+}
+
+//Append ATK mod type when enabled
+if (hasAtk) {
+  spec.modTypes.push({
+    id: ATK_ID,
+    name: ATK_NAME,
+    priority: "low",
+    targetPath: "{gamePath}",
+  });
+}
+
+//Append Forger mod types when enabled
+if (hasForger) {
+  spec.modTypes.push({
+    id: FORGER_ID,
+    name: FORGER_NAME,
+    priority: "low",
+    targetPath: "{gamePath}",
+  });
+  spec.modTypes.push({
+    id: FORGERPATCH_ID,
+    name: FORGERPATCH_NAME,
+    priority: "high",
+    targetPath: path.join("{gamePath}", FORGER_FOLDER),
+  });
+}
+
+//Append the Forger patch textures mod type when enabled
+if (hasPatchTextures) {
+  spec.modTypes.push({
+    id: PATCH_TEXTURES_ID,
+    name: PATCH_TEXTURES_NAME,
+    priority: "high",
+    targetPath: path.join("{gamePath}", FORGER_FOLDER),
+  });
+}
+
+//Append the DLC folder mod type when enabled. DLC .forge files do not get their own mod
+//types — installForge adds the DLC folder to the destination path instead.
+if (hasDlcFolders) {
+  spec.modTypes.push({
+    id: DLC_ID,
+    name: DLC_NAME,
+    priority: "high",
+    targetPath: "{gamePath}",
+  });
+}
+
+//Append the sound mod type when enabled
+if (hasSound) {
+  spec.modTypes.push({
+    id: SOUND_ID,
+    name: SOUND_NAME,
+    priority: "high",
+    targetPath: path.join("{gamePath}", SOUND_PATH),
+  });
+}
+
+//Append the fixes mod type when enabled
+if (hasFixes) {
+  spec.modTypes.push({
+    id: FIXES_ID,
+    name: FIXES_NAME,
+    priority: "low",
+    targetPath: "{gamePath}",
+  });
+}
+
+//Append the separate binaries mod type when enabled
+if (hasBinariesType) {
+  spec.modTypes.push({
+    id: BINARIES_ID,
+    name: BINARIES_NAME,
+    priority: "high",
+    targetPath: "{gamePath}",
+  });
+}
+
+//Individual Buildtables mod type — game-unique, always registered
+spec.modTypes.push({
+  id: BUILDTABLE_ID,
+  name: BUILDTABLE_NAME,
+  priority: "high",
+  targetPath: path.join("{gamePath}", BUILDTABLE_PATH),
+});
+
+//Append the ResoRep mod types when enabled
+if (hasResorep) {
+  spec.modTypes.push({
+    id: RESOREP_TEXTURES_ID,
+    name: RESOREP_TEXTURES_NAME,
+    priority: "high",
+    targetPath: path.join("{gamePath}", RESOREP_TEXTURES_PATH),
+  });
+  spec.modTypes.push({
+    id: RESOREP_ID,
+    name: RESOREP_NAME,
+    priority: "low",
+    targetPath: "{gamePath}",
+  });
+}
+
 //3rd party tools and launchers
 const tools = [
   {
-    id: "LaunchUbisoftPlus",
-    name: "Launch Game Ubisoft Plus",
-    logo: `exec.png`,
-    executable: () => EXEC_PLUS,
-    requiredFiles: [EXEC_PLUS],
-    detach: true,
-    relative: true,
-    exclusive: true,
-    //defaultPrimary: true,
-    //parameters: []
-  },
-  {
-    id: "LaunchVulkan",
-    name: "Launch Vulkan Game",
-    logo: `vulkan.png`,
-    executable: () => EXEC_VULKAN,
-    requiredFiles: [EXEC_VULKAN],
-    detach: true,
-    relative: true,
-    exclusive: true,
-    //defaultPrimary: true,
-    //parameters: []
-  },
-  {
     id: `${GAME_ID}-customlaunch`,
-    name: `Custom Launch`,
+    name: "Custom Launch",
     logo: `exec.png`,
     executable: () => EXEC,
     requiredFiles: [EXEC],
@@ -243,9 +471,37 @@ const tools = [
     exclusive: true,
     shell: true,
     //defaultPrimary: true,
-    //parameters: []
+    //parameters: PARAMETERS,
   },
-  {
+];
+
+//Append the extra launchers when enabled
+if (hasCustomLaunchers) {
+  tools.push({
+    id: `${GAME_ID}-launchplus`,
+    name: "Launch Game Ubisoft Plus",
+    logo: `exec.png`,
+    executable: () => EXEC_PLUS,
+    requiredFiles: [EXEC_PLUS],
+    detach: true,
+    relative: true,
+    exclusive: true,
+  });
+  tools.push({
+    id: `${GAME_ID}-launchvulkan`,
+    name: "Launch Vulkan",
+    logo: `vulkan.png`,
+    executable: () => EXEC_VULKAN,
+    requiredFiles: [EXEC_VULKAN],
+    detach: true,
+    relative: true,
+    exclusive: true,
+  });
+}
+
+//Append ATK tool when enabled
+if (hasAtk) {
+  tools.push({
     id: ATK_ID,
     name: ATK_NAME,
     logo: "anvil.png",
@@ -253,12 +509,34 @@ const tools = [
     requiredFiles: [ATK_EXEC],
     relative: true,
     exclusive: true,
-  },
-];
+  });
+}
+if (hasForger) {
+  tools.push({
+    id: FORGER_ID,
+    name: FORGER_NAME,
+    logo: "forger.png",
+    executable: () => FORGER_EXEC,
+    requiredFiles: [FORGER_EXEC],
+    relative: true,
+    exclusive: true,
+  });
+}
+if (hasReforger) {
+  tools.push({
+    id: REFORGER_ID,
+    name: REFORGER_NAME,
+    logo: "reforger.png",
+    queryPath: getReforgerPath,
+    executable: () => REFORGER_EXEC,
+    requiredFiles: [REFORGER_EXEC],
+    relative: false,
+    exclusive: true,
+  });
+}
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
-//Set mod type priorities
 function isDir(folder, file) {
   const stats = fs.statSync(path.join(folder, file));
   return stats.isDirectory();
@@ -290,11 +568,9 @@ async function getAllFiles(dirPath) {
       const fullPath = path.join(dirPath, entry);
       const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
-        // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
         results = results.concat(subDirFiles);
       } else {
-        // Add file to results
         results.push(fullPath);
       }
     }
@@ -305,12 +581,12 @@ async function getAllFiles(dirPath) {
 }
 
 const getDiscoveryPath = (api) => {
-  //get the game's discovered path
   const state = api.getState();
   const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
 
+//Set mod type priorities
 function modTypePriority(priority) {
   return {
     high: 25,
@@ -320,19 +596,27 @@ function modTypePriority(priority) {
 
 //Replace folder path string placeholders with actual folder paths
 function pathPattern(api, game, pattern) {
-  var _a;
-  return template(pattern, {
-    gamePath:
-      (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0
-        ? void 0
-        : _a.path,
-    documents: util.getVortexPath("documents"),
-    localAppData: util.getVortexPath("localAppData"),
-    appData: util.getVortexPath("appData"),
-  });
+  try {
+    var _a;
+    return template(pattern, {
+      gamePath:
+        (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0
+          ? void 0
+          : _a.path,
+      documents: util.getVortexPath("documents"),
+      localAppData: util.getVortexPath("localAppData"),
+      appData: util.getVortexPath("appData"),
+    });
+  } catch (err) {
+    //this happens if the executable comes back as "undefined", usually caused by the Xbox app locking down the folder
+    api.showErrorNotification(
+      "Failed to locate executable. Please launch the game at least once.",
+      err,
+    );
+  }
 }
 
-//Find the game installation folder
+//Find the game installation folder via Ubisoft Connect registry entry
 function makeFindGame(api, gameSpec) {
   try {
     const instPath = winapi.RegGetValue(
@@ -350,39 +634,61 @@ function makeFindGame(api, gameSpec) {
   }
 }
 
-//Set the mod path for the game
-function makeGetModPath(api, gameSpec) {
-  return () =>
-    gameSpec.game.modPathIsRelative !== false
-      ? gameSpec.game.modPath || "."
-      : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
+//Find ReForger, which is installed as an Xbox package rather than into the game folder
+function getReforgerPath() {
+  try {
+    const reg = winapi.RegGetValue(REFORGER_REG_HIVE, REFORGER_REG_KEY, REFORGER_REG_VALUE);
+    if (!reg) {
+      log("warn", `${REFORGER_NAME} path not found`);
+      return undefined;
+    }
+    log("info", `${REFORGER_NAME} path found at ${reg.value}`);
+    return reg.value;
+  } catch (err) {
+    log("warn", `${REFORGER_NAME} path not found: ${err.message}`);
+    return undefined;
+  }
 }
 
-//Setup launcher requirements (Steam, Epic, GOG, GamePass, etc.). More parameters required for Epic and GamePass
-function makeRequiresLauncher(api, gameSpec) {
-  return (gamePath, store) => {
-    if (store === "steam") {
-      return Promise.resolve({
-        launcher: "steam",
-      });
-    } //*/
-    if (store === "epic") {
-      return Promise.resolve({
-        launcher: "epic",
-        addInfo: {
-          appId: EPICAPP_ID,
-          //parameters: PARAMETERS,
-          //launchType: 'gamestore',
-        },
-      });
-    } //*/
-    return Promise.resolve(
-      gameSpec.game.requiresLauncher !== undefined
-        ? { launcher: gameSpec.game.requiresLauncher }
-        : undefined,
-    );
-  };
+//* Get mod path dynamically
+function getModPath(discoveryPath) {
+  return () => MOD_PATH_DEFAULT;
+} //*/
+
+//Set launcher requirements
+async function requiresLauncher(gamePath, store) {
+  if (store === "steam") {
+    return Promise.resolve({
+      launcher: "steam",
+    });
+  } //*/
+  return Promise.resolve(undefined);
 }
+
+//Get correct executable
+function getExecutable(discoveryPath) {
+  return EXEC;
+}
+
+//Get correct game version
+async function setGameVersion(gamePath) {
+  GAME_VERSION = "default";
+  return GAME_VERSION;
+}
+
+//* Resolve game version for display in Vortex
+async function resolveGameVersion(gamePath) {
+  GAME_VERSION = await setGameVersion(gamePath);
+  let version = "0.0.0";
+  try {
+    const exeVersion = require("exe-version");
+    version = exeVersion.getProductVersion(path.join(gamePath, getExecutable(gamePath)));
+    return Promise.resolve(version);
+  } catch (err) {
+    log("error", `Could not read executable file to get game version: ${err}`);
+    return Promise.resolve(version);
+  }
+} //*/
 
 // AUTOMATIC MOD DOWNLOADERS ///////////////////////////////////////////////////
 
@@ -393,7 +699,7 @@ function isAnvilInstalled(api, spec) {
   return Object.keys(mods).some((id) => mods[id]?.type === ATK_ID);
 }
 
-// Function to automatically download AnvilToolkit from Nexus Mods
+//Function to automatically download AnvilToolkit from Nexus Mods
 async function downloadAnvil(api, gameSpec) {
   let isInstalled = isAnvilInstalled(api, gameSpec);
   if (!isInstalled) {
@@ -401,10 +707,9 @@ async function downloadAnvil(api, gameSpec) {
     const MOD_TYPE = ATK_ID;
     const NOTIF_ID = `${MOD_TYPE}-installing`;
     const PAGE_ID = ATK_PAGE;
-    const FILE_ID = ATK_FILE; //If using a specific file id because "input" below gives an error
+    const FILE_ID = ATK_FILE;
     const GAME_DOMAIN = ATK_DOMAIN;
     api.sendNotification({
-      //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
       type: "activity",
@@ -412,14 +717,12 @@ async function downloadAnvil(api, gameSpec) {
       allowSuppress: false,
     });
     if (api.ext?.ensureLoggedIn !== undefined) {
-      //make sure user is logged into Nexus Mods account in Vortex
       await api.ext.ensureLoggedIn();
     }
     try {
       let FILE = null;
       let URL = null;
       try {
-        //get the mod files information from Nexus
         const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
         const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
         const file = modFiles
@@ -432,12 +735,10 @@ async function downloadAnvil(api, gameSpec) {
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       } catch {
-        // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       }
       const dlInfo = {
-        //Download the mod
         game: gameSpec.game.id,
         name: MOD_NAME,
       };
@@ -455,11 +756,10 @@ async function downloadAnvil(api, gameSpec) {
           allowAutoDeploy: true,
           installed: true,
         }),
-        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE),
       ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions
+      util.batchDispatch(api.store, batched);
     } catch (err) {
-      //Show the user the download page if the download, install process fails
       const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
       util.opn(errPage).catch(() => null);
@@ -467,16 +767,292 @@ async function downloadAnvil(api, gameSpec) {
       api.dismissNotification(NOTIF_ID);
     }
   }
-} //*/
+}
 
-// MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
+//Check if Forger Patch Manager is installed
+function isForgerInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  return Object.keys(mods).some((id) => mods[id]?.type === FORGER_ID);
+}
 
-//Installer test for Fluffy Mod Manager files
+//Function to automatically download Forger Patch Manager from Nexus Mods
+//Only called when hasForger = true
+async function downloadForger(api, gameSpec, check = true) {
+  let isInstalled = isForgerInstalled(api, gameSpec);
+  if (!isInstalled || !check) {
+    const MOD_NAME = FORGER_NAME;
+    const MOD_TYPE = FORGER_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const PAGE_ID = FORGER_PAGE;
+    const FILE_ID = FORGER_FILE;
+    const GAME_DOMAIN = FORGER_DOMAIN;
+    api.sendNotification({
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: "activity",
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    if (api.ext?.ensureLoggedIn !== undefined) {
+      await api.ext.ensureLoggedIn();
+    }
+    try {
+      let FILE = null;
+      let URL = null;
+      try {
+        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
+        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
+        const file = modFiles
+          .filter((file) => file.category_id === 1)
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
+          .reverse()[0];
+        if (file === undefined) {
+          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+        }
+        FILE = file.file_id;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } catch {
+        FILE = FILE_ID;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      }
+      const dlInfo = {
+        game: gameSpec.game.id,
+        name: MOD_NAME,
+      };
+      const dlId = await util.toPromise((cb) =>
+        api.events.emit("start-download", [URL], dlInfo, undefined, cb, undefined, {
+          allowInstall: false,
+        }),
+      );
+      const modId = await util.toPromise((cb) =>
+        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+      );
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE),
+      ];
+      util.batchDispatch(api.store, batched);
+    } catch (err) {
+      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.opn(errPage).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+}
+
+//Check if ResoRep is installed
+function isResoRepInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  return Object.keys(mods).some((id) => mods[id]?.type === RESOREP_ID);
+}
+
+//Ask the user whether they want ResoRep — only needed for legacy texture mods
+//Only called when hasResorep = true
+async function downloadResoRepPrompt(api, gameSpec) {
+  if (isResoRepInstalled(api, gameSpec)) {
+    return;
+  }
+  const NOTIF_ID = `${GAME_ID}-resorepdownload`;
+  const MESSAGE = `Download ResoRep for Legacy Texture Mods`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: "warning",
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: "Download ResoRep",
+        action: (dismiss) => {
+          downloadResoRep(api, gameSpec);
+          dismiss();
+        },
+      },
+      {
+        title: "More",
+        action: (dismiss) => {
+          api.showDialog(
+            "question",
+            MESSAGE,
+            {
+              text:
+                `Some legacy texture mods need ${RESOREP_NAME} to inject textures into memory while the game runs.\n` +
+                `Click "Download ResoRep" below if you want to use those mods. You can install it later at any time.\n` +
+                `\n` +
+                `Textures are deployed to "${RESOREP_TEXTURES_PATH}" inside the game folder, and the extension writes the "${RESOREP_INI_FILE}" settings file for you.\n`,
+            },
+            [
+              {
+                label: "Download ResoRep",
+                action: () => {
+                  downloadResoRep(api, gameSpec);
+                  dismiss();
+                },
+              },
+              { label: "Continue", action: () => dismiss() },
+              {
+                label: "Never Show Again",
+                action: () => {
+                  api.suppressNotification(NOTIF_ID);
+                  dismiss();
+                },
+              },
+            ],
+          );
+        },
+      },
+    ],
+  });
+}
+
+//Download the BITS-matched ResoRep "Vortex" file variant from Nexus Mods
+async function downloadResoRep(api, gameSpec) {
+  const MOD_NAME = `${RESOREP_NAME} ${BITS === "BIT32" ? "32-bit" : "64-bit"}`;
+  const MOD_TYPE = RESOREP_ID;
+  const NOTIF_ID = `${MOD_TYPE}-installing`;
+  const PAGE_ID = RESOREP_PAGE;
+  const FILE_ID = RESOREP_FILE;
+  const GAME_DOMAIN = RESOREP_DOMAIN;
+  api.sendNotification({
+    id: NOTIF_ID,
+    message: `Installing ${MOD_NAME}`,
+    type: "activity",
+    noDismiss: true,
+    allowSuppress: false,
+  });
+  if (api.ext?.ensureLoggedIn !== undefined) {
+    await api.ext.ensureLoggedIn();
+  }
+  try {
+    //The file id is pinned on purpose - the page also carries "Manual" variants, which bundle a
+    //conflicting dllsettings.ini, so picking the newest main file would install the wrong package.
+    const URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE_ID}`;
+    const dlInfo = {
+      game: gameSpec.game.id,
+      name: MOD_NAME,
+    };
+    const dlId = await util.toPromise((cb) =>
+      api.events.emit("start-download", [URL], dlInfo, undefined, cb, undefined, {
+        allowInstall: false,
+      }),
+    );
+    const modId = await util.toPromise((cb) =>
+      api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+    );
+    const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+    const batched = [
+      actions.setModsEnabled(api, profileId, [modId], true, {
+        allowAutoDeploy: true,
+        installed: true,
+      }),
+      actions.setModType(gameSpec.game.id, modId, MOD_TYPE),
+    ];
+    util.batchDispatch(api.store, batched);
+  } catch (err) {
+    const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+    api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+    util.opn(errPage).catch(() => null);
+  } finally {
+    api.dismissNotification(NOTIF_ID);
+  }
+}
+
+//Check if ReForger is installed. It registers an Xbox package rather than dropping files in the
+//game folder, so the registry lookup is the only reliable test.
+function isReforgerInstalled() {
+  return getReforgerPath() !== undefined;
+}
+
+//Download and run the ReForger installer from GitHub.
+//ReForger ships as an MSIX package behind an installer executable, so it cannot be managed as a
+//Vortex mod — there is nothing to stage or deploy. The installer is fetched into the downloads
+//folder with allowInstall disabled and then launched; the registry check above is what tells us
+//it worked. Only called when hasReforger = true.
+async function downloadReforger(api, gameSpec, force = false) {
+  if (!force && isReforgerInstalled()) {
+    log("info", `${REFORGER_NAME} already installed. Installer not downloaded.`);
+    return Promise.resolve();
+  }
+  const state = api.getState();
+  DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
+  const NOTIF_ID = `${REFORGER_ID}-installing`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    message: `Downloading ${REFORGER_NAME}`,
+    type: "activity",
+    noDismiss: true,
+    allowSuppress: false,
+  });
+  try {
+    const response = await fetch(`${REFORGER_GITHUB_API}/releases/latest`);
+    if (!response.ok) {
+      throw new Error(`Request failed with status code ${response.status}`);
+    }
+    const release = await response.json();
+    const asset = (release.assets || []).find(
+      (file) => path.basename(file.name).toLowerCase() === REFORGER_INSTALLER.toLowerCase(),
+    );
+    if (asset === undefined) {
+      throw new util.ProcessCanceled(
+        `No ${REFORGER_INSTALLER} found in ${REFORGER_NAME} release ${release.tag_name}. ` +
+          `That release ships: ${(release.assets || []).map((file) => file.name).join(", ")}`,
+      );
+    }
+    await new Promise((resolve, reject) => {
+      api.events.emit(
+        "start-download",
+        [asset.browser_download_url],
+        {},
+        undefined,
+        async (err, dlId) => {
+          if (err !== null && err.name !== "AlreadyDownloaded") {
+            return reject(err);
+          }
+          try {
+            const RUN_PATH = path.join(DOWNLOAD_FOLDER, REFORGER_INSTALLER);
+            await fsp.stat(RUN_PATH);
+            await api.runExecutable(RUN_PATH, [], { suggestDeploy: false });
+            log("info", `${REFORGER_NAME} installer started from the downloads folder`);
+          } catch (runErr) {
+            log("error", `Could not run the ${REFORGER_NAME} installer: ${runErr}`);
+            api.showErrorNotification(
+              `Could not run the ${REFORGER_NAME} installer. Run ${REFORGER_INSTALLER} from your downloads folder manually.`,
+              runErr,
+              { allowReport: false },
+            );
+            util.opn(DOWNLOAD_FOLDER).catch(() => null);
+          }
+          return resolve();
+        },
+        "never",
+        { allowInstall: false },
+      );
+    });
+  } catch (err) {
+    api.showErrorNotification(`Failed to download ${REFORGER_NAME}`, err, {
+      allowReport: !(err instanceof util.ProcessCanceled),
+    });
+    util.opn(REFORGER_RELEASES_URL).catch(() => null);
+  } finally {
+    api.dismissNotification(NOTIF_ID);
+  }
+  return Promise.resolve();
+}
+
+// MOD INSTALLER FUNCTIONS /////////////////////////////////////////////////////
+
+//Installer test for AnvilToolkit
 function testATK(files, gameId) {
-  const isMod = files.some((file) => path.basename(file).toLowerCase() === ATK_EXEC);
+  const isMod = files.some((file) => ATK_FILES.includes(path.basename(file).toLowerCase()));
   let supported = gameId === spec.game.id && isMod;
 
-  // Test for a mod installer.
   if (
     supported &&
     files.find(
@@ -494,111 +1070,15 @@ function testATK(files, gameId) {
   });
 }
 
-//Installer install Fluffy Mod Manger files
+//Installer install AnvilToolkit
 function installATK(files) {
-  const modFile = files.find((file) => path.basename(file).toLowerCase() === ATK_EXEC);
+  const modFile = files.find((file) => ATK_FILES.includes(path.basename(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ATK_ID };
 
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
-  const instructions = filtered.map((file) => {
-    return {
-      type: "copy",
-      source: file,
-      destination: path.join(file.substr(idx)),
-    };
-  });
-  instructions.push(setModTypeInstruction);
-  return Promise.resolve({ instructions });
-}
-
-//Test for config files
-function testSound(files, gameId) {
-  const isMod = files.some((file) => path.extname(file).toLowerCase() === SOUND_EXT);
-  let supported = gameId === spec.game.id && isMod;
-
-  // Test for a mod installer
-  if (
-    supported &&
-    files.find(
-      (file) =>
-        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
-        path.basename(path.dirname(file)).toLowerCase() === "fomod",
-    )
-  ) {
-    supported = false;
-  }
-
-  return Promise.resolve({
-    supported,
-    requiredFiles: [],
-  });
-}
-
-//Install config files
-function installSound(files) {
-  const modFile = files.find((file) => path.extname(file).toLowerCase() === SOUND_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
-  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
-  const setModTypeInstruction = { type: "setmodtype", value: SOUND_ID };
-
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
-  const instructions = filtered.map((file) => {
-    return {
-      type: "copy",
-      source: file,
-      destination: path.join(file.substr(idx)),
-    };
-  });
-  instructions.push(setModTypeInstruction);
-  return Promise.resolve({ instructions });
-}
-
-//Installer test for Root folder files
-function testIndividualBuildtables(files, gameId) {
-  const isMod = files.some((file) => path.basename(file) === BUILDTABLE_FOLDER);
-  const isExt = files.some((file) => path.extname(file).toLowerCase() === BUILDTABLE_EXT);
-  let supported = gameId === spec.game.id && isMod && isExt;
-
-  // Test for a mod installer.
-  if (
-    supported &&
-    files.find(
-      (file) =>
-        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
-        path.basename(path.dirname(file)).toLowerCase() === "fomod",
-    )
-  ) {
-    supported = false;
-  }
-
-  return Promise.resolve({
-    supported,
-    requiredFiles: [],
-  });
-}
-
-//Installer install Root folder files
-function installIndividualBuildtables(files) {
-  const modFile = files.find((file) => path.extname(file).toLowerCase() === BUILDTABLE_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
-  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
-  const setModTypeInstruction = { type: "setmodtype", value: BUILDTABLE_ID };
-
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -612,10 +1092,9 @@ function installIndividualBuildtables(files) {
 
 //Test for "Extracted" folder
 function testExtracted(files, gameId) {
-  const isMod = files.some((file) => path.basename(file) === EXTRACTED_FOLDER);
+  const isMod = files.some((file) => EXTRACTED_FOLDERS.includes(path.basename(file)));
   let supported = gameId === spec.game.id && isMod;
 
-  // Test for a mod installer
   if (
     supported &&
     files.find(
@@ -635,16 +1114,13 @@ function testExtracted(files, gameId) {
 
 //Install "Extracted" folder
 function installExtracted(files) {
-  const modFile = files.find((file) => path.basename(file) === EXTRACTED_FOLDER);
+  const modFile = files.find((file) => EXTRACTED_FOLDERS.includes(path.basename(file)));
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: EXTRACTED_ID };
 
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -656,12 +1132,11 @@ function installExtracted(files) {
   return Promise.resolve({ instructions });
 }
 
-//Test for ".forge" containing folder name
+//Test for folder with ".forge" in name
 function testForgeFolder(files, gameId) {
   const isMod = files.some((file) => path.dirname(file).includes(FORGEFOLDER_STRING));
   let supported = gameId === spec.game.id && isMod;
 
-  // Test for a mod installer
   if (
     supported &&
     files.find(
@@ -679,7 +1154,7 @@ function testForgeFolder(files, gameId) {
   });
 }
 
-//Install ".forge" containing folder name
+//Install folder with ".forge" in name — places inside Extracted folder
 function installForgeFolder(files) {
   const modFile = files.find((file) => path.basename(file).includes(FORGEFOLDER_STRING));
   const MODFILE_IDX = `${path.basename(modFile)}${path.sep}`;
@@ -688,28 +1163,23 @@ function installForgeFolder(files) {
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: FORGEFOLDER_ID };
 
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
       source: file,
       destination: path.join(EXTRACTED_FOLDER, file.substr(idx)),
-      //destination: path.join(file.substr(idx)),
     };
   });
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
 }
 
-//Test for ".data" containing folder name
+//Test for folder with ".data" in name
 function testDataFolder(files, gameId) {
   const isMod = files.some((file) => path.dirname(file).includes(DATAFOLDER_STRING));
   let supported = gameId === spec.game.id && isMod;
 
-  // Test for a mod installer
   if (
     supported &&
     files.find(
@@ -727,7 +1197,7 @@ function testDataFolder(files, gameId) {
   });
 }
 
-//Install ".data" containing folder name
+//Install folder with ".data" in name — places inside Extracted/RENAME_ME folder, notifies user to rename
 function installDataFolder(api, files, fileName) {
   const modFile = files.find((file) => path.basename(file).includes(DATAFOLDER_STRING));
   const MODFILE_IDX = `${path.basename(modFile)}${path.sep}`;
@@ -736,10 +1206,7 @@ function installDataFolder(api, files, fileName) {
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: DATAFOLDER_ID };
 
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -757,7 +1224,6 @@ function testLoose(files, gameId) {
   const isMod = files.some((file) => LOOSE_EXTS.includes(path.extname(file).toLowerCase()));
   let supported = gameId === spec.game.id && isMod;
 
-  // Test for a mod installer
   if (
     supported &&
     files.find(
@@ -775,7 +1241,7 @@ function testLoose(files, gameId) {
   });
 }
 
-//Install loose .data files
+//Install loose .data files — places inside Extracted/RENAME_ME folder, notifies user to rename
 function installLoose(api, files, fileName) {
   const modFile = files.find((file) => LOOSE_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
@@ -783,10 +1249,7 @@ function installLoose(api, files, fileName) {
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: LOOSE_ID };
 
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -799,12 +1262,11 @@ function installLoose(api, files, fileName) {
   return Promise.resolve({ instructions });
 }
 
-//Test for .forge files
+//Test for .forge replacement files
 function testForge(files, gameId) {
-  const isMod = files.some((file) => path.extname(file).toLowerCase() === FORGE_EXT);
+  const isMod = files.some((file) => FORGE_EXTS.includes(path.extname(file).toLowerCase()));
   let supported = gameId === spec.game.id && isMod;
 
-  // Test for a mod installer
   if (
     supported &&
     files.find(
@@ -822,19 +1284,63 @@ function testForge(files, gameId) {
   });
 }
 
-//Install .forge files
+//Install .forge replacement files — routed to a DLC folder when the file name names one
 function installForge(files) {
-  const modFile = files.find((file) => path.extname(file).toLowerCase() === FORGE_EXT);
+  const modFile = files.find((file) => FORGE_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
+
   const setModTypeInstruction = { type: "setmodtype", value: FORGE_ID };
 
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
+  //A DLC .forge file carries the DLC number as a "_NN_dlc" segment, and that names the folder
+  //it belongs in. First match wins; a name matching no DLC number stays at the root. Routing is
+  //per file, so one archive can carry .forge files for several DLCs.
+  const instructions = filtered.map((file) => {
+    const FILE_NAME = path.basename(file).toLowerCase();
+    const route = DLC_FORGE_ROUTES.find((entry) => FILE_NAME.includes(entry.token));
+    return {
+      type: "copy",
+      source: file,
+      destination: path.join(route !== undefined ? route.folder : "", file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
 
+//Test for DLC folders — only used when hasDlcFolders = true
+function testDlc(files, gameId) {
+  const isMod = files.some((file) => DLC_FOLDERS.includes(path.basename(file)));
+  let supported = gameId === spec.game.id && isMod;
+
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install DLC folders — only used when hasDlcFolders = true
+function installDlc(files) {
+  const modFile = files.find((file) => DLC_FOLDERS.includes(path.basename(file)));
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
+  const setModTypeInstruction = { type: "setmodtype", value: DLC_ID };
+
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -846,12 +1352,11 @@ function installForge(files) {
   return Promise.resolve({ instructions });
 }
 
-//Installer test for Root folder files
+//Test for root folder files (e.g. videos, resources)
 function testRoot(files, gameId) {
   const isMod = files.some((file) => ROOT_FOLDERS.includes(path.basename(file)));
   let supported = gameId === spec.game.id && isMod;
 
-  // Test for a mod installer.
   if (
     supported &&
     files.find(
@@ -869,7 +1374,7 @@ function testRoot(files, gameId) {
   });
 }
 
-//Installer install Root folder files
+//Install root folder files
 function installRoot(files) {
   const modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file)));
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
@@ -877,10 +1382,7 @@ function installRoot(files) {
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
 
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -892,11 +1394,10 @@ function installRoot(files) {
   return Promise.resolve({ instructions });
 }
 
-//Test Fallback installer for binaries folder
+//Fallback installer — catches anything not handled above
 function testFallback(files, gameId) {
   let supported = gameId === spec.game.id;
 
-  // Test for a mod installer.
   if (
     supported &&
     files.find(
@@ -914,9 +1415,133 @@ function testFallback(files, gameId) {
   });
 }
 
-//Fallback installer for binaries folder
+//Fallback installer — installs to root, notifies user
 function installFallback(api, files, fileName) {
-  // Remove empty directories
+  fallbackInstallerNotify(api, fileName);
+  const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
+  const filtered = files.filter((file) => !file.endsWith(path.sep));
+  const instructions = filtered.map((file) => {
+    return {
+      type: "copy",
+      source: file,
+      destination: file,
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for Forger Patch Manager installer files — only used when hasForger = true
+function testForger(files, gameId) {
+  const isMod = files.some((file) => FORGER_FILES.includes(path.basename(file).toLowerCase()));
+  let supported = gameId === spec.game.id && isMod;
+
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install Forger Patch Manager — only used when hasForger = true
+function installForger(files) {
+  const modFile = files.find((file) => FORGER_FILES.includes(path.basename(file).toLowerCase()));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
+  const setModTypeInstruction = { type: "setmodtype", value: FORGER_ID };
+
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
+  const instructions = filtered.map((file) => {
+    return {
+      type: "copy",
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for .forger2 patch files — only used when hasForger = true
+function testForgerPatch(files, gameId) {
+  const isMod = files.some((file) => FORGER_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = gameId === spec.game.id && isMod;
+
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install .forger2 patch files — only used when hasForger = true
+function installForgerPatch(files) {
+  const modFile = files.find((file) => FORGER_EXTS.includes(path.extname(file).toLowerCase()));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
+  const setModTypeInstruction = { type: "setmodtype", value: FORGERPATCH_ID };
+
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
+  const instructions = filtered.map((file) => {
+    return {
+      type: "copy",
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for loose .dds Forger patch textures — only used when hasPatchTextures = true
+function testPatchTextures(files, gameId) {
+  const isMod = files.some((file) =>
+    PATCH_TEXTURES_EXTS.includes(path.extname(file).toLowerCase()),
+  );
+  let supported = gameId === spec.game.id && isMod;
+
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install loose .dds Forger patch textures — only used when hasPatchTextures = true
+function installPatchTextures(files) {
+  const setModTypeInstruction = { type: "setmodtype", value: PATCH_TEXTURES_ID };
   const filtered = files.filter((file) => !file.endsWith(path.sep));
   const instructions = filtered.map((file) => {
     return {
@@ -925,11 +1550,228 @@ function installFallback(api, files, fileName) {
       destination: path.join(file),
     };
   });
-  fallbackInstallerNotify(api, fileName);
+  instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
 }
 
-//Notify User that folder renaming is required
+//Test for .pck sound banks — only used when hasSound = true
+function testSound(files, gameId) {
+  const isMod = files.some((file) => SOUND_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = gameId === spec.game.id && isMod;
+
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install .pck sound banks — only used when hasSound = true
+function installSound(files) {
+  const modFile = files.find((file) => SOUND_EXTS.includes(path.extname(file).toLowerCase()));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
+  const setModTypeInstruction = { type: "setmodtype", value: SOUND_ID };
+
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
+  const instructions = filtered.map((file) => {
+    return {
+      type: "copy",
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for Individual Buildtables — game-unique, always registered
+function testIndividualBuildtables(files, gameId) {
+  const isMod = files.some((file) => path.basename(file) === BUILDTABLE_FOLDER);
+  const isExt = files.some((file) => path.extname(file).toLowerCase() === BUILDTABLE_EXT);
+  let supported = gameId === spec.game.id && isMod && isExt;
+
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install Individual Buildtables — game-unique, always registered
+function installIndividualBuildtables(files) {
+  const modFile = files.find((file) => path.extname(file).toLowerCase() === BUILDTABLE_EXT);
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
+  const setModTypeInstruction = { type: "setmodtype", value: BUILDTABLE_ID };
+
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
+  const instructions = filtered.map((file) => {
+    return {
+      type: "copy",
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for the community fixes package — only used when hasFixes = true
+function testFixes(files, gameId) {
+  const isMod = files.some((file) => FIXES_FILES.includes(path.basename(file)));
+  let supported = gameId === spec.game.id && isMod;
+
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install the community fixes package — only used when hasFixes = true
+function installFixes(files) {
+  const modFile = files.find((file) => FIXES_FILES.includes(path.basename(file)));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
+  const setModTypeInstruction = { type: "setmodtype", value: FIXES_ID };
+
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
+  const instructions = filtered.map((file) => {
+    return {
+      type: "copy",
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for the ResoRep DLL package — only used when hasResorep = true
+function testResoRep(files, gameId) {
+  const isMod = files.some((file) => RESOREP_FILES.includes(path.basename(file)));
+  let supported = gameId === spec.game.id && isMod;
+
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install the ResoRep DLL package — only used when hasResorep = true
+function installResoRep(files) {
+  const modFile = files.find((file) => RESOREP_FILES.includes(path.basename(file)));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
+  const setModTypeInstruction = { type: "setmodtype", value: RESOREP_ID };
+
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
+  const instructions = filtered.map((file) => {
+    return {
+      type: "copy",
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for ResoRep .dds textures — only used when hasResorep = true
+function testResoRepTextures(files, gameId) {
+  const isMod = files.some((file) =>
+    RESOREP_TEXTURES_EXTS.includes(path.extname(file).toLowerCase()),
+  );
+  let supported = gameId === spec.game.id && isMod;
+
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install ResoRep .dds textures — only used when hasResorep = true
+function installResoRepTextures(files) {
+  const modFile = files.find((file) =>
+    RESOREP_TEXTURES_EXTS.includes(path.extname(file).toLowerCase()),
+  );
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
+  const setModTypeInstruction = { type: "setmodtype", value: RESOREP_TEXTURES_ID };
+
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
+  const instructions = filtered.map((file) => {
+    return {
+      type: "copy",
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+// MAIN FUNCTIONS //////////////////////////////////////////////////////////////
+
+//Notify user that folder renaming is required for .data folder mods
 function renamingRequiredNotify(api, fileName) {
   const state = api.getState();
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
@@ -970,7 +1812,6 @@ function renamingRequiredNotify(api, fileName) {
                 `\n`,
             },
             [
-              //*
               {
                 label: `Open Mod Page`,
                 action: () => {
@@ -991,10 +1832,9 @@ function renamingRequiredNotify(api, fileName) {
                     }
                   }
                   const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
-                  util.opn(MOD_PAGE_URL).catch((err) => undefined);
-                  //dismiss();
+                  util.opn(MOD_PAGE_URL).catch(() => null);
                 },
-              }, //*/
+              },
               {
                 label: `Show Folder Rename Dialog`,
                 action: () => {
@@ -1018,14 +1858,14 @@ function renamingRequiredNotify(api, fileName) {
                     dismiss();
                   }
                 },
-              }, //*/
+              },
               {
                 label: `Open Staging Folder`,
                 action: () => {
-                  util.opn(path.join(STAGING_FOLDER, MOD_NAME)).catch((err) => undefined);
+                  util.opn(path.join(STAGING_FOLDER, MOD_NAME)).catch(() => null);
                   dismiss();
                 },
-              }, //*/
+              },
               { label: "Close", action: () => dismiss() },
             ],
           );
@@ -1036,6 +1876,7 @@ function renamingRequiredNotify(api, fileName) {
 }
 
 const RENAME_INPUT_ID = `${GAME_ID}-forgefolderrenameinput`;
+
 async function purge(api) {
   return new Promise((resolve, reject) =>
     api.events.emit("purge-mods", true, (err) => (err ? reject(err) : resolve())),
@@ -1066,7 +1907,6 @@ async function folderRenameDialog(api, mod) {
       [{ label: "Cancel" }, { label: "Rename", default: true }],
     )
     .then((result) => {
-      //rename the folder in the mod staging folder
       if (result.action === "Rename") {
         let name = result.input[RENAME_INPUT_ID];
         if (name === undefined) {
@@ -1104,10 +1944,10 @@ async function folderRenameDialog(api, mod) {
 }
 
 async function rename(api, EXISTING, NEW) {
-  await purge(api); //purge mods to avoid External Changes
+  await purge(api);
   try {
-    fs.statSync(EXISTING); //make sure the folder exists
-    await fsp.rename(EXISTING, NEW); //rename the folder
+    fs.statSync(EXISTING);
+    await fsp.rename(EXISTING, NEW);
   } catch (err) {
     api.showErrorNotification(
       "Failed to rename .forge folder. You will have to rename the folder manually.",
@@ -1116,26 +1956,18 @@ async function rename(api, EXISTING, NEW) {
     );
     return Promise.resolve();
   }
-  await deploy(api); //redeploy mods after renaming folder
+  await deploy(api);
   return Promise.resolve();
 }
 
-//Notify User of fallback installation
-function fallbackInstallerNotify(api, fileName) {
+//Notify user that fallback installer was reached
+function fallbackInstallerNotify(api, modName) {
   const state = api.getState();
-  STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
-  const MOD_NAME = path.basename(fileName).replace(/(.installing)*(.zip)*(.rar)*(.7z)*/gi, "");
-  const mods = util.getSafe(api.store.getState(), ["persistent", "mods", spec.game.id], {});
-  const modMatch = Object.values(mods).find((mod) => mod.installationPath === MOD_NAME);
-  log("warn", `Found ${modMatch?.id} for ${MOD_NAME}`);
-  let PAGE = ``;
-  if (modMatch) {
-    const MOD_ID = modMatch.attributes.modId;
-    PAGE = `${MOD_ID}?tab=description`;
-  }
-  const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
-  const NOTIF_ID = `${GAME_ID}-fallbackinstaller`;
-  const MESSAGE = `Fallback installer reached for ${MOD_NAME}`;
+  STAGING_FOLDER = selectors.installPathForGame(state, spec.game.id);
+  modName = path.basename(modName, ".installing");
+  const id = modName.replace(/[^a-zA-Z0-9\s]*( )*/gi, "").slice(0, 20);
+  const NOTIF_ID = `${GAME_ID}-${id}-fallback`;
+  const MESSAGE = "Fallback installer reached for " + modName;
   api.sendNotification({
     id: NOTIF_ID,
     type: "info",
@@ -1150,28 +1982,37 @@ function fallbackInstallerNotify(api, fileName) {
             MESSAGE,
             {
               text:
-                `You've reached the fallback installer for the mod below. This mod is either not intended to be used with ATK, or it is packaged in a way that Vortex can't handle.\n` +
+                `The mod you just installed reached the fallback installer. This means Vortex could not determine where to place these mod files.\n` +
+                `Please check the mod page description and review the files in the mod staging folder to determine if manual file manipulation is required.\n` +
                 `\n` +
-                `${MOD_NAME}.\n` +
+                `If you think that Vortex should be capable to install this mod to a specific folder, please contact the extension developer for support at the link below.\n` +
                 `\n` +
-                `Please manually verify that the mod is installed correctly. You can open the Staging Folder with the button below.\n` +
-                `Check the mod page description with the button below to determine how the mod should be installed.\n` +
+                `Mod Name: ${modName}.\n` +
                 `\n`,
             },
             [
+              { label: "Continue", action: () => dismiss() },
+              {
+                label: "Contact Ext. Developer",
+                action: () => {
+                  util.opn(`${EXTENSION_URL}?tab=posts`).catch(() => null);
+                  dismiss();
+                },
+              },
               //*
               {
-                label: `Open Mod Page`,
+                label: `Open Mod Page + Staging Folder`,
                 action: () => {
+                  util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
                   const mods = util.getSafe(
                     api.store.getState(),
                     ["persistent", "mods", spec.game.id],
                     {},
                   );
                   const modMatch = Object.values(mods).find(
-                    (mod) => mod.installationPath === MOD_NAME,
+                    (mod) => mod.installationPath === modName,
                   );
-                  log("warn", `Found ${modMatch?.id} for ${MOD_NAME}`);
+                  log("warn", `Found ${modMatch?.id} for ${modName}`);
                   let PAGE = ``;
                   if (modMatch) {
                     const MOD_ID = modMatch.attributes.modId;
@@ -1180,18 +2021,10 @@ function fallbackInstallerNotify(api, fileName) {
                     }
                   }
                   const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
-                  util.opn(MOD_PAGE_URL).catch((err) => undefined);
-                  //dismiss();
-                },
-              }, //*/
-              {
-                label: `Open Staging Folder`,
-                action: () => {
-                  util.opn(path.join(STAGING_FOLDER, MOD_NAME)).catch((err) => undefined);
+                  util.opn(MOD_PAGE_URL).catch(() => null);
                   dismiss();
                 },
               }, //*/
-              { label: "Close", action: () => dismiss() },
             ],
           );
         },
@@ -1200,13 +2033,114 @@ function fallbackInstallerNotify(api, fileName) {
   });
 }
 
-// MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
-
-//Notify User to run ATK after deployment
+//Notify user to run the active deploy tool(s) after deployment
 function deployNotify(api) {
+  if (!hasAtk && !hasForger && !hasReforger) return;
+  const hasBoth = hasAtk && (hasForger || hasReforger);
+  const MESSAGE = hasBoth
+    ? `Run ATK and/or Forger to Apply Changes`
+    : hasAtk
+      ? `Run ATK to Repack .forge Files`
+      : `Run Forger to Apply Patches`;
   const NOTIF_ID = `${GAME_ID}-deploy-notification`;
-  const MOD_NAME = ATK_NAME;
-  const MESSAGE = `Run ATK to Repack .forge Files`;
+  const DLC_EXAMPLE_TEXT = hasDlcFolders
+    ? ` or "${DLC_FOLDERS[0]}/Extracted/{FORGE_FILE_NAME}.forge/{DATA_FILE}.data" for a DLC .forge file`
+    : ``;
+  const ATK_TEXT =
+    `For some mods, you must use ${ATK_NAME} to pack mods into the game's .forge data files after installing with Vortex.\n` +
+    `Read your mod's instructions to determine which .forge file(s) to unpack and repack.\n` +
+    `You may need to do some manual folder manipulation in the mod staging folder if the extension could not do it for your mod.\n` +
+    `Right click on the mod in the "Mods" tab to open the mod's staging folder and verify the folder structure is correct.\n` +
+    `The folder structure should look something like this: "Extracted/{FORGE_FILE_NAME}.forge/{DATA_FILE}.data"${DLC_EXAMPLE_TEXT}.\n`;
+  const FORGER_TEXT =
+    `For Forger patch mods, you must use ${FORGER_NAME} to apply patches after installing with Vortex.\n` +
+    `Read your mod's instructions for any additional steps required.\n`;
+  const REFORGER_TEXT = `For Forger patch mods, you must use ${REFORGER_NAME} to apply patches after installing with Vortex.\n`;
+  const ORDER_TEXT = `Run ${ATK_NAME} first to repack mods into the game's .forge data files, then run the Forger tool to apply any Forger patches.\n`;
+  const TOOLS_TEXT = `Use the included tools to launch them (buttons on this notification or in the "Dashboard" tab).\n`;
+  let DETAIL_TEXT = ``;
+  if (hasBoth) DETAIL_TEXT += ORDER_TEXT;
+  if (hasAtk) DETAIL_TEXT += ATK_TEXT;
+  if (hasForger) DETAIL_TEXT += FORGER_TEXT;
+  if (hasReforger) DETAIL_TEXT += REFORGER_TEXT;
+  DETAIL_TEXT += TOOLS_TEXT;
+
+  let deployTools = [];
+  if (hasAtk) deployTools.push({ id: ATK_ID, name: ATK_NAME });
+  if (hasForger) deployTools.push({ id: FORGER_ID, name: FORGER_NAME });
+  if (hasReforger && isReforgerInstalled)
+    deployTools.push({ id: REFORGER_ID, name: REFORGER_NAME });
+
+  const notifActions = deployTools.map((tool) => ({
+    title: `Run ${tool.name}`,
+    action: (dismiss) => {
+      runDeployTool(api, tool.id, tool.name);
+      dismiss();
+    },
+  }));
+  notifActions.push({
+    title: "More",
+    action: (dismiss) => {
+      const dialogButtons = deployTools.map((tool) => ({
+        label: `Run ${tool.name}`,
+        action: () => {
+          runDeployTool(api, tool.id, tool.name);
+          dismiss();
+        },
+      }));
+      dialogButtons.push({ label: "Continue", action: () => dismiss() });
+      dialogButtons.push({
+        label: "Never Show Again",
+        action: () => {
+          api.suppressNotification(NOTIF_ID);
+          dismiss();
+        },
+      });
+      api.showDialog("question", MESSAGE, { text: DETAIL_TEXT }, dialogButtons);
+    },
+  });
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: "warning",
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: notifActions,
+  });
+}
+
+//Launch a deploy tool from Vortex
+function runDeployTool(api, toolId, toolName) {
+  const state = api.store.getState();
+  const tool = util.getSafe(
+    state,
+    ["settings", "gameMode", "discovered", GAME_ID, "tools", toolId],
+    undefined,
+  );
+
+  try {
+    const TOOL_PATH = tool.path;
+    if (TOOL_PATH !== undefined) {
+      return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false }).catch((err) =>
+        api.showErrorNotification(`Failed to run ${toolName}`, err, {
+          allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+        }),
+      );
+    } else {
+      return api.showErrorNotification(
+        `Failed to run ${toolName}`,
+        `Path to ${toolName} executable could not be found. Ensure ${toolName} is installed through Vortex.`,
+      );
+    }
+  } catch (err) {
+    return api.showErrorNotification(`Failed to run ${toolName}`, err, {
+      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+    });
+  }
+}
+
+function setupNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-setup-notify`;
+  const MESSAGE = "Special Setup Instructions";
   api.sendNotification({
     id: NOTIF_ID,
     type: "warning",
@@ -1214,36 +2148,16 @@ function deployNotify(api) {
     allowSuppress: true,
     actions: [
       {
-        title: "Run ATK",
-        action: (dismiss) => {
-          runAtk(api);
-          dismiss();
-        },
-      },
-      {
         title: "More",
         action: (dismiss) => {
           api.showDialog(
             "question",
             MESSAGE,
             {
-              text:
-                `For some mods, you must use ${MOD_NAME} to pack mods into the game's .forge data files after installing with Vortex.\n` +
-                `Use the included tool to launch ${MOD_NAME} (button on notification or in "Dashboard" tab).\n` +
-                `Read your mod's instructions to determine which .forge file(s) to unpack and repack.\n` +
-                `You may need to do some manual folder manipulation in the mod staging folder if the extension could not do it for your mod.\n` +
-                `Right click on the mod in the "Mods" tab to open the mod's staging folder and verify the folder structure is correct.\n` +
-                `The folder structure should look something like this: "Extracted/{FORGE_FILE_NAME}.forge/{DATA_FILE}.data" or "dlc_10/Extracted/{FORGE_FILE_NAME}.forge/{DATA_FILE}.data".\n`,
+              text: `\n` + `TEXT HERE.\n` + `\n` + `TEXT HERE.\n` + `\n`,
             },
             [
-              {
-                label: "Run ATK",
-                action: () => {
-                  runAtk(api);
-                  dismiss();
-                },
-              },
-              { label: "Continue", action: () => dismiss() },
+              { label: "Acknowledge", action: () => dismiss() },
               {
                 label: "Never Show Again",
                 action: () => {
@@ -1259,47 +2173,85 @@ function deployNotify(api) {
   });
 }
 
-function runAtk(api) {
-  const TOOL_ID = ATK_ID;
-  const TOOL_NAME = ATK_NAME;
-  const state = api.store.getState();
-  const tool = util.getSafe(
-    state,
-    ["settings", "gameMode", "discovered", GAME_ID, "tools", TOOL_ID],
-    undefined,
-  );
+// RESOREP FUNCTIONS ///////////////////////////////////////////////////////////
 
+//Write the ResoRep dllsettings.ini file — the Vortex file variants deliberately ship without one
+async function resorepSettingsWrite(api, gameSpec) {
   try {
-    const TOOL_PATH = tool.path;
-    if (TOOL_PATH !== undefined) {
-      return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false }).catch((err) =>
-        api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-          allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
-        }),
-      );
-    } else {
-      return api.showErrorNotification(
-        `Failed to run ${TOOL_NAME}`,
-        `Path to ${TOOL_NAME} executable could not be found. Ensure ${TOOL_NAME} is installed through Vortex.`,
-      );
-    }
+    fs.statSync(path.join(GAME_PATH, RESOREP_INI_FILE));
+    return;
+  } catch {
+    //no ini in the game folder yet, so write one
+  }
+  try {
+    await fsp.writeFile(
+      path.join(GAME_PATH, RESOREP_INI_FILE),
+      pathPattern(api, gameSpec.game, RESOREP_INI_TEXT),
+    );
   } catch (err) {
-    return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+    api.showErrorNotification(`Failed to write ResoRep ${RESOREP_INI_FILE} file`, err);
+  }
+}
+
+//Copy the system d3d11.dll into the game folder as ori_d3d11.dll. The bundled .bat writes the same
+//file into the mod's staging folder instead; the game folder is used here so the copy is live at once,
+//at the cost of the file being unmanaged - purging or removing ResoRep leaves ori_d3d11.dll behind
+async function resorepDllCopy(api, gameSpec, force = false) {
+  let isInstalled = isResoRepInstalled(api, gameSpec);
+  if (!isInstalled && !force) {
+    log("info", "ResoRep not installed. File not copied.");
+    return Promise.resolve();
+  }
+  try {
+    if (force) throw new Error("forced copy");
+    fs.statSync(path.join(GAME_PATH, RESOREP_ORIDLL_FILE));
+    log("info", "ResoRep original dll already exists. No file copied.");
+    return Promise.resolve();
+  } catch {
+    const SOURCE = SYSTEM_DLL_FILE;
+    const TARGET = path.join(GAME_PATH, RESOREP_ORIDLL_FILE);
+    return util.copyFileAtomic(SOURCE, TARGET).catch((err) => {
+      api.showErrorNotification(`Failed to copy ${RESOREP_DLL_FILE} from the system folder`, err);
+      log("error", `Failed to copy ${RESOREP_DLL_FILE} from the system folder`);
+      return Promise.resolve();
     });
   }
 }
 
-//Setup function
+// SETUP AND REGISTRATION //////////////////////////////////////////////////////
+
+async function modFoldersEnsureWritable(gamePath, relPaths) {
+  for (let index = 0; index < relPaths.length; index++) {
+    await vfs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+  }
+}
+
+//Setup function — runs when the game is first discovered
 async function setup(discovery, api, gameSpec) {
+  // SYNCHRONOUS CODE ////////////////////////////////////
   const state = api.getState();
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
-  await vfs.ensureDirWritableAsync(path.join(GAME_PATH, BUILDTABLE_PATH));
-  await vfs.ensureDirWritableAsync(path.join(GAME_PATH, SOUND_PATH));
-  await downloadAnvil(api, gameSpec);
-  return vfs.ensureDirWritableAsync(path.join(GAME_PATH, EXTRACTED_FOLDER));
+  // ASYNC CODE //////////////////////////////////////////
+  if (setupNotification) setupNotify(api);
+  if (hasAtk) {
+    await downloadAnvil(api, gameSpec);
+  }
+  if (hasForger) {
+    await downloadForger(api, gameSpec);
+  }
+  if (hasReforger) {
+    await downloadReforger(api, gameSpec);
+  }
+  if (hasResorep) {
+    await downloadResoRepPrompt(api, gameSpec);
+    await resorepSettingsWrite(api, gameSpec);
+    if (autoCopyResorepDll) {
+      await resorepDllCopy(api, gameSpec);
+    }
+  }
+  return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
 //Let Vortex know about the game
@@ -1308,10 +2260,11 @@ function applyGame(context, gameSpec) {
   const game = {
     ...gameSpec.game,
     queryPath: makeFindGame(context.api, gameSpec),
-    queryModPath: makeGetModPath(context.api, gameSpec),
-    requiresLauncher: makeRequiresLauncher(context.api, gameSpec),
+    executable: getExecutable,
+    queryModPath: getModPath(),
+    requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
-    executable: () => gameSpec.game.executable,
+    getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);
@@ -1337,45 +2290,133 @@ function applyGame(context, gameSpec) {
     );
   });
 
+  //register retired mod types that users may still have mods installed under, so Vortex can
+  //still resolve their target path. They are not in spec.modTypes, so no installer routes to them.
+  LEGACY_MODTYPES.forEach((type, idx) => {
+    context.registerModType(
+      type.id,
+      modTypePriority("low") + idx,
+      (gameId) => {
+        var _a;
+        return (
+          gameId === gameSpec.game.id &&
+          !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+          _a === void 0
+            ? void 0
+            : _a.path)
+        );
+      },
+      (game) => pathPattern(context.api, game, type.targetPath),
+      () => Promise.resolve(false),
+      { name: type.name },
+    );
+  });
+
   //register mod installers
-  context.registerInstaller(ATK_ID, 25, testATK, installATK);
-  context.registerInstaller(SOUND_ID, 27, testSound, installSound);
+  if (hasAtk) {
+    context.registerInstaller(ATK_ID, 25, testATK, installATK);
+  }
+  if (hasForger) {
+    context.registerInstaller(FORGER_ID, 26, testForger, installForger);
+  }
+  if (hasResorep) {
+    context.registerInstaller(RESOREP_ID, 27, testResoRep, installResoRep);
+  }
+  if (hasForger) {
+    context.registerInstaller(FORGERPATCH_ID, 28, testForgerPatch, installForgerPatch);
+  }
+  if (hasPatchTextures) {
+    context.registerInstaller(PATCH_TEXTURES_ID, 29, testPatchTextures, installPatchTextures);
+  }
+  if (hasResorep) {
+    context.registerInstaller(RESOREP_TEXTURES_ID, 30, testResoRepTextures, installResoRepTextures);
+  }
+  //slot 31 is left free for game-unique installers
   context.registerInstaller(
     BUILDTABLE_ID,
-    29,
+    31,
     testIndividualBuildtables,
     installIndividualBuildtables,
   );
-  context.registerInstaller(EXTRACTED_ID, 31, testExtracted, installExtracted);
-  context.registerInstaller(FORGEFOLDER_ID, 33, testForgeFolder, installForgeFolder);
-  context.registerInstaller(DATAFOLDER_ID, 35, testDataFolder, (files, fileName) =>
-    installDataFolder(context.api, files, fileName),
-  );
-  context.registerInstaller(LOOSE_ID, 37, testLoose, (files, fileName) =>
-    installLoose(context.api, files, fileName),
-  );
+  if (hasSound) {
+    context.registerInstaller(SOUND_ID, 32, testSound, installSound);
+  }
+  if (hasFixes) {
+    context.registerInstaller(FIXES_ID, 33, testFixes, installFixes);
+  }
+  if (hasDlcFolders) {
+    context.registerInstaller(DLC_ID, 34, testDlc, installDlc);
+  }
+  if (hasAtk) {
+    context.registerInstaller(EXTRACTED_ID, 35, testExtracted, installExtracted);
+    context.registerInstaller(FORGEFOLDER_ID, 36, testForgeFolder, installForgeFolder);
+    context.registerInstaller(DATAFOLDER_ID, 37, testDataFolder, (files, fileName) =>
+      installDataFolder(context.api, files, fileName),
+    );
+    context.registerInstaller(LOOSE_ID, 38, testLoose, (files, fileName) =>
+      installLoose(context.api, files, fileName),
+    );
+  }
   context.registerInstaller(FORGE_ID, 39, testForge, installForge);
   context.registerInstaller(ROOT_ID, 41, testRoot, installRoot);
-  context.registerInstaller(`${GAME_ID}-fallback`, 43, testFallback, (files, fileName) =>
-    installFallback(context.api, files, fileName),
-  );
+  if (fallbackInstaller) {
+    context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) =>
+      installFallback(context.api, files, destinationPath),
+    );
+  }
 
   //register actions
-  context.registerAction(
-    "mod-icons",
-    300,
-    "open-ext",
-    {},
-    "Open Settings INI",
-    () => {
-      util.opn(SETTINGS_FILE).catch(() => null);
-    },
-    () => {
-      const state = context.api.getState();
-      const gameId = selectors.activeGameId(state);
-      return gameId === GAME_ID;
-    },
-  );
+  if (hasSettingsIni) {
+    context.registerAction(
+      "mod-icons",
+      300,
+      "open-ext",
+      {},
+      "Open Settings INI",
+      () => {
+        util.opn(SETTINGS_FILE).catch(() => null);
+      },
+      () => {
+        const state = context.api.getState();
+        const gameId = selectors.activeGameId(state);
+        return gameId === GAME_ID;
+      },
+    );
+  }
+  if (hasResorep) {
+    context.registerAction(
+      "mod-icons",
+      300,
+      "open-ext",
+      {},
+      `Force Copy System ${RESOREP_DLL_FILE} (ResoRep)`,
+      () => {
+        resorepDllCopy(context.api, spec, true);
+      },
+      () => {
+        const state = context.api.getState();
+        const gameId = selectors.activeGameId(state);
+        return gameId === GAME_ID;
+      },
+    );
+  }
+  if (hasReforger) {
+    context.registerAction(
+      "mod-icons",
+      300,
+      "open-ext",
+      {},
+      `Download ${REFORGER_NAME}`,
+      () => {
+        downloadReforger(context.api, spec, true);
+      },
+      () => {
+        const state = context.api.getState();
+        const gameId = selectors.activeGameId(state);
+        return gameId === GAME_ID;
+      },
+    );
+  }
   context.registerAction(
     "mod-icons",
     300,
@@ -1443,8 +2484,7 @@ function applyGame(context, gameSpec) {
     {},
     "Open Downloads Folder",
     () => {
-      const openPath = DOWNLOAD_FOLDER;
-      util.opn(openPath).catch(() => null);
+      util.opn(DOWNLOAD_FOLDER).catch(() => null);
     },
     () => {
       const state = context.api.getState();
@@ -1452,37 +2492,26 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     },
   );
-
-  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
-    util.opn(CONFIG_PATH).catch(() => null);
-    }, () => {
-      const state = context.api.getState();
-      const gameId = selectors.activeGameId(state);
-      return gameId === GAME_ID;
-  }); //*/
-  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
-    util.opn(SAVE_PATH).catch(() => null);
-    }, () => {
-      const state = context.api.getState();
-      const gameId = selectors.activeGameId(state);
-      return gameId === GAME_ID;
-  }); //*/
 }
 
 //main function
 function main(context) {
   applyGame(context, spec);
   context.once(() => {
-    const api = context.api;
     // put code here that should be run (once) when Vortex starts up
-    context.api.onAsync("did-deploy", async (profileId, deployment) => {
-      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(
-        context.api.getState(),
-        GAME_ID,
-      );
-      if (profileId !== LAST_ACTIVE_PROFILE) return;
-      return deployNotify(context.api);
-    });
+    const api = context.api;
+    if (deployNotification || hasResorep) {
+      api.onAsync("did-deploy", async (profileId) => {
+        const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
+        if (profileId !== LAST_ACTIVE_PROFILE) return;
+        if (hasResorep && autoCopyResorepDll) {
+          await resorepDllCopy(api, spec);
+        }
+        if (deployNotification) {
+          return deployNotify(api);
+        }
+      });
+    }
   });
   return true;
 }

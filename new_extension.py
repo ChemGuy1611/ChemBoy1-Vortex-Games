@@ -83,6 +83,7 @@ from vortex_utils import (
     http_get, http_get_bytes, http_get_json,
     roman_to_arabic, arabic_to_roman, name_lookup_variants,
     lookup_pcgamingwiki, pcgw_get_json, parse_pcgw_data_paths, format_pcgw_path,
+    parse_ue_engine_version,
     get_api_key, run_generate_explained_batch,
     run_generate_notes_batch, eslint_check,
     fetch_epic_app_id, fetch_gog_app_id, fetch_xbox_identity, add_to_discovery_ids,
@@ -487,14 +488,7 @@ def fetch_pcgw_availability(page_title):
         )
         if m:
             result['epic_url'] = f"https://store.epicgames.com/en-US/p/{m.group(1).strip()}"
-        m_eng = re.search(
-            r'\{\{Infobox game/row/engine\|Unreal Engine [45]\|build=(\d+\.\d+(?:\.\d+)?)',
-            wikitext
-        )
-        if m_eng:
-            build = m_eng.group(1)
-            # Normalise to 4-part format (e.g. '5.4.4' → '5.4.4.0')
-            result['engine_version'] = build if build.count('.') >= 3 else build + '.0'
+        result['engine_version'] = parse_ue_engine_version(wikitext)['engine_version']
         result['unity_paths'] = parse_unity_data_paths(wikitext)
     except Exception as e:
         print(f"    PCGamingWiki availability error: {e}")

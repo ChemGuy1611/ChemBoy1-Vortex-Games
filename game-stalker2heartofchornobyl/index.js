@@ -2,8 +2,8 @@
 Name: S.T.A.L.K.E.R. 2: Heart of Chornobyl Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 2.1.1
-Date: 2026-09-15
+Version: 2.1.2
+Date: 2026-09-21
 //////////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -179,7 +179,7 @@ const UE5_PATH = UNREALDATA.modsPath;
 const UE5_ALT_PATH = path.join(EPIC_CODE_NAME, "Content", "Paks");
 const UE5_PAK_PRIORITY = 35;
 const UE5_SORTABLE_ID = `${GAME_ID}-ue5-sortable-modtype`; //this game's own pre-Plan-C sortable pak modtype id - already game-specific, so kept as-is (no rename/migration needed)
-const LEGACY_UE5_SORTABLE_ID = "ue5-sortable-modtype"; //very old shared/buggy modtype id from before per-game ids existed - kept for legacyModsNotify reinstall prompt only
+const LEGACY_UE5_SORTABLE_ID = "ue5-sortable-modtype"; //very old shared/buggy modtype id from before per-game ids existed - kept for migrateLegacyUe5SortableType() to retag
 const UE5_SORTABLE_NAME = "UE5 Sortable Mod";
 
 const enableNewPak = false;
@@ -2659,66 +2659,27 @@ async function modFoldersEnsureWritable(gamePath, relPaths) {
   }
 }
 
-//Notification if Config, Save, and Creations folders are not on the same partition
-function legacyModsNotify(api, legacyMods) {
-  const NOTIF_ID = `${GAME_ID}-legacymodsnotify`;
-  const MESSAGE = "Reinstall Pak Mods to Make Sortable";
-  api.sendNotification({
-    id: NOTIF_ID,
-    type: "warning",
-    message: MESSAGE,
-    allowSuppress: true,
-    actions: [
-      {
-        title: "More",
-        action: (dismiss) => {
-          api.showDialog(
-            "question",
-            MESSAGE,
-            {
-              text:
-                `\n\n` +
-                `Due to a bug in a handful of Unreal Engine Vortex game extensions, your pak mods were assigned a modType ID that was shared among several games.\n` +
-                `This bug can result in the Load Order tab not properly load ordering your pak mods.\n` +
-                `A list of the affected mods is shown below. You must Reinstall these mods to make them sortable.\n` +
-                `If you don't Reinstall thes mods, they will still function, but they will sit at the bottom of the loading order and will not be sortable.\n` +
-                `\n` +
-                `Perform the following steps to Reinstall the affected mods:\n
-                  1. Filter your Mods page by Mod Type "Legacy UE - REINSTALL TO SORT" using the categories at the top.\n
-                  2. Use the "CTRL + A" keyboard shortcut to select all displayed mods.\n
-                  3. Click the "Reinstall" button in the blue ribbon at the bottom of the Mods page.\n
-                  4. You can now sort all of your pak mods in the Load Order tab.\n` +
-                `\n` +
-                `Pak Mods to Reinstall:\n` +
-                `${legacyMods.join("\n")}` +
-                `\n` +
-                `\n`,
-            },
-            [
-              { label: "Acknowledge", action: () => dismiss() },
-              {
-                label: "Never Show Again",
-                action: () => {
-                  api.suppressNotification(NOTIF_ID);
-                  dismiss();
-                },
-              },
-            ],
-          );
-        },
-      },
-    ],
-  });
+//Retag any mod still on the pre-migration bare LEGACY_UE5_SORTABLE_ID onto the real, namespaced
+//UE5_SORTABLE_ID - replaces the old manual "please reinstall" notification with a silent auto-fix
+async function migrateLegacyUe5SortableType(api) {
+  const state = api.getState();
+  const mods = util.getSafe(state, ["persistent", "mods", GAME_ID], {});
+  const legacyIds = Object.keys(mods).filter((id) => mods[id]?.type === LEGACY_UE5_SORTABLE_ID);
+  if (legacyIds.length === 0) return;
+  const batch = legacyIds.map((id) => actions.setModType(GAME_ID, id, UE5_SORTABLE_ID));
+  util.batchDispatch(api.store, batch);
+  log("info", `[${GAME_ID}] migrated ${legacyIds.length} pak mod(s) off the legacy shared modtype`);
+}
+
+const semver = require("semver");
+async function migrateLegacyUe5SortableType212(api, oldVersion) {
+  if (semver.gte(oldVersion, "2.1.2")) return;
+  await migrateLegacyUe5SortableType(api);
 }
 
 //Setup function
 async function setup(discovery, api, gameSpec) {
   const state = api.getState();
-  const mods = util.getSafe(state, ["persistent", "mods", gameSpec.game.id], {});
-  const legacyMods = Object.keys(mods).filter((id) => mods[id]?.type === LEGACY_UE5_SORTABLE_ID);
-  if (legacyMods.length > 0) {
-    legacyModsNotify(api, legacyMods);
-  }
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
@@ -2848,7 +2809,8 @@ function applyGame(context, gameSpec) {
     () => Promise.resolve(false),
     { name: UE5_SORTABLE_NAME, mergeMods: (mod) => loadOrderPrefix(context.api, mod) + mod.id },
   );
-  //Legacy shared/buggy modtype id from before per-game ids existed - kept only to prompt reinstall via legacyModsNotify (see setup())
+  //Legacy shared/buggy modtype id from before per-game ids existed - kept registered only so a
+  //straggler still deploys correctly in the brief window before migrateLegacyUe5SortableType() retags it
   context.registerModType(
     LEGACY_UE5_SORTABLE_ID,
     65,
@@ -3305,6 +3267,7 @@ function applyGame(context, gameSpec) {
 //Main function
 function main(context) {
   applyGame(context, spec);
+  context.registerMigration((old) => migrateLegacyUe5SortableType212(context.api, old));
   if (UNREALDATA.loadOrder === true) {
     //UNREAL - mod load order
     context.registerLoadOrder({
@@ -3465,6 +3428,16 @@ function main(context) {
     api.events.on("did-install-mod", (gameId, archiveId, modId) => {
       retagFomodPakMod(api, gameId, modId).catch((err) =>
         log("warn", `[${GAME_ID}] retagFomodPakMod failed for "${modId}"`, err),
+      );
+    });
+    //Permanent safety net alongside the version-gated registerMigration above - fires every
+    //activation regardless of version tracking, cheap no-op once a mod is already correctly
+    //tagged. gamemode-activated is a plain `emit`, not emitAndAwait, so use events.on (not
+    //onAsync), fire-and-forget with .catch, same as the did-install-mod handler above.
+    api.events.on("gamemode-activated", (gameId) => {
+      if (gameId !== GAME_ID) return;
+      migrateLegacyUe5SortableType(api).catch((err) =>
+        log("warn", `[${GAME_ID}] migrateLegacyUe5SortableType failed on gamemode-activated`, err),
       );
     });
   });

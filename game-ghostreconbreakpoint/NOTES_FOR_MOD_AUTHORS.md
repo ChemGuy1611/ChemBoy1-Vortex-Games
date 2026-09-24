@@ -9,13 +9,14 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | AnvilToolkit (tool) | a `anviltoolkit.exe` file | - |
-| Sound | a file with the `.pck` extension | `sounddata\pc` |
-| Buildtable | a file or folder named `Individual Buildtables` and a file with the `.buildtable` extension | `Extracted\DataPC_patch_01.forge\Extracted\23_-_TEAMMATE_Template.data` |
-| Extracted Forge Content | a `Extracted` folder | the game folder itself (no subfolder) |
-| Forgefolder | - | the game folder itself (no subfolder) |
-| Datafolder | - | the game folder itself (no subfolder) |
-| Loose Data Files | a `.data` file | the game folder itself (no subfolder) |
-| Forge File Mods | a `.forge` file | the game folder itself (no subfolder) |
+| Individual Buildtables | a `Individual Buildtables` folder or a `.buildtable` file | `Extracted\DataPC_patch_01.forge\Extracted\23_-_TEAMMATE_Template.data` |
+| Sound Banks | a `.pck` file | `sounddata\pc` |
+| DLC Folder Mods | a `dlc_10` folder | - |
+| Extracted Forge Content | a `Extracted` folder | - |
+| Unpacked .forge Folder | a `<name>.forge` folder | - |
+| Unpacked .data Folder | a `<name>.data` folder | - |
+| Loose Data Files | a `.data` file | - |
+| Forge File Mods | a `.forge` file | - |
 | Root / Game Folder Mods | a `videos` folder | the game folder itself (no subfolder) |
 | Fallback Installer | anything not matched above | - |
 
@@ -33,49 +34,94 @@ This installer handles AnvilToolkit itself, not mods for it. It exists so users 
 
 - If you bundle AnvilToolkit inside your mod archive, Vortex treats the whole download as AnvilToolkit rather than as your mod. Ship the mod alone and list AnvilToolkit as a requirement.
 
-## Sound
+## Individual Buildtables
 
-Recognised when the archive contains a file with the `.pck` extension.
+Loose buildtable files, kept in their own folder so several mods can supply one each without overwriting one another.
 
-Installs to: `sounddata\pc`
+**Requirements:**
 
-## Buildtable
-
-Recognised when the archive contains a file or folder named `Individual Buildtables` and a file with the `.buildtable` extension.
+- Recognised by a folder named `Individual Buildtables` in the archive.
+- Recognised by any file with the `.buildtable` extension.
 
 Installs to: `Extracted\DataPC_patch_01.forge\Extracted\23_-_TEAMMATE_Template.data`
 
+**Common mistakes:**
+
+- Both are required: the archive needs the named folder AND at least one buildtable file inside it. A bare buildtable file with no folder around it is not recognised.
+
+## Sound Banks
+
+Replacement sound bank files, deployed into the game's sound data folder.
+
+**Requirements:**
+
+- Recognised by any file with the `.pck` extension.
+
+Installs to: `sounddata\pc`
+
+**Common mistakes:**
+
+- Sound banks must keep their original names to replace the right bank.
+
+## DLC Folder Mods
+
+Mods laid out as one or more of the game's DLC folders, copied into the game folder with that layout intact.
+
+**Requirements:**
+
+- Recognised by a folder named `dlc_10` in the archive.
+
+**Common mistakes:**
+
+- Zip the DLC folders themselves, not the folder that contains them - an extra level misplaces every file.
+
 ## Extracted Forge Content
 
-Unpacked forge content for AnvilToolkit to repack.
+Unpacked forge content for AnvilToolkit to repack. The mod is not live until the user runs AnvilToolkit and repacks - deploying it in Vortex only stages the files where the toolkit expects them.
 
 **Requirements:**
 
 - Recognised by a folder named `Extracted` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+**Common mistakes:**
 
-## Forgefolder
+- Content unpacked with an AnvilToolkit older than 1.2.8 cannot be repacked by 1.2.8 or newer, which affects the pre-Unity titles. Repack on the old version first, delete the extracted folder, then unpack again on the new one.
 
-Handled by the `testForgeFolder` installer. Inspect the extension source for the exact archive layout it expects.
+## Unpacked .forge Folder
 
-Installs to: the game folder itself (no subfolder)
+A whole unpacked `.forge` archive, packaged as a folder named after the archive it came from. It is staged under the extracted-content folder for AnvilToolkit to repack.
 
-## Datafolder
+**Requirements:**
 
-Handled by the `testDataFolder` installer. Inspect the extension source for the exact archive layout it expects.
+- Recognised by a folder named `<name>.forge` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+**Common mistakes:**
+
+- Keep the folder named exactly after the `.forge` archive the content came from, extension included. The name is what tells AnvilToolkit which archive to repack into.
+
+## Unpacked .data Folder
+
+An unpacked `.data` file, packaged as a folder named after it. Nothing in the archive says which `.forge` it belongs in, so Vortex stages it under a placeholder folder and asks the user to rename that folder to the right `.forge` name.
+
+**Requirements:**
+
+- Recognised by a folder named `<name>.data` in the archive.
+
+**Common mistakes:**
+
+- Name the `.forge` archive your content belongs in somewhere the user will see it - the mod page, a readme, or the archive name. They have to type it into the rename prompt, and Vortex cannot work it out from the files.
 
 ## Loose Data Files
 
-Individual data files deployed into the game folder.
+Individual data files, staged under a placeholder folder for the user to rename to the `.forge` archive they belong in, the same way an unpacked `.data` folder is.
 
 **Requirements:**
 
 - Recognised by any file with the `.data` extension.
 
-Installs to: the game folder itself (no subfolder)
+**Common mistakes:**
+
+- State which `.forge` archive the files belong in. The user is prompted for that name and has nothing else to go on.
 
 ## Forge File Mods
 
@@ -85,11 +131,10 @@ Replacement `.forge` archives, deployed into the game's data folder.
 
 - Recognised by any file with the `.forge` extension.
 
-Installs to: the game folder itself (no subfolder)
-
 **Common mistakes:**
 
 - Forge files must keep their original names to replace the right archive.
+- A forge file belonging to a DLC is routed to that DLC's folder by the `_NN_dlc` segment in its name, so renaming that part of the file name sends it somewhere else. One archive may carry forge files for several DLCs; each is routed on its own.
 
 ## Root / Game Folder Mods
 

@@ -1,9 +1,10 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.0.0] - 2026-09-21
 
-- AC extension re-vamp (WIP)
-- Fixed: Mod files with no file extension were skipped during installation
+- Migrated to `template-anvilengine` (refreshed installer priorities, ResoRep-ready toggle set).
+- Added: DLC folder support. `.forge` mods for the dlc_10 and dlc_11 DLC now install into the correct DLC folder automatically instead of the base game folder.
+- Fixed: Mod files with no file extension were skipped during installation.
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 
 ## [0.4.4] - 2026-08-11

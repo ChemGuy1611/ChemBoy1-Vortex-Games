@@ -4,6 +4,10 @@
 
 - None
 
+## [1.1.1] - 2026-09-21
+
+- Fixed: A pak mod installed through a FOMOD wizard (checkbox installer) now shows up on the Load Order page and gets a proper sorted deployment position, instead of silently deploying unsorted with no way to reorder it against other pak mods.
+
 ## [1.1.0] - 2026-09-13
 
 - Fixed: Mod files with no file extension were skipped during installation

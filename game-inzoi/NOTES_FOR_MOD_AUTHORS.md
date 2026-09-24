@@ -8,33 +8,42 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Aigenerated | - | `DOCUMENTS\inZOI` |
+| Official Mod Kit Mods | a `mod_manifest.json` manifest | `DOCUMENTS\inZOI\Mods` |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `BlueClient` |
-| Blueprint Mods (LogicMods) | a `LogicMods` folder | `BlueClient\Content\Paks\LogicMods\LogicMods` |
-| Pak Mods | a `.pak` file | `DOCUMENTS\inZOI\Mods` |
+| Blueprint Mods (LogicMods) | a `LogicMods` folder | `BlueClient\Content\Paks\LogicMods` |
+| Creations | - | `CREATIONS_PATH` |
 | Pak Mods | a `.pak` file | `BlueClient\Content\Paks\~mods` |
+| Aigenerated | - | - |
 | UE4SS Itself | a `dwmapi.dll` file | `BlueClient\Binaries\Win64` |
+| Canvas | - | - |
 | Modenabler | a file or folder named `dsound.dll` and a file or folder named `sig.lua` | - |
 | UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `BlueClient\Binaries\Win64\ue4ss\Mods` |
+| My3dprinter | a file or folder named `appearance.dat`, a file or folder named `motion.dat`, a file or folder named `albedo.jpg`, a file with the `.glb` extension, a file with the `.dat` extension and a file with one of these extensions: `.glb` or `.dat` | - |
 | UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | `BlueClient\Binaries\Win64\ue4ss\Mods` |
-| Creations | - | `DOCUMENTS\inZOI` |
-| Canvas | - | `DOCUMENTS\inZOI` |
-| My3dprinter | a file with the `.glb` extension, a file with the `.dat` extension and a file with the `.json` extension | `DOCUMENTS\inZOI\AIGenerated\My3DPrinter` |
-| Myappearances | a file or folder named `appearance.dat` | `DOCUMENTS\inZOI\Creations\MyAppearances` |
-| Animations | a file or folder named `motion.dat` | `DOCUMENTS\inZOI\AIGenerated\MyAIMotions` |
-| Textures | a file or folder named `albedo.jpg` | `DOCUMENTS\inZOI\Creations\MyTextures` |
-| Root / Game Folder Mods | a top-level folder such as `BlueClient` | the game folder itself (no subfolder) |
-| Config File Mods | a config file such as `engine.ini` or `scalability.ini` | `LOCALAPPDATA\BlueClient\Saved\Config\Windows` |
-| Save Game Files | a `.sav` file | `DOCUMENTS\inZOI\SaveGames\USERID_FOLDER` |
+| Animations | - | - |
+| Root / Game Folder Mods | a top-level folder such as `BlueClient`, `Engine` or `Content` | the game folder itself (no subfolder) |
+| Myappearances | - | - |
+| Config File Mods | a config file such as `engine.ini` or `game.ini` | - |
+| Textures | - | - |
+| Save Game Files | a `.sav` file | - |
 | Fallback Installer | anything unrecognised with no pak file | `BlueClient\Binaries\Win64` |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
-## Aigenerated
+## Official Mod Kit Mods
 
-Handled by the `testAiGenerated` installer. Inspect the extension source for the exact archive layout it expects.
+Mods produced with the game's official mod kit, identified by a `mod_manifest.json` manifest.
 
-Installs to: `DOCUMENTS\inZOI`
+**Requirements:**
+
+- Recognised when the archive contains `mod_manifest.json` AND a `.uplugin` file.
+- The install folder name is read from the `modPluginName` field inside `mod_manifest.json`.
+
+Installs to: `DOCUMENTS\inZOI\Mods`
+
+**Common mistakes:**
+
+- A `modPluginName` that does not match what the mod was built as will crash the game. Keep it identical to the mod kit plugin name.
 
 ## Combo Mods (pak + UE4SS script/DLL together)
 
@@ -86,12 +95,18 @@ MyBlueprintMod.zip
 - Everything from the `LogicMods` folder down is copied to the game, keeping its structure.
 - Extra folders above `LogicMods` are fine - the installer finds it at any depth.
 
-Installs to: `BlueClient\Content\Paks\LogicMods\LogicMods`
+Installs to: `BlueClient\Content\Paks\LogicMods`
 
 **Common mistakes:**
 
 - Putting the `.pak` at the top level of the archive with no `LogicMods` folder. Vortex then treats it as an ordinary pak mod, installs it to the wrong place, and the blueprint mod never loads.
 - Renaming the folder (`Logic_Mods`, `logicmod`, `BPMods`) - the name must be exactly `LogicMods`.
+
+## Creations
+
+Handled by the `testDocsFolder` installer. Inspect the extension source for the exact archive layout it expects.
+
+Installs to: `CREATIONS_PATH`
 
 ## Pak Mods
 
@@ -108,33 +123,16 @@ MyPakMod.zip
 - Only the pak files are installed - surrounding folders are discarded.
 - If the archive holds more than one pak, Vortex asks the user which to install - useful for optional variants.
 
-Installs to: `DOCUMENTS\inZOI\Mods`
+Installs to: `BlueClient\Content\Paks\~mods`
 
 **Common mistakes:**
 
 - Shipping several unrelated paks in one archive when you meant them all to install - the user gets a choice dialog and may pick only one.
 - Blueprint mods belong in a `LogicMods` folder instead - see above.
 
-## Pak Mods
+## Aigenerated
 
-Standard content mods: one or more `.pak` files. Vortex installs the mod files themselves, so the folder structure around them in the archive does not matter.
-
-```text
-MyPakMod.zip
-└── MyPakMod.pak
-```
-
-**Requirements:**
-
-- Recognised by any file with the `.pak` extension.
-- Surrounding folders are discarded - only the mod files are installed.
-- If the archive holds several mod files, Vortex asks the user which to install, which is useful for shipping optional variants in one download.
-
-Installs to: `BlueClient\Content\Paks\~mods`
-
-**Common mistakes:**
-
-- Shipping several unrelated paks in one archive when you meant them all to install - the user gets a choice dialog and may pick only one.
+Handled by the `testDocsFolder` installer. Inspect the extension source for the exact archive layout it expects.
 
 ## UE4SS Itself
 
@@ -143,12 +141,17 @@ This installer handles the UE4SS runtime package, not individual mods. Most auth
 **Requirements:**
 
 - Recognised by a file named `dwmapi.dll` at any level of the archive.
+- Also recognised by any of the UE4SS support folders: `MapGenBP`, `MemberVarLayoutTemplates`, `UE4SS_Signatures` or `VTableLayoutTemplates`.
 
 Installs to: `BlueClient\Binaries\Win64`
 
 **Common mistakes:**
 
 - If your script mod archive happens to contain a file named `dwmapi.dll`, it will be treated as a UE4SS install rather than as your mod.
+
+## Canvas
+
+Handled by the `testDocsFolder` installer. Inspect the extension source for the exact archive layout it expects.
 
 ## Modenabler
 
@@ -178,6 +181,10 @@ Installs to: `BlueClient\Binaries\Win64\ue4ss\Mods`
 - Putting `main.lua` directly in the archive root with no `Scripts` folder - the mod is not recognised as a script mod.
 - Naming the wrapper folder something generic like `Mods` - that name is what appears in the load order.
 
+## My3dprinter
+
+Recognised when the archive contains a file or folder named `appearance.dat`, a file or folder named `motion.dat`, a file or folder named `albedo.jpg`, a file with the `.glb` extension, a file with the `.dat` extension and a file with one of these extensions: `.glb` or `.dat`.
+
 ## UE4SS DLL Mods (C++)
 
 Compiled UE4SS mods. Recognised when the archive holds both a `.dll` file and a folder named `dlls`.
@@ -200,41 +207,9 @@ Installs to: `BlueClient\Binaries\Win64\ue4ss\Mods`
 
 - A bare `.dll` with no `dlls` folder is not recognised as a UE4SS DLL mod and will reach the fallback installer.
 
-## Creations
-
-Handled by the `testCreations` installer. Inspect the extension source for the exact archive layout it expects.
-
-Installs to: `DOCUMENTS\inZOI`
-
-## Canvas
-
-Handled by the `testCanvas` installer. Inspect the extension source for the exact archive layout it expects.
-
-Installs to: `DOCUMENTS\inZOI`
-
-## My3dprinter
-
-Recognised when the archive contains a file with the `.glb` extension, a file with the `.dat` extension and a file with the `.json` extension.
-
-Installs to: `DOCUMENTS\inZOI\AIGenerated\My3DPrinter`
-
-## Myappearances
-
-Recognised when the archive contains a file or folder named `appearance.dat`.
-
-Installs to: `DOCUMENTS\inZOI\Creations\MyAppearances`
-
 ## Animations
 
-Recognised when the archive contains a file or folder named `motion.dat`.
-
-Installs to: `DOCUMENTS\inZOI\AIGenerated\MyAIMotions`
-
-## Textures
-
-Recognised when the archive contains a file or folder named `albedo.jpg`.
-
-Installs to: `DOCUMENTS\inZOI\Creations\MyTextures`
+Handled by the `testDocsFile` installer. Inspect the extension source for the exact archive layout it expects.
 
 ## Root / Game Folder Mods
 
@@ -248,7 +223,7 @@ MyRootMod.zip
 
 **Requirements:**
 
-- Recognised by a top-level folder matching any of: `BlueClient`.
+- Recognised by a top-level folder matching any of: `BlueClient`, `Engine`, `Content`, `Binaries`, `Mods`, `Paks` or `Movies`.
 - The matched folder and everything below it is copied into the game folder, preserving structure.
 
 Installs to: the game folder itself (no subfolder)
@@ -257,20 +232,25 @@ Installs to: the game folder itself (no subfolder)
 
 - Zipping the folder that CONTAINS the game folders instead of the game folders themselves adds an extra level and misplaces every file.
 
+## Myappearances
+
+Handled by the `testDocsFile` installer. Inspect the extension source for the exact archive layout it expects.
+
 ## Config File Mods
 
 Config tweaks are deployed to the game's config folder in your user profile, not into the game installation.
 
 **Requirements:**
 
-- Recognised by any of these filenames in the archive: `engine.ini`, `scalability.ini` or `input.ini`.
-- Installed to `LOCALAPPDATA\BlueClient\Saved\Config\Windows`.
-
-Installs to: `LOCALAPPDATA\BlueClient\Saved\Config\Windows`
+- Recognised by any of these filenames in the archive: `engine.ini`, `game.ini`, `gameusersettings.ini`, `input.ini`, `scalability.ini`, `hardware.ini`, `deviceprofiles.ini`, `compat.ini`, `runtimeoptions.ini`, `gameplaytags.ini`, `enhancedinput.ini` or `consolevariables.ini`.
 
 **Common mistakes:**
 
 - Shipping a config file with one of these names inside an unrelated mod - the whole archive is then treated as a config mod.
+
+## Textures
+
+Handled by the `testDocsFile` installer. Inspect the extension source for the exact archive layout it expects.
 
 ## Save Game Files
 
@@ -279,8 +259,6 @@ Save files are deployed to the game's save folder in your user profile.
 **Requirements:**
 
 - Recognised by any file with extension `.sav`.
-
-Installs to: `DOCUMENTS\inZOI\SaveGames\USERID_FOLDER`
 
 **Common mistakes:**
 
@@ -305,6 +283,5 @@ Installs to: `BlueClient\Binaries\Win64`
 
 ## Rules That Apply To Every Mod Type
 
-- Archives that contain a FOMOD installer (a `fomod` folder with `ModuleConfig.xml`) are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.

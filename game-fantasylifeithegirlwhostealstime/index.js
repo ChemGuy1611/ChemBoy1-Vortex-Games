@@ -2,8 +2,8 @@
 Name: FANTASY LIFE i: The Girl Who Steals Time Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-09-06
+Version: 1.0.3
+Date: 2026-09-21
 Notes:
 -
 ////////////////////////////////////////////////*/

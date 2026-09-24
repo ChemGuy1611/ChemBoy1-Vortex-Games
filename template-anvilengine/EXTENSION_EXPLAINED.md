@@ -26,9 +26,9 @@
 | `hasAtk` | `true` | true if game supports AnvilToolkit — also gates the Extracted/.forge/.data/loose workflow and the rename dialog |
 | `hasForger` | `false` | true if game supports Forger Patch Manager (.forger2 files) — typically older AC games |
 | `hasReforger` | `false` | true if game uses ReForger (Xbox package, found through the registry) |
-| `hasDlcFolders` | `false` | true if game has dlc_NN folders — adds the DLC mod type, per-DLC .forge mod types and .forge routing |
+| `hasDlcFolders` | `false` | true if game has dlc_NN folders — adds the DLC mod type and installer. Enumerate DLC_FOLDERS to match; .forge routing follows DLC_FOLDERS directly |
 | `hasResorep` | `false` | true if game uses ResoRep for runtime texture injection |
-| `autoCopyResorepDll` | `false` | true to copy the system d3d11.dll automatically instead of leaving the bundled .bat to the user |
+| `autoCopyResorepDll` | `false` | true to copy the system d3d11.dll into the game folder automatically instead of leaving the bundled .bat to the user. The copy is not a managed mod file, so purging does not remove it |
 | `hasPatchTextures` | `false` | true if game takes loose .dds textures as Forger patches — mutually exclusive with hasResorep |
 | `hasSound` | `false` | true if game takes .pck sound bank replacements |
 | `hasFixes` | `false` | true if game has a community "fixes" DLL package |
@@ -81,6 +81,7 @@ These tools appear in Vortex's Tools panel when this game is active:
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Open PCGamingWiki Page
+- Open SteamDB Page
 - View Changelog
 - Submit Bug Report
 - Open Downloads Folder

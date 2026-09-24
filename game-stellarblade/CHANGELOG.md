@@ -2,8 +2,13 @@
 
 ## Planned Improvements (Not Yet Released)
 
-- Fixed: Mod files with no file extension were skipped during installation
+- None
+
+## [1.0.5] - 2026-09-21
+
+- Fixed: Mod files with no file extension were skipped during installation.
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
+- Fixed: A pak mod installed through a FOMOD wizard (checkbox installer) now shows up on the Load Order page and gets a proper sorted deployment position, instead of silently deploying unsorted with no way to reorder it against other pak mods.
 
 ## [1.0.4] - 2026-09-08
 

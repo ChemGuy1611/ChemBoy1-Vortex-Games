@@ -1,9 +1,11 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.1.2] - 2026-09-21
 
-- Fixed: Mod files with no file extension were skipped during installation
+- Fixed: Mod files with no file extension were skipped during installation.
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
+- Improved: Pak mods still carrying the old shared mod type are now retagged automatically instead of prompting you to reinstall them.
+- Fixed: A pak mod installed through a FOMOD wizard (checkbox installer) now shows up on the Load Order page and gets a proper sorted deployment position, instead of silently deploying unsorted with no way to reorder it against other pak mods.
 
 ## [1.1.1] - 2026-09-06
 

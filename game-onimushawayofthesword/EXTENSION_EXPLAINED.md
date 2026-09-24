@@ -16,6 +16,7 @@
 | Executable | `OnimushaWotS.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (Demo) | `OnimushaWotS_Demo.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/2268](https://www.nexusmods.com/site/mods/2268) |
 | PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Onimusha%3A_Way_of_the_Sword](https://www.pcgamingwiki.com/wiki/Onimusha%3A_Way_of_the_Sword) |
 
 ## Supported Stores

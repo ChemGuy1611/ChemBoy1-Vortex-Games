@@ -4,6 +4,10 @@
 
 - None
 
+## [1.1.1] - 2026-09-21
+
+- Fixed: A pak mod installed through a FOMOD wizard (checkbox installer) now shows up on the Load Order page and gets a proper sorted deployment position, instead of silently deploying unsorted with no way to reorder it against other pak mods. Applies to both the client and dedicated server Load Order pages.
+
 ## [1.1.0] - 2026-09-20
 
 - Added: "Browse Thunderstore" page, which opens the Windrose Thunderstore site inside Vortex. Downloads started from it are installed, enabled, and named automatically, and any mods they depend on can be installed with them.

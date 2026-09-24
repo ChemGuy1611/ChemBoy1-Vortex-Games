@@ -2,8 +2,8 @@
 Name: Fatekeeper Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.1.0
-Date: 2026-09-13
+Version: 1.1.1
+Date: 2026-09-21
 Notes:
 -
 ////////////////////////////////////////////////*/

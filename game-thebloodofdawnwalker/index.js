@@ -206,10 +206,7 @@ const UE5_SORTABLE_NAME = "UE Sortable Pak Mod";
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries (Engine Injector)";
 let BINARIES_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_DEFAULT);
-let SHIPPING_EXE = path.join(
-  BINARIES_PATH,
-  `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEFAULT}-Shipping.exe`,
-);
+let SHIPPING_EXE = path.join(BINARIES_PATH, `${SHIPEXE_PROJECTNAME}.exe`);
 
 const GOG_FILE = path.join("Plugins", "OnlineSubsystemGOG", "GalaxySDK", "Galaxy64.dll");
 const STEAM_FILE = path.join(
@@ -636,10 +633,7 @@ function getExecutable(discoveryPath) {
     if (statCheckSync(discoveryPath, EXEC_XBOX)) {
       GAME_VERSION = "xbox";
       BINARIES_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_XBOX);
-      SHIPPING_EXE = path.join(
-        BINARIES_PATH,
-        `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_XBOX}${SHIPEXE_STRING_XBOX}-Shipping.exe`,
-      );
+      SHIPPING_EXE = path.join(BINARIES_PATH, `${SHIPEXE_PROJECTNAME}.exe`);
       SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
       DLL_PATH = SCRIPTS_PATH;
       CONFIG_PATH = CONFIG_PATH_XBOX;
@@ -651,10 +645,7 @@ function getExecutable(discoveryPath) {
   if (statCheckSync(discoveryPath, EXEC)) {
     GAME_VERSION = "steam";
     BINARIES_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_DEFAULT);
-    SHIPPING_EXE = path.join(
-      BINARIES_PATH,
-      `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEFAULT}-Shipping.exe`,
-    );
+    SHIPPING_EXE = path.join(BINARIES_PATH, `${SHIPEXE_PROJECTNAME}.exe`);
     SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
     DLL_PATH = SCRIPTS_PATH;
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
@@ -666,10 +657,7 @@ function getExecutable(discoveryPath) {
   if (statCheckSync(discoveryPath, EXEC_DEMO)) {
     GAME_VERSION = "demo";
     BINARIES_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_DEFAULT);
-    SHIPPING_EXE = path.join(
-      BINARIES_PATH,
-      `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEMO}-Shipping.exe`,
-    );
+    SHIPPING_EXE = path.join(BINARIES_PATH, `${SHIPEXE_PROJECTNAME}.exe`);
     SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
     DLL_PATH = SCRIPTS_PATH;
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
@@ -681,10 +669,7 @@ function getExecutable(discoveryPath) {
   if (statCheckSync(discoveryPath, EXEC_EPIC)) {
     GAME_VERSION = "epic";
     BINARIES_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_DEFAULT);
-    SHIPPING_EXE = path.join(
-      BINARIES_PATH,
-      `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_EGS}-Shipping.exe`,
-    );
+    SHIPPING_EXE = path.join(BINARIES_PATH, `${SHIPEXE_PROJECTNAME}.exe`);
     SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
     DLL_PATH = SCRIPTS_PATH;
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
@@ -696,10 +681,7 @@ function getExecutable(discoveryPath) {
   if (statCheckSync(discoveryPath, EXEC_GOG)) {
     GAME_VERSION = "gog";
     BINARIES_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_DEFAULT);
-    SHIPPING_EXE = path.join(
-      BINARIES_PATH,
-      `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_GOG}-Shipping.exe`,
-    );
+    SHIPPING_EXE = path.join(BINARIES_PATH, `${SHIPEXE_PROJECTNAME}.exe`);
     SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
     DLL_PATH = SCRIPTS_PATH;
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
@@ -720,7 +702,7 @@ function getShippingExe(gamePath) {
         EPIC_CODE_NAME,
         "Binaries",
         EXEC_FOLDER_XBOX,
-        `${SHIPEXE_PROJECTNAME}${SHIPEXE_STRING_XBOX}-${EXEC_FOLDER_XBOX}-Shipping.exe`,
+        `${SHIPEXE_PROJECTNAME}.exe`,
       );
       return SHIPPING_EXE;
     }
@@ -730,7 +712,7 @@ function getShippingExe(gamePath) {
       EPIC_CODE_NAME,
       "Binaries",
       EXEC_FOLDER_DEFAULT,
-      `${SHIPEXE_PROJECTNAME}${SHIPEXE_STRING_DEFAULT}-${EXEC_FOLDER_DEFAULT}-Shipping.exe`,
+      `${SHIPEXE_PROJECTNAME}.exe`,
     );
     return SHIPPING_EXE;
   }
@@ -739,7 +721,7 @@ function getShippingExe(gamePath) {
       EPIC_CODE_NAME,
       "Binaries",
       EXEC_FOLDER_DEFAULT,
-      `${SHIPEXE_PROJECTNAME}${SHIPEXE_STRING_EGS}-${EXEC_FOLDER_DEFAULT}-Shipping.exe`,
+      `${SHIPEXE_PROJECTNAME}.exe`,
     );
     return SHIPPING_EXE;
   }
@@ -748,7 +730,7 @@ function getShippingExe(gamePath) {
       EPIC_CODE_NAME,
       "Binaries",
       EXEC_FOLDER_DEFAULT,
-      `${SHIPEXE_PROJECTNAME}${SHIPEXE_STRING_GOG}-${EXEC_FOLDER_DEFAULT}-Shipping.exe`,
+      `${SHIPEXE_PROJECTNAME}.exe`,
     );
     return SHIPPING_EXE;
   }
@@ -757,7 +739,7 @@ function getShippingExe(gamePath) {
       EPIC_CODE_NAME,
       "Binaries",
       EXEC_FOLDER_DEFAULT,
-      `${SHIPEXE_PROJECTNAME}${SHIPEXE_STRING_DEMO}-${EXEC_FOLDER_DEFAULT}-Shipping.exe`,
+      `${SHIPEXE_PROJECTNAME}.exe`,
     );
     return SHIPPING_EXE;
   }
@@ -972,9 +954,7 @@ async function installModKitMod(files, fileName) {
   }
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1042,9 +1022,7 @@ async function installUe4ssCombo(files, workingDir) {
   }
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -1115,9 +1093,7 @@ function installLogic(files) {
   const setModTypeInstruction = { type: "setmodtype", value: LOGICMODS_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1179,9 +1155,7 @@ function installUe4ss(files) {
   const setModTypeInstruction = { type: "setmodtype", value: UE4SS_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1228,9 +1202,7 @@ function installSigBypass(files) {
   const setModTypeInstruction = { type: "setmodtype", value: SIGBYPASS_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1309,9 +1281,7 @@ async function installScripts(api, files, fileName) {
   }
   //Filter files and set instructions
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const MOD_ATTRIBUTE = {
     type: "attribute",
     key: LO_ATTRIBUTE_UE4SS,
@@ -1396,9 +1366,7 @@ async function installDll(api, files, fileName) {
   }
   //Filter files and set instructions
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const MOD_ATTRIBUTE = {
     type: "attribute",
     key: LO_ATTRIBUTE_UE4SS,
@@ -1478,9 +1446,7 @@ function installRoot(files) {
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1524,9 +1490,7 @@ function installConfig(api, files) {
   const setModTypeInstruction = { type: "setmodtype", value: CONFIG_ID };
 
   //Filter files and set instructions
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1641,9 +1605,7 @@ async function installSave(api, files) {
   }
 
   //Filter files and set instructions
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -2614,9 +2576,7 @@ function pathSegments(files) {
 function beatsPakInstaller(files) {
   const segsLower = pathSegments(files).map((seg) => seg.toLowerCase());
   if (hasModKit) {
-    const hasModKitExt = files.some(
-      (file) => path.extname(file).toLowerCase() === MODKITMOD_EXT,
-    );
+    const hasModKitExt = files.some((file) => path.extname(file).toLowerCase() === MODKITMOD_EXT);
     const hasModKitFile = segsLower.includes(MODKITMOD_FILE.toLowerCase());
     if (hasModKitExt && hasModKitFile) return true; //Mod Kit (25)
   }

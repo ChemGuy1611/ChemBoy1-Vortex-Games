@@ -10,10 +10,10 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | AnvilToolkit (tool) | a `anviltoolkit.exe` file | - |
 | Extracted Forge Content | a `Extracted` folder | - |
-| XXX Forgefolder | - | - |
-| XXX Datafolder | - | - |
+| Unpacked .forge Folder | a `<name>.forge` folder | - |
+| Unpacked .data Folder | a `<name>.data` folder | - |
 | Loose Data Files | a `.data` file | - |
-| XXX Forgefile | a file with one of these extensions: `.forge` | - |
+| Forge File Mods | a `.forge` file | - |
 | Root / Game Folder Mods | a `videos` folder | the game folder itself (no subfolder) |
 | Fallback Installer | anything not matched above | - |
 
@@ -33,31 +33,63 @@ This installer handles AnvilToolkit itself, not mods for it. It exists so users 
 
 ## Extracted Forge Content
 
-Unpacked forge content for AnvilToolkit to repack.
+Unpacked forge content for AnvilToolkit to repack. The mod is not live until the user runs AnvilToolkit and repacks - deploying it in Vortex only stages the files where the toolkit expects them.
 
 **Requirements:**
 
 - Recognised by a folder named `Extracted` in the archive.
 
-## XXX Forgefolder
+**Common mistakes:**
 
-Handled by the `testForgeFolder` installer. Inspect the extension source for the exact archive layout it expects.
+- Content unpacked with an AnvilToolkit older than 1.2.8 cannot be repacked by 1.2.8 or newer, which affects the pre-Unity titles. Repack on the old version first, delete the extracted folder, then unpack again on the new one.
 
-## XXX Datafolder
+## Unpacked .forge Folder
 
-Handled by the `testDataFolder` installer. Inspect the extension source for the exact archive layout it expects.
+A whole unpacked `.forge` archive, packaged as a folder named after the archive it came from. It is staged under the extracted-content folder for AnvilToolkit to repack.
+
+**Requirements:**
+
+- Recognised by a folder named `<name>.forge` in the archive.
+
+**Common mistakes:**
+
+- Keep the folder named exactly after the `.forge` archive the content came from, extension included. The name is what tells AnvilToolkit which archive to repack into.
+
+## Unpacked .data Folder
+
+An unpacked `.data` file, packaged as a folder named after it. Nothing in the archive says which `.forge` it belongs in, so Vortex stages it under a placeholder folder and asks the user to rename that folder to the right `.forge` name.
+
+**Requirements:**
+
+- Recognised by a folder named `<name>.data` in the archive.
+
+**Common mistakes:**
+
+- Name the `.forge` archive your content belongs in somewhere the user will see it - the mod page, a readme, or the archive name. They have to type it into the rename prompt, and Vortex cannot work it out from the files.
 
 ## Loose Data Files
 
-Individual data files deployed into the game folder.
+Individual data files, staged under a placeholder folder for the user to rename to the `.forge` archive they belong in, the same way an unpacked `.data` folder is.
 
 **Requirements:**
 
 - Recognised by any file with the `.data` extension.
 
-## XXX Forgefile
+**Common mistakes:**
 
-Recognised when the archive contains a file with one of these extensions: `.forge`.
+- State which `.forge` archive the files belong in. The user is prompted for that name and has nothing else to go on.
+
+## Forge File Mods
+
+Replacement `.forge` archives, deployed into the game's data folder.
+
+**Requirements:**
+
+- Recognised by any file with the `.forge` extension.
+
+**Common mistakes:**
+
+- Forge files must keep their original names to replace the right archive.
 
 ## Root / Game Folder Mods
 

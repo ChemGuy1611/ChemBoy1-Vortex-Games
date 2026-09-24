@@ -4,6 +4,10 @@
 
 - Xbox support - waiting on stable (and easy to install) mod injector for Xbox version
 
+## [1.0.1] - 2026-09-23
+
+- Fixed: Corrected file name for Lovely-Injector to winmm.dll (changed by source project).
+
 ## [0.4.0] - 2026-09-20
 
 - Added: "Browse Thunderstore" page, which opens the Balatro Thunderstore site inside Vortex. Downloads started from it are installed, enabled, and named automatically, and any mods they depend on can be installed with them.

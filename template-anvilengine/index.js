@@ -15,6 +15,8 @@ const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const winapi = require("winapi-bindings");
+//Auto-downloader module — only used for the ReForger installer package (hasReforger = true)
+const { download, findModByFile, resolveVersionByModVersion } = require("./downloader");
 
 //////////////////////////////////////////////////////////////////////////////
 // EDIT ZONE — everything down to "END EDIT ZONE" is set per game
@@ -39,9 +41,10 @@ const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 const hasAtk = true; //true if game supports AnvilToolkit — also gates the Extracted/.forge/.data/loose workflow and the rename dialog
 const hasForger = false; //true if game supports Forger Patch Manager (.forger2 files) — typically older AC games
 const hasReforger = false; //true if game uses ReForger (Xbox package, found through the registry)
+const autoDownloadReforger = false; //true to fetch+run the ReForger installer automatically during setup. false: the tool is still registered and the "Download ReForger" button still works, just nothing happens without the user clicking it
 const hasDlcFolders = false; //true if game has dlc_NN folders — adds the DLC mod type and installer. Enumerate DLC_FOLDERS to match; .forge routing follows DLC_FOLDERS directly
 const hasResorep = false; //true if game uses ResoRep for runtime texture injection
-const autoCopyResorepDll = false; //true to copy the system d3d11.dll automatically instead of leaving the bundled .bat to the user
+const autoCopyResorepDll = false; //true to copy the system d3d11.dll into the game folder automatically instead of leaving the bundled .bat to the user. The copy is not a managed mod file, so purging does not remove it
 const hasPatchTextures = false; //true if game takes loose .dds textures as Forger patches — mutually exclusive with hasResorep
 const hasSound = false; //true if game takes .pck sound bank replacements
 const hasFixes = false; //true if game has a community "fixes" DLL package
@@ -105,18 +108,45 @@ const FORGER_PAGE = 42;
 const FORGER_FILE = 716;
 const FORGER_DOMAIN = "assassinscreedodyssey"; //Forger is hosted on AC Odyssey page
 
-//ReForger — used when hasReforger = true. Installed as an Xbox (MSIX) package, so it is found
-//through the registry rather than in the game folder, and it cannot be managed as a Vortex mod.
+//ReForger — used when hasReforger = true. NOT an MSIX/Windows Store app despite the AppModel
+//registry path — ReForgerInstaller.exe does a regular application install, and its own
+//self-registration key embeds the exact installed version in the key NAME (not a value), so a
+//hardcoded key breaks on every ReForger update. REFORGER_PACKAGE_PREFIX/SUFFIX below are the
+//parts of that name that stay stable across versions; getReforgerPath() enumerates the parent
+//key's subkeys and matches on those instead of hardcoding the version segment between them. The
+//installer that sets ReForger up IS a naked GitHub release asset, downloaded through the shared
+//downloader module and deployed as a synthetic mod so it lands in the game folder, then run
+//from there.
 const REFORGER_ID = `${GAME_ID}-reforger`;
 const REFORGER_NAME = "ReForger";
 const REFORGER_EXEC = "ReForger.exe";
 const REFORGER_REG_HIVE = "HKEY_CLASSES_ROOT";
-const REFORGER_REG_KEY =
-  "Local Settings\\Software\\Microsoft\\Windows\\CurrentVersion\\AppModel\\Repository\\Packages\\XXX";
-const REFORGER_REG_VALUE = "PackageRootFolder";
+const REFORGER_REG_PATH =
+  "Local Settings\\Software\\Microsoft\\Windows\\CurrentVersion\\AppModel\\PackageRepository\\Packages";
+const REFORGER_PACKAGE_PREFIX = "ReForger_"; //stable across versions
+const REFORGER_PACKAGE_SUFFIX = "_x64__9r43be93mcwwm"; //stable across versions
+const REFORGER_REG_VALUE = "Path";
 const REFORGER_GITHUB_API = "https://api.github.com/repos/QuilLeeR/ReForger";
-const REFORGER_RELEASES_URL = "https://github.com/QuilLeeR/ReForger/releases";
 const REFORGER_INSTALLER = "ReForgerInstaller.exe";
+const REFORGER_INSTALL_ID = `${GAME_ID}-reforgerinstall`; //synthetic mod type the downloaded installer deploys through
+const REFORGER_INSTALL_NAME = "ReForger Installer";
+//Requirement object for the shared downloader module. directCopyPath is only the legacy-file
+//pointer in directCopyAsMod mode — the real deploy destination is REFORGER_INSTALL_ID's
+//targetPath ({gamePath}) — and it is baked in at module load when GAME_PATH is still "", so
+//setup() reassigns it once the real path is known, same as every other directCopyAsMod adopter.
+const REFORGER_REQUIREMENTS = [
+  {
+    archiveFileName: REFORGER_INSTALLER,
+    userFacingName: REFORGER_NAME,
+    githubUrl: REFORGER_GITHUB_API,
+    directCopyAsMod: true,
+    modType: REFORGER_INSTALL_ID,
+    assemblyFileName: REFORGER_INSTALLER,
+    findMod: (api) => findModByFile(api, REFORGER_INSTALL_ID, REFORGER_INSTALLER),
+    resolveVersion: (api) => resolveVersionByModVersion(api, REFORGER_REQUIREMENTS[0]),
+    directCopyPath: REFORGER_INSTALLER,
+  },
+];
 
 //Forger patch textures — used when hasPatchTextures = true. Claims ".dds", so it cannot be combined with hasResorep.
 const PATCH_TEXTURES_ID = `${GAME_ID}-forgerpatchtextures`;
@@ -251,18 +281,8 @@ const MOD_PATH_DEFAULT = ".";
 const REQ_FILE = EXEC;
 const PARAMETERS_STRING = "";
 const PARAMETERS = [PARAMETERS_STRING];
-const IGNORE_DEPLOY = [
-  path.join("**", "readme.txt"),
-  path.join("**", "README.txt"),
-  path.join("**", "ReadMe.txt"),
-  path.join("**", "Readme.txt"),
-];
-const IGNORE_CONFLICTS = [
-  path.join("**", "readme.txt"),
-  path.join("**", "README.txt"),
-  path.join("**", "ReadMe.txt"),
-  path.join("**", "Readme.txt"),
-];
+const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
 
 //Folders that must exist and be writable before mods are deployed
 let MODTYPE_FOLDERS = [EXTRACTED_FOLDER];
@@ -360,6 +380,17 @@ if (hasAtk) {
   spec.modTypes.push({
     id: ATK_ID,
     name: ATK_NAME,
+    priority: "low",
+    targetPath: "{gamePath}",
+  });
+}
+
+//Append the ReForger installer mod type when enabled — a synthetic type the downloader deploys
+//the fetched ReForgerInstaller.exe through, never installed to by a real installer
+if (hasReforger) {
+  spec.modTypes.push({
+    id: REFORGER_INSTALL_ID,
+    name: REFORGER_INSTALL_NAME,
     priority: "low",
     targetPath: "{gamePath}",
   });
@@ -624,10 +655,41 @@ function makeFindGame(api, gameSpec) {
   }
 }
 
-//Find ReForger, which is installed as an Xbox package rather than into the game folder
+//Find ReForger's own self-registered package key. Its name embeds the installed version
+//between the stable prefix/suffix, so this enumerates the parent key's subkeys and matches on
+//those two parts instead of a hardcoded version — stays correct across every ReForger update.
+function findReforgerPackageKey() {
+  let found;
+  try {
+    winapi.WithRegOpen(REFORGER_REG_HIVE, REFORGER_REG_PATH, (hkey) => {
+      const match = winapi
+        .RegEnumKeys(hkey)
+        .find(
+          (entry) =>
+            entry.key.startsWith(REFORGER_PACKAGE_PREFIX) &&
+            entry.key.endsWith(REFORGER_PACKAGE_SUFFIX),
+        );
+      found = match?.key;
+    });
+  } catch (err) {
+    log("warn", `Could not enumerate the ${REFORGER_NAME} package registry key: ${err.message}`);
+  }
+  return found;
+}
+
+//Find ReForger, which installs its own registry self-registration rather than into the game folder
 function getReforgerPath() {
   try {
-    const reg = winapi.RegGetValue(REFORGER_REG_HIVE, REFORGER_REG_KEY, REFORGER_REG_VALUE);
+    const packageKey = findReforgerPackageKey();
+    if (!packageKey) {
+      log("warn", `${REFORGER_NAME} path not found`);
+      return undefined;
+    }
+    const reg = winapi.RegGetValue(
+      REFORGER_REG_HIVE,
+      `${REFORGER_REG_PATH}\\${packageKey}`,
+      REFORGER_REG_VALUE,
+    );
     if (!reg) {
       log("warn", `${REFORGER_NAME} path not found`);
       return undefined;
@@ -954,86 +1016,42 @@ async function downloadResoRep(api, gameSpec) {
   }
 }
 
-//Check if ReForger is installed. It registers an Xbox package rather than dropping files in the
-//game folder, so the registry lookup is the only reliable test.
 function isReforgerInstalled() {
   return getReforgerPath() !== undefined;
 }
 
-//Download and run the ReForger installer from GitHub.
-//ReForger ships as an MSIX package behind an installer executable, so it cannot be managed as a
-//Vortex mod — there is nothing to stage or deploy. The installer is fetched into the downloads
-//folder with allowInstall disabled and then launched; the registry check above is what tells us
-//it worked. Only called when hasReforger = true.
+//Download the ReForger installer from GitHub, deploy it, and run it ONLY when a new version
+//actually landed. download() always runs below — a non-forced call is safe either way (repo-wide
+//downloader.js rule: it only raises an "update available" notification, it never overwrites
+//anything on its own) — but running ReForgerInstaller.exe pops its own window, so that only
+//happens when the deployed version actually changed (a first-ever install counts). Only called
+//when hasReforger = true.
 async function downloadReforger(api, gameSpec, force = false) {
-  if (!force && isReforgerInstalled()) {
-    log("info", `${REFORGER_NAME} already installed. Installer not downloaded.`);
-    return Promise.resolve();
+  REFORGER_REQUIREMENTS[0].directCopyPath = path.join(GAME_PATH, REFORGER_INSTALLER);
+  const before = await REFORGER_REQUIREMENTS[0].findMod(api);
+  await download(api, REFORGER_REQUIREMENTS, force);
+  const after = await REFORGER_REQUIREMENTS[0].findMod(api);
+  if (before !== undefined && before.attributes?.version === after?.attributes?.version) {
+    return; //nothing new landed — no update to run
   }
-  const state = api.getState();
-  DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
-  const NOTIF_ID = `${REFORGER_ID}-installing`;
-  api.sendNotification({
-    id: NOTIF_ID,
-    message: `Downloading ${REFORGER_NAME}`,
-    type: "activity",
-    noDismiss: true,
-    allowSuppress: false,
-  });
+  await deploy(api); //the installer must be on disk in the game folder before it can be run
+  const INSTALLER_PATH = path.join(GAME_PATH, REFORGER_INSTALLER);
   try {
-    const response = await fetch(`${REFORGER_GITHUB_API}/releases/latest`);
-    if (!response.ok) {
-      throw new Error(`Request failed with status code ${response.status}`);
-    }
-    const release = await response.json();
-    const asset = (release.assets || []).find(
-      (file) => path.basename(file.name).toLowerCase() === REFORGER_INSTALLER.toLowerCase(),
-    );
-    if (asset === undefined) {
-      throw new util.ProcessCanceled(
-        `No ${REFORGER_INSTALLER} found in ${REFORGER_NAME} release ${release.tag_name}. ` +
-          `That release ships: ${(release.assets || []).map((file) => file.name).join(", ")}`,
-      );
-    }
-    await new Promise((resolve, reject) => {
-      api.events.emit(
-        "start-download",
-        [asset.browser_download_url],
-        {},
-        undefined,
-        async (err, dlId) => {
-          if (err !== null && err.name !== "AlreadyDownloaded") {
-            return reject(err);
-          }
-          try {
-            const RUN_PATH = path.join(DOWNLOAD_FOLDER, REFORGER_INSTALLER);
-            await fsp.stat(RUN_PATH);
-            await api.runExecutable(RUN_PATH, [], { suggestDeploy: false });
-            log("info", `${REFORGER_NAME} installer started from the downloads folder`);
-          } catch (runErr) {
-            log("error", `Could not run the ${REFORGER_NAME} installer: ${runErr}`);
-            api.showErrorNotification(
-              `Could not run the ${REFORGER_NAME} installer. Run ${REFORGER_INSTALLER} from your downloads folder manually.`,
-              runErr,
-              { allowReport: false },
-            );
-            util.opn(DOWNLOAD_FOLDER).catch(() => null);
-          }
-          return resolve();
-        },
-        "never",
-        { allowInstall: false },
-      );
-    });
-  } catch (err) {
-    api.showErrorNotification(`Failed to download ${REFORGER_NAME}`, err, {
-      allowReport: !(err instanceof util.ProcessCanceled),
-    });
-    util.opn(REFORGER_RELEASES_URL).catch(() => null);
-  } finally {
-    api.dismissNotification(NOTIF_ID);
+    await fsp.stat(INSTALLER_PATH);
+  } catch {
+    return; //nothing landed — download() already notified the user why
   }
-  return Promise.resolve();
+  try {
+    await api.runExecutable(INSTALLER_PATH, [], { suggestDeploy: false });
+    log("info", `${REFORGER_NAME} installer started from the game folder`);
+  } catch (err) {
+    log("error", `Could not run the ${REFORGER_NAME} installer: ${err}`);
+    api.showErrorNotification(
+      `Could not run the ${REFORGER_NAME} installer. Run ${REFORGER_INSTALLER} from the game folder manually.`,
+      err,
+      { allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1 },
+    );
+  }
 }
 
 // MOD INSTALLER FUNCTIONS /////////////////////////////////////////////////////
@@ -1068,9 +1086,7 @@ function installATK(files) {
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ATK_ID };
 
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1112,9 +1128,7 @@ function installExtracted(files) {
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: EXTRACTED_ID };
 
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1157,9 +1171,7 @@ function installForgeFolder(files) {
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: FORGEFOLDER_ID };
 
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1202,9 +1214,7 @@ function installDataFolder(api, files, fileName) {
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: DATAFOLDER_ID };
 
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1247,9 +1257,7 @@ function installLoose(api, files, fileName) {
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: LOOSE_ID };
 
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1293,9 +1301,7 @@ function installForge(files) {
 
   const setModTypeInstruction = { type: "setmodtype", value: FORGE_ID };
 
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   //A DLC .forge file carries the DLC number as a "_NN_dlc" segment, and that names the folder
   //it belongs in. First match wins; a name matching no DLC number stays at the root. Routing is
   //per file, so one archive can carry .forge files for several DLCs.
@@ -1342,9 +1348,7 @@ function installDlc(files) {
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: DLC_ID };
 
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1386,9 +1390,7 @@ function installRoot(files) {
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
 
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1467,9 +1469,7 @@ function installForger(files) {
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: FORGER_ID };
 
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1511,9 +1511,7 @@ function installForgerPatch(files) {
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: FORGERPATCH_ID };
 
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1594,9 +1592,7 @@ function installSound(files) {
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: SOUND_ID };
 
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1638,9 +1634,7 @@ function installFixes(files) {
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: FIXES_ID };
 
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1682,9 +1676,7 @@ function installResoRep(files) {
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: RESOREP_ID };
 
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1730,9 +1722,7 @@ function installResoRepTextures(files) {
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: RESOREP_TEXTURES_ID };
 
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -2018,12 +2008,15 @@ function deployNotify(api) {
       ? `Run ATK to Repack .forge Files`
       : `Run Forger to Apply Patches`;
   const NOTIF_ID = `${GAME_ID}-deploy-notification`;
+  const DLC_EXAMPLE_TEXT = hasDlcFolders
+    ? ` or "${DLC_FOLDERS[0]}/Extracted/{FORGE_FILE_NAME}.forge/{DATA_FILE}.data" for a DLC .forge file`
+    : ``;
   const ATK_TEXT =
     `For some mods, you must use ${ATK_NAME} to pack mods into the game's .forge data files after installing with Vortex.\n` +
     `Read your mod's instructions to determine which .forge file(s) to unpack and repack.\n` +
     `You may need to do some manual folder manipulation in the mod staging folder if the extension could not do it for your mod.\n` +
     `Right click on the mod in the "Mods" tab to open the mod's staging folder and verify the folder structure is correct.\n` +
-    `The folder structure should look something like this: "Extracted/{FORGE_FILE_NAME}.forge/{DATA_FILE}.data".\n`;
+    `The folder structure should look something like this: "Extracted/{FORGE_FILE_NAME}.forge/{DATA_FILE}.data"${DLC_EXAMPLE_TEXT}.\n`;
   const FORGER_TEXT =
     `For Forger patch mods, you must use ${FORGER_NAME} to apply patches after installing with Vortex.\n` +
     `Read your mod's instructions for any additional steps required.\n`;
@@ -2037,10 +2030,11 @@ function deployNotify(api) {
   if (hasReforger) DETAIL_TEXT += REFORGER_TEXT;
   DETAIL_TEXT += TOOLS_TEXT;
 
-  const deployTools = [];
+  let deployTools = [];
   if (hasAtk) deployTools.push({ id: ATK_ID, name: ATK_NAME });
   if (hasForger) deployTools.push({ id: FORGER_ID, name: FORGER_NAME });
-  if (hasReforger) deployTools.push({ id: REFORGER_ID, name: REFORGER_NAME });
+  if (hasReforger && isReforgerInstalled)
+    deployTools.push({ id: REFORGER_ID, name: REFORGER_NAME });
 
   const notifActions = deployTools.map((tool) => ({
     title: `Run ${tool.name}`,
@@ -2164,7 +2158,9 @@ async function resorepSettingsWrite(api, gameSpec) {
   }
 }
 
-//Copy the system d3d11.dll into the staging folder as ori_d3d11.dll, which is what the bundled .bat does
+//Copy the system d3d11.dll into the game folder as ori_d3d11.dll. The bundled .bat writes the same
+//file into the mod's staging folder instead; the game folder is used here so the copy is live at once,
+//at the cost of the file being unmanaged - purging or removing ResoRep leaves ori_d3d11.dll behind
 async function resorepDllCopy(api, gameSpec, force = false) {
   let isInstalled = isResoRepInstalled(api, gameSpec);
   if (!isInstalled && !force) {
@@ -2210,7 +2206,7 @@ async function setup(discovery, api, gameSpec) {
   if (hasForger) {
     await downloadForger(api, gameSpec);
   }
-  if (hasReforger) {
+  if (hasReforger && autoDownloadReforger) {
     await downloadReforger(api, gameSpec);
   }
   if (hasResorep) {

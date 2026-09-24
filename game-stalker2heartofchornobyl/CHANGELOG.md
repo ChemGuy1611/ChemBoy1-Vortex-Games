@@ -1,8 +1,8 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [2.1.2] - 2026-09-21
 
-- None
+- Improved: Pak mods still carrying the old shared mod type are now retagged automatically instead of prompting you to reinstall them.
 
 ## [2.1.1] - 2026-09-15
 

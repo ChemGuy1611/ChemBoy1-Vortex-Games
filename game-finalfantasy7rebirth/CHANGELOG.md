@@ -1,6 +1,10 @@
 # Changelog
 
-## [0.6.0] - 2026-09-20
+## [1.0.1] - 2026-09-21
+
+- Improved: Pak mods still carrying the old shared mod type are now retagged automatically instead of prompting you to reinstall them.
+
+## [1.0.0] - 2026-09-20
 
 - Migrated to file-based load order (FBLO); added lock button, multi-select, and a right-click context menu to the Paks load order page.
 - Added a UE4SS Load Order page and a LogicMods Load Order page for Blueprint pak mods.

@@ -2,8 +2,8 @@
 audit_parity.py
 
 Mechanical layer for the template-parity audit: UE4-5 load-order parity plus Unity
-BepInEx/hybrid template parity. Regenerates the parity-related flag lists via
-categorize_games.py, then reports on games not yet at parity and a couple of
+BepInEx/hybrid, Anvil and Far Cry template parity. Regenerates the parity-related flag
+lists via categorize_games.py, then reports on games not yet at parity and a couple of
 invariants a stale or partial port can silently break.
 
 UE4-5: games-ue4-5-parity.txt marks games carrying the full UE4SS+LogicMods
@@ -21,6 +21,13 @@ game's own unique code is expected, same as UE4-5 parity is "matches template sh
 not byte-identical. For every game not at parity, this script prints its missing
 function/toggle counts - the same measurement the unity-loader-downloader-migration
 plan tracked by hand, wave over wave.
+
+Anvil / Far Cry: games-anvil-parity.txt and games-farcry-parity.txt mark games matching
+template-anvilengine and template-farcry the same way, with no toggle exemptions -
+every boolean in those two templates gates an optional subsystem, so a missing one is
+always a pending port rather than a deliberate variant. Both families started at zero:
+no Anvil extension carried a single boolean feature toggle before the template gained
+its EDIT ZONE, and the Far Cry games carry one of the template's five.
 
 Usage:
     python audit_parity.py              # regenerate lists + print full report
@@ -42,7 +49,9 @@ import subprocess
 
 from vortex_utils import (
     REPO_ROOT, LISTS_DIR, read_index_js, read_id_list,
-    unity_template_diff, UNITY_PARITY_KNOWN_EXCEPTIONS,
+    template_shape_diff,
+    UNITY_PARITY_KNOWN_EXCEPTIONS, UNITY_PARITY_TOGGLE_EXCEPTIONS,
+    ANVIL_PARITY_KNOWN_EXCEPTIONS, FARCRY_PARITY_KNOWN_EXCEPTIONS,
 )
 
 # UE4-5 games carved out of parity by design, never expected to reach it - not a
@@ -58,6 +67,8 @@ LOGICMODS_TOGGLE_RE = re.compile(r'^\s*(?:const\s+)?logicModsLoadOrder\s*=\s*(tr
 
 UNITY_BEPINEX_TEMPLATE = "template-unitybepinex"
 UNITY_HYBRID_TEMPLATE = "template-unitymelonloaderbepinex-hybrid"
+ANVIL_TEMPLATE = "template-anvilengine"
+FARCRY_TEMPLATE = "template-farcry"
 
 
 def _regenerate_lists():
@@ -105,23 +116,30 @@ def audit_ue4_5():
     }
 
 
-def _unity_family_report(list_file, parity_file, template_folder):
+def _shape_family_report(list_file, parity_file, template_folder,
+                         known_exceptions=None, toggle_exceptions=frozenset()):
+    """Report one engine family against its template: every game in list_file, marked
+    parity / excepted / pending, with per-game missing and extra counts for the pending
+    ones. Same measurement for every family - only the template and the carve-out map
+    change."""
+    known_exceptions = known_exceptions or {}
     all_games = sorted(_list(list_file))
     parity_games = set(_list(parity_file))
     games = []
     for game_id in all_games:
         folder = f"game-{game_id}"
-        if folder in UNITY_PARITY_KNOWN_EXCEPTIONS:
+        if folder in known_exceptions:
             games.append({
                 "game": game_id, "status": "excepted",
-                "reason": UNITY_PARITY_KNOWN_EXCEPTIONS[folder],
+                "reason": known_exceptions[folder],
             })
             continue
         if game_id in parity_games:
             games.append({"game": game_id, "status": "parity"})
             continue
         src = read_index_js(os.path.join(REPO_ROOT, folder))
-        missing_f, extra_f, missing_t, extra_t = unity_template_diff(src, template_folder)
+        missing_f, extra_f, missing_t, extra_t = template_shape_diff(
+            src, template_folder, toggle_exceptions)
         games.append({
             "game": game_id, "status": "pending",
             "missing_functions": missing_f, "extra_functions": extra_f,
@@ -137,11 +155,26 @@ def _unity_family_report(list_file, parity_file, template_folder):
 
 def audit_unity():
     return {
-        "bepinex": _unity_family_report(
-            "games-unity-bepinex.txt", "games-unity-bepinex-parity.txt", UNITY_BEPINEX_TEMPLATE),
-        "hybrid": _unity_family_report(
-            "games-unity-melonloader-bepinex.txt", "games-unity-hybrid-parity.txt", UNITY_HYBRID_TEMPLATE),
+        "bepinex": _shape_family_report(
+            "games-unity-bepinex.txt", "games-unity-bepinex-parity.txt", UNITY_BEPINEX_TEMPLATE,
+            UNITY_PARITY_KNOWN_EXCEPTIONS, UNITY_PARITY_TOGGLE_EXCEPTIONS),
+        "hybrid": _shape_family_report(
+            "games-unity-melonloader-bepinex.txt", "games-unity-hybrid-parity.txt",
+            UNITY_HYBRID_TEMPLATE,
+            UNITY_PARITY_KNOWN_EXCEPTIONS, UNITY_PARITY_TOGGLE_EXCEPTIONS),
     }
+
+
+def audit_anvil():
+    return _shape_family_report(
+        "games-anvil.txt", "games-anvil-parity.txt", ANVIL_TEMPLATE,
+        ANVIL_PARITY_KNOWN_EXCEPTIONS)
+
+
+def audit_farcry():
+    return _shape_family_report(
+        "games-farcrygame.txt", "games-farcry-parity.txt", FARCRY_TEMPLATE,
+        FARCRY_PARITY_KNOWN_EXCEPTIONS)
 
 
 def _print_ue4_5_report(report):
@@ -160,7 +193,7 @@ def _print_ue4_5_report(report):
         print("  Toggle-pairing invariant OK across all UE4-5 games.")
 
 
-def _print_unity_family(label, report):
+def _print_shape_family(label, report):
     print(f"{label}: {report['at_parity']}/{report['total']} at {report['template']} parity.")
     for g in report["games"]:
         if g["status"] == "parity":
@@ -192,15 +225,22 @@ def main():
 
     ue4_5 = audit_ue4_5()
     unity = audit_unity()
+    anvil = audit_anvil()
+    farcry = audit_farcry()
 
     if args.json:
-        print(json.dumps({"ue4_5": ue4_5, "unity": unity}, indent=2))
+        print(json.dumps(
+            {"ue4_5": ue4_5, "unity": unity, "anvil": anvil, "farcry": farcry}, indent=2))
     else:
         _print_ue4_5_report(ue4_5)
         print()
-        _print_unity_family("Unity+BepInEx", unity["bepinex"])
+        _print_shape_family("Unity+BepInEx", unity["bepinex"])
         print()
-        _print_unity_family("Unity+MelonLoader/BepInEx hybrid", unity["hybrid"])
+        _print_shape_family("Unity+MelonLoader/BepInEx hybrid", unity["hybrid"])
+        print()
+        _print_shape_family("Anvil", anvil)
+        print()
+        _print_shape_family("Far Cry (Dunia)", farcry)
 
     sys.exit(1 if ue4_5["toggle_pairing_violations"] else 0)
 
