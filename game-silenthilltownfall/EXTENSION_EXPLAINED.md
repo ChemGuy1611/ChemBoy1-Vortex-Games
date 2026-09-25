@@ -1,46 +1,45 @@
-# RuneScape: Dragonwilds — Vortex Extension Explained
+# SILENT HILL: Townfall — Vortex Extension Explained
 
 ## Overview
 
 | Property | Value |
 | --- | --- |
-| Name | RuneScape: Dragonwilds Vortex Extension |
-| Engine / Structure | UE5 (Xbox-Integrated) |
+| Name | SILENT HILL: Townfall Vortex Extension |
+| Engine / Structure | Unreal Engine 4-5 Game |
 | Author | ChemBoy1 |
 
 ## Key Identifiers
 
 | Property | Value |
 | --- | --- |
-| Game ID | `runescapedragonwilds` |
-| Executable | `RSDragonwilds.exe` |
+| Game ID | `silenthilltownfall` |
+| Executable | `Townfall.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
-| Executable (GOG) | `RSDragonwilds.exe` |
-| Executable (Demo) | `RSDragonwilds.exe` |
-| Extension Page | [https://www.nexusmods.com/site/mods/1273](https://www.nexusmods.com/site/mods/1273) |
-| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/RuneScape%3A_Dragonwilds](https://www.pcgamingwiki.com/wiki/RuneScape%3A_Dragonwilds) |
+| Executable (GOG) | `Townfall.exe` |
+| Executable (Demo) | `Townfall.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/2364](https://www.nexusmods.com/site/mods/2364) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Silent_Hill%3A_Townfall](https://www.pcgamingwiki.com/wiki/Silent_Hill%3A_Townfall) |
 
 ## Supported Stores
 
-- **Steam** — `1374490`
-- **Epic Games Store** — `9d918774f1db4b26b23a93a78847f4eb`
-- **Xbox / Microsoft Store** — `JagexLimited.Dominion`
+- **Steam** — `1636440`
+- **Epic Games Store** — `d0a72ab8e8c84252be486a820b684d2d`
 
 ## Feature Flags
 
 | Flag | Value | Description |
 | --- | --- | --- |
-| `hasXbox` | `true` | toggle for Xbox version logic. |
+| `hasXbox` | `false` | toggle for Xbox version logic. |
 | `multiExe` | `false` | toggle for multiple executables (Epic/GOG/Demo don't match Steam) |
 | `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
 | `hasModKit` | `false` | toggle for UE ModKit mod support |
 | `hasServer` | `false` | toggle for server pak mod logic |
 | `preferHardlinks` | `true` | set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users |
-| `autoDownloadUe4ss` | `true` | toggle for auto downloading UE4SS (only applies when ue4ssLoadOrder is enabled) |
+| `autoDownloadUe4ss` | `false` | toggle for auto downloading UE4SS (only applies when ue4ssLoadOrder is enabled) |
 | `writeEngineVersion` | `false` | toggle to write ENGINE_VERSION into UE4SS-settings.ini (EngineVersionOverride) on deploy, when UE4SS is installed |
 | `SIGBYPASS_REQUIRED` | `false` | set true if there are .sig files in the Paks folder |
 | `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
-| `hasUserIdFolder` | `true` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
+| `hasUserIdFolder` | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
 | `debug` | `false` | toggle for debug mode |
 | `PAKMOD_LOADORDER` | `true` | set to false if you don't want loadOrder. If must be in "Paks" root, disable loadOrder. |
 | `FBLO` | `true` | set to false to use legacy load order page |
@@ -59,21 +58,17 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| UE4SS Script-LogicMod Combo | `runescapedragonwilds-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `runescapedragonwilds-logicmods` | high | `{gamePath}/RSDragonwilds/Content/Paks/LogicMods` |
-| Paks (no "~mods") | `runescapedragonwilds-pak` | high | `{gamePath}/RSDragonwilds/Content/Paks` |
-| Root Folder | `runescapedragonwilds-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `runescapedragonwilds-ue5-sortable-modtype` | 25 | `?` |
-| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
-| UE4SS Script Mod | `runescapedragonwilds-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `runescapedragonwilds-ue4ssdll` | 52 | `?` |
-| RuneSchema Loader | `runescapedragonwilds-runeschemaloader` | 53 | `?` |
-| RuneSchema Mod | `runescapedragonwilds-runeschema` | 54 | `?` |
-| Binaries (Engine Injector) | `runescapedragonwilds-binaries` | 54 | `?` |
-| UE4SS | `runescapedragonwilds-ue4ss` | 56 | `?` |
-| Config (Local AppData) | `runescapedragonwilds-config` | 62 | `?` |
-| Saves (Local AppData) | `runescapedragonwilds-save` | 64 | `?` |
-| Save Characters | `runescapedragonwilds-savecharacters` | 66 | `?` |
+| UE4SS Script-LogicMod Combo | `silenthilltownfall-ue4sscombo` | high | `{gamePath}` |
+| UE4SS LogicMods (Blueprint) | `silenthilltownfall-logicmods` | high | `{gamePath}/Townfall/Content/Paks` |
+| Paks (no "~mods") | `silenthilltownfall-pakalt` | high | `{gamePath}/Townfall/Content/Paks` |
+| Root Folder | `silenthilltownfall-root` | high | `{gamePath}` |
+| UE Sortable Pak Mod | `silenthilltownfall-uesortablepak` | 25 | `?` |
+| UE4SS Script Mod | `silenthilltownfall-scripts` | 50 | `?` |
+| UE4SS DLL Mod | `silenthilltownfall-ue4ssdll` | 52 | `?` |
+| Binaries (Engine Injector) | `silenthilltownfall-binaries` | 54 | `?` |
+| UE4SS | `silenthilltownfall-ue4ss` | 56 | `?` |
+| Config (Local AppData) | `silenthilltownfall-config` | 62 | `?` |
+| Saves (Local AppData) | `silenthilltownfall-save` | 64 | `?` |
 
 ## Mod Installers
 
@@ -81,18 +76,16 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `runescapedragonwilds-ue4sscombo` | 25 |
-| `runescapedragonwilds-logicmods` | 26 |
-| `runescapedragonwilds-runeschemaloader` | 27 |
-| `runescapedragonwilds-runeschema` | 28 |
-| `runescapedragonwilds-ue5-sortable-modtype` | 29 |
-| `runescapedragonwilds-ue4ss` | 31 |
-| `runescapedragonwilds-scripts` | 35 |
-| `runescapedragonwilds-ue4ssdll` | 37 |
-| `runescapedragonwilds-root` | 39 |
-| `runescapedragonwilds-config` | 41 |
-| `runescapedragonwilds-save` | 43 |
-| `runescapedragonwilds-binaries` | 49 |
+| `silenthilltownfall-ue4sscombo` | 26 |
+| `silenthilltownfall-logicmods` | 27 |
+| `silenthilltownfall-uesortablepak` | 29 |
+| `silenthilltownfall-ue4ss` | 31 |
+| `silenthilltownfall-scripts` | 35 |
+| `silenthilltownfall-ue4ssdll` | 37 |
+| `silenthilltownfall-root` | 39 |
+| `silenthilltownfall-config` | 41 |
+| `silenthilltownfall-save` | 43 |
+| `silenthilltownfall-binaries` | 49 |
 
 ## Toolbar Actions
 
@@ -104,7 +97,6 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open LogicMods Folder
 - Open Config Folder
 - Open Saves Folder
-- Open Save Characters Folder
 - Download UE4SS
 - Open UE4SS Settings INI
 - Open UE4SS mods.txt
@@ -128,6 +120,5 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
-- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.

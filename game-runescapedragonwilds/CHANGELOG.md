@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.2.0] - 2026-09-25
+
+- Updated: RuneSchema support for new RSDW Modding Community framework and mods
+
 ## [1.1.1] - 2026-09-21
 
 - Improved: Pak mods still carrying the old shared mod type are now retagged automatically instead of prompting you to reinstall them.

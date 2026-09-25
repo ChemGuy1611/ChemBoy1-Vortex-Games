@@ -1,9 +1,9 @@
 /*////////////////////////////////////////////////
-Name: RuneScape: Dragonwilds Vortex Extension
-Structure: UE5 (Xbox-Integrated)
+Name: SILENT HILL: Townfall Vortex Extension
+Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.2.0
-Date: 2026-09-25
+Version: 1.0.0
+Date: 2026-09-24
 Notes:
 -
 ////////////////////////////////////////////////*/
@@ -46,30 +46,30 @@ const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow'); //*/
 const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all information about the game
-const GAME_ID = "runescapedragonwilds"; //same as Nexus domain
-const STEAMAPP_ID = "1374490"; //from steamdb.info
+const GAME_ID = "silenthilltownfall"; //same as Nexus domain
+const STEAMAPP_ID = "1636440"; // https://steamdb.info/app/1636440/
 const STEAMAPP_ID_DEMO = null; //VERIFY if the EPIC_CODE_NAME and EXEC_DEMO match Steam full game
-const EPICAPP_ID = "9d918774f1db4b26b23a93a78847f4eb"; //from egdata.app
+const EPICAPP_ID = "d0a72ab8e8c84252be486a820b684d2d"; // https://store.epicgames.com/en-US/p/silent-hill-townfall-0cb037
 const GOGAPP_ID = null; // from gogdb.org
-const XBOXAPP_ID = "JagexLimited.Dominion"; //from appxmanifest.xml
-const XBOXEXECNAME = "AppRSDragonwildsShipping"; //from appxmanifest.xml
-const XBOX_PUB_ID = "srxstwq7wczqa"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const XBOXAPP_ID = null; //from appxmanifest.xml
+const XBOXEXECNAME = "AppUEGameShipping"; //from appxmanifest.xml
+const XBOX_PUB_ID = null; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
-const GAME_NAME = "RuneScape: Dragonwilds";
-const GAME_NAME_SHORT = "RuneScape DW"; //Try for 8-10 characters
-const EPIC_CODE_NAME = "RSDragonwilds"; //Folder in root
+const GAME_NAME = "SILENT HILL: Townfall";
+const GAME_NAME_SHORT = "SILENT HILL Townfall"; //Try for 8-10 characters
+const EPIC_CODE_NAME = "Townfall"; //Folder in root
 const EXEC = `${EPIC_CODE_NAME}.exe`; //This is true ~80% of the time. Change if different
 const EXEC_EPIC = EXEC; //change these 3 if different
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const PARAMETERS_STRING = ""; //launch arguments to pass when launching the game
-const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/RuneScape%3A_Dragonwilds";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Silent_Hill%3A_Townfall";
 const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
-const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1273"; //Nexus link to this extension. Used for links
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/2364"; //Nexus link to this extension. Used for links
 
 //feature toggles
-let hasXbox = true; //toggle for Xbox version logic.
+let hasXbox = false; //toggle for Xbox version logic.
 if (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) hasXbox = true;
 let multiExe = false; //toggle for multiple executables (Epic/GOG/Demo don't match Steam)
 if (EXEC !== EXEC_EPIC || EXEC !== EXEC_GOG || EXEC !== EXEC_DEMO) {
@@ -79,15 +79,15 @@ const setupNotification = false; //enable to show the user a notification with s
 const hasModKit = false; //toggle for UE ModKit mod support
 const hasServer = false; //toggle for server pak mod logic
 const preferHardlinks = true; //set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users
-const autoDownloadUe4ss = true; //toggle for auto downloading UE4SS (only applies when ue4ssLoadOrder is enabled)
+const autoDownloadUe4ss = false; //toggle for auto downloading UE4SS (only applies when ue4ssLoadOrder is enabled)
 const writeEngineVersion = false; //toggle to write ENGINE_VERSION into UE4SS-settings.ini (EngineVersionOverride) on deploy, when UE4SS is installed
 const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
-const hasUserIdFolder = true; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
+const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 const debug = false; //toggle for debug mode
 
 //UE specific
-const ENGINE_VERSION = "5.6.2.0"; //Unreal Engine version. usually '4.27.2.0' or '5.X.X.0'. Written to UE4SS-settings.ini if writeEngineVersion is enabled
+const ENGINE_VERSION = "5.6.1.0"; //Unreal Engine version. usually '4.27.2.0' or '5.X.X.0'. Written to UE4SS-settings.ini if writeEngineVersion is enabled
 const MAJOR_VERSION = ENGINE_VERSION.split(".")[0]; //major UE version
 const MINOR_VERSION = ENGINE_VERSION.split(".")[1]; //minor UE version
 const ROOT_FOLDERS = [EPIC_CODE_NAME, "Engine"]; //addressable folders in root
@@ -111,7 +111,7 @@ const ue4ssLoadOrder = true; //master toggle for UE4SS support: UE4SS/Scripts/DL
 const logicModsLoadOrder = true; //enable load order page and load_order.txt writing for LogicMods/Blueprint pak mods
 const collectionsLoadOrder = true; //include UE4SS and LogicMods load orders in collections (ANDed with the toggles above)
 const UE4SS_PAGE_NO = 4; //set these if there is a customized UE4SS Nexus page
-const UE4SS_FILE_NO = 2142; //MAIN file "UE4SS 5.6 Xbox" - byte-identical to the "UE4SS Steam" MAIN file aside from one extra signature lua file, so this single id covers both platforms (extension already resolves the Win64/WinGDK path split)
+const UE4SS_FILE_NO = 4;
 const UE4SS_DOMAIN = GAME_ID; //either GAME_ID or 'site'
 const UE4SS_FOLDER = "ue4ss"; //this should probably never change
 const UE4SS_MOD_PATH = path.join(UE4SS_FOLDER, "Mods"); //this should probably never change (unless UE4SS team changes it again lol)
@@ -199,9 +199,8 @@ const UNREALDATA = {
   fileExt: PAKMOD_EXTS,
   loadOrder: PAKMOD_LOADORDER,
 };
-const UE5_SORTABLE_ID = `${GAME_ID}-ue5-sortable-modtype`; //preserved from pre-port id, already namespaced - do not rename (would orphan installed pak mods)
+const UE5_SORTABLE_ID = `${GAME_ID}-uesortablepak`; //this should not be changed to be maintain consistency with other UE5 games
 const UE5_SORTABLE_NAME = "UE Sortable Pak Mod";
-const LEGACY_UE5_SORTABLE_ID = "ue5-sortable-modtype"; //very old shared/buggy modtype id from before per-game ids existed - kept for migrateLegacyUe5SortableType() to retag
 
 //Information for modtypes, installers, tools, and actions
 const BINARIES_ID = `${GAME_ID}-binaries`;
@@ -225,7 +224,7 @@ const STEAM_FILE = path.join(
 const EPIC_FILE = path.join(EPIC_CODE_NAME, "Binaries", "Win64", SHIPPING_EXE);
 const XBOX_FILE = EXEC_XBOX;
 
-const PAK_ALT_ID = `${GAME_ID}-pak`; //preserved from pre-port id, do not rename to -pakalt (would orphan installed mods)
+const PAK_ALT_ID = `${GAME_ID}-pakalt`;
 let PAK_ALT_NAME = 'Paks (no "~mods")';
 let PAK_ALT_PATH = path.join(EPIC_CODE_NAME, "Content", "Paks");
 if (UNREALDATA.loadOrder === false) {
@@ -277,12 +276,6 @@ if (hasUserIdFolder) {
 }
 let SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
 
-//Save Characters (game-local, not a template concept - never available on Xbox, same as Save)
-const CHARACTER_ID = `${GAME_ID}-savecharacters`;
-const CHARACTER_NAME = "Save Characters";
-const CHARACTER_EXT = ".json";
-const CHARACTER_PATH = path.join(SAVEMOD_LOCATION, DATA_FOLDER, "Saved", "SaveCharacters");
-
 const SCRIPTS_ID = `${GAME_ID}-scripts`;
 const SCRIPTS_NAME = "UE4SS Script Mod";
 const SCRIPTS_EXT = ".lua";
@@ -295,23 +288,11 @@ const DLL_EXT = ".dll";
 const DLL_FOLDER = "dlls";
 let DLL_PATH = SCRIPTS_PATH;
 
-const SCHEMALOADER_ID = `${GAME_ID}-runeschemaloader`;
-const SCHEMALOADER_NAME = "RuneSchema Loader";
-const SCHEMALOADER_FILE = path.join("RuneSchema", "dlls", "main.dll");
-let SCHEMALOADER_PATH = path.join(SCRIPTS_PATH);
-
-const SCHEMA_ID = `${GAME_ID}-runeschema`;
-const SCHEMA_NAME = "RuneSchema Mod";
-const SCHEMA_EXTS = [".json", ".jsonc"];
-const SHCHEMA_FOLDERS = ["assets", "paks", "recipes", "raw", "blueprints"];
-const SCHEMA_FOLDER = path.join("RuneSchema", "mods");
-let SCHEMA_PATH = path.join(SCHEMALOADER_PATH, SCHEMA_FOLDER);
-
 const LOGICMODS_ID = `${GAME_ID}-logicmods`;
 const LOGICMODS_NAME = "UE4SS LogicMods (Blueprint)";
 const UE4SSCOMBO_ID = `${GAME_ID}-ue4sscombo`;
 const UE4SSCOMBO_NAME = "UE4SS Script-LogicMod Combo";
-const LOGICMODS_PATH = path.join(EPIC_CODE_NAME, "Content", "Paks", "LogicMods"); //preserved from pre-port shape (folder-included) - template's shape (Paks root) would re-deploy every installed LogicMod to Paks/ root
+const LOGICMODS_PATH = path.join(EPIC_CODE_NAME, "Content", "Paks");
 const LOGICMODS_FOLDER = "LogicMods";
 const LOGICMODS_EXT = ".pak";
 
@@ -449,7 +430,7 @@ const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")
 let MODTYPE_FOLDERS = [PAK_PATH, PAK_ALT_PATH];
 if (ue4ssLoadOrder) {
   //LogicMods are only loaded when UE4SS's BPModLoaderMod is present
-  MODTYPE_FOLDERS.push(LOGICMODS_PATH);
+  MODTYPE_FOLDERS.push(path.join(LOGICMODS_PATH, LOGICMODS_FOLDER));
 }
 if (hasModKit) {
   MODTYPE_FOLDERS.push(MODKITMOD_PATH);
@@ -661,7 +642,6 @@ function getExecutable(discoveryPath) {
       );
       SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
       DLL_PATH = SCRIPTS_PATH;
-      SCHEMA_PATH = path.join(SCRIPTS_PATH, SCHEMA_FOLDER);
       CONFIG_PATH = CONFIG_PATH_XBOX;
       //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
       SAVE_PATH = getUserIdFolder(SAVE_PATH_XBOX);
@@ -677,7 +657,6 @@ function getExecutable(discoveryPath) {
     );
     SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
     DLL_PATH = SCRIPTS_PATH;
-    SCHEMA_PATH = path.join(SCRIPTS_PATH, SCHEMA_FOLDER);
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
     //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
     //SAVE_PATH = setSavePath;
@@ -693,7 +672,6 @@ function getExecutable(discoveryPath) {
     );
     SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
     DLL_PATH = SCRIPTS_PATH;
-    SCHEMA_PATH = path.join(SCRIPTS_PATH, SCHEMA_FOLDER);
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
     //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
     //SAVE_PATH = setSavePath;
@@ -709,7 +687,6 @@ function getExecutable(discoveryPath) {
     );
     SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
     DLL_PATH = SCRIPTS_PATH;
-    SCHEMA_PATH = path.join(SCRIPTS_PATH, SCHEMA_FOLDER);
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
     //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
     //SAVE_PATH = setSavePath;
@@ -1706,200 +1683,6 @@ function saveInstallerNotify(api) {
   });
 }
 
-//error notification for Xbox version save character install attempt
-function characterErrorNotify(api) {
-  const NOTIF_ID = `${GAME_ID}-savecharacterinsterrxbox`;
-  const MESSAGE = `Save Character files are not supported by the Xbox version of ${GAME_NAME}`;
-  api.sendNotification({
-    id: NOTIF_ID,
-    type: "error",
-    message: MESSAGE,
-    allowSuppress: true,
-    actions: [],
-  });
-}
-
-//Test for save character files
-function testCharacter(files, gameId) {
-  const isMod = files.some((file) => path.extname(file).toLowerCase() === CHARACTER_EXT);
-  let supported = gameId === spec.game.id && isMod;
-
-  // Test for a mod installer
-  if (
-    supported &&
-    files.find(
-      (file) =>
-        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
-        path.basename(path.dirname(file)).toLowerCase() === "fomod",
-    )
-  ) {
-    supported = false;
-  }
-
-  return Promise.resolve({
-    supported,
-    requiredFiles: [],
-  });
-}
-
-//Install save character files
-async function installCharacter(api, files) {
-  const modFile = files.find((file) => path.extname(file).toLowerCase() === CHARACTER_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
-  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
-  const setModTypeInstruction = { type: "setmodtype", value: CHARACTER_ID };
-
-  GAME_PATH = getDiscoveryPath(api);
-  GAME_VERSION = await setGameVersionAsync(GAME_PATH);
-  const TEST = SAVE_COMPAT_VERSIONS.includes(GAME_VERSION);
-  if (!TEST) {
-    characterErrorNotify(api);
-    throw new util.UserCanceled();
-  }
-
-  //Filter files and set instructions
-  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
-  const instructions = filtered.map((file) => {
-    return {
-      type: "copy",
-      source: file,
-      destination: path.join(file.substr(idx)),
-    };
-  });
-  instructions.push(setModTypeInstruction);
-  const IS_CHARACTER = checkPartitions(SAVEMOD_LOCATION, GAME_PATH);
-  if (IS_CHARACTER === false) {
-    characterInstallerNotify(api);
-    throw new util.UserCanceled();
-  }
-  return Promise.resolve({ instructions });
-}
-
-//Error notification for save character installer when not on same partition
-function characterInstallerNotify(api) {
-  const NOTIF_ID = `${GAME_ID}-savecharacterinstaller`;
-  const MESSAGE = "Could not install mod as Save Character";
-  api.sendNotification({
-    id: NOTIF_ID,
-    type: "error",
-    message: MESSAGE,
-    allowSuppress: true,
-    actions: [
-      {
-        title: "More",
-        action: (dismiss) => {
-          api.showDialog(
-            "question",
-            MESSAGE,
-            {
-              text:
-                `You tried installing a Save Character mod, but the game, staging folder, and ${SAVE_LOC} folder are not all on the same drive.\n` +
-                `Please move the game and/or staging folder to the same drive as the ${SAVE_LOC} folder (typically C Drive) to install these types of mods with Vortex.\n` +
-                `\n` +
-                `Save Characters Path: ${CHARACTER_PATH}\n` +
-                `\n` +
-                `If you want to use this mod installer, you must move the game and staging folder to the same partition as the ${SAVE_LOC} folder (typically C Drive).\n` +
-                `\n`,
-            },
-            [
-              { label: "Continue", action: () => dismiss() },
-              {
-                label: "Open Save Characters Folder",
-                action: () => {
-                  util.opn(CHARACTER_PATH).catch(() => null);
-                  dismiss();
-                },
-              },
-            ],
-          );
-        },
-      },
-    ],
-  });
-}
-
-//Test RuneSchema mod loader
-function testSchemaLoader(files, gameId) {
-  const isMod = files.some((file) => file === SCHEMALOADER_FILE);
-  let supported = gameId === spec.game.id && isMod;
-
-  // Test for a mod installer.
-  if (
-    supported &&
-    files.find(
-      (file) =>
-        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
-        path.basename(path.dirname(file)).toLowerCase() === "fomod",
-    )
-  ) {
-    supported = false;
-  }
-
-  return Promise.resolve({
-    supported,
-    requiredFiles: [],
-  });
-}
-
-//Install RuneSchema mod loader
-function installSchemaLoader(files) {
-  const setModTypeInstruction = { type: "setmodtype", value: SCHEMALOADER_ID };
-
-  const filtered = files.filter((file) => !file.endsWith(path.sep));
-  const instructions = filtered.map((file) => {
-    return {
-      type: "copy",
-      source: file,
-      destination: file,
-    };
-  });
-  instructions.push(setModTypeInstruction);
-  return Promise.resolve({ instructions });
-}
-
-//Test RuneSchema mod
-function testSchema(files, gameId) {
-  const isMod = files.some((file) => SCHEMA_EXTS.includes(path.extname(file).toLowerCase()));
-  const isFolder = files.some((file) =>
-    SHCHEMA_FOLDERS.includes(path.basename(file).toLowerCase()),
-  );
-  let supported = gameId === spec.game.id && isMod && isFolder;
-
-  // Test for a mod installer.
-  if (
-    supported &&
-    files.find(
-      (file) =>
-        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
-        path.basename(path.dirname(file)).toLowerCase() === "fomod",
-    )
-  ) {
-    supported = false;
-  }
-
-  return Promise.resolve({
-    supported,
-    requiredFiles: [],
-  });
-}
-
-//Install RuneSchema mod
-function installSchema(files) {
-  const setModTypeInstruction = { type: "setmodtype", value: SCHEMA_ID };
-
-  const filtered = files.filter((file) => !file.endsWith(path.sep));
-  const instructions = filtered.map((file) => {
-    return {
-      type: "copy",
-      source: file,
-      destination: file,
-    };
-  });
-  instructions.push(setModTypeInstruction);
-  return Promise.resolve({ instructions });
-}
-
 //Test Fallback installer to Binaries folder
 function testBinaries(files, gameId) {
   const isPak = files.some((file) => path.extname(file).toLowerCase() === PAK_EXT);
@@ -2543,7 +2326,7 @@ async function deserializeLogicMods(api) {
   const state = api.getState();
   const mods = util.getSafe(state, ["persistent", "mods", spec.game.id], {});
   GAME_PATH = getDiscoveryPath(api);
-  const logicModsFolder = path.join(GAME_PATH, LOGICMODS_PATH);
+  const logicModsFolder = path.join(GAME_PATH, LOGICMODS_PATH, LOGICMODS_FOLDER);
   const bpmlFolder = path.join(GAME_PATH, BINARIES_PATH, UE4SS_MOD_PATH, BPML_FOLDER);
   const profile = selectors.activeProfile(state);
   const filename = profile.id + "_" + LOGICMODS_LO_FILE;
@@ -3030,24 +2813,6 @@ function setupNotify(api) {
   });
 }
 
-//Retag any mod still on the pre-migration bare LEGACY_UE5_SORTABLE_ID onto the real, namespaced
-//UE5_SORTABLE_ID - replaces the old manual "please reinstall" notification with a silent auto-fix
-async function migrateLegacyUe5SortableType(api) {
-  const state = api.getState();
-  const mods = util.getSafe(state, ["persistent", "mods", GAME_ID], {});
-  const legacyIds = Object.keys(mods).filter((id) => mods[id]?.type === LEGACY_UE5_SORTABLE_ID);
-  if (legacyIds.length === 0) return;
-  const batch = legacyIds.map((id) => actions.setModType(GAME_ID, id, UE5_SORTABLE_ID));
-  util.batchDispatch(api.store, batch);
-  log("info", `[${GAME_ID}] migrated ${legacyIds.length} pak mod(s) off the legacy shared modtype`);
-}
-
-const semver = require("semver");
-async function migrateLegacyUe5SortableType111(api, oldVersion) {
-  if (semver.gte(oldVersion, "1.1.1")) return;
-  await migrateLegacyUe5SortableType(api);
-}
-
 async function resolveGameVersion(gamePath, exePath) {
   GAME_VERSION = await setGameVersionAsync(gamePath);
   //SHIPPING_EXE = getShippingExe(gamePath);
@@ -3112,7 +2877,6 @@ async function setup(discovery, api, gameSpec) {
     if (SAVE_COMPAT_VERSIONS.includes(GAME_VERSION)) {
       if (configSaveMatch) {
         await vfs.ensureDirWritableAsync(SAVE_PATH);
-        await vfs.ensureDirWritableAsync(CHARACTER_PATH);
       }
     }
   } //*/
@@ -3120,9 +2884,6 @@ async function setup(discovery, api, gameSpec) {
     if (CHECK_SAVE) {
       //if game, staging folder, and config and save folders are on the same drive
       await vfs.ensureDirWritableAsync(SAVE_PATH);
-      if (SAVE_COMPAT_VERSIONS.includes(GAME_VERSION)) {
-        await vfs.ensureDirWritableAsync(CHARACTER_PATH);
-      }
     }
   }
   if (ue4ssLoadOrder && autoDownloadUe4ss) {
@@ -3137,7 +2898,6 @@ async function setup(discovery, api, gameSpec) {
   }
   if (ue4ssLoadOrder) {
     MODTYPE_FOLDERS.push(SCRIPTS_PATH);
-    MODTYPE_FOLDERS.push(SCHEMA_PATH);
     if (logicModsLoadOrder) {
       MODTYPE_FOLDERS.push(path.join(SCRIPTS_PATH, BPML_FOLDER));
     }
@@ -3283,25 +3043,6 @@ function applyGame(context, gameSpec) {
       }, //*/
     },
   );
-  //Legacy shared/buggy modtype id from before per-game ids existed - kept registered only so a
-  //straggler still deploys correctly in the brief window before migrateLegacyUe5SortableType() retags it
-  context.registerModType(
-    LEGACY_UE5_SORTABLE_ID,
-    65,
-    (gameId) => {
-      var _a;
-      return (
-        gameId === GAME_ID &&
-        !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
-        _a === void 0
-          ? void 0
-          : _a.path)
-      );
-    },
-    (game) => pathPattern(context.api, game, path.join("{gamePath}", UNREALDATA.modsPath)),
-    () => Promise.resolve(false),
-    { name: "Legacy UE - REINSTALL TO SORT", mergeMods: (mod) => "ZZZZ-" + mod.id },
-  );
 
   //register mod types explicitly (due to potentially dynamic Binaries folder)
   if (ue4ssLoadOrder) {
@@ -3338,40 +3079,6 @@ function applyGame(context, gameSpec) {
       (game) => pathPattern(context.api, game, path.join("{gamePath}", SCRIPTS_PATH)),
       () => Promise.resolve(false),
       { name: DLL_NAME },
-    );
-    context.registerModType(
-      SCHEMALOADER_ID,
-      53,
-      (gameId) => {
-        var _a;
-        return (
-          gameId === GAME_ID &&
-          !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
-          _a === void 0
-            ? void 0
-            : _a.path)
-        );
-      },
-      (game) => pathPattern(context.api, game, path.join("{gamePath}", SCHEMALOADER_PATH)),
-      () => Promise.resolve(false),
-      { name: SCHEMALOADER_NAME },
-    );
-    context.registerModType(
-      SCHEMA_ID,
-      54,
-      (gameId) => {
-        var _a;
-        return (
-          gameId === GAME_ID &&
-          !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
-          _a === void 0
-            ? void 0
-            : _a.path)
-        );
-      },
-      (game) => pathPattern(context.api, game, path.join("{gamePath}", SCHEMA_PATH)),
-      () => Promise.resolve(false),
-      { name: SCHEMA_NAME },
     );
   }
   context.registerModType(
@@ -3468,38 +3175,14 @@ function applyGame(context, gameSpec) {
     () => Promise.resolve(false),
     { name: SAVE_NAME },
   ); //*/
-  //Save Characters modtype (game-local, not a template concept - same partition/platform gate as Save)
-  context.registerModType(
-    CHARACTER_ID,
-    66,
-    (gameId) => {
-      GAME_PATH = getDiscoveryPath(context.api);
-      GAME_VERSION = setGameVersionSync(GAME_PATH);
-      if (GAME_PATH !== undefined) {
-        if (configSaveMatch) {
-          CHECK_SAVE = CHECK_CONFIG;
-        } else {
-          CHECK_SAVE = checkPartitions(SAVEMOD_LOCATION, GAME_PATH);
-        }
-      }
-      return (
-        gameId === GAME_ID && CHECK_SAVE === true && SAVE_COMPAT_VERSIONS.includes(GAME_VERSION)
-      );
-    },
-    (game) => pathPattern(context.api, game, CHARACTER_PATH),
-    () => Promise.resolve(false),
-    { name: CHARACTER_NAME },
-  );
 
   //register mod installers
   if (hasModKit === true) {
-    context.registerInstaller(MODKITMOD_ID, 24, testModKitMod, installModKitMod);
+    context.registerInstaller(MODKITMOD_ID, 25, testModKitMod, installModKitMod);
   }
-  context.registerInstaller(UE4SSCOMBO_ID, 25, testUe4ssCombo, installUe4ssCombo); //not gated on ue4ssLoadOrder - also handles mods with both Binaries and Content folders that are not for UE4SS
+  context.registerInstaller(UE4SSCOMBO_ID, 26, testUe4ssCombo, installUe4ssCombo); //not gated on ue4ssLoadOrder - also handles mods with both Binaries and Content folders that are not for UE4SS
   if (ue4ssLoadOrder) {
-    context.registerInstaller(LOGICMODS_ID, 26, testLogic, installLogic);
-    context.registerInstaller(SCHEMALOADER_ID, 27, testSchemaLoader, installSchemaLoader);
-    context.registerInstaller(SCHEMA_ID, 28, testSchema, installSchema);
+    context.registerInstaller(LOGICMODS_ID, 27, testLogic, installLogic);
   }
   context.registerInstaller(UE5_SORTABLE_ID, 29, testPak, (files) =>
     installPak(context.api, files),
@@ -3523,10 +3206,6 @@ function applyGame(context, gameSpec) {
     installConfig(context.api, files),
   );
   context.registerInstaller(SAVE_ID, 43, testSave, (files) => installSave(context.api, files));
-  /* //!disabled - no mods used it, conflicts with RuneSchema
-  context.registerInstaller(CHARACTER_ID, 45, testCharacter, (files) =>
-    installCharacter(context.api, files),
-  ); //*/
   context.registerInstaller(BINARIES_ID, 49, testBinaries, (files, fileName) =>
     installBinaries(context.api, files, fileName),
   );
@@ -3623,21 +3302,6 @@ function applyGame(context, gameSpec) {
     async () => {
       //SAVE_PATH = await setSavePath();
       util.opn(SAVE_PATH).catch(() => null);
-    },
-    () => {
-      const state = context.api.getState();
-      const gameId = selectors.activeGameId(state);
-      return gameId === GAME_ID;
-    },
-  );
-  context.registerAction(
-    "mod-icons",
-    300,
-    "open-ext",
-    {},
-    "Open Save Characters Folder",
-    () => {
-      util.opn(CHARACTER_PATH).catch(() => null);
     },
     () => {
       const state = context.api.getState();
@@ -3779,7 +3443,6 @@ function applyGame(context, gameSpec) {
 //Main function
 function main(context) {
   applyGame(context, spec);
-  context.registerMigration((old) => migrateLegacyUe5SortableType111(context.api, old));
   if (UNREALDATA.loadOrder === true) {
     //UNREAL - mod load order
     if (FBLO) {
@@ -3961,16 +3624,6 @@ function main(context) {
     api.events.on("did-install-mod", (gameId, archiveId, modId) => {
       retagFomodPakMod(api, gameId, modId).catch((err) =>
         log("warn", `[${GAME_ID}] retagFomodPakMod failed for "${modId}"`, err),
-      );
-    });
-    //Permanent safety net alongside the version-gated registerMigration above - fires every
-    //activation regardless of version tracking, cheap no-op once a mod is already correctly
-    //tagged. gamemode-activated is a plain `emit`, not emitAndAwait, so use events.on (not
-    //onAsync), fire-and-forget with .catch, same as the did-install-mod handler above.
-    api.events.on("gamemode-activated", (gameId) => {
-      if (gameId !== GAME_ID) return;
-      migrateLegacyUe5SortableType(api).catch((err) =>
-        log("warn", `[${GAME_ID}] migrateLegacyUe5SortableType failed on gamemode-activated`, err),
       );
     });
   });
@@ -6276,7 +5929,7 @@ function LogicModsContextMenu({
       ),
       React.createElement("div", { style: sepStyle }),
       menuItem(`Open LogicMods Folder (${n})`, () => {
-        util.opn(path.join(GAME_PATH, LOGICMODS_PATH)).catch(() => null);
+        util.opn(path.join(GAME_PATH, LOGICMODS_PATH, LOGICMODS_FOLDER)).catch(() => null);
         onClose();
       }),
       React.createElement("div", { style: sepStyle }),
@@ -6326,7 +5979,7 @@ function LogicModsContextMenu({
     ),
     React.createElement("div", { style: sepStyle }),
     menuItem("Open LogicMods Folder", () => {
-      util.opn(path.join(GAME_PATH, LOGICMODS_PATH)).catch(() => null);
+      util.opn(path.join(GAME_PATH, LOGICMODS_PATH, LOGICMODS_FOLDER)).catch(() => null);
       onClose();
     }),
     stagingFolder

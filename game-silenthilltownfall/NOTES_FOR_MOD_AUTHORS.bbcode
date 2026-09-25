@@ -1,5 +1,5 @@
-[b][color=#e69138][size=4]Notes for Mod Authors - RuneScape: Dragonwilds[/size]
-[/color][/b]Packaging rules for RuneScape: Dragonwilds mods, so Vortex installs them to the right place.
+[b][color=#e69138][size=4]Notes for Mod Authors - SILENT HILL: Townfall[/size]
+[/color][/b]Packaging rules for SILENT HILL: Townfall mods, so Vortex installs them to the right place.
 
 Vortex decides what a mod is by looking at the files and folders inside the archive. It tries each installer in order and the first one that matches wins, so archive layout is what determines where your mod ends up.
 
@@ -29,7 +29,7 @@ MyComboMod.zip
     - Mirror the real in-game folder structure below those two folders.
     - This installer is tested before the individual pak/script/DLL installers, so a matching archive is always handled as a combo.
 
-  Installs to: "RSDragonwilds"
+  Installs to: "Townfall"
 
   Common mistakes:
     - Including only one of "Content" or "Binaries" - the archive then falls through to a different installer.
@@ -54,23 +54,11 @@ MyBlueprintMod.zip
     - Everything from the "LogicMods" folder down is copied to the game, keeping its structure.
     - Extra folders above "LogicMods" are fine - the installer finds it at any depth.
 
-  Installs to: "RSDragonwilds\Content\Paks\LogicMods\LogicMods"
+  Installs to: "Townfall\Content\Paks\LogicMods"
 
   Common mistakes:
     - Putting the ".pak" at the top level of the archive with no "LogicMods" folder. Vortex then treats it as an ordinary pak mod, installs it to the wrong place, and the blueprint mod never loads.
     - Renaming the folder ("Logic_Mods", "logicmod", "BPMods") - the name must be exactly "LogicMods".
-
-========================================================================
-
-Runeschemaloader:
-
-Handled by the "testSchemaLoader" installer. Inspect the extension source for the exact archive layout it expects.
-
-========================================================================
-
-Runeschema:
-
-Recognised when the archive contains a file with one of these extensions: ".json" or ".jsonc" and a file or folder named one of: "assets", "paks", "recipes", "raw" or "blueprints".
 
 ========================================================================
 
@@ -88,7 +76,7 @@ MyPakMod.zip
     - Only the pak files are installed - surrounding folders are discarded.
     - If the archive holds more than one pak, Vortex asks the user which to install - useful for optional variants.
 
-  Installs to: "RSDragonwilds\Content\Paks\~mods"
+  Installs to: "Townfall\Content\Paks\~mods"
 
   Common mistakes:
     - Shipping several unrelated paks in one archive when you meant them all to install - the user gets a choice dialog and may pick only one.
@@ -104,7 +92,7 @@ This installer handles the UE4SS runtime package, not individual mods. Most auth
     - Recognised by a file named "dwmapi.dll" at any level of the archive.
     - Also recognised by any of the UE4SS support folders: "MapGenBP", "MemberVarLayoutTemplates", "UE4SS_Signatures" or "VTableLayoutTemplates".
 
-  Installs to: "RSDragonwilds\Binaries\Win64"
+  Installs to: "Townfall\Binaries\Win64"
 
   Common mistakes:
     - If your script mod archive happens to contain a file named "dwmapi.dll", it will be treated as a UE4SS install rather than as your mod.
@@ -127,7 +115,7 @@ MyScriptMod.zip
     - Wrap the "Scripts" folder in a folder named after your mod. That folder name becomes the mod's UE4SS name and is what gets written to the load order.
     - If you omit the wrapper folder, Vortex falls back to naming the mod after the archive file.
 
-  Installs to: "RSDragonwilds\Binaries\Win64\ue4ss\Mods"
+  Installs to: "Townfall\Binaries\Win64\ue4ss\Mods"
 
   Common mistakes:
     - Putting "main.lua" directly in the archive root with no "Scripts" folder - the mod is not recognised as a script mod.
@@ -150,7 +138,7 @@ MyDllMod.zip
     - The archive must contain a ".dll" file AND a folder named "dlls".
     - Wrap the "dlls" folder in a folder named after your mod - that name is used in the load order.
 
-  Installs to: "RSDragonwilds\Binaries\Win64\ue4ss\Mods"
+  Installs to: "Townfall\Binaries\Win64\ue4ss\Mods"
 
   Common mistakes:
     - A bare ".dll" with no "dlls" folder is not recognised as a UE4SS DLL mod and will reach the fallback installer.
@@ -163,12 +151,12 @@ For mods that replace or add files inside the game installation, laid out the sa
 
 [code]
 MyRootMod.zip
-└── RSDragonwilds\
+└── Townfall\
     └── ... files in their real relative locations
 [/code]
 
   Requirements:
-    - Recognised by a top-level folder matching any of: "RSDragonwilds", "Engine", "Content", "Binaries", "Mods", "Paks" or "Movies".
+    - Recognised by a top-level folder matching any of: "Townfall", "Engine", "Content", "Binaries", "Mods", "Paks" or "Movies".
     - The matched folder and everything below it is copied into the game folder, preserving structure.
 
   Installs to: the game folder itself (no subfolder)
@@ -212,7 +200,7 @@ This is the catch-all. Any archive with no ".pak" file that matched none of the 
     - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
     - Vortex shows the user a notification when a mod installs through the fallback.
 
-  Installs to: "RSDragonwilds\Binaries\Win64"
+  Installs to: "Townfall\Binaries\Win64"
 
   Common mistakes:
     - If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report it as broken.

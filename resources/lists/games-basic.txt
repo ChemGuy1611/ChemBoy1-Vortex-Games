@@ -10,6 +10,7 @@ borderlands3
 civilisationvi
 civilizationvii
 control
+controlresonant
 crimsondesert
 darkmessiahofmightandmagic
 deathstranding2onthebeach
