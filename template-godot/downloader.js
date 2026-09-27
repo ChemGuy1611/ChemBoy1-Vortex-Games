@@ -444,7 +444,7 @@ async function download(api, requirements, force) {
       } catch (err) {
         // Keep going: one unreachable repo or broken archive must not silently drop every
         // remaining requirement in the array.
-        if (err instanceof util.ProcessCanceled) {
+        if (err?.data?.kind === "process-canceled") {
           log("warn", `Skipped requirement ${req.userFacingName}`, err.message);
         } else {
           api.showErrorNotification(`Failed to install ${req.userFacingName}`, err, {

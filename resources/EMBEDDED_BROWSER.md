@@ -30,7 +30,8 @@ Both render the same underlying content, and both feed the same download capture
 api.emitAndAwait("browse-for-download", url, instructions).then((result) => {
     // result is an array; result[0] is the URL of the file the user clicked
     if (!result || !result.length) {
-        return Promise.reject(new util.UserCanceled()); // window closed without a download
+        // window closed without a download
+        return Promise.reject(new VortexError("User canceled", { kind: "user-canceled", skipped: false }));
     }
     api.events.emit("start-download", result, { game: gameId }, undefined, (err, dlId) => {
         api.events.emit("start-install-download", dlId, { allowAutoEnable: true }, () => null);

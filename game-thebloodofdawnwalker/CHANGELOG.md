@@ -7,6 +7,7 @@
 - Changed: "Download UE4SS" now downloads and installs the correct UE4SS build on its own, instead of opening a browser page and asking you to pick the file by hand.
 - Added: Vortex now checks for UE4SS updates and notifies you when a newer build is available.
 - Fixed: The UE4SS download could accept the development build, a much larger debug version, in place of the normal one.
+- The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
 
 ## [1.0.2] - 2026-09-17
 

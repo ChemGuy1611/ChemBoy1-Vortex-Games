@@ -5,6 +5,7 @@
 - Config and save modtypes, installers, and open buttons.
 - Fixed: Mod files with no file extension were skipped during installation
 - Added an "Open SteamDB Page" button for both editions, and an "Open PCGamingWiki Page" button for the BFG Edition, which was missing one.
+- The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
 
 ## [0.5.8] - 2026-09-08
 

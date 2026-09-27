@@ -142,7 +142,7 @@ context.registerStartHook(50, "inject-env", async (call) => {
 });
 ```
 
-Hook priority: non-extension hooks use steps of 100 (50 = between built-ins). Throw `util.ProcessCanceled` or `util.UserCanceled` to cancel the launch.
+Hook priority: non-extension hooks use steps of 100 (50 = between built-ins). Throw a `VortexError` of kind `process-canceled` or `user-canceled` to cancel the launch (see `ERROR_CLASSES.md`).
 
 ---
 

@@ -258,7 +258,7 @@ async function fetchAndImportModDbFile(api, requirement, url, cause) {
     // otherwise a partially written file is left behind in the temp folder.
     await streamToFile(response.body, tempPath);
     // 'import-downloads' calls back with (dlIds) - no error argument - unlike
-    // 'start-download'/'start-install-download', so it can't go through util.toPromise.
+    // 'start-download'/'start-install-download', so it can't use the usual (err, result) callback wrap.
     const dlId = await new Promise((resolve, reject) => {
       api.events.emit("import-downloads", [tempPath], (dlIds) => {
         const id = dlIds?.[0];
@@ -458,7 +458,11 @@ async function downloadModDbRequirement(api, gameSpec, requirement, check = true
       `Failed to download/install ${requirement.userFacingName}. You must download manually.`,
       err,
     );
-    util.opn(pageUrl(requirement)).catch(() => null);
+    try {
+      window.api.shell.openUrl(pageUrl(requirement));
+    } catch (openErr) {
+      api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
+    }
   } finally {
     activeInstalls.delete(requirement.modType);
     api.dismissNotification(NOTIF_ID);

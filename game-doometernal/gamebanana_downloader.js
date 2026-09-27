@@ -20,7 +20,7 @@
 // (single-requirement variants), isGameBananaRequirementInstalled,
 // getLatestGameBananaFile, getLatestGameBananaVersion.
 
-const { actions, log, selectors, util } = require("vortex-api");
+const { actions, log, selectors, util, VortexError } = require("vortex-api");
 
 // --- requirement helpers --------------------------------------------------
 
@@ -237,9 +237,9 @@ async function downloadGameBananaRequirement(api, gameSpec, requirement, check =
         ? latestFile._sDownloadUrl
         : fallbackUrl;
     if (!URL) {
-      throw new util.ProcessCanceled(
-        "GameBanana API is unreachable and no fallback file id is set",
-      );
+      throw new VortexError("GameBanana API is unreachable and no fallback file id is set", {
+        kind: "process-canceled",
+      });
     }
     //Hand Vortex the CDN URL rather than the /dl/{fileId} one. Vortex names an archive from the
     //server's Content-Disposition, failing that from the last path segment of the URL it was given,
@@ -254,13 +254,13 @@ async function downloadGameBananaRequirement(api, gameSpec, requirement, check =
     //with it: naming a download makes Vortex check the download folder first and hand an archive
     //already sitting there back through the callback as an error rather than a download id.
     const archive = latestFile?._sFile || undefined;
-    const dlId = await util.toPromise((cb) =>
+    const dlId = await new Promise((resolve, reject) =>
       api.events.emit(
         "start-download",
         [downloadUrl],
         dlInfo,
         archive,
-        cb,
+        (err, result) => (err ? reject(err) : resolve(result)),
         archive !== undefined ? "replace" : undefined,
         { allowInstall: false },
       ),
@@ -274,8 +274,10 @@ async function downloadGameBananaRequirement(api, gameSpec, requirement, check =
     // "Other" label is 'unsupported'), and an unregistered id leaves the Source column
     // blank. See https://github.com/Nexus-Mods/Vortex/issues/21979.
     api.store.dispatch(actions.setDownloadModInfo(dlId, "source", "website"));
-    const modId = await util.toPromise((cb) =>
-      api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+    const modId = await new Promise((resolve, reject) =>
+      api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, (err, result) =>
+        err ? reject(err) : resolve(result),
+      ),
     );
     const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
     const batched = [
@@ -332,7 +334,11 @@ async function downloadGameBananaRequirement(api, gameSpec, requirement, check =
       `Failed to download/install ${requirement.userFacingName}. You must download manually.`,
       err,
     );
-    util.opn(pageUrl(requirement)).catch(() => null);
+    try {
+      window.api.shell.openUrl(pageUrl(requirement));
+    } catch (openErr) {
+      api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
+    }
   } finally {
     activeInstalls.delete(requirement.modType);
     api.dismissNotification(NOTIF_ID);

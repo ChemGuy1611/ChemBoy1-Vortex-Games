@@ -2,7 +2,7 @@
 
 ## Planned Improvements (Not Yet Released)
 
-- None
+- The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
 
 ## [2.1.3] - 2026-09-13
 

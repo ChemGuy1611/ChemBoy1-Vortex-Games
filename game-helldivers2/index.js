@@ -9,7 +9,7 @@ Date: 2026-09-06
 //Import libraries
 const fs = require("fs");
 const fsp = fs.promises;
-const { actions, fs: vfs, util, selectors, log, MainPage } = require("vortex-api");
+const { actions, fs: vfs, util, selectors, log, MainPage, VortexError } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const React = require("react");
@@ -924,7 +924,8 @@ function answerOptionRequest(selection) {
 function cancelOptionRequest() {
   const request = OPTION_QUEUE.shift();
   notifyOptionListeners();
-  if (request !== undefined) request.reject(new util.UserCanceled());
+  if (request !== undefined)
+    request.reject(new VortexError("User canceled", { kind: "user-canceled", skipped: false }));
 }
 
 //install patch mods, asking once which of the mod's versions to install when it offers a choice
@@ -1214,7 +1215,13 @@ function fallbackInstallerNotify(api, modName) {
               {
                 label: "Contact Ext. Developer",
                 action: () => {
-                  util.opn(`${EXTENSION_URL}?tab=posts`).catch(() => null);
+                  try {
+                    window.api.shell.openUrl(`${EXTENSION_URL}?tab=posts`);
+                  } catch (err) {
+                    api.showErrorNotification("Failed to open the URL", err, {
+                      allowReport: false,
+                    });
+                  }
                   dismiss();
                 },
               }, //*/
@@ -1222,7 +1229,13 @@ function fallbackInstallerNotify(api, modName) {
               {
                 label: `Open Mod Page + Staging Folder`,
                 action: () => {
-                  util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
+                  try {
+                    window.api.shell.openFile(path.join(STAGING_FOLDER, modName));
+                  } catch (err) {
+                    api.showErrorNotification("Failed to open the file or folder", err, {
+                      allowReport: false,
+                    });
+                  }
                   const mods = api.store.getState()?.persistent?.mods?.[spec.game.id] ?? {};
                   const modMatch = Object.values(mods).find(
                     (mod) => mod.installationPath === modName,
@@ -1236,7 +1249,13 @@ function fallbackInstallerNotify(api, modName) {
                     }
                   }
                   const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
-                  util.opn(MOD_PAGE_URL).catch(() => null);
+                  try {
+                    window.api.shell.openUrl(MOD_PAGE_URL);
+                  } catch (err) {
+                    api.showErrorNotification("Failed to open the URL", err, {
+                      allowReport: false,
+                    });
+                  }
                   dismiss();
                 },
               }, //*/
@@ -1887,7 +1906,13 @@ function applyGame(context, gameSpec) {
     "View Changelog",
     () => {
       const openPath = path.join(__dirname, "CHANGELOG.md");
-      util.opn(openPath).catch(() => null);
+      try {
+        window.api.shell.openFile(openPath);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1903,7 +1928,13 @@ function applyGame(context, gameSpec) {
     "Open Downloads Folder",
     () => {
       const openPath = DOWNLOAD_FOLDER;
-      util.opn(openPath).catch(() => null);
+      try {
+        window.api.shell.openFile(openPath);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1918,7 +1949,13 @@ function applyGame(context, gameSpec) {
     {},
     "Open Patch Order Folder",
     () => {
-      util.opn(getDataFolder()).catch(() => null);
+      try {
+        window.api.shell.openFile(getDataFolder());
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1934,7 +1971,11 @@ function applyGame(context, gameSpec) {
     {},
     "Open PCGamingWiki Page",
     () => {
-      util.opn(PCGAMINGWIKI_URL).catch(() => null);
+      try {
+        window.api.shell.openUrl(PCGAMINGWIKI_URL);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1949,7 +1990,11 @@ function applyGame(context, gameSpec) {
     {},
     "Open SteamDB Page",
     () => {
-      util.opn(STEAMDB_URL).catch(() => null);
+      try {
+        window.api.shell.openUrl(STEAMDB_URL);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1964,7 +2009,11 @@ function applyGame(context, gameSpec) {
     {},
     "Submit Bug Report",
     () => {
-      util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+      try {
+        window.api.shell.openUrl(`${EXTENSION_URL}?tab=bugs`);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -2618,7 +2667,15 @@ function FbloContextMenu({
   const openStagingFolders = (entries) => {
     entries.forEach((entry) => {
       const folder = getModStagingFolder(context.api, entry.modId);
-      if (folder) util.opn(folder).catch(() => null);
+      if (folder) {
+        try {
+          window.api.shell.openFile(folder);
+        } catch (err) {
+          context.api.showErrorNotification("Failed to open the file or folder", err, {
+            allowReport: false,
+          });
+        }
+      }
     });
     onClose();
   };
@@ -2756,13 +2813,25 @@ function FbloContextMenu({
     React.createElement("div", { style: sepStyle }),
     stagingFolder
       ? menuItem("Open Staging Folder", () => {
-          util.opn(stagingFolder).catch(() => null);
+          try {
+            window.api.shell.openFile(stagingFolder);
+          } catch (err) {
+            context.api.showErrorNotification("Failed to open the file or folder", err, {
+              allowReport: false,
+            });
+          }
           onClose();
         })
       : null,
     modPageUrl
       ? menuItem("Open Mod Page", () => {
-          util.opn(modPageUrl).catch(() => null);
+          try {
+            window.api.shell.openUrl(modPageUrl);
+          } catch (err) {
+            context.api.showErrorNotification("Failed to open the URL", err, {
+              allowReport: false,
+            });
+          }
           onClose();
         })
       : null,

@@ -74,7 +74,11 @@ context.registerAction(
   "Open Thunderstore Page",
   () => {
     const { util } = require("vortex-api");
-    util.opn(`https://thunderstore.io/c/${TS_COMMUNITY}/`).catch(() => null);
+    try {
+      window.api.shell.openUrl(`https://thunderstore.io/c/${TS_COMMUNITY}/`);
+    } catch (err) {
+      context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+    }
   },
   () => {
     const state = context.api.getState();

@@ -747,14 +747,26 @@ function fallbackInstallerNotify(api, modName) {
               {
                 label: "Contact Ext. Developer",
                 action: () => {
-                  util.opn(`${EXTENSION_URL}?tab=posts`).catch(() => null);
+                  try {
+                    window.api.shell.openUrl(`${EXTENSION_URL}?tab=posts`);
+                  } catch (err) {
+                    api.showErrorNotification("Failed to open the URL", err, {
+                      allowReport: false,
+                    });
+                  }
                   dismiss();
                 },
               }, //*/
               {
                 label: "Open Staging Folder",
                 action: () => {
-                  util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
+                  try {
+                    window.api.shell.openFile(path.join(STAGING_FOLDER, modName));
+                  } catch (err) {
+                    api.showErrorNotification("Failed to open the file or folder", err, {
+                      allowReport: false,
+                    });
+                  }
                   dismiss();
                 },
               }, //*/
@@ -775,7 +787,13 @@ function fallbackInstallerNotify(api, modName) {
                     }
                   }
                   const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
-                  util.opn(MOD_PAGE_URL).catch((err) => undefined);
+                  try {
+                    window.api.shell.openUrl(MOD_PAGE_URL);
+                  } catch (err) {
+                    api.showErrorNotification("Failed to open the URL", err, {
+                      allowReport: false,
+                    });
+                  }
                   //dismiss();
                 },
               }, //*/
@@ -949,7 +967,13 @@ function applyGame(context, gameSpec) {
     () => {
       GAME_PATH = getDiscoveryPath(context.api);
       const openPath = path.join(GAME_PATH, "BepinEx", "config", "BepInEx.cfg");
-      util.opn(openPath).catch(() => null);
+      try {
+        window.api.shell.openFile(openPath);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -966,7 +990,13 @@ function applyGame(context, gameSpec) {
     () => {
       GAME_PATH = getDiscoveryPath(context.api);
       const openPath = path.join(GAME_PATH, DATA_FOLDER);
-      util.opn(openPath).catch(() => null);
+      try {
+        window.api.shell.openFile(openPath);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -982,7 +1012,13 @@ function applyGame(context, gameSpec) {
     "Open Save Folder",
     async () => {
       SAVE_PATH = await getSavePath(context.api);
-      util.opn(SAVE_PATH).catch(() => null);
+      try {
+        window.api.shell.openFile(SAVE_PATH);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -997,7 +1033,11 @@ function applyGame(context, gameSpec) {
     {},
     "Open PCGamingWiki Page",
     () => {
-      util.opn(PCGAMINGWIKI_URL).catch(() => null);
+      try {
+        window.api.shell.openUrl(PCGAMINGWIKI_URL);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1012,7 +1052,11 @@ function applyGame(context, gameSpec) {
     {},
     "Open SteamDB Page",
     () => {
-      util.opn(STEAMDB_URL).catch(() => null);
+      try {
+        window.api.shell.openUrl(STEAMDB_URL);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1027,7 +1071,13 @@ function applyGame(context, gameSpec) {
     {},
     "View Changelog",
     () => {
-      util.opn(path.join(__dirname, "CHANGELOG.md")).catch(() => null);
+      try {
+        window.api.shell.openFile(path.join(__dirname, "CHANGELOG.md"));
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1042,7 +1092,11 @@ function applyGame(context, gameSpec) {
     {},
     "Submit Bug Report",
     () => {
-      util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+      try {
+        window.api.shell.openUrl(`${EXTENSION_URL}?tab=bugs`);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1057,7 +1111,13 @@ function applyGame(context, gameSpec) {
     {},
     "Open Downloads Folder",
     () => {
-      util.opn(DOWNLOAD_FOLDER).catch(() => null);
+      try {
+        window.api.shell.openFile(DOWNLOAD_FOLDER);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1067,7 +1127,11 @@ function applyGame(context, gameSpec) {
   );
 
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
-    util.opn(CONFIG_PATH).catch(() => null);
+    try {
+      window.api.shell.openFile(CONFIG_PATH);
+    } catch (err) {
+      context.api.showErrorNotification("Failed to open the file or folder", err, { allowReport: false });
+    }
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);

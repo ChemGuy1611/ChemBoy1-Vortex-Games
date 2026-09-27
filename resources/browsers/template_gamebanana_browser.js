@@ -86,7 +86,11 @@ context.registerAction(
   "Open GameBanana Page",
   () => {
     const { util } = require("vortex-api");
-    util.opn(`https://gamebanana.com/games/${GB_GAME_ID}`).catch(() => null);
+    try {
+      window.api.shell.openUrl(`https://gamebanana.com/games/${GB_GAME_ID}`);
+    } catch (err) {
+      context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+    }
   },
   () => {
     const state = context.api.getState();

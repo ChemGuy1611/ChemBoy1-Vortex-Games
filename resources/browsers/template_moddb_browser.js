@@ -96,7 +96,11 @@ context.registerAction(
   "Open ModDB Page",
   () => {
     const { util } = require("vortex-api");
-    util.opn(`https://www.moddb.com/${MODDB_PATH}`).catch(() => null);
+    try {
+      window.api.shell.openUrl(`https://www.moddb.com/${MODDB_PATH}`);
+    } catch (err) {
+      context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+    }
   },
   () => {
     const state = context.api.getState();

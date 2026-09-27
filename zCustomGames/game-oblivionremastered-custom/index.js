@@ -9,7 +9,7 @@ Date: 2025-04-25
 //Import libraries
 const fs = require("fs");
 const fsp = fs.promises;
-const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
+const { actions, fs: vfs, util, selectors, log, VortexError } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const {
@@ -1112,7 +1112,7 @@ async function downloadUe4ss(api, gameSpec) {
         .filter((file) => file.category_id === 1)
         .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
       if (file === undefined) {
-        throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+        throw new VortexError(`No ${MOD_NAME} main file found`, { kind: "process-canceled" });
       }
       //Download the mod
       const dlInfo = {
@@ -1120,13 +1120,23 @@ async function downloadUe4ss(api, gameSpec) {
         name: MOD_NAME,
       };
       const nxmUrl = `nxm://${gameSpec.game.id}/mods/${modPageId}/files/${file.file_id}`;
-      const dlId = await util.toPromise((cb) =>
-        api.events.emit("start-download", [nxmUrl], dlInfo, undefined, cb, undefined, {
-          allowInstall: false,
-        }),
+      const dlId = await new Promise((resolve, reject) =>
+        api.events.emit(
+          "start-download",
+          [nxmUrl],
+          dlInfo,
+          undefined,
+          (err, result) => (err ? reject(err) : resolve(result)),
+          undefined,
+          {
+            allowInstall: false,
+          },
+        ),
       );
-      const modId = await util.toPromise((cb) =>
-        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+      const modId = await new Promise((resolve, reject) =>
+        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, (err, result) =>
+          err ? reject(err) : resolve(result),
+        ),
       );
       const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
       const batched = [
@@ -1141,7 +1151,11 @@ async function downloadUe4ss(api, gameSpec) {
     } catch (err) {
       const errPage = `https://www.nexusmods.com/${gameSpec.game.id}/mods/${modPageId}/files/?tab=files`;
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.opn(errPage).catch(() => null);
+      try {
+        window.api.shell.openUrl(errPage);
+      } catch (openErr) {
+        api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
+      }
     } finally {
       api.dismissNotification(NOTIF_ID);
     }
@@ -1176,7 +1190,7 @@ async function downloadObse(api, gameSpec) {
         .filter((file) => file.category_id === 1)
         .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
       if (file === undefined) {
-        throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+        throw new VortexError(`No ${MOD_NAME} main file found`, { kind: "process-canceled" });
       }
       //Download the mod
       const dlInfo = {
@@ -1184,13 +1198,23 @@ async function downloadObse(api, gameSpec) {
         name: MOD_NAME,
       };
       const nxmUrl = `nxm://${gameSpec.game.id}/mods/${modPageId}/files/${file.file_id}`;
-      const dlId = await util.toPromise((cb) =>
-        api.events.emit("start-download", [nxmUrl], dlInfo, undefined, cb, undefined, {
-          allowInstall: false,
-        }),
+      const dlId = await new Promise((resolve, reject) =>
+        api.events.emit(
+          "start-download",
+          [nxmUrl],
+          dlInfo,
+          undefined,
+          (err, result) => (err ? reject(err) : resolve(result)),
+          undefined,
+          {
+            allowInstall: false,
+          },
+        ),
       );
-      const modId = await util.toPromise((cb) =>
-        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+      const modId = await new Promise((resolve, reject) =>
+        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, (err, result) =>
+          err ? reject(err) : resolve(result),
+        ),
       );
       const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
       const batched = [
@@ -1205,7 +1229,11 @@ async function downloadObse(api, gameSpec) {
     } catch (err) {
       const errPage = `https://www.nexusmods.com/${gameSpec.game.id}/mods/${modPageId}/files/?tab=files`;
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.opn(errPage).catch(() => null);
+      try {
+        window.api.shell.openUrl(errPage);
+      } catch (openErr) {
+        api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
+      }
     } finally {
       api.dismissNotification(NOTIF_ID);
     }
@@ -1353,7 +1381,9 @@ function chooseFilesToInstall(api, files, fileExt) {
       )
       .then((result) => {
         if (result.action === "Cancel")
-          return Promise.reject(new util.UserCanceled("User cancelled."));
+          return Promise.reject(
+            new VortexError("User cancelled.", { kind: "user-canceled", skipped: true }),
+          );
         else {
           const installAll =
             result.action === "Install All" || result.action === "Install All_plural";
@@ -1425,7 +1455,7 @@ async function deserializeLoadOrder(context) {
   //Set basic information for load order paths and data
   let gameDir = getDiscoveryPath(context.api);
   if (gameDir === undefined) {
-    return Promise.reject(new util.NotFound("Game not found"));
+    return Promise.reject(new VortexError("Game not found", { kind: "not-found" }));
   }
   const mods = context.api.store.getState()?.persistent?.mods?.[spec.game.id] ?? {};
   const loadOrderPath = path.join(gameDir, PLUGINSTXT_PATH);
@@ -1516,7 +1546,7 @@ async function deserializeLoadOrder(context) {
 async function serializeLoadOrder(context, loadOrder) {
   let gameDir = getDiscoveryPath(context.api);
   if (gameDir === undefined) {
-    return Promise.reject(new util.NotFound("Game not found"));
+    return Promise.reject(new VortexError("Game not found", { kind: "not-found" }));
   }
   const loadOrderPath = path.join(gameDir, PLUGINSTXT_PATH);
 
@@ -1841,7 +1871,13 @@ function applyGame(context, gameSpec) {
     () => {
       GAME_PATH = getDiscoveryPath(context.api);
       const openPath = path.join(GAME_PATH, UE5_ALT_PATH);
-      util.opn(openPath).catch(() => null);
+      try {
+        window.api.shell.openFile(openPath);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1858,7 +1894,13 @@ function applyGame(context, gameSpec) {
     () => {
       GAME_PATH = getDiscoveryPath(context.api);
       const openPath = path.join(GAME_PATH, BINARIES_PATH);
-      util.opn(openPath).catch(() => null);
+      try {
+        window.api.shell.openFile(openPath);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1875,7 +1917,13 @@ function applyGame(context, gameSpec) {
     () => {
       GAME_PATH = getDiscoveryPath(context.api);
       const openPath = path.join(GAME_PATH, SCRIPTS_PATH);
-      util.opn(openPath).catch(() => null);
+      try {
+        window.api.shell.openFile(openPath);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1892,7 +1940,13 @@ function applyGame(context, gameSpec) {
     () => {
       GAME_PATH = getDiscoveryPath(context.api);
       const openPath = path.join(GAME_PATH, PLUGINS_PATH);
-      util.opn(openPath).catch(() => null);
+      try {
+        window.api.shell.openFile(openPath);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1909,7 +1963,13 @@ function applyGame(context, gameSpec) {
     () => {
       const state = context.api.getState();
       const openPath = path.join(CONFIG_PATH);
-      util.opn(openPath).catch(() => null);
+      try {
+        window.api.shell.openFile(openPath);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1926,7 +1986,13 @@ function applyGame(context, gameSpec) {
     () => {
       const state = context.api.getState();
       const openPath = path.join(CONFIG_PATH, "Engine.ini");
-      util.opn(openPath).catch(() => null);
+      try {
+        window.api.shell.openFile(openPath);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1943,7 +2009,13 @@ function applyGame(context, gameSpec) {
     () => {
       const state = context.api.getState();
       const openPath = path.join(SAVE_PATH);
-      util.opn(openPath).catch(() => null);
+      try {
+        window.api.shell.openFile(openPath);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1974,7 +2046,13 @@ function applyGame(context, gameSpec) {
     "View Changelog",
     () => {
       const openPath = path.join(__dirname, "CHANGELOG.md");
-      util.opn(openPath).catch(() => null);
+      try {
+        window.api.shell.openFile(openPath);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1990,7 +2068,13 @@ function applyGame(context, gameSpec) {
     "Open Downloads Folder",
     () => {
       const openPath = DOWNLOAD_FOLDER;
-      util.opn(openPath).catch(() => null);
+      try {
+        window.api.shell.openFile(openPath);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -2008,7 +2092,13 @@ function applyGame(context, gameSpec) {
     () => {
       GAME_PATH = getDiscoveryPath(context.api);
       const openPath = path.join(GAME_PATH, PLUGINSTXT_PATH);
-      util.opn(openPath).catch(() => null);
+      try {
+        window.api.shell.openFile(openPath);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -2110,7 +2200,7 @@ async function willPurge(api, profileId) {
 async function purgeTxtBackup(api) {
   GAME_PATH = getDiscoveryPath(api);
   if (GAME_PATH === undefined) {
-    return Promise.reject(new util.NotFound("Game not found"));
+    return Promise.reject(new VortexError("Game not found", { kind: "not-found" }));
   }
 
   const source = path.join(GAME_PATH, PLUGINSTXT_PATH);
@@ -2129,7 +2219,9 @@ async function purgeTxtBackup(api) {
     return;
   } catch (err) {
     return Promise.reject(
-      new util.NotFound(`Plugins.txt could not be backed up - error: ${err.message}`),
+      new VortexError(`Plugins.txt could not be backed up - error: ${err.message}`, {
+        kind: "not-found",
+      }),
     );
   }
 }
@@ -2150,7 +2242,7 @@ async function willDeploy(api, profileId) {
 async function deployTxtRestore(api) {
   GAME_PATH = getDiscoveryPath(api);
   if (GAME_PATH === undefined) {
-    return Promise.reject(new util.NotFound("Game not found"));
+    return Promise.reject(new VortexError("Game not found", { kind: "not-found" }));
   }
 
   const source = path.join(GAME_PATH, PLUGINS_PATH, PLUGINSTXT_FILE_BAK);
@@ -2176,8 +2268,9 @@ async function deployTxtRestore(api) {
     }
   } catch (err) {
     return Promise.reject(
-      new util.NotFound(
+      new VortexError(
         `Plugins.txt could not be restored when deploying mods from default - error: ${err.message}`,
+        { kind: "not-found" },
       ),
     );
   }
@@ -2200,7 +2293,7 @@ async function didPurge(api, profileId) { //run on mod purge
 async function writePluginsTxtPurge(api) {
   GAME_PATH = getDiscoveryPath(api);
   if (GAME_PATH === undefined) {
-    return Promise.reject(new util.NotFound("Game not found"));
+    return Promise.reject(new VortexError("Game not found", { kind: "not-found" }));
   }
   return fsp.writeFile(path.join(GAME_PATH, PLUGINSTXT_PATH), `${PLUGINSTXT_DEFAULT_CONTENT}`, {
     encoding: "utf8",
@@ -2222,7 +2315,7 @@ async function didDeploy(api, profileId) { //run on mod deploy
 async function writePluginsTxtDeploy(api) {
   GAME_PATH = getDiscoveryPath(api);
   if (GAME_PATH === undefined) {
-    return Promise.reject(new util.NotFound('Game not found'));
+    return Promise.reject(new VortexError('Game not found', { kind: 'not-found' }));
   }
   //Get all .esm/esp/esl files from Data folder
   let modFiles = [];

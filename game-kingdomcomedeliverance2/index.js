@@ -9,7 +9,7 @@ Date: 2026-09-06
 //Import libraries
 const fs = require("fs");
 const fsp = fs.promises;
-const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
+const { actions, fs: vfs, util, selectors, log, VortexError } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const { parseStringPromise } = require("xml2js");
@@ -788,7 +788,13 @@ function fallbackInstallerNotify(api, modName) {
               {
                 label: "Contact Ext. Developer",
                 action: () => {
-                  util.opn(`${EXTENSION_URL}?tab=posts`).catch(() => null);
+                  try {
+                    window.api.shell.openUrl(`${EXTENSION_URL}?tab=posts`);
+                  } catch (err) {
+                    api.showErrorNotification("Failed to open the URL", err, {
+                      allowReport: false,
+                    });
+                  }
                   dismiss();
                 },
               }, //*/
@@ -796,7 +802,13 @@ function fallbackInstallerNotify(api, modName) {
               {
                 label: `Open Mod Page + Staging Folder`,
                 action: () => {
-                  util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
+                  try {
+                    window.api.shell.openFile(path.join(STAGING_FOLDER, modName));
+                  } catch (err) {
+                    api.showErrorNotification("Failed to open the file or folder", err, {
+                      allowReport: false,
+                    });
+                  }
                   const mods = api.store.getState()?.persistent?.mods?.[spec.game.id] ?? {};
                   const modMatch = Object.values(mods).find(
                     (mod) => mod.installationPath === modName,
@@ -810,7 +822,13 @@ function fallbackInstallerNotify(api, modName) {
                     }
                   }
                   const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
-                  util.opn(MOD_PAGE_URL).catch(() => null);
+                  try {
+                    window.api.shell.openUrl(MOD_PAGE_URL);
+                  } catch (err) {
+                    api.showErrorNotification("Failed to open the URL", err, {
+                      allowReport: false,
+                    });
+                  }
                   dismiss();
                 },
               }, //*/
@@ -858,7 +876,7 @@ async function deserializeLoadOrder(context) {
   //Set basic information for load order paths and data
   let gameDir = getDiscoveryPath(context.api);
   if (gameDir === undefined) {
-    return Promise.reject(new util.NotFound("Game not found"));
+    return Promise.reject(new VortexError("Game not found", { kind: "not-found" }));
   }
   GAME_VERSION = await setGameVersion(gameDir);
   const mods = context.api.store.getState()?.persistent?.mods?.[spec.game.id] ?? {};
@@ -1020,7 +1038,13 @@ async function deserializeLoadOrder(context) {
                       {
                         label: "Open Steam Workshop Page",
                         action: () => {
-                          util.opn(URL).catch(() => null);
+                          try {
+                            window.api.shell.openUrl(URL);
+                          } catch (openErr) {
+                            context.api.showErrorNotification("Failed to open the URL", openErr, {
+                              allowReport: false,
+                            });
+                          }
                           dismiss();
                         },
                       },
@@ -1156,7 +1180,7 @@ async function serializeLoadOrder(context, loadOrder) {
   } //*/
   let gameDir = getDiscoveryPath(context.api);
   if (gameDir === undefined) {
-    return Promise.reject(new util.NotFound("Game not found"));
+    return Promise.reject(new VortexError("Game not found", { kind: "not-found" }));
   }
   GAME_VERSION = await setGameVersion(gameDir);
   let loadOrderPath = path.join(gameDir, LO_PATH);
@@ -1371,9 +1395,21 @@ function applyGame(context, gameSpec) {
       GAME_PATH = getDiscoveryPath(context.api);
       GAME_VERSION = await setGameVersion(GAME_PATH);
       if (GAME_VERSION === "xbox") {
-        util.opn(path.join(DOCUMENTS, LOG_FILE)).catch(() => null);
+        try {
+          window.api.shell.openFile(path.join(DOCUMENTS, LOG_FILE));
+        } catch (err) {
+          context.api.showErrorNotification("Failed to open the file or folder", err, {
+            allowReport: false,
+          });
+        }
       } else {
-        util.opn(path.join(GAME_PATH, LOG_FILE)).catch(() => null);
+        try {
+          window.api.shell.openFile(path.join(GAME_PATH, LOG_FILE));
+        } catch (err) {
+          context.api.showErrorNotification("Failed to open the file or folder", err, {
+            allowReport: false,
+          });
+        }
       }
     },
     () => {
@@ -1392,9 +1428,21 @@ function applyGame(context, gameSpec) {
       GAME_PATH = getDiscoveryPath(context.api);
       GAME_VERSION = await setGameVersion(GAME_PATH);
       if (GAME_VERSION === "xbox") {
-        util.opn(LO_PATH_XBOX).catch(() => null);
+        try {
+          window.api.shell.openFile(LO_PATH_XBOX);
+        } catch (err) {
+          context.api.showErrorNotification("Failed to open the file or folder", err, {
+            allowReport: false,
+          });
+        }
       } else {
-        util.opn(path.join(GAME_PATH, LO_PATH)).catch(() => null);
+        try {
+          window.api.shell.openFile(path.join(GAME_PATH, LO_PATH));
+        } catch (err) {
+          context.api.showErrorNotification("Failed to open the file or folder", err, {
+            allowReport: false,
+          });
+        }
       }
     },
     () => {
@@ -1410,7 +1458,13 @@ function applyGame(context, gameSpec) {
     {},
     "Open Settings - attributes.xml",
     () => {
-      util.opn(path.join(CONFIG_PATH, CONFIG_FILE)).catch(() => null);
+      try {
+        window.api.shell.openFile(path.join(CONFIG_PATH, CONFIG_FILE));
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1425,7 +1479,13 @@ function applyGame(context, gameSpec) {
     {},
     "Open Config Folder",
     () => {
-      util.opn(CONFIG_PATH).catch(() => null);
+      try {
+        window.api.shell.openFile(CONFIG_PATH);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1440,7 +1500,13 @@ function applyGame(context, gameSpec) {
     {},
     "Open Saves Folder",
     () => {
-      util.opn(SAVE_PATH).catch(() => null);
+      try {
+        window.api.shell.openFile(SAVE_PATH);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1455,7 +1521,11 @@ function applyGame(context, gameSpec) {
     {},
     "Open PCGamingWiki Page",
     () => {
-      util.opn(PCGAMINGWIKI_URL).catch(() => null);
+      try {
+        window.api.shell.openUrl(PCGAMINGWIKI_URL);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1470,7 +1540,11 @@ function applyGame(context, gameSpec) {
     {},
     "Open SteamDB Page",
     () => {
-      util.opn(STEAMDB_URL).catch(() => null);
+      try {
+        window.api.shell.openUrl(STEAMDB_URL);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1485,7 +1559,13 @@ function applyGame(context, gameSpec) {
     {},
     "View Changelog",
     () => {
-      util.opn(path.join(__dirname, "CHANGELOG.md")).catch(() => null);
+      try {
+        window.api.shell.openFile(path.join(__dirname, "CHANGELOG.md"));
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1500,7 +1580,11 @@ function applyGame(context, gameSpec) {
     {},
     "Submit Bug Report",
     () => {
-      util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+      try {
+        window.api.shell.openUrl(`${EXTENSION_URL}?tab=bugs`);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1515,7 +1599,13 @@ function applyGame(context, gameSpec) {
     {},
     "Open Downloads Folder",
     () => {
-      util.opn(DOWNLOAD_FOLDER).catch(() => null);
+      try {
+        window.api.shell.openFile(DOWNLOAD_FOLDER);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -2184,7 +2274,15 @@ function FbloContextMenu({
   const openModFolders = (entries) => {
     entries
       .filter((e) => e.id !== undefined)
-      .forEach((e) => util.opn(path.join(modBasePath, e.id)).catch(() => null));
+      .forEach((e) => {
+        try {
+          window.api.shell.openFile(path.join(modBasePath, e.id));
+        } catch (err) {
+          context.api.showErrorNotification("Failed to open the file or folder", err, {
+            allowReport: false,
+          });
+        }
+      });
     onClose();
   };
   const itemVortexEnabled = isModEnabled(item);
@@ -2279,7 +2377,15 @@ function FbloContextMenu({
                 targets.map((t) => getModStagingFolder(context.api, t.modId)).filter(Boolean),
               ),
             ];
-            folders.forEach((folder) => util.opn(folder).catch(() => null));
+            folders.forEach((folder) => {
+              try {
+                window.api.shell.openFile(folder);
+              } catch (err) {
+                context.api.showErrorNotification("Failed to open the file or folder", err, {
+                  allowReport: false,
+                });
+              }
+            });
             onClose();
           })
         : null,
@@ -2329,13 +2435,25 @@ function FbloContextMenu({
     menuItem("Open Mod Folder", () => openModFolders([item])),
     stagingFolder
       ? menuItem("Open Staging Folder", () => {
-          util.opn(stagingFolder).catch(() => null);
+          try {
+            window.api.shell.openFile(stagingFolder);
+          } catch (err) {
+            context.api.showErrorNotification("Failed to open the file or folder", err, {
+              allowReport: false,
+            });
+          }
           onClose();
         })
       : null,
     modPageUrl
       ? menuItem("Open Mod Page", () => {
-          util.opn(modPageUrl).catch(() => null);
+          try {
+            window.api.shell.openUrl(modPageUrl);
+          } catch (err) {
+            context.api.showErrorNotification("Failed to open the URL", err, {
+              allowReport: false,
+            });
+          }
           onClose();
         })
       : null,

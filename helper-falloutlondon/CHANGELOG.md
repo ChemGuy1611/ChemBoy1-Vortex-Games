@@ -3,6 +3,7 @@
 ## Future Improvements (Not Yet Released)
 
 - Enable plugins automatically (may be challenging).
+- The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
 
 ## [0.1.6] - 2026-01-06
 

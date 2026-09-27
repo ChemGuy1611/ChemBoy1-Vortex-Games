@@ -339,7 +339,7 @@ function usesClickFetch(adapter) {
 // install, the mod entry, the attributes - is the normal pipeline. 'import-downloads' MOVES the
 // file into the download folder, so there is nothing left in temp to clean up afterwards.
 // It also calls back with (dlIds) and no error argument, unlike every other event here, so it
-// cannot go through util.toPromise - that would read the id array as the error and reject.
+// cannot use the usual (err, result) callback wrap - that would read the id array as the error and reject.
 async function importFetchedFile(adapter, api, config, url) {
   const filePath = await adapter.fetchToFile(config, url);
   if (filePath === null || filePath === undefined) {

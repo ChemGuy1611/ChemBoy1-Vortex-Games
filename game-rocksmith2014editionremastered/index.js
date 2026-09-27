@@ -9,7 +9,7 @@ Date: 2026-04-19
 //Import libraries
 const fs = require("fs");
 const fsp = fs.promises;
-const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
+const { actions, fs: vfs, util, selectors, log, VortexError } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const winapi = require("winapi-bindings");
@@ -505,11 +505,15 @@ async function browseForDownloadFunction(
           //result is an array with the URL to the downloaded file as the only element
           if (!result || !result.length) {
             //user clicks outside the window without downloading
-            return reject(new util.UserCanceled());
+            return reject(
+              new VortexError("User canceled", { kind: "user-canceled", skipped: false }),
+            );
           }
           if (!result[0].toLowerCase().includes(ARCHIVE_NAME)) {
             //if user downloads the wrong file
-            return reject(new util.UserCanceled("Selected wrong download"));
+            return reject(
+              new VortexError("Selected wrong download", { kind: "user-canceled", skipped: true }),
+            );
           }
           return Promise.resolve(result);
         })
@@ -564,20 +568,24 @@ async function browseForDownloadFunction(
           );
         });
     }).catch((err) => {
-      if (err instanceof util.UserCanceled) {
+      if (err?.data?.kind === "user-canceled") {
         api.showErrorNotification(
           `User cancelled download/install of ${MOD_NAME}. Please try again.`,
           err,
           { allowReport: false },
         );
         return Promise.resolve();
-      } else if (err instanceof util.ProcessCanceled) {
+      } else if (err?.data?.kind === "process-canceled") {
         api.showErrorNotification(
           `Failed to download/install ${MOD_NAME}. Please re-launch Vortex and try again or download manually from the opened page..`,
           err,
           { allowReport: false },
         );
-        util.opn(URL).catch(() => null);
+        try {
+          window.api.shell.openUrl(URL);
+        } catch (openErr) {
+          api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
+        }
         return Promise.reject(err);
       } else {
         return Promise.reject(err);
@@ -595,11 +603,15 @@ async function browseForDownloadFunction(
           //result is an array with the URL to the downloaded file as the only element
           if (!result || !result.length) {
             //user clicks outside the window without downloading
-            return reject(new util.UserCanceled());
+            return reject(
+              new VortexError("User canceled", { kind: "user-canceled", skipped: false }),
+            );
           }
           if (!result[0].toLowerCase().includes(ARCHIVE_NAME)) {
             //if user downloads the wrong file
-            return reject(new util.UserCanceled("Selected wrong download"));
+            return reject(
+              new VortexError("Selected wrong download", { kind: "user-canceled", skipped: true }),
+            );
           }
           return Promise.resolve(result);
         })
@@ -655,20 +667,24 @@ async function browseForDownloadFunction(
           );
         });
     }).catch((err) => {
-      if (err instanceof util.UserCanceled) {
+      if (err?.data?.kind === "user-canceled") {
         api.showErrorNotification(
           `User cancelled download/install of ${MOD_NAME}. Please try again.`,
           err,
           { allowReport: false },
         );
         return Promise.resolve();
-      } else if (err instanceof util.ProcessCanceled) {
+      } else if (err?.data?.kind === "process-canceled") {
         api.showErrorNotification(
           `Failed to download/install ${MOD_NAME}. Please re-launch Vortex and try again or download manually from the opened page..`,
           err,
           { allowReport: false },
         );
-        util.opn(URL).catch(() => null);
+        try {
+          window.api.shell.openUrl(URL);
+        } catch (openErr) {
+          api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
+        }
         return Promise.reject(err);
       } else {
         return Promise.reject(err);
@@ -686,11 +702,15 @@ async function browseForDownloadFunction(
           //result is an array with the URL to the downloaded file as the only element
           if (!result || !result.length) {
             //user clicks outside the window without downloading
-            return reject(new util.UserCanceled());
+            return reject(
+              new VortexError("User canceled", { kind: "user-canceled", skipped: false }),
+            );
           }
           if (!result[0].toLowerCase().includes(ARCHIVE_NAME)) {
             //if user downloads the wrong file
-            return reject(new util.UserCanceled("Selected wrong download"));
+            return reject(
+              new VortexError("Selected wrong download", { kind: "user-canceled", skipped: true }),
+            );
           }
           return Promise.resolve(result);
         })
@@ -722,20 +742,24 @@ async function browseForDownloadFunction(
           );
         });
     }).catch((err) => {
-      if (err instanceof util.UserCanceled) {
+      if (err?.data?.kind === "user-canceled") {
         api.showErrorNotification(
           `User cancelled download/install of ${MOD_NAME}. Please re-launch Vortex and try again.`,
           err,
           { allowReport: false },
         );
         return Promise.resolve();
-      } else if (err instanceof util.ProcessCanceled) {
+      } else if (err?.data?.kind === "process-canceled") {
         api.showErrorNotification(
           `Failed to download/install ${MOD_NAME}. Please re-launch Vortex and try again or download manually from the opened page.`,
           err,
           { allowReport: false },
         );
-        util.opn(URL).catch(() => null);
+        try {
+          window.api.shell.openUrl(URL);
+        } catch (openErr) {
+          api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
+        }
         return Promise.reject(err);
       } else {
         return Promise.reject(err);
@@ -753,11 +777,15 @@ async function browseForDownloadFunction(
           //result is an array with the URL to the downloaded file as the only element
           if (!result || !result.length) {
             //user clicks outside the window without downloading
-            return reject(new util.UserCanceled());
+            return reject(
+              new VortexError("User canceled", { kind: "user-canceled", skipped: false }),
+            );
           }
           if (!result[0].toLowerCase().includes(ARCHIVE_NAME)) {
             //if user downloads the wrong file
-            return reject(new util.UserCanceled("Selected wrong download"));
+            return reject(
+              new VortexError("Selected wrong download", { kind: "user-canceled", skipped: true }),
+            );
           }
           return Promise.resolve(result);
         })
@@ -790,20 +818,24 @@ async function browseForDownloadFunction(
           );
         });
     }).catch((err) => {
-      if (err instanceof util.UserCanceled) {
+      if (err?.data?.kind === "user-canceled") {
         api.showErrorNotification(
           `User cancelled download/install of ${MOD_NAME}. Please re-launch Vortex and try again.`,
           err,
           { allowReport: false },
         );
         return Promise.resolve();
-      } else if (err instanceof util.ProcessCanceled) {
+      } else if (err?.data?.kind === "process-canceled") {
         api.showErrorNotification(
           `Failed to download/install ${MOD_NAME}. Please re-launch Vortex and try again or download manually from the opened page.`,
           err,
           { allowReport: false },
         );
-        util.opn(URL).catch(() => null);
+        try {
+          window.api.shell.openUrl(URL);
+        } catch (openErr) {
+          api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
+        }
         return Promise.reject(err);
       } else {
         return Promise.reject(err);
@@ -821,11 +853,15 @@ async function browseForDownloadFunction(
           //result is an array with the URL to the downloaded file as the only element
           if (!result || !result.length) {
             //user clicks outside the window without downloading
-            return reject(new util.UserCanceled());
+            return reject(
+              new VortexError("User canceled", { kind: "user-canceled", skipped: false }),
+            );
           }
           if (!result[0].toLowerCase().includes(ARCHIVE_NAME)) {
             //if user downloads the wrong file
-            return reject(new util.UserCanceled("Selected wrong download"));
+            return reject(
+              new VortexError("Selected wrong download", { kind: "user-canceled", skipped: true }),
+            );
           }
           return Promise.resolve(result);
         })
@@ -865,20 +901,24 @@ async function browseForDownloadFunction(
           );
         });
     }).catch((err) => {
-      if (err instanceof util.UserCanceled) {
+      if (err?.data?.kind === "user-canceled") {
         api.showErrorNotification(
           `User cancelled download/install of ${MOD_NAME}. Please try again.`,
           err,
           { allowReport: false },
         );
         return Promise.resolve();
-      } else if (err instanceof util.ProcessCanceled) {
+      } else if (err?.data?.kind === "process-canceled") {
         api.showErrorNotification(
           `Failed to download/install ${MOD_NAME}. Please re-launch Vortex and try again or download manually from the opened page.`,
           err,
           { allowReport: false },
         );
-        util.opn(URL).catch(() => null);
+        try {
+          window.api.shell.openUrl(URL);
+        } catch (openErr) {
+          api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
+        }
         return Promise.reject(err);
       } else {
         return Promise.reject(err);
@@ -1270,7 +1310,7 @@ async function downloadNoCable(discovery, api, gameSpec) {
           .reverse()[0];
         if (file === undefined) {
           // use defined file ID if input is undefined above
-          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+          throw new VortexError(`No ${MOD_NAME} main file found`, { kind: "process-canceled" });
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
@@ -1283,13 +1323,23 @@ async function downloadNoCable(discovery, api, gameSpec) {
         game: gameSpec.game.id, // set to the game's ID so that they wil not get a game selection popup. Vortex will update the metadata automatically if the mod is from another domain, such as 'site'
         name: MOD_NAME,
       };
-      const dlId = await util.toPromise((cb) =>
-        api.events.emit("start-download", [URL], dlInfo, undefined, cb, undefined, {
-          allowInstall: false,
-        }),
+      const dlId = await new Promise((resolve, reject) =>
+        api.events.emit(
+          "start-download",
+          [URL],
+          dlInfo,
+          undefined,
+          (err, result) => (err ? reject(err) : resolve(result)),
+          undefined,
+          {
+            allowInstall: false,
+          },
+        ),
       );
-      const modId = await util.toPromise((cb) =>
-        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+      const modId = await new Promise((resolve, reject) =>
+        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, (err, result) =>
+          err ? reject(err) : resolve(result),
+        ),
       );
       const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
       const batched = [
@@ -1304,7 +1354,11 @@ async function downloadNoCable(discovery, api, gameSpec) {
     } catch (err) {
       const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.opn(errPage).catch(() => null);
+      try {
+        window.api.shell.openUrl(errPage);
+      } catch (openErr) {
+        api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
+      }
     } finally {
       api.dismissNotification(NOTIF_ID);
     }
@@ -1423,11 +1477,15 @@ async function browseForAsio4all(
           //result is an array with the URL to the downloaded file as the only element
           if (!result || !result.length) {
             //user clicks outside the window without downloading
-            return reject(new util.UserCanceled());
+            return reject(
+              new VortexError("User canceled", { kind: "user-canceled", skipped: false }),
+            );
           }
           if (!result[0].toLowerCase().includes(ARCHIVE_NAME)) {
             //if user downloads the wrong file
-            return reject(new util.UserCanceled("Selected wrong download"));
+            return reject(
+              new VortexError("Selected wrong download", { kind: "user-canceled", skipped: true }),
+            );
           }
           return Promise.resolve(result);
         })
@@ -1471,20 +1529,24 @@ async function browseForAsio4all(
           );
         });
     }).catch((err) => {
-      if (err instanceof util.UserCanceled) {
+      if (err?.data?.kind === "user-canceled") {
         api.showErrorNotification(
           `User cancelled download/install of ${MOD_NAME}. Please re-launch Vortex and try again.`,
           err,
           { allowReport: false },
         );
         return Promise.resolve();
-      } else if (err instanceof util.ProcessCanceled) {
+      } else if (err?.data?.kind === "process-canceled") {
         api.showErrorNotification(
           `Failed to download/install ${MOD_NAME}. Please re-launch Vortex and try again or download manually from the opened page.`,
           err,
           { allowReport: false },
         );
-        util.opn(URL).catch(() => null);
+        try {
+          window.api.shell.openUrl(URL);
+        } catch (openErr) {
+          api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
+        }
         return Promise.reject(err);
       } else {
         return Promise.reject(err);
@@ -1605,11 +1667,15 @@ async function browseForDlcBuilder(
           //result is an array with the URL to the downloaded file as the only element
           if (!result || !result.length) {
             //user clicks outside the window without downloading
-            return reject(new util.UserCanceled());
+            return reject(
+              new VortexError("User canceled", { kind: "user-canceled", skipped: false }),
+            );
           }
           if (!result[0].toLowerCase().includes(ARCHIVE_NAME)) {
             //if user downloads the wrong file
-            return reject(new util.UserCanceled("Selected wrong download"));
+            return reject(
+              new VortexError("Selected wrong download", { kind: "user-canceled", skipped: true }),
+            );
           }
           return Promise.resolve(result);
         })
@@ -1653,20 +1719,24 @@ async function browseForDlcBuilder(
           );
         });
     }).catch((err) => {
-      if (err instanceof util.UserCanceled) {
+      if (err?.data?.kind === "user-canceled") {
         api.showErrorNotification(
           `User cancelled download/install of ${MOD_NAME}. Please re-launch Vortex and try again.`,
           err,
           { allowReport: false },
         );
         return Promise.resolve();
-      } else if (err instanceof util.ProcessCanceled) {
+      } else if (err?.data?.kind === "process-canceled") {
         api.showErrorNotification(
           `Failed to download/install ${MOD_NAME}. Please re-launch Vortex and try again or download manually from the opened page.`,
           err,
           { allowReport: false },
         );
-        util.opn(URL).catch(() => null);
+        try {
+          window.api.shell.openUrl(URL);
+        } catch (openErr) {
+          api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
+        }
         return Promise.reject(err);
       } else {
         return Promise.reject(err);
@@ -1704,11 +1774,19 @@ async function downloadCdlcSongs(discovery, api, gameSpec) {
       //return resolve();
     }); //*/
     //util.doBrowse(api, URL, instructions, MOD_TYPE, true)
-    util.opn(URL).catch(() => null);
+    try {
+      window.api.shell.openUrl(URL);
+    } catch (err) {
+      api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+    }
     return resolve();
   }).catch((err) => {
     api.showErrorNotification(`Browser error`, err, { allowReport: false });
-    util.opn(URL).catch(() => null);
+    try {
+      window.api.shell.openUrl(URL);
+    } catch (openErr) {
+      api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
+    }
     return Promise.reject(err);
   });
 } //*/
@@ -1893,7 +1971,7 @@ function setupNotify(discovery, api, gameSpec) {
                 label: `Download CDLC Songs`,
                 action: () => {
                   const openPath = CDLCMOD_URL;
-                  //util.opn(openPath).catch(() => null);
+                  //window.api.shell.openFile(openPath);
                   downloadCdlcSongs(discovery, api, gameSpec);
                   dismiss();
                 },
@@ -1980,7 +2058,13 @@ function applyGame(context, gameSpec) {
       const state = context.api.getState();
       const discovery = selectors.discoveryByGame(state, GAME_ID);
       const openPath = path.join(discovery.path, SETTINGS_FILE);
-      util.opn(openPath).catch(() => null);
+      try {
+        window.api.shell.openFile(openPath);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1998,7 +2082,13 @@ function applyGame(context, gameSpec) {
       const state = context.api.getState();
       const discovery = selectors.discoveryByGame(state, GAME_ID);
       const openPath = path.join(discovery.path, RSMODS_SETTINGS_FILE);
-      util.opn(openPath).catch(() => null);
+      try {
+        window.api.shell.openFile(openPath);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -2016,7 +2106,13 @@ function applyGame(context, gameSpec) {
       const state = context.api.getState();
       const discovery = selectors.discoveryByGame(state, GAME_ID);
       const openPath = path.join(discovery.path, NOCABLE_SETTINGS_FILE);
-      util.opn(openPath).catch(() => null);
+      try {
+        window.api.shell.openFile(openPath);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -2210,7 +2306,11 @@ function applyGame(context, gameSpec) {
     {},
     "Open PCGamingWiki Page",
     () => {
-      util.opn(PCGAMINGWIKI_URL).catch(() => null);
+      try {
+        window.api.shell.openUrl(PCGAMINGWIKI_URL);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -2225,7 +2325,11 @@ function applyGame(context, gameSpec) {
     {},
     "Open SteamDB Page",
     () => {
-      util.opn(STEAMDB_URL).catch(() => null);
+      try {
+        window.api.shell.openUrl(STEAMDB_URL);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -2240,7 +2344,13 @@ function applyGame(context, gameSpec) {
     {},
     "View Changelog",
     () => {
-      util.opn(path.join(__dirname, "CHANGELOG.md")).catch(() => null);
+      try {
+        window.api.shell.openFile(path.join(__dirname, "CHANGELOG.md"));
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -2255,7 +2365,11 @@ function applyGame(context, gameSpec) {
     {},
     "Submit Bug Report",
     () => {
-      util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+      try {
+        window.api.shell.openUrl(`${EXTENSION_URL}?tab=bugs`);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -2270,7 +2384,13 @@ function applyGame(context, gameSpec) {
     {},
     "Open Downloads Folder",
     () => {
-      util.opn(DOWNLOAD_FOLDER).catch(() => null);
+      try {
+        window.api.shell.openFile(DOWNLOAD_FOLDER);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -2280,14 +2400,22 @@ function applyGame(context, gameSpec) {
   );
 
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
-    util.opn(CONFIG_PATH).catch(() => null);
+    try {
+      window.api.shell.openFile(CONFIG_PATH);
+    } catch (err) {
+      context.api.showErrorNotification("Failed to open the file or folder", err, { allowReport: false });
+    }
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   }); //*/
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
-    util.opn(SAVE_PATH).catch(() => null);
+    try {
+      window.api.shell.openFile(SAVE_PATH);
+    } catch (err) {
+      context.api.showErrorNotification("Failed to open the file or folder", err, { allowReport: false });
+    }
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);

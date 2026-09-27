@@ -4,6 +4,7 @@
 
 - Fixed: Mod files with no file extension were skipped during installation
 - Added "Open PCGamingWiki Page" and "Open SteamDB Page" buttons.
+- The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
 
 ## [0.6.1] - 2026-05-10
 

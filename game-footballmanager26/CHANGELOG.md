@@ -2,6 +2,11 @@
 
 ## Planned Improvements (Not Yet Released)
 
+## [1.1.1] - 2026-09-27
+
+- Fixed: a non-Xbox install could be misidentified as the Xbox version, showing the wrong installed game version.
+- The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
+
 ## [1.1.0] - 2026-09-20
 
 - Added: "Browse Thunderstore" page, which opens the Football Manager 26 Thunderstore site inside Vortex. Downloads started from it are installed, enabled, and named automatically, and any mods they depend on can be installed with them.

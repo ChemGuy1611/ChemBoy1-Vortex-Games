@@ -473,8 +473,9 @@ base skips both.
 the `mods.farcry.info` database is not a download route).
 `MODDB_API.md` (the fifth source: the RSS feed, the download-start interstitial, the mirror URL, and
 the bot-block that forces `fetchStrategy: 'click'`).
-`DEPRECATED_METHODS.md` (`util.toPromise`, used throughout these modules to wrap callback-based
-download events — and the one event, `import-downloads`, that cannot go through it).
+`DEPRECATED_METHODS.md` (the `new Promise` form these modules use to wrap callback-based download
+events in place of the deprecated `util.toPromise` — and the one event, `import-downloads`, that
+needs a different wrap).
 `VORTEX_REACT_PAGES.md` (`registerMainPage` and the page component API).
 `VORTEX_MOD_INSTALL.md` (what `start-install-download` hands the archive to).
 `VORTEX_DOWNLOAD_MGMT.md` (download states, protocol handlers, `did-finish-download`).

@@ -31,7 +31,7 @@ const path = require("path");
 const { finished } = require("stream/promises");
 const fs = require("fs");
 const fsp = fs.promises;
-const { actions, log, selectors, util } = require("vortex-api");
+const { actions, log, selectors, util, VortexError } = require("vortex-api");
 
 // --- requirement helpers --------------------------------------------------
 
@@ -258,11 +258,13 @@ async function fetchAndImportModDbFile(api, requirement, url, cause) {
     // otherwise a partially written file is left behind in the temp folder.
     await streamToFile(response.body, tempPath);
     // 'import-downloads' calls back with (dlIds) - no error argument - unlike
-    // 'start-download'/'start-install-download', so it can't go through util.toPromise.
+    // 'start-download'/'start-install-download', so it can't use the usual (err, result) callback wrap.
     const dlId = await new Promise((resolve, reject) => {
       api.events.emit("import-downloads", [tempPath], (dlIds) => {
         const id = dlIds?.[0];
-        return id === undefined ? reject(new util.NotFound(tempPath)) : resolve(id);
+        return id === undefined
+          ? reject(new VortexError(tempPath, { kind: "not-found" }))
+          : resolve(id);
       });
     });
     // Declare the origin before the install pipeline reads it. InstallManager re-reads the
@@ -274,8 +276,10 @@ async function fetchAndImportModDbFile(api, requirement, url, cause) {
     // "Other" label is 'unsupported'), and an unregistered id leaves the Source column
     // blank. See https://github.com/Nexus-Mods/Vortex/issues/21979.
     api.store.dispatch(actions.setDownloadModInfo(dlId, "source", "website"));
-    return await util.toPromise((cb) =>
-      api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+    return await new Promise((resolve, reject) =>
+      api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, (err, result) =>
+        err ? reject(err) : resolve(result),
+      ),
     );
   } finally {
     await fsp.rm(tempPath, { recursive: true, force: true }).catch(() => null);
@@ -342,13 +346,15 @@ async function downloadModDbRequirement(api, gameSpec, requirement, check = true
         ? latestFile.id
         : requirement.fallbackFileId;
     if (!fileId) {
-      throw new util.ProcessCanceled(
-        "ModDB RSS feed is unreachable and no fallback file id is set",
-      );
+      throw new VortexError("ModDB RSS feed is unreachable and no fallback file id is set", {
+        kind: "process-canceled",
+      });
     }
     const mirrorUrl = await resolveModDbDownloadUrl(fileId);
     if (!mirrorUrl) {
-      throw new util.ProcessCanceled("Could not resolve a ModDB mirror URL for the file");
+      throw new VortexError("Could not resolve a ModDB mirror URL for the file", {
+        kind: "process-canceled",
+      });
     }
     const dlInfo = {
       game: gameSpec.game.id,
@@ -361,10 +367,18 @@ async function downloadModDbRequirement(api, gameSpec, requirement, check = true
     } else {
       try {
         //primary route: hand the mirror URL to Vortex's download manager
-        const dlId = await util.toPromise((cb) =>
-          api.events.emit("start-download", [mirrorUrl], dlInfo, undefined, cb, undefined, {
-            allowInstall: false,
-          }),
+        const dlId = await new Promise((resolve, reject) =>
+          api.events.emit(
+            "start-download",
+            [mirrorUrl],
+            dlInfo,
+            undefined,
+            (err, result) => (err ? reject(err) : resolve(result)),
+            undefined,
+            {
+              allowInstall: false,
+            },
+          ),
         );
         // Declare the origin before the install pipeline reads it. InstallManager re-reads the
         // download from live state right before running the attribute extractors, and
@@ -375,8 +389,13 @@ async function downloadModDbRequirement(api, gameSpec, requirement, check = true
         // "Other" label is 'unsupported'), and an unregistered id leaves the Source column
         // blank. See https://github.com/Nexus-Mods/Vortex/issues/21979.
         api.store.dispatch(actions.setDownloadModInfo(dlId, "source", "website"));
-        modId = await util.toPromise((cb) =>
-          api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+        modId = await new Promise((resolve, reject) =>
+          api.events.emit(
+            "start-install-download",
+            dlId,
+            { allowAutoEnable: false },
+            (err, result) => (err ? reject(err) : resolve(result)),
+          ),
         );
       } catch (dlErr) {
         //fallback route: ModDB's www host blocks some non-browser clients - fetch it directly instead
@@ -439,7 +458,11 @@ async function downloadModDbRequirement(api, gameSpec, requirement, check = true
       `Failed to download/install ${requirement.userFacingName}. You must download manually.`,
       err,
     );
-    util.opn(pageUrl(requirement)).catch(() => null);
+    try {
+      window.api.shell.openUrl(pageUrl(requirement));
+    } catch (openErr) {
+      api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
+    }
   } finally {
     activeInstalls.delete(requirement.modType);
     api.dismissNotification(NOTIF_ID);

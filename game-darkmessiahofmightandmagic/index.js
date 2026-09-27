@@ -428,10 +428,10 @@ async function downloadLauncherManual(api, gameSpec, check = true) {
       return api.emitAndAwait('browse-for-download', URL, instructions)
       .then((result) => { //result is an array with the URL to the downloaded file as the only element
         if (!result || !result.length) { //user clicks outside the window without downloading
-          return reject(new util.UserCanceled());
+          return reject(new VortexError('User canceled', { kind: 'user-canceled', skipped: false }));
         }
         if (!result[0].includes(ARCHIVE_NAME)) { //if user downloads the wrong file
-          return reject(new util.UserCanceled('Selected wrong download'));
+          return reject(new VortexError('Selected wrong download', { kind: 'user-canceled', skipped: true }));
         }
         return Promise.resolve(result);
       })
@@ -468,12 +468,16 @@ async function downloadLauncherManual(api, gameSpec, check = true) {
       });
     })
     .catch(err => {
-      if (err instanceof util.UserCanceled) {
+      if (err?.data?.kind === 'user-canceled') {
         api.showErrorNotification(`User cancelled download/install of ${MOD_NAME}. Please re-launch Vortex and try again.`, err, { allowReport: false });
         return Promise.resolve();
-      } else if (err instanceof util.ProcessCanceled) {
+      } else if (err?.data?.kind === 'process-canceled') {
         api.showErrorNotification(`Failed to download/install ${MOD_NAME}. Please re-launch Vortex and try again or download manually from modDB at the opened paged and install the zip in Vortex.`, err, { allowReport: false });
-        util.opn(URL).catch(() => null);
+        try {
+          window.api.shell.openUrl(URL);
+        } catch (openErr) {
+          api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
+        }
         return Promise.reject(err);
       } else {
         return Promise.reject(err);
@@ -1048,7 +1052,13 @@ function applyGame(context, gameSpec) {
     "Open config.cfg",
     async () => {
       GAME_PATH = getDiscoveryPath(context.api);
-      util.opn(path.join(GAME_PATH, CONFIG_PATH, CONFIG_FILE)).catch(() => null);
+      try {
+        window.api.shell.openFile(path.join(GAME_PATH, CONFIG_PATH, CONFIG_FILE));
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1064,7 +1074,13 @@ function applyGame(context, gameSpec) {
     "Open Saves Folder",
     async () => {
       GAME_PATH = getDiscoveryPath(context.api);
-      util.opn(path.join(GAME_PATH, SAVE_PATH)).catch(() => null);
+      try {
+        window.api.shell.openFile(path.join(GAME_PATH, SAVE_PATH));
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1079,7 +1095,11 @@ function applyGame(context, gameSpec) {
     {},
     "Open PCGamingWiki Page",
     () => {
-      util.opn(PCGAMINGWIKI_URL).catch(() => null);
+      try {
+        window.api.shell.openUrl(PCGAMINGWIKI_URL);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1094,7 +1114,11 @@ function applyGame(context, gameSpec) {
     {},
     "Open SteamDB Page",
     () => {
-      util.opn(STEAMDB_URL).catch(() => null);
+      try {
+        window.api.shell.openUrl(STEAMDB_URL);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1110,7 +1134,13 @@ function applyGame(context, gameSpec) {
     "View Changelog",
     () => {
       const openPath = path.join(__dirname, "CHANGELOG.md");
-      util.opn(openPath).catch(() => null);
+      try {
+        window.api.shell.openFile(openPath);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1125,7 +1155,11 @@ function applyGame(context, gameSpec) {
     {},
     "Submit Bug Report",
     () => {
-      util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+      try {
+        window.api.shell.openUrl(`${EXTENSION_URL}?tab=bugs`);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1140,7 +1174,13 @@ function applyGame(context, gameSpec) {
     {},
     "Open Downloads Folder",
     () => {
-      util.opn(DOWNLOAD_FOLDER).catch(() => null);
+      try {
+        window.api.shell.openFile(DOWNLOAD_FOLDER);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1150,14 +1190,22 @@ function applyGame(context, gameSpec) {
   );
 
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
-    util.opn(CONFIG_PATH).catch(() => null);
+    try {
+      window.api.shell.openFile(CONFIG_PATH);
+    } catch (err) {
+      context.api.showErrorNotification("Failed to open the file or folder", err, { allowReport: false });
+    }
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   }); //*/
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
-    util.opn(SAVE_PATH).catch(() => null);
+    try {
+      window.api.shell.openFile(SAVE_PATH);
+    } catch (err) {
+      context.api.showErrorNotification("Failed to open the file or folder", err, { allowReport: false });
+    }
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);

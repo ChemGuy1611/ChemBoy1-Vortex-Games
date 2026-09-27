@@ -32,7 +32,7 @@
 // getLatestCodebergVersion.
 
 const semver = require("semver");
-const { actions, log, selectors, util } = require("vortex-api");
+const { actions, log, selectors, util, VortexError } = require("vortex-api");
 
 const DEFAULT_API_BASE = "https://codeberg.org/api/v1";
 // Releases are listed newest-first; this only caps how far back a scan for a matching asset
@@ -371,7 +371,7 @@ async function downloadCodebergRequirement(api, gameSpec, requirement, check = t
     //Download the mod
     const asset = await getLatestCodebergAsset(api, requirement);
     if (!asset) {
-      throw new util.ProcessCanceled("No downloadable release asset found");
+      throw new VortexError("No downloadable release asset found", { kind: "process-canceled" });
     }
     const latestVersion = await getLatestCodebergVersion(requirement, asset);
     const dlInfo = {
@@ -379,13 +379,13 @@ async function downloadCodebergRequirement(api, gameSpec, requirement, check = t
       name: requirement.userFacingName,
     };
     //the asset URL is a plain unauthenticated 200 - it goes straight to the download manager
-    const dlId = await util.toPromise((cb) =>
+    const dlId = await new Promise((resolve, reject) =>
       api.events.emit(
         "start-download",
         [asset.browser_download_url],
         dlInfo,
         undefined,
-        cb,
+        (err, result) => (err ? reject(err) : resolve(result)),
         undefined,
         { allowInstall: false },
       ),
@@ -399,8 +399,10 @@ async function downloadCodebergRequirement(api, gameSpec, requirement, check = t
     // "Other" label is 'unsupported'), and an unregistered id leaves the Source column
     // blank. See https://github.com/Nexus-Mods/Vortex/issues/21979.
     api.store.dispatch(actions.setDownloadModInfo(dlId, "source", "website"));
-    const modId = await util.toPromise((cb) =>
-      api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+    const modId = await new Promise((resolve, reject) =>
+      api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, (err, result) =>
+        err ? reject(err) : resolve(result),
+      ),
     );
     const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
     const batched = [
@@ -453,7 +455,11 @@ async function downloadCodebergRequirement(api, gameSpec, requirement, check = t
       `Failed to download/install ${requirement.userFacingName}. You must download manually.`,
       err,
     );
-    util.opn(pageUrl(requirement)).catch(() => null);
+    try {
+      window.api.shell.openUrl(pageUrl(requirement));
+    } catch (openErr) {
+      api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
+    }
   } finally {
     activeInstalls.delete(requirement.modType);
     api.dismissNotification(NOTIF_ID);

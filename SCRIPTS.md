@@ -1521,7 +1521,9 @@ Same shape as `convert_getsafe.py`'s output — see that entry above.
 
 ## convert_error_classes.py
 
-Codemod (plan `swirling-dazzling-dolphin`): converts the 10 deprecated `util.<Class>(...)` error constructors (`UserCanceled`, `ProcessCanceled`, `DataInvalid`, `SetupError`, `MissingInterpreter`, `NotFound`, `NotSupportedError`, `ArgumentInvalid`, `CycleError`, `GameNotFound`) to direct `VortexError(message, { kind, ...payload })` construction. All 10 already `extend VortexError<kind>` with identical constructor args/instanceof/data shape since v2.5.0, and this repo has zero `instanceof <Class>` call sites (grepped before writing this), so the rewrite is behavior-preserving.
+Codemod (plan `swirling-dazzling-dolphin`): converts the 10 deprecated `util.<Class>(...)` error constructors (`UserCanceled`, `ProcessCanceled`, `DataInvalid`, `SetupError`, `MissingInterpreter`, `NotFound`, `NotSupportedError`, `ArgumentInvalid`, `CycleError`, `GameNotFound`) to direct `VortexError(message, { kind, ...payload })` construction, and rewrites every `x instanceof util.<Class>` check to `x?.data?.kind === "<kind>"` in the same pass.
+
+The two halves must travel together. All 10 classes `extend VortexError<kind>` since v2.5.0, but a plain `new VortexError(msg, { kind })` is **not** `instanceof` the subclass — the classes define no `Symbol.hasInstance`, and Vortex only rebuilds the subclass when an error crosses IPC, never within one extension's own throw and catch. Converting throws alone would silently break every same-file `instanceof util.X` branch (the shared `downloader.js` requirement loop, for one, would turn a quiet "skipped requirement" into a visible error). The kind check matches both shapes, so it is also applied in files whose throws cannot be converted.
 
 `VortexError` is a top-level `vortex-api` export, not under `util.*`, so every converted file also needs it added to its `require('vortex-api')` destructure — done via the shared `ensure_vortex_api_name()` helper in `vortex_utils.py` (also usable by any future script with the same "add a name to this import" problem). A file whose `vortex-api` import is namespace-style, or that binds `util` from more than one destructure, is skipped whole rather than left with a call site referencing an unimported name.
 
@@ -1544,7 +1546,7 @@ Same `--scope`/`--batch`/`--diff`/`--dry-run`/`--verbose` semantics as `convert_
 
 ### convert_error_classes.py — Output
 
-Same shape as `convert_getsafe.py`'s output, plus a `files skipped (import)` counter and a `WARNING - skipped whole file -- <reason>` line for any file where `VortexError` could not be safely added to the `vortex-api` import.
+Same shape as `convert_getsafe.py`'s output, plus an `instanceof checks converted` counter, a `files skipped (import)` counter, and a `WARNING - skipped whole file -- <reason>` line for any file where `VortexError` could not be safely added to the `vortex-api` import (its constructor calls stay untouched; its `instanceof` checks are still converted, since they need no import). Per-file lines read `Converted N call(s), M check(s)`.
 
 ---
 

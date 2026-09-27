@@ -2,6 +2,8 @@
 
 ## Planned Improvements (Not Yet Released)
 
+- The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
+
 ## [0.4.0] - 2026-09-20
 
 - Added: "Browse Thunderstore" page, which opens the Mewgenics Thunderstore site inside Vortex. Downloads started from it are installed, enabled, and named automatically, and any mods they depend on can be installed with them.

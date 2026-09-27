@@ -30,7 +30,7 @@
 // getLatestThunderstoreVersion, getThunderstoreDependencies.
 
 const semver = require("semver");
-const { actions, log, selectors, util } = require("vortex-api");
+const { actions, log, selectors, util, VortexError } = require("vortex-api");
 
 const API_BASE = "https://thunderstore.io";
 
@@ -263,9 +263,9 @@ async function downloadThunderstoreRequirement(api, gameSpec, requirement, check
         ? latestPackage.downloadUrl
         : fallbackUrl;
     if (!URL) {
-      throw new util.ProcessCanceled(
-        "Thunderstore API is unreachable and no fallback version is set",
-      );
+      throw new VortexError("Thunderstore API is unreachable and no fallback version is set", {
+        kind: "process-canceled",
+      });
     }
     const latestVersion = pinned
       ? requirement.pinVersion
@@ -282,10 +282,18 @@ async function downloadThunderstoreRequirement(api, gameSpec, requirement, check
     //the old behaviour of always fetching a fresh copy, which a named download would otherwise
     //refuse when the archive is already in the download folder.
     const archive = latestVersion ? archiveName(requirement, latestVersion) : undefined;
-    const dlId = await util.toPromise((cb) =>
-      api.events.emit("start-download", [URL], dlInfo, archive, cb, "replace", {
-        allowInstall: false,
-      }),
+    const dlId = await new Promise((resolve, reject) =>
+      api.events.emit(
+        "start-download",
+        [URL],
+        dlInfo,
+        archive,
+        (err, result) => (err ? reject(err) : resolve(result)),
+        "replace",
+        {
+          allowInstall: false,
+        },
+      ),
     );
     // Declare the origin before the install pipeline reads it. InstallManager re-reads the
     // download from live state right before running the attribute extractors, and
@@ -296,8 +304,10 @@ async function downloadThunderstoreRequirement(api, gameSpec, requirement, check
     // "Other" label is 'unsupported'), and an unregistered id leaves the Source column
     // blank. See https://github.com/Nexus-Mods/Vortex/issues/21979.
     api.store.dispatch(actions.setDownloadModInfo(dlId, "source", "website"));
-    const modId = await util.toPromise((cb) =>
-      api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+    const modId = await new Promise((resolve, reject) =>
+      api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, (err, result) =>
+        err ? reject(err) : resolve(result),
+      ),
     );
     const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
     const batched = [
@@ -352,7 +362,11 @@ async function downloadThunderstoreRequirement(api, gameSpec, requirement, check
       `Failed to download/install ${requirement.userFacingName}. You must download manually.`,
       err,
     );
-    util.opn(pageUrl(requirement)).catch(() => null);
+    try {
+      window.api.shell.openUrl(pageUrl(requirement));
+    } catch (openErr) {
+      api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
+    }
   } finally {
     activeInstalls.delete(requirement.modType);
     api.dismissNotification(NOTIF_ID);

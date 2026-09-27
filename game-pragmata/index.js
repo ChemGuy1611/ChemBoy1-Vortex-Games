@@ -11,7 +11,7 @@ Notes:
 //Import libraries
 const fs = require("fs");
 const fsp = fs.promises;
-const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
+const { actions, fs: vfs, util, selectors, log, VortexError } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const winapi = require("winapi-bindings");
@@ -489,7 +489,7 @@ async function downloadFluffy(api, gameSpec, check = true) {
           .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
           .reverse()[0];
         if (file === undefined) {
-          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+          throw new VortexError(`No ${MOD_NAME} main file found`, { kind: "process-canceled" });
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${modPageId}/files/${FILE}`;
@@ -502,13 +502,23 @@ async function downloadFluffy(api, gameSpec, check = true) {
         game: GAME_DOMAIN,
         name: MOD_NAME,
       };
-      const dlId = await util.toPromise((cb) =>
-        api.events.emit("start-download", [URL], dlInfo, undefined, cb, undefined, {
-          allowInstall: false,
-        }),
+      const dlId = await new Promise((resolve, reject) =>
+        api.events.emit(
+          "start-download",
+          [URL],
+          dlInfo,
+          undefined,
+          (err, result) => (err ? reject(err) : resolve(result)),
+          undefined,
+          {
+            allowInstall: false,
+          },
+        ),
       );
-      const modId = await util.toPromise((cb) =>
-        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+      const modId = await new Promise((resolve, reject) =>
+        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, (err, result) =>
+          err ? reject(err) : resolve(result),
+        ),
       );
       const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
       const batched = [
@@ -523,7 +533,11 @@ async function downloadFluffy(api, gameSpec, check = true) {
     } catch (err) {
       const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${modPageId}/files/?tab=files`;
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.opn(errPage).catch(() => null);
+      try {
+        window.api.shell.openUrl(errPage);
+      } catch (openErr) {
+        api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
+      }
     } finally {
       api.dismissNotification(NOTIF_ID);
     }
@@ -552,13 +566,23 @@ async function downloadREFrameworkGitHub(api, gameSpec, check = true) {
         name: MOD_NAME,
       };
       const URL = REF_URL;
-      const dlId = await util.toPromise((cb) =>
-        api.events.emit("start-download", [URL], dlInfo, undefined, cb, undefined, {
-          allowInstall: false,
-        }),
+      const dlId = await new Promise((resolve, reject) =>
+        api.events.emit(
+          "start-download",
+          [URL],
+          dlInfo,
+          undefined,
+          (err, result) => (err ? reject(err) : resolve(result)),
+          undefined,
+          {
+            allowInstall: false,
+          },
+        ),
       );
-      const modId = await util.toPromise((cb) =>
-        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+      const modId = await new Promise((resolve, reject) =>
+        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, (err, result) =>
+          err ? reject(err) : resolve(result),
+        ),
       );
       const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
       const batched = [
@@ -573,7 +597,11 @@ async function downloadREFrameworkGitHub(api, gameSpec, check = true) {
     } catch (err) {
       //const errPage = `https://github.com/praydog/REFramework/releases`;
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.opn(REF_URL_ERR).catch(() => null);
+      try {
+        window.api.shell.openUrl(REF_URL_ERR);
+      } catch (openErr) {
+        api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
+      }
     } finally {
       api.dismissNotification(NOTIF_ID);
     }
@@ -614,7 +642,7 @@ async function downloadREFramework(api, gameSpec) {
           .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
           .reverse()[0];
         if (file === undefined) {
-          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+          throw new VortexError(`No ${MOD_NAME} main file found`, { kind: "process-canceled" });
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${modPageId}/files/${FILE}`;
@@ -627,13 +655,23 @@ async function downloadREFramework(api, gameSpec) {
         game: GAME_DOMAIN,
         name: MOD_NAME,
       };
-      const dlId = await util.toPromise((cb) =>
-        api.events.emit("start-download", [URL], dlInfo, undefined, cb, undefined, {
-          allowInstall: false,
-        }),
+      const dlId = await new Promise((resolve, reject) =>
+        api.events.emit(
+          "start-download",
+          [URL],
+          dlInfo,
+          undefined,
+          (err, result) => (err ? reject(err) : resolve(result)),
+          undefined,
+          {
+            allowInstall: false,
+          },
+        ),
       );
-      const modId = await util.toPromise((cb) =>
-        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+      const modId = await new Promise((resolve, reject) =>
+        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, (err, result) =>
+          err ? reject(err) : resolve(result),
+        ),
       );
       const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
       const batched = [
@@ -648,7 +686,11 @@ async function downloadREFramework(api, gameSpec) {
     } catch (err) {
       const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${modPageId}/files/?tab=files`;
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.opn(errPage).catch(() => null);
+      try {
+        window.api.shell.openUrl(errPage);
+      } catch (openErr) {
+        api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
+      }
     } finally {
       api.dismissNotification(NOTIF_ID);
     }
@@ -1287,7 +1329,13 @@ function applyGame(context, gameSpec) {
     "Open Config File",
     () => {
       GAME_PATH = getDiscoveryPath(context.api);
-      util.opn(path.join(GAME_PATH, CONFIG_FILEPATH)).catch(() => null);
+      try {
+        window.api.shell.openFile(path.join(GAME_PATH, CONFIG_FILEPATH));
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1303,7 +1351,13 @@ function applyGame(context, gameSpec) {
     "Open Save Folder (Steam)",
     async () => {
       SAVE_PATH = await getSavePath();
-      util.opn(SAVE_PATH).catch(() => null);
+      try {
+        window.api.shell.openFile(SAVE_PATH);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1318,7 +1372,11 @@ function applyGame(context, gameSpec) {
     {},
     "Open PCGamingWiki Page",
     () => {
-      util.opn(PCGAMINGWIKI_URL).catch(() => null);
+      try {
+        window.api.shell.openUrl(PCGAMINGWIKI_URL);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1333,7 +1391,11 @@ function applyGame(context, gameSpec) {
     {},
     "Open SteamDB Page",
     () => {
-      util.opn(STEAMDB_URL).catch(() => null);
+      try {
+        window.api.shell.openUrl(STEAMDB_URL);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1349,7 +1411,13 @@ function applyGame(context, gameSpec) {
     "View Changelog",
     () => {
       const openPath = path.join(__dirname, "CHANGELOG.md");
-      util.opn(openPath).catch(() => null);
+      try {
+        window.api.shell.openFile(openPath);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1364,7 +1432,11 @@ function applyGame(context, gameSpec) {
     {},
     "Submit Bug Report",
     () => {
-      util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+      try {
+        window.api.shell.openUrl(`${EXTENSION_URL}?tab=bugs`);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -1379,7 +1451,13 @@ function applyGame(context, gameSpec) {
     {},
     "Open Downloads Folder",
     () => {
-      util.opn(DOWNLOAD_FOLDER).catch(() => null);
+      try {
+        window.api.shell.openFile(DOWNLOAD_FOLDER);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();

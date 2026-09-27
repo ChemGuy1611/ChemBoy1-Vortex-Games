@@ -1,5 +1,9 @@
 # Changelog
 
+## Planned Improvements (Not Yet Released)
+
+- The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
+
 ## [1.0.0] - 2026-09-22
 
 - Migrated to file-based load order (FBLO); added a lock button, multi-select, and a right-click context menu to the Paks load order page.

@@ -444,7 +444,7 @@ async function download(api, requirements, force) {
       } catch (err) {
         // Keep going: one unreachable repo or broken archive must not silently drop every
         // remaining requirement in the array.
-        if (err instanceof util.ProcessCanceled) {
+        if (err?.data?.kind === "process-canceled") {
           log("warn", `Skipped requirement ${req.userFacingName}`, err.message);
         } else {
           api.showErrorNotification(`Failed to install ${req.userFacingName}`, err, {
@@ -831,7 +831,11 @@ function reportNexusFailure(api, requirement, domain, error) {
   api.showErrorNotification(`Failed to download ${requirement.userFacingName}`, error, {
     allowReport: false,
   });
-  util.opn(`${nexusPageUrl(domain, requirement.nexusModId)}/files/?tab=files`).catch(() => null);
+  try {
+    window.api.shell.openUrl(`${nexusPageUrl(domain, requirement.nexusModId)}/files/?tab=files`);
+  } catch (err) {
+    api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+  }
 }
 
 // Name filters for a page publishing several current main files. Both plain-string fields are

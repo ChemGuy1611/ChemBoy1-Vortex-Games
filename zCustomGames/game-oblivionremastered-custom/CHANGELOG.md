@@ -5,6 +5,7 @@
 - Load order support for pak mods
 - ?Gamebryo extension integration?
 - Fixed: Mod files with no file extension were skipped during installation
+- The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
 
 ## [0.2.0] - 2025-04-23
 

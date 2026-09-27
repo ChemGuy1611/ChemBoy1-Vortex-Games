@@ -7,7 +7,7 @@ Date: 08/01/2024
 */
 
 //Import libraries
-const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
+const { actions, fs: vfs, util, selectors, log, VortexError } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 
@@ -654,7 +654,9 @@ function chooseFilesToInstall(api, files, fileExt) {
       )
       .then((result) => {
         if (result.action === "Cancel")
-          return Promise.reject(new util.UserCanceled("User cancelled."));
+          return Promise.reject(
+            new VortexError("User cancelled.", { kind: "user-canceled", skipped: true }),
+          );
         else {
           const installAll =
             result.action === "Install All" || result.action === "Install All_plural";

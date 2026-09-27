@@ -6,6 +6,7 @@
 - ? Disable Config/Save installers so that hardlinks will be available for more users? - symlinks seem fine.
 - Fixed: Mod files with no file extension were skipped during installation
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
+- The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
 
 ## [0.1.1] - 2025-11-23
 

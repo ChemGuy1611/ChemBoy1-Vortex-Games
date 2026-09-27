@@ -83,7 +83,11 @@ context.registerAction(
   "Open Far Cry Mod Installer Site",
   () => {
     const { util } = require("vortex-api");
-    util.opn(`https://downloads.fcmodding.com/${FC}/`).catch(() => null);
+    try {
+      window.api.shell.openUrl(`https://downloads.fcmodding.com/${FC}/`);
+    } catch (err) {
+      context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+    }
   },
   () => {
     const state = context.api.getState();

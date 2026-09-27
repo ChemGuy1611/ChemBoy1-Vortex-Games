@@ -436,10 +436,8 @@ async function downloadModManager(api, gameSpec, check = true) {
         name: MOD_NAME,
       };
       const URL = `https://github.com/praydog/REFramework/releases/latest/download/RE4.zip`;
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const dlId = await new Promise((resolve, reject) => api.events.emit('start-download', [URL], dlInfo, undefined, (err, result) => (err ? reject(err) : resolve(result)), undefined, { allowInstall: false }));
+      const modId = await new Promise((resolve, reject) => api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, (err, result) => (err ? reject(err) : resolve(result))));
       const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
       const batched = [
         actions.setModsEnabled(api, profileId, [modId], true, {

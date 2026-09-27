@@ -23,6 +23,7 @@ const {
   FlexLayout,
   DNDContainer,
   DraggableList,
+  VortexError,
 } = require("vortex-api");
 const path = require("path");
 const crypto = require("crypto");
@@ -1548,7 +1549,7 @@ function installConfig(api, files) {
   if (IS_CONFIG === false) {
     //api.showErrorNotification(`Could not install mod as Config`, `You tried installing a Config mod, but the game, staging folder, and ${CONFIG_LOC} folder are not all on the same drive. Please move the game and/or staging folder to the same drive as the ${CONFIG_LOC} folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
     configInstallerNotify(api);
-    throw new util.UserCanceled();
+    throw new VortexError("User canceled", { kind: "user-canceled", skipped: false });
   }
   return Promise.resolve({ instructions });
 }
@@ -1584,7 +1585,13 @@ function configInstallerNotify(api) {
               {
                 label: "Open Config Folder",
                 action: () => {
-                  util.opn(CONFIG_PATH).catch(() => null);
+                  try {
+                    window.api.shell.openFile(CONFIG_PATH);
+                  } catch (err) {
+                    api.showErrorNotification("Failed to open the file or folder", err, {
+                      allowReport: false,
+                    });
+                  }
                   dismiss();
                 },
               },
@@ -1645,7 +1652,7 @@ async function installSave(api, files) {
   const TEST = SAVE_COMPAT_VERSIONS.includes(GAME_VERSION);
   if (!TEST) {
     saveErrorNotify(api);
-    throw new util.UserCanceled();
+    throw new VortexError("User canceled", { kind: "user-canceled", skipped: false });
   }
 
   //Filter files and set instructions
@@ -1661,7 +1668,7 @@ async function installSave(api, files) {
   const IS_SAVE = checkPartitions(SAVEMOD_LOCATION, GAME_PATH);
   if (IS_SAVE === false) {
     saveInstallerNotify(api);
-    throw new util.UserCanceled();
+    throw new VortexError("User canceled", { kind: "user-canceled", skipped: false });
   }
   return Promise.resolve({ instructions });
 }
@@ -1697,7 +1704,13 @@ function saveInstallerNotify(api) {
               {
                 label: "Open Save Folder",
                 action: () => {
-                  util.opn(SAVE_PATH).catch(() => null);
+                  try {
+                    window.api.shell.openFile(SAVE_PATH);
+                  } catch (err) {
+                    api.showErrorNotification("Failed to open the file or folder", err, {
+                      allowReport: false,
+                    });
+                  }
                   dismiss();
                 },
               },
@@ -1788,7 +1801,13 @@ function fallbackInstallerNotify(api, modName) {
               {
                 label: "Contact Ext. Developer",
                 action: () => {
-                  util.opn(`${EXTENSION_URL}?tab=posts`).catch(() => null);
+                  try {
+                    window.api.shell.openUrl(`${EXTENSION_URL}?tab=posts`);
+                  } catch (err) {
+                    api.showErrorNotification("Failed to open the URL", err, {
+                      allowReport: false,
+                    });
+                  }
                   dismiss();
                 },
               }, //*/
@@ -1796,7 +1815,13 @@ function fallbackInstallerNotify(api, modName) {
               {
                 label: `Open Mod Page + Staging Folder`,
                 action: () => {
-                  util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
+                  try {
+                    window.api.shell.openFile(path.join(STAGING_FOLDER, modName));
+                  } catch (err) {
+                    api.showErrorNotification("Failed to open the file or folder", err, {
+                      allowReport: false,
+                    });
+                  }
                   const mods = api.store.getState()?.persistent?.mods?.[spec.game.id] ?? {};
                   const modMatch = Object.values(mods).find(
                     (mod) => mod.installationPath === modName,
@@ -1810,7 +1835,13 @@ function fallbackInstallerNotify(api, modName) {
                     }
                   }
                   const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
-                  util.opn(MOD_PAGE_URL).catch(() => null);
+                  try {
+                    window.api.shell.openUrl(MOD_PAGE_URL);
+                  } catch (err) {
+                    api.showErrorNotification("Failed to open the URL", err, {
+                      allowReport: false,
+                    });
+                  }
                   dismiss();
                 },
               }, //*/
@@ -1892,7 +1923,7 @@ async function downloadUe4ssNexus(api, gameSpec, check = true) {
           .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
           .reverse()[0];
         if (file === undefined) {
-          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+          throw new VortexError(`No ${MOD_NAME} main file found`, { kind: "process-canceled" });
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
@@ -1906,13 +1937,23 @@ async function downloadUe4ssNexus(api, gameSpec, check = true) {
         game: GAME_DOMAIN,
         name: MOD_NAME,
       };
-      const dlId = await util.toPromise((cb) =>
-        api.events.emit("start-download", [URL], dlInfo, undefined, cb, undefined, {
-          allowInstall: false,
-        }),
+      const dlId = await new Promise((resolve, reject) =>
+        api.events.emit(
+          "start-download",
+          [URL],
+          dlInfo,
+          undefined,
+          (err, result) => (err ? reject(err) : resolve(result)),
+          undefined,
+          {
+            allowInstall: false,
+          },
+        ),
       );
-      const modId = await util.toPromise((cb) =>
-        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+      const modId = await new Promise((resolve, reject) =>
+        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, (err, result) =>
+          err ? reject(err) : resolve(result),
+        ),
       );
       const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
       const batched = [
@@ -1927,7 +1968,11 @@ async function downloadUe4ssNexus(api, gameSpec, check = true) {
       //Show the user the download page if the download, install process fails
       const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.opn(errPage).catch(() => null);
+      try {
+        window.api.shell.openUrl(errPage);
+      } catch (openErr) {
+        api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
+      }
     } finally {
       api.dismissNotification(NOTIF_ID);
     }
@@ -1968,7 +2013,7 @@ async function downloadSigBypass(api, gameSpec, check = true) {
           .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
           .reverse()[0];
         if (file === undefined) {
-          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+          throw new VortexError(`No ${MOD_NAME} main file found`, { kind: "process-canceled" });
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
@@ -1982,13 +2027,23 @@ async function downloadSigBypass(api, gameSpec, check = true) {
         game: GAME_DOMAIN,
         name: MOD_NAME,
       };
-      const dlId = await util.toPromise((cb) =>
-        api.events.emit("start-download", [URL], dlInfo, undefined, cb, undefined, {
-          allowInstall: false,
-        }),
+      const dlId = await new Promise((resolve, reject) =>
+        api.events.emit(
+          "start-download",
+          [URL],
+          dlInfo,
+          undefined,
+          (err, result) => (err ? reject(err) : resolve(result)),
+          undefined,
+          {
+            allowInstall: false,
+          },
+        ),
       );
-      const modId = await util.toPromise((cb) =>
-        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+      const modId = await new Promise((resolve, reject) =>
+        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, (err, result) =>
+          err ? reject(err) : resolve(result),
+        ),
       );
       const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
       const batched = [
@@ -2003,7 +2058,11 @@ async function downloadSigBypass(api, gameSpec, check = true) {
       //Show the user the download page if the download, install process fails
       const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.opn(errPage).catch(() => null);
+      try {
+        window.api.shell.openUrl(errPage);
+      } catch (openErr) {
+        api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
+      }
     } finally {
       api.dismissNotification(NOTIF_ID);
     }
@@ -2038,7 +2097,9 @@ async function ensureLOFile(context, profileId, props) {
     props = generateProps(context, profileId);
   }
   if (props === undefined) {
-    return Promise.reject(new util.ProcessCanceled("failed to generate game props"));
+    return Promise.reject(
+      new VortexError("failed to generate game props", { kind: "process-canceled" }),
+    );
   }
   const targetPath = path.join(props.discovery.path, props.profile.id + "_" + LO_FILE_NAME);
   try {
@@ -2073,7 +2134,7 @@ async function deserializeLoadOrder(context) {
 
   const props = generateProps(context, undefined);
   if (props?.profile?.gameId !== GAME_ID) {
-    return Promise.reject(new util.ProcessCanceled("invalid props"));
+    return Promise.reject(new VortexError("invalid props", { kind: "process-canceled" }));
   }
 
   // The deserialization function should be used to filter and insert wanted data into Vortex's
@@ -2158,7 +2219,7 @@ async function serializeLoadOrder(context, loadOrder) {
 
   const props = generateProps(context, undefined);
   if (props === undefined) {
-    return Promise.reject(new util.ProcessCanceled("invalid props"));
+    return Promise.reject(new VortexError("invalid props", { kind: "process-canceled" }));
   }
   // Make sure the LO file is created and ready to be written to.
   const loFilePath = await ensureLOFile(context, props.profile.id, props);
@@ -2687,7 +2748,9 @@ async function chooseFilesToInstall(api, files, fileExt) {
     )
     .then((result) => {
       if (result.action === "Cancel")
-        return Promise.reject(new util.UserCanceled("User cancelled."));
+        return Promise.reject(
+          new VortexError("User cancelled.", { kind: "user-canceled", skipped: true }),
+        );
       else {
         const installAll =
           result.action === "Install All" || result.action === "Install All_plural";
@@ -3376,7 +3439,13 @@ function applyGame(context, gameSpec) {
     "Open Paks Folder",
     () => {
       GAME_PATH = getDiscoveryPath(context.api);
-      util.opn(path.join(GAME_PATH, PAK_ALT_PATH)).catch(() => null);
+      try {
+        window.api.shell.openFile(path.join(GAME_PATH, PAK_ALT_PATH));
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -3392,7 +3461,13 @@ function applyGame(context, gameSpec) {
     "Open Binaries Folder",
     () => {
       GAME_PATH = getDiscoveryPath(context.api);
-      util.opn(path.join(GAME_PATH, BINARIES_PATH)).catch(() => null);
+      try {
+        window.api.shell.openFile(path.join(GAME_PATH, BINARIES_PATH));
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -3409,7 +3484,13 @@ function applyGame(context, gameSpec) {
       "Open UE4SS Mods Folder",
       () => {
         GAME_PATH = getDiscoveryPath(context.api);
-        util.opn(path.join(GAME_PATH, SCRIPTS_PATH)).catch(() => null);
+        try {
+          window.api.shell.openFile(path.join(GAME_PATH, SCRIPTS_PATH));
+        } catch (err) {
+          context.api.showErrorNotification("Failed to open the file or folder", err, {
+            allowReport: false,
+          });
+        }
       },
       () => {
         const state = context.api.getState();
@@ -3425,7 +3506,13 @@ function applyGame(context, gameSpec) {
       "Open LogicMods Folder",
       () => {
         GAME_PATH = getDiscoveryPath(context.api);
-        util.opn(path.join(GAME_PATH, LOGICMODS_PATH)).catch(() => null);
+        try {
+          window.api.shell.openFile(path.join(GAME_PATH, LOGICMODS_PATH));
+        } catch (err) {
+          context.api.showErrorNotification("Failed to open the file or folder", err, {
+            allowReport: false,
+          });
+        }
       },
       () => {
         const state = context.api.getState();
@@ -3442,7 +3529,13 @@ function applyGame(context, gameSpec) {
     "Open Config Folder",
     async () => {
       //CONFIG_PATH = await setConfigPath(GAME_VERSION);
-      util.opn(CONFIG_PATH).catch(() => null);
+      try {
+        window.api.shell.openFile(CONFIG_PATH);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -3458,7 +3551,13 @@ function applyGame(context, gameSpec) {
     "Open Saves Folder",
     async () => {
       //SAVE_PATH = await setSavePath();
-      util.opn(SAVE_PATH).catch(() => null);
+      try {
+        window.api.shell.openFile(SAVE_PATH);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -3495,7 +3594,13 @@ function applyGame(context, gameSpec) {
       "Open UE4SS Settings INI",
       () => {
         GAME_PATH = getDiscoveryPath(context.api);
-        util.opn(path.join(GAME_PATH, BINARIES_PATH, UE4SS_SETTINGS_FILEPATH)).catch(() => null);
+        try {
+          window.api.shell.openFile(path.join(GAME_PATH, BINARIES_PATH, UE4SS_SETTINGS_FILEPATH));
+        } catch (err) {
+          context.api.showErrorNotification("Failed to open the file or folder", err, {
+            allowReport: false,
+          });
+        }
       },
       () => {
         const state = context.api.getState();
@@ -3511,7 +3616,13 @@ function applyGame(context, gameSpec) {
       "Open UE4SS mods.txt",
       () => {
         GAME_PATH = getDiscoveryPath(context.api);
-        util.opn(path.join(GAME_PATH, BINARIES_PATH, UE4SS_MODSTXT_FILEPATH)).catch(() => null);
+        try {
+          window.api.shell.openFile(path.join(GAME_PATH, BINARIES_PATH, UE4SS_MODSTXT_FILEPATH));
+        } catch (err) {
+          context.api.showErrorNotification("Failed to open the file or folder", err, {
+            allowReport: false,
+          });
+        }
       },
       () => {
         const state = context.api.getState();
@@ -3527,7 +3638,11 @@ function applyGame(context, gameSpec) {
     {},
     "Open PCGamingWiki Page",
     () => {
-      util.opn(PCGAMINGWIKI_URL).catch(() => null);
+      try {
+        window.api.shell.openUrl(PCGAMINGWIKI_URL);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -3542,7 +3657,11 @@ function applyGame(context, gameSpec) {
     {},
     "Open SteamDB Page",
     () => {
-      util.opn(STEAMDB_URL).catch(() => null);
+      try {
+        window.api.shell.openUrl(STEAMDB_URL);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -3557,7 +3676,13 @@ function applyGame(context, gameSpec) {
     {},
     "View Changelog",
     () => {
-      util.opn(path.join(__dirname, "CHANGELOG.md")).catch(() => null);
+      try {
+        window.api.shell.openFile(path.join(__dirname, "CHANGELOG.md"));
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -3572,7 +3697,11 @@ function applyGame(context, gameSpec) {
     {},
     "Submit Bug Report",
     () => {
-      util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+      try {
+        window.api.shell.openUrl(`${EXTENSION_URL}?tab=bugs`);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -3587,7 +3716,13 @@ function applyGame(context, gameSpec) {
     {},
     "Open Downloads Folder",
     () => {
-      util.opn(DOWNLOAD_FOLDER).catch(() => null);
+      try {
+        window.api.shell.openFile(DOWNLOAD_FOLDER);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();
@@ -4850,13 +4985,25 @@ function PakContextMenu({
     stagingFolder || modPageUrl ? React.createElement("div", { style: sepStyle }) : null,
     stagingFolder
       ? menuItem("Open Staging Folder", () => {
-          util.opn(stagingFolder).catch(() => null);
+          try {
+            window.api.shell.openFile(stagingFolder);
+          } catch (err) {
+            context.api.showErrorNotification("Failed to open the file or folder", err, {
+              allowReport: false,
+            });
+          }
           onClose();
         })
       : null,
     modPageUrl
       ? menuItem("Open Mod Page", () => {
-          util.opn(modPageUrl).catch(() => null);
+          try {
+            window.api.shell.openUrl(modPageUrl);
+          } catch (err) {
+            context.api.showErrorNotification("Failed to open the URL", err, {
+              allowReport: false,
+            });
+          }
           onClose();
         })
       : null,
@@ -5061,7 +5208,13 @@ function Ue4ssItemRenderer({ className, item }) {
   }, [gamePath, item.id]);
 
   const onConfigure = React.useCallback(() => {
-    util.opn(configFilePath).catch(() => null);
+    try {
+      window.api.shell.openFile(configFilePath);
+    } catch (err) {
+      vortexContext.api.showErrorNotification("Failed to open the file or folder", err, {
+        allowReport: false,
+      });
+    }
   }, [configFilePath]);
 
   const onToggle = React.useCallback(
@@ -5387,16 +5540,30 @@ function Ue4ssContextMenu({
       ),
       React.createElement("div", { style: sepStyle }),
       menuItem(`Open Mod Folders (${n})`, () => {
-        targets.forEach((t) =>
-          util.opn(path.join(gamePath, BINARIES_PATH, UE4SS_MOD_PATH, t.id)).catch(() => null),
-        );
+        targets.forEach((t) => {
+          try {
+            window.api.shell.openFile(path.join(gamePath, BINARIES_PATH, UE4SS_MOD_PATH, t.id));
+          } catch (err) {
+            api.showErrorNotification("Failed to open the file or folder", err, {
+              allowReport: false,
+            });
+          }
+        });
         onClose();
       }),
       targets.some((t) => t.modId !== undefined)
         ? menuItem(`Open Staging Folders (${n})`, () => {
             targets.forEach((t) => {
               const folder = getModStagingFolder(api, t.modId);
-              if (folder) util.opn(folder).catch(() => null);
+              if (folder) {
+                try {
+                  window.api.shell.openFile(folder);
+                } catch (err) {
+                  api.showErrorNotification("Failed to open the file or folder", err, {
+                    allowReport: false,
+                  });
+                }
+              }
             });
             onClose();
           })
@@ -5424,7 +5591,13 @@ function Ue4ssContextMenu({
     ),
     configFilePath
       ? menuItem("Configure", () => {
-          util.opn(configFilePath).catch(() => null);
+          try {
+            window.api.shell.openFile(configFilePath);
+          } catch (err) {
+            api.showErrorNotification("Failed to open the file or folder", err, {
+              allowReport: false,
+            });
+          }
           onClose();
         })
       : null,
@@ -5453,18 +5626,32 @@ function Ue4ssContextMenu({
     ),
     React.createElement("div", { style: sepStyle }),
     menuItem("Open Mod Folder", () => {
-      util.opn(path.join(gamePath, BINARIES_PATH, UE4SS_MOD_PATH, item.id)).catch(() => null);
+      try {
+        window.api.shell.openFile(path.join(gamePath, BINARIES_PATH, UE4SS_MOD_PATH, item.id));
+      } catch (err) {
+        api.showErrorNotification("Failed to open the file or folder", err, { allowReport: false });
+      }
       onClose();
     }),
     stagingFolder
       ? menuItem("Open Staging Folder", () => {
-          util.opn(stagingFolder).catch(() => null);
+          try {
+            window.api.shell.openFile(stagingFolder);
+          } catch (err) {
+            api.showErrorNotification("Failed to open the file or folder", err, {
+              allowReport: false,
+            });
+          }
           onClose();
         })
       : null,
     modPageUrl
       ? menuItem("Open Mod Page", () => {
-          util.opn(modPageUrl).catch(() => null);
+          try {
+            window.api.shell.openUrl(modPageUrl);
+          } catch (err) {
+            api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+          }
           onClose();
         })
       : null,
@@ -6052,7 +6239,13 @@ function LogicModsContextMenu({
       ),
       React.createElement("div", { style: sepStyle }),
       menuItem(`Open LogicMods Folder (${n})`, () => {
-        util.opn(path.join(GAME_PATH, LOGICMODS_PATH, LOGICMODS_FOLDER)).catch(() => null);
+        try {
+          window.api.shell.openFile(path.join(GAME_PATH, LOGICMODS_PATH, LOGICMODS_FOLDER));
+        } catch (err) {
+          api.showErrorNotification("Failed to open the file or folder", err, {
+            allowReport: false,
+          });
+        }
         onClose();
       }),
       React.createElement("div", { style: sepStyle }),
@@ -6102,18 +6295,32 @@ function LogicModsContextMenu({
     ),
     React.createElement("div", { style: sepStyle }),
     menuItem("Open LogicMods Folder", () => {
-      util.opn(path.join(GAME_PATH, LOGICMODS_PATH, LOGICMODS_FOLDER)).catch(() => null);
+      try {
+        window.api.shell.openFile(path.join(GAME_PATH, LOGICMODS_PATH, LOGICMODS_FOLDER));
+      } catch (err) {
+        api.showErrorNotification("Failed to open the file or folder", err, { allowReport: false });
+      }
       onClose();
     }),
     stagingFolder
       ? menuItem("Open Staging Folder", () => {
-          util.opn(stagingFolder).catch(() => null);
+          try {
+            window.api.shell.openFile(stagingFolder);
+          } catch (err) {
+            api.showErrorNotification("Failed to open the file or folder", err, {
+              allowReport: false,
+            });
+          }
           onClose();
         })
       : null,
     modPageUrl
       ? menuItem("Open Mod Page", () => {
-          util.opn(modPageUrl).catch(() => null);
+          try {
+            window.api.shell.openUrl(modPageUrl);
+          } catch (err) {
+            api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+          }
           onClose();
         })
       : null,

@@ -1,5 +1,10 @@
 # template-anvilengine Changelog
 
+## [2026-09-27]
+
+- Changed: the deprecated `util.<ErrorClass>(...)` constructors (`UserCanceled`, `ProcessCanceled`, `DataInvalid`, and the rest of that family) are replaced with direct `new VortexError(message, { kind, ... })` construction, and `VortexError` is added to the `vortex-api` require. `util.toPromise((cb) => api.events.emit(..., cb))` is replaced with a plain `new Promise((resolve, reject) => ...)` whose event callback is `(err, result) => (err ? reject(err) : resolve(result))`. No behavior change.
+- Changed: `downloader.js`'s requirement loop now checks `err?.data?.kind === "process-canceled"` instead of `err instanceof util.ProcessCanceled`. A plain `VortexError` is never `instanceof` the old subclass, so without this a skipped requirement (for example a GitHub rate limit) would surface as a "Failed to install" error instead of being logged and skipped.
+
 ## [2026-09-25]
 
 - Changed: `util.opn(...)` (deprecated Bluebird-promise API) replaced with `window.api.shell.openUrl()`/`openFile()` (void, no promise) at every call site, each wrapped in `try`/`catch` reporting failures via `showErrorNotification(..., { allowReport: false })` instead of the old silent `.catch(() => null)`.

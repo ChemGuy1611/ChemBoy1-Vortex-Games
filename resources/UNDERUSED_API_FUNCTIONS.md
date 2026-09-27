@@ -252,7 +252,7 @@ context.once(() => {
 
 **Why useful:** Intercept any tool launch. The hook receives `IRunParameters` and can mutate args, environment, or cancel the launch by throwing `UserCanceled` / `ProcessCanceled`.
 
-**Use case:** Before launching the game, verify all required prerequisite mods are deployed; if not, show a dialog and cancel the launch (`throw new util.ProcessCanceled('Deploy first')`).
+**Use case:** Before launching the game, verify all required prerequisite mods are deployed; if not, show a dialog and cancel the launch (`throw new VortexError('Deploy first', { kind: 'process-canceled' })`).
 
 Priority guide: first-party check-deployment hook runs at 100. Use 50-90 for extension hooks that must run before it, or 110+ to run after.
 
@@ -270,7 +270,7 @@ Priority guide: first-party check-deployment hook runs at 100. Use 50-90 for ext
 
 ### `context.registerInterpreter(extension, apply)`
 
-**Why useful:** Map a file extension (e.g. `.py`, `.jar`, `.bat`) to an actual interpreter when Vortex tries to launch it. Throw `util.MissingInterpreter(msg, url)` for a nice error UI.
+**Why useful:** Map a file extension (e.g. `.py`, `.jar`, `.bat`) to an actual interpreter when Vortex tries to launch it. Throw `new VortexError(msg, { kind: 'missing-interpreter', url })` for a nice error UI.
 
 **Use case:** Register `.jar` files to launch via `java -jar` so modders can ship Java-based tools that Vortex can auto-launch.
 

@@ -896,7 +896,7 @@ function getExecutable(discoveryPath) {
 
 //Get correct game version
 async function setGameVersion(gamePath) {
-  if (hasXbox && statCheckAsync(gamePath, EXEC_XBOX)) {
+  if (hasXbox && (await statCheckAsync(gamePath, EXEC_XBOX))) {
     GAME_VERSION = "xbox";
     DATA_FOLDER = DATA_FOLDER_ALT;
     ASSETS_PATH = path.join(DATA_FOLDER, "Managed");

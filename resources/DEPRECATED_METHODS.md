@@ -16,14 +16,14 @@ Deprecation notices are scattered across many independent JSDoc comments in the 
 
 | Symbol | Namespace | Replacement | Guidance |
 | --- | --- | --- | --- |
-| `UserCanceled`, `ProcessCanceled`, `DataInvalid`, `SetupError`, `MissingInterpreter`, `NotFound`, `NotSupportedError`, `ArgumentInvalid`, `CycleError`, `GameNotFound` | `util.*` (error classes) | `VortexError` directly (stable since v2.5.0) — constructors unchanged, classes still work | `ERROR_CLASSES.md` |
+| `UserCanceled`, `ProcessCanceled`, `DataInvalid`, `SetupError`, `MissingInterpreter`, `NotFound`, `NotSupportedError`, `ArgumentInvalid`, `CycleError`, `GameNotFound` | `util.*` (error classes) | `VortexError` directly (stable since v2.5.0), and `err?.data?.kind` checks in place of `instanceof` — this repo is fully migrated | `ERROR_CLASSES.md` |
 | `getSafe`, `getSafeCI`, `mutateSafe`, `setSafe`, `setOrNop`, `changeOrNop`, `deleteOrNop`, `setDefaultArray`, `pushSafe`, `addUniqueSafe`, `removeValue`, `removeValueIf`, `merge`, `rehydrate` | `util.*` (state helpers) | Optional chaining / nullish coalescing for reads; spread syntax for writes | `STATE_HELPERS.md` |
 | `isDirectoryAsync`, `ensureDirSync`, `ensureFileAsync`, `ensureDirAsync`, `copyAsync`, `linkAsync`, `renameAsync`, `removeAsync`, `readlinkAsync` | `fs.*` (vortex-api wrapper) | `node:fs` / `node:fs/promises` directly | `NODE_FS.md` |
 | `accessSync`, `appendFileSync`, `closeSync`, `createReadStream`, `createWriteStream`, `linkSync`, `openSync`, `readdirSync`, `readFileSync`, `statSync`, `symlinkSync`, `watch`, `writeFileSync`, `writeSync`, `constants`, `Stats`, `WriteStream`, `FSWatcher` | `fs.*` (raw Node passthrough) | `node:fs` directly (these are 1:1 re-exports already) | `NODE_FS.md` |
 | `registerLoadOrderPage` | `IExtensionContext` | `registerLoadOrder` (File-Based Load Order) | `LOAD_ORDER_REGISTRATION.md` |
 | `onceMain` | `IExtensionContext` | `once` (runs in the renderer); a separate NodeJS process + IPC if you truly need the main process | `VORTEX_EXTENSION_LOADING.md`, `VORTEX_EVENT_BUS.md` |
 | `open` / `util.opn` | `util.*` | `window.api.shell.openUrl` / `window.api.shell.openFile` | This doc, § below; `EMBEDDED_BROWSER.md` |
-| `toPromise` | `util.*` | Wrap the call in a plain `new Promise` | This doc, § below |
+| `toPromise` | `util.*` | Wrap the call in a plain `new Promise` — this repo is fully migrated | This doc, § below |
 | `makeRemoteCall` | `util.*` | `window.api` (IPC from renderer to main) | This doc, § below |
 | `IExtension` | type | `ExtensionInfo` | This doc, § below |
 
@@ -33,31 +33,31 @@ Deprecation notices are scattered across many independent JSDoc comments in the 
 
 `toPromise(func)` takes a function that calls a Node-style `(err, result) => {}` callback and returns a Promise. It predates Vortex's typed `ApiEvents` registry, so the callback signature — and therefore the emitted event's actual arguments and result — go unchecked. It is deprecated in favor of wrapping the same call in a plain `new Promise`.
 
-It is nonetheless the standard idiom throughout this repo's shared downloader and browser modules, because most of Vortex's download-pipeline events (`start-download`, `start-install-download`, `remove-download`) are callback-based:
+Most of Vortex's download-pipeline events (`start-download`, `start-install-download`, `remove-download`) are callback-based, so the shared downloader and browser modules wrap them constantly. Every call site in this repo now uses the plain `new Promise` form:
 
 ```js
-// Deprecated form — still what this repo uses everywhere:
+// Deprecated form (no longer used anywhere in this repo):
 const dlId = await util.toPromise((cb) =>
     api.events.emit("start-download", [url], dlInfo, undefined, cb, undefined, {
         allowInstall: false,
     }),
 );
 
-// Un-deprecated equivalent:
-const dlId = await new Promise((resolve, reject) => {
+// Current form:
+const dlId = await new Promise((resolve, reject) =>
     api.events.emit(
         "start-download",
         [url],
         dlInfo,
         undefined,
-        (err, id) => (err ? reject(err) : resolve(id)),
+        (err, result) => (err ? reject(err) : resolve(result)),
         undefined,
         { allowInstall: false },
-    );
-});
+    ),
+);
 ```
 
-**One event cannot go through either form the same way.** `import-downloads` calls back with `(dlIds)` and no error argument — unlike every other event in this family — so wrapping it in `toPromise` (or a naive `new Promise` that treats the first callback argument as an error) reads the id array as the error and rejects. `resources/downloader/downloader.js` handles this case with a plain callback, not `toPromise`.
+**One event cannot go through either form the same way.** `import-downloads` calls back with `(dlIds)` and no error argument — unlike every other event in this family — so wrapping it in `toPromise` (or a `new Promise` that treats the first callback argument as an error) reads the id array as the error and rejects. `resources/downloader/downloader.js` and `resources/browsers/base_browser.js` resolve it directly from `(dlIds)` instead.
 
 ---
 
@@ -92,4 +92,4 @@ The `fs.*` `*Async` family this repo actually calls constantly — `readdirAsync
 
 ## See also
 
-`ERROR_CLASSES.md` (the ten `VortexError` subclasses, cancel semantics, kind catalog). `STATE_HELPERS.md` (immutable state helpers, the native-JS replacement patterns). `NODE_FS.md` (full `fs` → native mapping, the three wrapper calls kept for elevation, verified semantics). `LOAD_ORDER_REGISTRATION.md` (legacy `registerLoadOrderPage` vs. `registerLoadOrder`, full migration guidance). `VORTEX_EXTENSION_LOADING.md` and `VORTEX_EVENT_BUS.md` (`onceMain` vs. `once`). `EMBEDDED_BROWSER.md` (`util.opn` used from an embedded webview). `DOWNLOADER.md` and `BROWSER_MODULES.md` (the shared modules where `util.toPromise` is the standard idiom).
+`ERROR_CLASSES.md` (the ten `VortexError` subclasses, cancel semantics, kind catalog). `STATE_HELPERS.md` (immutable state helpers, the native-JS replacement patterns). `NODE_FS.md` (full `fs` → native mapping, the three wrapper calls kept for elevation, verified semantics). `LOAD_ORDER_REGISTRATION.md` (legacy `registerLoadOrderPage` vs. `registerLoadOrder`, full migration guidance). `VORTEX_EXTENSION_LOADING.md` and `VORTEX_EVENT_BUS.md` (`onceMain` vs. `once`). `EMBEDDED_BROWSER.md` (`util.opn` used from an embedded webview). `DOWNLOADER.md` and `BROWSER_MODULES.md` (the shared modules that wrap callback-based download events in `new Promise`).

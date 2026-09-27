@@ -147,5 +147,5 @@ these: `VORTEX_MOD_INSTALL.md`, `VORTEX_DEPLOYMENT.md`, `VORTEX_PROFILES.md`,
 handler-ordering case), `VORTEX_MOD_METADATA.md` (`set-download-games`,
 `did-import-downloads`). Overview: `VORTEX_APP.md`. Authoring:
 `UNDERUSED_API_FUNCTIONS.md` (§7 `api.withPrePost`/`api.onStateChange`/`context.requireVersion`).
-`DEPRECATED_METHODS.md` (`onceMain` entry; `util.toPromise` for wrapping a callback-based event
-emit into a Promise).
+`DEPRECATED_METHODS.md` (`onceMain` entry; the `new Promise` form for wrapping a callback-based
+event emit into a Promise, replacing the deprecated `util.toPromise`).

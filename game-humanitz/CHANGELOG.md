@@ -4,6 +4,7 @@
 
 - Fixed: Mod files with no file extension were skipped during installation
 - Added an "Open SteamDB Page" button.
+- The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
 
 ## [2.0.1] - 2026-08-11
 

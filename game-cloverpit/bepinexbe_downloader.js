@@ -34,7 +34,7 @@
 // (single-requirement variants), isBepinexBeInstalled, getLatestBepinexBeBuild,
 // getBepinexBeBuild, parseBepinexBeArtifacts.
 
-const { actions, log, selectors, util } = require("vortex-api");
+const { actions, log, selectors, util, VortexError } = require("vortex-api");
 
 const BASE_URL = "https://builds.bepinex.dev";
 
@@ -295,9 +295,10 @@ async function downloadBepinexBeRequirement(api, gameSpec, requirement, check = 
         url = resolved.artifact.url;
       } else if (pinned) {
         //never silently install the newest build in place of the pinned one
-        throw new util.ProcessCanceled(
+        throw new VortexError(
           `Build ${requirement.pinVersion} could not be resolved from the ` +
             "builds.bepinex.dev index - set pinArtifactUrl to reach a build that has scrolled off it",
+          { kind: "process-canceled" },
         );
       } else {
         //fall back to the hardcoded build if the index page is unreachable
@@ -306,18 +307,26 @@ async function downloadBepinexBeRequirement(api, gameSpec, requirement, check = 
       }
     }
     if (!url) {
-      throw new util.ProcessCanceled(
-        "builds.bepinex.dev is unreachable and no fallbackArtifactUrl is set",
-      );
+      throw new VortexError("builds.bepinex.dev is unreachable and no fallbackArtifactUrl is set", {
+        kind: "process-canceled",
+      });
     }
     const dlInfo = {
       game: gameId,
       name: requirement.userFacingName,
     };
-    const dlId = await util.toPromise((cb) =>
-      api.events.emit("start-download", [url], dlInfo, undefined, cb, undefined, {
-        allowInstall: false,
-      }),
+    const dlId = await new Promise((resolve, reject) =>
+      api.events.emit(
+        "start-download",
+        [url],
+        dlInfo,
+        undefined,
+        (err, result) => (err ? reject(err) : resolve(result)),
+        undefined,
+        {
+          allowInstall: false,
+        },
+      ),
     );
     // Disable the outgoing build NOW, not in the batch below: the install enables the incoming
     // mod as soon as it lands, so a deferred disable leaves both enabled across the install -
@@ -335,8 +344,10 @@ async function downloadBepinexBeRequirement(api, gameSpec, requirement, check = 
     // "Other" label is 'unsupported'), and an unregistered id leaves the Source column
     // blank. See https://github.com/Nexus-Mods/Vortex/issues/21979.
     api.store.dispatch(actions.setDownloadModInfo(dlId, "source", "website"));
-    const modId = await util.toPromise((cb) =>
-      api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+    const modId = await new Promise((resolve, reject) =>
+      api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, (err, result) =>
+        err ? reject(err) : resolve(result),
+      ),
     );
     const batched = [
       actions.setModsEnabled(api, profileId, [modId], true, {
@@ -367,7 +378,11 @@ async function downloadBepinexBeRequirement(api, gameSpec, requirement, check = 
       `Failed to download/install ${requirement.userFacingName}. You must download manually.`,
       err,
     );
-    util.opn(pageUrl(requirement)).catch(() => null);
+    try {
+      window.api.shell.openUrl(pageUrl(requirement));
+    } catch (openErr) {
+      api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
+    }
   } finally {
     activeInstalls.delete(key);
     api.dismissNotification(NOTIF_ID);

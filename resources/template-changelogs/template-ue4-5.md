@@ -1,5 +1,10 @@
 # template-ue4-5 Changelog
 
+## [2026-09-27]
+
+- Changed: the deprecated `util.<ErrorClass>(...)` constructors (`UserCanceled`, `ProcessCanceled`, `DataInvalid`, and the rest of that family) are replaced with direct `new VortexError(message, { kind, ... })` construction, and `VortexError` is added to the `vortex-api` require. `util.toPromise((cb) => api.events.emit(..., cb))` is replaced with a plain `new Promise((resolve, reject) => ...)` whose event callback is `(err, result) => (err ? reject(err) : resolve(result))`. No behavior change.
+- Changed: `downloader.js`'s requirement loop now checks `err?.data?.kind === "process-canceled"` instead of `err instanceof util.ProcessCanceled`. A plain `VortexError` is never `instanceof` the old subclass, so without this a skipped requirement (for example a GitHub rate limit) would surface as a "Failed to install" error instead of being logged and skipped.
+
 ## [2026-09-26]
 
 - Changed: `resolveGameVersion` (non-Xbox path) now resolves the real game build instead of the Unreal engine version stamped in the shipping exe's `ProductVersion`, which is identical across every content patch and made curator/user "Game version mismatch" checks meaningless. New tiered chain, ported from the `game-subnautica2`/`game-witchfire`/`game-fatekeeper` pilots (`ue-unity-game-version-soaring-creek` plan): an `exeHasGameVersion` toggle (default off) for games whose devs do stamp the real version into the exe; then store build metadata - Steam `appmanifest_<id>.acf` `buildid` (walking up from the game path to find `steamapps/common`), Epic launcher `.item` manifest `AppVersionString` (matched by `AppName` or install path), GOG registry `ver` (matched by registry `path`); then an MD5-of-MD5s hash of `SHIPPING_EXE` (Vortex's own removed `gameversion-hash` extension's algorithm), cached per sorted file mtimes so it is paid once per build rather than on every `mod-installed` health check; last resort falls through to the old exe `ProductVersion` read, then `"0.0.0"`. Never throws. Requires `crypto` and `winapi-bindings`, both newly added to the require block.

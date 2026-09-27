@@ -26,7 +26,7 @@ const semver = require("semver");
 const { finished } = require("stream/promises");
 const fs = require("fs");
 const fsp = fs.promises;
-const { actions, fs: vfs, log, selectors, util } = require("vortex-api");
+const { actions, fs: vfs, log, selectors, util, VortexError } = require("vortex-api");
 
 // --- common ---------------------------------------------------------------
 const NOTIF_ID_REQUIREMENTS = "vortex-downloader-requirements-download-notification";
@@ -402,7 +402,7 @@ async function download(api, requirements, force) {
       } catch (err) {
         // Keep going: one unreachable repo or broken archive must not silently drop every
         // remaining requirement in the array.
-        if (err instanceof util.ProcessCanceled) {
+        if (err?.data?.kind === "process-canceled") {
           log("warn", `Skipped requirement ${req.userFacingName}`, err.message);
         } else {
           api.showErrorNotification(`Failed to install ${req.userFacingName}`, err, {
@@ -491,7 +491,7 @@ async function importAndInstall(api, filePath, info) {
     api.events.emit("import-downloads", [filePath], async (dlIds) => {
       const id = dlIds[0];
       if (id === undefined) {
-        return reject(new util.NotFound(filePath));
+        return reject(new VortexError(filePath, { kind: "not-found" }));
       }
       const batched = [];
       batched.push(actions.setDownloadModInfo(id, "source", "other"));
@@ -568,7 +568,9 @@ async function getLatestGithubReleaseAsset(api, requirement) {
         log("info", "GitHub rate limit exceeded", {
           reset_at: new Date(resetDate * 1000).toString(),
         });
-        return Promise.reject(new util.ProcessCanceled("GitHub rate limit exceeded"));
+        return Promise.reject(
+          new VortexError("GitHub rate limit exceeded", { kind: "process-canceled" }),
+        );
       }
       // Only a missing tag is worth retrying with the other 'v' spelling; any other status
       // means the next candidate would fail the same way.
@@ -659,7 +661,9 @@ async function getLatestNightlyArtifact(api, requirement) {
       log("info", "GitHub rate limit exceeded", {
         reset_at: new Date(resetDate * 1000).toString(),
       });
-      return Promise.reject(new util.ProcessCanceled("GitHub rate limit exceeded"));
+      return Promise.reject(
+        new VortexError("GitHub rate limit exceeded", { kind: "process-canceled" }),
+      );
     }
     if (!response.ok) {
       throw new Error(`Request failed with status code ${response.status} (${runsUrl})`);
@@ -755,7 +759,9 @@ async function doDownload(downloadUrl, destination) {
   ) {
     const resetDate = parseInt(response.headers.get("x-ratelimit-reset") ?? "0", 10);
     log("info", "GitHub rate limit exceeded", { reset_at: new Date(resetDate * 1000).toString() });
-    return Promise.reject(new util.ProcessCanceled("GitHub rate limit exceeded"));
+    return Promise.reject(
+      new VortexError("GitHub rate limit exceeded", { kind: "process-canceled" }),
+    );
   }
   if (!response.ok) {
     throw new Error(`Request failed with status code ${response.status} (${downloadUrl})`);

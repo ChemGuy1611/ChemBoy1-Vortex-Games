@@ -1109,7 +1109,7 @@ async function downloadUe4ss(api, gameSpec) {
           );
         });
     }).catch((err) => {
-      if (err instanceof util.UserCanceled) {
+      if (err?.data?.kind === "user-canceled") {
         api.showErrorNotification(
           `User cancelled download/install of ${MOD_NAME}. Please re-launch Vortex and try again.`,
           err,
@@ -1117,7 +1117,7 @@ async function downloadUe4ss(api, gameSpec) {
         );
         //window.api.shell.openUrl(URL);
         return Promise.resolve();
-      } else if (err instanceof util.ProcessCanceled) {
+      } else if (err?.data?.kind === "process-canceled") {
         api.showErrorNotification(
           `Failed to download/install ${MOD_NAME}. Please re-launch Vortex and try again or download manually from modDB at the opened paged and install the zip in Vortex.`,
           err,
@@ -1366,14 +1366,14 @@ async function browseForDownloadFunction(
           );
         });
     }).catch((err) => {
-      if (err instanceof util.UserCanceled) {
+      if (err?.data?.kind === "user-canceled") {
         api.showErrorNotification(
           `User cancelled download/install of ${MOD_NAME}. Please try again.`,
           err,
           { allowReport: false },
         );
         return Promise.resolve();
-      } else if (err instanceof util.ProcessCanceled) {
+      } else if (err?.data?.kind === "process-canceled") {
         api.showErrorNotification(
           `Failed to download/install ${MOD_NAME}. Please re-launch Vortex and try again or download manually from the opened page..`,
           err,
@@ -1461,14 +1461,14 @@ async function browseForDownloadFunction(
           );
         });
     }).catch((err) => {
-      if (err instanceof util.UserCanceled) {
+      if (err?.data?.kind === "user-canceled") {
         api.showErrorNotification(
           `User cancelled download/install of ${MOD_NAME}. Please try again.`,
           err,
           { allowReport: false },
         );
         return Promise.resolve();
-      } else if (err instanceof util.ProcessCanceled) {
+      } else if (err?.data?.kind === "process-canceled") {
         api.showErrorNotification(
           `Failed to download/install ${MOD_NAME}. Please re-launch Vortex and try again or download manually from the opened page..`,
           err,
@@ -1532,14 +1532,14 @@ async function browseForDownloadFunction(
           );
         });
     }).catch((err) => {
-      if (err instanceof util.UserCanceled) {
+      if (err?.data?.kind === "user-canceled") {
         api.showErrorNotification(
           `User cancelled download/install of ${MOD_NAME}. Please re-launch Vortex and try again.`,
           err,
           { allowReport: false },
         );
         return Promise.resolve();
-      } else if (err instanceof util.ProcessCanceled) {
+      } else if (err?.data?.kind === "process-canceled") {
         api.showErrorNotification(
           `Failed to download/install ${MOD_NAME}. Please re-launch Vortex and try again or download manually from the opened page.`,
           err,
@@ -1604,14 +1604,14 @@ async function browseForDownloadFunction(
           );
         });
     }).catch((err) => {
-      if (err instanceof util.UserCanceled) {
+      if (err?.data?.kind === "user-canceled") {
         api.showErrorNotification(
           `User cancelled download/install of ${MOD_NAME}. Please re-launch Vortex and try again.`,
           err,
           { allowReport: false },
         );
         return Promise.resolve();
-      } else if (err instanceof util.ProcessCanceled) {
+      } else if (err?.data?.kind === "process-canceled") {
         api.showErrorNotification(
           `Failed to download/install ${MOD_NAME}. Please re-launch Vortex and try again or download manually from the opened page.`,
           err,
@@ -1688,14 +1688,14 @@ async function browseForDownloadFunction(
           );
         });
     }).catch((err) => {
-      if (err instanceof util.UserCanceled) {
+      if (err?.data?.kind === "user-canceled") {
         api.showErrorNotification(
           `User cancelled download/install of ${MOD_NAME}. Please try again.`,
           err,
           { allowReport: false },
         );
         return Promise.resolve();
-      } else if (err instanceof util.ProcessCanceled) {
+      } else if (err?.data?.kind === "process-canceled") {
         api.showErrorNotification(
           `Failed to download/install ${MOD_NAME}. Please re-launch Vortex and try again or download manually from the opened page.`,
           err,

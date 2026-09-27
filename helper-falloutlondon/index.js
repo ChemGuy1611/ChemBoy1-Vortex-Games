@@ -483,7 +483,13 @@ function main(context) {
     {},
     "Open FOLON GOG Folder",
     () => {
-      util.opn(FOLON_INSTALL_PATH).catch(() => null);
+      try {
+        window.api.shell.openFile(FOLON_INSTALL_PATH);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
     },
     () => {
       const state = context.api.getState();

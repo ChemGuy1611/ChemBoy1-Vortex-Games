@@ -1,5 +1,9 @@
 # Changelog
 
+## Planned Improvements (Not Yet Released)
+
+- The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
+
 ## [1.0.0] - 2026-09-18
 
 - Migrated to file-based load order (FBLO); added lock button, multi-select, and right-click context menu.

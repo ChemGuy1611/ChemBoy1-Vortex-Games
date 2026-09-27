@@ -3,7 +3,7 @@ const path = require("path");
 const winapi = require("winapi-bindings");
 const fs = require("fs");
 const fsp = fs.promises;
-const { fs: vfs, util, actions, selectors } = require("vortex-api");
+const { fs: vfs, util, actions, selectors, VortexError } = require("vortex-api");
 const { default: IniParser, WinapiFormat } = require("vortex-parse-ini");
 
 const GAME_ID = "vampirebloodlines";
@@ -75,7 +75,7 @@ function getGameVersion(discoveryPath) {
     const version = data?.data?.["Version Info"]?.ExtVersion;
     return version
       ? Promise.resolve(version)
-      : Promise.reject(new util.DataInvalid("Invalid version file"));
+      : Promise.reject(new VortexError("Invalid version file", { kind: "data-invalid" }));
   });
 }
 

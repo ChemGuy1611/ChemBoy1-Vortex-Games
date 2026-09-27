@@ -378,7 +378,11 @@ async function downloadBepinexBeRequirement(api, gameSpec, requirement, check = 
       `Failed to download/install ${requirement.userFacingName}. You must download manually.`,
       err,
     );
-    util.opn(pageUrl(requirement)).catch(() => null);
+    try {
+      window.api.shell.openUrl(pageUrl(requirement));
+    } catch (openErr) {
+      api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
+    }
   } finally {
     activeInstalls.delete(key);
     api.dismissNotification(NOTIF_ID);

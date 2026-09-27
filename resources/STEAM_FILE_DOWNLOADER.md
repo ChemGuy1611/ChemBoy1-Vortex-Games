@@ -422,7 +422,7 @@ To restore a file the extension deliberately deleted, delete it **and leave it o
 `NOTIFICATIONS_DIALOGS.md` (the login / Steam Guard / mismatch dialogs the UI delegates raise).
 `TOOLBAR_ACTIONS.md` (the `mod-icons` group the "Verify Files" button registers into).
 `UNDERUSED_API_FUNCTIONS.md` (`registerAPI` / `api.ext` inter-extension calls in general).
-`ERROR_CLASSES.md` (`util.ProcessCanceled` and `util.UserCanceled`, which the delegates raise on
-cancel).
+`ERROR_CLASSES.md` (the `process-canceled` and `user-canceled` `VortexError` kinds the delegates
+raise on cancel).
 `STEAMCHARTS_API.md` (concurrent-player history for the same appid this extension verifies files
 for — an unauthenticated third-party source, no SteamKit session involved).

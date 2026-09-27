@@ -339,7 +339,7 @@ function usesClickFetch(adapter) {
 // install, the mod entry, the attributes - is the normal pipeline. 'import-downloads' MOVES the
 // file into the download folder, so there is nothing left in temp to clean up afterwards.
 // It also calls back with (dlIds) and no error argument, unlike every other event here, so it
-// cannot go through util.toPromise - that would read the id array as the error and reject.
+// cannot use the usual (err, result) callback wrap - that would read the id array as the error and reject.
 async function importFetchedFile(adapter, api, config, url) {
   const filePath = await adapter.fetchToFile(config, url);
   if (filePath === null || filePath === undefined) {
@@ -431,7 +431,11 @@ async function installRef(adapter, api, gameSpec, config, ref, options = {}) {
       err,
     );
     if (resolved.pageUrl) {
-      util.opn(resolved.pageUrl).catch(() => null);
+      try {
+        window.api.shell.openUrl(resolved.pageUrl);
+      } catch (openErr) {
+        api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
+      }
     }
     return undefined;
   } finally {
@@ -889,7 +893,12 @@ function makeBrowsePage(adapter, gameSpec, config) {
           //an ad click or pop-under: drop it rather than open a browser
           log("debug", `Blocked an ad destination from the ${adapter.label} browser: ${url}`);
         } else {
-          util.opn(url).catch(() => null); //off-site links open in the system browser, never in the page
+          //off-site links open in the system browser, never in the page
+          try {
+            window.api.shell.openUrl(url);
+          } catch (err) {
+            api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+          }
         }
         if (navigated) {
           //the view already left the allow-list - bring it back
@@ -1034,7 +1043,13 @@ function makeBrowsePage(adapter, gameSpec, config) {
           React.createElement(tooltip.IconButton, {
             icon: "open-ext",
             tooltip: "Open in your browser",
-            onClick: () => util.opn(currentUrl).catch(() => null),
+            onClick: () => {
+              try {
+                window.api.shell.openUrl(currentUrl);
+              } catch (err) {
+                api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+              }
+            },
           }),
         ),
       ),

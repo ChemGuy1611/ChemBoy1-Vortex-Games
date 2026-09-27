@@ -85,7 +85,11 @@ context.registerAction(
   "Open ModWorkshop Page",
   () => {
     const { util } = require("vortex-api");
-    util.opn(`https://modworkshop.net/g/${MWS_GAME}`).catch(() => null);
+    try {
+      window.api.shell.openUrl(`https://modworkshop.net/g/${MWS_GAME}`);
+    } catch (err) {
+      context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+    }
   },
   () => {
     const state = context.api.getState();

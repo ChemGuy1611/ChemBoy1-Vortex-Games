@@ -5,6 +5,7 @@
 - Add full Xbox version support (not on Game Pass) - discovery (need appxmanifest.xml), binaries folders
 - Fixed: Mod files with no file extension were skipped during installation
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
+- The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
 
 ## [0.3.1] - 2026-02-07
 

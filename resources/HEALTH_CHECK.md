@@ -162,7 +162,7 @@ check: async (api, signal) => {
   const start = Date.now();
   for (const file of manyFiles) {
     if (signal?.aborted) {
-      throw new util.ProcessCanceled('health check aborted');
+      throw new VortexError('health check aborted', { kind: 'process-canceled' });
     }
     await inspect(file);
   }

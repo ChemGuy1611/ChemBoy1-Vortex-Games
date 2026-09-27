@@ -2,12 +2,16 @@
 convert_error_classes.py
 
 Codemod: converts the 10 deprecated `util.<Class>(...)` error constructors to direct
-`VortexError(message, { kind, ...payload })` construction. All 10 already extend
-VortexError<kind> with identical constructor args/instanceof/data shape since v2.5.0
-(see resources/api.d.ts, memory reference_error_classes.md) -- this is a behavior-
-preserving rewrite, not a functional change. Grepped the whole repo for
-`instanceof (UserCanceled|ProcessCanceled|...)` first: zero hits, nobody branches on the
-specific subclass, which is what makes the swap safe to script at all.
+`VortexError(message, { kind, ...payload })` construction, AND every
+`x instanceof util.<Class>` check to `x?.data?.kind === "<kind>"`.
+
+Both halves are required together. All 10 classes extend VortexError<kind> since v2.5.0,
+but compatibility only runs one way: a plain `new VortexError(msg, { kind })` is NOT
+`instanceof` the subclass (no Symbol.hasInstance; Vortex rebuilds the subclass only when
+an error crosses IPC, never inside one extension's own throw/catch). Converting throws
+alone silently breaks every same-file `instanceof util.X` catch. The kind check matches
+both shapes -- subclass instances thrown by Vortex core carry the same `data.kind` -- so
+the catch rewrite is safe on its own, even in files whose throws can't be converted.
 
 `VortexError` is a TOP-LEVEL vortex-api export, NOT under `util.*` (api.d.ts export list
 bundles `util` separately as `api_d_exports$1`). Every file that gets a call site
@@ -71,6 +75,12 @@ from vortex_utils import (
 _CALL_RE = re.compile(
     r"\bnew\s+util\.(UserCanceled|ProcessCanceled|DataInvalid|SetupError|MissingInterpreter|"
     r"NotFound|NotSupportedError|ArgumentInvalid|CycleError|GameNotFound)\s*\("
+)
+
+_INSTANCEOF_RE = re.compile(
+    r"(?<![\w$.])([A-Za-z_$][\w$]*(?:\??\.[A-Za-z_$][\w$]*)*)\s+instanceof\s+util\.(UserCanceled|"
+    r"ProcessCanceled|DataInvalid|SetupError|MissingInterpreter|NotFound|NotSupportedError|"
+    r"ArgumentInvalid|CycleError|GameNotFound)\b"
 )
 
 # name -> (kind, min_args, max_args, message_fn(args) -> str, payload_fn(args) -> [(field, expr), ...])
@@ -170,13 +180,30 @@ def _convert_one_call(src, masked, class_name, open_pos):
     return (close_pos + 1, replacement), None
 
 
+def _instanceof_edits(masked):
+    """(start, end, replacement) for every `<operand> instanceof util.<Class>` in masked."""
+    edits = []
+    for m in _INSTANCEOF_RE.finditer(masked):
+        kind = _CLASSES[m.group(2)][0]
+        edits.append((m.start(), m.end(), f'{m.group(1)}?.data?.kind === "{kind}"'))
+    return edits
+
+
+def _apply_edits(src, edits):
+    for start, end, replacement in sorted(edits, key=lambda t: t[0], reverse=True):
+        src = src[:start] + replacement + src[end:]
+    return src
+
+
 def convert_source(src):
-    """Convert every `new util.<Class>(...)` call in src. Returns (new_src, converted,
-    skipped, import_reason). import_reason is set (and new_src == src) when at least one
-    call site would convert but VortexError could not be safely added to this file's
-    require('vortex-api') -- the whole file is left untouched rather than partially
-    converted with a dangling unimported name."""
+    """Convert every `new util.<Class>(...)` call and every `instanceof util.<Class>`
+    check in src. Returns (new_src, converted, checks, skipped, import_reason).
+    import_reason is set when at least one call site would convert but VortexError could
+    not be safely added to this file's require('vortex-api') -- the call sites are then
+    left untouched rather than converted with a dangling unimported name, while the
+    instanceof checks (which need no import) are still converted."""
     masked = mask_comments_and_strings(src)
+    check_edits = _instanceof_edits(masked)
     call_sites = [(m.group(1), m.start(), m.end() - 1) for m in _CALL_RE.finditer(masked)]
 
     candidates = []
@@ -198,26 +225,34 @@ def convert_source(src):
         accepted.append((call_start, end, replacement))
         last_end = end
 
-    if not accepted:
-        return src, 0, skipped, None
+    # A check nested inside a converted call's arguments would be overwritten by that
+    # call's replacement text; leave it for a rerun instead.
+    kept_checks = []
+    for edit in check_edits:
+        if any(cs <= edit[0] < ce for cs, ce, _ in accepted):
+            skipped.append((edit[0], "instanceof inside a converted call -- rerun this script"))
+        else:
+            kept_checks.append(edit)
 
-    # Apply call-site edits FIRST, against the original src's offsets, while they're
-    # still valid. Only afterward touch the require() line -- ensure_vortex_api_name
-    # re-locates its target fresh via regex, so it doesn't care that the string grew,
-    # but doing it first would shift every call-site offset computed against the
-    # pre-insertion src and corrupt every splice below it.
-    new_src = src
-    for call_start, end, replacement in sorted(accepted, key=lambda t: t[0], reverse=True):
-        new_src = new_src[:call_start] + replacement + new_src[end:]
+    checks_only = _apply_edits(src, kept_checks)
+    if not accepted:
+        return checks_only, 0, len(kept_checks), skipped, None
+
+    # Apply all offset-based edits FIRST, against the original src's offsets, while
+    # they're still valid. Only afterward touch the require() line --
+    # ensure_vortex_api_name re-locates its target fresh via regex, so it doesn't care
+    # that the string grew, but doing it first would shift every offset computed against
+    # the pre-insertion src and corrupt every splice below it.
+    new_src = _apply_edits(src, accepted + kept_checks)
 
     new_src, added, reason = ensure_vortex_api_name(new_src, "VortexError")
     if reason is not None:
-        # Can't safely add the import -- leave the whole file untouched, including the
-        # call sites that would otherwise have converted (report them as skipped too).
+        # Can't safely add the import -- leave the call sites untouched (report them as
+        # skipped too); the instanceof rewrites need no import, so they still land.
         skipped = skipped + [(call_start, f"would convert but {reason}") for call_start, _, _ in accepted]
-        return src, 0, skipped, reason
+        return checks_only, 0, len(kept_checks), skipped, reason
 
-    return new_src, len(accepted), skipped, None
+    return new_src, len(accepted), len(kept_checks), skipped, None
 
 
 def iter_target_files(scope, batch=None, game_ids=None):
@@ -259,7 +294,8 @@ def iter_target_files(scope, batch=None, game_ids=None):
 def build_parser():
     p = argparse.ArgumentParser(description=(
         "Convert the 10 deprecated util.<Class>(...) error constructors to direct "
-        "VortexError(message, { kind, ...payload }) construction."
+        "VortexError(message, { kind, ...payload }) construction, and every "
+        "'instanceof util.<Class>' check to an err?.data?.kind comparison."
     ))
     p.add_argument("game_ids", nargs="*", metavar="GAME_ID",
                    help="Restrict --scope games to these game IDs (default: all games, "
@@ -287,7 +323,8 @@ def main():
         return
 
     counters = {"files scanned": 0, "files changed": 0, "calls converted": 0,
-                "calls skipped": 0, "files skipped (import)": 0}
+                "instanceof checks converted": 0, "calls skipped": 0,
+                "files skipped (import)": 0}
 
     for path in files:
         counters["files scanned"] += 1
@@ -299,8 +336,9 @@ def main():
             log_warn(label, f"could not read: {e}")
             continue
 
-        new_src, converted, skipped, import_reason = convert_source(src)
+        new_src, converted, checks, skipped, import_reason = convert_source(src)
         counters["calls converted"] += converted
+        counters["instanceof checks converted"] += checks
         counters["calls skipped"] += len(skipped)
         if import_reason is not None:
             counters["files skipped (import)"] += 1
@@ -326,14 +364,14 @@ def main():
             continue
 
         if dry_run:
-            print(f"  [DRY RUN] would convert {converted} call(s): {label}")
+            print(f"  [DRY RUN] would convert {converted} call(s), {checks} check(s): {label}")
             ok, err = node_check_source(new_src)
             if ok is False:
                 log_warn(label, f"node --check would FAIL after conversion: {err}")
             continue
 
         write_text_atomic(path, new_src)
-        print(f"  Converted {converted} call(s): {label}")
+        print(f"  Converted {converted} call(s), {checks} check(s): {label}")
         ok, err = node_check(path)
         report_node_check(label, ok, err)
 
