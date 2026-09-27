@@ -284,7 +284,7 @@ function setGameVersion(discoveryPath) {
 
 const getDiscoveryPath = (api) => {
   const state = api.getState();
-  const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
+  const discovery = state?.settings?.gameMode?.discovered?.[GAME_ID] ?? {};
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
 
@@ -427,9 +427,7 @@ function installModManager(files) {
   const setModTypeInstruction = { type: "setmodtype", value: RELOADED_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -477,9 +475,7 @@ function installReloadedLoader(files) {
   const setModTypeInstruction = { type: "setmodtype", value: RELOADEDMODLOADER_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -534,9 +530,7 @@ function installReloadedMod(files, fileName) {
   }
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -581,9 +575,7 @@ function installSave(files) {
   const setModTypeInstruction = { type: "setmodtype", value: SAVE_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -661,11 +653,7 @@ function runReloadedAdmin(api) {
   const TOOL_ID = "ReloadedModManager";
   const TOOL_NAME = RELOADED_NAME;
   const state = api.store.getState();
-  const tool = util.getSafe(
-    state,
-    ["settings", "gameMode", "discovered", GAME_ID, "tools", TOOL_ID],
-    undefined,
-  );
+  const tool = state?.settings?.gameMode?.discovered?.[GAME_ID]?.tools?.[TOOL_ID] ?? undefined;
 
   try {
     const TOOL_PATH = tool.path;

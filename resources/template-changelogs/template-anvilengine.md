@@ -1,5 +1,9 @@
 # template-anvilengine Changelog
 
+## [2026-09-25]
+
+- Changed: `util.opn(...)` (deprecated Bluebird-promise API) replaced with `window.api.shell.openUrl()`/`openFile()` (void, no promise) at every call site, each wrapped in `try`/`catch` reporting failures via `showErrorNotification(..., { allowReport: false })` instead of the old silent `.catch(() => null)`.
+
 ## [2026-09-22]
 
 - Added: `autoDownloadReforger` toggle (default `true`). `hasReforger` alone gated both the tool's registration AND its setup-time auto-fetch together; some games (valhalla) support both ReForger and legacy Forger Patch Manager and only want the legacy one auto-installed. `false` keeps the tool entry, registry lookup and "Download ReForger" button working, it just skips the unattended fetch during `setup()`.

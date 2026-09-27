@@ -1,5 +1,9 @@
 # template-unitymelonloaderbepinex-hybrid Changelog
 
+## [2026-09-25]
+
+- Changed: `util.opn(...)` (deprecated Bluebird-promise API) replaced with `window.api.shell.openUrl()`/`openFile()` (void, no promise) at every call site (`index.js`, `downloader.js`, `bepinexbe_downloader.js`), each wrapped in `try`/`catch` reporting failures via `showErrorNotification(..., { allowReport: false })` instead of the old silent `.catch(() => null)`.
+
 ## [2026-09-15]
 
 - Fixed: `getRequirements()` pushed `BEPINEX_REQUIREMENTS`/`MELON_REQUIREMENTS` (GitHub-sourced) whenever the matching loader was installed, with no check for `bepinexFromNexus`/`melonFromNexus`. For a game whose loader is a Nexus-hosted fork - `bepinexFromNexus`/`melonFromNexus` true - the auto-update checker would have compared the installed Nexus build against the wrong upstream GitHub release. Now gated on those flags, matching the check `getBepinexBeRequirements()` already had. Found while porting `grimshire` (Wave 4 of `unity-loader-downloader-migration-amber-pinion`), the plan's first Nexus-sourced-loader game.

@@ -259,9 +259,7 @@ function installPric(files) {
   const setModTypeInstruction = { type: "setmodtype", value: PRIC_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -295,9 +293,7 @@ function installChair(files) {
   const setModTypeInstruction = { type: "setmodtype", value: CHAIR_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -382,9 +378,7 @@ function installChairMod(files, fileName) {
   const MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, "");
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -431,9 +425,7 @@ function installChairModLegacy(files) {
   const setModTypeInstruction = { type: "setmodtype", value: CHAIRMODLEGACY_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -466,9 +458,7 @@ function installRoot(files) {
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {

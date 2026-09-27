@@ -383,7 +383,7 @@ async function getAllFiles(dirPath) {
 const getDiscoveryPath = (api) => {
   //get the game's discovered path
   const state = api.getState();
-  const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
+  const discovery = state?.settings?.gameMode?.discovered?.[GAME_ID] ?? {};
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
 
@@ -573,9 +573,7 @@ function installModManager(files) {
   const setModTypeInstruction = { type: "setmodtype", value: MODMANAGER_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -630,9 +628,7 @@ function installModManagerMod(files, fileName) {
 
   // Remove directories and anything that isn't in the rootPath.
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -677,9 +673,7 @@ function installData(files) {
   const setModTypeInstruction = { type: "setmodtype", value: DATAMOD_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -728,9 +722,7 @@ function installRoot(files) {
   const idx = modFile.indexOf(path.basename(modFile));
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -841,11 +833,7 @@ function runModManager(api) {
   const TOOL_ID = MODMANAGER_ID;
   const TOOL_NAME = MODMANAGER_NAME;
   const state = api.store.getState();
-  const tool = util.getSafe(
-    state,
-    ["settings", "gameMode", "discovered", GAME_ID, "tools", TOOL_ID],
-    undefined,
-  );
+  const tool = state?.settings?.gameMode?.discovered?.[GAME_ID]?.tools?.[TOOL_ID] ?? undefined;
 
   try {
     const TOOL_PATH = tool.path;
@@ -998,11 +986,7 @@ function fallbackInstallerNotify(api, modName) {
                 label: `Open Mod Page + Staging Folder`,
                 action: () => {
                   util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
-                  const mods = util.getSafe(
-                    api.store.getState(),
-                    ["persistent", "mods", spec.game.id],
-                    {},
-                  );
+                  const mods = api.store.getState()?.persistent?.mods?.[spec.game.id] ?? {};
                   const modMatch = Object.values(mods).find(
                     (mod) => mod.installationPath === modName,
                   );

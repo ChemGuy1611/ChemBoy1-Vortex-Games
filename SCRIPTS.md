@@ -161,6 +161,11 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `has_modworkshop_downloader_js(folder)`                                                             | Return `True` if the extension `folder` contains a bundled `modworkshop_downloader.js` module                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `has_thunderstore_downloader_js(folder)`                                                            | Return `True` if the extension `folder` contains a bundled `thunderstore_downloader.js` module                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `strip_js_comments(src)`                                                                            | Return `src` with `//` and `/* */` comments blanked to spaces, preserving string/template/regex literals and character offsets                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `mask_comments_and_strings(src)`                                                                    | Fork of `strip_js_comments`: also blanks string/template/regex literal BODIES (not just comments), same length so offsets still line up 1:1. Used only to LOCATE call sites via regex — real extraction always reads the original `src` at the matched offsets. Tracks `[...]` character-class state inside a regex literal so an unescaped `/` there doesn't end the regex early (a real bug this caught in `resources/downloader/downloader.js`).                                                                                                                                                                                                                                                                             |
+| `find_matching_bracket(masked, open_pos)`                                                           | Return the offset in `masked` of the `([{` at `open_pos`'s matching `)]}`, or `None` if unbalanced. `masked` should come from `mask_comments_and_strings` so a bracket inside a string/comment is never mistaken for a structural one. Shared by `convert_getsafe.py`/`convert_setsafe.py`.                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `split_top_level_masked(masked, start, end)`                                                        | Return `[(piece_start, piece_end), ...]` offsets for `masked[start:end]` split on depth-0 commas, each trimmed of whitespace, empty pieces (a trailing comma) dropped. Offsets are meant to be sliced out of the ORIGINAL source. Shared by `convert_getsafe.py`/`convert_setsafe.py`.                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `js_files_in(folder, paths)`                                                                        | Append every top-level `*.js` file in `folder` to `paths` (sorted, non-recursive); no-op if `folder` does not exist. Shared file-walk step for the `convert_*.py` codemods.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `batch_slice(items, batch)`                                                                         | Return the N-th of TOTAL contiguous alphabetical chunks of `items` (`batch='N/TOTAL'`). Used to split a big scope (e.g. all `game-*` folders) into reproducible, human-checkable codemod wave boundaries.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `audit_skip_rules(line)`                                                                            | Parse an `//!audit-skip: <rule>[,<rule>] - <reason>` marker on one source line into `{rule: reason}`. Empty when there is no marker, or the marker states no reason                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `audit_skip_lines(src, rule)`                                                                       | Return `{line number: reason}` for every line in `src` that suppresses `rule`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `AUDIT_SKIP_STORE_ID`                                                                               | Rule name (`store-id`) suppressing a store ID wiring finding                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
@@ -969,6 +974,44 @@ With `--json`, stdout receives a JSON object instead:
 
 ---
 
+## replace_util_opn.js
+
+One-off codemod for the `util.opn` deprecation. Rewrites every `util.opn(target)` call in `game-*` extensions to `window.api.shell.openUrl(target)` or `window.api.shell.openFile(target)`, wrapped in a `try`/`catch` whose `catch` calls `showErrorNotification(..., { allowReport: false })`, and drops the old `.catch(() => null)` tail.
+
+Each file is parsed with `espree` and scope-analyzed with `eslint-scope` (both already installed as ESLint dependencies), so decisions are made on real bindings rather than text patterns:
+
+- **URL or path** — from the argument itself (a `://` literal, a `path.*(...)` call, `__dirname`), else from the value most recently assigned to the identifier it names before the call, else from the name (`...Url`/`..._URL` vs `...Path`/`...Folder`/`...File`/`...Dir`). Resolving the value first matters: 15 sites name a variable `openPath` that actually holds a URL.
+- **Notification API** — the innermost `api` variable in scope, else `context` (emits `context.api`), else a `React.useContext(MainContext)` variable (emits `<name>.api`). Module-level bindings are never used. When an outer `err` is already in scope the new catch binds `openErr` instead of shadowing it.
+- **Shapes handled** — plain statements, braceless `if` bodies (braces added), expression-bodied arrows (`onClick: () => util.opn(...)`, `.forEach((x) => util.opn(...))`; a dangling `,\n)` after a multi-line arrow collapses to `})`), a trailing `//` comment (moved above the `try`), `await`, `//util.opn(...)` line comments (rewritten to a commented one-line call), and code inside `/* */` blocks (parsed with the delimiters blanked so offsets stay identical).
+
+A site is left untouched and listed in the report when the target can't be classified, no API variable is in scope, the call sits in an unsupported expression position, the `.catch()` handler does real work, the call chains `.then()`/`.finally()`, or it lives in a `/* */` block that doesn't parse once uncommented. A rewritten file is written only if it re-parses, passes `node --check`, and every inserted API reference binds to a non-global variable.
+
+### replace_util_opn.js — Requirements
+
+Node.js plus the repo's dev dependencies (`npm install` at repo root) for `espree` and `eslint-scope`.
+
+### replace_util_opn.js — Usage
+
+```sh
+node replace_util_opn.js
+node replace_util_opn.js GAME_ID [GAME_ID ...]
+node replace_util_opn.js --dry-run
+node replace_util_opn.js --report PATH
+node replace_util_opn.js --file IN.js --out OUT.js
+```
+
+- No arguments — every `game-*` folder whose top-level `.js` files still hold `util.opn(`, except deprecated extensions (`game-battlefield1`).
+- `GAME_ID [GAME_ID ...]` — only these games; matches the folder suffix or the `GAME_ID` constant.
+- `--dry-run` — convert and validate in memory, write nothing.
+- `--report PATH` — write the unconverted-site list to `PATH` instead of printing it.
+- `--file IN.js` — process one arbitrary file instead of game folders; `--out OUT.js` writes the result elsewhere (used to validate against hand-converted files).
+
+### replace_util_opn.js — Output
+
+One line per file (`N/M converted`, plus how many were left for hand conversion), then the report (`file:line: reason  [arg: ...]`), then a summary: files, sites, live sites converted, commented-out sites converted, sites left for hand conversion, file errors. Exit code `0` when every site converted, `1` when any site was left or any file failed validation (that file is not written).
+
+---
+
 ## categorize_games.py
 
 Scans all `game-*` extension folders and categorizes them by engine or framework based on the `Structure:` header comment and key code markers in each `index.js`. Writes one `.txt` file per engine category into `resources/lists/`, plus several non-exclusive "flag" lists (load order, one per downloader module in the family, Unreal Engine Mod Installer dependency, any inter-extension dependency, UE4-5 load-order parity, Unity BepInEx/hybrid template parity, unreleased extensions, multi-game extensions, no real Steam app ID) evaluated for every game independently. Each line in the file is a `GAME_ID`.
@@ -1409,6 +1452,126 @@ With no `GAME_ID` and no scope flag, `--report` implies `--all`; a bare run erro
 ### migrate_fs.py — Output
 
 Per file: `OK` / `DRY` / `SKIP <reason>` / `FAIL <node --check error>`, then a `migrated / unchanged / skipped / failed` tally and any hand-migration notes. `--report` prints the live `fs.<method>` census across the scanned set (methods kept on `vfs` are tagged, as are native members such as `fs.mkdirSync` and `fs.createWriteStream` that start appearing once a wave lands and never count toward the migratable total), the count of migratable call sites still on `fs.*` (zero once a wave is complete), the `vfs.*` / `fsp.*` call-site totals for the orphan sweep, and the list of files not yet migrated.
+
+---
+
+## convert_getsafe.py
+
+Codemod (plan `getsafe-optional-chaining-migration`): converts deprecated `util.getSafe(obj, [path, 'segments'], default)` calls to native optional chaining + nullish coalescing, `(obj?.path?.segments ?? default)`. Vortex's own `getSafe` is already implemented internally as `current?.[path[i]] ... ?? fallback` and carries an `@deprecated` tag recommending this exact swap, so the conversion is behavior-preserving.
+
+Finds call sites and splits arguments with a bracket-depth scanner over `mask_comments_and_strings()` output (comments and string/template/regex bodies blanked, same length as the original so offsets line up 1:1) rather than a line-based regex — multi-line oxfmt-wrapped calls and a commented-out call are both real in this repo, and a naive scan would either miss the former or convert the latter.
+
+The replacement is **always wrapped in outer parens**: `??` binds looser than `===`/`+`/etc., so a bare `obj?.a ?? default` dropped into `getSafe(...) === folder` would silently reparse as `?? (default === folder)`. A quoted path segment only becomes a dot-chain segment (`?.name`) when its inner text is a valid identifier; otherwise it stays a bracket segment using the **original quoted text verbatim** (`?.["x-ratelimit-remaining"]`), since `?.x-ratelimit-remaining` is a syntax error (parses as subtraction). `getSafeCI` and `setSafe` are different functions with no optional-chaining equivalent and are never matched.
+
+An overlapping/nested call span (a getSafe call whose own `arg0` is itself a getSafe call — not observed anywhere in this repo, but not assumed impossible) is resolved outermost-first per run: an inner span overlapping an already-accepted outer replacement is skipped with a "rerun" reason instead of corrupting either span; the untouched original text is still sitting inside the outer call's own arg text, so a second run of the script picks it up.
+
+`mask_comments_and_strings()` (in `vortex_utils.py`, a fork of `strip_js_comments()`) found and fixed a real latent bug in the shared regex-literal scanner both functions were built from: an unescaped `/` inside a regex character class (e.g. `/[\\/:*?"<>|]/g`, real code in `resources/downloader/downloader.js`) was treated as the regex's closing delimiter, cascading the masking wrong for the rest of the file and silently dropping real call sites with no skip logged. `mask_comments_and_strings()` now tracks character-class state (`[...]`) so an unescaped `/` inside one no longer ends the regex early. `strip_js_comments()` itself was left as-is (other scripts depend on it and the bug was never triggered by their usage patterns) — a fix there is a separate, deliberate call, not a side effect of this script.
+
+### convert_getsafe.py — Usage
+
+```sh
+python convert_getsafe.py --scope templates --diff        # preview template-*/resources/*.js (no writes)
+python convert_getsafe.py --scope templates                # apply for real
+python convert_getsafe.py --scope games --batch 1/3 --diff # preview game-* batch 1 of 3 (alphabetical)
+python convert_getsafe.py --scope games --batch 1/3        # apply that batch
+python convert_getsafe.py GAME_ID [GAME_ID ...] --scope games --diff  # one-off games
+python convert_getsafe.py --scope all --dry-run --verbose  # full repo, report only, print every skip reason
+```
+
+`--scope` is one of `templates` (`template-*/*.js` + `resources/*.js` reference snippets — the master scaffolds/copy sources, grouped together), `games` (`game-*/*.js`, narrowed by positional `GAME_ID`s or `--batch N/TOTAL`, a contiguous alphabetical chunk of `list_game_ids()`), `zcustom` (`zCustomGames/**/*.js`), `helpers` (`helper-*/*.js`), or `all`. `--diff` prints a unified diff per changed file and implies `--dry-run`; both run `node_check_source` on the would-be result and warn if it would fail. A real (non-dry-run, non-diff) write runs `node --check` on the file immediately after writing. This script does not reformat its own output — run `npm run format` (oxfmt) afterward, scoped to just the touched paths so an unrelated in-flight change elsewhere in the tree isn't swept up.
+
+### convert_getsafe.py — Output
+
+Per changed file: `Converted N call(s): <path>` (or `[DRY RUN] would convert N call(s): <path>`), with a `node --check` `WARNING` line if the result wouldn't parse. `--verbose` also prints every skip with its line number and reason (expected count: 0, outside a call the audit didn't anticipate). Final line: `Done. N files scanned, N files changed, N calls converted, N calls skipped.`
+
+---
+
+## convert_setsafe.py
+
+Sibling to `convert_getsafe.py` (same plan `getsafe-optional-chaining-migration`, extended to cover `setSafe` too on the same 2026-09-25 session after checking `Vortex/src/renderer/src/util/storeHelper.ts` directly and finding the whole state-helper family carries an `@deprecated` tag, not just `getSafe`). Converts `util.setSafe(state, [path, 'segments'], value)` to a nested-spread object literal: `({ ...state, path: { ...state.path, segments: value } })`, per `setSafe`'s own `@deprecated` note ("Use spread syntax with computed property names and nested spreads for immutable updates").
+
+Reuses `convert_getsafe.py`'s call-finding machinery — `mask_comments_and_strings` + the shared `find_matching_bracket`/`split_top_level_masked` scanner in `vortex_utils.py` — but builds a different replacement shape, since a write can't be expressed as an optional chain.
+
+Every real call site in this repo is `util.setSafe(state, [...], value)` inside a `registerReducer` spec: `arg0` is always the bare `state` identifier, path depth is always 1 or 2 (confirmed: all 104 real sites, sampled and counted before writing this script). The generated spread is built recursively for ANY depth, matching `setSafe`'s own recursive implementation, rather than hard-coded to depth ≤2 — a future 3+ level call still converts correctly instead of silently mis-firing.
+
+**Known gap, inherent to a purely textual transform:** real `setSafe` uses `state.slice()` (array copy) instead of `{...state}` (object copy) when an intermediate path segment holds an ARRAY at runtime — that can't be known statically from the call site alone. Every real call site's intermediate values are per-key state objects, never arrays, so this never actually diverges from `setSafe`'s real behavior in this repo — but it means the transform is not a universal drop-in for a `setSafe` call whose state shape uses arrays partway down the path.
+
+The replacement is **always wrapped in outer parens**, same rule as `convert_getsafe.py` but for a different reason: an arrow function's implicit-return body cannot be a bare object literal (`(state, payload) => { ...state, a: value }` is a syntax error — `{` opens a block, `...state` is not valid there), and every real `setSafe` call site in this repo sits in exactly that position (`[actions.X]: (state, payload) => util.setSafe(...)`). Proven with a `node --check` self-test against a synthetic `registerReducer` object, not just a bare-expression check.
+
+`setSafeCI` and the other deprecated write-side helpers (`setOrNop`, `changeOrNop`, `mutateSafe`, `setDefaultArray`, `pushSafe`, `addUniqueSafe`, `removeValue`, `removeValueIf`, `merge`) are out of scope — all have zero real call sites in this repo (checked the same session). `deleteOrNop` has exactly one (`game-helldivers2/index.js`, `CLEAR_PATCH_OVERRIDE` reducer) and was hand-fixed directly rather than scripted for a single site.
+
+### convert_setsafe.py — Usage
+
+```sh
+python convert_setsafe.py --scope templates --diff        # preview template-*/resources/*.js
+python convert_setsafe.py --scope templates                # apply for real
+python convert_setsafe.py --scope games --batch 1/3 --diff # preview game-* batch 1 of 3
+python convert_setsafe.py --scope games --batch 1/3        # apply that batch
+python convert_setsafe.py GAME_ID [GAME_ID ...] --scope games --diff  # one-off games
+python convert_setsafe.py --scope all --dry-run --verbose  # full repo, report only
+```
+
+Same `--scope`/`--batch`/`--diff`/`--dry-run`/`--verbose` semantics as `convert_getsafe.py` — see that entry above. Run `npm run format` (oxfmt) afterward, scoped to the touched paths.
+
+### convert_setsafe.py — Output
+
+Same shape as `convert_getsafe.py`'s output — see that entry above.
+
+---
+
+## convert_error_classes.py
+
+Codemod (plan `swirling-dazzling-dolphin`): converts the 10 deprecated `util.<Class>(...)` error constructors (`UserCanceled`, `ProcessCanceled`, `DataInvalid`, `SetupError`, `MissingInterpreter`, `NotFound`, `NotSupportedError`, `ArgumentInvalid`, `CycleError`, `GameNotFound`) to direct `VortexError(message, { kind, ...payload })` construction. All 10 already `extend VortexError<kind>` with identical constructor args/instanceof/data shape since v2.5.0, and this repo has zero `instanceof <Class>` call sites (grepped before writing this), so the rewrite is behavior-preserving.
+
+`VortexError` is a top-level `vortex-api` export, not under `util.*`, so every converted file also needs it added to its `require('vortex-api')` destructure — done via the shared `ensure_vortex_api_name()` helper in `vortex_utils.py` (also usable by any future script with the same "add a name to this import" problem). A file whose `vortex-api` import is namespace-style, or that binds `util` from more than one destructure, is skipped whole rather than left with a call site referencing an unimported name.
+
+`UserCanceled` is a special case: its real signature is `(skipped?: boolean)`, but every one of this repo's 186 non-bare call sites passes a STRING (`"Selected wrong download"`, `"User cancelled."`, ...), never a boolean — confirmed by grepping every distinct argument value in the repo. That string was dead weight in the old class (no message slot existed), so the script routes it to `VortexError`'s real `message` param and sets `skipped: true`, rather than preserving the nonsensical `skipped: "some sentence"` shape a literal 1:1 mapping would produce.
+
+`ArgumentInvalid`/`GameNotFound` duplicate their single argument's text (once in the built message, once in the payload) — safe here since every real call site passes a string literal or simple identifier, never a side-effecting expression, but not something a codemod can prove in general; review with `--diff` before a real run on unfamiliar code.
+
+### convert_error_classes.py — Usage
+
+```sh
+python convert_error_classes.py --scope templates --diff        # preview template-*/resources/*.js
+python convert_error_classes.py --scope templates                # apply for real
+python convert_error_classes.py --scope games --batch 1/6 --diff # preview game-* batch 1 of 6
+python convert_error_classes.py --scope games --batch 1/6        # apply that batch
+python convert_error_classes.py GAME_ID [GAME_ID ...] --scope games --diff  # one-off games
+python convert_error_classes.py --scope all --dry-run --verbose  # full repo, report only
+```
+
+Same `--scope`/`--batch`/`--diff`/`--dry-run`/`--verbose` semantics as `convert_getsafe.py`. Run `npm run format` (oxfmt) afterward.
+
+### convert_error_classes.py — Output
+
+Same shape as `convert_getsafe.py`'s output, plus a `files skipped (import)` counter and a `WARNING - skipped whole file -- <reason>` line for any file where `VortexError` could not be safely added to the `vortex-api` import.
+
+---
+
+## convert_topromise.py
+
+Codemod (plan `swirling-dazzling-dolphin`): converts deprecated `util.toPromise((param) => EXPR)` calls to `new Promise((resolve, reject) => EXPR')`, where `EXPR'` has the bare `param` argument (wherever it appears as a standalone call argument inside `EXPR`) replaced with `(err, result) => (err ? reject(err) : resolve(result))`.
+
+Checked every one of this repo's ~1250 call sites' arrow signature before writing this: 100% are expression-bodied single-param arrows (`(cb) => api.events.emit(...)`), zero block-bodied (`=> {`) variants. The param name is `cb` everywhere sampled, but the script reads it from the arrow signature rather than hardcoding it.
+
+Known exception, already hand-fixed, never matched by this script (it's already plain `new Promise(...)`): `resources/downloader/downloader.js`'s `importFetchedFile` — the `import-downloads` event calls back `(dlIds)` with no error argument, unlike every other event in this family, so it can't go through the `(err, result)` wrap this script produces.
+
+### convert_topromise.py — Usage
+
+```sh
+python convert_topromise.py --scope templates --diff        # preview template-*/resources/*.js
+python convert_topromise.py --scope templates                # apply for real
+python convert_topromise.py --scope games --batch 1/6 --diff # preview game-* batch 1 of 6
+python convert_topromise.py --scope games --batch 1/6        # apply that batch
+python convert_topromise.py GAME_ID [GAME_ID ...] --scope games --diff  # one-off games
+python convert_topromise.py --scope all --dry-run --verbose  # full repo, report only
+```
+
+Same `--scope`/`--batch`/`--diff`/`--dry-run`/`--verbose` semantics as `convert_getsafe.py`. Run `npm run format` (oxfmt) afterward.
+
+### convert_topromise.py — Output
+
+Same shape as `convert_getsafe.py`'s output — see that entry above.
 
 ---
 

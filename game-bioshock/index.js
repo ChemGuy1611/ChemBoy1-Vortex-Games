@@ -337,7 +337,7 @@ async function getAllFiles(dirPath) {
 const getDiscoveryPath = (api) => {
   //get the game's discovered path
   const state = api.getState();
-  const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
+  const discovery = state?.settings?.gameMode?.discovered?.[GAME_ID] ?? {};
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
 
@@ -544,9 +544,7 @@ function installTfc(files) {
   const setModTypeInstruction = { type: "setmodtype", value: TFC_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -579,9 +577,7 @@ function installUpkExplorer(files) {
   const setModTypeInstruction = { type: "setmodtype", value: UPKEXPLORER_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -648,9 +644,7 @@ function installTfcMod(files, fileName) {
 
   // Remove empty directories and anything that isn't in the rootPath
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -712,9 +706,7 @@ function installRoot(files) {
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -764,9 +756,7 @@ function installCookedSub(files) {
   const setModTypeInstruction = { type: "setmodtype", value: COOKEDSUB_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -810,9 +800,7 @@ function installMovies(files) {
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOVIES_ID };
 
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -860,9 +848,7 @@ function installBinaries(files) {
   const setModTypeInstruction = { type: "setmodtype", value: BINARIES_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -985,11 +971,7 @@ function runModManager(api) {
   const TOOL_ID = TFC_ID;
   const TOOL_NAME = TFC_NAME;
   const state = api.store.getState();
-  const tool = util.getSafe(
-    state,
-    ["settings", "gameMode", "discovered", GAME_ID, "tools", TOOL_ID],
-    undefined,
-  );
+  const tool = state?.settings?.gameMode?.discovered?.[GAME_ID]?.tools?.[TOOL_ID] ?? undefined;
 
   try {
     const TOOL_PATH = tool.path;

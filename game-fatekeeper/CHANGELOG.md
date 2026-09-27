@@ -4,6 +4,10 @@
 
 - None
 
+## [1.1.2] - 2026-09-26
+
+- Game version now shows the real game build instead of the Unreal engine version.
+
 ## [1.1.1] - 2026-09-21
 
 - Fixed: A pak mod installed through a FOMOD wizard (checkbox installer) now shows up on the Load Order page and gets a proper sorted deployment position, instead of silently deploying unsorted with no way to reorder it against other pak mods.

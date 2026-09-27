@@ -173,4 +173,5 @@ async function setup(discovery) {
 `install`/`testSupported`). `UNDERUSED_API_FUNCTIONS.md` (§9, short pointer back to this doc).
 `HEALTH_CHECK.md` (health-check results use a similar severity vocabulary, though not these
 classes directly). `STEAM_FILE_DOWNLOADER.md` (`ProcessCanceled` for invalid Steam credentials,
-`UserCanceled` from the login/Steam Guard dialogs).
+`UserCanceled` from the login/Steam Guard dialogs). `DEPRECATED_METHODS.md` (index of every
+deprecated symbol across the published API, this family included).

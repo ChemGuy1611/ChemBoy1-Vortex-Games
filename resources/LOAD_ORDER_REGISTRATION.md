@@ -156,7 +156,7 @@ context.registerLoadOrderPage({
 ```js
 // Typical preSort helper (maps Vortex mods to display items):
 async function preSort(api, items, direction) {
-    const mods = util.getSafe(api.store.getState(), ["persistent", "mods", GAME_ID], {});
+    const mods = api.store.getState()?.persistent?.mods?.[GAME_ID] ?? {};
     const loadOrder = items.map((mod) => {
         const modInfo = mods[mod.id];
         const name =
@@ -235,11 +235,7 @@ async function migrateLegacyToFBLO(api, oldVersion) {
     if (semver.gte(oldVersion, TARGET_VERSION)) return;
     // State reads are safe before awaitUI; dispatches that update session state are too.
     const state = api.store.getState();
-    const gamePath = util.getSafe(
-        state,
-        ["settings", "gameMode", "discovered", GAME_ID, "path"],
-        undefined,
-    );
+    const gamePath = state?.settings?.gameMode?.discovered?.[GAME_ID]?.path ?? undefined;
     if (!gamePath) return; // game not discovered, nothing to migrate
     api.store.dispatch(actions.setDeploymentNecessary(GAME_ID, true));
     await api.awaitUI(); // required before showDialog / sendNotification
@@ -797,7 +793,7 @@ function main(context) {
     // 1. Settings reducer (ue4ssLoEnabled toggle)
     context.registerReducer(['settings', GAME_ID], {
       reducers: {
-        [setUe4ssLoEnabled.toString()]: (state, payload) => util.setSafe(state, ['ue4ssLoEnabled'], payload),
+        [setUe4ssLoEnabled.toString()]: (state, payload) => ({ ...state, ue4ssLoEnabled: payload }),
       },
       defaults: { ue4ssLoEnabled: true },
     });
@@ -808,7 +804,10 @@ function main(context) {
     // 3. Persistent LO reducer
     context.registerReducer(['persistent', 'ue4ssLoadOrder'], {
       reducers: {
-        [setUe4ssLoadOrder.toString()]: (state, payload) => util.setSafe(state, [payload.profileId, 'loadOrder'], payload.loadOrder),
+        [setUe4ssLoadOrder.toString()]: (state, payload) => ({
+          ...state,
+          [payload.profileId]: { ...state[payload.profileId], loadOrder: payload.loadOrder },
+        }),
       },
       defaults: {},
     });
@@ -861,8 +860,8 @@ function GameSettings() {
     const { useSelector, useDispatch } = require("react-redux");
     const dispatch = useDispatch();
     const { api } = React.useContext(MainContext);
-    const ue4ssLoEnabled = useSelector((state) =>
-        util.getSafe(state, ["settings", GAME_ID, "ue4ssLoEnabled"], true),
+    const ue4ssLoEnabled = useSelector(
+        (state) => state?.settings?.[GAME_ID]?.ue4ssLoEnabled ?? true,
     );
     const onToggle = React.useCallback(
         (checked) => {
@@ -973,7 +972,7 @@ async function didDeploy(api, profileId) {
     const profile = selectors.profileById(state, profileId);
     if (profile?.gameId !== GAME_ID) return Promise.resolve();
     if (ue4ssLoadOrder && isUe4ssInstalled(api, spec)) {
-        const loEnabled = util.getSafe(state, ["settings", GAME_ID, "ue4ssLoEnabled"], true);
+        const loEnabled = state?.settings?.[GAME_ID]?.ue4ssLoEnabled ?? true;
         if (loEnabled) {
             let UE4SS_LOAD_ORDER;
             try {
@@ -985,11 +984,7 @@ async function didDeploy(api, profileId) {
                     `[${GAME_ID}] didDeploy: deserializeUe4ss failed, falling back to store state`,
                     err,
                 );
-                UE4SS_LOAD_ORDER = util.getSafe(
-                    state,
-                    ["persistent", "ue4ssLoadOrder", profileId, "loadOrder"],
-                    [],
-                );
+                UE4SS_LOAD_ORDER = state?.persistent?.ue4ssLoadOrder?.[profileId]?.loadOrder ?? [];
             }
             if (UE4SS_LOAD_ORDER.length > 0) {
                 await serializeUe4ss(api, UE4SS_LOAD_ORDER);
@@ -1034,12 +1029,10 @@ function Ue4ssLoadOrderPage({ api }) {
     const { FormControl } = require("react-bootstrap");
 
     const profileId = useSelector((state) => selectors.activeProfile(state)?.id);
-    const loadOrder = useSelector((state) =>
-        util.getSafe(state, ["persistent", "ue4ssLoadOrder", profileId, "loadOrder"], []),
+    const loadOrder = useSelector(
+        (state) => state?.persistent?.ue4ssLoadOrder?.[profileId]?.loadOrder ?? [],
     );
-    const loEnabled = useSelector((state) =>
-        util.getSafe(state, ["settings", GAME_ID, "ue4ssLoEnabled"], true),
-    );
+    const loEnabled = useSelector((state) => state?.settings?.[GAME_ID]?.ue4ssLoEnabled ?? true);
     const dispatch = useDispatch();
     const [filterText, setFilterText] = React.useState("");
     const [statusFilter, setStatusFilter] = React.useState(new Set());
@@ -1252,13 +1245,13 @@ function Ue4ssItemRenderer({ className, item }) {
     const dispatch = useDispatch();
 
     const profileId = useSelector((state) => selectors.activeProfile(state)?.id);
-    const loadOrder = useSelector((state) =>
-        util.getSafe(state, ["persistent", "ue4ssLoadOrder", profileId, "loadOrder"], []),
+    const loadOrder = useSelector(
+        (state) => state?.persistent?.ue4ssLoadOrder?.[profileId]?.loadOrder ?? [],
     );
-    const mods = useSelector((state) => util.getSafe(state, ["persistent", "mods", GAME_ID], {}));
+    const mods = useSelector((state) => state?.persistent?.mods?.[GAME_ID] ?? {});
     const pictureUrl = mods[item.modId]?.attributes?.pictureUrl;
-    const gamePath = useSelector((state) =>
-        util.getSafe(state, ["settings", "gameMode", "discovered", GAME_ID, "path"], ""),
+    const gamePath = useSelector(
+        (state) => state?.settings?.gameMode?.discovered?.[GAME_ID]?.path ?? "",
     );
 
     const currentIdx = loadOrder.findIndex((e) => e.id === item.id) + 1;
@@ -1452,7 +1445,17 @@ function Ue4ssItemRenderer({ className, item }) {
                   {
                       className: "btn btn-default btn-sm",
                       style: { margin: "0 4px" },
-                      onClick: () => util.opn(configFilePath).catch(() => null),
+                      onClick: () => {
+                          try {
+                              window.api.shell.openFile(configFilePath);
+                          } catch (err) {
+                              vortexContext.api.showErrorNotification(
+                                  "Failed to open the file or folder",
+                                  err,
+                                  { allowReport: false },
+                              );
+                          }
+                      },
                   },
                   "Configure",
               )
@@ -1502,14 +1505,14 @@ window edges).
 | --------------------------- | ------------------------------ | ------------------------------------------------------------- |
 | Enable / Disable            | always                         | Toggle `enabled` on this entry (mods.txt flag); serialize     |
 | Lock / Unlock Position      | always                         | Toggle `locked`; serialize                                    |
-| Configure                   | `configFilePath` non-empty     | `util.opn(configFilePath)`                                    |
+| Configure                   | `configFilePath` non-empty     | `window.api.shell.openFile(configFilePath)`                   |
 | _(separator)_               | always                         |                                                               |
 | Move to Top                 | always                         | Re-insert after locked entries; serialize                     |
 | Move to Bottom              | always                         | Re-insert at end; serialize                                   |
 | _(separator)_               | always                         |                                                               |
-| Open Mod Folder             | always                         | `util.opn(gamePath/binaries/ue4ss/Mods/item.id)`              |
-| Open Staging Folder         | `getModStagingFolder` resolves | `util.opn` on the mod's Vortex staging folder                 |
-| Open Mod Page               | `getModPageURL` resolves       | `util.opn` on the mod page URL                                |
+| Open Mod Folder             | always                         | `window.api.shell.openFile(gamePath/binaries/ue4ss/Mods/item.id)` |
+| Open Staging Folder         | `getModStagingFolder` resolves | `window.api.shell.openFile` on the mod's Vortex staging folder |
+| Open Mod Page               | `getModPageURL` resolves       | `window.api.shell.openUrl` on the mod page URL                |
 | _(separator)_               | `item.modId` set               |                                                               |
 | Disable / Enable Vortex Mod | `item.modId` set               | Two-way toggle: `setVortexModsEnabled([item], !isModEnabled)` |
 
@@ -1567,3 +1570,5 @@ they change deployment state, not mods.txt.
   tier, minimal-renderer tier, and the one remaining legacy `registerLoadOrderPage` game
 - `resources/VORTEX_2_MIGRATION.md` -- React 17 to 18 move; `usageInstructions` and
   `customItemRenderer` are now typed `React.ComponentType<React.PropsWithChildren<...>>`
+- `resources/DEPRECATED_METHODS.md` -- index of every deprecated symbol across the published API,
+  `registerLoadOrderPage` included

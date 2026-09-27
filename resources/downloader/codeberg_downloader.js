@@ -32,7 +32,7 @@
 // getLatestCodebergVersion.
 
 const semver = require("semver");
-const { actions, log, selectors, util } = require("vortex-api");
+const { actions, log, selectors, util, VortexError } = require("vortex-api");
 
 const DEFAULT_API_BASE = "https://codeberg.org/api/v1";
 // Releases are listed newest-first; this only caps how far back a scan for a matching asset
@@ -151,7 +151,7 @@ function installedPinVersion(api, gameId, requirement) {
   const state = api.getState();
   const mods = state.persistent.mods[gameId] || {};
   const mod = Object.values(mods).find((entry) => entry?.type === requirement.modType);
-  return util.getSafe(mod, ["attributes", "version"], "");
+  return mod?.attributes?.version ?? "";
 }
 
 // Whether the installed copy already sits on the pin. True short-circuits the update check
@@ -215,8 +215,8 @@ function isUpdateAvailable(requirement, asset, installed) {
 // The marker an installed requirement is compared on, stamped at install time.
 function installedMarker(mod, requirement) {
   return requirement.trackByAssetDate === true
-    ? util.getSafe(mod, ["attributes", ASSET_DATE_ATTRIBUTE], "")
-    : util.getSafe(mod, ["attributes", "version"], "");
+    ? (mod?.attributes?.[ASSET_DATE_ATTRIBUTE] ?? "")
+    : (mod?.attributes?.version ?? "");
 }
 
 // --- Codeberg API ---------------------------------------------------------
@@ -371,7 +371,7 @@ async function downloadCodebergRequirement(api, gameSpec, requirement, check = t
     //Download the mod
     const asset = await getLatestCodebergAsset(api, requirement);
     if (!asset) {
-      throw new util.ProcessCanceled("No downloadable release asset found");
+      throw new VortexError("No downloadable release asset found", { kind: "process-canceled" });
     }
     const latestVersion = await getLatestCodebergVersion(requirement, asset);
     const dlInfo = {
@@ -379,13 +379,13 @@ async function downloadCodebergRequirement(api, gameSpec, requirement, check = t
       name: requirement.userFacingName,
     };
     //the asset URL is a plain unauthenticated 200 - it goes straight to the download manager
-    const dlId = await util.toPromise((cb) =>
+    const dlId = await new Promise((resolve, reject) =>
       api.events.emit(
         "start-download",
         [asset.browser_download_url],
         dlInfo,
         undefined,
-        cb,
+        (err, result) => (err ? reject(err) : resolve(result)),
         undefined,
         { allowInstall: false },
       ),
@@ -399,8 +399,10 @@ async function downloadCodebergRequirement(api, gameSpec, requirement, check = t
     // "Other" label is 'unsupported'), and an unregistered id leaves the Source column
     // blank. See https://github.com/Nexus-Mods/Vortex/issues/21979.
     api.store.dispatch(actions.setDownloadModInfo(dlId, "source", "website"));
-    const modId = await util.toPromise((cb) =>
-      api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+    const modId = await new Promise((resolve, reject) =>
+      api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, (err, result) =>
+        err ? reject(err) : resolve(result),
+      ),
     );
     const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
     const batched = [

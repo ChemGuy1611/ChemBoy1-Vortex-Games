@@ -341,11 +341,7 @@ async function requiresLauncher(gamePath, store) {
 
 const getDiscoveryPath = (api, gameSpec) => {
   const state = api.getState();
-  const discovery = util.getSafe(
-    state,
-    [`settings`, `gameMode`, `discovered`, gameSpec.game.id],
-    {},
-  );
+  const discovery = state?.settings?.gameMode?.discovered?.[gameSpec.game.id] ?? {};
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
 
@@ -876,9 +872,7 @@ function installMod(files) {
   const setModTypeInstruction = { type: "setmodtype", value: MOD_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1017,9 +1011,7 @@ function installRootFolder(files) {
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1120,9 +1112,7 @@ function installClassic(files, fileName) {
   let MOD_FOLDER = MOD_NAME_TRUNCATED;
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",

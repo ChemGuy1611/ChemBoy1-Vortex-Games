@@ -71,6 +71,7 @@ module.exports = defineConfig([
         ...globals.node,
         DOMParser: true,
         XMLSerializer: true,
+        window: true,
       },
     },
   },

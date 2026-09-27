@@ -341,7 +341,7 @@ async function requiresLauncher(gamePath, store) {
 
 const getDiscoveryPath = (api) => {
   const state = api.getState();
-  const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
+  const discovery = state?.settings?.gameMode?.discovered?.[GAME_ID] ?? {};
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
 
@@ -657,9 +657,7 @@ function installFrosty(files) {
   const setModTypeInstruction = { type: "setmodtype", value: FROSTY_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -862,9 +860,7 @@ function installPlugin(files) {
   const setModTypeInstruction = { type: "setmodtype", value: PLUGIN_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -912,9 +908,7 @@ function installKey(files) {
   const setModTypeInstruction = { type: "setmodtype", value: KEY_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1008,11 +1002,7 @@ function fallbackInstallerNotify(api, modName) {
                 label: `Open Mod Page + Staging Folder`,
                 action: () => {
                   util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
-                  const mods = util.getSafe(
-                    api.store.getState(),
-                    ["persistent", "mods", spec.game.id],
-                    {},
-                  );
+                  const mods = api.store.getState()?.persistent?.mods?.[spec.game.id] ?? {};
                   const modMatch = Object.values(mods).find(
                     (mod) => mod.installationPath === modName,
                   );
@@ -1096,11 +1086,7 @@ function runFrosty(api) {
   const TOOL_ID = FROSTY_ID;
   const TOOL_NAME = FROSTY_NAME;
   const state = api.store.getState();
-  const tool = util.getSafe(
-    state,
-    ["settings", "gameMode", "discovered", GAME_ID, "tools", TOOL_ID],
-    undefined,
-  );
+  const tool = state?.settings?.gameMode?.discovered?.[GAME_ID]?.tools?.[TOOL_ID] ?? undefined;
 
   try {
     const TOOL_PATH = tool.path;

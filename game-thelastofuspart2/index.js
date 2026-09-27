@@ -414,7 +414,7 @@ async function requiresLauncher(gamePath, store) {
 
 const getDiscoveryPath = (api) => {
   const state = api.getState();
-  const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
+  const discovery = state?.settings?.gameMode?.discovered?.[GAME_ID] ?? {};
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
 
@@ -645,9 +645,7 @@ function installModLoader(files) {
   const setModTypeInstruction = { type: "setmodtype", value: MODLOADER_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -693,9 +691,7 @@ function installBuildPakBin(files, fileName) {
   const setModTypeInstruction = { type: "setmodtype", value: BUILD_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -742,9 +738,7 @@ function installBin(files, fileName) {
   const setModTypeInstruction = { type: "setmodtype", value: BIN_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -873,9 +867,7 @@ function installPak(files, fileName) {
   const setModTypeInstruction = { type: "setmodtype", value: PAK_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -919,9 +911,7 @@ function installBuild(files) {
   const setModTypeInstruction = { type: "setmodtype", value: BUILD_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1008,9 +998,7 @@ function installConfig(files) {
   const setModTypeInstruction = { type: "setmodtype", value: CONFIG_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1054,9 +1042,7 @@ function installPsarcTool(files) {
   const setModTypeInstruction = { type: "setmodtype", value: PSARCTOOL_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1090,17 +1076,15 @@ async function deserializeLoadOrder(context) {
     //and the page keeps showing the real load order rather than a placeholder row.
     const updateState = context.api.getState();
     const updateProfileId = selectors.lastActiveProfileForGame(updateState, GAME_ID);
-    return util.getSafe(updateState, ["persistent", "loadOrder", updateProfileId], []);
+    return updateState?.persistent?.loadOrder?.[updateProfileId] ?? [];
   } //*/
 
   //Seed lock state from the stored load order. The game's own load order file has no lock
   //field, so without this a locked entry would silently unlock on the next deploy or page mount.
   const prevState = context.api.getState();
-  const prevLO = util.getSafe(
-    prevState,
-    ["persistent", "loadOrder", selectors.lastActiveProfileForGame(prevState, GAME_ID)],
-    [],
-  );
+  const prevLO =
+    prevState?.persistent?.loadOrder?.[selectors.lastActiveProfileForGame(prevState, GAME_ID)] ??
+    [];
   const prevById = new Map(prevLO.map((e) => [e.id, e]));
 
   //Set basic information for load order paths and data
@@ -1108,7 +1092,7 @@ async function deserializeLoadOrder(context) {
   if (gameDir === undefined) {
     return Promise.reject(new util.NotFound("Game not found"));
   }
-  const mods = util.getSafe(context.api.store.getState(), ["persistent", "mods", spec.game.id], {});
+  const mods = context.api.store.getState()?.persistent?.mods?.[spec.game.id] ?? {};
   let loadOrderPath = path.join(gameDir, LO_FILE);
   //The load order page can mount before setup has created the file, so make sure it exists
   //before reading it.
@@ -1136,7 +1120,7 @@ async function deserializeLoadOrder(context) {
     try {
       //find mod where atrribute (from installer) matches file in the load order
       const modMatch = Object.values(mods).find((mod) =>
-        util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], "").includes(file),
+        (mods[mod.id]?.attributes?.[LO_ATTRIBUTE] ?? "").includes(file),
       ); //find mod that includes the psarc file
       if (modMatch) {
         return (
@@ -1156,7 +1140,7 @@ async function deserializeLoadOrder(context) {
     try {
       //find mod where atrribute (from installer) matches file in the load order
       const modMatch = Object.values(mods).find((mod) =>
-        util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], "").includes(file),
+        (mods[mod.id]?.attributes?.[LO_ATTRIBUTE] ?? "").includes(file),
       ); //find mod that includes the psarc file
       if (modMatch) {
         return modMatch.id;
@@ -1892,7 +1876,7 @@ function main(context) {
       if (updateModIds.size > 0) {
         const state = api.getState();
         const profile = selectors.profileById(state, profileId);
-        const mods = util.getSafe(state, ["persistent", "mods", GAME_ID], {});
+        const mods = state?.persistent?.mods?.[GAME_ID] ?? {};
         const now = Date.now();
         for (const [nexusId, { firstSeen, targetFileId }] of Array.from(updateModIds)) {
           const landed = Object.values(mods).some(
@@ -1900,7 +1884,7 @@ function main(context) {
               String(mod?.attributes?.modId ?? "") === nexusId &&
               //if the target file is unknown, fall back to "installed and enabled"
               (targetFileId === "" || String(mod?.attributes?.fileId ?? "") === targetFileId) &&
-              util.getSafe(profile, ["modState", mod.id, "enabled"], false),
+              (profile?.modState?.[mod.id]?.enabled ?? false),
           );
           if (landed) {
             updateModIds.delete(nexusId);
@@ -1943,7 +1927,7 @@ function main(context) {
     //and never emits mod-update, so resolve each one to its Nexus mod id before tracking it
     api.events.on("mods-update", (gameId, modIds) => {
       if (GAME_ID !== gameId) return;
-      const mods = util.getSafe(api.getState(), ["persistent", "mods", GAME_ID], {});
+      const mods = api.getState()?.persistent?.mods?.[GAME_ID] ?? {};
       for (const modId of modIds ?? []) {
         const nexusModId = mods[modId]?.attributes?.modId;
         if (nexusModId !== undefined) {
@@ -1960,11 +1944,7 @@ function main(context) {
     //downloaded (older dash-delimited vs current space-delimited), so string
     //parsing silently misses old installs.
     api.events.on("remove-mod", (gameMode, modId) => {
-      const removedMod = util.getSafe(
-        api.getState(),
-        ["persistent", "mods", GAME_ID, modId],
-        undefined,
-      );
+      const removedMod = api.getState()?.persistent?.mods?.[GAME_ID]?.[modId] ?? undefined;
       const nexusModId = removedMod?.attributes?.modId;
       if (nexusModId !== undefined && updateModIds.has(String(nexusModId))) {
         mod_update_all_profile = true;
@@ -2012,9 +1992,7 @@ function LoadOrderInstructions() {
   const { statusFilter, setStatusFilter } = useFbloState();
   const { useSelector } = require("react-redux");
   const profile = useSelector((state) => selectors.activeProfile(state));
-  const loadOrder = useSelector((state) =>
-    util.getSafe(state, ["persistent", "loadOrder", profile?.id], []),
-  );
+  const loadOrder = useSelector((state) => state?.persistent?.loadOrder?.[profile?.id] ?? []);
   const isLocked = (entry) => [true, "true", "always"].includes(entry?.locked);
   // Count entries matching the active filter (matched / total), shown beside the pills.
   const total = loadOrder.length;
@@ -2094,11 +2072,7 @@ function useFbloState() {
 //Prefers the mod's homepage attribute; falls back to composing the Nexus URL from the numeric mod id.
 function getModPageURL(api, vortexModId) {
   if (vortexModId === undefined) return undefined;
-  const attributes = util.getSafe(
-    api.getState(),
-    ["persistent", "mods", GAME_ID, vortexModId, "attributes"],
-    {},
-  );
+  const attributes = api.getState()?.persistent?.mods?.[GAME_ID]?.[vortexModId]?.attributes ?? {};
   if (attributes.homepage) return attributes.homepage;
   if (attributes.source === "nexus" && attributes.modId !== undefined) {
     return `https://www.nexusmods.com/${GAME_ID}/mods/${attributes.modId}`;
@@ -2110,11 +2084,8 @@ function getModPageURL(api, vortexModId) {
 function getModStagingFolder(api, vortexModId) {
   if (vortexModId === undefined) return undefined;
   const state = api.getState();
-  const installationPath = util.getSafe(
-    state,
-    ["persistent", "mods", GAME_ID, vortexModId, "installationPath"],
-    undefined,
-  );
+  const installationPath =
+    state?.persistent?.mods?.[GAME_ID]?.[vortexModId]?.installationPath ?? undefined;
   const stagingPath = selectors.installPathForGame(state, GAME_ID);
   if (!installationPath || !stagingPath) return undefined;
   return path.join(stagingPath, installationPath);
@@ -2266,12 +2237,10 @@ function LoadOrderItemRenderer(props) {
   const dispatch = useDispatch();
 
   const profile = useSelector((state) => selectors.activeProfile(state));
-  const loadOrder = useSelector((state) =>
-    util.getSafe(state, ["persistent", "loadOrder", profile?.id], []),
-  );
+  const loadOrder = useSelector((state) => state?.persistent?.loadOrder?.[profile?.id] ?? []);
 
   const { loEntry, displayCheckboxes } = item;
-  const mods = useSelector((state) => util.getSafe(state, ["persistent", "mods", GAME_ID], {}));
+  const mods = useSelector((state) => state?.persistent?.mods?.[GAME_ID] ?? {});
   const pictureUrl = mods[loEntry.modId]?.attributes?.pictureUrl;
   //FBLO precomputes these on the item (memoized by its row cache); the fallbacks keep the
   //renderer working if it is ever mounted outside the FBLO page.
@@ -2536,7 +2505,7 @@ function FbloContextMenu({
   const isEntryLocked = isLocked(item);
   const isEntryEnabled = item.enabled ?? true;
 
-  const isModEnabled = (e) => util.getSafe(profile, ["modState", e.modId, "enabled"], false);
+  const isModEnabled = (e) => profile?.modState?.[e.modId]?.enabled ?? false;
   const setVortexEnabled = (entries, enabled) => {
     //One Vortex mod can own several load order rows on file-based games (LO_ATTRIBUTE is an array
     //of basenames), so a multi-select can list the same modId more than once - dedupe before dispatch.

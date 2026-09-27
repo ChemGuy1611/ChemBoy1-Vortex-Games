@@ -562,7 +562,7 @@ async function getAllFiles(dirPath) {
 
 const getDiscoveryPath = (api) => {
   const state = api.getState();
-  const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
+  const discovery = state?.settings?.gameMode?.discovered?.[GAME_ID] ?? {};
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
 
@@ -1752,11 +1752,7 @@ function renamingRequiredNotify(api, fileName) {
               {
                 label: `Open Mod Page`,
                 action: () => {
-                  const mods = util.getSafe(
-                    api.store.getState(),
-                    ["persistent", "mods", spec.game.id],
-                    {},
-                  );
+                  const mods = api.store.getState()?.persistent?.mods?.[spec.game.id] ?? {};
                   const modMatch = Object.values(mods).find(
                     (mod) => mod.installationPath === MOD_NAME,
                   );
@@ -1775,11 +1771,7 @@ function renamingRequiredNotify(api, fileName) {
               {
                 label: `Show Folder Rename Dialog`,
                 action: () => {
-                  const mods = util.getSafe(
-                    api.store.getState(),
-                    ["persistent", "mods", spec.game.id],
-                    {},
-                  );
+                  const mods = api.store.getState()?.persistent?.mods?.[spec.game.id] ?? {};
                   const modMatch = Object.values(mods).find(
                     (mod) => mod.installationPath === MOD_NAME,
                   );
@@ -1941,11 +1933,7 @@ function fallbackInstallerNotify(api, modName) {
                 label: `Open Mod Page + Staging Folder`,
                 action: () => {
                   util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
-                  const mods = util.getSafe(
-                    api.store.getState(),
-                    ["persistent", "mods", spec.game.id],
-                    {},
-                  );
+                  const mods = api.store.getState()?.persistent?.mods?.[spec.game.id] ?? {};
                   const modMatch = Object.values(mods).find(
                     (mod) => mod.installationPath === modName,
                   );
@@ -2048,11 +2036,7 @@ function deployNotify(api) {
 //Launch a deploy tool from Vortex
 function runDeployTool(api, toolId, toolName) {
   const state = api.store.getState();
-  const tool = util.getSafe(
-    state,
-    ["settings", "gameMode", "discovered", GAME_ID, "tools", toolId],
-    undefined,
-  );
+  const tool = state?.settings?.gameMode?.discovered?.[GAME_ID]?.tools?.[toolId] ?? undefined;
 
   try {
     const TOOL_PATH = tool.path;

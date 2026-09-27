@@ -228,10 +228,18 @@ async function downloadFcModdingRequirement(api, gameSpec, requirement, check = 
       game: gameId,
       name: requirement.userFacingName,
     };
-    const dlId = await util.toPromise((cb) =>
-      api.events.emit("start-download", [url], dlInfo, undefined, cb, undefined, {
-        allowInstall: false,
-      }),
+    const dlId = await new Promise((resolve, reject) =>
+      api.events.emit(
+        "start-download",
+        [url],
+        dlInfo,
+        undefined,
+        (err, result) => (err ? reject(err) : resolve(result)),
+        undefined,
+        {
+          allowInstall: false,
+        },
+      ),
     );
     // Declare the origin before the install pipeline reads it. InstallManager re-reads the
     // download from live state right before running the attribute extractors, and
@@ -242,8 +250,10 @@ async function downloadFcModdingRequirement(api, gameSpec, requirement, check = 
     // "Other" label is 'unsupported'), and an unregistered id leaves the Source column
     // blank. See https://github.com/Nexus-Mods/Vortex/issues/21979.
     api.store.dispatch(actions.setDownloadModInfo(dlId, "source", "website"));
-    const modId = await util.toPromise((cb) =>
-      api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+    const modId = await new Promise((resolve, reject) =>
+      api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, (err, result) =>
+        err ? reject(err) : resolve(result),
+      ),
     );
     const profileId = selectors.lastActiveProfileForGame(api.getState(), gameId);
     const batched = [

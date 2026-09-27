@@ -116,7 +116,13 @@ context.registerAction(
     "changelog", // in iconMap — mdiTextBoxOutline on modern, icon-changelog on classic
     { pinned: true }, // sit on the bar by default rather than in the "..." menu
     "View Changelog",
-    () => util.opn(path.join(__dirname, "CHANGELOG.md")).catch(() => null),
+    () => {
+        try {
+            window.api.shell.openFile(path.join(__dirname, "CHANGELOG.md"));
+        } catch (err) {
+            context.api.showErrorNotification("Failed to open the file or folder", err, { allowReport: false });
+        }
+    },
     () => selectors.activeGameId(context.api.getState()) === GAME_ID,
 );
 ```
@@ -171,9 +177,13 @@ examples: see `REGISTER_ACTION.md`.
 
 ```js
 // Minimal — no condition, always visible
-context.registerAction("mod-icons", 300, "open-ext", {}, "Open Wiki", () =>
-    util.opn("https://wiki.example.com").catch(() => null),
-);
+context.registerAction("mod-icons", 300, "open-ext", {}, "Open Wiki", () => {
+    try {
+        window.api.shell.openUrl("https://wiki.example.com");
+    } catch (err) {
+        context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+    }
+});
 
 // With condition gated on game + selection
 context.registerAction(
@@ -520,7 +530,13 @@ context.registerAction(
     "open-ext",
     {},
     "Open Nexus Page",
-    () => util.opn(`https://www.nexusmods.com/${NEXUS_DOMAIN}`).catch(() => null),
+    () => {
+        try {
+            window.api.shell.openUrl(`https://www.nexusmods.com/${NEXUS_DOMAIN}`);
+        } catch (err) {
+            context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+        }
+    },
     () => selectors.activeGameId(context.api.getState()) === GAME_ID,
 );
 ```

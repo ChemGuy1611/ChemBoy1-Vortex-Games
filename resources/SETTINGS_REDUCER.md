@@ -58,7 +58,7 @@ Call **first** in `main()`, before any other registrations.
 function main(context) {
     context.registerReducer(["settings", GAME_ID], {
         reducers: {
-            [setMyValue.toString()]: (state, payload) => util.setSafe(state, ["myKey"], payload),
+            [setMyValue.toString()]: (state, payload) => ({ ...state, myKey: payload }),
         },
         defaults: {
             myKey: "default-value",
@@ -79,9 +79,10 @@ function main(context) {
 ```
 
 - Reducers must be **pure** — return a new object, never mutate.
-- Use `util.setSafe(state, [keyPath], value)` for nested updates; use spread
+- Use a spread (`{ ...state, key: value }`) for shallow updates, or a nested
 
-    (`{ ...state, key: value }`) for shallow updates.
+    spread (`{ ...state, [k]: { ...state[k], b: v } }`) for a deeper path.
+    `util.setSafe` did this for you but is deprecated — build the spread by hand.
 
 - State must be **serializable** — strings, numbers, booleans, arrays, plain
 
@@ -111,7 +112,7 @@ context.registerReducer(["persistent", "ue4ssLoadOrder", GAME_ID], spec);
 
 ```js
 // Outside a React component (setup, event handler, etc.)
-const value = util.getSafe(api.getState(), ["settings", GAME_ID, "myKey"], "fallback");
+const value = api.getState()?.settings?.[GAME_ID]?.myKey ?? "fallback";
 
 // Direct property access (when shape is known)
 const mods = api.getState().persistent.mods[GAME_ID] ?? {};
@@ -166,12 +167,10 @@ Full example — toggle stored in `state.settings[GAME_ID].myToggle`:
 ```js
 function MySettingsComponent({ onDoSomething }) {
     const React = require("react");
-    const { Toggle, More, util } = require("vortex-api");
+    const { Toggle, More } = require("vortex-api");
     const { useSelector, useStore } = require("react-redux");
 
-    const myToggle = useSelector((state) =>
-        util.getSafe(state, ["settings", GAME_ID, "myToggle"], false),
-    );
+    const myToggle = useSelector((state) => state?.settings?.[GAME_ID]?.myToggle ?? false);
     const store = useStore();
 
     const onToggle = React.useCallback(
@@ -282,8 +281,8 @@ context.registerReducer(["persistent", "ue4ssLoadOrder", GAME_ID], {
 });
 
 // Read in component
-const loadOrder = useSelector((state) =>
-    util.getSafe(state, ["persistent", "ue4ssLoadOrder", GAME_ID, "loadOrder"], []),
+const loadOrder = useSelector(
+    (state) => state?.persistent?.ue4ssLoadOrder?.[GAME_ID]?.loadOrder ?? [],
 );
 
 // Dispatch
@@ -298,7 +297,7 @@ const setUDF = createAction("7DTD_SET_UDF", (udf) => ({ udf }));
 
 context.registerReducer(["settings", GAME_ID], {
     reducers: {
-        [setUDF]: (state, payload) => util.setSafe(state, ["udf"], payload.udf),
+        [setUDF]: (state, payload) => ({ ...state, udf: payload.udf }),
     },
     defaults: {},
 });
@@ -313,14 +312,14 @@ context.registerSettings(
 );
 
 // Read in setup()
-const udf = util.getSafe(api.getState(), ["settings", GAME_ID, "udf"], undefined);
+const udf = api.getState()?.settings?.[GAME_ID]?.udf ?? undefined;
 ```
 
 ---
 
 ## See also
 
-`STATE_HELPERS.md` (`getSafe`/`setSafe`/`batchDispatch` used throughout reducers and readers).
+`STATE_HELPERS.md` (`batchDispatch`, and the deprecated `getSafe`/`setSafe` family this doc's examples now avoid via `?.`/`??`/spread).
 `VORTEX_PROFILES.md` (per-profile state and `settings`/`persistent` hive swap on profile change).
 `VORTEX_REACT_PAGES.md` (`registerSettings`/`registerReducer` as used inside a page's Settings
 tab). `UNDERUSED_API_FUNCTIONS.md` (additional settings-adjacent API surface).

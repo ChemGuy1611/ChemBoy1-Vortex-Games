@@ -2,7 +2,7 @@
 
 ## Planned Improvements (Not Yet Released)
 
-- None
+- Game version now shows the real game build instead of the Unity engine version
 
 ## [1.0.1] - 2026-09-17
 

@@ -13,6 +13,7 @@ const fs = require("fs");
 const fsp = fs.promises;
 const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
+const crypto = require("crypto");
 const template = require("string-template");
 const { parseStringPromise } = require("xml2js");
 const winapi = require("winapi-bindings");
@@ -77,6 +78,7 @@ const hasCustomMods = false; //set to true if there are modTypes with folder pat
 const hasCustomLoader = false; //set to true if there is a custom mod loader
 const customLoaderInstaller = false; //set true if the custom loader uses an installer
 const debug = false; //toggle for debug mode
+const exeHasGameVersion = false; //toggle: true if the game devs stamp the real game version (not just the Unity player version) into the exe ProductVersion
 
 const DATA_FOLDER_DEFAULT = `${GAME_STRING}_Data`;
 let DATA_FOLDER = DATA_FOLDER_DEFAULT;
@@ -909,7 +911,7 @@ async function getAllFiles(dirPath) {
 const getDiscoveryPath = (api) => {
   //get the game's discovered path
   const state = api.getState();
-  const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
+  const discovery = state?.settings?.gameMode?.discovered?.[GAME_ID] ?? {};
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
 
@@ -962,9 +964,7 @@ function installBepinex(files) {
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1010,9 +1010,7 @@ function installMelon(files) {
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1057,9 +1055,7 @@ function installCustomLoader(files) {
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1153,9 +1149,7 @@ function installBepCfgMan(files) {
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1200,9 +1194,7 @@ function installMelonPrefMan(files) {
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1247,9 +1239,7 @@ function installAssembly(files) {
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1313,9 +1303,7 @@ async function installRoot(files, workingDir) {
   } //*/
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -1360,9 +1348,7 @@ function installAssets(files) {
   const setModTypeInstruction = { type: "setmodtype", value: ASSETS_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -1416,9 +1402,7 @@ function installCustom(files) {
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1763,9 +1747,7 @@ async function installPlugin(api, gameSpec, files, workingDir) {
 
   // Remove directories and anything that isn't in the rootPath.
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     const relPath = file.substr(idx);
     return {
@@ -1829,11 +1811,7 @@ function unknownDllNotify(api, modName) {
                 label: `Open Mod Page + Staging Folder`,
                 action: () => {
                   util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
-                  const mods = util.getSafe(
-                    api.store.getState(),
-                    ["persistent", "mods", spec.game.id],
-                    {},
-                  );
+                  const mods = api.store.getState()?.persistent?.mods?.[spec.game.id] ?? {};
                   const modMatch = Object.values(mods).find(
                     (mod) => mod.installationPath === modName,
                   );
@@ -1938,11 +1916,7 @@ function fallbackInstallerNotify(api, modName) {
                 label: `Open Mod Page + Staging Folder`,
                 action: () => {
                   util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
-                  const mods = util.getSafe(
-                    api.store.getState(),
-                    ["persistent", "mods", spec.game.id],
-                    {},
-                  );
+                  const mods = api.store.getState()?.persistent?.mods?.[spec.game.id] ?? {};
                   const modMatch = Object.values(mods).find(
                     (mod) => mod.installationPath === modName,
                   );
@@ -2003,9 +1977,7 @@ function installSave(files) {
   const setModTypeInstruction = { type: "setmodtype", value: ASSETS_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -2070,63 +2042,64 @@ async function chooseModLoader(api, gameSpec) {
   }
   const CUSTOM_LABEL = `${CUSTOMLOADER_NAME} (Recommended)`;
   let BEP_LABEL = `BepInEx`;
-  if (recommendedLoader === 'bepinex') {
+  if (recommendedLoader === "bepinex") {
     BEP_LABEL = `${BEPINEX_NAME} (Recommended)`;
   }
   let MEL_LABEL = `MelonLoader`;
-  if (recommendedLoader === 'melon') {
+  if (recommendedLoader === "melon") {
     MEL_LABEL = `${MELON_NAME} (Recommended)`;
   }
   const t = api.translate;
-  let choices = [
-    { label: t(BEP_LABEL) },
-    { label: t(MEL_LABEL) },
-  ];
+  let choices = [{ label: t(BEP_LABEL) }, { label: t(MEL_LABEL) }];
   if (hasCustomLoader) {
-    choices = [
-      { label: t(CUSTOM_LABEL) },
-      { label: t(BEP_LABEL) },
-      { label: t(MEL_LABEL) },
-    ];
+    choices = [{ label: t(CUSTOM_LABEL) }, { label: t(BEP_LABEL) }, { label: t(MEL_LABEL) }];
   }
   const replace = {
     game: gameSpec.game.name,
-    bl: '[br][/br][br][/br]',
+    bl: "[br][/br][br][/br]",
   };
-  return api.showDialog('info', 'Mod Loader Selection', {
-    bbcode: t('You must choose a mod loader to install mods.{{bl}}'
-      + 'Only one mod loader can be installed at a time.{{bl}}'
-      + 'Make your choice based on which mods you would like to install and which loader they support.{{bl}}'
-      + 'You can change which mod loader you have installed by Uninstalling the current one from Vortex, which will bring up this dialog again.{{bl}}'
-      + 'Which mod loader would you like to use for {{game}}?',
-      { replace }
-    ),
-  }, choices)
-  .then(async (result) => {
-    if (result === undefined) {
-      return;
-    }
-    if (hasCustomLoader && (result.action === CUSTOM_LABEL)) {
-      await downloadCustom(api, gameSpec);
-    }
-    if (result.action === BEP_LABEL) {
-      if ((BEPINEX_PAGE_NO !== 0) && allowBepinexNexus) {
-        await downloadBepinexNexus(api, gameSpec);
-      } else {
-        await downloadBepinex(api, gameSpec);
+  return api
+    .showDialog(
+      "info",
+      "Mod Loader Selection",
+      {
+        bbcode: t(
+          "You must choose a mod loader to install mods.{{bl}}" +
+            "Only one mod loader can be installed at a time.{{bl}}" +
+            "Make your choice based on which mods you would like to install and which loader they support.{{bl}}" +
+            "You can change which mod loader you have installed by Uninstalling the current one from Vortex, which will bring up this dialog again.{{bl}}" +
+            "Which mod loader would you like to use for {{game}}?",
+          { replace },
+        ),
+      },
+      choices,
+    )
+    .then(async (result) => {
+      if (result === undefined) {
+        return;
       }
-    } else if (result.action === MEL_LABEL) {
-      if ((MELON_PAGE_NO !== 0) && allowMelonNexus) {
-        await downloadMelonNexus(api, gameSpec);
-      } else {
-        await downloadMelon(api, gameSpec, true);
+      if (hasCustomLoader && result.action === CUSTOM_LABEL) {
+        await downloadCustom(api, gameSpec);
       }
-    }
-    if (hasCustomMods || loaderSwitchRestart) { //Run this if need to change a modType path based on the mod loader installed
-      await deploy(api);
-      relaunchExt(api);
-    }
-  }); //*/
+      if (result.action === BEP_LABEL) {
+        if (BEPINEX_PAGE_NO !== 0 && allowBepinexNexus) {
+          await downloadBepinexNexus(api, gameSpec);
+        } else {
+          await downloadBepinex(api, gameSpec);
+        }
+      } else if (result.action === MEL_LABEL) {
+        if (MELON_PAGE_NO !== 0 && allowMelonNexus) {
+          await downloadMelonNexus(api, gameSpec);
+        } else {
+          await downloadMelon(api, gameSpec, true);
+        }
+      }
+      if (hasCustomMods || loaderSwitchRestart) {
+        //Run this if need to change a modType path based on the mod loader installed
+        await deploy(api);
+        relaunchExt(api);
+      }
+    }); //*/
 }
 //Deconflict mod loaders
 async function deconflictModLoaders(api, gameSpec) {
@@ -2255,24 +2228,156 @@ async function deleteFiles(gamePath, relPaths) {
   }
 }
 
+async function readVersionFile(gamePath) {
+  //per-game override: text file (usually Version.info) that already carries the real game version
+  const versionFilePath = path.join(gamePath, VERSION_FILE_PATH);
+  try {
+    const data = await fsp.readFile(versionFilePath, { encoding: "utf8" });
+    const segments = data.split(VER_SPLIT); //space is usually the split for Version.info files
+    return segments[VER_IDX];
+  } catch (err) {
+    log("warn", `Could not read ${VERSION_FILE} file to get game version: ${err}`);
+    return undefined;
+  }
+}
+
+async function getExeProductVersion(filePath) {
+  const exeVersion = require("exe-version");
+  return exeVersion.getProductVersion(filePath);
+}
+
+function findSteamAppsDir(gamePath) {
+  //walk up from gamePath to the ancestor dir whose parent is 'steamapps' and whose name is 'common'
+  let dir = gamePath;
+  for (;;) {
+    const parent = path.dirname(dir);
+    if (parent === dir) return undefined; //reached filesystem root
+    if (
+      path.basename(parent).toLowerCase() === "common" &&
+      path.basename(path.dirname(parent)).toLowerCase() === "steamapps"
+    ) {
+      return path.dirname(parent);
+    }
+    dir = parent;
+  }
+}
+
+async function resolveSteamBuildVersion(gamePath) {
+  const steamAppsDir = findSteamAppsDir(gamePath);
+  if (!steamAppsDir) return undefined;
+  for (const appId of [STEAMAPP_ID, STEAMAPP_ID_DEMO]) {
+    if (!appId || appId === "XXX") continue;
+    try {
+      const contents = await fsp.readFile(
+        path.join(steamAppsDir, `appmanifest_${appId}.acf`),
+        "utf8",
+      );
+      const match = contents.match(/"buildid"\s+"(\d+)"/);
+      if (match) return match[1];
+    } catch {
+      //manifest for this appId not present here, try next
+    }
+  }
+  return undefined;
+}
+
+async function resolveEpicBuildVersion(gamePath) {
+  if (!EPICAPP_ID || EPICAPP_ID === "XXX") return undefined;
+  let dataPath;
+  try {
+    dataPath = winapi.RegGetValue(
+      "HKEY_LOCAL_MACHINE",
+      "SOFTWARE\\WOW6432Node\\Epic Games\\EpicGamesLauncher",
+      "AppDataPath",
+    ).value;
+  } catch {
+    dataPath = path.join(
+      process.env.ProgramData || process.env.ALLUSERSPROFILE,
+      "Epic",
+      "EpicGamesLauncher",
+      "Data",
+    );
+  }
+  const normalizedGamePath = path.normalize(gamePath).toLowerCase();
+  try {
+    const manifestsDir = path.join(dataPath, "Manifests");
+    const entries = await fsp.readdir(manifestsDir);
+    for (const entry of entries) {
+      if (!entry.toLowerCase().endsWith(".item")) continue;
+      try {
+        const data = JSON.parse(await fsp.readFile(path.join(manifestsDir, entry), "utf8"));
+        const matches =
+          data.AppName === EPICAPP_ID ||
+          path.normalize(data.InstallLocation || "").toLowerCase() === normalizedGamePath;
+        if (matches && data.AppVersionString) return data.AppVersionString;
+      } catch {
+        //unreadable/invalid manifest, skip it
+      }
+    }
+  } catch (err) {
+    log("warn", `Could not read Epic manifests for ${GAME_ID}: ${err}`);
+  }
+  return undefined;
+}
+
+async function resolveGogVersion(gamePath) {
+  if (!GOGAPP_ID || GOGAPP_ID === "XXX") return undefined;
+  try {
+    const regKey = `SOFTWARE\\WOW6432Node\\GOG.com\\Games\\${GOGAPP_ID}`;
+    const regPath = winapi.RegGetValue("HKEY_LOCAL_MACHINE", regKey, "path").value;
+    if (path.normalize(regPath).toLowerCase() !== path.normalize(gamePath).toLowerCase()) {
+      return undefined;
+    }
+    return winapi.RegGetValue("HKEY_LOCAL_MACHINE", regKey, "ver").value;
+  } catch {
+    //RegGetValue throws (never returns null) when the key/value is missing
+    return undefined;
+  }
+}
+
+async function resolveStoreVersion(gamePath) {
+  const steamVersion = await resolveSteamBuildVersion(gamePath);
+  if (steamVersion !== undefined) return steamVersion;
+  const epicVersion = await resolveEpicBuildVersion(gamePath);
+  if (epicVersion !== undefined) return epicVersion;
+  return resolveGogVersion(gamePath);
+}
+
+let VERSION_HASH_CACHE = {}; //cacheKey (MD5 of sorted mtimes) -> hash string; paid once per build, not per mod-installed health check
+
+async function resolveHashVersion(gamePath) {
+  const hashFiles = ASSEMBLY_FILES.map((file) => path.join(ASSEMBLY_PATH, file)); //Unity game code (IL2CPP GameAssembly.dll or Mono Assembly-CSharp.dll), never the exe stub
+  try {
+    const mtimes = [];
+    for (const relFile of hashFiles) {
+      mtimes.push((await fsp.stat(path.join(gamePath, relFile))).mtimeMs);
+    }
+    mtimes.sort((a, b) => a - b);
+    const cacheKey = crypto
+      .createHash("md5")
+      .update(mtimes.map((m) => m.toString()).join(""))
+      .digest("hex");
+    if (VERSION_HASH_CACHE[cacheKey] !== undefined) return VERSION_HASH_CACHE[cacheKey];
+    const fileHashes = [];
+    for (const relFile of hashFiles) {
+      fileHashes.push(await util.fileMD5(path.join(gamePath, relFile)));
+    }
+    const hash = crypto.createHash("md5").update(fileHashes.join("")).digest("hex");
+    VERSION_HASH_CACHE[cacheKey] = hash;
+    return hash;
+  } catch (err) {
+    log("warn", `Could not compute hash game version for ${GAME_ID}: ${err}`);
+    return undefined;
+  }
+}
+
 async function resolveGameVersion(gamePath) {
   GAME_VERSION = await setGameVersion(gamePath);
-  VERSION_FILE_PATH = path.join(DATA_FOLDER, VERSION_FILE);
-  let version = "0.0.0";
   if (hasVersionFile) {
-    //use text file - Not many games have a Version.info file with the version in it
-    const versionFilePath = path.join(gamePath, VERSION_FILE_PATH);
-    try {
-      const data = await fsp.readFile(versionFilePath, { encoding: "utf8" });
-      const segments = data.split(VER_SPLIT); //space is usually the split for Version.info files
-      return segments[VER_IDX]
-        ? Promise.resolve(segments[VER_IDX])
-        : Promise.reject(new util.DataInvalid("Failed to resolve version"));
-    } catch (err) {
-      log("error", `Could not read ${VERSION_FILE} file to get game version: ${err}`);
-      return Promise.resolve(version);
-    }
-  } //*/
+    const versionFileValue = await readVersionFile(gamePath);
+    if (versionFileValue !== undefined) return versionFileValue;
+  }
+  let version = "0.0.0";
   if (GAME_VERSION === "xbox") {
     // use appxmanifest.xml for Xbox version
     try {
@@ -2284,17 +2389,27 @@ async function resolveGameVersion(gamePath) {
       log("error", `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
       return Promise.resolve(version);
     }
-  } else {
-    // use exe - only returns Unity version
+  }
+  const EXEC_RESOLVED = getExecutable(gamePath); //need to read to account for multiple exe
+  const READ_FILE = path.join(gamePath, EXEC_RESOLVED);
+  if (exeHasGameVersion) {
     try {
-      const exeVersion = require("exe-version");
-      const EXEC = getExecutable(gamePath); //need to read to account for multiple exe
-      version = exeVersion.getProductVersion(path.join(gamePath, EXEC)); //getFileVersion may need to be used in some cases
-      return Promise.resolve(version);
+      return await getExeProductVersion(READ_FILE);
     } catch (err) {
-      log("error", `Could not read ${EXEC} file to get game version: ${err}`);
-      return Promise.resolve(version);
+      log("error", `Could not read ${READ_FILE} file to get game version: ${err}`);
     }
+  }
+  const storeVersion = await resolveStoreVersion(gamePath);
+  if (storeVersion !== undefined) return storeVersion;
+  const hashVersion = await resolveHashVersion(gamePath);
+  if (hashVersion !== undefined) return hashVersion;
+  //last resort: exe ProductVersion (Unity player version), then "0.0.0". Never throw.
+  try {
+    version = await getExeProductVersion(READ_FILE);
+    return version;
+  } catch (err) {
+    log("error", `Could not read ${READ_FILE} file to get game version: ${err}`);
+    return version;
   } //*/
 } //*/
 
@@ -2312,7 +2427,7 @@ async function downloadBepCfgManNotify(api) {
       allowSuppress: true,
       actions: [
         {
-  title: "Download BepCfgMan",
+          title: "Download BepCfgMan",
           action: (dismiss) => {
             downloadBepCfgMan(api, spec);
             dismiss();
@@ -3197,11 +3312,7 @@ function runCustom(api) {
   const TOOL_ID = CUSTOMLOADER_ID;
   const TOOL_NAME = `${CUSTOMLOADER_NAME} Installer`;
   const state = api.store.getState();
-  const tool = util.getSafe(
-    state,
-    ["settings", "gameMode", "discovered", GAME_ID, "tools", TOOL_ID],
-    undefined,
-  );
+  const tool = state?.settings?.gameMode?.discovered?.[GAME_ID]?.tools?.[TOOL_ID] ?? undefined;
   try {
     const TOOL_PATH = tool.path;
     if (TOOL_PATH !== undefined) {

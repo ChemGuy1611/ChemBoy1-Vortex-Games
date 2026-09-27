@@ -727,7 +727,7 @@ _FALLBACK_INSTALLER_FNS = (
     '            }, //*/\n'
     '            //*\n'
     "            { label: `Open Mod Page`, action: () => {\n"
-    "              const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});\n"
+    "              const mods = api.store.getState()?.persistent?.mods?.[spec.game.id] ?? {};\n"
     '              const modMatch = Object.values(mods).find(mod => mod.installationPath === modName);\n'
     '              log(\'warn\', `Found ${modMatch?.id} for ${modName}`);\n'
     '              let PAGE = ``;\n'

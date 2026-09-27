@@ -578,7 +578,7 @@ function claimDownload(adapter, api, gameSpec, config, dlId, dlState) {
   // Core installs the download itself when "Install mods when downloaded" is on and the download
   // carries no allowInstall override - which is exactly the shape of a browser capture. Starting a
   // second install here would install the archive twice, so only start one when core will not.
-  const autoInstall = util.getSafe(state, ["settings", "automation", "install"], false);
+  const autoInstall = state?.settings?.automation?.install ?? false;
   log("info", `claimed a ${adapter.label} download from the browse page`, {
     dlId,
     claim: partial,

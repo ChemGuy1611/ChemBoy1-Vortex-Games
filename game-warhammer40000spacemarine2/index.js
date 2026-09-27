@@ -2,8 +2,8 @@
 Name: WH40K Space Marine 2 Vortex Extension
 Structure: Mods Folder w/ LO
 Author: ChemBoy1
-Version: 0.8.4
-Date: 2026-09-06
+Version: 0.8.5
+Date: 2026-09-26
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -132,7 +132,7 @@ const IS_PAGE_ID = 280;
 const IS_FILE_NO = 2771;
 
 const MOD_PATH = PAK_PATH;
-const REQ_FILE = EXEC;
+const REQ_FILE = EXEC_BIN;
 
 const NOEAC_LAUNCH_ID = `${GAME_ID}-noeaclaunch`;
 const NOEAC_LAUNCH_NAME = "No-EAC Launch (Steam)";
@@ -402,7 +402,7 @@ async function setGameVersionAsync(gamePath) {
 
 const getDiscoveryPath = (api) => {
   const state = api.getState();
-  const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
+  const discovery = state?.settings?.gameMode?.discovered?.[GAME_ID] ?? {};
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
 
@@ -839,9 +839,7 @@ function installRoot(files) {
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -885,9 +883,7 @@ function installLocal(files) {
   const setModTypeInstruction = { type: "setmodtype", value: LOCAL_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -931,9 +927,7 @@ function installLocalSub(files) {
   const setModTypeInstruction = { type: "setmodtype", value: LOCALSUB_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1097,17 +1091,15 @@ async function deserializeLoadOrder(context) {
     //and the page keeps showing the real load order rather than a placeholder row.
     const updateState = context.api.getState();
     const updateProfileId = selectors.lastActiveProfileForGame(updateState, GAME_ID);
-    return util.getSafe(updateState, ["persistent", "loadOrder", updateProfileId], []);
+    return updateState?.persistent?.loadOrder?.[updateProfileId] ?? [];
   } //*/
 
   //Seed lock state from the stored load order. The game's own load order file has no lock
   //field, so without this a locked entry would silently unlock on the next deploy or page mount.
   const prevState = context.api.getState();
-  const prevLO = util.getSafe(
-    prevState,
-    ["persistent", "loadOrder", selectors.lastActiveProfileForGame(prevState, GAME_ID)],
-    [],
-  );
+  const prevLO =
+    prevState?.persistent?.loadOrder?.[selectors.lastActiveProfileForGame(prevState, GAME_ID)] ??
+    [];
   const prevById = new Map(prevLO.map((e) => [e.id, e]));
 
   //Set basic information for load order paths and data
@@ -1115,7 +1107,7 @@ async function deserializeLoadOrder(context) {
   if (gameDir === undefined) {
     return Promise.reject(new util.NotFound("Game not found"));
   }
-  const mods = util.getSafe(context.api.store.getState(), ["persistent", "mods", spec.game.id], {});
+  const mods = context.api.store.getState()?.persistent?.mods?.[spec.game.id] ?? {};
   let modFolderPath = path.join(gameDir, PAK_PATH);
   let loadOrderPath = path.join(gameDir, LO_FILE_PATH);
   await ensureFileAsync(loadOrderPath);
@@ -1141,7 +1133,7 @@ async function deserializeLoadOrder(context) {
     try {
       //find mod where atrribute (from installer) matches file in the load order
       const modMatch = Object.values(mods).find((mod) =>
-        util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], "").includes(file),
+        (mods[mod.id]?.attributes?.[LO_ATTRIBUTE] ?? "").includes(file),
       ); //find mod that includes the .pak file
       if (modMatch) {
         return (
@@ -1161,7 +1153,7 @@ async function deserializeLoadOrder(context) {
     try {
       //find mod where atrribute (from installer) matches file in the load order
       const modMatch = Object.values(mods).find((mod) =>
-        util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], "").includes(file),
+        (mods[mod.id]?.attributes?.[LO_ATTRIBUTE] ?? "").includes(file),
       ); //find mod that includes the .pak file
       if (modMatch) {
         return modMatch.id;
@@ -1954,7 +1946,7 @@ function main(context) {
       if (updateModIds.size > 0) {
         const state = context.api.getState();
         const profile = selectors.profileById(state, profileId);
-        const mods = util.getSafe(state, ["persistent", "mods", GAME_ID], {});
+        const mods = state?.persistent?.mods?.[GAME_ID] ?? {};
         const now = Date.now();
         for (const [nexusId, { firstSeen, targetFileId }] of Array.from(updateModIds)) {
           const landed = Object.values(mods).some(
@@ -1962,7 +1954,7 @@ function main(context) {
               String(mod?.attributes?.modId ?? "") === nexusId &&
               //if the target file is unknown, fall back to "installed and enabled"
               (targetFileId === "" || String(mod?.attributes?.fileId ?? "") === targetFileId) &&
-              util.getSafe(profile, ["modState", mod.id, "enabled"], false),
+              (profile?.modState?.[mod.id]?.enabled ?? false),
           );
           if (landed) {
             updateModIds.delete(nexusId);
@@ -2014,7 +2006,7 @@ function main(context) {
     //and never emits mod-update, so resolve each one to its Nexus mod id before tracking it
     context.api.events.on("mods-update", (gameId, modIds) => {
       if (GAME_ID !== gameId) return;
-      const mods = util.getSafe(context.api.getState(), ["persistent", "mods", GAME_ID], {});
+      const mods = context.api.getState()?.persistent?.mods?.[GAME_ID] ?? {};
       for (const modId of modIds ?? []) {
         const nexusModId = mods[modId]?.attributes?.modId;
         if (nexusModId !== undefined) {
@@ -2031,11 +2023,7 @@ function main(context) {
     //downloaded (older dash-delimited vs current space-delimited), so string
     //parsing silently misses old installs.
     context.api.events.on("remove-mod", (gameMode, modId) => {
-      const removedMod = util.getSafe(
-        api.getState(),
-        ["persistent", "mods", GAME_ID, modId],
-        undefined,
-      );
+      const removedMod = api.getState()?.persistent?.mods?.[GAME_ID]?.[modId] ?? undefined;
       const nexusModId = removedMod?.attributes?.modId;
       if (nexusModId !== undefined && updateModIds.has(String(nexusModId))) {
         mod_update_all_profile = true;
@@ -2061,9 +2049,7 @@ function LoadOrderInstructions() {
   const { statusFilter, setStatusFilter } = useFbloState();
   const { useSelector } = require("react-redux");
   const profile = useSelector((state) => selectors.activeProfile(state));
-  const loadOrder = useSelector((state) =>
-    util.getSafe(state, ["persistent", "loadOrder", profile?.id], []),
-  );
+  const loadOrder = useSelector((state) => state?.persistent?.loadOrder?.[profile?.id] ?? []);
   const isLocked = (entry) => [true, "true", "always"].includes(entry?.locked);
   // Count entries matching the active filter (matched / total), shown beside the pills.
   const total = loadOrder.length;
@@ -2143,11 +2129,7 @@ function useFbloState() {
 //Prefers the mod's homepage attribute; falls back to composing the Nexus URL from the numeric mod id.
 function getModPageURL(api, vortexModId) {
   if (vortexModId === undefined) return undefined;
-  const attributes = util.getSafe(
-    api.getState(),
-    ["persistent", "mods", GAME_ID, vortexModId, "attributes"],
-    {},
-  );
+  const attributes = api.getState()?.persistent?.mods?.[GAME_ID]?.[vortexModId]?.attributes ?? {};
   if (attributes.homepage) return attributes.homepage;
   if (attributes.source === "nexus" && attributes.modId !== undefined) {
     return `https://www.nexusmods.com/${GAME_ID}/mods/${attributes.modId}`;
@@ -2159,11 +2141,8 @@ function getModPageURL(api, vortexModId) {
 function getModStagingFolder(api, vortexModId) {
   if (vortexModId === undefined) return undefined;
   const state = api.getState();
-  const installationPath = util.getSafe(
-    state,
-    ["persistent", "mods", GAME_ID, vortexModId, "installationPath"],
-    undefined,
-  );
+  const installationPath =
+    state?.persistent?.mods?.[GAME_ID]?.[vortexModId]?.installationPath ?? undefined;
   const stagingPath = selectors.installPathForGame(state, GAME_ID);
   if (!installationPath || !stagingPath) return undefined;
   return path.join(stagingPath, installationPath);
@@ -2315,12 +2294,10 @@ function LoadOrderItemRenderer(props) {
   const dispatch = useDispatch();
 
   const profile = useSelector((state) => selectors.activeProfile(state));
-  const loadOrder = useSelector((state) =>
-    util.getSafe(state, ["persistent", "loadOrder", profile?.id], []),
-  );
+  const loadOrder = useSelector((state) => state?.persistent?.loadOrder?.[profile?.id] ?? []);
 
   const { loEntry, displayCheckboxes } = item;
-  const mods = useSelector((state) => util.getSafe(state, ["persistent", "mods", GAME_ID], {}));
+  const mods = useSelector((state) => state?.persistent?.mods?.[GAME_ID] ?? {});
   const pictureUrl = mods[loEntry.modId]?.attributes?.pictureUrl;
   //FBLO precomputes these on the item (memoized by its row cache); the fallbacks keep the
   //renderer working if it is ever mounted outside the FBLO page.
@@ -2585,7 +2562,7 @@ function FbloContextMenu({
   const isEntryLocked = isLocked(item);
   const isEntryEnabled = item.enabled ?? true;
 
-  const isModEnabled = (e) => util.getSafe(profile, ["modState", e.modId, "enabled"], false);
+  const isModEnabled = (e) => profile?.modState?.[e.modId]?.enabled ?? false;
   const setVortexEnabled = (entries, enabled) => {
     //One Vortex mod can own several load order rows on file-based games (LO_ATTRIBUTE is an array
     //of basenames), so a multi-select can list the same modId more than once - dedupe before dispatch.

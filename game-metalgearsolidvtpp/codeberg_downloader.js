@@ -151,7 +151,7 @@ function installedPinVersion(api, gameId, requirement) {
   const state = api.getState();
   const mods = state.persistent.mods[gameId] || {};
   const mod = Object.values(mods).find((entry) => entry?.type === requirement.modType);
-  return util.getSafe(mod, ["attributes", "version"], "");
+  return mod?.attributes?.version ?? "";
 }
 
 // Whether the installed copy already sits on the pin. True short-circuits the update check
@@ -215,8 +215,8 @@ function isUpdateAvailable(requirement, asset, installed) {
 // The marker an installed requirement is compared on, stamped at install time.
 function installedMarker(mod, requirement) {
   return requirement.trackByAssetDate === true
-    ? util.getSafe(mod, ["attributes", ASSET_DATE_ATTRIBUTE], "")
-    : util.getSafe(mod, ["attributes", "version"], "");
+    ? (mod?.attributes?.[ASSET_DATE_ATTRIBUTE] ?? "")
+    : (mod?.attributes?.version ?? "");
 }
 
 // --- Codeberg API ---------------------------------------------------------

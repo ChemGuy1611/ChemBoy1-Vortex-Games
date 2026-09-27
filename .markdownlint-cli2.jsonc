@@ -3,7 +3,7 @@
   "config": {
     "default": true,
     "MD013": false,
-    "MD060": { "style": "consistent" }
+    "MD060": { "style": "consistent" },
   },
-  "ignores": ["node_modules/**", "CC-Session-Logs/**", "graphify-out/**"]
+  "ignores": ["node_modules/**", "CC-Session-Logs/**", "graphify-out/**"],
 }

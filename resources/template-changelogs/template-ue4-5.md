@@ -1,5 +1,14 @@
 # template-ue4-5 Changelog
 
+## [2026-09-26]
+
+- Changed: `resolveGameVersion` (non-Xbox path) now resolves the real game build instead of the Unreal engine version stamped in the shipping exe's `ProductVersion`, which is identical across every content patch and made curator/user "Game version mismatch" checks meaningless. New tiered chain, ported from the `game-subnautica2`/`game-witchfire`/`game-fatekeeper` pilots (`ue-unity-game-version-soaring-creek` plan): an `exeHasGameVersion` toggle (default off) for games whose devs do stamp the real version into the exe; then store build metadata - Steam `appmanifest_<id>.acf` `buildid` (walking up from the game path to find `steamapps/common`), Epic launcher `.item` manifest `AppVersionString` (matched by `AppName` or install path), GOG registry `ver` (matched by registry `path`); then an MD5-of-MD5s hash of `SHIPPING_EXE` (Vortex's own removed `gameversion-hash` extension's algorithm), cached per sorted file mtimes so it is paid once per build rather than on every `mod-installed` health check; last resort falls through to the old exe `ProductVersion` read, then `"0.0.0"`. Never throws. Requires `crypto` and `winapi-bindings`, both newly added to the require block.
+- Note: existing collection revisions were published against the old engine-version values, so users will see a one-time "Game version mismatch" dialog on games ported to this resolver until the curator republishes.
+
+## [2026-09-25]
+
+- Changed: `util.opn(...)` (deprecated Bluebird-promise API) replaced with `window.api.shell.openUrl()`/`openFile()` (void, no promise) at every call site (`index.js`, `downloader.js`), each wrapped in `try`/`catch` reporting failures via `showErrorNotification(..., { allowReport: false })` instead of the old silent `.catch(() => null)`. `Ue4ssItemRenderer`'s `onConfigure` (a React function component with neither a bare `api` param nor a `context` param in scope) uses `vortexContext.api` via its existing `React.useContext(MainContext)` instead.
+
 ## [2026-09-15]
 
 - Added: a `did-install-mod` handler (`retagFomodPakMod`) that retags a FOMOD-installed pak mod as `UE5_SORTABLE_ID` so it shows up on the Load Order page. Every pak installer yields to Vortex's built-in FOMOD installer whenever an archive contains `fomod/ModuleConfig.xml`; that built-in installer never emits a `setmodtype` instruction, so a FOMOD-installed mod's type stayed `''` forever and `deserializeLoadOrder()` only ever pulls in enabled mods whose type is exactly `UE5_SORTABLE_ID`. A pak mod packaged with a FOMOD checkbox wizard (a common pattern for mods offering optional components) was therefore invisible to Load Order and never got a load-order-prefixed deploy path, even though it deployed correctly otherwise.

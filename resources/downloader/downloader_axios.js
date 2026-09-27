@@ -15,7 +15,7 @@ const path = require("path");
 const semver = require("semver");
 const fs = require("fs");
 const fsp = fs.promises;
-const { actions, log, selectors, util } = require("vortex-api");
+const { actions, log, selectors, util, VortexError } = require("vortex-api");
 
 // --- common ---------------------------------------------------------------
 const NOTIF_ID_REQUIREMENTS = "vortex-downloader-requirements-download-notification";
@@ -180,7 +180,7 @@ async function importAndInstall(api, filePath, name, assetDate) {
     api.events.emit("import-downloads", [filePath], async (dlIds) => {
       const id = dlIds[0];
       if (id === undefined) {
-        return reject(new util.NotFound(filePath));
+        return reject(new VortexError(filePath, { kind: "not-found" }));
       }
       const batched = [];
       batched.push(actions.setDownloadModInfo(id, "source", "other"));
@@ -224,11 +224,13 @@ async function getLatestGithubReleaseAsset(api, requirement) {
   try {
     const response = await axios.get(releasesUrl);
     const resHeaders = response.headers;
-    const callsRemaining = parseInt(util.getSafe(resHeaders, ["x-ratelimit-remaining"], "0"), 10);
+    const callsRemaining = parseInt(resHeaders?.["x-ratelimit-remaining"] ?? "0", 10);
     if ([403, 404].includes(response?.status) && callsRemaining === 0) {
-      const resetDate = parseInt(util.getSafe(resHeaders, ["x-ratelimit-reset"], "0"), 10);
+      const resetDate = parseInt(resHeaders?.["x-ratelimit-reset"] ?? "0", 10);
       log("info", "GitHub rate limit exceeded", { reset_at: new Date(resetDate).toString() });
-      return Promise.reject(new util.ProcessCanceled("GitHub rate limit exceeded"));
+      return Promise.reject(
+        new VortexError("GitHub rate limit exceeded", { kind: "process-canceled" }),
+      );
     }
     if (response.status === 200) {
       // /releases returns an array (newest-first); /releases/latest and /releases/tags/* a single object
@@ -259,11 +261,13 @@ async function doDownload(downloadUrl, destination) {
     },
   });
   const resHeaders = response.headers;
-  const callsRemaining = parseInt(util.getSafe(resHeaders, ["x-ratelimit-remaining"], "0"), 10);
+  const callsRemaining = parseInt(resHeaders?.["x-ratelimit-remaining"] ?? "0", 10);
   if ([403, 404].includes(response?.status) && callsRemaining === 0) {
-    const resetDate = parseInt(util.getSafe(resHeaders, ["x-ratelimit-reset"], "0"), 10);
+    const resetDate = parseInt(resHeaders?.["x-ratelimit-reset"] ?? "0", 10);
     log("info", "GitHub rate limit exceeded", { reset_at: new Date(resetDate).toString() });
-    return Promise.reject(new util.ProcessCanceled("GitHub rate limit exceeded"));
+    return Promise.reject(
+      new VortexError("GitHub rate limit exceeded", { kind: "process-canceled" }),
+    );
   }
   await fsp.writeFile(destination, Buffer.from(response.data));
 }
@@ -272,7 +276,7 @@ async function doDownload(downloadUrl, destination) {
 function getMods(api, modType) {
   const state = api.getState();
   const gameId = selectors.activeGameId(state);
-  const mods = util.getSafe(state, ["persistent", "mods", gameId], {});
+  const mods = state?.persistent?.mods?.[gameId] ?? {};
   return Object.values(mods).filter((mod) => mod.type === modType || mod.type === "");
 }
 
@@ -296,7 +300,7 @@ async function findModByFile(api, modType, fileName) {
 
 function findDownloadIdByFile(api, fileName) {
   const state = api.getState();
-  const downloads = util.getSafe(state, ["persistent", "downloads", "files"], {});
+  const downloads = state?.persistent?.downloads?.files ?? {};
   return Object.entries(downloads).reduce((prev, [dlId, dl]) => {
     if (path.basename(dl.localPath).toLowerCase() === fileName.toLowerCase()) {
       prev = dlId;
@@ -307,7 +311,7 @@ function findDownloadIdByFile(api, fileName) {
 
 async function resolveVersionByPattern(api, requirement) {
   const state = api.getState();
-  const files = util.getSafe(state, ["persistent", "downloads", "files"], []);
+  const files = state?.persistent?.downloads?.files ?? [];
   const latestVersion = Object.values(files).reduce((prev, file) => {
     const match = requirement.fileArchivePattern.exec(file.localPath);
     // coerce so an unparseable capture can't make semver.gt throw
@@ -326,7 +330,7 @@ async function resolveVersionByPattern(api, requirement) {
 // "update available".
 async function resolveVersionByAssetDate(api, requirement) {
   const mod = await requirement.findMod(api);
-  return util.getSafe(mod, ["attributes", "githubAssetDate"], "");
+  return mod?.attributes?.githubAssetDate ?? "";
 }
 
 async function walkPath(dirPath, walkOptions) {

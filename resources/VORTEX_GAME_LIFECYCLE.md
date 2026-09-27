@@ -57,8 +57,9 @@ Activation is **driven by the active profile**, not selected directly. The trigg
 2. Show a **"Preparing game for modding"** `activity` notification (dismissed in `finally`).
 3. **`GameModeManager.setupGameMode(newGameId)`** — the per-game setup:
     - `assertToolDir` + `fs.statAsync(gameDiscovery.path)` confirm the folder still exists.
-    - `game.getInstalledVersion(gameDiscovery)` is called **before** `game.setup` (so the
-      gameversion-hash extension can read files before `setup` may lock them).
+    - `game.getInstalledVersion(gameDiscovery)` is called **before** `game.setup`. The order
+      was chosen so the gameversion-hash extension could read files before `setup` locked
+      them; that extension was removed in Vortex 2.7.0, but the order remains.
     - `game.setup(gameDiscovery)` runs the extension's setup (typically
       `vfs.ensureDirWritableAsync` on the staging dir, requirement downloads, etc.). If a
       `contributed` (third-party) game's setup throws, `allowReport` is forced off.

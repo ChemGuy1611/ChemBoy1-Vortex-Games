@@ -347,7 +347,7 @@ _UTILITY_FUNCTIONS = [
         r'^const\s+getDiscoveryPath\b',
         "const getDiscoveryPath = (api) => { //get the game's discovered path\n"
         "  const state = api.getState();\n"
-        "  const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});\n"
+        "  const discovery = state?.settings?.gameMode?.discovered?.[GAME_ID] ?? {};\n"
         "  return discovery === null || discovery === void 0 ? void 0 : discovery.path;\n"
         "};\n"
     ),
@@ -1001,7 +1001,7 @@ _PLAN_B_SINGLE_OPEN_OLD = (
 )
 _PLAN_B_SINGLE_OPEN_NEW = (
     "    (stagingFolder || modPageUrl) ? React.createElement('div', { style: sepStyle }) : null,\n"
-    "    stagingFolder ? menuItem('Open Staging Folder', () => { util.opn(stagingFolder).catch(() => null); onClose(); }) : null,\n"
+    "    stagingFolder ? menuItem('Open Staging Folder', () => { try { window.api.shell.openFile(stagingFolder); } catch (err) { api.showErrorNotification('Failed to open the file or folder', err, { allowReport: false }); } onClose(); }) : null,\n"
 )
 
 

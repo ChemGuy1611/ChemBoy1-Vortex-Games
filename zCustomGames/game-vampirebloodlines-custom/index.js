@@ -58,7 +58,7 @@ function findGame() {
 
 function getUnofficialModPath(api) {
   const state = api.getState();
-  const discovery = util.getSafe(state, ["settings", "gameMode", "discovered", GAME_ID], undefined);
+  const discovery = state?.settings?.gameMode?.discovered?.[GAME_ID] ?? undefined;
   return path.join(discovery.path, "Unofficial_Patch");
 }
 

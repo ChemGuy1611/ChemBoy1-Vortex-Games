@@ -5,6 +5,10 @@
 - Fixed: Mod files with no file extension were skipped during installation
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 
+## [0.8.5] - 2026-09-26
+
+- Fixed: Changed requiredFile to allow for Xbox version discovery
+
 ## [0.8.4] - 2026-09-06
 
 - Fixed: Locked load order entries could be moved out of position when using "Move to Top", "Move to Bottom" or the position number box on another entry. Locked entries now keep their place.

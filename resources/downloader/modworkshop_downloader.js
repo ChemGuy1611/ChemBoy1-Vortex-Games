@@ -28,7 +28,7 @@
 // getLatestModWorkshopVersion.
 
 const semver = require("semver");
-const { actions, log, selectors, util } = require("vortex-api");
+const { actions, log, selectors, util, VortexError } = require("vortex-api");
 
 const API_BASE = "https://api.modworkshop.net";
 
@@ -292,14 +292,22 @@ async function downloadModWorkshopRequirement(api, gameSpec, requirement, check 
         ? latestFile.download_url
         : fallbackUrl;
     if (!URL) {
-      throw new util.ProcessCanceled(
-        "ModWorkshop API is unreachable and no fallback file id is set",
-      );
+      throw new VortexError("ModWorkshop API is unreachable and no fallback file id is set", {
+        kind: "process-canceled",
+      });
     }
-    const dlId = await util.toPromise((cb) =>
-      api.events.emit("start-download", [URL], dlInfo, undefined, cb, undefined, {
-        allowInstall: false,
-      }),
+    const dlId = await new Promise((resolve, reject) =>
+      api.events.emit(
+        "start-download",
+        [URL],
+        dlInfo,
+        undefined,
+        (err, result) => (err ? reject(err) : resolve(result)),
+        undefined,
+        {
+          allowInstall: false,
+        },
+      ),
     );
     // Declare the origin before the install pipeline reads it. InstallManager re-reads the
     // download from live state right before running the attribute extractors, and
@@ -310,8 +318,10 @@ async function downloadModWorkshopRequirement(api, gameSpec, requirement, check 
     // "Other" label is 'unsupported'), and an unregistered id leaves the Source column
     // blank. See https://github.com/Nexus-Mods/Vortex/issues/21979.
     api.store.dispatch(actions.setDownloadModInfo(dlId, "source", "website"));
-    const modId = await util.toPromise((cb) =>
-      api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+    const modId = await new Promise((resolve, reject) =>
+      api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, (err, result) =>
+        err ? reject(err) : resolve(result),
+      ),
     );
     const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
     const batched = [

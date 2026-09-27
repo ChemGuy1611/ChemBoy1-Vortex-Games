@@ -448,3 +448,5 @@ only one folder is deployed, and whose version comes off the asset filename rath
 `NODE_FS.md` (the `fs` surface this module writes through — `fs.createWriteStream` for the download
 itself, `fsp.mkdir { recursive: true }` for the staging folder, and why the `createWriteStream`
 import is no longer destructured).
+`DEPRECATED_METHODS.md` (`util.toPromise`, the standard idiom this module uses to wrap the
+callback-based `start-download`/`start-install-download`/`remove-download` events).

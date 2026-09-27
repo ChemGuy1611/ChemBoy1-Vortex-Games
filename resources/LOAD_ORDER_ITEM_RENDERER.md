@@ -327,9 +327,7 @@ actions.
 
 ```js
 const profile = useSelector((state) => selectors.activeProfile(state));
-const loadOrder = useSelector((state) =>
-    util.getSafe(state, ["persistent", "loadOrder", profile?.id], []),
-);
+const loadOrder = useSelector((state) => state?.persistent?.loadOrder?.[profile?.id] ?? []);
 ```
 
 **What is `useSelector`?**
@@ -351,7 +349,7 @@ active profile ID is needed first.
 
 ```js
 const { loEntry, displayCheckboxes } = item;
-const mods = useSelector((state) => util.getSafe(state, ["persistent", "mods", GAME_ID], {}));
+const mods = useSelector((state) => state?.persistent?.mods?.[GAME_ID] ?? {});
 const pictureUrl = mods[loEntry.modId]?.attributes?.pictureUrl;
 const currentIdx = loadOrder.findIndex((e) => e.id === loEntry.id) + 1;
 ```
@@ -436,12 +434,9 @@ Dispatches `setFBLoadOrderEntry` when the per-row Checkbox fires. Dormant for UE
 ### Chunk G2 -- Vortex-mod toggle (isModEnabled / onModToggle)
 
 ```js
-const isModEnabled = useSelector((state) =>
-    util.getSafe(
-        state,
-        ["persistent", "profiles", profile?.id, "modState", loEntry.modId, "enabled"],
-        false,
-    ),
+const isModEnabled = useSelector(
+    (state) =>
+        state?.persistent?.profiles?.[profile?.id]?.modState?.[loEntry.modId]?.enabled ?? false,
 );
 
 const onModToggle = React.useCallback(() => {
@@ -934,7 +929,7 @@ const filteredOrder = loadOrder.filter(
 `onApply` remaps drag results through the filter whenever **either** filter is
 active -- the guard is `if (isFiltered)`, not `if (filterText)`. (LogicMods'
 `LogicModsLoadOrderPage` is wired identically, except `isEntryEnabled` reads the
-Vortex mod state: `util.getSafe(modState, [e.modId, 'enabled'], false)`.)
+Vortex mod state: `modState?.[e.modId]?.enabled ?? false`.)
 
 It uses its own `DraggableList` + `Ue4ssItemRenderer`
 with a React context (`Ue4ssSelectionContext`) for shared selection and context menu state:
@@ -1108,11 +1103,7 @@ Module-level helpers used by the context menus and rows (defined near `usePakLOS
 // Mod page URL: homepage attribute first, else compose the Nexus URL.
 function getModPageURL(api, vortexModId) {
     if (vortexModId === undefined) return undefined;
-    const attributes = util.getSafe(
-        api.getState(),
-        ["persistent", "mods", GAME_ID, vortexModId, "attributes"],
-        {},
-    );
+    const attributes = api.getState()?.persistent?.mods?.[GAME_ID]?.[vortexModId]?.attributes ?? {};
     if (attributes.homepage) return attributes.homepage;
     if (attributes.source === "nexus" && attributes.modId !== undefined) {
         return `https://www.nexusmods.com/${GAME_ID}/mods/${attributes.modId}`;
@@ -1124,11 +1115,7 @@ function getModPageURL(api, vortexModId) {
 function getModStagingFolder(api, vortexModId) {
     if (vortexModId === undefined) return undefined;
     const state = api.getState();
-    const installationPath = util.getSafe(
-        state,
-        ["persistent", "mods", GAME_ID, vortexModId, "installationPath"],
-        undefined,
-    );
+    const installationPath = state?.persistent?.mods?.[GAME_ID]?.[vortexModId]?.installationPath ?? undefined;
     const stagingPath = selectors.installPathForGame(state, GAME_ID);
     if (!installationPath || !stagingPath) return undefined;
     return path.join(stagingPath, installationPath);

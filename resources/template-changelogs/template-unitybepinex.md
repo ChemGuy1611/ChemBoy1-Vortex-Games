@@ -1,5 +1,9 @@
 # template-unitybepinex Changelog
 
+## [2026-09-25]
+
+- Changed: `util.opn(...)` (deprecated Bluebird-promise API) replaced with `window.api.shell.openUrl()`/`openFile()` (void, no promise) at every call site (`index.js`, `downloader.js`), each wrapped in `try`/`catch` reporting failures via `showErrorNotification(..., { allowReport: false })` instead of the old silent `.catch(() => null)`.
+
 ## [2026-09-14]
 
 - Fixed: `BEP_BE_VER`/`BEP_BE_COMMIT` fallback bumped from build 755/`3fab71a` (2026-08-05) to the current builds.bepinex.dev newest build 788/`5b766a3` (2026-09-01).

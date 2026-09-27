@@ -105,7 +105,7 @@ context.registerMainPage("unreal", "UE4SS Load Order", Ue4ssLoadOrderPage, {
     visible: () => {
         const state = context.api.store.getState();
         const gameId = selectors.activeGameId(state);
-        const loEnabled = util.getSafe(state, ["settings", GAME_ID, "ue4ssLoEnabled"], true);
+        const loEnabled = state?.settings?.[GAME_ID]?.ue4ssLoEnabled ?? true;
         return gameId === GAME_ID && loEnabled;
     },
     props: () => ({ api: context.api }),
@@ -146,8 +146,8 @@ Pages that need persistent state (like a load order list) use `registerReducer`.
 context.registerReducer(["persistent", "myList", GAME_ID], spec); // before registerMainPage
 
 // Reading in a component:
-const items = useSelector((state) =>
-    util.getSafe(state, ["persistent", "myList", GAME_ID, "items"], []),
+const items = useSelector(
+    (state) => state?.persistent?.myList?.[GAME_ID]?.items ?? [],
 );
 ```
 
@@ -204,9 +204,7 @@ if (!items.length) {
 Read the setting via `useSelector` alongside other selectors at the top of the component (before any early returns — Rules of Hooks). Then guard after the empty-list check:
 
 ```js
-const loEnabled = useSelector((state) =>
-    util.getSafe(state, ["settings", GAME_ID, "ue4ssLoEnabled"], true),
-);
+const loEnabled = useSelector((state) => state?.settings?.[GAME_ID]?.ue4ssLoEnabled ?? true);
 
 // after empty-list check:
 if (!loEnabled) {
@@ -326,9 +324,7 @@ function MyComponent({ api }) {
     const dispatch = useDispatch();
     const [localState, setLocalState] = React.useState("");
 
-    const items = useSelector((state) =>
-        util.getSafe(state, ["persistent", "myList", GAME_ID, "items"], []),
-    );
+    const items = useSelector((state) => state?.persistent?.myList?.[GAME_ID]?.items ?? []);
 
     React.useEffect(() => {
         // runs when profileId changes
@@ -369,9 +365,7 @@ function MyItemRenderer({ className, item }) {
     const { useSelector, useDispatch } = require("react-redux");
 
     const dispatch = useDispatch();
-    const items = useSelector((state) =>
-        util.getSafe(state, ["persistent", "myList", GAME_ID, "items"], []),
-    );
+    const items = useSelector((state) => state?.persistent?.myList?.[GAME_ID]?.items ?? []);
 
     const onToggle = React.useCallback(
         (evt) => {
@@ -601,7 +595,7 @@ visible: () => selectors.activeGameId(context.api.store.getState()) === GAME_ID,
 visible: () => {
   const state = context.api.store.getState();
   return selectors.activeGameId(state) === GAME_ID
-    && util.getSafe(state, ['settings', GAME_ID, 'myFeatureEnabled'], true);
+    && (state?.settings?.[GAME_ID]?.myFeatureEnabled ?? true);
 },
 ```
 
@@ -971,7 +965,7 @@ context.registerDashlet(
 function MyDashletComponent() {
     const { useSelector } = require("react-redux");
     const count = useSelector(
-        (state) => util.getSafe(state, ["persistent", "myData", GAME_ID, "items"], []).length,
+        (state) => (state?.persistent?.myData?.[GAME_ID]?.items ?? []).length,
     );
 
     return React.createElement(
@@ -999,7 +993,7 @@ context.registerFooter("my-footer-item", MyFooterComponent);
 ```js
 function MyFooterComponent() {
     const { useSelector } = require("react-redux");
-    const status = useSelector((state) => util.getSafe(state, ["session", GAME_ID, "status"], ""));
+    const status = useSelector((state) => state?.session?.[GAME_ID]?.status ?? "");
 
     return React.createElement(
         "div",

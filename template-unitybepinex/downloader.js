@@ -27,7 +27,7 @@ const semver = require("semver");
 const { finished } = require("stream/promises");
 const fs = require("fs");
 const fsp = fs.promises;
-const { actions, fs: vfs, log, selectors, util } = require("vortex-api");
+const { actions, fs: vfs, log, selectors, util, VortexError } = require("vortex-api");
 
 // --- common ---------------------------------------------------------------
 const NOTIF_ID_REQUIREMENTS = "vortex-downloader-requirements-download-notification";
@@ -137,7 +137,7 @@ async function installedPinVersion(api, requirement) {
     return marker?.version ?? "";
   }
   const mod = requirement.findMod ? await requirement.findMod(api) : undefined;
-  return util.getSafe(mod, ["attributes", "version"], "");
+  return mod?.attributes?.version ?? "";
 }
 
 // Pin comparison. Exact string match first, so version shapes semver cannot represent compare
@@ -574,7 +574,7 @@ async function importAndInstall(api, filePath, info) {
     api.events.emit("import-downloads", [filePath], async (dlIds) => {
       const id = dlIds[0];
       if (id === undefined) {
-        return reject(new util.NotFound(filePath));
+        return reject(new VortexError(filePath, { kind: "not-found" }));
       }
       const batched = [];
       // Declare the origin before the install pipeline reads it: an md5 metadata lookup that
@@ -656,7 +656,9 @@ async function getLatestGithubReleaseAsset(api, requirement) {
         log("info", "GitHub rate limit exceeded", {
           reset_at: new Date(resetDate * 1000).toString(),
         });
-        return Promise.reject(new util.ProcessCanceled("GitHub rate limit exceeded"));
+        return Promise.reject(
+          new VortexError("GitHub rate limit exceeded", { kind: "process-canceled" }),
+        );
       }
       // Only a missing tag is worth retrying with the other 'v' spelling; any other status
       // means the next candidate would fail the same way.
@@ -747,7 +749,9 @@ async function getLatestNightlyArtifact(api, requirement) {
       log("info", "GitHub rate limit exceeded", {
         reset_at: new Date(resetDate * 1000).toString(),
       });
-      return Promise.reject(new util.ProcessCanceled("GitHub rate limit exceeded"));
+      return Promise.reject(
+        new VortexError("GitHub rate limit exceeded", { kind: "process-canceled" }),
+      );
     }
     if (!response.ok) {
       throw new Error(`Request failed with status code ${response.status} (${runsUrl})`);
@@ -827,7 +831,11 @@ function reportNexusFailure(api, requirement, domain, error) {
   api.showErrorNotification(`Failed to download ${requirement.userFacingName}`, error, {
     allowReport: false,
   });
-  util.opn(`${nexusPageUrl(domain, requirement.nexusModId)}/files/?tab=files`).catch(() => null);
+  try {
+    window.api.shell.openUrl(`${nexusPageUrl(domain, requirement.nexusModId)}/files/?tab=files`);
+  } catch (err) {
+    api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+  }
 }
 
 // Name filters for a page publishing several current main files. Both plain-string fields are
@@ -893,7 +901,7 @@ async function getLatestNexusFile(api, requirement) {
     }
     const err = new Error("Nexus integration is unavailable in this Vortex build");
     reportNexusFailure(api, requirement, domain, err);
-    return Promise.reject(new util.ProcessCanceled(err.message));
+    return Promise.reject(new VortexError(err.message, { kind: "process-canceled" }));
   }
   let files;
   try {
@@ -980,15 +988,25 @@ async function downloadNexusFile(api, requirement, asset) {
   }
   const nxmUrl = `nxm://${asset.nexusDomain}/mods/${asset.nexusModId}/files/${asset.nexusFileId}`;
   const dlInfo = { game: asset.nexusDomain, name: requirement.userFacingName };
-  const dlId = await util.toPromise((cb) =>
-    api.events.emit("start-download", [nxmUrl], dlInfo, undefined, cb, undefined, {
-      allowInstall: false,
-    }),
+  const dlId = await new Promise((resolve, reject) =>
+    api.events.emit(
+      "start-download",
+      [nxmUrl],
+      dlInfo,
+      undefined,
+      (err, result) => (err ? reject(err) : resolve(result)),
+      undefined,
+      {
+        allowInstall: false,
+      },
+    ),
   );
   if (!dlId) {
     // A dismissed free-user download dialog and a link refused for this account both land here.
     // Neither is an error worth a stack trace; download() reports the skip.
-    throw new util.ProcessCanceled(`${requirement.userFacingName} was not downloaded`);
+    throw new VortexError(`${requirement.userFacingName} was not downloaded`, {
+      kind: "process-canceled",
+    });
   }
   return dlId;
 }
@@ -999,7 +1017,7 @@ async function downloadNexusFile(api, requirement, asset) {
 // the download's own first game id.
 function downloadLocalPath(api, dlId) {
   const state = api.getState();
-  const dl = util.getSafe(state, ["persistent", "downloads", "files", dlId], undefined);
+  const dl = state?.persistent?.downloads?.files?.[dlId] ?? undefined;
   if (dl?.localPath === undefined) {
     return undefined;
   }
@@ -1016,12 +1034,18 @@ async function fetchNexusAsset(api, requirement, asset, destination) {
   const dlId = await downloadNexusFile(api, requirement, asset);
   const source = downloadLocalPath(api, dlId);
   if (source === undefined) {
-    throw new util.ProcessCanceled(`${requirement.userFacingName} download produced no file`);
+    throw new VortexError(`${requirement.userFacingName} download produced no file`, {
+      kind: "process-canceled",
+    });
   }
   await fsp.cp(source, destination, { recursive: true });
   // Guarded: the event exists in every current Vortex version, but failing to tidy up the row
   // must not fail an install that already succeeded.
-  await util.toPromise((cb) => api.events.emit("remove-download", dlId, cb)).catch(() => null);
+  await new Promise((resolve, reject) =>
+    api.events.emit("remove-download", dlId, (err, result) =>
+      err ? reject(err) : resolve(result),
+    ),
+  ).catch(() => null);
 }
 
 // How the bytes of a resolved asset are obtained. GitHub and nightly assets carry a fetchable
@@ -1097,7 +1121,9 @@ async function doDownload(downloadUrl, destination) {
   ) {
     const resetDate = parseInt(response.headers.get("x-ratelimit-reset") ?? "0", 10);
     log("info", "GitHub rate limit exceeded", { reset_at: new Date(resetDate * 1000).toString() });
-    return Promise.reject(new util.ProcessCanceled("GitHub rate limit exceeded"));
+    return Promise.reject(
+      new VortexError("GitHub rate limit exceeded", { kind: "process-canceled" }),
+    );
   }
   if (!response.ok) {
     throw new Error(`Request failed with status code ${response.status} (${downloadUrl})`);
@@ -1338,7 +1364,7 @@ async function installAssetAsMod(api, requirement, asset, fetchAsset) {
 function getMods(api, modType) {
   const state = api.getState();
   const gameId = selectors.activeGameId(state);
-  const mods = util.getSafe(state, ["persistent", "mods", gameId], {});
+  const mods = state?.persistent?.mods?.[gameId] ?? {};
   return Object.values(mods).filter((mod) => mod.type === modType);
 }
 
@@ -1377,8 +1403,8 @@ async function findModByFile(api, modType, fileName) {
   // enabled in the active profile is the one actually in use; fall back to the first match
   // when none is enabled, which is what a single-copy install always yields anyway.
   const profileId = selectors.lastActiveProfileForGame(state, gameId);
-  const modState = util.getSafe(state, ["persistent", "profiles", profileId, "modState"], {});
-  return matches.find((mod) => util.getSafe(modState, [mod.id, "enabled"], false)) ?? matches[0];
+  const modState = state?.persistent?.profiles?.[profileId]?.modState ?? {};
+  return matches.find((mod) => modState?.[mod.id]?.enabled ?? false) ?? matches[0];
 }
 
 // Compatible game ids recorded on a download. IDownload.game is an array in current Vortex,
@@ -1405,7 +1431,7 @@ function isDownloadForGame(dl, gameId) {
 function findDownloadIdByFile(api, fileName) {
   const state = api.getState();
   const gameId = selectors.activeGameId(state);
-  const downloads = util.getSafe(state, ["persistent", "downloads", "files"], {});
+  const downloads = state?.persistent?.downloads?.files ?? {};
   return Object.entries(downloads).reduce((prev, [dlId, dl]) => {
     // localPath is optional on IDownload - entries still initialising, redirects and failed
     // downloads have none, and path.basename throws on undefined.
@@ -1422,7 +1448,7 @@ function findDownloadIdByFile(api, fileName) {
 async function resolveVersionByPattern(api, requirement) {
   const state = api.getState();
   const gameId = selectors.activeGameId(state);
-  const files = util.getSafe(state, ["persistent", "downloads", "files"], []);
+  const files = state?.persistent?.downloads?.files ?? [];
   const latestVersion = Object.values(files).reduce((prev, file) => {
     //not every download entry has a local file yet, and archives belonging to another game say
     //nothing about the version installed for this one
@@ -1446,7 +1472,7 @@ async function resolveVersionByPattern(api, requirement) {
 // "update available".
 async function resolveVersionByAssetDate(api, requirement) {
   const mod = await requirement.findMod(api);
-  return util.getSafe(mod, ["attributes", "githubAssetDate"], "");
+  return mod?.attributes?.githubAssetDate ?? "";
 }
 
 // resolveVersion implementation reading the `version` attribute stamped on the installed
@@ -1460,7 +1486,7 @@ async function resolveVersionByAssetDate(api, requirement) {
 // "update available".
 async function resolveVersionByModVersion(api, requirement) {
   const mod = await requirement.findMod(api);
-  const stamped = util.getSafe(mod, ["attributes", "version"], "");
+  const stamped = mod?.attributes?.version ?? "";
   return toComparableVersion(stamped) ?? "0.0.0";
 }
 
@@ -1470,7 +1496,7 @@ async function resolveVersionByModVersion(api, requirement) {
 // "update available" - one notification, and the forced install stamps it.
 async function resolveVersionByNightlyRun(api, requirement) {
   const mod = await requirement.findMod(api);
-  return String(util.getSafe(mod, ["attributes", "nightlyRunNumber"], ""));
+  return String(mod?.attributes?.nightlyRunNumber ?? "");
 }
 
 async function walkPath(dirPath, walkOptions) {

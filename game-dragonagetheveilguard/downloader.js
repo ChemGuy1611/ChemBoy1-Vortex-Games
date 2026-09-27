@@ -147,7 +147,7 @@ async function installedPinVersion(api, requirement) {
     return marker?.version ?? "";
   }
   const mod = requirement.findMod ? await requirement.findMod(api) : undefined;
-  return util.getSafe(mod, ["attributes", "version"], "");
+  return mod?.attributes?.version ?? "";
 }
 
 // Pin comparison. Exact string match first, so version shapes semver cannot represent compare
@@ -1009,7 +1009,7 @@ async function downloadNexusFile(api, requirement, asset) {
 // the download's own first game id.
 function downloadLocalPath(api, dlId) {
   const state = api.getState();
-  const dl = util.getSafe(state, ["persistent", "downloads", "files", dlId], undefined);
+  const dl = state?.persistent?.downloads?.files?.[dlId] ?? undefined;
   if (dl?.localPath === undefined) {
     return undefined;
   }
@@ -1348,7 +1348,7 @@ async function installAssetAsMod(api, requirement, asset, fetchAsset) {
 function getMods(api, modType) {
   const state = api.getState();
   const gameId = selectors.activeGameId(state);
-  const mods = util.getSafe(state, ["persistent", "mods", gameId], {});
+  const mods = state?.persistent?.mods?.[gameId] ?? {};
   return Object.values(mods).filter((mod) => mod.type === modType);
 }
 
@@ -1387,8 +1387,8 @@ async function findModByFile(api, modType, fileName) {
   // enabled in the active profile is the one actually in use; fall back to the first match
   // when none is enabled, which is what a single-copy install always yields anyway.
   const profileId = selectors.lastActiveProfileForGame(state, gameId);
-  const modState = util.getSafe(state, ["persistent", "profiles", profileId, "modState"], {});
-  return matches.find((mod) => util.getSafe(modState, [mod.id, "enabled"], false)) ?? matches[0];
+  const modState = state?.persistent?.profiles?.[profileId]?.modState ?? {};
+  return matches.find((mod) => modState?.[mod.id]?.enabled ?? false) ?? matches[0];
 }
 
 // Compatible game ids recorded on a download. IDownload.game is an array in current Vortex,
@@ -1415,7 +1415,7 @@ function isDownloadForGame(dl, gameId) {
 function findDownloadIdByFile(api, fileName) {
   const state = api.getState();
   const gameId = selectors.activeGameId(state);
-  const downloads = util.getSafe(state, ["persistent", "downloads", "files"], {});
+  const downloads = state?.persistent?.downloads?.files ?? {};
   return Object.entries(downloads).reduce((prev, [dlId, dl]) => {
     // localPath is optional on IDownload - entries still initialising, redirects and failed
     // downloads have none, and path.basename throws on undefined.
@@ -1432,7 +1432,7 @@ function findDownloadIdByFile(api, fileName) {
 async function resolveVersionByPattern(api, requirement) {
   const state = api.getState();
   const gameId = selectors.activeGameId(state);
-  const files = util.getSafe(state, ["persistent", "downloads", "files"], []);
+  const files = state?.persistent?.downloads?.files ?? [];
   const latestVersion = Object.values(files).reduce((prev, file) => {
     //not every download entry has a local file yet, and archives belonging to another game say
     //nothing about the version installed for this one
@@ -1456,7 +1456,7 @@ async function resolveVersionByPattern(api, requirement) {
 // "update available".
 async function resolveVersionByAssetDate(api, requirement) {
   const mod = await requirement.findMod(api);
-  return util.getSafe(mod, ["attributes", "githubAssetDate"], "");
+  return mod?.attributes?.githubAssetDate ?? "";
 }
 
 // resolveVersion implementation reading the `version` attribute stamped on the installed
@@ -1470,7 +1470,7 @@ async function resolveVersionByAssetDate(api, requirement) {
 // "update available".
 async function resolveVersionByModVersion(api, requirement) {
   const mod = await requirement.findMod(api);
-  const stamped = util.getSafe(mod, ["attributes", "version"], "");
+  const stamped = mod?.attributes?.version ?? "";
   return toComparableVersion(stamped) ?? "0.0.0";
 }
 
@@ -1480,7 +1480,7 @@ async function resolveVersionByModVersion(api, requirement) {
 // "update available" - one notification, and the forced install stamps it.
 async function resolveVersionByNightlyRun(api, requirement) {
   const mod = await requirement.findMod(api);
-  return String(util.getSafe(mod, ["attributes", "nightlyRunNumber"], ""));
+  return String(mod?.attributes?.nightlyRunNumber ?? "");
 }
 
 async function walkPath(dirPath, walkOptions) {

@@ -214,4 +214,5 @@ extension hands the finished download to). `DOWNLOADER.md` (the requirements aut
 where `browse-for-download` fits among its routes). `NOTIFICATIONS_DIALOGS.md` (the dialog surface
 a confirmation gate uses). `THUNDERSTORE_API.md` (a source whose site is browsed this way).
 `BROWSER_MODULES.md` (the shared modules that assemble everything on this page into a browse-and-
-install page an extension can adopt).
+install page an extension can adopt). `DEPRECATED_METHODS.md` (`util.opn`, used from `onNewWindow`
+here, is deprecated in favor of `window.api.shell`).

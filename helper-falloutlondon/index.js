@@ -215,7 +215,7 @@ async function makeLink(api, src, dest, type) {
 //get FO4 game's discovered path
 const getFallout4Path = (api) => {
   const state = api.getState();
-  const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], undefined);
+  const discovery = state?.settings?.gameMode?.discovered?.[GAME_ID] ?? undefined;
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
 
@@ -349,11 +349,11 @@ async function checkPartitions(path1, path2, path3) {
 
 // Function to detect when falloutlondon mod is in state
 async function checkState(api) {
-  let mods = util.getSafe(api.store.getState(), ["persistent", "mods", GAME_ID], {});
+  let mods = api.store.getState()?.persistent?.mods?.[GAME_ID] ?? {};
   let STATUS = Object.keys(mods).some((id) => mods[id] === MOD_ID);
   while (!STATUS) {
     //wait until the new mod is in state
-    mods = util.getSafe(api.store.getState(), ["persistent", "mods", GAME_ID], {});
+    mods = api.store.getState()?.persistent?.mods?.[GAME_ID] ?? {};
     STATUS = Object.keys(mods).some((id) => mods[id] === MOD_ID);
   }
   return STATUS; //*/

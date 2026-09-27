@@ -341,3 +341,5 @@ archive rather than on disk). `DOWNLOADER.md` (the requirement-staging file writ
 downloader modules). `TEMPLATES_OVERVIEW.md` (every template's `setup` uses
 `ensureDirWritableAsync`; new extensions are scaffolded already migrated). `UNDERUSED_API_FUNCTIONS.md`
 (§5 — `fs.forcePerm`, `util.withTmpDir`, `util.calculateFolderSize` beyond the basics).
+`DEPRECATED_METHODS.md` (index of every deprecated symbol across the published API — explains why
+the retry-wrapped `*Async` family below is NOT deprecated despite renderer-src over-tagging).

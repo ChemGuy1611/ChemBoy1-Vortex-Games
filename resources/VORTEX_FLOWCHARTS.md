@@ -342,7 +342,7 @@ flowchart TD
 
     N --> SG["GameModeManager.setupGameMode(newGameId)"]
     SG --> SG1["assertToolDir + fs.statAsync(gameDiscovery.path)<br/>confirm the folder still exists"]
-    SG1 --> SG2["game.getInstalledVersion(gameDiscovery)<br/>called BEFORE setup, so the gameversion-hash ext<br/>can read files before setup may lock them"]
+    SG1 --> SG2["game.getInstalledVersion(gameDiscovery)<br/>called BEFORE setup (legacy order from the<br/>gameversion-hash ext, removed in Vortex 2.7.0)"]
     SG2 --> SG3["game.setup(gameDiscovery)<br/>typically vfs.ensureDirWritableAsync on staging,<br/>requirement downloads, etc."]
 
     SG3 -- "throws" --> FAIL{"error class?"}

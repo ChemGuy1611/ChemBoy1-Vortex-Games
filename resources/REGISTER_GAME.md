@@ -71,7 +71,7 @@ details: {
   xboxAppId:        XBOXAPP_ID,       // string
   nexusPageId:      'nexus-slug',     // if different from GAME_ID
   supportsSymlinks: true,             // boolean
-  hashFiles:        ['file.pak'],     // files to hash for update detection
+  hashFiles:        ['file.pak'],     // INERT since Vortex 2.7.0 (gameversion-hash ext removed) - hash inside getGameVersion instead
   ignoreConflicts:  [],               // file patterns to skip conflict check
   ignoreDeploy:     [],               // file patterns to skip deployment
 }

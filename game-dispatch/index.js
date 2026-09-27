@@ -697,7 +697,7 @@ async function setSavePath() {
 const getDiscoveryPath = (api) => {
   //get the game's discovered path
   const state = api.getState();
-  const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
+  const discovery = state?.settings?.gameMode?.discovered?.[GAME_ID] ?? {};
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
 
@@ -753,9 +753,7 @@ function installUe4ssCombo(files, fileName) {
   const setModTypeInstruction = { type: "setmodtype", value: UE4SSCOMBO_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -804,9 +802,7 @@ function installLogic(files) {
   const setModTypeInstruction = { type: "setmodtype", value: LOGICMODS_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -850,9 +846,7 @@ function installUe4ss(files) {
   const setModTypeInstruction = { type: "setmodtype", value: UE4SS_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -899,9 +893,7 @@ function installSigBypass(files) {
   const setModTypeInstruction = { type: "setmodtype", value: SIGBYPASS_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -969,9 +961,7 @@ function installScripts(files, fileName) {
   }
 
   //Filter files and set instructions
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1039,9 +1029,7 @@ function installDll(files, fileName) {
   }
 
   //Filter files and set instructions
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1103,9 +1091,7 @@ function installRoot(files) {
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1149,9 +1135,7 @@ function installConfig(api, files) {
   const setModTypeInstruction = { type: "setmodtype", value: CONFIG_ID };
 
   //Filter files and set instructions
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1265,9 +1249,7 @@ function installSave(api, files) {
   }
 
   //Filter files and set instructions
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1635,7 +1617,7 @@ async function downloadSigBypass(api, gameSpec) {
 
 //UNREAL - Pre-sort function
 async function preSort(api, items, direction) {
-  const mods = util.getSafe(api.store.getState(), ["persistent", "mods", spec.game.id], {});
+  const mods = api.store.getState()?.persistent?.mods?.[spec.game.id] ?? {};
   const fileExt = UNREALDATA.fileExt;
 
   const loadOrder = items.map((mod) => {
@@ -1645,17 +1627,13 @@ async function preSort(api, items, direction) {
         modInfo.attributes.logicalFileName ??
         modInfo.attributes.name)
       : mod.name;
-    const paks = util.getSafe(modInfo.attributes, ["unrealModFiles"], []);
+    const paks = modInfo.attributes?.unrealModFiles ?? [];
     if (paks.length > 1) name = name + ` (${paks.length} ${fileExt} files)`;
 
     return {
       id: mod.id,
       name,
-      imgUrl: util.getSafe(
-        modInfo,
-        ["attributes", "pictureUrl"],
-        path.join(__dirname, spec.game.logo),
-      ),
+      imgUrl: modInfo?.attributes?.pictureUrl ?? path.join(__dirname, spec.game.logo),
     };
   });
 
@@ -1709,7 +1687,7 @@ function makePrefix(input) {
 function loadOrderPrefix(api, mod) {
   const state = api.getState();
   const profile = selectors.lastActiveProfileForGame(state, GAME_ID);
-  const loadOrder = util.getSafe(state, ["persistent", "loadOrder", profile], {});
+  const loadOrder = state?.persistent?.loadOrder?.[profile] ?? {};
   const loKeys = Object.keys(loadOrder);
   const pos = loKeys.indexOf(mod.id);
   if (pos === -1) {
@@ -1828,11 +1806,7 @@ function UNREALEXTENSION(context) {
   const getUnrealModsPath = (game) => {
     const modsPath = UNREALDATA.modsPath;
     const state = context.api.getState();
-    const discoveryPath = util.getSafe(
-      state.settings,
-      ["gameMode", "discovered", game.id, "path"],
-      undefined,
-    );
+    const discoveryPath = state.settings?.gameMode?.discovered?.[game.id]?.path ?? undefined;
     const installPath = [discoveryPath].concat(modsPath.split(path.sep));
     return discoveryPath ? path.join.apply(null, installPath) : undefined;
   };

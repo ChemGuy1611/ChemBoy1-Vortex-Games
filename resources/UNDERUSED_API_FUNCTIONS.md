@@ -479,9 +479,9 @@ Only Vortex's four download events are typed out of the box; everything else fal
 
 ### `context.registerGameVersionProvider(id, priority, supported, getVersion, opts?)`
 
-**Why useful:** Override how Vortex detects the installed game version. Use when the default exe-header approach gives wrong results.
+**Removed in Vortex 2.7.1.** The provider pattern is gone from core; the bundled `gameversion-hash` extension that used it (hashing `details.hashFiles` at priority 75, below the extension's own `getGameVersion` at 20) was removed in 2.7.0. Core now resolves the version in two steps only: `IGame.getGameVersion(gamePath, exePath)` if defined, else the exe's PE version, else `"0.0.0"`.
 
-**Use case:** Read a game's `build_id.txt` or Steam `appmanifest.acf` to report the real version — many games report `1.0.0` in their PE header regardless of actual version.
+**Instead:** implement `getGameVersion` on the game. To report the real version, read a game's `build_id.txt` or Steam `appmanifest.acf`, or hash game-code files yourself — many games report the engine version or `1.0.0` in their PE header regardless of actual version.
 
 ---
 

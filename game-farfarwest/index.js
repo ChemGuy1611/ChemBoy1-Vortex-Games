@@ -21,6 +21,7 @@ const {
   FlexLayout,
   DNDContainer,
   DraggableList,
+  VortexError,
 } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
@@ -905,7 +906,7 @@ async function getAllFiles(dirPath) {
 const getDiscoveryPath = (api) => {
   //get the game's discovered path
   const state = api.getState();
-  const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
+  const discovery = state?.settings?.gameMode?.discovered?.[GAME_ID] ?? {};
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
 
@@ -972,9 +973,7 @@ async function installModKitMod(files, fileName) {
   }
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1042,9 +1041,7 @@ async function installUe4ssCombo(files, workingDir) {
   }
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -1115,9 +1112,7 @@ function installLogic(files) {
   const setModTypeInstruction = { type: "setmodtype", value: LOGICMODS_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1179,9 +1174,7 @@ function installUe4ss(files) {
   const setModTypeInstruction = { type: "setmodtype", value: UE4SS_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1228,9 +1221,7 @@ function installSigBypass(files) {
   const setModTypeInstruction = { type: "setmodtype", value: SIGBYPASS_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1288,10 +1279,7 @@ async function installScripts(api, files, fileName) {
   }
   const idx = modFile.indexOf(path.basename(modFile));
   //handle enabled.txt file
-  if (
-    !ue4ssLoadOrder ||
-    !util.getSafe(api.store.getState(), ["settings", GAME_ID, "ue4ssLoEnabled"], true)
-  ) {
+  if (!ue4ssLoadOrder || !(api.store.getState()?.settings?.[GAME_ID]?.ue4ssLoEnabled ?? true)) {
     const ENABLEDTXT_PATH = path.join(fileName, path.dirname(scriptsFolder), ENABLEDTXT_FILE);
     try {
       await fsp.stat(ENABLEDTXT_PATH);
@@ -1309,9 +1297,7 @@ async function installScripts(api, files, fileName) {
   }
   //Filter files and set instructions
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const MOD_ATTRIBUTE = {
     type: "attribute",
     key: LO_ATTRIBUTE_UE4SS,
@@ -1375,10 +1361,7 @@ async function installDll(api, files, fileName) {
   }
   const idx = modFile.indexOf(path.basename(modFile));
   //handle enabled.txt file
-  if (
-    !ue4ssLoadOrder ||
-    !util.getSafe(api.store.getState(), ["settings", GAME_ID, "ue4ssLoEnabled"], true)
-  ) {
+  if (!ue4ssLoadOrder || !(api.store.getState()?.settings?.[GAME_ID]?.ue4ssLoEnabled ?? true)) {
     const ENABLEDTXT_PATH = path.join(fileName, path.dirname(dllFolder), ENABLEDTXT_FILE);
     try {
       await fsp.stat(ENABLEDTXT_PATH);
@@ -1396,9 +1379,7 @@ async function installDll(api, files, fileName) {
   }
   //Filter files and set instructions
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const MOD_ATTRIBUTE = {
     type: "attribute",
     key: LO_ATTRIBUTE_UE4SS,
@@ -1478,9 +1459,7 @@ function installRoot(files) {
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1524,9 +1503,7 @@ function installConfig(api, files) {
   const setModTypeInstruction = { type: "setmodtype", value: CONFIG_ID };
 
   //Filter files and set instructions
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1540,7 +1517,7 @@ function installConfig(api, files) {
   if (IS_CONFIG === false) {
     //api.showErrorNotification(`Could not install mod as Config`, `You tried installing a Config mod, but the game, staging folder, and ${CONFIG_LOC} folder are not all on the same drive. Please move the game and/or staging folder to the same drive as the ${CONFIG_LOC} folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
     configInstallerNotify(api);
-    throw new util.UserCanceled();
+    throw new VortexError("User canceled", { kind: "user-canceled", skipped: false });
   }
   return Promise.resolve({ instructions });
 }
@@ -1637,13 +1614,11 @@ async function installSave(api, files) {
   const TEST = SAVE_COMPAT_VERSIONS.includes(GAME_VERSION);
   if (!TEST) {
     saveErrorNotify(api);
-    throw new util.UserCanceled();
+    throw new VortexError("User canceled", { kind: "user-canceled", skipped: false });
   }
 
   //Filter files and set instructions
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -1655,7 +1630,7 @@ async function installSave(api, files) {
   const IS_SAVE = checkPartitions(SAVEMOD_LOCATION, GAME_PATH);
   if (IS_SAVE === false) {
     saveInstallerNotify(api);
-    throw new util.UserCanceled();
+    throw new VortexError("User canceled", { kind: "user-canceled", skipped: false });
   }
   return Promise.resolve({ instructions });
 }
@@ -1791,11 +1766,7 @@ function fallbackInstallerNotify(api, modName) {
                 label: `Open Mod Page + Staging Folder`,
                 action: () => {
                   util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
-                  const mods = util.getSafe(
-                    api.store.getState(),
-                    ["persistent", "mods", spec.game.id],
-                    {},
-                  );
+                  const mods = api.store.getState()?.persistent?.mods?.[spec.game.id] ?? {};
                   const modMatch = Object.values(mods).find(
                     (mod) => mod.installationPath === modName,
                   );
@@ -1890,7 +1861,7 @@ async function downloadUe4ssNexus(api, gameSpec, check = true) {
           .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
           .reverse()[0];
         if (file === undefined) {
-          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+          throw new VortexError(`No ${MOD_NAME} main file found`, { kind: "process-canceled" });
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
@@ -1904,13 +1875,23 @@ async function downloadUe4ssNexus(api, gameSpec, check = true) {
         game: GAME_DOMAIN,
         name: MOD_NAME,
       };
-      const dlId = await util.toPromise((cb) =>
-        api.events.emit("start-download", [URL], dlInfo, undefined, cb, undefined, {
-          allowInstall: false,
-        }),
+      const dlId = await new Promise((resolve, reject) =>
+        api.events.emit(
+          "start-download",
+          [URL],
+          dlInfo,
+          undefined,
+          (err, result) => (err ? reject(err) : resolve(result)),
+          undefined,
+          {
+            allowInstall: false,
+          },
+        ),
       );
-      const modId = await util.toPromise((cb) =>
-        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+      const modId = await new Promise((resolve, reject) =>
+        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, (err, result) =>
+          err ? reject(err) : resolve(result),
+        ),
       );
       const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
       const batched = [
@@ -1966,7 +1947,7 @@ async function downloadSigBypass(api, gameSpec, check = true) {
           .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
           .reverse()[0];
         if (file === undefined) {
-          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+          throw new VortexError(`No ${MOD_NAME} main file found`, { kind: "process-canceled" });
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
@@ -1980,13 +1961,23 @@ async function downloadSigBypass(api, gameSpec, check = true) {
         game: GAME_DOMAIN,
         name: MOD_NAME,
       };
-      const dlId = await util.toPromise((cb) =>
-        api.events.emit("start-download", [URL], dlInfo, undefined, cb, undefined, {
-          allowInstall: false,
-        }),
+      const dlId = await new Promise((resolve, reject) =>
+        api.events.emit(
+          "start-download",
+          [URL],
+          dlInfo,
+          undefined,
+          (err, result) => (err ? reject(err) : resolve(result)),
+          undefined,
+          {
+            allowInstall: false,
+          },
+        ),
       );
-      const modId = await util.toPromise((cb) =>
-        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+      const modId = await new Promise((resolve, reject) =>
+        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, (err, result) =>
+          err ? reject(err) : resolve(result),
+        ),
       );
       const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
       const batched = [
@@ -2022,12 +2013,12 @@ function generateProps(context, profileId) {
     return undefined;
   }
 
-  const discovery = util.getSafe(state, ["settings", "gameMode", "discovered", GAME_ID], undefined);
+  const discovery = state?.settings?.gameMode?.discovered?.[GAME_ID] ?? undefined;
   if (discovery?.path === undefined) {
     return undefined;
   }
 
-  const mods = util.getSafe(state, ["persistent", "mods", GAME_ID], {});
+  const mods = state?.persistent?.mods?.[GAME_ID] ?? {};
   return { api, state, profile, mods, discovery };
 }
 
@@ -2036,7 +2027,9 @@ async function ensureLOFile(context, profileId, props) {
     props = generateProps(context, profileId);
   }
   if (props === undefined) {
-    return Promise.reject(new util.ProcessCanceled("failed to generate game props"));
+    return Promise.reject(
+      new VortexError("failed to generate game props", { kind: "process-canceled" }),
+    );
   }
   const targetPath = path.join(props.discovery.path, props.profile.id + "_" + LO_FILE_NAME);
   try {
@@ -2066,24 +2059,24 @@ async function deserializeLoadOrder(context) {
     //and the page keeps showing the real load order rather than a placeholder row.
     const updateState = context.api.getState();
     const updateProfileId = selectors.lastActiveProfileForGame(updateState, GAME_ID);
-    return util.getSafe(updateState, ["persistent", "loadOrder", updateProfileId], []);
+    return updateState?.persistent?.loadOrder?.[updateProfileId] ?? [];
   }
 
   const props = generateProps(context, undefined);
   if (props?.profile?.gameId !== GAME_ID) {
-    return Promise.reject(new util.ProcessCanceled("invalid props"));
+    return Promise.reject(new VortexError("invalid props", { kind: "process-canceled" }));
   }
 
   // The deserialization function should be used to filter and insert wanted data into Vortex's
   //  loadOrder application state, once that's done, Vortex will trigger a serialization event
   //  which will ensure that the data is written to the LO file.
-  const currentModsState = util.getSafe(props.profile, ["modState"], {});
+  const currentModsState = props.profile?.modState ?? {};
 
   // we only want to insert enabled mods.
-  const enabledModIds = Object.keys(currentModsState).filter((modId) =>
-    util.getSafe(currentModsState, [modId, "enabled"], false),
+  const enabledModIds = Object.keys(currentModsState).filter(
+    (modId) => currentModsState?.[modId]?.enabled ?? false,
   );
-  const mods = util.getSafe(props.state, ["persistent", "mods", GAME_ID], {});
+  const mods = props.state?.persistent?.mods?.[GAME_ID] ?? {};
   let data = [];
   try {
     const loFilePath = await ensureLOFile(context, props.profile.gameId, props);
@@ -2100,7 +2093,7 @@ async function deserializeLoadOrder(context) {
     //would deploy unsorted. Fall back to the order already in state - never to an empty list,
     //which would be serialized straight back over the file.
     log("warn", "failed to read load order file", err);
-    const storedLO = util.getSafe(props.state, ["persistent", "loadOrder", props.profile.id], []);
+    const storedLO = props.state?.persistent?.loadOrder?.[props.profile.id] ?? [];
     data = Array.isArray(storedLO) ? storedLO : [];
   }
   try {
@@ -2156,7 +2149,7 @@ async function serializeLoadOrder(context, loadOrder) {
 
   const props = generateProps(context, undefined);
   if (props === undefined) {
-    return Promise.reject(new util.ProcessCanceled("invalid props"));
+    return Promise.reject(new VortexError("invalid props", { kind: "process-canceled" }));
   }
   // Make sure the LO file is created and ready to be written to.
   const loFilePath = await ensureLOFile(context, props.profile.id, props);
@@ -2173,16 +2166,12 @@ async function deserializeUe4ss(api) {
     //Freeze the order while a mod update is in flight - see deserializeLoadOrder above.
     const updateState = api.getState();
     const updateProfileId = selectors.lastActiveProfileForGame(updateState, GAME_ID);
-    return util.getSafe(
-      updateState,
-      ["persistent", "ue4ssLoadOrder", updateProfileId, "loadOrder"],
-      [],
-    );
+    return updateState?.persistent?.ue4ssLoadOrder?.[updateProfileId]?.loadOrder ?? [];
   }
 
   //Set basic information for load order paths and data
   const state = api.getState();
-  const mods = util.getSafe(api.store.getState(), ["persistent", "mods", spec.game.id], {});
+  const mods = api.store.getState()?.persistent?.mods?.[spec.game.id] ?? {};
   GAME_PATH = getDiscoveryPath(api);
   let modFolderPath = path.join(GAME_PATH, BINARIES_PATH, UE4SS_MOD_PATH);
   const profile = selectors.activeProfile(state);
@@ -2227,7 +2216,7 @@ async function deserializeUe4ss(api) {
     try {
       //Mod installed by Vortex, find mod where atrribute (from installer) matches folder in the load order
       const modMatch = Object.values(mods).find(
-        (mod) => util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE_UE4SS], "") === folder,
+        (mod) => (mods[mod.id]?.attributes?.[LO_ATTRIBUTE_UE4SS] ?? "") === folder,
       );
       if (modMatch) {
         return (
@@ -2247,7 +2236,7 @@ async function deserializeUe4ss(api) {
     try {
       //find mod where atrribute (from installer) matches file in the load order
       const modMatch = Object.values(mods).find(
-        (mod) => util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE_UE4SS], "") === folder,
+        (mod) => (mods[mod.id]?.attributes?.[LO_ATTRIBUTE_UE4SS] ?? "") === folder,
       ); //find mod by folder name attribute
       if (modMatch) {
         return modMatch.id;
@@ -2336,15 +2325,11 @@ async function deserializeLogicMods(api) {
     //Freeze the order while a mod update is in flight - see deserializeLoadOrder above.
     const updateState = api.getState();
     const updateProfileId = selectors.lastActiveProfileForGame(updateState, GAME_ID);
-    return util.getSafe(
-      updateState,
-      ["persistent", "logicModsLoadOrder", updateProfileId, "loadOrder"],
-      [],
-    );
+    return updateState?.persistent?.logicModsLoadOrder?.[updateProfileId]?.loadOrder ?? [];
   }
 
   const state = api.getState();
-  const mods = util.getSafe(state, ["persistent", "mods", spec.game.id], {});
+  const mods = state?.persistent?.mods?.[spec.game.id] ?? {};
   GAME_PATH = getDiscoveryPath(api);
   const logicModsFolder = path.join(GAME_PATH, LOGICMODS_PATH, LOGICMODS_FOLDER);
   const bpmlFolder = path.join(GAME_PATH, BINARIES_PATH, UE4SS_MOD_PATH, BPML_FOLDER);
@@ -2380,7 +2365,7 @@ async function deserializeLogicMods(api) {
   const getModName = (pakName) => {
     try {
       const modMatch = Object.values(mods).find((mod) => {
-        const attr = util.getSafe(mod, ["attributes", LO_ATTRIBUTE_LOGIC], []);
+        const attr = mod?.attributes?.[LO_ATTRIBUTE_LOGIC] ?? [];
         return Array.isArray(attr) ? attr.includes(pakName) : attr === pakName;
       });
       if (modMatch) {
@@ -2399,7 +2384,7 @@ async function deserializeLogicMods(api) {
   const getModId = (pakName) => {
     try {
       const modMatch = Object.values(mods).find((mod) => {
-        const attr = util.getSafe(mod, ["attributes", LO_ATTRIBUTE_LOGIC], []);
+        const attr = mod?.attributes?.[LO_ATTRIBUTE_LOGIC] ?? [];
         return Array.isArray(attr) ? attr.includes(pakName) : attr === pakName;
       });
       return modMatch ? modMatch.id : undefined;
@@ -2465,17 +2450,13 @@ async function genUe4ssCollectionsData(api, gameId, includedMods) {
   }
   const result = {};
   if (ue4ssLoadOrder) {
-    const lo = util.getSafe(state, ["persistent", "ue4ssLoadOrder", profileId, "loadOrder"], []);
+    const lo = state?.persistent?.ue4ssLoadOrder?.[profileId]?.loadOrder ?? [];
     result.ue4ssLoadOrder = lo
       .filter((entry) => entry.modId !== undefined && includedMods.includes(entry.modId)) //drop manual mods and mods not in the collection
       .map((entry) => ({ id: entry.id, enabled: entry.enabled, locked: entry.locked })); //name and modId are machine-specific - recomputed on deserialize
   }
   if (logicModsLoadOrder) {
-    const lo = util.getSafe(
-      state,
-      ["persistent", "logicModsLoadOrder", profileId, "loadOrder"],
-      [],
-    );
+    const lo = state?.persistent?.logicModsLoadOrder?.[profileId]?.loadOrder ?? [];
     result.logicModsLoadOrder = lo
       .filter((entry) => entry.modId !== undefined && includedMods.includes(entry.modId))
       .map((entry) => ({ id: entry.id }));
@@ -2533,7 +2514,7 @@ async function parseUe4ssCollectionsData(api, gameId, collection) {
 
 //UNREAL - Pre-sort function - legacy load order page
 async function preSort(api, items, direction) {
-  const mods = util.getSafe(api.store.getState(), ["persistent", "mods", spec.game.id], {});
+  const mods = api.store.getState()?.persistent?.mods?.[spec.game.id] ?? {};
   const fileExt = UNREALDATA.fileExt;
 
   const loadOrder = items.map((mod) => {
@@ -2543,17 +2524,13 @@ async function preSort(api, items, direction) {
         modInfo.attributes.logicalFileName ??
         modInfo.attributes.name)
       : mod.name;
-    const paks = util.getSafe(modInfo.attributes, ["unrealModFiles"], []);
+    const paks = modInfo.attributes?.unrealModFiles ?? [];
     if (paks.length > 1) name = name + ` (${paks.length} ${fileExt} files)`;
 
     return {
       id: mod.id,
       name,
-      imgUrl: util.getSafe(
-        modInfo,
-        ["attributes", "pictureUrl"],
-        path.join(__dirname, spec.game.logo),
-      ),
+      imgUrl: modInfo?.attributes?.pictureUrl ?? path.join(__dirname, spec.game.logo),
     };
   });
 
@@ -2577,7 +2554,7 @@ function makePrefix(input) {
 function loadOrderPrefix(api, mod) {
   const state = api.getState();
   const profile = selectors.lastActiveProfileForGame(state, GAME_ID);
-  const loadOrder = util.getSafe(state, ["persistent", "loadOrder", profile], undefined);
+  const loadOrder = state?.persistent?.loadOrder?.[profile] ?? undefined;
   let pos = -1;
   if (Array.isArray(loadOrder)) {
     pos = loadOrder.findIndex((entry) => entry.id === mod.id); //FBLO stores an array
@@ -2614,9 +2591,7 @@ function pathSegments(files) {
 function beatsPakInstaller(files) {
   const segsLower = pathSegments(files).map((seg) => seg.toLowerCase());
   if (hasModKit) {
-    const hasModKitExt = files.some(
-      (file) => path.extname(file).toLowerCase() === MODKITMOD_EXT,
-    );
+    const hasModKitExt = files.some((file) => path.extname(file).toLowerCase() === MODKITMOD_EXT);
     const hasModKitFile = segsLower.includes(MODKITMOD_FILE.toLowerCase());
     if (hasModKitExt && hasModKitFile) return true; //Mod Kit (25)
   }
@@ -2703,7 +2678,9 @@ async function chooseFilesToInstall(api, files, fileExt) {
     )
     .then((result) => {
       if (result.action === "Cancel")
-        return Promise.reject(new util.UserCanceled("User cancelled."));
+        return Promise.reject(
+          new VortexError("User cancelled.", { kind: "user-canceled", skipped: true }),
+        );
       else {
         const installAll =
           result.action === "Install All" || result.action === "Install All_plural";
@@ -3506,8 +3483,7 @@ function main(context) {
   if (ue4ssLoadOrder) {
     context.registerReducer(["settings", GAME_ID], {
       reducers: {
-        [setUe4ssLoEnabled.toString()]: (state, payload) =>
-          util.setSafe(state, ["ue4ssLoEnabled"], payload),
+        [setUe4ssLoEnabled.toString()]: (state, payload) => ({ ...state, ue4ssLoEnabled: payload }),
       },
       defaults: { ue4ssLoEnabled: true },
     });
@@ -3520,8 +3496,10 @@ function main(context) {
     );
     context.registerReducer(["persistent", "ue4ssLoadOrder"], {
       reducers: {
-        [setUe4ssLoadOrder.toString()]: (state, payload) =>
-          util.setSafe(state, [payload.profileId, "loadOrder"], payload.loadOrder),
+        [setUe4ssLoadOrder.toString()]: (state, payload) => ({
+          ...state,
+          [payload.profileId]: { ...state[payload.profileId], loadOrder: payload.loadOrder },
+        }),
       },
       defaults: {},
     });
@@ -3554,8 +3532,10 @@ function main(context) {
   if (logicModsLoadOrder) {
     context.registerReducer(["persistent", "logicModsLoadOrder"], {
       reducers: {
-        [setLogicModsLoadOrder.toString()]: (state, payload) =>
-          util.setSafe(state, [payload.profileId, "loadOrder"], payload.loadOrder),
+        [setLogicModsLoadOrder.toString()]: (state, payload) => ({
+          ...state,
+          [payload.profileId]: { ...state[payload.profileId], loadOrder: payload.loadOrder },
+        }),
       },
       defaults: {},
     });
@@ -3603,7 +3583,7 @@ function main(context) {
     //and never emits mod-update, so resolve each one to its Nexus mod id before tracking it
     api.events.on("mods-update", (gameId, modIds) => {
       if (GAME_ID !== gameId) return;
-      const mods = util.getSafe(api.getState(), ["persistent", "mods", GAME_ID], {});
+      const mods = api.getState()?.persistent?.mods?.[GAME_ID] ?? {};
       for (const modId of modIds ?? []) {
         const nexusModId = mods[modId]?.attributes?.modId;
         if (nexusModId !== undefined) {
@@ -3620,11 +3600,7 @@ function main(context) {
     //downloaded (older dash-delimited vs current space-delimited), so string
     //parsing silently misses old installs.
     api.events.on("remove-mod", (gameMode, modId) => {
-      const removedMod = util.getSafe(
-        api.getState(),
-        ["persistent", "mods", GAME_ID, modId],
-        undefined,
-      );
+      const removedMod = api.getState()?.persistent?.mods?.[GAME_ID]?.[modId] ?? undefined;
       const nexusModId = removedMod?.attributes?.modId;
       if (nexusModId !== undefined && updateModIds.has(String(nexusModId))) {
         mod_update_all_profile = true;
@@ -3682,7 +3658,7 @@ const requestDeployment = (api, spec) => {
 //FOMOD instead of this extension's own testPak/installPak.
 async function retagFomodPakMod(api, gameId, modId) {
   if (gameId !== GAME_ID || !PAKMOD_LOADORDER) return;
-  const mod = util.getSafe(api.getState(), ["persistent", "mods", GAME_ID, modId], undefined);
+  const mod = api.getState()?.persistent?.mods?.[GAME_ID]?.[modId] ?? undefined;
   //Non-empty type means one of this extension's own installers already classified it
   //correctly (or a previous run of this same handler already fixed it) - strict no-op for
   //every mod that didn't go through FOMOD/basicInstaller, so normal installs can't regress.
@@ -3722,11 +3698,7 @@ async function retagFomodPakMod(api, gameId, modId) {
   //- by then with the type set here. (This key is core activity state; this extension never
   //sets it.)
   const state = api.getState();
-  const installingDependencies = util.getSafe(
-    state,
-    ["session", "base", "activity", "installing_dependencies"],
-    [],
-  );
+  const installingDependencies = state?.session?.base?.activity?.installing_dependencies ?? [];
   if (
     Array.isArray(installingDependencies)
       ? installingDependencies.length > 0
@@ -3774,7 +3746,7 @@ async function didDeploy(api, profileId) {
   //down only runs on the deploy that actually clears the guard
   const guardWasArmed = mod_update_all_profile;
   if (updateModIds.size > 0) {
-    const mods = util.getSafe(state, ["persistent", "mods", GAME_ID], {});
+    const mods = state?.persistent?.mods?.[GAME_ID] ?? {};
     const now = Date.now();
     for (const [nexusId, { firstSeen, targetFileId }] of Array.from(updateModIds)) {
       const landed = Object.values(mods).some(
@@ -3782,7 +3754,7 @@ async function didDeploy(api, profileId) {
           String(mod?.attributes?.modId ?? "") === nexusId &&
           //if the target file is unknown, fall back to "installed and enabled"
           (targetFileId === "" || String(mod?.attributes?.fileId ?? "") === targetFileId) &&
-          util.getSafe(profile, ["modState", mod.id, "enabled"], false),
+          (profile?.modState?.[mod.id]?.enabled ?? false),
       );
       if (landed) {
         updateModIds.delete(nexusId);
@@ -3810,7 +3782,7 @@ async function didDeploy(api, profileId) {
   }
   updating_mod = false; //reset updating flag on deploy
   if (ue4ssLoadOrder && isUe4ssInstalled(api, spec)) {
-    const loEnabled = util.getSafe(state, ["settings", GAME_ID, "ue4ssLoEnabled"], true);
+    const loEnabled = state?.settings?.[GAME_ID]?.ue4ssLoEnabled ?? true;
     if (loEnabled) {
       let UE4SS_LOAD_ORDER;
       try {
@@ -3822,11 +3794,7 @@ async function didDeploy(api, profileId) {
           `[${GAME_ID}] didDeploy: deserializeUe4ss failed, falling back to store state`,
           err,
         );
-        UE4SS_LOAD_ORDER = util.getSafe(
-          state,
-          ["persistent", "ue4ssLoadOrder", profileId, "loadOrder"],
-          [],
-        );
+        UE4SS_LOAD_ORDER = state?.persistent?.ue4ssLoadOrder?.[profileId]?.loadOrder ?? [];
       }
       if (UE4SS_LOAD_ORDER.length > 0) {
         await serializeUe4ss(api, UE4SS_LOAD_ORDER);
@@ -3844,7 +3812,7 @@ async function didDeploy(api, profileId) {
         `[${GAME_ID}] didDeploy: deserializeLogicMods failed, falling back to store state`,
         err,
       );
-      LO = util.getSafe(state, ["persistent", "logicModsLoadOrder", profileId, "loadOrder"], []);
+      LO = state?.persistent?.logicModsLoadOrder?.[profileId]?.loadOrder ?? [];
     }
     if (LO.length > 0) {
       await serializeLogicMods(api, LO);
@@ -3909,14 +3877,12 @@ function LoadOrderInstructions() {
   const { statusFilter, setStatusFilter } = usePakLOState();
   const { useSelector } = require("react-redux");
   const profile = useSelector((state) => selectors.activeProfile(state));
-  const loadOrder = useSelector((state) =>
-    util.getSafe(state, ["persistent", "loadOrder", profile?.id], []),
-  );
-  const modState = useSelector((state) =>
-    util.getSafe(state, ["persistent", "profiles", profile?.id, "modState"], {}),
+  const loadOrder = useSelector((state) => state?.persistent?.loadOrder?.[profile?.id] ?? []);
+  const modState = useSelector(
+    (state) => state?.persistent?.profiles?.[profile?.id]?.modState ?? {},
   );
   const isLocked = (entry) => [true, "true", "always"].includes(entry?.locked);
-  const isEnabled = (entry) => util.getSafe(modState, [entry.modId, "enabled"], false);
+  const isEnabled = (entry) => modState?.[entry.modId]?.enabled ?? false;
   // Count entries matching the active filter (matched / total), shown beside the pills.
   const total = loadOrder.length;
   const matched =
@@ -4020,11 +3986,7 @@ function usePakLOState() {
 //Prefers the mod's homepage attribute; falls back to composing the Nexus URL from the numeric mod id.
 function getModPageURL(api, vortexModId) {
   if (vortexModId === undefined) return undefined;
-  const attributes = util.getSafe(
-    api.getState(),
-    ["persistent", "mods", GAME_ID, vortexModId, "attributes"],
-    {},
-  );
+  const attributes = api.getState()?.persistent?.mods?.[GAME_ID]?.[vortexModId]?.attributes ?? {};
   if (attributes.homepage) return attributes.homepage;
   if (attributes.source === "nexus" && attributes.modId !== undefined) {
     return `https://www.nexusmods.com/${GAME_ID}/mods/${attributes.modId}`;
@@ -4036,11 +3998,8 @@ function getModPageURL(api, vortexModId) {
 function getModStagingFolder(api, vortexModId) {
   if (vortexModId === undefined) return undefined;
   const state = api.getState();
-  const installationPath = util.getSafe(
-    state,
-    ["persistent", "mods", GAME_ID, vortexModId, "installationPath"],
-    undefined,
-  );
+  const installationPath =
+    state?.persistent?.mods?.[GAME_ID]?.[vortexModId]?.installationPath ?? undefined;
   const stagingPath = selectors.installPathForGame(state, GAME_ID);
   if (!installationPath || !stagingPath) return undefined;
   return path.join(stagingPath, installationPath);
@@ -4303,25 +4262,20 @@ function LoadOrderItemRenderer(props) {
   const dispatch = useDispatch();
 
   const profile = useSelector((state) => selectors.activeProfile(state));
-  const loadOrder = useSelector((state) =>
-    util.getSafe(state, ["persistent", "loadOrder", profile?.id], []),
-  );
+  const loadOrder = useSelector((state) => state?.persistent?.loadOrder?.[profile?.id] ?? []);
 
   const { loEntry, displayCheckboxes } = item;
-  const mods = useSelector((state) => util.getSafe(state, ["persistent", "mods", GAME_ID], {}));
+  const mods = useSelector((state) => state?.persistent?.mods?.[GAME_ID] ?? {});
   const pictureUrl = mods[loEntry.modId]?.attributes?.pictureUrl;
   //FBLO precomputes these on the item (memoized by its row cache); the fallbacks keep the
   //renderer working if it is ever mounted outside the FBLO page.
   const currentIdx = item.position ?? loadOrder.findIndex((e) => e.id === loEntry.id) + 1;
-  const isModEnabled = useSelector((state) =>
-    util.getSafe(
-      state,
-      ["persistent", "profiles", profile?.id, "modState", loEntry.modId, "enabled"],
-      false,
-    ),
+  const isModEnabled = useSelector(
+    (state) =>
+      state?.persistent?.profiles?.[profile?.id]?.modState?.[loEntry.modId]?.enabled ?? false,
   );
-  const modState = useSelector((state) =>
-    util.getSafe(state, ["persistent", "profiles", profile?.id, "modState"], {}),
+  const modState = useSelector(
+    (state) => state?.persistent?.profiles?.[profile?.id]?.modState ?? {},
   );
 
   const isLocked = (entry) => [true, "true", "always"].includes(entry?.locked);
@@ -4377,7 +4331,7 @@ function LoadOrderItemRenderer(props) {
           matchesStatus(
             e,
             statusFilter,
-            (entry) => util.getSafe(modState, [entry.modId, "enabled"], false),
+            (entry) => modState?.[entry.modId]?.enabled ?? false,
             isLocked,
           ),
         )
@@ -4760,9 +4714,7 @@ function GameSettings() {
   const { useSelector, useDispatch } = require("react-redux");
   const dispatch = useDispatch();
   const { api } = React.useContext(MainContext);
-  const ue4ssLoEnabled = useSelector((state) =>
-    util.getSafe(state, ["settings", GAME_ID, "ue4ssLoEnabled"], true),
-  );
+  const ue4ssLoEnabled = useSelector((state) => state?.settings?.[GAME_ID]?.ue4ssLoEnabled ?? true);
   const onToggle = React.useCallback(
     (checked) => {
       dispatch(setUe4ssLoEnabled(checked));
@@ -4871,13 +4823,13 @@ function Ue4ssItemRenderer({ className, item }) {
   const dispatch = useDispatch();
 
   const profileId = useSelector((state) => selectors.activeProfile(state)?.id);
-  const loadOrder = useSelector((state) =>
-    util.getSafe(state, ["persistent", "ue4ssLoadOrder", profileId, "loadOrder"], []),
+  const loadOrder = useSelector(
+    (state) => state?.persistent?.ue4ssLoadOrder?.[profileId]?.loadOrder ?? [],
   );
-  const mods = useSelector((state) => util.getSafe(state, ["persistent", "mods", GAME_ID], {}));
+  const mods = useSelector((state) => state?.persistent?.mods?.[GAME_ID] ?? {});
   const pictureUrl = mods[item.modId]?.attributes?.pictureUrl;
-  const gamePath = useSelector((state) =>
-    util.getSafe(state, ["settings", "gameMode", "discovered", GAME_ID, "path"], ""),
+  const gamePath = useSelector(
+    (state) => state?.settings?.gameMode?.discovered?.[GAME_ID]?.path ?? "",
   );
 
   const currentIdx = loadOrder.findIndex((e) => e.id === item.id) + 1;
@@ -5188,11 +5140,8 @@ function Ue4ssContextMenu({
   const isEntryEnabled = item.enabled ?? true;
 
   //Vortex mod state (deployment), distinct from the LO-entry enabled flag written to mods.txt
-  const isModEnabled = util.getSafe(
-    api.getState(),
-    ["persistent", "profiles", profileId, "modState", item.modId, "enabled"],
-    false,
-  );
+  const isModEnabled =
+    api.getState()?.persistent?.profiles?.[profileId]?.modState?.[item.modId]?.enabled ?? false;
   const setVortexModsEnabled = (entries, enable) => {
     const modIds = entries.filter((e) => e.modId !== undefined).map((e) => e.modId);
     if (modIds.length > 0) {
@@ -5431,12 +5380,10 @@ function Ue4ssLoadOrderPage({ api }) {
   const { FormControl } = require("react-bootstrap");
 
   const profileId = useSelector((state) => selectors.activeProfile(state)?.id);
-  const loadOrder = useSelector((state) =>
-    util.getSafe(state, ["persistent", "ue4ssLoadOrder", profileId, "loadOrder"], []),
+  const loadOrder = useSelector(
+    (state) => state?.persistent?.ue4ssLoadOrder?.[profileId]?.loadOrder ?? [],
   );
-  const loEnabled = useSelector((state) =>
-    util.getSafe(state, ["settings", GAME_ID, "ue4ssLoEnabled"], true),
-  );
+  const loEnabled = useSelector((state) => state?.settings?.[GAME_ID]?.ue4ssLoEnabled ?? true);
   const dispatch = useDispatch();
   const [filterText, setFilterText] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState(new Set());
@@ -5606,18 +5553,14 @@ function LogicModsItemRenderer({ className, item }) {
   const dispatch = useDispatch();
 
   const profileId = useSelector((state) => selectors.activeProfile(state)?.id);
-  const loadOrder = useSelector((state) =>
-    util.getSafe(state, ["persistent", "logicModsLoadOrder", profileId, "loadOrder"], []),
+  const loadOrder = useSelector(
+    (state) => state?.persistent?.logicModsLoadOrder?.[profileId]?.loadOrder ?? [],
   );
-  const mods = useSelector((state) => util.getSafe(state, ["persistent", "mods", GAME_ID], {}));
+  const mods = useSelector((state) => state?.persistent?.mods?.[GAME_ID] ?? {});
   const pictureUrl = mods[item.modId]?.attributes?.pictureUrl;
 
-  const isModEnabled = useSelector((state) =>
-    util.getSafe(
-      state,
-      ["persistent", "profiles", profileId, "modState", item.modId, "enabled"],
-      false,
-    ),
+  const isModEnabled = useSelector(
+    (state) => state?.persistent?.profiles?.[profileId]?.modState?.[item.modId]?.enabled ?? false,
   );
 
   const currentIdx = loadOrder.findIndex((e) => e.id === item.id) + 1;
@@ -6089,12 +6032,10 @@ function LogicModsLoadOrderPage({ api }) {
   const { FormControl } = require("react-bootstrap");
 
   const profileId = useSelector((state) => selectors.activeProfile(state)?.id);
-  const loadOrder = useSelector((state) =>
-    util.getSafe(state, ["persistent", "logicModsLoadOrder", profileId, "loadOrder"], []),
+  const loadOrder = useSelector(
+    (state) => state?.persistent?.logicModsLoadOrder?.[profileId]?.loadOrder ?? [],
   );
-  const modState = useSelector((state) =>
-    util.getSafe(state, ["persistent", "profiles", profileId, "modState"], {}),
-  );
+  const modState = useSelector((state) => state?.persistent?.profiles?.[profileId]?.modState ?? {});
   const dispatch = useDispatch();
   const [filterText, setFilterText] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState(new Set());
@@ -6113,7 +6054,7 @@ function LogicModsLoadOrderPage({ api }) {
   useInjectStyleOnce("lo-index-focus-style", LO_INDEX_FOCUS_CSS);
 
   const isFiltered = !!filterText || statusFilter.size > 0;
-  const isEntryEnabled = (e) => util.getSafe(modState, [e.modId, "enabled"], false);
+  const isEntryEnabled = (e) => modState?.[e.modId]?.enabled ?? false;
   const isEntryLocked = (e) => [true, "true", "always"].includes(e?.locked);
 
   const onApply = React.useCallback(
@@ -6237,11 +6178,11 @@ function CollectionsDataView({ t, collection }) {
   const { ListGroup, ListGroupItem } = require("react-bootstrap");
 
   const profileId = useSelector((state) => selectors.lastActiveProfileForGame(state, GAME_ID));
-  const ue4ssLO = useSelector((state) =>
-    util.getSafe(state, ["persistent", "ue4ssLoadOrder", profileId, "loadOrder"], []),
+  const ue4ssLO = useSelector(
+    (state) => state?.persistent?.ue4ssLoadOrder?.[profileId]?.loadOrder ?? [],
   );
-  const logicLO = useSelector((state) =>
-    util.getSafe(state, ["persistent", "logicModsLoadOrder", profileId, "loadOrder"], []),
+  const logicLO = useSelector(
+    (state) => state?.persistent?.logicModsLoadOrder?.[profileId]?.loadOrder ?? [],
   );
 
   const isInCollection = (entry) =>

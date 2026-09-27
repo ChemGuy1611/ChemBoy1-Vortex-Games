@@ -25,7 +25,8 @@ Usage:
         fetch_epic_app_id, gogdb_search, fetch_gog_app_id, fetch_xbox_identity,
         add_to_discovery_ids,
         const_value, is_unset, is_missing, set_or_insert, replace_const_rhs,
-        js_string_literal, strip_js_comments,
+        js_string_literal, strip_js_comments, mask_comments_and_strings,
+        find_matching_bracket, split_top_level_masked, js_files_in, batch_slice,
         audit_skip_rules, audit_skip_lines,
         AUDIT_SKIP_STORE_ID, AUDIT_SKIP_FOMOD, AUDIT_SKIP_PRIORITY,
         XXX_PATTERN, is_placeholder_value, is_real_value, find_placeholder_vars,
@@ -1359,7 +1360,11 @@ REGISTER_ACTIONS = [
         'Open Config Folder',
         True,  # commented out by default
         "  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {\n"
-        "    util.opn(CONFIG_PATH).catch(() => null);\n"
+        "    try {\n"
+        "      window.api.shell.openFile(CONFIG_PATH);\n"
+        "    } catch (err) {\n"
+        "      context.api.showErrorNotification('Failed to open the file or folder', err, { allowReport: false });\n"
+        "    }\n"
         "    }, () => {\n"
         "      const state = context.api.getState();\n"
         "      const gameId = selectors.activeGameId(state);\n"
@@ -1371,7 +1376,11 @@ REGISTER_ACTIONS = [
         'Open Save Folder',
         True,  # commented out by default
         "  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {\n"
-        "    util.opn(SAVE_PATH).catch(() => null);\n"
+        "    try {\n"
+        "      window.api.shell.openFile(SAVE_PATH);\n"
+        "    } catch (err) {\n"
+        "      context.api.showErrorNotification('Failed to open the file or folder', err, { allowReport: false });\n"
+        "    }\n"
         "    }, () => {\n"
         "      const state = context.api.getState();\n"
         "      const gameId = selectors.activeGameId(state);\n"
@@ -1383,7 +1392,11 @@ REGISTER_ACTIONS = [
         'Open PCGamingWiki Page',
         False,
         "  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {\n"
-        "    util.opn(PCGAMINGWIKI_URL).catch(() => null);\n"
+        "    try {\n"
+        "      window.api.shell.openUrl(PCGAMINGWIKI_URL);\n"
+        "    } catch (err) {\n"
+        "      context.api.showErrorNotification('Failed to open the URL', err, { allowReport: false });\n"
+        "    }\n"
         "  }, () => {\n"
         "    const state = context.api.getState();\n"
         "    const gameId = selectors.activeGameId(state);\n"
@@ -1394,7 +1407,11 @@ REGISTER_ACTIONS = [
         'Open SteamDB Page',
         False,
         "  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open SteamDB Page', () => {\n"
-        "    util.opn(STEAMDB_URL).catch(() => null);\n"
+        "    try {\n"
+        "      window.api.shell.openUrl(STEAMDB_URL);\n"
+        "    } catch (err) {\n"
+        "      context.api.showErrorNotification('Failed to open the URL', err, { allowReport: false });\n"
+        "    }\n"
         "  }, () => {\n"
         "    const state = context.api.getState();\n"
         "    const gameId = selectors.activeGameId(state);\n"
@@ -1406,7 +1423,11 @@ REGISTER_ACTIONS = [
         False,
         "  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {\n"
         "    const openPath = path.join(__dirname, 'CHANGELOG.md');\n"
-        "    util.opn(openPath).catch(() => null);\n"
+        "    try {\n"
+        "      window.api.shell.openFile(openPath);\n"
+        "    } catch (err) {\n"
+        "      context.api.showErrorNotification('Failed to open the file or folder', err, { allowReport: false });\n"
+        "    }\n"
         "    }, () => {\n"
         "      const state = context.api.getState();\n"
         "      const gameId = selectors.activeGameId(state);\n"
@@ -1417,7 +1438,11 @@ REGISTER_ACTIONS = [
         'Submit Bug Report',
         False,
         "  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {\n"
-        "    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);\n"
+        "    try {\n"
+        "      window.api.shell.openUrl(`${EXTENSION_URL}?tab=bugs`);\n"
+        "    } catch (err) {\n"
+        "      context.api.showErrorNotification('Failed to open the URL', err, { allowReport: false });\n"
+        "    }\n"
         "  }, () => {\n"
         "    const state = context.api.getState();\n"
         "    const gameId = selectors.activeGameId(state);\n"
@@ -1428,7 +1453,11 @@ REGISTER_ACTIONS = [
         'Open Downloads Folder',
         False,
         "  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {\n"
-        "    util.opn(DOWNLOAD_FOLDER).catch(() => null);\n"
+        "    try {\n"
+        "      window.api.shell.openFile(DOWNLOAD_FOLDER);\n"
+        "    } catch (err) {\n"
+        "      context.api.showErrorNotification('Failed to open the file or folder', err, { allowReport: false });\n"
+        "    }\n"
         "  }, () => {\n"
         "    const state = context.api.getState();\n"
         "    const gameId = selectors.activeGameId(state);\n"
@@ -3549,6 +3578,242 @@ def strip_js_comments(src):
         i += 1
 
     return "".join(out)
+
+
+def mask_comments_and_strings(src):
+    """Return src with comments AND string/template/regex literal BODIES blanked out too.
+
+    Fork of strip_js_comments: same length-preserving walk, but the string/template/regex
+    branches blank their contents as well (not just comments), so a scan copy never
+    contains a call-site name sitting inside a comment or a string/template literal.
+    Delimiter chars ("'`/) are kept, and real newlines are preserved wherever the
+    original had one (including inside a backslash escape pair), so character offsets
+    line up 1:1 with the original source.
+
+    Only meant for LOCATING call sites via regex/search. Always read the ORIGINAL source
+    at the matched offsets to extract real code -- this masked copy has no usable content
+    of its own past the delimiters.
+    """
+    out = []
+    i = 0
+    n = len(src)
+    prev_significant = "\n"
+    while i < n:
+        c = src[i]
+        nxt = src[i + 1] if i + 1 < n else ""
+
+        if c == "/" and nxt == "/":                      # line comment
+            while i < n and src[i] != "\n":
+                out.append(" ")
+                i += 1
+            continue
+
+        if c == "/" and nxt == "*":                      # block comment
+            out.append("  ")
+            i += 2
+            while i < n and not (src[i] == "*" and i + 1 < n and src[i + 1] == "/"):
+                out.append("\n" if src[i] == "\n" else " ")
+                i += 1
+            out.append("  ")
+            i += 2
+            continue
+
+        if c in "\"'`":                                  # string / template literal
+            quote = c
+            out.append(c)
+            i += 1
+            while i < n:
+                if src[i] == "\\":
+                    escaped = src[i + 1] if i + 1 < n else ""
+                    out.append(" ")
+                    out.append("\n" if escaped == "\n" else " ")
+                    i += 2
+                    continue
+                if src[i] == quote:
+                    out.append(quote)
+                    i += 1
+                    break
+                out.append("\n" if src[i] == "\n" else " ")
+                i += 1
+            prev_significant = quote
+            continue
+
+        if c == "/" and prev_significant in _REGEX_PRECEDERS:   # regex literal
+            out.append(c)
+            i += 1
+            in_class = False                              # '/' inside [...] does not end the regex
+            while i < n:
+                if src[i] == "\\":
+                    escaped = src[i + 1] if i + 1 < n else ""
+                    out.append(" ")
+                    out.append("\n" if escaped == "\n" else " ")
+                    i += 2
+                    continue
+                if src[i] == "[":
+                    in_class = True
+                elif src[i] == "]":
+                    in_class = False
+                elif src[i] == "\n":
+                    out.append("\n")
+                    i += 1
+                    break
+                elif src[i] == "/" and not in_class:
+                    out.append("/")
+                    i += 1
+                    break
+                out.append(" " if src[i] not in "\n" else "\n")
+                i += 1
+            prev_significant = "/"
+            continue
+
+        out.append(c)
+        if not c.isspace():
+            prev_significant = c
+        elif c == "\n":
+            prev_significant = "\n"
+        i += 1
+
+    return "".join(out)
+
+
+_BRACKET_OPEN = "([{"
+_BRACKET_CLOSE = ")]}"
+
+
+def find_matching_bracket(masked, open_pos):
+    """Return the offset in masked of the bracket that closes the one at open_pos.
+
+    masked[open_pos] must be one of '([{'. Depth is tracked across all three bracket
+    types together since they always nest properly in valid JS. masked should come from
+    mask_comments_and_strings (or an equally string/comment-blanked copy) so a bracket
+    inside a string or comment is never mistaken for a structural one. Returns None if
+    EOF is reached before depth returns to 0 (unbalanced -- caller must skip, never
+    guess)."""
+    depth = 0
+    n = len(masked)
+    i = open_pos
+    while i < n:
+        c = masked[i]
+        if c in _BRACKET_OPEN:
+            depth += 1
+        elif c in _BRACKET_CLOSE:
+            depth -= 1
+            if depth == 0:
+                return i
+        i += 1
+    return None
+
+
+def split_top_level_masked(masked, start, end):
+    """Return [(piece_start, piece_end), ...] offsets for masked[start:end], split on
+    depth-0 commas, each piece trimmed of surrounding whitespace. Empty pieces (a
+    trailing comma, or otherwise) are dropped -- callers check the resulting count.
+
+    Offsets are meant to be sliced out of the ORIGINAL source the masked copy was built
+    from (mask_comments_and_strings is length-preserving), not out of masked itself."""
+    pieces = []
+    depth = 0
+    piece_start = start
+    i = start
+    while i < end:
+        c = masked[i]
+        if c in _BRACKET_OPEN:
+            depth += 1
+        elif c in _BRACKET_CLOSE:
+            depth -= 1
+        elif c == "," and depth == 0:
+            pieces.append((piece_start, i))
+            piece_start = i + 1
+        i += 1
+    pieces.append((piece_start, end))
+
+    trimmed = []
+    for s, e in pieces:
+        while s < e and masked[s].isspace():
+            s += 1
+        while e > s and masked[e - 1].isspace():
+            e -= 1
+        if s < e:
+            trimmed.append((s, e))
+    return trimmed
+
+
+_VORTEX_API_DESTRUCTURE_RE = re.compile(
+    r"(?:const|let)\s*\{([^{}]*?)\}\s*=\s*require\(\s*['\"]vortex-api['\"]\s*\)",
+    re.DOTALL,
+)
+_VORTEX_API_NAMESPACE_RE = re.compile(
+    r"(?:const|let)\s+(\w+)\s*=\s*require\(\s*['\"]vortex-api['\"]\s*\)"
+)
+
+
+def ensure_vortex_api_name(src, name):
+    """Ensure `name` is destructure-imported from require('vortex-api') somewhere in src.
+
+    Returns (new_src, added, reason). added is True only when a new name was actually
+    inserted. reason is None when nothing needs doing (name already present, or it was
+    just added); otherwise a string explaining why src was returned UNCHANGED and the
+    caller should skip the whole file rather than leave call sites referencing an
+    unimported name -- a namespace-style `const api = require('vortex-api')` needs
+    `api.<name>` at every call site instead of a bare name (different rewrite, not this
+    helper's job), and more than one destructure of the same module is ambiguous.
+
+    Reuses the destructure-then-namespace detection shape `migrate_fs.py` proved out for
+    the same "does this file already have vfs/fsp bound" problem -- second caller of the
+    same pattern, so it's centralized here instead of copy-pasted."""
+    matches = list(_VORTEX_API_DESTRUCTURE_RE.finditer(src))
+    if not matches:
+        ns = _VORTEX_API_NAMESPACE_RE.search(src)
+        if ns:
+            return src, False, f"namespace-style require('vortex-api') as `{ns.group(1)}` -- hand migrate"
+        return src, False, "no require('vortex-api') destructure found"
+
+    # A big UE4-5-shaped file has one real module-level import plus several small
+    # function-scoped ones for UI bits (`const { Icon } = require('vortex-api')`,
+    # `const { Toggle, More, MainContext } = require('vortex-api')`, ...). Those never
+    # bind `util`, so they're not real candidates and don't make this ambiguous -- only
+    # bail when more than one destructure ACTUALLY binds util (genuinely ambiguous).
+    util_matches = [m for m in matches if re.search(r"(?<![\w$])util\b", m.group(1))]
+    candidates = util_matches or matches
+    if len(candidates) > 1:
+        return src, False, f"{len(candidates)} require('vortex-api') destructures bind `util` -- hand migrate"
+
+    m = candidates[0]
+    names = m.group(1)
+    if re.search(rf"(?<![\w$]){re.escape(name)}\b", names):
+        return src, False, None  # already present
+
+    core = names.rstrip()
+    sep = "" if core == "" or core.endswith(",") else ","
+    insert_at = m.start(1) + len(core)
+    new_src = src[:insert_at] + f"{sep} {name}" + src[insert_at:]
+    return new_src, True, None
+
+
+def js_files_in(folder, paths):
+    """Append every top-level *.js file in folder to paths (sorted, non-recursive).
+    No-op if folder does not exist. Shared file-walk step for the convert_*.py codemods
+    (and any future one) so their scope-scanning logic stays identical."""
+    if not os.path.isdir(folder):
+        return
+    for entry in sorted(os.listdir(folder)):
+        p = os.path.join(folder, entry)
+        if os.path.isfile(p) and entry.endswith(".js"):
+            paths.append(p)
+
+
+def batch_slice(items, batch):
+    """Return the N-th of TOTAL contiguous alphabetical chunks of items ('N/TOTAL').
+
+    Used to split a big scope (e.g. all game-* folders) into reproducible, human-
+    checkable wave boundaries for a repo-wide codemod."""
+    n_str, total_str = batch.split("/")
+    n, total = int(n_str), int(total_str)
+    if not (1 <= n <= total):
+        raise ValueError(f"--batch {batch}: N must be between 1 and {total}")
+    size = -(-len(items) // total)  # ceil division without importing math
+    start = (n - 1) * size
+    return items[start:start + size]
 
 
 # Audit suppression marker. A JS comment that records a deliberate exception to one of

@@ -115,11 +115,7 @@ async function migrate100(api, oldVersion) {
 
     // Safe: read state directly
     const state = api.store.getState();
-    const discovery = util.getSafe(
-        state,
-        ["settings", "gameMode", "discovered", GAME_ID],
-        undefined,
-    );
+    const discovery = state?.settings?.gameMode?.discovered?.[GAME_ID] ?? undefined;
     if (!discovery?.path) return;
 
     // Need UI (dialogs, notifications): await first
@@ -144,4 +140,4 @@ async function migrate100(api, oldVersion) {
 
 `VORTEX_2_MIGRATION.md` (porting extension code across a Vortex version, not extension state —
 see disambiguation above). `SETTINGS_REDUCER.md` (the reducer state shape migrations typically
-patch). `STATE_HELPERS.md` (`getSafe`/`setSafe` for reading/patching state inside a migration).
+patch). `STATE_HELPERS.md` (the deprecated `getSafe`/`setSafe` family this doc's example avoids via `?.`/`??`).

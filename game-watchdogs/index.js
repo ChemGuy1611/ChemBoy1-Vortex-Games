@@ -380,7 +380,7 @@ async function getAllFiles(dirPath) {
 const getDiscoveryPath = (api) => {
   //get the game's discovered path
   const state = api.getState();
-  const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
+  const discovery = state?.settings?.gameMode?.discovered?.[GAME_ID] ?? {};
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
 
@@ -694,11 +694,7 @@ function fallbackInstallerNotify(api, modName) {
                 label: `Open Mod Page + Staging Folder`,
                 action: () => {
                   util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
-                  const mods = util.getSafe(
-                    api.store.getState(),
-                    ["persistent", "mods", spec.game.id],
-                    {},
-                  );
+                  const mods = api.store.getState()?.persistent?.mods?.[spec.game.id] ?? {};
                   const modMatch = Object.values(mods).find(
                     (mod) => mod.installationPath === modName,
                   );
@@ -879,24 +875,21 @@ async function readNexusToolsModsConfig() {
 async function deserializeWatchdogsLoadOrder(api) {
   const state = api.getState();
   if (selectors.activeGameId(state) !== GAME_ID) return [];
-  const discovery = util.getSafe(state, ["settings", "gameMode", "discovered", GAME_ID], undefined);
+  const discovery = state?.settings?.gameMode?.discovered?.[GAME_ID] ?? undefined;
   if (!discovery?.path) return [];
   const [folders, modsConfig] = await Promise.all([
     listModFolders(discovery.path),
     readNexusToolsModsConfig(),
   ]);
-  const mods = util.getSafe(state, ["persistent", "mods", GAME_ID], {});
+  const mods = state?.persistent?.mods?.[GAME_ID] ?? {};
   //Seed lock state from the stored load order - localmodsconfig.json has no lock concept at all,
   //so without this a locked entry would silently unlock on the next deploy/profile switch/page mount.
-  const prevLO = util.getSafe(
-    state,
-    ["persistent", "loadOrder", selectors.lastActiveProfileForGame(state, GAME_ID)],
-    [],
-  );
+  const prevLO =
+    state?.persistent?.loadOrder?.[selectors.lastActiveProfileForGame(state, GAME_ID)] ?? [];
   const prevById = new Map(prevLO.map((entry) => [entry.id, entry]));
   function getModId(folder) {
     const modMatch = Object.values(mods).find(
-      (mod) => util.getSafe(mod.attributes, [LO_ATTRIBUTE], "") === folder,
+      (mod) => (mod.attributes?.[LO_ATTRIBUTE] ?? "") === folder,
     );
     return modMatch?.id;
   }
@@ -969,9 +962,7 @@ function LoadOrderInstructions() {
   const { statusFilter, setStatusFilter } = useFbloState();
   const { useSelector } = require("react-redux");
   const profile = useSelector((state) => selectors.activeProfile(state));
-  const loadOrder = useSelector((state) =>
-    util.getSafe(state, ["persistent", "loadOrder", profile?.id], []),
-  );
+  const loadOrder = useSelector((state) => state?.persistent?.loadOrder?.[profile?.id] ?? []);
   const isLocked = (entry) => [true, "true", "always"].includes(entry?.locked);
   const total = loadOrder.length;
   const matched =
@@ -1049,11 +1040,7 @@ function useFbloState() {
 //Prefers the mod's homepage attribute; falls back to composing the Nexus URL from the numeric mod id.
 function getModPageURL(api, vortexModId) {
   if (vortexModId === undefined) return undefined;
-  const attributes = util.getSafe(
-    api.getState(),
-    ["persistent", "mods", GAME_ID, vortexModId, "attributes"],
-    {},
-  );
+  const attributes = api.getState()?.persistent?.mods?.[GAME_ID]?.[vortexModId]?.attributes ?? {};
   if (attributes.homepage) return attributes.homepage;
   if (attributes.source === "nexus" && attributes.modId !== undefined) {
     return `https://www.nexusmods.com/${GAME_ID}/mods/${attributes.modId}`;
@@ -1065,11 +1052,8 @@ function getModPageURL(api, vortexModId) {
 function getModStagingFolder(api, vortexModId) {
   if (vortexModId === undefined) return undefined;
   const state = api.getState();
-  const installationPath = util.getSafe(
-    state,
-    ["persistent", "mods", GAME_ID, vortexModId, "installationPath"],
-    undefined,
-  );
+  const installationPath =
+    state?.persistent?.mods?.[GAME_ID]?.[vortexModId]?.installationPath ?? undefined;
   const stagingPath = selectors.installPathForGame(state, GAME_ID);
   if (!installationPath || !stagingPath) return undefined;
   return path.join(stagingPath, installationPath);
@@ -1221,12 +1205,10 @@ function LoadOrderItemRenderer(props) {
   const dispatch = useDispatch();
 
   const profile = useSelector((state) => selectors.activeProfile(state));
-  const loadOrder = useSelector((state) =>
-    util.getSafe(state, ["persistent", "loadOrder", profile?.id], []),
-  );
+  const loadOrder = useSelector((state) => state?.persistent?.loadOrder?.[profile?.id] ?? []);
 
   const { loEntry, displayCheckboxes } = item;
-  const mods = useSelector((state) => util.getSafe(state, ["persistent", "mods", GAME_ID], {}));
+  const mods = useSelector((state) => state?.persistent?.mods?.[GAME_ID] ?? {});
   const pictureUrl = mods[loEntry.modId]?.attributes?.pictureUrl;
   //FBLO precomputes these on the item (memoized by its row cache); the fallbacks keep the
   //renderer working if it is ever mounted outside the FBLO page.
@@ -1480,7 +1462,7 @@ function FbloContextMenu({ x, y, item, loadOrder, profile, dispatch, api, select
   const isEntryEnabled = item.enabled ?? true;
 
   const gameDir = getDiscoveryPath(api);
-  const isModEnabled = (e) => util.getSafe(profile, ["modState", e.modId, "enabled"], false);
+  const isModEnabled = (e) => profile?.modState?.[e.modId]?.enabled ?? false;
   const setVortexEnabled = (entries, enabled) => {
     //One Vortex mod can only own one folder here, but a multi-select can still list it twice if
     //selection logic ever changes - dedupe before dispatch to be safe.
@@ -1658,8 +1640,8 @@ function GameSettings() {
   const { useSelector, useDispatch } = require("react-redux");
   const dispatch = useDispatch();
   const { api } = React.useContext(MainContext);
-  const autoConfirmEnabled = useSelector((state) =>
-    util.getSafe(state, ["settings", GAME_ID, "nexusToolsAutoConfirmEnabled"], true),
+  const autoConfirmEnabled = useSelector(
+    (state) => state?.settings?.[GAME_ID]?.nexusToolsAutoConfirmEnabled ?? true,
   );
   const onToggle = React.useCallback(
     (checked) => {
@@ -1789,11 +1771,7 @@ function runModManager(api) {
   const TOOL_ID = LOADER_ID;
   const TOOL_NAME = LOADER_NAME;
   const state = api.store.getState();
-  const tool = util.getSafe(
-    state,
-    ["settings", "gameMode", "discovered", GAME_ID, "tools", TOOL_ID],
-    undefined,
-  );
+  const tool = state?.settings?.gameMode?.discovered?.[GAME_ID]?.tools?.[TOOL_ID] ?? undefined;
 
   try {
     const TOOL_PATH = tool.path;
@@ -1836,7 +1814,7 @@ async function setup(discovery, api, gameSpec) {
     await downloadLoader(api, gameSpec);
     await reconcileNexusToolsPrelaunchSetting(
       api,
-      util.getSafe(state, ["settings", GAME_ID, "nexusToolsAutoConfirmEnabled"], true),
+      state?.settings?.[GAME_ID]?.nexusToolsAutoConfirmEnabled ?? true,
     );
   }
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
@@ -2078,8 +2056,10 @@ function applyGame(context, gameSpec) {
   if (hasLoader) {
     context.registerReducer(["settings", GAME_ID], {
       reducers: {
-        [setNexusToolsAutoConfirm.toString()]: (state, payload) =>
-          util.setSafe(state, ["nexusToolsAutoConfirmEnabled"], payload),
+        [setNexusToolsAutoConfirm.toString()]: (state, payload) => ({
+          ...state,
+          nexusToolsAutoConfirmEnabled: payload,
+        }),
       },
       defaults: { nexusToolsAutoConfirmEnabled: true },
     });
@@ -2111,11 +2091,8 @@ function main(context) {
     api.onAsync("did-deploy", async (profileId, deployment) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
-      const AUTO_CONFIRM_ENABLED = util.getSafe(
-        api.getState(),
-        ["settings", GAME_ID, "nexusToolsAutoConfirmEnabled"],
-        true,
-      );
+      const AUTO_CONFIRM_ENABLED =
+        api.getState()?.settings?.[GAME_ID]?.nexusToolsAutoConfirmEnabled ?? true;
       if (AUTO_CONFIRM_ENABLED) return;
       return deployNotify(api);
     }); //*/

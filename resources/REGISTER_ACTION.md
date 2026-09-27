@@ -95,7 +95,11 @@ context.registerAction(
     "Open PCGamingWiki", // title
     () => {
         // action
-        util.opn(PCGAMINGWIKI_URL).catch(() => null);
+        try {
+            window.api.shell.openUrl(PCGAMINGWIKI_URL);
+        } catch (err) {
+            context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+        }
     },
 );
 ```
@@ -110,7 +114,11 @@ context.registerAction(
     {},
     "Open Config Folder",
     () => {
-        util.opn(CONFIG_PATH).catch(() => null);
+        try {
+            window.api.shell.openFile(CONFIG_PATH);
+        } catch (err) {
+            context.api.showErrorNotification("Failed to open the file or folder", err, { allowReport: false });
+        }
     },
     (instanceIds) => {
         const state = api.getState();

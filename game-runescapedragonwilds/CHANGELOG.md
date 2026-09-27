@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.2.1] - 2026-09-26
+
+- Fixed: Missing variable reassignment for RuneSchema modType path on Xbox version
+
 ## [1.2.0] - 2026-09-25
 
 - Updated: RuneSchema support for new RSDW Modding Community framework and mods

@@ -286,9 +286,7 @@ function installConfig(files) {
   const setModTypeInstruction = { type: "setmodtype", value: MODTYPE_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -325,9 +323,7 @@ function installRoot(files) {
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -375,9 +371,7 @@ function installSave(files) {
   const setModTypeInstruction = { type: "setmodtype", value: SAVE_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -451,9 +445,7 @@ function installTocFolder(files) {
   const setModTypeInstruction = { type: "setmodtype", value: TOC_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -500,9 +492,7 @@ function installVo(files) {
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: VO_ID };
 
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -527,7 +517,7 @@ async function setup(discovery, api, gameSpec) {
 ///*
 //UNREAL - Pre-sort function
 async function preSort(api, items, direction) {
-  const mods = util.getSafe(api.store.getState(), ["persistent", "mods", spec.game.id], {});
+  const mods = api.store.getState()?.persistent?.mods?.[spec.game.id] ?? {};
   const fileExt = UNREALDATA.fileExt;
 
   const loadOrder = items.map((mod) => {
@@ -537,17 +527,13 @@ async function preSort(api, items, direction) {
         modInfo.attributes.logicalFileName ??
         modInfo.attributes.name)
       : mod.name;
-    const paks = util.getSafe(modInfo.attributes, ["unrealModFiles"], []);
+    const paks = modInfo.attributes?.unrealModFiles ?? [];
     if (paks.length > 1) name = name + ` (${paks.length} ${fileExt} files)`;
 
     return {
       id: mod.id,
       name,
-      imgUrl: util.getSafe(
-        modInfo,
-        ["attributes", "pictureUrl"],
-        path.join(__dirname, spec.game.logo),
-      ),
+      imgUrl: modInfo?.attributes?.pictureUrl ?? path.join(__dirname, spec.game.logo),
     };
   });
 
@@ -604,7 +590,7 @@ function loadOrderPrefix(api, mod) {
   const state = api.getState();
   const gameId = GAME_ID;
   const profile = selectors.lastActiveProfileForGame(state, gameId);
-  const loadOrder = util.getSafe(state, ["persistent", "loadOrder", profile], {});
+  const loadOrder = state?.persistent?.loadOrder?.[profile] ?? {};
   const loKeys = Object.keys(loadOrder);
   const pos = loKeys.indexOf(mod.id);
   if (pos === -1) {
@@ -712,11 +698,7 @@ function UNREALEXTENSION(context) {
     */
     const modsPath = UNREALDATA.modsPath;
     const state = context.api.getState();
-    const discoveryPath = util.getSafe(
-      state.settings,
-      ["gameMode", "discovered", game.id, "path"],
-      undefined,
-    );
+    const discoveryPath = state.settings?.gameMode?.discovered?.[game.id]?.path ?? undefined;
     const installPath = [discoveryPath].concat(modsPath.split(path.sep));
     return discoveryPath ? path.join.apply(null, installPath) : undefined;
   };

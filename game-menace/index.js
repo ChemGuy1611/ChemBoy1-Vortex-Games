@@ -778,7 +778,7 @@ async function getAllFiles(dirPath) {
 const getDiscoveryPath = (api) => {
   //get the game's discovered path
   const state = api.getState();
-  const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
+  const discovery = state?.settings?.gameMode?.discovered?.[GAME_ID] ?? {};
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
 
@@ -1092,7 +1092,6 @@ function installModpackLoader(files) {
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
 }
-
 
 //Test for MelonPreferencesManager mod files
 function testMelonPrefMan(files, gameId) {
@@ -1711,11 +1710,7 @@ function fallbackInstallerNotify(api, modName) {
               {
                 label: `Open Mod Page`,
                 action: () => {
-                  const mods = util.getSafe(
-                    api.store.getState(),
-                    ["persistent", "mods", spec.game.id],
-                    {},
-                  );
+                  const mods = api.store.getState()?.persistent?.mods?.[spec.game.id] ?? {};
                   const modMatch = Object.values(mods).find(
                     (mod) => mod.installationPath === modName,
                   );
@@ -1762,7 +1757,7 @@ function stripLoadOrderPrefix(folder) {
 //Folder a Jiangyu mod deploys into, before the load order prefix is added. The installer records it
 //as an attribute; the mod id is a fallback for anything installed without one.
 function modFolderName(mod) {
-  const folder = util.getSafe(mod, ["attributes", LO_ATTRIBUTE], "");
+  const folder = mod?.attributes?.[LO_ATTRIBUTE] ?? "";
   return typeof folder === "string" && folder !== "" ? folder : mod.id;
 }
 
@@ -1818,11 +1813,11 @@ async function deserializeLoadOrder(context) {
     //and the page keeps showing the real load order rather than a placeholder row.
     const updateState = context.api.getState();
     const updateProfileId = selectors.lastActiveProfileForGame(updateState, GAME_ID);
-    return util.getSafe(updateState, ["persistent", "loadOrder", updateProfileId], []);
+    return updateState?.persistent?.loadOrder?.[updateProfileId] ?? [];
   } //*/
 
   //Set basic information for load order paths and data
-  const mods = util.getSafe(context.api.store.getState(), ["persistent", "mods", spec.game.id], {});
+  const mods = context.api.store.getState()?.persistent?.mods?.[spec.game.id] ?? {};
   GAME_PATH = getDiscoveryPath(context.api);
   if (GAME_PATH === undefined) {
     return [];
@@ -1832,11 +1827,9 @@ async function deserializeLoadOrder(context) {
   //Seed lock state from the stored load order. Neither loader's manifest has a lock field, so
   //without this a locked entry would silently unlock on the next deploy or page mount.
   const prevState = context.api.getState();
-  const prevLO = util.getSafe(
-    prevState,
-    ["persistent", "loadOrder", selectors.lastActiveProfileForGame(prevState, GAME_ID)],
-    [],
-  );
+  const prevLO =
+    prevState?.persistent?.loadOrder?.[selectors.lastActiveProfileForGame(prevState, GAME_ID)] ??
+    [];
   const prevById = new Map((Array.isArray(prevLO) ? prevLO : []).map((entry) => [entry.id, entry]));
 
   //Get all mod folders from MelonLoader "Mods" folder
@@ -1884,7 +1877,7 @@ async function deserializeLoadOrder(context) {
     try {
       //Mod installed by Vortex, find mod where atrribute (from installer) matches folder in the load order
       const modMatch = Object.values(mods).find(
-        (mod) => util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], "") === id,
+        (mod) => (mods[mod.id]?.attributes?.[LO_ATTRIBUTE] ?? "") === id,
       );
       if (modMatch) {
         return (
@@ -1904,7 +1897,7 @@ async function deserializeLoadOrder(context) {
     try {
       //find mod where atrribute (from installer) matches file in the load order
       const modMatch = Object.values(mods).find(
-        (mod) => util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], "") === id,
+        (mod) => (mods[mod.id]?.attributes?.[LO_ATTRIBUTE] ?? "") === id,
       ); //find mod by folder name attribute
       if (modMatch) {
         return modMatch.id;
@@ -2014,7 +2007,7 @@ async function serializeLoadOrder(context, loadOrder) {
 function loadOrderPrefix(api, mod) {
   const state = api.getState();
   const profile = selectors.lastActiveProfileForGame(state, GAME_ID);
-  const loadOrder = util.getSafe(state, ["persistent", "loadOrder", profile], []);
+  const loadOrder = state?.persistent?.loadOrder?.[profile] ?? [];
   //The load order is an array of entries, where "id" is the mod's folder name and "modId" is the
   //Vortex mod id - the latter is what identifies the mod being deployed here.
   const pos = Array.isArray(loadOrder)
@@ -2741,7 +2734,7 @@ function main(context) {
       if (updateModIds.size > 0) {
         const state = api.getState();
         const profile = selectors.profileById(state, profileId);
-        const mods = util.getSafe(state, ["persistent", "mods", GAME_ID], {});
+        const mods = state?.persistent?.mods?.[GAME_ID] ?? {};
         const now = Date.now();
         for (const [nexusId, { firstSeen, targetFileId }] of Array.from(updateModIds)) {
           const landed = Object.values(mods).some(
@@ -2749,7 +2742,7 @@ function main(context) {
               String(mod?.attributes?.modId ?? "") === nexusId &&
               //if the target file is unknown, fall back to "installed and enabled"
               (targetFileId === "" || String(mod?.attributes?.fileId ?? "") === targetFileId) &&
-              util.getSafe(profile, ["modState", mod.id, "enabled"], false),
+              (profile?.modState?.[mod.id]?.enabled ?? false),
           );
           if (landed) {
             updateModIds.delete(nexusId);
@@ -2806,7 +2799,7 @@ function main(context) {
     //and never emits mod-update, so resolve each one to its Nexus mod id before tracking it
     api.events.on("mods-update", (gameId, modIds) => {
       if (GAME_ID !== gameId) return;
-      const mods = util.getSafe(api.getState(), ["persistent", "mods", GAME_ID], {});
+      const mods = api.getState()?.persistent?.mods?.[GAME_ID] ?? {};
       for (const modId of modIds ?? []) {
         const nexusModId = mods[modId]?.attributes?.modId;
         if (nexusModId !== undefined) {
@@ -2823,11 +2816,7 @@ function main(context) {
     //downloaded (older dash-delimited vs current space-delimited), so string
     //parsing silently misses old installs.
     api.events.on("remove-mod", (gameMode, modId) => {
-      const removedMod = util.getSafe(
-        api.getState(),
-        ["persistent", "mods", GAME_ID, modId],
-        undefined,
-      );
+      const removedMod = api.getState()?.persistent?.mods?.[GAME_ID]?.[modId] ?? undefined;
       const nexusModId = removedMod?.attributes?.modId;
       if (nexusModId !== undefined && updateModIds.has(String(nexusModId))) {
         mod_update_all_profile = true;
@@ -3110,11 +3099,7 @@ function useFbloState() {
 //Prefers the mod's homepage attribute; falls back to composing the Nexus URL from the numeric mod id.
 function getModPageURL(api, vortexModId) {
   if (vortexModId === undefined) return undefined;
-  const attributes = util.getSafe(
-    api.getState(),
-    ["persistent", "mods", GAME_ID, vortexModId, "attributes"],
-    {},
-  );
+  const attributes = api.getState()?.persistent?.mods?.[GAME_ID]?.[vortexModId]?.attributes ?? {};
   if (attributes.homepage) return attributes.homepage;
   if (attributes.source === "nexus" && attributes.modId !== undefined) {
     return `https://www.nexusmods.com/${GAME_ID}/mods/${attributes.modId}`;
@@ -3126,11 +3111,8 @@ function getModPageURL(api, vortexModId) {
 function getModStagingFolder(api, vortexModId) {
   if (vortexModId === undefined) return undefined;
   const state = api.getState();
-  const installationPath = util.getSafe(
-    state,
-    ["persistent", "mods", GAME_ID, vortexModId, "installationPath"],
-    undefined,
-  );
+  const installationPath =
+    state?.persistent?.mods?.[GAME_ID]?.[vortexModId]?.installationPath ?? undefined;
   const stagingPath = selectors.installPathForGame(state, GAME_ID);
   if (!installationPath || !stagingPath) return undefined;
   return path.join(stagingPath, installationPath);
@@ -3274,14 +3256,12 @@ function LoadOrderInstructions() {
   const { statusFilter, setStatusFilter } = useFbloState();
   const { useSelector } = require("react-redux");
   const profile = useSelector((state) => selectors.activeProfile(state));
-  const loadOrder = useSelector((state) =>
-    util.getSafe(state, ["persistent", "loadOrder", profile?.id], []),
-  );
-  const modState = useSelector((state) =>
-    util.getSafe(state, ["persistent", "profiles", profile?.id, "modState"], {}),
+  const loadOrder = useSelector((state) => state?.persistent?.loadOrder?.[profile?.id] ?? []);
+  const modState = useSelector(
+    (state) => state?.persistent?.profiles?.[profile?.id]?.modState ?? {},
   );
   const isLocked = (entry) => [true, "true", "always"].includes(entry?.locked);
-  const isEnabled = (entry) => util.getSafe(modState, [entry.modId, "enabled"], false);
+  const isEnabled = (entry) => modState?.[entry.modId]?.enabled ?? false;
   //Count entries matching the active filter (matched / total), shown beside the pills.
   const total = loadOrder.length;
   const matched =
@@ -3339,25 +3319,20 @@ function LoadOrderItemRenderer(props) {
   const dispatch = useDispatch();
 
   const profile = useSelector((state) => selectors.activeProfile(state));
-  const loadOrder = useSelector((state) =>
-    util.getSafe(state, ["persistent", "loadOrder", profile?.id], []),
-  );
+  const loadOrder = useSelector((state) => state?.persistent?.loadOrder?.[profile?.id] ?? []);
 
   const { loEntry, displayCheckboxes } = item;
-  const mods = useSelector((state) => util.getSafe(state, ["persistent", "mods", GAME_ID], {}));
+  const mods = useSelector((state) => state?.persistent?.mods?.[GAME_ID] ?? {});
   const pictureUrl = mods[loEntry.modId]?.attributes?.pictureUrl;
   //FBLO precomputes these on the item (memoized by its row cache); the fallbacks keep the
   //renderer working if it is ever mounted outside the FBLO page.
   const currentIdx = item.position ?? loadOrder.findIndex((e) => e.id === loEntry.id) + 1;
-  const isModEnabled = useSelector((state) =>
-    util.getSafe(
-      state,
-      ["persistent", "profiles", profile?.id, "modState", loEntry.modId, "enabled"],
-      false,
-    ),
+  const isModEnabled = useSelector(
+    (state) =>
+      state?.persistent?.profiles?.[profile?.id]?.modState?.[loEntry.modId]?.enabled ?? false,
   );
-  const modState = useSelector((state) =>
-    util.getSafe(state, ["persistent", "profiles", profile?.id, "modState"], {}),
+  const modState = useSelector(
+    (state) => state?.persistent?.profiles?.[profile?.id]?.modState ?? {},
   );
 
   const isLocked = (entry) => [true, "true", "always"].includes(entry?.locked);
@@ -3402,7 +3377,7 @@ function LoadOrderItemRenderer(props) {
           matchesStatus(
             e,
             statusFilter,
-            (entry) => util.getSafe(modState, [entry.modId, "enabled"], false),
+            (entry) => modState?.[entry.modId]?.enabled ?? false,
             isLocked,
           ),
         )

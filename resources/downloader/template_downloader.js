@@ -193,7 +193,7 @@ async function resolveVersionByFile(api, requirement) {
   const state = api.getState();
   const gameId = selectors.activeGameId(state);
   const downloadPath = selectors.downloadPath(state);
-  const files = util.getSafe(state, ["persistent", "downloads", "files"], {});
+  const files = state?.persistent?.downloads?.files ?? {};
   // Archives matching this requirement (version is not in the name, so match the pattern),
   // restricted to the game being managed. Requirement archives often share a generic name
   // across games, and downloadPath only points at this game's folder anyway - an entry from

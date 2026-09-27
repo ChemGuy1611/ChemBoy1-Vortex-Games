@@ -75,6 +75,7 @@ const {
   Spinner,
   Webview,
   tooltip,
+  VortexError,
 } = require("vortex-api");
 
 // Claimed downloads that never produced an install (the user cancelled it) are pruned this old.
@@ -342,12 +343,14 @@ function usesClickFetch(adapter) {
 async function importFetchedFile(adapter, api, config, url) {
   const filePath = await adapter.fetchToFile(config, url);
   if (filePath === null || filePath === undefined) {
-    throw new util.ProcessCanceled(`Could not fetch ${url}`);
+    throw new VortexError(`Could not fetch ${url}`, { kind: "process-canceled" });
   }
   return new Promise((resolve, reject) => {
     api.events.emit("import-downloads", [filePath], (dlIds) => {
       const dlId = dlIds?.[0];
-      return dlId === undefined ? reject(new util.NotFound(filePath)) : resolve(dlId);
+      return dlId === undefined
+        ? reject(new VortexError(filePath, { kind: "not-found" }))
+        : resolve(dlId);
     });
   });
 }
@@ -375,9 +378,10 @@ async function installRef(adapter, api, gameSpec, config, ref, options = {}) {
   if (resolved === null || resolved === undefined || !resolved.downloadUrl) {
     api.showErrorNotification(
       `Failed to install ${key}`,
-      new util.ProcessCanceled(
+      new VortexError(
         adapter.unresolvedMessage ||
           `The ${adapter.label} API is unreachable or this mod has no downloadable file`,
+        { kind: "process-canceled" },
       ),
       { allowReport: false },
     );
@@ -399,7 +403,7 @@ async function installRef(adapter, api, gameSpec, config, ref, options = {}) {
   try {
     const dlId = usesClickFetch(adapter) //a source the download manager cannot fetch for us
       ? await importFetchedFile(adapter, api, config, resolved.downloadUrl)
-      : await util.toPromise((cb) =>
+      : await new Promise((resolve, reject) =>
           api.events.emit(
             "start-download",
             [resolved.downloadUrl],
@@ -408,13 +412,15 @@ async function installRef(adapter, api, gameSpec, config, ref, options = {}) {
             //check the download folder first and report an archive already sitting there back as a
             //failure. Without a name that check never runs, so the call stays as it was.
             archive,
-            cb,
+            (err, result) => (err ? reject(err) : resolve(result)),
             archive !== undefined ? "replace" : undefined,
             { allowInstall: false },
           ),
         );
-    const modId = await util.toPromise((cb) =>
-      api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, cb),
+    const modId = await new Promise((resolve, reject) =>
+      api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, (err, result) =>
+        err ? reject(err) : resolve(result),
+      ),
     );
     stampMod(adapter, api, gameSpec, config, modId, resolved, previousModIds);
     return modId;
@@ -425,7 +431,11 @@ async function installRef(adapter, api, gameSpec, config, ref, options = {}) {
       err,
     );
     if (resolved.pageUrl) {
-      util.opn(resolved.pageUrl).catch(() => null);
+      try {
+        window.api.shell.openUrl(resolved.pageUrl);
+      } catch (openErr) {
+        api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
+      }
     }
     return undefined;
   } finally {
@@ -578,7 +588,7 @@ function claimDownload(adapter, api, gameSpec, config, dlId, dlState) {
   // Core installs the download itself when "Install mods when downloaded" is on and the download
   // carries no allowInstall override - which is exactly the shape of a browser capture. Starting a
   // second install here would install the archive twice, so only start one when core will not.
-  const autoInstall = util.getSafe(state, ["settings", "automation", "install"], false);
+  const autoInstall = state?.settings?.automation?.install ?? false;
   log("info", `claimed a ${adapter.label} download from the browse page`, {
     dlId,
     claim: partial,
@@ -883,7 +893,12 @@ function makeBrowsePage(adapter, gameSpec, config) {
           //an ad click or pop-under: drop it rather than open a browser
           log("debug", `Blocked an ad destination from the ${adapter.label} browser: ${url}`);
         } else {
-          util.opn(url).catch(() => null); //off-site links open in the system browser, never in the page
+          //off-site links open in the system browser, never in the page
+          try {
+            window.api.shell.openUrl(url);
+          } catch (err) {
+            api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+          }
         }
         if (navigated) {
           //the view already left the allow-list - bring it back
@@ -1028,7 +1043,13 @@ function makeBrowsePage(adapter, gameSpec, config) {
           React.createElement(tooltip.IconButton, {
             icon: "open-ext",
             tooltip: "Open in your browser",
-            onClick: () => util.opn(currentUrl).catch(() => null),
+            onClick: () => {
+              try {
+                window.api.shell.openUrl(currentUrl);
+              } catch (err) {
+                api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+              }
+            },
           }),
         ),
       ),

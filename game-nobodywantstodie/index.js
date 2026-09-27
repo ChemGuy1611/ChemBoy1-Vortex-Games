@@ -220,7 +220,7 @@ async function getAllFiles(dirPath) {
 const getDiscoveryPath = (api) => {
   //get the game's discovered path
   const state = api.getState();
-  const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
+  const discovery = state?.settings?.gameMode?.discovered?.[GAME_ID] ?? {};
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
 
@@ -348,9 +348,7 @@ function installConfig(files) {
   const setModTypeInstruction = { type: "setmodtype", value: MODTYPE_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -389,9 +387,7 @@ function installRoot(files) {
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -439,9 +435,7 @@ function installSave(files) {
   const setModTypeInstruction = { type: "setmodtype", value: SAVE_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(
-    (file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -513,7 +507,7 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
-  const mods = util.getSafe(state, ["persistent", "mods", gameSpec.game.id], {});
+  const mods = state?.persistent?.mods?.[gameSpec.game.id] ?? {};
   const legacyMods = Object.keys(mods).filter((id) => mods[id]?.type === LEGACY_UE5_SORTABLE_ID);
   if (legacyMods.length > 0) {
     legacyModsNotify(api, legacyMods);
@@ -526,7 +520,7 @@ async function setup(discovery, api, gameSpec) {
 ///*
 //UNREAL - Pre-sort function
 async function preSort(api, items, direction) {
-  const mods = util.getSafe(api.store.getState(), ["persistent", "mods", spec.game.id], {});
+  const mods = api.store.getState()?.persistent?.mods?.[spec.game.id] ?? {};
   const fileExt = UNREALDATA.fileExt;
 
   const loadOrder = items.map((mod) => {
@@ -536,17 +530,13 @@ async function preSort(api, items, direction) {
         modInfo.attributes.logicalFileName ??
         modInfo.attributes.name)
       : mod.name;
-    const paks = util.getSafe(modInfo.attributes, ["unrealModFiles"], []);
+    const paks = modInfo.attributes?.unrealModFiles ?? [];
     if (paks.length > 1) name = name + ` (${paks.length} ${fileExt} files)`;
 
     return {
       id: mod.id,
       name,
-      imgUrl: util.getSafe(
-        modInfo,
-        ["attributes", "pictureUrl"],
-        path.join(__dirname, spec.game.logo),
-      ),
+      imgUrl: modInfo?.attributes?.pictureUrl ?? path.join(__dirname, spec.game.logo),
     };
   });
 
@@ -603,7 +593,7 @@ function loadOrderPrefix(api, mod) {
   const state = api.getState();
   const gameId = GAME_ID;
   const profile = selectors.lastActiveProfileForGame(state, gameId);
-  const loadOrder = util.getSafe(state, ["persistent", "loadOrder", profile], {});
+  const loadOrder = state?.persistent?.loadOrder?.[profile] ?? {};
   const loKeys = Object.keys(loadOrder);
   const pos = loKeys.indexOf(mod.id);
   if (pos === -1) {
@@ -724,11 +714,7 @@ function UNREALEXTENSION(context) {
     */
     const modsPath = UNREALDATA.modsPath;
     const state = context.api.getState();
-    const discoveryPath = util.getSafe(
-      state.settings,
-      ["gameMode", "discovered", game.id, "path"],
-      undefined,
-    );
+    const discoveryPath = state.settings?.gameMode?.discovered?.[game.id]?.path ?? undefined;
     const installPath = [discoveryPath].concat(modsPath.split(path.sep));
     return discoveryPath ? path.join.apply(null, installPath) : undefined;
   };
