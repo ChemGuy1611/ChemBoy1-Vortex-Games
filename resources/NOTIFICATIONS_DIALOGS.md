@@ -195,7 +195,7 @@ interface IDialogAction {
 | Field     | Type         | Required | Notes                                                                                                                                                       |
 | --------- | ------------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `label`   | `string`     | Yes      | Button text -- also the key in `IDialogResult.action`                                                                                                       |
-| `default` | `boolean`    | No       | Pre-selects this button (Enter key)                                                                                                                         |
+| `default` | `boolean`    | No       | Also styles this button as primary/highlighted. **Binds Enter to it for the WHOLE dialog** -- core's `Dialog.tsx` intercepts every Enter keypress anywhere in the modal regardless of which control has focus, so with a `multiline` input present this swallows the newline the user is trying to type instead of inserting one. Omit `default: true` entirely on any dialog that has a `multiline` field (costs that button its highlighted styling -- no way to keep the styling without the Enter-binding, the same flag drives both). Fine on a dialog whose only inputs are single-line. |
 | `action`  | `() => void` | No       | Inline callback instead of using the returned promise. Dropped its `label` argument in Vortex v2.6.0 (the callback already belongs to one labelled action). |
 
 ### ICheckbox

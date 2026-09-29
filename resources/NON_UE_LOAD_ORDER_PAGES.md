@@ -1,6 +1,6 @@
 # Non-UE Load Order React Code
 
-The Unreal templates are not the only extensions with hand-written load order UI. Ten non-Unreal
+The Unreal templates are not the only extensions with hand-written load order UI. Eleven non-Unreal
 games in this repository register a load order, and their React code splits into three clearly
 separated tiers plus one legacy holdout. This document maps the tiers, walks the shared code, and
 records exactly where each tier diverges from the UE4-5 stack described in
@@ -25,6 +25,7 @@ lifecycle, `IItemRendererProps`, virtualization). Everything here is stated as a
 | `game-warhammer40kdarkheresy`     | —                  | B    | Minimal renderer                                  |
 | `game-warhammer40kroguetrader`    | Unity              | B    | Minimal renderer                                  |
 | `game-helldivers2`                | Autodesk Stingray  | G    | Full FBLO renderer + context menu + status filter |
+| `game-lookoutside`                | RPG Maker MV/MZ    | G    | Full FBLO renderer + context menu + status filter |
 
 Two Unreal games also sit in tier B (`game-fantasylifeithegirlwhostealstime`, `game-tekken8`) —
 they carry the minimal renderer without the UE4SS stack, so tier B guidance applies to them too.
@@ -60,6 +61,14 @@ mod type now merges with `mergeMods: () => ""` unconditionally. Because the cate
 `game-kingdomcomedeliverance2` and `game-warhammer40kdarktide` carry the same block. A direct diff of
 the two React sections is 24 lines, entirely instruction text and path resolution — treat it as one
 canonical implementation with two skins.
+
+`game-lookoutside` (via `template-rpgmaker`) is a third skin, ported from the darktide block, with
+one structural difference: its `LO_ATTRIBUTE` is array-valued (`pluginNames`), not a single string —
+one Vortex mod can install several plugin `.js` files, so entries are individual files, not folders.
+The context menu drops "Open Mod Folder"/"Open Mod Folder(s)" entirely rather than adapting the path
+resolution, since a file entry has no per-entry folder of its own the way a mod folder does on
+darktide/kcd2; Open Staging Folder / Open Mod Page cover that need instead. Same file-granularity
+shape as tier B's `game-warhammer40000spacemarine2` (`pakModFiles`), not yet upgraded to tier G.
 
 ### Components
 
@@ -260,7 +269,9 @@ so the same defects travel with it.
 5. Copy `LoadOrderItemRenderer`, adjusting the status-filter `isEnabledFn` to the game's definition
    of enabled (LO entry flag when `toggleableEntries: true`, Vortex `modState` otherwise).
 6. Copy the context menu, adjusting the "Open Mod Folder" path resolution and keeping
-   `actions.setModsEnabled` for Vortex-mod toggling.
+   `actions.setModsEnabled` for Vortex-mod toggling. Drop "Open Mod Folder" entirely on a
+   file-granularity game (array-valued `LO_ATTRIBUTE`, e.g. `game-lookoutside`) — a plugin file has
+   no per-entry folder to open.
 7. Register with `customItemRenderer` and `usageInstructions`; leave `uniformRowHeight` unset,
    because these rows are not uniform.
 

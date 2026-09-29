@@ -55,8 +55,16 @@ const MANAGER_URL_LEGACY_ERR = "https://www.factionfiles.com/ff.php?action=file&
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1145"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Red_Faction_Guerrilla_Re-Mars-tered";
 const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
-const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
-const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_CONFLICTS = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
+const IGNORE_DEPLOY = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
 
 //Embedded ModDB browser page - the user browses the live moddb.com section for this game and
 //installs from it. Vortex's download manager cannot fetch from this host, so the page fetches

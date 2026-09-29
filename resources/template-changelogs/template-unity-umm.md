@@ -1,5 +1,15 @@
 # template-unity-umm Changelog
 
+## [2026-09-28]
+
+- Added: a `license*` glob (`path.join("**", "license*")`) alongside the existing `changelog*`/`readme*` entries in `IGNORE_CONFLICTS`/`IGNORE_DEPLOY`, so LICENSE files are treated the same as README/CHANGELOG - never flagged as a mod conflict, never deployed into the game folder.
+
+## [2026-09-27] (2)
+
+- Changed: `resolveGameVersion` now resolves the real game build instead of the Unity player version stamped in the exe's `ProductVersion`, which barely changes across content patches and made curator/user "Game version mismatch" checks meaningless. New tiered chain, ported from the `game-prodeus` pilot (`ue-unity-game-version-soaring-creek` plan, live-tested OK on the hybrid/bepinex templates this same session): `hasVersionFile` is now checked before the Xbox appxmanifest tier rather than after it, matching the other two Unity templates (extracted into `readVersionFile()`, which returns `undefined` on a read failure instead of rejecting, so the chain falls through instead of dying); then Xbox appxmanifest (unchanged); then a new `exeHasGameVersion` toggle (default off) for games whose devs do stamp the real version into the exe; then store build metadata - Steam `appmanifest_<id>.acf` `buildid` (walking up from the game path to find `steamapps/common`), Epic launcher `.item` manifest `AppVersionString`, GOG registry `ver`; then an MD5-of-MD5s hash of `ASSEMBLY_FILES` (IL2CPP `GameAssembly.dll` or Mono `Assembly-CSharp.dll`+`Assembly-CSharp-firstpass.dll`, never the Unity exe stub), cached per sorted file mtimes so it is paid once per build rather than on every `mod-installed` health check; last resort falls through to the old exe `ProductVersion` read, then `"0.0.0"`. Never throws. Requires `crypto`, newly added to the require block (`winapi-bindings` was already present). New `VER_IDX`/`VER_SPLIT` consts added beside `VERSION_FILE_PATH` - this template inlined the split character and index instead of naming them, unlike the other two Unity templates.
+- Fixed: the last-resort exe read now goes through `getExecutable(gamePath)` instead of the bare `EXEC` constant, so a game with `multiExe = true` gets the alt/Xbox exe path checked here too, matching how every other tier already resolves the executable. Latent on the template default (`multiExe = false`), same as the exe-version import it shares with `getExeProductVersion()`.
+- Note: existing collection revisions were published against the old Unity-player-version values, so users will see a one-time "Game version mismatch" dialog on games ported to this resolver until the curator republishes.
+
 ## [2026-09-27]
 
 - Changed: the deprecated `util.<ErrorClass>(...)` constructors (`UserCanceled`, `ProcessCanceled`, `DataInvalid`, and the rest of that family) are replaced with direct `new VortexError(message, { kind, ... })` construction, and `VortexError` is added to the `vortex-api` require. `util.toPromise((cb) => api.events.emit(..., cb))` is replaced with a plain `new Promise((resolve, reject) => ...)` whose event callback is `(err, result) => (err ? reject(err) : resolve(result))`. No behavior change.

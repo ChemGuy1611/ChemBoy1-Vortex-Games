@@ -125,3 +125,5 @@ installed tool). `NTFS_LINKS.md` (the one place the permission, Task Scheduler a
 `TEMPLATE_FROSTBITE.md`, and the hybrid's .NET runtime probe).
 `SNAKEBITE_CLI.md` (a worked example of the paragraph above: a mod loader whose installer
 records its own folder as the default value of `HKEY_CURRENT_USER\SOFTWARE\SnakeBite`).
+`GAME_VERSION_RESOLUTION.md` (the Epic/GOG version tiers read `EpicGamesLauncher`'s `AppDataPath`
+and a game's own `GOG.com\Games\<id>` key this same way, throw-not-null included).

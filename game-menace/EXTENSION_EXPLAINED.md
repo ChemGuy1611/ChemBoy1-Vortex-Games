@@ -37,6 +37,8 @@
 | `preventPluginInstall` | `true` | set to true if you want to prevent plugins not for the current mod loader from installing. Disable if using cross-compatibility plugins. |
 | `loaderSwitchRestart` | `false` | set to true if you need to restart the extension after switching mod loaders |
 | `enableSaveInstaller` | `false` | set to true if you want to enable the save installer (only recommended if saves are stored in the game's folder) |
+| `exeHasGameVersion` | `false` | toggle: true if the game devs stamp the real game version (not just the Unity player version) into the exe ProductVersion |
+| `hasVersionFile` | `false` | set to true if there is a Version.info file that contains the game version number |
 | `allowMelPrefMan` | `false` | should MelonPreferencesManager be downloaded? False until figure out UniverseLib dependency |
 | `allowMelonNexus` | `true` | MelonLoader is sourced from this game's own Nexus page (current behavior). Flip false to switch to the GitHub release instead. |
 | `useMelonNightly` | `false` | use the GitHub Actions nightly build instead of the latest stable release? Only applies when allowMelonNexus is false. |

@@ -214,8 +214,16 @@ if (needsModInstaller) {
 if (saveInstaller) {
   MODTYPE_FOLDERS.push(SAVE_PATH);
 }
-const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
-const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_CONFLICTS = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
+const IGNORE_DEPLOY = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
 
 //filled in from data above
 const spec = {

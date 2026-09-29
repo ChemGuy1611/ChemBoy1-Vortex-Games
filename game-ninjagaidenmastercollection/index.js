@@ -21,6 +21,16 @@ const GAME_ID = "ninjagaidenmastercollection";
 const GAME_NAME = "NINJA GAIDEN: Master Collection";
 const GAME_NAME_SHORT = "NGMC";
 const MODLOADER_STEAM_FILE = "dbghelp.dll";
+const IGNORE_CONFLICTS = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
+const IGNORE_DEPLOY = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
 
 const XBOX_EXEC = "gamelaunchhelper.exe";
 const EXEC_XBOX = XBOX_EXEC;
@@ -192,6 +202,8 @@ const spec1 = {
       steamAppId: STEAMAPP_ID1,
       xboxAppId: XBOXAPP_ID1,
       nexusPageId: GAME_ID,
+      ignoreConflicts: IGNORE_CONFLICTS,
+      ignoreDeploy: IGNORE_DEPLOY,
     },
     environment: {
       SteamAPPId: STEAMAPP_ID1,
@@ -253,6 +265,8 @@ const spec2 = {
       steamAppId: STEAMAPP_ID2,
       xboxAppId: XBOXAPP_ID2,
       nexusPageId: GAME_ID,
+      ignoreConflicts: IGNORE_CONFLICTS,
+      ignoreDeploy: IGNORE_DEPLOY,
     },
     environment: {
       SteamAPPId: STEAMAPP_ID2,
@@ -314,6 +328,8 @@ const spec3 = {
       steamAppId: STEAMAPP_ID3,
       xboxAppId: XBOXAPP_ID3,
       nexusPageId: GAME_ID,
+      ignoreConflicts: IGNORE_CONFLICTS,
+      ignoreDeploy: IGNORE_DEPLOY,
     },
     environment: {
       SteamAPPId: STEAMAPP_ID3,

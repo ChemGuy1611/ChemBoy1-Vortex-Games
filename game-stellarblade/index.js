@@ -2,8 +2,8 @@
 Name: Stellar Blade Vortex Extension
 Structure: UE5 (static exe)
 Author: ChemBoy1
-Version: 1.0.5
-Date: 2026-09-21
+Version: 1.0.6
+Date: 2026-09-28
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -22,6 +22,8 @@ const {
   VortexError,
 } = require("vortex-api");
 const path = require("path");
+const crypto = require("crypto");
+const winapi = require("winapi-bindings");
 const template = require("string-template");
 const { default: IniParser, WinapiFormat } = require("vortex-parse-ini");
 const React = require("react");
@@ -86,6 +88,7 @@ const ENGINE_VERSION = "4.26.2"; //Unreal Engine version. usually '4.27.2.0' or 
 const MAJOR_VERSION = ENGINE_VERSION.split(".")[0]; //major UE version
 const MINOR_VERSION = ENGINE_VERSION.split(".")[1]; //minor UE version
 const debug = false; //toggle for debug mode
+const exeHasGameVersion = false; //toggle: true if the game devs stamp the real game version (not just the UE engine version) into the exe ProductVersion
 
 //Settings related to the IO Store UE feature
 let PAKMOD_EXTS = [".pak"];
@@ -310,8 +313,16 @@ const MODTYPE_FOLDERS = [
 ];
 
 //Filled in from data above
-const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
-const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_CONFLICTS = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
+const IGNORE_DEPLOY = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
 const spec = {
   game: {
     id: GAME_ID,
@@ -2328,6 +2339,160 @@ function partitionCheckNotify(api, CHECK_DATA) {
   });
 }
 
+async function getExeProductVersion(filePath) {
+  const exeVersion = require("exe-version");
+  return exeVersion.getProductVersion(filePath);
+}
+
+function findSteamAppsDir(gamePath) {
+  //walk up from gamePath to the ancestor dir whose parent is 'steamapps' and whose name is 'common'
+  let dir = gamePath;
+  for (;;) {
+    const parent = path.dirname(dir);
+    if (parent === dir) return undefined; //reached filesystem root
+    if (
+      path.basename(parent).toLowerCase() === "common" &&
+      path.basename(path.dirname(parent)).toLowerCase() === "steamapps"
+    ) {
+      return path.dirname(parent);
+    }
+    dir = parent;
+  }
+}
+
+async function resolveSteamBuildVersion(gamePath) {
+  const steamAppsDir = findSteamAppsDir(gamePath);
+  if (!steamAppsDir) return undefined;
+  for (const appId of [STEAMAPP_ID, STEAMAPP_ID_DEMO]) {
+    if (!appId || appId === "XXX") continue;
+    try {
+      const contents = await fsp.readFile(
+        path.join(steamAppsDir, `appmanifest_${appId}.acf`),
+        "utf8",
+      );
+      const match = contents.match(/"buildid"\s+"(\d+)"/);
+      if (match) return match[1];
+    } catch {
+      //manifest for this appId not present here, try next
+    }
+  }
+  return undefined;
+}
+
+async function resolveEpicBuildVersion(gamePath) {
+  if (!EPICAPP_ID || EPICAPP_ID === "XXX") return undefined;
+  let dataPath;
+  try {
+    dataPath = winapi.RegGetValue(
+      "HKEY_LOCAL_MACHINE",
+      "SOFTWARE\\WOW6432Node\\Epic Games\\EpicGamesLauncher",
+      "AppDataPath",
+    ).value;
+  } catch {
+    dataPath = path.join(
+      process.env.ProgramData || process.env.ALLUSERSPROFILE,
+      "Epic",
+      "EpicGamesLauncher",
+      "Data",
+    );
+  }
+  const normalizedGamePath = path.normalize(gamePath).toLowerCase();
+  try {
+    const manifestsDir = path.join(dataPath, "Manifests");
+    const entries = await fsp.readdir(manifestsDir);
+    for (const entry of entries) {
+      if (!entry.toLowerCase().endsWith(".item")) continue;
+      try {
+        const data = JSON.parse(await fsp.readFile(path.join(manifestsDir, entry), "utf8"));
+        const matches =
+          data.AppName === EPICAPP_ID ||
+          path.normalize(data.InstallLocation || "").toLowerCase() === normalizedGamePath;
+        if (matches && data.AppVersionString) return data.AppVersionString;
+      } catch {
+        //unreadable/invalid manifest, skip it
+      }
+    }
+  } catch (err) {
+    log("warn", `Could not read Epic manifests for ${GAME_ID}: ${err}`);
+  }
+  return undefined;
+}
+
+async function resolveGogVersion(gamePath) {
+  if (!GOGAPP_ID || GOGAPP_ID === "XXX") return undefined;
+  try {
+    const regKey = `SOFTWARE\\WOW6432Node\\GOG.com\\Games\\${GOGAPP_ID}`;
+    const regPath = winapi.RegGetValue("HKEY_LOCAL_MACHINE", regKey, "path").value;
+    if (path.normalize(regPath).toLowerCase() !== path.normalize(gamePath).toLowerCase()) {
+      return undefined;
+    }
+    return winapi.RegGetValue("HKEY_LOCAL_MACHINE", regKey, "ver").value;
+  } catch {
+    //RegGetValue throws (never returns null) when the key/value is missing
+    return undefined;
+  }
+}
+
+async function resolveStoreVersion(gamePath) {
+  const steamVersion = await resolveSteamBuildVersion(gamePath);
+  if (steamVersion !== undefined) return steamVersion;
+  const epicVersion = await resolveEpicBuildVersion(gamePath);
+  if (epicVersion !== undefined) return epicVersion;
+  return resolveGogVersion(gamePath);
+}
+
+let VERSION_HASH_CACHE = {}; //cacheKey (MD5 of sorted mtimes) -> hash string; paid once per build, not per mod-installed health check
+
+async function resolveHashVersion(gamePath) {
+  const hashFiles = [SHIPPING_EXE]; //game-code file(s), never the launcher EXEC
+  try {
+    const mtimes = [];
+    for (const relFile of hashFiles) {
+      mtimes.push((await fsp.stat(path.join(gamePath, relFile))).mtimeMs);
+    }
+    mtimes.sort((a, b) => a - b);
+    const cacheKey = crypto
+      .createHash("md5")
+      .update(mtimes.map((m) => m.toString()).join(""))
+      .digest("hex");
+    if (VERSION_HASH_CACHE[cacheKey] !== undefined) return VERSION_HASH_CACHE[cacheKey];
+    const fileHashes = [];
+    for (const relFile of hashFiles) {
+      fileHashes.push(await util.fileMD5(path.join(gamePath, relFile)));
+    }
+    const hash = crypto.createHash("md5").update(fileHashes.join("")).digest("hex");
+    VERSION_HASH_CACHE[cacheKey] = hash;
+    return hash;
+  } catch (err) {
+    log("warn", `Could not compute hash game version for ${GAME_ID}: ${err}`);
+    return undefined;
+  }
+}
+
+async function resolveGameVersion(gamePath, exePath) {
+  const READ_FILE = path.join(gamePath, SHIPPING_EXE);
+  let version = "0.0.0";
+  if (exeHasGameVersion) {
+    try {
+      return await getExeProductVersion(READ_FILE);
+    } catch (err) {
+      log("error", `Could not read ${READ_FILE} file to get game version: ${err}`);
+    }
+  }
+  const storeVersion = await resolveStoreVersion(gamePath);
+  if (storeVersion !== undefined) return storeVersion;
+  const hashVersion = await resolveHashVersion(gamePath);
+  if (hashVersion !== undefined) return hashVersion;
+  //last resort: exe ProductVersion (UE engine version), then "0.0.0". Never throw.
+  try {
+    version = await getExeProductVersion(READ_FILE);
+    return version;
+  } catch (err) {
+    log("error", `Could not read ${READ_FILE} file to get game version: ${err}`);
+    return version;
+  }
+}
+
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
     await vfs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
@@ -2379,7 +2544,7 @@ function applyGame(context, gameSpec) {
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
-    //getGameVersion: resolveGameVersion,
+    getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);

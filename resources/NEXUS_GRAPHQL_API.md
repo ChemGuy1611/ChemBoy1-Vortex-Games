@@ -518,6 +518,10 @@ changes by hand through the mod pages.
   sleep between batches.
 - **`personalApiKey` leaks the account's API key** to any authenticated caller.
 - **`Tag` ≠ `LegacyTag`.** The friendlier-sounding one is the deprecated collection system.
+- **`LegacyTag.id` (and `Tag.id`) is the GraphQL `ID` scalar, which serializes as a numeric
+  STRING** (`"4694"`), not a native int, even though it looks numeric. Comparing it against an
+  int literal without casting silently fails every comparison both ways — a mod carrying exactly
+  the right tag reads as simultaneously missing it and carrying a stray one.
 - **Filter values are strings even for numbers and booleans** in `BaseFilterValue`; only
   `IntFilterValue` and `BooleanFilterValue` take native types.
 - The mod counts returned by `mods(filter: {uploaderId: ...})` include unpublished and hidden mods

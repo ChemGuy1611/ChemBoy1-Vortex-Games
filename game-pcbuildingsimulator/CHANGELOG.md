@@ -2,7 +2,10 @@
 
 ## Planned Improvements (Not Yet Released)
 
+## [0.1.4] - 2026-09-28
+
 - The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
+- Game version now shows the real game build instead of the Unity engine version.
 
 ## [0.1.3] - 2026-09-13
 

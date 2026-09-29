@@ -110,8 +110,16 @@ const PARAMETERS_STRING = "";
 const PARAMETERS = [PARAMETERS_STRING];
 
 let MODTYPE_FOLDERS = [MANAGERMOD_PATH];
-const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
-const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_CONFLICTS = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
+const IGNORE_DEPLOY = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
 
 const spec = {
   game: {

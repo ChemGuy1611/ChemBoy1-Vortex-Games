@@ -445,8 +445,16 @@ const MOD_PATH_DEFAULT = PAK_PATH;
 const REQ_FILE = EPIC_CODE_NAME;
 const PARAMETERS = [PARAMETERS_STRING];
 
-const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
-const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_CONFLICTS = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
+const IGNORE_DEPLOY = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
 let MODTYPE_FOLDERS = [PAK_PATH, PAK_ALT_PATH];
 if (ue4ssLoadOrder) {
   //LogicMods are only loaded when UE4SS's BPModLoaderMod is present

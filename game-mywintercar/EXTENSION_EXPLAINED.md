@@ -26,9 +26,11 @@
 
 | Flag | Value | Description |
 | --- | --- | --- |
+| `hasVersionFile` | `false` | set to true if there is a Version.info file that contains the game version number |
 | `hasCustomMods` | `false` | set to true if there are modTypes with folder paths dependent on which mod loader is installed |
 | `hasCustomLoader` | `true` | set to true if there is a custom mod loader |
 | `customLoaderInstaller` | `true` | set true if the custom loader uses an installer |
+| `exeHasGameVersion` | `false` | toggle: true if the game devs stamp the real game version (not just the Unity player version) into the exe ProductVersion |
 | `allowBepCfgMan` | `false` | should BepInExConfigManager be downloaded? |
 | `allowMelPrefMan` | `false` | should MelonPreferencesManager be downloaded? False until figure out UniverseLib dependency |
 | `allowBepinexNexus` | `false` | set false until bugs are fixed |
@@ -122,4 +124,5 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
+- **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.

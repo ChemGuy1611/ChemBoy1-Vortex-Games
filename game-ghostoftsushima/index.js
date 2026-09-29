@@ -73,8 +73,16 @@ const PARAMETERS = [];
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/879"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Ghost_of_Tsushima_Director%27s_Cut";
 const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
-const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
-const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_CONFLICTS = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
+const IGNORE_DEPLOY = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
 const spec = {
   game: {
     id: GAME_ID,

@@ -135,8 +135,16 @@ const PARAMETERS = [PARAMETERS_STRING];
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/953"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Far_Cry_3";
 const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
-const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
-const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_CONFLICTS = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
+const IGNORE_DEPLOY = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
 const spec = {
   game: {
     id: GAME_ID,

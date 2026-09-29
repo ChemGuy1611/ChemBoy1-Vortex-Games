@@ -1,0 +1,6 @@
+{
+  "name": "Global Ignore Patterns Helper",
+  "author": "ChemBoy1",
+  "version": "1.0.0",
+  "description": "Adds README/CHANGELOG/LICENSE file patterns to every game's mod conflict and deployment ignore list, so these files are never flagged as conflicts or deployed into the game folder."
+}

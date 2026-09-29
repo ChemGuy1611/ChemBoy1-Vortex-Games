@@ -2,8 +2,8 @@
 Name: MENACE Vortex Extension
 Structure: Unity MelonLoader
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-09-18
+Version: 1.0.2
+Date: 2026-09-28
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -11,6 +11,7 @@ const fs = require("fs");
 const fsp = fs.promises;
 const { actions, fs: vfs, util, selectors, log, VortexError } = require("vortex-api");
 const path = require("path");
+const crypto = require("crypto");
 const template = require("string-template");
 const { parseStringPromise } = require("xml2js");
 const winapi = require("winapi-bindings");
@@ -64,6 +65,7 @@ const fallbackInstaller = true; //enable fallback installer. Set false if you ne
 const preventPluginInstall = true; //set to true if you want to prevent plugins not for the current mod loader from installing. Disable if using cross-compatibility plugins.
 const loaderSwitchRestart = false; //set to true if you need to restart the extension after switching mod loaders
 const enableSaveInstaller = false; //set to true if you want to enable the save installer (only recommended if saves are stored in the game's folder)
+const exeHasGameVersion = false; //toggle: true if the game devs stamp the real game version (not just the Unity player version) into the exe ProductVersion
 
 const DATA_FOLDER_DEFAULT = `${GAME_STRING}_Data`;
 let DATA_FOLDER = DATA_FOLDER_DEFAULT;
@@ -72,6 +74,9 @@ const DATA_FOLDER_ALT = `${GAME_STRING_ALT}_Data`; //don't always match
 const ROOT_FOLDERS = [DATA_FOLDER, DATA_FOLDER_ALT];
 const VERSION_FILE = "app.info";
 let VERSION_FILE_PATH = path.join(DATA_FOLDER, VERSION_FILE);
+const hasVersionFile = false; //set to true if there is a Version.info file that contains the game version number
+const VER_IDX = 3; //index of the version number in the Version.info file
+const VER_SPLIT = " "; //split character for the Version.info file - typically a space
 
 const DEV_REGSTRING = "Overhype Studios"; //developer name
 const GAME_REGSTRING = "Menace"; //game name
@@ -413,6 +418,7 @@ const IGNORE_CONFLICTS = [
   path.join("**", "README.txt"),
   path.join("**", "ReadMe.txt"),
   path.join("**", "Readme.txt"),
+  path.join("**", "license*"),
 ];
 const IGNORE_DEPLOY = [
   path.join("**", "manifest.json"),
@@ -422,6 +428,7 @@ const IGNORE_DEPLOY = [
   path.join("**", "README.txt"),
   path.join("**", "ReadMe.txt"),
   path.join("**", "Readme.txt"),
+  path.join("**", "license*"),
 ];
 let MODTYPE_FOLDERS = [MELON_PLUGINS_PATH, MELON_MODS_PATH, MELON_CONFIG_PATH, CUSTOMLEADERS_PATH];
 
@@ -2096,9 +2103,155 @@ async function chooseModLoader(api, gameSpec) {
   await downloadMelon(api, gameSpec);
 }
 
+async function readVersionFile(gamePath) {
+  //per-game override: text file (usually Version.info) that already carries the real game version
+  const versionFilePath = path.join(gamePath, VERSION_FILE_PATH);
+  try {
+    const data = await fsp.readFile(versionFilePath, { encoding: "utf8" });
+    const segments = data.split(VER_SPLIT); //space is usually the split for Version.info files
+    return segments[VER_IDX];
+  } catch (err) {
+    log("warn", `Could not read ${VERSION_FILE} file to get game version: ${err}`);
+    return undefined;
+  }
+}
+
+async function getExeProductVersion(filePath) {
+  const exeVersion = require("exe-version");
+  return exeVersion.getProductVersion(filePath);
+}
+
+function findSteamAppsDir(gamePath) {
+  //walk up from gamePath to the ancestor dir whose parent is 'steamapps' and whose name is 'common'
+  let dir = gamePath;
+  for (;;) {
+    const parent = path.dirname(dir);
+    if (parent === dir) return undefined; //reached filesystem root
+    if (
+      path.basename(parent).toLowerCase() === "common" &&
+      path.basename(path.dirname(parent)).toLowerCase() === "steamapps"
+    ) {
+      return path.dirname(parent);
+    }
+    dir = parent;
+  }
+}
+
+async function resolveSteamBuildVersion(gamePath) {
+  const steamAppsDir = findSteamAppsDir(gamePath);
+  if (!steamAppsDir) return undefined;
+  for (const appId of [STEAMAPP_ID, STEAMAPP_ID_DEMO]) {
+    if (!appId || appId === "XXX") continue;
+    try {
+      const contents = await fsp.readFile(
+        path.join(steamAppsDir, `appmanifest_${appId}.acf`),
+        "utf8",
+      );
+      const match = contents.match(/"buildid"\s+"(\d+)"/);
+      if (match) return match[1];
+    } catch {
+      //manifest for this appId not present here, try next
+    }
+  }
+  return undefined;
+}
+
+async function resolveEpicBuildVersion(gamePath) {
+  if (!EPICAPP_ID || EPICAPP_ID === "XXX") return undefined;
+  let dataPath;
+  try {
+    dataPath = winapi.RegGetValue(
+      "HKEY_LOCAL_MACHINE",
+      "SOFTWARE\\WOW6432Node\\Epic Games\\EpicGamesLauncher",
+      "AppDataPath",
+    ).value;
+  } catch {
+    dataPath = path.join(
+      process.env.ProgramData || process.env.ALLUSERSPROFILE,
+      "Epic",
+      "EpicGamesLauncher",
+      "Data",
+    );
+  }
+  const normalizedGamePath = path.normalize(gamePath).toLowerCase();
+  try {
+    const manifestsDir = path.join(dataPath, "Manifests");
+    const entries = await fsp.readdir(manifestsDir);
+    for (const entry of entries) {
+      if (!entry.toLowerCase().endsWith(".item")) continue;
+      try {
+        const data = JSON.parse(await fsp.readFile(path.join(manifestsDir, entry), "utf8"));
+        const matches =
+          data.AppName === EPICAPP_ID ||
+          path.normalize(data.InstallLocation || "").toLowerCase() === normalizedGamePath;
+        if (matches && data.AppVersionString) return data.AppVersionString;
+      } catch {
+        //unreadable/invalid manifest, skip it
+      }
+    }
+  } catch (err) {
+    log("warn", `Could not read Epic manifests for ${GAME_ID}: ${err}`);
+  }
+  return undefined;
+}
+
+async function resolveGogVersion(gamePath) {
+  if (!GOGAPP_ID || GOGAPP_ID === "XXX") return undefined;
+  try {
+    const regKey = `SOFTWARE\\WOW6432Node\\GOG.com\\Games\\${GOGAPP_ID}`;
+    const regPath = winapi.RegGetValue("HKEY_LOCAL_MACHINE", regKey, "path").value;
+    if (path.normalize(regPath).toLowerCase() !== path.normalize(gamePath).toLowerCase()) {
+      return undefined;
+    }
+    return winapi.RegGetValue("HKEY_LOCAL_MACHINE", regKey, "ver").value;
+  } catch {
+    //RegGetValue throws (never returns null) when the key/value is missing
+    return undefined;
+  }
+}
+
+async function resolveStoreVersion(gamePath) {
+  const steamVersion = await resolveSteamBuildVersion(gamePath);
+  if (steamVersion !== undefined) return steamVersion;
+  const epicVersion = await resolveEpicBuildVersion(gamePath);
+  if (epicVersion !== undefined) return epicVersion;
+  return resolveGogVersion(gamePath);
+}
+
+let VERSION_HASH_CACHE = {}; //cacheKey (MD5 of sorted mtimes) -> hash string; paid once per build, not per mod-installed health check
+
+async function resolveHashVersion(gamePath) {
+  const hashFiles = ASSEMBLY_FILES.map((file) => path.join(ASSEMBLY_PATH, file)); //Unity game code (IL2CPP GameAssembly.dll or Mono Assembly-CSharp.dll), never the exe stub
+  try {
+    const mtimes = [];
+    for (const relFile of hashFiles) {
+      mtimes.push((await fsp.stat(path.join(gamePath, relFile))).mtimeMs);
+    }
+    mtimes.sort((a, b) => a - b);
+    const cacheKey = crypto
+      .createHash("md5")
+      .update(mtimes.map((m) => m.toString()).join(""))
+      .digest("hex");
+    if (VERSION_HASH_CACHE[cacheKey] !== undefined) return VERSION_HASH_CACHE[cacheKey];
+    const fileHashes = [];
+    for (const relFile of hashFiles) {
+      fileHashes.push(await util.fileMD5(path.join(gamePath, relFile)));
+    }
+    const hash = crypto.createHash("md5").update(fileHashes.join("")).digest("hex");
+    VERSION_HASH_CACHE[cacheKey] = hash;
+    return hash;
+  } catch (err) {
+    log("warn", `Could not compute hash game version for ${GAME_ID}: ${err}`);
+    return undefined;
+  }
+}
+
 async function resolveGameVersion(gamePath) {
   GAME_VERSION = await setGameVersion(gamePath);
-  VERSION_FILE_PATH = path.join(DATA_FOLDER, VERSION_FILE);
+  if (hasVersionFile) {
+    const versionFileValue = await readVersionFile(gamePath);
+    if (versionFileValue !== undefined) return versionFileValue;
+  }
   let version = "0.0.0";
   if (GAME_VERSION === "xbox") {
     // use appxmanifest.xml for Xbox version
@@ -2111,28 +2264,27 @@ async function resolveGameVersion(gamePath) {
       log("error", `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
       return Promise.resolve(version);
     }
-  } else {
-    // use exe
+  }
+  const EXEC_RESOLVED = getExecutable(gamePath); //need to read to account for multiple exe
+  const READ_FILE = path.join(gamePath, EXEC_RESOLVED);
+  if (exeHasGameVersion) {
     try {
-      const exeVersion = require("exe-version");
-      version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
-      return Promise.resolve(version);
+      return await getExeProductVersion(READ_FILE);
     } catch (err) {
-      log("error", `Could not read ${EXEC} file to get game version: ${err}`);
-      return Promise.resolve(version);
+      log("error", `Could not read ${READ_FILE} file to get game version: ${err}`);
     }
   }
-  /*else {
-    const versionFilepath = path.join(gamePath, VERSION_FILE_PATH);
-    try {
-      const data = await fs.readFileAsync(versionFilepath, { encoding: 'utf8' });
-      const segments = data.split('\n');
-      return (segments[3])
-        ? Promise.resolve(segments[3])
-        : Promise.reject(new VortexError('Failed to resolve version', { kind: 'data-invalid' }));
-    } catch (err) {
-      return Promise.reject(err);
-    }
+  const storeVersion = await resolveStoreVersion(gamePath);
+  if (storeVersion !== undefined) return storeVersion;
+  const hashVersion = await resolveHashVersion(gamePath);
+  if (hashVersion !== undefined) return hashVersion;
+  //last resort: exe ProductVersion (Unity player version), then "0.0.0". Never throw.
+  try {
+    version = await getExeProductVersion(READ_FILE);
+    return version;
+  } catch (err) {
+    log("error", `Could not read ${READ_FILE} file to get game version: ${err}`);
+    return version;
   } //*/
 } //*/
 

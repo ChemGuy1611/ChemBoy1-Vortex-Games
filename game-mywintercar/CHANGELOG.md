@@ -2,6 +2,9 @@
 
 ## Planned Improvements (Not Yet Released)
 
+## [0.2.4] - 2026-09-28
+
+- Game version now shows the real game build instead of the Unity engine version.
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 - The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
 

@@ -151,8 +151,16 @@ let SAVE_PATH = path.join(APPDATA, "Balatro");
 const SAVE_PATH_XBOX = path.join(DATA_PATH_XBOX);
 
 //Filled in from info above
-const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
-const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_CONFLICTS = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
+const IGNORE_DEPLOY = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
 const spec = {
   game: {
     id: GAME_ID,

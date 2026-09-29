@@ -477,12 +477,14 @@ const IGNORE_CONFLICTS = [
   path.join("**", "icon.png"),
   path.join("**", "changelog*"),
   path.join("**", "readme*"),
+  path.join("**", "license*"),
 ];
 const IGNORE_DEPLOY = [
   path.join("**", "manifest.json"),
   path.join("**", "icon.png"),
   path.join("**", "changelog*"),
   path.join("**", "readme*"),
+  path.join("**", "license*"),
 ];
 let MODTYPE_FOLDERS = [
   BEPINEX_PATCHERS_PATH,

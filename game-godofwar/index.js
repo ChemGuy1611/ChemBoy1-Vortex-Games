@@ -105,8 +105,16 @@ const LOADER_FILE_NO = 475;
 const LOADER_DOMAIN = GAME_ID;
 
 // FILLED IN FROM DATA ABOVE
-const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
-const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_CONFLICTS = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
+const IGNORE_DEPLOY = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
 const spec = {
   game: {
     id: GAME_ID,

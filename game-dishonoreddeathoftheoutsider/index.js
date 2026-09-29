@@ -139,8 +139,16 @@ const MODTYPE_FOLDERS = [VOIDMOD_PATH, VIDEO_PATH];
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1532"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Dishonored%3A_Death_of_the_Outsider";
 const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
-const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
-const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_CONFLICTS = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
+const IGNORE_DEPLOY = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
 const spec = {
   game: {
     id: GAME_ID,

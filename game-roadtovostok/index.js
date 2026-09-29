@@ -187,8 +187,16 @@ const PAR_STRING2 = "--setup-create-override-cfg";
 //parameters at all when there is nothing to pass.
 const PARAMETERS = PARAMETERS_STRING === "" ? [] : [PARAMETERS_STRING];
 
-const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
-const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_CONFLICTS = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
+const IGNORE_DEPLOY = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
 
 let MODTYPE_FOLDERS = [MOD_PATH];
 

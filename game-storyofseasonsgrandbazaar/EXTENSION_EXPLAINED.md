@@ -35,6 +35,8 @@
 | `allowBepinexNexus` | `false` | set false until bugs are fixed |
 | `downloadCfgMan` | `true` | should BepInExConfigManager be downloaded? |
 | `bleedingEdge` | `true` | set to true to download bleeding edge builds of BepInEx (IL2CPP only) |
+| `debug` | `false` | toggle for debug mode |
+| `exeHasGameVersion` | `false` | toggle: true if the game devs stamp the real game version (not just the Unity player version) into the exe ProductVersion |
 | `hasVersionFile` | `false` | set to true if there is a Version.info file that contains the game version number |
 | `hasUserIdFolder` | `true` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
 

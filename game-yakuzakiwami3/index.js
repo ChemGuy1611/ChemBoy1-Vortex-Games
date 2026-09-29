@@ -128,8 +128,16 @@ const SAVE_EXTS = [".XXX"];
 const MOD_PATH_DEFAULT = MODMANAGERMOD_PATH;
 const PARAMETERS_STRING = "";
 const PARAMETERS = [PARAMETERS_STRING];
-const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
-const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_CONFLICTS = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
+const IGNORE_DEPLOY = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
 
 let MODTYPE_FOLDERS = [MODMANAGERMOD_PATH, DATAMOD_PATH]; // Add all mod type target paths
 

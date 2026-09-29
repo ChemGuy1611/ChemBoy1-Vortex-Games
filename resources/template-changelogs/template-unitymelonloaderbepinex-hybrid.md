@@ -1,5 +1,14 @@
 # template-unitymelonloaderbepinex-hybrid Changelog
 
+## [2026-09-28]
+
+- Added: a `license*` glob (`path.join("**", "license*")`) alongside the existing `changelog*`/`readme*` entries in `IGNORE_CONFLICTS`/`IGNORE_DEPLOY`, so LICENSE files are treated the same as README/CHANGELOG - never flagged as a mod conflict, never deployed into the game folder.
+
+## [2026-09-27] (2)
+
+- Changed: `resolveGameVersion` now resolves the real game build instead of the Unity player version stamped in the exe's `ProductVersion`, which barely changes across content patches and made curator/user "Game version mismatch" checks meaningless. New tiered chain, ported from the `game-prodeus` pilot (`ue-unity-game-version-soaring-creek` plan, live-tested OK): `hasVersionFile` stays tier 0 (extracted into `readVersionFile()`, now returns `undefined` on a read failure instead of `"0.0.0"` so the chain falls through); then Xbox appxmanifest (unchanged); then a new `exeHasGameVersion` toggle (default off) for games whose devs do stamp the real version into the exe; then store build metadata - Steam `appmanifest_<id>.acf` `buildid` (walking up from the game path to find `steamapps/common`), Epic launcher `.item` manifest `AppVersionString`, GOG registry `ver`; then an MD5-of-MD5s hash of `ASSEMBLY_FILES` (IL2CPP `GameAssembly.dll` or Mono `Assembly-CSharp.dll`+`Assembly-CSharp-firstpass.dll`, never the Unity exe stub), cached per sorted file mtimes so it is paid once per build rather than on every `mod-installed` health check; last resort falls through to the old exe `ProductVersion` read, then `"0.0.0"`. Never throws. Requires `crypto`, newly added to the require block (`winapi-bindings` was already present).
+- Note: existing collection revisions were published against the old Unity-player-version values, so users will see a one-time "Game version mismatch" dialog on games ported to this resolver until the curator republishes.
+
 ## [2026-09-27]
 
 - Fixed: `setGameVersion()`'s Xbox branch called `statCheckAsync(gamePath, EXEC_XBOX)` without `await` — a Promise is always truthy, so on any game with `hasXbox = true` the check always passed regardless of the actual install, misclassifying every non-Xbox install as Xbox and swapping `DATA_FOLDER`/`ASSETS_PATH`/`ASSEMBLY_PATH`/`SAVE_PATH` to the Xbox variants. The equivalent `multiExe`/`EXEC_ALT` check two lines below already awaited correctly. Found while debugging a `prodeus` version-resolver pilot that returned "0.0.0" on a real Steam install (`ue-unity-game-version-soaring-creek.md` W2).

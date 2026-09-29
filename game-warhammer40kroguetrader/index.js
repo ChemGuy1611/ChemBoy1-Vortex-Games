@@ -194,6 +194,7 @@ const IGNORE_CONFLICTS = [
   path.join("**", "README.txt"),
   path.join("**", "ReadMe.txt"),
   path.join("**", "Readme.txt"),
+  path.join("**", "license*"),
 ];
 const IGNORE_DEPLOY = [
   path.join("**", "CHANGELOG.md"),
@@ -201,6 +202,7 @@ const IGNORE_DEPLOY = [
   path.join("**", "README.txt"),
   path.join("**", "ReadMe.txt"),
   path.join("**", "Readme.txt"),
+  path.join("**", "license*"),
 ];
 let MODTYPE_FOLDERS = [PLUGIN_PATH, MOD_PATH, PORTRAIT_PATH, SAVE_PATH];
 

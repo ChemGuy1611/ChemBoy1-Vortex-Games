@@ -45,6 +45,7 @@ const IGNORE_CONFLICTS = [
   path.join("**", "README.txt"),
   path.join("**", "ReadMe.txt"),
   path.join("**", "Readme.txt"),
+  path.join("**", "license*"),
 ];
 const IGNORE_DEPLOY = [
   path.join("**", "modinfo.ini"),
@@ -53,6 +54,7 @@ const IGNORE_DEPLOY = [
   path.join("**", "README.txt"),
   path.join("**", "ReadMe.txt"),
   path.join("**", "Readme.txt"),
+  path.join("**", "license*"),
 ];
 
 //Info for mod types and installers

@@ -3,14 +3,14 @@
 fetch_nexus_stats.py
 --------------------
 Fetches endorsement count and unique download count from the Nexus Mods v1 API
-for every game-* extension with a valid EXTENSION_URL (contains nexusmods.com).
-Also fetches active file-update-group IDs from the Nexus Mods v3 API.
-Results are cached to vortex_gui_nexus_stats.json at the repo root for display
-in vortex_gui.py.
+for every game-* and helper-* extension with a valid EXTENSION_URL (contains
+nexusmods.com). Also fetches active file-update-group IDs from the Nexus Mods
+v3 API. Results are cached to vortex_gui_nexus_stats.json at the repo root for
+display in vortex_gui.py.
 
 Usage:
     python fetch_nexus_stats.py
-    python fetch_nexus_stats.py GAME_ID [GAME_ID ...]
+    python fetch_nexus_stats.py EXT_ID [EXT_ID ...]
     python fetch_nexus_stats.py --dry-run
     python fetch_nexus_stats.py --force
     python fetch_nexus_stats.py --prune [--dry-run]
@@ -18,7 +18,7 @@ Usage:
     python fetch_nexus_stats.py --max-age 7
 
 Options:
-    GAME_ID          One or more game IDs to process. Omit to process all.
+    EXT_ID           One or more game or helper IDs to process. Omit to process all.
     --dry-run        List extensions to fetch (or entries to prune) without making changes.
     --force          Re-fetch stats even if already cached.
     --max-age DAYS   Re-fetch entries older than DAYS days (ignored when --force is set).
@@ -44,9 +44,11 @@ def fetch_all(target_ids=None, dry_run=False, force=False, max_age=None):
     cache = vu.read_gui_stats()
     now = _time.time()
 
-    # Build work list
+    # Build work list -- game-* and helper-* extensions share the same
+    # id-space filter, since a bare id can only ever resolve to one or the other.
+    extensions = list(vu.iter_game_folders(target_ids)) + list(vu.iter_helper_folders(target_ids))
     work = []
-    for _folder, game_id, src in vu.iter_game_folders(target_ids):
+    for _folder, game_id, src in extensions:
         url = vu.extract_extension_url(src)
         if not url:
             continue
@@ -196,9 +198,9 @@ def report_groups(cache=None):
 # == Prune =====================================================================
 
 def prune(dry_run=False):
-    """Remove cache entries for game IDs no longer present in the repo."""
+    """Remove cache entries for game/helper IDs no longer present in the repo."""
     cache = vu.read_gui_stats()
-    current = set(vu.list_game_ids())
+    current = set(vu.list_game_ids()) | set(vu.list_helper_ids())
     stale = sorted(gid for gid in cache if gid not in current)
     if not stale:
         print("Nothing to prune -- all cached IDs still exist in the repo.")

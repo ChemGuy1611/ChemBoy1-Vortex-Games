@@ -22,6 +22,12 @@
 - **Steam** — `3373660`
 - **GOG** — `1582305837`
 
+## Feature Flags
+
+| Flag | Value | Description |
+| --- | --- | --- |
+| `isPurging` | `false` | guards plugins.js writes during a purge cycle - see the will-purge/did-deploy listeners in main() |
+
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
@@ -63,5 +69,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 ## Special Features
 
+- **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
+- **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.

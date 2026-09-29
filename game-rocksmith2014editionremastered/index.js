@@ -158,8 +158,16 @@ const NOCABLE_SETTINGS_FILE = "NCL_Settings.xml";
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1240"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Rocksmith_2014";
 const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
-const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
-const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_CONFLICTS = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
+const IGNORE_DEPLOY = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
 const spec = {
   game: {
     id: GAME_ID,

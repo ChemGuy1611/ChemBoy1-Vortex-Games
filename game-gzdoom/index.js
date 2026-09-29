@@ -158,8 +158,16 @@ const PORT_CONFIG_PATH = path.join(CONFIG_PATH, PORT_CONFIG_FILE);
 //Filled in from info above
 const PCGAMINGWIKI_URL = "XXX";
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1319";
-const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
-const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_CONFLICTS = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
+const IGNORE_DEPLOY = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
 
 //Embedded ModDB browser pages - Doom and Doom II each have their own moddb.com game page, but
 //this extension registers one game id for both, so both pages hang off it. The shared base keys

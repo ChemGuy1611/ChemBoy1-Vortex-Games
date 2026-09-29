@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 """
-deploy_to_vortex.py -- Copy CB1 game extension folder(s) to the Vortex plugins directory.
+deploy_to_vortex.py -- Copy CB1 game/helper extension folder(s) to the Vortex plugins directory.
 
 Usage:
-    python deploy_to_vortex.py GAME_ID [GAME_ID ...] [--dry-run] [--force] [--restart-vortex] [--launch-game]
+    python deploy_to_vortex.py EXT_ID [EXT_ID ...] [--dry-run] [--force] [--restart-vortex] [--launch-game]
     python deploy_to_vortex.py --all [--dry-run] [--force] [--restart-vortex]
 
 Arguments:
-    GAME_ID     One or more game IDs (e.g. thelastofuspart2)
-    --all       Deploy every game-* extension in the repo
+    EXT_ID      One or more extension IDs -- either a game id (e.g. thelastofuspart2,
+                matches a game-<id> folder) or a helper id (e.g. falloutlondon, matches
+                a helper-<id> folder). game-<id> is tried first, so a bare id can only
+                ever resolve to one or the other.
+    --all       Deploy every game-* and helper-* extension in the repo
     --dry-run   Preview what would change without copying
     --force     Fully replace the deployed folder instead of doing a partial
                 update. A partial update carries index.js, the *downloader.js /
@@ -18,8 +21,8 @@ Arguments:
                 version stays put. The deployed folder is always located by name
                 first, with or without --force, so this replaces the existing
                 extension rather than creating a second copy beside it. A new
-                "game-<id>" folder is created only when no deployed folder can be
-                found at all.
+                "game-<id>"/"helper-<id>" folder is created only when no deployed
+                folder can be found at all.
     --restart-vortex
                 Close Vortex before copying (graceful taskkill, force-kill
                 after 30s) and launch it again (no CLI args) after all copies.
@@ -28,9 +31,11 @@ Arguments:
     --launch-game
                 Same restart, but relaunch straight into the deployed game
                 ("Vortex.exe --game <GAME_ID>"). Implies --restart-vortex.
-                Requires exactly one GAME_ID (not valid with --all). The id
-                passed to Vortex is the GAME_ID declared in the extension's
-                index.js, falling back to the folder id. Ignored with --dry-run.
+                Requires exactly one EXT_ID (not valid with --all), and that id
+                must resolve to a game-<id> folder -- a helper has no Vortex-
+                registered game of its own to launch into. The id passed to
+                Vortex is the GAME_ID declared in the extension's index.js,
+                falling back to the folder id. Ignored with --dry-run.
 
 Environment variables:
     VORTEX_PLUGINS_DIR  Optional. Target plugins directory. Read by vortex_utils
@@ -101,23 +106,23 @@ def _vortex_game_id(folder_id: str) -> str:
     return (vu.extract_game_id(js_src) if js_src else None) or folder_id
 
 
-def deploy_game(game_id: str, dry_run: bool, force: bool) -> bool:
-    src = os.path.join(vu.REPO_ROOT, f"game-{game_id}")
-    if not os.path.isdir(src):
-        vu.log_error(game_id, f"source folder not found: {src}")
+def deploy_game(ext_id: str, dry_run: bool, force: bool) -> bool:
+    src, kind = vu.resolve_extension_folder(ext_id)
+    if not src:
+        vu.log_error(ext_id, f"source folder not found: {vu.GAME_PREFIX}{ext_id} or {vu.HELPER_PREFIX}{ext_id}")
         return False
-
-    js_src = vu.read_index_js(src)
-    game_name = vu.extract_game_name(js_src) if js_src else None
+    prefix = vu.extension_prefix(kind)
+    name = vu.extension_display_name(src, kind)
+    game_id = ext_id
 
     # Always resolve the deployed folder, including under --force. Extensions
     # installed through Vortex are named e.g. "Atomic Heart Vortex Extension 1832
-    # 1.0.4", not "game-<id>", so skipping the lookup would deploy a second copy
-    # alongside the live one and leave Vortex loading two registrations of the
-    # same game. --force selects a full-tree replace of the resolved folder; the
-    # "game-<id>" fallback is only for a genuine first-time deploy.
-    resolved = vu.find_vortex_plugin_folder(game_id, game_name)
-    dest = resolved or os.path.join(PLUGINS_DIR, f"game-{game_id}")
+    # 1.0.4", not "game-<id>"/"helper-<id>", so skipping the lookup would deploy a
+    # second copy alongside the live one and leave Vortex loading two registrations
+    # of the same extension. --force selects a full-tree replace of the resolved
+    # folder; the prefixed-folder fallback is only for a genuine first-time deploy.
+    resolved = vu.find_vortex_plugin_folder(ext_id, name)
+    dest = resolved or os.path.join(PLUGINS_DIR, f"{prefix}{ext_id}")
     partial = bool(resolved) and not force
 
     # Partial update (deployed folder already exists, no --force): carry index.js,
@@ -147,21 +152,21 @@ def deploy_game(game_id: str, dry_run: bool, force: bool) -> bool:
         else:
             action = "replace" if os.path.isdir(dest) else "create"
             vu.log_info(game_id, f"{action} -> {dest}")
-            for name in sorted(os.listdir(src)):
-                status = "(overwrite)" if os.path.exists(os.path.join(dest, name)) else "(new)"
-                print(f"  {name} {status}")
+            for fname in sorted(os.listdir(src)):
+                status = "(overwrite)" if os.path.exists(os.path.join(dest, fname)) else "(new)"
+                print(f"  {fname} {status}")
         return True
 
     if partial:
-        for name in copy_names:
-            src_file = os.path.join(src, name)
-            dest_file = os.path.join(dest, name)
+        for fname in copy_names:
+            src_file = os.path.join(src, fname)
+            dest_file = os.path.join(dest, fname)
             dest_tmp = dest_file + ".tmp"
             try:
                 shutil.copy2(src_file, dest_tmp)
                 os.replace(dest_tmp, dest_file)
             except PermissionError:
-                vu.log_error(game_id, f"{name} locked in {os.path.basename(dest)} -- close Vortex first (or use --restart-vortex)")
+                vu.log_error(game_id, f"{fname} locked in {os.path.basename(dest)} -- close Vortex first (or use --restart-vortex)")
                 return False
         vu.log_info(game_id, f"updated {', '.join(copy_names)} in {os.path.basename(dest)}")
     else:
@@ -181,7 +186,7 @@ def main():
     )
     parser.add_argument(
         "--all", action="store_true",
-        help="Deploy every game-* extension in the repo.",
+        help="Deploy every game-* and helper-* extension in the repo.",
     )
     parser.add_argument(
         "--restart-vortex", action="store_true",
@@ -195,17 +200,20 @@ def main():
     args = parser.parse_args()
 
     if args.all:
-        game_ids = vu.list_game_ids()
+        game_ids = vu.list_game_ids() + vu.list_helper_ids()
         if not game_ids:
-            print("[ERROR] No game-* folders found in repo.")
+            print("[ERROR] No game-* or helper-* folders found in repo.")
             sys.exit(1)
     elif args.game_ids:
         game_ids = args.game_ids
     else:
-        parser.error("Provide at least one GAME_ID or use --all.")
+        parser.error("Provide at least one EXT_ID or use --all.")
 
     if args.launch_game and len(game_ids) != 1:
-        parser.error("--launch-game requires exactly one GAME_ID (Vortex opens a single game).")
+        parser.error("--launch-game requires exactly one EXT_ID (Vortex opens a single game).")
+    if args.launch_game and not os.path.isdir(os.path.join(vu.REPO_ROOT, f"{vu.GAME_PREFIX}{game_ids[0]}")):
+        parser.error(f"--launch-game requires a game-* extension; "
+                      f"'{game_ids[0]}' has no Vortex-registered game of its own to launch into.")
 
     if not os.path.isdir(PLUGINS_DIR):
         print(f"[ERROR] Vortex plugins folder not found: {PLUGINS_DIR}")

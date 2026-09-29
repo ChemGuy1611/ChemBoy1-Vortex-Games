@@ -230,8 +230,16 @@ if (needsModInstaller) MODTYPE_FOLDERS.push(MOD_PATH);
 if (saveInstaller) MODTYPE_FOLDERS.push(SAVE_PATH);
 if (hasLoader) MODTYPE_FOLDERS.push(LOADER_PATH);
 if (hasLoader) MODTYPE_FOLDERS.push(LOADER_MODS_PATH); //the framework reads this folder every time it starts, so it has to exist even though Vortex never deploys into it
-const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
-const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_CONFLICTS = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
+const IGNORE_DEPLOY = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
 
 //filled in from data above
 const spec = {

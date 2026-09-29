@@ -100,8 +100,16 @@ const MOD_PATH_DEFAULT = FROSTYMOD_PATH; //default here to accommodate FOMODs
 const PARAMETERS_STRING = "";
 const PARAMETERS = [PARAMETERS_STRING];
 let MODTYPE_FOLDERS = [FROSTYMOD_PATH, PATCH_PATH]; // Folders to ensure are writable on setup
-const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
-const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_CONFLICTS = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
+const IGNORE_DEPLOY = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
 
 // Filled in from data above
 const spec = {

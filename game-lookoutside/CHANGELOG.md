@@ -1,10 +1,14 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.0.0] - 2026-09-29
 
 - Fixed: Mod files with no file extension were skipped during installation
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 - The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
+- Installed plugins can now be reordered and enabled/disabled from Vortex's Load Order page, which keeps plugins.js in sync automatically. Only mod-installed plugins are listed - the game's built-in plugins are left alone.
+- The Load Order page now shows mod thumbnails, lets you lock a plugin's position, filter the list by status, and right-click a plugin for a menu with move-to-top/bottom, open staging folder, open mod page, and enable/disable options.
+- Purging mods now removes their plugin entries from plugins.js - the game's own built-in plugins are left alone.
+- Added an "Edit Parameters" button to each plugin on the Load Order page (also in the right-click menu), so a plugin's description and configuration can be set without hand-editing plugins.js.
 
 ## [0.2.1] - 2026-08-11
 

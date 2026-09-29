@@ -1,8 +1,13 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.0.3] - 2026-09-29
+
+- Shortened the "Run AnvilToolkit" deploy reminder button to "Run ATK".
+
+## [1.0.2] - 2026-09-28
 
 - The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
+- Fixed: the "Installed Version" shown by Vortex was always wrong, since the game's own exe doesn't store a real version number. The extension now reads the actual installed build from Steam, Epic, or the Ubisoft Connect install data instead.
 
 ## [1.0.0] - 2026-09-21
 

@@ -12,6 +12,16 @@ const XBOXAPP_ID = "ColdIronStudiosLLC.AliensFireteam";
 const XBOXEXECNAME = "AppAliensFireteamEliteShipping";
 const EXEC_XBOX = "gamelaunchhelper.exe";
 const EXEC = "Endeavor.exe";
+const IGNORE_CONFLICTS = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
+const IGNORE_DEPLOY = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
 
 function findGame() {
   return util.GameStoreHelper.findByAppId([STEAMAPP_ID, XBOXAPP_ID]).then((game) => game.gamePath);
@@ -74,6 +84,8 @@ function main(context) {
     details: {
       steamAppId: STEAMAPP_ID,
       stopPatterns: ["(^|/).*.pak$"],
+      ignoreConflicts: IGNORE_CONFLICTS,
+      ignoreDeploy: IGNORE_DEPLOY,
     },
   });
   return true;

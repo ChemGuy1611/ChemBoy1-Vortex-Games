@@ -135,11 +135,13 @@ const IGNORE_CONFLICTS = [
   path.join("**", "Preview - *"),
   path.join("**", "changelog*"),
   path.join("**", "readme*"),
+  path.join("**", "license*"),
 ];
 const IGNORE_DEPLOY = [
   path.join("**", "Preview - *"),
   path.join("**", "changelog*"),
   path.join("**", "readme*"),
+  path.join("**", "license*"),
 ];
 
 //Embedded ModDB browser page - the user browses the live moddb.com section for this game and

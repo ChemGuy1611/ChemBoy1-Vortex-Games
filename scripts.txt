@@ -23,6 +23,7 @@ setup_test_folder.py
 deploy_to_vortex.py
 categorize_games.py
 audit_parity.py
+audit_mod_pages.py
 analyze_vortex_log.py
 read_vortex_db.py
 audit_scripts.py

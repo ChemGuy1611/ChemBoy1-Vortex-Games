@@ -25,6 +25,16 @@ const GAME_NAME = "Ready Or Not";
 const GAME_NAME_SHORT = "Ready Or Not";
 const EXEC = "ReadyOrNot.exe";
 //const EXEC = XBOXEXECNAME; //XBOX Version
+const IGNORE_CONFLICTS = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
+const IGNORE_DEPLOY = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
 
 /*
   Unreal Engine Game Data
@@ -95,6 +105,8 @@ const spec = {
       //"gogAppId": GOGAPP_ID,
       epicAppId: EPICAPP_ID,
       xboxAppId: XBOXAPP_ID,
+      ignoreConflicts: IGNORE_CONFLICTS,
+      ignoreDeploy: IGNORE_DEPLOY,
     },
     environment: {
       SteamAPPId: STEAMAPP_ID,

@@ -2,8 +2,8 @@
 Name: Assassin's Creed IV Black Flag Vortex Extension
 Structure: Anvil Engine - AnvilToolkit/ForgerPatchManager
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-09-23
+Version: 1.0.3
+Date: 2026-09-29
 Notes:
 -
 //////////////////////////////////////////////////////////*/
@@ -15,6 +15,9 @@ const { actions, fs: vfs, util, selectors, log, VortexError } = require("vortex-
 const path = require("path");
 const template = require("string-template");
 const winapi = require("winapi-bindings");
+const crypto = require("crypto");
+//Auto-downloader module — only used for the ReForger installer package (hasReforger = true)
+const { download, findModByFile, resolveVersionByModVersion } = require("./downloader");
 
 //////////////////////////////////////////////////////////////////////////////
 // EDIT ZONE — everything down to "END EDIT ZONE" is set per game
@@ -27,6 +30,7 @@ const STEAMAPP_ID = "242050"; //https://steamdb.info/app/XXX/
 const EPICAPP_ID = null; //Epic catalog item — Ubisoft games are usually installed through Ubisoft Connect instead
 const GOGAPP_ID = null; //not typically available for Ubisoft games
 const DISCOVERY_IDS_ACTIVE = [UPLAYAPP_ID, STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const exeHasGameVersion = false; //exe ProductVersion is all-zero — Denuvo strips it, confirmed across every anvil game checked
 
 const GAME_NAME = "Assassin's Creed IV Black Flag";
 const GAME_NAME_SHORT = "ACIV Black Flag";
@@ -39,6 +43,7 @@ const EXTENSION_URL = "https://www.nexusmods.com/site/mods/971"; //Nexus link to
 const hasAtk = true; //true if game supports AnvilToolkit — also gates the Extracted/.forge/.data/loose workflow and the rename dialog
 const hasForger = false; //true if game supports Forger Patch Manager (.forger2 files) — typically older AC games
 const hasReforger = false; //true if game uses ReForger (Xbox package, found through the registry)
+const autoDownloadReforger = false; //true to fetch+run the ReForger installer automatically during setup. false: the tool is still registered and the "Download ReForger" button still works, just nothing happens without the user clicking it
 const hasDlcFolders = true; //true if game has dlc_NN folders — adds the DLC mod type and installer. Enumerate DLC_FOLDERS to match; .forge routing follows DLC_FOLDERS directly
 const hasResorep = true; //true if game uses ResoRep for runtime texture injection
 const autoCopyResorepDll = false; //true to copy the system d3d11.dll into the game folder automatically instead of leaving the bundled .bat to the user. The copy is not a managed mod file, so purging does not remove it
@@ -105,18 +110,45 @@ const FORGER_PAGE = 42;
 const FORGER_FILE = 716;
 const FORGER_DOMAIN = "assassinscreedodyssey"; //Forger is hosted on AC Odyssey page
 
-//ReForger — used when hasReforger = true. Installed as an Xbox (MSIX) package, so it is found
-//through the registry rather than in the game folder, and it cannot be managed as a Vortex mod.
+//ReForger — used when hasReforger = true. NOT an MSIX/Windows Store app despite the AppModel
+//registry path — ReForgerInstaller.exe does a regular application install, and its own
+//self-registration key embeds the exact installed version in the key NAME (not a value), so a
+//hardcoded key breaks on every ReForger update. REFORGER_PACKAGE_PREFIX/SUFFIX below are the
+//parts of that name that stay stable across versions; getReforgerPath() enumerates the parent
+//key's subkeys and matches on those instead of hardcoding the version segment between them. The
+//installer that sets ReForger up IS a naked GitHub release asset, downloaded through the shared
+//downloader module and deployed as a synthetic mod so it lands in the game folder, then run
+//from there.
 const REFORGER_ID = `${GAME_ID}-reforger`;
 const REFORGER_NAME = "ReForger";
 const REFORGER_EXEC = "ReForger.exe";
 const REFORGER_REG_HIVE = "HKEY_CLASSES_ROOT";
-const REFORGER_VERSION = "1.0.28.0";
-const REFORGER_REG_KEY = `Local Settings\\Software\\Microsoft\\Windows\\CurrentVersion\\AppModel\\PackageRepository\\Packages\\6e7137e4-333c-4a34-9da6-f129f667b612_${REFORGER_VERSION}_x64__9r43be93mcwwm`;
+const REFORGER_REG_PATH =
+  "Local Settings\\Software\\Microsoft\\Windows\\CurrentVersion\\AppModel\\PackageRepository\\Packages";
+const REFORGER_PACKAGE_PREFIX = "ReForger_"; //stable across versions
+const REFORGER_PACKAGE_SUFFIX = "_x64__9r43be93mcwwm"; //stable across versions
 const REFORGER_REG_VALUE = "Path";
 const REFORGER_GITHUB_API = "https://api.github.com/repos/QuilLeeR/ReForger";
-const REFORGER_RELEASES_URL = "https://github.com/QuilLeeR/ReForger/releases";
 const REFORGER_INSTALLER = "ReForgerInstaller.exe";
+const REFORGER_INSTALL_ID = `${GAME_ID}-reforgerinstall`; //synthetic mod type the downloaded installer deploys through
+const REFORGER_INSTALL_NAME = "ReForger Installer";
+//Requirement object for the shared downloader module. directCopyPath is only the legacy-file
+//pointer in directCopyAsMod mode — the real deploy destination is REFORGER_INSTALL_ID's
+//targetPath ({gamePath}) — and it is baked in at module load when GAME_PATH is still "", so
+//setup() reassigns it once the real path is known, same as every other directCopyAsMod adopter.
+const REFORGER_REQUIREMENTS = [
+  {
+    archiveFileName: REFORGER_INSTALLER,
+    userFacingName: REFORGER_NAME,
+    githubUrl: REFORGER_GITHUB_API,
+    directCopyAsMod: true,
+    modType: REFORGER_INSTALL_ID,
+    assemblyFileName: REFORGER_INSTALLER,
+    findMod: (api) => findModByFile(api, REFORGER_INSTALL_ID, REFORGER_INSTALLER),
+    resolveVersion: (api) => resolveVersionByModVersion(api, REFORGER_REQUIREMENTS[0]),
+    directCopyPath: REFORGER_INSTALLER,
+  },
+];
 
 //Forger patch textures — used when hasPatchTextures = true. Claims ".dds", so it cannot be combined with hasResorep.
 const PATCH_TEXTURES_ID = `${GAME_ID}-forgerpatchtextures`;
@@ -177,6 +209,12 @@ const RESOREP_TEXTURES_EXTS = [".dds"];
 const RESOREP_INI_FILE = "dllsettings.ini";
 const RESOREP_DLL_FILE = "d3d11.dll";
 const RESOREP_ORIDLL_FILE = "ori_d3d11.dll";
+
+//Game version hash fallback — used when no store build id resolves (pure Ubisoft Connect install,
+//no Steam/Epic manifest at this path). uplay_install.manifest is the per-file integrity manifest
+//Ubisoft Connect itself writes into the game folder and regenerates on every real patch — confirmed
+//present on every anvil install checked. The exe carries no version at all (Denuvo).
+const UPLAY_MANIFEST_FILE = "uplay_install.manifest";
 
 //Legacy mod types — retired types that a user may still have mods installed under.
 //These are deliberately NOT part of spec.modTypes and no installer routes to them. They stay
@@ -262,8 +300,16 @@ const MOD_PATH_DEFAULT = ".";
 const REQ_FILE = EXEC;
 const PARAMETERS_STRING = "";
 const PARAMETERS = [PARAMETERS_STRING];
-const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
-const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_CONFLICTS = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
+const IGNORE_DEPLOY = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
 
 //Folders that must exist and be writable before mods are deployed
 let MODTYPE_FOLDERS = [EXTRACTED_FOLDER];
@@ -361,6 +407,17 @@ if (hasAtk) {
   spec.modTypes.push({
     id: ATK_ID,
     name: ATK_NAME,
+    priority: "low",
+    targetPath: "{gamePath}",
+  });
+}
+
+//Append the ReForger installer mod type when enabled — a synthetic type the downloader deploys
+//the fetched ReForgerInstaller.exe through, never installed to by a real installer
+if (hasReforger) {
+  spec.modTypes.push({
+    id: REFORGER_INSTALL_ID,
+    name: REFORGER_INSTALL_NAME,
     priority: "low",
     targetPath: "{gamePath}",
   });
@@ -625,10 +682,41 @@ function makeFindGame(api, gameSpec) {
   }
 }
 
-//Find ReForger, which is installed as an Xbox package rather than into the game folder
+//Find ReForger's own self-registered package key. Its name embeds the installed version
+//between the stable prefix/suffix, so this enumerates the parent key's subkeys and matches on
+//those two parts instead of a hardcoded version — stays correct across every ReForger update.
+function findReforgerPackageKey() {
+  let found;
+  try {
+    winapi.WithRegOpen(REFORGER_REG_HIVE, REFORGER_REG_PATH, (hkey) => {
+      const match = winapi
+        .RegEnumKeys(hkey)
+        .find(
+          (entry) =>
+            entry.key.startsWith(REFORGER_PACKAGE_PREFIX) &&
+            entry.key.endsWith(REFORGER_PACKAGE_SUFFIX),
+        );
+      found = match?.key;
+    });
+  } catch (err) {
+    log("warn", `Could not enumerate the ${REFORGER_NAME} package registry key: ${err.message}`);
+  }
+  return found;
+}
+
+//Find ReForger, which installs its own registry self-registration rather than into the game folder
 function getReforgerPath() {
   try {
-    const reg = winapi.RegGetValue(REFORGER_REG_HIVE, REFORGER_REG_KEY, REFORGER_REG_VALUE);
+    const packageKey = findReforgerPackageKey();
+    if (!packageKey) {
+      log("warn", `${REFORGER_NAME} path not found`);
+      return undefined;
+    }
+    const reg = winapi.RegGetValue(
+      REFORGER_REG_HIVE,
+      `${REFORGER_REG_PATH}\\${packageKey}`,
+      REFORGER_REG_VALUE,
+    );
     if (!reg) {
       log("warn", `${REFORGER_NAME} path not found`);
       return undefined;
@@ -667,17 +755,142 @@ async function setGameVersion(gamePath) {
   return GAME_VERSION;
 }
 
+async function getExeProductVersion(filePath) {
+  const exeVersion = require("exe-version");
+  return exeVersion.getProductVersion(filePath);
+}
+
+//Walk up from gamePath to the ancestor dir whose parent is 'steamapps' and whose name is 'common'
+function findSteamAppsDir(gamePath) {
+  let dir = gamePath;
+  for (;;) {
+    const parent = path.dirname(dir);
+    if (parent === dir) return undefined; //reached filesystem root
+    if (
+      path.basename(parent).toLowerCase() === "common" &&
+      path.basename(path.dirname(parent)).toLowerCase() === "steamapps"
+    ) {
+      return path.dirname(parent);
+    }
+    dir = parent;
+  }
+}
+
+async function resolveSteamBuildVersion(gamePath) {
+  if (!STEAMAPP_ID || STEAMAPP_ID === "XXX") return undefined;
+  const steamAppsDir = findSteamAppsDir(gamePath);
+  if (!steamAppsDir) return undefined;
+  try {
+    const contents = await fsp.readFile(
+      path.join(steamAppsDir, `appmanifest_${STEAMAPP_ID}.acf`),
+      "utf8",
+    );
+    const match = contents.match(/"buildid"\s+"(\d+)"/);
+    return match ? match[1] : undefined;
+  } catch {
+    return undefined; //manifest not present here — not a Steam install of this game
+  }
+}
+
+async function resolveEpicBuildVersion(gamePath) {
+  if (!EPICAPP_ID || EPICAPP_ID === "XXX") return undefined;
+  let dataPath;
+  try {
+    dataPath = winapi.RegGetValue(
+      "HKEY_LOCAL_MACHINE",
+      "SOFTWARE\\WOW6432Node\\Epic Games\\EpicGamesLauncher",
+      "AppDataPath",
+    ).value;
+  } catch {
+    dataPath = path.join(
+      process.env.ProgramData || process.env.ALLUSERSPROFILE,
+      "Epic",
+      "EpicGamesLauncher",
+      "Data",
+    );
+  }
+  const normalizedGamePath = path.normalize(gamePath).toLowerCase();
+  try {
+    const manifestsDir = path.join(dataPath, "Manifests");
+    const entries = await fsp.readdir(manifestsDir);
+    for (const entry of entries) {
+      if (!entry.toLowerCase().endsWith(".item")) continue;
+      try {
+        const data = JSON.parse(await fsp.readFile(path.join(manifestsDir, entry), "utf8"));
+        const matches =
+          data.AppName === EPICAPP_ID ||
+          path.normalize(data.InstallLocation || "").toLowerCase() === normalizedGamePath;
+        if (matches && data.AppVersionString) return data.AppVersionString;
+      } catch {
+        //unreadable/invalid manifest, skip it
+      }
+    }
+  } catch (err) {
+    log("warn", `[${GAME_ID}] Could not read Epic manifests: ${err}`);
+  }
+  return undefined;
+}
+
+async function resolveGogVersion(gamePath) {
+  if (!GOGAPP_ID || GOGAPP_ID === "XXX") return undefined;
+  try {
+    const regKey = `SOFTWARE\\WOW6432Node\\GOG.com\\Games\\${GOGAPP_ID}`;
+    const regPath = winapi.RegGetValue("HKEY_LOCAL_MACHINE", regKey, "path").value;
+    if (path.normalize(regPath).toLowerCase() !== path.normalize(gamePath).toLowerCase()) {
+      return undefined;
+    }
+    return winapi.RegGetValue("HKEY_LOCAL_MACHINE", regKey, "ver").value;
+  } catch {
+    return undefined; //RegGetValue throws (never returns null) when the key/value is missing
+  }
+}
+
+async function resolveStoreVersion(gamePath) {
+  const steamVersion = await resolveSteamBuildVersion(gamePath);
+  if (steamVersion !== undefined) return steamVersion;
+  const epicVersion = await resolveEpicBuildVersion(gamePath);
+  if (epicVersion !== undefined) return epicVersion;
+  return resolveGogVersion(gamePath);
+}
+
+//MD5 of uplay_install.manifest — cache key is MD5 of the file's own mtime, paid once per build
+let VERSION_HASH_CACHE = {};
+async function resolveHashVersion(gamePath) {
+  const hashFile = path.join(gamePath, UPLAY_MANIFEST_FILE);
+  try {
+    const mtime = (await fsp.stat(hashFile)).mtimeMs;
+    const cacheKey = crypto.createHash("md5").update(mtime.toString()).digest("hex");
+    if (VERSION_HASH_CACHE[cacheKey] !== undefined) return VERSION_HASH_CACHE[cacheKey];
+    const hash = await util.fileMD5(hashFile);
+    VERSION_HASH_CACHE[cacheKey] = hash;
+    return hash;
+  } catch (err) {
+    log("warn", `[${GAME_ID}] Could not compute hash game version: ${err}`);
+    return undefined;
+  }
+}
+
 //* Resolve game version for display in Vortex
 async function resolveGameVersion(gamePath) {
   GAME_VERSION = await setGameVersion(gamePath);
-  let version = "0.0.0";
+  const READ_FILE = path.join(gamePath, getExecutable(gamePath));
+  if (exeHasGameVersion) {
+    try {
+      return await getExeProductVersion(READ_FILE);
+    } catch (err) {
+      log("error", `[${GAME_ID}] Could not read ${READ_FILE} to get game version: ${err}`);
+    }
+  }
+  const storeVersion = await resolveStoreVersion(gamePath);
+  if (storeVersion !== undefined) return storeVersion;
+  const hashVersion = await resolveHashVersion(gamePath);
+  if (hashVersion !== undefined) return hashVersion;
+  //last resort: exe ProductVersion (blank on every anvil game so far), then "0.0.0". Never throw.
   try {
-    const exeVersion = require("exe-version");
-    version = exeVersion.getProductVersion(path.join(gamePath, getExecutable(gamePath)));
-    return Promise.resolve(version);
+    return await getExeProductVersion(READ_FILE);
   } catch (err) {
-    log("error", `Could not read executable file to get game version: ${err}`);
-    return Promise.resolve(version);
+    log("error", `[${GAME_ID}] Could not read ${READ_FILE} to get game version: ${err}`);
+    return "0.0.0";
   }
 } //*/
 
@@ -1003,91 +1216,38 @@ function isReforgerInstalled() {
   return getReforgerPath() !== undefined;
 }
 
-//Download and run the ReForger installer from GitHub.
-//ReForger ships as an MSIX package behind an installer executable, so it cannot be managed as a
-//Vortex mod — there is nothing to stage or deploy. The installer is fetched into the downloads
-//folder with allowInstall disabled and then launched; the registry check above is what tells us
-//it worked. Only called when hasReforger = true.
+//Download the ReForger installer from GitHub, deploy it, and run it ONLY when a new version
+//actually landed. download() always runs below — a non-forced call is safe either way (repo-wide
+//downloader.js rule: it only raises an "update available" notification, it never overwrites
+//anything on its own) — but running ReForgerInstaller.exe pops its own window, so that only
+//happens when the deployed version actually changed (a first-ever install counts). Only called
+//when hasReforger = true.
 async function downloadReforger(api, gameSpec, force = false) {
-  if (!force && isReforgerInstalled()) {
-    log("info", `${REFORGER_NAME} already installed. Installer not downloaded.`);
-    return Promise.resolve();
+  REFORGER_REQUIREMENTS[0].directCopyPath = path.join(GAME_PATH, REFORGER_INSTALLER);
+  const before = await REFORGER_REQUIREMENTS[0].findMod(api);
+  await download(api, REFORGER_REQUIREMENTS, force);
+  const after = await REFORGER_REQUIREMENTS[0].findMod(api);
+  if (before !== undefined && before.attributes?.version === after?.attributes?.version) {
+    return; //nothing new landed — no update to run
   }
-  const state = api.getState();
-  DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
-  const NOTIF_ID = `${REFORGER_ID}-installing`;
-  api.sendNotification({
-    id: NOTIF_ID,
-    message: `Downloading ${REFORGER_NAME}`,
-    type: "activity",
-    noDismiss: true,
-    allowSuppress: false,
-  });
+  await deploy(api); //the installer must be on disk in the game folder before it can be run
+  const INSTALLER_PATH = path.join(GAME_PATH, REFORGER_INSTALLER);
   try {
-    const response = await fetch(`${REFORGER_GITHUB_API}/releases/latest`);
-    if (!response.ok) {
-      throw new Error(`Request failed with status code ${response.status}`);
-    }
-    const release = await response.json();
-    const asset = (release.assets || []).find(
-      (file) => path.basename(file.name).toLowerCase() === REFORGER_INSTALLER.toLowerCase(),
-    );
-    if (asset === undefined) {
-      throw new VortexError(
-        `No ${REFORGER_INSTALLER} found in ${REFORGER_NAME} release ${release.tag_name}. ` +
-          `That release ships: ${(release.assets || []).map((file) => file.name).join(", ")}`,
-        { kind: "process-canceled" },
-      );
-    }
-    await new Promise((resolve, reject) => {
-      api.events.emit(
-        "start-download",
-        [asset.browser_download_url],
-        {},
-        undefined,
-        async (err, dlId) => {
-          if (err !== null && err.name !== "AlreadyDownloaded") {
-            return reject(err);
-          }
-          try {
-            const RUN_PATH = path.join(DOWNLOAD_FOLDER, REFORGER_INSTALLER);
-            await fsp.stat(RUN_PATH);
-            await api.runExecutable(RUN_PATH, [], { suggestDeploy: false });
-            log("info", `${REFORGER_NAME} installer started from the downloads folder`);
-          } catch (runErr) {
-            log("error", `Could not run the ${REFORGER_NAME} installer: ${runErr}`);
-            api.showErrorNotification(
-              `Could not run the ${REFORGER_NAME} installer. Run ${REFORGER_INSTALLER} from your downloads folder manually.`,
-              runErr,
-              { allowReport: false },
-            );
-            try {
-              window.api.shell.openFile(DOWNLOAD_FOLDER);
-            } catch (openErr) {
-              api.showErrorNotification("Failed to open the file or folder", openErr, {
-                allowReport: false,
-              });
-            }
-          }
-          return resolve();
-        },
-        "never",
-        { allowInstall: false },
-      );
-    });
-  } catch (err) {
-    api.showErrorNotification(`Failed to download ${REFORGER_NAME}`, err, {
-      allowReport: !(err?.data?.kind === "process-canceled"),
-    });
-    try {
-      window.api.shell.openUrl(REFORGER_RELEASES_URL);
-    } catch (openErr) {
-      api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
-    }
-  } finally {
-    api.dismissNotification(NOTIF_ID);
+    await fsp.stat(INSTALLER_PATH);
+  } catch {
+    return; //nothing landed — download() already notified the user why
   }
-  return Promise.resolve();
+  try {
+    await api.runExecutable(INSTALLER_PATH, [], { suggestDeploy: false });
+    log("info", `${REFORGER_NAME} installer started from the game folder`);
+  } catch (err) {
+    log("error", `Could not run the ${REFORGER_NAME} installer: ${err}`);
+    api.showErrorNotification(
+      `Could not run the ${REFORGER_NAME} installer. Run ${REFORGER_INSTALLER} from the game folder manually.`,
+      err,
+      { allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1 },
+    );
+  }
 }
 
 // MOD INSTALLER FUNCTIONS /////////////////////////////////////////////////////
@@ -2085,9 +2245,10 @@ function deployNotify(api) {
   DETAIL_TEXT += TOOLS_TEXT;
 
   let deployTools = [];
-  if (hasAtk) deployTools.push({ id: ATK_ID, name: ATK_NAME });
-  if (hasForger) deployTools.push({ id: FORGER_ID, name: FORGER_NAME });
-  if (hasReforger && isReforgerInstalled)
+  if (hasAtk) deployTools.push({ id: ATK_ID, name: "ATK" }); //short button label — ATK_NAME ("AnvilToolkit") is too long for the notification button
+  if (hasForger && isForgerInstalled(api, spec))
+    deployTools.push({ id: FORGER_ID, name: "Forger" }); //short button label — FORGER_NAME ("Forger Patch Manager") is too long for the notification button
+  if (hasReforger && isReforgerInstalled())
     deployTools.push({ id: REFORGER_ID, name: REFORGER_NAME });
 
   const notifActions = deployTools.map((tool) => ({

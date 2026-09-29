@@ -31,6 +31,7 @@
 | `thunderstoreBrowser` | `true` | register the "Browse Thunderstore" page |
 | `allowBepinexNexus` | `false` | set false until bugs are fixed |
 | `downloadCfgMan` | `true` | should BepInExConfigManager be downloaded? |
+| `exeHasGameVersion` | `false` | toggle: true if the game devs stamp the real game version (not just the Unity player version) into the exe ProductVersion |
 
 ## Mod Types
 
@@ -92,5 +93,6 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
+- **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 - **Required Extensions** — depends on: `modtype-bepinex`.

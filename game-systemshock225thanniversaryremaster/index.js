@@ -115,8 +115,16 @@ const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1359"; //Nexus link t
 const PCGAMINGWIKI_URL =
   "https://www.pcgamingwiki.com/wiki/System_Shock_2%3A_25th_Anniversary_Remaster";
 const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
-const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
-const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_CONFLICTS = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
+const IGNORE_DEPLOY = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
 
 //Embedded ModDB browser page - the user browses the live moddb.com section for this game and
 //installs from it. Vortex's download manager cannot fetch from this host, so the page fetches

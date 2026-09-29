@@ -217,8 +217,16 @@ const SETUP_PARAMETERS = [SETUP_PARAMETERS_STRING];
 //parameters at all when there is nothing to pass.
 const PARAMETERS = PARAMETERS_STRING === "" ? [] : [PARAMETERS_STRING];
 
-const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
-const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_CONFLICTS = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
+const IGNORE_DEPLOY = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
 
 //Deduped: MOD_PATH is itself 'mods' whenever keepZips is on, and ensuring the same folder
 //twice is pointless. Add EXTRA_PATH here when the extra content modType is in use.

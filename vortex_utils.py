@@ -28,7 +28,7 @@ Usage:
         js_string_literal, strip_js_comments, mask_comments_and_strings,
         find_matching_bracket, split_top_level_masked, js_files_in, batch_slice,
         audit_skip_rules, audit_skip_lines,
-        AUDIT_SKIP_STORE_ID, AUDIT_SKIP_FOMOD, AUDIT_SKIP_PRIORITY,
+        AUDIT_SKIP_STORE_ID, AUDIT_SKIP_FOMOD, AUDIT_SKIP_PRIORITY, AUDIT_SKIP_MODPAGE,
         XXX_PATTERN, is_placeholder_value, is_real_value, find_placeholder_vars,
         const_decl_match, const_array_value,
         find_js_function,
@@ -70,6 +70,7 @@ Usage:
         is_merge_game, has_mergemods_callback,
         parse_nexus_mod_url, nexus_list_games, nexus_get_mod,
         nexus_get_mod_files, nexus_get_file_download_link, nexus_download_file,
+        nexus_graphql, nexus_get_current_user,
         download_exec_icon, download_cover_art,
         download_title_image, download_banner_image,
         write_text_atomic, open_in_default_app,
@@ -142,6 +143,7 @@ GUI_STATS_PATH = os.path.join(REPO_ROOT, "vortex_gui_nexus_stats.json")
 
 GAME_PREFIX     = "game-"
 TEMPLATE_PREFIX = "template-"
+HELPER_PREFIX   = "helper-"
 
 # Starting version stamped into every newly created extension: info.json, the
 # CHANGELOG.md entry, the index.js header, and the version .txt filename.
@@ -360,6 +362,17 @@ def extract_game_name(src):
     if m:
         return m.group(2)
     m = re.search(r'\bid\s*:\s*GAME_ID\b.+?\bname\s*:\s*(["\'])(.+?)\1', src, re.DOTALL)
+    return m.group(2) if m else None
+
+
+def extract_extension_name(src):
+    """Extract the EXTENSION_NAME value from index.js source, or None if absent.
+
+    helper-* extensions carry this instead of (or alongside) GAME_NAME -- a
+    helper's GAME_NAME, when present, names its companion game, not the
+    extension itself, so this is the right display-name source for a helper
+    row/folder rather than extract_game_name()."""
+    m = re.search(r"const\s+EXTENSION_NAME\s*=\s*(['\"])(.*?)\1", src)
     return m.group(2) if m else None
 
 
@@ -2248,6 +2261,29 @@ def iter_game_folders(target_game_ids=None):
         yield folder, game_id, src
 
 
+def iter_helper_folders(target_ids=None):
+    """Yield (folder, helper_id, src) for every helper-* extension folder.
+    If target_ids is a non-empty collection, only those helper IDs are yielded.
+
+    helper_id is the folder suffix (e.g. "falloutlondon"), NEVER extract_game_id() --
+    a companion helper's GAME_ID const (when present at all) names its target game,
+    not itself, and would collide with that game's own game-* folder (helper-falloutlondon
+    sets GAME_ID = "fallout4", same id as game-fallout4)."""
+    for entry in sorted(os.listdir(REPO_ROOT)):
+        folder = os.path.join(REPO_ROOT, entry)
+        if not os.path.isdir(folder):
+            continue
+        if not entry.startswith(HELPER_PREFIX):
+            continue
+        src = read_index_js(folder)
+        if not src:
+            continue
+        helper_id = entry[len(HELPER_PREFIX):]
+        if target_ids and helper_id not in target_ids:
+            continue
+        yield folder, helper_id, src
+
+
 def iter_steam_image_targets(target_game_ids=None, force=False, target_path_fn=None):
     """Yield (folder, game_id, steamapp_id, game_name) for extensions to process.
 
@@ -2352,6 +2388,52 @@ def list_game_ids():
         entry[len('game-'):]
         for entry in os.listdir(REPO_ROOT)
         if entry.startswith('game-') and os.path.isdir(os.path.join(REPO_ROOT, entry))
+    )
+
+
+def resolve_extension_folder(ext_id):
+    """Resolve ext_id to (folder, kind) by trying game-<id> first, then helper-<id>.
+
+    kind is "game" or "helper". Returns (None, None) if neither folder exists.
+    Shared by every script that takes a single "give me either kind of
+    extension id" argument (deploy_to_vortex.py, release_extension.py) --
+    a bare id can only ever resolve to one or the other."""
+    game_folder = os.path.join(REPO_ROOT, f"{GAME_PREFIX}{ext_id}")
+    if os.path.isdir(game_folder):
+        return game_folder, "game"
+    helper_folder = os.path.join(REPO_ROOT, f"{HELPER_PREFIX}{ext_id}")
+    if os.path.isdir(helper_folder):
+        return helper_folder, "helper"
+    return None, None
+
+
+def extension_prefix(kind):
+    """Return the folder-name prefix ("game-" / "helper-") for a resolve_extension_folder kind."""
+    return GAME_PREFIX if kind == "game" else HELPER_PREFIX
+
+
+def extension_display_name(folder, kind, src=None):
+    """Best-effort display name for an extension folder.
+
+    GAME_NAME for a game. For a helper, EXTENSION_NAME (falling back to
+    info.json "name") -- a helper's own GAME_NAME, when present at all,
+    names its companion game, not the helper extension itself."""
+    if src is None:
+        src = read_index_js(folder)
+    if kind == "game":
+        return extract_game_name(src) if src else None
+    name = extract_extension_name(src) if src else None
+    if not name:
+        name = (read_info_json(folder) or {}).get("name")
+    return name
+
+
+def list_helper_ids():
+    """Return a sorted list of helper IDs for all helper-* folders in the repo."""
+    return sorted(
+        entry[len(HELPER_PREFIX):]
+        for entry in os.listdir(REPO_ROOT)
+        if entry.startswith(HELPER_PREFIX) and os.path.isdir(os.path.join(REPO_ROOT, entry))
     )
 
 
@@ -2554,11 +2636,15 @@ def detect_engine(src):
     return 'Basic'
 
 
-def validate_index_js(src: str) -> list[str]:
+def validate_index_js(src: str, is_helper: bool = False) -> list[str]:
     """Return a list of issue strings found in an index.js source.
 
     Checks: leftover XXX placeholders outside comments, missing applyGame(),
-    missing context.registerGame(), and missing main() function.
+    missing context.registerGame(), and missing main() function. The
+    applyGame()/registerGame() checks are skipped for a helper extension --
+    a helper by definition registers no game of its own (a global patcher
+    registers none at all; a single-game companion only reaches into a game
+    another extension already registered via util.getGame()).
     """
     issues = []
     stripped = re.sub(r'/\*.*?\*/', '', src, flags=re.DOTALL)
@@ -2566,10 +2652,11 @@ def validate_index_js(src: str) -> list[str]:
     stripped = re.sub(r'"[^"\n]*"|\'[^\'\n]*\'|`[^`]*`', '', stripped)
     if re.search(r'\bXXX\b', stripped):
         issues.append("leftover XXX placeholder(s)")
-    if 'applyGame' not in src:
-        issues.append("missing applyGame()")
-    if 'context.registerGame' not in src:
-        issues.append("missing context.registerGame()")
+    if not is_helper:
+        if 'applyGame' not in src:
+            issues.append("missing applyGame()")
+        if 'context.registerGame' not in src:
+            issues.append("missing context.registerGame()")
     if not re.search(r'\bfunction\s+main\s*\(|\bconst\s+main\s*=', src):
         issues.append("missing main()")
     return issues
@@ -3191,6 +3278,61 @@ def nexus_download_file(domain, mod_id, file_id, api_key, dest_path):
     with urllib.request.urlopen(req, timeout=60) as resp, open(dest_path, "wb") as out:
         shutil.copyfileobj(resp, out)
     return dest_path
+
+
+_NEXUS_GRAPHQL_URL = "https://api.nexusmods.com/v2/graphql"
+
+
+def nexus_graphql(query, api_key=None, variables=None):
+    """POST a query/mutation to the Nexus Mods v2 GraphQL API.
+
+    Most read fields need no auth (api_key may be None); pass it anyway when available,
+    since a few fields (preferences, personalApiKey) require it. Returns the parsed
+    response body ({'data': ..., 'errors': [...]}) -- v2 puts errors in a top-level
+    'errors' array with HTTP 200, so callers must check that too, not just catch
+    exceptions. Not retried, mirroring nexus_v3_post_json's POST-is-not-idempotent
+    stance (this helper can also carry mutations, even though the audit scripts only
+    ever send read-only queries through it). v2 has no rate-limit headers -- no adaptive
+    backoff possible; batch multi-mod reads via query aliasing (~30 aliases/request is
+    safe) and sleep between requests instead."""
+    payload = {"query": query}
+    if variables:
+        payload["variables"] = variables
+    headers = {"Content-Type": "application/json", **_NEXUS_HEADERS}
+    if api_key:
+        headers["apikey"] = api_key
+    req = urllib.request.Request(
+        _NEXUS_GRAPHQL_URL,
+        data=json.dumps(payload).encode("utf-8"),
+        headers=headers,
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=30, context=_SSL_CTX_NEXUS) as resp:
+            return json.loads(resp.read())
+    except urllib.error.HTTPError as e:
+        body = ""
+        try:
+            body = e.read().decode("utf-8", errors="replace")
+        except Exception:
+            pass
+        raise RuntimeError(f"nexus_graphql: HTTP {e.code} {e.reason} - {body[:400]}") from None
+
+
+def nexus_get_current_user(api_key):
+    """Fetch the authenticated account's identity via v1 GET /v1/users/validate.json.
+    Returns the parsed dict (user_id, key_id, name, email, is_premium, ...). Retries up
+    to 2 times on 429/5xx/network errors."""
+    req = urllib.request.Request(
+        "https://api.nexusmods.com/v1/users/validate.json",
+        headers={"apikey": api_key, **_NEXUS_HEADERS},
+    )
+
+    def _do():
+        with urllib.request.urlopen(req, timeout=_HTTP_TIMEOUT) as resp:
+            return json.loads(resp.read())
+
+    return _execute_with_retry(_do, respect_retry_after=True)
 
 
 # == Platform / filesystem helpers =============================================
@@ -3828,6 +3970,7 @@ def batch_slice(items, batch):
 AUDIT_SKIP_STORE_ID = "store-id"
 AUDIT_SKIP_FOMOD = "fomod-check"
 AUDIT_SKIP_PRIORITY = "installer-priority"
+AUDIT_SKIP_MODPAGE = "modpage-tags"
 
 _AUDIT_SKIP_RE = re.compile(
     r'//!\s*audit-skip\s*:\s*([A-Za-z0-9_\-]+(?:\s*,\s*[A-Za-z0-9_\-]+)*)\s+-\s+(\S.*?)\s*$'

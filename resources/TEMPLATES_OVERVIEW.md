@@ -257,6 +257,8 @@ DoorstopProxy file set an extension reproduces, and its `info.json` mod format).
 `REQUIRES_LAUNCHER.md` (the `requiresLauncher` hand-off every template implements).
 `WINAPI_BINDINGS.md` (the `winapi.RegGetValue` registry-discovery fallback).
 `RUN_EXECUTABLE.md` (`api.runExecutable`, behind every `runDeployTool` helper).
+`GAME_VERSION_RESOLUTION.md` (the tiered `resolveGameVersion`/`getGameVersion` chain shared by the
+`ue4-5` and three Unity templates, and its `exeHasGameVersion`/`hasVersionFile` toggles).
 `NOTIFICATIONS_DIALOGS.md` (the notification and dialog primitives behind the vocabulary above).
 `REGISTER_ACTION.md` and `TOOLBAR_ACTIONS.md` (the `mod-icons` toolbar buttons every template ships).
 `PCGAMINGWIKI_API.md` (source of the `PCGAMINGWIKI_URL` constant and the store-ID and save-path

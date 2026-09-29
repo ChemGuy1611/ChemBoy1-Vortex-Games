@@ -29,6 +29,7 @@ let GAME_PATH = "";
 let PARTITION_CHECK = false;
 const STAGINGFOLDER_NAME = "falloutlondon"; // The name of the mod folder in the FO4 staging folder
 const FOLON_FILE = "LondonWorldSpace.esm"; // The main plugin file for FOLON
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1349";
 
 const PLUGIN1 = "LondonWorldSpace.esm";
 const PLUGIN2 = "LondonWorldSpace-DLCBlock.esp";

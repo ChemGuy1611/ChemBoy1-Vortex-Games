@@ -30,6 +30,16 @@ const XBOXEXECNAME = "AppUEGameShipping";
 const GAME_NAME = "The Elder Scrolls IV: Oblivion Remastered";
 const GAME_NAME_SHORT = "Oblivion Remastered";
 const DEFAULT_EXEC = "OblivionRemastered.exe";
+const IGNORE_CONFLICTS = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
+const IGNORE_DEPLOY = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
 let GAME_PATH = "";
 let CHECK_DATA = false;
 let STAGING_FOLDER = "";
@@ -265,6 +275,8 @@ const spec = {
       epicAppId: EPICAPP_ID,
       xboxAppId: XBOXAPP_ID,
       supportsSymlinks: SYM_LINKS,
+      ignoreConflicts: IGNORE_CONFLICTS,
+      ignoreDeploy: IGNORE_DEPLOY,
     },
     environment: {
       SteamAPPId: STEAMAPP_ID,

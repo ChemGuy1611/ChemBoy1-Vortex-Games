@@ -21,6 +21,16 @@ let updateModIds = new Map(); // Nexus mod id -> {firstSeen, targetFileId} (Map,
 const MAX_UPDATE_WAIT_MS = 5 * 60 * 1000; // release the guard for an update that never lands (cancelled or failed install)
 let updating_mod = false; // used to see if it's a mod update or not
 const APPMANIFEST_FILE = "appxmanifest.xml";
+const IGNORE_CONFLICTS = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
+const IGNORE_DEPLOY = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
 
 const APPDATA = util.getVortexPath("appData");
 const CONFIG_PATH = path.join(APPDATA, "Fatshark", "Darktide");
@@ -642,6 +652,8 @@ function main(context) {
     details: {
       steamAppId: +STEAMAPP_ID,
       xboxAppId: XBOXAPP_ID,
+      ignoreConflicts: IGNORE_CONFLICTS,
+      ignoreDeploy: IGNORE_DEPLOY,
     },
   });
 

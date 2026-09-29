@@ -29,6 +29,7 @@ first, then the toggles, then the constants each toggle brings with it.
 | `hasBinariesType`     | `false` | A separate `-binaries` mod type alongside `-root`                                                 |
 | `hasCustomLaunchers`  | `false` | Ubisoft Plus and Vulkan launcher tool entries                                                     |
 | `hasSettingsIni`      | `false` | "Open Settings INI" toolbar button                                                                |
+| `exeHasGameVersion`   | `false` | Short-circuits `resolveGameVersion` straight to the exe's `ProductVersion` — for the rare game whose devs actually stamp it. Every anvil exe checked so far reads back all-zero (Denuvo strips it) |
 | `setupNotification`   | `false` | First-setup instruction notification                                                              |
 | `deployNotification`  | `true`  | Post-deployment reminder, composed from whichever tools are enabled                               |
 | `allowSymlinks`       | `false` | Feeds `details.supportsSymlinks`                                                                  |
@@ -38,6 +39,16 @@ first, then the toggles, then the constants each toggle brings with it.
 `hasEpic` and `hasGog` are **derived**, not set by hand: each is true when its app-ID constant is
 present in `DISCOVERY_IDS_ACTIVE`, and turns on `details.epicAppId` / `details.gogAppId` and the
 matching `environment` entry.
+
+## Game version resolution
+
+`resolveGameVersion` is a tiered chain, same shape as `template-ue4-5` and the Unity templates:
+`exeHasGameVersion` short-circuit → Steam/Epic/GOG store build id → a hash of
+`uplay_install.manifest` → last-resort exe read, then `"0.0.0"`. No version-file or Xbox tier —
+no anvil game has either. The hash tier exists because the exe carries nothing usable on any anvil
+game checked so far, and neither does anything else Ubisoft Connect writes to disk (registry,
+local cache, or its other in-folder manifest files) — `uplay_install.manifest` is the one file
+that's both readable and guaranteed to change on every real patch.
 
 Two startup asserts guard the combinations that silently half-work: `hasPatchTextures` together
 with `hasResorep` (both claim `.dds`), and `hasDlcFolders` disagreeing with `DLC_FOLDERS` in either

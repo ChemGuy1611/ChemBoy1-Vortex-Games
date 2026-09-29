@@ -2,6 +2,19 @@
 
 ## Planned Improvements (Not Yet Released)
 
+- None
+
+## [1.2.4] - 2026-09-29
+
+- Fixed: Leftover Vortex marker files inside the RuneSchema mods folder are now cleaned up after deployment.
+
+## [1.2.3] - 2026-09-28
+
+- Fixed: Correct UE4SS file is now downloaded - Steam latest - extension makes it work for Xbox too.
+
+## [1.2.2] - 2026-09-27
+
+- Game version now shows the real game build instead of the Unreal engine version.
 - The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
 
 ## [1.2.1] - 2026-09-26

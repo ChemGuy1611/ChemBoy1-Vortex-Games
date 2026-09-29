@@ -2,8 +2,8 @@
 Name: RuneScape: Dragonwilds Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 1.2.1
-Date: 2026-09-26
+Version: 1.2.4
+Date: 2026-09-29
 Notes:
 -
 ////////////////////////////////////////////////*/
@@ -24,6 +24,8 @@ const {
   VortexError,
 } = require("vortex-api");
 const path = require("path");
+const crypto = require("crypto");
+const winapi = require("winapi-bindings");
 const template = require("string-template");
 const { parseStringPromise } = require("xml2js");
 const { default: IniParser, WinapiFormat } = require("vortex-parse-ini");
@@ -86,6 +88,7 @@ const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
 const hasUserIdFolder = true; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 const debug = false; //toggle for debug mode
+const exeHasGameVersion = false; //toggle: true if the game devs stamp the real game version (not just the UE engine version) into the exe ProductVersion
 
 //UE specific
 const ENGINE_VERSION = "5.6.2.0"; //Unreal Engine version. usually '4.27.2.0' or '5.X.X.0'. Written to UE4SS-settings.ini if writeEngineVersion is enabled
@@ -445,8 +448,16 @@ const MOD_PATH_DEFAULT = PAK_PATH;
 const REQ_FILE = EPIC_CODE_NAME;
 const PARAMETERS = [PARAMETERS_STRING];
 
-const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
-const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_CONFLICTS = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
+const IGNORE_DEPLOY = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
 let MODTYPE_FOLDERS = [PAK_PATH, PAK_ALT_PATH];
 if (ue4ssLoadOrder) {
   //LogicMods are only loaded when UE4SS's BPModLoaderMod is present
@@ -2116,7 +2127,9 @@ async function downloadUe4ssNexus(api, gameSpec, check = true) {
         const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
         const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
         const file = modFiles
-          .filter((file) => file.category_id === 1)
+          .filter(
+            (file) => file.category_id === 1 && file.file_name.toLowerCase().includes("steam"),
+          )
           .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
           .reverse()[0];
         if (file === undefined) {
@@ -3097,9 +3110,138 @@ async function migrateLegacyUe5SortableType111(api, oldVersion) {
   await migrateLegacyUe5SortableType(api);
 }
 
+async function getExeProductVersion(filePath) {
+  const exeVersion = require("exe-version");
+  return exeVersion.getProductVersion(filePath);
+}
+
+function findSteamAppsDir(gamePath) {
+  //walk up from gamePath to the ancestor dir whose parent is 'steamapps' and whose name is 'common'
+  let dir = gamePath;
+  for (;;) {
+    const parent = path.dirname(dir);
+    if (parent === dir) return undefined; //reached filesystem root
+    if (
+      path.basename(parent).toLowerCase() === "common" &&
+      path.basename(path.dirname(parent)).toLowerCase() === "steamapps"
+    ) {
+      return path.dirname(parent);
+    }
+    dir = parent;
+  }
+}
+
+async function resolveSteamBuildVersion(gamePath) {
+  const steamAppsDir = findSteamAppsDir(gamePath);
+  if (!steamAppsDir) return undefined;
+  for (const appId of [STEAMAPP_ID, STEAMAPP_ID_DEMO]) {
+    if (!appId || appId === "XXX") continue;
+    try {
+      const contents = await fsp.readFile(
+        path.join(steamAppsDir, `appmanifest_${appId}.acf`),
+        "utf8",
+      );
+      const match = contents.match(/"buildid"\s+"(\d+)"/);
+      if (match) return match[1];
+    } catch {
+      //manifest for this appId not present here, try next
+    }
+  }
+  return undefined;
+}
+
+async function resolveEpicBuildVersion(gamePath) {
+  if (!EPICAPP_ID || EPICAPP_ID === "XXX") return undefined;
+  let dataPath;
+  try {
+    dataPath = winapi.RegGetValue(
+      "HKEY_LOCAL_MACHINE",
+      "SOFTWARE\\WOW6432Node\\Epic Games\\EpicGamesLauncher",
+      "AppDataPath",
+    ).value;
+  } catch {
+    dataPath = path.join(
+      process.env.ProgramData || process.env.ALLUSERSPROFILE,
+      "Epic",
+      "EpicGamesLauncher",
+      "Data",
+    );
+  }
+  const normalizedGamePath = path.normalize(gamePath).toLowerCase();
+  try {
+    const manifestsDir = path.join(dataPath, "Manifests");
+    const entries = await fsp.readdir(manifestsDir);
+    for (const entry of entries) {
+      if (!entry.toLowerCase().endsWith(".item")) continue;
+      try {
+        const data = JSON.parse(await fsp.readFile(path.join(manifestsDir, entry), "utf8"));
+        const matches =
+          data.AppName === EPICAPP_ID ||
+          path.normalize(data.InstallLocation || "").toLowerCase() === normalizedGamePath;
+        if (matches && data.AppVersionString) return data.AppVersionString;
+      } catch {
+        //unreadable/invalid manifest, skip it
+      }
+    }
+  } catch (err) {
+    log("warn", `Could not read Epic manifests for ${GAME_ID}: ${err}`);
+  }
+  return undefined;
+}
+
+async function resolveGogVersion(gamePath) {
+  if (!GOGAPP_ID || GOGAPP_ID === "XXX") return undefined;
+  try {
+    const regKey = `SOFTWARE\\WOW6432Node\\GOG.com\\Games\\${GOGAPP_ID}`;
+    const regPath = winapi.RegGetValue("HKEY_LOCAL_MACHINE", regKey, "path").value;
+    if (path.normalize(regPath).toLowerCase() !== path.normalize(gamePath).toLowerCase()) {
+      return undefined;
+    }
+    return winapi.RegGetValue("HKEY_LOCAL_MACHINE", regKey, "ver").value;
+  } catch {
+    //RegGetValue throws (never returns null) when the key/value is missing
+    return undefined;
+  }
+}
+
+async function resolveStoreVersion(gamePath) {
+  const steamVersion = await resolveSteamBuildVersion(gamePath);
+  if (steamVersion !== undefined) return steamVersion;
+  const epicVersion = await resolveEpicBuildVersion(gamePath);
+  if (epicVersion !== undefined) return epicVersion;
+  return resolveGogVersion(gamePath);
+}
+
+let VERSION_HASH_CACHE = {}; //cacheKey (MD5 of sorted mtimes) -> hash string; paid once per build, not per mod-installed health check
+
+async function resolveHashVersion(gamePath) {
+  const hashFiles = [SHIPPING_EXE]; //game-code file(s), never the launcher EXEC
+  try {
+    const mtimes = [];
+    for (const relFile of hashFiles) {
+      mtimes.push((await fsp.stat(path.join(gamePath, relFile))).mtimeMs);
+    }
+    mtimes.sort((a, b) => a - b);
+    const cacheKey = crypto
+      .createHash("md5")
+      .update(mtimes.map((m) => m.toString()).join(""))
+      .digest("hex");
+    if (VERSION_HASH_CACHE[cacheKey] !== undefined) return VERSION_HASH_CACHE[cacheKey];
+    const fileHashes = [];
+    for (const relFile of hashFiles) {
+      fileHashes.push(await util.fileMD5(path.join(gamePath, relFile)));
+    }
+    const hash = crypto.createHash("md5").update(fileHashes.join("")).digest("hex");
+    VERSION_HASH_CACHE[cacheKey] = hash;
+    return hash;
+  } catch (err) {
+    log("warn", `Could not compute hash game version for ${GAME_ID}: ${err}`);
+    return undefined;
+  }
+}
+
 async function resolveGameVersion(gamePath, exePath) {
   GAME_VERSION = await setGameVersionAsync(gamePath);
-  //SHIPPING_EXE = getShippingExe(gamePath);
   const READ_FILE = path.join(gamePath, SHIPPING_EXE);
   let version = "0.0.0";
   if (GAME_VERSION === "xbox") {
@@ -3114,17 +3256,25 @@ async function resolveGameVersion(gamePath, exePath) {
       log("error", `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
       return Promise.resolve(version);
     }
-  } else {
-    //use shipping exe (note that this only returns the UE engine version right now)
+  }
+  if (exeHasGameVersion) {
     try {
-      const exeVersion = require("exe-version");
-      version = await exeVersion.getProductVersion(READ_FILE);
-      //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);
-      return Promise.resolve(version);
+      return await getExeProductVersion(READ_FILE);
     } catch (err) {
       log("error", `Could not read ${READ_FILE} file to get game version: ${err}`);
-      return Promise.resolve(version);
     }
+  }
+  const storeVersion = await resolveStoreVersion(gamePath);
+  if (storeVersion !== undefined) return storeVersion;
+  const hashVersion = await resolveHashVersion(gamePath);
+  if (hashVersion !== undefined) return hashVersion;
+  //last resort: exe ProductVersion (UE engine version), then "0.0.0". Never throw.
+  try {
+    version = await getExeProductVersion(READ_FILE);
+    return version;
+  } catch (err) {
+    log("error", `Could not read ${READ_FILE} file to get game version: ${err}`);
+    return version;
   }
 }
 
@@ -4205,6 +4355,32 @@ async function retagFomodPakMod(api, gameId, modId) {
   requestDeployment(api, spec);
 }
 
+//Recursively scan the RuneSchema folder and delete any __folder_managed_by_vortex marker
+//files found - Vortex's deployment leaves one per nested mod subfolder (assets, paks,
+//recipes, raw, blueprints, etc.), which the game's mod loader doesn't expect.
+async function deleteSchemaMarkerFiles(api) {
+  GAME_PATH = getDiscoveryPath(api);
+  const folder = path.join(GAME_PATH, SCHEMALOADER_PATH, "RuneSchema");
+  const markerPaths = [];
+  await util.walk(
+    folder,
+    (iterPath, stats) => {
+      if (!stats.isDirectory() && path.basename(iterPath) === `__folder_managed_by_vortex`) {
+        markerPaths.push(iterPath);
+      }
+      return Promise.resolve();
+    },
+    { ignoreErrors: true },
+  );
+  for (const markerPath of markerPaths) {
+    try {
+      await fsp.rm(markerPath, { recursive: true, force: true });
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
 async function didDeploy(api, profileId) {
   //run on mod deploy
   const state = api.getState();
@@ -4274,6 +4450,11 @@ async function didDeploy(api, profileId) {
       if (UE4SS_LOAD_ORDER.length > 0) {
         await serializeUe4ss(api, UE4SS_LOAD_ORDER);
       }
+    }
+    try {
+      await deleteSchemaMarkerFiles(api);
+    } catch (err) {
+      log("warn", `[${GAME_ID}] didDeploy: failed to clean RuneSchema marker files`, err);
     }
   }
   if (logicModsLoadOrder && isUe4ssInstalled(api, spec)) {

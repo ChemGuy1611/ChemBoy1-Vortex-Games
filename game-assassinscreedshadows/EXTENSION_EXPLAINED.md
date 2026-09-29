@@ -27,6 +27,7 @@
 
 | Flag | Value | Description |
 | --- | --- | --- |
+| `exeHasGameVersion` | `false` | exe ProductVersion is all-zero — Denuvo strips it, confirmed across every anvil game checked |
 | `hasAtk` | `true` | true if game supports AnvilToolkit — also gates the Extracted/.forge/.data/loose workflow and the rename dialog |
 | `hasForger` | `false` | true if game supports Forger Patch Manager (.forger2 files) — typically older AC games |
 | `hasReforger` | `true` | true if game uses ReForger (Xbox package, found through the registry) |

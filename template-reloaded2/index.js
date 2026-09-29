@@ -119,8 +119,16 @@ const REQ_FILE = EXEC;
 const PARAMETERS_STRING = "";
 const PARAMETERS = [PARAMETERS_STRING]; //for Reloaded-II
 
-const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
-const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_CONFLICTS = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
+const IGNORE_DEPLOY = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
 let MODTYPE_FOLDERS = [RELOADEDMOD_PATH, SAVE_PATH];
 
 const spec = {

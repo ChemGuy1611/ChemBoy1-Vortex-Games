@@ -2,6 +2,7 @@
 
 ## Planned Improvements (Not Yet Released)
 
+- Game version now shows the real game build instead of the Unreal engine version.
 - Fixed: Mod files with no file extension were skipped during installation
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 - Changed: "Download UE4SS" now downloads and installs the correct UE4SS build on its own, instead of opening a browser page and asking you to pick the file by hand.

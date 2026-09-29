@@ -648,3 +648,5 @@ and settings hooked up alongside §2's reducer functions). `VORTEX_PROFILES.md`
 (`api.openArchive` in §5). `RUN_EXECUTABLE.md` (`registerStartHook`/`registerInterpreter` in §4).
 `STEAM_FILE_DOWNLOADER.md` (a worked example of consuming another extension's `registerAPI`
 function through `api.ext`, including the callback-vs-promise trap).
+`GAME_VERSION_RESOLUTION.md` (§`registerGameVersionProvider`'s replacement: the tiered
+`getGameVersion` chain templates use instead, including its own hash-fallback tier).

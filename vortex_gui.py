@@ -488,6 +488,11 @@ COL_CHECK, COL_FLAG, COL_ICON, COL_GAME_ID, COL_NAME, COL_VERSION, COL_DATE, COL
     COL_COVER, COL_TITLE, COL_BANNER = range(15)
 HEADERS = ("", "Flag", "Icon", "Game ID", "Name", "Ver", "Updated", "Engine", "Stores", "End", "DL", "Pub", "Cover", "Title", "Banner")
 _THUMBNAIL_COLS = frozenset({COL_ICON, COL_COVER, COL_TITLE, COL_BANNER})
+
+# Pseudo-engine label for helper-* rows -- lets "Group by Engine" and the
+# category filter combo bucket/filter them like any other engine, since they
+# have no real engine of their own.
+_HELPER_ENGINE_LABEL = "Helper"
 _IS_GROUP_HEADER_ROLE = Qt.UserRole + 10
 
 _ICON_CACHE_MAX = 512
@@ -518,7 +523,7 @@ class GameRow:
         "extension_url",
         "endorsements", "unique_downloads", "nexus_published", "stats_fetched_at",
         "flagged", "note",
-        "has_downloader", "has_load_order",
+        "has_downloader", "has_load_order", "is_helper",
     )
 
     def __init__(self, game_id, name, version, date, engine, stores, folder,
@@ -526,7 +531,7 @@ class GameRow:
                  title, title_path, banner, banner_path,
                  extension_url,
                  endorsements, unique_downloads, nexus_published, stats_fetched_at,
-                 flagged, note, has_downloader, has_load_order):
+                 flagged, note, has_downloader, has_load_order, is_helper=False):
         self.game_id = game_id
         self.name = name or ""
         self.version = version or ""
@@ -551,6 +556,7 @@ class GameRow:
         self.note = note
         self.has_downloader = has_downloader
         self.has_load_order = has_load_order
+        self.is_helper = is_helper
 
 
 class GameModel(QAbstractTableModel):
@@ -560,13 +566,18 @@ class GameModel(QAbstractTableModel):
         self._checked_ids: set[str] = set()
 
     def _load_rows(self) -> list:
-        """Load all row data from disk. Must NOT create QPixmap/QIcon objects -- safe to call
-        from a background thread. Call _attach_icons(rows) on the UI thread afterward.
+        """Load all row data from disk, for every game-* and helper-* folder. Must NOT
+        create QPixmap/QIcon objects -- safe to call from a background thread. Call
+        _attach_icons(rows) on the UI thread afterward.
 
         Per-folder index.js/info.json/CHANGELOG parsing is cached in ROW_CACHE_PATH keyed by
         folder name + those files' mtimes, so unchanged extensions skip the read+regex on
         later launches (the dominant startup cost). Image existence and Nexus stats are read
-        live -- they change independently of the cached source files."""
+        live -- they change independently of the cached source files.
+
+        A helper-* row's game_id is its folder suffix, not a GAME_ID const -- see the
+        is_helper branch below. It has no engine/stores/load-order of its own, so those
+        are hardcoded (engine buckets it under _HELPER_ENGINE_LABEL for grouping/filtering)."""
         flags = _load_flags()
         stats = _load_stats()
         cache = _load_row_cache()
@@ -574,7 +585,13 @@ class GameModel(QAbstractTableModel):
         rows = []
         for entry in sorted(os.listdir(REPO_ROOT)):
             folder = os.path.join(REPO_ROOT, entry)
-            if not entry.startswith(vu.GAME_PREFIX) or not os.path.isdir(folder):
+            if entry.startswith(vu.GAME_PREFIX):
+                is_helper = False
+            elif entry.startswith(vu.HELPER_PREFIX):
+                is_helper = True
+            else:
+                continue
+            if not os.path.isdir(folder):
                 continue
             mtimes = [
                 _safe_mtime(os.path.join(folder, "index.js")),
@@ -595,17 +612,30 @@ class GameModel(QAbstractTableModel):
                 src = vu.read_index_js(folder)
                 if not src:
                     continue
-                game_id = vu.extract_game_id(src)
-                if not game_id:
-                    continue
+                if is_helper:
+                    # Folder suffix, NEVER extract_game_id() -- a helper's own GAME_ID
+                    # const (when present at all) names its companion game, not itself,
+                    # and would collide with that game's own game-* row (helper-falloutlondon
+                    # sets GAME_ID = "fallout4", same id as game-fallout4).
+                    game_id = entry[len(vu.HELPER_PREFIX):]
+                else:
+                    game_id = vu.extract_game_id(src)
+                    if not game_id:
+                        continue
                 info = vu.read_info_json(folder) or {}
                 version = info.get("version", "")
                 _v, date = vu.parse_changelog_latest(folder)
-                name = vu.extract_game_name(src) or game_id
-                engine = vu.detect_engine(src)
-                stores = vu.detect_stores(src)
                 extension_url = vu.extract_extension_url(src)
-                load_order = vu.is_load_order_game(src)
+                if is_helper:
+                    name = vu.extension_display_name(folder, "helper", src) or game_id
+                    engine = _HELPER_ENGINE_LABEL
+                    stores = ""
+                    load_order = False
+                else:
+                    name = vu.extract_game_name(src) or game_id
+                    engine = vu.detect_engine(src)
+                    stores = vu.detect_stores(src)
+                    load_order = vu.is_load_order_game(src)
             new_cache[entry] = {
                 "game_id": game_id, "name": name, "version": version, "date": date,
                 "engine": engine, "stores": stores, "extension_url": extension_url,
@@ -649,7 +679,7 @@ class GameModel(QAbstractTableModel):
                 extension_url,
                 endorsements, unique_downloads, nexus_published, stats_fetched_at,
                 fd.get("flagged", False), fd.get("note", ""),
-                has_downloader, load_order,
+                has_downloader, load_order, is_helper,
             ))
         _save_row_cache(new_cache)
         return rows
@@ -2388,6 +2418,10 @@ class MainWindow(QMainWindow):
         if not self._require_selection():
             return
         for row in self._selected_rows():
+            if row.is_helper:
+                # A helper's game_id is its own folder suffix, not a Nexus game domain --
+                # nexusmods.com/<id> would 404. Its own mod page is "Open Extension Page".
+                continue
             QDesktopServices.openUrl(QUrl(f"https://www.nexusmods.com/{row.game_id}"))
 
     def _on_open_ext(self):
@@ -2404,6 +2438,10 @@ class MainWindow(QMainWindow):
             return
         if len(rows) > 1:
             QMessageBox.information(self, "Single Game Only", "Launch in Vortex works on one game at a time.")
+            return
+        if rows[0].is_helper:
+            QMessageBox.information(self, "Not a Game", "This is a helper extension, not a game -- "
+                                     "it has no Vortex-registered game of its own to launch into.")
             return
         if not VORTEX_EXE:
             QMessageBox.warning(self, "Vortex Not Found", "Vortex.exe could not be located.")

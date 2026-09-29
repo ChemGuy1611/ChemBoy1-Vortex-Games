@@ -41,6 +41,7 @@
 | `hasVersionFile` | `true` | toggle for version file. Set to false if game doesn't have |
 | `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
 | `debug` | `false` | toggle for debug mode |
+| `exeHasGameVersion` | `false` | toggle: true if the game devs stamp the real game version (not just the Unity player version) into the exe ProductVersion |
 
 ## Mod Types
 

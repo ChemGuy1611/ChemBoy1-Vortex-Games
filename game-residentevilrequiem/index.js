@@ -116,11 +116,13 @@ const IGNORE_CONFLICTS = [
   path.join("**", "screenshot*"),
   path.join("**", "changelog*"),
   path.join("**", "readme*"),
+  path.join("**", "license*"),
 ];
 const IGNORE_DEPLOY = [
   path.join("**", "screenshot*"),
   path.join("**", "changelog*"),
   path.join("**", "readme*"),
+  path.join("**", "license*"),
 ];
 let MODTYPE_FOLDERS = [];
 

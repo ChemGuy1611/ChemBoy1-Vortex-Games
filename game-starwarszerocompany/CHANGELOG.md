@@ -2,6 +2,7 @@
 
 ## Planned Improvements (Not Yet Released)
 
+- Game version now shows the real game build instead of the Unreal engine version.
 - Fixed: Mod files with no file extension were skipped during installation
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 - The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.

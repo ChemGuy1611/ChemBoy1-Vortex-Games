@@ -2,6 +2,10 @@
 
 ## Planned Improvements (Not Yet Released)
 
+## [1.0.2] - 2026-09-27
+
+- Game version now shows the real game build instead of the Unity engine version.
+
 ## [1.0.1] - 2026-09-27
 
 - Fixed: a non-Xbox install could be misidentified as the Xbox version, showing the wrong installed game version.

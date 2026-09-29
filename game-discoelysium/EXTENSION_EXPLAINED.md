@@ -36,6 +36,7 @@
 | `allowBepinexNexus` | `false` | set false until bugs are fixed |
 | `downloadCfgMan` | `true` | should BepInExConfigManager be downloaded? |
 | `bleedingEdge` | `true` | set to true to download bleeding edge builds of BepInEx (IL2CPP only) |
+| `exeHasGameVersion` | `false` | toggle: true if the game devs stamp the real game version (not just the Unity player version) into the exe ProductVersion |
 
 ## Mod Types
 

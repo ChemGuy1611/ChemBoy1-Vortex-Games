@@ -27,9 +27,11 @@
 
 | Flag | Value | Description |
 | --- | --- | --- |
+| `exeHasGameVersion` | `false` | exe ProductVersion is all-zero — Denuvo strips it, confirmed across every anvil game checked |
 | `hasAtk` | `true` | true if game supports AnvilToolkit — also gates the Extracted/.forge/.data/loose workflow and the rename dialog |
 | `hasForger` | `false` | true if game supports Forger Patch Manager (.forger2 files) — typically older AC games |
 | `hasReforger` | `false` | true if game uses ReForger (Xbox package, found through the registry) |
+| `autoDownloadReforger` | `false` | true to fetch+run the ReForger installer automatically during setup. false: the tool is still registered and the "Download ReForger" button still works, just nothing happens without the user clicking it |
 | `hasDlcFolders` | `true` | true if game has dlc_NN folders — adds the DLC mod type and installer. Enumerate DLC_FOLDERS to match; .forge routing follows DLC_FOLDERS directly |
 | `hasResorep` | `false` | true if game uses ResoRep for runtime texture injection |
 | `autoCopyResorepDll` | `false` | true to copy the system d3d11.dll into the game folder automatically instead of leaving the bundled .bat to the user. The copy is not a managed mod file, so purging does not remove it |

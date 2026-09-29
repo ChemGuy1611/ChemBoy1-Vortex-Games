@@ -2,8 +2,8 @@
 Name: Assassin's Creed Shadows Vortex Extension
 Structure: Anvil Engine - AnvilToolkit/ForgerPatchManager
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-09-23
+Version: 1.0.2
+Date: 2026-09-29
 Notes:
 -
 //////////////////////////////////////////////////////////*/
@@ -15,6 +15,7 @@ const { actions, fs: vfs, util, selectors, log, VortexError } = require("vortex-
 const path = require("path");
 const template = require("string-template");
 const winapi = require("winapi-bindings");
+const crypto = require("crypto");
 //Auto-downloader module — only used for the ReForger installer package (hasReforger = true)
 const { download, findModByFile, resolveVersionByModVersion } = require("./downloader");
 
@@ -29,6 +30,7 @@ const STEAMAPP_ID = "3159330"; //https://steamdb.info/app/XXX/
 const EPICAPP_ID = "a1a86c2450de45989bda712385f66c9d"; //Epic catalog item — Ubisoft games are usually installed through Ubisoft Connect instead
 const GOGAPP_ID = null; //not typically available for Ubisoft games
 const DISCOVERY_IDS_ACTIVE = [UPLAYAPP_ID, STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const exeHasGameVersion = false; //exe ProductVersion is all-zero — Denuvo strips it, confirmed across every anvil game checked
 
 const GAME_NAME = "Assassin's Creed Shadows";
 const GAME_NAME_SHORT = "AC Shadows";
@@ -197,6 +199,12 @@ const RESOREP_INI_FILE = "dllsettings.ini";
 const RESOREP_DLL_FILE = "d3d11.dll";
 const RESOREP_ORIDLL_FILE = "ori_d3d11.dll";
 
+//Game version hash fallback — used when no store build id resolves (pure Ubisoft Connect install,
+//no Steam/Epic manifest at this path). uplay_install.manifest is the per-file integrity manifest
+//Ubisoft Connect itself writes into the game folder and regenerates on every real patch — confirmed
+//present on every anvil install checked. The exe carries no version at all (Denuvo).
+const UPLAY_MANIFEST_FILE = "uplay_install.manifest";
+
 //Legacy mod types — retired types that a user may still have mods installed under.
 //These are deliberately NOT part of spec.modTypes and no installer routes to them. They stay
 //registered purely so Vortex can still resolve their target path, which is what lets purge and
@@ -291,8 +299,16 @@ const MOD_PATH_DEFAULT = ".";
 const REQ_FILE = EXEC;
 const PARAMETERS_STRING = "";
 const PARAMETERS = [PARAMETERS_STRING];
-const IGNORE_CONFLICTS = [path.join("**", "changelog*"), path.join("**", "readme*")];
-const IGNORE_DEPLOY = [path.join("**", "changelog*"), path.join("**", "readme*")];
+const IGNORE_CONFLICTS = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
+const IGNORE_DEPLOY = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
 
 //Folders that must exist and be writable before mods are deployed
 let MODTYPE_FOLDERS = [EXTRACTED_FOLDER];
@@ -738,17 +754,142 @@ async function setGameVersion(gamePath) {
   return GAME_VERSION;
 }
 
+async function getExeProductVersion(filePath) {
+  const exeVersion = require("exe-version");
+  return exeVersion.getProductVersion(filePath);
+}
+
+//Walk up from gamePath to the ancestor dir whose parent is 'steamapps' and whose name is 'common'
+function findSteamAppsDir(gamePath) {
+  let dir = gamePath;
+  for (;;) {
+    const parent = path.dirname(dir);
+    if (parent === dir) return undefined; //reached filesystem root
+    if (
+      path.basename(parent).toLowerCase() === "common" &&
+      path.basename(path.dirname(parent)).toLowerCase() === "steamapps"
+    ) {
+      return path.dirname(parent);
+    }
+    dir = parent;
+  }
+}
+
+async function resolveSteamBuildVersion(gamePath) {
+  if (!STEAMAPP_ID || STEAMAPP_ID === "XXX") return undefined;
+  const steamAppsDir = findSteamAppsDir(gamePath);
+  if (!steamAppsDir) return undefined;
+  try {
+    const contents = await fsp.readFile(
+      path.join(steamAppsDir, `appmanifest_${STEAMAPP_ID}.acf`),
+      "utf8",
+    );
+    const match = contents.match(/"buildid"\s+"(\d+)"/);
+    return match ? match[1] : undefined;
+  } catch {
+    return undefined; //manifest not present here — not a Steam install of this game
+  }
+}
+
+async function resolveEpicBuildVersion(gamePath) {
+  if (!EPICAPP_ID || EPICAPP_ID === "XXX") return undefined;
+  let dataPath;
+  try {
+    dataPath = winapi.RegGetValue(
+      "HKEY_LOCAL_MACHINE",
+      "SOFTWARE\\WOW6432Node\\Epic Games\\EpicGamesLauncher",
+      "AppDataPath",
+    ).value;
+  } catch {
+    dataPath = path.join(
+      process.env.ProgramData || process.env.ALLUSERSPROFILE,
+      "Epic",
+      "EpicGamesLauncher",
+      "Data",
+    );
+  }
+  const normalizedGamePath = path.normalize(gamePath).toLowerCase();
+  try {
+    const manifestsDir = path.join(dataPath, "Manifests");
+    const entries = await fsp.readdir(manifestsDir);
+    for (const entry of entries) {
+      if (!entry.toLowerCase().endsWith(".item")) continue;
+      try {
+        const data = JSON.parse(await fsp.readFile(path.join(manifestsDir, entry), "utf8"));
+        const matches =
+          data.AppName === EPICAPP_ID ||
+          path.normalize(data.InstallLocation || "").toLowerCase() === normalizedGamePath;
+        if (matches && data.AppVersionString) return data.AppVersionString;
+      } catch {
+        //unreadable/invalid manifest, skip it
+      }
+    }
+  } catch (err) {
+    log("warn", `[${GAME_ID}] Could not read Epic manifests: ${err}`);
+  }
+  return undefined;
+}
+
+async function resolveGogVersion(gamePath) {
+  if (!GOGAPP_ID || GOGAPP_ID === "XXX") return undefined;
+  try {
+    const regKey = `SOFTWARE\\WOW6432Node\\GOG.com\\Games\\${GOGAPP_ID}`;
+    const regPath = winapi.RegGetValue("HKEY_LOCAL_MACHINE", regKey, "path").value;
+    if (path.normalize(regPath).toLowerCase() !== path.normalize(gamePath).toLowerCase()) {
+      return undefined;
+    }
+    return winapi.RegGetValue("HKEY_LOCAL_MACHINE", regKey, "ver").value;
+  } catch {
+    return undefined; //RegGetValue throws (never returns null) when the key/value is missing
+  }
+}
+
+async function resolveStoreVersion(gamePath) {
+  const steamVersion = await resolveSteamBuildVersion(gamePath);
+  if (steamVersion !== undefined) return steamVersion;
+  const epicVersion = await resolveEpicBuildVersion(gamePath);
+  if (epicVersion !== undefined) return epicVersion;
+  return resolveGogVersion(gamePath);
+}
+
+//MD5 of uplay_install.manifest — cache key is MD5 of the file's own mtime, paid once per build
+let VERSION_HASH_CACHE = {};
+async function resolveHashVersion(gamePath) {
+  const hashFile = path.join(gamePath, UPLAY_MANIFEST_FILE);
+  try {
+    const mtime = (await fsp.stat(hashFile)).mtimeMs;
+    const cacheKey = crypto.createHash("md5").update(mtime.toString()).digest("hex");
+    if (VERSION_HASH_CACHE[cacheKey] !== undefined) return VERSION_HASH_CACHE[cacheKey];
+    const hash = await util.fileMD5(hashFile);
+    VERSION_HASH_CACHE[cacheKey] = hash;
+    return hash;
+  } catch (err) {
+    log("warn", `[${GAME_ID}] Could not compute hash game version: ${err}`);
+    return undefined;
+  }
+}
+
 //* Resolve game version for display in Vortex
 async function resolveGameVersion(gamePath) {
   GAME_VERSION = await setGameVersion(gamePath);
-  let version = "0.0.0";
+  const READ_FILE = path.join(gamePath, getExecutable(gamePath));
+  if (exeHasGameVersion) {
+    try {
+      return await getExeProductVersion(READ_FILE);
+    } catch (err) {
+      log("error", `[${GAME_ID}] Could not read ${READ_FILE} to get game version: ${err}`);
+    }
+  }
+  const storeVersion = await resolveStoreVersion(gamePath);
+  if (storeVersion !== undefined) return storeVersion;
+  const hashVersion = await resolveHashVersion(gamePath);
+  if (hashVersion !== undefined) return hashVersion;
+  //last resort: exe ProductVersion (blank on every anvil game so far), then "0.0.0". Never throw.
   try {
-    const exeVersion = require("exe-version");
-    version = exeVersion.getProductVersion(path.join(gamePath, getExecutable(gamePath)));
-    return Promise.resolve(version);
+    return await getExeProductVersion(READ_FILE);
   } catch (err) {
-    log("error", `Could not read executable file to get game version: ${err}`);
-    return Promise.resolve(version);
+    log("error", `[${GAME_ID}] Could not read ${READ_FILE} to get game version: ${err}`);
+    return "0.0.0";
   }
 } //*/
 
@@ -2101,9 +2242,10 @@ function deployNotify(api) {
   DETAIL_TEXT += TOOLS_TEXT;
 
   let deployTools = [];
-  if (hasAtk) deployTools.push({ id: ATK_ID, name: ATK_NAME });
-  if (hasForger) deployTools.push({ id: FORGER_ID, name: FORGER_NAME });
-  if (hasReforger && isReforgerInstalled)
+  if (hasAtk) deployTools.push({ id: ATK_ID, name: "ATK" }); //short button label — ATK_NAME ("AnvilToolkit") is too long for the notification button
+  if (hasForger && isForgerInstalled(api, spec))
+    deployTools.push({ id: FORGER_ID, name: "Forger" }); //short button label — FORGER_NAME ("Forger Patch Manager") is too long for the notification button
+  if (hasReforger && isReforgerInstalled())
     deployTools.push({ id: REFORGER_ID, name: REFORGER_NAME });
 
   const notifActions = deployTools.map((tool) => ({

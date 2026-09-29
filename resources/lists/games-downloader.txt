@@ -1,6 +1,19 @@
 aska
+assassinscreed
+assassinscreedbrotherhood
+assassinscreedii
+assassinscreediii
+assassinscreediiiremastered
+assassinscreedivblackflag
 assassinscreedmirage
+assassinscreedodyssey
+assassinscreedorigins
+assassinscreedrevelations
+assassinscreedrogue
 assassinscreedshadows
+assassinscreedsyndicate
+assassinscreedunity
+assassinscreedvalhalla
 atomicheart
 balatro
 ballxpit
@@ -30,6 +43,7 @@ farfarwest
 fatekeeper
 finalfantasy7rebirth
 footballmanager26
+ghostreconbreakpoint
 godofwarragnarok
 grimshire
 gzdoom

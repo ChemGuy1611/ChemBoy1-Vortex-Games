@@ -41,6 +41,7 @@
 | `hasCustomLoader` | `false` | set to true if there is a custom mod loader |
 | `customLoaderInstaller` | `false` | set true if the custom loader uses an installer |
 | `debug` | `false` | toggle for debug mode |
+| `exeHasGameVersion` | `false` | toggle: true if the game devs stamp the real game version (not just the Unity player version) into the exe ProductVersion |
 | `hasVersionFile` | `false` | set to true if there is a Version.info file that contains the game version number |
 | `hasUserIdFolder` | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
 | `loaderChoice` | `true` | true if loader choice is enabled |

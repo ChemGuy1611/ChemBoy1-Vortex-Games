@@ -1,19 +1,22 @@
 """
 bump_version.py
 
-Bump the version of one or more Vortex game extensions.
+Bump the version of one or more Vortex game or helper extensions.
 Updates info.json, the index.js header comment, and prepends a new section
 to CHANGELOG.md -- unless a ## [NEW_VERSION] section is already present, in
 which case it warns and leaves that section alone instead of stacking an
 empty stub over it.
 
+Each EXT_ID is looked up as a game-<id> folder first, then a helper-<id>
+folder (e.g. "falloutlondon" bumps helper-falloutlondon).
+
 Usage:
-    python bump_version.py --major GAME_ID [GAME_ID ...]
-    python bump_version.py --minor GAME_ID [GAME_ID ...]
-    python bump_version.py --patch GAME_ID [GAME_ID ...]
-    python bump_version.py --version 1.2.3 GAME_ID [GAME_ID ...]
-    python bump_version.py --minor GAME_ID --dry-run
-    python bump_version.py --patch GAME_ID --open-changelog
+    python bump_version.py --major EXT_ID [EXT_ID ...]
+    python bump_version.py --minor EXT_ID [EXT_ID ...]
+    python bump_version.py --patch EXT_ID [EXT_ID ...]
+    python bump_version.py --version 1.2.3 EXT_ID [EXT_ID ...]
+    python bump_version.py --minor EXT_ID --dry-run
+    python bump_version.py --patch EXT_ID --open-changelog
 
 Options:
     --major          Bump major segment: 1.2.3 -> 2.0.0 (resets minor and patch)
@@ -130,15 +133,27 @@ def main():
     bump_type = "major" if args.major else ("minor" if args.minor else ("patch" if args.patch else None))
     manual_ver = args.version or None
     saved, failed = [], []
+
+    def _run_one(folder, ext_id):
+        try:
+            ok = _process(folder, ext_id, bump_type, args.dry_run, manual_ver,
+                          args.open_changelog)
+            (saved if ok else failed).append(ext_id)
+        except Exception as e:
+            vu.log_error(ext_id, f"unexpected error: {e}")
+            failed.append(ext_id)
+
     try:
+        matched_ids = set()
         for folder, game_id, _ in vu.iter_game_folders(args.game_ids):
-            try:
-                ok = _process(folder, game_id, bump_type, args.dry_run, manual_ver,
-                              args.open_changelog)
-                (saved if ok else failed).append(game_id)
-            except Exception as e:
-                vu.log_error(game_id, f"unexpected error: {e}")
-                failed.append(game_id)
+            matched_ids.add(game_id)
+            _run_one(folder, game_id)
+        # IDs not matched to a game-* folder fall back to helper-* -- a bare id
+        # (e.g. "falloutlondon") can only ever resolve to one or the other.
+        remaining_ids = set(args.game_ids) - matched_ids
+        if remaining_ids:
+            for folder, helper_id, _ in vu.iter_helper_folders(remaining_ids):
+                _run_one(folder, helper_id)
     except KeyboardInterrupt:
         print("\n\n  Interrupted.")
     finally:
@@ -146,7 +161,7 @@ def main():
     # Explicit IDs that match no extension folder used to print "Saved: 0" and exit
     # 0, so a typo looked exactly like a successful no-op run.
     if args.game_ids and not saved and not failed:
-        matched = {gid for _, gid, _ in vu.iter_game_folders(None)}
+        matched = {gid for _, gid, _ in vu.iter_game_folders(None)} | set(vu.list_helper_ids())
         unmatched = sorted(set(args.game_ids) - matched)
         if unmatched:
             print(f"\n  ERROR - no extension found for: {', '.join(unmatched)}")

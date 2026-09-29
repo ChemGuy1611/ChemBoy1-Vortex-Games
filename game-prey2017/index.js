@@ -25,6 +25,16 @@ const MOD_PATH = path.join("GameSDK", "Precache");
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/711"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Prey_%282017%29";
 const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
+const IGNORE_CONFLICTS = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
+const IGNORE_DEPLOY = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
 
 let execFolder = "";
 let BINARIES_TARGET = "";
@@ -629,6 +639,8 @@ function main(context) {
       gogAppId: GOGAPP_ID,
       epicAppId: EPICAPP_ID,
       xboxAppId: XBOXAPP_ID,
+      ignoreConflicts: IGNORE_CONFLICTS,
+      ignoreDeploy: IGNORE_DEPLOY,
     },
     environment: {
       SteamAPPId: STEAMAPP_ID,

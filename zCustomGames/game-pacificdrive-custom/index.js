@@ -11,6 +11,17 @@ const path = require("path");
 const fs = require("fs");
 const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 
+const IGNORE_CONFLICTS = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
+const IGNORE_DEPLOY = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
+
 //Get correct executable for game version
 function getExecutable(discoveryPath) {
   const isCorrectExec = (exec) => {
@@ -60,6 +71,8 @@ function main(context) {
     },
     details: {
       steamAppId: STEAMAPP_ID,
+      ignoreConflicts: IGNORE_CONFLICTS,
+      ignoreDeploy: IGNORE_DEPLOY,
     },
   });
 

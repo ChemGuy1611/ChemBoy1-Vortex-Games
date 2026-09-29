@@ -3,6 +3,16 @@ const EGS_CODENAME = "Iris";
 const STEAMAPP_ID = "839770";
 
 const path = require("path");
+const IGNORE_CONFLICTS = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
+const IGNORE_DEPLOY = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
 const { fs: vfs, log, util } = require("vortex-api");
 
 function PhoenixPoint(context) {
@@ -17,6 +27,10 @@ function PhoenixPoint(context) {
     executable: () => "PhoenixPointWin64.exe",
     requiredFiles: ["PhoenixPointWin64.exe", "/PhoenixPointWin64_Data/Managed/Assembly-CSharp.dll"],
     setup: async (discovery) => await prepareForModding(discovery),
+    details: {
+      ignoreConflicts: IGNORE_CONFLICTS,
+      ignoreDeploy: IGNORE_DEPLOY,
+    },
   });
   return true;
 }

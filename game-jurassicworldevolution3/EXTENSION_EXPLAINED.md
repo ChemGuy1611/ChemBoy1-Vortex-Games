@@ -14,6 +14,7 @@
 | --- | --- |
 | Game ID | `jurassicworldevolution3` |
 | Executable | `JWE3.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
 | Extension Page | [https://www.nexusmods.com/site/mods/1503](https://www.nexusmods.com/site/mods/1503) |
 | PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Jurassic_World_Evolution_3](https://www.pcgamingwiki.com/wiki/Jurassic_World_Evolution_3) |
 
@@ -82,3 +83,4 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.

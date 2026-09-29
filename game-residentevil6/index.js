@@ -163,12 +163,14 @@ const IGNORE_CONFLICTS = [
   path.join("**", "readme*"),
   path.join("**", "modinfo.ini"),
   path.join("**", "screenshot.jpg"),
+  path.join("**", "license*"),
 ];
 const IGNORE_DEPLOY = [
   path.join("**", "changelog*"),
   path.join("**", "readme*"),
   path.join("**", "modinfo.ini"),
   path.join("**", "screenshot.jpg"),
+  path.join("**", "license*"),
 ];
 
 //filled in from data above

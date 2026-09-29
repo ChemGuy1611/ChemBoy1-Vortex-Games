@@ -11,6 +11,16 @@ const STEAM_ID = "2600";
 const GOG_ID = "1207659240";
 const EXEC = "Vampire.exe";
 const MOD_PATH = "Unofficial_Patch";
+const IGNORE_CONFLICTS = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
+const IGNORE_DEPLOY = [
+  path.join("**", "changelog*"),
+  path.join("**", "readme*"),
+  path.join("**", "license*"),
+];
 
 //3rd party tools and launchers
 const tools = [
@@ -114,6 +124,8 @@ function main(context) {
       steamAppId: +STEAM_ID,
       gogAppId: +GOG_ID,
       compatibleDownloads: ["vampirebloodlines"],
+      ignoreConflicts: IGNORE_CONFLICTS,
+      ignoreDeploy: IGNORE_DEPLOY,
     },
     supportedTools: tools,
     setup: async (discovery) => await setup(discovery, context.api),

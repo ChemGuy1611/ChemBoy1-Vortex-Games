@@ -732,6 +732,61 @@ def patch_spec_ignore_fields(game_id, src, context):
     return new_src, True, f"added {', '.join(added)} to spec.details"
 
 
+IGNORE_ARRAY_RE = re.compile(
+    r'const\s+(IGNORE_CONFLICTS|IGNORE_DEPLOY)\s*=\s*\[(?P<body>[^\]]*)\]',
+    re.DOTALL,
+)
+
+
+def patch_license_ignore_pattern(game_id, src, context):
+    """
+    Add a license* glob as a new trailing entry in IGNORE_CONFLICTS/IGNORE_DEPLOY,
+    wherever that array literal already exists - the majority readme*/changelog*
+    glob shape (single- and multi-line) AND the minority literal-cased shape
+    (readme.txt/README.txt/etc, e.g. game-vein/game-aska). Canonical:
+    template-basic (readme*/changelog*/license* convention). Purely additive -
+    never touches an existing literal LICENSE.txt entry (game-borderlands/2/3),
+    never overwrites, quote-style tolerant, matches indentation for multi-line
+    arrays.
+    """
+    changed_arrays = []
+
+    def _process_array(m):
+        body = m.group('body')
+        if re.search(r'license\*', body, re.IGNORECASE):
+            return m.group(0)  # this array already has it
+
+        quote_m = re.search(r'(["\'])', body)
+        q = quote_m.group(1) if quote_m else '"'
+        entry_call = f'path.join({q}**{q}, {q}license*{q})'
+
+        if '\n' in body:
+            lines = body.rstrip().split('\n')
+            last_line = next((ln for ln in reversed(lines) if ln.strip()), '  ')
+            indent = re.match(r'[ \t]*', last_line).group(0)
+            new_body = body.rstrip()
+            if not new_body.endswith(','):
+                new_body += ','
+            new_body += f'\n{indent}{entry_call},\n'
+        else:
+            new_body = body.rstrip()
+            if new_body.endswith(','):
+                new_body = new_body[:-1]
+            new_body = new_body + f', {entry_call}'
+
+        changed_arrays.append(m.group(1))
+        return f'const {m.group(1)} = [{new_body}]'
+
+    new_src = IGNORE_ARRAY_RE.sub(_process_array, src)
+
+    if not changed_arrays:
+        if IGNORE_ARRAY_RE.search(src):
+            return src, False, SKIP_ALREADY_SET
+        return src, False, "no IGNORE_CONFLICTS/IGNORE_DEPLOY array found"
+
+    return new_src, True, f"added license* glob to {', '.join(changed_arrays)}"
+
+
 def patch_findgame_launcher_async(game_id, src, context):
     """
     Ensure makeFindGame is sync and requiresLauncher is async. Canonical: template-basic:351,370.
@@ -1118,6 +1173,7 @@ PATCHES = [
     {"name": "filtered_empty_dirs",              "enabled": True, "fn": patch_filtered_empty_dirs},
     {"name": "ignore_conflicts_deploy_constants","enabled": True, "fn": patch_ignore_conflicts_deploy_constants},
     {"name": "spec_ignore_fields",              "enabled": True, "fn": patch_spec_ignore_fields},
+    {"name": "license_ignore_pattern",           "enabled": True, "fn": patch_license_ignore_pattern},
     {"name": "findgame_launcher_async",          "enabled": True, "fn": patch_findgame_launcher_async},
     {"name": "extension_url",                    "enabled": True, "fn": patch_extension_url},
     {"name": "pcgamingwiki_url",                 "enabled": True, "fn": patch_pcgamingwiki_url},

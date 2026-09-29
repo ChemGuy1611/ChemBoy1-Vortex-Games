@@ -77,6 +77,8 @@ details: {
 }
 ```
 
+Repo convention: every `game-*`/`template-*` extension sets `IGNORE_CONFLICTS`/`IGNORE_DEPLOY` to the same three glob patterns — `path.join("**", "changelog*")`, `path.join("**", "readme*")`, `path.join("**", "license*")` — so README/CHANGELOG/LICENSE files are never flagged as mod conflicts or deployed into the game folder. A separate global helper extension also applies these same three patterns to every known game at runtime (via `util.getGame(gameId).details`), independent of what any individual extension's own `index.js` declares.
+
 ### Standard `environment` keys
 
 ```js
@@ -305,4 +307,8 @@ Epic/Microsoft Store IDs these fields need). `STEAM_FILE_DOWNLOADER.md` (`detail
 and the `details.hideSteamKit` opt-out, both read by the Steam file-verification extension).
 `STEAMCHARTS_API.md` (player-count history keyed by that same `steamAppId`).
 `MICROSOFT_STORE_CATALOG_API.md` (resolving `XBOXAPP_ID`/`XBOXEXECNAME`/`XBOX_PUB_ID` from a Store
-product ID without an installed Game Pass copy).
+product ID without an installed Game Pass copy). `GAME_VERSION_RESOLUTION.md` (`details.steamAppId`/
+`gogAppId`/`epicAppId`/`xboxAppId` reused for per-store version detection; the `hashFiles` inert note
+above is explained in full there). `HELPER_EXTENSIONS.md` (a `helper-*` extension can read and mutate
+another game's live `details` object at runtime via `util.getGame()`, independent of what that game's
+own extension declares).
