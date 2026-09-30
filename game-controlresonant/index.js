@@ -2,8 +2,8 @@
 Name: CONTROL Resonant Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-09-24
+Version: 1.0.1
+Date: 2026-09-30
 Notes:
 -
 ///////////////////////////////////////////*/
@@ -64,7 +64,7 @@ const debug = false; //toggle for debug mode
 
 //info for modtypes, installers, tools, and actions
 const DATA_FOLDER = "data";
-let ROOT_FOLDERS = [DATA_FOLDER, "data_pack2"];
+let ROOT_FOLDERS = [DATA_FOLDER, "data_pack2", "crmods"];
 const ROOTSUB_FOLDERS = [];
 const ROOTSUB_PATH = DATA_FOLDER;
 
