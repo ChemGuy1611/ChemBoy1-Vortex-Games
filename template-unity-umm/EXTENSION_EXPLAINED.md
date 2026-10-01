@@ -30,6 +30,7 @@
 | `hasVersionFile` | `true` | toggle for version file. Set to false if game doesn't have |
 | `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
 | `debug` | `false` | toggle for debug mode |
+| `exeHasGameVersion` | `false` | toggle: true if the game devs stamp the real game version (not just the Unity player version) into the exe ProductVersion |
 
 ## Mod Types
 
@@ -72,6 +73,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open Data Folder
 - Open Save Folder
 - Open PCGamingWiki Page
+- Open SteamDB Page
 - View Changelog
 - Submit Bug Report
 - Open Downloads Folder

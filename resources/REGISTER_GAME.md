@@ -267,6 +267,7 @@ root alongside `index.js`.
 
 ```json
 {
+    "id": "warhammer40kdarktide",
     "name": "Game: Warhammer 40,000: Darktide",
     "author": "ChemBoy1",
     "version": "1.0.0",
@@ -276,6 +277,7 @@ root alongside `index.js`.
 
 | Field         | Type     | Notes                                                                                                                        |
 | ------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `id`          | `string` | Stable extension identifier. Convention: the `GAME_ID` (a helper extension uses its folder id). Keep it first, and never change it after release. See [VORTEX_EXTENSION_LOADING.md](VORTEX_EXTENSION_LOADING.md) for what Vortex does with it. |
 | `name`        | `string` | Display name in the Extensions list. Convention: `"Game: <Full Game Name>"`.                                                 |
 | `author`      | `string` | Extension author — `"ChemBoy1"` for this repo.                                                                               |
 | `version`     | `string` | Semver `MAJOR.MINOR.PATCH`. **Must match the latest `## [x.x.x]` entry in `CHANGELOG.md`.** New extensions start at `1.0.0`. |

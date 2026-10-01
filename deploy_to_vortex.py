@@ -20,9 +20,12 @@ Arguments:
                 info.json never travels on a partial update so the deployed
                 version stays put. The deployed folder is always located by name
                 first, with or without --force, so this replaces the existing
-                extension rather than creating a second copy beside it. A new
-                "game-<id>"/"helper-<id>" folder is created only when no deployed
-                folder can be found at all.
+                extension rather than creating a second copy beside it. The
+                lookup tries a folder named just "<id>" first (what Vortex
+                installs an extension with an info.json "id" into), then
+                "game-<id>"/"helper-<id>", then the older Vortex-installed
+                name forms. A new "<id>" folder is created only when no
+                deployed folder can be found at all.
     --restart-vortex
                 Close Vortex before copying (graceful taskkill, force-kill
                 after 30s) and launch it again (no CLI args) after all copies.
@@ -111,18 +114,21 @@ def deploy_game(ext_id: str, dry_run: bool, force: bool) -> bool:
     if not src:
         vu.log_error(ext_id, f"source folder not found: {vu.GAME_PREFIX}{ext_id} or {vu.HELPER_PREFIX}{ext_id}")
         return False
-    prefix = vu.extension_prefix(kind)
     name = vu.extension_display_name(src, kind)
     game_id = ext_id
 
-    # Always resolve the deployed folder, including under --force. Extensions
-    # installed through Vortex are named e.g. "Atomic Heart Vortex Extension 1832
-    # 1.0.4", not "game-<id>"/"helper-<id>", so skipping the lookup would deploy a
-    # second copy alongside the live one and leave Vortex loading two registrations
-    # of the same extension. --force selects a full-tree replace of the resolved
-    # folder; the prefixed-folder fallback is only for a genuine first-time deploy.
+    # Always resolve the deployed folder, including under --force. An extension
+    # whose info.json carries an "id" is installed by Vortex into a folder named
+    # just "<id>", which is the primary lookup; older installs are named e.g. "Atomic
+    # Heart Vortex Extension 1832 1.0.4", and an earlier deploy may have made
+    # "game-<id>"/"helper-<id>". Skipping the lookup would deploy a second copy
+    # alongside the live one and leave Vortex loading two registrations of the same
+    # extension. --force selects a full-tree replace of the resolved folder; the
+    # plain "<id>" fallback is only for a genuine first-time deploy, and is the name
+    # Vortex itself would later install a release into, so a release replaces the
+    # test copy instead of sitting beside it.
     resolved = vu.find_vortex_plugin_folder(ext_id, name)
-    dest = resolved or os.path.join(PLUGINS_DIR, f"{prefix}{ext_id}")
+    dest = resolved or os.path.join(PLUGINS_DIR, ext_id)
     partial = bool(resolved) and not force
 
     # Partial update (deployed folder already exists, no --force): carry index.js,

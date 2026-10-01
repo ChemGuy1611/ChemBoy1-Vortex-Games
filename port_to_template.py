@@ -30,6 +30,12 @@ Substitution rules:
 
 A .bak copy of the original index.js is written before overwriting.
 
+First-port tool, NOT a resync tool: it is not idempotent. Re-running it on a game
+that is already on the template resets every boolean toggle to the template default
+and can also replace customized constants such as DISCOVERY_IDS_ACTIVE and
+ROOT_FOLDERS with template values, silently losing real per-game settings. To bring
+an already-templated game up to a newer template, use --diff and hand-patch instead.
+
 Usage:
     python port_to_template.py GAME_ID TEMPLATE_NAME
     python port_to_template.py GAME_ID TEMPLATE_NAME --dry-run

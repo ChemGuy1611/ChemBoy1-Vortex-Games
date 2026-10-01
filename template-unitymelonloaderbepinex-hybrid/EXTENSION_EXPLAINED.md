@@ -35,11 +35,12 @@
 | `hasCustomLoader` | `false` | set to true if there is a custom mod loader |
 | `customLoaderInstaller` | `false` | set true if the custom loader uses an installer |
 | `debug` | `false` | toggle for debug mode |
+| `exeHasGameVersion` | `false` | toggle: true if the game devs stamp the real game version (not just the Unity player version) into the exe ProductVersion |
 | `hasVersionFile` | `false` | set to true if there is a Version.info file that contains the game version number |
 | `hasUserIdFolder` | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
 | `loaderChoice` | `true` | true if loader choice is enabled |
 | `allowBepCfgMan` | `true` | should BepInExConfigManager be downloaded (via notification)? |
-| `allowMelPrefMan` | `true` | should MelonPreferencesManager be downloaded (via notification)? |
+| `allowMelPrefMan` | `false` | should MelonPreferencesManager be downloaded (via notification)? disabled 2026-09-14 - plugin causes in-game errors when loaded |
 | `allowBepinexNexus` | `true` | allow Nexus Mods download of BepInEx/MelonLoader |
 | `allowMelonNexus` | `true` | allows MelonLoader to be downloaded from Nexus Mods |
 | `useMelonNightly` | `false` | use Nightly build of MelonLoader? |
@@ -52,18 +53,18 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | BepInEx Mod | `XXX-bepinexmod` | high | `{gamePath}/BepInEx` |
-| MelonLoader Mod | `XXX-melonmod` | high | `{gamePath}/.` |
 | BepInEx Plugins | `XXX-bepinex-plugins` | high | `{gamePath}/BepInEx/plugins` |
 | BepInEx Patchers | `XXX-bepinex-patchers` | high | `{gamePath}/BepInEx/patchers` |
 | BepInEx Config | `XXX-bepinex-config` | high | `{gamePath}/BepInEx/config` |
+| BepInExConfigManager | `XXX-bepcfgman` | high | `{gamePath}/BepInEx` |
+| Root Folder | `XXX-root` | high | `{gamePath}` |
+| BepInEx Injector | `XXX-bepinex` | low | `{gamePath}` |
+| MelonLoader Mod | `XXX-melonmod` | high | `{gamePath}/.` |
 | MelonLoader Mods | `XXX-melonloader-mods` | high | `{gamePath}/Mods` |
 | MelonLoader Plugins | `XXX-melonloader-plugins` | high | `{gamePath}/Plugins` |
 | MelonLoader Config | `XXX-melonloader-config` | high | `{gamePath}/UserData` |
 | MelonLoader UserLibs | `XXX-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
-| BepInExConfigManager | `XXX-bepcfgman` | high | `{gamePath}/BepInEx` |
 | MelonPreferencesManager | `XXX-melonprefman` | high | `{gamePath}/Mods` |
-| Root Folder | `XXX-root` | high | `{gamePath}` |
-| BepInEx Injector | `XXX-bepinex` | low | `{gamePath}` |
 | MelonLoader | `XXX-melonloader` | low | `{gamePath}` |
 | Assembly DLL Mod | `XXX-assemblydll` | 60 | `?` |
 | Assets/Resources File | `XXX-assets` | 62 | `?` |
@@ -97,7 +98,6 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Download Latest BepInEx BE
 - Download BepInExConfigManager
 - Download Latest MelonLoader
-- Download MelonPreferencesManager
 - Open Data Folder
 - Open Save Folder
 - Open BepInEx Config
@@ -105,6 +105,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open MelonLoader Config
 - Open MelonLoader Log
 - Open PCGamingWiki Page
+- Open SteamDB Page
 - View Changelog
 - Submit Bug Report
 - Open Downloads Folder

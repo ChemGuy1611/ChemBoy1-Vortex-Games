@@ -1,5 +1,9 @@
 # template-reframework-fluffy Changelog
 
+## [2026-09-30]
+
+- Added: an `id` field as the first key of `info.json`, set to the `XXX` placeholder that `new_extension.py` replaces with the `GAME_ID`. Vortex uses `id` as the extension's stable identity (registered name, install folder and localization namespace) instead of deriving them from the folder or archive name.
+
 ## [2026-09-28]
 
 - Added: a `license*` glob (`path.join("**", "license*")`) alongside the existing `changelog*`/`readme*` entries in `IGNORE_CONFLICTS`/`IGNORE_DEPLOY`, so LICENSE files are treated the same as README/CHANGELOG - never flagged as a mod conflict, never deployed into the game folder.

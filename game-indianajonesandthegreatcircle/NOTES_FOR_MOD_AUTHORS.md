@@ -8,17 +8,25 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Config | a file with one of these extensions: `.local` or `.cfg` | `USER_DOCS\Saved Games\MachineGames\TheGreatCircle\base` |
+| Config File Mods | a `.local` file | `USER_DOCS\Saved Games\MachineGames\TheGreatCircle\base` |
 | Save Game Files | a `.dat` file | `ROAMINGAPPDATA\GSE Saves\2677660\remote\GAME-SLOT0` |
 | Sounds | a file with one of these extensions: `.pack` or `.bnk` | `base\sound\soundbanks\pc` |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
-## Config
+## Config File Mods
 
-Recognised when the archive contains a file with one of these extensions: `.local` or `.cfg`.
+Configuration tweaks, deployed to the game's config location.
+
+**Requirements:**
+
+- Recognised by any file with the `.local` or `.cfg` extensions.
 
 Installs to: `USER_DOCS\Saved Games\MachineGames\TheGreatCircle\base`
+
+**Common mistakes:**
+
+- Shipping a config file with one of these names inside an unrelated mod makes the whole archive install as a config mod.
 
 ## Save Game Files
 

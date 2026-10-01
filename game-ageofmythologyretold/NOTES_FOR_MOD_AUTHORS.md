@@ -9,7 +9,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Save Game Files | a `.mythsav` file | `util.getVortexPath("home")\Games\Age of Mythology Retold\USERID_FOLDER\savegames` |
-| Config | a file or folder named `game` and a file with the `.xml` extension | `util.getVortexPath("home")\Games\Age of Mythology Retold\USERID_FOLDER\users` |
+| Config File Mods | a `.xml` file | `util.getVortexPath("home")\Games\Age of Mythology Retold\USERID_FOLDER\users` |
 | Reshade | a file or folder named `reshade-shaders` | - |
 | Binaries | a file with one of these extensions: `.dll` or `.ini` | - |
 
@@ -29,11 +29,19 @@ Installs to: `util.getVortexPath("home")\Games\Age of Mythology Retold\USERID_FO
 
 - Including an example save alongside a normal mod makes the archive install as a save.
 
-## Config
+## Config File Mods
 
-Recognised when the archive contains a file or folder named `game` and a file with the `.xml` extension.
+Configuration tweaks, deployed to the game's config location.
+
+**Requirements:**
+
+- Recognised by any file with the `.xml` extension.
 
 Installs to: `util.getVortexPath("home")\Games\Age of Mythology Retold\USERID_FOLDER\users`
+
+**Common mistakes:**
+
+- Shipping a config file with one of these names inside an unrelated mod makes the whole archive install as a config mod.
 
 ## Reshade
 

@@ -24,10 +24,27 @@ will be removed").
 ## Discovery & load
 
 1. **`prepareExtensions()`** builds `mExtensions` (`IRegisteredExtension[]`) from those paths.
-2. For each, **`loadDynamicExtension(extensionPath, …, bundled)`** reads `info.json`, computes a
+2. For each, **`loadDynamicExtension(extensionPath, …, bundled)`** reads `info.json`, computes the
+   extension's **name** (`info.id || folderName`, the key it is registered and persisted under) and a
    **namespace** (`info.namespace ?? info.id ?? (bundled ? folderName : idify(name, folderName))`),
    `require`s the extension's index file (trying known formats), and returns its `ExtensionInit`.
    `getExtensionInitFunc(mod)` extracts the **default export** — the `init(context)` function.
+
+### The `info.json` `id` field
+
+`id` is optional, and when present it becomes the extension's stable identity:
+
+- **Registered name and state key.** The extension is keyed by `id` instead of its folder name, so
+  it keeps the same key however the folder is named.
+- **Localization namespace.** The namespace is `id` (unless `namespace` is also set), instead of a
+  slug of the display `name`.
+- **Install folder.** When Vortex installs an extension from an archive it extracts to a folder
+  named after the sanitized `id`, falling back to the archive's file name when there is no `id`.
+  Updates therefore land in the same folder every time.
+- **One copy per id.** When a second extension with the same registered name is scanned, it is not
+  loaded.
+- **Exact dependency matching.** `requireExtension`, dependency checks and optional-extension
+  checks match `id` exactly (`findExt` compares `name`, `id` and the registered name).
 
 ## The context is a recording Proxy
 

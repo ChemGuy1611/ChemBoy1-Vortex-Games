@@ -86,7 +86,7 @@ Installers run in priority order (lower number = tested first). The first instal
 These tools appear in Vortex's Tools panel when this game is active:
 
 - **Custom Launch** (`mywintercar.exe`)
-- **${MSCLOADER_NAME} Installer** (`path.join(MSCLOADER_FOLDER`)
+- **MSCLoader Installer** (`MSCLoader/MSCLInstaller.exe`)
 
 ## Toolbar Actions
 

@@ -14,7 +14,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Binfolder | a file or folder named `bin`, a file with the `.pak` extension and a file with the `.bin` extension | `build\pc\main` |
 | Pak | a file with the `.pak` extension | `build\pc\main` |
 | Buildfolder | a file or folder named `build` | the game folder itself (no subfolder) |
-| Save | a file or folder named `USR-DATA` | `DOCUMENTS\The Last of Us Part II\USERID_FOLDER\savedata` |
+| Save Game Files | a `USR-DATA` file | `DOCUMENTS\The Last of Us Part II\USERID_FOLDER\savedata` |
 | Config File Mods | a `screeninfo.cfg` file | `USER_HOME\SOFTWARE\Naughty Dog\The Last of Us Part II` |
 | Psarctoolndarc | a file or folder named `ndarc.exe` | `build\pc\main` |
 
@@ -54,11 +54,19 @@ Recognised when the archive contains a file or folder named `build`.
 
 Installs to: the game folder itself (no subfolder)
 
-## Save
+## Save Game Files
 
-Recognised when the archive contains a file or folder named `USR-DATA`.
+Save files, deployed to the game's save folder.
+
+**Requirements:**
+
+- Recognised by any file named `USR-DATA`.
 
 Installs to: `DOCUMENTS\The Last of Us Part II\USERID_FOLDER\savedata`
+
+**Common mistakes:**
+
+- Including an example save alongside a normal mod makes the archive install as a save.
 
 ## Config File Mods
 

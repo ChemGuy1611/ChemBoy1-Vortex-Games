@@ -1,4 +1,5 @@
 {
+  "id": "globalignorepatterns",
   "name": "Global Ignore Patterns Helper",
   "author": "ChemBoy1",
   "version": "1.0.0",

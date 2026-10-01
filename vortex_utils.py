@@ -2523,6 +2523,7 @@ def make_info_json():
     """Return a fresh info.json template string for a new extension."""
     return (
         '{\n'
+        '  "id": "XXX",\n'
         '  "name": "Game: XXX",\n'
         '  "author": "ChemBoy1",\n'
         f'  "version": "{NEW_EXTENSION_VERSION}",\n'
@@ -3413,7 +3414,10 @@ def find_vortex_plugin_folder(game_id, game_name=None):
 
     Checks VORTEX_PLUGINS_DIR env var (default: C:\\ProgramData\\vortex\\plugins).
     Match priority:
-      1. Exact game_id match or game_id prefix (e.g. "subnautica2", "subnautica2-1.2.0")
+      1. A folder named for the id, each form checked against the whole listing
+         before the next: "<id>" (the folder Vortex installs an extension with an
+         info.json "id" into), then "game-<id>" / "helper-<id>" (the name an earlier
+         deploy_to_vortex.py run created), then "<id>-<suffix>" (e.g. "subnautica2-1.2.0")
       2. "Vortex Extension Update - <name> v*" folder (deployed via Nexus in-app
          update) whose cleaned name portion equals the cleaned game_id or game_name
       3. Any folder whose cleaned name equals the cleaned game_id or game_name
@@ -3457,12 +3461,17 @@ def find_vortex_plugin_folder(game_id, game_name=None):
 
     gid_lower = game_id.lower()
 
-    # Pass 1: exact game-id prefix match
-    for entry in entries:
-        el = entry.lower()
-        if el == gid_lower or el.startswith(gid_lower + "-"):
+    # Pass 1: a folder named for the id. One tier at a time over the whole listing,
+    # so the bare "<id>" folder always beats a prefixed or versioned one.
+    id_forms = (
+        lambda el: el == gid_lower,
+        lambda el: el in (GAME_PREFIX + gid_lower, HELPER_PREFIX + gid_lower),
+        lambda el: el.startswith(gid_lower + "-"),
+    )
+    for is_form in id_forms:
+        for entry in entries:
             full = os.path.join(plugins_dir, entry)
-            if os.path.isdir(full):
+            if is_form(entry.lower()) and os.path.isdir(full):
                 return full
 
     # Pass 2: "Vortex Extension Update - <name> v*" naming (Vortex in-app update folder)

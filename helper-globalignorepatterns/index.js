@@ -11,6 +11,7 @@ const path = require("path");
 const { util, log } = require("vortex-api");
 
 //Specify all information about the extension
+const EXTENSION_ID = "globalignorepatterns";
 const EXTENSION_NAME = "Global Ignore Patterns Helper";
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/2381";
 

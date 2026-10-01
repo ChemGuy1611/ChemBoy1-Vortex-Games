@@ -13,9 +13,9 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Smithbox | a file or folder named `smithbox.exe` | - |
 | Flver | a file or folder named `flver_editor.exe` | - |
 | Dvdroot Ps4 | a file or folder named one of: `action`, `chr`, `event`, `facegen`, `map`, `menu`, `movie`, `msg`, `mtd`, `obj`, `other`, `param`, `paramdef`, `parts`, `remo`, `script`, `sfx`, `shader` or `sound` | `CUSA03173\dvdroot_ps4` |
-| Save | a file or folder named `userdata0000` | `user\savedata\1\CUSA03173\SPRJ0005` |
+| Save Game Files | a `userdata0000` file | `user\savedata\1\CUSA03173\SPRJ0005` |
 
-Paths are relative to the game's install folder.
+Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
 ## Shadps4
 
@@ -39,11 +39,19 @@ Recognised when the archive contains a file or folder named one of: `action`, `c
 
 Installs to: `CUSA03173\dvdroot_ps4`
 
-## Save
+## Save Game Files
 
-Recognised when the archive contains a file or folder named `userdata0000`.
+Save files, deployed to the game's save folder.
+
+**Requirements:**
+
+- Recognised by any file named `userdata0000`.
 
 Installs to: `user\savedata\1\CUSA03173\SPRJ0005`
+
+**Common mistakes:**
+
+- Including an example save alongside a normal mod makes the archive install as a save.
 
 ## Rules That Apply To Every Mod Type
 

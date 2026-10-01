@@ -64,11 +64,11 @@ Caveat: `mod-dependency-manager`'s conflict blacklist caches its result per acti
 
 ## Required files
 
-Same set as any other extension: `index.js`, `info.json` (four fields: `name`, `author`, `version`, `description`), `CHANGELOG.md` (`# Changelog` → `## [x.x.x]` entries), an icon PNG, and a version-marker `.txt` file matching the current version.
+Same set as any other extension: `index.js`, `info.json` (five fields: `id`, `name`, `author`, `version`, `description`; the `id` is the helper's folder id, e.g. `falloutlondon` for `helper-falloutlondon`), `CHANGELOG.md` (`# Changelog` → `## [x.x.x]` entries), an icon PNG, and a version-marker `.txt` file matching the current version.
 
 ## Deploying for local testing
 
-`deploy_to_vortex.py` only supports `game-*` folders (its source/dest paths are hardcoded to `game-{id}`). A `helper-*` extension has to be copied into `%ProgramData%\vortex\plugins\<folder-name>` by hand for local live-testing.
+`deploy_to_vortex.py <id>` resolves a helper id to its `helper-<id>` folder and deploys it like a game extension. It looks in the plugins folder for one named just `<id>` first (the name Vortex installs an extension with an `info.json` `id` into), then `helper-<id>`, then the older Vortex-installed name forms, and creates `<id>` when none exists. Run it with `--dry-run` first to see which folder it picked.
 
 ---
 

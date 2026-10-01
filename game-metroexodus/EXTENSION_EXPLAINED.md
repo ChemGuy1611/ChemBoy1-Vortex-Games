@@ -27,7 +27,7 @@
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Metro Exodus SDK** (`path.join("SDK"`)
+- **Metro Exodus SDK** (`SDK/bin_x64/Exodus_SDK.exe`)
 
 ## Toolbar Actions
 

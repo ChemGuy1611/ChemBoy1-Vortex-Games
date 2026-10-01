@@ -24,7 +24,7 @@ context.registerMigration(
 | Fact                       | Detail                                                                                                                                                  |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **When it runs**           | When the stored extension version differs from the current `info.json` version                                                                          |
-| **Process**                | Main process — NOT the renderer. `api.store` is not available. Use `context.api.store.getState()` only after `context.api.awaitUI()` if you need state. |
+| **Process**                | Renderer, at extension-manager store setup (`ExtensionManager.migrateExtensions`), before any game is activated. `api.store` is available. The promise is fire-and-forget: nothing (game activation, deployment) waits for it. |
 | **`oldVersion`**           | Previous stored version. `"0.0.0"` if first run or state was damaged.                                                                                   |
 | **Multiple registrations** | Each `registerMigration` call registers independently. All run if versions differ. Each gate its own version range.                                     |
 | **Version update**         | Stored version is updated to current **after** the promise resolves.                                                                                    |
@@ -107,7 +107,7 @@ async function migrate200(api, oldVersion) {
 
 ## State access in migration
 
-Migration runs in the main process. You can read state but UI is not guaranteed ready:
+Migration runs in the renderer as soon as the store exists. You can read and dispatch state, but UI is not guaranteed ready. Because nothing awaits the migration, work that must finish before a game's `setup()` or first deployment belongs in `setup()` itself (idempotent), not only here:
 
 ```js
 async function migrate100(api, oldVersion) {

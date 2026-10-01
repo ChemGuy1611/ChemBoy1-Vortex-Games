@@ -165,9 +165,19 @@ function extractTools(src, table) {
     const idM = entry.match(/id\s*:\s*([^,\n]+)/);
     const execM = entry.match(/executable\s*:\s*\(\)\s*=>\s*([^,\n]+)/);
 
-    const name = nameM ? nameM[1] : null;
+    let name = nameM ? nameM[1] : null;
+    // A template-literal name (`${LOADER_NAME} Installer`) carries constants to resolve.
+    if (name && name.includes("${")) name = resolveValue("`" + name + "`", table);
     const id = idM ? resolveValue(idM[1].trim(), table) : null;
-    const exec = execM ? resolveValue(execM[1].trim(), table) : null;
+    let execExpr = execM ? execM[1].trim() : null;
+    // path.join(A, B) contains a comma, so the capture above cut it short. Re-read the call
+    // up to its matching paren.
+    if (execExpr && execExpr.startsWith("path.join(")) {
+      const open = entry.indexOf("path.join(", execM.index);
+      const close = scanToMatchingClose(entry, open + "path.join".length, "(", ")");
+      if (close !== -1) execExpr = entry.slice(open, close + 1);
+    }
+    const exec = execExpr ? resolveValue(execExpr, table) : null;
 
     if (name) results.push({ name, id, executable: exec });
   }

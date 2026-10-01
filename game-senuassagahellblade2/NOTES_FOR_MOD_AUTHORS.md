@@ -9,7 +9,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Pak Mods | a `".pak` file | `Hellblade2\Content\Paks\~mods` |
-| Config | a file with the `.ini` extension | - |
+| Config File Mods | a config file such as `engine.ini` or `scalability.ini` | - |
 | Save Game Files | a `.sav` file | `{localAppData}\Hellblade2\Saved\SaveGames` |
 | Root / Game Folder Mods | a top-level folder such as `Hellblade2` | the game folder itself (no subfolder) |
 
@@ -36,9 +36,17 @@ Installs to: `Hellblade2\Content\Paks\~mods`
 
 - Shipping several unrelated paks in one archive when you meant them all to install - the user gets a choice dialog and may pick only one.
 
-## Config
+## Config File Mods
 
-Recognised when the archive contains a file with the `.ini` extension.
+Config tweaks are deployed to the game's config folder in your user profile, not into the game installation.
+
+**Requirements:**
+
+- Recognised by any of these filenames in the archive: `engine.ini` or `scalability.ini`.
+
+**Common mistakes:**
+
+- Shipping a config file with one of these names inside an unrelated mod - the whole archive is then treated as a config mod.
 
 ## Save Game Files
 

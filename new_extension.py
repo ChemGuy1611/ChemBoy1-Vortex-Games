@@ -49,6 +49,7 @@ Copies all template assets as-is (tfc.png, fluffy.png, reloaded.png, etc.).
 New extensions start at version 1.0.0 (vortex_utils.NEW_EXTENSION_VERSION),
 stamped into info.json, the CHANGELOG.md entry, the index.js header, and the
 version .txt filename regardless of the version the template scaffold carries.
+info.json "id" is set to GAME_ID.
 
 After writing index.js, automatically runs:
     1. node generate_explained.js {GAME_ID}
@@ -659,10 +660,11 @@ def sub_toggle(src, toggle_name, value):
 
 # ── File editors ─────────────────────────────────────────────────────────────
 
-def edit_info_json(path, game_name):
-    """Replace the XXX game name in the copied info.json and stamp the starting version."""
+def edit_info_json(path, game_name, game_id):
+    """Replace the XXX game name and id in the copied info.json and stamp the starting version."""
     with open(path, encoding="utf-8") as f:
         content = f.read()
+    content = content.replace('"id": "XXX"', f'"id": "{game_id}"')
     content = content.replace('"Game: XXX"', f'"Game: {game_name}"')
     content = content.replace('"Vortex support for XXX"', f'"Vortex support for {game_name}"')
     content = re.sub(
@@ -983,7 +985,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
     print("  index.js written")
 
     # ── 9. info.json ──────────────────────────────────────────────────────────
-    edit_info_json(os.path.join(dest, "info.json"), game_name)
+    edit_info_json(os.path.join(dest, "info.json"), game_name, game_id)
     print("  info.json updated")
 
     # ── 10. CHANGELOG.md ──────────────────────────────────────────────────────

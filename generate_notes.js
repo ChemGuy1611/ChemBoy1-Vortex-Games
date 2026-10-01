@@ -40,8 +40,12 @@
  * The coverage report shows which extensions still lean on tier 2.
  *
  * JSON output schema:
- *   { timestamp, created, skipped, errors,
- *     tier1, tier2, results: [{ id, ok, error?, tier1, tier2, unknownFns }] }
+ *   { timestamp, created, skipped, errors, tier1, tier2, dropped,
+ *     results: [{ id, ok, error?, tier1, tier2, unknownFns, dropped }] }
+ *   unknownFns  installer test functions with no tier-1 block for the extension's engine.
+ *   dropped     installer test functions that DO have a tier-1 block, but whose build
+ *               returned null because a constant it needs did not resolve (usually an
+ *               alternate constant name). Those sections silently fall to tier 2.
  */
 
 const fs = require("fs");
@@ -1614,6 +1618,7 @@ const PROSE = [
         lead: "Save files, deployed to the game's save folder.",
         userProfile: true,
         exts: v.SAVE_EXTS,
+        files: v.SAVE_FILES,
         pitfalls: [
           "Including an example save alongside a normal mod makes the archive install as a save.",
         ],
@@ -1628,6 +1633,7 @@ const PROSE = [
         lead: "Configuration tweaks, deployed to the game's config location.",
         userProfile: true,
         files: v.CONFIG_FILES,
+        exts: v.CONFIG_EXTS,
         installsTo: v.CONFIG_PATH,
         pitfalls: [
           "Shipping a config file with one of these names inside an unrelated mod makes the whole " +
@@ -1746,7 +1752,9 @@ function buildVars(src, table) {
     "ROOTSUB_FOLDERS",
     "CONTENTSUB_FOLDERS",
     "CONFIG_FILES",
+    "CONFIG_EXTS",
     "SAVE_EXTS",
+    "SAVE_FILES",
     "PAKMOD_EXTS",
     "ASSEMBLY_FILES",
     "ASSETS_EXTS",
@@ -1790,6 +1798,8 @@ function buildVars(src, table) {
     ["MOVIES_EXTS", "MOVIES_EXT"],
     ["DATA_EXTS", "DATA_EXT"],
     ["CONFIG_FILES", "CONFIG_FILE"],
+    ["CONFIG_EXTS", "CONFIG_EXT"],
+    ["SAVE_FILES", "SAVE_FILE"],
     ["FORGE_EXTS", "FORGE_EXT"],
     ["FORGER_EXTS", "FORGER_EXT"],
     ["SOUND_EXTS", "SOUND_EXT"],
@@ -1801,9 +1811,24 @@ function buildVars(src, table) {
   for (const [arrName, scalarName] of singularFallbacks) {
     if (!v[arrName] || !v[arrName].length) {
       const single = val(scalarName, src, table);
-      if (single) v[arrName] = [single];
+      if (single) {
+        v[arrName] = [single];
+      } else {
+        // A singular name can also hold an array literal (CONFIG_FILE = [A, B]).
+        const arr = resolveArray(scalarName, src, table);
+        if (arr.length) v[arrName] = arr;
+      }
     }
   }
+  // CONFIG_EXTS and SAVE_FILES are only documented when the installer's own test function
+  // reads them. A declared-but-unused constant must not turn into a claim about what the
+  // installer recognises.
+  const readBy = (fn, names) => {
+    const body = sliceFunction(src, fn);
+    return !!body && names.some((n) => new RegExp(`\\b${n}\\b`).test(body));
+  };
+  if (!readBy("testConfig", ["CONFIG_EXTS", "CONFIG_EXT"])) v.CONFIG_EXTS = [];
+  if (!readBy("testSave", ["SAVE_FILES", "SAVE_FILE"])) v.SAVE_FILES = [];
   // Loader marker files are named inconsistently across the Unity extensions.
   if (!v.BEPINEX_DLL_FILE) v.BEPINEX_DLL_FILE = val("BEPINEX_FILE", src, table);
   if (!v.MELON_DLL_FILE) v.MELON_DLL_FILE = val("MELON_FILE", src, table);
@@ -2276,6 +2301,7 @@ function buildNotes(dirName, src) {
   let tier1 = 0,
     tier2 = 0;
   const unknownFns = [];
+  const dropped = [];
 
   for (const inst of sorted) {
     // A block pinned with `game` applies to that one extension folder only. Needed where a test
@@ -2295,6 +2321,9 @@ function buildNotes(dirName, src) {
       if (built) {
         section = built;
         tier1++;
+      } else {
+        // The block matched but a constant it needs did not resolve.
+        dropped.push(inst.testFn);
       }
     }
     if (!section) {
@@ -2312,7 +2341,7 @@ function buildNotes(dirName, src) {
         pitfalls: [],
       };
       tier2++;
-      if (inst.testFn) unknownFns.push(inst.testFn);
+      if (inst.testFn && !block) unknownFns.push(inst.testFn);
     }
     section.target = section.installsTo || targetById.get(inst.id) || null;
     section.quickTrigger = quickTrigger(section);
@@ -2332,6 +2361,7 @@ function buildNotes(dirName, src) {
     tier1,
     tier2,
     unknownFns,
+    dropped,
   };
 }
 
@@ -2405,7 +2435,8 @@ let created = 0,
   skipped = 0,
   errors = 0,
   tier1Total = 0,
-  tier2Total = 0;
+  tier2Total = 0,
+  droppedTotal = 0;
 const tier2Heavy = [];
 
 for (const dir of extDirs) {
@@ -2418,10 +2449,8 @@ for (const dir of extDirs) {
   }
   try {
     const src = fs.readFileSync(indexPath, "utf8");
-    const { md, bbcode, description, supported, scaffold, tier1, tier2, unknownFns } = buildNotes(
-      dir,
-      src,
-    );
+    const { md, bbcode, description, supported, scaffold, tier1, tier2, unknownFns, dropped } =
+      buildNotes(dir, src);
     if (doDescription) {
       // The page is hand-written around these lists, so an existing file is spliced,
       // never rewritten. Only a brand new page gets the full scaffold.
@@ -2456,11 +2485,12 @@ for (const dir of extDirs) {
     created++;
     tier1Total += tier1;
     tier2Total += tier2;
+    droppedTotal += dropped.length;
     if (tier2 > 0 && tier1 === 0) tier2Heavy.push(dir);
     const note =
       tier2 > 0 ? `  (${tier1} documented, ${tier2} auto-derived)` : `  (${tier1} documented)`;
     emit(`  OK    ${dir}${note}`);
-    jsonResults.push({ id: dir, ok: true, tier1, tier2, unknownFns });
+    jsonResults.push({ id: dir, ok: true, tier1, tier2, unknownFns, dropped });
   } catch (err) {
     emit(`  ERROR ${dir}: ${err.message}`);
     errors++;
@@ -2471,6 +2501,12 @@ for (const dir of extDirs) {
 emit("");
 emit(`Done.  Written: ${created}  Skipped: ${skipped}  Errors: ${errors}`);
 if (!doDescription) emit(`Sections: ${tier1Total} documented, ${tier2Total} auto-derived`);
+if (droppedTotal) {
+  emit(
+    `${droppedTotal} section(s) fell back to auto-derived because a documented block could not ` +
+      `resolve a constant it needs (see "dropped" in --json)`,
+  );
+}
 if (tier2Heavy.length) {
   emit(`Extensions with no documented sections yet: ${tier2Heavy.length}`);
 }
@@ -2485,6 +2521,7 @@ if (doJson) {
         errors,
         tier1: tier1Total,
         tier2: tier2Total,
+        dropped: droppedTotal,
         results: jsonResults,
       },
       null,

@@ -13,7 +13,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Voidmod | a file or folder named `modinfo.xml` and a file with one of these extensions: `.voidindex` or `.voidresources` | `Void Installer\Mods` |
 | Root / Game Folder Mods | a `base` folder | the game folder itself (no subfolder) |
 | Video | a file with one of these extensions: `.bk2` | `base\video` |
-| Save Game Files | a `.sav` file | - |
+| Save Game Files | a `profile.bin` file or a `.sav` file | - |
 | Config File Mods | a `dishonored2config.cfg` file | `USERHOME\Saved Games\Arkane Studios\Dishonored2\base` |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
@@ -68,6 +68,7 @@ Save files, deployed to the game's save folder.
 
 **Requirements:**
 
+- Recognised by any file named `profile.bin`.
 - Recognised by any file with the `.sav` extension.
 
 **Common mistakes:**

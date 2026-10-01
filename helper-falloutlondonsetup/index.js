@@ -18,6 +18,7 @@ const { default: IniParser, WinapiFormat } = require("vortex-parse-ini");
 //Specify all information about the game
 const GAME_NAME = "Fallout: London";
 const EXTENSION_NAME = "FOLON Setup Helper";
+const EXTENSION_ID = "falloutlondonsetup";
 const GAME_ID = "fallout4";
 const GOGAPP_ID = "1491728574";
 const GOGAPP_ID_ONECLICK = "1897848199";

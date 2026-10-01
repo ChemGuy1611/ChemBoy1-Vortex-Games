@@ -91,7 +91,7 @@ Vortex stores its data per-user under `%APPDATA%\Vortex\` by default. Enabling *
 in Vortex's settings moves that whole folder to `%PROGRAMDATA%\vortex\` — if that mode is on,
 substitute it in the path above and anywhere else `%APPDATA%\Vortex` appears in this guide.
 
-All paths above are the expected locations. Scripts derive `REPO_ROOT` relative to their own file, but some paths are hardcoded in env vars — match the folder layout or override with env vars (section 4).
+All paths above are the expected locations. Scripts derive `REPO_ROOT` relative to their own file, but some paths are hardcoded in env vars — match the folder layout or override with env vars (section 5).
 
 ---
 

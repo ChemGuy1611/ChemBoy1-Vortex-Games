@@ -623,7 +623,9 @@ async function deserializePluginsLoadOrder(api) {
     //Return whatever is already stored; main()'s did-deploy listener re-runs this for real once
     //the purge's matching deploy restores the files.
     const profile = selectors.activeProfile(api.getState());
-    return profile?.id !== undefined ? (api.getState()?.persistent?.loadOrder?.[profile.id] ?? []) : [];
+    return profile?.id !== undefined
+      ? (api.getState()?.persistent?.loadOrder?.[profile.id] ?? [])
+      : [];
   }
 
   const gamePath = getDiscoveryPath(api);
@@ -692,7 +694,9 @@ async function serializePluginsLoadOrder(api, loadOrder) {
 
   const onDiskArray = await readPluginsListFile(listPath);
   const onDiskByName = new Map(onDiskArray.map((entry) => [entry.name, entry]));
-  const sidecarByName = new Map((await readPluginsSidecar(sidecarPath)).map((entry) => [entry.name, entry]));
+  const sidecarByName = new Map(
+    (await readPluginsSidecar(sidecarPath)).map((entry) => [entry.name, entry]),
+  );
   const managedNames = new Set(loadOrder.map((entry) => entry.name));
   const deployedNames = await getDeployedPluginNames(pluginsDir);
 
@@ -796,7 +800,9 @@ async function readPluginEntry(api, pluginName) {
 
   const onDisk = (await readPluginsListFile(listPath)).find((entry) => entry.name === pluginName);
   if (onDisk) return onDisk;
-  const sidecar = (await readPluginsSidecar(sidecarPath)).find((entry) => entry.name === pluginName);
+  const sidecar = (await readPluginsSidecar(sidecarPath)).find(
+    (entry) => entry.name === pluginName,
+  );
   return sidecar ?? { description: JSLIST_DEFAULT_DESCRIPTION, parameters: {} };
 }
 
@@ -1437,7 +1443,17 @@ function LoadOrderItemRenderer(props) {
 //Right-click context menu for load order entries (single + multi-select). File-based LO surface -
 //no per-entry mod folder to open (one Vortex mod can own several plugin files via LO_ATTRIBUTE), so
 //no "Open Mod Folder" item - Open Staging Folder / Open Mod Page cover that need instead.
-function FbloContextMenu({ x, y, item, loadOrder, profile, dispatch, context, selectedIds, onClose }) {
+function FbloContextMenu({
+  x,
+  y,
+  item,
+  loadOrder,
+  profile,
+  dispatch,
+  context,
+  selectedIds,
+  onClose,
+}) {
   useDismissOnOutside(onClose);
 
   useInjectStyleOnce("ue4ss-ctx-menu-style", LO_CTX_MENU_CSS);
@@ -1649,7 +1665,9 @@ function FbloContextMenu({ x, y, item, loadOrder, profile, dispatch, context, se
           try {
             window.api.shell.openUrl(modPageUrl);
           } catch (err) {
-            context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+            context.api.showErrorNotification("Failed to open the URL", err, {
+              allowReport: false,
+            });
           }
           onClose();
         })

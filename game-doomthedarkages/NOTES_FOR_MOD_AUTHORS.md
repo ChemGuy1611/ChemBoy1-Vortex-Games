@@ -13,11 +13,11 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Valen | a file or folder named `Valen.exe` | - |
 | Patcher | a file or folder named `DarkAgesPatcher.exe` | - |
 | Sound | a file with one of these extensions: `.snd` or `.pck` | `base\sound\soundbanks\pc` |
-| Config | a file with one of these extensions: `.cfg` | `base` |
+| Config File Mods | a `.cfg` file | `base` |
 | Zipmod | a file or folder named `darkagesmod.txt` | - |
 | Binaries | - | - |
 
-Paths are relative to the game's install folder.
+Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
 ## Modmanager
 
@@ -41,11 +41,19 @@ Recognised when the archive contains a file with one of these extensions: `.snd`
 
 Installs to: `base\sound\soundbanks\pc`
 
-## Config
+## Config File Mods
 
-Recognised when the archive contains a file with one of these extensions: `.cfg`.
+Configuration tweaks, deployed to the game's config location.
+
+**Requirements:**
+
+- Recognised by any file with the `.cfg` extension.
 
 Installs to: `base`
+
+**Common mistakes:**
+
+- Shipping a config file with one of these names inside an unrelated mod makes the whole archive install as a config mod.
 
 ## Zipmod
 

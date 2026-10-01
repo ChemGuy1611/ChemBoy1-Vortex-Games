@@ -23,9 +23,11 @@
 
 | Flag | Value | Description |
 | --- | --- | --- |
+| `exeHasGameVersion` | `false` | true if this game's devs DO stamp the real game version into the exe ProductVersion — false for every anvil game checked so far, Denuvo strips it |
 | `hasAtk` | `true` | true if game supports AnvilToolkit — also gates the Extracted/.forge/.data/loose workflow and the rename dialog |
 | `hasForger` | `false` | true if game supports Forger Patch Manager (.forger2 files) — typically older AC games |
 | `hasReforger` | `false` | true if game uses ReForger (Xbox package, found through the registry) |
+| `autoDownloadReforger` | `false` | true to fetch+run the ReForger installer automatically during setup. false: the tool is still registered and the "Download ReForger" button still works, just nothing happens without the user clicking it |
 | `hasDlcFolders` | `false` | true if game has dlc_NN folders — adds the DLC mod type and installer. Enumerate DLC_FOLDERS to match; .forge routing follows DLC_FOLDERS directly |
 | `hasResorep` | `false` | true if game uses ResoRep for runtime texture injection |
 | `autoCopyResorepDll` | `false` | true to copy the system d3d11.dll into the game folder automatically instead of leaving the bundled .bat to the user. The copy is not a managed mod file, so purging does not remove it |
@@ -90,7 +92,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 | Dependency | Version | Details |
 | --- | --- | --- |
-| Forger Patch Manager | — | — |
+| AnvilToolkit | — | — |
 
 ## Special Features
 

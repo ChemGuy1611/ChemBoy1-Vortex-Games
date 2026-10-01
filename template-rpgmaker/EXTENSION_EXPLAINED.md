@@ -25,6 +25,7 @@
 | `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
 | `setupNotification` | `true` | enable to show the user a notification with special instructions (specify below) - default true: plugins.js manual-update reminder is always relevant |
 | `debug` | `false` | toggle for debug mode |
+| `isPurging` | `false` | guards plugins.js writes during a purge cycle - see the will-purge/did-deploy listeners in main() |
 
 ## Mod Types
 
@@ -61,12 +62,15 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Open plugins.js File
 - Open PCGamingWiki Page
+- Open SteamDB Page
 - View Changelog
 - Open Downloads Folder
 - Submit Bug Report
 
 ## Special Features
 
+- **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
+- **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.

@@ -11,7 +11,8 @@ folder (e.g. "falloutlondon" releases helper-falloutlondon).
 Steps performed per extension:
     1. Validate info.json version has a matching ## [X.Y.Z] entry in CHANGELOG.md
     2. Check info.json 'name' matches 'Game: <Name>' pattern (game folders only;
-       a helper folder just needs a non-empty name)
+       a helper folder just needs a non-empty name), and that info.json 'id'
+       equals GAME_ID (game folders) or the helper id (helper folders)
     3. Check that const debug = false in index.js (errors if true)
     4. Check that all context.registerInstaller calls have unique priority numbers (WARNS only,
        never blocks the release -- a duplicate is a code-quality finding, and its review home is
@@ -92,7 +93,7 @@ from vortex_utils import (
     run_generate_explained_batch, run_generate_notes_batch,
     run_generate_description_batch,
     add_to_discovery_ids, node_check, eslint_check,
-    extract_extension_url, extract_file_group_id, read_info_json, parse_changelog_latest,
+    extract_extension_url, extract_file_group_id, extract_game_id, read_info_json, parse_changelog_latest,
     update_index_header as _apply_header, mutate_index_js, validate_index_js,
     print_run_summary, assert_is_game_id, log_info, log_warn, log_error,
     get_api_key, parse_nexus_mod_url,
@@ -237,9 +238,12 @@ def release(game_id, open_browser, dry_run=False, skip_eslint=False,
     index_path = os.path.join(folder, "index.js")
     extension_url = None
     file_group_id = None
+    expected_id = game_id
     if os.path.isfile(index_path):
         with open(index_path, encoding="utf-8", errors="replace") as f:
             index_src = f.read()
+        if kind == "game":
+            expected_id = extract_game_id(index_src) or game_id
         extension_url = extract_extension_url(index_src)
         file_group_id = extract_file_group_id(index_src)
         if re.search(r'^\s*(?:const|let)\s+debug\s*=\s*true\b', index_src, re.MULTILINE):
@@ -254,6 +258,10 @@ def release(game_id, open_browser, dry_run=False, skip_eslint=False,
         log_error(game_id, "info.json missing or invalid")
         return False
     version = info.get("version")
+
+    if info.get("id") != expected_id:
+        log_error(game_id, f"info.json 'id' must be {expected_id!r}, found {info.get('id')!r}")
+        return False
 
     name_field = info.get("name", "")
     if kind == "game":
