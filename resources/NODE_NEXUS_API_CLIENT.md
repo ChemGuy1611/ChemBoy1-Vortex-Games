@@ -19,7 +19,7 @@ REST Collections endpoints documented in `NEXUS_MODS_API.md`.
 ## Package & Base URLs
 
 `package.json`: name `@nexusmods/nexus-api`, version `1.7.3`, `main: ./lib/index.js`. Source of truth is
-`src/Nexus.ts` (the `Nexus` class, ~1900 lines) plus `src/types.ts` (data shapes) and
+`src/Nexus.ts` (the `Nexus` class, ~2000 lines) plus `src/types.ts` (data shapes) and
 `src/typesGraphQL.ts` (GraphQL query-builder types). The compiled `lib/` and generated `docs/`
 folders can lag behind `src/` — `docs/classes/_nexus_.nexus.md` is missing several newer methods
 (GraphQL, collections, `modFileContents`) present in current `src/Nexus.ts`; read `src/Nexus.ts`
@@ -49,6 +49,15 @@ appName, appVersion, defaultGame, timeout?, onJWTRefresh?)`. `credentials = { to
 refreshToken, fingerprint }`, `config = { id, secret }` (OAuth client id/secret). The client
   refreshes expired tokens itself and calls `onJWTRefresh(newCredentials)` so the host app can
   persist them — obtaining the _initial_ JWT is not this library's job.
+- **Token provider** (the host app owns the session): `setTokenProvider(provider)` with
+  `AccessTokenProvider = (rejectedToken?: string) => Promise<string | undefined>`. Before every
+  request the client asks the provider for the bearer token; after a 401 it asks again, passing the
+  token that was rejected, and a rejected promise from the provider fails that request. Calling it
+  clears the client's own OAuth credentials, config and refresh callback — it _replaces_
+  `setOAuthCredentials` rather than supplementing it. Reads the first token immediately, which
+  refreshes an expired one. `getAccessToken(rejectedToken?)` hands the same token to code that
+  makes requests outside the client (with a rejected token it forces a refresh, unless that token
+  has already been replaced).
 - **SSO** (websocket handshake, described in the README, not implemented by this library): open a
   websocket to `wss://sso.nexusmods.com`, send `{ id: <uuid>, appid: <your appid> }`, ping every
   30s, have the user open `https://www.nexusmods.com/sso?id={id}` in a browser: the socket then
@@ -67,7 +76,9 @@ refreshToken, fingerprint }`, `config = { id, secret }` (OAuth client id/secret)
 | `static create(apiKey, appName, appVersion, defaultGame, timeout?)`                                      | Construct + validate in one call.                              |
 | `static createWithOAuth(credentials, config, appName, appVersion, defaultGame, timeout?, onJWTRefresh?)` | OAuth/JWT constructor.                                         |
 | `setKey(apiKey)`                                                                                         | Swap the API key; re-validates.                                |
-| `setOAuthCredentials(credentials, config)`                                                               | Swap OAuth creds.                                              |
+| `setOAuthCredentials(credentials, config, onJWTRefresh)`                                                 | Swap OAuth creds.                                              |
+| `setTokenProvider(provider)`                                                                             | App-owned OAuth session — see Auth.                            |
+| `getAccessToken(rejectedToken?)`                                                                         | Current bearer token for out-of-client requests — see Auth.    |
 | `revalidate()`                                                                                           | Re-run key/token validation.                                   |
 | `validateKey(key?)`                                                                                      | One-off validation without updating cached state/quota.        |
 | `getValidationResult()`                                                                                  | Last cached validation result (sync).                          |
@@ -118,7 +129,7 @@ fields that need parameters (documented at length in the README with `modFileCon
 
 #### The client wraps only a slice of v2
 
-The v2 schema is far wider than the seven methods above — 66 query fields and 96 mutations, against
+The v2 schema is far wider than the seven methods above — 67 query fields and 99 mutations, against
 which this client exposes a handful. Introspection on the endpoint is open and unauthenticated, so
 the full surface is discoverable directly. **`NEXUS_GRAPHQL_API.md` documents it**: the operation
 catalogs, the Elasticsearch filter/sort/facet grammar behind `mods` and `games`, both pagination
@@ -163,7 +174,7 @@ serve overlapping purposes; which one is authoritative/current was not resolved 
 
 ---
 
-## Key Types (`src/types.ts`, 122 exported names — 84 interfaces + 38 type aliases, not exhaustively catalogued here)
+## Key Types (`src/types.ts`, 123 exported names — 84 interfaces + 39 type aliases, not exhaustively catalogued here)
 
 Most directly useful ones, matching the methods above: `IValidateKeyResponse`, `IUserInfo`,
 `IModInfo` / `IModInfoEx`, `IFileInfo`, `IModFiles`, `IFileUpdate`, `IGameListEntry` /
@@ -172,23 +183,39 @@ Most directly useful ones, matching the methods above: `IValidateKeyResponse`, `
 `ICollectionPayload` / `ICollectionManifest` / `IRevision`, `IModFile` / `ModFileCategory` /
 `VirusScanStatus`, `IModFileContent` / `IModFileContentSearchFilter` (+ the `FilterComparison*`
 operator unions), `IPreference` (+ its dozen `Preferences*Enum` unions), `IOAuthCredentials` /
-`IOAuthConfig`, `IGraphQLError`. Full list: `grep "^export interface\|^export type" src/types.ts`.
+`IOAuthConfig` / `AccessTokenProvider`, `IGraphQLError`. Full list: `grep "^export interface\|^export type" src/types.ts`.
 
 `src/typesGraphQL.ts` (55 lines) defines the query-builder generic types (`IModQuery`,
 `IModFileQuery`, `IFileHashQuery`, `IUserQuery`, `IPreferenceQuery`, `ICollectionQuery`,
 `IRevisionQuery`, `GraphQueryParameters`) used to build the field-selection objects passed into
 the GraphQL methods above.
 
-`src/customErrors.ts` defines the thrown error classes: `HttpError`, `NexusError`,
-`ParameterInvalid`, `ProtocolError`, `RateLimitError`, `TimeoutError`, `JWTExpiredError`.
+`src/customErrors.ts` defines the thrown error classes: `HTTPError`, `NexusError` (its `name` is
+set to the subclass name), `GraphError`, `ParameterInvalid`, `ProtocolError`, `RateLimitError`,
+`TimeoutError`, `JwtExpiredError`.
 
 ---
 
 ## Throttling
 
-Client-side token-bucket quota: 300 requests (600 for premium keys), refilling at 1/second,
-allowing bursts but not sustained high traffic. Server-side, the API also returns HTTP 429 under
-heavy load (global or per-user) and resets the client's local quota to 0 when that happens.
+Client-side token-bucket quota (`src/parameters.ts`, `src/Quota.ts`): `QUOTA_MAX` = 500 tokens
+(the premium constant is the same, 500), recovering one token per `QUOTA_RATE_MS` = 50 ms
+(about 20 requests/second sustained; the comment in `parameters.ts` still says "one per second",
+the constant is authoritative). Bursts are allowed, sustained high traffic is not. A required wait
+longer than the request timeout (`DEFAULT_TIMEOUT_MS`, 30 s) fails fast with `RateLimitError`
+instead of hanging until the timeout fires.
+
+Server-side, the API returns HTTP 429 under heavy load (global or per-user). Handling, per request:
+
+- The `x-rl-daily-remaining` / `x-rl-hourly-remaining` headers are read **before** any error
+  handling, so even a throttled response updates `getRateLimits()`.
+- On 429 the local quota is zeroed. If the tracked remaining budget is exhausted (the daily figure
+  while it is positive, otherwise the hourly one — so only when both are 0), the client blocks new
+  requests until the next full hour and surfaces `RateLimitError`; if not (a temporary 429), it
+  waits and retries the request, at most `MAX_RATE_LIMIT_RETRIES` (2) times, then rethrows
+  `RateLimitError`.
+- 401 token refresh has its own per-request budget, `MAX_JWT_REFRESH_TRIES` (3), and only retries
+  with a token different from the one that was rejected.
 
 ---
 

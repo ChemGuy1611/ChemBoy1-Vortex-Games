@@ -2,10 +2,23 @@
 
 ## Planned Improvements (Not Yet Released)
 
-- Added tool to launch ModKit (Epic Games).
-- Fixed: Mod files with no file extension were skipped during installation
-- Added an "Open SteamDB Page" button next to the PCGamingWiki one.
+- None
+
+## [1.0.0] - 2026-10-01
+
+- Added: UE4SS Load Order page. Reorder, enable, disable and lock UE4SS mods, with multi-select, a right-click menu and a filter for enabled, disabled and locked mods.
+- Added: LogicMods Load Order page for blueprint mods, with the same controls.
+- Added: UE4SS and LogicMods load orders are now included in Collections.
+- Added: Updating a UE4SS or LogicMods mod now keeps its place in the load order.
+- Added: The Download UE4SS button now fetches the latest UE4SS release, and Vortex tells you when a newer version is available.
+- Added: Tool to launch the ModKit (Epic Games).
+- Added: Loose .pak mods (without a modinfo.json) now install to the ~mods folder. ModKit mods still install to Content/Mods.
+- Changed: Game version now shows the real game build instead of the Unreal engine version.
+- Changed: Mods from the old shared "Legacy UE - REINSTALL TO SORT" type are converted automatically, so the reminder to reinstall them is gone.
+- Fixed: Mod files with no file extension were skipped during installation.
+- Added an "Open SteamDB Page" button.
 - The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
+- Removed the "Open PCGamingWiki Page" button, since PCGamingWiki has no page for this game.
 
 ## [0.4.0] - 2026-05-07
 

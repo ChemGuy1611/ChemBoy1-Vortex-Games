@@ -13,7 +13,7 @@ Usage:
     python new_extension.py TEMPLATE "Game Name" --no-browser --no-startfile
     python new_extension.py GAME_ID --refresh-images
     python new_extension.py TEMPLATE "Game Name" --skip-explained
-    python new_extension.py TEMPLATE "Game Name" --skip-eslint
+    python new_extension.py TEMPLATE "Game Name" --skip-lint
 
     --no-browser        Skip opening browser tabs (PCGamingWiki, SteamDB, SteamDB demo page,
                         GOGDB, egdata, and a Google Images search for the game name).
@@ -22,7 +22,7 @@ Usage:
                         the only positional arg. Does not redo lookups or rewrite index.js.
     --skip-explained    Skip running generate_explained.js and generate_notes.js
                         after writing index.js.
-    --skip-eslint       Skip running eslint after writing index.js.
+    --skip-lint         Skip running oxlint after writing index.js (--skip-eslint still accepted).
 
 Fills in all XXX fields it can resolve automatically from Steam, GOG, Epic,
 PCGamingWiki, and (for Xbox titles) Microsoft's Store product catalog.
@@ -54,7 +54,7 @@ info.json "id" is set to GAME_ID.
 After writing index.js, automatically runs:
     1. node generate_explained.js {GAME_ID}
     2. node generate_notes.js {GAME_ID}
-    3. npx eslint game-{GAME_ID}/index.js  (warns on issues, does not abort)
+    3. npx oxlint game-{GAME_ID}/index.js  (warns on issues, does not abort)
     4. python categorize_games.py {GAME_ID}
     5. python setup_test_folder.py {GAME_ID}
 
@@ -80,13 +80,14 @@ import urllib.parse
 from datetime import date
 from io import BytesIO
 from vortex_utils import (
-    REPO_ROOT, PCGW_API, TITLE_IMAGES_DIR, BANNER_IMAGES_DIR, js_string_literal,
+    REPO_ROOT, TITLE_IMAGES_DIR, BANNER_IMAGES_DIR, js_string_literal,
     http_get, http_get_bytes, http_get_json,
     roman_to_arabic, arabic_to_roman, name_lookup_variants,
-    lookup_pcgamingwiki, pcgw_get_json, parse_pcgw_data_paths, format_pcgw_path,
+    lookup_pcgamingwiki, pcgw_page_wikitext, parse_pcgw_availability,
+    parse_pcgw_data_paths, format_pcgw_path,
     parse_ue_engine_version,
     get_api_key, run_generate_explained_batch,
-    run_generate_notes_batch, eslint_check,
+    run_generate_notes_batch, lint_check,
     fetch_epic_app_id, fetch_gog_app_id, fetch_xbox_identity, add_to_discovery_ids,
     download_exec_icon, download_cover_art, download_title_image, download_banner_image,
     update_index_header, sanitize_game_name, normalize_game_name, write_index_js,
@@ -111,7 +112,6 @@ TEMPLATES = [
     "template-tfcinstaller-ue2-3",
     "template-ue4-5",
     "template-unity-umm",
-    "template-unitybepinex",
     "template-unitymelonloaderbepinex-hybrid",
 ]
 
@@ -455,40 +455,15 @@ def fetch_pcgw_availability(page_title):
     if not page_title:
         return result
     try:
-        url = (
-            f"{PCGW_API}?action=parse&page={urllib.parse.quote(page_title)}"
-            "&prop=wikitext&format=json"
-        )
-        data = pcgw_get_json(url)
-        wikitext = data.get("parse", {}).get("wikitext", {}).get("*", "")
-        # Follow redirect if the title resolved to a redirect page
-        if wikitext.strip().startswith("#REDIRECT"):
-            m_redirect = re.search(r'#REDIRECT\s*\[\[(.+?)\]\]', wikitext, re.IGNORECASE)
-            if m_redirect:
-                redirect_title = m_redirect.group(1).strip()
-                url = (
-                    f"{PCGW_API}?action=parse&page={urllib.parse.quote(redirect_title)}"
-                    "&prop=wikitext&format=json"
-                )
-                data = pcgw_get_json(url)
-                wikitext = data.get("parse", {}).get("wikitext", {}).get("*", "")
+        wikitext = pcgw_page_wikitext(page_title)
         result['wikitext'] = wikitext
         if re.search(r'microsoft\s*store|xbox\s*(game\s*pass|store|app)', wikitext, re.IGNORECASE):
             result['xbox'] = True
-        # Store aliases accepted by Template:Availability/store, not just the
-        # display names: "MS Store" and "Epic"/"EGS" are as common as the long forms.
-        m_xbox = re.search(
-            r'\{\{Availability/row\|\s*(?:Microsoft Store|MS Store)\s*\|\s*([^|{}\n]+?)\s*\|',
-            wikitext, re.IGNORECASE
-        )
-        if m_xbox:
-            result['xbox_url'] = f"https://apps.microsoft.com/detail/{m_xbox.group(1).strip()}"
-        m = re.search(
-            r'\{\{Availability/row\|\s*(?:Epic Games Store(?: subpage)?|EGS|Epic)\s*\|\s*([^|{}\n]+?)\s*\|',
-            wikitext, re.IGNORECASE
-        )
-        if m:
-            result['epic_url'] = f"https://store.epicgames.com/en-US/p/{m.group(1).strip()}"
+        listed = parse_pcgw_availability(wikitext)
+        if listed['xbox']:
+            result['xbox_url'] = f"https://apps.microsoft.com/detail/{listed['xbox']}"
+        if listed['epic']:
+            result['epic_url'] = f"https://store.epicgames.com/en-US/p/{listed['epic']}"
         result['engine_version'] = parse_ue_engine_version(wikitext)['engine_version']
         result['unity_paths'] = parse_unity_data_paths(wikitext)
     except Exception as e:
@@ -712,7 +687,7 @@ def edit_version_txt(folder):
 
 def create_extension(template_name, game_input, force=False, dry_run=False, no_images=False,
                      no_browser=False, no_startfile=False,
-                     skip_explained=False, skip_eslint=False):
+                     skip_explained=False, skip_lint=False):
     sgdb_key = get_api_key("STEAMGRIDDB_API_KEY")
     nexus_key = get_api_key("NEXUS_API_KEY")
     today = date.today().strftime("%Y-%m-%d")
@@ -910,7 +885,6 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
     }
     # For Unity templates, populate registry/AppData path fields from PCGamingWiki save paths
     UNITY_TEMPLATES = {
-        'template-unitybepinex',
         'template-unitymelonloaderbepinex-hybrid',
         'template-unity-umm',
     }
@@ -1136,15 +1110,15 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
             if err:
                 print(f"  {err}\n")
 
-    if skip_eslint:
-        print("[eslint] skipped (--skip-eslint)\n")
+    if skip_lint:
+        print("[lint] skipped (--skip-lint)\n")
     else:
-        print("[eslint]")
-        ok, out = eslint_check(os.path.join(dest, "index.js"))
+        print("[lint]")
+        ok, out = lint_check(os.path.join(dest, "index.js"))
         if ok:
-            print("  index.js passes eslint.\n")
+            print("  index.js passes oxlint.\n")
         else:
-            print("  WARNING - eslint reported issues:")
+            print("  WARNING - oxlint reported issues:")
             for line in out.splitlines():
                 print(f"    {line}")
             print()
@@ -1238,7 +1212,7 @@ def main():
         epilog=(
             "Templates:\n  " + "\n  ".join(TEMPLATE_SHORT_NAMES) + "\n\n"
             "Examples:\n"
-            '  python new_extension.py unitybepinex "Hollow Knight"\n'
+            '  python new_extension.py unitymelonloaderbepinex-hybrid "Hollow Knight"\n'
             "  python new_extension.py ue4-5 1954200\n"
         ),
     )
@@ -1282,8 +1256,8 @@ def main():
         help="Skip running generate_explained.js and generate_notes.js after writing index.js.",
     )
     parser.add_argument(
-        "--skip-eslint", action="store_true",
-        help="Skip running eslint after writing index.js.",
+        "--skip-lint", "--skip-eslint", action="store_true",
+        help="Skip running oxlint after writing index.js (--skip-eslint still accepted).",
     )
     args = parser.parse_args()
 
@@ -1300,7 +1274,7 @@ def main():
         full_template = f"template-{args.template}"
         create_extension(full_template, args.game, args.force, args.dry_run, args.no_images,
                          no_browser=args.no_browser, no_startfile=args.no_startfile,
-                         skip_explained=args.skip_explained, skip_eslint=args.skip_eslint)
+                         skip_explained=args.skip_explained, skip_lint=args.skip_lint)
 
 
 if __name__ == "__main__":

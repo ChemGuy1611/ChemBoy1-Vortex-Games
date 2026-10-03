@@ -10,7 +10,7 @@ Steps to set up the dev script environment on a new Windows PC.
 | ---------------- | ----------------------------------------------------------------------------------- |
 | **Git**          | Required for all repos                                                              |
 | **Python 3.11+** | Must be on `PATH`                                                                   |
-| **Node.js LTS**  | Must be on `PATH`; required for `generate_explained.js`, `node --check`, and ESLint |
+| **Node.js LTS**  | Must be on `PATH`; required for `generate_explained.js`, `node --check`, and oxlint |
 | **Vortex**       | Install normally; creates its data folder at `%APPDATA%\Vortex\`                    |
 
 ---
@@ -45,7 +45,7 @@ Reference clones — read for API shapes and runtime behaviour, not modified loc
 | --------------------------- | -------------------------------------- | --------------------------------------------------------------------------- |
 | `Vortex`                    | `Nexus-Mods/Vortex`                    | Application source; the authority on extension API and runtime behaviour    |
 | `vortex-api`                | `Nexus-Mods/vortex-api`                | Published `@nexusmods/vortex-api` package — typings and generated docs      |
-| `Vortex-Backend`            | `Nexus-Mods/Vortex-Backend`            | Backend data, including `extensions-manifest-original.json` (see section 6) |
+| `Vortex-Backend`            | `Nexus-Mods/Vortex-Backend`            | Backend data; optional reference only, no script reads it (see section 6)   |
 | `node-winapi-bindings`      | `Nexus-Mods/node-winapi-bindings`      | Native Windows calls (registry, INI) used during game discovery             |
 | `node-nexus-api`            | `Nexus-Mods/node-nexus-api`            | Nexus Mods client library (v1 REST plus v2 GraphQL) that Vortex ships       |
 | `fomod-installer`           | `Nexus-Mods/fomod-installer`           | FOMOD installer invoked by Vortex for scripted installers                   |
@@ -136,7 +136,7 @@ From `ChemBoy1-Vortex-Games\`, run command below to install dev dependencies:
 npm install
 ```
 
-Installs dev dependencies: `eslint`, `oxfmt` (formatter, matches the Vortex app repo), `markdownlint-cli2` (doc linter), `typescript`, and `source-map`.
+Installs dev dependencies: `oxlint` (linter), `oxfmt` (formatter, matches the Vortex app repo), `markdownlint-cli2` (doc linter), `typescript`, and `source-map`.
 
 ---
 
@@ -150,7 +150,6 @@ Set all of these under `HKEY_CURRENT_USER\Environment` (i.e. user-level, not sys
 | `STEAM_API_KEY`        | Your Steam Web API key                                                 | `new_extension.py` (Steam app info lookups)                                                                    |
 | `STEAM_USER_ID`        | Your Steam 64-bit ID                                                   | `new_extension.py`                                                                                             |
 | `STEAMGRIDDB_API_KEY`  | Your SteamGridDB API key                                               | `fetch_cover_art.py`                                                                                           |
-| `VORTEX_MANIFEST_PATH` | _(optional override)_ `%APPDATA%\Vortex\temp\extensions-manifest.json` | `patch_extensions.py`, `nexus_games_report.py`; override only — default resolves automatically via `%APPDATA%` |
 
 API keys are read via `os.environ.get()` first, then `HKEY_CURRENT_USER\Environment` registry fallback. Do not hardcode them.
 
@@ -158,11 +157,13 @@ After setting user env vars, restart any open terminals for the changes to take 
 
 ---
 
-## 6. Extension Manifest
+## 6. Extension Catalog Feed
 
-`extensions-manifest.json` is the canonical source for which Nexus mod ID corresponds to each Vortex extension. It is used by `patch_extensions.py` (extension URL patching) and `nexus_games_report.py` (supported-status column).
+`patch_extensions.py` (extension URL patching) looks up each ChemBoy1 game extension's Nexus mod ID in Nexus's public `GET /v3/vortex/extensions` feed (see `NEXUS_MODS_API.md`). The feed needs no API key. It names games by numeric id, so the script maps them to domains with `%APPDATA%\Vortex\temp\nexus_gamelist.json`, which Vortex writes when it is launched and logged in on that PC.
 
-The file is written by Vortex at runtime to `%APPDATA%\Vortex\temp\extensions-manifest.json`. Launch Vortex at least once to generate it before running scripts that consume it.
+The feed lists one extension per game. A game whose slot belongs to another author gets no mod ID, and its `EXTENSION_URL` is left alone. If the game list file or the network is unavailable, the script prints a warning and skips URL patching.
+
+Vortex up to 2.6.x also cached an `extensions-manifest.json` in the same folder, and these scripts used to read it. Vortex 2.7.0 and later no longer write or refresh it, so nothing here depends on it any more.
 
 ---
 
@@ -176,12 +177,12 @@ python -c "from PySide6.QtWidgets import QApplication; print('PySide6 OK')"
 
 # Check Node
 node --version
-npx eslint --version
+npx oxlint --version
 npx oxfmt --version
 npx markdownlint-cli2 --version
 
-# Check manifest path exists
-python -c "import os; p=os.path.join(os.environ.get('APPDATA',''), 'Vortex', 'temp', 'extensions-manifest.json'); print('manifest OK' if os.path.exists(p) else 'MISSING: ' + p)"
+# Check the Vortex game list cache exists (see section 6; written once Vortex has run and logged in)
+python -c "import os; p=os.path.join(os.environ.get('APPDATA',''), 'Vortex', 'temp', 'nexus_gamelist.json'); print('game list OK' if os.path.exists(p) else 'MISSING: ' + p)"
 
 # Check env vars
 python -c "import os; [print(k, '=', 'SET' if os.environ.get(k) else 'MISSING') for k in ['NEXUS_API_KEY','STEAM_API_KEY','STEAM_USER_ID','STEAMGRIDDB_API_KEY']]"

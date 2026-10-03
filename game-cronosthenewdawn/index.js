@@ -24,6 +24,9 @@ const STEAMAPP_ID = "2101960";
 const STEAMAPP_ID_DEMO = "3870690";
 const EPICAPP_ID = "641abaddc74f4adfa3aa20dc9cadaf88";
 const GOGAPP_ID = "1546068368";
+const XBOXAPP_ID = "3951BlooberTeamS.A.CronosTheNewDawn"; //resolved via MS Store catalog
+const XBOXEXECNAME = "AppCronosTheNewDawnShipping"; // resolved via MS Store catalog - verify against a live install
+const XBOX_PUB_ID = "myqva651hxz16"; // resolved via MS Store catalog - verify against a live install
 const GAME_NAME = "Cronos: The New Dawn";
 const GAME_NAME_SHORT = "Cronos TND";
 const EXEC = "Cronos.exe";
@@ -215,6 +218,7 @@ const spec = {
       epicAppId: EPICAPP_ID,
       steamAppId: +STEAMAPP_ID,
       gogAppId: GOGAPP_ID,
+      xboxAppId: XBOXAPP_ID,
       supportsSymlinks: SYM_LINKS,
       ignoreConflicts: IGNORE_CONFLICTS,
       ignoreDeploy: IGNORE_DEPLOY,
@@ -223,6 +227,7 @@ const spec = {
       EpicAPPId: EPICAPP_ID,
       SteamAPPId: STEAMAPP_ID,
       GogAPPId: GOGAPP_ID,
+      XboxAPPId: XBOXAPP_ID,
     },
   },
   modTypes: [
@@ -282,7 +287,7 @@ const spec = {
     },
   ],
   discovery: {
-    ids: [STEAMAPP_ID, EPICAPP_ID, GOGAPP_ID, STEAMAPP_ID_DEMO],
+    ids: [STEAMAPP_ID, EPICAPP_ID, GOGAPP_ID, STEAMAPP_ID_DEMO, XBOXAPP_ID],
     names: [],
   },
 };
@@ -396,6 +401,15 @@ function makeFindGame(api, gameSpec) {
 }
 
 async function requiresLauncher(gamePath, store) {
+  if (store === "xbox") {
+    return Promise.resolve({
+      launcher: "xbox",
+      addInfo: {
+        appId: XBOXAPP_ID,
+        parameters: [{ appExecName: XBOXEXECNAME }],
+      },
+    });
+  } //*/
   if (store === "epic") {
     return Promise.resolve({
       launcher: "epic",

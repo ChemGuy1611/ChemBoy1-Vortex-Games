@@ -24,7 +24,10 @@ const STEAMAPP_ID = "2893570";
 const STEAMAPP_ID_DEMO = null;
 const EPICAPP_ID = null;
 const GOGAPP_ID = null;
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const XBOXAPP_ID = "39EA002F.DQONETWO"; //resolved via MS Store catalog
+const XBOXEXECNAME = "AppDRAGONQUESTIandIIShipping"; // resolved via MS Store catalog - verify against a live install
+const XBOX_PUB_ID = "n746a19ndrrjg"; // resolved via MS Store catalog - verify against a live install
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "DRAGON QUEST I & II HD-2D Remake";
 const GAME_NAME_SHORT = "DQ I&II Remake";
 const EXEC = "DQIandIIHD2DRemake.exe";
@@ -212,6 +215,7 @@ const spec = {
     details: {
       epicAppId: EPICAPP_ID,
       steamAppId: +STEAMAPP_ID,
+      xboxAppId: XBOXAPP_ID,
       supportsSymlinks: SYM_LINKS,
       ignoreConflicts: IGNORE_CONFLICTS,
       ignoreDeploy: IGNORE_DEPLOY,
@@ -219,6 +223,7 @@ const spec = {
     environment: {
       EpicAPPId: EPICAPP_ID,
       SteamAPPId: STEAMAPP_ID,
+      XboxAPPId: XBOXAPP_ID,
     },
   },
   modTypes: [
@@ -405,6 +410,16 @@ function makeFindGame(api, gameSpec) {
 }
 
 async function requiresLauncher(gamePath, store) {
+  //*
+  if (store === "xbox" && DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) {
+    return Promise.resolve({
+      launcher: "xbox",
+      addInfo: {
+        appId: XBOXAPP_ID,
+        parameters: [{ appExecName: XBOXEXECNAME }],
+      },
+    });
+  } //*/
   //*
   if (store === "epic" && DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID)) {
     return Promise.resolve({

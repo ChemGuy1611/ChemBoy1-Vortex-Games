@@ -80,6 +80,8 @@ Entries marked **(2.4.x)** were added during the Vortex 2.4 line and are absent 
 
 **Caution:** With this set, the page component is expected to render its own `Page`. Set it without doing so and your page renders with no chrome at all. Leave it unset unless you are deliberately targeting the new design system.
 
+Since v2.7.0 the value may also be a callback, `() => boolean`, resolved wherever Vortex already watches the classic/modern setting — for a page that kept its old rendering too, so the choice follows a change to that setting.
+
 ---
 
 ### `api.highlightControl(selector, durationMS, text?, altStyle?)`
@@ -479,7 +481,7 @@ Only Vortex's four download events are typed out of the box; everything else fal
 
 ### `context.registerGameVersionProvider(id, priority, supported, getVersion, opts?)`
 
-**Removed in Vortex 2.7.1.** The provider pattern is gone from core; the bundled `gameversion-hash` extension that used it (hashing `details.hashFiles` at priority 75, below the extension's own `getGameVersion` at 20) was removed in 2.7.0. Core now resolves the version in two steps only: `IGame.getGameVersion(gamePath, exePath)` if defined, else the exe's PE version, else `"0.0.0"`.
+**Removed in Vortex 2.8.0-beta.1** (the published typings dropped it earlier, at 2.7.1, so `api.d.ts` stops listing it before the app stops having it; stable app 2.7.x still carries the function, with no built-in provider once the bundled extension went in 2.7.0). The provider pattern is gone from core; the bundled `gameversion-hash` extension that used it (hashing `details.hashFiles` at priority 75, below the extension's own `getGameVersion` at 20) was removed in 2.7.0. Core now resolves the version in two steps only: `IGame.getGameVersion(gamePath, exePath)` if defined, else the exe's PE version, else `"0.0.0"`.
 
 **Instead:** implement `getGameVersion` on the game. To report the real version, read a game's `build_id.txt` or Steam `appmanifest.acf`, or hash game-code files yourself — many games report the engine version or `1.0.0` in their PE header regardless of actual version.
 

@@ -14,6 +14,7 @@
 | --- | --- |
 | Game ID | `borderlands3` |
 | Executable | `OakGame/Binaries/Win64/Borderlands3.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
 | Extension Page | [https://www.nexusmods.com/site/mods/1451](https://www.nexusmods.com/site/mods/1451) |
 | PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Borderlands_3](https://www.pcgamingwiki.com/wiki/Borderlands_3) |
 
@@ -21,6 +22,13 @@
 
 - **Steam** — `397540`
 - **Epic Games Store** — `Catnip`
+- **Xbox / Microsoft Store** — `2K-Gearbox.Borderlands3WindowsPC`
+
+## Feature Flags
+
+| Flag | Value | Description |
+| --- | --- | --- |
+| `hasXbox` | `false` | toggle for Xbox version logic |
 
 ## Mod Types
 
@@ -30,13 +38,13 @@ Mod types define where each category of mod gets deployed:
 | --- | --- | --- | --- |
 | Python SDK | `borderlands3-sdk` | high | `{gamePath}/.` |
 | SDK Mod | `borderlands3-sdkmod` | high | `{gamePath}/sdk_mods` |
-| OpenHotfixLoader | `borderlands3-openhotfixloader` | low | `{gamePath}/OakGame/Binaries/Win64/Plugins` |
-| Plugin Loader | `borderlands3-pluginloader` | low | `{gamePath}/OakGame/Binaries/Win64` |
-| Hotfix Mod | `borderlands3-hotfix` | high | `{gamePath}/OakGame/Binaries/Win64/Plugins/ohl-mods` |
 | Root Folder | `borderlands3-root` | high | `{gamePath}` |
-| Binaries (Engine Injector) | `borderlands3-binaries` | high | `{gamePath}/OakGame/Binaries/Win64` |
 | Movies | `borderlands3-movies` | high | `{gamePath}/OakGame/Content/Movies` |
 | Pak Mod | `borderlands3-pak` | high | `{gamePath}/OakGame/Content/Paks` |
+| Hotfix Mod | `borderlands3-hotfix` | 35 | `?` |
+| Binaries (Engine Injector) | `borderlands3-binaries` | 40 | `?` |
+| OpenHotfixLoader | `borderlands3-openhotfixloader` | 55 | `?` |
+| Plugin Loader | `borderlands3-pluginloader` | 56 | `?` |
 
 ## Mod Installers
 
@@ -77,5 +85,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
+- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.

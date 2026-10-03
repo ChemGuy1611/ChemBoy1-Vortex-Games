@@ -2,8 +2,8 @@
 Name: Warhammer 40,000: Rogue Trader Vortex Extension
 Structure: Game with Integrated Mod Loader (UnityModManager)
 Author: ChemBoy1
-Version: 0.5.9
-Date: 2026-09-12
+Version: 0.5.10
+Date: 2026-10-02
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -32,11 +32,11 @@ const USER_HOME = util.getVortexPath("home");
 const GAME_ID = "warhammer40kroguetrader";
 const STEAMAPP_ID = "2186680";
 const STEAMAPP_ID_DEMO = null;
-const EPICAPP_ID = ""; //NOT on egdata.app yet
+const EPICAPP_ID = "bd9a502222954e3c9db5050dae41426c"; //from egdata.app
 const GOGAPP_ID = "1347700224";
 const XBOXAPP_ID = "OwlcatGames.3387926822CE4";
 const XBOXEXECNAME = "Game";
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID, EPICAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "Warhammer 40,000: Rogue Trader";
 const GAME_NAME_SHORT = "WH40K Rogue Trader";
 const EXEC = "WH40KRT.exe";

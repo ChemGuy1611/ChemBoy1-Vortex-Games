@@ -11,6 +11,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Reloaded-II (mod loader) | a `reloaded-ii.exe` file | - |
 | Reloadedmodloader | a file or folder named `modconfig.json` and a file or folder named `fftivc.utility.modloader.dll` | `Reloaded\Mods\FFTIVC_Mod_Loader` |
 | Reloadedmod | a file or folder named `modconfig.json` | `Reloaded\Mods` |
+| Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
 
@@ -37,6 +38,21 @@ Installs to: `Reloaded\Mods\FFTIVC_Mod_Loader`
 Recognised when the archive contains a file or folder named `modconfig.json`.
 
 Installs to: `Reloaded\Mods`
+
+## Fallback Installer
+
+The catch-all. Any archive that matched none of the installers above lands here and is copied across unchanged.
+
+> **NOTE:** Landing in the fallback installer is a signal your archive layout needs fixing.
+
+**Requirements:**
+
+- Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
+- Vortex shows the user a notification when a mod installs through the fallback.
+
+**Common mistakes:**
+
+- If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.
 
 ## Rules That Apply To Every Mod Type
 

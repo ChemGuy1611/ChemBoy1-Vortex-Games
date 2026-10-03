@@ -51,8 +51,7 @@ function readRegistryKey(hive, key, name) {
 }
 
 function findGame() {
-  return util.steam
-    .findByAppId(STEAM_ID)
+  return util.GameStoreHelper.findByAppId(STEAM_ID, "steam")
     .then((game) => game.gamePath)
     .catch(() =>
       readRegistryKey(

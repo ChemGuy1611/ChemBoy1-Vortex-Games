@@ -2,8 +2,8 @@
 Name: Final Fantasy VII Rebirth Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-09-27
+Version: 1.0.3
+Date: 2026-10-02
 Notes:
 -
 ////////////////////////////////////////////////*/
@@ -54,10 +54,10 @@ const STEAMAPP_ID = "2909400"; //from steamdb.info
 const STEAMAPP_ID_DEMO = "XXX"; //VERIFY if the EPIC_CODE_NAME and EXEC_DEMO match Steam full game
 const EPICAPP_ID = "33e6ac38b5a14098b079fd62d71aabc6"; //from egdata.app
 const GOGAPP_ID = null; // from gogdb.org
-const XBOXAPP_ID = null; //from appxmanifest.xml
-const XBOXEXECNAME = null; //from appxmanifest.xml
-const XBOX_PUB_ID = null; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const XBOXAPP_ID = "39EA002F.EXED2"; //resolved via MS Store catalog
+const XBOXEXECNAME = "AppFINALFANTASYVIIREBIRTHShipping"; // resolved via MS Store catalog - verify against a live install
+const XBOX_PUB_ID = "n746a19ndrrjg"; // resolved via MS Store catalog - verify against a live install
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const GAME_NAME = "Final Fantasy VII Rebirth";
 const GAME_NAME_SHORT = "FFVII Rebirth"; //Try for 8-10 characters

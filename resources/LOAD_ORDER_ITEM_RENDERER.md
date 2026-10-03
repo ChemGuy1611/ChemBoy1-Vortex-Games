@@ -833,8 +833,8 @@ section order**, each section separator-delimited:
 | Move to Top            | Re-inserts after all locked entries                                                                                                                                                            |
 | Move to Bottom         | Re-inserts at end of array                                                                                                                                                                     |
 | _(separator)_          | Only shown when Open Staging Folder or Open Mod Page is visible                                                                                                                                |
-| Open Staging Folder    | Only when `getModStagingFolder` resolves; `util.opn` on the mod's Vortex staging folder                                                                                                        |
-| Open Mod Page          | Only when `getModPageURL` resolves; `util.opn` on the mod page URL                                                                                                                             |
+| Open Staging Folder    | Only when `getModStagingFolder` resolves; `window.api.shell.openFile` on the mod's Vortex staging folder                                                                                       |
+| Open Mod Page          | Only when `getModPageURL` resolves; `window.api.shell.openUrl` on the mod page URL                                                                                                             |
 | _(separator)_          | Only shown when Disable Vortex Mod is visible                                                                                                                                                  |
 | Disable Vortex Mod     | Only shown when `item.modId` set AND mod is currently enabled; calls `setModsEnabled([item], false)` on the underlying Vortex mod (one-way -- re-enable on the Mods tab or via the row button) |
 

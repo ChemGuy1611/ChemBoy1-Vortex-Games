@@ -10,8 +10,9 @@
 // Newest APIs land in the Vortex source before either of those:
 //   Vortex/src/renderer/src/types/IExtensionContext.ts
 //
-// Signatures below last reconciled against the Vortex source 2026-09-04
-// (v2.6.3 stable).
+// Signatures below last reconciled against the Vortex source 2026-10-01
+// (v2.7.2 stable, v2.8.0-beta.2; plus master where noted). The 2.8 beta removed
+// registerGameStore and registerGameVersionProvider, so they are no longer listed.
 ///////////////////////////////////////////////////////////////////////
 
 //context.registerModType
@@ -87,10 +88,15 @@ export interface IMainPageOptions {
     isClassicOnly?: boolean;
     isModernOnly?: boolean;
     /**
-     * Opt this page into the redesigned UI. When set, the page renders without the legacy
-     * `.main-page` / header / body-container wrappers and is expected to render its own Page.
+     * Opt this page into the redesigned UI. When set, MainPageContainer skips the legacy
+     * `.main-page` / header / body-container chrome and renders the page component as the
+     * sole root (it is expected to render its own Page), keeping the DOM subtree flat.
+     *
+     * A page that kept its old rendering as well passes a callback instead, deciding for
+     * itself which of the two it is about to draw. It is resolved wherever the classic/modern
+     * setting is already watched, so the answer follows a change to it.
      */
-    newLayout?: boolean;
+    newLayout?: boolean | (() => boolean);
     priority?: number;
     props?: () => any;
     badge?: ReduxProp<any>;
@@ -932,12 +938,6 @@ export interface IExtensionContext {
      */
     registerGameStub: (game: IGame, ext: IExtensionDownloadInfo) => void;
     /**
-     * registers support for a game store.
-     *
-     * @param {IGameStore} gameStore
-     */
-    registerGameStore: (gameStore: IGameStore) => void;
-    /**
      * registers a provider for general information about a game
      * @param {string} id unique id identifying the provider
      * @param {number} priority if two providers provide the same info (same key) the one with the
@@ -1085,10 +1085,6 @@ export interface IExtensionContext {
      * state.persistent.profiles.<profile id>.features.<feature id>
      */
     registerProfileFeature?: (featureId: string, type: string, icon: string, label: string, description: string, supported: () => boolean) => void;
-    /**
-     * register a game version resolution provider.
-     */
-    registerGameVersionProvider?: (id: string, priority: number, supported: GameVersionProviderTest, getVersion: GameVersionProviderFunc, options?: IGameVersionProviderOptions) => void;
     /**
      * register a handler that can be used to preview or diff files.
      * A handler can return a promise rejected with a "ProcessCanceled" exception to indicate

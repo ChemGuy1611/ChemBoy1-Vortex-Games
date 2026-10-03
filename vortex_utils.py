@@ -18,6 +18,7 @@ Usage:
         sanitize_game_name, normalize_game_name,
         roman_to_arabic, arabic_to_roman,
         name_lookup_variants, lookup_pcgamingwiki, pcgw_get_json,
+        pcgw_title_from_url, pcgw_page_wikitext, parse_pcgw_availability,
         get_api_key, http_get, http_get_bytes, http_get_json, http_post_json,
         nexus_v3_get, nexus_v3_post_json,
         egdata_search_queries, normalize_title_for_match, store_title_matches,
@@ -44,7 +45,7 @@ Usage:
         run_concurrent_batch, report_download_results, retry_failed_downloads,
         dry_prefix, log_dry, print_run_summary, print_count_summary, resize_images_to,
         build_arg_parser, assert_is_game_id, report_node_check,
-        node_check, node_check_source, eslint_check,
+        node_check, node_check_source, lint_check,
         run_generate_explained, run_generate_explained_batch,
         run_generate_notes, run_generate_notes_batch,
         run_generate_description_batch,
@@ -57,10 +58,12 @@ Usage:
         requires_extensions, has_extension_dependency,
         has_ue4ss_load_order_parity,
         top_level_functions, bool_toggles, template_shape_diff,
-        has_template_shape_parity, has_unity_bepinex_parity, has_unity_hybrid_parity,
+        has_template_shape_parity, has_unity_hybrid_parity,
         has_anvil_template_parity, has_farcry_template_parity,
+        has_reloaded_template_parity,
         UNITY_PARITY_TOGGLE_EXCEPTIONS, UNITY_PARITY_KNOWN_EXCEPTIONS,
         ANVIL_PARITY_KNOWN_EXCEPTIONS, FARCRY_PARITY_KNOWN_EXCEPTIONS,
+        RELOADED_PARITY_KNOWN_EXCEPTIONS,
         is_unreleased_extension,
         validate_index_js, find_registerinstaller_calls,
         log_info, log_error, log_warn,
@@ -81,6 +84,7 @@ Usage:
 """
 
 import argparse
+import functools
 import html
 import json
 import os
@@ -635,6 +639,60 @@ def lookup_pcgamingwiki(game_name, debug=False):
             print(f"    [debug] PCGamingWiki lookup error: {e}")
         _pcgw_cache[game_name] = (None, None)
         return None, None
+
+
+# == PCGamingWiki store availability ===========================================
+
+# Template:Availability/row names the store in its first argument. Long display
+# names and short aliases are both in use (Epic Games Store / EGS / Epic,
+# Microsoft Store / MS Store). The second argument is the store's own id: a GOG or
+# Epic slug, or a Microsoft Store product id.
+_PCGW_AVAILABILITY_STORES = {
+    "gog":  r"GOG\.com|GOG",
+    "epic": r"Epic Games Store(?: subpage)?|EGS|Epic",
+    "xbox": r"Microsoft Store|MS Store",
+}
+
+
+def pcgw_title_from_url(url_value):
+    """Return the PCGamingWiki page title for a PCGAMINGWIKI_URL const value, or None.
+    Accepts the raw (still quoted) RHS from const_value()."""
+    m = re.search(r'pcgamingwiki\.com/wiki/([^"\'?#\s]+)', url_value or "")
+    return urllib.parse.unquote(m.group(1)).replace("_", " ") if m else None
+
+
+def pcgw_page_wikitext(page_title):
+    """Return the wikitext of a PCGamingWiki page, following one #REDIRECT.
+    Raises on network or parse failure; callers decide whether that is fatal."""
+    wikitext = ""
+    for _ in range(2):
+        data = pcgw_get_json(
+            f"{PCGW_API}?action=parse&page={urllib.parse.quote(page_title)}"
+            "&prop=wikitext&format=json"
+        )
+        wikitext = data.get("parse", {}).get("wikitext", {}).get("*", "")
+        m = re.match(r'\s*#REDIRECT\s*\[\[(.+?)\]\]', wikitext, re.IGNORECASE)
+        if not m:
+            break
+        page_title = m.group(1).strip()
+    return wikitext
+
+
+def parse_pcgw_availability(wikitext):
+    """Return {'gog': ..., 'epic': ..., 'xbox': ...}: the store id each Availability row
+    lists in PCGamingWiki wikitext, or None when the page has no row for that store.
+
+    The values are slugs / product ids, not the extension constants: GOG and Epic give a
+    store-page slug (not the numeric GOGAPP_ID / catalog id), Microsoft Store gives the
+    product id fetch_xbox_identity() takes. A row with an empty id reads as absent."""
+    found = {}
+    for store, names in _PCGW_AVAILABILITY_STORES.items():
+        m = re.search(
+            rf'\{{\{{Availability/row\|\s*(?:{names})\s*\|\s*([^|{{}}\n]+?)\s*\|',
+            wikitext or "", re.IGNORECASE,
+        )
+        found[store] = m.group(1).strip() if m else None
+    return found
 
 
 # == PCGamingWiki save/config path parsing =====================================
@@ -1205,12 +1263,17 @@ def fetch_xbox_identity(xbox_url_or_id):
 
     For several AAA titles the apps.microsoft.com/detail/<id> URL is a
     listing-page ID distinct from the base game's own catalog product ID, and
-    the primary lookup comes back with no package identity at all (Onimusha:
-    Way of the Sword, The Blood of Dawnwalker, Crimson Desert - found
-    2026-09-17). When that happens this falls back to
-    storeedgefd.dsx.mp.microsoft.com, which resolves the real product ID via
-    Payload.PrimaryPackageIdentity.ProductId, and retries the catalog lookup
-    against that ID.
+    the primary lookup comes back with no package identity at all, or an
+    identity with no packages on any SKU (Onimusha: Way of the Sword, The Blood
+    of Dawnwalker, Crimson Desert - found 2026-09-17). When that happens this
+    falls back to storeedgefd.dsx.mp.microsoft.com, which resolves the real
+    product ID via Payload.PrimaryPackageIdentity.ProductId, and retries the
+    catalog lookup against that ID. With no redirect, the primary result stands.
+
+    xbox_exec_name is routinely None (or a placeholder like "GDKStubGame") for
+    Ubisoft and EA titles. Game Pass subscribers get access to a limited slice of
+    those publishers' libraries, so the games are listed in the Xbox library but are
+    run through the publisher's own launcher; that is expected, not a lookup failure.
 
     Returns (None, None, None) if the product ID can't be parsed, the lookup
     fails, or the product carries no package identity even after the
@@ -1219,26 +1282,93 @@ def fetch_xbox_identity(xbox_url_or_id):
     install confirms it (precedent: hellisus and rvthereyet both needed a
     live install for these values before this endpoint was known).
     """
-    m = _MS_STORE_PRODUCT_ID_RE.search((xbox_url_or_id or "").strip())
-    if not m:
+    data = _xbox_product(xbox_url_or_id)
+    if not data:
         return None, None, None
-    product_id = m.group(1).upper()
     try:
-        data = http_get_json(f"{MS_STORE_CATALOG_API}/{product_id}?market=US&languages=en-us")
-        xbox_app_id, xbox_exec_name, xbox_pub_id = _parse_catalog_product(data)
-        if xbox_app_id:
-            return xbox_app_id, xbox_exec_name, xbox_pub_id
-        edge_url = (f"{MS_STORE_EDGE_API}/{product_id}"
-                    "?market=US&locale=en-us&deviceFamily=Windows.Desktop")
-        edge_data = http_get_json(edge_url)
-        identity = (edge_data.get("Payload") or {}).get("PrimaryPackageIdentity")
-        real_id = identity.get("ProductId") if identity else None
-        if not real_id or real_id.upper() == product_id:
-            return None, None, None
-        data = http_get_json(f"{MS_STORE_CATALOG_API}/{real_id}?market=US&languages=en-us")
         return _parse_catalog_product(data)
     except Exception:
         return None, None, None
+
+
+# PackageFormat values of an encrypted / UWP-style package: installed under the protected
+# WindowsApps folder, so the game files are not writable and can never be modded. The GDK
+# formats (MSIXVC, XVC) install under XboxGames and are writable. Lowercased for comparison.
+XBOX_PROTECTED_FORMATS = frozenset({"eappx", "eappxbundle", "appx", "appxbundle"})
+
+
+def _catalog_has_packages(data):
+    """True if any SKU in a v7.0/products response lists at least one package."""
+    return any(
+        (sku.get("Sku", {}).get("Properties", {}).get("Packages") or [])
+        for sku in data["Product"].get("DisplaySkuAvailabilities", [])
+    )
+
+
+@functools.lru_cache(maxsize=None)
+def _fetch_catalog_product(product_id):
+    """v7.0/products response for an uppercase Store product ID, or None if the lookup
+    fails. When the listing-page ID carries no package identity, or an identity with no
+    packages on any SKU, the real product ID is resolved through storeedgefd and that
+    product is returned instead; if no redirect exists the original response is returned
+    as-is (it may still hold an identity, or none). Cached: identity and package-format
+    callers share one network round trip per product."""
+    try:
+        data = http_get_json(f"{MS_STORE_CATALOG_API}/{product_id}?market=US&languages=en-us")
+        if _parse_catalog_product(data)[0] and _catalog_has_packages(data):
+            return data
+    except Exception:
+        return None
+    try:
+        edge_url = (f"{MS_STORE_EDGE_API}/{product_id}"
+                    "?market=US&locale=en-us&deviceFamily=Windows.Desktop")
+        identity = (http_get_json(edge_url).get("Payload") or {}).get("PrimaryPackageIdentity")
+        real_id = identity.get("ProductId") if identity else None
+        if real_id and real_id.upper() != product_id:
+            return http_get_json(f"{MS_STORE_CATALOG_API}/{real_id}?market=US&languages=en-us")
+    except Exception:
+        pass
+    return data
+
+
+def _xbox_product(xbox_url_or_id):
+    """Catalog response for a Store product ID or apps.microsoft.com/detail URL, or None."""
+    m = _MS_STORE_PRODUCT_ID_RE.search((xbox_url_or_id or "").strip())
+    return _fetch_catalog_product(m.group(1).upper()) if m else None
+
+
+def fetch_xbox_package_formats(xbox_url_or_id):
+    """PackageFormat values of the PC-launchable packages of a Microsoft Store product.
+
+    Takes the same input as fetch_xbox_identity() and shares its redirect fallback.
+    Only packages with a non-empty Applications array count: those are the ones that
+    launch a game. A console-only XVC package alongside the PC one carries no
+    Applications and is left out (middleearthshadowofwar lists EAppxBundle + a
+    console XVC; only the EAppxBundle is the PC build).
+
+    The format predicts moddability - see xbox_formats_protected(). Returns a set of
+    format strings (e.g. {"MSIXVC"}); empty when the lookup failed or the product has
+    no PC-launchable package (console-only, or none uploaded yet)."""
+    data = _xbox_product(xbox_url_or_id)
+    if not data:
+        return set()
+    try:
+        return {
+            pkg["PackageFormat"]
+            for sku in data["Product"].get("DisplaySkuAvailabilities", [])
+            for pkg in (sku.get("Sku", {}).get("Properties", {}).get("Packages") or [])
+            if pkg.get("Applications") and pkg.get("PackageFormat")
+        }
+    except Exception:
+        return set()
+
+
+def xbox_formats_protected(formats):
+    """True if every format in a fetch_xbox_package_formats() result is an encrypted /
+    UWP-style one (XBOX_PROTECTED_FORMATS): the install lands in the protected
+    WindowsApps folder and the game is unmoddable. False for an empty set - an unknown
+    is surfaced, never silently ignored."""
+    return bool(formats) and all(f.lower() in XBOX_PROTECTED_FORMATS for f in formats)
 
 
 # == JS source helpers =========================================================
@@ -2193,11 +2323,12 @@ def node_check(path):
     return result.returncode == 0, result.stderr.strip()
 
 
-def eslint_check(path):
-    """Run `npx eslint` on a JS file. Returns (ok: bool, output: str).
-    Runs from REPO_ROOT so eslint.config.js is picked up automatically."""
+def lint_check(path):
+    """Run `npx oxlint` on a JS file. Returns (ok: bool, output: str).
+    Runs from REPO_ROOT so .oxlintrc.json is picked up automatically.
+    ok is False only for errors; warnings (e.g. no-unused-vars) keep ok True."""
     result = subprocess.run(
-        ["npx", "--no-install", "eslint", path],
+        ["npx", "--no-install", "oxlint", path],
         capture_output=True, text=True, cwd=REPO_ROOT, shell=True,
         encoding="utf-8", errors="replace",
     )
@@ -2494,28 +2625,38 @@ def read_info_json(folder):
         return None
 
 
-_DEFAULT_MANIFEST_PATH = os.path.join(os.environ.get("APPDATA", ""), "Vortex", "temp", "extensions-manifest.json")
+CB1_NEXUS_USER_ID = "3263034"
+_NEXUS_GAMELIST_PATH = os.path.join(os.environ.get("APPDATA", ""), "Vortex", "temp", "nexus_gamelist.json")
 
 
-def load_vortex_manifest(path=None):
-    """Read Vortex extensions-manifest.json. Returns {game_id: mod_id} dict.
+def load_vortex_manifest(entries=None):
+    """Return {game_id: mod_id} for ChemBoy1's game extensions on Nexus Mods.
 
-    path defaults to %APPDATA%\\Vortex\\temp\\extensions-manifest.json.
-    Returns {} and prints a warning on any read/parse error."""
-    manifest_path = path or _DEFAULT_MANIFEST_PATH
+    Reads the public v3 /vortex/extensions feed (the extension catalog Vortex 2.7+
+    uses; no API key needed). The feed keys games by numeric id, so domains come from
+    Vortex's cached %APPDATA%\\Vortex\\temp\\nexus_gamelist.json (run Vortex once to
+    create it). The feed lists one extension per game, so a game whose slot belongs to
+    another author is absent from the result.
+    entries: an already-fetched `data.extensions` list; the feed is fetched live when omitted.
+    Returns {} and prints a warning on any error."""
     try:
-        with open(manifest_path, encoding="utf-8") as f:
-            data = json.load(f)
+        with open(_NEXUS_GAMELIST_PATH, encoding="utf-8") as f:
+            domains = {g["id"]: g["domain_name"] for g in json.load(f)}
+        if entries is None:
+            req = urllib.request.Request(f"{_NEXUS_V3}/vortex/extensions", headers=_NEXUS_V3_HEADERS)
+            with urllib.request.urlopen(req, timeout=_HTTP_TIMEOUT) as resp:
+                entries = json.loads(resp.read())["data"]["extensions"]
         result = {}
-        for e in data.get("extensions", []):
-            gid = e.get("gameId")
-            mid = e.get("modId")
-            if gid and mid:
-                result[gid] = mid
-        print(f"  Manifest loaded: {len(result)} games with modId.")
+        for e in entries:
+            if e.get("type") != "game" or e.get("author_user_id") != CB1_NEXUS_USER_ID:
+                continue
+            domain = domains.get(int(e.get("game_id") or 0))
+            if domain and e.get("mod_id"):
+                result[domain] = e["mod_id"]
+        print(f"  Extension feed loaded: {len(result)} games with modId.")
         return result
     except Exception as ex:
-        print(f"  Warning: could not load manifest ({ex}). EXTENSION_URL patch will be skipped.")
+        print(f"  Warning: could not load extension feed ({ex}). EXTENSION_URL patch will be skipped.")
         return {}
 
 
@@ -3015,7 +3156,7 @@ def js_string_literal(value):
     Escapes backslashes first, then double quotes. Game names sourced from store
     pages routinely contain both -- an unescaped quote produces
     `const GAME_NAME = "Foo "Bar" Baz";`, a syntax error that only surfaces later
-    as a wall of eslint parse errors."""
+    as a wall of lint parse errors."""
     escaped = str(value).replace("\\", "\\\\").replace('"', '\\"')
     return f'"{escaped}"'
 
@@ -3068,6 +3209,58 @@ def changelog_has_version_section(folder, version):
     with open(changelog_path, "r", encoding="utf-8") as f:
         content = f.read()
     return bool(re.search(r"^## \[" + re.escape(version) + r"\]", content, re.MULTILINE))
+
+
+def open_planned_improvements(folder):
+    """Real bullet lines under CHANGELOG.md's '## Planned Improvements (Not Yet
+    Released)' (the '- None Planned' placeholder excluded), or [] when the file
+    or section is missing. Read-only: whether an item actually got done this
+    round is a human call, so nothing here ever moves a bullet."""
+    path = os.path.join(folder, "CHANGELOG.md")
+    if not os.path.isfile(path):
+        return []
+    with open(path, encoding="utf-8") as f:
+        content = f.read()
+    m = re.search(r"^## Planned Improvements \(Not Yet Released\)[^\n]*\n(.*?)(?=^## |\Z)",
+                  content, re.MULTILINE | re.DOTALL)
+    if not m:
+        return []
+    return [ln.strip() for ln in m.group(1).splitlines()
+            if re.match(r"\s*[-*]\s+\S", ln) and "None Planned" not in ln]
+
+
+def changelog_entry_is_empty(entry):
+    """True when a CHANGELOG entry (as returned by nexus_upload.extract_changelog_entry)
+    carries no note text: only a date line and bare "-" / "*" bullets, which is
+    what the stub bump_version.py prepends looks like until it is filled in.
+    Releasing it would publish blank release notes."""
+    for line in entry.splitlines():
+        s = line.strip()
+        if s in ("", "-", "*") or re.fullmatch(r"\d{4}-\d{2}-\d{2}", s):
+            continue
+        return False
+    return True
+
+
+def unreleased_intermediate_sections(changelog_src, marker_version, version):
+    """Dated CHANGELOG sections strictly between the <version>.txt marker and the
+    version being released, newest first, as [(ver, body_text)].
+
+    release_extension.py uploads only the current version's section, so notes
+    parked under a bumped-but-never-uploaded intermediate version are silently
+    dropped from the Nexus changelog. The marker is NOT a reliable "last
+    uploaded" signal -- a packaging-only run moves it, a manual upload leaves it
+    stale -- so callers should warn and let a human fold, not auto-fold."""
+    def key(v):
+        return tuple(int(p) for p in v.split("."))
+
+    out = []
+    for m in re.finditer(r"^## \[(\d+\.\d+\.\d+)\][^\n]*\n(.*?)(?=^## |\Z)",
+                         changelog_src, re.MULTILINE | re.DOTALL):
+        ver = m.group(1)
+        if key(marker_version) < key(ver) < key(version):
+            out.append((ver, m.group(2).strip()))
+    return sorted(out, key=lambda t: key(t[0]), reverse=True)
 
 
 def prepend_changelog_entry(folder, version, date):
@@ -3589,7 +3782,11 @@ def is_load_order_game(src):
 
 
 def is_multi_game_extension(src):
-    """Return True if the extension calls context.registerGame more than once.
+    """Return True if the extension registers more than one game.
+
+    That is more than one context.registerGame call, or applyGame(context, ...) called
+    more than once - an extension whose one applyGame serves every game it bundles
+    (robocoproguecity) has a single registerGame call in the source.
 
     A handful of extensions bundle several distinct games (or game variants with
     their own store app ids) behind one Nexus page - windrose (base + dedicated
@@ -3602,7 +3799,9 @@ def is_multi_game_extension(src):
     Comments are stripped first so a disabled/example registerGame call in a
     toggled-off block does not count.
     """
-    return strip_js_comments(src).count("context.registerGame(") > 1
+    stripped = strip_js_comments(src)
+    apply_calls = len(re.findall(r"(?<!function )applyGame\(context,", stripped))
+    return stripped.count("context.registerGame(") > 1 or apply_calls > 1
 
 
 def is_merge_game(src):
@@ -3909,9 +4108,8 @@ def ensure_vortex_api_name(src, name):
     `api.<name>` at every call site instead of a bare name (different rewrite, not this
     helper's job), and more than one destructure of the same module is ambiguous.
 
-    Reuses the destructure-then-namespace detection shape `migrate_fs.py` proved out for
-    the same "does this file already have vfs/fsp bound" problem -- second caller of the
-    same pattern, so it's centralized here instead of copy-pasted."""
+    Uses the destructure-then-namespace detection shape for the "does this file already
+    have vfs/fsp bound" problem."""
     matches = list(_VORTEX_API_DESTRUCTURE_RE.finditer(src))
     if not matches:
         ns = _VORTEX_API_NAMESPACE_RE.search(src)
@@ -3943,7 +4141,7 @@ def ensure_vortex_api_name(src, name):
 
 def js_files_in(folder, paths):
     """Append every top-level *.js file in folder to paths (sorted, non-recursive).
-    No-op if folder does not exist. Shared file-walk step for the convert_*.py codemods
+    No-op if folder does not exist. Shared file-walk step for repo-wide codemods
     (and any future one) so their scope-scanning logic stays identical."""
     if not os.path.isdir(folder):
         return
@@ -4128,18 +4326,19 @@ UNITY_PARITY_KNOWN_EXCEPTIONS = {
                         "and are accepted as permanently stale rather than ported",
 }
 
-# Same idea for the Anvil and Far Cry families. Both are empty today: every divergence
-# from their template is a pending port, not a deliberate permanent one. Add an entry
-# only on an explicit user decision, with the reason, exactly as the Unity map above.
+# Same idea for the Anvil, Far Cry and Reloaded-II families. All empty today: every
+# divergence from their template is a pending port, not a deliberate permanent one. Add
+# an entry only on an explicit user decision, with the reason, exactly as the Unity map above.
 ANVIL_PARITY_KNOWN_EXCEPTIONS = {}
 FARCRY_PARITY_KNOWN_EXCEPTIONS = {}
+RELOADED_PARITY_KNOWN_EXCEPTIONS = {}
 
 _template_src_cache = {}
 
 
 def _template_src(template_folder_name):
     """Read and cache a template's index.js source by folder name (e.g.
-    'template-unitybepinex'). Cached because parity predicates run once per game."""
+    'template-unitymelonloaderbepinex-hybrid'). Cached because parity predicates run once per game."""
     if template_folder_name not in _template_src_cache:
         _template_src_cache[template_folder_name] = read_index_js(
             os.path.join(REPO_ROOT, template_folder_name))
@@ -4199,16 +4398,9 @@ def has_template_shape_parity(src, folder, template_folder_name,
     return not (missing_f or missing_t)
 
 
-def has_unity_bepinex_parity(src, folder):
-    """Return True if a Unity+BepInEx extension is at template-unitybepinex shape parity
-    (isXna exempted both ways) and is not on UNITY_PARITY_KNOWN_EXCEPTIONS."""
-    return has_template_shape_parity(
-        src, folder, "template-unitybepinex",
-        UNITY_PARITY_KNOWN_EXCEPTIONS, UNITY_PARITY_TOGGLE_EXCEPTIONS)
-
-
 def has_unity_hybrid_parity(src, folder):
-    """Same as has_unity_bepinex_parity but against template-unitymelonloaderbepinex-hybrid."""
+    """Return True if a Unity extension is at template-unitymelonloaderbepinex-hybrid shape
+    parity (isXna exempted both ways) and is not on UNITY_PARITY_KNOWN_EXCEPTIONS."""
     return has_template_shape_parity(
         src, folder, "template-unitymelonloaderbepinex-hybrid",
         UNITY_PARITY_KNOWN_EXCEPTIONS, UNITY_PARITY_TOGGLE_EXCEPTIONS)
@@ -4232,3 +4424,12 @@ def has_farcry_template_parity(src, folder):
         return False
     return has_template_shape_parity(
         src, folder, "template-farcry", FARCRY_PARITY_KNOWN_EXCEPTIONS)
+
+
+def has_reloaded_template_parity(src, folder):
+    """Return True if a Reloaded-II extension is at template-reloaded2 shape parity.
+    No toggle exemptions: all four template booleans gate optional subsystems."""
+    if detect_engine(src) != 'Reloaded-II':
+        return False
+    return has_template_shape_parity(
+        src, folder, "template-reloaded2", RELOADED_PARITY_KNOWN_EXCEPTIONS)

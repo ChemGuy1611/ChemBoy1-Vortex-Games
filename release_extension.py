@@ -9,7 +9,12 @@ Each EXT_ID is looked up as a game-<id> folder first, then a helper-<id>
 folder (e.g. "falloutlondon" releases helper-falloutlondon).
 
 Steps performed per extension:
-    1. Validate info.json version has a matching ## [X.Y.Z] entry in CHANGELOG.md
+    1. Validate info.json version has a matching ## [X.Y.Z] entry in CHANGELOG.md,
+       and that the entry has note text (an unfilled "- " stub from bump_version.py
+       is an error: it would publish blank release notes). Also WARNS, printing
+       their text, about any dated section between the <version>.txt marker and
+       this version -- notes parked under a bumped-but-never-uploaded version are
+       not in the upload; fold them into this version first if they never shipped.
     2. Check info.json 'name' matches 'Game: <Name>' pattern (game folders only;
        a helper folder just needs a non-empty name), and that info.json 'id'
        equals GAME_ID (game folders) or the helper id (helper folders)
@@ -28,10 +33,10 @@ Steps performed per extension:
     7. Update Version and Date in index.js header comment
     8. Add resolved store IDs to DISCOVERY_IDS_ACTIVE if missing
     9. node --check on index.js (warns on syntax error; use --skip-node-check to skip)
-   10. eslint on index.js (warns on lint errors; use --skip-eslint to skip)
+   10. oxlint on index.js (warns on lint errors; use --skip-lint to skip)
    11. Create game-{EXT_ID}.zip or helper-{EXT_ID}.zip with 7-Zip, excluding the
        repo-facing generated docs (EXTENSION_EXPLAINED.md, NOTES_FOR_MOD_AUTHORS.md,
-       NOTES_FOR_MOD_AUTHORS.bbcode)
+       NOTES_FOR_MOD_AUTHORS.bbcode, DESCRIPTION.bbcode) and *.bak backups
    12. Optionally upload zip to Nexus Mods as a new file version (changelog entry as
        description; file group resolved via v1 uid -> v3 groups, or via index.js FILE_GROUP_ID
        override when the v3 list 404s); default: skip; use --upload to enable
@@ -72,7 +77,7 @@ Usage:
     python release_extension.py EXT_ID --no-open
     python release_extension.py EXT_ID --dry-run
     python release_extension.py EXT_ID --skip-node-check
-    python release_extension.py EXT_ID --skip-eslint
+    python release_extension.py EXT_ID --skip-lint      (--skip-eslint accepted as alias)
     python release_extension.py EXT_ID --upload
     python release_extension.py EXT_ID --edit-changelog
 
@@ -82,6 +87,7 @@ Environment variables:
 """
 
 import argparse
+import fnmatch
 import os
 import re
 import sys
@@ -92,7 +98,7 @@ import zipfile
 from vortex_utils import (
     run_generate_explained_batch, run_generate_notes_batch,
     run_generate_description_batch,
-    add_to_discovery_ids, node_check, eslint_check,
+    add_to_discovery_ids, node_check, lint_check,
     extract_extension_url, extract_file_group_id, extract_game_id, read_info_json, parse_changelog_latest,
     update_index_header as _apply_header, mutate_index_js, validate_index_js,
     print_run_summary, assert_is_game_id, log_info, log_warn, log_error,
@@ -100,6 +106,7 @@ from vortex_utils import (
     LISTS_DIR, read_id_list, write_id_list,
     find_registerinstaller_calls, audit_skip_lines, AUDIT_SKIP_PRIORITY,
     resolve_extension_folder, extension_prefix,
+    changelog_entry_is_empty, unreleased_intermediate_sections,
 )
 from nexus_upload import pick_file_group, upload_zip, extract_changelog_entry
 SEVENZIP = os.environ.get("SEVENZIP_PATH", r"C:\Program Files\7-Zip\7z.exe")
@@ -110,11 +117,14 @@ UNRELEASED_LIST = "games-unreleased.txt"
 # Vortex installs, so it is kept out of the released zip. DESCRIPTION.bbcode is the
 # mod page description, written by hand except for its install-notes list, which
 # generate_notes.js --description refreshes at the end of every release run.
+# *.bak covers the index.js.bak that port_to_template.py and hand edits leave behind.
+# Entries are wildcard patterns (7-Zip -xr! and fnmatch), matched against file names.
 ZIP_EXCLUDES = [
     "EXTENSION_EXPLAINED.md",
     "NOTES_FOR_MOD_AUTHORS.md",
     "NOTES_FOR_MOD_AUTHORS.bbcode",
     "DESCRIPTION.bbcode",
+    "*.bak",
 ]
 
 
@@ -222,7 +232,7 @@ def update_discovery_ids(folder, game_id, dry_run=False):
     )
 
 
-def release(game_id, open_browser, dry_run=False, skip_eslint=False,
+def release(game_id, open_browser, dry_run=False, skip_lint=False,
             skip_node_check=False, upload=False, edit_changelog=False, out=None):
     if out is None:
         out = {}
@@ -289,10 +299,27 @@ def release(game_id, open_browser, dry_run=False, skip_eslint=False,
     if version and changelog_version and version != changelog_version:
         log_warn(game_id, f"info.json version ({version}) does not match latest CHANGELOG entry ({changelog_version})")
     changelog_entry = extract_changelog_entry(changelog_src, version or "")
+    if version and changelog_entry_is_empty(changelog_entry):
+        log_error(game_id, f"CHANGELOG [{version}] has no note text (unfilled stub?) - "
+                           f"releasing it would publish blank release notes")
+        return False
     if changelog_entry:
         log_info(game_id, f"Changelog entry for v{version}:")
         for line in changelog_entry.splitlines():
             print(f"    {line}")
+
+    # Notes parked under a bumped-but-never-uploaded version are not in the entry above.
+    markers = sorted(
+        (tuple(int(p) for p in f[:-4].split(".")) for f in os.listdir(folder)
+         if re.fullmatch(r"\d+\.\d+\.\d+\.txt", f)), reverse=True)
+    if version and markers:
+        marker_version = ".".join(map(str, markers[0]))
+        for skipped_ver, body in unreleased_intermediate_sections(changelog_src, marker_version, version):
+            log_warn(game_id, f"CHANGELOG [{skipped_ver}] sits between the marker ({marker_version}) and "
+                              f"{version} and is NOT in this upload's notes. If it never shipped, fold "
+                              f"its bullets into [{version}] first. Its text:")
+            for line in body.splitlines():
+                print(f"    {line}")
 
     update_version_txt(folder, game_id, version, dry_run=dry_run)
     update_index_header(folder, game_id, version, date, dry_run=dry_run)
@@ -305,8 +332,8 @@ def release(game_id, open_browser, dry_run=False, skip_eslint=False,
         out["upload_ready"] = bool(extension_url and parse_nexus_mod_url(extension_url))
         if not skip_node_check:
             log_info(game_id, "[DRY RUN] Would run node --check on index.js")
-        if not skip_eslint:
-            log_info(game_id, "[DRY RUN] Would run eslint on index.js")
+        if not skip_lint:
+            log_info(game_id, "[DRY RUN] Would run oxlint on index.js")
         if kind == "game":
             log_info(game_id, "[DRY RUN] Would generate EXTENSION_EXPLAINED.md")
             log_info(game_id, "[DRY RUN] Would generate NOTES_FOR_MOD_AUTHORS.md + .bbcode")
@@ -352,13 +379,13 @@ def release(game_id, open_browser, dry_run=False, skip_eslint=False,
             log_warn(game_id, "node --check found a syntax error in index.js:")
             print(f"    {err}")
 
-    if not skip_eslint:
+    if not skip_lint:
         log_info(game_id, "Linting index.js...")
-        lint_ok, lint_out = eslint_check(index_path)
+        lint_ok, lint_out = lint_check(index_path)
         if lint_ok:
-            log_info(game_id, "eslint OK")
+            log_info(game_id, "oxlint OK")
         else:
-            log_warn(game_id, "eslint reported issues:")
+            log_warn(game_id, "oxlint reported issues:")
             for line in lint_out.splitlines():
                 print(f"    {line}")
 
@@ -373,7 +400,7 @@ def release(game_id, open_browser, dry_run=False, skip_eslint=False,
     log_info(game_id, "Zipping...")
     result = subprocess.run(
         [SEVENZIP, "a", "-tzip", zip_path, os.path.join(folder, "*")]
-        + [f"-x!{name}" for name in ZIP_EXCLUDES],
+        + [f"-xr!{name}" for name in ZIP_EXCLUDES],
         capture_output=True, text=True,
         encoding="utf-8", errors="replace",
     )
@@ -396,9 +423,12 @@ def release(game_id, open_browser, dry_run=False, skip_eslint=False,
         if "index.js" not in names:
             shown = ", ".join(names[:10]) + (f" ... ({len(names)} total)" if len(names) > 10 else "")
             log_warn(game_id, f"index.js not found at zip root (files: {shown})")
-        leaked = [n for n in names if os.path.basename(n) in ZIP_EXCLUDES]
+        leaked = [
+            n for n in names
+            if any(fnmatch.fnmatch(os.path.basename(n).lower(), pat.lower()) for pat in ZIP_EXCLUDES)
+        ]
         if leaked:
-            log_warn(game_id, f"excluded docs present in zip: {', '.join(sorted(leaked))}")
+            log_warn(game_id, f"excluded files present in zip: {', '.join(sorted(leaked))}")
     except Exception as e:
         log_warn(game_id, f"could not verify zip contents: {e}")
 
@@ -506,9 +536,9 @@ def main():
         help="Skip the node --check syntax step.",
     )
     parser.add_argument(
-        "--skip-eslint",
+        "--skip-lint", "--skip-eslint",
         action="store_true",
-        help="Skip the eslint step.",
+        help="Skip the oxlint step (--skip-eslint still accepted).",
     )
     parser.add_argument(
         "--upload",
@@ -547,7 +577,7 @@ def main():
             try:
                 ok = release(
                     game_id, not args.no_open, args.dry_run,
-                    skip_eslint=args.skip_eslint,
+                    skip_lint=args.skip_lint,
                     skip_node_check=args.skip_node_check,
                     upload=upload,
                     edit_changelog=args.edit_changelog,

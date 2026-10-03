@@ -23,12 +23,12 @@ independently of its engine category and of each other:
     games-requires-extension.txt - games that declare any context.requireExtension
                            dependency on another Vortex extension, required or optional
     games-ue4-5-parity.txt - UE4-5 games carrying the full template-ue4-5 load order
-    games-unity-bepinex-parity.txt - Unity+BepInEx games matching template-unitybepinex
-                           HEAD function-for-function and toggle-for-toggle
     games-unity-hybrid-parity.txt - Unity+MelonLoader/BepInEx games matching
                            template-unitymelonloaderbepinex-hybrid HEAD the same way
     games-anvil-parity.txt - Anvil games matching template-anvilengine HEAD the same way
     games-farcry-parity.txt - Far Cry (Dunia) games matching template-farcry HEAD the
+                           same way
+    games-reloaded2-parity.txt - Reloaded-II games matching template-reloaded2 HEAD the
                            same way
     games-unreleased.txt - games with no real Nexus page URL in EXTENSION_URL, i.e.
                            extensions that have never been published. Permanent test
@@ -62,8 +62,8 @@ from vortex_utils import (
     has_moddb_downloader_js, has_modworkshop_downloader_js,
     has_thunderstore_downloader_js,
     has_extension_dependency, has_ue4ss_load_order_parity,
-    has_unity_bepinex_parity, has_unity_hybrid_parity,
-    has_anvil_template_parity, has_farcry_template_parity,
+    has_unity_hybrid_parity,
+    has_anvil_template_parity, has_farcry_template_parity, has_reloaded_template_parity,
     is_unreleased_extension, is_multi_game_extension, has_any_steamapp_id,
     log_error, log_dry,
 )
@@ -147,16 +147,16 @@ FLAG_LISTS = [
     ("games-requires-extension.txt", lambda src, folder: has_extension_dependency(src)),
     # UE4-5 games at template load-order parity (custom UE4SS + LogicMods pages).
     ("games-ue4-5-parity.txt", lambda src, folder: has_ue4ss_load_order_parity(src)),
-    # Unity games matching their own template HEAD function-for-function and
+    # Unity games matching the hybrid template HEAD function-for-function and
     # toggle-for-toggle (isXna exempted both ways; see UNITY_PARITY_KNOWN_EXCEPTIONS
     # in vortex_utils.py for permanent per-game carve-outs like game-menace).
-    ("games-unity-bepinex-parity.txt", lambda src, folder: has_unity_bepinex_parity(src, folder)),
     ("games-unity-hybrid-parity.txt", lambda src, folder: has_unity_hybrid_parity(src, folder)),
-    # Anvil and Far Cry games matching their template HEAD the same way. Neither family
-    # has a toggle exemption: every boolean in those templates gates an optional
+    # Anvil, Far Cry and Reloaded-II games matching their template HEAD the same way. No
+    # family has a toggle exemption: every boolean in those templates gates an optional
     # subsystem, so a missing one is always a pending port.
     ("games-anvil-parity.txt", lambda src, folder: has_anvil_template_parity(src, folder)),
     ("games-farcry-parity.txt", lambda src, folder: has_farcry_template_parity(src, folder)),
+    ("games-reloaded2-parity.txt", lambda src, folder: has_reloaded_template_parity(src, folder)),
     # Extensions never published to Nexus: EXTENSION_URL is still a placeholder, empty,
     # absent, or points somewhere other than nexusmods.com. It is a hand-maintained
     # const rather than a live lookup, so treat the list as a starting point. Permanent

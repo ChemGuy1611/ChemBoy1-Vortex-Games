@@ -2,8 +2,8 @@
 Name: Assassin's Creed Vortex Extension
 Structure: Anvil Engine - AnvilToolkit/ForgerPatchManager
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-09-29
+Version: 1.0.1
+Date: 2026-10-02
 Notes:
 -
 //////////////////////////////////////////////////////////*/
@@ -27,9 +27,9 @@ const { download, findModByFile, resolveVersionByModVersion } = require("./downl
 const GAME_ID = "assassinscreed";
 const UPLAYAPP_ID = ""; //Ubisoft Connect App ID — from SOFTWARE\WOW6432Node\Ubisoft\Launcher\Installs\
 const STEAMAPP_ID = "15100"; //https://steamdb.info/app/XXX/
-const EPICAPP_ID = null; //Epic catalog item — Ubisoft games are usually installed through Ubisoft Connect instead
+const EPICAPP_ID = "0b9d1072cd674b8b91c8e25e9d695ed9"; //Director's Cut, from egdata.app. Unlike the other Ubisoft games, this one is not on Ubisoft Connect, so Epic launches it directly
 const GOGAPP_ID = "1207659023"; //not typically available for Ubisoft games
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const exeHasGameVersion = false; //true if this game's devs DO stamp the real game version into the exe ProductVersion — false for every anvil game checked so far, Denuvo strips it
 
 const GAME_NAME = "Assassin's Creed";
@@ -738,6 +738,14 @@ function getModPath(discoveryPath) {
 
 //Set launcher requirements
 async function requiresLauncher(gamePath, store) {
+  if (store === "epic" && DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID)) {
+    return Promise.resolve({
+      launcher: "epic",
+      addInfo: {
+        appId: EPICAPP_ID,
+      },
+    });
+  } //*/
   if (store === "steam") {
     return Promise.resolve({
       launcher: "steam",

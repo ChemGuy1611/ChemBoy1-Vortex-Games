@@ -1,6 +1,6 @@
-# Notes for Mod Authors - Silent Hill 2 Remake
+# Notes for Mod Authors - Silent Hill 2 (2024)
 
-Packaging rules for Silent Hill 2 Remake mods, so Vortex installs them to the right place.
+Packaging rules for Silent Hill 2 (2024) mods, so Vortex installs them to the right place.
 
 Vortex decides what a mod is by looking at the files and folders inside the archive. It tries each installer in order and the first one that matches wins, so archive layout is what determines where your mod ends up.
 
@@ -9,14 +9,17 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `SHProto` |
-| Blueprint Mods (LogicMods) | a `LogicMods` folder | `SHProto\Content\Paks\LogicMods\LogicMods` |
-| Pak Mods | a `".pak` file | `SHProto\Content\Paks\~mods` |
+| Blueprint Mods (LogicMods) | a `LogicMods` folder | `SHProto\Content\Paks\LogicMods` |
+| Pak Mods | a `.pak` file | `SHProto\Content\Paks\~mods` |
 | UE4SS Itself | a `dwmapi.dll` file | `SHProto\Binaries\Win64` |
 | UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `SHProto\Binaries\Win64\ue4ss\Mods` |
 | UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | `SHProto\Binaries\Win64\ue4ss\Mods` |
-| Root / Game Folder Mods | a top-level folder such as `SHProto` | the game folder itself (no subfolder) |
+| Root / Game Folder Mods | a top-level folder such as `SHProto`, `Engine` or `Content` | the game folder itself (no subfolder) |
+| Config File Mods | a config file such as `engine.ini` or `game.ini` | - |
+| Save Game Files | a `.sav` file | - |
+| Fallback Installer | anything unrecognised with no pak file | `SHProto\Binaries\Win64` |
 
-Paths are relative to the game's install folder.
+Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
 ## Combo Mods (pak + UE4SS script/DLL together)
 
@@ -68,7 +71,7 @@ MyBlueprintMod.zip
 - Everything from the `LogicMods` folder down is copied to the game, keeping its structure.
 - Extra folders above `LogicMods` are fine - the installer finds it at any depth.
 
-Installs to: `SHProto\Content\Paks\LogicMods\LogicMods`
+Installs to: `SHProto\Content\Paks\LogicMods`
 
 **Common mistakes:**
 
@@ -77,24 +80,25 @@ Installs to: `SHProto\Content\Paks\LogicMods\LogicMods`
 
 ## Pak Mods
 
-Standard content mods: one or more `".pak` files. Vortex installs the mod files themselves, so the folder structure around them in the archive does not matter.
+Standard content mods: one or more `.pak` files. Vortex copies just the pak files themselves, flattened, so the folder structure around them does not matter.
 
 ```text
 MyPakMod.zip
-└── MyPakMod".pak
+└── MyPakMod.pak
 ```
 
 **Requirements:**
 
-- Recognised by any file with the `".pak` extension.
-- Surrounding folders are discarded - only the mod files are installed.
-- If the archive holds several mod files, Vortex asks the user which to install, which is useful for shipping optional variants in one download.
+- Any archive containing a `.pak` file reaches this installer (unless an earlier one claimed it).
+- Only the pak files are installed - surrounding folders are discarded.
+- If the archive holds more than one pak, Vortex asks the user which to install - useful for optional variants.
 
 Installs to: `SHProto\Content\Paks\~mods`
 
 **Common mistakes:**
 
 - Shipping several unrelated paks in one archive when you meant them all to install - the user gets a choice dialog and may pick only one.
+- Blueprint mods belong in a `LogicMods` folder instead - see above.
 
 ## UE4SS Itself
 
@@ -103,6 +107,7 @@ This installer handles the UE4SS runtime package, not individual mods. Most auth
 **Requirements:**
 
 - Recognised by a file named `dwmapi.dll` at any level of the archive.
+- Also recognised by any of the UE4SS support folders: `MapGenBP`, `MemberVarLayoutTemplates`, `UE4SS_Signatures` or `VTableLayoutTemplates`.
 
 Installs to: `SHProto\Binaries\Win64`
 
@@ -168,7 +173,7 @@ MyRootMod.zip
 
 **Requirements:**
 
-- Recognised by a top-level folder matching any of: `SHProto`.
+- Recognised by a top-level folder matching any of: `SHProto`, `Engine`, `Content`, `Binaries`, `Mods`, `Paks` or `Movies`.
 - The matched folder and everything below it is copied into the game folder, preserving structure.
 
 Installs to: the game folder itself (no subfolder)
@@ -177,7 +182,49 @@ Installs to: the game folder itself (no subfolder)
 
 - Zipping the folder that CONTAINS the game folders instead of the game folders themselves adds an extra level and misplaces every file.
 
+## Config File Mods
+
+Config tweaks are deployed to the game's config folder in your user profile, not into the game installation.
+
+**Requirements:**
+
+- Recognised by any of these filenames in the archive: `engine.ini`, `game.ini`, `gameusersettings.ini`, `input.ini`, `scalability.ini`, `hardware.ini`, `deviceprofiles.ini`, `compat.ini`, `runtimeoptions.ini`, `gameplaytags.ini`, `enhancedinput.ini` or `consolevariables.ini`.
+
+**Common mistakes:**
+
+- Shipping a config file with one of these names inside an unrelated mod - the whole archive is then treated as a config mod.
+
+## Save Game Files
+
+Save files are deployed to the game's save folder in your user profile.
+
+**Requirements:**
+
+- Recognised by any file with extension `.sav`.
+
+**Common mistakes:**
+
+- Including an example save alongside a normal mod - the archive is then treated as a save, not a mod.
+
+## Fallback Installer
+
+This is the catch-all. Any archive with no `.pak` file that matched none of the installers above lands here and is copied, unchanged, into the game's binaries folder.
+
+> **NOTE:** Landing in the fallback installer is a signal your archive layout needs fixing.
+
+**Requirements:**
+
+- Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
+- Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: `SHProto\Binaries\Win64`
+
+**Common mistakes:**
+
+- If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report it as broken.
+
 ## Rules That Apply To Every Mod Type
 
+- Archives that contain a FOMOD installer (a `fomod` folder with `ModuleConfig.xml`) are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.

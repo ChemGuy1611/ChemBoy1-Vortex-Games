@@ -24,6 +24,7 @@ const GAME_ID = "starwarsbattlefront22017";
 const EAAPP_ID = "XXX";
 const STEAMAPP_ID = "1237950"; // https://steamdb.info/app/1237950/
 const GOGAPP_ID = null; //not typically available for EA games
+//!audit-skip: store-id - EPICAPP_ID: the Epic copy launches through the EA app, not the Epic launcher, so Epic discovery does not apply
 //not typically available on Xbox - available through EA Play instead
 const REGISTRY_HIVE = "HKEY_LOCAL_MACHINE";
 const REGISTRY_KEY = "SOFTWARE\\WOW6432Node\\EA Games\\STAR WARS Battlefront II"; // e.g. 'SOFTWARE\\WOW6432Node\\BioWare\\Mass Effect Andromeda'

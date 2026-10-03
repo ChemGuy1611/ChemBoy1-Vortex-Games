@@ -6,12 +6,14 @@ Covers the v1 and v3 Nexus Mods APIs as used by the release pipeline and extensi
 
 ## Authentication
 
-The v3 spec's global `security` block lists two schemes; either one satisfies a request:
+The v3 spec defines three security schemes. The global `security` block lists the first two;
+either one satisfies a request. The third is used by a single moderation-only operation:
 
-| Scheme          | Header                        | Notes                                                                                                                                                                                                |
-| --------------- | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ApiKeyAuth`    | `apikey: {key}`               | What this repo's pipeline uses. Key comes from the `NEXUS_API_KEY` environment variable (with an HKCU registry fallback); personal keys are issued at `https://www.nexusmods.com/settings/api-keys`. |
-| `BearerJwtAuth` | `Authorization: Bearer {jwt}` | Signed JWT — the OAuth path Vortex itself uses. Not used by this repo.                                                                                                                               |
+| Scheme           | Header                                | Notes                                                                                                                                                                                                                                                                         |
+| ---------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ApiKeyAuth`     | `apikey: {key}`                       | What this repo's pipeline uses. Key comes from the `NEXUS_API_KEY` environment variable (with an HKCU registry fallback); personal keys are issued at `https://www.nexusmods.com/settings/api-keys`.                                                                          |
+| `BearerJwtAuth`  | `Authorization: Bearer {jwt}`         | Signed JWT — the OAuth path Vortex itself uses. Not used by this repo.                                                                                                                                                                                                        |
+| `ServiceJwtAuth` | `Authorization: Bearer {service jwt}` | A `client_credentials` service JWT (no user claim) issued to a provisioned service account. Only the moderation-only `POST /mod-file-versions/{id}/quarantine` declares it, and it is not in the global block; user tokens and API keys get 401. Not obtainable by this repo. |
 
 Three v3 operations declare `security: []` and need no credentials at all:
 `GET /vortex/extensions`, `GET /games/{game_domain}/dlcs`, and
@@ -113,11 +115,11 @@ repo does that and reports any drift against the counts recorded here.
 
 ### Upcoming Changes (deprecation watch)
 
-The spec's `info.description` carries a table of scheduled breaking changes. As of 2026-09-04:
+The spec's `info.description` carries a table of scheduled breaking changes. As of 2026-09-30:
 
 | Date       | Change                                                                                                                                                   | Pipeline impact                                                                                                                                                                                         |
 | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-09-09 | `POST /mod-file-update-groups/{group_id}/versions` (`createUpdateGroupVersion`) removed — deprecated since 2026-06-11, 90-day Stable notice period ends. | None. Pipeline migrated to `POST /mod-files/{id}/versions` on 2026-07-24. Doc section below kept for historical reference until the path actually 404s.                                                 |
+| 2026-09-09 | `POST /mod-file-update-groups/{group_id}/versions` (`createUpdateGroupVersion`) removal — deprecated since 2026-06-11, 90-day Stable notice period ended. | None. Pipeline migrated to `POST /mod-files/{id}/versions` on 2026-07-24. **Date has passed, but the path was still listed (and still deprecated) in the live spec on 2026-09-30** — removal unconfirmed; it is a write endpoint, so it cannot be probed safely. Doc section below kept for historical reference until the path leaves the spec. |
 | 2026-12-01 | `md5` becomes **required** on `POST /uploads` (single-part upload) — uploads omitting it are rejected.                                                   | None yet. This pipeline uses `/uploads/multipart` (`createMultipartUpload`), which does not carry this field or requirement. Re-check before 2026-12-01 whether Nexus extends it to the multipart flow. |
 
 ### V1 to V3 Identifier Bridge
@@ -144,7 +146,7 @@ Use `uid` for all v3 mod-scoped endpoints.
 
 ---
 
-### V3 Endpoint Catalog (31 paths, confirmed against the live spec 2026-09-04)
+### V3 Endpoint Catalog (32 paths, confirmed against the live spec 2026-09-30)
 
 Every path the live v3 API exposes, grouped by resource. `id` in a mod-file-scoped path is the
 same value as `mod_files[].id` from `GET /mods/{id}/files` (what this repo calls the "file group"
@@ -191,10 +193,11 @@ A "mod file" is an update group/chain; `id` = group id.
 | PUT    | `/mod-file-versions/{id}/dependencies/ranges`               | `setModFileVersionDependencyRanges`                  | Experimental        | Replaces all range definitions for a version. 204 on success.                                                                                                                                                        |
 | GET    | `/mod-file-versions/{id}/dependencies/ranges/materialized`  | `getModFileVersionDependencyRangesMaterialized`      | Experimental        | **Unwrapped response.** Ranges resolved into concrete candidate file+version lists, for one version.                                                                                                                 |
 | POST   | `/mod-file-versions/dependencies/ranges/materialized/batch` | `getModFileVersionDependencyRangesMaterializedBatch` | Experimental        | Current batch variant — paginated (`page`/`page_size`, default 1/1000), response includes `meta: PaginationMeta`. Batch-resolves install/recommend candidates for a set of source versions.                          |
-| POST   | `/mod-file-versions/dependencies/materialized/batch`        | `getModFileVersionDependencyCandidatesBatch`         | Deprecated          | Still no removal date published as of 2026-09-04, unlike the group-version endpoint below. Superseded by the `ranges/materialized/batch` row above — same purpose, same request/response shape, just renamed.        |
+| POST   | `/mod-file-versions/dependencies/materialized/batch`        | `getModFileVersionDependencyCandidatesBatch`         | Deprecated          | Still no removal date published as of 2026-09-30, unlike the group-version endpoint below. Superseded by the `ranges/materialized/batch` row above — same purpose, same request/response shape, just renamed.        |
 | GET    | `/mod-file-versions/{id}/dependencies/dlc`                  | `getModFileVersionDlcDependencies`                   | Experimental        | **Unwrapped response.** `{ dlc_dependency_definitions: [{ id, dlc_targets: [{ id, dlc_id, name }] }] }` — declared DLC-dependency definitions (OR-alternatives within `dlc_targets`).                                |
 | PUT    | `/mod-file-versions/{id}/dependencies/dlc`                  | `setModFileVersionDependencyDlc`                     | Experimental        | Body `{ dlc_dependency_definitions: [{ dlc_ids: string[] }] }` — replaces the full set; empty array clears all DLC dependencies. `dlc_ids` must reference DLCs from `getGameDlcs` for that version's game.           |
-| POST   | `/mod-file-update-groups/{group_id}/versions`               | `createUpdateGroupVersion`                           | Stable (deprecated) | **Deprecated 2026-06-11, removal on/after 2026-09-09** — a Stable-tier endpoint, so it gets the full 90-day notice. See deprecation notice below.                                                                    |
+| POST   | `/mod-file-versions/{id}/quarantine`                        | `quarantineModFileVersion`                           | Experimental        | Found 2026-09-30. **Moderation-only.** Body `{ reason: string }` (1-1000 chars, recorded in service logs). Needs a `client_credentials` service token with scope `mod_file:quarantine` (`ServiceJwtAuth`): no token, a user token or an API key gets 401, a service token without the scope 403. Marks the version quarantined so it can no longer be downloaded. Idempotent (`already_quarantined: true` on repeat); 409 when staff manually verified the file (staff re-verification is the only way to reverse a quarantine); 404/422 otherwise. Wrapped response `{ data: { ... } }`. Not usable by this pipeline. |
+| POST   | `/mod-file-update-groups/{group_id}/versions`               | `createUpdateGroupVersion`                           | Stable (deprecated) | **Deprecated 2026-06-11, scheduled removal on/after 2026-09-09 — that date has passed, but the path was still listed (and still deprecated) in the live spec on 2026-09-30.** A Stable-tier endpoint, so it got the full 90-day notice. See deprecation notice below.                                                                    |
 
 #### Uploads
 
@@ -254,16 +257,27 @@ extension's `info.json` decides it targets a specific game (in which case `game_
 game's Nexus numeric id), otherwise `other`. `image_url` is the mod page image, falling back to
 the game artwork for game extensions, and is nullable.
 
-**Field-presence caveat:** the spec describes `game_id` as "present only when `type` is `game`",
-but the live response always includes the key and sets it to `null` for `other` entries. Read it
-as nullable rather than optional.
+**Field-presence caveat:** the spec lists `game_id` as nullable and "present only when `type` is
+`game`". The live response follows the second half: the key is absent on `other` rows (checked on
+all 118 rows, 2026-10-01), so read it with a default rather than expecting a `null`.
 
-Live snapshot (2026-08-05, unauthenticated): 664 extensions (557 `game`, 107 `other`), 16 themes,
-15 translations.
+Live snapshot (2026-10-01, unauthenticated): 684 extensions (566 `game`, 118 `other`), 16 themes,
+17 translations. The 566 `game` rows carry 566 distinct `game_id` values: the feed holds exactly one
+extension per game, so a game whose slot belongs to one author has no row for a second author's
+extension. `mod_id` and `game_id` are JSON strings, and `game_id` is absent (not null) on `other` rows.
 
 Because it needs no API key and returns the currently published `version` for every extension in
 one call, this endpoint is a cheap way to cross-check a whole repo of extensions against what is
 actually live on Nexus, without per-mod v1 requests counting against a key's rate limit.
+
+Vortex itself reads this endpoint for its extension catalog since **v2.7.0** (previously a separate
+manifest feed cached as `extensions-manifest.json` in Vortex's `temp` folder). From 2.7.0 on Vortex
+no longer refreshes that file, so a local copy of it only reflects what was cached before the switch.
+This repo's `patch_extensions.py` reads this endpoint instead, keeping the rows whose `author_user_id`
+is ChemBoy1's and turning `game_id` into a domain with Vortex's cached `nexus_gamelist.json`.
+A reference copy of the full response is saved next to this file as `vortex-extensions-feed.json`,
+with its fetch date, counts, refresh steps and an explanation of how extensions reach the feed in
+`vortex-extensions-feed.md`. No script reads the copy; it goes stale, so re-fetch the endpoint for live data.
 
 ---
 
@@ -279,9 +293,12 @@ Full working flow confirmed 2026-05-26. Used by `release_extension.py --upload`.
 > `{id}`/`{group_id}` value** — see "Step 8 (current) vs. legacy" below. Nexus's own reference
 > client (`Nexus-Mods/upload-action`) migrated to it on 2026-06-17. Verified live against the real
 > API same session (`check_nexus_api.py --test-upload`, 28/28 checks passed). The legacy section
-> below stays for historical reference until Nexus actually removes the endpoint. As of the
-> 2026-09-04 audit pass the path is still live in the spec, still marked deprecated, still carries
-> the same "removal on or after 2026-09-09" wording — a few days out at time of writing.
+> below stays for historical reference until Nexus actually removes the endpoint. The announced
+> removal date (2026-09-09) has passed, but at the 2026-09-30 audit pass the path was still in the
+> spec, still marked deprecated, with the same "removal on or after 2026-09-09" wording — "on or
+> after" means the date is a floor, not a promise. The endpoint is a write route, so whether it
+> still answers can't be probed safely; the next `check_nexus_api.py --check-spec` run reports
+> when it leaves the spec.
 
 ### Upload Steps
 
@@ -294,7 +311,7 @@ Full working flow confirmed 2026-05-26. Used by `release_extension.py --upload`.
 | 5    | none   | POST   | `{complete_presigned_url}` (S3)                                                                                                                                                        | Send XML to assemble parts                                                                                                                                                             |
 | 6    | apikey | POST   | `/v3/uploads/{upload_id}/finalise`                                                                                                                                                     | Notify Nexus assembly complete                                                                                                                                                         |
 | 7    | apikey | GET    | `/v3/uploads/{upload_id}`                                                                                                                                                              | Poll until `state == "available"`                                                                                                                                                      |
-| 8    | apikey | POST   | `/v3/mod-files/{group_id}/versions` (current, what this repo calls as of 2026-07-24) — legacy `/v3/mod-file-update-groups/{group_id}/versions` deprecated, removal on/after 2026-09-09 | Create file version entry                                                                                                                                                              |
+| 8    | apikey | POST   | `/v3/mod-files/{group_id}/versions` (current, what this repo calls as of 2026-07-24) — legacy `/v3/mod-file-update-groups/{group_id}/versions` deprecated, removal date 2026-09-09 passed, still listed 2026-09-30 | Create file version entry                                                                                                                                                              |
 
 ---
 
@@ -585,7 +602,7 @@ repo always unwraps `["data"]`, which would raise `KeyError` if pointed at any o
 
 ---
 
-### Known Broken V3 Endpoints (all six re-verified live 2026-09-04)
+### Known Broken V3 Endpoints (all six re-verified live 2026-09-04; four re-probed 2026-09-30, unchanged)
 
 | Endpoint                                                  | Problem                                                                                                                                                                                                                                                                                        |
 | --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -593,8 +610,8 @@ repo always unwraps `["data"]`, which would raise `KeyError` if pointed at any o
 | `GET /v3/games/{domain}/mods/{mod_id}/file-update-groups` | 404 (was 500 as of 2026-05-26)                                                                                                                                                                                                                                                                 |
 | `GET /v3/mod-file-update-groups/{group_id}`               | 404 (was 500 as of 2026-05-26)                                                                                                                                                                                                                                                                 |
 | `GET /v3/mods/{uid}/file-update-groups`                   | 404 even with correct `uid` — endpoint now defunct. **Use `GET /v3/mods/{uid}/files` instead** (returns the same group list under `mod_files[]`)                                                                                                                                               |
-| `GET /v3/openapi.yaml`                                    | 404 — **not actually broken, wrong path.** The live spec is at the domain root, `GET https://api.nexusmods.com/openapi.yaml` (no `/v3/` prefix), confirmed reachable 2026-09-04 (HTTP 200, 31 paths, `info.version: "3.0.0"`). Corrected from an earlier note in this doc that called it dead. |
-| `GET /v3/mods/{uid}` (mod-level, fetch by uid directly)   | 404 — **not a bug; this path was never part of the spec.** The only mod-level GET in the live spec is `GET /v3/games/{game_domain}/mods/{game_scoped_id}` (by domain + game-scoped id, not uid). Confirmed against the live 31-path catalog 2026-09-04.                                        |
+| `GET /v3/openapi.yaml`                                    | 404 — **not actually broken, wrong path.** The live spec is at the domain root, `GET https://api.nexusmods.com/openapi.yaml` (no `/v3/` prefix), confirmed reachable 2026-09-30 (HTTP 200, 32 paths, `info.version: "3.0.0"`). Corrected from an earlier note in this doc that called it dead. |
+| `GET /v3/mods/{uid}` (mod-level, fetch by uid directly)   | 404 — **not a bug; this path was never part of the spec.** The only mod-level GET in the live spec is `GET /v3/games/{game_domain}/mods/{game_scoped_id}` (by domain + game-scoped id, not uid). Confirmed against the live 32-path catalog 2026-09-30.                                        |
 
 The `/v3/mods/{uid}` and `/v3/openapi.yaml` rows were flagged broken in earlier passes based on
 probing the wrong path or an unreachable mirror; re-checking against the real, fetchable spec

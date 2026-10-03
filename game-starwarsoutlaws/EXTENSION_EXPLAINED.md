@@ -33,6 +33,7 @@ Mod types define where each category of mod gets deployed:
 | Game Data Folder | `starwarsoutlaws-data` | high | `{gamePath}` |
 | Game Data Subfolder | `starwarsoutlaws-datasub` | high | `{gamePath}/helix` |
 | Snowdrop ModLoader | `starwarsoutlaws-modloader` | low | `{gamePath}` |
+| ModLoader Plugin | `starwarsoutlaws-plugins` | high | `{gamePath}/plugins` |
 
 ## Mod Installers
 
@@ -43,6 +44,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | `starwarsoutlaws-modloader` | 25 |
 | `starwarsoutlaws-data` | 27 |
 | `starwarsoutlaws-datasub` | 29 |
+| `starwarsoutlaws-plugins` | 30 |
 | `starwarsoutlaws-config` | 31 |
 
 ## Registered Tools

@@ -2,8 +2,25 @@
 
 ## Planned Improvements (Not Yet Released)
 
-- Fixed: Mod files with no file extension were skipped during installation
-- Added an "Open SteamDB Page" button for both editions, and an "Open PCGamingWiki Page" button for the Unfinished Business edition, which was missing one.
+- None
+
+## [1.0.0] - 2026-10-02
+
+- Both games: migrated to file-based load order (FBLO); added a lock button, multi-select, and a right-click context menu to the Paks load order page.
+- Both games: added a UE4SS Load Order page and a LogicMods Load Order page for Blueprint pak mods.
+- Both games: added UE4SS and LogicMods load order support to Collections.
+- Both games: added a status filter to the load order pages.
+- Both games: updating a mod now keeps its place in the load order.
+- Both games: UE4SS now downloads automatically and checks for updates.
+- Both games: game version now shows the real game build instead of the Unreal engine version.
+- Both games: the UE4SS Load Order setting is now kept separately for each game.
+- Unfinished Business: added Xbox (Microsoft Store) support.
+- Unfinished Business: the Open PCGamingWiki Page button now opens its own page instead of the Rogue City one.
+- Unfinished Business: fixed the Open Saves Folder button, which pointed at the wrong location.
+- Rogue City: pak mods from the old shared "REINSTALL TO SORT" type are now made sortable automatically. Reinstalling them is no longer needed.
+- Rogue City: Save mods now install to the game's main save folder. They could previously end up in its Backup subfolder.
+- Fixed: Mod files with no file extension were skipped during installation.
+- Added an "Open SteamDB Page" button for both editions.
 - The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
 
 ## [0.7.0] - 2026-05-07

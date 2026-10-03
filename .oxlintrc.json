@@ -1,0 +1,79 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  // Core ESLint rules only: no typescript/unicorn/oxc plugins, extensions are plain CommonJS.
+  "plugins": [],
+  "categories": { "correctness": "error" },
+  "env": { "node": true },
+  "globals": {
+    "DOMParser": "readonly",
+    "XMLSerializer": "readonly",
+    "window": "readonly"
+  },
+  "ignorePatterns": ["resources/snippets.js", "resources/*.d.ts"],
+  "rules": {
+    // Unused stubs and toggles are intentional, so these stay warnings.
+    "no-unused-vars": ["warn", { "vars": "all", "args": "after-used", "ignoreRestSiblings": true }],
+    "no-unsafe-finally": "warn",
+    "require-yield": "warn",
+    // Extensions use bare expression statements (`cond && fn()`).
+    "no-unused-expressions": "off",
+    "no-useless-assignment": "off",
+    // After a file is rebound to native node fs, `fs` is node fs and the vortex-api wrapper
+    // lives under `vfs`, kept only for ensureDirWritableAsync / unlinkAsync / the fd-based
+    // calls. Every other wrapper member has a native replacement. `fsExtra` is retired.
+    "no-restricted-properties": [
+      "error",
+      {
+        "object": "vfs",
+        "property": "statSync",
+        "message": "use native fs.statSync (fs is node fs)"
+      },
+      { "object": "vfs", "property": "statAsync", "message": "use native fsp.stat" },
+      { "object": "vfs", "property": "readdirSync", "message": "use native fs.readdirSync" },
+      { "object": "vfs", "property": "readdirAsync", "message": "use native fsp.readdir" },
+      { "object": "vfs", "property": "readFileSync", "message": "use native fs.readFileSync" },
+      { "object": "vfs", "property": "readFileAsync", "message": "use native fsp.readFile" },
+      { "object": "vfs", "property": "writeFileSync", "message": "use native fs.writeFileSync" },
+      { "object": "vfs", "property": "writeFileAsync", "message": "use native fsp.writeFile" },
+      { "object": "vfs", "property": "renameAsync", "message": "use native fsp.rename" },
+      { "object": "vfs", "property": "symlinkAsync", "message": "use native fsp.symlink" },
+      {
+        "object": "vfs",
+        "property": "ensureDirSync",
+        "message": "use fs.mkdirSync(p, { recursive: true })"
+      },
+      {
+        "object": "vfs",
+        "property": "ensureDirAsync",
+        "message": "use fsp.mkdir(p, { recursive: true })"
+      },
+      {
+        "object": "vfs",
+        "property": "ensureFileAsync",
+        "message": "use the injected ensureFileAsync() helper"
+      },
+      {
+        "object": "vfs",
+        "property": "removeAsync",
+        "message": "use fsp.rm(p, { recursive: true, force: true })"
+      },
+      {
+        "object": "vfs",
+        "property": "copyAsync",
+        "message": "use fsp.cp(s, d, { recursive: true })"
+      },
+      {
+        "object": "vfs",
+        "property": "copySync",
+        "message": "use fs.cpSync(s, d, { recursive: true })"
+      },
+      {
+        "object": "vfs",
+        "property": "moveAsync",
+        "message": "use fsp.rename with an EXDEV fallback"
+      },
+      { "object": "fsExtra", "property": "unlinkSync", "message": "use native fs.unlinkSync" },
+      { "object": "fsExtra", "property": "copyFileSync", "message": "use native fs.copyFileSync" }
+    ]
+  }
+}

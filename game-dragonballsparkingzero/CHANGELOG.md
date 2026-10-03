@@ -4,6 +4,11 @@
 
 - None
 
+## [1.1.0] - 2026-09-30
+
+- Added a JSON Load Order page for SZModLoader JSON mods. The order you set there is written to JsonFiles.json, and new JSON mods are added to the bottom of the list. Each entry has a checkbox to leave it out of JsonFiles.json without uninstalling it.
+- Added the JSON load order to Collections.
+
 ## [1.0.1] - 2026-09-27
 
 - Game version now shows the real game build instead of the Unreal engine version.

@@ -370,7 +370,8 @@ session is exactly the client the challenge admits, where a fetch-and-parse down
   `did-navigate-in-page` are attached to the DOM node — give the control an `id` and look it up on
   mount, and remove the listeners on unmount.
 - `onNewWindow` is where popups and `target=_blank` links arrive: same-host navigates in place,
-  install-protocol links are parsed, everything else goes to the system browser via `util.opn`.
+  install-protocol links are parsed, everything else goes to the system browser via
+  `window.api.shell.openUrl`.
 - Setting a `partition` isolates cookies but moves the guest off the session whose `will-download`
   hook provides capture, which silently breaks installs. Do not set one without re-testing.
 
@@ -384,8 +385,9 @@ module can do about it, both local to the page:
   Injected CSS lasts for one document, so it has to go on **every** `dom-ready`, not once on mount.
   This is cosmetic: the ad requests still happen, the page just stops showing the result.
 - **Drop ad destinations.** Without this, an ad click or pop-under reaches `onNewWindow`, fails the
-  host allow-list, and gets handed to `util.opn` — so the ad opens in the user's real browser, which
-  is worse than the ad was. Match the URL against an ad-host list before the `util.opn` fallback.
+  host allow-list, and gets handed to `window.api.shell.openUrl` — so the ad opens in the user's real
+  browser, which is worse than the ad was. Match the URL against an ad-host list before that
+  fallback.
 
 What a module **cannot** reasonably do is block the requests themselves. That needs
 `session.webRequest` in the main process, which is the same session Vortex downloads through, and

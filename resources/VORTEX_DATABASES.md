@@ -35,7 +35,7 @@ The active folder can also be confirmed from a log line at startup or from `star
 
 Other files in the same folder are Chromium's, not Vortex's: `Cache`, `Code Cache`, `GPUCache`, `Local Storage`, `IndexedDB`, `Session Storage`, `Network`, `DIPS`, `SharedStorage`, `blob_storage`. They hold browser-level state for the Electron window and contain nothing about mods.
 
-A handful of plain JSON sidecars sit alongside the stores and are read before the database opens, so they are not part of it: `startup.json` (app version, GPU flag), `flag-cache.json`, `crashinfo.json`, `extensions-manifest.json`.
+A handful of plain JSON sidecars sit alongside the stores and are read before the database opens, so they are not part of it: `startup.json` (app version, GPU flag), `flag-cache.json`, `crashinfo.json`, and (up to Vortex 2.6.x only) `extensions-manifest.json`.
 
 ---
 

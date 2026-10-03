@@ -47,9 +47,9 @@ Examples:
 Details:
     Audits every *.py and *.js script in scripts.txt except those in the SKIP
     set: vortex_utils.py (library), gui_tray.py (GUI library),
-    extension_parser.js (parser library, no CLI), eslint.config.js (config),
-    and SCRIPTS.md. Libraries are skipped because they expose no CLI flags to
-    compare; they are still listed in scripts.txt and documented in SCRIPTS.md.
+    extension_parser.js (parser library, no CLI), and SCRIPTS.md. Libraries are
+    skipped because they expose no CLI flags to compare; they are still listed
+    in scripts.txt and documented in SCRIPTS.md.
 
     Env vars consumed inside vortex_utils helpers (STEAMGRIDDB_API_KEY,
     NEXUS_API_KEY, STEAM_API_KEY) are listed in INDIRECT_ENVVARS and
@@ -73,7 +73,7 @@ import sys
 from vortex_utils import iter_repo_scripts, REPO_ROOT
 
 # Scripts that are libraries, config files, or otherwise not dev scripts
-SKIP = {"vortex_utils.py", "gui_tray.py", "extension_parser.js", "SCRIPTS.md", "eslint.config.js"}
+SKIP = {"vortex_utils.py", "gui_tray.py", "extension_parser.js", "SCRIPTS.md"}
 
 # Env vars consumed inside vortex_utils helpers (indirect use).
 # Scripts that document these but don't call os.environ.get() directly are correct.

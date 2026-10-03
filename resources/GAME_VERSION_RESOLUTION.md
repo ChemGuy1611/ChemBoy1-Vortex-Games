@@ -56,7 +56,7 @@ Buildid/`AppVersionString`/`ver` do **not** agree with each other across stores 
 
 ## Hash fallback
 
-Ported from Vortex's own **removed** `gameversion-hash` bundled extension (removed in 2.7.0, its `registerGameVersionProvider` API removed in 2.7.1 — see `UNDERUSED_API_FUNCTIONS.md`). Same algorithm, so a hash computed here matches what that extension would have produced:
+Ported from Vortex's own **removed** `gameversion-hash` bundled extension (removed in 2.7.0; the `registerGameVersionProvider` API it used was dropped from the published typings at 2.7.1 and from Vortex itself in 2.8.0-beta.1 — see `UNDERUSED_API_FUNCTIONS.md`). Same algorithm, so a hash computed here matches what that extension would have produced:
 
 ```js
 async function resolveHashVersion(gamePath) {

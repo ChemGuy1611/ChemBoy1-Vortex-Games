@@ -2,8 +2,8 @@
 Name: Dragon Ball: Sparking! Zero Vortex Extension
 Structure: UE5
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-09-27
+Version: 1.1.0
+Date: 2026-09-30
 Notes:
 - SigBypass installs from this game's own Nexus page, not the universal SigBypass page
 - Save data lives inside the game install folder, not Local AppData
@@ -116,7 +116,8 @@ const SPECIAL_LO_INSTRUCTIONS = ""; //Show special load order instructions
 const PAKMOD_EXTRA_EXTS = []; //extra extensions to include with paks (usually for custom modding frameworks, i.e .toml, .json)
 const ue4ssLoadOrder = true; //master toggle for UE4SS support: UE4SS/Scripts/DLL/LogicMods mod types and installers, UE4SS buttons, load order page, and mods.txt writing
 const logicModsLoadOrder = true; //enable load order page and load_order.txt writing for LogicMods/Blueprint pak mods
-const collectionsLoadOrder = true; //include UE4SS and LogicMods load orders in collections (ANDed with the toggles above)
+const jsonLoadOrder = true; //enable load order page for SZModLoader JSON mods (controls the JsonFiles.json "Default" order). Not tied to UE4SS
+const collectionsLoadOrder = true; //include UE4SS, LogicMods and JSON load orders in collections (ANDed with the toggles above)
 const UE4SS_PAGE_NO = 0; //set these if there is a customized UE4SS Nexus page
 const UE4SS_FILE_NO = 0;
 const UE4SS_DOMAIN = GAME_ID; //either GAME_ID or 'site'
@@ -457,6 +458,24 @@ let DEFAULT_JSON = {
   Default: [],
   Unverum: [],
 };
+//files in the Json folder that are not JSON mods (lowercase basenames)
+const JSONFILES_IGNORED = [
+  JSONFILES_FILE.toLowerCase(),
+  "mod.json",
+  `vortex.deployment.${JSON_ID}.json`,
+];
+//persisted JSON load order, profile-prefixed. Lives in the ZeroSpark folder (parent of Json) so the
+//Json folder scan never picks it up as a mod
+const JSON_LO_FOLDER = path.join(EPIC_CODE_NAME, "Mods", "ZeroSpark");
+const JSON_LO_FILE = "jsonFiles_loadOrder.json";
+const JSON_ICON =
+  "M5,3H7V5H5V10A2,2 0 0,1 3,12A2,2 0 0,1 5,14V19H7V21H5C3.93,20.73 3,20.1 3,19V15A2,2 0 0,0 1,13H0V11H1A2,2 0 0,0 3,9V5A2,2 0 0,1 5,3M19,3A2,2 0 0,1 21,5V9A2,2 0 0,0 23,11H24V13H23A2,2 0 0,0 21,15V19A2,2 0 0,1 19,21H17V19H19V14A2,2 0 0,1 21,12A2,2 0 0,1 19,10V5H17V3H19M12,15A1,1 0 0,1 13,16A1,1 0 0,1 12,17A1,1 0 0,1 11,16A1,1 0 0,1 12,15M8,15A1,1 0 0,1 9,16A1,1 0 0,1 8,17A1,1 0 0,1 7,16A1,1 0 0,1 8,15M16,15A1,1 0 0,1 17,16A1,1 0 0,1 16,17A1,1 0 0,1 15,16A1,1 0 0,1 16,15Z"; // mdiCodeJson
+
+const SET_JSON_LOAD_ORDER = `SET_${GAME_ID.toUpperCase()}_JSON_LOAD_ORDER`;
+function setJsonLoadOrder(profileId, loadOrder) {
+  return { type: SET_JSON_LOAD_ORDER, payload: { profileId, loadOrder } };
+}
+setJsonLoadOrder.toString = () => SET_JSON_LOAD_ORDER;
 
 // -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2404,37 +2423,38 @@ async function downloadModLoader(api, gameSpec, check = true) {
   }
 } //*/
 
-//Write the list of installed SZModLoader JSON mods to JsonFiles.json (on deployment)
+//Read JsonFiles.json, writing it with default content first if it doesn't exist
+async function readJsonFiles(filePath) {
+  try {
+    return JSON.parse(util.deBOM(await fsp.readFile(filePath, { encoding: "utf8" })));
+  } catch {
+    await fsp.writeFile(filePath, JSON.stringify(DEFAULT_JSON, null, 2), { encoding: "utf8" });
+    return { ...DEFAULT_JSON };
+  }
+}
+
+//List the SZModLoader JSON mod names (basenames, no extension) currently deployed to the Json folder
+async function listJsonModNames(api) {
+  GAME_PATH = getDiscoveryPath(api);
+  const files = await fsp.readdir(path.join(GAME_PATH, JSON_PATH), { recursive: true });
+  const names = files
+    .filter(
+      (file) =>
+        path.extname(file).toLowerCase() === JSON_EXT &&
+        !JSONFILES_IGNORED.includes(path.basename(file).toLowerCase()),
+    )
+    .map((file) => path.basename(file, path.extname(file)));
+  return [...new Set(names)];
+}
+
+//Write the list of installed SZModLoader JSON mods to JsonFiles.json (on deployment, when the
+//JSON load order page is off - otherwise didDeploy writes it in load order via serializeJsonLO)
 async function updateJsonFiles(api) {
   GAME_PATH = getDiscoveryPath(api);
   const JSONFILES_FILEPATH = path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE);
-  const JSONFILES_FOLDERPATH = path.join(GAME_PATH, JSON_PATH);
   try {
-    try {
-      //read JsonFiles.json file to get current list
-      await fsp.stat(JSONFILES_FILEPATH);
-      const contents = await fsp.readFile(JSONFILES_FILEPATH);
-      JSONFILES_JSON = JSON.parse(contents);
-    } catch {
-      //write the file with default content if it doesn't exist
-      await fsp.writeFile(JSONFILES_FILEPATH, JSON.stringify(DEFAULT_JSON, null, 2), {
-        encoding: "utf8",
-      });
-      JSONFILES_JSON = DEFAULT_JSON;
-    }
-    const JSON_FOLDER_FILES = await fsp.readdir(JSONFILES_FOLDERPATH, { recursive: true });
-    const IGNORED_FILES = [
-      JSONFILES_FILE.toLowerCase(),
-      "mod.json",
-      `vortex.deployment.${GAME_ID}-json.json`,
-    ];
-    const JSON_FILES = JSON_FOLDER_FILES.filter(
-      (file) =>
-        path.extname(file).toLowerCase() === JSON_EXT &&
-        !IGNORED_FILES.includes(path.basename(file).toLowerCase()),
-    );
-    const JSON_FILE_NAMES = JSON_FILES.map((file) => path.basename(file, path.extname(file)));
-    JSONFILES_JSON[JSONFILES_KEY] = JSON_FILE_NAMES;
+    JSONFILES_JSON = await readJsonFiles(JSONFILES_FILEPATH);
+    JSONFILES_JSON[JSONFILES_KEY] = await listJsonModNames(api);
     await fsp.writeFile(JSONFILES_FILEPATH, JSON.stringify(JSONFILES_JSON, null, 2), {
       encoding: "utf8",
     });
@@ -2452,18 +2472,7 @@ async function resetJsonFiles(api) {
   GAME_PATH = getDiscoveryPath(api);
   const JSONFILES_FILEPATH = path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE);
   try {
-    try {
-      //read JsonFiles.json file to get current list
-      await fsp.stat(JSONFILES_FILEPATH);
-      const contents = await fsp.readFile(JSONFILES_FILEPATH);
-      JSONFILES_JSON = JSON.parse(contents);
-    } catch {
-      //write the file with default content if it doesn't exist
-      await fsp.writeFile(JSONFILES_FILEPATH, JSON.stringify(DEFAULT_JSON, null, 2), {
-        encoding: "utf8",
-      });
-      JSONFILES_JSON = DEFAULT_JSON;
-    }
+    JSONFILES_JSON = await readJsonFiles(JSONFILES_FILEPATH);
     JSONFILES_JSON[JSONFILES_KEY] = []; //clear out the list
     await fsp.writeFile(JSONFILES_FILEPATH, JSON.stringify(JSONFILES_JSON, null, 2), {
       encoding: "utf8",
@@ -2919,6 +2928,101 @@ async function serializeLogicMods(api, loadOrder) {
   await fsp.writeFile(loTxtPath, loadOrder.map((e) => e.id).join("\n"), { encoding: "utf8" });
 }
 
+//Build the SZModLoader JSON load order: saved order for files still deployed, new files appended
+async function deserializeJsonLO(api) {
+  if (mod_update_all_profile) {
+    //Freeze the order while a mod update is in flight - see deserializeLoadOrder above.
+    const updateState = api.getState();
+    const updateProfileId = selectors.lastActiveProfileForGame(updateState, GAME_ID);
+    return updateState?.persistent?.jsonLoadOrder?.[updateProfileId]?.loadOrder ?? [];
+  }
+
+  const state = api.getState();
+  GAME_PATH = getDiscoveryPath(api);
+  const profile = selectors.activeProfile(state);
+  const loPath = path.join(GAME_PATH, JSON_LO_FOLDER, profile.id + "_" + JSON_LO_FILE);
+
+  let savedLO = [];
+  try {
+    const raw = await fsp.readFile(loPath, { encoding: "utf8" });
+    if (raw.length > 0) savedLO = JSON.parse(util.deBOM(raw));
+  } catch {
+    /* file doesn't exist yet; start with empty array */
+  }
+
+  let jsonNames;
+  try {
+    jsonNames = await listJsonModNames(api);
+  } catch {
+    return Promise.reject(new Error("Failed to read SZModLoader Json folder"));
+  }
+
+  //JSON mods carry no install attribute, so map file names to mods by walking the staging folder
+  //of each enabled JSON mod (works for mods installed before this page existed)
+  const mods = state?.persistent?.mods?.[GAME_ID] ?? {};
+  const owners = new Map();
+  for (const mod of Object.values(mods)) {
+    if (mod?.type !== JSON_ID || !(profile?.modState?.[mod.id]?.enabled ?? false)) continue;
+    const stagingFolder = getModStagingFolder(api, mod.id);
+    if (!stagingFolder) continue;
+    for (const file of await getAllFiles(stagingFolder)) {
+      if (path.extname(file).toLowerCase() !== JSON_EXT) continue;
+      const name = path.basename(file, path.extname(file));
+      if (!owners.has(name)) owners.set(name, mod);
+    }
+  }
+
+  //prev carries the persisted entry, so a locked position survives the rebuild on every deploy
+  const makeEntry = (jsonName, prev) => {
+    const mod = owners.get(jsonName);
+    const modName =
+      mod?.attributes?.customFileName ?? mod?.attributes?.logicalFileName ?? mod?.attributes?.name;
+    return {
+      id: jsonName,
+      name: modName ? `${modName} (${jsonName}${JSON_EXT})` : `Manual Mod (${jsonName}${JSON_EXT})`,
+      modId: mod?.id,
+      enabled: prev?.enabled ?? true,
+      ...(prev?.locked !== undefined ? { locked: prev.locked } : {}),
+    };
+  };
+
+  const loadOrder = savedLO
+    .filter((entry) => jsonNames.includes(entry.id))
+    .map((entry) => makeEntry(entry.id, entry));
+  for (const jsonName of jsonNames) {
+    if (!loadOrder.find((e) => e.id === jsonName)) loadOrder.push(makeEntry(jsonName));
+  }
+  return loadOrder;
+}
+
+//Write the SZModLoader JSON load order: sidecar first, then the JsonFiles.json "Default" list
+async function serializeJsonLO(api, loadOrder) {
+  if (mod_update_all_profile) {
+    notifyLoadOrderPaused(api, GAME_ID);
+    return;
+  }
+
+  const state = api.getState();
+  if (selectors.activeGameId(state) !== GAME_ID) return;
+  GAME_PATH = getDiscoveryPath(api);
+  const profile = selectors.activeProfile(state);
+  const loFolder = path.join(GAME_PATH, JSON_LO_FOLDER);
+  await vfs.ensureDirWritableAsync(loFolder);
+  await fsp.writeFile(
+    path.join(loFolder, profile.id + "_" + JSON_LO_FILE),
+    JSON.stringify(loadOrder, null, 2),
+    { encoding: "utf8" },
+  );
+
+  const jsonFilesPath = path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE);
+  JSONFILES_JSON = await readJsonFiles(jsonFilesPath);
+  //disabled entries keep their place in the sidecar but are left out of the list SZModLoader reads
+  JSONFILES_JSON[JSONFILES_KEY] = loadOrder.filter((e) => e.enabled !== false).map((e) => e.id);
+  await fsp.writeFile(jsonFilesPath, JSON.stringify(JSONFILES_JSON, null, 2), {
+    encoding: "utf8",
+  });
+}
+
 //Generate UE4SS + LogicMods load order data for inclusion in a collection
 async function genUe4ssCollectionsData(api, gameId, includedMods) {
   const state = api.getState();
@@ -2941,6 +3045,12 @@ async function genUe4ssCollectionsData(api, gameId, includedMods) {
       .filter((entry) => entry.modId !== undefined && includedMods.includes(entry.modId))
       .map((entry) => ({ id: entry.id }));
   }
+  if (jsonLoadOrder) {
+    const lo = state?.persistent?.jsonLoadOrder?.[profileId]?.loadOrder ?? [];
+    result.jsonLoadOrder = lo
+      .filter((entry) => entry.modId !== undefined && includedMods.includes(entry.modId))
+      .map((entry) => ({ id: entry.id, enabled: entry.enabled, locked: entry.locked }));
+  }
   return Promise.resolve(result);
 }
 
@@ -2955,6 +3065,7 @@ async function parseUe4ssCollectionsData(api, gameId, collection) {
   }
   const ue4ssLO = collection?.ue4ssLoadOrder;
   const logicLO = collection?.logicModsLoadOrder;
+  const jsonLO = collection?.jsonLoadOrder;
   GAME_PATH = getDiscoveryPath(api);
   if (ue4ssLoadOrder && Array.isArray(ue4ssLO) && ue4ssLO.length > 0) {
     api.store.dispatch(setUe4ssLoadOrder(profileId, ue4ssLO));
@@ -2986,6 +3097,23 @@ async function parseUe4ssCollectionsData(api, gameId, collection) {
         );
       } catch (err) {
         log("warn", `[${GAME_ID}] Failed to write LogicMods load order file from collection`, err);
+      }
+    }
+  }
+  if (jsonLoadOrder && Array.isArray(jsonLO) && jsonLO.length > 0) {
+    api.store.dispatch(setJsonLoadOrder(profileId, jsonLO));
+    if (GAME_PATH !== undefined) {
+      //write per-profile sidecar so deserializeJsonLO picks up the ordering on next deploy
+      try {
+        const loFolder = path.join(GAME_PATH, JSON_LO_FOLDER);
+        await vfs.ensureDirWritableAsync(loFolder);
+        await fsp.writeFile(
+          path.join(loFolder, profileId + "_" + JSON_LO_FILE),
+          JSON.stringify(jsonLO, null, 2),
+          { encoding: "utf8" },
+        );
+      } catch (err) {
+        log("warn", `[${GAME_ID}] Failed to write JSON load order file from collection`, err);
       }
     }
   }
@@ -4323,7 +4451,7 @@ function main(context) {
       props: () => ({ api: context.api }),
     });
   }
-  if (collectionsLoadOrder && (ue4ssLoadOrder || logicModsLoadOrder)) {
+  if (collectionsLoadOrder && (ue4ssLoadOrder || logicModsLoadOrder || jsonLoadOrder)) {
     context.optional.registerCollectionFeature(
       `${GAME_ID}_ue4ss_collection_data`,
       (gameId, includedMods) => genUe4ssCollectionsData(context.api, gameId, includedMods),
@@ -4354,6 +4482,30 @@ function main(context) {
         const state = context.api.store.getState();
         const gameId = selectors.activeGameId(state);
         return gameId === GAME_ID && logicModsLoadOrder;
+      },
+      props: () => ({ api: context.api }),
+    });
+  }
+  if (jsonLoadOrder) {
+    context.registerReducer(["persistent", "jsonLoadOrder"], {
+      reducers: {
+        [setJsonLoadOrder.toString()]: (state, payload) => ({
+          ...state,
+          [payload.profileId]: { ...state[payload.profileId], loadOrder: payload.loadOrder },
+        }),
+      },
+      defaults: {},
+    });
+    context.registerMainPage("unreal", "JSON Load Order", JsonLoadOrderPage, {
+      id: `${GAME_ID}-json-loadorder`,
+      priority: 33,
+      group: "per-game",
+      hotkey: "J",
+      mdi: JSON_ICON,
+      visible: () => {
+        const state = context.api.store.getState();
+        const gameId = selectors.activeGameId(state);
+        return gameId === GAME_ID && jsonLoadOrder;
       },
       props: () => ({ api: context.api }),
     });
@@ -4552,7 +4704,9 @@ async function didDeploy(api, profileId) {
   if (gameId !== GAME_ID) {
     return Promise.resolve();
   }
-  await updateJsonFiles(api); //SZModLoader JsonFiles.json manifest, no template equivalent
+  //SZModLoader JsonFiles.json manifest, no template equivalent. With the JSON load order page on,
+  //the block further down writes it in load order instead
+  if (!jsonLoadOrder) await updateJsonFiles(api);
   //release tracking one mod id at a time, and only once that mod's new version has landed
   //and is enabled, so a deploy that fires mid-batch can't disarm the guard for mods that
   //haven't been reinstalled yet. Must stay above the UE4SS/LogicMods blocks below, which
@@ -4631,6 +4785,31 @@ async function didDeploy(api, profileId) {
     }
     if (LO.length > 0) {
       await serializeLogicMods(api, LO);
+    }
+  }
+  //SZModLoader JSON mods - not UE4SS, so no isUe4ssInstalled gate. Serialize even an empty order
+  //so JsonFiles.json drops mods that were removed or disabled.
+  if (jsonLoadOrder) {
+    let LO;
+    try {
+      LO = await deserializeJsonLO(api);
+      api.store.dispatch(setJsonLoadOrder(profileId, LO));
+    } catch (err) {
+      log(
+        "error",
+        `[${GAME_ID}] didDeploy: deserializeJsonLO failed, falling back to store state`,
+        err,
+      );
+      LO = state?.persistent?.jsonLoadOrder?.[profileId]?.loadOrder ?? [];
+    }
+    try {
+      await serializeJsonLO(api, LO);
+    } catch (err) {
+      api.showErrorNotification(
+        `Could not update ${JSONFILES_FILE} file with .json mod file names. Please add entries manually.`,
+        err,
+        { allowReport: false },
+      );
     }
   }
   if (writeEngineVersion && isUe4ssInstalled(api, spec)) {
@@ -7062,6 +7241,668 @@ function LogicModsLoadOrderPage({ api }) {
   );
 } //*/
 
+//* React components for SZModLoader JSON load order page
+const JsonSelectionContext = React.createContext({
+  selectedIds: new Set(),
+  setSelectedIds: () => {},
+  allIds: [],
+  contextMenu: null,
+  setContextMenu: () => {},
+});
+
+function JsonItemRenderer({ className, item }) {
+  const { Icon, LoadOrderIndexInput, MainContext } = require("vortex-api");
+  const { useSelector, useDispatch } = require("react-redux");
+  const { Checkbox } = require("react-bootstrap");
+
+  const vortexContext = React.useContext(MainContext);
+  const dispatch = useDispatch();
+
+  const profileId = useSelector((state) => selectors.activeProfile(state)?.id);
+  const loadOrder = useSelector(
+    (state) => state?.persistent?.jsonLoadOrder?.[profileId]?.loadOrder ?? [],
+  );
+  const mods = useSelector((state) => state?.persistent?.mods?.[GAME_ID] ?? {});
+  const pictureUrl = mods[item.modId]?.attributes?.pictureUrl;
+
+  const isModEnabled = useSelector(
+    (state) => state?.persistent?.profiles?.[profileId]?.modState?.[item.modId]?.enabled ?? false,
+  );
+
+  const currentIdx = loadOrder.findIndex((e) => e.id === item.id) + 1;
+  const isLocked = (entry) => [true, "true", "always"].includes(entry?.locked);
+  //Core derives the index input's minimum from this and assumes locked entries sit at the top.
+  //Only the LEADING locked run blocks row 1 - a lock further down must not raise the floor.
+  const firstUnlocked = loadOrder.findIndex((e) => !isLocked(e));
+  const leadingLockedCount = firstUnlocked === -1 ? loadOrder.length : firstUnlocked;
+
+  const onApplyIndex = React.useCallback(
+    (idx) => {
+      if (currentIdx === idx || isLocked(item)) return;
+      //Locked entries hold their absolute index - the typed row picks a slot among the unlocked ones
+      const bound = idx - 1 + (idx > currentIdx ? 1 : 0);
+      const dest = loadOrder.filter((e, i) => !isLocked(e) && e.id !== item.id && i < bound).length;
+      const unlocked = loadOrder.filter((e) => !isLocked(e) && e.id !== item.id);
+      unlocked.splice(dest, 0, item);
+      let next = 0;
+      const newLO = loadOrder.map((e) => (isLocked(e) ? e : unlocked[next++]));
+      dispatch(setJsonLoadOrder(profileId, newLO));
+      serializeJsonLO(vortexContext.api, newLO);
+    },
+    [dispatch, vortexContext, profileId, loadOrder, item, currentIdx],
+  );
+
+  const isEntryLocked = isLocked(item);
+
+  const onLock = React.useCallback(() => {
+    const newLO = loadOrder.map((e) => (e.id === item.id ? { ...e, locked: !isEntryLocked } : e));
+    dispatch(setJsonLoadOrder(profileId, newLO));
+    serializeJsonLO(vortexContext.api, newLO);
+  }, [dispatch, vortexContext, profileId, loadOrder, item, isEntryLocked]);
+
+  //LO-entry enabled flag (written to JsonFiles.json), distinct from the Vortex mod's deployment state
+  const onToggle = React.useCallback(
+    (evt) => {
+      const newLO = loadOrder.map((e) =>
+        e.id === item.id ? { ...e, enabled: evt.target.checked } : e,
+      );
+      dispatch(setJsonLoadOrder(profileId, newLO));
+      serializeJsonLO(vortexContext.api, newLO);
+    },
+    [dispatch, vortexContext, loadOrder, item, profileId],
+  );
+
+  const { selectedIds, setSelectedIds, allIds, contextMenu, setContextMenu } =
+    React.useContext(JsonSelectionContext);
+  const isSelected = selectedIds.has(item.id);
+
+  const onContextMenu = React.useCallback(
+    (evt) => {
+      evt.preventDefault();
+      evt.stopPropagation();
+      setContextMenu({ x: evt.clientX, y: evt.clientY, itemId: item.id });
+    },
+    [item.id, setContextMenu],
+  );
+
+  const onSelect = React.useCallback(
+    (evt) => {
+      const ctrlKey = evt.ctrlKey || evt.metaKey;
+      const shiftKey = evt.shiftKey;
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        if (ctrlKey) {
+          next.has(item.id) ? next.delete(item.id) : next.add(item.id);
+        } else if (shiftKey) {
+          const lastId = [...prev].at(-1);
+          const start = allIds.indexOf(lastId ?? item.id);
+          const end = allIds.indexOf(item.id);
+          const [lo, hi] = [Math.min(start, end), Math.max(start, end)];
+          for (let i = lo; i <= hi; i++) next.add(allIds[i]);
+        } else {
+          next.clear();
+          next.add(item.id);
+        }
+        return next;
+      });
+    },
+    [item.id, setSelectedIds, allIds],
+  );
+
+  useInjectStyleOnce("lo-index-focus-style", LO_INDEX_FOCUS_CSS);
+
+  const classes = ["load-order-entry"];
+  if (className) classes.push(...className.split(" ").filter(Boolean));
+
+  return React.createElement(
+    "div",
+    {
+      key: item.id,
+      className: classes.join(" "),
+      onClick: onSelect,
+      onContextMenu: onContextMenu,
+      style: {
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        padding: "4px 12px",
+        margin: 0,
+        border: "1px solid rgba(255,255,255,0.15)",
+        borderRadius: 4,
+        minHeight: 52,
+        outline: isSelected ? "2px solid #337ab7" : "none",
+        outlineOffset: "-1px",
+      },
+    },
+    React.createElement(
+      "div",
+      { style: { visibility: isEntryLocked ? "hidden" : "visible" } },
+      React.createElement(Icon, { className: "drag-handle-icon", name: "drag-handle" }),
+    ),
+    React.createElement(
+      "div",
+      { style: { width: 24, flexShrink: 0, overflow: "hidden" } },
+      React.createElement(LoadOrderIndexInput, {
+        className: "load-order-index",
+        api: vortexContext.api,
+        item: item,
+        currentPosition: currentIdx,
+        lockedEntriesCount: leadingLockedCount,
+        loadOrder: loadOrder,
+        isLocked: isLocked,
+        onApplyIndex: onApplyIndex,
+      }),
+    ),
+    React.createElement(
+      "div",
+      {
+        style: { cursor: "pointer", display: "flex", alignItems: "center" },
+        title: isEntryLocked ? "Unlock position" : "Lock position",
+        onClick: (evt) => {
+          evt.stopPropagation();
+          onLock();
+        },
+      },
+      React.createElement(Icon, {
+        name: isEntryLocked ? "locked" : "unlocked",
+        style: { color: isEntryLocked ? "#e2c04c" : "inherit" },
+      }),
+    ),
+    React.createElement(
+      "div",
+      {
+        className: "load-order-thumb-slot",
+        style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, flexShrink: 0 },
+      },
+      !item.modId
+        ? React.createElement(
+            "div",
+            {
+              className: "load-order-unmanaged-banner",
+              title: "Not managed by Vortex",
+              style: {
+                width: LO_IMAGE_WIDTH,
+                height: LO_IMAGE_HEIGHT,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 2,
+                textAlign: "center",
+                borderRadius: 2,
+                border: "1px solid #e2c04c",
+                background: "rgba(226,192,76,0.12)",
+                color: "#e2c04c",
+                fontSize: 9,
+                lineHeight: 1.1,
+                padding: 2,
+                pointerEvents: "none",
+              },
+            },
+            React.createElement(Icon, {
+              className: "external-caution-logo",
+              name: "feedback-warning",
+              style: { color: "#e2c04c" },
+            }),
+            React.createElement("span", null, "Not managed by Vortex"),
+          )
+        : pictureUrl
+          ? React.createElement("img", {
+              className: "load-order-thumb",
+              src: pictureUrl,
+              draggable: false,
+              style: {
+                width: LO_IMAGE_WIDTH,
+                height: LO_IMAGE_HEIGHT,
+                objectFit: "cover",
+                borderRadius: 2,
+                pointerEvents: "none",
+              },
+            })
+          : null,
+    ),
+    React.createElement(
+      "p",
+      {
+        className: "load-order-name",
+        style: { flex: "1 1 0", margin: 0, whiteSpace: "normal", wordBreak: "break-word" },
+      },
+      item.name ?? item.id,
+    ),
+    React.createElement(Checkbox, {
+      style: { alignSelf: "center", cursor: "pointer", margin: 0 },
+      checked: item.enabled ?? true,
+      onChange: onToggle,
+      onClick: (evt) => evt.stopPropagation(),
+    }),
+    contextMenu?.itemId === item.id
+      ? React.createElement(JsonContextMenu, {
+          x: contextMenu.x,
+          y: contextMenu.y,
+          item,
+          loadOrder,
+          profileId,
+          dispatch,
+          api: vortexContext.api,
+          selectedIds,
+          isModEnabled,
+          onClose: () => setContextMenu(null),
+        })
+      : null,
+  );
+}
+
+function JsonContextMenu({
+  x,
+  y,
+  item,
+  loadOrder,
+  profileId,
+  dispatch,
+  api,
+  selectedIds,
+  isModEnabled,
+  onClose,
+}) {
+  useDismissOnOutside(onClose);
+
+  useInjectStyleOnce("ue4ss-ctx-menu-style", LO_CTX_MENU_CSS);
+
+  const isLocked = (e) => [true, "true", "always"].includes(e?.locked);
+  const isMulti = selectedIds.size >= 2 && selectedIds.has(item.id);
+  const targets = isMulti ? loadOrder.filter((e) => selectedIds.has(e.id)) : [item];
+
+  const applyToTargets = (transform) => {
+    const newLO = transform(loadOrder, targets);
+    dispatch(setJsonLoadOrder(profileId, newLO));
+    serializeJsonLO(api, newLO);
+    onClose();
+  };
+
+  const isEntryLocked = isLocked(item);
+  const isEntryEnabled = item.enabled ?? true;
+
+  const [menuPosition, clampRef] = useClampedMenuPosition(x, y);
+  const menuStyle = {
+    position: "fixed",
+    left: menuPosition.left,
+    top: menuPosition.top,
+    zIndex: 9999,
+    background: "#1e1e1e",
+    border: "1px solid rgba(255,255,255,0.2)",
+    borderRadius: 4,
+    padding: "4px 0",
+    minWidth: 180,
+    boxShadow: "0 4px 12px rgba(0,0,0,0.6)",
+  };
+  const itemStyle = { padding: "6px 16px", cursor: "pointer", whiteSpace: "nowrap" };
+  const sepStyle = { borderTop: "1px solid rgba(255,255,255,0.1)", margin: "4px 0" };
+
+  const menuItem = (label, onClick) =>
+    React.createElement(
+      "div",
+      {
+        className: "ue4ss-ctx-item",
+        style: itemStyle,
+        onClick: (evt) => {
+          evt.stopPropagation();
+          onClick();
+        },
+      },
+      label,
+    );
+
+  if (isMulti) {
+    const n = targets.length;
+    return React.createElement(
+      "div",
+      { ref: clampRef, style: menuStyle },
+      menuItem(`Enable Selected (${n})`, () =>
+        applyToTargets((lo) =>
+          lo.map((e) => (targets.find((t) => t.id === e.id) ? { ...e, enabled: true } : e)),
+        ),
+      ),
+      menuItem(`Disable Selected (${n})`, () =>
+        applyToTargets((lo) =>
+          lo.map((e) => (targets.find((t) => t.id === e.id) ? { ...e, enabled: false } : e)),
+        ),
+      ),
+      React.createElement("div", { style: sepStyle }),
+      menuItem(`Lock Selected (${n})`, () =>
+        applyToTargets((lo) =>
+          lo.map((e) => (targets.find((t) => t.id === e.id) ? { ...e, locked: true } : e)),
+        ),
+      ),
+      menuItem(`Unlock Selected (${n})`, () =>
+        applyToTargets((lo) =>
+          lo.map((e) => (targets.find((t) => t.id === e.id) ? { ...e, locked: false } : e)),
+        ),
+      ),
+      React.createElement("div", { style: sepStyle }),
+      menuItem(`Move to Top (${n})`, () =>
+        applyToTargets((lo) => {
+          //Locked entries hold their absolute index - only the unlocked entries reorder into the slots between them
+          const selected = lo.filter((e) => targets.find((t) => t.id === e.id) && !isLocked(e));
+          const rest = lo.filter((e) => !isLocked(e) && !targets.find((t) => t.id === e.id));
+          const reordered = [...selected, ...rest];
+          let next = 0;
+          return lo.map((e) => (isLocked(e) ? e : reordered[next++]));
+        }),
+      ),
+      menuItem(`Move to Bottom (${n})`, () =>
+        applyToTargets((lo) => {
+          //Locked entries hold their absolute index - only the unlocked entries reorder into the slots between them
+          const selected = lo.filter((e) => targets.find((t) => t.id === e.id) && !isLocked(e));
+          const rest = lo.filter((e) => !isLocked(e) && !targets.find((t) => t.id === e.id));
+          const reordered = [...rest, ...selected];
+          let next = 0;
+          return lo.map((e) => (isLocked(e) ? e : reordered[next++]));
+        }),
+      ),
+      React.createElement("div", { style: sepStyle }),
+      menuItem(`Open Json Folder (${n})`, () => {
+        try {
+          window.api.shell.openFile(path.join(GAME_PATH, JSON_PATH));
+        } catch (err) {
+          api.showErrorNotification("Failed to open the file or folder", err, {
+            allowReport: false,
+          });
+        }
+        onClose();
+      }),
+      React.createElement("div", { style: sepStyle }),
+      menuItem(`Disable Vortex Mods (${n})`, () => {
+        const modIds = targets.filter((e) => e.modId !== undefined).map((e) => e.modId);
+        if (modIds.length > 0) {
+          actions.setModsEnabled(api, profileId, modIds, false, { allowAutoDeploy: true });
+        }
+        onClose();
+      }),
+    );
+  }
+
+  const modPageUrl = getModPageURL(api, item.modId);
+  const stagingFolder = getModStagingFolder(api, item.modId);
+
+  return React.createElement(
+    "div",
+    { ref: clampRef, style: menuStyle },
+    menuItem(isEntryEnabled ? "Disable" : "Enable", () =>
+      applyToTargets((lo) =>
+        lo.map((e) => (e.id === item.id ? { ...e, enabled: !isEntryEnabled } : e)),
+      ),
+    ),
+    menuItem(isEntryLocked ? "Unlock Position" : "Lock Position", () =>
+      applyToTargets((lo) =>
+        lo.map((e) => (e.id === item.id ? { ...e, locked: !isEntryLocked } : e)),
+      ),
+    ),
+    React.createElement("div", { style: sepStyle }),
+    menuItem("Move to Top", () =>
+      applyToTargets((lo) => {
+        if (isLocked(item)) return lo;
+        //Locked entries hold their absolute index - only the unlocked entries reorder into the slots between them
+        const moved = lo.filter((e) => !isLocked(e) && e.id === item.id);
+        const rest = lo.filter((e) => !isLocked(e) && e.id !== item.id);
+        const reordered = [...moved, ...rest];
+        let next = 0;
+        return lo.map((e) => (isLocked(e) ? e : reordered[next++]));
+      }),
+    ),
+    menuItem("Move to Bottom", () =>
+      applyToTargets((lo) => {
+        if (isLocked(item)) return lo;
+        //Locked entries hold their absolute index - only the unlocked entries reorder into the slots between them
+        const moved = lo.filter((e) => !isLocked(e) && e.id === item.id);
+        const rest = lo.filter((e) => !isLocked(e) && e.id !== item.id);
+        const reordered = [...rest, ...moved];
+        let next = 0;
+        return lo.map((e) => (isLocked(e) ? e : reordered[next++]));
+      }),
+    ),
+    React.createElement("div", { style: sepStyle }),
+    menuItem("Open Json Folder", () => {
+      try {
+        window.api.shell.openFile(path.join(GAME_PATH, JSON_PATH));
+      } catch (err) {
+        api.showErrorNotification("Failed to open the file or folder", err, { allowReport: false });
+      }
+      onClose();
+    }),
+    stagingFolder
+      ? menuItem("Open Staging Folder", () => {
+          try {
+            window.api.shell.openFile(stagingFolder);
+          } catch (err) {
+            api.showErrorNotification("Failed to open the file or folder", err, {
+              allowReport: false,
+            });
+          }
+          onClose();
+        })
+      : null,
+    modPageUrl
+      ? menuItem("Open Mod Page", () => {
+          try {
+            window.api.shell.openUrl(modPageUrl);
+          } catch (err) {
+            api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+          }
+          onClose();
+        })
+      : null,
+    item.modId ? React.createElement("div", { style: sepStyle }) : null,
+    item.modId
+      ? menuItem(isModEnabled ? "Disable Vortex Mod" : "Enable Vortex Mod", () => {
+          actions.setModsEnabled(api, profileId, [item.modId], !isModEnabled, {
+            allowAutoDeploy: true,
+          });
+          onClose();
+        })
+      : null,
+  );
+}
+
+function JsonLoadOrderInfoPanel() {
+  return React.createElement(
+    "div",
+    {
+      id: "json-loadorderinfo",
+      style: { padding: "12px", borderTop: "1px solid rgba(255,255,255,0.1)" },
+    },
+    React.createElement(
+      "h2",
+      { style: { marginTop: 0, display: "flex", alignItems: "center", gap: 10 } },
+      React.createElement(
+        "svg",
+        {
+          viewBox: "0 0 24 24",
+          style: { width: 28, height: 28, fill: "currentColor", flexShrink: 0 },
+        },
+        React.createElement("path", { d: JSON_ICON }),
+      ),
+      React.createElement(
+        "span",
+        null,
+        React.createElement("span", { style: { fontWeight: "bold" } }, "SZModLoader"),
+        React.createElement(
+          "span",
+          { style: { fontWeight: 300, color: "rgba(255,255,255,0.65)" } },
+          " JSON Load Order",
+        ),
+      ),
+    ),
+    React.createElement(
+      "ul",
+      { style: { margin: 0, paddingLeft: 20, listStyleType: "disc" } },
+      React.createElement(
+        "li",
+        null,
+        `Drag and drop mods to change the order SZModLoader loads JSON mods in. Changes write to ${JSONFILES_FILE} immediately.`,
+      ),
+      React.createElement(
+        "li",
+        null,
+        `Use the checkboxes to enable or disable each mod. A disabled mod keeps its place here but is left out of ${JSONFILES_FILE}.`,
+      ),
+      React.createElement(
+        "li",
+        null,
+        "New JSON mods are added to the bottom of the list when you deploy.",
+      ),
+      React.createElement(
+        "li",
+        { style: { fontStyle: "italic", color: "yellow", fontWeight: "bold" } },
+        "Note: This page manages SZModLoader JSON mods only. Pak mod load order is managed on the Load Order page.",
+      ),
+    ),
+  );
+}
+
+function JsonLoadOrderPage({ api }) {
+  const { useSelector, useDispatch } = require("react-redux");
+  const { FormControl } = require("react-bootstrap");
+
+  const profileId = useSelector((state) => selectors.activeProfile(state)?.id);
+  const loadOrder = useSelector(
+    (state) => state?.persistent?.jsonLoadOrder?.[profileId]?.loadOrder ?? [],
+  );
+  const dispatch = useDispatch();
+  const [filterText, setFilterText] = React.useState("");
+  const [statusFilter, setStatusFilter] = React.useState(new Set());
+  const [selectedIds, setSelectedIds] = React.useState(new Set());
+  const [contextMenu, setContextMenu] = React.useState(null);
+
+  React.useEffect(() => {
+    if (!profileId) return;
+    if (selectors.activeGameId(api.getState()) !== GAME_ID) return;
+    deserializeJsonLO(api)
+      .then((lo) => dispatch(setJsonLoadOrder(profileId, lo)))
+      .catch((err) => log("warn", `[${GAME_ID}] JSON load order refresh failed`, err));
+    setSelectedIds(new Set());
+  }, [profileId]);
+
+  useInjectStyleOnce("lo-index-focus-style", LO_INDEX_FOCUS_CSS);
+
+  const isFiltered = !!filterText || statusFilter.size > 0;
+  const isEntryEnabled = (e) => e.enabled !== false; //LO-entry flag (JsonFiles.json), not Vortex mod state
+  const isEntryLocked = (e) => [true, "true", "always"].includes(e?.locked);
+
+  const onApply = React.useCallback(
+    (reordered) => {
+      let newLO;
+      if (isFiltered) {
+        const filteredIds = new Set(reordered.map((e) => e.id));
+        const positions = loadOrder.reduce((acc, e, i) => {
+          if (filteredIds.has(e.id)) acc.push(i);
+          return acc;
+        }, []);
+        newLO = [...loadOrder];
+        positions.forEach((pos, i) => {
+          newLO[pos] = reordered[i];
+        });
+      } else {
+        newLO = reordered;
+      }
+      dispatch(setJsonLoadOrder(profileId, newLO));
+      serializeJsonLO(api, newLO);
+    },
+    [dispatch, loadOrder, isFiltered, profileId],
+  );
+
+  const filteredOrder = loadOrder.filter(
+    (e) =>
+      (!filterText || (e.name ?? e.id).toLowerCase().includes(filterText.toLowerCase())) &&
+      matchesStatus(e, statusFilter, isEntryEnabled, isEntryLocked),
+  );
+
+  const allIds = filteredOrder.map((e) => e.id);
+
+  if (!loadOrder.length) {
+    return React.createElement(
+      MainPage,
+      null,
+      React.createElement(
+        MainPage.Body,
+        null,
+        React.createElement(
+          "p",
+          { style: { padding: "12px", fontWeight: "bold", color: "yellow" } },
+          "No SZModLoader JSON mods are installed.",
+        ),
+      ),
+    );
+  }
+
+  return React.createElement(
+    MainPage,
+    null,
+    React.createElement(
+      MainPage.Header,
+      null,
+      React.createElement(
+        "div",
+        { style: { display: "flex", alignItems: "center", width: "100%" } },
+        React.createElement(FormControl, {
+          type: "search",
+          placeholder: "Filter mods...",
+          className: "file-based-load-order-filter",
+          style: { flex: 1 },
+          value: filterText,
+          onChange: (evt) => setFilterText(evt.target.value),
+        }),
+        React.createElement(LoadOrderStatusFilter, {
+          active: statusFilter,
+          setActive: setStatusFilter,
+          groups: ["enabled", "locked", "unmanaged"],
+          count:
+            statusFilter.size > 0
+              ? { matched: filteredOrder.length, total: loadOrder.length }
+              : null,
+        }),
+      ),
+    ),
+    React.createElement(
+      MainPage.Body,
+      null,
+      React.createElement(
+        DNDContainer,
+        { style: { height: "95%" } },
+        React.createElement(
+          FlexLayout,
+          {
+            type: "column",
+            className: "file-based-load-order-container",
+            style: { height: "100%" },
+          },
+          React.createElement(
+            FlexLayout.Flex,
+            { className: "file-based-load-order-list", style: { overflowY: "auto", minHeight: 0 } },
+            React.createElement(
+              JsonSelectionContext.Provider,
+              { value: { selectedIds, setSelectedIds, allIds, contextMenu, setContextMenu } },
+              React.createElement(DraggableList, {
+                itemTypeId: `${GAME_ID}-json-lo-entry`,
+                id: `${GAME_ID}-json-loadorder-list`,
+                items: filteredOrder,
+                itemRenderer: JsonItemRenderer,
+                apply: onApply,
+                idFunc: (entry) => entry.id,
+                isLocked: (item) => [true, "true", "always"].includes(item?.locked),
+              }),
+            ),
+          ),
+          React.createElement(
+            "div",
+            { style: { flexShrink: 0 } },
+            React.createElement(JsonLoadOrderInfoPanel),
+          ),
+        ),
+      ),
+    ),
+  );
+} //*/
 //Read-only view of UE4SS + LogicMods load order data exported with a collection (collection workshop tab)
 function CollectionsDataView({ t, collection }) {
   const { useSelector } = require("react-redux");
@@ -7074,12 +7915,16 @@ function CollectionsDataView({ t, collection }) {
   const logicLO = useSelector(
     (state) => state?.persistent?.logicModsLoadOrder?.[profileId]?.loadOrder ?? [],
   );
+  const jsonLO = useSelector(
+    (state) => state?.persistent?.jsonLoadOrder?.[profileId]?.loadOrder ?? [],
+  );
 
   const isInCollection = (entry) =>
     entry.modId !== undefined &&
     (collection?.rules ?? []).some((rule) => rule.reference?.id === entry.modId);
   const ue4ssFiltered = ue4ssLoadOrder ? ue4ssLO.filter(isInCollection) : [];
   const logicFiltered = logicModsLoadOrder ? logicLO.filter(isInCollection) : [];
+  const jsonFiltered = jsonLoadOrder ? jsonLO.filter(isInCollection) : [];
 
   const renderSection = (title, entries, showEnabled) =>
     React.createElement(
@@ -7130,11 +7975,14 @@ function CollectionsDataView({ t, collection }) {
       "p",
       null,
       t(
-        "This is a snapshot of the UE4SS and LogicMods load order information that will be exported with this collection.",
+        "This is a snapshot of the UE4SS, LogicMods and SZModLoader JSON load order information that will be exported with this collection.",
       ),
     ),
     ue4ssLoadOrder ? renderSection("UE4SS Mods (mods.txt)", ue4ssFiltered, true) : null,
     logicModsLoadOrder ? renderSection("LogicMods/Blueprint Mods", logicFiltered, false) : null,
+    jsonLoadOrder
+      ? renderSection(`SZModLoader JSON Mods (${JSONFILES_FILE})`, jsonFiltered, true)
+      : null,
   );
 }
 

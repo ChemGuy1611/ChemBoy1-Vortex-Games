@@ -77,6 +77,15 @@ details: {
 }
 ```
 
+The two ignore lists are matched against **different path shapes**, both case-insensitive minimatch:
+
+| Key | Matched by | Path the pattern sees |
+| --- | --- | --- |
+| `ignoreDeploy` | core `BlacklistSet` (deploy, per file) | `<mod staging folder>\<path inside the mod>` |
+| `ignoreConflicts` | `mod-dependency-manager` conflict scan (walks staging, `dot: true`) | `<mod type target, relative to the game folder>\<path inside the mod>` |
+
+So `path.join("**", "x")` behaves the same in both, but a depth-limited pattern does not. In `ignoreDeploy`, `path.join("*", "manifest.json")` matches only a `manifest.json` at a mod's top level and leaves `<mod>\<subfolder>\manifest.json` deploying. The same pattern in `ignoreConflicts` would instead mean "directly under a one-level-deep mod type target". Conflict detection reads staging, not the deployment, so a file kept out of deployment by `ignoreDeploy` can still raise a conflict unless `ignoreConflicts` also covers it. The Unity hybrid template relies on this split: `IGNORE_DEPLOY` uses the `*` form for Thunderstore `manifest.json`/`icon.png` so wrapped plugins keep their own copy, while `IGNORE_CONFLICTS` keeps `**`.
+
 Repo convention: every `game-*`/`template-*` extension sets `IGNORE_CONFLICTS`/`IGNORE_DEPLOY` to the same three glob patterns — `path.join("**", "changelog*")`, `path.join("**", "readme*")`, `path.join("**", "license*")` — so README/CHANGELOG/LICENSE files are never flagged as mod conflicts or deployed into the game folder. A separate global helper extension also applies these same three patterns to every known game at runtime (via `util.getGame(gameId).details`), independent of what any individual extension's own `index.js` declares.
 
 ### Standard `environment` keys
@@ -211,6 +220,12 @@ supportedTools: [
 ];
 ```
 
+A tool's `executable()` is called **once, with no arguments**, when the game is registered, and the
+result is what Vortex stores. It cannot change per install afterwards. Tools with `relative: true`
+are found by walking the game folder for their `requiredFiles`, which is a static array. A tool
+whose location differs per build (for example `Binaries\Win64` vs `Binaries\WinGDK` on the Xbox
+build) therefore needs one static entry per variant; only the entry whose file exists shows up.
+
 `queryPath` on a tool is used when the tool lives outside the game dir (e.g. a separate ModKit install).
 It returns the tool's **folder**, not the executable — Vortex joins `executable()` onto it.
 
@@ -245,6 +260,12 @@ with `path.join()`, which emits forward slashes off Windows.
 - `getModPaths` and `getInstalledVersion` are populated BY Vortex — do NOT implement on the IGame object.
 - `onGameModeActivated` does NOT exist on IGame. Use `setup` or `api.events.on('gamemode-activated', ...)`.
 - `modTypes` on IGame is populated by Vortex after `registerModType` calls — do not set it yourself.
+- A mod type's `targetPath` string in `spec` is computed once at module load. When the folder depends
+  on the install (Win64 vs WinGDK), keep the folder in a `let`, reassign it from `executable(discoveryPath)`,
+  and register that mod type explicitly with a getPath closure that reads the variable when called.
+- The `registerModType` priority only orders the sequential `test()` pass Vortex runs to detect a mod's
+  type (lowest first, first match wins). A type whose `test` always returns `false` (assigned by an
+  installer's `setmodtype` instead) is not affected by its number. Keep priorities within 25-75.
 - `steamAppId` in `details` must be a **number** (`+STEAMAPP_ID`). The `environment` copy stays a string.
 - `parameters` field: omit it entirely (or comment it out) when empty — sending `[]` or `['']` passes a blank arg to the exe.
 - `logo` must match the actual filename in the extension folder (conventionally `${GAME_ID}.jpg`).

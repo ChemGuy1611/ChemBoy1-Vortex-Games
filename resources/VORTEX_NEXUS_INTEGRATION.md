@@ -16,10 +16,44 @@ Driver: the `nexus_integration` core extension (`index.tsx`, `util/`, `eventHand
   `oauthCallback(api, oauthCode, oauthState)`.
 - Credentials live in **`state.confidential.account.nexus.OAuthCredentials`** (a legacy `apiKey`
   path is still honoured). On load the ext reads them once; `loggedIn = apiKey !== undefined ||
-oauthCred !== undefined`. `updateToken(api, nexus, oauthCred)` refreshes the token into the
-  nexus-node client.
+oauthCred !== undefined`. `updateToken(api, nexus, oauthCred)` hands the session to the
+  nexus-node client through its token provider (`nexus.setTokenProvider(...)`) and then reads the
+  account from the site (Vortex 2.8.0-beta.1 and later; before that it pushed the credentials into
+  the client, which refreshed its own copy).
 - Helpers: `ensureLoggedIn(api)`, `requestLogin(nexus, api, callback)` (also exposed as the
   `request-nexus-login` event and `nexusRequestNexusLogin` API).
+
+## OAuth session and rate limits (Vortex 2.8.0-beta.1 and later)
+
+Not in stable 2.7.2.
+
+- **One owner of the OAuth session** (`util/oauthSession.ts`). The credentials stay in state; this
+  module decides when the access token is refreshed. `getAccessToken(api, rejectedToken?)`
+  refreshes ahead of expiry (30 s leeway) and runs one refresh at a time — everyone who needs a new
+  token while one is in flight shares it. A refresh that fails for a passing reason (offline, 5xx)
+  returns the current token and lets the request find out; a refusal from the token endpoint
+  (`invalid_grant`) means the session is dead, so the user is signed out with an "Authentication
+  failed, please log in again" error and `did-login` is emitted. A refresh that completes after the
+  session was replaced is discarded.
+- **Both clients pull their token from it.** nexus-node gets `tokenProviderFor(api)` through
+  `setTokenProvider` (see `NODE_NEXUS_API_CLIENT.md`); the v3 client (`nexusV3Client.ts`) has an
+  `oauthMiddleware` that resolves the token per request and retries a 401 once, with a forced
+  refresh, on a cloned request. Neither client refreshes on its own.
+- **429 handling** (`rateLimit.ts`). `isRateLimited(err)` is true for a nexus-node `RateLimitError`
+  _or_ any error carrying status 429 (nexus-node only types a 429 as `RateLimitError` on the paths
+  that reach its result handler; others arrive as a plain `HTTPError`). `notifyRateLimited(api)`
+  raises one warning notification under a shared id (`nexus-rate-limited`), so a burst of rejected
+  requests collapses into a single toast. Used by update checks, tracking, the nxm protocol handler
+  and the event handlers. Server-side limits: `NEXUS_MODS_API.md`.
+
+## Extension catalog
+
+Since **2.7.0** the Extensions page's catalog of available extensions comes from the Nexus v3
+`GET /vortex/extensions` endpoint (`extension_manager/availableExtensions.ts`, `fetchExtensionList`),
+not from a manifest file; see `NEXUS_MODS_API.md` for the endpoint and the consequence for any
+locally cached `extensions-manifest.json`. `vortex-extensions-feed.md` walks through the whole flow:
+how an extension reaches the feed, how Vortex maps, installs and auto-updates from it, and the
+one-extension-per-game rule, with a saved copy of the feed (`vortex-extensions-feed.json`).
 
 ## Clients
 

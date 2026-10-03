@@ -173,7 +173,8 @@ Consequences to design around:
   window-open handler on that guest's contents which denies the popup and sends `webview-open-url`
   back to the renderer. That is what surfaces as `onNewWindow`.
 - So `onNewWindow` is the decision point for an embedding page: navigate in place with `loadURL`,
-  hand the URL to a download, or `util.opn` it to the system browser. Core's modal treats any such
+  hand the URL to a download, or open it in the system browser with `window.api.shell.openUrl`
+  (the older `util.opn` is deprecated). Core's modal treats any such
   URL as a download candidate, with a hardcoded exception that keeps `drive.google.com` navigating
   in place.
 - Nothing stops in-page navigation to another host. A page that wants to stay on one site must
@@ -215,5 +216,5 @@ extension hands the finished download to). `DOWNLOADER.md` (the requirements aut
 where `browse-for-download` fits among its routes). `NOTIFICATIONS_DIALOGS.md` (the dialog surface
 a confirmation gate uses). `THUNDERSTORE_API.md` (a source whose site is browsed this way).
 `BROWSER_MODULES.md` (the shared modules that assemble everything on this page into a browse-and-
-install page an extension can adopt). `DEPRECATED_METHODS.md` (`util.opn`, used from `onNewWindow`
-here, is deprecated in favor of `window.api.shell`).
+install page an extension can adopt). `DEPRECATED_METHODS.md` (`util.opn`, the older way to hand a
+URL to the system browser from `onNewWindow`, is deprecated in favor of `window.api.shell`).

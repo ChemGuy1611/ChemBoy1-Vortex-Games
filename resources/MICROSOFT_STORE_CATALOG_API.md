@@ -106,7 +106,43 @@ def fetch_xbox_identity(product_id):
 ```
 
 `vortex_utils.fetch_xbox_identity(xbox_url_or_id)` is the version actually used in this repo — same
-logic, plus accepting a full URL and retry/error handling via `http_get_json()`.
+logic, plus accepting a full URL, retry/error handling via `http_get_json()`, and the redirect
+fallback described below. `vortex_utils.fetch_xbox_package_formats(xbox_url_or_id)` reads the package
+formats from the same (cached) response — see the next section.
+
+---
+
+## `PackageFormat` predicts whether the game is moddable
+
+Each `Packages[]` entry carries a `PackageFormat`, and the format decides where the install lands:
+
+| `PackageFormat`                 | Install location                                  | Moddable |
+| ------------------------------- | ------------------------------------------------- | -------- |
+| `MSIXVC`                        | `XboxGames\<title>\Content` (GDK install)         | yes      |
+| `XVC`                           | console package, empty `Applications`             | n/a      |
+| `EAppx`, `EAppxBundle`, `Appx`  | protected `WindowsApps` folder, encrypted         | no       |
+
+Judge the **PC-launchable** packages only, meaning the ones whose `Applications` array is non-empty.
+A GDK title lists its console `XVC` package beside the PC `MSIXVC` one, and a title can list a
+console `XVC` next to a protected PC build: Middle-earth: Shadow of War is `EAppxBundle` (PC, has
+`Applications`) + `XVC` (console, none), and it is unmoddable. Counting the `XVC` would misclassify it.
+
+Values seen across the games this repo supports or has ruled out:
+
+| Game                               | PC package format | Verdict                                 |
+| ---------------------------------- | ----------------- | --------------------------------------- |
+| Abiotic Factor, Keeper             | `MSIXVC`          | moddable, supported                     |
+| Alien: Isolation, Metro Exodus, Civilization VI, Red Dead Redemption, Borderlands 3, Final Fantasy XVI | `MSIXVC` | moddable |
+| Resident Evil 7                    | `EAppxBundle`     | protected, ruled out                    |
+| Middle-earth: Shadow of War        | `EAppxBundle`     | protected, ruled out                    |
+| Rise of the Tomb Raider            | `Appx`            | protected, ruled out                    |
+| PC Building Simulator              | `EAppx`           | protected                               |
+
+This is an inference from store metadata, not a live read: every game this repo already ruled out for
+folder permissions reports a protected format, and every supported one reports `MSIXVC`, but an unseen
+format should be treated as unknown until an install shows where it lands. A product with no
+PC-launchable package at all (console-only, or no PC build uploaded yet — NORSE: Oath of Blood has
+zero packages on every SKU and no redirect) yields an empty format set.
 
 ---
 
@@ -171,6 +207,15 @@ identity.
   can independently confirm both checked out.
 - **A title can list more than one package with no `Applications` entry.** Don't assume index `0` is
   the game; scan for the entry that actually has one.
+- **Ubisoft and EA titles in the Xbox library often have no usable `XBOXEXECNAME`.** Game Pass
+  subscribers get access to a limited slice of the Ubisoft and EA libraries, and those games appear in
+  the Microsoft Store and Xbox app even though the publisher's own launcher (Ubisoft Connect, the EA
+  app) is what runs them. Their packages are not a normal directly launched game package, so the
+  lookup returns either no `ApplicationId` at all (`None`) or only a placeholder such as
+  `GDKStubGame`. That is the expected shape for these publishers, not a failed lookup. The package
+  identity (`XBOXAPP_ID`) and publisher suffix (`XBOX_PUB_ID`) still resolve, and the publisher-hash
+  suffix is shared across a publisher's titles (Ubisoft: `ngz4m417e0mpw`; EA: `q5ha1ztykcgvj`). Treat
+  such a hit as unverified until an install confirms the exec name.
 - **Region/market can matter for storefront metadata** (price, availability) but not for the package
   identity fields this lookup cares about — `market=US&languages=en-us` is fine regardless of where
   the game actually ships.

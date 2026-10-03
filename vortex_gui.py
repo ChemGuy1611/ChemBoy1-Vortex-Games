@@ -2218,7 +2218,7 @@ class MainWindow(QMainWindow):
                 ("--no-open", "Skip opening Nexus Page", False),
                 ("--dry-run", "Dry run (no writes)", False),
                 ("--skip-node-check", "Skip Node syntax", False),
-                ("--skip-eslint", "Skip ESLint", False),
+                ("--skip-lint", "Skip lint", False),
             ],
         )
         if dlg is None:

@@ -1,5 +1,10 @@
 # template-unitymelonloaderbepinex-hybrid Changelog
 
+## [2026-10-01]
+
+- Changed: `IGNORE_DEPLOY` narrows `path.join("**", "manifest.json")`/`path.join("**", "icon.png")` to `path.join("*", ...)`. Vortex matches deploy-ignore patterns against `<mod folder>\<relative path>`, so `*` hits only a file at a mod's top level - Thunderstore metadata that an unwrapped install drops into the shared loader folder. A wrapped plugin's own `manifest.json` (`<mod>\<wrap>\manifest.json`) now deploys, which fixes MelonLoader skipping wrapped mods: `installPlugin` generates that manifest, but the `**` pattern kept it from ever deploying. `IGNORE_CONFLICTS` keeps `**` - conflict detection walks staging, where already-installed mods still carry the root files.
+- Added: `PACKAGE_META_FILES` (`manifest.json`, `icon.png`). `installPlugin` drops archive-root copies of them on unwrapped installs (`BEPINEX_MOD_ID`/`MELON_MOD_ID`/unknown), so a root-layout Thunderstore package (`manifest.json`, `icon.png`, `plugins/x.dll`) no longer stages them into `BepInEx\`. Wrapped installs keep them in their own folder.
+
 ## [2026-09-30]
 
 - Added: an `id` field as the first key of `info.json`, set to the `XXX` placeholder that `new_extension.py` replaces with the `GAME_ID`. Vortex uses `id` as the extension's stable identity (registered name, install folder and localization namespace) instead of deriving them from the folder or archive name.

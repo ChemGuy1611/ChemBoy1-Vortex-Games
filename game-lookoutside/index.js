@@ -2,8 +2,8 @@
 Name: Look Outside Vortex Extension
 Structure: RPGMaker Engine Game
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-09-29
+Version: 1.0.1
+Date: 2026-10-02
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -69,7 +69,9 @@ const JSLIST_HEADER = `var $plugins =\n`;
 const JSLIST_DEFAULT_DESCRIPTION =
   "Mod installed with Vortex. See mod page for description. You may need to add additional parameters below.";
 const LO_ATTRIBUTE = "pluginNames"; //mod attribute holding the plugin basenames it installed, set by installJsFile/installJsFolder
-let isPurging = false; //guards plugins.js writes during a purge cycle - see the will-purge/did-deploy listeners in main()
+let mod_update_all_profile = false; // for mod update to keep plugins in the load order and not uncheck them
+let updateModIds = new Map(); // Nexus mod id -> {firstSeen, targetFileId} (Map, not scalar, so batch updates don't clobber each other)
+const MAX_UPDATE_WAIT_MS = 5 * 60 * 1000; // release the guard for an update that never lands (cancelled or failed install)
 const LO_IMAGE_WIDTH = 96; //Width of the load order thumbnail image
 const LO_IMAGE_HEIGHT = LO_IMAGE_WIDTH * 0.5625;
 const PLUGINS_LO_FILE = "pluginsLoadOrder.json"; //Vortex-owned sidecar (profile-prefixed), durable order/enabled/description/parameters store - lives in the game root, never deployed, so a purge never touches it
@@ -607,6 +609,18 @@ async function getDeployedPluginNames(pluginsDir) {
   }
 }
 
+//Reordering is ignored while a mod update is in flight: the deserializer below freezes the stored
+//order and the serializer skips writing, so tell the user their change was not applied.
+function notifyLoadOrderPaused(api, gameId) {
+  api.sendNotification({
+    id: `${gameId}-loadorder-update-paused`,
+    type: "warning",
+    message:
+      "Load order changes are paused while a mod update finishes. Reorder again once it completes.",
+    displayMS: 6000,
+  });
+}
+
 //Read installed plugins.js entries, reconciled against the plugins actually deployed to
 //js/plugins and against the durable sidecar. Only plugins owned by a Vortex mod (LO_ATTRIBUTE
 //match) are returned - vanilla/base-game plugins never show on the Load Order page.
@@ -617,11 +631,11 @@ async function getDeployedPluginNames(pluginsDir) {
 //edits to description/parameters), then the sidecar's copy (durable - survives plugins.js being
 //reset, e.g. by a purge), then a fresh default for a plugin never seen before.
 async function deserializePluginsLoadOrder(api) {
-  if (isPurging) {
-    //Every plugin .js file is transiently gone during a purge - rebuilding from that would read
-    //as "every plugin uninstalled" and wipe plugins.js's custom parameters on the next write.
-    //Return whatever is already stored; main()'s did-deploy listener re-runs this for real once
-    //the purge's matching deploy restores the files.
+  if (mod_update_all_profile) {
+    //A mod update briefly removes and reinstalls the updated mod's plugins, so rebuilding the order
+    //from disk right now would drop their entries and reset their position and enabled state.
+    //Return the stored order untouched instead: positions are preserved and the page keeps showing
+    //the real load order. main()'s did-deploy listener re-runs this for real once the update lands.
     const profile = selectors.activeProfile(api.getState());
     return profile?.id !== undefined
       ? (api.getState()?.persistent?.loadOrder?.[profile.id] ?? [])
@@ -682,8 +696,9 @@ async function deserializePluginsLoadOrder(api) {
 //they're still deployed - keeps them in the file while still dropping dead entries left behind
 //by an uninstalled mod. The sidecar only ever holds managed (mod-owned) entries.
 async function serializePluginsLoadOrder(api, loadOrder) {
-  if (isPurging) {
-    return; //purge in progress - see deserializePluginsLoadOrder and main()'s listeners
+  if (mod_update_all_profile) {
+    notifyLoadOrderPaused(api, GAME_ID);
+    return;
   }
 
   const gamePath = getDiscoveryPath(api);
@@ -738,10 +753,9 @@ async function serializePluginsLoadOrder(api, loadOrder) {
 //On purge, every deployed plugin .js file is gone - remove their now-dead entries from plugins.js
 //(vanilla/still-deployed ones stay untouched) so the game doesn't try to load a file that no
 //longer exists. Matches game-thelastofuspart2's didPurge/clearModOrder pattern: a dedicated purge
-//cleanup, independent of the reorder/serialize cycle (which stays no-op'd by `isPurging` - this
-//runs regardless of that guard, it's the intentional write purge is supposed to cause). The
-//sidecar is left alone on purpose - it's the recovery copy for exactly this case, picked back up
-//by deserializePluginsLoadOrder's sidecar tier if/when these plugins get reinstalled.
+//cleanup, independent of the reorder/serialize cycle. The sidecar is left alone on purpose - it's
+//the recovery copy for exactly this case, picked back up by deserializePluginsLoadOrder's sidecar
+//tier if/when these plugins get reinstalled.
 async function clearPurgedPlugins(api, profileId) {
   const profile = selectors.profileById(api.getState(), profileId);
   if (profile?.gameId !== GAME_ID) return;
@@ -1959,32 +1973,97 @@ function main(context) {
     // put code here that should be run (once) when Vortex starts up
     const api = context.api;
 
-    //Purging removes every plugin .js file transiently, and core's own did-deploy handler reads
-    //the load order (via deserializePluginsLoadOrder) before this listener gets a chance to run,
-    //so the guard has to stay armed past did-purge and only clear once the matching deploy that
-    //restores the files actually lands - then this listener re-runs the read/dispatch itself.
-    api.events.on("will-purge", (profileId) => {
-      const profile = selectors.profileById(api.getState(), profileId);
-      if (profile?.gameId === GAME_ID) {
-        isPurging = true;
-      }
-    });
-    api.events.on("did-deploy", async (profileId) => {
-      if (!isPurging) return;
-      const profile = selectors.profileById(api.getState(), profileId);
-      if (profile?.gameId !== GAME_ID) return;
-      isPurging = false;
-      try {
-        const lo = await deserializePluginsLoadOrder(api);
-        api.store.dispatch(actions.setFBLoadOrder(profileId, lo));
-      } catch (err) {
-        log("error", `Could not refresh plugins.js load order after purge: ${err}`);
-      }
-    });
     //Files are gone by did-purge - prune their dead plugins.js entries now rather than waiting on
     //a redeploy/reorder to notice, so the game never tries to load a file that's already deleted.
     api.events.on("did-purge", (profileId) => {
       clearPurgedPlugins(api, profileId);
+    });
+
+    //Reset mod update flags on deploy
+    api.onAsync("did-deploy", async (profileId) => {
+      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
+      if (profileId !== LAST_ACTIVE_PROFILE) return; //only reset this game's mod update flags
+      //release tracking one mod id at a time, and only once that mod's new version has
+      //landed and is enabled, so a deploy that fires mid-batch can't disarm the guard for
+      //mods that haven't been reinstalled yet
+      //guard state as it stood before the loop below releases it - the FBLO refresh further
+      //down only runs on the deploy that actually clears the guard
+      const guardWasArmed = mod_update_all_profile;
+      if (updateModIds.size > 0) {
+        const state = api.getState();
+        const profile = selectors.profileById(state, profileId);
+        const mods = state?.persistent?.mods?.[GAME_ID] ?? {};
+        const now = Date.now();
+        for (const [nexusId, { firstSeen, targetFileId }] of Array.from(updateModIds)) {
+          const landed = Object.values(mods).some(
+            (mod) =>
+              String(mod?.attributes?.modId ?? "") === nexusId &&
+              //if the target file is unknown, fall back to "installed and enabled"
+              (targetFileId === "" || String(mod?.attributes?.fileId ?? "") === targetFileId) &&
+              (profile?.modState?.[mod.id]?.enabled ?? false),
+          );
+          if (landed) {
+            updateModIds.delete(nexusId);
+          } else if (now - firstSeen > MAX_UPDATE_WAIT_MS) {
+            log(
+              "warn",
+              `[${GAME_ID}] Mod update tracking for Nexus mod ${nexusId} timed out without landing; releasing load order guard for it.`,
+            );
+            updateModIds.delete(nexusId);
+          }
+        }
+      }
+      mod_update_all_profile = updateModIds.size > 0; //stay armed while any update is still outstanding
+      //Core FBLO deserialized this order concurrently with this handler - did-deploy listeners run
+      //in parallel and the core one is registered first - so it read the frozen order before the
+      //guard cleared above, leaving its page stale. Re-run the deserialize it would have got and
+      //push the result into state; cheaper and less disruptive than forcing a second deployment.
+      if (guardWasArmed && !mod_update_all_profile) {
+        try {
+          const refreshedLO = await deserializePluginsLoadOrder(api);
+          api.store.dispatch(actions.setFBLoadOrder(profileId, refreshedLO));
+        } catch (err) {
+          log("warn", `[${GAME_ID}] post-update load order refresh failed`, err);
+        }
+      }
+    });
+    //detect mod update (to maintain LO position)
+    //fileId is the version being updated TO, and is what tells the new version apart from the
+    //old one on deploy - without it every mod not yet updated still looks "already installed"
+    api.events.on("mod-update", (gameId, modId, fileId) => {
+      if (GAME_ID == gameId) {
+        updateModIds.set(String(modId), {
+          firstSeen: Date.now(),
+          targetFileId: String(fileId ?? ""),
+        });
+      }
+    });
+    //detect batch mod update: the "Update all" button emits mods-update with LOCAL mod ids
+    //and never emits mod-update, so resolve each one to its Nexus mod id before tracking it
+    api.events.on("mods-update", (gameId, modIds) => {
+      if (GAME_ID !== gameId) return;
+      const mods = api.getState()?.persistent?.mods?.[GAME_ID] ?? {};
+      for (const modId of modIds ?? []) {
+        const nexusModId = mods[modId]?.attributes?.modId;
+        if (nexusModId !== undefined) {
+          updateModIds.set(String(nexusModId), {
+            firstSeen: Date.now(),
+            targetFileId: String(mods[modId]?.attributes?.newestFileId ?? ""),
+          });
+        }
+      }
+    });
+    //detect mod removal (to maintain LO position) - match on the Nexus mod id
+    //recorded in state (attributes.modId), not the local modId string: the
+    //local id's naming convention varies by when the mod was originally
+    //downloaded (older dash-delimited vs current space-delimited), so string
+    //parsing silently misses old installs.
+    api.events.on("remove-mod", (gameMode, modId) => {
+      const removedMod = api.getState()?.persistent?.mods?.[GAME_ID]?.[modId] ?? undefined;
+      const nexusModId = removedMod?.attributes?.modId;
+      if (nexusModId !== undefined && updateModIds.has(String(nexusModId))) {
+        mod_update_all_profile = true;
+      }
     });
   });
   return true;

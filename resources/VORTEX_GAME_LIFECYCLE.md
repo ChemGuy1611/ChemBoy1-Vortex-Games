@@ -14,7 +14,7 @@ Almost everything here lives in the `gamemode_management` core extension
 | ----------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | Known games       | `GameModeManager.mKnownGames` (`IGame[]`)                         | Every `context.registerGame(...)` from a bundled or third-party extension. What Vortex _could_ manage. |
 | Game stubs        | `GameModeManager.mGameStubs`                                      | Registered-but-not-installed game extensions (downloadable on demand).                                 |
-| Known game stores | `GameModeManager.mKnownGameStores` (`IGameStore[]`)               | `Steam`, `EpicGamesLauncher`, plus `gamestore-*` extensions. Used during discovery.                    |
+| Known game stores | `GameModeManager.mKnownGameStores` (`IGameStore[]`)               | Through 2.7.x: `Steam`, `EpicGamesLauncher`, plus `gamestore-*` extensions. From 2.8.0-beta.1: Steam, Epic, GOG, Origin, Uplay and Xbox, all core. Used during discovery. |
 | Discovered games  | `state.settings.gameMode.discovered[gameId]` (`IDiscoveryResult`) | What was actually _found on disk_ — has a `path`, `store`, `tools`, `environment`.                     |
 
 A game is manageable only when it is **both** a known game **and** discovered with a valid `path`

@@ -25,6 +25,7 @@ const STEAMAPP_ID = "2561580";
 const EPICAPP_ID = "Grunion"; //from egdata.app
 const XBOXAPP_ID = null;
 const XBOXEXECNAME = null;
+//!audit-skip: store-id - GOGAPP_ID: GOG lists only the original Horizon Zero Dawn Complete Edition, not the Remastered release
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const EXEC = "HorizonZeroDawnRemastered.exe";

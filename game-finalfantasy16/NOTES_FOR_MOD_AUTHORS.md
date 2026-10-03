@@ -9,7 +9,9 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Reloaded-II (mod loader) | a `reloaded-ii.exe` file | - |
-| Reloadedmod | a file or folder named `modconfig.json` | `Reloaded` |
+| Reloadedmodloader | a file or folder named `modconfig.json` and a file or folder named `ff16.utility.modloader.dll` | `Reloaded\Mods\FF16_Mod_Loader` |
+| Reloadedmod | a file or folder named `modconfig.json` | `Reloaded\Mods` |
+| Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
 
@@ -25,11 +27,32 @@ This installer handles Reloaded-II itself, not mods for it. It exists so users c
 
 - If you bundle Reloaded-II inside your mod archive, Vortex treats the whole download as Reloaded-II rather than as your mod. Ship the mod alone and list Reloaded-II as a requirement.
 
+## Reloadedmodloader
+
+Recognised when the archive contains a file or folder named `modconfig.json` and a file or folder named `ff16.utility.modloader.dll`.
+
+Installs to: `Reloaded\Mods\FF16_Mod_Loader`
+
 ## Reloadedmod
 
 Recognised when the archive contains a file or folder named `modconfig.json`.
 
-Installs to: `Reloaded`
+Installs to: `Reloaded\Mods`
+
+## Fallback Installer
+
+The catch-all. Any archive that matched none of the installers above lands here and is copied across unchanged.
+
+> **NOTE:** Landing in the fallback installer is a signal your archive layout needs fixing.
+
+**Requirements:**
+
+- Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
+- Vortex shows the user a notification when a mod installs through the fallback.
+
+**Common mistakes:**
+
+- If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.
 
 ## Rules That Apply To Every Mod Type
 

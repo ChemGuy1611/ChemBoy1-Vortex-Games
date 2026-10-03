@@ -1,14 +1,15 @@
 {
-  "eslint.rules.customizations": [
-    { "rule": "no-unused-vars", "severity": "info" },
-    { "rule": "no-useless-assignment", "severity": "info" },
-    { "rule": "no-unsafe-finally", "severity": "info" },
-    { "rule": "require-yield", "severity": "info" }
-  ],
-  "eslint.useFlatConfig": true,
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
+  "oxc.enable.oxlint": true,
+  "oxc.lint.customization": {
+    "no-unused-vars": { "severity": "info" },
+    "no-unsafe-finally": { "severity": "info" },
+    "require-yield": { "severity": "info" }
   },
+  "editor.codeActionsOnSave": {
+    "source.fixAll.oxc": "explicit",
+    "source.fixAll.markdownlint": "explicit"
+  },
+  "js/ts.suggestionActions.enabled": false,
   "oxc.fmt.configPath": ".oxfmtrc.json",
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "oxc.oxc-vscode",

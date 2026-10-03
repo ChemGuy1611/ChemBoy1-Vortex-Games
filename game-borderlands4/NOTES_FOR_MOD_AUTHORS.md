@@ -8,21 +8,27 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
+| Pysdk | a file or folder named one of: `unrealsdk.dll` and a file or folder named one of: `sdk_mods` | the game folder itself (no subfolder) |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `OakGame` |
-| Pysdk | a file or folder named `unrealsdk.dll` and a file or folder named `sdk_mods` | the game folder itself (no subfolder) |
-| Pysdkmod | a file with one of these extensions: `.py` or `.sdkmod` | `sdk_mods` |
 | Blueprint Mods (LogicMods) | a `LogicMods` folder | `OakGame\Content\Paks\LogicMods\LogicMods` |
-| Pak Mods | a `.pak` file | `OakGame\Content\Paks` |
+| Pysdkmod | a file with one of these extensions: `.py` or `.sdkmod` | `sdk_mods` |
+| Pak Mods | a `.pak` file | `OakGame\Content\Paks\~mods` |
 | UE4SS Itself | a `dwmapi.dll` file | `OakGame\Binaries\Win64` |
 | UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `OakGame\Binaries\Win64\ue4ss\Mods` |
 | UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | `OakGame\Binaries\Win64\ue4ss\Mods` |
-| Root / Game Folder Mods | a top-level folder such as `OakGame` | the game folder itself (no subfolder) |
-| Contentfolder | a file or folder named `Content` | `OakGame` |
-| Config File Mods | a config file such as `engine.ini` or `game.ini` | `DOCUMENTS\My Games\Borderlands 4\Saved\Config\Windows` |
+| Contentfolder | a file or folder named one of: `Content` | `OakGame` |
+| Root / Game Folder Mods | a top-level folder such as `OakGame`, `Engine` or `Content` | the game folder itself (no subfolder) |
+| Config File Mods | a config file such as `engine.ini` or `game.ini` | - |
 | Save Game Files | a `.sav` or `.yaml` file | - |
 | Fallback Installer | anything unrecognised with no pak file | `OakGame\Binaries\Win64` |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+
+## Pysdk
+
+Recognised when the archive contains a file or folder named one of: `unrealsdk.dll` and a file or folder named one of: `sdk_mods`.
+
+Installs to: the game folder itself (no subfolder)
 
 ## Combo Mods (pak + UE4SS script/DLL together)
 
@@ -56,18 +62,6 @@ Installs to: `OakGame`
 - Including only one of `Content` or `Binaries` - the archive then falls through to a different installer.
 - Adding an extra wrapper folder between `Binaries` and `Win64`.
 
-## Pysdk
-
-Recognised when the archive contains a file or folder named `unrealsdk.dll` and a file or folder named `sdk_mods`.
-
-Installs to: the game folder itself (no subfolder)
-
-## Pysdkmod
-
-Recognised when the archive contains a file with one of these extensions: `.py` or `.sdkmod`.
-
-Installs to: `sdk_mods`
-
 ## Blueprint Mods (LogicMods)
 
 Blueprint mods built against UE4SS must sit inside a folder named `LogicMods`. This is the single most common packaging mistake for Unreal games.
@@ -93,9 +87,15 @@ Installs to: `OakGame\Content\Paks\LogicMods\LogicMods`
 - Putting the `.pak` at the top level of the archive with no `LogicMods` folder. Vortex then treats it as an ordinary pak mod, installs it to the wrong place, and the blueprint mod never loads.
 - Renaming the folder (`Logic_Mods`, `logicmod`, `BPMods`) - the name must be exactly `LogicMods`.
 
+## Pysdkmod
+
+Recognised when the archive contains a file with one of these extensions: `.py` or `.sdkmod`.
+
+Installs to: `sdk_mods`
+
 ## Pak Mods
 
-Standard content mods: one or more `.pak` files. Vortex installs the mod files themselves, so the folder structure around them in the archive does not matter.
+Standard content mods: one or more `.pak` files. Vortex copies just the pak files themselves, flattened, so the folder structure around them does not matter.
 
 ```text
 MyPakMod.zip
@@ -104,15 +104,16 @@ MyPakMod.zip
 
 **Requirements:**
 
-- Recognised by any file with the `.pak` extension.
-- Surrounding folders are discarded - only the mod files are installed.
-- If the archive holds several mod files, Vortex asks the user which to install, which is useful for shipping optional variants in one download.
+- Any archive containing a `.pak` file reaches this installer (unless an earlier one claimed it).
+- Only the pak files are installed - surrounding folders are discarded.
+- If the archive holds more than one pak, Vortex asks the user which to install - useful for optional variants.
 
-Installs to: `OakGame\Content\Paks`
+Installs to: `OakGame\Content\Paks\~mods`
 
 **Common mistakes:**
 
 - Shipping several unrelated paks in one archive when you meant them all to install - the user gets a choice dialog and may pick only one.
+- Blueprint mods belong in a `LogicMods` folder instead - see above.
 
 ## UE4SS Itself
 
@@ -121,6 +122,7 @@ This installer handles the UE4SS runtime package, not individual mods. Most auth
 **Requirements:**
 
 - Recognised by a file named `dwmapi.dll` at any level of the archive.
+- Also recognised by any of the UE4SS support folders: `MapGenBP`, `MemberVarLayoutTemplates`, `UE4SS_Signatures` or `VTableLayoutTemplates`.
 
 Installs to: `OakGame\Binaries\Win64`
 
@@ -174,6 +176,12 @@ Installs to: `OakGame\Binaries\Win64\ue4ss\Mods`
 
 - A bare `.dll` with no `dlls` folder is not recognised as a UE4SS DLL mod and will reach the fallback installer.
 
+## Contentfolder
+
+Recognised when the archive contains a file or folder named one of: `Content`.
+
+Installs to: `OakGame`
+
 ## Root / Game Folder Mods
 
 For mods that replace or add files inside the game installation, laid out the same way they appear in the game folder.
@@ -186,7 +194,7 @@ MyRootMod.zip
 
 **Requirements:**
 
-- Recognised by a top-level folder matching any of: `OakGame`.
+- Recognised by a top-level folder matching any of: `OakGame`, `Engine`, `Content`, `Binaries`, `Mods`, `Paks` or `Movies`.
 - The matched folder and everything below it is copied into the game folder, preserving structure.
 
 Installs to: the game folder itself (no subfolder)
@@ -195,12 +203,6 @@ Installs to: the game folder itself (no subfolder)
 
 - Zipping the folder that CONTAINS the game folders instead of the game folders themselves adds an extra level and misplaces every file.
 
-## Contentfolder
-
-Recognised when the archive contains a file or folder named `Content`.
-
-Installs to: `OakGame`
-
 ## Config File Mods
 
 Config tweaks are deployed to the game's config folder in your user profile, not into the game installation.
@@ -208,9 +210,6 @@ Config tweaks are deployed to the game's config folder in your user profile, not
 **Requirements:**
 
 - Recognised by any of these filenames in the archive: `engine.ini`, `game.ini`, `gameusersettings.ini`, `input.ini`, `scalability.ini`, `hardware.ini`, `deviceprofiles.ini`, `compat.ini`, `runtimeoptions.ini`, `gameplaytags.ini`, `enhancedinput.ini` or `consolevariables.ini`.
-- Installed to `DOCUMENTS\My Games\Borderlands 4\Saved\Config\Windows`.
-
-Installs to: `DOCUMENTS\My Games\Borderlands 4\Saved\Config\Windows`
 
 **Common mistakes:**
 

@@ -14,6 +14,7 @@
 | --- | --- |
 | Game ID | `reddeadredemption` |
 | Executable | `RDR.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
 | Extension Page | [https://www.nexusmods.com/site/mods/1079](https://www.nexusmods.com/site/mods/1079) |
 | PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Red_Dead_Redemption](https://www.pcgamingwiki.com/wiki/Red_Dead_Redemption) |
 
@@ -21,6 +22,13 @@
 
 - **Steam** — `2668510`
 - **Epic Games Store** — `c180bd9859624278aa20f1333918498a`
+- **Xbox / Microsoft Store** — `RockstarGamesInc.KalonPC`
+
+## Feature Flags
+
+| Flag | Value | Description |
+| --- | --- | --- |
+| `hasXbox` | `false` | toggle for Xbox version logic |
 
 ## Mod Types
 
@@ -72,4 +80,6 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
+- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.

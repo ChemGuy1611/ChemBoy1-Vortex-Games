@@ -2,8 +2,8 @@
 Name: Borderlands 3 Vortex Extension
 Structure: UE4 Game (Custom)
 Author: ChemBoy1
-Version: 0.4.3
-Date: 2026-09-08
+Version: 0.4.4
+Date: 2026-10-02
 /////////////////////////////////////////*/
 
 //Import libraries
@@ -12,6 +12,7 @@ const fsp = fs.promises;
 const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
+const { parseStringPromise } = require("xml2js");
 //const winapi = require('winapi-bindings');
 const {
   download,
@@ -30,15 +31,25 @@ const DOCUMENTS = util.getVortexPath("documents");
 const GAME_ID = "borderlands3";
 const STEAMAPP_ID = "397540";
 const EPICAPP_ID = "Catnip";
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const XBOXAPP_ID = "2K-Gearbox.Borderlands3WindowsPC"; //Microsoft Store Edition, resolved via MS Store catalog - verify against a live install
+const XBOXEXECNAME = "App2KGearboxBorderlands3WindowsPCShipping"; // resolved via MS Store catalog - verify against a live install
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "Borderlands 3";
 const GAME_NAME_SHORT = "Borderlands 3";
 const EPIC_CODE_NAME = "OakGame";
 
 const ROOT_FOLDERS = [EPIC_CODE_NAME, "Engine"];
-const BINARIES_PATH = path.join(EPIC_CODE_NAME, "Binaries", "Win64");
+const EXEC_FOLDER_DEFAULT = "Win64"; //PC builds (Steam, Epic)
+const EXEC_FOLDER_XBOX = "WinGDK"; //Xbox / Microsoft Store build
+let BINARIES_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_DEFAULT); //reset for the Xbox build in getExecutable
 const EXEC = path.join(BINARIES_PATH, "Borderlands3.exe");
+const EXEC_XBOX = "gamelaunchhelper.exe";
+const APPMANIFEST_FILE = "appxmanifest.xml";
 const DATA_FOLDER = "Borderlands 3";
+
+//feature toggles
+let hasXbox = false; //toggle for Xbox version logic
+if (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) hasXbox = true;
 
 let GAME_PATH = ""; //patched in the setup function to the discovered game path
 let GAME_VERSION = ""; //Game version
@@ -49,7 +60,7 @@ let DOWNLOAD_FOLDER = ""; //Vortex download folder path
 const MERGER_ID = `${GAME_ID}-openhotfixloader`;
 const MERGER_NAME = "OpenHotfixLoader";
 const MERGER_EXEC = "b3hm.exe"; //legacy merger exe (not used)
-const MERGER_PATH = path.join(BINARIES_PATH, "Plugins");
+let MERGER_PATH = path.join(BINARIES_PATH, "Plugins");
 const MERGER_EXEC_PATH = path.join(MERGER_PATH, MERGER_EXEC);
 //const MERGER_DLL = "b3hm.dll";
 const MERGER_DLL = "openhotfixloader.dll";
@@ -60,12 +71,12 @@ const MERGER_URL_API = `https://api.github.com/repos/apple1417/OpenHotfixLoader`
 const PLUGINLOADER_ID = `${GAME_ID}-pluginloader`; //not used
 const PLUGINLOADER_NAME = "Plugin Loader";
 const PLUGINLOADER_FILE = "d3d11.dll";
-const PLUGINLOADER_PATH = BINARIES_PATH; //installer only - not auto-downloaded
+let PLUGINLOADER_PATH = BINARIES_PATH; //installer only - not auto-downloaded
 
 const HOTFIX_ID = `${GAME_ID}-hotfix`;
 const HOTFIX_NAME = "Hotfix Mod";
 const HOTFIX_EXT = ".bl3hotfix";
-const HOTFIX_PATH = path.join(MERGER_PATH, "ohl-mods");
+let HOTFIX_PATH = path.join(MERGER_PATH, "ohl-mods");
 
 const SDK_ID = `${GAME_ID}-sdk`;
 const SDK_NAME = "Python SDK";
@@ -153,8 +164,10 @@ const SAVEEDITOR_ID = `${GAME_ID}-saveeditor`;
 const SAVEEDITOR_NAME = "Save Editor";
 const SAVEEDITOR_EXEC = "BL3SaveEditor.exe";
 const SAVEEDITOR_EXEC_PATH = path.join(BINARIES_PATH, SAVEEDITOR_EXEC);
+const SAVEEDITOR_EXEC_PATH_XBOX = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_XBOX, SAVEEDITOR_EXEC);
 
-const REQ_FILE = EXEC;
+//The Xbox version launches through a different exe and its Binaries folder is unverified, so require the game's code folder that every version has instead of Borderlands3.exe
+const REQ_FILE = hasXbox ? EPIC_CODE_NAME : EXEC;
 let MODTYPE_FOLDERS = [SDKMOD_PATH, HOTFIX_PATH, PAK_PATH, MOVIES_PATH];
 
 const IGNORE_CONFLICTS = [
@@ -192,12 +205,14 @@ const spec = {
     details: {
       steamAppId: +STEAMAPP_ID,
       epicAppId: EPICAPP_ID,
+      xboxAppId: XBOXAPP_ID,
       ignoreConflicts: IGNORE_CONFLICTS,
       ignoreDeploy: IGNORE_DEPLOY,
     },
     environment: {
       SteamAPPId: STEAMAPP_ID,
       EpicAPPId: EPICAPP_ID,
+      XboxAPPId: XBOXAPP_ID,
     },
   },
   modTypes: [
@@ -214,34 +229,10 @@ const spec = {
       targetPath: path.join("{gamePath}", SDKMOD_PATH),
     },
     {
-      id: MERGER_ID,
-      name: MERGER_NAME,
-      priority: "low",
-      targetPath: path.join("{gamePath}", MERGER_PATH),
-    },
-    {
-      id: PLUGINLOADER_ID,
-      name: PLUGINLOADER_NAME,
-      priority: "low",
-      targetPath: path.join("{gamePath}", PLUGINLOADER_PATH),
-    },
-    {
-      id: HOTFIX_ID,
-      name: HOTFIX_NAME,
-      priority: "high",
-      targetPath: path.join("{gamePath}", HOTFIX_PATH),
-    },
-    {
       id: ROOT_ID,
       name: ROOT_NAME,
       priority: "high",
       targetPath: `{gamePath}`,
-    },
-    {
-      id: BINARIES_ID,
-      name: BINARIES_NAME,
-      priority: "high",
-      targetPath: path.join("{gamePath}", BINARIES_PATH),
     },
     {
       id: MOVIES_ID,
@@ -290,6 +281,18 @@ const tools = [
     //defaultPrimary: true,
     parameters: [],
   }, //*/
+  {
+    //Xbox build keeps its binaries in WinGDK; relative tools are found by their required file, so only the matching one shows
+    id: `${SAVEEDITOR_ID}-xbox`,
+    name: SAVEEDITOR_NAME,
+    logo: `saveeditor.png`,
+    executable: () => SAVEEDITOR_EXEC_PATH_XBOX,
+    requiredFiles: [SAVEEDITOR_EXEC_PATH_XBOX],
+    detach: true,
+    relative: true,
+    exclusive: false,
+    parameters: [],
+  },
   /*{
     id: MERGER_ID,
     name: MERGER_NAME,
@@ -351,7 +354,7 @@ async function getAllFiles(dirPath) {
 function modTypePriority(priority) {
   return {
     high: 25,
-    low: 75,
+    low: 50,
   }[priority];
 }
 
@@ -393,6 +396,15 @@ function makeFindGame(api, gameSpec) {
 
 //set launcher requirements
 async function requiresLauncher(gamePath, store) {
+  if (store === "xbox" && DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) {
+    return Promise.resolve({
+      launcher: "xbox",
+      addInfo: {
+        appId: XBOXAPP_ID,
+        parameters: [{ appExecName: XBOXEXECNAME }],
+      },
+    });
+  } //*/
   if (store === "epic" && DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID)) {
     return Promise.resolve({
       launcher: "epic",
@@ -415,6 +427,65 @@ async function requiresLauncher(gamePath, store) {
     });
   } //*/
   return Promise.resolve(undefined);
+}
+
+//Get correct executable for game version
+function getExecutable(discoveryPath) {
+  if (!hasXbox) {
+    return EXEC;
+  }
+  if (statCheckSync(discoveryPath, EXEC_XBOX)) {
+    setBinariesFolder(EXEC_FOLDER_XBOX);
+    return EXEC_XBOX;
+  }
+  if (statCheckSync(discoveryPath, EXEC)) {
+    setBinariesFolder(EXEC_FOLDER_DEFAULT);
+  }
+  return EXEC;
+}
+
+//Point every Binaries-relative path at the Win64 (PC) or WinGDK (Xbox) folder
+function setBinariesFolder(folder) {
+  BINARIES_PATH = path.join(EPIC_CODE_NAME, "Binaries", folder);
+  MERGER_PATH = path.join(BINARIES_PATH, "Plugins");
+  PLUGINLOADER_PATH = BINARIES_PATH;
+  HOTFIX_PATH = path.join(MERGER_PATH, "ohl-mods");
+  MODTYPE_FOLDERS = [SDKMOD_PATH, HOTFIX_PATH, PAK_PATH, MOVIES_PATH];
+}
+
+//Get correct game version
+async function setGameVersion(gamePath) {
+  GAME_VERSION = (await statCheckAsync(gamePath, EXEC_XBOX)) ? "xbox" : "default";
+  return GAME_VERSION;
+}
+
+//Resolve game version dynamically for different game versions
+async function resolveGameVersion(gamePath) {
+  GAME_VERSION = await setGameVersion(gamePath);
+  let version = "0.0.0";
+  if (GAME_VERSION === "xbox") {
+    // use appxmanifest.xml for Xbox version
+    try {
+      const appManifest = await fsp.readFile(path.join(gamePath, APPMANIFEST_FILE), "utf8");
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log("error", `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  } else {
+    // use exe
+    try {
+      const exeVersion = require("exe-version");
+      const EXEC = getExecutable(gamePath);
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC)); //can also use getFileVersion if this doesn't return the correct number (rare)
+      return Promise.resolve(version);
+    } catch (err) {
+      log("error", `Could not read executable file to get game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
 }
 
 const getDiscoveryPath = (api) => {
@@ -1007,6 +1078,9 @@ async function setup(discovery, api, gameSpec) {
   STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
   // ASYNC CODE //////////////////////////////////////////
+  if (hasXbox) {
+    GAME_VERSION = await setGameVersion(GAME_PATH);
+  }
   await vfs.ensureDirWritableAsync(path.join(GAME_PATH, MERGER_PATH));
   const requirementsInstalled = await checkForRequirements(api);
   if (!requirementsInstalled) {
@@ -1021,10 +1095,11 @@ function applyGame(context, gameSpec) {
   const game = {
     ...gameSpec.game,
     queryPath: makeFindGame(context.api, gameSpec),
+    executable: getExecutable,
     queryModPath: makeGetModPath(context.api, gameSpec),
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
-    executable: () => gameSpec.game.executable,
+    getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);
@@ -1049,6 +1124,76 @@ function applyGame(context, gameSpec) {
       { name: type.name },
     );
   });
+
+  //register mod types that live in the Binaries folder (Win64 or WinGDK, set in getExecutable) so their path is resolved when used
+  context.registerModType(
+    HOTFIX_ID,
+    35,
+    (gameId) => {
+      var _a;
+      return (
+        gameId === GAME_ID &&
+        !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+        _a === void 0
+          ? void 0
+          : _a.path)
+      );
+    },
+    (game) => pathPattern(context.api, game, path.join("{gamePath}", HOTFIX_PATH)),
+    () => Promise.resolve(false),
+    { name: HOTFIX_NAME },
+  );
+  context.registerModType(
+    BINARIES_ID,
+    40,
+    (gameId) => {
+      var _a;
+      return (
+        gameId === GAME_ID &&
+        !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+        _a === void 0
+          ? void 0
+          : _a.path)
+      );
+    },
+    (game) => pathPattern(context.api, game, path.join("{gamePath}", BINARIES_PATH)),
+    () => Promise.resolve(false),
+    { name: BINARIES_NAME },
+  );
+  context.registerModType(
+    MERGER_ID,
+    55,
+    (gameId) => {
+      var _a;
+      return (
+        gameId === GAME_ID &&
+        !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+        _a === void 0
+          ? void 0
+          : _a.path)
+      );
+    },
+    (game) => pathPattern(context.api, game, path.join("{gamePath}", MERGER_PATH)),
+    () => Promise.resolve(false),
+    { name: MERGER_NAME },
+  );
+  context.registerModType(
+    PLUGINLOADER_ID,
+    56,
+    (gameId) => {
+      var _a;
+      return (
+        gameId === GAME_ID &&
+        !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+        _a === void 0
+          ? void 0
+          : _a.path)
+      );
+    },
+    (game) => pathPattern(context.api, game, path.join("{gamePath}", PLUGINLOADER_PATH)),
+    () => Promise.resolve(false),
+    { name: PLUGINLOADER_NAME },
+  );
 
   //register mod installers
   context.registerInstaller(MERGER_ID, 25, testHotfixMerger, installHotfixMerger);

@@ -1,6 +1,6 @@
 /**
  * lint_extensions.js
- * Runs ESLint on every game-[*]/index.js in this repo and reports results.
+ * Runs oxlint on every game-[*]/index.js in this repo and reports results.
  * Always writes lint_results.txt to the repo root with the full output.
  *
  * Usage:
@@ -14,7 +14,7 @@
  *
  * Flags:
  *   GAME_ID [GAME_ID ...]  Only lint the listed game IDs.
- *   --fix                  Auto-fix ESLint issues where possible.
+ *   --fix                  Auto-fix oxlint issues where possible.
  *   --templates            Also include template-[*]/index.js files.
  *   --quiet                Suppress output for passing files.
  *   --json                 Write machine-readable JSON to stdout instead of human-readable text.
@@ -134,7 +134,7 @@ if (doChanged) {
 const label = doFix ? "Fixing" : "Linting";
 const timestamp = new Date().toISOString();
 
-emit(`ESLint Results -- ${timestamp}`);
+emit(`oxlint Results -- ${timestamp}`);
 emit("=".repeat(60));
 emit();
 emit(`${label} ${targetDirs.length} extension(s)...`);
@@ -164,9 +164,9 @@ if (targetFiles.length === 0) {
   process.exit(1);
 }
 
-// ── run eslint (chunked to stay under Windows CreateProcess 32767-char limit) ──
+// ── run oxlint (chunked to stay under the cmd.exe 8191-char limit; npx.cmd runs via shell) ──
 
-const WIN_CMD_LIMIT = 32000;
+const WIN_CMD_LIMIT = 7000;
 
 let passed = 0;
 let failed = 0;
@@ -176,7 +176,7 @@ const failedIds = [];
 const jsonResults = [];
 
 if (targetFiles.length > 0) {
-  const baseArgs = ["eslint", "--format", "json"];
+  const baseArgs = ["--no-install", "oxlint", "--format", "json"];
   if (doFix) baseArgs.push("--fix");
 
   // Split into batches so no single invocation exceeds the Windows limit
@@ -184,7 +184,7 @@ if (targetFiles.length > 0) {
   if (isWin) {
     let batchLen = 0;
     for (const f of targetFiles) {
-      const argLen = f.indexPath.length + 1;
+      const argLen = f.relPath.length + 1;
       if (batches[batches.length - 1].length > 0 && batchLen + argLen > WIN_CMD_LIMIT) {
         batches.push([]);
         batchLen = 0;
@@ -199,37 +199,56 @@ if (targetFiles.length > 0) {
   const byPath = new Map();
   for (const batch of batches) {
     if (batch.length === 0) continue;
-    const eslintArgs = [...baseArgs];
-    for (const { indexPath } of batch) {
-      eslintArgs.push(indexPath);
+    const oxlintArgs = [...baseArgs];
+    for (const { relPath } of batch) {
+      oxlintArgs.push(relPath);
     }
-    const result = spawnSync(npxCmd, eslintArgs, {
+    const result = spawnSync(npxCmd, oxlintArgs, {
       cwd: ROOT,
       encoding: "utf8",
       shell: isWin,
+      maxBuffer: 256 * 1024 * 1024,
     });
     if (result.error) {
-      const errMsg = `ESLint spawn failed: ${result.error.message}`;
+      const errMsg = `oxlint spawn failed: ${result.error.message}`;
       emit(errMsg);
       writeResultsAtomic(lines.join("\n") + "\n");
       process.exit(2);
     }
-    let eslintData = [];
+    let oxlintData;
     try {
-      eslintData = JSON.parse(result.stdout || "[]");
+      oxlintData = JSON.parse(result.stdout);
     } catch {
-      const errMsg = `ESLint error: ${(result.stderr || result.stdout || "").trim()}`;
+      const errMsg = `oxlint error: ${(result.stderr || result.stdout || "").trim()}`;
       emit(errMsg);
       writeResultsAtomic(lines.join("\n") + "\n");
       process.exit(2);
     }
-    for (const entry of eslintData) {
-      byPath.set(path.normalize(entry.filePath), entry);
+    // oxlint lists diagnostics flat; regroup per file into the ESLint-style entry shape
+    // (errorCount, warningCount, messages[{ line, column, severity 1|2, message, ruleId }]).
+    for (const d of oxlintData.diagnostics) {
+      const key = path.normalize(d.filename);
+      let entry = byPath.get(key);
+      if (!entry) {
+        entry = { errorCount: 0, warningCount: 0, messages: [] };
+        byPath.set(key, entry);
+      }
+      const isError = d.severity === "error";
+      if (isError) entry.errorCount++;
+      else entry.warningCount++;
+      const span = d.labels && d.labels[0] && d.labels[0].span;
+      entry.messages.push({
+        ruleId: d.code ? d.code.replace(/^[^(]+\((.*)\)$/, "$1") : null,
+        severity: isError ? 2 : 1,
+        message: d.message,
+        line: span ? span.line : 0,
+        column: span ? span.column : 0,
+      });
     }
   }
 
-  for (const { dirName, indexPath, relPath } of targetFiles) {
-    const entry = byPath.get(path.normalize(indexPath));
+  for (const { dirName, relPath } of targetFiles) {
+    const entry = byPath.get(path.normalize(relPath));
     const errCount = entry ? entry.errorCount : 0;
     const warnCount = entry ? entry.warningCount : 0;
     const ok = errCount === 0;

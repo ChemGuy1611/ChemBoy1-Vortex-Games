@@ -4,6 +4,10 @@
 
 - None
 
+## [1.0.3] - 2026-10-02
+
+- Added support for the Xbox / Microsoft Store version of the game.
+
 ## [1.0.2] - 2026-09-27
 
 - Game version now shows the real game build instead of the Unreal engine version.

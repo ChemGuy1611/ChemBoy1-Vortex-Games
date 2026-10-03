@@ -5,7 +5,10 @@ Bump the version of one or more Vortex game or helper extensions.
 Updates info.json, the index.js header comment, and prepends a new section
 to CHANGELOG.md -- unless a ## [NEW_VERSION] section is already present, in
 which case it warns and leaves that section alone instead of stacking an
-empty stub over it.
+empty stub over it. After bumping it lists any open "Planned Improvements
+(Not Yet Released)" bullets as a hint; it never moves them (only items actually
+done this round belong in the new section). release_extension.py refuses a
+version whose section is still an empty stub.
 
 Each EXT_ID is looked up as a game-<id> folder first, then a helper-<id>
 folder (e.g. "falloutlondon" bumps helper-falloutlondon).
@@ -88,6 +91,16 @@ def _process(folder: str, game_id: str, bump_type: str | None, dry_run: bool,
             vu.write_index_js(folder, new_src)
 
     vu.prepend_changelog_entry(folder, new_ver, today)
+
+    # Hint only: moving a bullet is a human call (it must actually have shipped).
+    planned = vu.open_planned_improvements(folder)
+    if planned:
+        vu.log_info(game_id, f"[{new_ver}] stub needs note text; {len(planned)} open Planned "
+                             f"Improvements - move ONLY the ones done this round:")
+        for line in planned:
+            print(f"    {line}")
+    else:
+        vu.log_info(game_id, f"[{new_ver}] stub needs note text before release_extension.py will accept it")
 
     if open_changelog:
         changelog_path = os.path.join(folder, "CHANGELOG.md")

@@ -18,8 +18,9 @@ const GAME_ID = "mandragorawhispersofthewitchtree";
 const STEAMAPP_ID = "1721060";
 const EPICAPP_ID = "ed2feac9c1de4248a6d297959d1da411";
 const GOGAPP_ID = "1716387415";
-const XBOXAPP_ID = null;
-const XBOXEXECNAME = null;
+const XBOXAPP_ID = "My.comNetherlands.Mandragora"; //resolved via MS Store catalog
+const XBOXEXECNAME = "AppMandragoraShipping"; // resolved via MS Store catalog - verify against a live install
+const XBOX_PUB_ID = "s4dj5qbx037em"; // resolved via MS Store catalog - verify against a live install
 const GAME_NAME = "Mandragora: Whispers of the Witch Tree";
 const GAME_NAME_SHORT = "Mandragora WotWT";
 const EXEC = "man.exe";
@@ -188,6 +189,7 @@ const spec = {
       epicAppId: EPICAPP_ID,
       steamAppId: +STEAMAPP_ID,
       gogAppId: GOGAPP_ID,
+      xboxAppId: XBOXAPP_ID,
       supportsSymlinks: SYM_LINKS,
       ignoreConflicts: IGNORE_CONFLICTS,
       ignoreDeploy: IGNORE_DEPLOY,
@@ -196,6 +198,7 @@ const spec = {
       EpicAPPId: EPICAPP_ID,
       SteamAPPId: STEAMAPP_ID,
       GogAPPId: GOGAPP_ID,
+      XboxAPPId: XBOXAPP_ID,
     },
   },
   modTypes: [
@@ -255,7 +258,7 @@ const spec = {
     },
   ],
   discovery: {
-    ids: [STEAMAPP_ID, GOGAPP_ID, EPICAPP_ID],
+    ids: [STEAMAPP_ID, GOGAPP_ID, EPICAPP_ID, XBOXAPP_ID],
     names: [],
   },
 };
@@ -354,14 +357,14 @@ function makeFindGame(api, gameSpec) {
 }
 
 async function requiresLauncher(gamePath, store) {
-  /*if (store === 'xbox') {
-      return Promise.resolve({
-          launcher: 'xbox',
-          addInfo: {
-              appId: XBOXAPP_ID,
-              parameters: [{ appExecName: XBOXEXECNAME }],
-          },
-      });
+  if (store === "xbox") {
+    return Promise.resolve({
+      launcher: "xbox",
+      addInfo: {
+        appId: XBOXAPP_ID,
+        parameters: [{ appExecName: XBOXEXECNAME }],
+      },
+    });
   } //*/
   if (store === "epic") {
     return Promise.resolve({

@@ -148,6 +148,7 @@ SPEC_KNOWN_PATHS = {
     "/mod-file-versions/{id}/dependencies/dlc",
     "/mod-file-versions/{id}/dependencies/ranges",
     "/mod-file-versions/{id}/dependencies/ranges/materialized",
+    "/mod-file-versions/{id}/quarantine",
     "/mod-files",
     "/mod-files/{id}",
     "/mod-files/{id}/versions",

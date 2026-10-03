@@ -319,7 +319,7 @@ await new Promise((resolve, reject) => {
   not degraded — but it fails loudly. Native `fs` has no `ensureDirWritableAsync` / `statAsync` /
   `readdirAsync` / `ensureFileAsync` / `removeAsync`, so a missed call site throws
   `TypeError: fs.X is not a function` on first run rather than misbehaving silently.
-- `migrate_fs.py` at the repo root applies the mapping above; `eslint.config.js` carries a
+- The mapping above was applied repo-wide by a one-off script; `.oxlintrc.json` carries a
   `no-restricted-properties` block that flags the 17 migrated names on `vfs`.
 - Both `removeAsync` and `unlinkAsync` tolerate a missing path, so `fsp.rm(p, { force: true })`
   (plus `recursive: true` for a tree) matches either on the `ENOENT` axis. Code wrapping them in a

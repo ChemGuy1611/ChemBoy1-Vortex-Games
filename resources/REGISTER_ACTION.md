@@ -30,6 +30,7 @@ context.registerAction(
 | `isClassicOnly` | `boolean`                   | Visible only in classic layout                                                                                                                    |
 | `isModernOnly`  | `boolean`                   | Visible only in modern layout                                                                                                                     |
 | `notice`        | `() => string \| undefined` | Extra text read on render, shown bracketed after the title. Since Vortex 2.7.0-beta.1.                                                            |
+| `brand`         | `() => IButtonBrand \| undefined` | Colour the action asks for, read on render so it can follow state (Vortex colours Manage Rules this way while conflicts wait). Since Vortex 2.8.0-beta.1.                 |
 | `pinned`        | `boolean`                   | Action stays on a pinning-aware toolbar until the user removes it; toolbars without pinning ignore it. Since Vortex 2.7.0-beta.1.                 |
 
 ---

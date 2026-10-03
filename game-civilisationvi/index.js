@@ -2,8 +2,8 @@
 Name: Civilization VI Vortex Extension
 Structure: User Folder Mod Location
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2026-08-03
+Version: 0.2.1
+Date: 2026-10-02
 /////////////////////////////////////////////////////*/
 
 //import libraries
@@ -12,16 +12,24 @@ const fsp = fs.promises;
 const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
+const { parseStringPromise } = require("xml2js");
 //const winapi = require('winapi-bindings'); //gives access to the Windows registry
 
 //Specify all the information about the game
 const STEAMAPP_ID = "289070";
 const EPICAPP_ID = "Kinglet";
-const XBOXAPP_ID = null;
-const XBOXEXECNAME = null;
+const XBOXAPP_ID = "79ACB67D.CivilizationVIPC"; //Microsoft Store Edition, resolved via MS Store catalog - verify against a live install
+const XBOXEXECNAME = "CivilizationVI"; // resolved via MS Store catalog - verify against a live install
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_ID = "civilisationvi";
 const EXEC = path.join("Base", "Binaries", "Win64Steam", "CivilizationVI.exe");
 const EXEC_EPIC = path.join("Base", "Binaries", "Win64EOS", "CivilizationVI.exe");
+const EXEC_XBOX = "gamelaunchhelper.exe";
+const APPMANIFEST_FILE = "appxmanifest.xml";
+
+//feature toggles
+let hasXbox = false; //toggle for Xbox version logic
+if (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) hasXbox = true;
 const GAME_NAME = "Sid Meier's Civilization VI";
 const GAME_NAME_SHORT = "Civ VI";
 let GAME_PATH = "";
@@ -98,11 +106,7 @@ const spec = {
     },
   ],
   discovery: {
-    ids: [
-      STEAMAPP_ID,
-      EPICAPP_ID,
-      //XBOXAPP_ID,
-    ],
+    ids: DISCOVERY_IDS_ACTIVE,
     names: [],
   },
 };
@@ -206,9 +210,9 @@ function makeFindGame(api, gameSpec) {
 }
 
 async function requiresLauncher(gamePath, store) {
-  /*if (store === 'xbox') {
+  if (store === "xbox" && DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) {
     return Promise.resolve({
-      launcher: 'xbox',
+      launcher: "xbox",
       addInfo: {
         appId: XBOXAPP_ID,
         parameters: [{ appExecName: XBOXEXECNAME }],
@@ -237,6 +241,11 @@ function getExecutable(api) {
       return false;
     }
   };
+  if (hasXbox && isCorrectExec(EXEC_XBOX)) {
+    GAME_VERSION = "xbox";
+    MOD_PATH = MOD_PATH_STEAM; //Xbox user data folder is unverified, assumed to match Steam (same fallback as getModPath)
+    return EXEC_XBOX;
+  }
   if (isCorrectExec(EXEC)) {
     GAME_VERSION = "steam";
     MOD_PATH = MOD_PATH_STEAM;
@@ -272,6 +281,34 @@ function getModPath(api) {
     return MOD_PATH;
   }
   return MOD_PATH_STEAM;
+}
+
+//Resolve game version dynamically for different game versions
+async function resolveGameVersion(gamePath) {
+  let version = "0.0.0";
+  if (hasXbox && (await statCheckAsync(gamePath, EXEC_XBOX))) {
+    // use appxmanifest.xml for Xbox version
+    try {
+      const appManifest = await fsp.readFile(path.join(gamePath, APPMANIFEST_FILE), "utf8");
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log("error", `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  } else {
+    // use exe
+    try {
+      const exeVersion = require("exe-version");
+      const exec = (await statCheckAsync(gamePath, EXEC)) ? EXEC : EXEC_EPIC;
+      version = exeVersion.getProductVersion(path.join(gamePath, exec)); //can also use getFileVersion if this doesn't return the correct number (rare)
+      return Promise.resolve(version);
+    } catch (err) {
+      log("error", `Could not read executable file to get game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
 }
 
 const getDiscoveryPath = (api) => {
@@ -413,6 +450,7 @@ function applyGame(context, gameSpec) {
     queryModPath: () => getModPath(context.api),
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
+    getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);

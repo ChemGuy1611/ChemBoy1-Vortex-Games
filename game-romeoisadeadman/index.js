@@ -2,8 +2,8 @@
 Name: ROMEO IS A DEAD MAN Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-02-16
+Version: 0.1.1
+Date: 2026-10-02
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -31,10 +31,10 @@ const STEAMAPP_ID = "3050900"; //from steamdb.info
 const STEAMAPP_ID_DEMO = null; //VERIFY if the EPIC_CODE_NAME and EXEC_DEMO match Steam full game
 const EPICAPP_ID = null; //from egdata.app
 const GOGAPP_ID = null; // from gogdb.org
-const XBOXAPP_ID = ""; //NOT ON GAME PASS - cannot get data
-const XBOXEXECNAME = "AppUEGameShipping"; //from appxmanifest.xml
-const XBOX_PUB_ID = ""; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const XBOXAPP_ID = "NetEaseGamesGlobal.RomeoisaDeadMan"; //resolved via MS Store catalog
+const XBOXEXECNAME = "AppROMEOISADEADMANShipping"; // resolved via MS Store catalog - verify against a live install
+const XBOX_PUB_ID = "hfc15bhpepnfj"; // resolved via MS Store catalog - verify against a live install
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const GAME_NAME = "ROMEO IS A DEAD MAN";
 const GAME_NAME_SHORT = "ROMEO IADM"; //Try for 8-10 characters
@@ -49,7 +49,7 @@ const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1693"; //Nexus link to this extension. Used for links
 
 //feature toggles
-const hasXbox = true; //NOT ON GAME PASS
+const hasXbox = true; //toggle for Xbox version logic.
 let multiExe = false; //toggle for multiple executables (Epic/GOG/Demo don't match Steam)
 if (EXEC !== EXEC_EPIC || EXEC !== EXEC_GOG || EXEC !== EXEC_DEMO) {
   multiExe = true;

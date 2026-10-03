@@ -51,7 +51,8 @@
 | `FBLO` | `true` | set to false to use legacy load order page |
 | `ue4ssLoadOrder` | `true` | master toggle for UE4SS support: UE4SS/Scripts/DLL/LogicMods mod types and installers, UE4SS buttons, load order page, and mods.txt writing |
 | `logicModsLoadOrder` | `true` | enable load order page and load_order.txt writing for LogicMods/Blueprint pak mods |
-| `collectionsLoadOrder` | `true` | include UE4SS and LogicMods load orders in collections (ANDed with the toggles above) |
+| `jsonLoadOrder` | `true` | enable load order page for SZModLoader JSON mods (controls the JsonFiles.json "Default" order). Not tied to UE4SS |
+| `collectionsLoadOrder` | `true` | include UE4SS, LogicMods and JSON load orders in collections (ANDed with the toggles above) |
 | `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
 | `CHECK_CONFIG` | `false` | boolean to check if game, staging folder, and config and save folders are on the same drive |
 | `CHECK_SAVE` | `false` | secondary same as above (if save and config are in different locations) |

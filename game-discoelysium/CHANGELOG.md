@@ -2,6 +2,15 @@
 
 ## Planned Improvements (Not Yet Released)
 
+## [1.0.0] - 2026-10-01
+
+- Changed: BepInEx is now installed and managed by this extension instead of Vortex's built-in BepInEx support. Your installed BepInEx and mods are carried over automatically - no action needed.
+- BepInEx now checks for updates and notifies you when a newer bleeding edge build is available. It was previously fixed to a single build, and it is never updated without you choosing to.
+- Plugins that don't already ship their own folder are now installed into one of their own, so two mods with a same-named file no longer overwrite each other.
+- New installs: BepInExConfigManager is now offered through a notification instead of being installed automatically.
+- Added: "Download Latest MelonLoader" button. Only one mod loader can be installed at a time - if both are present, you'll be asked to choose which one to keep.
+- Thunderstore package files (manifest.json, icon.png) from newly installed mods are no longer copied into the shared mod loader folder, where they collided between mods.
+
 ## [0.2.1] - 2026-09-28
 
 - The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.

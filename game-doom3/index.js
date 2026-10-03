@@ -65,6 +65,7 @@ const GOGAPP_ID_BFG = "1135892318";
 const XBOXAPP_ID_BFG = "BethesdaSoftworks.Doom32004"; //the xbox release is the BFG Edition only, so the classic spec carries no xbox ID
 const XBOXEXECNAME_BFG = "Game";
 const EPICAPP_ID_BFG = "83e46676e06541d9a22d96ee852ad912"; //Epic lists one "DOOM 3" offer, which is the BFG Edition re-release
+//!audit-skip: store-id - EPICAPP_ID: the classic game is not on Epic, its only DOOM 3 offer is the BFG Edition (EPICAPP_ID_BFG)
 const GAME_NAME = "DOOM 3";
 const GAME_NAME_BFG = "DOOM 3: BFG Edition";
 const GAME_NAME_SHORT_BFG = "DOOM 3 BFG";

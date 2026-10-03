@@ -2,37 +2,73 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "ESLint: Lint All",
+      "label": "oxlint: Lint All",
       "type": "shell",
-      "command": "npx eslint .",
+      "command": "npx oxlint -f unix",
       "group": "test",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
       },
-      "problemMatcher": ["$eslint-stylish"]
+      "problemMatcher": {
+        "owner": "oxlint",
+        "fileLocation": ["relative", "${workspaceFolder}"],
+        "pattern": {
+          "regexp": "^(.+?):(\\d+):(\\d+): (.+) \\[(Error|Warning)(?:/(.+))?\\]$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "message": 4,
+          "severity": 5,
+          "code": 6
+        }
+      }
     },
     {
-      "label": "ESLint: Fix All",
+      "label": "oxlint: Fix All",
       "type": "shell",
-      "command": "npx eslint . --fix",
+      "command": "npx oxlint -f unix --fix",
       "group": "test",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
       },
-      "problemMatcher": ["$eslint-stylish"]
+      "problemMatcher": {
+        "owner": "oxlint",
+        "fileLocation": ["relative", "${workspaceFolder}"],
+        "pattern": {
+          "regexp": "^(.+?):(\\d+):(\\d+): (.+) \\[(Error|Warning)(?:/(.+))?\\]$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "message": 4,
+          "severity": 5,
+          "code": 6
+        }
+      }
     },
     {
-      "label": "ESLint: Lint Current File",
+      "label": "oxlint: Lint Current File",
       "type": "shell",
-      "command": "npx eslint ${file}",
+      "command": "npx oxlint -f unix \"${relativeFile}\"",
       "group": "test",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
       },
-      "problemMatcher": ["$eslint-stylish"]
+      "problemMatcher": {
+        "owner": "oxlint",
+        "fileLocation": ["relative", "${workspaceFolder}"],
+        "pattern": {
+          "regexp": "^(.+?):(\\d+):(\\d+): (.+) \\[(Error|Warning)(?:/(.+))?\\]$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "message": 4,
+          "severity": 5,
+          "code": 6
+        }
+      }
     }
   ]
 }

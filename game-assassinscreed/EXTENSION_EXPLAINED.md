@@ -20,6 +20,7 @@
 ## Supported Stores
 
 - **Steam** — `15100`
+- **Epic Games Store** — `0b9d1072cd674b8b91c8e25e9d695ed9`
 - **GOG** — `1207659023`
 - **Ubisoft Connect** — `Registry`
 
@@ -103,6 +104,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
+- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Symlinks Disabled** — hardlink or copy deployment is used instead of symlinks.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.

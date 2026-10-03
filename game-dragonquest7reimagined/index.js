@@ -2,8 +2,8 @@
 Name: DRAGON QUEST VII Reimagined Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
-Version: 0.1.1
-Date: 2026-02-03
+Version: 0.1.2
+Date: 2026-10-02
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -31,10 +31,10 @@ const STEAMAPP_ID = "2499860"; //from steamdb.info
 const STEAMAPP_ID_DEMO = null; //"2499870" cannot support demo since EPIC_CODE_NAME is different
 const EPICAPP_ID = null; //from egdata.app
 const GOGAPP_ID = null; // from gogdb.org
-const XBOXAPP_ID = null; //from appxmanifest.xml
-const XBOXEXECNAME = "AppUEGameShipping"; //from appxmanifest.xml
-const XBOX_PUB_ID = ""; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const XBOXAPP_ID = "39EA002F.DQ7"; //resolved via MS Store catalog
+const XBOXEXECNAME = "AppUE4GameShipping"; // resolved via MS Store catalog - verify against a live install
+const XBOX_PUB_ID = "n746a19ndrrjg"; // resolved via MS Store catalog - verify against a live install
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "DRAGON QUEST VII Reimagined";
 const GAME_NAME_SHORT = "DQ7 Reimagined"; //Try for 8-10 characters
 const EPIC_CODE_NAME = "DQ7R"; //Folder in root
@@ -49,7 +49,7 @@ const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1647"; //Nexus link to this extension. Used for links
 
 //feature toggles
-const hasXbox = false; //toggle for Xbox version logic.
+const hasXbox = true; //toggle for Xbox version logic.
 const multiExe = false; //toggle for multiple executables (Epic/GOG/Demo don't match Steam)
 const hasModKit = false; //toggle for UE ModKit mod support
 const preferHardlinks = true; //set true to perform partition check for Config/Save modtypes so that hardlinks available to more users

@@ -13,6 +13,7 @@
 | --- | --- |
 | Game ID | `alienisolation` |
 | Executable | `AI.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
 | Extension Page | [https://www.nexusmods.com/site/mods/968](https://www.nexusmods.com/site/mods/968) |
 | PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Alien_Isolation](https://www.pcgamingwiki.com/wiki/Alien_Isolation) |
 
@@ -21,6 +22,13 @@
 - **Steam** — `214490`
 - **Epic Games Store** — `8935bb3e1420443a9789fe01758039a5`
 - **GOG** — `1744178250`
+- **Xbox / Microsoft Store** — `7904SEGAEuropeLtd.AlienIsolation-Windows`
+
+## Feature Flags
+
+| Flag | Value | Description |
+| --- | --- | --- |
+| `hasXbox` | `false` | toggle for Xbox version logic |
 
 ## Mod Types
 
@@ -53,4 +61,6 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Special Features
 
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
+- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.

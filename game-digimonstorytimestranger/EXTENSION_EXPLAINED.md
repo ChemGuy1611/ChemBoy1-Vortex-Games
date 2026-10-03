@@ -22,6 +22,15 @@
 
 - **Steam** — `1984270`
 
+## Feature Flags
+
+| Flag | Value | Description |
+| --- | --- | --- |
+| `hasXbox` | `false` | toggle for Xbox version logic |
+| `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
+| `setupNotification` | `true` | enable to show the user a notification with special instructions (specify below) - default true: Reloaded-II Mod Manager setup instructions are always relevant |
+| `debug` | `false` | toggle for debug mode |
+
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
@@ -42,6 +51,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | `digimonstorytimestranger-reloadedmanager` | 25 |
 | `digimonstorytimestranger-reloadedmodloader` | 27 |
 | `digimonstorytimestranger-reloadedmod` | 29 |
+| `digimonstorytimestranger-fallback` | 49 |
 
 ## Toolbar Actions
 

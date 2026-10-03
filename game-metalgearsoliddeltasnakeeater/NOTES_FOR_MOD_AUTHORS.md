@@ -10,12 +10,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `MGSDelta` |
 | Blueprint Mods (LogicMods) | a `LogicMods` folder | `MGSDelta\Content\Paks\LogicMods\LogicMods` |
+| Pak Mods | a `.pak` file | `MGSDelta\Content\Paks\~mods` |
 | UE4SS Itself | a `dwmapi.dll` file | `MGSDelta\Binaries\Win64` |
 | UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `MGSDelta\Binaries\Win64\ue4ss\Mods` |
 | UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | `MGSDelta\Binaries\Win64\ue4ss\Mods` |
-| Pak Mods | a `.pak` file | `MGSDelta\Content\Paks\~mods` |
-| Root / Game Folder Mods | a top-level folder such as `MGSDelta` | the game folder itself (no subfolder) |
-| Config File Mods | a config file such as `engine.ini` or `game.ini` | `LOCALAPPDATA\MGSDelta\Saved\Config\Windows` |
+| Root / Game Folder Mods | a top-level folder such as `MGSDelta`, `Engine` or `Content` | the game folder itself (no subfolder) |
+| Config File Mods | a config file such as `engine.ini` or `game.ini` | - |
 | Save Game Files | a `.sav` file | - |
 | Fallback Installer | anything unrecognised with no pak file | `MGSDelta\Binaries\Win64` |
 
@@ -78,6 +78,28 @@ Installs to: `MGSDelta\Content\Paks\LogicMods\LogicMods`
 - Putting the `.pak` at the top level of the archive with no `LogicMods` folder. Vortex then treats it as an ordinary pak mod, installs it to the wrong place, and the blueprint mod never loads.
 - Renaming the folder (`Logic_Mods`, `logicmod`, `BPMods`) - the name must be exactly `LogicMods`.
 
+## Pak Mods
+
+Standard content mods: one or more `.pak` files. Vortex copies just the pak files themselves, flattened, so the folder structure around them does not matter.
+
+```text
+MyPakMod.zip
+└── MyPakMod.pak
+```
+
+**Requirements:**
+
+- Any archive containing a `.pak` file reaches this installer (unless an earlier one claimed it).
+- Only the pak files are installed - surrounding folders are discarded.
+- If the archive holds more than one pak, Vortex asks the user which to install - useful for optional variants.
+
+Installs to: `MGSDelta\Content\Paks\~mods`
+
+**Common mistakes:**
+
+- Shipping several unrelated paks in one archive when you meant them all to install - the user gets a choice dialog and may pick only one.
+- Blueprint mods belong in a `LogicMods` folder instead - see above.
+
 ## UE4SS Itself
 
 This installer handles the UE4SS runtime package, not individual mods. Most authors never need it - it exists so users can install UE4SS through Vortex.
@@ -85,6 +107,7 @@ This installer handles the UE4SS runtime package, not individual mods. Most auth
 **Requirements:**
 
 - Recognised by a file named `dwmapi.dll` at any level of the archive.
+- Also recognised by any of the UE4SS support folders: `MapGenBP`, `MemberVarLayoutTemplates`, `UE4SS_Signatures` or `VTableLayoutTemplates`.
 
 Installs to: `MGSDelta\Binaries\Win64`
 
@@ -138,27 +161,6 @@ Installs to: `MGSDelta\Binaries\Win64\ue4ss\Mods`
 
 - A bare `.dll` with no `dlls` folder is not recognised as a UE4SS DLL mod and will reach the fallback installer.
 
-## Pak Mods
-
-Standard content mods: one or more `.pak` files. Vortex installs the mod files themselves, so the folder structure around them in the archive does not matter.
-
-```text
-MyPakMod.zip
-└── MyPakMod.pak
-```
-
-**Requirements:**
-
-- Recognised by any file with the `.pak` extension.
-- Surrounding folders are discarded - only the mod files are installed.
-- If the archive holds several mod files, Vortex asks the user which to install, which is useful for shipping optional variants in one download.
-
-Installs to: `MGSDelta\Content\Paks\~mods`
-
-**Common mistakes:**
-
-- Shipping several unrelated paks in one archive when you meant them all to install - the user gets a choice dialog and may pick only one.
-
 ## Root / Game Folder Mods
 
 For mods that replace or add files inside the game installation, laid out the same way they appear in the game folder.
@@ -171,7 +173,7 @@ MyRootMod.zip
 
 **Requirements:**
 
-- Recognised by a top-level folder matching any of: `MGSDelta`.
+- Recognised by a top-level folder matching any of: `MGSDelta`, `Engine`, `Content`, `Binaries`, `Mods`, `Paks` or `Movies`.
 - The matched folder and everything below it is copied into the game folder, preserving structure.
 
 Installs to: the game folder itself (no subfolder)
@@ -187,9 +189,6 @@ Config tweaks are deployed to the game's config folder in your user profile, not
 **Requirements:**
 
 - Recognised by any of these filenames in the archive: `engine.ini`, `game.ini`, `gameusersettings.ini`, `input.ini`, `scalability.ini`, `hardware.ini`, `deviceprofiles.ini`, `compat.ini`, `runtimeoptions.ini`, `gameplaytags.ini`, `enhancedinput.ini` or `consolevariables.ini`.
-- Installed to `LOCALAPPDATA\MGSDelta\Saved\Config\Windows`.
-
-Installs to: `LOCALAPPDATA\MGSDelta\Saved\Config\Windows`
 
 **Common mistakes:**
 
@@ -226,5 +225,6 @@ Installs to: `MGSDelta\Binaries\Win64`
 
 ## Rules That Apply To Every Mod Type
 
+- Archives that contain a FOMOD installer (a `fomod` folder with `ModuleConfig.xml`) are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.

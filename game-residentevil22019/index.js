@@ -25,7 +25,7 @@ const GAME_ID = "residentevil22019";
 const STEAMAPP_ID = "883710"; // https://steamdb.info/app/883710/
 const STEAMAPP_ID_DEMO = "1168280"; // https://steamdb.info/app/1168280/
 const EPICAPP_ID = null;
-const GOGAPP_ID = null; // entry is classic version - https://www.gogdb.org/product/1534123252
+const GOGAPP_ID = null; //!audit-skip: store-id - gogdb entry is the classic version, not the 2019 remake - https://www.gogdb.org/product/1534123252
 const XBOXAPP_ID = "F024294D.GAMEResidentEvil2biohazard2";
 const XBOXEXECNAME = "re2";
 const XBOX_PUB_ID = "8fty0by30jkny"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
@@ -205,12 +205,14 @@ const spec = {
     },
     details: {
       steamAppId: +STEAMAPP_ID,
+      xboxAppId: XBOXAPP_ID,
       supportsSymlinks: allowSymlinks,
       ignoreDeploy: IGNORE_DEPLOY,
       ignoreConflicts: IGNORE_CONFLICTS,
     },
     environment: {
       SteamAPPId: STEAMAPP_ID,
+      XboxAPPId: XBOXAPP_ID,
     },
   },
   modTypes: [

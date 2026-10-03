@@ -21,6 +21,11 @@ administrator rights to hook the game process.
 
 **Installers:** `RELOADED` (manager) 25 → `RELOADEDMODLOADER` 27 → `RELOADEDMOD` 29 → fallback 49.
 
+**Writable folders.** `setup` calls `modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS)`, which joins
+each entry onto the game folder, so entries must be game-relative. A game whose save folder lives in
+Documents or AppData leaves it out of `MODTYPE_FOLDERS` (list the loader folder instead). The save mod
+type stays commented for those games, since its target needs the per-user id folder at load time.
+
 **Elevated launch.** `runReloadedAdmin` does not run `reloaded-ii.exe` directly. It calls
 `api.runExecutable` on Vortex's own bundled `elevate.exe`, passing the Reloaded-II path as the single
 argument, with `detached: true`. Anything that skips the elevator fails to hook the game.

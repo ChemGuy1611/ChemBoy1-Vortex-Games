@@ -2,8 +2,8 @@
 Name: Onimusha: Way of the Sword Vortex Extension
 Structure: Fluffy + REFramework (RE Engine)
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-09-06
+Version: 1.0.1
+Date: 2026-10-02
 Notes:
 -
 ///////////////////////////////////////////*/
@@ -206,12 +206,16 @@ const spec = {
     },
     details: {
       steamAppId: +STEAMAPP_ID,
+      epicAppId: EPICAPP_ID,
+      xboxAppId: XBOXAPP_ID,
       supportsSymlinks: allowSymlinks,
       ignoreDeploy: IGNORE_DEPLOY,
       ignoreConflicts: IGNORE_CONFLICTS,
     },
     environment: {
       SteamAPPId: STEAMAPP_ID,
+      EpicAPPId: EPICAPP_ID,
+      XboxAPPId: XBOXAPP_ID,
     },
   },
   modTypes: [

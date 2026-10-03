@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.1] - 2026-10-02
+
+- Added support for the Epic Games Store version of the game.
+
 ## [1.0.0] - 2026-09-29
 
 - Migrated to the updated Anvil template. Mods can now be installed as unpacked/extracted .forge and .data folders, with a rename prompt and automatic repacking via AnvilToolkit, or as loose .forge/.data file replacements.

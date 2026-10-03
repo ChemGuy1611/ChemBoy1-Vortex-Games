@@ -5,7 +5,7 @@
 | Property | Value |
 | --- | --- |
 | Name | Disco Elysium Vortex Extension |
-| Engine / Structure | Unity BepinEx |
+| Engine / Structure | Unity BepinEx/MelonLoader/Custom Loader Hybrid |
 | Author | ChemBoy1 |
 
 ## Key Identifiers
@@ -16,6 +16,7 @@
 | Executable | `disco.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `disco.exe` |
+| Executable (Demo) | `disco.exe` |
 | Extension Page | [https://www.nexusmods.com/site/mods/1643](https://www.nexusmods.com/site/mods/1643) |
 | PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Disco_Elysium](https://www.pcgamingwiki.com/wiki/Disco_Elysium) |
 
@@ -30,13 +31,30 @@
 
 | Flag | Value | Description |
 | --- | --- | --- |
-| `thunderstoreBrowser` | `true` | register the "Browse Thunderstore" page |
+| `isXna` | `false` | set to true if game is XNA engine |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
-| `multiExe` | `true` | set to true if there are multiple executables (e.g. for Xbox and PC) |
-| `allowBepinexNexus` | `false` | set false until bugs are fixed |
-| `downloadCfgMan` | `true` | should BepInExConfigManager be downloaded? |
-| `bleedingEdge` | `true` | set to true to download bleeding edge builds of BepInEx (IL2CPP only) |
+| `hasXbox` | `false` | toggle for Xbox version logic |
+| `multiExe` | `false` | set to true if there are multiple executables (typically for Xbox/EGS) |
+| `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
+| `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
+| `preventPluginInstall` | `true` | set to true if you want to prevent plugins not for the current mod loader from installing. Disable if using cross-compatibility plugins. |
+| `loaderSwitchRestart` | `false` | set to true if you need to restart the extension after switching mod loaders |
+| `enableSaveInstaller` | `false` | set to true if you want to enable the save installer (only recommended if saves are stored in the game's folder) |
+| `hasCustomMods` | `false` | set to true if there are modTypes with folder paths dependent on which mod loader is installed |
+| `hasCustomLoader` | `false` | set to true if there is a custom mod loader |
+| `customLoaderInstaller` | `false` | set true if the custom loader uses an installer |
+| `debug` | `false` | toggle for debug mode |
 | `exeHasGameVersion` | `false` | toggle: true if the game devs stamp the real game version (not just the Unity player version) into the exe ProductVersion |
+| `thunderstoreBrowser` | `true` | register the "Browse Thunderstore" page |
+| `hasVersionFile` | `false` | set to true if there is a Version.info file that contains the game version number |
+| `hasUserIdFolder` | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
+| `loaderChoice` | `false` | true if loader choice is enabled |
+| `allowBepCfgMan` | `true` | should BepInExConfigManager be downloaded (via notification)? |
+| `allowMelPrefMan` | `false` | should MelonPreferencesManager be downloaded (via notification)? disabled 2026-09-14 - plugin causes in-game errors when loaded |
+| `allowBepinexNexus` | `true` | allow Nexus Mods download of BepInEx/MelonLoader |
+| `allowMelonNexus` | `true` | allows MelonLoader to be downloaded from Nexus Mods |
+| `useMelonNightly` | `false` | use Nightly build of MelonLoader? |
+| `customInstalled` | `false` |  |
 
 ## Mod Types
 
@@ -44,9 +62,20 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| Root Game Folder | `discoelysium-root` | high | `{gamePath}` |
-| BepInEx Configuration Manager | `discoelysium-bepcfgman` | high | `{gamePath}/Bepinex` |
-| BepInEx Mod | `discoelysium-bepmods` | high | `{gamePath}/BepinEx/plugins` |
+| BepInEx Mod | `discoelysium-bepinexmod` | high | `{gamePath}/BepInEx` |
+| BepInEx Plugins | `discoelysium-bepinex-plugins` | high | `{gamePath}/BepInEx/plugins` |
+| BepInEx Patchers | `discoelysium-bepinex-patchers` | high | `{gamePath}/BepInEx/patchers` |
+| BepInEx Config | `discoelysium-bepinex-config` | high | `{gamePath}/BepInEx/config` |
+| BepInExConfigManager | `discoelysium-bepcfgman` | high | `{gamePath}/BepInEx` |
+| Root Folder | `discoelysium-root` | high | `{gamePath}` |
+| BepInEx Injector | `discoelysium-bepinex` | low | `{gamePath}` |
+| MelonLoader Mod | `discoelysium-melonmod` | high | `{gamePath}/.` |
+| MelonLoader Mods | `discoelysium-melonloader-mods` | high | `{gamePath}/Mods` |
+| MelonLoader Plugins | `discoelysium-melonloader-plugins` | high | `{gamePath}/Plugins` |
+| MelonLoader Config | `discoelysium-melonloader-config` | high | `{gamePath}/UserData` |
+| MelonLoader UserLibs | `discoelysium-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
+| MelonPreferencesManager | `discoelysium-melonprefman` | high | `{gamePath}/Mods` |
+| MelonLoader | `discoelysium-melonloader` | low | `{gamePath}` |
 | Assembly DLL Mod | `discoelysium-assemblydll` | 60 | `?` |
 | Assets/Resources File | `discoelysium-assets` | 62 | `?` |
 
@@ -56,45 +85,62 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `discoelysium-root` | 8 |
-| `discoelysium-bepcfgman` | 9 |
-| `discoelysium-assemblydll` | 25 |
-| `discoelysium-assets` | 27 |
+| `discoelysium-bepinex` | 26 |
+| `discoelysium-melonloader` | 27 |
+| `discoelysium-root` | 28 |
+| `discoelysium-bepcfgman` | 29 |
+| `discoelysium-melonprefman` | 30 |
+| `discoelysium-assemblydll` | 31 |
+| `discoelysium-plugin` | 33 |
+| `discoelysium-assets` | 37 |
+| `discoelysium-fallback` | 49 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
 - **Custom Launch** (`disco.exe`)
-- **Custom Launch** (`Disco Elysium.exe`)
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- Open BepInEx.cfg
+- Download Latest BepInEx BE
 - Download BepInExConfigManager
+- Download Latest MelonLoader
 - Open Data Folder
-- Open Config Folder
 - Open Save Folder
+- Open Config Folder
+- Open BepInEx Config
+- Open BepInEx Log
+- Open MelonLoader Config
+- Open MelonLoader Log
 - Open PCGamingWiki Page
 - Open SteamDB Page
 - View Changelog
-- Open Downloads Folder
 - Submit Bug Report
+- Open Downloads Folder
 
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
 | --- | --- | --- |
-| BepInEx | 6.0.0 | unityil2cpp, x64 |
+| BepInEx | 5.4.23.5 | il2cpp |
+
+## Config & Save Paths
+
+| Type | Path |
+| --- | --- |
+| Config (Registry) | `HKEY_CURRENT_USER\\Software\\ZAUM Studio\\Disco Elysium` |
 
 ## Special Features
 
+- **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
+- **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
+- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **GOG Support** — detects GOG version with adjusted executable/data paths.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-- **Required Extensions** — depends on: `modtype-bepinex`.

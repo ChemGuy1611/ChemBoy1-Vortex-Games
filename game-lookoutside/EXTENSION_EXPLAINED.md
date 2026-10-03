@@ -26,7 +26,7 @@
 
 | Flag | Value | Description |
 | --- | --- | --- |
-| `isPurging` | `false` | guards plugins.js writes during a purge cycle - see the will-purge/did-deploy listeners in main() |
+| `mod_update_all_profile` | `false` | for mod update to keep plugins in the load order and not uncheck them |
 
 ## Mod Types
 

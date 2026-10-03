@@ -5,7 +5,7 @@
 | Property | Value |
 | --- | --- |
 | Name | WUCHANG: Fallen Feathers Vortex Extension |
-| Engine / Structure | UE5 (Xbox-Integrated) |
+| Engine / Structure | Unreal Engine 4-5 Game |
 | Author | ChemBoy1 |
 
 ## Key Identifiers
@@ -15,6 +15,8 @@
 | Game ID | `wuchangfallenfeathers` |
 | Executable | `Project_Plague.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
+| Executable (GOG) | `Project_Plague.exe` |
+| Executable (Demo) | `Project_Plague.exe` |
 | Extension Page | [https://www.nexusmods.com/site/mods/1385](https://www.nexusmods.com/site/mods/1385) |
 | PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Wuchang%3A_Fallen_Feathers](https://www.pcgamingwiki.com/wiki/Wuchang%3A_Fallen_Feathers) |
 
@@ -28,9 +30,29 @@
 
 | Flag | Value | Description |
 | --- | --- | --- |
-| `CHECK_DATA` | `false` | true if game, staging, and save folders are all on the same drive (partition check) |
+| `hasXbox` | `false` | toggle for Xbox version logic. |
+| `multiExe` | `false` | toggle for multiple executables (Epic/GOG/Demo don't match Steam) |
+| `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
+| `hasModKit` | `false` | toggle for UE ModKit mod support |
+| `hasServer` | `false` | toggle for server pak mod logic |
+| `preferHardlinks` | `true` | set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users |
+| `autoDownloadUe4ss` | `false` | toggle for auto downloading UE4SS (only applies when ue4ssLoadOrder is enabled) |
+| `writeEngineVersion` | `false` | toggle to write ENGINE_VERSION into UE4SS-settings.ini (EngineVersionOverride) on deploy, when UE4SS is installed |
+| `SIGBYPASS_REQUIRED` | `true` | set true if there are .sig files in the Paks folder |
 | `IO_STORE` | `false` | true if the Paks folder contains .ucas and .utoc files |
+| `hasUserIdFolder` | `true` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
+| `debug` | `false` | toggle for debug mode |
+| `exeHasGameVersion` | `false` | toggle: true if the game devs stamp the real game version (not just the UE engine version) into the exe ProductVersion |
+| `PAKMOD_LOADORDER` | `true` | set to false if you don't want loadOrder. If must be in "Paks" root, disable loadOrder. |
+| `FBLO` | `true` | set to false to use legacy load order page |
+| `ue4ssLoadOrder` | `true` | master toggle for UE4SS support: UE4SS/Scripts/DLL/LogicMods mod types and installers, UE4SS buttons, load order page, and mods.txt writing |
+| `logicModsLoadOrder` | `true` | enable load order page and load_order.txt writing for LogicMods/Blueprint pak mods |
+| `collectionsLoadOrder` | `true` | include UE4SS and LogicMods load orders in collections (ANDed with the toggles above) |
 | `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
+| `CHECK_CONFIG` | `false` | boolean to check if game, staging folder, and config and save folders are on the same drive |
+| `CHECK_SAVE` | `false` | secondary same as above (if save and config are in different locations) |
+| `mod_update_all_profile` | `false` | for mod update to keep them in the load order and not uncheck them |
+| `updating_mod` | `false` | used to see if it's a mod update or not |
 
 ## Mod Types
 
@@ -40,17 +62,17 @@ Mod types define where each category of mod gets deployed:
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `wuchangfallenfeathers-ue4sscombo` | high | `{gamePath}` |
 | UE4SS LogicMods (Blueprint) | `wuchangfallenfeathers-logicmods` | high | `{gamePath}/Project_Plague/Content/Paks/LogicMods` |
-| Root Game Folder | `wuchangfallenfeathers-root` | high | `{gamePath}` |
+| Paks (no "~mods") | `wuchangfallenfeathers-pakalt` | high | `{gamePath}/Project_Plague/Content/Paks` |
+| Root Folder | `wuchangfallenfeathers-root` | high | `{gamePath}` |
 | Content Folder | `wuchangfallenfeathers-contentfolder` | high | `{gamePath}/Project_Plague` |
-| UE5 Paks (no "~mods") | `wuchangfallenfeathers-pakalt` | high | `{gamePath}/Project_Plague/Content/Paks` |
-| UE5 Sortable Mod | `wuchangfallenfeathers-ue5-sortable-modtype` | 25 | `?` |
+| UE Sortable Pak Mod | `wuchangfallenfeathers-ue5-sortable-modtype` | 25 | `?` |
 | UE4SS Script Mod | `wuchangfallenfeathers-scripts` | 50 | `?` |
 | UE4SS DLL Mod | `wuchangfallenfeathers-ue4ssdll` | 52 | `?` |
 | Binaries (Engine Injector) | `wuchangfallenfeathers-binaries` | 54 | `?` |
 | UE4SS | `wuchangfallenfeathers-ue4ss` | 56 | `?` |
 | Mod Enabler | `wuchangfallenfeathers-sigbypass` | 58 | `?` |
-| Config (LocalAppData) | `wuchangfallenfeathers-config` | 60 | `?` |
-| Saves (LocalAppData) | `wuchangfallenfeathers-save` | 62 | `?` |
+| Config (Local AppData) | `wuchangfallenfeathers-config` | 62 | `?` |
+| Saves (Local AppData) | `wuchangfallenfeathers-save` | 64 | `?` |
 
 ## Mod Installers
 
@@ -58,18 +80,18 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `ue5-pak-installer` | 29 |
-| `wuchangfallenfeathers-ue4sscombo` | 25 |
+| `wuchangfallenfeathers-ue4sscombo` | 26 |
 | `wuchangfallenfeathers-logicmods` | 27 |
+| `wuchangfallenfeathers-ue5-sortable-modtype` | 29 |
 | `wuchangfallenfeathers-ue4ss` | 31 |
-| `wuchangfallenfeathers-sigbypass` | 32 |
-| `wuchangfallenfeathers-scripts` | 33 |
-| `wuchangfallenfeathers-ue4ssdll` | 35 |
-| `wuchangfallenfeathers-root` | 37 |
-| `wuchangfallenfeathers-contentfolder` | 39 |
+| `wuchangfallenfeathers-sigbypass` | 33 |
+| `wuchangfallenfeathers-scripts` | 35 |
+| `wuchangfallenfeathers-ue4ssdll` | 37 |
+| `wuchangfallenfeathers-contentfolder` | 38 |
+| `wuchangfallenfeathers-root` | 39 |
 | `wuchangfallenfeathers-config` | 41 |
 | `wuchangfallenfeathers-save` | 43 |
-| `wuchangfallenfeathers-binaries` | 45 |
+| `wuchangfallenfeathers-binaries` | 49 |
 
 ## Toolbar Actions
 
@@ -78,14 +100,17 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open Paks Folder
 - Open Binaries Folder
 - Open UE4SS Mods Folder
+- Open LogicMods Folder
 - Open Config Folder
 - Open Saves Folder
 - Download UE4SS
-- View Changelog
-- Open Downloads Folder
+- Open UE4SS Settings INI
+- Open UE4SS mods.txt
 - Open PCGamingWiki Page
 - Open SteamDB Page
+- View Changelog
 - Submit Bug Report
+- Open Downloads Folder
 
 ## Auto-Downloaded Dependencies
 
@@ -95,10 +120,14 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 ## Special Features
 
+- **Load Order** — mods are assigned numbered folder names or sorted based on their position in the load order.
+- **UE4SS Load Order** — manages UE4SS script/DLL mod load order via a dedicated page; serializes order to `mods.txt` on deploy.
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
 - **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Signature Bypass** — .sig file bypass is required for pak mods.
+- **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.

@@ -2,8 +2,8 @@
 Name: Star Wars Outlaws Vortex Extension
 Structure: Snowdrop Mod Loader
 Author: ChemBoy1
-Version: 0.2.5
-Date: 2026-08-11
+Version: 0.3.0
+Date: 2026-10-01
 ////////////////////////////////////////////*/
 
 //Import libraries
@@ -52,6 +52,11 @@ const MODLOADER_NAME = "Snowdrop ModLoader";
 const MODLOADER_FILE = `version.dll`;
 const MODLOADER_PAGE_NO = 24;
 const MODLOADER_FILE_NO = 294;
+
+const PLUGINS_ID = `${GAME_ID}-plugins`;
+const PLUGINS_NAME = "ModLoader Plugin";
+const PLUGINS_PATH = "plugins";
+const PLUGINS_EXTS = [".dll", ".asi"];
 
 const MOD_PATH = ".";
 
@@ -117,6 +122,12 @@ const spec = {
       name: MODLOADER_NAME,
       priority: "low",
       targetPath: `{gamePath}`,
+    },
+    {
+      id: PLUGINS_ID,
+      name: PLUGINS_NAME,
+      priority: "high",
+      targetPath: path.join("{gamePath}", PLUGINS_PATH),
     },
   ],
   discovery: {
@@ -283,51 +294,6 @@ function makeRequiresLauncher(api, gameSpec) {
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
-//Test for config files
-function testConfig(files, gameId) {
-  const isConfig = files.some((file) => path.extname(file).toLowerCase() === CONFIG_EXT);
-  let supported = gameId === spec.game.id && isConfig;
-
-  // Test for a mod installer
-  if (
-    supported &&
-    files.find(
-      (file) =>
-        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
-        path.basename(path.dirname(file)).toLowerCase() === "fomod",
-    )
-  ) {
-    supported = false;
-  }
-
-  return Promise.resolve({
-    supported,
-    requiredFiles: [],
-  });
-}
-
-//Install config files
-function installConfig(files) {
-  const modFile = files.find((file) => path.extname(file).toLowerCase() === CONFIG_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
-  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
-  const setModTypeInstruction = { type: "setmodtype", value: CONFIG_ID };
-
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
-
-  const instructions = filtered.map((file) => {
-    return {
-      type: "copy",
-      source: file,
-      destination: path.join(file.substr(idx)),
-    };
-  });
-  instructions.push(setModTypeInstruction);
-  return Promise.resolve({ instructions });
-}
-
 //Installer test for Mod Loader files
 function testModLoader(files, gameId) {
   const isMod = files.some((file) => path.basename(file).toLowerCase() === MODLOADER_FILE);
@@ -358,7 +324,51 @@ function installModLoader(files) {
     };
   });
   instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
 
+//Test for config files
+function testPlugins(files, gameId) {
+  const isMod = files.some((file) => PLUGINS_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = gameId === spec.game.id && isMod;
+
+  // Test for a mod installer
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install config files
+function installPlugins(files) {
+  const modFile = files.find((file) => PLUGINS_EXTS.includes(path.extname(file).toLowerCase()));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
+  const setModTypeInstruction = { type: "setmodtype", value: PLUGINS_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
+
+  const instructions = filtered.map((file) => {
+    return {
+      type: "copy",
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
 }
 
@@ -441,6 +451,51 @@ function installDataSub(files) {
   });
   instructions.push(setModTypeInstruction);
 
+  return Promise.resolve({ instructions });
+}
+
+//Test for config files
+function testConfig(files, gameId) {
+  const isConfig = files.some((file) => path.extname(file).toLowerCase() === CONFIG_EXT);
+  let supported = gameId === spec.game.id && isConfig;
+
+  // Test for a mod installer
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install config files
+function installConfig(files) {
+  const modFile = files.find((file) => path.extname(file).toLowerCase() === CONFIG_EXT);
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
+  const setModTypeInstruction = { type: "setmodtype", value: CONFIG_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
+
+  const instructions = filtered.map((file) => {
+    return {
+      type: "copy",
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
 }
 
@@ -555,6 +610,7 @@ async function setup(discovery, api, gameSpec) {
   // ASYNC CODE //////////////////////////////////////////
   await downloadModLoader(api, gameSpec);
   await vfs.ensureDirWritableAsync(path.join(CONFIG_PATH));
+  await vfs.ensureDirWritableAsync(path.join(GAME_PATH, PLUGINS_PATH));
   return vfs.ensureDirWritableAsync(path.join(GAME_PATH, DATASUB_PATH));
 }
 
@@ -597,7 +653,8 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(MODLOADER_ID, 25, testModLoader, installModLoader);
   context.registerInstaller(DATA_ID, 27, testData, installData);
   context.registerInstaller(DATASUB_ID, 29, testDataSub, installDataSub);
-  // ??? add fallback installer dialogue for user to set path where files should go (AFOP)?
+  context.registerInstaller(PLUGINS_ID, 30, testPlugins, installPlugins);
+  //??? add fallback installer dialogue for user to set path where files should go (AFOP)?
   context.registerInstaller(CONFIG_ID, 31, testConfig, installConfig);
 
   context.registerAction(

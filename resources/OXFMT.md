@@ -26,7 +26,6 @@ Root-level `.oxfmtrc.json`:
     "**/node_modules/**",
     "package-lock.json",
     "resources/snippets.js",
-    "resources/extensions-manifest.json",
     "resources/*.d.ts",
     "**/*.min.js",
     "**/*.zip",
@@ -36,7 +35,7 @@ Root-level `.oxfmtrc.json`:
 ```
 
 - `sortPackageJson: false` — leaves `package.json` key order alone.
-- `ignorePatterns` skips generated files (`resources/snippets.js`, `resources/extensions-manifest.json`),
+- `ignorePatterns` skips the generated `resources/snippets.js`,
   bare `.d.ts` declarations `oxfmt` can't parse, minified/zip files, and all Markdown.
 
 ### Why Markdown is excluded
@@ -110,7 +109,8 @@ toolchain.
 
 ## See also
 
-`MARKDOWNLINT.md` (the doc linter that covers the `**/*.md` files this formatter excludes) ·
+`OXLINT.md` (the JavaScript linter from the same toolchain) · `MARKDOWNLINT.md` (the doc linter
+that covers the `**/*.md` files this formatter excludes) ·
 `BOOTSTRAP.md` (installs the Node dev dependencies this doc assumes) · `VORTEX_CODESTYLE.md` (the
 Vortex app repo's own, heavier oxfmt/oxlint/ESLint stack) · `VORTEX_DEV_BUILD.md` (running the
 formatter as part of building Vortex from source).

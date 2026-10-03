@@ -2,8 +2,8 @@
 Name: Grimshire Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-09-27
+Version: 1.0.2
+Date: 2026-10-01
 Notes:
 -
 //////////////////////////////////////////*/
@@ -281,6 +281,7 @@ let ASSETS_PATH = DATA_FOLDER;
 const ASSETS_EXTS = [".assets", ".resource", ".ress"];
 
 const PLUGIN_EXTS = [".dll"];
+const PACKAGE_META_FILES = ["manifest.json", "icon.png"]; //Thunderstore package metadata - never read by BepInEx
 
 const BEPINEX_MOD_ID = `${GAME_ID}-bepinexmod`;
 const BEPINEX_MOD_NAME = "BepInEx Mod";
@@ -548,8 +549,10 @@ const IGNORE_CONFLICTS = [
   path.join("**", "license*"),
 ];
 const IGNORE_DEPLOY = [
-  path.join("**", "manifest.json"),
-  path.join("**", "icon.png"),
+  //top-level only: package metadata that would land in a shared loader folder. A wrapped plugin's
+  //own copy still deploys - MelonLoader skips a mod folder without its manifest.json
+  path.join("*", "manifest.json"),
+  path.join("*", "icon.png"),
   path.join("**", "changelog*"),
   path.join("**", "readme*"),
   path.join("**", "license*"),
@@ -1820,9 +1823,20 @@ async function installPlugin(api, gameSpec, files, workingDir) {
       setModTypeInstruction.value === MELON_PLUGINS_ID);
   const hasManifest = files.some((file) => path.basename(file).toLowerCase() === "manifest.json");
 
-  // Remove directories and anything that isn't in the rootPath.
+  // Remove directories and anything that isn't in the rootPath. An unwrapped install also drops
+  // archive-root package metadata - it would land in the shared loader folder, where every such
+  // mod collides on the same two files. A wrapped plugin keeps it in its own folder.
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
-  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
+  const filtered = files.filter(
+    (file) =>
+      !file.endsWith(path.sep) &&
+      file.startsWith(rootPrefix) &&
+      !(
+        wrapFolder === "" &&
+        path.dirname(file.substr(idx)) === "." &&
+        PACKAGE_META_FILES.includes(path.basename(file).toLowerCase())
+      ),
+  );
   const instructions = filtered.map((file) => {
     const relPath = file.substr(idx);
     return {

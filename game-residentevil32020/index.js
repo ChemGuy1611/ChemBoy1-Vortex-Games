@@ -25,7 +25,7 @@ const GAME_ID = "residentevil32020";
 const STEAMAPP_ID = "952060"; // https://steamdb.info/app/952060/
 const STEAMAPP_ID_DEMO = "1173690"; // https://steamdb.info/app/1173690/
 const EPICAPP_ID = null;
-const GOGAPP_ID = null; // entry is classic version - https://www.gogdb.org/product/1266089300
+const GOGAPP_ID = null; //!audit-skip: store-id - gogdb entry is the classic version, not the 2020 remake - https://www.gogdb.org/product/1266089300
 const XBOXAPP_ID = "F024294D.1052923506B93"; // https://apps.microsoft.com/detail/9p7t44ttdl7m
 const XBOXEXECNAME = "re3";
 const XBOX_PUB_ID = "8fty0by30jkny"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
@@ -205,12 +205,14 @@ const spec = {
     },
     details: {
       steamAppId: +STEAMAPP_ID,
+      xboxAppId: XBOXAPP_ID,
       supportsSymlinks: allowSymlinks,
       ignoreDeploy: IGNORE_DEPLOY,
       ignoreConflicts: IGNORE_CONFLICTS,
     },
     environment: {
       SteamAPPId: STEAMAPP_ID,
+      XboxAPPId: XBOXAPP_ID,
     },
   },
   modTypes: [

@@ -11,7 +11,7 @@ interface IDeployedFile {
     relPath: string; // path relative to game mod folder
     source: string; // mod staging folder name that owns this file
     merged?: string[]; // other sources merged into this file
-    target?: string; // mod type id (empty = default)
+    target?: string; // per-mod output subfolder; empty when mergeMods is true (NOT the mod type)
     time: number; // deploy timestamp (ms)
 }
 ```
@@ -32,6 +32,23 @@ interface IDeploymentManifest {
     files: IDeployedFile[];
 }
 ```
+
+---
+
+## On-disk location
+
+One file per mod type, in that type's deploy folder (`game.getModPaths(gamePath)[modType]`):
+
+| File | Where | Read when |
+| --- | --- | --- |
+| `vortex.deployment.json` (default type) / `vortex.deployment.<modType>.json` | deploy folder | every deploy, purge and `getManifest` |
+| `vortex.deployment.<modType>.msgpack` | staging folder | only when the main file fails to parse ("Manifest damaged" dialog) |
+| `vortex.deployment.<modType>.json` | staging folder | same fallback, older backup form |
+
+- The file name is the only link to a mod type — the content carries `gameId`, `instance`, `targetPath` and `files`, but no mod-type field. Every deploy/purge path builds the name from the type ids returned by `getModPaths()`.
+- Consequence: when a mod type stops being registered for a game, its manifest is never read or purged again, and the files it lists stay on disk. Renaming the file to a still-registered type id that deploys to the same folder hands those files over completely.
+- A manifest whose `instance` differs from the running Vortex instance triggers the "Purge files from different instance?" dialog on the next deploy.
+- An empty deployment deletes the deploy-folder file and the staging `.msgpack` backup instead of writing an empty manifest.
 
 ---
 
@@ -90,7 +107,7 @@ const manifest = await util.getManifest(api, "mymodtype", GAME_ID);
 - `util.getManifest` is **expensive** — reads the manifest file from disk. Always cache the result within a single event handler or function call; never call it in a loop.
 - The `did-deploy` event passes `deployment` as the second argument — use it directly when available to avoid the disk read.
 - `IDeployedFile.source` is the mod's `installationPath` (the staging subdirectory name), not the full path.
-- `target` is the mod type id — empty string means the default mod type.
+- `target` is the per-mod output subfolder, used only when the game (or mod type) does not merge mods — empty with `mergeMods: true`. It is not the mod type id; the mod type is identified only by the manifest's file name (see On-disk location).
 - Manifest is written per mod type. If you have multiple mod types, you need separate `getManifest` calls for each.
 
 ---

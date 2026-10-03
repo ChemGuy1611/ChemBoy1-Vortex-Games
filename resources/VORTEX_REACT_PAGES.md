@@ -77,7 +77,7 @@ context.registerMainPage(icon, title, Component, options);
   isClassicOnly: bool,  // show only in the classic layout
   isModernOnly: bool,   // show only in the modern layout
   menuBadge: React.ComponentType,  // self-subscribing badge on the left-menu item
-  newLayout: bool,      // opt into the redesigned page chrome (see below)
+  newLayout: bool | (() => bool), // opt into the redesigned page chrome (see below)
 }
 ```
 
@@ -92,7 +92,11 @@ context.registerMainPage(icon, title, Component, options);
   legacy `.main-page` / header / body-container wrappers and renders your component as the sole
   subtree root — the component is then expected to render its own `Page`. Leave it unset unless you
   are deliberately building against the new design system; with it set and no `Page` of your own,
-  the page renders without any chrome.
+  the page renders without any chrome. Since Vortex 2.7.0 it also accepts a callback,
+  `() => boolean`, for a page that kept its old rendering as well: the page decides on each render
+  which of the two layouts it is about to draw (Vortex's mods page reads the classic/modern
+  setting this way), so the answer follows a change to that setting instead of being fixed when
+  the page registered. The same field exists on the registered-page shape (`IMainPage`).
 
 ### Minimal example
 

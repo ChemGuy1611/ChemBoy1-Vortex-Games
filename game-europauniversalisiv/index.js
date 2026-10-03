@@ -2,8 +2,8 @@
 Name: Europa Universalis IV Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-11-04
+Version: 0.1.1
+Date: 2026-10-02
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -12,7 +12,7 @@ const fsp = fs.promises;
 const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
-//const { parseStringPromise } = require('xml2js');
+const { parseStringPromise } = require("xml2js");
 //const winapi = require('winapi-bindings');
 
 //const USER_HOME = util.getVortexPath("home");
@@ -26,9 +26,9 @@ const STEAMAPP_ID = "236850";
 const STEAMAPP_ID_DEMO = null;
 const EPICAPP_ID = "da0103e959e54d139d0c109ded3b3672"; //from egdata.app
 const GOGAPP_ID = "2057001589";
-const XBOXAPP_ID = ""; // is on Xbox, but not Game Pass
-const XBOXEXECNAME = "";
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const XBOXAPP_ID = "ParadoxInteractive.EuropaUniversalisIV-MicrosoftSt"; //Microsoft Store Edition, resolved via MS Store catalog - verify against a live install
+const XBOXEXECNAME = "App"; // resolved via MS Store catalog - verify against a live install
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID, EPICAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "Europa Universalis IV";
 const GAME_NAME_SHORT = "Europa Univ IV";
 const BINARIES_PATH = path.join(".");
@@ -36,6 +36,10 @@ const EXEC_NAME = "eu4.exe";
 const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
 const EXEC_EGS = EXEC;
 const EXEC_XBOX = "gamelaunchhelper.exe";
+
+//feature toggles
+let hasXbox = false; //toggle for Xbox version logic
+if (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) hasXbox = true;
 
 //can't install against these folders in game directory because they will be present in mod archives
 const ROOT_FOLDERS = [
@@ -118,7 +122,8 @@ const TOOL_NAME = "XXX";
 const TOOL_EXEC = path.join("XXX", "XXX.exe");
 
 const MOD_PATH_DEFAULT = MOD_PATH;
-const REQ_FILE = EXEC;
+//The Xbox version launches through a different exe, so require a game data folder that every version has instead of eu4.exe
+const REQ_FILE = hasXbox ? "common" : EXEC;
 const PARAMETERS_STRING = "";
 const PARAMETERS = [PARAMETERS_STRING];
 const MODTYPE_FOLDERS = [BINARIES_PATH];
@@ -356,6 +361,9 @@ async function requiresLauncher(gamePath, store) {
 
 //Get correct executable for game version
 function getExecutable(discoveryPath) {
+  if (!hasXbox) {
+    return EXEC;
+  }
   const isCorrectExec = (exec) => {
     try {
       fs.statSync(path.join(discoveryPath, exec));
@@ -553,28 +561,30 @@ function installBinaries(files) {
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
-/*
+//* Resolve game version dynamically for different game versions
 async function resolveGameVersion(gamePath) {
   GAME_VERSION = await setGameVersion(gamePath);
-  let version = '0.0.0';
-  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+  let version = "0.0.0";
+  if (GAME_VERSION === "xbox") {
+    // use appxmanifest.xml for Xbox version
     try {
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const appManifest = await fsp.readFile(path.join(gamePath, APPMANIFEST_FILE), "utf8");
       const parsed = await parseStringPromise(appManifest);
       version = parsed?.Package?.Identity?.[0]?.$?.Version;
       return Promise.resolve(version);
     } catch (err) {
-      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      log("error", `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
       return Promise.resolve(version);
     }
-  }
-  else { // use exe
+  } else {
+    // use exe
     try {
-      const exeVersion = require('exe-version');
-      version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
-      return Promise.resolve(version); 
+      const exeVersion = require("exe-version");
+      const EXEC = getExecutable(gamePath);
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC)); //can also use getFileVersion if this doesn't return the correct number (rare)
+      return Promise.resolve(version);
     } catch (err) {
-      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      log("error", `Could not read executable file to get game version: ${err}`);
       return Promise.resolve(version);
     }
   }
@@ -591,10 +601,12 @@ async function setup(discovery, api, gameSpec) {
   // SYNCHRONOUS CODE ////////////////////////////////////
   const state = api.getState();
   GAME_PATH = discovery.path;
-  //GAME_VERSION = setGameVersion(GAME_PATH);
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   // ASYNC CODE //////////////////////////////////////////
+  if (hasXbox) {
+    GAME_VERSION = await setGameVersion(GAME_PATH);
+  }
   /*await fs.ensureDirWritableAsync(CONFIG_PATH);
   await fs.ensureDirWritableAsync(SAVE_PATH); //*/
   await vfs.ensureDirWritableAsync(MOD_PATH_DEFAULT);
@@ -607,13 +619,12 @@ function applyGame(context, gameSpec) {
   const game = {
     ...gameSpec.game,
     queryPath: makeFindGame(context.api, gameSpec),
-    executable: () => gameSpec.game.executable,
-    //executable: getExecutable,
+    executable: getExecutable,
     queryModPath: makeGetModPath(context.api, gameSpec),
     //queryModPath: () => MOD_PATH_DEFAULT,
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
-    //getGameVersion: resolveGameVersion,
+    getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);

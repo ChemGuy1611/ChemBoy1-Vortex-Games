@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.1] - 2026-10-02
+
+- Fixed: Updating a mod no longer resets its plugins' position and enabled state on the Load Order page. Reordering is paused with a notice until the update finishes.
+
 ## [1.0.0] - 2026-09-29
 
 - Fixed: Mod files with no file extension were skipped during installation

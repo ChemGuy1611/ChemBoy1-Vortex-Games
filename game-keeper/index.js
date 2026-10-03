@@ -2,8 +2,8 @@
 Name: Keeper Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-10-22
+Version: 0.1.1
+Date: 2026-10-02
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -24,7 +24,7 @@ const GAME_ID = "keeper"; //same as Nexus domain
 const STEAMAPP_ID = "3043580"; //from steamdb.info
 const STEAMAPP_ID_DEMO = null;
 const EPICAPP_ID = null; //from egdata.app
-const GOGAPP_ID = null; // from gogdb.org
+const GOGAPP_ID = "1428536898"; // from gogdb.org
 const XBOXAPP_ID = "Microsoft.PaganIdol"; //from appxmanifest.xml
 const XBOXEXECNAME = "AppKeeperShipping"; //from appxmanifest.xml
 const GAME_NAME = "Keeper";
@@ -55,7 +55,7 @@ const SHIPEXE_PROJECTNAME = EPIC_CODE_NAME;
 const gameFinderQuery = {
   steam: [{ id: STEAMAPP_ID, prefer: 0 }],
   //steam: [{ id: STEAMAPP_ID, prefer: 0 }, { id: STEAMAPP_ID_DEMO }],
-  //gog: [{ id: GOGAPP_ID }],
+  gog: [{ id: GOGAPP_ID }],
   //epic: [{ id: EPICAPP_ID }],
   xbox: [{ id: XBOXAPP_ID }],
 };
@@ -230,7 +230,7 @@ const spec = {
     requiresCleanup: true,
     details: {
       steamAppId: +STEAMAPP_ID,
-      //"gogAppId": GOGAPP_ID,
+      gogAppId: GOGAPP_ID,
       epicAppId: EPICAPP_ID,
       xboxAppId: XBOXAPP_ID,
       supportsSymlinks: SYM_LINKS,
@@ -239,7 +239,7 @@ const spec = {
     },
     environment: {
       SteamAPPId: STEAMAPP_ID,
-      //"GogAPPId": GOGAPP_ID,
+      GogAPPId: GOGAPP_ID,
       EpicAPPId: EPICAPP_ID,
       XboxAPPId: XBOXAPP_ID,
     },

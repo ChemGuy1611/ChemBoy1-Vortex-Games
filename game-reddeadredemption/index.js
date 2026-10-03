@@ -2,8 +2,8 @@
 Name: Red Dead Redemption Vortex Extension
 Structure: 3rd-Party Mod Installer
 Author: ChemBoy1
-Version: 0.3.4
-Date: 2026-09-08
+Version: 0.3.5
+Date: 2026-10-02
 ////////////////////////////////////////////*/
 
 //Import libraries
@@ -12,6 +12,7 @@ const fsp = fs.promises;
 const { actions, fs: vfs, util, selectors, log, VortexError } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
+const { parseStringPromise } = require("xml2js");
 const {
   download,
   findModByFile,
@@ -26,17 +27,26 @@ const DOCUMENTS = util.getVortexPath("documents");
 const STEAMAPP_ID = "2668510";
 const EPICAPP_ID = "c180bd9859624278aa20f1333918498a";
 const GOGAPP_ID = null;
-const XBOXAPP_ID = null;
-const XBOXEXECNAME = null;
+const XBOXAPP_ID = "RockstarGamesInc.KalonPC"; //Microsoft Store Edition, resolved via MS Store catalog - verify against a live install
+const XBOXEXECNAME = "PlayRDR"; // resolved via MS Store catalog - verify against a live install
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_ID = "reddeadredemption";
 const EXEC = "RDR.exe";
+const EXEC_XBOX = "gamelaunchhelper.exe";
 const GAME_NAME = "Red Dead Redemption";
 const GAME_NAME_SHORT = "RDR";
+
+//feature toggles
+let hasXbox = false; //toggle for Xbox version logic
+if (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) hasXbox = true;
 
 let GAME_PATH = "";
 let GAME_VERSION = ""; //Game version
 let STAGING_FOLDER = "";
 let DOWNLOAD_FOLDER = "";
+const APPMANIFEST_FILE = "appxmanifest.xml";
+//The Xbox version launches through a different exe, so require a game data folder that every version has instead of RDR.exe
+const REQ_FILE = hasXbox ? path.join("game", "redemption", "territory_swall") : EXEC;
 
 const ROOT_ID = `${GAME_ID}-root`;
 
@@ -135,12 +145,12 @@ const spec = {
     mergeMods: true,
     modPath: ".",
     modPathIsRelative: true,
-    requiredFiles: [EXEC],
+    requiredFiles: [REQ_FILE],
     details: {
       steamAppId: +STEAMAPP_ID,
       //"gogAppId": GOGAPP_ID,
       epicAppId: EPICAPP_ID,
-      //"xboxAppId": XBOXAPP_ID,
+      xboxAppId: XBOXAPP_ID,
       ignoreConflicts: IGNORE_CONFLICTS,
       ignoreDeploy: IGNORE_DEPLOY,
     },
@@ -148,7 +158,7 @@ const spec = {
       SteamAPPId: STEAMAPP_ID,
       //"GogAPPId": GOGAPP_ID,
       EpicAPPId: EPICAPP_ID,
-      //"XboxAPPId": XBOXAPP_ID
+      XboxAPPId: XBOXAPP_ID,
     },
   },
   modTypes: [
@@ -196,12 +206,7 @@ const spec = {
     },
   ],
   discovery: {
-    ids: [
-      STEAMAPP_ID,
-      EPICAPP_ID,
-      //GOGAPP_ID,
-      //XBOXAPP_ID
-    ],
+    ids: DISCOVERY_IDS_ACTIVE,
     names: [],
   },
 };
@@ -337,6 +342,16 @@ async function requiresLauncher(gamePath, store) {
         launcher: 'steam',
     });
   } //*/
+  if (store === "xbox" && DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) {
+    return Promise.resolve({
+      launcher: "xbox",
+      addInfo: {
+        appId: XBOXAPP_ID,
+        // appExecName is the <Application id="" in the appxmanifest.xml file
+        parameters: [{ appExecName: XBOXEXECNAME }],
+      },
+    });
+  }
   if (store === "epic") {
     return Promise.resolve({
       launcher: "epic",
@@ -346,6 +361,52 @@ async function requiresLauncher(gamePath, store) {
     });
   } //*/
   return Promise.resolve(undefined);
+}
+
+//Get correct executable for game version
+function getExecutable(discoveryPath) {
+  if (!hasXbox) {
+    return EXEC;
+  }
+  if (statCheckSync(discoveryPath, EXEC_XBOX)) {
+    return EXEC_XBOX;
+  }
+  return EXEC;
+}
+
+//Get correct game version
+async function setGameVersion(gamePath) {
+  GAME_VERSION = (await statCheckAsync(gamePath, EXEC_XBOX)) ? "xbox" : "default";
+  return GAME_VERSION;
+}
+
+//Resolve game version dynamically for different game versions
+async function resolveGameVersion(gamePath) {
+  GAME_VERSION = await setGameVersion(gamePath);
+  let version = "0.0.0";
+  if (GAME_VERSION === "xbox") {
+    // use appxmanifest.xml for Xbox version
+    try {
+      const appManifest = await fsp.readFile(path.join(gamePath, APPMANIFEST_FILE), "utf8");
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log("error", `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  } else {
+    // use exe
+    try {
+      const exeVersion = require("exe-version");
+      const EXEC = getExecutable(gamePath);
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC)); //can also use getFileVersion if this doesn't return the correct number (rare)
+      return Promise.resolve(version);
+    } catch (err) {
+      log("error", `Could not read executable file to get game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
 }
 
 // AUTOMATIC DOWNLOAD FUNCTIONS ////////////////////////////////////////////////////////
@@ -879,6 +940,9 @@ async function setup(discovery, api, gameSpec) {
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   // ASYNC CODE //////////////////////////////////////////
+  if (hasXbox) {
+    GAME_VERSION = await setGameVersion(GAME_PATH);
+  }
   await vfs.ensureDirWritableAsync(path.join(discovery.path, RPF_PATH));
   const requirementsInstalled = await checkForRequirements(api);
   if (!requirementsInstalled) {
@@ -895,11 +959,12 @@ function applyGame(context, gameSpec) {
   const game = {
     ...gameSpec.game,
     queryPath: makeFindGame(context.api, gameSpec),
+    executable: getExecutable,
     queryModPath: makeGetModPath(context.api, gameSpec),
     requiresLauncher: requiresLauncher,
     requiresCleanup: true,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
-    executable: () => gameSpec.game.executable,
+    getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);

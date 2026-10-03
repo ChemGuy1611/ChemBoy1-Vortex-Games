@@ -206,12 +206,14 @@ const spec = {
     },
     details: {
       steamAppId: +STEAMAPP_ID,
+      xboxAppId: XBOXAPP_ID,
       supportsSymlinks: allowSymlinks,
       ignoreDeploy: IGNORE_DEPLOY,
       ignoreConflicts: IGNORE_CONFLICTS,
     },
     environment: {
       SteamAPPId: STEAMAPP_ID,
+      XboxAPPId: XBOXAPP_ID,
     },
   },
   modTypes: [

@@ -27,15 +27,13 @@ Usage:
     python patch_extensions.py GAME_ID [GAME_ID ...] --only PATCH_NAME
     python patch_extensions.py --audit                        # run the read-only audits (installer priorities + FOMOD checks + store ID wiring) then exit
     python patch_extensions.py GAME_ID [GAME_ID ...] --audit  # scope audits to specific games only
-    python patch_extensions.py --audit --resolve              # also re-query egdata + gogdb for every unresolved EPICAPP_ID/GOGAPP_ID (network-bound, read-only)
-    python patch_extensions.py --audit --resolve gog          # limit the resolution pass to one store (epic, gog, or both)
+    python patch_extensions.py --audit --resolve              # also look for missing Epic/GOG/Xbox versions: egdata + gogdb search, plus a PCGamingWiki availability cross-check, for every unresolved EPICAPP_ID/GOGAPP_ID/XBOXAPP_ID; Xbox hits print their PC package format and protected WindowsApps formats are ignored (network-bound, ~10 min for the whole repo, read-only)
+    python patch_extensions.py --audit --resolve xbox         # limit the resolution pass to one store (epic, gog, xbox, or all)
     python patch_extensions.py --audit --show-suppressed      # also list the findings parked by an '//!audit-skip: <rule> - <reason>' marker, with their reasons
 
-Environment variables:
-    VORTEX_MANIFEST_PATH  (optional) Path to Vortex extensions-manifest.json.
-                          Default: %APPDATA%\\Vortex\\temp\\extensions-manifest.json
-    APPDATA               (optional) Base for the default manifest path above.
-                          Only read when VORTEX_MANIFEST_PATH is not set.
+The extension_url patch looks up each game's modId from the public Nexus v3
+/vortex/extensions feed (no API key). It needs %APPDATA%\\Vortex\\temp\\nexus_gamelist.json,
+which Vortex writes on first login, to turn the feed's numeric game ids into domains.
 """
 
 import argparse
@@ -43,11 +41,14 @@ import hashlib
 import os
 import re
 import sys
+import time
 from vortex_utils import (
     REPO_ROOT, TITLE_IMAGES_DIR,
     lookup_pcgamingwiki, extract_game_name,
+    pcgw_title_from_url, pcgw_page_wikitext, parse_pcgw_availability,
     run_generate_explained_batch,
-    fetch_epic_app_id, fetch_gog_app_id, add_to_discovery_ids,
+    fetch_epic_app_id, fetch_gog_app_id, fetch_xbox_identity, add_to_discovery_ids,
+    fetch_xbox_package_formats, xbox_formats_protected,
     const_value, is_unset, is_missing, set_or_insert,
     inject_register_actions, find_fn_body,
     list_game_ids, write_index_js, resize_images_to, log_info, log_warn, log_error,
@@ -57,7 +58,6 @@ from vortex_utils import (
     audit_skip_lines, AUDIT_SKIP_STORE_ID, AUDIT_SKIP_FOMOD, AUDIT_SKIP_PRIORITY,
     find_registerinstaller_calls,
 )
-MANIFEST_PATH = os.environ.get("VORTEX_MANIFEST_PATH", os.path.join(os.environ.get("APPDATA", ""), "Vortex", "temp", "extensions-manifest.json"))
 NEXUS_SITE_BASE = "https://www.nexusmods.com/site/mods"
 
 
@@ -66,7 +66,7 @@ NEXUS_SITE_BASE = "https://www.nexusmods.com/site/mods"
 def patch_extension_url(game_id, src, context):
     """
     Set EXTENSION_URL to https://www.nexusmods.com/site/mods/{modId}.
-    Skips if modId not in manifest or value is already a real URL.
+    Skips if the game has no modId in the Nexus extension feed or value is already a real URL.
     """
     manifest = context["manifest"]
     mod_id = manifest.get(game_id)
@@ -369,8 +369,8 @@ _UTILITY_FUNCTIONS = [
 
 
 # Matches `const fs = require('fs')` / `require("node:fs")` - the marker that a file has
-# been through migrate_fs.py, where `fs` means native node fs and the vortex-api wrapper
-# has been rebound to `vfs`. An un-migrated extension binds `fs` to the wrapper instead.
+# been migrated to native node fs, where the vortex-api wrapper is rebound to `vfs`.
+# An un-migrated extension binds `fs` to the wrapper instead.
 _FSP_DECL_RE = re.compile(r"(?:const|let)\s+fsp\s*=\s*fs\.promises")
 
 
@@ -1307,6 +1307,9 @@ def _spec_key_state(active_src, key, sibling_key):
     other as its own misspelling.
     """
     found = set(re.findall(rf'["\']?({re.escape(key)})["\']?\s*:', active_src, re.IGNORECASE))
+    # The anvil-family files set the keys by assignment (spec.game.details.epicAppId = ...)
+    # once the matching store is in use, rather than declaring them in the spec object.
+    found |= set(re.findall(rf'\.({re.escape(key)})\s*=(?!=)', active_src, re.IGNORECASE))
     if key in found:
         return True, []
     return False, sorted(v for v in found if v != sibling_key)
@@ -1357,16 +1360,31 @@ def _skip_reason_for_const(src_lines, skip_lines, const):
     """Return the audit-skip reason covering const in this file, or None.
 
     A marker covers a constant when it sits on a line that names it - the const
-    declaration itself, or the commented-out wiring line - or on the line directly
-    above such a line. A covered constant is parked whole: every finding it carries
-    is suppressed together, because a half-wired store is not a state worth reporting.
+    declaration itself, or the commented-out wiring line - or on a comment-only line
+    directly above such a line. A marker trailing code covers only its own line, so it
+    cannot reach down and park the neighbouring store's constant. A covered constant is
+    parked whole: every finding it carries is suppressed together, because a
+    half-wired store is not a state worth reporting.
     """
     name_re = re.compile(rf'\b{re.escape(const)}\b')
     for lineno, reason in skip_lines.items():
+        marker_only = src_lines[lineno - 1].lstrip().startswith("//")
         for probe in (lineno, lineno + 1):
+            if probe == lineno + 1 and not marker_only:
+                continue
             if 1 <= probe <= len(src_lines) and name_re.search(src_lines[probe - 1]):
                 return reason
     return None
+
+
+def _is_parked(src, const):
+    """Return True if a store-id audit-skip marker covers const in src.
+
+    The resolve passes use this to stop re-offering a candidate that was already
+    hand-checked and rejected (GOG's 1998 Resident Evil 2 for the 2019 game).
+    """
+    skip_lines = audit_skip_lines(src, AUDIT_SKIP_STORE_ID)
+    return bool(skip_lines) and _skip_reason_for_const(src.splitlines(), skip_lines, const) is not None
 
 
 def _print_suppressed(rows):
@@ -1507,16 +1525,21 @@ def audit_store_id_resolve(folder_paths, stores):
     for store in stores:
         const, resolver, second_field = STORE_RESOLVERS[store]
         targets = []
+        parked = 0
         for folder, index_path in folder_paths:
             with open(index_path, encoding="utf-8", errors="replace") as f:
                 src = f.read()
             if is_real_value(const_value(src, const)):
                 continue
+            if _is_parked(src, const):
+                parked += 1
+                continue
             game_name = extract_game_name(src)
             if game_name:
                 targets.append((folder, game_name))
 
-        print(f"\n--- {store}: {len(targets)} extension(s) with an unresolved {const} ---")  # noqa: raw-log-print
+        print(f"\n--- {store}: {len(targets)} extension(s) with an unresolved {const}"  # noqa: raw-log-print
+              f" ({parked} parked by audit-skip) ---")
         for folder, game_name in targets:
             try:
                 app_id, extra = resolver(game_name)
@@ -1527,6 +1550,101 @@ def audit_store_id_resolve(folder_paths, stores):
                 print(f"  {folder}: {const} = {app_id}"  # noqa: raw-log-print
                       f"  ('{game_name}' -> {second_field} {extra})")
                 total += 1
+    return total
+
+
+# PCGamingWiki asks for at most 30 requests/minute; one page fetch per extension.
+PCGW_FETCH_INTERVAL = 2.1
+
+# Publisher-hash suffixes (XBOX_PUB_ID) of the Ubisoft and EA Microsoft Store packages.
+# Game Pass subscribers get a limited slice of those libraries: the games are listed in
+# the Xbox library but run through the publisher's own launcher, so they are not Xbox
+# versions worth wiring and the cross-check ignores them.
+XBOX_LAUNCHER_PUB_IDS = {"ngz4m417e0mpw": "Ubisoft", "q5ha1ztykcgvj": "EA"}
+
+PCGW_STORE_CONSTS = {"gog": "GOGAPP_ID", "epic": "EPICAPP_ID", "xbox": "XBOXAPP_ID"}
+PCGW_STORE_LABELS = {"gog": "GOG.com", "epic": "Epic Games Store", "xbox": "Microsoft Store"}
+
+
+def audit_store_pcgw_crosscheck(folder_paths, stores):
+    """
+    Cross-check each game-* extension against its PCGamingWiki Availability table:
+    report a store PCGW lists for the game while the extension's constant for that
+    store is still unresolved (null, "", "XXX", or absent).
+
+    A second source independent of the name-search resolvers - the page comes from the
+    extension's own PCGAMINGWIKI_URL, so there is no title guessing. PCGW lists a
+    GOG/Epic slug rather than the numeric id, so those rows are a presence signal to
+    follow up on; an Xbox row carries the Microsoft Store product id, which is resolved
+    through the catalog API to the full XBOXAPP_ID / XBOXEXECNAME / XBOX_PUB_ID set.
+    Ubisoft and EA entries (XBOX_LAUNCHER_PUB_IDS) are ignored: they are Game Pass
+    library access to launcher-run games, and are only counted in a summary line.
+    So are entries whose PC package is an encrypted / UWP format (EAppx, EAppxBundle,
+    Appx): they install into the protected WindowsApps folder and can never be
+    modded. Those are listed by folder in a summary line. Every other hit prints the
+    PC package format(s) so a console-only or odd package is visible.
+
+    Network-bound (one rate-limited PCGW fetch per extension) and read-only. Like the
+    other resolve rows, every hit is a candidate to hand-check, not a fact. Returns the
+    total hit count.
+    """
+    targets = []
+    for folder, index_path in folder_paths:
+        if not folder.startswith("game-"):
+            continue
+        with open(index_path, encoding="utf-8", errors="replace") as f:
+            src = f.read()
+        title = pcgw_title_from_url(const_value(src, "PCGAMINGWIKI_URL"))
+        if not title:
+            continue
+        wanted = [s for s in stores
+                  if not is_real_value(const_value(src, PCGW_STORE_CONSTS[s]))
+                  and not _is_parked(src, PCGW_STORE_CONSTS[s])]
+        if wanted:
+            targets.append((folder, title, wanted))
+
+    print(f"\n--- PCGamingWiki cross-check ({', '.join(stores)}): "  # noqa: raw-log-print
+          f"{len(targets)} extension(s) with an unresolved, unparked constant and a PCGW page ---")
+    print(f"  ~{len(targets) * PCGW_FETCH_INTERVAL / 60:.0f} min at PCGW's 30 requests/minute limit",  # noqa: raw-log-print
+          flush=True)
+    total = 0
+    ignored = 0
+    protected = []
+    for i, (folder, title, wanted) in enumerate(targets):
+        if i:
+            time.sleep(PCGW_FETCH_INTERVAL)
+        try:
+            listed = parse_pcgw_availability(pcgw_page_wikitext(title))
+        except Exception as err:  # one bad page must not abort the pass
+            print(f"  {folder}: PCGW fetch failed for '{title}' -- {err}", flush=True)  # noqa: raw-log-print
+            continue
+        for store in wanted:
+            ref = listed[store]
+            if not ref:
+                continue
+            const = PCGW_STORE_CONSTS[store]
+            detail = f"PCGW lists {PCGW_STORE_LABELS[store]} '{ref}'"
+            if store == "xbox":
+                app_id, exec_name, pub_id = fetch_xbox_identity(ref)
+                if pub_id in XBOX_LAUNCHER_PUB_IDS:
+                    ignored += 1
+                    continue
+                formats = fetch_xbox_package_formats(ref)
+                if xbox_formats_protected(formats):
+                    protected.append(folder)
+                    continue
+                detail += (f" -> XBOXAPP_ID = {app_id}, XBOXEXECNAME = {exec_name}, XBOX_PUB_ID = {pub_id}"
+                           f" (PC package format: {', '.join(sorted(formats)) or 'none'})"
+                           if app_id else
+                           " -> identity lookup empty (console-only title, or no PC package uploaded yet)")
+            print(f"  {folder}: {const} unresolved; {detail}", flush=True)  # noqa: raw-log-print
+            total += 1
+    if ignored:
+        print(f"  ({ignored} Ubisoft/EA Game Pass library entries ignored - launcher titles, not Xbox versions)",  # noqa: raw-log-print
+              flush=True)
+    if protected:
+        print(f"  ({len(protected)} protected-format Xbox packages ignored - encrypted WindowsApps installs, "  # noqa: raw-log-print
+              f"not moddable: {', '.join(protected)})", flush=True)
     return total
 
 
@@ -1574,7 +1692,9 @@ def run_audits(target_ids=None, resolve_stores=None, show_suppressed=False):
         print(f"\n=== Audit: store ID resolution ({', '.join(resolve_stores)}) - {scope} ===")  # noqa: raw-log-print
         print("Read-only. Every candidate needs a hand-check against the store page "  # noqa: raw-log-print
               "before it is written anywhere.")
-        resolved_total = audit_store_id_resolve(folder_paths, resolve_stores)
+        resolved_total = audit_store_id_resolve(
+            folder_paths, [s for s in resolve_stores if s in STORE_RESOLVERS])
+        resolved_total += audit_store_pcgw_crosscheck(folder_paths, resolve_stores)
         print(f"\nTotal unresolved constants with a candidate: {resolved_total}")  # noqa: raw-log-print
 
 
@@ -1629,7 +1749,7 @@ SKIP_ALREADY_SET        = "already set"
 SKIP_NULL_NOT_ON_EPIC   = "null (not on Epic)"
 SKIP_NO_EPICAPP_ID      = "no EPICAPP_ID in source"
 SKIP_XXX_INTENTIONAL    = "XXX (intentional placeholder)"
-SKIP_NO_MOD_ID          = "no modId in manifest"
+SKIP_NO_MOD_ID          = "no modId in Nexus extension feed"
 SKIP_ALREADY_UP_TO_DATE = "already up to date"
 
 _SILENT_MSGS = frozenset({
@@ -1765,9 +1885,9 @@ def main():
         "--resolve",
         nargs="?",
         const="both",
-        choices=["epic", "gog", "both"],
+        choices=["epic", "gog", "xbox", "all"],
         metavar="STORE",
-        help="With --audit: also re-query egdata/gogdb for every unresolved EPICAPP_ID/GOGAPP_ID and report candidates. Network-bound and read-only. Default 'both'.",
+        help="With --audit: also look for missing store versions. Re-queries egdata/gogdb (epic/gog) and cross-checks every game's PCGamingWiki availability table (epic/gog/xbox) for stores whose constant is unresolved. Network-bound and read-only. Default 'all'.",
     )
     parser.add_argument(
         "--show-suppressed",
@@ -1792,7 +1912,7 @@ def main():
         target_ids = args.game if args.game else None
         resolve_stores = None
         if args.resolve:
-            resolve_stores = ["epic", "gog"] if args.resolve == "both" else [args.resolve]
+            resolve_stores = ["epic", "gog", "xbox"] if args.resolve == "all" else [args.resolve]
         run_audits(target_ids, resolve_stores, args.show_suppressed)
         sys.exit(0)
 
@@ -1807,7 +1927,7 @@ def main():
 
     print("Loading context...")
     context = {
-        "manifest": load_vortex_manifest(MANIFEST_PATH),
+        "manifest": load_vortex_manifest(),
         "force_pcgw": args.force_pcgw or args.force,
         "force": args.force,
         "debug": args.debug,

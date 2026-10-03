@@ -398,7 +398,7 @@ Same skeleton as the pak renderer, with three differences:
   enabled; the context menu exposes the Vortex mod state separately.
 - A `useEffect` keyed on `[gamePath, item.id]` looks for a config file (`UE4SS_CONFIG_FILES` plus
   `<id>.txt|.ini|.json`) and stores the first hit in local state. When found, the row grows a
-  "Configure" button that opens the file with `util.opn`. It stats those names in three folders —
+  "Configure" button that opens the file with `window.api.shell.openFile`. It stats those names in three folders —
   the mod folder, its `Scripts` folder and its `dlls` folder — rather than walking the mod folder:
   a recursive walk ran once per row on every page open and profile switch. The trade is that a
   config kept below some other subfolder is not found, and no error surfaces; the three folders are

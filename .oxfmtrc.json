@@ -6,7 +6,6 @@
     "**/node_modules/**",
     "package-lock.json",
     "resources/snippets.js",
-    "resources/extensions-manifest.json",
     "resources/*.d.ts",
     "**/*.min.js",
     "**/*.zip",

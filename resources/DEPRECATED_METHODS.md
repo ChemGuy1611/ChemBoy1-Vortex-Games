@@ -22,10 +22,12 @@ Deprecation notices are scattered across many independent JSDoc comments in the 
 | `accessSync`, `appendFileSync`, `closeSync`, `createReadStream`, `createWriteStream`, `linkSync`, `openSync`, `readdirSync`, `readFileSync`, `statSync`, `symlinkSync`, `watch`, `writeFileSync`, `writeSync`, `constants`, `Stats`, `WriteStream`, `FSWatcher` | `fs.*` (raw Node passthrough) | `node:fs` directly (these are 1:1 re-exports already) | `NODE_FS.md` |
 | `registerLoadOrderPage` | `IExtensionContext` | `registerLoadOrder` (File-Based Load Order) | `LOAD_ORDER_REGISTRATION.md` |
 | `onceMain` | `IExtensionContext` | `once` (runs in the renderer); a separate NodeJS process + IPC if you truly need the main process | `VORTEX_EXTENSION_LOADING.md`, `VORTEX_EVENT_BUS.md` |
-| `open` / `util.opn` | `util.*` | `window.api.shell.openUrl` / `window.api.shell.openFile` | This doc, § below; `EMBEDDED_BROWSER.md` |
+| `open` / `util.opn` | `util.*` | `window.api.shell.openUrl` / `window.api.shell.openFile` — this repo is fully migrated | This doc, § below; `EMBEDDED_BROWSER.md` |
 | `toPromise` | `util.*` | Wrap the call in a plain `new Promise` — this repo is fully migrated | This doc, § below |
 | `makeRemoteCall` | `util.*` | `window.api` (IPC from renderer to main) | This doc, § below |
+| `steamShim`, `epicGamesLauncherShim` (exposed as `util.steam`, `util.epicGamesLauncher`) | `util.*` | `util.GameStoreHelper.findByAppId(id, "steam" \| "epic")` / `.findByName(name, store)`. Deprecated in Vortex 2.8, removed in 2.10 | This doc, § below |
 | `IExtension` | type | `ExtensionInfo` | This doc, § below |
+| `ExtensionInfo.type`, `.bundled`, `.path`, `.modId`, `.fileId`, `.issueTrackerURL` | type fields | Nothing — Vortex no longer reads them from `info.json` (since 2.7.0) | This doc, § below |
 
 ---
 
@@ -63,11 +65,14 @@ const dlId = await new Promise((resolve, reject) =>
 
 ## `util.opn` / `open` — open a URL or file externally
 
-Deprecated in favor of `window.api.shell.openUrl(url)` / `window.api.shell.openFile(path)`, part of the newer preload-based IPC surface (`src/shared/types/preload.ts` upstream). This repo has not adopted `window.api` yet — `util.opn` remains what `EMBEDDED_BROWSER.md` documents for handing a URL to the system browser from an embedded webview's `onNewWindow` handler.
+Deprecated in favor of `window.api.shell.openUrl(url)` / `window.api.shell.openFile(path)`, part of the newer preload-based IPC surface (`src/shared/types/preload.ts` upstream). Every template and game in this repo now uses the `window.api.shell` form, including the shared downloader and browser modules and the embedded webview's `onNewWindow` hand-off described in `EMBEDDED_BROWSER.md`. The preload `Shell` type returns `void` (there is no promise to `.catch()`), so the call is wrapped in `try/catch`:
 
 ```js
-const { util } = require("vortex-api");
-util.opn(url).catch(() => null); // deprecated, still current practice in this repo
+try {
+  window.api.shell.openUrl(url);
+} catch (err) {
+  api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+}
 ```
 
 ---
@@ -78,9 +83,31 @@ Formerly a generic RPC bridge from the renderer to Electron's main process. The 
 
 ---
 
+## `util.steam` and `util.epicGamesLauncher` — use `GameStoreHelper`
+
+In Vortex 2.8 both exports became thin shims over `util.GameStoreHelper`; they keep working until **2.10**, when `util.steam` becomes `undefined` and a call throws a `TypeError` (usually inside `findGame` or `queryPath`, so the game stops being discovered). The published typings expose the shims as `steamShim` and `epicGamesLauncherShim`, both tagged `@deprecated`. Vortex 2.7.x still has the full `Steam` / `EpicGamesLauncher` classes behind those names.
+
+| Deprecated | Replacement |
+| --- | --- |
+| `util.steam.findByAppId(id)` | `util.GameStoreHelper.findByAppId(id, "steam")` |
+| `util.steam.findByName(name)` | `util.GameStoreHelper.findByName(name, "steam")` |
+| `util.steam.id` | the literal string `"steam"` |
+| `util.epicGamesLauncher.findByAppId(id)` / `.findByName(name)` | the same calls with `"epic"` |
+| `util.epicGamesLauncher.isGameInstalled(name)` | no drop-in; inline `util.GameStoreHelper.findByAppId(id, "epic").then(() => true).catch(() => false)` |
+
+Lookup behaviour is identical: same matchers, `^name$`-anchored name matching, same `GameEntryNotFound` rejection. Only the members listed above exist on the shims; any other member access warns and returns `undefined`. The old Epic `isGameInstalled` also fell back to a name lookup when the app id missed — Vortex's own Epic extensions dropped that fallback, so add it back only if you are passing a display name. Prefer `findByAppId`: display names change between editions and localisations, app ids do not. Call the new API unconditionally rather than guarding with `util.GameStoreHelper !== undefined` — it has accepted a store id since 2019 and extensions cannot declare a minimum Vortex version.
+
+Vortex also watches these exports at run time: reading any member of a deprecated export logs `"<method>" is deprecated` once per session and sends an analytics event once per extension and method (extension name, version, Nexus mod and file id). The mechanism is generic, so any later deprecation can use it.
+
+The rest of the game-store surface changed in 2.8 too: `registerGameStore` and the `IGameStore` export were removed, and `GameStoreHelper` shrank to `findByAppId`, `findByName`, `isGameInstalled` and `launchGameStore(api, storeId, params?)`. This repo only calls `findByAppId`.
+
+---
+
 ## `IExtension` type
 
 `IExtension` (the extension-manager's own metadata shape — install state, bundled flag, path) is deprecated in favor of `ExtensionInfo`. This describes Vortex's *own* extension bookkeeping (the Extensions page), not anything a game extension's `index.js` reads or writes, so it has no practical effect on this repo's code.
+
+Since Vortex 2.7.0 six fields on `ExtensionInfo` itself — `type`, `bundled`, `path`, `modId`, `fileId`, `issueTrackerURL` — are tagged `@deprecated` ("not read from info.json anymore"). The fields the `ExtensionInfo` type still treats as live are `name`, `author`, `description`, `version`, and optionally `id` and `namespace`.
 
 ---
 

@@ -131,7 +131,6 @@ const TEMPLATE_ENGINES = {
   "template-tfcinstaller-ue2-3": "ue2-3",
   "template-reframework-fluffy": "reengine",
   "template-unitymelonloaderbepinex-hybrid": "unity-melon-bepinex",
-  "template-unitybepinex": "unity-bepinex",
   "template-unity-umm": "unity-umm",
   "template-anvilengine": "anvil",
   "template-frostbite": "frostbite",

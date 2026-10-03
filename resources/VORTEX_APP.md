@@ -3,7 +3,7 @@
 How the Vortex application and its monorepo are put together, for orientation when reading or searching the `Vortex` source tree. This is the **app/repo** view — the extension-facing API surface is covered separately by the `vortex-api` type declarations (`node_modules/vortex-api/lib/api.d.ts`) and the authoring docs in this folder. Crosslinks to those are noted where relevant.
 
 **Repo:** `Nexus-Mods/Vortex`, cloned locally as `Vortex\` (read-only mirror — see `BOOTSTRAP.md`).
-**Version line (audited 2026-09-04):** v2.6.3 (2026-09-02) is the latest stable tag; the local checkout's HEAD is on `master` at 2026-09-03, past v2.6.3. Default branch is `master`.
+**Version line (audited 2026-10-01):** v2.7.2 (2026-09-29) is the latest stable tag and v2.8.0-beta.2 (2026-09-29) the latest beta; the local checkout's HEAD is on `master` at 2026-09-30, past both. The v2.7.x and v2.8.x tags are release-branch tags, not ancestors of `master`. Default branch is `master`.
 
 ## Top-level layout
 
@@ -109,7 +109,7 @@ Vortex has **two** extension directories. Do not confuse them.
 
 2. **Bundled extensions** — `extensions/` at repo root. Separately-bundled extensions shipped with the app (rolldown via `scripts/extensions-rolldown.mjs`). Includes:
     - Gamebryo/Bethesda stack: `gamebryo-plugin-management`, `gamebryo-archive-*`, `gamebryo-bsa-support`, `gamebryo-savegame-management`, etc.
-    - Game-store integrations: `gamestore-gog`, `gamestore-origin`, `gamestore-uplay`, `gamestore-xbox`, `gameinfo-steam`.
+    - Game-store integrations: `gamestore-gog`, `gamestore-origin`, `gamestore-uplay`, `gamestore-xbox`, `gameinfo-steam` — present through Vortex 2.7.x, **removed in 2.8.0-beta.1** when the GOG, Origin, Uplay and Xbox stores moved into core.
     - Modtypes: `modtype-bepinex`, `modtype-dazip`, `modtype-dinput`, `modtype-enb`, `modtype-gedosato`, `modtype-umm`.
     - Tooling: `collections`, `mod-dependency-manager`, `fnis-integration`, `script-extender-installer`, `nmm-import-tool`, `mo-import`, `meta-editor`, `quickbms-support`, `mtframework-arc-support`, and more.
     - **`extensions/games/`** — 86 first-party `game-*` extensions (one folder per game). These are the in-tree equivalents of the third-party extensions in `ChemBoy1-Vortex-Games`.
@@ -132,7 +132,7 @@ This is the practical orchestration that happens inside the app at runtime. The 
 
 ### 1. Game lifecycle
 
-- **Known games registry.** Every `context.registerGame(...)` (from a bundled or third-party extension) adds an `IGame` to `GameModeManager`'s `mKnownGames`. Game stores (`gamestore-steam`/`gog`/`xbox`/...) register as `IGameStore` in `mKnownGameStores`. (`gamemode_management/GameModeManager.ts`, registration contract: `REGISTER_GAME.md`.)
+- **Known games registry.** Every `context.registerGame(...)` (from a bundled or third-party extension) adds an `IGame` to `GameModeManager`'s `mKnownGames`. Game stores are held as `IGameStore` in `mKnownGameStores`: through 2.7.x that is `Steam`, `EpicGamesLauncher` plus the bundled `gamestore-*` extensions (registered with `registerGameStore`); from 2.8.0-beta.1 all six stores (Steam, Epic, GOG, Origin, Uplay, Xbox) are core classes, `registerGameStore` is gone, and each store exposes a synchronous snapshot of its last scan. (`gamemode_management/GameModeManager.ts`, registration contract: `REGISTER_GAME.md`.)
 - **Discovery** — finding where a game is installed. Three paths in `gamemode_management/util/discovery.ts`:
   - `quickDiscovery` — asks each game's store/`queryPath` + each registered game store; fast, runs on startup. Calls back `onDiscoveredGame` -> writes an `IDiscoveryResult` into state.
   - `searchDiscovery` — full filesystem walk of chosen drives (user-triggered "Scan" when quick discovery misses).

@@ -2,6 +2,10 @@
 
 ## Planned Improvements (Not Yet Released)
 
+## [1.1.2] - 2026-10-01
+
+- Thunderstore package files (manifest.json, icon.png) from newly installed mods are no longer copied into the shared mod loader folder, where they collided between mods.
+
 ## [1.1.1] - 2026-09-27
 
 - Game version now shows the real game build instead of the Unity engine version.

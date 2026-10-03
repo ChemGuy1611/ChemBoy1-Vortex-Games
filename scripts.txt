@@ -3,15 +3,11 @@ vortex_utils.py
 gui_tray.py
 nexus_upload.py
 check_nexus_api.py
+refresh_extensions_feed.py
 new_extension.py
 new_template.py
 port_to_template.py
 patch_extensions.py
-convert_getsafe.py
-convert_setsafe.py
-convert_error_classes.py
-convert_topromise.py
-migrate_fs.py
 fetch_cover_art.py
 make_title_image.py
 fetch_exec_icon.py
@@ -34,7 +30,6 @@ extension_parser.js
 generate_explained.js
 generate_notes.js
 lint_extensions.js
-replace_util_opn.js
 
 # Documentation
 SCRIPTS.md
