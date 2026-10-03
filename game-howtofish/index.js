@@ -64,7 +64,7 @@ const TS_BROWSER_CONFIG = {
 
 const GAME_NAME = "How to Fish";
 const GAME_NAME_SHORT = "How to Fish";
-const GAME_STRING = "How To Fish"; //string for exe and data folder (seem to always match)
+const GAME_STRING = "How to Fish"; //string for exe and data folder (seem to always match)
 const GAME_STRING_ALT = GAME_STRING; //CHANGE THIS IF IT DOESN'T MATCH
 const EXEC = `${GAME_STRING}.exe`;
 const EXEC_EGS = EXEC;
