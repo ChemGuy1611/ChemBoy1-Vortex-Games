@@ -1,6 +1,6 @@
 # Extension Templates Overview
 
-Scaffolding reference for the 16 game-extension templates in `template-*/`. This file covers how to
+Scaffolding reference for the 15 game-extension templates in `template-*/`. This file covers how to
 pick a template and the anatomy every template shares. Per-template mechanics — what each engine or
 mod loader actually requires and how the template is shaped around it — live one file per template
 in `templates/`, indexed below.
@@ -25,11 +25,11 @@ Date / Notes` block at the top of every template is parsed by `new_extension.py`
 `update_index_header()` with a fixed regex. Changing its shape breaks scaffolding for every template.
 The `Structure:` line is also the in-file record of which template an extension came from.
 
-**Edit zones.** Larger templates (`ue4-5`, `unitymelonloaderbepinex-hybrid`, `unitybepinex`) bracket
+**Edit zones.** Larger templates (`ue4-5`, `unitymelonloaderbepinex-hybrid`) bracket
 the fields a new extension must fill in between `-- START EDIT ZONE --` and `-- END EDIT ZONE --`
 comment banners. Everything outside those banners is derived and normally left alone.
 
-**Version stamping.** All 16 templates carry `1.0.0` in `info.json`, their `CHANGELOG.md` entry, the
+**Version stamping.** All 15 templates carry `1.0.0` in `info.json`, their `CHANGELOG.md` entry, the
 `index.js` header, and a `1.0.0.txt` marker file. `new_extension.py` overwrites that with its own
 configured new-extension version, so the scaffold value is cosmetic.
 
@@ -58,7 +58,6 @@ not the place to record template mechanics.
 | `tfcinstaller-ue2-3`             | template-tfcinstaller-ue2-3             | Unreal Engine 2/3 + TFC Installer                | S E G X |
 | `ue4-5`                          | template-ue4-5                          | Unreal Engine 4/5                                | S E G X |
 | `unity-umm`                      | template-unity-umm                      | Unity + Unity Mod Manager                        | S E G X |
-| `unitybepinex`                   | template-unitybepinex                   | Unity + BepInEx 5/6                              | S E G X |
 | `unitymelonloaderbepinex-hybrid` | template-unitymelonloaderbepinex-hybrid | Unity + BepInEx **and** MelonLoader (user picks) | S E G X |
 
 **Stores legend:** S = Steam, E = Epic, G = GOG, X = Xbox / Microsoft Store, Uplay = Ubisoft Connect,
@@ -92,7 +91,7 @@ must run once at Vortex startup — event handlers, hand-offs to helper extensio
 directly, before `context.once()`, because they are registrations rather than handlers.
 
 `template-basic` is the reference skeleton. Every other template is that skeleton plus engine- or
-loader-specific mod types, installers, and tooling, so reading it first makes the other 15 legible
+loader-specific mod types, installers, and tooling, so reading it first makes the other 14 legible
 as deltas. It is also the checklist for a _new_ template: the `spec` must carry every store ID slot
 (`null` where unused), `compatible`, and the discovery ID array, even if a given engine never uses
 them.
@@ -122,13 +121,13 @@ of the gated function.
 
 | Toggle              | In                                                | Default                                                                 | Effect                                                                                                                                                                                |
 | ------------------- | ------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `debug`             | all 16                                            | `false`                                                                 | Extra logging                                                                                                                                                                         |
-| `setupNotification` | all 16                                            | `false`, except `farcry`, `frostbite`, `reloaded2`, `rpgmaker`          | Fires `setupNotify()` from `setup()`. The four exceptions default `true` because each already had real, always-relevant instructions firing unconditionally before the toggle existed |
-| `allowSymlinks`     | 14 (not `reloaded2`, `ue4-5`)                     | `true`, except `anvilengine` and `frostbite` (`false`)                  | Feeds `details.supportsSymlinks`. Must be `false` when files carry internal references or a repacking tool rewrites them                                                              |
-| `fallbackInstaller` | 13 (not `reframework-fluffy`, `shinryu`, `ue4-5`) | `true`                                                                  | Registers the catch-all installer at priority 49. Set `false` to avoid installer collisions                                                                                           |
-| `hasXbox`           | 12                                                | `false`, auto-set `true` when `XBOXAPP_ID` is in `DISCOVERY_IDS_ACTIVE` | Xbox executable, save path, and `appxmanifest.xml` version reading                                                                                                                    |
-| `multiExe`          | 6                                                 | `false`, several templates auto-derive it                               | More than one store's executable name differs from the Steam default                                                                                                                  |
-| `hasUserIdFolder`   | 6                                                 | `false`, except `shinryu` (`true`)                                      | Scans the save/config folder for a single numeric-account subfolder and splices it into the path                                                                                      |
+| `debug`             | all 15                                            | `false`                                                                 | Extra logging                                                                                                                                                                         |
+| `setupNotification` | all 15                                            | `false`, except `farcry`, `frostbite`, `reloaded2`, `rpgmaker`          | Fires `setupNotify()` from `setup()`. The four exceptions default `true` because each already had real, always-relevant instructions firing unconditionally before the toggle existed |
+| `allowSymlinks`     | 13 (not `reloaded2`, `ue4-5`)                     | `true`, except `anvilengine` and `frostbite` (`false`)                  | Feeds `details.supportsSymlinks`. Must be `false` when files carry internal references or a repacking tool rewrites them                                                              |
+| `fallbackInstaller` | 12 (not `reframework-fluffy`, `shinryu`, `ue4-5`) | `true`                                                                  | Registers the catch-all installer at priority 49. Set `false` to avoid installer collisions                                                                                           |
+| `hasXbox`           | 11                                                | `false`, auto-set `true` when `XBOXAPP_ID` is in `DISCOVERY_IDS_ACTIVE` | Xbox executable, save path, and `appxmanifest.xml` version reading                                                                                                                    |
+| `multiExe`          | 5                                                 | `false`, several templates auto-derive it                               | More than one store's executable name differs from the Steam default                                                                                                                  |
+| `hasUserIdFolder`   | 5                                                 | `false`, except `shinryu` (`true`)                                      | Scans the save/config folder for a single numeric-account subfolder and splices it into the path                                                                                      |
 
 The three templates without `fallbackInstaller` and the two without `allowSymlinks` are deliberate:
 `reframework-fluffy`, `shinryu`, and `ue4-5` each route unrecognised archives through their own
@@ -143,7 +142,7 @@ computed at runtime rather than templated — is registered explicitly instead, 
 
 | Band  | Typical use                                                                                                                                         |
 | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 8–9   | Must beat a helper extension's own mod types (`unitybepinex` registers ConfigurationManager at 9 because the BepInEx extension's types start at 10) |
+| 8–9   | Must beat a helper extension's own mod types (`unity-umm` registers its UMM loader type at 8)                                                       |
 | 25–58 | Engine-specific types with runtime-computed paths                                                                                                   |
 | 60–72 | Config, save, assembly, assets, loader — the tail types                                                                                             |
 
@@ -152,10 +151,15 @@ computed at runtime rather than templated — is registered explicitly instead, 
 Installers register in the 25–49 band, lowest tested first, first `supported: true` wins. Templates
 step by 2 (25, 27, 29, …) so a game extension can slot an extra installer between two template ones
 without renumbering. The fallback installer, where present, always sits at 49 and is registered
-last.
+last. Three templates break the ladder: `unity-umm` registers its root installer at 8,
+`cobraengineACSE` registers its save installer at 49 beside the fallback, and `shinryu` registers
+two installers at 27.
 
-Every `testSupported` checks the game ID and early-returns `supported: false` when the archive
-contains `fomod/ModuleConfig.xml`, so FOMOD archives fall through to Vortex's own FOMOD installer.
+Every `testSupported` checks the game ID. Most also early-return `supported: false` when the
+archive contains `fomod/ModuleConfig.xml`, so FOMOD archives fall through to Vortex's own FOMOD
+installer. Installers that match one exact marker file omit that guard: `cobraengineACSE` (ACSE,
+ACSE mod, localised, ovldata), `reloaded2` (manager) and `snowdropengine` (mod loader, data
+subfolder). `TEMPLATE_TESTING.md` lists these as known exceptions.
 
 ### Notification vocabulary
 
@@ -185,14 +189,13 @@ override.cfg, Delete ModData Folder, Download BepInExConfigManager, and so on).
 
 ### Auto-download routes
 
-Templates fetch their required loader or tool through one of four routes:
+Templates fetch their required loader or tool through one of three routes:
 
 | Route                           | Used by                                                                                                                                                | Mechanism                                                                                                                                                                                                                   |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Inline Nexus                    | `anvilengine`, `cobraengineACSE`, `farcry`, `reframework-fluffy`, `reloaded2`, `shinryu`, `snowdropengine`, `tfcinstaller-ue2-3`, `ue4-5`, `unity-umm` | `api.ext.nexusGetModFiles(domain, pageId)`, newest category-1 file wins, falls back to a hardcoded file ID, then `start-download` + `start-install-download`, then `setModsEnabled` + `setModType` via `util.batchDispatch` |
 | Inline direct URL               | `anvilengine` (ReForger), `frostbite`, `farcry`, `reframework-fluffy` (nightly)                                                                        | `start-download` against a fixed vendor or GitHub URL, sometimes followed by a manual copy into the game folder for naked `.dll` payloads                                                                                   |
-| `downloader.js` module          | `godot`, `unitybepinex`, `unitymelonloaderbepinex-hybrid`                                                                                              | A bundled module resolving the newest GitHub release, with version comparison and an update check wired to `check-mods-version`. Full contract in `DOWNLOADER.md`                                                           |
-| Delegated to a helper extension | `unitybepinex` (`modtype-bepinex`)                                                                                                                     | `context.requireExtension(...)` plus an `api.ext.bepinexAddGame` registration in `context.once()`; the helper extension owns fetching and installing the loader                                                             |
+| `downloader.js` module          | `godot`, `unitymelonloaderbepinex-hybrid`; `anvilengine` (ReForger installer only), `ue4-5` (UE4SS requirement set)                                    | A bundled module resolving the newest GitHub release, with version comparison and an update check wired to `check-mods-version`. Full contract in `DOWNLOADER.md`                                                           |
 
 The `game` field of the `start-download` `modInfo` is the Nexus domain the file comes from, which
 for site-wide tools is `site`. Vortex files the archive under that domain and installs it into the
@@ -237,7 +240,6 @@ real target paths, installer ladder, tools, auto-downloads, and known traps — 
 | `template-tfcinstaller-ue2-3`             | `templates/TEMPLATE_TFCINSTALLER_UE2_3.md`             | `.tfc` texture caches; `.tfc` excluded from mod exts          |
 | `template-ue4-5`                          | `templates/TEMPLATE_UE4_5.md`                          | Three load-order surfaces, React layer, update guard          |
 | `template-unity-umm`                      | `templates/TEMPLATE_UNITY_UMM.md`                      | Fetches UMM from Nexus and reproduces its DoorstopProxy patch |
-| `template-unitybepinex`                   | `templates/TEMPLATE_UNITYBEPINEX.md`                   | Loader delegated; ConfigurationManager is not                 |
 | `template-unitymelonloaderbepinex-hybrid` | `templates/TEMPLATE_UNITYMELONLOADERBEPINEX_HYBRID.md` | Two mutually exclusive loaders, user picks                    |
 
 ---
@@ -246,6 +248,7 @@ real target paths, installer ladder, tools, auto-downloads, and known traps — 
 
 `REGISTER_GAME.md` (the `spec` / `applyGame()` structure every template follows).
 `INSTALLER_SYSTEM.md` (`registerInstaller` contract behind the priority ladder above).
+`TEMPLATE_TESTING.md` (the automated suite that asserts the registration and installer rules above).
 `FOMOD_INSTALLER.md` (the built-in installer the `ModuleConfig.xml` check yields to).
 `LOAD_ORDER_REGISTRATION.md` (`registerLoadOrder` / legacy `registerLoadOrderPage`, used by `ue4-5`).
 `UE4_5_REACT_ARCHITECTURE.md` and `NON_UE_LOAD_ORDER_PAGES.md` (the load-order React layers).

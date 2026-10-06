@@ -52,7 +52,9 @@ const setMyValue = createAction(`${GAME_ID.toUpperCase()}_SET_MY_VALUE`, (v) => 
 
 ## 2. Register the reducer
 
-Call **first** in `main()`, before any other registrations.
+Call it in `main()`, never inside `context.once()`. Its order relative to the other `register*`
+calls does not matter, so it may come after `registerGame` (`template-ue4-5` registers its
+reducers after `applyGame()`).
 
 ```js
 function main(context) {

@@ -80,6 +80,25 @@ gets a unique 13-character hash.
 
 ---
 
+## Looking a product up by package family
+
+The reverse direction — from an `XBOXAPP_ID` and `XBOX_PUB_ID` already in an extension to the Store
+product — has its own endpoint:
+
+```text
+https://displaycatalog.mp.microsoft.com/v7.0/products/lookup?market=US&languages=en-US&alternateId=PackageFamilyName&value={PackageIdentityName}_{XBOX_PUB_ID}
+```
+
+The response carries `Products[]`, each with a `ProductId` and `LocalizedProperties[0].ProductTitle`;
+an unknown family returns an empty list. The top-level `Properties` block is not populated in this
+response, so take the `ProductId` and call the normal `products/{id}` endpoint above for the identity.
+An empty list means the identity name **or** the hash is wrong — the two cannot be told apart. The
+lookup needs both halves of the family name, so an extension that carries no `XBOX_PUB_ID` has to find
+its product another way (the PCGamingWiki Microsoft Store row). `patch_extensions.py --audit --verify xbox`
+uses this to check every filled-in Xbox id.
+
+---
+
 ## Python example
 
 ```python
@@ -207,6 +226,12 @@ identity.
   can independently confirm both checked out.
 - **A title can list more than one package with no `Applications` entry.** Don't assume index `0` is
   the game; scan for the entry that actually has one.
+- **`ApplicationId` is sometimes an executable path rather than the manifest Id.** GDK titles list
+  values like `x64\FarmingSimulator2025Game` or `launcher\launcher` where a live manifest holds the
+  dotted form (`x64.FarmingSimulator2025Game`). When comparing against a hand-entered `XBOXEXECNAME`,
+  fold path separators, dots and spaces to one separator and ignore case. A package that holds several
+  apps lists the first (`Stalker2RedirectionApp` for a game whose launch app is `AppSTALKER2Shipping`),
+  so a difference that survives the folding is a reason to check by hand, not proof of a wrong value.
 - **Ubisoft and EA titles in the Xbox library often have no usable `XBOXEXECNAME`.** Game Pass
   subscribers get access to a limited slice of the Ubisoft and EA libraries, and those games appear in
   the Microsoft Store and Xbox app even though the publisher's own launcher (Ubisoft Connect, the EA

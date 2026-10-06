@@ -2,6 +2,10 @@
 
 ## Planned Improvements (Not Yet Released)
 
+## [1.0.7] - 2026-10-04
+
+- Added: Mods packaged in a top-level "Engine", "Content", "Binaries" or "Mods" folder now install into the matching game folder.
+
 ## [1.0.6] - 2026-09-28
 
 - The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.

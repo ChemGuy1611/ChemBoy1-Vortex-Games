@@ -27,7 +27,7 @@
 
 | Flag | Value | Description |
 | --- | --- | --- |
-| `hasLoader` | `false` | true if game needs a mod loader |
+| `hasLoader` | `true` | true if game needs a mod loader |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
 | `needsModInstaller` | `true` | set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing |
 | `rootInstaller` | `true` | enable root installer. Set false if you need to avoid installer collisions |
@@ -43,6 +43,8 @@ Mod types define where each category of mod gets deployed:
 | --- | --- | --- | --- |
 | Root Folder | `ghostreconwildlands-root` | high | `{gamePath}` |
 | Mod | `ghostreconwildlands-mod` | high | `{gamePath}/.` |
+| ScriptHook Plugin | `ghostreconwildlands-plugin` | high | `{gamePath}/plugins` |
+| GRW ScriptHook Reforged | `ghostreconwildlands-loader` | 70 | `?` |
 
 ## Mod Installers
 
@@ -50,7 +52,10 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `ghostreconwildlands-root` | 27 |
+| `ghostreconwildlands-loader` | 25 |
+| `ghostreconwildlands-plugin` | 26 |
+| `ghostreconwildlands-forgemod` | 27 |
+| `ghostreconwildlands-root` | 28 |
 | `ghostreconwildlands-mod` | 29 |
 
 ## Registered Tools
@@ -64,6 +69,7 @@ These tools appear in Vortex's Tools panel when this game is active:
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Open Config File
+- Open ScriptHook Config File
 - Open Save Folder
 - Open PCGamingWiki Page
 - Open SteamDB Page
@@ -75,7 +81,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 | Dependency | Version | Details |
 | --- | --- | --- |
-| Mod Loader | — | — |
+| GRW ScriptHook Reforged | — | — |
 
 ## Special Features
 

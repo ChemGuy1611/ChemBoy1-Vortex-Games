@@ -11,7 +11,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Root / Game Folder Mods | a `Railroader_Data` folder | the game folder itself (no subfolder) |
 | Railloader (tool) | a `railloader.exe` file | the game folder itself (no subfolder) |
 | Unity Mod Manager (tool) | a `UnityModManager.exe` file | the game folder itself (no subfolder) |
-| Unity Mod Manager Mods | an `info.json` file and a `.dll` | `Mods\<ModName>` |
+| Unity Mod Manager Mods | an `info.json` file | `Mods\<ModName>` |
 | Railloader Mods | a `Definition.json` file | `Mods\<ModName>` |
 | Assembly Replacement Mods | a `Assembly-CSharp.dll` file | `Railroader_Data\Managed` |
 | Asset Replacement Mods | a `.assets` file | `Railroader_Data` |
@@ -71,7 +71,7 @@ Installs to: the game folder itself (no subfolder)
 
 ## Unity Mod Manager Mods
 
-Mods for Unity Mod Manager: a manifest plus the assembly that implements the mod. Each one gets its own folder under `Mods`.
+Mods for Unity Mod Manager, told apart by their manifest. Each one gets its own folder under `Mods`.
 
 ```text
 MyUmmMod.zip
@@ -81,15 +81,16 @@ MyUmmMod.zip
 
 **Requirements:**
 
-- Recognised by a file named `info.json` together with a `.dll` beside it.
-- The mod folder name comes from the folder wrapping the manifest. A flat archive is named from the `Id` field in `info.json` instead, so keep that field filled in.
+- Recognised by a file named `info.json` at any level of the archive. A `.dll` is not required.
+- Every folder holding `info.json` is installed as its own mod, so one archive can carry several mods.
+- The mod folder name comes from the folder holding the manifest. A flat archive is named from the `Id` field in `info.json` instead, so keep that field filled in.
+- Folders above a mod folder, such as a `Mods` wrapper, are dropped.
 
 Installs to: `Mods\<ModName>`
 
 **Common mistakes:**
 
-- Shipping the manifest without the assembly - the archive is not recognised as a mod.
-- Wrapping the mod in an extra `Mods` folder is fine, but a second level of wrapping folders becomes part of the mod folder name.
+- Keeping files a mod needs outside its own folder - only the contents of each `info.json` folder are installed.
 
 ## Railloader Mods
 

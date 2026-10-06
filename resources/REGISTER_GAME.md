@@ -265,7 +265,9 @@ with `path.join()`, which emits forward slashes off Windows.
   and register that mod type explicitly with a getPath closure that reads the variable when called.
 - The `registerModType` priority only orders the sequential `test()` pass Vortex runs to detect a mod's
   type (lowest first, first match wins). A type whose `test` always returns `false` (assigned by an
-  installer's `setmodtype` instead) is not affected by its number. Keep priorities within 25-75.
+  installer's `setmodtype` instead) is not affected by its number. Keep explicit priorities within
+  25-75. Spec-driven mod types use `modTypePriority()`, which maps `high` to 25 and `low` to 75 and
+  adds the entry's array index, so `low` types land just above 75.
 - `steamAppId` in `details` must be a **number** (`+STEAMAPP_ID`). The `environment` copy stays a string.
 - `parameters` field: omit it entirely (or comment it out) when empty — sending `[]` or `['']` passes a blank arg to the exe.
 - `logo` must match the actual filename in the extension folder (conventionally `${GAME_ID}.jpg`).

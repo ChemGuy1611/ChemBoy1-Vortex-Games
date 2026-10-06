@@ -56,13 +56,19 @@ values. Both are gated by `seedUmmParams` and make the tool open already pointed
 Both loaders read from `<gamePath>/Mods/<ModName>`, so there is one `Mod` mod type and two
 installers that differ only in the manifest they key on:
 
-| Installer    | Manifest                                     | Folder name comes from                      |
-| ------------ | -------------------------------------------- | ------------------------------------------- |
-| `UMM_MOD_ID` | `info.json` (case-insensitive) plus a `.dll` | the wrapping folder, or the manifest's `Id` |
+| Installer    | Manifest                       | Folder name comes from                        |
+| ------------ | ------------------------------ | --------------------------------------------- |
+| `UMM_MOD_ID` | `info.json` (case-insensitive) | the folder holding it, or the manifest's `Id` |
 
 `modsFolderInstructions()` rebuilds every archive shape — `Mods/<Name>/...`, a bare `<Name>/...`, or
 flat — into a single `<Name>/` folder, which is what drops a leading `Mods` segment without
 producing `Mods\Mods\<Name>`.
+
+The UMM mod test needs only the `info.json`; a `.dll` is not required. `installUmmMod` runs
+`modsFolderInstructions()` once per folder that holds a manifest, so an archive with several mod
+folders installs all of them. A manifest nested inside another mod folder stays part of that mod,
+and a manifest at the archive root owns the whole archive. Files outside every mod folder are not
+installed.
 
 Railloader is not part of this template. `game-railroader` is the only game with a second loader,
 so its Railloader constants, installers and "Get Railloader" action live in that extension alone.

@@ -2,8 +2,8 @@
 Name: S.T.A.L.K.E.R. 2: Heart of Chornobyl Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 2.1.3
-Date: 2026-09-27
+Version: 2.1.4
+Date: 2026-10-04
 //////////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -89,6 +89,9 @@ const writeEngineVersion = false; //toggle to write ENGINE_VERSION into UE4SS-se
 const ENGINE_VERSION = "5.1.1.0"; //Unreal Engine version. usually '4.27.2.0' or '5.X.X.0'. Written to UE4SS-settings.ini if writeEngineVersion is enabled
 const MAJOR_VERSION = ENGINE_VERSION.split(".")[0]; //major UE version
 const MINOR_VERSION = ENGINE_VERSION.split(".")[1]; //minor UE version
+const ROOT_FOLDERS = [EPIC_CODE_NAME, "Engine"]; //addressable folders in root
+const ROOTSUB_FOLDERS = ["Content", "Binaries", "Mods"]; //subfolders of EPIC_CODE_NAME. Don't use "Plugins" here since it can conflict with plugin loader/asi mods
+const CONTENTSUB_FOLDERS = ["Paks", "Movies"]; //subfolders of Content folder
 
 //Settings related to the IO Store UE feature
 let PAKMOD_EXTS = [".pak"];
@@ -256,6 +259,7 @@ const SAVE_LOC = CONFIG_LOC; //string for notification text. Config and Save mod
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Game Folder";
 const ROOT_FOLDER = EPIC_CODE_NAME;
+const ROOTSUB_PATH = EPIC_CODE_NAME;
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Saves (LocalAppData)";
@@ -1216,10 +1220,19 @@ function installDll(api, files, fileName) {
 
 //Installer test for Root folder files
 function testRoot(files, gameId) {
-  const isMod = files.some(
-    (file) => path.basename(file).toLowerCase() === ROOT_FOLDER.toLowerCase(),
+  const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map((str) => str.toLowerCase());
+  const ROOTSUB_FOLDERS_LOWER = ROOTSUB_FOLDERS.map((str) => str.toLowerCase());
+  const CONTENTSUB_FOLDERS_LOWER = CONTENTSUB_FOLDERS.map((str) => str.toLowerCase());
+  const isMod = files.some((file) =>
+    ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
   );
-  let supported = gameId === spec.game.id && isMod;
+  const isSub = files.some((file) =>
+    ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
+  );
+  const isContentSub = files.some((file) =>
+    CONTENTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
+  );
+  let supported = gameId === spec.game.id && (isMod || isSub || isContentSub);
 
   // Test for a mod installer
   if (
@@ -1241,9 +1254,25 @@ function testRoot(files, gameId) {
 
 //Installer install Root folder files
 function installRoot(files) {
-  const modFile = files.find(
-    (file) => path.basename(file).toLowerCase() === ROOT_FOLDER.toLowerCase(),
+  const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map((str) => str.toLowerCase());
+  const ROOTSUB_FOLDERS_LOWER = ROOTSUB_FOLDERS.map((str) => str.toLowerCase());
+  const CONTENTSUB_FOLDERS_LOWER = CONTENTSUB_FOLDERS.map((str) => str.toLowerCase());
+  let folder = "";
+  let modFile = files.find((file) =>
+    ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
   );
+  if (modFile === undefined) {
+    modFile = files.find((file) =>
+      ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
+    );
+    folder = ROOTSUB_PATH;
+  }
+  if (modFile === undefined) {
+    modFile = files.find((file) =>
+      CONTENTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
+    );
+    folder = path.join(EPIC_CODE_NAME, "Content");
+  }
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
@@ -1256,7 +1285,7 @@ function installRoot(files) {
     return {
       type: "copy",
       source: file,
-      destination: path.join(file.substr(idx)),
+      destination: path.join(folder, file.substr(idx)),
     };
   });
   instructions.push(setModTypeInstruction);

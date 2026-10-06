@@ -2,8 +2,8 @@
 Name: Tom Clancy's Ghost Recon Wildlands Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-08-10
+Version: 2.0.1
+Date: 2026-10-05
 Notes:
 -
 ///////////////////////////////////////////*/
@@ -31,6 +31,7 @@ const DISCOVERY_IDS_ACTIVE = [UPLAYAPP_ID, STEAMAPP_ID, EPICAPP_ID]; // UPDATE T
 const gameFinderQuery = {
   steam: [{ id: STEAMAPP_ID, prefer: 0 }],
   epic: [{ id: EPICAPP_ID }],
+  uplay: [{ id: UPLAYAPP_ID }],
   registry: [{ id: `${INSTALL_HIVE}:${INSTALL_KEY}:${INSTALL_VALUE}` }],
 };
 
@@ -44,7 +45,7 @@ const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/2170"; //Nexus link to this extension. Used for links
 
 //feature toggles
-const hasLoader = false; //true if game needs a mod loader
+const hasLoader = true; //true if game needs a mod loader
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
 const needsModInstaller = true; //set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing
 const rootInstaller = true; //enable root installer. Set false if you need to avoid installer collisions
@@ -68,13 +69,25 @@ let STAGING_FOLDER = "";
 let DOWNLOAD_FOLDER = "";
 
 const LOADER_ID = `${GAME_ID}-loader`;
-const LOADER_NAME = "Mod Loader";
+const LOADER_NAME = "GRW ScriptHook Reforged";
 const LOADER_PATH = BINARIES_PATH;
-const LOADER_FILE = "XXX.dll";
-const LOADER_PAGE_NO = 0;
-const LOADER_FILE_NO = 0;
+const LOADER_FILE = "dinput8.dll";
+const LOADER_PAGE_NO = 136;
+const LOADER_FILE_NO = 882;
 const LOADER_DOMAIN = GAME_ID;
+const LOADER_CONFIG_FILE = "scripthook.ini"; //created by the loader on first launch
 //const LOADER_URL = `XXX`; //if not on Nexus
+
+const PLUGIN_ID = `${GAME_ID}-plugin`;
+const PLUGIN_NAME = "ScriptHook Plugin";
+const PLUGIN_PATH = "plugins"; //loader reads plugins\<name>\<name>.asi
+const PLUGIN_FOLDERS = [PLUGIN_PATH];
+const PLUGIN_EXTS = [".asi", ".dll"];
+
+const FORGE_ID = `${GAME_ID}-forgemod`;
+const FORGE_NAME = "Forge Mod";
+const FORGE_PATH = "mods"; //loader's Forge Mod Loader reads loose files from here. Mods are copied as packaged, so authors must ship one top-level folder named after the mod
+const FORGE_EXTS = [".forge", ".data"];
 
 const MOD_ID = `${GAME_ID}-mod`;
 const MOD_NAME = "Mod";
@@ -103,6 +116,7 @@ const PARAMETERS = [PARAMETERS_STRING];
 let MODTYPE_FOLDERS = [BINARIES_PATH];
 if (needsModInstaller) MODTYPE_FOLDERS.push(MOD_PATH);
 if (saveInstaller) MODTYPE_FOLDERS.push(SAVE_PATH);
+if (hasLoader) MODTYPE_FOLDERS.push(PLUGIN_PATH, FORGE_PATH);
 const IGNORE_CONFLICTS = [
   path.join("**", "changelog*"),
   path.join("**", "readme*"),
@@ -172,6 +186,22 @@ if (saveInstaller) {
     priority: "high",
     targetPath: path.join("{gamePath}", SAVE_PATH),
   });
+}
+if (hasLoader) {
+  spec.modTypes.push(
+    {
+      id: PLUGIN_ID,
+      name: PLUGIN_NAME,
+      priority: "high",
+      targetPath: path.join("{gamePath}", PLUGIN_PATH),
+    },
+    {
+      id: FORGE_ID,
+      name: FORGE_NAME,
+      priority: "high",
+      targetPath: path.join("{gamePath}", FORGE_PATH),
+    },
+  );
 }
 
 //3rd party tools and launchers
@@ -460,6 +490,100 @@ function installMod(files) {
     };
   });
   instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for ScriptHook plugin files
+function testPlugin(files, gameId) {
+  const isMod = files.some((file) => PLUGIN_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = gameId === spec.game.id && isMod;
+
+  // Test for a mod installer
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install ScriptHook plugin files. The loader only reads plugins\<name>\<name>.asi
+function installPlugin(files) {
+  const filtered = files.filter((file) => !file.endsWith(path.sep));
+  const modFile =
+    filtered.find((file) => path.extname(file).toLowerCase() === ".asi") ??
+    filtered.find((file) => PLUGIN_EXTS.includes(path.extname(file).toLowerCase()));
+  const segments = modFile.split(path.sep);
+  const wrapperIdx = segments.findIndex((seg) => PLUGIN_FOLDERS.includes(seg.toLowerCase()));
+  let instructions = [];
+  if (wrapperIdx !== -1 && wrapperIdx <= segments.length - 3) {
+    // archive already has plugins\<name>\... - keep everything below the plugins folder
+    const wrapperPrefix = segments.slice(0, wrapperIdx + 1).join(path.sep) + path.sep;
+    instructions = filtered
+      .filter((file) => file.startsWith(wrapperPrefix))
+      .map((file) => ({
+        type: "copy",
+        source: file,
+        destination: file.substr(wrapperPrefix.length),
+      }));
+  } else {
+    // folder (or loose file) holding the plugin becomes plugins\<plugin file name>\
+    const pluginName = path.basename(modFile, path.extname(modFile));
+    const rootPath = path.dirname(modFile);
+    const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
+    instructions = filtered
+      .filter((file) => file.startsWith(rootPrefix))
+      .map((file) => ({
+        type: "copy",
+        source: file,
+        destination: path.join(pluginName, file.substr(rootPrefix.length)),
+      }));
+  }
+  instructions.push({ type: "setmodtype", value: PLUGIN_ID });
+  return Promise.resolve({ instructions });
+}
+
+//Test for Forge Mod Loader files
+function testForge(files, gameId) {
+  const isMod = files.some((file) => FORGE_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = gameId === spec.game.id && isMod;
+
+  // Test for a mod installer
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install Forge Mod Loader files exactly as packaged
+function installForge(files) {
+  const filtered = files.filter((file) => !file.endsWith(path.sep));
+  const instructions = filtered.map((file) => ({
+    type: "copy",
+    source: file,
+    destination: file,
+  }));
+  instructions.push({ type: "setmodtype", value: FORGE_ID });
   return Promise.resolve({ instructions });
 }
 
@@ -869,9 +993,11 @@ function applyGame(context, gameSpec) {
   //register mod installers
   if (hasLoader) {
     context.registerInstaller(LOADER_ID, 25, testLoader, installLoader);
+    context.registerInstaller(PLUGIN_ID, 26, testPlugin, installPlugin);
+    context.registerInstaller(FORGE_ID, 27, testForge, installForge);
   }
   if (rootInstaller) {
-    context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
+    context.registerInstaller(ROOT_ID, 28, testRoot, installRoot);
   }
   if (needsModInstaller) {
     context.registerInstaller(MOD_ID, 29, testMod, installMod);
@@ -904,6 +1030,29 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     },
   );
+  if (hasLoader) {
+    context.registerAction(
+      "mod-icons",
+      300,
+      "open-ext",
+      {},
+      "Open ScriptHook Config File",
+      () => {
+        try {
+          window.api.shell.openFile(path.join(GAME_PATH, LOADER_PATH, LOADER_CONFIG_FILE));
+        } catch (err) {
+          context.api.showErrorNotification("Failed to open the file or folder", err, {
+            allowReport: false,
+          });
+        }
+      },
+      () => {
+        const state = context.api.getState();
+        const gameId = selectors.activeGameId(state);
+        return gameId === GAME_ID;
+      },
+    );
+  }
   context.registerAction(
     "mod-icons",
     300,

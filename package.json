@@ -4,7 +4,7 @@
   "description": "Vortex Extensions",
   "type": "commonjs",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test --test-timeout=30000 \"tests/**/*.test.js\"",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "format": "oxfmt --write .",

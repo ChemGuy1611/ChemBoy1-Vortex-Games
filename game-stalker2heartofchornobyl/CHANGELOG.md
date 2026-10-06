@@ -4,6 +4,10 @@
 
 - None
 
+## [2.1.4] - 2026-10-04
+
+- Added: Mods packaged in a top-level "Engine", "Content", "Binaries", "Mods", "Paks" or "Movies" folder now install into the matching game folder.
+
 ## [2.1.3] - 2026-09-27
 
 - Game version now shows the real game build instead of the Unreal engine version.

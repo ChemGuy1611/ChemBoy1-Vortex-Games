@@ -92,7 +92,6 @@ async function resolveHashVersion(gamePath) {
 | --- | --- |
 | `template-ue4-5` | Ported |
 | `template-unitymelonloaderbepinex-hybrid` | Ported |
-| `template-unitybepinex` | Ported |
 | `template-unity-umm` | Ported |
 
 Pilots (live-tested before the template port): `game-subnautica2` (Steam UE4-5, test bed), `game-witchfire` (Epic UE4-5), `game-fatekeeper` (Steam UE4-5), `game-prodeus` (Steam Unity hybrid).

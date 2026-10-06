@@ -496,6 +496,12 @@ or v3 REST):
 - **Add or remove a tag on a mod.** The whole tag-assignment mutation family is collection-scoped.
 - **Add, remove or reorder a mod's images or videos.** Likewise collection-scoped
   (`addImageToCollection`, `addVideoToCollection`).
+- **Read how many gallery images a mod page has.** `Mod` exposes only `pictureUrl` /
+  `thumbnailUrl` (the primary image); there is no image or media list on it. The `media(...)` search
+  returns only the site's community gallery (`Image` / `Video` nodes carry `game` and `owner`, no mod
+  reference) and its filter has no mod field — an extension author's account returns 0 hits there.
+  The v1 mod JSON has only `picture_url`, and the v3 mod object is just `id` / `name` / `game_id` /
+  `game_scoped_id`. Counting a page's images means loading the page itself.
 - **Change a mod page's permission switches** — "allow users to add tags", "allow users to add
   images/videos". `editCollection` exposes `allowUserMedia` and `manuallyVerifyMedia`; the `Mod`
   type has no counterpart and no mutation targets it.

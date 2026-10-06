@@ -2,8 +2,8 @@
 Name: Stellar Blade Vortex Extension
 Structure: UE5 (static exe)
 Author: ChemBoy1
-Version: 1.0.6
-Date: 2026-09-28
+Version: 1.0.7
+Date: 2026-10-04
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -87,6 +87,8 @@ const writeEngineVersion = false; //toggle to write ENGINE_VERSION into UE4SS-se
 const ENGINE_VERSION = "4.26.2"; //Unreal Engine version. usually '4.27.2.0' or '5.X.X.0'. Written to UE4SS-settings.ini if writeEngineVersion is enabled
 const MAJOR_VERSION = ENGINE_VERSION.split(".")[0]; //major UE version
 const MINOR_VERSION = ENGINE_VERSION.split(".")[1]; //minor UE version
+const ROOT_FOLDERS = [EPIC_CODE_NAME, "Engine"]; //addressable folders in root
+const ROOTSUB_FOLDERS = ["Content", "Binaries", "Mods"]; //subfolders of EPIC_CODE_NAME. Don't use "Plugins" here since it can conflict with plugin loader/asi mods
 const debug = false; //toggle for debug mode
 const exeHasGameVersion = false; //toggle: true if the game devs stamp the real game version (not just the UE engine version) into the exe ProductVersion
 
@@ -150,6 +152,7 @@ const SHIPPING_EXE = path.join(BINARIES_PATH, `${EPIC_CODE_NAME}-${EXEC_FOLDER_N
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Game Folder";
 const ROOT_FOLDER = EPIC_CODE_NAME;
+const ROOTSUB_PATH = EPIC_CODE_NAME;
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Saves";
@@ -907,10 +910,15 @@ async function installDll(api, files, fileName) {
 
 //Installer test for Fluffy Mod Manager files
 function testRoot(files, gameId) {
-  const isMod = files.some(
-    (file) => path.basename(file).toLowerCase() === ROOT_FOLDER.toLowerCase(),
+  const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map((str) => str.toLowerCase());
+  const ROOTSUB_FOLDERS_LOWER = ROOTSUB_FOLDERS.map((str) => str.toLowerCase());
+  const isMod = files.some((file) =>
+    ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
   );
-  let supported = gameId === spec.game.id && isMod;
+  const isSub = files.some((file) =>
+    ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
+  );
+  let supported = gameId === spec.game.id && (isMod || isSub);
 
   // Test for a mod installer
   if (
@@ -932,9 +940,18 @@ function testRoot(files, gameId) {
 
 //Installer install Fluffy Mod Manger files
 function installRoot(files) {
-  const modFile = files.find(
-    (file) => path.basename(file).toLowerCase() === ROOT_FOLDER.toLowerCase(),
+  const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map((str) => str.toLowerCase());
+  const ROOTSUB_FOLDERS_LOWER = ROOTSUB_FOLDERS.map((str) => str.toLowerCase());
+  let folder = "";
+  let modFile = files.find((file) =>
+    ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
   );
+  if (modFile === undefined) {
+    modFile = files.find((file) =>
+      ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
+    );
+    folder = ROOTSUB_PATH;
+  }
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
@@ -946,7 +963,7 @@ function installRoot(files) {
     return {
       type: "copy",
       source: file,
-      destination: path.join(file.substr(idx)),
+      destination: path.join(folder, file.substr(idx)),
     };
   });
   instructions.push(setModTypeInstruction);

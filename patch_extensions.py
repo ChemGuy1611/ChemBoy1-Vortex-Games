@@ -29,6 +29,9 @@ Usage:
     python patch_extensions.py GAME_ID [GAME_ID ...] --audit  # scope audits to specific games only
     python patch_extensions.py --audit --resolve              # also look for missing Epic/GOG/Xbox versions: egdata + gogdb search, plus a PCGamingWiki availability cross-check, for every unresolved EPICAPP_ID/GOGAPP_ID/XBOXAPP_ID; Xbox hits print their PC package format and protected WindowsApps formats are ignored (network-bound, ~10 min for the whole repo, read-only)
     python patch_extensions.py --audit --resolve xbox         # limit the resolution pass to one store (epic, gog, xbox, or all)
+    python patch_extensions.py --audit --verify               # also check every filled-in EPICAPP_ID / GOGAPP_ID / XBOXAPP_ID against the store's own catalog (egdata.app, api.gog.com, Microsoft Store + PCGamingWiki): typos, ids that match nothing, ids copied from another game, ids shared by two extensions, wrong Xbox publisher hashes (network-bound, ~15 min for the whole repo, read-only)
+    python patch_extensions.py --audit --verify gog           # limit the verification pass to one store (epic, gog, xbox, or all)
+    python patch_extensions.py GAME_ID --audit --verify       # verify one extension's store ids only
     python patch_extensions.py --audit --show-suppressed      # also list the findings parked by an '//!audit-skip: <rule> - <reason>' marker, with their reasons
 
 The extension_url patch looks up each game's modId from the public Nexus v3
@@ -38,6 +41,7 @@ which Vortex writes on first login, to turn the feed's numeric game ids into dom
 
 import argparse
 import hashlib
+import json
 import os
 import re
 import sys
@@ -47,7 +51,8 @@ from vortex_utils import (
     lookup_pcgamingwiki, extract_game_name,
     pcgw_title_from_url, pcgw_page_wikitext, parse_pcgw_availability,
     run_generate_explained_batch,
-    fetch_epic_app_id, fetch_gog_app_id, fetch_xbox_identity, add_to_discovery_ids,
+    fetch_epic_app_id, verify_epic_app_id, verify_gog_app_id, verify_xbox_identity, PCGW_FETCH_INTERVAL,
+    fetch_gog_app_id, fetch_xbox_identity, add_to_discovery_ids,
     fetch_xbox_package_formats, xbox_formats_protected,
     const_value, is_unset, is_missing, set_or_insert,
     inject_register_actions, find_fn_body,
@@ -1343,12 +1348,34 @@ def _discovery_blocks(active_src):
     return blocks
 
 
+def _launcher_code(active_src):
+    """Return the joined bodies of every requiresLauncher-style function in active_src.
+
+    Matches any function whose name contains `requiresLauncher` (case-insensitive on the
+    leading R): the plain `requiresLauncher`, the `makeRequiresLauncher` factory, and the
+    renamed variants (`requiresLauncherBfg`, `requiresLauncher1`, ...). Scoping the branch
+    check to these bodies stops an unrelated `GAME_VERSION === "xbox"` elsewhere in the
+    file from counting as a launcher branch. Empty string when the file defines none.
+    Braces are counted without parsing strings, so a brace inside a string literal in one
+    of these functions would skew the cut; none exist today.
+    """
+    bodies = []
+    for m in re.finditer(r'function\s+\w*[Rr]equiresLauncher\w*\s*\([^)]*\)\s*\{', active_src):
+        depth, i = 1, m.end()
+        while i < len(active_src) and depth:
+            depth += (active_src[i] == "{") - (active_src[i] == "}")
+            i += 1
+        bodies.append(active_src[m.end():i])
+    return "\n".join(bodies)
+
+
 def _has_launcher_branch(active_src, token):
     """Return True if an active requiresLauncher branch handles the given store.
 
     Accepts every branching idiom in the repo: the template's
     `store === 'epic'`, the `game.gameStoreId === 'epic'` variant, switch cases,
-    and a bare `launcher: 'epic'` for files that decide the store elsewhere.
+    and a bare `launcher: 'epic'`. The caller passes only the launcher functions'
+    bodies (see _launcher_code) when the file has any, else the whole file.
     """
     return bool(re.search(
         rf"===\s*['\"]{token}['\"]|case\s*['\"]{token}['\"]|launcher\s*:\s*['\"]{token}['\"]",
@@ -1456,6 +1483,7 @@ def audit_store_ids(folder_paths):
                               "sparse array -- first element is a hole (feeds undefined to discovery)"))
 
         blocks = _discovery_blocks(active)
+        launcher_src = _launcher_code(active) or active  # no launcher function: whole file
         for const, details_key, env_key, _query_key, launcher_token in STORE_ID_SPECS:
             if not is_real_value(const_value(src, const)):
                 continue
@@ -1482,7 +1510,7 @@ def audit_store_ids(folder_paths):
                 file_hits.append((lineno, const, FUNCTIONAL,
                                   f"not referenced by discovery ({mechanisms})"))
 
-            if launcher_token and not _has_launcher_branch(active, launcher_token):
+            if launcher_token and not _has_launcher_branch(launcher_src, launcher_token):
                 file_hits.append((lineno, const, FUNCTIONAL,
                                   f"no active '{launcher_token}' branch in requiresLauncher"))
 
@@ -1552,9 +1580,6 @@ def audit_store_id_resolve(folder_paths, stores):
                 total += 1
     return total
 
-
-# PCGamingWiki asks for at most 30 requests/minute; one page fetch per extension.
-PCGW_FETCH_INTERVAL = 2.1
 
 # Publisher-hash suffixes (XBOX_PUB_ID) of the Ubisoft and EA Microsoft Store packages.
 # Game Pass subscribers get a limited slice of those libraries: the games are listed in
@@ -1648,7 +1673,243 @@ def audit_store_pcgw_crosscheck(folder_paths, stores):
     return total
 
 
-def run_audits(target_ids=None, resolve_stores=None, show_suppressed=False):
+def _js_string_value(raw):
+    """Return the string a JS string-literal RHS (as const_value() gives it) evaluates to,
+    so an escaped backslash in "packages\\bin64\\Game" compares as one backslash."""
+    try:
+        return json.loads(raw) if raw.startswith('"') else raw[1:-1].replace("\\\\", "\\")
+    except ValueError:
+        return raw.strip("\"'")
+
+
+def _ascii(text):
+    """Store titles carry (R)/(TM)/curly quotes and the console may not be UTF-8."""
+    return (text or "").encode("ascii", "replace").decode()
+
+
+def _collect_store_values(folder_paths, prefix):
+    """Gather every real, unparked value of the `<prefix>*` constants across the extensions.
+
+    Returns (targets, parked): targets = [(folder, const, value, active_src, src)] in folder
+    order, value being the evaluated string. A constant parked by a store-id audit-skip
+    marker is counted, not returned. Comments are stripped first, so a commented-out
+    constant is invisible.
+    """
+    targets, parked = [], 0
+    for folder, index_path in folder_paths:
+        with open(index_path, encoding="utf-8", errors="replace") as f:
+            src = f.read()
+        active = strip_js_comments(src)
+        for const in re.findall(rf"(?:const|let)\s+({prefix}\w*)\s*=", active):
+            raw = const_value(active, const)
+            if not is_real_value(raw):
+                continue
+            if _is_parked(src, const):
+                parked += 1
+                continue
+            targets.append((folder, const, _js_string_value(raw), active, src))
+    return targets, parked
+
+
+def _report_shared_values(targets):
+    """Print every value two different extensions both hold: copy-paste between sibling
+    games is the one defect that needs no network to see. Returns how many were found."""
+    by_value = {}
+    for folder, const, value, _active, _src in targets:
+        by_value.setdefault(value, []).append(f"{folder}:{const}")
+    shared = 0
+    for value, names in by_value.items():
+        if len({n.split(":")[0] for n in names}) > 1:
+            print(f"  {value} is shared by {', '.join(names)} - one of them holds another game's id")  # noqa: raw-log-print
+            shared += 1
+    return shared
+
+
+def _print_verify_header(label, targets, parked, seconds_each):
+    print(f"\n--- {label} verification: {len(targets)} real value(s) "  # noqa: raw-log-print
+          f"({parked} parked by audit-skip) ---")
+    print(f"  ~{len(targets) * seconds_each / 60:.0f}+ min of requests", flush=True)  # noqa: raw-log-print
+
+
+def audit_epic_verify(folder_paths):
+    """
+    Verify every EPICAPP_ID* constant that already holds a real value against
+    egdata.app - the check the other passes skip: --resolve only looks at unresolved
+    constants and the wiring audit only at whether a constant is wired through.
+
+    Catches a typo ("chamaelejp" for "chamaeleon"), a GUID that matches no offer, and
+    a copy-paste from another game (God of War carried Ragnarok's id, Marvel's
+    Spider-Man 2 carried Marvel Rivals'). Two parts: offline, any value shared by two
+    extensions; then network-bound, verify_epic_app_id per constant (~3 requests each,
+    more when it falls to the loose title search). Read-only.
+
+    A "mismatch" is reliable. "unverified" only means egdata could not tie the id to a
+    title, so hand-check it and park a confirmed one with a store-id audit-skip marker.
+    Ids that matched by loose title search alone are listed so the offer title can be
+    eyeballed. Returns the finding count (shared + mismatch + unverified + failed).
+    """
+    targets, parked = _collect_store_values(folder_paths, "EPICAPP_ID")
+    _print_verify_header("EPICAPP_ID", targets, parked, 2)
+    findings = _report_shared_values(targets)
+
+    loose = []
+    for folder, const, value, _active, src in targets:
+        game_name = extract_game_name(src)
+        if not game_name:
+            print(f"  {folder}: {const} = {value} not checked - no game name found in index.js")  # noqa: raw-log-print
+            findings += 1
+            continue
+        status, detail = verify_epic_app_id(game_name, value, base_game=(const == "EPICAPP_ID"))
+        shown, detail = _ascii(game_name), _ascii(detail)
+        if status == "mismatch":
+            print(f"  {folder}: {const} = {value} is not on egdata's offer for '{shown}'"  # noqa: raw-log-print
+                  f" (it lists: {detail})", flush=True)
+        elif status == "unverified":
+            print(f"  {folder}: {const} = {value} is on no egdata offer found for '{shown}'"  # noqa: raw-log-print
+                  " - check by hand", flush=True)
+        elif status == "error":
+            print(f"  {folder}: {const} lookup failed for '{shown}' -- {detail}", flush=True)  # noqa: raw-log-print
+        elif status == "ok-loose":
+            loose.append((folder, const, detail))
+        if status in ("mismatch", "unverified", "error"):
+            findings += 1
+
+    if loose:
+        print(f"  ({len(loose)} matched by loose title search only - eyeball the offer title:)")  # noqa: raw-log-print
+        for folder, const, title in loose:
+            print(f"    {folder}: {const} -> '{title}'")  # noqa: raw-log-print
+    return findings
+
+
+def audit_gog_verify(folder_paths):
+    """
+    Verify every GOGAPP_ID* constant that already holds a real value against
+    api.gog.com, one request each. GOG answers a lookup by id, so unlike Epic the
+    check is direct: the product must exist and must be an installable game.
+
+    Findings: an id GOG has no product for, and an id that is a pack or DLC - Vortex's
+    gamestore-gog matches the registry gameID of the installable game, so a package id
+    never matches an install. A product whose title does not name the game is listed
+    for eyeballing, not counted: it is a wrong-game id or just GOG's naming ("Disco
+    Elysium - The Final Cut"), and only a human can tell which. Plus the offline
+    shared-value check. Read-only. Returns the finding count.
+    """
+    targets, parked = _collect_store_values(folder_paths, "GOGAPP_ID")
+    _print_verify_header("GOGAPP_ID", targets, parked, 1)
+    findings = _report_shared_values(targets)
+
+    differs = []
+    for folder, const, value, _active, src in targets:
+        game_name = extract_game_name(src)
+        if not game_name:
+            print(f"  {folder}: {const} = {value} not checked - no game name found in index.js")  # noqa: raw-log-print
+            findings += 1
+            continue
+        time.sleep(0.3)
+        status, detail = verify_gog_app_id(game_name, value, base_game=(const == "GOGAPP_ID"))
+        detail = _ascii(detail)
+        if status == "not-found":
+            print(f"  {folder}: {const} = {value} is not a GOG product", flush=True)  # noqa: raw-log-print
+        elif status == "not-game":
+            print(f"  {folder}: {const} = {value} is a {detail} - Vortex matches the installable "  # noqa: raw-log-print
+                  "game's id, never a package's", flush=True)
+        elif status == "error":
+            print(f"  {folder}: {const} lookup failed -- {detail}", flush=True)  # noqa: raw-log-print
+        elif status == "title":
+            differs.append((folder, const, detail))
+        if status in ("not-found", "not-game", "error"):
+            findings += 1
+
+    if differs:
+        print(f"  ({len(differs)} where GOG's title differs from the game name - eyeball:)")  # noqa: raw-log-print
+        for folder, const, title in differs:
+            print(f"    {folder}: {const} -> '{title}'")  # noqa: raw-log-print
+    return findings
+
+
+def audit_xbox_verify(folder_paths):
+    """
+    Verify every XBOXAPP_ID* constant that already holds a real value against the
+    Microsoft Store catalog, together with the XBOXEXECNAME / XBOX_PUB_ID that go with it
+    (same suffix: XBOXAPP_ID_DEMO pairs with XBOXEXECNAME_DEMO and XBOX_PUB_ID_DEMO, and
+    a variant with no hash of its own falls back to XBOX_PUB_ID).
+
+    With a XBOX_PUB_ID the package family `<id>_<hash>` is looked up directly, and the
+    product title is compared with the game's (the copied-from-a-sibling check). Without
+    one, the game's PCGamingWiki Microsoft Store row names the product, throttled to
+    PCGW's 30 requests/minute. Either way the resolved identity is compared field by field.
+
+    Counted findings: an identity name that differs, a wrong publisher hash (it feeds the
+    Packages save path and the launch id), a family the catalog does not have, plus the
+    offline shared-value check. Listed but not counted: titles that differ from the game
+    name (Store naming), ApplicationIds that differ (the catalog often lists a path where
+    the manifest has dots, and some packages hold several apps), and ids that cannot be
+    checked at all (no hash and no PCGW row, or a product with no package identity).
+    Read-only. Returns the finding count.
+    """
+    targets, parked = _collect_store_values(folder_paths, "XBOXAPP_ID")
+    _print_verify_header("XBOXAPP_ID", targets, parked, 3)
+    findings = _report_shared_values(targets)
+
+    titles, execs, unverifiable = [], [], []
+    for folder, const, value, active, src in targets:
+        game_name = extract_game_name(src)
+        if not game_name:
+            print(f"  {folder}: {const} = {value} not checked - no game name found in index.js")  # noqa: raw-log-print
+            findings += 1
+            continue
+        suffix = const[len("XBOXAPP_ID"):]
+
+        def sibling(name):
+            raw = const_value(active, name)
+            return _js_string_value(raw) if is_real_value(raw) else None
+
+        exec_name = sibling("XBOXEXECNAME" + suffix)
+        pub_id = sibling("XBOX_PUB_ID" + suffix) or sibling("XBOX_PUB_ID")
+        time.sleep(0.3)
+        status, detail = verify_xbox_identity(
+            game_name, value, exec_name, pub_id,
+            pcgw_title_from_url(const_value(active, "PCGAMINGWIKI_URL")),
+            base_game=(const == "XBOXAPP_ID"),
+        )
+        detail = _ascii(detail)
+        if status == "mismatch":
+            print(f"  {folder}: {const} = {value} - the Store lists that product as '{detail}'", flush=True)  # noqa: raw-log-print
+        elif status == "pub":
+            print(f"  {folder}: {const} - XBOX_PUB_ID is {pub_id} but the Store's package family "  # noqa: raw-log-print
+                  f"ends in '{detail}'", flush=True)
+        elif status == "not-found":
+            print(f"  {folder}: {const} - package family '{value}_{pub_id}' is not in the Store "  # noqa: raw-log-print
+                  "catalog (wrong id or hash?)", flush=True)
+        elif status == "error":
+            print(f"  {folder}: {const} lookup failed -- {detail}", flush=True)  # noqa: raw-log-print
+        elif status == "title":
+            titles.append((folder, const, detail))
+        elif status == "exec":
+            execs.append((folder, const, exec_name, detail))
+        elif status == "unverifiable":
+            unverifiable.append(f"{folder}:{const}")
+        if status in ("mismatch", "pub", "not-found", "error"):
+            findings += 1
+
+    if titles:
+        print(f"  ({len(titles)} where the Store's title differs from the game name - eyeball:)")  # noqa: raw-log-print
+        for folder, const, title in titles:
+            print(f"    {folder}: {const} -> '{title}'")  # noqa: raw-log-print
+    if execs:
+        print(f"  ({len(execs)} where the catalog's ApplicationId differs from XBOXEXECNAME - check by hand:)")  # noqa: raw-log-print
+        for folder, const, ours, theirs in execs:
+            print(f"    {folder}: XBOXEXECNAME for {const} is '{_ascii(ours)}', catalog lists '{theirs}'")  # noqa: raw-log-print
+    if unverifiable:
+        print(f"  ({len(unverifiable)} could not be checked - no XBOX_PUB_ID and no PCGW Microsoft Store row, "  # noqa: raw-log-print
+              f"or no package identity in the catalog: {', '.join(unverifiable)})")
+    return findings
+
+
+STORE_VERIFIERS = {"epic": audit_epic_verify, "gog": audit_gog_verify, "xbox": audit_xbox_verify}
+
+
+def run_audits(target_ids=None, resolve_stores=None, show_suppressed=False, verify_stores=None):
     """Run the read-only audits across all game-* and template-* index.js files."""
     folder_paths = []
     for d in sorted(os.listdir(REPO_ROOT)):
@@ -1696,6 +1957,13 @@ def run_audits(target_ids=None, resolve_stores=None, show_suppressed=False):
             folder_paths, [s for s in resolve_stores if s in STORE_RESOLVERS])
         resolved_total += audit_store_pcgw_crosscheck(folder_paths, resolve_stores)
         print(f"\nTotal unresolved constants with a candidate: {resolved_total}")  # noqa: raw-log-print
+
+    if verify_stores:
+        print(f"\n=== Audit: store ID verification ({', '.join(verify_stores)}) - {scope} ===")  # noqa: raw-log-print
+        print("Read-only. Checks each filled-in id against the store's own catalog. A finding is "  # noqa: raw-log-print
+              "a wrong id; the eyeball lists below are not proof either way.")
+        verify_total = sum(STORE_VERIFIERS[store](folder_paths) for store in verify_stores)
+        print(f"\nTotal store ID verification findings: {verify_total}")  # noqa: raw-log-print
 
 
 def run_title_image_resize(game_ids, dry_run):
@@ -1884,10 +2152,18 @@ def main():
     parser.add_argument(
         "--resolve",
         nargs="?",
-        const="both",
+        const="all",
         choices=["epic", "gog", "xbox", "all"],
         metavar="STORE",
         help="With --audit: also look for missing store versions. Re-queries egdata/gogdb (epic/gog) and cross-checks every game's PCGamingWiki availability table (epic/gog/xbox) for stores whose constant is unresolved. Network-bound and read-only. Default 'all'.",
+    )
+    parser.add_argument(
+        "--verify",
+        nargs="?",
+        const="all",
+        choices=["epic", "gog", "xbox", "all"],
+        metavar="STORE",
+        help="With --audit: check every filled-in store id against the store's own catalog (epic: egdata.app, gog: api.gog.com, xbox: Microsoft Store catalog + PCGamingWiki). Catches typos, ids that match nothing, ids copied from another game, wrong Xbox publisher hashes. Network-bound and read-only. Default 'all'.",
     )
     parser.add_argument(
         "--show-suppressed",
@@ -1908,12 +2184,19 @@ def main():
         print("ERROR: --show-suppressed only applies to --audit. Add --audit.")
         sys.exit(1)
 
+    if args.verify and not args.audit:
+        print("ERROR: --verify only applies to --audit. Add --audit.")
+        sys.exit(1)
+
     if args.audit:
         target_ids = args.game if args.game else None
         resolve_stores = None
         if args.resolve:
             resolve_stores = ["epic", "gog", "xbox"] if args.resolve == "all" else [args.resolve]
-        run_audits(target_ids, resolve_stores, args.show_suppressed)
+        verify_stores = None
+        if args.verify:
+            verify_stores = ["epic", "gog", "xbox"] if args.verify == "all" else [args.verify]
+        run_audits(target_ids, resolve_stores, args.show_suppressed, verify_stores)
         sys.exit(0)
 
     if args.only:

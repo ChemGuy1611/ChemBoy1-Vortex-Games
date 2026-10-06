@@ -1,5 +1,10 @@
 # template-unity-umm Changelog
 
+## [2026-10-05]
+
+- Changed: the UMM mod installer (`testUmmMod` / `installUmmMod`) is recognised by an `info.json` alone. A `.dll` is no longer required, but is still accepted: mods with or without one install.
+- Changed: `installUmmMod` installs every folder that holds an `info.json` as its own mod under `Mods`, so an archive carrying several mod folders no longer loses all but the first. A manifest nested inside another mod folder stays part of that mod, and a manifest at the archive root owns the whole archive (named from its `Id`, as before). Files outside every mod folder are still not installed.
+
 ## [2026-09-30]
 
 - Added: an `id` field as the first key of `info.json`, set to the `XXX` placeholder that `new_extension.py` replaces with the `GAME_ID`. Vortex uses `id` as the extension's stable identity (registered name, install folder and localization namespace) instead of deriving them from the folder or archive name.

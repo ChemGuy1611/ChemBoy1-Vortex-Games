@@ -4,6 +4,10 @@
 
 - None
 
+## [1.0.5] - 2026-10-04
+
+- Added: Mods packaged in a top-level "Paks" or "Movies" folder now install into the game's Content folder.
+
 ## [1.0.4] - 2026-09-27
 
 - Game version now shows the real game build instead of the Unreal engine version.

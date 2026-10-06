@@ -52,7 +52,7 @@ const LOCALAPPDATA = util.getVortexPath("localAppData");
 const GAME_ID = "lordsofthefallen2023"; //same as Nexus domain
 const STEAMAPP_ID = "1501750"; //from steamdb.info
 const STEAMAPP_ID_DEMO = null; //no demo
-const EPICAPP_ID = "ce98de7d9e9c47ea8d9ba8e46a5063b4"; //!audit-skip: store-id - epic and xbox launcher branches are deliberately off: DO NOT launch from store due to EAC bypass
+const EPICAPP_ID = "ce98de7d9e9c47ea8d9ba8e46a5063b4";
 const GOGAPP_ID = null; // from gogdb.org
 const XBOXAPP_ID = "CIGamesS.A.LordsoftheFallen-PC"; //from appxmanifest.xml
 const XBOXEXECNAME = "AppLordsoftheFallenShipping"; //from appxmanifest.xml
@@ -618,6 +618,7 @@ async function requiresLauncher(gamePath, store) {
       launcher: "steam",
     });
   } //*/
+  //!audit-skip: store-id - xbox launcher branch is deliberately off: a store launch brings EAC back, the game must start from the Shipping exe (EAC bypass)
   /*if (store === "xbox" && DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) {
     return Promise.resolve({
       launcher: "xbox",
@@ -627,6 +628,7 @@ async function requiresLauncher(gamePath, store) {
       },
     });
   } //*/
+  //!audit-skip: store-id - epic launcher branch is deliberately off: a store launch brings EAC back, the game must start from the Shipping exe (EAC bypass)
   /*if (store === "epic" && DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID)) {
     return Promise.resolve({
       launcher: "epic",

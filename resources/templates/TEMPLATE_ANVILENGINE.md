@@ -19,7 +19,7 @@ first, then the toggles, then the constants each toggle brings with it.
 | `hasAtk`              | `true`  | ATK mod type, tool entry and download, plus the Extracted / `.forge` folder / `.data` folder / loose workflow and the rename dialog |
 | `hasForger`           | `false` | Forger Patch Manager tool and `.forger2` patch mod type (older AC titles)                          |
 | `hasReforger`         | `false` | ReForger tool entry, registry lookup and the installer's mod type/download plumbing               |
-| `autoDownloadReforger` | `true`  | Runs the ReForger installer download during setup. `false`: tool + button still work, nothing happens unless the user clicks — for a game where both ReForger and legacy Forger are valid and only one should auto-install |
+| `autoDownloadReforger` | `false` | `true` runs the ReForger installer download during setup. `false` (the template default): tool + button still work, nothing happens unless the user clicks — for a game where both ReForger and legacy Forger are valid and only one should auto-install |
 | `hasDlcFolders`       | `false` | DLC folder mod type and installer. `.forge` routing follows `DLC_FOLDERS` directly                |
 | `hasResorep`          | `false` | ResoRep DLL mod type, textures mod type, auto-download and `dllsettings.ini` write                |
 | `autoCopyResorepDll`  | `false` | Copies the system `d3d11.dll` into the game folder instead of leaving the bundled `.bat` to the user |
@@ -172,5 +172,6 @@ Open Downloads Folder, plus Open Settings INI (`hasSettingsIni`), Force Copy Sys
 `../NOTIFICATIONS_DIALOGS.md` (the rename input dialog and the deploy notification).
 `../REGISTER_GAME.md` (the `spec` / `applyGame()` contract).
 `../INSTALLER_SYSTEM.md` (`registerInstaller` semantics behind the ladder above).
+`../DOWNLOADER.md` (the shared downloader module behind the ReForger `directCopyAsMod` requirement).
 `../FOMOD_INSTALLER.md` (the `ModuleConfig.xml` early-return in every `testSupported`).
 `../GITHUB_API.md` (the ReForger release lookup).

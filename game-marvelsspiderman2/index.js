@@ -2,8 +2,8 @@
 Name: Marvel's Spider-Man 2 Vortex Extension
 Structure: 3rd-Party Mod Manager (Overstrike)
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-08-23
+Version: 1.0.1
+Date: 2026-10-04
 ////////////////////////////////////////////*/
 
 //Import libraries
@@ -17,7 +17,7 @@ const DOCUMENTS = util.getVortexPath("documents");
 
 //Specify all information about the game
 const STEAMAPP_ID = "2651280";
-const EPICAPP_ID = "575efd0b5dd54429b035ffc8fe2d36d0"; //from egdata.app
+const EPICAPP_ID = "0c6db5941ac8420aabbd8510e94e7d9a"; //from egdata.app
 const GAME_ID = "marvelsspiderman2";
 const EXEC = "Spider-Man2.exe";
 const GAME_NAME = "Marvel's Spider-Man 2";

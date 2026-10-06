@@ -942,7 +942,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         )
     # PCGamingWiki config/save findings land as review comments only - never a value change.
     # Path CONSTRUCTION (which base folder, how many subfolder segments) varies too much across
-    # the 16 templates to auto-set safely; a wrong auto-filled path looks correct and isn't.
+    # the 15 templates to auto-set safely; a wrong auto-filled path looks correct and isn't.
     pcgw_spec = PCGW_COMMENT_TEMPLATES.get(template_name)
     if pcgw_spec:
         cfg_info = pcgw_data_paths.get('config')

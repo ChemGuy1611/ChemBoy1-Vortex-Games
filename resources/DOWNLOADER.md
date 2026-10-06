@@ -401,10 +401,11 @@ The template also includes a full `resolveVersionByFile` implementation (extract
 ## See also
 
 `VORTEX_DOWNLOAD_MGMT.md` (the `start-download`/`import-downloads` events this module hands off
-to). `TEMPLATES_OVERVIEW.md` (which templates bundle a `downloader.js` copy, and the four
-auto-download routes templates choose between). `templates/TEMPLATE_GODOT.md`,
-`templates/TEMPLATE_UNITYBEPINEX.md`, and `templates/TEMPLATE_UNITYMELONLOADERBEPINEX_HYBRID.md`
-(the requirement sets those three templates actually declare).
+to). `TEMPLATES_OVERVIEW.md` (which templates bundle a `downloader.js` copy, and the three
+auto-download routes templates choose between). `templates/TEMPLATE_ANVILENGINE.md`,
+`templates/TEMPLATE_GODOT.md`, `templates/TEMPLATE_UE4_5.md`, and
+`templates/TEMPLATE_UNITYMELONLOADERBEPINEX_HYBRID.md` (the requirement sets those templates
+actually declare).
 `BEPINEX.md` (what the resolved BepInEx 5.x asset actually installs, and why the four-segment
 version defeats `semver.coerce`) and `MELONLOADER.md` (a requirement whose asset filename never
 changes, so the version has to come from the release tag).

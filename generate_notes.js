@@ -111,7 +111,6 @@ const ENGINE_LISTS = [
   ["ue2-3", "games-ue2-3.txt"],
   ["reengine", "games-reengine.txt"],
   ["unity-melon-bepinex", "games-unity-melonloader-bepinex.txt"],
-  ["unity-bepinex", "games-unity-bepinex.txt"],
   ["unity-umm", "games-unity-umm.txt"],
   ["anvil", "games-anvil.txt"],
   ["frostbite", "games-frostbite.txt"],
@@ -241,7 +240,6 @@ function orList(items, wrap = "`") {
 /** Every engine except Unreal 4-5, which has its own more specific blocks. */
 const NON_UE_ENGINES = [
   "basic",
-  "unity-bepinex",
   "unity-melon-bepinex",
   "unity-umm",
   "anvil",
@@ -825,7 +823,7 @@ const PROSE = [
   // ── Unity: BepInEx / MelonLoader ──────────────────────────────────────────
   {
     fn: "testBepinex",
-    engine: ["unity-bepinex", "unity-melon-bepinex"],
+    engine: ["unity-melon-bepinex"],
     build: (v) => {
       if (!v.BEPINEX_FOLDER || !v.BEPINEX_DLL_FILE) return null;
       return toolBlock({
@@ -841,7 +839,7 @@ const PROSE = [
   },
   {
     fn: "testMelon",
-    engine: ["unity-bepinex", "unity-melon-bepinex"],
+    engine: ["unity-melon-bepinex"],
     build: (v) => {
       if (!v.MELON_FOLDER || !v.MELON_DLL_FILE) return null;
       return toolBlock({
@@ -857,7 +855,7 @@ const PROSE = [
   },
   {
     fn: "testPlugin",
-    engine: ["unity-bepinex", "unity-melon-bepinex"],
+    engine: ["unity-melon-bepinex"],
     build: (v) =>
       matchBlock({
         title: "Plugin Mods",
@@ -875,7 +873,7 @@ const PROSE = [
   },
   {
     fn: "testBepCfgMan",
-    engine: ["unity-bepinex", "unity-melon-bepinex"],
+    engine: ["unity-melon-bepinex"],
     build: (v) => {
       if (!v.BEPCFGMAN_FILE) return null;
       return toolBlock({
@@ -889,7 +887,7 @@ const PROSE = [
   },
   {
     fn: "testMelonPrefMan",
-    engine: ["unity-bepinex", "unity-melon-bepinex"],
+    engine: ["unity-melon-bepinex"],
     build: (v) => {
       if (!v.MELONPREFMAN_FILE) return null;
       return toolBlock({
@@ -926,21 +924,22 @@ const PROSE = [
       const folder = v.MODS_FOLDER || "Mods";
       return {
         title: "Unity Mod Manager Mods",
-        quick: `an \`${v.UMM_MOD_FILE}\` file and a \`.dll\``,
+        quick: `an \`${v.UMM_MOD_FILE}\` file`,
         installsTo: `${folder}\\<ModName>`,
         lead:
-          `Mods for Unity Mod Manager: a manifest plus the assembly that implements the mod. ` +
+          `Mods for Unity Mod Manager, told apart by their manifest. ` +
           `Each one gets its own folder under \`${folder}\`.`,
         tree: ["MyUmmMod.zip", `├── ${v.UMM_MOD_FILE}`, "└── MyUmmMod.dll"].join("\n"),
         rules: [
-          `Recognised by a file named \`${v.UMM_MOD_FILE}\` together with a \`.dll\` beside it.`,
-          `The mod folder name comes from the folder wrapping the manifest. A flat archive is ` +
+          `Recognised by a file named \`${v.UMM_MOD_FILE}\` at any level of the archive. A \`.dll\` is not required.`,
+          `Every folder holding \`${v.UMM_MOD_FILE}\` is installed as its own mod, so one archive can carry several mods.`,
+          `The mod folder name comes from the folder holding the manifest. A flat archive is ` +
             `named from the \`Id\` field in \`${v.UMM_MOD_FILE}\` instead, so keep that field filled in.`,
+          `Folders above a mod folder, such as a \`${folder}\` wrapper, are dropped.`,
         ],
         pitfalls: [
-          `Shipping the manifest without the assembly - the archive is not recognised as a mod.`,
-          `Wrapping the mod in an extra \`${folder}\` folder is fine, but a second level of ` +
-            `wrapping folders becomes part of the mod folder name.`,
+          `Keeping files a mod needs outside its own folder - only the contents of each ` +
+            `\`${v.UMM_MOD_FILE}\` folder are installed.`,
         ],
       };
     },
@@ -999,7 +998,7 @@ const PROSE = [
   },
   {
     fn: "testAssembly",
-    engine: ["unity-bepinex", "unity-melon-bepinex", "unity-umm"],
+    engine: ["unity-melon-bepinex", "unity-umm"],
     build: (v) =>
       matchBlock({
         title: "Assembly Replacement Mods",
@@ -1018,7 +1017,7 @@ const PROSE = [
   },
   {
     fn: "testAssets",
-    engine: ["unity-bepinex", "unity-melon-bepinex", "unity-umm"],
+    engine: ["unity-melon-bepinex", "unity-umm"],
     build: (v) =>
       matchBlock({
         title: "Asset Replacement Mods",

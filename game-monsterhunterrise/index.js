@@ -2,8 +2,8 @@
 Name: MONSTER HUNTER RISE Vortex Extension
 Structure: Fluffy + REFramework (RE Engine)
 Author: ChemBoy1
-Version: 2.0.0
-Date: 2026-09-15
+Version: 2.0.1
+Date: 2026-10-04
 Notes:
 -
 ///////////////////////////////////////////*/
@@ -27,7 +27,7 @@ const STEAMAPP_ID_DEMO = "1836450"; // https://steamdb.info/app/1836450/
 const EPICAPP_ID = null;
 const GOGAPP_ID = null;
 const XBOXAPP_ID = "F024294D.50755C2F12831"; //!NOT on Game Pass. got it on pcgw. https://apps.microsoft.com/detail/9n1vp8wdqk4d
-const XBOXEXECNAME = "XXX";
+const XBOXEXECNAME = "MonsterHunterRise"; //from the Microsoft Store catalog (MSIXVC package), not yet checked against an install
 const XBOX_PUB_ID = "8fty0by30jkny"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, STEAMAPP_ID_DEMO, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
@@ -378,15 +378,15 @@ async function requiresLauncher(gamePath, store) {
       },
     });
   } //*/
-  /*if (store === 'xbox' && DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) { //!had to comment out since don't know the XBOXEXECNAME
+  if (store === "xbox" && DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) {
     return Promise.resolve({
-      launcher: 'xbox',
+      launcher: "xbox",
       addInfo: {
         appId: XBOXAPP_ID,
         parameters: [{ appExecName: XBOXEXECNAME }],
       },
     });
-  } //*/
+  }
   return Promise.resolve(undefined);
 }
 

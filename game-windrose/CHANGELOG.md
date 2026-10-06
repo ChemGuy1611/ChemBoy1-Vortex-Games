@@ -4,6 +4,10 @@
 
 - None
 
+## [1.1.3] - 2026-10-04
+
+- Added: Mods packaged in a top-level "Paks" or "Movies" folder now install into the game's Content folder. Applies to both Windrose and Windrose Dedicated Server.
+
 ## [1.1.2] - 2026-09-27
 
 - Game version now shows the real game build instead of the Unreal engine version.

@@ -269,6 +269,8 @@ function testLoader(files, gameId) {
 
 Detects archives containing known root or sub-root folders (e.g. `Data`, `Plugins`). Has a two-tier fallback: try `ROOT_FOLDERS` first, then `ROOTSUB_FOLDERS`. The `ROOT_IDX` variant strips at the folder name boundary rather than at the file name.
 
+Every name in `ROOTSUB_FOLDERS` makes the Root installer claim any archive that contains a folder of that name, so a game whose own mod loader reads a same-named folder (for example a loader that reads a `mods` folder next to its DLL while `ROOTSUB_FOLDERS` lists `Mods`) loses those archives to Root. Either drop the name from `ROOTSUB_FOLDERS` when the game has no such folder under its root, or register the loader's installer at a lower priority number than Root so it is tested first.
+
 ```js
 function testRoot(files, gameId) {
     const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map((s) => s.toLowerCase());
@@ -495,6 +497,7 @@ Always read existing toggles before adding or removing conditional registration 
 `MOD_RULES.md` (`rule` instruction type / `IRule` shape). `ERROR_CLASSES.md` (throwing from
 `install`/`testSupported`). `TEMPLATES_OVERVIEW.md` (the shared 25-49 priority convention across
 templates; the per-template files under `templates/` give each template's actual ladder).
+`TEMPLATE_TESTING.md` (the test suite that asserts the installer contract against every template).
 `VORTEX_MOD_INSTALL.md` (runtime InstallManager orchestration, and where the `files` list passed
 to `testSupported`/`install` is built). `ARCHIVE_HANDLER.md` (`registerArchiveType`, which serves
 `api.openArchive` and does **not** feed the installer `files` list).

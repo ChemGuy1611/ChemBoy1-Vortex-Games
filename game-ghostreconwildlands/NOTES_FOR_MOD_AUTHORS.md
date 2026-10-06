@@ -8,10 +8,27 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
+| Loader | a file or folder named `dinput8.dll` | - |
+| Plugin | a file with one of these extensions: `.asi` or `.dll` | `plugins` |
+| Forgemod | a file with one of these extensions: `.forge` or `.data` | - |
 | Root / Game Folder Mods | a `sounddata` folder | the game folder itself (no subfolder) |
 | Mod | a file with one of these extensions: `.pck` or `.bk2` | the game folder itself (no subfolder) |
 
 Paths are relative to the game's install folder.
+
+## Loader
+
+Recognised when the archive contains a file or folder named `dinput8.dll`.
+
+## Plugin
+
+Recognised when the archive contains a file with one of these extensions: `.asi` or `.dll`.
+
+Installs to: `plugins`
+
+## Forgemod
+
+Recognised when the archive contains a file with one of these extensions: `.forge` or `.data`.
 
 ## Root / Game Folder Mods
 

@@ -58,12 +58,10 @@ Usage:
         requires_extensions, has_extension_dependency,
         has_ue4ss_load_order_parity,
         top_level_functions, bool_toggles, template_shape_diff,
-        has_template_shape_parity, has_unity_hybrid_parity,
-        has_anvil_template_parity, has_farcry_template_parity,
-        has_reloaded_template_parity,
+        has_template_shape_parity, has_family_parity,
+        ShapeParityFamily, SHAPE_PARITY_FAMILIES,
         UNITY_PARITY_TOGGLE_EXCEPTIONS, UNITY_PARITY_KNOWN_EXCEPTIONS,
-        ANVIL_PARITY_KNOWN_EXCEPTIONS, FARCRY_PARITY_KNOWN_EXCEPTIONS,
-        RELOADED_PARITY_KNOWN_EXCEPTIONS,
+        REENGINE_PARITY_KNOWN_EXCEPTIONS, FROSTBITE_PARITY_KNOWN_EXCEPTIONS,
         is_unreleased_extension,
         validate_index_js, find_registerinstaller_calls,
         log_info, log_error, log_warn,
@@ -100,6 +98,7 @@ import urllib.error
 import urllib.request
 import urllib.parse
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import NamedTuple
 
 try:
     import certifi as _certifi
@@ -661,6 +660,11 @@ def pcgw_title_from_url(url_value):
     return urllib.parse.unquote(m.group(1)).replace("_", " ") if m else None
 
 
+# PCGamingWiki asks for at most 30 requests/minute; callers that fetch one page per
+# extension sleep this long between pages.
+PCGW_FETCH_INTERVAL = 2.1
+
+
 def pcgw_page_wikitext(page_title):
     """Return the wikitext of a PCGamingWiki page, following one #REDIRECT.
     Raises on network or parse failure; callers decide whether that is fatal."""
@@ -942,14 +946,16 @@ def egdata_search_queries(game_name):
     """Return the ordered list of title strings to try against egdata's /search.
 
     egdata's search returns zero results for any query containing an apostrophe
-    (straight or curly), even when the indexed title contains one - so every name
-    variant is also offered with apostrophes replaced by a space. Built on top of
+    (straight or curly), hyphen, comma or underscore, even when the indexed title
+    contains one, and a period is read literally ("S.T.A.L.K.E.R. 2" matches an
+    unrelated title). So every name variant is also offered as bare words, with
+    each run of punctuation replaced by a space. Built on top of
     name_lookup_variants(), so franchise-prefix, numeral and edition-suffix
     alternates are covered too. Order runs exact-first, loosest-last.
     """
     queries = []
     for base in name_lookup_variants(game_name):
-        for candidate in (base, re.sub(r"['’]", " ", base)):
+        for candidate in (base, re.sub(r"[\W_]+", " ", base)):
             candidate = re.sub(r"\s+", " ", candidate).strip()
             if candidate and candidate not in queries:
                 queries.append(candidate)
@@ -1057,6 +1063,91 @@ def fetch_epic_app_id(game_name):
         return None, None
 
     return None, None
+
+
+# Most offers verify_epic_app_id's loose tier fetches items for before giving up.
+EGDATA_LOOSE_OFFER_CAP = 40
+
+
+def _egdata_search(title, offer_type=None, limit=5):
+    """POST /search and return the elements list. No offerType = every offer type."""
+    body = {"title": title, "limit": limit}
+    if offer_type:
+        body["offerType"] = offer_type
+    return http_post_json(f"{EGDATA_API}/search", body).get("elements", [])
+
+
+def _egdata_offer_app_ids(offer_id):
+    """Return [(appId, is_executable)] for every release on an offer's items."""
+    time.sleep(0.3)
+    items = json.loads(http_get(f"{EGDATA_API}/offers/{offer_id}/items"))
+    return [
+        (release["appId"], item.get("entitlementType") == "EXECUTABLE")
+        for item in items
+        for release in item.get("releaseInfo", [])
+        if release.get("appId")
+    ]
+
+
+def verify_epic_app_id(game_name, app_id, base_game=True):
+    """Check an EPICAPP_ID that is already filled in against egdata.app.
+
+    Returns (status, detail):
+      "ok"         the id is on a BASE_GAME offer whose title names the game
+                   (detail = that offer's title)
+      "ok-loose"   no title-matched offer, but the id is on an offer the loose
+                   title search returned (detail = its title; eyeball it)
+      "mismatch"   a title-matched offer exists and does not carry the id
+                   (detail = the executable appIds it does list)
+      "unverified" no offer egdata returned carries the id
+      "error"      network/parse failure (detail = the message)
+
+    Two tiers, because store titles rarely equal ours ("Director's Cut",
+    "Final Cut"), so title-matching alone leaves valid ids unchecked - while the
+    loose tier alone would accept a wrong id that belongs to a sibling game
+    (God of War carried Ragnarok's id, and a plain "God of War" search returns
+    Ragnarok offers). So a title-matched offer that lacks the id is a hard
+    mismatch with no loose fallback. base_game=False (EPICAPP_ID_DEMO, _MCE,
+    _SPACERS...) skips the strict tier: those ids sit on a demo or edition
+    offer, not the base game's.
+    """
+    try:
+        queries = egdata_search_queries(game_name)
+        if base_game:
+            offers = {}
+            for query in queries:
+                time.sleep(0.3)
+                for element in _egdata_search(query, "BASE_GAME"):
+                    if element.get("id") and store_title_matches(game_name, element.get("title")):
+                        offers[element["id"]] = element["title"]
+                if offers:
+                    break
+            listed = set()
+            for offer_id, title in offers.items():
+                releases = _egdata_offer_app_ids(offer_id)
+                if any(found == app_id for found, _ in releases):
+                    return "ok", title
+                listed.update(found for found, is_exec in releases if is_exec)
+            if offers:
+                return "mismatch", ", ".join(sorted(listed)) or "no executable item"
+        # Base games first (a plain title search is buried in DLC and add-ons), then any
+        # offer type for demo/edition ids. The cap stops one hopeless id stalling a run.
+        seen = set()
+        for offer_type in ("BASE_GAME", None):
+            for query in queries:
+                time.sleep(0.3)
+                for element in _egdata_search(query, offer_type, limit=25):
+                    offer_id = element.get("id")
+                    if not offer_id or offer_id in seen:
+                        continue
+                    if len(seen) >= EGDATA_LOOSE_OFFER_CAP:
+                        return "unverified", ""
+                    seen.add(offer_id)
+                    if any(found == app_id for found, _ in _egdata_offer_app_ids(offer_id)):
+                        return "ok-loose", element.get("title", "")
+        return "unverified", ""
+    except Exception as err:  # network/parse failures must not abort the pass
+        return "error", str(err)
 
 
 # == gogdb.org helpers =========================================================
@@ -1206,6 +1297,44 @@ def fetch_gog_app_id(game_name, accept_edition_variant=False):
             if resolved:
                 return resolved, title
     return None, None
+
+
+GOG_PRODUCT_API = "https://api.gog.com/products"
+
+
+def verify_gog_app_id(game_name, product_id, base_game=True):
+    """Check a GOGAPP_ID that already holds a value against api.gog.com.
+
+    Unlike egdata, GOG answers a direct lookup by id, so this is one request.
+    Returns (status, detail):
+      "ok"         the product exists, is an installable game, and its title names
+                   the game (detail = title). With base_game=False it only has to
+                   exist and be a game: GOGAPP_ID_CLASSIC / _BFG / _MCE... name a
+                   different product than game_name by design
+      "title"      the product exists and is a game, but its title does not name
+                   the game (detail = title) - a wrong-game id, or just GOG naming
+                   ("The Witcher 3: Wild Hunt - Complete Edition"); read the title
+      "not-game"   the product is a pack or DLC (detail = "<type>: <title>"). Vortex's
+                   gamestore-gog matches the registry gameID of the installable game,
+                   so a package id never matches an install
+      "not-found"  GOG has no such product (HTTP 404)
+      "error"      network/parse failure (detail = the message)
+    """
+    try:
+        data = http_get_json(f"{GOG_PRODUCT_API}/{product_id}?locale=en_US")
+    except urllib.error.HTTPError as err:
+        if err.code == 404:
+            return "not-found", ""
+        return "error", str(err)
+    except Exception as err:  # network/parse failures must not abort the pass
+        return "error", str(err)
+    title = data.get("title") or ""
+    kind = (data.get("game_type") or "").lower()
+    if kind != "game":
+        return "not-game", f"{kind or 'unknown type'}: {title}"
+    if not base_game or store_title_matches(game_name, title) or is_edition_variant_title(game_name, title):
+        return "ok", title
+    return "title", title
 
 
 # == Microsoft Store (Xbox) catalog helpers ====================================
@@ -1369,6 +1498,88 @@ def xbox_formats_protected(formats):
     WindowsApps folder and the game is unmoddable. False for an empty set - an unknown
     is surfaced, never silently ignored."""
     return bool(formats) and all(f.lower() in XBOX_PROTECTED_FORMATS for f in formats)
+
+
+def _xbox_exec_key(app_id_or_path):
+    """Fold an ApplicationId for comparison: path separators, dots and spaces are one
+    separator, case ignored."""
+    return re.sub(r"[\\/.\s]+", ".", app_id_or_path).lower()
+
+
+def _xbox_product_by_family(family_name):
+    """(Store product ID, title) for a package family name (`<identity>_<pubhash>`),
+    or (None, None) when the catalog has no such package."""
+    data = http_get_json(
+        f"{MS_STORE_CATALOG_API}/lookup?market=US&languages=en-US"
+        f"&alternateId=PackageFamilyName&value={urllib.parse.quote(family_name)}"
+    )
+    for product in data.get("Products") or []:
+        titles = product.get("LocalizedProperties") or [{}]
+        return product.get("ProductId"), titles[0].get("ProductTitle") or ""
+    return None, None
+
+
+def verify_xbox_identity(game_name, app_id, exec_name=None, pub_id=None, pcgw_title=None, base_game=True):
+    """Check an XBOXAPP_ID (and its XBOXEXECNAME / XBOX_PUB_ID, when given) that is
+    already filled in against the Microsoft Store catalog.
+
+    Two routes to the Store product, because many extensions carry no XBOX_PUB_ID:
+      1. pub_id given: look up the package family `<app_id>_<pub_id>` directly. That
+         product's title is also compared with game_name, which is what catches an id
+         copied from a sibling game.
+      2. no pub_id, or route 1 found nothing: the Microsoft Store row of the game's
+         PCGamingWiki page (pcgw_title) names the product. Sleeps PCGW_FETCH_INTERVAL
+         first, since callers loop over many extensions.
+    Either way the product's identity comes back through fetch_xbox_identity() and is
+    compared field by field. base_game=False (XBOXAPP_ID_DEMO, _BFG, _MCE...) skips
+    route 2 and the title comparison: a variant names a different product than the
+    game's own PCGW page and title.
+
+    Returns (status, detail):
+      "ok"         the identity name matches, and the ApplicationId matches or cannot
+                   be compared (Ubisoft/EA titles carry none, or the GDKStubGame
+                   placeholder). detail = how it was found, "family" or "PCGW"
+      "title"      route 1 only: identity resolves but the product title does not name
+                   the game (detail = the title) - a copied id, or just Store naming
+      "mismatch"   the product resolved but its identity name differs (detail = it)
+      "pub"        identity matches, publisher hash differs (detail = the catalog's)
+      "exec"       identity matches, ApplicationId differs (detail = the catalog's).
+                   Separators are folded first: the catalog often lists the executable
+                   path (`x64\\Game`) where the manifest Id has dots (`x64.Game`)
+      "not-found"  pub_id was given but the family is not in the catalog and no PCGW
+                   row names a product - the id or hash is probably wrong
+      "unverifiable"  nothing to check against: no pub_id and no PCGW Microsoft Store
+                   row, or the product carries no package identity (protected or
+                   not-yet-uploaded titles)
+      "error"      network/parse failure (detail = the message)
+    """
+    try:
+        product_id, title, via = None, None, "family"
+        if pub_id:
+            product_id, title = _xbox_product_by_family(f"{app_id}_{pub_id}")
+        if not product_id and pcgw_title and base_game:
+            time.sleep(PCGW_FETCH_INTERVAL)
+            product_id = parse_pcgw_availability(pcgw_page_wikitext(pcgw_title))["xbox"]
+            title, via = None, "PCGW"
+        if not product_id:
+            return ("not-found", "") if pub_id else ("unverifiable", "")
+        found_app, found_exec, found_pub = fetch_xbox_identity(product_id)
+        if not found_app:
+            return "unverifiable", "the catalog product carries no package identity"
+        if found_app != app_id:
+            return "mismatch", found_app
+        if pub_id and found_pub and found_pub != pub_id:
+            return "pub", found_pub
+        if (found_exec and found_exec != "GDKStubGame" and exec_name
+                and _xbox_exec_key(found_exec) != _xbox_exec_key(exec_name)):
+            return "exec", found_exec
+        if base_game and title is not None and not (
+            store_title_matches(game_name, title) or is_edition_variant_title(game_name, title)
+        ):
+            return "title", title
+        return "ok", via
+    except Exception as err:  # network/parse failures must not abort the pass
+        return "error", str(err)
 
 
 # == JS source helpers =========================================================
@@ -2749,8 +2960,6 @@ def detect_engine(src):
         return 'UE4-5'
     if 'const TFC_ID =' in src or 'Structure: UE2/3' in head or 'TFC Installer' in head:
         return 'UE2-3'
-    if re.search(r"""requireExtension\(['"]modtype-bepinex['"]\)""", src) and 'MelonLoader' not in head and 'Hybrid' not in head:
-        return 'Unity+Bep'
     if 'MelonLoader' in head or 'Hybrid' in head:
         return 'Unity+Mel/Bep'
     if re.search(r"""requireExtension\(['"]modtype-umm['"]\)""", src) or 'UMM' in head:
@@ -4326,12 +4535,19 @@ UNITY_PARITY_KNOWN_EXCEPTIONS = {
                         "and are accepted as permanently stale rather than ported",
 }
 
-# Same idea for the Anvil, Far Cry and Reloaded-II families. All empty today: every
-# divergence from their template is a pending port, not a deliberate permanent one. Add
-# an entry only on an explicit user decision, with the reason, exactly as the Unity map above.
-ANVIL_PARITY_KNOWN_EXCEPTIONS = {}
-FARCRY_PARITY_KNOWN_EXCEPTIONS = {}
-RELOADED_PARITY_KNOWN_EXCEPTIONS = {}
+# Same idea for the RE Engine (Fluffy) and Frostbite families. Every other family has no
+# carve-out: every divergence from its template is a pending port, not a deliberate
+# permanent one. Add an entry only on an explicit user decision, with the reason, exactly
+# as the Unity map above.
+REENGINE_PARITY_KNOWN_EXCEPTIONS = {
+    "game-unchartedlegacyofthievescollection": "Naughty Dog game (PSARC archives) installed through "
+                                               "Fluffy, not an RE Engine title - the REFramework half "
+                                               "of template-reframework-fluffy does not apply to it, "
+                                               "user decision 2026-10-04",
+}
+FROSTBITE_PARITY_KNOWN_EXCEPTIONS = {
+    "game-battlefield1": "frozen extension, no longer maintained - excluded from template sweeps",
+}
 
 _template_src_cache = {}
 
@@ -4398,38 +4614,78 @@ def has_template_shape_parity(src, folder, template_folder_name,
     return not (missing_f or missing_t)
 
 
-def has_unity_hybrid_parity(src, folder):
-    """Return True if a Unity extension is at template-unitymelonloaderbepinex-hybrid shape
-    parity (isXna exempted both ways) and is not on UNITY_PARITY_KNOWN_EXCEPTIONS."""
-    return has_template_shape_parity(
-        src, folder, "template-unitymelonloaderbepinex-hybrid",
-        UNITY_PARITY_KNOWN_EXCEPTIONS, UNITY_PARITY_TOGGLE_EXCEPTIONS)
+class ShapeParityFamily(NamedTuple):
+    """One engine family measured against its template's shape (top-level functions plus
+    boolean toggles). Drives the parity flag lists in categorize_games.py and the
+    per-family reports in audit_parity.py, so bringing a template-backed family under
+    the audit is one row in SHAPE_PARITY_FAMILIES."""
+    key: str                # audit_parity.py --json key
+    label: str              # audit_parity.py report heading
+    engine: str             # detect_engine() label every game in the family carries
+    template: str           # template folder the games are measured against
+    source_list: str        # engine-category list in resources/lists/ (everything in the family)
+    parity_list: str        # flag list in resources/lists/ (the games at parity)
+    exceptions: dict        # game folder basename -> reason, carved out permanently
+    toggle_exceptions: frozenset = frozenset()  # toggles dropped from the diff both ways
 
 
-def has_anvil_template_parity(src, folder):
-    """Return True if an Anvil extension is at template-anvilengine shape parity.
+# parity_list is spelled out per row rather than derived from source_list: the two do not
+# follow one pattern (games-farcrygame.txt -> games-farcry-parity.txt,
+# games-unity-melonloader-bepinex.txt -> games-unity-hybrid-parity.txt).
+# Only Unity exempts a toggle. Everywhere else every template boolean gates an optional
+# subsystem, so a missing one is always a pending port rather than a deliberate variant.
+# Anvil games carried no boolean feature toggle at all before the template gained its
+# EDIT ZONE, so an Anvil game reporting zero missing toggles has necessarily been ported.
+SHAPE_PARITY_FAMILIES = [
+    ShapeParityFamily(
+        "unity_hybrid", "Unity+MelonLoader/BepInEx hybrid", "Unity+Mel/Bep",
+        "template-unitymelonloaderbepinex-hybrid", "games-unity-melonloader-bepinex.txt",
+        "games-unity-hybrid-parity.txt",
+        UNITY_PARITY_KNOWN_EXCEPTIONS, UNITY_PARITY_TOGGLE_EXCEPTIONS),
+    ShapeParityFamily(
+        "anvil", "Anvil", "Anvil", "template-anvilengine",
+        "games-anvil.txt", "games-anvil-parity.txt", {}),
+    ShapeParityFamily(
+        "farcry", "Far Cry (Dunia)", "Dunia", "template-farcry",
+        "games-farcrygame.txt", "games-farcry-parity.txt", {}),
+    ShapeParityFamily(
+        "reloaded", "Reloaded-II", "Reloaded-II", "template-reloaded2",
+        "games-reloaded2.txt", "games-reloaded2-parity.txt", {}),
+    ShapeParityFamily(
+        "cobra_acse", "Cobra Engine (ACSE)", "Cobra/ACSE", "template-cobraengineACSE",
+        "games-cobra-acse.txt", "games-cobra-acse-parity.txt", {}),
+    ShapeParityFamily(
+        "frostbite", "Frostbite (Frosty)", "Frostbite", "template-frostbite",
+        "games-frostbite.txt", "games-frostbite-parity.txt", FROSTBITE_PARITY_KNOWN_EXCEPTIONS),
+    ShapeParityFamily(
+        "godot", "Godot", "Godot", "template-godot",
+        "games-godot.txt", "games-godot-parity.txt", {}),
+    ShapeParityFamily(
+        "reengine", "RE Engine (Fluffy + REFramework)", "RE/Fluffy", "template-reframework-fluffy",
+        "games-reengine.txt", "games-reengine-parity.txt", REENGINE_PARITY_KNOWN_EXCEPTIONS),
+    ShapeParityFamily(
+        "rpgmaker", "RPG Maker", "RPG Maker", "template-rpgmaker",
+        "games-rpgmaker.txt", "games-rpgmaker-parity.txt", {}),
+    ShapeParityFamily(
+        "snowdrop", "Snowdrop", "Snowdrop", "template-snowdropengine",
+        "games-snowdrop.txt", "games-snowdrop-parity.txt", {}),
+    ShapeParityFamily(
+        "srmm", "Shinryu Mod Manager (SRMM)", "SRMM", "template-shinryu",
+        "games-srmm.txt", "games-srmm-parity.txt", {}),
+    ShapeParityFamily(
+        "ue2_3", "UE2-3 (TFC Installer)", "UE2-3", "template-tfcinstaller-ue2-3",
+        "games-ue2-3.txt", "games-ue2-3-parity.txt", {}),
+    ShapeParityFamily(
+        "unity_umm", "Unity Mod Manager (UMM)", "Unity+UMM", "template-unity-umm",
+        "games-unity-umm.txt", "games-unity-umm-parity.txt", {}),
+]
 
-    Anvil games carried no boolean feature toggles at all before the template gained its
-    EDIT ZONE, so a game reporting zero missing toggles has necessarily been ported.
-    """
-    if detect_engine(src) != 'Anvil':
+
+def has_family_parity(family, src, folder):
+    """Return True if an extension is at its ShapeParityFamily's template shape parity:
+    detect_engine() reports the family's engine, the folder is not carved out, and every
+    top-level function and boolean toggle the template has is present."""
+    if detect_engine(src) != family.engine:
         return False
     return has_template_shape_parity(
-        src, folder, "template-anvilengine", ANVIL_PARITY_KNOWN_EXCEPTIONS)
-
-
-def has_farcry_template_parity(src, folder):
-    """Return True if a Far Cry (Dunia) extension is at template-farcry shape parity."""
-    if detect_engine(src) != 'Dunia':
-        return False
-    return has_template_shape_parity(
-        src, folder, "template-farcry", FARCRY_PARITY_KNOWN_EXCEPTIONS)
-
-
-def has_reloaded_template_parity(src, folder):
-    """Return True if a Reloaded-II extension is at template-reloaded2 shape parity.
-    No toggle exemptions: all four template booleans gate optional subsystems."""
-    if detect_engine(src) != 'Reloaded-II':
-        return False
-    return has_template_shape_parity(
-        src, folder, "template-reloaded2", RELOADED_PARITY_KNOWN_EXCEPTIONS)
+        src, folder, family.template, family.exceptions, family.toggle_exceptions)

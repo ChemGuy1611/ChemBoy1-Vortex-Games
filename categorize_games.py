@@ -23,13 +23,11 @@ independently of its engine category and of each other:
     games-requires-extension.txt - games that declare any context.requireExtension
                            dependency on another Vortex extension, required or optional
     games-ue4-5-parity.txt - UE4-5 games carrying the full template-ue4-5 load order
-    games-unity-hybrid-parity.txt - Unity+MelonLoader/BepInEx games matching
-                           template-unitymelonloaderbepinex-hybrid HEAD the same way
-    games-anvil-parity.txt - Anvil games matching template-anvilengine HEAD the same way
-    games-farcry-parity.txt - Far Cry (Dunia) games matching template-farcry HEAD the
-                           same way
-    games-reloaded2-parity.txt - Reloaded-II games matching template-reloaded2 HEAD the
-                           same way
+    games-<family>-parity.txt - one per vortex_utils.SHAPE_PARITY_FAMILIES row: games of
+                           that engine family declaring every top-level function and
+                           boolean toggle its template's HEAD declares. Files:
+                           unity-hybrid, anvil, farcry, reloaded2, cobra-acse, frostbite,
+                           godot, reengine, rpgmaker, snowdrop, srmm, ue2-3, unity-umm
     games-unreleased.txt - games with no real Nexus page URL in EXTENSION_URL, i.e.
                            extensions that have never been published. Permanent test
                            beds are dropped via UNRELEASED_LIST_EXCLUDED_GAMES
@@ -62,8 +60,7 @@ from vortex_utils import (
     has_moddb_downloader_js, has_modworkshop_downloader_js,
     has_thunderstore_downloader_js,
     has_extension_dependency, has_ue4ss_load_order_parity,
-    has_unity_hybrid_parity,
-    has_anvil_template_parity, has_farcry_template_parity, has_reloaded_template_parity,
+    SHAPE_PARITY_FAMILIES, has_family_parity,
     is_unreleased_extension, is_multi_game_extension, has_any_steamapp_id,
     log_error, log_dry,
 )
@@ -73,7 +70,6 @@ from vortex_utils import (
 CATEGORIES = [
     ("games-ue4-5.txt",                      "UE4-5"),
     ("games-ue2-3.txt",                      "UE2-3"),
-    ("games-unity-bepinex.txt",              "Unity+Bep"),
     ("games-unity-melonloader-bepinex.txt",  "Unity+Mel/Bep"),
     ("games-unity-umm.txt",                  "Unity+UMM"),
     ("games-farcrygame.txt",                 "Dunia"),
@@ -147,16 +143,6 @@ FLAG_LISTS = [
     ("games-requires-extension.txt", lambda src, folder: has_extension_dependency(src)),
     # UE4-5 games at template load-order parity (custom UE4SS + LogicMods pages).
     ("games-ue4-5-parity.txt", lambda src, folder: has_ue4ss_load_order_parity(src)),
-    # Unity games matching the hybrid template HEAD function-for-function and
-    # toggle-for-toggle (isXna exempted both ways; see UNITY_PARITY_KNOWN_EXCEPTIONS
-    # in vortex_utils.py for permanent per-game carve-outs like game-menace).
-    ("games-unity-hybrid-parity.txt", lambda src, folder: has_unity_hybrid_parity(src, folder)),
-    # Anvil, Far Cry and Reloaded-II games matching their template HEAD the same way. No
-    # family has a toggle exemption: every boolean in those templates gates an optional
-    # subsystem, so a missing one is always a pending port.
-    ("games-anvil-parity.txt", lambda src, folder: has_anvil_template_parity(src, folder)),
-    ("games-farcry-parity.txt", lambda src, folder: has_farcry_template_parity(src, folder)),
-    ("games-reloaded2-parity.txt", lambda src, folder: has_reloaded_template_parity(src, folder)),
     # Extensions never published to Nexus: EXTENSION_URL is still a placeholder, empty,
     # absent, or points somewhere other than nexusmods.com. It is a hand-maintained
     # const rather than a live lookup, so treat the list as a starting point. Permanent
@@ -173,6 +159,15 @@ FLAG_LISTS = [
     # Epic/Xbox/GOG-only titles (alanwake2) and store-agnostic front ends that never
     # carry one at all (gzdoom, bloodborne).
     ("games-no-steamappid.txt", lambda src, folder: not has_any_steamapp_id(src)),
+]
+
+# One parity list per engine family in vortex_utils.SHAPE_PARITY_FAMILIES: games matching
+# their template HEAD function-for-function and toggle-for-toggle. Per-game carve-outs
+# and toggle exemptions live on each registry row. fam=fam binds the row now - a plain
+# closure would test every game against the last family.
+FLAG_LISTS += [
+    (fam.parity_list, lambda src, folder, fam=fam: has_family_parity(fam, src, folder))
+    for fam in SHAPE_PARITY_FAMILIES
 ]
 
 

@@ -37,7 +37,10 @@ in the family, so they always fire. `deployNotify` plus `runModManager` cover th
 
 **Tools:** Custom Launch, FC Mod Installer, FC Save Manager (assets `modinstaller.png`,
 `savemanager.png`). Extra toolbar actions: Open Far Cry Mods Site, Open Far Cry Mod Installer Site.
-The user-ID folder used by the save and config paths is resolved during `setup()`.
+The config folder's user-ID subfolder (`XML_ID` target, "Open Config Folder") is picked when the
+extension loads, so a profile folder the game creates later is not used until Vortex restarts. The
+save folder's user-ID subfolder is looked up under the Ubisoft Launcher's `savegames` folder each
+time `getSavePath()` runs (setup and "Open Save Folder").
 
 **Bundled modules:** `fcmodding_downloader.js` keeps the FC Mod Installer installed and up to date,
 and `fcmodding_browser.js` + `base_browser.js` register a "Browse Far Cry Mods" page that embeds

@@ -2,8 +2,8 @@
 Name: Planet Coaster 2 Vortex Extension
 Structure: Cobra Engine (ACSE)
 Author: ChemBoy1
-Version: 0.4.0
-Date: 2026-06-06
+Version: 0.4.1
+Date: 2026-10-04
 ///////////////////////////////////////*/
 
 //import libraries
@@ -23,7 +23,7 @@ const USER_HOME = util.getVortexPath("home");
 //Specify all the information about the game
 const GAME_ID = "planetcoaster2";
 const STEAMAPP_ID = "2688950";
-const EPICAPP_ID = "d945e57b9dde4510b664a581fead2819";
+const EPICAPP_ID = "737c348dddbd4c17afd22c87af0edcbb"; //from egdata.app
 const GOGAPP_ID = null;
 const XBOXAPP_ID = "FrontierDevelopmentsPlc.FDNewton";
 const XBOXEXECNAME = "Newton.App";

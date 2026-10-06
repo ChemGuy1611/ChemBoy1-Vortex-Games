@@ -181,6 +181,9 @@ npx oxlint --version
 npx oxfmt --version
 npx markdownlint-cli2 --version
 
+# Run the template test suite (needs npm install first)
+npm test
+
 # Check the Vortex game list cache exists (see section 6; written once Vortex has run and logged in)
 python -c "import os; p=os.path.join(os.environ.get('APPDATA',''), 'Vortex', 'temp', 'nexus_gamelist.json'); print('game list OK' if os.path.exists(p) else 'MISSING: ' + p)"
 

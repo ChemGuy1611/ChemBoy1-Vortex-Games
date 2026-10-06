@@ -21,7 +21,7 @@
 ## Supported Stores
 
 - **Steam** — `2688950`
-- **Epic Games Store** — `d945e57b9dde4510b664a581fead2819`
+- **Epic Games Store** — `737c348dddbd4c17afd22c87af0edcbb`
 - **Xbox / Microsoft Store** — `FrontierDevelopmentsPlc.FDNewton`
 
 ## Mod Types

@@ -20,7 +20,7 @@
 ## Supported Stores
 
 - **Steam** — `1593500`
-- **Epic Games Store** — `456afef39a4c4cbbb6b17e92201443d7`
+- **Epic Games Store** — `91bfb663fe7a4b9698ba08bd80549b34`
 - **GOG** — `1074905459`
 
 ## Mod Types

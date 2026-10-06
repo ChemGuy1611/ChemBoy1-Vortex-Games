@@ -13,10 +13,10 @@
 | Property | Value |
 | --- | --- |
 | Game ID | `howtofish` |
-| Executable | `How To Fish.exe` |
+| Executable | `How to Fish.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
-| Executable (GOG) | `How To Fish.exe` |
-| Executable (Demo) | `How To Fish.exe` |
+| Executable (GOG) | `How to Fish.exe` |
+| Executable (Demo) | `How to Fish.exe` |
 | Extension Page | [https://www.nexusmods.com/site/mods/2211](https://www.nexusmods.com/site/mods/2211) |
 | PCGamingWiki | [https://www.pcgamingwiki.com/wiki/How_to_Fish](https://www.pcgamingwiki.com/wiki/How_to_Fish) |
 
@@ -95,7 +95,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch** (`How To Fish.exe`)
+- **Custom Launch** (`How to Fish.exe`)
 
 ## Toolbar Actions
 

@@ -1,6 +1,6 @@
 # Underused Vortex API Functions
 
-Functions available in the Vortex API that are **not used by any of the 16 templates** in this repo, but are genuinely useful for building richer extensions. Organized by use case.
+Functions available in the Vortex API that are **not used by any of the 15 templates** in this repo, but are genuinely useful for building richer extensions. Organized by use case.
 
 For the exhaustive API reference see the bundled type declarations in `node_modules/vortex-api/lib/api.d.ts`. Grep it by symbol name — the file is a build artifact and its line numbers move with every release, so nothing here cites them.
 

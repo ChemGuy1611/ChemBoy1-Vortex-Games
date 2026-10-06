@@ -906,9 +906,7 @@ function modsFolderInstructions(files, rootPath, modName) {
 
 //Installer test for UMM mod files
 function testUmmMod(files, gameId) {
-  const manifest = files.find((file) => path.basename(file).toLowerCase() === UMM_MOD_FILE);
-  const isMod =
-    manifest !== undefined && files.some((file) => path.extname(file).toLowerCase() === ".dll");
+  const isMod = files.some((file) => path.basename(file).toLowerCase() === UMM_MOD_FILE);
   let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer.
@@ -929,16 +927,27 @@ function testUmmMod(files, gameId) {
   });
 }
 
-//Installer install UMM mod files
+//Installer install UMM mod files. Every folder holding a manifest is its own mod, so an archive with several installs them all
 async function installUmmMod(files, workingDir) {
-  const modFile = files.find((file) => path.basename(file).toLowerCase() === UMM_MOD_FILE);
-  const rootPath = path.dirname(modFile);
+  const manifests = files.filter((file) => path.basename(file).toLowerCase() === UMM_MOD_FILE);
+  const roots = [...new Set(manifests.map((file) => path.dirname(file)))];
+  //a manifest nested inside another mod folder (or any manifest, when one sits at the archive root) belongs to that mod
+  const modRoots = roots.filter(
+    (root) =>
+      !roots.some(
+        (parent) => parent !== root && (parent === "." || root.startsWith(parent + path.sep)),
+      ),
+  );
   const fallbackName = path.basename(workingDir, ".installing");
-  const modName =
-    rootPath === "."
-      ? await readModName(path.join(workingDir, modFile), "Id", fallbackName)
-      : path.basename(rootPath);
-  const instructions = modsFolderInstructions(files, rootPath, modName);
+  const instructions = [];
+  for (const rootPath of modRoots) {
+    const modFile = manifests.find((file) => path.dirname(file) === rootPath);
+    const modName =
+      rootPath === "."
+        ? await readModName(path.join(workingDir, modFile), "Id", fallbackName)
+        : path.basename(rootPath);
+    instructions.push(...modsFolderInstructions(files, rootPath, modName));
+  }
   instructions.push({ type: "setmodtype", value: MODS_ID });
   return Promise.resolve({ instructions });
 }

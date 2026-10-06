@@ -20,7 +20,7 @@
 ## Supported Stores
 
 - **Steam** — `1845910`
-- **Epic Games Store** — `chamaelejp`
+- **Epic Games Store** — `chamaeleon`
 - **EA** — `Registry`
 
 ## Mod Types

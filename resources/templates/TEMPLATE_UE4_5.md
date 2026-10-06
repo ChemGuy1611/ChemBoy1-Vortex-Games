@@ -166,3 +166,4 @@ Folder, Download UE4SS, Open UE4SS Settings INI, and Open UE4SS mods.txt.
 `../REGISTER_GAME.md` (the `spec` / `applyGame()` contract).
 `../INSTALLER_SYSTEM.md` (`registerInstaller` semantics behind the ladder above).
 `../FOMOD_INSTALLER.md` (the `ModuleConfig.xml` early-return in every `testSupported`).
+`../DOWNLOADER.md` (the shared downloader module behind the GitHub `UE4SS_REQUIREMENTS` set).

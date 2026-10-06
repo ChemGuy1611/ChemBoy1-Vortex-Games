@@ -2,8 +2,8 @@
 Name: A Plague Tale Requiem Vortex Extension
 Structure: Basic Game (XBOX Integrated)
 Author: ChemBoy1
-Version: 1.3.1
-Date: 2025-11-18
+Version: 1.4.0
+Date: 2026-10-04
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -281,15 +281,14 @@ async function requiresLauncher(gamePath, store) {
       },
     });
   }
-  /*
-  if (store === 'epic') {
+  if (store === "epic") {
     return Promise.resolve({
-        launcher: 'epic',
-        addInfo: {
-            appId: EPICAPP_ID,
-        },
+      launcher: "epic",
+      addInfo: {
+        appId: EPICAPP_ID,
+      },
     });
-  } //*/
+  }
   return Promise.resolve(undefined);
 }
 

@@ -8,6 +8,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
+| Modkitmod | a file with the `.uplugin` extension and a file with the `.pak` extension | `LOCALAPPDATA\Whiskerwood\Saved\mods` |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `Whiskerwood` |
 | Blueprint Mods (LogicMods) | a `LogicMods` folder | `Whiskerwood\Content\Paks\LogicMods\LogicMods` |
 | Pak Mods | a `.pak` file | `Whiskerwood\Content\Paks\~mods` |
@@ -16,10 +17,16 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | `Whiskerwood\Binaries\Win64\ue4ss\Mods` |
 | Root / Game Folder Mods | a top-level folder such as `Whiskerwood`, `Engine` or `Content` | the game folder itself (no subfolder) |
 | Config File Mods | a config file such as `engine.ini` or `game.ini` | - |
-| Save Game Files | a `.sav` file | - |
+| Save Game Files | a `.whisker` file | - |
 | Fallback Installer | anything unrecognised with no pak file | `Whiskerwood\Binaries\Win64` |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+
+## Modkitmod
+
+Recognised when the archive contains a file with the `.uplugin` extension and a file with the `.pak` extension.
+
+Installs to: `LOCALAPPDATA\Whiskerwood\Saved\mods`
 
 ## Combo Mods (pak + UE4SS script/DLL together)
 
@@ -80,7 +87,7 @@ Installs to: `Whiskerwood\Content\Paks\LogicMods\LogicMods`
 
 ## Pak Mods
 
-Standard content mods: one or more `.pak` files. Vortex installs the mod files themselves, so the folder structure around them in the archive does not matter.
+Standard content mods: one or more `.pak` files. Vortex copies just the pak files themselves, flattened, so the folder structure around them does not matter.
 
 ```text
 MyPakMod.zip
@@ -89,15 +96,16 @@ MyPakMod.zip
 
 **Requirements:**
 
-- Recognised by any file with the `.pak` extension.
-- Surrounding folders are discarded - only the mod files are installed.
-- If the archive holds several mod files, Vortex asks the user which to install, which is useful for shipping optional variants in one download.
+- Any archive containing a `.pak` file reaches this installer (unless an earlier one claimed it).
+- Only the pak files are installed - surrounding folders are discarded.
+- If the archive holds more than one pak, Vortex asks the user which to install - useful for optional variants.
 
 Installs to: `Whiskerwood\Content\Paks\~mods`
 
 **Common mistakes:**
 
 - Shipping several unrelated paks in one archive when you meant them all to install - the user gets a choice dialog and may pick only one.
+- Blueprint mods belong in a `LogicMods` folder instead - see above.
 
 ## UE4SS Itself
 
@@ -106,6 +114,7 @@ This installer handles the UE4SS runtime package, not individual mods. Most auth
 **Requirements:**
 
 - Recognised by a file named `dwmapi.dll` at any level of the archive.
+- Also recognised by any of the UE4SS support folders: `MapGenBP`, `MemberVarLayoutTemplates`, `UE4SS_Signatures` or `VTableLayoutTemplates`.
 
 Installs to: `Whiskerwood\Binaries\Win64`
 
@@ -171,7 +180,7 @@ MyRootMod.zip
 
 **Requirements:**
 
-- Recognised by a top-level folder matching any of: `Whiskerwood`, `Engine`, `Content`, `Binaries` or `Mods`.
+- Recognised by a top-level folder matching any of: `Whiskerwood`, `Engine`, `Content`, `Binaries`, `Mods`, `Paks` or `Movies`.
 - The matched folder and everything below it is copied into the game folder, preserving structure.
 
 Installs to: the game folder itself (no subfolder)
@@ -198,7 +207,7 @@ Save files are deployed to the game's save folder in your user profile.
 
 **Requirements:**
 
-- Recognised by any file with extension `.sav`.
+- Recognised by any file with extension `.whisker`.
 
 **Common mistakes:**
 
@@ -223,5 +232,6 @@ Installs to: `Whiskerwood\Binaries\Win64`
 
 ## Rules That Apply To Every Mod Type
 
+- Archives that contain a FOMOD installer (a `fomod` folder with `ModuleConfig.xml`) are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.

@@ -15,7 +15,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | UE4SS Itself | a `dwmapi.dll` file | - |
 | UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | - |
 | UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | - |
-| Root / Game Folder Mods | a top-level folder such as `Stalker2` | the game folder itself (no subfolder) |
+| Root / Game Folder Mods | a top-level folder such as `Stalker2`, `Engine` or `Content` | the game folder itself (no subfolder) |
 | Config File Mods | a config file such as `engine.ini` or `game.ini` | - |
 | Save Game Files | a `.sav` file | - |
 | Fallback Installer | anything unrecognised with no pak file | - |
@@ -157,7 +157,7 @@ MyRootMod.zip
 
 **Requirements:**
 
-- Recognised by a top-level folder matching any of: `Stalker2`.
+- Recognised by a top-level folder matching any of: `Stalker2`, `Engine`, `Content`, `Binaries`, `Mods`, `Paks` or `Movies`.
 - The matched folder and everything below it is copied into the game folder, preserving structure.
 
 Installs to: the game folder itself (no subfolder)

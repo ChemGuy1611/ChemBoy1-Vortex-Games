@@ -643,8 +643,8 @@ Unity-only where BepInEx also covers XNA).
 `NEXUS_MODS_API.md` and `NEXUS_FILE_PROPERTIES.md` (how a developer-published fork on a game's own
 mod page is enumerated and downloaded, since such forks have no release feed).
 `DOWNLOADER.md` (the GitHub requirements auto-downloader that resolves the 5.x release assets).
-`templates/TEMPLATE_UNITYBEPINEX.md` and `templates/TEMPLATE_UNITYMELONLOADERBEPINEX_HYBRID.md` (the
-two templates that install and manage this loader).
+`templates/TEMPLATE_UNITYMELONLOADERBEPINEX_HYBRID.md` (the template that installs and manages this
+loader).
 `INSTALLER_SYSTEM.md` (`registerInstaller` test/install contracts behind routing a plugin archive to
 the right folder).
 `REGISTER_GAME.md` (the `spec` / `applyGame()` contract, including `parameters` for the launcher and

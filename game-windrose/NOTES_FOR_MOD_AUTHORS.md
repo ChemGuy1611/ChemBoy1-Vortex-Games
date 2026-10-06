@@ -177,7 +177,7 @@ MyRootMod.zip
 
 **Requirements:**
 
-- Recognised by a top-level folder matching any of: `R5`, `Engine`, `Content`, `Binaries` or `Mods`.
+- Recognised by a top-level folder matching any of: `R5`, `Engine`, `Content`, `Binaries`, `Mods`, `Paks` or `Movies`.
 - The matched folder and everything below it is copied into the game folder, preserving structure.
 
 Installs to: the game folder itself (no subfolder)

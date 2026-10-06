@@ -2,8 +2,8 @@
 Name: TEKKEN 8 Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.4
-Date: 2026-09-27
+Version: 1.0.5
+Date: 2026-10-04
 Notes:
 -
 ////////////////////////////////////////////////*/
@@ -83,6 +83,7 @@ const MAJOR_VERSION = ENGINE_VERSION.split(".")[0]; //major UE version
 const MINOR_VERSION = ENGINE_VERSION.split(".")[1]; //minor UE version
 const ROOT_FOLDERS = [EPIC_CODE_NAME, "Engine"]; //addressable folders in root
 const ROOTSUB_FOLDERS = ["Content", "Binaries", "Mods"]; //subfolders of EPIC_CODE_NAME. Don't use "Plugins" here since it can conflict with plugin loader/asi mods
+const CONTENTSUB_FOLDERS = ["Paks", "Movies"]; //subfolders of Content folder
 const SAVE_EXT = ".sav";
 const SAVE_COMPAT_VERSIONS = ["steam", "epic", "gog"]; //game versions with installable save mods (never Xbox)
 let PAKMOD_PATH = path.join(EPIC_CODE_NAME, "Content", "Paks", "~mods"); //usually works. Some games don't work from "~mods".
@@ -1338,13 +1339,17 @@ async function installDll(api, files, fileName) {
 function testRoot(files, gameId) {
   const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map((str) => str.toLowerCase());
   const ROOTSUB_FOLDERS_LOWER = ROOTSUB_FOLDERS.map((str) => str.toLowerCase());
+  const CONTENTSUB_FOLDERS_LOWER = CONTENTSUB_FOLDERS.map((str) => str.toLowerCase());
   const isMod = files.some((file) =>
     ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
   );
   const isSub = files.some((file) =>
     ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
   );
-  let supported = gameId === spec.game.id && (isMod || isSub);
+  const isContentSub = files.some((file) =>
+    CONTENTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
+  );
+  let supported = gameId === spec.game.id && (isMod || isSub || isContentSub);
 
   // Test for a mod installer.
   if (
@@ -1368,6 +1373,8 @@ function testRoot(files, gameId) {
 function installRoot(files) {
   const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map((str) => str.toLowerCase());
   const ROOTSUB_FOLDERS_LOWER = ROOTSUB_FOLDERS.map((str) => str.toLowerCase());
+  const CONTENTSUB_FOLDERS_LOWER = CONTENTSUB_FOLDERS.map((str) => str.toLowerCase());
+  let folder = "";
   let modFile = files.find((file) =>
     ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
   );
@@ -1377,6 +1384,13 @@ function installRoot(files) {
       ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
     );
     setModTypeInstruction = { type: "setmodtype", value: ROOTSUB_ID };
+  }
+  if (modFile === undefined) {
+    modFile = files.find((file) =>
+      CONTENTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
+    );
+    setModTypeInstruction = { type: "setmodtype", value: ROOTSUB_ID };
+    folder = "Content"; //ROOTSUB_ID already targets EPIC_CODE_NAME
   }
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
   const idx = modFile.indexOf(ROOT_IDX);
@@ -1389,7 +1403,7 @@ function installRoot(files) {
     return {
       type: "copy",
       source: file,
-      destination: path.join(file.substr(idx)),
+      destination: path.join(folder, file.substr(idx)),
     };
   });
   instructions.push(setModTypeInstruction);
