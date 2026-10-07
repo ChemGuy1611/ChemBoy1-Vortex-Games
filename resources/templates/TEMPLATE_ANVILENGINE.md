@@ -156,8 +156,8 @@ version changed (a first-ever install counts) — both during setup and from a "
 button. Because the installer is now a managed mod, it gets real version tracking (mod list entry,
 update notifications) that a plain fetch-and-run never had.
 
-**Toolbar actions:** Open PCGamingWiki Page, Open SteamDB Page, View Changelog, Submit Bug Report,
-Open Downloads Folder, plus Open Settings INI (`hasSettingsIni`), Force Copy System `d3d11.dll`
+**Toolbar actions:** Open PCGamingWiki Page, Open Nexus Mods Page, Open SteamDB Page, View Changelog,
+Submit Bug Report, Open Downloads Folder, plus Open Settings INI (`hasSettingsIni`), Force Copy System `d3d11.dll`
 (`hasResorep`) and Download ReForger (`hasReforger`).
 
 ---

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.0] - 2026-10-07
+
+- Added a Load Order page for .texpack and .lodpack mods. Drag packs to reorder them, use the checkbox to turn a pack on or off without uninstalling it, lock a pack's position, and right-click a pack for more options. The order is written to boot-options.json automatically.
+- Fixed: The game's own texture and LOD packs are no longer added to the pack lists in boot-options.json.
+- Fixed: Packs stored more than two folders deep inside "exec\patch" or "exec\wad" now get the correct path in boot-options.json.
+
 ## [0.2.2] - 2026-10-04
 
 - Fixed: The Epic Games Store version of the game is now found and launched correctly.

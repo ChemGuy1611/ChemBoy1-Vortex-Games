@@ -2,6 +2,10 @@
 
 Covers `template-unity-umm`. Suite file: `tests/templates/unity-umm.test.js`.
 
+## [2026-10-06]
+
+- Changed: the toolbar actions tests cover the new `Open Nexus Mods Page` button. It is in the registered action list, and it opens `https://www.nexusmods.com/XXX/mods`.
+
 ## [2026-10-05] (2)
 
 - Changed: the suite follows the template change that lets the UMM mod installer recognise a mod by its `info.json` alone and install every mod folder in an archive. Routing now covers an `info.json` with no `.dll` and an archive with several mod folders. Install output now covers each manifest folder becoming its own mod, a manifest nested inside another mod folder staying part of that mod, a manifest at the archive root owning the whole archive (named from its `Id`), and files outside every mod folder not being installed. The suite is now 96 tests (was 87).

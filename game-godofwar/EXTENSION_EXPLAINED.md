@@ -23,6 +23,12 @@
 - **Epic Games Store** — `91bfb663fe7a4b9698ba08bd80549b34`
 - **GOG** — `1074905459`
 
+## Feature Flags
+
+| Flag | Value | Description |
+| --- | --- | --- |
+| `mod_update_all_profile` | `false` | for mod update to keep packs in the load order and not uncheck them |
+
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:

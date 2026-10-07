@@ -2,6 +2,10 @@
 
 Covers `template-rpgmaker`. Suite file: `tests/templates/rpgmaker.test.js`.
 
+## [2026-10-06]
+
+- Changed: the toolbar actions tests cover the new `Open Nexus Mods Page` button. It is in the registered action list, and it opens `https://www.nexusmods.com/XXX/mods`, and its failure is reported instead of thrown when the shell is unavailable.
+
 ## [2026-10-05]
 
 - Added: the suite, 90 tests. Covers registration, routing for the js folder, js file, root, json and fallback installers, install output including the plugin names stamped on the mod, setup, game definition, the toolbar actions, and the plugins.js load order run against a real temporary game folder: reading (managed plugins only, sidecar and default tiers, lock precedence, corrupt files), writing (order, enabled state, descriptions and parameters kept, `locked` kept in the sidecar only), the purge guard and the purge cleanup, and the Edit Parameters dialog with its parameter parsing helpers.

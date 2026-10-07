@@ -2,6 +2,10 @@
 
 Covers `template-reloaded2`. Suite file: `tests/templates/reloaded2.test.js`.
 
+## [2026-10-06]
+
+- Changed: the toolbar actions tests cover the new `Open Nexus Mods Page` button. It is in the registered action list, and it opens `https://www.nexusmods.com/XXX/mods`.
+
 ## [2026-10-05]
 
 - Added: the suite, 39 tests. Covers registration, `modconfig.json` mod detection, launching through the `elevate.exe` path, routing, install output, toggle gating, game definition, the Reloaded-II download, the post-deploy notice, and the toolbar actions.

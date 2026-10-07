@@ -2,6 +2,10 @@
 
 Covers `template-godot`. Suite file: `tests/templates/godot.test.js`.
 
+## [2026-10-06]
+
+- Changed: the toolbar actions tests cover the new `Open Nexus Mods Page` button. It is in the registered action list, and it opens `https://www.nexusmods.com/XXX/mods`, and its failure is reported instead of thrown when the shell is unavailable.
+
 ## [2026-10-05]
 
 - Added: the suite, 67 tests. Covers registration, routing for the loader, mod and fallback installers with the custom and stock loader, install output (loader exclusions, mod folder detection, the zip installer including repacking), the toggles that change file layout (`keepZips`, `customLoader`, `useOverrideCfg`, `ENGINE_VERSION`), game definition and launchers, setup with the custom loader download, setup with the stock loader through a stand-in for the bundled `downloader.js`, update checks, and the toolbar actions.

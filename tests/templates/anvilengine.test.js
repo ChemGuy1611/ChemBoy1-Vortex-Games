@@ -322,11 +322,12 @@ describe("template-anvilengine: registration with default toggles", () => {
     ]);
   });
 
-  it("registers the five toolbar actions for the game only", async () => {
+  it("registers the six toolbar actions for the game only", async () => {
     assert.deepEqual(
       ext.registeredActions.map(({ title }) => title),
       [
         "Open PCGamingWiki Page",
+        "Open Nexus Mods Page",
         "Open SteamDB Page",
         "View Changelog",
         "Submit Bug Report",
@@ -582,6 +583,7 @@ describe("template-anvilengine: toggles change what is registered", () => {
         "Force Copy System d3d11.dll (ResoRep)",
         "Download ReForger",
         "Open PCGamingWiki Page",
+        "Open Nexus Mods Page",
         "Open SteamDB Page",
         "View Changelog",
         "Submit Bug Report",
@@ -2990,8 +2992,11 @@ describe("template-anvilengine: toolbar actions", () => {
     return { ext, shown };
   }
 
-  it("opens the PCGamingWiki and SteamDB pages", async () => {
+  it("opens the PCGamingWiki, Nexus Mods and SteamDB pages", async () => {
     assert.deepEqual((await run("Open PCGamingWiki Page")).shown, ["XXX"]);
+    assert.deepEqual((await run("Open Nexus Mods Page")).shown, [
+      "https://www.nexusmods.com/XXX/mods",
+    ]);
     assert.deepEqual((await run("Open SteamDB Page")).shown, ["https://steamdb.info/app/XXX/"]);
   });
 
@@ -3018,6 +3023,7 @@ describe("template-anvilengine: toolbar actions", () => {
   it("reports a failure instead of throwing when the shell is unavailable", async () => {
     for (const [title, message] of [
       ["Open PCGamingWiki Page", "Failed to open the URL"],
+      ["Open Nexus Mods Page", "Failed to open the URL"],
       ["Open SteamDB Page", "Failed to open the URL"],
       ["Submit Bug Report", "Failed to open the URL"],
       ["View Changelog", "Failed to open the file or folder"],

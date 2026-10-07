@@ -70,12 +70,13 @@ describe("template-rpgmaker: registration with default toggles", () => {
     ]);
   });
 
-  it("registers the six toolbar actions in the mod toolbar group", () => {
+  it("registers the seven toolbar actions in the mod toolbar group", () => {
     assert.deepEqual(
       ext.registeredActions.map(({ title }) => title),
       [
         "Open plugins.js File",
         "Open PCGamingWiki Page",
+        "Open Nexus Mods Page",
         "Open SteamDB Page",
         "View Changelog",
         "Open Downloads Folder",
@@ -582,6 +583,7 @@ describe("template-rpgmaker: toolbar actions", () => {
 
   it("opens the game's pages, the changelog shipped with the extension and the bug tracker", async () => {
     assert.deepEqual(await run("Open PCGamingWiki Page"), ["XXX"]);
+    assert.deepEqual(await run("Open Nexus Mods Page"), ["https://www.nexusmods.com/XXX/mods"]);
     assert.deepEqual(await run("Open SteamDB Page"), ["https://steamdb.info/app/XXX/"]);
     assert.deepEqual(await run("View Changelog"), [path.join(DIR, "CHANGELOG.md")]);
     assert.deepEqual(await run("Submit Bug Report"), ["XXX?tab=bugs"]);
@@ -603,6 +605,7 @@ describe("template-rpgmaker: toolbar actions", () => {
     const titles = [
       ["Open plugins.js File", FILE_FAILURE],
       ["Open PCGamingWiki Page", URL_FAILURE],
+      ["Open Nexus Mods Page", URL_FAILURE],
       ["Open SteamDB Page", URL_FAILURE],
       ["View Changelog", FILE_FAILURE],
       ["Open Downloads Folder", FILE_FAILURE],

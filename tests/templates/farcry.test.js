@@ -105,7 +105,7 @@ describe("template-farcry: registration with default toggles", () => {
     ]);
   });
 
-  it("registers the ten toolbar actions", () => {
+  it("registers the eleven toolbar actions", () => {
     assert.deepEqual(
       ext.registeredActions.map(({ title }) => title),
       [
@@ -115,6 +115,7 @@ describe("template-farcry: registration with default toggles", () => {
         "Open Config Folder",
         "Open Save Folder",
         "Open PCGamingWiki Page",
+        "Open Nexus Mods Page",
         "Open SteamDB Page",
         "View Changelog",
         "Open Downloads Folder",
@@ -1103,6 +1104,7 @@ describe("template-farcry: toolbar actions", () => {
     assert.deepEqual(await run("Open Far Cry Mods Site"), ["https://mods.farcry.info/fcXXX"]);
     assert.deepEqual(await run("Open Far Cry Mod Installer Site"), [MI_PAGE]);
     assert.deepEqual(await run("Open PCGamingWiki Page"), ["XXX"]);
+    assert.deepEqual(await run("Open Nexus Mods Page"), ["https://www.nexusmods.com/XXX/mods"]);
     assert.deepEqual(await run("Open SteamDB Page"), ["https://steamdb.info/app/XXX/"]);
   });
 
@@ -1160,6 +1162,7 @@ describe("template-farcry: toolbar actions", () => {
       ["Open Config Folder", FILE_FAILURE],
       ["Open Save Folder", FILE_FAILURE],
       ["Open PCGamingWiki Page", URL_FAILURE],
+      ["Open Nexus Mods Page", URL_FAILURE],
       ["Open SteamDB Page", URL_FAILURE],
       ["View Changelog", FILE_FAILURE],
       ["Open Downloads Folder", FILE_FAILURE],

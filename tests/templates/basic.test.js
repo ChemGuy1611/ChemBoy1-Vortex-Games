@@ -43,6 +43,7 @@ describe("template-basic: registration with default toggles", () => {
         "Open Config Folder",
         "Open Save Folder",
         "Open PCGamingWiki Page",
+        "Open Nexus Mods Page",
         "Open SteamDB Page",
         "View Changelog",
         "Submit Bug Report",
@@ -329,6 +330,11 @@ describe("template-basic: toolbar actions", () => {
     ext.registeredActions.find((action) => action.title === title).action();
     return ext;
   }
+
+  it("opens the Nexus Mods page for the game", async () => {
+    await run("Open Nexus Mods Page");
+    assert.deepEqual(opened, ["https://www.nexusmods.com/XXX/mods"]);
+  });
 
   it("opens the SteamDB page for the game", async () => {
     await run("Open SteamDB Page");

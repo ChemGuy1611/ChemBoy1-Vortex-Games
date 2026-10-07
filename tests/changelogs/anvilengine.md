@@ -2,6 +2,10 @@
 
 Covers `template-anvilengine`. Suite file: `tests/templates/anvilengine.test.js`.
 
+## [2026-10-06] (2)
+
+- Changed: the toolbar actions tests cover the new `Open Nexus Mods Page` button. It is in the registered action list, and it opens `https://www.nexusmods.com/XXX/mods`, and its failure is reported instead of thrown when the shell is unavailable.
+
 ## [2026-10-06]
 
 - Added: the suite, 247 tests. Covers registration and the priority ladder with the default toggles, one load per toggle, and a load with every feature on (which also runs the contract checks); the startup checks for conflicting toggles; routing across all fifteen installers, including case handling and FOMOD and game-id rejection; install output for every installer, including the DLC `.forge` routing and the rename placeholder; mod type target paths and retired mod types; game discovery through the Ubisoft Connect registry and the store helper; the whole game version chain (Steam build id, Epic manifests, GOG registry, the `uplay_install.manifest` hash with its modified-time cache, the executable); setup and the folders it creates; the AnvilToolkit, Forger and ResoRep downloads; the ReForger registry lookup and its download, deploy and run flow against a stand-in for the bundled `downloader.js`; the `dllsettings.ini` write and the `ori_d3d11.dll` copy against a temporary game folder and a fake Windows folder; the post-deploy reminder and the tool buttons; the `.forge` rename notice and dialog against a real temporary staging folder; the fallback notice; and the toolbar actions.

@@ -50,12 +50,13 @@ describe("template-snowdropengine: registration with default toggles", () => {
     ]);
   });
 
-  it("registers the six toolbar actions", () => {
+  it("registers the seven toolbar actions", () => {
     assert.deepEqual(
       ext.registeredActions.map(({ title }) => title),
       [
         "Open Config Folder",
         "Open PCGamingWiki Page",
+        "Open Nexus Mods Page",
         "Open SteamDB Page",
         "View Changelog",
         "Open Downloads Folder",
@@ -306,6 +307,11 @@ describe("template-snowdropengine: toolbar actions", () => {
   it("opens the Documents config folder", async () => {
     await run("Open Config Folder");
     assert.deepEqual(opened, [path.join(vortex.APP_ROOT, "documents", "My Games", "XXX")]);
+  });
+
+  it("opens the Nexus Mods page for the game", async () => {
+    await run("Open Nexus Mods Page");
+    assert.deepEqual(opened, ["https://www.nexusmods.com/XXX/mods"]);
   });
 
   it("opens the SteamDB page for the game", async () => {

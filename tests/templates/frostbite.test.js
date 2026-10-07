@@ -64,7 +64,7 @@ describe("template-frostbite: registration with default toggles", () => {
     ]);
   });
 
-  it("registers the thirteen toolbar actions", () => {
+  it("registers the fourteen toolbar actions", () => {
     assert.deepEqual(
       ext.registeredActions.map(({ title }) => title),
       [
@@ -77,6 +77,7 @@ describe("template-frostbite: registration with default toggles", () => {
         "Open Config Folder",
         "Open Frosty Mods Folder",
         "Open PCGamingWiki Page",
+        "Open Nexus Mods Page",
         "Open SteamDB Page",
         "View Changelog",
         "Submit Bug Report",
@@ -731,7 +732,8 @@ describe("template-frostbite: toolbar actions", () => {
     assert.deepEqual(await run("Open Frosty Mods Folder", state), [sep(gameDir, MODS)]);
   });
 
-  it("opens the SteamDB page and the bug tracker", async () => {
+  it("opens the Nexus Mods and SteamDB pages and the bug tracker", async () => {
+    assert.deepEqual(await run("Open Nexus Mods Page"), ["https://www.nexusmods.com/XXX/mods"]);
     assert.deepEqual(await run("Open SteamDB Page"), ["https://steamdb.info/app/XXX/"]);
     assert.deepEqual(await run("Submit Bug Report"), ["XXX?tab=bugs"]);
   });

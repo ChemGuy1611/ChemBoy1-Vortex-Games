@@ -2,6 +2,10 @@
 
 Covers `template-frostbite`. Suite file: `tests/templates/frostbite.test.js`.
 
+## [2026-10-06]
+
+- Changed: the toolbar actions tests cover the new `Open Nexus Mods Page` button. It is in the registered action list, and it opens `https://www.nexusmods.com/XXX/mods`.
+
 ## [2026-10-05] (2)
 
 - Fixed: three tests asserted a notification the moment a file change became visible, before the template had sent it, and one config read could land while the file was being rewritten. They now wait for the notification and tolerate a mid-write read. The failures were intermittent and showed up under a full `npm test` run; twelve consecutive full runs pass after the fix.

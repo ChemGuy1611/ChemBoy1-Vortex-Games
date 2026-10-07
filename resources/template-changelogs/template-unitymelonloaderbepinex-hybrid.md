@@ -1,5 +1,9 @@
 # template-unitymelonloaderbepinex-hybrid Changelog
 
+## [2026-10-06]
+
+- Added: an "Open Nexus Mods Page" button in the Mods toolbar that opens the game's mods page on Nexus Mods (`https://www.nexusmods.com/<GAME_ID>/mods`). It sits beside the PCGamingWiki and SteamDB buttons and only shows while this game is the active game.
+
 ## [2026-10-01]
 
 - Changed: `IGNORE_DEPLOY` narrows `path.join("**", "manifest.json")`/`path.join("**", "icon.png")` to `path.join("*", ...)`. Vortex matches deploy-ignore patterns against `<mod folder>\<relative path>`, so `*` hits only a file at a mod's top level - Thunderstore metadata that an unwrapped install drops into the shared loader folder. A wrapped plugin's own `manifest.json` (`<mod>\<wrap>\manifest.json`) now deploys, which fixes MelonLoader skipping wrapped mods: `installPlugin` generates that manifest, but the `**` pattern kept it from ever deploying. `IGNORE_CONFLICTS` keeps `**` - conflict detection walks staging, where already-installed mods still carry the root files.

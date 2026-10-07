@@ -2,6 +2,10 @@
 
 Covers `template-snowdropengine`. Suite file: `tests/templates/snowdropengine.test.js`.
 
+## [2026-10-06]
+
+- Added: one test that the `Open Nexus Mods Page` button opens `https://www.nexusmods.com/XXX/mods`. The registered action list and the action count in its test name now include the button.
+
 ## [2026-10-05]
 
 - Added: the suite, 32 tests. Covers registration, the `version.dll` proxy handling, routing, install output, toggle gating, game definition, setup, and the toolbar actions.

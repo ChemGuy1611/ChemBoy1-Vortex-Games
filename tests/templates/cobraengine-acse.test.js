@@ -63,13 +63,14 @@ describe("template-cobraengineACSE: registration with default toggles", () => {
     ]);
   });
 
-  it("registers the seven toolbar actions", () => {
+  it("registers the eight toolbar actions", () => {
     assert.deepEqual(
       ext.registeredActions.map(({ title }) => title),
       [
         "Open Save Folder",
         "Open Config Folder",
         "Open PCGamingWiki Page",
+        "Open Nexus Mods Page",
         "Open SteamDB Page",
         "View Changelog",
         "Open Downloads Folder",
@@ -456,7 +457,8 @@ describe("template-cobraengineACSE: toolbar actions", () => {
     assert.deepEqual(await run("Open Save Folder"), [sep(SAVED_GAMES, "Saves", "Saves")]);
   });
 
-  it("opens the SteamDB page and the bug tracker", async () => {
+  it("opens the Nexus Mods and SteamDB pages and the bug tracker", async () => {
+    assert.deepEqual(await run("Open Nexus Mods Page"), ["https://www.nexusmods.com/XXX/mods"]);
     assert.deepEqual(await run("Open SteamDB Page"), ["https://steamdb.info/app/XXX/"]);
     assert.deepEqual(await run("Submit Bug Report"), ["XXX?tab=bugs"]);
   });

@@ -2,6 +2,10 @@
 
 Covers `template-cobraengineACSE`. Suite file: `tests/templates/cobraengine-acse.test.js`.
 
+## [2026-10-06]
+
+- Changed: the toolbar actions tests cover the new `Open Nexus Mods Page` button. It is in the registered action list, and it opens `https://www.nexusmods.com/XXX/mods`.
+
 ## [2026-10-05]
 
 - Added: the suite, 49 tests. Covers `.ovl` files under `Win64/ovldata`, the installers that share priority 49, routing, install output, toggle gating, game definition, setup and the save folder, and the toolbar actions.

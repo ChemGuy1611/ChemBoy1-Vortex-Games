@@ -1,5 +1,9 @@
 # template-unity-umm Changelog
 
+## [2026-10-06]
+
+- Added: an "Open Nexus Mods Page" button in the Mods toolbar that opens the game's mods page on Nexus Mods (`https://www.nexusmods.com/<GAME_ID>/mods`). It sits beside the PCGamingWiki and SteamDB buttons and only shows while this game is the active game.
+
 ## [2026-10-05]
 
 - Changed: the UMM mod installer (`testUmmMod` / `installUmmMod`) is recognised by an `info.json` alone. A `.dll` is no longer required, but is still accepted: mods with or without one install.

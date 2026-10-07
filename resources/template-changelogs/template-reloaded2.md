@@ -1,5 +1,9 @@
 # template-reloaded2 Changelog
 
+## [2026-10-06]
+
+- Added: an "Open Nexus Mods Page" button in the Mods toolbar that opens the game's mods page on Nexus Mods (`https://www.nexusmods.com/<GAME_ID>/mods`). It sits beside the PCGamingWiki and SteamDB buttons and only shows while this game is the active game.
+
 ## [2026-09-30]
 
 - Added: an `id` field as the first key of `info.json`, set to the `XXX` placeholder that `new_extension.py` replaces with the `GAME_ID`. Vortex uses `id` as the extension's stable identity (registered name, install folder and localization namespace) instead of deriving them from the folder or archive name.

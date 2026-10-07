@@ -118,7 +118,7 @@ describe("template-unity-umm: registration with default toggles", () => {
     ]);
   });
 
-  it("registers the nine toolbar actions", () => {
+  it("registers the ten toolbar actions", () => {
     assert.deepEqual(
       ext.registeredActions.map(({ title }) => title),
       [
@@ -127,6 +127,7 @@ describe("template-unity-umm: registration with default toggles", () => {
         "Open Data Folder",
         "Open Save Folder",
         "Open PCGamingWiki Page",
+        "Open Nexus Mods Page",
         "Open SteamDB Page",
         "View Changelog",
         "Submit Bug Report",
@@ -1124,7 +1125,8 @@ describe("template-unity-umm: toolbar actions", () => {
     assert.deepEqual(await run("Open Data Folder", discovered(dir)), [sep(dir, DATA)]);
   });
 
-  it("opens the SteamDB page and the bug tracker", async () => {
+  it("opens the Nexus Mods and SteamDB pages and the bug tracker", async () => {
+    assert.deepEqual(await run("Open Nexus Mods Page"), ["https://www.nexusmods.com/XXX/mods"]);
     assert.deepEqual(await run("Open SteamDB Page"), ["https://steamdb.info/app/XXX/"]);
     assert.deepEqual(await run("Submit Bug Report"), ["XXX?tab=bugs"]);
   });
