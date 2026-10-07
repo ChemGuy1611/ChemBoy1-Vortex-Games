@@ -324,11 +324,11 @@ function makeFindGame(api, gameSpec) {
 async function requiresLauncher(gamePath, store) {
   /*if (store === 'xbox') {
       return Promise.resolve({
-          launcher: 'xbox',
-          addInfo: {
-              appId: XBOXAPP_ID,
-              parameters: [{ appExecName: XBOXEXECNAME }],
-          },
+        launcher: 'xbox',
+        addInfo: {
+          appId: XBOXAPP_ID,
+          parameters: [{ appExecName: XBOXEXECNAME }],
+        },
       });
   } //*/
   if (store === "epic") {
@@ -339,9 +339,9 @@ async function requiresLauncher(gamePath, store) {
       },
     });
   } //*/
-  /*if (store === 'steam') {
+  if (store === "steam") {
     return Promise.resolve({
-        launcher: 'steam',
+      launcher: "steam",
     });
   } //*/
   return Promise.resolve(undefined);

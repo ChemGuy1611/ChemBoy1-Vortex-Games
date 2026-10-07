@@ -1,9 +1,9 @@
 /*///////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Welcome to Elderfield Vortex Extension
 Structure: RPGMaker Engine Game
 Author: ChemBoy1
 Version: 1.0.0
-Date: 2026-XX-XX
+Date: 2026-10-07
 Notes:
 -
 ///////////////////////////////////////////*/
@@ -24,24 +24,24 @@ const DOCUMENTS = util.getVortexPath("documents");
 //const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
-const GAME_ID = "XXX";
-const STEAMAPP_ID = "XXX";
-const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = "XXX";
-const GOGAPP_ID = "XXX";
-const XBOXAPP_ID = "XXX";
+const GAME_ID = "welcometoelderfield";
+const STEAMAPP_ID = "3195440"; // https://steamdb.info/app/3195440/
+const STEAMAPP_ID_DEMO = "3195680"; // https://steamdb.info/app/3195680/
+const EPICAPP_ID = null;
+const GOGAPP_ID = null;
+const XBOXAPP_ID = null;
 const XBOXEXECNAME = "XXX";
-const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const XBOX_PUB_ID = null; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, STEAMAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
 
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
-const EXEC = "XXX.exe";
+const GAME_NAME = "Welcome to Elderfield";
+const GAME_NAME_SHORT = "Welcome to Elderfield";
+const EXEC = "Game.exe";
 const EXEC_EGS = EXEC;
-const NAME_FOLDER = "XXX";
-const PCGAMINGWIKI_URL = "XXX";
+const NAME_FOLDER = "Elderfield";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/";
 const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/2429"; //Nexus link to this extension. Used for links
 
 //feature toggles
 let hasXbox = false; //toggle for Xbox version logic

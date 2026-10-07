@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.1] - 2026-10-07
+
+- Fixed: Prevent conflicts and deployment of boot-options.json files packaged in mod archives.
+
 ## [1.0.0] - 2026-10-07
 
 - Added a Load Order page for .texpack and .lodpack mods. Drag packs to reorder them, use the checkbox to turn a pack on or off without uninstalling it, lock a pack's position, and right-click a pack for more options. The order is written to boot-options.json automatically.

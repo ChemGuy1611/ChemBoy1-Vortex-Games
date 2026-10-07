@@ -132,11 +132,13 @@ const IGNORE_CONFLICTS = [
   path.join("**", "changelog*"),
   path.join("**", "readme*"),
   path.join("**", "license*"),
+  path.join("**", "boot-options.json"),
 ];
 const IGNORE_DEPLOY = [
   path.join("**", "changelog*"),
   path.join("**", "readme*"),
   path.join("**", "license*"),
+  path.join("**", "boot-options.json"),
 ];
 const spec = {
   game: {

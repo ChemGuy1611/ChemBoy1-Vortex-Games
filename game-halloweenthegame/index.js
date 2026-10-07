@@ -1,8 +1,8 @@
 /*////////////////////////////////////////////////
-Name: STAR WARS: Galactic Racer Vortex Extension
+Name: Halloween: The Game Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.2
+Version: 1.0.0
 Date: 2026-10-07
 Notes:
 -
@@ -49,27 +49,27 @@ const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow'); //*/
 const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all information about the game
-const GAME_ID = "starwarsgalacticracer"; //same as Nexus domain
-const STEAMAPP_ID = "4078430"; // https://steamdb.info/app/4078430/
+const GAME_ID = "halloweenthegame"; //same as Nexus domain
+const STEAMAPP_ID = "3219630"; // https://steamdb.info/app/3219630/
 const STEAMAPP_ID_DEMO = null; //VERIFY if the EPIC_CODE_NAME and EXEC_DEMO match Steam full game
-const EPICAPP_ID = "XXX"; // https://store.epicgames.com/en-US/p/star-wars-galactic-racer-246fdc
+const EPICAPP_ID = "XXX"; // https://store.epicgames.com/en-US/p/halloween-f3e2dd
 const GOGAPP_ID = null; // from gogdb.org
 const XBOXAPP_ID = null; //from appxmanifest.xml
 const XBOXEXECNAME = "AppUEGameShipping"; //from appxmanifest.xml
 const XBOX_PUB_ID = null; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
-const GAME_NAME = "STAR WARS: Galactic Racer";
-const GAME_NAME_SHORT = "SW Galactic Racer"; //Try for 8-10 characters
-const EPIC_CODE_NAME = "Griffin"; //Folder in root
-const EXEC = `SWGR.exe`; //!different than EPIC_CODE_NAME
+const GAME_NAME = "Halloween: The Game";
+const GAME_NAME_SHORT = "Halloween"; //Try for 8-10 characters
+const EPIC_CODE_NAME = "Ravage"; //Folder in root
+const EXEC = path.join(EPIC_CODE_NAME, "Binaries", "Win64", "Halloween.exe"); //!Only shipping exe. EAC launcher in root.
 const EXEC_EPIC = EXEC; //change these 3 if different
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const PARAMETERS_STRING = ""; //launch arguments to pass when launching the game
-const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Star_Wars%3A_Galactic_Racer";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Halloween%3A_The_Game";
 const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
-const EXTENSION_URL = "https://www.nexusmods.com/site/mods/2425"; //Nexus link to this extension. Used for links
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/2428"; //Nexus link to this extension. Used for links
 
 //feature toggles
 let hasXbox = false; //toggle for Xbox version logic.
@@ -114,14 +114,14 @@ const PAKMOD_EXTRA_EXTS = []; //extra extensions to include with paks (usually f
 const ue4ssLoadOrder = true; //master toggle for UE4SS support: UE4SS/Scripts/DLL/LogicMods mod types and installers, UE4SS buttons, load order page, and mods.txt writing
 const logicModsLoadOrder = true; //enable load order page and load_order.txt writing for LogicMods/Blueprint pak mods
 const collectionsLoadOrder = true; //include UE4SS and LogicMods load orders in collections (ANDed with the toggles above)
-const UE4SS_PAGE_NO = 2; //set these if there is a customized UE4SS Nexus page
-const UE4SS_FILE_NO = 3;
+const UE4SS_PAGE_NO = 0; //set these if there is a customized UE4SS Nexus page
+const UE4SS_FILE_NO = 0;
 const UE4SS_DOMAIN = GAME_ID; //either GAME_ID or 'site'
 const UE4SS_FOLDER = "ue4ss"; //this should probably never change
 const UE4SS_MOD_PATH = path.join(UE4SS_FOLDER, "Mods"); //this should probably never change (unless UE4SS team changes it again lol)
 
 //config and save
-const DATA_FOLDER = "StarWarsGalacticRacer"; //almost always matches.
+const DATA_FOLDER = "Halloween"; //almost always matches.
 const CONFIG_FOLDERNAME = "Windows"; //UE 4 games are often 'WindowsNoEditor' - "Windows", "WindowsClient", "WindowsNoEditor"
 const CONFIG_LOC = "Local AppData"; //string for notification text.
 const SAVE_LOC = CONFIG_LOC; //string for notification text. Config and Save mods are almost always in the same place
@@ -134,7 +134,7 @@ const SHIPEXE_STRING_EGS = "";
 const SHIPEXE_STRING_GOG = "";
 const SHIPEXE_STRING_XBOX = "";
 const SHIPEXE_STRING_DEMO = "";
-const SHIPEXE_PROJECTNAME = "SWGR"; //!DIFFERENT THAN EPIC_CODE_NAME
+const SHIPEXE_PROJECTNAME = "Halloween"; //almost always matches.
 
 //Save Editor (only used if one is available)
 const SAVE_EDITOR_ID = `${GAME_ID}-saveeditor`;
@@ -210,10 +210,7 @@ const UE5_SORTABLE_NAME = "UE Sortable Pak Mod";
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries (Engine Injector)";
 let BINARIES_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_DEFAULT);
-let SHIPPING_EXE = path.join(
-  BINARIES_PATH,
-  `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEFAULT}-Shipping.exe`,
-);
+let SHIPPING_EXE = path.join(BINARIES_PATH, `${SHIPEXE_PROJECTNAME}.exe`);
 
 const GOG_FILE = path.join("Plugins", "OnlineSubsystemGOG", "GalaxySDK", "Galaxy64.dll");
 const STEAM_FILE = path.join(
@@ -3605,6 +3602,25 @@ function applyGame(context, gameSpec) {
     () => {
       try {
         window.api.shell.openUrl(PCGAMINGWIKI_URL);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+      }
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Nexus Mods Page",
+    () => {
+      try {
+        window.api.shell.openUrl(`https://www.nexusmods.com/${GAME_ID}/mods`);
       } catch (err) {
         context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
       }

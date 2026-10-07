@@ -1,10 +1,10 @@
-# STAR WARS: Galactic Racer — Vortex Extension Explained
+# Halloween: The Game — Vortex Extension Explained
 
 ## Overview
 
 | Property | Value |
 | --- | --- |
-| Name | STAR WARS: Galactic Racer Vortex Extension |
+| Name | Halloween: The Game Vortex Extension |
 | Engine / Structure | Unreal Engine 4-5 Game |
 | Author | ChemBoy1 |
 
@@ -12,17 +12,17 @@
 
 | Property | Value |
 | --- | --- |
-| Game ID | `starwarsgalacticracer` |
-| Executable | `SWGR.exe` |
+| Game ID | `halloweenthegame` |
+| Executable | `Ravage/Binaries/Win64/Halloween.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
-| Executable (GOG) | `SWGR.exe` |
-| Executable (Demo) | `SWGR.exe` |
-| Extension Page | [https://www.nexusmods.com/site/mods/2425](https://www.nexusmods.com/site/mods/2425) |
-| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Star_Wars%3A_Galactic_Racer](https://www.pcgamingwiki.com/wiki/Star_Wars%3A_Galactic_Racer) |
+| Executable (GOG) | `Ravage/Binaries/Win64/Halloween.exe` |
+| Executable (Demo) | `Ravage/Binaries/Win64/Halloween.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/2428](https://www.nexusmods.com/site/mods/2428) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Halloween%3A_The_Game](https://www.pcgamingwiki.com/wiki/Halloween%3A_The_Game) |
 
 ## Supported Stores
 
-- **Steam** — `4078430`
+- **Steam** — `3219630`
 
 ## Feature Flags
 
@@ -58,17 +58,17 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| UE4SS Script-LogicMod Combo | `starwarsgalacticracer-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `starwarsgalacticracer-logicmods` | high | `{gamePath}/Griffin/Content/Paks` |
-| Paks (no "~mods") | `starwarsgalacticracer-pakalt` | high | `{gamePath}/Griffin/Content/Paks` |
-| Root Folder | `starwarsgalacticracer-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `starwarsgalacticracer-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `starwarsgalacticracer-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `starwarsgalacticracer-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `starwarsgalacticracer-binaries` | 54 | `?` |
-| UE4SS | `starwarsgalacticracer-ue4ss` | 56 | `?` |
-| Config (Local AppData) | `starwarsgalacticracer-config` | 62 | `?` |
-| Saves (Local AppData) | `starwarsgalacticracer-save` | 64 | `?` |
+| UE4SS Script-LogicMod Combo | `halloweenthegame-ue4sscombo` | high | `{gamePath}` |
+| UE4SS LogicMods (Blueprint) | `halloweenthegame-logicmods` | high | `{gamePath}/Ravage/Content/Paks` |
+| Paks (no "~mods") | `halloweenthegame-pakalt` | high | `{gamePath}/Ravage/Content/Paks` |
+| Root Folder | `halloweenthegame-root` | high | `{gamePath}` |
+| UE Sortable Pak Mod | `halloweenthegame-uesortablepak` | 25 | `?` |
+| UE4SS Script Mod | `halloweenthegame-scripts` | 50 | `?` |
+| UE4SS DLL Mod | `halloweenthegame-ue4ssdll` | 52 | `?` |
+| Binaries (Engine Injector) | `halloweenthegame-binaries` | 54 | `?` |
+| UE4SS | `halloweenthegame-ue4ss` | 56 | `?` |
+| Config (Local AppData) | `halloweenthegame-config` | 62 | `?` |
+| Saves (Local AppData) | `halloweenthegame-save` | 64 | `?` |
 
 ## Mod Installers
 
@@ -76,16 +76,16 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `starwarsgalacticracer-ue4sscombo` | 26 |
-| `starwarsgalacticracer-logicmods` | 27 |
-| `starwarsgalacticracer-uesortablepak` | 29 |
-| `starwarsgalacticracer-ue4ss` | 31 |
-| `starwarsgalacticracer-scripts` | 35 |
-| `starwarsgalacticracer-ue4ssdll` | 37 |
-| `starwarsgalacticracer-root` | 39 |
-| `starwarsgalacticracer-config` | 41 |
-| `starwarsgalacticracer-save` | 43 |
-| `starwarsgalacticracer-binaries` | 49 |
+| `halloweenthegame-ue4sscombo` | 26 |
+| `halloweenthegame-logicmods` | 27 |
+| `halloweenthegame-uesortablepak` | 29 |
+| `halloweenthegame-ue4ss` | 31 |
+| `halloweenthegame-scripts` | 35 |
+| `halloweenthegame-ue4ssdll` | 37 |
+| `halloweenthegame-root` | 39 |
+| `halloweenthegame-config` | 41 |
+| `halloweenthegame-save` | 43 |
+| `halloweenthegame-binaries` | 49 |
 
 ## Toolbar Actions
 
@@ -101,6 +101,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open UE4SS Settings INI
 - Open UE4SS mods.txt
 - Open PCGamingWiki Page
+- Open Nexus Mods Page
 - Open SteamDB Page
 - View Changelog
 - Submit Bug Report

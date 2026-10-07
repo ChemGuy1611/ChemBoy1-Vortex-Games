@@ -2,7 +2,7 @@
 Name: God of War (2018) Vortex Extension
 Structure: Sony Port, Custom Game Data
 Author: ChemBoy1
-Version: 1.0.0
+Version: 1.0.1
 Date: 2026-10-07
 /////////////////////////////////////////*/
 
@@ -117,11 +117,13 @@ const IGNORE_CONFLICTS = [
   path.join("**", "changelog*"),
   path.join("**", "readme*"),
   path.join("**", "license*"),
+  path.join("**", "boot-options.json"),
 ];
 const IGNORE_DEPLOY = [
   path.join("**", "changelog*"),
   path.join("**", "readme*"),
   path.join("**", "license*"),
+  path.join("**", "boot-options.json"),
 ];
 const spec = {
   game: {

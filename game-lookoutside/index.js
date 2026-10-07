@@ -93,6 +93,7 @@ const IGNORE_CONFLICTS = [
   path.join("**", "changelog*"),
   path.join("**", "readme*"),
   path.join("**", "license*"),
+  path.join("**", "plugins.js"),
 ];
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1449"; //Nexus link to this extension. Used for links
@@ -102,6 +103,7 @@ const IGNORE_DEPLOY = [
   path.join("**", "changelog*"),
   path.join("**", "readme*"),
   path.join("**", "license*"),
+  path.join("**", "plugins.js"),
 ];
 const spec = {
   game: {

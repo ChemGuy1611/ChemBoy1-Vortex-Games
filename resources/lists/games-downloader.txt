@@ -58,6 +58,7 @@ ghostreconbreakpoint
 godofwarragnarok
 grimshire
 gzdoom
+halloweenthegame
 hellisus
 highonlife
 highonlife2
