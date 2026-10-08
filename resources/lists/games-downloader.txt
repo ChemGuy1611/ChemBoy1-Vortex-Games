@@ -1,4 +1,5 @@
 abioticfactor
+animeshopsimulator
 aska
 assassinscreed
 assassinscreedbrotherhood
@@ -48,6 +49,7 @@ dragonagetheveilguard
 dragonballsparkingzero
 dragonquest1and2hd2dremake
 dragonquest7reimagined
+dynastywarriors3completeeditionremastered
 escapefromduckov
 farfarwest
 fatekeeper

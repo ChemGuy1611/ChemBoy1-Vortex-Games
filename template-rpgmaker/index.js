@@ -36,7 +36,7 @@ const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const GAME_NAME = "XXX";
 const GAME_NAME_SHORT = "XXX";
-const EXEC = "XXX.exe";
+const EXEC = "Game.exe";
 const EXEC_EGS = EXEC;
 const NAME_FOLDER = "XXX";
 const PCGAMINGWIKI_URL = "XXX";
