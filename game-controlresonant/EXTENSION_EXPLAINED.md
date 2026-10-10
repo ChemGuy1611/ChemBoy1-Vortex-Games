@@ -32,7 +32,7 @@
 | `hasXbox` | `true` | toggle for Xbox version logic |
 | `multiExe` | `false` | set to true if there are multiple executable names |
 | `multiModPath` | `false` | set to true if there are multiple possible mod paths (i.e. different path for Xbox version) |
-| `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
+| `allowSymlinks` | `false` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
 | `needsModInstaller` | `false` | set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing |
 | `rootInstaller` | `true` | enable root installer. Set false if you need to avoid installer collisions |
 | `saveInstaller` | `false` | enable save installer. Set false if path is outside of game folder |
@@ -95,5 +95,6 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Symlinks Disabled** — hardlink or copy deployment is used instead of symlinks.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.

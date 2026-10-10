@@ -2,8 +2,8 @@
 Name: Return to Castle Wolfenstein Vortex Extension
 Structure: Generic Game with Custom Engine Mod (RealRTCW)
 Author: ChemBoy1
-Version: 1.1.1
-Date: 2026-09-08
+Version: 1.1.2
+Date: 2026-10-09
 ////////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -61,6 +61,7 @@ const MODDB_REQUIREMENTS = [
     pageUrl: REALRTCW_URL,
     browseKey: "mods/realrtcw-realism-mod#realrtcw", //RealRTCW's own file on the browse page, so browsing to it installs the requirement
     skipDownloadManager: true, //modDB blocks Vortex's download manager - fetch the file directly instead
+    autoInstall: false, //the startup notification installs this, never the update check (ioRTCW is a valid alternative engine)
   },
 ];
 

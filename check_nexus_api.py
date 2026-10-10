@@ -153,6 +153,7 @@ SPEC_KNOWN_PATHS = {
     "/mod-files/{id}",
     "/mod-files/{id}/versions",
     "/mods/batch",
+    "/mods/{id}",
     "/mods/{id}/changelogs",
     "/mods/{id}/files",
     "/mods/{id}/toggle-legacy-mod-requirements",
@@ -160,6 +161,7 @@ SPEC_KNOWN_PATHS = {
     "/uploads/multipart",
     "/uploads/{id}",
     "/uploads/{id}/finalise",
+    "/vortex/detected-games",
     "/vortex/extensions",
 }
 

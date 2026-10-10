@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.2] - 2026-10-09
+
+- Fixed: A .texpack and a .lodpack with the same name now share one line on the Load Order page instead of showing as two, and both are written to boot-options.json. Your saved order, disabled packs and locked positions are kept.
+
 ## [1.0.1] - 2026-10-07
 
 - Fixed: Prevent conflicts and deployment of boot-options.json files packaged in mod archives.

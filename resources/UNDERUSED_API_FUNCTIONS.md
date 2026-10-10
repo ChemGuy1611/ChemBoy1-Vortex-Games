@@ -262,7 +262,7 @@ Priority guide: first-party check-deployment hook runs at 100. Use 50-90 for ext
 
 ### `IRunOptions.onExit` — **(2.4.x)**
 
-**Why useful:** `api.runExecutable(exe, args, { onExit: (code) => ... })` hands you the process's actual exit code (`null` when it was killed by a signal). Without it there is no way to read the code: the promise resolves with no value, and `expectSuccess` only turns a bad code into a notification.
+**Why useful:** `api.runExecutable(exe, args, { onExit: (code) => ... })` hands you the process's actual exit code (`null` when it was killed by a signal; from v2.9.0-beta.2 a second argument names that signal). Without it there is no way to read the code: the promise resolves with no value, and `expectSuccess` only turns a bad code into a notification.
 
 **Use case:** Re-scan a game's config directory after an external tool the user launched from your extension finishes, or warn only when the tool actually failed rather than every time it closes.
 

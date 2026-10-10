@@ -17,10 +17,10 @@ context.registerMigration(
 )
 ```
 
-The declared return type is `PromiseBB<void>` (Bluebird) in every release through v2.8.0-beta.2 and
-`PromiseLike<void>` on current `master`. At runtime a native `Promise<void>` / `async` function
+The declared return type is `PromiseBB<void>` (Bluebird) in every release through stable v2.8.0 and
+`PromiseLike<void>` from v2.9.0-beta.1 on. At runtime a native `Promise<void>` / `async` function
 works on both; only strictly typed TypeScript needs `util.toBlue` to satisfy `PromiseBB` until the
-`master` change ships.
+v2.9 change reaches a stable release.
 
 ---
 

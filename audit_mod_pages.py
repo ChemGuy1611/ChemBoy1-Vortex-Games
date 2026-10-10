@@ -19,12 +19,17 @@ missing const there is a genuine index.js gap and is reported as a problem findi
 instead of silently skipped. A folder with no index.js at all (a non-JS tool, e.g. a
 bundled .bat script) can't be scanned this way and is reported the same way.
 
+helper-* pages are exempt from the two-tag policy (2026-10-10 user call): they may carry
+any tags and are never reported as missing/stray. Their mod page is still fetched, so a
+dead or unresolvable page is still a finding; live ones are listed separately under
+"Helper pages (tag policy exempt)" for visibility.
+
 A second pass queries mods(filter: {uploaderId, gameDomainName: "site"}) for the whole
 account to list mods with no local match: a newly published extension whose
 EXTENSION_URL hasn't been filled in yet, a renamed/orphaned mod page, or a non-extension
 mod uploaded under the same account (Anti-Stutter, XeSS, etc.). Named but never
-tag-checked (2026-09-27 user call) -- the two-tag policy was never confirmed to apply
-to these, so there is nothing to check yet, just something to keep visible.
+tag-checked: the two-tag policy does not cover non-extension mods (2026-10-10 user
+call), so this list is status reporting only, not a worklist.
 
 Unreleased extensions (EXTENSION_URL unset/XXX/non-Nexus) are skipped -- no live page to
 check. battlefield1 is excluded as frozen, same carve-out as the store-id audit. A
@@ -80,9 +85,9 @@ BATCH_SLEEP_SECONDS = 0.5
 PERMISSION_FIELD_HINTS = ("allowuser", "usertag", "usermedia", "manuallyverify", "userpermission")
 
 
-def _make_entry(folder, game_id, src, url):
+def _make_entry(folder, game_id, src, url, helper=False):
     """Build a live-extension dict from a resolved EXTENSION_URL, or None if the URL
-    doesn't parse as a Nexus mod URL."""
+    doesn't parse as a Nexus mod URL. helper marks a helper-* folder (tag-policy exempt)."""
     parsed = parse_nexus_mod_url(url)
     if not parsed:
         return None
@@ -100,6 +105,7 @@ def _make_entry(folder, game_id, src, url):
         "url": url,
         "suppress_reason": suppress_reason,
         "no_url": None,
+        "helper": helper,
     }
 
 
@@ -141,7 +147,7 @@ def _get_local_extensions():
         if not url:
             yield _no_url_entry(game_id, folder, "index.js has no EXTENSION_URL const")
             continue
-        entry = _make_entry(folder, game_id, src, url)
+        entry = _make_entry(folder, game_id, src, url, helper=True)
         if entry:
             yield entry
         else:
@@ -251,8 +257,8 @@ def _fetch_account_site_mods(api_key):
 
 
 def check_permission_visibility(api_key):
-    """Live-introspect the Mod type + top-level Mutation type. Returns (visible, hits)
-    where hits lists any field name that matches PERMISSION_FIELD_HINTS -- i.e. any sign
+    """Live-introspect the Mod type + top-level Mutation type. Returns (unreadable, hits)
+    where unreadable is True when hits is empty, and hits lists any field name that matches PERMISSION_FIELD_HINTS -- i.e. any sign
     the user-tag/user-media permission switches have become API-visible since the last
     run. Empty hits = still confirmed unreadable, matching resources/NEXUS_GRAPHQL_API.md."""
     query = """
@@ -284,6 +290,7 @@ def run_audit(api_key):
 
     findings = [{**e, "problem": e["no_url"]} for e in no_url]
     ok = []
+    exempt = []
     for e in live:
         key = (e["domain"], e["mod_id"])
         page = pages.get(key)
@@ -292,6 +299,9 @@ def run_audit(api_key):
             continue
         if "error" in page:
             findings.append({**e, "problem": page["error"]})
+            continue
+        if e["helper"]:
+            exempt.append({**e, "name": page["name"], "tags": sorted(page["tag_ids"].values())})
             continue
         have = set(page["tag_ids"])
         missing = [TARGET_TAGS[t] for t in TARGET_TAGS if t not in have]
@@ -306,14 +316,15 @@ def run_audit(api_key):
     extra_account_mods = {mid: name for mid, name in account_site_mods.items()
                            if mid not in matched_mod_ids}
 
-    perm_visible, perm_hits = check_permission_visibility(api_key)
+    perm_unreadable, perm_hits = check_permission_visibility(api_key)
 
     return {
         "ok": ok,
+        "tag_exempt": exempt,
         "findings": findings,
         "suppressed": suppressed,
         "extra_account_mods": extra_account_mods,
-        "permission_switches_visible": perm_visible,
+        "permission_switches_unreadable": perm_unreadable,
         "permission_hits": perm_hits,
     }
 
@@ -322,6 +333,12 @@ def print_report(report, show_suppressed):
     print("=== Mod Page Audit ===\n")
 
     print(f"OK (exactly Game Extension + AI Assisted): {len(report['ok'])}")
+
+    exempt = report["tag_exempt"]
+    print(f"Helper pages (tag policy exempt): {len(exempt)}")
+    for h in exempt:
+        tags = ", ".join(h["tags"]) or "(no tags)"
+        print(f"  - {h['game_id']} ({h['name']}) -- {h['domain']}/mods/{h['mod_id']}: {tags}")
 
     findings = report["findings"]
     if findings:
@@ -354,10 +371,10 @@ def print_report(report, show_suppressed):
     for mid, name in sorted(extras.items()):
         print(f"  - site/mods/{mid}: {name}")
     if extras:
-        print("  (names only -- tags not checked, out of scope until the policy is confirmed for these)")
+        print("  (status only -- the two-tag policy does not cover non-extension mods, tags not checked)")
 
     print("\nUser-tag / user-media permission switches:")
-    if report["permission_switches_visible"]:
+    if report["permission_switches_unreadable"]:
         print("  Still confirmed unreadable via any API tier (Mod type + non-Collection "
               "mutations checked live) -- stays a manual per-page check on the site.")
     else:

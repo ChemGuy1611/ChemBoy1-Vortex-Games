@@ -36,8 +36,9 @@ into `<modname>.zip` with `util.SevenZip` and that single file becomes the mod. 
 claims everything that is not Fluffy itself and not REFramework, which is what makes it the de facto
 fallback.
 
-**Save path** resolves through the registry to
-`Steam/userdata/<userId>/<appId>/remote` via `getSavePath`.
+**Save path** resolves through the registry to `Steam/userdata/<userId>/<appId>` via
+`getSavePath` (the first folder in `userdata`; the `remote` subfolder is commented out in the
+template). The demo build uses `STEAMAPP_ID_DEMO` as the app id.
 
 **Tools:** Custom Launch, Custom Launch (Demo), Fluffy Mod Manager (asset `fluffy.png`).
 `deployNotify` plus `runFluffy`. Extra toolbar actions: Download Latest REFramework Nightly, Open

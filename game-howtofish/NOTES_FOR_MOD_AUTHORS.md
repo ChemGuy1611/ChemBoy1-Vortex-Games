@@ -10,12 +10,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | BepInEx (mod loader) | a `winhttp.dll` file | the game folder itself (no subfolder) |
 | MelonLoader (mod loader) | a `version.dll` file | the game folder itself (no subfolder) |
-| Root / Game Folder Mods | a `How To Fish_Data` folder | the game folder itself (no subfolder) |
+| Root / Game Folder Mods | a `How to Fish_Data` folder | the game folder itself (no subfolder) |
 | BepInEx Configuration Manager | a `configurationmanager.dll` file | `BepInEx` |
 | MelonLoader Preferences Manager | a `melonprefmanager.mono.dll` file | `Mods` |
 | Assembly Replacement Mods | a `GameAssembly.dll` file | the game folder itself (no subfolder) |
 | Plugin Mods | a `.dll` file | `BepInEx` |
-| Asset Replacement Mods | a `.assets` file | `How To Fish_Data` |
+| Asset Replacement Mods | a `.assets` file | `How to Fish_Data` |
 | Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
@@ -56,13 +56,13 @@ For mods laid out the same way the files appear inside the game folder. Vortex c
 
 ```text
 MyRootMod.zip
-└── How To Fish_Data\
+└── How to Fish_Data\
     └── ... files in their real relative locations
 ```
 
 **Requirements:**
 
-- Recognised by a folder named `How To Fish_Data` or `How To Fish_Data` in the archive.
+- Recognised by a folder named `How to Fish_Data` or `How to Fish_Data` in the archive.
 
 Installs to: the game folder itself (no subfolder)
 
@@ -142,7 +142,7 @@ Mods that replace packed Unity asset files, deployed into the game's data folder
 
 - Recognised by any file with the `.assets`, `.resource` or `.ress` extensions.
 
-Installs to: `How To Fish_Data`
+Installs to: `How to Fish_Data`
 
 **Common mistakes:**
 

@@ -33,8 +33,10 @@ Not in stable 2.7.2.
   token while one is in flight shares it. A refresh that fails for a passing reason (offline, 5xx)
   returns the current token and lets the request find out; a refusal from the token endpoint
   (`invalid_grant`) means the session is dead, so the user is signed out with an "Authentication
-  failed, please log in again" error and `did-login` is emitted. A refresh that completes after the
-  session was replaced is discarded.
+  failed, please log in again" error and `did-login` is emitted. From v2.9.0-beta.2, once a refused
+  refresh has signed the user out, `getAccessToken` returns `undefined` so the request goes out with
+  no token, instead of re-sending the dead one; earlier releases returned the stale token. A refresh
+  that completes after the session was replaced is discarded.
 - **Both clients pull their token from it.** nexus-node gets `tokenProviderFor(api)` through
   `setTokenProvider` (see `NODE_NEXUS_API_CLIENT.md`); the v3 client (`nexusV3Client.ts`) has an
   `oauthMiddleware` that resolves the token per request and retries a 401 once, with a forced

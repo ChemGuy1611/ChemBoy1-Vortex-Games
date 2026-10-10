@@ -8,6 +8,7 @@ borderlands4
 clairobscurexpedition33
 clivebarkershellraiserrevival
 codevein2
+crisoltheaterofidols
 cronosthenewdawn
 daemonxmachinatitanicscion
 deadasdisco
@@ -28,6 +29,7 @@ highonlife
 highonlife2
 humanitz
 inzoi
+keeper
 legobatmanlegacyofthedarkknight
 liesofp
 lordsofthefallen2023
@@ -35,15 +37,22 @@ lostsoulaside
 mandragorawhispersofthewitchtree
 manorlords
 mechwarrior5clans
+metaleden
 metalgearsoliddeltasnakeeater
 misery
 mortalkombat
+myheroacademiaallsjustice
 ninjagaiden2black
 nobodywantstodie
+norse
 octopathtraveler0
 ofashandsteel
+painkiller
 quarantinezonethelastcheck
+reanimal
 robocoproguecity
+romeoisadeadman
+routine
 runefactoryguardiansofazuma
 runescapedragonwilds
 rvthereyet
@@ -58,6 +67,7 @@ starwarsgalacticracer
 starwarszerocompany
 stateofdecay2
 stellarblade
+styxbladesofgreed
 subnautica2
 surroundead
 systemshock2023

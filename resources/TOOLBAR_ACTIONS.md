@@ -405,6 +405,12 @@ context.registerAction(
 
 Real example: `fb-load-order-icons` group in `Vortex/src/renderer/src/extensions/file_based_loadorder/views/FileBasedLoadOrderPage.tsx:292`.
 
+From v2.9.0-beta.2 that `IconBar` is given the shown load order's id as its `instanceId`, so an
+action registered to `fb-load-order-icons` receives it as the one-element `instanceIds` array that
+every `IconBar` passes to `action(instanceIds)` and `condition(instanceIds)` (a string `instanceId`
+is wrapped into an array), and can apply to one load order tab only. The primary load order's id is
+`"default"`. Before v2.9.0-beta.2 these callbacks got no load order id.
+
 ---
 
 ## 10. `staticElements` — Hardcoded Buttons on `IconBar`

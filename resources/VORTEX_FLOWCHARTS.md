@@ -167,6 +167,11 @@ filter).
 The file-based load order system in the `file_based_loadorder` core extension. Gamebryo plugin
 management is a **separate, parallel** system — see `GAMEBRYO_PLUGIN_SYSTEM.md`.
 
+The diagram below is the stable v2.8.x flow. v2.9.0-beta.2 replaces `findGameEntry` with a registry
+lookup per load order, `updateSet` with a hold and a reconcile step, and watches a second state
+slice for named load orders; the diagram is redrawn when that ships in a stable release. Until then
+the beta behaviour is in `VORTEX_LOAD_ORDER.md`, "The v2.9.0-beta.2 rewrite".
+
 ```mermaid
 flowchart TD
     subgraph SEED["Seed — on activation or profile change"]

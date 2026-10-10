@@ -62,19 +62,29 @@ Eleven mod types come from `spec` — `BEPINEX_MOD` (`BepInEx`), `MELON_MOD` (`.
 Registered explicitly on top: `CUSTOMLOADER_MOD` 25, `CUSTOMLOADER_PLUGIN` 27, `CUSTOM` 58,
 `CUSTOMLOADER` 60, `ASSEMBLY` 60, `ASSETS` 62.
 
-**Installers:** `CUSTOMLOADER` 25 (behind `customLoaderInstaller`) → `BEPINEX` 26 → `MELON` 27 →
-`ROOT` 28 → `BEPCFGMAN` 29 → `MELONPREFMAN` 30 → `ASSEMBLY` 31 → plugin 33 → `ASSETS` 37 → `CUSTOM`
-39 (behind `hasCustomMods`) → `SAVE` 47 (behind `enableSaveInstaller`) → fallback 49.
+**Installers:** `CUSTOMLOADER` 25 (behind `hasCustomLoader`) → `BEPINEX` 26 → `MELON` 27 → `ROOT` 28 →
+`BEPCFGMAN` 29 → `MELONPREFMAN` 30 → `ASSEMBLY` 31 → plugin 33 → `ASSETS` 37 → `CUSTOM` 39 (behind
+`hasCustomMods`) → `SAVE` 47 (behind `enableSaveInstaller`) → fallback 49 (behind
+`fallbackInstaller`). The `SAVE` installer installs as the assets mod type, since the template has no
+save mod type.
 
 **Custom loader support.** `hasCustomLoader`, `customLoaderInstaller`, and `hasCustomMods` let a game
 add a third, game-specific loader with its own mod types and folder layout; `getCustomFolder`
-resolves paths that depend on which loader is currently active.
+resolves paths that depend on which loader is currently active. `hasCustomLoader` registers the
+`CUSTOMLOADER_MOD`, `CUSTOMLOADER_PLUGIN` and `CUSTOMLOADER` mod types and the loader installer, which
+recognises the loader by `CUSTOMLOADER_FILE`. `customLoaderInstaller` swaps that installer for one that
+recognises the loader's own installer by `CUSTOMLOADER_EXEC`, installs it below `CUSTOMLOADER_FOLDER`,
+adds it as a tool, and makes the marker file `CUSTOMLOADER_MARKER_PATH` the proof that it has been run.
 
 `check-mods-version`, `did-deploy`, and `did-purge` handlers are all registered. Toolbar actions are
-the widest of any template: Download Latest BepInEx BE, Download BepInExConfigManager, Download
-Latest MelonLoader, Download MelonPreferencesManager, Remove MelonPreferencesManager, Open Data
-Folder, Open Save Folder, Open Config Folder, Open BepInEx Config, Open BepInEx Log, Open MelonLoader
-Config, Open MelonLoader Log, plus the universal set.
+the widest of any template: Download Latest BepInEx BE (IL2CPP, not served from Nexus), Download
+BepInExConfigManager (`allowBepCfgMan`), Download Latest MelonLoader, Download
+MelonPreferencesManager (`allowMelPrefMan`), Open Data Folder, Open BepInEx Config, Open BepInEx Log,
+Open MelonLoader Config, Open MelonLoader Log, plus the universal set. Open Save Folder, Open
+PCGamingWiki Page and Submit Bug Report only appear once `SAVE_FOLDERNAME`, `PCGAMINGWIKI_URL` and
+`EXTENSION_URL` are filled in. With `isXna` the MelonLoader buttons, Open Data Folder and the assets
+mod type and installer are dropped; the Bleeding Edge button stays, because an XNA game takes the
+Bleeding Edge route.
 
 ---
 

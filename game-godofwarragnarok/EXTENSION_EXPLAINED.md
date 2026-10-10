@@ -22,6 +22,12 @@
 - **Steam** — `2322010`
 - **Epic Games Store** — `456afef39a4c4cbbb6b17e92201443d7`
 
+## Feature Flags
+
+| Flag | Value | Description |
+| --- | --- | --- |
+| `mod_update_all_profile` | `false` | for mod update to keep packs in the load order and not uncheck them |
+
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:

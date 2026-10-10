@@ -1,4 +1,4 @@
-# Anime Shop Simulator ✨ — Vortex Extension Explained
+# Anime Shop Simulator — Vortex Extension Explained
 
 ## Overview
 

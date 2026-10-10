@@ -16,6 +16,14 @@ There are **two distinct** load-order systems plus a legacy page:
 
 This doc is about **FBLO**. Gamebryo plugins are a parallel system (`GAMEBRYO_PLUGIN_SYSTEM.md`).
 
+**Version note.** The sections from "What FBLO stores" through "Mod updates and load-order
+position" describe the file-based load order as shipped in stable Vortex up to v2.8.x (the
+`UpdateSet`, `findGameEntry`, one load order per game). **v2.9.0-beta.2 rewrites that core
+extension** — a registry of several load orders per game, a reconcile step on every deploy, and a
+"hold" that replaces `UpdateSet`. It is described in "The v2.9.0-beta.2 rewrite" near the end of
+this file; until a stable release ships it, the older sections stay the reference for what users
+actually run. One smaller fix is already in v2.9.0-beta.1 (see "`deserializeLoadOrder` contract").
+
 ## What FBLO stores
 
 - State: **`state.persistent.loadOrder[profileId]`** — a `LoadOrder` = `ILoadOrderEntry[]`
@@ -68,6 +76,13 @@ it survives until the next successful deserialize. To decline to rebuild (e.g. w
 in flight) return the currently stored order unchanged; that is a no-op dispatch and leaves the page
 showing the real order.
 
+**Narrow exception from v2.9.0-beta.1:** on the deploy/purge re-read, an _empty_ (or undefined)
+result no longer replaces the stored order — the persisted order wins that tie, because a game
+that has nothing ordered and a game whose read failed both return `[]`. Anything non-empty still
+becomes the load order unfiltered, so the placeholder-row and truncated-list cases above are
+unchanged. (Vortex ticket LAZ-1304; stable v2.8.x still replaces the order with `[]`.) A game that
+really wants to clear its order therefore cannot do it by returning `[]` on those paths.
+
 **An extension's own `did-deploy` handler cannot pre-empt it.** `emitAndAwait` fans the event out to
 every listener concurrently — it emits synchronously, each listener enqueues a promise, and the
 caller `Promise.all`s them. Listeners are invoked in registration order, and the core
@@ -96,6 +111,9 @@ profile-change seed, `genLoadOrderChange`, and `genDeploymentEvent` — wrap the
 notification.
 
 ## UpdateSet — surviving mod updates and purge cycles
+
+_Through stable v2.8.x and v2.9.0-beta.1. `UpdateSet.ts` is deleted in v2.9.0-beta.2; its job moves
+to the hold and reconcile steps described in "The v2.9.0-beta.2 rewrite" below._
 
 `UpdateSet.ts` remembers the load-order entries and the **index** each one held
 (`toExtendedLoadOrderEntry`), so a load order re-read from disk can be put back into the order the
@@ -203,6 +221,79 @@ load order into a collection and restores it on install (`genCollectionLoadOrder
   as the guard stays armed. Same applies to a sidecar order's own deserializer, which the extension
   dispatches into its own reducer. Tell the user when a reorder is being skipped: with the real
   order still on screen the page looks interactive, and a silently dropped drag reads as a bug.
+
+## The v2.9.0-beta.2 rewrite
+
+Present in v2.9.0-beta.2 (2026-10-08) and on `master`; absent from v2.8.0 and v2.9.0-beta.1. All of
+it is additive for extensions — `registerLoadOrder` calls written for v2.8 keep working — but the
+runtime behaviour underneath changes in ways an extension author can observe.
+
+**A registry replaces `findGameEntry`.** `file_based_loadorder/gameSupport.ts` becomes a
+`LoadOrderRegistry` that holds every registered load order of a game. One game may register several
+(`loadOrderId`, `displayName`, `priority`, `adoptsLegacyOrder`, `conflictWinner` on the
+registration; see `LOAD_ORDER_REGISTRATION.md` "Several load orders per game"). A registration is
+refused, with an `error` log line (`load order registration rejected`, with a `reason`), for four
+causes: an invalid id, a duplicate id for the same game, `adoptsLegacyOrder` without an id, and a
+second adopter. A duplicate registration was already dropped silently in v2.8; what changes is that
+it is now logged at `error` level. Lookup without an id returns the game's first listed load order,
+the primary when it has one.
+
+**State.** The primary load order stays at `state.persistent.loadOrder[profileId]`, payload
+unchanged. Named load orders live at `state.persistent.loadOrders[profileId][loadOrderId]`
+(arrays; a non-array is reset). `setFBLoadOrder` / `setFBLoadOrderEntry` take an optional
+`loadOrderId`; any spelling of the primary (`undefined` or `"default"`, the `DEFAULT_LOAD_ORDER_ID`)
+produces the old id-less payload. A new `removeFBLoadOrderProfile(profileId)` action drops a removed
+profile's stored orders. Transient page state is in `state.session.fblo`: `activeLoadOrder` (the open
+tab per profile), `validationResult` (per profile, then per load order), `refresh`, and
+`heldForDeploy`. Selectors in `file_based_loadorder/selectors.ts`: `loadOrderForProfile(state,
+profileId, loadOrderId?)` returns one frozen empty array on a miss.
+
+**Adoption.** A named load order registered with `adoptsLegacyOrder: true` starts, the first time
+it is read for a profile that has no order of its own, from a copy of the primary order (only when
+that primary is non-empty). A game whose registrations leave a populated primary order with no
+reader (no primary and no adopter) logs `no load order continues the existing one`. In a collection
+export the legacy `loadOrder` key carries the primary's order, or the adopter's for a game without a
+primary.
+
+**Change watching.** One watcher per slot (the primary slice, the named slice). A changed order
+calls the game's `serializeLoadOrder(next, previous)` only when the diff shows an added entry, a
+removed entry or a changed count, then `validate`; a validation failure is stored per load order.
+Everything is skipped while a collection is installing.
+
+**Reconcile on deploy.** `did-deploy` reads every in-use load order back (`condition()` not
+`false`) and runs `reconcileLoadOrder(stored, fromGame, mods)`. The game's entries keep the game's
+slots for new and locked entries; entries the stored order knows are placed back into the slots
+they occupy among themselves, in stored order; stored entries the game no longer reports drop out.
+An entry continues a stored one by entry id first, then — each only when exactly one entry on each
+side carries the key — by Vortex mod id plus name, Nexus file id plus name, or Nexus mod id plus
+name. An empty read keeps the stored order. `did-purge` takes the game's order, again unless it read
+back nothing.
+
+**Hold replaces `UpdateSet`.** `will-remove-mods` with `IRemoveModOptions.willBeReplaced === true`
+holds the affected load orders (those that list one of the removed mods) in
+`session.fblo.heldForDeploy`; `will-purge` holds every non-empty in-use load order, awaiting no mod. While a
+load order is held, changes to it are the game's interim state: not written, not validated. The held
+order is restored into the first read that lists every awaited mod again — from the change watcher,
+from `did-deploy`, or from one extra read after `mods-did-deploy` (which fires after every
+`did-deploy` listener has settled, so a game extension that lists deployed mods in its file from its
+own handler is covered). A purge hold waits for the deployment itself. If an awaited mod is missing
+from Vortex at the next deployment the hold ends. This is armed per removal, like the old arming,
+so a batch of updates holds once per mod. Whether the mid-batch gap described above for `UpdateSet`
+still exists under the hold has not been tested on a real mid-batch deployment.
+
+**Sidecar orders are still not covered.** Everything above operates on the registry's load orders;
+a custom `registerMainPage` list with its own reducer is invisible to it, exactly as before.
+
+**Other observable changes.** The page shows one tab per load order when a game has more than one.
+Header actions registered to the `fb-load-order-icons` group receive the shown load order's id as
+the IconBar instance id in their `action` and `condition` callbacks, so an action can apply to one
+tab only. The item renderer's `IItemRendererProps` gains `loadOrderId`. An exported load-order file
+is now `{ version: 1, loadOrderId, entries }` (import also accepts a bare entry list and warns,
+while still applying it, when the file names a different load order). Collections carry named
+orders as `fbLoadOrders: [{ id, entries }]`, omitted for a single-order game so older manifests are
+unchanged; the parser skips ids the game does not register, with a warning. `ILoadOrderEntryExt`
+and `ILoadOrderGameInfoExt` no longer exist (both were internal; `IRegisteredLoadOrder` replaces the
+latter).
 
 ## See also
 

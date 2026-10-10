@@ -283,10 +283,11 @@ Worked example: `LOBOTOMY_BASEMOD.md` (`ensureNexusRequirementMod` in `game-lobo
 registry. Prefer `registerHealthCheck` for new code: it adds category/severity,
 declarative triggers, caching, per-mod checks, and one-click fixes that
 `registerTest` lacks. The legacy `ITestResult` (what a `registerTest` check
-returns) gains an optional `allowSuppress` flag on current `master` — whether
-the user may hide the result for good, defaulting to true for anything below
-error severity. No released Vortex has it yet; the `@nexusmods/vortex-api` 2.7.2 typings already
-declare it because stable typings are built from `master`.
+returns) gains an optional `allowSuppress` flag — whether the user may hide the
+result for good, defaulting to true for anything below error severity. It first
+ships in Vortex v2.9.0-beta.1 (a beta; stable v2.8.0 does not have it). The
+`@nexusmods/vortex-api` 2.7.2 typings declared it early because that build was
+cut from `master`; the 2.8.0 typings no longer do.
 
 ---
 

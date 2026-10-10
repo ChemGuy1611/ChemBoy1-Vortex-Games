@@ -18,7 +18,12 @@ REST Collections endpoints documented in `NEXUS_MODS_API.md`.
 
 ## Package & Base URLs
 
-`package.json`: name `@nexusmods/nexus-api`, version `1.7.3`, `main: ./lib/index.js`. Source of truth is
+`package.json`: name `@nexusmods/nexus-api`, version `1.7.3`, `main: ./lib/index.js`. The version
+number does not change when behaviour does: the token provider, a rewritten 401/429 retry path,
+per-request refresh attempts, a rate-limit header read fix (`0e8a750`) and a headers fix
+(`c5eda4a`, 2026-10-07) all landed under `1.7.3`. To see what changed since you last looked, use
+`git log` and `git diff` on `src/`, not the version. Vortex pins this library by commit (currently
+`c5eda4a`). Source of truth is
 `src/Nexus.ts` (the `Nexus` class, ~2000 lines) plus `src/types.ts` (data shapes) and
 `src/typesGraphQL.ts` (GraphQL query-builder types). The compiled `lib/` and generated `docs/`
 folders can lag behind `src/` — `docs/classes/_nexus_.nexus.md` is missing several newer methods
@@ -57,7 +62,9 @@ refreshToken, fingerprint }`, `config = { id, secret }` (OAuth client id/secret)
   `setOAuthCredentials` rather than supplementing it. Reads the first token immediately, which
   refreshes an expired one. `getAccessToken(rejectedToken?)` hands the same token to code that
   makes requests outside the client (with a rejected token it forces a refresh, unless that token
-  has already been replaced).
+  has already been replaced). Since `c5eda4a` every request builds its own copy of the headers
+  (`args()` in `src/Nexus.ts`), so the `Authorization` bearer set for one request is no longer
+  written into the header map that all requests share.
 - **SSO** (websocket handshake, described in the README, not implemented by this library): open a
   websocket to `wss://sso.nexusmods.com`, send `{ id: <uuid>, appid: <your appid> }`, ping every
   30s, have the user open `https://www.nexusmods.com/sso?id={id}` in a browser: the socket then

@@ -373,6 +373,36 @@ Two behaviours behind that table:
   rows. Set the flag when rows are fixed-height and the list can get long; leave it off when rows
   wrap or grow conditional controls.
 
+### Several load orders per game (v2.9.0-beta.2, not in a stable release yet)
+
+From v2.9.0-beta.2 (2026-10-08) a game can call `registerLoadOrder` more than once, each call with
+its own `loadOrderId`, and the Load Order page shows one tab per load order. Five optional fields
+on `ILoadOrderGameInfo` carry it; every one is ignored by Vortex v2.8 and earlier, so setting them
+is safe for an extension that must run on both.
+
+| Field               | Purpose                                                                                                                                  |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `loadOrderId`       | Identifies this load order. Omit for the game's primary one. Letters, digits, `_` and `-` only. `"default"` (`DEFAULT_LOAD_ORDER_ID`) is the primary's id |
+| `displayName`       | Tab label, shown only when the game has more than one load order                                                                         |
+| `priority`          | Tab position among the _named_ load orders, lowest first; the primary is always first; ties keep registration order                        |
+| `adoptsLegacyOrder` | On the named load order that continues the game's primary order: its first read for a profile with no order of its own starts from a copy of the primary. At most one per game, only on a named load order |
+| `conflictWinner`    | `ConflictWinner.First` or `.Last` (`"first"` / `"last"`; exported as `FBLOConflictWinner`) -- which end of the list wins a conflict, shown beside the list. Informational: the order is never reversed for you |
+
+Rules enforced at registration (a rejected call logs `load order registration rejected` at `error`
+level with a `reason`, and registers nothing): the id must match `^[A-Za-z0-9_-]+$`; one id per
+game; `adoptsLegacyOrder` needs a `loadOrderId`; only one adopter per game. Registering the same
+game twice without ids was already dropped silently before v2.9; it is now logged.
+
+Storage: the primary order stays at `persistent.loadOrder[profileId]`; a named one is at
+`persistent.loadOrders[profileId][loadOrderId]`. `setFBLoadOrder(profileId, loadOrder,
+loadOrderId?)` and `setFBLoadOrderEntry(profileId, loEntry, loadOrderId?)` take the id as an
+optional last argument. A custom `customItemRenderer` row gets `item.loadOrderId` (the primary when
+omitted), and header actions registered to `fb-load-order-icons` receive the shown load order's id
+as the IconBar instance id. Collections carry named orders under `fbLoadOrders`; see
+`COLLECTIONS_FEATURE.md`. If the game needs per-tab behaviour in `serializeLoadOrder` /
+`deserializeLoadOrder`, register a separate pair of callbacks per call -- there is no shared
+"which tab" argument.
+
 ### `ILoadOrderEntry` shape (types.ts:35-60)
 
 ```js
@@ -437,7 +467,8 @@ context.registerLoadOrder({
 
 ## 4. The internal FBLO page Vortex draws
 
-`file_based_loadorder\index.ts:305` registers the shared Load Order main page:
+`file_based_loadorder\index.ts:305` registers the shared Load Order main page (shown as of stable
+v2.8.x; v2.9.0-beta.2 replaces `findGameEntry` with a registry lookup and adds a tab per load order):
 
 ```ts
 context.registerMainPage('sort-none', 'Load order', FileBasedLoadOrderPage, {
@@ -531,6 +562,9 @@ state.persistent.loadOrder[profileId] = ILoadOrderEntry[]
 Key point: keyed by **profile id**, not game id. Each profile has its own
 independent load order for the same game.
 
+From v2.9.0-beta.2 this path holds only the game's _primary_ load order. Named load orders (see
+"Several load orders per game") live at `state.persistent.loadOrders[profileId][loadOrderId]`.
+
 Reducers are registered at:
 
 - `["persistent", "loadOrder"]` -- the LO array (`file_based_loadorder\index.ts:290`)
@@ -569,6 +603,11 @@ const { actions } = require("vortex-api");
 Serialize is **never** called directly by events -- it is only called after a user-driven
 LO state change (`onStateChange persistent.loadOrder`). Deploy/purge events only call
 deserialize, not serialize.
+
+This table is the stable (through v2.8.x) picture. In v2.9.0-beta.2 the "UpdateSet rebuild" on
+`did-deploy` becomes a reconcile of the game's read against the stored order, `will-purge` and
+`will-remove-mods` (with `willBeReplaced`) hold the order instead of re-reading it, and the change
+watcher covers the named-order slice too -- see `VORTEX_LOAD_ORDER.md`, "The v2.9.0-beta.2 rewrite".
 
 ---
 
@@ -643,7 +682,8 @@ anchor lines.
 Because the sidecars are not FBLO state, **none** of the core machinery that keeps a load order
 stable across a mod update applies to them (`UpdateSet`, arming from `will-remove-mods`, serialize
 suppression while an update is in flight, the fileId re-arm — see `VORTEX_LOAD_ORDER.md`). The same
-is true of any other custom `registerMainPage` order that keeps its own reducer.
+is true of any other custom `registerMainPage` order that keeps its own reducer. This still holds in
+v2.9.0-beta.2, where the replacement mechanism (the hold) also only covers registered load orders.
 
 What that means in practice for a sidecar order:
 

@@ -2,8 +2,8 @@
 Name: God of War (2018) Vortex Extension
 Structure: Sony Port, Custom Game Data
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-10-07
+Version: 1.0.2
+Date: 2026-10-09
 /////////////////////////////////////////*/
 
 //import libraries
@@ -786,19 +786,37 @@ function getVanillaStems(bootJson) {
   return new Set([...chunks, ...BOOT_VANILLA_STEMS].map((name) => String(name).toLowerCase()));
 }
 
-//Pack id: path under the exec folder with forward slashes, e.g. "wad/pc_le/slayer.texpack"
+//An id without a pack extension. Rows used to be one per file, with ".texpack" / ".lodpack" in the id.
+function stripPackExt(id) {
+  const ext = path.extname(id);
+  return PACK_EXTS.includes(ext.toLowerCase()) ? id.slice(0, -ext.length) : id;
+}
+
+//Pack id: path under the exec folder with forward slashes and no extension, e.g. "wad/pc_le/slayer".
+//One id is one load order row and covers both the .texpack and the .lodpack of that name.
 function toPackId(root, file) {
-  return path.relative(DATA_FILE, path.join(root, file)).split(path.sep).join("/");
+  return stripPackExt(path.relative(DATA_FILE, path.join(root, file)).split(path.sep).join("/"));
 }
 
 //How boot-options.json refers to a pack: relative to a folder two levels below exec, no extension
 function toBootPath(packId) {
-  return BOOT_PATH_PREFIX + packId.slice(0, -path.extname(packId).length);
+  return BOOT_PATH_PREFIX + packId;
 }
 
-//List every non-vanilla texpack/lodpack on disk as a pack id
+//Does this pack have a file with the given extension on disk?
+async function hasPackFile(gamePath, packId, ext) {
+  try {
+    await fsp.access(path.join(gamePath, DATA_FILE, packId + ext));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+//List every non-vanilla texpack/lodpack on disk as a pack id. A .texpack and a .lodpack with the
+//same name give one id.
 async function scanPackIds(gamePath, vanillaStems) {
-  const ids = [];
+  const ids = new Map(); //lowercase id -> id, so Foo.texpack + foo.lodpack are one row
   for (const root of PACK_SCAN_PATHS) {
     let files = [];
     try {
@@ -810,10 +828,11 @@ async function scanPackIds(gamePath, vanillaStems) {
       const ext = path.extname(file);
       if (!PACK_EXTS.includes(ext.toLowerCase())) continue;
       if (vanillaStems.has(path.basename(file, ext).toLowerCase())) continue;
-      ids.push(toPackId(root, file));
+      const id = toPackId(root, file);
+      if (!ids.has(id.toLowerCase())) ids.set(id.toLowerCase(), id);
     }
   }
-  return ids.sort();
+  return [...ids.values()].sort();
 }
 
 //Per-profile sidecar: the durable copy of the whole load order (order, enabled, locked).
@@ -823,13 +842,31 @@ function getPacksSidecarPath(gamePath, profileId) {
   return path.join(gamePath, DATA_FILE, `${profileId}_${PACKS_LO_FILE}`);
 }
 
+//Older versions saved one row per pack FILE ("patch/JP/Messi.texpack" and "patch/JP/Messi.lodpack").
+//Fold those into one row per pack: first position wins, off if either file was off, locked if either was.
+function foldSidecarEntries(entries) {
+  const folded = new Map();
+  for (const entry of entries) {
+    if (typeof entry?.id !== "string") continue;
+    const id = stripPackExt(entry.id);
+    const prev = folded.get(id.toLowerCase());
+    if (prev === undefined) {
+      folded.set(id.toLowerCase(), { ...entry, id });
+    } else {
+      prev.enabled = prev.enabled !== false && entry.enabled !== false;
+      prev.locked = prev.locked === true || entry.locked === true;
+    }
+  }
+  return [...folded.values()];
+}
+
 //Read the sidecar. Returns [] on a missing/corrupt file, the game never parses it.
 async function readPacksSidecar(sidecarPath) {
   try {
     const raw = await fsp.readFile(sidecarPath, { encoding: "utf8" });
     if (raw.length === 0) return [];
     const data = JSON.parse(util.deBOM(raw));
-    return Array.isArray(data) ? data : [];
+    return Array.isArray(data) ? foldSidecarEntries(data) : [];
   } catch {
     return [];
   }
@@ -839,9 +876,9 @@ async function writePacksSidecar(sidecarPath, loadOrder) {
   await fsp.writeFile(sidecarPath, JSON.stringify(loadOrder, null, 2), { encoding: "utf8" });
 }
 
-//Map each pack file name (lowercase) to the enabled Vortex mod that ships it, by walking the
-//staging folder of every enabled mod that can deliver a pack. Pack files carry no install
-//attribute, and this also works for mods installed before the Load Order page existed.
+//Map each pack name (file name without extension, lowercase) to the enabled Vortex mod that ships
+//it, by walking the staging folder of every enabled mod that can deliver a pack. Pack files carry
+//no install attribute, and this also works for mods installed before the Load Order page existed.
 async function getPackOwners(api, profileId) {
   const state = api.getState();
   const profile = selectors.profileById(state, profileId);
@@ -854,8 +891,9 @@ async function getPackOwners(api, profileId) {
     const stagingFolder = getModStagingFolder(api, mod.id);
     if (!stagingFolder) continue;
     for (const file of await getAllFiles(stagingFolder)) {
-      if (!PACK_EXTS.includes(path.extname(file).toLowerCase())) continue;
-      const key = path.basename(file).toLowerCase();
+      const ext = path.extname(file);
+      if (!PACK_EXTS.includes(ext.toLowerCase())) continue;
+      const key = path.basename(file, ext).toLowerCase();
       if (!owners.has(key)) owners.set(key, mod);
     }
   }
@@ -893,7 +931,7 @@ async function deserializePackLoadOrder(api) {
 
   const packIds = await scanPackIds(gamePath, vanillaStems);
   const saved = await readPacksSidecar(getPacksSidecarPath(gamePath, profileId));
-  const storedById = new Map(storedLO.map((entry) => [entry.id, entry]));
+  const storedById = new Map(storedLO.map((entry) => [stripPackExt(entry.id), entry]));
   const owners = await getPackOwners(api, profileId);
 
   //prev is the sidecar entry, so enabled and locked survive the rebuild on every deploy
@@ -920,17 +958,25 @@ async function deserializePackLoadOrder(api) {
   return loadOrder;
 }
 
-//Write the pack lists into boot-options.json: enabled packs only, in load order, one list per
-//extension. Every other key in the file is kept exactly as the game shipped it.
+//Write the pack lists into boot-options.json: enabled packs only, in load order. A pack goes into
+//the texpack list if its .texpack exists and into the lodpack list if its .lodpack exists, so one row
+//can feed both. Every other key in the file is kept exactly as the game shipped it.
 async function writeBootOptions(api, loadOrder) {
   const gamePath = getDiscoveryPath(api);
   try {
     const bootJson = await readBootOptions(gamePath);
     const block = getBootBlock(bootJson);
-    const enabledIds = loadOrder.filter((entry) => entry.enabled !== false).map((e) => e.id);
-    const idsWithExt = (ext) => enabledIds.filter((id) => path.extname(id).toLowerCase() === ext);
-    block[BOOT_TEX_KEY] = idsWithExt(PACK_EXT).map(toBootPath);
-    block[BOOT_LOD_KEY] = idsWithExt(LOD_EXT).map(toBootPath);
+    const enabledIds = [
+      ...new Set(
+        loadOrder.filter((entry) => entry.enabled !== false).map((e) => stripPackExt(e.id)),
+      ),
+    ];
+    const idsWithExt = async (ext) => {
+      const found = await Promise.all(enabledIds.map((id) => hasPackFile(gamePath, id, ext)));
+      return enabledIds.filter((_, i) => found[i]).map(toBootPath);
+    };
+    block[BOOT_TEX_KEY] = await idsWithExt(PACK_EXT);
+    block[BOOT_LOD_KEY] = await idsWithExt(LOD_EXT);
     await fsp.writeFile(
       path.join(gamePath, BOOT_OPTIONS_FILEPATH),
       JSON.stringify(bootJson, null, 2),

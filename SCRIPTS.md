@@ -1173,7 +1173,7 @@ Exit code `1` if the UE4-5 toggle-pairing invariant is violated anywhere, `0` ot
 
 Mechanical layer for the mod-page audit: checks every `game-*` and `helper-*` extension's Nexus mod page against the two-tag policy (`Game Extension` 4694 + `AI Assisted` 4902, no others), and re-verifies live via GraphQL introspection that the mod-page "allow users to add tags/images/videos" permission switches are still unreadable through any API tier.
 
-Extension-to-mod-page mapping comes from each folder's `index.js` `EXTENSION_URL`, not a hardcoded domain — nearly every extension publishes under the `site` domain, but `game-bloodborne` publishes under its own game's domain, so the numeric `gameId` each domain needs is resolved live and cached per domain rather than assumed. A `game-*` folder with no `EXTENSION_URL` is treated as unreleased and silently skipped (most are pre-release test beds); a `helper-*` folder is different — every one that exists is a real, already-shipped tool, so a missing `EXTENSION_URL` (or a missing `index.js` entirely, e.g. a bundled `.bat`-only tool) is reported as a problem finding instead of skipped. A second pass queries the account's full `site`-domain mod list to name anything with no local match: a newly published extension whose `EXTENSION_URL` isn't filled in yet, or a non-extension mod uploaded under the same account.
+Extension-to-mod-page mapping comes from each folder's `index.js` `EXTENSION_URL`, not a hardcoded domain — nearly every extension publishes under the `site` domain, but `game-bloodborne` publishes under its own game's domain, so the numeric `gameId` each domain needs is resolved live and cached per domain rather than assumed. A `game-*` folder with no `EXTENSION_URL` is treated as unreleased and silently skipped (most are pre-release test beds); a `helper-*` folder is different — every one that exists is a real, already-shipped tool, so a missing `EXTENSION_URL` (or a missing `index.js` entirely, e.g. a bundled `.bat`-only tool) is reported as a problem finding instead of skipped. `helper-*` pages are exempt from the two-tag policy (2026-10-10 user call): they may carry any tags and are never reported as missing or stray. Their page is still fetched, so a dead page remains a finding. A second pass queries the account's full `site`-domain mod list to name anything with no local match: a newly published extension whose `EXTENSION_URL` isn't filled in yet, or a non-extension mod uploaded under the same account.
 
 ### audit_mod_pages.py — Environment Variables
 
@@ -1197,9 +1197,9 @@ Run without arguments for a full text report. `--json` emits a structured report
 
 ### audit_mod_pages.py — Output
 
-Three buckets: **OK** (exactly the two required tags), **Needs attention** (missing tag(s) and/or stray tags, with the mod's live `name`/`status` — also where a `helper-*` folder with no resolvable `EXTENSION_URL` lands, as a problem finding), and **Suppressed/excluded** — unreleased `game-*` extensions (no live page yet, silently skipped, not counted), `battlefield1` (frozen, same carve-out as the store-id audit), and any `//!audit-skip: modpage-tags - <reason>` marker on the `EXTENSION_URL` line.
+Four buckets: **OK** (exactly the two required tags), **Helper pages (tag policy exempt)** (live `helper-*` pages listed with whatever tags they carry; JSON key `tag_exempt`), **Needs attention** (`game-*` pages with missing tag(s) and/or stray tags, with the mod's live `name`/`status` — also where a `helper-*` folder with no resolvable `EXTENSION_URL` or a dead page lands, as a problem finding), and **Suppressed/excluded** — unreleased `game-*` extensions (no live page yet, silently skipped, not counted), `battlefield1` (frozen, same carve-out as the store-id audit), and any `//!audit-skip: modpage-tags - <reason>` marker on the `EXTENSION_URL` line.
 
-Also lists mods on the account's `site` domain with no local `game-*` match — non-extension mods (Anti-Stutter, XeSS, etc.) and anything published from outside this repo (e.g. `extension-re-engine-wrapper`'s dependency mod). Named, but never tag-checked (2026-09-27 user call — the two-tag policy isn't confirmed to apply to these, so there's nothing to check, just something to keep visible).
+Also lists mods on the account's `site` domain with no local `game-*` match — non-extension mods (Anti-Stutter, XeSS, etc.) and anything published from outside this repo (e.g. `extension-re-engine-wrapper`'s dependency mod). Named, but never tag-checked: the two-tag policy does not cover non-extension mods (2026-10-10 user call), so this list is status reporting only, not a worklist.
 
 Finally, live-introspects the `Mod` type and the non-Collection-scoped half of `Mutation` for any field name suggesting the user-tag/user-media permission switches have become API-visible (`allowUser*`, `userTag*`, `userMedia*`, `manuallyVerify*`, `userPermission*`). Confirmed absent as of 2026-09-27 — this check exists so that finding is re-verified every run instead of silently going stale as a hardcoded assumption.
 
@@ -1275,6 +1275,62 @@ Prints a substitution report before writing anything:
 - **Reminders** — remaining XXX check, inline string check, `node --check` command
 
 A `.bak` file is written alongside `index.js` before overwriting. Use `--force` to overwrite an existing `.bak`. After writing, `generate_explained.js` is run automatically to regenerate `EXTENSION_EXPLAINED.md`.
+
+---
+
+## check_port_equality.py
+
+Proves a template port did not move anything it should not have. Loads an extension's OLD `index.js` and its NEW `index.js` side by side under the stub harness in `tests/harness/` (no Vortex, no network; the generated test lives in a temp dir, nothing is written to the repo) and compares what each one resolves. Run it right after `port_to_template.py` and the hand fixes, before deploying. Each `EXT_ID` is resolved via `vortex_utils.resolve_extension_folder()`.
+
+### check_port_equality.py — Requirements
+
+No additional packages required (Python stdlib only). `node` must be on `PATH`. Uses the existing harness (`tests/harness/load-extension.js`), so run it from a checkout with `node_modules` installed (`npm install`).
+
+### check_port_equality.py — Usage
+
+```sh
+python check_port_equality.py EXT_ID
+python check_port_equality.py EXT_ID --allow ENGINE_VERSION,EXEC
+python check_port_equality.py EXT_ID --old path/to/old-index.js
+python check_port_equality.py EXT_ID --git-head
+python check_port_equality.py EXT_ID --strict-installers
+python check_port_equality.py EXT_ID --verbose
+```
+
+- `--old PATH` — use this file as the OLD side. Default is `<folder>/index.js.bak`, which `port_to_template.py` writes.
+- `--git-head` — use `git show HEAD:<folder>/index.js` as the OLD side (for a port whose `.bak` is gone).
+- `--allow LIST` — comma-separated names expected to differ: constants, or mod type ids (e.g. `crisoltheaterofidols-save`). They are still printed, but do not fail the run.
+- `--strict-installers` — installer battery differences fail the run too (informational by default).
+- `--verbose` — also print every equal constant, mod type path and installer case.
+
+### check_port_equality.py — What it compares
+
+Four layers, old file against new file, each loaded fresh under the stubs:
+
+1. **Constants.** Every top-level `const`/`let` in either file whose value is a string, number, boolean, `null` or an array of those (paths, ids, store ids, toggles, ignore lists). A changed value fails the run; an array that differs only in order is reported and does not fail.
+2. **Mod types.** Ids only in one side are listed (informational); for the ids both register, the folder each resolves to for a fake install must be equal (a difference fails the run). Also printed, informational: `game.executable()`, `requiresLauncher` per store, supported tool ids, `game.details`, installer ids and priorities.
+3. **Store scenarios.** Six scenarios (default, xbox, demo, epic, gog, and default with a seeded Steam user-id folder under the save path). Each builds a fake install folder holding only that scenario's marker exe (named from each file's own `EXEC*` constants; one the old file never declared, e.g. no `EXEC_GOG`, falls back to `EXEC`), calls `game.executable()` on it, then re-reads every path variable it re-pointed and every shared mod type folder. A difference fails the run. This is what catches a Steam branch that resets `SAVE_PATH` and throws away the user id, or an Xbox branch that lost its `BINARIES_PATH`.
+4. **Installer battery.** 27 sample archive layouts (pak, IO store, wrapper folders, `~mods` tree, LogicMods, UE4SS script / DLL / root bundle / game-tree bundle, combo, root, config, save, binaries, extension-less files, readme-only, FOMOD, empty) run through Vortex's dispatch rule (ascending priority, first installer whose test passes wins) on both sides. The winning installer's priority and its normalized install instructions are compared. Informational by default, because the template legitimately changes installer output (extra `attribute` instructions for the load orders, dropped `enabled.txt` copies); `--strict-installers` makes a difference fail. The harness sets `GAME_VERSION` to `steam` and gives the fake discovery folder a real default marker exe, standing in for `setup()`, so the save installer's store gate behaves.
+
+The sibling `.js` files in the game folder (`downloader.js`, bundled modules) are copied next to the OLD file so its `require()` calls resolve.
+
+### check_port_equality.py — Limitations
+
+The store scenarios only exercise what `game.executable()` does, and they pick the branch by marker exe file name. They cannot reach:
+
+- Paths `setup()` sets from `discovery.store` (a per-store save folder such as an Epic `SAVE_PATH_EPIC`, or a store folder above `Saved`: the frostpunk2 `setStorePaths()` shape).
+- A game whose Steam, Epic and GOG builds share ONE exe name: it always lands in the first matching branch, whatever the real store.
+- The Xbox save path with a user-id folder (only the Steam uid is seeded).
+- Anything needing a real `Packages\` or launcher-manifest folder on disk.
+- A game whose project folder differs per store: the scenarios compare each store once, but `--allow` takes mod type ids, and allowing one hides it in every scenario. Back such a port with a store-toggling check of its own.
+
+An OLD file from before the `EXEC` rename that names its default exe `EXEC_DEFAULT` is read too (the scenario marker falls back to it; an OLD file with neither gets no marker file for that scenario).
+
+Check those by hand against PCGW and the install. Also not covered: the Vortex FOMOD installer itself (the FOMOD case only checks that none of this extension's installers claim the archive), and anything only a live Vortex run proves.
+
+### check_port_equality.py — Output
+
+Prints the differences, then `RESULT: PASS` or `RESULT: FAIL (n failing differences)`. Exit code `0` = no failing difference, `1` = a constant, shared mod type path or store-scenario path differs (or an installer, with `--strict-installers`), `2` = could not run (no such extension, missing OLD file, `node` missing, or the comparison crashed). Judge each printed line: a port's intended changes (a corrected Xbox exe name, template ignore globs, a dropped legacy mod type, `hasUserIdFolder` turned off) show up as differences and are passed with `--allow`.
 
 ---
 

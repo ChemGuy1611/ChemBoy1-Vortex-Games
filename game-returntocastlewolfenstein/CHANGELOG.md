@@ -1,7 +1,8 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.1.2] - 2026-10-09
 
+- Fixed: RealRTCW was downloaded automatically at startup. It is now only downloaded when you choose "Download RealRTCW" in the notification (or use the toolbar button), so you can use ioRTCW instead without RealRTCW being installed on top
 - Fixed: Mod files with no file extension were skipped during installation
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 - The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.

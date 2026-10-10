@@ -29,6 +29,7 @@ const GLOBS = [
   path.join("**", "changelog*"),
   path.join("**", "readme*"),
   path.join("**", "license*"),
+  path.join("**", "plugins.js"),
 ];
 const DEFAULT_DESCRIPTION =
   "Mod installed with Vortex. See mod page for description. You may need to add additional parameters below.";
@@ -119,8 +120,8 @@ describe("template-rpgmaker: registration with default toggles", () => {
   it("offers a custom launch tool", () => {
     assert.deepEqual(idsOf(ext.game.supportedTools), ["XXX-customlaunch"]);
     const [launch] = ext.game.supportedTools;
-    assert.equal(launch.executable(), "XXX.exe");
-    assert.deepEqual(launch.requiredFiles, ["XXX.exe"]);
+    assert.equal(launch.executable(), "Game.exe");
+    assert.deepEqual(launch.requiredFiles, ["Game.exe"]);
     assert.ok(launch.relative && launch.exclusive && launch.shell);
     assert.equal(launch.name, "Custom Launch");
     assert.equal(launch.logo, "exec.png");
@@ -479,7 +480,7 @@ describe("template-rpgmaker: game definition", () => {
     assert.equal(game.requiresCleanup, true);
     assert.equal(game.modPathIsRelative, true);
     assert.equal(game.queryModPath(), ".");
-    assert.deepEqual(game.requiredFiles, ["XXX.exe"]);
+    assert.deepEqual(game.requiredFiles, ["Game.exe"]);
     assert.deepEqual(game.compatible, { dinput: false, enb: false });
     assert.equal(game.details.steamAppId, 1234);
     assert.equal(game.details.gogAppId, "g1");
@@ -506,13 +507,13 @@ describe("template-rpgmaker: game definition", () => {
   });
 
   it("picks the Xbox launcher executable only when its marker file exists", async () => {
-    assert.equal(ext.game.executable(makeGameDir()), "XXX.exe");
+    assert.equal(ext.game.executable(makeGameDir()), "Game.exe");
     assert.equal(
       ext.game.executable(makeGameDir(["gamelaunchhelper.exe"])),
       "gamelaunchhelper.exe",
     );
     const off = await loadExtension(DIR, { transform: setConst("XBOXAPP_ID", '"other"') });
-    assert.equal(off.game.executable(makeGameDir(["gamelaunchhelper.exe"])), "XXX.exe");
+    assert.equal(off.game.executable(makeGameDir(["gamelaunchhelper.exe"])), "Game.exe");
     assert.equal(await off.game.requiresLauncher(gameDir, "xbox"), undefined);
   });
 

@@ -68,8 +68,41 @@ class SevenZip {
   }
 }
 
+// Visits every file and folder below `target`, folders before their contents, the way
+// vortex-api's util.walk does: `callback(fullPath, stats)` is awaited per entry. With
+// `ignoreErrors` an unreadable or missing folder ends quietly instead of rejecting.
+async function walk(target, callback, options = {}) {
+  let names;
+  try {
+    names = await fsp.readdir(target);
+  } catch (err) {
+    if (options.ignoreErrors) return;
+    throw err;
+  }
+  for (const name of names.sort()) {
+    const full = path.join(target, name);
+    const stats = await fsp.stat(full);
+    await callback(full, stats);
+    if (stats.isDirectory()) await walk(full, callback, options);
+  }
+}
+
 const util = lenient("util", {
   SevenZip,
+  walk,
+  // Same arithmetic as vortex-api: the value as text, left-padded with `padding` up to `width`.
+  pad: (value, padding, width) => {
+    const text = `${value}`;
+    return text.length >= width ? text : padding.repeat(width - text.length) + text;
+  },
+  deBOM: (input) => input.replace(/^﻿/, ""),
+  // The display name an extension shows for a mod. The real function also decorates it with the
+  // version; the stub keeps just the name so assertions do not depend on that.
+  renderModName: (mod) =>
+    mod.attributes?.customFileName ??
+    mod.attributes?.logicalFileName ??
+    mod.attributes?.name ??
+    mod.id,
   getVortexPath: (name) => path.join(APP_ROOT, String(name)),
   GameStoreHelper: lenient("util.GameStoreHelper", {
     findByAppId: (...args) => gameStore.findByAppId(...args),

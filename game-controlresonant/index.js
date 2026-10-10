@@ -2,8 +2,8 @@
 Name: CONTROL Resonant Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-09-30
+Version: 1.0.2
+Date: 2026-10-09
 Notes:
 -
 ///////////////////////////////////////////*/
@@ -52,7 +52,7 @@ const hasLoader = false; //true if game needs a mod loader
 let hasXbox = true; //toggle for Xbox version logic
 const multiExe = false; //set to true if there are multiple executable names
 const multiModPath = false; //set to true if there are multiple possible mod paths (i.e. different path for Xbox version)
-const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
+const allowSymlinks = false; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
 const needsModInstaller = false; //set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing
 const rootInstaller = true; //enable root installer. Set false if you need to avoid installer collisions
 const saveInstaller = false; //enable save installer. Set false if path is outside of game folder

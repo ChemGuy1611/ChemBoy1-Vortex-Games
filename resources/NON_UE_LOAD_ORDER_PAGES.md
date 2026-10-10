@@ -1,6 +1,6 @@
 # Non-UE Load Order React Code
 
-The Unreal templates are not the only extensions with hand-written load order UI. Eleven non-Unreal
+The Unreal templates are not the only extensions with hand-written load order UI. Thirteen non-Unreal
 games in this repository register a load order, and their React code splits into three clearly
 separated tiers plus one legacy holdout. This document maps the tiers, walks the shared code, and
 records exactly where each tier diverges from the UE4-5 stack described in
@@ -26,6 +26,8 @@ lifecycle, `IItemRendererProps`, virtualization). Everything here is stated as a
 | `game-warhammer40kroguetrader`    | Unity              | B    | Minimal renderer                                  |
 | `game-helldivers2`                | Autodesk Stingray  | G    | Full FBLO renderer + context menu + status filter |
 | `game-lookoutside`                | RPG Maker MV/MZ    | G    | Full FBLO renderer + context menu + status filter |
+| `game-godofwar`                   | Sony port          | G    | Full FBLO renderer + context menu + status filter |
+| `game-godofwarragnarok`           | Sony port          | G    | Full FBLO renderer + context menu + status filter |
 
 Two Unreal games also sit in tier B (`game-fantasylifeithegirlwhostealstime`, `game-tekken8`) —
 they carry the minimal renderer without the UE4SS stack, so tier B guidance applies to them too.
@@ -69,6 +71,28 @@ The context menu drops "Open Mod Folder"/"Open Mod Folder(s)" entirely rather th
 resolution, since a file entry has no per-entry folder of its own the way a mod folder does on
 darktide/kcd2; Open Staging Folder / Open Mod Page cover that need instead. Same file-granularity
 shape as tier B's `game-warhammer40000spacemarine2` (`pakModFiles`), not yet upgraded to tier G.
+
+`game-godofwar` and `game-godofwarragnarok` are two more skins of the same block, with file
+granularity like lookoutside (no "Open Mod Folder" item) and a different data layer, because the
+file the game reads cannot hold what the page needs to remember:
+
+- **A row is a pack name, not a file.** The id is the path under `exec` without an extension
+  (`patch/JP/Messi`), and a `.texpack` and a `.lodpack` with that name share the one row. On write,
+  an enabled pack goes into `patch-texpacks` if its `.texpack` exists on disk and into
+  `patch-lodpacks` if its `.lodpack` exists, so a row can feed both lists or just one. Packs from
+  `exec\patch` and `exec\wad` are both listed.
+- **The base game's own packs never get a row.** `boot-options.json` lists them under
+  `playgo-chunks` (plus `root`); the game already loads them, so writing them into the patch lists
+  would load them twice.
+- **`boot-options.json` carries only the enabled subset.** A disabled or locked row has nowhere to
+  live in it, so the whole order is also saved in a per-profile sidecar,
+  `exec/<profileId>_packsLoadOrder.json`, which sits outside the scanned folders and is read
+  tolerantly (missing or corrupt means an empty order). The game file is re-read right before each
+  write and only the two pack arrays are changed.
+- **The two games differ in one structural way.** The 2018 game keeps these keys at the top level of
+  `boot-options.json`; Ragnarok nests them under `allcontentidarray[0]`. Everything else is shared.
+- **A purge and a deploy both rewrite the lists.** Core only serializes a load order when it
+  changed, so the extension recomputes the pack lists after every deploy and purge.
 
 ### Components
 

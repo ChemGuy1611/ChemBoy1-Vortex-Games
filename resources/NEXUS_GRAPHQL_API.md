@@ -10,8 +10,9 @@ Companion docs: `NEXUS_MODS_API.md` (v1 + v3 REST, including the file-upload flo
 small subset of what follows).
 
 Everything here was verified live on 2026-09-04 against schema totals of **67 query fields**
-(4 deprecated), **99 mutation fields** (22 deprecated), and **354 types**. There is no subscription
-type. The growth since the 2026-08-23 pass (66/96/346) is six new staff/internal-scoped operations —
+(4 deprecated), **99 mutation fields** (22 deprecated), and **354 types**, and re-checked on
+2026-10-10: the totals are identical, and every live query and mutation name appears in this
+document. There is no subscription type. The growth since the 2026-08-23 pass (66/96/346) is six new staff/internal-scoped operations —
 see "Moderation, admin, reporting" and "Moderation and admin" below — none of it touches the mod,
 file, or collection surface.
 

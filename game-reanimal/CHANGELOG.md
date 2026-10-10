@@ -1,5 +1,21 @@
 # Changelog
 
+## Planned Improvements (Not Yet Released)
+
+- None
+
+## [1.0.0] - 2026-10-09
+
+- Migrated to file-based load order (FBLO); added a lock button, multi-select, and a right-click context menu to the Paks load order page.
+- Added a UE4SS Load Order page and a LogicMods Load Order page for Blueprint pak mods.
+- Added UE4SS and LogicMods load order support to Collections.
+- Added a status filter to the load order pages.
+- Updating a mod now keeps its place in the load order.
+- UE4SS now downloads automatically and checks for updates.
+- Game version now shows the real game build instead of the Unreal engine version.
+- Fixed: Config mods were installed to a folder the game does not read. They now go to `%LOCALAPPDATA%\Everholm\Saved\Config\Windows`.
+- Fixed: Save mods now go inside your Steam user ID folder, where the game keeps its saves.
+
 ## [0.1.1] - 2026-10-02
 
 - Added support for the Xbox / Microsoft Store version of the game.

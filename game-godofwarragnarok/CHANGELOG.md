@@ -1,7 +1,10 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.0.0] - 2026-10-09
 
+- Added a Load Order page for .texpack and .lodpack mods. A .texpack and .lodpack with the same name share one line. Drag packs to reorder them, use the checkbox to turn a pack on or off without uninstalling it, lock a pack's position, and right-click a pack for more options. The order is written to boot-options.json automatically.
+- Added: Packs that mods place in "exec\wad" are now added to boot-options.json as well. The game's own packs are never added.
+- Fixed: Packs stored two or more folders deep inside "exec\patch" now get the correct path in boot-options.json.
 - Fixed: Mod files with no file extension were skipped during installation
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 - The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.

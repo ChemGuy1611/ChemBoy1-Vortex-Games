@@ -2,6 +2,10 @@
 
 Covers `template-rpgmaker`. Suite file: `tests/templates/rpgmaker.test.js`.
 
+## [2026-10-09]
+
+- Changed: the suite follows the template's new default executable. `EXEC` is `Game.exe` (the usual RPG Maker executable) instead of `XXX.exe`, so the custom launch tool, the required files and the executable choice tests expect `Game.exe`; the template's `IGNORE_CONFLICTS` and `IGNORE_DEPLOY` lists gained `**/plugins.js`, which the game definition test expects.
+
 ## [2026-10-06]
 
 - Changed: the toolbar actions tests cover the new `Open Nexus Mods Page` button. It is in the registered action list, and it opens `https://www.nexusmods.com/XXX/mods`, and its failure is reported instead of thrown when the shell is unavailable.

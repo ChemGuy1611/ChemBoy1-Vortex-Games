@@ -2455,7 +2455,6 @@ interface ITestResult {
     context?: any;
   };
   severity: ProblemSeverity;
-  allowSuppress?: boolean;
   automaticFix?: () => PromiseLike<void>;
   onRecheck?: () => PromiseLike<void>;
 }
@@ -6639,9 +6638,6 @@ declare function writeFileAtomic(filePath: string, input: string | Buffer): Prom
  * directory as the destination, then deletes the destination and renames the temp
  * to destination. Since the rename is atomic and the deletion only happens after
  * a successful write this should minimize the risk of error.
- *
- * Goes through node's fs: a file another process is holding fails back to the caller, which
- * knows whether that is worth interrupting the user over.
  *
  * @export
  * @param {string} srcPath

@@ -144,13 +144,23 @@ check is either a documented exception (add an allowlist entry with a reason) or
 fix in the template through the normal propagation path.
 
 Suites exist for `basic`, `snowdropengine`, `shinryu`, `frostbite`, `reloaded2`,
-`cobraengine-acse`, `tfcinstaller-ue2-3`, `unity-umm`, `farcry`, `godot`, `rpgmaker` and
-`anvilengine`. The rest are covered by the contract checks only until their own suite is written.
+`cobraengine-acse`, `tfcinstaller-ue2-3`, `unity-umm`, `farcry`, `godot`, `rpgmaker`,
+`anvilengine`, `reframework-fluffy` and `unitymelonloaderbepinex-hybrid`. The rest are covered by
+the contract checks only until their own suite is written.
 
 A template with many toggles (`anvilengine` has nineteen) is tested three ways: the default
 load, one load per toggle with the registration it adds, and a load with every feature on, which
 also runs the contract checks, because installer priorities and mod type counts only collide when
 the optional features are present together.
+
+A template that bundles more than one shared module (`unitymelonloaderbepinex-hybrid` bundles
+`downloader.js` and `bepinexbe_downloader.js`) fakes both through `loadExtension`'s `bundled` option
+for most tests, which then assert on what the template asked of them. The bundled
+`bepinexbe_downloader.js` is also tested as the real module, offline, against a fake copy of the
+builds.bepinex.dev index page served through `withFetch`, and the template's own Bleeding Edge
+requirement is run through it. Be careful with the scaffold's placeholder ids: the placeholder Xbox id
+equals the placeholder Steam id, which switches the Xbox logic on, so a suite that wants it off has to
+set a different `XBOXAPP_ID` as well as `hasXbox`.
 
 A suite can reach a template's private helpers (functions the template does not export) with a
 source transform that appends an export, for example `src + "\nmodule.exports.internals = { fn };"`.

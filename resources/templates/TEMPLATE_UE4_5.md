@@ -152,6 +152,17 @@ filtering and the same context menus. Full anatomy is in `../UE4_5_REACT_ARCHITE
 actions include Open Paks Folder, Open Binaries Folder, Open UE4SS Mods Folder, Open LogicMods
 Folder, Download UE4SS, Open UE4SS Settings INI, and Open UE4SS mods.txt.
 
+**One project folder for every store.** `EPIC_CODE_NAME` is the game's project folder, and almost
+every path constant, mod type target, installer destination and `getExecutable` branch is built from
+it. The template has no way to give one store a different folder. A few games ship a different
+project folder per store (`game-keeper`: `Keeper` on Steam and GOG, `PaganIdol` on Xbox), and also
+keep Config and Save in a LocalAppData folder named differently from either. For those, read the
+install tree of each store, not just one, and set `DATA_FOLDER` from the real LocalAppData folder
+(the Config and Save mod types deploy there, so a wrong name deploys to a folder the game never
+reads). `game-keeper` carries a game-only shim for the project folder: a `PROJECT_FOLDER` variable
+and a `setProjectFolder()` function that swaps the leading folder of each project-relative path to
+the active store's, called from `getExecutable` and `setup()`. Every site is marked `KEEPER ONLY`.
+
 ---
 
 ## See also
