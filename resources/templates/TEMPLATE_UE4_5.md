@@ -1,6 +1,6 @@
 # template-ue4-5
 
-Unreal Engine 4 and 5, and by a wide margin the largest template (~4,600 lines). It carries three
+Unreal Engine 4 and 5, and by a wide margin the largest template (~6,600 lines). It carries three
 independent load-order surfaces, a React UI layer, collections support, and a mod-update guard, on
 top of the usual pak handling.
 
@@ -35,6 +35,9 @@ of a pak mod, for custom frameworks that add `.toml` or `.json` sidecars).
 
 ## Mod types and installers
 
+The mod types from `spec` register at 30 plus their position in the list (`high` is 30 in this
+template, not the 25 other templates use). The rest use the explicit priorities below.
+
 | Mod type          | Priority               | Target                  |
 | ----------------- | ---------------------- | ----------------------- |
 | `UE4SSCOMBO_ID`   | spec                   | `{gamePath}`            |
@@ -42,7 +45,7 @@ of a pak mod, for custom frameworks that add `.toml` or `.json` sidecars).
 | `PAK_ALT_ID`      | spec                   | `<code>/Content/Paks`   |
 | `ROOT_ID`         | spec                   | `{gamePath}`            |
 | `MODKITMOD_ID`    | spec, when `hasModKit` | `<code>/Mods`           |
-| `UE5_SORTABLE_ID` | 29                     | pak mods folder         |
+| `UE5_SORTABLE_ID` | 25                     | pak mods folder         |
 | `SCRIPTS_ID`      | 50                     | `<binaries>/ue4ss/Mods` |
 | `DLL_ID`          | 52                     | `<binaries>/ue4ss/Mods` |
 | `BINARIES_ID`     | 54                     | `<code>/Binaries/Win64` |
@@ -54,11 +57,20 @@ of a pak mod, for custom frameworks that add `.toml` or `.json` sidecars).
 `UE5_SORTABLE_ID` keeps its exact name across every UE4-5 extension on purpose, so pak mods stay
 interchangeable between them.
 
+`SCRIPTS_ID`, `DLL_ID` and `UE4SS_ID` register only with `ue4ssLoadOrder`, which also removes
+`LOGICMODS_ID` from the spec. `SIGBYPASS_ID` needs `SIGBYPASS_REQUIRED`. `CONFIG_ID` is offered
+only when the partition check below passes for the config folder, and `SAVE_ID` only when it
+passes for the save folder and the game version is listed in `SAVE_COMPAT_VERSIONS`.
+
 **Installers:** `MODKITMOD` 25 → `UE4SSCOMBO` 26 → `LOGICMODS` 27 → `UE5_SORTABLE` 29 (paks) →
 `UE4SS` 31 → `SIGBYPASS` 33 → `SCRIPTS` 35 → `DLL` 37 → `ROOT` 39 → `CONFIG` 41 → `SAVE` 43 →
 `BINARIES` 49. There is no separate fallback installer — `BINARIES` at 49 _is_ it: `testBinaries`
 claims anything that is not a pak and not a FOMOD, and `installBinaries` fires
 `fallbackInstallerNotify` unless the `updating_mod` guard says this install is a mod update.
+
+`MODKITMOD` needs `hasModKit`. `LOGICMODS`, `UE4SS`, `SCRIPTS` and `DLL` need `ue4ssLoadOrder`
+(`logicModsLoadOrder` does not gate the LogicMods installer, only its load-order page).
+`SIGBYPASS` needs `SIGBYPASS_REQUIRED`.
 
 `UE4SSCOMBO` at 26 is **not** gated on `ue4ssLoadOrder`, because besides UE4SS script-plus-blueprint
 combos it also handles any mod that ships both a `Binaries` and a `Content` folder.
@@ -93,10 +105,10 @@ writing all hang off it. It also registers a `settings.<gameId>.ue4ssLoEnabled` 
 `registerSettings('Mods', GameSettings, …, 150)` panel. The page stays visible even when the user
 turns the load order off in settings, so it can be turned back on.
 
-**Collections.** `collectionsLoadOrder`, ANDed with the other two toggles, registers
-`context.optional.registerCollectionFeature` with `genUe4ssCollectionsData` /
-`parseUe4ssCollectionsData` and a `CollectionsDataView`, so both the UE4SS and LogicMods orders
-travel with a collection.
+**Collections.** `collectionsLoadOrder` registers `context.optional.registerCollectionFeature`
+when at least one of `ue4ssLoadOrder` and `logicModsLoadOrder` is on, with
+`genUe4ssCollectionsData` / `parseUe4ssCollectionsData` and a `CollectionsDataView`. Each order
+travels with a collection only if its own toggle is on.
 
 ## Runtime behavior
 
@@ -121,22 +133,27 @@ pak mod packaged with a FOMOD checkbox wizard (offering optional components) kee
 forever and never shows up in the pak load order, which filters strictly on `UE5_SORTABLE_ID`. A
 `did-install-mod` handler (`retagFomodPakMod`) retags such a mod after the fact: it reruns the
 marker checks for every installer registered above the pak installer's priority — Mod Kit (25,
-when `hasModKit`), UE4SS Combo (26), LogicMods (27) — against the mod's staged files via
-`beatsPakInstaller()`/`pathSegments()`, and only retags when none of them would have claimed the
-archive first. It skips mods staged in full game-root layout (the pak installer only ever
+when `hasModKit`), UE4SS Combo (26), LogicMods (27, counted only when `logicModsLoadOrder` is on)
+— against the mod's staged files via `beatsPakInstaller()`/`pathSegments()`, and only retags when
+none of them would have claimed the archive first. The handler does nothing when
+`PAKMOD_LOADORDER` is off. It skips mods staged in full game-root layout (the pak installer only ever
 flattens a shallow-staged archive), and while a collection install is in progress it retags but
 skips the load-order refresh and deployment request, since core's own post-install deserialize
 picks up the corrected type once the collection finishes.
 
-**Partition checks.** When `IO_STORE` is off and `preferHardlinks` is on, `checkPartitions` verifies
-that the game folder, staging folder, and the config and save folders all sit on the same volume,
-and `partitionCheckNotify` explains it if they do not — hardlinks cannot cross volumes.
+**Partition checks.** `checkPartitions` is skipped only when both `preferHardlinks` and `IO_STORE`
+are off. Otherwise it verifies that the game folder, the staging folder and the config (or save)
+folder sit on the same volume, and `partitionCheckNotify` explains it if they do not — hardlinks
+cannot cross volumes. A failed check switches off the Config or Save mod type and installer.
 
 **UE4SS acquisition.** `downloadUe4ss` pulls from the RE-UE4SS GitHub releases; `downloadUe4ssNexus`
 is used instead when the game has a customised UE4SS build on its own Nexus page
 (`UE4SS_PAGE_NO` / `UE4SS_FILE_NO` / `UE4SS_DOMAIN`). `autoDownloadUe4ss` decides whether that
 happens unattended during `setup()`. With `writeEngineVersion` on, the `did-deploy` handler writes
-`ENGINE_VERSION` into `UE4SS-settings.ini` as `EngineVersionOverride`.
+`ENGINE_VERSION` into `UE4SS-settings.ini` as `EngineVersionOverride`. The `check-mods-version`
+listener tests the UE4SS GitHub requirement for an update, but only when `ue4ssLoadOrder` is on
+and the game has no customised Nexus UE4SS page (`UE4SS_PAGE_NO` is 0), so a curated build is never
+replaced by an upstream one.
 
 `didDeploy` is wired to `did-deploy`. A `didPurge` function exists but its `did-purge` registration
 is commented out by default.
@@ -148,9 +165,12 @@ is commented out by default.
 `useDismissOnOutside`, and `useClampedMenuPosition`. All three load-order surfaces carry status
 filtering and the same context menus. Full anatomy is in `../UE4_5_REACT_ARCHITECTURE.md`.
 
-**Tools:** Custom Launch, the ModKit when `hasModKit`, and a commented-out Save Editor slot. Toolbar
-actions include Open Paks Folder, Open Binaries Folder, Open UE4SS Mods Folder, Open LogicMods
-Folder, Download UE4SS, Open UE4SS Settings INI, and Open UE4SS mods.txt.
+**Tools:** Custom Launch, the ModKit when `hasModKit`, and a commented-out Save Editor slot. There
+are fifteen toolbar actions, all hidden unless the game is active: folder openers (Paks,
+Binaries, Config, Saves, Downloads, plus UE4SS Mods and LogicMods with `ue4ssLoadOrder`), the
+UE4SS actions (Download UE4SS, Open UE4SS Settings INI, Open UE4SS mods.txt, also with
+`ue4ssLoadOrder`), and links (PCGamingWiki, Nexus Mods, SteamDB, View Changelog, Submit Bug
+Report).
 
 **One project folder for every store.** `EPIC_CODE_NAME` is the game's project folder, and almost
 every path constant, mod type target, installer destination and `getExecutable` branch is built from

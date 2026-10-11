@@ -6,7 +6,7 @@ Mods extension page in the browser. Optionally uploads the zip to the mod
 page as a new file version via the Nexus Mods v3 API.
 
 Each EXT_ID is looked up as a game-<id> folder first, then a helper-<id>
-folder (e.g. "falloutlondon" releases helper-falloutlondon).
+folder (e.g. "globalignorepatterns" releases helper-globalignorepatterns).
 
 Steps performed per extension:
     1. Validate info.json version has a matching ## [X.Y.Z] entry in CHANGELOG.md,
@@ -62,6 +62,13 @@ Once per run, after every extension has been processed:
     rewritten; everything the author wrote around it is preserved, and an extension
     with no description page yet gets a scaffold to fill in. Skipped with --dry-run.
 
+    With --push-description, push each regenerated DESCRIPTION.bbcode (and the summary built
+    from it) to the extension's Nexus mod page through sync_mod_pages.push_pages. Works with
+    or without --upload. Backup first; a page this tooling has never pushed is SKIPPED when
+    the live text differs from the file, so its first push is done by hand with
+    sync_mod_pages.py --push --force. A failed or skipped push warns and never fails the
+    release. Not run when the description batch itself failed. Skipped with --dry-run.
+
     All three doc generators are skipped for helper extensions that released
     successfully -- they document mod installer/archive-recognition rules for a
     game, and a helper registers no installers of its own.
@@ -80,10 +87,11 @@ Usage:
     python release_extension.py EXT_ID --skip-lint      (--skip-eslint accepted as alias)
     python release_extension.py EXT_ID --upload
     python release_extension.py EXT_ID --edit-changelog
+    python release_extension.py EXT_ID --push-description
 
 Environment variables:
     SEVENZIP_PATH   (optional, default: C:\\Program Files\\7-Zip\\7z.exe)
-    NEXUS_API_KEY   (required for --upload)
+    NEXUS_API_KEY   (required for --upload and --push-description)
 """
 
 import argparse
@@ -107,25 +115,18 @@ from vortex_utils import (
     find_registerinstaller_calls, audit_skip_lines, AUDIT_SKIP_PRIORITY,
     resolve_extension_folder, extension_prefix,
     changelog_entry_is_empty, unreleased_intermediate_sections,
+    PACKAGE_EXCLUDES,
 )
 from nexus_upload import pick_file_group, upload_zip, extract_changelog_entry
+from sync_mod_pages import push_pages
 SEVENZIP = os.environ.get("SEVENZIP_PATH", r"C:\Program Files\7-Zip\7z.exe")
 NEXUS_SITE_URL = "https://www.nexusmods.com/games/site"
 UNRELEASED_LIST = "games-unreleased.txt"
 
-# Repo-facing documentation. Useful on GitHub, but dead weight inside the extension
-# Vortex installs, so it is kept out of the released zip. DESCRIPTION.bbcode is the
-# mod page description, written by hand except for its install-notes list, which
-# generate_notes.js --description refreshes at the end of every release run.
-# *.bak covers the index.js.bak that port_to_template.py and hand edits leave behind.
-# Entries are wildcard patterns (7-Zip -xr! and fnmatch), matched against file names.
-ZIP_EXCLUDES = [
-    "EXTENSION_EXPLAINED.md",
-    "NOTES_FOR_MOD_AUTHORS.md",
-    "NOTES_FOR_MOD_AUTHORS.bbcode",
-    "DESCRIPTION.bbcode",
-    "*.bak",
-]
+# Repo-facing documentation and *.bak leftovers are dead weight inside the extension
+# Vortex installs, so they are kept out of the released zip (vortex_utils.PACKAGE_EXCLUDES,
+# shared with deploy_to_vortex.py). Entries are wildcard patterns (7-Zip -xr! and fnmatch).
+ZIP_EXCLUDES = PACKAGE_EXCLUDES
 
 
 # == Extension helpers =========================================================
@@ -268,6 +269,9 @@ def release(game_id, open_browser, dry_run=False, skip_lint=False,
         log_error(game_id, "info.json missing or invalid")
         return False
     version = info.get("version")
+    if not version:
+        log_error(game_id, "info.json has no 'version'")
+        return False
 
     if info.get("id") != expected_id:
         log_error(game_id, f"info.json 'id' must be {expected_id!r}, found {info.get('id')!r}")
@@ -291,15 +295,15 @@ def release(game_id, open_browser, dry_run=False, skip_lint=False,
         return False
     with open(changelog_path, encoding="utf-8", errors="replace") as f:
         changelog_src = f.read()
-    if version and not re.search(rf'## \[{re.escape(version)}\]', changelog_src):
+    if not re.search(rf'## \[{re.escape(version)}\]', changelog_src):
         log_error(game_id, f"version {version} has no entry in CHANGELOG.md (add ## [{version}] section)")
         return False
 
     changelog_version, date = parse_changelog_latest(folder)
-    if version and changelog_version and version != changelog_version:
+    if changelog_version and version != changelog_version:
         log_warn(game_id, f"info.json version ({version}) does not match latest CHANGELOG entry ({changelog_version})")
-    changelog_entry = extract_changelog_entry(changelog_src, version or "")
-    if version and changelog_entry_is_empty(changelog_entry):
+    changelog_entry = extract_changelog_entry(changelog_src, version)
+    if changelog_entry_is_empty(changelog_entry):
         log_error(game_id, f"CHANGELOG [{version}] has no note text (unfilled stub?) - "
                            f"releasing it would publish blank release notes")
         return False
@@ -312,7 +316,7 @@ def release(game_id, open_browser, dry_run=False, skip_lint=False,
     markers = sorted(
         (tuple(int(p) for p in f[:-4].split(".")) for f in os.listdir(folder)
          if re.fullmatch(r"\d+\.\d+\.\d+\.txt", f)), reverse=True)
-    if version and markers:
+    if markers:
         marker_version = ".".join(map(str, markers[0]))
         for skipped_ver, body in unreleased_intermediate_sections(changelog_src, marker_version, version):
             log_warn(game_id, f"CHANGELOG [{skipped_ver}] sits between the marker ({marker_version}) and "
@@ -550,6 +554,13 @@ def main():
         action="store_true",
         help="Also open the Nexus Mods changelog editor (Documents tab) in the browser.",
     )
+    parser.add_argument(
+        "--push-description",
+        action="store_true",
+        help="Push the regenerated DESCRIPTION.bbcode (and its summary) to each game's Nexus page "
+             "via sync_mod_pages.py. Backup first; a never-pushed page whose live text differs is "
+             "skipped until pushed once by hand with --force. Needs NEXUS_API_KEY.",
+    )
     args = parser.parse_args()
 
     upload = True if args.upload else False
@@ -564,6 +575,7 @@ def main():
     saved = []
     failed = []
     details = {}
+    interrupted = False
     try:
         for game_id in args.game:
             try:
@@ -595,6 +607,7 @@ def main():
             details[game_id] = r_out
     except KeyboardInterrupt:
         print("\n\n  Interrupted.")
+        interrupted = True
     finally:
         # Regenerate every generated doc AFTER the release loop, for the games that
         # actually released. release() rewrites the index.js header (Version, Date) and
@@ -627,6 +640,20 @@ def main():
                 if not ok:
                     print(f"  WARNING - generate_notes.js --description batch failed: {err}")
 
+                if args.push_description:
+                    if not ok:
+                        print("  WARNING - skipping the description push: the description batch failed")
+                    else:
+                        print(f"  Pushing DESCRIPTION.bbcode to the Nexus page ({label})...")
+                        try:
+                            pushed = push_pages(game_saved)
+                        except Exception as e:
+                            print(f"  WARNING - description push failed: {e}")
+                        else:
+                            for r in pushed:
+                                if r["status"] in ("error", "gated"):
+                                    print(f"  WARNING - {r['id']}: description not pushed ({r['status']})")
+
         uploaded = [gid for gid, r in details.items() if r.get("uploaded")]
         if uploaded:
             drop_from_unreleased_list(uploaded)
@@ -634,10 +661,13 @@ def main():
             would_upload = [gid for gid in saved if details.get(gid, {}).get("upload_ready")]
             drop_from_unreleased_list(would_upload, dry_run=True)
 
-        print_run_summary(saved, failed, skipped=[])
+        # details is filled only once an id finishes, so after Ctrl-C the id that was
+        # mid-release and every one after it count as not processed.
+        not_processed = [gid for gid in args.game if gid not in details] if interrupted else []
+        print_run_summary(saved, failed, skipped=not_processed, skip_label="interrupted, not processed")
         if not args.dry_run:
             _print_per_game_summary(details)
-    return 1 if failed else 0
+    return 1 if (failed or interrupted) else 0
 
 
 if __name__ == "__main__":

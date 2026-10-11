@@ -11,7 +11,7 @@ Usage:
         REPO_ROOT, PCGW_API, PCGW_USER_AGENT, NEXUS_USER_AGENT, EGDATA_API,
         TITLE_IMAGES_DIR, BANNER_IMAGES_DIR, LISTS_DIR,
         GUI_FLAGS_PATH, GUI_STATS_PATH,
-        GAME_PREFIX, TEMPLATE_PREFIX, VORTEX_PLUGINS_DIR, NEW_EXTENSION_VERSION,
+        GAME_PREFIX, HELPER_PREFIX, TEMPLATE_PREFIX, VORTEX_PLUGINS_DIR, NEW_EXTENSION_VERSION,
         read_index_js, write_index_js,
         extract_game_id, extract_steamapp_id, has_real_steamapp_id,
         extract_game_name, extract_extension_url, extract_file_group_id,
@@ -20,7 +20,7 @@ Usage:
         name_lookup_variants, lookup_pcgamingwiki, pcgw_get_json,
         pcgw_title_from_url, pcgw_page_wikitext, parse_pcgw_availability,
         get_api_key, http_get, http_get_bytes, http_get_json, http_post_json,
-        nexus_v3_get, nexus_v3_post_json,
+        nexus_v3_get, nexus_v3_post_json, nexus_v3_patch_json,
         egdata_search_queries, normalize_title_for_match, store_title_matches,
         strip_edition_suffix, is_edition_variant_title,
         fetch_epic_app_id, gogdb_search, fetch_gog_app_id, fetch_xbox_identity,
@@ -75,9 +75,19 @@ Usage:
         download_exec_icon, download_cover_art,
         download_title_image, download_banner_image,
         write_text_atomic, open_in_default_app,
-        run_script, load_vortex_manifest,
+        run_script, load_vortex_manifest, load_nexus_gamelist,
         resize_pngs_in_dirs, build_js_symbol_table,
         list_template_names, iter_extension_folders,
+        CB1_NEXUS_USER_ID, PACKAGE_EXCLUDES, PCGW_FETCH_INTERVAL,
+        classify_pcgw_path, format_pcgw_path, parse_pcgw_data_paths,
+        parse_ue_engine_version, get_ue_engine_version,
+        verify_epic_app_id, verify_gog_app_id, verify_xbox_identity,
+        fetch_xbox_package_formats, xbox_formats_protected, has_any_steamapp_id,
+        ensure_vortex_api_name, extract_extension_name, extract_index_header,
+        extension_display_name, extension_prefix, resolve_extension_folder,
+        iter_helper_folders, list_helper_ids, is_multi_game_extension,
+        add_planned_improvement, open_planned_improvements,
+        changelog_entry_is_empty, unreleased_intermediate_sections,
     )
 """
 
@@ -1605,15 +1615,20 @@ def is_missing(src, var_name):
 
 
 def set_or_insert(src, var_name, value, comment=None):
-    """Replace the 'XXX' value for var_name, or insert the declaration before
-    `const spec = {` if var_name is missing. value is a Python string (will be
-    JSON-quoted in the output). comment is an optional trailing // comment."""
-    escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+    """Set var_name to the string value: replace the literal on its existing
+    const/let declaration (an "XXX" placeholder, null, or an earlier real value),
+    or insert the declaration before `const spec = {` if no declaration line
+    exists. value is a Python string (will be JSON-quoted in the output). comment
+    is an optional trailing // comment, used only on an insert.
+
+    Never adds a second declaration of a name that is already declared. Whether
+    overwriting a real value is allowed is the caller's call (patch_extensions
+    gates on --force / --force-pcgw first)."""
+    literal = js_string_literal(value)
+    if re.search(rf'^[ \t]*(?:const|let)\s+{re.escape(var_name)}\s*=', src, re.MULTILINE):
+        return replace_const_rhs(src, var_name, literal)
     comment_str = f" //{comment}" if comment else ""
-    new_line = f'const {var_name} = "{escaped}";{comment_str}'
-    pattern = rf'((?:const|let)\s+{re.escape(var_name)}\s*=\s*)["\']XXX["\']([^;\n]*;?)'
-    if re.search(pattern, src):
-        return re.sub(pattern, rf'\1"{escaped}"\2', src)
+    new_line = f'const {var_name} = {literal};{comment_str}'
     insert_marker = re.search(r'^const\s+spec\s*=\s*\{', src, re.MULTILINE)
     if insert_marker:
         pos = insert_marker.start()
@@ -1626,12 +1641,21 @@ def get_discovery_ids(src):
     Returns a list of variable name strings (e.g. ["STEAMAPP_ID", "EAAPP_ID"]).
     Falls back to ["STEAMAPP_ID"] if the block cannot be parsed.
     Strips JS comments so commented-out IDs are excluded.
-    Matches both quoted ("discovery": {"ids": [...]}) and the repo's actual
-    unquoted-key convention (discovery: {ids: [...]})."""
-    m = re.search(r'"?discovery"?\s*:\s*\{.*?"?ids"?\s*:\s*\[([^\]]*)\]', src, re.DOTALL)
+    Matches both quoted ("discovery": {"ids": [...]}) and unquoted-key
+    (discovery: {ids: [...]}) spellings. `ids:` may hold an inline array or a
+    bare const name (`ids: DISCOVERY_IDS_ACTIVE`, the form most extensions use);
+    a const name is resolved to that const's array."""
+    m = re.search(
+        r'"?discovery"?\s*:\s*\{.*?"?ids"?\s*:\s*(?:\[([^\]]*)\]|([A-Za-z_]\w*))',
+        src, re.DOTALL,
+    )
     if not m:
         return ['STEAMAPP_ID']
     ids_block = m.group(1)
+    if ids_block is None:
+        ids_block = const_array_value(src, m.group(2))
+        if ids_block is None:
+            return ['STEAMAPP_ID']
     ids_block = re.sub(r'/\*.*?\*/', '', ids_block, flags=re.DOTALL)
     ids_block = re.sub(r'//[^\n]*', '', ids_block)
     names = re.findall(r'\b([A-Z_][A-Z0-9_]+)\b', ids_block)
@@ -1664,20 +1688,26 @@ def add_to_discovery_ids(src):
     Returns the updated source string.
     """
     def _append(s, var_name):
-        m = re.search(r'const\s+DISCOVERY_IDS_ACTIVE\s*=\s*\[([^\]]*)\]', s)
-        if not m or re.search(rf'\b{re.escape(var_name)}\b', m.group(1)):
+        m = re.search(r'const\s+DISCOVERY_IDS_ACTIVE\s*=\s*\[', s)
+        if not m:
             return s
-        # An empty array takes the name alone. Appending ", NAME" to "[]" yields
-        # "[, NAME]" - a sparse array whose first element is a hole, which is
-        # valid JS and so survives node --check while feeding undefined to
-        # discovery.
-        separator = "" if not m.group(1).strip() else ", "
-        return re.sub(
-            r'(const\s+DISCOVERY_IDS_ACTIVE\s*=\s*\[[^\]]*?)(\s*\])',
-            rf'\1{separator}{var_name}\2',
-            s,
-            count=1,
-        )
+        open_pos = m.end() - 1
+        masked = mask_comments_and_strings(s)
+        close_pos = find_matching_bracket(masked, open_pos)
+        if close_pos is None or re.search(rf'\b{re.escape(var_name)}\b', s[open_pos + 1:close_pos]):
+            return s
+        # Splice after the last real element, found on the comment-masked copy, so
+        # a trailing comma and a trailing `// note` both stay where they are. An
+        # empty array takes the name alone: appending ", NAME" to "[]" yields
+        # "[, NAME]", a sparse array whose first element is a hole - valid JS that
+        # survives node --check while feeding undefined to discovery. A trailing
+        # comma kept after the last element is why this is not a plain
+        # "insert before ]".
+        pieces = split_top_level_masked(masked, open_pos + 1, close_pos)
+        if not pieces:
+            return s[:open_pos + 1] + var_name + s[open_pos + 1:]
+        last_end = pieces[-1][1]
+        return s[:last_end] + ", " + var_name + s[last_end:]
 
     def _has_real_value(s, var_name):
         v = const_value(s, var_name)
@@ -2254,11 +2284,13 @@ def download_title_image(appid, game_name, out_path, sgdb_key=None,
 
     hero_id: if given, use that specific SteamGridDB hero asset
         (https://www.steamgriddb.com/hero/<id>) as the background instead of the
-        best hero auto-picked for appid. The composite still falls back to the
-        grid/capsule path if no logo is available.
+        best hero auto-picked for appid.
     logo_id: if given, use that specific SteamGridDB logo asset
         (https://www.steamgriddb.com/logo/<id>) instead of the best auto-picked
         logo for appid.
+    A pinned hero_id or logo_id never falls back to the grid/capsule art: if the composite
+    cannot be built the call returns (False, None) and out_path is left untouched, rather
+    than overwriting a deliberately chosen image with unrelated art.
     """
     from io import BytesIO
     from PIL import Image
@@ -2336,6 +2368,9 @@ def download_title_image(appid, game_name, out_path, sgdb_key=None,
                 source = "SteamGridDB hero + logo composite"
             except Exception as e:
                 print(f"    Composite error: {e}")
+
+    if result_img is None and (hero_id or logo_id):
+        return False, None
 
     if result_img is None and sgdb_key:
         try:
@@ -2461,50 +2496,51 @@ def resize_pngs_in_dirs(folders, dry_run=False):
 
 # == Node / repo helpers =======================================================
 
-def run_generate_explained(game_id):
-    """Run generate_explained.js for game_id. Returns (ok: bool, stderr: str)."""
+def _run_node_generator(script, args):
+    """Run a Node doc generator from the repo root. Returns (ok: bool, detail: str).
+
+    detail is the generator's stderr; when that is empty on a failure it falls back to the
+    generator's own per-folder ERR/ERROR/SKIP lines, which both generators print on STDOUT
+    (only a bad id or a crash reaches stderr), so a failed run is never reported with no
+    reason."""
     result = subprocess.run(
-        ["node", "generate_explained.js", game_id],
+        ["node", script] + list(args),
         cwd=REPO_ROOT, capture_output=True, text=True,
         encoding="utf-8", errors="replace",
     )
-    return result.returncode == 0, result.stderr.strip()
+    detail = result.stderr.strip()
+    if not detail and result.returncode != 0:
+        detail = "\n".join(
+            line.strip() for line in result.stdout.splitlines()
+            if line.strip().startswith(("ERR", "SKIP"))
+        )
+    return result.returncode == 0, detail
+
+
+def run_generate_explained(game_id):
+    """Run generate_explained.js for game_id. Returns (ok: bool, detail: str)."""
+    return _run_node_generator("generate_explained.js", [game_id])
 
 
 def run_generate_explained_batch(game_ids):
     """Run generate_explained.js for multiple game IDs in a single node invocation.
-    Returns (ok: bool, stderr: str). No-op (ok=True) for empty input."""
+    Returns (ok: bool, detail: str). No-op (ok=True) for empty input."""
     if not game_ids:
         return True, ""
-    result = subprocess.run(
-        ["node", "generate_explained.js"] + list(game_ids),
-        cwd=REPO_ROOT, capture_output=True, text=True,
-        encoding="utf-8", errors="replace",
-    )
-    return result.returncode == 0, result.stderr.strip()
+    return _run_node_generator("generate_explained.js", game_ids)
 
 
 def run_generate_notes(game_id):
-    """Run generate_notes.js for game_id. Returns (ok: bool, stderr: str)."""
-    result = subprocess.run(
-        ["node", "generate_notes.js", game_id],
-        cwd=REPO_ROOT, capture_output=True, text=True,
-        encoding="utf-8", errors="replace",
-    )
-    return result.returncode == 0, result.stderr.strip()
+    """Run generate_notes.js for game_id. Returns (ok: bool, detail: str)."""
+    return _run_node_generator("generate_notes.js", [game_id])
 
 
 def run_generate_notes_batch(game_ids):
     """Run generate_notes.js for multiple game IDs in a single node invocation.
-    Returns (ok: bool, stderr: str). No-op (ok=True) for empty input."""
+    Returns (ok: bool, detail: str). No-op (ok=True) for empty input."""
     if not game_ids:
         return True, ""
-    result = subprocess.run(
-        ["node", "generate_notes.js"] + list(game_ids),
-        cwd=REPO_ROOT, capture_output=True, text=True,
-        encoding="utf-8", errors="replace",
-    )
-    return result.returncode == 0, result.stderr.strip()
+    return _run_node_generator("generate_notes.js", game_ids)
 
 
 def run_generate_description_batch(game_ids):
@@ -2513,15 +2549,10 @@ def run_generate_description_batch(game_ids):
     inside each extension's DESCRIPTION.bbcode (the Nexus mod page description) and
     scaffolding that file for extensions that do not have one yet. Everything else on an
     existing page is left as the author wrote it.
-    Returns (ok: bool, stderr: str). No-op (ok=True) for empty input."""
+    Returns (ok: bool, detail: str). No-op (ok=True) for empty input."""
     if not game_ids:
         return True, ""
-    result = subprocess.run(
-        ["node", "generate_notes.js", "--description"] + list(game_ids),
-        cwd=REPO_ROOT, capture_output=True, text=True,
-        encoding="utf-8", errors="replace",
-    )
-    return result.returncode == 0, result.stderr.strip()
+    return _run_node_generator("generate_notes.js", ["--description"] + list(game_ids))
 
 
 def node_check(path):
@@ -2607,10 +2638,10 @@ def iter_helper_folders(target_ids=None):
     """Yield (folder, helper_id, src) for every helper-* extension folder.
     If target_ids is a non-empty collection, only those helper IDs are yielded.
 
-    helper_id is the folder suffix (e.g. "falloutlondon"), NEVER extract_game_id() --
+    helper_id is the folder suffix (e.g. "falloutlondonsetup"), NEVER extract_game_id() --
     a companion helper's GAME_ID const (when present at all) names its target game,
-    not itself, and would collide with that game's own game-* folder (helper-falloutlondon
-    sets GAME_ID = "fallout4", same id as game-fallout4)."""
+    not itself, and would collide with that game's own game-* folder
+    (helper-falloutlondonsetup sets GAME_ID = "fallout4", same id as game-fallout4)."""
     for entry in sorted(os.listdir(REPO_ROOT)):
         folder = os.path.join(REPO_ROOT, entry)
         if not os.path.isdir(folder):
@@ -2655,16 +2686,23 @@ def run_concurrent_batch(items, worker_fn, max_workers=8):
 
     worker_fn(item) must return a tuple whose first element is the result key,
     and must catch its own per-item exceptions (an uncaught exception aborts
-    the batch). KeyboardInterrupt prints an "Interrupted." notice and returns
-    the partial batch collected so far."""
+    the batch). KeyboardInterrupt prints an "Interrupted." notice, cancels every queued
+    item (only downloads already running finish) and returns the partial batch collected
+    so far."""
     batch = {}
+    pool = ThreadPoolExecutor(max_workers=max_workers)
+    interrupted = False
     try:
-        with ThreadPoolExecutor(max_workers=max_workers) as pool:
-            for f in as_completed({pool.submit(worker_fn, item): item for item in items}):
-                r = f.result()
-                batch[r[0]] = r
+        for f in as_completed({pool.submit(worker_fn, item): item for item in items}):
+            r = f.result()
+            batch[r[0]] = r
     except KeyboardInterrupt:
+        interrupted = True
         print("\n\n  Interrupted.")
+    finally:
+        # Not `with ThreadPoolExecutor(...)`: its __exit__ waits for every queued item, so
+        # Ctrl-C would sit there until the whole remaining batch had downloaded.
+        pool.shutdown(wait=not interrupted, cancel_futures=interrupted)
     return batch
 
 
@@ -2840,6 +2878,14 @@ CB1_NEXUS_USER_ID = "3263034"
 _NEXUS_GAMELIST_PATH = os.path.join(os.environ.get("APPDATA", ""), "Vortex", "temp", "nexus_gamelist.json")
 
 
+def load_nexus_gamelist():
+    """Return {domain_name: numeric game id} from Vortex's cached
+    %APPDATA%\\Vortex\\temp\\nexus_gamelist.json (run Vortex once to create it).
+    Raises OSError / ValueError / KeyError when the file is missing or malformed."""
+    with open(_NEXUS_GAMELIST_PATH, encoding="utf-8") as f:
+        return {g["domain_name"]: g["id"] for g in json.load(f)}
+
+
 def load_vortex_manifest(entries=None):
     """Return {game_id: mod_id} for ChemBoy1's game extensions on Nexus Mods.
 
@@ -2851,8 +2897,7 @@ def load_vortex_manifest(entries=None):
     entries: an already-fetched `data.extensions` list; the feed is fetched live when omitted.
     Returns {} and prints a warning on any error."""
     try:
-        with open(_NEXUS_GAMELIST_PATH, encoding="utf-8") as f:
-            domains = {g["id"]: g["domain_name"] for g in json.load(f)}
+        domains = {game_id: domain for domain, game_id in load_nexus_gamelist().items()}
         if entries is None:
             req = urllib.request.Request(f"{_NEXUS_V3}/vortex/extensions", headers=_NEXUS_V3_HEADERS)
             with urllib.request.urlopen(req, timeout=_HTTP_TIMEOUT) as resp:
@@ -2904,21 +2949,23 @@ def add_planned_improvement(folder, bullet):
     section, creating the section right after the '# Changelog' header if it is
     missing. bullet is the line text without a leading '- '. A pre-existing
     '- None Planned' placeholder is dropped. Returns True if written, False if
-    CHANGELOG.md is missing or the exact bullet line is already present."""
+    CHANGELOG.md is missing or the exact bullet line is already in the Planned
+    Improvements section (a longer bullet containing the text, or the same text
+    in a released section, does not count)."""
     path = os.path.join(folder, "CHANGELOG.md")
     if not os.path.isfile(path):
         return False
     with open(path, encoding="utf-8") as f:
         content = f.read()
     line = f"- {bullet}"
-    if line in content:
-        return False
 
     heading = "## Planned Improvements (Not Yet Released)"
     if heading in content:
         body_start = content.index(heading) + len(heading)
         next_heading_m = re.search(r'^## ', content[body_start:], re.MULTILINE)
         section_end = body_start + next_heading_m.start() if next_heading_m else len(content)
+        if any(row.rstrip() == line for row in content[body_start:section_end].splitlines()):
+            return False
         section = content[body_start:section_end].replace("- None Planned\n", "", 1)
         existing_bullets = section.strip('\n')
         new_section = "\n\n" + (existing_bullets + f"\n{line}" if existing_bullets else line) + "\n\n"
@@ -2929,8 +2976,7 @@ def add_planned_improvement(folder, bullet):
         rest = content[pos:].lstrip('\n')
         new_content = content[:pos] + f"\n{heading}\n\n{line}\n\n" + rest
 
-    with open(path, "w", encoding="utf-8", newline="\n") as f:
-        f.write(new_content)
+    write_text_atomic(path, new_content)
     return True
 
 
@@ -3014,27 +3060,30 @@ def validate_index_js(src: str, is_helper: bool = False) -> list[str]:
 
 
 _REGISTER_INSTALLER_RE = re.compile(
-    r'^[ \t]*context\.registerInstaller\(\s*([^,]+?)\s*,\s*(\d+)\s*,'
+    r'\bcontext\.registerInstaller\(\s*([^,]+?)\s*,\s*(\d+)\s*,'
 )
 
 
 def find_registerinstaller_calls(src):
     """Return (lineno, installer_id, priority) for every LIVE context.registerInstaller
-    call in src. 1-indexed lineno, priority as int.
+    call in src. 1-indexed lineno of the line the call opens on, priority as int.
 
-    Comment-aware: a line whose stripped text starts with "//" is skipped, so a
-    disabled/example installer's priority literal can never collide with a live
-    one. Every extension carries at least one commented-out sample registerInstaller
-    line (the template's disabled CONFIG_ID installer) -- scanning without this guard
-    false-positives a "duplicate priority" the moment a live priority matches it."""
-    calls = []
-    for lineno, line in enumerate(src.splitlines(), 1):
-        if line.lstrip().startswith('//'):
-            continue
-        m = _REGISTER_INSTALLER_RE.match(line)
-        if m:
-            calls.append((lineno, m.group(1).strip(), int(m.group(2))))
-    return calls
+    Scans a comment-stripped copy (strip_js_comments, which also resolves the
+    `/* ... //*/` block-toggle idiom), so a disabled/example installer's priority
+    literal can never collide with a live one. Every extension carries at least
+    one commented-out sample registerInstaller line (the template's disabled
+    CONFIG_ID installer) -- scanning without this guard false-positives a
+    "duplicate priority" the moment a live priority matches it.
+
+    The pattern is not line-anchored and may span lines, so a call split over
+    several lines (`context.registerInstaller(` alone on its line) or sitting
+    behind an inline `if (cond)` is found as well. A call whose priority is not
+    a numeric literal is not reported."""
+    clean = strip_js_comments(src)
+    return [
+        (clean.count("\n", 0, m.start()) + 1, m.group(1).strip(), int(m.group(2)))
+        for m in _REGISTER_INSTALLER_RE.finditer(clean)
+    ]
 
 
 def detect_stores(src: str) -> str:
@@ -3351,12 +3400,18 @@ def replace_const_rhs(src, name, new_rhs, *, count=1):
     - store ID consts sit at `= null` until they are resolved, so a
     quoted-only pattern silently no-ops on exactly the case a store sweep needs.
     The trailing lookahead keeps the bare-literal branch from eating the first
-    operand of an expression like `= 2 + OFFSET`."""
+    operand of an expression like `= 2 + OFFSET`.
+
+    The quoted branch closes on the SAME quote it opened with (backreference)
+    and steps over backslash escapes, so `"Assassin's Creed"` is one literal
+    rather than `"Assassin'` plus a stray tail. new_rhs is spliced in through a
+    callable, not a replacement template: a template would collapse every `\\\\`
+    in a Windows-path value to `\\`."""
     pattern = (
         rf'^([ \t]*(?:const|let)\s+{re.escape(name)}\s*=\s*)'
-        rf'''(?:["'][^"']*["']|(?:null|undefined|true|false|\d+(?:\.\d+)?)(?=\s*(?:;|//|$)))'''
+        rf'''(?:(["'])(?:\\.|(?!\2)[^\\\n])*\2|(?:null|undefined|true|false|\d+(?:\.\d+)?)(?=\s*(?:;|//|$)))'''
     )
-    return re.sub(pattern, rf'\g<1>{new_rhs}', src, count=count, flags=re.MULTILINE)
+    return re.sub(pattern, lambda m: m.group(1) + new_rhs, src, count=count, flags=re.MULTILINE)
 
 
 def js_string_literal(value):
@@ -3620,6 +3675,33 @@ def nexus_v3_post_json(path, body, api_key):
         raise RuntimeError(f"nexus_v3_post_json {path}: HTTP {e.code} {e.reason} - {body_txt[:400]}") from None
 
 
+def nexus_v3_patch_json(path, body, api_key):
+    """PATCH JSON to a Nexus Mods v3 endpoint (e.g. `/mods/{uid}`, editMod).
+
+    Uses certifi SSL context. Returns the parsed JSON response body, or {} when the response is
+    empty: the edit routes answer 204 No Content, which nexus_v3_post_json would fail to parse.
+    Not retried (a failed PATCH may or may not have applied). Raises RuntimeError on HTTP errors."""
+    url = f"{_NEXUS_V3}{path}"
+    payload = json.dumps(body).encode("utf-8")
+    req = urllib.request.Request(
+        url,
+        data=payload,
+        method="PATCH",
+        headers={"apikey": api_key, "Content-Type": "application/json", **_NEXUS_V3_HEADERS},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=60, context=_SSL_CTX_NEXUS) as resp:
+            raw = resp.read()
+            return json.loads(raw) if raw else {}
+    except urllib.error.HTTPError as e:
+        body_txt = ""
+        try:
+            body_txt = e.read().decode("utf-8", errors="replace")
+        except Exception:
+            pass
+        raise RuntimeError(f"nexus_v3_patch_json {path}: HTTP {e.code} {e.reason} - {body_txt[:400]}") from None
+
+
 def nexus_get_mod_files(domain, mod_id, api_key):
     """Fetch the file list for a mod page from the Nexus v1 API.
 
@@ -3753,11 +3835,28 @@ def find_vortex_exe():
     return None
 
 
+# Repo-facing files that live in an extension folder but are never part of the
+# extension Vortex runs: the generated docs, the hand-written mod page description
+# (its install-notes list is refreshed by generate_notes.js --description) and the
+# *.bak that port_to_template.py and hand edits leave behind. Wildcard patterns
+# matched against file names. release_extension.py keeps them out of the released
+# zip, deploy_to_vortex.py out of the plugins folder.
+PACKAGE_EXCLUDES = [
+    "EXTENSION_EXPLAINED.md",
+    "NOTES_FOR_MOD_AUTHORS.md",
+    "NOTES_FOR_MOD_AUTHORS.bbcode",
+    "DESCRIPTION.bbcode",
+    "*.bak",
+]
+
+
 def safe_rmtree(path, hint=None):
     """Remove a directory tree, retrying once on PermissionError after 1 second.
 
     On retry, read-only bits are cleared via an error handler before the
-    per-file delete is re-attempted.
+    per-file delete is re-attempted. That handler swallows every per-file error,
+    so the retry rmtree itself never raises for a still-locked file; the folder
+    is re-checked afterwards and a PermissionError raised if anything survived.
     hint: shown in the warning when PermissionError is caught."""
     def _on_err(func, fpath, _exc):
         try:
@@ -3778,6 +3877,8 @@ def safe_rmtree(path, hint=None):
         time.sleep(1)
         try:
             shutil.rmtree(path, **retry_kwargs)
+            if os.path.exists(path):
+                raise PermissionError(f"{path} could not be fully removed")
         except PermissionError as e2:
             print(f"  ERROR - {e2}. {msg}. Could not remove folder.")
             raise
@@ -4116,13 +4217,18 @@ def strip_js_comments(src):
         if c == "/" and prev_significant in _REGEX_PRECEDERS:   # regex literal
             out.append(c)
             i += 1
+            in_class = False                              # '/' inside [...] does not end the regex
             while i < n:
                 if src[i] == "\\":
                     out.append(src[i:i + 2])
                     i += 2
                     continue
+                if src[i] == "[":
+                    in_class = True
+                elif src[i] == "]":
+                    in_class = False
                 out.append(src[i])
-                if src[i] in "/\n":
+                if src[i] == "\n" or (src[i] == "/" and not in_class):
                     i += 1
                     break
                 i += 1
@@ -4409,13 +4515,34 @@ def audit_skip_rules(line):
     return {r.strip(): reason for r in m.group(1).split(",") if r.strip()}
 
 
-def audit_skip_lines(src, rule):
-    """Return {1-based line number: reason} for every line in src suppressing rule."""
+def audit_skip_lines(src, rule, *, wrapped=True):
+    """Return {1-based line number: reason} for every line in src suppressing rule.
+
+    With wrapped=True (default) a marker on a comment-only line also covers the
+    contiguous `//` comment lines directly under it, so a reason wrapped over
+    several comment lines still reaches the code line below. The audits then match
+    a finding on the code line or the line above it (the last comment line). A
+    marker trailing code covers only its own line, and a following line carrying
+    its own audit-skip marker ends the run. wrapped=False returns only the marker
+    lines themselves, for audits that scan the neighbouring lines' text (the
+    store-id audit searches them for constant names, so wrapped reason text could
+    park the wrong store)."""
+    lines = src.splitlines()
     hits = {}
-    for lineno, line in enumerate(src.splitlines(), 1):
+    for lineno, line in enumerate(lines, 1):
         rules = audit_skip_rules(line)
-        if rule in rules:
-            hits[lineno] = rules[rule]
+        if rule not in rules:
+            continue
+        hits[lineno] = rules[rule]
+        if not wrapped or not line.lstrip().startswith("//"):
+            continue
+        nxt = lineno
+        while nxt < len(lines):
+            follow = lines[nxt]
+            if not follow.lstrip().startswith("//") or audit_skip_rules(follow):
+                break
+            nxt += 1
+            hits.setdefault(nxt, rules[rule])
     return hits
 
 

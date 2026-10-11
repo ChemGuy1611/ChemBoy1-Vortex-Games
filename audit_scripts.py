@@ -265,7 +265,9 @@ def _parse_scripts_md():
 
         # Level-3 subsection — detect Usage vs Environment Variables
         if current_script and re.match(r'^### ', line):
-            lower = line.lower()
+            # Drop the script name first: audit_deprecated_usage.js itself contains "usage",
+            # which would make every one of its subsections parse as Usage.
+            lower = line.lower().replace(current_script.lower(), '')
             if 'usage' in lower:
                 current_sub = 'usage'
             elif 'environment' in lower:

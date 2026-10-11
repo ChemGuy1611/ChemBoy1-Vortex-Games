@@ -8,15 +8,21 @@
  *   NOTES_FOR_MOD_AUTHORS.md       markdown, for the repo / GitHub
  *   NOTES_FOR_MOD_AUTHORS.bbcode  BBCode, paste-ready for a Nexus mod page
  *
- * Both are always overwritten.
+ * Both are always overwritten (unless --check).
  *
  * Run with:  node generate_notes.js
  *            node generate_notes.js subnautica2 [GAME_ID ...]
  *            node generate_notes.js railroader --description
+ *            node generate_notes.js --check [--templates] [GAME_ID ...]
  *
  * Flags:
- *   --json       Write machine-readable JSON to stdout; progress goes to stderr.
+ *   --json       Write machine-readable JSON to stdout; progress goes to stderr. This
+ *                does NOT make the run read-only: files are still written. Use --check.
  *   --templates  Also process template-* folders (when no GAME_ID args given).
+ *   --check      Drift mode: compare what would be generated against the files on disk,
+ *                write nothing, and exit non-zero if any file would change or is missing.
+ *                Combine with --description to check DESCRIPTION.bbcode instead. The only
+ *                read-only way to run this generator.
  *   --description  Write DESCRIPTION.bbcode, the Nexus mod page description, in
  *                  place of the notes files. Two lists on the page are generated: the
  *                  "Mod Installation Notes" list, one line per installer, trigger +
@@ -28,9 +34,12 @@
  *                  everything the author wrote - only each list between its heading and
  *                  the closing [/list] is replaced. A missing page is scaffolded with
  *                  the standard section order for the author to finish.
- *
- * Drift checking is deliberately NOT a flag here - it is handled by the
- * generated-docs audit, which regenerates and diffs.
+ *                  Three more blocks are added to a page that lacks them, never removed
+ *                  or rewritten: a red symlink warning (supportsSymlinks resolves to
+ *                  false), the yellow LogicMod-authors note (ue4-5 with a testLogic
+ *                  installer) and a Credits section (CREDITS_BY_GAME, else the engine
+ *                  default). A second run changes nothing. The summary counts each kind
+ *                  and lists any extension whose supportsSymlinks could not be resolved.
  *
  * Content comes from two tiers:
  *   Tier 1  hand-written prose keyed by the installer's test function name, with
@@ -40,8 +49,10 @@
  * The coverage report shows which extensions still lean on tier 2.
  *
  * JSON output schema:
- *   { timestamp, created, skipped, errors, tier1, tier2, dropped,
+ *   { timestamp, created, skipped, errors, drifted, tier1, tier2, dropped,
  *     results: [{ id, ok, error?, tier1, tier2, unknownFns, dropped }] }
+ *   drifted     files that --check found different from what would be generated (0 otherwise);
+ *               such a result has ok: false and error: "drift".
  *   unknownFns  installer test functions with no tier-1 block for the extension's engine.
  *   dropped     installer test functions that DO have a tier-1 block, but whose build
  *               returned null because a constant it needs did not resolve (usually an
@@ -55,7 +66,6 @@ const {
   buildSymbolTable,
   splitAtTopLevelCommas,
   scanToMatchingClose,
-  resolveValue,
   resolveWithFallback,
   isRealValue,
   parseHeader,
@@ -217,6 +227,22 @@ function val(name, src, table) {
 /** Windows-style display path. */
 function disp(p) {
   return p ? String(p).replace(/\//g, "\\") : p;
+}
+
+/**
+ * The folder a `<folder>` directory is installed INTO. LOGICMODS_PATH names the parent in the
+ * template (`.../Paks`) but already ends in the folder itself in 33 games (`.../Paks/LogicMods`),
+ * so appending the folder name again printed `LogicMods\LogicMods`. Either way the pak lands in
+ * `<parent>/<folder>`, so the parent is the one destination that reads right for both.
+ */
+function folderParent(p, folder) {
+  const parts = String(p)
+    .split(/[\\/]+/)
+    .filter(Boolean);
+  if (parts.length && parts[parts.length - 1].toLowerCase() === String(folder).toLowerCase()) {
+    parts.pop();
+  }
+  return parts.join("/") || ".";
 }
 
 /** Quote a list of names for prose: `a`, `b` or `c`. */
@@ -489,7 +515,7 @@ const PROSE = [
       return {
         title: `Blueprint Mods (${folder})`,
         quick: `a \`${folder}\` folder`,
-        installsTo: v.LOGICMODS_PATH ? `${v.LOGICMODS_PATH}/${folder}` : null,
+        installsTo: v.LOGICMODS_PATH ? folderParent(v.LOGICMODS_PATH, folder) : null,
         lead:
           `Blueprint mods built against UE4SS must sit inside a folder named \`${folder}\`. ` +
           `This is the single most common packaging mistake for Unreal games.`,
@@ -1686,7 +1712,6 @@ function buildVars(src, table) {
     "MELON_FOLDER",
     "MELON_DLL_FILE",
     "MELON_MODS_PATH",
-    "MELON_PLUGINS_PATH",
     "BEPCFGMAN_FILE",
     "BEPCFGMAN_PATH",
     "MELONPREFMAN_FILE",
@@ -1694,7 +1719,6 @@ function buildVars(src, table) {
     "ASSEMBLY_PATH",
     "ASSETS_PATH",
     "PLUGIN_PATH",
-    "DATA_FOLDER",
     // Unity (Jiangyu - MENACE)
     "JIANGYU_FILE",
     "JIANGYU_PATH",
@@ -1712,7 +1736,6 @@ function buildVars(src, table) {
     "FLUFFY_EXEC",
     "REF_FILE",
     "LUA_EXT",
-    "FLUFFYMOD_FILE",
     // Anvil
     "ATK_EXEC",
     "EXTRACTED_FOLDER",
@@ -1720,24 +1743,18 @@ function buildVars(src, table) {
     "DATAFOLDER_STRING",
     "FORGE_EXT",
     "FORGER_EXEC",
-    "FORGER_FOLDER",
     "RESOREP_DLL_FILE",
-    "RESOREP_TEXTURES_PATH",
     "BUILDTABLE_FOLDER",
     // Frostbite
     "FROSTY_EXEC",
     // Far Cry
     "MI_FILE",
-    "BIN_EXT",
-    "XML_FILE",
-    "MIMOD_FILEXML",
     // Reloaded-II
     "RELOADED_EXEC",
     // Cobra / ACSE
     "ACSE_FILE",
     "ACSE_MOD_FILE",
     "OVLDATA_FILE",
-    "LOCALISED_FILE",
     // Godot
     "MAPS_PATH",
     "MAPS_FOLDER",
@@ -1766,7 +1783,6 @@ function buildVars(src, table) {
     "MOVIES_EXTS",
     "BINARIES_FILES",
     "BINARIES_EXTS",
-    "DLCSUB_FOLDERS",
     "PRESET_EXTS",
     "REF_FOLDERS",
     "LOOSE_EXTS",
@@ -1841,14 +1857,7 @@ function buildVars(src, table) {
   v.UNREAL_FILE_EXTS = resolveObjArray("UNREALDATA", "fileExt", src, table);
   // Deploy targets. These resolve far more often than spec.modTypes targetPath,
   // which is frequently a function rather than a literal.
-  for (const n of [
-    "PAKMOD_PATH",
-    "SCRIPTS_PATH",
-    "DLL_PATH",
-    "BINARIES_PATH",
-    "LOGICMODS_PATH",
-    "UE4SS_MOD_PATH",
-  ]) {
+  for (const n of ["PAKMOD_PATH", "SCRIPTS_PATH", "DLL_PATH", "BINARIES_PATH", "LOGICMODS_PATH"]) {
     v[n] = val(n, src, table);
   }
   return v;
@@ -2183,6 +2192,77 @@ function renderSupportedVersions(ctx) {
   return L.join("\n");
 }
 
+/**
+ * Credit lines for the page's Credits section. A credit entry in CREDITS_BY_GAME is either one of
+ * these keys or a bespoke line used verbatim (code credits that name someone outside this set).
+ * Texts are the wording the live pages already use; Pickysaurus uses the keeper wording.
+ */
+const CREDIT_LINES = {
+  nagev:
+    "Credit to [url=https://next.nexusmods.com/profile/Nagev/about-me]Nagev[/url] (Nexus Mods Vortex Developer) for his support on helping me learn to make Vortex extensions, and being patient when I break things :)",
+  insomnious:
+    "Credit to [url=https://next.nexusmods.com/profile/insomnious/about-me]insomnious[/url] (Nexus Mods App Developer) for his Palworld extension and the method for dynamically setting the game executable so that the Game Pass version is supported.",
+  pickysaurus:
+    "Credit to [url=https://next.nexusmods.com/profile/Pickysaurus/about-me]Pickysaurus[/url] (Nexus Mods Community Manager) for his Unreal Engine Mod Installer extension, which I customized to make it work here with all UE5 mods.",
+  wistipouf:
+    'Credit to [url=https://next.nexusmods.com/profile/Wistipouf/about-me]Wistipouf[/url] for writing the functions to automatically rename ".patch_0" files.',
+};
+
+/** Credits an extension gets when CREDITS_BY_GAME has no entry for it, keyed by engine. */
+const ENGINE_CREDITS = { "ue4-5": ["nagev"] };
+
+/**
+ * Per-game credits where the live page differs from the engine default, in live page order.
+ * Seeded 2026-10-11 from the 270 published extension pages (read-only v1 sweep). An engine-default
+ * game with no live credits is not listed: it gets ENGINE_CREDITS. Edit here, never on the page.
+ */
+const CREDITS_BY_GAME = {
+  abioticfactor: ["insomnious", "nagev"],
+  ageofmythologyretold: ["nagev"],
+  avowed: ["pickysaurus", "insomnious", "nagev"],
+  batmanarkhamasylum: ["nagev"],
+  batmanarkhamcity: ["nagev"],
+  batmanarkhamorigins: [
+    "Credit to Senjay and his [url=https://www.nexusmods.com/site/mods/903]Batman: Arkham Knight Vortex extension[/url] for some code used in the .upk installer.",
+    "nagev",
+  ],
+  bellwright: [
+    "nagev",
+    "Credit to DMVoidKitten for assisting with updating this extension to accomodate the game's changing mod landscape.",
+  ],
+  bioshock: ["nagev"],
+  bioshock2: ["nagev"],
+  bioshockinfinite: ["nagev"],
+  blackmythwukong: ["pickysaurus"],
+  clairobscurexpedition33: ["insomnious", "nagev"],
+  dishonored: ["insomnious", "nagev"],
+  doometernal: [
+    "Credit to deleted user Iluviel735 who made a previous extension for this game on Nexus Mods.",
+  ],
+  frostpunk2: ["insomnious", "nagev"],
+  helldivers2: ["wistipouf"],
+  hellisus: ["pickysaurus", "nagev"],
+  keeper: ["pickysaurus", "nagev"],
+  liesofp: ["insomnious", "nagev"],
+  lordsofthefallen2023: ["insomnious", "nagev"],
+  lostsoulaside: ["pickysaurus", "nagev"],
+  manorlords: ["insomnious", "nagev"],
+  mechwarrior5clans: ["insomnious", "nagev"],
+  mortalkombat: ["pickysaurus"],
+  ninjagaiden2black: ["insomnious", "nagev"],
+  nobodywantstodie: ["pickysaurus"],
+  prey2017: ["nagev"],
+  senuassagahellblade2: ["insomnious", "nagev"],
+  sifu: ["insomnious", "nagev"],
+  stalker2heartofchornobyl: ["insomnious", "nagev"],
+  thelastofuspart1: [
+    "Credit to rm-NoobInCoding on GitHub for creating [url=https://github.com/rm-NoobInCoding/UnPSARC]UnPSARC[/url] tool, and making it freely available with the MIT License.",
+  ],
+  theouterworlds: ["insomnious", "nagev"],
+  untildawn: ["pickysaurus"],
+  wuchangfallenfeathers: ["pickysaurus", "insomnious", "nagev"],
+};
+
 /** Donation block, byte-identical across every published extension page. */
 const SUPPORT_BLOCK = [
   "[b]❤️ Support the Mod Author: [/b]",
@@ -2198,16 +2278,170 @@ const SUPPORT_BLOCK = [
   "[url=https://buymeacoffee.com/chemboy1/][img]https://live.staticflickr.com/65535/54379586002_8dcc6370e5_m.jpg[/img][/url]",
 ].join("\n");
 
+const SUPPORT_HEADING = SUPPORT_BLOCK.split("\n")[0];
+const CREDITS_HEADING = "[b]🤝 Credits:[/b]";
+
+/** Value of a plain `const|let|var NAME = true|false;` declaration, or null when there is none. */
+function boolLiteral(src, name) {
+  const decl = new RegExp(`^[ \\t]*(?:const|let|var)\\s+${name}\\s*=\\s*(true|false)\\s*;`, "m");
+  const m = decl.exec(src);
+  return m ? m[1] === "true" : null;
+}
+
+/**
+ * Whether the extension registers its game with symlink support, read from `supportsSymlinks:`.
+ * Four shapes exist: a literal, a boolean constant (`allowSymlinks`), and `SYM_LINKS`, which the
+ * UE4-5 template declares true and flips false inside `if (IO_STORE) { ... }`. Anything else is
+ * unresolved, so the page gets no note rather than a wrong one. Several registrations (multi-game
+ * extensions) must agree. Vortex only treats `=== false` as unsupported, so an extension that never
+ * sets the key supports symlinks. Returns { supported: true | false | null, reason }.
+ */
+function resolveSymlinkSupport(src) {
+  const exprs = [...src.matchAll(/\bsupportsSymlinks:\s*([^,}\n]+)/g)].map((m) =>
+    m[1].replace(/\/\/.*$/, "").trim(),
+  );
+  if (!exprs.length) return { supported: true, reason: null };
+  const values = exprs.map((expr) => {
+    if (expr === "true" || expr === "false") return expr === "true";
+    if (!/^[A-Za-z_$][\w$]*$/.test(expr)) return null;
+    let value = boolLiteral(src, expr);
+    if (value === null) return null;
+    // `if (FLAG) { NAME = false; }` overrides the declared default; FLAG must be a plain literal.
+    const override = new RegExp(
+      `if\\s*\\(\\s*(!?)\\s*([A-Za-z_$][\\w$]*)\\s*\\)\\s*\\{[^{}]*?\\b${expr}\\s*=\\s*(true|false)\\s*;`,
+      "g",
+    );
+    for (const m of src.matchAll(override)) {
+      const flag = boolLiteral(src, m[2]);
+      if (flag === null) return null;
+      if (flag !== (m[1] === "!")) value = m[3] === "true";
+    }
+    return value;
+  });
+  if (values.includes(null)) return { supported: null, reason: `unresolved: ${exprs.join(", ")}` };
+  if (new Set(values).size > 1) return { supported: null, reason: `mixed: ${exprs.join(", ")}` };
+  return { supported: values[0], reason: null };
+}
+
+/** BBCode credit lines for one extension: its CREDITS_BY_GAME entry, else the engine default. */
+function creditsFor(gameId, engine) {
+  const keys = CREDITS_BY_GAME[gameId] || ENGINE_CREDITS[engine] || [];
+  return keys.map((k) => CREDIT_LINES[k] || k);
+}
+
+/** What identifies a credit line already on a page: its first link, else the whole text. */
+function creditKey(line) {
+  const m = /\[url=([^\]]+)\]/i.exec(line);
+  return (m ? m[1] : line).trim().toLowerCase();
+}
+
+const SYMLINK_KEY = /does not support symlinks/i;
+const LOGICMODS_KEY = /LogicMod \(Blueprint\) Mod Authors/i;
+
+/** The warning blocks a page carries between its store list and its install list. */
+function warningBlocks(page) {
+  return {
+    symlinks:
+      page.symlinks.supported === false
+        ? "[size=3][b][color=#ea9999]This game does not support symlinks. You must have the mod staging folder and the game on the same drive to use this extension.[/color][/b][/size]"
+        : null,
+    logicmods: page.logicFolder
+      ? `[size=3][b][color=#f9cb9c]UE4SS LogicMod (Blueprint) Mod Authors - You MUST include a "${page.logicFolder}" folder above your .pak file in order for this extension to install the mod to the correct location. Without this, there is no way to differentiate between LogicMod paks and regular pak mods.[/color][/b][/size]`
+      : null,
+  };
+}
+
+function creditsSection(page) {
+  return page.credits.length ? [CREDITS_HEADING, ...page.credits].join("\n") : null;
+}
+
+/**
+ * Add the blocks a page is missing without touching anything the author wrote: the symlink and
+ * LogicMod-authors warnings go in front of the install list, the Credits section in front of the
+ * support block. A block already on the page (matched by key phrase, or by profile link for a
+ * credit) is left alone, so a second run changes nothing. Returns { text, added, notes }.
+ */
+function ensureBlocks(existing, page) {
+  const added = { symlinks: 0, logicmods: 0, credits: 0, creditLines: 0 };
+  const notes = [];
+  let text = existing;
+  const insertAt = (idx, block) => {
+    const gap = text.slice(Math.max(0, idx - 2), idx) === "\n\n" || idx === 0 ? "" : "\n";
+    text = text.slice(0, idx) + gap + block + "\n\n" + text.slice(idx);
+  };
+  const warn = warningBlocks(page);
+
+  if (page.symlinks.supported === true && SYMLINK_KEY.test(text)) {
+    notes.push("symlink warning on the page but the extension supports symlinks - left in place");
+  }
+  const installAt = text.indexOf(INSTALL_HEADING);
+  if (installAt === -1) {
+    notes.push("no install list heading - warning blocks not added");
+  } else {
+    if (warn.logicmods && !LOGICMODS_KEY.test(text)) {
+      insertAt(installAt, warn.logicmods);
+      added.logicmods++;
+    }
+    if (warn.symlinks && !SYMLINK_KEY.test(text)) {
+      // Scaffold order is symlinks first, so sit in front of the LogicMod note when it is there.
+      const logicAt = text.search(LOGICMODS_KEY);
+      insertAt(
+        logicAt === -1 ? text.indexOf(INSTALL_HEADING) : text.lastIndexOf("\n", logicAt) + 1,
+        warn.symlinks,
+      );
+      added.symlinks++;
+    }
+  }
+
+  const wanted = page.credits;
+  if (wanted.length) {
+    const supportAt = text.indexOf(SUPPORT_HEADING);
+    let headAt = text.indexOf(CREDITS_HEADING);
+    if (headAt === -1) {
+      // A page that carries its own Credits heading (pulled from a live page) keeps it.
+      const own = /^\[(?:b|size=\d)\][^\n]*\bCredits:[^\n]*$/m.exec(text);
+      if (own) headAt = own.index;
+    }
+    if (headAt === -1) {
+      if (supportAt === -1) {
+        text = text.replace(/\s*$/, "") + "\n\n" + creditsSection(page) + "\n";
+      } else {
+        insertAt(supportAt, creditsSection(page));
+      }
+      added.credits++;
+      added.creditLines += wanted.length;
+    } else {
+      const sectionEnd = supportAt > headAt ? supportAt : text.length;
+      const body = text.slice(headAt, sectionEnd);
+      const missing = wanted.filter((l) => !body.toLowerCase().includes(creditKey(l)));
+      if (missing.length) {
+        const kept = body.replace(/\s+$/, "");
+        const tail = body.slice(kept.length) || "\n\n";
+        text =
+          text.slice(0, headAt) + kept + "\n" + missing.join("\n") + tail + text.slice(sectionEnd);
+        added.creditLines += missing.length;
+      }
+    }
+  }
+  return { text, added, notes };
+}
+
 /**
  * Whole-page scaffold, used only when no DESCRIPTION.bbcode exists yet. Follows
  * the section order every published extension page uses. The parts a generator cannot
- * know - loader warnings, per-game usage notes, credits - are left for the author.
+ * know - loader lines and per-game usage notes - are left for the author.
  */
 function scaffoldDescription(ctx, installBlock, supportedBlock) {
   const L = [];
   L.push(`This extension adds ${ctx.gameName} modding support to Vortex Mod Manager.`);
   L.push("");
   L.push(supportedBlock);
+  const warn = Object.values(warningBlocks(ctx.page)).filter(Boolean);
+  if (warn.length) {
+    L.push("");
+    L.push(warn.join("\n\n"));
+    L.push("");
+  }
   L.push(installBlock);
   L.push("[b]📋 Usage Notes:[/b]");
   L.push("[list]");
@@ -2216,6 +2450,11 @@ function scaffoldDescription(ctx, installBlock, supportedBlock) {
   );
   L.push("[/list]");
   L.push("");
+  const credits = creditsSection(ctx.page);
+  if (credits) {
+    L.push(credits);
+    L.push("");
+  }
   L.push(SUPPORT_BLOCK);
   L.push("");
   return L.join("\n");
@@ -2328,7 +2567,7 @@ function buildNotes(dirName, src) {
       // Tier 2 - derive what we can from the test function itself.
       const body = inst.testFn ? sliceFunction(src, inst.testFn) : null;
       const triggers = body ? deriveTrigger(body, src, table) : [];
-      const name = (targetById.has(inst.id) ? null : null) || prettifyId(inst.id, dirName);
+      const name = prettifyId(inst.id, dirName);
       section = {
         title: name,
         lead: triggers.length
@@ -2346,8 +2585,19 @@ function buildNotes(dirName, src) {
     sections.push(section);
   }
 
+  // What the page says beyond the two generated lists: warnings and credits.
+  const gameId = dirName.replace(/^(game|template)-/, "");
+  const page = {
+    symlinks: resolveSymlinkSupport(src),
+    logicFolder:
+      engine === "ue4-5" && installers.some((i) => i.testFn === "testLogic")
+        ? vars.LOGICMODS_FOLDER || "LogicMods"
+        : null,
+    credits: isTemplate ? [] : creditsFor(gameId, engine),
+  };
+
   const title = `Notes for Mod Authors - ${gameName}`;
-  const ctx = { title, gameName, sections, allFomodGuarded, table };
+  const ctx = { title, gameName, sections, allFomodGuarded, table, page };
   const installBlock = renderDescription(ctx);
   const supportedBlock = renderSupportedVersions(ctx);
   return {
@@ -2355,6 +2605,7 @@ function buildNotes(dirName, src) {
     bbcode: renderBBCode(ctx),
     description: installBlock,
     supported: supportedBlock,
+    page,
     scaffold: () => scaffoldDescription(ctx, installBlock, supportedBlock),
     tier1,
     tier2,
@@ -2402,11 +2653,22 @@ const gameArgs = rawArgs.filter((a) => !a.startsWith("--"));
 const doJson = cliFlags.has("--json");
 const doTemplates = cliFlags.has("--templates");
 const doDescription = cliFlags.has("--description");
+const doCheck = cliFlags.has("--check");
 const jsonResults = [];
 
 function emit(line = "") {
   if (doJson) process.stderr.write(line + "\n");
   else process.stdout.write(line + "\n");
+}
+
+/**
+ * Write content to filePath, or with --check only compare. Returns true when the file on
+ * disk differs from `content` (or does not exist yet).
+ */
+function putFile(filePath, content) {
+  const existing = fs.existsSync(filePath) ? fs.readFileSync(filePath, "utf8") : null;
+  if (!doCheck) writeFileAtomic(filePath, content);
+  return existing !== content;
 }
 
 const entries = fs.readdirSync(ROOT, { withFileTypes: true });
@@ -2429,13 +2691,24 @@ if (gameArgs.length > 0) {
     .sort();
 }
 
+// An id that matches no game-/template- folder (a typo, or a helper-* row, which this generator
+// does not scan) must fail loudly: "Written: 0" with exit 0 reads as success to the GUI.
+if (gameArgs.length > 0 && extDirs.length === 0) {
+  console.error(`Error: no matching directories found for: ${gameArgs.join(", ")}`);
+  process.exit(1);
+}
+
 let created = 0,
   skipped = 0,
   errors = 0,
+  drifted = 0,
   tier1Total = 0,
   tier2Total = 0,
   droppedTotal = 0;
 const tier2Heavy = [];
+const blockTotals = { symlinks: 0, logicmods: 0, credits: 0, creditLines: 0 };
+const unresolvedSymlinks = [];
+const pageNotes = [];
 
 for (const dir of extDirs) {
   const indexPath = path.join(ROOT, dir, "index.js");
@@ -2447,44 +2720,78 @@ for (const dir of extDirs) {
   }
   try {
     const src = fs.readFileSync(indexPath, "utf8");
-    const { md, bbcode, description, supported, scaffold, tier1, tier2, unknownFns, dropped } =
-      buildNotes(dir, src);
+    const {
+      md,
+      bbcode,
+      description,
+      supported,
+      page,
+      scaffold,
+      tier1,
+      tier2,
+      unknownFns,
+      dropped,
+    } = buildNotes(dir, src);
     if (doDescription) {
       // The page is hand-written around these lists, so an existing file is spliced,
       // never rewritten. Only a brand new page gets the full scaffold.
       const descPath = path.join(ROOT, dir, DESCRIPTION_FILE);
+      if (page.symlinks.supported === null)
+        unresolvedSymlinks.push(`${dir}: ${page.symlinks.reason}`);
+      let blocks;
       if (fs.existsSync(descPath)) {
         const existing = fs.readFileSync(descPath, "utf8");
-        const merged = spliceDescription(existing, description, supported);
-        if (merged === null) {
+        const spliced = spliceDescription(existing, description, supported);
+        if (spliced === null) {
           emit(`  SKIP  ${dir} (${DESCRIPTION_FILE} has no "${INSTALL_HEADING}" list to replace)`);
           skipped++;
           jsonResults.push({ id: dir, ok: false, error: "no install list heading" });
           continue;
         }
+        const ensured = ensureBlocks(spliced, page);
+        const merged = ensured.text;
+        blocks = ensured.added;
+        for (const k of Object.keys(blockTotals)) blockTotals[k] += blocks[k];
+        for (const n of ensured.notes) pageNotes.push(`${dir}: ${n}`);
         if (merged === existing) {
           emit(`  OK    ${dir} (${DESCRIPTION_FILE} already up to date)`);
+        } else if (doCheck) {
+          emit(`  DRIFT ${dir} (${DESCRIPTION_FILE} generated content differs)`);
+          drifted++;
+          jsonResults.push({ id: dir, ok: false, error: "drift", description: true, blocks });
+          continue;
         } else {
           writeFileAtomic(descPath, merged);
-          emit(`  OK    ${dir} (${DESCRIPTION_FILE} generated lists updated)`);
+          emit(`  OK    ${dir} (${DESCRIPTION_FILE} generated content updated)`);
         }
+      } else if (doCheck) {
+        emit(`  DRIFT ${dir} (${DESCRIPTION_FILE} missing)`);
+        drifted++;
+        jsonResults.push({ id: dir, ok: false, error: "drift", description: true });
+        continue;
       } else {
         writeFileAtomic(descPath, scaffold());
         emit(
-          `  NEW   ${dir} (${DESCRIPTION_FILE} scaffolded - fill in the loader, usage and credit lines)`,
+          `  NEW   ${dir} (${DESCRIPTION_FILE} scaffolded - fill in the loader and usage lines)`,
         );
       }
       created++;
-      jsonResults.push({ id: dir, ok: true, description: true });
+      jsonResults.push({ id: dir, ok: true, description: true, blocks });
       continue;
     }
-    writeFileAtomic(path.join(ROOT, dir, "NOTES_FOR_MOD_AUTHORS.md"), md);
-    writeFileAtomic(path.join(ROOT, dir, "NOTES_FOR_MOD_AUTHORS.bbcode"), bbcode);
-    created++;
+    const mdDiffers = putFile(path.join(ROOT, dir, "NOTES_FOR_MOD_AUTHORS.md"), md);
+    const bbDiffers = putFile(path.join(ROOT, dir, "NOTES_FOR_MOD_AUTHORS.bbcode"), bbcode);
     tier1Total += tier1;
     tier2Total += tier2;
     droppedTotal += dropped.length;
     if (tier2 > 0 && tier1 === 0) tier2Heavy.push(dir);
+    if (doCheck && (mdDiffers || bbDiffers)) {
+      emit(`  DRIFT ${dir}`);
+      drifted++;
+      jsonResults.push({ id: dir, ok: false, error: "drift", tier1, tier2, unknownFns, dropped });
+      continue;
+    }
+    created++;
     const note =
       tier2 > 0 ? `  (${tier1} documented, ${tier2} auto-derived)` : `  (${tier1} documented)`;
     emit(`  OK    ${dir}${note}`);
@@ -2497,7 +2804,8 @@ for (const dir of extDirs) {
 }
 
 emit("");
-emit(`Done.  Written: ${created}  Skipped: ${skipped}  Errors: ${errors}`);
+const doneNote = doCheck ? `Drifted: ${drifted}` : `Written: ${created}`;
+emit(`Done.  ${doneNote}  Skipped: ${skipped}  Errors: ${errors}`);
 if (!doDescription) emit(`Sections: ${tier1Total} documented, ${tier2Total} auto-derived`);
 if (droppedTotal) {
   emit(
@@ -2508,6 +2816,18 @@ if (droppedTotal) {
 if (tier2Heavy.length) {
   emit(`Extensions with no documented sections yet: ${tier2Heavy.length}`);
 }
+if (doDescription) {
+  const verb = doCheck ? "to add" : "added";
+  emit(
+    `Blocks ${verb}: symlink warning ${blockTotals.symlinks}, LogicMod-authors note ${blockTotals.logicmods}, ` +
+      `Credits section ${blockTotals.credits}, credit lines ${blockTotals.creditLines}`,
+  );
+  if (unresolvedSymlinks.length) {
+    emit(`Symlink support unresolved, no warning written (${unresolvedSymlinks.length}):`);
+    for (const line of unresolvedSymlinks) emit(`  ${line}`);
+  }
+  for (const line of pageNotes) emit(`NOTE  ${line}`);
+}
 
 if (doJson) {
   process.stdout.write(
@@ -2517,9 +2837,12 @@ if (doJson) {
         created,
         skipped,
         errors,
+        drifted,
         tier1: tier1Total,
         tier2: tier2Total,
         dropped: droppedTotal,
+        blocks: blockTotals,
+        unresolvedSymlinks,
         results: jsonResults,
       },
       null,
@@ -2528,4 +2851,4 @@ if (doJson) {
   );
 }
 
-process.exit(errors > 0 ? 1 : 0);
+process.exit(errors > 0 || (doCheck && drifted > 0) ? 1 : 0);

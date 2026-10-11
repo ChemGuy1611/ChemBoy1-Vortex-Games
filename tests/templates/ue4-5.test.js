@@ -87,11 +87,14 @@ afterEach(() => {
 });
 
 // Stands in for the bundled downloader module and records what the template asks of it.
-function fakeDownloader({ failTest } = {}) {
+function fakeDownloader({ failTest, delay = 0 } = {}) {
   const calls = [];
+  const finished = [];
   const module = {
     download: async (_api, requirements, force) => {
       calls.push(["download", requirements, force]);
+      if (delay > 0) await new Promise((resolve) => setTimeout(resolve, delay));
+      finished.push("download");
     },
     findModByFile: async (_api, type, fileName) => {
       calls.push(["findModByFile", type, fileName]);
@@ -110,12 +113,14 @@ function fakeDownloader({ failTest } = {}) {
       if (failTest) throw new Error(failTest);
     },
   };
-  return { calls, module };
+  return { calls, finished, module };
 }
 
-// Loads the template with the downloader faked. `ext.fake.calls` is what it was asked.
-async function boot({ failTest, ...options } = {}) {
-  const fake = fakeDownloader({ failTest });
+// Loads the template with the downloader faked. `ext.fake.calls` is what it was asked,
+// `ext.fake.finished` what completed. `delay` makes a download finish later, so a caller that
+// does not wait for it is told apart from one that does.
+async function boot({ failTest, delay, ...options } = {}) {
+  const fake = fakeDownloader({ failTest, delay });
   const ext = await loadExtension(DIR, { bundled: { "downloader.js": fake.module }, ...options });
   ext.fake = fake;
   return ext;
@@ -169,7 +174,6 @@ function answerDialogs(ext, choose) {
   };
 }
 const pick = (action) => () => ({ action });
-const labelsOf = (dialog) => dialog[3].map(({ label }) => label);
 
 // A staged archive on disk: `{ "Mod/Scripts/main.lua": "text" }`. Returns the folder the
 // installer reads from and the file list Vortex would hand it.
@@ -481,7 +485,10 @@ describe("template-ue4-5: registration with default toggles", () => {
     assert.equal(id, "XXX_ue4ss_collection_data");
     assert.equal(typeof generate, "function");
     assert.equal(typeof parse, "function");
-    assert.equal(title((text) => `t:${text}`), "t:UE4SS Load Orders");
+    assert.equal(
+      title((text) => `t:${text}`),
+      "t:UE4SS Load Orders",
+    );
     assert.equal(condition({}, "XXX"), true);
     assert.equal(condition({}, "other"), false);
     assert.equal(typeof view, "function");
@@ -576,7 +583,10 @@ describe("template-ue4-5: toggles that change what is registered", () => {
 
   it("ue4ssLoadOrder off still registers the collection feature for LogicMods", async () => {
     const ext = await boot({ transform: noUe4ss });
-    assert.equal(names(ext).filter((name) => name === "optional.registerCollectionFeature").length, 1);
+    assert.equal(
+      names(ext).filter((name) => name === "optional.registerCollectionFeature").length,
+      1,
+    );
   });
 
   it("ue4ssLoadOrder off stops the update check from running", async () => {
@@ -680,9 +690,7 @@ describe("template-ue4-5: toggles that change what is registered", () => {
     callback(first);
     assert.deepEqual(ext.dispatched, []);
     callback({ a: 2 });
-    assert.deepEqual(ext.dispatched, [
-      { type: "setDeploymentNecessary", payload: ["XXX", true] },
-    ]);
+    assert.deepEqual(ext.dispatched, [{ type: "setDeploymentNecessary", payload: ["XXX", true] }]);
     assert.equal(ext.notifications.at(-1).id, "XXX-loadorderdeploy-notif");
   });
 
@@ -706,11 +714,14 @@ describe("template-ue4-5: toggles that change what is registered", () => {
 
   it("SIGBYPASS_REQUIRED adds the signature bypass mod type and installer", async () => {
     const ext = await boot({ transform: sigBypass });
-    assert.deepEqual(summary(ext.modTypes).find(([id]) => id === ID.sigbypass), [ID.sigbypass, 58]);
-    assert.deepEqual(summary(ext.installers).find(([id]) => id === ID.sigbypass), [
-      ID.sigbypass,
-      33,
-    ]);
+    assert.deepEqual(
+      summary(ext.modTypes).find(([id]) => id === ID.sigbypass),
+      [ID.sigbypass, 58],
+    );
+    assert.deepEqual(
+      summary(ext.installers).find(([id]) => id === ID.sigbypass),
+      [ID.sigbypass, 33],
+    );
     assert.equal(ext.modTypes.find(({ id }) => id === ID.sigbypass).options.name, "Sig Bypass");
   });
 
@@ -750,7 +761,9 @@ function onOtherDevice(target) {
   const real = fs.statSync;
   mock.method(fs, "statSync", (file, ...rest) => {
     const stats = real(file, ...rest);
-    return String(file) === target ? Object.assign(Object.create(stats), { dev: stats.dev + 1 }) : stats;
+    return String(file) === target
+      ? Object.assign(Object.create(stats), { dev: stats.dev + 1 })
+      : stats;
   });
 }
 
@@ -816,7 +829,11 @@ describe("template-ue4-5: which installers accept an archive", () => {
       [["A.SAV"], ID.save],
     ];
     for (const [entries, id] of UPPER) {
-      assert.equal((await supportedBy(ext, tree(...entries))).includes(id), true, `${id} ${entries}`);
+      assert.equal(
+        (await supportedBy(ext, tree(...entries))).includes(id),
+        true,
+        `${id} ${entries}`,
+      );
     }
   });
 
@@ -847,17 +864,20 @@ describe("template-ue4-5: which installers accept an archive", () => {
 
   it("hasModKit routes a mod.json plus .uplugin archive to the ModKit installer first", async () => {
     const kit = await boot({ transform: modKit });
-    assert.deepEqual(
-      await supportedBy(kit, tree("Mod/mod.json", "Mod/Plugin.uplugin")),
-      [ID.modkit, ID.binaries],
-    );
+    assert.deepEqual(await supportedBy(kit, tree("Mod/mod.json", "Mod/Plugin.uplugin")), [
+      ID.modkit,
+      ID.binaries,
+    ]);
     assert.deepEqual(await supportedBy(kit, tree("Mod/mod.json")), [ID.binaries]);
     assert.deepEqual(await supportedBy(kit, tree("Mod/Plugin.uplugin")), [ID.binaries]);
     assert.deepEqual(await supportedBy(kit, tree("MOD/MOD.JSON", "MOD/A.UPLUGIN")), [
       ID.modkit,
       ID.binaries,
     ]);
-    assert.deepEqual(await supportedBy(kit, withFomod(tree("Mod/mod.json", "Mod/Plugin.uplugin"))), []);
+    assert.deepEqual(
+      await supportedBy(kit, withFomod(tree("Mod/mod.json", "Mod/Plugin.uplugin"))),
+      [],
+    );
     assert.deepEqual(
       await supportedBy(kit, tree("Mod/mod.json", "Mod/Plugin.uplugin"), "othergame"),
       [],
@@ -871,7 +891,9 @@ describe("template-ue4-5: which installers accept an archive", () => {
       [ID.sigbypass, ID.binaries],
     );
     assert.deepEqual(await supportedBy(bypass, tree("Mod/dsound.dll")), [ID.binaries]);
-    assert.deepEqual(await supportedBy(bypass, tree("Mod/UniversalSigBypasser.asi")), [ID.binaries]);
+    assert.deepEqual(await supportedBy(bypass, tree("Mod/UniversalSigBypasser.asi")), [
+      ID.binaries,
+    ]);
     assert.deepEqual(
       await supportedBy(bypass, tree("MOD/DSOUND.DLL", "MOD/UNIVERSALSIGBYPASSER.ASI")),
       [ID.sigbypass, ID.binaries],
@@ -956,12 +978,9 @@ describe("template-ue4-5: pak installer output", () => {
     assert.match(content.text, /Please select which files to install below:$/);
     assert.deepEqual(
       content.checkboxes,
-      [
-        sep("v1", "a.pak"),
-        sep("v1", "a.ucas"),
-        sep("v1", "a.utoc"),
-        sep("v2", "b.pak"),
-      ].map((file) => ({ id: file, text: file, value: false })),
+      [sep("v1", "a.pak"), sep("v1", "a.ucas"), sep("v1", "a.utoc"), sep("v2", "b.pak")].map(
+        (file) => ({ id: file, text: file, value: false }),
+      ),
     );
     assert.deepEqual(
       buttons.map(({ label }) => label),
@@ -978,7 +997,10 @@ describe("template-ue4-5: pak installer output", () => {
         instructions.filter(({ type }) => type === "copy").map(({ destination }) => destination),
         ["a.pak", "a.ucas", "a.utoc", "b.pak"],
       );
-      assert.deepEqual(instructions.at(-1), attribute("unrealModFiles", ["a.pak", "a.ucas", "a.utoc", "b.pak"]));
+      assert.deepEqual(
+        instructions.at(-1),
+        attribute("unrealModFiles", ["a.pak", "a.ucas", "a.utoc", "b.pak"]),
+      );
     });
   }
 
@@ -1061,16 +1083,25 @@ describe("template-ue4-5: UE4SS combo, LogicMods and UE4SS installers", () => {
       "Binaries/Win64/ue4ss/Mods/Other/Scripts/main.lua",
     );
     const { instructions } = await combo(files, "unused");
-    assert.deepEqual(instructions.slice(-2), [modType(ID.combo), attribute("ue4ssModFolder", "MyMod")]);
-    assert.deepEqual(instructions[0], copy(
-      sep("Binaries", "Win64", "ue4ss", "Mods", "MyMod", "Scripts", "main.lua"),
-      sep("XXX", "Binaries", "Win64", "ue4ss", "Mods", "MyMod", "Scripts", "main.lua"),
-    ));
+    assert.deepEqual(instructions.slice(-2), [
+      modType(ID.combo),
+      attribute("ue4ssModFolder", "MyMod"),
+    ]);
+    assert.deepEqual(
+      instructions[0],
+      copy(
+        sep("Binaries", "Win64", "ue4ss", "Mods", "MyMod", "Scripts", "main.lua"),
+        sep("XXX", "Binaries", "Win64", "ue4ss", "Mods", "MyMod", "Scripts", "main.lua"),
+      ),
+    );
   });
 
   it("combo adds no attributes for a plain Binaries plus Content mod", async () => {
     const { instructions } = await combo(tree("Binaries/a.dll", "Content/a.dat"), "unused");
-    assert.deepEqual(instructions.map(({ type }) => type), ["copy", "copy", "setmodtype"]);
+    assert.deepEqual(
+      instructions.map(({ type }) => type),
+      ["copy", "copy", "setmodtype"],
+    );
   });
 
   it("combo copies no folder entries", async () => {
@@ -1096,7 +1127,10 @@ describe("template-ue4-5: UE4SS combo, LogicMods and UE4SS installers", () => {
     });
     const { instructions } = await installerOf(xbox, ID.combo).install(files, workingDir);
     assert.deepEqual(
-      instructions.filter(({ type }) => type === "copy").map(({ destination }) => destination).sort(),
+      instructions
+        .filter(({ type }) => type === "copy")
+        .map(({ destination }) => destination)
+        .sort(),
       [
         sep("XXX", "Binaries", "WinGDK", "ue4ss", "Mods", "MyMod", "Scripts", "main.lua"),
         sep("XXX", "Binaries", "WinGDK", "x.dll"),
@@ -1120,7 +1154,10 @@ describe("template-ue4-5: UE4SS combo, LogicMods and UE4SS installers", () => {
     // Should end with attribute("ue4ssModFolder", "MyMod") as on every other build. The Xbox path
     // rebuilds the file list from the staged files, which holds no folder entries, so the Scripts
     // folder the attribute is found from is gone.
-    assert.deepEqual(instructions.filter(({ type }) => type === "attribute"), []);
+    assert.deepEqual(
+      instructions.filter(({ type }) => type === "attribute"),
+      [],
+    );
   });
 
   it("combo keeps the archive's own file list for the Xbox build when there is no Win64 folder", async () => {
@@ -1136,7 +1173,10 @@ describe("template-ue4-5: UE4SS combo, LogicMods and UE4SS installers", () => {
   });
 
   it("combo wrapped in an archive folder drops the wrapper", async () => {
-    const { instructions } = await combo(tree("Pack/Binaries/a.dll", "Pack/Content/a.dat"), "unused");
+    const { instructions } = await combo(
+      tree("Pack/Binaries/a.dll", "Pack/Content/a.dat"),
+      "unused",
+    );
     assert.deepEqual(
       instructions.filter(({ type }) => type === "copy").map(({ destination }) => destination),
       [sep("XXX", "Binaries", "a.dll"), sep("XXX", "Content", "a.dat")],
@@ -1167,7 +1207,10 @@ describe("template-ue4-5: UE4SS combo, LogicMods and UE4SS installers", () => {
 
   it("logic with no pak records no attribute", async () => {
     const { instructions } = await logic(tree("LogicMods/readme.txt"));
-    assert.deepEqual(instructions.map(({ type }) => type), ["copy", "setmodtype"]);
+    assert.deepEqual(
+      instructions.map(({ type }) => type),
+      ["copy", "setmodtype"],
+    );
   });
 
   it("logic ignores files outside the wrapper that holds the LogicMods folder", async () => {
@@ -1242,7 +1285,13 @@ function openMore(ext, notification) {
 // Both UE4SS folder installers share a shape: a marker folder, a wrapper-or-archive-name folder,
 // an enabled.txt next to the marker folder when the load order is off, and an ownership attribute.
 for (const kind of [
-  { id: ID.scripts, label: "scripts", folder: "Scripts", file: "main.lua", name: "UE4SS Script Mod" },
+  {
+    id: ID.scripts,
+    label: "scripts",
+    folder: "Scripts",
+    file: "main.lua",
+    name: "UE4SS Script Mod",
+  },
   { id: ID.dll, label: "dll", folder: "dlls", file: "main.dll", name: "UE4SS DLL Mod" },
 ]) {
   describe(`template-ue4-5: ${kind.label} installer output`, () => {
@@ -1337,12 +1386,23 @@ for (const kind of [
           instructions.filter(({ type }) => type === "copy").map(({ destination }) => destination),
           [sep("Mod", kind.folder, kind.file), sep("Mod", "enabled.txt")],
         );
-        assert.equal(vortex.logs.some(({ message }) => message.includes(`Successfully created enabled.txt for ${kind.name}: Cool Mod.installing`)), true);
+        assert.equal(
+          vortex.logs.some(({ message }) =>
+            message.includes(
+              `Successfully created enabled.txt for ${kind.name}: Cool Mod.installing`,
+            ),
+          ),
+          true,
+        );
       });
 
       it("puts the enabled.txt of a bare mod in the archive-named folder", async () => {
         const fresh = await off();
-        const { instructions, workingDir } = await run({ [inner]: "" }, "Cool Mod.installing", fresh);
+        const { instructions, workingDir } = await run(
+          { [inner]: "" },
+          "Cool Mod.installing",
+          fresh,
+        );
         assert.equal(fs.existsSync(path.join(workingDir, "enabled.txt")), true);
         assert.deepEqual(
           instructions.filter(({ type }) => type === "copy").map(({ destination }) => destination),
@@ -1370,12 +1430,13 @@ for (const kind of [
           tree(`Mod/${inner}`),
           missing,
         );
-        assert.deepEqual(
-          instructions.filter(({ type }) => type === "copy").length,
-          1,
-        );
+        assert.deepEqual(instructions.filter(({ type }) => type === "copy").length, 1);
         assert.equal(
-          vortex.logs.some(({ level, message }) => level === "error" && message === `Could not create enabled.txt for ${kind.name}: gone`),
+          vortex.logs.some(
+            ({ level, message }) =>
+              level === "error" &&
+              message === `Could not create enabled.txt for ${kind.name}: gone`,
+          ),
           true,
         );
       });
@@ -1422,7 +1483,9 @@ describe("template-ue4-5: root installer output", () => {
   });
 
   it("puts Paks and Movies under the game's Content folder", async () => {
-    assert.deepEqual(copies(await root("Movies/a.bk2")), [sep("XXX", "Content", "Movies", "a.bk2")]);
+    assert.deepEqual(copies(await root("Movies/a.bk2")), [
+      sep("XXX", "Content", "Movies", "a.bk2"),
+    ]);
     assert.deepEqual(copies(await root("Pack/Paks/~mods/a.pak")), [
       sep("XXX", "Content", "Paks", "~mods", "a.pak"),
     ]);
@@ -1500,14 +1563,20 @@ describe("template-ue4-5: ModKit and signature bypass installers", () => {
     const { instructions } = await installerOf(ext, ID.modkit).install(files, workingDir);
     assert.equal(instructions[0].destination, sep("Pack", "mod.json"));
     assert.equal(
-      vortex.logs.some(({ level, message }) => level === "error" && message === "Could not read mod.json file for mod Pack."),
+      vortex.logs.some(
+        ({ level, message }) =>
+          level === "error" && message === "Could not read mod.json file for mod Pack.",
+      ),
       true,
     );
   });
 
   it("ModKit falls back to the archive name when there is no wrapper folder", async () => {
     const ext = await boot({ transform: modKit });
-    const { workingDir, files } = stage({ "mod.json": "not json", "a.uplugin": "" }, "Cool Mod.zip.installing");
+    const { workingDir, files } = stage(
+      { "mod.json": "not json", "a.uplugin": "" },
+      "Cool Mod.zip.installing",
+    );
     const { instructions } = await installerOf(ext, ID.modkit).install(files, workingDir);
     assert.equal(instructions[0].destination, sep("CoolMod", "mod.json"));
   });
@@ -1545,26 +1614,35 @@ describe("template-ue4-5: config and save installers", () => {
     assert.equal(notification.type, "error");
     assert.equal(notification.message, "Could not install mod as Config");
     assert.equal(notification.allowSuppress, true);
-    assert.deepEqual(notification.actions.map(({ title }) => title), ["More"]);
+    assert.deepEqual(
+      notification.actions.map(({ title }) => title),
+      ["More"],
+    );
   });
 
   it("config refuses when the config folder is on another drive", async () => {
     const { ext } = await ready();
     onOtherDevice(LOCAL_APP_DATA);
-    assert.throws(() => installerOf(ext, ID.config).install(configFiles), { kind: "user-canceled" });
+    assert.throws(() => installerOf(ext, ID.config).install(configFiles), {
+      kind: "user-canceled",
+    });
     assert.equal(ext.notifications.at(-1).id, "XXX-configinstaller");
   });
 
   it("config refuses when the game is on another drive", async () => {
     const { ext, gameDir } = await ready();
     onOtherDevice(gameDir);
-    assert.throws(() => installerOf(ext, ID.config).install(configFiles), { kind: "user-canceled" });
+    assert.throws(() => installerOf(ext, ID.config).install(configFiles), {
+      kind: "user-canceled",
+    });
   });
 
   it("config refuses when the staging folder is on another drive", async () => {
     const { ext } = await ready();
     onOtherDevice(STAGING);
-    assert.throws(() => installerOf(ext, ID.config).install(configFiles), { kind: "user-canceled" });
+    assert.throws(() => installerOf(ext, ID.config).install(configFiles), {
+      kind: "user-canceled",
+    });
   });
 
   it("config skips the drive check when hardlinks have no benefit", async () => {
@@ -1584,9 +1662,15 @@ describe("template-ue4-5: config and save installers", () => {
     const { dialog, text, press, state } = openMore(ext, ext.notifications.at(-1));
     assert.equal(dialog[0], "question");
     assert.equal(dialog[1], "Could not install mod as Config");
-    assert.match(text, /You tried installing a Config file mod, but the game, staging folder, and Local AppData folder are not all on the same drive\./);
+    assert.match(
+      text,
+      /You tried installing a Config file mod, but the game, staging folder, and Local AppData folder are not all on the same drive\./,
+    );
     assert.match(text, new RegExp(`Config Path: ${CONFIG_PATH.replace(/\\/g, "\\\\")}`));
-    assert.deepEqual(dialog[3].map(({ label }) => label), ["Continue", "Open Config Folder"]);
+    assert.deepEqual(
+      dialog[3].map(({ label }) => label),
+      ["Continue", "Open Config Folder"],
+    );
     press("Open Config Folder");
     assert.deepEqual(opened, [CONFIG_PATH]);
     assert.equal(state.dismissed, 1);
@@ -1635,7 +1719,9 @@ describe("template-ue4-5: config and save installers", () => {
 
   it("save refuses when no game executable is found", async () => {
     const { ext } = await ready({ files: ["other.txt"] });
-    await assert.rejects(installerOf(ext, ID.save).install(tree("a.sav")), { kind: "user-canceled" });
+    await assert.rejects(installerOf(ext, ID.save).install(tree("a.sav")), {
+      kind: "user-canceled",
+    });
     assert.equal(ext.notifications.at(-1).id, "XXX-saveinsterrxbox");
   });
 
@@ -1649,22 +1735,34 @@ describe("template-ue4-5: config and save installers", () => {
 
   it("save refuses the demo build", async () => {
     const { ext } = await ready({ files: ["Demo.exe"], transform: multiExe });
-    await assert.rejects(installerOf(ext, ID.save).install(tree("a.sav")), { kind: "user-canceled" });
+    await assert.rejects(installerOf(ext, ID.save).install(tree("a.sav")), {
+      kind: "user-canceled",
+    });
   });
 
   it("save refuses when the save folder is on another drive and explains why", async () => {
     const { ext } = await ready();
     onOtherDevice(LOCAL_APP_DATA);
-    await assert.rejects(installerOf(ext, ID.save).install(tree("a.sav")), { kind: "user-canceled" });
+    await assert.rejects(installerOf(ext, ID.save).install(tree("a.sav")), {
+      kind: "user-canceled",
+      skipped: false,
+    });
     const notification = ext.notifications.at(-1);
     assert.equal(notification.id, "XXX-saveinstaller");
+    assert.equal(notification.type, "error");
     assert.equal(notification.message, "Could not install mod as Save");
     const opened = stubShell();
     const { dialog, text, press } = openMore(ext, notification);
     assert.equal(dialog[1], "Could not install mod as Save");
-    assert.match(text, /You tried installing a Save file mod, but the game, staging folder, and Local AppData folder are not all on the same drive\./);
+    assert.match(
+      text,
+      /You tried installing a Save file mod, but the game, staging folder, and Local AppData folder are not all on the same drive\./,
+    );
     assert.match(text, /Save Path: /);
-    assert.deepEqual(dialog[3].map(({ label }) => label), ["Continue", "Open Save Folder"]);
+    assert.deepEqual(
+      dialog[3].map(({ label }) => label),
+      ["Continue", "Open Save Folder"],
+    );
     press("Open Save Folder");
     assert.deepEqual(opened, [sep(LOCAL_APP_DATA, "XXX", "Saved", "SaveGames")]);
   });
@@ -1688,7 +1786,10 @@ describe("template-ue4-5: Binaries fallback installer", () => {
 
   it("tells the user a fallback install happened", async () => {
     const ext = await boot({ state: stateFor({}) });
-    await installerOf(ext, ID.binaries).install(FALLBACK_FILES, sep(STAGING, "Cool Mod!.7z.installing"));
+    await installerOf(ext, ID.binaries).install(
+      FALLBACK_FILES,
+      sep(STAGING, "Cool Mod!.7z.installing"),
+    );
     assert.equal(ext.notifications.length, 1);
     const [notification] = ext.notifications;
     assert.equal(notification.id, "XXX-CoolMod7z-fallback");
@@ -1708,22 +1809,27 @@ describe("template-ue4-5: Binaries fallback installer", () => {
 
   it("explains the fallback and offers support, the staging folder and the mod page", async () => {
     const ext = await boot({ state: stateFor({}) });
-    await installerOf(ext, ID.binaries).install(FALLBACK_FILES, sep(STAGING, "Cool Mod.installing"));
+    await installerOf(ext, ID.binaries).install(
+      FALLBACK_FILES,
+      sep(STAGING, "Cool Mod.installing"),
+    );
     const { dialog, text } = openMore(ext, ext.notifications[0]);
     assert.equal(dialog[0], "question");
     assert.equal(dialog[1], "Fallback installer reached for Cool Mod");
     assert.match(text, /reached the fallback installer to the Binaries folder/);
     assert.match(text, /Mod Name: Cool Mod\.\n/);
-    assert.deepEqual(dialog[3].map(({ label }) => label), [
-      "Continue",
-      "Contact Ext. Developer",
-      "Open Mod Page + Staging Folder",
-    ]);
+    assert.deepEqual(
+      dialog[3].map(({ label }) => label),
+      ["Continue", "Contact Ext. Developer", "Open Mod Page + Staging Folder"],
+    );
   });
 
   it("opens the support page of the extension", async () => {
     const ext = await boot({ state: stateFor({}) });
-    await installerOf(ext, ID.binaries).install(FALLBACK_FILES, sep(STAGING, "Cool Mod.installing"));
+    await installerOf(ext, ID.binaries).install(
+      FALLBACK_FILES,
+      sep(STAGING, "Cool Mod.installing"),
+    );
     const opened = stubShell();
     const { press, state } = openMore(ext, ext.notifications[0]);
     press("Contact Ext. Developer");
@@ -1733,11 +1839,18 @@ describe("template-ue4-5: Binaries fallback installer", () => {
 
   it("opens the staging folder and the Nexus page of the mod it installed", async () => {
     const mods = {
-      "Cool Mod-123-1": { id: "Cool Mod-123-1", installationPath: "Cool Mod", attributes: { modId: 123 } },
+      "Cool Mod-123-1": {
+        id: "Cool Mod-123-1",
+        installationPath: "Cool Mod",
+        attributes: { modId: 123 },
+      },
       other: { id: "other", installationPath: "Other", attributes: { modId: 999 } },
     };
     const ext = await boot({ state: stateFor({ mods }) });
-    await installerOf(ext, ID.binaries).install(FALLBACK_FILES, sep(STAGING, "Cool Mod.installing"));
+    await installerOf(ext, ID.binaries).install(
+      FALLBACK_FILES,
+      sep(STAGING, "Cool Mod.installing"),
+    );
     const opened = stubShell();
     const { press, state } = openMore(ext, ext.notifications[0]);
     press("Open Mod Page + Staging Folder");
@@ -1755,7 +1868,10 @@ describe("template-ue4-5: Binaries fallback installer", () => {
       {},
     ]) {
       const ext = await boot({ state: stateFor({ mods }) });
-      await installerOf(ext, ID.binaries).install(FALLBACK_FILES, sep(STAGING, "Cool Mod.installing"));
+      await installerOf(ext, ID.binaries).install(
+        FALLBACK_FILES,
+        sep(STAGING, "Cool Mod.installing"),
+      );
       const opened = stubShell();
       openMore(ext, ext.notifications[0]).press("Open Mod Page + Staging Folder");
       assert.equal(opened[1], "https://www.nexusmods.com/XXX/mods/");
@@ -1764,7 +1880,10 @@ describe("template-ue4-5: Binaries fallback installer", () => {
 
   it("reports a folder or page it cannot open", async () => {
     const ext = await boot({ state: stateFor({}) });
-    await installerOf(ext, ID.binaries).install(FALLBACK_FILES, sep(STAGING, "Cool Mod.installing"));
+    await installerOf(ext, ID.binaries).install(
+      FALLBACK_FILES,
+      sep(STAGING, "Cool Mod.installing"),
+    );
     delete globalThis.window;
     openMore(ext, ext.notifications[0]).press("Open Mod Page + Staging Folder");
     assert.deepEqual(
@@ -1780,7 +1899,10 @@ describe("template-ue4-5: Binaries fallback installer", () => {
     const ext = await boot({ state: stateFor({}) });
     ext.api.events.emit("mod-update", GAME_ID, 123, 456);
     ext.api.events.emit("will-install-mod", GAME_ID, "archive", "Cool Mod-123-1");
-    await installerOf(ext, ID.binaries).install(FALLBACK_FILES, sep(STAGING, "Cool Mod.installing"));
+    await installerOf(ext, ID.binaries).install(
+      FALLBACK_FILES,
+      sep(STAGING, "Cool Mod.installing"),
+    );
     assert.deepEqual(ext.notifications, []);
   });
 });
@@ -1841,6 +1963,18 @@ describe("template-ue4-5: game discovery and the executable", () => {
     });
   }
 
+  // One store with its own executable is enough to look for it, with the others sharing the first.
+  for (const [constant, file] of [
+    ["EXEC_EPIC", "Epic.exe"],
+    ["EXEC_GOG", "Gog.exe"],
+    ["EXEC_DEMO", "Demo.exe"],
+  ]) {
+    it(`without Xbox, ${constant} alone being different is looked for and found`, async () => {
+      const ext = await boot({ transform: all(noXbox, setConst(constant, JSON.stringify(file))) });
+      assert.equal(ext.game.executable(makeGameDir([file])), file);
+    });
+  }
+
   it("with no Xbox and one executable, answers at once and leaves the paths alone", async () => {
     const ext = await boot({ transform: noXbox });
     const before = pathOf(ext, ID.binaries);
@@ -1857,10 +1991,7 @@ describe("template-ue4-5: game discovery and the executable", () => {
     assert.equal(pathOf(ext, ID.ue4ss), winGdk());
     assert.equal(pathOf(ext, ID.scripts), winGdk("ue4ss", "Mods"));
     assert.equal(pathOf(ext, ID.dll), winGdk("ue4ss", "Mods"));
-    assert.equal(
-      pathOf(ext, ID.config),
-      sep(LOCAL_APP_DATA, "XXX", "Saved", "Config", "WinGDK"),
-    );
+    assert.equal(pathOf(ext, ID.config), sep(LOCAL_APP_DATA, "XXX", "Saved", "Config", "WinGDK"));
   });
 
   it("points the engine folders back at Win64 for any other build", async () => {
@@ -1869,10 +2000,7 @@ describe("template-ue4-5: game discovery and the executable", () => {
     ext.game.executable(makeGameDir(["gamelaunchhelper.exe"]));
     ext.game.executable(gameDir);
     assert.equal(pathOf(ext, ID.binaries), sep(gameDir, "XXX", "Binaries", "Win64"));
-    assert.equal(
-      pathOf(ext, ID.config),
-      sep(LOCAL_APP_DATA, "XXX", "Saved", "Config", "Windows"),
-    );
+    assert.equal(pathOf(ext, ID.config), sep(LOCAL_APP_DATA, "XXX", "Saved", "Config", "Windows"));
   });
 
   for (const [file, label] of [
@@ -1885,7 +2013,10 @@ describe("template-ue4-5: game discovery and the executable", () => {
       const ext = await boot({ transform: multiExe, state: stateFor({ gameDir }) });
       ext.game.executable(gameDir);
       assert.equal(pathOf(ext, ID.binaries), sep(gameDir, "XXX", "Binaries", "Win64"));
-      assert.equal(pathOf(ext, ID.scripts), sep(gameDir, "XXX", "Binaries", "Win64", "ue4ss", "Mods"));
+      assert.equal(
+        pathOf(ext, ID.scripts),
+        sep(gameDir, "XXX", "Binaries", "Win64", "ue4ss", "Mods"),
+      );
     });
   }
 
@@ -1907,6 +2038,14 @@ describe("template-ue4-5: game discovery and the executable", () => {
       pathOf(ext, ID.save),
       sep(LOCAL_APP_DATA, "Packages", "XXX_XXX", "SystemAppData", "wgs"),
     );
+  });
+
+  it("leaves a folder in the save folder alone while the user id toggle is off", async () => {
+    const saves = sep(LOCAL_APP_DATA, "XXX", "Saved", "SaveGames");
+    fs.mkdirSync(path.join(saves, "76561198000000000"), { recursive: true });
+    const ext = await boot();
+    fs.rmSync(path.join(LOCAL_APP_DATA, "XXX"), { recursive: true, force: true });
+    assert.equal(pathOf(ext, ID.save), saves);
   });
 
   it("takes the first folder of the save folder as the user id for a Steam-style build", async () => {
@@ -1985,7 +2124,14 @@ describe("template-ue4-5: game version", () => {
     const gameDir = makeGameDir(["gamelaunchhelper.exe"]);
     const ext = await boot();
     assert.equal(await version(ext, gameDir), "0.0.0");
-    assert.equal(vortex.logs.some(({ level, message }) => level === "error" && message.startsWith("Could not read appmanifest.xml file to get Xbox game version")), true);
+    assert.equal(
+      vortex.logs.some(
+        ({ level, message }) =>
+          level === "error" &&
+          message.startsWith("Could not read appmanifest.xml file to get Xbox game version"),
+      ),
+      true,
+    );
   });
 
   it("reads the executable's product version first when exeHasGameVersion is on", async () => {
@@ -1998,7 +2144,10 @@ describe("template-ue4-5: game version", () => {
     const root = makeTempDir();
     const gameDir = path.join(root, "steamapps", "common", "Cool");
     fs.mkdirSync(gameDir, { recursive: true });
-    write(path.join(root, "steamapps", "appmanifest_480.acf"), '"AppState"\n{\n\t"buildid"\t\t"4242"\n}');
+    write(
+      path.join(root, "steamapps", "appmanifest_480.acf"),
+      '"AppState"\n{\n\t"buildid"\t\t"4242"\n}',
+    );
     const ext = await boot({
       transform: all(setConst("exeHasGameVersion", "true"), setConst("STEAMAPP_ID", '"480"')),
     });
@@ -2056,6 +2205,38 @@ describe("template-ue4-5: game version", () => {
       const ext = await boot({ transform: steam });
       assert.equal(await version(ext, gameDir), STUB_EXE_VERSION);
       assert.equal(await version(ext, makeGameDir()), STUB_EXE_VERSION);
+    });
+
+    it("only treats a common folder inside steamapps as a Steam library", async () => {
+      const root = makeTempDir();
+      write(path.join(root, "misc", "appmanifest_480.acf"), '"buildid"\t\t"4242"');
+      write(path.join(root, "steamapps", "appmanifest_480.acf"), '"buildid"\t\t"4242"');
+      const notCommon = path.join(root, "steamapps", "other", "Cool");
+      const notSteamapps = path.join(root, "misc", "common", "Cool");
+      fs.mkdirSync(notCommon, { recursive: true });
+      fs.mkdirSync(notSteamapps, { recursive: true });
+      const ext = await boot({ transform: steam });
+      assert.equal(await version(ext, notCommon), STUB_EXE_VERSION);
+      assert.equal(await version(ext, notSteamapps), STUB_EXE_VERSION);
+    });
+
+    it("ignores the placeholder store ids a game has not filled in", async () => {
+      const root = makeTempDir();
+      const gameDir = path.join(root, "steamapps", "common", "Cool");
+      fs.mkdirSync(gameDir, { recursive: true });
+      write(path.join(root, "steamapps", "appmanifest_XXX.acf"), '"buildid"\t\t"5"');
+      const dataPath = makeTempDir();
+      write(
+        path.join(dataPath, "Manifests", "a.item"),
+        JSON.stringify({ AppName: "XXX", AppVersionString: "9.9" }),
+      );
+      const ext = await boot();
+      await withWinapi(
+        { RegGetValue: (_hive, _key, name) => ({ value: name === "path" ? gameDir : dataPath }) },
+        async () => {
+          assert.equal(await version(ext, gameDir), STUB_EXE_VERSION);
+        },
+      );
     });
 
     describe("Epic", () => {
@@ -2137,7 +2318,13 @@ describe("template-ue4-5: game version", () => {
         await withData(makeTempDir(), async () => {
           assert.equal(await version(ext, makeGameDir()), STUB_EXE_VERSION);
         });
-        assert.equal(vortex.logs.some(({ level, message }) => level === "warn" && message.startsWith("Could not read Epic manifests for XXX")), true);
+        assert.equal(
+          vortex.logs.some(
+            ({ level, message }) =>
+              level === "warn" && message.startsWith("Could not read Epic manifests for XXX"),
+          ),
+          true,
+        );
       });
 
       it("reads the registry value that names the data folder", async () => {
@@ -2153,18 +2340,24 @@ describe("template-ue4-5: game version", () => {
           async () => version(ext, makeGameDir()),
         );
         assert.deepEqual(asked, [
-          ["HKEY_LOCAL_MACHINE", "SOFTWARE\\WOW6432Node\\Epic Games\\EpicGamesLauncher", "AppDataPath"],
+          [
+            "HKEY_LOCAL_MACHINE",
+            "SOFTWARE\\WOW6432Node\\Epic Games\\EpicGamesLauncher",
+            "AppDataPath",
+          ],
         ]);
       });
     });
 
     describe("GOG", () => {
       const gog = setConst("GOGAPP_ID", '"1234"');
-      const registry = (gameDir, ver = "2.1.0") => (hive, key, name) => {
-        assert.equal(hive, "HKEY_LOCAL_MACHINE");
-        assert.equal(key, "SOFTWARE\\WOW6432Node\\GOG.com\\Games\\1234");
-        return { value: name === "path" ? gameDir : ver };
-      };
+      const registry =
+        (gameDir, ver = "2.1.0") =>
+        (hive, key, name) => {
+          assert.equal(hive, "HKEY_LOCAL_MACHINE");
+          assert.equal(key, "SOFTWARE\\WOW6432Node\\GOG.com\\Games\\1234");
+          return { value: name === "path" ? gameDir : ver };
+        };
 
       it("takes the version the GOG registry key records for this install", async () => {
         const gameDir = makeGameDir();
@@ -2189,6 +2382,23 @@ describe("template-ue4-5: game version", () => {
         });
       });
 
+      it("reads the value named ver", async () => {
+        const gameDir = makeGameDir();
+        const ext = await boot({ transform: gog });
+        await withWinapi(
+          {
+            RegGetValue: (_hive, _key, name) => {
+              if (name === "path") return { value: gameDir };
+              if (name === "ver") return { value: "2.1.0" };
+              throw new Error("no such value");
+            },
+          },
+          async () => {
+            assert.equal(await version(ext, gameDir), "2.1.0");
+          },
+        );
+      });
+
       it("ignores a missing registry key", async () => {
         const ext = await boot({ transform: gog });
         assert.equal(await version(ext, makeGameDir()), STUB_EXE_VERSION);
@@ -2199,7 +2409,10 @@ describe("template-ue4-5: game version", () => {
       const root = makeTempDir();
       const gameDir = path.join(root, "steamapps", "common", "Cool");
       fs.mkdirSync(gameDir, { recursive: true });
-      write(path.join(root, "steamapps", "appmanifest_480.acf"), '"buildid"\t\t"STEAM"'.replace("STEAM", "11"));
+      write(
+        path.join(root, "steamapps", "appmanifest_480.acf"),
+        '"buildid"\t\t"STEAM"'.replace("STEAM", "11"),
+      );
       const all3 = all(steam, setConst("EPICAPP_ID", '"e"'), setConst("GOGAPP_ID", '"g"'));
       const ext = await boot({ transform: all3 });
       await withWinapi(
@@ -2208,7 +2421,9 @@ describe("template-ue4-5: game version", () => {
           assert.equal(await version(ext, gameDir), "11");
         },
       );
-      const noSteam = await boot({ transform: all(setConst("EPICAPP_ID", '"e"'), setConst("GOGAPP_ID", '"g"')) });
+      const noSteam = await boot({
+        transform: all(setConst("EPICAPP_ID", '"e"'), setConst("GOGAPP_ID", '"g"')),
+      });
       await withWinapi(
         { RegGetValue: (_hive, _key, name) => ({ value: name === "path" ? gameDir : "gog-ver" }) },
         async () => {
@@ -2255,7 +2470,10 @@ describe("template-ue4-5: game version", () => {
 
     it("hashes the shipping executable of the Epic build under its own file name", async () => {
       const gameDir = makeGameDir(["Epic.exe"]);
-      write(path.join(gameDir, "XXX", "Binaries", "Win64", "XXX-Win64-EOS-Shipping.exe"), "epic code");
+      write(
+        path.join(gameDir, "XXX", "Binaries", "Win64", "XXX-Win64-EOS-Shipping.exe"),
+        "epic code",
+      );
       const ext = await boot({
         transform: all(multiExe, setConst("SHIPEXE_STRING_EGS", '"-EOS"')),
       });
@@ -2280,7 +2498,8 @@ describe("template-ue4-5: game version", () => {
 
 // The shared app data folder outlives a test, so tests that look at what setup created start from
 // an empty one.
-const cleanLocal = () => fs.rmSync(path.join(LOCAL_APP_DATA, "XXX"), { recursive: true, force: true });
+const cleanLocal = () =>
+  fs.rmSync(path.join(LOCAL_APP_DATA, "XXX"), { recursive: true, force: true });
 const exists = (...parts) => fs.existsSync(path.join(...parts));
 
 describe("template-ue4-5: setup", () => {
@@ -2296,7 +2515,8 @@ describe("template-ue4-5: setup", () => {
   it("makes every mod folder, the config folder and the save folder", async () => {
     cleanLocal();
     const { gameDir } = await ready();
-    for (const folder of MOD_FOLDERS) assert.equal(exists(gameDir, ...folder), true, folder.join("/"));
+    for (const folder of MOD_FOLDERS)
+      assert.equal(exists(gameDir, ...folder), true, folder.join("/"));
     assert.equal(exists(LOCAL_APP_DATA, "XXX", "Saved", "Config", "Windows"), true);
     assert.equal(exists(LOCAL_APP_DATA, "XXX", "Saved", "SaveGames"), true);
   });
@@ -2324,7 +2544,10 @@ describe("template-ue4-5: setup", () => {
   it("logicModsLoadOrder off makes no BPModLoaderMod folder", async () => {
     const { gameDir } = await ready({ transform: noLogicMods });
     assert.equal(exists(gameDir, "XXX", "Binaries", "Win64", "ue4ss", "Mods"), true);
-    assert.equal(exists(gameDir, "XXX", "Binaries", "Win64", "ue4ss", "Mods", "BPModLoaderMod"), false);
+    assert.equal(
+      exists(gameDir, "XXX", "Binaries", "Win64", "ue4ss", "Mods", "BPModLoaderMod"),
+      false,
+    );
   });
 
   it("hasModKit makes the Mods folder", async () => {
@@ -2358,7 +2581,10 @@ describe("template-ue4-5: setup", () => {
     assert.match(text, /Staging Path: /);
     assert.match(text, /Config Path: /);
     assert.match(text, /Save Path \(installer for Steam\/Epic\/GOG versions only\): /);
-    assert.deepEqual(dialog[3].map(({ label }) => label), ["Acknowledge", "Never Show Again"]);
+    assert.deepEqual(
+      dialog[3].map(({ label }) => label),
+      ["Acknowledge", "Never Show Again"],
+    );
     press("Acknowledge");
     assert.equal(state.dismissed, 1);
     press("Never Show Again");
@@ -2393,11 +2619,17 @@ describe("template-ue4-5: setup", () => {
     const { dialog, text, press } = openMore(ext, notification);
     assert.equal(dialog[1], "Special Setup Instructions");
     assert.equal(text, "\nTEXT HERE.\n\nTEXT HERE.\n\n");
-    assert.deepEqual(dialog[3].map(({ label }) => label), ["Acknowledge", "Never Show Again"]);
+    assert.deepEqual(
+      dialog[3].map(({ label }) => label),
+      ["Acknowledge", "Never Show Again"],
+    );
     press("Never Show Again");
     assert.deepEqual(suppressed, ["XXX-setup-notify"]);
     const quiet = await ready();
-    assert.equal(quiet.ext.notifications.some(({ id }) => id === "XXX-setup-notify"), false);
+    assert.equal(
+      quiet.ext.notifications.some(({ id }) => id === "XXX-setup-notify"),
+      false,
+    );
   });
 });
 
@@ -2407,13 +2639,25 @@ describe("template-ue4-5: mod type behavior", () => {
   it("only claims the game once it is discovered", async () => {
     const gameDir = makeGameDir(["XXX.exe"]);
     const ext = await boot({ state: stateFor({ gameDir }) });
-    for (const id of [ID.combo, ID.logic, ID.pakAlt, ID.root, ID.pak, ID.scripts, ID.dll, ID.binaries, ID.ue4ss]) {
+    for (const id of [
+      ID.combo,
+      ID.logic,
+      ID.pakAlt,
+      ID.root,
+      ID.pak,
+      ID.scripts,
+      ID.dll,
+      ID.binaries,
+      ID.ue4ss,
+    ]) {
       const type = typeOf(ext, id);
       assert.equal(type.isSupported(GAME_ID), true, id);
       assert.equal(type.isSupported("othergame"), false, id);
     }
     const undiscovered = await boot({ state: stateFor({}) });
-    for (const type of undiscovered.modTypes.filter(({ id }) => ![ID.config, ID.save].includes(id))) {
+    for (const type of undiscovered.modTypes.filter(
+      ({ id }) => ![ID.config, ID.save].includes(id),
+    )) {
       assert.equal(type.isSupported(GAME_ID), false, type.id);
     }
   });
@@ -2512,7 +2756,8 @@ describe("template-ue4-5: mod type behavior", () => {
       const ext = await boot({ state: stateFor({ loadOrder }) });
       return typeOf(ext, ID.pak).options.mergeMods({ id });
     };
-    const entries = (count) => Array.from({ length: count }, (_, index) => ({ id: `mod-${index}` }));
+    const entries = (count) =>
+      Array.from({ length: count }, (_, index) => ({ id: `mod-${index}` }));
 
     it("numbers folders from AAA by load order position", async () => {
       assert.equal(await prefixed([{ id: "mod-a" }]), "AAA-mod-a");
@@ -2540,6 +2785,10 @@ describe("template-ue4-5: mod type behavior", () => {
     it("reads the position from a legacy load order stored as an object", async () => {
       assert.equal(await prefixed({ first: {}, "mod-a": {}, last: {} }), "AAB-mod-a");
       assert.equal(await prefixed({ first: {} }), "ZZZZ-mod-a");
+    });
+
+    it("ignores a stored order that is neither a list nor an object", async () => {
+      assert.equal(await prefixed("abc", "0"), "ZZZZ-0");
     });
 
     it("uses the load order of the last active profile", async () => {
@@ -2634,12 +2883,13 @@ describe("template-ue4-5: UE4SS and signature bypass downloads", () => {
 
   // A booted extension ready to run a Nexus download: login, file list, events and a recorded
   // dismissal. `files` is what the Nexus file lookup returns, or a function that throws.
-  async function nexusReady({ transform, files = FILES, mods } = {}) {
+  async function nexusReady({ transform, files = FILES, mods, delay = 0 } = {}) {
     const gameDir = makeGameDir(["XXX.exe"]);
     const ext = await boot({ transform, state: stateFor({ gameDir, mods }) });
     ext.nexus = { loggedIn: 0, lookups: [], dismissed: [] };
     ext.api.ext.ensureLoggedIn = async () => {
       ext.nexus.loggedIn++;
+      if (delay > 0) await new Promise((resolve) => setTimeout(resolve, delay));
     };
     ext.api.ext.nexusGetModFiles = async (domain, page) => {
       ext.nexus.lookups.push([domain, page]);
@@ -2694,10 +2944,23 @@ describe("template-ue4-5: UE4SS and signature bypass downloads", () => {
       ]);
     });
 
+    it("setup does not finish before the download has", async () => {
+      const gameDir = makeGameDir(["XXX.exe"]);
+      const ext = await boot({
+        delay: 60,
+        transform: setConst("autoDownloadUe4ss", "true"),
+        state: stateFor({ gameDir }),
+      });
+      await ext.game.setup({ path: gameDir });
+      assert.deepEqual(ext.fake.finished, ["download"]);
+    });
+
     it("downloads at setup only when autoDownloadUe4ss is on and UE4SS is used", async () => {
       const off = await ready();
       assert.deepEqual(off.ext.fake.calls, []);
-      const noLoadOrder = await ready({ transform: all(noUe4ss, setConst("autoDownloadUe4ss", "true")) });
+      const noLoadOrder = await ready({
+        transform: all(noUe4ss, setConst("autoDownloadUe4ss", "true")),
+      });
       assert.deepEqual(noLoadOrder.ext.fake.calls, []);
     });
 
@@ -2714,7 +2977,9 @@ describe("template-ue4-5: UE4SS and signature bypass downloads", () => {
     const nexus = nexusUe4ss;
 
     it("downloads the newest main file and installs it as the UE4SS mod type", async () => {
-      const { ext } = await nexusReady({ transform: all(nexus, setConst("autoDownloadUe4ss", "true")) });
+      const { ext } = await nexusReady({
+        transform: all(nexus, setConst("autoDownloadUe4ss", "true")),
+      });
       await ext.game.setup({ path: ext.state.settings.gameMode.discovered[GAME_ID].path });
       assert.deepEqual(ext.nexus.lookups, [["XXX", 100]]);
       assert.equal(ext.nexus.loggedIn, 1);
@@ -2746,8 +3011,19 @@ describe("template-ue4-5: UE4SS and signature bypass downloads", () => {
       assert.deepEqual(ext.nexus.dismissed, ["XXX-ue4ss-installing"]);
     });
 
+    it("setup does not finish before the download has", async () => {
+      const { ext } = await nexusReady({
+        delay: 60,
+        transform: all(nexus, setConst("autoDownloadUe4ss", "true")),
+      });
+      await ext.game.setup({ path: ext.state.settings.gameMode.discovered[GAME_ID].path });
+      assert.deepEqual(ext.nexus.dismissed, ["XXX-ue4ss-installing"]);
+    });
+
     it("shows an activity notification while it works", async () => {
-      const { ext } = await nexusReady({ transform: all(nexus, setConst("autoDownloadUe4ss", "true")) });
+      const { ext } = await nexusReady({
+        transform: all(nexus, setConst("autoDownloadUe4ss", "true")),
+      });
       await ext.game.setup({ path: ext.state.settings.gameMode.discovered[GAME_ID].path });
       assert.deepEqual(ext.notifications[0], {
         id: "XXX-ue4ss-installing",
@@ -2780,7 +3056,11 @@ describe("template-ue4-5: UE4SS and signature bypass downloads", () => {
 
     it("downloads from the site domain when the page lives there", async () => {
       const { ext } = await nexusReady({
-        transform: all(nexus, setConst("autoDownloadUe4ss", "true"), setConst("UE4SS_DOMAIN", '"site"')),
+        transform: all(
+          nexus,
+          setConst("autoDownloadUe4ss", "true"),
+          setConst("UE4SS_DOMAIN", '"site"'),
+        ),
       });
       await ext.game.setup({ path: ext.state.settings.gameMode.discovered[GAME_ID].path });
       assert.deepEqual(ext.nexus.lookups, [["site", 100]]);
@@ -2800,10 +3080,29 @@ describe("template-ue4-5: UE4SS and signature bypass downloads", () => {
     });
 
     it("skips the login step when Vortex offers none", async () => {
-      const { ext } = await nexusReady({ transform: all(nexus, setConst("autoDownloadUe4ss", "true")) });
+      const { ext } = await nexusReady({
+        transform: all(nexus, setConst("autoDownloadUe4ss", "true")),
+      });
       delete ext.api.ext.ensureLoggedIn;
       await ext.game.setup({ path: ext.state.settings.gameMode.discovered[GAME_ID].path });
       assert.equal(ext.events.length, 2);
+    });
+
+    it("waits for the login before it asks Nexus for the files", async () => {
+      const { ext } = await nexusReady({
+        transform: all(nexus, setConst("autoDownloadUe4ss", "true")),
+      });
+      const order = [];
+      ext.api.ext.ensureLoggedIn = async () => {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        order.push("login");
+      };
+      ext.api.ext.nexusGetModFiles = async () => {
+        order.push("lookup");
+        return FILES;
+      };
+      await ext.game.setup({ path: ext.state.settings.gameMode.discovered[GAME_ID].path });
+      assert.deepEqual(order, ["login", "lookup"]);
     });
 
     it("the toolbar button downloads from the Nexus page unless UE4SS is installed", async () => {
@@ -2816,7 +3115,9 @@ describe("template-ue4-5: UE4SS and signature bypass downloads", () => {
 
     it("reports a failed download and opens the file page", async () => {
       const opened = stubShell();
-      const { ext } = await nexusReady({ transform: all(nexus, setConst("autoDownloadUe4ss", "true")) });
+      const { ext } = await nexusReady({
+        transform: all(nexus, setConst("autoDownloadUe4ss", "true")),
+      });
       ext.api.events.removeAllListeners("start-download");
       ext.api.events.on("start-download", (_urls, _info, _third, callback) =>
         callback(new Error("download refused")),
@@ -2832,7 +3133,9 @@ describe("template-ue4-5: UE4SS and signature bypass downloads", () => {
 
     it("reports a failed install the same way", async () => {
       stubShell();
-      const { ext } = await nexusReady({ transform: all(nexus, setConst("autoDownloadUe4ss", "true")) });
+      const { ext } = await nexusReady({
+        transform: all(nexus, setConst("autoDownloadUe4ss", "true")),
+      });
       ext.api.events.removeAllListeners("start-install-download");
       ext.api.events.on("start-install-download", (_id, _options, callback) =>
         callback(new Error("install refused")),
@@ -2843,9 +3146,13 @@ describe("template-ue4-5: UE4SS and signature bypass downloads", () => {
     });
 
     it("also reports a download page it cannot open", async () => {
-      const { ext } = await nexusReady({ transform: all(nexus, setConst("autoDownloadUe4ss", "true")) });
+      const { ext } = await nexusReady({
+        transform: all(nexus, setConst("autoDownloadUe4ss", "true")),
+      });
       ext.api.events.removeAllListeners("start-download");
-      ext.api.events.on("start-download", (_urls, _info, _third, callback) => callback(new Error("x")));
+      ext.api.events.on("start-download", (_urls, _info, _third, callback) =>
+        callback(new Error("x")),
+      );
       await ext.game.setup({ path: ext.state.settings.gameMode.discovered[GAME_ID].path });
       assert.deepEqual(
         ext.errors.map(([message]) => message),
@@ -2873,6 +3180,12 @@ describe("template-ue4-5: UE4SS and signature bypass downloads", () => {
         noDismiss: true,
         allowSuppress: false,
       });
+      assert.deepEqual(ext.nexus.dismissed, ["XXX-sigbypass-installing"]);
+    });
+
+    it("setup does not finish before the download has", async () => {
+      const { ext } = await nexusReady({ delay: 60, transform: sigBypass });
+      await ext.game.setup({ path: ext.state.settings.gameMode.discovered[GAME_ID].path });
       assert.deepEqual(ext.nexus.dismissed, ["XXX-sigbypass-installing"]);
     });
 
@@ -2913,7 +3226,9 @@ describe("template-ue4-5: UE4SS and signature bypass downloads", () => {
       const opened = stubShell();
       const { ext } = await nexusReady({ transform: sigBypass });
       ext.api.events.removeAllListeners("start-download");
-      ext.api.events.on("start-download", (_urls, _info, _third, callback) => callback(new Error("no")));
+      ext.api.events.on("start-download", (_urls, _info, _third, callback) =>
+        callback(new Error("no")),
+      );
       await ext.game.setup({ path: ext.state.settings.gameMode.discovered[GAME_ID].path });
       assert.equal(ext.errors[0][0], "Failed to download/install Sig Bypass");
       assert.deepEqual(opened, ["https://www.nexusmods.com/site/mods/1416/files/?tab=files"]);
@@ -2922,17 +3237,62 @@ describe("template-ue4-5: UE4SS and signature bypass downloads", () => {
     it("reports a bypass page it cannot open", async () => {
       const { ext } = await nexusReady({ transform: sigBypass });
       ext.api.events.removeAllListeners("start-download");
-      ext.api.events.on("start-download", (_urls, _info, _third, callback) => callback(new Error("no")));
+      ext.api.events.on("start-download", (_urls, _info, _third, callback) =>
+        callback(new Error("no")),
+      );
       await ext.game.setup({ path: ext.state.settings.gameMode.discovered[GAME_ID].path });
       assert.deepEqual(
         ext.errors.map(([message]) => message),
         ["Failed to download/install Sig Bypass", "Failed to open the URL"],
       );
+      assert.deepEqual(ext.errors[1][2], { allowReport: false });
+    });
+
+    it("hands the download and install events the same options as the UE4SS download", async () => {
+      const { ext } = await nexusReady({ transform: sigBypass });
+      await ext.game.setup({ path: ext.state.settings.gameMode.discovered[GAME_ID].path });
+      assert.equal(ext.nexus.loggedIn, 1);
+      assert.deepEqual(ext.events[0].options, { allowInstall: false });
+      assert.deepEqual(ext.events[1], {
+        event: "start-install-download",
+        id: "download-1",
+        options: { allowAutoEnable: false },
+      });
+      assert.equal(ext.dispatched[0].type, "setModsEnabled");
+      assert.deepEqual(ext.dispatched[0].payload.slice(1), [
+        "profile",
+        ["mod-1"],
+        true,
+        { allowAutoDeploy: true, installed: true },
+      ]);
+    });
+
+    it("skips the login step when Vortex offers none", async () => {
+      const { ext } = await nexusReady({ transform: sigBypass });
+      delete ext.api.ext.ensureLoggedIn;
+      await ext.game.setup({ path: ext.state.settings.gameMode.discovered[GAME_ID].path });
+      assert.equal(ext.events.length, 2);
+    });
+
+    it("waits for the login before it asks Nexus for the files", async () => {
+      const { ext } = await nexusReady({ transform: sigBypass });
+      const order = [];
+      ext.api.ext.ensureLoggedIn = async () => {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        order.push("login");
+      };
+      ext.api.ext.nexusGetModFiles = async () => {
+        order.push("lookup");
+        return FILES;
+      };
+      await ext.game.setup({ path: ext.state.settings.gameMode.discovered[GAME_ID].path });
+      assert.deepEqual(order, ["login", "lookup"]);
     });
   });
 
   describe("update check", () => {
-    const check = (ext) => ext.listeners.find(({ args }) => args[0] === "check-mods-version").args[1];
+    const check = (ext) =>
+      ext.listeners.find(({ args }) => args[0] === "check-mods-version").args[1];
 
     it("tests the UE4SS requirement for this game", async () => {
       const ext = await boot();
@@ -2959,14 +3319,18 @@ describe("template-ue4-5: UE4SS and signature bypass downloads", () => {
       const ext = await boot({ failTest: "no network" });
       await check(ext)(GAME_ID, {}, false);
       assert.equal(
-        vortex.logs.some(({ level, message }) => level === "warn" && message === "Failed to test requirement version: Error: no network"),
+        vortex.logs.some(
+          ({ level, message }) =>
+            level === "warn" && message === "Failed to test requirement version: Error: no network",
+        ),
         true,
       );
     });
   });
 });
 
-const MODS = (gameDir, ...rest) => sep(gameDir, "XXX", "Binaries", "Win64", "ue4ss", "Mods", ...rest);
+const MODS = (gameDir, ...rest) =>
+  sep(gameDir, "XXX", "Binaries", "Win64", "ue4ss", "Mods", ...rest);
 const BPML = (gameDir, ...rest) => MODS(gameDir, "BPModLoaderMod", ...rest);
 const LOGIC = (gameDir, ...rest) => sep(gameDir, "XXX", "Content", "Paks", "LogicMods", ...rest);
 const loadOrderApi = (ext) => ext.calls.find(({ name }) => name === "registerLoadOrder")?.args[0];
@@ -2999,7 +3363,12 @@ function armUpdateGuard(ext, { nexusId = 123, fileId = 456, removed = "upd" } = 
 }
 
 // The same, for a game folder and state where the pak load order can run.
-async function pakGame({ files = ["XXX.exe"], mods = PAK_MODS, modState = PAK_MOD_STATE, ...rest } = {}) {
+async function pakGame({
+  files = ["XXX.exe"],
+  mods = PAK_MODS,
+  modState = PAK_MOD_STATE,
+  ...rest
+} = {}) {
   const gameDir = makeGameDir(files);
   // Tests change mods and enabled flags, so every boot gets its own copy of the shared fixtures.
   const state = stateFor({
@@ -3021,7 +3390,10 @@ describe("template-ue4-5: pak load order", () => {
 
   it("lists the enabled sortable pak mods by name and creates the order file", async () => {
     const { ext, gameDir } = await pakGame();
-    assert.deepEqual(await ext.lo.deserializeLoadOrder(), [entry("a", "Mod A"), entry("b", "Mod B")]);
+    assert.deepEqual(await ext.lo.deserializeLoadOrder(), [
+      entry("a", "Mod A"),
+      entry("b", "Mod B"),
+    ]);
     assert.equal(fs.readFileSync(orderFile(gameDir), "utf8"), "");
   });
 
@@ -3041,13 +3413,19 @@ describe("template-ue4-5: pak load order", () => {
       orderFile(gameDir),
       JSON.stringify([entry("d", "Disabled"), entry("gone", "Gone"), entry("a", "Mod A")]),
     );
-    assert.deepEqual(await ext.lo.deserializeLoadOrder(), [entry("a", "Mod A"), entry("b", "Mod B")]);
+    assert.deepEqual(await ext.lo.deserializeLoadOrder(), [
+      entry("a", "Mod A"),
+      entry("b", "Mod B"),
+    ]);
   });
 
   it("adds a newly enabled mod at the bottom", async () => {
     const { ext, gameDir } = await pakGame();
     write(orderFile(gameDir), JSON.stringify([entry("b", "Mod B")]));
-    assert.deepEqual(await ext.lo.deserializeLoadOrder(), [entry("b", "Mod B"), entry("a", "Mod A")]);
+    assert.deepEqual(await ext.lo.deserializeLoadOrder(), [
+      entry("b", "Mod B"),
+      entry("a", "Mod A"),
+    ]);
   });
 
   it("only adds enabled mods of the sortable pak type", async () => {
@@ -3060,12 +3438,11 @@ describe("template-ue4-5: pak load order", () => {
     const stored = [{ id: "b", modId: "b", enabled: true, name: "In state" }];
     const { ext, gameDir } = await pakGame({ loadOrder: stored });
     write(orderFile(gameDir), "{ not json");
-    assert.deepEqual(await ext.lo.deserializeLoadOrder(), [
-      stored[0],
-      entry("a", "Mod A"),
-    ]);
+    assert.deepEqual(await ext.lo.deserializeLoadOrder(), [stored[0], entry("a", "Mod A")]);
     assert.equal(
-      vortex.logs.some(({ level, message }) => level === "warn" && message === "failed to read load order file"),
+      vortex.logs.some(
+        ({ level, message }) => level === "warn" && message === "failed to read load order file",
+      ),
       true,
     );
   });
@@ -3073,13 +3450,53 @@ describe("template-ue4-5: pak load order", () => {
   it("falls back to an empty load order when nothing is stored either", async () => {
     const { ext, gameDir } = await pakGame();
     write(orderFile(gameDir), "{ not json");
-    assert.deepEqual(await ext.lo.deserializeLoadOrder(), [entry("a", "Mod A"), entry("b", "Mod B")]);
+    assert.deepEqual(await ext.lo.deserializeLoadOrder(), [
+      entry("a", "Mod A"),
+      entry("b", "Mod B"),
+    ]);
   });
 
   it("treats JSON that is not a list as an empty order", async () => {
     const { ext, gameDir } = await pakGame();
     write(orderFile(gameDir), '{"id":"a"}');
-    assert.deepEqual(await ext.lo.deserializeLoadOrder(), [entry("a", "Mod A"), entry("b", "Mod B")]);
+    assert.deepEqual(await ext.lo.deserializeLoadOrder(), [
+      entry("a", "Mod A"),
+      entry("b", "Mod B"),
+    ]);
+  });
+
+  it("treats an empty order file as an empty order without complaint", async () => {
+    const { ext, gameDir } = await pakGame();
+    write(orderFile(gameDir), "");
+    assert.deepEqual(await ext.lo.deserializeLoadOrder(), [
+      entry("a", "Mod A"),
+      entry("b", "Mod B"),
+    ]);
+    assert.equal(
+      vortex.logs.some(({ message }) => message === "failed to read load order file"),
+      false,
+    );
+  });
+
+  it("complains about an order file that holds one stray character", async () => {
+    const { ext, gameDir } = await pakGame();
+    write(orderFile(gameDir), "x");
+    await ext.lo.deserializeLoadOrder();
+    assert.equal(
+      vortex.logs.some(
+        ({ level, message }) => level === "warn" && message === "failed to read load order file",
+      ),
+      true,
+    );
+  });
+
+  it("lists only the mods the profile marks as enabled", async () => {
+    const { ext } = await pakGame({
+      mods: { ...PAK_MODS, e: { id: "e", type: ID.pak, attributes: { name: "Unflagged" } } },
+      modState: { ...PAK_MOD_STATE, e: {} },
+    });
+    const ids = (await ext.lo.deserializeLoadOrder()).map(({ id }) => id);
+    assert.deepEqual(ids, ["a", "b"]);
   });
 
   it("refuses to read a load order for another game or an undiscovered game", async () => {
@@ -3105,7 +3522,10 @@ describe("template-ue4-5: pak load order", () => {
     assert.equal(notification.type, "warning");
     assert.equal(notification.message, "Deployment Required to Apply Load Order Changes");
     assert.equal(notification.allowSuppress, true);
-    assert.deepEqual(notification.actions.map(({ title }) => title), ["Deploy"]);
+    assert.deepEqual(
+      notification.actions.map(({ title }) => title),
+      ["Deploy"],
+    );
   });
 
   it("deploys and dismisses when the user presses Deploy", async () => {
@@ -3121,7 +3541,11 @@ describe("template-ue4-5: pak load order", () => {
   it("refuses to write a load order for another game", async () => {
     const { ext } = await pakGame();
     ext.state.persistent.profiles.profile.gameId = "othergame";
-    await assert.rejects(ext.lo.serializeLoadOrder([]), /invalid props/);
+    await assert.rejects(ext.lo.serializeLoadOrder([]), (error) => {
+      assert.equal(error.message, "invalid props");
+      assert.equal(error.kind, "process-canceled");
+      return true;
+    });
   });
 
   it("freezes the stored order while a mod update is in flight", async () => {
@@ -3219,13 +3643,20 @@ describe("template-ue4-5: mod update guard", () => {
     const { ext, gameDir } = await pakGame({ loadOrder: [] });
     armUpdateGuard(ext);
     assert.equal(await pending(ext), true);
-    ext.state.persistent.mods[GAME_ID].fresh = { id: "fresh", type: ID.pak, attributes: { modId: 123, fileId: 456, name: "Fresh" } };
+    ext.state.persistent.mods[GAME_ID].fresh = {
+      id: "fresh",
+      type: ID.pak,
+      attributes: { modId: 123, fileId: 456, name: "Fresh" },
+    };
     ext.state.persistent.profiles.profile.modState.fresh = { enabled: true };
     ext.notifications.length = 0;
     await listener(ext, "did-deploy")("profile");
     await ext.lo.serializeLoadOrder([entry0()]);
     assert.equal(fs.existsSync(path.join(gameDir, "profile_loadOrder.json")), true);
-    assert.equal(ext.notifications.some(({ id }) => id === "XXX-loadorder-update-paused"), false);
+    assert.equal(
+      ext.notifications.some(({ id }) => id === "XXX-loadorder-update-paused"),
+      false,
+    );
   });
 
   function entry0() {
@@ -3241,7 +3672,11 @@ describe("template-ue4-5: mod update guard", () => {
       return pending(ext);
     };
     assert.equal(await stillArmed(), true);
-    ext.state.persistent.mods[GAME_ID].fresh = { id: "fresh", type: ID.pak, attributes: { modId: 123, fileId: 456 } };
+    ext.state.persistent.mods[GAME_ID].fresh = {
+      id: "fresh",
+      type: ID.pak,
+      attributes: { modId: 123, fileId: 456 },
+    };
     assert.equal(await stillArmed(), true);
     ext.state.persistent.profiles.profile.modState.fresh = { enabled: true };
     ext.state.persistent.mods[GAME_ID].fresh.attributes.fileId = 1;
@@ -3255,7 +3690,11 @@ describe("template-ue4-5: mod update guard", () => {
     ext.state.persistent.mods[GAME_ID].upd = { id: "upd", attributes: { modId: 123 } };
     ext.api.events.emit("mod-update", GAME_ID, 123, undefined);
     ext.api.events.emit("remove-mod", GAME_ID, "upd");
-    ext.state.persistent.mods[GAME_ID].fresh = { id: "fresh", type: ID.pak, attributes: { modId: 123, fileId: 7 } };
+    ext.state.persistent.mods[GAME_ID].fresh = {
+      id: "fresh",
+      type: ID.pak,
+      attributes: { modId: 123, fileId: 7 },
+    };
     ext.state.persistent.profiles.profile.modState.fresh = { enabled: true };
     await listener(ext, "did-deploy")("profile");
     assert.equal(await pending(ext), false);
@@ -3289,7 +3728,12 @@ describe("template-ue4-5: mod update guard", () => {
     await listener(ext, "did-deploy")("profile");
     assert.equal(await pending(ext), false);
     assert.equal(
-      vortex.logs.some(({ level, message }) => level === "warn" && message === "[XXX] Mod update tracking for Nexus mod 123 timed out without landing; releasing load order guard for it."),
+      vortex.logs.some(
+        ({ level, message }) =>
+          level === "warn" &&
+          message ===
+            "[XXX] Mod update tracking for Nexus mod 123 timed out without landing; releasing load order guard for it.",
+      ),
       true,
     );
   });
@@ -3297,14 +3741,24 @@ describe("template-ue4-5: mod update guard", () => {
   it("refreshes the stored order once the guard clears, and not on an ordinary deploy", async () => {
     const { ext } = await pakGame({ loadOrder: [] });
     await listener(ext, "did-deploy")("profile");
-    assert.equal(ext.dispatched.some(({ type }) => type === "setFBLoadOrder"), false);
+    assert.equal(
+      ext.dispatched.some(({ type }) => type === "setFBLoadOrder"),
+      false,
+    );
     armUpdateGuard(ext);
-    ext.state.persistent.mods[GAME_ID].fresh = { id: "fresh", type: ID.pak, attributes: { modId: 123, fileId: 456, name: "Fresh" } };
+    ext.state.persistent.mods[GAME_ID].fresh = {
+      id: "fresh",
+      type: ID.pak,
+      attributes: { modId: 123, fileId: 456, name: "Fresh" },
+    };
     ext.state.persistent.profiles.profile.modState.fresh = { enabled: true };
     await listener(ext, "did-deploy")("profile");
     const refresh = ext.dispatched.find(({ type }) => type === "setFBLoadOrder");
     assert.equal(refresh.payload[0], "profile");
-    assert.deepEqual(refresh.payload[1].map(({ id }) => id), ["a", "b", "fresh"]);
+    assert.deepEqual(
+      refresh.payload[1].map(({ id }) => id),
+      ["a", "b", "fresh"],
+    );
   });
 
   it("ignores a deployment of another game's profile", async () => {
@@ -3334,6 +3788,15 @@ describe("template-ue4-5: mod update guard", () => {
       assert.equal(await noticeFor("Cool Mod-1234-1"), 1);
       assert.equal(await noticeFor("Cool Mod-12-1"), 1);
       assert.equal(await noticeFor("Cool Mod-123-1", "othergame"), 1);
+    });
+
+    it("is suppressed when any one of several tracked updates matches", async () => {
+      const { ext } = await pakGame();
+      ext.api.events.emit("mod-update", GAME_ID, 123, 456);
+      ext.api.events.emit("mod-update", GAME_ID, 999, 1);
+      ext.api.events.emit("will-install-mod", GAME_ID, "archive", "Cool Mod-123-1");
+      await installerOf(ext, ID.binaries).install(tree("a.dll"), sep(STAGING, "Cool.installing"));
+      assert.equal(ext.notifications.length, 0);
     });
 
     it("comes back after the next deployment", async () => {
@@ -3375,6 +3838,7 @@ const INTERNALS = [
   "setSavePath",
   "getModKitPath",
   "didPurge",
+  "setGameVersionAsync",
 ];
 const withInternals = (transform) => (source) =>
   exposing(...INTERNALS)(transform ? transform(source) : source);
@@ -3461,6 +3925,17 @@ describe("template-ue4-5: UE4SS load order", () => {
       { id: "ModC", name: "Custom C (ModC)", modId: "mod-c", enabled: true },
       { id: "ModD", name: "Logical D (ModD)", modId: "mod-d", enabled: true },
       { id: "ModX", name: "ModX (ModX)", modId: undefined, enabled: true },
+    ]);
+  });
+
+  it("gives no mod id to a folder without Vortex's marker even when a mod claims it", async () => {
+    // mod-b names ModB as its folder, but this ModB has no marker file: it was put there by hand.
+    const { ext, gameDir } = await ue4ssGame({ plain: ["ModB"], managed: [] });
+    const expected = { id: "ModB", name: "Manual Mod (ModB)", modId: undefined, enabled: true };
+    assert.deepEqual(await ext.internals.deserializeUe4ss(ext.api), [expected]);
+    write(stored(gameDir), JSON.stringify([{ id: "ModB", enabled: true }]));
+    assert.deepEqual(await ext.internals.deserializeUe4ss(ext.api), [
+      { ...expected, locked: undefined },
     ]);
   });
 
@@ -3608,6 +4083,30 @@ describe("template-ue4-5: UE4SS load order", () => {
       assert.equal(text(), "Keybinds : 1\nBPModLoaderMod : 1\nModA : 1\nModB : 0");
     });
 
+    it("finds the markers and comments through leading whitespace", async () => {
+      const { text } = await run(
+        ["  BPModLoaderMod : 1", "  ; indented note", "Old : 1", "  Keybinds : 1", "Tail : 1"].join(
+          "\n",
+        ),
+      );
+      assert.equal(
+        text(),
+        [
+          "  BPModLoaderMod : 1",
+          "ModA : 1",
+          "ModB : 0",
+          "  ; indented note",
+          "  Keybinds : 1",
+          "Tail : 1",
+        ].join("\n"),
+      );
+    });
+
+    it("keeps everything after Keybinds when it directly follows BPModLoaderMod", async () => {
+      const { text } = await run("BPModLoaderMod : 1\nKeybinds : 1\nTail : 1");
+      assert.equal(text(), "BPModLoaderMod : 1\nModA : 1\nModB : 0\nKeybinds : 1\nTail : 1");
+    });
+
     it("writes 0 for a disabled mod and 1 for an enabled one", async () => {
       const { text } = await run("BPModLoaderMod : 1\nKeybinds : 1", [
         { id: "Off", enabled: false },
@@ -3661,6 +4160,18 @@ describe("template-ue4-5: LogicMods load order", () => {
     ]);
   });
 
+  it("known gap: lists an upper-case .PAK with its extension", async () => {
+    const { ext, gameDir } = await ue4ssGame();
+    paks(gameDir, ["Up.PAK"]);
+    // Should list "Up". The pak is found by its lower-cased extension but the extension is stripped
+    // with path.basename, which compares case-sensitively.
+    const order = await ext.internals.deserializeLogicMods(ext.api);
+    assert.deepEqual(
+      order.map(({ id }) => id),
+      ["Up.PAK"],
+    );
+  });
+
   it("keeps the stored order and locks, drops missing paks and appends new ones", async () => {
     const { ext, gameDir } = await ue4ssGame();
     paks(gameDir, ["Alpha.pak", "Beta.pak", "New.pak"]);
@@ -3703,10 +4214,7 @@ describe("template-ue4-5: LogicMods load order", () => {
 
   it("writes the order as JSON and as the plain list BPModLoaderMod reads", async () => {
     const { ext, gameDir } = await ue4ssGame();
-    const order = [
-      { id: "Beta", locked: true },
-      { id: "Alpha" },
-    ];
+    const order = [{ id: "Beta", locked: true }, { id: "Alpha" }];
     await ext.internals.serializeLogicMods(ext.api, order);
     assert.equal(fs.readFileSync(stored(gameDir), "utf8"), JSON.stringify(order, null, 2));
     assert.equal(fs.readFileSync(BPML(gameDir, "load_order.txt"), "utf8"), "Beta\nAlpha");
@@ -3726,7 +4234,8 @@ describe("template-ue4-5: LogicMods load order", () => {
 });
 
 describe("template-ue4-5: load orders in collections", () => {
-  const feature = (ext) => ext.calls.find(({ name }) => name === "optional.registerCollectionFeature").args;
+  const feature = (ext) =>
+    ext.calls.find(({ name }) => name === "optional.registerCollectionFeature").args;
   const withOrders = (state) => {
     state.persistent.ue4ssLoadOrder = {
       profile: {
@@ -3770,13 +4279,14 @@ describe("template-ue4-5: load orders in collections", () => {
   it("leaves out the order of a surface that is switched off", async () => {
     const off = await ue4ssGame({ transform: noLogicMods });
     withOrders(off.ext.state);
-    assert.deepEqual(Object.keys(await feature(off.ext)[1](GAME_ID, ["mod-b"])), ["ue4ssLoadOrder"]);
+    assert.deepEqual(Object.keys(await feature(off.ext)[1](GAME_ID, ["mod-b"])), [
+      "ue4ssLoadOrder",
+    ]);
     const noUe4ssSurface = await ue4ssGame({ transform: noUe4ss });
     withOrders(noUe4ssSurface.ext.state);
-    assert.deepEqual(
-      Object.keys(await feature(noUe4ssSurface.ext)[1](GAME_ID, ["logic1"])),
-      ["logicModsLoadOrder"],
-    );
+    assert.deepEqual(Object.keys(await feature(noUe4ssSurface.ext)[1](GAME_ID, ["logic1"])), [
+      "logicModsLoadOrder",
+    ]);
   });
 
   it("refuses to export without a profile", async () => {
@@ -3818,6 +4328,15 @@ describe("template-ue4-5: load orders in collections", () => {
     assert.deepEqual(ext.dispatched, []);
   });
 
+  it("applies one surface when the other holds an empty list", async () => {
+    const { ext } = await ue4ssGame();
+    await feature(ext)[2](GAME_ID, { ue4ssLoadOrder: [{ id: "ModB" }], logicModsLoadOrder: [] });
+    assert.deepEqual(
+      ext.dispatched.map(({ type }) => type),
+      ["SET_XXX_UE4SS_LOAD_ORDER"],
+    );
+  });
+
   it("updates the state even when the game is not discovered", async () => {
     const ext = await boot({ state: stateFor({}) });
     const [, , parse] = feature(ext);
@@ -3845,7 +4364,9 @@ describe("template-ue4-5: load orders in collections", () => {
       ue4ssLoadOrder: [{ id: "ModB" }],
       logicModsLoadOrder: [{ id: "Alpha" }],
     });
-    const warnings = vortex.logs.filter(({ level }) => level === "warn").map(({ message }) => message);
+    const warnings = vortex.logs
+      .filter(({ level }) => level === "warn")
+      .map(({ message }) => message);
     assert.deepEqual(warnings, [
       "[XXX] Failed to write UE4SS load order file from collection",
       "[XXX] Failed to write LogicMods load order file from collection",
@@ -3872,10 +4393,7 @@ describe("template-ue4-5: after a deployment, UE4SS and LogicMods", () => {
       ext.dispatched[0].payload.loadOrder.map(({ id }) => id),
       ["ModA", "ModB"],
     );
-    assert.equal(
-      fs.readFileSync(MODS(gameDir, "mods.txt"), "utf8"),
-      "ModA : 1\nModB : 1",
-    );
+    assert.equal(fs.readFileSync(MODS(gameDir, "mods.txt"), "utf8"), "ModA : 1\nModB : 1");
     assert.equal(
       fs.readFileSync(MODS(gameDir, "profile_ue4ss_loadOrder.json"), "utf8").includes('"ModA"'),
       true,
@@ -3914,10 +4432,24 @@ describe("template-ue4-5: after a deployment, UE4SS and LogicMods", () => {
   });
 
   it("writes no order file for a surface with nothing in it", async () => {
-    const { ext, gameDir } = await ue4ssGame({ mods: withUe4ssInstalled(), plain: [], managed: [] });
+    const { ext, gameDir } = await ue4ssGame({
+      mods: withUe4ssInstalled(),
+      plain: [],
+      managed: [],
+    });
     await deployed(ext);
     assert.equal(fs.existsSync(MODS(gameDir, "mods.txt")), false);
     assert.equal(fs.existsSync(BPML(gameDir, "load_order.txt")), false);
+  });
+
+  it("writes mods.txt for a single mod folder", async () => {
+    const { ext, gameDir } = await ue4ssGame({
+      mods: withUe4ssInstalled(),
+      plain: ["Solo"],
+      managed: [],
+    });
+    await deployed(ext);
+    assert.equal(fs.readFileSync(MODS(gameDir, "mods.txt"), "utf8"), "Solo : 1");
   });
 
   it("falls back to the stored order, and logs, when a surface cannot be read", async () => {
@@ -3926,18 +4458,25 @@ describe("template-ue4-5: after a deployment, UE4SS and LogicMods", () => {
     ext.state.persistent.ue4ssLoadOrder = { profile: { loadOrder: [] } };
     await deployed(ext);
     assert.equal(
-      vortex.logs.some(({ level, message }) => level === "error" && message === "[XXX] didDeploy: deserializeUe4ss failed, falling back to store state"),
+      vortex.logs.some(
+        ({ level, message }) =>
+          level === "error" &&
+          message === "[XXX] didDeploy: deserializeUe4ss failed, falling back to store state",
+      ),
       true,
     );
     assert.deepEqual(types(ext), ["SET_XXX_LOGICMODS_LOAD_ORDER"].slice(0, 0).concat(types(ext)));
   });
 
   describe("engine version", () => {
-    const iniFile = (gameDir) => sep(gameDir, "XXX", "Binaries", "Win64", "ue4ss", "UE4SS-settings.ini");
+    const iniFile = (gameDir) =>
+      sep(gameDir, "XXX", "Binaries", "Win64", "ue4ss", "UE4SS-settings.ini");
     // Replaces the INI parser so the file contents are a plain object the test can inspect.
     function fakeIni() {
       const IniParser = require("vortex-parse-ini").default;
-      const contents = { data: { EngineVersionOverride: { MajorVersion: " 0", MinorVersion: " 0" } } };
+      const contents = {
+        data: { EngineVersionOverride: { MajorVersion: " 0", MinorVersion: " 0" } },
+      };
       const calls = [];
       mock.method(IniParser.prototype, "read", async (file) => {
         calls.push(["read", file]);
@@ -3955,11 +4494,17 @@ describe("template-ue4-5: after a deployment, UE4SS and LogicMods", () => {
       write(iniFile(gameDir));
       const ini = fakeIni();
       await deployed(ext);
-      assert.deepEqual(ini.contents.data.EngineVersionOverride, { MajorVersion: " 1", MinorVersion: " 2" });
-      assert.deepEqual(ini.calls.map(([kind, file]) => [kind, file]), [
-        ["read", iniFile(gameDir)],
-        ["write", iniFile(gameDir)],
-      ]);
+      assert.deepEqual(ini.contents.data.EngineVersionOverride, {
+        MajorVersion: " 1",
+        MinorVersion: " 2",
+      });
+      assert.deepEqual(
+        ini.calls.map(([kind, file]) => [kind, file]),
+        [
+          ["read", iniFile(gameDir)],
+          ["write", iniFile(gameDir)],
+        ],
+      );
       assert.equal(ini.calls[1][2], ini.contents);
     });
 
@@ -3974,9 +4519,17 @@ describe("template-ue4-5: after a deployment, UE4SS and LogicMods", () => {
         throw new Error("unreadable");
       });
       await deployed(ext);
-      assert.deepEqual(ini.contents.data.EngineVersionOverride, { MajorVersion: " 5", MinorVersion: " 4" });
+      assert.deepEqual(ini.contents.data.EngineVersionOverride, {
+        MajorVersion: " 5",
+        MinorVersion: " 4",
+      });
       assert.equal(
-        vortex.logs.some(({ level, message }) => level === "info" && message === "[XXX] Could not read engine version from shipping exe, falling back to ENGINE_VERSION constant: unreadable"),
+        vortex.logs.some(
+          ({ level, message }) =>
+            level === "info" &&
+            message ===
+              "[XXX] Could not read engine version from shipping exe, falling back to ENGINE_VERSION constant: unreadable",
+        ),
         true,
       );
     });
@@ -3990,7 +4543,10 @@ describe("template-ue4-5: after a deployment, UE4SS and LogicMods", () => {
       const ini = fakeIni();
       mock.method(require("exe-version"), "getProductVersion", () => "5");
       await deployed(ext);
-      assert.deepEqual(ini.contents.data.EngineVersionOverride, { MajorVersion: " 4", MinorVersion: " 27" });
+      assert.deepEqual(ini.contents.data.EngineVersionOverride, {
+        MajorVersion: " 4",
+        MinorVersion: " 27",
+      });
     });
 
     it("logs and leaves the file when UE4SS-settings.ini is missing", async () => {
@@ -3999,7 +4555,13 @@ describe("template-ue4-5: after a deployment, UE4SS and LogicMods", () => {
       await deployed(ext);
       assert.deepEqual(ini.calls, []);
       assert.equal(
-        vortex.logs.some(({ level, message }) => level === "info" && message.startsWith("[XXX] Failed to read UE4SS Settings INI file and write Engine Version: ENOENT")),
+        vortex.logs.some(
+          ({ level, message }) =>
+            level === "info" &&
+            message.startsWith(
+              "[XXX] Failed to read UE4SS Settings INI file and write Engine Version: ENOENT",
+            ),
+        ),
         true,
       );
     });
@@ -4109,10 +4671,7 @@ describe("template-ue4-5: retagging a FOMOD-installed pak mod", () => {
   });
 
   it("leaves a mod an earlier installer would have claimed", async () => {
-    for (const staged of [
-      ["Binaries/Win64/x.dll", "Content/Paks/a.pak"],
-      ["LogicMods/a.pak"],
-    ]) {
+    for (const staged of [["Binaries/Win64/x.dll", "Content/Paks/a.pak"], ["LogicMods/a.pak"]]) {
       const { ext } = await fomodGame({ staged });
       await install(ext);
       assert.deepEqual(ext.dispatched, [], staged.join());
@@ -4131,6 +4690,18 @@ describe("template-ue4-5: retagging a FOMOD-installed pak mod", () => {
       await install(ext);
       assert.deepEqual(ext.dispatched, [], staged.join());
     }
+  });
+
+  it("recognises an upper-case pak extension", async () => {
+    const { ext } = await fomodGame({ staged: ["A.PAK"] });
+    await install(ext);
+    assert.equal(types(ext)[0], "setModType");
+  });
+
+  it("leaves a mod when any one of its paks is staged in the full game folder layout", async () => {
+    const { ext } = await fomodGame({ staged: ["a.pak", "XXX/Content/b.pak"] });
+    await install(ext);
+    assert.deepEqual(ext.dispatched, []);
   });
 
   it("tags but does not refresh while a collection is installing", async () => {
@@ -4167,7 +4738,10 @@ describe("template-ue4-5: retagging a FOMOD-installed pak mod", () => {
     await install(ext);
     assert.deepEqual(types(ext), ["setModType", "setDeploymentNecessary"]);
     assert.equal(
-      vortex.logs.some(({ level, message }) => level === "warn" && message === '[XXX] load order refresh after retagging "m1" failed'),
+      vortex.logs.some(
+        ({ level, message }) =>
+          level === "warn" && message === '[XXX] load order refresh after retagging "m1" failed',
+      ),
       true,
     );
   });
@@ -4182,7 +4756,14 @@ describe("template-ue4-5: path and status helpers", () => {
   });
 
   it("splits paths into segments on either separator, dropping blanks", () => {
-    assert.deepEqual(helpers.pathSegments(["a\\b/c", "d//e\\", "", "f"]), ["a", "b", "c", "d", "e", "f"]);
+    assert.deepEqual(helpers.pathSegments(["a\\b/c", "d//e\\", "", "f"]), [
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f",
+    ]);
   });
 
   describe("beatsPakInstaller", () => {
@@ -4213,7 +4794,10 @@ describe("template-ue4-5: path and status helpers", () => {
       assert.equal(kit.exports.internals.beatsPakInstaller(files), true);
       assert.equal(kit.exports.internals.beatsPakInstaller(["Mod\\mod.json"]), false);
       assert.equal(kit.exports.internals.beatsPakInstaller(["Mod\\Plugin.uplugin"]), false);
-      assert.equal(kit.exports.internals.beatsPakInstaller(["MOD\\MOD.JSON", "MOD\\A.UPLUGIN"]), true);
+      assert.equal(
+        kit.exports.internals.beatsPakInstaller(["MOD\\MOD.JSON", "MOD\\A.UPLUGIN"]),
+        true,
+      );
     });
 
     it("ignores a LogicMods folder when LogicMods are switched off", async () => {
@@ -4255,10 +4839,22 @@ describe("template-ue4-5: path and status helpers", () => {
     });
 
     it("needs every group to agree", () => {
-      assert.equal(match({ on: true, lock: true, modId: undefined }, "enabled", "locked", "unmanaged"), true);
-      assert.equal(match({ on: true, lock: false, modId: undefined }, "enabled", "locked", "unmanaged"), false);
-      assert.equal(match({ on: false, lock: true, modId: undefined }, "enabled", "locked", "unmanaged"), false);
-      assert.equal(match({ on: true, lock: true, modId: "m" }, "enabled", "locked", "unmanaged"), false);
+      assert.equal(
+        match({ on: true, lock: true, modId: undefined }, "enabled", "locked", "unmanaged"),
+        true,
+      );
+      assert.equal(
+        match({ on: true, lock: false, modId: undefined }, "enabled", "locked", "unmanaged"),
+        false,
+      );
+      assert.equal(
+        match({ on: false, lock: true, modId: undefined }, "enabled", "locked", "unmanaged"),
+        false,
+      );
+      assert.equal(
+        match({ on: true, lock: true, modId: "m" }, "enabled", "locked", "unmanaged"),
+        false,
+      );
     });
   });
 
@@ -4272,7 +4868,10 @@ describe("template-ue4-5: path and status helpers", () => {
     };
 
     it("prefers the mod's homepage for its page", () => {
-      withMod({ id: "page", attributes: { homepage: "https://example.test/mod", source: "nexus", modId: 5 } });
+      withMod({
+        id: "page",
+        attributes: { homepage: "https://example.test/mod", source: "nexus", modId: 5 },
+      });
       assert.equal(helpers.getModPageURL(api(), "page"), "https://example.test/mod");
     });
 
@@ -4304,12 +4903,20 @@ describe("template-ue4-5: path and status helpers", () => {
   });
 
   describe("legacy load order sorting", () => {
-    const sortApi = (mods) => ({ store: { getState: () => ({ persistent: { mods: { XXX: mods } } }) } });
+    const sortApi = (mods) => ({
+      store: { getState: () => ({ persistent: { mods: { XXX: mods } } }) },
+    });
 
     it("names each mod and counts its pak files", async () => {
       const mods = {
         a: { attributes: { customFileName: "Custom", logicalFileName: "Logical", name: "Plain" } },
-        b: { attributes: { logicalFileName: "Logical", name: "Plain", unrealModFiles: ["x.pak", "x.ucas", "x.utoc"] } },
+        b: {
+          attributes: {
+            logicalFileName: "Logical",
+            name: "Plain",
+            unrealModFiles: ["x.pak", "x.ucas", "x.utoc"],
+          },
+        },
         c: { attributes: { name: "Plain", pictureUrl: "https://example.test/c.png" } },
       };
       const sorted = await helpers.preSort(
@@ -4324,6 +4931,15 @@ describe("template-ue4-5: path and status helpers", () => {
       ]);
     });
 
+    it("counts two pak files as soon as there is more than one", async () => {
+      const sorted = await helpers.preSort(
+        sortApi({ a: { attributes: { name: "Plain", unrealModFiles: ["x.pak", "x.utoc"] } } }),
+        [{ id: "a" }],
+        "ascending",
+      );
+      assert.equal(sorted[0].name, "Plain (2 .pak,.ucas,.utoc files)");
+    });
+
     it("lists a single pak without a count", async () => {
       const sorted = await helpers.preSort(
         sortApi({ a: { attributes: { name: "Plain", unrealModFiles: ["x.pak"] } } }),
@@ -4336,7 +4952,10 @@ describe("template-ue4-5: path and status helpers", () => {
     it("reverses the list for a descending sort", async () => {
       const mods = { a: { attributes: { name: "A" } }, b: { attributes: { name: "B" } } };
       const sorted = await helpers.preSort(sortApi(mods), [{ id: "a" }, { id: "b" }], "descending");
-      assert.deepEqual(sorted.map(({ id }) => id), ["b", "a"]);
+      assert.deepEqual(
+        sorted.map(({ id }) => id),
+        ["b", "a"],
+      );
     });
   });
 
@@ -4346,6 +4965,10 @@ describe("template-ue4-5: path and status helpers", () => {
       fs.mkdirSync(sep(gameDir, "XXX", "Binaries", "WinGDK"), { recursive: true });
       // Should answer XXX\Binaries\WinGDK. It stats <game>\WinGDK and <game>\Win64, which never exist.
       assert.equal(helpers.getBinariesFolder(gameDir), undefined);
+    });
+
+    it("setGameVersionAsync answers nothing when no known executable is there", async () => {
+      assert.equal(await helpers.setGameVersionAsync(makeGameDir(["other.exe"])), undefined);
     });
 
     it("answers the current Binaries folder when there is no Xbox build", async () => {
@@ -4358,7 +4981,10 @@ describe("template-ue4-5: path and status helpers", () => {
 
     it("getShippingExe names the executable of the build it finds", () => {
       const named = (file) => helpers.getShippingExe(makeGameDir([file]));
-      assert.equal(named("gamelaunchhelper.exe"), sep("XXX", "Binaries", "WinGDK", "XXX-WinGDK-Shipping.exe"));
+      assert.equal(
+        named("gamelaunchhelper.exe"),
+        sep("XXX", "Binaries", "WinGDK", "XXX-WinGDK-Shipping.exe"),
+      );
       assert.equal(named("XXX.exe"), sep("XXX", "Binaries", "Win64", "XXX-Win64-Shipping.exe"));
       assert.equal(named("other.exe"), undefined);
     });
@@ -4413,10 +5039,7 @@ describe("template-ue4-5: path and status helpers", () => {
         seen.push(args);
         return { gamePath: "C:\\Epic\\Kit" };
       };
-      assert.equal(
-        await helpers.getModKitPath(),
-        sep("C:\\Epic\\Kit", "XXX", "Binaries", "Win64"),
-      );
+      assert.equal(await helpers.getModKitPath(), sep("C:\\Epic\\Kit", "XXX", "Binaries", "Win64"));
       assert.deepEqual(seen, [["XXX", "epic"]]);
       vortex.gameStore.findByAppId = async () => undefined;
       assert.equal(await helpers.getModKitPath(), undefined);
@@ -4438,17 +5061,26 @@ describe("template-ue4-5: UE4SS Load Order setting", () => {
     fs.rmSync(STAGING, { recursive: true, force: true });
     for (const name of names) write(path.join(STAGING, ...name.split("/")));
   };
-  const run = async (write, extra = []) => {
+  const run = async (write) => {
     const { ext } = await ue4ssGame({ transform: undefined });
     await ext.internals.reconcileEnabledTxt(ext.api, write);
     return ext;
   };
 
   it("writes an enabled.txt beside every Scripts and dlls folder when the load order is turned off", async () => {
-    stage(["ModA/Scripts/main.lua", "ModB/dlls/x.dll", "Deep/Wrap/Scripts/a.lua", "ModC/readme.txt"]);
+    stage([
+      "ModA/Scripts/main.lua",
+      "ModB/dlls/x.dll",
+      "Deep/Wrap/Scripts/a.lua",
+      "ModC/readme.txt",
+    ]);
     const ext = await run(true);
     for (const folder of ["ModA", "ModB", "Deep/Wrap"]) {
-      assert.equal(fs.existsSync(path.join(STAGING, ...folder.split("/"), "enabled.txt")), true, folder);
+      assert.equal(
+        fs.existsSync(path.join(STAGING, ...folder.split("/"), "enabled.txt")),
+        true,
+        folder,
+      );
     }
     assert.equal(fs.existsSync(path.join(STAGING, "ModC", "enabled.txt")), false);
     assert.deepEqual(ext.notifications.at(-1), {
@@ -4460,11 +5092,20 @@ describe("template-ue4-5: UE4SS Load Order setting", () => {
   });
 
   it("skips folders of UE4SS's own native mods and folders that already have the file", async () => {
-    stage(["BPModLoaderMod/Scripts/main.lua", "Keybinds/Scripts/main.lua", "ModA/Scripts/main.lua", "ModB/Scripts/main.lua", "ModB/enabled.txt"]);
+    stage([
+      "BPModLoaderMod/Scripts/main.lua",
+      "Keybinds/Scripts/main.lua",
+      "ModA/Scripts/main.lua",
+      "ModB/Scripts/main.lua",
+      "ModB/enabled.txt",
+    ]);
     const ext = await run(true);
     assert.equal(fs.existsSync(path.join(STAGING, "BPModLoaderMod", "enabled.txt")), false);
     assert.equal(fs.existsSync(path.join(STAGING, "Keybinds", "enabled.txt")), false);
-    assert.equal(ext.notifications.at(-1).message, "UE4SS Load Order disabled: wrote enabled.txt for 1 mod folder(s).");
+    assert.equal(
+      ext.notifications.at(-1).message,
+      "UE4SS Load Order disabled: wrote enabled.txt for 1 mod folder(s).",
+    );
   });
 
   it("matches the Scripts and dlls folder names without regard to case", async () => {
@@ -4474,7 +5115,13 @@ describe("template-ue4-5: UE4SS Load Order setting", () => {
   });
 
   it("removes the enabled.txt files when the load order is turned back on", async () => {
-    stage(["ModA/Scripts/main.lua", "ModA/enabled.txt", "ModB/dlls/x.dll", "ModC/Scripts/main.lua", "ModC/enabled.txt"]);
+    stage([
+      "ModA/Scripts/main.lua",
+      "ModA/enabled.txt",
+      "ModB/dlls/x.dll",
+      "ModC/Scripts/main.lua",
+      "ModC/enabled.txt",
+    ]);
     const ext = await run(false);
     assert.equal(fs.existsSync(path.join(STAGING, "ModA", "enabled.txt")), false);
     assert.equal(fs.existsSync(path.join(STAGING, "ModC", "enabled.txt")), false);
@@ -4506,6 +5153,356 @@ describe("template-ue4-5: UE4SS Load Order setting", () => {
       (await run(true)).notifications.at(-1).message,
       "UE4SS Load Order disabled: wrote enabled.txt for 0 mod folder(s).",
     );
+  });
+});
+
+// Checks for behavior the sections above reach only for some installers or store builds: FOMOD
+// detection per installer, the case handling of markers, archives with no wrapper folder, the save
+// compatibility list per build, the drive-check conditions and the shape of the notices.
+describe("template-ue4-5: installer guards and markers", () => {
+  let ext;
+  before(async () => {
+    ext = await boot({ transform: all(modKit, sigBypass) });
+  });
+
+  // An archive each installer accepts.
+  const ARCHIVES = [
+    [ID.modkit, ["Mod/mod.json", "Mod/Plugin.uplugin"]],
+    [ID.combo, ["Binaries/a.dll", "Content/a.dat"]],
+    [ID.logic, ["LogicMods/a.pak"]],
+    [ID.pak, ["a.pak"]],
+    [ID.ue4ss, ["dwmapi.dll"]],
+    [ID.sigbypass, ["Mod/dsound.dll", "Mod/UniversalSigBypasser.asi"]],
+    [ID.scripts, ["Cool/Scripts/main.lua"]],
+    [ID.dll, ["Cool/dlls/main.dll"]],
+    [ID.root, ["XXX/a.dat"]],
+    [ID.config, ["engine.ini"]],
+    [ID.save, ["a.sav"]],
+    [ID.binaries, ["readme.txt"]],
+  ];
+  // [description, file added to the archive, whether the archive then belongs to FOMOD]
+  const FOMOD = [
+    ["a ModuleConfig.xml outside a fomod folder", "other/ModuleConfig.xml", false],
+    ["a fomod folder without ModuleConfig.xml", "fomod/info.xml", false],
+    ["a ModuleConfig.xml in a nested fomod folder", "Pack/fomod/ModuleConfig.xml", true],
+    ["an upper-case fomod folder and file", "FOMOD/MODULECONFIG.XML", true],
+    ["a mixed-case fomod folder and file", "Fomod/moduleConfig.xml", true],
+  ];
+
+  for (const [id, entries] of ARCHIVES) {
+    it(`${id.replace("XXX-", "")} defers to FOMOD only for a ModuleConfig.xml inside a fomod folder`, async () => {
+      const plain = await supportedBy(ext, tree(...entries));
+      assert.equal(plain.includes(id), true);
+      for (const [description, extra, blocks] of FOMOD) {
+        const found = await supportedBy(ext, [...tree(...entries), ...tree(extra)]);
+        assert.deepEqual(found, blocks ? [] : plain, description);
+      }
+    });
+  }
+
+  it("takes an upper-case .PAK for the pak installer alone", async () => {
+    assert.deepEqual(await supportedBy(ext, tree("A.PAK")), [ID.pak]);
+    assert.deepEqual(await supportedBy(ext, tree("Mod/A.PAK", "readme.txt")), [ID.pak]);
+  });
+
+  it("takes the UE4SS proxy dll when it ships with other files", async () => {
+    assert.deepEqual(await supportedBy(ext, tree("dwmapi.dll", "readme.txt")), [
+      ID.ue4ss,
+      ID.binaries,
+    ]);
+  });
+
+  it("needs a script or dll in the Scripts or dlls folder, not any file", async () => {
+    assert.deepEqual(await supportedBy(ext, tree("Cool/Scripts/readme.txt")), [ID.binaries]);
+    assert.deepEqual(await supportedBy(ext, tree("Cool/dlls/readme.txt")), [ID.binaries]);
+  });
+
+  it("takes a save file when it ships with other files", async () => {
+    assert.deepEqual(await supportedBy(ext, tree("a.sav", "readme.txt")), [ID.save, ID.binaries]);
+  });
+
+  it("ModKit installs a mod.json and plugin named in upper case", async () => {
+    const { workingDir, files } = stage({
+      "MOD/MOD.JSON": JSON.stringify({ modPluginName: "RealName" }),
+      "MOD/A.UPLUGIN": "",
+    });
+    const { instructions } = await installerOf(ext, ID.modkit).install(files, workingDir);
+    assert.deepEqual(instructions, [
+      copy(sep("MOD", "MOD.JSON"), sep("RealName", "MOD.JSON")),
+      copy(sep("MOD", "A.UPLUGIN"), sep("RealName", "A.UPLUGIN")),
+      modType(ID.modkit),
+    ]);
+  });
+
+  it("ue4ss installs a proxy dll named in upper case", async () => {
+    const { instructions } = await installerOf(ext, ID.ue4ss).install(
+      tree("Pack/DWMAPI.DLL", "Pack/ue4ss/UE4SS.dll"),
+    );
+    assert.deepEqual(instructions, [
+      copy(sep("Pack", "DWMAPI.DLL"), "DWMAPI.DLL"),
+      copy(sep("Pack", "ue4ss", "UE4SS.dll"), sep("ue4ss", "UE4SS.dll")),
+      modType(ID.ue4ss),
+    ]);
+  });
+
+  it("bypass installs a dll and asi named in upper case, and a bare archive", async () => {
+    const install = (...entries) => installerOf(ext, ID.sigbypass).install(tree(...entries));
+    assert.deepEqual(
+      (await install("Pack/DSOUND.DLL", "Pack/UNIVERSALSIGBYPASSER.ASI")).instructions,
+      [
+        copy(sep("Pack", "DSOUND.DLL"), "DSOUND.DLL"),
+        copy(sep("Pack", "UNIVERSALSIGBYPASSER.ASI"), "UNIVERSALSIGBYPASSER.ASI"),
+        modType(ID.sigbypass),
+      ],
+    );
+    assert.deepEqual(
+      (await install("dsound.dll", "UniversalSigBypasser.asi", "readme.txt")).instructions,
+      [
+        copy("dsound.dll", "dsound.dll"),
+        copy("UniversalSigBypasser.asi", "UniversalSigBypasser.asi"),
+        copy("readme.txt", "readme.txt"),
+        modType(ID.sigbypass),
+      ],
+    );
+  });
+
+  it("config installs a config file named in upper case, and a bare archive", async () => {
+    const { ext: setUp } = await ready();
+    const install = (...entries) => installerOf(setUp, ID.config).install(tree(...entries));
+    assert.deepEqual((await install("Mod/ENGINE.INI", "Mod/GAME.INI")).instructions, [
+      copy(sep("Mod", "ENGINE.INI"), "ENGINE.INI"),
+      copy(sep("Mod", "GAME.INI"), "GAME.INI"),
+      modType(ID.config),
+    ]);
+    assert.deepEqual((await install("engine.ini", "readme.txt")).instructions, [
+      copy("engine.ini", "engine.ini"),
+      copy("readme.txt", "readme.txt"),
+      modType(ID.config),
+    ]);
+  });
+
+  it("save installs a save file named in upper case, and a bare archive", async () => {
+    const { ext: setUp } = await ready();
+    const install = (...entries) => installerOf(setUp, ID.save).install(tree(...entries));
+    assert.deepEqual((await install("Mod/A.SAV")).instructions, [
+      copy(sep("Mod", "A.SAV"), "A.SAV"),
+      modType(ID.save),
+    ]);
+    assert.deepEqual((await install("a.sav", "readme.txt")).instructions, [
+      copy("a.sav", "a.sav"),
+      copy("readme.txt", "readme.txt"),
+      modType(ID.save),
+    ]);
+  });
+
+  it("dll finds a dlls folder named in upper case", async () => {
+    const { workingDir, files } = stage({ "Mod/DLLS/A.DLL": "" });
+    const { instructions } = await installerOf(ext, ID.dll).install(files, workingDir);
+    assert.deepEqual(instructions, [
+      copy(sep("Mod", "DLLS", "A.DLL"), sep("Mod", "DLLS", "A.DLL")),
+      modType(ID.dll),
+      attribute("ue4ssModFolder", "Mod"),
+    ]);
+  });
+
+  for (const [id, folder, file] of [
+    [ID.scripts, "Scripts", "main.lua"],
+    [ID.dll, "dlls", "main.dll"],
+  ]) {
+    it(`${id.replace("XXX-", "")} drops an enabled.txt named in upper case while the load order is on`, async () => {
+      const staged = stage({ [`Mod/${folder}/${file}`]: "", "Mod/ENABLED.TXT": "" });
+      const { instructions } = await installerOf(ext, id).install(staged.files, staged.workingDir);
+      assert.deepEqual(
+        instructions.filter(({ type }) => type === "copy").map(({ source }) => source),
+        [sep("Mod", folder, file)],
+      );
+    });
+  }
+
+  it("combo records only the paks inside a LogicMods folder", async () => {
+    const { instructions } = await installerOf(ext, ID.combo).install(
+      tree(
+        "Binaries/a.dll",
+        "Content/Paks/~mods/other.pak",
+        "Content/Paks/LogicMods/a.pak",
+        "Content/Paks/LogicMods/readme.txt",
+      ),
+      "unused",
+    );
+    assert.deepEqual(instructions.at(-1), attribute("logicModFiles", ["a"]));
+  });
+
+  it("known gap: combo records an upper-case .PAK with its extension", async () => {
+    const { instructions } = await installerOf(ext, ID.combo).install(
+      tree("Binaries/a.dll", "Content/Paks/LogicMods/B.PAK"),
+      "unused",
+    );
+    // Should record ["B"], as with the logic installer.
+    assert.deepEqual(instructions.at(-1), attribute("logicModFiles", ["B.PAK"]));
+  });
+
+  it("registers the ModKit and bypass types like the others", async () => {
+    const gameDir = makeGameDir(["XXX.exe"]);
+    const known = await boot({ transform: all(modKit, sigBypass), state: stateFor({ gameDir }) });
+    const unknown = await boot({ transform: all(modKit, sigBypass), state: stateFor({}) });
+    for (const id of [ID.modkit, ID.sigbypass]) {
+      assert.equal(typeOf(known, id).isSupported(GAME_ID), true, id);
+      assert.equal(typeOf(known, id).isSupported("othergame"), false, id);
+      assert.equal(typeOf(unknown, id).isSupported(GAME_ID), false, id);
+      assert.equal(await typeOf(known, id).test(), false, id);
+    }
+  });
+});
+
+describe("template-ue4-5: save mods per store build", () => {
+  const onlyThe = (version) => setConst("SAVE_COMPAT_VERSIONS", `[${JSON.stringify(version)}]`);
+  const BUILDS = [
+    ["Steam", "XXX.exe", "steam", multiExe],
+    ["Epic", "Epic.exe", "epic", multiExe],
+    ["GOG", "Gog.exe", "gog", multiExe],
+    ["demo", "Demo.exe", "demo", multiExe],
+    ["Xbox", "gamelaunchhelper.exe", "xbox", all()],
+  ];
+
+  for (const [label, exe, version, base] of BUILDS) {
+    it(`${label} build: the Save type and installer follow the compatible version list`, async () => {
+      const listed = await ready({ files: [exe], transform: all(base, onlyThe(version)) });
+      assert.equal(typeOf(listed.ext, ID.save).isSupported(GAME_ID), true);
+      const { instructions } = await installerOf(listed.ext, ID.save).install(tree("a.sav"));
+      assert.equal(instructions.at(-1).value, ID.save);
+
+      const unlisted = await ready({ files: [exe], transform: all(base, onlyThe("other")) });
+      assert.equal(typeOf(unlisted.ext, ID.save).isSupported(GAME_ID), false);
+      await assert.rejects(installerOf(unlisted.ext, ID.save).install(tree("a.sav")), {
+        kind: "user-canceled",
+      });
+    });
+  }
+});
+
+describe("template-ue4-5: drive checks and notices", () => {
+  const separateSave = setConst("SAVEMOD_LOCATION", 'path.join(LOCALAPPDATA, "SaveRoot")');
+  const SAVE_ROOT = path.join(LOCAL_APP_DATA, "SaveRoot");
+
+  // [preferHardlinks, IO_STORE, whether the config folder is checked against the game's drive]
+  for (const [hardlinks, ioStore, checked] of [
+    [true, true, true],
+    [true, false, true],
+    [false, true, true],
+    [false, false, false],
+  ]) {
+    it(`checks the drive with preferHardlinks ${hardlinks} and IO_STORE ${ioStore}: ${checked}`, async () => {
+      const { ext } = await ready({
+        transform: all(
+          setConst("preferHardlinks", String(hardlinks)),
+          setConst("IO_STORE", String(ioStore)),
+        ),
+      });
+      onOtherDevice(LOCAL_APP_DATA);
+      assert.equal(typeOf(ext, ID.config).isSupported(GAME_ID), !checked);
+    });
+  }
+
+  it("does not offer the Config type before the game is discovered", async () => {
+    const ext = await boot({ state: stateFor({}) });
+    assert.equal(typeOf(ext, ID.config).isSupported(GAME_ID), false);
+  });
+
+  it("checks the drive with IO_STORE off while preferHardlinks keeps its default", async () => {
+    const { ext } = await ready({ transform: noIoStore });
+    onOtherDevice(LOCAL_APP_DATA);
+    assert.equal(typeOf(ext, ID.config).isSupported(GAME_ID), false);
+  });
+
+  it("makes the config and save folders in their own places when they differ", async () => {
+    cleanLocal();
+    fs.rmSync(SAVE_ROOT, { recursive: true, force: true });
+    const { ext } = await ready({ transform: separateSave });
+    assert.equal(exists(LOCAL_APP_DATA, "XXX", "Saved", "Config", "Windows"), true);
+    assert.equal(exists(SAVE_ROOT, "XXX", "Saved", "SaveGames"), true);
+    assert.deepEqual(ext.notifications, []);
+  });
+
+  it("says so, and makes no save folder, when only the save folder is on another drive", async () => {
+    cleanLocal();
+    fs.rmSync(SAVE_ROOT, { recursive: true, force: true });
+    const gameDir = makeGameDir(["XXX.exe"]);
+    const ext = await boot({ transform: separateSave, state: stateFor({ gameDir }) });
+    onOtherDevice(SAVE_ROOT);
+    await ext.game.setup({ path: gameDir });
+    assert.equal(exists(LOCAL_APP_DATA, "XXX", "Saved", "Config", "Windows"), true);
+    assert.equal(exists(SAVE_ROOT, "XXX", "Saved", "SaveGames"), false);
+    assert.deepEqual(
+      ext.notifications.map(({ id }) => id),
+      ["XXX-partioncheck"],
+    );
+    const { text } = openMore(ext, ext.notifications[0]);
+    assert.match(text, /Config: ENABLED: Local AppData folder is on the same partition/);
+    assert.match(text, /Save: DISABLED: Local AppData folder is NOT on the same partition/);
+  });
+
+  it("shows the drive and setup notices as suppressible warnings with a More button", async () => {
+    const gameDir = makeGameDir(["XXX.exe"]);
+    const ext = await boot({
+      transform: setConst("setupNotification", "true"),
+      state: stateFor({ gameDir }),
+    });
+    onOtherDevice(gameDir);
+    await ext.game.setup({ path: gameDir });
+    assert.deepEqual(
+      ext.notifications.map(({ id }) => id),
+      ["XXX-partioncheck", "XXX-setup-notify"],
+    );
+    for (const notification of ext.notifications) {
+      assert.equal(notification.allowSuppress, true, notification.id);
+      assert.deepEqual(
+        notification.actions.map(({ title }) => title),
+        ["More"],
+        notification.id,
+      );
+      assert.equal(openMore(ext, notification).dialog[0], "question", notification.id);
+    }
+  });
+
+  it("shows the save notices as suppressible errors with a More button", async () => {
+    const xbox = await ready({ files: ["gamelaunchhelper.exe"] });
+    await assert.rejects(installerOf(xbox.ext, ID.save).install(tree("a.sav")));
+    assert.equal(xbox.ext.notifications.at(-1).allowSuppress, true);
+
+    const { ext } = await ready();
+    onOtherDevice(LOCAL_APP_DATA);
+    await assert.rejects(installerOf(ext, ID.save).install(tree("a.sav")));
+    const notification = ext.notifications.at(-1);
+    assert.equal(notification.allowSuppress, true);
+    assert.deepEqual(
+      notification.actions.map(({ title }) => title),
+      ["More"],
+    );
+    const { dialog, press } = openMore(ext, notification);
+    assert.equal(dialog[0], "question");
+    press("Open Save Folder");
+    const [message, , options] = ext.errors.at(-1);
+    assert.equal(message, "Failed to open the file or folder");
+    assert.deepEqual(options, { allowReport: false });
+  });
+
+  it("shows the fallback notice with a More button and reports pages it cannot open quietly", async () => {
+    const ext = await boot({ state: stateFor({}) });
+    await installerOf(ext, ID.binaries).install(
+      tree("Mod/a.dll"),
+      sep(STAGING, "Cool Mod.installing"),
+    );
+    const [notification] = ext.notifications;
+    assert.deepEqual(
+      notification.actions.map(({ title }) => title),
+      ["More"],
+    );
+    delete globalThis.window;
+    openMore(ext, notification).press("Open Mod Page + Staging Folder");
+    assert.deepEqual(ext.errors[1][2], { allowReport: false });
+    openMore(ext, notification).press("Contact Ext. Developer");
+    assert.equal(ext.errors.at(-1)[0], "Failed to open the URL");
+    assert.deepEqual(ext.errors.at(-1)[2], { allowReport: false });
   });
 });
 

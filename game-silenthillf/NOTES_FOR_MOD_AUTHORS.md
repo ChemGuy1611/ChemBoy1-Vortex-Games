@@ -9,7 +9,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `SHf` |
-| Blueprint Mods (LogicMods) | a `LogicMods` folder | `SHf\Content\Paks\LogicMods\LogicMods` |
+| Blueprint Mods (LogicMods) | a `LogicMods` folder | `SHf\Content\Paks` |
 | Pak Mods | a `.pak` file | `SHf\Content\Paks\~mods` |
 | UE4SS Itself | a `dwmapi.dll` file | `SHf\Binaries\Win64` |
 | UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `SHf\Binaries\Win64\ue4ss\Mods` |
@@ -72,7 +72,7 @@ MyBlueprintMod.zip
 - Everything from the `LogicMods` folder down is copied to the game, keeping its structure.
 - Extra folders above `LogicMods` are fine - the installer finds it at any depth.
 
-Installs to: `SHf\Content\Paks\LogicMods\LogicMods`
+Installs to: `SHf\Content\Paks`
 
 **Common mistakes:**
 

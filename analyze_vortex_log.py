@@ -31,7 +31,9 @@ Options:
                      (falls back to %APPDATA%\\Vortex\\vortex.log).
     --out-dir DIR    Output directory (default: same folder as LOG_PATH).
     --levels LEVELS  Comma-separated levels: DEBUG, INFO, WARN, ERROR.
-                     Default: all four.
+                     Default: all four. Only the chosen levels are counted and
+                     shown; entries with an unrecognised level token always
+                     land in a separate OTHER section.
     --summary-only   Print entry counts and exit without writing files.
     --dry-run        Preview output path and counts without writing.
     --force          Overwrite existing output file.
@@ -182,39 +184,31 @@ def _parse_log(
     buckets: dict[str, list[tuple[str, str]]] = {tok: [] for tok in all_tokens}
     current_lines: list[str] = []
     current_level: str | None = None
-    current_is_other = False
 
     def _flush():
-        nonlocal current_level, current_lines, current_is_other
-        if current_level is None:
+        nonlocal current_level, current_lines
+        level, lines = current_level, current_lines
+        current_level, current_lines = None, []
+        # A known level the caller did not select (WARN under --levels ERROR) has no
+        # bucket and is dropped; "OTHER" always has one and takes only unknown tokens.
+        if level is None or level not in buckets:
             return
-        text = "".join(current_lines)
+        text = "".join(lines)
         if since_seconds is not None or until_seconds is not None:
             ts = _entry_ts_seconds(text)
             if ts is not None and (
                 (since_seconds is not None and ts < since_seconds)
                 or (until_seconds is not None and ts > until_seconds)
             ):
-                current_lines = []
-                current_level = None
-                current_is_other = False
                 return
         if grep_pattern is not None and not grep_pattern.search(text):
-            current_lines = []
-            current_level = None
-            current_is_other = False
             return
-        counts[current_level] += 1
+        counts[level] += 1
         if merge_lines and "\n" in text.rstrip("\n"):
             text = " | ".join(
                 ln.strip() for ln in text.splitlines() if ln.strip()
             ) + "\n"
-        bucket_key = current_level if current_level in buckets else "OTHER"
-        if bucket_key in buckets:
-            buckets[bucket_key].append((_extract_hour(text), text))
-        current_lines = []
-        current_level = None
-        current_is_other = False
+        buckets[level].append((_extract_hour(text), text))
 
     with open(log_path, encoding="utf-8", errors="replace") as f:
         for line in f:
@@ -224,7 +218,6 @@ def _parse_log(
                 current_lines = [line]
                 token = m.group(1)
                 current_level = _CANON_TOKEN.get(token, token)
-                current_is_other = False
             else:
                 # Catch-all: line that starts with a timestamp + unknown level token
                 ma = _ANY_LEVEL_RE.match(line)
@@ -232,7 +225,6 @@ def _parse_log(
                     _flush()
                     current_lines = [line]
                     current_level = "OTHER"
-                    current_is_other = True
                 elif current_level is not None:
                     current_lines.append(line)
 

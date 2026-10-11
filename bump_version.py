@@ -11,7 +11,7 @@ done this round belong in the new section). release_extension.py refuses a
 version whose section is still an empty stub.
 
 Each EXT_ID is looked up as a game-<id> folder first, then a helper-<id>
-folder (e.g. "falloutlondon" bumps helper-falloutlondon).
+folder (e.g. "globalignorepatterns" bumps helper-globalignorepatterns).
 
 Usage:
     python bump_version.py --major EXT_ID [EXT_ID ...]
@@ -156,30 +156,32 @@ def main():
             vu.log_error(ext_id, f"unexpected error: {e}")
             failed.append(ext_id)
 
+    matched_ids = set()
+    interrupted = False
     try:
-        matched_ids = set()
         for folder, game_id, _ in vu.iter_game_folders(args.game_ids):
             matched_ids.add(game_id)
             _run_one(folder, game_id)
         # IDs not matched to a game-* folder fall back to helper-* -- a bare id
-        # (e.g. "falloutlondon") can only ever resolve to one or the other.
+        # (e.g. "globalignorepatterns") can only ever resolve to one or the other.
         remaining_ids = set(args.game_ids) - matched_ids
         if remaining_ids:
             for folder, helper_id, _ in vu.iter_helper_folders(remaining_ids):
+                matched_ids.add(helper_id)
                 _run_one(folder, helper_id)
     except KeyboardInterrupt:
         print("\n\n  Interrupted.")
+        interrupted = True
     finally:
         vu.print_run_summary(saved, failed, [])
-    # Explicit IDs that match no extension folder used to print "Saved: 0" and exit
-    # 0, so a typo looked exactly like a successful no-op run.
-    if args.game_ids and not saved and not failed:
-        matched = {gid for _, gid, _ in vu.iter_game_folders(None)} | set(vu.list_helper_ids())
-        unmatched = sorted(set(args.game_ids) - matched)
-        if unmatched:
-            print(f"\n  ERROR - no extension found for: {', '.join(unmatched)}")
-            return 1
-    return 1 if failed else 0
+    # An id that matches no extension folder is a typo, whether or not other ids in the
+    # same call worked, so it always fails the run. It used to be reported only when
+    # nothing at all was saved, which hid a bad id sitting beside a good one. After an
+    # interrupt the unprocessed ids are not typos, so they are left out.
+    unmatched = [] if interrupted else sorted(set(args.game_ids) - matched_ids)
+    if unmatched:
+        print(f"\n  ERROR - no extension found for: {', '.join(unmatched)}")
+    return 1 if (failed or unmatched or interrupted) else 0
 
 
 if __name__ == "__main__":

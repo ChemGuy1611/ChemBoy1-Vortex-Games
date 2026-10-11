@@ -52,7 +52,7 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| Plugin Loader | `crimsondesert-mod` | high | `{gamePath}/.` |
+| Data Mod | `crimsondesert-mod` | high | `{gamePath}/.` |
 | Crimson Sharp Mod | `crimsondesert-browsermod` | high | `{gamePath}/mods` |
 | Patch Mod | `crimsondesert-patchmod` | high | `{gamePath}/mods` |
 | Root Folder | `crimsondesert-root` | high | `{gamePath}` |

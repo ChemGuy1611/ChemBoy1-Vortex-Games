@@ -69,12 +69,13 @@ def _cover_target_path(mode, folder, game_id):
 
 def fetch_all(target_game_ids=None, dry_run=False, force=False, mode="cover",
               concurrency=8, retry_failed=False):
+    """Returns the failed entries; a non-empty result means the run failed (exit code 1)."""
     sgdb_key = get_api_key("STEAMGRIDDB_API_KEY")
     if mode in ("title", "banner"):
         if not sgdb_key:
             if mode == "banner":
                 print("No SteamGridDB API key -- banner images require STEAMGRIDDB_API_KEY.")
-                return
+                return ["STEAMGRIDDB_API_KEY"]
             else:
                 print("No SteamGridDB API key -- title images will fall back to Steam capsule art.")
     else:

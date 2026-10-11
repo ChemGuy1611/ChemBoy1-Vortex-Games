@@ -1990,6 +1990,7 @@ class MainWindow(QMainWindow):
         QApplication.restoreOverrideCursor()
         if not self._runner.is_running:
             self._refresh_btn.setEnabled(True)
+            self._set_actions_enabled()
         if prev_ids:
             sel = self._table.selectionModel()
             sel.clearSelection()
@@ -2215,6 +2216,7 @@ class MainWindow(QMainWindow):
             flags=[
                 ("--upload", "Upload (Nexus API v3)", True),
                 ("--edit-changelog", "Open Changelog editor", True),
+                ("--push-description", "Push description to Nexus page", False),
                 ("--no-open", "Skip opening Nexus Page", False),
                 ("--dry-run", "Dry run (no writes)", False),
                 ("--skip-node-check", "Skip Node syntax", False),
@@ -2585,10 +2587,13 @@ class MainWindow(QMainWindow):
         refresh = self._refresh_after_run
         self._refresh_after_run = False
         self._run_failed = code != 0
+        # Re-enable first: _on_run_started disabled every action, and the refresh below
+        # only brings them back through a selection change - which never comes when
+        # nothing was selected (a New Game run), or when a refresh is already in flight.
+        self._set_actions_enabled()
         if refresh:
             self._refresh_data()
         else:
-            self._set_actions_enabled()
             self._update_status_bar()
 
     def _clear_checks(self):

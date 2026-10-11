@@ -377,8 +377,10 @@ Two behaviours behind that table:
 
 From v2.9.0-beta.2 (2026-10-08) a game can call `registerLoadOrder` more than once, each call with
 its own `loadOrderId`, and the Load Order page shows one tab per load order. Five optional fields
-on `ILoadOrderGameInfo` carry it; every one is ignored by Vortex v2.8 and earlier, so setting them
-is safe for an extension that must run on both.
+on `ILoadOrderGameInfo` carry it. Vortex v2.8 and earlier ignore those fields, and they also keep
+only the **first** `registerLoadOrder` call per game (a later call for the same `gameId` is dropped
+with a debug log). An extension that must run on both should therefore register its primary load
+order first: on v2.8 the extra calls vanish and the game keeps a single list.
 
 | Field               | Purpose                                                                                                                                  |
 | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |

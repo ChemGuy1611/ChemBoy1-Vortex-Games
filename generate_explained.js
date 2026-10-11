@@ -25,10 +25,10 @@ const path = require("path");
 // Static-analysis helpers shared with generate_notes.js.
 const {
   buildSymbolTable,
-  splitPathJoinArgs,
   splitAtTopLevelCommas,
   scanToMatchingClose,
-  getGuardFlag,
+  isGuardChainActive,
+  cleanEnvPath,
   resolveValue,
   resolveWithFallback,
   isRealValue,
@@ -36,8 +36,6 @@ const {
   discoverFlags,
   extractModTypes,
   extractRegisterModTypes,
-  extractField,
-  extractFieldRaw,
   extractInstallers,
 } = require("./extension_parser");
 
@@ -204,9 +202,8 @@ function extractActions(src, table) {
     const argsStr = stripped.slice(parenOpenPos + 1, parenClosePos);
     const args = splitAtTopLevelCommas(argsStr);
     if (args.length < 5) continue;
-    // An action wrapped in `if (FLAG) {` only exists when that flag is on
-    const guardFlagAction = getGuardFlag(stripped, m.index);
-    if (guardFlagAction && table.get(guardFlagAction) === "false") continue;
+    // An action wrapped in `if (FLAG) {` / `if (!FLAG) {` only exists when that flag says so
+    if (!isGuardChainActive(stripped, m.index, table)) continue;
     const labelArg = args[4].trim();
     const labelM = labelArg.match(/^[`'"]([^`'"]+)[`'"]$/);
     if (!labelM) continue;
@@ -455,17 +452,6 @@ function extractConfigSavePaths(table) {
   }
 
   return paths;
-}
-
-/**
- * Replace Vortex path helper references with readable environment variables.
- */
-function cleanEnvPath(p) {
-  return p
-    .replace(/util\.getVortexPath\(["']home["']\)/g, "%USERPROFILE%")
-    .replace(/util\.getVortexPath\(["']documents["']\)/g, "%DOCUMENTS%")
-    .replace(/util\.getVortexPath\(["']localAppData["']\)/g, "%LOCALAPPDATA%")
-    .replace(/util\.getVortexPath\(["']appData["']\)/g, "%APPDATA%");
 }
 
 /**

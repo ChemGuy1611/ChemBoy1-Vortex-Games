@@ -41,7 +41,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | Root Game Folder | `kingdomcomedeliverance2-root` | high | `{gamePath}` |
-| Mod | `?` | 25 | `?` |
+| Mod | `kingdomcomedeliverance2-mod` | 25 | `?` |
 | Binaries | `kingdomcomedeliverance2-binaries` | 45 | `?` |
 
 ## Mod Installers
@@ -50,7 +50,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `` | 25 |
+| `kingdomcomedeliverance2-mod` | 25 |
 | `kingdomcomedeliverance2-root` | 30 |
 | `kingdomcomedeliverance2-cfg` | 35 |
 | `kingdomcomedeliverance2-binaries` | 40 |

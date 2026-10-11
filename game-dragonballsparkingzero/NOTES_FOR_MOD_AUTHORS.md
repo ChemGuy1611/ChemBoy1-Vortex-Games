@@ -10,7 +10,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | Modloader | a file or folder named `SZModLib` | `SparkingZERO\Mods` |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `SparkingZERO` |
-| Blueprint Mods (LogicMods) | a `LogicMods` folder | `SparkingZERO\Content\Paks\LogicMods\LogicMods` |
+| Blueprint Mods (LogicMods) | a `LogicMods` folder | `SparkingZERO\Content\Paks` |
 | Pak Mods | a `.pak` file | `SparkingZERO\Content\Paks\~mods` |
 | UE4SS Itself | a `dwmapi.dll` file | `SparkingZERO\Binaries\Win64` |
 | Signature Bypass | `dsound.dll` and `dbsparkingzeroutocbypass.asi` | `SparkingZERO\Binaries\Win64` |
@@ -82,7 +82,7 @@ MyBlueprintMod.zip
 - Everything from the `LogicMods` folder down is copied to the game, keeping its structure.
 - Extra folders above `LogicMods` are fine - the installer finds it at any depth.
 
-Installs to: `SparkingZERO\Content\Paks\LogicMods\LogicMods`
+Installs to: `SparkingZERO\Content\Paks`
 
 **Common mistakes:**
 

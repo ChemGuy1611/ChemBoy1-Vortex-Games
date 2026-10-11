@@ -2,8 +2,8 @@
 Name: Gears of War: E-Day Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-10-08
+Version: 1.0.1
+Date: 2026-10-10
 Notes:
 -
 ////////////////////////////////////////////////*/
@@ -62,9 +62,14 @@ const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL 
 const GAME_NAME = "Gears of War: E-Day";
 const GAME_NAME_SHORT = "Gears of War"; //Try for 8-10 characters
 const EPIC_CODE_NAME = "FairlightConcept"; //Folder in root
-const EXEC = path.join(EPIC_CODE_NAME, "Binaries", "Win64", "GoWEDAY-Steam.exe"); //!Direct to shipping exe due to EAC
-const EXEC_EPIC = EXEC; //change these 3 if different
-const EXEC_GOG = EXEC;
+const EXEC_FILE = "GoWEDay-Steam.exe"; //direct to shipping exe due to EAC
+const EXEC = path.join(EPIC_CODE_NAME, "Binaries", "Win64", EXEC_FILE); //!Direct to shipping exe due to EAC
+const EXEC_FILE_XBOX = "GoWEDAY.exe"; //direct to shipping exe due to EAC
+const EXEC_XBOX = path.join(EPIC_CODE_NAME, "Binaries", "WinGDK", EXEC_FILE_XBOX); //!Direct to shipping exe due to EAC
+const EXEC_FILE_EPIC = "GoWEDAY-Epic.exe"; //direct to shipping exe due to EAC
+const EXEC_EPIC = path.join(EPIC_CODE_NAME, "Binaries", "Win64", EXEC_FILE_EPIC); //!Direct to shipping exe due to EAC
+const EXEC_FILE_GOG = "GoWEDAY-GOG.exe"; //direct to shipping exe due to EAC
+const EXEC_GOG = path.join(EPIC_CODE_NAME, "Binaries", "Win64", EXEC_FILE_EPIC); //!Direct to shipping exe due to EAC
 const EXEC_DEMO = EXEC;
 const PARAMETERS_STRING = "EOS_USE_ANTICHEATCLIENTNULL=1"; //launch arguments to pass when launching the game
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Gears_of_War%3A_E-Day";
@@ -83,7 +88,7 @@ const hasModKit = false; //toggle for UE ModKit mod support
 const hasServer = false; //toggle for server pak mod logic
 const preferHardlinks = true; //set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users
 const autoDownloadUe4ss = false; //toggle for auto downloading UE4SS (only applies when ue4ssLoadOrder is enabled)
-const writeEngineVersion = false; //toggle to write ENGINE_VERSION into UE4SS-settings.ini (EngineVersionOverride) on deploy, when UE4SS is installed
+const writeEngineVersion = true; //toggle to write ENGINE_VERSION into UE4SS-settings.ini (EngineVersionOverride) on deploy, when UE4SS is installed
 const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
 const hasUserIdFolder = true; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
@@ -140,6 +145,15 @@ const SHIPEXE_PROJECTNAME = ""; //almost always matches.
 const SAVE_EDITOR_ID = `${GAME_ID}-saveeditor`;
 const SAVE_EDITOR_NAME = "Save Editor";
 const SAVE_EDITOR_EXEC = "XXX.exe";
+
+const EACBAT_FILE = "EAC_Bypass.bat";
+let EACBAT_CONTENTS = `@echo off
+setlocal
+set "SteamAppId=${STEAMAPP_ID}"
+set "SteamGameId=${STEAMAPP_ID}"
+set "EOS_USE_ANTICHEATCLIENTNULL=1"
+"${EXEC_FILE}"
+exit`;
 
 // -- END EDIT ZONE -- /////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -201,7 +215,6 @@ let STORE_FOLDER = "";
 
 //other constants
 const APPMANIFEST_FILE = "appxmanifest.xml";
-const EXEC_XBOX = path.join(EPIC_CODE_NAME, "Binaries", "WinGDK", "GoWEDAY.exe"); //!Direct to shipping exe due to EAC
 const EXEC_FOLDER_DEFAULT = "Win64"; //almost never changes
 const EXEC_FOLDER_XBOX = "WinGDK"; //almost never changes
 
@@ -653,7 +666,14 @@ function getExecutable(discoveryPath) {
     if (statCheckSync(discoveryPath, EXEC_XBOX)) {
       GAME_VERSION = "xbox";
       BINARIES_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_XBOX);
-      SHIPPING_EXE = path.join(BINARIES_PATH, "GoWEDAY.exe");
+      //fs.writeFileSync(path.join(discoveryPath, BINARIES_PATH, EACBAT_FILE), EACBAT_CONTENTS);
+      EACBAT_CONTENTS = `@echo off
+set "SteamAppId=${STEAMAPP_ID}"
+set "SteamGameId=${STEAMAPP_ID}"
+set "EOS_USE_ANTICHEATCLIENTNULL=1"
+"${EXEC_FILE_XBOX}"
+exit`;
+      SHIPPING_EXE = path.join(BINARIES_PATH, EXEC_FILE_XBOX);
       SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
       DLL_PATH = SCRIPTS_PATH;
       CONFIG_PATH = CONFIG_PATH_XBOX;
@@ -665,7 +685,8 @@ function getExecutable(discoveryPath) {
   if (statCheckSync(discoveryPath, EXEC)) {
     GAME_VERSION = "steam";
     BINARIES_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_DEFAULT);
-    SHIPPING_EXE = path.join(BINARIES_PATH, "GoWEDAY-Steam.exe");
+    //fs.writeFileSync(path.join(discoveryPath, BINARIES_PATH, EACBAT_FILE), EACBAT_CONTENTS);
+    SHIPPING_EXE = path.join(BINARIES_PATH, EXEC_FILE);
     SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
     DLL_PATH = SCRIPTS_PATH;
     //CONFIG_PATH = CONFIG_PATH_DEFAULT;
@@ -677,10 +698,8 @@ function getExecutable(discoveryPath) {
   if (statCheckSync(discoveryPath, EXEC_DEMO)) {
     GAME_VERSION = "demo";
     BINARIES_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_DEFAULT);
-    SHIPPING_EXE = path.join(
-      BINARIES_PATH,
-      `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEMO}-Shipping.exe`,
-    );
+    //fs.writeFileSync(path.join(discoveryPath, BINARIES_PATH, EACBAT_FILE), EACBAT_CONTENTS);
+    SHIPPING_EXE = path.join(BINARIES_PATH, EXEC_FILE);
     SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
     DLL_PATH = SCRIPTS_PATH;
     //CONFIG_PATH = CONFIG_PATH_DEFAULT;
@@ -692,7 +711,15 @@ function getExecutable(discoveryPath) {
   if (statCheckSync(discoveryPath, EXEC_EPIC)) {
     GAME_VERSION = "epic";
     BINARIES_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_DEFAULT);
-    SHIPPING_EXE = path.join(BINARIES_PATH, "GoWEDAY-Epic.exe");
+    //fs.writeFileSync(path.join(discoveryPath, BINARIES_PATH, EACBAT_FILE), EACBAT_CONTENTS);
+    EACBAT_CONTENTS = `@echo off
+setlocal
+set "SteamAppId=${STEAMAPP_ID}"
+set "SteamGameId=${STEAMAPP_ID}"
+set "EOS_USE_ANTICHEATCLIENTNULL=1"
+"${EXEC_FILE_EPIC}"
+exit`;
+    SHIPPING_EXE = path.join(BINARIES_PATH, EXEC_FILE_EPIC);
     SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
     DLL_PATH = SCRIPTS_PATH;
     //CONFIG_PATH = CONFIG_PATH_DEFAULT;
@@ -704,6 +731,14 @@ function getExecutable(discoveryPath) {
   if (statCheckSync(discoveryPath, EXEC_GOG)) {
     GAME_VERSION = "gog";
     BINARIES_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_DEFAULT);
+    //fs.writeFileSync(path.join(discoveryPath, BINARIES_PATH, EACBAT_FILE), EACBAT_CONTENTS);
+    EACBAT_CONTENTS = `@echo off
+setlocal
+set "SteamAppId=${STEAMAPP_ID}"
+set "SteamGameId=${STEAMAPP_ID}"
+set "EOS_USE_ANTICHEATCLIENTNULL=1"
+"${EXEC_FILE_GOG}"
+exit`;
     SHIPPING_EXE = path.join(BINARIES_PATH, "GoWEDAY-GOG.exe");
     SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
     DLL_PATH = SCRIPTS_PATH;
@@ -714,6 +749,7 @@ function getExecutable(discoveryPath) {
     return EXEC_GOG;
   } //*/
   GAME_VERSION = "default";
+  //fs.writeFileSync(path.join(discoveryPath, BINARIES_PATH, EACBAT_FILE), EACBAT_CONTENTS);
   return EXEC;
 }
 
@@ -3033,6 +3069,7 @@ async function setup(discovery, api, gameSpec) {
   // SYNCHRONOUS CODE ////////////////////////////////////
   const state = api.getState();
   GAME_PATH = discovery.path;
+  fs.writeFileSync(path.join(GAME_PATH, BINARIES_PATH, EACBAT_FILE), EACBAT_CONTENTS);
   STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
   CHECK_CONFIG = checkPartitions(CONFIGMOD_LOCATION, GAME_PATH);
@@ -3081,6 +3118,7 @@ async function setup(discovery, api, gameSpec) {
     }
   }
   MODTYPE_FOLDERS.push(BINARIES_PATH);
+  //await fsp.writeFile(path.join(GAME_PATH, BINARIES_PATH, EACBAT_FILE), EACBAT_CONTENTS);
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
@@ -3115,6 +3153,19 @@ function applyGame(context, gameSpec) {
     requiresLauncher: requiresLauncher,
     getGameVersion: resolveGameVersion,
     supportedTools: [
+      {
+        id: `${GAME_ID}-eacbypasslaunch`,
+        name: `EAC Bypass Launch`,
+        logo: `noeac.png`,
+        queryPath: getBinariesFolder,
+        executable: () => EACBAT_FILE,
+        requiredFiles: [EACBAT_FILE],
+        detach: true,
+        relative: true,
+        exclusive: true,
+        shell: true,
+        defaultPrimary: true,
+      }, //*/
       {
         id: `${GAME_ID}-customlaunch`,
         name: `Custom Launch`,

@@ -72,15 +72,7 @@ Mod types define where each category of mod gets deployed:
 | Root Folder | `romestead-root` | high | `{gamePath}` |
 | Mod Settings Menu | `romestead-modsettingsmenu` | high | `{gamePath}` |
 | BepInEx Injector | `romestead-bepinex` | low | `{gamePath}` |
-| MelonLoader Mod | `romestead-melonmod` | high | `{gamePath}/.` |
-| MelonLoader Mods | `romestead-melonloader-mods` | high | `{gamePath}/Mods` |
-| MelonLoader Plugins | `romestead-melonloader-plugins` | high | `{gamePath}/Plugins` |
-| MelonLoader Config | `romestead-melonloader-config` | high | `{gamePath}/UserData` |
-| MelonLoader UserLibs | `romestead-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
-| MelonPreferencesManager | `romestead-melonprefman` | high | `{gamePath}/Mods` |
-| MelonLoader | `romestead-melonloader` | low | `{gamePath}` |
 | Assembly DLL Mod | `romestead-assemblydll` | 60 | `?` |
-| Assets/Resources File | `romestead-assets` | 62 | `?` |
 
 ## Mod Installers
 
@@ -108,13 +100,9 @@ These tools appear in Vortex's Tools panel when this game is active:
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Download Latest BepInEx BE
-- Download Latest MelonLoader
-- Open Data Folder
 - Open Save Folder
 - Open BepInEx Config
 - Open BepInEx Log
-- Open MelonLoader Config
-- Open MelonLoader Log
 - Open PCGamingWiki Page
 - Open SteamDB Page
 - View Changelog

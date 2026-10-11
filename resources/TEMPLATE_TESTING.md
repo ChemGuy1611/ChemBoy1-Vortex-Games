@@ -145,8 +145,9 @@ fix in the template through the normal propagation path.
 
 Suites exist for `basic`, `snowdropengine`, `shinryu`, `frostbite`, `reloaded2`,
 `cobraengine-acse`, `tfcinstaller-ue2-3`, `unity-umm`, `farcry`, `godot`, `rpgmaker`,
-`anvilengine`, `reframework-fluffy` and `unitymelonloaderbepinex-hybrid`. The rest are covered by
-the contract checks only until their own suite is written.
+`anvilengine`, `reframework-fluffy`, `unitymelonloaderbepinex-hybrid` and `ue4-5`. Every template
+has a suite; a template added later is covered by the contract checks only until its own suite is
+written.
 
 A template with many toggles (`anvilengine` has nineteen) is tested three ways: the default
 load, one load per toggle with the registration it adds, and a load with every feature on, which
@@ -164,7 +165,25 @@ set a different `XBOXAPP_ID` as well as `hasXbox`.
 
 A suite can reach a template's private helpers (functions the template does not export) with a
 source transform that appends an export, for example `src + "\nmodule.exports.internals = { fn };"`.
-The rpgmaker suite does this for its parameter parsing helpers.
+The rpgmaker suite does this for its parameter parsing helpers, and the ue4-5 suite for the load
+order readers and writers, the collections generators and the path and status helpers.
+
+`ue4-5` is the largest template (three load order surfaces, a React layer, a mod-update guard) and
+its suite follows the hybrid pattern: the bundled `downloader.js` is faked, and a load per toggle
+combination also runs the contract checks. The React components are registered and the
+registration is asserted, but they are not rendered because `react-dom` is not installed;
+everything they call (state readers, writers, sorting and status helpers) is tested directly. The
+partition check compares the device of the game, staging and config or save folders, and a
+temporary folder cannot be put on a second disk, so a test makes one folder report another device
+by wrapping `fs.statSync` for that path. Shared fixture objects are mutated by the template's
+handlers, so each test boots from a fresh copy, and a test that asserts on created folders
+cleans the shared application folder first. Fakes that answer instantly cannot tell a caller that
+waits for a download from one that forgot to, because the real folder work that follows takes
+longer than a few microtasks; the downloader and login fakes take a `delay` for this, and the
+test asserts the work finished by the time `setup` resolved. A mutation run of this suite
+(see "Proving a suite can fail") leaves the React components uncovered by design, since they are never
+rendered; what survives elsewhere is log and dialog text, placeholder constants, and a dropped
+`await` on a real file write, none of which a test can observe.
 
 ### Shared helpers
 
@@ -214,6 +233,14 @@ once on the unbroken copy first, because a copy that fails for an unrelated reas
 mutant look killed. A break that no test notices is either a missing test or a change that has
 no observable effect, and each survivor should be judged which. The real template files are
 never modified.
+
+For a large template, write the breaks by script instead of by hand: scan the template source
+into code, string and comment spans, then generate one position-based break per comparison
+operator, `&&` / `||`, `true` / `false`, `!`, number, `await`, `.toLowerCase()` and string
+literal, run them across several scratch copies in parallel, and list the survivors with their
+line. Treat a dropped `await` as a missing test only when the fake it waits on can be made slow;
+a fake that answers in microtasks cannot tell a caller that waits from one that does not. Killed
+runs leave temporary folders behind, so sweep them afterwards.
 
 ## Adding a template or a check
 

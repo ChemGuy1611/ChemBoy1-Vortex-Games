@@ -596,7 +596,11 @@ def build_output(args, db_dir, store, locked):
     if args.tree is not None:
         return fmt_tree(store, split_path(args.tree), max(1, args.depth), show)
     if args.json is not None:
-        return [json.dumps(unflatten(store, split_path(args.json)), indent=2)]
+        # Redact per leaf before rebuilding, exactly as --get / --tree do; the rebuilt
+        # object would otherwise carry the OAuth token from the confidential hive.
+        parts = split_path(args.json)
+        shown = {key: redact(key, store[key], show) for key in matching(store, parts)}
+        return [json.dumps(unflatten(shown, parts), indent=2)]
     if args.get is not None:
         parts = split_path(args.get)
         keys = matching(store, parts)

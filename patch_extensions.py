@@ -61,7 +61,7 @@ from vortex_utils import (
     is_placeholder_value, replace_const_rhs, print_count_summary, js_string_literal,
     strip_js_comments, is_real_value,
     audit_skip_lines, AUDIT_SKIP_STORE_ID, AUDIT_SKIP_FOMOD, AUDIT_SKIP_PRIORITY,
-    find_registerinstaller_calls,
+    find_registerinstaller_calls, node_check_source,
 )
 NEXUS_SITE_BASE = "https://www.nexusmods.com/site/mods"
 
@@ -85,6 +85,8 @@ def patch_extension_url(game_id, src, context):
 
     url = f"{NEXUS_SITE_BASE}/{mod_id}"
     new_src = set_or_insert(src, "EXTENSION_URL", url, comment="Nexus link to this extension. Used for links")
+    if new_src == src:
+        return src, False, SKIP_ALREADY_UP_TO_DATE
     return new_src, True, f"set to {url}"
 
 
@@ -197,6 +199,8 @@ def patch_pcgamingwiki_url(game_id, src, context):
         return src, False, "not found on PCGamingWiki"
 
     new_src = set_or_insert(src, "PCGAMINGWIKI_URL", page_url)
+    if new_src == src:
+        return src, False, SKIP_ALREADY_UP_TO_DATE
     return new_src, True, f"set to {page_url}"
 
 
@@ -1410,7 +1414,7 @@ def _is_parked(src, const):
     The resolve passes use this to stop re-offering a candidate that was already
     hand-checked and rejected (GOG's 1998 Resident Evil 2 for the 2019 game).
     """
-    skip_lines = audit_skip_lines(src, AUDIT_SKIP_STORE_ID)
+    skip_lines = audit_skip_lines(src, AUDIT_SKIP_STORE_ID, wrapped=False)
     return bool(skip_lines) and _skip_reason_for_const(src.splitlines(), skip_lines, const) is not None
 
 
@@ -1472,7 +1476,7 @@ def audit_store_ids(folder_paths):
             src = f.read()
         active = strip_js_comments(src)
         src_lines = src.splitlines()
-        skip_lines = audit_skip_lines(src, AUDIT_SKIP_STORE_ID)
+        skip_lines = audit_skip_lines(src, AUDIT_SKIP_STORE_ID, wrapped=False)
         skip_cache = {}
         file_hits = []
 
@@ -1555,6 +1559,8 @@ def audit_store_id_resolve(folder_paths, stores):
         targets = []
         parked = 0
         for folder, index_path in folder_paths:
+            if not folder.startswith("game-"):
+                continue  # templates carry a placeholder GAME_NAME ("XXX"); nothing to look up
             with open(index_path, encoding="utf-8", errors="replace") as f:
                 src = f.read()
             if is_real_value(const_value(src, const)):
@@ -2074,6 +2080,13 @@ def run_patches(game_ids, dry_run, context, only=None):
                 log_error(game_id, '; '.join(err_msgs))
 
             if game_changed:
+                # A patch that splices JS can leave a SyntaxError the extension only
+                # reveals when Vortex loads it. Refuse to write (or report) such a result.
+                syntax_ok, syntax_err = node_check_source(src)
+                if syntax_ok is False:
+                    log_error(game_id, f"patched index.js fails node --check, not written: {syntax_err}")
+                    total_errors += 1
+                    continue
                 log_info(game_id, f"{'[DRY RUN] ' if dry_run else ''}CHANGED")
                 for msg in changed_msgs:
                     print(f"    - {msg}")

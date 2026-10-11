@@ -637,9 +637,9 @@ async function recoverFailedDownload(adapter, api, gameSpec, config, dlId, downl
     });
     // The failed entry is removed first: the install that follows produces its own download, and
     // leaving the failure behind would show the user two rows for one click.
-    await util
-      .toPromise((cb) => api.events.emit("remove-download", dlId, cb))
-      .catch((err) => log("warn", `Could not remove the failed ${adapter.label} download: ${err}`));
+    await new Promise((resolve, reject) =>
+      api.events.emit("remove-download", dlId, (err) => (err ? reject(err) : resolve())),
+    ).catch((err) => log("warn", `Could not remove the failed ${adapter.label} download: ${err}`));
     // force, because the user clicked download on a mod they may already have
     await installRef(adapter, api, gameSpec, config, ref, { force: true });
   } finally {

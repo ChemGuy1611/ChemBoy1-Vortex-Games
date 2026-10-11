@@ -50,8 +50,10 @@ Usage:
 Environment variables:
     NEXUS_API_KEY  Required. Read from env var, with HKCU/HKLM registry fallback.
 
-Exit code 1 if any non-suppressed extension has a missing/stray tag or a helper-*
-folder has no resolvable mod-page URL, 0 otherwise.
+Exit code 1 if anything lands under "Needs attention" -- a non-suppressed extension with a
+missing/stray tag, a mod page that can't be fetched (dead or unresolvable), or a helper-*
+folder with no resolvable mod-page URL -- 0 otherwise. Warnings and errors go to stderr, so
+--json output on stdout always parses.
 """
 
 import argparse
@@ -61,7 +63,7 @@ import sys
 import time
 
 from vortex_utils import (
-    REPO_ROOT, iter_game_folders, read_index_js, extract_game_id,
+    REPO_ROOT, HELPER_PREFIX, iter_game_folders, read_index_js,
     extract_extension_url, parse_nexus_mod_url,
     audit_skip_lines, AUDIT_SKIP_MODPAGE,
     get_api_key, nexus_graphql,
@@ -72,8 +74,6 @@ TARGET_TAGS = {4694: "Game Extension", 4902: "AI Assisted"}
 # Same carve-out as the store-id audit (feedback_store_id_audit) -- frozen, no more
 # updates, excluded from bulk sweeps. See memory project_deprecated_extensions.
 FROZEN_GAME_IDS = {"battlefield1": "frozen extension (project_deprecated_extensions)"}
-
-HELPER_PREFIX = "helper-"
 
 ALIAS_BATCH_SIZE = 30
 BATCH_SLEEP_SECONDS = 0.5
@@ -138,11 +138,14 @@ def _get_local_extensions():
         folder = os.path.join(REPO_ROOT, name)
         if not os.path.isdir(folder):
             continue
+        # The folder suffix is the helper's id. A companion helper's GAME_ID const names its
+        # target game (helper-falloutlondonsetup sets "fallout4"), not itself -- see
+        # vortex_utils.iter_helper_folders.
+        game_id = name[len(HELPER_PREFIX):]
         src = read_index_js(folder)
         if src is None:
-            yield _no_url_entry(name, folder, "no index.js in this folder -- can't read EXTENSION_URL")
+            yield _no_url_entry(game_id, folder, "no index.js in this folder -- can't read EXTENSION_URL")
             continue
-        game_id = extract_game_id(src) or name
         url = extract_extension_url(src)
         if not url:
             yield _no_url_entry(game_id, folder, "index.js has no EXTENSION_URL const")
@@ -174,7 +177,7 @@ def _resolve_game_ids(domains, api_key):
             result[d] = node["id"]
         else:
             print(f"  WARNING: could not resolve numeric gameId for domain {d!r} -- "
-                  f"its extensions will be skipped")
+                  f"its extensions will be skipped", file=sys.stderr)
     return result
 
 
@@ -222,11 +225,12 @@ def _fetch_account_site_mods(api_key):
         user = nexus_get_current_user(api_key)
     except Exception as e:
         print(f"  WARNING: could not resolve account user id ({e}) -- "
-              f"skipping the account-wide extra-mods pass")
+              f"skipping the account-wide extra-mods pass", file=sys.stderr)
         return {}
     uploader_id = user.get("user_id")
     if not uploader_id:
-        print("  WARNING: v1 validate response had no user_id -- skipping account-wide pass")
+        print("  WARNING: v1 validate response had no user_id -- skipping account-wide pass",
+              file=sys.stderr)
         return {}
 
     mods = {}
@@ -243,7 +247,7 @@ def _fetch_account_site_mods(api_key):
         }}"""
         resp = nexus_graphql(query, api_key=api_key)
         if resp.get("errors"):
-            print(f"  WARNING: account-wide mods() query failed: {resp['errors']}")
+            print(f"  WARNING: account-wide mods() query failed: {resp['errors']}", file=sys.stderr)
             break
         page = (resp.get("data") or {}).get("mods") or {}
         nodes = page.get("nodes") or []
@@ -395,7 +399,7 @@ def main():
 
     api_key = get_api_key("NEXUS_API_KEY")
     if not api_key:
-        print("ERROR: NEXUS_API_KEY not found in env / registry")
+        print("ERROR: NEXUS_API_KEY not found in env / registry", file=sys.stderr)
         sys.exit(1)
 
     report = run_audit(api_key)

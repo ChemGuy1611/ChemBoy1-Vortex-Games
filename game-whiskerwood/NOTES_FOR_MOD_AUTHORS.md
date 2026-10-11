@@ -10,7 +10,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | Modkitmod | a file with the `.uplugin` extension and a file with the `.pak` extension | `LOCALAPPDATA\Whiskerwood\Saved\mods` |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `Whiskerwood` |
-| Blueprint Mods (LogicMods) | a `LogicMods` folder | `Whiskerwood\Content\Paks\LogicMods\LogicMods` |
+| Blueprint Mods (LogicMods) | a `LogicMods` folder | `Whiskerwood\Content\Paks` |
 | Pak Mods | a `.pak` file | `Whiskerwood\Content\Paks\~mods` |
 | UE4SS Itself | a `dwmapi.dll` file | `Whiskerwood\Binaries\Win64` |
 | UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `Whiskerwood\Binaries\Win64\ue4ss\Mods` |
@@ -78,7 +78,7 @@ MyBlueprintMod.zip
 - Everything from the `LogicMods` folder down is copied to the game, keeping its structure.
 - Extra folders above `LogicMods` are fine - the installer finds it at any depth.
 
-Installs to: `Whiskerwood\Content\Paks\LogicMods\LogicMods`
+Installs to: `Whiskerwood\Content\Paks`
 
 **Common mistakes:**
 

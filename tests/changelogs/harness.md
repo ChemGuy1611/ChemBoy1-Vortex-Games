@@ -2,6 +2,10 @@
 
 Covers the shared test harness in `tests/harness/`. A harness change can change what every suite proves, so each one is followed by a full `npm test` run.
 
+## [2026-10-10]
+
+- Added: `util.walk` (visits folders before their contents and honors `ignoreErrors`), `util.pad` and `util.deBOM` (same arithmetic as vortex-api) and `util.renderModName` (the display name attributes in the order extensions prefer, falling back to the id). `template-ue4-5` uses all four; without them the no-op fallback returned `undefined`.
+
 ## [2026-10-05] (4)
 
 - Added: `util.copyFileAtomic` stub, a plain file copy. An extension that chains `.catch` on it (the ResoRep system dll copy in `template-anvilengine`) otherwise got `undefined` back from the no-op fallback and threw.

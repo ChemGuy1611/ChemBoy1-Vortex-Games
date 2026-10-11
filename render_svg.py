@@ -33,6 +33,8 @@ Arguments:
                     modes only; an SVG file keeps its own colours on a white canvas.
     --bg            Background colour, or "none" for a transparent PNG (default: "#0d1117").
                     "none" applies to --path / --js-const only; SVG files render opaque.
+                    Colours must be #rgb or #rrggbb; anything else (a name, #rrggbbaa) exits
+                    with an error before any file is written.
     --js-const NAME Read the path string out of `const NAME = '...'` in a .js file,
                     which is how these extensions store icon paths
 
@@ -250,16 +252,18 @@ def draw_svg_path(ctx, path_data):
 
 
 def hex_to_rgb(colour):
-    """Return an (r, g, b) tuple for a #rgb / #rrggbb colour, defaulting to white."""
+    """Return an (r, g, b) tuple for a #rgb / #rrggbb colour. Raises ValueError for anything
+    else (named colours, #rrggbbaa): a silent white would make the PNG disagree with the
+    kept .svg, which carries the colour string as given."""
     value = colour.lstrip("#")
     if len(value) == 3:
         value = "".join(char * 2 for char in value)
-    if len(value) != 6:
-        return (255, 255, 255)
     try:
+        if len(value) != 6:
+            raise ValueError
         return tuple(int(value[i:i + 2], 16) for i in (0, 2, 4))
     except ValueError:
-        return (255, 255, 255)
+        raise ValueError("unsupported colour %r -- use #rgb or #rrggbb" % colour) from None
 
 
 def main():
@@ -282,6 +286,12 @@ def main():
 
     transparent = args.bg.lower() == "none"
     if path_data:
+        try:
+            hex_to_rgb(args.fill)
+            if not transparent:
+                hex_to_rgb(args.bg)
+        except ValueError as err:
+            sys.exit(str(err))
         name = args.js_const or "path"
         out_file = args.out or os.path.abspath("%s.png" % name)
         svg_file = os.path.splitext(out_file)[0] + ".svg"

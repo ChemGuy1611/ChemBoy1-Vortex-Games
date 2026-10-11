@@ -100,6 +100,22 @@ if (gameArgs.length > 0) {
     .sort();
 }
 
+/** --json consumers always get a parseable report, including for a run that lints nothing. */
+function emitEmptyJson() {
+  if (!doJson) return;
+  const empty = {
+    timestamp: new Date().toISOString(),
+    passed: 0,
+    failed: 0,
+    total: 0,
+    totalErrors: 0,
+    totalWarnings: 0,
+    results: [],
+    failedIds: [],
+  };
+  process.stdout.write(JSON.stringify(empty, null, 2) + "\n");
+}
+
 // ── filter to git-changed index.js files ─────────────────────────────────────
 
 if (doChanged) {
@@ -123,6 +139,8 @@ if (doChanged) {
     targetDirs = targetDirs.filter((d) => changedDirs.has(d));
     if (targetDirs.length === 0 && before > 0) {
       emit("No changed index.js files found (--changed).");
+      if (doJson) process.stderr.write("No changed index.js files found (--changed).\n");
+      emitEmptyJson();
       writeResultsAtomic(lines.join("\n") + "\n");
       process.exit(0);
     }
@@ -160,6 +178,8 @@ for (const dirName of targetDirs) {
 
 if (targetFiles.length === 0) {
   emit("Warning: no index.js files found to lint.");
+  if (doJson) process.stderr.write("Warning: no index.js files found to lint.\n");
+  emitEmptyJson();
   writeResultsAtomic(lines.join("\n") + "\n");
   process.exit(1);
 }

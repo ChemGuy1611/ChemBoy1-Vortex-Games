@@ -52,10 +52,10 @@ version .txt filename regardless of the version the template scaffold carries.
 info.json "id" is set to GAME_ID.
 
 After writing index.js, automatically runs:
-    1. node generate_explained.js {GAME_ID}
-    2. node generate_notes.js {GAME_ID}
-    3. npx oxlint game-{GAME_ID}/index.js  (warns on issues, does not abort)
-    4. python categorize_games.py {GAME_ID}
+    1. python categorize_games.py {GAME_ID}  (first: the doc generators read its lists)
+    2. node generate_explained.js {GAME_ID}
+    3. node generate_notes.js {GAME_ID}
+    4. npx oxlint game-{GAME_ID}/index.js  (warns on issues, does not abort)
     5. python setup_test_folder.py {GAME_ID}
 
 Requirements:
@@ -1087,6 +1087,18 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
 
     print(f"{'=' * 60}\n")
 
+    # ── Update engine category lists ─────────────────────────────────────────
+    # Before the doc generators: generate_notes.js picks the game's engine from the lists
+    # this writes, so a game not yet listed gets all-stub NOTES.
+    print("[categorize_games.py]")
+    result = run_script("categorize_games.py", game_id)
+    if result.returncode == 0:
+        print(f"  {result.stdout.strip()}\n")
+    else:
+        print(f"  FAILED -run manually: python categorize_games.py {game_id}")
+        if result.stderr:
+            print(f"  {result.stderr.strip()}\n")
+
     # ── Generate EXTENSION_EXPLAINED.md + NOTES_FOR_MOD_AUTHORS.md ────────────
     if skip_explained:
         print("[generate_explained.js] skipped (--skip-explained)\n")
@@ -1122,16 +1134,6 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
             for line in out.splitlines():
                 print(f"    {line}")
             print()
-
-    # ── Update engine category lists ─────────────────────────────────────────
-    print("[categorize_games.py]")
-    result = run_script("categorize_games.py", game_id)
-    if result.returncode == 0:
-        print(f"  {result.stdout.strip()}\n")
-    else:
-        print(f"  FAILED -run manually: python categorize_games.py {game_id}")
-        if result.stderr:
-            print(f"  {result.stderr.strip()}\n")
 
     # ── Create test game folder ───────────────────────────────────────────────
     print("[setup_test_folder.py]")

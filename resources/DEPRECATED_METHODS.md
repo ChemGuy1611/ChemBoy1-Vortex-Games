@@ -23,7 +23,7 @@ Deprecation notices are scattered across many independent JSDoc comments in the 
 | `registerLoadOrderPage` | `IExtensionContext` | `registerLoadOrder` (File-Based Load Order) | `LOAD_ORDER_REGISTRATION.md` |
 | `onceMain` | `IExtensionContext` | `once` (runs in the renderer); a separate NodeJS process + IPC if you truly need the main process | `VORTEX_EXTENSION_LOADING.md`, `VORTEX_EVENT_BUS.md` |
 | `open` / `util.opn` | `util.*` | `window.api.shell.openUrl` / `window.api.shell.openFile` — this repo is fully migrated | This doc, § below; `EMBEDDED_BROWSER.md` |
-| `toPromise` | `util.*` | Wrap the call in a plain `new Promise` — this repo has one call left, the `remove-download` emit in the shared `resources/browsers/base_browser.js` and its bundled copies | This doc, § below |
+| `toPromise` | `util.*` | Wrap the call in a plain `new Promise` — this repo is fully migrated, including the `remove-download` emit in the shared `resources/browsers/base_browser.js` and its bundled copies | This doc, § below |
 | `makeRemoteCall` | `util.*` | `window.api` (IPC from renderer to main) | This doc, § below |
 | `steamShim`, `epicGamesLauncherShim` (exposed as `util.steam`, `util.epicGamesLauncher`) | `util.*` | `util.GameStoreHelper.findByAppId(id, "steam" \| "epic")` / `.findByName(name, store)`. Deprecated in Vortex 2.8, removed in 2.10 | This doc, § below |
 | `IExtension` | type | `ExtensionInfo` | This doc, § below |

@@ -8,7 +8,7 @@ Usage:
 
 Arguments:
     EXT_ID      One or more extension IDs -- either a game id (e.g. thelastofuspart2,
-                matches a game-<id> folder) or a helper id (e.g. falloutlondon, matches
+                matches a game-<id> folder) or a helper id (e.g. globalignorepatterns, matches
                 a helper-<id> folder). game-<id> is tried first, so a bare id can only
                 ever resolve to one or the other.
     --all       Deploy every game-* and helper-* extension in the repo
@@ -46,6 +46,7 @@ Environment variables:
                         deploys. Defaults to %ProgramData%\\vortex\\plugins.
 """
 
+import fnmatch
 import os
 import shutil
 import subprocess
@@ -56,6 +57,15 @@ import vortex_utils as vu
 
 PLUGINS_DIR = vu.VORTEX_PLUGINS_DIR
 VORTEX_IMAGE = "Vortex.exe"
+
+# Never copied into the plugins folder: the repo-only files the release zip also
+# leaves out (generated docs, *.bak), plus the stale game-*.zip a past release left
+# in the folder and *.tmp files from an interrupted atomic write.
+DEPLOY_IGNORE = (*vu.PACKAGE_EXCLUDES, "*.zip", "*.tmp")
+
+
+def _is_ignored(name: str) -> bool:
+    return any(fnmatch.fnmatch(name, pat) for pat in DEPLOY_IGNORE)
 
 
 def _vortex_running() -> bool:
@@ -141,7 +151,7 @@ def deploy_game(ext_id: str, dry_run: bool, force: bool) -> bool:
     # whole tree, info.json included.
     def _partial_wanted(n):
         p = os.path.join(src, n)
-        if not os.path.isfile(p) or n.endswith((".bak", ".tmp")):
+        if not os.path.isfile(p) or _is_ignored(n):
             return False
         if n == "info.json":
             return False
@@ -158,7 +168,7 @@ def deploy_game(ext_id: str, dry_run: bool, force: bool) -> bool:
         else:
             action = "replace" if os.path.isdir(dest) else "create"
             vu.log_info(game_id, f"{action} -> {dest}")
-            for fname in sorted(os.listdir(src)):
+            for fname in sorted(n for n in os.listdir(src) if not _is_ignored(n)):
                 status = "(overwrite)" if os.path.exists(os.path.join(dest, fname)) else "(new)"
                 print(f"  {fname} {status}")
         return True
@@ -178,8 +188,7 @@ def deploy_game(ext_id: str, dry_run: bool, force: bool) -> bool:
     else:
         if os.path.isdir(dest):
             vu.safe_rmtree(dest, "close Vortex first")
-        shutil.copytree(src, dest,
-                        ignore=shutil.ignore_patterns("*.bak", "*.tmp"))
+        shutil.copytree(src, dest, ignore=shutil.ignore_patterns(*DEPLOY_IGNORE))
         files = os.listdir(dest)
         vu.log_info(game_id, f"deployed to {dest} ({len(files)} files)")
     return True

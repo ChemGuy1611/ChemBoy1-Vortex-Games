@@ -228,6 +228,14 @@ test("port equality: old vs new", async () => {
     if (scenario === "xbox") return "gamelaunchhelper.exe";
     return real("EXEC") || real("EXEC_DEFAULT"); //older files name the default exe EXEC_DEFAULT; undefined = no marker file
   };
+  // The marker can carry a directory part (EXEC = path.join(BINARIES_PATH, EXEC_NAME)), so its parent
+  // folder has to exist first; undefined (no EXEC constant on that side) writes nothing.
+  const writeMarker = (dir, marker) => {
+    if (!marker) return;
+    const target = path.join(dir, marker);
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.writeFileSync(target, "");
+  };
   const scenarios = [
     { name: "default", from: "default" },
     { name: "xbox", from: "xbox" },
@@ -240,8 +248,7 @@ test("port equality: old vs new", async () => {
   const runSide = async (dir, base, scenario) => {
     const install = fs.mkdtempSync(path.join(os.tmpdir(), "cb1-port-install-"));
     scratch.push(install);
-    const marker = markerFor(base, scenario.from);
-    if (marker) fs.writeFileSync(path.join(install, marker), "");
+    writeMarker(install, markerFor(base, scenario.from));
     let uidDir;
     if (scenario.uid && typeof nb.SAVE_PATH_DEFAULT === "string") {
       uidDir = path.join(nb.SAVE_PATH_DEFAULT, scenario.uid);
@@ -340,11 +347,11 @@ test("port equality: old vs new", async () => {
   // Some installers (save) re-derive the store version from the discovery folder itself, so that
   // folder gets a real default marker exe for the battery.
   fs.mkdirSync(FAKE, { recursive: true });
-  for (const snap of [ob, nb]) fs.writeFileSync(path.join(FAKE, markerFor(snap, "default")), "");
+  for (const snap of [ob, nb]) writeMarker(FAKE, markerFor(snap, "default"));
   for (const [ext, snap] of [[oldExt, ob], [newExt, nb]]) {
     const install = fs.mkdtempSync(path.join(os.tmpdir(), "cb1-port-battery-"));
     scratch.push(install);
-    fs.writeFileSync(path.join(install, markerFor(snap, "default")), "");
+    writeMarker(install, markerFor(snap, "default"));
     try { await ext.game.executable(install); } catch (e) { /* reported by the scenarios */ }
     // A Steam-only game's executable() returns early without setting GAME_VERSION (setup() does).
     ext.exports.__setVersion("steam");

@@ -10,7 +10,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | Pysdk | a file or folder named one of: `unrealsdk.dll` and a file or folder named one of: `sdk_mods` | the game folder itself (no subfolder) |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `OakGame` |
-| Blueprint Mods (LogicMods) | a `LogicMods` folder | `OakGame\Content\Paks\LogicMods\LogicMods` |
+| Blueprint Mods (LogicMods) | a `LogicMods` folder | `OakGame\Content\Paks` |
 | Pysdkmod | a file with one of these extensions: `.py` or `.sdkmod` | `sdk_mods` |
 | Pak Mods | a `.pak` file | `OakGame\Content\Paks\~mods` |
 | UE4SS Itself | a `dwmapi.dll` file | `OakGame\Binaries\Win64` |
@@ -80,7 +80,7 @@ MyBlueprintMod.zip
 - Everything from the `LogicMods` folder down is copied to the game, keeping its structure.
 - Extra folders above `LogicMods` are fine - the installer finds it at any depth.
 
-Installs to: `OakGame\Content\Paks\LogicMods\LogicMods`
+Installs to: `OakGame\Content\Paks`
 
 **Common mistakes:**
 

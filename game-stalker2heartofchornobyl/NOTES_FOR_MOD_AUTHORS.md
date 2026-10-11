@@ -10,7 +10,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | Merger | a file or folder named `simple_mod_merger.exe` | `Stalker2SimpleModMerger` |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `Stalker2` |
-| Blueprint Mods (LogicMods) | a `LogicMods` folder | `Stalker2\Content\Paks\LogicMods\LogicMods` |
+| Blueprint Mods (LogicMods) | a `LogicMods` folder | `Stalker2\Content\Paks` |
 | Herbatamod | a file or folder named `GameLite` | `Stalker2\Content` |
 | UE4SS Itself | a `dwmapi.dll` file | - |
 | UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | - |
@@ -78,7 +78,7 @@ MyBlueprintMod.zip
 - Everything from the `LogicMods` folder down is copied to the game, keeping its structure.
 - Extra folders above `LogicMods` are fine - the installer finds it at any depth.
 
-Installs to: `Stalker2\Content\Paks\LogicMods\LogicMods`
+Installs to: `Stalker2\Content\Paks`
 
 **Common mistakes:**
 

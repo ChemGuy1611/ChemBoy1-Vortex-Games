@@ -68,7 +68,8 @@ LOGICMODS_TOGGLE_RE = re.compile(r'^\s*(?:const\s+)?logicModsLoadOrder\s*=\s*(tr
 def _regenerate_lists():
     result = subprocess.run(
         [sys.executable, os.path.join(REPO_ROOT, "categorize_games.py")],
-        cwd=REPO_ROOT, capture_output=True, text=True)
+        cwd=REPO_ROOT, capture_output=True, text=True,
+        encoding="utf-8", errors="replace")
     if result.returncode != 0:
         print("  categorize_games.py failed to regenerate lists:", file=sys.stderr)
         print(result.stderr, file=sys.stderr)
@@ -132,6 +133,8 @@ def _shape_family_report(list_file, parity_file, template_folder,
             games.append({"game": game_id, "status": "parity"})
             continue
         src = read_index_js(os.path.join(REPO_ROOT, folder))
+        if src is None:
+            continue  # listed game whose folder is gone (stale list under --no-regen)
         missing_f, extra_f, missing_t, extra_t = template_shape_diff(
             src, template_folder, toggle_exceptions)
         games.append({

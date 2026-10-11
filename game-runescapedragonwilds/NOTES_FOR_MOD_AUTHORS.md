@@ -9,7 +9,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `RSDragonwilds` |
-| Blueprint Mods (LogicMods) | a `LogicMods` folder | `RSDragonwilds\Content\Paks\LogicMods\LogicMods` |
+| Blueprint Mods (LogicMods) | a `LogicMods` folder | `RSDragonwilds\Content\Paks` |
 | Runeschemaloader | - | - |
 | Runeschema | a file with one of these extensions: `.json` or `.jsonc` and a file or folder named one of: `assets`, `paks`, `recipes`, `raw` or `blueprints` | - |
 | Pak Mods | a `.pak` file | `RSDragonwilds\Content\Paks\~mods` |
@@ -73,7 +73,7 @@ MyBlueprintMod.zip
 - Everything from the `LogicMods` folder down is copied to the game, keeping its structure.
 - Extra folders above `LogicMods` are fine - the installer finds it at any depth.
 
-Installs to: `RSDragonwilds\Content\Paks\LogicMods\LogicMods`
+Installs to: `RSDragonwilds\Content\Paks`
 
 **Common mistakes:**
 

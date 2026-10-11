@@ -13,10 +13,10 @@
 | Property | Value |
 | --- | --- |
 | Game ID | `gearsofwareday` |
-| Executable | `FairlightConcept/Binaries/Win64/GoWEDAY-Steam.exe` |
+| Executable | `FairlightConcept/Binaries/Win64/GoWEDay-Steam.exe` |
 | Executable (Xbox) | `FairlightConcept/Binaries/WinGDK/GoWEDAY.exe` |
-| Executable (GOG) | `FairlightConcept/Binaries/Win64/GoWEDAY-Steam.exe` |
-| Executable (Demo) | `FairlightConcept/Binaries/Win64/GoWEDAY-Steam.exe` |
+| Executable (GOG) | `FairlightConcept/Binaries/Win64/GoWEDAY-Epic.exe` |
+| Executable (Demo) | `FairlightConcept/Binaries/Win64/GoWEDay-Steam.exe` |
 | Extension Page | [https://www.nexusmods.com/site/mods/2433](https://www.nexusmods.com/site/mods/2433) |
 | PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Gears_of_War%3A_E-Day](https://www.pcgamingwiki.com/wiki/Gears_of_War%3A_E-Day) |
 
@@ -36,7 +36,7 @@
 | `hasServer` | `false` | toggle for server pak mod logic |
 | `preferHardlinks` | `true` | set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users |
 | `autoDownloadUe4ss` | `false` | toggle for auto downloading UE4SS (only applies when ue4ssLoadOrder is enabled) |
-| `writeEngineVersion` | `false` | toggle to write ENGINE_VERSION into UE4SS-settings.ini (EngineVersionOverride) on deploy, when UE4SS is installed |
+| `writeEngineVersion` | `true` | toggle to write ENGINE_VERSION into UE4SS-settings.ini (EngineVersionOverride) on deploy, when UE4SS is installed |
 | `SIGBYPASS_REQUIRED` | `false` | set true if there are .sig files in the Paks folder |
 | `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
 | `hasUserIdFolder` | `true` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |

@@ -8,6 +8,7 @@ new_extension.py
 new_template.py
 port_to_template.py
 check_port_equality.py
+compare_to_head.py
 patch_extensions.py
 fetch_cover_art.py
 make_title_image.py
@@ -15,6 +16,8 @@ fetch_exec_icon.py
 render_svg.py
 fetch_nexus_stats.py
 release_extension.py
+sync_mod_pages.py
+test_sync_mod_pages.py
 bump_version.py
 setup_test_folder.py
 deploy_to_vortex.py
@@ -31,6 +34,7 @@ extension_parser.js
 generate_explained.js
 generate_notes.js
 lint_extensions.js
+audit_deprecated_usage.js
 
 # Documentation
 SCRIPTS.md

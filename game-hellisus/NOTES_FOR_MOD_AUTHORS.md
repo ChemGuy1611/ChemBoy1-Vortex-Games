@@ -9,7 +9,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `HellIsUs` |
-| Blueprint Mods (LogicMods) | a `LogicMods` folder | `HellIsUs\Content\Paks\LogicMods\LogicMods` |
+| Blueprint Mods (LogicMods) | a `LogicMods` folder | `HellIsUs\Content\Paks` |
 | Pak Mods | a `.pak` file | `HellIsUs\Content\Paks\~mods` |
 | UE4SS Itself | a `dwmapi.dll` file | `HellIsUs\Binaries\Win64` |
 | Signature Bypass | `dsound.dll` and `universal.lua` | `HellIsUs\Binaries\Win64` |
@@ -73,7 +73,7 @@ MyBlueprintMod.zip
 - Everything from the `LogicMods` folder down is copied to the game, keeping its structure.
 - Extra folders above `LogicMods` are fine - the installer finds it at any depth.
 
-Installs to: `HellIsUs\Content\Paks\LogicMods\LogicMods`
+Installs to: `HellIsUs\Content\Paks`
 
 **Common mistakes:**
 

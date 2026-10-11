@@ -31,8 +31,8 @@ independently of its engine category and of each other:
     games-unreleased.txt - games with no real Nexus page URL in EXTENSION_URL, i.e.
                            extensions that have never been published. Permanent test
                            beds are dropped via UNRELEASED_LIST_EXCLUDED_GAMES
-    games-multi-game.txt - extensions that call context.registerGame more than once,
-                           i.e. bundle several distinct games/variants behind one
+    games-multi-game.txt - extensions that call context.registerGame, or applyGame(context, ...),
+                           more than once, i.e. bundle several distinct games/variants behind one
                            Nexus page (windrose, doom3, gzdoom, ninjagaidenmastercollection, ...)
     games-no-steamappid.txt - games with no real STEAMAPP_ID (missing, null, or
                            placeholder), i.e. no Steam release - Epic/Xbox/GOG-only

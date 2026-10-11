@@ -40,7 +40,7 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| OldUnreal Patch | `unrealtournament2004-mod` | high | `{gamePath}` |
+| Mod | `unrealtournament2004-mod` | high | `{gamePath}` |
 | Binaries (Engine Injector) | `unrealtournament2004-binaries` | high | `{gamePath}/System` |
 
 ## Mod Installers

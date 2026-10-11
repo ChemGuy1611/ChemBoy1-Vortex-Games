@@ -3,6 +3,7 @@
 **/CC-Session-Logs/*
 .claude
 lint_results.txt
+page-backups/
 *.pyc
 vortex_gui_nexus_stats.json
 vortex_gui_row_cache.json

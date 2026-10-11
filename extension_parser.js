@@ -25,9 +25,26 @@ function buildSymbolTable(src) {
   // Strip block comments to avoid picking up commented-out declarations
   const stripped = src.replace(/(?<!\/)\/\*[\s\S]*?\*\//g, "");
 
+  // Which declarations sit at module level. The harvests below are line-based, so they also
+  // pick up locals declared inside functions; a local that shares a module constant's name
+  // (an installer's own `let MOD_ID = "";`) must not displace the module-level value.
+  const topLevelDeclared = new Set();
+  const topLevelLineStarts = new Set();
+  const declPosRe = /^[ \t]*(?:const|let)\s+([A-Za-z_$]\w*)\s*=/gm;
+  let declM;
+  while ((declM = declPosRe.exec(stripped)) !== null) {
+    if (findInnermostBlockHead(stripped, declM.index) === null) {
+      topLevelDeclared.add(declM[1]);
+      topLevelLineStarts.add(declM.index);
+    }
+  }
+
   // Harvest all const/let declarations
   const lines = stripped.split("\n");
+  let lineStart = 0;
   for (const line of lines) {
+    const top = topLevelLineStarts.has(lineStart);
+    lineStart += line.length + 1;
     const trimmed = line.trim();
     // Skip line comments
     if (trimmed.startsWith("//")) continue;
@@ -37,7 +54,7 @@ function buildSymbolTable(src) {
     // Match: const/let NAME = VALUE;
     const m = noComment.match(/^(?:const|let)\s+([A-Za-z_$]\w*)\s*=\s*(.+?)\s*;?\s*$/);
     if (m) {
-      raw.push({ name: m[1], rawValue: m[2].trim() });
+      raw.push({ name: m[1], rawValue: m[2].trim(), top });
     }
   }
 
@@ -47,6 +64,7 @@ function buildSymbolTable(src) {
   let objM;
   while ((objM = objDeclRe.exec(stripped)) !== null) {
     const objName = objM[1];
+    const top = topLevelLineStarts.has(stripped.lastIndexOf("\n", objM.index) + 1);
     const braceOpenPos = objM.index + objM[0].length - 1;
     const braceClosePos = scanToMatchingClose(stripped, braceOpenPos, "{", "}");
     if (braceClosePos === -1) continue;
@@ -56,9 +74,17 @@ function buildSymbolTable(src) {
     for (const prop of props) {
       const pm = prop.trim().match(/^(\w+)\s*:\s*(.+?)\s*$/);
       if (pm) {
-        raw.push({ name: `${objName}.${pm[1]}`, rawValue: pm[2].trim() });
+        raw.push({ name: `${objName}.${pm[1]}`, rawValue: pm[2].trim(), top, owner: objName });
       }
     }
+  }
+
+  // A name declared at module level wins over any same-named local. Names that exist only as
+  // locals are kept: several extensions resolve helper constants declared inside applyGame().
+  const topNames = new Set(raw.filter((d) => d.top).map((d) => d.name));
+  for (let k = raw.length - 1; k >= 0; k--) {
+    const d = raw[k];
+    if (!d.top && (topNames.has(d.name) || (d.owner && topNames.has(d.owner)))) raw.splice(k, 1);
   }
 
   // Harvest guarded reassignments, e.g. `let X = 'a'; if (FLAG) { X = 'b'; }`. The
@@ -71,15 +97,8 @@ function buildSymbolTable(src) {
   // `if (BEPINEX_BUILD === 'mono')`, a compound condition, a function body - is left alone.
   // That conservative default matters: those shapes are the common case across the repo, and
   // taking a dead branch would silently rewrite a value that is correct today.
-  // Only names declared at top level are eligible. The declaration harvest above is
-  // line-based, so it also picks up locals declared inside functions; without this filter a
-  // local assignment could overwrite a module constant that happens to share its name.
-  const topLevelDeclared = new Set();
-  const declPosRe = /^[ \t]*(?:const|let)\s+([A-Za-z_$]\w*)\s*=/gm;
-  let declM;
-  while ((declM = declPosRe.exec(stripped)) !== null) {
-    if (findInnermostBlockHead(stripped, declM.index) === null) topLevelDeclared.add(declM[1]);
-  }
+  // Only names declared at top level are eligible (topLevelDeclared, built above): without
+  // this filter a local assignment could overwrite a module constant that shares its name.
   const declaredNames = new Set(raw.map((d) => d.name).filter((n) => topLevelDeclared.has(n)));
   const flagValues = new Map(discoverFlags(src).map((f) => [f.name, f.value === "true"]));
   const reassignRe = /^[ \t]*([A-Za-z_$]\w*)\s*=\s*([^=][^;\n]*?)\s*;[ \t]*$/gm;
@@ -333,19 +352,57 @@ function getGuardFlag(stripped, callIndex) {
  * overwrite a live declaration.
  */
 function findInnermostBlockHead(stripped, idx) {
+  const open = findInnermostBlockOpen(stripped, idx);
+  if (open === -1) return null;
+  const lineStart = stripped.lastIndexOf("\n", open);
+  return stripped.substring(lineStart + 1, open + 1).trim();
+}
+
+/**
+ * Index of the `{` that opens the innermost block enclosing `idx`, or -1 at top level.
+ */
+function findInnermostBlockOpen(stripped, idx) {
   let depth = 0;
-  let i = idx - 1;
-  while (i >= 0) {
+  for (let i = idx - 1; i >= 0; i--) {
     const ch = stripped[i];
     if (ch === "}") depth++;
     else if (ch === "{") {
-      if (depth === 0) {
-        const lineStart = stripped.lastIndexOf("\n", i);
-        return stripped.substring(lineStart + 1, i + 1).trim();
-      }
+      if (depth === 0) return i;
       depth--;
     }
-    i--;
+  }
+  return -1;
+}
+
+const IF_FLAG_RE = /^if\s*\(\s*([A-Za-z_$]\w*)\s*(?:===\s*true\s*)?\)\s*\{$/;
+const IF_NOT_FLAG_RE = /^if\s*\(\s*!\s*([A-Za-z_$]\w*)\s*\)\s*\{$/;
+
+/**
+ * Guard condition of the block opened by the `{` at `openIdx`, as { flag, negated }, or null
+ * when the block is not an `if (FLAG)`, `if (!FLAG)` or the `} else {` arm of one of those.
+ */
+function guardFromBlockOpen(stripped, openIdx) {
+  const lineStart = stripped.lastIndexOf("\n", openIdx);
+  const head = stripped.substring(lineStart + 1, openIdx + 1).trim();
+
+  const direct = head.match(IF_FLAG_RE);
+  if (direct) return { flag: direct[1], negated: false };
+
+  const negated = head.match(IF_NOT_FLAG_RE);
+  if (negated) return { flag: negated[1], negated: true };
+
+  // `} else {` - the line starts with the `}` that closes the if-block; walk back over that
+  // block and read its own head.
+  if (/^\}\s*else\s*\{$/.test(head)) {
+    const ifCloseIdx = stripped.indexOf("}", lineStart + 1);
+    const ifOpenIdx = scanToMatchingOpen(stripped, ifCloseIdx);
+    if (ifOpenIdx === -1) return null;
+    const ifLineStart = stripped.lastIndexOf("\n", ifOpenIdx);
+    const ifHead = stripped.substring(ifLineStart + 1, ifOpenIdx + 1).trim();
+    const ifM = ifHead.match(IF_FLAG_RE);
+    if (ifM) return { flag: ifM[1], negated: true };
+    const ifNeg = ifHead.match(IF_NOT_FLAG_RE);
+    if (ifNeg) return { flag: ifNeg[1], negated: false };
   }
   return null;
 }
@@ -363,29 +420,24 @@ function findInnermostBlockHead(stripped, idx) {
  * evaluated to be correct, so it returns null and the caller keeps the registration.
  */
 function getGuardCondition(stripped, idx) {
-  const head = findInnermostBlockHead(stripped, idx);
-  if (head === null) return null;
+  const open = findInnermostBlockOpen(stripped, idx);
+  return open === -1 ? null : guardFromBlockOpen(stripped, open);
+}
 
-  const direct = head.match(/^if\s*\(\s*([A-Za-z_$]\w*)\s*(?:===\s*true\s*)?\)\s*\{$/);
-  if (direct) return { flag: direct[1], negated: false };
-
-  const negated = head.match(/^if\s*\(\s*!\s*([A-Za-z_$]\w*)\s*\)\s*\{$/);
-  if (negated) return { flag: negated[1], negated: true };
-
-  // `} else {` - walk back over the if-block it closes and read that block's own head.
-  if (/^\}\s*else\s*\{$/.test(head)) {
-    const elseBraceIdx = stripped.lastIndexOf("}", idx);
-    if (elseBraceIdx === -1) return null;
-    const ifOpenIdx = scanToMatchingOpen(stripped, elseBraceIdx);
-    if (ifOpenIdx === -1) return null;
-    const lineStart = stripped.lastIndexOf("\n", ifOpenIdx);
-    const ifHead = stripped.substring(lineStart + 1, ifOpenIdx + 1).trim();
-    const ifM = ifHead.match(/^if\s*\(\s*([A-Za-z_$]\w*)\s*(?:===\s*true\s*)?\)\s*\{$/);
-    if (ifM) return { flag: ifM[1], negated: true };
-    const ifNeg = ifHead.match(/^if\s*\(\s*!\s*([A-Za-z_$]\w*)\s*\)\s*\{$/);
-    if (ifNeg) return { flag: ifNeg[1], negated: false };
+/**
+ * True unless some block enclosing `idx` is a recognised guard (see getGuardCondition) that
+ * the symbol table evaluates to off. Walks outward through every enclosing block, so a
+ * registration inside a loop or callback still honours the `if` around that loop - and, unlike
+ * getGuardFlag, it understands `if (!FLAG)` and `} else {` arms.
+ */
+function isGuardChainActive(stripped, idx, table) {
+  let pos = idx;
+  for (;;) {
+    const open = findInnermostBlockOpen(stripped, pos);
+    if (open === -1) return true;
+    if (!isGuardActive(guardFromBlockOpen(stripped, open), table)) return false;
+    pos = open;
   }
-  return null;
 }
 
 /**
@@ -413,6 +465,18 @@ function isGuardActive(guard, table) {
   const val = table.get(guard.flag);
   if (val !== "true" && val !== "false") return true;
   return guard.negated ? val === "false" : val === "true";
+}
+
+/**
+ * Replace Vortex path helper references with readable environment variables, so a generated
+ * document shows `%USERPROFILE%\Games\...` rather than `util.getVortexPath("home")\Games\...`.
+ */
+function cleanEnvPath(p) {
+  return p
+    .replace(/util\.getVortexPath\(["']home["']\)/g, "%USERPROFILE%")
+    .replace(/util\.getVortexPath\(["']documents["']\)/g, "%DOCUMENTS%")
+    .replace(/util\.getVortexPath\(["']localAppData["']\)/g, "%LOCALAPPDATA%")
+    .replace(/util\.getVortexPath\(["']appData["']\)/g, "%APPDATA%");
 }
 
 /**
@@ -450,8 +514,9 @@ function resolveValue(expr, table) {
     return table.has(e) ? table.get(e) : e;
   }
 
-  // Fallback
-  return e;
+  // Fallback: the expression stays as written, apart from Vortex path helpers, which every
+  // generated document renders as environment variables.
+  return cleanEnvPath(e);
 }
 
 /**
@@ -651,8 +716,7 @@ function extractModTypes(src, table) {
     const lineStart = stripped.lastIndexOf("\n", pm.index);
     const linePrefix = stripped.substring(lineStart + 1, pm.index).trim();
     if (linePrefix.startsWith("//")) continue;
-    const guardFlagPush = getGuardFlag(stripped, pm.index);
-    if (guardFlagPush && table.get(guardFlagPush) === "false") continue;
+    if (!isGuardChainActive(stripped, pm.index, table)) continue;
     let depth = 1;
     let i = pm.index + pm[0].length;
     let entry = "";
@@ -693,8 +757,7 @@ function extractRegisterModTypes(src, table) {
     const lineStart = stripped.lastIndexOf("\n", m.index);
     const linePrefix = stripped.substring(lineStart + 1, m.index).trim();
     if (linePrefix.startsWith("//")) continue;
-    const guardFlagMT = getGuardFlag(stripped, m.index);
-    if (guardFlagMT && table.get(guardFlagMT) === "false") continue;
+    if (!isGuardChainActive(stripped, m.index, table)) continue;
     // Extract full args by depth tracking
     let depth = 1;
     let i = m.index + m[0].length;
@@ -853,8 +916,11 @@ module.exports = {
   scanToMatchingClose,
   getGuardFlag,
   findInnermostBlockHead,
+  findInnermostBlockOpen,
   getGuardCondition,
   isGuardActive,
+  isGuardChainActive,
+  cleanEnvPath,
   scanToMatchingOpen,
   resolveValue,
   resolveWithFallback,

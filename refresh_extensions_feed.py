@@ -14,9 +14,16 @@ Usage:
 Requirements:
     Python standard library only. The endpoint needs no API key.
 
+Also prints, for every game-* folder that has no ChemBoy1 game row, what the feed holds for
+that game (another author's row, a ChemBoy1 row of type other, or nothing) and the state of
+the folder's EXTENSION_URL, so an unpublished extension (no row, URL XXX) is told apart from
+a published one the feed lacks (no row, URL set).
+
 Reads:
-    %APPDATA%\\Vortex\\temp\\nexus_gamelist.json   (only for the game-folder coverage row;
-                                                   the row reads "unavailable" without it)
+    %APPDATA%\\Vortex\\temp\\nexus_gamelist.json   (only for the game-folder coverage row and
+                                                   the uncovered-folder list; the row reads
+                                                   "unavailable" without it)
+    game-*/index.js                                (EXTENSION_URL, uncovered folders only)
 """
 
 import argparse
@@ -29,8 +36,9 @@ import urllib.request
 from collections import Counter
 
 from vortex_utils import (
-    NEXUS_USER_AGENT, REPO_ROOT, CB1_NEXUS_USER_ID,
-    list_game_ids, load_vortex_manifest,
+    NEXUS_USER_AGENT, REPO_ROOT, CB1_NEXUS_USER_ID, GAME_PREFIX,
+    const_value, extract_extension_url, is_unset, list_game_ids,
+    load_nexus_gamelist, load_vortex_manifest, read_index_js,
 )
 
 FEED_URL = "https://api.nexusmods.com/v3/vortex/extensions"
@@ -71,6 +79,50 @@ def folder_coverage(extensions):
         return "unavailable (needs Vortex's nexus_gamelist.json)", []
     missing = [g for g in folders if g not in rows]
     return f"{len(folders) - len(missing)} of {len(folders)}", missing
+
+
+def extension_url_state(folder_id):
+    """Return the folder's EXTENSION_URL as a short display string: the Nexus URL, or why there is none."""
+    src = read_index_js(os.path.join(REPO_ROOT, f"{GAME_PREFIX}{folder_id}"))
+    if src is None:
+        return "no index.js"
+    raw = const_value(src, "EXTENSION_URL")
+    if raw is None:
+        return "no EXTENSION_URL const"
+    if is_unset(raw):
+        return "XXX (unset)"
+    if not raw.strip("\"'` "):
+        return "empty string"
+    return extract_extension_url(src) or f"non-Nexus value {raw}"
+
+
+def feed_note(extensions, game_numeric_id, url):
+    """Return what the feed holds for an uncovered folder: another author's row, a ChemBoy1 `other` row, or nothing."""
+    rows = [e for e in extensions if game_numeric_id is not None and str(e.get("game_id")) == str(game_numeric_id)]
+    if rows:
+        return "; ".join(f"{e['type']} row owned by {e['author_name']} (mod {e['mod_id']})" for e in rows)
+    m = re.search(r"nexusmods\.com/site/mods/(\d+)", url)
+    if m:
+        other = [e for e in extensions
+                 if e["author_user_id"] == CB1_NEXUS_USER_ID and e["type"] == "other" and e["mod_id"] == m.group(1)]
+        if other:
+            return f"ChemBoy1 row of type other (site mod {m.group(1)})"
+    if game_numeric_id is None:
+        return "no Nexus domain in nexus_gamelist.json"
+    return "no feed row for this game"
+
+
+def describe_uncovered(extensions, folder_ids):
+    """Return [(folder_id, feed note, EXTENSION_URL state)] for game-* folders with no ChemBoy1 game row.
+
+    Separates a not-yet-published extension (no row, URL unset) from one that is published but
+    absent from the feed (no row, URL set), listed under another author, or listed as type other."""
+    game_numeric_ids = load_nexus_gamelist()
+    rows = []
+    for folder_id in folder_ids:
+        url = extension_url_state(folder_id)
+        rows.append((folder_id, feed_note(extensions, game_numeric_ids.get(folder_id), url), url))
+    return rows
 
 
 def build_block(payload, fetched, size, coverage):
@@ -158,7 +210,11 @@ def main():
         print(f"Updated the tables in {MD_PATH}")
 
     if missing:
-        print(f"\ngame-* folders with no ChemBoy1 game row ({len(missing)}): {', '.join(missing)}")
+        print(f"\ngame-* folders with no ChemBoy1 game row ({len(missing)}):")
+        details = describe_uncovered(payload["data"]["extensions"], missing)
+        width = max(len(d[0]) for d in details)
+        for folder_id, note, url in details:
+            print(f"  {folder_id.ljust(width)}  {note}  |  EXTENSION_URL: {url}")
     print("Re-check the hand-written 'Observations' section in the .md against the figures above.")
     return 0
 
