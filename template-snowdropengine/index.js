@@ -248,7 +248,7 @@ function testConfig(files, gameId) {
 //Install config files
 function installConfig(files) {
   const modFile = files.find((file) => CONFIG_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: CONFIG_ID };
@@ -281,16 +281,13 @@ function testModLoader(files, gameId) {
 //Installer install UE4SS files
 function installModLoader(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === MODLOADER_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MODLOADER_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter((file) =>
-    //((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-    file.startsWith(rootPrefix),
-  );
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
 
   const instructions = filtered.map((file) => {
     return {
@@ -331,7 +328,7 @@ function testData(files, gameId) {
 function installData(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === DATA_FILE);
   const DATA_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(DATA_IDX);
+  const idx = modFile.lastIndexOf(DATA_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: DATA_ID };
@@ -366,7 +363,7 @@ function testDataSub(files, gameId) {
 function installDataSub(files) {
   const modFile = files.find((file) => DATASUB_FOLDERS.includes(path.basename(file).toLowerCase()));
   const DATASUB_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(DATASUB_IDX);
+  const idx = modFile.lastIndexOf(DATASUB_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: DATASUB_ID };

@@ -1,5 +1,10 @@
 # template-cobraengineACSE Changelog
 
+## [2026-10-11]
+
+- Fixed: `setup` creates `<Saved Games>/<dev>/<game>/Saves` when no user id folder exists yet, and the next load took that `Saves` folder for the user id (it picks the first subfolder), so the Open Save Folder and Open Config Folder buttons pointed at `Saves/Saves` and `Saves/Config`. The user id scan now skips folders named `Saves` or `Config` (any case), which also repairs installs that already have the stray folder.
+- Fixed: the installers cut each mod's destination with `modFile.indexOf(...)`, which finds the FIRST occurrence of the marker's name in the path, so a wrapper folder whose name contains or ends with the marker's name (`MyACSE/ACSE`, `Mod_old/Mod`, `Myovldata/ovldata`) was cut inside the wrapper's name and stayed in the install path. `installACSE`, `installSave`, `installRoot`, `installOvlData`, the mod installer, `installLocalised` and `installMovies` now use `lastIndexOf`, which always lands on the marker's own path segment.
+
 ## [2026-10-06]
 
 - Added: an "Open Nexus Mods Page" button in the Mods toolbar that opens the game's mods page on Nexus Mods (`https://www.nexusmods.com/<GAME_ID>/mods`). It sits beside the PCGamingWiki and SteamDB buttons and only shows while this game is the active game.

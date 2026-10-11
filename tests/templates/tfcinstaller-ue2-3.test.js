@@ -12,6 +12,7 @@ const {
   stubShell,
   summary,
   supportedBy,
+  waitFor,
 } = require("../harness/helpers");
 const { loadExtension, templateDir, vortex } = require("../harness/load-extension");
 const { STUB_EXE_VERSION } = require("../harness/stub-modules");
@@ -325,16 +326,90 @@ describe("template-tfcinstaller-ue2-3: install output", () => {
     ]);
   });
 
-  // The cooked subfolder installer reads modFile.indexOf before its fall-back to .upk files, so
-  // a package with no Maps or Packages folder passes the test and then throws. Pinned so that
-  // fixing the template turns this red and the entry gets removed.
-  it("known gap: cooked subfolder installer throws on a lone .upk package", async () => {
-    const files = tree("Mod/a.upk");
+  it("cooked subfolder installer falls back to a lone .upk package's folder", async () => {
+    const files = tree("Mod/a.upk", "Mod/readme.txt");
     assert.equal(
       (await installerOf(ext, "XXX-cookedsub").testSupported(files, GAME_ID)).supported,
       true,
     );
-    assert.throws(() => installerOf(ext, "XXX-cookedsub").install(files), TypeError);
+    const { instructions } = await installerOf(ext, "XXX-cookedsub").install(files);
+    assert.deepEqual(instructions, [
+      copy(sep("Mod", "a.upk"), "a.upk"),
+      copy(sep("Mod", "readme.txt"), "readme.txt"),
+      { type: "setmodtype", value: "XXX-cookedsub" },
+    ]);
+  });
+
+  it("the installers cut at the marker itself, not at an earlier copy of its name", async () => {
+    const cases = [
+      [
+        "XXX-tfcinstaller",
+        tree("tfcinstaller.exe.bak/tfcinstaller.exe", "tfcinstaller.exe.bak/lib/a.dll"),
+        [
+          copy(
+            sep("tfcinstaller.exe.bak", "tfcinstaller.exe"),
+            sep("TFCInstaller", "tfcinstaller.exe"),
+          ),
+          copy(sep("tfcinstaller.exe.bak", "lib", "a.dll"), sep("TFCInstaller", "lib", "a.dll")),
+        ],
+      ],
+      [
+        "XXX-tfcexplorer",
+        tree("upk explorer.exe.bak/upk explorer.exe"),
+        [
+          copy(
+            sep("upk explorer.exe.bak", "upk explorer.exe"),
+            sep("UPK Explorer", "upk explorer.exe"),
+          ),
+        ],
+      ],
+      [
+        "XXX-tfcmod",
+        tree("Mod_old/Mod/gameprofile.xml", "Mod_old/Mod/a.bin"),
+        [
+          copy(sep("Mod_old", "Mod", "gameprofile.xml"), sep("Mod", "gameprofile.xml")),
+          copy(sep("Mod_old", "Mod", "a.bin"), sep("Mod", "a.bin")),
+        ],
+      ],
+      [
+        "XXX-root",
+        tree("MyEngine/Engine/a.bin"),
+        [copy(sep("MyEngine", "Engine", "a.bin"), sep("Engine", "a.bin"))],
+      ],
+      [
+        "XXX-cookedsub",
+        tree("MyMaps/Maps/a.bin"),
+        [copy(sep("MyMaps", "Maps", "a.bin"), sep("Maps", "a.bin"))],
+      ],
+      [
+        "XXX-cookedsub",
+        tree("a.upk.bak/a.upk", "a.upk.bak/readme.txt"),
+        [
+          copy(sep("a.upk.bak", "a.upk"), "a.upk"),
+          copy(sep("a.upk.bak", "readme.txt"), "readme.txt"),
+        ],
+      ],
+      [
+        "XXX-movies",
+        tree("a.bik.bak/a.bik", "a.bik.bak/readme.txt"),
+        [
+          copy(sep("a.bik.bak", "a.bik"), "a.bik"),
+          copy(sep("a.bik.bak", "readme.txt"), "readme.txt"),
+        ],
+      ],
+      [
+        "XXX-binaries",
+        tree("XXX.exe.bak/XXX.exe", "XXX.exe.bak/x.dll"),
+        [
+          copy(sep("XXX.exe.bak", "XXX.exe"), "XXX.exe"),
+          copy(sep("XXX.exe.bak", "x.dll"), "x.dll"),
+        ],
+      ],
+    ];
+    for (const [id, files, expected] of cases) {
+      const { instructions } = await installerOf(ext, id).install(files, "Cool Mod.installing");
+      assert.deepEqual(instructions, [...expected, { type: "setmodtype", value: id }], id);
+    }
   });
 
   it("movies installer flattens to the movie's folder", async () => {
@@ -652,6 +727,43 @@ describe("template-tfcinstaller-ue2-3: run the TFC Installer after a deploy", ()
     await didDeploy(ext)("profile-1");
     ext.notifications[0].actions[0].action(() => undefined);
     assert.equal(ext.errors[0][0], "Failed to run TFC Installer");
+  });
+
+  // Runs the notice's button against a tool that fails to start, by rejecting or by throwing.
+  async function launchFailing(failure, { sync }) {
+    const state = makeState({
+      discovered: { [GAME_ID]: { path: "x", tools: { "XXX-tfcinstaller": { path: toolPath } } } },
+    });
+    const ext = await loadExtension(DIR, { state });
+    ext.api.runExecutable = () => {
+      if (sync) throw failure;
+      return Promise.reject(failure);
+    };
+    ext.state.settings.profiles.lastActiveProfile[GAME_ID] = "profile-1";
+    await didDeploy(ext)("profile-1");
+    ext.notifications[0].actions[0].action(() => undefined);
+    assert.ok(await waitFor(() => ext.errors.length === 1));
+    return ext.errors[0];
+  }
+
+  it("offers to report a permission, access or missing-file failure to start the tool", async () => {
+    for (const sync of [false, true]) {
+      for (const code of ["EPERM", "EACCES", "ENOENT"]) {
+        const failure = Object.assign(new Error("fail"), { code });
+        const [message, error, options] = await launchFailing(failure, { sync });
+        assert.equal(message, "Failed to run TFC Installer");
+        assert.equal(error, failure);
+        assert.deepEqual(options, { allowReport: true }, `${code}, sync ${sync}`);
+      }
+    }
+  });
+
+  it("does not offer to report an unrecognised failure to start the tool", async () => {
+    for (const sync of [false, true]) {
+      const failure = Object.assign(new Error("odd"), { code: "EOTHER" });
+      const [, , options] = await launchFailing(failure, { sync });
+      assert.deepEqual(options, { allowReport: false }, `sync ${sync}`);
+    }
   });
 });
 

@@ -1,5 +1,13 @@
 # template-reframework-fluffy Changelog
 
+## [2026-10-11]
+
+- Fixed: a game with no demo (`EXEC_DEMO` set to `""`) or a "demo" executable that is the game's own file (`EXEC_DEMO` equal to `EXEC`) was treated as a demo install whenever the Xbox logic was on: the executable came back empty (or the demo's), the mod and preset folders moved to the `_Demo` folders, and the Steam save lookup used the demo app id. A new `HAS_DEMO` constant (`EXEC_DEMO` is set and differs from `EXEC`) now guards the three demo checks in `getExecutable`, `getModPath` and `setGameVersion`, and `multiExe` reads it too.
+- Fixed: the Fluffy, REFramework, root and preset installers cut each destination with `modFile.indexOf(...)`, which finds the FIRST occurrence of the marker's file name in the path. A parent folder whose name starts with the marker's name (`dinput8.dll.old/dinput8.dll`) was cut inside the folder name and kept in the destination. All four now use `lastIndexOf`, which always lands on the marker's own path segment.
+- Fixed: the loose lua installer only kept the folder holding the FIRST script, so a mod with scripts in separate folders lost every other folder. It now roots the install at the deepest folder that holds every script (dropping a shared wrapper folder) and keeps each script's own folder beneath `reframework/autorun`.
+- Fixed: a nested `.ZIP`, `.7Z` or `.RAR` (any case other than lower-case) was not recognised as an archive, so the Fluffy installer repacked the mod inside another zip. The extension is now compared in lower case.
+- Fixed: the "report this error" check in `runFluffy` listed `"EACCESS"`, a code Node never raises, so an access-denied failure to start Fluffy was never offered for reporting. It now lists `"EACCES"` (both the rejected-promise and the thrown-error route).
+
 ## [2026-10-06]
 
 - Added: an "Open Nexus Mods Page" button in the Mods toolbar that opens the game's mods page on Nexus Mods (`https://www.nexusmods.com/<GAME_ID>/mods`). It sits beside the PCGamingWiki and SteamDB buttons and only shows while this game is the active game.

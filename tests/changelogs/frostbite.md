@@ -2,6 +2,12 @@
 
 Covers `template-frostbite`. Suite file: `tests/templates/frostbite.test.js`.
 
+## [2026-10-11]
+
+- Added: a test that the Frosty, plugin and key installers cut at the marker itself when its name also appears in a parent folder.
+- Added: two tests for the Run Frosty button's failure report. Permission, access (`EACCES`) and missing-file errors are offered for reporting and an unknown code is not, on both the rejected-promise and the thrown-error route. Suite is now 68 tests.
+- Added: red proof. The two new tests fail against the template as it was at the last commit and pass with the fix.
+
 ## [2026-10-06]
 
 - Changed: the toolbar actions tests cover the new `Open Nexus Mods Page` button. It is in the registered action list, and it opens `https://www.nexusmods.com/XXX/mods`.

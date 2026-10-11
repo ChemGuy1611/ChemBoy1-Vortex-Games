@@ -384,17 +384,38 @@ describe("template-farcry: install output", () => {
     }
   });
 
-  // The destination is cut at the first occurrence of "<root folder>/" in the matched path, so a
-  // wrapper folder whose name ends with a root folder's name is cut inside the wrapper's name
-  // and the root folder is duplicated. Pinned so that fixing the template turns this red.
-  it("known gap: root installer duplicates the root folder when the wrapper name ends with it", async () => {
+  it("root installer is not thrown off by a wrapper whose name ends with the root folder's name", async () => {
     const { instructions } = await installerOf(ext, "XXX-root").install(
       tree("ModSupport/Support/a.txt"),
     );
     assert.deepEqual(
       instructions[0],
-      copy(sep("ModSupport", "Support", "a.txt"), sep("Support", "Support", "a.txt")),
+      copy(sep("ModSupport", "Support", "a.txt"), sep("Support", "a.txt")),
     );
+  });
+
+  it("the folder-flattening installers cut at the marker file itself, not at an earlier copy of its name", async () => {
+    const cases = [
+      ["XXX-data", "a.dat"],
+      ["XXX-binaries", "a.dll"],
+      ["XXX-mimod", "Main.a2"],
+      ["XXX-xml", "gamerprofile.xml"],
+      ["XXX-modinstaller", "FCModInstaller.exe"],
+    ];
+    for (const [id, marker] of cases) {
+      const wrapper = `${marker}.bak`;
+      const files = tree(`${wrapper}/${marker}`, `${wrapper}/readme.txt`);
+      const { instructions } = await installerOf(ext, id).install(files);
+      assert.deepEqual(
+        instructions,
+        [
+          copy(sep(wrapper, marker), marker),
+          copy(sep(wrapper, "readme.txt"), "readme.txt"),
+          { type: "setmodtype", value: id },
+        ],
+        id,
+      );
+    }
   });
 
   it("data installer flattens to the .dat file's folder", async () => {
@@ -1027,6 +1048,43 @@ describe("template-farcry: run the mod installer after a deploy", () => {
     await didDeploy(ext)("profile-1", {});
     ext.notifications[0].actions[0].action(() => undefined);
     assert.equal(ext.errors[0][0], "Failed to run FC Mod Installer");
+  });
+
+  // Runs the notice's button against a tool that fails to start, by rejecting or by throwing.
+  async function launchFailing(failure, { sync }) {
+    const state = makeState({
+      discovered: { [GAME_ID]: { path: "x", tools: { "XXX-modinstaller": { path: toolPath } } } },
+    });
+    const ext = await loadExtension(DIR, { state });
+    ext.api.runExecutable = () => {
+      if (sync) throw failure;
+      return Promise.reject(failure);
+    };
+    ext.state.settings.profiles.lastActiveProfile[GAME_ID] = "profile-1";
+    await didDeploy(ext)("profile-1", {});
+    ext.notifications[0].actions[0].action(() => undefined);
+    assert.ok(await waitFor(() => ext.errors.length === 1));
+    return ext.errors[0];
+  }
+
+  it("offers to report a permission, access or missing-file failure to start the tool", async () => {
+    for (const sync of [false, true]) {
+      for (const code of ["EPERM", "EACCES", "ENOENT"]) {
+        const failure = Object.assign(new Error("fail"), { code });
+        const [message, error, options] = await launchFailing(failure, { sync });
+        assert.equal(message, "Failed to run FC Mod Installer");
+        assert.equal(error, failure);
+        assert.deepEqual(options, { allowReport: true }, `${code}, sync ${sync}`);
+      }
+    }
+  });
+
+  it("does not offer to report an unrecognised failure to start the tool", async () => {
+    for (const sync of [false, true]) {
+      const failure = Object.assign(new Error("odd"), { code: "EOTHER" });
+      const [, , options] = await launchFailing(failure, { sync });
+      assert.deepEqual(options, { allowReport: false }, `sync ${sync}`);
+    }
   });
 
   it("says so when Vortex found the tool but not where it lives", async () => {

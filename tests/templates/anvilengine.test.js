@@ -1011,16 +1011,44 @@ describe("template-anvilengine: install output", () => {
     ]);
   });
 
-  it("known gap: a wrapper folder ending in 'Extracted' is kept, doubling the folder", async () => {
+  it("a wrapper folder ending in 'Extracted' is stripped, not kept as a second Extracted folder", async () => {
     const { instructions } = await install(
       "XXX-extracted",
       tree("MyExtracted/Extracted/X.forge/a.data"),
     );
-    assert.equal(
-      instructions[0].destination,
-      sep("Extracted", "Extracted", "X.forge", "a.data"),
-      "should be Extracted\\X.forge\\a.data",
-    );
+    assert.deepEqual(instructions, [
+      copy(
+        sep("MyExtracted", "Extracted", "X.forge", "a.data"),
+        sep("Extracted", "X.forge", "a.data"),
+      ),
+      modType("XXX-extracted"),
+    ]);
+  });
+
+  it("the installers cut at the marker itself, not at an earlier copy of its name", async () => {
+    const staging = path.join(STAGING, "Cool Mod.installing");
+    const own = await loadExtension(DIR); // the loose-file case raises a notice the other tests count
+    const cases = [
+      [
+        "XXX-atk",
+        tree("anviltoolkit.exe.bak/anviltoolkit.exe"),
+        [[sep("anviltoolkit.exe.bak", "anviltoolkit.exe"), "anviltoolkit.exe"]],
+      ],
+      [
+        "XXX-loosedata",
+        tree("a.data.bak/a.data"),
+        [[sep("a.data.bak", "a.data"), sep("Extracted", RENAME, "a.data")]],
+      ],
+      ["XXX-forgefile", tree("a.forge.bak/a.forge"), [[sep("a.forge.bak", "a.forge"), "a.forge"]]],
+    ];
+    for (const [id, files, moves] of cases) {
+      const { instructions } = await installerOf(own, id).install(files, staging);
+      assert.deepEqual(
+        instructions,
+        [...moves.map(([from, to]) => copy(from, to)), modType(id)],
+        id,
+      );
+    }
   });
 
   it("a .forge folder is placed inside Extracted, wrapper stripped", async () => {
@@ -1128,13 +1156,12 @@ describe("template-anvilengine: install output", () => {
     ]);
   });
 
-  it("known gap: a wrapper folder ending in a root folder's name is kept, doubling the folder", async () => {
+  it("a wrapper folder ending in a root folder's name is stripped, not kept as a second root folder", async () => {
     const { instructions } = await install("XXX-root", tree("HD videos/videos/a.bk2"));
-    assert.equal(
-      instructions[0].destination,
-      sep("videos", "videos", "a.bk2"),
-      "should be videos\\a.bk2",
-    );
+    assert.deepEqual(instructions, [
+      copy(sep("HD videos", "videos", "a.bk2"), sep("videos", "a.bk2")),
+      modType("XXX-root"),
+    ]);
   });
 
   it("the fallback copies everything as it is, retypes to root, and notifies", async () => {
@@ -1163,17 +1190,22 @@ describe("template-anvilengine: install output", () => {
     assert.equal(ext.notifications.at(-1).id, "XXX-Averyverylongmodname-fallback");
   });
 
-  it("known gap: a mod name with a character plus 'rar', 'zip' or '7z' loses those letters in the rename notice", async () => {
-    await install(
-      "XXX-datafolder",
-      tree("Foo.data/a.bin"),
-      path.join(STAGING, "Hunter rarity.installing"),
-    );
-    assert.equal(
-      ext.notifications.at(-1).message,
-      "MANUAL FOLDER RENAMING REQUIRED FOR Hunterity",
-      "should name Hunter rarity",
-    );
+  it("the rename notice names the mod in full, losing only a trailing '.installing' and archive extension", async () => {
+    const cases = [
+      ["Hunter rarity.installing", "Hunter rarity"],
+      ["Zipper 7zip.installing", "Zipper 7zip"],
+      ["Cool Mod.zip.installing", "Cool Mod"],
+      ["Cool Mod.RAR", "Cool Mod"],
+      ["Cool Mod.installing", "Cool Mod"],
+    ];
+    for (const [name, shown] of cases) {
+      await install("XXX-datafolder", tree("Foo.data/a.bin"), path.join(STAGING, name));
+      assert.equal(
+        ext.notifications.at(-1).message,
+        `MANUAL FOLDER RENAMING REQUIRED FOR ${shown}`,
+        name,
+      );
+    }
   });
 });
 
@@ -1184,6 +1216,30 @@ describe("template-anvilengine: install output for the optional features", () =>
   });
 
   const install = (id, files, ...rest) => installerOf(ext, id).install(files, ...rest);
+
+  it("the optional installers cut at the marker itself, not at an earlier copy of its name", async () => {
+    const cases = [
+      ["XXX-forger", tree("forger.exe.bak/forger.exe"), [["forger.exe.bak", "forger.exe"]]],
+      ["XXX-forgerpatch", tree("a.forger2.bak/a.forger2"), [["a.forger2.bak", "a.forger2"]]],
+      ["XXX-sound", tree("a.pck.bak/a.pck"), [["a.pck.bak", "a.pck"]]],
+      ["XXX-fixes", tree("version.dll.bak/version.dll"), [["version.dll.bak", "version.dll"]]],
+      ["XXX-resorep", tree("d3d11.dll.bak/d3d11.dll"), [["d3d11.dll.bak", "d3d11.dll"]]],
+      ["XXX-resoreptextures", tree("a.dds.bak/a.dds"), [["a.dds.bak", "a.dds"]]],
+    ];
+    for (const [id, files, moves] of cases) {
+      const { instructions } = await install(id, files);
+      assert.deepEqual(
+        instructions,
+        [...moves.map(([wrapper, name]) => copy(sep(wrapper, name), name)), modType(id)],
+        id,
+      );
+    }
+    const dlc = await install("XXX-dlcfolder", tree("Mydlc_10/dlc_10/a.forge"));
+    assert.deepEqual(dlc.instructions, [
+      copy(sep("Mydlc_10", "dlc_10", "a.forge"), sep("dlc_10", "a.forge")),
+      modType("XXX-dlcfolder"),
+    ]);
+  });
 
   it("Forger keeps the folder holding forger.exe", async () => {
     const { instructions } = await install(
@@ -2689,12 +2745,32 @@ describe("template-anvilengine: deploy reminder", () => {
       assert.equal(await failures("EOTHER"), false);
     });
 
-    it("known gap: an access-denied failure (EACCES) is never offered for reporting", async () => {
+    it("offers to report an access-denied failure (EACCES), whether the launch rejects or throws", async () => {
+      for (const sync of [false, true]) {
+        const ext = await remind({ tools: { "XXX-atk": { path: toolPath } } });
+        const failure = Object.assign(new Error("denied"), { code: "EACCES" });
+        if (sync) {
+          ext.api.runExecutable = () => {
+            throw failure;
+          };
+        } else {
+          recordRuns(ext, failure);
+        }
+        runButton(ext).action(() => undefined);
+        assert.ok(await waitFor(() => ext.errors.length === 1));
+        assert.equal(ext.errors[0][0], "Failed to run ATK");
+        assert.deepEqual(ext.errors[0][2], { allowReport: true }, `sync ${sync}`);
+      }
+    });
+
+    it("does not offer to report an unrecognised launch failure that throws", async () => {
       const ext = await remind({ tools: { "XXX-atk": { path: toolPath } } });
-      recordRuns(ext, Object.assign(new Error("denied"), { code: "EACCES" }));
+      ext.api.runExecutable = () => {
+        throw Object.assign(new Error("odd"), { code: "EOTHER" });
+      };
       runButton(ext).action(() => undefined);
       assert.ok(await waitFor(() => ext.errors.length === 1));
-      assert.equal(ext.errors[0][2].allowReport, false, "the check list spells it EACCESS");
+      assert.deepEqual(ext.errors[0][2], { allowReport: false });
     });
 
     it("runs Forger from the dialog's Run Forger button", async () => {
@@ -2901,6 +2977,31 @@ describe("template-anvilengine: rename dialog for .forge folders", () => {
         "Failed to rename .forge folder. You will have to rename the folder manually.",
       );
       assert.deepEqual(ext.errors[0][2], { allowReport: false });
+    });
+
+    it("reports a purge or deploy that fails instead of leaving the failure unhandled", async () => {
+      for (const failing of ["purge-mods", "deploy-mods"]) {
+        const { ext, buttons } = await opened();
+        const extracted = path.join(STAGING, MOD, "Extracted");
+        fs.rmSync(path.join(STAGING, MOD), { recursive: true, force: true });
+        fs.mkdirSync(path.join(extracted, RENAME), { recursive: true });
+        ext.api.events.on("purge-mods", (flag, callback) =>
+          callback(failing === "purge-mods" ? new Error("purge-mods broke") : null),
+        );
+        ext.api.events.on("deploy-mods", (callback) =>
+          callback(failing === "deploy-mods" ? new Error("deploy-mods broke") : null),
+        );
+        ext.api.showDialog = async () => typed("Patch_04");
+        button(buttons, "Show Folder Rename Dialog").action();
+        await settle();
+        assert.equal(
+          ext.errors[0]?.[0],
+          "Failed to rename .forge folder. You will have to rename the folder manually.",
+          failing,
+        );
+        assert.equal(ext.errors[0][1].message, `${failing} broke`);
+        assert.deepEqual(ext.errors[0][2], { allowReport: false });
+      }
     });
 
     it("reports a missing placeholder folder, after the purge and without a deploy", async () => {

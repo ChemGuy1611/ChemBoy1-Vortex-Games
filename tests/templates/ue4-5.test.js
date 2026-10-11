@@ -1139,24 +1139,55 @@ describe("template-ue4-5: UE4SS combo, LogicMods and UE4SS installers", () => {
     );
     assert.equal(fs.existsSync(path.join(workingDir, "Binaries", "WinGDK", "x.dll")), true);
     assert.equal(fs.existsSync(path.join(workingDir, "Binaries", "Win64")), false);
-    assert.equal(instructions.at(-1).type, "setmodtype");
+    assert.equal(
+      instructions.some(({ type }) => type === "setmodtype"),
+      true,
+    );
+    assert.deepEqual(instructions.at(-1), attribute("ue4ssModFolder", "MyMod"));
   });
 
-  it("known gap: combo for the Xbox build records no UE4SS mod folder for a script mod", async () => {
+  it("combo for the Xbox build records the UE4SS mod folder for a script mod, as on every other build", async () => {
     const gameDir = makeGameDir(["gamelaunchhelper.exe"]);
     const xbox = await boot({ state: stateFor({ gameDir }) });
     xbox.game.executable(gameDir);
     const { workingDir, files } = stage({
       "Binaries/Win64/ue4ss/Mods/MyMod/Scripts/main.lua": "",
+      "Binaries/Win64/ue4ss/Mods/MyMod/Scripts/util.lua": "",
       "Content/a.dat": "",
     });
     const { instructions } = await installerOf(xbox, ID.combo).install(files, workingDir);
-    // Should end with attribute("ue4ssModFolder", "MyMod") as on every other build. The Xbox path
-    // rebuilds the file list from the staged files, which holds no folder entries, so the Scripts
-    // folder the attribute is found from is gone.
+    // The Xbox path rebuilds the file list from the staged files, which holds no folder entries,
+    // so the mod folder comes from the path segments around Scripts.
     assert.deepEqual(
       instructions.filter(({ type }) => type === "attribute"),
-      [],
+      [attribute("ue4ssModFolder", "MyMod")],
+    );
+  });
+
+  it("combo records the same UE4SS mod folder on a build with folder entries", async () => {
+    const { instructions } = await combo(
+      tree("Binaries/Win64/ue4ss/Mods/MyMod/Scripts/main.lua", "Content/a.dat"),
+      "unused",
+    );
+    assert.deepEqual(
+      instructions.filter(({ type }) => type === "attribute"),
+      [attribute("ue4ssModFolder", "MyMod")],
+    );
+  });
+
+  it("combo records the first UE4SS mod folder when a pack holds several, and ignores a file named Scripts", async () => {
+    const { instructions } = await combo(
+      tree(
+        "Binaries/Win64/ue4ss/Mods/Alpha/Scripts/a.lua",
+        "Binaries/Win64/ue4ss/Mods/Beta/Scripts/b.lua",
+        "Binaries/Win64/ue4ss/Mods/Gamma/Scripts",
+        "Content/a.dat",
+      ),
+      "unused",
+    );
+    assert.deepEqual(
+      instructions.filter(({ type }) => type === "attribute"),
+      [attribute("ue4ssModFolder", "Alpha")],
     );
   });
 
@@ -1251,25 +1282,19 @@ describe("template-ue4-5: UE4SS combo, LogicMods and UE4SS installers", () => {
     ]);
   });
 
-  it("known gap: combo cuts a wrapper whose name ends in Binaries at its own name", async () => {
+  it("combo drops a wrapper whose name ends in Binaries", async () => {
     const { instructions } = await combo(tree("MyBinaries/Binaries/Win64/x.dll"), "unused");
-    // Should be XXX\Binaries\Win64\x.dll. The cut is the first "Binaries\" in the path, which sits
-    // inside the wrapper's name.
-    assert.equal(instructions[0].destination, sep("XXX", "Binaries", "Binaries", "Win64", "x.dll"));
+    assert.equal(instructions[0].destination, sep("XXX", "Binaries", "Win64", "x.dll"));
   });
 
-  it("known gap: logic records an upper-case .PAK with its extension", async () => {
+  it("logic records an upper-case .PAK without its extension, keeping the stem's case", async () => {
     const { instructions } = await logic(tree("LogicMods/a.pak", "LogicMods/B.PAK"));
-    // Should record ["a", "B"]. The pak is found by its lower-cased extension but the extension is
-    // stripped with path.basename, which compares case-sensitively. The combo installer and the
-    // LogicMods load order read the same way.
-    assert.deepEqual(instructions.at(-1), attribute("logicModFiles", ["a", "B.PAK"]));
+    assert.deepEqual(instructions.at(-1), attribute("logicModFiles", ["a", "B"]));
   });
 
-  it("known gap: logic cuts a wrapper whose name ends in LogicMods at its own name", async () => {
+  it("logic drops a wrapper whose name ends in LogicMods", async () => {
     const { instructions } = await logic(tree("MyLogicMods/LogicMods/a.pak"));
-    // Should be LogicMods\a.pak.
-    assert.equal(instructions[0].destination, sep("LogicMods", "LogicMods", "a.pak"));
+    assert.equal(instructions[0].destination, sep("LogicMods", "a.pak"));
   });
 });
 
@@ -1501,18 +1526,16 @@ describe("template-ue4-5: root installer output", () => {
     assert.equal(result.instructions.filter(({ source }) => source?.endsWith(path.sep)).length, 0);
   });
 
-  it("known gap: a wrapper whose name ends in the game folder name is cut inside its own name", async () => {
-    // Should be XXX\Content\a.dat. The cut is the first "XXX\" in the path, which is part of
-    // the wrapper's name.
+  it("a wrapper whose name ends in the game folder name is dropped whole", async () => {
+    // The cut is the game folder itself, not the same letters at the end of the wrapper's name.
     assert.deepEqual(copies(await root("MyXXX/XXX/Content/a.dat")), [
-      sep("XXX", "XXX", "Content", "a.dat"),
+      sep("XXX", "Content", "a.dat"),
     ]);
   });
 
-  it("known gap: a wrapper whose name ends in a subfolder name is cut inside its own name", async () => {
-    // Should be XXX\Content\Paks\a.pak.
+  it("a wrapper whose name ends in a subfolder name is dropped whole", async () => {
     assert.deepEqual(copies(await root("MyContent/Content/Paks/a.pak")), [
-      sep("XXX", "Content", "Content", "Paks", "a.pak"),
+      sep("XXX", "Content", "Paks", "a.pak"),
     ]);
   });
 });
@@ -1571,6 +1594,41 @@ describe("template-ue4-5: ModKit and signature bypass installers", () => {
     );
   });
 
+  it("ModKit keeps the wrapper folder name when mod.json has no usable modPluginName, instead of throwing", async () => {
+    const ext = await boot({ transform: modKit });
+    for (const contents of [
+      {},
+      { modPluginName: "" },
+      { modPluginName: 7 },
+      { modPluginName: null },
+    ]) {
+      const { workingDir, files } = stage({
+        "Pack/mod.json": JSON.stringify(contents),
+        "Pack/a.uplugin": "",
+      });
+      const { instructions } = await installerOf(ext, ID.modkit).install(files, workingDir);
+      assert.deepEqual(
+        instructions,
+        [
+          copy(sep("Pack", "mod.json"), sep("Pack", "mod.json")),
+          copy(sep("Pack", "a.uplugin"), sep("Pack", "a.uplugin")),
+          modType(ID.modkit),
+        ],
+        JSON.stringify(contents),
+      );
+    }
+  });
+
+  it("ModKit falls back to the archive name when mod.json has no modPluginName and there is no wrapper", async () => {
+    const ext = await boot({ transform: modKit });
+    const { workingDir, files } = stage(
+      { "mod.json": "{}", "a.uplugin": "" },
+      "Cool Mod.zip.installing",
+    );
+    const { instructions } = await installerOf(ext, ID.modkit).install(files, workingDir);
+    assert.equal(instructions[0].destination, sep("CoolMod", "mod.json"));
+  });
+
   it("ModKit falls back to the archive name when there is no wrapper folder", async () => {
     const ext = await boot({ transform: modKit });
     const { workingDir, files } = stage(
@@ -1579,6 +1637,52 @@ describe("template-ue4-5: ModKit and signature bypass installers", () => {
     );
     const { instructions } = await installerOf(ext, ID.modkit).install(files, workingDir);
     assert.equal(instructions[0].destination, sep("CoolMod", "mod.json"));
+  });
+});
+
+// Every installer that flattens to a marker cuts at the marker itself. A parent folder whose name
+// holds the marker's whole name must not be mistaken for it, so none of these destinations may
+// keep the wrapper.
+describe("template-ue4-5: a parent folder named after the marker", () => {
+  const markers = [
+    ["the UE4SS proxy dll", ID.ue4ss, undefined, ["dwmapi.dll.d/dwmapi.dll", "dwmapi.dll.d/a.txt"]],
+    ["the signature bypass dll", ID.sigbypass, sigBypass, ["dsound.dll.d/dsound.dll"]],
+    ["a config file", ID.config, undefined, ["engine.ini.d/engine.ini"]],
+    ["a save file", ID.save, undefined, ["a.sav.d/a.sav"]],
+    ["a UE4SS script mod", ID.scripts, undefined, ["MyMod.d/MyMod/Scripts/main.lua"]],
+    ["a UE4SS dll mod", ID.dll, undefined, ["MyDll.d/MyDll/dlls/main.dll"]],
+  ];
+  for (const [label, id, transform, entries] of markers) {
+    it(`drops the folder when installing ${label}`, async () => {
+      // setup would wait on the bypass download, so a toggled build skips it
+      const { ext } = transform ? { ext: await boot({ transform }) } : await ready();
+      const { workingDir, files } = stage(Object.fromEntries(entries.map((e) => [e, ""])));
+      const { instructions } = await installerOf(ext, id).install(files, workingDir);
+      const copies = instructions.filter(({ type }) => type === "copy");
+      assert.ok(copies.length > 0, label);
+      const wrapper = entries[0].split("/")[0];
+      for (const { destination } of copies) {
+        assert.equal(
+          destination.split(path.sep).includes(wrapper),
+          false,
+          `${label}: ${destination}`,
+        );
+      }
+    });
+  }
+
+  it("drops the folder when installing a ModKit mod", async () => {
+    const ext = await boot({ transform: modKit });
+    const { workingDir, files } = stage({
+      "mod.json.d/mod.json": JSON.stringify({ modPluginName: "Real" }),
+      "mod.json.d/Plugin.uplugin": "",
+    });
+    const { instructions } = await installerOf(ext, ID.modkit).install(files, workingDir);
+    assert.deepEqual(instructions, [
+      copy(sep("mod.json.d", "mod.json"), sep("Real", "mod.json")),
+      copy(sep("mod.json.d", "Plugin.uplugin"), sep("Real", "Plugin.uplugin")),
+      modType(ID.modkit),
+    ]);
   });
 });
 
@@ -2829,12 +2933,11 @@ describe("template-ue4-5: toolbar buttons", () => {
     }
   });
 
-  it("known gap: Open LogicMods Folder opens the Paks folder, not its LogicMods subfolder", async () => {
+  it("Open LogicMods Folder opens the LogicMods subfolder of the Paks folder, like the LogicMods page", async () => {
     const { ext, gameDir } = await ready();
     const opened = stubShell();
     await button(ext, "Open LogicMods Folder").action();
-    // Should be <game>\XXX\Content\Paks\LogicMods, which is what the LogicMods load order page opens.
-    assert.deepEqual(opened, [sep(gameDir, "XXX", "Content", "Paks")]);
+    assert.deepEqual(opened, [sep(gameDir, "XXX", "Content", "Paks", "LogicMods")]);
   });
 
   it("report a folder or page they cannot open instead of throwing", async () => {
@@ -4160,16 +4263,11 @@ describe("template-ue4-5: LogicMods load order", () => {
     ]);
   });
 
-  it("known gap: lists an upper-case .PAK with its extension", async () => {
+  it("lists an upper-case .PAK without its extension, keeping the stem's case", async () => {
     const { ext, gameDir } = await ue4ssGame();
-    paks(gameDir, ["Up.PAK"]);
-    // Should list "Up". The pak is found by its lower-cased extension but the extension is stripped
-    // with path.basename, which compares case-sensitively.
+    paks(gameDir, ["Up.PAK", "LOW.Pak"]);
     const order = await ext.internals.deserializeLogicMods(ext.api);
-    assert.deepEqual(
-      order.map(({ id }) => id),
-      ["Up.PAK"],
-    );
+    assert.deepEqual(order.map(({ id }) => id).sort(), ["LOW", "Up"]);
   });
 
   it("keeps the stored order and locks, drops missing paks and appends new ones", async () => {
@@ -4678,10 +4776,17 @@ describe("template-ue4-5: retagging a FOMOD-installed pak mod", () => {
     }
   });
 
-  it("lets a LogicMods folder through when LogicMods are switched off", async () => {
-    const { ext } = await fomodGame({ staged: ["LogicMods/a.pak"], transform: noLogicMods });
+  it("lets a LogicMods folder through when UE4SS support is switched off, as no LogicMods installer exists then", async () => {
+    const { ext } = await fomodGame({ staged: ["LogicMods/a.pak"], transform: noUe4ss });
     await install(ext);
     assert.equal(types(ext)[0], "setModType");
+  });
+
+  it("still leaves a LogicMods folder alone when only the LogicMods load order page is off", async () => {
+    // The LogicMods installer registers under the UE4SS toggle, so it still claims the folder.
+    const { ext } = await fomodGame({ staged: ["LogicMods/a.pak"], transform: noLogicMods });
+    await install(ext);
+    assert.deepEqual(ext.dispatched, []);
   });
 
   it("leaves a mod staged in the full game folder layout", async () => {
@@ -4800,9 +4905,14 @@ describe("template-ue4-5: path and status helpers", () => {
       );
     });
 
-    it("ignores a LogicMods folder when LogicMods are switched off", async () => {
-      const plain = await boot({ transform: withInternals(noLogicMods) });
+    it("ignores a LogicMods folder when UE4SS support is switched off", async () => {
+      const plain = await boot({ transform: withInternals(noUe4ss) });
       assert.equal(plain.exports.internals.beatsPakInstaller(["LogicMods\\a.pak"]), false);
+    });
+
+    it("counts a LogicMods folder when only the LogicMods load order page is switched off", async () => {
+      const plain = await boot({ transform: withInternals(noLogicMods) });
+      assert.equal(plain.exports.internals.beatsPakInstaller(["LogicMods\\a.pak"]), true);
     });
   });
 
@@ -4940,6 +5050,29 @@ describe("template-ue4-5: path and status helpers", () => {
       assert.equal(sorted[0].name, "Plain (2 .pak,.ucas,.utoc files)");
     });
 
+    it("lists a mod missing from state under the name it was given, instead of throwing", async () => {
+      const mods = { a: { attributes: { name: "Known" } } };
+      const sorted = await helpers.preSort(
+        sortApi(mods),
+        [{ id: "a" }, { id: "gone", name: "Ghost" }, { id: "bare" }],
+        "ascending",
+      );
+      assert.deepEqual(sorted, [
+        { id: "a", name: "Known", imgUrl: path.join(DIR, "XXX.jpg") },
+        { id: "gone", name: "Ghost", imgUrl: path.join(DIR, "XXX.jpg") },
+        { id: "bare", name: undefined, imgUrl: path.join(DIR, "XXX.jpg") },
+      ]);
+    });
+
+    it("lists a mod whose state has no attributes under the name it was given", async () => {
+      const sorted = await helpers.preSort(
+        sortApi({ a: {} }),
+        [{ id: "a", name: "Fallback" }],
+        "ascending",
+      );
+      assert.deepEqual(sorted, [{ id: "a", name: "Fallback", imgUrl: path.join(DIR, "XXX.jpg") }]);
+    });
+
     it("lists a single pak without a count", async () => {
       const sorted = await helpers.preSort(
         sortApi({ a: { attributes: { name: "Plain", unrealModFiles: ["x.pak"] } } }),
@@ -4960,10 +5093,11 @@ describe("template-ue4-5: path and status helpers", () => {
   });
 
   describe("scaffold helpers games switch on", () => {
-    it("known gap: getBinariesFolder looks for the build folders in the game root, not under Binaries", async () => {
+    it("getBinariesFolder looks for the build folders directly in the game root, as a relative tool path helper", async () => {
+      // Left as is: the helper only feeds a tool registered with `relative: true`, so Vortex
+      // joins its answer onto the game folder. With a real layout it answers nothing here.
       const gameDir = makeGameDir(["gamelaunchhelper.exe"]);
       fs.mkdirSync(sep(gameDir, "XXX", "Binaries", "WinGDK"), { recursive: true });
-      // Should answer XXX\Binaries\WinGDK. It stats <game>\WinGDK and <game>\Win64, which never exist.
       assert.equal(helpers.getBinariesFolder(gameDir), undefined);
     });
 
@@ -5332,13 +5466,12 @@ describe("template-ue4-5: installer guards and markers", () => {
     assert.deepEqual(instructions.at(-1), attribute("logicModFiles", ["a"]));
   });
 
-  it("known gap: combo records an upper-case .PAK with its extension", async () => {
+  it("combo records an upper-case .PAK without its extension, keeping the stem's case", async () => {
     const { instructions } = await installerOf(ext, ID.combo).install(
-      tree("Binaries/a.dll", "Content/Paks/LogicMods/B.PAK"),
+      tree("Binaries/a.dll", "Content/Paks/LogicMods/B.PAK", "Content/Paks/LogicMods/c.Pak"),
       "unused",
     );
-    // Should record ["B"], as with the logic installer.
-    assert.deepEqual(instructions.at(-1), attribute("logicModFiles", ["B.PAK"]));
+    assert.deepEqual(instructions.at(-1), attribute("logicModFiles", ["B", "c"]));
   });
 
   it("registers the ModKit and bypass types like the others", async () => {

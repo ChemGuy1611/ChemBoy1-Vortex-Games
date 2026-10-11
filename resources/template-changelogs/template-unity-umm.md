@@ -1,5 +1,11 @@
 # template-unity-umm Changelog
 
+## [2026-10-11]
+
+- Fixed: the "Open Save Folder" toolbar button handed the shell an unresolved Promise, because the async `getSavePath` was not awaited, so the button could not open the folder. The click handler is now async and awaits the path.
+- Fixed: the installers cut each mod's destination with `modFile.indexOf(...)`, which finds the FIRST occurrence of the marker's name in the path, so a wrapper folder whose name contains or ends with the marker's name (`MyXXX_Data/XXX_Data`, `Assembly-CSharp.dll.bak/Assembly-CSharp.dll`) was cut inside the wrapper's name and stayed in the install path. `installAssembly`, `installRoot` and `installAssets` now use `lastIndexOf`, which always lands on the marker's own path segment.
+- Fixed: the "report this error" check in `runUmm` listed `"EACCESS"`, a code Node never raises, so an access-denied failure to start Unity Mod Manager was never offered for reporting. It now lists `"EACCES"` (both the rejected-promise and the thrown-error route).
+
 ## [2026-10-06]
 
 - Added: an "Open Nexus Mods Page" button in the Mods toolbar that opens the game's mods page on Nexus Mods (`https://www.nexusmods.com/<GAME_ID>/mods`). It sits beside the PCGamingWiki and SteamDB buttons and only shows while this game is the active game.

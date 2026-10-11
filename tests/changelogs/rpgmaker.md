@@ -2,6 +2,13 @@
 
 Covers `template-rpgmaker`. Suite file: `tests/templates/rpgmaker.test.js`.
 
+## [2026-10-11]
+
+- Changed: the three `known gap` tests (js folder wrapper cut, upper-case `.JS` stamp, root installer wrapper cut) now assert the fixed results and lost their `known gap:` prefix. The js folder case also checks that the plugin names are stamped.
+- Added: a test that the js file and json installers cut at the marker file itself when its name also appears in a parent folder (`A.js.bak/A.js`).
+- Added: a load order test that a deployed `B.JS` plugin is listed. Suite is now 92 tests.
+- Added: red proof. Five of the changed tests fail against the template as it was at the last commit and pass with the fix.
+
 ## [2026-10-09]
 
 - Changed: the suite follows the template's new default executable. `EXEC` is `Game.exe` (the usual RPG Maker executable) instead of `XXX.exe`, so the custom launch tool, the required files and the executable choice tests expect `Game.exe`; the template's `IGNORE_CONFLICTS` and `IGNORE_DEPLOY` lists gained `**/plugins.js`, which the game definition test expects.

@@ -2,6 +2,13 @@
 
 Covers `template-farcry`. Suite file: `tests/templates/farcry.test.js`.
 
+## [2026-10-11]
+
+- Changed: the `known gap` test for the root installer now asserts the fixed result (`ModSupport/Support/a.txt` installs as `Support/a.txt`) and lost its `known gap:` prefix.
+- Added: a test that every folder-flattening installer (data, binaries, mod file, xml, mod installer) cuts at the marker file itself when the same name also appears in a parent folder (`a.dat.bak/a.dat`).
+- Added: two tests for the Run Installer button's failure report. Permission, access (`EACCES`) and missing-file errors are offered for reporting and an unknown code is not, on both the rejected-promise and the thrown-error route. Suite is now 101 tests.
+- Added: red proof. The new tests fail against the template as it was at the last commit and pass with the fix.
+
 ## [2026-10-06]
 
 - Changed: the toolbar actions tests cover the new `Open Nexus Mods Page` button. It is in the registered action list, and it opens `https://www.nexusmods.com/XXX/mods`, and its failure is reported instead of thrown when the shell is unavailable.

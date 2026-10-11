@@ -258,16 +258,14 @@ describe("template-rpgmaker: install output", () => {
     assert.ok(instructions.every((entry) => entry.type !== "attribute"));
   });
 
-  // The destination is cut at the first "js" in the matched path, so a wrapper folder whose name
-  // contains "js" is cut inside the wrapper's name: the files land under the wrapper and no
-  // plugin names are stamped. Pinned so that fixing the template turns this red.
-  it("known gap: js folder installer keeps a wrapper folder whose name contains js", async () => {
+  it("js folder installer is not thrown off by a wrapper folder whose name contains js", async () => {
     const { instructions } = await installerOf(ext, "XXX-jsfolder").install(
       tree("jsmods/js/plugins/A.js"),
     );
     assert.deepEqual(instructions, [
-      copy(sep("jsmods", "js", "plugins", "A.js"), sep("jsmods", "js", "plugins", "A.js")),
+      copy(sep("jsmods", "js", "plugins", "A.js"), sep("js", "plugins", "A.js")),
       { type: "setmodtype", value: "XXX-jsfolder" },
+      attribute(["A"]),
     ]);
   });
 
@@ -293,20 +291,17 @@ describe("template-rpgmaker: install output", () => {
     ]);
   });
 
-  // path.basename's extension argument is case-sensitive, so a plugin saved as B.JS is stamped
-  // "B.JS", and the deployed-plugin scan only counts names ending in lower-case .js, so it is
-  // never listed on the load order page. Pinned so that fixing the template turns this red.
-  it("known gap: js file installer stamps an upper-case .JS plugin with its extension", async () => {
+  it("stamps a plugin saved with an upper-case .JS extension by its bare name", async () => {
     const { instructions } = await installerOf(ext, "XXX-jsfile").install(tree("A.js", "B.JS"));
-    assert.deepEqual(instructions.at(-1), attribute(["A", "B.JS"]));
+    assert.deepEqual(instructions.at(-1), attribute(["A", "B"]));
     const only = await installerOf(ext, "XXX-jsfile").install(tree("Cool/C.JS"));
     assert.deepEqual(only.instructions, [
       copy(sep("Cool", "C.JS"), "C.JS"),
       { type: "setmodtype", value: "XXX-jsfile" },
-      attribute(["C.JS"]),
+      attribute(["C"]),
     ]);
     const folder = await installerOf(ext, "XXX-jsfolder").install(tree("js/plugins/D.JS"));
-    assert.deepEqual(folder.instructions.at(-1), attribute(["D.JS"]));
+    assert.deepEqual(folder.instructions.at(-1), attribute(["D"]));
   });
 
   it("root installer strips the wrapper folder above the root folder", async () => {
@@ -330,14 +325,29 @@ describe("template-rpgmaker: install output", () => {
     );
   });
 
-  // The same first-occurrence cut as the js folder installer: a wrapper whose name ends with a
-  // root folder's name duplicates that folder. Pinned so that fixing the template turns this red.
-  it("known gap: root installer duplicates the root folder when the wrapper name ends with it", async () => {
+  it("root installer is not thrown off by a wrapper whose name ends with the root folder's name", async () => {
     const { instructions } = await installerOf(ext, "XXX-root").install(tree("mydata/data/a.json"));
-    assert.deepEqual(
-      instructions[0],
-      copy(sep("mydata", "data", "a.json"), sep("data", "data", "a.json")),
+    assert.deepEqual(instructions[0], copy(sep("mydata", "data", "a.json"), sep("data", "a.json")));
+  });
+
+  it("the flattening installers cut at the marker file itself, not at an earlier copy of its name", async () => {
+    const jsFile = await installerOf(ext, "XXX-jsfile").install(
+      tree("A.js.bak/A.js", "A.js.bak/readme.txt"),
     );
+    assert.deepEqual(jsFile.instructions, [
+      copy(sep("A.js.bak", "A.js"), "A.js"),
+      copy(sep("A.js.bak", "readme.txt"), "readme.txt"),
+      { type: "setmodtype", value: "XXX-jsfile" },
+      attribute(["A"]),
+    ]);
+    const json = await installerOf(ext, "XXX-json").install(
+      tree("Map1.json.bak/Map1.json", "Map1.json.bak/notes.txt"),
+    );
+    assert.deepEqual(json.instructions, [
+      copy(sep("Map1.json.bak", "Map1.json"), "Map1.json"),
+      copy(sep("Map1.json.bak", "notes.txt"), "notes.txt"),
+      { type: "setmodtype", value: "XXX-json" },
+    ]);
   });
 
   it("json installer flattens to the json file's folder", async () => {
@@ -694,6 +704,16 @@ describe("template-rpgmaker: plugins.js load order", () => {
       assert.deepEqual(
         (await registration.deserializeLoadOrder()).map(({ id }) => id),
         ["A"],
+      );
+    });
+
+    it("lists a deployed plugin whose file extension is upper case", async () => {
+      const dir = makeGameDir([sep("js", "plugins", "A.js"), sep("js", "plugins", "B.JS")]);
+      writePlugins(dir, [entry("B"), entry("A")]);
+      const { registration } = await load(dir);
+      assert.deepEqual(
+        (await registration.deserializeLoadOrder()).map(({ id }) => id),
+        ["B", "A"],
       );
     });
 

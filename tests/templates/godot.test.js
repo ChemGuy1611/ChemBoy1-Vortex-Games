@@ -266,6 +266,17 @@ describe("template-godot: mod install output (unpacked)", () => {
     ]);
   });
 
+  it("cuts at mod_main.gd itself, not at an earlier copy of its name in the folder name", async () => {
+    const { instructions } = await install(
+      tree("mod_main.gd.bak/mod_main.gd", "mod_main.gd.bak/a.gd"),
+    );
+    assert.deepEqual(instructions, [
+      copy(sep("mod_main.gd.bak", "mod_main.gd"), sep("mod_main.gd.bak", "mod_main.gd")),
+      copy(sep("mod_main.gd.bak", "a.gd"), sep("mod_main.gd.bak", "a.gd")),
+      { type: "setmodtype", value: "XXX-mod" },
+    ]);
+  });
+
   it("names the folder after the archive when the mod files sit at the top", async () => {
     const { instructions } = await install(
       tree("mod_main.gd", "manifest.json"),
@@ -394,18 +405,20 @@ describe("template-godot: mod install output (kept in zips)", () => {
     assert.equal(instructions[0].source, `${"b".repeat(25)}.zip`);
   });
 
-  // The extension check is case-sensitive, so an archive named in upper case inside the mod is
-  // not seen as an archive and the whole staging folder is zipped around it. Pinned so that
-  // fixing the template turns this red.
-  it("known gap: a nested .ZIP in upper case is repacked inside another zip", async () => {
+  it("copies a nested archive through whatever case its extension is in", async () => {
     const staging = path.join(makeTempDir(), "Cool Mod.installing");
     fs.mkdirSync(staging);
     const { instructions } = await installerOf(ext, "XXX-mod").install(
-      tree("Mods/COOL.ZIP"),
+      tree("Mods/COOL.ZIP", "Mods/Other.7Z", "Mods/Third.Rar"),
       staging,
     );
-    assert.equal(instructions[0].source, "Cool Mod.zip");
-    assert.equal(vortex.sevenZip.calls.length, 1);
+    assert.deepEqual(instructions, [
+      copy(sep("Mods", "COOL.ZIP"), "COOL.ZIP"),
+      copy(sep("Mods", "Other.7Z"), "Other.7Z"),
+      copy(sep("Mods", "Third.Rar"), "Third.Rar"),
+      { type: "setmodtype", value: "XXX-mod" },
+    ]);
+    assert.deepEqual(vortex.sevenZip.calls, []);
   });
 });
 

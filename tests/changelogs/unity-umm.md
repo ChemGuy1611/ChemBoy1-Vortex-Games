@@ -2,6 +2,13 @@
 
 Covers `template-unity-umm`. Suite file: `tests/templates/unity-umm.test.js`.
 
+## [2026-10-11]
+
+- Changed: the toolbar `run` helper now awaits the button's action, since "Open Save Folder" is async. The `known gap` test for it now asserts that the shell receives the resolved path as a string, and the Xbox save-folder test reads the path directly instead of awaiting a promise.
+- Added: a test that the assembly, assets and root installers cut at the marker itself when its name also appears in a parent folder.
+- Added: two tests for the Run Unity Mod Manager button's failure report. Permission, access (`EACCES`) and missing-file errors are offered for reporting and an unknown code is not, on both the rejected-promise and the thrown-error route. Suite is now 99 tests.
+- Added: red proof. The four new or changed tests fail against the template as it was at the last commit and pass with the fix.
+
 ## [2026-10-06]
 
 - Changed: the toolbar actions tests cover the new `Open Nexus Mods Page` button. It is in the registered action list, and it opens `https://www.nexusmods.com/XXX/mods`.

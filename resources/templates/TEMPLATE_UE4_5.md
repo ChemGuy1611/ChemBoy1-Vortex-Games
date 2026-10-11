@@ -133,7 +133,7 @@ pak mod packaged with a FOMOD checkbox wizard (offering optional components) kee
 forever and never shows up in the pak load order, which filters strictly on `UE5_SORTABLE_ID`. A
 `did-install-mod` handler (`retagFomodPakMod`) retags such a mod after the fact: it reruns the
 marker checks for every installer registered above the pak installer's priority — Mod Kit (25,
-when `hasModKit`), UE4SS Combo (26), LogicMods (27, counted only when `logicModsLoadOrder` is on)
+when `hasModKit`), UE4SS Combo (26), LogicMods (27, counted only when `ue4ssLoadOrder` is on, the toggle the LogicMods installer registers under)
 — against the mod's staged files via `beatsPakInstaller()`/`pathSegments()`, and only retags when
 none of them would have claimed the archive first. The handler does nothing when
 `PAKMOD_LOADORDER` is off. It skips mods staged in full game-root layout (the pak installer only ever

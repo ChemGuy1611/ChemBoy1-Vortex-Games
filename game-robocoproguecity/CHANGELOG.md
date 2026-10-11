@@ -4,6 +4,10 @@
 
 - None
 
+## [1.0.1] - 2026-10-11
+
+- Fixed: The Open Saves Folder button for the Xbox version of Rogue City now points to the correct folder.
+
 ## [1.0.0] - 2026-10-02
 
 - Both games: migrated to file-based load order (FBLO); added a lock button, multi-select, and a right-click context menu to the Paks load order page.

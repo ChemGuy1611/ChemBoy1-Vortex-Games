@@ -14,6 +14,7 @@ const {
   stubShell,
   summary,
   supportedBy,
+  waitFor,
   withWinapi,
 } = require("../harness/helpers");
 const { loadExtension, templateDir, vortex } = require("../harness/load-extension");
@@ -551,6 +552,30 @@ describe("template-unity-umm: other installers", () => {
       copy(sep("Pack", "a.assets"), "a.assets"),
       copy(sep("Pack", "b.resource"), "b.resource"),
       { type: "setmodtype", value: "XXX-assets" },
+    ]);
+  });
+
+  it("the installers cut at the marker itself, not at an earlier copy of its name", async () => {
+    const assembly = await installerOf(ext, "XXX-assemblydll").install(
+      tree("Assembly-CSharp.dll.bak/Assembly-CSharp.dll", "Assembly-CSharp.dll.bak/x.txt"),
+    );
+    assert.deepEqual(assembly.instructions, [
+      copy(sep("Assembly-CSharp.dll.bak", "Assembly-CSharp.dll"), "Assembly-CSharp.dll"),
+      copy(sep("Assembly-CSharp.dll.bak", "x.txt"), "x.txt"),
+      { type: "setmodtype", value: "XXX-assemblydll" },
+    ]);
+    const assets = await installerOf(ext, "XXX-assets").install(tree("a.assets.bak/a.assets"));
+    assert.deepEqual(assets.instructions, [
+      copy(sep("a.assets.bak", "a.assets"), "a.assets"),
+      { type: "setmodtype", value: "XXX-assets" },
+    ]);
+    const root = await installerOf(ext, "XXX-root").install(
+      tree("MyXXX_Data/XXX_Data/a.assets"),
+      staging([]),
+    );
+    assert.deepEqual(root.instructions, [
+      copy(sep("MyXXX_Data", "XXX_Data", "a.assets"), sep("XXX_Data", "a.assets")),
+      { type: "setmodtype", value: "XXX-root" },
     ]);
   });
 
@@ -1104,6 +1129,38 @@ describe("template-unity-umm: setup and Unity Mod Manager download", () => {
     ext.registeredActions.find(({ title }) => title === "Run Unity Mod Manager").action();
     assert.equal(ext.errors[0][0], "Failed to run Unity Mod Manager");
   });
+
+  // Runs the button against a tool that fails to start, by rejecting or by throwing.
+  async function launchFailing(failure, { sync }) {
+    const ext = await loadExtension(DIR, { state: stateFor(gameDir()) });
+    ext.api.runExecutable = () => {
+      if (sync) throw failure;
+      return Promise.reject(failure);
+    };
+    ext.registeredActions.find(({ title }) => title === "Run Unity Mod Manager").action();
+    assert.ok(await waitFor(() => ext.errors.length === 1));
+    return ext.errors[0];
+  }
+
+  it("offers to report a permission, access or missing-file failure to start the tool", async () => {
+    for (const sync of [false, true]) {
+      for (const code of ["EPERM", "EACCES", "ENOENT"]) {
+        const failure = Object.assign(new Error("fail"), { code });
+        const [message, error, options] = await launchFailing(failure, { sync });
+        assert.equal(message, "Failed to run Unity Mod Manager");
+        assert.equal(error, failure);
+        assert.deepEqual(options, { allowReport: true }, `${code}, sync ${sync}`);
+      }
+    }
+  });
+
+  it("does not offer to report an unrecognised failure to start the tool", async () => {
+    for (const sync of [false, true]) {
+      const failure = Object.assign(new Error("odd"), { code: "EOTHER" });
+      const [, , options] = await launchFailing(failure, { sync });
+      assert.deepEqual(options, { allowReport: false }, `sync ${sync}`);
+    }
+  });
 });
 
 describe("template-unity-umm: toolbar actions", () => {
@@ -1114,7 +1171,7 @@ describe("template-unity-umm: toolbar actions", () => {
   async function run(title, state) {
     const opened = stubShell();
     const ext = await loadExtension(DIR, { state });
-    ext.registeredActions.find((action) => action.title === title).action();
+    await ext.registeredActions.find((action) => action.title === title).action();
     return opened;
   }
   const discovered = (dir) => makeState({ discovered: { [GAME_ID]: { path: dir } } });
@@ -1131,19 +1188,16 @@ describe("template-unity-umm: toolbar actions", () => {
     assert.deepEqual(await run("Submit Bug Report"), ["XXX?tab=bugs"]);
   });
 
-  // The save folder is resolved by an async function whose result is not awaited, so the shell
-  // is handed a Promise rather than a path. Pinned so that fixing the template turns this red
-  // and the entry gets removed.
-  it("known gap: Open Save Folder hands the shell an unresolved promise", async () => {
+  it("Open Save Folder hands the shell the resolved path, not a promise", async () => {
     const dir = makeGameDir();
     const [handed] = await run("Open Save Folder", discovered(dir));
-    assert.ok(handed instanceof Promise);
-    assert.equal(await handed, SAVE_DEFAULT);
+    assert.equal(typeof handed, "string");
+    assert.equal(handed, SAVE_DEFAULT);
   });
 
   it("the save folder resolves to the Xbox location when the Xbox launcher is present", async () => {
     const dir = makeGameDir(["gamelaunchhelper.exe"]);
     const [handed] = await run("Open Save Folder", discovered(dir));
-    assert.equal(await handed, SAVE_XBOX);
+    assert.equal(handed, SAVE_XBOX);
   });
 });

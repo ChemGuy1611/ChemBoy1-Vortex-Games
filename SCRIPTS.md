@@ -1056,6 +1056,34 @@ With `--json`, stdout receives a JSON object instead:
 
 ---
 
+## sweep_template_fixes.js
+
+Reverts fixed sites in `template-*/index.js` one at a time and runs that template's suite against each reverted scratch copy. A revert the suite does not catch is a fix nothing guards: it has no test, or the site is unreachable (dead code, an unregistered installer). Real templates are never touched; each mutant is a copy of the template and `template-basic` in the OS temp folder, loaded through the `CB1_TEMPLATE_ROOT` override of the test harness. Method and how to read survivors: `resources/TEMPLATE_TESTING.md`.
+
+### sweep_template_fixes.js â€” Requirements
+
+Node.js 24 (built-in `node:test`). No packages. The suite for a template must exist at `tests/templates/<name>.test.js`; a template without one is skipped with a message.
+
+### sweep_template_fixes.js â€” Usage
+
+```sh
+node sweep_template_fixes.js
+node sweep_template_fixes.js TEMPLATE [TEMPLATE ...]
+node sweep_template_fixes.js --pair "FROM=>TO" [--pair "FROM=>TO" ...]
+node sweep_template_fixes.js --concurrency 4
+node sweep_template_fixes.js --json
+```
+
+- No arguments â€” sweeps every template with the default pairs.
+- `TEMPLATE` â€” only the listed templates; folder name (`template-ue4-5`) or short name (`ue4-5`).
+- `--pair "FROM=>TO"` â€” every occurrence of `FROM` in a non-comment line becomes `TO`, one mutant per occurrence. Repeatable. Defaults: `.lastIndexOf(=>.indexOf(` and `"EACCES"=>"EACCESS"` (the two fix patterns of the last template fix round).
+- `--concurrency N` â€” parallel suite runs (default 8). A full sweep of 115 mutants takes a few minutes.
+- `--json` â€” `{ total, killed, survivors: [{ folder, line, from, to, at }] }` on stdout.
+
+Exit codes: `0` every revert was caught, `1` at least one survivor, `2` nothing to sweep. Survivors print as `SURVIVOR <folder>:<line> col <n>`; line numbers refer to the unmodified template.
+
+---
+
 ## audit_deprecated_usage.js
 
 Finds live uses of deprecated or removed Vortex APIs across the extension sources and reports a hit count per API family. It parses every `.js` file as an AST with the repo's own `typescript` dev dependency, so commented-out code never counts and a call split over several lines is still found. A line grep gets both wrong, which is why the API audit moved to this script. It follows how each file binds `vortex-api` (`const { util, fs: vfs } = require("vortex-api")`, `require("vortex-api").util`, destructuring off `util`), so Node's own `fs` and `util` are not mistaken for Vortex's. A member read off a `util` or `fs` receiver that is never declared in the file is reported as an unresolved receiver rather than skipped.

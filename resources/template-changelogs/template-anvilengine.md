@@ -1,5 +1,12 @@
 # template-anvilengine Changelog
 
+## [2026-10-11]
+
+- Fixed: the installers cut each mod's destination with `modFile.indexOf(...)`, which finds the FIRST occurrence of the marker's name in the path, so a wrapper folder whose name contains or ends with the marker's name (`MyExtracted/Extracted`, `HD videos/videos`, `Mydlc_10/dlc_10`, `forger.exe.bak/forger.exe`) was cut inside the wrapper's name and stayed in the install path, doubling the folder. All 14 cuts (ATK, Extracted, .forge folder, .data folder, loose .data, .forge file, DLC, root, Forger, Forger patch, sound, fixes, ResoRep, ResoRep textures) now use `lastIndexOf`, which always lands on the marker's own path segment.
+- Fixed: the rename notice shown for `.data` mods derived the mod name with `/(.installing)*(.zip)*(.rar)*(.7z)*/gi`, whose unescaped dots match any character, so "Hunter rarity" became "Hunterity" and the Open Mod Page and rename buttons could not find the mod. The name now loses only a trailing `.installing` and a trailing `.zip`/`.rar`/`.7z`.
+- Fixed: `runDeployTool` listed `"EACCESS"`, a code Node never raises, so an access-denied failure to start ATK or Forger was never offered for reporting. It now lists `"EACCES"` (both the rejected-promise and the thrown-error route).
+- Fixed: the rename dialog did not wait for the purge, rename and redeploy it starts, so a failing purge or deploy was an unhandled rejection. The dialog now returns that work, and a failure shows the existing "Failed to rename .forge folder" error.
+
 ## [2026-10-06]
 
 - Added: an "Open Nexus Mods Page" button in the Mods toolbar that opens the game's mods page on Nexus Mods (`https://www.nexusmods.com/<GAME_ID>/mods`). It sits beside the PCGamingWiki and SteamDB buttons and only shows while this game is the active game.

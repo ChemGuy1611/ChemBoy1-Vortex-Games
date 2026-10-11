@@ -2,6 +2,13 @@
 
 Covers `template-shinryu`. Suite file: `tests/templates/shinryu.test.js`.
 
+## [2026-10-11]
+
+- Changed: the `known gap` test for the root installer throwing on a marker DLL in another case now asserts the fixed install (the DLL's folder is stripped) and lost its `known gap:` prefix.
+- Added: a test that the mod manager, mod, data and root installers cut at the marker itself when its name also appears in a parent folder.
+- Added: two tests for the Run SRMM button's failure report. Permission, access (`EACCES`) and missing-file errors are offered for reporting and an unknown code is not, on both the rejected-promise and the thrown-error route. Suite is now 55 tests.
+- Added: red proof. The three new or changed tests fail against the template as it was at the last commit and pass with the fix.
+
 ## [2026-10-06]
 
 - Changed: the toolbar actions tests cover the new `Open Nexus Mods Page` button. It is in the registered action list, and it opens `https://www.nexusmods.com/XXX/mods`.

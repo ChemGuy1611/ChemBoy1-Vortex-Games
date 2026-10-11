@@ -1,5 +1,15 @@
 # template-ue4-5 Changelog
 
+## [2026-10-11]
+
+- Fixed: the installers cut each destination with `indexOf(...)`, which finds the FIRST occurrence of the marker's name in the path, so a wrapper folder whose name ends in the folder name (`MyXXX/XXX/...`, `MyContent/Content/...`, `MyBinaries/Binaries/...`, `MyLogicMods/LogicMods/...`) kept part of the wrapper in the destination. The root installer (game folder and subfolder cases), the UE4SS combo, LogicMods and every other installer that flattens to a marker now use `lastIndexOf`, which always lands on the marker's own path segment.
+- Fixed: a LogicMods pak with an upper-case extension (`B.PAK`) was recorded in `logicModFiles` with the extension still on (`B.PAK`), because the extension was stripped with a case-sensitive compare. The LogicMods and UE4SS combo installers and the LogicMods load order reader now strip whatever extension the file has and keep the case of the name (`B`), the form the LogicMods loader matches.
+- Fixed: the UE4SS combo installer for the Xbox build never recorded the `ue4ssModFolder` attribute, because it rebuilds its file list from the staged files (files only) and looked for a `Scripts` folder entry. The mod folder is now read from the path segments around `Scripts`, which works for both list shapes, so the mod no longer shows as a manual mod on the UE4SS page.
+- Fixed: the "Open LogicMods Folder" toolbar button opened the Paks folder, the same as "Open Paks Folder". It now opens the `LogicMods` folder inside it, as the LogicMods load order page does.
+- Fixed: `beatsPakInstaller` (used to retag a FOMOD-installed pak mod) counted a LogicMods folder only when `logicModsLoadOrder` was on, but the LogicMods installer registers under `ue4ssLoadOrder`. It now uses `ue4ssLoadOrder`, and its comment says so, so a FOMOD pak with a LogicMods folder is no longer retagged as a sortable pak when the LogicMods installer would have claimed it.
+- Fixed: the legacy load order `preSort` threw when a listed mod was missing from the profile's mod state (or had no attributes). It now falls back to the name it was given.
+- Fixed: the ModKit installer threw a `TypeError` when `mod.json` had no `modPluginName`. It now keeps the wrapper or archive name as the mod folder.
+
 ## [2026-10-06]
 
 - Added: an "Open Nexus Mods Page" button in the Mods toolbar that opens the game's mods page on Nexus Mods (`https://www.nexusmods.com/<GAME_ID>/mods`). It sits beside the PCGamingWiki and SteamDB buttons and only shows while this game is the active game.

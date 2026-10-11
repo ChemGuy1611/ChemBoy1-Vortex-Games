@@ -237,6 +237,37 @@ describe("template-cobraengineACSE: install output", () => {
     ]);
   });
 
+  it("the installers cut at the marker itself, not at an earlier copy of its name", async () => {
+    const cases = [
+      ["XXX-acse", tree("MyACSE/ACSE/a.dll"), [["MyACSE/ACSE/a.dll", "ACSE/a.dll"]]],
+      ["XXX-root", tree("MyWin64/Win64/a.dll"), [["MyWin64/Win64/a.dll", "Win64/a.dll"]]],
+      ["XXX-acsemod", tree("Mod_old/Mod/Main.ovl"), [["Mod_old/Mod/Main.ovl", "Mod/Main.ovl"]]],
+      [
+        "XXX-localised",
+        tree("Mylocalised/localised/en/a.txt"),
+        [["Mylocalised/localised/en/a.txt", "localised/en/a.txt"]],
+      ],
+      [
+        "XXX-ovldata",
+        tree("Myovldata/ovldata/x.ovl"),
+        [["Myovldata/ovldata/x.ovl", "ovldata/x.ovl"]],
+      ],
+      ["XXX-movies", tree("a.webm.bak/a.webm"), [["a.webm.bak/a.webm", "a.webm"]]],
+      ["XXX-save", tree("a.prk2.bak/a.prk2"), [["a.prk2.bak/a.prk2", "a.prk2"]]],
+    ];
+    for (const [id, files, moves] of cases) {
+      const { instructions } = await installerOf(ext, id).install(files, "Cool Mod.installing");
+      assert.deepEqual(
+        instructions,
+        [
+          ...moves.map(([from, to]) => copy(sep(...from.split("/")), sep(...to.split("/")))),
+          { type: "setmodtype", value: id },
+        ],
+        id,
+      );
+    }
+  });
+
   it("fallback installer copies every file as is, leaves the mod type, and notifies", async () => {
     const files = tree("readme.txt", "docs/a.txt");
     const { instructions } = await installerOf(ext, "XXX-fallback").install(
@@ -446,15 +477,23 @@ describe("template-cobraengineACSE: toolbar actions", () => {
     assert.deepEqual(await run("Open Config Folder"), [sep(userDir, "Config")]);
   });
 
-  // Setup creates <Saved Games>/XXX/Saves when no user id folder exists yet. The next load scans
-  // that folder, takes "Saves" for a user id, and points save and config at Saves/Saves and
-  // Saves/Config. Pinned so that fixing the template turns this red and the entry gets removed.
-  it("known gap: a Saves folder made by setup is mistaken for a user id folder on the next load", async () => {
+  // Setup creates <Saved Games>/XXX/Saves when no user id folder exists yet, and the next load
+  // scans that folder for a user id.
+  it("a Saves folder made by setup is not mistaken for a user id folder on the next load", async () => {
     const first = await loadExtension(DIR);
     answerDownloads(first);
     await first.game.setup({ path: makeGameDir() });
 
-    assert.deepEqual(await run("Open Save Folder"), [sep(SAVED_GAMES, "Saves", "Saves")]);
+    assert.deepEqual(await run("Open Save Folder"), [sep(SAVED_GAMES, "Saves")]);
+    assert.deepEqual(await run("Open Config Folder"), [sep(SAVED_GAMES, "Config")]);
+  });
+
+  it("skips stray Saves and Config folders, in any case, when looking for the user id folder", async () => {
+    for (const name of ["Saves", "config", "User76561"]) {
+      fs.mkdirSync(path.join(SAVED_GAMES, name), { recursive: true });
+    }
+    assert.deepEqual(await run("Open Save Folder"), [sep(SAVED_GAMES, "User76561", "Saves")]);
+    assert.deepEqual(await run("Open Config Folder"), [sep(SAVED_GAMES, "User76561", "Config")]);
   });
 
   it("opens the Nexus Mods and SteamDB pages and the bug tracker", async () => {

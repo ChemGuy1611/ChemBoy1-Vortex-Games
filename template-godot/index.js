@@ -609,7 +609,7 @@ function findModRootFile(files) {
 function installMod(files, fileName) {
   const MOD_TYPE = MOD_ID;
   const modFile = findModRootFile(files);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -703,7 +703,9 @@ function installMod(files, fileName) {
 async function installModZip(files, destinationPath) {
   const MOD_TYPE = MOD_ID;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
-  const zipFiles = files.filter((file) => [".zip", ".7z", ".rar"].includes(path.extname(file)));
+  const zipFiles = files.filter((file) =>
+    [".zip", ".7z", ".rar"].includes(path.extname(file).toLowerCase()),
+  );
   if (zipFiles.length > 0) {
     // If it's a double zip, we don't need to repack.
     const instructions = zipFiles.map((file) => {

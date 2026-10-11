@@ -811,13 +811,12 @@ describe("template-unitymelonloaderbepinex-hybrid: routing with other toggles", 
     assert.deepEqual(await supportedBy(ext, tree("XXX.exe")), ["XXX-fallback"]);
   });
 
-  it("known gap: the custom loader mod types carry each other's display names", async () => {
+  it("each custom loader mod type carries its own display name", async () => {
     const ext = await boot({ transform: customLoader });
     const nameOf = (id) => ext.modTypes.find((type) => type.id === id).options.name;
-    // CUSTOMLOADER_MOD_NAME is "XXX Mod" and CUSTOMLOADER_PLUGIN_NAME is "XXX Plugin", but the
-    // registration hands each mod type the other's name.
-    assert.equal(nameOf("XXX-customloadermod"), "XXX Plugin");
-    assert.equal(nameOf("XXX-customloaderplugin"), "XXX Mod");
+    // CUSTOMLOADER_MOD_NAME is "XXX Mod" and CUSTOMLOADER_PLUGIN_NAME is "XXX Plugin".
+    assert.equal(nameOf("XXX-customloadermod"), "XXX Mod");
+    assert.equal(nameOf("XXX-customloaderplugin"), "XXX Plugin");
     assert.equal(nameOf("XXX-customloader"), "XXX");
   });
 
@@ -1019,16 +1018,16 @@ describe("template-unitymelonloaderbepinex-hybrid: install output", () => {
     ]);
   });
 
-  it("known gap: a root folder mod in a wrapper named like the root folder keeps the wrapper name", async () => {
-    // The destination is cut at the first "XXX_Data\" in the path, which here is inside the
-    // wrapper's own name.
+  it("a root folder mod in a wrapper named like the root folder drops the wrapper", async () => {
+    // The destination is cut at the root folder itself, not at the same letters inside the
+    // wrapper's name.
     assert.deepEqual(await installWith(ext, "XXX-root", tree("MyXXX_Data/XXX_Data/a.txt")), [
-      copy(sep("MyXXX_Data", "XXX_Data", "a.txt"), sep("XXX_Data", "XXX_Data", "a.txt")),
+      copy(sep("MyXXX_Data", "XXX_Data", "a.txt"), sep("XXX_Data", "a.txt")),
       modType("XXX-root"),
     ]);
   });
 
-  it("known gap: MelonLoader in a wrapper whose name ends in MelonLoader keeps the wrapper name", async () => {
+  it("MelonLoader in a wrapper whose name ends in MelonLoader drops the wrapper", async () => {
     assert.deepEqual(
       await installWith(
         ext,
@@ -1036,27 +1035,93 @@ describe("template-unitymelonloaderbepinex-hybrid: install output", () => {
         tree("MyMelonLoader/version.dll", "MyMelonLoader/MelonLoader/net6/MelonLoader.dll"),
       ),
       [
-        copy(sep("MyMelonLoader", "version.dll"), sep("MelonLoader", "version.dll")),
+        copy(sep("MyMelonLoader", "version.dll"), "version.dll"),
         copy(
           sep("MyMelonLoader", "MelonLoader", "net6", "MelonLoader.dll"),
-          sep("MelonLoader", "MelonLoader", "net6", "MelonLoader.dll"),
+          sep("MelonLoader", "net6", "MelonLoader.dll"),
         ),
         modType("XXX-melonloader"),
       ],
     );
   });
 
-  it("known gap: BepInExConfigManager in a wrapper whose name ends in plugins doubles the plugins folder", async () => {
+  it("BepInExConfigManager in a wrapper whose name ends in plugins drops the wrapper", async () => {
     assert.deepEqual(
       await installWith(ext, "XXX-bepcfgman", tree("Myplugins/plugins/ConfigurationManager.dll")),
       [
         copy(
           sep("Myplugins", "plugins", "ConfigurationManager.dll"),
-          sep("plugins", "plugins", "ConfigurationManager.dll"),
+          sep("plugins", "ConfigurationManager.dll"),
         ),
         modType("XXX-bepcfgman"),
       ],
     );
+  });
+
+  // Every installer that flattens to a marker file cuts at the marker itself. A parent folder whose
+  // name holds the marker's whole file name must not be mistaken for it.
+  describe("a parent folder named after the marker file", () => {
+    const saveToggles = all(
+      setConst("enableSaveInstaller", "true"),
+      setConst("SAVE_FILES", '["slot1.sav"]'),
+      setConst("SAVE_EXTS", '[".sav"]'),
+    );
+    const cases = [
+      ["BepInEx", "XXX-bepinex", undefined, "winhttp.dll"],
+      ["MelonPreferencesManager", "XXX-melonprefman", undefined, "MelonPrefManager.IL2CPP.dll"],
+      ["the game assembly", "XXX-assemblydll", undefined, "GameAssembly.dll"],
+      ["assets", "XXX-assets", undefined, "level0.assets"],
+      ["a custom mod data file", "XXX-custommod", customMods, "a.custom.json"],
+      ["the custom loader", "XXX-customloader", customLoader, "XXX.dll"],
+      ["the custom loader's installer", "XXX-customloader", customLoaderWithInstaller, "XXX.exe"],
+      ["a save", "XXX-save", saveToggles, "slot1.sav"],
+    ];
+    for (const [label, id, transform, marker] of cases) {
+      it(`drops the folder when installing ${label}`, async () => {
+        const loaded = await boot({ transform });
+        const wrapper = `${marker}.d`;
+        const instructions = await installWith(
+          loaded,
+          id,
+          tree(`${wrapper}/${marker}`, `${wrapper}/extra.txt`),
+        );
+        const copies = instructions.filter(({ type }) => type === "copy");
+        assert.equal(copies.length, 2, label);
+        for (const { source, destination } of copies) {
+          assert.equal(source.split(path.sep)[0], wrapper, label);
+          assert.equal(
+            destination.split(path.sep).includes(wrapper),
+            false,
+            `${label}: ${destination}`,
+          );
+        }
+        assert.equal(
+          copies.some(({ destination }) => path.basename(destination) === marker),
+          true,
+          label,
+        );
+      });
+    }
+
+    it("drops the folder when sorting a loose plugin whose folder is named after the dll", async () => {
+      const { instructions } = await sortPlugins({ "Foo.dll.d/Foo.dll": BEPINEX_PLUGIN });
+      assert.deepEqual(instructions, [
+        copy(sep("Foo.dll.d", "Foo.dll"), sep("Foo.dll.d", "Foo.dll")),
+        modType("XXX-bepinex-plugins"),
+      ]);
+    });
+
+    it("drops a wrapper whose name ends in the custom loader's mods folder", async () => {
+      const { instructions, error } = await sortPlugins(
+        { "Mymods/mods/Custom.dll": "built for CustomLoaderPlugin" },
+        { transform: customLoader },
+      );
+      assert.equal(error, undefined);
+      assert.deepEqual(instructions, [
+        copy(sep("Mymods", "mods", "Custom.dll"), sep("mods", "Custom.dll")),
+        modType("XXX-customloadermod"),
+      ]);
+    });
   });
 
   describe("the root installer for a build with its own data folder", () => {
@@ -1142,18 +1207,30 @@ describe("template-unitymelonloaderbepinex-hybrid: install output with other tog
     );
   });
 
-  it("known gap: a custom mod data file in a wrapper loses part of the wrapper's name, or keeps all of it", async () => {
+  it("a custom mod data file in a wrapper drops the whole wrapper, whatever letters they share", async () => {
     const ext = await boot({ transform: customMods });
-    // The destination starts at the first occurrence of the data file's base name in the path,
-    // which is inside the wrapper's name when the two share letters.
+    // The destination starts at the data file itself, not at the first occurrence of its base
+    // name, which can sit inside the wrapper's name.
     assert.deepEqual(await installWith(ext, "XXX-custommod", tree("Pack/a.custom.json")), [
-      copy(sep("Pack", "a.custom.json"), sep("ack", "a.custom.json")),
+      copy(sep("Pack", "a.custom.json"), "a.custom.json"),
       modType("XXX-custommod"),
     ]);
     assert.deepEqual(await installWith(ext, "XXX-custommod", tree("Cool Mods/Cool.custom.json")), [
-      copy(sep("Cool Mods", "Cool.custom.json"), sep("Cool Mods", "Cool.custom.json")),
+      copy(sep("Cool Mods", "Cool.custom.json"), "Cool.custom.json"),
       modType("XXX-custommod"),
     ]);
+    assert.deepEqual(
+      await installWith(
+        ext,
+        "XXX-custommod",
+        tree("custom/custom.custom.json", "custom/extra.txt"),
+      ),
+      [
+        copy(sep("custom", "custom.custom.json"), "custom.custom.json"),
+        copy(sep("custom", "extra.txt"), "extra.txt"),
+        modType("XXX-custommod"),
+      ],
+    );
   });
 
   it("installs a save file as an assets mod, since there is no save mod type", async () => {
@@ -1346,6 +1423,43 @@ describe("template-unitymelonloaderbepinex-hybrid: plugin sorter", () => {
         copy("Patch.dll", sep("Patch", "Patch.dll")),
         modType("XXX-bepinex-patchers"),
       ]);
+    });
+
+    // The dlls are read side by side, so the one that finishes last used to decide the type.
+    // Slowing each file in turn proves the outcome no longer depends on the read order.
+    const slowRead = async (slowName, run) => {
+      const real = fs.promises.readFile;
+      fs.promises.readFile = async (file, ...rest) => {
+        if (path.basename(String(file)) === slowName) {
+          await new Promise((resolve) => setTimeout(resolve, 40));
+        }
+        return real.call(fs.promises, file, ...rest);
+      };
+      try {
+        return await run();
+      } finally {
+        fs.promises.readFile = real;
+      }
+    };
+
+    it("sorts a loose plugin and a loose patcher in one archive as patchers, whichever dll is read last", async () => {
+      for (const slow of ["Plugin.dll", "Patch.dll"]) {
+        const { instructions, error } = await slowRead(slow, () =>
+          sortPlugins({ "Plugin.dll": BEPINEX_PLUGIN, "Patch.dll": BEPINEX_PATCHER }),
+        );
+        assert.equal(error, undefined, slow);
+        assert.equal(instructions.at(-1).value, "XXX-bepinex-patchers", slow);
+      }
+    });
+
+    it("sorts a MelonLoader mod and a MelonLoader plugin in one archive as plugins, whichever dll is read last", async () => {
+      for (const slow of ["Mod.dll", "Plug.dll"]) {
+        const { instructions, error } = await slowRead(slow, () =>
+          sortPlugins({ "Mod.dll": MELON_MOD, "Plug.dll": MELON_PLUGIN }),
+        );
+        assert.equal(error, undefined, slow);
+        assert.equal(instructions.at(-1).value, "XXX-melonloader-plugins", slow);
+      }
     });
 
     it("installs a patchers folder as it is, below BepInEx", async () => {
@@ -1579,13 +1693,13 @@ describe("template-unitymelonloaderbepinex-hybrid: plugin sorter", () => {
       );
     });
 
-    it("lets the install go ahead when the dialog is dismissed without pressing Ok", async () => {
-      const { ext, instructions } = await sortPlugins(
+    it("cancels the install when the dialog is dismissed without pressing Ok", async () => {
+      const { ext, error } = await sortPlugins(
         { "Foo.dll": BEPINEX_PLUGIN },
         { mods: ["XXX-melonloader"] },
       );
       assert.equal(wrongLoader(ext) !== undefined, true);
-      assert.equal(instructions.at(-1).value, "XXX-bepinex-plugins");
+      assert.equal(error?.message, "User canceled");
     });
 
     it("installs anyway when preventPluginInstall is off", async () => {
@@ -1596,6 +1710,46 @@ describe("template-unitymelonloaderbepinex-hybrid: plugin sorter", () => {
       );
       assert.equal(error, undefined);
       assert.equal(wrongLoader(ext) !== undefined, true);
+      assert.equal(instructions.at(-1).value, "XXX-bepinex-plugins");
+    });
+
+    it("cancels the install for every kind of refusal when the dialog is not answered with Ok", async () => {
+      const CUSTOM_DLL = "built for CustomLoaderPlugin";
+      const scenarios = [
+        ["a BepInEx plugin beside MelonLoader", { "Foo.dll": BEPINEX_PLUGIN }, ["XXX-melonloader"]],
+        ["a MelonLoader mod beside BepInEx", { "Mod.dll": MELON_MOD }, ["XXX-bepinex"]],
+        ["a mixed archive", { "Foo.dll": BEPINEX_PLUGIN, "Mod.dll": MELON_MOD }, []],
+        [
+          "a custom plugin beside BepInEx",
+          { "Custom.dll": CUSTOM_DLL },
+          ["XXX-bepinex"],
+          customLoader,
+        ],
+        [
+          "a BepInEx plugin beside the custom loader",
+          { "Foo.dll": BEPINEX_PLUGIN },
+          ["XXX-customloader"],
+          customLoader,
+        ],
+      ];
+      for (const [label, entries, mods, transform] of scenarios) {
+        for (const action of ["Cancel", "Close"]) {
+          const { ext, error } = await withAnswer(entries, mods, transform, action);
+          assert.equal(error?.message, "User canceled", `${label} answered ${action}`);
+          assert.equal(ext.dialogs.length, 1, label);
+        }
+      }
+    });
+
+    it("still goes ahead with a refusal when preventPluginInstall is off, even if the dialog is dismissed", async () => {
+      const off = setConst("preventPluginInstall", "false");
+      const { error, instructions } = await withAnswer(
+        { "Foo.dll": BEPINEX_PLUGIN },
+        ["XXX-melonloader"],
+        off,
+        "Cancel",
+      );
+      assert.equal(error, undefined);
       assert.equal(instructions.at(-1).value, "XXX-bepinex-plugins");
     });
 
@@ -2184,17 +2338,19 @@ describe("template-unitymelonloaderbepinex-hybrid: more than one mod loader inst
     ]);
   });
 
-  it("known gap: without an installer the custom loader is judged by a marker file it never has, so it stays and the user is told to run an installer", async () => {
+  it("without an installer the custom loader is judged by its mod, so keeping BepInEx removes it too and no installer is asked for", async () => {
     const { ext, removed } = await conflict({
       transform: customLoader,
       mods: only("a", "b", "c"),
       choose: pick("BepInEx"),
     });
-    // Only MelonLoader goes; the custom loader mod is still installed beside BepInEx.
-    assert.deepEqual(removed, [["XXX", ["mel-id"]]]);
+    assert.deepEqual(removed, [
+      ["XXX", ["mel-id"]],
+      ["XXX", ["cus-id"]],
+    ]);
     assert.equal(
       ext.notifications.some(({ id }) => id === "XXX-custominstaller"),
-      true,
+      false,
     );
   });
 
@@ -2506,9 +2662,13 @@ describe("template-unitymelonloaderbepinex-hybrid: setup", () => {
       );
     });
 
-    it("warns when the key has no entries at all", async () => {
+    it("warns once when the key has no entries at all", async () => {
       const { ext } = await withWinapi({ WithRegOpen: () => undefined }, () => runSetup());
-      assert.equal(dotnetNotice(ext).length > 0, true);
+      assert.equal(dotnetNotice(ext).length, 1);
+      assert.equal(
+        vortex.logs.some(({ message }) => message.startsWith("Failed to read .NET registry key:")),
+        false,
+      );
     });
 
     it("does not check for BepInEx, for a Mono game, or for an XNA game", async () => {
@@ -3117,16 +3277,14 @@ describe("template-unitymelonloaderbepinex-hybrid: after a deployment or a purge
     );
   });
 
-  it("known gap: a purge reminds the user to run an installer a mod-based custom loader does not have", async () => {
+  it("a purge does not remind the user to run an installer a mod-based custom loader does not have", async () => {
     const ext = await boot({
       transform: customLoader,
       state: stateFor({ gameDir: makeGameDir(), mods: modsOf("XXX-customloader") }),
     });
     await listener(ext, "did-purge")("profile");
-    assert.deepEqual(
-      ext.notifications.map(({ id }) => id),
-      ["XXX-custominstaller"],
-    );
+    assert.deepEqual(ext.notifications, []);
+    assert.deepEqual(ext.dialogs, []);
   });
 });
 
@@ -3243,11 +3401,24 @@ describe("template-unitymelonloaderbepinex-hybrid: game version", () => {
       assert.equal(await versionOf(gameDir, noXbox), STUB_EXE_VERSION);
     });
 
-    it("known gap: a build with its own executable is taken for the Xbox build and reports 0.0.0", async () => {
-      // The alt build's marker is the same "xbox" string, so the manifest lookup runs for an
-      // Epic or GOG build that has no manifest, and the store and hash sources are never tried.
+    it("a build with its own executable is not taken for the Xbox build, so it is read like any other", async () => {
+      // The alt build has its own label, so no appxmanifest.xml is looked for and the store, hash
+      // and executable sources run.
       const gameDir = makeGameDir(["ALT.exe"]);
-      assert.equal(await versionOf(gameDir, multiExe), "0.0.0");
+      assert.equal(await versionOf(gameDir, multiExe), STUB_EXE_VERSION);
+      assert.equal(
+        vortex.logs.some(({ message }) => message.startsWith("Could not read appmanifest.xml")),
+        false,
+      );
+    });
+
+    it("a build with its own executable still reads the manifest when the Xbox helper is there", async () => {
+      const gameDir = makeGameDir(["ALT.exe", "gamelaunchhelper.exe"]);
+      fs.writeFileSync(
+        path.join(gameDir, "appxmanifest.xml"),
+        '<Package><Identity Version="4.5.6"/></Package>',
+      );
+      assert.equal(await versionOf(gameDir, setConst("GAME_STRING_ALT", '"ALT"')), "4.5.6");
     });
   });
 
@@ -3918,13 +4089,48 @@ describe("template-unitymelonloaderbepinex-hybrid: download buttons", () => {
     assert.equal(actionOf(nexus, "Download Latest BepInEx BE"), undefined);
   });
 
-  it("known gap: Download Latest MelonLoader fetches the upstream release even for a fork on the game's Nexus page", async () => {
+  it("Download Latest MelonLoader fetches the fork on the game's Nexus page, not the upstream release", async () => {
     const ext = await boot({ transform: nexusMelon });
-    const [call] = await press(ext, "Download Latest MelonLoader");
-    assert.deepEqual(
-      [call[0], call[1][0].githubUrl],
-      ["download", "https://api.github.com/repos/LavaGang/MelonLoader"],
-    );
+    ext.api.ext.nexusGetModFiles = async (domain, page) => {
+      assert.deepEqual([domain, page], ["XXX", 200]);
+      return [
+        {
+          category_id: 1,
+          file_id: 12,
+          uploaded_timestamp: 300,
+          name: "Fork",
+          file_name: "fork.zip",
+        },
+      ];
+    };
+    const seen = [];
+    ext.api.events.on("start-download", (urls, info, third, callback) => {
+      seen.push(urls);
+      callback(null, "download-1");
+    });
+    ext.api.events.on("start-install-download", (id, options, callback) => callback(null, "mod-1"));
+    await actionOf(ext, "Download Latest MelonLoader").action();
+    assert.ok(await waitFor(() => seen.length === 1));
+    assert.deepEqual(seen, [["nxm://XXX/mods/200/files/12"]]);
+    assert.deepEqual(ext.fake.calls, []);
+  });
+
+  it("Download Latest MelonLoader downloads again from the Nexus page even when MelonLoader is installed", async () => {
+    const ext = await boot({
+      transform: nexusMelon,
+      state: stateFor({ gameDir: makeGameDir(), mods: modsOf("XXX-melonloader") }),
+    });
+    ext.api.ext.nexusGetModFiles = async () => [
+      { category_id: 1, file_id: 12, uploaded_timestamp: 300, name: "Fork", file_name: "fork.zip" },
+    ];
+    const seen = [];
+    ext.api.events.on("start-download", (urls, info, third, callback) => {
+      seen.push(urls);
+      callback(null, "download-1");
+    });
+    ext.api.events.on("start-install-download", (id, options, callback) => callback(null, "mod-1"));
+    await actionOf(ext, "Download Latest MelonLoader").action();
+    assert.ok(await waitFor(() => seen.length === 1));
   });
 });
 
@@ -4317,7 +4523,7 @@ describe("template-unitymelonloaderbepinex-hybrid: custom loader installer", () 
     assert.deepEqual(ext.errors[0][2], { allowReport: false });
   });
 
-  it("known gap: the report list names EACCESS, so a real EACCES permission failure is not offered", async () => {
+  it("offers to report a real EACCES permission failure, not the mistyped EACCESS", async () => {
     const attempt = async (code, throws) => {
       const { ext, notice } = await reminder({
         tool: { path: TOOL_PATH },
@@ -4335,8 +4541,8 @@ describe("template-unitymelonloaderbepinex-hybrid: custom loader installer", () 
       return ext.errors[0][2].allowReport;
     };
     for (const throws of [false, true]) {
-      assert.equal(await attempt("EACCES", throws), false);
-      assert.equal(await attempt("EACCESS", throws), true);
+      assert.equal(await attempt("EACCES", throws), true);
+      assert.equal(await attempt("EACCESS", throws), false);
     }
   });
 
@@ -6152,7 +6358,7 @@ describe("template-unitymelonloaderbepinex-hybrid: last details", () => {
     }
   });
 
-  it("known gap: keeping MelonLoader leaves a mod-based custom loader installed beside it", async () => {
+  it("keeping MelonLoader removes a mod-based custom loader along with BepInEx", async () => {
     const gameDir = makeGameDir();
     const ext = await boot({
       transform: customLoader,
@@ -6175,7 +6381,7 @@ describe("template-unitymelonloaderbepinex-hybrid: last details", () => {
       },
       () => ext.game.setup({ path: gameDir }),
     );
-    assert.deepEqual(removed, ["bep-id"]);
+    assert.deepEqual(removed, ["bep-id", "cus-id"]);
   });
 
   it("sorts a plugin in a config folder as a BepInEx mod, folder and all", async () => {
@@ -6190,12 +6396,31 @@ describe("template-unitymelonloaderbepinex-hybrid: last details", () => {
     ]);
   });
 
-  it("known gap: a plugins folder inside a wrapper whose name ends in plugins doubles the folder", async () => {
+  it("a plugins folder inside a wrapper whose name ends in plugins drops the wrapper", async () => {
     const { instructions } = await sortPlugins({ "Myplugins/plugins/Foo.dll": BEPINEX_PLUGIN });
     assert.deepEqual(instructions, [
-      copy(sep("Myplugins", "plugins", "Foo.dll"), sep("plugins", "plugins", "Foo.dll")),
+      copy(sep("Myplugins", "plugins", "Foo.dll"), sep("plugins", "Foo.dll")),
       modType("XXX-bepinexmod"),
     ]);
+  });
+
+  it("the folder branch of every loader drops a wrapper whose name ends in the folder's name", async () => {
+    const cases = [
+      ["Myplugins/plugins/Foo.dll", BEPINEX_PLUGIN, "plugins"],
+      ["Mypatchers/patchers/P.dll", BEPINEX_PATCHER, "patchers"],
+      ["MyMods/Mods/M.dll", MELON_MOD, "Mods"],
+      ["MyPlugins/Plugins/P.dll", MELON_PLUGIN, "Plugins"],
+    ];
+    for (const [entry, content, folder] of cases) {
+      const { instructions, error } = await sortPlugins({ [entry]: content });
+      assert.equal(error, undefined, folder);
+      const file = path.basename(entry);
+      assert.deepEqual(
+        instructions.slice(0, 1),
+        [copy(sep(...entry.split("/")), sep(folder, file))],
+        folder,
+      );
+    }
   });
 
   it("tells the user to launch the game when a mod type's folder cannot be worked out", async () => {

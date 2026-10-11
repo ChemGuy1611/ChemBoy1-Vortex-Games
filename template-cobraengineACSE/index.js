@@ -103,13 +103,16 @@ const SAVE_NAME = "Saves";
 const SAVE_EXTS = [".blpr2", ".prk2"];
 const SAVE_FOLDER = path.join(USER_HOME, "Saved Games", DEV_FOLDER, GAME_FOLDER);
 let USERID_FOLDER = "";
+const NOT_USERID_FOLDERS = ["saves", "config"]; //the user id folder's own subfolders - setup creates Saves here before a user id folder exists
 function isDir(folder, file) {
   const stats = fs.statSync(path.join(folder, file));
   return stats.isDirectory();
 }
 try {
   const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
-  USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
+  USERID_FOLDER = SAVE_ARRAY.find(
+    (entry) => !NOT_USERID_FOLDERS.includes(entry.toLowerCase()) && isDir(SAVE_FOLDER, entry),
+  );
 } catch {
   USERID_FOLDER = "";
 }
@@ -384,7 +387,7 @@ function testACSE(files, gameId) {
 //Installer install ACSE
 function installACSE(files) {
   const modFile = files.find((file) => path.basename(file) === ACSE_FILE);
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ACSE_ID };
@@ -429,7 +432,7 @@ function testSave(files, gameId) {
 //Install save files
 function installSave(files) {
   const modFile = files.find((file) => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: SAVE_ID };
@@ -475,7 +478,7 @@ function testRoot(files, gameId) {
 function installRoot(files) {
   const modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file)));
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(ROOT_IDX);
+  const idx = modFile.lastIndexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
@@ -508,7 +511,7 @@ function testOvlData(files, gameId) {
 //Installer install ovldata folder
 function installOvlData(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === OVLDATA_FILE);
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: OVLDATA_ID };
@@ -556,7 +559,7 @@ function installAcseMod(files, fileName) {
     modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
     rootPath = path.dirname(modFile);
   }
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
 
   // Remove directories and anything that isn't in the rootPath.
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
@@ -587,7 +590,7 @@ function testLocalised(files, gameId) {
 //Installer install localised folder
 function installLocalised(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === LOCALISED_FILE);
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: LOCALISED_ID };
@@ -632,7 +635,7 @@ function testMovies(files, gameId) {
 //Install movies files
 function installMovies(files) {
   const modFile = files.find((file) => MOVIES_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOVIES_ID };

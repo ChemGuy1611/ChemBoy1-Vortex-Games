@@ -2,8 +2,8 @@
 Name: SILENT HILL: Townfall Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-09-27
+Version: 1.1.0
+Date: 2026-10-11
 Notes:
 -
 ////////////////////////////////////////////////*/
@@ -53,11 +53,11 @@ const GAME_ID = "silenthilltownfall"; //same as Nexus domain
 const STEAMAPP_ID = "1636440"; // https://steamdb.info/app/1636440/
 const STEAMAPP_ID_DEMO = null; //VERIFY if the EPIC_CODE_NAME and EXEC_DEMO match Steam full game
 const EPICAPP_ID = "d0a72ab8e8c84252be486a820b684d2d"; // https://store.epicgames.com/en-US/p/silent-hill-townfall-0cb037
-const GOGAPP_ID = null; // from gogdb.org
+const GOGAPP_ID = "1777950599"; // from gogdb.org
 const XBOXAPP_ID = null; //from appxmanifest.xml
 const XBOXEXECNAME = "AppUEGameShipping"; //from appxmanifest.xml
 const XBOX_PUB_ID = null; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const GAME_NAME = "SILENT HILL: Townfall";
 const GAME_NAME_SHORT = "SILENT HILL Townfall"; //Try for 8-10 characters

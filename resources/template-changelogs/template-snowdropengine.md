@@ -1,5 +1,10 @@
 # template-snowdropengine Changelog
 
+## [2026-10-11]
+
+- Fixed: the mod loader installer (`installModLoader`) also emitted a copy instruction for every folder entry inside the loader's folder (the wrapper folder itself landed on destination `.`), because its file filter did not drop folder entries like the other installers do. It now uses the same `!file.endsWith(path.sep) && file.startsWith(rootPrefix)` filter.
+- Fixed: the installers cut each mod's destination with `modFile.indexOf(...)`, which finds the FIRST occurrence of the marker's name in the path, so a wrapper folder whose name contains or ends with the marker's name (`Mydata/data`, `Mybaked/baked`, `version.dll.bak/version.dll`) was cut inside the wrapper's name and stayed in the install path. `installConfig`, `installModLoader`, `installData` and `installDataSub` now use `lastIndexOf`, which always lands on the marker's own path segment.
+
 ## [2026-10-06]
 
 - Added: an "Open Nexus Mods Page" button in the Mods toolbar that opens the game's mods page on Nexus Mods (`https://www.nexusmods.com/<GAME_ID>/mods`). It sits beside the PCGamingWiki and SteamDB buttons and only shows while this game is the active game.

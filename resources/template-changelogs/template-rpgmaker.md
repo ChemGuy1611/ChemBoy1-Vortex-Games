@@ -1,5 +1,10 @@
 # template-rpgmaker Changelog
 
+## [2026-10-11]
+
+- Fixed: the installers cut each mod's destination with `modFile.indexOf(...)`, which finds the FIRST occurrence of the marker's name in the path. A wrapper folder whose name contains `js` (`jsmods/js/plugins/A.js`) or ends with a root folder's name (`mydata/data/a.json`) was cut inside the wrapper's name, so the wrapper stayed in the install path (and, for the js folder installer, no plugin names were recorded). `installJsFolder`, `installJsFile`, `installRoot` and `installJson` now use `lastIndexOf`, which always lands on the marker's own path segment.
+- Fixed: a plugin saved with an upper-case extension (`B.JS`) was recorded under the name `B.JS` instead of `B`, and the deployed-plugin scan behind the Load Order page only counted names ending in lower-case `.js`, so such a plugin never appeared there. The plugin name is now taken with the file's own extension stripped, at both the install stamp and the scan, and the scan compares the extension in lower case.
+
 ## [2026-10-06]
 
 - Added: an "Open Nexus Mods Page" button in the Mods toolbar that opens the game's mods page on Nexus Mods (`https://www.nexusmods.com/<GAME_ID>/mods`). It sits beside the PCGamingWiki and SteamDB buttons and only shows while this game is the active game.

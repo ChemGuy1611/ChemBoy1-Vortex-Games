@@ -2,8 +2,8 @@
 Name: RoboCop Rogue City and Unfinished Business Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-10-02
+Version: 1.0.1
+Date: 2026-10-11
 Notes:
 - Registers RoboCop: Rogue City and RoboCop: Rogue City - Unfinished Business as two separate games
 ////////////////////////////////////////////////*/
@@ -62,7 +62,7 @@ const EPICAPP_ID = "d6ab0d70d3c842b7a13beec125a02ecc"; //from egdata.app
 const GOGAPP_ID = "1950574400"; // from gogdb.org
 const XBOXAPP_ID = "BigbenInteractiveSA.RoboCopRogueCity"; //from appxmanifest.xml
 const XBOXEXECNAME = "AppRobocopShipping"; //from appxmanifest.xml
-const XBOX_PUB_ID = "ymj30pw7xe604"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
+const XBOX_PUB_ID = "tqjv3vrxr8ppw"; //Microsoft Store catalog PackageFamilyName suffix
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID, GOGAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const GAME_NAME = "RoboCop: Rogue City";

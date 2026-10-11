@@ -36,6 +36,15 @@ into `<modname>.zip` with `util.SevenZip` and that single file becomes the mod. 
 claims everything that is not Fluffy itself and not REFramework, which is what makes it the de facto
 fallback.
 
+**Lua mods.** `LOOSELUA` takes any mod with a `.lua` script and no `reframework` or `autorun` folder,
+and installs every script folder under `reframework/autorun` (a wrapper shared by all scripts is
+dropped). A lua mod that already ships a `reframework` or `autorun` folder is left to the re-zip
+catch-all on purpose, so it lands as a Fluffy mod.
+
+**Demo build.** `HAS_DEMO` is true only when `EXEC_DEMO` is set and differs from `EXEC`. A game with
+no demo (`EXEC_DEMO = ""`) or a demo that shares the game's executable never switches to the
+`_Demo` mod and preset folders or the demo Steam app id.
+
 **Save path** resolves through the registry to `Steam/userdata/<userId>/<appId>` via
 `getSavePath` (the first folder in `userdata`; the `remote` subfolder is commented out in the
 template). The demo build uses `STEAMAPP_ID_DEMO` as the app id.

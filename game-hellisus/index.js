@@ -2,8 +2,8 @@
 Name: Hell is Us Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 1.1.2
-Date: 2026-09-27
+Version: 1.2.0
+Date: 2026-10-11
 Notes:
 - LOGICMODS_PATH ends in the LogicMods folder for this game (kept from the 0.1.0 extension)
 ////////////////////////////////////////////////*/
@@ -53,11 +53,11 @@ const GAME_ID = "hellisus"; //same as Nexus domain
 const STEAMAPP_ID = "1620730"; //from steamdb.info
 const STEAMAPP_ID_DEMO = "3623800"; //VERIFY if the EPIC_CODE_NAME and EXEC_DEMO match Steam full game
 const EPICAPP_ID = "14ce1acff0db4cf8bf59533318058c7c"; //from egdata.app
-const GOGAPP_ID = null; // from gogdb.org
+const GOGAPP_ID = "1774500758"; // from gogdb.org
 const XBOXAPP_ID = "BigbenInteractiveSA.HellisUs"; //from appxmanifest.xml
 const XBOXEXECNAME = "AppHellisUsShipping"; //from appxmanifest.xml
 const XBOX_PUB_ID = "tqjv3vrxr8ppw"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID, STEAMAPP_ID_DEMO, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID, EPICAPP_ID, STEAMAPP_ID_DEMO, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const GAME_NAME = "Hell is Us";
 const GAME_NAME_SHORT = "Hell is Us"; //Try for 8-10 characters

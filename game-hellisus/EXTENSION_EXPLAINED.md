@@ -28,6 +28,7 @@
 
 - **Steam** — `1620730`
 - **Epic Games Store** — `14ce1acff0db4cf8bf59533318058c7c`
+- **GOG** — `1774500758`
 - **Xbox / Microsoft Store** — `BigbenInteractiveSA.HellisUs`
 
 ## Feature Flags
@@ -131,6 +132,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **GOG Support** — detects GOG version with adjusted executable/data paths.
 - **Signature Bypass** — .sig file bypass is required for pak mods.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.

@@ -31,9 +31,10 @@ const REF_NIGHTLY =
   "https://github.com/praydog/REFramework-nightly/releases/latest/download/REFramework.zip";
 const REF_RELEASES = "https://github.com/praydog/REFramework-nightly/releases";
 
-// The scaffold's demo executable is the same file as the game executable, which makes every
-// install look like the demo. Tests that care about the demo use a distinct, realistic name.
+// The scaffold ships with no demo executable. Tests that care about the demo use a distinct,
+// realistic name; a "demo" that is the game's own file counts as no demo.
 const withDemo = setConst("EXEC_DEMO", '"XXX_Demo.exe"');
+const sameAsGame = setConst("EXEC_DEMO", '"XXX.exe"');
 const withDemoIds = all(withDemo, setConst("STEAMAPP_ID_DEMO", '"DEMO"'));
 // No Xbox build and no demo: the single-executable case.
 const singleExe = all(
@@ -176,7 +177,7 @@ describe("template-reframework-fluffy: registration with default toggles", () =>
     assert.deepEqual(game.environment, { SteamAPPId: "XXX" });
   });
 
-  it("offers Fluffy and the two launch buttons as tools", () => {
+  it("offers Fluffy and the two launch buttons as tools", async () => {
     const [fluffy, launch, demo] = ext.game.supportedTools;
     assert.equal(ext.game.supportedTools.length, 3);
     assert.deepEqual(
@@ -198,9 +199,17 @@ describe("template-reframework-fluffy: registration with default toggles", () =>
       [launch.detach, launch.relative, launch.exclusive, launch.shell],
       [true, true, true, true],
     );
+    const withDemoExt = await loadExtension(DIR, { transform: withDemo });
+    const demoTool = withDemoExt.game.supportedTools[2];
     assert.deepEqual(
-      [demo.id, demo.name, demo.logo, demo.executable(), demo.requiredFiles],
-      ["XXX-customlaunchdemo", "Custom Launch (Demo)", "exec_demo.png", "XXX.exe", ["XXX.exe"]],
+      [demo.id, demo.name, demo.logo, demoTool.executable(), demoTool.requiredFiles],
+      [
+        "XXX-customlaunchdemo",
+        "Custom Launch (Demo)",
+        "exec_demo.png",
+        "XXX_Demo.exe",
+        ["XXX_Demo.exe"],
+      ],
     );
     assert.deepEqual(
       [demo.detach, demo.relative, demo.exclusive, demo.shell],
@@ -536,11 +545,113 @@ describe("template-reframework-fluffy: install output", () => {
     ]);
   });
 
-  it("loose lua installer only takes the folder holding the first script", async () => {
-    const files = tree("A/one.lua", "B/two.lua");
+  it("loose lua installer takes every folder that holds a script, keeping their names", async () => {
+    const files = tree("A/one.lua", "B/two.lua", "B/data/y.txt", "C/readme.txt");
     const { instructions } = await installerOf(ext, "XXX-looselua").install(files);
     assert.deepEqual(instructions, [
-      copy(sep("A", "one.lua"), sep("reframework", "autorun", "one.lua")),
+      copy(sep("A", "one.lua"), sep("reframework", "autorun", "A", "one.lua")),
+      copy(sep("B", "two.lua"), sep("reframework", "autorun", "B", "two.lua")),
+      copy(sep("B", "data", "y.txt"), sep("reframework", "autorun", "B", "data", "y.txt")),
+      copy(sep("C", "readme.txt"), sep("reframework", "autorun", "C", "readme.txt")),
+      { type: "setmodtype", value: "XXX-looselua" },
+    ]);
+  });
+
+  it("loose lua installer drops the wrapper shared by scripts in separate folders", async () => {
+    const files = tree("Wrap/A/one.lua", "Wrap/B/two.lua", "Wrap/readme.txt", "Other/c.txt");
+    const { instructions } = await installerOf(ext, "XXX-looselua").install(files);
+    assert.deepEqual(instructions, [
+      copy(sep("Wrap", "A", "one.lua"), sep("reframework", "autorun", "A", "one.lua")),
+      copy(sep("Wrap", "B", "two.lua"), sep("reframework", "autorun", "B", "two.lua")),
+      copy(sep("Wrap", "readme.txt"), sep("reframework", "autorun", "readme.txt")),
+      { type: "setmodtype", value: "XXX-looselua" },
+    ]);
+  });
+
+  it("loose lua installer roots at the shared folder when a deeper script comes first", async () => {
+    const files = tree("Wrap/Deep/one.lua", "Wrap/two.lua");
+    const { instructions } = await installerOf(ext, "XXX-looselua").install(files);
+    assert.deepEqual(instructions, [
+      copy(sep("Wrap", "Deep", "one.lua"), sep("reframework", "autorun", "Deep", "one.lua")),
+      copy(sep("Wrap", "two.lua"), sep("reframework", "autorun", "two.lua")),
+      { type: "setmodtype", value: "XXX-looselua" },
+    ]);
+  });
+
+  it("loose lua installer keeps a script at the top beside scripts in folders", async () => {
+    const files = tree("top.lua", "A/one.lua");
+    const { instructions } = await installerOf(ext, "XXX-looselua").install(files);
+    assert.deepEqual(instructions, [
+      copy("top.lua", sep("reframework", "autorun", "top.lua")),
+      copy(sep("A", "one.lua"), sep("reframework", "autorun", "A", "one.lua")),
+      { type: "setmodtype", value: "XXX-looselua" },
+    ]);
+  });
+
+  it("loose lua installer does not mistake a folder sharing a name prefix for the script folder", async () => {
+    const files = tree("Mod/one.lua", "Mod2/other.txt");
+    const { instructions } = await installerOf(ext, "XXX-looselua").install(files);
+    assert.deepEqual(instructions, [
+      copy(sep("Mod", "one.lua"), sep("reframework", "autorun", "one.lua")),
+      { type: "setmodtype", value: "XXX-looselua" },
+    ]);
+  });
+
+  // Each installer cuts a marker's folder off the destination. A parent folder whose name holds
+  // the marker's own file name must not be mistaken for the marker.
+  const cutCases = [
+    [
+      "Fluffy installer",
+      "XXX-fluffymanager",
+      tree("modmanager.exe.bak/modmanager.exe", "modmanager.exe.bak/Games/a.txt"),
+      [
+        copy(sep("modmanager.exe.bak", "modmanager.exe"), "modmanager.exe"),
+        copy(sep("modmanager.exe.bak", "Games", "a.txt"), sep("Games", "a.txt")),
+      ],
+    ],
+    [
+      "REFramework installer",
+      "XXX-reframework",
+      tree("dinput8.dll.old/dinput8.dll", "dinput8.dll.old/reframework/x.dll"),
+      [
+        copy(sep("dinput8.dll.old", "dinput8.dll"), "dinput8.dll"),
+        copy(sep("dinput8.dll.old", "reframework", "x.dll"), sep("reframework", "x.dll")),
+      ],
+    ],
+    [
+      "root installer",
+      "XXX-root",
+      tree("libxess.dll.d/libxess.dll", "libxess.dll.d/sub/x.cfg"),
+      [
+        copy(sep("libxess.dll.d", "libxess.dll"), "libxess.dll"),
+        copy(sep("libxess.dll.d", "sub", "x.cfg"), sep("sub", "x.cfg")),
+      ],
+    ],
+    [
+      "preset installer",
+      "XXX-preset",
+      tree("look.prt.old/look.prt", "look.prt.old/notes.txt"),
+      [
+        copy(sep("look.prt.old", "look.prt"), "look.prt"),
+        copy(sep("look.prt.old", "notes.txt"), "notes.txt"),
+      ],
+    ],
+  ];
+
+  for (const [label, id, files, expected] of cutCases) {
+    it(`${label} cuts at the marker itself when its name also starts a parent folder name`, async () => {
+      const { instructions } = await installerOf(ext, id).install(files);
+      assert.deepEqual(instructions, [...expected, { type: "setmodtype", value: id }]);
+    });
+  }
+
+  it("loose lua installer is not confused by a parent folder named like the script", async () => {
+    const { instructions } = await installerOf(ext, "XXX-looselua").install(
+      tree("one.lua.d/one.lua", "one.lua.d/data/x.txt"),
+    );
+    assert.deepEqual(instructions, [
+      copy(sep("one.lua.d", "one.lua"), sep("reframework", "autorun", "one.lua")),
+      copy(sep("one.lua.d", "data", "x.txt"), sep("reframework", "autorun", "data", "x.txt")),
       { type: "setmodtype", value: "XXX-looselua" },
     ]);
   });
@@ -707,18 +818,34 @@ describe("template-reframework-fluffy: re-zip installer", () => {
     assert.deepEqual(instructions, [copy("Cool Mod.zip", "Cool Mod.zip")]);
   });
 
-  it("only treats lower-case .zip, .7z and .rar as archives to pass through", async () => {
+  it("passes a nested .zip, .7z or .rar archive through, and only those", async () => {
     vortex.sevenZip.calls.length = 0;
     const dest = staging("Mod.installing", ["a.pak"]);
-    const { instructions } = await install(tree("a.pak", "b.zip"), dest);
-    assert.deepEqual(instructions, [copy("b.zip", "b.zip")]);
+    const { instructions } = await install(tree("a.pak", "b.zip", "c.7z", "d.rar", "e.tar"), dest);
+    assert.deepEqual(instructions, [
+      copy("b.zip", "b.zip"),
+      copy("c.7z", "c.7z"),
+      copy("d.rar", "d.rar"),
+    ]);
     assert.deepEqual(vortex.sevenZip.calls, []);
   });
 
-  it("known gap: a nested archive with an upper-case extension is repacked inside another zip", async () => {
+  it("passes a nested archive through whatever the case of its extension", async () => {
     vortex.sevenZip.calls.length = 0;
     const dest = staging("Mod.installing", ["Mod.ZIP"]);
-    const { instructions } = await install(tree("Mod.ZIP"), dest);
+    const { instructions } = await install(tree("Mod.ZIP", "Two.7Z", "Three.Rar"), dest);
+    assert.deepEqual(instructions, [
+      copy("Mod.ZIP", "Mod.ZIP"),
+      copy("Two.7Z", "Two.7Z"),
+      copy("Three.Rar", "Three.Rar"),
+    ]);
+    assert.deepEqual(vortex.sevenZip.calls, []);
+  });
+
+  it("still repacks a folder with no nested archive, even when a file name ends in zip", async () => {
+    vortex.sevenZip.calls.length = 0;
+    const dest = staging("Mod.installing", ["a.pak", "notzip"]);
+    const { instructions } = await install(tree("a.pak", "notzip"), dest);
     assert.deepEqual(instructions, [copy("Mod.zip", "Mod.zip")]);
     assert.equal(vortex.sevenZip.calls.length, 1);
   });
@@ -812,16 +939,39 @@ describe("template-reframework-fluffy: game definition", () => {
     assert.equal(single.game.queryModPath(), sep("Games", "XXX", "Mods"));
   });
 
-  it("known gap: a game with no demo (EXEC_DEMO empty) and the Xbox logic on launches an empty executable", async () => {
-    const noDemo = await loadExtension(DIR, { transform: setConst("EXEC_DEMO", '""') });
-    assert.equal(noDemo.game.executable(makeGameDir()), "");
-    assert.equal(noDemo.game.queryModPath(), sep("Games", "XXX_Demo", "Mods"));
+  it("a game with no demo (EXEC_DEMO empty) and the Xbox logic on still launches its own executable", async () => {
+    const gameDirNoDemo = makeGameDir();
+    const noDemo = await loadExtension(DIR, {
+      transform: setConst("EXEC_DEMO", '""'),
+      state: makeState({ discovered: { [GAME_ID]: { path: gameDirNoDemo } } }),
+    });
+    assert.equal(noDemo.game.executable(gameDirNoDemo), "XXX.exe");
+    assert.equal(noDemo.game.queryModPath(), sep("Games", "XXX", "Mods"));
+    const targets = Object.fromEntries(
+      noDemo.modTypes.map(({ id, getPath }) => [id, getPath({ id: GAME_ID })]),
+    );
+    assert.equal(targets["XXX-fluffymod"], sep(gameDirNoDemo, "Games", "XXX", "Mods"));
+    assert.equal(targets["XXX-preset"], sep(gameDirNoDemo, "Games", "XXX", "Presets"));
   });
 
-  it("known gap: a demo executable with the game's own name makes every install look like the demo", async () => {
-    const same = await loadExtension(DIR);
-    same.game.executable(makeGameDir(["XXX.exe"]));
-    assert.equal(same.game.queryModPath(), sep("Games", "XXX_Demo", "Mods"));
+  it("a game with no demo still launches the Xbox helper when it is there", async () => {
+    const noDemo = await loadExtension(DIR, { transform: setConst("EXEC_DEMO", '""') });
+    assert.equal(
+      noDemo.game.executable(makeGameDir(["gamelaunchhelper.exe"])),
+      "gamelaunchhelper.exe",
+    );
+  });
+
+  it("a demo executable with the game's own name is no demo, so installs keep the game's folders", async () => {
+    const same = await loadExtension(DIR, { transform: sameAsGame });
+    assert.equal(same.game.executable(makeGameDir(["XXX.exe"])), "XXX.exe");
+    assert.equal(same.game.queryModPath(), sep("Games", "XXX", "Mods"));
+  });
+
+  it("a demo with its own executable name keeps the base folders until that executable shows up", async () => {
+    const demo = await loadExtension(DIR, { transform: withDemo });
+    assert.equal(demo.game.executable(makeGameDir(["XXX.exe"])), "XXX.exe");
+    assert.equal(demo.game.queryModPath(), sep("Games", "XXX", "Mods"));
   });
 
   it("sets the launcher for each store", async () => {
@@ -1105,6 +1255,23 @@ describe("template-reframework-fluffy: setup and downloads", () => {
     assert.ok(fs.statSync(path.join(gameDir, "Games", "XXX", "Mods")).isDirectory());
     assert.equal(fs.existsSync(path.join(gameDir, "Games", "XXX_Demo")), false);
   });
+
+  // A game with no demo, or a "demo" executable that is the game's own file, is not a demo build.
+  for (const [label, transform] of [
+    ["has no demo executable", setConst("EXEC_DEMO", '""')],
+    ["names the game's own executable as the demo", sameAsGame],
+  ]) {
+    it(`keeps the base mod folders when the game ${label}`, async () => {
+      const gameDir = makeGameDir(["XXX.exe"]);
+      const ext = await loadExtension(DIR, { transform });
+      answerDownloads(ext);
+      await ext.game.setup({ path: gameDir });
+
+      assert.ok(fs.statSync(path.join(gameDir, "Games", "XXX", "Mods")).isDirectory());
+      assert.ok(fs.statSync(path.join(gameDir, "Games", "XXX", "Presets")).isDirectory());
+      assert.equal(fs.existsSync(path.join(gameDir, "Games", "XXX_Demo")), false);
+    });
+  }
 
   it("skips both downloads when both are already installed", async () => {
     const state = makeState({
@@ -1399,10 +1566,10 @@ describe("template-reframework-fluffy: Fluffy reminder after deploying", () => {
       }
     });
 
-    it(`known gap: ${label} with an access-denied code is never offered for reporting`, async () => {
-      // The list holds "EACCESS", which Node never raises; the code is "EACCES".
-      assert.deepEqual((await reportedFor(route("EACCES")))[2], { allowReport: false });
-      assert.deepEqual((await reportedFor(route("EACCESS")))[2], { allowReport: true });
+    it(`offers to report ${label} with an access-denied code`, async () => {
+      // Node raises "EACCES"; the old list held "EACCESS", a code that never occurs.
+      assert.deepEqual((await reportedFor(route("EACCES")))[2], { allowReport: true });
+      assert.deepEqual((await reportedFor(route("EACCESS")))[2], { allowReport: false });
     });
   }
 
@@ -1550,6 +1717,20 @@ describe("template-reframework-fluffy: Steam save folder", () => {
     const opened = stubShell();
     const ext = await loadExtension(DIR, { transform: withDemoIds });
     await ext.game.getGameVersion(makeGameDir());
+    await withWinapi(registry(root), async () => {
+      actionOf(ext, "Open Save Folder (Steam)").action();
+      await waitFor(() => opened.length === 1);
+    });
+    assert.deepEqual(opened, [sep(root, "userdata", "1111", "XXX")]);
+  });
+
+  it("uses the game's Steam id when the demo executable is the game's own", async () => {
+    const root = steam(["1111"]);
+    const opened = stubShell();
+    const ext = await loadExtension(DIR, {
+      transform: all(sameAsGame, setConst("STEAMAPP_ID_DEMO", '"DEMO"')),
+    });
+    assert.equal(await ext.game.getGameVersion(makeGameDir(["XXX.exe"])), STUB_EXE_VERSION);
     await withWinapi(registry(root), async () => {
       actionOf(ext, "Open Save Folder (Steam)").action();
       await waitFor(() => opened.length === 1);

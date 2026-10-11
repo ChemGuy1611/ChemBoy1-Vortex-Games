@@ -205,8 +205,9 @@ rendered; what survives elsewhere is log and dialog text, placeholder constants,
 When a template has a real defect that is not being fixed in the same change, the suite pins
 the current behavior in a test named `known gap: ...` instead of skipping it or hiding it in
 the allowlist. The test asserts the faulty behavior, so it turns red when the template is fixed
-and the test is then rewritten to assert the correct behavior. These tests are a to-do list,
-not a statement that the behavior is acceptable.
+and the test is then rewritten to assert the correct behavior and loses its `known gap:`
+prefix. These tests are a to-do list, not a statement that the behavior is acceptable. To list
+the ones still open: `grep -c "known gap" tests/templates/*.test.js`.
 
 ## Changelogs
 
@@ -241,6 +242,19 @@ literal, run them across several scratch copies in parallel, and list the surviv
 line. Treat a dropped `await` as a missing test only when the fake it waits on can be made slow;
 a fake that answers in microtasks cannot tell a caller that waits from one that does not. Killed
 runs leave temporary folders behind, so sweep them afterwards.
+
+A template fix is proven the other way round: take the template as it was at the last commit
+(`git archive HEAD <template-folder> template-basic`, extracted into a scratch folder and used
+as `CB1_TEMPLATE_ROOT`), run the changed suite against it, and every test written or flipped for
+the fix must fail there and pass against the fixed template. A new test that stays green on the
+unfixed template tests nothing.
+
+After a round of fixes, revert them one at a time to see which are guarded: copy the template and
+`template-basic` into a scratch folder, turn one fixed site back (`lastIndexOf` to `indexOf`, a
+corrected error code to the old typo), run that template's suite with `CB1_TEMPLATE_ROOT`, and list
+the reverts that leave it green. Those sites either have no test or are unreachable (an installer
+that is never registered, a marker that is not a substring of another path segment). Close the
+reachable ones with a fixture that puts the marker's whole name inside a parent folder name. `node sweep_template_fixes.js` does the reverts and reports the survivors (see `SCRIPTS.md`).
 
 ## Adding a template or a check
 

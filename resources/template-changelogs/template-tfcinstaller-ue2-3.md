@@ -1,5 +1,11 @@
 # template-tfcinstaller-ue2-3 Changelog
 
+## [2026-10-11]
+
+- Fixed: `installCookedSub` cut the destination before it checked whether a Maps/Packages folder was found, so a package with only `.upk` files (no such folder) passed the test and then crashed the install on an undefined path. The folder lookup and the `.upk` fall-back now each set the cut position themselves.
+- Fixed: the installers cut each mod's destination with `modFile.indexOf(...)`, which finds the FIRST occurrence of the marker's name in the path, so a wrapper folder whose name contains or ends with the marker's name (`MyEngine/Engine`, `Mod_old/Mod`, `a.bik.bak/a.bik`) was cut inside the wrapper's name and stayed in the install path. `installTfc`, `installUpkExplorer`, `installTfcMod`, `installRoot`, `installCookedSub`, `installMovies` and `installBinaries` now use `lastIndexOf`, which always lands on the marker's own path segment.
+- Fixed: the "report this error" check in `runModManager` listed `"EACCESS"`, a code Node never raises, so an access-denied failure to start the TFC Installer was never offered for reporting. It now lists `"EACCES"` (both the rejected-promise and the thrown-error route).
+
 ## [2026-10-06]
 
 - Added: an "Open Nexus Mods Page" button in the Mods toolbar that opens the game's mods page on Nexus Mods (`https://www.nexusmods.com/<GAME_ID>/mods`). It sits beside the PCGamingWiki and SteamDB buttons and only shows while this game is the active game.

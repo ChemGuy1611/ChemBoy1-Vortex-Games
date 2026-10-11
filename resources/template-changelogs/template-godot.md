@@ -1,5 +1,10 @@
 # template-godot Changelog
 
+## [2026-10-11]
+
+- Fixed: `installMod` cut each mod's destination with `modFile.indexOf(path.basename(modFile))`, which finds the FIRST occurrence of the marker's name in the path, so a mod whose folder name contains `mod_main.gd` (`mod_main.gd.bak/mod_main.gd`) was cut inside the folder name and the folder name was doubled in the install path. It now uses `lastIndexOf`, which always lands on the marker file's own path segment.
+- Fixed: `installModZip` checked a mod's nested archives with a case-sensitive extension compare, so a mod that ships `COOL.ZIP`, `Other.7Z` or `Third.Rar` was not recognised as already archived and the whole staging folder was zipped around it. The extension is now lowercased before the compare, so those archives are copied through as they are.
+
 ## [2026-10-06]
 
 - Added: an "Open Nexus Mods Page" button in the Mods toolbar that opens the game's mods page on Nexus Mods (`https://www.nexusmods.com/<GAME_ID>/mods`). It sits beside the PCGamingWiki and SteamDB buttons and only shows while this game is the active game.

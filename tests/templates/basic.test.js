@@ -15,7 +15,7 @@ const {
 } = require("../harness/helpers");
 const { loadExtension, templateDir } = require("../harness/load-extension");
 const { STUB_EXE_VERSION } = require("../harness/stub-modules");
-const { setConst } = require("../harness/transforms");
+const { all, setConst } = require("../harness/transforms");
 
 const DIR = templateDir("template-basic");
 const GAME_ID = "XXX";
@@ -111,6 +111,46 @@ describe("template-basic: install output", () => {
       { type: "copy", source: sep("Mod", "readme.txt"), destination: "readme.txt" },
       { type: "setmodtype", value: "XXX-root" },
     ]);
+  });
+
+  it("root installer is not thrown off by a wrapper whose name ends with the root folder's name", async () => {
+    const { instructions } = await installer(ext, "XXX-root").install(tree("MyXXX/XXX/a.dat"));
+    assert.deepEqual(instructions, [
+      { type: "copy", source: sep("MyXXX", "XXX", "a.dat"), destination: sep("XXX", "a.dat") },
+      { type: "setmodtype", value: "XXX-root" },
+    ]);
+  });
+
+  it("the loader, mod and save installers cut at the marker itself, not at an earlier copy of its name", async () => {
+    const full = await loadExtension(DIR, {
+      transform: all(
+        setConst("hasLoader", "true"),
+        setConst("needsModInstaller", "true"),
+        setConst("saveInstaller", "true"),
+        setConst("MOD_EXTS", '[".xxx"]'),
+        setConst("SAVE_EXTS", '[".xxx"]'),
+      ),
+    });
+    const cases = [
+      ["XXX-loader", "XXX.dll"],
+      ["XXX-mod", "a.xxx"],
+      ["XXX-save", "a.xxx"],
+    ];
+    for (const [id, marker] of cases) {
+      const wrapper = `${marker}.bak`;
+      const { instructions } = await installer(full, id).install(
+        tree(`${wrapper}/${marker}`, `${wrapper}/readme.txt`),
+      );
+      assert.deepEqual(
+        instructions,
+        [
+          { type: "copy", source: sep(wrapper, marker), destination: marker },
+          { type: "copy", source: sep(wrapper, "readme.txt"), destination: "readme.txt" },
+          { type: "setmodtype", value: id },
+        ],
+        id,
+      );
+    }
   });
 
   it("fallback installer copies every file as is, retypes to root, and notifies", async () => {

@@ -1,5 +1,9 @@
 # template-basic Changelog
 
+## [2026-10-11]
+
+- Fixed: the installers cut each mod's destination with `modFile.indexOf(...)`, which finds the FIRST occurrence of the marker's name in the path, so a wrapper folder whose name contains or ends with the marker's name (`MyXXX/XXX`, `XXX.dll.bak/XXX.dll`) was cut inside the wrapper's name and stayed in the install path. `installLoader`, `installMod`, `installRoot` and `installSave` now use `lastIndexOf`, which always lands on the marker's own path segment.
+
 ## [2026-10-06]
 
 - Added: an "Open Nexus Mods Page" button in the Mods toolbar that opens the game's mods page on Nexus Mods (`https://www.nexusmods.com/<GAME_ID>/mods`). It sits beside the PCGamingWiki and SteamDB buttons and only shows while this game is the active game.

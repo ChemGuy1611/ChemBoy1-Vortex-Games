@@ -280,6 +280,42 @@ describe("template-frostbite: install output", () => {
     ]);
   });
 
+  it("the installers cut at the marker itself, not at an earlier copy of its name", async () => {
+    const keyed = await loadExtension(DIR, { transform: withKey });
+    const cases = [
+      [
+        ext,
+        "XXX-frostymodmanager",
+        tree("frostymodmanager.exe.bak/frostymodmanager.exe"),
+        [
+          copy(
+            sep("frostymodmanager.exe.bak", "frostymodmanager.exe"),
+            sep("FrostyModManager", "frostymodmanager.exe"),
+          ),
+        ],
+      ],
+      [
+        ext,
+        "XXX-plugin",
+        tree("a.dll.bak/a.dll", "a.dll.bak/b.txt"),
+        [copy(sep("a.dll.bak", "a.dll"), "a.dll"), copy(sep("a.dll.bak", "b.txt"), "b.txt")],
+      ],
+      [
+        keyed,
+        "XXX-key",
+        tree("xxx.key.bak/xxx.key", "xxx.key.bak/readme.txt"),
+        [
+          copy(sep("xxx.key.bak", "xxx.key"), "xxx.key"),
+          copy(sep("xxx.key.bak", "readme.txt"), "readme.txt"),
+        ],
+      ],
+    ];
+    for (const [loaded, id, files, expected] of cases) {
+      const { instructions } = await installerOf(loaded, id).install(files);
+      assert.deepEqual(instructions, [...expected, { type: "setmodtype", value: id }], id);
+    }
+  });
+
   it("fallback installer copies every file as is, retypes to root, and notifies", async () => {
     const files = tree("readme.txt", "docs/a.txt");
     const { instructions } = await installerOf(ext, "XXX-fallback").install(
@@ -704,6 +740,45 @@ describe("template-frostbite: run Frosty after a deploy", () => {
     await didDeploy(ext)("profile-1", {});
     ext.notifications[0].actions[0].action(() => undefined);
     assert.equal(ext.errors[0][0], "Failed to run Frosty Mod Manager");
+  });
+
+  // Runs the notice's button against a tool that fails to start, by rejecting or by throwing.
+  async function launchFailing(failure, { sync }) {
+    const state = makeState({
+      discovered: {
+        [GAME_ID]: { path: "x", tools: { "XXX-frostymodmanager": { path: toolPath } } },
+      },
+    });
+    const ext = await loadExtension(DIR, { state });
+    ext.api.runExecutable = () => {
+      if (sync) throw failure;
+      return Promise.reject(failure);
+    };
+    ext.state.settings.profiles.lastActiveProfile[GAME_ID] = "profile-1";
+    await didDeploy(ext)("profile-1", {});
+    ext.notifications[0].actions[0].action(() => undefined);
+    assert.ok(await waitFor(() => ext.errors.length === 1));
+    return ext.errors[0];
+  }
+
+  it("offers to report a permission, access or missing-file failure to start Frosty", async () => {
+    for (const sync of [false, true]) {
+      for (const code of ["EPERM", "EACCES", "ENOENT"]) {
+        const failure = Object.assign(new Error("fail"), { code });
+        const [message, error, options] = await launchFailing(failure, { sync });
+        assert.equal(message, "Failed to run Frosty Mod Manager");
+        assert.equal(error, failure);
+        assert.deepEqual(options, { allowReport: true }, `${code}, sync ${sync}`);
+      }
+    }
+  });
+
+  it("does not offer to report an unrecognised failure to start Frosty", async () => {
+    for (const sync of [false, true]) {
+      const failure = Object.assign(new Error("odd"), { code: "EOTHER" });
+      const [, , options] = await launchFailing(failure, { sync });
+      assert.deepEqual(options, { allowReport: false }, `sync ${sync}`);
+    }
   });
 });
 

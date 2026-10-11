@@ -1,5 +1,17 @@
 # template-unitymelonloaderbepinex-hybrid Changelog
 
+## [2026-10-11]
+
+- Fixed: the two custom-loader mod types showed each other's display names (`CUSTOMLOADER_MOD_ID` was registered with `CUSTOMLOADER_PLUGIN_NAME` and the plugin type with `CUSTOMLOADER_MOD_NAME`). Each now carries its own.
+- Fixed: the installers cut each destination with `indexOf(...)`, which finds the FIRST occurrence of the marker's name in the path, so a wrapper folder whose name ends in the folder name (`Myplugins/plugins/x.dll`, `MyMelonLoader/MelonLoader/...`, `MyXXX_Data/XXX_Data/...`) kept part of the wrapper in the destination. The BepInEx, MelonLoader, custom loader, BepInExConfigManager, MelonPreferencesManager, assembly, root, assets, save and plugin installers (the loose-file cut and the four plugins/patchers/Mods/Plugins folder branches) now use `lastIndexOf`. The custom mod data file installer cut at the first occurrence of the file's base name (which could sit inside the wrapper's name); it now cuts at the data file itself.
+- Fixed: the "custom loader installed" decision in `deconflictModLoaders` and after a purge used the installer's marker file, so a mod-based custom loader (no installer) was never removed when another loader was kept and the user was told to run an installer it does not have. Both now ask `isCustomInstalled` (the mod, or the marker file for a loader with an installer). A new `hasCustomMarker` is the plain file check; `checkCustomInstalled` (which also shows the reminder) now only runs after a deploy for a loader with an installer, and files are still only removed on a purge when the marker file exists.
+- Fixed: the "Download Latest MelonLoader" toolbar button always fetched the upstream release, even for a MelonLoader fork hosted on the game's Nexus page. It now downloads from the Nexus page when `melonFromNexus` is on.
+- Fixed: `ALT_VERSION` shared the Xbox build's label (`"xbox"`), so an Epic/GOG/demo build with its own executable was taken for the Xbox build, looked for `appxmanifest.xml` and reported `0.0.0` without trying the store, hash or executable sources. The default is now `"alt"`, and the root installer's data-folder rename covers both the alt label and the Xbox build.
+- Fixed: the "report this error" check in `runCustom` listed `"EACCESS"`, a code Node never raises, so an access-denied failure to start the custom loader's installer was never offered for reporting. It now lists `"EACCES"` (both failure routes).
+- Fixed: dismissing a "Wrong Mod Loader" or "Mixed Mod Detected" dialog without pressing Ok let the install go ahead even with `preventPluginInstall` on. The install is now cancelled for every kind of refusal whichever way the dialog is closed.
+- Fixed: the `.NET` check for MelonLoader showed its notice twice when the registry key returned no entries; it now returns after the first.
+- Fixed: whether a BepInEx archive counted as a patcher, and a MelonLoader archive as a plugin, depended on which dll was read last. Any patcher (or plugin) dll now decides, whatever the read order.
+
 ## [2026-10-06]
 
 - Added: an "Open Nexus Mods Page" button in the Mods toolbar that opens the game's mods page on Nexus Mods (`https://www.nexusmods.com/<GAME_ID>/mods`). It sits beside the PCGamingWiki and SteamDB buttons and only shows while this game is the active game.

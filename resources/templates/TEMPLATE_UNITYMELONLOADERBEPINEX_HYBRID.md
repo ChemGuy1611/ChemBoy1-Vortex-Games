@@ -76,9 +76,20 @@ recognises the loader by `CUSTOMLOADER_FILE`. `customLoaderInstaller` swaps that
 recognises the loader's own installer by `CUSTOMLOADER_EXEC`, installs it below `CUSTOMLOADER_FOLDER`,
 adds it as a tool, and makes the marker file `CUSTOMLOADER_MARKER_PATH` the proof that it has been run.
 
+A custom loader counts as installed through `isCustomInstalled`: its mod in the profile, or for a
+loader with an installer also the marker file. After a purge, installer files are only removed while
+the marker file exists, and the "run the installer" reminder only shows after a deploy for a loader
+that has an installer.
+
+`ALT_VERSION` (default `"alt"`) is the label for a build with its own executable (Epic, GOG or demo);
+the Xbox build sets `"xbox"` itself and is the only one whose version is read from
+`appxmanifest.xml`. The root installer renames the default data folder for both. With
+`preventPluginInstall` on, a refusal dialog cancels the install however it is closed.
+
 `check-mods-version`, `did-deploy`, and `did-purge` handlers are all registered. Toolbar actions are
 the widest of any template: Download Latest BepInEx BE (IL2CPP, not served from Nexus), Download
-BepInExConfigManager (`allowBepCfgMan`), Download Latest MelonLoader, Download
+BepInExConfigManager (`allowBepCfgMan`), Download Latest MelonLoader (from the game's Nexus page when
+`melonFromNexus` is on), Download
 MelonPreferencesManager (`allowMelPrefMan`), Open Data Folder, Open BepInEx Config, Open BepInEx Log,
 Open MelonLoader Config, Open MelonLoader Log, plus the universal set. Open Save Folder, Open
 PCGamingWiki Page and Submit Bug Report only appear once `SAVE_FOLDERNAME`, `PCGAMINGWIKI_URL` and

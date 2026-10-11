@@ -20,11 +20,6 @@ const withDataFolder = setConst("DATA_FILE", '"data"');
 const sep = (...parts) => path.join(...parts);
 const copy = (source, destination) => ({ type: "copy", source, destination });
 
-// The mod loader installer also emits an entry for every folder (the other installers drop
-// them), so install-output tests compare only the file copies and the mod type.
-const withoutFolderCopies = (instructions) =>
-  instructions.filter(({ type, source }) => type !== "copy" || !source.endsWith(path.sep));
-
 describe("template-snowdropengine: registration with default toggles", () => {
   let ext;
   before(async () => {
@@ -117,11 +112,50 @@ describe("template-snowdropengine: install output", () => {
   it("mod loader installer strips the wrapper folder and sets the loader mod type", async () => {
     const files = tree("Mod/version.dll", "Mod/loader.ini", "Other/x.txt");
     const { instructions } = await installerOf(ext, "XXX-modloader").install(files);
-    assert.deepEqual(withoutFolderCopies(instructions), [
+    assert.deepEqual(instructions, [
       copy(sep("Mod", "version.dll"), "version.dll"),
       copy(sep("Mod", "loader.ini"), "loader.ini"),
       { type: "setmodtype", value: "XXX-modloader" },
     ]);
+  });
+
+  it("mod loader installer drops folder entries, at the top of the archive too", async () => {
+    const { instructions } = await installerOf(ext, "XXX-modloader").install(
+      tree("version.dll", "plugins/a.asi"),
+    );
+    assert.deepEqual(instructions, [
+      copy("version.dll", "version.dll"),
+      copy(sep("plugins", "a.asi"), sep("plugins", "a.asi")),
+      { type: "setmodtype", value: "XXX-modloader" },
+    ]);
+  });
+
+  it("the installers cut at the marker itself, not at an earlier copy of its name", async () => {
+    const cases = [
+      [
+        "XXX-modloader",
+        tree("version.dll.bak/version.dll", "version.dll.bak/loader.ini"),
+        [
+          copy(sep("version.dll.bak", "version.dll"), "version.dll"),
+          copy(sep("version.dll.bak", "loader.ini"), "loader.ini"),
+        ],
+      ],
+      ["XXX-config", tree("a.cfg.bak/a.cfg"), [copy(sep("a.cfg.bak", "a.cfg"), "a.cfg")]],
+      [
+        "XXX-data",
+        tree("Mydata/data/a.bin"),
+        [copy(sep("Mydata", "data", "a.bin"), sep("data", "a.bin"))],
+      ],
+      [
+        "XXX-datasub",
+        tree("Mybaked/baked/a.bin"),
+        [copy(sep("Mybaked", "baked", "a.bin"), sep("baked", "a.bin"))],
+      ],
+    ];
+    for (const [id, files, expected] of cases) {
+      const { instructions } = await installerOf(ext, id).install(files);
+      assert.deepEqual(instructions, [...expected, { type: "setmodtype", value: id }], id);
+    }
   });
 
   it("data installer keeps the data folder and drops the wrapper and folder entries", async () => {

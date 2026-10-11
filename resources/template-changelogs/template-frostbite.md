@@ -1,5 +1,10 @@
 # template-frostbite Changelog
 
+## [2026-10-11]
+
+- Fixed: the installers cut each mod's destination with `modFile.indexOf(...)`, which finds the FIRST occurrence of the marker's name in the path, so a marker name that also appears in a parent folder name (`a.dll.bak/a.dll`) was cut at the wrong place and the wrapper stayed in the install path. `installFrosty`, `installPlugin` and `installKey` now use `lastIndexOf`, which always lands on the marker's own path segment.
+- Fixed: the "report this error" check in `runModManager` listed `"EACCESS"`, a code Node never raises, so an access-denied failure to start Frosty was never offered for reporting. It now lists `"EACCES"` (both the rejected-promise and the thrown-error route).
+
 ## [2026-10-06]
 
 - Added: an "Open Nexus Mods Page" button in the Mods toolbar that opens the game's mods page on Nexus Mods (`https://www.nexusmods.com/<GAME_ID>/mods`). It sits beside the PCGamingWiki and SteamDB buttons and only shows while this game is the active game.

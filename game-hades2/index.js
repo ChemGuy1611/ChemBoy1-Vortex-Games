@@ -2,8 +2,8 @@
 Name: Hades II Vortex Extension
 Structure: 3rd-Party Mod Installer
 Author: ChemBoy1
-Version: 1.1.4
-Date: 2026-09-08
+Version: 1.2.0
+Date: 2026-10-11
 ////////////////////////////////*/
 
 //Import libraries
@@ -28,7 +28,7 @@ const STEAMAPP_ID = "1145350";
 const EPICAPP_ID = "07c634c7291a49b5b2455e14b9a83950";
 const XBOXAPP_ID = "SupergiantGamesLLC.HadesII";
 const XBOXEXECNAME = "Game";
-const XBOX_PUB_ID = "8fty0by31jkny"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
+const XBOX_PUB_ID = "q53c1yqmx7pha"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
 const GAME_ID = "hades2";
 const GAME_NAME = "Hades II";
 const EXEC = path.join("Ship", "Hades2.exe");

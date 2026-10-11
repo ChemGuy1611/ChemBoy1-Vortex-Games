@@ -2,6 +2,11 @@
 
 Covers `template-godot`. Suite file: `tests/templates/godot.test.js`.
 
+## [2026-10-11]
+
+- Added: a test that the unpacked mod installer cuts at `mod_main.gd` itself when its name also appears in the folder name. Suite is now 68 tests.
+- Changed: the `known gap` test for the nested upper-case archive now asserts the fixed result and covers all three extensions (`.ZIP`, `.7Z`, `.Rar`): each is copied through and 7-Zip is never called. It fails against the template as it was at the last commit.
+
 ## [2026-10-06]
 
 - Changed: the toolbar actions tests cover the new `Open Nexus Mods Page` button. It is in the registered action list, and it opens `https://www.nexusmods.com/XXX/mods`, and its failure is reported instead of thrown when the shell is unavailable.

@@ -12,6 +12,7 @@ const {
   stubShell,
   summary,
   supportedBy,
+  waitFor,
 } = require("../harness/helpers");
 const { loadExtension, templateDir, vortex } = require("../harness/load-extension");
 const { setConst } = require("../harness/transforms");
@@ -199,6 +200,36 @@ describe("template-reloaded2: install output", () => {
       copy(sep("Wrap", "MyMod", "Mod.dll"), sep("MyMod", "Mod.dll")),
       { type: "setmodtype", value: "XXX-reloadedmod" },
     ]);
+  });
+
+  it("the installers cut at the marker itself, not at an earlier copy of its name", async () => {
+    const cases = [
+      [
+        "XXX-reloadedmanager",
+        tree("reloaded-ii.exe.bak/reloaded-ii.exe"),
+        [copy(sep("reloaded-ii.exe.bak", "reloaded-ii.exe"), sep("Reloaded", "reloaded-ii.exe"))],
+      ],
+      [
+        "XXX-reloadedmodloader",
+        tree("modconfig.json.bak/modconfig.json", "modconfig.json.bak/xxx.modloader.dll"),
+        [
+          copy(sep("modconfig.json.bak", "modconfig.json"), "modconfig.json"),
+          copy(sep("modconfig.json.bak", "xxx.modloader.dll"), "xxx.modloader.dll"),
+        ],
+      ],
+      [
+        "XXX-reloadedmod",
+        tree("MyMod/Mod/modconfig.json", "MyMod/Mod/Mod.dll"),
+        [
+          copy(sep("MyMod", "Mod", "modconfig.json"), sep("Mod", "modconfig.json")),
+          copy(sep("MyMod", "Mod", "Mod.dll"), sep("Mod", "Mod.dll")),
+        ],
+      ],
+    ];
+    for (const [id, files, expected] of cases) {
+      const { instructions } = await installerOf(ext, id).install(files, "Cool Mod.installing");
+      assert.deepEqual(instructions, [...expected, { type: "setmodtype", value: id }], id);
+    }
   });
 
   it("fallback installer copies every file as is, leaves the mod type, and notifies", async () => {
@@ -438,6 +469,45 @@ describe("template-reloaded2: run Reloaded-II as admin", () => {
     await didDeploy(ext)("profile-1", {});
     ext.notifications[0].actions[0].action(() => undefined);
     assert.equal(ext.errors[0][0], "Failed to run Reloaded-II Mod Manager as Admin");
+  });
+
+  // Runs the notice's button against a tool that fails to start, by rejecting or by throwing.
+  async function launchFailing(failure, { sync }) {
+    const state = makeState({
+      discovered: {
+        [GAME_ID]: { path: "x", tools: { "XXX-reloadedmanager": { path: toolPath } } },
+      },
+    });
+    const ext = await loadExtension(DIR, { state });
+    ext.api.runExecutable = () => {
+      if (sync) throw failure;
+      return Promise.reject(failure);
+    };
+    ext.state.settings.profiles.lastActiveProfile[GAME_ID] = "profile-1";
+    await didDeploy(ext)("profile-1", {});
+    ext.notifications[0].actions[0].action(() => undefined);
+    assert.ok(await waitFor(() => ext.errors.length === 1));
+    return ext.errors[0];
+  }
+
+  it("offers to report a permission, access or missing-file failure to start the manager", async () => {
+    for (const sync of [false, true]) {
+      for (const code of ["EPERM", "EACCES", "ENOENT"]) {
+        const failure = Object.assign(new Error("fail"), { code });
+        const [message, error, options] = await launchFailing(failure, { sync });
+        assert.equal(message, "Failed to run Reloaded-II Mod Manager as Admin");
+        assert.equal(error, failure);
+        assert.deepEqual(options, { allowReport: true }, `${code}, sync ${sync}`);
+      }
+    }
+  });
+
+  it("does not offer to report an unrecognised failure to start the manager", async () => {
+    for (const sync of [false, true]) {
+      const failure = Object.assign(new Error("odd"), { code: "EOTHER" });
+      const [, , options] = await launchFailing(failure, { sync });
+      assert.deepEqual(options, { allowReport: false }, `sync ${sync}`);
+    }
   });
 });
 

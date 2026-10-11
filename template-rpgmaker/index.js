@@ -471,7 +471,7 @@ function testJsFolder(files, gameId) {
 async function installJsFolder(files) {
   const MOD_TYPE = JSFOLDER_ID;
   const modFile = files.find((file) => path.basename(file).toLowerCase() === JSFOLDER_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -492,7 +492,7 @@ async function installJsFolder(files) {
         path.dirname(instr.destination) === JSFILE_PATH &&
         path.extname(instr.destination).toLowerCase() === JSFILE_EXT,
     )
-    .map((instr) => path.basename(instr.destination, JSFILE_EXT));
+    .map((instr) => path.basename(instr.destination, path.extname(instr.destination)));
   instructions.push(setModTypeInstruction);
   if (pluginNames.length > 0) {
     instructions.push({ type: "attribute", key: LO_ATTRIBUTE, value: pluginNames });
@@ -528,7 +528,7 @@ function testJsFile(files, gameId) {
 async function installJsFile(files) {
   const MOD_TYPE = JSFILE_ID;
   const modFile = files.find((file) => path.extname(file).toLowerCase() === JSFILE_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -545,7 +545,7 @@ async function installJsFile(files) {
   });
   const pluginNames = filtered
     .filter((file) => path.extname(file).toLowerCase() === JSFILE_EXT)
-    .map((file) => path.basename(file, JSFILE_EXT));
+    .map((file) => path.basename(file, path.extname(file)));
   instructions.push(setModTypeInstruction);
   if (pluginNames.length > 0) {
     instructions.push({ type: "attribute", key: LO_ATTRIBUTE, value: pluginNames });
@@ -582,7 +582,7 @@ function installRoot(files) {
   const MOD_TYPE = ROOT_ID;
   const modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file)));
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(ROOT_IDX);
+  const idx = modFile.lastIndexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -628,7 +628,7 @@ function testJson(files, gameId) {
 function installJson(files) {
   const MOD_TYPE = JSON_ID;
   const modFile = files.find((file) => path.extname(file).toLowerCase() === JSON_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -788,8 +788,8 @@ async function getDeployedPluginNames(pluginsDir) {
   try {
     const files = await fsp.readdir(pluginsDir, { recursive: true });
     return files
-      .filter((file) => file.endsWith(JSFILE_EXT))
-      .map((file) => path.basename(file, JSFILE_EXT));
+      .filter((file) => path.extname(file).toLowerCase() === JSFILE_EXT)
+      .map((file) => path.basename(file, path.extname(file)));
   } catch {
     return [];
   }

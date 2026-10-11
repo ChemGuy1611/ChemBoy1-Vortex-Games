@@ -12,6 +12,7 @@ const {
   stubShell,
   summary,
   supportedBy,
+  waitFor,
 } = require("../harness/helpers");
 const { loadExtension, templateDir, vortex } = require("../harness/load-extension");
 const { STUB_EXE_VERSION } = require("../harness/stub-modules");
@@ -217,16 +218,52 @@ describe("template-shinryu: install output", () => {
     ]);
   });
 
-  // The root installer's test lower-cases file names but its install does not, so a marker DLL
-  // written in another case (and no .exe) passes the test and then throws. Pinned so that
-  // fixing the template turns this red and the entry gets removed.
-  it("known gap: root installer throws on a marker DLL in a different case", async () => {
-    const files = tree("Mod/NVNGX_DLSS.dll");
+  it("root installer finds a marker DLL written in a different case", async () => {
+    const files = tree("Mod/NVNGX_DLSS.dll", "Mod/lib/x.dll");
     assert.equal(
       (await installerOf(ext, "XXX-root").testSupported(files, GAME_ID)).supported,
       true,
     );
-    assert.throws(() => installerOf(ext, "XXX-root").install(files), TypeError);
+    const { instructions } = await installerOf(ext, "XXX-root").install(files);
+    assert.deepEqual(instructions, [
+      copy(sep("Mod", "NVNGX_DLSS.dll"), "NVNGX_DLSS.dll"),
+      copy(sep("Mod", "lib", "x.dll"), sep("lib", "x.dll")),
+      { type: "setmodtype", value: "XXX-root" },
+    ]);
+  });
+
+  it("the installers cut at the marker itself, not at an earlier copy of its name", async () => {
+    const manager = await installerOf(ext, "XXX-modmanager").install(
+      tree(
+        "shinryumodmanager.exe.bak/shinryumodmanager.exe",
+        "shinryumodmanager.exe.bak/libs/a.dll",
+      ),
+    );
+    assert.deepEqual(manager.instructions, [
+      copy(sep("shinryumodmanager.exe.bak", "shinryumodmanager.exe"), "shinryumodmanager.exe"),
+      copy(sep("shinryumodmanager.exe.bak", "libs", "a.dll"), sep("libs", "a.dll")),
+      { type: "setmodtype", value: "XXX-modmanager" },
+    ]);
+    const mod = await installerOf(ext, "XXX-mod").install(
+      tree("MyMod_old/MyMod/mod-meta.yaml"),
+      "Cool Mod.installing",
+    );
+    assert.deepEqual(mod.instructions, [
+      copy(sep("MyMod_old", "MyMod", "mod-meta.yaml"), sep("MyMod", "mod-meta.yaml")),
+      { type: "setmodtype", value: "XXX-mod" },
+    ]);
+    const data = await installerOf(ext, "XXX-data").install(tree("a.par.bak/a.par"));
+    assert.deepEqual(data.instructions, [
+      copy(sep("a.par.bak", "a.par"), "a.par"),
+      { type: "setmodtype", value: "XXX-data" },
+    ]);
+    const root = await installerOf(ext, "XXX-root").install(
+      tree("nvngx_dlss.dll.bak/nvngx_dlss.dll"),
+    );
+    assert.deepEqual(root.instructions, [
+      copy(sep("nvngx_dlss.dll.bak", "nvngx_dlss.dll"), "nvngx_dlss.dll"),
+      { type: "setmodtype", value: "XXX-root" },
+    ]);
   });
 });
 
@@ -489,6 +526,43 @@ describe("template-shinryu: run the mod manager after a deploy", () => {
     await didDeploy(ext)("profile-1", {});
     ext.notifications[0].actions[0].action(() => undefined);
     assert.equal(ext.errors[0][0], "Failed to run Shin Ryu MM");
+  });
+
+  // Runs the notice's button against a tool that fails to start, by rejecting or by throwing.
+  async function launchFailing(failure, { sync }) {
+    const state = makeState({
+      discovered: { [GAME_ID]: { path: "x", tools: { "XXX-modmanager": { path: toolPath } } } },
+    });
+    const ext = await loadExtension(DIR, { state });
+    ext.api.runExecutable = () => {
+      if (sync) throw failure;
+      return Promise.reject(failure);
+    };
+    ext.state.settings.profiles.lastActiveProfile[GAME_ID] = "profile-1";
+    await didDeploy(ext)("profile-1", {});
+    ext.notifications[0].actions[0].action(() => undefined);
+    assert.ok(await waitFor(() => ext.errors.length === 1));
+    return ext.errors[0];
+  }
+
+  it("offers to report a permission, access or missing-file failure to start the tool", async () => {
+    for (const sync of [false, true]) {
+      for (const code of ["EPERM", "EACCES", "ENOENT"]) {
+        const failure = Object.assign(new Error("fail"), { code });
+        const [message, error, options] = await launchFailing(failure, { sync });
+        assert.equal(message, "Failed to run Shin Ryu MM");
+        assert.equal(error, failure);
+        assert.deepEqual(options, { allowReport: true }, `${code}, sync ${sync}`);
+      }
+    }
+  });
+
+  it("does not offer to report an unrecognised failure to start the tool", async () => {
+    for (const sync of [false, true]) {
+      const failure = Object.assign(new Error("odd"), { code: "EOTHER" });
+      const [, , options] = await launchFailing(failure, { sync });
+      assert.deepEqual(options, { allowReport: false }, `sync ${sync}`);
+    }
   });
 });
 

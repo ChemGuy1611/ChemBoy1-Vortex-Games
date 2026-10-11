@@ -1,5 +1,10 @@
 # template-farcry Changelog
 
+## [2026-10-11]
+
+- Fixed: the installers cut each mod's destination with `modFile.indexOf(...)`, which finds the FIRST occurrence of the marker's name in the path. A wrapper folder whose name ends with a root folder's name (`ModSupport/Support/x`) was cut inside the wrapper's name and installed as `Support/Support/x`; a flattening installer whose marker file name also appears in a parent folder name was cut at the wrong place. All seven cuts (`installModInstaller`, `installMiMod`, `installRootFiles`, `installRoot`, `installData`, `installBin`, `installXml`) now use `lastIndexOf`, which always lands on the marker's own path segment.
+- Fixed: the "report this error" check in `runModManager` listed `"EACCESS"`, a code Node never raises, so an access-denied failure to start the FC Mod Installer was never offered for reporting. It now lists `"EACCES"` (both the rejected-promise and the thrown-error route).
+
 ## [2026-10-06]
 
 - Added: an "Open Nexus Mods Page" button in the Mods toolbar that opens the game's mods page on Nexus Mods (`https://www.nexusmods.com/<GAME_ID>/mods`). It sits beside the PCGamingWiki and SteamDB buttons and only shows while this game is the active game.

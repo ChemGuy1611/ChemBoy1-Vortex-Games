@@ -2,6 +2,12 @@
 
 Covers `template-snowdropengine`. Suite file: `tests/templates/snowdropengine.test.js`.
 
+## [2026-10-11]
+
+- Changed: the install-output tests no longer filter folder copies out of the mod loader installer's result, since it now drops them itself. Added a test for a loader at the top of the archive.
+- Added: a test that the mod loader, config, data and data subfolder installers cut at the marker itself when its name also appears in a parent folder. Suite is now 35 tests.
+- Added: red proof. The three new or changed tests fail against the template as it was at the last commit and pass with the fix.
+
 ## [2026-10-06]
 
 - Added: one test that the `Open Nexus Mods Page` button opens `https://www.nexusmods.com/XXX/mods`. The registered action list and the action count in its test name now include the button.

@@ -2,6 +2,13 @@
 
 Covers `template-anvilengine`. Suite file: `tests/templates/anvilengine.test.js`.
 
+## [2026-10-11]
+
+- Changed: the three `known gap` tests (Extracted wrapper cut, root wrapper cut, rename notice name) now assert the fixed results and lost their prefix. The rename notice test covers five names, including a trailing `.zip.installing` and an upper-case `.RAR`. The EACCES gap test now asserts the report is offered, on both the rejected-promise and the thrown-error route, plus an unknown code on the thrown route.
+- Added: two table tests that every other cutting installer (ATK, loose .data, .forge file; Forger, Forger patch, sound, fixes, ResoRep, ResoRep textures, DLC) cuts at the marker itself when its name also appears in a parent folder. The .forge folder and .data folder installers are not in the tables: their cut cannot misfire, because a parent that contains the folder's name would itself have matched first.
+- Added: a rename dialog test that a failing purge or deploy is reported with the existing error instead of being left unhandled. Suite is now 251 tests.
+- Added: red proof. Seven of the changed or new test groups fail against the template as it was at the last commit and pass with the fix.
+
 ## [2026-10-06] (2)
 
 - Changed: the toolbar actions tests cover the new `Open Nexus Mods Page` button. It is in the registered action list, and it opens `https://www.nexusmods.com/XXX/mods`, and its failure is reported instead of thrown when the shell is unavailable.

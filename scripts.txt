@@ -35,6 +35,7 @@ generate_explained.js
 generate_notes.js
 lint_extensions.js
 audit_deprecated_usage.js
+sweep_template_fixes.js
 
 # Documentation
 SCRIPTS.md
