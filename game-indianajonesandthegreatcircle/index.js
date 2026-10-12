@@ -2,8 +2,8 @@
 Name: Indiana Jones and the Great Circle Vortex Extension
 Structure: Basic Game (with Xbox) - Future Mod Injector
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2025-12-09
+Version: 1.0.0
+Date: 2026-10-12
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -418,7 +418,9 @@ async function testZipContent(files, gameId) {
 
 //Install zips
 async function installZipContent(files, destinationPath) {
-  const zipFiles = files.filter((file) => [".zip", ".7z", ".rar"].includes(path.extname(file)));
+  const zipFiles = files.filter((file) =>
+    [".zip", ".7z", ".rar"].includes(path.extname(file).toLowerCase()),
+  );
   // If it's a double zip, we don't need to repack.
   if (zipFiles.length > 0) {
     const instructions = zipFiles.map((file) => {
@@ -478,7 +480,7 @@ function testConfig(files, gameId) {
 //Install config files
 function installConfig(files) {
   const modFile = files.find((file) => CONFIG_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: CONFIG_ID };
@@ -523,7 +525,7 @@ function testSave(files, gameId) {
 //Install save files
 function installSave(files) {
   const modFile = files.find((file) => path.extname(file).toLowerCase() === SAVE_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: SAVE_ID };
@@ -568,7 +570,7 @@ function testSound(files, gameId) {
 //Install sound files
 function installSound(files) {
   const modFile = files.find((file) => SOUND_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: SOUND_ID };

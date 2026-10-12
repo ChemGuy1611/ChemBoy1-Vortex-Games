@@ -14,6 +14,7 @@
 | --- | --- |
 | Game ID | `lookoutside` |
 | Executable | `Game.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
 | Extension Page | [https://www.nexusmods.com/site/mods/1449](https://www.nexusmods.com/site/mods/1449) |
 | PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Look_Outside](https://www.pcgamingwiki.com/wiki/Look_Outside) |
 
@@ -26,6 +27,11 @@
 
 | Flag | Value | Description |
 | --- | --- | --- |
+| `hasXbox` | `false` | toggle for Xbox version logic |
+| `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
+| `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
+| `setupNotification` | `true` | enable to show the user a notification with special instructions (specify below) - default true: plugins.js manual-update reminder is always relevant |
+| `debug` | `false` | toggle for debug mode |
 | `mod_update_all_profile` | `false` | for mod update to keep plugins in the load order and not uncheck them |
 
 ## Mod Types
@@ -49,6 +55,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | `lookoutside-jsfile` | 27 |
 | `lookoutside-root` | 29 |
 | `lookoutside-json` | 31 |
+| `lookoutside-fallback` | 49 |
 
 ## Registered Tools
 
@@ -73,3 +80,4 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.

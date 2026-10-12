@@ -5,6 +5,7 @@
   "type": "commonjs",
   "scripts": {
     "test": "node --test --test-timeout=30000 \"tests/**/*.test.js\"",
+    "test:games": "node --test --test-timeout=60000 tests/games-smoke.js",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "format": "oxfmt --write .",

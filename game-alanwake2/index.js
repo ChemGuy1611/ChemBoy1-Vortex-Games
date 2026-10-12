@@ -2,8 +2,8 @@
 Name: Alan Wake 2 Vortex Extension
 Structure: Root Folder Mod Loader
 Author: ChemBoy1
-Version: 1.2.0
-Date: 2026-03-22
+Version: 1.2.1
+Date: 2026-10-12
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -353,7 +353,7 @@ function testModLoader(files, gameId) {
 //Installer install Fluffy Mod Manger files
 function installModLoader(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === MODLOADER_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MODLOADER_ID };
@@ -400,7 +400,7 @@ function testFolders(files, gameId) {
 function installFolders(files) {
   const modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file).toLowerCase()));
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(ROOT_IDX);
+  const idx = modFile.lastIndexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
 

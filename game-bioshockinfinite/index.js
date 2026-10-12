@@ -2,8 +2,8 @@
 Name: BioShock Infinite Vortex Extension
 Structure: UE2/3 Game (TFC Installer)
 Author: ChemBoy1
-Version: 0.6.1
-Date: 2025-11-12
+Version: 1.0.0
+Date: 2026-10-12
 /////////////////////////////////////////*/
 
 //Import libraries
@@ -12,6 +12,7 @@ const fsp = fs.promises;
 const { actions, fs: vfs, util, selectors, log, VortexError } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
+const { parseStringPromise } = require("xml2js");
 //const winapi = require('winapi-bindings');
 
 //const USER_HOME = util.getVortexPath("home");
@@ -33,9 +34,22 @@ const EPIC_CODE_NAME = "XGame";
 const ROOT_FOLDERS = [EPIC_CODE_NAME, "DLC", "Engine", "Binaries"];
 const BINARIES_PATH = path.join("Binaries", "Win32");
 const EXEC_NAME = "BioShockInfinite.exe";
+const EXEC_NAME_64 = EXEC_NAME; //no separate 64-bit executable
+const EXEC_NAME_SHIPPING = EXEC_NAME;
 const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
+const EXEC_64 = path.join(BINARIES_PATH, EXEC_NAME_64);
+const EXEC_SHIPPING = path.join(BINARIES_PATH, EXEC_NAME_SHIPPING);
 const EXEC_XBOX = "gamelaunchhelper.exe";
 const DATA_FOLDER = path.join("BioShock Infinite", EPIC_CODE_NAME);
+
+//feature toggles
+let hasXbox = false; //toggle for Xbox version logic
+if (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) hasXbox = true;
+const has64Bit = false; //toggle for 64-bit version logic
+const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
+const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
+const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
+const debug = false; //toggle for debug mode
 
 const SPECIAL_TFCMOD_FOLDERS = [];
 
@@ -43,6 +57,7 @@ let GAME_PATH = ""; //patched in the setup function to the discovered game path
 let GAME_VERSION = "";
 let STAGING_FOLDER = ""; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ""; //Vortex download folder path
+const APPMANIFEST_FILE = "appxmanifest.xml";
 
 //Information for mod types and installers
 const TFC_ID = `${GAME_ID}-tfcinstaller`;
@@ -145,7 +160,7 @@ const spec = {
       gogAppId: GOGAPP_ID,
       epicAppId: EPICAPP_ID,
       xboxAppId: XBOXAPP_ID,
-      //"supportsSymlinks": false,
+      supportsSymlinks: allowSymlinks,
       ignoreConflicts: IGNORE_CONFLICTS,
       ignoreDeploy: IGNORE_DEPLOY,
     },
@@ -394,6 +409,22 @@ function getExecutable(gamePath) {
   return EXEC;
 }
 
+//Get correct game version
+async function setGameVersion(gamePath) {
+  if (hasXbox && (await statCheckAsync(gamePath, EXEC_XBOX))) {
+    GAME_VERSION = "xbox";
+    return GAME_VERSION;
+  }
+  if (await statCheckAsync(gamePath, EXEC)) {
+    GAME_VERSION = "default";
+    return GAME_VERSION;
+  }
+  if (has64Bit && (await statCheckAsync(gamePath, EXEC_64))) {
+    GAME_VERSION = "definitive";
+    return GAME_VERSION;
+  } //*/
+}
+
 const getDiscoveryPath = (api) => {
   //get the game's discovered path
   const state = api.getState();
@@ -541,7 +572,7 @@ function testTfc(files, gameId) {
 //Installer install Fluffy Mod Manger files
 function installTfc(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === TFC_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: TFC_ID };
@@ -586,7 +617,7 @@ function testUpkExplorer(files, gameId) {
 //Installer install Fluffy Mod Manger files
 function installUpkExplorer(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === UPKEXPLORER_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: UPKEXPLORER_ID };
@@ -638,7 +669,7 @@ function installTfcMod(files, fileName) {
   if (modFile === undefined) {
     modFile = files.find((file) => TFCMOD_EXTS.includes(path.extname(file).toLowerCase())); //exts fallback
   }
-  //let idx = modFile.indexOf(path.basename(modFile));
+  //let idx = modFile.lastIndexOf(path.basename(modFile));
   let rootPath = path.dirname(modFile);
   const ROOT_PATH = path.basename(rootPath);
   if (ROOT_PATH !== ".") {
@@ -655,7 +686,7 @@ function installTfcMod(files, fileName) {
     /*const indexFolder = path.basename(modFile); //index to catch other folders in the same directory
     //idx = modFile.indexOf(`${indexFolder}${path.sep}`); //index on the folder with path separator //*/
   }
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
 
   // Remove empty directories and anything that isn't in the rootPath
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
@@ -716,7 +747,7 @@ function installRoot(files) {
     setModTypeInstruction = { type: "setmodtype", value: ROOTSUB_ID };
   }
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(ROOT_IDX);
+  const idx = modFile.lastIndexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
 
@@ -761,10 +792,12 @@ function testCookedSub(files, gameId) {
 //Installer install CookedPC folders/files
 function installCookedSub(files) {
   let modFile = files.find((file) => COOKEDSUB_FOLDERS.includes(path.basename(file)));
-  let idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  let idx;
   if (modFile === undefined) {
     modFile = files.find((file) => COOKEDSUB_EXTS.includes(path.extname(file).toLowerCase()));
-    idx = modFile.indexOf(path.basename(modFile));
+    idx = modFile.lastIndexOf(path.basename(modFile));
+  } else {
+    idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   }
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
@@ -810,7 +843,7 @@ function testMovies(files, gameId) {
 //mod installer instructions
 function installMovies(files) {
   const modFile = files.find((file) => MOVIES_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOVIES_ID };
@@ -857,7 +890,7 @@ function installBinaries(files) {
   if (modFile === undefined) {
     modFile = files.find((file) => BINARIES_EXTS.includes(path.extname(file).toLowerCase()));
   }
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: BINARIES_ID };
@@ -874,6 +907,129 @@ function installBinaries(files) {
   });
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
+}
+
+//Fallback installer to root folder
+function testFallback(files, gameId) {
+  let supported = gameId === spec.game.id;
+
+  // Test for a mod installer.
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Fallback installer to root folder
+function installFallback(api, files, destinationPath) {
+  fallbackInstallerNotify(api, destinationPath);
+
+  const filtered = files.filter((file) => !file.endsWith(path.sep));
+  const instructions = filtered.map((file) => {
+    return {
+      type: "copy",
+      source: file,
+      destination: file,
+    };
+  });
+  return Promise.resolve({ instructions });
+}
+
+function fallbackInstallerNotify(api, modName) {
+  const state = api.getState();
+  STAGING_FOLDER = selectors.installPathForGame(state, spec.game.id);
+  modName = path.basename(modName, ".installing");
+  const id = modName.replace(/[^a-zA-Z0-9\s]*( )*/gi, "");
+  const NOTIF_ID = `${GAME_ID}-${id}-fallback`;
+  const MESSAGE = "Fallback installer reached for " + modName;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: "info",
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: "More",
+        action: (dismiss) => {
+          api.showDialog(
+            "question",
+            MESSAGE,
+            {
+              text:
+                `The mod you just installed reached the fallback installer. This means Vortex could not determine where to place these mod files.\n` +
+                `Please check the mod page description and review the files in the mod staging folder to determine if manual file manipulation is required.\n` +
+                `\n` +
+                `If you think that Vortex should be capable to install this mod to a specific folder, please contact the extension developer for support at the link below.\n` +
+                `\n` +
+                `Mod Name: ${modName}.\n` +
+                `\n`,
+            },
+            [
+              { label: "Continue", action: () => dismiss() },
+              {
+                label: "Contact Ext. Developer",
+                action: () => {
+                  try {
+                    window.api.shell.openUrl(`${EXTENSION_URL}?tab=posts`);
+                  } catch (err) {
+                    api.showErrorNotification("Failed to open the URL", err, {
+                      allowReport: false,
+                    });
+                  }
+                  dismiss();
+                },
+              }, //*/
+              //*
+              {
+                label: `Open Mod Page + Staging Folder`,
+                action: () => {
+                  try {
+                    window.api.shell.openFile(path.join(STAGING_FOLDER, modName));
+                  } catch (err) {
+                    api.showErrorNotification("Failed to open the file or folder", err, {
+                      allowReport: false,
+                    });
+                  }
+                  const mods = api.store.getState()?.persistent?.mods?.[spec.game.id] ?? {};
+                  const modMatch = Object.values(mods).find(
+                    (mod) => mod.installationPath === modName,
+                  );
+                  log("warn", `Found ${modMatch?.id} for ${modName}`);
+                  let PAGE = ``;
+                  if (modMatch) {
+                    const MOD_ID = modMatch.attributes.modId;
+                    if (MOD_ID !== undefined) {
+                      PAGE = `${MOD_ID}?tab=description`;
+                    }
+                  }
+                  const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
+                  try {
+                    window.api.shell.openUrl(MOD_PAGE_URL);
+                  } catch (err) {
+                    api.showErrorNotification("Failed to open the URL", err, {
+                      allowReport: false,
+                    });
+                  }
+                  dismiss();
+                },
+              }, //*/
+            ],
+          );
+        },
+      },
+    ],
+  });
 }
 
 // MAIN EXTENSION FUNCTION /////////////////////////////////////////////////////
@@ -993,7 +1149,7 @@ function runModManager(api) {
     if (TOOL_PATH !== undefined) {
       return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false }).catch((err) =>
         api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-          allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+          allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
         }),
       );
     } else {
@@ -1004,8 +1160,45 @@ function runModManager(api) {
     }
   } catch (err) {
     return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+      allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
     });
+  }
+}
+
+//*
+async function resolveGameVersion(gamePath) {
+  GAME_VERSION = await setGameVersion(gamePath);
+  let version = "0.0.0";
+  if (GAME_VERSION === "xbox") {
+    // use appxmanifest.xml for Xbox version
+    try {
+      const appManifest = await fsp.readFile(path.join(gamePath, APPMANIFEST_FILE), "utf8");
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log("error", `Could not read ${APPMANIFEST_FILE} file to get game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  } /*if (has64Bit && await statCheckAsync(gamePath, EXEC_64)) {
+    try {
+      const exeVersion = require('exe-version');
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC_SHIPPING));
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read ${EXEC_NAME_SHIPPING} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  } //*/ else {
+    // use exe
+    try {
+      const exeVersion = require("exe-version");
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC_SHIPPING));
+      return Promise.resolve(version);
+    } catch (err) {
+      log("error", `Could not read ${EXEC_NAME_SHIPPING} file to get game version: ${err}`);
+      return Promise.resolve(version);
+    }
   }
 }
 
@@ -1022,7 +1215,7 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
-  //setupNotify(api);
+  if (setupNotification) setupNotify(api);
   // ASYNC CODE //////////////////////////////////////////
   await downloadTfc(api, gameSpec);
   await modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
@@ -1040,6 +1233,7 @@ function applyGame(context, gameSpec) {
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
     //executable: getExecutable,
+    getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);
@@ -1073,6 +1267,11 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(COOKEDSUB_ID, 33, testCookedSub, installCookedSub);
   context.registerInstaller(MOVIES_ID, 35, testMovies, installMovies);
   context.registerInstaller(BINARIES_ID, 37, testBinaries, installBinaries);
+  if (fallbackInstaller) {
+    context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) =>
+      installFallback(context.api, files, destinationPath),
+    );
+  }
 
   //register actions
   context.registerAction(

@@ -2,8 +2,8 @@
 Name: Hades II Vortex Extension
 Structure: 3rd-Party Mod Installer
 Author: ChemBoy1
-Version: 1.2.0
-Date: 2026-10-11
+Version: 1.2.1
+Date: 2026-10-12
 ////////////////////////////////*/
 
 //Import libraries
@@ -707,7 +707,7 @@ function testModManger(files, gameId) {
 //Installer install Mod Importer
 function installModManager(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === MANAGER_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MANAGER_ID };
@@ -756,7 +756,7 @@ function testModUtility(files, gameId) {
 //Installer install Mod Importer
 function installModUtility(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === UTILITY_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: UTILITY_ID };
@@ -802,7 +802,7 @@ function testLoader(files, gameId) {
 //Installer install the Hell2Modding mod loader
 function installLoader(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === LOADER_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: LOADER_ID };
@@ -940,7 +940,7 @@ function testMod(files, gameId) {
 //Installer install mod files
 function installMod(files, fileName) {
   const modFile = files.find((file) => MOD_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_ID };

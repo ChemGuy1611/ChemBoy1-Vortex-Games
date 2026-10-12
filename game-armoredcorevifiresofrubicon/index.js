@@ -492,7 +492,7 @@ function testMe3(files, gameId) {
 function installMe3(files) {
   const MOD_TYPE = ME3_ID;
   const modFile = files.find((file) => path.basename(file) === ME3_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -537,7 +537,7 @@ function testMod(files, gameId) {
 function installMod(files) {
   const MOD_TYPE = MOD_ID;
   const modFile = files.find((file) => MOD_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -582,7 +582,7 @@ function testRoot(files, gameId) {
 function installRoot(files) {
   const modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file)));
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(ROOT_IDX);
+  const idx = modFile.lastIndexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };

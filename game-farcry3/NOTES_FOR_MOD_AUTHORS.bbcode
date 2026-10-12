@@ -37,6 +37,7 @@ MyRootMod.zip
 
   Requirements:
     - Recognised by a folder named "bin", "data_win32" or "Support" in the archive.
+    - Recognised by a file named """".
 
   Installs to: the game folder itself (no subfolder)
 
@@ -91,6 +92,21 @@ Mods packaged for the Far Cry Mod Installer.
 
   Common mistakes:
     - These are applied through the Mod Installer tool, not deployed straight into the game.
+
+========================================================================
+
+Fallback Installer:
+
+The catch-all. Any archive that matched none of the installers above lands here and is copied across unchanged.
+
+[b][color=#ffff00]NOTE: Landing in the fallback installer is a signal your archive layout needs fixing.[/color][/b]
+
+  Requirements:
+    - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
+    - Vortex shows the user a notification when a mod installs through the fallback.
+
+  Common mistakes:
+    - If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.
 
 ========================================================================
 

@@ -30,6 +30,7 @@
 | `has64Bit` | `false` | toggle for 64-bit version logic |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
 | `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
+| `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
 | `debug` | `false` | toggle for debug mode |
 
 ## Mod Types

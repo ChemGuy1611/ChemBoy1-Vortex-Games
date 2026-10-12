@@ -1894,6 +1894,47 @@ function sliceFunction(src, name) {
   return null;
 }
 
+/** Index of the `)` closing the `(` at `open`, skipping string literals; -1 when unbalanced. */
+function matchingParen(body, open) {
+  let depth = 0;
+  for (let i = open; i < body.length; i++) {
+    const ch = body[i];
+    if (ch === '"' || ch === "'" || ch === "`") {
+      i = body.indexOf(ch, i + 1);
+      if (i === -1) return -1;
+    } else if (ch === "(") {
+      depth++;
+    } else if (ch === ")" && --depth === 0) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+/**
+ * Character ranges of `files.some/find(...)` checks that only count AGAINST a match, either
+ * written inline as `!files.some(...)` or bound to a flag the body only ever reads negated
+ * (`const isExe = files.some(...)` ... `&& !isExe`). A "must not contain" check is not something
+ * the archive has to contain, so deriveTrigger leaves these ranges out.
+ */
+function negatedRanges(body) {
+  const ranges = [];
+  for (const m of body.matchAll(/(!+)\s*files\.(?:some|find)\s*\(/g)) {
+    if (m[1].length % 2 === 0) continue;
+    const open = m.index + m[0].length - 1;
+    const close = matchingParen(body, open);
+    if (close !== -1) ranges.push([open, close]);
+  }
+  for (const m of body.matchAll(/\b(?:const|let)\s+(\w+)\s*=\s*files\.(?:some|find)\s*\(/g)) {
+    const open = m.index + m[0].length - 1;
+    const close = matchingParen(body, open);
+    if (close === -1) continue;
+    const uses = [...body.slice(close).matchAll(new RegExp(`(!*)\\s*\\b${m[1]}\\b`, "g"))];
+    if (uses.length && uses.every((u) => u[1].length % 2 === 1)) ranges.push([open, close]);
+  }
+  return ranges;
+}
+
 /**
  * Read the recognisable file/folder conditions out of a test function body.
  * Returns human-readable phrases; unrecognised logic simply yields nothing,
@@ -1908,13 +1949,15 @@ function deriveTrigger(body, src, table) {
       out.push(s);
     }
   };
+  const negated = negatedRanges(body);
+  const isNegated = (idx) => negated.some(([from, to]) => idx > from && idx < to);
 
   // path.basename(...) === CONST  ->  file or folder with that name
   for (const m of body.matchAll(
     /path\.basename\([^)]*\)(?:\.toLowerCase\(\))?\s*===\s*([A-Za-z_$][\w.]*|'[^']*'|"[^"]*")(?:\.toLowerCase\(\))?/g,
   )) {
     const raw = m[1];
-    if (/^(gameId|spec)/.test(raw)) continue;
+    if (/^(gameId|spec)/.test(raw) || isNegated(m.index)) continue;
     const value = resolveWithFallback(raw, table, src);
     if (value && value !== raw && !String(value).includes("${") && value !== "moduleconfig.xml") {
       add(`a file or folder named \`${value}\``);
@@ -1924,6 +1967,7 @@ function deriveTrigger(body, src, table) {
   for (const m of body.matchAll(
     /path\.extname\([^)]*\)(?:\.toLowerCase\(\))?\s*===\s*([A-Za-z_$][\w.]*|'[^']*'|"[^"]*")/g,
   )) {
+    if (isNegated(m.index)) continue;
     const value = resolveWithFallback(m[1], table, src);
     if (value && value !== m[1] && !String(value).includes("${")) {
       add(`a file with the \`${value}\` extension`);
@@ -1933,6 +1977,7 @@ function deriveTrigger(body, src, table) {
   for (const m of body.matchAll(
     /([A-Z][A-Z0-9_]*)(?:_LOWER)?\.includes\(\s*path\.(basename|extname)\(/g,
   )) {
+    if (isNegated(m.index)) continue;
     const arrName = m[1].replace(/_LOWER$/, "");
     const items = resolveArray(arrName, src, table);
     if (items.length) {

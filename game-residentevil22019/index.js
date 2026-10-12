@@ -2,8 +2,8 @@
 Name: Resident Evil 2 Vortex Extension
 Structure: Fluffy + REFramework (RE Engine)
 Author: ChemBoy1
-Version: 2.0.0
-Date: 2026-09-15
+Version: 2.1.1
+Date: 2026-10-12
 Notes:
 -
 ///////////////////////////////////////////*/
@@ -32,7 +32,7 @@ const XBOX_PUB_ID = "8fty0by30jkny"; //get from Save folder. '8wekyb3d8bbwe' if 
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, STEAMAPP_ID_DEMO, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const EXEC = "re2.exe";
-const EXEC_DEMO = EXEC;
+const EXEC_DEMO = EXEC; //the 1-Shot Demo uses the same re2.exe, so it can't be told apart from the full game by file name (HAS_DEMO stays false)
 const REF_STRING = "REFramework"; //file name for nightly latest URL - constant in recent versions. Not named per game any longer.
 const GAME_NAME = "Resident Evil 2 (2019)";
 const GAME_NAME_SHORT = "RE 2";
@@ -64,8 +64,9 @@ if (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) hasXbox = true;
 const reZip = true; //! NOT WORKING YET - KEEP AS TRUE FOR NOW - set to true to re-zip Fluffy Mods (possibly not necessary for FLUFFY v3.069+)
 //could index on modinfo.ini to avoid extra top level folder. should work?
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
+const HAS_DEMO = EXEC_DEMO !== "" && EXEC_DEMO !== EXEC; //false when the game has no separate demo executable
 let multiExe = true; //set to true if there are multiple executables (and multiple FLUFFY_FOLDERs) (typically for Demo)
-if ((EXEC !== EXEC_DEMO && EXEC_DEMO !== null) || hasXbox) {
+if (HAS_DEMO || hasXbox) {
   multiExe = true;
 }
 const setupNotification = true; //enable to show the user a notification with special instructions (specify below)
@@ -272,19 +273,24 @@ const tools = [
     //defaultPrimary: true,
     //parameters: [],
   }, //*/
-  {
-    id: `${GAME_ID}-customlaunchdemo`,
-    name: `Custom Launch (Demo)`,
-    logo: `exec_demo.png`,
-    executable: () => EXEC_DEMO,
-    requiredFiles: [EXEC_DEMO],
-    detach: true,
-    relative: true,
-    exclusive: true,
-    shell: true,
-    //defaultPrimary: true,
-    //parameters: [],
-  }, //*/
+  //only offered when the game has a separate demo executable
+  ...(HAS_DEMO
+    ? [
+        {
+          id: `${GAME_ID}-customlaunchdemo`,
+          name: `Custom Launch (Demo)`,
+          logo: `exec_demo.png`,
+          executable: () => EXEC_DEMO,
+          requiredFiles: [EXEC_DEMO],
+          detach: true,
+          relative: true,
+          exclusive: true,
+          shell: true,
+          //defaultPrimary: true,
+          //parameters: [],
+        },
+      ]
+    : []),
 ];
 
 // BASIC FUNCTIONS //////////////////////////////////////////////////////////////////////
@@ -398,7 +404,7 @@ function getExecutable(discoveryPath) {
   if (hasXbox && statCheckSync(discoveryPath, EXEC_XBOX)) {
     return EXEC_XBOX;
   }
-  if (statCheckSync(discoveryPath, EXEC_DEMO)) {
+  if (HAS_DEMO && statCheckSync(discoveryPath, EXEC_DEMO)) {
     FLUFFYMOD_PATH = FLUFFYMOD_PATH_DEMO;
     PRESET_PATH = PRESET_PATH_DEMO;
     return EXEC_DEMO;
@@ -412,7 +418,7 @@ function getModPath(discoveryPath) {
     //return immediately if only one exe filename for all versions
     return () => FLUFFYMOD_PATH;
   }
-  if (statCheckSync(discoveryPath, EXEC_DEMO)) {
+  if (HAS_DEMO && statCheckSync(discoveryPath, EXEC_DEMO)) {
     FLUFFYMOD_PATH = FLUFFYMOD_PATH_DEMO;
     PRESET_PATH = PRESET_PATH_DEMO;
     return () => FLUFFYMOD_PATH;
@@ -426,7 +432,7 @@ async function setGameVersion(gamePath) {
     GAME_VERSION = "xbox";
     return GAME_VERSION;
   }
-  if (multiExe && (await statCheckAsync(gamePath, EXEC_DEMO))) {
+  if (HAS_DEMO && (await statCheckAsync(gamePath, EXEC_DEMO))) {
     GAME_VERSION = "demo";
     FLUFFYMOD_PATH = FLUFFYMOD_PATH_DEMO;
     PRESET_PATH = PRESET_PATH_DEMO;
@@ -745,7 +751,7 @@ function testFluffy(files, gameId) {
 //Installer install Fluffy Mod Manger files
 function installFluffy(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === FLUFFY_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: FLUFFY_ID };
@@ -790,7 +796,7 @@ function testREF(files, gameId) {
 //Installer install REFramework file
 function installREF(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === REF_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: REF_ID };
@@ -837,7 +843,7 @@ function testFluffyMod(files, gameId) {
 //Installer install Fluffy mod files
 function installFluffyMod(files) {
   //const modFile = files.find(file => path.basename(file).toLowerCase() === FLUFFYMOD_FILE);
-  //const idx = modFile.indexOf(path.basename(modFile));
+  //const idx = modFile.lastIndexOf(path.basename(modFile));
   //const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: "setmodtype", value: FLUFFYMOD_ID };
 
@@ -884,10 +890,17 @@ function testLooseLua(files, gameId) {
 
 //Installer install mod files
 function installLooseLua(files) {
-  const modFile = files.find((file) => path.extname(file).toLowerCase() === LUA_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
-  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
+  // Root the install at the deepest folder that holds every script, so scripts in separate folders all install.
+  const luaDirs = files
+    .filter((file) => path.extname(file).toLowerCase() === LUA_EXT)
+    .map((file) => (path.dirname(file) === "." ? [] : path.dirname(file).split(path.sep)));
+  let sharedDirs = luaDirs[0];
+  for (const dirs of luaDirs) {
+    let n = 0;
+    while (n < sharedDirs.length && n < dirs.length && sharedDirs[n] === dirs[n]) n++;
+    sharedDirs = sharedDirs.slice(0, n);
+  }
+  const rootPrefix = sharedDirs.length > 0 ? sharedDirs.join(path.sep) + path.sep : "";
   const setModTypeInstruction = { type: "setmodtype", value: LOOSELUA_ID };
 
   // Remove directories and anything that isn't in the rootPath.
@@ -897,7 +910,7 @@ function installLooseLua(files) {
     return {
       type: "copy",
       source: file,
-      destination: path.join("reframework", "autorun", file.substr(idx)),
+      destination: path.join("reframework", "autorun", file.substr(rootPrefix.length)),
     };
   });
   instructions.push(setModTypeInstruction);
@@ -938,7 +951,7 @@ function installRoot(files) {
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
@@ -980,7 +993,7 @@ function testPreset(files, gameId) {
 //Install Fluffy Preset files
 function installPreset(files) {
   const modFile = files.find((file) => PRESET_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: PRESET_ID };
@@ -1025,7 +1038,9 @@ async function testZipContent(files, gameId) {
 
 //install zips for Fluffy
 async function installZipContent(files, destinationPath) {
-  const zipFiles = files.filter((file) => [".zip", ".7z", ".rar"].includes(path.extname(file)));
+  const zipFiles = files.filter((file) =>
+    [".zip", ".7z", ".rar"].includes(path.extname(file).toLowerCase()),
+  );
   if (zipFiles.length > 0) {
     // If it's a double zip, we don't need to repack.
     const instructions = zipFiles.map((file) => {
@@ -1166,7 +1181,7 @@ function runFluffy(api) {
     if (TOOL_PATH !== undefined) {
       return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false }).catch((err) =>
         api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-          allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+          allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
         }),
       );
     } else {
@@ -1177,7 +1192,7 @@ function runFluffy(api) {
     }
   } catch (err) {
     return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+      allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
     });
   }
 }

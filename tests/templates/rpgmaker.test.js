@@ -110,11 +110,14 @@ describe("template-rpgmaker: registration with default toggles", () => {
     assert.equal(await registration.validate(), undefined);
   });
 
-  it("listens for purges and deployments through the event bus", () => {
-    for (const event of ["will-purge", "did-deploy", "did-purge"]) {
-      assert.equal(ext.api.events.listenerCount(event), 1, event);
-    }
-    assert.deepEqual(ext.listeners, []);
+  it("listens for purges on the event bus and for deploys through the async hook", () => {
+    assert.equal(ext.api.events.listenerCount("did-purge"), 1);
+    assert.equal(ext.api.events.listenerCount("will-purge"), 0);
+    assert.equal(ext.api.events.listenerCount("did-deploy"), 0);
+    assert.deepEqual(
+      ext.listeners.map(({ kind, args }) => [kind, args[0]]),
+      [["onAsync", "did-deploy"]],
+    );
   });
 
   it("offers a custom launch tool", () => {
@@ -907,6 +910,16 @@ describe("template-rpgmaker: plugins.js load order", () => {
       );
     });
 
+    it("leaves the sidecar's locked flag out of plugins.js for a plugin only the sidecar knows", async () => {
+      const dir = gameWith(["A"]);
+      writePlugins(dir, []);
+      writeSidecar(dir, [entry("A", { locked: true })]);
+      const { registration } = await load(dir);
+      await registration.serializeLoadOrder(await registration.deserializeLoadOrder());
+      assert.deepEqual(readPlugins(dir), [entry("A")]);
+      assert.equal(readSidecar(dir)[0].locked, true);
+    });
+
     it("treats an entry with no enabled flag as enabled", async () => {
       const dir = gameWith(["A"]);
       const { registration } = await load(dir);
@@ -929,77 +942,63 @@ describe("template-rpgmaker: plugins.js load order", () => {
     });
   });
 
-  describe("purge guard", () => {
-    it("returns the stored load order untouched while a purge is under way", async () => {
-      const dir = gameWith(["A"]);
-      writePlugins(dir, [entry("A")]);
-      const stored = [{ id: "A", name: "A", enabled: false, locked: true }];
-      const { ext, registration } = await load(dir, { loadOrder: stored });
-
-      ext.api.events.emit("will-purge", "profile");
-      assert.deepEqual(await registration.deserializeLoadOrder(), stored);
-
-      const before = fs.readFileSync(pluginsFile(dir), "utf8");
-      await registration.serializeLoadOrder([{ id: "Z", name: "Z", enabled: true }]);
-      assert.equal(fs.readFileSync(pluginsFile(dir), "utf8"), before);
-      assert.equal(fs.existsSync(sidecarFile(dir)), false);
-    });
-
-    it("returns nothing while purging when no load order is stored yet", async () => {
-      const dir = gameWith(["A"]);
-      const { ext, registration } = await load(dir);
-      ext.api.events.emit("will-purge", "profile");
-      assert.deepEqual(await registration.deserializeLoadOrder(), []);
-    });
-
-    it("ignores a purge of another game's profile", async () => {
-      const dir = gameWith(["A"]);
-      const { ext, registration } = await load(dir);
-      ext.api.events.emit("will-purge", "other");
-      assert.deepEqual(
-        (await registration.deserializeLoadOrder()).map(({ id }) => id),
-        ["A"],
-      );
-    });
-
-    it("lifts the guard on the next deploy and refreshes the stored load order from disk", async () => {
+  describe("purge cleanup", () => {
+    it("does not hold back load order reads or writes around a purge", async () => {
       const dir = gameWith(["A"]);
       writePlugins(dir, [entry("A")]);
       const { ext, registration } = await load(dir);
 
       ext.api.events.emit("will-purge", "profile");
-      ext.api.events.emit("did-deploy", "profile");
-      assert.equal(await waitFor(() => ext.dispatched.length > 0), true);
-
-      const [action] = ext.dispatched;
-      assert.equal(action.type, "setFBLoadOrder");
-      assert.equal(action.payload[0], "profile");
-      assert.deepEqual(
-        action.payload[1].map(({ id }) => id),
-        ["A"],
-      );
       assert.deepEqual(
         (await registration.deserializeLoadOrder()).map(({ id }) => id),
         ["A"],
       );
+      await registration.serializeLoadOrder([{ id: "A", name: "A", enabled: true }]);
+      assert.equal(readSidecar(dir)[0].name, "A");
+      await settle();
+      assert.deepEqual(ext.dispatched, []);
     });
 
-    it("does nothing on a deploy that is not the end of a purge", async () => {
-      const dir = gameWith(["A"]);
+    //Vortex 2.9 writes nothing back on the deploy after a purge, so the extension's own
+    //did-deploy hook has to. The harness only records the hook, so call it directly.
+    const deploy = (ext, profileId = "profile") =>
+      ext.listeners
+        .find(({ kind, args }) => kind === "onAsync" && args[0] === "did-deploy")
+        .args[1](profileId);
+
+    it("writes a deployed plugin missing from plugins.js back on the deploy after a purge", async () => {
+      const dir = gameWith(["Vanilla", "A"]);
+      writePlugins(dir, [entry("Vanilla")]);
+      writeSidecar(dir, [entry("A", { parameters: { x: "1" }, locked: true })]);
       const { ext } = await load(dir);
-      ext.api.events.emit("did-deploy", "profile");
-      await settle();
-      assert.deepEqual(ext.dispatched, []);
+
+      await deploy(ext);
+      assert.deepEqual(readPlugins(dir), [
+        entry("Vanilla"),
+        entry("A", { parameters: { x: "1" } }),
+      ]);
+      assert.equal(readSidecar(dir)[0].locked, true);
     });
 
-    it("keeps the guard when another game's profile deploys", async () => {
+    it("leaves plugins.js untouched on a deploy when it already lists every managed plugin", async () => {
       const dir = gameWith(["A"]);
-      const { ext, registration } = await load(dir, { loadOrder: [{ id: "S" }] });
-      ext.api.events.emit("will-purge", "profile");
-      ext.api.events.emit("did-deploy", "other");
-      await settle();
-      assert.deepEqual(ext.dispatched, []);
-      assert.deepEqual(await registration.deserializeLoadOrder(), [{ id: "S" }]);
+      const compact = `var $plugins =\n[{"name":"A","status":true}];`;
+      fs.writeFileSync(pluginsFile(dir), compact);
+      const { ext } = await load(dir);
+
+      await deploy(ext);
+      assert.equal(fs.readFileSync(pluginsFile(dir), "utf8"), compact);
+    });
+
+    it("ignores the deploy of another game's profile or of a profile that is not active", async () => {
+      const dir = gameWith(["A"]);
+      writePlugins(dir, []);
+      writeSidecar(dir, [entry("A")]);
+      const { ext } = await load(dir);
+
+      await deploy(ext, "other");
+      await deploy(ext, "missing");
+      assert.deepEqual(readPlugins(dir), []);
     });
 
     it("prunes plugins.js down to the plugins still deployed after a purge, leaving the sidecar", async () => {

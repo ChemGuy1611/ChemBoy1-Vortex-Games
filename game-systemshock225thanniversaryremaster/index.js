@@ -2,8 +2,8 @@
 Name: System Shock 2 (Classic AND 25th Anniversary Remaster) Vortex Extension
 Structure: Basic game w/ mods folder
 Author: ChemBoy1
-Version: 0.4.8
-Date: 2026-09-04
+Version: 1.0.0
+Date: 2026-10-12
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -906,7 +906,7 @@ function testMod(files, gameId) {
 //Install save files
 function installMod(files) {
   const modFile = files.find((file) => MOD_EXT.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_ID };
@@ -979,7 +979,7 @@ async function installLegacy(files, destinationPath) {
   if (modFile === undefined) {
     modFile = files.find((file) => LEGACY_EXTS.includes(path.extname(file).toLowerCase()));
   }
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   let rootPath = path.dirname(modFile);
   if (rootPath === ".") {
     rootPath = "";
@@ -1045,7 +1045,7 @@ function testRootFolder(files, gameId) {
 //Install save files
 function installRootFolder(files) {
   const modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file).toLowerCase()));
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
@@ -1136,11 +1136,11 @@ function installClassic(files, fileName) {
   let modFile = files.find((file) => CLASSIC_FOLDERS.includes(path.basename(file).toLowerCase()));
   let idx = 0;
   if (modFile !== undefined) {
-    idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+    idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   }
   if (modFile === undefined) {
     modFile = files.find((file) => CLASSIC_EXTS.includes(path.extname(file).toLowerCase()));
-    idx = modFile.indexOf(path.basename(modFile));
+    idx = modFile.lastIndexOf(path.basename(modFile));
   }
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;

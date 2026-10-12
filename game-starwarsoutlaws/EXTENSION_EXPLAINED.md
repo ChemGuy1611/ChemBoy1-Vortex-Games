@@ -23,6 +23,15 @@
 - **Epic Games Store** — `02636c0284e8474f8c0b066ac7d9807f`
 - **Ubisoft Connect** — `17903`
 
+## Feature Flags
+
+| Flag | Value | Description |
+| --- | --- | --- |
+| `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
+| `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
+| `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
+| `debug` | `false` | toggle for debug mode |
+
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
@@ -46,6 +55,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | `starwarsoutlaws-datasub` | 29 |
 | `starwarsoutlaws-plugins` | 30 |
 | `starwarsoutlaws-config` | 31 |
+| `starwarsoutlaws-fallback` | 49 |
 
 ## Registered Tools
 

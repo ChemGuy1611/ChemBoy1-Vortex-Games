@@ -177,9 +177,9 @@ describe("template-reframework-fluffy: registration with default toggles", () =>
     assert.deepEqual(game.environment, { SteamAPPId: "XXX" });
   });
 
-  it("offers Fluffy and the two launch buttons as tools", async () => {
-    const [fluffy, launch, demo] = ext.game.supportedTools;
-    assert.equal(ext.game.supportedTools.length, 3);
+  it("offers Fluffy and the launch buttons as tools, the demo button only for a game with a demo", async () => {
+    const [fluffy, launch] = ext.game.supportedTools;
+    assert.equal(ext.game.supportedTools.length, 2);
     assert.deepEqual(
       [fluffy.id, fluffy.name, fluffy.logo, fluffy.executable(), fluffy.requiredFiles],
       [
@@ -200,9 +200,10 @@ describe("template-reframework-fluffy: registration with default toggles", () =>
       [true, true, true, true],
     );
     const withDemoExt = await loadExtension(DIR, { transform: withDemo });
-    const demoTool = withDemoExt.game.supportedTools[2];
+    assert.equal(withDemoExt.game.supportedTools.length, 3);
+    const demo = withDemoExt.game.supportedTools[2];
     assert.deepEqual(
-      [demo.id, demo.name, demo.logo, demoTool.executable(), demoTool.requiredFiles],
+      [demo.id, demo.name, demo.logo, demo.executable(), demo.requiredFiles],
       [
         "XXX-customlaunchdemo",
         "Custom Launch (Demo)",
@@ -215,6 +216,16 @@ describe("template-reframework-fluffy: registration with default toggles", () =>
       [demo.detach, demo.relative, demo.exclusive, demo.shell],
       [true, true, true, true],
     );
+  });
+
+  it("registers no demo button for a game without a demo, or whose demo executable is the game's own", async () => {
+    for (const transform of [setConst("EXEC_DEMO", '""'), sameAsGame]) {
+      const noDemo = await loadExtension(DIR, { transform });
+      assert.deepEqual(
+        noDemo.game.supportedTools.map(({ id }) => id),
+        ["XXX-fluffymanager", "XXX-customlaunch"],
+      );
+    }
   });
 });
 

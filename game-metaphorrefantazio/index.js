@@ -2,8 +2,8 @@
 Name: Metaphor: ReFantazio Vortex Extension
 Structure: Reloaded-II Game (Mod Installer)
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-10-03
+Version: 1.0.1
+Date: 2026-10-12
 /////////////////////////////////////////////////*/
 
 //Import libraries
@@ -554,7 +554,7 @@ function testModManger(files, gameId) {
 //Installer install Fluffy Mod Manger files
 function installModManager(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === RELOADED_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: RELOADED_ID };
@@ -603,7 +603,7 @@ function testReloadedLoader(files, gameId) {
 //Install Reloaded Mod files
 function installReloadedLoader(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === RELOADEDMOD_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: RELOADEDMODLOADER_ID };
@@ -648,7 +648,7 @@ function testReloadedMod(files, gameId) {
 //Install Reloaded Mod files
 function installReloadedMod(files, fileName) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === RELOADEDMOD_FILE);
-  let idx = modFile.indexOf(path.basename(modFile));
+  let idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: RELOADEDMOD_ID };
@@ -657,7 +657,7 @@ function installReloadedMod(files, fileName) {
   const ROOT_PATH = path.basename(path.dirname(modFile));
   const MOD_NAME = path.basename(fileName);
   if (ROOT_PATH !== "." && ROOT_PATH !== undefined) {
-    idx = modFile.indexOf(`${path.basename(ROOT_PATH)}${path.sep}`);
+    idx = modFile.lastIndexOf(`${path.basename(ROOT_PATH)}${path.sep}`);
   }
   if (ROOT_PATH === ".") {
     MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, "");
@@ -703,7 +703,7 @@ function testSave(files, gameId) {
 //Installer install Save (.bin) files
 function installSave(files) {
   const modFile = files.find((file) => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: SAVE_ID };
@@ -922,7 +922,7 @@ function runReloadedAdmin(api) {
         })
         .catch((err) =>
           api.showErrorNotification(`Failed to run ${TOOL_NAME} as Admin`, err, {
-            allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+            allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
           }),
         );
     } else {
@@ -933,7 +933,7 @@ function runReloadedAdmin(api) {
     }
   } catch (err) {
     return api.showErrorNotification(`Failed to run ${TOOL_NAME} as Admin`, err, {
-      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+      allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
     });
   }
 }

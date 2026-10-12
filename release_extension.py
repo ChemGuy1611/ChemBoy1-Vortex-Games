@@ -39,7 +39,11 @@ Steps performed per extension:
        NOTES_FOR_MOD_AUTHORS.bbcode, DESCRIPTION.bbcode) and *.bak backups
    12. Optionally upload zip to Nexus Mods as a new file version (changelog entry as
        description; file group resolved via v1 uid -> v3 groups, or via index.js FILE_GROUP_ID
-       override when the v3 list 404s); default: skip; use --upload to enable
+       override when the v3 list 404s); default: skip; use --upload to enable.
+       If Nexus answers HTTP 429 (Cloudflare rate limit), the whole run stops at that
+       extension: the rest are left untouched and the re-run command is printed.
+       --upload-delay SECONDS pauses after each upload to stay under the limit. The
+       exit code is 1 when any upload failed.
    13. Open EXTENSION_URL?tab=files in browser (or nexusmods.com/games/site if not set)
    14. Optionally open EXTENSION_URL/edit/documents (changelog editor) in browser
 
@@ -86,6 +90,7 @@ Usage:
     python release_extension.py EXT_ID --skip-node-check
     python release_extension.py EXT_ID --skip-lint      (--skip-eslint accepted as alias)
     python release_extension.py EXT_ID --upload
+    python release_extension.py EXT_ID [EXT_ID ...] --upload --upload-delay 15
     python release_extension.py EXT_ID --edit-changelog
     python release_extension.py EXT_ID --push-description
 
@@ -100,6 +105,7 @@ import os
 import re
 import sys
 import subprocess
+import time
 import webbrowser
 import zipfile
 
@@ -233,11 +239,18 @@ def update_discovery_ids(folder, game_id, dry_run=False):
     )
 
 
+def is_rate_limit_error(exc):
+    """True when an upload error is Nexus's HTTP 429 (the nexus_* helpers wrap it in a
+    RuntimeError whose text reads "HTTP 429 Too Many Requests")."""
+    return "HTTP 429" in str(exc)
+
+
 def release(game_id, open_browser, dry_run=False, skip_lint=False,
             skip_node_check=False, upload=False, edit_changelog=False, out=None):
     if out is None:
         out = {}
-    out.update({"zipped": False, "uploaded": False, "upload_failed": False, "browser_opened": False})
+    out.update({"zipped": False, "uploaded": False, "upload_failed": False, "rate_limited": False,
+                "browser_opened": False})
 
     folder, kind = resolve_extension_folder(game_id)
     if not folder:
@@ -454,6 +467,10 @@ def release(game_id, open_browser, dry_run=False, skip_lint=False,
                 except Exception as e:
                     log_error(game_id, f"upload failed: {e}")
                     out["upload_failed"] = True
+                    # Nexus sits behind Cloudflare: once it answers 429, every further upload
+                    # fails the same way until the ban lifts, so main() stops the run here.
+                    if is_rate_limit_error(e):
+                        out["rate_limited"] = True
 
     url_to_open = (f"{extension_url}?tab=files" if extension_url else None) or NEXUS_SITE_URL
     url_label = "" if extension_url else " (EXTENSION_URL not set)"
@@ -561,6 +578,14 @@ def main():
              "via sync_mod_pages.py. Backup first; a never-pushed page whose live text differs is "
              "skipped until pushed once by hand with --force. Needs NEXUS_API_KEY.",
     )
+    parser.add_argument(
+        "--upload-delay",
+        type=float,
+        default=0.0,
+        metavar="SECONDS",
+        help="Pause this long after each successful upload before the next extension "
+             "(default 0). Use it on a bulk --upload to stay under the Nexus rate limit.",
+    )
     args = parser.parse_args()
 
     upload = True if args.upload else False
@@ -576,6 +601,7 @@ def main():
     failed = []
     details = {}
     interrupted = False
+    rate_limited = False
     try:
         for game_id in args.game:
             try:
@@ -605,6 +631,11 @@ def main():
                 r_out["ok"] = False
                 failed.append(game_id)
             details[game_id] = r_out
+            if r_out.get("rate_limited"):
+                rate_limited = True
+                break
+            if args.upload_delay > 0 and r_out.get("uploaded") and game_id != args.game[-1]:
+                time.sleep(args.upload_delay)
     except KeyboardInterrupt:
         print("\n\n  Interrupted.")
         interrupted = True
@@ -663,11 +694,23 @@ def main():
 
         # details is filled only once an id finishes, so after Ctrl-C the id that was
         # mid-release and every one after it count as not processed.
-        not_processed = [gid for gid in args.game if gid not in details] if interrupted else []
-        print_run_summary(saved, failed, skipped=not_processed, skip_label="interrupted, not processed")
+        # A rate-limit stop leaves the rest untouched the same way.
+        stopped = interrupted or rate_limited
+        not_processed = [gid for gid in args.game if gid not in details] if stopped else []
+        print_run_summary(saved, failed, skipped=not_processed,
+                          skip_label="interrupted, not processed" if interrupted
+                          else "stopped by rate limit, not processed")
         if not args.dry_run:
             _print_per_game_summary(details)
-    return 1 if (failed or interrupted) else 0
+        if rate_limited:
+            redo = [gid for gid in args.game
+                    if gid not in details or details[gid].get("upload_failed")]
+            print("\n  Nexus rate-limited the upload (HTTP 429), so the run stopped here instead of"
+                  "\n  failing every remaining upload. The limit can last up to an hour; wait, then run:"
+                  f"\n    python release_extension.py {' '.join(redo)} --upload --upload-delay 15")
+    # A failed upload is a failed release even though the zip step succeeded.
+    upload_failed = any(r.get("upload_failed") for r in details.values())
+    return 1 if (failed or interrupted or upload_failed) else 0
 
 
 if __name__ == "__main__":

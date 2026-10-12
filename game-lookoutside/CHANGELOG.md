@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.2] - 2026-10-12
+
+- Added: A fallback installer. A mod no other installer recognises is now copied into the game folder as it is, with a notice explaining where it went.
+- Changed: The game's data folder is now checked for write access during setup, along with the plugins folder.
+- Fixed: Mods packaged inside an outer folder whose name ends with a game folder's name (for example "MyData" for "Data") now install into the right place instead of a doubled folder.
+- Fixed: Plugins with an upper-case ".JS" file extension are now named and listed correctly.
+- Fixed: After mods are purged, the next deploy now adds the deployed plugins back to plugins.js. They used to stay out until the load order was changed.
+
 ## [1.0.1] - 2026-10-02
 
 - Fixed: Updating a mod no longer resets its plugins' position and enabled state on the Load Order page. Reordering is paused with a notice until the update finishes.

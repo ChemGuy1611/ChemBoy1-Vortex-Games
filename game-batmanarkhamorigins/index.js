@@ -2,8 +2,8 @@
 Name: Batman: Arkham Origins Vortex Extension
 Structure: UE 2-3 Game + TFC Installer
 Author: ChemBoy1
-Version: 0.1.1
-Date: 2026-08-11
+Version: 1.0.0
+Date: 2026-10-12
 Notes:
 -
 /////////////////////////////////////////*/
@@ -67,6 +67,7 @@ const hasXbox = false; //toggle for Xbox version logic
 const has64Bit = false; //toggle for 64-bit version logic
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
+const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
 const debug = false; //toggle for debug mode
 
 const SPECIAL_TFCMOD_FOLDERS = [];
@@ -569,7 +570,7 @@ function testTfc(files, gameId) {
 //Installer install Fluffy Mod Manger files
 function installTfc(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === TFC_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: TFC_ID };
@@ -614,7 +615,7 @@ function testUpkExplorer(files, gameId) {
 //Installer install Fluffy Mod Manger files
 function installUpkExplorer(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === UPKEXPLORER_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: UPKEXPLORER_ID };
@@ -666,7 +667,7 @@ function installTfcMod(files, fileName) {
   if (modFile === undefined) {
     modFile = files.find((file) => TFCMOD_EXTS.includes(path.extname(file).toLowerCase())); //exts fallback
   }
-  //let idx = modFile.indexOf(path.basename(modFile));
+  //let idx = modFile.lastIndexOf(path.basename(modFile));
   let rootPath = path.dirname(modFile);
   const ROOT_PATH = path.basename(rootPath);
   if (ROOT_PATH !== ".") {
@@ -683,7 +684,7 @@ function installTfcMod(files, fileName) {
     /*const indexFolder = path.basename(modFile); //index to catch other folders in the same directory
     //idx = modFile.indexOf(`${indexFolder}${path.sep}`); //index on the folder with path separator //*/
   } //*/
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
 
   // Remove empty directories and anything that isn't in the rootPath
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
@@ -767,7 +768,7 @@ function installRoot(files) {
     folder = path.join(EPIC_CODE_NAME, COOKED_FOLDER);
   }
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(ROOT_IDX);
+  const idx = modFile.lastIndexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
 
@@ -907,7 +908,7 @@ async function installCookedSub(
 
   const generateInstructions = () => {
     const fileInstructions = filtered.reduce((accum, iter) => {
-      const idx = iter.indexOf(path.basename(iter));
+      const idx = iter.lastIndexOf(path.basename(iter));
       accum.push({
         type: "copy",
         source: iter,
@@ -954,7 +955,7 @@ function testMovies(files, gameId) {
 //mod installer instructions
 function installMovies(files) {
   const modFile = files.find((file) => MOVIES_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOVIES_ID };
@@ -1001,7 +1002,7 @@ function installBinaries(files) {
   if (modFile === undefined) {
     modFile = files.find((file) => BINARIES_EXTS.includes(path.extname(file).toLowerCase()));
   }
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: BINARIES_ID };
@@ -1260,7 +1261,7 @@ function runModManager(api) {
     if (TOOL_PATH !== undefined) {
       return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false }).catch((err) =>
         api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-          allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+          allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
         }),
       );
     } else {
@@ -1271,7 +1272,7 @@ function runModManager(api) {
     }
   } catch (err) {
     return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+      allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
     });
   }
 }
@@ -1326,7 +1327,7 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
-  //setupNotify(api);
+  if (setupNotification) setupNotify(api);
   // ASYNC CODE //////////////////////////////////////////
   await downloadTfc(api, gameSpec);
   await modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);

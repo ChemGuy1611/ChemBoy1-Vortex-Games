@@ -2,8 +2,8 @@
 Name: RAGE Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-01-19
+Version: 1.0.0
+Date: 2026-10-12
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -466,7 +466,7 @@ async function installLoader(files, tempFolder) {
   }
 
   const modFile = files.find((file) => path.basename(file) === LOADER_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
 
@@ -552,7 +552,7 @@ function testRoot(files, gameId) {
 function installRoot(files) {
   const modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file)));
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(ROOT_IDX);
+  const idx = modFile.lastIndexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };

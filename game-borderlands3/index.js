@@ -2,8 +2,8 @@
 Name: Borderlands 3 Vortex Extension
 Structure: UE4 Game (Custom)
 Author: ChemBoy1
-Version: 0.4.4
-Date: 2026-10-02
+Version: 1.0.0
+Date: 2026-10-12
 /////////////////////////////////////////*/
 
 //Import libraries
@@ -569,7 +569,7 @@ function testHotfixMerger(files, gameId) {
 function installHotfixMerger(files) {
   const MOD_TYPE = MERGER_ID;
   const modFile = files.find((file) => path.basename(file).toLowerCase() === MERGER_DLL);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -615,7 +615,7 @@ function testPluginLoader(files, gameId) {
 function installPluginLoader(files) {
   const MOD_TYPE = PLUGINLOADER_ID;
   const modFile = files.find((file) => path.basename(file).toLowerCase() === PLUGINLOADER_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -662,7 +662,7 @@ function testSdk(files, gameId) {
 function installSdk(files) {
   const MOD_TYPE = SDK_ID;
   const modFile = files.find((file) => path.basename(file).toLowerCase() === SDK_FOLDER);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -713,7 +713,7 @@ function installSdkMod(files, fileName) {
     modFile = files.find((file) => path.extname(file).toLowerCase() === SDKMOD_EXT);
   }
   let MOD_FOLDER = ".";
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const ROOT_PATH = path.basename(path.dirname(modFile));
   const MOD_NAME = path.basename(fileName);
   if (ROOT_PATH === ".") {
@@ -773,7 +773,7 @@ function testHotfix(files, gameId) {
 function installHotfix(files) {
   const MOD_TYPE = HOTFIX_ID;
   const modFile = files.find((file) => path.extname(file).toLowerCase() === HOTFIX_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -819,7 +819,7 @@ function testRoot(files, gameId) {
 function installRoot(files) {
   const modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file)));
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(ROOT_IDX);
+  const idx = modFile.lastIndexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
@@ -865,7 +865,7 @@ function testPak(files, gameId) {
 function installPak(files) {
   const MOD_TYPE = PAK_ID;
   const modFile = files.find((file) => path.extname(file).toLowerCase() === PAK_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -911,7 +911,7 @@ function testMovies(files, gameId) {
 function installMovies(files) {
   const MOD_TYPE = MOVIES_ID;
   const modFile = files.find((file) => path.extname(file).toLowerCase() === MOVIES_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -1048,7 +1048,7 @@ function runModManager(api) {
     if (TOOL_PATH !== undefined) {
       return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false }).catch((err) =>
         api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-          allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+          allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
         }),
       );
     } else {
@@ -1059,7 +1059,7 @@ function runModManager(api) {
     }
   } catch (err) {
     return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+      allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
     });
   }
 }

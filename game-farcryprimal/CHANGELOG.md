@@ -1,7 +1,10 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.2.0] - 2026-10-12
 
+- Added a fallback installer: when no other installer matches a mod, Vortex now shows a notice and installs the files to the game folder.
+- Fixed: Mods packaged inside an outer folder whose name ends with a game folder's name (for example "MyData" for "Data") now install into the right place instead of a doubled folder.
+- Vortex now checks that the game's mod folders are writable when the game is set up.
 - Fixed: Mod files with no file extension were skipped during installation
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 - The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.

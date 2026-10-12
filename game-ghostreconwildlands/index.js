@@ -3,7 +3,7 @@ Name: Tom Clancy's Ghost Recon Wildlands Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
 Version: 2.0.1
-Date: 2026-10-05
+Date: 2026-10-12
 Notes:
 -
 ///////////////////////////////////////////*/
@@ -424,7 +424,7 @@ function testLoader(files, gameId) {
 function installLoader(files) {
   const MOD_TYPE = LOADER_ID;
   const modFile = files.find((file) => path.basename(file) === LOADER_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -475,7 +475,7 @@ function installMod(files) {
   } else {
     folder = "videos";
   }
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -632,7 +632,7 @@ function installRoot(files) {
     folder = ROOTSUB_PATH;
   }
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(ROOT_IDX);
+  const idx = modFile.lastIndexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };

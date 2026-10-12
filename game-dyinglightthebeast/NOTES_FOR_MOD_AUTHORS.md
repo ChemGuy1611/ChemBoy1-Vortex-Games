@@ -12,7 +12,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Supermerger | - | `ph_ft` |
 | Pak | a file with the `.pak` extension | `ph_ft\mods` |
 | Root / Game Folder Mods | a `ph_ft` folder | the game folder itself (no subfolder) |
-| Binaries | a file with the `.pak` extension | `ph_ft\work\bin\x64` |
+| Binaries | - | `ph_ft\work\bin\x64` |
 
 Paths are relative to the game's install folder.
 
@@ -56,7 +56,7 @@ Installs to: the game folder itself (no subfolder)
 
 ## Binaries
 
-Recognised when the archive contains a file with the `.pak` extension.
+Handled by the `testBinaries` installer. Inspect the extension source for the exact archive layout it expects.
 
 Installs to: `ph_ft\work\bin\x64`
 

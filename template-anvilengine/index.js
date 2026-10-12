@@ -2109,8 +2109,8 @@ async function rename(api, EXISTING, NEW) {
       err,
       { allowReport: false },
     );
-    return Promise.resolve();
   }
+  // Redeploy even after a failed rename, otherwise the mods stay purged.
   await deploy(api);
   return Promise.resolve();
 }

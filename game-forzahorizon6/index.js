@@ -2,8 +2,8 @@
 Name: Forza Horizon 6 Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-05-20
+Version: 1.0.0
+Date: 2026-10-12
 Notes:
 - 
 ///////////////////////////////////////////*/
@@ -556,7 +556,7 @@ function testLoader(files, gameId) {
 function installLoader(files) {
   const MOD_TYPE = LOADER_ID;
   const modFile = files.find((file) => path.basename(file) === LOADER_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -601,7 +601,7 @@ function testMod(files, gameId) {
 function installMod(files) {
   const MOD_TYPE = MOD_ID;
   const modFile = files.find((file) => MOD_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -667,7 +667,7 @@ function installRoot(files) {
     folder = ROOTSUB_PATH;
   }
   const ROOT_IDX = path.basename(modFile); //!don't use path.sep since some sub-items are files
-  const idx = modFile.indexOf(ROOT_IDX);
+  const idx = modFile.lastIndexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
@@ -751,7 +751,7 @@ function testSave(files, gameId) {
 function installSave(files) {
   const MOD_TYPE = SAVE_ID;
   const modFile = files.find((file) => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };

@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.0] - 2026-10-12
+
+- Fixed: Mods packaged inside an outer folder whose name contains the name of the mod's own folder or file (for example "MyData" for "Data") now install into the right place.
+
+## [0.5.11] - 2026-10-12
+
+- Fixed: After mods were purged, the next deploy left the mod lists in OwlcatModificationManagerSettings.json empty until the load order was changed. The load order is now written back on that deploy.
+
 ## [0.5.10] - 2026-10-02
 
 - Added support for the Epic Games Store version of the game.

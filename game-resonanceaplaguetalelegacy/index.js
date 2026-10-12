@@ -2,8 +2,8 @@
 Name: Resonance: A Plague Tale Legacy Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 1.1.1
-Date: 2026-09-08
+Version: 1.2.0
+Date: 2026-10-12
 Notes:
 -
 ///////////////////////////////////////////*/
@@ -599,7 +599,7 @@ function installLoader(files) {
   const modFile = files.find(
     (file) => path.basename(file).toLowerCase() === LOADER_FILE.toLowerCase(),
   );
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -648,7 +648,7 @@ function installFramework(files) {
   const modFile = files.find(
     (file) => path.basename(file).toLowerCase() === FRAMEWORK_FILE.toLowerCase(),
   );
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -693,7 +693,7 @@ function testAsiLoader(files, gameId) {
 function installAsiLoader(files) {
   const MOD_TYPE = ASILOADER_ID;
   const modFile = files.find((file) => path.basename(file) === ASILOADER_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -752,7 +752,7 @@ function installFrameworkMod(files, tempFolder) {
     modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
     rootPath = path.dirname(modFile);
   }
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
 
   // Remove directories and anything that isn't in the rootPath.
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
@@ -795,7 +795,7 @@ function testMod(files, gameId) {
 async function installMod(files, tempFolder) {
   const MOD_TYPE = MOD_ID;
   const modFile = files.find((file) => MOD_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -871,7 +871,7 @@ function installRoot(files) {
     folder = ROOTSUB_PATH;
   }
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(ROOT_IDX);
+  const idx = modFile.lastIndexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
@@ -924,7 +924,7 @@ function installTextureStudio(files) {
       path.basename(file).includes(TEXTURESTUDIO_STRING) &&
       path.extname(file).toLowerCase() === ".exe",
   );
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -1008,7 +1008,7 @@ function testSave(files, gameId) {
 function installSave(files) {
   const MOD_TYPE = SAVE_ID;
   const modFile = files.find((file) => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -1478,7 +1478,7 @@ function runModManager(api) {
     if (TOOL_PATH !== undefined) {
       return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false }).catch((err) =>
         api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-          allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+          allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
         }),
       );
     } else {
@@ -1489,7 +1489,7 @@ function runModManager(api) {
     }
   } catch (err) {
     return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+      allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
     });
   }
 }

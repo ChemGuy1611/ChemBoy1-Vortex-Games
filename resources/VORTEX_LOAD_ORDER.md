@@ -281,6 +281,25 @@ from Vortex at the next deployment the hold ends. This is armed per removal, lik
 so a batch of updates holds once per mod. Whether the mid-batch gap described above for `UpdateSet`
 still exists under the hold has not been tested on a real mid-batch deployment.
 
+**A purge followed by a deploy writes nothing back to the game.** Observed on v2.9.0-beta.2 with
+`game-welcometoelderfield` and `game-thelastofuspart2`. The purge holds the stored order, the
+`did-purge` read keeps it, and the `did-deploy` reconcile ends on an order equal to the stored one.
+The change watcher writes to the game only when the order gains an entry, loses one or changes its
+entry count (`diffLoadOrder`), and none of that happens, so `serializeLoadOrder` does not run. A game
+extension that empties its load order file on `did-purge` (a plugins list pruned, a load order line
+blanked) is therefore not restored by Vortex on the next deploy; it has to write the file back from
+its own `did-deploy` handler. Before commit `2155ab0eb` (LAZ-1304, "keep the stored load order when
+the game reports none", merged 2026-10-05, part of v2.9.0-beta.2) the empty read was dispatched as the
+new order, so the purge emptied the stored order and the deploy "added" every entry back, which wrote
+the file as a side effect. Extensions that relied on that side effect stopped getting it.
+
+When the emptied file was the only copy of the order (no sidecar to rebuild from), write back the
+stored order from `state.persistent.loadOrder[profileId]`, keeping the entries that are deployed
+again and appending any deployed file the stored order does not know. Do not deserialize the blanked
+file for the order: it returns the deployed mods alphabetically, and the user's order is lost. Gate the
+write on the file being empty, not on an entry being missing, so a normal deploy that adds a mod
+does not race the write the app makes for it.
+
 **Sidecar orders are still not covered.** Everything above operates on the registry's load orders;
 a custom `registerMainPage` list with its own reducer is invisible to it, exactly as before.
 

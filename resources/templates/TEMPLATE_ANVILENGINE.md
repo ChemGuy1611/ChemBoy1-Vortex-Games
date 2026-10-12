@@ -91,8 +91,9 @@ A mod packaged as a loose `.data` folder does not say which `.forge` archive it 
 `installDataFolder` / `installLoose` stage it under the placeholder `RENAME_ME_TO_FORGE_NAME.forge`
 and fire `renamingRequiredNotify`. `folderRenameDialog` takes a text input, appends `.forge` if the
 user left it off, rejects the bare placeholder, then `rename()` purges deployment, renames the
-folder inside staging, and redeploys. Renaming inside staging rather than the game folder is what
-makes the change survive the next deploy.
+folder inside staging, and redeploys. The redeploy also runs when the folder rename fails (after
+the error notice), so a failed rename never leaves the mods purged. Renaming inside staging rather
+than the game folder is what makes the change survive the next deploy.
 
 ## DLC folders and `.forge` routing
 

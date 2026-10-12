@@ -23,9 +23,23 @@ This installer handles Frosty Mod Manager itself, not mods for it. It exists so 
 
 ========================================================================
 
-Fbmod:
+Frosty Mods:
 
-Recognised when the archive contains a file with the ".fbmod" extension.
+Frostbite mods in Frosty Mod Manager format. Vortex stages them for Frosty rather than deploying them into the game directly.
+
+  Requirements:
+    - Recognised by any file with the ".fbmod" or ".fbpack" extensions.
+
+  Common mistakes:
+    - These mods still have to be applied through Frosty Mod Manager - installing in Vortex alone does not patch the game.
+
+========================================================================
+
+Frostyplugin:
+
+Recognised when the archive contains a file with one of these extensions: ".dll".
+
+  Installs to: "FrostyModManager\Plugins"
 
 ========================================================================
 
@@ -34,6 +48,21 @@ Daimod:
 Recognised when the archive contains a file with the ".daimod" extension.
 
   Installs to: "DAIMod"
+
+========================================================================
+
+Fallback Installer:
+
+The catch-all. Any archive that matched none of the installers above lands here and is copied across unchanged.
+
+[b][color=#ffff00]NOTE: Landing in the fallback installer is a signal your archive layout needs fixing.[/color][/b]
+
+  Requirements:
+    - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
+    - Vortex shows the user a notification when a mod installs through the fallback.
+
+  Common mistakes:
+    - If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.
 
 ========================================================================
 

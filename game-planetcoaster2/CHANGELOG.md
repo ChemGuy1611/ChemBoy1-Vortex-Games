@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.0] - 2026-10-12
+
+- Added a fallback installer: when no other installer matches a mod, Vortex now shows a notice and installs the files to the game folder.
+- Added installers for ACSE localization files and .webm movie replacements.
+- Fixed: Mods packaged inside an outer folder whose name ends with a game folder's name (for example "MyData" for "Data") now install into the right place instead of a doubled folder.
+- Fixed: The Open Save Folder and Open Config Folder buttons could point to the wrong folder right after the first setup.
+- Vortex now checks that the game's mod folders are writable when the game is set up.
+
 ## [0.4.1] - 2026-10-04
 
 - Fixed: The Epic Games Store version of the game is now found and launched correctly.

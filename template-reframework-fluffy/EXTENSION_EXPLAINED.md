@@ -15,7 +15,6 @@
 | Game ID | `XXX` |
 | Executable | `XXX.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
-| Executable (Demo) | `XXX.exe` |
 
 ## Feature Flags
 
@@ -60,7 +59,7 @@ Installers run in priority order (lower number = tested first). The first instal
 These tools appear in Vortex's Tools panel when this game is active:
 
 - **Custom Launch** (`XXX.exe`)
-- **Custom Launch (Demo)** (`XXX.exe`)
+- **Custom Launch (Demo)**
 
 ## Toolbar Actions
 
@@ -70,6 +69,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open Config File
 - Open Save Folder (Steam)
 - Open PCGamingWiki Page
+- Open Nexus Mods Page
 - Open SteamDB Page
 - View Changelog
 - Submit Bug Report

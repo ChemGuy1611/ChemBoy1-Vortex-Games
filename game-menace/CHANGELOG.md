@@ -1,6 +1,10 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.0.3] - 2026-10-12
+
+- Fixed: Mods packaged inside an outer folder whose name ends with the name of a mod loader or plugin folder (for example "Myplugins" for "plugins") now install into the right place instead of keeping part of the outer folder's name.
+- Fixed: A mod archive is now recognised as a MelonLoader plugin whichever of its files is read last.
+- Fixed: The missing .NET runtime warning for MelonLoader is no longer shown twice.
 
 ## [1.0.2] - 2026-09-28
 

@@ -2,8 +2,8 @@
 Name: Planet Coaster 2 Vortex Extension
 Structure: Cobra Engine (ACSE)
 Author: ChemBoy1
-Version: 0.4.1
-Date: 2026-10-04
+Version: 1.0.0
+Date: 2026-10-12
 ///////////////////////////////////////*/
 
 //import libraries
@@ -45,6 +45,14 @@ const ACSE_FILE_NO = 2;
 const DEV_FOLDER = "Frontier Developments";
 const GAME_FOLDER = "Planet Coaster 2";
 
+//feature toggles
+let hasXbox = false; //toggle for Xbox version logic.
+if (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) hasXbox = true;
+const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
+const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
+const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
+const debug = false; //toggle for debug mode
+
 let GAME_PATH = "";
 let GAME_VERSION = "";
 let STAGING_FOLDER = "";
@@ -69,23 +77,36 @@ const OVLDATA_NAME = "ovldata Subfolder";
 const OVLDATA_PATH = path.join("Win64");
 const OVLDATA_FILE = "ovldata";
 
+const LOCALISED_ID = `${GAME_ID}-localised`;
+const LOCALISED_NAME = "ACSE Localization";
+const LOCALISED_PATH = path.join(ACSE_PATH, ACSE_FILE);
+const LOCALISED_FILE = "localised";
+
 const ACSE_MOD_ID = `${GAME_ID}-acsemod`;
 const ACSE_MOD_NAME = "ACSE Mod";
 const ACSE_MOD_PATH = MOD_PATH;
 const ACSE_MOD_FILE = "Main.ovl";
+
+const MOVIES_ID = `${GAME_ID}-movies`;
+const MOVIES_NAME = "Movies (.webm)";
+const MOVIES_PATH = "Movies";
+const MOVIES_EXTS = [".webm"];
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Saves";
 const SAVE_EXTS = [".blpr2", ".prk2"];
 const SAVE_FOLDER = path.join(USER_HOME, "Saved Games", DEV_FOLDER, GAME_FOLDER);
 let USERID_FOLDER = "";
+const NOT_USERID_FOLDERS = ["saves", "config"]; //the user id folder's own subfolders - setup creates Saves here before a user id folder exists
 function isDir(folder, file) {
   const stats = fs.statSync(path.join(folder, file));
   return stats.isDirectory();
 }
 try {
   const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
-  USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
+  USERID_FOLDER = SAVE_ARRAY.find(
+    (entry) => !NOT_USERID_FOLDERS.includes(entry.toLowerCase()) && isDir(SAVE_FOLDER, entry),
+  );
 } catch {
   USERID_FOLDER = "";
 }
@@ -113,6 +134,8 @@ const IGNORE_DEPLOY = [
   path.join("**", "readme*"),
   path.join("**", "license*"),
 ];
+let MODTYPE_FOLDERS = [MOD_PATH, LOCALISED_PATH, MOVIES_PATH];
+
 const spec = {
   game: {
     id: GAME_ID,
@@ -129,6 +152,7 @@ const spec = {
       steamAppId: +STEAMAPP_ID,
       epicAppId: EPICAPP_ID,
       xboxAppId: XBOXAPP_ID,
+      supportsSymlinks: allowSymlinks,
       ignoreConflicts: IGNORE_CONFLICTS,
       ignoreDeploy: IGNORE_DEPLOY,
     },
@@ -162,6 +186,18 @@ const spec = {
       name: OVLDATA_NAME,
       priority: "high",
       targetPath: path.join("{gamePath}", OVLDATA_PATH),
+    },
+    {
+      id: LOCALISED_ID,
+      name: LOCALISED_NAME,
+      priority: "high",
+      targetPath: path.join("{gamePath}", LOCALISED_PATH),
+    },
+    {
+      id: MOVIES_ID,
+      name: MOVIES_NAME,
+      priority: "high",
+      targetPath: path.join("{gamePath}", MOVIES_PATH),
     },
     {
       id: SAVE_ID,
@@ -300,7 +336,7 @@ async function requiresLauncher(gamePath, store) {
 
 //Get correct executable for game version
 function getExecutable(discoveryPath) {
-  if (statCheckSync(discoveryPath, EXEC_XBOX)) {
+  if (hasXbox && statCheckSync(discoveryPath, EXEC_XBOX)) {
     return EXEC_XBOX;
   }
   return EXEC;
@@ -308,12 +344,13 @@ function getExecutable(discoveryPath) {
 
 //Get correct game version
 async function setGameVersion(gamePath) {
-  if (await statCheckAsync(gamePath, EXEC_XBOX)) {
+  if (hasXbox && (await statCheckAsync(gamePath, EXEC_XBOX))) {
     GAME_VERSION = "xbox";
     return GAME_VERSION;
+  } else {
+    GAME_VERSION = "default";
+    return GAME_VERSION;
   }
-  GAME_VERSION = "default";
-  return GAME_VERSION;
 }
 
 const getDiscoveryPath = (api) => {
@@ -352,7 +389,7 @@ function testACSE(files, gameId) {
 //Installer install ACSE
 function installACSE(files) {
   const modFile = files.find((file) => path.basename(file) === ACSE_FILE);
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ACSE_ID };
@@ -398,7 +435,7 @@ function testSave(files, gameId) {
 //Install save files
 function installSave(files) {
   const modFile = files.find((file) => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: SAVE_ID };
@@ -445,7 +482,7 @@ function testRoot(files, gameId) {
 function installRoot(files) {
   const modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file)));
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(ROOT_IDX);
+  const idx = modFile.lastIndexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
@@ -478,7 +515,7 @@ function testOvlData(files, gameId) {
 //Installer install ovldata folder
 function installOvlData(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === OVLDATA_FILE);
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: OVLDATA_ID };
@@ -526,7 +563,7 @@ function installAcseMod(files, fileName) {
     modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
     rootPath = path.dirname(modFile);
   }
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
 
   // Remove directories and anything that isn't in the rootPath.
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
@@ -541,6 +578,207 @@ function installAcseMod(files, fileName) {
   });
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
+}
+
+//Installer test for localised folder
+function testLocalised(files, gameId) {
+  const isMod = files.some((file) => path.basename(file).toLowerCase() === LOCALISED_FILE);
+  let supported = gameId === spec.game.id && isMod;
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install localised folder
+function installLocalised(files) {
+  const modFile = files.find((file) => path.basename(file).toLowerCase() === LOCALISED_FILE);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
+  const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
+  const setModTypeInstruction = { type: "setmodtype", value: LOCALISED_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
+
+  const instructions = filtered.map((file) => {
+    return {
+      type: "copy",
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for movies files
+function testMovies(files, gameId) {
+  const isMod = files.some((file) => MOVIES_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = gameId === spec.game.id && isMod;
+
+  // Test for a mod installer.
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install movies files
+function installMovies(files) {
+  const modFile = files.find((file) => MOVIES_EXTS.includes(path.extname(file).toLowerCase()));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
+  const setModTypeInstruction = { type: "setmodtype", value: MOVIES_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
+
+  const instructions = filtered.map((file) => {
+    return {
+      type: "copy",
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Fallback installer to root folder
+function testFallback(files, gameId) {
+  let supported = gameId === spec.game.id;
+
+  // Test for a mod installer.
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Fallback installer to root folder
+function installFallback(api, files, destinationPath) {
+  fallbackInstallerNotify(api, destinationPath);
+
+  const filtered = files.filter((file) => !file.endsWith(path.sep));
+  const instructions = filtered.map((file) => {
+    return {
+      type: "copy",
+      source: file,
+      destination: file,
+    };
+  });
+  return Promise.resolve({ instructions });
+}
+
+function fallbackInstallerNotify(api, modName) {
+  const state = api.getState();
+  STAGING_FOLDER = selectors.installPathForGame(state, spec.game.id);
+  modName = path.basename(modName, ".installing");
+  const id = modName.replace(/[^a-zA-Z0-9\s]*( )*/gi, "");
+  const NOTIF_ID = `${GAME_ID}-${id}-fallback`;
+  const MESSAGE = "Fallback installer reached for " + modName;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: "info",
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: "More",
+        action: (dismiss) => {
+          api.showDialog(
+            "question",
+            MESSAGE,
+            {
+              text:
+                `The mod you just installed reached the fallback installer. This means Vortex could not determine where to place these mod files.\n` +
+                `Please check the mod page description and review the files in the mod staging folder to determine if manual file manipulation is required.\n` +
+                `\n` +
+                `If you think that Vortex should be capable to install this mod to a specific folder, please contact the extension developer for support at the link below.\n` +
+                `\n` +
+                `Mod Name: ${modName}.\n` +
+                `\n`,
+            },
+            [
+              { label: "Continue", action: () => dismiss() },
+              {
+                label: "Contact Ext. Developer",
+                action: () => {
+                  try {
+                    window.api.shell.openUrl(`${EXTENSION_URL}?tab=posts`);
+                  } catch (err) {
+                    api.showErrorNotification("Failed to open the URL", err, {
+                      allowReport: false,
+                    });
+                  }
+                  dismiss();
+                },
+              }, //*/
+              //*
+              {
+                label: `Open Mod Page + Staging Folder`,
+                action: () => {
+                  try {
+                    window.api.shell.openFile(path.join(STAGING_FOLDER, modName));
+                  } catch (err) {
+                    api.showErrorNotification("Failed to open the file or folder", err, {
+                      allowReport: false,
+                    });
+                  }
+                  const mods = api.store.getState()?.persistent?.mods?.[spec.game.id] ?? {};
+                  const modMatch = Object.values(mods).find(
+                    (mod) => mod.installationPath === modName,
+                  );
+                  log("warn", `Found ${modMatch?.id} for ${modName}`);
+                  let PAGE = ``;
+                  if (modMatch) {
+                    const MOD_ID = modMatch.attributes.modId;
+                    if (MOD_ID !== undefined) {
+                      PAGE = `${MOD_ID}?tab=description`;
+                    }
+                  }
+                  const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
+                  try {
+                    window.api.shell.openUrl(MOD_PAGE_URL);
+                  } catch (err) {
+                    api.showErrorNotification("Failed to open the URL", err, {
+                      allowReport: false,
+                    });
+                  }
+                  dismiss();
+                },
+              }, //*/
+            ],
+          );
+        },
+      },
+    ],
+  });
 }
 
 // AUTOMATIC DOWNLOAD FUNCTIONS //////////////////////////////////////////////
@@ -645,6 +883,41 @@ async function downloadACSE(api, gameSpec) {
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
+function setupNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-setup-notify`;
+  const MESSAGE = "Special Setup Instructions";
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: "warning",
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: "More",
+        action: (dismiss) => {
+          api.showDialog(
+            "question",
+            MESSAGE,
+            {
+              text: `\n` + `TEXT HERE.\n` + `\n` + `TEXT HERE.\n` + `\n`,
+            },
+            [
+              { label: "Acknowledge", action: () => dismiss() },
+              {
+                label: "Never Show Again",
+                action: () => {
+                  api.suppressNotification(NOTIF_ID);
+                  dismiss();
+                },
+              },
+            ],
+          );
+        },
+      },
+    ],
+  });
+}
+
 //* Resolve game version dynamically for different game versions
 async function resolveGameVersion(gamePath) {
   GAME_VERSION = await setGameVersion(gamePath);
@@ -674,6 +947,12 @@ async function resolveGameVersion(gamePath) {
   }
 } //*/
 
+async function modFoldersEnsureWritable(gamePath, relPaths) {
+  for (let index = 0; index < relPaths.length; index++) {
+    await vfs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+  }
+}
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   // SYNCHRONOUS CODE ////////////////////////////////////
@@ -682,10 +961,11 @@ async function setup(discovery, api, gameSpec) {
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   // ASYNC CODE //////////////////////////////////////////
+  if (setupNotification) setupNotify(api);
   GAME_VERSION = await setGameVersion(GAME_PATH);
   await downloadACSE(api, gameSpec);
   await vfs.ensureDirWritableAsync(SAVE_PATH);
-  return vfs.ensureDirWritableAsync(path.join(GAME_PATH, MOD_PATH));
+  return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
 //Let Vortex know about the game
@@ -728,8 +1008,15 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(ACSE_ID, 25, testACSE, installACSE);
   context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
   context.registerInstaller(ACSE_MOD_ID, 28, testAcseMod, installAcseMod);
-  context.registerInstaller(OVLDATA_ID, 29, testOvlData, installOvlData);
+  context.registerInstaller(LOCALISED_ID, 29, testLocalised, installLocalised);
+  context.registerInstaller(MOVIES_ID, 31, testMovies, installMovies);
+  context.registerInstaller(OVLDATA_ID, 33, testOvlData, installOvlData);
   context.registerInstaller(SAVE_ID, 49, testSave, installSave);
+  if (fallbackInstaller) {
+    context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) =>
+      installFallback(context.api, files, destinationPath),
+    );
+  }
 
   //register actions
   context.registerAction(

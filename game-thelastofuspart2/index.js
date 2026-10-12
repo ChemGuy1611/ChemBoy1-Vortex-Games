@@ -2,8 +2,8 @@
 Name: The Last of Us Part II Remastered Vortex Extension
 Author: ChemBoy1
 Structure: Generic Game w/ File Extraction, Mod Loader, and Load Order
-Version: 0.11.4
-Date: 2026-09-06
+Version: 1.0.0
+Date: 2026-10-12
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -669,7 +669,7 @@ function testModLoader(files, gameId) {
 //Installer install Fluffy Mod Manger files
 function installModLoader(files) {
   const modFile = files.find((file) => path.basename(file) === MODLOADER_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MODLOADER_ID };
@@ -715,7 +715,7 @@ function testBuildPakBin(files, gameId) {
 //Install .pak or .bin files in "build" folder
 function installBuildPakBin(files, fileName) {
   const modFile = files.find((file) => path.basename(file) === BUILD_FOLDER);
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: BUILD_ID };
@@ -762,7 +762,7 @@ function testBin(files, gameId) {
 //Install "bin" folder
 function installBin(files, fileName) {
   const modFile = files.find((file) => path.basename(file) === BIN_FOLDER);
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: BIN_ID };
@@ -893,7 +893,7 @@ function testPak(files, gameId) {
 //Installer Install pak files in root folder
 function installPak(files, fileName) {
   const modFile = files.find((file) => path.extname(file).toLowerCase() === PAK_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: PAK_ID };
@@ -937,7 +937,7 @@ function testBuild(files, gameId) {
 //Installer install "build" folder (non-Fluffy)
 function installBuild(files) {
   const modFile = files.find((file) => path.basename(file) === BUILD_FOLDER);
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: BUILD_ID };
@@ -982,7 +982,7 @@ function testSave(files, gameId) {
 function installSave(files) {
   const modFile = files.find((file) => path.basename(file) === SAVE_FILE);
   const rootPath = path.dirname(modFile);
-  let idx = modFile.indexOf(`${path.basename(rootPath)}${path.sep}`);
+  let idx = modFile.lastIndexOf(`${path.basename(rootPath)}${path.sep}`);
   const setModTypeInstruction = { type: "setmodtype", value: SAVE_ID };
 
   // Remove directories and anything that isn't in the rootPath.
@@ -1024,7 +1024,7 @@ function testConfig(files, gameId) {
 //Installer install config files
 function installConfig(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === CONFIG_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: CONFIG_ID };
@@ -1068,7 +1068,7 @@ function testPsarcTool(files, gameId) {
 //Installer install Fluffy Mod Manger files
 function installPsarcTool(files) {
   const modFile = files.find((file) => path.basename(file) === PSARCTOOL_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: PSARCTOOL_ID };
@@ -1297,6 +1297,48 @@ async function clearChunksTxt(api) {
 
   let chunksPath = path.join(gameDir, CHUNKS_PATH);
   return fsp.writeFile(chunksPath, `${CHUNKS_DEFAULT_CONTENT}`, { encoding: "utf8" });
+}
+
+//Vortex 2.9 does not write the load order back to the game on the deploy that follows a purge: the
+//order it restores equals the stored one, so it sees no change to write. didPurge blanked the
+//MountOrder line and reset chunks.txt, so write the stored order back once the .psarc files are
+//deployed again. Does nothing while the MountOrder line lists mods, which is every other deploy.
+async function restoreDeployedOrder(context, profileId) {
+  const api = context.api;
+  const state = api.getState();
+  if (
+    selectors.profileById(state, profileId)?.gameId !== GAME_ID ||
+    profileId !== selectors.activeProfile(state)?.id ||
+    mod_update_all_profile
+  ) {
+    return;
+  }
+
+  try {
+    const loadOrderFile = await fsp.readFile(path.join(getDiscoveryPath(api), LO_FILE), {
+      encoding: "utf8",
+    });
+    const LO_LINE = loadOrderFile.split("\n").find((line) => line.startsWith(LO_LINE_START));
+    if ((LO_LINE ?? "").replace(LO_LINE_START, "").trim() !== "") return; //file still lists mods
+
+    //A blank file reads back as a plain alphabetical list, so take the order and the enabled
+    //state from the stored order and keep the deserialized entries only for the files on disk.
+    const storedLO = state?.persistent?.loadOrder?.[profileId] ?? [];
+    if (storedLO.length === 0) return;
+    const deployedLO = await deserializeLoadOrder(context);
+    const deployedById = new Map(deployedLO.map((entry) => [entry.id, entry]));
+    const restoredLO = storedLO
+      .filter((entry) => deployedById.has(entry.id))
+      .map((entry) => ({ ...deployedById.get(entry.id), enabled: entry.enabled }));
+    const restoredIds = new Set(restoredLO.map((entry) => entry.id));
+    deployedLO.forEach((entry) => {
+      if (!restoredIds.has(entry.id)) restoredLO.push(entry);
+    });
+    if (restoredLO.length === 0) return;
+    await serializeLoadOrder(context, restoredLO);
+  } catch (err) {
+    log("error", `Could not restore the load order after deploy: ${err}`);
+  }
 }
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
@@ -1960,6 +2002,8 @@ function main(context) {
     // put code here that should be run (once) when Vortex starts up
     const api = context.api;
     api.onAsync("did-purge", (profileId) => didPurge(api, profileId)); //*/
+    //Vortex does not write the load order back on the deploy after a purge - see restoreDeployedOrder
+    api.onAsync("did-deploy", (profileId) => restoreDeployedOrder(context, profileId));
     api.onAsync("did-deploy", async (profileId) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return; //only reset this game's mod update flags

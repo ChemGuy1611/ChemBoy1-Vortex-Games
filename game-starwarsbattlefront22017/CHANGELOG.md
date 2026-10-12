@@ -1,10 +1,11 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.1.0] - 2026-10-12
 
 - Fixed: Mod files with no file extension were skipped during installation
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 - The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
+- Fixed: Mods packaged inside an outer folder named like one of the mod's key files (for example "plugin.dll.old") now install into the right place.
 
 ## [1.0.3] - 2026-07-02
 

@@ -2,14 +2,14 @@
 Name: Dragon Age Inquisition Vortex Extension
 Structure: 3rd-Party Mod Manager (Frosty)
 Author: ChemBoy1
-Version: 0.3.0
-Date: 2026-07-19
+Version: 1.0.0
+Date: 2026-10-12
 /////////////////////////////////////////////////*/
 
 //Import libraries
 const fs = require("fs");
 const fsp = fs.promises;
-const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
+const { actions, fs: vfs, util, selectors, log, VortexError } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const winapi = require("winapi-bindings");
@@ -25,10 +25,20 @@ const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Dragon_Age:_Inquisit
 const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/876"; //Nexus link to this extension. Used for links
 
-const FROSTY_FOLDER = "dragonageinquisition";
+//feature toggles
+const hasArchives = false; //toggle for .archive file support
+const needsKey = false; //toggle for encryption key logic
+const allowSymlinks = false; // Frosty handles its own deployment; symlinks not typical
+const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
+const setupNotification = true; //enable to show the user a notification with special instructions (specify below)
+const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
+const debug = false; //toggle for debug mode
+
+const FROSTY_FOLDER = "FrostyModManager";
+const FROSTYMOD_FOLDER = "dragonageinquisition";
 
 //definitions for mod types, installers, and tools
-const BINARIES_ID = `${GAME_ID}-binaries`;
+const ROOT_ID = `${GAME_ID}-binaries`;
 
 const FROSTY_ID = `${GAME_ID}-frostymanager`;
 const DAI_ID = `${GAME_ID}-daimanager`;
@@ -38,8 +48,9 @@ const daiModFileExt = ".daimod";
 const DAI_PATH = "DAIMod";
 
 const FROSTYMOD_ID = `${GAME_ID}-frostymod`;
-const modFileExt = ".fbmod";
-const FROSTY_PATH = path.join("FrostyModManager", "Mods", FROSTY_FOLDER);
+let FROSTYMOD_EXTS = [".fbmod", ".fbpack"];
+if (hasArchives) FROSTYMOD_EXTS.push(".archive");
+const FROSTYMOD_PATH = path.join("FrostyModManager", "Mods", FROSTYMOD_FOLDER);
 
 const FROSTY_EXEC = "frostymodmanager.exe";
 const DAI_EXEC = "daimodmanager.exe";
@@ -54,8 +65,16 @@ const CONFIG_FILE = "ProfileOptions_profile";
 const UPDATE_ID = `${GAME_ID}-update`;
 const UPDATE_PATH = "Update";
 
-const FROSTYPLUGIN_ID = `${GAME_ID}-frostyplugin`;
-const FROSTYPLUGIN_PATH = path.join("FrostyModManager", "Plugins");
+const PLUGIN_ID = `${GAME_ID}-frostyplugin`;
+const PLUGIN_PATH = path.join("FrostyModManager", "Plugins");
+const PLUGIN_EXTS = [".dll"];
+
+const KEY_ID = `${GAME_ID}-key`;
+const KEY_NAME = "Key (FMM)";
+const KEY_PATH = path.join(FROSTY_FOLDER);
+const KEY_FILE = "XXX.key"; //not used: this game needs no key file, so needsKey stays false
+const KEY_PAGE_NO = 0;
+const KEY_FILE_NO = 0;
 
 const MODDATA_FOLDER = "ModData";
 
@@ -66,7 +85,7 @@ const FROSTY_CONFIG_PATH = path.join(LOCALAPPDATA, "Frosty", FROSTY_CONFIG_FILE)
 
 const PATCH_ID = `${GAME_ID}-patch`; //!NOT registered as a modType since the plugin must be copied in as it is not in an archive
 const PATCH_NAME = "DatapathFix Plugin";
-const PATCH_PATH = FROSTYPLUGIN_PATH;
+const PATCH_PATH = PLUGIN_PATH;
 const PATCH_FILE = "DatapathFixPlugin.dll";
 const PATCH_URL = `https://github.com/Dyvinia/DatapathFixPlugin/releases/download/v1.7.1/DatapathFixPlugin.dll`;
 const PATCH_URL_ERR = `https://github.com/Dyvinia/DatapathFixPlugin/releases`;
@@ -78,6 +97,7 @@ let STAGING_FOLDER = "";
 //Specify all the information about the game
 let GAME_PATH = ""; //Game installation path
 let GAME_VERSION = ""; //Game version
+let MODTYPE_FOLDERS = [DAI_PATH, UPDATE_PATH, PLUGIN_PATH, FROSTYMOD_PATH]; // Folders to ensure are writable on setup
 const IGNORE_CONFLICTS = [
   path.join("**", "changelog*"),
   path.join("**", "readme*"),
@@ -103,6 +123,7 @@ const spec = {
       steamAppId: +STEAMAPP_ID,
       epicAppId: EPICAPP_ID,
       //"EAAppId": EAAPP_ID,
+      supportsSymlinks: allowSymlinks,
       ignoreConflicts: IGNORE_CONFLICTS,
       ignoreDeploy: IGNORE_DEPLOY,
     },
@@ -114,7 +135,7 @@ const spec = {
   },
   modTypes: [
     {
-      id: BINARIES_ID,
+      id: ROOT_ID,
       name: "Binaries / Root Game Folder",
       priority: "high",
       targetPath: "{gamePath}",
@@ -123,7 +144,7 @@ const spec = {
       id: FROSTYMOD_ID,
       name: "Frosty Mod .fbmod",
       priority: "high",
-      targetPath: path.join("{gamePath}", FROSTY_PATH),
+      targetPath: path.join("{gamePath}", FROSTYMOD_PATH),
     },
     {
       id: DAIMOD_ID,
@@ -138,10 +159,10 @@ const spec = {
       "targetPath": CONFIG_PATH
     }, //*/
     {
-      id: FROSTYPLUGIN_ID,
+      id: PLUGIN_ID,
       name: "Frosty Plugin",
       priority: "high",
-      targetPath: path.join("{gamePath}", FROSTYPLUGIN_PATH),
+      targetPath: path.join("{gamePath}", PLUGIN_PATH),
     },
     {
       id: UPDATE_ID,
@@ -171,6 +192,14 @@ const spec = {
     names: [],
   },
 };
+if (needsKey) {
+  spec.modTypes.push({
+    id: KEY_ID,
+    name: KEY_NAME,
+    priority: "low",
+    targetPath: path.join("{gamePath}", KEY_PATH),
+  });
+}
 
 //3rd party tools and launchers
 const tools = [
@@ -604,6 +633,112 @@ async function downloadPatch(api, gameSpec, check = true) {
   }
 } //*/
 
+//Check if key is installed
+async function isKeyInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  let test = Object.keys(mods).some((id) => mods[id]?.type === KEY_ID);
+  if (!test) {
+    try {
+      await fsp.stat(path.join(GAME_PATH, FROSTY_FOLDER, KEY_FILE));
+      test = true;
+    } catch {
+      test = false;
+    }
+  }
+  return test;
+}
+
+//* Function to auto-download Key from Nexus Mods
+async function downloadKey(api, gameSpec, check = true) {
+  let modLoaderInstalled = await isKeyInstalled(api, gameSpec);
+  if (!modLoaderInstalled || !check) {
+    const MOD_NAME = KEY_NAME;
+    const MOD_TYPE = KEY_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const PAGE_ID = KEY_PAGE_NO;
+    const FILE_ID = KEY_FILE_NO; //If using a specific file id because "input" below gives an error
+    const GAME_DOMAIN = GAME_ID;
+    api.sendNotification({
+      //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: "activity",
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    if (api.ext?.ensureLoggedIn !== undefined) {
+      //make sure user is logged into Nexus Mods account in Vortex
+      await api.ext.ensureLoggedIn();
+    }
+    try {
+      let FILE = null;
+      let URL = null;
+      try {
+        //get the mod files information from Nexus
+        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
+        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
+        const file = modFiles
+          .filter((file) => file.category_id === 1)
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
+          .reverse()[0];
+        if (file === undefined) {
+          throw new VortexError(`No ${MOD_NAME} main file found`, { kind: "process-canceled" });
+        }
+        FILE = file.file_id;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } catch {
+        // use defined file ID if input is undefined above
+        FILE = FILE_ID;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      }
+      const dlInfo = {
+        //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      const dlId = await new Promise((resolve, reject) =>
+        api.events.emit(
+          "start-download",
+          [URL],
+          dlInfo,
+          undefined,
+          (err, result) => (err ? reject(err) : resolve(result)),
+          undefined,
+          {
+            allowInstall: false,
+          },
+        ),
+      );
+      const modId = await new Promise((resolve, reject) =>
+        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, (err, result) =>
+          err ? reject(err) : resolve(result),
+        ),
+      );
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) {
+      //Show the user the download page if the download, install process fails
+      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      try {
+        window.api.shell.openUrl(errPage);
+      } catch (openErr) {
+        api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
+      }
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+}
+
 //Notify User of Setup instructions for Mod Managers
 function setupNotify(api) {
   api.sendNotification({
@@ -749,7 +884,7 @@ function testFrosty(files, gameId) {
 function installFrosty(files) {
   // The .fbmod file is expected to always be positioned in the mods directory we're going to disregard anything placed outside the root.
   const modFile = files.find((file) => path.basename(file).toLowerCase() === FROSTY_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: FROSTY_ID };
@@ -796,7 +931,7 @@ function testDAI(files, gameId) {
 function installDAI(files) {
   // The .fbmod file is expected to always be positioned in the mods directory we're going to disregard anything placed outside the root.
   const modFile = files.find((file) => path.basename(file).toLowerCase() === DAI_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: DAI_ID };
@@ -812,54 +947,6 @@ function installDAI(files) {
     };
   });
   instructions.push(setModTypeInstruction);
-  return Promise.resolve({ instructions });
-}
-
-//Test for .fbmod files
-function testFrostyMod(files, gameId) {
-  // Make sure we're able to support this mod.
-  const isMod = files.find((file) => path.extname(file).toLowerCase() === modFileExt) !== undefined;
-  let supported = gameId === spec.game.id && isMod;
-
-  // Test for a mod installer.
-  if (
-    supported &&
-    files.find(
-      (file) =>
-        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
-        path.basename(path.dirname(file)).toLowerCase() === "fomod",
-    )
-  ) {
-    supported = false;
-  }
-
-  return Promise.resolve({
-    supported,
-    requiredFiles: [],
-  });
-}
-
-//Install .fbmod files
-function installFrostyMod(files) {
-  // The .fbmod file is expected to always be positioned in the mods directory we're going to disregard anything placed outside the root.
-  const modFile = files.find((file) => path.extname(file).toLowerCase() === modFileExt);
-  const idx = modFile.indexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
-  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
-  const setModTypeInstruction = { type: "setmodtype", value: FROSTYMOD_ID };
-
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
-
-  const instructions = filtered.map((file) => {
-    return {
-      type: "copy",
-      source: file,
-      destination: path.join(file.substr(idx)),
-    };
-  });
-  instructions.push(setModTypeInstruction);
-
   return Promise.resolve({ instructions });
 }
 
@@ -892,7 +979,7 @@ function testDaiMod(files, gameId) {
 function installDaiMod(files) {
   // The .daimod file is expected to always be positioned in the mods directory we're going to disregard anything placed outside the root.
   const modFile = files.find((file) => path.extname(file).toLowerCase() === daiModFileExt);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: DAIMOD_ID };
@@ -939,7 +1026,7 @@ function testConfig(files, gameId) {
 function installConfig(files) {
   // The config file is expected to always be positioned in the mods directory we're going to disregard anything placed outside the root.
   const modFile = files.find((file) => path.basename(file) === CONFIG_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: "setmodtype", value: CONFIG_ID };
 
@@ -985,7 +1072,7 @@ function testSave(files, gameId) {
 function installSave(files) {
   // The save file is expected to always be positioned in the mods directory we're going to disregard anything placed outside the root.
   const modFile = files.find((file) => path.extname(file).toLowerCase() === SAVE_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: CONFIG_ID };
@@ -1002,6 +1089,364 @@ function installSave(files) {
   });
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
+}
+
+//Test for .fbmod files
+function testFbmod(files, gameId) {
+  const isMod = files.some((file) => FROSTYMOD_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = gameId === spec.game.id && isMod;
+
+  // Test for a mod installer.
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//install .fbmod/.archive mod files (variant handler)
+async function installFbmod(api, files, workingDir) {
+  const fileExt = FROSTYMOD_EXTS;
+  const modFiles = files.filter((file) => fileExt.includes(path.extname(file).toLowerCase()));
+  const modType = {
+    type: "setmodtype",
+    value: FROSTYMOD_ID,
+  };
+  const installFiles =
+    modFiles.length > FROSTYMOD_EXTS.length
+      ? await chooseFilesToInstall(api, modFiles, fileExt)
+      : modFiles;
+  let instructions = installFiles.map((file) => {
+    return {
+      type: "copy",
+      source: file,
+      destination: path.basename(file),
+    };
+  });
+  if (installFiles.some((file) => path.extname(file).toLowerCase() === ".fbpack")) {
+    const file = path.basename(
+      installFiles.find((file) => path.extname(file).toLowerCase() === ".fbpack"),
+    );
+    packInstructionsNotify(api, workingDir, file);
+  }
+  instructions.push(modType);
+  return Promise.resolve({ instructions });
+}
+
+function packInstructionsNotify(api, modName, file) {
+  GAME_PATH = getDiscoveryPath(api);
+  log("warn", `.fbpack file: ${file}`);
+  modName = path.basename(modName, ".installing");
+  const id = modName.replace(/[^a-zA-Z0-9\s]*( )*/gi, "").slice(0, 20);
+  const NOTIF_ID = `${GAME_ID}-${id}-fallback`;
+  const MESSAGE = ".fbpack Import Required for " + modName;
+  const t = api.translate;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: "warning",
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: "More",
+        action: (dismiss) => {
+          api.showDialog(
+            "question",
+            MESSAGE,
+            {
+              bbcode: t(
+                `The mod you just installed included a .fbpack file. This means you need to manually import the pack in Frosty Mod Manager.[br][/br][br][/br]` +
+                  `Run Frosty with the button below, then select File -> Pack -> Import.[br][/br][br][/br]` +
+                  `Then navigate to the file path shown below and select the file. Screenshot included below for reference.[br][/br][br][/br]` +
+                  `Mod Name: ${modName}.[br][/br][br][/br]` +
+                  `Path to .fbpack File: ${path.join(GAME_PATH, FROSTYMOD_PATH, file)}[br][/br][br][/br]` +
+                  `[img]https://live.staticflickr.com/65535/55339069196_713ca00e3f.jpg[/img][br][/br][br][/br]`,
+              ),
+            },
+            [
+              { label: "Continue", action: () => dismiss() },
+              {
+                label: "Run Frosty",
+                action: () => {
+                  runFrosty(api);
+                  dismiss();
+                },
+              },
+            ],
+          );
+        },
+      },
+    ],
+  });
+}
+
+//file selection dialog for .fbmod/.archive mods
+async function chooseFilesToInstall(api, files, fileExt) {
+  const t = api.translate;
+  return api
+    .showDialog(
+      "question",
+      t("Multiple {{ext}} files", { replace: { ext: fileExt } }),
+      {
+        text:
+          t("The mod you are installing contains {{x}} {{ext}} files.", {
+            replace: { x: files.length, ext: fileExt },
+          }) +
+          `This can be because the author intended for you to chose one of several options. Please select which files to install below:`,
+        checkboxes: files.map((file) => {
+          return {
+            id: file,
+            text: file,
+            value: false,
+          };
+        }),
+      },
+      [{ label: "Cancel" }, { label: "Install Selected" }, { label: "Install All_plural" }],
+    )
+    .then((result) => {
+      if (result.action === "Cancel")
+        return Promise.reject(
+          new VortexError("User cancelled.", { kind: "user-canceled", skipped: true }),
+        );
+      else {
+        const installAll =
+          result.action === "Install All" || result.action === "Install All_plural";
+        const installFiles = installAll
+          ? files
+          : Object.keys(result.input)
+              .filter((s) => result.input[s])
+              .map((file) => files.find((f) => f === file));
+        return installFiles;
+      }
+    });
+}
+
+//Test for FMM plugin files
+function testPlugin(files, gameId) {
+  const isMod = files.some((file) => PLUGIN_EXTS.includes(path.extname(file).toLowerCase()));
+  const isExe = files.some((file) => path.extname(file).toLowerCase() === ".exe");
+  let supported = gameId === spec.game.id && isMod && !isExe;
+
+  // Test for a mod installer.
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install Frosty Manager files
+function installPlugin(files) {
+  const modFile = files.find((file) => PLUGIN_EXTS.includes(path.extname(file).toLowerCase()));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
+  const setModTypeInstruction = { type: "setmodtype", value: PLUGIN_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
+  const instructions = filtered.map((file) => {
+    return {
+      type: "copy",
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for key file
+function testKey(files, gameId) {
+  const isFrosty = files.some(
+    (file) => path.basename(file).toLowerCase() === KEY_FILE.toLowerCase(),
+  );
+  let supported = gameId === spec.game.id && isFrosty;
+
+  // Test for a mod installer.
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install key file
+function installKey(files) {
+  const modFile = files.find(
+    (file) => path.basename(file).toLowerCase() === KEY_FILE.toLowerCase(),
+  );
+  const idx = modFile.lastIndexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
+  const setModTypeInstruction = { type: "setmodtype", value: KEY_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
+  const instructions = filtered.map((file) => {
+    return {
+      type: "copy",
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Fallback installer to root folder
+function testFallback(files, gameId) {
+  let supported = gameId === spec.game.id;
+
+  // Test for a mod installer.
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Fallback installer to root folder
+function installFallback(api, files, destinationPath) {
+  fallbackInstallerNotify(api, destinationPath);
+  const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
+
+  const filtered = files.filter((file) => !file.endsWith(path.sep));
+  const instructions = filtered.map((file) => {
+    return {
+      type: "copy",
+      source: file,
+      destination: file,
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+function fallbackInstallerNotify(api, modName) {
+  const state = api.getState();
+  STAGING_FOLDER = selectors.installPathForGame(state, spec.game.id);
+  modName = path.basename(modName, ".installing");
+  const id = modName.replace(/[^a-zA-Z0-9\s]*( )*/gi, "").slice(0, 20);
+  const NOTIF_ID = `${GAME_ID}-${id}-fallback`;
+  const MESSAGE = "Fallback installer reached for " + modName;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: "info",
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: "More",
+        action: (dismiss) => {
+          api.showDialog(
+            "question",
+            MESSAGE,
+            {
+              text:
+                `The mod you just installed reached the fallback installer. This means Vortex could not determine where to place these mod files.\n` +
+                `Please check the mod page description and review the files in the mod staging folder to determine if manual file manipulation is required.\n` +
+                `\n` +
+                `If you think that Vortex should be capable to install this mod to a specific folder, please contact the extension developer for support at the link below.\n` +
+                `\n` +
+                `Mod Name: ${modName}.\n` +
+                `\n`,
+            },
+            [
+              { label: "Continue", action: () => dismiss() },
+              {
+                label: "Contact Ext. Developer",
+                action: () => {
+                  try {
+                    window.api.shell.openUrl(`${EXTENSION_URL}?tab=posts`);
+                  } catch (err) {
+                    api.showErrorNotification("Failed to open the URL", err, {
+                      allowReport: false,
+                    });
+                  }
+                  dismiss();
+                },
+              }, //*/
+              //*
+              {
+                label: `Open Mod Page + Staging Folder`,
+                action: () => {
+                  try {
+                    window.api.shell.openFile(path.join(STAGING_FOLDER, modName));
+                  } catch (err) {
+                    api.showErrorNotification("Failed to open the file or folder", err, {
+                      allowReport: false,
+                    });
+                  }
+                  const mods = api.store.getState()?.persistent?.mods?.[spec.game.id] ?? {};
+                  const modMatch = Object.values(mods).find(
+                    (mod) => mod.installationPath === modName,
+                  );
+                  log("warn", `Found ${modMatch?.id} for ${modName}`);
+                  let PAGE = ``;
+                  if (modMatch) {
+                    const MOD_ID = modMatch.attributes.modId;
+                    if (MOD_ID !== undefined) {
+                      PAGE = `${MOD_ID}?tab=description`;
+                    }
+                  }
+                  const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
+                  try {
+                    window.api.shell.openUrl(MOD_PAGE_URL);
+                  } catch (err) {
+                    api.showErrorNotification("Failed to open the URL", err, {
+                      allowReport: false,
+                    });
+                  }
+                  dismiss();
+                },
+              }, //*/
+            ],
+          );
+        },
+      },
+    ],
+  });
 }
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
@@ -1070,7 +1515,7 @@ function runFrosty(api) {
     if (TOOL_PATH !== undefined) {
       return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false }).catch((err) =>
         api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-          allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+          allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
         }),
       );
     } else {
@@ -1081,8 +1526,15 @@ function runFrosty(api) {
     }
   } catch (err) {
     return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+      allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
     });
+  }
+}
+
+//Setup function
+async function modFoldersEnsureWritable(gamePath, relPaths) {
+  for (let index = 0; index < relPaths.length; index++) {
+    await vfs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
   }
 }
 
@@ -1094,13 +1546,13 @@ async function setup(discovery, api, gameSpec) {
   STAGING_FOLDER = selectors.installPathForGame(api.getState(), GAME_ID);
   await downloadFrosty(discovery, api, gameSpec);
   await downloadDAIMod(discovery, api, gameSpec);
-  setupNotify(api);
-  setupNotifyPatch(api, gameSpec);
-  await vfs.ensureDirWritableAsync(path.join(discovery.path, DAI_PATH));
+  if (needsKey) await downloadKey(api, gameSpec, true);
+  if (setupNotification) {
+    setupNotify(api);
+    setupNotifyPatch(api, gameSpec);
+  }
   //await fs.ensureDirWritableAsync(path.join(CONFIG_PATH));
-  await vfs.ensureDirWritableAsync(path.join(discovery.path, UPDATE_PATH));
-  await vfs.ensureDirWritableAsync(path.join(discovery.path, FROSTYPLUGIN_PATH));
-  return vfs.ensureDirWritableAsync(path.join(discovery.path, FROSTY_PATH));
+  return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
 //Let Vortex know about the game
@@ -1142,10 +1594,19 @@ function applyGame(context, gameSpec) {
   //register mod installers
   context.registerInstaller("dragonageinquisition-daimodmanager", 25, testDAI, installDAI);
   context.registerInstaller("dragonageinquisition-frostymodmanager", 30, testFrosty, installFrosty);
-  context.registerInstaller("dragonageinquisition-fbmod", 35, testFrostyMod, installFrostyMod);
+  context.registerInstaller("dragonageinquisition-fbmod", 35, testFbmod, (files, workingDir) =>
+    installFbmod(context.api, files, workingDir),
+  );
+  context.registerInstaller(PLUGIN_ID, 38, testPlugin, installPlugin);
+  if (needsKey) context.registerInstaller(KEY_ID, 40, testKey, installKey);
   context.registerInstaller("dragonageinquisition-daimod", 45, testDaiMod, installDaiMod);
   //context.registerInstaller('dragonageinquisition-config', 50, testConfig, installConfig);
   //context.registerInstaller('dragonageinquisition-save', 55, testSave, installSave);
+  if (fallbackInstaller) {
+    context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) =>
+      installFallback(context.api, files, destinationPath),
+    );
+  }
 
   context.registerAction(
     "mod-icons",
@@ -1253,7 +1714,7 @@ function applyGame(context, gameSpec) {
     () => {
       const state = context.api.getState();
       const discovery = selectors.discoveryByGame(state, GAME_ID);
-      const openPath = path.join(discovery.path, FROSTY_PATH);
+      const openPath = path.join(discovery.path, FROSTYMOD_PATH);
       try {
         window.api.shell.openFile(openPath);
       } catch (err) {

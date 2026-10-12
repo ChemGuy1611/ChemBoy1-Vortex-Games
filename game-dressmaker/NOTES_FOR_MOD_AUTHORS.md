@@ -15,7 +15,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | MelonLoader Preferences Manager | a `melonprefmanager.il2cpp.dll` file | `Mods` |
 | Assembly Replacement Mods | a `GameAssembly.dll` file | the game folder itself (no subfolder) |
 | Plugin Mods | a `.dll` file | `BepInEx` |
-| Modpack | a file or folder named one of: `mod.json` and a file with one of these extensions: `.dll` | `Mods` |
+| Modpack | a file or folder named one of: `mod.json` | `Mods` |
 | Asset Replacement Mods | a `.assets` file | `Dressmaker_Data` |
 | Fallback Installer | anything not matched above | - |
 
@@ -137,7 +137,7 @@ Installs to: `BepInEx`
 
 ## Modpack
 
-Recognised when the archive contains a file or folder named one of: `mod.json` and a file with one of these extensions: `.dll`.
+Recognised when the archive contains a file or folder named one of: `mod.json`.
 
 Installs to: `Mods`
 

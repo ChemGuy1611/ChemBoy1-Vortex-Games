@@ -2,8 +2,8 @@
 Name: NINJA GAIDEN: Master Collection Vortex Extension
 Structure: Multi-Game, Mod Loader
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2025-11-10
+Version: 1.0.0
+Date: 2026-10-12
 ///////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -893,7 +893,7 @@ function testModLoaderXbox(files, gameId) {
 //Installer install Xbox Mod Loader
 function installModLoaderXbox(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === MODLOADER_XBOX_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MODLOADER_XBOX_ID };
@@ -926,7 +926,7 @@ function testModLoaderSteam1(files, gameId) {
 //Installer install Steam Mod Loader - for NGS1
 function installModLoaderSteam1(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === ML_STEAM_EXEC1);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MODLOADER_STEAM_ID1 };
@@ -959,7 +959,7 @@ function testModLoaderSteam2(files, gameId) {
 //Installer install Steam Mod Loader - for NGS2
 function installModLoaderSteam2(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === ML_STEAM_EXEC2);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MODLOADER_STEAM_ID2 };
@@ -992,7 +992,7 @@ function testModLoaderSteam3(files, gameId) {
 //Installer install Steam Mod Loader - for NG3RE
 function installModLoaderSteam3(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === ML_STEAM_EXEC3);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MODLOADER_STEAM_ID3 };
@@ -1038,7 +1038,7 @@ function testMlMod(files, gameId) {
 //Installer install mod files
 function installMlMod(files, fileName) {
   const modFile = files.find((file) => path.extname(file).toLowerCase() === MLMOD_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MLMOD_ID };
@@ -1084,7 +1084,7 @@ function testDatabin(files, gameId) {
 //Installer install mod files
 function installDatabin(files) {
   const modFile = files.find((file) => path.basename(file) === DATABIN_FOLDER);
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: DATABIN_ID };
@@ -1117,7 +1117,7 @@ function testDatabinSub1(files, gameId) {
 //Installer install Root folder files
 function installDatabinSub1(files) {
   const modFile = files.find((file) => DATABINSUB_FOLDERS1.includes(path.basename(file)));
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: DATABINSUB_ID1 };
@@ -1150,7 +1150,7 @@ function testDatabinSub23(files, gameId) {
 //Installer install Root folder files
 function installDatabinSub23(files) {
   const modFile = files.find((file) => DATABINSUB_FOLDERS23.includes(path.basename(file)));
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: DATABINSUB_ID23 };

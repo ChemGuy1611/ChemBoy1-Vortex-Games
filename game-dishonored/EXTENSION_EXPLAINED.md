@@ -25,6 +25,17 @@
 - **GOG** — `1701063787`
 - **Xbox / Microsoft Store** — `BethesdaSoftworks.DishonoredDE-PC`
 
+## Feature Flags
+
+| Flag | Value | Description |
+| --- | --- | --- |
+| `hasXbox` | `false` | toggle for Xbox version logic |
+| `has64Bit` | `true` | toggle for 64-bit version logic |
+| `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
+| `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
+| `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
+| `debug` | `false` | toggle for debug mode |
+
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
@@ -53,6 +64,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | `dishonored-cookedsub` | 33 |
 | `dishonored-movies` | 35 |
 | `dishonored-binaries` | 37 |
+| `dishonored-fallback` | 49 |
 
 ## Registered Tools
 

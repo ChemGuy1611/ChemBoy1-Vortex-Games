@@ -2,8 +2,8 @@
 Name: Painkiller: Black Edition Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.1
-Date: 2026-09-03
+Version: 1.0.0
+Date: 2026-10-12
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -367,7 +367,7 @@ function testRoot(files, gameId) {
 function installRoot(files) {
   const modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file)));
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(ROOT_IDX);
+  const idx = modFile.lastIndexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
@@ -416,11 +416,11 @@ function installData(files) {
   let modFile = files.find((file) => DATA_EXTS.includes(path.extname(file).toLowerCase()));
   let idx;
   if (modFile !== undefined) {
-    idx = modFile.indexOf(path.basename(modFile));
+    idx = modFile.lastIndexOf(path.basename(modFile));
   }
   if (modFile === undefined) {
     modFile = files.find((file) => DATA_FOLDERS.includes(path.basename(file).toLowerCase()));
-    idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+    idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   }
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
@@ -467,7 +467,7 @@ function testConfig(files, gameId) {
 function installConfig(files) {
   const MOD_TYPE = CONFIG_ID;
   const modFile = files.find((file) => CONFIG_FILES.includes(path.basename(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -513,7 +513,7 @@ function testSave(files, gameId) {
 function installSave(files) {
   const MOD_TYPE = SAVE_ID;
   const modFile = files.find((file) => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };

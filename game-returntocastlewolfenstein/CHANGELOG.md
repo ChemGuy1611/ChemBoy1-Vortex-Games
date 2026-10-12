@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.3] - 2026-10-12
+
+- Fixed: Mods packaged inside an outer folder whose name contains the name of the mod's own folder or file (for example "MyData" for "Data") now install into the right place.
+- Fixed: Mods in a main folder now install into the right place instead of losing their path.
+
 ## [1.1.2] - 2026-10-09
 
 - Fixed: RealRTCW was downloaded automatically at startup. It is now only downloaded when you choose "Download RealRTCW" in the notification (or use the toolbar button), so you can use ioRTCW instead without RealRTCW being installed on top

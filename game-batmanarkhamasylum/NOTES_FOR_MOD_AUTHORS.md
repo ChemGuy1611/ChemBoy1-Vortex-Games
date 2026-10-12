@@ -15,6 +15,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Cooked Content Mods | a `Maps` folder or a `.upk` file | `BmGame\CookedPC` |
 | Movie / Cutscene Replacements | a `.bik` file | `BmGame\Movies` |
 | Binaries / Injector Mods | a `BmLauncher.exe` file or a `.dll` file | `Binaries` |
+| Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
 
@@ -116,6 +117,21 @@ DLL injectors and other files that belong next to the game executable.
 - Recognised by any file with the `.dll` extension.
 
 Installs to: `Binaries`
+
+## Fallback Installer
+
+The catch-all. Any archive that matched none of the installers above lands here and is copied across unchanged.
+
+> **NOTE:** Landing in the fallback installer is a signal your archive layout needs fixing.
+
+**Requirements:**
+
+- Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
+- Vortex shows the user a notification when a mod installs through the fallback.
+
+**Common mistakes:**
+
+- If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.
 
 ## Rules That Apply To Every Mod Type
 

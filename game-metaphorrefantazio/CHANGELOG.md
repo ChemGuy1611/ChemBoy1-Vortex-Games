@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.1] - 2026-10-12
+
+- Fixed: Mods packaged inside an outer folder whose name ends with a game folder's name (for example "MyData" for "Data") now install into the right place instead of a doubled folder.
+
 ## [1.0.0] - 2026-10-03
 
 - Added a fallback installer: when no other installer matches a mod, Vortex now shows a notice and installs the files to the game folder.

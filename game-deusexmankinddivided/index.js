@@ -2,8 +2,8 @@
 Name: Deus Ex: Mankind Divided Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2026-08-03
+Version: 1.0.0
+Date: 2026-10-12
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -379,7 +379,7 @@ function testRuntime(files, gameId) {
 function installRuntime(files) {
   const MOD_TYPE = RUNTIME_ID;
   const modFile = files.find((file) => RUNTIME_FILES.includes(path.basename(file)));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -425,7 +425,7 @@ function testDlcRuntime(files, gameId) {
 function installDlcRuntime(files) {
   const MOD_TYPE = DLCRUNTIME_ID;
   const modFile = files.find((file) => DLCRUNTIME_FILES.includes(path.basename(file)));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -471,7 +471,7 @@ function testRoot(files, gameId) {
 function installRoot(files) {
   const modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file)));
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(ROOT_IDX);
+  const idx = modFile.lastIndexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
@@ -517,7 +517,7 @@ function testBinaries(files, gameId) {
 function installBinaries(files) {
   const MOD_TYPE = BINARIES_ID;
   const modFile = files.find((file) => BINARIES_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };

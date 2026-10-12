@@ -2,8 +2,8 @@
 Name: Rocksmith 2014 Edition REMASTERED Vortex Extension
 Structure: Basic Game with Tools & Launchers
 Author: ChemBoy1
-Version: 0.3.1
-Date: 2026-04-19
+Version: 1.0.0
+Date: 2026-10-12
 /////////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -1827,7 +1827,7 @@ function testCdlcMod(files, gameId) {
 //Installer install mod files
 function installCdlcMod(files) {
   const modFile = files.find((file) => path.extname(file).toLowerCase() === CDLCMOD_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: CDLCMOD_ID };
@@ -1872,7 +1872,7 @@ function testEof(files, gameId) {
 //Installer install mod files
 function installEof(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === EOF_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: EOF_ID };
@@ -1920,11 +1920,11 @@ function installRoot(files) {
   let modFile = files.find((file) => ROOT_FILES.includes(path.basename(file).toLowerCase()));
   let idx;
   if (modFile !== undefined) {
-    idx = modFile.indexOf(path.basename(modFile));
+    idx = modFile.lastIndexOf(path.basename(modFile));
   }
   if (modFile === undefined) {
     modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file).toLowerCase()));
-    idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+    idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   }
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;

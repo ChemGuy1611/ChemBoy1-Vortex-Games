@@ -1,8 +1,9 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.1.3] - 2026-10-12
 
 - The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
+- Fixed: Mods packaged inside an outer folder whose name ends with a game folder's name (for example "MyContent" for "Content") now install into the right place instead of a doubled folder.
 
 ## [1.1.2] - 2026-09-21
 

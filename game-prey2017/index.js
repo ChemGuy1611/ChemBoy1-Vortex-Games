@@ -1,8 +1,8 @@
 /*
 Name: Prey Vortex Extension (Alt version)
 Author: ChemBoy1
-Version: 0.6.1
-Date: 2026-05-10
+Version: 1.0.0
+Date: 2026-10-12
 */
 
 //Import libraries
@@ -263,7 +263,7 @@ function testPric(files, gameId) {
 //Installer install Fluffy Mod Manger files
 function installPric(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === PRIC_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: PRIC_ID };
@@ -297,7 +297,7 @@ function testChair(files, gameId) {
 //Installer install Fluffy Mod Manger files
 function installChair(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === CHAIR_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: CHAIR_ID };
@@ -328,7 +328,9 @@ function testChairModZip(files, gameId) {
 
 //install zips
 async function installChairModZip(files, destinationPath) {
-  const zipFiles = files.filter((file) => [".zip", ".7z", ".rar"].includes(path.extname(file)));
+  const zipFiles = files.filter((file) =>
+    [".zip", ".7z", ".rar"].includes(path.extname(file).toLowerCase()),
+  );
   const setModTypeInstruction = { type: "setmodtype", value: CHAIRMOD_ID };
   // If it's a double zip, we don't need to repack.
   if (zipFiles.length > 0) {
@@ -379,7 +381,7 @@ function testChairMod(files, gameId) {
 //Installer install Chairload mod files
 function installChairMod(files, fileName) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === CHAIRMOD_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: CHAIRMOD_ID };
@@ -429,7 +431,7 @@ function testChairModLegacy(files, gameId) {
 //mod installer instructions
 function installChairModLegacy(files) {
   const modFile = files.find((file) => path.extname(file).toLowerCase() === CHAIRMODLEGACY_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: CHAIRMODLEGACY_ID };
@@ -462,7 +464,7 @@ function testRoot(files, gameId) {
 //Installer install Fluffy Mod Manger files
 function installRoot(files) {
   const modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file)));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };

@@ -4,6 +4,10 @@
 
 - Config and save installers (partition check)
 
+## [1.0.0] - 2026-10-12
+
+- Fixed: Mods packaged inside an outer folder named like one of the mod's key files (for example "plugin.dll.old") now install into the right place.
+
 ## [0.5.5] - 2026-10-04
 
 - Fixed: The Epic Games Store version of the game is now found and launched correctly.

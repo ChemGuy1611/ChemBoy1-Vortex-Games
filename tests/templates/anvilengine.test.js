@@ -2911,7 +2911,7 @@ describe("template-anvilengine: rename dialog for .forge folders", () => {
     });
 
     // Stages the mod, answers the rename dialog with `answer`, and waits for it to finish.
-    async function rename(answer, { stage = true } = {}) {
+    async function rename(answer, { stage = true, prepare } = {}) {
       const { ext, buttons } = await opened();
       const events = answerDeployEvents(ext);
       const extracted = path.join(STAGING, MOD, "Extracted");
@@ -2920,6 +2920,7 @@ describe("template-anvilengine: rename dialog for .forge folders", () => {
         fs.mkdirSync(path.join(extracted, RENAME), { recursive: true });
         fs.writeFileSync(path.join(extracted, RENAME, "a.data"), "data");
       }
+      if (prepare) prepare(extracted);
       ext.api.showDialog = (...args) => {
         ext.dialogs.push(args);
         return typeof answer === "function" ? answer() : Promise.resolve(answer);
@@ -3004,13 +3005,26 @@ describe("template-anvilengine: rename dialog for .forge folders", () => {
       }
     });
 
-    it("reports a missing placeholder folder, after the purge and without a deploy", async () => {
+    it("reports a missing placeholder folder and still redeploys after the purge", async () => {
       const { ext, events } = await rename(typed("Patch_03"), { stage: false });
       assert.equal(
         ext.errors[0][0],
         "Failed to rename .forge folder. You will have to rename the folder manually.",
       );
-      assert.deepEqual(events, [["purge-mods", true]]);
+      assert.deepEqual(events, [["purge-mods", true], ["deploy-mods"]]);
+    });
+
+    it("redeploys after a rename that fails on the file system, with one notice", async () => {
+      const { ext, events, extracted } = await rename(typed("Patch_05"), {
+        prepare: (dir) => {
+          // A non-empty folder already sits where the renamed folder would go.
+          fs.mkdirSync(path.join(dir, "Patch_05.forge", "locked"), { recursive: true });
+          fs.writeFileSync(path.join(dir, "Patch_05.forge", "locked", "x.txt"), "x");
+        },
+      });
+      assert.equal(ext.errors.length, 1);
+      assert.deepEqual(events, [["purge-mods", true], ["deploy-mods"]]);
+      assert.ok(fs.existsSync(path.join(extracted, RENAME)));
     });
   });
 });

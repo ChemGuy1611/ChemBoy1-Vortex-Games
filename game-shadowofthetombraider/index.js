@@ -2,8 +2,8 @@
 Name: Shadow of the Tomb Raider Vortex Extension
 Structure: 3rd-Party Mod Installer
 Author: ChemBoy1
-Version: 0.5.0
-Date: 2025-10-29
+Version: 1.0.0
+Date: 2026-10-12
 ////////////////////////////////////////////*/
 //junk comment to change file size for reupload since Nexus Mods site doesn't like to work
 //Import libraries
@@ -494,7 +494,7 @@ function testModManger(files, gameId) {
 //Installer install SOTTR Mod Manager files
 function installModManager(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === MANAGER_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MANAGER_ID };
@@ -527,7 +527,7 @@ function testModMangerUnified(files, gameId) {
 //Installer install TR Reboot Mod Manager files
 function installModManagerUnified(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === MANAGERUNIFIED_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MANAGERUNIFIED_ID };
@@ -572,7 +572,7 @@ function testBinaries(files, gameId) {
 //Fallback installer for binaries folder
 function installBinaries(files) {
   const modFile = files.find((file) => BINARIES_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: BINARIES_ID };
@@ -748,7 +748,7 @@ function runModManager(api) {
     if (TOOL_PATH !== undefined) {
       return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false }).catch((err) =>
         api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-          allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+          allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
         }),
       );
     } else {
@@ -759,7 +759,7 @@ function runModManager(api) {
     }
   } catch (err) {
     return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+      allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
     });
   }
 }

@@ -9,6 +9,10 @@
 - Added: Vortex now checks for UE4SS updates and notifies you when a newer build is available.
 - Fixed: The UE4SS download could accept the development build, a much larger debug version, in place of the normal one.
 - The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
+- Fixed: Mods packaged inside an outer folder whose name ends with the name of an expected folder (for example "MyContent" for "Content") now install into the right place instead of keeping part of the outer folder's name.
+- Fixed: Blueprint (LogicMods) mods with an upper-case ".PAK" extension now get the correct name on the LogicMods load order.
+- Fixed: Pak + UE4SS combo mods now show up on the UE4SS load order page on the Xbox / Game Pass version, instead of being listed as manual mods.
+- Fixed: The "Open LogicMods Folder" button now opens the LogicMods folder instead of the Paks folder.
 
 ## [1.0.2] - 2026-09-17
 

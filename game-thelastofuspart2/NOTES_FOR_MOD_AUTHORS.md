@@ -9,7 +9,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Modloader | a file or folder named `winmm.dll` | the game folder itself (no subfolder) |
-| Psarc | a file with the `.psarc` extension, a file with the `.pak` extension and a file with the `.bin` extension | `mods` |
+| Psarc | a file with the `.psarc` extension | `mods` |
 | Buildfolderpakbin | a file or folder named `build`, a file with the `.pak` extension and a file with the `.bin` extension | - |
 | Binfolder | a file or folder named `bin`, a file with the `.pak` extension and a file with the `.bin` extension | `build\pc\main` |
 | Pak | a file with the `.pak` extension | `build\pc\main` |
@@ -28,7 +28,7 @@ Installs to: the game folder itself (no subfolder)
 
 ## Psarc
 
-Recognised when the archive contains a file with the `.psarc` extension, a file with the `.pak` extension and a file with the `.bin` extension.
+Recognised when the archive contains a file with the `.psarc` extension.
 
 Installs to: `mods`
 

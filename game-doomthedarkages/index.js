@@ -2,8 +2,8 @@
 Name: DOOM: The Dark Ages Vortex Extension
 Structure: 3rd-Party Mod Loader
 Author: ChemBoy1
-Version: 0.4.7
-Date: 2026-09-08
+Version: 1.0.0
+Date: 2026-10-12
 /////////////////////////////////////////*/
 /*
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣠⣤⣤⣤⡴⣦⡴⣖⠶⣴⠶⡶⣖⡶⣶⢶⣲⡾⠿⢿⡷⣾⢿⣷⣦⢾⣷⣾⣶⣤⣀⣰⣤⣀⡀⠀⠀⢀⣴⣿⡿⡿⣿⣿⣦⣄⠀⠀⣠⣴⣿⡿⢿⡿⣷⣦⡄⠀⠀⢀⣀⣤⣦⣀⣤⣶⣶⣷⣦⣴⡿⢿⡷⣿⠿⡿⣿⣷⢶⣦⢴⡲⣦⢶⡶⢶⡲⣖⡶⣦⣤⣤⣤⣤⣤⣤⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -718,7 +718,7 @@ function testInjector(files, gameId) {
 //Installer install TDAModInjector files
 function installInjector(files) {
   const modFile = files.find((file) => path.basename(file) === INJECTOR_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: INJECTOR_ID };
@@ -762,7 +762,7 @@ function testAtlan(files, gameId) {
 //Installer install Atlan files
 function installAtlan(files) {
   const modFile = files.find((file) => path.basename(file) === ATLAN_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ATLAN_ID };
@@ -806,7 +806,7 @@ function testValen(files, gameId) {
 //Installer install Atlan files
 function installValen(files) {
   const modFile = files.find((file) => path.basename(file) === VALEN_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: VALEN_ID };
@@ -850,7 +850,7 @@ function testPatcher(files, gameId) {
 //Installer install Patcher files
 function installPatcher(files) {
   const modFile = files.find((file) => path.basename(file) === PATCHER_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: PATCHER_ID };
@@ -894,7 +894,7 @@ function testSound(files, gameId) {
 //Install sound files
 function installSound(files) {
   const modFile = files.find((file) => SOUND_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: SOUND_ID };
@@ -939,7 +939,7 @@ function testConfig(files, gameId) {
 //Install config files
 function installConfig(files) {
   const modFile = files.find((file) => CONFIG_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: CONFIG_ID };
@@ -984,7 +984,7 @@ function testSave(files, gameId) {
 //Install save files
 function installSave(files) {
   const modFile = files.find((file) => path.extname(file).toLowerCase() === SAVE_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: SAVE_ID };
@@ -1029,7 +1029,9 @@ async function testZipContent(files, gameId) {
 
 //Install zips
 async function installZipContent(files, destinationPath) {
-  const zipFiles = files.filter((file) => [".zip", ".7z", ".rar"].includes(path.extname(file)));
+  const zipFiles = files.filter((file) =>
+    [".zip", ".7z", ".rar"].includes(path.extname(file).toLowerCase()),
+  );
   if (zipFiles.length > 0) {
     // If it's a double zip, we don't need to repack.
     const instructions = zipFiles.map((file) => {
@@ -1168,7 +1170,7 @@ function runInjector(api) {
     if (TOOL_PATH !== undefined) {
       return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false }).catch((err) =>
         api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-          allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+          allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
         }),
       );
     } else {
@@ -1179,7 +1181,7 @@ function runInjector(api) {
     }
   } catch (err) {
     return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+      allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
     });
   }
 }

@@ -2,8 +2,8 @@
 Name: MENACE Vortex Extension
 Structure: Unity MelonLoader
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-09-28
+Version: 1.0.3
+Date: 2026-10-12
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -832,7 +832,7 @@ function testMelon(files, gameId) {
 function installMelon(files) {
   const MOD_TYPE = MELON_ID;
   const modFile = files.find((file) => path.basename(file) === MELON_FOLDER);
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -877,7 +877,7 @@ function testModkit(files, gameId) {
 function installModkit(files) {
   const MOD_TYPE = MODKIT_ID;
   const modFile = files.find((file) => path.basename(file) === MODKIT_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -934,7 +934,7 @@ function installJiangyu(files) {
       (loaderFile) => loaderFile.toLowerCase() === path.basename(file).toLowerCase(),
     ),
   );
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -982,7 +982,7 @@ async function installJiangyuMod(files, destinationPath) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === JIANGYUMOD_FILE);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
 
   //Folder the mod deploys into. The manifest's "name" is the loader's own identity for the mod -
   //what other mods declare as a dependency - so it wins over anything derived from the archive.
@@ -1083,7 +1083,7 @@ function installModpackLoader(files) {
 
   //Standalone ModpackLoader package: copy it through as authored, anchored on its "UserLibs" folder.
   const modFile = files.find((file) => path.basename(file) === MODPACKLOADER_FOLDER);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
 
@@ -1127,7 +1127,7 @@ function testMelonPrefMan(files, gameId) {
 function installMelonPrefMan(files) {
   const MOD_TYPE = MELONPREFMAN_ID;
   const modFile = files.find((file) => path.basename(file).toLowerCase() === MELONPREFMAN_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -1172,7 +1172,7 @@ function testAssembly(files, gameId) {
 function installAssembly(files) {
   const MOD_TYPE = ASSEMBLY_ID;
   const modFile = files.find((file) => ASSEMBLY_FILES.includes(path.basename(file)));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -1217,7 +1217,7 @@ function testRoot(files, gameId) {
 async function installRoot(files, workingDir) {
   const modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file)));
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(ROOT_IDX);
+  const idx = modFile.lastIndexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
@@ -1275,7 +1275,7 @@ function testAssets(files, gameId) {
 //Installer install assets files
 function installAssets(files) {
   const modFile = files.find((file) => ASSETS_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ASSETS_ID };
@@ -1334,7 +1334,7 @@ function installModpackMod(files, fileName) {
     //const indexFolder = path.basename(modFile);
     //idx = modFile.indexOf(`${indexFolder}${path.sep}`);  //index on the folder with path separator
   } //*/
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const MOD_ATTRIBUTE = {
     //attribute for use in load order
     type: "attribute",
@@ -1386,7 +1386,7 @@ function testCustomLeadersPlugin(files, gameId) {
 function installCustomLeadersPlugin(files) {
   const MOD_TYPE = CUSTOMLEADERSPLUGIN_ID;
   const modFile = files.find((file) => path.basename(file) === CUSTOMLEADERSPLUGIN_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -1458,7 +1458,7 @@ function installCustomLeaders(files, fileName) {
     //const indexFolder = path.basename(modFile);
     //idx = modFile.indexOf(`${indexFolder}${path.sep}`);  //index on the folder with path separator
   } //*/
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
 
   // Remove directories and anything that isn't in the rootPath.
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
@@ -1533,7 +1533,7 @@ function melonManifest(name) {
 
 async function installPlugin(api, gameSpec, files, workingDir) {
   const modFile = files.find((file) => PLUGIN_EXTS.includes(path.extname(file).toLowerCase()));
-  let idx = modFile.indexOf(path.basename(modFile));
+  let idx = modFile.lastIndexOf(path.basename(modFile));
   let rootPath = path.dirname(modFile);
   let setModTypeInstruction = {};
 
@@ -1552,7 +1552,9 @@ async function installPlugin(api, gameSpec, files, workingDir) {
           const content = await fsp.readFile(path.join(workingDir, file), "utf8");
           if (content.includes(MEL_STRING)) {
             isMelon = true;
-            isMelonPlugin = content.includes(MEL_PLUGIN_STRING);
+            if (content.includes(MEL_PLUGIN_STRING)) {
+              isMelonPlugin = true; //any plugin makes it a plugin archive, whatever order the dlls are read in
+            }
           } else {
             unknown = true;
           }
@@ -1576,7 +1578,7 @@ async function installPlugin(api, gameSpec, files, workingDir) {
       MELON_MOD_FOLDERS.includes(path.basename(file).toLowerCase()),
     );
     if (folder !== undefined) {
-      idx = folder.indexOf(`${path.basename(folder)}${path.sep}`);
+      idx = folder.lastIndexOf(`${path.basename(folder)}${path.sep}`);
       rootPath = path.dirname(folder);
     }
     if (folder === undefined) {
@@ -1590,7 +1592,7 @@ async function installPlugin(api, gameSpec, files, workingDir) {
       MELON_MOD_FOLDERS.includes(path.basename(file).toLowerCase()),
     );
     if (folder !== undefined) {
-      idx = folder.indexOf(`${path.basename(folder)}${path.sep}`);
+      idx = folder.lastIndexOf(`${path.basename(folder)}${path.sep}`);
       rootPath = path.dirname(folder);
     }
     if (folder === undefined) {
@@ -2495,6 +2497,7 @@ async function checkDotNetMelon(api) {
     );
     if (!values) {
       dotNetMelonNotify(api); //assume not installed if key not found
+      return;
     }
     values = values.map((value) => value.key); //map array to only keys
     const found = values.some((value) => value.startsWith(version)); //find entry starting with correct version number

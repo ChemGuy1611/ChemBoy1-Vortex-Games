@@ -49,8 +49,10 @@ no demo (`EXEC_DEMO = ""`) or a demo that shares the game's executable never swi
 `getSavePath` (the first folder in `userdata`; the `remote` subfolder is commented out in the
 template). The demo build uses `STEAMAPP_ID_DEMO` as the app id.
 
-**Tools:** Custom Launch, Custom Launch (Demo), Fluffy Mod Manager (asset `fluffy.png`).
-`deployNotify` plus `runFluffy`. Extra toolbar actions: Download Latest REFramework Nightly, Open
+**Tools:** Custom Launch, Custom Launch (Demo), Fluffy Mod Manager (asset `fluffy.png`). The demo
+button is only registered when `HAS_DEMO` is true, so a game with no demo (`EXEC_DEMO = ""`) or a
+demo executable named like the game gets just Custom Launch and Fluffy. `deployNotify` plus
+`runFluffy`. Extra toolbar actions: Download Latest REFramework Nightly, Open
 Config File, Open Save Folder (Steam).
 
 The `spec` carries all five store-ID slots and a `hasXbox` toggle, even though most RE Engine

@@ -1,5 +1,11 @@
 # template-rpgmaker Changelog
 
+## [2026-10-12]
+
+- Added: `restoreDeployedPlugins`, run from a new `did-deploy` listener (`api.onAsync`) in `main()`. After a purge, `clearPurgedPlugins` removes the purged plugins' entries from plugins.js, and Vortex 2.9.0-beta.2 does not write the load order back on the deploy that follows (the order it restores equals the stored one, so it sees no change to write), so the entries stayed missing until the user changed the load order. The listener checks, for the profile that was deployed (this game, active profile only), whether every deployed Vortex-managed plugin is listed in plugins.js, and only if one is missing it runs `serializePluginsLoadOrder` with the load order read from the game. Every other deploy writes nothing.
+- Fixed: `serializePluginsLoadOrder` wrote a `locked` field into plugins.js for a plugin whose entry came from the sidecar (the sidecar keeps the Vortex-only lock flag). It is removed from the plugins.js copy and stays in the sidecar.
+- Removed: the `isPurging` purge guard. `deserializePluginsLoadOrder` and `serializePluginsLoadOrder` no longer return early while a purge is under way, and the `will-purge` and `did-deploy` listeners in `main()` that armed, cleared and re-synced it are gone. The Load Order page now reads and writes plugins.js the same way during a purge as at any other time. The `did-purge` listener and `clearPurgedPlugins` stay, so a purge still prunes the dead plugin entries. Reason: `game-lookoutside` replaced the guard in 1.0.1, and the per-profile sidecar keeps each managed plugin's description and parameters. Live purge test on `game-welcometoelderfield` (Vortex 2.9.0-beta.2): a plugin's edited parameters survive the purge in the sidecar.
+
 ## [2026-10-11]
 
 - Fixed: the installers cut each mod's destination with `modFile.indexOf(...)`, which finds the FIRST occurrence of the marker's name in the path. A wrapper folder whose name contains `js` (`jsmods/js/plugins/A.js`) or ends with a root folder's name (`mydata/data/a.json`) was cut inside the wrapper's name, so the wrapper stayed in the install path (and, for the js folder installer, no plugin names were recorded). `installJsFolder`, `installJsFile`, `installRoot` and `installJson` now use `lastIndexOf`, which always lands on the marker's own path segment.

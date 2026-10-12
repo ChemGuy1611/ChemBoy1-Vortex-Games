@@ -1,8 +1,9 @@
 # Changelog
 
-## [2.0.1] - 2026-10-05
+## [2.0.1] - 2026-10-12
 
 - Fixed Ubisoft Connect version discovery so that game store is properly set to "Ubisoft" rather than "Registry"
+- Fixed: Mods packaged inside an outer folder whose name contains the name of the mod's own folder or file (for example "MyData" for "Data") now install into the right place.
 
 ## [2.0.0] - 2026-10-05
 

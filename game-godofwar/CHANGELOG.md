@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.3] - 2026-10-12
+
+- Fixed: Mods packaged inside an outer folder whose name contains the name of the mod's own folder or file (for example "MyData" for "Data") now install into the right place.
+
 ## [1.0.2] - 2026-10-09
 
 - Fixed: A .texpack and a .lodpack with the same name now share one line on the Load Order page instead of showing as two, and both are written to boot-options.json. Your saved order, disabled packs and locked positions are kept.

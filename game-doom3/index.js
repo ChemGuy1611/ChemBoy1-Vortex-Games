@@ -2,8 +2,8 @@
 Name: DOOM 3 & DOOM 3: BFG Edition Vortex Extension
 Structure: Basic multi-game with multiple exes
 Author: ChemBoy1
-Version: 0.5.8
-Date: 2026-09-08
+Version: 1.0.0
+Date: 2026-10-12
 /////////////////////////////////////////*/
 /*
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣠⣤⣤⣤⡴⣦⡴⣖⠶⣴⠶⡶⣖⡶⣶⢶⣲⡾⠿⢿⡷⣾⢿⣷⣦⢾⣷⣾⣶⣤⣀⣰⣤⣀⡀⠀⠀⢀⣴⣿⡿⡿⣿⣿⣦⣄⠀⠀⣠⣴⣿⡿⢿⡿⣷⣦⡄⠀⠀⢀⣀⣤⣦⣀⣤⣶⣶⣷⣦⣴⡿⢿⡷⣿⠿⡿⣿⣷⢶⣦⢴⡲⣦⢶⡶⢶⡲⣖⡶⣦⣤⣤⣤⣤⣤⣤⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -618,7 +618,7 @@ function testDhewm3(files, gameId) {
 //Installer install Dhewm3
 function installDhewm3(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === DHEWM3_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: DHEWM3_ID };
@@ -662,7 +662,7 @@ function testRoot(files, gameId) {
 //Installer install Root files
 function installRoot(api, files, fileName) {
   const modFile = files.find((file) => ROOT_FILES.includes(path.basename(file).toLowerCase()));
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
@@ -687,7 +687,10 @@ function installRoot(api, files, fileName) {
 function manualManipulationNotify(api, fileName) {
   const state = api.getState();
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
-  const MOD_NAME = path.basename(fileName).replace(/(.installing)*(.zip)*(.rar)*(.7z)*/gi, "");
+  const MOD_NAME = path
+    .basename(fileName)
+    .replace(/\.installing$/i, "")
+    .replace(/\.(zip|rar|7z)$/i, "");
   const NOTIF_ID = `${GAME_ID}-manualmanipulation-${MOD_NAME}`;
   const MESSAGE = "Manual File/Folder Manipulation Required";
   api.sendNotification({
@@ -796,7 +799,7 @@ function testRootBfg(files, gameId) {
 function installRootBfg(files) {
   const modFile = files.find((file) => ROOT_FOLDERS_BFG.includes(path.basename(file)));
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(ROOT_IDX);
+  const idx = modFile.lastIndexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID_BFG };

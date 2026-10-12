@@ -9,7 +9,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | BepInEx (mod loader) | a `winhttp.dll` file | the game folder itself (no subfolder) |
-| Bepinex Loaderpatch | a file or folder named `winhttp.dll` and a file or folder named `doorstop_config.ini` | the game folder itself (no subfolder) |
+| Bepinex Loaderpatch | a file or folder named `doorstop_config.ini` | the game folder itself (no subfolder) |
 | MelonLoader (mod loader) | a `version.dll` file | the game folder itself (no subfolder) |
 | Root / Game Folder Mods | a `MOUSE_Data` folder | the game folder itself (no subfolder) |
 | BepInEx Configuration Manager | a `configurationmanager.dll` file | `BepInEx` |
@@ -38,7 +38,7 @@ Installs to: the game folder itself (no subfolder)
 
 ## Bepinex Loaderpatch
 
-Recognised when the archive contains a file or folder named `winhttp.dll` and a file or folder named `doorstop_config.ini`.
+Recognised when the archive contains a file or folder named `doorstop_config.ini`.
 
 Installs to: the game folder itself (no subfolder)
 

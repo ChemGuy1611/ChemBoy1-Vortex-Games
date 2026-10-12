@@ -2,8 +2,8 @@
 Name: Pathologic 2 Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.1
-Date: 2026-09-17
+Version: 1.0.0
+Date: 2026-10-12
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -439,7 +439,7 @@ function testLoader(files, gameId) {
 function installLoader(files) {
   const MOD_TYPE = LOADER_ID;
   const modFile = files.find((file) => path.basename(file) === LOADER_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -499,7 +499,7 @@ function installMod(files, fileName) {
     /*const indexFolder = path.basename(modFile);
       //idx = modFile.indexOf(`${indexFolder}${path.sep}`); //*/ //index on the folder with path separator
   }
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
 
   // Remove directories and anything that isn't in the rootPath.
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;

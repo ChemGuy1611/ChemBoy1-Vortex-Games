@@ -2,8 +2,8 @@
 Name: WH40K Space Marine 2 Vortex Extension
 Structure: Mods Folder w/ LO
 Author: ChemBoy1
-Version: 0.8.5
-Date: 2026-09-26
+Version: 1.0.0
+Date: 2026-10-12
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -877,7 +877,7 @@ function testRoot(files, gameId) {
 //Installer install Root folder files
 function installRoot(files) {
   const modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file)));
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
@@ -921,7 +921,7 @@ function testLocal(files, gameId) {
 //Installer install Root folder files
 function installLocal(files) {
   const modFile = files.find((file) => path.basename(file) === LOCAL_FILE);
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: LOCAL_ID };
@@ -965,7 +965,7 @@ function testLocalSub(files, gameId) {
 //Installer install Root folder files
 function installLocalSub(files) {
   const modFile = files.find((file) => LOCALSUB_FOLDERS.includes(path.basename(file)));
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: LOCALSUB_ID };

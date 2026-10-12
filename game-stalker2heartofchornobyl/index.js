@@ -2,8 +2,8 @@
 Name: S.T.A.L.K.E.R. 2: Heart of Chornobyl Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 2.1.4
-Date: 2026-10-04
+Version: 2.1.5
+Date: 2026-10-12
 //////////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -789,7 +789,7 @@ function testModMerger(files, gameId) {
 //Installer install Simple Mod Merger files
 function installModMerger(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === MERGER_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MERGER_ID };
@@ -829,7 +829,7 @@ function testHerbata(files, gameId) {
 //Installer install Herbata's Mod-as-DLC Loader files
 function installHerbata(files) {
   const modFile = files.find(file => (path.basename(file).toLowerCase() === HERBATA_FILE));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: HERBATA_ID };
 
@@ -882,7 +882,7 @@ async function installUe4ssCombo(files, workingDir) {
   const modFile = files.find(
     (file) => path.basename(file).toLowerCase() === ROOT_FOLDER.toLowerCase(),
   );
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: UE4SSCOMBO_ID };
@@ -915,13 +915,25 @@ async function installUe4ssCombo(files, workingDir) {
     };
   });
   instructions.push(setModTypeInstruction);
-  const ue4ssModFolders = files
-    .filter(
-      (f) =>
-        f.toLowerCase().includes(UE4SS_MOD_PATH.toLowerCase()) &&
-        path.basename(f).toLowerCase() === SCRIPTS_FOLDER.toLowerCase(),
-    )
-    .map((f) => path.basename(path.dirname(f)));
+  //The mod folder is the one holding a Scripts folder. Read it from the path segments, so it also
+  //works for the Xbox list rebuilt above, which holds files only and no folder entries.
+  const ue4ssModFolders = [
+    ...new Set(
+      files
+        .filter((f) => f.toLowerCase().includes(UE4SS_MOD_PATH.toLowerCase()))
+        .map((f) => {
+          const segments = f.split(/[\\/]+/);
+          const scriptsAt = segments.findIndex(
+            (segment, i) =>
+              i > 0 &&
+              i < segments.length - 1 &&
+              segment.toLowerCase() === SCRIPTS_FOLDER.toLowerCase(),
+          );
+          return scriptsAt === -1 ? undefined : segments[scriptsAt - 1];
+        })
+        .filter(Boolean),
+    ),
+  ];
   if (ue4ssModFolders.length) {
     instructions.push({ type: "attribute", key: LO_ATTRIBUTE_UE4SS, value: ue4ssModFolders[0] }); //!only picking one folder to have a string. Can change to array if needed, but need to change in load order modId function too.
   }
@@ -956,7 +968,7 @@ function testLogic(files, gameId) {
 //Install save files
 function installLogic(files) {
   const modFile = files.find((file) => path.extname(file).toLowerCase() === LOGICMODS_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: LOGICMODS_ID };
@@ -974,7 +986,7 @@ function installLogic(files) {
   instructions.push(setModTypeInstruction);
   const pakBasenames = filtered
     .filter((f) => path.extname(f).toLowerCase() === LOGICMODS_EXT)
-    .map((f) => path.basename(f, LOGICMODS_EXT));
+    .map((f) => path.basename(f, path.extname(f)));
   if (pakBasenames.length) {
     instructions.push({ type: "attribute", key: LO_ATTRIBUTE_LOGIC, value: pakBasenames });
   }
@@ -1007,7 +1019,7 @@ function testHerbataMod(files, gameId) {
 //Installer install Root folder files
 function installHerbataMod(files) {
   const modFile = files.find((file) => path.basename(file) === HERBATAMOD_FOLDER);
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: HERBATAMOD_ID };
@@ -1052,7 +1064,7 @@ function testUe4ss(files, gameId) {
 //Installer install UE4SS files
 function installUe4ss(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === UE4SS_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: UE4SS_ID };
@@ -1103,7 +1115,7 @@ function installScripts(api, files, fileName) {
   const modFile = files.find(
     (file) => path.basename(file).toLowerCase() === SCRIPTS_FOLDER.toLowerCase(),
   );
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: SCRIPTS_ID };
@@ -1176,7 +1188,7 @@ function installDll(api, files, fileName) {
   const modFile = files.find(
     (file) => path.basename(file).toLowerCase() === DLL_FOLDER.toLowerCase(),
   );
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: DLL_ID };
@@ -1273,7 +1285,7 @@ function installRoot(files) {
     );
     folder = path.join(EPIC_CODE_NAME, "Content");
   }
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
@@ -1319,7 +1331,7 @@ function testConfig(files, gameId) {
 //Install config files
 function installConfig(api, files) {
   const modFile = files.find((file) => path.extname(file).toLowerCase() === CONFIG_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: CONFIG_ID };
@@ -1433,7 +1445,7 @@ function saveErrorNotify(api) {
 //Install save files
 async function installSave(api, files) {
   const modFile = files.find((file) => path.extname(file).toLowerCase() === SAVE_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: SAVE_ID };
@@ -1827,7 +1839,7 @@ function testNewPakMod(files, gameId) {
 //Installer install new 2.0 pak mod folders and files (no LO)
 function installNewPakMod(files) {
   const modFile = files.find((file) => NEWPAK_FOLDERS.includes(path.basename(file)));
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: "setmodtype", value: NEWPAK_ID };
 
@@ -2158,7 +2170,7 @@ async function deserializeLogicMods(api) {
     const seen = new Set();
     for (const f of all) {
       if (path.extname(f).toLowerCase() === LOGICMODS_EXT) {
-        const name = path.basename(f, LOGICMODS_EXT);
+        const name = path.basename(f, path.extname(f));
         if (!seen.has(name)) {
           seen.add(name);
           pakFiles.push(name);

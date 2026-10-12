@@ -2,8 +2,8 @@
 Name: Marvel's Spider-Man 2 Vortex Extension
 Structure: 3rd-Party Mod Manager (Overstrike)
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-10-04
+Version: 1.0.2
+Date: 2026-10-12
 ////////////////////////////////////////////*/
 
 //Import libraries
@@ -386,7 +386,7 @@ function testOverstrike(files, gameId) {
 //Installer install Overstrike
 function installOverstrike(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === OVERSTRIKE_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: OVERSTRIKE_ID };
@@ -431,7 +431,7 @@ function testOsMod(files, gameId) {
 //Installer install mod files
 function installOsMod(files) {
   const modFile = files.find((file) => OSMOD_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: OSMOD_ID };
@@ -575,7 +575,7 @@ function runOverstrike(api) {
     if (TOOL_PATH !== undefined) {
       return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false }).catch((err) =>
         api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-          allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+          allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
         }),
       );
     } else {
@@ -586,7 +586,7 @@ function runOverstrike(api) {
     }
   } catch (err) {
     return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+      allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
     });
   }
 }
@@ -607,7 +607,7 @@ async function verifyGameFiles(api) {
       await vfs.unlinkAsync(path.join(GAME_PATH, TOC_FILE_BAK));
     } catch (err) {
       return api.showErrorNotification(`Failed to delete ${TOC_FILE_BAK}`, err, {
-        allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+        allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
       });
     }
   }

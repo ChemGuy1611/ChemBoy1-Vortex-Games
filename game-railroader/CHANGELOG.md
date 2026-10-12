@@ -1,6 +1,9 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.0.4] - 2026-10-12
+
+- Fixed: Mods packaged inside an outer folder whose name ends with a game folder's name (for example "MyData" for "Data") now install into the right place instead of a doubled folder.
+- Fixed: The "Open Save Folder" button now opens the save folder.
 
 ## [1.0.3] - 2026-10-05
 

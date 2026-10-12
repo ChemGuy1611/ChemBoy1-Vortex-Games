@@ -24,6 +24,10 @@ Usage:
     python patch_extensions.py GAME_ID --only plan_b_lo_region --dry-run   # Plan B FBLO load order port: splice darktide's LO region into one target game (registered disabled; one game at a time; see PLAN_B_LO_GAMES)
     python patch_extensions.py GAME_ID [GAME_ID ...] --only rootpath_prefix_scope --dry-run   # installer mod-root scoping fix: file.indexOf(rootPath) !== -1 -> file.startsWith(rootPrefix) (registered disabled; apply to one wave of games at a time)
     python patch_extensions.py --only steamdb_button --dry-run   # add "Open SteamDB Page" button after "Open PCGamingWiki Page" (registered disabled; one-off propagation)
+    python patch_extensions.py GAME_ID [GAME_ID ...] --only template_gap_fixes --no-resize --dry-run   # port the 2026-10-11 template gap fixes (lastIndexOf wrapper cuts, EACCESS -> EACCES, .JS, Shinryu marker case, UMM save folder await, Anvil rename notice + rename redeploy, Fluffy loose-lua root + nested archive case, Unity hybrid dialogs / archive flags / custom loader / ALT_VERSION / Melon Nexus button, UE4-5 LogicMods .PAK stem / ModKit name guard / Xbox combo mod folder / legacy preSort / beatsPakInstaller gate / Open LogicMods Folder button, the last skipped where LOGICMODS_PATH already ends in the folder); registered disabled; pass the family's at-parity game ids only
+    python patch_extensions.py GAME_ID [GAME_ID ...] --only farcry_parity --no-resize --dry-run   # splice template-farcry's baseline block (fallback installer trio, modFoldersEnsureWritable, 4 toggles + wiring) into Far Cry games below template shape parity (registered disabled; all-or-nothing per game, a variant that misses an anchor is reported for a hand port)
+    python patch_extensions.py GAME_ID [GAME_ID ...] --only fluffy_has_demo --no-resize --dry-run   # bring REFramework/Fluffy games to template-reframework-fluffy's HAS_DEMO shape: const, multiExe, 3 demo checks, demo launch tool only when HAS_DEMO (registered disabled; all-or-nothing per game)
+    python patch_extensions.py GAME_ID [GAME_ID ...] --only PATCH_NAME --no-resize   # --no-resize skips the PNG / title image / cover art resize passes that follow the patches (code-only run)
     python patch_extensions.py GAME_ID [GAME_ID ...] --only PATCH_NAME
     python patch_extensions.py --audit                        # run the read-only audits (installer priorities + FOMOD checks + store ID wiring) then exit
     python patch_extensions.py GAME_ID [GAME_ID ...] --audit  # scope audits to specific games only
@@ -61,7 +65,7 @@ from vortex_utils import (
     is_placeholder_value, replace_const_rhs, print_count_summary, js_string_literal,
     strip_js_comments, is_real_value,
     audit_skip_lines, AUDIT_SKIP_STORE_ID, AUDIT_SKIP_FOMOD, AUDIT_SKIP_PRIORITY,
-    find_registerinstaller_calls, node_check_source,
+    find_registerinstaller_calls, node_check_source, read_index_js,
 )
 NEXUS_SITE_BASE = "https://www.nexusmods.com/site/mods"
 
@@ -1168,6 +1172,508 @@ def patch_plan_b_lo_region(game_id, src, context):
     return new_src, True, f"{mode} mode; {msg}; {loi_msg}; {delta:+d} bytes"
 
 
+def _dialog_ok_block(var, indent):
+    """Hybrid installPlugin: a refusal dialog whose result was only checked for "Ok", so closing
+    the dialog any other way let the install go ahead. Returns the (old, new) text of the check
+    for one dialog result variable at one indent."""
+    pad = " " * indent
+    old = (f'{pad}if ({var}.action === "Ok") {{\n'
+           f'{pad}  if (preventPluginInstall) {{\n'
+           f'{pad}    throw new VortexError("User canceled", {{ kind: "user-canceled", skipped: false }});\n'
+           f'{pad}  }} else {{\n'
+           f'{pad}    //do nothing, proceed with install\n'
+           f'{pad}  }}\n'
+           f'{pad}}}\n')
+    new = (f'{pad}if (preventPluginInstall) {{\n'
+           f'{pad}  throw new VortexError("User canceled", {{ kind: "user-canceled", skipped: false }});\n'
+           f'{pad}}}\n')
+    return old, new
+
+
+# Literal old -> new pairs ported from the template gap fixes (resources/template-changelogs,
+# entries dated 2026-10-11; anchors are the template diff of those commits). A pair applies to
+# every game that still carries the old text and is skipped silently for the rest, so one
+# table serves all template families.
+TEMPLATE_GAP_FIXES = [
+    # REFramework / Fluffy: the loose-lua installer kept only the folder of the FIRST script. It must
+    # run before cut_basename, whose pair would rewrite the idx line this block replaces.
+    ("loose_lua_root",
+     '  const modFile = files.find((file) => path.extname(file).toLowerCase() === LUA_EXT);\n'
+     '  const idx = modFile.indexOf(path.basename(modFile));\n'
+     '  const rootPath = path.dirname(modFile);\n'
+     '  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;\n'
+     '  const setModTypeInstruction = { type: "setmodtype", value: LOOSELUA_ID };\n'
+     '\n'
+     '  // Remove directories and anything that isn\'t in the rootPath.\n'
+     '  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));\n'
+     '\n'
+     '  const instructions = filtered.map((file) => {\n'
+     '    return {\n'
+     '      type: "copy",\n'
+     '      source: file,\n'
+     '      destination: path.join("reframework", "autorun", file.substr(idx)),\n',
+     '  // Root the install at the deepest folder that holds every script, so scripts in separate folders all install.\n'
+     '  const luaDirs = files\n'
+     '    .filter((file) => path.extname(file).toLowerCase() === LUA_EXT)\n'
+     '    .map((file) => (path.dirname(file) === "." ? [] : path.dirname(file).split(path.sep)));\n'
+     '  let sharedDirs = luaDirs[0];\n'
+     '  for (const dirs of luaDirs) {\n'
+     '    let n = 0;\n'
+     '    while (n < sharedDirs.length && n < dirs.length && sharedDirs[n] === dirs[n]) n++;\n'
+     '    sharedDirs = sharedDirs.slice(0, n);\n'
+     '  }\n'
+     '  const rootPrefix = sharedDirs.length > 0 ? sharedDirs.join(path.sep) + path.sep : "";\n'
+     '  const setModTypeInstruction = { type: "setmodtype", value: LOOSELUA_ID };\n'
+     '\n'
+     '  // Remove directories and anything that isn\'t in the rootPath.\n'
+     '  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));\n'
+     '\n'
+     '  const instructions = filtered.map((file) => {\n'
+     '    return {\n'
+     '      type: "copy",\n'
+     '      source: file,\n'
+     '      destination: path.join("reframework", "autorun", file.substr(rootPrefix.length)),\n'),
+    # Wrapper-name cut: the first occurrence of the marker's name is not always the marker.
+    ("cut_basename", "modFile.indexOf(path.basename(modFile))",
+     "modFile.lastIndexOf(path.basename(modFile))"),
+    ("cut_basename_sep", "modFile.indexOf(`${path.basename(modFile)}${path.sep}`)",
+     "modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`)"),
+    ("cut_modfile_idx", "modFile.indexOf(MODFILE_IDX)", "modFile.lastIndexOf(MODFILE_IDX)"),
+    ("cut_root_idx", "modFile.indexOf(ROOT_IDX)", "modFile.lastIndexOf(ROOT_IDX)"),
+    ("cut_root_path", "modFile.indexOf(`${path.basename(ROOT_PATH)}${path.sep}`)",
+     "modFile.lastIndexOf(`${path.basename(ROOT_PATH)}${path.sep}`)"),
+    # Node raises EACCES; the typo meant an access-denied failure was never offered for reporting.
+    ("eacces", '"EACCESS"', '"EACCES"'),
+    # Anvil: the rename notice stripped archive extensions with unescaped dots ("Hunter rarity" -> "Hunterity").
+    ("rename_notice_name",
+     '  const MOD_NAME = path.basename(fileName).replace(/(.installing)*(.zip)*(.rar)*(.7z)*/gi, "");\n',
+     '  const MOD_NAME = path\n'
+     '    .basename(fileName)\n'
+     '    .replace(/\\.installing$/i, "")\n'
+     '    .replace(/\\.(zip|rar|7z)$/i, "");\n'),
+    # Anvil: the folder rename dialog did not wait for rename(), so a failed purge/deploy was an unhandled rejection.
+    ("rename_await",
+     '        const NEW = path.join(FOLDER_PATH, name);\n        rename(api, EXISTING, NEW);\n',
+     '        const NEW = path.join(FOLDER_PATH, name);\n        return rename(api, EXISTING, NEW);\n'),
+    # Anvil: after a failed rename the mods stayed purged because rename() returned before the redeploy.
+    ("rename_redeploy",
+     '      { allowReport: false },\n    );\n    return Promise.resolve();\n  }\n  await deploy(api);\n',
+     '      { allowReport: false },\n    );\n  }\n  // Redeploy even after a failed rename, otherwise the mods stay purged.\n  await deploy(api);\n'),
+    # Fluffy: a nested .ZIP / .7Z / .RAR was not recognised as an archive and was repacked inside another zip.
+    ("zip_ext_case",
+     '  const zipFiles = files.filter((file) => [".zip", ".7z", ".rar"].includes(path.extname(file)));\n',
+     '  const zipFiles = files.filter((file) =>\n'
+     '    [".zip", ".7z", ".rar"].includes(path.extname(file).toLowerCase()),\n'
+     '  );\n'),
+    # RPG Maker: upper-case .JS plugins were stamped with the extension and never listed.
+    ("js_stamp_ext", "path.basename(instr.destination, JSFILE_EXT)",
+     "path.basename(instr.destination, path.extname(instr.destination))"),
+    ("js_scan_ext", "path.basename(file, JSFILE_EXT)", "path.basename(file, path.extname(file))"),
+    ("js_scan_filter", "file.endsWith(JSFILE_EXT)", "path.extname(file).toLowerCase() === JSFILE_EXT"),
+    # Shinryu: the root marker test lowercases the name, the install did not.
+    ("marker_case", "let modFile = files.find((file) => ROOT_FILES.includes(path.basename(file)));",
+     "let modFile = files.find((file) => ROOT_FILES.includes(path.basename(file).toLowerCase()));"),
+    # Unity UMM: Open Save Folder passed an unresolved promise to the shell.
+    ("save_folder_await",
+     '    "Open Save Folder",\n    () => {\n      //const openPath = SAVE_PATH;\n'
+     '      const openPath = getSavePath(context.api);\n      try {\n',
+     '    "Open Save Folder",\n    async () => {\n      //const openPath = SAVE_PATH;\n'
+     '      try {\n        const openPath = await getSavePath(context.api);\n'),
+    # Hybrid (Unity MelonLoader / BepInEx): the wrapper-name cut also sits in the plugin sorter's
+    # folder branches and the custom data-file installer.
+    ("cut_folder_sep", "folder.indexOf(`${path.basename(folder)}${path.sep}`)",
+     "folder.lastIndexOf(`${path.basename(folder)}${path.sep}`)"),
+    ("cut_custom_data",
+     '  const DATA_FILE = path.basename(modFile, ".custom.json");\n  const idx = modFile.indexOf(DATA_FILE);\n',
+     '  const idx = modFile.lastIndexOf(path.basename(modFile));\n'),
+    # Hybrid: the alt-exe label equalled the Xbox label, so an Epic/GOG build was read as Xbox and its
+    # version resolved to 0.0.0. The Xbox build sets "xbox" itself; installRoot covers both.
+    ("alt_version_label", 'const ALT_VERSION = "xbox";\n',
+     'const ALT_VERSION = "alt"; //Epic/GOG/demo exe - the Xbox build sets GAME_VERSION to "xbox" itself\n'),
+    ("root_alt_guard", "if (GAME_VERSION === ALT_VERSION) {",
+     'if (GAME_VERSION === ALT_VERSION || GAME_VERSION === "xbox") {'),
+    # Hybrid: one patcher / plugin dll no longer depends on the order the dlls are read in.
+    ("sticky_bep_patcher", "isBepinexPatcher = content.includes(BEP_PATCHER_STRING);",
+     'if (content.includes(BEP_PATCHER_STRING)) {\n'
+     '              isBepinexPatcher = true; //any patcher makes it a patcher archive, whatever order the dlls are read in\n'
+     '            }'),
+    ("sticky_melon_plugin", "isMelonPlugin = content.includes(MEL_PLUGIN_STRING);",
+     'if (content.includes(MEL_PLUGIN_STRING)) {\n'
+     '              isMelonPlugin = true; //any plugin makes it a plugin archive, whatever order the dlls are read in\n'
+     '            }'),
+    # Hybrid: a refusal dialog closed without pressing Ok no longer lets the install go ahead.
+    ("dialog_const_wrong", "const wrongLoader = await api.showDialog(", "await api.showDialog("),
+    ("dialog_const_mixed", "const mixedModHandling = await api.showDialog(", "await api.showDialog("),
+    ("dialog_ok_nested", *_dialog_ok_block("wrongLoader", 6)),
+    ("dialog_ok_top", *_dialog_ok_block("wrongLoader", 4)),
+    ("dialog_ok_mixed", *_dialog_ok_block("mixedModHandling", 4)),
+    # Hybrid: the .NET check notified twice when the registry key had no entries.
+    ("dotnet_return",
+     '    if (!values) {\n      dotNetMelonNotify(api); //assume not installed if key not found\n    }\n',
+     '    if (!values) {\n      dotNetMelonNotify(api); //assume not installed if key not found\n      return;\n    }\n'),
+    # Hybrid custom loader: the two mod types had each other's display name.
+    ("custom_name_swap_mod",
+     'CUSTOMLOADER_MOD_PATH)),\n      () => Promise.resolve(false),\n      { name: CUSTOMLOADER_PLUGIN_NAME },\n',
+     'CUSTOMLOADER_MOD_PATH)),\n      () => Promise.resolve(false),\n      { name: CUSTOMLOADER_MOD_NAME },\n'),
+    ("custom_name_swap_plugin",
+     'CUSTOMLOADER_PLUGIN_PATH)),\n      () => Promise.resolve(false),\n      { name: CUSTOMLOADER_MOD_NAME },\n',
+     'CUSTOMLOADER_PLUGIN_PATH)),\n      () => Promise.resolve(false),\n      { name: CUSTOMLOADER_PLUGIN_NAME },\n'),
+    # Hybrid custom loader: a mod-based loader has no installer files, so conflicts and purge judge it
+    # by isCustomInstalled / the marker file without the "Run installer" notice.
+    ("custom_deconflict", "customInstalled = checkCustomInstalled(api, gameSpec);",
+     "customInstalled = isCustomInstalled(api, gameSpec);"),
+    ("custom_purge_marker", "customInstalled = checkCustomInstalled(api, spec); //file check",
+     "customInstalled = hasCustomMarker(api); //file check - a mod-based loader has no installer files"),
+    ("custom_marker_fn",
+     "// Test if Custom Mod Loader installer was run (marker file exists)\n"
+     "function checkCustomInstalled(api, spec) {\n"
+     "  GAME_PATH = getDiscoveryPath(api);\n"
+     "  let fileTest = false;\n"
+     "  try {\n"
+     "    fs.statSync(path.join(GAME_PATH, CUSTOMLOADER_MARKER_PATH));\n"
+     "    fileTest = true;\n"
+     "  } catch {\n"
+     "    customInstallerNotify(api);\n"
+     "    fileTest = false;\n"
+     "  }\n"
+     "  return fileTest;\n"
+     "}\n",
+     "// Test if the Custom Mod Loader installer's marker file exists (no notification)\n"
+     "function hasCustomMarker(api) {\n"
+     "  GAME_PATH = getDiscoveryPath(api);\n"
+     "  try {\n"
+     "    fs.statSync(path.join(GAME_PATH, CUSTOMLOADER_MARKER_PATH));\n"
+     "    return true;\n"
+     "  } catch {\n"
+     "    return false;\n"
+     "  }\n"
+     "}\n"
+     "\n"
+     "// Test if Custom Mod Loader installer was run (marker file exists), and notify if it was not\n"
+     "function checkCustomInstalled(api, spec) {\n"
+     "  const fileTest = hasCustomMarker(api);\n"
+     "  if (!fileTest) {\n"
+     "    customInstallerNotify(api);\n"
+     "  }\n"
+     "  return fileTest;\n"
+     "}\n"),
+    # Hybrid: the toolbar "Download Latest MelonLoader" ignored a Nexus fork (melonFromNexus). Games that
+    # predate the melonFromNexus const keep the old button (hand case, see the plan).
+    ("melon_button_nexus",
+     '      "Download Latest MelonLoader",\n      () => {\n        downloadMelon(context.api, spec, false);\n      },\n',
+     '      "Download Latest MelonLoader",\n      () => {\n        if (melonFromNexus) {\n'
+     '          downloadMelonNexus(context.api, spec, false);\n        } else {\n'
+     '          downloadMelon(context.api, spec, false);\n        }\n      },\n'),
+    # UE4-5: a LogicMods pak stem is cut with the file's own extension, so B.PAK keeps its case.
+    ("logic_pak_stem", "path.basename(f, LOGICMODS_EXT)", "path.basename(f, path.extname(f))"),
+    # UE4-5: a mod.json without modPluginName no longer sets the mod folder to undefined.
+    ("modkit_name_guard",
+     '    MOD_FOLDER = JSON_MOD_NAME;\n',
+     '    if (typeof JSON_MOD_NAME === "string" && JSON_MOD_NAME !== "") {\n'
+     '      MOD_FOLDER = JSON_MOD_NAME; //without a name the folder keeps the wrapper or archive name\n'
+     '    }\n'),
+    # UE4-5: the UE4SS combo mod folder is read from the path segments, so the Xbox file list (files
+    # only, no folder entries) still records the ue4ssModFolder attribute.
+    ("combo_mod_folder",
+     '  const ue4ssModFolders = files\n'
+     '    .filter(\n'
+     '      (f) =>\n'
+     '        f.toLowerCase().includes(UE4SS_MOD_PATH.toLowerCase()) &&\n'
+     '        path.basename(f).toLowerCase() === SCRIPTS_FOLDER.toLowerCase(),\n'
+     '    )\n'
+     '    .map((f) => path.basename(path.dirname(f)));\n',
+     '  //The mod folder is the one holding a Scripts folder. Read it from the path segments, so it also\n'
+     '  //works for the Xbox list rebuilt above, which holds files only and no folder entries.\n'
+     '  const ue4ssModFolders = [\n'
+     '    ...new Set(\n'
+     '      files\n'
+     '        .filter((f) => f.toLowerCase().includes(UE4SS_MOD_PATH.toLowerCase()))\n'
+     '        .map((f) => {\n'
+     '          const segments = f.split(/[\\\\/]+/);\n'
+     '          const scriptsAt = segments.findIndex(\n'
+     '            (segment, i) =>\n'
+     '              i > 0 &&\n'
+     '              i < segments.length - 1 &&\n'
+     '              segment.toLowerCase() === SCRIPTS_FOLDER.toLowerCase(),\n'
+     '          );\n'
+     '          return scriptsAt === -1 ? undefined : segments[scriptsAt - 1];\n'
+     '        })\n'
+     '        .filter(Boolean),\n'
+     '    ),\n'
+     '  ];\n'),
+    # UE4-5: the legacy pak sort threw when a listed mod was missing from state.
+    ("presort_missing_mod",
+     '    let name = modInfo\n'
+     '      ? (modInfo.attributes.customFileName ??\n'
+     '        modInfo.attributes.logicalFileName ??\n'
+     '        modInfo.attributes.name)\n'
+     '      : mod.name;\n'
+     '    const paks = modInfo.attributes?.unrealModFiles ?? [];\n',
+     '    let name =\n'
+     '      modInfo?.attributes?.customFileName ??\n'
+     '      modInfo?.attributes?.logicalFileName ??\n'
+     '      modInfo?.attributes?.name ??\n'
+     '      mod.name;\n'
+     '    const paks = modInfo?.attributes?.unrealModFiles ?? [];\n'),
+    # UE4-5: the LogicMods installer registers under ue4ssLoadOrder, so the pak retag helper gates on it too.
+    ("beats_pak_gate",
+     "if (logicModsLoadOrder && segsLower.includes(LOGICMODS_FOLDER.toLowerCase())) return true;",
+     "if (ue4ssLoadOrder && segsLower.includes(LOGICMODS_FOLDER.toLowerCase())) return true;"),
+    ("beats_pak_comment", "LogicMods (27, only when logicModsLoadOrder)", "LogicMods (27, only when ue4ssLoadOrder)"),
+    # UE4-5: toolbar "Open LogicMods Folder" opened Content\Paks instead of Paks\LogicMods.
+    ("open_logicmods_folder",
+     '      "Open LogicMods Folder",\n'
+     '      () => {\n'
+     '        GAME_PATH = getDiscoveryPath(context.api);\n'
+     '        try {\n'
+     '          window.api.shell.openFile(path.join(GAME_PATH, LOGICMODS_PATH));\n',
+     '      "Open LogicMods Folder",\n'
+     '      () => {\n'
+     '        GAME_PATH = getDiscoveryPath(context.api);\n'
+     '        try {\n'
+     '          window.api.shell.openFile(path.join(GAME_PATH, LOGICMODS_PATH, LOGICMODS_FOLDER));\n'),
+]
+
+
+def patch_template_gap_fixes(game_id, src, context):
+    """
+    Port the template gap fixes (2026-10-11) to a game: wrapper-name cuts use lastIndexOf,
+    "EACCESS" -> "EACCES", RPG Maker .JS handling, Shinryu root marker case, UMM Open Save
+    Folder await. Literal replacements from TEMPLATE_GAP_FIXES; a game that carries none of
+    the old text is left alone. Run per family, only on games in that family's parity list.
+    """
+    new_src = src
+    applied = []
+    # Per-pair guards. UE4-5 games that kept the folder in LOGICMODS_PATH ("already ends in the folder")
+    # open the right folder from the toolbar already; appending LOGICMODS_FOLDER there would double it.
+    # The two ALT_VERSION pairs are hybrid-only: Unity UMM carries the identical text on purpose.
+    path_has_folder = re.search(r'^const LOGICMODS_PATH = [^\n/]*"LogicMods"', src, re.MULTILINE)
+    is_hybrid = "BEP_PATCHER_STRING" in src
+    skipped_by_guard = {
+        "open_logicmods_folder": bool(path_has_folder),
+        "alt_version_label": not is_hybrid,
+        "root_alt_guard": not is_hybrid,
+    }
+    def apply_pairs(skipped):
+        out, done = src, []
+        for name, old, new in TEMPLATE_GAP_FIXES:
+            if skipped.get(name):
+                continue
+            count = out.count(old)
+            if count:
+                out = out.replace(old, new)
+                done.append(f"{name} x{count}")
+        return out, done
+
+    new_src, applied = apply_pairs(skipped_by_guard)
+    # The dialog consts may only go when every check that read them was rewritten too. An older hybrid
+    # shape (no preventPluginInstall) keeps `if (wrongLoader.action === "Ok")`, and dropping the const
+    # alone would leave a ReferenceError that node --check cannot see. Redo without the two const pairs.
+    if re.search(r"\b(?:wrongLoader|mixedModHandling)\.action\b", new_src):
+        skipped_by_guard["dialog_const_wrong"] = True
+        skipped_by_guard["dialog_const_mixed"] = True
+        new_src, applied = apply_pairs(skipped_by_guard)
+    if not applied:
+        return src, False, SKIP_ALREADY_SET
+    return new_src, True, ", ".join(applied)
+
+
+FLUFFY_TEMPLATE = "template-reframework-fluffy"
+FLUFFY_HAS_DEMO_CONST = ('const HAS_DEMO = EXEC_DEMO !== "" && EXEC_DEMO !== EXEC; '
+                         '//false when the game has no separate demo executable\n')
+# The demo launch tool exactly as the template had it before it was gated on HAS_DEMO.
+FLUFFY_DEMO_TOOL_OLD = (
+    '  {\n'
+    '    id: `${GAME_ID}-customlaunchdemo`,\n'
+    '    name: `Custom Launch (Demo)`,\n'
+    '    logo: `exec_demo.png`,\n'
+    '    executable: () => EXEC_DEMO,\n'
+    '    requiredFiles: [EXEC_DEMO],\n'
+    '    detach: true,\n'
+    '    relative: true,\n'
+    '    exclusive: true,\n'
+    '    shell: true,\n'
+    '    //defaultPrimary: true,\n'
+    '    //parameters: [],\n'
+    '  }, //*/\n'
+    '];\n')
+FLUFFY_MULTIEXE_OLD = re.compile(
+    r'if \(\(EXEC !== EXEC_DEMO && EXEC_DEMO !== (?:null|"")\) \|\| hasXbox\) \{')
+FLUFFY_SYNC_GUARD_OLD = "  if (statCheckSync(discoveryPath, EXEC_DEMO)) {\n"
+FLUFFY_SYNC_GUARD_NEW = "  if (HAS_DEMO && statCheckSync(discoveryPath, EXEC_DEMO)) {\n"
+FLUFFY_ASYNC_GUARD_OLD = "  if (multiExe && (await statCheckAsync(gamePath, EXEC_DEMO))) {\n"
+FLUFFY_ASYNC_GUARD_NEW = "  if (HAS_DEMO && (await statCheckAsync(gamePath, EXEC_DEMO))) {\n"
+
+
+def _fluffy_demo_tool_block():
+    """The gated demo tool + closing bracket, copied verbatim from template-reframework-fluffy."""
+    tsrc = read_index_js(os.path.join(REPO_ROOT, FLUFFY_TEMPLATE))
+    if tsrc is None:
+        raise RuntimeError(f"{FLUFFY_TEMPLATE}/index.js not found")
+    start = tsrc.index("  //only offered when the game has a separate demo executable\n")
+    end = tsrc.index("];\n", start) + len("];\n")
+    return tsrc[start:end]
+
+
+def patch_fluffy_has_demo(game_id, src, context):
+    """
+    Bring a Fluffy (REFramework) game's demo handling to the template's HAS_DEMO shape: the
+    HAS_DEMO constant, multiExe read from it, the three demo checks guarded by it, and the
+    "Custom Launch (Demo)" tool registered only when it is true. All-or-nothing: every part must
+    either be applied or already in template form, else the game is left alone and reported.
+    """
+    new_src = src
+    applied = []
+
+    if "const HAS_DEMO" not in new_src:
+        m = re.search(r"^let multiExe = ", new_src, re.MULTILINE)
+        if not m:
+            return src, False, "no `let multiExe` line (hand-edit)"
+        new_src = new_src[:m.start()] + FLUFFY_HAS_DEMO_CONST + new_src[m.start():]
+        applied.append("const")
+
+    new_src, n = FLUFFY_MULTIEXE_OLD.subn("if (HAS_DEMO || hasXbox) {", new_src)
+    if n:
+        applied.append(f"multiExe x{n}")
+    elif "if (HAS_DEMO || hasXbox) {" not in new_src:
+        return src, False, "multiExe condition not recognised (hand-edit)"
+
+    n = new_src.count(FLUFFY_SYNC_GUARD_OLD)
+    if n:
+        new_src = new_src.replace(FLUFFY_SYNC_GUARD_OLD, FLUFFY_SYNC_GUARD_NEW)
+        applied.append(f"sync guard x{n}")
+    elif new_src.count(FLUFFY_SYNC_GUARD_NEW) < 2:
+        return src, False, "sync demo checks not recognised (hand-edit)"
+
+    n = new_src.count(FLUFFY_ASYNC_GUARD_OLD)
+    if n:
+        new_src = new_src.replace(FLUFFY_ASYNC_GUARD_OLD, FLUFFY_ASYNC_GUARD_NEW)
+        applied.append(f"async guard x{n}")
+    elif FLUFFY_ASYNC_GUARD_NEW not in new_src:
+        return src, False, "async demo check not recognised (hand-edit)"
+
+    if FLUFFY_DEMO_TOOL_OLD in new_src:
+        new_src = new_src.replace(FLUFFY_DEMO_TOOL_OLD, _fluffy_demo_tool_block())
+        applied.append("demo tool")
+    elif "...(HAS_DEMO" not in new_src:
+        return src, False, "demo tool block not recognised (hand-edit)"
+
+    if not applied:
+        return src, False, SKIP_ALREADY_SET
+    return new_src, True, ", ".join(applied)
+
+
+FARCRY_TEMPLATE = "template-farcry"
+FARCRY_BASELINE_TOGGLES = ("allowSymlinks", "fallbackInstaller", "setupNotification", "debug")
+FARCRY_BASELINE_FUNCTIONS = ("testFallback", "installFallback", "fallbackInstallerNotify",
+                             "modFoldersEnsureWritable")
+
+
+def _farcry_template_blocks():
+    """Pull the baseline blocks out of template-farcry verbatim: the four toggle lines, the
+    fallback installer trio, modFoldersEnsureWritable and the fallback registration."""
+    tsrc = read_index_js(os.path.join(REPO_ROOT, FARCRY_TEMPLATE))
+    if tsrc is None:
+        raise RuntimeError(f"{FARCRY_TEMPLATE}/index.js not found")
+    toggles = {}
+    for name in FARCRY_BASELINE_TOGGLES:
+        m = re.search(rf"^const {name} = (?:true|false);[^\n]*$", tsrc, re.MULTILINE)
+        if not m:
+            raise RuntimeError(f"toggle {name} not found in {FARCRY_TEMPLATE}")
+        toggles[name] = m.group(0)
+    fb_start = tsrc.index("//Fallback installer to root folder\nfunction testFallback(")
+    fb_end = tsrc.index("\n// AUTOMATIC DOWNLOAD FUNCTIONS", fb_start)
+    fallback = tsrc[fb_start:fb_end].rstrip("\n") + "\n"
+    mf_start = tsrc.index("async function modFoldersEnsureWritable(")
+    mf_end = tsrc.index("\n}\n", mf_start) + 3
+    reg_start = tsrc.index("  if (fallbackInstaller) {\n")
+    reg_end = tsrc.index("\n  }\n", reg_start) + 5
+    return {
+        "toggles": toggles,
+        "fallback": fallback,
+        "modfolders": tsrc[mf_start:mf_end],
+        "register": tsrc[reg_start:reg_end],
+    }
+
+
+def patch_farcry_parity(game_id, src, context):
+    """
+    Bring a Far Cry (Dunia) game to template-farcry shape parity for the shared baseline
+    block: the allowSymlinks / fallbackInstaller / setupNotification / debug toggles, the
+    fallback installer trio, modFoldersEnsureWritable and their wiring (spec
+    supportsSymlinks, gated setupNotify, setup() write guard, priority-49 registration).
+    Blocks are copied verbatim from template-farcry. Every anchor is a literal that must
+    match exactly once; a game that misses one is left untouched and reported, so a variant
+    gets a hand port instead of a partial splice. Registered disabled.
+    """
+    missing_fn = [n for n in FARCRY_BASELINE_FUNCTIONS if f"function {n}(" not in src]
+    missing_tg = [n for n in FARCRY_BASELINE_TOGGLES
+                  if not re.search(rf"^const {n} = ", src, re.MULTILINE)]
+    if not missing_fn and not missing_tg:
+        return src, False, SKIP_ALREADY_SET
+    blocks = _farcry_template_blocks()
+    new = src
+
+    def once(anchor):
+        n = new.count(anchor)
+        if n != 1:
+            raise ValueError(f"anchor x{n} (want 1): {anchor.strip()[:70]!r}")
+
+    # toggles: three at the top of the existing block, debug at the end
+    m = re.search(r"(//feature toggles\n)((?:const \w+ = (?:true|false);[^\n]*\n)+)", new)
+    if not m:
+        return src, False, "no '//feature toggles' block to extend - hand port"
+    top = "".join(blocks["toggles"][n] + "\n" for n in missing_tg if n != "debug")
+    tail = blocks["toggles"]["debug"] + "\n" if "debug" in missing_tg else ""
+    new = new[:m.start()] + m.group(1) + top + m.group(2) + tail + new[m.end():]
+
+    try:
+        if "let MODTYPE_FOLDERS" not in new:
+            for const in ("MIMOD_PATH", "BIN_PATH", "DATA_PATH"):
+                if not re.search(rf"^const {const} = ", new, re.MULTILINE):
+                    return src, False, f"{const} not declared - hand port MODTYPE_FOLDERS"
+            once("\nconst spec = {\n")
+            new = new.replace(
+                "\nconst spec = {\n",
+                "\nlet MODTYPE_FOLDERS = [MIMOD_PATH, BIN_PATH, DATA_PATH];\n\nconst spec = {\n")
+        if "supportsSymlinks" not in new:
+            once("      ignoreConflicts: IGNORE_CONFLICTS,\n")
+            new = new.replace("      ignoreConflicts: IGNORE_CONFLICTS,\n",
+                              "      supportsSymlinks: allowSymlinks,\n      ignoreConflicts: IGNORE_CONFLICTS,\n")
+        if "testFallback" in missing_fn:
+            once("\n// AUTOMATIC DOWNLOAD FUNCTIONS")
+            new = new.replace("\n// AUTOMATIC DOWNLOAD FUNCTIONS",
+                              "\n" + blocks["fallback"] + "\n// AUTOMATIC DOWNLOAD FUNCTIONS")
+        if "modFoldersEnsureWritable" in missing_fn:
+            once("\n//Setup function\n")
+            new = new.replace("\n//Setup function\n",
+                              "\n" + blocks["modfolders"] + "\n//Setup function\n")
+        if "if (setupNotification) setupNotify(api);" not in new:
+            once("\n  setupNotify(api);\n")
+            new = new.replace("\n  setupNotify(api);\n", "\n  if (setupNotification) setupNotify(api);\n")
+        if "return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);" not in new:
+            guard = re.compile(
+                r"await vfs\.ensureDirWritableAsync\(XML_PATH\);(?: //\*/)?\n"
+                r"  return vfs\.ensureDirWritableAsync\(path\.join\(GAME_PATH, MIMOD_PATH\)\);")
+            if len(guard.findall(new)) != 1:
+                raise ValueError("setup() write-guard tail not in the expected shape")
+            new = guard.sub("await vfs.ensureDirWritableAsync(XML_PATH);\n"
+                            "  return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);", new)
+        if "if (fallbackInstaller) {" not in new:
+            if "  //default to root\n" in new:
+                once("  //default to root\n")
+                new = new.replace("  //default to root\n", blocks["register"])
+            else:
+                # no marker comment: the registration goes after the last installer line
+                once("\n\n  //register actions\n")
+                new = new.replace("\n\n  //register actions\n",
+                                  "\n" + blocks["register"] + "\n  //register actions\n")
+    except ValueError as ex:
+        return src, False, f"{ex} - hand port"
+    return new, True, (f"+{len(missing_tg)} toggles, +{len(missing_fn)} functions "
+                       f"({', '.join(missing_fn)}), {len(new) - len(src):+d} bytes")
+
+
 # ── Patch registry ────────────────────────────────────────────────────────────
 # Add new patches here. Set enabled=False to skip without removing.
 
@@ -1191,6 +1697,9 @@ PATCHES = [
     {"name": "discovery_ids",                    "enabled": True, "fn": patch_discovery_ids},
     {"name": "plan_b_lo_region",                 "enabled": False,"fn": patch_plan_b_lo_region},
     {"name": "steamdb_button",                   "enabled": False,"fn": patch_steamdb_button},
+    {"name": "template_gap_fixes",               "enabled": False,"fn": patch_template_gap_fixes},
+    {"name": "farcry_parity",                    "enabled": False,"fn": patch_farcry_parity},
+    {"name": "fluffy_has_demo",                  "enabled": False,"fn": patch_fluffy_has_demo},
 ]
 
 
@@ -2158,6 +2667,11 @@ def main():
         help="Run only this named patch (bypasses the enabled flag). Use --list-patches to see names.",
     )
     parser.add_argument(
+        "--no-resize",
+        action="store_true",
+        help="Skip the PNG, title image and cover art resize passes that normally run after the patches. Use for a code-only patch so unrelated asset files stay untouched.",
+    )
+    parser.add_argument(
         "--audit",
         action="store_true",
         help="Run the read-only audits (installer priorities + FOMOD checks + store ID wiring) across all game-* and template-* folders, then exit without patching.",
@@ -2239,6 +2753,9 @@ def main():
     else:
         print(f"Running {len([p for p in PATCHES if p['enabled']])} patch(es) on {len(game_ids)} game(s){' [DRY RUN]' if dry_run else ''}...\n")
     run_patches(game_ids, dry_run, context, only=args.only)
+
+    if args.no_resize:
+        return
 
     # PNG resize — all game-* and template-* folders when running on all,
     # or just the targeted game folders when specific IDs are given

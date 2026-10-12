@@ -1,8 +1,8 @@
 /*//
 Name: Alien Isolation Vortex Extension
 Author: ChemBoy1
-Version: 0.2.1
-Date: 2026-10-02
+Version: 1.0.0
+Date: 2026-10-12
 /*/ ///test
 
 //Import libraries
@@ -312,7 +312,7 @@ function installDataFolder(files) {
   const modFile = files.find(
     (file) => path.basename(file).toLowerCase() === DATA_FOLDER.toLowerCase(),
   );
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
@@ -358,7 +358,7 @@ function testDataFiles(files, gameId) {
 //Installer install individual files to be installed in the "DATA" folder
 function installDataFiles(files) {
   const modFile = files.find((file) => DATA_EXT.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: DATA_ID };

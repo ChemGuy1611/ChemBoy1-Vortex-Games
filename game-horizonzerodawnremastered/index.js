@@ -412,7 +412,7 @@ function testSave(files, gameId) {
 //mod installer instructions
 function installSave(files) {
   const modFile = files.find((file) => path.extname(file).toLowerCase() === SAVE_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: SAVE_ID };
@@ -590,7 +590,7 @@ function runManager(api) {
         })
         .catch((err) =>
           api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-            allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+            allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
           }),
         );
     } else {
@@ -601,7 +601,7 @@ function runManager(api) {
     }
   } catch (err) {
     return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+      allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
     });
   }
 }

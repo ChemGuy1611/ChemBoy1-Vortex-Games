@@ -2,8 +2,8 @@
 Name: The Last of Us Part I Vortex Extension
 Author: ChemBoy1
 Structure: Gemeric Game w/ File Extraction
-Version: 2.2.5
-Date: 2026-09-08
+Version: 2.3.0
+Date: 2026-10-12
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -417,7 +417,7 @@ function testBuildPakBin(files, gameId) {
 //Install .pak or .bin files in "build" folder
 function installBuildPakBin(files, fileName) {
   const modFile = files.find((file) => path.basename(file) === BUILD_FOLDER);
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: BUILD_ID };
@@ -464,7 +464,7 @@ function testBin(files, gameId) {
 //Install "bin" folder
 function installBin(files, fileName) {
   const modFile = files.find((file) => path.basename(file) === BIN_FOLDER);
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: BIN_ID };
@@ -508,7 +508,7 @@ function testPak(files, gameId) {
 //Installer Install pak files in root folder
 function installPak(files, fileName) {
   const modFile = files.find((file) => path.extname(file).toLowerCase() === PAK_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: PAK_ID };
@@ -552,7 +552,7 @@ function testBuild(files, gameId) {
 //Installer install "build" folder (non-Fluffy)
 function installBuild(files) {
   const modFile = files.find((file) => path.basename(file) === BUILD_FOLDER);
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: BUILD_ID };
@@ -597,7 +597,7 @@ function testSave(files, gameId) {
 function installSave(files) {
   const modFile = files.find((file) => path.basename(file) === SAVE_FILE);
   const rootPath = path.dirname(modFile);
-  let idx = modFile.indexOf(`${path.basename(rootPath)}${path.sep}`);
+  let idx = modFile.lastIndexOf(`${path.basename(rootPath)}${path.sep}`);
   const setModTypeInstruction = { type: "setmodtype", value: SAVE_ID };
 
   // Remove directories and anything that isn't in the rootPath.
@@ -639,7 +639,7 @@ function testConfig(files, gameId) {
 //Installer install config files
 function installConfig(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === CONFIG_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: CONFIG_ID };
@@ -683,7 +683,7 @@ function testPsarcTool(files, gameId) {
 //Installer install Fluffy Mod Manger files
 function installPsarcTool(files) {
   const modFile = files.find((file) => path.basename(file) === PSARCTOOL_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: PSARCTOOL_ID };

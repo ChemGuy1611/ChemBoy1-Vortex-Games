@@ -4,6 +4,13 @@
 
 - Add???: Support for installing MelonLoader plugins. Need the compatibility loader for MelonLoader mods to work (<https://github.com/BepInEx/BepInEx.MelonLoader.Loader>) - there are very few MelonLoader mods.
 
+## [1.0.1] - 2026-10-12
+
+- Fixed: Mods packaged inside an outer folder whose name ends with the name of a mod loader or plugin folder (for example "Myplugins" for "plugins") now install into the right place instead of keeping part of the outer folder's name.
+- Fixed: Closing the "Wrong Mod Loader" or "Mixed Mod Detected" warning without pressing Ok now cancels the install instead of installing the mod anyway.
+- Fixed: A mod archive is now recognised as a BepInEx patcher or a MelonLoader plugin whichever of its files is read last.
+- Fixed: The missing .NET runtime warning for MelonLoader is no longer shown twice.
+
 ## [1.0.0] - 2026-10-01
 
 - Changed: BepInEx is now installed and managed by this extension instead of Vortex's built-in BepInEx support. Your installed BepInEx and mods are carried over automatically - no action needed.

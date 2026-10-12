@@ -2,8 +2,8 @@
 Name: Dragon Ball: Sparking! Zero Vortex Extension
 Structure: UE5
 Author: ChemBoy1
-Version: 1.1.0
-Date: 2026-09-30
+Version: 1.1.1
+Date: 2026-10-12
 Notes:
 - SigBypass installs from this game's own Nexus page, not the universal SigBypass page
 - Save data lives inside the game install folder, not Local AppData
@@ -1046,7 +1046,7 @@ function testModKitMod(files, gameId) {
 //Installer install modkit mod files
 async function installModKitMod(files, fileName) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === MODKITMOD_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MODKITMOD_ID };
@@ -1062,7 +1062,9 @@ async function installModKitMod(files, fileName) {
     contents = util.deBOM(contents);
     const JSON_OBJECT = JSON.parse(contents);
     const JSON_MOD_NAME = JSON_OBJECT["modPluginName"];
-    MOD_FOLDER = JSON_MOD_NAME;
+    if (typeof JSON_MOD_NAME === "string" && JSON_MOD_NAME !== "") {
+      MOD_FOLDER = JSON_MOD_NAME; //without a name the folder keeps the wrapper or archive name
+    }
   } catch {
     //mod.json could not be read.
     log("error", `Could not read mod.json file for mod ${MOD_NAME}.`);
@@ -1112,7 +1114,7 @@ function testUe4ssCombo(files, gameId) {
 async function installUe4ssCombo(files, workingDir) {
   //const modFile = files.find(file => (path.basename(file).toLowerCase() === ROOT_FOLDER.toLowerCase()));
   const modFile = files.find((file) => path.basename(file).toLowerCase() === "binaries");
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: UE4SSCOMBO_ID };
@@ -1154,17 +1156,29 @@ async function installUe4ssCombo(files, workingDir) {
         f.toLowerCase().includes(`${LOGICMODS_FOLDER.toLowerCase()}${path.sep}`) &&
         path.extname(f).toLowerCase() === LOGICMODS_EXT,
     )
-    .map((f) => path.basename(f, LOGICMODS_EXT));
+    .map((f) => path.basename(f, path.extname(f)));
   if (logicPakBasenames.length) {
     instructions.push({ type: "attribute", key: LO_ATTRIBUTE_LOGIC, value: logicPakBasenames });
   }
-  const ue4ssModFolders = files
-    .filter(
-      (f) =>
-        f.toLowerCase().includes(UE4SS_MOD_PATH.toLowerCase()) &&
-        path.basename(f).toLowerCase() === SCRIPTS_FOLDER.toLowerCase(),
-    )
-    .map((f) => path.basename(path.dirname(f)));
+  //The mod folder is the one holding a Scripts folder. Read it from the path segments, so it also
+  //works for the Xbox list rebuilt above, which holds files only and no folder entries.
+  const ue4ssModFolders = [
+    ...new Set(
+      files
+        .filter((f) => f.toLowerCase().includes(UE4SS_MOD_PATH.toLowerCase()))
+        .map((f) => {
+          const segments = f.split(/[\\/]+/);
+          const scriptsAt = segments.findIndex(
+            (segment, i) =>
+              i > 0 &&
+              i < segments.length - 1 &&
+              segment.toLowerCase() === SCRIPTS_FOLDER.toLowerCase(),
+          );
+          return scriptsAt === -1 ? undefined : segments[scriptsAt - 1];
+        })
+        .filter(Boolean),
+    ),
+  ];
   if (ue4ssModFolders.length) {
     instructions.push({ type: "attribute", key: LO_ATTRIBUTE_UE4SS, value: ue4ssModFolders[0] }); //!only picking one folder to have a string. Can change to array if needed, but need to change in load order modId function too.
     log("warn", `Installer: UE4SS LO attribute: ${ue4ssModFolders.join(", ")}`);
@@ -1202,7 +1216,7 @@ function installLogic(files) {
   const modFile = files.find(
     (file) => path.basename(file).toLowerCase() === LOGICMODS_FOLDER.toLowerCase(),
   );
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: LOGICMODS_ID };
@@ -1218,7 +1232,7 @@ function installLogic(files) {
   });
   const pakBasenames = filtered
     .filter((f) => path.extname(f).toLowerCase() === LOGICMODS_EXT)
-    .map((f) => path.basename(f, LOGICMODS_EXT));
+    .map((f) => path.basename(f, path.extname(f)));
   instructions.push(setModTypeInstruction);
   if (pakBasenames.length) {
     instructions.push({ type: "attribute", key: LO_ATTRIBUTE_LOGIC, value: pakBasenames });
@@ -1264,7 +1278,7 @@ function installUe4ss(files) {
       UE4SS_SUBFOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
     );
   }
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: UE4SS_ID };
@@ -1311,7 +1325,7 @@ function testSigBypass(files, gameId) {
 //Installer install UE4SS files
 function installSigBypass(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === SIGBYPASS_DLL);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: SIGBYPASS_ID };
@@ -1355,7 +1369,7 @@ function testModLoader(files, gameId) {
 //Install SZModLoader itself
 function installModLoader(files) {
   const modFile = files.find((file) => path.basename(file) === MODLOADER_FOLDER);
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MODLOADER_ID };
@@ -1404,7 +1418,7 @@ function testLFSE(files, gameId) {
 //Install LFSE
 function installLFSE(files) {
   const modFile = files.find((file) => path.basename(file) === LFSE_FOLDER);
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: LFSE_ID };
@@ -1449,7 +1463,7 @@ function testModLoaderMod(files, gameId) {
 //Install individual SZModLoader mods
 function installModLoaderMod(files) {
   const modFile = files.find((file) => path.extname(file).toLowerCase() === MODLOADERMOD_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MODLOADERMOD_ID };
@@ -1499,7 +1513,7 @@ function testJson(files, gameId) {
 //Install SZModLoader JSON mods
 function installJson(files) {
   const modFile = files.find((file) => path.extname(file).toLowerCase() === JSON_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: JSON_ID };
@@ -1566,7 +1580,7 @@ async function installScripts(api, files, fileName) {
     modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
     rootPath = path.dirname(modFile);
   }
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   //handle enabled.txt file
   if (!ue4ssLoadOrder || !(api.store.getState()?.settings?.[GAME_ID]?.ue4ssLoEnabled ?? true)) {
     const ENABLEDTXT_PATH = path.join(fileName, path.dirname(scriptsFolder), ENABLEDTXT_FILE);
@@ -1648,7 +1662,7 @@ async function installDll(api, files, fileName) {
     modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
     rootPath = path.dirname(modFile);
   }
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   //handle enabled.txt file
   if (!ue4ssLoadOrder || !(api.store.getState()?.settings?.[GAME_ID]?.ue4ssLoEnabled ?? true)) {
     const ENABLEDTXT_PATH = path.join(fileName, path.dirname(dllFolder), ENABLEDTXT_FILE);
@@ -1742,7 +1756,7 @@ function installRoot(files) {
     folder = path.join(EPIC_CODE_NAME, "Content");
   }
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(ROOT_IDX);
+  const idx = modFile.lastIndexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
@@ -1786,7 +1800,7 @@ function testConfig(files, gameId) {
 //Install config files
 function installConfig(api, files) {
   const modFile = files.find((file) => CONFIG_FILES.includes(path.basename(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: CONFIG_ID };
@@ -1899,7 +1913,7 @@ function testSave(files, gameId) {
 //Install save files
 async function installSave(api, files) {
   const modFile = files.find((file) => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: SAVE_ID };
@@ -2840,7 +2854,7 @@ async function deserializeLogicMods(api) {
     const seen = new Set();
     for (const f of all) {
       if (path.extname(f).toLowerCase() === LOGICMODS_EXT) {
-        const name = path.basename(f, LOGICMODS_EXT);
+        const name = path.basename(f, path.extname(f));
         if (!seen.has(name)) {
           seen.add(name);
           pakFiles.push(name);
@@ -3127,12 +3141,12 @@ async function preSort(api, items, direction) {
 
   const loadOrder = items.map((mod) => {
     const modInfo = mods[mod.id];
-    let name = modInfo
-      ? (modInfo.attributes.customFileName ??
-        modInfo.attributes.logicalFileName ??
-        modInfo.attributes.name)
-      : mod.name;
-    const paks = modInfo.attributes?.unrealModFiles ?? [];
+    let name =
+      modInfo?.attributes?.customFileName ??
+      modInfo?.attributes?.logicalFileName ??
+      modInfo?.attributes?.name ??
+      mod.name;
+    const paks = modInfo?.attributes?.unrealModFiles ?? [];
     if (paks.length > 1) name = name + ` (${paks.length} ${fileExt} files)`;
 
     return {
@@ -3188,7 +3202,7 @@ function pathSegments(files) {
 
 //Mirrors the registration-priority ladder in main() for just the installers that sit ABOVE the
 //pak installer's priority (UE5_SORTABLE_ID = 29): Mod Kit (25, only when hasModKit), UE4SS Combo
-//(26, always registered) and LogicMods (27, only when logicModsLoadOrder). An installer at or
+//(26, always registered) and LogicMods (27, only when ue4ssLoadOrder). An installer at or
 //below priority 29 never gets a turn once a pak-type file is present, since testPak's own check
 //is just "has a pak-type file" with no exclusivity - so lower-priority markers can't have
 //"actually" claimed the archive and are not checked here. Used by retagFomodPakMod() below to
@@ -3206,7 +3220,7 @@ function beatsPakInstaller(files) {
   const hasBinariesFolder = segsLower.includes("binaries");
   const hasContentFolder = segsLower.includes("content");
   if (hasBinariesFolder && hasContentFolder) return true; //UE4SS Combo (26)
-  if (logicModsLoadOrder && segsLower.includes(LOGICMODS_FOLDER.toLowerCase())) return true; //LogicMods (27)
+  if (ue4ssLoadOrder && segsLower.includes(LOGICMODS_FOLDER.toLowerCase())) return true; //LogicMods (27)
   return false;
 }
 

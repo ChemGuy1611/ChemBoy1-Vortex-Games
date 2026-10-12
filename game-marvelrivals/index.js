@@ -2,8 +2,8 @@
 Name: Marvel Rivals Vortex Extension
 Structure: UE5
 Author: ChemBoy1
-Version: 1.1.2
-Date: 2026-09-21
+Version: 1.1.3
+Date: 2026-10-12
 ////////////////////////////////////////*/
 
 //Import libraries
@@ -473,7 +473,7 @@ function installRoot(files) {
   const modFile = files.find(
     (file) => path.basename(file).toLowerCase() === ROOT_FOLDER.toLowerCase(),
   );
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
@@ -521,7 +521,7 @@ function testSigBypass(files, gameId) {
 //Installer install Signature Bypass files
 function installSigBypass(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === SIGBYPASS_DLL);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: SIGBYPASS_ID };
@@ -566,7 +566,7 @@ function testConfig(files, gameId) {
 //Install config files
 function installConfig(api, files) {
   const modFile = files.find((file) => path.extname(file).toLowerCase() === CONFIG_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: CONFIG_ID };
@@ -787,12 +787,12 @@ async function preSort(api, items, direction) {
 
   const loadOrder = items.map((mod) => {
     const modInfo = mods[mod.id];
-    let name = modInfo
-      ? (modInfo.attributes.customFileName ??
-        modInfo.attributes.logicalFileName ??
-        modInfo.attributes.name)
-      : mod.name;
-    const paks = modInfo.attributes?.unrealModFiles ?? [];
+    let name =
+      modInfo?.attributes?.customFileName ??
+      modInfo?.attributes?.logicalFileName ??
+      modInfo?.attributes?.name ??
+      mod.name;
+    const paks = modInfo?.attributes?.unrealModFiles ?? [];
     if (paks.length > 1) name = name + ` (${paks.length} ${fileExt} files)`;
 
     return {

@@ -15,6 +15,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Movie / Cutscene Replacements | a `.webm` file | `Movies` |
 | OVL Data Mods | a `ovldata` file | `Win64` |
 | Save Game Files | a `.blpr2` file | `USER_HOME\Saved Games\Frontier Developments\Jurassic World Evolution 3\USERID_FOLDER\Saves` |
+| Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
@@ -109,6 +110,21 @@ Installs to: `USER_HOME\Saved Games\Frontier Developments\Jurassic World Evoluti
 **Common mistakes:**
 
 - Including an example save alongside a normal mod makes the archive install as a save.
+
+## Fallback Installer
+
+The catch-all. Any archive that matched none of the installers above lands here and is copied across unchanged.
+
+> **NOTE:** Landing in the fallback installer is a signal your archive layout needs fixing.
+
+**Requirements:**
+
+- Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
+- Vortex shows the user a notification when a mod installs through the fallback.
+
+**Common mistakes:**
+
+- If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.
 
 ## Rules That Apply To Every Mod Type
 

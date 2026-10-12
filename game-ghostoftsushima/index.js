@@ -1,8 +1,8 @@
 /*//////////////////////////////////////////
 Name: Ghost of Tsushima Vortex Extension
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2025-10-02
+Version: 1.0.0
+Date: 2026-10-12
 ///////////////////////////////////////////*/
 
 //import libraries
@@ -300,7 +300,7 @@ function testPsarc(files, gameId) {
 function installPsarc(files) {
   // The .psarc file is expected to always be positioned in the mods directory we're going to disregard anything placed outside the root.
   const modFile = files.find(file => path.extname(file).toLowerCase() === PSARC_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: PSARC_ID };
 
@@ -427,7 +427,7 @@ function testSave(files, gameId) {
 function installSave(files) {
   // The .psarc file is expected to always be positioned in the mods directory we're going to disregard anything placed outside the root.
   const modFile = files.find((file) => path.extname(file).toLowerCase() === SAVE_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: SAVE_ID };

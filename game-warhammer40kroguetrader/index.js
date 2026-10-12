@@ -2,8 +2,8 @@
 Name: Warhammer 40,000: Rogue Trader Vortex Extension
 Structure: Game with Integrated Mod Loader (UnityModManager)
 Author: ChemBoy1
-Version: 0.5.10
-Date: 2026-10-02
+Version: 1.0.0
+Date: 2026-10-12
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -544,7 +544,7 @@ function testMicroPatches(files, gameId) {
 function installMicroPatches(files) {
   const MOD_TYPE = MICROPATCHES_ID;
   const modFile = files.find((file) => path.basename(file) === MICROPATCHES_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -594,7 +594,7 @@ function installModFinder(files) {
   const modFile = files.find(
     (file) => path.basename(file).toLowerCase() === MODFINDER_EXEC.toLowerCase(),
   );
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
 
@@ -640,7 +640,7 @@ function installSaveEditor(files) {
   const modFile = files.find(
     (file) => path.basename(file).toLowerCase() === SAVEEDITOR_EXEC.toLowerCase(),
   );
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
 
@@ -686,7 +686,7 @@ function installPortraitManager(files) {
   const modFile = files.find(
     (file) => path.basename(file).toLowerCase() === PORTMAN_EXEC.toLowerCase(),
   );
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
 
@@ -735,7 +735,7 @@ function testMod(files, gameId) {
 async function installMod(api, files, workingDir) {
   const MOD_TYPE = MOD_ID;
   let modFile = files.find((file) => MOD_FILES.includes(path.basename(file).toLowerCase()));
-  let idx = modFile.indexOf(path.basename(modFile));
+  let idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile); //this is often "." because mods are frequently not in top-level folders
   //an empty prefix when rootPath is "." keeps the extension-less "Bundles" payload
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
@@ -756,7 +756,7 @@ async function installMod(api, files, workingDir) {
     nameFolder = files.find((file) => path.basename(file) === folder);
     if (nameFolder !== undefined) {
       modFile = nameFolder;
-      idx = modFile.indexOf(path.basename(modFile));
+      idx = modFile.lastIndexOf(path.basename(modFile));
       folder = "";
     } //*/
   } catch (err) {
@@ -817,7 +817,7 @@ function testPlugin(files, gameId) {
 function installPlugin(files) {
   const MOD_TYPE = PLUGIN_ID;
   const modFile = files.find((file) => PLUGIN_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -886,7 +886,7 @@ function installPortrait(files) {
     /*const indexFolder = path.basename(modFile); //index to catch other folders in the same directory
     //idx = modFile.indexOf(`${indexFolder}${path.sep}`); //*/ //index on the folder with path separator
   }
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
 
   // Remove directories and anything that isn't in the rootPath.
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
@@ -929,7 +929,7 @@ function testSave(files, gameId) {
 function installSave(files) {
   const MOD_TYPE = SAVE_ID;
   const modFile = files.find((file) => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -1266,6 +1266,46 @@ async function serializeLoadOrder(context, loadOrder) {
   //write to OwlcatModificationManagerSettings.json file
   let loadOrderOutput = JSON.stringify(json, null, 2);
   return fsp.writeFile(loadOrderPath, loadOrderOutput, { encoding: "utf8" });
+}
+
+//Vortex 2.9 does not write the load order back to the game on the deploy that follows a purge: the
+//order it restores equals the stored one, so it sees no change to write. clearModOrder emptied the
+//mod lists in the settings file, so write the stored order back once the mod folders are deployed
+//again. Does nothing while the file lists mods, which is every other deploy.
+async function restoreDeployedOrder(context, profileId) {
+  const api = context.api;
+  const state = api.getState();
+  if (
+    selectors.profileById(state, profileId)?.gameId !== GAME_ID ||
+    profileId !== selectors.activeProfile(state)?.id ||
+    mod_update_all_profile
+  ) {
+    return;
+  }
+
+  try {
+    const json = await readOwlcatSettings(LO_FILE_PATH);
+    const listed = [...(json.EnabledModifications ?? []), ...(json.DisabledModifications ?? [])];
+    if (listed.length > 0) return; //file still lists mods
+
+    //An emptied file reads back as a plain alphabetical list, so take the order and the enabled
+    //state from the stored order and keep the deserialized entries only for the folders on disk.
+    const storedLO = state?.persistent?.loadOrder?.[profileId] ?? [];
+    if (storedLO.length === 0) return;
+    const deployedLO = await deserializeLoadOrder(context);
+    const deployedById = new Map(deployedLO.map((entry) => [entry.id, entry]));
+    const restoredLO = storedLO
+      .filter((entry) => deployedById.has(entry.id))
+      .map((entry) => ({ ...deployedById.get(entry.id), enabled: entry.enabled }));
+    const restoredIds = new Set(restoredLO.map((entry) => entry.id));
+    deployedLO.forEach((entry) => {
+      if (!restoredIds.has(entry.id)) restoredLO.push(entry);
+    });
+    if (restoredLO.length === 0) return;
+    await serializeLoadOrder(context, restoredLO);
+  } catch (err) {
+    log("error", `Could not restore the load order after deploy: ${err}`);
+  }
 }
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
@@ -1675,6 +1715,8 @@ function main(context) {
       return onCheckModVersion(context.api, gameId, mods, forced);
     }); //*/
     context.api.onAsync("did-purge", (profileId) => didPurge(context.api, profileId)); //*/
+    //Vortex does not write the load order back on the deploy after a purge - see restoreDeployedOrder
+    context.api.onAsync("did-deploy", (profileId) => restoreDeployedOrder(context, profileId));
     context.api.onAsync("did-deploy", async (profileId) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(
         context.api.getState(),

@@ -2,8 +2,8 @@
 Name: Dishonored 2 Vortex Extension
 Structure: Void Installer
 Author: ChemBoy1
-Version: 0.6.3
-Date: 2025-11-16
+Version: 1.0.0
+Date: 2026-10-12
 ////////////////////////////////////*/
 
 //Import libraries
@@ -512,7 +512,7 @@ function testVoid(files, gameId) {
 //Installer install Overstrike
 function installVoid(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === VOID_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: VOID_ID };
@@ -544,7 +544,7 @@ function testVoidExplorer(files, gameId) {
 //Installer install Overstrike
 function installVoidExplorer(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === VOIDEXPLORER_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: VOIDEXPLORER_ID };
@@ -604,7 +604,7 @@ function installVoidMod(files, fileName) {
     /*const indexFolder = path.basename(modFile); //index to catch other folders in the same directory
     //idx = modFile.indexOf(`${indexFolder}${path.sep}`); //index on the folder with path separator //*/
   }
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
 
   // Remove directories and anything that isn't in the rootPath.
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
@@ -647,7 +647,7 @@ function testRoot(files, gameId) {
 function installRoot(files) {
   const modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file)));
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(ROOT_IDX);
+  const idx = modFile.lastIndexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
@@ -692,7 +692,7 @@ function testVideo(files, gameId) {
 //mod installer instructions
 function installVideo(files) {
   const modFile = files.find((file) => VIDEO_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: VIDEO_ID };
@@ -739,7 +739,7 @@ function installSave(files) {
   if (modFile === undefined) {
     modFile = files.find((file) => path.basename(file).toLowerCase() === SAVE_FILE);
   }
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: SAVE_ID };
@@ -783,7 +783,7 @@ function testConfig(files, gameId) {
 //mod installer instructions
 function installConfig(files) {
   const modFile = files.find((file) => CONFIG_FILES.includes(path.basename(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: CONFIG_ID };
@@ -918,7 +918,7 @@ function runModManager(api) {
     if (TOOL_PATH !== undefined) {
       return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false }).catch((err) =>
         api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-          allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+          allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
         }),
       );
     } else {
@@ -929,7 +929,7 @@ function runModManager(api) {
     }
   } catch (err) {
     return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+      allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
     });
   }
 }

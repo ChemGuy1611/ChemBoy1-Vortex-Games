@@ -10,7 +10,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | Frosty Mod Manager (tool) | a `frostymodmanager.exe` file | - |
 | Frosty Mods | a `.fbmod` file | `FrostyModManager\Mods\StarWarsBattlefrontII` |
-| Plugin | a file with the `.exe` extension and a file with one of these extensions: `.dll` | `FrostyModManager\Plugins` |
+| Plugin | a file with one of these extensions: `.dll` | `FrostyModManager\Plugins` |
 | Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
@@ -43,7 +43,7 @@ Installs to: `FrostyModManager\Mods\StarWarsBattlefrontII`
 
 ## Plugin
 
-Recognised when the archive contains a file with the `.exe` extension and a file with one of these extensions: `.dll`.
+Recognised when the archive contains a file with one of these extensions: `.dll`.
 
 Installs to: `FrostyModManager\Plugins`
 

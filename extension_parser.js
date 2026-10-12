@@ -424,13 +424,29 @@ function getGuardCondition(stripped, idx) {
   return open === -1 ? null : guardFromBlockOpen(stripped, open);
 }
 
+const IF_INLINE_RE = /^\s*if\s*\(\s*(!?)\s*([A-Za-z_$]\w*)\s*\)\s*$/;
+
 /**
- * True unless some block enclosing `idx` is a recognised guard (see getGuardCondition) that
- * the symbol table evaluates to off. Walks outward through every enclosing block, so a
- * registration inside a loop or callback still honours the `if` around that loop - and, unlike
- * getGuardFlag, it understands `if (!FLAG)` and `} else {` arms.
+ * Guard written on the same line as the statement at `idx` and without braces, as in
+ * `if (FLAG) context.registerInstaller(...)`, as { flag, negated }, or null. The block-based
+ * lookups above only see a guard that opens a `{ }` block, so a one-line `if` reads as
+ * unguarded and its registration is documented even while the flag is off.
+ */
+function inlineGuardAt(stripped, idx) {
+  const lineStart = stripped.lastIndexOf("\n", idx - 1) + 1;
+  const m = stripped.substring(lineStart, idx).match(IF_INLINE_RE);
+  return m ? { flag: m[2], negated: m[1] === "!" } : null;
+}
+
+/**
+ * True unless the statement is guarded by a one-line `if (FLAG)` (see inlineGuardAt) or some
+ * block enclosing `idx` is a recognised guard (see getGuardCondition) that the symbol table
+ * evaluates to off. Walks outward through every enclosing block, so a registration inside a
+ * loop or callback still honours the `if` around that loop - and, unlike getGuardFlag, it
+ * understands `if (!FLAG)` and `} else {` arms.
  */
 function isGuardChainActive(stripped, idx, table) {
+  if (!isGuardActive(inlineGuardAt(stripped, idx), table)) return false;
   let pos = idx;
   for (;;) {
     const open = findInnermostBlockOpen(stripped, pos);
@@ -875,9 +891,11 @@ function extractInstallers(src, table) {
     const lineStart = stripped.lastIndexOf("\n", m.index);
     const linePrefix = stripped.substring(lineStart + 1, m.index).trim();
     if (linePrefix.startsWith("//")) continue;
+    const inlineGuard = inlineGuardAt(stripped, m.index);
+    if (!isGuardActive(inlineGuard, table)) continue;
     const guardInst = getGuardCondition(stripped, m.index);
     if (!isGuardActive(guardInst, table)) continue;
-    const guardFlagInst = guardInst ? guardInst.flag : null;
+    const guardFlagInst = guardInst ? guardInst.flag : inlineGuard ? inlineGuard.flag : null;
 
     const rawId = m[1].trim();
     const priority = m[2];

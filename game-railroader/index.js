@@ -2,8 +2,8 @@
 Name: Railroader Vortex Extension
 Structure: Unity UMM (Unity Mod Manager)
 Author: ChemBoy1
-Version: 1.0.3
-Date: 2026-10-05
+Version: 1.0.4
+Date: 2026-10-12
 Notes:
 - First UMM implementation.
 //////////////////////////////////////////*/
@@ -858,7 +858,7 @@ function runUmm(api) {
     if (TOOL_PATH !== undefined) {
       return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false }).catch((err) =>
         api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-          allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+          allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
         }),
       );
     } else {
@@ -869,7 +869,7 @@ function runUmm(api) {
     }
   } catch (err) {
     return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+      allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
     });
   }
 }
@@ -1126,7 +1126,7 @@ function testAssembly(files, gameId) {
 function installAssembly(files) {
   const MOD_TYPE = ASSEMBLY_ID;
   const modFile = files.find((file) => ASSEMBLY_FILES.includes(path.basename(file)));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -1171,7 +1171,7 @@ function testRoot(files, gameId) {
 async function installRoot(files, workingDir) {
   const modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file)));
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(ROOT_IDX);
+  const idx = modFile.lastIndexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
@@ -1235,7 +1235,7 @@ function testAssets(files, gameId) {
 //Installer install assets files
 function installAssets(files) {
   const modFile = files.find((file) => ASSETS_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ASSETS_ID };
@@ -1843,10 +1843,10 @@ function applyGame(context, gameSpec) {
     "open-ext",
     {},
     "Open Save Folder",
-    () => {
+    async () => {
       //const openPath = SAVE_PATH;
-      const openPath = getSavePath(context.api);
       try {
+        const openPath = await getSavePath(context.api);
         window.api.shell.openFile(openPath);
       } catch (err) {
         context.api.showErrorNotification("Failed to open the file or folder", err, {

@@ -2,8 +2,8 @@
 Name: Age of Mythology: Retold Vortex Extension
 Structure: Generic Game
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2026-08-03
+Version: 1.0.0
+Date: 2026-10-12
 */
 
 //Import libraries
@@ -352,7 +352,7 @@ function testData(files, gameId) {
 //Installer install Root folder files
 function installData(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === DATA_FOLDER);
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   //const setModTypeInstruction = { type: 'setmodtype', value: DATA_ID };
@@ -396,7 +396,7 @@ function testSave(files, gameId) {
 //mod installer instructions
 function installSave(files) {
   const modFile = files.find((file) => path.extname(file).toLowerCase() === SAVE_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: SAVE_ID };
@@ -441,7 +441,7 @@ function testConfig(files, gameId) {
 //mod installer instructions
 function installConfig(files) {
   const modFile = files.find((file) => path.extname(file).toLowerCase() === CONFIG_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: CONFIG_ID };
@@ -473,7 +473,7 @@ function testReshade(files, gameId) {
 //Installer install Root folder files
 function installReshade(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === RESHADE_FOLDER);
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: BINARIES_ID };
@@ -506,7 +506,7 @@ function testBinaries(files, gameId) {
 //Installer install Root folder files
 function installBinaries(files) {
   const modFile = files.find((file) => BINARIES_EXT.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: BINARIES_ID };

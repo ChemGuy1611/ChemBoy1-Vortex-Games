@@ -4,6 +4,11 @@
 
 - tool to launch bl4-crypt (by Cr4nkSt4r, naked exe file)
 
+## [1.0.1] - 2026-10-12
+
+- Fixed: Mods packaged inside an outer folder whose name ends with the name of an expected folder (for example "MyContent" for "Content") now install into the right place instead of keeping part of the outer folder's name.
+- Fixed: Blueprint (LogicMods) mods with an upper-case ".PAK" extension now get the correct name on the LogicMods load order.
+
 ## [1.0.0] - 2026-10-01
 
 - Added: UE4SS Load Order page. Reorder, enable, disable and lock UE4SS mods, with multi-select, a right-click menu and a filter for enabled, disabled and locked mods.

@@ -2,8 +2,8 @@
 Name: Wolfenstein (2009) Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.3.1
-Date: 2026-09-03
+Version: 1.0.0
+Date: 2026-10-12
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -355,7 +355,7 @@ function installBase(api, files) {
         );
       }
       if (result.action === SP_BUT) {
-        const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+        const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
         const rootPath = path.dirname(modFile);
         const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
         const setModTypeInstruction = { type: "setmodtype", value: SP_ID };
@@ -374,7 +374,7 @@ function installBase(api, files) {
         return Promise.resolve({ instructions });
       }
       if (result.action === MP_BUT) {
-        const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+        const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
         const rootPath = path.dirname(modFile);
         const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
         const setModTypeInstruction = { type: "setmodtype", value: MP_ID };
@@ -448,7 +448,7 @@ function installMaps(api, files) {
         );
       }
       if (result.action === SP_BUT) {
-        const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+        const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
         const rootPath = path.dirname(modFile);
         const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
         const setModTypeInstruction = { type: "setmodtype", value: SPBASE_ID };
@@ -467,7 +467,7 @@ function installMaps(api, files) {
         return Promise.resolve({ instructions });
       }
       if (result.action === MP_BUT) {
-        const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+        const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
         const rootPath = path.dirname(modFile);
         const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
         const setModTypeInstruction = { type: "setmodtype", value: MPBASE_ID };
@@ -541,7 +541,7 @@ function installStream(api, files) {
         );
       }
       if (result.action === SP_BUT) {
-        const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+        const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
         const rootPath = path.dirname(modFile);
         const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
         const setModTypeInstruction = { type: "setmodtype", value: SPBASE_ID };
@@ -560,7 +560,7 @@ function installStream(api, files) {
         return Promise.resolve({ instructions });
       }
       if (result.action === MP_BUT) {
-        const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+        const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
         const rootPath = path.dirname(modFile);
         const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
         const setModTypeInstruction = { type: "setmodtype", value: MPBASE_ID };
@@ -634,7 +634,7 @@ function installVideos(api, files) {
         );
       }
       if (result.action === SP_BUT) {
-        const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+        const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
         const rootPath = path.dirname(modFile);
         const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
         const setModTypeInstruction = { type: "setmodtype", value: SPBASE_ID };
@@ -653,7 +653,7 @@ function installVideos(api, files) {
         return Promise.resolve({ instructions });
       }
       if (result.action === MP_BUT) {
-        const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+        const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
         const rootPath = path.dirname(modFile);
         const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
         const setModTypeInstruction = { type: "setmodtype", value: MPBASE_ID };
@@ -725,7 +725,7 @@ function installPk4(api, files) {
         );
       }
       if (result.action === SP_BUT) {
-        const idx = modFile.indexOf(path.basename(modFile));
+        const idx = modFile.lastIndexOf(path.basename(modFile));
         const rootPath = path.dirname(modFile);
         const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
         const setModTypeInstruction = { type: "setmodtype", value: SPBASE_ID };
@@ -744,7 +744,7 @@ function installPk4(api, files) {
         return Promise.resolve({ instructions });
       }
       if (result.action === MP_BUT) {
-        const idx = modFile.indexOf(path.basename(modFile));
+        const idx = modFile.lastIndexOf(path.basename(modFile));
         const rootPath = path.dirname(modFile);
         const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
         const setModTypeInstruction = { type: "setmodtype", value: MPBASE_ID };
@@ -816,7 +816,7 @@ function installExe(api, files) {
         );
       }
       if (result.action === SP_BUT) {
-        const idx = modFile.indexOf(path.basename(modFile));
+        const idx = modFile.lastIndexOf(path.basename(modFile));
         const rootPath = path.dirname(modFile);
         const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
         const setModTypeInstruction = { type: "setmodtype", value: SP_ID };
@@ -835,7 +835,7 @@ function installExe(api, files) {
         return Promise.resolve({ instructions });
       }
       if (result.action === MP_BUT) {
-        const idx = modFile.indexOf(path.basename(modFile));
+        const idx = modFile.lastIndexOf(path.basename(modFile));
         const rootPath = path.dirname(modFile);
         const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
         const setModTypeInstruction = { type: "setmodtype", value: MP_ID };

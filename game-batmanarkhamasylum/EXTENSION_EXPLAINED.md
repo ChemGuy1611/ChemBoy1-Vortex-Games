@@ -24,6 +24,17 @@
 - **Epic Games Store** — `Godwit`
 - **GOG** — `1482504285`
 
+## Feature Flags
+
+| Flag | Value | Description |
+| --- | --- | --- |
+| `hasXbox` | `false` | toggle for Xbox version logic |
+| `has64Bit` | `false` | toggle for 64-bit version logic |
+| `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
+| `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
+| `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
+| `debug` | `false` | toggle for debug mode |
+
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
@@ -52,6 +63,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | `batmanarkhamasylum-cookedsub` | 33 |
 | `batmanarkhamasylum-movies` | 35 |
 | `batmanarkhamasylum-binaries` | 37 |
+| `batmanarkhamasylum-fallback` | 49 |
 
 ## Registered Tools
 

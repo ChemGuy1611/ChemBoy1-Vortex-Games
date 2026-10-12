@@ -41,7 +41,7 @@ IGame extends ITool. Fields marked **required** will cause discovery or deployme
 | Field          | Type                                 | Notes                                                                                                                         |
 | -------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
 | `queryModPath` | `(gamePath: string) => string`       | **Required.** Where mods live. Use `.` for in-place (game root). In templates built by `makeGetModPath()`.                    |
-| `mergeMods`    | `boolean \| ((mod: IMod) => string)` | **Required.** `true` = all mods share one dir. `false` = each mod gets its own subdir. Function = custom subdir name per mod. |
+| `mergeMods`    | `boolean \| ((mod: IMod) => string)` | **Required.** `true` = all mods share one dir. `false` = each mod gets its own subdir. Function = custom subdir name per mod. A mod type registered with its own `mergeMods` option uses that instead; left undefined it falls back to this value (default `true`). |
 
 ### IGame-specific (optional)
 

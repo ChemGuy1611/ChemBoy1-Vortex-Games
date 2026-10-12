@@ -10,6 +10,8 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | Frosty Mod Manager (tool) | a `frostymodmanager.exe` file | - |
 | Frosty Mods | a `.fbmod` file | `FrostyModManager\Mods\MassEffectAndromeda` |
+| Plugin | a file with one of these extensions: `.dll` | `FrostyModManager\Plugins` |
+| Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
 
@@ -31,13 +33,34 @@ Frostbite mods in Frosty Mod Manager format. Vortex stages them for Frosty rathe
 
 **Requirements:**
 
-- Recognised by any file with the `.fbmod` or `.archive` extensions.
+- Recognised by any file with the `.fbmod` or `.fbpack` extensions.
 
 Installs to: `FrostyModManager\Mods\MassEffectAndromeda`
 
 **Common mistakes:**
 
 - These mods still have to be applied through Frosty Mod Manager - installing in Vortex alone does not patch the game.
+
+## Plugin
+
+Recognised when the archive contains a file with one of these extensions: `.dll`.
+
+Installs to: `FrostyModManager\Plugins`
+
+## Fallback Installer
+
+The catch-all. Any archive that matched none of the installers above lands here and is copied across unchanged.
+
+> **NOTE:** Landing in the fallback installer is a signal your archive layout needs fixing.
+
+**Requirements:**
+
+- Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
+- Vortex shows the user a notification when a mod installs through the fallback.
+
+**Common mistakes:**
+
+- If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.
 
 ## Rules That Apply To Every Mod Type
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.2] - 2026-10-12
+
+- Fixed: Mods packaged inside an outer folder whose name contains the name of the mod's own folder or file (for example "MyData" for "Data") now install into the right place.
+
 ## [1.0.1] - 2026-10-04
 
 - Fixed: The Epic Games Store version of the game is now found and launched correctly.

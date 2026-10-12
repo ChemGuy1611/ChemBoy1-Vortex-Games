@@ -2,6 +2,12 @@
 
 Covers `template-reframework-fluffy`. Suite file: `tests/templates/reframework-fluffy.test.js`.
 
+## [2026-10-12]
+
+- Changed: the template registers the "Custom Launch (Demo)" tool only when `HAS_DEMO` is true. The default-tools test now expects Fluffy and Custom Launch (2 tools) and loads a demo build to check the third, so the demo button's fields are read from the demo load instead of the default load. Suite is now 153 tests.
+- Added: a test that a game with no demo (`EXEC_DEMO` set to `""`) and a game whose demo executable is the game's own both register only Fluffy and Custom Launch.
+- Added: red proof. The two changed tests fail against the template as it was at the last commit and pass with the gate.
+
 ## [2026-10-11]
 
 - Changed: the template now has a `HAS_DEMO` guard, a multi-folder loose lua installer, `lastIndexOf` cuts, a case-insensitive nested archive check and `"EACCES"`. The four `known gap` tests that pinned the old behavior (nested `.ZIP`, no demo executable, demo executable named like the game, `EACCESS`) now assert the fixed result and lost their `known gap:` prefix; the loose lua test that pinned "only the first script's folder" asserts that every script folder installs.

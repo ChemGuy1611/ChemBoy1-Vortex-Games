@@ -2,8 +2,8 @@
 Name: Return to Castle Wolfenstein Vortex Extension
 Structure: Generic Game with Custom Engine Mod (RealRTCW)
 Author: ChemBoy1
-Version: 1.1.2
-Date: 2026-10-09
+Version: 1.1.3
+Date: 2026-10-12
 ////////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -413,7 +413,7 @@ function testIortcw(files, gameId) {
 //Installer install ioRTCW files
 function installIortcw(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === IORTCW_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: IORTCW_ID };
@@ -448,7 +448,7 @@ function testRealrtcw(files, gameId) {
 function installRealrtcw(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === REALRTCW_EXEC);
   //const modFile = files.find(file => (path.basename(file).toLowerCase().includes('realrtcw.x64')));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: REALRTCW_ID };
@@ -483,7 +483,7 @@ function installMainFolder(files) {
   const modFile = files.find(
     (file) => path.basename(file).toLowerCase() === MAIN_FOLDER.toLowerCase(),
   );
-  const idx = modFile.indexOf(`${modFile}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MAIN_ID };
@@ -528,7 +528,7 @@ function testPk3(files, gameId) {
 //Install pk3 files
 function installPk3(files) {
   const modFile = files.find((file) => path.extname(file).toLowerCase() === PK3_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: PK3_ID };

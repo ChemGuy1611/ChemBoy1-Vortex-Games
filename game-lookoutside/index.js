@@ -2,8 +2,8 @@
 Name: Look Outside Vortex Extension
 Structure: RPGMaker Engine Game
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-10-02
+Version: 1.0.2
+Date: 2026-10-12
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -34,6 +34,14 @@ const GAME_NAME_SHORT = "Look Outside";
 const EXEC = "Game.exe";
 const NAME_FOLDER = "LookOutside";
 
+//feature toggles
+let hasXbox = false; //toggle for Xbox version logic
+if (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) hasXbox = true;
+const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
+const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
+const setupNotification = true; //enable to show the user a notification with special instructions (specify below) - default true: plugins.js manual-update reminder is always relevant
+const debug = false; //toggle for debug mode
+
 const ROOT_FOLDERS = [
   NAME_FOLDER,
   "audio",
@@ -52,6 +60,8 @@ let GAME_PATH = "";
 let GAME_VERSION = ""; //Game version
 let STAGING_FOLDER = "";
 let DOWNLOAD_FOLDER = "";
+const APPMANIFEST_FILE = "appxmanifest.xml";
+const EXEC_XBOX = "gamelaunchhelper.exe";
 
 const JSFOLDER_ID = `${GAME_ID}-jsfolder`;
 const JSFOLDER_NAME = "js folder";
@@ -105,12 +115,12 @@ const IGNORE_DEPLOY = [
   path.join("**", "license*"),
   path.join("**", "plugins.js"),
 ];
+let MODTYPE_FOLDERS = [JSFILE_PATH, JSON_PATH];
 const spec = {
   game: {
     id: GAME_ID,
     name: GAME_NAME,
     shortName: GAME_NAME_SHORT,
-    executable: EXEC,
     parameters: PARAMETERS,
     logo: `${GAME_ID}.jpg`,
     mergeMods: true,
@@ -123,6 +133,7 @@ const spec = {
       gogAppId: GOGAPP_ID,
       epicAppId: EPICAPP_ID,
       xboxAppId: XBOXAPP_ID,
+      supportsSymlinks: allowSymlinks,
       ignoreConflicts: IGNORE_CONFLICTS,
       ignoreDeploy: IGNORE_DEPLOY,
     },
@@ -361,6 +372,25 @@ async function requiresLauncher(gamePath, store) {
   return Promise.resolve(undefined);
 }
 
+//Get correct executable for game version
+function getExecutable(discoveryPath) {
+  if (hasXbox && statCheckSync(discoveryPath, EXEC_XBOX)) {
+    return EXEC_XBOX;
+  }
+  return EXEC;
+}
+
+//Get correct game version
+async function setGameVersion(gamePath) {
+  if (hasXbox && (await statCheckAsync(gamePath, EXEC_XBOX))) {
+    GAME_VERSION = "xbox";
+    return GAME_VERSION;
+  } else {
+    GAME_VERSION = "default";
+    return GAME_VERSION;
+  }
+}
+
 const getDiscoveryPath = (api) => {
   //get the game's discovered path
   const state = api.getState();
@@ -410,7 +440,7 @@ function testJsFolder(files, gameId) {
 async function installJsFolder(files) {
   const MOD_TYPE = JSFOLDER_ID;
   const modFile = files.find((file) => path.basename(file).toLowerCase() === JSFOLDER_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -431,7 +461,7 @@ async function installJsFolder(files) {
         path.dirname(instr.destination) === JSFILE_PATH &&
         path.extname(instr.destination).toLowerCase() === JSFILE_EXT,
     )
-    .map((instr) => path.basename(instr.destination, JSFILE_EXT));
+    .map((instr) => path.basename(instr.destination, path.extname(instr.destination)));
   instructions.push(setModTypeInstruction);
   if (pluginNames.length > 0) {
     instructions.push({ type: "attribute", key: LO_ATTRIBUTE, value: pluginNames });
@@ -467,7 +497,7 @@ function testJsFile(files, gameId) {
 async function installJsFile(files) {
   const MOD_TYPE = JSFILE_ID;
   const modFile = files.find((file) => path.extname(file).toLowerCase() === JSFILE_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -484,7 +514,7 @@ async function installJsFile(files) {
   });
   const pluginNames = filtered
     .filter((file) => path.extname(file).toLowerCase() === JSFILE_EXT)
-    .map((file) => path.basename(file, JSFILE_EXT));
+    .map((file) => path.basename(file, path.extname(file)));
   instructions.push(setModTypeInstruction);
   if (pluginNames.length > 0) {
     instructions.push({ type: "attribute", key: LO_ATTRIBUTE, value: pluginNames });
@@ -521,7 +551,7 @@ function installRoot(files) {
   const MOD_TYPE = ROOT_ID;
   const modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file)));
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(ROOT_IDX);
+  const idx = modFile.lastIndexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -567,7 +597,7 @@ function testJson(files, gameId) {
 function installJson(files) {
   const MOD_TYPE = JSON_ID;
   const modFile = files.find((file) => path.extname(file).toLowerCase() === JSON_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -584,6 +614,129 @@ function installJson(files) {
   });
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
+}
+
+//Fallback installer to root folder
+function testFallback(files, gameId) {
+  let supported = gameId === spec.game.id;
+
+  // Test for a mod installer.
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Fallback installer to root folder
+function installFallback(api, files, destinationPath) {
+  fallbackInstallerNotify(api, destinationPath);
+
+  const filtered = files.filter((file) => !file.endsWith(path.sep));
+  const instructions = filtered.map((file) => {
+    return {
+      type: "copy",
+      source: file,
+      destination: file,
+    };
+  });
+  return Promise.resolve({ instructions });
+}
+
+function fallbackInstallerNotify(api, modName) {
+  const state = api.getState();
+  STAGING_FOLDER = selectors.installPathForGame(state, spec.game.id);
+  modName = path.basename(modName, ".installing");
+  const id = modName.replace(/[^a-zA-Z0-9\s]*( )*/gi, "");
+  const NOTIF_ID = `${GAME_ID}-${id}-fallback`;
+  const MESSAGE = "Fallback installer reached for " + modName;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: "info",
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: "More",
+        action: (dismiss) => {
+          api.showDialog(
+            "question",
+            MESSAGE,
+            {
+              text:
+                `The mod you just installed reached the fallback installer. This means Vortex could not determine where to place these mod files.\n` +
+                `Please check the mod page description and review the files in the mod staging folder to determine if manual file manipulation is required.\n` +
+                `\n` +
+                `If you think that Vortex should be capable to install this mod to a specific folder, please contact the extension developer for support at the link below.\n` +
+                `\n` +
+                `Mod Name: ${modName}.\n` +
+                `\n`,
+            },
+            [
+              { label: "Continue", action: () => dismiss() },
+              {
+                label: "Contact Ext. Developer",
+                action: () => {
+                  try {
+                    window.api.shell.openUrl(`${EXTENSION_URL}?tab=posts`);
+                  } catch (err) {
+                    api.showErrorNotification("Failed to open the URL", err, {
+                      allowReport: false,
+                    });
+                  }
+                  dismiss();
+                },
+              }, //*/
+              //*
+              {
+                label: `Open Mod Page + Staging Folder`,
+                action: () => {
+                  try {
+                    window.api.shell.openFile(path.join(STAGING_FOLDER, modName));
+                  } catch (err) {
+                    api.showErrorNotification("Failed to open the file or folder", err, {
+                      allowReport: false,
+                    });
+                  }
+                  const mods = api.store.getState()?.persistent?.mods?.[spec.game.id] ?? {};
+                  const modMatch = Object.values(mods).find(
+                    (mod) => mod.installationPath === modName,
+                  );
+                  log("warn", `Found ${modMatch?.id} for ${modName}`);
+                  let PAGE = ``;
+                  if (modMatch) {
+                    const MOD_ID = modMatch.attributes.modId;
+                    if (MOD_ID !== undefined) {
+                      PAGE = `${MOD_ID}?tab=description`;
+                    }
+                  }
+                  const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
+                  try {
+                    window.api.shell.openUrl(MOD_PAGE_URL);
+                  } catch (err) {
+                    api.showErrorNotification("Failed to open the URL", err, {
+                      allowReport: false,
+                    });
+                  }
+                  dismiss();
+                },
+              }, //*/
+            ],
+          );
+        },
+      },
+    ],
+  });
 }
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
@@ -604,8 +757,8 @@ async function getDeployedPluginNames(pluginsDir) {
   try {
     const files = await fsp.readdir(pluginsDir, { recursive: true });
     return files
-      .filter((file) => file.endsWith(JSFILE_EXT))
-      .map((file) => path.basename(file, JSFILE_EXT));
+      .filter((file) => path.extname(file).toLowerCase() === JSFILE_EXT)
+      .map((file) => path.basename(file, path.extname(file)));
   } catch {
     return [];
   }
@@ -720,17 +873,19 @@ async function serializePluginsLoadOrder(api, loadOrder) {
   const unmanagedEntries = onDiskArray.filter(
     (entry) => !managedNames.has(entry.name) && deployedNames.includes(entry.name),
   );
-  const managedEntries = loadOrder.map((entry) => ({
-    ...(onDiskByName.get(entry.name) ??
-      sidecarByName.get(entry.name) ??
-      entry.data ?? {
-        name: entry.name,
-        description: JSLIST_DEFAULT_DESCRIPTION,
-        parameters: {},
-      }),
-    name: entry.name,
-    status: entry.enabled !== false,
-  }));
+  const managedEntries = loadOrder.map((entry) => {
+    const stored = {
+      ...(onDiskByName.get(entry.name) ??
+        sidecarByName.get(entry.name) ??
+        entry.data ?? {
+          name: entry.name,
+          description: JSLIST_DEFAULT_DESCRIPTION,
+          parameters: {},
+        }),
+    };
+    delete stored.locked; //plugins.js has no lock field, but an entry taken from the sidecar carries one
+    return { ...stored, name: entry.name, status: entry.enabled !== false };
+  });
   //Sidecar-only field: `locked` is pure Vortex UI state, plugins.js has no concept of it and
   //shouldn't gain one. persistent.loadOrder already covers the common case (profile switch,
   //reload) via the prevById lookup above - this is the fallback for if that state is ever lost
@@ -775,6 +930,27 @@ async function clearPurgedPlugins(api, profileId) {
     await writePluginsListFile(listPath, remaining);
   } catch (err) {
     log("error", `Could not clear purged plugins from plugins.js: ${err}`);
+  }
+}
+
+//Vortex 2.9 does not write the load order back to the game on the deploy that follows a purge: the
+//order it restores equals the stored one, so it sees no change to write. clearPurgedPlugins removed
+//the purged plugins' entries from plugins.js, so put the ones now deployed again back from the load
+//order. Does nothing while plugins.js lists every managed plugin, which is every other deploy.
+async function restoreDeployedPlugins(api, profileId) {
+  const profile = selectors.profileById(api.getState(), profileId);
+  if (profile?.gameId !== GAME_ID || profileId !== selectors.activeProfile(api.getState())?.id) {
+    return;
+  }
+
+  try {
+    const listPath = path.join(getDiscoveryPath(api), JSLIST_FILE_PATH);
+    const listed = new Set((await readPluginsListFile(listPath)).map((entry) => entry.name));
+    const loadOrder = await deserializePluginsLoadOrder(api);
+    if (loadOrder.every((entry) => listed.has(entry.name))) return;
+    await serializePluginsLoadOrder(api, loadOrder);
+  } catch (err) {
+    log("error", `Could not restore plugins.js entries after deploy: ${err}`);
   }
 }
 
@@ -1752,16 +1928,50 @@ function setupNotify(api) {
   });
 }
 
+/*
+async function resolveGameVersion(gamePath) {
+  GAME_VERSION = await setGameVersion(gamePath);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try {
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  else { // use exe
+    try {
+      const exeVersion = require('exe-version');
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+} //*/
+
+async function modFoldersEnsureWritable(gamePath, relPaths) {
+  for (let index = 0; index < relPaths.length; index++) {
+    await vfs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+  }
+}
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   // SYNCHRONOUS CODE ////////////////////////////////////
   const state = api.getState();
   GAME_PATH = discovery.path;
+  //GAME_VERSION = await setGameVersion(GAME_PATH);
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
-  setupNotify(api);
+  if (setupNotification) setupNotify(api);
   // ASYNC CODE //////////////////////////////////////////
-  return vfs.ensureDirWritableAsync(path.join(GAME_PATH, JSFILE_PATH));
+  return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
 //Let Vortex know about the game
@@ -1770,10 +1980,11 @@ function applyGame(context, gameSpec) {
   const game = {
     ...gameSpec.game,
     queryPath: makeFindGame(context.api, gameSpec),
-    executable: () => gameSpec.game.executable,
+    executable: getExecutable,
     queryModPath: makeGetModPath(context.api, gameSpec),
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
+    //getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);
@@ -1806,6 +2017,11 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(JSON_ID, 31, testJson, installJson);
   //context.registerInstaller(CONFIG_ID, 47, testConfig, installConfig);
   //context.registerInstaller(SAVE_ID, 49, testSave, installSave);
+  if (fallbackInstaller) {
+    context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) =>
+      installFallback(context.api, files, destinationPath),
+    );
+  }
 
   //register load order
   context.registerLoadOrder({
@@ -1980,6 +2196,10 @@ function main(context) {
     api.events.on("did-purge", (profileId) => {
       clearPurgedPlugins(api, profileId);
     });
+    //Vortex does not write the load order back on the deploy after a purge - see restoreDeployedPlugins
+    api.onAsync("did-deploy", (profileId) =>
+      mod_update_all_profile ? undefined : restoreDeployedPlugins(api, profileId),
+    );
 
     //Reset mod update flags on deploy
     api.onAsync("did-deploy", async (profileId) => {

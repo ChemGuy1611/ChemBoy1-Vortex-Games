@@ -10,7 +10,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | Mlue4ss | a file or folder named `ae_bp` and a file with the `.pak` extension | the game folder itself (no subfolder) |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `ManorLords` |
-| Blueprint Mods (LogicMods) | a `LogicMods` folder | `ManorLords\Content\Paks\LogicMods` |
+| Blueprint Mods (LogicMods) | a `LogicMods` folder | `ManorLords\Content\Paks` |
 | Pak Mods | a `.pak` file | `ManorLords\Content\Paks\~mods` |
 | UE4SS Itself | a `dwmapi.dll` file | `ManorLords\Binaries\Win64` |
 | UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `ManorLords\Binaries\Win64\ue4ss\Mods` |
@@ -78,7 +78,7 @@ MyBlueprintMod.zip
 - Everything from the `LogicMods` folder down is copied to the game, keeping its structure.
 - Extra folders above `LogicMods` are fine - the installer finds it at any depth.
 
-Installs to: `ManorLords\Content\Paks\LogicMods`
+Installs to: `ManorLords\Content\Paks`
 
 **Common mistakes:**
 

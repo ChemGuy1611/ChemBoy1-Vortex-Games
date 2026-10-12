@@ -15,6 +15,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mimoda3 | a file or folder named `info.xml` | `FCModInstaller\ModifiedFilesFC6` |
 | Mod Installer Mods | a `.a2` file | `FCModInstaller\ModifiedFilesFC6` |
 | Xml | a file or folder named `gamerprofile.xml` and a file with the `.xml` extension | `DOCUMENTS\My Games\Far Cry 6\USERID_FOLDER` |
+| Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
 
@@ -94,6 +95,21 @@ Installs to: `FCModInstaller\ModifiedFilesFC6`
 Recognised when the archive contains a file or folder named `gamerprofile.xml` and a file with the `.xml` extension.
 
 Installs to: `DOCUMENTS\My Games\Far Cry 6\USERID_FOLDER`
+
+## Fallback Installer
+
+The catch-all. Any archive that matched none of the installers above lands here and is copied across unchanged.
+
+> **NOTE:** Landing in the fallback installer is a signal your archive layout needs fixing.
+
+**Requirements:**
+
+- Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
+- Vortex shows the user a notification when a mod installs through the fallback.
+
+**Common mistakes:**
+
+- If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.
 
 ## Rules That Apply To Every Mod Type
 

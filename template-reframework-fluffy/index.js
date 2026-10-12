@@ -272,19 +272,24 @@ const tools = [
     //defaultPrimary: true,
     //parameters: [],
   }, //*/
-  {
-    id: `${GAME_ID}-customlaunchdemo`,
-    name: `Custom Launch (Demo)`,
-    logo: `exec_demo.png`,
-    executable: () => EXEC_DEMO,
-    requiredFiles: [EXEC_DEMO],
-    detach: true,
-    relative: true,
-    exclusive: true,
-    shell: true,
-    //defaultPrimary: true,
-    //parameters: [],
-  }, //*/
+  //only offered when the game has a separate demo executable
+  ...(HAS_DEMO
+    ? [
+        {
+          id: `${GAME_ID}-customlaunchdemo`,
+          name: `Custom Launch (Demo)`,
+          logo: `exec_demo.png`,
+          executable: () => EXEC_DEMO,
+          requiredFiles: [EXEC_DEMO],
+          detach: true,
+          relative: true,
+          exclusive: true,
+          shell: true,
+          //defaultPrimary: true,
+          //parameters: [],
+        },
+      ]
+    : []),
 ];
 
 // BASIC FUNCTIONS //////////////////////////////////////////////////////////////////////

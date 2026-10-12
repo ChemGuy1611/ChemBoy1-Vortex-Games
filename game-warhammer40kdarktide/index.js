@@ -259,7 +259,7 @@ function testMod(files, gameId) {
 //Installer install mod files
 function installMod(files) {
   const modFile = files.find((file) => path.extname(file).toLowerCase() === MOD_FILE_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const modName = path.basename(modFile, MOD_FILE_EXT);
@@ -307,7 +307,7 @@ function testRoot(files, gameId) {
 function installRoot(files) {
   let modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file)));
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(ROOT_IDX);
+  const idx = modFile.lastIndexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
 

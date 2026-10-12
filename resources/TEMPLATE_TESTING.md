@@ -6,8 +6,9 @@ template registers and how its installers route and emit. Templates are the sour
 every game extension built from them, so a template regression is a regression in every game
 that inherits it. The suite exists to catch that before a change is propagated.
 
-It does not launch Vortex, touch the network, or test `game-*` folders. Whether an extension
-works in the app is still checked by deploying it and loading the game.
+It does not launch Vortex or touch the network, and `npm test` does not test `game-*` folders
+(an opt-in smoke run does, see "Game smoke run"). Whether an extension works in the app is still
+checked by deploying it and loading the game.
 
 ## Running it
 
@@ -40,6 +41,7 @@ tests/
   contract-checks.js     the checks every template must pass
   contract-allowlist.js  known per-template exceptions, each with a reason
   contract.test.js       runs the checks on every template, plus mutation self-checks
+  games-smoke.js         opt-in run of the same checks over game-* folders (npm run test:games)
   templates/<name>.test.js   behavior tests for one template
   changelogs/<suite>.md  one changelog per suite, plus harness.md and contract.md
 ```
@@ -255,6 +257,47 @@ corrected error code to the old typo), run that template's suite with `CB1_TEMPL
 the reverts that leave it green. Those sites either have no test or are unreachable (an installer
 that is never registered, a marker that is not a substring of another path segment). Close the
 reachable ones with a fixture that puts the marker's whole name inside a parent folder name. `node sweep_template_fixes.js` does the reverts and reports the survivors (see `SCRIPTS.md`).
+
+## Game smoke run
+
+```text
+npm run test:games
+```
+
+Loads released `game-*` extensions under the same stubs and runs the contract checks on each. It
+exists to catch a syntax slip or a broken registration after a repo-wide patch. It is not part of
+`npm test` (the file has no `.test.js` suffix): game extensions carry per-game drift the template
+contract was never written for, so the useful signal is what changed, not what is red.
+
+| Variable | Effect |
+| --- | --- |
+| `CB1_GAMES` | Comma-separated game ids, without the `game-` prefix. |
+| `CB1_GAME_LIST` | Path to a file with one game id per line. With neither variable set, every game in a `resources/lists/games-*-parity.txt` list is used. |
+| `CB1_GAME_ROOT` | Folder holding the `game-*` folders, default the repo root. Points the run at a scratch copy, which is how a deliberately broken game proves the run can go red. |
+| `CB1_SMOKE_BASELINE` | Path to a baseline JSON file outside the repo. Missing file: the run records it and every game passes. Present file: a game fails on a load error or on any contract violation the baseline does not already hold; fixed violations are fine. Unset: report mode, a game fails only if it does not load or does not register exactly one game. |
+
+Use it around a patch: record a baseline on the unpatched tree, patch, run again. A regression
+shows as a new violation or a load error for that game only. The first recording over the
+149 games in the parity lists loaded all of them and held 57 known violations (FOMOD guards on
+marker installers, mod type priorities, `mod-icons` guards), none of them new.
+
+Proof it can fail: with `CB1_GAME_ROOT` pointing at a scratch copy of three games and a baseline
+recorded on the copies, a syntax error appended to one game, an installer priority of 99 in a
+second and the `registerGame` call removed from a third each turned that game red.
+
+The smoke run shows a game still loads; it does not show the fix landed. After a patch, run
+`python verify_propagation.py TEMPLATE OLD_REF --list <family parity list>`: it takes the
+functions the template changed since `OLD_REF`, and every game function that matched the old
+template text must now equal the new one byte for byte. A game's own variant is reported as
+patched or untouched, and an untouched one is where a missed fix hides. Run on games that are
+not patched yet it fails, which is the check that it can.
+
+Two flags extend the same run. `--residual` reports a game where the repo-wide gap-fix patch
+(`patch_extensions.py --only template_gap_fixes`) would still change something, which is the
+"no old pattern left" check; a game the patch skips on purpose is not reported.
+`--changelog-key "bullet text"` (repeatable) checks that each CHANGELOG bullet the patch added
+appears at most once per game, only above the first dated section, and that the released
+text did not change.
 
 ## Adding a template or a check
 

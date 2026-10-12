@@ -2,8 +2,8 @@
 Name: Middle-earth: Shadow of War Vortex Extension
 Structure: Mod Loaders + Mods folder w/ LO support
 Author: ChemBoy1
-Version: 2.5.4
-Date: 2026-09-06
+Version: 2.5.6
+Date: 2026-10-12
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -560,7 +560,7 @@ function testDllLoader(files, gameId) {
 function installDllLoader(files) {
   const MOD_TYPE = DLLLOADER_ID;
   const modFile = files.find((file) => path.basename(file) === DLLLOADER_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -606,7 +606,7 @@ function testModLoader(files, gameId) {
 function installModLoader(files) {
   const MOD_TYPE = MODLOADER_ID;
   const modFile = files.find((file) => path.basename(file) === MODLOADER_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -651,7 +651,7 @@ function testPacketLoader(files, gameId) {
 function installPacketLoader(files) {
   const MOD_TYPE = PACKETLOADER_ID;
   const modFile = files.find((file) => path.basename(file) === PACKETLOADER_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -763,7 +763,7 @@ async function chooseFilesToInstall(api, files, fileExt) {
 function installMod(api, files) {
   const MOD_TYPE = MOD_ID;
   const modFile = files.find(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
 
@@ -845,7 +845,7 @@ function installPlugins(files) {
     FOLDERS = PACKETLOADER_FOLDER;
   }
 
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -890,7 +890,7 @@ function testRoot(files, gameId) {
 function installRoot(files) {
   const modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file)));
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(ROOT_IDX);
+  const idx = modFile.lastIndexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
@@ -1488,6 +1488,47 @@ async function serializeLoadOrder(context, loadOrder) {
   return fsp.writeFile(loadOrderPath, `${loadOrderOutput}`, { encoding: "utf8" });
 }
 
+//Vortex 2.9 does not write the load order back to the game on the deploy that follows a purge: the
+//order it restores equals the stored one, so it sees no change to write. clearModOrder reset
+//default.archcfg to its startup text, so write the stored order back once the mod files are
+//deployed again. Does nothing while the file lists mods, which is every other deploy.
+async function restoreDeployedOrder(context, profileId) {
+  const api = context.api;
+  const state = api.getState();
+  if (
+    selectors.profileById(state, profileId)?.gameId !== GAME_ID ||
+    profileId !== selectors.activeProfile(state)?.id ||
+    mod_update_all_profile
+  ) {
+    return;
+  }
+
+  try {
+    const loadOrderFile = await fsp.readFile(path.join(getDiscoveryPath(api), LO_FILE_PATH), {
+      encoding: "utf8",
+    });
+    if (loadOrderFile.includes(LO_FILE_SPLITSTRING)) return; //file still lists mods
+
+    //A reset file reads back as a plain alphabetical list, so take the order and the enabled
+    //state from the stored order and keep the deserialized entries only for the files on disk.
+    const storedLO = state?.persistent?.loadOrder?.[profileId] ?? [];
+    if (storedLO.length === 0) return;
+    const deployedLO = await deserializeLoadOrder(context);
+    const deployedById = new Map(deployedLO.map((entry) => [entry.id, entry]));
+    const restoredLO = storedLO
+      .filter((entry) => deployedById.has(entry.id))
+      .map((entry) => ({ ...deployedById.get(entry.id), enabled: entry.enabled }));
+    const restoredIds = new Set(restoredLO.map((entry) => entry.id));
+    deployedLO.forEach((entry) => {
+      if (!restoredIds.has(entry.id)) restoredLO.push(entry);
+    });
+    if (restoredLO.length === 0) return;
+    await serializeLoadOrder(context, restoredLO);
+  } catch (err) {
+    log("error", `Could not restore the load order after deploy: ${err}`);
+  }
+}
+
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
@@ -1827,6 +1868,8 @@ function main(context) {
     // put code here that should be run (once) when Vortex starts up
     const api = context.api;
     context.api.onAsync("did-purge", (profileId) => didPurge(context.api, profileId)); //*/
+    //Vortex does not write the load order back on the deploy after a purge - see restoreDeployedOrder
+    context.api.onAsync("did-deploy", (profileId) => restoreDeployedOrder(context, profileId));
     context.api.onAsync("did-deploy", async (profileId) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(
         context.api.getState(),

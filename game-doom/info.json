@@ -2,6 +2,6 @@
   "id": "doom",
   "name": "Game: DOOM",
   "author": "ChemBoy1",
-  "version": "0.6.4",
+  "version": "1.0.0",
   "description": "Vortex support for DOOM"
 }

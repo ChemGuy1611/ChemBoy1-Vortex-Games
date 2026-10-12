@@ -2,8 +2,8 @@
 Name: DOOM Eternal Vortex Extension
 Structure: 3rd party mod loader
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-09-08
+Version: 1.1.0
+Date: 2026-10-12
 ////////////////////////////////////////////////*/
 /*
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣠⣤⣤⣤⡴⣦⡴⣖⠶⣴⠶⡶⣖⡶⣶⢶⣲⡾⠿⢿⡷⣾⢿⣷⣦⢾⣷⣾⣶⣤⣀⣰⣤⣀⡀⠀⠀⢀⣴⣿⡿⡿⣿⣿⣦⣄⠀⠀⣠⣴⣿⡿⢿⡿⣷⣦⡄⠀⠀⢀⣀⣤⣦⣀⣤⣶⣶⣷⣦⣴⡿⢿⡷⣿⠿⡿⣿⣷⢶⣦⢴⡲⣦⢶⡶⢶⡲⣖⡶⣦⣤⣤⣤⣤⣤⣤⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -405,7 +405,7 @@ function testRollback(files, gameId) {
 //Installer install version rollback files
 function installRollback(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === ROLLBACK_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: BINARIES_ID };
@@ -437,7 +437,7 @@ function testInjector(files, gameId) {
 //Installer install EternalModInjector files
 function installInjector(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === INJECTOR_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: INJECTOR_ID };
@@ -469,7 +469,7 @@ function testKTDE(files, gameId) {
 //Installer install KTDE files
 function installKTDE(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === KTDE_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: BINARIES_ID };
@@ -502,7 +502,7 @@ function testMeat(files, gameId) {
 //Installer install Meathook files
 function installMeat(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === MEAT_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: BINARIES_ID };
@@ -533,7 +533,9 @@ async function testZipContent(files, gameId) {
 
 //Install zips
 async function installZipContent(files, destinationPath) {
-  const zipFiles = files.filter((file) => [".zip", ".7z", ".rar"].includes(path.extname(file)));
+  const zipFiles = files.filter((file) =>
+    [".zip", ".7z", ".rar"].includes(path.extname(file).toLowerCase()),
+  );
   // If it's a double zip, we don't need to repack.
   if (zipFiles.length > 0) {
     const instructions = zipFiles.map((file) => {
@@ -634,7 +636,7 @@ function runInjector(api) {
     if (TOOL_PATH !== undefined) {
       return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false }).catch((err) =>
         api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-          allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+          allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
         }),
       );
     } else {
@@ -645,7 +647,7 @@ function runInjector(api) {
     }
   } catch (err) {
     return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+      allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
     });
   }
 }

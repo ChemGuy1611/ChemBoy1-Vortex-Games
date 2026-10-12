@@ -2,8 +2,8 @@
 Name: DOOM (2016) Vortex Extension
 Structure: 3rd party mod loader
 Author: ChemBoy1
-Version: 0.6.4
-Date: 2026-09-08
+Version: 1.0.0
+Date: 2026-10-12
 ////////////////////////////////////*/
 /*
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣠⣤⣤⣤⡴⣦⡴⣖⠶⣴⠶⡶⣖⡶⣶⢶⣲⡾⠿⢿⡷⣾⢿⣷⣦⢾⣷⣾⣶⣤⣀⣰⣤⣀⡀⠀⠀⢀⣴⣿⡿⡿⣿⣿⣦⣄⠀⠀⣠⣴⣿⡿⢿⡿⣷⣦⡄⠀⠀⢀⣀⣤⣦⣀⣤⣶⣶⣷⣦⣴⡿⢿⡷⣿⠿⡿⣿⣷⢶⣦⢴⡲⣦⢶⡶⢶⡲⣖⡶⣦⣤⣤⣤⣤⣤⣤⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -413,7 +413,7 @@ function testModLoader(files, gameId) {
 //Installer install DOOMModLoader files
 function installModLoader(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === LOADER_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: LOADER_ID };
@@ -445,7 +445,7 @@ function testLauncher(files, gameId) {
 //Installer install DOOMLauncher files
 function installLauncher(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === LAUNCHER_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: LAUNCHER_ID };
@@ -478,7 +478,7 @@ function testLegacy(files, gameId) {
 //Installer install DoomLegacyMod files
 function installLegacy(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === LEGACY_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: LEGACY_ID };
@@ -510,7 +510,7 @@ function testRollback(files, gameId) {
 //Installer install game version rollback files
 function installRollback(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === ROLLBACK_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROLLBACK_ID };
@@ -540,7 +540,9 @@ async function testZipContent(files, gameId) {
 
 //Install zips
 async function installZipContent(files, destinationPath) {
-  const zipFiles = files.filter((file) => [".zip", ".7z", ".rar"].includes(path.extname(file)));
+  const zipFiles = files.filter((file) =>
+    [".zip", ".7z", ".rar"].includes(path.extname(file).toLowerCase()),
+  );
   // If it's a double zip, we don't need to repack.
   if (zipFiles.length > 0) {
     const instructions = zipFiles.map((file) => {
@@ -641,7 +643,7 @@ function runLoader(api) {
     if (TOOL_PATH !== undefined) {
       return api.runExecutable(TOOL_PATH, [], { shell: true, suggestDeploy: false }).catch((err) =>
         api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-          allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+          allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
         }),
       );
     } else {
@@ -652,7 +654,7 @@ function runLoader(api) {
     }
   } catch (err) {
     return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+      allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
     });
   }
 }

@@ -2,8 +2,8 @@
 Name: Control Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 2.0.2
-Date: 2025-12-01
+Version: 2.1.0
+Date: 2026-10-12
 /////////////////////////////////////////*/
 
 //Import libraries
@@ -642,7 +642,7 @@ function installModFolder(files) {
   const modFile = files.find((file) =>
     MODFOLDER_FOLDERS.includes(path.basename(file).toLowerCase()),
   );
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MODFOLDER_ID };
@@ -686,7 +686,7 @@ function testModPack(files, gameId) {
 //Installer install Root folder files
 function installModPack(files) {
   const modFile = files.find((file) => MODPACK_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MODPACK_ID };
@@ -730,7 +730,7 @@ function testLooseLoader(files, gameId) {
 //Install Mod Loader mods
 function installLooseLoader(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === LOOSELOADER_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: LOOSELOADER_ID };
@@ -774,7 +774,7 @@ function testPluginLoader(files, gameId) {
 //Install Mod Loader mods
 function installPluginLoader(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === PLUGINLOADER_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: PLUGINLOADER_ID };

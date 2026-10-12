@@ -3,9 +3,13 @@
 ## Planned Improvements (Not Yet Released)
 
 - Change CDLC Song Downloader to open a free-roam browser window so that domain switching to file hosting sites for the .psarc files does not cause exit errors and allows downloading multiple files in one session.
+
+## [1.0.0] - 2026-10-12
+
 - Fixed: Mod files with no file extension were skipped during installation
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 - The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
+- Fixed: Mods packaged inside an outer folder whose name contains the name of the mod's own folder or file (for example "MyData" for "Data") now install into the right place.
 
 ## [0.3.1] - 2026-04-19
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.1] - 2026-10-12
+
+- Fixed: Mods packaged inside an outer folder whose name ends with a game folder's name (for example "MyData" for "Data") now install into the right place instead of a doubled folder.
+- Fixed: The manual-rename notice no longer cuts letters out of mod names that contain "rar", "zip" or "7z" (for example "Hunter rarity"), so its Open Mod Page and rename buttons find the mod.
+- Fixed: If renaming an extracted .forge folder fails, your mods are now redeployed instead of staying purged.
+
 ## [1.0.0] - 2026-09-29
 
 - Migrated to `template-anvilengine`. Added ReForger support alongside the existing Forger Patch Manager, with a "Download ReForger" button

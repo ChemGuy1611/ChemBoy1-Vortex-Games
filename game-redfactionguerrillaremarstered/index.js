@@ -2,8 +2,8 @@
 Name: Red Faction Guerrilla Re-Mars-tered Vortex Extension
 Structure: 3rd-Party Mod Installer
 Author: ChemBoy1
-Version: 0.2.1
-Date: 2026-09-04
+Version: 1.0.0
+Date: 2026-10-12
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -491,7 +491,7 @@ function testModManger(files, gameId) {
 //Installer install Mod Importer
 function installModManager(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === MANAGER_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MANAGER_ID };
@@ -537,7 +537,7 @@ function testModMangerLegacy(files, gameId) {
 //Installer install Mod Importer
 function installModManagerLegacy(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === MANAGER_EXEC_LEGACY);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MANAGER_ID };
@@ -583,7 +583,7 @@ function testMod(files, gameId) {
 //Installer install mod files
 function installMod(files, fileName) {
   const modFile = files.find((file) => MOD_FILES.includes(path.basename(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_ID };
@@ -930,7 +930,7 @@ function runModManager(api, toolId) {
     if (TOOL_PATH !== undefined) {
       return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false, shell: true }).catch((err) =>
         api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-          allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+          allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
         }),
       );
     } else {
@@ -941,7 +941,7 @@ function runModManager(api, toolId) {
     }
   } catch (err) {
     return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+      allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
     });
   }
 }

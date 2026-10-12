@@ -24,6 +24,16 @@
 - **Epic Games Store** — `737c348dddbd4c17afd22c87af0edcbb`
 - **Xbox / Microsoft Store** — `FrontierDevelopmentsPlc.FDNewton`
 
+## Feature Flags
+
+| Flag | Value | Description |
+| --- | --- | --- |
+| `hasXbox` | `false` | toggle for Xbox version logic. |
+| `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
+| `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
+| `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
+| `debug` | `false` | toggle for debug mode |
+
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
@@ -34,6 +44,8 @@ Mod types define where each category of mod gets deployed:
 | Root Game Folder | `planetcoaster2-root` | high | `{gamePath}` |
 | ACSE Mod | `planetcoaster2-acsemod` | high | `{gamePath}/Win64/ovldata` |
 | ovldata Subfolder | `planetcoaster2-ovldata` | high | `{gamePath}/Win64` |
+| ACSE Localization | `planetcoaster2-localised` | high | `{gamePath}/Win64/ovldata/ACSE` |
+| Movies (.webm) | `planetcoaster2-movies` | high | `{gamePath}/Movies` |
 | Saves | `planetcoaster2-save` | high | `USER_HOME/Saved Games/Frontier Developments/Planet Coaster 2/USERID_FOLDER/Saves` |
 
 ## Mod Installers
@@ -45,8 +57,11 @@ Installers run in priority order (lower number = tested first). The first instal
 | `planetcoaster2-acse` | 25 |
 | `planetcoaster2-root` | 27 |
 | `planetcoaster2-acsemod` | 28 |
-| `planetcoaster2-ovldata` | 29 |
+| `planetcoaster2-localised` | 29 |
+| `planetcoaster2-movies` | 31 |
+| `planetcoaster2-ovldata` | 33 |
 | `planetcoaster2-save` | 49 |
+| `planetcoaster2-fallback` | 49 |
 
 ## Registered Tools
 

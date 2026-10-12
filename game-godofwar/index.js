@@ -2,8 +2,8 @@
 Name: God of War (2018) Vortex Extension
 Structure: Sony Port, Custom Game Data
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-09
+Version: 1.0.3
+Date: 2026-10-12
 /////////////////////////////////////////*/
 
 //import libraries
@@ -372,7 +372,7 @@ function installLoader(files) {
   const modFile = files.find(
     (file) => path.basename(file).toLowerCase() === LOADER_FILE.toLowerCase(),
   );
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: LOADER_ID };
@@ -416,7 +416,7 @@ function testData(files, gameId) {
 //Installer install Root folder files
 function installData(files) {
   const modFile = files.find((file) => path.basename(file) === DATA_FILE);
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: DATA_ID };
@@ -460,7 +460,7 @@ function testPatch(files, gameId) {
 //Installer install Root folder files
 function installPatch(files) {
   const modFile = files.find((file) => path.basename(file) === PATCH_FILE);
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: PATCH_ID };
@@ -504,7 +504,7 @@ function testExecsub(files, gameId) {
 //Installer install Root folder files
 function installExecsub(files) {
   const modFile = files.find((file) => EXECSUB_FOLDERS.includes(path.basename(file)));
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: EXECSUB_ID };
@@ -548,7 +548,7 @@ function testPack(files, gameId) {
 //mod installer instructions
 function installPack(files) {
   const modFile = files.find((file) => PACK_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: PACK_ID };
@@ -593,7 +593,7 @@ function testLuaMod(files, gameId) {
 //mod installer instructions
 function installLuaMod(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === LUAMOD_FOLDER);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: LUAMOD_ID };
@@ -637,7 +637,7 @@ function testSave(files, gameId) {
 //mod installer instructions
 function installSave(files) {
   const modFile = files.find((file) => path.extname(file) === SAVE_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: "setmodtype", value: SAVE_ID };
 

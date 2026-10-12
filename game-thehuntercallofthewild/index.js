@@ -2,8 +2,8 @@
 Name: theHunter: Call of the Wild Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.2.1
-Date: 2026-06-28
+Version: 1.0.0
+Date: 2026-10-12
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -554,7 +554,7 @@ function testDropzone(files, gameId) {
 function installDropzone(files) {
   const MOD_TYPE = DROPZONE_ID;
   const modFile = files.find((file) => path.basename(file).toLowerCase() === DROPZONE_FOLDER);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -600,7 +600,7 @@ function testSave(files, gameId) {
 function installSave(files) {
   const MOD_TYPE = SAVE_ID;
   const modFile = files.find((file) => SAVE_FILES.includes(path.basename(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
 

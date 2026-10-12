@@ -2,8 +2,8 @@
 Name: Welcome to Elderfield Vortex Extension
 Structure: RPGMaker Engine Game
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-10-07
+Version: 1.0.1
+Date: 2026-10-12
 Notes:
 -
 ///////////////////////////////////////////*/
@@ -94,7 +94,6 @@ const JSLIST_HEADER = `var $plugins =\n`;
 const JSLIST_DEFAULT_DESCRIPTION =
   "Mod installed with Vortex. See mod page for description. You may need to add additional parameters below.";
 const LO_ATTRIBUTE = "pluginNames"; //mod attribute holding the plugin basenames it installed, set by installJsFile/installJsFolder
-let isPurging = false; //guards plugins.js writes during a purge cycle - see the will-purge/did-deploy listeners in main()
 const LO_IMAGE_WIDTH = 96; //Width of the load order thumbnail image
 const LO_IMAGE_HEIGHT = LO_IMAGE_WIDTH * 0.5625;
 const PLUGINS_LO_FILE = "pluginsLoadOrder.json"; //Vortex-owned sidecar (profile-prefixed), durable order/enabled/description/parameters store - lives in the game root, never deployed, so a purge never touches it
@@ -471,7 +470,7 @@ function testJsFolder(files, gameId) {
 async function installJsFolder(files) {
   const MOD_TYPE = JSFOLDER_ID;
   const modFile = files.find((file) => path.basename(file).toLowerCase() === JSFOLDER_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -492,7 +491,7 @@ async function installJsFolder(files) {
         path.dirname(instr.destination) === JSFILE_PATH &&
         path.extname(instr.destination).toLowerCase() === JSFILE_EXT,
     )
-    .map((instr) => path.basename(instr.destination, JSFILE_EXT));
+    .map((instr) => path.basename(instr.destination, path.extname(instr.destination)));
   instructions.push(setModTypeInstruction);
   if (pluginNames.length > 0) {
     instructions.push({ type: "attribute", key: LO_ATTRIBUTE, value: pluginNames });
@@ -528,7 +527,7 @@ function testJsFile(files, gameId) {
 async function installJsFile(files) {
   const MOD_TYPE = JSFILE_ID;
   const modFile = files.find((file) => path.extname(file).toLowerCase() === JSFILE_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -545,7 +544,7 @@ async function installJsFile(files) {
   });
   const pluginNames = filtered
     .filter((file) => path.extname(file).toLowerCase() === JSFILE_EXT)
-    .map((file) => path.basename(file, JSFILE_EXT));
+    .map((file) => path.basename(file, path.extname(file)));
   instructions.push(setModTypeInstruction);
   if (pluginNames.length > 0) {
     instructions.push({ type: "attribute", key: LO_ATTRIBUTE, value: pluginNames });
@@ -582,7 +581,7 @@ function installRoot(files) {
   const MOD_TYPE = ROOT_ID;
   const modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file)));
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(ROOT_IDX);
+  const idx = modFile.lastIndexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -628,7 +627,7 @@ function testJson(files, gameId) {
 function installJson(files) {
   const MOD_TYPE = JSON_ID;
   const modFile = files.find((file) => path.extname(file).toLowerCase() === JSON_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -788,8 +787,8 @@ async function getDeployedPluginNames(pluginsDir) {
   try {
     const files = await fsp.readdir(pluginsDir, { recursive: true });
     return files
-      .filter((file) => file.endsWith(JSFILE_EXT))
-      .map((file) => path.basename(file, JSFILE_EXT));
+      .filter((file) => path.extname(file).toLowerCase() === JSFILE_EXT)
+      .map((file) => path.basename(file, path.extname(file)));
   } catch {
     return [];
   }
@@ -805,17 +804,6 @@ async function getDeployedPluginNames(pluginsDir) {
 //edits to description/parameters), then the sidecar's copy (durable - survives plugins.js being
 //reset, e.g. by a purge), then a fresh default for a plugin never seen before.
 async function deserializePluginsLoadOrder(api) {
-  if (isPurging) {
-    //Every plugin .js file is transiently gone during a purge - rebuilding from that would read
-    //as "every plugin uninstalled" and wipe plugins.js's custom parameters on the next write.
-    //Return whatever is already stored; main()'s did-deploy listener re-runs this for real once
-    //the purge's matching deploy restores the files.
-    const profile = selectors.activeProfile(api.getState());
-    return profile?.id !== undefined
-      ? (api.getState()?.persistent?.loadOrder?.[profile.id] ?? [])
-      : [];
-  }
-
   const gamePath = getDiscoveryPath(api);
   const listPath = path.join(gamePath, JSLIST_FILE_PATH);
   const pluginsDir = path.join(gamePath, JSFILE_PATH);
@@ -870,10 +858,6 @@ async function deserializePluginsLoadOrder(api) {
 //they're still deployed - keeps them in the file while still dropping dead entries left behind
 //by an uninstalled mod. The sidecar only ever holds managed (mod-owned) entries.
 async function serializePluginsLoadOrder(api, loadOrder) {
-  if (isPurging) {
-    return; //purge in progress - see deserializePluginsLoadOrder and main()'s listeners
-  }
-
   const gamePath = getDiscoveryPath(api);
   const listPath = path.join(gamePath, JSLIST_FILE_PATH);
   const pluginsDir = path.join(gamePath, JSFILE_PATH);
@@ -891,17 +875,19 @@ async function serializePluginsLoadOrder(api, loadOrder) {
   const unmanagedEntries = onDiskArray.filter(
     (entry) => !managedNames.has(entry.name) && deployedNames.includes(entry.name),
   );
-  const managedEntries = loadOrder.map((entry) => ({
-    ...(onDiskByName.get(entry.name) ??
-      sidecarByName.get(entry.name) ??
-      entry.data ?? {
-        name: entry.name,
-        description: JSLIST_DEFAULT_DESCRIPTION,
-        parameters: {},
-      }),
-    name: entry.name,
-    status: entry.enabled !== false,
-  }));
+  const managedEntries = loadOrder.map((entry) => {
+    const stored = {
+      ...(onDiskByName.get(entry.name) ??
+        sidecarByName.get(entry.name) ??
+        entry.data ?? {
+          name: entry.name,
+          description: JSLIST_DEFAULT_DESCRIPTION,
+          parameters: {},
+        }),
+    };
+    delete stored.locked; //plugins.js has no lock field, but an entry taken from the sidecar carries one
+    return { ...stored, name: entry.name, status: entry.enabled !== false };
+  });
   //Sidecar-only field: `locked` is pure Vortex UI state, plugins.js has no concept of it and
   //shouldn't gain one. persistent.loadOrder already covers the common case (profile switch,
   //reload) via the prevById lookup above - this is the fallback for if that state is ever lost
@@ -926,10 +912,9 @@ async function serializePluginsLoadOrder(api, loadOrder) {
 //On purge, every deployed plugin .js file is gone - remove their now-dead entries from plugins.js
 //(vanilla/still-deployed ones stay untouched) so the game doesn't try to load a file that no
 //longer exists. Matches game-thelastofuspart2's didPurge/clearModOrder pattern: a dedicated purge
-//cleanup, independent of the reorder/serialize cycle (which stays no-op'd by `isPurging` - this
-//runs regardless of that guard, it's the intentional write purge is supposed to cause). The
-//sidecar is left alone on purpose - it's the recovery copy for exactly this case, picked back up
-//by deserializePluginsLoadOrder's sidecar tier if/when these plugins get reinstalled.
+//cleanup, independent of the reorder/serialize cycle. The sidecar is left alone on purpose - it's
+//the recovery copy for exactly this case, picked back up by deserializePluginsLoadOrder's sidecar
+//tier if/when these plugins get reinstalled.
 async function clearPurgedPlugins(api, profileId) {
   const profile = selectors.profileById(api.getState(), profileId);
   if (profile?.gameId !== GAME_ID) return;
@@ -947,6 +932,27 @@ async function clearPurgedPlugins(api, profileId) {
     await writePluginsListFile(listPath, remaining);
   } catch (err) {
     log("error", `Could not clear purged plugins from plugins.js: ${err}`);
+  }
+}
+
+//Vortex 2.9 does not write the load order back to the game on the deploy that follows a purge: the
+//order it restores equals the stored one, so it sees no change to write. clearPurgedPlugins removed
+//the purged plugins' entries from plugins.js, so put the ones now deployed again back from the load
+//order. Does nothing while plugins.js lists every managed plugin, which is every other deploy.
+async function restoreDeployedPlugins(api, profileId) {
+  const profile = selectors.profileById(api.getState(), profileId);
+  if (profile?.gameId !== GAME_ID || profileId !== selectors.activeProfile(api.getState())?.id) {
+    return;
+  }
+
+  try {
+    const listPath = path.join(getDiscoveryPath(api), JSLIST_FILE_PATH);
+    const listed = new Set((await readPluginsListFile(listPath)).map((entry) => entry.name));
+    const loadOrder = await deserializePluginsLoadOrder(api);
+    if (loadOrder.every((entry) => listed.has(entry.name))) return;
+    await serializePluginsLoadOrder(api, loadOrder);
+  } catch (err) {
+    log("error", `Could not restore plugins.js entries after deploy: ${err}`);
   }
 }
 
@@ -2202,33 +2208,13 @@ function main(context) {
     // put code here that should be run (once) when Vortex starts up
     const api = context.api;
 
-    //Purging removes every plugin .js file transiently, and core's own did-deploy handler reads
-    //the load order (via deserializePluginsLoadOrder) before this listener gets a chance to run,
-    //so the guard has to stay armed past did-purge and only clear once the matching deploy that
-    //restores the files actually lands - then this listener re-runs the read/dispatch itself.
-    api.events.on("will-purge", (profileId) => {
-      const profile = selectors.profileById(api.getState(), profileId);
-      if (profile?.gameId === GAME_ID) {
-        isPurging = true;
-      }
-    });
-    api.events.on("did-deploy", async (profileId) => {
-      if (!isPurging) return;
-      const profile = selectors.profileById(api.getState(), profileId);
-      if (profile?.gameId !== GAME_ID) return;
-      isPurging = false;
-      try {
-        const lo = await deserializePluginsLoadOrder(api);
-        api.store.dispatch(actions.setFBLoadOrder(profileId, lo));
-      } catch (err) {
-        log("error", `Could not refresh plugins.js load order after purge: ${err}`);
-      }
-    });
     //Files are gone by did-purge - prune their dead plugins.js entries now rather than waiting on
     //a redeploy/reorder to notice, so the game never tries to load a file that's already deleted.
     api.events.on("did-purge", (profileId) => {
       clearPurgedPlugins(api, profileId);
     });
+    //Vortex does not write the load order back on the deploy after a purge - see restoreDeployedPlugins
+    api.onAsync("did-deploy", (profileId) => restoreDeployedPlugins(api, profileId));
   });
   return true;
 }

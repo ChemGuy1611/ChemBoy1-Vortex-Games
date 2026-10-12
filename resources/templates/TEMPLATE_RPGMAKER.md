@@ -43,9 +43,15 @@ attribute (`LO_ATTRIBUTE`) listing the plugin basenames the mod installed — th
   back plus an untouched passthrough of any still-deployed entry the page doesn't manage (keeps
   vanilla plugins in the file without ever showing them), and mirrors the managed entries to the
   sidecar.
-- A module-level `isPurging` guard (armed on `will-purge`, cleared + self-resynced on `did-deploy`)
-  skips both functions during a purge — every plugin `.js` file is transiently gone mid-purge, and
-  without the guard that reads as a mass-uninstall and wipes `plugins.js`.
+- A `did-purge` listener runs `clearPurgedPlugins`, which drops the dead entries of purged plugins
+  from `plugins.js` (vanilla and still-deployed entries stay) and leaves the sidecar untouched as
+  the recovery copy. There is no purge guard around `deserializeLoadOrder` / `serializeLoadOrder`:
+  the sidecar holds each managed plugin's description and parameters through a purge.
+- A `did-deploy` listener (registered with `api.onAsync`) runs `restoreDeployedPlugins`. Vortex
+  2.9.0-beta.2 does not write the load order back on the deploy that follows a purge, so the entries
+  `clearPurgedPlugins` removed would stay missing until the load order changed. When a deployed,
+  Vortex-managed plugin is not listed in `plugins.js`, the listener writes the load order back through
+  `serializeLoadOrder`; every other deploy writes nothing.
 - A `customItemRenderer` (mod thumbnails, position locking, status filter pills, right-click menu —
   move to top/bottom, open staging folder/mod page, enable/disable) is wired into the same
   `registerLoadOrder` call, ported from `game-warhammer40kdarktide`'s FBLO row pattern. No "Open Mod

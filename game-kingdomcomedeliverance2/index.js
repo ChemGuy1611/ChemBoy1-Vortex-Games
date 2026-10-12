@@ -2,8 +2,8 @@
 Name: Kingdom Come Deliverance II Vortex Extension
 Structure: Mod Folder and FBLO
 Author: ChemBoy1
-Version: 1.0.5
-Date: 2026-09-06
+Version: 1.1.0
+Date: 2026-10-12
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -435,7 +435,7 @@ function installMod(files, fileName) {
   let MOD_FOLDER = null;
   //log('info', `Installing Mod File: ${MOD_NAME}`);
   if (modFile1 !== undefined) {
-    idx = modFile1.indexOf(path.basename(modFile1));
+    idx = modFile1.lastIndexOf(path.basename(modFile1));
     rootPath = path.dirname(modFile1);
     try {
       //parse mod.manifest XML here to get <name>, lowercase and replace whitespace with "_", and use as MOD_FOLDER
@@ -492,7 +492,7 @@ function installMod(files, fileName) {
     }
   } else if (modFile2 !== undefined) {
     //Archive contains valid mod folder, but no mod.manifest
-    idx = modFile2.indexOf(`${path.basename(modFile2)}${path.sep}`);
+    idx = modFile2.lastIndexOf(`${path.basename(modFile2)}${path.sep}`);
     rootPath = path.dirname(modFile2);
     const rootPathLower = path.basename(rootPath).toLowerCase();
     MOD_FOLDER = rootPathLower.replace(/ /gi, "_");
@@ -522,7 +522,7 @@ function installMod(files, fileName) {
     }
   } else if (modFile3 !== undefined) {
     //Archive contains mod.cfg, but no mod.manifest
-    idx = modFile3.indexOf(path.basename(modFile3));
+    idx = modFile3.lastIndexOf(path.basename(modFile3));
     rootPath = path.dirname(modFile3);
     const rootPathLower = path.basename(rootPath).toLowerCase();
     MOD_FOLDER = rootPathLower.replace(/ /gi, "_");
@@ -616,7 +616,7 @@ function installRoot(files) {
   const modFile = files.find((file) =>
     ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
   );
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
@@ -662,7 +662,7 @@ function testCfg(files, gameId) {
 //Installer install Root folder files
 function installCfg(files) {
   const modFile = files.find((file) => path.extname(file).toLowerCase() === CFG_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };

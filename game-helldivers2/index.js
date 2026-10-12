@@ -2,8 +2,8 @@
 Name: Helldivers 2 Vortex Extension
 Structure: Custom Game Data
 Author: ChemBoy1
-Version: 1.1.1
-Date: 2026-09-06
+Version: 1.2.0
+Date: 2026-10-12
 /////////////////////////////////////////*/
 
 //Import libraries
@@ -482,7 +482,7 @@ function testDlbin(files, gameId) {
 //Install .dl_bin files
 function installDlbin(files, gameSpec) {
   const modFile = files.find((file) => path.extname(file).toLowerCase() === modFileExt);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: DATA_ID };
@@ -1094,7 +1094,7 @@ function testStream(files, gameId) {
 //Install .stream files without patch file
 function installStream(files) {
   const modFile = files.find((file) => path.extname(file).toLowerCase() === streamFileExt);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: "setmodtype", value: STREAM_ID };
 

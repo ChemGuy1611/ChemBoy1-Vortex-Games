@@ -1,8 +1,8 @@
 /*////////////////////////////////////////////
 Name: Farming Simulator 25 Vortex Extension
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2026-01-27
+Version: 1.0.0
+Date: 2026-10-12
 ////////////////////////////////////////////*/
 
 //import libraries
@@ -304,7 +304,7 @@ function testI3d(files, gameId) {
 //Install .i3d files
 function installI3d(files) {
   const modFile = files.find((file) => I3D_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: I3D_ID };
@@ -347,7 +347,9 @@ async function testZip(files, gameId) {
 
 //Install zips
 async function installZip(files, destinationPath) {
-  const zipFiles = files.filter((file) => [".zip", ".7z", ".rar"].includes(path.extname(file)));
+  const zipFiles = files.filter((file) =>
+    [".zip", ".7z", ".rar"].includes(path.extname(file).toLowerCase()),
+  );
   // If it's a double zip, we don't need to repack.
   if (zipFiles.length > 0) {
     const instructions = zipFiles.map((file) => {

@@ -2,8 +2,8 @@
 Name: A Plague Tale Requiem Vortex Extension
 Structure: Basic Game (XBOX Integrated)
 Author: ChemBoy1
-Version: 1.4.0
-Date: 2026-10-04
+Version: 1.4.1
+Date: 2026-10-12
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -397,7 +397,7 @@ function installRoot(files) {
   const modFile = files.find((file) =>
     ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
   );
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };

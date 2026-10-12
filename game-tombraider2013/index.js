@@ -2,8 +2,8 @@
 Name: Tomb Raider (2013) Vortex Extension
 Structure: Basic Game 
 Author: ChemBoy1
-Version: 0.5.0
-Date: 2025-10-29
+Version: 1.0.0
+Date: 2026-10-12
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -574,7 +574,7 @@ function testManager(files, gameId) {
 //Installer install Fluffy Mod Manger files
 function installManager(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === MANAGER_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MANAGER_ID };
@@ -618,7 +618,7 @@ function testTexMod(files, gameId) {
 //Installer install TexMod files
 function installTexMod(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === TEXMOD_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: TEXMOD_ID };
@@ -662,7 +662,7 @@ function testTexModPack(files, gameId) {
 //Install TexMod package files
 function installTexModPack(files) {
   const modFile = files.find((file) => path.extname(file).toLowerCase() === TEXMODPACK_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: TEXMODPACK_ID };
@@ -833,7 +833,7 @@ function runModManager(api) {
     if (TOOL_PATH !== undefined) {
       return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false }).catch((err) =>
         api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-          allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+          allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
         }),
       );
     } else {
@@ -844,7 +844,7 @@ function runModManager(api) {
     }
   } catch (err) {
     return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+      allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
     });
   }
 }

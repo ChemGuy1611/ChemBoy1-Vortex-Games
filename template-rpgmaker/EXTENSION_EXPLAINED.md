@@ -13,7 +13,7 @@
 | Property | Value |
 | --- | --- |
 | Game ID | `XXX` |
-| Executable | `XXX.exe` |
+| Executable | `Game.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 
 ## Feature Flags
@@ -25,7 +25,6 @@
 | `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
 | `setupNotification` | `true` | enable to show the user a notification with special instructions (specify below) - default true: plugins.js manual-update reminder is always relevant |
 | `debug` | `false` | toggle for debug mode |
-| `isPurging` | `false` | guards plugins.js writes during a purge cycle - see the will-purge/did-deploy listeners in main() |
 
 ## Mod Types
 
@@ -54,7 +53,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch** (`XXX.exe`)
+- **Custom Launch** (`Game.exe`)
 
 ## Toolbar Actions
 
@@ -62,6 +61,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Open plugins.js File
 - Open PCGamingWiki Page
+- Open Nexus Mods Page
 - Open SteamDB Page
 - View Changelog
 - Open Downloads Folder

@@ -2,8 +2,8 @@
 Name: Dressmaker Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-10-11
+Version: 1.0.1
+Date: 2026-10-12
 Notes:
 -
 //////////////////////////////////////////*/
@@ -87,7 +87,7 @@ const exeHasGameVersion = false; //toggle: true if the game devs stamp the real 
 
 const DATA_FOLDER_DEFAULT = `${GAME_STRING}_Data`;
 let DATA_FOLDER = DATA_FOLDER_DEFAULT;
-const ALT_VERSION = "xbox";
+const ALT_VERSION = "alt"; //Epic/GOG/demo exe - the Xbox build sets GAME_VERSION to "xbox" itself
 const DATA_FOLDER_ALT = `${GAME_STRING_ALT}_Data`; //don't always match
 const ROOT_FOLDERS = [DATA_FOLDER, DATA_FOLDER_ALT];
 const VERSION_FILE = path.join("Version.info"); // LIKELY to change - usually .txt or .info file, i.e. Version.info. app.info typically does NOT contain version number
@@ -1054,7 +1054,7 @@ function testBepinex(files, gameId) {
 function installBepinex(files) {
   const MOD_TYPE = BEPINEX_ID;
   const modFile = files.find((file) => path.basename(file) === BEPINEX_DLL_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -1101,7 +1101,7 @@ function testMelon(files, gameId) {
 function installMelon(files) {
   const MOD_TYPE = MELON_ID;
   const modFile = files.find((file) => path.basename(file) === MELON_FOLDER);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -1146,7 +1146,7 @@ function testCustomLoader(files, gameId) {
 function installCustomLoader(files) {
   const MOD_TYPE = CUSTOMLOADER_ID;
   const modFile = files.find((file) => path.basename(file) === CUSTOMLOADER_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -1191,7 +1191,7 @@ if (customLoaderInstaller) {
   function installCustomLoader(files) {
     const MOD_TYPE = CUSTOMLOADER_ID;
     const modFile = files.find((file) => path.basename(file) === CUSTOMLOADER_EXEC);
-    const idx = modFile.indexOf(path.basename(modFile));
+    const idx = modFile.lastIndexOf(path.basename(modFile));
     const rootPath = path.dirname(modFile);
     const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
     const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -1240,7 +1240,7 @@ function testBepCfgMan(files, gameId) {
 function installBepCfgMan(files) {
   const MOD_TYPE = BEPCFGMAN_ID;
   const modFile = files.find((file) => path.basename(file).toLowerCase() === "plugins");
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -1285,7 +1285,7 @@ function testMelonPrefMan(files, gameId) {
 function installMelonPrefMan(files) {
   const MOD_TYPE = MELONPREFMAN_ID;
   const modFile = files.find((file) => path.basename(file).toLowerCase() === MELONPREFMAN_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -1330,7 +1330,7 @@ function testAssembly(files, gameId) {
 function installAssembly(files) {
   const MOD_TYPE = ASSEMBLY_ID;
   const modFile = files.find((file) => ASSEMBLY_FILES.includes(path.basename(file)));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -1375,12 +1375,12 @@ function testRoot(files, gameId) {
 async function installRoot(files, workingDir) {
   const modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file)));
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(ROOT_IDX);
+  const idx = modFile.lastIndexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
 
-  if (GAME_VERSION === ALT_VERSION) {
+  if (GAME_VERSION === ALT_VERSION || GAME_VERSION === "xbox") {
     try {
       await fsp.stat(path.join(workingDir, modFile));
       if (path.basename(modFile) === DATA_FOLDER_DEFAULT) {
@@ -1439,7 +1439,7 @@ function testAssets(files, gameId) {
 //Installer install assets files
 function installAssets(files) {
   const modFile = files.find((file) => ASSETS_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ASSETS_ID };
@@ -1562,8 +1562,7 @@ function installCustom(files) {
     modFile = files.find(file => (CUSTOM_EXTS.includes(path.extname(file).toLowerCase())));
     folder =  CUSTOM_FOLDER;
   } //*/
-  const DATA_FILE = path.basename(modFile, ".custom.json");
-  const idx = modFile.indexOf(DATA_FILE);
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
 
@@ -1639,7 +1638,7 @@ function melonManifest(name) {
 //Installer install plugin files
 async function installPlugin(api, gameSpec, files, workingDir) {
   const modFile = files.find((file) => PLUGIN_EXTS.includes(path.extname(file).toLowerCase()));
-  let idx = modFile.indexOf(path.basename(modFile));
+  let idx = modFile.lastIndexOf(path.basename(modFile));
   let rootPath = path.dirname(modFile);
   let setModTypeInstruction = {};
   const MOD_NAME = path
@@ -1670,10 +1669,14 @@ async function installPlugin(api, gameSpec, files, workingDir) {
             isCustom = true;
           } else if (content.includes(BEP_STRING)) {
             isBepinex = true;
-            isBepinexPatcher = content.includes(BEP_PATCHER_STRING);
+            if (content.includes(BEP_PATCHER_STRING)) {
+              isBepinexPatcher = true; //any patcher makes it a patcher archive, whatever order the dlls are read in
+            }
           } else if (content.includes(MEL_STRING)) {
             isMelon = true;
-            isMelonPlugin = content.includes(MEL_PLUGIN_STRING);
+            if (content.includes(MEL_PLUGIN_STRING)) {
+              isMelonPlugin = true; //any plugin makes it a plugin archive, whatever order the dlls are read in
+            }
           } else {
             unknown = true;
           }
@@ -1692,7 +1695,7 @@ async function installPlugin(api, gameSpec, files, workingDir) {
 
   if (hasCustomLoader) {
     if (isCustom && (bepinexInstalled || melonInstalled)) {
-      const wrongLoader = await api.showDialog(
+      await api.showDialog(
         "error",
         "Wrong Mod Loader",
         {
@@ -1706,16 +1709,12 @@ async function installPlugin(api, gameSpec, files, workingDir) {
         },
         [{ label: "Ok" }],
       );
-      if (wrongLoader.action === "Ok") {
-        if (preventPluginInstall) {
-          throw new VortexError("User canceled", { kind: "user-canceled", skipped: false });
-        } else {
-          //do nothing, proceed with install
-        }
+      if (preventPluginInstall) {
+        throw new VortexError("User canceled", { kind: "user-canceled", skipped: false });
       }
     }
     if ((isBepinex || isMelon) && customInstalled) {
-      const wrongLoader = await api.showDialog(
+      await api.showDialog(
         "error",
         "Wrong Mod Loader",
         {
@@ -1728,18 +1727,14 @@ async function installPlugin(api, gameSpec, files, workingDir) {
         },
         [{ label: "Ok" }],
       );
-      if (wrongLoader.action === "Ok") {
-        if (preventPluginInstall) {
-          throw new VortexError("User canceled", { kind: "user-canceled", skipped: false });
-        } else {
-          //do nothing, proceed with install
-        }
+      if (preventPluginInstall) {
+        throw new VortexError("User canceled", { kind: "user-canceled", skipped: false });
       }
     }
   }
   // If both BepInEx and MelonLoader plugins are detected, cancel install
   if (isBepinex && isMelon) {
-    const mixedModHandling = await api.showDialog(
+    await api.showDialog(
       "error",
       "Mixed Mod Detected",
       {
@@ -1752,17 +1747,13 @@ async function installPlugin(api, gameSpec, files, workingDir) {
       },
       [{ label: "Ok" }],
     );
-    if (mixedModHandling.action === "Ok") {
-      if (preventPluginInstall) {
-        throw new VortexError("User canceled", { kind: "user-canceled", skipped: false });
-      } else {
-        //do nothing, proceed with install
-      }
+    if (preventPluginInstall) {
+      throw new VortexError("User canceled", { kind: "user-canceled", skipped: false });
     }
   }
   //if BepInEx plugin is installed while using MelonLoader, cancel install
   if (isBepinex && melonInstalled) {
-    const wrongLoader = await api.showDialog(
+    await api.showDialog(
       "error",
       "Wrong Mod Loader",
       {
@@ -1775,17 +1766,13 @@ async function installPlugin(api, gameSpec, files, workingDir) {
       },
       [{ label: "Ok" }],
     );
-    if (wrongLoader.action === "Ok") {
-      if (preventPluginInstall) {
-        throw new VortexError("User canceled", { kind: "user-canceled", skipped: false });
-      } else {
-        //do nothing, proceed with install
-      }
+    if (preventPluginInstall) {
+      throw new VortexError("User canceled", { kind: "user-canceled", skipped: false });
     }
   }
   //if MelonLoader plugin is installed while using BepInEx, cancel install
   if (isMelon && bepinexInstalled) {
-    const wrongLoader = await api.showDialog(
+    await api.showDialog(
       "error",
       "Wrong Mod Loader",
       {
@@ -1798,12 +1785,8 @@ async function installPlugin(api, gameSpec, files, workingDir) {
       },
       [{ label: "Ok" }],
     );
-    if (wrongLoader.action === "Ok") {
-      if (preventPluginInstall) {
-        throw new VortexError("User canceled", { kind: "user-canceled", skipped: false });
-      } else {
-        //do nothing, proceed with install
-      }
+    if (preventPluginInstall) {
+      throw new VortexError("User canceled", { kind: "user-canceled", skipped: false });
     }
   }
 
@@ -1817,7 +1800,7 @@ async function installPlugin(api, gameSpec, files, workingDir) {
         CUSTOMLOADER_MOD_FOLDERS.includes(path.basename(file).toLowerCase()),
       );
       if (folder !== undefined) {
-        idx = folder.indexOf(`${path.basename(folder)}${path.sep}`);
+        idx = folder.lastIndexOf(`${path.basename(folder)}${path.sep}`);
         rootPath = path.dirname(folder);
       } else {
         setModTypeInstruction = { type: "setmodtype", value: CUSTOMLOADER_PLUGIN_ID };
@@ -1831,7 +1814,7 @@ async function installPlugin(api, gameSpec, files, workingDir) {
       BEPINEX_MOD_FOLDERS.includes(path.basename(file).toLowerCase()),
     );
     if (folder !== undefined) {
-      idx = folder.indexOf(`${path.basename(folder)}${path.sep}`);
+      idx = folder.lastIndexOf(`${path.basename(folder)}${path.sep}`);
       rootPath = path.dirname(folder);
     } else {
       setModTypeInstruction = { type: "setmodtype", value: BEPINEX_PLUGINS_ID };
@@ -1844,7 +1827,7 @@ async function installPlugin(api, gameSpec, files, workingDir) {
       BEPINEX_MOD_FOLDERS.includes(path.basename(file).toLowerCase()),
     );
     if (folder !== undefined) {
-      idx = folder.indexOf(`${path.basename(folder)}${path.sep}`);
+      idx = folder.lastIndexOf(`${path.basename(folder)}${path.sep}`);
       rootPath = path.dirname(folder);
     } else {
       setModTypeInstruction = { type: "setmodtype", value: BEPINEX_PATCHERS_ID };
@@ -1857,7 +1840,7 @@ async function installPlugin(api, gameSpec, files, workingDir) {
       MELON_MOD_FOLDERS.includes(path.basename(file).toLowerCase()),
     );
     if (folder !== undefined) {
-      idx = folder.indexOf(`${path.basename(folder)}${path.sep}`);
+      idx = folder.lastIndexOf(`${path.basename(folder)}${path.sep}`);
       rootPath = path.dirname(folder);
     } else {
       setModTypeInstruction = { type: "setmodtype", value: MELON_MODS_ID };
@@ -1870,7 +1853,7 @@ async function installPlugin(api, gameSpec, files, workingDir) {
       MELON_MOD_FOLDERS.includes(path.basename(file).toLowerCase()),
     );
     if (folder !== undefined) {
-      idx = folder.indexOf(`${path.basename(folder)}${path.sep}`);
+      idx = folder.lastIndexOf(`${path.basename(folder)}${path.sep}`);
       rootPath = path.dirname(folder);
     } else {
       setModTypeInstruction = { type: "setmodtype", value: MELON_PLUGINS_ID };
@@ -2184,7 +2167,7 @@ function installSave(files) {
   if (modFile === undefined) {
     modFile = files.find((file) => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
   }
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ASSETS_ID };
@@ -2324,7 +2307,7 @@ async function deconflictModLoaders(api, gameSpec) {
   bepinexInstalled = isBepinexInstalled(api, gameSpec);
   melonInstalled = isMelonInstalled(api, gameSpec);
   if (hasCustomLoader) {
-    customInstalled = checkCustomInstalled(api, gameSpec);
+    customInstalled = isCustomInstalled(api, gameSpec);
   }
   const t = api.translate;
   let choices = [{ label: t(BEP_LABEL) }, { label: t(MEL_LABEL) }];
@@ -2864,6 +2847,7 @@ async function checkDotNetMelon(api) {
     );
     if (!values) {
       dotNetMelonNotify(api); //assume not installed if key not found
+      return;
     }
     values = values.map((value) => value.key); //map array to only keys
     const found = values.some((value) => value.startsWith(version)); //find entry starting with correct version number
@@ -3011,7 +2995,7 @@ function applyGame(context, gameSpec) {
       },
       (game) => pathPattern(context.api, game, path.join("{gamePath}", CUSTOMLOADER_MOD_PATH)),
       () => Promise.resolve(false),
-      { name: CUSTOMLOADER_PLUGIN_NAME },
+      { name: CUSTOMLOADER_MOD_NAME },
     ); //*/
     context.registerModType(
       CUSTOMLOADER_PLUGIN_ID,
@@ -3028,7 +3012,7 @@ function applyGame(context, gameSpec) {
       },
       (game) => pathPattern(context.api, game, path.join("{gamePath}", CUSTOMLOADER_PLUGIN_PATH)),
       () => Promise.resolve(false),
-      { name: CUSTOMLOADER_MOD_NAME },
+      { name: CUSTOMLOADER_PLUGIN_NAME },
     ); //*/
     context.registerModType(
       CUSTOMLOADER_ID,
@@ -3166,7 +3150,11 @@ function applyGame(context, gameSpec) {
       {},
       "Download Latest MelonLoader",
       () => {
-        downloadMelon(context.api, spec, false);
+        if (melonFromNexus) {
+          downloadMelonNexus(context.api, spec, false);
+        } else {
+          downloadMelon(context.api, spec, false);
+        }
       },
       () => {
         const state = context.api.getState();
@@ -3529,7 +3517,7 @@ function main(context) {
       if (hasCustomLoader) {
         bepinexInstalled = isBepinexInstalled(api, spec);
         melonInstalled = isMelonInstalled(api, spec);
-        customInstalled = checkCustomInstalled(api, spec); //file check
+        customInstalled = hasCustomMarker(api); //file check - a mod-based loader has no installer files
         if (customInstalled && customLoaderInstaller) {
           await removeCustomFiles(api, spec); //delete installed files to clean folder
         }
@@ -3578,16 +3566,22 @@ function isCustomInstalled(api, spec) {
   return idTest || fileTest;
 }
 
-// Test if Custom Mod Loader installer was run (marker file exists)
-function checkCustomInstalled(api, spec) {
+// Test if the Custom Mod Loader installer's marker file exists (no notification)
+function hasCustomMarker(api) {
   GAME_PATH = getDiscoveryPath(api);
-  let fileTest = false;
   try {
     fs.statSync(path.join(GAME_PATH, CUSTOMLOADER_MARKER_PATH));
-    fileTest = true;
+    return true;
   } catch {
+    return false;
+  }
+}
+
+// Test if Custom Mod Loader installer was run (marker file exists), and notify if it was not
+function checkCustomInstalled(api, spec) {
+  const fileTest = hasCustomMarker(api);
+  if (!fileTest) {
     customInstallerNotify(api);
-    fileTest = false;
   }
   return fileTest;
 }
@@ -3657,7 +3651,7 @@ function runCustom(api) {
     if (TOOL_PATH !== undefined) {
       return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false }).catch((err) =>
         api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-          allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+          allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
         }),
       );
     } else {
@@ -3668,7 +3662,7 @@ function runCustom(api) {
     }
   } catch (err) {
     return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+      allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
     });
   }
 }

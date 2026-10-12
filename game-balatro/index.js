@@ -2,8 +2,8 @@
 Name: Balatro Vortex Extension
 Structure: Mod Loader (Mods in AppData Folder)
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-09-23
+Version: 1.0.2
+Date: 2026-10-12
 ///////////////////////////////////////*/
 
 //Import libraries
@@ -416,7 +416,7 @@ function testLovely(files, gameId) {
 //Installer install LOVELY files
 function installLovely(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === LOVELY_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: LOVELY_ID };
@@ -560,7 +560,7 @@ function installMod(files, fileName) {
     /*const indexFolder = path.basename(modFile);
     //idx = modFile.indexOf(`${indexFolder}${path.sep}`); //*/ //index on the folder with path separator
   }
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
 
   // Remove directories and anything that isn't in the rootPath.
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;

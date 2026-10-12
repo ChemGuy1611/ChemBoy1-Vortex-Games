@@ -2,8 +2,8 @@
 Name: Crimson Desert Vortex Extension
 Structure: Basic Game w/ 3rd Party Manager Integration
 Author: ChemBoy1
-Version: 0.4.3
-Date: 2026-09-17
+Version: 1.0.0
+Date: 2026-10-12
 Notes:
 - Supports plugin mods and data mods with "00XX" folders (XX <= 35)
 - Supports Crimson Browser (manifest.json and files folder) and JSON Mod Manager (.json or "0036+" folder) mods
@@ -733,7 +733,7 @@ function testLoader(files, gameId) {
 function installLoader(files) {
   const MOD_TYPE = LOADER_ID;
   const modFile = files.find((file) => path.basename(file) === LOADER_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -778,7 +778,7 @@ function testRoot(files, gameId) {
 function installRoot(files) {
   const modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file)));
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(ROOT_IDX);
+  const idx = modFile.lastIndexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
@@ -831,7 +831,7 @@ function installDmm(files) {
       path.basename(file).startsWith(DMM_EXEC_STRING) &&
       path.extname(file).toLowerCase() === ".exe",
   );
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -876,7 +876,7 @@ function testTools(files, gameId) {
 function installTools(files) {
   const MOD_TYPE = TOOLS_ID;
   const modFile = files.find((file) => KNOWN_TOOLS_FILES.includes(path.basename(file)));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -994,7 +994,7 @@ function installBrowserMod(files, fileName) {
     modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
     rootPath = path.dirname(modFile);
   } //*/
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
 
   // Remove directories and anything that isn't in the rootPath.
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
@@ -1060,7 +1060,7 @@ function installPatchMod(api, files, fileName) {
     modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
     rootPath = path.dirname(modFile);
   } //*/
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
 
   // Remove directories and anything that isn't in the rootPath.
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
@@ -1114,7 +1114,7 @@ function installTextureMod(files, fileName) {
     modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
     rootPath = path.dirname(modFile);
   } //*/
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
 
   // Remove directories and anything that isn't in the rootPath.
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
@@ -1262,7 +1262,7 @@ function installVortex(files) {
     path.basename(file).startsWith("00") && path.basename(file).length === 4;
     //&& isDir(archivePath, file)
   });
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -1313,7 +1313,7 @@ function installMod(files) {
   const MOD_TYPE = MOD_ID;
   let folder = "";
   let modFile = files.find((file) => DATA_FOLDERS.includes(path.basename(file)));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -1359,7 +1359,7 @@ function testBinaries(files, gameId) {
 function installBinaries(files) {
   const MOD_TYPE = BINARIES_ID;
   const modFile = files.find((file) => BINARIES_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -3050,7 +3050,7 @@ async function runDmm(api, file, args = []) {
     if (TOOL_PATH !== undefined) {
       return api.runExecutable(TOOL_PATH, args, { suggestDeploy: false }).catch((err) =>
         api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-          allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+          allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
         }),
       );
     } else {
@@ -3061,7 +3061,7 @@ async function runDmm(api, file, args = []) {
     }
   } catch (err) {
     return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+      allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
     });
   }
 }
@@ -3077,7 +3077,7 @@ function runManager(api, id, name, args = []) {
     if (TOOL_PATH !== undefined) {
       return api.runExecutable(TOOL_PATH, args, { suggestDeploy: false }).catch((err) =>
         api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-          allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+          allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
         }),
       );
     } else {
@@ -3088,7 +3088,7 @@ function runManager(api, id, name, args = []) {
     }
   } catch (err) {
     return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+      allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
     });
   }
 }

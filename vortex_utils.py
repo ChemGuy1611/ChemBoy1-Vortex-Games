@@ -57,11 +57,12 @@ Usage:
         has_thunderstore_downloader_js,
         requires_extensions, has_extension_dependency,
         has_ue4ss_load_order_parity,
-        top_level_functions, bool_toggles, template_shape_diff,
+        top_level_functions, top_level_function_text, bool_toggles, template_shape_diff,
         has_template_shape_parity, has_family_parity,
         ShapeParityFamily, SHAPE_PARITY_FAMILIES,
         UNITY_PARITY_TOGGLE_EXCEPTIONS, UNITY_PARITY_KNOWN_EXCEPTIONS,
         REENGINE_PARITY_KNOWN_EXCEPTIONS, FROSTBITE_PARITY_KNOWN_EXCEPTIONS,
+        GODOT_PARITY_KNOWN_EXCEPTIONS,
         is_unreleased_extension,
         validate_index_js, find_registerinstaller_calls,
         log_info, log_error, log_warn,
@@ -2948,7 +2949,7 @@ def add_planned_improvement(folder, bullet):
     """Append a bullet under CHANGELOG.md's '## Planned Improvements (Not Yet Released)'
     section, creating the section right after the '# Changelog' header if it is
     missing. bullet is the line text without a leading '- '. A pre-existing
-    '- None Planned' placeholder is dropped. Returns True if written, False if
+    '- None Planned' or '- None' placeholder line is dropped. Returns True if written, False if
     CHANGELOG.md is missing or the exact bullet line is already in the Planned
     Improvements section (a longer bullet containing the text, or the same text
     in a released section, does not count)."""
@@ -2966,7 +2967,8 @@ def add_planned_improvement(folder, bullet):
         section_end = body_start + next_heading_m.start() if next_heading_m else len(content)
         if any(row.rstrip() == line for row in content[body_start:section_end].splitlines()):
             return False
-        section = content[body_start:section_end].replace("- None Planned\n", "", 1)
+        section = re.sub(r'^- None(?: Planned)?[ \t]*(?:\n|\Z)', '',
+                         content[body_start:section_end], count=1, flags=re.MULTILINE)
         existing_bullets = section.strip('\n')
         new_section = "\n\n" + (existing_bullets + f"\n{line}" if existing_bullets else line) + "\n\n"
         new_content = content[:body_start] + new_section + content[section_end:]
@@ -4674,6 +4676,17 @@ REENGINE_PARITY_KNOWN_EXCEPTIONS = {
 }
 FROSTBITE_PARITY_KNOWN_EXCEPTIONS = {
     "game-battlefield1": "frozen extension, no longer maintained - excluded from template sweeps",
+    "game-dragonagetheveilguard": "gets Frosty through the shared downloader (modern Frosty, not the "
+                                  "template's v1.0.6.3 zip) and has its own SDK patch family in place of "
+                                  "the template's DatapathFix half (downloadFrosty, isPatchInstalled, "
+                                  "downloadPatch, removePatch, togglePatch) - ported they would be dead "
+                                  "code, wired they would install the wrong tools, user decision 2026-10-12",
+}
+GODOT_PARITY_KNOWN_EXCEPTIONS = {
+    "game-roadtovostok": "Metro Mod Loader (ModWorkshop, .vmz) game - the template's Godot Mod "
+                         "Loader half (downloadModLoader, isModLoaderInstalled, "
+                         "isExcludedLoaderFile, findModRootFile, installModZip, setupNotify) "
+                         "would be dead code here, user decision 2026-10-12",
 }
 
 _template_src_cache = {}
@@ -4696,6 +4709,37 @@ def top_level_functions(src):
     for m in _TOP_LEVEL_FUNCTION_RE.finditer(src):
         names.add(m.group(1) or m.group(2))
     return names
+
+
+def top_level_function_text(src, name, with_comments=False):
+    """Return the source text of the top-level `function name(...)` / `async function`
+    declaration, from its first line to the closing `}` at column 0 (newline included), or
+    None when absent. `with_comments=True` also takes the contiguous `//` comment lines
+    directly above it. Arrow-style `const name = (...) =>` declarations are not covered.
+
+    A name defined more than once resolves to the first definition that is not inside a
+    `/* ... */` block comment (template-frostbite keeps a disabled SIMPLE `installFbmod`
+    above the live async one). A name that only exists commented-out still resolves to
+    that commented text."""
+    pattern = re.compile(r"^(?:async\s+)?function\s+" + re.escape(name) + r"\s*\(", re.MULTILINE)
+    matches = list(pattern.finditer(src))
+    if not matches:
+        return None
+    m = next((c for c in matches
+              if src.rfind("/*", 0, c.start()) <= src.rfind("*/", 0, c.start())), matches[0])
+    end = re.compile(r"^}\n?", re.MULTILINE).search(src, m.start())
+    if not end:
+        return None
+    start = m.start()
+    if with_comments:
+        lead = []
+        for line in reversed(src[:start].split("\n")[:-1]):
+            if not line.startswith("//"):
+                break
+            lead.append(line)
+        if lead:
+            start -= sum(len(l) + 1 for l in lead)
+    return src[start:end.end()]
 
 
 def bool_toggles(src):
@@ -4786,7 +4830,7 @@ SHAPE_PARITY_FAMILIES = [
         "games-frostbite.txt", "games-frostbite-parity.txt", FROSTBITE_PARITY_KNOWN_EXCEPTIONS),
     ShapeParityFamily(
         "godot", "Godot", "Godot", "template-godot",
-        "games-godot.txt", "games-godot-parity.txt", {}),
+        "games-godot.txt", "games-godot-parity.txt", GODOT_PARITY_KNOWN_EXCEPTIONS),
     ShapeParityFamily(
         "reengine", "RE Engine (Fluffy + REFramework)", "RE/Fluffy", "template-reframework-fluffy",
         "games-reengine.txt", "games-reengine-parity.txt", REENGINE_PARITY_KNOWN_EXCEPTIONS),

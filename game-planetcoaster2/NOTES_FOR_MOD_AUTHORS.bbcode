@@ -53,6 +53,28 @@ Lua mods that run under ACSE.
 
 ========================================================================
 
+Localised:
+
+Recognised when the archive contains a file or folder named "localised".
+
+  Installs to: "Win64\ovldata\ACSE"
+
+========================================================================
+
+Movie / Cutscene Replacements:
+
+Replacement video files, deployed into the game's movies folder.
+
+  Requirements:
+    - Recognised by any file with the ".webm" extension.
+
+  Installs to: "Movies"
+
+  Common mistakes:
+    - The replacement must keep the original file name, or the game will not pick it up.
+
+========================================================================
+
 OVL Data Mods:
 
 Packed Cobra Engine content.
@@ -75,6 +97,21 @@ Save files, deployed to the game's save folder.
 
   Common mistakes:
     - Including an example save alongside a normal mod makes the archive install as a save.
+
+========================================================================
+
+Fallback Installer:
+
+The catch-all. Any archive that matched none of the installers above lands here and is copied across unchanged.
+
+[b][color=#ffff00]NOTE: Landing in the fallback installer is a signal your archive layout needs fixing.[/color][/b]
+
+  Requirements:
+    - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
+    - Vortex shows the user a notification when a mod installs through the fallback.
+
+  Common mistakes:
+    - If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.
 
 ========================================================================
 

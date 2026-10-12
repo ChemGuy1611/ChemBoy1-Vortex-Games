@@ -2,8 +2,8 @@
 Name: Deus Ex: Human Revolution Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.2
-Date: 2025-12-03
+Version: 1.0.0
+Date: 2026-10-12
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -516,7 +516,7 @@ function testMod(files, gameId) {
 function installMod(files) {
   const MOD_TYPE = MOD_ID;
   const modFile = files.find((file) => path.extname(file).toLowerCase() === MOD_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -562,7 +562,7 @@ function testHook(files, gameId) {
 function installHook(files) {
   const MOD_TYPE = HOOK_ID;
   const modFile = files.find((file) => path.basename(file) === HOOK_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -596,7 +596,7 @@ function testPatcher(files, gameId) {
 async function installPatcher(files, tempFolder) {
   const MOD_TYPE = PATCHER_ID;
   const modFile = files.find((file) => path.basename(file) === PATCHER_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };

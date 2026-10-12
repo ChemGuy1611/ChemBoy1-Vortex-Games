@@ -1,11 +1,12 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.0.0] - 2026-10-12
 
 - Fixed: Mod archives containing README, CHANGELOG, or LICENSE files are no longer flagged as file conflicts or excluded from deployment
 - Fixed: Mod files with no file extension were skipped during installation
 - Added "Open PCGamingWiki Page" and "Open SteamDB Page" buttons for all three games.
 - The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
+- Fixed: Mods packaged inside an outer folder whose name contains the name of the mod's own folder or file (for example "MyData" for "Data") now install into the right place.
 
 ## [0.2.0] - 2025-11-10
 

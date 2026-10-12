@@ -2,8 +2,8 @@
 Name: Dragon Age: The Veilguard Vortex Extension
 Structure: 3rd Party Mod Manager (Frosty)
 Author: ChemBoy1
-Version: 0.5.5
-Date: 2026-10-04
+Version: 1.0.0
+Date: 2026-10-12
 ////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -710,7 +710,7 @@ function testFrosty(files, gameId) {
 //Install Frosty Manager files
 function installFrosty(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === FROSTY_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: FROSTYMANAGER_ID };
@@ -754,7 +754,7 @@ function testDavex(files, gameId) {
 //Install DAVExtender files
 function installDavex(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === DAVEX_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: DAVEX_ID };
@@ -798,7 +798,7 @@ function testSdkPatch(files, gameId) {
 //Install SDK Patch files
 function installSdkPatch(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === SDKPATCH_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: SDKPATCH_ID };
@@ -843,7 +843,7 @@ function testFbmod(files, gameId) {
 //Install .fbmod files
 function installFbmod(files) {
   const modFile = files.find((file) => FROSTYMOD_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: FROSTYMOD_ID };
@@ -979,7 +979,7 @@ function runFrosty(api) {
     if (TOOL_PATH !== undefined) {
       return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false }).catch((err) =>
         api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-          allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+          allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
         }),
       );
     } else {
@@ -990,7 +990,7 @@ function runFrosty(api) {
     }
   } catch (err) {
     return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+      allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
     });
   }
 }

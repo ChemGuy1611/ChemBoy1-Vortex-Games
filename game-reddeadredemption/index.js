@@ -2,8 +2,8 @@
 Name: Red Dead Redemption Vortex Extension
 Structure: 3rd-Party Mod Installer
 Author: ChemBoy1
-Version: 0.3.5
-Date: 2026-10-02
+Version: 1.0.0
+Date: 2026-10-12
 ////////////////////////////////////////////*/
 
 //Import libraries
@@ -641,7 +641,7 @@ function testScriptHook(files, gameId) {
 //Installer install Fluffy Mod Manger files
 function installScriptHook(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === SCRIPTHOOK_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: SCRIPTHOOK_ID };
@@ -687,7 +687,7 @@ function testModLoader(files, gameId) {
 //Installer install mod loader files
 function installModLoader(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === MODLOADER_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MODLOADER_ID };
@@ -732,7 +732,7 @@ function testMagicMod(files, gameId) {
 //Install loose files (installed with Magic-RDR)
 function installMagicMod(files, fileName) {
   const modFile = files.find((file) => MAGICMOD_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MAGICMOD_ID };
@@ -778,7 +778,7 @@ function testMagic(files, gameId) {
 //Installer install Magic-RDR
 function installMagic(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === MAGIC_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MAGIC_ID };
@@ -824,7 +824,7 @@ function testRPF(files, gameId) {
 //Install whole RPF files
 function installRPF(files) {
   const modFile = files.find((file) => path.extname(file).toLowerCase() === RPF_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: RPF_ID };
@@ -870,7 +870,7 @@ function testAsiPlugin(files, gameId) {
 //Install ASI plugin files
 function installAsiPlugin(files) {
   const modFile = files.find((file) => path.extname(file).toLowerCase() === ASIPLUGIN_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ASIPLUGIN_ID };

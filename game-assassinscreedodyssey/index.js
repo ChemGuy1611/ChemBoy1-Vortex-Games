@@ -2,8 +2,8 @@
 Name: Assassin's Creed Odyssey Vortex Extension
 Structure: Anvil Engine - AnvilToolkit/ForgerPatchManager
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-09-29
+Version: 1.0.1
+Date: 2026-10-12
 Notes:
 -
 //////////////////////////////////////////////////////////*/
@@ -1297,7 +1297,7 @@ function testATK(files, gameId) {
 //Installer install AnvilToolkit
 function installATK(files) {
   const modFile = files.find((file) => ATK_FILES.includes(path.basename(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ATK_ID };
@@ -1339,7 +1339,7 @@ function testExtracted(files, gameId) {
 //Install "Extracted" folder
 function installExtracted(files) {
   const modFile = files.find((file) => EXTRACTED_FOLDERS.includes(path.basename(file)));
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: EXTRACTED_ID };
@@ -1382,7 +1382,7 @@ function testForgeFolder(files, gameId) {
 function installForgeFolder(files) {
   const modFile = files.find((file) => path.basename(file).includes(FORGEFOLDER_STRING));
   const MODFILE_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(MODFILE_IDX);
+  const idx = modFile.lastIndexOf(MODFILE_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: FORGEFOLDER_ID };
@@ -1425,7 +1425,7 @@ function testDataFolder(files, gameId) {
 function installDataFolder(api, files, fileName) {
   const modFile = files.find((file) => path.basename(file).includes(DATAFOLDER_STRING));
   const MODFILE_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(MODFILE_IDX);
+  const idx = modFile.lastIndexOf(MODFILE_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: DATAFOLDER_ID };
@@ -1468,7 +1468,7 @@ function testLoose(files, gameId) {
 //Install loose .data files — places inside Extracted/RENAME_ME folder, notifies user to rename
 function installLoose(api, files, fileName) {
   const modFile = files.find((file) => LOOSE_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: LOOSE_ID };
@@ -1511,7 +1511,7 @@ function testForge(files, gameId) {
 //Install .forge replacement files — routed to a DLC folder when the file name names one
 function installForge(files) {
   const modFile = files.find((file) => FORGE_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
 
@@ -1559,7 +1559,7 @@ function testDlc(files, gameId) {
 //Install DLC folders — only used when hasDlcFolders = true
 function installDlc(files) {
   const modFile = files.find((file) => DLC_FOLDERS.includes(path.basename(file)));
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: DLC_ID };
@@ -1601,7 +1601,7 @@ function testRoot(files, gameId) {
 //Install root folder files
 function installRoot(files) {
   const modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file)));
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
@@ -1680,7 +1680,7 @@ function testForger(files, gameId) {
 //Install Forger Patch Manager — only used when hasForger = true
 function installForger(files) {
   const modFile = files.find((file) => FORGER_FILES.includes(path.basename(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: FORGER_ID };
@@ -1722,7 +1722,7 @@ function testForgerPatch(files, gameId) {
 //Install .forger2 patch files — only used when hasForger = true
 function installForgerPatch(files) {
   const modFile = files.find((file) => FORGER_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: FORGERPATCH_ID };
@@ -1803,7 +1803,7 @@ function testSound(files, gameId) {
 //Install .pck sound banks — only used when hasSound = true
 function installSound(files) {
   const modFile = files.find((file) => SOUND_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: SOUND_ID };
@@ -1845,7 +1845,7 @@ function testFixes(files, gameId) {
 //Install the community fixes package — only used when hasFixes = true
 function installFixes(files) {
   const modFile = files.find((file) => FIXES_FILES.includes(path.basename(file)));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: FIXES_ID };
@@ -1887,7 +1887,7 @@ function testResoRep(files, gameId) {
 //Install the ResoRep DLL package — only used when hasResorep = true
 function installResoRep(files) {
   const modFile = files.find((file) => RESOREP_FILES.includes(path.basename(file)));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: RESOREP_ID };
@@ -1933,7 +1933,7 @@ function installResoRepTextures(files) {
   const modFile = files.find((file) =>
     RESOREP_TEXTURES_EXTS.includes(path.extname(file).toLowerCase()),
   );
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: RESOREP_TEXTURES_ID };
@@ -1956,7 +1956,10 @@ function installResoRepTextures(files) {
 function renamingRequiredNotify(api, fileName) {
   const state = api.getState();
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
-  const MOD_NAME = path.basename(fileName).replace(/(.installing)*(.zip)*(.rar)*(.7z)*/gi, "");
+  const MOD_NAME = path
+    .basename(fileName)
+    .replace(/\.installing$/i, "")
+    .replace(/\.(zip|rar|7z)$/i, "");
   const NOTIF_ID = `${GAME_ID}-installerrenamingrequired`;
   const MESSAGE = `MANUAL FOLDER RENAMING REQUIRED FOR ${MOD_NAME}`;
   api.sendNotification({
@@ -2114,7 +2117,7 @@ async function folderRenameDialog(api, mod) {
         const FOLDER_PATH = path.join(STAGING_FOLDER, mod.installationPath, EXTRACTED_FOLDER);
         const EXISTING = path.join(FOLDER_PATH, RENAME_FOLDER);
         const NEW = path.join(FOLDER_PATH, name);
-        rename(api, EXISTING, NEW);
+        return rename(api, EXISTING, NEW);
       }
       return Promise.resolve();
     })
@@ -2139,8 +2142,8 @@ async function rename(api, EXISTING, NEW) {
       err,
       { allowReport: false },
     );
-    return Promise.resolve();
   }
+  // Redeploy even after a failed rename, otherwise the mods stay purged.
   await deploy(api);
   return Promise.resolve();
 }
@@ -2318,7 +2321,7 @@ function runDeployTool(api, toolId, toolName) {
     if (TOOL_PATH !== undefined) {
       return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false }).catch((err) =>
         api.showErrorNotification(`Failed to run ${toolName}`, err, {
-          allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+          allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
         }),
       );
     } else {
@@ -2329,7 +2332,7 @@ function runDeployTool(api, toolId, toolName) {
     }
   } catch (err) {
     return api.showErrorNotification(`Failed to run ${toolName}`, err, {
-      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+      allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
     });
   }
 }

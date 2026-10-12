@@ -8,6 +8,7 @@ Covers `template-anvilengine`. Suite file: `tests/templates/anvilengine.test.js`
 - Added: two table tests that every other cutting installer (ATK, loose .data, .forge file; Forger, Forger patch, sound, fixes, ResoRep, ResoRep textures, DLC) cuts at the marker itself when its name also appears in a parent folder. The .forge folder and .data folder installers are not in the tables: their cut cannot misfire, because a parent that contains the folder's name would itself have matched first.
 - Added: a rename dialog test that a failing purge or deploy is reported with the existing error instead of being left unhandled. Suite is now 251 tests.
 - Added: red proof. Seven of the changed or new test groups fail against the template as it was at the last commit and pass with the fix.
+- Changed: the rename dialog test for a missing placeholder folder now expects the redeploy after the purge (it pinned "without a deploy"). Added a test where the folder rename fails on the file system (a non-empty folder already at the new name): one error notice, then purge and deploy. Both fail with the early return restored and pass with the fix. Suite is now 252 tests. The `rename` helper gained a `prepare` option to stage extra files before the dialog is answered.
 
 ## [2026-10-06] (2)
 

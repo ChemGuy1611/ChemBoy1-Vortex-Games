@@ -2,8 +2,8 @@
 Name: NINJA GAIDEN 4 Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-10-20
+Version: 1.0.0
+Date: 2026-10-12
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -388,7 +388,7 @@ function testRoot(files, gameId) {
 function installRoot(files) {
   const modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file).toLowerCase()));
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(ROOT_IDX);
+  const idx = modFile.lastIndexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
@@ -437,11 +437,11 @@ function installAsset(files) {
   let modFile = files.find((file) => ASSET_EXTS.includes(path.extname(file).toLowerCase()));
   let idx;
   if (modFile !== undefined) {
-    idx = modFile.indexOf(path.basename(modFile));
+    idx = modFile.lastIndexOf(path.basename(modFile));
   }
   if (modFile === undefined) {
     modFile = files.find((file) => ASSET_FOLDERS.includes(path.basename(file).toLowerCase()));
-    idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+    idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   }
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;

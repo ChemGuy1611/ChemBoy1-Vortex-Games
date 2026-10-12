@@ -2,8 +2,8 @@
 Name: Doom I & II (UZDoom) Vortex Extension
 Structure: Mod Loader (Any Folder)
 Author: ChemBoy1
-Version: 0.4.3
-Date: 2026-09-08
+Version: 1.0.0
+Date: 2026-10-12
 ///////////////////////////////////////*/
 /*
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣠⣤⣤⣤⡴⣦⡴⣖⠶⣴⠶⡶⣖⡶⣶⢶⣲⡾⠿⢿⡷⣾⢿⣷⣦⢾⣷⣾⣶⣤⣀⣰⣤⣀⡀⠀⠀⢀⣴⣿⡿⡿⣿⣿⣦⣄⠀⠀⣠⣴⣿⡿⢿⡿⣷⣦⡄⠀⠀⢀⣀⣤⣦⣀⣤⣶⣶⣷⣦⣴⡿⢿⡷⣿⠿⡿⣿⣷⢶⣦⢴⡲⣦⢶⡶⢶⡲⣖⡶⣦⣤⣤⣤⣤⣤⣤⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -393,7 +393,7 @@ function testDML(files, gameId) {
 //Installer install DML files
 function installDML(files) {
   const modFile = files.find((file) => path.basename(file).includes(DML_EXEC_STRING));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: DML_ID };
@@ -438,7 +438,7 @@ function testUzdoom(files, gameId) {
 //Installer install UZDOOM files
 function installUzdoom(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === UZDOOM_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: UZDOOM_ID };
@@ -487,7 +487,7 @@ function installWad(files) {
   if (modFile === undefined) {
     modFile = files.find((file) => WAD_EXTS.includes(path.extname(file).toLowerCase()));
   }
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: WAD_ID };
@@ -532,7 +532,7 @@ function testMod(files, gameId) {
 //Installer install UZDOOM files
 function installMod(files) {
   const modFile = files.find((file) => MOD_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_ID };
@@ -575,7 +575,9 @@ async function testZipContent(files, gameId) {
 
 //Install zips
 async function installZipContent(files, destinationPath) {
-  const zipFiles = files.filter((file) => [".zip", ".7z", ".rar"].includes(path.extname(file)));
+  const zipFiles = files.filter((file) =>
+    [".zip", ".7z", ".rar"].includes(path.extname(file).toLowerCase()),
+  );
   if (zipFiles.length > 0) {
     // If it's a double zip, we don't need to repack.
     const instructions = zipFiles.map((file) => {

@@ -1,7 +1,12 @@
 # template-reframework-fluffy Changelog
 
+## [2026-10-12]
+
+- Fixed: the "Custom Launch (Demo)" tool was always registered, so a game with no demo (`EXEC_DEMO = ""`, the scaffold default) got a tool with an empty executable, and a game whose "demo" executable is the game's own file got a second button that launched the same file. The tool is now registered only when `HAS_DEMO` is true, the same condition that guards the demo checks in `getExecutable`, `getModPath` and `setGameVersion`.
+
 ## [2026-10-11]
 
+- Changed: the scaffold default `EXEC_DEMO` is now `""` (no demo) instead of the `XXX.exe` placeholder, which was the same file name as `EXEC`. New games start without demo handling, and a game that has a real demo sets its own executable name.
 - Fixed: a game with no demo (`EXEC_DEMO` set to `""`) or a "demo" executable that is the game's own file (`EXEC_DEMO` equal to `EXEC`) was treated as a demo install whenever the Xbox logic was on: the executable came back empty (or the demo's), the mod and preset folders moved to the `_Demo` folders, and the Steam save lookup used the demo app id. A new `HAS_DEMO` constant (`EXEC_DEMO` is set and differs from `EXEC`) now guards the three demo checks in `getExecutable`, `getModPath` and `setGameVersion`, and `multiExe` reads it too.
 - Fixed: the Fluffy, REFramework, root and preset installers cut each destination with `modFile.indexOf(...)`, which finds the FIRST occurrence of the marker's file name in the path. A parent folder whose name starts with the marker's name (`dinput8.dll.old/dinput8.dll`) was cut inside the folder name and kept in the destination. All four now use `lastIndexOf`, which always lands on the marker's own path segment.
 - Fixed: the loose lua installer only kept the folder holding the FIRST script, so a mod with scripts in separate folders lost every other folder. It now roots the install at the deepest folder that holds every script (dropping a shared wrapper folder) and keeps each script's own folder beneath `reframework/autorun`.

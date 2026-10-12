@@ -2,8 +2,8 @@
 Name: Dark Messiah of Might & Magic Vortex Extension
 Structure: Basic (Launcher)
 Author: ChemBoy1
-Version: 0.5.1
-Date: 2026-09-08
+Version: 1.0.0
+Date: 2026-10-12
 //////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -505,7 +505,7 @@ function testLauncher(files, gameId) {
 //Installer install WiltOS Mod Launcher files
 function installLauncher(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === LAUNCHER_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: LAUNCHER_ID };
@@ -537,7 +537,7 @@ function testUnlimited(files, gameId) {
 //Installer install Unlimited mod files
 function installUnlimited(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === UNLIMITED_FILE);
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: LAUNCHERMOD_ID };
@@ -581,7 +581,7 @@ function testRoot(files, gameId) {
 //Installer install Materials subfolders
 function installRoot(files) {
   const modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file)));
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
@@ -625,7 +625,7 @@ function testLauncherMod(files, gameId) {
 //Installer install wiltOS Mod Launcher mod  files
 function installLauncherMod(files, fileName) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === LAUNCHERMOD_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: LAUNCHERMOD_ID };
@@ -674,7 +674,7 @@ function testData(files, gameId) {
 //Installer install Data folder
 function installData(files) {
   const modFile = files.find((file) => path.basename(file) === DATA_FILE);
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: DATA_ID };
@@ -718,7 +718,7 @@ function testDataSub(files, gameId) {
 //Installer install Data subfolders
 function installDataSub(files) {
   const modFile = files.find((file) => DATASUB_FOLDERS.includes(path.basename(file)));
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: DATASUB_ID };
@@ -762,7 +762,7 @@ function testVpk(files, gameId) {
 //Install .vpk files
 function installVpk(files) {
   const modFile = files.find((file) => path.extname(file).toLowerCase() === VPK_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: VPK_ID };
@@ -807,7 +807,7 @@ function testMaterials(files, gameId) {
 function installMaterials(files) {
   const modFile = files.find((file) => MATERIALS_SUB_FOLDERS.includes(path.basename(file)));
   const MATERIALS_SUB_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(MATERIALS_SUB_IDX);
+  const idx = modFile.lastIndexOf(MATERIALS_SUB_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MATERIALS_SUB_ID };
@@ -851,7 +851,7 @@ function testMaps(files, gameId) {
 //Install .bsp files
 function installMaps(files) {
   const modFile = files.find((file) => path.extname(file).toLowerCase() === MAPS_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MAPS_ID };
@@ -895,7 +895,7 @@ function testSave(files, gameId) {
 //Install .sav files
 function installSave(files) {
   const modFile = files.find((file) => path.extname(file).toLowerCase() === SAVE_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: SAVE_ID };
@@ -939,7 +939,7 @@ function testConfig(files, gameId) {
 //Install config file
 function installConfig(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === CONFIG_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: CONFIG_ID };

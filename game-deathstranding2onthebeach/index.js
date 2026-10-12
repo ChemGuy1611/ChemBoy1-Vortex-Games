@@ -2,8 +2,8 @@
 Name: DEATH STRANDING 2: ON THE BEACH Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.2.3
-Date: 2026-09-08
+Version: 1.0.0
+Date: 2026-10-12
 Notes:
 -
 ///////////////////////////////////////////*/
@@ -517,7 +517,7 @@ function testLoader(files, gameId) {
 function installLoader(files) {
   const MOD_TYPE = LOADER_ID;
   const modFile = files.find((file) => path.basename(file) === LOADER_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -606,7 +606,7 @@ function testRoot(files, gameId) {
 function installRoot(files) {
   const modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file)));
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(ROOT_IDX);
+  const idx = modFile.lastIndexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
@@ -1046,7 +1046,7 @@ function runManager(api) {
         })
         .catch((err) =>
           api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-            allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+            allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
           }),
         );
     } else {
@@ -1057,7 +1057,7 @@ function runManager(api) {
     }
   } catch (err) {
     return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+      allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
     });
   }
 }

@@ -10,12 +10,13 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | Mod Installer (tool) | a `fcmodinstaller.exe` file | `FCModInstaller` |
 | Ziggy | a file or folder named `readme - ziggy's mod.txt` | - |
-| Root / Game Folder Mods | a `bin` folder | the game folder itself (no subfolder) |
+| Root / Game Folder Mods | a `bin` folder or a `""` file | the game folder itself (no subfolder) |
 | Data File Mods | a `.dat` file | `data_win32` |
 | Binaries | a file with the `.dll` extension | `bin` |
 | Xml | a file or folder named `gamerprofile.xml` | `DOCUMENTS\My Games\Far Cry 3` |
 | Mimoda3 | a file or folder named `info.xml` | `FCModInstaller\ModifiedFilesFC3` |
 | Mod Installer Mods | a `.a2` file | `FCModInstaller\ModifiedFilesFC3` |
+| Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
 
@@ -50,6 +51,7 @@ MyRootMod.zip
 **Requirements:**
 
 - Recognised by a folder named `bin`, `data_win32` or `Support` in the archive.
+- Recognised by a file named `""`.
 
 Installs to: the game folder itself (no subfolder)
 
@@ -98,6 +100,21 @@ Installs to: `FCModInstaller\ModifiedFilesFC3`
 **Common mistakes:**
 
 - These are applied through the Mod Installer tool, not deployed straight into the game.
+
+## Fallback Installer
+
+The catch-all. Any archive that matched none of the installers above lands here and is copied across unchanged.
+
+> **NOTE:** Landing in the fallback installer is a signal your archive layout needs fixing.
+
+**Requirements:**
+
+- Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
+- Vortex shows the user a notification when a mod installs through the fallback.
+
+**Common mistakes:**
+
+- If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.
 
 ## Rules That Apply To Every Mod Type
 

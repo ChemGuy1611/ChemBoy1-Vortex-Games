@@ -11,8 +11,11 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | ACSE (mod loader) | a `ACSE` file | `Win64\ovldata` |
 | Root / Game Folder Mods | a `Win64` folder | the game folder itself (no subfolder) |
 | ACSE Mods | a `Main.ovl` file | `Win64\ovldata` |
+| Localised | a file or folder named `localised` | `Win64\ovldata\ACSE` |
+| Movie / Cutscene Replacements | a `.webm` file | `Movies` |
 | OVL Data Mods | a `ovldata` file | `Win64` |
 | Save Game Files | a `.blpr2` file | `USER_HOME\Saved Games\Frontier Developments\Planet Coaster 2\USERID_FOLDER\Saves` |
+| Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
@@ -64,6 +67,26 @@ Installs to: `Win64\ovldata`
 
 - The archive must contain `Main.ovl` - ACSE identifies mods by that file.
 
+## Localised
+
+Recognised when the archive contains a file or folder named `localised`.
+
+Installs to: `Win64\ovldata\ACSE`
+
+## Movie / Cutscene Replacements
+
+Replacement video files, deployed into the game's movies folder.
+
+**Requirements:**
+
+- Recognised by any file with the `.webm` extension.
+
+Installs to: `Movies`
+
+**Common mistakes:**
+
+- The replacement must keep the original file name, or the game will not pick it up.
+
 ## OVL Data Mods
 
 Packed Cobra Engine content.
@@ -87,6 +110,21 @@ Installs to: `USER_HOME\Saved Games\Frontier Developments\Planet Coaster 2\USERI
 **Common mistakes:**
 
 - Including an example save alongside a normal mod makes the archive install as a save.
+
+## Fallback Installer
+
+The catch-all. Any archive that matched none of the installers above lands here and is copied across unchanged.
+
+> **NOTE:** Landing in the fallback installer is a signal your archive layout needs fixing.
+
+**Requirements:**
+
+- Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
+- Vortex shows the user a notification when a mod installs through the fallback.
+
+**Common mistakes:**
+
+- If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.
 
 ## Rules That Apply To Every Mod Type
 

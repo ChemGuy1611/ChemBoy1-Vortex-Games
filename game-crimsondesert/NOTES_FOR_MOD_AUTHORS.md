@@ -11,12 +11,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Root / Game Folder Mods | a `bin64` folder | the game folder itself (no subfolder) |
 | Dmm | a file with the `.exe` extension | - |
 | Tools | a file or folder named one of: `//DMM_EXEC`, `CD JSON Mod Manager.exe`, `CrimsonSharp.exe`, `CrimsonSaveEditorStandalone.exe`, `PazGui.exe`, `CDModManager.exe`, `QT_ModManager.exe` or `CrimsonDesertModManager.exe` | - |
-| Specialpatchmod | a file with the `.exe` extension and a file with one of these extensions: `.dll`, `.asi` or `.addon64` | - |
+| Specialpatchmod | a file with one of these extensions: `.dll`, `.asi` or `.addon64` | - |
 | Browsermod | a file or folder named `manifest.json`, a file or folder named `files` and a file or folder named one of: `meta`, `0000`, `0001`, `0002`, `0003`, `0004`, `0005`, `0006`, `0007`, `0008`, `0009`, `0010`, `0011`, `0012`, `0013`, `0014`, `0015`, `0016`, `0017`, `0018`, `0019`, `0020`, `0021`, `0022`, `0023`, `0024`, `0025`, `0026`, `0027`, `0028`, `0029`, `0030`, `0031`, `0032`, `0033`, `0034`, `0035`, `//'0036'`, `//this folder is used by patch mods` or `so we don't want to put it in root` | `mods` |
 | Patchmod | a file or folder named one of: `modinfo.json` | `mods` |
 | Texture | a file or folder named one of: `meta`, `0000`, `0001`, `0002`, `0003`, `0004`, `0005`, `0006`, `0007`, `0008`, `0009`, `0010`, `0011`, `0012`, `0013`, `0014`, `0015`, `0016`, `0017`, `0018`, `0019`, `0020`, `0021`, `0022`, `0023`, `0024`, `0025`, `0026`, `0027`, `0028`, `0029`, `0030`, `0031`, `0032`, `0033`, `0034`, `0035`, `//'0036'`, `//this folder is used by patch mods` or `so we don't want to put it in root` and a file with one of these extensions: `.dds` | - |
-| Json | a file with the `.json` extension and a file or folder named one of: `modinfo.json` | - |
-| Binaries | a file with the `.exe` extension and a file with one of these extensions: `.dll`, `.asi` or `.addon64` | `bin64` |
+| Json | a file with the `.json` extension | - |
+| Binaries | a file with one of these extensions: `.dll`, `.asi` or `.addon64` | `bin64` |
 | Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
@@ -51,7 +51,7 @@ Recognised when the archive contains a file or folder named one of: `//DMM_EXEC`
 
 ## Specialpatchmod
 
-Recognised when the archive contains a file with the `.exe` extension and a file with one of these extensions: `.dll`, `.asi` or `.addon64`.
+Recognised when the archive contains a file with one of these extensions: `.dll`, `.asi` or `.addon64`.
 
 ## Browsermod
 
@@ -71,11 +71,11 @@ Recognised when the archive contains a file or folder named one of: `meta`, `000
 
 ## Json
 
-Recognised when the archive contains a file with the `.json` extension and a file or folder named one of: `modinfo.json`.
+Recognised when the archive contains a file with the `.json` extension.
 
 ## Binaries
 
-Recognised when the archive contains a file with the `.exe` extension and a file with one of these extensions: `.dll`, `.asi` or `.addon64`.
+Recognised when the archive contains a file with one of these extensions: `.dll`, `.asi` or `.addon64`.
 
 Installs to: `bin64`
 

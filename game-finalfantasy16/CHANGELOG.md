@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.1] - 2026-10-12
+
+- Fixed: Mods packaged inside an outer folder whose name ends with a game folder's name (for example "MyData" for "Data") now install into the right place instead of a doubled folder.
+
 ## [1.0.0] - 2026-10-03
 
 - Added the FF16 Mod Loader (Reloaded-II) as a supported mod type. Setup now downloads and installs it automatically.

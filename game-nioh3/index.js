@@ -2,8 +2,8 @@
 Name: Nioh 3 Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.3.1
-Date: 2026-09-08
+Version: 1.0.0
+Date: 2026-10-12
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -530,7 +530,7 @@ function testLoader(files, gameId) {
 function installLoader(files) {
   const MOD_TYPE = LOADER_ID;
   const modFile = files.find((file) => path.basename(file) === LOADER_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -575,7 +575,7 @@ function testLooseLoader(files, gameId) {
 function installLooseLoader(files) {
   const MOD_TYPE = LOOSELOADER_ID;
   const modFile = files.find((file) => path.basename(file) === LOOSELOADER_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -620,7 +620,7 @@ function testModManager(files, gameId) {
 function installModManager(files) {
   const MOD_TYPE = MOD_MANAGER_ID;
   const modFile = files.find((file) => path.basename(file) === MOD_MANAGER_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -665,7 +665,7 @@ function testRdbExplorer(files, gameId) {
 function installRdbExplorer(files) {
   const MOD_TYPE = RDBEXPLORER_ID;
   const modFile = files.find((file) => path.basename(file) === RDBEXPLORER_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -710,7 +710,7 @@ function testYumia(files, gameId) {
 function installYumia(files) {
   const MOD_TYPE = YUMIA_ID;
   const modFile = files.find((file) => path.basename(file).toLowerCase() === YUMIA_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -755,7 +755,7 @@ function testLoaderMod(files, gameId) {
 function installLoaderMod(files) {
   const MOD_TYPE = LOADER_MOD_ID;
   const modFile = files.find((file) => LOADER_MOD_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -805,7 +805,7 @@ function installYumiaMod(files, api) {
   if (!hasFolder) {
     //if no "package" folder, install normally
     const modFile = files.find((file) => YUMIA_MOD_EXTS.includes(path.extname(file).toLowerCase()));
-    const idx = modFile.indexOf(path.basename(modFile));
+    const idx = modFile.lastIndexOf(path.basename(modFile));
     const rootPath = path.dirname(modFile);
     const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
     const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -899,7 +899,9 @@ function installYumiaMod(files, api) {
 
   const generateInstructions = () => {
     const fileInstructions = filtered.reduce((accum, file) => {
-      const idx = file.indexOf(YUMIA_MOD_FOLDER);
+      //cut at the "package" folder itself, not at the first "package" in a wrapper folder's name
+      const folderIdx = file.lastIndexOf(`${YUMIA_MOD_FOLDER}${path.sep}`);
+      const idx = folderIdx !== -1 ? folderIdx : file.indexOf(YUMIA_MOD_FOLDER);
       accum.push({
         type: "copy",
         source: file,
@@ -948,7 +950,7 @@ function testRdbMod(files, gameId) {
 function installRdbMod(files) {
   const MOD_TYPE = RDB_MOD_ID;
   const modFile = files.find((file) => RDB_MOD_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -992,7 +994,9 @@ function testMod(files, gameId) {
 //Install Loose .g1t/.g1m mod files
 async function installModZip(files, destinationPath) {
   const setModTypeInstruction = { type: "setmodtype", value: MOD_ID };
-  const zipFiles = files.filter((file) => [".zip", ".7z", ".rar"].includes(path.extname(file)));
+  const zipFiles = files.filter((file) =>
+    [".zip", ".7z", ".rar"].includes(path.extname(file).toLowerCase()),
+  );
   if (zipFiles.length > 0) {
     // If it's a double zip, we don't need to repack.
     const instructions = zipFiles.map((file) => {
@@ -1053,7 +1057,7 @@ function testRoot(files, gameId) {
 function installRoot(files) {
   const modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file)));
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(ROOT_IDX);
+  const idx = modFile.lastIndexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
@@ -2280,7 +2284,7 @@ function runMerge(api) {
         .runExecutable(TOOL_PATH, [], { shell: true, detached: true, suggestDeploy: false })
         .catch((err) =>
           api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-            allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+            allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
           }),
         );
     } else {
@@ -2291,7 +2295,7 @@ function runMerge(api) {
     }
   } catch (err) {
     return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+      allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
     });
   }
 }
@@ -2370,7 +2374,7 @@ function runModManager(api) {
         .runExecutable(TOOL_PATH, [], { detached: true, suggestDeploy: false })
         .catch((err) =>
           api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-            allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+            allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
           }),
         );
     } else {
@@ -2381,7 +2385,7 @@ function runModManager(api) {
     }
   } catch (err) {
     return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+      allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
     });
   }
 }

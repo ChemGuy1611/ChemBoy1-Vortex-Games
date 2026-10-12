@@ -2,8 +2,8 @@
 Name: Europa Universalis IV Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.1
-Date: 2026-10-02
+Version: 1.0.0
+Date: 2026-10-12
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -448,7 +448,7 @@ function installMod(files) {
   const MOD_TYPE = MOD_ID;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
   let modFile = files.find((file) => MOD_EXTS.includes(path.extname(file).toLowerCase())); //find the .mod file
-  //let idx = modFile.indexOf(path.basename(modFile));
+  //let idx = modFile.lastIndexOf(path.basename(modFile));
   let MOD_FOLDER = path.basename(modFile, path.extname(modFile)); //set folder name to .mod file name
   let rootPath = path.dirname(modFile);
   const ROOT_PATH = path.basename(rootPath);
@@ -459,7 +459,7 @@ function installMod(files) {
     /*const indexFolder = path.basename(modFile); //index to catch other folders in the same directory
     //idx = modFile.indexOf(`${indexFolder}${path.sep}`); //index on the folder with path separator //*/
   }
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
 
   // Remove directories and anything that isn't in the rootPath.
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
@@ -502,7 +502,7 @@ function testRoot(files, gameId) {
 function installRoot(files) {
   const modFile = files.find((file) => ROOT_FOLDERS.includes(path.basename(file)));
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(ROOT_IDX);
+  const idx = modFile.lastIndexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };

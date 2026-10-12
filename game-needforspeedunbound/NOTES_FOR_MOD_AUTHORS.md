@@ -10,7 +10,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | Frosty Mod Manager (tool) | a `frostymodmanager.exe` file | - |
 | Frosty Mods | a `.fbmod` file | `FrostyModManager\Mods\NeedForSpeedUnbound` |
-| Plugin | a file with the `.exe` extension and a file with one of these extensions: `.dll` | `FrostyModManager\Plugins` |
+| Plugin | a file with one of these extensions: `.dll` | `FrostyModManager\Plugins` |
 | Key | - | `FrostyModManager` |
 | Fallback Installer | anything not matched above | - |
 
@@ -44,7 +44,7 @@ Installs to: `FrostyModManager\Mods\NeedForSpeedUnbound`
 
 ## Plugin
 
-Recognised when the archive contains a file with the `.exe` extension and a file with one of these extensions: `.dll`.
+Recognised when the archive contains a file with one of these extensions: `.dll`.
 
 Installs to: `FrostyModManager\Plugins`
 

@@ -2,8 +2,8 @@
 Name: Star Wars Outlaws Vortex Extension
 Structure: Snowdrop Mod Loader
 Author: ChemBoy1
-Version: 0.3.0
-Date: 2026-10-01
+Version: 1.0.0
+Date: 2026-10-12
 ////////////////////////////////////////////*/
 
 //Import libraries
@@ -25,6 +25,12 @@ const EXEC = "Outlaws.exe";
 const EXEC_PLUS = "Outlaws_Plus.exe";
 const GAME_NAME = "Star Wars Outlaws";
 const GAME_NAME_SHORT = "SW Outlaws";
+
+//feature toggles
+const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
+const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
+const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
+const debug = false; //toggle for debug mode
 
 let GAME_PATH = "";
 let GAME_VERSION = ""; //Game version
@@ -73,6 +79,8 @@ const IGNORE_DEPLOY = [
   path.join("**", "readme*"),
   path.join("**", "license*"),
 ];
+let MODTYPE_FOLDERS = [PLUGINS_PATH, DATASUB_PATH];
+
 const spec = {
   game: {
     id: GAME_ID,
@@ -89,6 +97,7 @@ const spec = {
       uPlayAppId: UPLAYAPP_ID,
       steamAppId: +STEAMAPP_ID,
       epicAppId: EPICAPP_ID,
+      supportsSymlinks: allowSymlinks,
       ignoreConflicts: IGNORE_CONFLICTS,
       ignoreDeploy: IGNORE_DEPLOY,
     },
@@ -266,30 +275,22 @@ function makeGetModPath(api, gameSpec) {
       : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
 }
 
-//Setup launcher requirements (Steam, Epic, GOG, GamePass, etc.). More parameters required for Epic and GamePass
-function makeRequiresLauncher(api, gameSpec) {
-  return (gamePath, store) => {
-    if (store === "steam") {
-      return Promise.resolve({
-        launcher: "steam",
-      });
-    } //*/
-    if (store === "epic") {
-      return Promise.resolve({
-        launcher: "epic",
-        addInfo: {
-          appId: EPICAPP_ID,
-          //parameters: PARAMETERS,
-          //launchType: 'gamestore',
-        },
-      });
-    } //*/
-    return Promise.resolve(
-      gameSpec.game.requiresLauncher !== undefined
-        ? { launcher: gameSpec.game.requiresLauncher }
-        : undefined,
-    );
-  };
+//Set launcher requirements (Steam and Epic; Ubisoft Connect needs none)
+async function requiresLauncher(gamePath, store) {
+  if (store === "steam") {
+    return Promise.resolve({
+      launcher: "steam",
+    });
+  }
+  if (store === "epic") {
+    return Promise.resolve({
+      launcher: "epic",
+      addInfo: {
+        appId: EPICAPP_ID,
+      },
+    });
+  }
+  return Promise.resolve(undefined);
 }
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
@@ -308,7 +309,7 @@ function testModLoader(files, gameId) {
 //Installer install Mod Loader files
 function installModLoader(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === MODLOADER_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MODLOADER_ID };
@@ -353,7 +354,7 @@ function testPlugins(files, gameId) {
 //Install config files
 function installPlugins(files) {
   const modFile = files.find((file) => PLUGINS_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: PLUGINS_ID };
@@ -399,7 +400,7 @@ function testData(files, gameId) {
 function installData(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === DATA_FILE);
   const DATA_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(DATA_IDX);
+  const idx = modFile.lastIndexOf(DATA_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: DATA_ID };
@@ -434,7 +435,7 @@ function testDataSub(files, gameId) {
 function installDataSub(files) {
   const modFile = files.find((file) => DATASUB_FOLDERS.includes(path.basename(file).toLowerCase()));
   const DATASUB_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(DATASUB_IDX);
+  const idx = modFile.lastIndexOf(DATASUB_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: DATASUB_ID };
@@ -480,7 +481,7 @@ function testConfig(files, gameId) {
 //Install config files
 function installConfig(files) {
   const modFile = files.find((file) => path.extname(file).toLowerCase() === CONFIG_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: CONFIG_ID };
@@ -497,6 +498,129 @@ function installConfig(files) {
   });
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
+}
+
+//Fallback installer to root folder
+function testFallback(files, gameId) {
+  let supported = gameId === spec.game.id;
+
+  // Test for a mod installer.
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Fallback installer to root folder
+function installFallback(api, files, destinationPath) {
+  fallbackInstallerNotify(api, destinationPath);
+
+  const filtered = files.filter((file) => !file.endsWith(path.sep));
+  const instructions = filtered.map((file) => {
+    return {
+      type: "copy",
+      source: file,
+      destination: file,
+    };
+  });
+  return Promise.resolve({ instructions });
+}
+
+function fallbackInstallerNotify(api, modName) {
+  const state = api.getState();
+  STAGING_FOLDER = selectors.installPathForGame(state, spec.game.id);
+  modName = path.basename(modName, ".installing");
+  const id = modName.replace(/[^a-zA-Z0-9\s]*( )*/gi, "");
+  const NOTIF_ID = `${GAME_ID}-${id}-fallback`;
+  const MESSAGE = "Fallback installer reached for " + modName;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: "info",
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: "More",
+        action: (dismiss) => {
+          api.showDialog(
+            "question",
+            MESSAGE,
+            {
+              text:
+                `The mod you just installed reached the fallback installer. This means Vortex could not determine where to place these mod files.\n` +
+                `Please check the mod page description and review the files in the mod staging folder to determine if manual file manipulation is required.\n` +
+                `\n` +
+                `If you think that Vortex should be capable to install this mod to a specific folder, please contact the extension developer for support at the link below.\n` +
+                `\n` +
+                `Mod Name: ${modName}.\n` +
+                `\n`,
+            },
+            [
+              { label: "Continue", action: () => dismiss() },
+              {
+                label: "Contact Ext. Developer",
+                action: () => {
+                  try {
+                    window.api.shell.openUrl(`${EXTENSION_URL}?tab=posts`);
+                  } catch (err) {
+                    api.showErrorNotification("Failed to open the URL", err, {
+                      allowReport: false,
+                    });
+                  }
+                  dismiss();
+                },
+              }, //*/
+              //*
+              {
+                label: `Open Mod Page + Staging Folder`,
+                action: () => {
+                  try {
+                    window.api.shell.openFile(path.join(STAGING_FOLDER, modName));
+                  } catch (err) {
+                    api.showErrorNotification("Failed to open the file or folder", err, {
+                      allowReport: false,
+                    });
+                  }
+                  const mods = api.store.getState()?.persistent?.mods?.[spec.game.id] ?? {};
+                  const modMatch = Object.values(mods).find(
+                    (mod) => mod.installationPath === modName,
+                  );
+                  log("warn", `Found ${modMatch?.id} for ${modName}`);
+                  let PAGE = ``;
+                  if (modMatch) {
+                    const MOD_ID = modMatch.attributes.modId;
+                    if (MOD_ID !== undefined) {
+                      PAGE = `${MOD_ID}?tab=description`;
+                    }
+                  }
+                  const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
+                  try {
+                    window.api.shell.openUrl(MOD_PAGE_URL);
+                  } catch (err) {
+                    api.showErrorNotification("Failed to open the URL", err, {
+                      allowReport: false,
+                    });
+                  }
+                  dismiss();
+                },
+              }, //*/
+            ],
+          );
+        },
+      },
+    ],
+  });
 }
 
 // AUTOMATIC DOWNLOAD FUNCTIONS //////////////////////////////////////////////
@@ -600,6 +724,47 @@ async function downloadModLoader(api, gameSpec) {
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
+function setupNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-setup-notify`;
+  const MESSAGE = "Special Setup Instructions";
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: "warning",
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: "More",
+        action: (dismiss) => {
+          api.showDialog(
+            "question",
+            MESSAGE,
+            {
+              text: `\n` + `TEXT HERE.\n` + `\n` + `TEXT HERE.\n` + `\n`,
+            },
+            [
+              { label: "Acknowledge", action: () => dismiss() },
+              {
+                label: "Never Show Again",
+                action: () => {
+                  api.suppressNotification(NOTIF_ID);
+                  dismiss();
+                },
+              },
+            ],
+          );
+        },
+      },
+    ],
+  });
+}
+
+async function modFoldersEnsureWritable(gamePath, relPaths) {
+  for (let index = 0; index < relPaths.length; index++) {
+    await vfs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+  }
+}
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   // SYNCHRONOUS CODE ////////////////////////////////////
@@ -608,10 +773,10 @@ async function setup(discovery, api, gameSpec) {
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   // ASYNC CODE //////////////////////////////////////////
+  if (setupNotification) setupNotify(api);
   await downloadModLoader(api, gameSpec);
   await vfs.ensureDirWritableAsync(path.join(CONFIG_PATH));
-  await vfs.ensureDirWritableAsync(path.join(GAME_PATH, PLUGINS_PATH));
-  return vfs.ensureDirWritableAsync(path.join(GAME_PATH, DATASUB_PATH));
+  return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
 //Let Vortex know about the game
@@ -621,7 +786,7 @@ function applyGame(context, gameSpec) {
     ...gameSpec.game,
     queryPath: makeFindGame(context.api, gameSpec),
     queryModPath: makeGetModPath(context.api, gameSpec),
-    requiresLauncher: makeRequiresLauncher(context.api, gameSpec),
+    requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
     supportedTools: tools,
@@ -656,6 +821,11 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(PLUGINS_ID, 30, testPlugins, installPlugins);
   //??? add fallback installer dialogue for user to set path where files should go (AFOP)?
   context.registerInstaller(CONFIG_ID, 31, testConfig, installConfig);
+  if (fallbackInstaller) {
+    context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) =>
+      installFallback(context.api, files, destinationPath),
+    );
+  }
 
   context.registerAction(
     "mod-icons",

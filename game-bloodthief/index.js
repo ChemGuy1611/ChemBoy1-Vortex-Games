@@ -2,8 +2,8 @@
 Name: Bloodthief Vortex Extension
 Structure: Godot Engine Game
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-09-08
+Version: 1.1.0
+Date: 2026-10-12
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -48,12 +48,18 @@ let hasXbox = false; //toggle for Xbox version logic
 if (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) hasXbox = true;
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
+const useOverrideCfg = false; //true to run loader setup in override.cfg mode instead of patching the game's .pck
 const customLoader = true;
 const keepZips = false;
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
 const debug = false; //toggle for debug mode
 
 const LOADER_CUSTOM_URL_API = "https://api.github.com/repos/olvior/bloodthief-mod-loader";
+//Direct-download route used by downloadModLoader. setup() installs the loader through REQUIREMENTS
+//(the GitHub release API) instead, which also keeps it updated, so these two are only used if that call is swapped.
+const LOADER_CUSTOM_URL =
+  "https://github.com/olvior/bloodthief-mod-loader/releases/latest/download/mod_loader.zip";
+const LOADER_CUSTOM_URL_MANUAL = "https://github.com/olvior/bloodthief-mod-loader/releases/latest";
 
 let GAME_PATH = "";
 let GAME_VERSION = "default";
@@ -128,11 +134,29 @@ const OVERRIDE_FILE = "override.cfg";
 
 const MOD_PATH_DEFAULT = MOD_PATH;
 const REQ_FILE = EXEC;
+const SETUP_SCRIPT = "--script addons/mod_loader/mod_loader_setup.gd";
+//The default setup path renames the game's .pck to -vanilla.pck and swaps in a patched copy,
+//which store validation reverts. --setup-create-override-cfg writes an override.cfg instead
+//and leaves the .pck alone - it is also the only setup method off Windows, because the
+//loader's get_gdre_path() returns "" there. Safer under a mod manager; enable per game.
+const PAR_STRING2 = "--setup-create-override-cfg";
+//--only-setup makes the setup script quit(0) when it finishes instead of firing OS.alert()
+//and demanding a restart, which is what makes a deliberate setup button possible.
+const PAR_ONLY_SETUP = "--only-setup";
+
 let PARAMETERS_STRING = "";
 if (!customLoader) {
-  PARAMETERS_STRING = "--script addons/mod_loader/mod_loader_setup.gd";
+  PARAMETERS_STRING = SETUP_SCRIPT;
+  if (useOverrideCfg) {
+    PARAMETERS_STRING = `${SETUP_SCRIPT} ${PAR_STRING2}`;
+  }
 }
-const PAR_STRING2 = "--setup-create-override-cfg";
+//Parameters for the headless "Run Mod Loader Setup" tool below.
+let SETUP_PARAMETERS_STRING = `${SETUP_SCRIPT} ${PAR_ONLY_SETUP}`;
+if (useOverrideCfg) {
+  SETUP_PARAMETERS_STRING = `${SETUP_SCRIPT} ${PAR_ONLY_SETUP} ${PAR_STRING2}`;
+}
+const SETUP_PARAMETERS = [SETUP_PARAMETERS_STRING];
 //An empty string here reaches the game as an empty argv element, so emit no arguments at all.
 const PARAMETERS = PARAMETERS_STRING === "" ? [] : [PARAMETERS_STRING];
 const MODTYPE_FOLDERS = [MOD_PATH, "mods", MAPS_PATH];
@@ -207,6 +231,24 @@ const spec = {
 //3rd party tools and launchers
 const tools = [
   //accepts: exe, jar, py, vbs, bat
+  //Stock Godot Mod Loader runs its setup on first launch and then forces a restart. This tool
+  //runs the same setup headlessly so it is a deliberate button instead of an ambush. Only
+  //meaningful for the stock loader, so it is omitted entirely when customLoader is set.
+  ...(!customLoader
+    ? [
+        {
+          id: `${GAME_ID}-loadersetup`,
+          name: "Run Mod Loader Setup",
+          logo: "exec.png",
+          executable: () => EXEC,
+          requiredFiles: [EXEC],
+          relative: true,
+          exclusive: true,
+          shell: true,
+          parameters: SETUP_PARAMETERS,
+        },
+      ]
+    : []),
   {
     id: `${GAME_ID}-customlaunch`,
     name: "Custom Launch",
@@ -249,8 +291,35 @@ const tools = [
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
+
 function truncateString(str, num) {
   return str.length > num ? str.slice(0, num) : str;
+}
+
+async function getAllFiles(dirPath) {
+  let results = [];
+  try {
+    const entries = await fsp.readdir(dirPath);
+    for (const entry of entries) {
+      const fullPath = path.join(dirPath, entry);
+      const stats = await fsp.stat(fullPath);
+      if (stats.isDirectory()) {
+        // Recursively get files from subdirectories
+        const subDirFiles = await getAllFiles(fullPath);
+        results = results.concat(subDirFiles);
+      } else {
+        // Add file to results
+        results.push(fullPath);
+      }
+    }
+  } catch (err) {
+    log("warn", `Error reading directory ${dirPath}: ${err.message}`);
+  }
+  return results;
 }
 
 //Set mod type priorities
@@ -486,7 +555,7 @@ function findModRootFile(files) {
 function installMod(files, fileName) {
   const MOD_TYPE = MOD_ID;
   const modFile = findModRootFile(files);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -521,7 +590,9 @@ function installMod(files, fileName) {
 async function installModZip(files, destinationPath) {
   const MOD_TYPE = MOD_ID;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
-  const zipFiles = files.filter((file) => [".zip", ".7z", ".rar"].includes(path.extname(file)));
+  const zipFiles = files.filter((file) =>
+    [".zip", ".7z", ".rar"].includes(path.extname(file).toLowerCase()),
+  );
   if (zipFiles.length > 0) {
     // If it's a double zip, we don't need to repack.
     const instructions = zipFiles.map((file) => {
@@ -596,7 +667,7 @@ function testMaps(files, gameId) {
 function installMaps(files, fileName) {
   const MOD_TYPE = MAPS_ID;
   const mapFile = findMapFile(files);
-  const idx = mapFile.indexOf(path.basename(mapFile));
+  const idx = mapFile.lastIndexOf(path.basename(mapFile));
   const rootPath = path.dirname(mapFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MOD_TYPE };
@@ -776,6 +847,82 @@ async function checkForRequirements(api) {
   return CHECK;
 }
 
+//Check if mod loader is installed
+function isModLoaderInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  return Object.keys(mods).some((id) => mods[id]?.type === LOADER_ID);
+}
+
+//* Function to auto-download Mod Loader from GitHub
+async function downloadModLoader(api, gameSpec, check = true) {
+  let isInstalled = isModLoaderInstalled(api, gameSpec);
+  if (!isInstalled || !check) {
+    const MOD_NAME = LOADER_NAME;
+    const MOD_TYPE = LOADER_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const GAME_DOMAIN = GAME_ID;
+    let URL = LOADER_CUSTOM_URL;
+    /*if (version = 'demo') {
+      URL = LOADER_CUSTOM_URL_DEMO;
+    } //*/
+    const ERR_URL = LOADER_CUSTOM_URL_MANUAL;
+    api.sendNotification({
+      //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: "activity",
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    try {
+      const dlInfo = {
+        //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      const dlId = await new Promise((resolve, reject) =>
+        api.events.emit(
+          "start-download",
+          [URL],
+          dlInfo,
+          undefined,
+          (err, result) => (err ? reject(err) : resolve(result)),
+          undefined,
+          {
+            allowInstall: false,
+          },
+        ),
+      );
+      const modId = await new Promise((resolve, reject) =>
+        api.events.emit("start-install-download", dlId, { allowAutoEnable: false }, (err, result) =>
+          err ? reject(err) : resolve(result),
+        ),
+      );
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) {
+      //Show the user the download page if the download, install process fails
+      const errPage = ERR_URL;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      try {
+        window.api.shell.openUrl(errPage);
+      } catch (openErr) {
+        api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
+      }
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+} //*/
+
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
 function setupNotify(api) {
@@ -812,6 +959,33 @@ function setupNotify(api) {
     ],
   });
 }
+
+/*
+async function resolveGameVersion(gamePath) {
+  GAME_VERSION = await setGameVersion(gamePath);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try {
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  else { // use exe
+    try {
+      const exeVersion = require('exe-version');
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+} //*/
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {

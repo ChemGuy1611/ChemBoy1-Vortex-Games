@@ -14,6 +14,7 @@
 | --- | --- |
 | Game ID | `monsterhunterstories3twistedreflection` |
 | Executable | `MONSTER_HUNTER_STORIES_3_TWISTED_REFLECTION.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (Demo) | `MONSTER_HUNTER_STORIES_3_TWISTED_REFLECTION_TRIAL.exe` |
 | Extension Page | [https://www.nexusmods.com/site/mods/1740](https://www.nexusmods.com/site/mods/1740) |
 
@@ -25,9 +26,13 @@
 
 | Flag | Value | Description |
 | --- | --- | --- |
+| `useRefNightly` | `false` | toggle for using the REFramework nightly instead of Nexus release |
+| `hasXbox` | `false` | toggle for Xbox version logic |
 | `reZip` | `true` | NOT WORKING YET - KEEP AS TRUE FOR NOW - set to true to re-zip Fluffy Mods (possibly not necessary for FLUFFY v3.069+) |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
-| `multiExe` | `true` | set to true if there are multiple executables (and multiple FLUFFY_FOLDERs) (typically for Demo) |
+| `multiExe` | `false` | set to true if there are multiple executables (and multiple FLUFFY_FOLDERs) (typically for Demo) |
+| `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
+| `debug` | `false` | toggle for debug mode |
 
 ## Mod Types
 
@@ -66,6 +71,7 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
+- Download Latest REFramework Nightly
 - Open Config File
 - Open Save Folder (Steam)
 - Open PCGamingWiki Page

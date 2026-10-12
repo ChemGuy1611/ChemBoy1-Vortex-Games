@@ -2,6 +2,14 @@
 
 Covers `template-rpgmaker`. Suite file: `tests/templates/rpgmaker.test.js`.
 
+## [2026-10-12]
+
+- Changed: the suite follows the removal of the template's `isPurging` guard. The `purge guard` group (six tests that held the load order frozen between `will-purge` and the next `did-deploy`) is gone; its two purge cleanup tests stay under a new `purge cleanup` group.
+- Changed: the event bus test now expects a `did-purge` listener and no `will-purge` or `did-deploy` listener.
+- Added: a test that a load order read and write during a purge go through normally and dispatch nothing.
+- Changed: the event bus test now also expects the `did-deploy` hook the template registers through `onAsync`.
+- Added: three tests for the write-back after a purge (a deployed plugin missing from plugins.js is written back with its parameters and without `locked`; plugins.js is left byte for byte alone when it already lists every managed plugin; another game's or a non-active profile is ignored) and one that the sidecar's `locked` flag stays out of plugins.js. The harness records `onAsync` hooks without firing them, so the tests call the recorded hook directly. Suite is now 91 tests.
+
 ## [2026-10-11]
 
 - Changed: the three `known gap` tests (js folder wrapper cut, upper-case `.JS` stamp, root installer wrapper cut) now assert the fixed results and lost their `known gap:` prefix. The js folder case also checks that the plugin names are stamped.

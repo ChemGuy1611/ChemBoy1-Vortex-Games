@@ -31,7 +31,6 @@
 | `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
 | `setupNotification` | `true` | enable to show the user a notification with special instructions (specify below) - default true: plugins.js manual-update reminder is always relevant |
 | `debug` | `false` | toggle for debug mode |
-| `isPurging` | `false` | guards plugins.js writes during a purge cycle - see the will-purge/did-deploy listeners in main() |
 
 ## Mod Types
 

@@ -2,8 +2,8 @@
 Name: Need for Speed Unbound Vortex Extension
 Structure: Frostbite Engine - Frosty Mod Manager
 Author: ChemBoy1
-Version: 0.1.2
-Date: 2026-08-11
+Version: 1.0.0
+Date: 2026-10-12
 Notes:
 -
 /////////////////////////////////////////////*/
@@ -771,7 +771,7 @@ function testFrosty(files, gameId) {
 //Install Frosty Manager files
 function installFrosty(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === FROSTY_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: FROSTY_ID };
@@ -815,7 +815,7 @@ function testFbmod(files, gameId) {
 /*Install .fbmod files - SIMPLE VERSION
 function installFbmod(files) {
   const modFile = files.find(file => FROSTYMOD_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: FROSTYMOD_ID };
 
@@ -976,7 +976,7 @@ function testPlugin(files, gameId) {
 //Install Frosty Manager files
 function installPlugin(files) {
   const modFile = files.find((file) => PLUGIN_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: PLUGIN_ID };
@@ -1024,7 +1024,7 @@ function installKey(files) {
   const modFile = files.find(
     (file) => path.basename(file).toLowerCase() === KEY_FILE.toLowerCase(),
   );
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: KEY_ID };
@@ -1233,7 +1233,7 @@ function runFrosty(api) {
     if (TOOL_PATH !== undefined) {
       return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false }).catch((err) =>
         api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-          allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+          allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
         }),
       );
     } else {
@@ -1244,7 +1244,7 @@ function runFrosty(api) {
     }
   } catch (err) {
     return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+      allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
     });
   }
 }

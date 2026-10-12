@@ -2,8 +2,8 @@
 Name: Bloodborne Vortex Extension
 Structure: Emulation Game
 Author: ChemBoy1
-Version: 0.4.5
-Date: 2026-09-08
+Version: 1.0.0
+Date: 2026-10-12
 ////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -361,7 +361,7 @@ function testShadPs4(files, gameId) {
 //Installer install ShadPS4 files
 function installShadPs4(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === SHADPS4_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: SHADPS4_ID };
@@ -393,7 +393,7 @@ function testShadLauncher(files, gameId) {
 //Installer install ShadPS4 Qt Launcher files
 function installShadLauncher(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === SHADLAUNCHER_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: SHADLAUNCHER_ID };
@@ -425,7 +425,7 @@ function testSmithbox(files, gameId) {
 //Installer install Smithbox files
 function installSmithbox(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === SMITHBOX_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   //const setModTypeInstruction = { type: 'setmodtype', value: SHADPS4_ID };
@@ -457,7 +457,7 @@ function testFlver(files, gameId) {
 //Installer install Flver Editor files
 function installFlver(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === FLVER_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   //const setModTypeInstruction = { type: 'setmodtype', value: SHADPS4_ID };
@@ -489,7 +489,7 @@ function testDvdRootPs4(files, gameId) {
 //Installer install game data files
 function installDvdRootPs4(files) {
   const modFile = files.find((file) => DVDROOTPS4_FOLDERS.includes(path.basename(file)));
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.lastIndexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: DVDROOTPS4_ID };
@@ -521,7 +521,7 @@ function testSave(files, gameId) {
 //Installer install save files
 function installSave(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === SAVE_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: SAVE_ID };

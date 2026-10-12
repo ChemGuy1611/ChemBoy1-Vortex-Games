@@ -2,8 +2,8 @@
 Name: Resident Evil Requiem Vortex Extension
 Structure: Fluffy + REFramework (RE Engine)
 Author: ChemBoy1
-Version: 0.1.5
-Date: 2026-08-14
+Version: 1.0.0
+Date: 2026-10-12
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -12,6 +12,8 @@ const fsp = fs.promises;
 const { actions, fs: vfs, util, selectors, log, VortexError } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
+const winapi = require("winapi-bindings");
+const { parseStringPromise } = require("xml2js");
 
 //Specify all information about the game
 const GAME_ID = "residentevilrequiem";
@@ -19,9 +21,12 @@ const STEAMAPP_ID = "3764200";
 const STEAMAPP_ID_DEMO = null; //no demo yet
 const EPICAPP_ID = "d9b9a31471634f69916e07cd5e5d2fc3"; //https://egdata.app/offers/03c9e4679725466891f8d72c832dcc01
 const GOGAPP_ID = null;
+const XBOXAPP_ID = null;
+const XBOXEXECNAME = null;
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const EXEC = "re9.exe";
-const EXEC_DEMO = "re9demo.exe";
+const EXEC_DEMO = ""; //!set as "" if no demo (STEAMAPP_ID_DEMO is null: no demo yet)
+const REF_STRING = "REFramework"; //file name for nightly latest URL - constant in recent versions. Not named per game any longer.
 const GAME_NAME = "Resident Evil Requiem";
 const GAME_NAME_SHORT = "RE9 Requiem";
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Resident_Evil_Requiem";
@@ -44,8 +49,7 @@ const ROOT_EXTS = [".exe"];
 const REF_PAGE_NO = 13;
 const REF_FILE_NO = 27;
 const REF_DOMAIN = GAME_ID;
-const REF_URL_LATEST =
-  "https://github.com/praydog/REFramework-nightly/releases/latest/download/REFramework.zip"; //latest release of REFramework Nightly
+const REF_URL = `https://github.com/praydog/REFramework-nightly/releases/latest/download/${REF_STRING}.zip`; //latest release of REFramework Nightly
 const REF_URL_ERR = "https://github.com/praydog/REFramework-nightly/releases";
 const EMVENGINE_URL =
   "https://github.com/SilverEzredes/EMV-Engine-SILVER/archive/refs/heads/main.zip"; //tools for modders
@@ -53,15 +57,27 @@ const EMVENGINE_URL_ERR = "https://github.com/SilverEzredes/EMV-Engine-SILVER"; 
 const EMVENGINE_NAME = "EMV-Engine-SILVER";
 
 //feature toggles
+const useRefNightly = false; //toggle for using the REFramework nightly instead of Nexus release
+let hasXbox = false; //toggle for Xbox version logic
+if (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) hasXbox = true;
 const reZip = true; //NOT WORKING YET - KEEP AS TRUE FOR NOW - set to true to re-zip Fluffy Mods (possibly not necessary for FLUFFY v3.069+)
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
-const multiExe = false; //set to true if there are multiple executables (and multiple FLUFFY_FOLDERs) (typically for Demo)
+const HAS_DEMO = EXEC_DEMO !== "" && EXEC_DEMO !== EXEC; //false when the game has no separate demo executable
+let multiExe = false; //set to true if there are multiple executables (and multiple FLUFFY_FOLDERs) (typically for Demo)
+if (HAS_DEMO || hasXbox) {
+  multiExe = true;
+}
+const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
+const debug = false; //toggle for debug mode
 
 //global variables to set later
 let GAME_PATH = ""; //game installation path
 let GAME_VERSION = "";
+let SAVE_PATH = "";
 let STAGING_FOLDER = ""; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ""; //Vortex download folder path
+const EXEC_XBOX = "gamelaunchhelper.exe";
+const APPMANIFEST_FILE = "appxmanifest.xml";
 
 //Information for mod types, tools, and installers
 const ROOT_ID = `${GAME_ID}-root`;
@@ -82,6 +98,7 @@ const FLUFFYMOD_NAME = "Fluffy Mod";
 const FLUFFYPAK_ID = `${GAME_ID}-fluffypakmod`;
 const FLUFFYPAK_NAME = "Fluffy Pak Mod";
 let FLUFFYMOD_PATH = path.join("Games", FLUFFY_FOLDER, "Mods");
+const FLUFFYMOD_PATH_DEMO = path.join("Games", FLUFFY_FOLDER_DEMO, "Mods");
 const FLUFFYMOD_FILE = "modinfo.ini";
 const PAK_EXT = ".pak";
 const NATIVES_FOLDER = "natives";
@@ -103,6 +120,44 @@ const CONFIG_NAME = "Config File";
 const CONFIG_PATH = ".";
 const CONFIG_FILE = "config.ini";
 const CONFIG_FILEPATH = path.join(CONFIG_PATH, CONFIG_FILE);
+
+async function getSavePath() {
+  const STEAM_HIVE = "HKEY_LOCAL_MACHINE"; //typically HKEY_LOCAL_MACHINE or HKEY_CURRENT_USER
+  const STEAM_KEY = `SOFTWARE\\WOW6432Node\\Valve\\Steam`; //fill in path
+  const STEAM_VALUE = "InstallPath"; //often InstallDir or InstallPath
+  let STEAM_PATH = "";
+  try {
+    const instPath = winapi.RegGetValue(STEAM_HIVE, STEAM_KEY, STEAM_VALUE);
+    if (!instPath) {
+      STEAM_PATH = "";
+    } else {
+      STEAM_PATH = instPath.value;
+    }
+  } catch {
+    STEAM_PATH = "";
+  }
+  if (STEAM_PATH === undefined) {
+    STEAM_PATH = "";
+  } //*/
+  const SAVE_FOLDER = path.join(STEAM_PATH, "userdata");
+  let USERID_FOLDER = "";
+  try {
+    const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
+    USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
+  } catch {
+    USERID_FOLDER = "";
+  }
+  if (USERID_FOLDER === undefined) {
+    USERID_FOLDER = "";
+  } //*/
+  let STEAM_ID = STEAMAPP_ID;
+  if (GAME_VERSION === "demo") {
+    STEAM_ID = STEAMAPP_ID_DEMO;
+  }
+  //SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER, STEAM_ID, 'remote', 'win64_save');
+  SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER, STEAM_ID);
+  return SAVE_PATH;
+}
 
 const MOD_PATH_DEFAULT = FLUFFYMOD_PATH;
 let REQ_FILE = EXEC;
@@ -210,19 +265,24 @@ const tools = [
     //defaultPrimary: true,
     //parameters: [],
   }, //*/
-  /*{
-    id: `${GAME_ID}-customlaunchdemo`,
-    name: `Custom Launch`,
-    logo: `exec_demo.png`,
-    executable: () => EXEC_DEMO,
-    requiredFiles: [EXEC_DEMO],
-    detach: true,
-    relative: true,
-    exclusive: true,
-    shell: true,
-    //defaultPrimary: true,
-    //parameters: [],
-  }, //*/
+  //only offered when the game has a separate demo executable
+  ...(HAS_DEMO
+    ? [
+        {
+          id: `${GAME_ID}-customlaunchdemo`,
+          name: `Custom Launch (Demo)`,
+          logo: `exec_demo.png`,
+          executable: () => EXEC_DEMO,
+          requiredFiles: [EXEC_DEMO],
+          detach: true,
+          relative: true,
+          exclusive: true,
+          shell: true,
+          //defaultPrimary: true,
+          //parameters: [],
+        },
+      ]
+    : []),
 ];
 
 // BASIC FUNCTIONS //////////////////////////////////////////////////////////////////////
@@ -319,12 +379,15 @@ async function requiresLauncher(gamePath, store) {
 
 //Get correct executable for game version
 function getExecutable(discoveryPath) {
-  if (!multiExe) {
+  if (!multiExe && !hasXbox) {
     //return immediately if only one exe filename for all versions
     return EXEC;
   }
-  if (statCheckSync(discoveryPath, EXEC_DEMO)) {
-    FLUFFYMOD_PATH = path.join("Games", FLUFFY_FOLDER_DEMO, "Mods");
+  if (hasXbox && statCheckSync(discoveryPath, EXEC_XBOX)) {
+    return EXEC_XBOX;
+  }
+  if (HAS_DEMO && statCheckSync(discoveryPath, EXEC_DEMO)) {
+    FLUFFYMOD_PATH = FLUFFYMOD_PATH_DEMO;
     PRESET_PATH = PRESET_PATH_DEMO;
     return EXEC_DEMO;
   }
@@ -337,8 +400,8 @@ function getModPath(discoveryPath) {
     //return immediately if only one exe filename for all versions
     return FLUFFYMOD_PATH;
   }
-  if (statCheckSync(discoveryPath, EXEC_DEMO)) {
-    FLUFFYMOD_PATH = path.join("Games", FLUFFY_FOLDER_DEMO, "Mods");
+  if (HAS_DEMO && statCheckSync(discoveryPath, EXEC_DEMO)) {
+    FLUFFYMOD_PATH = FLUFFYMOD_PATH_DEMO;
     PRESET_PATH = PRESET_PATH_DEMO;
     return FLUFFYMOD_PATH;
   }
@@ -347,10 +410,13 @@ function getModPath(discoveryPath) {
 
 //Get correct game version
 async function setGameVersion(gamePath) {
-  const CHECK = await statCheckAsync(gamePath, EXEC_DEMO);
-  if (CHECK) {
+  if (hasXbox && (await statCheckAsync(gamePath, EXEC_XBOX))) {
+    GAME_VERSION = "xbox";
+    return GAME_VERSION;
+  }
+  if (HAS_DEMO && (await statCheckAsync(gamePath, EXEC_DEMO))) {
     GAME_VERSION = "demo";
-    FLUFFYMOD_PATH = path.join("Games", FLUFFY_FOLDER_DEMO, "Mods");
+    FLUFFYMOD_PATH = FLUFFYMOD_PATH_DEMO;
     PRESET_PATH = PRESET_PATH_DEMO;
     return GAME_VERSION;
   } else {
@@ -561,16 +627,14 @@ async function downloadREFramework(api, gameSpec) {
 }
 
 //Function to auto-download REFramework from Github
-async function downloadRefNightly(api, gameSpec, check) {
+async function downloadREFrameworkGitHub(api, gameSpec, check = true) {
   let isInstalled = isREFInstalled(api, gameSpec);
   if (!isInstalled || !check) {
+    //notification indicating install process
     const MOD_NAME = REF_NAME;
     const MOD_TYPE = REF_ID;
     const NOTIF_ID = `${MOD_TYPE}-installing`;
-    const URL = REF_URL_LATEST;
-    const URL_ERR = REF_URL_ERR;
     api.sendNotification({
-      //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
       type: "activity",
@@ -583,6 +647,7 @@ async function downloadRefNightly(api, gameSpec, check) {
         game: gameSpec.game.id,
         name: MOD_NAME,
       };
+      const URL = REF_URL;
       const dlId = await new Promise((resolve, reject) =>
         api.events.emit(
           "start-download",
@@ -612,9 +677,10 @@ async function downloadRefNightly(api, gameSpec, check) {
       util.batchDispatch(api.store, batched); // Will dispatch both actions.
       //Show the user the download page if the download, install process fails
     } catch (err) {
+      //const errPage = `https://github.com/praydog/REFramework/releases`;
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
       try {
-        window.api.shell.openUrl(URL_ERR);
+        window.api.shell.openUrl(REF_URL_ERR);
       } catch (openErr) {
         api.showErrorNotification("Failed to open the URL", openErr, { allowReport: false });
       }
@@ -622,7 +688,7 @@ async function downloadRefNightly(api, gameSpec, check) {
       api.dismissNotification(NOTIF_ID);
     }
   }
-} //*/
+}
 
 //Function to download EMV Engine (Modding Tools) from GitHub
 async function downloadEmvEngine(api, gameSpec) {
@@ -711,7 +777,7 @@ function testFluffy(files, gameId) {
 //Installer install Fluffy Mod Manger files
 function installFluffy(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === FLUFFY_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: FLUFFY_ID };
@@ -756,7 +822,7 @@ function testREF(files, gameId) {
 //Installer install REFramework file
 function installREF(files) {
   const modFile = files.find((file) => path.basename(file).toLowerCase() === REF_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: REF_ID };
@@ -803,7 +869,7 @@ function testFluffyMod(files, gameId) {
 //Installer install Fluffy mod files
 function installFluffyMod(files) {
   //const modFile = files.find(file => path.basename(file).toLowerCase() === FLUFFYMOD_FILE);
-  //const idx = modFile.indexOf(path.basename(modFile));
+  //const idx = modFile.lastIndexOf(path.basename(modFile));
   //const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: "setmodtype", value: FLUFFYMOD_ID };
 
@@ -850,10 +916,17 @@ function testLooseLua(files, gameId) {
 
 //Installer install mod files
 function installLooseLua(files) {
-  const modFile = files.find((file) => path.extname(file).toLowerCase() === LUA_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
-  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
+  // Root the install at the deepest folder that holds every script, so scripts in separate folders all install.
+  const luaDirs = files
+    .filter((file) => path.extname(file).toLowerCase() === LUA_EXT)
+    .map((file) => (path.dirname(file) === "." ? [] : path.dirname(file).split(path.sep)));
+  let sharedDirs = luaDirs[0];
+  for (const dirs of luaDirs) {
+    let n = 0;
+    while (n < sharedDirs.length && n < dirs.length && sharedDirs[n] === dirs[n]) n++;
+    sharedDirs = sharedDirs.slice(0, n);
+  }
+  const rootPrefix = sharedDirs.length > 0 ? sharedDirs.join(path.sep) + path.sep : "";
   const setModTypeInstruction = { type: "setmodtype", value: LOOSELUA_ID };
 
   // Remove directories and anything that isn't in the rootPath.
@@ -863,7 +936,7 @@ function installLooseLua(files) {
     return {
       type: "copy",
       source: file,
-      destination: path.join("reframework", "autorun", file.substr(idx)),
+      destination: path.join("reframework", "autorun", file.substr(rootPrefix.length)),
     };
   });
   instructions.push(setModTypeInstruction);
@@ -897,14 +970,14 @@ function testRoot(files, gameId) {
 
 //Installer install root folders/files
 function installRoot(files) {
-  let modFile = files.find((file) => ROOT_FILES.includes(path.basename(file)));
+  let modFile = files.find((file) => ROOT_FILES.includes(path.basename(file).toLowerCase()));
   if (modFile === undefined) {
     modFile = files.find((file) => ROOT_EXTS.includes(path.extname(file).toLowerCase()));
   }
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
@@ -946,7 +1019,7 @@ function testPreset(files, gameId) {
 //Install Fluffy Preset files
 function installPreset(files) {
   const modFile = files.find((file) => PRESET_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: PRESET_ID };
@@ -991,7 +1064,9 @@ async function testZipContent(files, gameId) {
 
 //install zips for Fluffy
 async function installZipContent(files, destinationPath) {
-  const zipFiles = files.filter((file) => [".zip", ".7z", ".rar"].includes(path.extname(file)));
+  const zipFiles = files.filter((file) =>
+    [".zip", ".7z", ".rar"].includes(path.extname(file).toLowerCase()),
+  );
   if (zipFiles.length > 0) {
     // If it's a double zip, we don't need to repack.
     const instructions = zipFiles.map((file) => {
@@ -1131,7 +1206,7 @@ function runFluffy(api) {
     if (TOOL_PATH !== undefined) {
       return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false }).catch((err) =>
         api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-          allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+          allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
         }),
       );
     } else {
@@ -1142,8 +1217,37 @@ function runFluffy(api) {
     }
   } catch (err) {
     return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, {
-      allowReport: ["EPERM", "EACCESS", "ENOENT"].indexOf(err.code) !== -1,
+      allowReport: ["EPERM", "EACCES", "ENOENT"].indexOf(err.code) !== -1,
     });
+  }
+}
+
+//* Resolve game version dynamically for different game versions
+async function resolveGameVersion(gamePath) {
+  GAME_VERSION = await setGameVersion(gamePath);
+  let version = "0.0.0";
+  if (GAME_VERSION === "xbox") {
+    // use appxmanifest.xml for Xbox version
+    try {
+      const appManifest = await fsp.readFile(path.join(gamePath, APPMANIFEST_FILE), "utf8");
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log("error", `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  } else {
+    // use exe
+    try {
+      const exeVersion = require("exe-version");
+      const EXEC = getExecutable(gamePath);
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC)); //can also use getFileVersion if this doesn't return the correct number (rare)
+      return Promise.resolve(version);
+    } catch (err) {
+      log("error", `Could not read executable file to get game version: ${err}`);
+      return Promise.resolve(version);
+    }
   }
 }
 
@@ -1160,13 +1264,17 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
-  //setupNotify(api);
+  if (setupNotification) setupNotify(api);
   // ASYNC CODE //////////////////////////////////////////
   GAME_VERSION = await setGameVersion(GAME_PATH);
   MODTYPE_FOLDERS.push(FLUFFYMOD_PATH);
   MODTYPE_FOLDERS.push(PRESET_PATH);
   await downloadFluffy(api, gameSpec);
-  await downloadREFramework(api, gameSpec);
+  if (useRefNightly) {
+    await downloadREFrameworkGitHub(api, gameSpec);
+  } else {
+    await downloadREFramework(api, gameSpec);
+  }
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
@@ -1181,6 +1289,7 @@ function applyGame(context, gameSpec) {
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     supportedTools: tools,
+    getGameVersion: resolveGameVersion,
   };
   context.registerGame(game);
 
@@ -1266,7 +1375,7 @@ function applyGame(context, gameSpec) {
     {},
     "Download Latest REFramework Nightly",
     () => {
-      downloadRefNightly(context.api, gameSpec, false);
+      downloadREFrameworkGitHub(context.api, gameSpec, false);
     },
     () => {
       const state = context.api.getState();
@@ -1311,17 +1420,28 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     },
   );
-  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
-    try {
-      window.api.shell.openFile(SAVE_PATH);
-    } catch (err) {
-      context.api.showErrorNotification("Failed to open the file or folder", err, { allowReport: false });
-    }
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  }); //*/
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Save Folder (Steam)",
+    async () => {
+      SAVE_PATH = await getSavePath();
+      try {
+        window.api.shell.openFile(SAVE_PATH);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  ); //*/
   context.registerAction(
     "mod-icons",
     300,

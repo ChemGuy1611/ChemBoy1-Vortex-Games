@@ -1,8 +1,8 @@
 /*
 Name: Civilization VII Vortex Extension
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2026-08-03
+Version: 1.0.0
+Date: 2026-10-12
 */
 
 //import libraries
@@ -289,7 +289,7 @@ function testMod(files, gameId) {
 function installMod(files, fileName) {
   const modFile = files.find((file) => path.extname(file).toLowerCase() === MOD_EXT);
   const setModTypeInstruction = { type: "setmodtype", value: MOD_ID };
-  const idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const MOD_NAME = path.basename(fileName);

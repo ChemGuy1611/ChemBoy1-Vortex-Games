@@ -6,6 +6,7 @@
 - Fixed: the rename notice shown for `.data` mods derived the mod name with `/(.installing)*(.zip)*(.rar)*(.7z)*/gi`, whose unescaped dots match any character, so "Hunter rarity" became "Hunterity" and the Open Mod Page and rename buttons could not find the mod. The name now loses only a trailing `.installing` and a trailing `.zip`/`.rar`/`.7z`.
 - Fixed: `runDeployTool` listed `"EACCESS"`, a code Node never raises, so an access-denied failure to start ATK or Forger was never offered for reporting. It now lists `"EACCES"` (both the rejected-promise and the thrown-error route).
 - Fixed: the rename dialog did not wait for the purge, rename and redeploy it starts, so a failing purge or deploy was an unhandled rejection. The dialog now returns that work, and a failure shows the existing "Failed to rename .forge folder" error.
+- Fixed: `rename` purged the mods first and then, when the folder rename failed (placeholder folder missing, or a non-empty folder already at the new name), showed the error and returned without redeploying, so the user's mods stayed purged. It now redeploys after the error notice as well.
 
 ## [2026-10-06]
 

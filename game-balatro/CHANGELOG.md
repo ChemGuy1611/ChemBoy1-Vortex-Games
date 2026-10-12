@@ -3,7 +3,11 @@
 ## Planned Improvements (Not Yet Released)
 
 - Xbox support - waiting on stable (and easy to install) mod injector for Xbox version
+
+## [1.0.2] - 2026-10-12
+
 - The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
+- Fixed: Mods packaged inside an outer folder whose name contains the name of the mod's own folder or file (for example "MyData" for "Data") now install into the right place.
 
 ## [1.0.1] - 2026-09-23
 

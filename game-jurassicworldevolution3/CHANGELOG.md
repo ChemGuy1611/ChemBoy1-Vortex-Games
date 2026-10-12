@@ -1,6 +1,12 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.0.0] - 2026-10-12
+
+- Added a fallback installer: when no other installer matches a mod, Vortex now shows a notice and installs the files to the game folder.
+- Fixed: Mods packaged inside an outer folder whose name ends with a game folder's name (for example "MyData" for "Data") now install into the right place instead of a doubled folder.
+- Fixed: The Xbox (Game Pass) version now uses the correct game executable.
+- Fixed: The Open Save Folder and Open Config Folder buttons could point to the wrong folder right after the first setup.
+- Vortex now checks that the game's mod folders are writable when the game is set up.
 
 ## [0.3.0] - 2026-09-28
 

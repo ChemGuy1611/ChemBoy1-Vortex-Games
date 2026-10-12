@@ -27,7 +27,11 @@
 
 | Flag | Value | Description |
 | --- | --- | --- |
+| `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
+| `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
+| `setupNotification` | `true` | enable to show the user a notification with special instructions (specify below) - default true: FC Mod Installer usage instructions are always relevant |
 | `fcmoddingBrowser` | `true` | register the "Browse Far Cry Mods" page (downloads.fcmodding.com) |
+| `debug` | `false` | toggle for debug mode |
 
 ## Mod Types
 
@@ -58,6 +62,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | `farcry3-xml` | 33 |
 | `farcry3-mimoda3` | 35 |
 | `farcry3-mimod` | 37 |
+| `farcry3-fallback` | 49 |
 
 ## Registered Tools
 

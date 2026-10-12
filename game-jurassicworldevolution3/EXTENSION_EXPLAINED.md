@@ -24,6 +24,16 @@
 - **Epic Games Store** — `642f83b4166d4dc7887d798b04337ea8`
 - **Xbox / Microsoft Store** — `FrontierDevelopmentsPlc.1986275F2F4D`
 
+## Feature Flags
+
+| Flag | Value | Description |
+| --- | --- | --- |
+| `hasXbox` | `false` | toggle for Xbox version logic. |
+| `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
+| `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
+| `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
+| `debug` | `false` | toggle for debug mode |
+
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
@@ -51,6 +61,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | `jurassicworldevolution3-movies` | 31 |
 | `jurassicworldevolution3-ovldata` | 33 |
 | `jurassicworldevolution3-save` | 49 |
+| `jurassicworldevolution3-fallback` | 49 |
 
 ## Registered Tools
 

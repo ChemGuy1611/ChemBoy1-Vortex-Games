@@ -9,7 +9,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `CodeVein2` |
-| Blueprint Mods (LogicMods) | a `LogicMods` folder | `CodeVein2\Content\Paks\LogicMods` |
+| Blueprint Mods (LogicMods) | a `LogicMods` folder | `CodeVein2\Content\Paks` |
 | Rhff | a file or folder named one of: `rhff.asi` | `CodeVein2\Binaries\Win64` |
 | Pak Mods | a `.pak` file | `CodeVein2\Content\Paks\~mods` |
 | UE4SS Itself | a `dwmapi.dll` file | `CodeVein2\Binaries\Win64` |
@@ -72,7 +72,7 @@ MyBlueprintMod.zip
 - Everything from the `LogicMods` folder down is copied to the game, keeping its structure.
 - Extra folders above `LogicMods` are fine - the installer finds it at any depth.
 
-Installs to: `CodeVein2\Content\Paks\LogicMods`
+Installs to: `CodeVein2\Content\Paks`
 
 **Common mistakes:**
 

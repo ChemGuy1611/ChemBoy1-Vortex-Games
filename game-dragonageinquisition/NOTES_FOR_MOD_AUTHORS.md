@@ -10,8 +10,10 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | Daimodmanager | a file or folder named `daimodmanager.exe` | - |
 | Frosty Mod Manager (tool) | a `frostymodmanager.exe` file | - |
-| Fbmod | a file with the `.fbmod` extension | - |
+| Frosty Mods | a `.fbmod` file | - |
+| Frostyplugin | a file with one of these extensions: `.dll` | `FrostyModManager\Plugins` |
 | Daimod | a file with the `.daimod` extension | `DAIMod` |
+| Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
 
@@ -31,15 +33,44 @@ This installer handles Frosty Mod Manager itself, not mods for it. It exists so 
 
 - If you bundle Frosty Mod Manager inside your mod archive, Vortex treats the whole download as Frosty Mod Manager rather than as your mod. Ship the mod alone and list Frosty Mod Manager as a requirement.
 
-## Fbmod
+## Frosty Mods
 
-Recognised when the archive contains a file with the `.fbmod` extension.
+Frostbite mods in Frosty Mod Manager format. Vortex stages them for Frosty rather than deploying them into the game directly.
+
+**Requirements:**
+
+- Recognised by any file with the `.fbmod` or `.fbpack` extensions.
+
+**Common mistakes:**
+
+- These mods still have to be applied through Frosty Mod Manager - installing in Vortex alone does not patch the game.
+
+## Frostyplugin
+
+Recognised when the archive contains a file with one of these extensions: `.dll`.
+
+Installs to: `FrostyModManager\Plugins`
 
 ## Daimod
 
 Recognised when the archive contains a file with the `.daimod` extension.
 
 Installs to: `DAIMod`
+
+## Fallback Installer
+
+The catch-all. Any archive that matched none of the installers above lands here and is copied across unchanged.
+
+> **NOTE:** Landing in the fallback installer is a signal your archive layout needs fixing.
+
+**Requirements:**
+
+- Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
+- Vortex shows the user a notification when a mod installs through the fallback.
+
+**Common mistakes:**
+
+- If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.
 
 ## Rules That Apply To Every Mod Type
 

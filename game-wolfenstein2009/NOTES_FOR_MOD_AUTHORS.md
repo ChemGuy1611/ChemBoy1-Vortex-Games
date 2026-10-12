@@ -8,38 +8,38 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Base | a file or folder named `base`, a file or folder named `SP` and a file or folder named `MP` | - |
-| Maps | a file or folder named `maps`, a file or folder named `SP` and a file or folder named `MP` | - |
-| Streampacks | a file or folder named `streampacks`, a file or folder named `SP` and a file or folder named `MP` | - |
-| Videos | a file or folder named `videos`, a file or folder named `SP` and a file or folder named `MP` | - |
-| Pk4 | a file or folder named `SP`, a file or folder named `MP` and a file with the `.pk4` extension | - |
-| Exe | a file or folder named `SP`, a file or folder named `MP` and a file with the `.exe` extension | - |
+| Base | a file or folder named `base` | - |
+| Maps | a file or folder named `maps` | - |
+| Streampacks | a file or folder named `streampacks` | - |
+| Videos | a file or folder named `videos` | - |
+| Pk4 | a file with the `.pk4` extension | - |
+| Exe | a file with the `.exe` extension | - |
 
 Paths are relative to the game's install folder.
 
 ## Base
 
-Recognised when the archive contains a file or folder named `base`, a file or folder named `SP` and a file or folder named `MP`.
+Recognised when the archive contains a file or folder named `base`.
 
 ## Maps
 
-Recognised when the archive contains a file or folder named `maps`, a file or folder named `SP` and a file or folder named `MP`.
+Recognised when the archive contains a file or folder named `maps`.
 
 ## Streampacks
 
-Recognised when the archive contains a file or folder named `streampacks`, a file or folder named `SP` and a file or folder named `MP`.
+Recognised when the archive contains a file or folder named `streampacks`.
 
 ## Videos
 
-Recognised when the archive contains a file or folder named `videos`, a file or folder named `SP` and a file or folder named `MP`.
+Recognised when the archive contains a file or folder named `videos`.
 
 ## Pk4
 
-Recognised when the archive contains a file or folder named `SP`, a file or folder named `MP` and a file with the `.pk4` extension.
+Recognised when the archive contains a file with the `.pk4` extension.
 
 ## Exe
 
-Recognised when the archive contains a file or folder named `SP`, a file or folder named `MP` and a file with the `.exe` extension.
+Recognised when the archive contains a file with the `.exe` extension.
 
 ## Rules That Apply To Every Mod Type
 

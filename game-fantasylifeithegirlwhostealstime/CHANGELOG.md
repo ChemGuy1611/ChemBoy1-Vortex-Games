@@ -1,8 +1,8 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.0.6] - 2026-10-12
 
-- None
+- Fixed: Mods packaged inside an outer folder whose name ends with the name of an expected folder (for example "MyContent" for "Content") now install into the right place instead of keeping part of the outer folder's name.
 
 ## [1.0.5] - 2026-10-04
 

@@ -2,8 +2,8 @@
 Name: Sacred 2 Remaster Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-11-19
+Version: 1.0.0
+Date: 2026-10-12
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -484,7 +484,7 @@ function installRoot(files) {
     setModTypeInstruction = { type: "setmodtype", value: UISUB_ID };
   }
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
-  const idx = modFile.indexOf(ROOT_IDX);
+  const idx = modFile.lastIndexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
 
