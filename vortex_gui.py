@@ -2222,6 +2222,7 @@ class MainWindow(QMainWindow):
                 ("--skip-node-check", "Skip Node syntax", False),
                 ("--skip-lint", "Skip lint", False),
             ],
+            inputs=[("--upload-delay", "Pause between uploads (s)", "bulk upload, e.g. 15")],
         )
         if dlg is None:
             return

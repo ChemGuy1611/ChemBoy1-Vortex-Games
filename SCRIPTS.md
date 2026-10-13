@@ -1720,6 +1720,24 @@ Prints one line per passed group and `ALL OK`; exits non-zero on the first faile
 
 ---
 
+## test_bump_version.py
+
+Offline test for `bump_version.py --move-planned` and the `vortex_utils.py` helpers under it (`split_planned_bullets`, `move_planned_to_version`). Each case builds a throwaway extension folder in a temp directory, so nothing in the repo is read or written. It checks that the default leaves the stub bare and Planned untouched, that `done` moves only finished bullets (a wrapped bullet whole) and keeps open plans and a `None` placeholder, that `all` moves everything but the placeholder, that an emptied Planned section is deleted, that a stub with note text is never overwritten, that `--dry-run` writes nothing, and that an extension with no Planned section is left alone. Run it after any change to the CHANGELOG helpers or the bump flow.
+
+### test_bump_version.py — Usage
+
+```sh
+python test_bump_version.py
+```
+
+No arguments. Run it with plain `python`; isolated mode drops the script folder, so `import bump_version` fails.
+
+### test_bump_version.py — Output
+
+Prints one line per passed group and `ALL OK`; exits non-zero on the first failed check.
+
+---
+
 ## test_release_extension.py
 
 Offline test for the bulk-upload behavior of `release_extension.py`. `release()` and the doc generators are stubbed, so no Nexus call, zip, 7-Zip run or file write happens; only the run loop in `main()` is exercised. It checks the HTTP 429 detector, a clean run, `--upload-delay` (a pause after each upload except the last), a 429 mid-run (the run stops, later ids are untouched, the printed re-run command names the failed id and every unprocessed one, exit `1`), and a non-429 upload failure (exit `1`, the run carries on). Run it after any change to the run loop, the exit code or the upload error handling in `release_extension.py`.
@@ -1740,7 +1758,7 @@ Prints one line per passed group and `ALL OK`; exits non-zero on the first faile
 
 ## bump_version.py
 
-Bumps the version of one or more game or helper extensions. Each `EXT_ID` is looked up as a `game-<id>` folder first, then a `helper-<id>` folder. Updates `info.json`, the `index.js` header comment (`Version:` and `Date:` fields), and prepends a new empty changelog section to `CHANGELOG.md` — unless a `## [NEW_VERSION]` section is already there (hand-written first, or a re-run), in which case it prints a warning and leaves the existing section alone rather than burying it under an empty stub. Notes parked under a differently-named heading (e.g. `Planned Improvements`) are not detected and still need a manual check. After a bump it lists any open `## Planned Improvements (Not Yet Released)` bullets as a hint and never moves them: only items actually done this round belong in the new section (auto-promoting a TODO would claim a feature that never shipped).
+Bumps the version of one or more game or helper extensions. Each `EXT_ID` is looked up as a `game-<id>` folder first, then a `helper-<id>` folder. Updates `info.json`, the `index.js` header comment (`Version:` and `Date:` fields), and prepends a new empty changelog section to `CHANGELOG.md` — unless a `## [NEW_VERSION]` section is already there (hand-written first, or a re-run), in which case it prints a warning and leaves the existing section alone rather than burying it under an empty stub. Notes parked under a differently-named heading (e.g. `Planned Improvements`) are not detected and still need a manual check. After a bump it lists any open `## Planned Improvements (Not Yet Released)` bullets as a hint and by default never moves them: only items actually done this round belong in the new section (auto-promoting a TODO would claim a feature that never shipped). `--move-planned` is the opt-in: it moves only the bullets that read as finished (see below) and leaves every open plan where it is.
 
 ### bump_version.py — Requirements
 
@@ -1755,6 +1773,8 @@ python bump_version.py --patch EXT_ID [EXT_ID ...]
 python bump_version.py --version 1.2.3 EXT_ID [EXT_ID ...]
 python bump_version.py --minor EXT_ID --dry-run
 python bump_version.py --patch EXT_ID --open-changelog
+python bump_version.py --patch EXT_ID [EXT_ID ...] --move-planned
+python bump_version.py --patch EXT_ID --move-planned all --dry-run
 ```
 
 - `--major` — bumps the major segment and resets minor and patch to 0 (e.g. `1.2.3 -> 2.0.0`).
@@ -1762,6 +1782,7 @@ python bump_version.py --patch EXT_ID --open-changelog
 - `--patch` — bumps the patch segment (e.g. `1.2.3 -> 1.2.4`).
 - `--version VER` — sets an explicit version; must be valid semver (`X.Y.Z`). Errors immediately if format is invalid.
 - `--open-changelog` — opens each bumped extension's `CHANGELOG.md` in the default editor after the bump, so the new empty section can be filled in immediately. Skipped for games whose version is unchanged or that have no `CHANGELOG.md`.
+- `--move-planned [done|all]` — fills the new section from `## Planned Improvements (Not Yet Released)` instead of leaving the stub bare. `done` (the default when the flag is given without a value) moves the bullets that read as finished: they start `Fixed:`, `Added:`, `Changed:`, `Removed:` or `Improved:` (colon required, so "Changed launcher settings …" stays an open plan), or `Added <thing>`; a wrapped bullet moves with its continuation lines. `all` moves every bullet except a `None` / `None Planned` placeholder. Open plans stay in Planned Improvements, the section is deleted when nothing is left in it, and a new section that already has note text is never touched. A finished bullet worded some other way ("The various … buttons now …") is not recognised and stays in Planned for a hand move, so read the `=` lines the run prints. With `--dry-run` it lists what would move (`+`) and stay (`=`).
 - `--dry-run` — prints what would change without writing files.
 
 One of `--major`, `--minor`, `--patch`, or `--version` is required. Pass multiple `EXT_ID` values to bump several extensions in one run.
@@ -2246,7 +2267,7 @@ The per-folder `index.js`/`info.json`/`CHANGELOG.md` parse is cached in `vortex_
 | Button               | Script invoked                                                                                                                                                            |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Bump Version         | Dialog (`--major`, `--minor` (default), `--patch`, Manual `--version X.Y.Z`, `--open-changelog` default-checked, `--dry-run`), then `python bump_version.py <id> [flags]` |
-| Release              | Dialog (`--no-open`, `--dry-run`, `--upload`, `--edit-changelog`, `--push-description`), then `python release_extension.py <ids> [flags]`                                |
+| Release              | Dialog (`--no-open`, `--dry-run`, `--upload`, `--edit-changelog`, `--push-description`, plus an `--upload-delay` seconds field for bulk uploads), then `python release_extension.py <ids> [flags]`                                |
 | Deploy to Vortex     | Dialog (`--dry-run`, `--force`, `--restart-vortex` default-checked, `--launch-game`), then `python deploy_to_vortex.py [flags] <ids>`                                     |
 | Launch in Vortex     | `subprocess.Popen(VortexExe, ...)` — opens Vortex with `--game` for the selected game. Refuses a helper row (no game of its own to launch)                                |
 | Open Folder          | `os.startfile(folder)` — no subprocess                                                                                                                                    |

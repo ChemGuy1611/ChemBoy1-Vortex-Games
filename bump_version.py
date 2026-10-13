@@ -6,9 +6,10 @@ Updates info.json, the index.js header comment, and prepends a new section
 to CHANGELOG.md -- unless a ## [NEW_VERSION] section is already present, in
 which case it warns and leaves that section alone instead of stacking an
 empty stub over it. After bumping it lists any open "Planned Improvements
-(Not Yet Released)" bullets as a hint; it never moves them (only items actually
-done this round belong in the new section). release_extension.py refuses a
-version whose section is still an empty stub.
+(Not Yet Released)" bullets as a hint; by default it never moves them (only
+items actually done this round belong in the new section), and
+--move-planned opts in to moving the ones that read as done. release_extension.py
+refuses a version whose section is still an empty stub.
 
 Each EXT_ID is looked up as a game-<id> folder first, then a helper-<id>
 folder (e.g. "globalignorepatterns" bumps helper-globalignorepatterns).
@@ -20,6 +21,8 @@ Usage:
     python bump_version.py --version 1.2.3 EXT_ID [EXT_ID ...]
     python bump_version.py --minor EXT_ID --dry-run
     python bump_version.py --patch EXT_ID --open-changelog
+    python bump_version.py --patch EXT_ID [EXT_ID ...] --move-planned
+    python bump_version.py --patch EXT_ID --move-planned all --dry-run
 
 Options:
     --major          Bump major segment: 1.2.3 -> 2.0.0 (resets minor and patch)
@@ -27,6 +30,12 @@ Options:
     --patch          Bump patch segment: 1.2.3 -> 1.2.4
     --version VER    Set explicit semver version (X.Y.Z)
     --open-changelog Open CHANGELOG.md in the default editor after bumping
+    --move-planned [done|all]
+                     Move Planned Improvements bullets into the new section. done (the
+                     default) = bullets starting Fixed:/Added:/Changed:/Removed:/Improved:
+                     or "Added <thing>"; all = every bullet except a "None" placeholder.
+                     Open plans stay; the Planned section is deleted when emptied.
+                     A new section that already has note text is never touched.
     --dry-run        Print changes without writing files
 """
 
@@ -43,7 +52,8 @@ def _bump(version: str, bump_type: str) -> str:
 
 
 def _process(folder: str, game_id: str, bump_type: str | None, dry_run: bool,
-             manual_ver: str | None = None, open_changelog: bool = False) -> bool:
+             manual_ver: str | None = None, open_changelog: bool = False,
+             move_planned: str | None = None) -> bool:
     info = vu.read_info_json(folder)
     if info is None:
         vu.log_error(game_id, "info.json missing or invalid")
@@ -75,6 +85,14 @@ def _process(folder: str, game_id: str, bump_type: str | None, dry_run: bool,
                        f"would NOT prepend a stub")
         else:
             vu.log_dry(f"Would prepend ## [{new_ver}] - {today} to CHANGELOG.md")
+        if move_planned:
+            shipped, left = vu.split_planned_bullets(folder, move_all=(move_planned == "all"))
+            vu.log_dry(f"Would move {len(shipped)} Planned Improvements bullet(s) into [{new_ver}], "
+                       f"leave {len(left)} in place")
+            for line in shipped:
+                print(f"    + {line}")
+            for line in left:
+                print(f"    = {line}")
         if open_changelog:
             vu.log_dry("Would open CHANGELOG.md in the default editor")
         return True
@@ -92,15 +110,28 @@ def _process(folder: str, game_id: str, bump_type: str | None, dry_run: bool,
 
     vu.prepend_changelog_entry(folder, new_ver, today)
 
-    # Hint only: moving a bullet is a human call (it must actually have shipped).
-    planned = vu.open_planned_improvements(folder)
-    if planned:
-        vu.log_info(game_id, f"[{new_ver}] stub needs note text; {len(planned)} open Planned "
-                             f"Improvements - move ONLY the ones done this round:")
-        for line in planned:
-            print(f"    {line}")
-    else:
-        vu.log_info(game_id, f"[{new_ver}] stub needs note text before release_extension.py will accept it")
+    moved = []
+    if move_planned:
+        result = vu.move_planned_to_version(folder, new_ver, move_all=(move_planned == "all"))
+        if result and result[0]:
+            moved = result[0]
+            vu.log_info(game_id, f"[{new_ver}] moved {len(moved)} Planned Improvements bullet(s) in; "
+                                 f"{len(result[1])} left in place")
+            for line in result[1]:
+                print(f"    = {line}")
+
+    # Without --move-planned this is a hint only: moving a bullet is a human call (it
+    # must actually have shipped). With it, whatever read as done is already in the stub,
+    # so the hint is only needed when nothing was moved.
+    if not moved:
+        planned = vu.open_planned_improvements(folder)
+        if planned:
+            vu.log_info(game_id, f"[{new_ver}] stub needs note text; {len(planned)} open Planned "
+                                 f"Improvements - move ONLY the ones done this round:")
+            for line in planned:
+                print(f"    {line}")
+        else:
+            vu.log_info(game_id, f"[{new_ver}] stub needs note text before release_extension.py will accept it")
 
     if open_changelog:
         changelog_path = os.path.join(folder, "CHANGELOG.md")
@@ -137,6 +168,17 @@ def main():
         action="store_true",
         help="Open CHANGELOG.md in the default editor after bumping",
     )
+    parser.add_argument(
+        "--move-planned",
+        nargs="?",
+        const="done",
+        choices=["done", "all"],
+        help="Move Planned Improvements bullets into the new [X.Y.Z] section instead of leaving "
+             "the stub bare. 'done' (default when given without a value) moves bullets that "
+             "start Fixed:/Added:/Changed:/Removed:/Improved: or 'Added <thing>' and leaves the "
+             "rest as open plans; 'all' moves every bullet except a 'None' placeholder. The "
+             "Planned section is deleted when nothing is left in it.",
+    )
     args = parser.parse_args()
 
     if args.version and not vu.is_valid_semver(args.version):
@@ -150,7 +192,7 @@ def main():
     def _run_one(folder, ext_id):
         try:
             ok = _process(folder, ext_id, bump_type, args.dry_run, manual_ver,
-                          args.open_changelog)
+                          args.open_changelog, args.move_planned)
             (saved if ok else failed).append(ext_id)
         except Exception as e:
             vu.log_error(ext_id, f"unexpected error: {e}")

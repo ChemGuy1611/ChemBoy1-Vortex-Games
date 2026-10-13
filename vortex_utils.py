@@ -3495,6 +3495,98 @@ def open_planned_improvements(folder):
             if re.match(r"\s*[-*]\s+\S", ln) and "None Planned" not in ln]
 
 
+# A bullet that reads as a finished change: "Fixed: ...", "Added: ...", "Changed: ...",
+# "Removed: ...", "Improved: ..." or "Added <thing>". Anything else under Planned
+# Improvements ("? handle x?", "Xbox support - waiting on ...", "Changed launcher settings
+# ...") is treated as an open plan.
+_DONE_BULLET = re.compile(r"^[-*]\s+(?:(?:Fixed|Added|Changed|Removed|Improved)\s*:|Added\s)")
+_PLANNED_PLACEHOLDER = re.compile(r"^[-*]\s+None(?:\s+Planned)?\.?\s*$", re.IGNORECASE)
+_PLANNED_RE = re.compile(r"^## Planned Improvements \(Not Yet Released\)[^\n]*\n(.*?)(?=^## |\Z)",
+                         re.MULTILINE | re.DOTALL)
+
+
+def _planned_groups(body):
+    """Split a Planned Improvements body into ([prose lines], [bullet groups]).
+
+    A bullet group is a bullet line plus any indented continuation lines under it, as one
+    string with the original line breaks, so a wrapped bullet moves or stays as a unit."""
+    prose, groups = [], []
+    for line in body.splitlines():
+        if not line.strip():
+            continue
+        if re.match(r"\s*[-*]\s+\S", line):
+            groups.append([line.strip()])
+        elif groups:
+            groups[-1].append(line.rstrip())
+        else:
+            prose.append(line)
+    return prose, ["\n".join(g) for g in groups]
+
+
+def split_planned_bullets(folder, move_all=False):
+    """(shipped, left) bullets of CHANGELOG.md's Planned Improvements, in file order.
+
+    shipped = bullets that read as done (_DONE_BULLET), or every bullet except the
+    "None" / "None Planned" placeholder when move_all. Read-only; ([], []) when the file
+    or section is missing."""
+    path = os.path.join(folder, "CHANGELOG.md")
+    if not os.path.isfile(path):
+        return [], []
+    with open(path, encoding="utf-8") as f:
+        m = _PLANNED_RE.search(f.read())
+    if not m:
+        return [], []
+    shipped, left = [], []
+    for g in _planned_groups(m.group(1))[1]:
+        first = g.split("\n", 1)[0]
+        if _PLANNED_PLACEHOLDER.match(first):
+            left.append(g)
+        elif move_all or _DONE_BULLET.match(first):
+            shipped.append(g)
+        else:
+            left.append(g)
+    return shipped, left
+
+
+def move_planned_to_version(folder, version, move_all=False):
+    """Move the shipped Planned Improvements bullets into the (bare) ## [version] stub.
+
+    Returns (moved, left), or None when nothing could be done: no CHANGELOG, no Planned
+    section, no such version section, or that section already carries note text (it is
+    never overwritten). The Planned section is deleted when nothing is left in it. Open
+    plans stay exactly where they are; split_planned_bullets decides which is which."""
+    path = os.path.join(folder, "CHANGELOG.md")
+    if not os.path.isfile(path):
+        return None
+    with open(path, encoding="utf-8") as f:
+        content = f.read()
+    pm = _PLANNED_RE.search(content)
+    vm = re.search(r"^## \[" + re.escape(version) + r"\][^\n]*\n(.*?)(?=^## |\Z)",
+                   content, re.MULTILINE | re.DOTALL)
+    if not pm or not vm:
+        return None
+    if not changelog_entry_is_empty(vm.group(1)):
+        log_warn(os.path.basename(folder),
+                 f"CHANGELOG.md [{version}] already has note text - not moving Planned bullets into it")
+        return None
+    shipped, left = split_planned_bullets(folder, move_all)
+    if not shipped:
+        return [], left
+    prose, _groups = _planned_groups(pm.group(1))
+    if prose or left:
+        kept = "\n".join(prose + left)
+        planned_new = "## Planned Improvements (Not Yet Released)\n\n" + kept + "\n\n"
+    else:
+        planned_new = ""
+    stub_new = "\n" + "\n".join(shipped) + "\n\n"
+    # Apply the later span first so the earlier span's offsets stay valid.
+    spans = sorted([(pm.start(), pm.end(), planned_new), (vm.start(1), vm.end(1), stub_new)], reverse=True)
+    for start, end, text in spans:
+        content = content[:start] + text + content[end:]
+    write_text_atomic(path, content)
+    return shipped, left
+
+
 def changelog_entry_is_empty(entry):
     """True when a CHANGELOG entry (as returned by nexus_upload.extract_changelog_entry)
     carries no note text: only a date line and bare "-" / "*" bullets, which is
