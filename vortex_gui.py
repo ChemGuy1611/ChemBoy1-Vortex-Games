@@ -2228,6 +2228,9 @@ class MainWindow(QMainWindow):
             return
         ids = self._selected_ids()
         extra = dlg.extra_args()
+        if "--push-description" in extra:
+            # The GUI push always overwrites the live page text, so skip the first-push gate.
+            extra.append("--force")
         self._run([[PYTHON, os.path.join(REPO_ROOT, "release_extension.py")] + ids + extra],
                   "release_extension.py")
 

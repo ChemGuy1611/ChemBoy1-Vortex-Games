@@ -14,8 +14,11 @@ Usage:
     python new_extension.py GAME_ID --refresh-images
     python new_extension.py TEMPLATE "Game Name" --skip-explained
     python new_extension.py TEMPLATE "Game Name" --skip-lint
+    python new_extension.py TEMPLATE "Game Name" --nexus-game-id 1303
 
-    --no-browser        Skip opening browser tabs (PCGamingWiki, SteamDB, SteamDB demo page,
+    --nexus-game-id N   Numeric Nexus game id to stamp into info.json "gameId" when the
+                        automatic lookup finds nothing (or finds the wrong game).
+    --no-browser       Skip opening browser tabs (PCGamingWiki, SteamDB, SteamDB demo page,
                         GOGDB, egdata, and a Google Images search for the game name).
     --no-startfile      Skip opening downloaded images and index.js in the default editor.
     --refresh-images    Re-download all 4 images for an existing extension. Pass GAME_ID as
@@ -49,7 +52,9 @@ Copies all template assets as-is (tfc.png, fluffy.png, reloaded.png, etc.).
 New extensions start at version 1.0.0 (vortex_utils.NEW_EXTENSION_VERSION),
 stamped into info.json, the CHANGELOG.md entry, the index.js header, and the
 version .txt filename regardless of the version the template scaffold carries.
-info.json "id" is set to GAME_ID.
+info.json "id" is set to GAME_ID. info.json "gameId" is set to the numeric Nexus game
+id of the game's Nexus domain (v1 games API, then Vortex's cached game list); when
+no id is found it stays "XXX" and is reported at the end.
 
 After writing index.js, automatically runs:
     1. python categorize_games.py {GAME_ID}  (first: the doc generators read its lists)
@@ -92,7 +97,7 @@ from vortex_utils import (
     download_exec_icon, download_cover_art, download_title_image, download_banner_image,
     update_index_header, sanitize_game_name, normalize_game_name, write_index_js,
     read_index_js, extract_steamapp_id, extract_game_name,
-    nexus_list_games, run_script, open_in_default_app,
+    nexus_list_games, nexus_game_id_for_domain, run_script, open_in_default_app,
     write_text_atomic, is_placeholder_value, find_placeholder_vars, replace_const_rhs,
     safe_rmtree, touch_empty, NEW_EXTENSION_VERSION,
 )
@@ -635,11 +640,14 @@ def sub_toggle(src, toggle_name, value):
 
 # ── File editors ─────────────────────────────────────────────────────────────
 
-def edit_info_json(path, game_name, game_id):
-    """Replace the XXX game name and id in the copied info.json and stamp the starting version."""
+def edit_info_json(path, game_name, game_id, nexus_game_id=None):
+    """Replace the XXX game name and id in the copied info.json and stamp the starting version.
+    nexus_game_id (int) replaces the "gameId" placeholder; None leaves it as "XXX"."""
     with open(path, encoding="utf-8") as f:
         content = f.read()
     content = content.replace('"id": "XXX"', f'"id": "{game_id}"')
+    if nexus_game_id:
+        content = content.replace('"gameId": "XXX"', f'"gameId": {nexus_game_id}')
     content = content.replace('"Game: XXX"', f'"Game: {game_name}"')
     content = content.replace('"Vortex support for XXX"', f'"Vortex support for {game_name}"')
     content = re.sub(

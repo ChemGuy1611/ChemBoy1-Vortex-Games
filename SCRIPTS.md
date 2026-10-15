@@ -1626,6 +1626,7 @@ python release_extension.py EXT_ID --upload
 python release_extension.py EXT_ID [EXT_ID ...] --upload --upload-delay 15
 python release_extension.py EXT_ID --edit-changelog
 python release_extension.py EXT_ID --push-description
+python release_extension.py EXT_ID --push-description --force
 ```
 
 Pass one or more `EXT_ID` values to release multiple extensions in one run — a game id (`game-<id>` folder) or a helper id (`helper-<id>` folder).
@@ -1635,7 +1636,7 @@ Use `--skip-node-check` to skip the `node --check` syntax step. Use `--skip-lint
 Use `--upload` to upload the zip to Nexus Mods as a new file version after zipping. Default is skip (no prompt). The changelog entry for the current version is attached as the file description on Nexus. Every game that uploads successfully is also dropped from `resources/lists/games-unreleased.txt`.
 Use `--upload-delay SECONDS` (default 0) to pause after each successful upload before the next extension. Use it on a bulk `--upload`: Nexus sits behind Cloudflare, which answers HTTP 429 (error 1015) when uploads arrive too fast, and the ban can last up to an hour. A 191-extension run at roughly five uploads a minute hit it. On a 429 the run **stops at that extension**: every later id is left untouched (listed as `Skipped (stopped by rate limit, not processed)`) and the exact re-run command is printed.
 Use `--edit-changelog` to also open the Nexus Mods changelog editor (Documents tab) in the browser alongside the Files tab.
-Use `--push-description` to push each regenerated `DESCRIPTION.bbcode` (and the summary built from it) to the extension's Nexus page right after the description batch, through `sync_mod_pages.push_pages`. It works with or without `--upload`, is skipped by `--dry-run` and when the description batch failed, and never fails the release: a failed push, or a page skipped by the first-push gate, only warns. A page that was never pushed through `sync_mod_pages.py` is skipped while its live text differs from the file, so do its first push by hand (see `sync_mod_pages.py`). The **Release** popup in `vortex_gui.py` carries it as an unchecked "Push description to Nexus page" checkbox.
+Use `--push-description` to push each regenerated `DESCRIPTION.bbcode` (and the summary built from it) to the extension's Nexus page right after the description batch, through `sync_mod_pages.push_pages`. It works with or without `--upload`, is skipped by `--dry-run` and when the description batch failed, and never fails the release: a failed push, or a page skipped by the first-push gate, only warns. A page that was never pushed through `sync_mod_pages.py` is skipped while its live text differs from the file, so do its first push by hand (see `sync_mod_pages.py`) or add `--force` here (valid only with `--push-description`; passes `force=True` to `push_pages`, so the live text is overwritten, backup still taken first). The **Release** popup in `vortex_gui.py` carries it as an unchecked "Push description to Nexus page" checkbox; when ticked, the popup always appends `--force`.
 Passing a template name (e.g. `template-basic`) instead of an extension ID errors immediately before any release steps run.
 
 ### release_extension.py — Examples
@@ -2267,7 +2268,7 @@ The per-folder `index.js`/`info.json`/`CHANGELOG.md` parse is cached in `vortex_
 | Button               | Script invoked                                                                                                                                                            |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Bump Version         | Dialog (`--major`, `--minor` (default), `--patch`, Manual `--version X.Y.Z`, `--open-changelog` default-checked, `--dry-run`), then `python bump_version.py <id> [flags]` |
-| Release              | Dialog (`--no-open`, `--dry-run`, `--upload`, `--edit-changelog`, `--push-description`, plus an `--upload-delay` seconds field for bulk uploads), then `python release_extension.py <ids> [flags]`                                |
+| Release              | Dialog (`--no-open`, `--dry-run`, `--upload`, `--edit-changelog`, `--push-description` (always sent with `--force`), plus an `--upload-delay` seconds field for bulk uploads), then `python release_extension.py <ids> [flags]`                                |
 | Deploy to Vortex     | Dialog (`--dry-run`, `--force`, `--restart-vortex` default-checked, `--launch-game`), then `python deploy_to_vortex.py [flags] <ids>`                                     |
 | Launch in Vortex     | `subprocess.Popen(VortexExe, ...)` — opens Vortex with `--game` for the selected game. Refuses a helper row (no game of its own to launch)                                |
 | Open Folder          | `os.startfile(folder)` — no subprocess                                                                                                                                    |

@@ -96,7 +96,7 @@ const MAJOR_VERSION = ENGINE_VERSION.split(".")[0]; //major UE version
 const MINOR_VERSION = ENGINE_VERSION.split(".")[1]; //minor UE version
 const ROOT_FOLDERS = [EPIC_CODE_NAME, "Engine"]; //addressable folders in root
 const ROOTSUB_FOLDERS = ["Content", "Binaries", "Mods"]; //subfolders of EPIC_CODE_NAME. Don't use "Plugins" here since it can conflict with plugin loader/asi mods
-const CONTENTSUB_FOLDERS = ["Paks", "Movies"]; //subfolders of Content folder
+const CONTENTSUB_FOLDERS = ["Paks", "Movies", "Splash"]; //subfolders of Content folder
 const UE4SS_SUBFOLDERS = [
   "MapGenBP",
   "MemberVarLayoutTemplates",
@@ -1038,17 +1038,17 @@ async function installUe4ssCombo(files, workingDir) {
     try {
       /*await fs.statAsync(path.join(workingDir, modFile, 'Binaries', 'Win64'));
       await fs.renameAsync(path.join(workingDir, modFile, 'Binaries', 'Win64'), path.join(workingDir, modFile, 'Binaries', 'WinGDK')); //*/
-      await fsp.stat(path.join(workingDir, modFile, "Win64"));
+      await fsp.stat(path.join(workingDir, modFile, EXEC_FOLDER_DEFAULT));
       await fsp.rename(
-        path.join(workingDir, modFile, "Win64"),
-        path.join(workingDir, modFile, "WinGDK"),
+        path.join(workingDir, modFile, EXEC_FOLDER_DEFAULT),
+        path.join(workingDir, modFile, EXEC_FOLDER_XBOX),
       ); //*/
       const paths = await getAllFiles(workingDir);
       files = [...paths.map((p) => p.replace(`${workingDir}${path.sep}`, ""))];
     } catch (err) {
       log(
         "warn",
-        `Failed to rename "Win64" folder to "WinGDK" for UE4SS combo mod ${workingDir} (or "Win64" folder is not present): ${err}`,
+        `Failed to rename ${EXEC_FOLDER_DEFAULT} folder to ${EXEC_FOLDER_XBOX} for UE4SS combo mod ${workingDir} (or ${EXEC_FOLDER_DEFAULT} folder is not present): ${err}`,
       );
     }
   }

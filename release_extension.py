@@ -70,8 +70,10 @@ Once per run, after every extension has been processed:
     from it) to the extension's Nexus mod page through sync_mod_pages.push_pages. Works with
     or without --upload. Backup first; a page this tooling has never pushed is SKIPPED when
     the live text differs from the file, so its first push is done by hand with
-    sync_mod_pages.py --push --force. A failed or skipped push warns and never fails the
-    release. Not run when the description batch itself failed. Skipped with --dry-run.
+    sync_mod_pages.py --push --force, or here with --force (pushes it anyway, overwriting
+    the live text; the backup still lands first). A failed or skipped push warns and never
+    fails the release. Not run when the description batch itself failed. Skipped with
+    --dry-run.
 
     All three doc generators are skipped for helper extensions that released
     successfully -- they document mod installer/archive-recognition rules for a
@@ -93,6 +95,7 @@ Usage:
     python release_extension.py EXT_ID [EXT_ID ...] --upload --upload-delay 15
     python release_extension.py EXT_ID --edit-changelog
     python release_extension.py EXT_ID --push-description
+    python release_extension.py EXT_ID --push-description --force
 
 Environment variables:
     SEVENZIP_PATH   (optional, default: C:\\Program Files\\7-Zip\\7z.exe)
@@ -579,6 +582,12 @@ def main():
              "skipped until pushed once by hand with --force. Needs NEXUS_API_KEY.",
     )
     parser.add_argument(
+        "--force",
+        action="store_true",
+        help="With --push-description: push a never-pushed page even though its live text "
+             "differs from DESCRIPTION.bbcode (overwrites the live text; backup still taken first).",
+    )
+    parser.add_argument(
         "--upload-delay",
         type=float,
         default=0.0,
@@ -587,6 +596,8 @@ def main():
              "(default 0). Use it on a bulk --upload to stay under the Nexus rate limit.",
     )
     args = parser.parse_args()
+    if args.force and not args.push_description:
+        parser.error("--force only applies with --push-description")
 
     upload = True if args.upload else False
 
@@ -677,7 +688,7 @@ def main():
                     else:
                         print(f"  Pushing DESCRIPTION.bbcode to the Nexus page ({label})...")
                         try:
-                            pushed = push_pages(game_saved)
+                            pushed = push_pages(game_saved, force=args.force)
                         except Exception as e:
                             print(f"  WARNING - description push failed: {e}")
                         else:

@@ -70,7 +70,7 @@ Usage:
         safe_rmtree, touch_empty, find_vortex_plugin_folder,
         normalize_target_ids, read_id_list, write_id_list, is_load_order_game,
         is_merge_game, has_mergemods_callback,
-        parse_nexus_mod_url, nexus_list_games, nexus_get_mod,
+        parse_nexus_mod_url, nexus_list_games, nexus_game_id_for_domain, nexus_get_mod,
         nexus_get_mod_files, nexus_get_file_download_link, nexus_download_file,
         nexus_graphql, nexus_get_current_user,
         download_exec_icon, download_cover_art,
@@ -2922,6 +2922,7 @@ def make_info_json():
     return (
         '{\n'
         '  "id": "XXX",\n'
+        '  "gameId": "XXX",\n'
         '  "name": "Game: XXX",\n'
         '  "author": "ChemBoy1",\n'
         f'  "version": "{NEW_EXTENSION_VERSION}",\n'
@@ -3691,6 +3692,41 @@ def nexus_list_games(api_key):
             print(f"  Nexus games fetch error: {e}")
             return []
     return _nexus_games_cache
+
+
+def nexus_game_id_for_domain(domain, api_key=None):
+    """Return the numeric Nexus game id for a domain (the slug in nexusmods.com/<domain>), or None.
+
+    Tries the full v1 games list first (one cached call), then a direct
+    GET /v1/games/{domain}.json for a game that list leaves out, then Vortex's cached
+    nexus_gamelist.json. Without api_key only the cache is tried. Returns an int."""
+    def _valid(gid):
+        return isinstance(gid, int) and not isinstance(gid, bool) and gid > 0
+
+    if api_key:
+        for game in nexus_list_games(api_key):
+            if game.get("domain_name") == domain and _valid(game.get("id")):
+                return game["id"]
+
+        def _do():
+            req = urllib.request.Request(
+                f"https://api.nexusmods.com/v1/games/{urllib.parse.quote(domain)}.json",
+                headers={"apikey": api_key, **_NEXUS_HEADERS},
+            )
+            with urllib.request.urlopen(req, timeout=_HTTP_TIMEOUT) as resp:
+                return json.loads(resp.read()).get("id")
+
+        try:
+            gid = _execute_with_retry(_do, respect_retry_after=True)
+            if _valid(gid):
+                return gid
+        except Exception:
+            pass  # 404 = no such domain; fall through to the cache
+    try:
+        gid = load_nexus_gamelist().get(domain)
+    except (OSError, ValueError, KeyError):
+        return None
+    return gid if _valid(gid) else None
 
 
 def nexus_get_mod(domain, mod_id, api_key):
