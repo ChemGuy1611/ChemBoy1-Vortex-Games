@@ -325,7 +325,7 @@ const MELON_CONFIG_PATH = MELON_CONFIG_FOLDER;
 
 const CUSTOMASSETS_ID = `${GAME_ID}-customassets`;
 const CUSTOMASSETS_NAME = "Custom Assets";
-const CUSTOMASSETS_FOLDERS = ["CustomPosters", "CustomCards"];
+const CUSTOMASSETS_FOLDERS = ["CustomManga", "CustomDakimakura", "CustomPosters", "CustomCard"];
 const CUSTOMASSETS_PATH = MELON_CONFIG_FOLDER;
 
 const MELON_USERLIB_ID = `${GAME_ID}-melonloader-userlibs`;
