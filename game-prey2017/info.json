@@ -1,7 +1,8 @@
 {
   "id": "prey2017",
+  "gameId": 1962,
   "name": "Game: Prey (2017)",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for Prey (2017)"
 }

@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.1] - 2026-10-16
+
+- Added the game's Nexus Mods ID to the extension's info file.
+
 ## [1.0.0] - 2026-10-12
 
 - The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.

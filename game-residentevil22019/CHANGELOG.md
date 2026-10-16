@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.1.2] - 2026-10-16
+
+- Added the game's Nexus Mods ID to the extension's info file.
+
 ## [2.1.1] - 2026-10-12
 
 - Fixed: Removed the "Custom Launch (Demo)" button. The demo uses the same re2.exe as the full game, so the button only started the full game a second time.

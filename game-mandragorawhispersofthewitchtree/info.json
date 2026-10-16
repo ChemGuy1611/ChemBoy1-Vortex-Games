@@ -1,7 +1,8 @@
 {
   "id": "mandragorawhispersofthewitchtree",
+  "gameId": 7623,
   "name": "Game: Mandragora: Whispers of the Witch Tree",
   "author": "ChemBoy1",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Vortex support for Mandragora: Whispers of the Witch Tree"
 }

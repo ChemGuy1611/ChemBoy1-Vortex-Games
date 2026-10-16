@@ -1,7 +1,8 @@
 {
   "id": "frostpunk2",
+  "gameId": 6349,
   "name": "Game: Frostpunk 2",
   "author": "ChemBoy1",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Vortex support for Frostpunk 2"
 }

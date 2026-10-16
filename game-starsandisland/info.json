@@ -1,7 +1,8 @@
 {
   "id": "starsandisland",
+  "gameId": 8808,
   "name": "Game: Starsand Island",
   "author": "ChemBoy1",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Vortex support for Starsand Island"
 }

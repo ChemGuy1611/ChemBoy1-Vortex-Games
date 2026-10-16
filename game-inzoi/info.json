@@ -1,7 +1,8 @@
 {
   "id": "inzoi",
+  "gameId": 7480,
   "name": "Game: inZOI",
   "author": "ChemBoy1",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Vortex support for inZOI"
 }

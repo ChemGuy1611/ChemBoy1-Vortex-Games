@@ -1,7 +1,8 @@
 {
   "id": "needforspeedheat",
+  "gameId": 3074,
   "name": "Game: Need for Speed Heat",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for Need for Speed Heat"
 }

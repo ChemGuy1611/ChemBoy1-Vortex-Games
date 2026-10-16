@@ -2,8 +2,8 @@
 Name: Helldivers 2 Vortex Extension
 Structure: Custom Game Data
 Author: ChemBoy1
-Version: 1.2.0
-Date: 2026-10-12
+Version: 1.2.1
+Date: 2026-10-16
 /////////////////////////////////////////*/
 
 //Import libraries

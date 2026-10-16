@@ -2,8 +2,8 @@
 Name: Anime Shop Simulator Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-10-07
+Version: 1.0.1
+Date: 2026-10-16
 Notes:
 -
 //////////////////////////////////////////*/
@@ -325,7 +325,7 @@ const MELON_CONFIG_PATH = MELON_CONFIG_FOLDER;
 
 const CUSTOMASSETS_ID = `${GAME_ID}-customassets`;
 const CUSTOMASSETS_NAME = "Custom Assets";
-const CUSTOMASSETS_FOLDERS = ["CustomManga", "CustomDakimakura", "CustomPosters", "CustomCard"];
+const CUSTOMASSETS_FOLDERS = ["CustomManga", "CustomDakimakura", "CustomPosters", "CustomCard"]; //!Add more if more loaders are added
 const CUSTOMASSETS_PATH = MELON_CONFIG_FOLDER;
 
 const MELON_USERLIB_ID = `${GAME_ID}-melonloader-userlibs`;

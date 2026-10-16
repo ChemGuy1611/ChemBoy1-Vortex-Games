@@ -2,8 +2,8 @@
 Name: Black Myth Wukong Vortex Extension
 Structure: UE5
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-12
+Version: 1.0.3
+Date: 2026-10-16
 Notes:
 - LOGICMODS_PATH ends in the LogicMods folder for this game (kept from the 0.3.2 extension)
 - SigBypass and UE4SS both install from this game's own Nexus page, not the universal SigBypass page

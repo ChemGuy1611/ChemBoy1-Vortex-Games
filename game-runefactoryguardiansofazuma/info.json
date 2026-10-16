@@ -1,7 +1,8 @@
 {
   "id": "runefactoryguardiansofazuma",
+  "gameId": 7821,
   "name": "Game: Rune Factory: Guardians of Azuma",
   "author": "ChemBoy1",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Vortex support for Rune Factory: Guardians of Azuma"
 }

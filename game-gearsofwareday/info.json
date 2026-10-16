@@ -1,7 +1,8 @@
 {
   "id": "gearsofwareday",
+  "gameId": 9851,
   "name": "Game: Gears of War: E-Day",
   "author": "ChemBoy1",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Vortex support for Gears of War: E-Day"
 }

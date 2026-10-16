@@ -1,7 +1,8 @@
 {
   "id": "mechwarrior5clans",
+  "gameId": 6935,
   "name": "Game: MechWarrior 5: Clans",
   "author": "ChemBoy1",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Vortex support for MechWarrior 5: Clans"
 }

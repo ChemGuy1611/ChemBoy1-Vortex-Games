@@ -1,7 +1,8 @@
 {
   "id": "finalfantasy7rebirth",
+  "gameId": 7237,
   "name": "Game: Final Fantasy VII Rebirth",
   "author": "ChemBoy1",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Vortex support for Final Fantasy VII Rebirth"
 }

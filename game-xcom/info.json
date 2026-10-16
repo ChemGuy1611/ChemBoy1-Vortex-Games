@@ -1,5 +1,6 @@
 {
   "id": "xcom",
+  "gameId": 151,
   "name": "Game: XCOM: Enemy Unknown",
   "author": "ChemBoy1",
   "version": "0.1.0",

@@ -1,7 +1,8 @@
 {
   "id": "dynastywarriors3completeeditionremastered",
+  "gameId": 10418,
   "name": "Game: DYNASTY WARRIORS 3: Complete Edition Remastered",
   "author": "ChemBoy1",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Vortex support for DYNASTY WARRIORS 3: Complete Edition Remastered"
 }

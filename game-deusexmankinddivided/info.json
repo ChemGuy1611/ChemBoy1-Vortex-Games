@@ -1,7 +1,8 @@
 {
   "id": "deusexmankinddivided",
+  "gameId": 2411,
   "name": "Game: Deus Ex: Mankind Divided",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for Deus Ex: Mankind Divided"
 }

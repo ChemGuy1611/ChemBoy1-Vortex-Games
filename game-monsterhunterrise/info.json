@@ -1,7 +1,8 @@
 {
   "id": "monsterhunterrise",
+  "gameId": 4095,
   "name": "Game: MONSTER HUNTER RISE",
   "author": "ChemBoy1",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "Vortex support for MONSTER HUNTER RISE"
 }

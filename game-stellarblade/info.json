@@ -1,7 +1,8 @@
 {
   "id": "stellarblade",
+  "gameId": 7804,
   "name": "Game: Stellar Blade",
   "author": "ChemBoy1",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Vortex support for Stellar Blade"
 }

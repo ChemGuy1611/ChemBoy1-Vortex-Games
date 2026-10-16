@@ -2,8 +2,8 @@
 Name: Ghost Recon Breakpoint Vortex Extension
 Structure: Anvil Engine - AnvilToolkit/ForgerPatchManager
 Author: ChemBoy1
-Version: 1.0.3
-Date: 2026-10-12
+Version: 1.0.4
+Date: 2026-10-16
 Notes:
 -
 //////////////////////////////////////////////////////////*/

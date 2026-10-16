@@ -1,7 +1,8 @@
 {
   "id": "whiskerwood",
+  "gameId": 8402,
   "name": "Game: Whiskerwood",
   "author": "ChemBoy1",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Vortex support for Whiskerwood"
 }

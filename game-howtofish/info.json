@@ -1,7 +1,8 @@
 {
   "id": "howtofish",
+  "gameId": 9944,
   "name": "Game: How to Fish",
   "author": "ChemBoy1",
-  "version": "1.1.3",
+  "version": "1.1.4",
   "description": "Vortex support for How to Fish"
 }

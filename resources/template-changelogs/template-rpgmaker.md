@@ -1,5 +1,9 @@
 # template-rpgmaker Changelog
 
+## [2026-10-16]
+
+- Added: a `gameId` field to `info.json`, directly after `id`, set to the `"XXX"` placeholder that `new_extension.py` replaces with the numeric Nexus Mods game id of the game's Nexus domain (for example `1303` for `stardewvalley`). In a finished extension it is a number, not a string.
+
 ## [2026-10-12]
 
 - Added: `restoreDeployedPlugins`, run from a new `did-deploy` listener (`api.onAsync`) in `main()`. After a purge, `clearPurgedPlugins` removes the purged plugins' entries from plugins.js, and Vortex 2.9.0-beta.2 does not write the load order back on the deploy that follows (the order it restores equals the stored one, so it sees no change to write), so the entries stayed missing until the user changed the load order. The listener checks, for the profile that was deployed (this game, active profile only), whether every deployed Vortex-managed plugin is listed in plugins.js, and only if one is missing it runs `serializePluginsLoadOrder` with the load order read from the game. Every other deploy writes nothing.

@@ -1,7 +1,8 @@
 {
   "id": "residentevilvillage",
+  "gameId": 3669,
   "name": "Game: Resident Evil Village",
   "author": "ChemBoy1",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Vortex support for Resident Evil Village"
 }

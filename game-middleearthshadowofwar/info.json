@@ -1,7 +1,8 @@
 {
   "id": "middleearthshadowofwar",
+  "gameId": 2506,
   "name": "Game: Middle-earth: Shadow of War",
   "author": "ChemBoy1",
-  "version": "2.5.6",
+  "version": "2.5.7",
   "description": "Vortex support for Middle-earth: Shadow of War"
 }

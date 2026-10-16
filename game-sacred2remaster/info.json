@@ -1,7 +1,8 @@
 {
   "id": "sacred2remaster",
+  "gameId": 8408,
   "name": "Game: Sacred 2 Remaster",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for Sacred 2 Remaster"
 }

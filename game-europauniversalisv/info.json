@@ -1,7 +1,8 @@
 {
   "id": "europauniversalisv",
+  "gameId": 8390,
   "name": "Game: Europa Universalis V",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for Europa Universalis V"
 }

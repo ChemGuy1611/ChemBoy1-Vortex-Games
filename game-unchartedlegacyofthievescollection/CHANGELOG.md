@@ -1,10 +1,11 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [0.3.3] - 2026-10-16
 
 - Fixed: Mod files with no file extension were skipped during installation
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 - The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
+- Added the game's Nexus Mods ID to the extension's info file.
 
 ## [0.3.2] - 2026-08-11
 

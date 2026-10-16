@@ -4,6 +4,10 @@
 
 - None
 
+## [1.0.1] - 2026-10-16
+
+- Added the game's Nexus Mods ID to the extension's info file.
+
 ## [1.0.0] - 2026-10-15
 
 - Initial release

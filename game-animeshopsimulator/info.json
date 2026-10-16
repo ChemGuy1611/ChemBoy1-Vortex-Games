@@ -1,7 +1,8 @@
 {
   "id": "animeshopsimulator",
-  "name": "Game: Anime Shop Simulator ✨",
+  "gameId": 10172,
+  "name": "Game: Anime Shop Simulator \u2728",
   "author": "ChemBoy1",
-  "version": "1.0.0",
-  "description": "Vortex support for Anime Shop Simulator ✨"
+  "version": "1.0.1",
+  "description": "Vortex support for Anime Shop Simulator \u2728"
 }

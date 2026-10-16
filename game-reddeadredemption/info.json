@@ -1,7 +1,8 @@
 {
   "id": "reddeadredemption",
+  "gameId": 5175,
   "name": "Game: Red Dead Redemption",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for Red Dead Redemption"
 }

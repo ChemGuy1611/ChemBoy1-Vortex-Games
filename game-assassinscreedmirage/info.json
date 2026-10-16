@@ -1,7 +1,8 @@
 {
   "id": "assassinscreedmirage",
+  "gameId": 5775,
   "name": "Game: Assassin's Creed Mirage",
   "author": "ChemBoy1",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Vortex support for Assassin's Creed Mirage"
 }

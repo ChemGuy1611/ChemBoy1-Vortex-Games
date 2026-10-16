@@ -1,7 +1,8 @@
 {
   "id": "mywintercar",
+  "gameId": 8597,
   "name": "Game: My Winter Car",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for My Winter Car"
 }

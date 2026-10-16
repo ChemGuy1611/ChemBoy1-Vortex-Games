@@ -1,8 +1,8 @@
 /*//
 Name: Alien Isolation Vortex Extension
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-10-12
+Version: 1.0.1
+Date: 2026-10-16
 /*/ ///test
 
 //Import libraries

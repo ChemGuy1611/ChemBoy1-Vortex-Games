@@ -2,8 +2,8 @@
 Name: The Outer Worlds Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.1.2
-Date: 2026-10-12
+Version: 1.1.3
+Date: 2026-10-16
 Notes:
 - Rebuilt on the unified UE4-5 template, added UE4SS/Scripts/DLL/LogicMods support
 - Dropped the Unreal Engine Mod Installer (UEMI) dependency - pak modtype/installer now self-owned (UE5_SORTABLE_ID), existing pak mods retag automatically on update; also added the FOMOD-pak-retag safety net

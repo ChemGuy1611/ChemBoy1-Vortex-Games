@@ -1,7 +1,8 @@
 {
   "id": "grimshire",
+  "gameId": 8643,
   "name": "Game: Grimshire",
   "author": "ChemBoy1",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Vortex support for Grimshire"
 }

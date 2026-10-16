@@ -1,7 +1,8 @@
 {
   "id": "titanquest2",
+  "gameId": 8008,
   "name": "Game: Titan Quest II",
   "author": "ChemBoy1",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Vortex support for Titan Quest II"
 }

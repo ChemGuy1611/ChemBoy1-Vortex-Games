@@ -1,5 +1,9 @@
 # template-reframework-fluffy Changelog
 
+## [2026-10-16]
+
+- Added: a `gameId` field to `info.json`, directly after `id`, set to the `"XXX"` placeholder that `new_extension.py` replaces with the numeric Nexus Mods game id of the game's Nexus domain (for example `1303` for `stardewvalley`). In a finished extension it is a number, not a string.
+
 ## [2026-10-12]
 
 - Fixed: the "Custom Launch (Demo)" tool was always registered, so a game with no demo (`EXEC_DEMO = ""`, the scaffold default) got a tool with an empty executable, and a game whose "demo" executable is the game's own file got a second button that launched the same file. The tool is now registered only when `HAS_DEMO` is true, the same condition that guards the demo checks in `getExecutable`, `getModPath` and `setGameVersion`.

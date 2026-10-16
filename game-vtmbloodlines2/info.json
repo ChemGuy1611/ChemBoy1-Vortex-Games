@@ -1,7 +1,8 @@
 {
   "id": "vtmbloodlines2",
+  "gameId": 8298,
   "name": "Game: Vampire: the Masquerade - Bloodlines 2",
   "author": "ChemBoy1",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Vortex support for Vampire: the Masquerade - Bloodlines 2"
 }

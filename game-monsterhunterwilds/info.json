@@ -1,7 +1,8 @@
 {
   "id": "monsterhunterwilds",
+  "gameId": 6993,
   "name": "Game: Monster Hunter Wilds",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for Monster Hunter Wilds"
 }

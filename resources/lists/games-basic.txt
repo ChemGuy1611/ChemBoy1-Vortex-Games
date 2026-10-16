@@ -3,7 +3,7 @@ alanwake2
 alienisolation
 anno117paxromana
 aplaguetalerequiem
-armoredcorevifiresofrubicon
+armoredcore6firesofrubicon
 balatro
 bloodborne
 borderlands3
@@ -82,9 +82,9 @@ tombraider2013
 trailsintheskyfirstchapter
 unrealtournament2004
 vermintide2
+warhammer40000darkheresy
 warhammer40000spacemarine
 warhammer40000spacemarine2
-warhammer40kdarkheresy
 warhammer40kdarktide
 warhammer40kroguetrader
 watchdogs

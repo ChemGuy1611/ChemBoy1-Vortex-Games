@@ -1,7 +1,8 @@
 {
   "id": "civilisationvi",
+  "gameId": 1694,
   "name": "Game: Sid Meier's Civilization VI",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for Sid Meier's Civilization VI"
 }

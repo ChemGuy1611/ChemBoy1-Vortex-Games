@@ -1,7 +1,8 @@
 {
   "id": "wolfenstein2009",
+  "gameId": 3535,
   "name": "Game: Wolfenstein (2009)",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for Wolfenstein (2009)"
 }

@@ -1,7 +1,8 @@
 {
   "id": "finalfantasytacticstheivalicechronicles",
+  "gameId": 8229,
   "name": "Game: FINAL FANTASY TACTICS - The Ivalice Chronicles",
   "author": "ChemBoy1",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Vortex support for FINAL FANTASY TACTICS - The Ivalice Chronicles"
 }

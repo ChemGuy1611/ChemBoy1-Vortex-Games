@@ -1,7 +1,8 @@
 {
   "id": "farcry4",
+  "gameId": 773,
   "name": "Game: Far Cry 4",
   "author": "ChemBoy1",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Vortex support for Far Cry 4"
 }

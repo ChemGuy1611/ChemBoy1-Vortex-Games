@@ -1,5 +1,9 @@
 # template-farcry Changelog
 
+## [2026-10-16]
+
+- Added: a `gameId` field to `info.json`, directly after `id`, set to the `"XXX"` placeholder that `new_extension.py` replaces with the numeric Nexus Mods game id of the game's Nexus domain (for example `1303` for `stardewvalley`). In a finished extension it is a number, not a string.
+
 ## [2026-10-11]
 
 - Fixed: the installers cut each mod's destination with `modFile.indexOf(...)`, which finds the FIRST occurrence of the marker's name in the path. A wrapper folder whose name ends with a root folder's name (`ModSupport/Support/x`) was cut inside the wrapper's name and installed as `Support/Support/x`; a flattening installer whose marker file name also appears in a parent folder name was cut at the wrong place. All seven cuts (`installModInstaller`, `installMiMod`, `installRootFiles`, `installRoot`, `installData`, `installBin`, `installXml`) now use `lastIndexOf`, which always lands on the marker's own path segment.

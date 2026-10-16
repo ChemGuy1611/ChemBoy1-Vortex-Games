@@ -1,7 +1,8 @@
 {
   "id": "shadowofthetombraider",
+  "gameId": 2588,
   "name": "Game: Shadow of the Tomb Raider",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for Shadow of the Tomb Raider"
 }

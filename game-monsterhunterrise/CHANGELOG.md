@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.0.3] - 2026-10-16
+
+- Added the game's Nexus Mods ID to the extension's info file.
+
 ## [2.0.2] - 2026-10-12
 
 - Fixed: Mods packaged inside an outer folder named like one of the mod's key files (for example "dinput8.dll.old") now install into the right place.

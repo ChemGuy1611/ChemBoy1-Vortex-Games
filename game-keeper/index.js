@@ -2,8 +2,8 @@
 Name: Keeper Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-10-12
+Version: 1.0.2
+Date: 2026-10-16
 Notes:
 - The project folder differs per store: Steam and GOG use Keeper\ (Keeper\Content, Keeper\Binaries\Win64), the Microsoft Store (Xbox) build uses PaganIdol\ (PaganIdol\Content, PaganIdol\Binaries\WinGDK). EPIC_CODE_NAME is the Steam/GOG folder and XBOX_CODE_NAME the Xbox one. The template assumes one folder, so setProjectFolder() (every site marked KEEPER ONLY) swaps each project-relative path to the active store's folder from getExecutable() and setup().
 - The game is Unreal Engine 5.5.4. No Keeper mod has used UE4SS yet; other UE 5.5 games needed a hand-made ue4ss\UE4SS_Signatures\*.lua next to stock UE4SS, which the Download UE4SS button does not provide, so UE4SS may not start until a signature file is added.

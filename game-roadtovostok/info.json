@@ -1,7 +1,8 @@
 {
   "id": "roadtovostok",
+  "gameId": 9086,
   "name": "Game: Road to Vostok",
   "author": "ChemBoy1",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Vortex support for Road to Vostok"
 }

@@ -1,7 +1,8 @@
 {
   "id": "myheroacademiaallsjustice",
+  "gameId": 8767,
   "name": "Game: MY HERO ACADEMIA: All's Justice",
   "author": "ChemBoy1",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Vortex support for MY HERO ACADEMIA: All's Justice"
 }

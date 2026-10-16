@@ -1,7 +1,8 @@
 {
   "id": "deadasdisco",
+  "gameId": 7897,
   "name": "Game: Dead as Disco",
   "author": "ChemBoy1",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Vortex support for Dead as Disco"
 }

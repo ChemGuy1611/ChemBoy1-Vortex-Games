@@ -1,7 +1,8 @@
 {
   "id": "likeadragonpirateyakuzainhawaii",
+  "gameId": 7333,
   "name": "Game: Like a Dragon: Pirate Yakuza in Hawaii",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for Like a Dragon: Pirate Yakuza in Hawaii"
 }

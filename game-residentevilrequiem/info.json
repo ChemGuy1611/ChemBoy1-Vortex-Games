@@ -1,7 +1,8 @@
 {
   "id": "residentevilrequiem",
+  "gameId": 8863,
   "name": "Game: Resident Evil Requiem",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for Resident Evil Requiem"
 }

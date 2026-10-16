@@ -2,8 +2,8 @@
 Name: Bellwright Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-10-12
+Version: 1.0.2
+Date: 2026-10-16
 Notes:
 - Pak load order is off by design: official ModKit mods load from Content/Mods and are ordered in the game's own mod menu (PAKMOD_LOADORDER = false).
 - Loose .pak mods without a modinfo.json install to ~mods.

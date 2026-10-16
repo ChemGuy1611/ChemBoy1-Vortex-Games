@@ -1,7 +1,8 @@
 {
   "id": "bioshock2",
+  "gameId": 4853,
   "name": "Game: BioShock 2 Remastered",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for BioShock 2 Remastered"
 }

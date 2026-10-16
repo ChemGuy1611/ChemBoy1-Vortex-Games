@@ -2,8 +2,8 @@
 Name: Dead Rising Deluxe Remaster Vortex Extension
 Structure: 3rd Party Mod Manager (Fluffy)
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-10-12
+Version: 1.0.1
+Date: 2026-10-16
 Notes:
 - Demo version has same exe name and same Fluffy folder name
 */

@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.2.1] - 2026-10-16
+
+- Added the game's Nexus Mods ID to the extension's info file.
+
 ## [1.2.0] - 2026-10-12
 
 - Added a fallback installer: when no other installer matches a mod, Vortex now shows a notice and installs the files to the game folder.

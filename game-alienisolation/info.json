@@ -1,7 +1,8 @@
 {
   "id": "alienisolation",
+  "gameId": 1310,
   "name": "Game: Alien Isolation",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for Alien Isolation"
 }

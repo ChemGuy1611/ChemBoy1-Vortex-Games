@@ -1,7 +1,8 @@
 {
   "id": "routine",
+  "gameId": 8499,
   "name": "Game: ROUTINE",
   "author": "ChemBoy1",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Vortex support for ROUTINE"
 }

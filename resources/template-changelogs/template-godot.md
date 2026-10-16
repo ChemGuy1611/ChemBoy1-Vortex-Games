@@ -1,5 +1,9 @@
 # template-godot Changelog
 
+## [2026-10-16]
+
+- Added: a `gameId` field to `info.json`, directly after `id`, set to the `"XXX"` placeholder that `new_extension.py` replaces with the numeric Nexus Mods game id of the game's Nexus domain (for example `1303` for `stardewvalley`). In a finished extension it is a number, not a string.
+
 ## [2026-10-11]
 
 - Fixed: `installMod` cut each mod's destination with `modFile.indexOf(path.basename(modFile))`, which finds the FIRST occurrence of the marker's name in the path, so a mod whose folder name contains `mod_main.gd` (`mod_main.gd.bak/mod_main.gd`) was cut inside the folder name and the folder name was doubled in the install path. It now uses `lastIndexOf`, which always lands on the marker file's own path segment.

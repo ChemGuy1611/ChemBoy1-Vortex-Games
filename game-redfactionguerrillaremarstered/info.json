@@ -1,7 +1,8 @@
 {
   "id": "redfactionguerrillaremarstered",
+  "gameId": 2538,
   "name": "Game: Red Faction Guerrilla Re-Mars-tered",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for Red Faction Guerrilla Re-Mars-tered"
 }

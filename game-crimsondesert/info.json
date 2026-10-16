@@ -1,7 +1,8 @@
 {
   "id": "crimsondesert",
+  "gameId": 8969,
   "name": "Game: Crimson Desert",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for Crimson Desert"
 }

@@ -1,7 +1,8 @@
 {
   "id": "nioh3",
+  "gameId": 8740,
   "name": "Game: Nioh 3",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for Nioh 3"
 }

@@ -2,8 +2,8 @@
 Name: Uncharted: Legacy of Thieves Collection Vortex Extension
 Structure: 3rd Party Mod Manager (Fluffy)
 Author: ChemBoy1
-Version: 0.3.2
-Date: 2026-08-11
+Version: 0.3.3
+Date: 2026-10-16
 */
 
 //Import libraries

@@ -1,7 +1,8 @@
 {
   "id": "deathstranding2onthebeach",
+  "gameId": 8932,
   "name": "Game: DEATH STRANDING 2: ON THE BEACH",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for DEATH STRANDING 2: ON THE BEACH"
 }

@@ -1,13 +1,13 @@
 """
 audit_scripts.py
 
-Runs seven audits and reports drift found in any:
+Runs eight audits and reports drift found in any:
 
   1. Header docstring audit -- compares each script's flags and env-var reads
      against the flags and env vars documented in its own header (Usage: and
      Environment variables: sections). Covers Python scripts (argparse) and
-     Node scripts (flags.has('--x') lookups and KNOWN_FLAGS sets, documented
-     under Run with: / Flags: in the banner comment).
+     Node scripts (flags.has('--x') lookups, KNOWN_FLAGS sets and arg === '--x'
+     comparisons, documented under Run with: / Flags: in the banner comment).
 
   2. SCRIPTS.md audit -- compares the same code-extracted flags and env vars
      against the corresponding script section in SCRIPTS.md (### name --
@@ -31,6 +31,11 @@ Runs seven audits and reports drift found in any:
      to index.js / info.json / CHANGELOG outside the atomic helpers
      (write_index_js / write_*_atomic / os.replace). Blocking. Suppress a line
      with  # noqa: nonatomic-write  when a non-atomic write is intentional.
+
+  8. Mojibake audit -- detects UTF-8 text that a tool re-read as Windows cp1252
+     and saved again (an em-dash turned into three junk characters) in every
+     script source, SCRIPTS.md and scripts.txt. Blocking. Each hit must decode
+     back to real UTF-8, so a genuine accented letter is not flagged.
 
 Read-only; never modifies any file.
 
@@ -115,12 +120,15 @@ def _extract_js_module_docstring(src):
 def _extract_js_flags(src):
     """Return the set of --flag strings a Node script actually recognises.
 
-    Both idioms in this repo are covered: `flags.has('--x')` lookups and the
+    The idioms in this repo are covered: `flags.has('--x')` lookups, the
     `KNOWN_FLAGS = new Set([...])` whitelist that lint_extensions.js validates
-    against."""
-    flags = set(re.findall(r'\.has\(\s*[\'"](--[\w-]+)[\'"]\s*\)', src))
+    against, and a hand-rolled argv loop comparing `arg === '--x'` (also
+    `argv.includes('--x')`)."""
+    flags = set(re.findall(r'\.(?:has|includes)\(\s*[\'"](--[A-Za-z][\w-]*)[\'"]\s*\)', src))
+    flags.update(re.findall(r'[=!]==?\s*[\'"](--[A-Za-z][\w-]*)[\'"]', src))
+    flags.update(re.findall(r'[\'"](--[A-Za-z][\w-]*)[\'"]\s*[=!]==?', src))
     for m in re.finditer(r'KNOWN_FLAGS\s*=\s*new Set\(\[([^\]]*)\]', src):
-        flags.update(re.findall(r'[\'"](--[\w-]+)[\'"]', m.group(1)))
+        flags.update(re.findall(r'[\'"](--[A-Za-z][\w-]*)[\'"]', m.group(1)))
     return flags
 
 
@@ -209,7 +217,7 @@ def _parse_docstring_flags(docstring):
             if m and m.group(1).lower() in _SECTION_HEADERS:
                 in_usage = False
                 continue
-            flags.update(re.findall(r'--[\w-]+', line))
+            flags.update(re.findall(r'--[A-Za-z][\w-]*', line))
     return flags
 
 
@@ -285,13 +293,14 @@ def _parse_scripts_md():
             cleaned = re.sub(r'`(?:node|npx)\s[^`]*`', '', line)
             if in_fence:
                 # Inside a fenced example block every flag shown is a real one.
-                result[current_script]['flags'].update(re.findall(r'--[\w-]+', cleaned))
+                result[current_script]['flags'].update(re.findall(r'--[A-Za-z][\w-]*', cleaned))
             else:
                 # Outside a fence, only treat a line that OPENS with the flag as a
                 # declaration of it. Explanatory prose mentions flags mid-sentence --
                 # notably "There is deliberately no `--check` flag", which otherwise
                 # registers --check as documented and reports phantom drift.
-                m = re.match(r'^\s*(?:[-*]\s*)?`?(--[\w-]+)', cleaned)
+                # The name must start with a letter: a "---" rule closing the section is no flag.
+                m = re.match(r'^\s*(?:[-*]\s*)?`?(--[A-Za-z][\w-]*)', cleaned)
                 if m:
                     result[current_script]['flags'].add(m.group(1))
         elif current_sub == 'envvars':
@@ -614,6 +623,56 @@ def audit_nonatomic_writes(paths):
     return bool(hits), hits
 
 
+# UTF-8 text that was decoded as Windows cp1252 and saved again ("mojibake"): a multi-byte
+# character's lead byte (U+00C2 / U+00C3 / U+00E2 / U+00F0 as a Latin-1 letter) followed by its
+# continuation bytes shown as cp1252 characters, so an em-dash becomes U+00E2 U+20AC U+201D.
+# Written with \u escapes so this file never contains a mangled sequence itself.
+_MOJIBAKE_RE = re.compile(
+    "[ÂÃâð][\u0080-¿ŒœŠšŸŽžƒˆ˜"
+    "–—‘’‚“”„†‡•…‰‹›€™]{1,3}"
+)
+
+
+def _unmangle(seq):
+    """Return the text a mangled sequence was before the cp1252 round trip, or None when it
+    does not decode as UTF-8 (so it is not mojibake, just an accented letter)."""
+    try:
+        raw = b"".join(ch.encode("cp1252") if ch.encode("cp1252", "ignore") else ch.encode("latin-1")
+                       for ch in seq)
+        return raw.decode("utf-8")
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        return None
+
+
+def audit_mojibake(paths):
+    """Detect mojibake in SCRIPTS.md, scripts.txt and every script source.
+
+    A tool that reads UTF-8 as cp1252 and saves the result turns each non-ASCII character
+    (em-dash, trademark sign, arrow, accented letter) into 2-4 junk ones; nothing else
+    notices, because the file is still valid UTF-8. Every candidate must round-trip back to
+    real UTF-8 text before it is reported, which keeps a genuine accented letter from
+    counting. Returns (any_issue, {file_name: [(line_no, mangled_codepoints, fixed_codepoints)]}),
+    code points as 'U+XXXX' text so the report stays ASCII."""
+    def cps(text):
+        return "+".join(f"U+{ord(c):04X}" for c in text)
+
+    targets = list(paths) + [SCRIPTS_MD, SCRIPTS_TXT]
+    hits: dict[str, list[tuple[int, str, str]]] = {}
+    seen = set()
+    for path in targets:
+        name = os.path.basename(path)
+        if name in seen or not os.path.isfile(path):
+            continue
+        seen.add(name)
+        with open(path, encoding="utf-8", errors="replace") as f:
+            for line_no, line in enumerate(f, 1):
+                for m in _MOJIBAKE_RE.finditer(line):
+                    fixed = _unmangle(m.group(0))
+                    if fixed is not None:
+                        hits.setdefault(name, []).append((line_no, cps(m.group(0)), cps(fixed)))
+    return bool(hits), hits
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
@@ -676,9 +735,13 @@ def main():
     # -- non-atomic write audit (blocking) --
     nonatomic_issue, nonatomic_hits = audit_nonatomic_writes(all_py_paths)
 
+    # -- mojibake audit (blocking): every script source, SCRIPTS.md and scripts.txt --
+    all_script_paths = [p for p in iter_repo_scripts() if p.endswith(('.py', '.js'))]
+    mojibake_issue, mojibake_hits = audit_mojibake(all_script_paths)
+
     # prints_issue is informational only -- raw-print calls are migration candidates, not blocking
     any_drift = (header_drift or md_drift or txt_issue or exports_drift
-                 or contents_drift or nonatomic_issue)
+                 or contents_drift or nonatomic_issue or mojibake_issue)
 
     if args.json:
         output = {
@@ -709,6 +772,10 @@ def main():
             },
             "nonatomic_writes_audit": {
                 name: lines for name, lines in nonatomic_hits.items()
+            },
+            "mojibake_audit": {
+                name: [{"line": n, "found": found, "expected": fixed} for n, found, fixed in rows]
+                for name, rows in mojibake_hits.items()
             },
             "drift_found": any_drift,
         }
@@ -782,6 +849,17 @@ def main():
             print(f"  {name}: non-atomic write on line(s) {nums} -- use write_index_js/write_*_atomic/os.replace")
     else:
         print("  No non-atomic writes to managed files found.")
+
+    print()
+    print("Checking scripts, SCRIPTS.md and scripts.txt for mojibake (UTF-8 re-read as cp1252)...\n")
+    if mojibake_hits:
+        for name, rows in sorted(mojibake_hits.items()):
+            nums = ", ".join(str(n) for n, _, _ in rows)
+            _, found, fixed = rows[0]
+            print(f"  {name}: {len(rows)} mangled sequence(s) on line(s) {nums} "
+                  f"(first: {found} should be {fixed})")
+    else:
+        print("  No mojibake found.")
 
     print()
     if any_drift:

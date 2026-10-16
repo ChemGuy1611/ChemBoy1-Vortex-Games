@@ -1,7 +1,8 @@
 {
   "id": "borderlands4",
+  "gameId": 8148,
   "name": "Game: Borderlands 4",
   "author": "ChemBoy1",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Vortex support for Borderlands 4"
 }

@@ -1,7 +1,8 @@
 {
   "id": "pathologic3",
+  "gameId": 7447,
   "name": "Game: Pathologic 3",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for Pathologic 3"
 }

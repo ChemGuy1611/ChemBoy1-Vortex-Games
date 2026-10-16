@@ -1,7 +1,8 @@
 {
   "id": "misery",
+  "gameId": 8383,
   "name": "Game: MISERY",
   "author": "ChemBoy1",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "Vortex support for MISERY"
 }

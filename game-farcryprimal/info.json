@@ -1,7 +1,8 @@
 {
   "id": "farcryprimal",
+  "gameId": 1296,
   "name": "Game: Far Cry Primal",
   "author": "ChemBoy1",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Vortex support for Far Cry Primal"
 }

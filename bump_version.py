@@ -8,8 +8,10 @@ which case it warns and leaves that section alone instead of stacking an
 empty stub over it. After bumping it lists any open "Planned Improvements
 (Not Yet Released)" bullets as a hint; by default it never moves them (only
 items actually done this round belong in the new section), and
---move-planned opts in to moving the ones that read as done. release_extension.py
-refuses a version whose section is still an empty stub.
+--move-planned opts in to moving the ones that read as done, and --note TEXT adds
+one bullet of your own (the whole entry for a metadata-only release, or the last
+line after moved bullets). release_extension.py refuses a version whose section is
+still an empty stub.
 
 Each EXT_ID is looked up as a game-<id> folder first, then a helper-<id>
 folder (e.g. "globalignorepatterns" bumps helper-globalignorepatterns).
@@ -23,6 +25,7 @@ Usage:
     python bump_version.py --patch EXT_ID --open-changelog
     python bump_version.py --patch EXT_ID [EXT_ID ...] --move-planned
     python bump_version.py --patch EXT_ID --move-planned all --dry-run
+    python bump_version.py --patch EXT_ID [EXT_ID ...] --note "Added X to the extension."
 
 Options:
     --major          Bump major segment: 1.2.3 -> 2.0.0 (resets minor and patch)
@@ -36,7 +39,11 @@ Options:
                      or "Added <thing>"; all = every bullet except a "None" placeholder.
                      Open plans stay; the Planned section is deleted when emptied.
                      A new section that already has note text is never touched.
-    --dry-run        Print changes without writing files
+    --note TEXT      Add TEXT as a bullet to the new section: it replaces the bare stub, or
+                     goes after the bullets --move-planned already moved in. A leading "- "
+                     is optional. Use it for a release whose only change has no Planned
+                     bullet (for example a metadata field added to every extension).
+    --dry-run       Print changes without writing files
 """
 
 import datetime
@@ -53,7 +60,7 @@ def _bump(version: str, bump_type: str) -> str:
 
 def _process(folder: str, game_id: str, bump_type: str | None, dry_run: bool,
              manual_ver: str | None = None, open_changelog: bool = False,
-             move_planned: str | None = None) -> bool:
+             move_planned: str | None = None, note: str | None = None) -> bool:
     info = vu.read_info_json(folder)
     if info is None:
         vu.log_error(game_id, "info.json missing or invalid")
@@ -93,6 +100,8 @@ def _process(folder: str, game_id: str, bump_type: str | None, dry_run: bool,
                 print(f"    + {line}")
             for line in left:
                 print(f"    = {line}")
+        if note:
+            vu.log_dry(f"Would add note to [{new_ver}]: {note}")
         if open_changelog:
             vu.log_dry("Would open CHANGELOG.md in the default editor")
         return True
@@ -120,10 +129,14 @@ def _process(folder: str, game_id: str, bump_type: str | None, dry_run: bool,
             for line in result[1]:
                 print(f"    = {line}")
 
+    noted = bool(note) and vu.add_changelog_note(folder, new_ver, note)
+    if noted:
+        vu.log_info(game_id, f"[{new_ver}] note added")
+
     # Without --move-planned this is a hint only: moving a bullet is a human call (it
     # must actually have shipped). With it, whatever read as done is already in the stub,
-    # so the hint is only needed when nothing was moved.
-    if not moved:
+    # so the hint is only needed when nothing was moved. A note also fills the stub.
+    if not moved and not noted:
         planned = vu.open_planned_improvements(folder)
         if planned:
             vu.log_info(game_id, f"[{new_ver}] stub needs note text; {len(planned)} open Planned "
@@ -179,6 +192,12 @@ def main():
              "rest as open plans; 'all' moves every bullet except a 'None' placeholder. The "
              "Planned section is deleted when nothing is left in it.",
     )
+    parser.add_argument(
+        "--note",
+        metavar="TEXT",
+        help="Add TEXT as a bullet to the new [X.Y.Z] section (replaces the bare stub, or goes "
+             "after the bullets --move-planned moved in). A leading '- ' is optional.",
+    )
     args = parser.parse_args()
 
     if args.version and not vu.is_valid_semver(args.version):
@@ -192,7 +211,7 @@ def main():
     def _run_one(folder, ext_id):
         try:
             ok = _process(folder, ext_id, bump_type, args.dry_run, manual_ver,
-                          args.open_changelog, args.move_planned)
+                          args.open_changelog, args.move_planned, args.note)
             (saved if ok else failed).append(ext_id)
         except Exception as e:
             vu.log_error(ext_id, f"unexpected error: {e}")

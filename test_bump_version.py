@@ -1,16 +1,19 @@
 """
 test_bump_version.py
 
-Offline test for the --move-planned option of bump_version.py and the vortex_utils helpers
-under it (split_planned_bullets, move_planned_to_version). Every case builds a throwaway
-extension folder in a temp directory, so nothing in the repo is read or written.
+Offline test for the --move-planned and --note options of bump_version.py and the
+vortex_utils helpers under them (split_planned_bullets, move_planned_to_version,
+add_changelog_note). Every case builds a throwaway extension folder in a temp directory,
+so nothing in the repo is read or written.
 
 Covers: the default (no flag) leaving the stub bare and Planned untouched; 'done' moving
 only bullets that read as done and keeping open plans, a "None" placeholder and a wrapped
 (two-line) bullet in the right place; 'all' moving every bullet except the placeholder; the
 Planned section being deleted once nothing is left in it; a stub that already has note
-text never being overwritten; --dry-run writing nothing; and an extension with no Planned
-section.
+text never being overwritten; --dry-run writing nothing; an extension with no Planned
+section; and --note replacing a bare stub, going after moved bullets, accepting a leading
+dash, writing nothing on --dry-run, and add_changelog_note being idempotent and leaving the
+last section of a file with a single final newline.
 
 Run it after any change to the CHANGELOG helpers in vortex_utils.py or to the bump flow.
 
@@ -30,6 +33,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
 import bump_version as bv  # noqa: E402
+import vortex_utils as vu  # noqa: E402
+from vortex_utils import write_text_atomic  # noqa: E402
 
 INDEX_JS = "/*\nStructure: Basic\nVersion: 1.0.0\nDate: 2026-01-01\n*/\n"
 
@@ -66,18 +71,15 @@ NO_PLANNED = "# Changelog\n\n## [1.0.0] - 2026-01-01\n\n- Initial release\n"
 def make(tmp, name, changelog):
     folder = os.path.join(tmp, name)
     os.makedirs(folder)
-    with open(os.path.join(folder, "info.json"), "w", encoding="utf-8") as f:
-        f.write('{\n  "id": "%s",\n  "version": "1.0.0"\n}\n' % name)
-    with open(os.path.join(folder, "index.js"), "w", encoding="utf-8") as f:
-        f.write(INDEX_JS)
-    with open(os.path.join(folder, "CHANGELOG.md"), "w", encoding="utf-8") as f:
-        f.write(changelog)
+    write_text_atomic(os.path.join(folder, "info.json"), '{\n  "id": "%s",\n  "version": "1.0.0"\n}\n' % name)
+    write_text_atomic(os.path.join(folder, "index.js"), INDEX_JS)
+    write_text_atomic(os.path.join(folder, "CHANGELOG.md"), changelog)
     return folder
 
 
-def bump(folder, move_planned=None, dry_run=False, manual_ver=None):
+def bump(folder, move_planned=None, dry_run=False, manual_ver=None, note=None):
     with contextlib.redirect_stdout(io.StringIO()):
-        return bv._process(folder, os.path.basename(folder), "patch", dry_run, manual_ver, False, move_planned)
+        return bv._process(folder, os.path.basename(folder), "patch", dry_run, manual_ver, False, move_planned, note)
 
 
 def read(folder):
@@ -155,6 +157,42 @@ def main():
         assert bump(f, "done")
         assert "## [1.0.1]" in read(f) and section(read(f), "## [1.0.1]").strip() == "-"
         print("no Planned section ok: stub left bare, no error")
+
+        # --note on a bare stub replaces it; Planned is untouched
+        f = make(tmp, "note", MIXED)
+        assert bump(f, note="Added the game's ID to the info file.")
+        t = read(f)
+        assert section(t, "## [1.0.1]").strip() == "- Added the game's ID to the info file.", section(t, "## [1.0.1]")
+        assert "- Fixed: first thing" in section(t, "## Planned")
+        print("note ok: bare stub replaced, Planned untouched")
+
+        # a leading "- " on the note is accepted, not doubled
+        f = make(tmp, "notedash", NO_PLANNED)
+        assert bump(f, note="- Added a thing.")
+        assert section(read(f), "## [1.0.1]").strip() == "- Added a thing."
+        print("note ok: leading dash not doubled")
+
+        # --note after --move-planned goes last, after the moved bullets
+        f = make(tmp, "notemoved", ONLY_DONE)
+        assert bump(f, "done", note="Added the ID.")
+        lines = section(read(f), "## [1.0.1]").strip().splitlines()
+        assert lines == ["- Fixed: only thing", "- Added: another thing", "- Added the ID."], lines
+        print("note ok: appended after the moved bullets")
+
+        # dry run with a note writes nothing
+        f = make(tmp, "notedry", MIXED)
+        assert bump(f, dry_run=True, note="Added the ID.")
+        assert read(f) == MIXED
+        print("note dry-run ok: no files written")
+
+        # add_changelog_note: idempotent, and the last section of the file keeps a single final newline
+        f = make(tmp, "notelast", NO_PLANNED)
+        assert vu.add_changelog_note(f, "1.0.0", "Second bullet.") is True
+        assert vu.add_changelog_note(f, "1.0.0", "Second bullet.") is False
+        assert vu.add_changelog_note(f, "9.9.9", "No such section.") is False
+        t = read(f)
+        assert t.endswith("- Initial release\n- Second bullet.\n") and not t.endswith("\n\n"), repr(t[-60:])
+        print("add_changelog_note ok: idempotent, missing section refused, one final newline")
 
     print("ALL OK")
 

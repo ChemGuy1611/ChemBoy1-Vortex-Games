@@ -1,7 +1,8 @@
 {
   "id": "deadrisingdeluxeremaster",
+  "gameId": 6837,
   "name": "Game: Dead Rising Deluxe Remaster",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for Dead Rising Deluxe Remaster"
 }

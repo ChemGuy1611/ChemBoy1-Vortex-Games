@@ -1,7 +1,8 @@
 {
   "id": "watchdogs",
+  "gameId": 533,
   "name": "Game: Watch_Dogs",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for Watch_Dogs"
 }

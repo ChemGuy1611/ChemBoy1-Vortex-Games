@@ -1,7 +1,8 @@
 {
   "id": "thelastofuspart2",
+  "gameId": 7521,
   "name": "Game: The Last of Us Part II Remastered",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for The Last of Us Part II Remastered"
 }

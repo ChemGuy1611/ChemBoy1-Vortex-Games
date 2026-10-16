@@ -2,8 +2,8 @@
 Name: MY HERO ACADEMIA: All's Justice Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-10-12
+Version: 1.0.2
+Date: 2026-10-16
 Notes:
 - There is no exe in the game root: the only exe is HeroGame\Binaries\Win64\AJGAME.exe (no -Shipping suffix). Saves live in %LOCALAPPDATA%\BANDAI NAMCO Entertainment\MY HERO ACADEMIA Alls Justice\Saved\SaveGames\<user id>. PCGamingWiki lists the Config folder as Saved\Windows (no Config folder); this extension keeps the standard Saved\Config\Windows, unverified. Nexus mod authors require the Sig Bypass (installed into Binaries\Win64) for pak mods to load.
 ////////////////////////////////////////////////*/

@@ -1,7 +1,8 @@
 {
   "id": "hollowknight",
+  "gameId": 2698,
   "name": "Game: Hollow Knight",
   "author": "ChemBoy1",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "Vortex support for Hollow Knight"
 }

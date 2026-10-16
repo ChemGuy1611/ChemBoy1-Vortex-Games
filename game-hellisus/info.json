@@ -1,7 +1,8 @@
 {
   "id": "hellisus",
+  "gameId": 7813,
   "name": "Game: Hell is Us",
   "author": "ChemBoy1",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Vortex support for Hell is Us"
 }

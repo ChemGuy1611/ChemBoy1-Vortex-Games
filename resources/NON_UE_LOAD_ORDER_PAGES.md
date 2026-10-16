@@ -22,7 +22,7 @@ lifecycle, `IItemRendererProps`, virtualization). Everything here is stated as a
 | `game-middleearthshadowofwar`     | LithTech-derived   | B    | Minimal renderer                                  |
 | `game-thelastofuspart2`           | Naughty Dog engine | B    | Minimal renderer                                  |
 | `game-warhammer40000spacemarine2` | Swarm              | B    | Minimal renderer                                  |
-| `game-warhammer40kdarkheresy`     | —                  | B    | Minimal renderer                                  |
+| `game-warhammer40000darkheresy`   | —                  | B    | Minimal renderer                                  |
 | `game-warhammer40kroguetrader`    | Unity              | B    | Minimal renderer                                  |
 | `game-helldivers2`                | Autodesk Stingray  | G    | Full FBLO renderer + context menu + status filter |
 | `game-lookoutside`                | RPG Maker MV/MZ    | G    | Full FBLO renderer + context menu + status filter |

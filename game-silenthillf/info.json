@@ -1,7 +1,8 @@
 {
   "id": "silenthillf",
+  "gameId": 8203,
   "name": "Game: Silent Hill f",
   "author": "ChemBoy1",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Vortex support for Silent Hill f"
 }

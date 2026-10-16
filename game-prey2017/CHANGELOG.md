@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.1] - 2026-10-16
+
+- Added the game's Nexus Mods ID to the extension's info file.
+
 ## [1.0.0] - 2026-10-12
 
 - Fixed: Mod archives containing README, CHANGELOG, or LICENSE files are no longer flagged as file conflicts or excluded from deployment

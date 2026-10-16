@@ -2,8 +2,8 @@
 Name: Windrose Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
-Version: 1.1.4
-Date: 2026-10-12
+Version: 1.1.5
+Date: 2026-10-16
 Notes:
 - User selects where to install pak mods (SP or MP)
 - Dedicated Server registered as a separate game

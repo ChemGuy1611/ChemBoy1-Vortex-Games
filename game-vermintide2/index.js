@@ -1,8 +1,8 @@
 /*
 Name: Warhammer Vermintide 2 Vortex Extension
 Author: ChemBoy1
-Version: 1.1.0
-Date: 2026-08-03
+Version: 1.1.1
+Date: 2026-10-16
 */
 
 //Import libraries

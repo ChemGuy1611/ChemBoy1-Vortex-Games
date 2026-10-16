@@ -1,5 +1,9 @@
 # template-snowdropengine Changelog
 
+## [2026-10-16]
+
+- Added: a `gameId` field to `info.json`, directly after `id`, set to the `"XXX"` placeholder that `new_extension.py` replaces with the numeric Nexus Mods game id of the game's Nexus domain (for example `1303` for `stardewvalley`). In a finished extension it is a number, not a string.
+
 ## [2026-10-11]
 
 - Fixed: the mod loader installer (`installModLoader`) also emitted a copy instruction for every folder entry inside the loader's folder (the wrapper folder itself landed on destination `.`), because its file filter did not drop folder entries like the other installers do. It now uses the same `!file.endsWith(path.sep) && file.startsWith(rootPrefix)` filter.

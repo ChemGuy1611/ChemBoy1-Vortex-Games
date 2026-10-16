@@ -88,6 +88,8 @@ Usage:
         extension_display_name, extension_prefix, resolve_extension_folder,
         iter_helper_folders, list_helper_ids, is_multi_game_extension,
         add_planned_improvement, open_planned_improvements,
+        split_planned_bullets, move_planned_to_version, add_changelog_note,
+        NEVER_UPLOAD_GAMES, DEPRECATED_GAMES, releasable_game_ids, fetch_vortex_extensions_feed,
         changelog_entry_is_empty, unreleased_intermediate_sections,
     )
 """
@@ -162,6 +164,17 @@ HELPER_PREFIX   = "helper-"
 # Starting version stamped into every newly created extension: info.json, the
 # CHANGELOG.md entry, the index.js header, and the version .txt filename.
 NEW_EXTENSION_VERSION = "1.0.0"
+
+# Games that are versioned and changelogged like published ones but never uploaded to Nexus:
+# permanent test beds and CB1's personal-use parallels of games NexusMods supports itself.
+NEVER_UPLOAD_GAMES = frozenset({
+    "warhammer40kdarktide",     # non-UE / generic load order test bed
+    "subnautica2",              # UE4-5 test bed
+    "starwarszerocompany",      # Personal version, officially supported by NexusMods
+    "thebloodofdawnwalker",     # Personal version, officially supported by NexusMods
+})
+# Retired extensions: frozen in the repo, never updated or released again.
+DEPRECATED_GAMES = frozenset({"battlefield1"})
 
 VORTEX_PLUGINS_DIR = os.environ.get("VORTEX_PLUGINS_DIR", r"C:\ProgramData\vortex\plugins")
 
@@ -2635,6 +2648,19 @@ def iter_game_folders(target_game_ids=None):
         yield folder, game_id, src
 
 
+def releasable_game_ids(exclude=()):
+    """Sorted ids of the game-* extensions that can be uploaded to Nexus.
+
+    A game qualifies when EXTENSION_URL holds a real Nexus page and it is not in
+    NEVER_UPLOAD_GAMES (test beds, personal-use), DEPRECATED_GAMES, or `exclude` (for
+    example an extension blocked on an external tool). The URL const is a hand-kept signal,
+    weak in both directions (see is_unreleased_extension), so confirm the list before a
+    bulk upload."""
+    skip = NEVER_UPLOAD_GAMES | DEPRECATED_GAMES | set(exclude)
+    return sorted(gid for _folder, gid, src in iter_game_folders()
+                  if gid not in skip and not is_unreleased_extension(src))
+
+
 def iter_helper_folders(target_ids=None):
     """Yield (folder, helper_id, src) for every helper-* extension folder.
     If target_ids is a non-empty collection, only those helper IDs are yielded.
@@ -2900,9 +2926,7 @@ def load_vortex_manifest(entries=None):
     try:
         domains = {game_id: domain for domain, game_id in load_nexus_gamelist().items()}
         if entries is None:
-            req = urllib.request.Request(f"{_NEXUS_V3}/vortex/extensions", headers=_NEXUS_V3_HEADERS)
-            with urllib.request.urlopen(req, timeout=_HTTP_TIMEOUT) as resp:
-                entries = json.loads(resp.read())["data"]["extensions"]
+            entries = fetch_vortex_extensions_feed()["data"]["extensions"]
         result = {}
         for e in entries:
             if e.get("type") != "game" or e.get("author_user_id") != CB1_NEXUS_USER_ID:
@@ -3588,6 +3612,36 @@ def move_planned_to_version(folder, version, move_all=False):
     return shipped, left
 
 
+def add_changelog_note(folder, version, note):
+    """Add one bullet to CHANGELOG.md's ## [version] section.
+
+    A bare stub ("- ") is replaced by the bullet; a section that already has note text (for
+    example after bump_version.py --move-planned) gets it appended after the last bullet.
+    `note` is the text without the leading "- " (one is stripped if given). Returns True if
+    written, False when CHANGELOG.md or the section is missing or the bullet is already there."""
+    path = os.path.join(folder, "CHANGELOG.md")
+    if not os.path.isfile(path):
+        return False
+    bullet = "- " + re.sub(r"^\s*[-*]\s+", "", note.strip())
+    with open(path, encoding="utf-8") as f:
+        content = f.read()
+    m = re.search(r"^## \[" + re.escape(version) + r"\][^\n]*\n(.*?)(?=^## |\Z)",
+                  content, re.MULTILINE | re.DOTALL)
+    if not m:
+        return False
+    body = m.group(1)
+    if bullet in (line.strip() for line in body.splitlines()):
+        return False
+    if changelog_entry_is_empty(body):
+        new_body = "\n" + bullet + "\n"
+    else:
+        new_body = "\n" + body.strip("\n") + "\n" + bullet + "\n"
+    if m.end(1) < len(content):
+        new_body += "\n"  # blank line before the next section; the last section ends with one newline
+    write_text_atomic(path, content[:m.start(1)] + new_body + content[m.end(1):])
+    return True
+
+
 def changelog_entry_is_empty(entry):
     """True when a CHANGELOG entry (as returned by nexus_upload.extract_changelog_entry)
     carries no note text: only a date line and bare "-" / "*" bullets, which is
@@ -3779,6 +3833,22 @@ def nexus_v3_get(path, api_key):
             pass
         raise RuntimeError(f"nexus_v3_get {path}: HTTP {e.code} {e.reason} - {body[:200]}") from None
     return result["r"]
+
+
+def fetch_vortex_extensions_feed():
+    """GET the public v3 /vortex/extensions feed (no API key) and return the parsed response,
+    {"data": {"extensions": [...], "themes": [...], "translations": [...]}}.
+
+    One call lists every extension on Nexus with its published `version`, `mod_id` and (for a
+    game extension) numeric `game_id`. Raises on a network error or an unexpected shape."""
+    req = urllib.request.Request(f"{_NEXUS_V3}/vortex/extensions", headers=_NEXUS_V3_HEADERS)
+    with urllib.request.urlopen(req, timeout=60) as resp:
+        payload = json.loads(resp.read())
+    data = payload["data"]
+    for key in ("extensions", "themes", "translations"):
+        if not isinstance(data[key], list):
+            raise ValueError(f"data.{key} is not a list")
+    return payload
 
 
 def nexus_v3_post_json(path, body, api_key):

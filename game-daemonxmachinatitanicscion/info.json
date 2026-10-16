@@ -1,7 +1,8 @@
 {
   "id": "daemonxmachinatitanicscion",
+  "gameId": 8080,
   "name": "Game: Daemon X Machina: Titanic Scion",
   "author": "ChemBoy1",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Vortex support for Daemon X Machina: Titanic Scion"
 }

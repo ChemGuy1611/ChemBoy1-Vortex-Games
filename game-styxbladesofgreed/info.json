@@ -1,7 +1,8 @@
 {
   "id": "styxbladesofgreed",
+  "gameId": 8659,
   "name": "Game: Styx: Blades of Greed",
   "author": "ChemBoy1",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Vortex support for Styx: Blades of Greed"
 }

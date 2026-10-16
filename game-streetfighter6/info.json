@@ -1,7 +1,8 @@
 {
   "id": "streetfighter6",
+  "gameId": 5329,
   "name": "Game: Street Fighter 6",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for Street Fighter 6"
 }

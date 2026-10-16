@@ -2,8 +2,8 @@
 Name: The Lord of the Rings: War in the North - Legacy Edition Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 1.1.0
-Date: 2026-10-12
+Version: 1.1.1
+Date: 2026-10-16
 Notes:
 -
 ///////////////////////////////////////////*/

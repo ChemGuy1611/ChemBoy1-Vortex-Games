@@ -1,5 +1,9 @@
 # template-tfcinstaller-ue2-3 Changelog
 
+## [2026-10-16]
+
+- Added: a `gameId` field to `info.json`, directly after `id`, set to the `"XXX"` placeholder that `new_extension.py` replaces with the numeric Nexus Mods game id of the game's Nexus domain (for example `1303` for `stardewvalley`). In a finished extension it is a number, not a string.
+
 ## [2026-10-11]
 
 - Fixed: `installCookedSub` cut the destination before it checked whether a Maps/Packages folder was found, so a package with only `.upk` files (no such folder) passed the test and then crashed the install on an undefined path. The folder lookup and the `.upk` fall-back now each set the cut position themselves.

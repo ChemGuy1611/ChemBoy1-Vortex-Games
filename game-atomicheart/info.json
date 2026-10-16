@@ -1,7 +1,8 @@
 {
   "id": "atomicheart",
+  "gameId": 5158,
   "name": "Game: Atomic Heart",
   "author": "ChemBoy1",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "Vortex support for Atomic Heart"
 }

@@ -291,6 +291,7 @@ root alongside `index.js`.
 ```json
 {
     "id": "warhammer40kdarktide",
+    "gameId": 4943,
     "name": "Game: Warhammer 40,000: Darktide",
     "author": "ChemBoy1",
     "version": "1.0.0",
@@ -301,6 +302,7 @@ root alongside `index.js`.
 | Field         | Type     | Notes                                                                                                                        |
 | ------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | `id`          | `string` | Stable extension identifier. Convention: the `GAME_ID` (a helper extension uses its folder id). Keep it first, and never change it after release. See [VORTEX_EXTENSION_LOADING.md](VORTEX_EXTENSION_LOADING.md) for what Vortex does with it. |
+| `gameId`      | `number` | Numeric Nexus Mods game id of the game's Nexus domain (the slug in `nexusmods.com/<domain>`, e.g. `4943` for `warhammer40kdarktide`). A JSON number, not a string. Repo convention, not read by Vortex's loader. Kept second, right after `id`. A game with no Nexus domain of its own uses the id of the closest Nexus game page (`gzdoom` uses `doom1993`'s `1839`). Look it up with `GET https://api.nexusmods.com/v1/games/<domain>.json` (the `id` field). |
 | `name`        | `string` | Display name in the Extensions list. Convention: `"Game: <Full Game Name>"`.                                                 |
 | `author`      | `string` | Extension author — `"ChemBoy1"` for this repo.                                                                               |
 | `version`     | `string` | Semver `MAJOR.MINOR.PATCH`. **Must match the latest `## [x.x.x]` entry in `CHANGELOG.md`.** New extensions start at `1.0.0`. |

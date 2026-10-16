@@ -2,8 +2,8 @@
 Name: NORSE: Oath of Blood Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-10-12
+Version: 1.0.2
+Date: 2026-10-16
 Notes:
 - The game is Unreal Engine 5.6.0. No Norse mod has used UE4SS yet; other UE 5.6 games needed a hand-made ue4ss\UE4SS_Signatures\*.lua next to stock UE4SS, which the Download UE4SS button does not provide, so UE4SS may not start until a signature file is added.
 - The shipping exe name (Norse-Win64-Shipping.exe) and the Save folder layout (flat SaveGames or a user id subfolder) are unverified: no install was available and PCGamingWiki lists no paths. Config is confirmed by the General Tweaks mod page: %LOCALAPPDATA%\Norse\Saved\Config\Windows.

@@ -1,7 +1,8 @@
 {
   "id": "onimushawayofthesword",
+  "gameId": 9356,
   "name": "Game: Onimusha: Way of the Sword",
   "author": "ChemBoy1",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Vortex support for Onimusha: Way of the Sword"
 }

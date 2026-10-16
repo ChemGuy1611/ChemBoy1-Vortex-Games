@@ -1,7 +1,8 @@
 {
   "id": "pragmata",
+  "gameId": 8522,
   "name": "Game: PRAGMATA",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for PRAGMATA"
 }

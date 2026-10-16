@@ -2,8 +2,8 @@
 Name: Crimson Desert Vortex Extension
 Structure: Basic Game w/ 3rd Party Manager Integration
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-10-12
+Version: 1.0.1
+Date: 2026-10-16
 Notes:
 - Supports plugin mods and data mods with "00XX" folders (XX <= 35)
 - Supports Crimson Browser (manifest.json and files folder) and JSON Mod Manager (.json or "0036+" folder) mods

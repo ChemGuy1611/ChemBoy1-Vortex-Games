@@ -1,7 +1,8 @@
 {
   "id": "hades2",
+  "gameId": 6354,
   "name": "Game: Hades II",
   "author": "ChemBoy1",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Vortex support for Hades II"
 }

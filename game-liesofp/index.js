@@ -2,8 +2,8 @@
 Name: Lies of P Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.1.2
-Date: 2026-10-12
+Version: 1.1.3
+Date: 2026-10-16
 Notes:
 - Rebuilt on the unified UE4-5 template (base file: game-trepang2/index.js), added UE4SS/LogicMods/Save mod support
 - Fixed a latent bug from the pre-FBLO 0.5.x extension: its Steam/Epic Config/Save paths joined a relative "Saved\Config\..." string onto the game's own install path instead of %LocalAppData%, pointing at a folder that doesn't exist (confirmed against real save/config location via web search). Now uses the template's standard LocalAppData path, matching Xbox (which was already correct).

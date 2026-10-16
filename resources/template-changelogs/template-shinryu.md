@@ -1,5 +1,9 @@
 # template-shinryu Changelog
 
+## [2026-10-16]
+
+- Added: a `gameId` field to `info.json`, directly after `id`, set to the `"XXX"` placeholder that `new_extension.py` replaces with the numeric Nexus Mods game id of the game's Nexus domain (for example `1303` for `stardewvalley`). In a finished extension it is a number, not a string.
+
 ## [2026-10-11]
 
 - Fixed: `installRoot` looked for the marker DLL with a case-sensitive compare while its test lower-cased file names, so a mod whose marker DLL was written in another case (`NVNGX_DLSS.dll`) passed the test and then crashed the install on an undefined file. The install now lower-cases the name the same way.

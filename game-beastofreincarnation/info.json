@@ -1,7 +1,8 @@
 {
   "id": "beastofreincarnation",
+  "gameId": 9755,
   "name": "Game: Beast of Reincarnation",
   "author": "ChemBoy1",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Vortex support for Beast of Reincarnation"
 }

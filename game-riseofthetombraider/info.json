@@ -1,7 +1,8 @@
 {
   "id": "riseofthetombraider",
+  "gameId": 2178,
   "name": "Game: Rise of the Tomb Raider",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for Rise of the Tomb Raider"
 }

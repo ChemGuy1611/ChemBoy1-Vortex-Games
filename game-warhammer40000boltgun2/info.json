@@ -1,7 +1,8 @@
 {
   "id": "warhammer40000boltgun2",
+  "gameId": 9447,
   "name": "Game: Warhammer 40,000: Boltgun 2",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for Warhammer 40,000: Boltgun 2"
 }

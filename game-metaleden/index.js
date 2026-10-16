@@ -2,8 +2,8 @@
 Name: METAL EDEN Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-10-12
+Version: 1.0.2
+Date: 2026-10-16
 Notes:
 - The game is Unreal Engine 5.3.1 with signed IO Store containers, so the Sig Bypass is required. Steam, GOG and the Steam demo are supported; there is no Epic or Xbox build.
 - Saves live in %LOCALAPPDATA%\MetalEden\Saved\SaveGames\<user id>\FileSave, so the Save folder is the user id folder plus FileSave. A user with several user id folders gets the first one alphabetically.

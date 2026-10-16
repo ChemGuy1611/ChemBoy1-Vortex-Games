@@ -1,5 +1,9 @@
 # template-unity-umm Changelog
 
+## [2026-10-16]
+
+- Added: a `gameId` field to `info.json`, directly after `id`, set to the `"XXX"` placeholder that `new_extension.py` replaces with the numeric Nexus Mods game id of the game's Nexus domain (for example `1303` for `stardewvalley`). In a finished extension it is a number, not a string.
+
 ## [2026-10-11]
 
 - Fixed: the "Open Save Folder" toolbar button handed the shell an unresolved Promise, because the async `getSavePath` was not awaited, so the button could not open the folder. The click handler is now async and awaits the path.

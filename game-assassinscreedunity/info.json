@@ -1,7 +1,8 @@
 {
   "id": "assassinscreedunity",
+  "gameId": 2619,
   "name": "Game: Assassin's Creed Unity",
   "author": "ChemBoy1",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Vortex support for Assassin's Creed Unity"
 }

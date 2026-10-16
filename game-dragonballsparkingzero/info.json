@@ -1,7 +1,8 @@
 {
   "id": "dragonballsparkingzero",
+  "gameId": 6892,
   "name": "Game: Dragon Ball: Sparking! Zero",
   "author": "ChemBoy1",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Vortex support for Dragon Ball: Sparking! Zero"
 }

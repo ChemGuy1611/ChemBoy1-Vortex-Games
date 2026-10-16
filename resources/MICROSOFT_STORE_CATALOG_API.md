@@ -202,7 +202,7 @@ needed). Only retry through `storeedgefd` — the same `v7.0/products/{id}` call
 or a different market returns byte-identical output, it is not a query-parameter problem.
 
 A genuinely empty `Payload.PrimaryPackageIdentity` (`None`, as opposed to a populated one with empty
-`Packages`) means there is no PC package at all yet — confirmed on `game-warhammer40kdarkheresy`
+`Packages`) means there is no PC package at all yet — confirmed on `game-warhammer40000darkheresy`
 (Owlcat has reserved `OwlcatGames.Warhammer40000DarkHeresy` and its `XBOX_PUB_ID` but shipped no build),
 distinct from a genuine redirect. **A package whose `PlatformDependencies` names only `Windows.Xbox`**
 (Pragmata's case, `PackageFormat: "XVC"`) means the title is Xbox-console-only for now — no PC/Desktop

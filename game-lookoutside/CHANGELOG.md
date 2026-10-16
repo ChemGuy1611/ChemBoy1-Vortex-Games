@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.3] - 2026-10-16
+
+- Added the game's Nexus Mods ID to the extension's info file.
+
 ## [1.0.2] - 2026-10-12
 
 - Added: A fallback installer. A mod no other installer recognises is now copied into the game folder as it is, with a notice explaining where it went.

@@ -1,7 +1,8 @@
 {
   "id": "unchartedlegacyofthievescollection",
+  "gameId": 4875,
   "name": "Game: Uncharted: Legacy of Thieves Collection",
   "author": "ChemBoy1",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Vortex support for Uncharted: Legacy of Thieves Collection"
 }

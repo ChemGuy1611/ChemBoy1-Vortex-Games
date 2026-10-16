@@ -1,7 +1,8 @@
 {
   "id": "farfarwest",
+  "gameId": 8879,
   "name": "Game: Far Far West",
   "author": "ChemBoy1",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Vortex support for Far Far West"
 }

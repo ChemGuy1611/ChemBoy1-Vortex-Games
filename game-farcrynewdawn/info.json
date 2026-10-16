@@ -1,7 +1,8 @@
 {
   "id": "farcrynewdawn",
+  "gameId": 2731,
   "name": "Game: Far Cry New Dawn",
   "author": "ChemBoy1",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Vortex support for Far Cry New Dawn"
 }

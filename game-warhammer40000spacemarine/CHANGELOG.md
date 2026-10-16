@@ -3,8 +3,12 @@
 ## Planned Improvements (Not Yet Released)
 
 - (UNCERTAIN) Installer for the preview folder???
+
+## [0.3.1] - 2026-10-16
+
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 - The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
+- Added the game's Nexus Mods ID to the extension's info file.
 
 ## [0.3.0] - 2026-08-03
 

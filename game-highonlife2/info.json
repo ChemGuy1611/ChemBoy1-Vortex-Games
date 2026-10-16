@@ -1,7 +1,8 @@
 {
   "id": "highonlife2",
+  "gameId": 8807,
   "name": "Game: High On Life 2",
   "author": "ChemBoy1",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Vortex support for High On Life 2"
 }

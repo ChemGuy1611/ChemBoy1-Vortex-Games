@@ -1,7 +1,8 @@
 {
   "id": "jurassicworldevolution3",
+  "gameId": 8286,
   "name": "Game: Jurassic World Evolution 3",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for Jurassic World Evolution 3"
 }

@@ -1,7 +1,8 @@
 {
   "id": "diplomacyisnotanoption",
+  "gameId": 6883,
   "name": "Game: Diplomacy is Not an Option",
   "author": "ChemBoy1",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Vortex support for Diplomacy is Not an Option"
 }

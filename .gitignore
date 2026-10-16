@@ -2,6 +2,7 @@
 **/node_modules/*
 **/CC-Session-Logs/*
 .claude
+.memsearch
 lint_results.txt
 page-backups/
 *.pyc

@@ -695,7 +695,7 @@ def edit_version_txt(folder):
 
 def create_extension(template_name, game_input, force=False, dry_run=False, no_images=False,
                      no_browser=False, no_startfile=False,
-                     skip_explained=False, skip_lint=False):
+                     skip_explained=False, skip_lint=False, nexus_game_id=None):
     sgdb_key = get_api_key("STEAMGRIDDB_API_KEY")
     nexus_key = get_api_key("NEXUS_API_KEY")
     today = date.today().strftime("%Y-%m-%d")
@@ -733,6 +733,17 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
     else:
         game_id = derive_game_id(game_name)
         print(f"  Game ID  : {game_id} (derived -verify Nexus domain manually)")
+
+    # Numeric Nexus game id for info.json "gameId". Looked up by the real domain (hyphens kept),
+    # not the stripped GAME_ID; a derived GAME_ID is tried as a domain too.
+    if nexus_game_id:
+        print(f"  Nexus ID : {nexus_game_id} (from --nexus-game-id)")
+    else:
+        nexus_game_id = nexus_game_id_for_domain(nexus_domain or game_id, nexus_key)
+        if nexus_game_id:
+            print(f"  Nexus ID : {nexus_game_id} (game id of '{nexus_domain or game_id}')")
+        else:
+            print('  Nexus ID : not found - info.json "gameId" stays XXX (pass --nexus-game-id N)')
 
     # ── Check destination ─────────────────────────────────────────────────────
     dest = os.path.join(REPO_ROOT, f"game-{game_id}")
@@ -820,6 +831,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         print(f"  Template : {template_name}")
         print(f"  Steam ID : {appid}  |  GOG: {gog_id or 'N/A'}  |  Epic: {resolved_epic_id or ('yes' if epic_found else 'N/A')}  |  Xbox: {resolved_xbox_app_id or ('yes' if xbox_found else 'N/A')}")
         print(f"  Exec     : {exec_filename or 'XXX'}")
+        print(f"  Nexus ID : {nexus_game_id or 'XXX'}")
         if engine_version:
             print(f"  UE build : {engine_version}")
         tmpl_index = os.path.join(REPO_ROOT, template_name, "index.js")
@@ -967,7 +979,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
     print("  index.js written")
 
     # ── 9. info.json ──────────────────────────────────────────────────────────
-    edit_info_json(os.path.join(dest, "info.json"), game_name, game_id)
+    edit_info_json(os.path.join(dest, "info.json"), game_name, game_id, nexus_game_id)
     print("  info.json updated")
 
     # ── 10. CHANGELOG.md ──────────────────────────────────────────────────────
@@ -1074,6 +1086,10 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
             print(f"    - {v}")
     else:
         print("  All XXX fields resolved.")
+
+    if not nexus_game_id:
+        print('\n  info.json "gameId" is still XXX - set the numeric Nexus game id by hand')
+        print("  (release_extension.py refuses to package it until it is a number).")
 
     if epic_found and not pcgw_epic_url:
         print("\n  Note: Epic store page found but canonical URL not in PCGamingWiki.")
@@ -1269,6 +1285,10 @@ def main():
         "--skip-lint", "--skip-eslint", action="store_true",
         help="Skip running oxlint after writing index.js (--skip-eslint still accepted).",
     )
+    parser.add_argument(
+        "--nexus-game-id", type=int, metavar="N",
+        help='Numeric Nexus game id for info.json "gameId", used when the lookup finds nothing or the wrong game.',
+    )
     args = parser.parse_args()
 
     if args.refresh_images:
@@ -1284,7 +1304,8 @@ def main():
         full_template = f"template-{args.template}"
         create_extension(full_template, args.game, args.force, args.dry_run, args.no_images,
                          no_browser=args.no_browser, no_startfile=args.no_startfile,
-                         skip_explained=args.skip_explained, skip_lint=args.skip_lint)
+                         skip_explained=args.skip_explained, skip_lint=args.skip_lint,
+                         nexus_game_id=args.nexus_game_id)
 
 
 if __name__ == "__main__":

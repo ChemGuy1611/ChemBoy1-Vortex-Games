@@ -32,12 +32,11 @@ import json
 import os
 import re
 import sys
-import urllib.request
 from collections import Counter
 
 from vortex_utils import (
-    NEXUS_USER_AGENT, REPO_ROOT, CB1_NEXUS_USER_ID, GAME_PREFIX,
-    const_value, extract_extension_url, is_unset, list_game_ids,
+    REPO_ROOT, CB1_NEXUS_USER_ID, GAME_PREFIX,
+    const_value, extract_extension_url, fetch_vortex_extensions_feed, is_unset, list_game_ids,
     load_nexus_gamelist, load_vortex_manifest, read_index_js,
 )
 
@@ -51,14 +50,7 @@ BLOCK_RE = re.compile(re.escape(MARKER_START) + r".*?" + re.escape(MARKER_END), 
 
 def fetch_feed():
     """Return the parsed feed response. Raises on a network error or an unexpected shape."""
-    req = urllib.request.Request(FEED_URL, headers={"Accept": "application/json", "User-Agent": NEXUS_USER_AGENT})
-    with urllib.request.urlopen(req, timeout=60) as resp:
-        payload = json.loads(resp.read())
-    data = payload["data"]
-    for key in ("extensions", "themes", "translations"):
-        if not isinstance(data[key], list):
-            raise ValueError(f"data.{key} is not a list")
-    return payload
+    return fetch_vortex_extensions_feed()
 
 
 def table(headers, rows):

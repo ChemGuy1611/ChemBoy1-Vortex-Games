@@ -17,7 +17,10 @@ Steps performed per extension:
        not in the upload; fold them into this version first if they never shipped.
     2. Check info.json 'name' matches 'Game: <Name>' pattern (game folders only;
        a helper folder just needs a non-empty name), and that info.json 'id'
-       equals GAME_ID (game folders) or the helper id (helper folders)
+       equals GAME_ID (game folders) or the helper id (helper folders). Game folders
+       also need info.json 'gameId' (numeric Nexus game id) to be a positive integer:
+       a leftover "XXX" placeholder is an error, a missing key only a warning (a game
+       with no Nexus domain has none)
     3. Check that const debug = false in index.js (errors if true)
     4. Check that all context.registerInstaller calls have unique priority numbers (WARNS only,
        never blocks the release -- a duplicate is a code-quality finding, and its review home is
@@ -292,6 +295,15 @@ def release(game_id, open_browser, dry_run=False, skip_lint=False,
     if info.get("id") != expected_id:
         log_error(game_id, f"info.json 'id' must be {expected_id!r}, found {info.get('id')!r}")
         return False
+
+    if kind == "game":
+        if "gameId" not in info:
+            log_warn(game_id, "info.json has no 'gameId' (numeric Nexus game id) - fine only for a game with no Nexus domain")
+        else:
+            game_nexus_id = info["gameId"]
+            if not (isinstance(game_nexus_id, int) and not isinstance(game_nexus_id, bool) and game_nexus_id > 0):
+                log_error(game_id, f"info.json 'gameId' must be a positive integer (numeric Nexus game id), found {game_nexus_id!r}")
+                return False
 
     name_field = info.get("name", "")
     if kind == "game":

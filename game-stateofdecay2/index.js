@@ -2,8 +2,8 @@
 Name: State of Decay 2 Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 3.1.2
-Date: 2026-10-12
+Version: 3.1.3
+Date: 2026-10-16
 Notes:
 - Rebuilt on the unified UE4-5 template, migrated to file-based load order (FBLO)
 - Dropped the Unreal Engine Mod Installer (UEMI) dependency - pak modtype/installer now self-owned per template-ue4-5; existing pak mods migrate automatically on update

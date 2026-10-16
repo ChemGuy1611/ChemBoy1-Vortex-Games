@@ -1,7 +1,8 @@
 {
   "id": "avowed",
+  "gameId": 7325,
   "name": "Game: Avowed",
   "author": "ChemBoy1",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Vortex support for Avowed"
 }

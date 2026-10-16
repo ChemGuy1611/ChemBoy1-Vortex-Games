@@ -997,7 +997,7 @@ def patch_steamdb_button(game_id, src, context):
 # 6 games, and a wrong guess writes a broken folder path silently.
 PLAN_B_LO_GAMES = {
     "mewgenics":                  "path.join(getDiscoveryPath(context.api), MOD_PATH)",
-    "warhammer40kdarkheresy":     "MOD_PATH",
+    "warhammer40000darkheresy":   "MOD_PATH",
     "warhammer40kroguetrader":    "MOD_PATH",
     "middleearthshadowofwar":     None,
     "thelastofuspart2":           None,

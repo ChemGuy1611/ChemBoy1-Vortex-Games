@@ -1,7 +1,8 @@
 {
   "id": "cronosthenewdawn",
+  "gameId": 8133,
   "name": "Game: Cronos: The New Dawn",
   "author": "ChemBoy1",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Vortex support for Cronos: The New Dawn"
 }

@@ -1,7 +1,8 @@
 {
   "id": "controlresonant",
+  "gameId": 10317,
   "name": "Game: CONTROL Resonant",
   "author": "ChemBoy1",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Vortex support for CONTROL Resonant"
 }

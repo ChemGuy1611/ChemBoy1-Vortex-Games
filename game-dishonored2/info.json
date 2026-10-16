@@ -1,7 +1,8 @@
 {
   "id": "dishonored2",
+  "gameId": 2911,
   "name": "Game: Dishonored 2",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for Dishonored 2"
 }

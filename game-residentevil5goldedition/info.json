@@ -1,7 +1,8 @@
 {
   "id": "residentevil5goldedition",
+  "gameId": 2760,
   "name": "Game: Resident Evil 5 Gold Edition",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for Resident Evil 5 Gold Edition"
 }

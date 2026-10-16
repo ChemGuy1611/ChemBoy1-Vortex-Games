@@ -1,7 +1,8 @@
 {
   "id": "devilmaycry5",
+  "gameId": 2751,
   "name": "Game: Devil May Cry 5",
   "author": "ChemBoy1",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Vortex support for Devil May Cry 5"
 }

@@ -4,6 +4,10 @@
 
 - tool to launch bl4-crypt (by Cr4nkSt4r, naked exe file)
 
+## [1.0.2] - 2026-10-16
+
+- Added the game's Nexus Mods ID to the extension's info file.
+
 ## [1.0.1] - 2026-10-12
 
 - Fixed: Mods packaged inside an outer folder whose name ends with the name of an expected folder (for example "MyContent" for "Content") now install into the right place instead of keeping part of the outer folder's name.

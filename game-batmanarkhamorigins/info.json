@@ -1,7 +1,8 @@
 {
   "id": "batmanarkhamorigins",
+  "gameId": 283,
   "name": "Game: Batman: Arkham Origins",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for Batman: Arkham Origins"
 }

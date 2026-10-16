@@ -4,6 +4,10 @@
 
 - Add???: Support for installing MelonLoader plugins. Need the compatibility loader for MelonLoader mods to work (<https://github.com/BepInEx/BepInEx.MelonLoader.Loader>) - there are very few MelonLoader mods.
 
+## [1.0.2] - 2026-10-16
+
+- Added the game's Nexus Mods ID to the extension's info file.
+
 ## [1.0.1] - 2026-10-12
 
 - Fixed: Mods packaged inside an outer folder whose name ends with the name of a mod loader or plugin folder (for example "Myplugins" for "plugins") now install into the right place instead of keeping part of the outer folder's name.

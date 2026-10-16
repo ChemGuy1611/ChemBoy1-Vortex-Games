@@ -1,7 +1,8 @@
 {
   "id": "civilizationvii",
+  "gameId": 7318,
   "name": "Game: Sid Meier's Civilization VII",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for Sid Meier's Civilization VII"
 }

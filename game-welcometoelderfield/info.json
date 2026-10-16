@@ -1,7 +1,8 @@
 {
   "id": "welcometoelderfield",
+  "gameId": 10192,
   "name": "Game: Welcome to Elderfield",
   "author": "ChemBoy1",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Vortex support for Welcome to Elderfield"
 }

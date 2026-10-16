@@ -1,7 +1,8 @@
 {
   "id": "ninjagaiden2black",
+  "gameId": 7247,
   "name": "Game: Ninja Gaiden 2 Black",
   "author": "ChemBoy1",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Vortex support for Ninja Gaiden 2 Black"
 }

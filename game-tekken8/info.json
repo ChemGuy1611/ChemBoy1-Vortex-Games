@@ -1,7 +1,8 @@
 {
   "id": "tekken8",
+  "gameId": 5622,
   "name": "Game: TEKKEN 8",
   "author": "ChemBoy1",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Vortex support for TEKKEN 8"
 }

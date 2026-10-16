@@ -1,7 +1,8 @@
 {
   "id": "starwarsgalacticracer",
+  "gameId": 10217,
   "name": "Game: STAR WARS: Galactic Racer",
   "author": "ChemBoy1",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Vortex support for STAR WARS: Galactic Racer"
 }

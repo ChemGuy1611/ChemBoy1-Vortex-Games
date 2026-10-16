@@ -1,5 +1,9 @@
 # template-cobraengineACSE Changelog
 
+## [2026-10-16]
+
+- Added: a `gameId` field to `info.json`, directly after `id`, set to the `"XXX"` placeholder that `new_extension.py` replaces with the numeric Nexus Mods game id of the game's Nexus domain (for example `1303` for `stardewvalley`). In a finished extension it is a number, not a string.
+
 ## [2026-10-11]
 
 - Fixed: `setup` creates `<Saved Games>/<dev>/<game>/Saves` when no user id folder exists yet, and the next load took that `Saves` folder for the user id (it picks the first subfolder), so the Open Save Folder and Open Config Folder buttons pointed at `Saves/Saves` and `Saves/Config`. The user id scan now skips folders named `Saves` or `Config` (any case), which also repairs installs that already have the stray folder.

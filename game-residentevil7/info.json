@@ -1,7 +1,8 @@
 {
   "id": "residentevil7",
+  "gameId": 3111,
   "name": "Game: Resident Evil 7",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for Resident Evil 7"
 }

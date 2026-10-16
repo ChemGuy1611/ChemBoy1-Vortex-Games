@@ -1,7 +1,8 @@
 {
   "id": "wuchangfallenfeathers",
+  "gameId": 7976,
   "name": "Game: WUCHANG: Fallen Feathers",
   "author": "ChemBoy1",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Vortex support for WUCHANG: Fallen Feathers"
 }

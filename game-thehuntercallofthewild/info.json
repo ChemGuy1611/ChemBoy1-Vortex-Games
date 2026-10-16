@@ -1,7 +1,8 @@
 {
   "id": "thehuntercallofthewild",
+  "gameId": 3158,
   "name": "Game: theHunter: Call of the Wild",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for theHunter: Call of the Wild"
 }

@@ -1,5 +1,9 @@
 # template-ue4-5 Changelog
 
+## [2026-10-16]
+
+- Added: a `gameId` field to `info.json`, directly after `id`, set to the `"XXX"` placeholder that `new_extension.py` replaces with the numeric Nexus Mods game id of the game's Nexus domain (for example `1303` for `stardewvalley`). In a finished extension it is a number, not a string.
+
 ## [2026-10-11]
 
 - Fixed: the installers cut each destination with `indexOf(...)`, which finds the FIRST occurrence of the marker's name in the path, so a wrapper folder whose name ends in the folder name (`MyXXX/XXX/...`, `MyContent/Content/...`, `MyBinaries/Binaries/...`, `MyLogicMods/LogicMods/...`) kept part of the wrapper in the destination. The root installer (game folder and subfolder cases), the UE4SS combo, LogicMods and every other installer that flattens to a marker now use `lastIndexOf`, which always lands on the marker's own path segment.

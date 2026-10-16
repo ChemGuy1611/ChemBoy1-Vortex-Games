@@ -1,7 +1,8 @@
 {
   "id": "senuassagahellblade2",
+  "gameId": 6438,
   "name": "Game: Senua's Saga: Hellblade 2",
   "author": "ChemBoy1",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Vortex support for Senua's Saga: Hellblade 2"
 }

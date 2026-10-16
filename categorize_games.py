@@ -62,7 +62,7 @@ from vortex_utils import (
     has_extension_dependency, has_ue4ss_load_order_parity,
     SHAPE_PARITY_FAMILIES, has_family_parity,
     is_unreleased_extension, is_multi_game_extension, has_any_steamapp_id,
-    log_error, log_dry,
+    NEVER_UPLOAD_GAMES, log_error, log_dry,
 )
 
 # (filename, display label) in detection priority order.
@@ -93,12 +93,8 @@ _FILE_FOR_LABEL = {label: fname for fname, label in CATEGORIES}
 # pre-release extensions would wrongly suggest their versions should be frozen.
 # game-subnautica2 is the other test bed; it already falls out of the list on its own
 # because a real extension URL is parked in its EXTENSION_URL.
-UNRELEASED_LIST_EXCLUDED_GAMES = {
-    "warhammer40kdarktide",     # non-UE / generic load order test bed
-    "subnautica2",              # UE4-5 test bed
-    "starwarszerocompany",      # Personal version, officially supported by NexusMods
-    "thebloodofdawnwalker",     # Personal version, officially supported by NexusMods
-}
+# The set itself lives in vortex_utils (NEVER_UPLOAD_GAMES), shared with releasable_game_ids().
+UNRELEASED_LIST_EXCLUDED_GAMES = NEVER_UPLOAD_GAMES
 
 
 def _game_id_from_folder(folder):

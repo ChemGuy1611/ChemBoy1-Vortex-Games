@@ -1,7 +1,8 @@
 {
   "id": "norse",
+  "gameId": 8832,
   "name": "Game: NORSE: Oath of Blood",
   "author": "ChemBoy1",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Vortex support for NORSE: Oath of Blood"
 }

@@ -2,8 +2,8 @@
 Name: Hell is Us Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 1.2.1
-Date: 2026-10-12
+Version: 1.2.2
+Date: 2026-10-16
 Notes:
 - LOGICMODS_PATH ends in the LogicMods folder for this game (kept from the 0.1.0 extension)
 ////////////////////////////////////////////////*/

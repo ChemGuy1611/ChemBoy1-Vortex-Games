@@ -1,5 +1,9 @@
 # template-unitymelonloaderbepinex-hybrid Changelog
 
+## [2026-10-16]
+
+- Added: a `gameId` field to `info.json`, directly after `id`, set to the `"XXX"` placeholder that `new_extension.py` replaces with the numeric Nexus Mods game id of the game's Nexus domain (for example `1303` for `stardewvalley`). In a finished extension it is a number, not a string.
+
 ## [2026-10-11]
 
 - Fixed: the two custom-loader mod types showed each other's display names (`CUSTOMLOADER_MOD_ID` was registered with `CUSTOMLOADER_PLUGIN_NAME` and the plugin type with `CUSTOMLOADER_MOD_NAME`). Each now carries its own.

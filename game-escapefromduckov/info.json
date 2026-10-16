@@ -1,7 +1,8 @@
 {
   "id": "escapefromduckov",
+  "gameId": 8316,
   "name": "Game: Escape from Duckov",
   "author": "ChemBoy1",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Vortex support for Escape from Duckov"
 }

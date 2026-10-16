@@ -1,7 +1,8 @@
 {
   "id": "indianajonesandthegreatcircle",
+  "gameId": 7101,
   "name": "Game: Indiana Jones and the Great Circle",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for Indiana Jones and the Great Circle"
 }

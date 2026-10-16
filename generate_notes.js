@@ -26,8 +26,8 @@
  *   --description  Write DESCRIPTION.bbcode, the Nexus mod page description, in
  *                  place of the notes files. Two lists on the page are generated: the
  *                  "Mod Installation Notes" list, one line per installer, trigger +
- *                  destination ("Installs mods with an "info.json" file to the "Mods"
- *                  folder."), and the "Supported Versions" list, one line per store
+ *                  destination, naming the mod type ("Installs UE4SS mod with a
+ *                  "dwmapi.dll" file to the "Win64" folder."), and the "Supported Versions" list, one line per store
  *                  app-id constant that resolves to a real value - plus Ubisoft Connect
  *                  and EA, which are found through the Windows registry and so are
  *                  listed whenever their constant is declared. An existing page keeps
@@ -2144,13 +2144,115 @@ function fixArticle(s) {
 /**
  * One line per installer, for the "Mod Installation Notes" list on a Nexus mod page.
  * Same sections the notes are built from, collapsed to trigger + destination:
- *   [*]Installs mods with an "info.json" file to the "Mods" folder.[/*]
+ *   [*]Installs UE4SS mod with a "dwmapi.dll" file to the "Win64" folder.[/*]
+ * The mod type is the registered mod type's display name (see modTypeNoun).
  * Loader installers (the ones whose section carries a tool lead) are marked so the
  * author can move them to the top of the list, where the house style puts them.
  */
 const DESCRIPTION_FILE = "DESCRIPTION.bbcode";
 const INSTALL_HEADING = "[b]🛠️ Mod Installation Notes:[/b]";
 const SUPPORTED_HEADING = "[b]✅ Supported Versions:[/b]";
+
+/** A registered mod type name that ends in a tool word names a tool, not a kind of mod. */
+const TOOL_TYPE_NAME = /\b(loader|manager|launcher|injector|installer|extractor|editor|patcher)$/i;
+
+/**
+ * Description labels for installers whose mod type the parser cannot name: the mod type is not
+ * registered under the installer's id (or is registered in a way the parser misses), and the
+ * section title is a mangled installer id ("Zipmod", "Masseffectandromeda Fbmod"). Keyed by the
+ * full installer id; wins over the registered mod type name. A string is the mod type's name, as
+ * in `Installs <name> mod with ...`. `{ tool: "Name" }` marks a loader/manager installer, worded
+ * `Installs Name itself, recognised by ...`. Take names from the extension's own *_NAME constants.
+ */
+const MOD_TYPE_LABELS = {
+  "ageofmythologyretold-reshade": "ReShade",
+  "alanwake2-folders": "Game Data",
+  "alienisolation-datafolder": "Data Folder",
+  "bloodborne-flver": { tool: "FLVER Editor" },
+  "bloodborne-shadlauncher": { tool: "shadPS4 Qt Launcher" },
+  "bloodborne-smithbox": { tool: "Smithbox" },
+  "crimsondesert-json": "JSON",
+  "crimsondesert-specialpatchmod": "Special Patch",
+  "crimsondesert-texture": "Texture",
+  "darkmessiahofmightandmagic-unlimited": "Unlimited Edition",
+  "darktide-root": "Root Folder",
+  "deadrisingdeluxeremaster-looselua": "Loose Lua Script",
+  "doom3bfgedition-root": "Root Folder",
+  "doometernal-ktde": "Keep The Dead Eternal",
+  "doometernal-meathook": { tool: "Meath00k" },
+  "doometernal-rollback": "Version Rollback",
+  "doometernal-zip-mod": "Nested Archive",
+  "doomthedarkages-zipmod": "Nested Archive",
+  "dragonageinquisition-daimodmanager": { tool: "DAI Mod Manager" },
+  "dragonballsparkingzero-json": "SZModLoader JSON",
+  "dragonballsparkingzero-lfse": "LFSE",
+  "dragonballsparkingzero-modloader": { tool: "SZModLoader" },
+  "dragonballsparkingzero-modloadermod": "SZModLoader Plugin",
+  "farcry3-ziggy": "Ziggy's",
+  "farmingsimulator25-zip": "Nested Archive",
+  "ghostreconwildlands-forgemod": "Forge",
+  "gzdoom-zipmod": "Nested Archive",
+  "helldivers2-patch--MergedMods--This-is-fine--Ignore-this--SELECT-APPLY-CHANGES--DO-NOT-ENABLE":
+    "Patch",
+  "inzoi-aigenerated": "AIGenerated (Documents)",
+  "inzoi-animations": "Animations (Documents)",
+  "inzoi-canvas": "Canvas (Documents)",
+  "inzoi-my3dprinter": "My3DPrinter (Documents)",
+  "inzoi-myappearances": "MyAppearances (Documents)",
+  "inzoi-textures": "Textures (Documents)",
+  "kingdomcomedeliverance2-cfg": "CFG",
+  "masseffectandromeda-fbmod": "Frosty",
+  "ninjagaiden3razorsedge-steammodloader": { tool: "Essential Files for NG3RE" },
+  "ninjagaidensigma-steammodloader": { tool: "Essential Files for NGS1" },
+  "ninjagaidenmastercollection-databinsubfolder23": "Databin Subfolder",
+  "ninjagaidensigma2-steammodloader": { tool: "Essential Files for NGS2" },
+  "prey2017-chairmodzip": "Chairloader",
+  "redfactionguerrillaremarstered-managerlegacy": { tool: "Mod Manager" },
+  "residentevil5goldedition-root": "Root Folder",
+  "residentevil7-looselua": "Loose Lua Script",
+  "roadtovostok-mod-rezip": "Godot",
+  "robocoproguecity-binaries": "Binaries (Engine Injector)",
+  "robocoproguecity-config": "Config",
+  "robocoproguecity-save": "Save",
+  "robocoproguecity-scripts": "UE4SS Script",
+  "robocoproguecity-ue4ss": "UE4SS",
+  "robocoproguecity-ue4ssdll": "UE4SS DLL",
+  "robocoproguecity-ue5-sortable-modtype": "UE Sortable Pak",
+  "selaco-binaries": "Binaries",
+  "streetfighter6-looselua": "Loose Lua Script",
+  "systemshock2-classicmod": "Classic",
+  "systemshock225thanniversaryremaster-rootfolder": "Root Folder",
+  "thelastofuspart1-buildfolderpakbin": "Build Folder",
+  "thelastofuspart2-buildfolderpakbin": "Build Folder",
+  "warhammer40000darkheresy-modfinder": { tool: "Modfinder" },
+  "warhammer40000darkheresy-portraitmanager": { tool: "Portrait Manager" },
+  "warhammer40000darkheresy-saveeditor": { tool: "Arcemi Save Editor" },
+  "warhammer40kdarktide-dmfdml": { tool: "Darktide Mod Loader" },
+  "warhammer40kdarktide-mod": "Darktide",
+  "warhammer40kroguetrader-modfinder": { tool: "Modfinder" },
+  "warhammer40kroguetrader-portraitmanager": { tool: "Portrait Manager" },
+  "warhammer40kroguetrader-saveeditor": { tool: "Arcemi Save Editor" },
+  "wolfenstein2009-base": "Base Folder",
+  "wolfenstein2009-exe": "Executable",
+  "wolfenstein2009-maps": "Maps",
+  "wolfenstein2009-pk4": "PK4",
+  "wolfenstein2009-streampacks": "Stream Packs",
+  "wolfenstein2009-videos": "Videos",
+};
+
+/**
+ * The mod type a description bullet is about, as a noun phrase: `UE4SS mod`, or `UE4SS mods` when
+ * `plural`. Named after the registered mod type, else the installer's section title. A trailing
+ * "Mod"/"Mods" is dropped first so `UE4SS Script Mod` does not read "Script Mod mod". A name that is
+ * nothing but "Mod" says nothing, so it falls back to the bare generic noun.
+ */
+function modTypeNoun(section, plural = false) {
+  const name = stripMd(section.modTypeName || section.title || "")
+    .replace(/(^|\s+)mods?$/i, "")
+    .trim();
+  if (!name) return plural ? "Mods" : "mods";
+  return `${name} ${plural ? "mods" : "mod"}`;
+}
 
 function renderDescription(ctx) {
   const { sections, allFomodGuarded } = ctx;
@@ -2168,7 +2270,7 @@ function renderDescription(ctx) {
           ? rawTarget
           : `the ${stripMd(rawTarget)} folder`;
     // A tool installer handles the loader/manager itself, so "installs mods with" is wrong for it.
-    const isTool = s.lead && /not mods for it/i.test(s.lead);
+    const isTool = !!s.toolName || (s.lead && /not mods for it/i.test(s.lead));
     // The catch-all installer has no trigger worth naming and usually no mod type.
     const isFallback = trigger && /anything not matched/i.test(trigger);
     let line;
@@ -2176,18 +2278,18 @@ function renderDescription(ctx) {
       line = `Any other mod not described above is installed to ${target || GAME_FOLDER_PROSE}.`;
     } else if (isTool) {
       // Section titles carry a "(tool)" / "(mod loader)" qualifier that reads as clutter here.
-      const toolName = s.title.replace(/\s*\([^)]*\)\s*$/, "");
+      const toolName = s.toolName || s.title.replace(/\s*\([^)]*\)\s*$/, "");
       line = target
         ? `Installs ${toolName} itself to ${target}, recognised by ${trigger || "its own files"}.`
         : `Installs ${toolName} itself, recognised by ${trigger || "its own files"}.`;
     } else if (trigger && target) {
-      line = `Installs mods with ${trigger} to ${target}.`;
+      line = `Installs ${modTypeNoun(s)} with ${trigger} to ${target}.`;
     } else if (trigger) {
-      line = `Installs mods with ${trigger}.`;
+      line = `Installs ${modTypeNoun(s)} with ${trigger}.`;
     } else if (target) {
-      line = `${s.title} mods are installed to ${target}.`;
+      line = `${modTypeNoun(s, true)} are installed to ${target}.`;
     } else {
-      line = `${s.title} mods are recognised by the ${s.title} installer.`;
+      line = `${modTypeNoun(s, true)} are recognised by the ${s.title} installer.`;
     }
     L.push(`[*]${line}[/*]`);
   }
@@ -2627,6 +2729,17 @@ function buildNotes(dirName, src) {
     }
     section.target = section.installsTo || targetById.get(inst.id) || null;
     section.quickTrigger = quickTrigger(section);
+    // The registered mod type this installer feeds, for the description bullets. An entry whose
+    // name fell back to its own id has no real display name, so it does not count.
+    const modType = modTypes.find((m) => m.id && m.id === inst.id);
+    section.modTypeName =
+      modType && modType.name && modType.name !== modType.id ? modType.name : null;
+    const label = Object.hasOwn(MOD_TYPE_LABELS, inst.id) ? MOD_TYPE_LABELS[inst.id] : null;
+    if (typeof label === "string") section.modTypeName = label;
+    else if (label) section.toolName = label.tool;
+    // A mod type named for the tool itself ("Atlan Mod Loader") holds the tool, not mods for it.
+    else if (section.modTypeName && TOOL_TYPE_NAME.test(section.modTypeName))
+      section.toolName = section.modTypeName;
     sections.push(section);
   }
 

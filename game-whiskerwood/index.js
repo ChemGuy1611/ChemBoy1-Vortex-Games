@@ -2,8 +2,8 @@
 Name: Whiskerwood Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-10-12
+Version: 1.0.2
+Date: 2026-10-16
 Notes:
 - Mods for the game's own mod loader (a folder per mod holding <name>.pak + <name>.uplugin in LocalAppData\Whiskerwood\Saved\mods) use the ModKit mod type, with an absolute target and no mod.json.
 - Saves are .whisker files in Saved\saves_player (all stores), not SaveGames.

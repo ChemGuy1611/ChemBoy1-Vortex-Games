@@ -1,7 +1,8 @@
 {
   "id": "metalgearsolidvtpp",
+  "gameId": 1091,
   "name": "Game: METAL GEAR SOLID V: THE PHANTOM PAIN",
   "author": "ChemBoy1",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Vortex support for METAL GEAR SOLID V: THE PHANTOM PAIN"
 }

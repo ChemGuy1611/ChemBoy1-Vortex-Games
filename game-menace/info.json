@@ -1,7 +1,8 @@
 {
   "id": "menace",
+  "gameId": 8759,
   "name": "Game: MENACE",
   "author": "ChemBoy1",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Vortex support for MENACE"
 }

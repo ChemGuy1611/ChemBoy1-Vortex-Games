@@ -1,5 +1,9 @@
 # template-frostbite Changelog
 
+## [2026-10-16]
+
+- Added: a `gameId` field to `info.json`, directly after `id`, set to the `"XXX"` placeholder that `new_extension.py` replaces with the numeric Nexus Mods game id of the game's Nexus domain (for example `1303` for `stardewvalley`). In a finished extension it is a number, not a string.
+
 ## [2026-10-11]
 
 - Fixed: the installers cut each mod's destination with `modFile.indexOf(...)`, which finds the FIRST occurrence of the marker's name in the path, so a marker name that also appears in a parent folder name (`a.dll.bak/a.dll`) was cut at the wrong place and the wrapper stayed in the install path. `installFrosty`, `installPlugin` and `installKey` now use `lastIndexOf`, which always lands on the marker's own path segment.

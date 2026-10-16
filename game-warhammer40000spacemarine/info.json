@@ -1,7 +1,8 @@
 {
   "id": "warhammer40000spacemarine",
+  "gameId": 3049,
   "name": "Game: Warhammer 40K: Space Marine",
   "author": "ChemBoy1",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Vortex support for Warhammer 40K: Space Marine"
 }

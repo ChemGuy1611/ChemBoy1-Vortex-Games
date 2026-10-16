@@ -1,7 +1,8 @@
 {
   "id": "tombraider2013",
+  "gameId": 2824,
   "name": "Game: Tomb Raider (2013)",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for Tomb Raider (2013)"
 }

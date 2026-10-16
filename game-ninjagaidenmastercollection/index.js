@@ -2,8 +2,8 @@
 Name: NINJA GAIDEN: Master Collection Vortex Extension
 Structure: Multi-Game, Mod Loader
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-10-12
+Version: 1.0.1
+Date: 2026-10-16
 ///////////////////////////////////////////////////////*/
 
 //Import libraries

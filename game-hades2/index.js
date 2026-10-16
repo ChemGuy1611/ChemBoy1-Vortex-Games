@@ -2,8 +2,8 @@
 Name: Hades II Vortex Extension
 Structure: 3rd-Party Mod Installer
 Author: ChemBoy1
-Version: 1.2.1
-Date: 2026-10-12
+Version: 1.2.2
+Date: 2026-10-16
 ////////////////////////////////*/
 
 //Import libraries

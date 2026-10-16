@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.3.1] - 2026-10-16
+
+- Added the game's Nexus Mods ID to the extension's info file.
+
 ## [2.3.0] - 2026-10-12
 
 - Fixed: Mod files with no file extension were skipped during installation

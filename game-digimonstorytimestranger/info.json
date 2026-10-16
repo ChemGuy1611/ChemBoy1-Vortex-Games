@@ -1,7 +1,8 @@
 {
   "id": "digimonstorytimestranger",
+  "gameId": 8213,
   "name": "Game: Digimon Story Time Stranger",
   "author": "ChemBoy1",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Vortex support for Digimon Story Time Stranger"
 }

@@ -1,7 +1,8 @@
 {
   "id": "assassinscreediiiremastered",
+  "gameId": 2773,
   "name": "Game: Assassin's Creed III Remastered",
   "author": "ChemBoy1",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Vortex support for Assassin's Creed III Remastered"
 }

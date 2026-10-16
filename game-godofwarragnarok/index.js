@@ -2,8 +2,8 @@
 Name: God of War: Ragnarok Vortex Extension
 Structure: Sony Port, Custom Game Data
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-10-12
+Version: 1.0.2
+Date: 2026-10-16
 /////////////////////////////////////////*/
 
 //import libraries

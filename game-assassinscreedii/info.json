@@ -1,7 +1,8 @@
 {
   "id": "assassinscreedii",
+  "gameId": 1809,
   "name": "Game: Assassin's Creed II",
   "author": "ChemBoy1",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Vortex support for Assassin's Creed II"
 }

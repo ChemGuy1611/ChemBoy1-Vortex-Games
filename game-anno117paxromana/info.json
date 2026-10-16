@@ -1,7 +1,8 @@
 {
   "id": "anno117paxromana",
+  "gameId": 8155,
   "name": "Game: Anno 117: Pax Romana",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for Anno 117: Pax Romana"
 }

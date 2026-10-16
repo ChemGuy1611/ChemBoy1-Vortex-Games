@@ -17,6 +17,7 @@ fetch_exec_icon.py
 render_svg.py
 fetch_nexus_stats.py
 release_extension.py
+release_scope.py
 sync_mod_pages.py
 test_sync_mod_pages.py
 test_release_extension.py

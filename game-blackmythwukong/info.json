@@ -1,7 +1,8 @@
 {
   "id": "blackmythwukong",
+  "gameId": 6713,
   "name": "Game: Black Myth Wukong",
   "author": "ChemBoy1",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Vortex support for Black Myth Wukong"
 }

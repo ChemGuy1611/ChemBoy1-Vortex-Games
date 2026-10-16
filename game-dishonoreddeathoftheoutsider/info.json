@@ -1,7 +1,8 @@
 {
   "id": "dishonoreddeathoftheoutsider",
+  "gameId": 4697,
   "name": "Game: Dishonored: Death of the Outsider",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for Dishonored: Death of the Outsider"
 }

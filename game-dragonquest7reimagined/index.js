@@ -2,8 +2,8 @@
 Name: DRAGON QUEST VII Reimagined Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-10-12
+Version: 1.0.2
+Date: 2026-10-16
 Notes:
 - Config and Save live in Documents\My Games, with the Steam save under a store folder, the user ID folder and release\Saved\SaveGames.
 ////////////////////////////////////////////////*/

@@ -2,8 +2,8 @@
 Name: Dragon Ball: Sparking! Zero Vortex Extension
 Structure: UE5
 Author: ChemBoy1
-Version: 1.1.1
-Date: 2026-10-12
+Version: 1.1.2
+Date: 2026-10-16
 Notes:
 - SigBypass installs from this game's own Nexus page, not the universal SigBypass page
 - Save data lives inside the game install folder, not Local AppData

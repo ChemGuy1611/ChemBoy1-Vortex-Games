@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.1] - 2026-10-16
+
+- Added the game's Nexus Mods ID to the extension's info file.
+
 ## [1.1.0] - 2026-10-12
 
 - Fixed: Mods packaged inside an outer folder whose name ends with a game folder's name (for example "MyData" for "Data") now install into the right place instead of a doubled folder.

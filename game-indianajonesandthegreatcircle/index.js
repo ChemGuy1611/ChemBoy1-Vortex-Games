@@ -2,8 +2,8 @@
 Name: Indiana Jones and the Great Circle Vortex Extension
 Structure: Basic Game (with Xbox) - Future Mod Injector
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-10-12
+Version: 1.0.1
+Date: 2026-10-16
 ////////////////////////////////////////////////*/
 
 //Import libraries

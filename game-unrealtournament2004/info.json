@@ -1,7 +1,8 @@
 {
   "id": "unrealtournament2004",
+  "gameId": 1413,
   "name": "Game: Unreal Tournament 2004",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for Unreal Tournament 2004"
 }

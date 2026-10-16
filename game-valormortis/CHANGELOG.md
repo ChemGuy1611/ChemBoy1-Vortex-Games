@@ -4,6 +4,10 @@
 
 - None
 
+## [1.0.4] - 2026-10-16
+
+- Added the game's Nexus Mods ID to the extension's info file.
+
 ## [1.0.3] - 2026-10-14
 
 - Fixed: Corrected Steam root folder name to "ValorMortis", matches Xbox version

@@ -1,7 +1,8 @@
 {
   "id": "legobatmanlegacyofthedarkknight",
+  "gameId": 9287,
   "name": "Game: LEGO Batman: Legacy of the Dark Knight",
   "author": "ChemBoy1",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Vortex support for LEGO Batman: Legacy of the Dark Knight"
 }

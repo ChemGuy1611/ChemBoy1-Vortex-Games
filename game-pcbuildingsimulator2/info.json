@@ -1,7 +1,8 @@
 {
   "id": "pcbuildingsimulator2",
+  "gameId": 4558,
   "name": "Game: PC Building Simulator 2",
   "author": "ChemBoy1",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Vortex support for PC Building Simulator 2"
 }

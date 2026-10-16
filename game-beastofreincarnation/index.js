@@ -2,8 +2,8 @@
 Name: Beast of Reincarnation Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.6
-Date: 2026-10-12
+Version: 1.0.7
+Date: 2026-10-16
 Notes:
 -
 ////////////////////////////////////////////////*/

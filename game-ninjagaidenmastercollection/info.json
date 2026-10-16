@@ -1,7 +1,8 @@
 {
   "id": "ninjagaidenmastercollection",
+  "gameId": 3858,
   "name": "Game: NINJA GAIDEN: Master Collection",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for NINJA GAIDEN: Master Collection"
 }

@@ -1,7 +1,8 @@
 {
   "id": "aplaguetalerequiem",
+  "gameId": 4874,
   "name": "Game: A Plague Tale: Requiem",
   "author": "ChemBoy1",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "Vortex support for A Plague Tale: Requiem"
 }

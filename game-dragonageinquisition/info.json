@@ -1,7 +1,8 @@
 {
   "id": "dragonageinquisition",
+  "gameId": 728,
   "name": "Game: Dragon Age: Inquisition",
   "author": "ChemBoy1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vortex support for Dragon Age: Inquisition"
 }

@@ -2,8 +2,8 @@
 Name: System Shock Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.1.2
-Date: 2026-10-12
+Version: 1.1.3
+Date: 2026-10-16
 Notes:
 - Rebuilt on the unified UE4-5 template - added UE4SS/Scripts/DLL/LogicMods mod support and FBLO
 - Dropped Unreal Engine Mod Installer (UEMI) dependency - pak modtype/installer now self-owned, existing installs migrated automatically on update
