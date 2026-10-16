@@ -1,5 +1,5 @@
 /*//////////////////////////////////////////
-Name: Anime Shop Simulator ✨ Vortex Extension
+Name: Anime Shop Simulator Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
 Version: 1.0.0
@@ -53,7 +53,7 @@ const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const GAME_NAME = "Anime Shop Simulator";
 const GAME_NAME_SHORT = "Anime Shop Sim";
-const GAME_STRING = "XXX"; //string for exe and data folder (seem to always match)
+const GAME_STRING = "Anime Shop Simulator"; //string for exe and data folder (seem to always match)
 const GAME_STRING_ALT = GAME_STRING; //CHANGE THIS IF IT DOESN'T MATCH
 const EXEC = `${GAME_STRING}.exe`;
 const EXEC_EGS = EXEC;
@@ -63,7 +63,7 @@ const EXEC_XBOX = "gamelaunchhelper.exe";
 const EXEC_ALT = `${GAME_STRING_ALT}.exe`;
 const PCGAMINGWIKI_URL = "XXX";
 const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/2460"; //Nexus link to this extension. Used for links
 
 //feature toggles
 const isXna = false; //set to true if game is XNA engine
@@ -104,7 +104,7 @@ const hasUserIdFolder = false; //true if there is a folder in the Save path that
 
 //Data to determine BepinEx/MelonLoader versions and URLs
 const ENGINE_VERSION = "6"; //Unity Engine version - info only atm.
-let loaderChoice = true; //true if loader choice is enabled
+let loaderChoice = false; //true if loader choice is enabled
 let recommendedLoader = "mel"; // bep/mel - If loaderChoice false, this determines downloaded loader. Otherwise shows as "(Recommended)" in selector.
 let BEPINEX_BUILD = "il2cpp"; // 'mono' or 'il2cpp' - check for "il2cpp_data" folder
 const ARCH = "x64"; //'x64' or 'x86' game architecture (64-bit or 32-bit)
@@ -322,6 +322,11 @@ const MELON_CONFIG_ID = `${GAME_ID}-melonloader-config`;
 const MELON_CONFIG_NAME = "MelonLoader Config";
 const MELON_CONFIG_FOLDER = "UserData";
 const MELON_CONFIG_PATH = MELON_CONFIG_FOLDER;
+
+const CUSTOMASSETS_ID = `${GAME_ID}-customassets`;
+const CUSTOMASSETS_NAME = "Custom Assets";
+const CUSTOMASSETS_FOLDERS = ["CustomPosters", "CustomCards"];
+const CUSTOMASSETS_PATH = MELON_CONFIG_FOLDER;
 
 const MELON_USERLIB_ID = `${GAME_ID}-melonloader-userlibs`;
 const MELON_USERLIB_NAME = "MelonLoader UserLibs";
@@ -682,6 +687,12 @@ if (!isXna) {
     name: MELON_CONFIG_NAME,
     priority: "high",
     targetPath: path.join("{gamePath}", MELON_CONFIG_PATH),
+  });
+  spec.modTypes.push({
+    id: CUSTOMASSETS_ID,
+    name: CUSTOMASSETS_NAME,
+    priority: "high",
+    targetPath: path.join("{gamePath}", CUSTOMASSETS_PATH),
   });
   spec.modTypes.push({
     id: MELON_USERLIB_ID,
@@ -1486,6 +1497,56 @@ function installCustom(files) {
       source: file,
       destination: file.substr(idx),
       //destination: path.join(folder, file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Installer test for Root folder files
+function testCustomAssets(files, gameId) {
+  const isMod = files.some((file) =>
+    CUSTOMASSETS_FOLDERS.toLowerCase().includes(path.basename(file).toLowerCase()),
+  );
+  let supported = gameId === spec.game.id && isMod;
+
+  // Test for a mod installer.
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install Root folder files
+async function installCustomAssets(files) {
+  const modFile = files.find((file) =>
+    CUSTOMASSETS_FOLDERS.toLowerCase().includes(path.basename(file).toLowerCase()),
+  );
+  const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
+  const idx = modFile.lastIndexOf(ROOT_IDX);
+  const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
+  const setModTypeInstruction = { type: "setmodtype", value: CUSTOMASSETS_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
+
+  const instructions = filtered.map((file) => {
+    return {
+      type: "copy",
+      source: file,
+      destination: path.join(file.substr(idx)),
     };
   });
   instructions.push(setModTypeInstruction);
@@ -3001,6 +3062,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(`${GAME_ID}-plugin`, 33, testPlugin, (files, workingDir) =>
     installPlugin(context.api, gameSpec, files, workingDir),
   );
+  context.registerInstaller(CUSTOMASSETS_ID, 34, testCustomAssets, installCustomAssets);
   if (!isXna) {
     //.assets/.resource/.ress are Unity container formats
     context.registerInstaller(ASSETS_ID, 37, testAssets, installAssets);

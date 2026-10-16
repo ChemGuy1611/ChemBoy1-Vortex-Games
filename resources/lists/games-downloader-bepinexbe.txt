@@ -4,6 +4,7 @@ ballxpit
 blueprince
 burglingnomes
 cairn
+castlevaniabelmontscurse
 cloverpit
 dimraeth
 diplomacyisnotanoption
@@ -23,5 +24,6 @@ pcbuildingsimulator2
 peak
 prodeus
 romestead
+silverpines
 starsandisland
 storyofseasonsgrandbazaar

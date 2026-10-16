@@ -4,7 +4,7 @@
 
 | Property | Value |
 | --- | --- |
-| Name | Anime Shop Simulator ✨ Vortex Extension |
+| Name | Anime Shop Simulator Vortex Extension |
 | Engine / Structure | Unity BepinEx/MelonLoader/Custom Loader Hybrid |
 | Author | ChemBoy1 |
 
@@ -13,10 +13,11 @@
 | Property | Value |
 | --- | --- |
 | Game ID | `animeshopsimulator` |
-| Executable | `XXX.exe` |
+| Executable | `Anime Shop Simulator.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
-| Executable (GOG) | `XXX.exe` |
-| Executable (Demo) | `XXX.exe` |
+| Executable (GOG) | `Anime Shop Simulator.exe` |
+| Executable (Demo) | `Anime Shop Simulator.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/2460](https://www.nexusmods.com/site/mods/2460) |
 
 ## Supported Stores
 
@@ -42,7 +43,7 @@
 | `exeHasGameVersion` | `false` | toggle: true if the game devs stamp the real game version (not just the Unity player version) into the exe ProductVersion |
 | `hasVersionFile` | `false` | set to true if there is a Version.info file that contains the game version number |
 | `hasUserIdFolder` | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
-| `loaderChoice` | `true` | true if loader choice is enabled |
+| `loaderChoice` | `false` | true if loader choice is enabled |
 | `allowBepCfgMan` | `true` | should BepInExConfigManager be downloaded (via notification)? |
 | `allowMelPrefMan` | `false` | should MelonPreferencesManager be downloaded (via notification)? disabled 2026-09-14 - plugin causes in-game errors when loaded |
 | `allowBepinexNexus` | `true` | allow Nexus Mods download of BepInEx/MelonLoader |
@@ -67,6 +68,7 @@ Mod types define where each category of mod gets deployed:
 | MelonLoader Mods | `animeshopsimulator-melonloader-mods` | high | `{gamePath}/Mods` |
 | MelonLoader Plugins | `animeshopsimulator-melonloader-plugins` | high | `{gamePath}/Plugins` |
 | MelonLoader Config | `animeshopsimulator-melonloader-config` | high | `{gamePath}/UserData` |
+| Custom Assets | `animeshopsimulator-customassets` | high | `{gamePath}/UserData` |
 | MelonLoader UserLibs | `animeshopsimulator-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
 | MelonPreferencesManager | `animeshopsimulator-melonprefman` | high | `{gamePath}/Mods` |
 | MelonLoader | `animeshopsimulator-melonloader` | low | `{gamePath}` |
@@ -86,6 +88,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | `animeshopsimulator-melonprefman` | 30 |
 | `animeshopsimulator-assemblydll` | 31 |
 | `animeshopsimulator-plugin` | 33 |
+| `animeshopsimulator-customassets` | 34 |
 | `animeshopsimulator-assets` | 37 |
 | `animeshopsimulator-fallback` | 49 |
 
@@ -93,7 +96,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch** (`XXX.exe`)
+- **Custom Launch** (`Anime Shop Simulator.exe`)
 
 ## Toolbar Actions
 

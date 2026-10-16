@@ -1,5 +1,5 @@
-[b][color=#e69138][size=4]Notes for Mod Authors - Anime Shop Simulator ✨[/size]
-[/color][/b]Packaging rules for Anime Shop Simulator ✨ mods, so Vortex installs them to the right place.
+[b][color=#e69138][size=4]Notes for Mod Authors - Anime Shop Simulator[/size]
+[/color][/b]Packaging rules for Anime Shop Simulator mods, so Vortex installs them to the right place.
 
 Vortex decides what a mod is by looking at the files and folders inside the archive. It tries each installer in order and the first one that matches wins, so archive layout is what determines where your mod ends up.
 
@@ -41,12 +41,12 @@ For mods laid out the same way the files appear inside the game folder. Vortex c
 
 [code]
 MyRootMod.zip
-└── XXX_Data\
+└── Anime Shop Simulator_Data\
     └── ... files in their real relative locations
 [/code]
 
   Requirements:
-    - Recognised by a folder named "XXX_Data" or "XXX_Data" in the archive.
+    - Recognised by a folder named "Anime Shop Simulator_Data" or "Anime Shop Simulator_Data" in the archive.
 
   Installs to: the game folder itself (no subfolder)
 
@@ -119,6 +119,14 @@ MyPlugin.zip
 
 ========================================================================
 
+Customassets:
+
+Handled by the "testCustomAssets" installer. Inspect the extension source for the exact archive layout it expects.
+
+  Installs to: "UserData"
+
+========================================================================
+
 Asset Replacement Mods:
 
 Mods that replace packed Unity asset files, deployed into the game's data folder.
@@ -126,7 +134,7 @@ Mods that replace packed Unity asset files, deployed into the game's data folder
   Requirements:
     - Recognised by any file with the ".assets", ".resource" or ".ress" extensions.
 
-  Installs to: "XXX_Data"
+  Installs to: "Anime Shop Simulator_Data"
 
   Common mistakes:
     - Asset files must keep their original names to replace the right bundle.

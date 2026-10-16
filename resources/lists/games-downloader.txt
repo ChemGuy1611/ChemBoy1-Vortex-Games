@@ -32,6 +32,7 @@ borderlands3
 borderlands4
 burglingnomes
 cairn
+castlevaniabelmontscurse
 clairobscurexpedition33
 clivebarkershellraiserrevival
 cloverpit
@@ -122,6 +123,7 @@ sifu
 silenthill2
 silenthillf
 silenthilltownfall
+silverpines
 stalker2heartofchornobyl
 starrupture
 starsandisland
