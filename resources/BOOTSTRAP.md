@@ -51,6 +51,7 @@ Reference clones — read for API shapes and runtime behaviour, not modified loc
 | `fomod-installer`           | `Nexus-Mods/fomod-installer`           | FOMOD installer invoked by Vortex for scripted installers                   |
 | `game-description-language` | `Nexus-Mods/game-description-language` | GDL game-definition tooling                                                 |
 | `vortex-parse-ini`          | `Nexus-Mods/vortex-parse-ini`          | INI parser available to extensions                                          |
+| `node-exe-version`          | `Nexus-Mods/node-exe-version`          | Reads the version resource of a Windows executable (game version detection) |
 | `NexusMods.App`             | `Nexus-Mods/NexusMods.App`             | Next-generation Nexus Mods app; context only, unrelated to these extensions |
 
 ### Extension references
@@ -73,10 +74,13 @@ Third-party and first-party extensions kept as worked examples.
 
 Mod loaders and asset tooling that extensions install or reference — not Vortex components.
 
-| Folder            | Upstream                  |
-| ----------------- | ------------------------- |
-| `FrostyToolsuite` | `CadeEvs/FrostyToolsuite` |
-| `RE-UE4SS`        | `UE4SS-RE/RE-UE4SS`       |
+| Folder                 | Upstream                         |
+| ---------------------- | -------------------------------- |
+| `FrostyToolsuite`      | `CadeEvs/FrostyToolsuite`        |
+| `RE-UE4SS`             | `UE4SS-RE/RE-UE4SS`              |
+| `godot-mod-loader`     | `GodotModding/godot-mod-loader`  |
+| `unity-mod-manager`    | `newman55/unity-mod-manager`     |
+| `Darktide-Source-Code` | `Aussiemon/Darktide-Source-Code` |
 
 ### Local folders (not repos)
 
@@ -144,12 +148,12 @@ Installs dev dependencies: `oxlint` (linter), `oxfmt` (formatter, matches the Vo
 
 Set all of these under `HKEY_CURRENT_USER\Environment` (i.e. user-level, not system). The easiest way is **System Properties -> Environment Variables -> User variables**.
 
-| Variable               | Value                                                                  | Required by                                                                                                    |
-| ---------------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `NEXUS_API_KEY`        | Your Nexus Mods API key                                                | `new_extension.py`, `fetch_nexus_stats.py`, `patch_extensions.py`, `nexus_games_report.py`                     |
-| `STEAM_API_KEY`        | Your Steam Web API key                                                 | `new_extension.py` (Steam app info lookups)                                                                    |
-| `STEAM_USER_ID`        | Your Steam 64-bit ID                                                   | `new_extension.py`                                                                                             |
-| `STEAMGRIDDB_API_KEY`  | Your SteamGridDB API key                                               | `fetch_cover_art.py`                                                                                           |
+| Variable              | Value                    | Required by                                                                                |
+| --------------------- | ------------------------ | ------------------------------------------------------------------------------------------ |
+| `NEXUS_API_KEY`       | Your Nexus Mods API key  | `new_extension.py`, `fetch_nexus_stats.py`, `patch_extensions.py`, `nexus_games_report.py` |
+| `STEAM_API_KEY`       | Your Steam Web API key   | `new_extension.py` (Steam app info lookups)                                                |
+| `STEAM_USER_ID`       | Your Steam 64-bit ID     | `new_extension.py`                                                                         |
+| `STEAMGRIDDB_API_KEY` | Your SteamGridDB API key | `fetch_cover_art.py`                                                                       |
 
 API keys are read via `os.environ.get()` first, then `HKEY_CURRENT_USER\Environment` registry fallback. Do not hardcode them.
 
