@@ -1,6 +1,7 @@
 {
   "id": "borderlands",
   "gameId": 360,
+  "modId": 1450,
   "name": "Game: Borderlands",
   "author": "ChemBoy1",
   "version": "1.0.1",

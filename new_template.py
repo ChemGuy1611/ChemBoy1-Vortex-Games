@@ -73,7 +73,7 @@ import shutil
 import argparse
 
 from vortex_utils import (
-    REPO_ROOT, extract_game_id, find_fn_end, REGISTER_ACTIONS, node_check,
+    REPO_ROOT, extract_game_id, find_fn_end, node_check,
     inject_register_actions, update_index_header, write_index_js,
     make_info_json, make_changelog, is_missing, const_value,
     write_text_atomic, report_node_check, replace_const_rhs, touch_empty,

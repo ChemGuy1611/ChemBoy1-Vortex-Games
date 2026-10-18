@@ -434,15 +434,13 @@ def main():
             old_file = os.path.abspath(args.old)
         elif args.git_head:
             rel = os.path.relpath(os.path.join(folder, "index.js"), vu.REPO_ROOT).replace(os.sep, "/")
-            shown = subprocess.run(
-                ["git", "show", f"HEAD:{rel}"], cwd=vu.REPO_ROOT, capture_output=True
-            )
-            if shown.returncode != 0:
-                print(f"ERROR: git show HEAD:{rel} failed: {shown.stderr.decode(errors='replace').strip()}")
+            shown = vu.git_show_text("HEAD", rel)
+            if shown is None:
+                print(f"ERROR: git show HEAD:{rel} failed (not tracked at HEAD?)")
                 return 2
             old_file = os.path.join(work, "old-index.js")
-            with open(old_file, "wb") as fh:
-                fh.write(shown.stdout)
+            with open(old_file, "w", encoding="utf-8", newline="\n") as fh:
+                fh.write(shown)
         else:
             old_file = os.path.join(folder, "index.js.bak")
         if not os.path.isfile(old_file):

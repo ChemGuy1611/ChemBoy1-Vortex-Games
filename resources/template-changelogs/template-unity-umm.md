@@ -1,5 +1,9 @@
 # template-unity-umm Changelog
 
+## [2026-10-17]
+
+- Added: a `modId` field to `info.json`, directly after `gameId`, set to the `"XXX"` placeholder. `release_extension.py` replaces it with the mod id at the end of the extension's `EXTENSION_URL` when the extension is released, so a finished extension carries a number, not a string.
+
 ## [2026-10-16]
 
 - Added: a `gameId` field to `info.json`, directly after `id`, set to the `"XXX"` placeholder that `new_extension.py` replaces with the numeric Nexus Mods game id of the game's Nexus domain (for example `1303` for `stardewvalley`). In a finished extension it is a number, not a string.

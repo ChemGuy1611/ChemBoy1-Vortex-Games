@@ -138,10 +138,6 @@ def _extract_js_envvars(src):
             | set(re.findall(r'process\.env\[\s*[\'"]([A-Z][A-Z0-9_]+)[\'"]\s*\]', src)))
 
 
-_BUILD_ARG_PARSER_FLAGS = {
-    "with_dry_run":  "--dry-run",
-    "with_force":    "--force",
-}
 def _extract_argparse_flags(src):
     """Return set of --flag-name strings found in add_argument() calls.
     Also synthesises flags implied by vu.build_arg_parser(with_dry_run=True, ...)."""
@@ -626,7 +622,9 @@ def audit_nonatomic_writes(paths):
 # UTF-8 text that was decoded as Windows cp1252 and saved again ("mojibake"): a multi-byte
 # character's lead byte (U+00C2 / U+00C3 / U+00E2 / U+00F0 as a Latin-1 letter) followed by its
 # continuation bytes shown as cp1252 characters, so an em-dash becomes U+00E2 U+20AC U+201D.
-# Written with \u escapes so this file never contains a mangled sequence itself.
+# The class holds the lead letters and cp1252 characters literally (only the range start is a
+# \u escape). This file passes its own scan because a lead letter is never followed by a
+# continuation character here; a cp1252 re-save of this file would show up as a hit on itself.
 _MOJIBAKE_RE = re.compile(
     "[ÂÃâð][\u0080-¿ŒœŠšŸŽžƒˆ˜"
     "–—‘’‚“”„†‡•…‰‹›€™]{1,3}"

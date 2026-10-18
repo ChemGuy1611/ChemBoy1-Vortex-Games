@@ -1,5 +1,6 @@
 {
   "id": "globalignorepatterns",
+  "modId": 2381,
   "name": "Global Ignore Patterns Helper",
   "author": "ChemBoy1",
   "version": "1.0.0",

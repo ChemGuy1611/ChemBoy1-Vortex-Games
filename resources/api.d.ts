@@ -58,6 +58,11 @@ declare const setExtensionEndorsed: import("redux-act").ComplexActionCreator2<st
   extensionId: string;
   endorsed: EndorsedStatus;
 }, {}>;
+declare const setExtensionModId: import("redux-act").ComplexActionCreator2<string, number, {
+  extensionId: string;
+  modId: number;
+}, {}>;
+declare const declineExtensionNexusLink: import("redux-act").ComplexActionCreator1<string, string, {}>;
 declare const removeExtension: import("redux-act").ComplexActionCreator1<string, string, {}>;
 declare const forgetExtension: import("redux-act").ComplexActionCreator1<string, string, {}>;
 declare const completeMigration: import("redux-act").ComplexActionCreator1<string, string, {}>;
@@ -4817,7 +4822,7 @@ interface ExtensionInfo {
   bundled?: boolean;
   /** @deprecated not read from info.json anymore */
   path?: string;
-  /** @deprecated not read from info.json anymore */
+  /** @deprecated only read to re-link extensions installed before Vortex 2.7 */
   modId?: number;
   /** @deprecated not read from info.json anymore */
   fileId?: number;
@@ -5005,6 +5010,8 @@ interface IExtensionState$1 {
   fileId?: number;
   /** Nexus Mods endorsed status of the extension mod page. */
   endorsed: EndorsedStatus;
+  /** Set when the user declined linking this unlinked extension to its Nexus Mods page. */
+  nexusLinkDeclined?: boolean;
 }
 /**
  * settings relating to the vortex application itself
@@ -6010,7 +6017,7 @@ declare const setToolPinned: import("redux-act").ComplexActionCreator3<string, s
   pinned: boolean;
 }, {}>;
 declare namespace index_d_exports {
-  export { Condition, ConditionResults, DialogActions, DialogContentItem, DialogType, ICheckbox, IConditionResult, IControlBase, IDialog, IDialogAction, IDialogContent, IDialogResult, IDictionary, IEnableOptions, IInput, ILink, addDialog, addDiscoveredGame, addDiscoveredTool, addExtension, addLocalDownload, addMod, addModRule, addMods, addNotification, cacheModReference, clearDialog, clearDiscoveredGame, clearModRules, clearOAuthCredentials, clearPendingPluginSort, clearUIBlocker, closeBrowser, closeDialog, closeDialogs, collapseGroup, completeMigration, dismissAllNotifications, dismissDialog, dismissNotification, displayGroup, downloadProgress, endDialog, finalizingDownload, finalizingProgress, finishDownload, fireNotificationAction, forgetExtension, forgetMod, initDownload, loadCategories, mergeDownloadModInfo, pauseDownload, removeCategory, removeDownload, removeDownloadSilent, removeExtension, removeMod, removeModRule, removeProfile, renameCategory, resetSuppression, setActivator, setAdvancedMode, setAlwaysCompactHeaders, setApplicationVersion, setAssociatedWithNXMURLs, setAttributeFilter, setAttributeSort, setAttributeVisible, setAutoDeployment, setAutoEnable, setAutoInstall, setAutoStart, setCategory, setCategoryOrder, setCleanupOnDeploy, setCollapsedGroups, setCollectionConcurrency, setCommandLine, setCompatibleGames, setConfirmPurge, setCopyOnIFF, setCustomTitlebar, setDeploymentNecessary, setDesktopNotifications, setDialogState, setDialogVisible, setDownloadFilePath, setDownloadGameFilter, setDownloadHash, setDownloadHashByFile, setDownloadInstalled, setDownloadInterrupted, setDownloadModInfo, setDownloadPath, setDownloadPausable, setDownloadSpeed, setDownloadSpeeds, setDownloadTime, setExtensionEnabled, setExtensionEndorsed, setExtensionLoadFailures, setExtensionVersion, setFBLoadOrder, setFBLoadOrderEntry, setFeature, setFileOverride, setForcedLogout, setForegroundDL, setGameHidden, setGameParameters, setGamePath, setGameSearchPaths, setGroupingAttribute, setHideTopLevelCategory, setINITweakEnabled, setInstallPath, setInstallPathMode, setInstallType, setInstanceId, setLanguage, setLoadOrder, setLoadOrderEntry, setMaxBandwidth, setMaxDownloads, setMaximized, setModArchiveId, setModAttribute, setModAttributes, setModEnabled, setModInstallationPath, setModState, setModType, setModsEnabled, setNetworkConnected, setNewestVersion, setNextProfile, setOAuthCredentials, setOpenMainPage, setPendingPluginSort, setPickerLayout, setPrimaryTool, setProfile, setProfileActivated, setProfilesVisible, setProgress, setReduceMotion, setRelativeTimes, setSettingsPage, setShowDLDropzone, setShowDLGraph, setShowModDropzone, setSortDetected, setSortManaged, setSortUnmanaged, setStartMinimized, setStateVersion, setSuggestInstallPathDirectory, setTabsMinimized, setToolOrder, setToolPid, setToolPinned, setToolRunning, setToolStopped, setToolValid, setToolVisible, setUIBlocker, setUpdateChannel, setUpdaterActive, setUpdaterSnapshot, setUseModernLayout, setUserAPIKey, setUserInfo, setWarnedAdmin, setWindowPosition, setWindowSize, setZoomFactor, setupNotificationSuppression, showDialog, showURL, showUsageInstruction, startActivity, startDialog, startDownload, startNotification, stopActivity, stopAllNotifications, stopNotification, suppressNotification, triggerDialogLink, updateCategories, updateNotification, willRemoveProfile };
+  export { Condition, ConditionResults, DialogActions, DialogContentItem, DialogType, ICheckbox, IConditionResult, IControlBase, IDialog, IDialogAction, IDialogContent, IDialogResult, IDictionary, IEnableOptions, IInput, ILink, addDialog, addDiscoveredGame, addDiscoveredTool, addExtension, addLocalDownload, addMod, addModRule, addMods, addNotification, cacheModReference, clearDialog, clearDiscoveredGame, clearModRules, clearOAuthCredentials, clearPendingPluginSort, clearUIBlocker, closeBrowser, closeDialog, closeDialogs, collapseGroup, completeMigration, declineExtensionNexusLink, dismissAllNotifications, dismissDialog, dismissNotification, displayGroup, downloadProgress, endDialog, finalizingDownload, finalizingProgress, finishDownload, fireNotificationAction, forgetExtension, forgetMod, initDownload, loadCategories, mergeDownloadModInfo, pauseDownload, removeCategory, removeDownload, removeDownloadSilent, removeExtension, removeMod, removeModRule, removeProfile, renameCategory, resetSuppression, setActivator, setAdvancedMode, setAlwaysCompactHeaders, setApplicationVersion, setAssociatedWithNXMURLs, setAttributeFilter, setAttributeSort, setAttributeVisible, setAutoDeployment, setAutoEnable, setAutoInstall, setAutoStart, setCategory, setCategoryOrder, setCleanupOnDeploy, setCollapsedGroups, setCollectionConcurrency, setCommandLine, setCompatibleGames, setConfirmPurge, setCopyOnIFF, setCustomTitlebar, setDeploymentNecessary, setDesktopNotifications, setDialogState, setDialogVisible, setDownloadFilePath, setDownloadGameFilter, setDownloadHash, setDownloadHashByFile, setDownloadInstalled, setDownloadInterrupted, setDownloadModInfo, setDownloadPath, setDownloadPausable, setDownloadSpeed, setDownloadSpeeds, setDownloadTime, setExtensionEnabled, setExtensionEndorsed, setExtensionLoadFailures, setExtensionModId, setExtensionVersion, setFBLoadOrder, setFBLoadOrderEntry, setFeature, setFileOverride, setForcedLogout, setForegroundDL, setGameHidden, setGameParameters, setGamePath, setGameSearchPaths, setGroupingAttribute, setHideTopLevelCategory, setINITweakEnabled, setInstallPath, setInstallPathMode, setInstallType, setInstanceId, setLanguage, setLoadOrder, setLoadOrderEntry, setMaxBandwidth, setMaxDownloads, setMaximized, setModArchiveId, setModAttribute, setModAttributes, setModEnabled, setModInstallationPath, setModState, setModType, setModsEnabled, setNetworkConnected, setNewestVersion, setNextProfile, setOAuthCredentials, setOpenMainPage, setPendingPluginSort, setPickerLayout, setPrimaryTool, setProfile, setProfileActivated, setProfilesVisible, setProgress, setReduceMotion, setRelativeTimes, setSettingsPage, setShowDLDropzone, setShowDLGraph, setShowModDropzone, setSortDetected, setSortManaged, setSortUnmanaged, setStartMinimized, setStateVersion, setSuggestInstallPathDirectory, setTabsMinimized, setToolOrder, setToolPid, setToolPinned, setToolRunning, setToolStopped, setToolValid, setToolVisible, setUIBlocker, setUpdateChannel, setUpdaterActive, setUpdaterSnapshot, setUseModernLayout, setUserAPIKey, setUserInfo, setWarnedAdmin, setWindowPosition, setWindowSize, setZoomFactor, setupNotificationSuppression, showDialog, showURL, showUsageInstruction, startActivity, startDialog, startDownload, startNotification, stopActivity, stopAllNotifications, stopNotification, suppressNotification, triggerDialogLink, updateCategories, updateNotification, willRemoveProfile };
 }
 //#endregion
 //#region ../shared/dist/index.d.ts
@@ -7715,7 +7722,7 @@ declare const getCollectionModsByPhase: (state: IState) => Map<number, ICollecti
 declare const getCollectionModsForPhase: (state: IState, phase: number) => ICollectionModInstallInfo[];
 /**
  * Get the total number of phases in the active session
- * @returns The highest phase number, or 0 if no active session
+ * @returns The number of distinct phases, optionals counting as one
  */
 declare const getCollectionTotalPhases: (state: IState) => number;
 /**
@@ -7817,7 +7824,7 @@ declare const isCollectionPhaseComplete: (state: IState, phase: number) => boole
 declare const isCollectionPhaseSettledSuccessfully: (state: IState, phase: number) => boolean;
 /**
  * Get the current phase being processed
- * @returns The lowest phase number with incomplete mods, or -1 if all complete
+ * @returns The lowest phase with incomplete required mods, or -1 once all required mods are done
  */
 declare const getCollectionCurrentPhase: (state: IState) => number;
 /**

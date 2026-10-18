@@ -27,7 +27,7 @@ api.runExecutable(
 | `detach`        | `boolean`                        | `false`       | Also `unref()` the child so it can outlive Vortex. Does **not** resolve the promise early |
 | `expectSuccess` | `boolean`                        | `false`       | Show error notification if process exits with non-zero code                               |
 | `onSpawned`     | `(pid?: number) => void`         | —             | Callback immediately after process spawns; receives PID                                   |
-| `onExit`        | `(code: number \| null, signal?: NodeJS.Signals \| null) => void` | — | Callback when the process exits; `code` is `null` when terminated by a signal, and from v2.9.0-beta.2 `signal` names it |
+| `onExit`        | `(code: number \| null, signal?: NodeJS.Signals \| null) => void` | — | Callback when the process exits; `code` is `null` when terminated by a signal, and in v2.9.0-beta.2 and on `master` (not beta.3/4) `signal` names it |
 
 `onSpawned` receives no pid when Vortex doesn't know it — chiefly when the target runs elevated.
 

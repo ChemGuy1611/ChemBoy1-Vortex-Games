@@ -63,7 +63,10 @@ def _git(*args):
 
 
 def _git_show(name):
-    """Return the text of repo-root file `name` as committed at HEAD."""
+    """Return the text of repo-root file `name` as committed at HEAD.
+
+    Not vortex_utils.git_show_text on purpose: this script compares HEAD against the working
+    tree, so it must run without importing the very vortex_utils it may be asked to compare."""
     shown = _git("show", f"HEAD:{name}")
     if shown.returncode != 0:
         raise FileNotFoundError(f"{name} is not tracked at HEAD: {shown.stderr.decode(errors='replace').strip()}")

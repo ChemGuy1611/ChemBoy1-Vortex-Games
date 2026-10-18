@@ -38,6 +38,9 @@ Usage:
     python patch_extensions.py GAME_ID --audit --verify       # verify one extension's store ids only
     python patch_extensions.py --audit --show-suppressed      # also list the findings parked by an '//!audit-skip: <rule> - <reason>' marker, with their reasons
 
+Exit code: 1 when any game errored (a patch raised, the patched source failed node
+syntax check, or the write failed), else 0. A skipped game is not an error.
+
 The extension_url patch looks up each game's modId from the public Nexus v3
 /vortex/extensions feed (no API key). It needs %APPDATA%\\Vortex\\temp\\nexus_gamelist.json,
 which Vortex writes on first login, to turn the feed's numeric game ids into domains.
@@ -1439,8 +1442,12 @@ def patch_template_gap_fixes(game_id, src, context):
     """
     Port the template gap fixes (2026-10-11) to a game: wrapper-name cuts use lastIndexOf,
     "EACCESS" -> "EACCES", RPG Maker .JS handling, Shinryu root marker case, UMM Open Save
-    Folder await. Literal replacements from TEMPLATE_GAP_FIXES; a game that carries none of
-    the old text is left alone. Run per family, only on games in that family's parity list.
+    Folder await, Anvil rename notice + rename redeploy, Fluffy loose-lua root + nested
+    archive case, Unity hybrid dialogs / archive flags / custom loader / ALT_VERSION / Melon
+    Nexus button, UE4-5 LogicMods .PAK stem / ModKit name guard / Xbox combo mod folder /
+    legacy preSort / pak retag gate / Open LogicMods Folder button. Literal replacements from
+    TEMPLATE_GAP_FIXES; a game that carries none of the old text is left alone. Run per
+    family, only on games in that family's parity list.
     """
     new_src = src
     applied = []
@@ -2625,6 +2632,8 @@ def run_patches(game_ids, dry_run, context, only=None):
         if not ok:
             print(f"  ! generate_explained.js batch failed: {err}")
 
+    return total_errors
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -2752,10 +2761,10 @@ def main():
         print(f"Running patch '{args.only}' on {len(game_ids)} game(s){' [DRY RUN]' if dry_run else ''}...\n")
     else:
         print(f"Running {len([p for p in PATCHES if p['enabled']])} patch(es) on {len(game_ids)} game(s){' [DRY RUN]' if dry_run else ''}...\n")
-    run_patches(game_ids, dry_run, context, only=args.only)
+    errors = run_patches(game_ids, dry_run, context, only=args.only)
 
     if args.no_resize:
-        return
+        return 1 if errors else 0
 
     # PNG resize — all game-* and template-* folders when running on all,
     # or just the targeted game folders when specific IDs are given
@@ -2775,7 +2784,8 @@ def main():
 
     print(f"Checking cover art for {len(game_ids)} game(s){' [DRY RUN]' if dry_run else ''}...\n")
     run_cover_art_resize(game_ids, dry_run)
+    return 1 if errors else 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main() or 0)

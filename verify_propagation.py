@@ -68,21 +68,10 @@ import argparse
 import json
 import os
 import re
-import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
 import vortex_utils as vu
-
-
-def _git_show(ref, rel_path):
-    """Text of repo-relative `rel_path` at `ref`, LF-normalised, or None when it does not
-    exist there."""
-    shown = subprocess.run(["git", "-C", vu.REPO_ROOT, "show", f"{ref}:{rel_path}"],
-                           capture_output=True)
-    if shown.returncode != 0:
-        return None
-    return shown.stdout.decode("utf-8").replace("\r\n", "\n")
 
 
 def _read_working(folder):
@@ -122,7 +111,7 @@ def verify_game(game_id, game_ref, tpl_old, tpl_new, names):
     folder = os.path.join(vu.REPO_ROOT, f"{vu.GAME_PREFIX}{game_id}")
     rel = f"{vu.GAME_PREFIX}{game_id}/index.js"
     game_new = _read_working(folder)
-    game_old = _git_show(game_ref, rel)
+    game_old = vu.git_show_text(game_ref, rel)
     result = {"game": game_id, "problems": [], "exact": [], "patched": [], "untouched": []}
     if game_new is None:
         result["problems"].append("no index.js in the working tree")
@@ -180,7 +169,7 @@ def changelog_problems(game_id, game_ref, keys):
             problems.append(f"CHANGELOG: '{key[:40]}' appears {new.count(key)} times")
         elif new.count(key, cut):
             problems.append(f"CHANGELOG: '{key[:40]}' sits in a released section")
-    old = _git_show(game_ref, rel)
+    old = vu.git_show_text(game_ref, rel)
     if old is not None:
         old_dated = re.search(r"^## \[", old, re.MULTILINE)
         if (old[old_dated.start():] if old_dated else "") != new[cut:]:
@@ -217,15 +206,17 @@ def main():
     parser.add_argument("--json", action="store_true", help="emit a structured JSON report")
     args = parser.parse_args()
 
-    template = args.template if args.template.startswith(vu.TEMPLATE_PREFIX) \
-        else f"{vu.TEMPLATE_PREFIX}{args.template}"
+    template = vu.resolve_template_folder(args.template)
+    if template is None:
+        print(f"ERROR: no template folder matches {args.template!r}")
+        return 2
     tpl_rel = f"{template}/index.js"
-    tpl_old = _git_show(args.old_ref, tpl_rel)
+    tpl_old = vu.git_show_text(args.old_ref, tpl_rel)
     if tpl_old is None:
         print(f"ERROR: {tpl_rel} not found at {args.old_ref}")
         return 2
     if args.new_ref:
-        tpl_new = _git_show(args.new_ref, tpl_rel)
+        tpl_new = vu.git_show_text(args.new_ref, tpl_rel)
     else:
         tpl_new = _read_working(os.path.join(vu.REPO_ROOT, template))
     if tpl_new is None:

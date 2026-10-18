@@ -27,7 +27,7 @@ Usage:
     python splice_template_functions.py GAME_ID TEMPLATE --block START END ANCHOR [--block ...]
 
     GAME_ID    bare id (farcry4, not game-farcry4)
-    TEMPLATE   template folder name (template-farcry)
+    TEMPLATE   template folder name (template-farcry) or its short name (farcry)
 
 Examples:
     python splice_template_functions.py starwarsoutlaws template-snowdropengine \\
@@ -51,6 +51,7 @@ import sys
 
 from vortex_utils import (
     REPO_ROOT, read_index_js, write_index_js, top_level_function_text, node_check_source,
+    resolve_template_folder,
 )
 
 
@@ -93,7 +94,11 @@ def main():
         parser.error("give at least one names@anchor spec or --block")
     if any("@" not in s for s in args.specs):
         parser.error("every spec needs a '@' between the function names and the anchor")
-    game_id, template, specs, dry = args.game_id, args.template, args.specs, args.dry_run
+    template = resolve_template_folder(args.template)
+    if template is None:
+        print(f"ERROR: no template folder matches {args.template!r}")
+        sys.exit(2)
+    game_id, specs, dry = args.game_id, args.specs, args.dry_run
     folder = os.path.join(REPO_ROOT, f"game-{game_id}")
     src = read_index_js(folder)
     tsrc = read_index_js(os.path.join(REPO_ROOT, template))

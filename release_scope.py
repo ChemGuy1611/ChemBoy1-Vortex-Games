@@ -72,10 +72,6 @@ def _vkey(version):
     return tuple(int(p) for p in version.split("."))
 
 
-def _valid_game_id(value):
-    return isinstance(value, int) and not isinstance(value, bool) and value > 0
-
-
 def _main_file_version(domain, mod_id, api_key):
     """Version of the newest MAIN file on a mod page via the v1 file list, or None."""
     try:
@@ -155,7 +151,7 @@ def survey(exclude, offline, verify=False):
         local_gid = info.get("gameId")
         if "gameId" not in info:
             out["game_id"]["missing"].append(gid)
-        elif not _valid_game_id(local_gid):
+        elif not vu.is_valid_nexus_game_id(local_gid):
             out["game_id"]["invalid"].append({"id": gid, "value": local_gid})
         elif row is not None and row.get("game_id") is not None and int(row["game_id"]) != local_gid:
             out["game_id"]["disagree"].append({"id": gid, "local": local_gid, "nexus": int(row["game_id"])})

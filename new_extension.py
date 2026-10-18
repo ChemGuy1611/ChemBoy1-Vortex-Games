@@ -54,7 +54,9 @@ stamped into info.json, the CHANGELOG.md entry, the index.js header, and the
 version .txt filename regardless of the version the template scaffold carries.
 info.json "id" is set to GAME_ID. info.json "gameId" is set to the numeric Nexus game
 id of the game's Nexus domain (v1 games API, then Vortex's cached game list); when
-no id is found it stays "XXX" and is reported at the end.
+no id is found it stays "XXX" and is reported at the end. info.json "modId" stays "XXX"
+too: the Nexus page does not exist yet, and release_extension.py fills it in from
+EXTENSION_URL once it does.
 
 After writing index.js, automatically runs:
     1. python categorize_games.py {GAME_ID}  (first: the doc generators read its lists)
@@ -87,7 +89,7 @@ from io import BytesIO
 from vortex_utils import (
     REPO_ROOT, TITLE_IMAGES_DIR, BANNER_IMAGES_DIR, js_string_literal,
     http_get, http_get_bytes, http_get_json,
-    roman_to_arabic, arabic_to_roman, name_lookup_variants,
+    name_lookup_variants,
     lookup_pcgamingwiki, pcgw_page_wikitext, parse_pcgw_availability,
     parse_pcgw_data_paths, format_pcgw_path,
     parse_ue_engine_version,
@@ -98,7 +100,7 @@ from vortex_utils import (
     update_index_header, sanitize_game_name, normalize_game_name, write_index_js,
     read_index_js, extract_steamapp_id, extract_game_name,
     nexus_list_games, nexus_game_id_for_domain, run_script, open_in_default_app,
-    write_text_atomic, is_placeholder_value, find_placeholder_vars, replace_const_rhs,
+    write_text_atomic, find_placeholder_vars, replace_const_rhs,
     safe_rmtree, touch_empty, NEW_EXTENSION_VERSION,
 )
 

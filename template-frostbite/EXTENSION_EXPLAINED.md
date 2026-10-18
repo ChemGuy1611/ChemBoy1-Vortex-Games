@@ -51,7 +51,6 @@ Installers run in priority order (lower number = tested first). The first instal
 | `XXX-frostymodmanager` | 25 |
 | `XXX-frostymod` | 30 |
 | `XXX-plugin` | 35 |
-| `XXX-key` | 40 |
 | `XXX-fallback` | 49 |
 
 ## Registered Tools

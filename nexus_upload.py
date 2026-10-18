@@ -24,7 +24,7 @@ import urllib.error
 import urllib.request
 
 from vortex_utils import (
-    log_info, log_warn, log_error, nexus_v3_get, nexus_v3_post_json, NEXUS_USER_AGENT,
+    log_info, nexus_v3_get, nexus_v3_post_json, NEXUS_USER_AGENT,
 )
 
 NEXUS_V3 = "https://api.nexusmods.com/v3"

@@ -1,6 +1,7 @@
 {
   "id": "doom",
   "gameId": 1372,
+  "modId": 677,
   "name": "Game: DOOM",
   "author": "ChemBoy1",
   "version": "1.0.1",

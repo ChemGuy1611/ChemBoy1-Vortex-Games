@@ -13,6 +13,8 @@ Steps to set up the dev script environment on a new Windows PC.
 | **Node.js LTS**  | Must be on `PATH`; required for `generate_explained.js`, `node --check`, and oxlint |
 | **Vortex**       | Install normally; creates its data folder at `%APPDATA%\Vortex\`                    |
 
+With more than one Python installed, `python` must be the interpreter the packages in section 3 were installed into. A newer Python placed first on `PATH` starts with none of them, and the failure is quiet: `render_svg.py` stops at its import check and the Pillow image steps are skipped with a warning. Section 7 prints which interpreter `python` resolves to.
+
 ---
 
 ## 2. Clone Repos
@@ -104,13 +106,14 @@ All paths above are the expected locations. Scripts derive `REPO_ROOT` relative 
 Install from the repo root:
 
 ```text
-pip install PySide6 Pillow
+pip install PySide6 Pillow pyyaml
 ```
 
 | Package   | Required by                                                                                                           |
 | --------- | --------------------------------------------------------------------------------------------------------------------- |
 | `PySide6` | `vortex_gui.py`                                                                                                       |
 | `Pillow`  | `vortex_utils.py` image resize, `fetch_cover_art.py`, `fetch_exec_icon.py`, `new_extension.py`, `patch_extensions.py` |
+| `pyyaml`  | `check_nexus_api.py --check-spec` (without it the check fails rather than comparing the spec)                         |
 
 `vortex_utils.py` itself uses stdlib only. Pillow is lazy-imported — scripts run without it but image operations are skipped with a warning.
 
@@ -175,8 +178,10 @@ Vortex up to 2.6.x also cached an `extensions-manifest.json` in the same folder,
 
 ```text
 # Check Python + key packages
+python -c "import sys; print(sys.executable)"
 python -c "import vortex_utils; print('vortex_utils OK')"
 python -c "from PIL import Image; print('Pillow OK')"
+python -c "import svglib, reportlab, cairo, rlPyCairo; print('render_svg.py deps OK')"
 python -c "from PySide6.QtWidgets import QApplication; print('PySide6 OK')"
 
 # Check Node

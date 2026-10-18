@@ -1,6 +1,7 @@
 {
   "id": "bioshock",
   "gameId": 1216,
+  "modId": 920,
   "name": "Game: BioShock Remastered",
   "author": "ChemBoy1",
   "version": "1.0.1",

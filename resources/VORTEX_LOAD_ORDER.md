@@ -22,7 +22,10 @@ position" describe the file-based load order as shipped in stable Vortex up to v
 extension** — a registry of several load orders per game, a reconcile step on every deploy, and a
 "hold" that replaces `UpdateSet`. It is described in "The v2.9.0-beta.2 rewrite" near the end of
 this file; until a stable release ships it, the older sections stay the reference for what users
-actually run. One smaller fix is already in v2.9.0-beta.1 (see "`deserializeLoadOrder` contract").
+actually run. The rewrite is **not** in v2.9.0-beta.3 or v2.9.0-beta.4 (nor in v2.8.1 or v2.8.2):
+those tags are a release branch cut from `master` on 2026-10-06, a day before the rewrite landed,
+and they still ship `UpdateSet.ts`. Only the beta.2 tag and `master` carry it. One smaller fix is
+already in v2.9.0-beta.1 (see "`deserializeLoadOrder` contract").
 
 ## What FBLO stores
 
@@ -112,7 +115,7 @@ notification.
 
 ## UpdateSet — surviving mod updates and purge cycles
 
-_Through stable v2.8.x and v2.9.0-beta.1. `UpdateSet.ts` is deleted in v2.9.0-beta.2; its job moves
+_Through stable v2.8.x and v2.9.0-beta.1, beta.3 and beta.4. `UpdateSet.ts` is deleted in v2.9.0-beta.2 and on `master`; its job moves
 to the hold and reconcile steps described in "The v2.9.0-beta.2 rewrite" below._
 
 `UpdateSet.ts` remembers the load-order entries and the **index** each one held
@@ -224,7 +227,9 @@ load order into a collection and restores it on install (`genCollectionLoadOrder
 
 ## The v2.9.0-beta.2 rewrite
 
-Present in v2.9.0-beta.2 (2026-10-08) and on `master`; absent from v2.8.0 and v2.9.0-beta.1. All of
+Present in v2.9.0-beta.2 (2026-10-08) and on `master`; absent from v2.8.x, v2.9.0-beta.1,
+v2.9.0-beta.3 and v2.9.0-beta.4 (checked 2026-10-17: the later betas are cut from an earlier point
+of `master` and do not contain it, so a user on beta.4 has the old behaviour). All of
 it is additive for extensions — `registerLoadOrder` calls written for v2.8 keep working — but the
 runtime behaviour underneath changes in ways an extension author can observe.
 

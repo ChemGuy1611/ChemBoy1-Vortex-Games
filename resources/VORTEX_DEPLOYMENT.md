@@ -97,6 +97,33 @@ set, so once a higher-priority mod has placed a file, lower-priority mods skip i
 | `purge-mods-in-path` (gameId, modType, modPath)           | `onAsync`      | Targeted purge                     |
 | `await-activation` (cb)                                   | on             | Wait for any in-flight deployment  |
 
+## Deployment fixes on `master` that no release tag contains yet
+
+Checked 2026-10-17 against `master` (e7698e5a0): none of these commits is in a tag up to
+v2.9.0-beta.4, so a user on any release does not have them. Re-check which tag first carries each
+one before relying on it.
+
+- **A game file's backup is never overwritten.** When a link deployment moves a game file aside to
+  `<file>.vortex_backup` and that backup name is already taken (a second mod type deploying over the
+  same file), the file is left undeployed and recorded as a deployment failure instead of renaming
+  over the backup of the game's original file.
+- **Skip patterns match dot-files.** The deployment blacklist compiles its patterns with `dot: true`,
+  once per deployment instead of once per file, so `._*` files inside an archive's `__MACOSX` folder
+  and junk under a dot-prefixed folder stay out of the game folder. A pattern that cannot be compiled
+  is dropped with a warning instead of failing the deployment.
+- **Deploying one mod keeps the rest.** A single-mod redeploy (`deploy-single-mod`) now applies the
+  mod's rules and file overrides, keeps the files of mods sorted after it and of the merged output,
+  and sorts the mod in even when it is not enabled yet (the script-extender-download case).
+- **A failed deployment cancels a profile switch.** `IDeployOptions.failOnError` is new: the
+  profile switch asks its deployments for their error, cancels on one, marks the game as needing a
+  deployment and offers to switch back. (`IDeployOptions.profileId` is gone from the published API
+  report at the same point.)
+- **Fallback purge works at the file's real path.** It reads the staging backup by its file name,
+  removes files from the mod's subfolder for games that do not merge mods, keeps files older than the
+  copy it deployed, asks before purging files of a `move` or unknown deployment method, and records
+  the files it leaves behind in the manifest. The External Changes dialog applies Revert and Save at
+  each file's deployed path.
+
 ## Gotchas
 
 - `hardlink_activator` needs staging and game on the same volume; otherwise it's not supported and

@@ -178,7 +178,7 @@ An object (`IItemRendererProps`) with:
 | `invalidEntries`     | `IInvalidResult[]`  | Optional; validation failures, for the warning tooltip                      |
 | `position`           | `number`            | Optional; 1-based position in the **full** order, computed before filtering |
 | `lockedEntriesCount` | `number`            | Optional; number of locked entries in the full order                        |
-| `loadOrderId`        | `string`            | Optional (v2.9.0-beta.2); the load order this row belongs to, the primary when omitted |
+| `loadOrderId`        | `string`            | Optional (v2.9.0-beta.2 and `master` only, not beta.3/4); the load order this row belongs to, the primary when omitted |
 | `setRef`             | `(ref) => void`     | Declared in the type but **never passed** by `DraggableListItem`            |
 
 `position` and `lockedEntriesCount` exist precisely to feed `LoadOrderIndexInput`. The UE4-5
@@ -189,7 +189,7 @@ these row objects through `RenderRowsCache` (`renderRows.ts`), memoised on
 re-renders reuse the same objects and each row's `React.memo` holds. Reading `item.position` and
 `item.lockedEntriesCount` preserves that; recomputing defeats it.
 
-`loadOrderId` matters only for a game that registers several load orders (v2.9.0-beta.2, see
+`loadOrderId` matters only for a game that registers several load orders (v2.9.0-beta.2 and `master` only, see
 `LOAD_ORDER_REGISTRATION.md`, "Several load orders per game"). Vortex's own row renderer passes it to
 its selector and to `setFBLoadOrder` / `setFBLoadOrderEntry`. A custom renderer that reads
 `state.persistent.loadOrder[profileId]` directly, or dispatches those actions without the id, reads

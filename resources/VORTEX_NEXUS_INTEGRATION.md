@@ -33,7 +33,7 @@ Not in stable 2.7.2.
   token while one is in flight shares it. A refresh that fails for a passing reason (offline, 5xx)
   returns the current token and lets the request find out; a refusal from the token endpoint
   (`invalid_grant`) means the session is dead, so the user is signed out with an "Authentication
-  failed, please log in again" error and `did-login` is emitted. From v2.9.0-beta.2, once a refused
+  failed, please log in again" error and `did-login` is emitted. In v2.9.0-beta.2 and on `master` (not in v2.8.x, beta.3 or beta.4), once a refused
   refresh has signed the user out, `getAccessToken` returns `undefined` so the request goes out with
   no token, instead of re-sending the dead one; earlier releases returned the stale token. A refresh
   that completes after the session was replaced is discarded.
@@ -54,8 +54,8 @@ Since **2.7.0** the Extensions page's catalog of available extensions comes from
 `GET /vortex/extensions` endpoint (`extension_manager/availableExtensions.ts`, `fetchExtensionList`),
 not from a manifest file; see `NEXUS_MODS_API.md` for the endpoint and the consequence for any
 locally cached `extensions-manifest.json`. `vortex-extensions-feed.md` walks through the whole flow:
-how an extension reaches the feed, how Vortex maps, installs and auto-updates from it, and the
-one-extension-per-game rule, with a saved copy of the feed (`vortex-extensions-feed.json`).
+how an extension reaches the feed, how Vortex maps, installs and auto-updates from it (including,
+since 2.8.2, restoring or offering a missing `modId` link), and the one-extension-per-game rule, with a saved copy of the feed (`vortex-extensions-feed.json`).
 
 ## Clients
 

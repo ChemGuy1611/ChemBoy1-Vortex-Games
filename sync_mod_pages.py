@@ -63,7 +63,6 @@ Environment variables:
 Exit code: 1 if any page errored (a skipped page is not an error), else 0.
 """
 
-import argparse
 import difflib
 import hashlib
 import json

@@ -8,7 +8,9 @@ on Nexus/S3 that expires automatically; does not publish any files).
 Use --check-spec to diff the live OpenAPI document against the endpoint
 catalog recorded in resources/NEXUS_MODS_API.md (no API key needed). A path
 listed in SPEC_RETIRING_PATHS is tolerated as an expected removal once its
-scheduled date has passed, instead of failing the check.
+scheduled date has passed, instead of failing the check. --check-spec needs
+PyYAML; when it is missing the check FAILS (exit 1) rather than reporting a
+clean 0/0.
 
 Usage:
     python check_nexus_api.py
@@ -136,6 +138,9 @@ SPEC_KNOWN_PATHS = {
     "/games/{game_domain}/mod-file-versions/{game_scoped_id}",
     "/games/{game_domain}/mods/{game_scoped_id}",
     "/games/{game_domain}/trending-mods",
+    "/mod-bugs",
+    "/mod-bugs/{id}",
+    "/mod-bugs/{id}/replies",
     "/mod-file-update-groups/{group_id}/versions",
     "/mod-file-versions/batch",
     "/mod-file-versions/dependencies/materialized/batch",
@@ -157,6 +162,7 @@ SPEC_KNOWN_PATHS = {
     "/mods/{id}/changelogs",
     "/mods/{id}/files",
     "/mods/{id}/toggle-legacy-mod-requirements",
+    "/team-mods",
     "/uploads",
     "/uploads/multipart",
     "/uploads/{id}",
@@ -632,7 +638,9 @@ def run_spec_check(results):
     try:
         import yaml
     except ImportError:
-        warn("PyYAML not installed - run 'pip install pyyaml' to enable --check-spec")
+        # A failure, not a warning: a warning here ends the run at "Passed 0/0",
+        # which reads as a clean spec check when nothing was compared.
+        fail("PyYAML not installed, so the spec was NOT checked - run 'pip install pyyaml'")
         return
 
     req = urllib.request.Request(NEXUS_SPEC_URL, headers={"User-Agent": UA})

@@ -10,24 +10,24 @@ The tables in the Snapshot section are generated, together with the JSON, by `re
 
 | Field                 | Value                                                                                  |
 | --------------------- | -------------------------------------------------------------------------------------- |
-| Fetched (UTC)         | 2026-10-10T13:25:26Z                                                                   |
+| Fetched (UTC)         | 2026-10-17T20:58:10Z                                                                   |
 | Source                | `GET https://api.nexusmods.com/v3/vortex/extensions` (no API key)                      |
-| File                  | `vortex-extensions-feed.json`, 302 KB, 2-space indent, UTF-8, LF, one trailing newline |
-| Newest upload in feed | 2026-10-10T06:37:35Z (extensions list)                                                 |
+| File                  | `vortex-extensions-feed.json`, 309 KB, 2-space indent, UTF-8, LF, one trailing newline |
+| Newest upload in feed | 2026-10-17T05:47:35Z (extensions list)                                                 |
 | Oldest upload in feed | 2018-09-21T07:48:03Z (extensions list)                                                 |
 
 | Item                                        | Count                                                               |
 | ------------------------------------------- | ------------------------------------------------------------------- |
-| Extensions                                  | 704                                                                 |
-| Extensions with `type` `game`               | 582                                                                 |
-| Extensions with `type` `other`              | 122                                                                 |
-| Themes                                      | 16                                                                  |
-| Translations                                | 18                                                                  |
-| Distinct extension authors                  | 265                                                                 |
-| Distinct `game_id` values                   | 582 (one extension per game, see below)                             |
-| ChemBoy1 extensions                         | 271 (268 `game`, 3 `other`)                                         |
-| Largest extension authors by rows           | ChemBoy1 271, Pickysaurus 23, NexusMods 16, Senjay 14, AtomicTEM 13 |
-| `game-*` folders with a ChemBoy1 `game` row | 267 of 282                                                          |
+| Extensions                                  | 719                                                                 |
+| Extensions with `type` `game`               | 602                                                                 |
+| Extensions with `type` `other`              | 117                                                                 |
+| Themes                                      | 15                                                                  |
+| Translations                                | 19                                                                  |
+| Distinct extension authors                  | 268                                                                 |
+| Distinct `game_id` values                   | 602 (one extension per game, see below)                             |
+| ChemBoy1 extensions                         | 277 (275 `game`, 2 `other`)                                         |
+| Largest extension authors by rows           | ChemBoy1 277, Pickysaurus 23, NexusMods 17, Senjay 14, AtomicTEM 13 |
+| `game-*` folders with a ChemBoy1 `game` row | 273 of 288                                                          |
 
 <!-- feed-snapshot:end -->
 
@@ -49,7 +49,7 @@ Each statement is tagged by how well it is established. **Documented** means the
 3. **Classification.** Documented: Nexus analyses the extension's code (`info.json`) on the server. If it targets one game the row is `type: "game"` with that game's numeric Nexus id in `game_id`; otherwise it is `type: "other"` (helpers, dependencies and global patchers end up here). Themes and translations are separate lists, and translations carry a `locale`.
    - Unknown: how themes and translations are recognised. The retired generator used mod categories 13 and 7.
 4. **One extension per game.** Documented in the Vortex source: the API already de-duplicates game extensions, and Vortex re-checks on its side, keeping the newest `uploaded_at` per `game_id`.
-   - Observed: the feed has 566 `game` rows and 566 distinct `game_id` values, so no game appears twice.
+   - Observed: the 2026-10-17 snapshot has 602 `game` rows and 602 distinct `game_id` values, so no game appears twice.
    - Observed, resolved: until the 2026-10-01 snapshot the feed listed mod 244 (uploaded 2021-07-03) for game 2433 (State of Decay 2) and had no row for ChemBoy1's mod 946, which was published, in category 4, and last uploaded 2026-09-27. The mod was missing entirely rather than listed as `other`, so it was not a classification result. It was reported to Nexus staff as an error; by the 2026-10-10 snapshot the feed lists only mod 946 for game 2433 and mod 244 is gone. The cause was never established.
    - Observed: game 4309 (Sifu) lists mod 350 and has no row for ChemBoy1's mod 1063. That one is deliberate: Nexus staff rejected that extension change, so the slot is held on purpose.
    - Unknown: the server's tie-break rule when two extensions claim the same game. Vortex applies "newest upload wins" on its own side. The one unexplained case (State of Decay 2) kept the older mod until staff changed it, but it was treated as an error, so it is not evidence of an intended rule.
@@ -63,8 +63,11 @@ Vortex 2.7.0 and later, checked against the master source on the fetch date. Up 
 
 1. **Fetch.** Once per session, at startup, Vortex downloads the feed and the Nexus game list (`nexus_gamelist.json`) in parallel. The result is memoised for the session. The Extensions page refresh and the browse dialog force a new fetch. Nothing is fetched while offline.
 2. **Mapping.** Each row becomes a catalog entry. A `game` row keeps its numeric `gameId`, which Vortex resolves to a domain name and a game name from the local game list. An `other` row has no game. Themes and translations are typed accordingly. Rows whose `mod_id` or `file_id` is not a number are dropped. Vortex then keeps one game extension per game id, the one with the newest `uploaded_at`.
-3. **Browse and install.** The Extensions page lists the catalog. Installing downloads the entry's `file_id` from Nexus into the `site` download folder and installs it; a restart is needed afterwards. An `nxm://site/...` link that carries a file id does not need the catalog, while one with only a mod id gets its file from the catalog. At install time Vortex records the catalog entry's `modId`, `fileId` and `version` on the installed extension. An extension installed without a catalog entry has no recorded `modId`.
-4. **Automatic updates.** After every fetch, Vortex pairs each installed extension with the catalog entry that has the same `modId`. When the catalog's version is higher than the installed one (both parsed with `semver.coerce`), Vortex downloads and installs it, removes the older version, shows a notification and asks for a restart. Three consequences follow. An extension with no feed row is never updated automatically. A version string that does not parse as semver is skipped. A new file whose version is not higher never triggers an update.
+3. **Browse and install.** The Extensions page lists the catalog. Installing downloads the entry's `file_id` from Nexus into the `site` download folder and installs it; a restart is needed afterwards. An `nxm://site/...` link that carries a file id does not need the catalog, while one with only a mod id gets its file from the catalog. At install time Vortex records the catalog entry's `modId`, `fileId` and `version` on the installed extension. An extension installed without a catalog entry has no recorded `modId` unless it can be restored (see step 4).
+4. **Automatic updates.** After every fetch, Vortex pairs each installed extension with the catalog entry that has the same `modId`. When the catalog's version is higher than the installed one (both parsed with `semver.coerce`), Vortex downloads and installs it, removes the older version, shows a notification and asks for a restart. Three consequences follow. An extension with no recorded `modId` is not updated by this step. A version string that does not parse as semver is skipped. A new file whose version is not higher never triggers an update.
+   - **Restoring a missing `modId` (Vortex 2.8.2 and later; not in 2.8.0 or 2.8.1).** Vortex 2.7 stopped reading `modId` from an extension's `info.json`, so extensions installed by an older Vortex lost their link to the catalog and stopped updating. 2.8.2 reads `modId` again, for that purpose only: when an installed extension has no `modId` in Vortex's state and its `info.json` holds a positive whole number, Vortex stores it. Any other value is ignored and leaves the extension unlinked rather than failing to load.
+   - **Offering a link (2.8.2 and later).** For game extensions that still have no `modId`, Vortex looks at the Nexus domain of the games each one registers. If the catalog holds exactly one game extension for that domain, it is a different mod from every installed one, and its version is higher than the installed version, Vortex asks the user to confirm linking the two. Accepting stores the catalog's `modId` and installs the newer version. Declining stores `nexusLinkDeclined` on the extension so it is not offered again. Each candidate is offered at most once per session, and bundled extensions and ones marked for removal are skipped. The match is a guess from the game's domain, which is why the user confirms it.
+   - Observed on the fetch date: this repository's extensions carry `id`, `gameId`, `name`, `author`, `version` and `description` in `info.json` and no `modId`, so only the domain match can re-link them. Vortex does not read `gameId` from `info.json`; the game id it uses comes from the feed row's `game_id`.
 5. **Dependencies.** An extension's declared dependency is looked up in the catalog and installed on demand.
 6. **Site installer.** Archives for the `site` game cannot be installed from the mod list; Vortex tells the user to use the Extensions page.
 
@@ -75,14 +78,15 @@ Vortex 2.7.0 and later, checked against the master source on the fetch date. Up 
 
 ## Observations
 
-Hand-written against the 2026-10-10 snapshot; re-check after a refresh.
+Hand-written against the 2026-10-17 snapshot; re-check after a refresh.
 
-- 267 of the 282 `game-*` folders have a ChemBoy1 `game` row. The other 15 are:
-  - 12 with no published extension (`EXTENSION_URL` unset): eight games have no feed row at all, and four (`reddeadredemption2`, `starwarszerocompany`, `subnautica2`, `thebloodofdawnwalker`) have a row owned by another author.
-  - `gzdoom`, listed as `other` because the game has no Nexus game id.
+- 273 of the 288 `game-*` folders have a ChemBoy1 `game` row. The other 15 are:
+  - 12 with no published extension (`EXTENSION_URL` unset, empty or absent): eight games have no feed row at all, and four (`reddeadredemption2`, `starwarszerocompany`, `subnautica2`, `thebloodofdawnwalker`) have a row owned by another author.
+  - `gzdoom`, which does have a ChemBoy1 `game` row (mod 1319, `game_id` 1839, uploaded 2026-10-16; 1839 is the `doom1993` game page). The refresh script lists it anyway because it looks the folder name up as a Nexus domain in `nexus_gamelist.json`, and `gzdoom` is not one.
   - `bloodborne`, whose mod page is on the `bloodborne` game domain, not under `site`, so it is not a Vortex-site extension.
   - `sifu`, whose slot is held deliberately because Nexus staff rejected the ChemBoy1 extension change.
 - `stateofdecay2` moved out of this list since the 2026-10-01 snapshot: its feed row is now ChemBoy1's mod 946.
-- ChemBoy1's three `other` rows are the RE Engine wrapper (deprecated), the UZDoom extension and the global ignore patterns helper.
+- ChemBoy1's two `other` rows are the RE Engine wrapper (deprecated) and the global ignore patterns helper. The UZDoom extension, `other` in the 2026-10-10 snapshot, is now a `game` row.
+- Feed size grew from 704 to 719 extensions between 2026-10-10 and 2026-10-17 (`game` 582 to 602, `other` 122 to 117); the fields per row are unchanged.
 
 Related: `NEXUS_MODS_API.md` (the endpoint's schema and tier), `VORTEX_NEXUS_INTEGRATION.md` (Vortex's Nexus integration, including the extension catalog).

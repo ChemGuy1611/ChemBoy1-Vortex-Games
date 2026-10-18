@@ -20,7 +20,10 @@ Steps performed per extension:
        equals GAME_ID (game folders) or the helper id (helper folders). Game folders
        also need info.json 'gameId' (numeric Nexus game id) to be a positive integer:
        a leftover "XXX" placeholder is an error, a missing key only a warning (a game
-       with no Nexus domain has none)
+       with no Nexus domain has none). Then keep info.json 'modId' equal to the mod id at
+       the end of EXTENSION_URL (games and helpers): a missing key, the "XXX" placeholder
+       or a different number is rewritten in place before the zip is built (a different
+       real number warns). With no usable EXTENSION_URL nothing is written.
     3. Check that const debug = false in index.js (errors if true)
     4. Check that all context.registerInstaller calls have unique priority numbers (WARNS only,
        never blocks the release -- a duplicate is a code-quality finding, and its review home is
@@ -127,7 +130,7 @@ from vortex_utils import (
     find_registerinstaller_calls, audit_skip_lines, AUDIT_SKIP_PRIORITY,
     resolve_extension_folder, extension_prefix,
     changelog_entry_is_empty, unreleased_intermediate_sections,
-    PACKAGE_EXCLUDES,
+    PACKAGE_EXCLUDES, is_valid_nexus_game_id, set_info_mod_id,
 )
 from nexus_upload import pick_file_group, upload_zip, extract_changelog_entry
 from sync_mod_pages import push_pages
@@ -245,6 +248,37 @@ def update_discovery_ids(folder, game_id, dry_run=False):
     )
 
 
+def sync_info_mod_id(folder, game_id, info, extension_url, dry_run=False):
+    """Keep info.json "modId" equal to the mod id at the end of EXTENSION_URL.
+
+    The Nexus page does not exist when a new extension is scaffolded (info.json carries the
+    "XXX" placeholder) and EXTENSION_URL is filled in by hand once it does, so the release is
+    the first moment both are known. Runs before the zip is built so the package carries the id.
+    A modId that disagrees with EXTENSION_URL is corrected, the URL being the source of truth.
+    With no usable URL nothing is written; a real modId in that state only gets a warning.
+    Returns False only when the key could not be written."""
+    current = info.get("modId")
+    page = parse_nexus_mod_url(extension_url) if extension_url else None
+    if not page:
+        if isinstance(current, int) and not isinstance(current, bool):
+            log_warn(game_id, f"info.json 'modId' is {current} but EXTENSION_URL is not a Nexus mod page URL - left as is")
+        return True
+
+    mod_id = page[1]
+    status = set_info_mod_id(folder, mod_id, dry_run=dry_run)
+    if status is None:
+        log_error(game_id, "could not write info.json 'modId' - add it by hand (after 'gameId')")
+        return False
+    if status == "unchanged":
+        return True
+    verb = "[DRY RUN] Would set" if dry_run else "Set"
+    if isinstance(current, int) and not isinstance(current, bool):
+        log_warn(game_id, f"{verb} info.json 'modId' {current} -> {mod_id} to match EXTENSION_URL")
+    else:
+        log_info(game_id, f"{verb} info.json 'modId' to {mod_id} (from EXTENSION_URL)")
+    return True
+
+
 def is_rate_limit_error(exc):
     """True when an upload error is Nexus's HTTP 429 (the nexus_* helpers wrap it in a
     RuntimeError whose text reads "HTTP 429 Too Many Requests")."""
@@ -301,9 +335,12 @@ def release(game_id, open_browser, dry_run=False, skip_lint=False,
             log_warn(game_id, "info.json has no 'gameId' (numeric Nexus game id) - fine only for a game with no Nexus domain")
         else:
             game_nexus_id = info["gameId"]
-            if not (isinstance(game_nexus_id, int) and not isinstance(game_nexus_id, bool) and game_nexus_id > 0):
+            if not is_valid_nexus_game_id(game_nexus_id):
                 log_error(game_id, f"info.json 'gameId' must be a positive integer (numeric Nexus game id), found {game_nexus_id!r}")
                 return False
+
+    if not sync_info_mod_id(folder, game_id, info, extension_url, dry_run=dry_run):
+        return False
 
     name_field = info.get("name", "")
     if kind == "game":

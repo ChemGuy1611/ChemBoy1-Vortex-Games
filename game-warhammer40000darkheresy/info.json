@@ -1,6 +1,7 @@
 {
   "id": "warhammer40000darkheresy",
   "gameId": 8540,
+  "modId": "XXX",
   "name": "Game: Warhammer 40,000: Dark Heresy",
   "author": "ChemBoy1",
   "version": "0.1.0",

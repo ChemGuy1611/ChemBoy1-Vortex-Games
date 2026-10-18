@@ -290,19 +290,21 @@ root alongside `index.js`.
 
 ```json
 {
-    "id": "warhammer40kdarktide",
-    "gameId": 4943,
-    "name": "Game: Warhammer 40,000: Darktide",
+    "id": "abioticfactor",
+    "gameId": 6412,
+    "modId": 1392,
+    "name": "Game: Abiotic Factor",
     "author": "ChemBoy1",
-    "version": "1.0.0",
-    "description": "Vortex support for Warhammer 40,000: Darktide"
+    "version": "1.0.2",
+    "description": "Vortex support for Abiotic Factor"
 }
 ```
 
 | Field         | Type     | Notes                                                                                                                        |
 | ------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | `id`          | `string` | Stable extension identifier. Convention: the `GAME_ID` (a helper extension uses its folder id). Keep it first, and never change it after release. See [VORTEX_EXTENSION_LOADING.md](VORTEX_EXTENSION_LOADING.md) for what Vortex does with it. |
-| `gameId`      | `number` | Numeric Nexus Mods game id of the game's Nexus domain (the slug in `nexusmods.com/<domain>`, e.g. `4943` for `warhammer40kdarktide`). A JSON number, not a string. Repo convention, not read by Vortex's loader. Kept second, right after `id`. A game with no Nexus domain of its own uses the id of the closest Nexus game page (`gzdoom` uses `doom1993`'s `1839`). Look it up with `GET https://api.nexusmods.com/v1/games/<domain>.json` (the `id` field). |
+| `gameId`      | `number` | Numeric Nexus Mods game id of the game's Nexus domain (the slug in `nexusmods.com/<domain>`, e.g. `6412` for `abioticfactor`). A JSON number, not a string. Repo convention, not read by Vortex's loader. Kept second, right after `id`. A game with no Nexus domain of its own uses the id of the closest Nexus game page (`gzdoom` uses `doom1993`'s `1839`). Look it up with `GET https://api.nexusmods.com/v1/games/<domain>.json` (the `id` field). |
+| `modId`       | `number` | Nexus Mods mod id of the extension's own page: the number at the end of the page URL (`1392` for `https://www.nexusmods.com/site/mods/1392`), the same value the extension's `EXTENSION_URL` constant ends in. A JSON number; the string `"XXX"` stands in until the page exists (templates and unreleased extensions). Kept third, right after `gameId` (second in a helper, which has no `gameId`). Vortex 2.8.2 and later validate it as an optional positive integer: any other value, including the `"XXX"` placeholder, is ignored and never stops the extension loading. It is used to re-link an extension to its catalog entry when Vortex has no recorded link, and to build the "Report" link in an error dialog raised by this extension (`nexusmods.com/site/mods/<modId>?tab=bugs`; the host is fixed to `site`, so it assumes the extension's page lives there). The repo's release script rewrites it from `EXTENSION_URL` before packaging, so it is never edited by hand. |
 | `name`        | `string` | Display name in the Extensions list. Convention: `"Game: <Full Game Name>"`.                                                 |
 | `author`      | `string` | Extension author — `"ChemBoy1"` for this repo.                                                                               |
 | `version`     | `string` | Semver `MAJOR.MINOR.PATCH`. **Must match the latest `## [x.x.x]` entry in `CHANGELOG.md`.** New extensions start at `1.0.0`. |
@@ -315,6 +317,10 @@ Notes:
 - Required sibling files in the extension root: `index.js`, `info.json`, `CHANGELOG.md`, and
   `${GAME_ID}.jpg` (the `logo`). The folder is conventionally named `game-<GAME_ID>`.
 - Bump `info.json` `version` and add a matching `CHANGELOG.md` entry in the same change.
+- `modId` (the Nexus mod page id of the extension) is not part of this repo's manifest. Vortex 2.8.2
+  and later read it from `info.json` only to re-link extensions installed before Vortex 2.7 to their
+  Nexus page so they can update again; the value must be a positive whole number. Without it, the
+  only link is the by-game-domain offer described in `vortex-extensions-feed.md`.
 
 ---
 

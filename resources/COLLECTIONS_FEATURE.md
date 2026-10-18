@@ -86,7 +86,7 @@ load order is included in collections with zero extension code.
   call (use when the default generation logic is wrong for your game).
 - Custom sidecar load orders (UE4SS, LogicMods) live in their own reducers and
   are **not** covered by this auto-registration — register them explicitly via A.
-- Several load orders per game (v2.9.0-beta.2, see `LOAD_ORDER_REGISTRATION.md`): the manifest's
+- Several load orders per game (v2.9.0-beta.2 and `master` only, see `LOAD_ORDER_REGISTRATION.md`): the manifest's
   `loadOrder` key still holds the primary order — or the adopter's, for a game with no primary — so
   an older Vortex applies it as before. Named orders travel as
   `fbLoadOrders: [{ id, entries }]`, omitted for a single-order game so those manifests are
@@ -148,6 +148,37 @@ Note the UI prop shape differs from A's `editComponent`: `interface` gets only
   `{ id }`. Avoid exporting `name`/`modId` that differ per machine.
 - Before choosing a feature `id` / data key, check existing game extensions —
   the flat `Object.assign` merge means a duplicate key silently clobbers.
+
+---
+
+## Reading a collection install from an extension
+
+While a collection installs, Vortex keeps an install session in `state.session.collections`. The
+`selectors` export carries 24 read-only selectors over it (all take `state`; the phase ones also take
+a phase number), so an extension can see progress without its own bookkeeping:
+
+- **Session:** `getCollectionActiveSession`, `getCollectionSessionById`,
+  `getCollectionLastActiveSessionId`, `getCollectionSessionHistory`,
+  `getCollectionLastCompletedSession`.
+- **Members:** `getCollectionSessionMods`, `getCollectionActiveSessionMods`,
+  `getCollectionActiveSessionMod`, `getCollectionModByReference`, `getCollectionRequiredMods`,
+  `getCollectionOptionalMods`, `getCollectionModsByStatus`, `getCollectionPendingMods`,
+  `getCollectionModsInProgress`, `getCollectionCompletedMods`, `getCollectionStatusBreakdown`.
+- **Progress:** `getCollectionInstallProgress`, `getCollectionPhaseProgress`.
+- **Phases:** `getCollectionModsByPhase`, `getCollectionModsForPhase`, `getCollectionTotalPhases`,
+  `getCollectionCurrentPhase`, `isCollectionPhaseComplete`, `isCollectionPhaseSettledSuccessfully`.
+
+Phase numbers: a required member uses its authored phase (default 0); every optional (recommended)
+member maps to one reserved phase, `666`, which sorts after all authored phases. Up to Vortex 2.8.0,
+`getCollectionTotalPhases` returned the highest phase number plus one, so a collection with any
+optional member reported 667 phases, and `getCollectionCurrentPhase` counted up through every integer
+below that. From 2.8.1 (signatures unchanged) both work from the phases that actually occur:
+`getCollectionTotalPhases` is the number of distinct phases (the optional group counts as one), and
+`getCollectionCurrentPhase` is the lowest occurring phase that still has an incomplete **required**
+mod, or `-1` once every required mod is done. `isCollectionPhaseComplete` is true when all required
+mods of a phase are completed; `isCollectionPhaseSettledSuccessfully` also needs every required
+member installed or ignored, which is what makes a failed member's retry run at its own phase
+before later phases start. The phase numbers in `getCollectionModsByPhase` still include `666`.
 
 ---
 

@@ -1,6 +1,7 @@
 {
   "id": "battlefield1",
   "gameId": 2587,
+  "modId": 847,
   "name": "Game: Battlefield 1",
   "author": "ChemBoy1",
   "version": "0.2.2",

@@ -35,7 +35,7 @@ Usage:
         find_js_function,
         update_index_header, inject_register_actions,
         find_fn_end, find_fn_body, REGISTER_ACTIONS,
-        read_info_json, make_info_json, make_changelog, parse_changelog_latest,
+        read_info_json, set_info_mod_id, make_info_json, make_changelog, parse_changelog_latest,
         bump_semver, prepend_changelog_entry, changelog_has_version_section,
         mutate_index_js, mutate_text_file, detect_eol, patch_text_file,
         read_json, write_json_atomic,
@@ -78,7 +78,7 @@ Usage:
         write_text_atomic, open_in_default_app,
         run_script, load_vortex_manifest, load_nexus_gamelist,
         resize_pngs_in_dirs, build_js_symbol_table,
-        list_template_names, iter_extension_folders,
+        list_template_names, resolve_template_folder, iter_extension_folders,
         CB1_NEXUS_USER_ID, PACKAGE_EXCLUDES, PCGW_FETCH_INTERVAL,
         classify_pcgw_path, format_pcgw_path, parse_pcgw_data_paths,
         parse_ue_engine_version, get_ue_engine_version,
@@ -90,6 +90,7 @@ Usage:
         add_planned_improvement, open_planned_improvements,
         split_planned_bullets, move_planned_to_version, add_changelog_note,
         NEVER_UPLOAD_GAMES, DEPRECATED_GAMES, releasable_game_ids, fetch_vortex_extensions_feed,
+        is_valid_nexus_game_id, git_show_text,
         changelog_entry_is_empty, unreleased_intermediate_sections,
     )
 """
@@ -2853,6 +2854,21 @@ def list_template_names():
     )
 
 
+def resolve_template_folder(name):
+    """Return the on-disk template folder name for a short ("ue4-5") or full
+    ("template-ue4-5") name, or None when no such template exists.
+
+    Matched case-insensitively and returned in the folder's real spelling, so
+    "cobraengineacse" -> "template-cobraengineACSE"."""
+    if not name:
+        return None
+    short = name[len(TEMPLATE_PREFIX):] if name.startswith(TEMPLATE_PREFIX) else name
+    for existing in list_template_names():
+        if existing.lower() == short.lower():
+            return TEMPLATE_PREFIX + existing
+    return None
+
+
 def iter_extension_folders(*, include_templates=False):
     """Yield (folder, game_id, src) for game-* and optionally template-* folders.
 
@@ -2887,6 +2903,18 @@ def iter_repo_scripts():
             yield os.path.join(REPO_ROOT, line)
 
 
+def git_show_text(ref, rel_path):
+    """Text of repo-relative `rel_path` at git `ref`, or None when it does not exist there.
+
+    Read from git's object store, never the working tree: it answers "what did HEAD (or a
+    past commit) hold". UTF-8 decoded, CRLF folded to LF. compare_to_head.py keeps its own
+    copy on purpose: it must run without importing the (working-tree) vortex_utils it compares."""
+    shown = subprocess.run(["git", "-C", REPO_ROOT, "show", f"{ref}:{rel_path}"], capture_output=True)
+    if shown.returncode != 0:
+        return None
+    return shown.stdout.decode("utf-8").replace("\r\n", "\n")
+
+
 # == Extension metadata helpers ================================================
 
 def read_info_json(folder):
@@ -2899,6 +2927,51 @@ def read_info_json(folder):
             return json.load(f)
     except (json.JSONDecodeError, OSError):
         return None
+
+
+def set_info_mod_id(folder, mod_id, dry_run=False):
+    """Set info.json "modId" to mod_id, the trailing number of the extension's Nexus page URL.
+
+    mod_id is that number (int), or the string "XXX" for an extension with no Nexus page yet.
+    Edits the file text in place, so key order, indentation, line endings and every other byte
+    stay as they were: an existing "modId" line (a real id or the "XXX" placeholder) gets its
+    value replaced, otherwise a new line goes in right after "gameId" ("id" when there is no
+    gameId). The result is parsed back before anything is written.
+    Returns "added", "updated" or "unchanged", or None when info.json is missing or its text
+    cannot take the key (nothing is written). dry_run reports the outcome without writing."""
+    path = os.path.join(folder, "info.json")
+    try:
+        with open(path, encoding="utf-8", newline="") as f:
+            text = f.read()
+    except OSError:
+        return None
+
+    value = json.dumps(mod_id)
+    existing = re.search(r'^([ \t]*)"modId"[ \t]*:[ \t]*[^,\r\n]*', text, re.MULTILINE)
+    if existing:
+        new_text = text[:existing.start()] + f'{existing.group(1)}"modId": {value}' + text[existing.end():]
+        status = "updated"
+    else:
+        anchor = None
+        for key in ("gameId", "id"):
+            anchor = re.search(rf'^([ \t]*)"{key}"[ \t]*:[^\r\n]*,[ \t]*(\r?\n)', text, re.MULTILINE)
+            if anchor:
+                break
+        if not anchor:
+            return None
+        new_text = text[:anchor.end()] + f'{anchor.group(1)}"modId": {value},{anchor.group(2)}' + text[anchor.end():]
+        status = "added"
+
+    try:
+        if json.loads(new_text).get("modId") != mod_id:
+            return None
+    except ValueError:
+        return None
+    if new_text == text:
+        return "unchanged"
+    if not dry_run:
+        write_text_atomic(path, new_text)
+    return status
 
 
 CB1_NEXUS_USER_ID = "3263034"
@@ -2947,6 +3020,7 @@ def make_info_json():
         '{\n'
         '  "id": "XXX",\n'
         '  "gameId": "XXX",\n'
+        '  "modId": "XXX",\n'
         '  "name": "Game: XXX",\n'
         '  "author": "ChemBoy1",\n'
         f'  "version": "{NEW_EXTENSION_VERSION}",\n'
@@ -3748,14 +3822,18 @@ def nexus_list_games(api_key):
     return _nexus_games_cache
 
 
+def is_valid_nexus_game_id(value):
+    """True for a numeric Nexus game id: a positive int (bool excluded). The info.json "gameId" rule."""
+    return isinstance(value, int) and not isinstance(value, bool) and value > 0
+
+
 def nexus_game_id_for_domain(domain, api_key=None):
     """Return the numeric Nexus game id for a domain (the slug in nexusmods.com/<domain>), or None.
 
     Tries the full v1 games list first (one cached call), then a direct
     GET /v1/games/{domain}.json for a game that list leaves out, then Vortex's cached
     nexus_gamelist.json. Without api_key only the cache is tried. Returns an int."""
-    def _valid(gid):
-        return isinstance(gid, int) and not isinstance(gid, bool) and gid > 0
+    _valid = is_valid_nexus_game_id
 
     if api_key:
         for game in nexus_list_games(api_key):

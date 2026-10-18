@@ -1,6 +1,7 @@
 {
   "id": "warhammer40000spacemarine",
   "gameId": 3049,
+  "modId": 894,
   "name": "Game: Warhammer 40K: Space Marine",
   "author": "ChemBoy1",
   "version": "0.3.1",
