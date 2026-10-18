@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.0] - 2026-10-18
+
+- Added: Support for the GOG version of the game.
+
 ## [1.0.6] - 2026-10-16
 
 - Added the game's Nexus Mods ID to the extension's info file.

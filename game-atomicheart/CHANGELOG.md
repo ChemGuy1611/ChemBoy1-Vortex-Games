@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.12] - 2026-10-18
+
+- Changed: Launching the Xbox / Game Pass version now uses the game's current Microsoft Store app name.
+
 ## [1.0.11] - 2026-10-16
 
 - Added the game's Nexus Mods ID to the extension's info file.

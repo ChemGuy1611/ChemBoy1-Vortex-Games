@@ -317,10 +317,8 @@ Notes:
 - Required sibling files in the extension root: `index.js`, `info.json`, `CHANGELOG.md`, and
   `${GAME_ID}.jpg` (the `logo`). The folder is conventionally named `game-<GAME_ID>`.
 - Bump `info.json` `version` and add a matching `CHANGELOG.md` entry in the same change.
-- `modId` (the Nexus mod page id of the extension) is not part of this repo's manifest. Vortex 2.8.2
-  and later read it from `info.json` only to re-link extensions installed before Vortex 2.7 to their
-  Nexus page so they can update again; the value must be a positive whole number. Without it, the
-  only link is the by-game-domain offer described in `vortex-extensions-feed.md`.
+- What Vortex does with `modId` when it has no recorded link (the restore from `info.json`, and the
+  by-game-domain offer for extensions without one) is described in `vortex-extensions-feed.md`.
 
 ---
 

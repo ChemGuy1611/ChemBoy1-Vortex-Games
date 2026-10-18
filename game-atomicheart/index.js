@@ -2,8 +2,8 @@
 Name: Atomic Heart Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.11
-Date: 2026-10-16
+Version: 1.0.12
+Date: 2026-10-18
 Notes:
 - 
 ////////////////////////////////////////////////*/
@@ -55,7 +55,7 @@ const STEAMAPP_ID_DEMO = "2407990"; // https://steamdb.info/app/2407990/
 const EPICAPP_ID = null; //from egdata.app
 const GOGAPP_ID = null; // from gogdb.org
 const XBOXAPP_ID = "FocusHomeInteractiveSA.579645D26CFD"; // https://apps.microsoft.com/detail/9n9kxp8rrpb5
-const XBOXEXECNAME = "AppUEGameShipping"; //from appxmanifest.xml
+const XBOXEXECNAME = "AppUE4GameShipping"; // resolved via MS Store catalog - verify against a live install
 const XBOX_PUB_ID = "4hny5m903y3g0"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, XBOXAPP_ID, STEAMAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
 

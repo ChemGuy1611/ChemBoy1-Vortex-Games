@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.3] - 2026-10-18
+
+- Changed: The Epic Games Store version is no longer detected, as its folder layout is not supported yet.
+
 ## [1.0.2] - 2026-10-16
 
 - Added the game's Nexus Mods ID to the extension's info file.

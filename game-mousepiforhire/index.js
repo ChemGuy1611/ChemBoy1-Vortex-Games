@@ -2,8 +2,8 @@
 Name: MOUSE: P.I. For Hire Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
-Version: 1.0.6
-Date: 2026-10-16
+Version: 1.1.0
+Date: 2026-10-18
 Notes:
 - Need custom BepInEx patch due to stripped methods
 - Cannot install BepInExConfigManager - causes BepInEx crash
@@ -44,11 +44,11 @@ const GAME_ID = "mousepiforhire";
 const STEAMAPP_ID = "2416450"; // https://steamdb.info/app/2416450/
 const STEAMAPP_ID_DEMO = null;
 const EPICAPP_ID = null;
-const GOGAPP_ID = null;
+const GOGAPP_ID = "1567378928"; // https://www.gogdb.org/product/1567378928
 const XBOXAPP_ID = "PlaySideStudiosLTD.MOUSEP.I.ForHire"; // NOT on Game Pass - https://apps.microsoft.com/detail/9p7522hwd0nh
 const XBOXEXECNAME = "Game";
 const XBOX_PUB_ID = "xnzn2e73jvyg2"; //string after "ID_"
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const GAME_NAME = "MOUSE: P.I. For Hire";
 const GAME_NAME_SHORT = "MOUSE";

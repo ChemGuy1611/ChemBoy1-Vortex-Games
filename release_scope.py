@@ -17,7 +17,10 @@ One pass answers what the release runbook otherwise needs several ad-hoc checks 
      is set, otherwise reported as unknown.
   3. gameId -- info.json "gameId" must be a positive integer and equal the feed's numeric
      game_id for the same extension. Missing, invalid and disagreeing ids are attention items.
-  4. CHANGELOG -- how many games hold a done Planned Improvements bullet that
+  4. modId -- info.json "modId" must be a positive integer equal to the mod id at the end of
+     the game's EXTENSION_URL. Local only (no Nexus call): release_extension.py would rewrite
+     a missing, placeholder or wrong value anyway, so this shows what the release will change.
+  5. CHANGELOG -- how many games hold a done Planned Improvements bullet that
      bump_version.py --move-planned would move in, how many would be left with a bare stub
      (needs --note or hand-written text before release_extension.py accepts it), and how many
      are already bumped with a bare stub.
@@ -53,7 +56,7 @@ Environment variables:
                       Required for --verify-files.
 
 Exit code: 1 when an attention item exists (a local version BEHIND Nexus, or a missing,
-invalid or disagreeing gameId), otherwise 0.
+invalid or disagreeing gameId or modId), otherwise 0.
 """
 
 import argparse
@@ -105,6 +108,7 @@ def survey(exclude, offline, verify=False):
         "feed_rows": len(feed_rows), "feed_error": feed_error,
         "versions": {"equal": [], "ahead": [], "behind": [], "unknown": []},
         "game_id": {"ok": 0, "missing": [], "invalid": [], "disagree": []},
+        "mod_id": {"ok": 0, "missing": [], "invalid": [], "disagree": []},
         "changelog": {"move_planned": [], "bare_stub": [], "bumped_bare": []},
         "left_behind": collections.defaultdict(list),
     }
@@ -158,6 +162,17 @@ def survey(exclude, offline, verify=False):
         else:
             out["game_id"]["ok"] += 1
 
+        # -- modId --
+        local_mid = info.get("modId")
+        if "modId" not in info:
+            out["mod_id"]["missing"].append(gid)
+        elif not vu.is_valid_nexus_game_id(local_mid):  # same rule: a positive int, bool excluded
+            out["mod_id"]["invalid"].append({"id": gid, "value": local_mid})
+        elif local_mid != mod_id:
+            out["mod_id"]["disagree"].append({"id": gid, "local": local_mid, "url": mod_id})
+        else:
+            out["mod_id"]["ok"] += 1
+
         # -- changelog --
         shipped, left = vu.split_planned_bullets(folder)
         if shipped:
@@ -177,8 +192,9 @@ def survey(exclude, offline, verify=False):
         except OSError:
             pass
 
-    out["attention"] = bool(out["versions"]["behind"] or out["game_id"]["missing"]
-                            or out["game_id"]["invalid"] or out["game_id"]["disagree"])
+    out["attention"] = bool(out["versions"]["behind"]
+                            or any(out[k][s] for k in ("game_id", "mod_id")
+                                   for s in ("missing", "invalid", "disagree")))
     return out
 
 
@@ -223,6 +239,13 @@ def print_report(s, show_bullets):
     for r in g["disagree"]:
         print(f"    {r['id']}: local {r['local']}, Nexus {r['nexus']}")
 
+    m = s["mod_id"]
+    print(f"\ninfo.json modId: ok {m['ok']} | missing {len(m['missing'])} | invalid {len(m['invalid'])} "
+          f"| differs from EXTENSION_URL {len(m['disagree'])}")
+    _print_capped(m["missing"], lambda gid: f"{gid}: no modId")
+    _print_capped(m["invalid"], lambda r: f"{r['id']}: invalid value {r['value']!r}")
+    _print_capped(m["disagree"], lambda r: f"{r['id']}: local {r['local']}, EXTENSION_URL {r['url']}")
+
     c = s["changelog"]
     print("\nCHANGELOG")
     print(f"  done Planned bullets that --move-planned moves in : {len(c['move_planned'])} game(s)"
@@ -241,7 +264,7 @@ def print_report(s, show_bullets):
                 print(f"              {', '.join(games)}")
 
     print()
-    print("Attention: " + ("yes - see BEHIND / gameId above." if s["attention"] else "none."))
+    print("Attention: " + ("yes - see BEHIND / gameId / modId above." if s["attention"] else "none."))
 
 
 def main():

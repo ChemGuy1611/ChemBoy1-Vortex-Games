@@ -537,6 +537,10 @@ const MOD_PATH_DEFAULT = ".";
 let REQ_FILE = EXEC;
 if (multiExe) {
   REQ_FILE = path.join(ASSEMBLY_PATH, ASSEMBLY_FILES[0]);
+  if (BEPINEX_BUILD === "mono" && GAME_STRING !== GAME_STRING_ALT) {
+    //have to use a common file in root for mono games if data folders are named differently
+    REQ_FILE = "UnityPlayer.dll";
+  }
 }
 const PARAMETERS_STRING = "";
 const PARAMETERS = [PARAMETERS_STRING];

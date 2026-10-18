@@ -10,9 +10,10 @@ Companion docs: `NEXUS_MODS_API.md` (v1 + v3 REST, including the file-upload flo
 small subset of what follows).
 
 Everything here was verified live on 2026-09-04 against schema totals of **67 query fields**
-(4 deprecated), **99 mutation fields** (22 deprecated), and **354 types**, and re-checked on
-2026-10-10: the totals are identical, and every live query and mutation name appears in this
-document. There is no subscription type. The growth since the 2026-08-23 pass (66/96/346) is six new staff/internal-scoped operations —
+(4 deprecated), **99 mutation fields** (22 deprecated), and **354 types**. Re-checked on
+2026-10-17: the schema now has **67 query fields** (4 deprecated, unchanged), **100 mutation fields**
+(22 deprecated) and **355 types**; the one new mutation is `adoptLegacyModFile` (staff-only, see
+"Moderation and admin"), and every other live query and mutation name appears in this document. There is no subscription type. The growth since the 2026-08-23 pass (66/96/346) is six new staff/internal-scoped operations —
 see "Moderation, admin, reporting" and "Moderation and admin" below — none of it touches the mod,
 file, or collection surface.
 
@@ -339,7 +340,7 @@ Most of these are staff-scoped and return `UNAUTHORIZED` for ordinary accounts.
 
 ## Mutation Catalog
 
-96 fields, 22 deprecated. The shape is uniform: every mutation returns a
+100 fields, 22 deprecated. The shape is uniform: every mutation returns a
 `<Name>MutationPayload` object.
 
 ### Mods — the entire mod-level write surface
@@ -401,7 +402,10 @@ these manage **collection-tag definitions** and are permission-gated (`tag:disca
 artworkSchema, copyrightedName)`, `uploadGameArtworkV2`, `uploadAttachment(file: Upload!)`,
 `trackAppMetric`, `reorderItem`, `replayTemporalWorkflow`, `replayTemporalArchiveHistory`,
 `startTemporalArchiveSearch` (all three found 2026-09-04 — Temporal workflow-engine admin
-tooling, pairs with the `temporalWorkflowInspection`/`temporalArchiveSearch` queries above).
+tooling, pairs with the `temporalWorkflowInspection`/`temporalArchiveSearch` queries above),
+`adoptLegacyModFile(fileId!, gameId!)` (found 2026-10-17; returns `AdoptLegacyModFileMutationPayload`;
+the schema describes it as "Admin: add a file that predates the upload service to the upload queue
+for a re-scan").
 Deprecated generics: `moderate`, `amendModeration`, `endorse`, `rate`, `unpublishRevision`.
 
 ## Key Types

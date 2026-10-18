@@ -1141,7 +1141,7 @@ Exit codes: `0` every revert was caught, `1` at least one survivor, `2` nothing 
 
 Finds live uses of deprecated or removed Vortex APIs across the extension sources and reports a hit count per API family. It parses every `.js` file as an AST with the repo's own `typescript` dev dependency, so commented-out code never counts and a call split over several lines is still found. A line grep gets both wrong, which is why the API audit moved to this script. It follows how each file binds `vortex-api` (`const { util, fs: vfs } = require("vortex-api")`, `require("vortex-api").util`, destructuring off `util`), so Node's own `fs` and `util` are not mistaken for Vortex's. A member read off a `util` or `fs` receiver that is never declared in the file is reported as an unresolved receiver rather than skipped.
 
-The families (error classes, state helpers, `fs` wrappers, `util.toPromise`, `util.opn`, store shims, `onceMain`, `registerLoadOrderPage`, the removed game-store APIs, the deprecated `ExtensionInfo` keys in `info.json`) are the `FAMILIES` table at the top of the script, which is the source of truth for names and replacement hints. The script also parses `resources/api.d.ts` and checks the table against it: a symbol tagged `@deprecated` there that no family claims is reported `UNMAPPED`, and a family symbol that lost its tag is reported `STALE`. Refresh `api.d.ts` first (see `feedback_api_audit_process`), then run this.
+The families (error classes, state helpers, `fs` wrappers, `util.toPromise`, `util.opn`, store shims, `onceMain`, `registerLoadOrderPage`, the removed game-store APIs, the deprecated `ExtensionInfo` keys in `info.json`, except `modId`: Vortex 2.8.2 and later read it again and this repo keeps it on purpose, so it is mapped to a family for the typings check but never scanned) are the `FAMILIES` table at the top of the script, which is the source of truth for names and replacement hints. The script also parses `resources/api.d.ts` and checks the table against it: a symbol tagged `@deprecated` there that no family claims is reported `UNMAPPED`, and a family symbol that lost its tag is reported `STALE`. Refresh `api.d.ts` first (see `feedback_api_audit_process`), then run this.
 
 Scans `game-*`, `template-*`, `helper-*`, `zCustomGames`, `resources/browsers`, `resources/downloader` and `resources/templates`. Skips `zArchive` and `node_modules`.
 
@@ -1814,7 +1814,7 @@ For each extension: prints `[ext_id] OLD -> NEW`. Writes `info.json`, updates `i
 
 ## release_scope.py
 
-Survey before a bulk release. Read-only; it writes nothing and uploads nothing. One pass answers what the release runbook otherwise needs several ad-hoc checks for: which `game-*` extensions can be uploaded at all, whether the local version agrees with what Nexus publishes, whether every `info.json` `gameId` is valid and matches Nexus, and what state each `CHANGELOG.md` is in.
+Survey before a bulk release. Read-only; it writes nothing and uploads nothing. One pass answers what the release runbook otherwise needs several ad-hoc checks for: which `game-*` extensions can be uploaded at all, whether the local version agrees with what Nexus publishes, whether every `info.json` `gameId` is valid and matches Nexus, whether every `info.json` `modId` matches its `EXTENSION_URL`, and what state each `CHANGELOG.md` is in.
 
 ### release_scope.py — Requirements
 
@@ -1851,8 +1851,9 @@ python release_scope.py --json
 - **Eligible / not eligible** — the count, and each excluded game with its reason: never uploaded (test bed or personal-use), deprecated, left out with `--exclude`, or no Nexus page (`EXTENSION_URL` unset). Eligibility is `vortex_utils.releasable_game_ids()`.
 - **Local version vs Nexus** — one call to the public `/v3/vortex/extensions` feed. `equal` is bump-ready; `AHEAD` is bumped but never uploaded (fold into that version, never double-bump); `BEHIND` is an attention item; `unknown` is a page the feed has no row for that could not be looked up. During and well after a bulk upload many games read `AHEAD` because the feed is a cached snapshot that trails an upload by hours: run with `--verify-files` to read the real MAIN file versions instead.
 - **info.json gameId** — counts `ok`, `missing`, `invalid` (not a positive integer) and `disagrees with Nexus` (against the feed's numeric `game_id` for the same extension).
+- **info.json modId** — counts `ok`, `missing`, `invalid` (not a positive integer, so a leftover `"XXX"` placeholder) and `differs from EXTENSION_URL` (the number at the end of the page URL). Local only, so it still runs with `--offline`. `release_extension.py` rewrites a bad value before zipping, so this shows what the release is about to change.
 - **CHANGELOG** — games holding a done Planned bullet that `--move-planned` moves in; games whose stub would stay bare after a bump (give `bump_version.py` a `--note` or write the text by hand, because `release_extension.py` refuses a bare stub); games already bumped with a bare stub.
-- **Attention** — `yes` when a version is `BEHIND` Nexus or a `gameId` is missing, invalid or disagrees. The exit code is `1` in that case, otherwise `0`.
+- **Attention** — `yes` when a version is `BEHIND` Nexus or a `gameId` or `modId` is missing, invalid or disagrees. The exit code is `1` in that case, otherwise `0`.
 
 ---
 

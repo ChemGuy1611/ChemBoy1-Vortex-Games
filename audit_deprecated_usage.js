@@ -194,16 +194,25 @@ const FAMILIES = [
   {
     id: "extension-info-keys",
     via: "info.json",
-    names: ["type", "bundled", "path", "modId", "fileId", "issueTrackerURL"],
+    names: ["type", "bundled", "path", "fileId", "issueTrackerURL"],
     typings: [
       "ExtensionInfo.type",
       "ExtensionInfo.bundled",
       "ExtensionInfo.path",
-      "ExtensionInfo.modId",
       "ExtensionInfo.fileId",
       "ExtensionInfo.issueTrackerURL",
     ],
     hint: "drop the key from info.json; Vortex no longer reads it (since 2.7.0)",
+  },
+  {
+    // Not scanned on purpose: Vortex 2.8.2+ reads info.json modId again (restores the link of
+    // extensions installed before 2.7), and release_extension.py keeps it equal to the mod id
+    // at the end of EXTENSION_URL. Still listed so the typings drift check keeps it mapped.
+    id: "extension-info-modId",
+    via: "type",
+    names: [],
+    typings: ["ExtensionInfo.modId"],
+    hint: "keep it in info.json (release_extension.py stamps it from EXTENSION_URL)",
   },
   {
     id: "IExtension-type",

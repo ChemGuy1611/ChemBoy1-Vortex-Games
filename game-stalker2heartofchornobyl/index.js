@@ -2,8 +2,8 @@
 Name: S.T.A.L.K.E.R. 2: Heart of Chornobyl Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 2.1.6
-Date: 2026-10-16
+Version: 2.1.7
+Date: 2026-10-18
 //////////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -45,7 +45,7 @@ const STEAMAPP_ID_DEMO = null;
 const EPICAPP_ID = "c04ba25a0e674b1ab3ea79e50c24a722";
 const GOGAPP_ID = "1529799785";
 const XBOXAPP_ID = "GSCGameWorld.S.T.A.L.K.E.R.2HeartofChernobyl";
-const XBOXEXECNAME = "AppSTALKER2Shipping";
+const XBOXEXECNAME = "Stalker2RedirectionApp"; // resolved via MS Store catalog - verify against a live install
 const GAME_NAME = "S.T.A.L.K.E.R. 2 Heart of Chornobyl";
 const GAME_NAME_SHORT = "STALKER 2";
 const EXEC_DEFAULT = "Stalker2.exe";

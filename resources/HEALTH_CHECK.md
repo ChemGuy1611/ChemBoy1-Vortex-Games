@@ -2,8 +2,9 @@
 
 Registers a diagnostic check that Vortex runs against the active game (or each
 installed mod) and surfaces on the Health Check page. Added Vortex 2.x
-(May 2026). This is the modern replacement for `registerTest` — legacy tests are
-shimmed onto the same registry via `ILegacyTestAdapter`.
+(May 2026). This is the modern replacement for `registerTest`, which is still
+served by the separate legacy `test_runner` extension (see "Migrating from
+registerTest").
 
 Use a health check when you want to detect a misconfiguration, missing
 requirement, or bad mod state and (optionally) offer a one-click fix, with
@@ -116,7 +117,7 @@ interface IModHealthCheck extends Omit<IHealthCheck, "check" | "fix"> {
     checkMod: PerModCheckFunction;
 }
 
-// Legacy registerTest shimmed onto the registry:
+// Adapter shape for a legacy test (defined, but `registerTest` does not use it):
 interface ILegacyTestAdapter extends IHealthCheck {
     eventType: string;
     originalCheck: CheckFunction;
@@ -278,9 +279,13 @@ Worked example: `LOBOTOMY_BASEMOD.md` (`ensureNexusRequirementMod` in `game-lobo
 
 ## Migrating from registerTest
 
-`registerTest(id, event, check)` still works — Vortex wraps it as an
-`ILegacyTestAdapter` (category `Legacy`, `isLegacyTest: true`) on the health-check
-registry. Prefer `registerHealthCheck` for new code: it adds category/severity,
+`registerTest(id, event, check)` still works, but it does not go through the
+health-check registry. In the current source it is served by the separate legacy
+`test_runner` extension, which runs the checks itself and shows its own
+notification (`test-<id>`). `ILegacyTestAdapter` and `healthCheckApi.legacy` exist
+in the health-check extension, but nothing calls them, so a `registerTest` check
+gets no category, no entry on the Health Check page and no `isLegacyTest` flag.
+Prefer `registerHealthCheck` for new code: it adds category/severity,
 declarative triggers, caching, per-mod checks, and one-click fixes that
 `registerTest` lacks. The legacy `ITestResult` (what a `registerTest` check
 returns) gains an optional `allowSuppress` flag — whether the user may hide the
@@ -288,6 +293,24 @@ result for good, defaulting to true for anything below error severity. It first
 ships in Vortex v2.9.0-beta.1 (a beta; stable v2.8.0 does not have it). The
 `@nexusmods/vortex-api` 2.7.2 typings declared it early because that build was
 cut from `master`; the 2.8.0 typings no longer do.
+
+### How the legacy runner schedules checks
+
+- Each event type has its own queue. A `settings-changed` check runs 500ms after the
+  **last** change anywhere under `settings`, so rapid changes collapse into one run.
+- Switching the active profile is itself a settings change. On the first switch to a game
+  the run therefore starts while the game's `setup` is still executing, and a check that
+  depends on what `setup` creates (for example the deployment check on a mod folder that
+  does not exist yet) fails until `setup` returns.
+- `api.ext.withSuppressedTests(events, callback)` holds the listed event types while the
+  promise returned by `callback` is pending. The latest run skipped in that time is
+  replayed once the last overlapping hold lifts. The hold is checked when a run is
+  queued, not when its timer fires, so a run queued just before the hold started still
+  fires. The game-activation work does not take this hold, which is why the deployment
+  check can flash an error during a first-time `setup`. The callback must return a
+  promise and must not throw synchronously: the hold is released only when that promise
+  settles, so a synchronous throw keeps it for the rest of the session. The hold exists
+  only in recent Vortex builds, so call it as `api.ext.withSuppressedTests?.(...)`.
 
 ---
 
