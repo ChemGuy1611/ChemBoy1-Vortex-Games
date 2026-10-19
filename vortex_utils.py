@@ -11,7 +11,7 @@ Usage:
         REPO_ROOT, PCGW_API, PCGW_USER_AGENT, NEXUS_USER_AGENT, EGDATA_API,
         TITLE_IMAGES_DIR, BANNER_IMAGES_DIR, LISTS_DIR,
         GUI_FLAGS_PATH, GUI_STATS_PATH,
-        GAME_PREFIX, HELPER_PREFIX, TEMPLATE_PREFIX, VORTEX_PLUGINS_DIR, NEW_EXTENSION_VERSION,
+        GAME_PREFIX, HELPER_PREFIX, TEMPLATE_PREFIX, VORTEX_PLUGINS_DIR, VORTEX_DEV_PLUGINS_DIR, NEW_EXTENSION_VERSION,
         read_index_js, write_index_js,
         extract_game_id, extract_steamapp_id, has_real_steamapp_id,
         extract_game_name, extract_extension_url, extract_file_group_id,
@@ -178,6 +178,13 @@ NEVER_UPLOAD_GAMES = frozenset({
 DEPRECATED_GAMES = frozenset({"battlefield1"})
 
 VORTEX_PLUGINS_DIR = os.environ.get("VORTEX_PLUGINS_DIR", r"C:\ProgramData\vortex\plugins")
+# User-extensions folder of a Vortex dev build run from source: the dev app is named
+# "@vortex/main", so its userData is %APPDATA%\@vortex\main, isolated from the
+# installed app's plugins folder.
+VORTEX_DEV_PLUGINS_DIR = os.environ.get(
+    "VORTEX_DEV_PLUGINS_DIR",
+    os.path.join(os.environ.get("APPDATA", ""), "@vortex", "main", "plugins"),
+)
 
 
 # == Logging helpers ===========================================================
@@ -4190,10 +4197,11 @@ _FOLDER_NAME_ALIASES = {
 }
 
 
-def find_vortex_plugin_folder(game_id, game_name=None):
+def find_vortex_plugin_folder(game_id, game_name=None, plugins_dir=None):
     """Return the deployed plugin folder path for game_id in Vortex's plugins dir, or None.
 
-    Checks VORTEX_PLUGINS_DIR env var (default: C:\\ProgramData\\vortex\\plugins).
+    Searches plugins_dir when given (e.g. VORTEX_DEV_PLUGINS_DIR), else
+    VORTEX_PLUGINS_DIR (env var, default: C:\\ProgramData\\vortex\\plugins).
     Match priority:
       1. A folder named for the id, each form checked against the whole listing
          before the next: "<id>" (the folder Vortex installs an extension with an
@@ -4232,7 +4240,7 @@ def find_vortex_plugin_folder(game_id, game_name=None):
     25th Anniversary Remaster") match folders using "and"/Arabic/"40K"/"HoC"/
     dropped-wording ("DOOM I and II", "battlefront2", "Warhammer 40K Space
     Marine 2", "STALKER 2 HoC", "System Shock 2 Remaster")."""
-    plugins_dir = VORTEX_PLUGINS_DIR
+    plugins_dir = plugins_dir or VORTEX_PLUGINS_DIR
     if not os.path.isdir(plugins_dir):
         return None
     try:

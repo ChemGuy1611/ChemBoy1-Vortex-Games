@@ -1643,6 +1643,7 @@ ACTION_DEFS = [
     ("Open Extension Page", "_on_open_ext",          False, False),
     ("Port to Template...", "_on_port_to_template",  True,  False),
     ("Setup Test Folder",   "_on_setup_test",        False, False),
+    ("Deploy to Dev Vortex", "_on_deploy_to_dev_vortex", False, False),
     ("Patch",               "_on_patch",             False, False),
     ("Categorize",          "_on_categorize",        False, False),
     ("Generate Description", "_on_generate_description", False, False),
@@ -2345,6 +2346,22 @@ class MainWindow(QMainWindow):
         ids = self._selected_ids()
         self._run([[PYTHON, os.path.join(REPO_ROOT, "deploy_to_vortex.py")] + dlg.extra_args() + ids],
                   "deploy_to_vortex.py")
+
+    def _on_deploy_to_dev_vortex(self):
+        # Restart/launch flags are left out: they drive the installed Vortex.exe,
+        # not a dev build run from source.
+        dlg = self._script_dlg(
+            "Deploy to Dev Vortex",
+            flags=[
+                ("--dry-run", "Preview only, no copies", False),
+                ("--force", "Overwrite existing plugin folder without prompting", False),
+            ],
+        )
+        if dlg is None:
+            return
+        ids = self._selected_ids()
+        self._run([[PYTHON, os.path.join(REPO_ROOT, "deploy_to_vortex.py"), "--dev"] + dlg.extra_args() + ids],
+                  "deploy_to_vortex.py --dev")
 
     def _on_analyze_log(self):
         self._run(

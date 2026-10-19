@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.0] - 2026-10-18
+
+- Added: A notification with a "TOC Reset" button now appears when Vortex detects a game update (requires a Vortex version that reports game updates to extensions).
+- Fixed: Corrected name of optional extension as it was changed to "Steamkit".
+
 ## [1.0.3] - 2026-10-16
 
 - Added the game's Nexus Mods ID to the extension's info file.

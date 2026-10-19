@@ -83,7 +83,7 @@ SKIP = {"vortex_utils.py", "gui_tray.py", "extension_parser.js", "SCRIPTS.md"}
 # Env vars consumed inside vortex_utils helpers (indirect use).
 # Scripts that document these but don't call os.environ.get() directly are correct.
 INDIRECT_ENVVARS = {"STEAMGRIDDB_API_KEY", "NEXUS_API_KEY", "STEAM_API_KEY",
-                    "VORTEX_PLUGINS_DIR"}
+                    "VORTEX_PLUGINS_DIR", "VORTEX_DEV_PLUGINS_DIR"}
 
 SCRIPTS_MD  = os.path.join(REPO_ROOT, "SCRIPTS.md")
 SCRIPTS_TXT = os.path.join(REPO_ROOT, "scripts.txt")

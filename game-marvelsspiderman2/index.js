@@ -2,8 +2,8 @@
 Name: Marvel's Spider-Man 2 Vortex Extension
 Structure: 3rd-Party Mod Manager (Overstrike)
 Author: ChemBoy1
-Version: 1.0.3
-Date: 2026-10-16
+Version: 1.1.0
+Date: 2026-10-18
 ////////////////////////////////////////////*/
 
 //Import libraries
@@ -455,22 +455,20 @@ function installOsMod(files) {
 //Notify User of Setup instructions
 function updateNotify(api) {
   const NOTIF_ID = `${GAME_ID}-update-notification`;
-  const MESSAGE = `Verify Game Files after Update`;
+  const MESSAGE = `TOC Reset Required After Update`;
   api.sendNotification({
     id: NOTIF_ID,
     type: "warning",
     message: MESSAGE,
     allowSuppress: true,
     actions: [
-      /*
       {
-        title: 'Verify Game Files',
+        title: "TOC Reset",
         action: (dismiss) => {
           verifyGameFiles(api);
           dismiss();
         },
       },
-      //*/
       {
         title: "More",
         action: (dismiss) => {
@@ -684,7 +682,7 @@ async function setup(discovery, api, gameSpec) {
 function applyGame(context, gameSpec) {
   //optional dependency - without the third argument Vortex unloads this whole extension
   //for anyone who does not have the Steam File Downloader installed
-  context.requireExtension("Vortex Steam File Downloader", undefined, true);
+  context.requireExtension("Steamkit", undefined, true);
   //register the game
   const game = {
     ...gameSpec.game,
@@ -906,6 +904,11 @@ function main(context) {
       );
       if (profileId !== LAST_ACTIVE_PROFILE) return;
       return deployNotify(context.api);
+    });
+    //Vortex emits this when its game version check sees a new version. Older Vortex versions never emit it.
+    api.events.on("game-version-changed", (gameId) => {
+      if (gameId !== GAME_ID) return;
+      updateNotify(api);
     });
   });
   return true;

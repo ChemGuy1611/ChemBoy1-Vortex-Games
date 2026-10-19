@@ -5,6 +5,7 @@ deploy_to_vortex.py -- Copy CB1 game/helper extension folder(s) to the Vortex pl
 Usage:
     python deploy_to_vortex.py EXT_ID [EXT_ID ...] [--dry-run] [--force] [--restart-vortex] [--launch-game]
     python deploy_to_vortex.py --all [--dry-run] [--force] [--restart-vortex]
+    python deploy_to_vortex.py EXT_ID [EXT_ID ...] --dev [--dry-run] [--force]
 
 Arguments:
     EXT_ID      One or more extension IDs -- either a game id (e.g. thelastofuspart2,
@@ -39,11 +40,20 @@ Arguments:
                 registered game of its own to launch into. The id passed to
                 Vortex is the GAME_ID declared in the extension's index.js,
                 falling back to the folder id. Ignored with --dry-run.
+    --dev       Deploy to the plugins folder of a Vortex dev build run from
+                source (%APPDATA%\\@vortex\\main\\plugins) instead of the
+                installed app's. Same folder lookup and partial/full update
+                rules. Not valid with --restart-vortex or --launch-game: those
+                close and launch the installed Vortex.exe, not the dev build.
 
 Environment variables:
     VORTEX_PLUGINS_DIR  Optional. Target plugins directory. Read by vortex_utils
                         at import time, so setting it changes where this script
                         deploys. Defaults to %ProgramData%\\vortex\\plugins.
+    VORTEX_DEV_PLUGINS_DIR
+                        Optional. Target plugins directory for --dev. Read by
+                        vortex_utils at import time. Defaults to
+                        %APPDATA%\\@vortex\\main\\plugins.
 """
 
 import fnmatch
@@ -55,7 +65,6 @@ import time
 
 import vortex_utils as vu
 
-PLUGINS_DIR = vu.VORTEX_PLUGINS_DIR
 VORTEX_IMAGE = "Vortex.exe"
 
 # Never copied into the plugins folder: the repo-only files the release zip also
@@ -119,7 +128,7 @@ def _vortex_game_id(folder_id: str) -> str:
     return (vu.extract_game_id(js_src) if js_src else None) or folder_id
 
 
-def deploy_game(ext_id: str, dry_run: bool, force: bool) -> bool:
+def deploy_game(ext_id: str, dry_run: bool, force: bool, plugins_dir: str) -> bool:
     src, kind = vu.resolve_extension_folder(ext_id)
     if not src:
         vu.log_error(ext_id, f"source folder not found: {vu.GAME_PREFIX}{ext_id} or {vu.HELPER_PREFIX}{ext_id}")
@@ -137,8 +146,8 @@ def deploy_game(ext_id: str, dry_run: bool, force: bool) -> bool:
     # plain "<id>" fallback is only for a genuine first-time deploy, and is the name
     # Vortex itself would later install a release into, so a release replaces the
     # test copy instead of sitting beside it.
-    resolved = vu.find_vortex_plugin_folder(ext_id, name)
-    dest = resolved or os.path.join(PLUGINS_DIR, ext_id)
+    resolved = vu.find_vortex_plugin_folder(ext_id, name, plugins_dir)
+    dest = resolved or os.path.join(plugins_dir, ext_id)
     partial = bool(resolved) and not force
 
     # Partial update (deployed folder already exists, no --force): carry index.js,
@@ -212,6 +221,11 @@ def main():
         help="Relaunch Vortex straight into the deployed game (Vortex.exe --game <id>). "
              "Implies --restart-vortex, requires exactly one GAME_ID. Ignored with --dry-run.",
     )
+    parser.add_argument(
+        "--dev", action="store_true",
+        help="Deploy to the Vortex dev build's plugins folder (%%APPDATA%%\\@vortex\\main\\plugins). "
+             "Not valid with --restart-vortex or --launch-game.",
+    )
     args = parser.parse_args()
 
     if args.all:
@@ -230,8 +244,13 @@ def main():
         parser.error(f"--launch-game requires a game-* extension; "
                       f"'{game_ids[0]}' has no Vortex-registered game of its own to launch into.")
 
-    if not os.path.isdir(PLUGINS_DIR):
-        print(f"[ERROR] Vortex plugins folder not found: {PLUGINS_DIR}")
+    if args.dev and (args.restart_vortex or args.launch_game):
+        parser.error("--dev cannot be combined with --restart-vortex or --launch-game "
+                     "(they close and launch the installed Vortex.exe, not the dev build).")
+
+    plugins_dir = vu.VORTEX_DEV_PLUGINS_DIR if args.dev else vu.VORTEX_PLUGINS_DIR
+    if not os.path.isdir(plugins_dir):
+        print(f"[ERROR] Vortex plugins folder not found: {plugins_dir}")
         sys.exit(1)
 
     launch_id = _vortex_game_id(game_ids[0]) if args.launch_game else None
@@ -243,7 +262,8 @@ def main():
     try:
         for gid in game_ids:
             try:
-                results.append(deploy_game(gid, dry_run=args.dry_run, force=args.force))
+                results.append(deploy_game(gid, dry_run=args.dry_run, force=args.force,
+                                           plugins_dir=plugins_dir))
             except Exception as e:
                 vu.log_error(gid, f"unexpected error: {e}")
                 results.append(False)

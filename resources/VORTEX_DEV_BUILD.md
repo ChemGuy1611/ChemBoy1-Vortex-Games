@@ -131,6 +131,27 @@ profile. A fresh directory starts at the first-run setup wizard with no games ma
 existing `%APPDATA%\Vortex` into it first gives realistic data to test against without risking the
 original.
 
+What follows from that default location when checking a dev run:
+
+| What               | Dev build                                                     | Installed Vortex                                                                   |
+| ------------------ | ------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Log                | `%APPDATA%\@vortex\main\vortex.log`                           | `%APPDATA%\Vortex\vortex.log` (multi-user mode: `%ProgramData%\vortex\vortex.log`) |
+| User extensions    | `%APPDATA%\@vortex\main\plugins`                              | `%APPDATA%\Vortex\plugins` (multi-user mode: `%ProgramData%\vortex\plugins`)       |
+| Bundled extensions | `src\main\build\bundledPlugins\<name>\index.cjs` in the clone | inside the app's resources                                                         |
+
+- A game extension copied into the installed app's plugins folder is **not** loaded by the dev
+  build. Copy it into `%APPDATA%\@vortex\main\plugins` as well to test it there
+  (`python deploy_to_vortex.py <id> --dev` does this from the extensions repo).
+- The bundled extensions are copied from each `extensions/<name>/dist` at build time. Searching
+  `bundledPlugins\<name>\index.cjs` for a string from the change is a quick way to confirm the
+  build you ran actually contains it.
+- Log timestamps are UTC, and the error level is written `[ERRO]` (next to `[WARN]`, `[INFO]`,
+  `[DEBG]`), so a search for `[ERROR]` finds nothing. Each run ends with a `clean application end`
+  line, which makes a good boundary when cutting the latest run out of the file.
+- A dev run's log is noisy even when nothing is wrong: one `failed to use game support plugin ...
+  Game entry not found` per bundled game that is not installed, and `extensions ignored for using
+  unsupported api` for a few bundled store extensions.
+
 The E2E suite isolates differently: with `VORTEX_E2E=1` set, `main.ts` redirects `userData` and
 `appData` to whatever `ELECTRON_USERDATA` and `ELECTRON_APPDATA` point at, so parallel test workers
 never collide.
