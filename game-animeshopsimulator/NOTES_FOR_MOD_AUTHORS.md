@@ -15,7 +15,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | MelonLoader Preferences Manager | a `melonprefmanager.il2cpp.dll` file | `Mods` |
 | Assembly Replacement Mods | a `GameAssembly.dll` file | the game folder itself (no subfolder) |
 | Plugin Mods | a `.dll` file | `BepInEx` |
-| Customassets | - | `UserData` |
+| Customassets | a file or folder named one of: `CustomManga`, `CustomDakimakura`, `CustomPosters` or `CustomCard` | `UserData` |
 | Asset Replacement Mods | a `.assets` file | `Anime Shop Simulator_Data` |
 | Fallback Installer | anything not matched above | - |
 
@@ -137,7 +137,7 @@ Installs to: `BepInEx`
 
 ## Customassets
 
-Handled by the `testCustomAssets` installer. Inspect the extension source for the exact archive layout it expects.
+Recognised when the archive contains a file or folder named one of: `CustomManga`, `CustomDakimakura`, `CustomPosters` or `CustomCard`.
 
 Installs to: `UserData`
 

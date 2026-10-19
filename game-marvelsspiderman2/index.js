@@ -681,7 +681,7 @@ async function setup(discovery, api, gameSpec) {
 //Let Vortex know about the game
 function applyGame(context, gameSpec) {
   //optional dependency - without the third argument Vortex unloads this whole extension
-  //for anyone who does not have the Steam File Downloader installed
+  //for anyone who does not have Steamkit extension installed
   context.requireExtension("Steamkit", undefined, true);
   //register the game
   const game = {

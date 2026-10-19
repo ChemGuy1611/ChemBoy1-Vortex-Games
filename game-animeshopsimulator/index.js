@@ -2,8 +2,8 @@
 Name: Anime Shop Simulator Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-10-16
+Version: 1.0.2
+Date: 2026-10-19
 Notes:
 -
 //////////////////////////////////////////*/
@@ -1505,8 +1505,9 @@ function installCustom(files) {
 
 //Installer test for Root folder files
 function testCustomAssets(files, gameId) {
+  const CUSTOMASSETS_FOLDERS_LOWER = CUSTOMASSETS_FOLDERS.map((f) => f.toLowerCase());
   const isMod = files.some((file) =>
-    CUSTOMASSETS_FOLDERS.toLowerCase().includes(path.basename(file).toLowerCase()),
+    CUSTOMASSETS_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
   );
   let supported = gameId === spec.game.id && isMod;
 
@@ -1530,8 +1531,9 @@ function testCustomAssets(files, gameId) {
 
 //Installer install Root folder files
 async function installCustomAssets(files) {
+  const CUSTOMASSETS_FOLDERS_LOWER = CUSTOMASSETS_FOLDERS.map((f) => f.toLowerCase());
   const modFile = files.find((file) =>
-    CUSTOMASSETS_FOLDERS.toLowerCase().includes(path.basename(file).toLowerCase()),
+    CUSTOMASSETS_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
   );
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
   const idx = modFile.lastIndexOf(ROOT_IDX);
