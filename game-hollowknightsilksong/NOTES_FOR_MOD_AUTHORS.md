@@ -15,7 +15,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | MelonLoader Preferences Manager | a `melonprefmanager.mono.dll` file | `Mods` |
 | Assembly Replacement Mods | a `GameAssembly.dll` file | the game folder itself (no subfolder) |
 | Plugin Mods | a `.dll` file | `BepInEx` |
-| Skin | a file with one of these extensions: `.png` | - |
+| Skin | a file with one of these extensions: `.png` | `Hollow Knight Silksong_Data\Mods\Customizer` |
 | Asset Replacement Mods | a `.assets` file | `Hollow Knight Silksong_Data` |
 | Fallback Installer | anything not matched above | - |
 
@@ -138,6 +138,8 @@ Installs to: `BepInEx`
 ## Skin
 
 Recognised when the archive contains a file with one of these extensions: `.png`.
+
+Installs to: `Hollow Knight Silksong_Data\Mods\Customizer`
 
 ## Asset Replacement Mods
 

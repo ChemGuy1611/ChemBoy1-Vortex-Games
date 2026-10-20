@@ -1,5 +1,9 @@
 # template-unitymelonloaderbepinex-hybrid Changelog
 
+## [2026-10-20]
+
+- Fixed: the save installer gave save mods the assets mod type, so they deployed to the Unity data folder instead of the save folder. With `enableSaveInstaller` on, a "Save" mod type (`SAVE_ID`, priority 64) is now registered and the installer uses it. It deploys to `SAVE_PATH`, read when Vortex asks for the folder, so the Xbox save location applies once the Xbox build is detected. Added `SAVE_NAME`.
+
 ## [2026-10-19]
 
 - Changed: for a Mono game with two executables whose data folders are named differently (`GAME_STRING` and `GAME_STRING_ALT` differ), `requiredFiles` is `UnityPlayer.dll` in the game root instead of the `Assembly-CSharp.dll` inside one build's data folder. Only a root file is common to both builds. An IL2CPP game with two executables still requires the game assembly.

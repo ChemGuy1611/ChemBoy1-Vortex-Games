@@ -45,8 +45,8 @@ Mod types define where each category of mod gets deployed:
 | --- | --- | --- | --- |
 | Root Folder | `watchdogs2-root` | high | `{gamePath}` |
 | Mod | `watchdogs2-mod` | high | `{gamePath}/Disrupt_Manager/Watch Dogs 2` |
-| Mod Loader | `watchdogs2-loader` | 70 | `?` |
-| Binaries (Engine Injector) | `watchdogs2-binaries` | 72 | `?` |
+| Mod Loader | `watchdogs2-loader` | 70 | `{gamePath}/Disrupt_Manager` |
+| Binaries (Engine Injector) | `watchdogs2-binaries` | 72 | `{gamePath}/bin` |
 
 ## Mod Installers
 

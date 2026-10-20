@@ -70,13 +70,13 @@ Mod types define where each category of mod gets deployed:
 | Root Folder | `inzoi-root` | high | `{gamePath}` |
 | UE5 MODKit Pak Mod | `inzoi-ue5modkitpak` | high | `DOCUMENTS/inZOI/Mods` |
 | Creations (Documents) | `inzoi-creations` | high | `CREATIONS_PATH` |
-| UE Sortable Pak Mod | `inzoi-ue5-sortable-modtype` | 25 | `?` |
-| UE4SS Script Mod | `inzoi-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `inzoi-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `inzoi-binaries` | 54 | `?` |
-| UE4SS | `inzoi-ue4ss` | 56 | `?` |
-| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
-| Mod Enabler | `inzoi-modenabler` | 60 | `?` |
+| UE Sortable Pak Mod | `inzoi-ue5-sortable-modtype` | 25 | `{gamePath}/BlueClient/Content/Paks/~mods` |
+| UE4SS Script Mod | `inzoi-scripts` | 50 | `{gamePath}/BlueClient/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `inzoi-ue4ssdll` | 52 | `{gamePath}/BlueClient/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `inzoi-binaries` | 54 | `{gamePath}/BlueClient/Binaries/Win64` |
+| UE4SS | `inzoi-ue4ss` | 56 | `{gamePath}/BlueClient/Binaries/Win64` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `{gamePath}/BlueClient/Content/Paks/~mods` |
+| Mod Enabler | `inzoi-modenabler` | 60 | `{gamePath}` |
 | Config (Local AppData) | `inzoi-config` | 62 | `?` |
 | Saves (Documents) | `inzoi-save` | 64 | `?` |
 

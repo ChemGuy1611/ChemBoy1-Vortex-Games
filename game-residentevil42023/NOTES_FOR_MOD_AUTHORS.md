@@ -13,7 +13,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Loose Lua Scripts | a `.lua` file outside the REFramework folders | the game folder itself (no subfolder) |
 | Root / Game Folder Mods | a `dxgi.dll` file or a `.exe` file | the game folder itself (no subfolder) |
 | Upscaler | - | `reframework\plugins` |
-| Preset Files | a `.prt` file | - |
+| Preset Files | a `.prt` file | `Games\RE4R\Presets` |
 | Fluffy-Format Mods | anything not matched above | - |
 
 Paths are relative to the game's install folder.
@@ -85,6 +85,8 @@ Configuration presets for REFramework mods.
 **Requirements:**
 
 - Recognised by any file with the `.prt` extension.
+
+Installs to: `Games\RE4R\Presets`
 
 ## Fluffy-Format Mods
 

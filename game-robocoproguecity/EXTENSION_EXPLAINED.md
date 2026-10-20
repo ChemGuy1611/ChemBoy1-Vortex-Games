@@ -68,7 +68,7 @@ Mod types define where each category of mod gets deployed:
 | Paks (no "~mods") | `robocoproguecity-pakalt` | high | `{gamePath}/Game/Content/Paks` |
 | Root Folder | `robocoproguecity-root` | high | `{gamePath}` |
 | Content Folder | `robocoproguecity-contentfolder` | high | `{gamePath}/Game` |
-| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `{gamePath}/Game/Content/Paks/~mods` |
 
 ## Mod Installers
 

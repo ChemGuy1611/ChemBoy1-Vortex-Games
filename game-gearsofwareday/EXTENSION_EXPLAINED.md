@@ -63,11 +63,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `gearsofwareday-logicmods` | high | `{gamePath}/FairlightConcept/Content/Paks` |
 | Paks (no "~mods") | `gearsofwareday-pakalt` | high | `{gamePath}/FairlightConcept/Content/Paks` |
 | Root Folder | `gearsofwareday-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `gearsofwareday-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `gearsofwareday-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `gearsofwareday-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `gearsofwareday-binaries` | 54 | `?` |
-| UE4SS | `gearsofwareday-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `gearsofwareday-uesortablepak` | 25 | `{gamePath}/FairlightConcept/Content/Paks/~mods` |
+| UE4SS Script Mod | `gearsofwareday-scripts` | 50 | `{gamePath}/FairlightConcept/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `gearsofwareday-ue4ssdll` | 52 | `{gamePath}/FairlightConcept/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `gearsofwareday-binaries` | 54 | `{gamePath}/FairlightConcept/Binaries/Win64` |
+| UE4SS | `gearsofwareday-ue4ss` | 56 | `{gamePath}/FairlightConcept/Binaries/Win64` |
 | Config (Local AppData) | `gearsofwareday-config` | 62 | `?` |
 | Saves (Local AppData) | `gearsofwareday-save` | 64 | `?` |
 

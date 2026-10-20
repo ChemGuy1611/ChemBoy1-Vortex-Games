@@ -63,11 +63,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `dispatch-logicmods` | high | `{gamePath}/Dispatch/Content/Paks` |
 | Paks (no "~mods") | `dispatch-pakalt` | high | `{gamePath}/Dispatch/Content/Paks` |
 | Root Folder | `dispatch-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `dispatch-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `dispatch-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `dispatch-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `dispatch-binaries` | 54 | `?` |
-| UE4SS | `dispatch-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `dispatch-uesortablepak` | 25 | `{gamePath}/Dispatch/Content/Paks/~mods` |
+| UE4SS Script Mod | `dispatch-scripts` | 50 | `{gamePath}/Dispatch/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `dispatch-ue4ssdll` | 52 | `{gamePath}/Dispatch/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `dispatch-binaries` | 54 | `{gamePath}/Dispatch/Binaries/Win64` |
+| UE4SS | `dispatch-ue4ss` | 56 | `{gamePath}/Dispatch/Binaries/Win64` |
 | Config (Local AppData) | `dispatch-config` | 62 | `?` |
 | Saves (Local AppData) | `dispatch-save` | 64 | `?` |
 

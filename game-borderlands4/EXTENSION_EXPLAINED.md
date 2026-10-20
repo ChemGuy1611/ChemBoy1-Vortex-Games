@@ -71,11 +71,11 @@ Mod types define where each category of mod gets deployed:
 | Paks (no "~mods") | `borderlands4-pakalt` | high | `{gamePath}/OakGame/Content/Paks` |
 | Root Folder | `borderlands4-root` | high | `{gamePath}` |
 | Content Folder | `borderlands4-contentfolder` | high | `{gamePath}/OakGame` |
-| UE Sortable Pak Mod | `borderlands4-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `borderlands4-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `borderlands4-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `borderlands4-binaries` | 54 | `?` |
-| UE4SS | `borderlands4-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `borderlands4-uesortablepak` | 25 | `{gamePath}/OakGame/Content/Paks/~mods` |
+| UE4SS Script Mod | `borderlands4-scripts` | 50 | `{gamePath}/OakGame/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `borderlands4-ue4ssdll` | 52 | `{gamePath}/OakGame/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `borderlands4-binaries` | 54 | `{gamePath}/OakGame/Binaries/Win64` |
+| UE4SS | `borderlands4-ue4ss` | 56 | `{gamePath}/OakGame/Binaries/Win64` |
 | Config (Documents) | `borderlands4-config` | 62 | `?` |
 | Saves (Documents) | `borderlands4-save` | 64 | `?` |
 

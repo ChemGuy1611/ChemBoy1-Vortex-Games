@@ -64,12 +64,12 @@ Mod types define where each category of mod gets deployed:
 | Paks (no "~mods") | `senuassagahellblade2-pakalt` | high | `{gamePath}/Hellblade2/Content/Paks` |
 | Root Folder | `senuassagahellblade2-root` | high | `{gamePath}` |
 | UE5 Paks | `senuassagahellblade2-ue5` | high | `{gamePath}/Hellblade2/Content/Paks/~mods` |
-| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
-| UE Sortable Pak Mod | `senuassagahellblade2-ue5-sortable-modtype` | 25 | `?` |
-| UE4SS Script Mod | `senuassagahellblade2-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `senuassagahellblade2-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `senuassagahellblade2-binaries` | 54 | `?` |
-| UE4SS | `senuassagahellblade2-ue4ss` | 56 | `?` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `{gamePath}/Hellblade2/Content/Paks/~mods` |
+| UE Sortable Pak Mod | `senuassagahellblade2-ue5-sortable-modtype` | 25 | `{gamePath}/Hellblade2/Content/Paks/~mods` |
+| UE4SS Script Mod | `senuassagahellblade2-scripts` | 50 | `{gamePath}/Hellblade2/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `senuassagahellblade2-ue4ssdll` | 52 | `{gamePath}/Hellblade2/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `senuassagahellblade2-binaries` | 54 | `{gamePath}/Hellblade2/Binaries/Win64` |
+| UE4SS | `senuassagahellblade2-ue4ss` | 56 | `{gamePath}/Hellblade2/Binaries/Win64` |
 | Config (Local AppData) | `senuassagahellblade2-config` | 62 | `?` |
 | Saves (Local AppData) | `senuassagahellblade2-save` | 64 | `?` |
 

@@ -67,11 +67,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `dragonquest7reimagined-logicmods` | high | `{gamePath}/DQ7R/Content/Paks` |
 | Paks (no "~mods") | `dragonquest7reimagined-pakalt` | high | `{gamePath}/DQ7R/Content/Paks` |
 | Root Folder | `dragonquest7reimagined-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `dragonquest7reimagined-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `dragonquest7reimagined-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `dragonquest7reimagined-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `dragonquest7reimagined-binaries` | 54 | `?` |
-| UE4SS | `dragonquest7reimagined-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `dragonquest7reimagined-uesortablepak` | 25 | `{gamePath}/DQ7R/Content/Paks/~mods` |
+| UE4SS Script Mod | `dragonquest7reimagined-scripts` | 50 | `{gamePath}/DQ7R/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `dragonquest7reimagined-ue4ssdll` | 52 | `{gamePath}/DQ7R/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `dragonquest7reimagined-binaries` | 54 | `{gamePath}/DQ7R/Binaries/Win64` |
+| UE4SS | `dragonquest7reimagined-ue4ss` | 56 | `{gamePath}/DQ7R/Binaries/Win64` |
 | Config (Documents) | `dragonquest7reimagined-config` | 62 | `?` |
 | Saves (Documents) | `dragonquest7reimagined-save` | 64 | `?` |
 

@@ -70,11 +70,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `styxbladesofgreed-logicmods` | high | `{gamePath}/Styx3/Content/Paks` |
 | Paks (no "~mods") | `styxbladesofgreed-pakalt` | high | `{gamePath}/Styx3/Content/Paks` |
 | Root Folder | `styxbladesofgreed-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `styxbladesofgreed-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `styxbladesofgreed-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `styxbladesofgreed-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `styxbladesofgreed-binaries` | 54 | `?` |
-| UE4SS | `styxbladesofgreed-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `styxbladesofgreed-uesortablepak` | 25 | `{gamePath}/Styx3/Content/Paks/~mods` |
+| UE4SS Script Mod | `styxbladesofgreed-scripts` | 50 | `{gamePath}/Styx3/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `styxbladesofgreed-ue4ssdll` | 52 | `{gamePath}/Styx3/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `styxbladesofgreed-binaries` | 54 | `{gamePath}/Styx3/Binaries/Win64` |
+| UE4SS | `styxbladesofgreed-ue4ss` | 56 | `{gamePath}/Styx3/Binaries/Win64` |
 | Config (Local AppData) | `styxbladesofgreed-config` | 62 | `?` |
 | Saves (Local AppData) | `styxbladesofgreed-save` | 64 | `?` |
 

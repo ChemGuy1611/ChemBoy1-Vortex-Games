@@ -66,8 +66,8 @@ Mod types define where each category of mod gets deployed:
 | MelonLoader UserLibs | `XXX-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
 | MelonPreferencesManager | `XXX-melonprefman` | high | `{gamePath}/Mods` |
 | MelonLoader | `XXX-melonloader` | low | `{gamePath}` |
-| Assembly DLL Mod | `XXX-assemblydll` | 60 | `?` |
-| Assets/Resources File | `XXX-assets` | 62 | `?` |
+| Assembly DLL Mod | `XXX-assemblydll` | 60 | `{gamePath}` |
+| Assets/Resources File | `XXX-assets` | 62 | `{gamePath}/XXX_Data` |
 
 ## Mod Installers
 

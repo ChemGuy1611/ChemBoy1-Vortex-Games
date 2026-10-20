@@ -62,11 +62,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `farfarwest-logicmods` | high | `{gamePath}/FarFarWest/Content/Paks` |
 | Paks (no "~mods") | `farfarwest-pakalt` | high | `{gamePath}/FarFarWest/Content/Paks` |
 | Root Game Folder | `farfarwest-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `farfarwest-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `farfarwest-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `farfarwest-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `farfarwest-binaries` | 54 | `?` |
-| UE4SS | `farfarwest-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `farfarwest-uesortablepak` | 25 | `{gamePath}/FarFarWest/Content/Paks/~mods` |
+| UE4SS Script Mod | `farfarwest-scripts` | 50 | `{gamePath}/FarFarWest/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `farfarwest-ue4ssdll` | 52 | `{gamePath}/FarFarWest/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `farfarwest-binaries` | 54 | `{gamePath}/FarFarWest/Binaries/Win64` |
+| UE4SS | `farfarwest-ue4ss` | 56 | `{gamePath}/FarFarWest/Binaries/Win64` |
 | Config (Local AppData) | `farfarwest-config` | 62 | `?` |
 | Saves (Local AppData) | `farfarwest-save` | 64 | `?` |
 

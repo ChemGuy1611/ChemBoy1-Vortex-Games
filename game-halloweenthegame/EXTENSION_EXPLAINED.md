@@ -62,11 +62,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `halloweenthegame-logicmods` | high | `{gamePath}/Ravage/Content/Paks` |
 | Paks (no "~mods") | `halloweenthegame-pakalt` | high | `{gamePath}/Ravage/Content/Paks` |
 | Root Folder | `halloweenthegame-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `halloweenthegame-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `halloweenthegame-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `halloweenthegame-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `halloweenthegame-binaries` | 54 | `?` |
-| UE4SS | `halloweenthegame-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `halloweenthegame-uesortablepak` | 25 | `{gamePath}/Ravage/Content/Paks/~mods` |
+| UE4SS Script Mod | `halloweenthegame-scripts` | 50 | `{gamePath}/Ravage/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `halloweenthegame-ue4ssdll` | 52 | `{gamePath}/Ravage/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `halloweenthegame-binaries` | 54 | `{gamePath}/Ravage/Binaries/Win64` |
+| UE4SS | `halloweenthegame-ue4ss` | 56 | `{gamePath}/Ravage/Binaries/Win64` |
 | Config (Local AppData) | `halloweenthegame-config` | 62 | `?` |
 | Saves (Local AppData) | `halloweenthegame-save` | 64 | `?` |
 

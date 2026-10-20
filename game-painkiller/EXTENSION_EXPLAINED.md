@@ -69,11 +69,11 @@ Mod types define where each category of mod gets deployed:
 | Paks (no "~mods") | `painkiller-pakalt` | high | `{gamePath}/Painkiller/Content/Paks` |
 | Root Folder | `painkiller-root` | high | `{gamePath}` |
 | Content Folder | `painkiller-contentfolder` | high | `{gamePath}/Painkiller` |
-| UE Sortable Pak Mod | `painkiller-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `painkiller-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `painkiller-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `painkiller-binaries` | 54 | `?` |
-| UE4SS | `painkiller-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `painkiller-uesortablepak` | 25 | `{gamePath}/Painkiller/Content/Paks/~mods` |
+| UE4SS Script Mod | `painkiller-scripts` | 50 | `{gamePath}/Painkiller/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `painkiller-ue4ssdll` | 52 | `{gamePath}/Painkiller/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `painkiller-binaries` | 54 | `{gamePath}/Painkiller/Binaries/Win64` |
+| UE4SS | `painkiller-ue4ss` | 56 | `{gamePath}/Painkiller/Binaries/Win64` |
 | Config (Local AppData) | `painkiller-config` | 62 | `?` |
 | Saves (Local AppData) | `painkiller-save` | 64 | `?` |
 

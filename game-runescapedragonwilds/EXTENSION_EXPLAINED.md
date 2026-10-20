@@ -64,14 +64,14 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `runescapedragonwilds-logicmods` | high | `{gamePath}/RSDragonwilds/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `runescapedragonwilds-pak` | high | `{gamePath}/RSDragonwilds/Content/Paks` |
 | Root Folder | `runescapedragonwilds-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `runescapedragonwilds-ue5-sortable-modtype` | 25 | `?` |
-| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
-| UE4SS Script Mod | `runescapedragonwilds-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `runescapedragonwilds-ue4ssdll` | 52 | `?` |
-| RuneSchema Loader | `runescapedragonwilds-runeschemaloader` | 53 | `?` |
+| UE Sortable Pak Mod | `runescapedragonwilds-ue5-sortable-modtype` | 25 | `{gamePath}/RSDragonwilds/Content/Paks/~mods` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `{gamePath}/RSDragonwilds/Content/Paks/~mods` |
+| UE4SS Script Mod | `runescapedragonwilds-scripts` | 50 | `{gamePath}/RSDragonwilds/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `runescapedragonwilds-ue4ssdll` | 52 | `{gamePath}/RSDragonwilds/Binaries/Win64/ue4ss/Mods` |
+| RuneSchema Loader | `runescapedragonwilds-runeschemaloader` | 53 | `{gamePath}/RSDragonwilds/Binaries/Win64/ue4ss/Mods` |
 | RuneSchema Mod | `runescapedragonwilds-runeschema` | 54 | `?` |
-| Binaries (Engine Injector) | `runescapedragonwilds-binaries` | 54 | `?` |
-| UE4SS | `runescapedragonwilds-ue4ss` | 56 | `?` |
+| Binaries (Engine Injector) | `runescapedragonwilds-binaries` | 54 | `{gamePath}/RSDragonwilds/Binaries/Win64` |
+| UE4SS | `runescapedragonwilds-ue4ss` | 56 | `{gamePath}/RSDragonwilds/Binaries/Win64` |
 | Config (Local AppData) | `runescapedragonwilds-config` | 62 | `?` |
 | Saves (Local AppData) | `runescapedragonwilds-save` | 64 | `?` |
 | Save Characters | `runescapedragonwilds-savecharacters` | 66 | `?` |

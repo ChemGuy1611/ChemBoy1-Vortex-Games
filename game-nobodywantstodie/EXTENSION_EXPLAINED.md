@@ -65,12 +65,12 @@ Mod types define where each category of mod gets deployed:
 | Paks (no "~mods") | `nobodywantstodie-pakalt` | high | `{gamePath}/detnoir/Content/Paks` |
 | Root Folder | `nobodywantstodie-root` | high | `{gamePath}` |
 | UE5 Paks | `nobodywantstodie-ue5` | high | `{gamePath}/detnoir/Content/Paks/~mods` |
-| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
-| UE Sortable Pak Mod | `nobodywantstodie-ue5-sortable-modtype` | 25 | `?` |
-| UE4SS Script Mod | `nobodywantstodie-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `nobodywantstodie-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `nobodywantstodie-binaries` | 54 | `?` |
-| UE4SS | `nobodywantstodie-ue4ss` | 56 | `?` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `{gamePath}/detnoir/Content/Paks/~mods` |
+| UE Sortable Pak Mod | `nobodywantstodie-ue5-sortable-modtype` | 25 | `{gamePath}/detnoir/Content/Paks/~mods` |
+| UE4SS Script Mod | `nobodywantstodie-scripts` | 50 | `{gamePath}/detnoir/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `nobodywantstodie-ue4ssdll` | 52 | `{gamePath}/detnoir/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `nobodywantstodie-binaries` | 54 | `{gamePath}/detnoir/Binaries/Win64` |
+| UE4SS | `nobodywantstodie-ue4ss` | 56 | `{gamePath}/detnoir/Binaries/Win64` |
 | Config (Local AppData) | `nobodywantstodie-config` | 62 | `?` |
 | Saves (Local AppData) | `nobodywantstodie-save` | 64 | `?` |
 

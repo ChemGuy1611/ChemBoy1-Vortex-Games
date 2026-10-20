@@ -63,12 +63,12 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `beastofreincarnation-logicmods` | high | `{gamePath}/BeastOfReincarnation/Content/Paks` |
 | Paks (no "~mods") | `beastofreincarnation-pakalt` | high | `{gamePath}/BeastOfReincarnation/Content/Paks` |
 | Root Folder | `beastofreincarnation-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `beastofreincarnation-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `beastofreincarnation-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `beastofreincarnation-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `beastofreincarnation-binaries` | 54 | `?` |
-| UE4SS | `beastofreincarnation-ue4ss` | 56 | `?` |
-| Sig Bypass | `beastofreincarnation-sigbypass` | 58 | `?` |
+| UE Sortable Pak Mod | `beastofreincarnation-uesortablepak` | 25 | `{gamePath}/BeastOfReincarnation/Content/Paks/~mods` |
+| UE4SS Script Mod | `beastofreincarnation-scripts` | 50 | `{gamePath}/BeastOfReincarnation/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `beastofreincarnation-ue4ssdll` | 52 | `{gamePath}/BeastOfReincarnation/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `beastofreincarnation-binaries` | 54 | `{gamePath}/BeastOfReincarnation/Binaries/Win64` |
+| UE4SS | `beastofreincarnation-ue4ss` | 56 | `{gamePath}/BeastOfReincarnation/Binaries/Win64` |
+| Sig Bypass | `beastofreincarnation-sigbypass` | 58 | `{gamePath}/BeastOfReincarnation/Binaries/Win64` |
 | Config (Local AppData) | `beastofreincarnation-config` | 62 | `?` |
 | Saves (Local AppData) | `beastofreincarnation-save` | 64 | `?` |
 

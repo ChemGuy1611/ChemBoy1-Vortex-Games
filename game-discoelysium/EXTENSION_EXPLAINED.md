@@ -76,8 +76,8 @@ Mod types define where each category of mod gets deployed:
 | MelonLoader UserLibs | `discoelysium-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
 | MelonPreferencesManager | `discoelysium-melonprefman` | high | `{gamePath}/Mods` |
 | MelonLoader | `discoelysium-melonloader` | low | `{gamePath}` |
-| Assembly DLL Mod | `discoelysium-assemblydll` | 60 | `?` |
-| Assets/Resources File | `discoelysium-assets` | 62 | `?` |
+| Assembly DLL Mod | `discoelysium-assemblydll` | 60 | `{gamePath}` |
+| Assets/Resources File | `discoelysium-assets` | 62 | `{gamePath}/disco_Data` |
 
 ## Mod Installers
 

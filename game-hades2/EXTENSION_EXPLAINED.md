@@ -40,8 +40,8 @@ Mod types define where each category of mod gets deployed:
 | Root Game Folder | `hades2-root` | high | `{gamePath}` |
 | Mod Importer | `hades2-manager` | low | `{gamePath}/Content` |
 | Mod Utility | `hades2-modutility` | low | `{gamePath}/Content/Mods/ModUtil` |
-| Binaries | `hades2-binaries` | 50 | `?` |
-| Mod Loader (Hell2Modding) | `hades2-loader` | 51 | `?` |
+| Binaries | `hades2-binaries` | 50 | `{gamePath}/Ship` |
+| Mod Loader (Hell2Modding) | `hades2-loader` | 51 | `{gamePath}/Ship` |
 
 ## Mod Installers
 

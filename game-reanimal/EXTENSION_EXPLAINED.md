@@ -69,11 +69,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `reanimal-logicmods` | high | `{gamePath}/Everholm/Content/Paks` |
 | Paks (no "~mods") | `reanimal-pakalt` | high | `{gamePath}/Everholm/Content/Paks` |
 | Root Folder | `reanimal-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `reanimal-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `reanimal-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `reanimal-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `reanimal-binaries` | 54 | `?` |
-| UE4SS | `reanimal-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `reanimal-uesortablepak` | 25 | `{gamePath}/Everholm/Content/Paks/~mods` |
+| UE4SS Script Mod | `reanimal-scripts` | 50 | `{gamePath}/Everholm/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `reanimal-ue4ssdll` | 52 | `{gamePath}/Everholm/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `reanimal-binaries` | 54 | `{gamePath}/Everholm/Binaries/Win64` |
+| UE4SS | `reanimal-ue4ss` | 56 | `{gamePath}/Everholm/Binaries/Win64` |
 | Config (Local AppData) | `reanimal-config` | 62 | `?` |
 | Saves (Local AppData) | `reanimal-save` | 64 | `?` |
 

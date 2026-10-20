@@ -64,11 +64,11 @@ Mod types define where each category of mod gets deployed:
 | Paks (no "~mods") | `titanquest2-pak` | high | `{gamePath}/TQ2/Content/Paks` |
 | Root Folder | `titanquest2-root` | high | `{gamePath}` |
 | Content Folder | `titanquest2-contentfolder` | high | `{gamePath}/TQ2` |
-| UE Sortable Pak Mod | `titanquest2-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `titanquest2-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `titanquest2-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `titanquest2-binaries` | 54 | `?` |
-| UE4SS | `titanquest2-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `titanquest2-uesortablepak` | 25 | `{gamePath}/TQ2/Content/Paks/~mods` |
+| UE4SS Script Mod | `titanquest2-scripts` | 50 | `{gamePath}/TQ2/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `titanquest2-ue4ssdll` | 52 | `{gamePath}/TQ2/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `titanquest2-binaries` | 54 | `{gamePath}/TQ2/Binaries/Win64` |
+| UE4SS | `titanquest2-ue4ss` | 56 | `{gamePath}/TQ2/Binaries/Win64` |
 | Config (Local AppData) | `titanquest2-config` | 62 | `?` |
 | Saves (Local AppData) | `titanquest2-save` | 64 | `?` |
 

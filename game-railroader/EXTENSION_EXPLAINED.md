@@ -50,10 +50,10 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | Root Folder | `railroader-root` | high | `{gamePath}` |
-| Unity Mod Manager | `railroader-umm` | 8 | `?` |
-| Mod | `railroader-mods` | 10 | `?` |
-| Assembly DLL Mod | `railroader-assemblydll` | 60 | `?` |
-| Assets/Resources File | `railroader-assets` | 62 | `?` |
+| Unity Mod Manager | `railroader-umm` | 8 | `{gamePath}` |
+| Mod | `railroader-mods` | 10 | `{gamePath}/Mods` |
+| Assembly DLL Mod | `railroader-assemblydll` | 60 | `{gamePath}/Railroader_Data/Managed` |
+| Assets/Resources File | `railroader-assets` | 62 | `{gamePath}/Railroader_Data` |
 
 ## Mod Installers
 

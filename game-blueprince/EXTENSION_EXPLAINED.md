@@ -74,8 +74,8 @@ Mod types define where each category of mod gets deployed:
 | MelonLoader UserLibs | `blueprince-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
 | MelonPreferencesManager | `blueprince-melonprefman` | high | `{gamePath}/Mods` |
 | MelonLoader | `blueprince-melonloader` | low | `{gamePath}` |
-| Assembly DLL Mod | `blueprince-assemblydll` | 60 | `?` |
-| Assets/Resources File | `blueprince-assets` | 62 | `?` |
+| Assembly DLL Mod | `blueprince-assemblydll` | 60 | `{gamePath}` |
+| Assets/Resources File | `blueprince-assets` | 62 | `{gamePath}/BLUE PRINCE_Data` |
 
 ## Mod Installers
 

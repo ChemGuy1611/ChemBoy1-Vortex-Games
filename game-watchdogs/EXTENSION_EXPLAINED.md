@@ -45,8 +45,8 @@ Mod types define where each category of mod gets deployed:
 | --- | --- | --- | --- |
 | Root Folder | `watchdogs-root` | high | `{gamePath}` |
 | Mod | `watchdogs-mod` | high | `{gamePath}/data_win64/mods` |
-| NexusTools Mod Loader | `watchdogs-loader` | 70 | `?` |
-| Binaries (Engine Injector) | `watchdogs-binaries` | 72 | `?` |
+| NexusTools Mod Loader | `watchdogs-loader` | 70 | `{gamePath}` |
+| Binaries (Engine Injector) | `watchdogs-binaries` | 72 | `{gamePath}/bin` |
 
 ## Mod Installers
 

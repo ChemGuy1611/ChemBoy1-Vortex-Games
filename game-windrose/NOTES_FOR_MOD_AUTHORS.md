@@ -10,7 +10,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `R5` |
 | Blueprint Mods (LogicMods) | a `LogicMods` folder | `R5` |
-| Server Uesortablepak | a file with the `.pak` extension | - |
+| Server Uesortablepak | a file with the `.pak` extension | `R5` |
 | Pak Mods | a `.pak` file | `R5` |
 | UE4SS Itself | a `dwmapi.dll` file | `R5\Binaries\Win64` |
 | UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `R5\Binaries\Win64\ue4ss\Mods` |
@@ -82,6 +82,8 @@ Installs to: `R5`
 ## Server Uesortablepak
 
 Recognised when the archive contains a file with the `.pak` extension.
+
+Installs to: `R5`
 
 ## Pak Mods
 

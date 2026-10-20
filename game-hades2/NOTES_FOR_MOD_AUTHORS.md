@@ -10,7 +10,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | Manager | a file or folder named `modimporter.exe` | `Content` |
 | Modutility | a file or folder named `modutil.lua` | `Content\Mods\ModUtil` |
-| Loader | a file or folder named `d3d12.dll` | - |
+| Loader | a file or folder named `d3d12.dll` | `Ship` |
 | Plugin | a file or folder named `manifest.json` and a file or folder named `main.lua` | - |
 
 Paths are relative to the game's install folder.
@@ -30,6 +30,8 @@ Installs to: `Content\Mods\ModUtil`
 ## Loader
 
 Recognised when the archive contains a file or folder named `d3d12.dll`.
+
+Installs to: `Ship`
 
 ## Plugin
 

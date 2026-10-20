@@ -72,8 +72,8 @@ Mod types define where each category of mod gets deployed:
 | MelonLoader UserLibs | `storyofseasonsgrandbazaar-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
 | MelonPreferencesManager | `storyofseasonsgrandbazaar-melonprefman` | high | `{gamePath}/Mods` |
 | MelonLoader | `storyofseasonsgrandbazaar-melonloader` | low | `{gamePath}` |
-| Assembly DLL Mod | `storyofseasonsgrandbazaar-assemblydll` | 60 | `?` |
-| Assets/Resources File | `storyofseasonsgrandbazaar-assets` | 62 | `?` |
+| Assembly DLL Mod | `storyofseasonsgrandbazaar-assemblydll` | 60 | `{gamePath}` |
+| Assets/Resources File | `storyofseasonsgrandbazaar-assets` | 62 | `{gamePath}/SOSGrandBazaar_Data` |
 
 ## Mod Installers
 

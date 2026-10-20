@@ -62,12 +62,12 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `fatekeeper-logicmods` | high | `{gamePath}/SLASHER/Content/Paks` |
 | Paks (no "~mods") | `fatekeeper-pakalt` | high | `{gamePath}/SLASHER/Content/Paks` |
 | Root Game Folder | `fatekeeper-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `fatekeeper-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `fatekeeper-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `fatekeeper-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `fatekeeper-binaries` | 54 | `?` |
-| UE4SS | `fatekeeper-ue4ss` | 56 | `?` |
-| Sig Bypass | `fatekeeper-sigbypass` | 58 | `?` |
+| UE Sortable Pak Mod | `fatekeeper-uesortablepak` | 25 | `{gamePath}/SLASHER/Content/Paks/~mods` |
+| UE4SS Script Mod | `fatekeeper-scripts` | 50 | `{gamePath}/SLASHER/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `fatekeeper-ue4ssdll` | 52 | `{gamePath}/SLASHER/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `fatekeeper-binaries` | 54 | `{gamePath}/SLASHER/Binaries/Win64` |
+| UE4SS | `fatekeeper-ue4ss` | 56 | `{gamePath}/SLASHER/Binaries/Win64` |
+| Sig Bypass | `fatekeeper-sigbypass` | 58 | `{gamePath}/SLASHER/Binaries/Win64` |
 | Config (Local AppData) | `fatekeeper-config` | 62 | `?` |
 | Saves (Roaming AppData) | `fatekeeper-save` | 64 | `?` |
 

@@ -62,11 +62,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `starwarsgalacticracer-logicmods` | high | `{gamePath}/Griffin/Content/Paks` |
 | Paks (no "~mods") | `starwarsgalacticracer-pakalt` | high | `{gamePath}/Griffin/Content/Paks` |
 | Root Folder | `starwarsgalacticracer-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `starwarsgalacticracer-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `starwarsgalacticracer-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `starwarsgalacticracer-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `starwarsgalacticracer-binaries` | 54 | `?` |
-| UE4SS | `starwarsgalacticracer-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `starwarsgalacticracer-uesortablepak` | 25 | `{gamePath}/Griffin/Content/Paks/~mods` |
+| UE4SS Script Mod | `starwarsgalacticracer-scripts` | 50 | `{gamePath}/Griffin/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `starwarsgalacticracer-ue4ssdll` | 52 | `{gamePath}/Griffin/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `starwarsgalacticracer-binaries` | 54 | `{gamePath}/Griffin/Binaries/Win64` |
+| UE4SS | `starwarsgalacticracer-ue4ss` | 56 | `{gamePath}/Griffin/Binaries/Win64` |
 | Config (Local AppData) | `starwarsgalacticracer-config` | 62 | `?` |
 | Saves (Local AppData) | `starwarsgalacticracer-save` | 64 | `?` |
 

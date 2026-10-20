@@ -2,6 +2,11 @@
 
 Covers `template-unitymelonloaderbepinex-hybrid`. Suite file: `tests/templates/unitymelonloaderbepinex-hybrid.test.js`.
 
+## [2026-10-20]
+
+- Changed: the template's save installer now sets the new save mod type (see its changelog entry of this date). The three save install-output tests expect `XXX-save` instead of `XXX-assets`; the one titled "installs a save file as an assets mod, since there is no save mod type" is renamed "installs a save file as a save mod".
+- Added: the save registration test also checks the save mod type (priority 64, after assets, named "Save") and that it is absent with the toggle off. A new save-folder test checks its folder (LocalLow for a Steam build, the Xbox location once the Xbox build is detected), its game check and that its test never claims a mod. Suite is now 468 tests.
+
 ## [2026-10-19]
 
 - Changed: the Mono game with two executables test expects `UnityPlayer.dll` as the required file instead of the managed assembly. The template switched to the root file (see its changelog entry of this date) because the two builds name their data folders differently; the suite had not followed and was the one red test in `npm test`.

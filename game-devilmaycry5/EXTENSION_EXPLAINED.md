@@ -44,8 +44,8 @@ Mod types define where each category of mod gets deployed:
 | Loose Lua/Plugin (REFramework) | `devilmaycry5-looselua` | high | `{gamePath}/.` |
 | Fluffy Mod Manager | `devilmaycry5-fluffymanager` | low | `{gamePath}` |
 | REFramework | `devilmaycry5-reframework` | low | `{gamePath}` |
-| Fluffy Mod | `devilmaycry5-fluffymod` | 25 | `?` |
-| Fluffy Preset | `devilmaycry5-preset` | 40 | `?` |
+| Fluffy Mod | `devilmaycry5-fluffymod` | 25 | `{gamePath}/Games/DMC5/Mods` |
+| Fluffy Preset | `devilmaycry5-preset` | 40 | `{gamePath}/Games/DMC5/Presets` |
 
 ## Mod Installers
 

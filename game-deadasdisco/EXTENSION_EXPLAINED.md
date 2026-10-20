@@ -63,11 +63,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `deadasdisco-logicmods` | high | `{gamePath}/Pagoda/Content/Paks` |
 | Paks (no "~mods") | `deadasdisco-pakalt` | high | `{gamePath}/Pagoda/Content/Paks` |
 | Root Folder | `deadasdisco-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `deadasdisco-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `deadasdisco-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `deadasdisco-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `deadasdisco-binaries` | 54 | `?` |
-| UE4SS | `deadasdisco-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `deadasdisco-uesortablepak` | 25 | `{gamePath}/Pagoda/Content/Paks/~mods` |
+| UE4SS Script Mod | `deadasdisco-scripts` | 50 | `{gamePath}/Pagoda/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `deadasdisco-ue4ssdll` | 52 | `{gamePath}/Pagoda/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `deadasdisco-binaries` | 54 | `{gamePath}/Pagoda/Binaries/Win64` |
+| UE4SS | `deadasdisco-ue4ss` | 56 | `{gamePath}/Pagoda/Binaries/Win64` |
 | Config (Local AppData) | `deadasdisco-config` | 62 | `?` |
 | Saves (Local AppData) | `deadasdisco-save` | 64 | `?` |
 

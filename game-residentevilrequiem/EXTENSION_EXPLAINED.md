@@ -45,8 +45,8 @@ Mod types define where each category of mod gets deployed:
 | Loose Lua (REFramework) | `residentevilrequiem-looselua` | high | `{gamePath}/.` |
 | Fluffy Mod Manager | `residentevilrequiem-fluffymanager` | low | `{gamePath}` |
 | REFramework | `residentevilrequiem-reframework` | low | `{gamePath}` |
-| Fluffy Mod | `residentevilrequiem-fluffymod` | 25 | `?` |
-| Fluffy Preset | `residentevilrequiem-preset` | 40 | `?` |
+| Fluffy Mod | `residentevilrequiem-fluffymod` | 25 | `{gamePath}/Games/RE9/Mods` |
+| Fluffy Preset | `residentevilrequiem-preset` | 40 | `{gamePath}/Games/RE9/Presets` |
 
 ## Mod Installers
 

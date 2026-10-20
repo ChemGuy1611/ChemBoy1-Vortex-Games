@@ -46,8 +46,8 @@ Mod types define where each category of mod gets deployed:
 | Fluffy Mod Manager | `re7-fluffymodmanager` | low | `{gamePath}` |
 | REFramework | `re7-reframework` | low | `{gamePath}` |
 | REFramework (RT) | `re7-reframeworkRT` | low | `{gamePath}` |
-| Fluffy Mod | `residentevil7-fluffymod` | 25 | `?` |
-| Fluffy Preset | `residentevil7-preset` | 40 | `?` |
+| Fluffy Mod | `residentevil7-fluffymod` | 25 | `{gamePath}/Games/RE7/Mods` |
+| Fluffy Preset | `residentevil7-preset` | 40 | `{gamePath}/Games/RE7/Presets` |
 
 ## Mod Installers
 

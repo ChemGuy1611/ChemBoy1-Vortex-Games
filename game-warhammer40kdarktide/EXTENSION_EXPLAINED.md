@@ -31,7 +31,7 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| Binaries | `darktide-binaries` | 25 | `?` |
+| Binaries | `darktide-binaries` | 25 | `{gamePath}/binaries` |
 | Config | `darktide-config` | 30 | `?` |
 
 ## Mod Installers

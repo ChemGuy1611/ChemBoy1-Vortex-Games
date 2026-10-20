@@ -747,7 +747,7 @@ describe("template-unitymelonloaderbepinex-hybrid: routing with other toggles", 
     ]);
   });
 
-  it("enableSaveInstaller registers the save installer at 47", async () => {
+  it("enableSaveInstaller registers the save installer at 47 and the save mod type at 64", async () => {
     const ext = await boot({
       transform: all(
         setConst("enableSaveInstaller", "true"),
@@ -759,6 +759,16 @@ describe("template-unitymelonloaderbepinex-hybrid: routing with other toggles", 
       ["XXX-save", 47],
       ["XXX-fallback", 49],
     ]);
+    assert.deepEqual(summary(ext.modTypes).slice(-2), [
+      ["XXX-assets", 62],
+      ["XXX-save", 64],
+    ]);
+    assert.deepEqual(ext.modTypes.find(({ id }) => id === "XXX-save").options, { name: "Save" });
+    const bare = await boot();
+    assert.equal(
+      bare.modTypes.some(({ id }) => id === "XXX-save"),
+      false,
+    );
     assert.deepEqual(await supportedBy(ext, tree("Slot1.SAV")), ["XXX-save", "XXX-fallback"]);
     assert.deepEqual(await supportedBy(ext, tree("anything.sav")), ["XXX-save", "XXX-fallback"]);
     assert.deepEqual(await supportedBy(ext, tree("readme.txt")), ["XXX-fallback"]);
@@ -1233,7 +1243,7 @@ describe("template-unitymelonloaderbepinex-hybrid: install output with other tog
     );
   });
 
-  it("installs a save file as an assets mod, since there is no save mod type", async () => {
+  it("installs a save file as a save mod", async () => {
     const ext = await boot({
       transform: all(
         setConst("enableSaveInstaller", "true"),
@@ -1244,12 +1254,12 @@ describe("template-unitymelonloaderbepinex-hybrid: install output with other tog
     assert.deepEqual(await installWith(ext, "XXX-save", tree("Slot1.sav", "x.txt")), [
       copy("Slot1.sav", "Slot1.sav"),
       copy("x.txt", "x.txt"),
-      modType("XXX-assets"),
+      modType("XXX-save"),
     ]);
     assert.deepEqual(await installWith(ext, "XXX-save", tree("Saves/a.sav", "Saves/b.txt")), [
       copy(sep("Saves", "a.sav"), "a.sav"),
       copy(sep("Saves", "b.txt"), "b.txt"),
-      modType("XXX-assets"),
+      modType("XXX-save"),
     ]);
   });
 
@@ -1263,7 +1273,7 @@ describe("template-unitymelonloaderbepinex-hybrid: install output with other tog
     });
     assert.deepEqual(await installWith(ext, "XXX-save", tree("Mysaves/Saves/other.SAV")), [
       copy(sep("Mysaves", "Saves", "other.SAV"), "other.SAV"),
-      modType("XXX-assets"),
+      modType("XXX-save"),
     ]);
   });
 
@@ -3884,6 +3894,22 @@ describe("template-unitymelonloaderbepinex-hybrid: save folder", () => {
     assert.deepEqual(opened, [XBOX]);
   });
 
+  it("deploys save mods to the LocalLow save folder, or the Xbox one once the Xbox build is detected", async () => {
+    const saveType = (ext) => ext.modTypes.find(({ id }) => id === "XXX-save");
+    const transform = all(withSaves, setConst("enableSaveInstaller", "true"));
+    const steamDir = makeGameDir();
+    const steam = await boot({ transform, state: stateFor({ gameDir: steamDir }) });
+    steam.game.executable(steamDir);
+    assert.equal(saveType(steam).getPath({ id: GAME_ID }), path.join(LOW, "Saves"));
+    assert.equal(saveType(steam).isSupported(GAME_ID), true);
+    assert.equal(saveType(steam).isSupported("someothergame"), false);
+    assert.equal(await saveType(steam).test(), false);
+    const xboxDir = makeGameDir(["gamelaunchhelper.exe"]);
+    const xbox = await boot({ transform, state: stateFor({ gameDir: xboxDir }) });
+    xbox.game.executable(xboxDir);
+    assert.equal(saveType(xbox).getPath({ id: GAME_ID }), XBOX);
+  });
+
   it("includes the user id folder found in the config folder when hasUserIdFolder is on", async () => {
     fs.mkdirSync(path.join(LOW, "steam-12345"), { recursive: true });
     try {
@@ -5391,7 +5417,7 @@ describe("template-unitymelonloaderbepinex-hybrid: install output, in detail", (
     const ext = await boot({ transform: saveConsts });
     assert.deepEqual(await installWith(ext, "XXX-save", tree("a/other.sav", "b/SLOT1.SAV")), [
       copy(sep("b", "SLOT1.SAV"), "SLOT1.SAV"),
-      modType("XXX-assets"),
+      modType("XXX-save"),
     ]);
   });
 

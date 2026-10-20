@@ -73,10 +73,10 @@ Mod types define where each category of mod gets deployed:
 | UE4SS | `windrose-ue4ss` | low | `{gamePath}/R5/Binaries/Win64` |
 | UE4SS Script Mod | `windrose-scripts` | low | `{gamePath}/R5/Binaries/Win64/ue4ss/Mods` |
 | UE4SS DLL Mod | `windrose-ue4ssdll` | low | `{gamePath}/R5/Binaries/Win64/ue4ss/Mods` |
-| UE Sortable Pak Mod | `windrose-uesortablepak` | 25 | `?` |
+| UE Sortable Pak Mod | `windrose-uesortablepak` | 25 | `{gamePath}/R5` |
 | Config (Local AppData) | `windrose-config` | 62 | `?` |
 | Saves (Local AppData) | `windrose-save` | 64 | `?` |
-| UE Sortable Pak Mod | `windrose-server-uesortablepak` | 25 | `?` |
+| UE Sortable Pak Mod | `windrose-server-uesortablepak` | 25 | `{gamePath}/R5` |
 
 ## Mod Installers
 

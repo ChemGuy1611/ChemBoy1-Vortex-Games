@@ -61,11 +61,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `starrupture-logicmods` | high | `{gamePath}/StarRupture/Content/Paks` |
 | Paks (no "~mods") | `starrupture-pakalt` | high | `{gamePath}/StarRupture/Content/Paks` |
 | Root Folder | `starrupture-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `starrupture-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `starrupture-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `starrupture-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `starrupture-binaries` | 54 | `?` |
-| UE4SS | `starrupture-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `starrupture-uesortablepak` | 25 | `{gamePath}/StarRupture/Content/Paks/~mods` |
+| UE4SS Script Mod | `starrupture-scripts` | 50 | `{gamePath}/StarRupture/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `starrupture-ue4ssdll` | 52 | `{gamePath}/StarRupture/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `starrupture-binaries` | 54 | `{gamePath}/StarRupture/Binaries/Win64` |
+| UE4SS | `starrupture-ue4ss` | 56 | `{gamePath}/StarRupture/Binaries/Win64` |
 | Config (Local AppData) | `starrupture-config` | 62 | `?` |
 | Saves (Local AppData) | `starrupture-save` | 64 | `?` |
 

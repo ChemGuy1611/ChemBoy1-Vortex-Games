@@ -14,7 +14,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Root / Game Folder Mods | a `DishonoredGame` folder | the game folder itself (no subfolder) |
 | Cooked Content Mods | a `.upk` file | `DishonoredGame\CookedPCConsole` |
 | Movie / Cutscene Replacements | a `.bik` file | `DishonoredGame\Movies` |
-| Binaries / Injector Mods | a `Dishonored.exe` file or a `.dll` file | - |
+| Binaries / Injector Mods | a `Dishonored.exe` file or a `.dll` file | `Binaries\Win32` |
 | Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
@@ -114,6 +114,8 @@ DLL injectors and other files that belong next to the game executable.
 
 - Recognised by any file named `Dishonored.exe`.
 - Recognised by any file with the `.dll`, `.asi` or `.addon64` extensions.
+
+Installs to: `Binaries\Win32`
 
 ## Fallback Installer
 

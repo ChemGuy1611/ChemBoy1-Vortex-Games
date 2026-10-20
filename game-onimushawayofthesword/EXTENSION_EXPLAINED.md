@@ -47,8 +47,8 @@ Mod types define where each category of mod gets deployed:
 | Loose Lua/Plugin (REFramework) | `onimushawayofthesword-looselua` | high | `{gamePath}/.` |
 | Fluffy Mod Manager | `onimushawayofthesword-fluffymanager` | low | `{gamePath}` |
 | REFramework | `onimushawayofthesword-reframework` | low | `{gamePath}` |
-| Fluffy Mod | `onimushawayofthesword-fluffymod` | 25 | `?` |
-| Fluffy Preset | `onimushawayofthesword-preset` | 40 | `?` |
+| Fluffy Mod | `onimushawayofthesword-fluffymod` | 25 | `{gamePath}/Games/Onimusha5/Mods` |
+| Fluffy Preset | `onimushawayofthesword-preset` | 40 | `{gamePath}/Games/Onimusha5/Presets` |
 
 ## Mod Installers
 

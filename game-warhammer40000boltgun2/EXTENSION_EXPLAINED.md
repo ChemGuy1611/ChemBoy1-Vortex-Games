@@ -62,11 +62,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `warhammer40000boltgun2-logicmods` | high | `{gamePath}/Boltgun2/Content/Paks` |
 | Paks (no "~mods") | `warhammer40000boltgun2-pakalt` | high | `{gamePath}/Boltgun2/Content/Paks` |
 | Root Folder | `warhammer40000boltgun2-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `warhammer40000boltgun2-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `warhammer40000boltgun2-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `warhammer40000boltgun2-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `warhammer40000boltgun2-binaries` | 54 | `?` |
-| UE4SS | `warhammer40000boltgun2-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `warhammer40000boltgun2-uesortablepak` | 25 | `{gamePath}/Boltgun2/Content/Paks/~mods` |
+| UE4SS Script Mod | `warhammer40000boltgun2-scripts` | 50 | `{gamePath}/Boltgun2/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `warhammer40000boltgun2-ue4ssdll` | 52 | `{gamePath}/Boltgun2/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `warhammer40000boltgun2-binaries` | 54 | `{gamePath}/Boltgun2/Binaries/Win64` |
+| UE4SS | `warhammer40000boltgun2-ue4ss` | 56 | `{gamePath}/Boltgun2/Binaries/Win64` |
 | Config (Local AppData) | `warhammer40000boltgun2-config` | 62 | `?` |
 | Saves (Local AppData) | `warhammer40000boltgun2-save` | 64 | `?` |
 

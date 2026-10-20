@@ -73,8 +73,8 @@ Mod types define where each category of mod gets deployed:
 | MelonLoader UserLibs | `castlevaniabelmontscurse-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
 | MelonPreferencesManager | `castlevaniabelmontscurse-melonprefman` | high | `{gamePath}/Mods` |
 | MelonLoader | `castlevaniabelmontscurse-melonloader` | low | `{gamePath}` |
-| Assembly DLL Mod | `castlevaniabelmontscurse-assemblydll` | 60 | `?` |
-| Assets/Resources File | `castlevaniabelmontscurse-assets` | 62 | `?` |
+| Assembly DLL Mod | `castlevaniabelmontscurse-assemblydll` | 60 | `{gamePath}` |
+| Assets/Resources File | `castlevaniabelmontscurse-assets` | 62 | `{gamePath}/Castlevania Belmont's Curse_Data` |
 
 ## Mod Installers
 

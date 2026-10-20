@@ -39,10 +39,10 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | Root Folder | `XXX-root` | high | `{gamePath}` |
-| Unity Mod Manager | `XXX-umm` | 8 | `?` |
-| Mod | `XXX-mods` | 10 | `?` |
-| Assembly DLL Mod | `XXX-assemblydll` | 60 | `?` |
-| Assets/Resources File | `XXX-assets` | 62 | `?` |
+| Unity Mod Manager | `XXX-umm` | 8 | `{gamePath}` |
+| Mod | `XXX-mods` | 10 | `{gamePath}/Mods` |
+| Assembly DLL Mod | `XXX-assemblydll` | 60 | `{gamePath}/XXX_Data/Managed` |
+| Assets/Resources File | `XXX-assets` | 62 | `{gamePath}/XXX_Data` |
 
 ## Mod Installers
 

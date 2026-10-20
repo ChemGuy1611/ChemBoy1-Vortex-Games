@@ -69,13 +69,13 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `blackmythwukong-logicmods` | high | `{gamePath}/b1/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `blackmythwukong-pakalt` | high | `{gamePath}/b1/Content/Paks` |
 | Root Folder | `blackmythwukong-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `blackmythwukong-ue5-sortable-modtype` | 25 | `?` |
-| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
-| UE4SS Script Mod | `blackmythwukong-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `blackmythwukong-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `blackmythwukong-binaries` | 54 | `?` |
-| UE4SS | `blackmythwukong-ue4ss` | 56 | `?` |
-| Sig Bypass | `blackmythwukong-sigbypass` | 58 | `?` |
+| UE Sortable Pak Mod | `blackmythwukong-ue5-sortable-modtype` | 25 | `{gamePath}/b1/Content/Paks/~mods` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `{gamePath}/b1/Content/Paks/~mods` |
+| UE4SS Script Mod | `blackmythwukong-scripts` | 50 | `{gamePath}/b1/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `blackmythwukong-ue4ssdll` | 52 | `{gamePath}/b1/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `blackmythwukong-binaries` | 54 | `{gamePath}/b1/Binaries/Win64` |
+| UE4SS | `blackmythwukong-ue4ss` | 56 | `{gamePath}/b1/Binaries/Win64` |
+| Sig Bypass | `blackmythwukong-sigbypass` | 58 | `{gamePath}/b1/Binaries/Win64` |
 | Config (Local AppData) | `blackmythwukong-config` | 62 | `?` |
 | Saves (Game Folder) | `blackmythwukong-save` | 64 | `?` |
 

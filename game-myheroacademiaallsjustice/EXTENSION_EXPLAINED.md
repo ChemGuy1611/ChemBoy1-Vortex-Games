@@ -66,12 +66,12 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `myheroacademiaallsjustice-logicmods` | high | `{gamePath}/HeroGame/Content/Paks` |
 | Paks (no "~mods") | `myheroacademiaallsjustice-pakalt` | high | `{gamePath}/HeroGame/Content/Paks` |
 | Root Folder | `myheroacademiaallsjustice-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `myheroacademiaallsjustice-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `myheroacademiaallsjustice-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `myheroacademiaallsjustice-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `myheroacademiaallsjustice-binaries` | 54 | `?` |
-| UE4SS | `myheroacademiaallsjustice-ue4ss` | 56 | `?` |
-| Sig Bypass | `myheroacademiaallsjustice-sigbypass` | 58 | `?` |
+| UE Sortable Pak Mod | `myheroacademiaallsjustice-uesortablepak` | 25 | `{gamePath}/HeroGame/Content/Paks/~mods` |
+| UE4SS Script Mod | `myheroacademiaallsjustice-scripts` | 50 | `{gamePath}/HeroGame/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `myheroacademiaallsjustice-ue4ssdll` | 52 | `{gamePath}/HeroGame/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `myheroacademiaallsjustice-binaries` | 54 | `{gamePath}/HeroGame/Binaries/Win64` |
+| UE4SS | `myheroacademiaallsjustice-ue4ss` | 56 | `{gamePath}/HeroGame/Binaries/Win64` |
+| Sig Bypass | `myheroacademiaallsjustice-sigbypass` | 58 | `{gamePath}/HeroGame/Binaries/Win64` |
 | Config (Local AppData) | `myheroacademiaallsjustice-config` | 62 | `?` |
 | Saves (Local AppData) | `myheroacademiaallsjustice-save` | 64 | `?` |
 

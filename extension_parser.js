@@ -761,6 +761,25 @@ function extractModTypes(src, table) {
 }
 
 /**
+ * Tidy a resolved deploy folder, or return null when part of it did not resolve.
+ * "." segments are dropped ({gamePath}/. is the game folder). A segment that is still
+ * the name of a constant declared in the file means the value could not be followed
+ * (a path built at runtime), so the whole folder is treated as unknown.
+ */
+function cleanResolvedPath(resolved, src) {
+  if (!resolved) return null;
+  const segments = String(resolved)
+    .split("/")
+    .filter((seg) => seg !== ".");
+  const unresolved = segments.some(
+    (seg) =>
+      /^[A-Za-z_$][\w$]*$/.test(seg) && new RegExp(`(?:const|let|var)\\s+${seg}\\s*=`).test(src),
+  );
+  if (unresolved || segments.length === 0) return null;
+  return segments.join("/");
+}
+
+/**
  * Extract explicit context.registerModType() calls (e.g. from applyGame).
  * Skips entries already captured via spec.modTypes.
  */
@@ -802,7 +821,19 @@ function extractRegisterModTypes(src, table) {
       const nameM = lastArg.match(/(?:"name"|name)\s*:\s*([^,}\n]+)/);
       if (nameM) name = resolveWithFallback(nameM[1].trim(), table, src);
     }
-    results.push({ id, name: name || id, priority, targetPath: null });
+    // Folder from a getPath of the form (game) => pathPattern(context.api, game, <expr>).
+    // Any other getPath (a helper call, a block body) is left unresolved.
+    let targetPath = null;
+    if (args.length >= 4) {
+      const pathM = args[3]
+        .trim()
+        .match(
+          /^\(?\s*game\s*\)?\s*=>\s*pathPattern\(\s*context\.api\s*,\s*game\s*,\s*([\s\S]+)\)$/,
+        );
+      if (pathM)
+        targetPath = cleanResolvedPath(resolveWithFallback(pathM[1].trim(), table, src), src);
+    }
+    results.push({ id, name: name || id, priority, targetPath });
   }
   return results;
 }

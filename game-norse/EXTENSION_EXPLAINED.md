@@ -70,11 +70,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `norse-logicmods` | high | `{gamePath}/Norse/Content/Paks` |
 | Paks (no "~mods") | `norse-pakalt` | high | `{gamePath}/Norse/Content/Paks` |
 | Root Folder | `norse-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `norse-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `norse-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `norse-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `norse-binaries` | 54 | `?` |
-| UE4SS | `norse-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `norse-uesortablepak` | 25 | `{gamePath}/Norse/Content/Paks/~mods` |
+| UE4SS Script Mod | `norse-scripts` | 50 | `{gamePath}/Norse/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `norse-ue4ssdll` | 52 | `{gamePath}/Norse/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `norse-binaries` | 54 | `{gamePath}/Norse/Binaries/Win64` |
+| UE4SS | `norse-ue4ss` | 56 | `{gamePath}/Norse/Binaries/Win64` |
 | Config (Local AppData) | `norse-config` | 62 | `?` |
 | Saves (Local AppData) | `norse-save` | 64 | `?` |
 

@@ -46,8 +46,8 @@ Mod types define where each category of mod gets deployed:
 | Loose Lua/Plugin (REFramework) | `monsterhunterrise-looselua` | high | `{gamePath}/.` |
 | Fluffy Mod Manager | `monsterhunterrise-fluffymanager` | low | `{gamePath}` |
 | REFramework | `monsterhunterrise-reframework` | low | `{gamePath}` |
-| Fluffy Mod | `monsterhunterrise-fluffymod` | 25 | `?` |
-| Fluffy Preset | `monsterhunterrise-preset` | 40 | `?` |
+| Fluffy Mod | `monsterhunterrise-fluffymod` | 25 | `{gamePath}/Games/MHRISE/Mods` |
+| Fluffy Preset | `monsterhunterrise-preset` | 40 | `{gamePath}/Games/MHRISE/Presets` |
 
 ## Mod Installers
 

@@ -73,8 +73,8 @@ Mod types define where each category of mod gets deployed:
 | BepInEx Injector | `megabonk-bepinex` | low | `{gamePath}` |
 | MelonLoader | `megabonk-melonloader` | low | `{gamePath}` |
 | Custom Characters | `megabonk-customcharacters` | 58 | `?` |
-| Assembly DLL Mod | `megabonk-assemblydll` | 60 | `?` |
-| Assets/Resources File | `megabonk-assets` | 62 | `?` |
+| Assembly DLL Mod | `megabonk-assemblydll` | 60 | `{gamePath}` |
+| Assets/Resources File | `megabonk-assets` | 62 | `{gamePath}/Megabonk_Data` |
 
 ## Mod Installers
 

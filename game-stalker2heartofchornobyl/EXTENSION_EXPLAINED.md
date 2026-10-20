@@ -60,8 +60,8 @@ Mod types define where each category of mod gets deployed:
 | UE5 Paks (no ~mods) | `stalker2heartofchornobyl-pakalt` | high | `{gamePath}/Stalker2/Content/Paks` |
 | Herbata Mod (GameLite) | `stalker2heartofchornobyl-herbatamod` | high | `{gamePath}/Stalker2/Content` |
 | Simple Mod Merger | `stalker2heartofchornobyl-merger` | low | `{gamePath}/Stalker2SimpleModMerger` |
-| UE5 Sortable Mod | `stalker2heartofchornobyl-ue5-sortable-modtype` | 25 | `?` |
-| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
+| UE5 Sortable Mod | `stalker2heartofchornobyl-ue5-sortable-modtype` | 25 | `{gamePath}/Stalker2/Content/Paks/~mods` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `{gamePath}/Stalker2/Content/Paks/~mods` |
 | UE4SS Scripts | `stalker2heartofchornobyl-scripts` | 40 | `?` |
 | UE4SS DLL Mod | `stalker2heartofchornobyl-ue4ssdll` | 42 | `?` |
 | Config (LocalAppData) | `stalker2heartofchornobyl-config` | 44 | `?` |

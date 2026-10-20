@@ -182,6 +182,7 @@ const CONFIG_PATH = path.join(CONFIG_FOLDER, USERID_FOLDER, CONFIG_FOLDERNAME);
 const CONFIG_FILES = ["settings.json"];
 
 const SAVE_ID = `${GAME_ID}-save`;
+const SAVE_NAME = "Save";
 const SAVE_PATH_DEFAULT = path.join(
   LOCALLOW,
   DEV_REGSTRING,
@@ -2092,7 +2093,7 @@ function installSave(files) {
   const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
-  const setModTypeInstruction = { type: "setmodtype", value: ASSETS_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: SAVE_ID };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
@@ -3055,6 +3056,26 @@ function applyGame(context, gameSpec) {
       (game) => pathPattern(context.api, game, path.join("{gamePath}", ASSETS_PATH)),
       () => Promise.resolve(false),
       { name: ASSETS_NAME },
+    );
+  }
+  if (enableSaveInstaller) {
+    //SAVE_PATH switches to the Xbox folder once the Xbox build is detected, so it is read when the folder is asked for
+    context.registerModType(
+      SAVE_ID,
+      64,
+      (gameId) => {
+        var _a;
+        return (
+          gameId === GAME_ID &&
+          !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+          _a === void 0
+            ? void 0
+            : _a.path)
+        );
+      },
+      (game) => pathPattern(context.api, game, SAVE_PATH),
+      () => Promise.resolve(false),
+      { name: SAVE_NAME },
     );
   }
 

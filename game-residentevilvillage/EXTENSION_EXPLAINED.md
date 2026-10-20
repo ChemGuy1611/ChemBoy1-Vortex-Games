@@ -46,8 +46,8 @@ Mod types define where each category of mod gets deployed:
 | Loose Lua/Plugin (REFramework) | `residentevilvillage-looselua` | high | `{gamePath}/.` |
 | Fluffy Mod Manager | `residentevilvillage-fluffymanager` | low | `{gamePath}` |
 | REFramework | `residentevilvillage-reframework` | low | `{gamePath}` |
-| Fluffy Mod | `residentevilvillage-fluffymod` | 25 | `?` |
-| Fluffy Preset | `residentevilvillage-preset` | 40 | `?` |
+| Fluffy Mod | `residentevilvillage-fluffymod` | 25 | `{gamePath}/Games/RE8/Mods` |
+| Fluffy Preset | `residentevilvillage-preset` | 40 | `{gamePath}/Games/RE8/Presets` |
 
 ## Mod Installers
 

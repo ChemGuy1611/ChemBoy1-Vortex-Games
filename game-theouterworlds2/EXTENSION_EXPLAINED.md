@@ -64,11 +64,11 @@ Mod types define where each category of mod gets deployed:
 | Paks (no "~mods") | `theouterworlds2-pakalt` | high | `{gamePath}/Arkansas/Content/Paks` |
 | Root Folder | `theouterworlds2-root` | high | `{gamePath}` |
 | Content Folder | `theouterworlds2-contentfolder` | high | `{gamePath}/Arkansas` |
-| UE Sortable Pak Mod | `theouterworlds2-ue5-sortable-modtype` | 25 | `?` |
-| UE4SS Script Mod | `theouterworlds2-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `theouterworlds2-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `theouterworlds2-binaries` | 54 | `?` |
-| UE4SS | `theouterworlds2-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `theouterworlds2-ue5-sortable-modtype` | 25 | `{gamePath}/Arkansas/Content/Paks/~mods` |
+| UE4SS Script Mod | `theouterworlds2-scripts` | 50 | `{gamePath}/Arkansas/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `theouterworlds2-ue4ssdll` | 52 | `{gamePath}/Arkansas/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `theouterworlds2-binaries` | 54 | `{gamePath}/Arkansas/Binaries/Win64` |
+| UE4SS | `theouterworlds2-ue4ss` | 56 | `{gamePath}/Arkansas/Binaries/Win64` |
 | Config (Local AppData) | `theouterworlds2-config` | 62 | `?` |
 | Saves (Saved Games) | `theouterworlds2-save` | 64 | `?` |
 

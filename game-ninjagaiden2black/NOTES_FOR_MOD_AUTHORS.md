@@ -17,8 +17,8 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Root / Game Folder Mods | a top-level folder such as `NINJAGAIDEN2BLACK`, `Engine` or `Content` | the game folder itself (no subfolder) |
 | Config File Mods | a config file such as `engine.ini` or `game.ini` | - |
 | Save Game Files | a `.sav` file | - |
-| Modloader | a file or folder named one of: `d3d9.dll` | - |
-| Mlmod | a file or folder named one of: `mods` | - |
+| Modloader | a file or folder named one of: `d3d9.dll` | `NINJAGAIDEN2BLACK\Binaries\Win64` |
+| Mlmod | a file or folder named one of: `mods` | `NINJAGAIDEN2BLACK\Binaries\Win64` |
 | Fallback Installer | anything unrecognised with no pak file | `NINJAGAIDEN2BLACK\Binaries\Win64` |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
@@ -212,9 +212,13 @@ Save files are deployed to the game's save folder in your user profile.
 
 Recognised when the archive contains a file or folder named one of: `d3d9.dll`.
 
+Installs to: `NINJAGAIDEN2BLACK\Binaries\Win64`
+
 ## Mlmod
 
 Recognised when the archive contains a file or folder named one of: `mods`.
+
+Installs to: `NINJAGAIDEN2BLACK\Binaries\Win64`
 
 ## Fallback Installer
 

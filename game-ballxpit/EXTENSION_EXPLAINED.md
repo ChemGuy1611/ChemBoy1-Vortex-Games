@@ -73,8 +73,8 @@ Mod types define where each category of mod gets deployed:
 | MelonLoader UserLibs | `ballxpit-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
 | MelonPreferencesManager | `ballxpit-melonprefman` | high | `{gamePath}/Mods` |
 | MelonLoader | `ballxpit-melonloader` | low | `{gamePath}` |
-| Assembly DLL Mod | `ballxpit-assemblydll` | 60 | `?` |
-| Assets/Resources File | `ballxpit-assets` | 62 | `?` |
+| Assembly DLL Mod | `ballxpit-assemblydll` | 60 | `{gamePath}` |
+| Assets/Resources File | `ballxpit-assets` | 62 | `{gamePath}/Balls_Data` |
 
 ## Mod Installers
 

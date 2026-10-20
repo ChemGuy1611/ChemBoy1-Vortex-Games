@@ -73,8 +73,8 @@ Mod types define where each category of mod gets deployed:
 | MelonLoader UserLibs | `starsandisland-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
 | MelonPreferencesManager | `starsandisland-melonprefman` | high | `{gamePath}/Mods` |
 | MelonLoader | `starsandisland-melonloader` | low | `{gamePath}` |
-| Assembly DLL Mod | `starsandisland-assemblydll` | 60 | `?` |
-| Assets/Resources File | `starsandisland-assets` | 62 | `?` |
+| Assembly DLL Mod | `starsandisland-assemblydll` | 60 | `{gamePath}` |
+| Assets/Resources File | `starsandisland-assets` | 62 | `{gamePath}/StarsandIsland_Data` |
 
 ## Mod Installers
 

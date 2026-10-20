@@ -53,7 +53,7 @@ Mod types define where each category of mod gets deployed:
 | --- | --- | --- | --- |
 | Root Folder | `hitman3-root` | high | `{gamePath}` |
 | SMF Mod | `hitman3-mod` | high | `{gamePath}/Vortex_Mods` |
-| Simple Mod Framework | `hitman3-loader` | 70 | `?` |
+| Simple Mod Framework | `hitman3-loader` | 70 | `{gamePath}/Simple Mod Framework` |
 
 ## Mod Installers
 

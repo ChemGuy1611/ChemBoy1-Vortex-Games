@@ -52,7 +52,7 @@ MyBlueprintMod.zip
     - Everything from the "LogicMods" folder down is copied to the game, keeping its structure.
     - Extra folders above "LogicMods" are fine - the installer finds it at any depth.
 
-  Installs to: "XXX\Content\Paks\LogicMods"
+  Installs to: "XXX\Content\Paks"
 
   Common mistakes:
     - Putting the ".pak" at the top level of the archive with no "LogicMods" folder. Vortex then treats it as an ordinary pak mod, installs it to the wrong place, and the blueprint mod never loads.
@@ -154,7 +154,7 @@ MyRootMod.zip
 [/code]
 
   Requirements:
-    - Recognised by a top-level folder matching any of: "Engine", "Content", "Binaries", "Mods", "Paks" or "Movies".
+    - Recognised by a top-level folder matching any of: "Engine", "Content", "Binaries", "Mods", "Paks", "Movies" or "Splash".
     - The matched folder and everything below it is copied into the game folder, preserving structure.
 
   Installs to: the game folder itself (no subfolder)

@@ -70,11 +70,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `liesofp-logicmods` | high | `{gamePath}/LiesofP/Content/Paks` |
 | Paks (no "~mods") | `liesofp-pakalt` | high | `{gamePath}/LiesofP/Content/Paks` |
 | Root Folder | `liesofp-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `liesofp-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `liesofp-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `liesofp-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `liesofp-binaries` | 54 | `?` |
-| UE4SS | `liesofp-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `liesofp-uesortablepak` | 25 | `{gamePath}/LiesofP/Content/Paks/~mods` |
+| UE4SS Script Mod | `liesofp-scripts` | 50 | `{gamePath}/LiesofP/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `liesofp-ue4ssdll` | 52 | `{gamePath}/LiesofP/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `liesofp-binaries` | 54 | `{gamePath}/LiesofP/Binaries/Win64` |
+| UE4SS | `liesofp-ue4ss` | 56 | `{gamePath}/LiesofP/Binaries/Win64` |
 | Config (Local AppData) | `liesofp-config` | 62 | `?` |
 | Saves (Local AppData) | `liesofp-save` | 64 | `?` |
 

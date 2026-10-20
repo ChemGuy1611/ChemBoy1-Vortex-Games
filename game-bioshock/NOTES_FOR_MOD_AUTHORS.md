@@ -14,7 +14,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Root / Game Folder Mods | a `ContentBaked` folder | the game folder itself (no subfolder) |
 | Cooked Content Mods | a `.blk` file | `ContentBaked\pc\BulkContent` |
 | Movie / Cutscene Replacements | a `.bik` file | `ContentBaked\pc\BinkMovies` |
-| Binaries / Injector Mods | a `BioshockHD.exe` file or a `.dll` file | - |
+| Binaries / Injector Mods | a `BioshockHD.exe` file or a `.dll` file | `Build\Final` |
 | Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
@@ -114,6 +114,8 @@ DLL injectors and other files that belong next to the game executable.
 
 - Recognised by any file named `BioshockHD.exe` or `Bioshock.exe`.
 - Recognised by any file with the `.dll` extension.
+
+Installs to: `Build\Final`
 
 ## Fallback Installer
 

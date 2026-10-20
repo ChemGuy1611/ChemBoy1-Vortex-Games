@@ -72,8 +72,8 @@ Mod types define where each category of mod gets deployed:
 | MelonLoader UserLibs | `animeshopsimulator-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
 | MelonPreferencesManager | `animeshopsimulator-melonprefman` | high | `{gamePath}/Mods` |
 | MelonLoader | `animeshopsimulator-melonloader` | low | `{gamePath}` |
-| Assembly DLL Mod | `animeshopsimulator-assemblydll` | 60 | `?` |
-| Assets/Resources File | `animeshopsimulator-assets` | 62 | `?` |
+| Assembly DLL Mod | `animeshopsimulator-assemblydll` | 60 | `{gamePath}` |
+| Assets/Resources File | `animeshopsimulator-assets` | 62 | `{gamePath}/Anime Shop Simulator_Data` |
 
 ## Mod Installers
 

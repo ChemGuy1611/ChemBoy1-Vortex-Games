@@ -66,11 +66,11 @@ Mod types define where each category of mod gets deployed:
 | Paks (no "~mods") | `clairobscurexpedition33-pakalt` | high | `{gamePath}/Sandfall/Content/Paks` |
 | Root Folder | `clairobscurexpedition33-root` | high | `{gamePath}` |
 | Content Folder | `clairobscurexpedition33-contentfolder` | high | `{gamePath}/Sandfall` |
-| UE Sortable Pak Mod | `clairobscurexpedition33-ue5-sortable-modtype` | 25 | `?` |
-| UE4SS Script Mod | `clairobscurexpedition33-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `clairobscurexpedition33-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `clairobscurexpedition33-binaries` | 54 | `?` |
-| UE4SS | `clairobscurexpedition33-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `clairobscurexpedition33-ue5-sortable-modtype` | 25 | `{gamePath}/Sandfall/Content/Paks/~mods` |
+| UE4SS Script Mod | `clairobscurexpedition33-scripts` | 50 | `{gamePath}/Sandfall/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `clairobscurexpedition33-ue4ssdll` | 52 | `{gamePath}/Sandfall/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `clairobscurexpedition33-binaries` | 54 | `{gamePath}/Sandfall/Binaries/Win64` |
+| UE4SS | `clairobscurexpedition33-ue4ss` | 56 | `{gamePath}/Sandfall/Binaries/Win64` |
 | Config (Local AppData) | `clairobscurexpedition33-config` | 62 | `?` |
 | Saves (Local AppData) | `clairobscurexpedition33-save` | 64 | `?` |
 

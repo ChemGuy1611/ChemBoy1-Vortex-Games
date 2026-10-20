@@ -64,12 +64,12 @@ Mod types define where each category of mod gets deployed:
 | Paks (no "~mods") | `untildawn-pakalt` | high | `{gamePath}/Windows/Bates/Content/Paks` |
 | Root Folder | `untildawn-root` | high | `{gamePath}/Windows` |
 | UE5 Paks | `untildawn-ue5` | high | `{gamePath}/Windows/Bates/Content/Paks/~mods` |
-| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
-| UE Sortable Pak Mod | `untildawn-ue5-sortable-modtype` | 25 | `?` |
-| UE4SS Script Mod | `untildawn-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `untildawn-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `untildawn-binaries` | 54 | `?` |
-| UE4SS | `untildawn-ue4ss` | 56 | `?` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `{gamePath}/Windows/Bates/Content/Paks/~mods` |
+| UE Sortable Pak Mod | `untildawn-ue5-sortable-modtype` | 25 | `{gamePath}/Windows/Bates/Content/Paks/~mods` |
+| UE4SS Script Mod | `untildawn-scripts` | 50 | `{gamePath}/Windows/Bates/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `untildawn-ue4ssdll` | 52 | `{gamePath}/Windows/Bates/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `untildawn-binaries` | 54 | `{gamePath}/Windows/Bates/Binaries/Win64` |
+| UE4SS | `untildawn-ue4ss` | 56 | `{gamePath}/Windows/Bates/Binaries/Win64` |
 | Config (Documents) | `untildawn-config` | 62 | `?` |
 | Saves (Documents) | `untildawn-save` | 64 | `?` |
 

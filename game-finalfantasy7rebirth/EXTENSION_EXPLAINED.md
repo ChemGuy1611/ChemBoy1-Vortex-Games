@@ -66,12 +66,12 @@ Mod types define where each category of mod gets deployed:
 | Root Folder | `finalfantasy7rebirth-root` | high | `{gamePath}` |
 | FF7RML Mod | `finalfantasy7rebirth-modloadermod` | high | `{gamePath}/End/Mods` |
 | FF7R Mod Loader | `finalfantasy7rebirth-modloader` | low | `{gamePath}/End/Mods` |
-| UE Sortable Pak Mod | `finalfantasy7rebirth-ue5-sortable-modtype` | 25 | `?` |
-| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
-| UE4SS Script Mod | `finalfantasy7rebirth-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `finalfantasy7rebirth-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `finalfantasy7rebirth-binaries` | 54 | `?` |
-| UE4SS | `finalfantasy7rebirth-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `finalfantasy7rebirth-ue5-sortable-modtype` | 25 | `{gamePath}/End/Content/Paks/~mods` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `{gamePath}/End/Content/Paks/~mods` |
+| UE4SS Script Mod | `finalfantasy7rebirth-scripts` | 50 | `{gamePath}/End/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `finalfantasy7rebirth-ue4ssdll` | 52 | `{gamePath}/End/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `finalfantasy7rebirth-binaries` | 54 | `{gamePath}/End/Binaries/Win64` |
+| UE4SS | `finalfantasy7rebirth-ue4ss` | 56 | `{gamePath}/End/Binaries/Win64` |
 | Config (Documents) | `finalfantasy7rebirth-config` | 62 | `?` |
 | Saves (Documents) | `finalfantasy7rebirth-save` | 64 | `?` |
 

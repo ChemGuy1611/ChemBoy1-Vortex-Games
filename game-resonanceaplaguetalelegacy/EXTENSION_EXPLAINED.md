@@ -56,7 +56,7 @@ Mod types define where each category of mod gets deployed:
 | ASI Loader | `resonanceaplaguetalelegacy-asiloader` | low | `{gamePath}` |
 | TextureStudio | `resonanceaplaguetalelegacy-texturestudio` | low | `{gamePath}/TextureStudio` |
 | Script Mod | `resonanceaplaguetalelegacy-mod` | high | `{gamePath}/Mods` |
-| Mod Merger | `resonanceaplaguetalelegacy-merger` | 70 | `?` |
+| Mod Merger | `resonanceaplaguetalelegacy-merger` | 70 | `{gamePath}` |
 
 ## Mod Installers
 

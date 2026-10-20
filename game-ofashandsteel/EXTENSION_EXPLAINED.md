@@ -67,11 +67,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `ofashandsteel-logicmods` | high | `{gamePath}/ofAshAndSteelGame/Content/Paks` |
 | Paks (no "~mods") | `ofashandsteel-pakalt` | high | `{gamePath}/ofAshAndSteelGame/Content/Paks` |
 | Root Folder | `ofashandsteel-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `ofashandsteel-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `ofashandsteel-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `ofashandsteel-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `ofashandsteel-binaries` | 54 | `?` |
-| UE4SS | `ofashandsteel-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `ofashandsteel-uesortablepak` | 25 | `{gamePath}/ofAshAndSteelGame/Content/Paks/~mods` |
+| UE4SS Script Mod | `ofashandsteel-scripts` | 50 | `{gamePath}/ofAshAndSteelGame/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `ofashandsteel-ue4ssdll` | 52 | `{gamePath}/ofAshAndSteelGame/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `ofashandsteel-binaries` | 54 | `{gamePath}/ofAshAndSteelGame/Binaries/Win64` |
+| UE4SS | `ofashandsteel-ue4ss` | 56 | `{gamePath}/ofAshAndSteelGame/Binaries/Win64` |
 | Config (Local AppData) | `ofashandsteel-config` | 62 | `?` |
 | Saves (Local AppData) | `ofashandsteel-save` | 64 | `?` |
 

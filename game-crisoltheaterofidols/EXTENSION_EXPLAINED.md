@@ -66,11 +66,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `crisoltheaterofidols-logicmods` | high | `{gamePath}/CRToiPrototype/Content/Paks` |
 | Paks (no "~mods") | `crisoltheaterofidols-pakalt` | high | `{gamePath}/CRToiPrototype/Content/Paks` |
 | Root Folder | `crisoltheaterofidols-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `crisoltheaterofidols-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `crisoltheaterofidols-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `crisoltheaterofidols-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `crisoltheaterofidols-binaries` | 54 | `?` |
-| UE4SS | `crisoltheaterofidols-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `crisoltheaterofidols-uesortablepak` | 25 | `{gamePath}/CRToiPrototype/Content/Paks/~mods` |
+| UE4SS Script Mod | `crisoltheaterofidols-scripts` | 50 | `{gamePath}/CRToiPrototype/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `crisoltheaterofidols-ue4ssdll` | 52 | `{gamePath}/CRToiPrototype/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `crisoltheaterofidols-binaries` | 54 | `{gamePath}/CRToiPrototype/Binaries/Win64` |
+| UE4SS | `crisoltheaterofidols-ue4ss` | 56 | `{gamePath}/CRToiPrototype/Binaries/Win64` |
 | Config (Local AppData) | `crisoltheaterofidols-config` | 62 | `?` |
 | Saves (Local AppData) | `crisoltheaterofidols-save` | 64 | `?` |
 

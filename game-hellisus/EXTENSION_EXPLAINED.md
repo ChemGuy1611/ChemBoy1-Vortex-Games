@@ -69,12 +69,12 @@ Mod types define where each category of mod gets deployed:
 | Paks (no "~mods") | `hellisus-pak` | high | `{gamePath}/HellIsUs/Content/Paks` |
 | Root Folder | `hellisus-root` | high | `{gamePath}` |
 | Content Folder | `hellisus-contentfolder` | high | `{gamePath}/HellIsUs` |
-| UE Sortable Pak Mod | `hellisus-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `hellisus-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `hellisus-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `hellisus-binaries` | 54 | `?` |
-| UE4SS | `hellisus-ue4ss` | 56 | `?` |
-| Sig Bypass | `hellisus-sigbypass` | 58 | `?` |
+| UE Sortable Pak Mod | `hellisus-uesortablepak` | 25 | `{gamePath}/HellIsUs/Content/Paks/~mods` |
+| UE4SS Script Mod | `hellisus-scripts` | 50 | `{gamePath}/HellIsUs/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `hellisus-ue4ssdll` | 52 | `{gamePath}/HellIsUs/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `hellisus-binaries` | 54 | `{gamePath}/HellIsUs/Binaries/Win64` |
+| UE4SS | `hellisus-ue4ss` | 56 | `{gamePath}/HellIsUs/Binaries/Win64` |
+| Sig Bypass | `hellisus-sigbypass` | 58 | `{gamePath}/HellIsUs/Binaries/Win64` |
 | Config (Local AppData) | `hellisus-config` | 62 | `?` |
 | Saves (Local AppData) | `hellisus-save` | 64 | `?` |
 

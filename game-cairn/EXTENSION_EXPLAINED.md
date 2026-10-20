@@ -75,8 +75,8 @@ Mod types define where each category of mod gets deployed:
 | MelonLoader UserLibs | `cairn-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
 | MelonPreferencesManager | `cairn-melonprefman` | high | `{gamePath}/Mods` |
 | MelonLoader | `cairn-melonloader` | low | `{gamePath}` |
-| Assembly DLL Mod | `cairn-assemblydll` | 60 | `?` |
-| Assets/Resources File | `cairn-assets` | 62 | `?` |
+| Assembly DLL Mod | `cairn-assemblydll` | 60 | `{gamePath}` |
+| Assets/Resources File | `cairn-assets` | 62 | `{gamePath}/Cairn_Data` |
 
 ## Mod Installers
 

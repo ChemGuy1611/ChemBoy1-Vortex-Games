@@ -65,11 +65,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `highonlife-logicmods` | high | `{gamePath}/Oregon/Content/Paks` |
 | Paks (no "~mods") | `highonlife-pakalt` | high | `{gamePath}/Oregon/Content/Paks` |
 | Root Folder | `highonlife-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `highonlife-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `highonlife-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `highonlife-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `highonlife-binaries` | 54 | `?` |
-| UE4SS | `highonlife-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `highonlife-uesortablepak` | 25 | `{gamePath}/Oregon/Content/Paks/~mods` |
+| UE4SS Script Mod | `highonlife-scripts` | 50 | `{gamePath}/Oregon/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `highonlife-ue4ssdll` | 52 | `{gamePath}/Oregon/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `highonlife-binaries` | 54 | `{gamePath}/Oregon/Binaries/Win64` |
+| UE4SS | `highonlife-ue4ss` | 56 | `{gamePath}/Oregon/Binaries/Win64` |
 | Config (Local AppData) | `highonlife-config` | 62 | `?` |
 | Saves (Local AppData) | `highonlife-save` | 64 | `?` |
 

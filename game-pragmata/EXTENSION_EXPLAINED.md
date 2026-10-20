@@ -45,8 +45,8 @@ Mod types define where each category of mod gets deployed:
 | Loose Lua/Plugin (REFramework) | `pragmata-looselua` | high | `{gamePath}/.` |
 | Fluffy Mod Manager | `pragmata-fluffymanager` | low | `{gamePath}` |
 | REFramework | `pragmata-reframework` | low | `{gamePath}` |
-| Fluffy Mod | `pragmata-fluffymod` | 25 | `?` |
-| Fluffy Preset | `pragmata-preset` | 40 | `?` |
+| Fluffy Mod | `pragmata-fluffymod` | 25 | `{gamePath}/Games/PRAGMATA/Mods` |
+| Fluffy Preset | `pragmata-preset` | 40 | `{gamePath}/Games/PRAGMATA/Presets` |
 
 ## Mod Installers
 

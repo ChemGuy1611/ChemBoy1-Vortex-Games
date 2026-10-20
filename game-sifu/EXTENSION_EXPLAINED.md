@@ -65,12 +65,12 @@ Mod types define where each category of mod gets deployed:
 | Paks (no "~mods") | `sifu-pakalt` | high | `{gamePath}/Sifu/Content/Paks` |
 | Root Folder | `sifu-root` | high | `{gamePath}` |
 | Paks | `sifu-pak` | high | `{gamePath}/Sifu/Content/Paks/~mods` |
-| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
-| UE Sortable Pak Mod | `sifu-ue5-sortable-modtype` | 25 | `?` |
-| UE4SS Script Mod | `sifu-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `sifu-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `sifu-binaries` | 54 | `?` |
-| UE4SS | `sifu-ue4ss` | 56 | `?` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `{gamePath}/Sifu/Content/Paks/~mods` |
+| UE Sortable Pak Mod | `sifu-ue5-sortable-modtype` | 25 | `{gamePath}/Sifu/Content/Paks/~mods` |
+| UE4SS Script Mod | `sifu-scripts` | 50 | `{gamePath}/Sifu/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `sifu-ue4ssdll` | 52 | `{gamePath}/Sifu/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `sifu-binaries` | 54 | `{gamePath}/Sifu/Binaries/Win64` |
+| UE4SS | `sifu-ue4ss` | 56 | `{gamePath}/Sifu/Binaries/Win64` |
 | Config (Local AppData) | `sifu-config` | 62 | `?` |
 | Saves (Local AppData) | `sifu-save` | 64 | `?` |
 

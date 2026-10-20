@@ -63,11 +63,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `thelastcaretaker-logicmods` | high | `{gamePath}/Voyage/Content/Paks` |
 | Paks (no "~mods") | `thelastcaretaker-pakalt` | high | `{gamePath}/Voyage/Content/Paks` |
 | Root Folder | `thelastcaretaker-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `thelastcaretaker-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `thelastcaretaker-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `thelastcaretaker-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `thelastcaretaker-binaries` | 54 | `?` |
-| UE4SS | `thelastcaretaker-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `thelastcaretaker-uesortablepak` | 25 | `{gamePath}/Voyage/Content/Paks/~mods` |
+| UE4SS Script Mod | `thelastcaretaker-scripts` | 50 | `{gamePath}/Voyage/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `thelastcaretaker-ue4ssdll` | 52 | `{gamePath}/Voyage/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `thelastcaretaker-binaries` | 54 | `{gamePath}/Voyage/Binaries/Win64` |
+| UE4SS | `thelastcaretaker-ue4ss` | 56 | `{gamePath}/Voyage/Binaries/Win64` |
 | Config (Local AppData) | `thelastcaretaker-config` | 62 | `?` |
 | Saves (Local AppData) | `thelastcaretaker-save` | 64 | `?` |
 

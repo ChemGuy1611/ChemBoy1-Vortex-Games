@@ -68,13 +68,13 @@ Mod types define where each category of mod gets deployed:
 | Root Folder | `bellwright-root` | high | `{gamePath}` |
 | UE5 ModKit Pak Mod | `bellwright-ue5modkitpak` | high | `{gamePath}/Bellwright/Content/Mods` |
 | UE5 Paks (Legacy ~mods) | `bellwright-ue5` | high | `{gamePath}/Bellwright/Content/Paks/~mods` |
-| UE Sortable Pak Mod | `bellwright-ue5-sortable-modtype` | 25 | `?` |
-| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
-| UE4SS Script Mod | `bellwright-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `bellwright-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `bellwright-binaries` | 54 | `?` |
-| UE4SS | `bellwright-ue4ss` | 56 | `?` |
-| Signature Bypass | `bellwright-sigbypass` | 58 | `?` |
+| UE Sortable Pak Mod | `bellwright-ue5-sortable-modtype` | 25 | `{gamePath}/Bellwright/Content/Paks/~mods` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `{gamePath}/Bellwright/Content/Paks/~mods` |
+| UE4SS Script Mod | `bellwright-scripts` | 50 | `{gamePath}/Bellwright/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `bellwright-ue4ssdll` | 52 | `{gamePath}/Bellwright/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `bellwright-binaries` | 54 | `{gamePath}/Bellwright/Binaries/Win64` |
+| UE4SS | `bellwright-ue4ss` | 56 | `{gamePath}/Bellwright/Binaries/Win64` |
+| Signature Bypass | `bellwright-sigbypass` | 58 | `{gamePath}/Bellwright/Binaries/Win64` |
 | Config (Local AppData) | `bellwright-config` | 62 | `?` |
 | Saves (Local AppData) | `bellwright-save` | 64 | `?` |
 

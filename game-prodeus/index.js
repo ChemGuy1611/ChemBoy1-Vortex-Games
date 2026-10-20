@@ -2009,7 +2009,7 @@ function installSave(files) {
   const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
-  const setModTypeInstruction = { type: "setmodtype", value: ASSETS_ID };
+  const setModTypeInstruction = { type: "setmodtype", value: SAVE_ID };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));

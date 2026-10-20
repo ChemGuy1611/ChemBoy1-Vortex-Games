@@ -44,7 +44,7 @@ Mod types define where each category of mod gets deployed:
 | Root Folder | `ghostreconwildlands-root` | high | `{gamePath}` |
 | Mod | `ghostreconwildlands-mod` | high | `{gamePath}/.` |
 | ScriptHook Plugin | `ghostreconwildlands-plugin` | high | `{gamePath}/plugins` |
-| GRW ScriptHook Reforged | `ghostreconwildlands-loader` | 70 | `?` |
+| GRW ScriptHook Reforged | `ghostreconwildlands-loader` | 70 | `{gamePath}` |
 
 ## Mod Installers
 

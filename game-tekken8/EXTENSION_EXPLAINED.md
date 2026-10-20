@@ -62,8 +62,8 @@ Mod types define where each category of mod gets deployed:
 | Paks (no "~mods") | `tekken8-pakalt` | high | `{gamePath}/Polaris/Content/Paks` |
 | Root Game Folder | `tekken8-root` | high | `{gamePath}` |
 | Root Sub-Folders | `tekken8-rootsubfolders` | high | `{gamePath}/Polaris` |
-| UE Sortable Pak Mod | `tekken8-uesortablepak` | 25 | `?` |
-| Binaries (Engine Injector) | `tekken8-binaries` | 54 | `?` |
+| UE Sortable Pak Mod | `tekken8-uesortablepak` | 25 | `{gamePath}/Polaris/Content/Paks/~mods` |
+| Binaries (Engine Injector) | `tekken8-binaries` | 54 | `{gamePath}/Polaris/Binaries/Win64` |
 | Config (Local AppData) | `tekken8-config` | 62 | `?` |
 | Saves (Local AppData) | `tekken8-save` | 64 | `?` |
 

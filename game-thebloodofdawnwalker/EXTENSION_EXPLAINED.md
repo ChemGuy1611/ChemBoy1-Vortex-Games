@@ -63,11 +63,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `thebloodofdawnwalker-logicmods` | high | `{gamePath}/Dawnwalker/Content/Paks` |
 | Paks (no "~mods") | `thebloodofdawnwalker-pakalt` | high | `{gamePath}/Dawnwalker/Content/Paks` |
 | Root Folder | `thebloodofdawnwalker-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `thebloodofdawnwalker-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `thebloodofdawnwalker-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `thebloodofdawnwalker-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `thebloodofdawnwalker-binaries` | 54 | `?` |
-| UE4SS | `thebloodofdawnwalker-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `thebloodofdawnwalker-uesortablepak` | 25 | `{gamePath}/Dawnwalker/Content/Paks/~mods` |
+| UE4SS Script Mod | `thebloodofdawnwalker-scripts` | 50 | `{gamePath}/Dawnwalker/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `thebloodofdawnwalker-ue4ssdll` | 52 | `{gamePath}/Dawnwalker/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `thebloodofdawnwalker-binaries` | 54 | `{gamePath}/Dawnwalker/Binaries/Win64` |
+| UE4SS | `thebloodofdawnwalker-ue4ss` | 56 | `{gamePath}/Dawnwalker/Binaries/Win64` |
 | Config (Local AppData) | `thebloodofdawnwalker-config` | 62 | `?` |
 | Saves (Local AppData) | `thebloodofdawnwalker-save` | 64 | `?` |
 

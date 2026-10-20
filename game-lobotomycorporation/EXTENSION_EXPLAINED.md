@@ -59,7 +59,7 @@ Mod types define where each category of mod gets deployed:
 | --- | --- | --- | --- |
 | Root Folder | `lobotomycorporation-root` | high | `{gamePath}` |
 | BaseMod | `lobotomycorporation-mod` | high | `{gamePath}/LobotomyCorp_Data/BaseMods` |
-| BaseMod Loader | `lobotomycorporation-loader` | 70 | `?` |
+| BaseMod Loader | `lobotomycorporation-loader` | 70 | `{gamePath}/LobotomyCorp_Data/Managed` |
 
 ## Mod Installers
 

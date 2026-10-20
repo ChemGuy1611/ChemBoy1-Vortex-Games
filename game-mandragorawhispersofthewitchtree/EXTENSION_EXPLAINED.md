@@ -70,12 +70,12 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `mandragorawhispersofthewitchtree-logicmods` | high | `{gamePath}/man/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `mandragorawhispersofthewitchtree-pak` | high | `{gamePath}/man/Content/Paks` |
 | Root Folder | `mandragorawhispersofthewitchtree-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `mandragorawhispersofthewitchtree-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `mandragorawhispersofthewitchtree-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `mandragorawhispersofthewitchtree-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `mandragorawhispersofthewitchtree-binaries` | 54 | `?` |
-| UE4SS | `mandragorawhispersofthewitchtree-ue4ss` | 56 | `?` |
-| Signature Bypass | `mandragorawhispersofthewitchtree-sigbypass` | 58 | `?` |
+| UE Sortable Pak Mod | `mandragorawhispersofthewitchtree-uesortablepak` | 25 | `{gamePath}/man/Content/Paks/~mods` |
+| UE4SS Script Mod | `mandragorawhispersofthewitchtree-scripts` | 50 | `{gamePath}/man/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `mandragorawhispersofthewitchtree-ue4ssdll` | 52 | `{gamePath}/man/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `mandragorawhispersofthewitchtree-binaries` | 54 | `{gamePath}/man/Binaries/Win64` |
+| UE4SS | `mandragorawhispersofthewitchtree-ue4ss` | 56 | `{gamePath}/man/Binaries/Win64` |
+| Signature Bypass | `mandragorawhispersofthewitchtree-sigbypass` | 58 | `{gamePath}/man/Binaries/Win64` |
 | Config (Local AppData) | `mandragorawhispersofthewitchtree-config` | 62 | `?` |
 | Saves (Local AppData) | `mandragorawhispersofthewitchtree-save` | 64 | `?` |
 

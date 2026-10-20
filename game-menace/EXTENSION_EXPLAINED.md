@@ -64,9 +64,9 @@ Mod types define where each category of mod gets deployed:
 | Root Game Folder | `menace-root` | high | `{gamePath}` |
 | MelonLoader | `menace-melonloader` | low | `{gamePath}` |
 | Jiangyu Loader | `menace-jiangyu` | low | `{gamePath}/Mods` |
-| Jiangyu Mod | `menace-jiangyumod` | 29 | `?` |
-| Assembly DLL Mod | `menace-assemblydll` | 60 | `?` |
-| Assets/Resources File | `menace-assets` | 62 | `?` |
+| Jiangyu Mod | `menace-jiangyumod` | 29 | `{gamePath}/Mods` |
+| Assembly DLL Mod | `menace-assemblydll` | 60 | `{gamePath}` |
+| Assets/Resources File | `menace-assets` | 62 | `{gamePath}/Menace_Data` |
 
 ## Mod Installers
 

@@ -46,8 +46,8 @@ Mod types define where each category of mod gets deployed:
 | Loose Lua/Plugin (REFramework) | `residentevil22019-looselua` | high | `{gamePath}/.` |
 | Fluffy Mod Manager | `residentevil22019-fluffymanager` | low | `{gamePath}` |
 | REFramework | `residentevil22019-reframework` | low | `{gamePath}` |
-| Fluffy Mod | `residentevil22019-fluffymod` | 25 | `?` |
-| Fluffy Preset | `residentevil22019-preset` | 40 | `?` |
+| Fluffy Mod | `residentevil22019-fluffymod` | 25 | `{gamePath}/Games/RE2R/Mods` |
+| Fluffy Preset | `residentevil22019-preset` | 40 | `{gamePath}/Games/RE2R/Presets` |
 
 ## Mod Installers
 

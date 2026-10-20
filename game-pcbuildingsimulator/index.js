@@ -704,16 +704,6 @@ if (!isXna) {
     targetPath: "{gamePath}",
   });
 }
-//The template ships a save installer but no save mod type. This game keeps its saves in its own
-//folder, so the mod type targets it.
-if (enableSaveInstaller) {
-  spec.modTypes.push({
-    id: SAVE_ID,
-    name: SAVE_NAME,
-    priority: "high",
-    targetPath: path.join("{gamePath}", SAVE_PATH_DEFAULT),
-  });
-}
 
 //3rd party tools and launchers
 let tools = [
@@ -3057,6 +3047,26 @@ function applyGame(context, gameSpec) {
       (game) => pathPattern(context.api, game, path.join("{gamePath}", ASSETS_PATH)),
       () => Promise.resolve(false),
       { name: ASSETS_NAME },
+    );
+  }
+  if (enableSaveInstaller) {
+    //saves are stored inside the game folder
+    context.registerModType(
+      SAVE_ID,
+      39,
+      (gameId) => {
+        var _a;
+        return (
+          gameId === GAME_ID &&
+          !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+          _a === void 0
+            ? void 0
+            : _a.path)
+        );
+      },
+      (game) => pathPattern(context.api, game, path.join("{gamePath}", SAVE_PATH_DEFAULT)),
+      () => Promise.resolve(false),
+      { name: SAVE_NAME },
     );
   }
 

@@ -50,7 +50,7 @@ Mod types define where each category of mod gets deployed:
 | --- | --- | --- | --- |
 | Root Folder | `residentevil4-root` | high | `{gamePath}` |
 | Save | `residentevil4-save` | high | `{gamePath}/Bin32/profile/player/saves` |
-| Binaries (Engine Injector) | `residentevil4-binaries` | 72 | `?` |
+| Binaries (Engine Injector) | `residentevil4-binaries` | 72 | `{gamePath}/Bin32` |
 
 ## Mod Installers
 

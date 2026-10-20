@@ -43,7 +43,7 @@ Mod types define where each category of mod gets deployed:
 | Mod | `pathologic2-mod` | high | `{gamePath}/Mods` |
 | Root Folder | `pathologic2-root` | high | `{gamePath}` |
 | Binaries (Engine Injector) | `pathologic2-binaries` | high | `{gamePath}/.` |
-| P2ModLoader | `pathologic2-loader` | 70 | `?` |
+| P2ModLoader | `pathologic2-loader` | 70 | `{gamePath}` |
 
 ## Mod Installers
 

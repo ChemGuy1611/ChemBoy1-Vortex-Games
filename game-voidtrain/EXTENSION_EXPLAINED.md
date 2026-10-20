@@ -64,11 +64,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `voidtrain-logicmods` | high | `{gamePath}/VoidTrain/Content/Paks` |
 | Paks (no "~mods") | `voidtrain-pakalt` | high | `{gamePath}/VoidTrain/Content/Paks` |
 | Root Folder | `voidtrain-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `voidtrain-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `voidtrain-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `voidtrain-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `voidtrain-binaries` | 54 | `?` |
-| UE4SS | `voidtrain-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `voidtrain-uesortablepak` | 25 | `{gamePath}/VoidTrain/Content/Paks/~mods` |
+| UE4SS Script Mod | `voidtrain-scripts` | 50 | `{gamePath}/VoidTrain/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `voidtrain-ue4ssdll` | 52 | `{gamePath}/VoidTrain/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `voidtrain-binaries` | 54 | `{gamePath}/VoidTrain/Binaries/Win64` |
+| UE4SS | `voidtrain-ue4ss` | 56 | `{gamePath}/VoidTrain/Binaries/Win64` |
 | Config (Local AppData) | `voidtrain-config` | 62 | `?` |
 | Saves (Local AppData) | `voidtrain-save` | 64 | `?` |
 

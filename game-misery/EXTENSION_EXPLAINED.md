@@ -61,11 +61,11 @@ Mod types define where each category of mod gets deployed:
 | Paks (no "~mods") | `misery-pakalt` | high | `{gamePath}/MISERY/Content/Paks` |
 | Root Game Folder | `misery-root` | high | `{gamePath}` |
 | Root Sub-Folders | `misery-rootsubfolders` | high | `{gamePath}/MISERY` |
-| UE Sortable Pak Mod | `misery-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `misery-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `misery-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `misery-binaries` | 54 | `?` |
-| UE4SS | `misery-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `misery-uesortablepak` | 25 | `{gamePath}/MISERY/Content/Paks/~mods` |
+| UE4SS Script Mod | `misery-scripts` | 50 | `{gamePath}/MISERY/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `misery-ue4ssdll` | 52 | `{gamePath}/MISERY/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `misery-binaries` | 54 | `{gamePath}/MISERY/Binaries/Win64` |
+| UE4SS | `misery-ue4ss` | 56 | `{gamePath}/MISERY/Binaries/Win64` |
 | Config (Local AppData) | `misery-config` | 62 | `?` |
 | Saves (Local AppData) | `misery-save` | 64 | `?` |
 

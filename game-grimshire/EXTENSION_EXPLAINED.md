@@ -71,8 +71,8 @@ Mod types define where each category of mod gets deployed:
 | MelonLoader UserLibs | `grimshire-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
 | MelonPreferencesManager | `grimshire-melonprefman` | high | `{gamePath}/Mods` |
 | MelonLoader | `grimshire-melonloader` | low | `{gamePath}` |
-| Assembly DLL Mod | `grimshire-assemblydll` | 60 | `?` |
-| Assets/Resources File | `grimshire-assets` | 62 | `?` |
+| Assembly DLL Mod | `grimshire-assemblydll` | 60 | `{gamePath}` |
+| Assets/Resources File | `grimshire-assets` | 62 | `{gamePath}/Grimshire_Data` |
 
 ## Mod Installers
 

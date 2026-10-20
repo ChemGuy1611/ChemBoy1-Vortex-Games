@@ -67,11 +67,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `routine-logicmods` | high | `{gamePath}/Routine/Content/Paks` |
 | Paks (no "~mods") | `routine-pakalt` | high | `{gamePath}/Routine/Content/Paks` |
 | Root Folder | `routine-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `routine-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `routine-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `routine-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `routine-binaries` | 54 | `?` |
-| UE4SS | `routine-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `routine-uesortablepak` | 25 | `{gamePath}/Routine/Content/Paks/~mods` |
+| UE4SS Script Mod | `routine-scripts` | 50 | `{gamePath}/Routine/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `routine-ue4ssdll` | 52 | `{gamePath}/Routine/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `routine-binaries` | 54 | `{gamePath}/Routine/Binaries/Win64` |
+| UE4SS | `routine-ue4ss` | 56 | `{gamePath}/Routine/Binaries/Win64` |
 | Config (Local AppData) | `routine-config` | 62 | `?` |
 | Saves (Local AppData) | `routine-save` | 64 | `?` |
 

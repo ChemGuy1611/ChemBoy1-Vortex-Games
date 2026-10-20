@@ -44,8 +44,8 @@ Mod types define where each category of mod gets deployed:
 | Loose Lua (REFramework) | `monsterhunterstories3twistedreflection-looselua` | high | `{gamePath}/.` |
 | Fluffy Mod Manager | `monsterhunterstories3twistedreflection-fluffymanager` | low | `{gamePath}` |
 | REFramework | `monsterhunterstories3twistedreflection-reframework` | low | `{gamePath}` |
-| Fluffy Mod | `monsterhunterstories3twistedreflection-fluffymod` | 25 | `?` |
-| Fluffy Preset | `monsterhunterstories3twistedreflection-preset` | 40 | `?` |
+| Fluffy Mod | `monsterhunterstories3twistedreflection-fluffymod` | 25 | `{gamePath}/Games/Monster Hunter Stories 3/Mods` |
+| Fluffy Preset | `monsterhunterstories3twistedreflection-preset` | 40 | `{gamePath}/Games/Monster Hunter Stories 3/Presets` |
 
 ## Mod Installers
 

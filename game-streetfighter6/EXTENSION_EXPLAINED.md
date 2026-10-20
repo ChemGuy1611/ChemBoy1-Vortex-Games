@@ -48,8 +48,8 @@ Mod types define where each category of mod gets deployed:
 | Binaries / Root Folder | `streetfighter6-root` | high | `{gamePath}` |
 | Fluffy Mod Manager | `streetfighter6-fluffymodmanager` | low | `{gamePath}` |
 | REFramework | `streetfighter6-reframework` | low | `{gamePath}` |
-| Fluffy Mod | `streetfighter6-fluffymod` | 25 | `?` |
-| Fluffy Preset | `streetfighter6-preset` | 40 | `?` |
+| Fluffy Mod | `streetfighter6-fluffymod` | 25 | `{gamePath}/Games/SF6/Mods` |
+| Fluffy Preset | `streetfighter6-preset` | 40 | `{gamePath}/Games/SF6/Presets` |
 
 ## Mod Installers
 

@@ -75,8 +75,8 @@ Mod types define where each category of mod gets deployed:
 | MelonLoader UserLibs | `footballmanager26-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
 | MelonPreferencesManager | `footballmanager26-melonprefman` | high | `{gamePath}/Mods` |
 | MelonLoader | `footballmanager26-melonloader` | low | `{gamePath}` |
-| Assembly DLL Mod | `footballmanager26-assemblydll` | 60 | `?` |
-| Assets/Resources File | `footballmanager26-assets` | 62 | `?` |
+| Assembly DLL Mod | `footballmanager26-assemblydll` | 60 | `{gamePath}` |
+| Assets/Resources File | `footballmanager26-assets` | 62 | `{gamePath}/fm_Data` |
 
 ## Mod Installers
 

@@ -71,11 +71,11 @@ Mod types define where each category of mod gets deployed:
 | Paks (no "~mods") | `manorlords-pakalt` | high | `{gamePath}/ManorLords/Content/Paks` |
 | Root Folder | `manorlords-root` | high | `{gamePath}` |
 | MLUE4SS Mod | `manorlords-mlue4ss` | high | `{gamePath}/.` |
-| UE Sortable Pak Mod | `manorlords-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `manorlords-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `manorlords-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `manorlords-binaries` | 54 | `?` |
-| UE4SS | `manorlords-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `manorlords-uesortablepak` | 25 | `{gamePath}/ManorLords/Content/Paks/~mods` |
+| UE4SS Script Mod | `manorlords-scripts` | 50 | `{gamePath}/ManorLords/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `manorlords-ue4ssdll` | 52 | `{gamePath}/ManorLords/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `manorlords-binaries` | 54 | `{gamePath}/ManorLords/Binaries/Win64` |
+| UE4SS | `manorlords-ue4ss` | 56 | `{gamePath}/ManorLords/Binaries/Win64` |
 | Config (Local AppData) | `manorlords-config` | 62 | `?` |
 | Saves (Local AppData) | `manorlords-save` | 64 | `?` |
 

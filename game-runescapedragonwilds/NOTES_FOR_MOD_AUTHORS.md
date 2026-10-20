@@ -10,7 +10,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `RSDragonwilds` |
 | Blueprint Mods (LogicMods) | a `LogicMods` folder | `RSDragonwilds\Content\Paks` |
-| Runeschemaloader | - | - |
+| Runeschemaloader | - | `RSDragonwilds\Binaries\Win64\ue4ss\Mods` |
 | Runeschema | a file with one of these extensions: `.json` or `.jsonc` and a file or folder named one of: `assets`, `paks`, `recipes`, `raw` or `blueprints` | - |
 | Pak Mods | a `.pak` file | `RSDragonwilds\Content\Paks\~mods` |
 | UE4SS Itself | a `dwmapi.dll` file | `RSDragonwilds\Binaries\Win64` |
@@ -83,6 +83,8 @@ Installs to: `RSDragonwilds\Content\Paks`
 ## Runeschemaloader
 
 Handled by the `testSchemaLoader` installer. Inspect the extension source for the exact archive layout it expects.
+
+Installs to: `RSDragonwilds\Binaries\Win64\ue4ss\Mods`
 
 ## Runeschema
 

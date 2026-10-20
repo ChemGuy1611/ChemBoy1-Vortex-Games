@@ -51,7 +51,7 @@ Mod types define where each category of mod gets deployed:
 | Root Folder | `mewgenics-root` | high | `{gamePath}` |
 | Mewjector | `mewgenics-mewjector` | low | `{gamePath}/.` |
 | MewgenicsSaveEditor | `mewgenics-saveeeditor` | low | `{gamePath}` |
-| Mewtator | `mewgenics-mewtator` | 70 | `?` |
+| Mewtator | `mewgenics-mewtator` | 70 | `{gamePath}` |
 
 ## Mod Installers
 

@@ -64,11 +64,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `silenthilltownfall-logicmods` | high | `{gamePath}/Townfall/Content/Paks` |
 | Paks (no "~mods") | `silenthilltownfall-pakalt` | high | `{gamePath}/Townfall/Content/Paks` |
 | Root Folder | `silenthilltownfall-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `silenthilltownfall-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `silenthilltownfall-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `silenthilltownfall-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `silenthilltownfall-binaries` | 54 | `?` |
-| UE4SS | `silenthilltownfall-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `silenthilltownfall-uesortablepak` | 25 | `{gamePath}/Townfall/Content/Paks/~mods` |
+| UE4SS Script Mod | `silenthilltownfall-scripts` | 50 | `{gamePath}/Townfall/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `silenthilltownfall-ue4ssdll` | 52 | `{gamePath}/Townfall/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `silenthilltownfall-binaries` | 54 | `{gamePath}/Townfall/Binaries/Win64` |
+| UE4SS | `silenthilltownfall-ue4ss` | 56 | `{gamePath}/Townfall/Binaries/Win64` |
 | Config (Local AppData) | `silenthilltownfall-config` | 62 | `?` |
 | Saves (Local AppData) | `silenthilltownfall-save` | 64 | `?` |
 

@@ -68,11 +68,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `rvthereyet-logicmods` | high | `{gamePath}/Ride/Content/Paks` |
 | Paks (no "~mods") | `rvthereyet-pakalt` | high | `{gamePath}/Ride/Content/Paks` |
 | Root Folder | `rvthereyet-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `rvthereyet-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `rvthereyet-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `rvthereyet-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `rvthereyet-binaries` | 54 | `?` |
-| UE4SS | `rvthereyet-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `rvthereyet-uesortablepak` | 25 | `{gamePath}/Ride/Content/Paks/~mods` |
+| UE4SS Script Mod | `rvthereyet-scripts` | 50 | `{gamePath}/Ride/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `rvthereyet-ue4ssdll` | 52 | `{gamePath}/Ride/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `rvthereyet-binaries` | 54 | `{gamePath}/Ride/Binaries/Win64` |
+| UE4SS | `rvthereyet-ue4ss` | 56 | `{gamePath}/Ride/Binaries/Win64` |
 | Config (Local AppData) | `rvthereyet-config` | 62 | `?` |
 | Saves (Local AppData) | `rvthereyet-save` | 64 | `?` |
 

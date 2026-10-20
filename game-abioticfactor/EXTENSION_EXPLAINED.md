@@ -64,11 +64,11 @@ Mod types define where each category of mod gets deployed:
 | Paks (no "~mods") | `abioticfactor-pakalt` | high | `{gamePath}/AbioticFactor/Content/Paks` |
 | Root Folder | `abioticfactor-root` | high | `{gamePath}` |
 | Content Folder | `abioticfactor-contentfolder` | high | `{gamePath}/AbioticFactor` |
-| UE Sortable Pak Mod | `abioticfactor-ue5-sortable-modtype` | 25 | `?` |
-| UE4SS Script Mod | `abioticfactor-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `abioticfactor-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `abioticfactor-binaries` | 54 | `?` |
-| UE4SS | `abioticfactor-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `abioticfactor-ue5-sortable-modtype` | 25 | `{gamePath}/AbioticFactor/Content/Paks/~mods` |
+| UE4SS Script Mod | `abioticfactor-scripts` | 50 | `{gamePath}/AbioticFactor/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `abioticfactor-ue4ssdll` | 52 | `{gamePath}/AbioticFactor/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `abioticfactor-binaries` | 54 | `{gamePath}/AbioticFactor/Binaries/Win64` |
+| UE4SS | `abioticfactor-ue4ss` | 56 | `{gamePath}/AbioticFactor/Binaries/Win64` |
 | Config (Local AppData) | `abioticfactor-config` | 62 | `?` |
 | Saves (Local AppData) | `abioticfactor-save` | 64 | `?` |
 

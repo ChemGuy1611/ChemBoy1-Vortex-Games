@@ -80,8 +80,8 @@ Mod types define where each category of mod gets deployed:
 | BepInEx Injector | `mousepiforhire-bepinex` | low | `{gamePath}` |
 | BepInEx Loader Patch | `mousepiforhire-bepinex-loaderpatch` | low | `{gamePath}/.` |
 | MelonLoader | `mousepiforhire-melonloader` | low | `{gamePath}` |
-| Assembly DLL Mod | `mousepiforhire-assemblydll` | 60 | `?` |
-| Assets/Resources File | `mousepiforhire-assets` | 62 | `?` |
+| Assembly DLL Mod | `mousepiforhire-assemblydll` | 60 | `{gamePath}` |
+| Assets/Resources File | `mousepiforhire-assets` | 62 | `{gamePath}/MOUSE_Data` |
 
 ## Mod Installers
 

@@ -73,8 +73,8 @@ Mod types define where each category of mod gets deployed:
 | MelonLoader UserLibs | `dressmaker-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
 | MelonPreferencesManager | `dressmaker-melonprefman` | high | `{gamePath}/Mods` |
 | MelonLoader | `dressmaker-melonloader` | low | `{gamePath}` |
-| Assembly DLL Mod | `dressmaker-assemblydll` | 60 | `?` |
-| Assets/Resources File | `dressmaker-assets` | 62 | `?` |
+| Assembly DLL Mod | `dressmaker-assemblydll` | 60 | `{gamePath}` |
+| Assets/Resources File | `dressmaker-assets` | 62 | `{gamePath}/Dressmaker_Data` |
 
 ## Mod Installers
 

@@ -73,8 +73,8 @@ Mod types define where each category of mod gets deployed:
 | Root Game Folder | `prodeus-root` | high | `{gamePath}` |
 | BepInEx Injector | `prodeus-bepinex` | low | `{gamePath}` |
 | MelonLoader | `prodeus-melonloader` | low | `{gamePath}` |
-| Assembly DLL Mod | `prodeus-assemblydll` | 60 | `?` |
-| Assets/Resources File | `prodeus-assets` | 62 | `?` |
+| Assembly DLL Mod | `prodeus-assemblydll` | 60 | `{gamePath}` |
+| Assets/Resources File | `prodeus-assets` | 62 | `{gamePath}/Prodeus_Data` |
 
 ## Mod Installers
 

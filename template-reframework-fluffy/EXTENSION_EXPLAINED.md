@@ -38,8 +38,8 @@ Mod types define where each category of mod gets deployed:
 | Loose Lua/Plugin (REFramework) | `XXX-looselua` | high | `{gamePath}/.` |
 | Fluffy Mod Manager | `XXX-fluffymanager` | low | `{gamePath}` |
 | REFramework | `XXX-reframework` | low | `{gamePath}` |
-| Fluffy Mod | `XXX-fluffymod` | 25 | `?` |
-| Fluffy Preset | `XXX-preset` | 40 | `?` |
+| Fluffy Mod | `XXX-fluffymod` | 25 | `{gamePath}/Games/XXX/Mods` |
+| Fluffy Preset | `XXX-preset` | 40 | `{gamePath}/Games/XXX/Presets` |
 
 ## Mod Installers
 

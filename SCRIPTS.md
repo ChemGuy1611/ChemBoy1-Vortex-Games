@@ -833,6 +833,8 @@ Not a runnable script — it is required by `generate_explained.js` and `generat
 
 `buildSymbolTable` reads declarations line by line, so it also sees locals declared inside functions. A name declared at module level wins over any same-named local (`game-kingdomcomedeliverance2` declares ``const MOD_ID = `${GAME_ID}-mod` `` at top level and `let MOD_ID = ""` inside an installer — the local used to overwrite the constant and blank the installer id). A name that exists only as a local is still kept, because several extensions resolve helper constants declared inside `applyGame()`.
 
+`extractRegisterModTypes` reads the deploy folder of an explicit `context.registerModType()` call when its getPath is written `(game) => pathPattern(context.api, game, <expr>)`, resolving `<expr>` the same way as a spec `targetPath`. `cleanResolvedPath` then drops `.` segments (`{gamePath}/.` becomes `{gamePath}`) and gives up on the whole folder (shown as `?`, no "Installs to" line) when a segment is still the name of a constant declared in the file, which is what a path built at runtime resolves to (`SAVE_FOLDER/USERID_FOLDER`, `CONFIG_PATH`). Any other getPath shape (a helper call such as `getCustomFolder(context.api, game)`, a block body) is left unresolved. A `let` folder that the extension reassigns at runtime shows its starting value.
+
 `cleanEnvPath` rewrites `util.getVortexPath("home" | "documents" | "localAppData" | "appData")` to `%USERPROFILE%` / `%DOCUMENTS%` / `%LOCALAPPDATA%` / `%APPDATA%`. `resolveValue` applies it to every expression it leaves unresolved, so no generated document shows the raw call; `generate_explained.js` also applies it to the Config/Save path rows.
 
 ---

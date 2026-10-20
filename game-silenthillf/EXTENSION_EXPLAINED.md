@@ -66,11 +66,11 @@ Mod types define where each category of mod gets deployed:
 | Paks (no "~mods") | `silenthillf-pak` | high | `{gamePath}/SHf/Content/Paks` |
 | Root Folder | `silenthillf-root` | high | `{gamePath}` |
 | Content Folder | `silenthillf-contentfolder` | high | `{gamePath}/SHf` |
-| UE Sortable Pak Mod | `silenthillf-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `silenthillf-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `silenthillf-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `silenthillf-binaries` | 54 | `?` |
-| UE4SS | `silenthillf-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `silenthillf-uesortablepak` | 25 | `{gamePath}/SHf/Content/Paks/~mods` |
+| UE4SS Script Mod | `silenthillf-scripts` | 50 | `{gamePath}/SHf/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `silenthillf-ue4ssdll` | 52 | `{gamePath}/SHf/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `silenthillf-binaries` | 54 | `{gamePath}/SHf/Binaries/Win64` |
+| UE4SS | `silenthillf-ue4ss` | 56 | `{gamePath}/SHf/Binaries/Win64` |
 | Config (Local AppData) | `silenthillf-config` | 62 | `?` |
 | Saves (Local AppData) | `silenthillf-save` | 64 | `?` |
 

@@ -71,8 +71,8 @@ Mod types define where each category of mod gets deployed:
 | MelonLoader UserLibs | `mirthwood-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
 | MelonPreferencesManager | `mirthwood-melonprefman` | high | `{gamePath}/Mods` |
 | MelonLoader | `mirthwood-melonloader` | low | `{gamePath}` |
-| Assembly DLL Mod | `mirthwood-assemblydll` | 60 | `?` |
-| Assets/Resources File | `mirthwood-assets` | 62 | `?` |
+| Assembly DLL Mod | `mirthwood-assemblydll` | 60 | `{gamePath}` |
+| Assets/Resources File | `mirthwood-assets` | 62 | `{gamePath}/Mirthwood_Data` |
 
 ## Mod Installers
 

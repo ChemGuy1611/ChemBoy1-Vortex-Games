@@ -63,11 +63,11 @@ Mod types define where each category of mod gets deployed:
 | Paks (no "~mods") | `atomicheart-pakalt` | high | `{gamePath}/AtomicHeart/Content/Paks` |
 | Root Game Folder | `atomicheart-root` | high | `{gamePath}` |
 | Root Sub-Folders | `atomicheart-rootsubfolders` | high | `{gamePath}/AtomicHeart` |
-| UE Sortable Pak Mod | `atomicheart-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `atomicheart-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `atomicheart-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `atomicheart-binaries` | 54 | `?` |
-| UE4SS | `atomicheart-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `atomicheart-uesortablepak` | 25 | `{gamePath}/AtomicHeart/Content/Paks/~mods` |
+| UE4SS Script Mod | `atomicheart-scripts` | 50 | `{gamePath}/AtomicHeart/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `atomicheart-ue4ssdll` | 52 | `{gamePath}/AtomicHeart/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `atomicheart-binaries` | 54 | `{gamePath}/AtomicHeart/Binaries/Win64` |
+| UE4SS | `atomicheart-ue4ss` | 56 | `{gamePath}/AtomicHeart/Binaries/Win64` |
 | Config (Local AppData) | `atomicheart-config` | 62 | `?` |
 | Saves (Local AppData) | `atomicheart-save` | 64 | `?` |
 

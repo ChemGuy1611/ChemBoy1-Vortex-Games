@@ -8,9 +8,9 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Loader | a file or folder named `DisruptManager.exe` | - |
+| Loader | a file or folder named `DisruptManager.exe` | `Disrupt_Manager` |
 | Root / Game Folder Mods | a `data_win64` folder | the game folder itself (no subfolder) |
-| Binaries | a file with one of these extensions: `.exe`, `.dll`, `.asi` or `.addon64` | - |
+| Binaries | a file with one of these extensions: `.exe`, `.dll`, `.asi` or `.addon64` | `bin` |
 | Mod | a file with one of these extensions: `.dat` or `.fat` | `Disrupt_Manager\Watch Dogs 2` |
 | Fallback Installer | anything not matched above | - |
 
@@ -19,6 +19,8 @@ Paths are relative to the game's install folder.
 ## Loader
 
 Recognised when the archive contains a file or folder named `DisruptManager.exe`.
+
+Installs to: `Disrupt_Manager`
 
 ## Root / Game Folder Mods
 
@@ -43,6 +45,8 @@ Installs to: the game folder itself (no subfolder)
 ## Binaries
 
 Recognised when the archive contains a file with one of these extensions: `.exe`, `.dll`, `.asi` or `.addon64`.
+
+Installs to: `bin`
 
 ## Mod
 

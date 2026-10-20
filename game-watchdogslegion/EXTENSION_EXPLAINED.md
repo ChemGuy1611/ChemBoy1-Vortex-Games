@@ -45,8 +45,8 @@ Mod types define where each category of mod gets deployed:
 | --- | --- | --- | --- |
 | Root Folder | `watchdogslegion-root` | high | `{gamePath}` |
 | Mod | `watchdogslegion-mod` | high | `{gamePath}/Disrupt_Manager/Watch Dogs Legion` |
-| Mod Loader | `watchdogslegion-loader` | 70 | `?` |
-| Binaries (Engine Injector) | `watchdogslegion-binaries` | 72 | `?` |
+| Mod Loader | `watchdogslegion-loader` | 70 | `{gamePath}/Disrupt_Manager` |
+| Binaries (Engine Injector) | `watchdogslegion-binaries` | 72 | `{gamePath}/bin` |
 
 ## Mod Installers
 

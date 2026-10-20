@@ -63,11 +63,11 @@ Mod types define where each category of mod gets deployed:
 | Paks (no "~mods") | `codevein2-pakalt` | high | `{gamePath}/CodeVein2/Content/Paks` |
 | Root Folder | `codevein2-root` | high | `{gamePath}` |
 | RHFF Framework | `codevein2-rhff` | high | `{gamePath}/CodeVein2/Binaries/Win64` |
-| UE Sortable Pak Mod | `codevein2-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `codevein2-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `codevein2-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `codevein2-binaries` | 54 | `?` |
-| UE4SS | `codevein2-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `codevein2-uesortablepak` | 25 | `{gamePath}/CodeVein2/Content/Paks/~mods` |
+| UE4SS Script Mod | `codevein2-scripts` | 50 | `{gamePath}/CodeVein2/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `codevein2-ue4ssdll` | 52 | `{gamePath}/CodeVein2/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `codevein2-binaries` | 54 | `{gamePath}/CodeVein2/Binaries/Win64` |
+| UE4SS | `codevein2-ue4ss` | 56 | `{gamePath}/CodeVein2/Binaries/Win64` |
 | Config (Local AppData) | `codevein2-config` | 62 | `?` |
 | Saves (Local AppData) | `codevein2-save` | 64 | `?` |
 

@@ -63,11 +63,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `quarantinezonethelastcheck-logicmods` | high | `{gamePath}/QZSim/Content/Paks` |
 | Paks (no "~mods") | `quarantinezonethelastcheck-pakalt` | high | `{gamePath}/QZSim/Content/Paks` |
 | Root Folder | `quarantinezonethelastcheck-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `quarantinezonethelastcheck-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `quarantinezonethelastcheck-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `quarantinezonethelastcheck-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `quarantinezonethelastcheck-binaries` | 54 | `?` |
-| UE4SS | `quarantinezonethelastcheck-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `quarantinezonethelastcheck-uesortablepak` | 25 | `{gamePath}/QZSim/Content/Paks/~mods` |
+| UE4SS Script Mod | `quarantinezonethelastcheck-scripts` | 50 | `{gamePath}/QZSim/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `quarantinezonethelastcheck-ue4ssdll` | 52 | `{gamePath}/QZSim/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `quarantinezonethelastcheck-binaries` | 54 | `{gamePath}/QZSim/Binaries/Win64` |
+| UE4SS | `quarantinezonethelastcheck-ue4ss` | 56 | `{gamePath}/QZSim/Binaries/Win64` |
 | Config (Local AppData) | `quarantinezonethelastcheck-config` | 62 | `?` |
 | Saves (Local AppData) | `quarantinezonethelastcheck-save` | 64 | `?` |
 

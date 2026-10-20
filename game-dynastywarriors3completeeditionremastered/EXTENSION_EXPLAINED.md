@@ -61,11 +61,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `dynastywarriors3completeeditionremastered-logicmods` | high | `{gamePath}/DW3CE_RE/Content/Paks` |
 | Paks (no "~mods") | `dynastywarriors3completeeditionremastered-pakalt` | high | `{gamePath}/DW3CE_RE/Content/Paks` |
 | Root Folder | `dynastywarriors3completeeditionremastered-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `dynastywarriors3completeeditionremastered-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `dynastywarriors3completeeditionremastered-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `dynastywarriors3completeeditionremastered-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `dynastywarriors3completeeditionremastered-binaries` | 54 | `?` |
-| UE4SS | `dynastywarriors3completeeditionremastered-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `dynastywarriors3completeeditionremastered-uesortablepak` | 25 | `{gamePath}/DW3CE_RE/Content/Paks` |
+| UE4SS Script Mod | `dynastywarriors3completeeditionremastered-scripts` | 50 | `{gamePath}/DW3CE_RE/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `dynastywarriors3completeeditionremastered-ue4ssdll` | 52 | `{gamePath}/DW3CE_RE/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `dynastywarriors3completeeditionremastered-binaries` | 54 | `{gamePath}/DW3CE_RE/Binaries/Win64` |
+| UE4SS | `dynastywarriors3completeeditionremastered-ue4ss` | 56 | `{gamePath}/DW3CE_RE/Binaries/Win64` |
 | Config (Local AppData) | `dynastywarriors3completeeditionremastered-config` | 62 | `?` |
 | Saves (Local AppData) | `dynastywarriors3completeeditionremastered-save` | 64 | `?` |
 

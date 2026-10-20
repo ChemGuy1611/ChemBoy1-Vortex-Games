@@ -46,8 +46,8 @@ Mod types define where each category of mod gets deployed:
 | UE5 Paks | `marvelrivals-ue5` | high | `{gamePath}/MarvelGame/Marvel/Content/Paks/~mods` |
 | UE5 Paks (no ~mods) | `marvelrivals-pakalt` | high | `{gamePath}/MarvelGame/Marvel/Content/Paks` |
 | Signature Bypass | `marvelrivals-sigbypass` | low | `{gamePath}/MarvelGame/Marvel/Binaries/Win64` |
-| UE5 Sortable Mod | `marvelrivals-ue5-sortable-modtype` | 25 | `?` |
-| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
+| UE5 Sortable Mod | `marvelrivals-ue5-sortable-modtype` | 25 | `{gamePath}/MarvelGame/Marvel/Content/Paks/~mods` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `{gamePath}/MarvelGame/Marvel/Content/Paks/~mods` |
 
 ## Mod Installers
 

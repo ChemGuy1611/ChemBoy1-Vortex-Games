@@ -46,8 +46,8 @@ Mod types define where each category of mod gets deployed:
 | Loose Lua/Plugin (REFramework) | `residentevil32020-looselua` | high | `{gamePath}/.` |
 | Fluffy Mod Manager | `residentevil32020-fluffymanager` | low | `{gamePath}` |
 | REFramework | `residentevil32020-reframework` | low | `{gamePath}` |
-| Fluffy Mod | `residentevil32020-fluffymod` | 25 | `?` |
-| Fluffy Preset | `residentevil32020-preset` | 40 | `?` |
+| Fluffy Mod | `residentevil32020-fluffymod` | 25 | `{gamePath}/Games/RE3R/Mods` |
+| Fluffy Preset | `residentevil32020-preset` | 40 | `{gamePath}/Games/RE3R/Presets` |
 
 ## Mod Installers
 

@@ -70,12 +70,12 @@ Mod types define where each category of mod gets deployed:
 | Paks (no "~mods") | `metaleden-pak` | high | `{gamePath}/MetalEden/Content/Paks` |
 | Root Folder | `metaleden-root` | high | `{gamePath}` |
 | Content Folder | `metaleden-contentfolder` | high | `{gamePath}/MetalEden` |
-| UE Sortable Pak Mod | `metaleden-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `metaleden-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `metaleden-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `metaleden-binaries` | 54 | `?` |
-| UE4SS | `metaleden-ue4ss` | 56 | `?` |
-| Sig Bypass | `metaleden-sigbypass` | 58 | `?` |
+| UE Sortable Pak Mod | `metaleden-uesortablepak` | 25 | `{gamePath}/MetalEden/Content/Paks/~mods` |
+| UE4SS Script Mod | `metaleden-scripts` | 50 | `{gamePath}/MetalEden/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `metaleden-ue4ssdll` | 52 | `{gamePath}/MetalEden/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `metaleden-binaries` | 54 | `{gamePath}/MetalEden/Binaries/Win64` |
+| UE4SS | `metaleden-ue4ss` | 56 | `{gamePath}/MetalEden/Binaries/Win64` |
+| Sig Bypass | `metaleden-sigbypass` | 58 | `{gamePath}/MetalEden/Binaries/Win64` |
 | Config (Local AppData) | `metaleden-config` | 62 | `?` |
 | Saves (Local AppData) | `metaleden-save` | 64 | `?` |
 

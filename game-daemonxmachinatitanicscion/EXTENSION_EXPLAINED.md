@@ -63,11 +63,11 @@ Mod types define where each category of mod gets deployed:
 | Paks (no "~mods") | `daemonxmachinatitanicscion-pak` | high | `{gamePath}/Game/Content/Paks` |
 | Root Folder | `daemonxmachinatitanicscion-root` | high | `{gamePath}` |
 | Content Folder | `daemonxmachinatitanicscion-contentfolder` | high | `{gamePath}/Game` |
-| UE Sortable Pak Mod | `daemonxmachinatitanicscion-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `daemonxmachinatitanicscion-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `daemonxmachinatitanicscion-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `daemonxmachinatitanicscion-binaries` | 54 | `?` |
-| UE4SS | `daemonxmachinatitanicscion-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `daemonxmachinatitanicscion-uesortablepak` | 25 | `{gamePath}/Game/Content/Paks/~mods` |
+| UE4SS Script Mod | `daemonxmachinatitanicscion-scripts` | 50 | `{gamePath}/Game/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `daemonxmachinatitanicscion-ue4ssdll` | 52 | `{gamePath}/Game/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `daemonxmachinatitanicscion-binaries` | 54 | `{gamePath}/Game/Binaries/Win64` |
+| UE4SS | `daemonxmachinatitanicscion-ue4ss` | 56 | `{gamePath}/Game/Binaries/Win64` |
 | Config (Local AppData) | `daemonxmachinatitanicscion-config` | 62 | `?` |
 | Saves (Local AppData) | `daemonxmachinatitanicscion-save` | 64 | `?` |
 

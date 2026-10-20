@@ -8,7 +8,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Loader | a file or folder named `Deploy.exe` | - |
+| Loader | a file or folder named `Deploy.exe` | `Simple Mod Framework` |
 | Mod | a file or folder named one of: `manifest.json` and a file with one of these extensions: `.rpkg` | `Vortex_Mods` |
 | Fallback Installer | anything not matched above | - |
 
@@ -17,6 +17,8 @@ Paths are relative to the game's install folder.
 ## Loader
 
 Recognised when the archive contains a file or folder named `Deploy.exe`.
+
+Installs to: `Simple Mod Framework`
 
 ## Mod
 

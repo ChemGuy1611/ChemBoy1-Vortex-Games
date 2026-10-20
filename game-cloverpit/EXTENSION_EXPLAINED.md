@@ -74,8 +74,8 @@ Mod types define where each category of mod gets deployed:
 | MelonLoader UserLibs | `cloverpit-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
 | MelonPreferencesManager | `cloverpit-melonprefman` | high | `{gamePath}/Mods` |
 | MelonLoader | `cloverpit-melonloader` | low | `{gamePath}` |
-| Assembly DLL Mod | `cloverpit-assemblydll` | 60 | `?` |
-| Assets/Resources File | `cloverpit-assets` | 62 | `?` |
+| Assembly DLL Mod | `cloverpit-assemblydll` | 60 | `{gamePath}` |
+| Assets/Resources File | `cloverpit-assets` | 62 | `{gamePath}/CloverPit_Data` |
 
 ## Mod Installers
 

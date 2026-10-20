@@ -66,12 +66,12 @@ Mod types define where each category of mod gets deployed:
 | Paks (no "~mods") | `silenthill2-pakalt` | high | `{gamePath}/SHProto/Content/Paks` |
 | Root Folder | `silenthill2-root` | high | `{gamePath}` |
 | UE5 Paks | `silenthill2-ue5` | high | `{gamePath}/SHProto/Content/Paks/~mods` |
-| UE Sortable Pak Mod | `silenthill2-ue5-sortable-modtype` | 25 | `?` |
-| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
-| UE4SS Script Mod | `silenthill2-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `silenthill2-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `silenthill2-binaries` | 54 | `?` |
-| UE4SS | `silenthill2-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `silenthill2-ue5-sortable-modtype` | 25 | `{gamePath}/SHProto/Content/Paks/~mods` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `{gamePath}/SHProto/Content/Paks/~mods` |
+| UE4SS Script Mod | `silenthill2-scripts` | 50 | `{gamePath}/SHProto/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `silenthill2-ue4ssdll` | 52 | `{gamePath}/SHProto/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `silenthill2-binaries` | 54 | `{gamePath}/SHProto/Binaries/Win64` |
+| UE4SS | `silenthill2-ue4ss` | 56 | `{gamePath}/SHProto/Binaries/Win64` |
 | Config (Local AppData) | `silenthill2-config` | 62 | `?` |
 | Saves (Local AppData) | `silenthill2-save` | 64 | `?` |
 

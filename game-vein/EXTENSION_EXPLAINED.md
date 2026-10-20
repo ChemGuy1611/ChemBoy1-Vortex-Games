@@ -61,11 +61,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `vein-logicmods` | high | `{gamePath}/Vein/Content/Paks` |
 | Paks (no "~mods") | `vein-pakalt` | high | `{gamePath}/Vein/Content/Paks` |
 | Root Folder | `vein-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `vein-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `vein-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `vein-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `vein-binaries` | 54 | `?` |
-| UE4SS | `vein-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `vein-uesortablepak` | 25 | `{gamePath}/Vein/Content/Paks/~mods` |
+| UE4SS Script Mod | `vein-scripts` | 50 | `{gamePath}/Vein/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `vein-ue4ssdll` | 52 | `{gamePath}/Vein/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `vein-binaries` | 54 | `{gamePath}/Vein/Binaries/Win64` |
+| UE4SS | `vein-ue4ss` | 56 | `{gamePath}/Vein/Binaries/Win64` |
 | Config (Local AppData) | `vein-config` | 62 | `?` |
 | Saves (Local AppData) | `vein-save` | 64 | `?` |
 

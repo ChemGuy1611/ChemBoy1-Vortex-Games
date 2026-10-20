@@ -63,11 +63,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `humanitz-logicmods` | high | `{gamePath}/Humanitz/Content/Paks` |
 | Paks (no "~mods") | `humanitz-pakalt` | high | `{gamePath}/Humanitz/Content/Paks` |
 | Root Folder | `humanitz-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `humanitz-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `humanitz-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `humanitz-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `humanitz-binaries` | 54 | `?` |
-| UE4SS | `humanitz-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `humanitz-uesortablepak` | 25 | `{gamePath}/Humanitz/Content/Paks/~mods` |
+| UE4SS Script Mod | `humanitz-scripts` | 50 | `{gamePath}/Humanitz/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `humanitz-ue4ssdll` | 52 | `{gamePath}/Humanitz/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `humanitz-binaries` | 54 | `{gamePath}/Humanitz/Binaries/Win64` |
+| UE4SS | `humanitz-ue4ss` | 56 | `{gamePath}/Humanitz/Binaries/Win64` |
 | Config (Local AppData) | `humanitz-config` | 62 | `?` |
 | Saves (Local AppData) | `humanitz-save` | 64 | `?` |
 

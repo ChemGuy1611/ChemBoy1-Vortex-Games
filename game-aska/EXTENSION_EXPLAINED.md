@@ -73,8 +73,8 @@ Mod types define where each category of mod gets deployed:
 | MelonLoader UserLibs | `aska-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
 | MelonPreferencesManager | `aska-melonprefman` | high | `{gamePath}/Mods` |
 | MelonLoader | `aska-melonloader` | low | `{gamePath}` |
-| Assembly DLL Mod | `aska-assemblydll` | 60 | `?` |
-| Assets/Resources File | `aska-assets` | 62 | `?` |
+| Assembly DLL Mod | `aska-assemblydll` | 60 | `{gamePath}` |
+| Assets/Resources File | `aska-assets` | 62 | `{gamePath}/Aska_Data` |
 
 ## Mod Installers
 

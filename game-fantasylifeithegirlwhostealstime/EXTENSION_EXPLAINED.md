@@ -61,8 +61,8 @@ Mod types define where each category of mod gets deployed:
 | Paks (no "~mods") | `fantasylifeithegirlwhostealstime-pakalt` | high | `{gamePath}/Game/Content/Paks` |
 | Root Game Folder | `fantasylifeithegirlwhostealstime-root` | high | `{gamePath}` |
 | Root Sub-Folders | `fantasylifeithegirlwhostealstime-rootsubfolders` | high | `{gamePath}/Game` |
-| UE Sortable Pak Mod | `fantasylifeithegirlwhostealstime-uesortablepak` | 25 | `?` |
-| Binaries (Engine Injector) | `fantasylifeithegirlwhostealstime-binaries` | 54 | `?` |
+| UE Sortable Pak Mod | `fantasylifeithegirlwhostealstime-uesortablepak` | 25 | `{gamePath}/Game/Content/Paks/~mods` |
+| Binaries (Engine Injector) | `fantasylifeithegirlwhostealstime-binaries` | 54 | `{gamePath}/Game/Binaries/Win64` |
 
 ## Mod Installers
 

@@ -65,12 +65,12 @@ Mod types define where each category of mod gets deployed:
 | Paks (no "~mods") | `lordsofthefallen2023-pakalt` | high | `{gamePath}/LOTF2/Content/Paks` |
 | Root Folder | `lordsofthefallen2023-root` | high | `{gamePath}` |
 | Content Folder | `lordsofthefallen2023-contentfolder` | high | `{gamePath}/LOTF2` |
-| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
-| UE Sortable Pak Mod | `lordsofthefallen2023-ue5-sortable-modtype` | 25 | `?` |
-| UE4SS Script Mod | `lordsofthefallen2023-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `lordsofthefallen2023-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `lordsofthefallen2023-binaries` | 54 | `?` |
-| UE4SS | `lordsofthefallen2023-ue4ss` | 56 | `?` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `{gamePath}/LOTF2/Content/Paks/~mods` |
+| UE Sortable Pak Mod | `lordsofthefallen2023-ue5-sortable-modtype` | 25 | `{gamePath}/LOTF2/Content/Paks/~mods` |
+| UE4SS Script Mod | `lordsofthefallen2023-scripts` | 50 | `{gamePath}/LOTF2/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `lordsofthefallen2023-ue4ssdll` | 52 | `{gamePath}/LOTF2/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `lordsofthefallen2023-binaries` | 54 | `{gamePath}/LOTF2/Binaries/Win64` |
+| UE4SS | `lordsofthefallen2023-ue4ss` | 56 | `{gamePath}/LOTF2/Binaries/Win64` |
 | Config (Local AppData) | `lordsofthefallen2023-config` | 62 | `?` |
 | Saves (Local AppData) | `lordsofthefallen2023-save` | 64 | `?` |
 

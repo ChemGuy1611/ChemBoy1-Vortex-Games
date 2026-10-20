@@ -73,8 +73,8 @@ Mod types define where each category of mod gets deployed:
 | MelonLoader UserLibs | `silverpines-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
 | MelonPreferencesManager | `silverpines-melonprefman` | high | `{gamePath}/Mods` |
 | MelonLoader | `silverpines-melonloader` | low | `{gamePath}` |
-| Assembly DLL Mod | `silverpines-assemblydll` | 60 | `?` |
-| Assets/Resources File | `silverpines-assets` | 62 | `?` |
+| Assembly DLL Mod | `silverpines-assemblydll` | 60 | `{gamePath}` |
+| Assets/Resources File | `silverpines-assets` | 62 | `{gamePath}/Carpenter_Data` |
 
 ## Mod Installers
 

@@ -61,13 +61,13 @@ Mod types define where each category of mod gets deployed:
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `valormortis-ue4sscombo` | high | `{gamePath}` |
 | Root Folder | `valormortis-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `valormortis-uesortablepak` | 25 | `?` |
-| UE4SS LogicMods (Blueprint) | `valormortis-logicmods` | 26 | `?` |
-| Paks (no "~mods") | `valormortis-pakalt` | 26 | `?` |
-| UE4SS Script Mod | `valormortis-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `valormortis-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `valormortis-binaries` | 54 | `?` |
-| UE4SS | `valormortis-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `valormortis-uesortablepak` | 25 | `{gamePath}/ValorMortis/Content/Paks/~mods` |
+| UE4SS LogicMods (Blueprint) | `valormortis-logicmods` | 26 | `{gamePath}/ValorMortis/Content/Paks` |
+| Paks (no "~mods") | `valormortis-pakalt` | 26 | `{gamePath}/ValorMortis/Content/Paks` |
+| UE4SS Script Mod | `valormortis-scripts` | 50 | `{gamePath}/ValorMortis/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `valormortis-ue4ssdll` | 52 | `{gamePath}/ValorMortis/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `valormortis-binaries` | 54 | `{gamePath}/ValorMortis/Binaries/Win64` |
+| UE4SS | `valormortis-ue4ss` | 56 | `{gamePath}/ValorMortis/Binaries/Win64` |
 | Config (Local AppData) | `valormortis-config` | 62 | `?` |
 | Saves (Local AppData) | `valormortis-save` | 64 | `?` |
 

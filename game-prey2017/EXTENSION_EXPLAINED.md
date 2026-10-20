@@ -31,12 +31,12 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| Root Game Folder | `prey2017-root` | 25 | `?` |
+| Root Game Folder | `prey2017-root` | 25 | `{gamePath}` |
 | Binaries (Engine Injector) | `prey2017-binaries` | 30 | `?` |
-| Chairloader Mod | `prey2017-chairloadermod` | 35 | `?` |
-| Chairloader Legacy Mod | `prey2017-chairloadermodlegacy` | 35 | `?` |
+| Chairloader Mod | `prey2017-chairloadermod` | 35 | `{gamePath}/Mods` |
+| Chairloader Legacy Mod | `prey2017-chairloadermodlegacy` | 35 | `{gamePath}/Mods/Legacy` |
 | Prey Interface Customizer | `prey2017-pric` | 70 | `?` |
-| Chairloader | `prey2017-chairloader` | 75 | `?` |
+| Chairloader | `prey2017-chairloader` | 75 | `{gamePath}` |
 
 ## Mod Installers
 

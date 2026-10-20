@@ -64,12 +64,12 @@ Mod types define where each category of mod gets deployed:
 | Paks (no "~mods") | `avowed-pakalt` | high | `{gamePath}/Alabama/Content/Paks` |
 | Root Folder | `avowed-root` | high | `{gamePath}` |
 | UE5 Paks | `avowed-ue5` | high | `{gamePath}/Alabama/Content/Paks/~mods` |
-| UE Sortable Pak Mod | `avowed-ue5-sortable-modtype` | 25 | `?` |
-| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
-| UE4SS Script Mod | `avowed-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `avowed-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `avowed-binaries` | 54 | `?` |
-| UE4SS | `avowed-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `avowed-ue5-sortable-modtype` | 25 | `{gamePath}/Alabama/Content/Paks/~mods` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `{gamePath}/Alabama/Content/Paks/~mods` |
+| UE4SS Script Mod | `avowed-scripts` | 50 | `{gamePath}/Alabama/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `avowed-ue4ssdll` | 52 | `{gamePath}/Alabama/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `avowed-binaries` | 54 | `{gamePath}/Alabama/Binaries/Win64` |
+| UE4SS | `avowed-ue4ss` | 56 | `{gamePath}/Alabama/Binaries/Win64` |
 | Config (Local AppData) | `avowed-config` | 62 | `?` |
 | Saves (Saved Games) | `avowed-save` | 64 | `?` |
 

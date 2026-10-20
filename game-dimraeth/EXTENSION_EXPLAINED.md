@@ -71,8 +71,8 @@ Mod types define where each category of mod gets deployed:
 | MelonLoader UserLibs | `dimraeth-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
 | MelonPreferencesManager | `dimraeth-melonprefman` | high | `{gamePath}/Mods` |
 | MelonLoader | `dimraeth-melonloader` | low | `{gamePath}` |
-| Assembly DLL Mod | `dimraeth-assemblydll` | 60 | `?` |
-| Assets/Resources File | `dimraeth-assets` | 62 | `?` |
+| Assembly DLL Mod | `dimraeth-assemblydll` | 60 | `{gamePath}` |
+| Assets/Resources File | `dimraeth-assets` | 62 | `{gamePath}/Dimraeth_Data` |
 
 ## Mod Installers
 

@@ -67,11 +67,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `octopathtraveler0-logicmods` | high | `{gamePath}/Octopath_Traveler0/Content/Paks` |
 | Paks (no "~mods") | `octopathtraveler0-pakalt` | high | `{gamePath}/Octopath_Traveler0/Content/Paks` |
 | Root Folder | `octopathtraveler0-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `octopathtraveler0-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `octopathtraveler0-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `octopathtraveler0-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `octopathtraveler0-binaries` | 54 | `?` |
-| UE4SS | `octopathtraveler0-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `octopathtraveler0-uesortablepak` | 25 | `{gamePath}/Octopath_Traveler0/Content/Paks/~mods` |
+| UE4SS Script Mod | `octopathtraveler0-scripts` | 50 | `{gamePath}/Octopath_Traveler0/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `octopathtraveler0-ue4ssdll` | 52 | `{gamePath}/Octopath_Traveler0/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `octopathtraveler0-binaries` | 54 | `{gamePath}/Octopath_Traveler0/Binaries/Win64` |
+| UE4SS | `octopathtraveler0-ue4ss` | 56 | `{gamePath}/Octopath_Traveler0/Binaries/Win64` |
 | Config (Documents) | `octopathtraveler0-config` | 62 | `?` |
 | Saves (Documents) | `octopathtraveler0-save` | 64 | `?` |
 

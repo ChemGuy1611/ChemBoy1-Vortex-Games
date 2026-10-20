@@ -69,11 +69,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `romeoisadeadman-logicmods` | high | `{gamePath}/SevGame/Content/Paks` |
 | Paks (no "~mods") | `romeoisadeadman-pakalt` | high | `{gamePath}/SevGame/Content/Paks` |
 | Root Folder | `romeoisadeadman-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `romeoisadeadman-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `romeoisadeadman-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `romeoisadeadman-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `romeoisadeadman-binaries` | 54 | `?` |
-| UE4SS | `romeoisadeadman-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `romeoisadeadman-uesortablepak` | 25 | `{gamePath}/SevGame/Content/Paks/~mods` |
+| UE4SS Script Mod | `romeoisadeadman-scripts` | 50 | `{gamePath}/SevGame/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `romeoisadeadman-ue4ssdll` | 52 | `{gamePath}/SevGame/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `romeoisadeadman-binaries` | 54 | `{gamePath}/SevGame/Binaries/Win64` |
+| UE4SS | `romeoisadeadman-ue4ss` | 56 | `{gamePath}/SevGame/Binaries/Win64` |
 | Config (Local AppData) | `romeoisadeadman-config` | 62 | `?` |
 | Saves (Saved Games) | `romeoisadeadman-save` | 64 | `?` |
 

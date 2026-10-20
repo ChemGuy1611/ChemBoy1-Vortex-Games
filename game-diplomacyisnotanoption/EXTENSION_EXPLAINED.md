@@ -74,8 +74,8 @@ Mod types define where each category of mod gets deployed:
 | MelonLoader UserLibs | `diplomacyisnotanoption-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
 | MelonPreferencesManager | `diplomacyisnotanoption-melonprefman` | high | `{gamePath}/Mods` |
 | MelonLoader | `diplomacyisnotanoption-melonloader` | low | `{gamePath}` |
-| Assembly DLL Mod | `diplomacyisnotanoption-assemblydll` | 60 | `?` |
-| Assets/Resources File | `diplomacyisnotanoption-assets` | 62 | `?` |
+| Assembly DLL Mod | `diplomacyisnotanoption-assemblydll` | 60 | `{gamePath}` |
+| Assets/Resources File | `diplomacyisnotanoption-assets` | 62 | `{gamePath}/Diplomacy is Not an Option_Data` |
 
 ## Mod Installers
 

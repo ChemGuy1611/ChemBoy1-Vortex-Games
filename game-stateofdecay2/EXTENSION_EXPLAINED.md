@@ -73,7 +73,7 @@ Mod types define where each category of mod gets deployed:
 | Cooked Mods | `stateofdecay2-cooked` | high | `{localAppData}/StateOfDecay2/Saved` |
 | SoD2 Mod Manager | `stateofdecay2-modmanager` | low | `{gamePath}` |
 | UE Sortable Pak Mod | `stateofdecay2-uesortablepak` | 25 | `?` |
-| Binaries (Engine Injector) | `stateofdecay2-binaries` | 54 | `?` |
+| Binaries (Engine Injector) | `stateofdecay2-binaries` | 54 | `{gamePath}/StateOfDecay2/Binaries/Win64` |
 | Config (Local AppData) | `stateofdecay2-config` | 62 | `?` |
 | Saves (Local AppData) | `stateofdecay2-save` | 64 | `?` |
 

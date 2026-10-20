@@ -42,7 +42,7 @@ Mod types define where each category of mod gets deployed:
 | Mod | `rage-mod` | high | `{gamePath}/mods` |
 | Root Folder | `rage-root` | high | `{gamePath}` |
 | Config | `rage-config` | high | `{gamePath}/SAVES/base` |
-| id5Tweaker | `rage-loader` | 70 | `?` |
+| id5Tweaker | `rage-loader` | 70 | `{gamePath}` |
 
 ## Mod Installers
 

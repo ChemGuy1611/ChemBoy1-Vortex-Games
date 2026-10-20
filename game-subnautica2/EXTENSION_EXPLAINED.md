@@ -69,11 +69,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `subnautica2-logicmods` | high | `{gamePath}/Subnautica2/Content/Paks` |
 | Paks (no "~mods") | `subnautica2-pakalt` | high | `{gamePath}/Subnautica2/Content/Paks` |
 | Root Game Folder | `subnautica2-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `subnautica2-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `subnautica2-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `subnautica2-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `subnautica2-binaries` | 54 | `?` |
-| UE4SS | `subnautica2-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `subnautica2-uesortablepak` | 25 | `{gamePath}/Subnautica2/Content/Paks/~mods` |
+| UE4SS Script Mod | `subnautica2-scripts` | 50 | `{gamePath}/Subnautica2/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `subnautica2-ue4ssdll` | 52 | `{gamePath}/Subnautica2/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `subnautica2-binaries` | 54 | `{gamePath}/Subnautica2/Binaries/Win64` |
+| UE4SS | `subnautica2-ue4ss` | 56 | `{gamePath}/Subnautica2/Binaries/Win64` |
 | Config (Local AppData) | `subnautica2-config` | 62 | `?` |
 | Saves (Local AppData) | `subnautica2-save` | 64 | `?` |
 

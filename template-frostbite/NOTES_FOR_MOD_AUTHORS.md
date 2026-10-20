@@ -10,8 +10,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | Frosty Mod Manager (tool) | a `frostymodmanager.exe` file | - |
 | Frosty Mods | a `.fbmod` file | `FrostyModManager\Mods\XXX` |
-| XXX Plugin | a file with the `.exe` extension and a file with one of these extensions: `.dll` | `FrostyModManager\Plugins` |
-| XXX Key | - | - |
+| XXX Plugin | a file with one of these extensions: `.dll` | `FrostyModManager\Plugins` |
 | Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
@@ -44,13 +43,9 @@ Installs to: `FrostyModManager\Mods\XXX`
 
 ## XXX Plugin
 
-Recognised when the archive contains a file with the `.exe` extension and a file with one of these extensions: `.dll`.
+Recognised when the archive contains a file with one of these extensions: `.dll`.
 
 Installs to: `FrostyModManager\Plugins`
-
-## XXX Key
-
-Handled by the `testKey` installer. Inspect the extension source for the exact archive layout it expects.
 
 ## Fallback Installer
 

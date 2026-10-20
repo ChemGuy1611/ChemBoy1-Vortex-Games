@@ -63,11 +63,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `thelordoftheringsreturntomoria-logicmods` | high | `{gamePath}/Moria/Content/Paks` |
 | Paks (no "~mods") | `thelordoftheringsreturntomoria-pakalt` | high | `{gamePath}/Moria/Content/Paks` |
 | Root Folder | `thelordoftheringsreturntomoria-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `thelordoftheringsreturntomoria-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `thelordoftheringsreturntomoria-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `thelordoftheringsreturntomoria-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `thelordoftheringsreturntomoria-binaries` | 54 | `?` |
-| UE4SS | `thelordoftheringsreturntomoria-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `thelordoftheringsreturntomoria-uesortablepak` | 25 | `{gamePath}/Moria/Content/Paks/~mods` |
+| UE4SS Script Mod | `thelordoftheringsreturntomoria-scripts` | 50 | `{gamePath}/Moria/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `thelordoftheringsreturntomoria-ue4ssdll` | 52 | `{gamePath}/Moria/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `thelordoftheringsreturntomoria-binaries` | 54 | `{gamePath}/Moria/Binaries/Win64` |
+| UE4SS | `thelordoftheringsreturntomoria-ue4ss` | 56 | `{gamePath}/Moria/Binaries/Win64` |
 | Config (Local AppData) | `thelordoftheringsreturntomoria-config` | 62 | `?` |
 | Saves (Local AppData) | `thelordoftheringsreturntomoria-save` | 64 | `?` |
 

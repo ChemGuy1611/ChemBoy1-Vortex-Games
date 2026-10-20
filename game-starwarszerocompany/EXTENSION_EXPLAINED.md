@@ -62,11 +62,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `starwarszerocompany-logicmods` | high | `{gamePath}/SWZeroCompany/Content/Paks` |
 | Paks (no "~mods") | `starwarszerocompany-pakalt` | high | `{gamePath}/SWZeroCompany/Content/Paks` |
 | Root Folder | `starwarszerocompany-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `starwarszerocompany-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `starwarszerocompany-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `starwarszerocompany-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `starwarszerocompany-binaries` | 54 | `?` |
-| UE4SS | `starwarszerocompany-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `starwarszerocompany-uesortablepak` | 25 | `{gamePath}/SWZeroCompany/Content/Paks/~mods` |
+| UE4SS Script Mod | `starwarszerocompany-scripts` | 50 | `{gamePath}/SWZeroCompany/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `starwarszerocompany-ue4ssdll` | 52 | `{gamePath}/SWZeroCompany/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `starwarszerocompany-binaries` | 54 | `{gamePath}/SWZeroCompany/Binaries/Win64` |
+| UE4SS | `starwarszerocompany-ue4ss` | 56 | `{gamePath}/SWZeroCompany/Binaries/Win64` |
 | Config (Local AppData) | `starwarszerocompany-config` | 62 | `?` |
 | Saves (Local AppData) | `starwarszerocompany-save` | 64 | `?` |
 

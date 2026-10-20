@@ -49,7 +49,7 @@ Mod types define where each category of mod gets deployed:
 | Movies Mod | `dishonored-movies` | high | `{gamePath}/DishonoredGame/Movies` |
 | TFC Installer | `dishonored-tfcinstaller` | low | `{gamePath}/.` |
 | UPK Explorer | `dishonored-tfcexplorer` | low | `{gamePath}/.` |
-| Binaries (Engine Injector) | `dishonored-binaries` | 40 | `?` |
+| Binaries (Engine Injector) | `dishonored-binaries` | 40 | `{gamePath}/Binaries/Win32` |
 
 ## Mod Installers
 

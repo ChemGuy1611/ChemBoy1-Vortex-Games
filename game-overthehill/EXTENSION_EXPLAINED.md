@@ -73,8 +73,8 @@ Mod types define where each category of mod gets deployed:
 | MelonLoader UserLibs | `overthehill-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
 | MelonPreferencesManager | `overthehill-melonprefman` | high | `{gamePath}/Mods` |
 | MelonLoader | `overthehill-melonloader` | low | `{gamePath}` |
-| Assembly DLL Mod | `overthehill-assemblydll` | 60 | `?` |
-| Assets/Resources File | `overthehill-assets` | 62 | `?` |
+| Assembly DLL Mod | `overthehill-assemblydll` | 60 | `{gamePath}` |
+| Assets/Resources File | `overthehill-assets` | 62 | `{gamePath}/over the hill_Data` |
 
 ## Mod Installers
 

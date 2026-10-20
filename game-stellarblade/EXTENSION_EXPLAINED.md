@@ -60,7 +60,7 @@ Mod types define where each category of mod gets deployed:
 | Menu Mod (.bk2/.webm) | `stellarblade-menu` | high | `{gamePath}/SB/Content/Movies/Menu` |
 | Splash Screen | `stellarblade-splash` | high | `{gamePath}/SB/Content/Splash` |
 | CNS JSON Mod | `stellarblade-cnsjson` | high | `{gamePath}/SB/Content/Paks/~mods/CustomNanosuitSystem` |
-| UE Sortable Pak Mod | `stellarblade-uesortablepak` | 25 | `?` |
+| UE Sortable Pak Mod | `stellarblade-uesortablepak` | 25 | `{gamePath}/SB/Content/Paks/~mods` |
 | Config | `stellarblade-config` | 45 | `?` |
 | Saves | `stellarblade-save` | 47 | `?` |
 

@@ -63,11 +63,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `metalgearsoliddeltasnakeeater-logicmods` | high | `{gamePath}/MGSDelta/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `metalgearsoliddeltasnakeeater-pak` | high | `{gamePath}/MGSDelta/Content/Paks` |
 | Root Folder | `metalgearsoliddeltasnakeeater-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `metalgearsoliddeltasnakeeater-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `metalgearsoliddeltasnakeeater-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `metalgearsoliddeltasnakeeater-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `metalgearsoliddeltasnakeeater-binaries` | 54 | `?` |
-| UE4SS | `metalgearsoliddeltasnakeeater-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `metalgearsoliddeltasnakeeater-uesortablepak` | 25 | `{gamePath}/MGSDelta/Content/Paks/~mods` |
+| UE4SS Script Mod | `metalgearsoliddeltasnakeeater-scripts` | 50 | `{gamePath}/MGSDelta/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `metalgearsoliddeltasnakeeater-ue4ssdll` | 52 | `{gamePath}/MGSDelta/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `metalgearsoliddeltasnakeeater-binaries` | 54 | `{gamePath}/MGSDelta/Binaries/Win64` |
+| UE4SS | `metalgearsoliddeltasnakeeater-ue4ss` | 56 | `{gamePath}/MGSDelta/Binaries/Win64` |
 | Config (Local AppData) | `metalgearsoliddeltasnakeeater-config` | 62 | `?` |
 | Saves (Local AppData) | `metalgearsoliddeltasnakeeater-save` | 64 | `?` |
 

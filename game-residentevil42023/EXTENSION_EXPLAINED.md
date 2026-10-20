@@ -47,8 +47,8 @@ Mod types define where each category of mod gets deployed:
 | Fluffy Mod Manager | `re4-fluffymodmanager` | low | `{gamePath}` |
 | REFramework | `re4-reframework` | low | `{gamePath}` |
 | Upscaler | `residentevil42023-upscaler` | low | `{gamePath}/reframework/plugins` |
-| Fluffy Mod | `residentevil42023-fluffymod` | 25 | `?` |
-| Fluffy Preset | `residentevil42023-preset` | 40 | `?` |
+| Fluffy Mod | `residentevil42023-fluffymod` | 25 | `{gamePath}/Games/RE4R/Mods` |
+| Fluffy Preset | `residentevil42023-preset` | 40 | `{gamePath}/Games/RE4R/Presets` |
 
 ## Mod Installers
 

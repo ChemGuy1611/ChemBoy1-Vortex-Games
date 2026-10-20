@@ -52,8 +52,8 @@ Mod types define where each category of mod gets deployed:
 | Yumia fdata Tools | `nioh3-yumia` | low | `{gamePath}/package` |
 | RDBExplorer | `nioh3-rdbexplorer` | low | `{gamePath}/package` |
 | ModManager | `nioh3-modmanager` | low | `{gamePath}/.` |
-| DLL Plugin Loader | `nioh3-dllloader` | 70 | `?` |
-| ModManager Loose Mod | `nioh3-mod` | 25 | `?` |
+| DLL Plugin Loader | `nioh3-dllloader` | 70 | `{gamePath}` |
+| ModManager Loose Mod | `nioh3-mod` | 25 | `{gamePath}/ModArchives` |
 
 ## Mod Installers
 

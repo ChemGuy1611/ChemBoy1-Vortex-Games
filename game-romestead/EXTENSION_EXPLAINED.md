@@ -72,7 +72,7 @@ Mod types define where each category of mod gets deployed:
 | Root Folder | `romestead-root` | high | `{gamePath}` |
 | Mod Settings Menu | `romestead-modsettingsmenu` | high | `{gamePath}` |
 | BepInEx Injector | `romestead-bepinex` | low | `{gamePath}` |
-| Assembly DLL Mod | `romestead-assemblydll` | 60 | `?` |
+| Assembly DLL Mod | `romestead-assemblydll` | 60 | `{gamePath}` |
 
 ## Mod Installers
 

@@ -70,13 +70,13 @@ Mod types define where each category of mod gets deployed:
 | Paks (no "~mods") | `dragonballsparkingzero-pakalt` | high | `{gamePath}/SparkingZERO/Content/Paks` |
 | Root Folder | `dragonballsparkingzero-root` | high | `{gamePath}` |
 | SZModLoader | `dragonballsparkingzero-modloader` | low | `{gamePath}/SparkingZERO/Mods` |
-| UE Sortable Pak Mod | `dragonballsparkingzero-ue5-sortable-modtype` | 25 | `?` |
-| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
-| UE4SS Script Mod | `dragonballsparkingzero-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `dragonballsparkingzero-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `dragonballsparkingzero-binaries` | 54 | `?` |
-| UE4SS | `dragonballsparkingzero-ue4ss` | 56 | `?` |
-| Signature Bypass | `dragonballsparkingzero-sigbypass` | 58 | `?` |
+| UE Sortable Pak Mod | `dragonballsparkingzero-ue5-sortable-modtype` | 25 | `{gamePath}/SparkingZERO/Content/Paks/~mods` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `{gamePath}/SparkingZERO/Content/Paks/~mods` |
+| UE4SS Script Mod | `dragonballsparkingzero-scripts` | 50 | `{gamePath}/SparkingZERO/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `dragonballsparkingzero-ue4ssdll` | 52 | `{gamePath}/SparkingZERO/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `dragonballsparkingzero-binaries` | 54 | `{gamePath}/SparkingZERO/Binaries/Win64` |
+| UE4SS | `dragonballsparkingzero-ue4ss` | 56 | `{gamePath}/SparkingZERO/Binaries/Win64` |
+| Signature Bypass | `dragonballsparkingzero-sigbypass` | 58 | `{gamePath}/SparkingZERO/Binaries/Win64` |
 | Config (Local AppData) | `dragonballsparkingzero-config` | 62 | `?` |
 | Saves (Local AppData) | `dragonballsparkingzero-save` | 64 | `?` |
 

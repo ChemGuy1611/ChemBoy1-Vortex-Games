@@ -68,12 +68,12 @@ Mod types define where each category of mod gets deployed:
 | Paks (no "~mods") | `lostsoulaside-pak` | high | `{gamePath}/Projectlsa/Content/Paks` |
 | Root Folder | `lostsoulaside-root` | high | `{gamePath}` |
 | Content Folder | `lostsoulaside-contentfolder` | high | `{gamePath}/Projectlsa` |
-| UE Sortable Pak Mod | `lostsoulaside-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `lostsoulaside-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `lostsoulaside-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `lostsoulaside-binaries` | 54 | `?` |
-| UE4SS | `lostsoulaside-ue4ss` | 56 | `?` |
-| Sig Bypass | `lostsoulaside-sigbypass` | 58 | `?` |
+| UE Sortable Pak Mod | `lostsoulaside-uesortablepak` | 25 | `{gamePath}/Projectlsa/Content/Paks/~mods` |
+| UE4SS Script Mod | `lostsoulaside-scripts` | 50 | `{gamePath}/Projectlsa/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `lostsoulaside-ue4ssdll` | 52 | `{gamePath}/Projectlsa/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `lostsoulaside-binaries` | 54 | `{gamePath}/Projectlsa/Binaries/Win64` |
+| UE4SS | `lostsoulaside-ue4ss` | 56 | `{gamePath}/Projectlsa/Binaries/Win64` |
+| Sig Bypass | `lostsoulaside-sigbypass` | 58 | `{gamePath}/Projectlsa/Binaries/Win64` |
 | Config (Saved Games) | `lostsoulaside-config` | 62 | `?` |
 | Saves (Saved Games) | `lostsoulaside-save` | 64 | `?` |
 

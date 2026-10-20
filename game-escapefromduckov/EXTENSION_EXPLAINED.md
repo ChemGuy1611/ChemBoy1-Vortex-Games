@@ -73,8 +73,8 @@ Mod types define where each category of mod gets deployed:
 | MelonLoader UserLibs | `escapefromduckov-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
 | MelonPreferencesManager | `escapefromduckov-melonprefman` | high | `{gamePath}/Mods` |
 | MelonLoader | `escapefromduckov-melonloader` | low | `{gamePath}` |
-| Assembly DLL Mod | `escapefromduckov-assemblydll` | 60 | `?` |
-| Assets/Resources File | `escapefromduckov-assets` | 62 | `?` |
+| Assembly DLL Mod | `escapefromduckov-assemblydll` | 60 | `{gamePath}` |
+| Assets/Resources File | `escapefromduckov-assets` | 62 | `{gamePath}/Duckov_Data` |
 
 ## Mod Installers
 

@@ -70,11 +70,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `keeper-logicmods` | high | `{gamePath}/Keeper/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `keeper-pakalt` | high | `{gamePath}/Keeper/Content/Paks` |
 | Root Folder | `keeper-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `keeper-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `keeper-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `keeper-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `keeper-binaries` | 54 | `?` |
-| UE4SS | `keeper-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `keeper-uesortablepak` | 25 | `{gamePath}/Keeper/Content/Paks/~mods` |
+| UE4SS Script Mod | `keeper-scripts` | 50 | `{gamePath}/Keeper/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `keeper-ue4ssdll` | 52 | `{gamePath}/Keeper/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `keeper-binaries` | 54 | `{gamePath}/Keeper/Binaries/Win64` |
+| UE4SS | `keeper-ue4ss` | 56 | `{gamePath}/Keeper/Binaries/Win64` |
 | Config (Local AppData) | `keeper-config` | 62 | `?` |
 | Saves (Local AppData) | `keeper-save` | 64 | `?` |
 

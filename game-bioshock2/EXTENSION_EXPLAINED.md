@@ -47,7 +47,7 @@ Mod types define where each category of mod gets deployed:
 | Cooked Sub Folder | `bioshock2-cookedsub` | high | `{gamePath}/ContentBaked/pc/BulkContent` |
 | TFC Installer | `bioshock2-tfcinstaller` | low | `{gamePath}/.` |
 | UPK Explorer | `bioshock2-tfcexplorer` | low | `{gamePath}/.` |
-| Binaries (Engine Injector) | `bioshock2-binaries` | 40 | `?` |
+| Binaries (Engine Injector) | `bioshock2-binaries` | 40 | `{gamePath}/Build/Final` |
 
 ## Mod Installers
 

@@ -72,8 +72,8 @@ Mod types define where each category of mod gets deployed:
 | MelonLoader UserLibs | `burglingnomes-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
 | MelonPreferencesManager | `burglingnomes-melonprefman` | high | `{gamePath}/Mods` |
 | MelonLoader | `burglingnomes-melonloader` | low | `{gamePath}` |
-| Assembly DLL Mod | `burglingnomes-assemblydll` | 60 | `?` |
-| Assets/Resources File | `burglingnomes-assets` | 62 | `?` |
+| Assembly DLL Mod | `burglingnomes-assemblydll` | 60 | `{gamePath}` |
+| Assets/Resources File | `burglingnomes-assets` | 62 | `{gamePath}/Gnomium_Data` |
 
 ## Mod Installers
 

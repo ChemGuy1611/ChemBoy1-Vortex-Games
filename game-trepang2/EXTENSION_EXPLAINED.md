@@ -70,11 +70,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `trepang2-logicmods` | high | `{gamePath}/CPPFPS/Content/Paks` |
 | Paks (no "~mods") | `trepang2-pakalt` | high | `{gamePath}/CPPFPS/Content/Paks` |
 | Root Folder | `trepang2-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `trepang2-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `trepang2-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `trepang2-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `trepang2-binaries` | 54 | `?` |
-| UE4SS | `trepang2-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `trepang2-uesortablepak` | 25 | `{gamePath}/CPPFPS/Content/Paks/~mods` |
+| UE4SS Script Mod | `trepang2-scripts` | 50 | `{gamePath}/CPPFPS/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `trepang2-ue4ssdll` | 52 | `{gamePath}/CPPFPS/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `trepang2-binaries` | 54 | `{gamePath}/CPPFPS/Binaries/Win64` |
+| UE4SS | `trepang2-ue4ss` | 56 | `{gamePath}/CPPFPS/Binaries/Win64` |
 | Config (Local AppData) | `trepang2-config` | 62 | `?` |
 | Saves (Local AppData) | `trepang2-save` | 64 | `?` |
 

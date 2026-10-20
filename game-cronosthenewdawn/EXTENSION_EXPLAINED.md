@@ -66,11 +66,11 @@ Mod types define where each category of mod gets deployed:
 | Paks (no "~mods") | `cronosthenewdawn-pak` | high | `{gamePath}/Cronos/Content/Paks` |
 | Root Folder | `cronosthenewdawn-root` | high | `{gamePath}` |
 | Content Folder | `cronosthenewdawn-contentfolder` | high | `{gamePath}/Cronos` |
-| UE Sortable Pak Mod | `cronosthenewdawn-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `cronosthenewdawn-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `cronosthenewdawn-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `cronosthenewdawn-binaries` | 54 | `?` |
-| UE4SS | `cronosthenewdawn-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `cronosthenewdawn-uesortablepak` | 25 | `{gamePath}/Cronos/Content/Paks/~mods` |
+| UE4SS Script Mod | `cronosthenewdawn-scripts` | 50 | `{gamePath}/Cronos/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `cronosthenewdawn-ue4ssdll` | 52 | `{gamePath}/Cronos/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `cronosthenewdawn-binaries` | 54 | `{gamePath}/Cronos/Binaries/Win64` |
+| UE4SS | `cronosthenewdawn-ue4ss` | 56 | `{gamePath}/Cronos/Binaries/Win64` |
 | Config (Local AppData) | `cronosthenewdawn-config` | 62 | `?` |
 | Saves (Local AppData) | `cronosthenewdawn-save` | 64 | `?` |
 

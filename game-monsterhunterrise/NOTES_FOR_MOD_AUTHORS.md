@@ -12,7 +12,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | REFramework (mod loader) | a `dinput8.dll` file | - |
 | Loose Lua Scripts | a `.lua` file outside the REFramework folders | the game folder itself (no subfolder) |
 | Root / Game Folder Mods | a `nvngx_dlss.dll` file or a `.exe` file | the game folder itself (no subfolder) |
-| Preset Files | a `.prt` file | - |
+| Preset Files | a `.prt` file | `Games\MHRISE\Presets` |
 | Fluffy-Format Mods | anything not matched above | - |
 
 Paths are relative to the game's install folder.
@@ -78,6 +78,8 @@ Configuration presets for REFramework mods.
 **Requirements:**
 
 - Recognised by any file with the `.prt` extension.
+
+Installs to: `Games\MHRISE\Presets`
 
 ## Fluffy-Format Mods
 

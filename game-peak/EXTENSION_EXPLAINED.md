@@ -73,8 +73,8 @@ Mod types define where each category of mod gets deployed:
 | MelonLoader UserLibs | `peak-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
 | MelonPreferencesManager | `peak-melonprefman` | high | `{gamePath}/Mods` |
 | MelonLoader | `peak-melonloader` | low | `{gamePath}` |
-| Assembly DLL Mod | `peak-assemblydll` | 60 | `?` |
-| Assets/Resources File | `peak-assets` | 62 | `?` |
+| Assembly DLL Mod | `peak-assemblydll` | 60 | `{gamePath}` |
+| Assets/Resources File | `peak-assets` | 62 | `{gamePath}/PEAK_Data` |
 
 ## Mod Installers
 

@@ -13,7 +13,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | UE4SS Itself | a `dwmapi.dll` file | `SB\Binaries\Win64` |
 | UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `SB\Binaries\Win64\ue4ss\Mods` |
 | UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | `SB\Binaries\Win64\ue4ss\Mods` |
-| Pak Mods | a `.pak` file | - |
+| Pak Mods | a `.pak` file | `SB\Content\Paks\~mods` |
 | Root / Game Folder Mods | a top-level folder such as `SB`, `Engine` or `Content` | the game folder itself (no subfolder) |
 | Config File Mods | a config file such as `engine.ini` or `game.ini` | `LOCALAPPDATA\SB\Saved\Config\WindowsNoEditor` |
 | Save Game Files | a `.sav` file | - |
@@ -156,6 +156,8 @@ MyPakMod.zip
 - Any archive containing a `.pak` file reaches this installer (unless an earlier one claimed it).
 - Only the pak files are installed - surrounding folders are discarded.
 - If the archive holds more than one pak, Vortex asks the user which to install - useful for optional variants.
+
+Installs to: `SB\Content\Paks\~mods`
 
 **Common mistakes:**
 

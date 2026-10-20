@@ -41,10 +41,10 @@ Mod types define where each category of mod gets deployed:
 | Root Folder | `borderlands3-root` | high | `{gamePath}` |
 | Movies | `borderlands3-movies` | high | `{gamePath}/OakGame/Content/Movies` |
 | Pak Mod | `borderlands3-pak` | high | `{gamePath}/OakGame/Content/Paks` |
-| Hotfix Mod | `borderlands3-hotfix` | 35 | `?` |
-| Binaries (Engine Injector) | `borderlands3-binaries` | 40 | `?` |
-| OpenHotfixLoader | `borderlands3-openhotfixloader` | 55 | `?` |
-| Plugin Loader | `borderlands3-pluginloader` | 56 | `?` |
+| Hotfix Mod | `borderlands3-hotfix` | 35 | `{gamePath}/OakGame/Binaries/Win64/Plugins/ohl-mods` |
+| Binaries (Engine Injector) | `borderlands3-binaries` | 40 | `{gamePath}/OakGame/Binaries/Win64` |
+| OpenHotfixLoader | `borderlands3-openhotfixloader` | 55 | `{gamePath}/OakGame/Binaries/Win64/Plugins` |
+| Plugin Loader | `borderlands3-pluginloader` | 56 | `{gamePath}/OakGame/Binaries/Win64` |
 
 ## Mod Installers
 

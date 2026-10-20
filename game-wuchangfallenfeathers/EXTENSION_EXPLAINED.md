@@ -65,12 +65,12 @@ Mod types define where each category of mod gets deployed:
 | Paks (no "~mods") | `wuchangfallenfeathers-pakalt` | high | `{gamePath}/Project_Plague/Content/Paks` |
 | Root Folder | `wuchangfallenfeathers-root` | high | `{gamePath}` |
 | Content Folder | `wuchangfallenfeathers-contentfolder` | high | `{gamePath}/Project_Plague` |
-| UE Sortable Pak Mod | `wuchangfallenfeathers-ue5-sortable-modtype` | 25 | `?` |
-| UE4SS Script Mod | `wuchangfallenfeathers-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `wuchangfallenfeathers-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `wuchangfallenfeathers-binaries` | 54 | `?` |
-| UE4SS | `wuchangfallenfeathers-ue4ss` | 56 | `?` |
-| Mod Enabler | `wuchangfallenfeathers-sigbypass` | 58 | `?` |
+| UE Sortable Pak Mod | `wuchangfallenfeathers-ue5-sortable-modtype` | 25 | `{gamePath}/Project_Plague/Content/Paks/~mods` |
+| UE4SS Script Mod | `wuchangfallenfeathers-scripts` | 50 | `{gamePath}/Project_Plague/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `wuchangfallenfeathers-ue4ssdll` | 52 | `{gamePath}/Project_Plague/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `wuchangfallenfeathers-binaries` | 54 | `{gamePath}/Project_Plague/Binaries/Win64` |
+| UE4SS | `wuchangfallenfeathers-ue4ss` | 56 | `{gamePath}/Project_Plague/Binaries/Win64` |
+| Mod Enabler | `wuchangfallenfeathers-sigbypass` | 58 | `{gamePath}/Project_Plague/Binaries/Win64` |
 | Config (Local AppData) | `wuchangfallenfeathers-config` | 62 | `?` |
 | Saves (Local AppData) | `wuchangfallenfeathers-save` | 64 | `?` |
 

@@ -68,11 +68,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `witchfire-logicmods` | high | `{gamePath}/Witchfire/Content/Paks` |
 | Paks (no "~mods") | `witchfire-pakalt` | high | `{gamePath}/Witchfire/Content/Paks` |
 | Root Folder | `witchfire-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `witchfire-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `witchfire-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `witchfire-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `witchfire-binaries` | 54 | `?` |
-| UE4SS | `witchfire-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `witchfire-uesortablepak` | 25 | `{gamePath}/Witchfire/Content/Paks/~mods` |
+| UE4SS Script Mod | `witchfire-scripts` | 50 | `{gamePath}/Witchfire/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `witchfire-ue4ssdll` | 52 | `{gamePath}/Witchfire/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `witchfire-binaries` | 54 | `{gamePath}/Witchfire/Binaries/Win64` |
+| UE4SS | `witchfire-ue4ss` | 56 | `{gamePath}/Witchfire/Binaries/Win64` |
 | Config (Local AppData) | `witchfire-config` | 62 | `?` |
 | Saves (Local AppData) | `witchfire-save` | 64 | `?` |
 

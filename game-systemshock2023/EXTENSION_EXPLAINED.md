@@ -69,11 +69,11 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `systemshock2023-logicmods` | high | `{gamePath}/SystemShock/Content/Paks` |
 | Paks (no "~mods") | `systemshock2023-pakalt` | high | `{gamePath}/SystemShock/Content/Paks` |
 | Root Folder | `systemshock2023-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `systemshock2023-uesortablepak` | 25 | `?` |
-| UE4SS Script Mod | `systemshock2023-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `systemshock2023-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `systemshock2023-binaries` | 54 | `?` |
-| UE4SS | `systemshock2023-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `systemshock2023-uesortablepak` | 25 | `{gamePath}/SystemShock/Content/Paks/~mods` |
+| UE4SS Script Mod | `systemshock2023-scripts` | 50 | `{gamePath}/SystemShock/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `systemshock2023-ue4ssdll` | 52 | `{gamePath}/SystemShock/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `systemshock2023-binaries` | 54 | `{gamePath}/SystemShock/Binaries/Win64` |
+| UE4SS | `systemshock2023-ue4ss` | 56 | `{gamePath}/SystemShock/Binaries/Win64` |
 | Config (Local AppData) | `systemshock2023-config` | 62 | `?` |
 | Saves (Local AppData) | `systemshock2023-save` | 64 | `?` |
 

@@ -52,8 +52,8 @@ Mod types define where each category of mod gets deployed:
 | --- | --- | --- | --- |
 | Root Folder | `metalgearsolidvtpp-root` | high | `{gamePath}` |
 | SnakeBite Mod (.mgsv) | `metalgearsolidvtpp-mod` | high | `{gamePath}/SnakeBite_Mods` |
-| Snakebite Mod Manager | `metalgearsolidvtpp-loader` | 70 | `?` |
-| MGSVFix | `metalgearsolidvtpp-mgsvfix` | 72 | `?` |
+| Snakebite Mod Manager | `metalgearsolidvtpp-loader` | 70 | `{gamePath}` |
+| MGSVFix | `metalgearsolidvtpp-mgsvfix` | 72 | `{gamePath}` |
 
 ## Mod Installers
 

@@ -66,12 +66,12 @@ Mod types define where each category of mod gets deployed:
 | Root Folder | `mechwarrior5clans-root` | high | `{gamePath}` |
 | UE5 Paks | `mechwarrior5clans-ue5` | high | `{gamePath}/MW5Clans/Content/Paks/~mods` |
 | Modding Editor Mod | `mechwarrior5clans-moddingeditormod` | high | `{gamePath}/MW5Clans/Mods` |
-| UE Sortable Pak Mod | `mechwarrior5clans-ue5-sortable-modtype` | 25 | `?` |
-| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
-| UE4SS Script Mod | `mechwarrior5clans-scripts` | 50 | `?` |
-| UE4SS DLL Mod | `mechwarrior5clans-ue4ssdll` | 52 | `?` |
-| Binaries (Engine Injector) | `mechwarrior5clans-binaries` | 54 | `?` |
-| UE4SS | `mechwarrior5clans-ue4ss` | 56 | `?` |
+| UE Sortable Pak Mod | `mechwarrior5clans-ue5-sortable-modtype` | 25 | `{gamePath}/MW5Clans/Content/Paks/~mods` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `{gamePath}/MW5Clans/Content/Paks/~mods` |
+| UE4SS Script Mod | `mechwarrior5clans-scripts` | 50 | `{gamePath}/MW5Clans/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `mechwarrior5clans-ue4ssdll` | 52 | `{gamePath}/MW5Clans/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `mechwarrior5clans-binaries` | 54 | `{gamePath}/MW5Clans/Binaries/Win64` |
+| UE4SS | `mechwarrior5clans-ue4ss` | 56 | `{gamePath}/MW5Clans/Binaries/Win64` |
 | Config (Local AppData) | `mechwarrior5clans-config` | 62 | `?` |
 | Saves (Local AppData) | `mechwarrior5clans-save` | 64 | `?` |
 
