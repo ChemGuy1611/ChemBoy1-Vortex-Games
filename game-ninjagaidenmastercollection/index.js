@@ -387,6 +387,7 @@ const tools = [
     detach: true,
     relative: true,
     exclusive: false,
+    startWithGame: true,
   },
 ];
 

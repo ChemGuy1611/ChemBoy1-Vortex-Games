@@ -1,5 +1,9 @@
 # Changelog
 
+## Planned Improvements (Not Yet Released)
+
+- Added: The TMX Mod Loader tool now starts automatically when you launch the game from Vortex (requires a Vortex version with tool "Start with game" support).
+
 ## [1.0.1] - 2026-10-16
 
 - Added the game's Nexus Mods ID to the extension's info file.
