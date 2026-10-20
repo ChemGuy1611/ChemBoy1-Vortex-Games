@@ -3786,9 +3786,10 @@ describe("template-unitymelonloaderbepinex-hybrid: build detection", () => {
     assert.deepEqual(ext.game.requiredFiles, ["GameAssembly.dll"]);
   });
 
-  it("requires a managed assembly for a Mono game with two executables", async () => {
+  it("requires the Unity player in the root for a Mono game with two executables", async () => {
+    // The two builds name their data folders differently, so only a root file is common to both.
     const ext = await boot({ transform: all(multiExe, mono) });
-    assert.deepEqual(ext.game.requiredFiles, [sep("XXX_Data", "Managed", "Assembly-CSharp.dll")]);
+    assert.deepEqual(ext.game.requiredFiles, ["UnityPlayer.dll"]);
   });
 
   it("offers a second launch tool for the alt executable", async () => {

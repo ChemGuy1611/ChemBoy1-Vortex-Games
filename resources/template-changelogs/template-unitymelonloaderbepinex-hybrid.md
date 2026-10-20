@@ -1,5 +1,9 @@
 # template-unitymelonloaderbepinex-hybrid Changelog
 
+## [2026-10-19]
+
+- Changed: for a Mono game with two executables whose data folders are named differently (`GAME_STRING` and `GAME_STRING_ALT` differ), `requiredFiles` is `UnityPlayer.dll` in the game root instead of the `Assembly-CSharp.dll` inside one build's data folder. Only a root file is common to both builds. An IL2CPP game with two executables still requires the game assembly.
+
 ## [2026-10-17]
 
 - Added: a `modId` field to `info.json`, directly after `gameId`, set to the `"XXX"` placeholder. `release_extension.py` replaces it with the mod id at the end of the extension's `EXTENSION_URL` when the extension is released, so a finished extension carries a number, not a string.

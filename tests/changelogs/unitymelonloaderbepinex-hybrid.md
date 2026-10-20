@@ -2,6 +2,10 @@
 
 Covers `template-unitymelonloaderbepinex-hybrid`. Suite file: `tests/templates/unitymelonloaderbepinex-hybrid.test.js`.
 
+## [2026-10-19]
+
+- Changed: the Mono game with two executables test expects `UnityPlayer.dll` as the required file instead of the managed assembly. The template switched to the root file (see its changelog entry of this date) because the two builds name their data folders differently; the suite had not followed and was the one red test in `npm test`.
+
 ## [2026-10-11]
 
 - Changed: the template fixes listed in its changelog entry of this date. The `known gap` tests for the swapped custom-loader names, the wrapper-name cuts (root, MelonLoader, BepInExConfigManager, custom mod data file, plugins folder), the deconflict and purge custom-loader checks, the MelonLoader button, the alt build version and `EACCESS` now assert the fixed result and lost their `known gap:` prefix. The test that pinned "a dismissed dialog lets the install go ahead" asserts the install is cancelled.
