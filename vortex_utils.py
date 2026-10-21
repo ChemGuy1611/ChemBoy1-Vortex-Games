@@ -89,7 +89,7 @@ Usage:
         iter_helper_folders, list_helper_ids, is_multi_game_extension,
         add_planned_improvement, open_planned_improvements,
         split_planned_bullets, move_planned_to_version, add_changelog_note,
-        NEVER_UPLOAD_GAMES, DEPRECATED_GAMES, releasable_game_ids, fetch_vortex_extensions_feed,
+        NEVER_UPLOAD_GAMES, NEVER_UPLOAD_LIST, DEPRECATED_GAMES, releasable_game_ids, fetch_vortex_extensions_feed,
         is_valid_nexus_game_id, git_show_text,
         changelog_entry_is_empty, unreleased_intermediate_sections,
     )
@@ -167,13 +167,14 @@ HELPER_PREFIX   = "helper-"
 NEW_EXTENSION_VERSION = "1.0.0"
 
 # Games that are versioned and changelogged like published ones but never uploaded to Nexus:
-# permanent test beds and CB1's personal-use parallels of games NexusMods supports itself.
-NEVER_UPLOAD_GAMES = frozenset({
-    "warhammer40kdarktide",     # non-UE / generic load order test bed
-    "subnautica2",              # UE4-5 test bed
-    "starwarszerocompany",      # Personal version, officially supported by NexusMods
-    "thebloodofdawnwalker",     # Personal version, officially supported by NexusMods
-})
+# permanent test beds (subnautica2 for UE4-5, warhammer40kdarktide for everything else) and
+# CB1's personal-use parallels of games NexusMods supports itself. The hand-maintained list
+# file is the source of truth; this set is read from it once at import. A missing file
+# raises here rather than silently disabling every never-upload guard.
+NEVER_UPLOAD_LIST = os.path.join(LISTS_DIR, "games-never-upload.txt")
+with open(NEVER_UPLOAD_LIST, encoding="utf-8") as _never_upload_fh:
+    NEVER_UPLOAD_GAMES = frozenset(line.strip() for line in _never_upload_fh if line.strip())
+del _never_upload_fh
 # Retired extensions: frozen in the repo, never updated or released again.
 DEPRECATED_GAMES = frozenset({"battlefield1"})
 

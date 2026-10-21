@@ -93,7 +93,8 @@ _FILE_FOR_LABEL = {label: fname for fname, label in CATEGORIES}
 # pre-release extensions would wrongly suggest their versions should be frozen.
 # game-subnautica2 is the other test bed; it already falls out of the list on its own
 # because a real extension URL is parked in its EXTENSION_URL.
-# The set itself lives in vortex_utils (NEVER_UPLOAD_GAMES), shared with releasable_game_ids().
+# The set is resources/lists/games-never-upload.txt (hand-maintained, not written by this
+# script), loaded as vortex_utils.NEVER_UPLOAD_GAMES and shared with releasable_game_ids().
 UNRELEASED_LIST_EXCLUDED_GAMES = NEVER_UPLOAD_GAMES
 
 

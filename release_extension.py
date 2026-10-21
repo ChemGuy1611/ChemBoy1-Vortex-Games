@@ -50,6 +50,9 @@ Steps performed per extension:
        extension: the rest are left untouched and the re-run command is printed.
        --upload-delay SECONDS pauses after each upload to stay under the limit. The
        exit code is 1 when any upload failed.
+       With --upload, an id on resources/lists/games-never-upload.txt (test beds and
+       personal-use extensions) or in DEPRECATED_GAMES is refused before any step runs
+       and counted as failed. Without --upload those ids still zip normally.
    13. Open EXTENSION_URL?tab=files in browser (or nexusmods.com/games/site if not set)
    14. Optionally open EXTENSION_URL/edit/documents (changelog editor) in browser
 
@@ -131,6 +134,7 @@ from vortex_utils import (
     resolve_extension_folder, extension_prefix,
     changelog_entry_is_empty, unreleased_intermediate_sections,
     PACKAGE_EXCLUDES, is_valid_nexus_game_id, set_info_mod_id,
+    NEVER_UPLOAD_GAMES, DEPRECATED_GAMES,
 )
 from nexus_upload import pick_file_group, upload_zip, extract_changelog_entry
 from sync_mod_pages import push_pages
@@ -668,6 +672,12 @@ def main():
                 assert_is_game_id(game_id)
             except ValueError as e:
                 print(f"  ERROR - {e}")
+                failed.append(game_id)
+                details[game_id] = {}
+                continue
+            if upload and game_id in (NEVER_UPLOAD_GAMES | DEPRECATED_GAMES):
+                log_error(game_id, "never uploaded (games-never-upload.txt or DEPRECATED_GAMES) "
+                                   "- drop --upload to zip only")
                 failed.append(game_id)
                 details[game_id] = {}
                 continue

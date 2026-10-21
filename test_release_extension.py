@@ -9,7 +9,8 @@ Covers: the 429 detector (a Cloudflare rate-limit error is recognised, other HTT
 not), a clean run (exit 0, no pause), --upload-delay (one pause per successful upload, none
 after the last id), a 429 mid-run (the run stops, later ids are untouched, the re-run command
 names the failed id and every unprocessed one, exit 1), and a non-429 upload failure (exit 1,
-the run carries on, no re-run command).
+the run carries on, no re-run command), and the never-upload refusal (an id from
+resources/lists/games-never-upload.txt is refused with --upload and still released without it).
 
 Also covers the info.json "modId" stamp (vortex_utils.set_info_mod_id and release_extension.
 sync_info_mod_id) against throwaway files in the system temp dir: added after "gameId" or "id",
@@ -180,6 +181,21 @@ def main():
     assert code == 1, code
     assert "python release_extension.py" not in text and "stopped by rate limit" not in text, text
     print("non-429 failure ok: exit 1, run carried on, no re-run command")
+
+    never_id = sorted(rel.NEVER_UPLOAD_GAMES)[0]
+    called = []
+    fake = stub_release({})
+    rel.release = lambda gid, *a, **kw: (called.append(gid), fake(gid, *a, **kw))[1]
+    sys.argv = ["release_extension.py", "a", never_id, "--upload"]
+    with contextlib.redirect_stdout(io.StringIO()):
+        code = rel.main()
+    assert code == 1 and called == ["a"], (code, called)
+    called.clear()
+    sys.argv = ["release_extension.py", never_id]
+    with contextlib.redirect_stdout(io.StringIO()):
+        code = rel.main()
+    assert called == [never_id], called
+    print("never-upload ok: refused with --upload (release() not called, exit 1), zips without it")
 
     check_mod_id_sync()
 
