@@ -8,6 +8,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
+| Modkitmod | - | `Voyage` |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `Voyage` |
 | Blueprint Mods (LogicMods) | a `LogicMods` folder | `Voyage\Content\Paks` |
 | Pak Mods | a `.pak` file | `Voyage\Content\Paks\~mods` |
@@ -20,6 +21,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Fallback Installer | anything unrecognised with no pak file | `Voyage\Binaries\Win64` |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+
+## Modkitmod
+
+Handled by the `testModKitMod` installer. Inspect the extension source for the exact archive layout it expects.
+
+Installs to: `Voyage`
 
 ## Combo Mods (pak + UE4SS script/DLL together)
 

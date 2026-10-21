@@ -2,8 +2,8 @@
 Name: The Last Caretaker Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-16
+Version: 1.1.0
+Date: 2026-10-21
 Notes:
 -
 ////////////////////////////////////////////////*/
@@ -79,7 +79,7 @@ if (EXEC !== EXEC_EPIC || EXEC !== EXEC_GOG || EXEC !== EXEC_DEMO) {
   multiExe = true;
 } //*/
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
-const hasModKit = false; //toggle for UE ModKit mod support
+const hasModKit = true; //toggle for UE ModKit mod support
 const hasServer = false; //toggle for server pak mod logic
 const preferHardlinks = true; //set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users
 const autoDownloadUe4ss = false; //toggle for auto downloading UE4SS (only applies when ue4ssLoadOrder is enabled)
@@ -409,10 +409,14 @@ const SIGBYPASS_DOMAIN = "site";
 
 //ModKit (only used if game supports)
 const MODKITMOD_ID = `${GAME_ID}-modkitmod`;
-const MODKITMOD_NAME = "ModKit mod";
-const MODKITMOD_FILE = "mod.json";
+const MODKITMOD_NAME = "ModKit Mod";
 const MODKITMOD_EXT = ".uplugin";
-const MODKITMOD_PATH = path.join(EPIC_CODE_NAME, "Mods");
+const MODKITMOD_FOLDERS = ["Mods"]; //folder names that identify a ModKit mod (plugin half)
+const MODKITMOD_PAKS_FOLDERS = ["Paks"]; //folder names that identify a ModKit mod (pak half)
+const MODKITMOD_FOLDER = "Mods";
+const MODKITMOD_PATH = path.join(EPIC_CODE_NAME, MODKITMOD_FOLDER);
+const MODKITMOD_PAKS_PATH = path.join("Content", "Paks"); //relative to MODKITMOD_TARGET
+const MODKITMOD_TARGET = EPIC_CODE_NAME; //mod type target (relative to game root) - holds both Mods and Content\Paks
 
 const MODKIT_ID = `${GAME_ID}-modkit`;
 const MODKIT_NAME = "ModKit";
@@ -521,7 +525,7 @@ if (hasModKit) {
     id: MODKITMOD_ID,
     name: MODKITMOD_NAME,
     priority: "high",
-    targetPath: path.join("{gamePath}", MODKITMOD_PATH),
+    targetPath: path.join("{gamePath}", MODKITMOD_TARGET),
   });
 }
 
@@ -934,11 +938,18 @@ async function deploy(api) {
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
+//True for a ModKit mod: a .uplugin file plus "Mods" and "Paks" folders
+function isModKitMod(files) {
+  const segsLower = pathSegments(files).map((seg) => seg.toLowerCase());
+  const isPlugin = files.some((file) => path.extname(file).toLowerCase() === MODKITMOD_EXT);
+  const isMods = MODKITMOD_FOLDERS.some((folder) => segsLower.includes(folder.toLowerCase()));
+  const isPaks = MODKITMOD_PAKS_FOLDERS.some((folder) => segsLower.includes(folder.toLowerCase()));
+  return isPlugin && isMods && isPaks;
+}
+
 //Installer test for modkit mod files
 function testModKitMod(files, gameId) {
-  const isMod = files.some((file) => path.extname(file).toLowerCase() === MODKITMOD_EXT);
-  const isJson = files.some((file) => path.basename(file).toLowerCase() === MODKITMOD_FILE);
-  let supported = gameId === spec.game.id && isMod && isJson;
+  let supported = gameId === spec.game.id && isModKitMod(files);
 
   // Test for a mod installer
   if (
@@ -958,42 +969,33 @@ function testModKitMod(files, gameId) {
   });
 }
 
-//Installer install modkit mod files
-async function installModKitMod(files, fileName) {
-  const modFile = files.find((file) => path.basename(file).toLowerCase() === MODKITMOD_FILE);
-  const idx = modFile.lastIndexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
-  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
+//Installer install modkit mod files - files below the "Mods" folder go to Mods, files below the
+//"Paks" folder go to Content\Paks, anything else (readmes, etc.) is skipped
+function installModKitMod(files) {
+  const modsFoldersLower = MODKITMOD_FOLDERS.map((str) => str.toLowerCase());
+  const paksFoldersLower = MODKITMOD_PAKS_FOLDERS.map((str) => str.toLowerCase());
   const setModTypeInstruction = { type: "setmodtype", value: MODKITMOD_ID };
-  let MOD_NAME = path.basename(fileName);
-  let MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, "");
-  if (rootPath !== ".") {
-    MOD_NAME = path.basename(rootPath);
-    MOD_FOLDER = MOD_NAME;
-  }
-  try {
-    //read mod.json file to get folder name (game will crash if this doesn't match)
-    let contents = await fsp.readFile(path.join(fileName, rootPath, MODKITMOD_FILE), "utf8");
-    contents = util.deBOM(contents);
-    const JSON_OBJECT = JSON.parse(contents);
-    const JSON_MOD_NAME = JSON_OBJECT["modPluginName"];
-    if (typeof JSON_MOD_NAME === "string" && JSON_MOD_NAME !== "") {
-      MOD_FOLDER = JSON_MOD_NAME; //without a name the folder keeps the wrapper or archive name
-    }
-  } catch {
-    //mod.json could not be read.
-    log("error", `Could not read mod.json file for mod ${MOD_NAME}.`);
-  }
-
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
-  const instructions = filtered.map((file) => {
-    return {
-      type: "copy",
-      source: file,
-      destination: path.join(MOD_FOLDER, file.substr(idx)),
-    };
-  });
+  const instructions = [];
+  files
+    .filter((file) => !file.endsWith(path.sep))
+    .forEach((file) => {
+      const segments = file.split(/[\\/]+/);
+      const modsIdx = segments.findIndex((seg) => modsFoldersLower.includes(seg.toLowerCase()));
+      const paksIdx = segments.findIndex((seg) => paksFoldersLower.includes(seg.toLowerCase()));
+      if (modsIdx !== -1) {
+        instructions.push({
+          type: "copy",
+          source: file,
+          destination: path.join(MODKITMOD_FOLDER, ...segments.slice(modsIdx + 1)),
+        });
+      } else if (paksIdx !== -1) {
+        instructions.push({
+          type: "copy",
+          source: file,
+          destination: path.join(MODKITMOD_PAKS_PATH, ...segments.slice(paksIdx + 1)),
+        });
+      }
+    });
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
 }
@@ -2653,11 +2655,7 @@ function pathSegments(files) {
 //living under the game's root folder name would then satisfy that check for every mod.
 function beatsPakInstaller(files) {
   const segsLower = pathSegments(files).map((seg) => seg.toLowerCase());
-  if (hasModKit) {
-    const hasModKitExt = files.some((file) => path.extname(file).toLowerCase() === MODKITMOD_EXT);
-    const hasModKitFile = segsLower.includes(MODKITMOD_FILE.toLowerCase());
-    if (hasModKitExt && hasModKitFile) return true; //Mod Kit (25)
-  }
+  if (hasModKit && isModKitMod(files)) return true; //Mod Kit (25)
   const hasBinariesFolder = segsLower.includes("binaries");
   const hasContentFolder = segsLower.includes("content");
   if (hasBinariesFolder && hasContentFolder) return true; //UE4SS Combo (26)

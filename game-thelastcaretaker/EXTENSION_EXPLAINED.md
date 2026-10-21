@@ -32,7 +32,7 @@
 | `hasXbox` | `false` | toggle for Xbox version logic. |
 | `multiExe` | `false` | toggle for multiple executables (Epic/GOG/Demo don't match Steam) |
 | `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
-| `hasModKit` | `false` | toggle for UE ModKit mod support |
+| `hasModKit` | `true` | toggle for UE ModKit mod support |
 | `hasServer` | `false` | toggle for server pak mod logic |
 | `preferHardlinks` | `true` | set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users |
 | `autoDownloadUe4ss` | `false` | toggle for auto downloading UE4SS (only applies when ue4ssLoadOrder is enabled) |
@@ -63,6 +63,7 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `thelastcaretaker-logicmods` | high | `{gamePath}/Voyage/Content/Paks` |
 | Paks (no "~mods") | `thelastcaretaker-pakalt` | high | `{gamePath}/Voyage/Content/Paks` |
 | Root Folder | `thelastcaretaker-root` | high | `{gamePath}` |
+| ModKit Mod | `thelastcaretaker-modkitmod` | high | `{gamePath}/Voyage` |
 | UE Sortable Pak Mod | `thelastcaretaker-uesortablepak` | 25 | `{gamePath}/Voyage/Content/Paks/~mods` |
 | UE4SS Script Mod | `thelastcaretaker-scripts` | 50 | `{gamePath}/Voyage/Binaries/Win64/ue4ss/Mods` |
 | UE4SS DLL Mod | `thelastcaretaker-ue4ssdll` | 52 | `{gamePath}/Voyage/Binaries/Win64/ue4ss/Mods` |
@@ -77,6 +78,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
+| `thelastcaretaker-modkitmod` | 25 |
 | `thelastcaretaker-ue4sscombo` | 26 |
 | `thelastcaretaker-logicmods` | 27 |
 | `thelastcaretaker-uesortablepak` | 29 |

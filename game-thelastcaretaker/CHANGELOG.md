@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.0] - 2026-10-21
+
+- Added: Support for mods that include both a plugin for the game's "Mods" folder (".uplugin") and pak files for the Paks folder.
+
 ## [1.0.2] - 2026-10-16
 
 - Added the game's Nexus Mods ID to the extension's info file.

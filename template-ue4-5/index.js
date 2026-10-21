@@ -409,7 +409,7 @@ const SIGBYPASS_DOMAIN = "site";
 
 //ModKit (only used if game supports)
 const MODKITMOD_ID = `${GAME_ID}-modkitmod`;
-const MODKITMOD_NAME = "ModKit mod";
+const MODKITMOD_NAME = "ModKit Mod";
 const MODKITMOD_FILE = "mod.json";
 const MODKITMOD_EXT = ".uplugin";
 const MODKITMOD_PATH = path.join(EPIC_CODE_NAME, "Mods");
