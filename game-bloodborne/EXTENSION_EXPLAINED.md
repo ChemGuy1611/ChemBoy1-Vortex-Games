@@ -59,6 +59,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Submit Bug Report
 - Open Downloads Folder
 - Open PCGamingWiki Page
+- Open Nexus Mods Page
 
 ## Config & Save Paths
 

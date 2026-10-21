@@ -67,6 +67,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open Binaries Folder
 - Open Config Folder (LocalAppData)
 - Open PCGamingWiki Page
+- Open Nexus Mods Page
 - Open SteamDB Page
 - View Changelog
 - Submit Bug Report

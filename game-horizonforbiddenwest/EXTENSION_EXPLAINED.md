@@ -57,6 +57,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open HFW Mod Manager Page
 - Open Saves Folder
 - Open PCGamingWiki Page
+- Open Nexus Mods Page
 - Open SteamDB Page
 - View Changelog
 - Open Downloads Folder

@@ -64,6 +64,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open win32_settings.ini
 - Open Launcher.exe.config
 - Open PCGamingWiki Page
+- Open Nexus Mods Page
 - Open SteamDB Page
 - Open Downloads Folder
 

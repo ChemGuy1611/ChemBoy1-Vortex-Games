@@ -1331,6 +1331,44 @@ function applyGame(context, gameSpec) {
     300,
     "open-ext",
     {},
+    "Open Nexus Mods Page (Doom)",
+    () => {
+      try {
+        window.api.shell.openUrl(`https://www.nexusmods.com/${GAME_ID1}/mods`);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+      }
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Nexus Mods Page (Doom II)",
+    () => {
+      try {
+        window.api.shell.openUrl(`https://www.nexusmods.com/${GAME_ID2}/mods`);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+      }
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
     "View Changelog",
     () => {
       const openPath = path.join(__dirname, "CHANGELOG.md");

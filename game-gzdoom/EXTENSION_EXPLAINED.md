@@ -55,6 +55,8 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open UZDoom Config Folder
 - Open uzdoom.ini
 - Open Vortex Downloads Folder
+- Open Nexus Mods Page (Doom)
+- Open Nexus Mods Page (Doom II)
 - View Changelog
 - Submit Bug Report
 - Open Downloads Folder

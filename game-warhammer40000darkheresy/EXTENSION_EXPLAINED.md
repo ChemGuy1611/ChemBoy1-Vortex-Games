@@ -80,6 +80,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open Portraits Folder
 - Open Save Folder
 - Open PCGamingWiki Page
+- Open Nexus Mods Page
 - Open SteamDB Page
 - View Changelog
 - Submit Bug Report

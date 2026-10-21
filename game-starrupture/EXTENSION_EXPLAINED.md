@@ -99,6 +99,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Download UE4SS
 - Open UE4SS Settings INI
 - Open UE4SS mods.txt
+- Open Nexus Mods Page
 - Open SteamDB Page
 - View Changelog
 - Submit Bug Report

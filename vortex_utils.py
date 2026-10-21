@@ -1810,6 +1810,22 @@ REGISTER_ACTIONS = [
         "  });\n",
     ),
     (
+        'Open Nexus Mods Page',
+        False,
+        "  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Nexus Mods Page', () => {\n"
+        "    try {\n"
+        "      window.api.shell.openUrl(`https://www.nexusmods.com/${GAME_ID}/mods`);\n"
+        "    } catch (err) {\n"
+        "      context.api.showErrorNotification('Failed to open the URL', err, { allowReport: false });\n"
+        "    }\n"
+        "  }, () => {\n"
+        "    const state = context.api.getState();\n"
+        "    const gameId = selectors.activeGameId(state);\n"
+        "    return gameId === GAME_ID;\n"
+        "  });\n",
+        'Open Nexus Mods Page',  # match the per-domain variants too (gzdoom's "Open Nexus Mods Page (Doom)")
+    ),
+    (
         'Open SteamDB Page',
         False,
         "  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open SteamDB Page', () => {\n"
@@ -2041,9 +2057,20 @@ def inject_register_actions(src):
     has_combined = 'Open Config/Save' in src
     missing_code = []
     missing_labels = []
-    for label, _commented, code, *rest in REGISTER_ACTIONS:
-        detect_key = rest[0] if rest else f"'{label}'"
-        if detect_key not in src:
+    for label, commented, code, *rest in REGISTER_ACTIONS:
+        # A live button whose *_URL constant the extension never declares (no STEAMDB_URL
+        # in a game that is not on Steam) would throw on click - leave it out.
+        if not commented and any(
+            not re.search(rf'\b(?:const|let)\s+{c}\b', src)
+            for c in set(re.findall(r'\b[A-Z][A-Z0-9_]*_URL\b', code))
+        ):
+            continue
+        if rest:
+            present = rest[0] in src
+        else:
+            # Quote-agnostic: games are oxfmt double-quoted, the snippets above single-quoted
+            present = re.search(r'''["'`]''' + re.escape(label) + r'''["'`]''', src) is not None
+        if not present:
             if has_combined and label in ('Open Config Folder', 'Open Save Folder'):
                 continue
             missing_code.append(code)

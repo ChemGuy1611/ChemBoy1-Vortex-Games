@@ -1403,6 +1403,44 @@ function applyGame(context, gameSpec) {
     300,
     "open-ext",
     {},
+    "Open Nexus Mods Page",
+    () => {
+      try {
+        window.api.shell.openUrl(`https://www.nexusmods.com/${GAME_ID}/mods`);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+      }
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Nexus Mods Page",
+    () => {
+      try {
+        window.api.shell.openUrl(`https://www.nexusmods.com/${GAME_ID_CLASSIC}/mods`);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+      }
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID_CLASSIC;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
     "Open SteamDB Page",
     () => {
       try {

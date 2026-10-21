@@ -97,6 +97,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Force Copy System d3d11.dll (ResoRep)
 - Open PCGamingWiki Page
+- Open Nexus Mods Page
 - Open SteamDB Page
 - View Changelog
 - Submit Bug Report

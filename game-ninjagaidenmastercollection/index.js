@@ -1457,6 +1457,25 @@ function applyGame1(context, gameSpec) {
     300,
     "open-ext",
     {},
+    "Open Nexus Mods Page",
+    () => {
+      try {
+        window.api.shell.openUrl(`https://www.nexusmods.com/${GAME_ID}/mods`);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+      }
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID1;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
     "Open SteamDB Page",
     () => {
       try {
@@ -1601,6 +1620,25 @@ function applyGame2(context, gameSpec) {
     300,
     "open-ext",
     {},
+    "Open Nexus Mods Page",
+    () => {
+      try {
+        window.api.shell.openUrl(`https://www.nexusmods.com/${GAME_ID}/mods`);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+      }
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID2;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
     "Open SteamDB Page",
     () => {
       try {
@@ -1730,6 +1768,25 @@ function applyGame3(context, gameSpec) {
     () => {
       try {
         window.api.shell.openUrl(PCGAMINGWIKI_URL);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+      }
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID3;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Nexus Mods Page",
+    () => {
+      try {
+        window.api.shell.openUrl(`https://www.nexusmods.com/${GAME_ID}/mods`);
       } catch (err) {
         context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
       }

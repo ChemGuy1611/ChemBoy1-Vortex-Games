@@ -24,6 +24,7 @@ Usage:
     python patch_extensions.py GAME_ID --only plan_b_lo_region --dry-run   # Plan B FBLO load order port: splice darktide's LO region into one target game (registered disabled; one game at a time; see PLAN_B_LO_GAMES)
     python patch_extensions.py GAME_ID [GAME_ID ...] --only rootpath_prefix_scope --dry-run   # installer mod-root scoping fix: file.indexOf(rootPath) !== -1 -> file.startsWith(rootPrefix) (registered disabled; apply to one wave of games at a time)
     python patch_extensions.py --only steamdb_button --dry-run   # add "Open SteamDB Page" button after "Open PCGamingWiki Page" (registered disabled; one-off propagation)
+    python patch_extensions.py --only nexus_mods_button --no-resize --dry-run   # add "Open Nexus Mods Page" toolbar button after each live "Open PCGamingWiki Page" (else before "Open SteamDB Page"); non-domain variant ids fall back to GAME_ID; needs Vortex's cached nexus_gamelist.json (registered disabled; one-off propagation)
     python patch_extensions.py GAME_ID [GAME_ID ...] --only template_gap_fixes --no-resize --dry-run   # port the 2026-10-11 template gap fixes (lastIndexOf wrapper cuts, EACCESS -> EACCES, .JS, Shinryu marker case, UMM save folder await, Anvil rename notice + rename redeploy, Fluffy loose-lua root + nested archive case, Unity hybrid dialogs / archive flags / custom loader / ALT_VERSION / Melon Nexus button, UE4-5 LogicMods .PAK stem / ModKit name guard / Xbox combo mod folder / legacy preSort / beatsPakInstaller gate / Open LogicMods Folder button, the last skipped where LOGICMODS_PATH already ends in the folder); registered disabled; pass the family's at-parity game ids only
     python patch_extensions.py GAME_ID [GAME_ID ...] --only farcry_parity --no-resize --dry-run   # splice template-farcry's baseline block (fallback installer trio, modFoldersEnsureWritable, 4 toggles + wiring) into Far Cry games below template shape parity (registered disabled; all-or-nothing per game, a variant that misses an anchor is reported for a hand port)
     python patch_extensions.py GAME_ID [GAME_ID ...] --only fluffy_has_demo --no-resize --dry-run   # bring REFramework/Fluffy games to template-reframework-fluffy's HAS_DEMO shape: const, multiExe, 3 demo checks, demo launch tool only when HAS_DEMO (registered disabled; all-or-nothing per game)
@@ -64,7 +65,7 @@ from vortex_utils import (
     const_value, is_unset, is_missing, set_or_insert,
     inject_register_actions, find_fn_body,
     list_game_ids, write_index_js, resize_images_to, log_info, log_warn, log_error,
-    load_vortex_manifest, resize_pngs_in_dirs,
+    load_vortex_manifest, load_nexus_gamelist, resize_pngs_in_dirs,
     is_placeholder_value, replace_const_rhs, print_count_summary, js_string_literal,
     strip_js_comments, is_real_value,
     audit_skip_lines, AUDIT_SKIP_STORE_ID, AUDIT_SKIP_FOMOD, AUDIT_SKIP_PRIORITY,
@@ -874,27 +875,29 @@ def patch_context_once_api(game_id, src, context):
     return new_src, True, f"inserted const api in {inserted} context.once block(s)"
 
 
-_STEAMDB_LABEL_RE = re.compile(r'''(['"])Open PCGamingWiki Page\1''')
 _STEAMDB_GAMEID_COND_RE = re.compile(r'gameId\s*===\s*(GAME_ID\w*)')
 
 
-def _steamdb_find_pcgw_blocks(src):
+def _find_live_action_blocks(src, label):
     """Return [(start, end)] spans for every LIVE context.registerAction(...) call
-    whose label is 'Open PCGamingWiki Page'. start is the index of the literal text
+    whose label is `label`. start is the index of the literal text
     'context.registerAction(' (no leading indentation); end is just past the call's
     trailing ';' when present, else just past the closing ')'.
 
     Searched against a comment-stripped copy of src (same length, so offsets line up
     exactly) so a disabled '/* ... */' toggle block is invisible here - cloning a
-    commented-out call verbatim would otherwise land the new SteamDB block inside
-    that same still-open comment, producing dead code (found the hard way on
-    humanitz, the one game with a real STEAMAPP_ID but a commented-out PCGW button).
+    commented-out call verbatim would otherwise land the new block inside that same
+    still-open comment, producing dead code (found the hard way on humanitz, the one
+    game with a real STEAMAPP_ID but a commented-out PCGW button). A label match that
+    sits outside the nearest preceding registerAction call (a dialog button with the
+    same text further down the file) is ignored.
     """
+    label_re = re.compile(r'''(['"])''' + re.escape(label) + r'''\1''')
     bare = strip_js_comments(src)
     blocks = []
     pos = 0
     while True:
-        m = _STEAMDB_LABEL_RE.search(bare, pos)
+        m = label_re.search(bare, pos)
         if not m:
             break
         call_pos = bare.rfind('context.registerAction(', 0, m.start())
@@ -903,7 +906,7 @@ def _steamdb_find_pcgw_blocks(src):
             continue
         open_idx = call_pos + len('context.registerAction(') - 1
         close_idx = _matching_paren(bare, open_idx)
-        if close_idx is None:
+        if close_idx is None or close_idx < m.start():
             pos = m.end()
             continue
         end = close_idx + 1
@@ -912,6 +915,11 @@ def _steamdb_find_pcgw_blocks(src):
         blocks.append((call_pos, end))
         pos = end
     return blocks
+
+
+def _steamdb_find_pcgw_blocks(src):
+    """Spans of every live 'Open PCGamingWiki Page' registerAction call (see _find_live_action_blocks)."""
+    return _find_live_action_blocks(src, 'Open PCGamingWiki Page')
 
 
 def patch_steamdb_button(game_id, src, context):
@@ -984,6 +992,94 @@ def patch_steamdb_button(game_id, src, context):
 
     labels = ', '.join(sorted(u for u, _ in url_consts_needed.values()))
     return new_src, True, f"inserted {inserted} SteamDB button(s): {labels}"
+
+
+# Extensions whose game ids don't fit the one-button-per-GAME_ID-guard shape; their
+# Nexus buttons are written by hand: gzdoom (GAME_ID "gzdoom" is not a Nexus domain,
+# gets one button per Doom domain), systemshock225thanniversaryremaster (one PCGW
+# button, two registered games), robocoproguecity (buttons keyed on gameSpec.game.id).
+_NEXUS_BUTTON_HAND_PORTS = {"gzdoom", "systemshock225thanniversaryremaster", "robocoproguecity"}
+_NEXUS_BUTTON_URL_RE = re.compile(r'openUrl\(`https://www\.nexusmods\.com/\$\{\w+\}/mods`\)')
+_NEXUS_DOMAINS = None
+
+
+def _nexus_domains():
+    global _NEXUS_DOMAINS
+    if _NEXUS_DOMAINS is None:
+        _NEXUS_DOMAINS = set(load_nexus_gamelist())
+    return _NEXUS_DOMAINS
+
+
+def patch_nexus_mods_button(game_id, src, context):
+    """
+    Insert an 'Open Nexus Mods Page' context.registerAction right after every live
+    'Open PCGamingWiki Page' one (the template order: PCGamingWiki, Nexus Mods,
+    SteamDB). Extensions with no live PCGamingWiki button get it right before each
+    live 'Open SteamDB Page' one instead.
+
+    Each clone keeps its source block's `gameId === GAME_ID...` guard and opens
+    https://www.nexusmods.com/<domain>/mods. The domain is that guard's own id constant
+    when its value is a Nexus domain, else the base GAME_ID (doom3's GAME_ID_BFG,
+    windrose's GAME_ID_SERVER, ninjagaidenmastercollection's per-title GAME_ID1-3).
+    Domains come from Vortex's cached nexus_gamelist.json.
+
+    Already-set check is a live registerAction whose openUrl is the Nexus mods URL,
+    never the label text alone: about 20 games use the same label on a notification
+    dialog button. Skips the hand-ported extensions in _NEXUS_BUTTON_HAND_PORTS.
+    """
+    if game_id in _NEXUS_BUTTON_HAND_PORTS:
+        return src, False, "hand port (see _NEXUS_BUTTON_HAND_PORTS)"
+
+    for s, e in _find_live_action_blocks(src, 'Open Nexus Mods Page'):
+        if _NEXUS_BUTTON_URL_RE.search(src[s:e]):
+            return src, False, SKIP_ALREADY_SET
+
+    blocks = _find_live_action_blocks(src, 'Open PCGamingWiki Page')
+    source_label, after = 'Open PCGamingWiki Page', True
+    if not blocks:
+        blocks = _find_live_action_blocks(src, 'Open SteamDB Page')
+        source_label, after = 'Open SteamDB Page', False
+    if not blocks:
+        return src, False, "no 'Open PCGamingWiki Page' or 'Open SteamDB Page' button to anchor on"
+
+    domains = _nexus_domains()
+
+    def domain_var(var):
+        value = const_value(src, var)
+        return value is not None and value.strip('"\'`') in domains
+
+    new_src = src
+    offset = 0
+    used = []
+    for start, end in blocks:
+        s, e = start + offset, end + offset
+        block = new_src[s:e]
+        cond_m = _STEAMDB_GAMEID_COND_RE.search(block)
+        if not cond_m:
+            return src, False, "button has no `gameId === GAME_ID...` guard - hand port"
+        guard = var = cond_m.group(1)
+        if not domain_var(var):
+            if var == 'GAME_ID' or not domain_var('GAME_ID'):
+                return src, False, f"{var} is not a Nexus domain - hand port"
+            var = 'GAME_ID'
+        new_block, n = re.subn(r'openUrl\([^()]*\)',
+                               f'openUrl(`https://www.nexusmods.com/${{{var}}}/mods`)',
+                               block.replace(source_label, 'Open Nexus Mods Page'))
+        if n != 1:
+            return src, False, f"expected one openUrl(...) in the '{source_label}' block, found {n}"
+        line_start = new_src.rfind('\n', 0, s) + 1
+        indent = new_src[line_start:s]
+        if after:
+            insertion = '\n' + indent + new_block
+            new_src = new_src[:e] + insertion + new_src[e:]
+        else:
+            insertion = new_block + '\n' + indent
+            new_src = new_src[:s] + insertion + new_src[s:]
+        offset += len(insertion)
+        used.append(var if var == guard else f"{guard}->{var}")
+
+    anchor = 'after PCGamingWiki' if after else 'before SteamDB'
+    return new_src, True, f"inserted {len(used)} Nexus Mods button(s) {anchor}: {', '.join(used)}"
 
 
 # ── Plan B FBLO load order port ───────────────────────────────────────────────
@@ -1704,6 +1800,7 @@ PATCHES = [
     {"name": "discovery_ids",                    "enabled": True, "fn": patch_discovery_ids},
     {"name": "plan_b_lo_region",                 "enabled": False,"fn": patch_plan_b_lo_region},
     {"name": "steamdb_button",                   "enabled": False,"fn": patch_steamdb_button},
+    {"name": "nexus_mods_button",                "enabled": False,"fn": patch_nexus_mods_button},
     {"name": "template_gap_fixes",               "enabled": False,"fn": patch_template_gap_fixes},
     {"name": "farcry_parity",                    "enabled": False,"fn": patch_farcry_parity},
     {"name": "fluffy_has_demo",                  "enabled": False,"fn": patch_fluffy_has_demo},
