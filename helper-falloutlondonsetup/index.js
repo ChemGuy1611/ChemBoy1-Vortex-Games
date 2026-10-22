@@ -2,8 +2,8 @@
 Name: FOLON Setup Helper Extension
 Structure: Utility Extension (game helper)
 Author: ChemBoy1
-Version: 0.1.5
-Date: 2025-07-09
+Version: 0.2.0
+Date: 2026-10-21
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -11,7 +11,6 @@ const fs = require("fs");
 const fsp = fs.promises;
 const { actions, util, selectors, log } = require("vortex-api");
 const path = require("path");
-const template = require("string-template");
 const winapi = require("winapi-bindings");
 const { default: IniParser, WinapiFormat } = require("vortex-parse-ini");
 
@@ -20,6 +19,7 @@ const GAME_NAME = "Fallout: London";
 const EXTENSION_NAME = "FOLON Setup Helper";
 const EXTENSION_ID = "falloutlondonsetup";
 const GAME_ID = "fallout4";
+const NEXUS_ID = "falloutlondon";
 const GOGAPP_ID = "1491728574";
 const GOGAPP_ID_ONECLICK = "1897848199";
 const DISCOVERY_IDS = [GOGAPP_ID, GOGAPP_ID_ONECLICK];
@@ -34,6 +34,7 @@ const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1349";
 
 const PLUGIN1 = "LondonWorldSpace.esm";
 const PLUGIN2 = "LondonWorldSpace-DLCBlock.esp";
+const FOLON_PLUGINS = [PLUGIN1, PLUGIN2]; // Plugins to enable automatically when the falloutlondon mod is enabled
 const MOD_ID = STAGINGFOLDER_NAME; // The mod ID for FOLON in Vortex (used to find mod for enabling and changing modtype)
 
 const DOCUMENTS = util.getVortexPath("documents");
@@ -42,16 +43,6 @@ const INI_FILE_DEFAULT = "Fallout4.ini"; // The main INI file for FO4
 const INI_FILE_CUSTOM = "Fallout4Custom.ini"; // Second (optional) INI file for FO4
 const INI_PATH_DEFAULT = path.join(INI_PATH, INI_FILE_DEFAULT);
 const INI_PATH_CUSTOM = path.join(INI_PATH, INI_FILE_CUSTOM);
-
-const INI_ARCHIVE_SECTION = `sResourceDataDirsFinal=
-sResourceIndexFileList=Fallout4 - Textures1.ba2, Fallout4 - Textures2.ba2, Fallout4 - Textures3.ba2, Fallout4 - Textures4.ba2, Fallout4 - Textures5.ba2, Fallout4 - Textures6.ba2, Fallout4 - Textures7.ba2, Fallout4 - Textures8.ba2, Fallout4 - Textures9.ba2, LondonWorldSpace - Textures1.ba2, LondonWorldSpace - Textures2.ba2, LondonWorldSpace - Textures3.ba2, LondonWorldSpace - Textures4.ba2, LondonWorldSpace - Textures5.ba2, LondonWorldSpace - Textures6.ba2, LondonWorldSpace - Textures7.ba2, LondonWorldSpace - Textures8.ba2, LondonWorldSpace - Textures9.ba2, LondonWorldSpace - Textures10.ba2, LondonWorldSpace - Textures11.ba2, LondonWorldSpace - Textures12.ba2, LondonWorldSpace - Textures13.ba2, LondonWorldSpace - Textures14.ba2
-sResourceStartUpArchiveList=Fallout4 - Startup.ba2, Fallout4 - Shaders.ba2, Fallout4 - Interface.ba2, LondonWorldSpace - Interface.ba2
-SResourceArchiveList=Fallout4 - Voices.ba2, Fallout4 - Meshes.ba2, Fallout4 - MeshesExtra.ba2, Fallout4 - Misc.ba2, Fallout4 - Sounds.ba2, Fallout4 - Materials.ba2, LondonWorldSpace - Sounds.ba2, LondonWorldSpace - Misc.ba2, LondonWorldSpace - Materials.ba2, LondonWorldSpace - Voices.ba2, LondonWorldSpace - VoicesExtra.ba2, LondonWorldSpace - Meshes.ba2, LondonWorldSpace - MeshesExtra.ba2, LondonWorldSpace - MeshesLOD.ba2
-SResourceArchiveList2=Fallout4 - Animations.ba2, LondonWorldSpace - Animations.ba2
-SGeometryPackageList=Fallout4 - Geometry.csg, LondonWorldSpace - Geometry.csg
-SCellResourceIndexFileList=Fallout4.cdx, LondonWorldSpace.cdx
-SResourceArchiveMemoryCacheList=Fallout4 - Misc.ba2, Fallout4 - Shaders.ba2, Fallout4 - Interface.ba2, Fallout4 - Materials.ba2, LondonWorldSpace - Misc.ba2, LondonWorldSpace - Interface.ba2, LondonWorldSpace - Materials.ba2
-bInvalidateOlderFiles=1`; // [Archive] section - write to FO4 INI files
 
 const INI_ARCHIVE_OBJECT = {
   sResourceDataDirsFinal: "",
@@ -193,8 +184,6 @@ async function makeLink(api, src, dest, type) {
   } catch {
     await fsp
       .symlink(src, dest, type) //make directory link
-      //return api.runExecutable('cmd.exe', [`mklink`, `/D`, `"${dest}"`, `"${src}"`], { shell: true, detached: true }) run through cmd.exe
-      //return api.runExecutable('makelink.bat', [`mklink`, `/D`, `"${dest}"`, `"${src}"`], { shell: true, detached: true }) run through .bat file (close and restart Vortex)
       .then(() =>
         log(
           "warn",
@@ -202,8 +191,6 @@ async function makeLink(api, src, dest, type) {
         ),
       )
       .then(() => linkSuccessNotify(api)) //notify user of linking success
-      .then(() => changeFolonModTypeNotify(api)) //notify user of manual steps required
-      .then(() => changeFolonModTypeAuto(api)) //attempt to automatically enable and change mod type for falloutlondon mod (relies on user responding to popup within 10 seconds)
       .catch((err) =>
         api.showErrorNotification(
           `${EXTENSION_NAME} failed to create directory link for FOLON GOG files`,
@@ -259,7 +246,7 @@ function changeFolonModTypeNotify(api) {
                     `\n` +
                     `3. If there are conflicts, falloutlondon should load after other mods (unless the mod is specifically for FOLON, in which case, load it after falloutlondon).\n` +
                     `\n` +
-                    `4. Enable the plugins "${PLUGIN1}" and "${PLUGIN2}" in the Plugins tab.\n` +
+                    `4. Check that the plugins "${PLUGIN1}" and "${PLUGIN2}" are enabled in the Plugins tab (they are enabled automatically when you enable the mod).\n` +
                     `\n`,
                 },
                 [
@@ -349,52 +336,115 @@ async function checkPartitions(path1, path2, path3) {
   }
 }
 
-// Function to detect when falloutlondon mod is in state
-async function checkState(api) {
-  let mods = api.store.getState()?.persistent?.mods?.[GAME_ID] ?? {};
-  let STATUS = Object.keys(mods).some((id) => mods[id] === MOD_ID);
-  while (!STATUS) {
-    //wait until the new mod is in state
-    mods = api.store.getState()?.persistent?.mods?.[GAME_ID] ?? {};
-    STATUS = Object.keys(mods).some((id) => mods[id] === MOD_ID);
-  }
-  return STATUS; //*/
-}
-
-// Change falloutlondon modType and enable
-async function changeFolonModTypeAuto(api) {
-  await new Promise((resolve) => setTimeout(resolve, 10000)); //wait a few seconds to allow Vortex to startup
-  //const STATUS = await checkState(api);
-  // <-- Need to figure out a reliable way to WAIT to set the modtype and enable until after the user clicks the button to Apply Changes, thus adding the linked mod to state
-  const state = api.getState();
-  const profileId = selectors.lastActiveProfileForGame(state, GAME_ID);
+// Add the falloutlondon mod to Vortex with the FOLON mod type and enable it.
+// Vortex only picks up new staging folders on game activation (after its "Mods changed on disk" prompt),
+// which runs before the link exists, so the helper adds the mod record itself.
+function addFolonMod(api) {
   try {
-    const batched = [
-      actions.setModType(GAME_ID, MOD_ID, FOLON_ID),
-      actions.setModEnabled(profileId, MOD_ID, true),
-    ];
-    util.batchDispatch(api.store, batched); //*/
+    fs.statSync(FOLON_STAGING_PATH); //only add the mod if the linked staging folder exists
+  } catch {
+    return;
+  }
+  const state = api.getState();
+  if (state?.persistent?.mods?.[GAME_ID]?.[MOD_ID] !== undefined) {
+    setFolonModType(api);
+    return;
+  }
+  const mod = {
+    id: MOD_ID,
+    type: FOLON_ID,
+    installationPath: STAGINGFOLDER_NAME,
+    state: "installed",
+    attributes: {
+      name: STAGINGFOLDER_NAME,
+      installTime: new Date().toString(),
+    },
+  };
+  try {
+    api.store.dispatch(actions.addMod(GAME_ID, mod));
+    log(
+      "warn",
+      `${EXTENSION_NAME} added "${STAGINGFOLDER_NAME}" mod with Mod Type "${FOLON_NAME}"`,
+    );
+    enableFolonMod(api);
   } catch (err) {
     api.showErrorNotification(
-      `${EXTENSION_NAME} failed to automatically enable and change Mod Type for "${STAGINGFOLDER_NAME}" mod.`,
+      `${EXTENSION_NAME} failed to automatically add "${STAGINGFOLDER_NAME}" mod.`,
       err,
       { allowReport: false },
     );
   }
-  /* State change should mean that the user added the mod.
-  api.onStateChange(['persistent', 'profiles'],
-    () => {
-      try {
-        const batched = [
-          actions.setModType(GAME_ID, MOD_ID, FOLON_ID),
-          actions.setModEnabled(profileId, MOD_ID, false),
-        ];
-        util.batchDispatch(api.store, batched);
-      } catch (err) {
-        api.showErrorNotification(`${EXTENSION_NAME} failed to automatically enable and change Mod Type for "${STAGINGFOLDER_NAME}" mod.`, err, { allowReport: false });
-      }
-    }
-  ); //*/
+}
+
+// Set the FOLON mod type on the falloutlondon mod while it still has the default mod type.
+// Vortex adds the folder with the default type if the user applies its "Mods changed on disk" prompt.
+function setFolonModType(api) {
+  const mod = api.getState()?.persistent?.mods?.[GAME_ID]?.[MOD_ID];
+  if (mod === undefined || (mod.type ?? "") !== "") return;
+  try {
+    api.store.dispatch(actions.setModType(GAME_ID, MOD_ID, FOLON_ID));
+    log("warn", `${EXTENSION_NAME} set Mod Type "${FOLON_NAME}" for "${STAGINGFOLDER_NAME}" mod`);
+  } catch (err) {
+    api.showErrorNotification(
+      `${EXTENSION_NAME} failed to automatically change Mod Type for "${STAGINGFOLDER_NAME}" mod.`,
+      err,
+      { allowReport: false },
+    );
+  }
+}
+
+// Enable the falloutlondon mod in the last active FO4 profile (enabling it also enables the FOLON plugins)
+function enableFolonMod(api) {
+  const state = api.getState();
+  const profileId = selectors.lastActiveProfileForGame(state, GAME_ID);
+  if (profileId === undefined) return;
+  if (state?.persistent?.profiles?.[profileId]?.modState?.[MOD_ID]?.enabled === true) return;
+  try {
+    api.store.dispatch(actions.setModEnabled(profileId, MOD_ID, true));
+  } catch (err) {
+    api.showErrorNotification(
+      `${EXTENSION_NAME} failed to automatically enable "${STAGINGFOLDER_NAME}" mod.`,
+      err,
+      { allowReport: false },
+    );
+  }
+}
+
+// Watch for the falloutlondon mod record being added or replaced (for example by the "Mods changed on disk" prompt)
+function onFolonModChange(api, prev, current) {
+  const mod = current?.[MOD_ID];
+  if (mod === undefined || mod === prev?.[MOD_ID]) return;
+  setFolonModType(api);
+  if (prev?.[MOD_ID] === undefined) {
+    enableFolonMod(api);
+  }
+}
+
+//Enable the FOLON plugins when the falloutlondon mod is enabled.
+//Vortex only auto-enables plugins at the top level of a mod folder, and the FOLON plugins sit in "Data".
+//"SET_PLUGIN_ENABLED" is the plugin management action type (redux-act keeps upper-case types verbatim).
+//The plugin hive (state.loadOrder) belongs to the active profile, so other profiles are skipped.
+function enableFolonPlugins(api, profileId, modId) {
+  if (modId !== MOD_ID) return;
+  const state = api.getState();
+  const profile = selectors.activeProfile(state);
+  if (profile?.id !== profileId || profile?.gameId !== GAME_ID) return;
+  const loadOrder = state?.loadOrder ?? {};
+  const batched = FOLON_PLUGINS.filter(
+    (plugin) => loadOrder[plugin.toLowerCase()]?.enabled !== true,
+  ).map((plugin) => ({
+    type: "SET_PLUGIN_ENABLED",
+    payload: { pluginName: plugin, enabled: true },
+  }));
+  if (batched.length === 0) return;
+  try {
+    util.batchDispatch(api.store, batched);
+    log("info", `${EXTENSION_NAME} enabled FOLON plugins: ${FOLON_PLUGINS.join(", ")}`);
+  } catch (err) {
+    api.showErrorNotification(`${EXTENSION_NAME} failed to enable FOLON plugins.`, err, {
+      allowReport: false,
+    });
+  }
 }
 
 //Setup function
@@ -439,7 +489,8 @@ async function setup(api, gameId) {
     return; //if folders not on same partition, exit setup
   }
   //Make link, write INI files, and change falloutlondon modtype
-  await makeLink(api, FOLON_INSTALL_PATH, FOLON_STAGING_PATH, "dir"); //create link for FOLON game files to staging folder. Attempt to autmatically enable and change mod type for falloutlondon mod (relies on user responding to popup within 10 seconds)
+  await makeLink(api, FOLON_INSTALL_PATH, FOLON_STAGING_PATH, "dir"); //create link for FOLON game files to staging folder
+  addFolonMod(api); //add falloutlondon mod with FOLON mod type and enable it (or fix the mod type if it's already added)
   changeFolonModTypeNotify(api); //check if FOLON mod type is set and notify user to change it if it's not
   await writeFolonIni(api); //write "[Archive]" section to FO4 INI file(s)
 }
@@ -457,6 +508,12 @@ function main(context) {
         });
       }
     });
+    context.api.events.on("mod-enabled", (profileId, modId) =>
+      enableFolonPlugins(context.api, profileId, modId),
+    );
+    context.api.onStateChange(["persistent", "mods", GAME_ID], (prev, current) =>
+      onFolonModChange(context.api, prev, current),
+    );
   });
 
   context.registerModType(
@@ -504,6 +561,25 @@ function main(context) {
     300,
     "open-ext",
     {},
+    "Open FOLON Nexus Mods Page",
+    () => {
+      try {
+        window.api.shell.openUrl(`https://www.nexusmods.com/${NEXUS_ID}/mods`);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+      }
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
     "Run FOLON Helper Setup",
     () => {
       const state = context.api.getState();
@@ -514,6 +590,25 @@ function main(context) {
         context.api.showErrorNotification(`Failed to manually execute ${EXTENSION_NAME}.`, err, {
           allowReport: false,
         });
+      }
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Submit FOLON Helper Bug Report",
+    () => {
+      try {
+        window.api.shell.openUrl(`${EXTENSION_URL}?tab=bugs`);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
       }
     },
     () => {

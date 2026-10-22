@@ -2,7 +2,7 @@
 
 ## Planned Improvements (Not Yet Released)
 
-- tool to launch bl4-crypt (by Cr4nkSt4r, naked exe file)
+- None
 
 ## [1.0.2] - 2026-10-16
 

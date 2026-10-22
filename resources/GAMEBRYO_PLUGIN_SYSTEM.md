@@ -2,7 +2,7 @@
 
 Covers how Vortex manages plugin load ordering for Bethesda/Gamebryo games, including the two file format types, plugin metadata parsing, and LOOT integration.
 
-**Primary source:** `Vortex\extensions\gamebryo-plugin-management\src\`
+**Primary source:** `Vortex\src\renderer\src\extensions\gamebryo_plugin_management\`
 
 ---
 
@@ -23,7 +23,7 @@ Covers how Vortex manages plugin load ordering for Bethesda/Gamebryo games, incl
 | Enderal Special Edition | fallout4 | Yes                       | `%LOCALAPPDATA%\Enderal Special Edition\` |
 | Oblivion Remastered     | original | No                        | (UE5 game — custom plugins path)          |
 
-Game support config: `gamebryo-plugin-management\src\util\gameSupport.ts`
+Game support config: `gamebryo_plugin_management\util\gameSupport.ts`
 
 ---
 
@@ -103,7 +103,7 @@ Starfield DLC plugins also match via pattern: `sfbgs00[0-8].esm`.
 
 ## 5. ESP/ESM/ESL Binary Parsing
 
-Source: `gamebryo-plugin-management\src\esp\ESPFile.ts`
+Source: `gamebryo_plugin_management\esp\ESPFile.ts`
 
 Vortex reads only the `TES4` record header (first ~50-200 bytes) — not the full file. Subrecords parsed:
 
@@ -144,17 +144,32 @@ Ghosted plugins are:
 ### Load order state path
 
 ```text
-state.persistent.loadOrder[profileId][pluginId] = ILoadOrder
+state.loadOrder[pluginId] = IPluginLoadOrderEntry
 ```
 
-### ILoadOrder shape
+A root-level hive (`registerReducer(["loadOrder"])`), not `persistent` and not keyed by profile. `PluginPersistor` is registered as its persistor (`registerPersistor("loadOrder", ...)`), so the hive mirrors `plugins.txt` of the active game and only ever holds the active profile's plugins. `pluginId` is the lower-cased file name with any `.ghost` suffix stripped (`toPluginId`). Not to be confused with `state.persistent.loadOrder[profileId]`, the file-based load order hive used by `registerLoadOrder` games.
+
+### IPluginLoadOrderEntry shape
 
 ```ts
 {
+  name?: string,               // display name (missing on entries hydrated from older state)
   enabled: boolean | "ghost",  // true = active, false = disabled, "ghost" = ghosted
-  loadOrder: number,           // zero-based index position
+  loadOrder: number,           // zero-based index position; -1 for an entry created before deployment
 }
 ```
+
+### Enabling plugins from another extension
+
+The load order actions are created with `redux-act` using upper-case names, which `redux-act` keeps verbatim as the action type. Another extension can therefore dispatch them as plain objects without importing the plugin management code:
+
+```js
+api.store.dispatch({ type: "SET_PLUGIN_ENABLED", payload: { pluginName: "MyMod.esp", enabled: true } });
+```
+
+If no entry exists yet, the reducer creates one with `loadOrder: -1`, so this works before the plugin is deployed. Only dispatch while the target game's profile is active, because the hive belongs to the active profile.
+
+Vortex's own auto-enable runs on the `mod-enabled` event (`util\onModEnabled.ts`). It only reads the **top level** of the mod's staging folder, so plugins inside a `Data` subfolder (mods deployed to the game root) are never found. It enables every plugin it finds when the mod has exactly one plugin, a collection install is running, or the mod has the attribute `enableallplugins: true`; otherwise it shows a "contains multiple plugins" notification with an "Enable all" button.
 
 ### Plugin info state path
 
@@ -174,13 +189,13 @@ state.session.plugins.pluginList[pluginId] = IPlugin
 }
 ```
 
-Reducers: `gamebryo-plugin-management\src\reducers\loadOrder.ts`, `plugins.ts`
+Reducers: `gamebryo_plugin_management\reducers\loadOrder.ts`, `plugins.ts`
 
 ---
 
 ## 8. PluginPersistor
 
-Source: `gamebryo-plugin-management\src\util\PluginPersistor.ts`
+Source: `gamebryo_plugin_management\util\PluginPersistor.ts`
 
 Implements `types.IPersistor`. Responsibilities:
 
@@ -210,7 +225,7 @@ Implements `types.IPersistor`. Responsibilities:
 
 ## 9. LOOT Integration
 
-Source: `gamebryo-plugin-management\src\autosort.ts`
+Source: `gamebryo_plugin_management\autosort.ts`
 
 LOOT (Load Order Optimization Tool) provides automated plugin sorting and plugin metadata (tags, requirements, incompatibilities, dirty/clean status).
 
@@ -282,7 +297,7 @@ Metadata retrieved per-plugin via:
 
 ### 9e. Userlist (Custom Rules)
 
-Source: `gamebryo-plugin-management\src\util\UserlistPersistor.ts`
+Source: `gamebryo_plugin_management\util\UserlistPersistor.ts`
 
 `userlist.yaml` stores user-defined LOOT rules (custom load order relationships, groups, messages). The UI allows adding/editing/removing these rules without editing YAML manually.
 
@@ -294,17 +309,17 @@ Userlist is loaded with the masterlist and affects LOOT sort output. Vortex moni
 
 | File                                                       | Role                                         |
 | ---------------------------------------------------------- | -------------------------------------------- |
-| `gamebryo-plugin-management\src\index.ts`                  | Extension entry, event wiring, registration  |
-| `gamebryo-plugin-management\src\util\PluginPersistor.ts`   | Read/write plugins.txt + loadorder.txt       |
-| `gamebryo-plugin-management\src\autosort.ts`               | LOOT init, sort trigger, plugin details      |
-| `gamebryo-plugin-management\src\util\gameSupport.ts`       | Per-game config, native plugin lists         |
-| `gamebryo-plugin-management\src\util\UserlistPersistor.ts` | userlist.yaml I/O                            |
-| `gamebryo-plugin-management\src\util\masterlist.ts`        | masterlist download/versioning               |
-| `gamebryo-plugin-management\src\esp\ESPFile.ts`            | Binary TES4 record parser                    |
-| `gamebryo-plugin-management\src\types\ILoadOrder.ts`       | ILoadOrder interface                         |
-| `gamebryo-plugin-management\src\types\IPlugins.ts`         | IPlugin, IPluginCombined                     |
-| `gamebryo-plugin-management\src\types\ILOOTList.ts`        | LOOT masterlist/userlist structures          |
-| `gamebryo-plugin-management\src\reducers\`                 | Redux reducers for load order + plugin state |
+| `gamebryo_plugin_management\index.ts`                  | Extension entry, event wiring, registration  |
+| `gamebryo_plugin_management\util\PluginPersistor.ts`   | Read/write plugins.txt + loadorder.txt       |
+| `gamebryo_plugin_management\autosort.ts`               | LOOT init, sort trigger, plugin details      |
+| `gamebryo_plugin_management\util\gameSupport.ts`       | Per-game config, native plugin lists         |
+| `gamebryo_plugin_management\util\UserlistPersistor.ts` | userlist.yaml I/O                            |
+| `gamebryo_plugin_management\util\masterlist.ts`        | masterlist download/versioning               |
+| `gamebryo_plugin_management\esp\ESPFile.ts`            | Binary TES4 record parser                    |
+| `gamebryo_plugin_management\types\IPluginLoadOrderEntry.ts` | IPluginLoadOrderEntry interface         |
+| `gamebryo_plugin_management\types\IPlugins.ts`         | IPlugin, IPluginCombined                     |
+| `gamebryo_plugin_management\types\ILOOTList.ts`        | LOOT masterlist/userlist structures          |
+| `gamebryo_plugin_management\reducers\`                 | Redux reducers for load order + plugin state |
 
 All paths relative to `Vortex\extensions\`.
 

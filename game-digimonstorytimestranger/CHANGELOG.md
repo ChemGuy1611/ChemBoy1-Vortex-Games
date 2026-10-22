@@ -2,7 +2,7 @@
 
 ## Planned Improvements (Not Yet Released)
 
-- Installer for Save (.bin) files (no mods of this type yet).
+- None
 
 ## [1.0.2] - 2026-10-16
 

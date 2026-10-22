@@ -89,7 +89,7 @@ Usage:
         iter_helper_folders, list_helper_ids, is_multi_game_extension,
         add_planned_improvement, open_planned_improvements,
         split_planned_bullets, move_planned_to_version, add_changelog_note,
-        NEVER_UPLOAD_GAMES, NEVER_UPLOAD_LIST, DEPRECATED_GAMES, releasable_game_ids, fetch_vortex_extensions_feed,
+        NEVER_UPLOAD_GAMES, NEVER_UPLOAD_LIST, DEPRECATED_GAMES, DEPRECATED_LIST, releasable_game_ids, fetch_vortex_extensions_feed,
         is_valid_nexus_game_id, git_show_text,
         changelog_entry_is_empty, unreleased_intermediate_sections,
     )
@@ -175,8 +175,13 @@ NEVER_UPLOAD_LIST = os.path.join(LISTS_DIR, "games-never-upload.txt")
 with open(NEVER_UPLOAD_LIST, encoding="utf-8") as _never_upload_fh:
     NEVER_UPLOAD_GAMES = frozenset(line.strip() for line in _never_upload_fh if line.strip())
 del _never_upload_fh
-# Retired extensions: frozen in the repo, never updated or released again.
-DEPRECATED_GAMES = frozenset({"battlefield1"})
+# Retired extensions: frozen in the repo, never updated or released again. Same pattern as
+# the never-upload set: the hand-maintained list file is the source of truth, read once at
+# import, and a missing file raises.
+DEPRECATED_LIST = os.path.join(LISTS_DIR, "games-deprecated.txt")
+with open(DEPRECATED_LIST, encoding="utf-8") as _deprecated_fh:
+    DEPRECATED_GAMES = frozenset(line.strip() for line in _deprecated_fh if line.strip())
+del _deprecated_fh
 
 VORTEX_PLUGINS_DIR = os.environ.get("VORTEX_PLUGINS_DIR", r"C:\ProgramData\vortex\plugins")
 # User-extensions folder of a Vortex dev build run from source: the dev app is named
@@ -4151,7 +4156,9 @@ def find_vortex_exe():
 # Repo-facing files that live in an extension folder but are never part of the
 # extension Vortex runs: the generated docs, the hand-written mod page description
 # (its install-notes list is refreshed by generate_notes.js --description) and the
-# *.bak that port_to_template.py and hand edits leave behind. Wildcard patterns
+# *.bak that port_to_template.py and hand edits leave behind. Also every *.zip:
+# a past release's zip (possibly under an older name) is left in the folder, and
+# Nexus quarantines any upload that contains a nested archive. Wildcard patterns
 # matched against file names. release_extension.py keeps them out of the released
 # zip, deploy_to_vortex.py out of the plugins folder.
 PACKAGE_EXCLUDES = [
@@ -4160,6 +4167,7 @@ PACKAGE_EXCLUDES = [
     "NOTES_FOR_MOD_AUTHORS.bbcode",
     "DESCRIPTION.bbcode",
     "*.bak",
+    "*.zip",
 ]
 
 

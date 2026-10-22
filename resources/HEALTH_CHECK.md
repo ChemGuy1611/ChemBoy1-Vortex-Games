@@ -298,16 +298,17 @@ cut from `master`; the 2.8.0 typings no longer do.
 
 - Each event type has its own queue. A `settings-changed` check runs 500ms after the
   **last** change anywhere under `settings`, so rapid changes collapse into one run.
-- Switching the active profile is itself a settings change. On the first switch to a game
-  the run therefore starts while the game's `setup` is still executing, and a check that
-  depends on what `setup` creates (for example the deployment check on a mod folder that
-  does not exist yet) fails until `setup` returns.
+- Switching the active profile is itself a settings change. Up to v2.9.x, on the first
+  switch to a game the run therefore starts while the game's `setup` is still executing,
+  and a check that depends on what `setup` creates (for example the deployment check on a
+  mod folder that does not exist yet) fails until `setup` returns. From v2.10.0-beta.1 the
+  game switch holds `settings-changed` until `setup` has returned, so the check runs once
+  afterwards.
 - `api.ext.withSuppressedTests(events, callback)` holds the listed event types while the
   promise returned by `callback` is pending. The latest run skipped in that time is
-  replayed once the last overlapping hold lifts. The hold is checked when a run is
-  queued, not when its timer fires, so a run queued just before the hold started still
-  fires. The game-activation work does not take this hold, which is why the deployment
-  check can flash an error during a first-time `setup`. The callback must return a
+  replayed once the last overlapping hold lifts. Up to v2.9.x the hold is checked only when
+  a run is queued, so a run queued just before the hold started still fires; from
+  v2.10.0-beta.1 it is checked again when the timer fires. The callback must return a
   promise and must not throw synchronously: the hold is released only when that promise
   settles, so a synchronous throw keeps it for the rest of the session. The hold exists
   only in recent Vortex builds, so call it as `api.ext.withSuppressedTests?.(...)`.

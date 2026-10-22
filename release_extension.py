@@ -42,7 +42,8 @@ Steps performed per extension:
    10. oxlint on index.js (warns on lint errors; use --skip-lint to skip)
    11. Create game-{EXT_ID}.zip or helper-{EXT_ID}.zip with 7-Zip, excluding the
        repo-facing generated docs (EXTENSION_EXPLAINED.md, NOTES_FOR_MOD_AUTHORS.md,
-       NOTES_FOR_MOD_AUTHORS.bbcode, DESCRIPTION.bbcode) and *.bak backups
+       NOTES_FOR_MOD_AUTHORS.bbcode, DESCRIPTION.bbcode), *.bak backups and any
+       *.zip (a nested archive gets the upload quarantined by Nexus)
    12. Optionally upload zip to Nexus Mods as a new file version (changelog entry as
        description; file group resolved via v1 uid -> v3 groups, or via index.js FILE_GROUP_ID
        override when the v3 list 404s); default: skip; use --upload to enable.
@@ -51,7 +52,8 @@ Steps performed per extension:
        --upload-delay SECONDS pauses after each upload to stay under the limit. The
        exit code is 1 when any upload failed.
        With --upload, an id on resources/lists/games-never-upload.txt (test beds and
-       personal-use extensions) or in DEPRECATED_GAMES is refused before any step runs
+       personal-use extensions) or resources/lists/games-deprecated.txt (retired
+       extensions) is refused before any step runs
        and counted as failed. Without --upload those ids still zip normally.
    13. Open EXTENSION_URL?tab=files in browser (or nexusmods.com/games/site if not set)
    14. Optionally open EXTENSION_URL/edit/documents (changelog editor) in browser
@@ -143,7 +145,8 @@ NEXUS_SITE_URL = "https://www.nexusmods.com/games/site"
 UNRELEASED_LIST = "games-unreleased.txt"
 
 # Repo-facing documentation and *.bak leftovers are dead weight inside the extension
-# Vortex installs, so they are kept out of the released zip (vortex_utils.PACKAGE_EXCLUDES,
+# Vortex installs, and any *.zip (an old release zip left in the folder) gets the upload
+# quarantined by Nexus, so they are kept out of the released zip (vortex_utils.PACKAGE_EXCLUDES,
 # shared with deploy_to_vortex.py). Entries are wildcard patterns (7-Zip -xr! and fnmatch).
 ZIP_EXCLUDES = PACKAGE_EXCLUDES
 
@@ -676,7 +679,7 @@ def main():
                 details[game_id] = {}
                 continue
             if upload and game_id in (NEVER_UPLOAD_GAMES | DEPRECATED_GAMES):
-                log_error(game_id, "never uploaded (games-never-upload.txt or DEPRECATED_GAMES) "
+                log_error(game_id, "never uploaded (games-never-upload.txt or games-deprecated.txt) "
                                    "- drop --upload to zip only")
                 failed.append(game_id)
                 details[game_id] = {}

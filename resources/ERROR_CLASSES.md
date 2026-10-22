@@ -189,4 +189,5 @@ async function setup(discovery) {
 kinds directly). `STEAM_FILE_DOWNLOADER.md` (`process-canceled` for invalid Steam credentials,
 `user-canceled` from the login/Steam Guard dialogs). `DOWNLOADER.md` (the requirement loop's
 `process-canceled` skip). `DEPRECATED_METHODS.md` (index of every deprecated symbol across the
-published API, this family included).
+published API, this family included). `VORTEX_CONTRIBUTING.md` (how the app's own `showError`
+decides which of these get reported, for changes to Vortex itself).

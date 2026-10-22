@@ -23,10 +23,10 @@ against a `master` clone; script and target names move, so read `package.json` a
 `pnpm run test` expands to `pnpm nx run-many -t test test:integration --exclude @vortex/e2e`, so the
 first two layers run together and the E2E package is deliberately excluded from it.
 
-The repo's own written rules are split the same way: `AGENTS-TESTING.md` covers only the vitest
-half, and every Playwright rule lives in `packages/e2e/E2E-BEST-PRACTICES.md` plus the packaged
-`e2e-test` skill under `.claude/skills/`. Reading `AGENTS-TESTING.md` alone leaves the E2E
-conventions unknown.
+The repo's own written rules are split the same way: `docs/testing.md` covers the vitest half
+(running, selectors, extension mocks, the in-memory filesystem), and every Playwright rule lives in
+`packages/e2e/E2E-BEST-PRACTICES.md` plus the packaged `e2e-test` skill under `.claude/skills/`.
+Reading `docs/testing.md` alone leaves the E2E conventions unknown.
 
 ---
 
@@ -39,14 +39,15 @@ is running is an E2E spec. A bug fix gets a test that fails without the fix.
 Run them before the PR goes up, and record in the PR which ones ran:
 
 ```powershell
-pnpm run test
-pnpm nx run <affected-project>:lint
-pnpm nx run <affected-project>:typecheck
+pnpm run verify       # format, then build (+ lint + typecheck), then unit + integration tests
 pnpm run e2e          # when the change touches a UI flow
 ```
 
-`AGENTS.md` asks for `build`, `test`, `lint`, and `format` on the affected package after any code
-change; the list above is that, with the E2E layer added for UI work.
+`AGENTS.md` and `CONTRIBUTING.md` both name `pnpm run verify` as the check before a PR. It
+excludes the E2E suite, so say which suites ran. Don't run `verify` while a `pnpm run dev` session
+is live: its build step overwrites the output the running app loads from. While iterating with dev
+running, use `pnpm run typecheck`, `pnpm run lint` and single-file tests, and save `verify` for the
+end.
 
 The E2E layer has to be run locally because CI will not run it for you — see "What CI actually
 runs" below. A change that alters what the user sees or clicks is only verified if you ran
@@ -94,19 +95,34 @@ cleanup — test files should still import `describe`/`it`/`expect` from `vitest
 ### Running a subset
 
 ```powershell
-pnpm run test -- <path>                                    # documented repo-wide shortcut
+cd src/renderer; pnpm exec vitest run src/controls/ContextMenu.test.tsx   # documented form
+pnpm -F @vortex/renderer exec vitest run src/controls/ContextMenu.test.tsx  # same, from the root
 pnpm nx run @vortex/renderer:test                          # one project
-pnpm -F @vortex/renderer exec vitest run src/controls/ContextMenu.test.tsx
 pnpm -F @vortex/renderer exec vitest                       # watch mode
 ```
 
-`test` targets are not nx-cached, so a rerun always executes.
+`pnpm run test` is an nx run across every project and cannot be scoped to a path — run a single
+file from inside the project directory that owns it. `test` targets are not nx-cached, so a rerun
+always executes.
+
+### Faking the filesystem
+
+`@vortex/shared/filesystem` exports `InMemoryFS` (a `FileSystem` backed by an in-memory store),
+`InMemoryFSBuilder` for seeding it, and `ChaosFS`, a decorator that injects transient faults such as
+a full disk or a locked file. Their semantics mirror the node backend
+(`src/main/src/filesystem/backend.ts`), so a test that passes against them says something about
+production, with no temp directories. In main-process tests swap the process-wide singleton with
+`setFileSystem` / `resetFileSystem` from `src/main/src/filesystem/instance.ts`; in renderer tests
+`installInMemoryFS` from `src/renderer/src/test-utils/fsApi.ts` replaces `window.api.fs`.
 
 ### Finding elements in component tests
 
-Target a `data-testid`, or a role when exactly one element carries it. Add the attribute to the
-component — `Button`, `Input` and the other UI primitives spread unknown props onto the underlying
-element, and `IToolbarAction` takes a `testId`.
+Prefer a role when exactly one element in the query scope carries it — the closest match to how a
+user perceives the UI — and fall back to a `data-testid` when the element has no usable role or
+several share it. Add the attribute to the component — `Button`, `Input` and the other UI
+primitives spread unknown props onto the underlying element, and `IToolbarAction` takes a `testId`.
+Existing tests mix `getByRole`, `getByTestId` and `getByText` roughly equally; the rule is the
+direction, not a description of the tree.
 
 Do not look elements up by their text. There is no i18n instance in the test setup, so `t` returns
 the translation key it was handed; a key can be shared by several elements and says nothing about
@@ -467,9 +483,10 @@ running it locally.** Treat a green PR check as evidence about units and integra
 
 ## See also
 
-`VORTEX_DEV_BUILD.md` (getting the repo to the point where these commands run, and the
-build/lint/typecheck half of verifying a change) · `VORTEX_CODESTYLE.md` (the conventions test code
-is held to, and the lint rules that enforce them) · `VORTEX_AGENT_GUIDES.md` (the repo's own
-`AGENTS*.md` files and packaged skills, including the E2E authoring skill) · `VORTEX_APP.md` (repo
+`VORTEX_CONTRIBUTING.md` (the PR policy and CI gates these tests feed) · `VORTEX_DEV_BUILD.md`
+(getting the repo to the point where these commands run, and the build/lint/typecheck half of
+verifying a change) · `VORTEX_CODESTYLE.md` (the conventions test code is held to, and the lint
+rules that enforce them) · `VORTEX_AGENT_GUIDES.md` (the repo's own `AGENTS.md`, `docs/` tree and
+packaged skills, including the E2E authoring skill) · `VORTEX_APP.md` (repo
 layout, the process split the E2E fixture launches, and the internal package list) ·
 `VORTEX_DATABASES.md` (the DuckDB state the auth snapshot has to flush before it can be copied).

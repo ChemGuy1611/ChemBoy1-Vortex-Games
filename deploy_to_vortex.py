@@ -68,9 +68,9 @@ import vortex_utils as vu
 VORTEX_IMAGE = "Vortex.exe"
 
 # Never copied into the plugins folder: the repo-only files the release zip also
-# leaves out (generated docs, *.bak), plus the stale game-*.zip a past release left
-# in the folder and *.tmp files from an interrupted atomic write.
-DEPLOY_IGNORE = (*vu.PACKAGE_EXCLUDES, "*.zip", "*.tmp")
+# leaves out (generated docs, *.bak, the stale *.zip a past release left in the
+# folder), plus *.tmp files from an interrupted atomic write.
+DEPLOY_IGNORE = (*vu.PACKAGE_EXCLUDES, "*.tmp")
 
 
 def _is_ignored(name: str) -> bool:

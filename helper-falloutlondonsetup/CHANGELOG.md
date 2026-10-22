@@ -1,9 +1,12 @@
 # Changelog
 
-## Future Improvements (Not Yet Released)
+## [0.2.0] - 2026-10-21
 
-- Enable plugins automatically (may be challenging).
+- Added automatic enabling of the Fallout: London plugins when the falloutlondon mod is enabled.
+- The falloutlondon mod is now added to Vortex, set to the "FOLON GOG Files" mod type and enabled automatically, with no 10-second time limit.
 - The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
+- Added a button to open the Fallout: London Nexus Mods page.
+- Added a button to submit a bug report for the FOLON Setup Helper.
 
 ## [0.1.6] - 2026-01-06
 

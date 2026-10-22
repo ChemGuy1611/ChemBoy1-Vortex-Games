@@ -12,20 +12,21 @@ How the Vortex application and its monorepo are put together, for orientation wh
 | `src/`              | The Electron app itself, split by process (see Process Model)                                                 |
 | `packages/`         | Internal workspace packages (the published `vortex-api` lives here, plus PE-parsing and test helpers)         |
 | `extensions/`       | Bundled feature + game extensions shipped inside Vortex                                                       |
-| `docs/`             | Architecture, debugging, release, and i18n docs                                                               |
+| `docs/`             | All project and coding documentation, indexed by `docs/README.md` (see `VORTEX_AGENT_GUIDES.md`)              |
 | `scripts/`          | Workspace build/automation scripts (env file, dependency report, query-type codegen, rolldown for extensions) |
 | `tools/`            | One-off build/icon/sourcemap helpers                                                                          |
 | `locales/`          | Translations (`translation-strings.txt` is the extracted source string list at repo root)                     |
 | `assets/`, `icons/` | Static bundled assets                                                                                         |
 | `etc/`              | Generated reference (`vortex.api.md`, `Dependency Report.md`)                                                 |
-| `playwright/`       | E2E specs (older location; the `@vortex/e2e` package under `packages/e2e/` is the current runner)             |
-| `AGENTS*.md`        | Short agent-facing guides (see AGENTS docs below)                                                             |
+| `eslint-rules/`     | Custom `vortex/*` ESLint rules                                                                                |
+| `flatpak/`          | Flatpak manifest and build scripts                                                                            |
+| `AGENTS.md`         | Agent operating instructions only; routes into `docs/` (see `VORTEX_AGENT_GUIDES.md`)                         |
 
 ## Monorepo & build system
 
 Vortex is an **nx + pnpm-workspace** monorepo.
 
-- **Package manager:** pnpm `11.10.0`, Node `24.17.0` (pinned in `package.json` `engines`/`devEngines`/`packageManager`). The Node pin is an exact version and `pnpm-workspace.yaml` sets `engineStrict: true`, so a different Node build fails the install outright — see `VORTEX_DEV_BUILD.md` for the setup that satisfies it.
+- **Package manager:** pnpm `11.10.0`, Node `24.20.0` (pinned in `package.json` `engines`/`devEngines`/`packageManager`). pnpm switches itself to the pinned version and downloads the pinned Node runtime on install, so pnpm is the only tool to install by hand. The Node pin is an exact version and `pnpm-workspace.yaml` sets `engineStrict: true` — see `VORTEX_DEV_BUILD.md`.
 - **Task runner:** [nx](https://nx.dev) (`nx.json`). `neverConnectToCloud: true`, analytics off, default base branch `master`. Targets are cached: `build`, `typecheck`, `lint*` cache; `test*` does not. `build`/`typecheck`/`lint` all `dependsOn: ["^build"]` so dependency packages build first.
 - **Dependency versions are centralised** in the pnpm **catalog** (`pnpm-workspace.yaml`). Almost every `devDependency` in the root `package.json` is `"catalog:"`. When checking a dependency version, read the catalog, not the individual `package.json`.
 - **Bundlers:**
@@ -41,7 +42,9 @@ Vortex is an **nx + pnpm-workspace** monorepo.
 | Command                                     | Effect                                                                                                                                                                                                                  |
 | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `pnpm run start`                            | Launch dev app (`nx run @vortex/main:start`)                                                                                                                                                                            |
-| `pnpm run build`                            | `nx run-many -t build lint typecheck` + dependency-report assets. This is the full build to run before `start` / F5 debugging — `CONTRIBUTE.md` still calls it `build:all`, but no such script exists in `package.json` |
+| `pnpm run dev`                              | Dev app with hot module replacement for renderer code (`nx run @vortex/main:dev`)                                                                                                                                       |
+| `pnpm run build`                            | `nx run-many -t build lint typecheck` + dependency-report assets. The full build to run before `start` / F5 debugging                                                                                                   |
+| `pnpm run verify`                           | `format`, then `build`, then `test` — the pre-PR gate. Excludes E2E; never run it while `dev` is live                                                                                                                   |
 | `pnpm run package` / `package:nosign`       | Production build + Electron package (signed / unsigned)                                                                                                                                                                 |
 | `pnpm run api`                              | Build the `vortex-api` package only                                                                                                                                                                                     |
 | `pnpm run test`                             | Run all unit + integration tests except `@vortex/e2e`                                                                                                                                                                   |
@@ -69,7 +72,7 @@ The app under `src/` is split by Electron process plus shared and query layers:
 ### Main process
 
 - Entry `src/main/src/main.ts` -> constructs `Application` (`Application.ts`). Top of `main.ts` also answers `get-app-info` IPC for forked child processes and handles `VORTEX_E2E=1` userData/appData redirection for test isolation.
-- `Application.ts` orchestrates startup: `setupAppEvents`, `regularStart` / `regularStartInner`, splash (`SplashScreen.ts`), main window (`MainWindow.ts`), persistence (`setupPersistence`), migration (`migrateIfNecessary`), install-type / admin checks. Private fields use the `m` prefix (`mLevelPersistors`, `mMainWindow`, …).
+- `Application.ts` orchestrates startup: `setupAppEvents`, `regularStart` / `regularStartInner`, splash (`SplashScreen.ts`), main window (`MainWindow.ts`), persistence (`setupPersistence`), migration (`migrateIfNecessary`), install-type / admin checks. Its private fields use the legacy `m` prefix (`mLevelPersistors`, `mMainWindow`, …); new code prefers `#` private fields (`VORTEX_CODESTYLE.md`).
 - IPC: `ipc.ts` / `ipcHandlers.ts`. Downloads live under `src/main/src/downloading/`. Telemetry under `src/main/src/telemetry/`. Feature flags under `src/main/src/unleash/` (Unleash client + IPC).
 - Main-side extensions: `src/main/src/extensions/` (`autoupdater.ts`, `updater.ts`, `nexusIntegration.ts`).
 
@@ -105,7 +108,7 @@ Vortex has **two** extension directories. Do not confuse them.
     - Deployment methods: `hardlink_activator`, `symlink_activator` (+ `_elevate`), `move_activator`, `null_activator`.
     - Platform/integration: `nexus_integration`, `browse_nexus`, `gamemode_management`, `gameversion_management`, `profile_management`, `category_management`, `collections`, `updater`, `health_check`, `recovery`. (`collections_integration` was folded into `collections` during the install-session rework; its install-session types now live at `src/renderer/src/types/collections/ICollectionInstallSession.ts`.)
     - UI/dashlets: `dashboard`, `*_dashlet` (announcement, firststeps, news, starter, mod*spotlights, onboarding), `settings*\*`.
-    - Note: `extensions/collections/` phased-install logic actually lives at `src/renderer/src/extensions/mod_management/InstallManager.ts` (see Collections below) — the `AGENTS-COLLECTIONS.md` path `src/extensions/...` is stale.
+    - Note: collections' phased-install logic lives in `src/renderer/src/extensions/mod_management/InstallManager.ts`, not under `collections/` (see Collections below).
 
 2. **Bundled extensions** — `extensions/` at repo root. Separately-bundled extensions shipped with the app (rolldown via `scripts/extensions-rolldown.mjs`). Includes:
     - Gamebryo/Bethesda stack: `gamebryo-plugin-management`, `gamebryo-archive-*`, `gamebryo-bsa-support`, `gamebryo-savegame-management`, etc.
@@ -114,11 +117,11 @@ Vortex has **two** extension directories. Do not confuse them.
     - Tooling: `collections`, `mod-dependency-manager`, `fnis-integration`, `script-extender-installer`, `nmm-import-tool`, `mo-import`, `meta-editor`, `quickbms-support`, `mtframework-arc-support`, and more.
     - **`extensions/games/`** — 86 first-party `game-*` extensions (one folder per game). These are the in-tree equivalents of the third-party extensions in `ChemBoy1-Vortex-Games`.
 
-A reference scaffold for new extensions lives at `samples/sample-extension/` (per AGENTS-DIRECTORIES). Extension authoring against the published API: see `REGISTER_GAME.md` and the `vortex-api` type declarations.
+There is no in-tree sample extension; the `extensions/games/` folders and `src/renderer/src/extensions/gamebryo_plugin_management/` (which `docs/repo-layout.md` names as reference reading) are the worked examples. Extension authoring against the published API: see `REGISTER_GAME.md` and the `vortex-api` type declarations.
 
 ### Collections & phased install
 
-Collections install in **phases**; each phase must complete and deploy before the next starts (Phase 0 = framework mods like SMAPI, Phase 1+ = content). Core logic + invariants live in `InstallManager.ts` (`mInstallPhaseState`, `ensurePhaseState`, `markPhaseDownloadsFinished`, `maybeAdvancePhase`, `pollPhaseSettlement`, `startPendingForPhase`). Rule of thumb when touching it: never bypass phase gating, check both `active === 0` and `pending === 0` before deploying, keep `isDeploying` accurate. Tests: `__tests__/PhasedInstaller.test.ts`. See `COLLECTIONS_FEATURE.md` for the registration API.
+Collections install in **phases**; each phase must complete and deploy before the next starts (Phase 0 = framework mods like SMAPI, Phase 1+ = content). Core logic + invariants live in `InstallManager.ts` (`mInstallPhaseState`, `ensurePhaseState`, `markPhaseDownloadsFinished`, `maybeAdvancePhase`, `pollPhaseSettlement`, `startPendingForPhase`). Rule of thumb when touching it: never bypass phase gating, check both `active === 0` and `pending === 0` before deploying, keep `isDeploying` accurate. The authority is `docs/mod-management/collections.md` (full invariants in `VORTEX_AGENT_GUIDES.md`). Tests: `InstallManager.optionalPhaseGate.test.ts`, `InstallManager.optionals.test.ts`, `util/InstallPhaseTracker.test.ts`, `util/rulePhase.test.ts` under `mod_management/`. See `COLLECTIONS_FEATURE.md` for the registration API.
 
 ## How Vortex works (runtime flow)
 
@@ -151,7 +154,7 @@ Driven by `mod_management/InstallManager.ts` (large file; phased-install invaria
 4. **Run install** — the chosen `install()` returns `IInstallResult` = a list of `IInstruction`s (copy, mkdir, generatefile, iniedit, setmodtype, attribute, rule, submodule, enableallplugins, …). `InstallManager`'s instruction-collector class buckets them by type.
 5. **Stage** — the archive is extracted and instructions applied into the **staging folder** (`util/getInstallPath.ts`, `stagingDirectory.ts`) under a per-mod `installationPath` folder. Variant mods append `+variant` to the folder name. The mod is now _installed_ (in state) but **not yet on disk in the game** — that's deployment.
 6. **Modtype** — `setmodtype` instructions / modtype extensions (`modtype-*`) route a mod's files to a destination other than the game's data dir (e.g. BepInEx, ENB). Each modtype supplies its own target path.
-7. **Collections** install in phases (Phase 0 framework -> Phase 1+ content); each phase must deploy before the next (`COLLECTIONS_FEATURE.md`, AGENTS-COLLECTIONS).
+7. **Collections** install in phases (Phase 0 framework -> Phase 1+ content); each phase must deploy before the next (`COLLECTIONS_FEATURE.md`, `docs/mod-management/collections.md`).
 
 `simulate()` is a dry-run that produces instructions without committing — used for previews and conflict detection.
 
@@ -235,41 +238,44 @@ Notifications are session-state entries deduped by `id` (re-send updates in plac
 | `pe-resources`         | `pe-resources`                 | Shared PE resource-section parser (backs `exe-version` + `icon-extract`) |
 | `extension-test-mocks` | `@vortex/extension-test-mocks` | Mocks for testing extensions                                             |
 | `game-extension-test`  | `@vortex/game-extension-test`  | Test harness for game extensions                                         |
+| `file-dependency-resolver` | —                          | File-to-file dependency resolver behind the file-level requirements health check |
 | `e2e`                  | `@vortex/e2e`                  | Playwright E2E runner                                                    |
 
-> The `AGENTS-DIRECTORIES.md` "Packages" section lists `paths`, `paths-node`, `game-extension-helpers`, `install-entries` — those do **not** exist in the current tree; use the table above.
+`docs/repo-layout.md` keeps the authoritative package list.
 
 ## Testing
 
-- **Unit/integration:** vitest, colocated `*.test.ts`. Run a single file with `pnpm run test -- <path>`. Extension tests that import `vortex-api` need a local `vitest.config.ts` alias to `__mocks__/vortex-api.ts`, mocking only the used exports (see `AGENTS-TESTING.md`).
+- **Unit/integration:** vitest, colocated `*.test.ts`. Run a single file with `pnpm exec vitest run <file>` from inside the owning project directory (`pnpm run test` cannot be scoped). Extension tests that import `vortex-api` need a local `vitest.config.ts` alias to `__mocks__/vortex-api.ts`, mocking only the used exports (see `docs/testing.md`).
 - **E2E:** Playwright via `@vortex/e2e` (`pnpm run e2e`). `VORTEX_E2E=1` plus `ELECTRON_USERDATA`/`ELECTRON_APPDATA` isolate each **test's** data — the fixture launches one Electron process per test, not per worker. Not a PR gate: `e2e.yml` only triggers on PRs that touch `packages/e2e/**`, so UI changes have to be run locally.
-- **What a PR ships:** a test for the change at the lowest layer that can observe it, run before submitting. Both layers, their fixtures, and the Playwright rules are in `VORTEX_TESTING.md` (`AGENTS-TESTING.md` covers only the vitest half, and `packages/e2e/README.md` is stale in several places).
+- **What a PR ships:** a test for the change at the lowest layer that can observe it, run before submitting. Both layers, their fixtures, and the Playwright rules are in `VORTEX_TESTING.md` (`docs/testing.md` covers only the vitest half, and `packages/e2e/README.md` is stale in several places). The PR policy itself — size limits, CI gates, `pnpm run verify` — is in `VORTEX_CONTRIBUTING.md`.
 
 ## Release & branching
 
 - **`master` is home** — main development line. Each version stabilises on its own branch (`v2.0`, `v2.1`, …) cut from master; alpha/beta/stable all live on that branch. Tags are semver (`v2.0.0-beta.1`, `v2.0.0`, patch `v2.0.1`). No separate hotfix branches — hotfixes go on the release branch. (`docs/branching-and-release-strategy.md`, `docs/cherry-pick-workflow.md`.)
 - **Cadence:** 2-week beta cycle — beta cut from master on a Monday, promoted to stable 2 weeks later. Three update channels: Stable (default), Beta, No-auto-update. Nightly unpacked artifacts on GitHub Actions (`nightly.yml`), not pushed via update channel. (`RELEASES.md`.)
-- **API for extension devs:** `@nexusmods/vortex-api` published to NPM with every beta + stable (first stable `2.2.0`, 2026-06-30). NPM is now the only distribution channel — the standalone `Nexus-Mods/vortex-api` GitHub repo was archived on 2026-07-14 and its sync workflows removed (PR #23679). Breaking changes get a ~2-release / 4-week deprecation window where possible; affected authors notified. (`RELEASES.md`, `packages/vortex-api/docs/MIGRATION.md` — see `VORTEX_2_MIGRATION.md`.)
-- **Release tooling:** `docs/publishing-releases.md`, `scripts/publish-release-to-nexus/`, `docs/packaging/`, `docker/`, `flatpak/` (Linux).
+- **API for extension devs:** `@nexusmods/vortex-api` published to NPM with every beta + stable (first stable `2.2.0`, 2026-06-30). NPM is now the only distribution channel — the standalone `Nexus-Mods/vortex-api` GitHub repo was archived on 2026-07-14 and its sync workflows removed (PR #23679). Breaking changes get a two-minor-release deprecation window where possible, and the replacement must already work in the current stable before anything is deprecated; affected authors notified. (`RELEASES.md`, `packages/vortex-api/docs/MIGRATION.md` — see `VORTEX_2_MIGRATION.md` and `VORTEX_CONTRIBUTING.md`.)
+- **Release tooling:** `docs/publishing-releases.md`, `scripts/publish-release-to-nexus/`, `docs/packaging/`, `flatpak/` (Linux). The Docker images and the GitLab pipeline were removed in October 2026.
 
 ## Code style highlights (`CODESTYLE.md`)
 
-- Airbnb baseline. Soft 100 / hard 150 char lines; soft 25-line functions.
+- Soft 100 / hard 150 char lines; soft 25-line functions (the "airbnb baseline" it names is not the configured one — see `VORTEX_CODESTYLE.md`).
 - ES6 `async`/`await`, **no Bluebird** (`.catch(Type, fn)` and `Promise.map` are banned).
-- Naming: `I`-prefixed interfaces, `m`-prefixed private members, PascalCase types/enums/components, `UPPER_SNAKE_CASE` exported consts.
+- Naming: `I`-prefixed interfaces, `#` private fields for new code (legacy code uses `m`-prefixed `private` members), PascalCase types/enums/components, `UPPER_SNAKE_CASE` exported consts.
 - All front-end text localizable + static; dynamic error-message parts go in quotes so error-report grouping ignores them.
 - Files primarily containing a class/component are UpperCamelCase; free-function files are lowerCamelCase.
 
-## AGENTS docs in-repo (quick map)
+## In-repo guidance (quick map)
 
-| File                             | Use                                                                |
-| -------------------------------- | ------------------------------------------------------------------ |
-| `AGENTS.md`                      | Entry: use `pnpm run`; run build/test/lint/format after changes    |
-| `AGENTS-DIRECTORIES.md`          | Navigation map (note stale Packages section)                       |
-| `AGENTS-TESTING.md`              | vitest + mock-alias conventions (says nothing about the E2E suite) |
-| `AGENTS-DEBUGGING.md`            | F5 debug both processes; `VORTEX_TRACE_DB_WRITES`                  |
-| `AGENTS-COLLECTIONS.md`          | Phased install (note stale `src/extensions/...` path)              |
-| `CONTRIBUTE.md` / `CODESTYLE.md` | Setup + code standards                                             |
+| File                              | Use                                                                                     |
+| --------------------------------- | --------------------------------------------------------------------------------------- |
+| `AGENTS.md`                       | Agent operating rules: `verify`, dev-session caveat, branded game ids, which doc to read |
+| `docs/README.md`                  | Index of all project docs (layout, frontend, state, testing, debugging, subsystems)     |
+| `CONTRIBUTING.md`                 | Setup, small-PR policy, AI-assisted contribution rule                                   |
+| `CODESTYLE.md`                    | Written code standard                                                                   |
+| `RELEASES.md`                     | Cadence, channels, API deprecation windows                                              |
+
+The five `AGENTS-*.md` topic files that used to sit at the root were folded into `docs/` in August
+2026; `VORTEX_AGENT_GUIDES.md` maps where each topic went.
 
 ## See also (extension-API docs)
 
@@ -277,8 +283,8 @@ Notifications are session-state entries deduped by `id` (re-send updates in plac
 install, update, load-order, deployment, discovery/activation, profile-switch, and extension-load
 flows).
 
-Contributing to the app itself: `VORTEX_DEV_BUILD.md` (build from source) ·
+Contributing to the app itself: `VORTEX_CONTRIBUTING.md` (PR policy, CI gates, per-change-type rules) · `VORTEX_DEV_BUILD.md` (build from source) ·
 `VORTEX_TESTING.md` (vitest and Playwright layers, and what a pull request has to ship) ·
 `VORTEX_CODESTYLE.md` (conventions and their enforcement) · `VORTEX_AGENT_GUIDES.md` (the repo's own
-`AGENTS*.md` instruction set and packaged skills) · `VORTEX_DATABASES.md` (what these persistence
+`AGENTS.md`, `docs/` tree and packaged skills) · `VORTEX_DATABASES.md` (what these persistence
 layers actually write to disk, and how to read it back without the app).

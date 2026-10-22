@@ -4,8 +4,8 @@ How to get a clone of `Nexus-Mods/Vortex` from freshly-cloned to running, on Win
 verify a change to the app before opening a pull request. The repo layout those commands operate on
 is described in `VORTEX_APP.md`.
 
-Everything below was carried out on a Windows 11 clone of the `master` line pinned to
-Node `24.17.0` / pnpm `11.10.0`. Version pins move — always read the current
+Everything below was checked against a Windows 11 clone of the `master` line pinned to
+Node `24.20.0` / pnpm `11.10.0`. Version pins move — always read the current
 `package.json` and `pnpm-workspace.yaml` rather than trusting the numbers quoted here.
 
 ---
@@ -41,32 +41,28 @@ The repo's own guides live at `docs/install-instructions/windows.md` (prerequisi
 
 ## 2. Node and pnpm
 
-The root `package.json` pins an **exact** Node version in `engines` and `devEngines`, and
-`pnpm-workspace.yaml` sets `engineStrict: true`. A different Node version — even a newer patch of
-the same major — is rejected at install time, so match the pin exactly.
-
-Any version manager works. With **nvm for Windows**:
+**pnpm is the only tool to install by hand.** The repo pins both its pnpm and its Node versions and
+fetches them itself, so no version manager, Corepack, or global Node is needed:
 
 ```powershell
-nvm install 24.17.0
-nvm use 24.17.0
-node -v          # must print the pinned version
+winget install -e --id pnpm.pnpm      # or: iwr https://get.pnpm.io/install.ps1 -UseBasicParsing | iex
+pnpm --version                        # any version; it only bootstraps
 ```
 
-The repo's `docs/install-instructions/shared.md` recommends Volta instead. Note that page currently
-tells you to install `node@22`, which contradicts the `engines` pin and will fail `engineStrict` —
-install the version `package.json` actually asks for.
-
-pnpm is pinned by the `packageManager` field and is installed through Corepack, which ships with
-Node:
+On `pnpm install`, pnpm reads `packageManager` from `package.json` and switches itself to that exact
+version, then downloads the Node runtime declared in `devEngines.runtime` (`onFail: "download"`).
+Repo scripts resolve `node` from `node_modules/.bin` first, so whatever Node is on `PATH` does not
+matter and does not conflict. Check the version the repo actually runs with:
 
 ```powershell
-corepack enable pnpm
-pnpm -v          # must match the packageManager pin
+pnpm exec node --version     # the pinned runtime, not necessarily the one on PATH
+pnpm nx --version            # nx is a dev dependency; never install it globally
 ```
 
-In a non-interactive shell, set `COREPACK_ENABLE_DOWNLOAD_PROMPT=0` so Corepack fetches the pinned
-pnpm without waiting on a confirmation prompt.
+`pnpm-workspace.yaml` still sets `engineStrict: true`, and `engines.node` is an exact version, so
+anything that bypasses pnpm's managed runtime with a different Node is rejected at install. An older
+nvm or Corepack setup keeps working only while it matches the pin exactly; the repo's guides dropped
+both (and Volta) in favour of the pnpm-managed runtime.
 
 ---
 
@@ -105,9 +101,52 @@ pnpm run build     # nx run-many -t build lint typecheck, then the dependency-re
 pnpm run start     # nx run @vortex/main:start -> electron .
 ```
 
-`start` depends on `build`, so nx builds whatever is stale before launching. `CONTRIBUTE.md` and the
-VS Code debugging notes still refer to `pnpm run build:all`; that script no longer exists — use
-`pnpm run build`.
+`start` depends on `build`, so nx builds whatever is stale before launching. Run `pnpm run build`
+before VS Code **F5** ("Debug Electron", a compound of main and renderer debuggers on port `9222`)
+so source maps are current.
+
+### Hot reload: `pnpm run dev`
+
+For renderer work, `pnpm run dev` replaces the build/start cycle with watch builds and hot module
+replacement:
+
+- `.tsx` component edits hot-swap in place (react-refresh), keeping React and Redux state.
+- Edits that can't be hot-applied — reducers, utilities, an extension's `index.ts` init code —
+  trigger a clean window reload automatically.
+- Tailwind class changes rebuild `tailwind-v4.css` and swap the stylesheet without a reload.
+- **Not covered:** main process (`src/main`), preload and `@vortex/shared` changes need `dev`
+  restarted; the separately bundled extensions in `extensions/` and `extensions/games/` need an app
+  relaunch.
+
+Console lines prefixed `[vortex-hmr]` report applied updates and fallback reloads. Hot-swapped code
+can leave line breakpoints stale until the next full reload (Ctrl+R). DevTools works as usual
+(`START_DEVTOOLS=true`, or `pnpm run dev --inspect=9229`), and a dev session exposes remote
+debugging on `127.0.0.1:9222`.
+
+> [!WARNING]
+> Do not run `pnpm run verify` or `pnpm run build` while `dev` is running. The build writes
+> production output into `src/main/build`, the directory the dev app loads from; it overwrites the
+> CSS the Tailwind watcher owns and replaces the HMR renderer bundle, leaving broken styles and dead
+> hot reload until `dev` is restarted. While `dev` runs, use `pnpm run typecheck`, `pnpm run lint`,
+> `pnpm run format` and single-file tests.
+
+### Diagnostic environment variables
+
+Set in `.env` or the launching shell (`docs/DEBUGGING-GUIDE.md` owns the full list):
+
+| Variable                                  | Effect                                                                                              |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `VORTEX_TRACE_DB_WRITES=1`                | `level_pivot Write enter`/`exit` breadcrumbs per persistence write; an enter with no exit is a hung write |
+| `VORTEX_ENABLE_LOGGING=1`                 | File logging in a build that isn't `NODE_ENV=development`                                           |
+| `START_DEVTOOLS=true`                     | Open DevTools on launch                                                                             |
+| `DEBUG_REACT_RENDERS=true`                | Stop focus/blur from updating state, so inspecting renders doesn't cause renders                    |
+| `HIGHLIGHT_I18N=true`                     | Uppercase every translated string and prefix it `TT:`, exposing hardcoded text                      |
+| `VORTEX_DEV_UPDATER=1`, `VORTEX_UPDATER_REPO` | The updater does nothing from source unless set; the repo override points it at e.g. Vortex-Staging |
+| `VORTEX_E2E=1`, `VORTEX_E2E_HEADLESS=1`   | Set only by the Playwright harness                                                                  |
+
+Even without `VORTEX_TRACE_DB_WRITES`, a single persistence write over 250 ms logs a
+`level_pivot slow Write` warning. In the DevTools console, `window.store.getState()` exposes the
+whole Redux state.
 
 Packaging (`pnpm run package`, or `package:nosign` without code signing) does a production build and
 then runs electron-builder.
@@ -187,6 +226,7 @@ Repo-wide equivalents:
 
 | Command                          | Effect                                                                                                                                                                                   |
 | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm run verify`                | The pre-PR gate: `format`, then `build` (build + lint + typecheck), then `test`. Excludes E2E. Never while `dev` is running                                                              |
 | `pnpm run typecheck`             | `tsc` across every project                                                                                                                                                               |
 | `pnpm run lint` / `lint:verbose` | ESLint across every project (`--quiet` hides warnings)                                                                                                                                   |
 | `pnpm run test`                  | vitest unit + integration, excluding the Playwright E2E package                                                                                                                          |
@@ -197,7 +237,8 @@ Unit tests are colocated with the code as `src/**/*.test.ts(x)` and run under vi
 a renderer utility can usually be covered by a test file placed next to it.
 
 A pull request is expected to arrive with tests for the change and with evidence that they were run.
-`pnpm run test` covers the vitest layers and is what CI checks; the Playwright suite is **not** a PR
+`pnpm run verify` covers formatting, lint, typecheck, build and the vitest layers, which is what CI
+checks; the Playwright suite is **not** a PR
 gate — `e2e.yml` only triggers on PRs that touch `packages/e2e/**` — so a change to a UI flow has to be
 exercised locally with `pnpm run e2e`. Writing tests for either layer is covered in `VORTEX_TESTING.md`.
 
@@ -207,8 +248,9 @@ exercised locally with `pnpm run e2e`. Writing tests for either layer is covered
 
 | Symptom                                                                         | Cause / fix                                                                                                                      |
 | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `Unsupported engine` at install                                                 | Active Node does not match the exact `engines` pin; `engineStrict: true` makes this fatal                                        |
-| `pnpm` not found                                                                | Corepack not enabled, or the shim was created for a different Node install — re-run `corepack enable pnpm` under the pinned Node |
+| `Unsupported engine` at install                                                 | Something bypassed pnpm's managed runtime with a Node that doesn't match the exact pin; run through `pnpm`, check `pnpm exec node --version` |
+| `pnpm` not found                                                                | Install it (`winget install -e --id pnpm.pnpm`) and reopen the terminal; Corepack is no longer part of the setup |
+| Broken styles / dead HMR in a `dev` session                                     | A `build` or `verify` ran while `dev` was live and overwrote `src/main/build`; restart `pnpm run dev`                           |
 | Editor floods with `Cannot find module 'react'` / `Cannot find namespace 'JSX'` | Dependencies were never installed (or were installed for a different Node); run `pnpm install`                                   |
 | `node-gyp` failures mentioning MSVC, ATL, MFC, or the Windows SDK               | Build Tools workload incomplete — add the individual components listed in section 1                                              |
 | A stale target keeps passing after an edit                                      | nx served it from cache; the inputs list in `nx.json` decides invalidation. `pnpm nx reset` clears the cache                     |
@@ -217,6 +259,7 @@ exercised locally with `pnpm run e2e`. Writing tests for either layer is covered
 
 ## See also
 
+`VORTEX_CONTRIBUTING.md` (PR policy, CI gates, what to run before opening) ·
 `VORTEX_APP.md` (repo layout, process model, persistence, and where each subsystem lives) ·
 `VORTEX_TESTING.md` (both test layers in depth: what a PR has to ship, and how to write vitest and
 Playwright tests for this app) ·

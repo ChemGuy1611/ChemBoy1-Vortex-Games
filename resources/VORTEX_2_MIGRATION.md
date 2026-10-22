@@ -247,3 +247,4 @@ this doc; see disambiguation above). `VORTEX_DEV_BUILD.md` (building the 2.x app
 to test against it). `VORTEX_REACT_PAGES.md` (page and component authoring against the React 18
 runtime this guide's React section covers). `LOAD_ORDER_REGISTRATION.md` (`usageInstructions` and
 `customItemRenderer`, two of the registration surfaces retyped for React 18).
+`VORTEX_CONTRIBUTING.md` (the deprecation-window rules a change to the published API has to follow).

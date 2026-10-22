@@ -32,7 +32,8 @@ tag-checked: the two-tag policy does not cover non-extension mods (2026-10-10 us
 call), so this list is status reporting only, not a worklist.
 
 Unreleased extensions (EXTENSION_URL unset/XXX/non-Nexus) are skipped -- no live page to
-check. battlefield1 is excluded as frozen, same carve-out as the store-id audit. A
+check. Deprecated extensions (resources/lists/games-deprecated.txt) are excluded as
+frozen, same carve-out as the store-id audit. A
 one-off exception can be parked with a marker on the EXTENSION_URL line:
 
     const EXTENSION_URL = "..."; //!audit-skip: modpage-tags - <reason>
@@ -66,14 +67,10 @@ from vortex_utils import (
     REPO_ROOT, HELPER_PREFIX, iter_game_folders, read_index_js,
     extract_extension_url, parse_nexus_mod_url,
     audit_skip_lines, AUDIT_SKIP_MODPAGE,
-    get_api_key, nexus_graphql,
+    get_api_key, nexus_graphql, DEPRECATED_GAMES,
 )
 
 TARGET_TAGS = {4694: "Game Extension", 4902: "AI Assisted"}
-
-# Same carve-out as the store-id audit (feedback_store_id_audit) -- frozen, no more
-# updates, excluded from bulk sweeps. See memory project_deprecated_extensions.
-FROZEN_GAME_IDS = {"battlefield1": "frozen extension (project_deprecated_extensions)"}
 
 ALIAS_BATCH_SIZE = 30
 BATCH_SLEEP_SECONDS = 0.5
@@ -92,7 +89,7 @@ def _make_entry(folder, game_id, src, url, helper=False):
     if not parsed:
         return None
     domain, mod_id = parsed
-    suppress_reason = FROZEN_GAME_IDS.get(game_id)
+    suppress_reason = "frozen extension (games-deprecated.txt)" if game_id in DEPRECATED_GAMES else None
     if not suppress_reason:
         skip_hits = audit_skip_lines(src, AUDIT_SKIP_MODPAGE)
         if skip_hits:

@@ -85,6 +85,59 @@ set, so once a higher-priority mod has placed a file, lower-priority mods skip i
   deployed, restoring the game folder. `genSubDirFunc(game, modType)` maps mods to subdirs.
   Always **purge before** switching activators or profiles.
 
+## External changes
+
+Before each deployment, `dealWithExternalChanges` compares the game folder against the last
+manifest and decides what to do about anything that changed outside Vortex. The repo's own deep
+dive is `docs/mod-management/EXTERNAL-CHANGES.md`; code in `mod_management/util/externalChanges.ts`,
+the dialog in `views/ExternalChangeDialog.tsx`.
+
+```text
+activator.externalChanges()        per mod type -> IFileChange[]
+  -> classifyExternalChange()      merged | autoResolved | rest
+  -> existingSourceFolders()       which mod folders are still in staging
+  -> changeToEntry()               IFileEntry with its preselected action
+  -> showExternalChanges(entries)  fills state.session.mods.changes, opens the dialog
+  -> setExternalChangeAction()     user edits
+  -> confirmExternalChanges()      resolves the promise
+  -> applyFileActions()            file operations, updated manifest
+```
+
+### Change types
+
+| Type         | What happened                                                              | Default action                                                                          |
+| ------------ | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `refchange`  | The deployed file was replaced or rewritten (another tool, the game, by hand) | `newest` — keep whichever side has the newer timestamp                                  |
+| `valchange`  | The bytes changed in place through a hard link, so both sides already agree | `nop` (never shown in the dialog)                                                       |
+| `deleted`    | The deployed link was removed from the game folder; staging still has it   | `restore` — drop it from the manifest so the next deployment re-creates it              |
+| `srcdeleted` | The staging file is gone but the deployed copy remains                     | `import` (move it back into staging) while the mod's staging folder exists, else `drop` |
+
+"Save" in the dialog means accept the external change as permanent; "Revert" means undo it.
+`refchange` offers `drop` (revert to the staging file), `import` (copy the game-folder file over the
+staging one) and `newest`. `deleted` offers `restore` or `delete` — the latter removes the staging
+file too and asks for confirmation when more than one file is affected. `srcdeleted` offers `import`
+or `drop`. The dialog groups entries by source mod by default and can list individual files.
+
+### Silent resolution
+
+Two buckets never reach the dialog and resolve with the internal defaults (`refchange` → `drop`,
+`valchange` → `nop`, `deleted` → `restore`, `srcdeleted` → `drop`), treating staging as the source
+of truth:
+
+- **Merged files** — sources under the `__merged` folder (`MERGED_PATH`).
+- **Expected changes** — a collection install is running, or the change belongs to a mod Vortex
+  itself just touched (its folder is in the deployment's `recentChanges`, e.g. after an update or
+  reinstall).
+
+`EXTERNAL-CHANGES.md` describes the second trigger as an `autoResolveAll` setting; no such flag exists
+in the code — the decision is `classifyExternalChange(change, { isInstallingCollection,
+recentChanges })`.
+
+Two of these defaults are recent: the "keep mod files by default" change (first in
+v2.10.0-beta.1) made `deleted` default to `restore` and `srcdeleted` to `import` while the mod
+folder exists. Earlier releases preselected `delete` for `deleted` — the destructive choice that
+also removes the staging file — and `drop` for every `srcdeleted` entry.
+
 ## Events (runtime)
 
 | Event                                                     | Direction      | Purpose                            |
@@ -97,11 +150,10 @@ set, so once a higher-priority mod has placed a file, lower-priority mods skip i
 | `purge-mods-in-path` (gameId, modType, modPath)           | `onAsync`      | Targeted purge                     |
 | `await-activation` (cb)                                   | on             | Wait for any in-flight deployment  |
 
-## Deployment fixes on `master` that no release tag contains yet
+## Deployment fixes first shipped in v2.10.0-beta.1
 
-Checked 2026-10-17 against `master` (e7698e5a0): none of these commits is in a tag up to
-v2.9.0-beta.4, so a user on any release does not have them. Re-check which tag first carries each
-one before relying on it.
+None of these commits is in v2.9.0 or any earlier tag; all five first ship in v2.10.0-beta.1
+(checked 2026-10-21). A user on the stable line does not have them yet.
 
 - **A game file's backup is never overwritten.** When a link deployment moves a game file aside to
   `<file>.vortex_backup` and that backup name is already taken (a second mod type deploying over the
@@ -139,7 +191,7 @@ one before relying on it.
 
 Runtime siblings: `VORTEX_MOD_INSTALL.md`, `VORTEX_PROFILES.md`, `VORTEX_GAME_LIFECYCLE.md`,
 `VORTEX_EVENT_BUS.md`. Overview: `VORTEX_APP.md`. Authoring: `DEPLOYMENT_MANIFEST.md`,
-`REGISTER_MERGE.md`. Link mechanics behind each activator (hard links, symlinks, elevation,
+`REGISTER_MERGE.md`. Contributing a change here: `VORTEX_CONTRIBUTING.md`. Link mechanics behind each activator (hard links, symlinks, elevation,
 per-method purge): `NTFS_LINKS.md`. Diagram of deploy/purge: `VORTEX_FLOWCHARTS.md` §4. Third-party purge trigger that leaves
 `deploymentNecessary` set without re-deploying: `STEAM_FILE_DOWNLOADER.md`. A worked case of a mod
 type target chosen to keep mods on the staging volume so hardlinks stay available: `RESOREP.md`.
