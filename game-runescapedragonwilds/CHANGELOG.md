@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.2.7] - 2026-10-23
+
+- Fixed: RuneSchema Loader now shows on the UE4SS load order page as its Vortex mod instead of a manual mod.
+
 ## [1.2.6] - 2026-10-16
 
 - Added the game's Nexus Mods ID to the extension's info file.

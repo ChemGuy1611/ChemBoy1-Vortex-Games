@@ -2,8 +2,8 @@
 Name: RuneScape: Dragonwilds Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 1.2.6
-Date: 2026-10-16
+Version: 1.2.7
+Date: 2026-10-23
 Notes:
 -
 ////////////////////////////////////////////////*/
@@ -301,7 +301,8 @@ let DLL_PATH = SCRIPTS_PATH;
 
 const SCHEMALOADER_ID = `${GAME_ID}-runeschemaloader`;
 const SCHEMALOADER_NAME = "RuneSchema Loader";
-const SCHEMALOADER_FILE = path.join("RuneSchema", "dlls", "main.dll");
+const SCHEMALOADER_FOLDER = "RuneSchema";
+const SCHEMALOADER_FILE = path.join(SCHEMALOADER_FOLDER, "dlls", "main.dll");
 let SCHEMALOADER_PATH = path.join(SCRIPTS_PATH);
 
 const SCHEMA_ID = `${GAME_ID}-runeschema`;
@@ -1889,6 +1890,12 @@ function testSchemaLoader(files, gameId) {
 //Install RuneSchema mod loader
 function installSchemaLoader(files) {
   const setModTypeInstruction = { type: "setmodtype", value: SCHEMALOADER_ID };
+  //Loader is a UE4SS mod folder, so tag it for the UE4SS load order to match by folder name
+  const MOD_ATTRIBUTE = {
+    type: "attribute",
+    key: LO_ATTRIBUTE_UE4SS,
+    value: SCHEMALOADER_FOLDER,
+  };
 
   const filtered = files.filter((file) => !file.endsWith(path.sep));
   const instructions = filtered.map((file) => {
@@ -1899,6 +1906,7 @@ function installSchemaLoader(files) {
     };
   });
   instructions.push(setModTypeInstruction);
+  instructions.push(MOD_ATTRIBUTE);
   return Promise.resolve({ instructions });
 }
 
@@ -2495,6 +2503,10 @@ async function deserializeUe4ss(api) {
 
   //Determine if mod is managed by Vortex (async version)
   const isVortexManaged = async (modId) => {
+    //RuneSchema marker file is deleted after deployment, so check for an installed loader mod instead
+    if (modId === SCHEMALOADER_FOLDER) {
+      return Object.values(mods).some((mod) => mod?.type === SCHEMALOADER_ID);
+    }
     return fsp
       .stat(path.join(modFolderPath, modId, `__folder_managed_by_vortex`))
       .then(() => true)
@@ -4393,7 +4405,7 @@ async function retagFomodPakMod(api, gameId, modId) {
 //recipes, raw, blueprints, etc.), which the game's mod loader doesn't expect.
 async function deleteSchemaMarkerFiles(api) {
   GAME_PATH = getDiscoveryPath(api);
-  const folder = path.join(GAME_PATH, SCHEMALOADER_PATH, "RuneSchema");
+  const folder = path.join(GAME_PATH, SCHEMALOADER_PATH, SCHEMALOADER_FOLDER);
   const markerPaths = [];
   await util.walk(
     folder,
