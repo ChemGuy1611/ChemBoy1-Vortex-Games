@@ -2,6 +2,10 @@
 
 Covers `template-unitymelonloaderbepinex-hybrid`. Suite file: `tests/templates/unitymelonloaderbepinex-hybrid.test.js`.
 
+## [2026-10-23]
+
+- Added: tests for the new `hasTextureReplacer` toggle (see the template's changelog entry of this date): registration (mod type at 44 with its name, installer at 35, both absent with the toggle off) and routing (prefixed `.png` in any case, unprefixed `.png`, wrong extension, an archive with a `.dll`); the placeholder prefix never matching; install output anchored on the shallowest texture with a subfolder listed first, and a full `BepInEx/plugins/TextureReplacer` path flattened to the folder's root; setup creating the `TextureReplacer` folder only with the toggle on. Suite is now 473 tests.
+
 ## [2026-10-20]
 
 - Changed: the template's save installer now sets the new save mod type (see its changelog entry of this date). The three save install-output tests expect `XXX-save` instead of `XXX-assets`; the one titled "installs a save file as an assets mod, since there is no save mod type" is renamed "installs a save file as a save mod".

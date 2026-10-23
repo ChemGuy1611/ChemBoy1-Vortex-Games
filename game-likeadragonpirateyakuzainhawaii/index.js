@@ -2,8 +2,8 @@
 Name: Like a Dragon: Pirate Yakuza in Hawaii Vortex Extension
 Structure: SRMM Game
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-10-16
+Version: 1.0.2
+Date: 2026-10-22
 Notes:
 -
 ////////////////////////////////////////////////////////////*/
@@ -31,7 +31,12 @@ const GOGAPP_ID = "XXX";
 const XBOXAPP_ID = "SEGAofAmericaInc.s1b05f489rw"; //!audit-skip: store-id - not active yet, the game crashes on launch with the SRMM injector installed; the package id is "SEGAofAmericaInc.s1b05f489rw"
 const XBOXEXECNAME = "runtime.media.startup";
 const XBOX_PUB_ID = "s751p9cej88mt"; //get from Save folder
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, STEAMAPP_ID_DEMO, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [
+  // UPDATE THIS WITH ALL VALID IDs
+  STEAMAPP_ID,
+  STEAMAPP_ID_DEMO,
+  //XBOXAPP_ID, // crashes on launch with the SRMM injector installed
+];
 
 const TOPLEVEL_FOLDER = path.join("runtime", "media");
 const EXEC = path.join(TOPLEVEL_FOLDER, "startup.exe");

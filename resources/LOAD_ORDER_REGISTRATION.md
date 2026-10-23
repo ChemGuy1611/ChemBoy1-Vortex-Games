@@ -373,15 +373,16 @@ Two behaviours behind that table:
   rows. Set the flag when rows are fixed-height and the list can get long; leave it off when rows
   wrap or grow conditional controls.
 
-### Several load orders per game (v2.9.0-beta.2 and `master` only, not in a stable release yet)
+### Several load orders per game (v2.10.0-beta.1 and `master` only, not in a stable release yet)
 
-In v2.9.0-beta.2 (2026-10-08) and on `master`, but not in v2.9.0-beta.3 or beta.4 (they are cut from
-an earlier point of `master`), a game can call `registerLoadOrder` more than once, each call with
+In v2.10.0-beta.1 (2026-10-20), beta.2 and on `master`, but not in any v2.8.x or v2.9.x tag, stable
+v2.9.0 included (those are cut from an earlier point of `master`; only the npm 2.9.0-beta.2 typings,
+built from `master`, already described it), a game can call `registerLoadOrder` more than once, each call with
 its own `loadOrderId`, and the Load Order page shows one tab per load order. Five optional fields
-on `ILoadOrderGameInfo` carry it. Vortex v2.8 and earlier ignore those fields, and they also keep
+on `ILoadOrderGameInfo` carry it. Vortex v2.9.0 and earlier ignore those fields, and they also keep
 only the **first** `registerLoadOrder` call per game (a later call for the same `gameId` is dropped
 with a debug log). An extension that must run on both should therefore register its primary load
-order first: on v2.8 the extra calls vanish and the game keeps a single list.
+order first: on v2.9.0 and earlier the extra calls vanish and the game keeps a single list.
 
 | Field               | Purpose                                                                                                                                  |
 | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
@@ -471,7 +472,7 @@ context.registerLoadOrder({
 ## 4. The internal FBLO page Vortex draws
 
 `file_based_loadorder\index.ts:305` registers the shared Load Order main page (shown as of stable
-v2.8.x and v2.9.0-beta.3/4; v2.9.0-beta.2 and `master` replace `findGameEntry` with a registry lookup and adds a tab per load order):
+v2.9.0 and every v2.8/v2.9 tag; v2.10.0-beta.1 and `master` replace `findGameEntry` with a registry lookup and adds a tab per load order):
 
 ```ts
 context.registerMainPage('sort-none', 'Load order', FileBasedLoadOrderPage, {
@@ -565,7 +566,7 @@ state.persistent.loadOrder[profileId] = ILoadOrderEntry[]
 Key point: keyed by **profile id**, not game id. Each profile has its own
 independent load order for the same game.
 
-In v2.9.0-beta.2 and on `master` this path holds only the game's _primary_ load order. Named load orders (see
+From v2.10.0-beta.1 and on `master` this path holds only the game's _primary_ load order. Named load orders (see
 "Several load orders per game") live at `state.persistent.loadOrders[profileId][loadOrderId]`.
 
 Reducers are registered at:
@@ -607,10 +608,10 @@ Serialize is **never** called directly by events -- it is only called after a us
 LO state change (`onStateChange persistent.loadOrder`). Deploy/purge events only call
 deserialize, not serialize.
 
-This table is the stable (through v2.8.x) picture. In v2.9.0-beta.2 and on `master` the "UpdateSet rebuild" on
+This table is the stable (through v2.9.0) picture. From v2.10.0-beta.1 and on `master` the "UpdateSet rebuild" on
 `did-deploy` becomes a reconcile of the game's read against the stored order, `will-purge` and
 `will-remove-mods` (with `willBeReplaced`) hold the order instead of re-reading it, and the change
-watcher covers the named-order slice too -- see `VORTEX_LOAD_ORDER.md`, "The v2.9.0-beta.2 rewrite".
+watcher covers the named-order slice too -- see `VORTEX_LOAD_ORDER.md`, "The v2.10.0-beta.1 rewrite".
 
 ---
 
@@ -685,8 +686,8 @@ anchor lines.
 Because the sidecars are not FBLO state, **none** of the core machinery that keeps a load order
 stable across a mod update applies to them (`UpdateSet`, arming from `will-remove-mods`, serialize
 suppression while an update is in flight, the fileId re-arm — see `VORTEX_LOAD_ORDER.md`). The same
-is true of any other custom `registerMainPage` order that keeps its own reducer. This still holds in
-v2.9.0-beta.2, where the replacement mechanism (the hold) also only covers registered load orders.
+is true of any other custom `registerMainPage` order that keeps its own reducer. This still holds from
+v2.10.0-beta.1, where the replacement mechanism (the hold) also only covers registered load orders.
 
 What that means in practice for a sidecar order:
 

@@ -4,6 +4,10 @@
 
 - Add: Xbox version support - NOTE: Xbox currently crashes on launch with SRMM injector installed.
 
+## [1.0.2] - 2026-10-22
+
+- Changed: The Xbox version is no longer detected until it is supported.
+
 ## [1.0.1] - 2026-10-16
 
 - Added the game's Nexus Mods ID to the extension's info file.

@@ -15,6 +15,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | MelonLoader Preferences Manager | a `melonprefmanager.il2cpp.dll` file | `Mods` |
 | Assembly Replacement Mods | a `GameAssembly.dll` file | the game folder itself (no subfolder) |
 | Plugin Mods | a `.dll` file | `BepInEx` |
+| Texturereplacer | - | `BepInEx\plugins\TextureReplacer` |
 | Asset Replacement Mods | a `.assets` file | `SOSGrandBazaar_Data` |
 | Fallback Installer | anything not matched above | - |
 
@@ -133,6 +134,12 @@ Installs to: `BepInEx`
 
 - Wrapping the DLL in a `BepInEx\plugins` folder as well - it can end up nested one level too deep.
 - Shipping a plugin together with loader files, which makes the archive look like a loader install instead.
+
+## Texturereplacer
+
+Handled by the `testTextures` installer. Inspect the extension source for the exact archive layout it expects.
+
+Installs to: `BepInEx\plugins\TextureReplacer`
 
 ## Asset Replacement Mods
 

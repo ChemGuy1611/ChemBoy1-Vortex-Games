@@ -22,12 +22,20 @@ Register event handlers inside `context.once()` to ensure all extensions are loa
 
 ## Game mode & profile
 
-| Event                 | Args                  | Description                            |
-| --------------------- | --------------------- | -------------------------------------- |
-| `gamemode-activated`  | `(gameId: string)`    | User switched to a different game mode |
-| `activate-game`       | `(gameId: string)`    | Request to activate a game             |
-| `profile-did-change`  | `(profileId: string)` | Profile has been switched              |
-| `profile-will-change` | -                     | About to switch profiles               |
+| Event                  | Args                                                         | Description                                              |
+| ---------------------- | ------------------------------------------------------------ | -------------------------------------------------------- |
+| `gamemode-activated`   | `(gameId: string)`                                           | User switched to a different game mode                   |
+| `activate-game`        | `(gameId: string)`                                           | Request to activate a game                               |
+| `game-version-changed` | `(gameId: string, oldVersion: string, newVersion: string)`   | Active game's installed version changed since last check |
+| `profile-did-change`   | `(profileId: string)`                                        | Profile has been switched                                |
+| `profile-will-change`  | -                                                            | About to switch profiles                                 |
+
+`game-version-changed` is new in Vortex v2.10.0-beta.1 (not in stable v2.9.0). The bundled game
+version check emits it with a plain `emit` when a game is activated and after a mod is installed,
+once per change in either direction. It does not fire on the first check after a game is
+discovered, since there is no stored version to compare against. The versions are whatever the
+game's version lookup returns (see `GAME_VERSION_RESOLUTION.md`). It fires even when the
+"game updated, mods may be incompatible" notification is skipped.
 
 ## Game discovery
 

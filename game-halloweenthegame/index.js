@@ -2,8 +2,8 @@
 Name: Halloween: The Game Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-16
+Version: 1.1.0
+Date: 2026-10-22
 Notes:
 -
 ////////////////////////////////////////////////*/
@@ -52,12 +52,12 @@ const LOCALAPPDATA = util.getVortexPath("localAppData");
 const GAME_ID = "halloweenthegame"; //same as Nexus domain
 const STEAMAPP_ID = "3219630"; // https://steamdb.info/app/3219630/
 const STEAMAPP_ID_DEMO = null; //VERIFY if the EPIC_CODE_NAME and EXEC_DEMO match Steam full game
-const EPICAPP_ID = "XXX"; // https://store.epicgames.com/en-US/p/halloween-f3e2dd
+const EPICAPP_ID = "7494bc6302554a26b17ad8d286e624d2"; //from egdata.app // https://store.epicgames.com/en-US/p/halloween-f3e2dd
 const GOGAPP_ID = null; // from gogdb.org
 const XBOXAPP_ID = null; //from appxmanifest.xml
 const XBOXEXECNAME = "AppUEGameShipping"; //from appxmanifest.xml
 const XBOX_PUB_ID = null; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const GAME_NAME = "Halloween: The Game";
 const GAME_NAME_SHORT = "Halloween"; //Try for 8-10 characters

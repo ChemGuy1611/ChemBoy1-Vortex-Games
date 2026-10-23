@@ -1,5 +1,9 @@
 # template-unitymelonloaderbepinex-hybrid Changelog
 
+## [2026-10-23]
+
+- Added: `hasTextureReplacer` toggle (default off) for games with a Texture Replacer BepInEx plugin that loads `.png` textures from `BepInEx/plugins/TextureReplacer`. When on, it registers a "Texture Replacer Textures" mod type (`TEXTURES_ID`) deploying to that folder, adds the folder to the setup write check, and registers an installer at priority 35 for archives holding a `.png` whose file name starts with `TEXTURES_STRING` (placeholder `"XXX"`, never matches until set) and no `.dll`. The installer anchors on the shallowest matching texture, so textures sorted into subfolders keep them and outer wrapper folders are dropped. First used by `game-storyofseasonsgrandbazaar` (prefix `tex_`).
+
 ## [2026-10-20]
 
 - Fixed: the save installer gave save mods the assets mod type, so they deployed to the Unity data folder instead of the save folder. With `enableSaveInstaller` on, a "Save" mod type (`SAVE_ID`, priority 64) is now registered and the installer uses it. It deploys to `SAVE_PATH`, read when Vortex asks for the folder, so the Xbox save location applies once the Xbox build is detected. Added `SAVE_NAME`.

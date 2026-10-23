@@ -21,6 +21,29 @@ A game is manageable only when it is **both** a known game **and** discovered wi
 (`isValidGame`). `mKnownGames` answers "is this game supported"; `discovered` answers "do we know
 where it is".
 
+### Tier 0 games — managed without a game extension (v2.10.0-beta.1+, feature-flagged)
+
+From v2.10.0-beta.1 (not in stable v2.9.0) Vortex can manage a game no extension supports. It is
+gated by the remote feature flag `vortex-tier-0-game-support`, so it may be off for a given user.
+`gamemode_management/tiered/supportTier.ts` grades each game: **tier 2** = a game an installed or
+catalog extension provides for, **tier 0** = a detected game no extension covers, where "Manage"
+opts it in. An opted-in game is stored at `state.persistent.gameMode.tier0[nexusGameId]` as an
+`ITierZeroGame` (`gameId` = numeric Nexus game id, `domain` = Nexus domain, `name`, `storeIDs` for
+Steam, GOG and Epic) and on startup becomes a synthesized `IGame` whose `id` is that domain
+(`tiered/tierZero.ts`, `synthesizePersistedTierZeroGames`).
+
+Two rules matter to extension authors:
+
+- **An extension owns its domain.** Synthesis skips a tier-0 entry when a registered game has
+  `id === domain` or `details.nexusPageId === domain`, so an extension installed later takes the
+  game back. A game extension whose id differs from its Nexus domain should set
+  `details.nexusPageId`, or a user who opted the game in earlier gets a second, synthesized entry.
+- **A synthesized game has no executable.** It is launched through its store; when it was not
+  discovered through a supported store, starting it shows "Failed to start game" instead of trying
+  to run the game folder (`util/StarterInfo.ts`).
+
+The numeric game ids and domains use branded types from `@vortex/shared` (`GameId`, `GameDomain`).
+
 ## Discovery — locating games on disk
 
 All in `gamemode_management/util/discovery.ts`. Results are reported through an `onDiscoveredGame`

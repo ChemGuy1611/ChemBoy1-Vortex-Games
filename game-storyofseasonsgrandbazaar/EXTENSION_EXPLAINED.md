@@ -40,6 +40,7 @@
 | `hasCustomMods` | `false` | set to true if there are modTypes with folder paths dependent on which mod loader is installed |
 | `hasCustomLoader` | `false` | set to true if there is a custom mod loader |
 | `customLoaderInstaller` | `false` | set true if the custom loader uses an installer |
+| `hasTextureReplacer` | `true` | set to true if the game has a Texture Replacer BepInEx plugin that loads .png textures from BepInEx/plugins/TextureReplacer (set TEXTURES_STRING below) |
 | `debug` | `false` | toggle for debug mode |
 | `exeHasGameVersion` | `false` | toggle: true if the game devs stamp the real game version (not just the Unity player version) into the exe ProductVersion |
 | `hasVersionFile` | `false` | set to true if there is a Version.info file that contains the game version number |
@@ -72,6 +73,7 @@ Mod types define where each category of mod gets deployed:
 | MelonLoader UserLibs | `storyofseasonsgrandbazaar-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
 | MelonPreferencesManager | `storyofseasonsgrandbazaar-melonprefman` | high | `{gamePath}/Mods` |
 | MelonLoader | `storyofseasonsgrandbazaar-melonloader` | low | `{gamePath}` |
+| Texture Replacer Textures | `storyofseasonsgrandbazaar-texturereplacer` | high | `{gamePath}/BepInEx/plugins/TextureReplacer` |
 | Assembly DLL Mod | `storyofseasonsgrandbazaar-assemblydll` | 60 | `{gamePath}` |
 | Assets/Resources File | `storyofseasonsgrandbazaar-assets` | 62 | `{gamePath}/SOSGrandBazaar_Data` |
 
@@ -88,6 +90,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | `storyofseasonsgrandbazaar-melonprefman` | 30 |
 | `storyofseasonsgrandbazaar-assemblydll` | 31 |
 | `storyofseasonsgrandbazaar-plugin` | 33 |
+| `storyofseasonsgrandbazaar-texturereplacer` | 35 |
 | `storyofseasonsgrandbazaar-assets` | 37 |
 | `storyofseasonsgrandbazaar-fallback` | 49 |
 

@@ -33,6 +33,11 @@ const modType = (value) => ({ type: "setmodtype", value });
 const xna = setConst("isXna", "true");
 const mono = setConst("BEPINEX_BUILD", '"mono"');
 const customMods = setConst("hasCustomMods", "true");
+// Texture Replacer textures, recognised by a real file name prefix instead of the placeholder.
+const textureReplacer = all(
+  setConst("hasTextureReplacer", "true"),
+  setConst("TEXTURES_STRING", '"tex_"'),
+);
 // A custom loader whose plugins are recognised by a real string instead of the placeholder.
 const customLoader = all(
   setConst("hasCustomLoader", "true"),
@@ -803,6 +808,52 @@ describe("template-unitymelonloaderbepinex-hybrid: routing with other toggles", 
     assert.deepEqual(await supportedBy(ext, tree("a.custom.txt")), ["XXX-fallback"]);
   });
 
+  it("hasTextureReplacer registers the texture mod type at 44 and its installer at 35", async () => {
+    const ext = await boot({ transform: textureReplacer });
+    assert.deepEqual(
+      summary(ext.modTypes).filter(([id]) => id === "XXX-texturereplacer"),
+      [["XXX-texturereplacer", 44]],
+    );
+    assert.deepEqual(ext.modTypes.find(({ id }) => id === "XXX-texturereplacer").options, {
+      name: "Texture Replacer Textures",
+    });
+    assert.deepEqual(
+      summary(ext.installers).filter(([id]) => id === "XXX-texturereplacer"),
+      [["XXX-texturereplacer", 35]],
+    );
+    const bare = await boot();
+    assert.equal(
+      bare.modTypes.some(({ id }) => id === "XXX-texturereplacer"),
+      false,
+    );
+    assert.equal(
+      bare.installers.some(({ id }) => id === "XXX-texturereplacer"),
+      false,
+    );
+    assert.deepEqual(await supportedBy(ext, tree("tex_avt_a.png")), [
+      "XXX-texturereplacer",
+      "XXX-fallback",
+    ]);
+    assert.deepEqual(await supportedBy(ext, tree("Pack/TEX_AVT_A.PNG")), [
+      "XXX-texturereplacer",
+      "XXX-fallback",
+    ]);
+    assert.deepEqual(await supportedBy(ext, tree("preview.png")), ["XXX-fallback"]);
+    assert.deepEqual(await supportedBy(ext, tree("tex_a.dds")), ["XXX-fallback"]);
+    // A plugin that ships its own textures stays with the plugin sorter.
+    assert.deepEqual(await supportedBy(ext, tree("Pack.dll", "tex_a.png")), [
+      "XXX-plugin",
+      "XXX-fallback",
+    ]);
+  });
+
+  it("the texture installer never matches while its prefix is still a placeholder", async () => {
+    const ext = await boot({ transform: setConst("hasTextureReplacer", "true") });
+    // The placeholder is upper case but the installer compares lower-cased names.
+    assert.deepEqual(await supportedBy(ext, tree("XXX_a.png")), ["XXX-fallback"]);
+    assert.deepEqual(await supportedBy(ext, tree("xxx_a.png")), ["XXX-fallback"]);
+  });
+
   it("hasCustomLoader registers three more mod types ahead of the assembly type, and the loader installer first", async () => {
     const ext = await boot({ transform: customLoader });
     assert.deepEqual(summary(ext.modTypes).slice(-5), [
@@ -1201,6 +1252,40 @@ describe("template-unitymelonloaderbepinex-hybrid: install output", () => {
 });
 
 describe("template-unitymelonloaderbepinex-hybrid: install output with other toggles", () => {
+  it("installs textures from the shallowest texture, keeping the folders they are sorted into", async () => {
+    const ext = await boot({ transform: textureReplacer });
+    // The subfolder comes first in the list, so anchoring on the first match would drop tex_a.png.
+    assert.deepEqual(
+      await installWith(ext, "XXX-texturereplacer", tree("Ribbons/tex_b.png", "tex_a.png")),
+      [
+        copy(sep("Ribbons", "tex_b.png"), sep("Ribbons", "tex_b.png")),
+        copy("tex_a.png", "tex_a.png"),
+        modType("XXX-texturereplacer"),
+      ],
+    );
+  });
+
+  it("textures packed in the full game folder path install at the Texture Replacer folder's root", async () => {
+    const ext = await boot({ transform: textureReplacer });
+    const root = sep("Mod", "BepInEx", "plugins", "TextureReplacer");
+    assert.deepEqual(
+      await installWith(
+        ext,
+        "XXX-texturereplacer",
+        tree(
+          "Mod/BepInEx/plugins/TextureReplacer/tex_a.png",
+          "Mod/BepInEx/plugins/TextureReplacer/Sub/tex_b.png",
+          "Mod/readme.txt",
+        ),
+      ),
+      [
+        copy(sep(root, "tex_a.png"), "tex_a.png"),
+        copy(sep(root, "Sub", "tex_b.png"), sep("Sub", "tex_b.png")),
+        modType("XXX-texturereplacer"),
+      ],
+    );
+  });
+
   it("installs a custom mod data file as the custom mod type", async () => {
     const ext = await boot({ transform: customMods });
     assert.deepEqual(await installWith(ext, "XXX-custommod", tree("a.custom.json")), [
@@ -2463,6 +2548,13 @@ describe("template-unitymelonloaderbepinex-hybrid: setup", () => {
     assert.deepEqual(topFolders(path.join(gameDir, "BepInEx", "plugins")), ["XXX"]);
     assert.deepEqual(topFolders(path.join(gameDir, "Mods")), ["XXX"]);
     assert.equal(topFolders(gameDir).includes("XXX"), true);
+  });
+
+  it("the Texture Replacer folder is created only when that feature is on", async () => {
+    const { gameDir } = await runSetup({ transform: textureReplacer });
+    assert.deepEqual(topFolders(path.join(gameDir, "BepInEx", "plugins")), ["TextureReplacer"]);
+    const bare = await runSetup();
+    assert.deepEqual(topFolders(path.join(bare.gameDir, "BepInEx", "plugins")), []);
   });
 
   it("an Xbox install gets its assets folder below Managed, and mod types follow it", async () => {

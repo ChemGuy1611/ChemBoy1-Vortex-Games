@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.0] - 2026-10-23
+
+- Added: Support for Texture Replacer texture mods. They are installed into the "BepInEx\plugins\TextureReplacer" folder.
+
 ## [1.0.2] - 2026-10-16
 
 - Added the game's Nexus Mods ID to the extension's info file.

@@ -48,7 +48,7 @@ attribute (`LO_ATTRIBUTE`) listing the plugin basenames the mod installed — th
   the recovery copy. There is no purge guard around `deserializeLoadOrder` / `serializeLoadOrder`:
   the sidecar holds each managed plugin's description and parameters through a purge.
 - A `did-deploy` listener (registered with `api.onAsync`) runs `restoreDeployedPlugins`. Vortex
-  2.9.0-beta.2 does not write the load order back on the deploy that follows a purge, so the entries
+  2.9 (every 2.9 beta and stable v2.9.0) does not write the load order back on the deploy that follows a purge, so the entries
   `clearPurgedPlugins` removed would stay missing until the load order changed. When a deployed,
   Vortex-managed plugin is not listed in `plugins.js`, the listener writes the load order back through
   `serializeLoadOrder`; every other deploy writes nothing.

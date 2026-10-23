@@ -175,6 +175,19 @@ None of these commits is in v2.9.0 or any earlier tag; all five first ship in v2
   copy it deployed, asks before purging files of a `move` or unknown deployment method, and records
   the files it leaves behind in the manifest. The External Changes dialog applies Revert and Save at
   each file's deployed path.
+- **Mod undeploys run one at a time.** Each undeploy rewrites the manifest it loaded, so removing
+  several mods at once no longer has two removals write the manifest over each other.
+- **The modern layout says "apply" for deploy.** The auto-deploy switch, the deployment method panel
+  and the mods toolbar menu say Apply, and the toolbar's own Deploy button is gone. The classic
+  layout keeps its wording. Event names (`will-deploy`, `did-deploy`) and the API are unchanged, so
+  extension notifications that tell users to "deploy" still work but no longer match the label.
+
+v2.10.0-beta.2 adds `state.persistent.deployment.purged[gameId]`: set to `true` after a purge that
+succeeded and was not cancelled, back to `false` after the next deployment. The
+`purged(state)` selector in `mod_management/selectors.ts` reads it for the active game, and
+`setDeploymentPurged(gameId, purged)` is the action. A game extension can use it to tell "purged,
+waiting for a deploy" apart from a normal state, for example when deciding whether to write a load
+order file back (see `VORTEX_LOAD_ORDER.md`, "A purge followed by a deploy writes nothing back").
 
 ## Gotchas
 

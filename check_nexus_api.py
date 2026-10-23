@@ -6,7 +6,11 @@ Read-only checks run by default. Use --test-upload to also verify the
 multipart upload session shape (creates a dangling 1-byte upload session
 on Nexus/S3 that expires automatically; does not publish any files).
 Use --check-spec to diff the live OpenAPI document against the endpoint
-catalog recorded in resources/NEXUS_MODS_API.md (no API key needed). A path
+catalog recorded in resources/NEXUS_MODS_API.md (no API key needed). It
+compares both the paths and the HTTP methods listed on each path, checks
+that every live operationId is named in that doc, and compares the request
+body fields (and which are required) of the write operations this repo sends
+against SPEC_REQUEST_BODIES. A path
 listed in SPEC_RETIRING_PATHS is tolerated as an expected removal once its
 scheduled date has passed, instead of failing the check. --check-spec needs
 PyYAML; when it is missing the check FAILS (exit 1) rather than reporting a
@@ -26,6 +30,7 @@ Environment variables:
 
 import argparse
 import json
+import os
 import ssl
 import sys
 import urllib.error
@@ -33,7 +38,7 @@ import urllib.request
 from datetime import date
 
 from vortex_utils import get_api_key as vu_get_api_key
-from vortex_utils import NEXUS_USER_AGENT
+from vortex_utils import NEXUS_USER_AGENT, REPO_ROOT
 
 try:
     import certifi
@@ -128,47 +133,52 @@ DOCUMENTED_RATE_LIMITS = {
 
 # == Live OpenAPI spec baseline ================================================
 # Mirrors the "V3 Endpoint Catalog" table in resources/NEXUS_MODS_API.md. When
-# --check-spec reports drift, update BOTH this list and that doc in the same pass.
+# --check-spec reports drift, update BOTH this map and that doc in the same pass.
+# Keyed by path, valued by the HTTP methods the spec lists on it: a new method on
+# a path that is already known (GET /mods/{id} appeared beside PATCH) is drift
+# too, and a path-only diff cannot see it.
 SPEC_EXPECTED_VERSION = "3.0.0"
 SPEC_KNOWN_PATHS = {
-    "/collections",
-    "/collections/{id}",
-    "/collections/{id}/revisions",
-    "/games/{game_domain}/dlcs",
-    "/games/{game_domain}/mod-file-versions/{game_scoped_id}",
-    "/games/{game_domain}/mods/{game_scoped_id}",
-    "/games/{game_domain}/trending-mods",
-    "/mod-bugs",
-    "/mod-bugs/{id}",
-    "/mod-bugs/{id}/replies",
-    "/mod-file-update-groups/{group_id}/versions",
-    "/mod-file-versions/batch",
-    "/mod-file-versions/dependencies/materialized/batch",
-    "/mod-file-versions/dependencies/ranges/materialized/batch",
-    "/mod-file-versions/move",
-    "/mod-file-versions/move-to-new-mod-file",
-    "/mod-file-versions/{id}",
-    "/mod-file-versions/{id}/download-repacked",
-    "/mod-file-versions/{id}/dependencies",
-    "/mod-file-versions/{id}/dependencies/dlc",
-    "/mod-file-versions/{id}/dependencies/ranges",
-    "/mod-file-versions/{id}/dependencies/ranges/materialized",
-    "/mod-file-versions/{id}/quarantine",
-    "/mod-files",
-    "/mod-files/{id}",
-    "/mod-files/{id}/versions",
-    "/mods/batch",
-    "/mods/{id}",
-    "/mods/{id}/changelogs",
-    "/mods/{id}/files",
-    "/mods/{id}/toggle-legacy-mod-requirements",
-    "/team-mods",
-    "/uploads",
-    "/uploads/multipart",
-    "/uploads/{id}",
-    "/uploads/{id}/finalise",
-    "/vortex/detected-games",
-    "/vortex/extensions",
+    "/collections": {"post"},
+    "/collections/{id}": {"patch"},
+    "/collections/{id}/revisions": {"post"},
+    "/games/{game_domain}/dlcs": {"get"},
+    "/games/{game_domain}/mod-file-versions/{game_scoped_id}": {"get"},
+    "/games/{game_domain}/mod-file-versions/{game_scoped_id}/download-link": {"get"},
+    "/games/{game_domain}/mods/{game_scoped_id}": {"get"},
+    "/games/{game_domain}/trending-mods": {"get"},
+    "/mod-bugs": {"get"},
+    "/mod-bugs/{id}": {"get", "patch"},
+    "/mod-bugs/{id}/replies": {"post"},
+    "/mod-file-update-groups/{group_id}/versions": {"post"},
+    "/mod-file-versions/batch": {"post"},
+    "/mod-file-versions/dependencies/materialized/batch": {"post"},
+    "/mod-file-versions/dependencies/ranges/materialized/batch": {"post"},
+    "/mod-file-versions/move": {"post"},
+    "/mod-file-versions/move-to-new-mod-file": {"post"},
+    "/mod-file-versions/{id}": {"get"},
+    "/mod-file-versions/{id}/download-repacked": {"post"},
+    "/mod-file-versions/{id}/dependencies": {"get"},
+    "/mod-file-versions/{id}/dependencies/dlc": {"get", "put"},
+    "/mod-file-versions/{id}/dependencies/ranges": {"get", "put"},
+    "/mod-file-versions/{id}/dependencies/ranges/materialized": {"get"},
+    "/mod-file-versions/{id}/quarantine": {"post"},
+    "/mod-files": {"post"},
+    "/mod-files/{id}": {"get", "put"},
+    "/mod-files/{id}/versions": {"get", "post"},
+    "/mods/batch": {"post"},
+    "/mods/search": {"post"},
+    "/mods/{id}": {"get", "patch"},
+    "/mods/{id}/changelogs": {"post"},
+    "/mods/{id}/files": {"get"},
+    "/mods/{id}/toggle-legacy-mod-requirements": {"put"},
+    "/team-mods": {"get"},
+    "/uploads": {"post"},
+    "/uploads/multipart": {"post"},
+    "/uploads/{id}": {"get"},
+    "/uploads/{id}/finalise": {"post"},
+    "/vortex/detected-games": {"post"},
+    "/vortex/extensions": {"get"},
 }
 
 # Endpoints release_extension.py --upload depends on. Both are Experimental tier,
@@ -196,6 +206,35 @@ SPEC_KNOWN_DEPRECATIONS = {
 SPEC_RETIRING_PATHS = {
     "/mod-file-update-groups/{group_id}/versions": "2026-09-09",
 }
+
+# Request bodies of the write operations this repo sends (nexus_upload.py,
+# sync_mod_pages.py) plus POST /uploads, which is on the deprecation watch for
+# md5 becoming required on 2026-12-01. A path diff cannot see a new body field
+# (crc64nvme arrived on /uploads/multipart that way) or a field turning
+# required, so both sets are pinned here. Update them together with the
+# matching rows in resources/NEXUS_MODS_API.md.
+SPEC_REQUEST_BODIES = {
+    "createMultipartUpload": {
+        "fields": {"crc64nvme", "filename", "size_bytes"},
+        "required": {"filename", "size_bytes"},
+    },
+    "finaliseUpload": {"fields": set(), "required": set()},
+    "createModFileVersion": {
+        "fields": {
+            "allow_mod_manager_download", "archive_existing_file", "description",
+            "file_category", "name", "previous_version_id", "primary_mod_manager_download",
+            "show_requirements_pop_up", "update_mod_version", "upload_id", "version",
+        },
+        "required": {"file_category", "name", "upload_id", "version"},
+    },
+    "createUpload": {
+        "fields": {"filename", "md5", "size_bytes"},
+        "required": {"filename", "size_bytes"},
+    },
+    "editMod": {"fields": {"description", "summary"}, "required": set()},
+}
+
+NEXUS_API_DOC = os.path.join(REPO_ROOT, "resources", "NEXUS_MODS_API.md")
 
 # Recognized stability-tier badge names. Any other x-badges entry (e.g. a
 # scheduled-change warning like "md5 required from 2026-12-01") is not a
@@ -374,6 +413,26 @@ def run_read_only_checks(domain, mod_id, api_key):
                 warn("No mod files returned - shape check skipped")
 
     # ------------------------------------------------------------------
+    # getModById. Until 2026-10 this path 404'd on GET (only PATCH editMod
+    # existed), so it sat on the dead-path list below.
+    print(f"\n=== v3 Mod by uid: mods/{uid} ===")
+    status, _, body = _get(f"{NEXUS_V3}/mods/{uid}", api_key)
+    if status != 200:
+        fail(f"Expected 200, got {status}: {body}")
+    elif not isinstance(body, dict) or not isinstance(body.get("data"), dict):
+        fail("Top-level 'data' object missing")
+    else:
+        data = body["data"]
+        if str(data.get("id")) == str(uid):
+            ok(f"Status 200, data.id matches uid {uid}")
+        else:
+            fail(f"data.id {data.get('id')!r} does not match uid {uid}")
+        if "description" in data:
+            ok("data.description present (page text, same <br /> expansion as v1)")
+        else:
+            fail("data.description missing - editMod backup must use v1 again")
+
+    # ------------------------------------------------------------------
     print(f"\n=== Dead/Nonexistent v3 Paths (expect 404 -- confirms still gone, not that they're 'wrong') ===")
 
     # GET /v3/openapi.yaml itself is NOT broken -- the live spec is at the domain root,
@@ -384,8 +443,6 @@ def run_read_only_checks(domain, mod_id, api_key):
          f"{NEXUS_V3}/openapi.yaml", 404),
         (f"GET /v3/mods/{mod_id}/file-update-groups (v1 mod_id, not uid)",
          f"{NEXUS_V3}/mods/{mod_id}/file-update-groups", 404),
-        (f"GET /v3/mods/{uid} (mod-level GET by uid was never in the spec)",
-         f"{NEXUS_V3}/mods/{uid}", 404),
     ]
     if group_id:
         broken.append((
@@ -614,6 +671,38 @@ def _operation_tier(op):
     return "Stable"
 
 
+def _deref(spec, node):
+    """Follow local "$ref": "#/..." pointers until a real schema object is reached."""
+    while isinstance(node, dict) and "$ref" in node:
+        target = spec
+        for part in node["$ref"].lstrip("#/").split("/"):
+            target = target[part]
+        node = target
+    return node
+
+
+def _schema_fields(spec, schema):
+    """Top-level property names and required names of a schema, allOf merged."""
+    schema = _deref(spec, schema) or {}
+    fields, required = set(), set()
+    for part in schema.get("allOf") or []:
+        sub_fields, sub_required = _schema_fields(spec, part)
+        fields |= sub_fields
+        required |= sub_required
+    fields |= set(schema.get("properties") or {})
+    required |= set(schema.get("required") or [])
+    return fields, required
+
+
+def _request_body_fields(spec, op):
+    """(fields, required) of an operation's JSON request body; empty sets when it has none."""
+    body = _deref(spec, op.get("requestBody") or {})
+    schema = ((body.get("content") or {}).get("application/json") or {}).get("schema")
+    if schema is None:
+        return set(), set()
+    return _schema_fields(spec, schema)
+
+
 def run_spec_check(results):
     """Diff the live OpenAPI document against the catalog recorded in the docs.
 
@@ -658,8 +747,9 @@ def run_spec_check(results):
         warn(f"info.version: {version} (docs record {SPEC_EXPECTED_VERSION})")
 
     live_paths = set(spec.get("paths") or {})
-    added = sorted(live_paths - SPEC_KNOWN_PATHS)
-    removed = sorted(SPEC_KNOWN_PATHS - live_paths)
+    known_paths = set(SPEC_KNOWN_PATHS)
+    added = sorted(live_paths - known_paths)
+    removed = sorted(known_paths - live_paths)
 
     # A path in SPEC_RETIRING_PATHS whose date has passed is an EXPECTED
     # removal, not drift -- surface it as INFO so the check stays green and
@@ -686,6 +776,68 @@ def run_spec_check(results):
     for p, retire_date in sorted(SPEC_RETIRING_PATHS.items()):
         if p in live_paths and today < retire_date:
             print(f"  {INFO} {p} still live, scheduled to retire {retire_date}")
+
+    # Methods on paths both sides know. A path diff alone missed GET /mods/{id}
+    # when it was added beside the already-documented PATCH.
+    method_drift = False
+    for path in sorted(live_paths & known_paths):
+        live_methods = {m for m in (spec["paths"][path] or {}) if m in _HTTP_METHODS}
+        new_methods = sorted(live_methods - SPEC_KNOWN_PATHS[path])
+        gone_methods = sorted(SPEC_KNOWN_PATHS[path] - live_methods)
+        for m in new_methods:
+            method_drift = True
+            fail(f"NEW operation not in docs: {m.upper()} {path} - "
+                 "add it to resources/NEXUS_MODS_API.md")
+        for m in gone_methods:
+            method_drift = True
+            fail(f"Documented operation GONE from spec: {m.upper()} {path} - "
+                 "update resources/NEXUS_MODS_API.md")
+    if not method_drift:
+        op_count = sum(len(methods) for methods in SPEC_KNOWN_PATHS.values())
+        ok(f"Operations on known paths match the catalog ({op_count} documented)")
+
+    # Every live operation must be named in the docs. Catches an operation the
+    # catalog maps were updated for but the doc rows were not.
+    ops_by_id = {}
+    for path, ops in (spec.get("paths") or {}).items():
+        for method, op in ops.items():
+            if method in _HTTP_METHODS and isinstance(op, dict) and op.get("operationId"):
+                ops_by_id[op["operationId"]] = op
+    try:
+        with open(NEXUS_API_DOC, encoding="utf-8") as fh:
+            doc_text = fh.read()
+    except OSError as e:
+        fail(f"Could not read {NEXUS_API_DOC}: {e}")
+        doc_text = None
+    if doc_text is not None:
+        undocumented = sorted(op_id for op_id in ops_by_id if f"`{op_id}`" not in doc_text)
+        for op_id in undocumented:
+            fail(f"operationId `{op_id}` is not named in resources/NEXUS_MODS_API.md")
+        if not undocumented:
+            ok(f"All {len(ops_by_id)} operationIds are named in resources/NEXUS_MODS_API.md")
+
+    # Request-body drift on the write operations this repo sends.
+    for op_id, expected in sorted(SPEC_REQUEST_BODIES.items()):
+        op = ops_by_id.get(op_id)
+        if op is None:
+            fail(f"Request-body check: operation {op_id} no longer in spec")
+            continue
+        fields, required = _request_body_fields(spec, op)
+        problems = []
+        for name in sorted(fields - expected["fields"]):
+            problems.append(f"new field '{name}'")
+        for name in sorted(expected["fields"] - fields):
+            problems.append(f"field '{name}' gone")
+        for name in sorted(required - expected["required"]):
+            problems.append(f"'{name}' now REQUIRED")
+        for name in sorted(expected["required"] - required):
+            problems.append(f"'{name}' no longer required")
+        if problems:
+            fail(f"{op_id} request body changed: {'; '.join(problems)} - "
+                 "update SPEC_REQUEST_BODIES, resources/NEXUS_MODS_API.md and any caller")
+        else:
+            ok(f"{op_id} request body unchanged ({len(fields)} field(s), "
+               f"{len(required)} required)")
 
     # Upload-flow endpoints -- Experimental tier, so they can vanish without notice.
     for path, method in sorted(SPEC_PIPELINE_PATHS.items()):

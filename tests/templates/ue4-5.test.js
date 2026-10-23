@@ -708,7 +708,7 @@ describe("template-ue4-5: toggles that change what is registered", () => {
       [ID.root, 33],
       [ID.modkit, 34],
     ]);
-    assert.equal(ext.modTypes[4].options.name, "ModKit mod");
+    assert.equal(ext.modTypes[4].options.name, "ModKit Mod");
     assert.deepEqual(summary(ext.installers)[0], [ID.modkit, 25]);
   });
 

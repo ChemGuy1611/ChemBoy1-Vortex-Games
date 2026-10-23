@@ -86,7 +86,7 @@ load order is included in collections with zero extension code.
   call (use when the default generation logic is wrong for your game).
 - Custom sidecar load orders (UE4SS, LogicMods) live in their own reducers and
   are **not** covered by this auto-registration — register them explicitly via A.
-- Several load orders per game (v2.9.0-beta.2 and `master` only, see `LOAD_ORDER_REGISTRATION.md`): the manifest's
+- Several load orders per game (v2.10.0-beta.1 and `master` only, not in stable v2.9.0; see `LOAD_ORDER_REGISTRATION.md`): the manifest's
   `loadOrder` key still holds the primary order — or the adopter's, for a game with no primary — so
   an older Vortex applies it as before. Named orders travel as
   `fbLoadOrders: [{ id, entries }]`, omitted for a single-order game so those manifests are

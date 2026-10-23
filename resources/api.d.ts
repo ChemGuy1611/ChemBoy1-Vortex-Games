@@ -2460,6 +2460,7 @@ interface ITestResult {
     context?: any;
   };
   severity: ProblemSeverity;
+  allowSuppress?: boolean;
   automaticFix?: () => PromiseLike<void>;
   onRecheck?: () => PromiseLike<void>;
 }
@@ -3482,7 +3483,7 @@ interface ILookupOptions {
 //#region src/types/logging.d.ts
 type Level = "debug" | "info" | "warn" | "error";
 //#endregion
-//#region ../shared/dist/ipc-DN31l_Iv.d.ts
+//#region ../shared/dist/ipc-DovJlVwC.d.ts
 type PersistorKey = string[];
 /**
  * a persistor is used to hook a data file into the store.
@@ -3514,6 +3515,8 @@ interface IDimensions {
   width: number;
 }
 interface IWindow {
+  /** Saved interface scale; 1 is the default (100%). */
+  zoomFactor?: number;
   maximized: boolean;
   position?: IPosition;
   size: IDimensions;
@@ -3861,7 +3864,7 @@ interface IRunOptions {
   detach?: boolean;
   expectSuccess?: boolean;
   onSpawned?: (pid?: number) => void;
-  onExit?: (code: number | null) => void;
+  onExit?: (code: number | null, signal: NodeJS.Signals | null) => void;
 }
 /**
  * all parameters passed to runExecutable. This is used to support interpreters
@@ -4221,6 +4224,7 @@ interface IStateVerifier {
   };
   required?: boolean;
   deleteBroken?: boolean | "parent";
+  silent?: boolean;
   repair?: (input: any, def: any, context?: IVerifierRepairContext) => any;
 }
 /**
@@ -4657,7 +4661,7 @@ interface IExtensionContext {
    *                           As soon as the promise returned from this is resolved, the stored
    *                           version number is updated.
    */
-  registerMigration: (migrate: (oldVersion: string) => PromiseBB$1<void>) => void;
+  registerMigration: (migrate: (oldVersion: string) => PromiseLike<void>) => void;
   /**
    * register a file to be stored with the profile. It will always be synchronised with the current
    * profile, so when users switch to a different profile, this file will be copied to the
@@ -6645,6 +6649,9 @@ declare function writeFileAtomic(filePath: string, input: string | Buffer): Prom
  * directory as the destination, then deletes the destination and renames the temp
  * to destination. Since the rename is atomic and the deletion only happens after
  * a successful write this should minimize the risk of error.
+ *
+ * Goes through node's fs: a file another process is holding fails back to the caller, which
+ * knows whether that is worth interrupting the user over.
  *
  * @export
  * @param {string} srcPath

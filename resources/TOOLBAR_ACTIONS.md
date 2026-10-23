@@ -35,6 +35,10 @@ toolbar still render through `IconBar` and behave as documented in the rest of t
 The modern toolbar maps the action's `icon` string through a hardcoded lookup
 (`Vortex/src/renderer/src/views/components/iconMap.ts`) of ~28 names to Material Design Icon paths.
 **A name that is not in the table renders as a generic puzzle-piece icon** (`mdiPuzzleOutline`).
+On Vortex `master` (after v2.10.0-beta.2, in no release yet) the table moved to
+`views/components/icon_map/iconMap.ts` and maps the same names to Material Symbols
+(`open-ext` -> `folder_open`); an unknown name on an extension action still draws a puzzle piece
+(the `extension` symbol).
 
 There is no registration API for this map. An extension cannot add an entry, pass raw MDI path
 data, or reference an SVG symbol id. Injecting a `<symbol>` into `#icon-sets`, or calling
@@ -405,7 +409,7 @@ context.registerAction(
 
 Real example: `fb-load-order-icons` group in `Vortex/src/renderer/src/extensions/file_based_loadorder/views/FileBasedLoadOrderPage.tsx:292`.
 
-In v2.9.0-beta.2 and on `master` (not in beta.3, beta.4 or 2.8.x) that `IconBar` is given the shown load order's id as its `instanceId`, so an
+From v2.10.0-beta.1 and on `master` (not in any 2.8.x or 2.9.x tag, stable v2.9.0 included) that `IconBar` is given the shown load order's id as its `instanceId`, so an
 action registered to `fb-load-order-icons` receives it as the one-element `instanceIds` array that
 every `IconBar` passes to `action(instanceIds)` and `condition(instanceIds)` (a string `instanceId`
 is wrapped into an array), and can apply to one load order tab only. The primary load order's id is

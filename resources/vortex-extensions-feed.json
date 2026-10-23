@@ -86,13 +86,25 @@
         "game_id": "1428"
       },
       {
-        "name": "Black Mesa Support",
-        "version": "1.0.1",
+        "name": "Half-Life 2 Support",
+        "version": "1.2.0",
         "author_name": "AtomicTEM",
         "author_user_id": "41248120",
-        "uploaded_at": "2020-03-14T16:00:21Z",
+        "uploaded_at": "2026-10-21T22:49:32Z",
+        "mod_id": "80",
+        "file_id": "11692",
+        "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1nmw.jpg",
+        "type": "game",
+        "game_id": "354"
+      },
+      {
+        "name": "Black Mesa Support",
+        "version": "1.1.0",
+        "author_name": "AtomicTEM",
+        "author_user_id": "41248120",
+        "uploaded_at": "2026-10-21T22:51:24Z",
         "mod_id": "81",
-        "file_id": "396",
+        "file_id": "11693",
         "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/co20n4.jpg",
         "type": "game",
         "game_id": "3112"
@@ -183,12 +195,12 @@
       },
       {
         "name": "Portal 2 Support",
-        "version": "1.1.0",
+        "version": "1.2.0",
         "author_name": "AtomicTEM",
         "author_user_id": "41248120",
-        "uploaded_at": "2020-05-25T14:20:18Z",
+        "uploaded_at": "2026-10-21T22:48:15Z",
         "mod_id": "109",
-        "file_id": "526",
+        "file_id": "11691",
         "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1rs4.jpg",
         "type": "game",
         "game_id": "3114"
@@ -243,12 +255,12 @@
       },
       {
         "name": "Left 4 Dead 2 Support",
-        "version": "1.0.1",
+        "version": "1.1.0",
         "author_name": "AtomicTEM",
         "author_user_id": "41248120",
-        "uploaded_at": "2020-06-11T17:17:35Z",
+        "uploaded_at": "2026-10-21T22:46:49Z",
         "mod_id": "131",
-        "file_id": "563",
+        "file_id": "11690",
         "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1y2f.jpg",
         "type": "game",
         "game_id": "195"
@@ -266,40 +278,16 @@
         "game_id": "3295"
       },
       {
-        "name": "Day of Defeat Source Support",
-        "version": "1.0.0",
-        "author_name": "AtomicTEM",
-        "author_user_id": "41248120",
-        "uploaded_at": "2020-06-10T17:17:31Z",
-        "mod_id": "134",
-        "file_id": "558",
-        "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/co610o.jpg",
-        "type": "game",
-        "game_id": "1463"
-      },
-      {
         "name": "Counter-Strike Source Support",
-        "version": "1.0.0",
+        "version": "1.1.0",
         "author_name": "AtomicTEM",
         "author_user_id": "41248120",
-        "uploaded_at": "2020-06-10T17:22:00Z",
+        "uploaded_at": "2026-10-21T22:43:09Z",
         "mod_id": "135",
-        "file_id": "559",
+        "file_id": "11688",
         "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1txv.jpg",
         "type": "game",
         "game_id": "1418"
-      },
-      {
-        "name": "Half-Life 2 Deathmatch Support",
-        "version": "1.0.0",
-        "author_name": "AtomicTEM",
-        "author_user_id": "41248120",
-        "uploaded_at": "2020-06-10T17:28:49Z",
-        "mod_id": "136",
-        "file_id": "560",
-        "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1nmw.jpg",
-        "type": "game",
-        "game_id": "354"
       },
       {
         "name": "MW5Mercs Game Extension",
@@ -309,7 +297,7 @@
         "uploaded_at": "2020-08-11T11:46:55Z",
         "mod_id": "137",
         "file_id": "677",
-        "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1q7q.jpg",
+        "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/cod67l.jpg",
         "type": "game",
         "game_id": "3099"
       },
@@ -2091,12 +2079,12 @@
       },
       {
         "name": "Atomic Heart Vortex Extension",
-        "version": "1.0.11",
+        "version": "1.0.12",
         "author_name": "ChemBoy1",
         "author_user_id": "3263034",
-        "uploaded_at": "2026-10-16T14:16:16Z",
+        "uploaded_at": "2026-10-18T05:05:56Z",
         "mod_id": "1832",
-        "file_id": "11244",
+        "file_id": "11573",
         "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/co68ag.jpg",
         "type": "game",
         "game_id": "5158"
@@ -2943,12 +2931,12 @@
       },
       {
         "name": "S.T.A.L.K.E.R. 2 Heart of Chornobyl Vortex Extension",
-        "version": "2.1.6",
+        "version": "2.1.7",
         "author_name": "ChemBoy1",
         "author_user_id": "3263034",
-        "uploaded_at": "2026-10-16T15:43:15Z",
+        "uploaded_at": "2026-10-18T05:06:02Z",
         "mod_id": "958",
-        "file_id": "11454",
+        "file_id": "11574",
         "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/cocqoz.jpg",
         "type": "game",
         "game_id": "6944"
@@ -3387,12 +3375,12 @@
       },
       {
         "name": "Until Dawn Vortex Extension",
-        "version": "1.0.2",
+        "version": "1.0.3",
         "author_name": "ChemBoy1",
         "author_user_id": "3263034",
-        "uploaded_at": "2026-10-16T15:53:21Z",
+        "uploaded_at": "2026-10-18T05:06:08Z",
         "mod_id": "1049",
-        "file_id": "11483",
+        "file_id": "11575",
         "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/co2s5q.jpg",
         "type": "game",
         "game_id": "6886"
@@ -3819,12 +3807,12 @@
       },
       {
         "name": "Marvel's Spider-Man 2 Vortex Extension",
-        "version": "1.0.3",
+        "version": "1.1.0",
         "author_name": "ChemBoy1",
         "author_user_id": "3263034",
-        "uploaded_at": "2026-10-16T14:58:06Z",
+        "uploaded_at": "2026-10-19T14:33:40Z",
         "mod_id": "1166",
-        "file_id": "11372",
+        "file_id": "11629",
         "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/cobg1k.jpg",
         "type": "game",
         "game_id": "6082"
@@ -4251,12 +4239,12 @@
       },
       {
         "name": "Fallout London (FOLON) Setup Helper Extension",
-        "version": "0.1.6",
+        "version": "0.2.0",
         "author_name": "ChemBoy1",
         "author_user_id": "3263034",
-        "uploaded_at": "2026-01-06T22:48:27Z",
+        "uploaded_at": "2026-10-21T17:59:43Z",
         "mod_id": "1349",
-        "file_id": "6630",
+        "file_id": "11680",
         "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1yc6.jpg",
         "type": "game",
         "game_id": "1151"
@@ -5271,12 +5259,12 @@
       },
       {
         "name": "The Last Caretaker Vortex Extension",
-        "version": "1.0.2",
+        "version": "1.1.0",
         "author_name": "ChemBoy1",
         "author_user_id": "3263034",
-        "uploaded_at": "2026-10-16T15:48:49Z",
+        "uploaded_at": "2026-10-21T14:19:06Z",
         "mod_id": "1624",
-        "file_id": "11470",
+        "file_id": "11663",
         "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/coasoq.jpg",
         "type": "game",
         "game_id": "8289"
@@ -5907,12 +5895,12 @@
       },
       {
         "name": "MOUSE PI For Hire Vortex Extension",
-        "version": "1.0.6",
+        "version": "1.1.0",
         "author_name": "ChemBoy1",
         "author_user_id": "3263034",
-        "uploaded_at": "2026-10-16T15:04:15Z",
+        "uploaded_at": "2026-10-18T05:05:49Z",
         "mod_id": "1835",
-        "file_id": "11391",
+        "file_id": "11572",
         "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/coaacx.jpg",
         "type": "game",
         "game_id": "9108"
@@ -6759,15 +6747,27 @@
       },
       {
         "name": "Audiosurf 2 Vortex Extension",
-        "version": "1.0.2",
+        "version": "1.0.3",
         "author_name": "wolflord480",
         "author_user_id": "71784498",
-        "uploaded_at": "2026-09-15T03:48:14Z",
+        "uploaded_at": "2026-10-18T23:37:51Z",
         "mod_id": "2315",
-        "file_id": "9758",
+        "file_id": "11610",
         "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1ud4.jpg",
         "type": "game",
         "game_id": "9966"
+      },
+      {
+        "name": "Tales of Glory 4 Ragnarok Vortex Extension",
+        "version": "1.2.1",
+        "author_name": "asaidas",
+        "author_user_id": "23557799",
+        "uploaded_at": "2026-10-19T17:47:55Z",
+        "mod_id": "2346",
+        "file_id": "11633",
+        "image_url": "https://staticdelivery.nexusmods.com/mods/2295/images/2346/2346-1789922862-1774626675.png",
+        "type": "game",
+        "game_id": "10147"
       },
       {
         "name": "Dead Space 2 Vortex Extension",
@@ -6939,12 +6939,12 @@
       },
       {
         "name": "Parisian Bistro Simulator Vortex Support",
-        "version": "0.1.0",
+        "version": "0.1.1",
         "author_name": "LZHSimulators",
         "author_user_id": "149051063",
-        "uploaded_at": "2026-10-05T15:44:04Z",
+        "uploaded_at": "2026-10-18T22:44:46Z",
         "mod_id": "2421",
-        "file_id": "10607",
+        "file_id": "11609",
         "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/cocxmi.jpg",
         "type": "game",
         "game_id": "10352"
@@ -7083,12 +7083,12 @@
       },
       {
         "name": "Coal LLC Support",
-        "version": "1.1.0",
+        "version": "1.2.0",
         "author_name": "DerFIoh",
         "author_user_id": "87375903",
-        "uploaded_at": "2026-10-12T06:00:23Z",
+        "uploaded_at": "2026-10-19T10:14:15Z",
         "mod_id": "2444",
-        "file_id": "10818",
+        "file_id": "11624",
         "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/coa8f9.jpg",
         "type": "game",
         "game_id": "9309"
@@ -7154,6 +7154,18 @@
         "game_id": "9447"
       },
       {
+        "name": "The Slormancer Vortex Extension",
+        "version": "0.6.1",
+        "author_name": "LittleNick0",
+        "author_user_id": "53031016",
+        "uploaded_at": "2026-10-20T09:09:22Z",
+        "mod_id": "2455",
+        "file_id": "11644",
+        "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/co9ohn.jpg",
+        "type": "game",
+        "game_id": "10308"
+      },
+      {
         "name": "Castlevania Belmont's Curse Vortex Extension",
         "version": "1.0.1",
         "author_name": "ChemBoy1",
@@ -7179,12 +7191,12 @@
       },
       {
         "name": "Anime Shop Simulator Vortex Extension",
-        "version": "1.0.1",
+        "version": "1.0.2",
         "author_name": "ChemBoy1",
         "author_user_id": "3263034",
-        "uploaded_at": "2026-10-16T14:09:42Z",
+        "uploaded_at": "2026-10-19T16:03:04Z",
         "mod_id": "2460",
-        "file_id": "11225",
+        "file_id": "11632",
         "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/coavli.jpg",
         "type": "game",
         "game_id": "10172"
@@ -7224,6 +7236,66 @@
         "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1u2c.jpg",
         "type": "game",
         "game_id": "4452"
+      },
+      {
+        "name": "Permafrost Vortex Extension",
+        "version": "1.0.2",
+        "author_name": "Paulyus1",
+        "author_user_id": "8441767",
+        "uploaded_at": "2026-10-19T02:13:14Z",
+        "mod_id": "2466",
+        "file_id": "11611",
+        "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/cod570.jpg",
+        "type": "game",
+        "game_id": "10550"
+      },
+      {
+        "name": "over the hill Vortex Extension",
+        "version": "1.0.0",
+        "author_name": "ChemBoy1",
+        "author_user_id": "3263034",
+        "uploaded_at": "2026-10-17T21:10:14Z",
+        "mod_id": "2467",
+        "file_id": "11559",
+        "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/co9bpq.jpg",
+        "type": "game",
+        "game_id": "10627"
+      },
+      {
+        "name": "Car Dealer Simulator Vortex Extension",
+        "version": "0.1.0",
+        "author_name": "lukarick",
+        "author_user_id": "248019998",
+        "uploaded_at": "2026-10-18T02:36:03Z",
+        "mod_id": "2468",
+        "file_id": "11566",
+        "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/co9a2y.jpg",
+        "type": "game",
+        "game_id": "8049"
+      },
+      {
+        "name": "Survival Log Vortex Extension",
+        "version": "1.0.2",
+        "author_name": "ivmakk0",
+        "author_user_id": "79112633",
+        "uploaded_at": "2026-10-20T17:58:33Z",
+        "mod_id": "2471",
+        "file_id": "11650",
+        "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/cobm4o.jpg",
+        "type": "game",
+        "game_id": "9894"
+      },
+      {
+        "name": "Apocalypter Vortex Extension",
+        "version": "1.0.0",
+        "author_name": "ChemBoy1",
+        "author_user_id": "3263034",
+        "uploaded_at": "2026-10-18T18:04:21Z",
+        "mod_id": "2472",
+        "file_id": "11602",
+        "image_url": "https://images.igdb.com/igdb/image/upload/t_cover_big/coavdu.jpg",
+        "type": "game",
+        "game_id": "10356"
       },
       {
         "name": "Archive binding fix",
@@ -7289,17 +7361,6 @@
         "mod_id": "67",
         "file_id": "2599",
         "image_url": "https://staticdelivery.nexusmods.com/mods/2295/images/67/67-1574711459-1788149758.png",
-        "type": "other"
-      },
-      {
-        "name": "Half-Life 2 Support",
-        "version": "1.1.0",
-        "author_name": "AtomicTEM",
-        "author_user_id": "41248120",
-        "uploaded_at": "2020-05-18T16:29:44Z",
-        "mod_id": "80",
-        "file_id": "516",
-        "image_url": "https://staticdelivery.nexusmods.com/mods/2295/images/80/80-1579744631-1635768160.jpeg",
         "type": "other"
       },
       {
@@ -7832,12 +7893,12 @@
       },
       {
         "name": "Karryn's Prison Support",
-        "version": "2.6.2",
+        "version": "2.6.3",
         "author_name": "madtisa",
         "author_user_id": "56308802",
-        "uploaded_at": "2026-06-24T06:36:08Z",
+        "uploaded_at": "2026-10-22T06:10:43Z",
         "mod_id": "566",
-        "file_id": "8280",
+        "file_id": "11705",
         "image_url": "https://staticdelivery.nexusmods.com/mods/2295/images/566/566-1686218101-625196592.jpeg",
         "type": "other"
       },
@@ -8261,12 +8322,12 @@
       },
       {
         "name": "Support Stats",
-        "version": "1.13.9",
+        "version": "1.13.10",
         "author_name": "elsid2010",
         "author_user_id": "8477780",
-        "uploaded_at": "2026-10-12T14:03:34Z",
+        "uploaded_at": "2026-10-19T18:42:05Z",
         "mod_id": "2076",
-        "file_id": "10829",
+        "file_id": "11636",
         "image_url": "https://staticdelivery.nexusmods.com/mods/2295/images/2076/2076-1783134355-1861360478.png",
         "type": "other"
       },
@@ -8316,12 +8377,12 @@
       },
       {
         "name": "Event Horizon - Advanced Mod Manager for Bethesda Games in Vortex",
-        "version": "0.2.81",
+        "version": "0.2.89",
         "author_name": "DuduPhudu",
         "author_user_id": "165440728",
-        "uploaded_at": "2026-10-16T22:08:23Z",
+        "uploaded_at": "2026-10-22T17:51:50Z",
         "mod_id": "2235",
-        "file_id": "11530",
+        "file_id": "11716",
         "image_url": "https://staticdelivery.nexusmods.com/mods/2295/images/2235/2235-1790138960-158705291.jpg",
         "type": "other"
       },
@@ -8360,12 +8421,12 @@
       },
       {
         "name": "Vortex Development Bridge",
-        "version": "1.0.0",
+        "version": "1.1.9",
         "author_name": "keenanselbee",
         "author_user_id": "2818151",
-        "uploaded_at": "2026-09-14T00:34:20Z",
+        "uploaded_at": "2026-10-21T21:48:16Z",
         "mod_id": "2303",
-        "file_id": "9724",
+        "file_id": "11686",
         "image_url": "https://staticdelivery.nexusmods.com/mods/2295/images/2303/2303-1789369638-487954404.png",
         "type": "other"
       },
@@ -8447,17 +8508,6 @@
         "type": "other"
       },
       {
-        "name": "Tales of Glory 4 Ragnarok Vortex Extension",
-        "version": "1.0.0",
-        "author_name": "asaidas",
-        "author_user_id": "23557799",
-        "uploaded_at": "2026-10-09T14:21:30Z",
-        "mod_id": "2346",
-        "file_id": "10760",
-        "image_url": "https://staticdelivery.nexusmods.com/mods/2295/images/2346/2346-1789922862-1774626675.png",
-        "type": "other"
-      },
-      {
         "name": "Global Ignore Patterns - Avoid Frivilous File Conflicts - Vortex Extension",
         "version": "1.0.0",
         "author_name": "ChemBoy1",
@@ -8510,6 +8560,28 @@
         "mod_id": "2461",
         "file_id": "11521",
         "image_url": "https://staticdelivery.nexusmods.com/mods/2295/images/2461/2461-1792132528-254962850.png",
+        "type": "other"
+      },
+      {
+        "name": "MoLi Organizer",
+        "version": "0.1.0",
+        "author_name": "Giakou",
+        "author_user_id": "17979234",
+        "uploaded_at": "2026-10-19T22:41:56Z",
+        "mod_id": "2479",
+        "file_id": "11639",
+        "image_url": "https://staticdelivery.nexusmods.com/mods/2295/images/2479/2479-1792448927-45189591.png",
+        "type": "other"
+      },
+      {
+        "name": "Nexus Mod Browser for Vortex - Browse and Download Nexus Mods",
+        "version": "0.6.3",
+        "author_name": "MC10086AAA",
+        "author_user_id": "249240590",
+        "uploaded_at": "2026-10-22T12:16:27Z",
+        "mod_id": "2485",
+        "file_id": "11712",
+        "image_url": "https://staticdelivery.nexusmods.com/mods/2295/images/2485/2485-1792665558-905023899.png",
         "type": "other"
       }
     ],
@@ -8690,12 +8762,12 @@
       },
       {
         "name": "French translation for Vortex - Traduction FR",
-        "version": "1.7.5",
+        "version": "1.7.7",
         "author_name": "aogara",
         "author_user_id": "7763808",
-        "uploaded_at": "2026-10-14T16:43:46Z",
+        "uploaded_at": "2026-10-20T17:22:49Z",
         "mod_id": "48",
-        "file_id": "11158",
+        "file_id": "11649",
         "image_url": "https://staticdelivery.nexusmods.com/mods/2295/images/48/48-1585008071-273996874.png",
         "locale": "fr"
       },
@@ -8811,23 +8883,23 @@
       },
       {
         "name": "Vortex - Russian Translation",
-        "version": "2.8.1-1",
+        "version": "2.9.0-1",
         "author_name": "enbl1tenment",
         "author_user_id": "5826079",
-        "uploaded_at": "2026-10-12T16:06:18Z",
+        "uploaded_at": "2026-10-19T18:31:39Z",
         "mod_id": "1507",
-        "file_id": "10835",
+        "file_id": "11635",
         "image_url": "https://staticdelivery.nexusmods.com/mods/2295/images/1507/1507-1786833831-659897975.png",
         "locale": "ru"
       },
       {
-        "name": "Vortex in Russian - 2.8.2",
-        "version": "2.8.2",
+        "name": "Vortex in Russian - 2.9.0",
+        "version": "2.9.0",
         "author_name": "MrBeard8",
         "author_user_id": "28757345",
-        "uploaded_at": "2026-10-13T17:39:23Z",
+        "uploaded_at": "2026-10-20T20:21:41Z",
         "mod_id": "2169",
-        "file_id": "11135",
+        "file_id": "11652",
         "image_url": "https://staticdelivery.nexusmods.com/mods/2295/images/2169/2169-1786382671-1529083224.png",
         "locale": "ru"
       },
@@ -8866,14 +8938,25 @@
       },
       {
         "name": "Vortex-Simplified-Chinese-Translation-Extension",
-        "version": "2.8.1",
+        "version": "2.9.0",
         "author_name": "clx12",
         "author_user_id": "74112758",
-        "uploaded_at": "2026-10-13T09:57:19Z",
+        "uploaded_at": "2026-10-20T03:19:07Z",
         "mod_id": "2449",
-        "file_id": "11117",
+        "file_id": "11640",
         "image_url": "https://staticdelivery.nexusmods.com/mods/2295/images/2449/2449-1791877314-431756466.png",
         "locale": "zh"
+      },
+      {
+        "name": "Vortex Full Chinese Localization - AI Mod Name Translation",
+        "version": "0.16.1",
+        "author_name": "qibgkong",
+        "author_user_id": "227543547",
+        "uploaded_at": "2026-10-22T06:08:11Z",
+        "mod_id": "2475",
+        "file_id": "11704",
+        "image_url": "https://staticdelivery.nexusmods.com/mods/2295/images/2475/2475-1792380440-2104738320.png",
+        "locale": null
       }
     ]
   }

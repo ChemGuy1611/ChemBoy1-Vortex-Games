@@ -59,15 +59,25 @@ Eleven mod types come from `spec` — `BEPINEX_MOD` (`BepInEx`), `MELON_MOD` (`.
 `BEPINEX_PLUGINS` / `BEPINEX_PATCHERS` / `BEPINEX_CONFIG` (`BepInEx/plugins|patchers|config`),
 `MELON_MODS` / `MELON_PLUGINS` / `MELON_CONFIG` / `MELON_USERLIB` (`Mods`, `Plugins`, `UserData`,
 `UserLibs`), `BEPCFGMAN`, `MELONPREFMAN`, plus `ROOT`, `BEPINEX`, and `MELON` at `{gamePath}`.
+`TEXTURES` (`BepInEx/plugins/TextureReplacer`) is appended to `spec` behind `hasTextureReplacer`.
 Registered explicitly on top: `CUSTOMLOADER_MOD` 25, `CUSTOMLOADER_PLUGIN` 27, `CUSTOM` 58,
 `CUSTOMLOADER` 60, `ASSEMBLY` 60, `ASSETS` 62, and `SAVE` 64 (behind `enableSaveInstaller`). The
 `SAVE` folder is `SAVE_PATH`, read when Vortex asks for it, so it switches to the Xbox save location
 once the Xbox build is detected.
 
 **Installers:** `CUSTOMLOADER` 25 (behind `hasCustomLoader`) → `BEPINEX` 26 → `MELON` 27 → `ROOT` 28 →
-`BEPCFGMAN` 29 → `MELONPREFMAN` 30 → `ASSEMBLY` 31 → plugin 33 → `ASSETS` 37 → `CUSTOM` 39 (behind
-`hasCustomMods`) → `SAVE` 47 (behind `enableSaveInstaller`) → fallback 49 (behind
-`fallbackInstaller`). The `SAVE` installer installs as the `SAVE` mod type.
+`BEPCFGMAN` 29 → `MELONPREFMAN` 30 → `ASSEMBLY` 31 → plugin 33 → `TEXTURES` 35 (behind
+`hasTextureReplacer`) → `ASSETS` 37 → `CUSTOM` 39 (behind `hasCustomMods`) → `SAVE` 47 (behind
+`enableSaveInstaller`) → fallback 49 (behind `fallbackInstaller`). The `SAVE` installer installs as
+the `SAVE` mod type.
+
+**Texture Replacer textures.** `hasTextureReplacer` is for games with a Texture Replacer BepInEx plugin
+that loads every `.png` under `BepInEx/plugins/TextureReplacer`, subfolders included, and matches each
+by file name to an in-game texture. The `TEXTURES` installer takes an archive with a `.png` whose name
+starts with `TEXTURES_STRING` (placeholder `"XXX"` until set, compared lower-cased) and no `.dll` (a
+plugin that ships textures stays with the plugin sorter). It anchors on the shallowest matching texture,
+so subfolders the mod sorts its textures into are kept and outer wrapper folders are dropped. The
+folder is in `MODTYPE_FOLDERS` when the toggle is on.
 
 **Custom loader support.** `hasCustomLoader`, `customLoaderInstaller`, and `hasCustomMods` let a game
 add a third, game-specific loader with its own mod types and folder layout; `getCustomFolder`

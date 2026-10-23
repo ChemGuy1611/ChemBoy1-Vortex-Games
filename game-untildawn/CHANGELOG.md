@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.4] - 2026-10-22
+
+- Fixed: The Epic Games Store version was still being detected, despite the change in 1.0.3.
+
 ## [1.0.3] - 2026-10-18
 
 - Changed: The Epic Games Store version is no longer detected, as its folder layout is not supported yet.

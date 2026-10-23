@@ -278,6 +278,10 @@ with `path.join()`, which emits forward slashes off Windows.
   the game name out of the artwork — Vortex renders the localised name as text beside it.
 - `queryPath` and `executable` are always functions even though IGameStored stores them as strings.
 - `IDiscoveryResult` is the type for discovered game state — there is no `IDiscoveredGame`.
+- From Vortex v2.10.0-beta.1 a game can be managed without any extension ("tier 0", see
+  `VORTEX_GAME_LIFECYCLE.md`). Vortex decides that an extension owns a game when its `id` or its
+  `details.nexusPageId` equals the game's Nexus domain. If the id differs from the domain, set
+  `nexusPageId`, or a user who opted the game in before installing the extension sees it twice.
 
 ---
 

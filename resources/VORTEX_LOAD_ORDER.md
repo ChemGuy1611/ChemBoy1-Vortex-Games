@@ -17,15 +17,18 @@ There are **two distinct** load-order systems plus a legacy page:
 This doc is about **FBLO**. Gamebryo plugins are a parallel system (`GAMEBRYO_PLUGIN_SYSTEM.md`).
 
 **Version note.** The sections from "What FBLO stores" through "Mod updates and load-order
-position" describe the file-based load order as shipped in stable Vortex up to v2.8.x (the
-`UpdateSet`, `findGameEntry`, one load order per game). **v2.9.0-beta.2 rewrites that core
+position" describe the file-based load order as shipped in stable Vortex up to v2.9.0 (the
+`UpdateSet`, `findGameEntry`, one load order per game). **v2.10.0-beta.1 rewrites that core
 extension** — a registry of several load orders per game, a reconcile step on every deploy, and a
-"hold" that replaces `UpdateSet`. It is described in "The v2.9.0-beta.2 rewrite" near the end of
+"hold" that replaces `UpdateSet`. It is described in "The v2.10.0-beta.1 rewrite" near the end of
 this file; until a stable release ships it, the older sections stay the reference for what users
-actually run. The rewrite is **not** in v2.9.0-beta.3 or v2.9.0-beta.4 (nor in v2.8.1 or v2.8.2):
-those tags are a release branch cut from `master` on 2026-10-06, a day before the rewrite landed,
-and they still ship `UpdateSet.ts`. Only the beta.2 tag and `master` carry it. One smaller fix is
-already in v2.9.0-beta.1 (see "`deserializeLoadOrder` contract").
+actually run. The rewrite is **not** in any v2.8.x or v2.9.x tag, stable v2.9.0 included: those
+tags are a release branch cut from `master` on 2026-10-06, a day before the rewrite landed, and
+they still ship `UpdateSet.ts`. The first tags that carry it are v2.10.0-beta.1 (2026-10-20) and
+beta.2, both cut from `master`. (The npm `@nexusmods/vortex-api` 2.9.0-beta.2 typings already
+described it, because that package was built from `master`, but the v2.9.0-beta.2 app did not
+ship it.) One smaller fix is in every v2.9 tag, stable v2.9.0 included (see
+"`deserializeLoadOrder` contract" and "A purge followed by a deploy writes nothing back").
 
 ## What FBLO stores
 
@@ -79,7 +82,7 @@ it survives until the next successful deserialize. To decline to rebuild (e.g. w
 in flight) return the currently stored order unchanged; that is a no-op dispatch and leaves the page
 showing the real order.
 
-**Narrow exception from v2.9.0-beta.1:** on the deploy/purge re-read, an _empty_ (or undefined)
+**Narrow exception from v2.9.0-beta.1 (stable since v2.9.0):** on the deploy/purge re-read, an _empty_ (or undefined)
 result no longer replaces the stored order — the persisted order wins that tie, because a game
 that has nothing ordered and a game whose read failed both return `[]`. Anything non-empty still
 becomes the load order unfiltered, so the placeholder-row and truncated-list cases above are
@@ -115,8 +118,8 @@ notification.
 
 ## UpdateSet — surviving mod updates and purge cycles
 
-_Through stable v2.8.x and v2.9.0-beta.1, beta.3 and beta.4. `UpdateSet.ts` is deleted in v2.9.0-beta.2 and on `master`; its job moves
-to the hold and reconcile steps described in "The v2.9.0-beta.2 rewrite" below._
+_Through stable v2.9.0 and every v2.8/v2.9 tag. `UpdateSet.ts` is deleted from v2.10.0-beta.1 and on `master`; its job moves
+to the hold and reconcile steps described in "The v2.10.0-beta.1 rewrite" below._
 
 `UpdateSet.ts` remembers the load-order entries and the **index** each one held
 (`toExtendedLoadOrderEntry`), so a load order re-read from disk can be put back into the order the
@@ -225,11 +228,36 @@ load order into a collection and restores it on install (`genCollectionLoadOrder
   dispatches into its own reducer. Tell the user when a reorder is being skipped: with the real
   order still on screen the page looks interactive, and a silently dropped drag reads as a bug.
 
-## The v2.9.0-beta.2 rewrite
+## A purge followed by a deploy writes nothing back
 
-Present in v2.9.0-beta.2 (2026-10-08) and on `master`; absent from v2.8.x, v2.9.0-beta.1,
-v2.9.0-beta.3 and v2.9.0-beta.4 (checked 2026-10-17: the later betas are cut from an earlier point
-of `master` and do not contain it, so a user on beta.4 has the old behaviour). All of
+Applies to every v2.9 tag, **stable v2.9.0 included**, and to v2.10. Observed on the v2.9.0-beta.2
+app (release-branch code: the `UpdateSet` core plus the fix below) with `game-welcometoelderfield`
+and `game-thelastofuspart2`. Commit `2155ab0eb` (LAZ-1304, "keep the stored load order when the game
+reports none", merged 2026-10-05, in v2.9.0-beta.1 and every later tag) keeps the stored order when
+the `did-purge` read comes back empty. The deploy that follows then reads an order equal to the
+stored one; the change watcher writes to the game only when the order gains an entry, loses one or
+changes its entry count (`diffLoadOrder`), and none of that happens, so `serializeLoadOrder` does
+not run. A game extension that empties its load order file on `did-purge` (a plugins list pruned, a
+load order line blanked) is therefore not restored by Vortex on the next deploy; it has to write the
+file back from its own `did-deploy` handler. Before LAZ-1304 the empty read was dispatched as the new
+order, so the purge emptied the stored order and the deploy "added" every entry back, which wrote
+the file as a side effect. Extensions that relied on that side effect stopped getting it, on stable
+since v2.9.0 (2026-10-19).
+
+When the emptied file was the only copy of the order (no sidecar to rebuild from), write back the
+stored order from `state.persistent.loadOrder[profileId]`, keeping the entries that are deployed
+again and appending any deployed file the stored order does not know. Do not deserialize the blanked
+file for the order: it returns the deployed mods alphabetically, and the user's order is lost. Gate the
+write on the file being empty, not on an entry being missing, so a normal deploy that adds a mod
+does not race the write the app makes for it.
+
+## The v2.10.0-beta.1 rewrite
+
+Present in v2.10.0-beta.1 (2026-10-20), v2.10.0-beta.2 and on `master`; absent from every v2.8.x
+and v2.9.x tag, stable v2.9.0 included (checked per tag 2026-10-22: those tags are a release branch
+cut from `master` before the rewrite, so a user on v2.9.0 has the old behaviour). An earlier
+version of this section dated it to v2.9.0-beta.2; that was the npm typings package of that number,
+built from `master`, not the app tag. All of
 it is additive for extensions — `registerLoadOrder` calls written for v2.8 keep working — but the
 runtime behaviour underneath changes in ways an extension author can observe.
 
@@ -286,24 +314,11 @@ from Vortex at the next deployment the hold ends. This is armed per removal, lik
 so a batch of updates holds once per mod. Whether the mid-batch gap described above for `UpdateSet`
 still exists under the hold has not been tested on a real mid-batch deployment.
 
-**A purge followed by a deploy writes nothing back to the game.** Observed on v2.9.0-beta.2 with
-`game-welcometoelderfield` and `game-thelastofuspart2`. The purge holds the stored order, the
-`did-purge` read keeps it, and the `did-deploy` reconcile ends on an order equal to the stored one.
-The change watcher writes to the game only when the order gains an entry, loses one or changes its
-entry count (`diffLoadOrder`), and none of that happens, so `serializeLoadOrder` does not run. A game
-extension that empties its load order file on `did-purge` (a plugins list pruned, a load order line
-blanked) is therefore not restored by Vortex on the next deploy; it has to write the file back from
-its own `did-deploy` handler. Before commit `2155ab0eb` (LAZ-1304, "keep the stored load order when
-the game reports none", merged 2026-10-05, part of v2.9.0-beta.2) the empty read was dispatched as the
-new order, so the purge emptied the stored order and the deploy "added" every entry back, which wrote
-the file as a side effect. Extensions that relied on that side effect stopped getting it.
-
-When the emptied file was the only copy of the order (no sidecar to rebuild from), write back the
-stored order from `state.persistent.loadOrder[profileId]`, keeping the entries that are deployed
-again and appending any deployed file the stored order does not know. Do not deserialize the blanked
-file for the order: it returns the deployed mods alphabetically, and the user's order is lost. Gate the
-write on the file being empty, not on an entry being missing, so a normal deploy that adds a mod
-does not race the write the app makes for it.
+**Purge then deploy under the rewrite.** The purge holds the stored order, the `did-purge` read
+keeps it, and the `did-deploy` reconcile ends on an order equal to the stored one, so the change
+watcher sees no added or removed entry and `serializeLoadOrder` does not run. The result is the same
+as on v2.9.0 (see "A purge followed by a deploy writes nothing back" above): an extension that empties
+its load order file on `did-purge` has to write it back itself.
 
 **Sidecar orders are still not covered.** Everything above operates on the registry's load orders;
 a custom `registerMainPage` list with its own reducer is invisible to it, exactly as before.

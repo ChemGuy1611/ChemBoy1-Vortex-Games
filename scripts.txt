@@ -4,6 +4,7 @@ gui_tray.py
 nexus_upload.py
 check_nexus_api.py
 refresh_extensions_feed.py
+diff_vortex_api_typings.py
 new_extension.py
 new_template.py
 port_to_template.py
@@ -22,6 +23,7 @@ sync_mod_pages.py
 test_sync_mod_pages.py
 test_release_extension.py
 test_bump_version.py
+test_discovery_ids.py
 bump_version.py
 setup_test_folder.py
 deploy_to_vortex.py

@@ -28,7 +28,7 @@ Usage:
         const_value, is_unset, is_missing, set_or_insert, replace_const_rhs,
         js_string_literal, strip_js_comments, mask_comments_and_strings,
         find_matching_bracket, split_top_level_masked, js_files_in, batch_slice,
-        audit_skip_rules, audit_skip_lines,
+        audit_skip_rules, audit_skip_lines, store_id_skip_reason, is_store_id_parked,
         AUDIT_SKIP_STORE_ID, AUDIT_SKIP_FOMOD, AUDIT_SKIP_PRIORITY, AUDIT_SKIP_MODPAGE,
         XXX_PATTERN, is_placeholder_value, is_real_value, find_placeholder_vars,
         const_decl_match, const_array_value,
@@ -1706,7 +1706,10 @@ def add_to_discovery_ids(src):
     Reads each store ID constant directly from src. A variable is added only
     if its current value is a real resolved ID (not null, '', or 'XXX') and
     it is not already present in the array (a commented-out entry counts as
-    present, so a deliberately parked store stays parked).
+    present, so a deliberately parked store stays parked). A constant parked by
+    a store-id audit-skip marker is never added either, so a port or hand edit
+    that drops the commented entry cannot bring the store back on the next
+    release (release_extension.py runs this on every release).
 
     Handled variables are appended in DISCOVERY_ID_APPEND_ORDER: GOGAPP_ID,
     EPICAPP_ID, XBOXAPP_ID, then the Demo/other tail STEAMAPP_ID_DEMO,
@@ -1742,7 +1745,7 @@ def add_to_discovery_ids(src):
         return is_real_value(v)
 
     for var in DISCOVERY_ID_APPEND_ORDER:
-        if _has_real_value(src, var):
+        if _has_real_value(src, var) and not is_store_id_parked(src, var):
             src = _append(src, var)
 
     return src
@@ -2061,13 +2064,15 @@ def inject_register_actions(src):
     if fn_end == -1:
         return src, []
     has_combined = 'Open Config/Save' in src
+    live_src = strip_js_comments(src)
     missing_code = []
     missing_labels = []
     for label, commented, code, *rest in REGISTER_ACTIONS:
         # A live button whose *_URL constant the extension never declares (no STEAMDB_URL
-        # in a game that is not on Steam) would throw on click - leave it out.
+        # in a game that is not on Steam) would throw on click - leave it out. A declaration
+        # that is commented out does not count.
         if not commented and any(
-            not re.search(rf'\b(?:const|let)\s+{c}\b', src)
+            not re.search(rf'\b(?:const|let)\s+{c}\b', live_src)
             for c in set(re.findall(r'\b[A-Z][A-Z0-9_]*_URL\b', code))
         ):
             continue
@@ -4866,6 +4871,37 @@ def audit_skip_lines(src, rule, *, wrapped=True):
             nxt += 1
             hits.setdefault(nxt, rules[rule])
     return hits
+
+
+def store_id_skip_reason(src_lines, skip_lines, const):
+    """Return the audit-skip reason covering const in this file, or None.
+
+    A marker covers a constant when it sits on a line that names it - the const
+    declaration itself, or the commented-out wiring line - or on a comment-only line
+    directly above such a line. A marker trailing code covers only its own line, so it
+    cannot reach down and park the neighbouring store's constant. A covered constant is
+    parked whole: every finding it carries is suppressed together, because a
+    half-wired store is not a state worth reporting.
+    """
+    name_re = re.compile(rf'\b{re.escape(const)}\b')
+    for lineno, reason in skip_lines.items():
+        marker_only = src_lines[lineno - 1].lstrip().startswith("//")
+        for probe in (lineno, lineno + 1):
+            if probe == lineno + 1 and not marker_only:
+                continue
+            if 1 <= probe <= len(src_lines) and name_re.search(src_lines[probe - 1]):
+                return reason
+    return None
+
+
+def is_store_id_parked(src, const):
+    """Return True if a store-id audit-skip marker covers const in src.
+
+    The resolve passes and add_to_discovery_ids use this to stop re-offering a candidate that was already
+    hand-checked and rejected (GOG's 1998 Resident Evil 2 for the 2019 game).
+    """
+    skip_lines = audit_skip_lines(src, AUDIT_SKIP_STORE_ID, wrapped=False)
+    return bool(skip_lines) and store_id_skip_reason(src.splitlines(), skip_lines, const) is not None
 
 
 def has_downloader_js(folder):

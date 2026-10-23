@@ -70,7 +70,8 @@ context.registerMainPage(icon, title, Component, options);
   hotkeyRaw: string,    // full electron hotkey string (alternative to hotkey)
   visible: () => bool,  // hide/show the page dynamically
   props: () => ({}),    // extra props passed to the Component
-  mdi: string,          // SVG path data for a custom icon
+  mdi: string,          // SVG path data for a custom icon (deprecated on master, see §17)
+  menuIcon: IIconSource, // master only: Material Symbol name or { path } (see §17)
   badge: ReduxProp,     // shows a badge on the sidebar icon
   activity: ReduxProp,  // shows a spinner on the sidebar icon
   onReset: () => void,  // called when page is reset
@@ -695,6 +696,16 @@ context.registerMainPage("download", "My Page", MyPage, {
 
 Use `mdi` to provide a custom SVG icon from `@mdi/js` instead of a named string icon. MDI = Material Design Icons.
 
+**Coming change (Vortex `master`, after v2.10.0-beta.2; in no release yet).** Vortex replaced its
+own MDI icons with Google's Material Symbols and added `menuIcon` to the page options: either a
+Material Symbol by name (`"settings"`, `"dashboard"`) or an SVG path as `{ path }`. `mdi` is
+`@deprecated` in favour of `menuIcon: { path }`, but keeps working: Vortex turns it into
+`{ path: mdi }` when `menuIcon` is not set (`hooks/useMainPages.ts`), so existing pages need no
+change. **`@mdi/js` is no longer a dependency of Vortex itself**, so an extension that `require`s it
+at runtime (Option A below) will fail to load on a release built from that code unless it bundles
+its own copy. Paste the path string instead (Option B). Older Vortex ignores `menuIcon`, so an
+extension that must run on both can set `menuIcon: { path: X }` and `mdi: X` side by side.
+
 **Finding icons:** [pictogrammers.com/library/mdi/](https://pictogrammers.com/library/mdi/)
 
 Workflow to get path data from Pictogrammers:
@@ -705,7 +716,7 @@ Workflow to get path data from Pictogrammers:
 4. Copy the `d="..."` value (the long path string)
 5. Paste as a string constant in your extension
 
-**Option A — named import from `@mdi/js`** (bundled with Vortex; preferred when the icon exists):
+**Option A — named import from `@mdi/js`** (resolved from Vortex's own copy through v2.10.0-beta.2; that copy is gone on `master`, so prefer Option B for anything new):
 
 ```js
 const { mdiGamepad, mdiFolder, mdiCog } = require("@mdi/js");
@@ -733,7 +744,7 @@ context.registerMainPage("", "My Page", MyPage, {
 
 - When `mdi` is set, the first `icon` string argument to `registerMainPage` is ignored.
 - Store as a `const` at file top; reuse across multiple page registrations.
-- `mdi` is **only** for `registerMainPage`. `registerAction` takes an icon _name_ string, not MDI path data. On the classic `IconBar` the name resolves against Vortex's icon font (`'open-ext'`, `'gamepad'`). On the modern Mods toolbar (default since 2.7) `'mod-icons'` names resolve through a fixed table (`iconMap.ts`) — `'gamepad'` is not in it, use `'game'`; an unknown name draws a puzzle piece. See `TOOLBAR_ACTIONS.md` §"The Modern Mods Toolbar".
+- `mdi` is **only** for `registerMainPage`. `registerAction` takes an icon _name_ string, not MDI path data. On the classic `IconBar` the name resolves against Vortex's icon font (`'open-ext'`, `'gamepad'`). On the modern Mods toolbar (default since 2.7) `'mod-icons'` names resolve through a fixed table (`iconMap.ts`) — `'gamepad'` is not in it, use `'game'`; an unknown name draws a puzzle piece. On `master` the same table maps those names to Material Symbols (`'open-ext'` -> `folder_open`) and an unknown extension action icon still falls back to a puzzle piece (the `extension` symbol). See `TOOLBAR_ACTIONS.md` §"The Modern Mods Toolbar".
 
 Real examples: `mdi: mdiViewDashboard` (Dashboard page), `mdi: mdiMagnify` (Browse Nexus page), `mdi: UE4SS_ICON` (UE4SS Load Order pages in CB1 extensions).
 
@@ -1186,4 +1197,4 @@ main page that hosts a live web view, and the shared modules built on that patte
 and the `@types/react` 18 fixes every page component needs on its next rebuild).
 `EMBEDDED_BROWSER.md` (hosting a live web page inside a main page with the `Webview` control — the
 props it exposes, the chrome you have to build yourself, and how downloads from that content reach
-Vortex).
+Vortex). `DEPRECATED_METHODS.md` (`mdi` -> `menuIcon` and the rest of the deprecated surface).

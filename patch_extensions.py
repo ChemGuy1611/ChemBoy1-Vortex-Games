@@ -68,7 +68,7 @@ from vortex_utils import (
     load_vortex_manifest, load_nexus_gamelist, resize_pngs_in_dirs,
     is_placeholder_value, replace_const_rhs, print_count_summary, js_string_literal,
     strip_js_comments, is_real_value,
-    audit_skip_lines, AUDIT_SKIP_STORE_ID, AUDIT_SKIP_FOMOD, AUDIT_SKIP_PRIORITY,
+    audit_skip_lines, store_id_skip_reason, is_store_id_parked, AUDIT_SKIP_STORE_ID, AUDIT_SKIP_FOMOD, AUDIT_SKIP_PRIORITY,
     find_registerinstaller_calls, node_check_source, read_index_js,
 )
 NEXUS_SITE_BASE = "https://www.nexusmods.com/site/mods"
@@ -2000,37 +2000,6 @@ def _has_launcher_branch(active_src, token):
     ))
 
 
-def _skip_reason_for_const(src_lines, skip_lines, const):
-    """Return the audit-skip reason covering const in this file, or None.
-
-    A marker covers a constant when it sits on a line that names it - the const
-    declaration itself, or the commented-out wiring line - or on a comment-only line
-    directly above such a line. A marker trailing code covers only its own line, so it
-    cannot reach down and park the neighbouring store's constant. A covered constant is
-    parked whole: every finding it carries is suppressed together, because a
-    half-wired store is not a state worth reporting.
-    """
-    name_re = re.compile(rf'\b{re.escape(const)}\b')
-    for lineno, reason in skip_lines.items():
-        marker_only = src_lines[lineno - 1].lstrip().startswith("//")
-        for probe in (lineno, lineno + 1):
-            if probe == lineno + 1 and not marker_only:
-                continue
-            if 1 <= probe <= len(src_lines) and name_re.search(src_lines[probe - 1]):
-                return reason
-    return None
-
-
-def _is_parked(src, const):
-    """Return True if a store-id audit-skip marker covers const in src.
-
-    The resolve passes use this to stop re-offering a candidate that was already
-    hand-checked and rejected (GOG's 1998 Resident Evil 2 for the 2019 game).
-    """
-    skip_lines = audit_skip_lines(src, AUDIT_SKIP_STORE_ID, wrapped=False)
-    return bool(skip_lines) and _skip_reason_for_const(src.splitlines(), skip_lines, const) is not None
-
-
 def _print_suppressed(rows):
     """Print the suppressed-findings list gathered by an audit.
 
@@ -2135,7 +2104,7 @@ def audit_store_ids(folder_paths):
         for lineno, const, severity, msg in file_hits:
             if skip_lines:
                 if const not in skip_cache:
-                    skip_cache[const] = _skip_reason_for_const(src_lines, skip_lines, const)
+                    skip_cache[const] = store_id_skip_reason(src_lines, skip_lines, const)
                 reason = skip_cache[const]
             else:
                 reason = None
@@ -2178,7 +2147,7 @@ def audit_store_id_resolve(folder_paths, stores):
                 src = f.read()
             if is_real_value(const_value(src, const)):
                 continue
-            if _is_parked(src, const):
+            if is_store_id_parked(src, const):
                 parked += 1
                 continue
             game_name = extract_game_name(src)
@@ -2243,7 +2212,7 @@ def audit_store_pcgw_crosscheck(folder_paths, stores):
             continue
         wanted = [s for s in stores
                   if not is_real_value(const_value(src, PCGW_STORE_CONSTS[s]))
-                  and not _is_parked(src, PCGW_STORE_CONSTS[s])]
+                  and not is_store_id_parked(src, PCGW_STORE_CONSTS[s])]
         if wanted:
             targets.append((folder, title, wanted))
 
@@ -2323,7 +2292,7 @@ def _collect_store_values(folder_paths, prefix):
             raw = const_value(active, const)
             if not is_real_value(raw):
                 continue
-            if _is_parked(src, const):
+            if is_store_id_parked(src, const):
                 parked += 1
                 continue
             targets.append((folder, const, _js_string_value(raw), active, src))

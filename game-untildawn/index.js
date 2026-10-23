@@ -2,8 +2,8 @@
 Name: Until Dawn Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.3
-Date: 2026-10-18
+Version: 1.0.4
+Date: 2026-10-22
 Notes:
 -
 ////////////////////////////////////////////////*/
@@ -57,7 +57,11 @@ const GOGAPP_ID = null; // from gogdb.org
 const XBOXAPP_ID = null; //from appxmanifest.xml
 const XBOXEXECNAME = null; //from appxmanifest.xml
 const XBOX_PUB_ID = ""; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [
+  // UPDATE THIS WITH ALL VALID IDs
+  STEAMAPP_ID,
+  //EPICAPP_ID, // Epic build has no top-level "Windows" folder (see TOPLEVEL_FOLDER)
+];
 
 const GAME_NAME = "Until Dawn";
 const GAME_NAME_SHORT = "Until Dawn"; //Try for 8-10 characters

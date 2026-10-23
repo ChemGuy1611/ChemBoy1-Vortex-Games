@@ -30,9 +30,6 @@
 ## [2026-09-28]
 
 - Added: a `license*` glob (`path.join("**", "license*")`) alongside the existing `changelog*`/`readme*` entries in `IGNORE_CONFLICTS`/`IGNORE_DEPLOY`, so LICENSE files are treated the same as README/CHANGELOG - never flagged as a mod conflict, never deployed into the game folder.
-
-## [2026-09-28]
-
 - Added: `context.registerLoadOrder` (FBLO) for the plugins.js array - installed plugins now show up on Vortex's Load Order page, where they can be dragged into a new order or toggled on/off via the `status` field, instead of only ever being appended in install order.
 - Changed: `installJsFolder`/`installJsFile` no longer read-modify-write plugins.js at install time. That logic (and its read-modify-write race when two plugin mods install back to back) is replaced by the load order's `deserializeLoadOrder`/`serializeLoadOrder` hooks, which reconcile the file against whatever plugin files are actually deployed to `js/plugins`.
 - Fixed: reading plugins.js sliced from the array's `[` to the file's first `;`, which a semicolon inside a plugin's `description`/`parameters` string could hit before the array's real closing `;`. Now slices to the LAST `;` in the file.
