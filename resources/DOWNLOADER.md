@@ -296,7 +296,9 @@ A Nexus download link is short-lived, account-bound, and ad-gated for free accou
 
 ### Naked files
 
-Nexus hosts plenty of tools as a bare `.exe`. Two rules follow from that:
+Nexus hosts plenty of tools as a bare `.exe`. Three rules follow from that:
+
+- **Use `directCopyAsMod`, never loose `directCopyPath`.** Loose mode fetches the asset itself with `doDownload(asset.browser_download_url, …)`, and a Nexus asset has no `browser_download_url` (the download has to go through Vortex's nxm pipeline). A loose direct copy on the Nexus route therefore always fails. To put a naked Nexus file in the game root, point the requirement's `modType` at `{gamePath}`.
 
 - **`.exe` is not in Vortex's known-archive set**, and `removeInvalidFileExts` deletes every file in the download folder that fails that test the next time the download path is initialised. A naked Nexus file therefore cannot be left in the download folder and read back later: `directCopyAsMod` copies it into the mod's staging folder immediately, and then removes the download entry, which would otherwise become a Downloads-tab row pointing at a file Vortex itself deleted.
 - **`installFileName` is effectively required here.** A Nexus upload's file name carries the mod and file ids (`HFW Mod Manager-137-1-2-0-1234567890.exe`), which is almost never the name the game expects — and if the staged name does not match `assemblyFileName`, `findMod` never finds the install and the requirement is re-downloaded forever.

@@ -4591,10 +4591,11 @@ describe("template-ue4-5: after a deployment, UE4SS and LogicMods", () => {
       const { ext, gameDir } = await ue4ssGame({ mods: withUe4ssInstalled(), transform: engine() });
       write(iniFile(gameDir));
       const ini = fakeIni();
+      mock.method(require("exe-version"), "getProductVersion", () => "5.3.2.0");
       await deployed(ext);
       assert.deepEqual(ini.contents.data.EngineVersionOverride, {
-        MajorVersion: " 1",
-        MinorVersion: " 2",
+        MajorVersion: " 5",
+        MinorVersion: " 3",
       });
       assert.deepEqual(
         ini.calls.map(([kind, file]) => [kind, file]),
@@ -4645,6 +4646,48 @@ describe("template-ue4-5: after a deployment, UE4SS and LogicMods", () => {
         MajorVersion: " 4",
         MinorVersion: " 27",
       });
+    });
+
+    it("falls back to ENGINE_VERSION when the executable carries the game's own version", async () => {
+      const { ext, gameDir } = await ue4ssGame({
+        mods: withUe4ssInstalled(),
+        transform: engine(setConst("ENGINE_VERSION", '"5.6.1.0"')),
+      });
+      write(iniFile(gameDir));
+      const ini = fakeIni();
+      mock.method(require("exe-version"), "getProductVersion", () => "1.0.0.0");
+      await deployed(ext);
+      assert.deepEqual(ini.contents.data.EngineVersionOverride, {
+        MajorVersion: " 5",
+        MinorVersion: " 6",
+      });
+    });
+
+    it("never reads the executable when exeHasGameVersion is on", async () => {
+      const { ext, gameDir } = await ue4ssGame({
+        mods: withUe4ssInstalled(),
+        transform: engine(
+          all(setConst("ENGINE_VERSION", '"5.4.2.0"'), setConst("exeHasGameVersion", "true")),
+        ),
+      });
+      write(iniFile(gameDir));
+      const ini = fakeIni();
+      const exeVersion = require("exe-version");
+      const calls = [];
+      const real = exeVersion.getProductVersion;
+      mock.method(exeVersion, "getProductVersion", (file) => {
+        calls.push(file);
+        return real(file);
+      });
+      await deployed(ext);
+      assert.deepEqual(ini.contents.data.EngineVersionOverride, {
+        MajorVersion: " 5",
+        MinorVersion: " 4",
+      });
+      assert.equal(
+        calls.some((file) => file.endsWith("-Shipping.exe")),
+        false,
+      );
     });
 
     it("logs and leaves the file when UE4SS-settings.ini is missing", async () => {

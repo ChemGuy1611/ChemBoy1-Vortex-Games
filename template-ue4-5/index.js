@@ -4116,22 +4116,27 @@ async function didDeploy(api, profileId) {
       await fsp.stat(INI_PATH); //check if UE4SS settings file exists
       let engineMajor = MAJOR_VERSION;
       let engineMinor = MINOR_VERSION;
-      try {
-        //try to read the real engine version from the shipping exe file properties first
-        const exeVersion = require("exe-version");
-        const exeProductVersion = await exeVersion.getProductVersion(
-          path.join(GAME_PATH, SHIPPING_EXE),
-        );
-        const [exeMajor, exeMinor] = exeProductVersion.split(".");
-        if (exeMajor && exeMinor) {
-          engineMajor = exeMajor;
-          engineMinor = exeMinor;
+      //an exe stamped with the game's own version says nothing about the engine
+      if (!exeHasGameVersion) {
+        try {
+          //try to read the real engine version from the shipping exe file properties first
+          const exeVersion = require("exe-version");
+          const exeProductVersion = await exeVersion.getProductVersion(
+            path.join(GAME_PATH, SHIPPING_EXE),
+          );
+          const [exeMajor, exeMinor] = exeProductVersion.split(".");
+          //only a UE4/UE5 major is an engine version - anything else (e.g. 1.0.0.0) is the
+          //game's own version, stamped without the toggle being set
+          if (["4", "5"].includes(exeMajor) && exeMinor) {
+            engineMajor = exeMajor;
+            engineMinor = exeMinor;
+          }
+        } catch (err) {
+          log(
+            "info",
+            `[${GAME_ID}] Could not read engine version from shipping exe, falling back to ENGINE_VERSION constant: ${err.message}`,
+          );
         }
-      } catch (err) {
-        log(
-          "info",
-          `[${GAME_ID}] Could not read engine version from shipping exe, falling back to ENGINE_VERSION constant: ${err.message}`,
-        );
       }
       const parser = new IniParser(new WinapiFormat());
       const contents = await parser.read(INI_PATH);

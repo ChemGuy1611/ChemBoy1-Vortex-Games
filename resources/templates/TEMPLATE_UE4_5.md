@@ -150,7 +150,10 @@ cannot cross volumes. A failed check switches off the Config or Save mod type an
 is used instead when the game has a customised UE4SS build on its own Nexus page
 (`UE4SS_PAGE_NO` / `UE4SS_FILE_NO` / `UE4SS_DOMAIN`). `autoDownloadUe4ss` decides whether that
 happens unattended during `setup()`. With `writeEngineVersion` on, the `did-deploy` handler writes
-`ENGINE_VERSION` into `UE4SS-settings.ini` as `EngineVersionOverride`. The `check-mods-version`
+the engine version into `UE4SS-settings.ini` as `EngineVersionOverride`: the shipping executable's
+ProductVersion when its major part is `4` or `5`, otherwise `ENGINE_VERSION`. Some games stamp their
+own version into the executable (`1.0.0.0`), which is why any other major is ignored; with
+`exeHasGameVersion` on, the executable is not read at all. The `check-mods-version`
 listener tests the UE4SS GitHub requirement for an update, but only when `ue4ssLoadOrder` is on
 and the game has no customised Nexus UE4SS page (`UE4SS_PAGE_NO` is 0), so a curated build is never
 replaced by an upstream one.

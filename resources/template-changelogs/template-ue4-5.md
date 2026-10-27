@@ -1,5 +1,9 @@
 # template-ue4-5 Changelog
 
+## [2026-10-27]
+
+- Fixed: with `writeEngineVersion` on, the engine version written into `UE4SS-settings.ini` (`EngineVersionOverride`) was taken from the shipping executable's ProductVersion whenever that read succeeded, even when the executable carries the game's own version. A game whose executable reports `1.0.0.0` (FINAL FANTASY RESONANCE) got `MajorVersion = 1`, `MinorVersion = 0`. The executable's version is now used only when its major part is `4` or `5`, and is not read at all when `exeHasGameVersion` is on; otherwise the `ENGINE_VERSION` constant is written.
+
 ## [2026-10-21]
 
 - Changed: the ModKit mod type's display name is now `ModKit Mod` (was `ModKit mod`), matching the capitalisation of the other mod type names.
