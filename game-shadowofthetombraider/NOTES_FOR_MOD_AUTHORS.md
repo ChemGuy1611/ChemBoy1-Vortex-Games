@@ -8,28 +8,34 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Manager | a file or folder named `sottrmodmanager.exe` | - |
-| Trmodmanager | a file or folder named `trreboottools.modmanager.exe` | - |
-| Binaries | a file with one of these extensions: `.dll`, `.exe`, `.tiger`, `.asi` or `.addon64` | - |
-| Modmanagermod | a file with one of these extensions: `.tr11dtp`, `.tr11material`, `.tr11modeldata`, `.t11script`, `.t11shaderlib`, `.tr11sound`, `.dds`, `.tr11objectref`, `.tr11dtp` or `.tr11anim` | `Mods` |
+| Manager | a `sottrmodmanager.exe` file | the game folder |
+| Trmodmanager | a `trreboottools.modmanager.exe` file | the game folder |
+| Binaries | a `.dll`, `.exe`, `.tiger`, `.asi` or `.addon64` file | the game folder |
+| Modmanagermod | a `.tr11dtp`, `.tr11material`, `.tr11modeldata`, `.t11script`, `.t11shaderlib`, `.tr11sound`, `.dds`, `.tr11objectref`, `.tr11dtp` or `.tr11anim` file | `Mods` |
 
 Paths are relative to the game's install folder.
 
 ## Manager
 
-Recognised when the archive contains a file or folder named `sottrmodmanager.exe`.
+Recognised when the archive contains a `sottrmodmanager.exe` file.
+
+Installs to: the game folder
 
 ## Trmodmanager
 
-Recognised when the archive contains a file or folder named `trreboottools.modmanager.exe`.
+Recognised when the archive contains a `trreboottools.modmanager.exe` file.
+
+Installs to: the game folder
 
 ## Binaries
 
-Recognised when the archive contains a file with one of these extensions: `.dll`, `.exe`, `.tiger`, `.asi` or `.addon64`.
+Recognised when the archive contains a `.dll`, `.exe`, `.tiger`, `.asi` or `.addon64` file.
+
+Installs to: the game folder
 
 ## Modmanagermod
 
-Recognised when the archive contains a file with one of these extensions: `.tr11dtp`, `.tr11material`, `.tr11modeldata`, `.t11script`, `.t11shaderlib`, `.tr11sound`, `.dds`, `.tr11objectref`, `.tr11dtp` or `.tr11anim`.
+Recognised when the archive contains a `.tr11dtp`, `.tr11material`, `.tr11modeldata`, `.t11script`, `.t11shaderlib`, `.tr11sound`, `.dds`, `.tr11objectref`, `.tr11dtp` or `.tr11anim` file.
 
 Installs to: `Mods`
 

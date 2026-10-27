@@ -8,18 +8,20 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Overstrike | a file or folder named `overstrike.exe` | - |
-| Osmod | a file with one of these extensions: `.smpcmod`, `.suit`, `.suit_style`, `.stage`, `.modular` or `.script` | `Mods Library` |
+| Overstrike | a `overstrike.exe` file | the game folder |
+| Osmod | a `.smpcmod`, `.suit`, `.suit_style`, `.stage`, `.modular` or `.script` file | `Mods Library` |
 
 Paths are relative to the game's install folder.
 
 ## Overstrike
 
-Recognised when the archive contains a file or folder named `overstrike.exe`.
+Recognised when the archive contains a `overstrike.exe` file.
+
+Installs to: the game folder
 
 ## Osmod
 
-Recognised when the archive contains a file with one of these extensions: `.smpcmod`, `.suit`, `.suit_style`, `.stage`, `.modular` or `.script`.
+Recognised when the archive contains a `.smpcmod`, `.suit`, `.suit_style`, `.stage`, `.modular` or `.script` file.
 
 Installs to: `Mods Library`
 

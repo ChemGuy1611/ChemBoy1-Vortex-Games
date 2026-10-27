@@ -8,45 +8,49 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Scriptloader | - | - |
-| Data | a file or folder named `exec` | - |
-| Patchfolder | a file or folder named `patch` | `exec` |
-| Execsub | a file or folder named one of: `ActivityFeed`, `cinematics`, `dc`, `languages`, `sound` or `wad` | `exec` |
-| Pack | a file with one of these extensions: `.texpack` or `.lodpack` | `exec\patch\pc_le` |
-| Luamod | a file or folder named `lua` and a file with one of these extensions: `.lua` | `mods` |
-| Save Game Files | a `.sav` file | `USER_HOME\Saved Games\God of War\USERID_FOLDER` |
+| Scriptloader | a `version.dll` file and a `loader_config.toml` file | the game folder |
+| Data | a `exec` folder | the game folder |
+| Patchfolder | a `patch` folder | `exec` |
+| Execsub | a `ActivityFeed`, `cinematics`, `dc`, `languages`, `sound` or `wad` folder | `exec` |
+| Pack | a `.texpack` or `.lodpack` file | `exec\patch\pc_le` |
+| Luamod | a `lua` folder and a `.lua` file | `mods` |
+| Save Game Files | a `.sav` file | `%USERPROFILE%\Saved Games\God of War\<User ID>` |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
 ## Scriptloader
 
-Handled by the `testLoader` installer. Inspect the extension source for the exact archive layout it expects.
+Recognised when the archive contains a `version.dll` file and a `loader_config.toml` file.
+
+Installs to: the game folder
 
 ## Data
 
-Recognised when the archive contains a file or folder named `exec`.
+Recognised when the archive contains a `exec` folder.
+
+Installs to: the game folder
 
 ## Patchfolder
 
-Recognised when the archive contains a file or folder named `patch`.
+Recognised when the archive contains a `patch` folder.
 
 Installs to: `exec`
 
 ## Execsub
 
-Recognised when the archive contains a file or folder named one of: `ActivityFeed`, `cinematics`, `dc`, `languages`, `sound` or `wad`.
+Recognised when the archive contains a `ActivityFeed`, `cinematics`, `dc`, `languages`, `sound` or `wad` folder.
 
 Installs to: `exec`
 
 ## Pack
 
-Recognised when the archive contains a file with one of these extensions: `.texpack` or `.lodpack`.
+Recognised when the archive contains a `.texpack` or `.lodpack` file.
 
 Installs to: `exec\patch\pc_le`
 
 ## Luamod
 
-Recognised when the archive contains a file or folder named `lua` and a file with one of these extensions: `.lua`.
+Recognised when the archive contains a `lua` folder and a `.lua` file.
 
 Installs to: `mods`
 
@@ -58,7 +62,7 @@ Save files, deployed to the game's save folder.
 
 - Recognised by any file with the `.sav` extension.
 
-Installs to: `USER_HOME\Saved Games\God of War\USERID_FOLDER`
+Installs to: `%USERPROFILE%\Saved Games\God of War\<User ID>`
 
 **Common mistakes:**
 

@@ -8,21 +8,23 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Loader | a file or folder named `ModManager.exe` and a file or folder named `bin` | - |
-| Mod | a file or folder named `modconfig.json` and a file with one of these extensions: `.dat` or `.fat` | `data_win64\mods` |
-| Root / Game Folder Mods | a `data_win64` folder | the game folder itself (no subfolder) |
-| Binaries | a file with one of these extensions: `.exe`, `.dll`, `.asi` or `.addon64` | `bin` |
-| Fallback Installer | anything not matched above | - |
+| Loader | a `ModManager.exe` file and a `bin` folder | the game folder |
+| Mod | a `modconfig.json` file and a `.dat` or `.fat` file | `data_win64\mods` |
+| Root / Game Folder Mods | a `data_win64` folder | the game folder |
+| Binaries | a `.exe`, `.dll`, `.asi` or `.addon64` file | `bin` |
+| Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
 ## Loader
 
-Recognised when the archive contains a file or folder named `ModManager.exe` and a file or folder named `bin`.
+Recognised when the archive contains a `ModManager.exe` file and a `bin` folder.
+
+Installs to: the game folder
 
 ## Mod
 
-Recognised when the archive contains a file or folder named `modconfig.json` and a file with one of these extensions: `.dat` or `.fat`.
+Recognised when the archive contains a `modconfig.json` file and a `.dat` or `.fat` file.
 
 Installs to: `data_win64\mods`
 
@@ -40,7 +42,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `data_win64`, `bin` or `worlds` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -48,7 +50,7 @@ Installs to: the game folder itself (no subfolder)
 
 ## Binaries
 
-Recognised when the archive contains a file with one of these extensions: `.exe`, `.dll`, `.asi` or `.addon64`.
+Recognised when the archive contains a `.exe`, `.dll`, `.asi` or `.addon64` file.
 
 Installs to: `bin`
 
@@ -62,6 +64,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: the game folder
 
 **Common mistakes:**
 

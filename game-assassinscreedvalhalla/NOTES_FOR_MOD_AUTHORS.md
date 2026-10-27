@@ -8,22 +8,24 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Forger Patch Manager (tool) | a `forger.exe` file | - |
+| Forger Patch Manager (tool) | a `forger.exe` file | the game folder |
 | Forger Patches | a `.forger2` file | `ForgerPatches` |
-| DLC Folder Mods | a `dlc_35` folder | - |
-| Forge File Mods | a `.forge` file | - |
-| Root / Game Folder Mods | a `videos` folder | the game folder itself (no subfolder) |
-| Fallback Installer | anything not matched above | - |
+| DLC Folder Mods | a `dlc_35` folder | the game folder |
+| Forge File Mods | a `.forge` file | the game folder |
+| Root / Game Folder Mods | a `videos` folder | the game folder |
+| Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
 ## Forger Patch Manager (tool)
 
-This installer handles Forger Patch Manager itself, not mods for it. It exists so users can install Forger Patch Manager through Vortex, and mod authors normally never package this.
+This installer handles Forger Patch Manager, not mods for it. It exists so users can install Forger Patch Manager through Vortex, and mod authors normally never package this.
 
 **Requirements:**
 
 - Recognised by a file named `forger.exe` in the archive.
+
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -51,6 +53,8 @@ Mods laid out as one or more of the game's DLC folders, copied into the game fol
 
 - Recognised by a folder named `dlc_35`, `dlc_42`, `dlc_211`, `dlc_222`, `dlc_223`, `dlc_225`, `dlc_231`, `dlc_232`, `dlc_234`, `dlc_242`, `dlc_243`, `dlc_247` or `dlc_248` in the archive.
 
+Installs to: the game folder
+
 **Common mistakes:**
 
 - Zip the DLC folders themselves, not the folder that contains them - an extra level misplaces every file.
@@ -62,6 +66,8 @@ Replacement `.forge` archives, deployed into the game's data folder.
 **Requirements:**
 
 - Recognised by any file with the `.forge` extension.
+
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -82,7 +88,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `videos` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -98,6 +104,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: the game folder
 
 **Common mistakes:**
 

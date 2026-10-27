@@ -8,13 +8,36 @@ This extension adds Red Dead Redemption 2 modding support to Vortex Mod Manager.
 [/list]
 [b]🛠️ Mod Installation Notes:[/b]
 [list]
-[*]Root Folder mods are recognised by the Root installer.[/*]
+[*]Root Folder mods install to the game folder.[/*]
 [*]Archives with a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to Vortex's built-in FOMOD installer instead.[/*]
 [/list]
 [b]📋 Usage Notes:[/b]
 [list]
 [*]You can open several useful files/folders/URLs using the buttons within the folder icon on the Mods toolbar.[/*]
 [/list]
+
+[b]📝 Notes for Mod Authors:[/b]
+[spoiler]
+Packaging rules for Red Dead Redemption 2 mods, so Vortex installs them to the right place.
+
+Vortex decides what a mod is by looking at the files and folders inside the archive. It tries each installer in order and the first one that matches wins, so archive layout is what determines where your mod ends up.
+
+========================================================================
+
+Root:
+
+Handled by the "testRoot" installer. Inspect the extension source for the exact archive layout it expects.
+
+  Installs to: the game folder
+
+========================================================================
+
+Rules That Apply To Every Mod Type:
+
+    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
+    - Folder and file name matching is case-insensitive.
+    - Extra wrapper folders around a recognised folder are generally fine.
+[/spoiler]
 
 [b]❤️ Support the Mod Author: [/b]
 If you would like to support my work, you can do so below. Your support is greatly appreciated!

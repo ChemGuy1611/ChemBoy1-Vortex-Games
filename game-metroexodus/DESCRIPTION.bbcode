@@ -5,16 +5,33 @@ This extension adds Metro Exodus modding support to Vortex Mod Manager.
 [*]Steam[/*]
 [*]GOG[/*]
 [*]Epic[/*]
-[*]Xbox (Game Pass)[/*]
+[*]Xbox[/*]
 [*]Other versions may need to select the installation location manually.[/*]
 [/list]
 [b]🛠️ Mod Installation Notes:[/b]
 [list]
+[*]All mods are installed to the game's root folder exactly as they are packaged, with no processing.[/*]
 [/list]
 [b]📋 Usage Notes:[/b]
 [list]
 [*]You can open several useful files/folders/URLs using the buttons within the folder icon on the Mods toolbar.[/*]
 [/list]
+
+[b]📝 Notes for Mod Authors:[/b]
+[spoiler]
+Packaging rules for Metro Exodus mods, so Vortex installs them to the right place.
+
+Vortex decides what a mod is by looking at the files and folders inside the archive. It tries each installer in order and the first one that matches wins, so archive layout is what determines where your mod ends up.
+
+========================================================================
+
+All mods are installed to the game's root folder exactly as they are packaged, with no processing.
+
+Rules That Apply To Every Mod Type:
+
+    - Folder and file name matching is case-insensitive.
+    - Extra wrapper folders around a recognised folder are generally fine.
+[/spoiler]
 
 [b]❤️ Support the Mod Author: [/b]
 If you would like to support my work, you can do so below. Your support is greatly appreciated!

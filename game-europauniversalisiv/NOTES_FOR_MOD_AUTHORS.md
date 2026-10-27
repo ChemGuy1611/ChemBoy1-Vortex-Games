@@ -8,13 +8,13 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Mod | a file with one of these extensions: `.mod` | `game\mod` |
+| Mod | a `.mod` file | `game\mod` |
 
 Paths are relative to the game's install folder.
 
 ## Mod
 
-Recognised when the archive contains a file with one of these extensions: `.mod`.
+Recognised when the archive contains a `.mod` file.
 
 Installs to: `game\mod`
 

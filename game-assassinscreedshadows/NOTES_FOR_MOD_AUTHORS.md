@@ -8,26 +8,28 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| AnvilToolkit (tool) | a `anviltoolkit.exe` file | - |
+| AnvilToolkit (tool) | a `anviltoolkit.exe` file | the game folder |
 | Forger Patch Textures | a `.dds` file | `ForgerPatches` |
-| DLC Folder Mods | a `dlc_10` folder | - |
-| Extracted Forge Content | a `Extracted` folder | - |
-| Unpacked .forge Folder | a `<name>.forge` folder | - |
-| Unpacked .data Folder | a `<name>.data` folder | - |
-| Loose Data Files | a `.data` file | - |
-| Forge File Mods | a `.forge` file | - |
-| Root / Game Folder Mods | a `videos` folder | the game folder itself (no subfolder) |
-| Fallback Installer | anything not matched above | - |
+| DLC Folder Mods | a `dlc_10` folder | the game folder |
+| Extracted Forge Content | a `Extracted` folder | the game folder |
+| Unpacked .forge Folder | a `<name>.forge` folder | the game folder |
+| Unpacked .data Folder | a `<name>.data` folder | the game folder |
+| Loose Data Files | a `.data` file | the game folder |
+| Forge File Mods | a `.forge` file | the game folder |
+| Root / Game Folder Mods | a `videos` folder | the game folder |
+| Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
 ## AnvilToolkit (tool)
 
-This installer handles AnvilToolkit itself, not mods for it. It exists so users can install AnvilToolkit through Vortex, and mod authors normally never package this.
+This installer handles AnvilToolkit, not mods for it. It exists so users can install AnvilToolkit through Vortex, and mod authors normally never package this.
 
 **Requirements:**
 
 - Recognised by a file named `anviltoolkit.exe` in the archive.
+
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -55,6 +57,8 @@ Mods laid out as one or more of the game's DLC folders, copied into the game fol
 
 - Recognised by a folder named `dlc_10`, `dlc_26`, `dlc_28` or `dlc_29` in the archive.
 
+Installs to: the game folder
+
 **Common mistakes:**
 
 - Zip the DLC folders themselves, not the folder that contains them - an extra level misplaces every file.
@@ -66,6 +70,8 @@ Unpacked forge content for AnvilToolkit to repack. The mod is not live until the
 **Requirements:**
 
 - Recognised by a folder named `Extracted` in the archive.
+
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -79,6 +85,8 @@ A whole unpacked `.forge` archive, packaged as a folder named after the archive 
 
 - Recognised by a folder named `<name>.forge` in the archive.
 
+Installs to: the game folder
+
 **Common mistakes:**
 
 - Keep the folder named exactly after the `.forge` archive the content came from, extension included. The name is what tells AnvilToolkit which archive to repack into.
@@ -90,6 +98,8 @@ An unpacked `.data` file, packaged as a folder named after it. Nothing in the ar
 **Requirements:**
 
 - Recognised by a folder named `<name>.data` in the archive.
+
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -103,6 +113,8 @@ Individual data files, staged under a placeholder folder for the user to rename 
 
 - Recognised by any file with the `.data` extension.
 
+Installs to: the game folder
+
 **Common mistakes:**
 
 - State which `.forge` archive the files belong in. The user is prompted for that name and has nothing else to go on.
@@ -114,6 +126,8 @@ Replacement `.forge` archives, deployed into the game's data folder.
 **Requirements:**
 
 - Recognised by any file with the `.forge` extension.
+
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -134,7 +148,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `videos` or `resources` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -150,6 +164,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: the game folder
 
 **Common mistakes:**
 

@@ -8,37 +8,43 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Merger | - | - |
-| Framework | - | - |
-| Asiloader | a file or folder named `RAPTL_Framework.asi` | - |
-| Mod | a file with one of these extensions: `.psc` | `Mods` |
-| Frameworkmod | a file or folder named one of: `textures` | `Mods` |
-| Root / Game Folder Mods | a `DATAS` folder | the game folder itself (no subfolder) |
-| Texturestudio | a file with the `.exe` extension | `TextureStudio` |
+| Merger | a `ResonanceModMerger.exe` file | the game folder |
+| Framework | a `RAPTL_Framework.asi` file | the game folder |
+| Asiloader | a `RAPTL_Framework.asi` file | the game folder |
+| Mod | a `.psc` file | `Mods` |
+| Frameworkmod | a `textures` folder | `Mods` |
+| Root / Game Folder Mods | a `DATAS` folder | the game folder |
+| Texturestudio | a `.exe` file | `TextureStudio` |
 
 Paths are relative to the game's install folder.
 
 ## Merger
 
-Handled by the `testLoader` installer. Inspect the extension source for the exact archive layout it expects.
+Recognised when the archive contains a `ResonanceModMerger.exe` file.
+
+Installs to: the game folder
 
 ## Framework
 
-Handled by the `testFramework` installer. Inspect the extension source for the exact archive layout it expects.
+Recognised when the archive contains a `RAPTL_Framework.asi` file.
+
+Installs to: the game folder
 
 ## Asiloader
 
-Recognised when the archive contains a file or folder named `RAPTL_Framework.asi`.
+Recognised when the archive contains a `RAPTL_Framework.asi` file.
+
+Installs to: the game folder
 
 ## Mod
 
-Recognised when the archive contains a file with one of these extensions: `.psc`.
+Recognised when the archive contains a `.psc` file.
 
 Installs to: `Mods`
 
 ## Frameworkmod
 
-Recognised when the archive contains a file or folder named one of: `textures`.
+Recognised when the archive contains a `textures` folder.
 
 Installs to: `Mods`
 
@@ -56,7 +62,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `DATAS`, `FONT`, `INPUT`, `LEVELS`, `Resources`, `RTC`, `RTE`, `Shaders`, `SOUNDBANKS` or `VIDEOS` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -64,7 +70,7 @@ Installs to: the game folder itself (no subfolder)
 
 ## Texturestudio
 
-Recognised when the archive contains a file with the `.exe` extension.
+Recognised when the archive contains a `.exe` file.
 
 Installs to: `TextureStudio`
 

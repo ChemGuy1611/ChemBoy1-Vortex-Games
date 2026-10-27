@@ -2,8 +2,8 @@
 Name: REANIMAL Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-16
+Version: 1.0.3
+Date: 2026-10-25
 Notes:
 - There is no exe in the game root: the only exe is Everholm\Binaries\Win64\REANIMAL.exe (no -Shipping suffix). Config lives in %LOCALAPPDATA%\Everholm, saves in %LOCALAPPDATA%\REANIMAL\Saved\SaveGames\<user id> (the demo keeps both under Everholm).
 ////////////////////////////////////////////////*/

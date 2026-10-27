@@ -7,7 +7,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 Mergerutility:
 
-Handled by the "testMergerUtility" installer. Inspect the extension source for the exact archive layout it expects.
+Recognised when the archive contains a "unleashthemods.exe" file.
 
   Installs to: "ph_ft"
 
@@ -15,7 +15,7 @@ Handled by the "testMergerUtility" installer. Inspect the extension source for t
 
 Supermerger:
 
-Handled by the "testSuperMerger" installer. Inspect the extension source for the exact archive layout it expects.
+Recognised when the archive contains a "SuperModMerger.exe" file.
 
   Installs to: "ph_ft"
 
@@ -23,7 +23,7 @@ Handled by the "testSuperMerger" installer. Inspect the extension source for the
 
 Pak:
 
-Recognised when the archive contains a file with the ".pak" extension.
+Recognised when the archive contains a ".pak" file.
 
   Installs to: "ph_ft\mods"
 
@@ -42,7 +42,7 @@ MyRootMod.zip
   Requirements:
     - Recognised by a folder named "ph_ft" in the archive.
 
-  Installs to: the game folder itself (no subfolder)
+  Installs to: the game folder
 
   Common mistakes:
     - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.

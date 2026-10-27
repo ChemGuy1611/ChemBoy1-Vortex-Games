@@ -8,13 +8,13 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Managermod | a file or folder named one of: `modinfo.json` and a file with one of these extensions: `.core` or `.stream` | `mods` |
+| Managermod | a `modinfo.json` file and a `.core` or `.stream` file | `mods` |
 
 Paths are relative to the game's install folder.
 
 ## Managermod
 
-Recognised when the archive contains a file or folder named one of: `modinfo.json` and a file with one of these extensions: `.core` or `.stream`.
+Recognised when the archive contains a `modinfo.json` file and a `.core` or `.stream` file.
 
 Installs to: `mods`
 

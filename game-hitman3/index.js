@@ -2,8 +2,8 @@
 Name: HITMAN World of Assassination Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 1.1.1
-Date: 2026-10-16
+Version: 1.1.2
+Date: 2026-10-25
 Notes:
 -
 ///////////////////////////////////////////*/

@@ -8,16 +8,16 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Root / Game Folder Mods | a `bin64` folder | the game folder itself (no subfolder) |
-| Dmm | a file with the `.exe` extension | - |
-| Tools | a file or folder named one of: `//DMM_EXEC`, `CD JSON Mod Manager.exe`, `CrimsonSharp.exe`, `CrimsonSaveEditorStandalone.exe`, `PazGui.exe`, `CDModManager.exe`, `QT_ModManager.exe` or `CrimsonDesertModManager.exe` | - |
-| Specialpatchmod | a file with one of these extensions: `.dll`, `.asi` or `.addon64` | - |
-| Browsermod | a file or folder named `manifest.json`, a file or folder named `files` and a file or folder named one of: `meta`, `0000`, `0001`, `0002`, `0003`, `0004`, `0005`, `0006`, `0007`, `0008`, `0009`, `0010`, `0011`, `0012`, `0013`, `0014`, `0015`, `0016`, `0017`, `0018`, `0019`, `0020`, `0021`, `0022`, `0023`, `0024`, `0025`, `0026`, `0027`, `0028`, `0029`, `0030`, `0031`, `0032`, `0033`, `0034`, `0035`, `//'0036'`, `//this folder is used by patch mods` or `so we don't want to put it in root` | `mods` |
-| Patchmod | a file or folder named one of: `modinfo.json` | `mods` |
-| Texture | a file or folder named one of: `meta`, `0000`, `0001`, `0002`, `0003`, `0004`, `0005`, `0006`, `0007`, `0008`, `0009`, `0010`, `0011`, `0012`, `0013`, `0014`, `0015`, `0016`, `0017`, `0018`, `0019`, `0020`, `0021`, `0022`, `0023`, `0024`, `0025`, `0026`, `0027`, `0028`, `0029`, `0030`, `0031`, `0032`, `0033`, `0034`, `0035`, `//'0036'`, `//this folder is used by patch mods` or `so we don't want to put it in root` and a file with one of these extensions: `.dds` | - |
-| Json | a file with the `.json` extension | - |
-| Binaries | a file with one of these extensions: `.dll`, `.asi` or `.addon64` | `bin64` |
-| Fallback Installer | anything not matched above | - |
+| Root / Game Folder Mods | a `bin64` folder | the game folder |
+| Dmm | a `.exe` file | the game folder |
+| Tools | a `CD JSON Mod Manager.exe`, `CrimsonSharp.exe`, `CrimsonSaveEditorStandalone.exe`, `PazGui.exe`, `CDModManager.exe`, `QT_ModManager.exe` or `CrimsonDesertModManager.exe` file | the game folder |
+| Specialpatchmod | a `.dll`, `.asi` or `.addon64` file | the game folder |
+| Browsermod | a `manifest.json` file, a `files` folder and a `meta`, `0000`, `0001`, `0002`, `0003`, `0004`, `0005`, `0006`, `0007`, `0008`, `0009`, `0010`, `0011`, `0012`, `0013`, `0014`, `0015`, `0016`, `0017`, `0018`, `0019`, `0020`, `0021`, `0022`, `0023`, `0024`, `0025`, `0026`, `0027`, `0028`, `0029`, `0030`, `0031`, `0032`, `0033`, `0034` or `0035` folder | `mods` |
+| Patchmod | a `modinfo.json` file | `mods` |
+| Texture | a `meta`, `0000`, `0001`, `0002`, `0003`, `0004`, `0005`, `0006`, `0007`, `0008`, `0009`, `0010`, `0011`, `0012`, `0013`, `0014`, `0015`, `0016`, `0017`, `0018`, `0019`, `0020`, `0021`, `0022`, `0023`, `0024`, `0025`, `0026`, `0027`, `0028`, `0029`, `0030`, `0031`, `0032`, `0033`, `0034` or `0035` folder and a `.dds` file | - |
+| Json | a `.json` file | `mods` |
+| Binaries | a `.dll`, `.asi` or `.addon64` file | `bin64` |
+| Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
@@ -35,7 +35,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `bin64` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -43,39 +43,47 @@ Installs to: the game folder itself (no subfolder)
 
 ## Dmm
 
-Recognised when the archive contains a file with the `.exe` extension.
+Recognised when the archive contains a `.exe` file.
+
+Installs to: the game folder
 
 ## Tools
 
-Recognised when the archive contains a file or folder named one of: `//DMM_EXEC`, `CD JSON Mod Manager.exe`, `CrimsonSharp.exe`, `CrimsonSaveEditorStandalone.exe`, `PazGui.exe`, `CDModManager.exe`, `QT_ModManager.exe` or `CrimsonDesertModManager.exe`.
+Recognised when the archive contains a `CD JSON Mod Manager.exe`, `CrimsonSharp.exe`, `CrimsonSaveEditorStandalone.exe`, `PazGui.exe`, `CDModManager.exe`, `QT_ModManager.exe` or `CrimsonDesertModManager.exe` file.
+
+Installs to: the game folder
 
 ## Specialpatchmod
 
-Recognised when the archive contains a file with one of these extensions: `.dll`, `.asi` or `.addon64`.
+Recognised when the archive contains a `.dll`, `.asi` or `.addon64` file.
+
+Installs to: the game folder
 
 ## Browsermod
 
-Recognised when the archive contains a file or folder named `manifest.json`, a file or folder named `files` and a file or folder named one of: `meta`, `0000`, `0001`, `0002`, `0003`, `0004`, `0005`, `0006`, `0007`, `0008`, `0009`, `0010`, `0011`, `0012`, `0013`, `0014`, `0015`, `0016`, `0017`, `0018`, `0019`, `0020`, `0021`, `0022`, `0023`, `0024`, `0025`, `0026`, `0027`, `0028`, `0029`, `0030`, `0031`, `0032`, `0033`, `0034`, `0035`, `//'0036'`, `//this folder is used by patch mods` or `so we don't want to put it in root`.
+Recognised when the archive contains a `manifest.json` file, a `files` folder and a `meta`, `0000`, `0001`, `0002`, `0003`, `0004`, `0005`, `0006`, `0007`, `0008`, `0009`, `0010`, `0011`, `0012`, `0013`, `0014`, `0015`, `0016`, `0017`, `0018`, `0019`, `0020`, `0021`, `0022`, `0023`, `0024`, `0025`, `0026`, `0027`, `0028`, `0029`, `0030`, `0031`, `0032`, `0033`, `0034` or `0035` folder.
 
 Installs to: `mods`
 
 ## Patchmod
 
-Recognised when the archive contains a file or folder named one of: `modinfo.json`.
+Recognised when the archive contains a `modinfo.json` file.
 
 Installs to: `mods`
 
 ## Texture
 
-Recognised when the archive contains a file or folder named one of: `meta`, `0000`, `0001`, `0002`, `0003`, `0004`, `0005`, `0006`, `0007`, `0008`, `0009`, `0010`, `0011`, `0012`, `0013`, `0014`, `0015`, `0016`, `0017`, `0018`, `0019`, `0020`, `0021`, `0022`, `0023`, `0024`, `0025`, `0026`, `0027`, `0028`, `0029`, `0030`, `0031`, `0032`, `0033`, `0034`, `0035`, `//'0036'`, `//this folder is used by patch mods` or `so we don't want to put it in root` and a file with one of these extensions: `.dds`.
+Recognised when the archive contains a `meta`, `0000`, `0001`, `0002`, `0003`, `0004`, `0005`, `0006`, `0007`, `0008`, `0009`, `0010`, `0011`, `0012`, `0013`, `0014`, `0015`, `0016`, `0017`, `0018`, `0019`, `0020`, `0021`, `0022`, `0023`, `0024`, `0025`, `0026`, `0027`, `0028`, `0029`, `0030`, `0031`, `0032`, `0033`, `0034` or `0035` folder and a `.dds` file.
 
 ## Json
 
-Recognised when the archive contains a file with the `.json` extension.
+Recognised when the archive contains a `.json` file.
+
+Installs to: `mods`
 
 ## Binaries
 
-Recognised when the archive contains a file with one of these extensions: `.dll`, `.asi` or `.addon64`.
+Recognised when the archive contains a `.dll`, `.asi` or `.addon64` file.
 
 Installs to: `bin64`
 
@@ -89,6 +97,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: the game folder
 
 **Common mistakes:**
 

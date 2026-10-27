@@ -2,8 +2,8 @@
 Name: Batman: Arkham Origins Vortex Extension
 Structure: UE 2-3 Game + TFC Installer
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-10-16
+Version: 1.0.2
+Date: 2026-10-25
 Notes:
 -
 /////////////////////////////////////////*/

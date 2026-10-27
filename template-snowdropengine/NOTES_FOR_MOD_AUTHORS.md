@@ -8,25 +8,29 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| XXX Modloader | a file or folder named `version.dll` | - |
-| XXX Data | a file or folder named `XXX` | - |
-| XXX Datasub | a file or folder named one of: `baked`, `graph objects` or `game system data` | `XXX` |
-| Config File Mods | a `graphic settings.cfg` file or a `.cfg` file | `DOCUMENTS\My Games\XXX` |
+| XXX Modloader | a `version.dll` file | the game folder |
+| XXX Data | a `XXX` folder | the game folder |
+| XXX Datasub | a `baked`, `graph objects` or `game system data` folder | `XXX` |
+| Config File Mods | a `graphic settings.cfg` file or a `.cfg` file | `%USERPROFILE%\Documents\My Games\XXX` |
 | Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
 ## XXX Modloader
 
-Recognised when the archive contains a file or folder named `version.dll`.
+Recognised when the archive contains a `version.dll` file.
+
+Installs to: the game folder
 
 ## XXX Data
 
-Recognised when the archive contains a file or folder named `XXX`.
+Recognised when the archive contains a `XXX` folder.
+
+Installs to: the game folder
 
 ## XXX Datasub
 
-Recognised when the archive contains a file or folder named one of: `baked`, `graph objects` or `game system data`.
+Recognised when the archive contains a `baked`, `graph objects` or `game system data` folder.
 
 Installs to: `XXX`
 
@@ -39,7 +43,7 @@ Configuration tweaks, deployed to the game's config location.
 - Recognised by any file named `graphic settings.cfg`.
 - Recognised by any file with the `.cfg` extension.
 
-Installs to: `DOCUMENTS\My Games\XXX`
+Installs to: `%USERPROFILE%\Documents\My Games\XXX`
 
 **Common mistakes:**
 

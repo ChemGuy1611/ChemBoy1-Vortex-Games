@@ -8,36 +8,44 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Modmanager | a file or folder named `DarkAgesModManager.exe` | - |
-| Atlanextractor | a file or folder named `AtlanResourceExtractor.exe` | - |
-| Valen | a file or folder named `Valen.exe` | - |
-| Patcher | a file or folder named `DarkAgesPatcher.exe` | - |
-| Sound | a file with one of these extensions: `.snd` or `.pck` | `base\sound\soundbanks\pc` |
+| Modmanager | a `DarkAgesModManager.exe` file | the game folder |
+| Atlanextractor | a `AtlanResourceExtractor.exe` file | the game folder |
+| Valen | a `Valen.exe` file | the game folder |
+| Patcher | a `DarkAgesPatcher.exe` file | the game folder |
+| Sound | a `.snd` or `.pck` file | `base\sound\soundbanks\pc` |
 | Config File Mods | a `.cfg` file | `base` |
-| Zipmod | a file or folder named `darkagesmod.txt` | - |
-| Binaries | - | - |
+| Zipmod | a `darkagesmod.txt` file | - |
+| Binaries | - | the game folder |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
 ## Modmanager
 
-Recognised when the archive contains a file or folder named `DarkAgesModManager.exe`.
+Recognised when the archive contains a `DarkAgesModManager.exe` file.
+
+Installs to: the game folder
 
 ## Atlanextractor
 
-Recognised when the archive contains a file or folder named `AtlanResourceExtractor.exe`.
+Recognised when the archive contains a `AtlanResourceExtractor.exe` file.
+
+Installs to: the game folder
 
 ## Valen
 
-Recognised when the archive contains a file or folder named `Valen.exe`.
+Recognised when the archive contains a `Valen.exe` file.
+
+Installs to: the game folder
 
 ## Patcher
 
-Recognised when the archive contains a file or folder named `DarkAgesPatcher.exe`.
+Recognised when the archive contains a `DarkAgesPatcher.exe` file.
+
+Installs to: the game folder
 
 ## Sound
 
-Recognised when the archive contains a file with one of these extensions: `.snd` or `.pck`.
+Recognised when the archive contains a `.snd` or `.pck` file.
 
 Installs to: `base\sound\soundbanks\pc`
 
@@ -57,11 +65,13 @@ Installs to: `base`
 
 ## Zipmod
 
-Recognised when the archive contains a file or folder named `darkagesmod.txt`.
+Recognised when the archive contains a `darkagesmod.txt` file.
 
 ## Binaries
 
 Handled by the `testBinaries` installer. Inspect the extension source for the exact archive layout it expects.
+
+Installs to: the game folder
 
 ## Rules That Apply To Every Mod Type
 

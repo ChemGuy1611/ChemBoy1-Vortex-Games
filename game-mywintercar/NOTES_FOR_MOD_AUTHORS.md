@@ -8,34 +8,37 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Mscloader | a file or folder named `MSCLInstaller.exe` | - |
-| BepInEx (mod loader) | a `BepInEx.Core.dll` file | the game folder itself (no subfolder) |
-| MelonLoader (mod loader) | a `MelonLoader.dll` file | the game folder itself (no subfolder) |
-| Root | a file or folder named `mywintercar_Data` | - |
+| Mscloader | a `MSCLInstaller.exe` file | the game folder |
+| BepInEx (mod loader) | a `BepInEx.dll` file | the game folder |
+| MelonLoader (mod loader) | a `MelonLoader.dll` file | the game folder |
+| Root | a `mywintercar_Data` folder | the game folder |
 | BepInEx Configuration Manager | a `configurationmanager.dll` file | `BepInEx` |
 | MelonLoader Preferences Manager | a `melonprefmanager.mono.dll` file | `Mods` |
-| Assembly Replacement Mods | a `GameAssembly.dll` file | the game folder itself (no subfolder) |
-| Plugin Mods | a `.dll` file | `BepInEx` |
+| Assembly Replacement Mods | a `Assembly-CSharp.dll` file | `mywintercar_Data\Managed` |
+| BepInEx Plugin Mods | a `.dll` file built for BepInEx | `BepInEx\plugins` |
+| MelonLoader Mods | a `.dll` file built for MelonLoader | `Mods` |
 | Asset Replacement Mods | a `.assets` file | `mywintercar_Data` |
-| Texturepack | a file or folder named one of: `packinfo.json` | `Mods\Assets\TexturePackLoader` |
+| Texturepack | a `packinfo.json` file | `Mods\Assets\TexturePackLoader` |
 | Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
 
 ## Mscloader
 
-Recognised when the archive contains a file or folder named `MSCLInstaller.exe`.
+Recognised when the archive contains a `MSCLInstaller.exe` file.
+
+Installs to: the game folder
 
 ## BepInEx (mod loader)
 
-This installer handles BepInEx itself, not mods for it. It exists so users can install BepInEx through Vortex, and mod authors normally never package this.
+This installer handles BepInEx, not mods for it. It exists so users can install BepInEx through Vortex, and mod authors normally never package this.
 
 **Requirements:**
 
-- Recognised by a file named `BepInEx.Core.dll` in the archive.
-- Requires BOTH a folder named `BepInEx` and the loader file `BepInEx.Core.dll`.
+- Recognised by a file named `BepInEx.dll` in the archive.
+- Requires BOTH a folder named `BepInEx` and the loader file `BepInEx.dll`.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -43,14 +46,14 @@ Installs to: the game folder itself (no subfolder)
 
 ## MelonLoader (mod loader)
 
-This installer handles MelonLoader itself, not mods for it. It exists so users can install MelonLoader through Vortex, and mod authors normally never package this.
+This installer handles MelonLoader, not mods for it. It exists so users can install MelonLoader through Vortex, and mod authors normally never package this.
 
 **Requirements:**
 
 - Recognised by a file named `MelonLoader.dll` in the archive.
 - Requires BOTH a folder named `MelonLoader` and the loader file `MelonLoader.dll`.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -58,11 +61,13 @@ Installs to: the game folder itself (no subfolder)
 
 ## Root
 
-Recognised when the archive contains a file or folder named `mywintercar_Data`.
+Recognised when the archive contains a `mywintercar_Data` folder.
+
+Installs to: the game folder
 
 ## BepInEx Configuration Manager
 
-This installer handles the BepInEx Configuration Manager plugin itself, not mods for it. It exists so users can install the BepInEx Configuration Manager plugin through Vortex, and mod authors normally never package this.
+This installer handles the BepInEx Configuration Manager plugin, not mods for it. It exists so users can install the BepInEx Configuration Manager plugin through Vortex, and mod authors normally never package this.
 
 **Requirements:**
 
@@ -77,7 +82,7 @@ Installs to: `BepInEx`
 
 ## MelonLoader Preferences Manager
 
-This installer handles the MelonLoader Preferences Manager itself, not mods for it. It exists so users can install the MelonLoader Preferences Manager through Vortex, and mod authors normally never package this.
+This installer handles the MelonLoader Preferences Manager, not mods for it. It exists so users can install the MelonLoader Preferences Manager through Vortex, and mod authors normally never package this.
 
 **Requirements:**
 
@@ -95,18 +100,18 @@ Mods that replace a compiled game assembly outright. These overwrite core game f
 
 **Requirements:**
 
-- Recognised by any file named `GameAssembly.dll`.
+- Recognised by any file named `Assembly-CSharp.dll` or `Assembly-CSharp-firstpass.dll`.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: `mywintercar_Data\Managed`
 
 **Common mistakes:**
 
 - Assembly replacements cannot be combined with other assembly mods - state this clearly on the mod page.
 - Shipping an assembly alongside a plugin makes the whole archive install as an assembly mod.
 
-## Plugin Mods
+## BepInEx Plugin Mods
 
-The normal shape for a Unity mod: a compiled plugin DLL. Vortex installs it into the loader's mod folder, so the archive does not need to reproduce the loader folder structure.
+The normal shape for a BepInEx mod: a compiled plugin DLL. Vortex reads each DLL to tell which mod loader it was built for, so the archive does not need to reproduce the BepInEx folder structure.
 
 ```text
 MyPlugin.zip
@@ -115,14 +120,39 @@ MyPlugin.zip
 
 **Requirements:**
 
-- Recognised by any file with the `.dll` extension.
+- Recognised by any `.dll` file that references BepInEx.
+- A preloader patcher (a DLL that references `BaseUnityPlugin`) goes to `BepInEx\patchers` instead.
+- An archive that already has a `plugins`, `patchers` or `config` folder keeps that layout and installs to `BepInEx`.
 
-Installs to: `BepInEx`
+Installs to: `BepInEx\plugins`
 
 **Common mistakes:**
 
-- Wrapping the DLL in a `BepInEx\plugins` folder as well - it can end up nested one level too deep.
 - Shipping a plugin together with loader files, which makes the archive look like a loader install instead.
+- Putting BepInEx and MelonLoader plugins in one archive. Vortex cannot install both kinds together - publish them as separate files.
+
+## MelonLoader Mods
+
+The normal shape for a MelonLoader mod: a compiled mod DLL. Vortex reads each DLL to tell which mod loader it was built for, so the archive does not need to reproduce the MelonLoader folder structure.
+
+```text
+MyMelonMod.zip
+└── MyMelonMod.dll
+```
+
+**Requirements:**
+
+- Recognised by any `.dll` file that references MelonLoader.
+- A MelonLoader plugin (a DLL that references `MelonPlugin`) goes to `Plugins` instead.
+- An archive that already has a `mods`, `plugins`, `userdata` or `userlibs` folder keeps that layout and installs to the game folder.
+- An archive whose DLLs reference neither loader installs to the game folder, and Vortex shows a notification asking the user to check the mod page.
+
+Installs to: `Mods`
+
+**Common mistakes:**
+
+- Shipping a plugin together with loader files, which makes the archive look like a loader install instead.
+- Putting BepInEx and MelonLoader plugins in one archive. Vortex cannot install both kinds together - publish them as separate files.
 
 ## Asset Replacement Mods
 
@@ -140,7 +170,7 @@ Installs to: `mywintercar_Data`
 
 ## Texturepack
 
-Recognised when the archive contains a file or folder named one of: `packinfo.json`.
+Recognised when the archive contains a `packinfo.json` file.
 
 Installs to: `Mods\Assets\TexturePackLoader`
 

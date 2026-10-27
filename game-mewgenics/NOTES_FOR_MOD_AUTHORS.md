@@ -8,38 +8,42 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Mewtator | a file or folder named `Mewtator.exe` | - |
-| Saveeeditor | a file or folder named `MewgenicsSaveEditor.exe` | - |
-| Mewjector | a file or folder named `version.dll` | the game folder itself (no subfolder) |
-| Mod | a file or folder named one of: `description.json` and a file or folder named one of: `data`, `audio`, `levels`, `shaders`, `swfs` or `textures` | `mods` |
-| Mewjectormod | a file with one of these extensions: `.dll` | `mods` |
-| Fallback Installer | anything not matched above | - |
+| Mewtator | a `Mewtator.exe` file | the game folder |
+| Saveeeditor | a `MewgenicsSaveEditor.exe` file | the game folder |
+| Mewjector | a `version.dll` file | the game folder |
+| Mod | a `description.json` file and a `data`, `audio`, `levels`, `shaders`, `swfs` or `textures` folder | `mods` |
+| Mewjectormod | a `.dll` file | `mods` |
+| Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
 ## Mewtator
 
-Recognised when the archive contains a file or folder named `Mewtator.exe`.
+Recognised when the archive contains a `Mewtator.exe` file.
+
+Installs to: the game folder
 
 ## Saveeeditor
 
-Recognised when the archive contains a file or folder named `MewgenicsSaveEditor.exe`.
+Recognised when the archive contains a `MewgenicsSaveEditor.exe` file.
+
+Installs to: the game folder
 
 ## Mewjector
 
-Recognised when the archive contains a file or folder named `version.dll`.
+Recognised when the archive contains a `version.dll` file.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 ## Mod
 
-Recognised when the archive contains a file or folder named one of: `description.json` and a file or folder named one of: `data`, `audio`, `levels`, `shaders`, `swfs` or `textures`.
+Recognised when the archive contains a `description.json` file and a `data`, `audio`, `levels`, `shaders`, `swfs` or `textures` folder.
 
 Installs to: `mods`
 
 ## Mewjectormod
 
-Recognised when the archive contains a file with one of these extensions: `.dll`.
+Recognised when the archive contains a `.dll` file.
 
 Installs to: `mods`
 
@@ -53,6 +57,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: the game folder
 
 **Common mistakes:**
 

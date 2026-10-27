@@ -8,27 +8,31 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Loader | a file or folder named `dinput8.dll` | - |
-| Plugin | a file with one of these extensions: `.asi` or `.dll` | `plugins` |
-| Forgemod | a file with one of these extensions: `.forge` or `.data` | - |
-| Root / Game Folder Mods | a `sounddata` folder | the game folder itself (no subfolder) |
-| Mod | a file with one of these extensions: `.pck` or `.bk2` | the game folder itself (no subfolder) |
+| Loader | a `dinput8.dll` file | the game folder |
+| Plugin | a `.asi` or `.dll` file | `plugins` |
+| Forgemod | a `.forge` or `.data` file | `mods` |
+| Root / Game Folder Mods | a `sounddata` folder | the game folder |
+| Mod | a `.pck` or `.bk2` file | the game folder |
 
 Paths are relative to the game's install folder.
 
 ## Loader
 
-Recognised when the archive contains a file or folder named `dinput8.dll`.
+Recognised when the archive contains a `dinput8.dll` file.
+
+Installs to: the game folder
 
 ## Plugin
 
-Recognised when the archive contains a file with one of these extensions: `.asi` or `.dll`.
+Recognised when the archive contains a `.asi` or `.dll` file.
 
 Installs to: `plugins`
 
 ## Forgemod
 
-Recognised when the archive contains a file with one of these extensions: `.forge` or `.data`.
+Recognised when the archive contains a `.forge` or `.data` file.
+
+Installs to: `mods`
 
 ## Root / Game Folder Mods
 
@@ -44,7 +48,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `sounddata`, `videos` or `EasyAntiCheat` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -52,9 +56,9 @@ Installs to: the game folder itself (no subfolder)
 
 ## Mod
 
-Recognised when the archive contains a file with one of these extensions: `.pck` or `.bk2`.
+Recognised when the archive contains a `.pck` or `.bk2` file.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 ## Rules That Apply To Every Mod Type
 

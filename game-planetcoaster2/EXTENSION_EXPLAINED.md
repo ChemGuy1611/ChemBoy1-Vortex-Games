@@ -60,7 +60,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | `planetcoaster2-localised` | 29 |
 | `planetcoaster2-movies` | 31 |
 | `planetcoaster2-ovldata` | 33 |
-| `planetcoaster2-save` | 49 |
+| `planetcoaster2-save` | 48 |
 | `planetcoaster2-fallback` | 49 |
 
 ## Registered Tools

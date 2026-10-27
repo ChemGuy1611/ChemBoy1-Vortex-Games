@@ -2,8 +2,8 @@
 Name: Styx: Blades of Greed Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-16
+Version: 1.0.3
+Date: 2026-10-25
 Notes:
 - The game is Unreal Engine 5.6.0. UE4SS 3.0.1 is deployed on the test install, but it was not confirmed that the game starts with it; other UE 5.6 games needed a hand-made ue4ss\UE4SS_Signatures\*.lua next to stock UE4SS, which the Download UE4SS button does not provide.
 - Config (%LOCALAPPDATA%\Styx3\Saved\Config\WindowsClient), flat SaveGames (no user id folder) and the shipping exe (Styx3-Win64-Shipping.exe) were confirmed on disk. The test install is a repack with no Steam/Epic/GOG files, so store and game version detection are unverified.

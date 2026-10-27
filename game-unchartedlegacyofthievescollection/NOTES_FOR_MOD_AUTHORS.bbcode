@@ -7,10 +7,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 Fluffy Mod Manager (tool):
 
-This installer handles Fluffy Mod Manager itself, not mods for it. It exists so users can install Fluffy Mod Manager through Vortex, and mod authors normally never package this.
+This installer handles Fluffy Mod Manager, not mods for it. It exists so users can install Fluffy Mod Manager through Vortex, and mod authors normally never package this.
 
   Requirements:
     - Recognised by a file named "modmanager.exe" in the archive.
+
+  Installs to: the game folder
 
   Common mistakes:
     - If you bundle Fluffy Mod Manager inside your mod archive, Vortex treats the whole download as Fluffy Mod Manager rather than as your mod. Ship the mod alone and list Fluffy Mod Manager as a requirement.
@@ -19,7 +21,9 @@ This installer handles Fluffy Mod Manager itself, not mods for it. It exists so 
 
 Psarc:
 
-Recognised when the archive contains a file with the ".psarc" extension.
+Recognised when the archive contains a ".psarc" file.
+
+  Installs to: the game folder
 
 ========================================================================
 

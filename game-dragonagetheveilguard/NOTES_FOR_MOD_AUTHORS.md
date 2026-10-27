@@ -9,15 +9,15 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Frosty Mod Manager (tool) | a `frostymodmanager.exe` file | `FrostyModManager` |
-| Davex | a file or folder named `d3d11.dll` | the game folder itself (no subfolder) |
-| Sdkpatch | a file or folder named `DragonAgeTheVeilguardSDK.dll` | `FrostyModManager\Profiles` |
+| Davex | a `d3d11.dll` file | the game folder |
+| Sdkpatch | a `DragonAgeTheVeilguardSDK.dll` file | `FrostyModManager\Profiles` |
 | Frosty Mods | a `.fbmod` file | `FrostyModManager\Mods\Dragon Age The Veilguard` |
 
 Paths are relative to the game's install folder.
 
 ## Frosty Mod Manager (tool)
 
-This installer handles Frosty Mod Manager itself, not mods for it. It exists so users can install Frosty Mod Manager through Vortex, and mod authors normally never package this.
+This installer handles Frosty Mod Manager, not mods for it. It exists so users can install Frosty Mod Manager through Vortex, and mod authors normally never package this.
 
 **Requirements:**
 
@@ -31,13 +31,13 @@ Installs to: `FrostyModManager`
 
 ## Davex
 
-Recognised when the archive contains a file or folder named `d3d11.dll`.
+Recognised when the archive contains a `d3d11.dll` file.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 ## Sdkpatch
 
-Recognised when the archive contains a file or folder named `DragonAgeTheVeilguardSDK.dll`.
+Recognised when the archive contains a `DragonAgeTheVeilguardSDK.dll` file.
 
 Installs to: `FrostyModManager\Profiles`
 

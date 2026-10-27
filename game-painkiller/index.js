@@ -2,8 +2,8 @@
 Name: Painkiller Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-16
+Version: 1.0.3
+Date: 2026-10-25
 Notes:
 - The game is Unreal Engine 4.27.2 (PCGamingWiki, page "Painkiller (2025)" - the page named just "Painkiller" is the 2004 game). Config is Saved\Config\WindowsNoEditor and saves are Saved\SaveGames\<Steam ID>, both confirmed on disk from the demo.
 - Steam only. The Steam demo (4047990) was a time-limited Next Fest demo and is no longer listed; its id stays so existing demo installs are still found. No Epic, GOG or Microsoft Store (PC) release; GOG's "Painkiller" is a different game.

@@ -8,43 +8,43 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Packetloader | a file or folder named `ShadowOfWarPacketLoader.dll` | `x64\plugins` |
-| Dllloader | a file or folder named `ShadowOfWarDllLoader.dll` | `x64` |
-| Modloader | a file or folder named `bink2w64.dll` and a file or folder named `modloader` | `x64` |
-| Arch06mod | a file with one of these extensions: `.arch06` | `Mods` |
-| Pluginsandpackets | a file with one of these extensions: `.dll`, a file or folder named one of: `PacketLoader` and a file or folder named one of: `Internal` | `x64\plugins` |
-| Root / Game Folder Mods | a `game` folder | the game folder itself (no subfolder) |
-| Fallback Installer | anything not matched above | - |
+| Packetloader | a `ShadowOfWarPacketLoader.dll` file | `x64\plugins` |
+| Dllloader | a `ShadowOfWarDllLoader.dll` file | `x64` |
+| Modloader | a `bink2w64.dll` file and a `modloader` folder | `x64` |
+| Arch06mod | a `.arch06` file | `Mods` |
+| Pluginsandpackets | a `.dll` file, a `PacketLoader` folder and a `Internal` folder | `x64\plugins` |
+| Root / Game Folder Mods | a `game` folder | the game folder |
+| Fallback Installer | anything not matched above | `x64\plugins` |
 
 Paths are relative to the game's install folder.
 
 ## Packetloader
 
-Recognised when the archive contains a file or folder named `ShadowOfWarPacketLoader.dll`.
+Recognised when the archive contains a `ShadowOfWarPacketLoader.dll` file.
 
 Installs to: `x64\plugins`
 
 ## Dllloader
 
-Recognised when the archive contains a file or folder named `ShadowOfWarDllLoader.dll`.
+Recognised when the archive contains a `ShadowOfWarDllLoader.dll` file.
 
 Installs to: `x64`
 
 ## Modloader
 
-Recognised when the archive contains a file or folder named `bink2w64.dll` and a file or folder named `modloader`.
+Recognised when the archive contains a `bink2w64.dll` file and a `modloader` folder.
 
 Installs to: `x64`
 
 ## Arch06mod
 
-Recognised when the archive contains a file with one of these extensions: `.arch06`.
+Recognised when the archive contains a `.arch06` file.
 
 Installs to: `Mods`
 
 ## Pluginsandpackets
 
-Recognised when the archive contains a file with one of these extensions: `.dll`, a file or folder named one of: `PacketLoader` and a file or folder named one of: `Internal`.
+Recognised when the archive contains a `.dll` file, a `PacketLoader` folder and a `Internal` folder.
 
 Installs to: `x64\plugins`
 
@@ -62,7 +62,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `game` or `x64` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -78,6 +78,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: `x64\plugins`
 
 **Common mistakes:**
 

@@ -7,7 +7,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 Openhotfixloader:
 
-Recognised when the archive contains a file or folder named "openhotfixloader.dll" and a file or folder named "b3hm.exe".
+Recognised when the archive contains a "openhotfixloader.dll" file and a "b3hm.exe" file.
 
   Installs to: "OakGame\Binaries\Win64\Plugins"
 
@@ -15,15 +15,15 @@ Recognised when the archive contains a file or folder named "openhotfixloader.dl
 
 Sdk:
 
-Recognised when the archive contains a file or folder named "unrealsdk.dll" and a file or folder named "sdk_mods".
+Recognised when the archive contains a "unrealsdk.dll" file and a "sdk_mods" folder.
 
-  Installs to: the game folder itself (no subfolder)
+  Installs to: the game folder
 
 ========================================================================
 
 Sdkmod:
 
-Recognised when the archive contains a file with the ".py" extension and a file with the ".sdkmod" extension.
+Recognised when the archive contains a ".py" file and a ".sdkmod" file.
 
   Installs to: "sdk_mods"
 
@@ -31,7 +31,7 @@ Recognised when the archive contains a file with the ".py" extension and a file 
 
 Pluginloader:
 
-Recognised when the archive contains a file or folder named "d3d11.dll".
+Recognised when the archive contains a "d3d11.dll" file.
 
   Installs to: "OakGame\Binaries\Win64"
 
@@ -39,7 +39,7 @@ Recognised when the archive contains a file or folder named "d3d11.dll".
 
 Hotfix:
 
-Recognised when the archive contains a file with the ".bl3hotfix" extension.
+Recognised when the archive contains a ".bl3hotfix" file.
 
   Installs to: "OakGame\Binaries\Win64\Plugins\ohl-mods"
 
@@ -58,7 +58,7 @@ MyRootMod.zip
   Requirements:
     - Recognised by a folder named "OakGame" or "Engine" in the archive.
 
-  Installs to: the game folder itself (no subfolder)
+  Installs to: the game folder
 
   Common mistakes:
     - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
@@ -67,7 +67,7 @@ MyRootMod.zip
 
 Pak:
 
-Recognised when the archive contains a file with the ".pak" extension.
+Recognised when the archive contains a ".pak" file.
 
   Installs to: "OakGame\Content\Paks"
 
@@ -75,7 +75,7 @@ Recognised when the archive contains a file with the ".pak" extension.
 
 Movies:
 
-Recognised when the archive contains a file with the ".mp4" extension.
+Recognised when the archive contains a ".mp4" file.
 
   Installs to: "OakGame\Content\Movies"
 

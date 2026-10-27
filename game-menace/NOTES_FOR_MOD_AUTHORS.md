@@ -8,17 +8,17 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| MelonLoader (mod loader) | a `MelonLoader.dll` file | the game folder itself (no subfolder) |
-| Modkit | a file or folder named `Menace.Modkit.App.exe` | the game folder itself (no subfolder) |
+| MelonLoader (mod loader) | a `MelonLoader.dll` file | the game folder |
+| Modkit | a `Menace.Modkit.App.exe` file | the game folder |
 | Jiangyu Loader | a `Jiangyu.Loader.dll` file | `Mods` |
 | Jiangyu Mods | a `jiangyu.json` file | `Mods` |
-| Modpackloader | a file or folder named `Menace.ModpackLoader.dll` and a file or folder named `UserLibs` | the game folder itself (no subfolder) |
-| Modpackmod | a file or folder named `modpack.json` | `Mods` |
-| Root / Game Folder Mods | a `Menace_Data` folder | the game folder itself (no subfolder) |
-| Assembly Replacement Mods | a `GameAssembly.dll` file | the game folder itself (no subfolder) |
+| Modpackloader | a `Menace.ModpackLoader.dll` file and a `UserLibs` folder | the game folder |
+| Modpackmod | a `modpack.json` file | `Mods` |
+| Root / Game Folder Mods | a `Menace_Data` folder | the game folder |
+| Assembly Replacement Mods | a `GameAssembly.dll` file | the game folder |
 | MelonLoader Preferences Manager | a `melonprefmanager.il2cpp.dll` file | `Mods` |
-| Customleadersplugin | a file or folder named `MenaceCustomLeader.dll` | `Mods` |
-| Plugin Mods | a `.dll` file | `Mods` |
+| Customleadersplugin | a `MenaceCustomLeader.dll` file | `Mods` |
+| MelonLoader Mods | a `.dll` file built for MelonLoader | `Mods\<ModName>` |
 | Customleaders | - | `Mods\customleaders` |
 | Asset Replacement Mods | a `.assets` file | `Menace_Data` |
 | Fallback Installer | anything not matched above | - |
@@ -27,14 +27,14 @@ Paths are relative to the game's install folder.
 
 ## MelonLoader (mod loader)
 
-This installer handles MelonLoader itself, not mods for it. It exists so users can install MelonLoader through Vortex, and mod authors normally never package this.
+This installer handles MelonLoader, not mods for it. It exists so users can install MelonLoader through Vortex, and mod authors normally never package this.
 
 **Requirements:**
 
 - Recognised by a file named `MelonLoader.dll` in the archive.
 - Requires BOTH a folder named `MelonLoader` and the loader file `MelonLoader.dll`.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -42,13 +42,13 @@ Installs to: the game folder itself (no subfolder)
 
 ## Modkit
 
-Recognised when the archive contains a file or folder named `Menace.Modkit.App.exe`.
+Recognised when the archive contains a `Menace.Modkit.App.exe` file.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 ## Jiangyu Loader
 
-This installer handles the Jiangyu loader itself, not mods for it. It exists so users can install the Jiangyu loader through Vortex, and mod authors normally never package this.
+This installer handles the Jiangyu loader, not mods for it. It exists so users can install the Jiangyu loader through Vortex, and mod authors normally never package this.
 
 **Requirements:**
 
@@ -87,13 +87,13 @@ Installs to: `Mods`
 
 ## Modpackloader
 
-Recognised when the archive contains a file or folder named `Menace.ModpackLoader.dll` and a file or folder named `UserLibs`.
+Recognised when the archive contains a `Menace.ModpackLoader.dll` file and a `UserLibs` folder.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 ## Modpackmod
 
-Recognised when the archive contains a file or folder named `modpack.json`.
+Recognised when the archive contains a `modpack.json` file.
 
 Installs to: `Mods`
 
@@ -111,7 +111,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `Menace_Data` or `Menace_Data` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -125,7 +125,7 @@ Mods that replace a compiled game assembly outright. These overwrite core game f
 
 - Recognised by any file named `GameAssembly.dll`.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -134,7 +134,7 @@ Installs to: the game folder itself (no subfolder)
 
 ## MelonLoader Preferences Manager
 
-This installer handles the MelonLoader Preferences Manager itself, not mods for it. It exists so users can install the MelonLoader Preferences Manager through Vortex, and mod authors normally never package this.
+This installer handles the MelonLoader Preferences Manager, not mods for it. It exists so users can install the MelonLoader Preferences Manager through Vortex, and mod authors normally never package this.
 
 **Requirements:**
 
@@ -148,28 +148,32 @@ Installs to: `Mods`
 
 ## Customleadersplugin
 
-Recognised when the archive contains a file or folder named `MenaceCustomLeader.dll`.
+Recognised when the archive contains a `MenaceCustomLeader.dll` file.
 
 Installs to: `Mods`
 
-## Plugin Mods
+## MelonLoader Mods
 
-The normal shape for a Unity mod: a compiled plugin DLL. Vortex installs it into the loader's mod folder, so the archive does not need to reproduce the loader folder structure.
+The normal shape for a MelonLoader mod: a compiled mod DLL. Vortex reads each DLL to tell which mod loader it was built for, so the archive does not need to reproduce the MelonLoader folder structure.
 
 ```text
-MyPlugin.zip
-└── MyPlugin.dll
+MyMelonMod.zip
+└── MyMelonMod.dll
 ```
 
 **Requirements:**
 
-- Recognised by any file with the `.dll` extension.
+- Recognised by any `.dll` file that references MelonLoader.
+- A loose DLL is put in a folder of its own, named after its folder in the archive or else after the DLL, so files from different mods cannot overwrite each other.
+- MelonLoader only loads a mod in its own folder when that folder holds a `manifest.json`, so Vortex writes one when the archive has none.
+- A MelonLoader plugin (a DLL that references `MelonPlugin`) goes to `Plugins\<ModName>` instead.
+- An archive that already has a `mods`, `plugins`, `userdata` or `userlibs` folder keeps that layout and installs to the game folder.
+- An archive whose DLLs reference neither loader installs to the game folder, and Vortex shows a notification asking the user to check the mod page.
 
-Installs to: `Mods`
+Installs to: `Mods\<ModName>`
 
 **Common mistakes:**
 
-- Wrapping the DLL in a `BepInEx\plugins` folder as well - it can end up nested one level too deep.
 - Shipping a plugin together with loader files, which makes the archive look like a loader install instead.
 
 ## Customleaders

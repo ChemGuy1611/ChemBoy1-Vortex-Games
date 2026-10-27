@@ -11,7 +11,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | TFC Installer (tool) | a `tfcinstaller.exe` file | `SinglePlayer` |
 | UPK Explorer (tool) | a `upk explorer.exe` file | `SinglePlayer` |
 | TFC Mods | a `gameprofile.xml` file or a `.packagepatch` file | `SinglePlayer\TFCInstaller\Mods` |
-| Root / Game Folder Mods | a `BMGame` folder | the game folder itself (no subfolder) |
+| Root / Game Folder Mods | a `BMGame` folder | the game folder |
 | Cooked Content Mods | a `Maps` folder or a `.upk` file | `SinglePlayer` |
 | Movie / Cutscene Replacements | a `.usm` file | `SinglePlayer\BMGame\Movies` |
 | Binaries / Injector Mods | a `BatmanOrigins.exe` file or a `.exe` file | `SinglePlayer\Binaries\Win32` |
@@ -21,7 +21,7 @@ Paths are relative to the game's install folder.
 
 ## TFC Installer (tool)
 
-This installer handles the TFC Installer itself, not mods for it. It exists so users can install the TFC Installer through Vortex, and mod authors normally never package this.
+This installer handles the TFC Installer, not mods for it. It exists so users can install the TFC Installer through Vortex, and mod authors normally never package this.
 
 **Requirements:**
 
@@ -35,7 +35,7 @@ Installs to: `SinglePlayer`
 
 ## UPK Explorer (tool)
 
-This installer handles UPK Explorer itself, not mods for it. It exists so users can install UPK Explorer through Vortex, and mod authors normally never package this.
+This installer handles UPK Explorer, not mods for it. It exists so users can install UPK Explorer through Vortex, and mod authors normally never package this.
 
 **Requirements:**
 
@@ -76,7 +76,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `BMGame`, `Engine`, `Binaries`, `Config`, `CookedPCConsole`, `DLC`, `Localization` or `Movies` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 

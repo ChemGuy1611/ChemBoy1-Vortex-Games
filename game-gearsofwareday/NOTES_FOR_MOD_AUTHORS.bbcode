@@ -74,6 +74,7 @@ MyPakMod.zip
   Requirements:
     - Any archive containing a ".pak" file reaches this installer (unless an earlier one claimed it).
     - Only the pak files are installed - surrounding folders are discarded.
+    - Companion files are installed alongside paks: ".ucas" or ".utoc".
     - If the archive holds more than one pak, Vortex asks the user which to install - useful for optional variants.
 
   Installs to: "FairlightConcept\Content\Paks\~mods"
@@ -84,7 +85,7 @@ MyPakMod.zip
 
 ========================================================================
 
-UE4SS Itself:
+UE4SS:
 
 This installer handles the UE4SS runtime package, not individual mods. Most authors never need it - it exists so users can install UE4SS through Vortex.
 
@@ -92,7 +93,7 @@ This installer handles the UE4SS runtime package, not individual mods. Most auth
     - Recognised by a file named "dwmapi.dll" at any level of the archive.
     - Also recognised by any of the UE4SS support folders: "MapGenBP", "MemberVarLayoutTemplates", "UE4SS_Signatures" or "VTableLayoutTemplates".
 
-  Installs to: "FairlightConcept\Binaries\Win64"
+  Installs to: "FairlightConcept\Binaries\Win64" ("WinGDK" instead of "Win64" for the Xbox version)
 
   Common mistakes:
     - If your script mod archive happens to contain a file named "dwmapi.dll", it will be treated as a UE4SS install rather than as your mod.
@@ -115,7 +116,7 @@ MyScriptMod.zip
     - Wrap the "Scripts" folder in a folder named after your mod. That folder name becomes the mod's UE4SS name and is what gets written to the load order.
     - If you omit the wrapper folder, Vortex falls back to naming the mod after the archive file.
 
-  Installs to: "FairlightConcept\Binaries\Win64\ue4ss\Mods"
+  Installs to: "FairlightConcept\Binaries\Win64\ue4ss\Mods" ("WinGDK" instead of "Win64" for the Xbox version)
 
   Common mistakes:
     - Putting "main.lua" directly in the archive root with no "Scripts" folder - the mod is not recognised as a script mod.
@@ -138,7 +139,7 @@ MyDllMod.zip
     - The archive must contain a ".dll" file AND a folder named "dlls".
     - Wrap the "dlls" folder in a folder named after your mod - that name is used in the load order.
 
-  Installs to: "FairlightConcept\Binaries\Win64\ue4ss\Mods"
+  Installs to: "FairlightConcept\Binaries\Win64\ue4ss\Mods" ("WinGDK" instead of "Win64" for the Xbox version)
 
   Common mistakes:
     - A bare ".dll" with no "dlls" folder is not recognised as a UE4SS DLL mod and will reach the fallback installer.
@@ -159,7 +160,7 @@ MyRootMod.zip
     - Recognised by a top-level folder matching any of: "FairlightConcept", "Engine", "Content", "Binaries", "Mods", "Paks" or "Movies".
     - The matched folder and everything below it is copied into the game folder, preserving structure.
 
-  Installs to: the game folder itself (no subfolder)
+  Installs to: the game folder
 
   Common mistakes:
     - Zipping the folder that CONTAINS the game folders instead of the game folders themselves adds an extra level and misplaces every file.
@@ -172,9 +173,6 @@ Config tweaks are deployed to the game's config folder in your user profile, not
 
   Requirements:
     - Recognised by any of these filenames in the archive: "engine.ini", "game.ini", "gameusersettings.ini", "input.ini", "scalability.ini", "hardware.ini", "deviceprofiles.ini", "compat.ini", "runtimeoptions.ini", "gameplaytags.ini", "enhancedinput.ini" or "consolevariables.ini".
-    - Installed to "CONFIGMOD_LOCATION\Microsoft\Gears of War E-Day\Steam\USERID_FOLDER\Saved\Config\Windows".
-
-  Installs to: "CONFIGMOD_LOCATION\Microsoft\Gears of War E-Day\Steam\USERID_FOLDER\Saved\Config\Windows"
 
   Common mistakes:
     - Shipping a config file with one of these names inside an unrelated mod - the whole archive is then treated as a config mod.
@@ -203,7 +201,7 @@ This is the catch-all. Any archive with no ".pak" file that matched none of the 
     - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
     - Vortex shows the user a notification when a mod installs through the fallback.
 
-  Installs to: "FairlightConcept\Binaries\Win64"
+  Installs to: "FairlightConcept\Binaries\Win64" ("WinGDK" instead of "Win64" for the Xbox version)
 
   Common mistakes:
     - If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report it as broken.

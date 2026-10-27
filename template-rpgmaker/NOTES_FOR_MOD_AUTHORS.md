@@ -8,23 +8,23 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| XXX Jsfolder | a file or folder named `js` | the game folder itself (no subfolder) |
-| XXX Jsfile | a file with the `.js` extension | `js\plugins` |
-| Root / Game Folder Mods | a `audio` folder | the game folder itself (no subfolder) |
-| XXX Json | a file with the `.json` extension | `data` |
+| XXX Jsfolder | a `js` folder | the game folder |
+| XXX Jsfile | a `.js` file | `js\plugins` |
+| Root / Game Folder Mods | a `audio` folder | the game folder |
+| XXX Json | a `.json` file | `data` |
 | Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
 
 ## XXX Jsfolder
 
-Recognised when the archive contains a file or folder named `js`.
+Recognised when the archive contains a `js` folder.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 ## XXX Jsfile
 
-Recognised when the archive contains a file with the `.js` extension.
+Recognised when the archive contains a `.js` file.
 
 Installs to: `js\plugins`
 
@@ -42,7 +42,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `audio`, `css`, `data`, `effects`, `fonts`, `icon`, `img`, `lib`, `locales` or `swiftshader` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -50,7 +50,7 @@ Installs to: the game folder itself (no subfolder)
 
 ## XXX Json
 
-Recognised when the archive contains a file with the `.json` extension.
+Recognised when the archive contains a `.json` file.
 
 Installs to: `data`
 

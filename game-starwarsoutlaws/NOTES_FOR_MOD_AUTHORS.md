@@ -8,32 +8,36 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Modloader | a file or folder named `version.dll` | - |
-| Data | a file or folder named `helix` | - |
-| Datasub | a file or folder named one of: `baked`, `graph objects` or `game system data` | `helix` |
-| Plugins | a file with one of these extensions: `.dll` or `.asi` | `plugins` |
-| Config File Mods | a `graphic settings.cfg` file or a `.cfg` file | `DOCUMENTS\My Games\Outlaws` |
+| Modloader | a `version.dll` file | the game folder |
+| Data | a `helix` folder | the game folder |
+| Datasub | a `baked`, `graph objects` or `game system data` folder | `helix` |
+| Plugins | a `.dll` or `.asi` file | `plugins` |
+| Config File Mods | a `graphic settings.cfg` file or a `.cfg` file | `%USERPROFILE%\Documents\My Games\Outlaws` |
 | Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
 ## Modloader
 
-Recognised when the archive contains a file or folder named `version.dll`.
+Recognised when the archive contains a `version.dll` file.
+
+Installs to: the game folder
 
 ## Data
 
-Recognised when the archive contains a file or folder named `helix`.
+Recognised when the archive contains a `helix` folder.
+
+Installs to: the game folder
 
 ## Datasub
 
-Recognised when the archive contains a file or folder named one of: `baked`, `graph objects` or `game system data`.
+Recognised when the archive contains a `baked`, `graph objects` or `game system data` folder.
 
 Installs to: `helix`
 
 ## Plugins
 
-Recognised when the archive contains a file with one of these extensions: `.dll` or `.asi`.
+Recognised when the archive contains a `.dll` or `.asi` file.
 
 Installs to: `plugins`
 
@@ -46,7 +50,7 @@ Configuration tweaks, deployed to the game's config location.
 - Recognised by any file named `graphic settings.cfg`.
 - Recognised by any file with the `.cfg` extension.
 
-Installs to: `DOCUMENTS\My Games\Outlaws`
+Installs to: `%USERPROFILE%\Documents\My Games\Outlaws`
 
 **Common mistakes:**
 

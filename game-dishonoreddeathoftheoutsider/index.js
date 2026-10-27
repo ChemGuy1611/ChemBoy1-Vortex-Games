@@ -2,8 +2,8 @@
 Name: Dishonored: Death of the Outsider Vortex Extension
 Structure: Void Installer
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-10-16
+Version: 1.0.2
+Date: 2026-10-25
 ////////////////////////////////////*/
 
 //Import libraries

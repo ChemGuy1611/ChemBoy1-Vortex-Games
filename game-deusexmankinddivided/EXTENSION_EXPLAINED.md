@@ -43,7 +43,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | `deusexmankinddivided-root` | 25 |
 | `deusexmankinddivided-runtime` | 27 |
 | `deusexmankinddivided-dlcruntime` | 29 |
-| `deusexmankinddivided-binaries` | 29 |
+| `deusexmankinddivided-binaries` | 30 |
 
 ## Registered Tools
 

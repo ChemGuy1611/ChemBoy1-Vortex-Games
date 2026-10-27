@@ -7,13 +7,17 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 Scripthook:
 
-Recognised when the archive contains a file or folder named "dinput8.dll" and a file or folder named "scripthookrdr.dll".
+Recognised when the archive contains a "dinput8.dll" file and a "scripthookrdr.dll" file.
+
+  Installs to: the game folder
 
 ========================================================================
 
 Modloader:
 
-Recognised when the archive contains a file or folder named "kml.asi".
+Recognised when the archive contains a "kml.asi" file.
+
+  Installs to: the game folder
 
 ========================================================================
 
@@ -21,11 +25,13 @@ Magicrdr:
 
 Handled by the "testMagic" installer. Inspect the extension source for the exact archive layout it expects.
 
+  Installs to: the game folder
+
 ========================================================================
 
 Magicmod:
 
-Recognised when the archive contains a file with one of these extensions: ".wtd", ".was", ".dds", ".mtl" or ".wsc".
+Recognised when the archive contains a ".wtd", ".was", ".dds", ".mtl" or ".wsc" file.
 
   Installs to: "MagicRDR_Mods"
 
@@ -33,7 +39,7 @@ Recognised when the archive contains a file with one of these extensions: ".wtd"
 
 Rpf:
 
-Recognised when the archive contains a file with the ".rpf" extension.
+Recognised when the archive contains a ".rpf" file.
 
   Installs to: "kml\rpf"
 
@@ -41,7 +47,9 @@ Recognised when the archive contains a file with the ".rpf" extension.
 
 Asiplugin:
 
-Recognised when the archive contains a file with the ".asi" extension.
+Recognised when the archive contains a ".asi" file.
+
+  Installs to: the game folder
 
 ========================================================================
 

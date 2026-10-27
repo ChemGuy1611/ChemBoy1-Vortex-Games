@@ -2,8 +2,8 @@
 Name: Crisol: Theater of Idols Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-16
+Version: 1.0.3
+Date: 2026-10-25
 Notes:
 - The game is Unreal Engine 5.5.4 and Steam only. The Steam demo (3989380) was delisted, so it is not supported; there is no Epic, GOG or Xbox build. Nexus mod authors ship UE4SS prepackaged with their mods (experimental-latest builds), which is the same build the Download UE4SS button fetches.
 ////////////////////////////////////////////////*/

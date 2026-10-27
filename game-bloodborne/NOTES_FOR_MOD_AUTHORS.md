@@ -8,34 +8,42 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Shadps4 | a file or folder named `shadps4.exe` | - |
-| Shadlauncher | a file or folder named `shadps4qtlauncher.exe` | - |
-| Smithbox | a file or folder named `smithbox.exe` | - |
-| Flver | a file or folder named `flver_editor.exe` | - |
-| Dvdroot Ps4 | a file or folder named one of: `action`, `chr`, `event`, `facegen`, `map`, `menu`, `movie`, `msg`, `mtd`, `obj`, `other`, `param`, `paramdef`, `parts`, `remo`, `script`, `sfx`, `shader` or `sound` | `CUSA03173\dvdroot_ps4` |
+| Shadps4 | a `shadps4.exe` file | the game folder |
+| Shadlauncher | a `shadps4qtlauncher.exe` file | the game folder |
+| Smithbox | a `smithbox.exe` file | the game folder |
+| Flver | a `flver_editor.exe` file | the game folder |
+| Dvdroot Ps4 | a `action`, `chr`, `event`, `facegen`, `map`, `menu`, `movie`, `msg`, `mtd`, `obj`, `other`, `param`, `paramdef`, `parts`, `remo`, `script`, `sfx`, `shader` or `sound` folder | `CUSA03173\dvdroot_ps4` |
 | Save Game Files | a `userdata0000` file | `user\savedata\1\CUSA03173\SPRJ0005` |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
 ## Shadps4
 
-Recognised when the archive contains a file or folder named `shadps4.exe`.
+Recognised when the archive contains a `shadps4.exe` file.
+
+Installs to: the game folder
 
 ## Shadlauncher
 
-Recognised when the archive contains a file or folder named `shadps4qtlauncher.exe`.
+Recognised when the archive contains a `shadps4qtlauncher.exe` file.
+
+Installs to: the game folder
 
 ## Smithbox
 
-Recognised when the archive contains a file or folder named `smithbox.exe`.
+Recognised when the archive contains a `smithbox.exe` file.
+
+Installs to: the game folder
 
 ## Flver
 
-Recognised when the archive contains a file or folder named `flver_editor.exe`.
+Recognised when the archive contains a `flver_editor.exe` file.
+
+Installs to: the game folder
 
 ## Dvdroot Ps4
 
-Recognised when the archive contains a file or folder named one of: `action`, `chr`, `event`, `facegen`, `map`, `menu`, `movie`, `msg`, `mtd`, `obj`, `other`, `param`, `paramdef`, `parts`, `remo`, `script`, `sfx`, `shader` or `sound`.
+Recognised when the archive contains a `action`, `chr`, `event`, `facegen`, `map`, `menu`, `movie`, `msg`, `mtd`, `obj`, `other`, `param`, `paramdef`, `parts`, `remo`, `script`, `sfx`, `shader` or `sound` folder.
 
 Installs to: `CUSA03173\dvdroot_ps4`
 

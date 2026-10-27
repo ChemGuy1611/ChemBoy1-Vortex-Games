@@ -75,7 +75,7 @@ Mod types define where each category of mod gets deployed:
 | MelonLoader UserLibs | `hollowknightsilksong-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
 | MelonPreferencesManager | `hollowknightsilksong-melonprefman` | high | `{gamePath}/Mods` |
 | MelonLoader | `hollowknightsilksong-melonloader` | low | `{gamePath}` |
-| Assembly DLL Mod | `hollowknightsilksong-assemblydll` | 60 | `{gamePath}` |
+| Assembly DLL Mod | `hollowknightsilksong-assemblydll` | 60 | `{gamePath}/Hollow Knight Silksong_Data/Managed` |
 | Assets/Resources File | `hollowknightsilksong-assets` | 62 | `{gamePath}/Hollow Knight Silksong_Data` |
 | Skin Mod | `hollowknightsilksong-skin` | 50 | `{gamePath}/Hollow Knight Silksong_Data/Mods/Customizer` |
 

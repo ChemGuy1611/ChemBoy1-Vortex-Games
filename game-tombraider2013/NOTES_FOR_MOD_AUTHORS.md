@@ -8,30 +8,34 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Trmodmanager | a file or folder named `trreboottools.modmanager.exe` | - |
-| Texmod | a file or folder named `texmod.exe` | - |
-| Texmodpack | a file with the `.tpf` extension | `TexMod` |
-| Managermod | a file with one of these extensions: `.tr9dtp`, `.tr9material`, `.tr9modeldata`, `.t9script`, `.t9shaderlib`, `.tr9sound`, `.dds`, `.tr9objectref`, `.tr9dtp` or `.tr9anim` | `Mods` |
+| Trmodmanager | a `trreboottools.modmanager.exe` file | the game folder |
+| Texmod | a `texmod.exe` file | the game folder |
+| Texmodpack | a `.tpf` file | `TexMod` |
+| Managermod | a `.tr9dtp`, `.tr9material`, `.tr9modeldata`, `.t9script`, `.t9shaderlib`, `.tr9sound`, `.dds`, `.tr9objectref`, `.tr9dtp` or `.tr9anim` file | `Mods` |
 
 Paths are relative to the game's install folder.
 
 ## Trmodmanager
 
-Recognised when the archive contains a file or folder named `trreboottools.modmanager.exe`.
+Recognised when the archive contains a `trreboottools.modmanager.exe` file.
+
+Installs to: the game folder
 
 ## Texmod
 
-Recognised when the archive contains a file or folder named `texmod.exe`.
+Recognised when the archive contains a `texmod.exe` file.
+
+Installs to: the game folder
 
 ## Texmodpack
 
-Recognised when the archive contains a file with the `.tpf` extension.
+Recognised when the archive contains a `.tpf` file.
 
 Installs to: `TexMod`
 
 ## Managermod
 
-Recognised when the archive contains a file with one of these extensions: `.tr9dtp`, `.tr9material`, `.tr9modeldata`, `.t9script`, `.t9shaderlib`, `.tr9sound`, `.dds`, `.tr9objectref`, `.tr9dtp` or `.tr9anim`.
+Recognised when the archive contains a `.tr9dtp`, `.tr9material`, `.tr9modeldata`, `.t9script`, `.t9shaderlib`, `.tr9sound`, `.dds`, `.tr9objectref`, `.tr9dtp` or `.tr9anim` file.
 
 Installs to: `Mods`
 

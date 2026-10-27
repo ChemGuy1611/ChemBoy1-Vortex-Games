@@ -20,9 +20,17 @@
 //                        File present: a game fails on a load error or any contract violation
 //                        that the baseline does not already hold. Fixed violations are fine.
 //                        Variable unset: report mode, a game fails only if it does not load or
-//                        does not register exactly one game.
+//                        does not register exactly one game (or the count MULTI_GAME gives it).
 //
 // Typical use around a patch: record a baseline on the unpatched tree, patch, run again.
+
+// Extensions that register more than one game on purpose: { id: [count, why] }. The count is
+// asserted exactly, so a lost or extra registration still fails. The contract check's
+// "registerGame called N times" finding is dropped for these games when N matches.
+const MULTI_GAME = {
+  robocoproguecity: [2, "base game and the standalone Unfinished Business expansion"],
+  windrose: [2, "game and its Dedicated Server, registered as a separate game"],
+};
 
 const assert = require("node:assert/strict");
 const fs = require("fs");
@@ -64,6 +72,8 @@ const baseline =
 const recording = Boolean(baselinePath) && !baseline;
 const recorded = {};
 
+const expectedRegistrations = (id) => (Object.hasOwn(MULTI_GAME, id) ? MULTI_GAME[id][0] : 1);
+
 // Load one game and run every contract check. Returns { load, violations } where load is an
 // error message (or null) and violations is a flat list of "check: detail" strings.
 async function inspect(id) {
@@ -78,9 +88,14 @@ async function inspect(id) {
     return { load: String(err?.message ?? err).split("\n")[0], violations: [], registrations: 0 };
   }
   const violations = [];
+  const expected = expectedRegistrations(id);
   for (const [name, check] of Object.entries(checks)) {
     try {
-      for (const issue of await check(ext)) violations.push(`${name}: ${issue}`);
+      for (const issue of await check(ext)) {
+        if (expected !== 1 && issue === `registerGame called ${expected} times, expected 1`)
+          continue;
+        violations.push(`${name}: ${issue}`);
+      }
     } catch (err) {
       violations.push(`${name}: check threw ${String(err?.message ?? err).split("\n")[0]}`);
     }
@@ -103,7 +118,14 @@ describe(`game smoke (${ids.length} games, ${baseline ? "compare" : recording ? 
 
       if (!baseline) {
         assert.equal(result.load, null, "did not load");
-        assert.equal(result.registrations, 1, "registerGame must be called exactly once");
+        const expected = expectedRegistrations(id);
+        assert.equal(
+          result.registrations,
+          expected,
+          expected === 1
+            ? "registerGame must be called exactly once"
+            : `registerGame must be called ${expected} times (${MULTI_GAME[id][1]})`,
+        );
         return;
       }
 

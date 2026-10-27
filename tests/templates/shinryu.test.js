@@ -54,7 +54,7 @@ describe("template-shinryu: registration with default toggles", () => {
       ["XXX-modmanager", 25],
       ["XXX-mod", 27],
       ["XXX-data", 29],
-      ["XXX-root", 27],
+      ["XXX-root", 28],
     ]);
   });
 
@@ -98,7 +98,7 @@ describe("template-shinryu: installer routing", () => {
     ["a root DLL", tree("nvngx_dlss.dll"), ["XXX-root"]],
     ["a root executable", tree("Tools/Cool.exe"), ["XXX-root"]],
     [
-      "a mod that also ships an exe (mod and root tie at priority 27)",
+      "a mod that also ships an exe (mod at 27 is tried before root at 28)",
       tree("mod-meta.yaml", "tool.exe"),
       ["XXX-mod", "XXX-root"],
     ],
@@ -275,7 +275,7 @@ describe("template-shinryu: toggles change what is registered", () => {
       installers: [
         ["XXX-modmanager", 25],
         ["XXX-data", 29],
-        ["XXX-root", 27],
+        ["XXX-root", 28],
       ],
     },
     {

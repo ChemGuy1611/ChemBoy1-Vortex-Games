@@ -48,7 +48,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | `XXX-modmanager` | 25 |
 | `XXX-mod` | 27 |
 | `XXX-data` | 29 |
-| `XXX-root` | 27 |
+| `XXX-root` | 28 |
 
 ## Registered Tools
 

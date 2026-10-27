@@ -7,7 +7,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 Integrationstudio:
 
-Recognised when the archive contains a file or folder named "IntegrationStudio.exe".
+Recognised when the archive contains a "IntegrationStudio.exe" file.
 
   Installs to: "client_pc\root"
 
@@ -15,7 +15,7 @@ Recognised when the archive contains a file or folder named "IntegrationStudio.e
 
 Pak:
 
-Recognised when the archive contains a file with one of these extensions: ".pak".
+Recognised when the archive contains a ".pak" file.
 
   Installs to: "client_pc\root\mods"
 
@@ -34,7 +34,7 @@ MyRootMod.zip
   Requirements:
     - Recognised by a folder named "client_pc" or "server_pc" in the archive.
 
-  Installs to: the game folder itself (no subfolder)
+  Installs to: the game folder
 
   Common mistakes:
     - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
@@ -43,7 +43,7 @@ MyRootMod.zip
 
 Local:
 
-Recognised when the archive contains a file or folder named "local".
+Recognised when the archive contains a "local" folder.
 
   Installs to: "client_pc\root"
 
@@ -51,7 +51,7 @@ Recognised when the archive contains a file or folder named "local".
 
 Localsub:
 
-Recognised when the archive contains a file or folder named one of: "ssl", "video", "textures", "presets", "texts" or "ui".
+Recognised when the archive contains a "ssl", "video", "textures", "presets", "texts" or "ui" folder.
 
   Installs to: "client_pc\root\local"
 

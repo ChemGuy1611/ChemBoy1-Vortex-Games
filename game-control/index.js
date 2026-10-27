@@ -2,8 +2,8 @@
 Name: Control Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 2.1.1
-Date: 2026-10-16
+Version: 2.1.2
+Date: 2026-10-25
 /////////////////////////////////////////*/
 
 //Import libraries

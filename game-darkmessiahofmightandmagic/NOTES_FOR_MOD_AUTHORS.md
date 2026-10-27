@@ -8,15 +8,15 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Launcher | a file or folder named `mm.exe` | - |
-| Unlimited | a file or folder named `unlimited_edition` | - |
-| Root / Game Folder Mods | a `_mods` folder | the game folder itself (no subfolder) |
-| Launchermod | a file or folder named `info.json` | `_mods` |
-| Data | a file or folder named `mm` | - |
-| Datasub | a file or folder named one of: `materials`, `maps`, `bin`, `cfg`, `media`, `resource`, `scripts` or `SAVE` | `mm` |
-| Vpk | a file with the `.vpk` extension | `vpks` |
-| Materialssub | a file or folder named one of: `models`, `fx`, `sprites`, `cloth`, `console`, `correction`, `decals`, `detail`, `effects`, `engine`, `envcubemaps`, `generic`, `hud`, `nature`, `overlays`, `sun`, `vgui` or `voice` | `mm\materials` |
-| Maps | a file with the `.bsp` extension | `mm\maps` |
+| Launcher | a `mm.exe` file | the game folder |
+| Unlimited | a `unlimited_edition` folder | `_mods` |
+| Root / Game Folder Mods | a `_mods` folder | the game folder |
+| Launchermod | a `info.json` file | `_mods` |
+| Data | a `mm` folder | the game folder |
+| Datasub | a `materials`, `maps`, `bin`, `cfg`, `media`, `resource`, `scripts` or `SAVE` folder | `mm` |
+| Vpk | a `.vpk` file | `vpks` |
+| Materialssub | a `models`, `fx`, `sprites`, `cloth`, `console`, `correction`, `decals`, `detail`, `effects`, `engine`, `envcubemaps`, `generic`, `hud`, `nature`, `overlays`, `sun`, `vgui` or `voice` folder | `mm\materials` |
+| Maps | a `.bsp` file | `mm\maps` |
 | Save Game Files | a `.sav` file | `mm\SAVE` |
 | Config File Mods | a `config.cfg` file | `mm\cfg` |
 
@@ -24,11 +24,15 @@ Paths are relative to the game's install folder. Config and save mods deploy int
 
 ## Launcher
 
-Recognised when the archive contains a file or folder named `mm.exe`.
+Recognised when the archive contains a `mm.exe` file.
+
+Installs to: the game folder
 
 ## Unlimited
 
-Recognised when the archive contains a file or folder named `unlimited_edition`.
+Recognised when the archive contains a `unlimited_edition` folder.
+
+Installs to: `_mods`
 
 ## Root / Game Folder Mods
 
@@ -44,7 +48,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `_mods` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -52,35 +56,37 @@ Installs to: the game folder itself (no subfolder)
 
 ## Launchermod
 
-Recognised when the archive contains a file or folder named `info.json`.
+Recognised when the archive contains a `info.json` file.
 
 Installs to: `_mods`
 
 ## Data
 
-Recognised when the archive contains a file or folder named `mm`.
+Recognised when the archive contains a `mm` folder.
+
+Installs to: the game folder
 
 ## Datasub
 
-Recognised when the archive contains a file or folder named one of: `materials`, `maps`, `bin`, `cfg`, `media`, `resource`, `scripts` or `SAVE`.
+Recognised when the archive contains a `materials`, `maps`, `bin`, `cfg`, `media`, `resource`, `scripts` or `SAVE` folder.
 
 Installs to: `mm`
 
 ## Vpk
 
-Recognised when the archive contains a file with the `.vpk` extension.
+Recognised when the archive contains a `.vpk` file.
 
 Installs to: `vpks`
 
 ## Materialssub
 
-Recognised when the archive contains a file or folder named one of: `models`, `fx`, `sprites`, `cloth`, `console`, `correction`, `decals`, `detail`, `effects`, `engine`, `envcubemaps`, `generic`, `hud`, `nature`, `overlays`, `sun`, `vgui` or `voice`.
+Recognised when the archive contains a `models`, `fx`, `sprites`, `cloth`, `console`, `correction`, `decals`, `detail`, `effects`, `engine`, `envcubemaps`, `generic`, `hud`, `nature`, `overlays`, `sun`, `vgui` or `voice` folder.
 
 Installs to: `mm\materials`
 
 ## Maps
 
-Recognised when the archive contains a file with the `.bsp` extension.
+Recognised when the archive contains a `.bsp` file.
 
 Installs to: `mm\maps`
 

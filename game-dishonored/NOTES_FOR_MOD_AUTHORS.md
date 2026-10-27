@@ -8,10 +8,10 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| TFC Installer (tool) | a `tfcinstaller.exe` file | the game folder itself (no subfolder) |
-| UPK Explorer (tool) | a `upk explorer.exe` file | the game folder itself (no subfolder) |
+| TFC Installer (tool) | a `tfcinstaller.exe` file | the game folder |
+| UPK Explorer (tool) | a `upk explorer.exe` file | the game folder |
 | TFC Mods | a `gameprofile.xml` file or a `.packagepatch` file | `TFCInstaller\Mods` |
-| Root / Game Folder Mods | a `DishonoredGame` folder | the game folder itself (no subfolder) |
+| Root / Game Folder Mods | a `DishonoredGame` folder | the game folder |
 | Cooked Content Mods | a `.upk` file | `DishonoredGame\CookedPCConsole` |
 | Movie / Cutscene Replacements | a `.bik` file | `DishonoredGame\Movies` |
 | Binaries / Injector Mods | a `Dishonored.exe` file or a `.dll` file | `Binaries\Win32` |
@@ -21,13 +21,13 @@ Paths are relative to the game's install folder.
 
 ## TFC Installer (tool)
 
-This installer handles the TFC Installer itself, not mods for it. It exists so users can install the TFC Installer through Vortex, and mod authors normally never package this.
+This installer handles the TFC Installer, not mods for it. It exists so users can install the TFC Installer through Vortex, and mod authors normally never package this.
 
 **Requirements:**
 
 - Recognised by a file named `tfcinstaller.exe` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -35,13 +35,13 @@ Installs to: the game folder itself (no subfolder)
 
 ## UPK Explorer (tool)
 
-This installer handles UPK Explorer itself, not mods for it. It exists so users can install UPK Explorer through Vortex, and mod authors normally never package this.
+This installer handles UPK Explorer, not mods for it. It exists so users can install UPK Explorer through Vortex, and mod authors normally never package this.
 
 **Requirements:**
 
 - Recognised by a file named `upk explorer.exe` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -76,7 +76,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `DishonoredGame`, `Binaries`, `Engine`, `Config`, `CookedPCConsole`, `DLC`, `Localization` or `Movies` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 

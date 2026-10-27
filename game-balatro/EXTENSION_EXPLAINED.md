@@ -38,8 +38,8 @@ Mod types define where each category of mod gets deployed:
 | --- | --- | --- | --- |
 | Root Folder | `balatro-root` | high | `{gamePath}` |
 | Lovely-Injector | `balatro-LOVELY` | low | `{gamePath}` |
-| SteamModded | `balatro-steammodded` | low | `STEAMMODDED_PATH` |
-| Malverk (Texture Pack Manager) | `balatro-malverk` | low | `MALVERK_PATH` |
+| SteamModded | `balatro-steammodded` | low | `APPDATA/Balatro/Mods` |
+| Malverk (Texture Pack Manager) | `balatro-malverk` | low | `APPDATA/Balatro/Mods` |
 | Mod | `balatro-mod` | 25 | `?` |
 
 ## Mod Installers

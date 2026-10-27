@@ -8,10 +8,10 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Save Game Files | a `.mythsav` file | `%USERPROFILE%\Games\Age of Mythology Retold\USERID_FOLDER\savegames` |
-| Config File Mods | a `.xml` file | `%USERPROFILE%\Games\Age of Mythology Retold\USERID_FOLDER\users` |
-| Reshade | a file or folder named `reshade-shaders` | - |
-| Binaries | a file with one of these extensions: `.dll` or `.ini` | - |
+| Save Game Files | a `.mythsav` file | `%USERPROFILE%\Games\Age of Mythology Retold\<User ID>\savegames` |
+| Config File Mods | a `.xml` file | `%USERPROFILE%\Games\Age of Mythology Retold\<User ID>\users` |
+| Reshade | a `reshade-shaders` folder | the game folder |
+| Binaries | a `.dll` or `.ini` file | the game folder |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
@@ -23,7 +23,7 @@ Save files, deployed to the game's save folder.
 
 - Recognised by any file with the `.mythsav` extension.
 
-Installs to: `%USERPROFILE%\Games\Age of Mythology Retold\USERID_FOLDER\savegames`
+Installs to: `%USERPROFILE%\Games\Age of Mythology Retold\<User ID>\savegames`
 
 **Common mistakes:**
 
@@ -37,7 +37,7 @@ Configuration tweaks, deployed to the game's config location.
 
 - Recognised by any file with the `.xml` extension.
 
-Installs to: `%USERPROFILE%\Games\Age of Mythology Retold\USERID_FOLDER\users`
+Installs to: `%USERPROFILE%\Games\Age of Mythology Retold\<User ID>\users`
 
 **Common mistakes:**
 
@@ -45,11 +45,15 @@ Installs to: `%USERPROFILE%\Games\Age of Mythology Retold\USERID_FOLDER\users`
 
 ## Reshade
 
-Recognised when the archive contains a file or folder named `reshade-shaders`.
+Recognised when the archive contains a `reshade-shaders` folder.
+
+Installs to: the game folder
 
 ## Binaries
 
-Recognised when the archive contains a file with one of these extensions: `.dll` or `.ini`.
+Recognised when the archive contains a `.dll` or `.ini` file.
+
+Installs to: the game folder
 
 ## Rules That Apply To Every Mod Type
 

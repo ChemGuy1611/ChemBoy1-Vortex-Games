@@ -2,6 +2,10 @@
 
 Covers `template-cobraengineACSE`. Suite file: `tests/templates/cobraengine-acse.test.js`.
 
+## [2026-10-25]
+
+- Changed: the registration and `fallbackInstaller` toggle tests expect the save installer at priority 48, one step ahead of the fallback at 49. The `installer-priority-unique` allowlist entry for this template is removed.
+
 ## [2026-10-11]
 
 - Changed: the `known gap` test for the Saves folder made by `setup` now asserts the fixed result (the next load still opens `Saves` and `Config` directly under the game's Saved Games folder) and lost its `known gap:` prefix.

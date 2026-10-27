@@ -4,6 +4,10 @@
 
 - Change CDLC Song Downloader to open a free-roam browser window so that domain switching to file hosting sites for the .psarc files does not cause exit errors and allows downloading multiple files in one session.
 
+## [1.0.2] - 2026-10-25
+
+- Added the Nexus mod ID to the extension info.
+
 ## [1.0.1] - 2026-10-16
 
 - Added the game's Nexus Mods ID to the extension's info file.

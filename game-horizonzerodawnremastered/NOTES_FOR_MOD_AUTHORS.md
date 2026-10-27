@@ -8,14 +8,14 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Managermod | a file or folder named one of: `modinfo.json` and a file with one of these extensions: `.core` or `.stream` | `mods` |
-| Save Game Files | a `.dat` file | `userDocsPathString\Horizon Zero Dawn Remastered\USERID_FOLDER` |
+| Managermod | a `modinfo.json` file and a `.core` or `.stream` file | `mods` |
+| Save Game Files | a `.dat` file | - |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
 ## Managermod
 
-Recognised when the archive contains a file or folder named one of: `modinfo.json` and a file with one of these extensions: `.core` or `.stream`.
+Recognised when the archive contains a `modinfo.json` file and a `.core` or `.stream` file.
 
 Installs to: `mods`
 
@@ -26,8 +26,6 @@ Save files, deployed to the game's save folder.
 **Requirements:**
 
 - Recognised by any file with the `.dat` extension.
-
-Installs to: `userDocsPathString\Horizon Zero Dawn Remastered\USERID_FOLDER`
 
 **Common mistakes:**
 

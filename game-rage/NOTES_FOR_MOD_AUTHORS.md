@@ -8,20 +8,22 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Loader | a file or folder named `dinput8.dll` and a file or folder named `id5Tweaker.ini` | - |
-| Mod | a file with one of these extensions: `.streamed` or `.resources` and a file or folder named one of: `info.txt` | `mods` |
-| Root / Game Folder Mods | a `base` folder | the game folder itself (no subfolder) |
-| Fallback Installer | anything not matched above | - |
+| Loader | a `dinput8.dll` file and a `id5Tweaker.ini` file | the game folder |
+| Mod | a `.streamed` or `.resources` file and a `info.txt` file | `mods` |
+| Root / Game Folder Mods | a `base` folder | the game folder |
+| Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
 ## Loader
 
-Recognised when the archive contains a file or folder named `dinput8.dll` and a file or folder named `id5Tweaker.ini`.
+Recognised when the archive contains a `dinput8.dll` file and a `id5Tweaker.ini` file.
+
+Installs to: the game folder
 
 ## Mod
 
-Recognised when the archive contains a file with one of these extensions: `.streamed` or `.resources` and a file or folder named one of: `info.txt`.
+Recognised when the archive contains a `.streamed` or `.resources` file and a `info.txt` file.
 
 Installs to: `mods`
 
@@ -39,7 +41,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `base`, `dlc`, `mods`, `mp`, `SAVES` or `virtualtextures` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -55,6 +57,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: the game folder
 
 **Common mistakes:**
 

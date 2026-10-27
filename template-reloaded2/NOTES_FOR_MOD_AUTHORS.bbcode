@@ -7,10 +7,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 Reloaded-II (mod loader):
 
-This installer handles Reloaded-II itself, not mods for it. It exists so users can install Reloaded-II through Vortex, and mod authors normally never package this.
+This installer handles Reloaded-II, not mods for it. It exists so users can install Reloaded-II through Vortex, and mod authors normally never package this.
 
   Requirements:
     - Recognised by a file named "reloaded-ii.exe" in the archive.
+
+  Installs to: the game folder
 
   Common mistakes:
     - If you bundle Reloaded-II inside your mod archive, Vortex treats the whole download as Reloaded-II rather than as your mod. Ship the mod alone and list Reloaded-II as a requirement.
@@ -19,7 +21,7 @@ This installer handles Reloaded-II itself, not mods for it. It exists so users c
 
 XXX Reloadedmodloader:
 
-Recognised when the archive contains a file or folder named "modconfig.json" and a file or folder named "XXX.modloader.dll".
+Recognised when the archive contains a "modconfig.json" file and a "XXX.modloader.dll" file.
 
   Installs to: "Reloaded\Mods\XXX_Mod_Loader"
 
@@ -27,7 +29,7 @@ Recognised when the archive contains a file or folder named "modconfig.json" and
 
 XXX Reloadedmod:
 
-Recognised when the archive contains a file or folder named "modconfig.json".
+Recognised when the archive contains a "modconfig.json" file.
 
   Installs to: "Reloaded\Mods"
 

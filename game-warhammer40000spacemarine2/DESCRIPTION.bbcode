@@ -1,10 +1,11 @@
 This extension adds WH40K Space Marine 2 modding support to Vortex Mod Manager.
+[summary]Load Order support for pak mods.[/summary]
 
 [b]✅ Supported Versions:[/b]
 [list]
 [*]Steam[/*]
 [*]Epic[/*]
-[*]Xbox (Game Pass)[/*]
+[*]Xbox[/*]
 [*]Other versions may need to select the installation location manually.[/*]
 [/list]
 
@@ -12,27 +13,110 @@ This extension adds WH40K Space Marine 2 modding support to Vortex Mod Manager.
 
 [b]🛠️ Mod Installation Notes:[/b]
 [list]
-[*]Installs Integration Studio mod with a file or folder named "IntegrationStudio.exe" to the "client_pc\root" folder.[/*]
-[*]Installs Paks mod with a file with one of these extensions: ".pak" to the "client_pc\root\mods" folder.[/*]
-[*]Installs Root Game Folder mod with a "client_pc" folder to the game folder itself (no subfolder).[/*]
-[*]Installs Local (Loose) mod with a file or folder named "local" to the "client_pc\root" folder.[/*]
-[*]Installs Local (Loose Subfolder) mod with a file or folder named one of: "ssl", "video", "textures", "presets", "texts" or "ui" to the "client_pc\root\local" folder.[/*]
-[*]Binaries (Engine Injector) mods are installed to the "client_pc\root\bin\pc" folder.[/*]
+[*]Integration Studio mods with an "IntegrationStudio.exe" file install to the "client_pc\root" folder.[/*]
+[*]Paks mods with a ".pak" file install to the "client_pc\root\mods" folder.[/*]
+[*]Root Game Folder mods with a "client_pc" folder install to the game folder.[/*]
+[*]Local (Loose) mods with a "local" folder install to the "client_pc\root" folder.[/*]
+[*]Local (Loose Subfolder) mods with a "ssl", "video", "textures", "presets", "texts" or "ui" folder install to the "client_pc\root\local" folder.[/*]
+[*]Binaries (Engine Injector) mods install to the "client_pc\root\bin\pc" folder.[/*]
 [*]Archives with a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to Vortex's built-in FOMOD installer instead.[/*]
 [/list]
 [b]📋 Usage Notes:[/b]
 [list]
 [*]You can open several useful files/folders/URLs using the buttons within the folder icon on the Mods toolbar.[/*]
+[*]Installs .pak mods to "client_pc/root/mods" folder. [color=#ffff00]Sorts mods in the Load Order tab and writes them to "pak_config.yaml".[/color][/*]
+[*]Fallback installer goes to game's "shipping" executable location (upscalers, reshades, DLL mods, etc).[/*]
+[*]Includes installers and download buttons for the following tools: Custom Stratagems, Integration Studio, Index V2[/*]
+[*]If you use Integration Studio to make mods, note that you must Reinstall the Integration Studio mod in Vortex after each game update to refresh the files extracted from default_other.pak files.[/*]
+[*]You can download tools for modding SM2 using the buttons in the folder icon on the Mods toolbar.[/*]
+[*][b][color=#ffff00]Save (profile) backups happen automatically when purging mods (for vanilla online play). [/color]You can restore your most recent modded save (profile) files at any time using the button in the folder icon on the Mods toolbar.[/b][/*]
+[/list]
+
+[b]📝 Notes for Mod Authors:[/b]
+[spoiler]
+Packaging rules for WH40K Space Marine 2 mods, so Vortex installs them to the right place.
+
+Vortex decides what a mod is by looking at the files and folders inside the archive. It tries each installer in order and the first one that matches wins, so archive layout is what determines where your mod ends up.
+
+========================================================================
+
+Integrationstudio:
+
+Recognised when the archive contains a "IntegrationStudio.exe" file.
+
+  Installs to: "client_pc\root"
+
+========================================================================
+
+Pak:
+
+Recognised when the archive contains a ".pak" file.
+
+  Installs to: "client_pc\root\mods"
+
+========================================================================
+
+Root / Game Folder Mods:
+
+For mods laid out the same way the files appear inside the game folder. Vortex copies the matched folder and everything under it straight into the game.
+
+[code]
+MyRootMod.zip
+└── client_pc\
+    └── ... files in their real relative locations
+[/code]
+
+  Requirements:
+    - Recognised by a folder named "client_pc" or "server_pc" in the archive.
+
+  Installs to: the game folder
+
+  Common mistakes:
+    - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
+
+========================================================================
+
+Local:
+
+Recognised when the archive contains a "local" folder.
+
+  Installs to: "client_pc\root"
+
+========================================================================
+
+Localsub:
+
+Recognised when the archive contains a "ssl", "video", "textures", "presets", "texts" or "ui" folder.
+
+  Installs to: "client_pc\root\local"
+
+========================================================================
+
+Binaries:
+
+Handled by the "testBinaries" installer. Inspect the extension source for the exact archive layout it expects.
+
+  Installs to: "client_pc\root\bin\pc"
+
+========================================================================
+
+Rules That Apply To Every Mod Type:
+
+    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
+    - Folder and file name matching is case-insensitive.
+    - Extra wrapper folders around a recognised folder are generally fine.
+[/spoiler]
+
+[b]🤝 Credits:[/b]
+[list]
+[*]Credit to [url=https://next.nexusmods.com/profile/Nagev/about-me]Nagev[/url] (Nexus Mods Vortex Developer) for his support on helping me learn to make Vortex extensions, and being patient when I break things :)[/*]
 [/list]
 
 [b]❤️ Support the Mod Author: [/b]
 If you would like to support my work, you can do so below. Your support is greatly appreciated!
 
-
 [url=https://www.paypal.com/donate/?hosted_button_id=ZFE99JKP43D2G][img]https://live.staticflickr.com/65535/54395661414_10e6ef111d_m.jpg[/img][/url]
 
-
 [url=https://ko-fi.com/chemboy1nexusmods/][img]https://live.staticflickr.com/65535/54380730333_357df43249_n.jpg[/img][/url]
-
 
 [url=https://buymeacoffee.com/chemboy1/][img]https://live.staticflickr.com/65535/54379586002_8dcc6370e5_m.jpg[/img][/url]

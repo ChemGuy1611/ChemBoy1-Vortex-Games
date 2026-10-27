@@ -8,16 +8,16 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Dropzonefolder | a file or folder named `dropzone` | the game folder itself (no subfolder) |
+| Dropzonefolder | a `dropzone` folder | the game folder |
 | Save Game Files | a `achievements_adf` file | - |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
 ## Dropzonefolder
 
-Recognised when the archive contains a file or folder named `dropzone`.
+Recognised when the archive contains a `dropzone` folder.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 ## Save Game Files
 

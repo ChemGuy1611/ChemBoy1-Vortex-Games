@@ -2,8 +2,8 @@
 Name: ROMEO IS A DEAD MAN Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-16
+Version: 1.0.3
+Date: 2026-10-25
 Notes:
 - The game is Unreal Engine 5.6.1. Per the Nexus UE4SS mod author, UE4SS needs experimental-latest, MajorVersion/MinorVersion 5/6 in UE4SS-settings.ini (written on deploy by writeEngineVersion) and a hand-made ue4ss\UE4SS_Signatures folder (UE4SS_Signatures_ROMEO_IS_A_DEAD_MAN.zip from github.com/forest-soft/ue4ss_signatures); the Download UE4SS button installs only the stock zip.
 - Saves live in %USERPROFILE%\Saved Games\Grasshopper Manufacture\ROMEO IS A DEAD MAN\SavedGames\<userid> (PCGamingWiki + Nexus save mod + leftover user data), Config in %LOCALAPPDATA%\SevGame\Saved\Config\Windows.

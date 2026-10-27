@@ -8,23 +8,23 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Merger | a file or folder named `simple_mod_merger.exe` | `Stalker2SimpleModMerger` |
+| Merger | a `simple_mod_merger.exe` file | `Stalker2SimpleModMerger` |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `Stalker2` |
 | Blueprint Mods (LogicMods) | a `LogicMods` folder | `Stalker2\Content\Paks` |
-| Herbatamod | a file or folder named `GameLite` | `Stalker2\Content` |
-| UE4SS Itself | a `dwmapi.dll` file | - |
+| Herbatamod | a `GameLite` folder | `Stalker2\Content` |
+| UE4SS | a `dwmapi.dll` file | - |
 | UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | - |
 | UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | - |
-| Root / Game Folder Mods | a top-level folder such as `Stalker2`, `Engine` or `Content` | the game folder itself (no subfolder) |
+| Root / Game Folder Mods | a top-level folder such as `Stalker2`, `Engine` or `Content` | the game folder |
 | Config File Mods | a config file such as `engine.ini` or `game.ini` | - |
 | Save Game Files | a `.sav` file | - |
-| Fallback Installer | anything unrecognised with no pak file | - |
+| Fallback Installer | anything not matched above with no pak file | - |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
 ## Merger
 
-Recognised when the archive contains a file or folder named `simple_mod_merger.exe`.
+Recognised when the archive contains a `simple_mod_merger.exe` file.
 
 Installs to: `Stalker2SimpleModMerger`
 
@@ -87,11 +87,11 @@ Installs to: `Stalker2\Content\Paks`
 
 ## Herbatamod
 
-Recognised when the archive contains a file or folder named `GameLite`.
+Recognised when the archive contains a `GameLite` folder.
 
 Installs to: `Stalker2\Content`
 
-## UE4SS Itself
+## UE4SS
 
 This installer handles the UE4SS runtime package, not individual mods. Most authors never need it - it exists so users can install UE4SS through Vortex.
 
@@ -160,7 +160,7 @@ MyRootMod.zip
 - Recognised by a top-level folder matching any of: `Stalker2`, `Engine`, `Content`, `Binaries`, `Mods`, `Paks` or `Movies`.
 - The matched folder and everything below it is copied into the game folder, preserving structure.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 

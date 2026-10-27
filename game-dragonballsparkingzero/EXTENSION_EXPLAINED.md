@@ -70,6 +70,9 @@ Mod types define where each category of mod gets deployed:
 | Paks (no "~mods") | `dragonballsparkingzero-pakalt` | high | `{gamePath}/SparkingZERO/Content/Paks` |
 | Root Folder | `dragonballsparkingzero-root` | high | `{gamePath}` |
 | SZModLoader | `dragonballsparkingzero-modloader` | low | `{gamePath}/SparkingZERO/Mods` |
+| LFSE | `dragonballsparkingzero-lfse` | low | `{gamePath}/SparkingZERO/Mods` |
+| SZModLoader Mod | `dragonballsparkingzero-modloadermod` | high | `{gamePath}/SparkingZERO/Mods` |
+| SZModLoader JSON | `dragonballsparkingzero-json` | high | `{gamePath}/SparkingZERO/Mods/ZeroSpark/Json` |
 | UE Sortable Pak Mod | `dragonballsparkingzero-ue5-sortable-modtype` | 25 | `{gamePath}/SparkingZERO/Content/Paks/~mods` |
 | Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `{gamePath}/SparkingZERO/Content/Paks/~mods` |
 | UE4SS Script Mod | `dragonballsparkingzero-scripts` | 50 | `{gamePath}/SparkingZERO/Binaries/Win64/ue4ss/Mods` |

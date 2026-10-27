@@ -2,8 +2,8 @@
 Name: Mandragora: Whispers of the Witch Tree Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-16
+Version: 1.0.3
+Date: 2026-10-25
 Notes:
 - Config and Save live in Local AppData (MandragoraWotWT), with saves flat in SaveGames.
 - Signature Bypass is downloaded from this game's own Nexus page (mod 1), not the universal one.

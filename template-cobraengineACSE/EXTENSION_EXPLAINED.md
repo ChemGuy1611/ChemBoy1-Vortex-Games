@@ -52,7 +52,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | `XXX-localised` | 29 |
 | `XXX-movies` | 31 |
 | `XXX-ovldata` | 33 |
-| `XXX-save` | 49 |
+| `XXX-save` | 48 |
 | `XXX-fallback` | 49 |
 
 ## Registered Tools

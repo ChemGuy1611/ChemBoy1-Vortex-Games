@@ -7,13 +7,15 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 Loader:
 
-Recognised when the archive contains a file or folder named "ModManager.exe" and a file or folder named "bin".
+Recognised when the archive contains a "ModManager.exe" file and a "bin" folder.
+
+  Installs to: the game folder
 
 ========================================================================
 
 Mod:
 
-Recognised when the archive contains a file or folder named "modconfig.json" and a file with one of these extensions: ".dat" or ".fat".
+Recognised when the archive contains a "modconfig.json" file and a ".dat" or ".fat" file.
 
   Installs to: "data_win64\mods"
 
@@ -32,7 +34,7 @@ MyRootMod.zip
   Requirements:
     - Recognised by a folder named "data_win64", "bin" or "worlds" in the archive.
 
-  Installs to: the game folder itself (no subfolder)
+  Installs to: the game folder
 
   Common mistakes:
     - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
@@ -41,7 +43,7 @@ MyRootMod.zip
 
 Binaries:
 
-Recognised when the archive contains a file with one of these extensions: ".exe", ".dll", ".asi" or ".addon64".
+Recognised when the archive contains a ".exe", ".dll", ".asi" or ".addon64" file.
 
   Installs to: "bin"
 
@@ -56,6 +58,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
   Requirements:
     - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
     - Vortex shows the user a notification when a mod installs through the fallback.
+
+  Installs to: the game folder
 
   Common mistakes:
     - If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.

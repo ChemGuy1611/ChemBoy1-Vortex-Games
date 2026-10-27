@@ -7,7 +7,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 Packetloader:
 
-Recognised when the archive contains a file or folder named "ShadowOfWarPacketLoader.dll".
+Recognised when the archive contains a "ShadowOfWarPacketLoader.dll" file.
 
   Installs to: "x64\plugins"
 
@@ -15,7 +15,7 @@ Recognised when the archive contains a file or folder named "ShadowOfWarPacketLo
 
 Dllloader:
 
-Recognised when the archive contains a file or folder named "ShadowOfWarDllLoader.dll".
+Recognised when the archive contains a "ShadowOfWarDllLoader.dll" file.
 
   Installs to: "x64"
 
@@ -23,7 +23,7 @@ Recognised when the archive contains a file or folder named "ShadowOfWarDllLoade
 
 Modloader:
 
-Recognised when the archive contains a file or folder named "bink2w64.dll" and a file or folder named "modloader".
+Recognised when the archive contains a "bink2w64.dll" file and a "modloader" folder.
 
   Installs to: "x64"
 
@@ -31,7 +31,7 @@ Recognised when the archive contains a file or folder named "bink2w64.dll" and a
 
 Arch06mod:
 
-Recognised when the archive contains a file with one of these extensions: ".arch06".
+Recognised when the archive contains a ".arch06" file.
 
   Installs to: "Mods"
 
@@ -39,7 +39,7 @@ Recognised when the archive contains a file with one of these extensions: ".arch
 
 Pluginsandpackets:
 
-Recognised when the archive contains a file with one of these extensions: ".dll", a file or folder named one of: "PacketLoader" and a file or folder named one of: "Internal".
+Recognised when the archive contains a ".dll" file, a "PacketLoader" folder and a "Internal" folder.
 
   Installs to: "x64\plugins"
 
@@ -58,7 +58,7 @@ MyRootMod.zip
   Requirements:
     - Recognised by a folder named "game" or "x64" in the archive.
 
-  Installs to: the game folder itself (no subfolder)
+  Installs to: the game folder
 
   Common mistakes:
     - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
@@ -74,6 +74,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
   Requirements:
     - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
     - Vortex shows the user a notification when a mod installs through the fallback.
+
+  Installs to: "x64\plugins"
 
   Common mistakes:
     - If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.

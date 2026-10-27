@@ -48,8 +48,11 @@ Steps performed per extension:
        description; file group resolved via v1 uid -> v3 groups, or via index.js FILE_GROUP_ID
        override when the v3 list 404s); default: skip; use --upload to enable.
        If Nexus answers HTTP 429 (Cloudflare rate limit), the whole run stops at that
-       extension: the rest are left untouched and the re-run command is printed.
-       --upload-delay SECONDS pauses after each upload to stay under the limit. The
+       extension: the rest are left untouched and the re-run command is printed
+       (keeping the run's --upload-delay and --no-open).
+       The limit caps the number of uploads per IP address (roughly 200), not their
+       speed, so switch IP (for example toggle a VPN) before re-running.
+       --upload-delay SECONDS pauses after each upload. The
        exit code is 1 when any upload failed.
        With --upload, an id on resources/lists/games-never-upload.txt (test beds and
        personal-use extensions) or resources/lists/games-deprecated.txt (retired
@@ -80,9 +83,10 @@ Once per run, after every extension has been processed:
     With --push-description, push each regenerated DESCRIPTION.bbcode (and the summary built
     from it) to the extension's Nexus mod page through sync_mod_pages.push_pages. Works with
     or without --upload. Backup first; a page this tooling has never pushed is SKIPPED when
-    the live text differs from the file, so its first push is done by hand with
-    sync_mod_pages.py --push --force, or here with --force (pushes it anyway, overwriting
-    the live text; the backup still lands first). A failed or skipped push warns and never
+    the live text differs from the file, unless sync_mod_pages.py --mark-reviewed recorded
+    that live text after its special statements were carried into the file. Otherwise its
+    first push is done by hand with sync_mod_pages.py --push --force, or here with --force
+    (pushes it anyway, overwriting the live text; the backup still lands first). A failed or skipped push warns and never
     fails the release. Not run when the description batch itself failed. Skipped with
     --dry-run.
 
@@ -635,7 +639,8 @@ def main():
         action="store_true",
         help="Push the regenerated DESCRIPTION.bbcode (and its summary) to each game's Nexus page "
              "via sync_mod_pages.py. Backup first; a never-pushed page whose live text differs is "
-             "skipped until pushed once by hand with --force. Needs NEXUS_API_KEY.",
+             "skipped unless sync_mod_pages.py --mark-reviewed recorded it, or until pushed once "
+             "by hand with --force. Needs NEXUS_API_KEY.",
     )
     parser.add_argument(
         "--force",
@@ -649,7 +654,8 @@ def main():
         default=0.0,
         metavar="SECONDS",
         help="Pause this long after each successful upload before the next extension "
-             "(default 0). Use it on a bulk --upload to stay under the Nexus rate limit.",
+             "(default 0). Does not avoid the Nexus upload limit, which caps the number "
+             "of uploads per IP address rather than their speed.",
     )
     args = parser.parse_args()
     if args.force and not args.push_description:
@@ -779,8 +785,11 @@ def main():
             redo = [gid for gid in args.game
                     if gid not in details or details[gid].get("upload_failed")]
             print("\n  Nexus rate-limited the upload (HTTP 429), so the run stopped here instead of"
-                  "\n  failing every remaining upload. The limit can last up to an hour; wait, then run:"
-                  f"\n    python release_extension.py {' '.join(redo)} --upload --upload-delay 15")
+                  "\n  failing every remaining upload. The limit caps uploads per IP address, so switch"
+                  "\n  IP (for example toggle a VPN) or wait it out (up to an hour), then run:"
+                  f"\n    python release_extension.py {' '.join(redo)} --upload"
+                  + (f" --upload-delay {args.upload_delay:g}" if args.upload_delay else "")
+                  + (" --no-open" if args.no_open else ""))
     # A failed upload is a failed release even though the zip step succeeded.
     upload_failed = any(r.get("upload_failed") for r in details.values())
     return 1 if (failed or interrupted or upload_failed) else 0

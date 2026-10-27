@@ -8,18 +8,18 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Mod | a file or folder named one of: `Community Update` | the game folder itself (no subfolder) |
-| Root / Game Folder Mods | a `System` folder | the game folder itself (no subfolder) |
-| Launcher | a file or folder named `deusex.exe` | `System` |
-| Binaries | a file or folder named one of: `engine.dll`, `deusexechelonrenderer.dll`, `d3d9.dll` or `rtx.conf` and a file with one of these extensions: `.exe`, `.dll`, `.asi` or `.addon64` | `System` |
+| Mod | a `Community Update` folder | the game folder |
+| Root / Game Folder Mods | a `System` folder | the game folder |
+| Launcher | a `deusex.exe` file | `System` |
+| Binaries | a `engine.dll`, `deusexechelonrenderer.dll`, `d3d9.dll` or `rtx.conf` file and a `.exe`, `.dll`, `.asi` or `.addon64` file | `System` |
 
 Paths are relative to the game's install folder.
 
 ## Mod
 
-Recognised when the archive contains a file or folder named one of: `Community Update`.
+Recognised when the archive contains a `Community Update` folder.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 ## Root / Game Folder Mods
 
@@ -35,7 +35,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `System`, `Maps`, `Textures`, `Sounds`, `Music`, `Save` or `GOTY_1` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -43,13 +43,13 @@ Installs to: the game folder itself (no subfolder)
 
 ## Launcher
 
-Recognised when the archive contains a file or folder named `deusex.exe`.
+Recognised when the archive contains a `deusex.exe` file.
 
 Installs to: `System`
 
 ## Binaries
 
-Recognised when the archive contains a file or folder named one of: `engine.dll`, `deusexechelonrenderer.dll`, `d3d9.dll` or `rtx.conf` and a file with one of these extensions: `.exe`, `.dll`, `.asi` or `.addon64`.
+Recognised when the archive contains a `engine.dll`, `deusexechelonrenderer.dll`, `d3d9.dll` or `rtx.conf` file and a `.exe`, `.dll`, `.asi` or `.addon64` file.
 
 Installs to: `System`
 

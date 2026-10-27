@@ -37,7 +37,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | Installer ID | Priority |
 | --- | --- |
 | `ghostoftsushima-psarc` | 25 |
-| `ghostoftsushima-save` | 25 |
+| `ghostoftsushima-save` | 26 |
 
 ## Registered Tools
 

@@ -8,25 +8,25 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Official Mod Kit Mods | a `mod_manifest.json` manifest | `DOCUMENTS\inZOI\Mods` |
+| Official Mod Kit Mods | a `mod_manifest.json` manifest | `%USERPROFILE%\Documents\inZOI\Mods` |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `BlueClient` |
 | Blueprint Mods (LogicMods) | a `LogicMods` folder | `BlueClient\Content\Paks` |
-| Creations | - | `CREATIONS_PATH` |
+| Creations | - | `%USERPROFILE%\Documents\inZOI` |
 | Pak Mods | a `.pak` file | `BlueClient\Content\Paks\~mods` |
-| Aigenerated | - | - |
-| UE4SS Itself | a `dwmapi.dll` file | `BlueClient\Binaries\Win64` |
-| Canvas | - | - |
-| Modenabler | a file or folder named `dsound.dll` and a file or folder named `sig.lua` | - |
+| Aigenerated | - | `%USERPROFILE%\Documents\inZOI` |
+| UE4SS | a `dwmapi.dll` file | `BlueClient\Binaries\Win64` |
+| Canvas | - | `%USERPROFILE%\Documents\inZOI` |
+| Modenabler | a `dsound.dll` file and a `sig.lua` file | the game folder |
 | UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `BlueClient\Binaries\Win64\ue4ss\Mods` |
-| My3dprinter | a file or folder named `appearance.dat`, a file or folder named `motion.dat`, a file or folder named `albedo.jpg`, a file with the `.glb` extension, a file with the `.dat` extension and a file with one of these extensions: `.glb` or `.dat` | - |
+| My3dprinter | a `appearance.dat` file, a `motion.dat` file, a `albedo.jpg` file, a `.glb` file and a `.dat` file | `%USERPROFILE%\Documents\inZOI\AIGenerated\My3DPrinter` |
 | UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | `BlueClient\Binaries\Win64\ue4ss\Mods` |
-| Animations | - | - |
-| Root / Game Folder Mods | a top-level folder such as `BlueClient`, `Engine` or `Content` | the game folder itself (no subfolder) |
-| Myappearances | - | - |
+| Animations | - | `%USERPROFILE%\Documents\inZOI\AIGenerated\MyAIMotions` |
+| Root / Game Folder Mods | a top-level folder such as `BlueClient`, `Engine` or `Content` | the game folder |
+| Myappearances | - | `%USERPROFILE%\Documents\inZOI\Creations\MyAppearances` |
 | Config File Mods | a config file such as `engine.ini` or `game.ini` | - |
-| Textures | - | - |
+| Textures | - | `%USERPROFILE%\Documents\inZOI\Creations\MyTextures` |
 | Save Game Files | a `.sav` file | - |
-| Fallback Installer | anything unrecognised with no pak file | `BlueClient\Binaries\Win64` |
+| Fallback Installer | anything not matched above with no pak file | `BlueClient\Binaries\Win64` |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
@@ -39,7 +39,7 @@ Mods produced with the game's official mod kit, identified by a `mod_manifest.js
 - Recognised when the archive contains `mod_manifest.json` AND a `.uplugin` file.
 - The install folder name is read from the `modPluginName` field inside `mod_manifest.json`.
 
-Installs to: `DOCUMENTS\inZOI\Mods`
+Installs to: `%USERPROFILE%\Documents\inZOI\Mods`
 
 **Common mistakes:**
 
@@ -106,7 +106,7 @@ Installs to: `BlueClient\Content\Paks`
 
 Handled by the `testDocsFolder` installer. Inspect the extension source for the exact archive layout it expects.
 
-Installs to: `CREATIONS_PATH`
+Installs to: `%USERPROFILE%\Documents\inZOI`
 
 ## Pak Mods
 
@@ -121,6 +121,7 @@ MyPakMod.zip
 
 - Any archive containing a `.pak` file reaches this installer (unless an earlier one claimed it).
 - Only the pak files are installed - surrounding folders are discarded.
+- Companion files are installed alongside paks: `.ucas` or `.utoc`.
 - If the archive holds more than one pak, Vortex asks the user which to install - useful for optional variants.
 
 Installs to: `BlueClient\Content\Paks\~mods`
@@ -134,7 +135,9 @@ Installs to: `BlueClient\Content\Paks\~mods`
 
 Handled by the `testDocsFolder` installer. Inspect the extension source for the exact archive layout it expects.
 
-## UE4SS Itself
+Installs to: `%USERPROFILE%\Documents\inZOI`
+
+## UE4SS
 
 This installer handles the UE4SS runtime package, not individual mods. Most authors never need it - it exists so users can install UE4SS through Vortex.
 
@@ -153,9 +156,13 @@ Installs to: `BlueClient\Binaries\Win64`
 
 Handled by the `testDocsFolder` installer. Inspect the extension source for the exact archive layout it expects.
 
+Installs to: `%USERPROFILE%\Documents\inZOI`
+
 ## Modenabler
 
-Recognised when the archive contains a file or folder named `dsound.dll` and a file or folder named `sig.lua`.
+Recognised when the archive contains a `dsound.dll` file and a `sig.lua` file.
+
+Installs to: the game folder
 
 ## UE4SS Script Mods (Lua)
 
@@ -183,7 +190,9 @@ Installs to: `BlueClient\Binaries\Win64\ue4ss\Mods`
 
 ## My3dprinter
 
-Recognised when the archive contains a file or folder named `appearance.dat`, a file or folder named `motion.dat`, a file or folder named `albedo.jpg`, a file with the `.glb` extension, a file with the `.dat` extension and a file with one of these extensions: `.glb` or `.dat`.
+Recognised when the archive contains a `appearance.dat` file, a `motion.dat` file, a `albedo.jpg` file, a `.glb` file and a `.dat` file.
+
+Installs to: `%USERPROFILE%\Documents\inZOI\AIGenerated\My3DPrinter`
 
 ## UE4SS DLL Mods (C++)
 
@@ -211,6 +220,8 @@ Installs to: `BlueClient\Binaries\Win64\ue4ss\Mods`
 
 Handled by the `testDocsFile` installer. Inspect the extension source for the exact archive layout it expects.
 
+Installs to: `%USERPROFILE%\Documents\inZOI\AIGenerated\MyAIMotions`
+
 ## Root / Game Folder Mods
 
 For mods that replace or add files inside the game installation, laid out the same way they appear in the game folder.
@@ -226,7 +237,7 @@ MyRootMod.zip
 - Recognised by a top-level folder matching any of: `BlueClient`, `Engine`, `Content`, `Binaries`, `Mods`, `Paks` or `Movies`.
 - The matched folder and everything below it is copied into the game folder, preserving structure.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -235,6 +246,8 @@ Installs to: the game folder itself (no subfolder)
 ## Myappearances
 
 Handled by the `testDocsFile` installer. Inspect the extension source for the exact archive layout it expects.
+
+Installs to: `%USERPROFILE%\Documents\inZOI\Creations\MyAppearances`
 
 ## Config File Mods
 
@@ -251,6 +264,8 @@ Config tweaks are deployed to the game's config folder in your user profile, not
 ## Textures
 
 Handled by the `testDocsFile` installer. Inspect the extension source for the exact archive layout it expects.
+
+Installs to: `%USERPROFILE%\Documents\inZOI\Creations\MyTextures`
 
 ## Save Game Files
 

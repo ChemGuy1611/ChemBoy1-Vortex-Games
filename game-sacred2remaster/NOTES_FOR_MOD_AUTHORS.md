@@ -8,7 +8,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Root / Game Folder Mods | a `scripts` folder | the game folder itself (no subfolder) |
+| Root / Game Folder Mods | a `scripts` folder | the game folder |
 | Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
@@ -27,7 +27,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `scripts`, `video`, `pak`, `locale`, `Textures` or `ui` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 

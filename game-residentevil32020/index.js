@@ -2,8 +2,8 @@
 Name: Resident Evil 3 Vortex Extension
 Structure: Fluffy + REFramework (RE Engine)
 Author: ChemBoy1
-Version: 2.0.2
-Date: 2026-10-16
+Version: 2.0.3
+Date: 2026-10-25
 Notes:
 -
 ///////////////////////////////////////////*/

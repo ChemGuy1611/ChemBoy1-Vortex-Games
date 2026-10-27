@@ -2,8 +2,8 @@
 Name: Yakuza Kiwami 3 & Dark Ties Vortex Extension
 Structure: SRMM Game
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-10-16
+Version: 1.0.2
+Date: 2026-10-25
 Notes:
 - 
 ////////////////////////////////////////////////////////////*/
@@ -1096,7 +1096,7 @@ function applyGame(context, gameSpec) {
   }
   context.registerInstaller(DATAMOD_ID, 29, testData, installData);
   if (rootInstaller) {
-    context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
+    context.registerInstaller(ROOT_ID, 28, testRoot, installRoot);
   }
 
   //register actions

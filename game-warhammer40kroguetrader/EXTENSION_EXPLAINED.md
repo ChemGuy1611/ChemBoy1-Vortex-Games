@@ -45,7 +45,7 @@ Mod types define where each category of mod gets deployed:
 | Owlcat Mod | `warhammer40kroguetrader-mod` | high | `USER_HOME/AppData/LocalLow/Owlcat Games/Warhammer 40000 Rogue Trader/Modifications` |
 | Portraits | `warhammer40kroguetrader-portrait` | high | `USER_HOME/AppData/LocalLow/Owlcat Games/Warhammer 40000 Rogue Trader/Portraits` |
 | Save | `warhammer40kroguetrader-save` | high | `USER_HOME/AppData/LocalLow/Owlcat Games/Warhammer 40000 Rogue Trader/Saved Games` |
-| MicroPatches | `warhammer40kroguetrader-micropatches` | low | `MICROPATCHES_PATH` |
+| MicroPatches | `warhammer40kroguetrader-micropatches` | low | `USER_HOME/AppData/LocalLow/Owlcat Games/Warhammer 40000 Rogue Trader/UnityModManager` |
 
 ## Mod Installers
 

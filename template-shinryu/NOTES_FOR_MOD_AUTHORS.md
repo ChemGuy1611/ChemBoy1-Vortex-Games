@@ -8,22 +8,22 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| XXX Modmanager | a file or folder named `shinryumodmanager.exe` | `runtime\media` |
-| XXX Mod | a file or folder named one of: `mod-meta.yaml` or `modinfo.ini` | `runtime\media\mods` |
-| Root / Game Folder Mods | a `nvngx_dlss.dll` file or a `.exe` file | the game folder itself (no subfolder) |
-| XXX Data | a file with one of these extensions: `.par` | `runtime\media\data` |
+| XXX Modmanager | a `shinryumodmanager.exe` file | `runtime\media` |
+| XXX Mod | a `mod-meta.yaml` or `modinfo.ini` file | `runtime\media\mods` |
+| Root / Game Folder Mods | a `nvngx_dlss.dll` file or a `.exe` file | the game folder |
+| XXX Data | a `.par` file | `runtime\media\data` |
 
 Paths are relative to the game's install folder.
 
 ## XXX Modmanager
 
-Recognised when the archive contains a file or folder named `shinryumodmanager.exe`.
+Recognised when the archive contains a `shinryumodmanager.exe` file.
 
 Installs to: `runtime\media`
 
 ## XXX Mod
 
-Recognised when the archive contains a file or folder named one of: `mod-meta.yaml` or `modinfo.ini`.
+Recognised when the archive contains a `mod-meta.yaml` or `modinfo.ini` file.
 
 Installs to: `runtime\media\mods`
 
@@ -36,7 +36,7 @@ For mods laid out the same way the files appear inside the game folder. Vortex c
 - Recognised by any file named `nvngx_dlss.dll`, `dstoragecore.dll`, `dstorage.dll`, `amd_fidelityfx_dx12.dll`, `amd_ags_x64.dll` or `libxess.dll`.
 - Recognised by any file with the `.exe` extension.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -44,7 +44,7 @@ Installs to: the game folder itself (no subfolder)
 
 ## XXX Data
 
-Recognised when the archive contains a file with one of these extensions: `.par`.
+Recognised when the archive contains a `.par` file.
 
 Installs to: `runtime\media\data`
 

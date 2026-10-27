@@ -22,9 +22,8 @@ depend on.
 | `SAVE_ID`      | absolute `SAVE_PATH` (outside the game folder) |
 
 **Installers:** `ACSE` 25 → `ROOT` 27 → `ACSE_MOD` 28 → `LOCALISED` 29 → `MOVIES` 31 → `OVLDATA` 33
-→ `SAVE` 49 → fallback 49. Two departures from the usual pattern: `ACSE_MOD` sits at 28 rather than
-on the odd-number step, and `SAVE` shares priority 49 with the fallback — it is registered first, so
-it is tested first.
+→ `SAVE` 48 → fallback 49. Two departures from the usual pattern: `ACSE_MOD` sits at 28 rather than
+on the odd-number step, and `SAVE` sits at 48 so it is always tested just before the fallback.
 
 **Save and config.** `%USERPROFILE%\Saved Games\Frontier Developments\<game>\<userId>\Saves` and
 `…\Config`. The user-ID subfolder is scanned for unconditionally at module load — there is no

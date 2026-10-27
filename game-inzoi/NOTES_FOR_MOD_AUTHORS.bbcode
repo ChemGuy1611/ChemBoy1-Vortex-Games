@@ -13,7 +13,7 @@ Mods produced with the game's official mod kit, identified by a "mod_manifest.js
     - Recognised when the archive contains "mod_manifest.json" AND a ".uplugin" file.
     - The install folder name is read from the "modPluginName" field inside "mod_manifest.json".
 
-  Installs to: "DOCUMENTS\inZOI\Mods"
+  Installs to: "%USERPROFILE%\Documents\inZOI\Mods"
 
   Common mistakes:
     - A "modPluginName" that does not match what the mod was built as will crash the game. Keep it identical to the mod kit plugin name.
@@ -81,7 +81,7 @@ Creations:
 
 Handled by the "testDocsFolder" installer. Inspect the extension source for the exact archive layout it expects.
 
-  Installs to: "CREATIONS_PATH"
+  Installs to: "%USERPROFILE%\Documents\inZOI"
 
 ========================================================================
 
@@ -97,6 +97,7 @@ MyPakMod.zip
   Requirements:
     - Any archive containing a ".pak" file reaches this installer (unless an earlier one claimed it).
     - Only the pak files are installed - surrounding folders are discarded.
+    - Companion files are installed alongside paks: ".ucas" or ".utoc".
     - If the archive holds more than one pak, Vortex asks the user which to install - useful for optional variants.
 
   Installs to: "BlueClient\Content\Paks\~mods"
@@ -111,9 +112,11 @@ Aigenerated:
 
 Handled by the "testDocsFolder" installer. Inspect the extension source for the exact archive layout it expects.
 
+  Installs to: "%USERPROFILE%\Documents\inZOI"
+
 ========================================================================
 
-UE4SS Itself:
+UE4SS:
 
 This installer handles the UE4SS runtime package, not individual mods. Most authors never need it - it exists so users can install UE4SS through Vortex.
 
@@ -132,11 +135,15 @@ Canvas:
 
 Handled by the "testDocsFolder" installer. Inspect the extension source for the exact archive layout it expects.
 
+  Installs to: "%USERPROFILE%\Documents\inZOI"
+
 ========================================================================
 
 Modenabler:
 
-Recognised when the archive contains a file or folder named "dsound.dll" and a file or folder named "sig.lua".
+Recognised when the archive contains a "dsound.dll" file and a "sig.lua" file.
+
+  Installs to: the game folder
 
 ========================================================================
 
@@ -166,7 +173,9 @@ MyScriptMod.zip
 
 My3dprinter:
 
-Recognised when the archive contains a file or folder named "appearance.dat", a file or folder named "motion.dat", a file or folder named "albedo.jpg", a file with the ".glb" extension, a file with the ".dat" extension and a file with one of these extensions: ".glb" or ".dat".
+Recognised when the archive contains a "appearance.dat" file, a "motion.dat" file, a "albedo.jpg" file, a ".glb" file and a ".dat" file.
+
+  Installs to: "%USERPROFILE%\Documents\inZOI\AIGenerated\My3DPrinter"
 
 ========================================================================
 
@@ -196,6 +205,8 @@ Animations:
 
 Handled by the "testDocsFile" installer. Inspect the extension source for the exact archive layout it expects.
 
+  Installs to: "%USERPROFILE%\Documents\inZOI\AIGenerated\MyAIMotions"
+
 ========================================================================
 
 Root / Game Folder Mods:
@@ -212,7 +223,7 @@ MyRootMod.zip
     - Recognised by a top-level folder matching any of: "BlueClient", "Engine", "Content", "Binaries", "Mods", "Paks" or "Movies".
     - The matched folder and everything below it is copied into the game folder, preserving structure.
 
-  Installs to: the game folder itself (no subfolder)
+  Installs to: the game folder
 
   Common mistakes:
     - Zipping the folder that CONTAINS the game folders instead of the game folders themselves adds an extra level and misplaces every file.
@@ -222,6 +233,8 @@ MyRootMod.zip
 Myappearances:
 
 Handled by the "testDocsFile" installer. Inspect the extension source for the exact archive layout it expects.
+
+  Installs to: "%USERPROFILE%\Documents\inZOI\Creations\MyAppearances"
 
 ========================================================================
 
@@ -240,6 +253,8 @@ Config tweaks are deployed to the game's config folder in your user profile, not
 Textures:
 
 Handled by the "testDocsFile" installer. Inspect the extension source for the exact archive layout it expects.
+
+  Installs to: "%USERPROFILE%\Documents\inZOI\Creations\MyTextures"
 
 ========================================================================
 

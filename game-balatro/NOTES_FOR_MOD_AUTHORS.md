@@ -8,32 +8,34 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| LOVELY | a file or folder named `winmm.dll` | - |
-| Steammodded | a file or folder named `tk_debug_window.py` | `STEAMMODDED_PATH` |
-| Malverk | a file or folder named `malverk.lua` | `MALVERK_PATH` |
-| Mod | a file with one of these extensions: `.lua` and a file or folder named one of: `assets`, `libs`, `localization`, `lovely`, `lsp_def`, `api` or `utils` | - |
+| LOVELY | a `winmm.dll` file | the game folder |
+| Steammodded | a `tk_debug_window.py` file | `%APPDATA%\Balatro\Mods` |
+| Malverk | a `malverk.lua` file | `%APPDATA%\Balatro\Mods` |
+| Mod | a `.lua` file and a `assets`, `libs`, `localization`, `lovely`, `lsp_def`, `api` or `utils` folder | - |
 
 Paths are relative to the game's install folder.
 
 ## LOVELY
 
-Recognised when the archive contains a file or folder named `winmm.dll`.
+Recognised when the archive contains a `winmm.dll` file.
+
+Installs to: the game folder
 
 ## Steammodded
 
-Recognised when the archive contains a file or folder named `tk_debug_window.py`.
+Recognised when the archive contains a `tk_debug_window.py` file.
 
-Installs to: `STEAMMODDED_PATH`
+Installs to: `%APPDATA%\Balatro\Mods`
 
 ## Malverk
 
-Recognised when the archive contains a file or folder named `malverk.lua`.
+Recognised when the archive contains a `malverk.lua` file.
 
-Installs to: `MALVERK_PATH`
+Installs to: `%APPDATA%\Balatro\Mods`
 
 ## Mod
 
-Recognised when the archive contains a file with one of these extensions: `.lua` and a file or folder named one of: `assets`, `libs`, `localization`, `lovely`, `lsp_def`, `api` or `utils`.
+Recognised when the archive contains a `.lua` file and a `assets`, `libs`, `localization`, `lovely`, `lsp_def`, `api` or `utils` folder.
 
 ## Rules That Apply To Every Mod Type
 

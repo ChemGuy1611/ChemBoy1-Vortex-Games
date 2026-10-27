@@ -8,53 +8,55 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Scriptloader | - | - |
-| Data | a file or folder named `exec` | - |
-| Patchfolder | a file or folder named `patch` | `exec` |
-| Execsub | a file or folder named one of: `ActivityFeed`, `cinematics`, `dc`, `languages`, `sound` or `wad` | `exec` |
-| Pack | a file with one of these extensions: `.texpack` or `.lodpack` | `exec\patch\pc_le` |
-| Luamod | a file or folder named `int9` and a file with one of these extensions: `.lua` | `mod` |
-| Save | - | `userHomePathSanitize\Saved Games\God of War Ragnar\u00F6k\USERID_FOLDER` |
+| Scriptloader | a `winmm.dll` file and a `GOWR-Script-Loader.ini` file | the game folder |
+| Data | a `exec` folder | the game folder |
+| Patchfolder | a `patch` folder | `exec` |
+| Execsub | a `ActivityFeed`, `cinematics`, `dc`, `languages`, `sound` or `wad` folder | `exec` |
+| Pack | a `.texpack` or `.lodpack` file | `exec\patch\pc_le` |
+| Luamod | a `int9` folder and a `.lua` file | `mod` |
+| Save | - | - |
 
 Paths are relative to the game's install folder.
 
 ## Scriptloader
 
-Handled by the `testLoader` installer. Inspect the extension source for the exact archive layout it expects.
+Recognised when the archive contains a `winmm.dll` file and a `GOWR-Script-Loader.ini` file.
+
+Installs to: the game folder
 
 ## Data
 
-Recognised when the archive contains a file or folder named `exec`.
+Recognised when the archive contains a `exec` folder.
+
+Installs to: the game folder
 
 ## Patchfolder
 
-Recognised when the archive contains a file or folder named `patch`.
+Recognised when the archive contains a `patch` folder.
 
 Installs to: `exec`
 
 ## Execsub
 
-Recognised when the archive contains a file or folder named one of: `ActivityFeed`, `cinematics`, `dc`, `languages`, `sound` or `wad`.
+Recognised when the archive contains a `ActivityFeed`, `cinematics`, `dc`, `languages`, `sound` or `wad` folder.
 
 Installs to: `exec`
 
 ## Pack
 
-Recognised when the archive contains a file with one of these extensions: `.texpack` or `.lodpack`.
+Recognised when the archive contains a `.texpack` or `.lodpack` file.
 
 Installs to: `exec\patch\pc_le`
 
 ## Luamod
 
-Recognised when the archive contains a file or folder named `int9` and a file with one of these extensions: `.lua`.
+Recognised when the archive contains a `int9` folder and a `.lua` file.
 
 Installs to: `mod`
 
 ## Save
 
 Handled by the `testSave` installer. Inspect the extension source for the exact archive layout it expects.
-
-Installs to: `userHomePathSanitize\Saved Games\God of War Ragnar\u00F6k\USERID_FOLDER`
 
 ## Rules That Apply To Every Mod Type
 

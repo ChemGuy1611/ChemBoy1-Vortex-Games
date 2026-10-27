@@ -5,19 +5,50 @@ This extension adds Alien Isolation modding support to Vortex Mod Manager.
 [*]Steam[/*]
 [*]GOG[/*]
 [*]Epic[/*]
-[*]Xbox (Game Pass)[/*]
+[*]Xbox[/*]
 [*]Other versions may need to select the installation location manually.[/*]
 [/list]
 [b]🛠️ Mod Installation Notes:[/b]
 [list]
-[*]Data Folder mods are recognised by the Datafolder installer.[/*]
-[*]Installs Data Files mod with a file with one of these extensions: ".bin", ".bml", ".xml" or ".pak" to the "DATA" folder.[/*]
+[*]Data Folder mods with a "DATA" folder install to the game folder.[/*]
+[*]Data Files mods with a ".bin", ".bml", ".xml" or ".pak" file install to the "DATA" folder.[/*]
 [*]Archives with a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to Vortex's built-in FOMOD installer instead.[/*]
 [/list]
 [b]📋 Usage Notes:[/b]
 [list]
 [*]You can open several useful files/folders/URLs using the buttons within the folder icon on the Mods toolbar.[/*]
 [/list]
+
+[b]📝 Notes for Mod Authors:[/b]
+[spoiler]
+Packaging rules for Alien Isolation mods, so Vortex installs them to the right place.
+
+Vortex decides what a mod is by looking at the files and folders inside the archive. It tries each installer in order and the first one that matches wins, so archive layout is what determines where your mod ends up.
+
+========================================================================
+
+Datafolder:
+
+Recognised when the archive contains a "DATA" folder.
+
+  Installs to: the game folder
+
+========================================================================
+
+Datafiles:
+
+Recognised when the archive contains a ".bin", ".bml", ".xml" or ".pak" file.
+
+  Installs to: "DATA"
+
+========================================================================
+
+Rules That Apply To Every Mod Type:
+
+    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
+    - Folder and file name matching is case-insensitive.
+    - Extra wrapper folders around a recognised folder are generally fine.
+[/spoiler]
 
 [b]❤️ Support the Mod Author: [/b]
 If you would like to support my work, you can do so below. Your support is greatly appreciated!

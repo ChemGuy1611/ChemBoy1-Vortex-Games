@@ -5,7 +5,8 @@ fetch_nexus_stats.py
 Fetches endorsement count and unique download count from the Nexus Mods v1 API
 for every game-* and helper-* extension with a valid EXTENSION_URL (contains
 nexusmods.com). Also fetches active file-update-group IDs from the Nexus Mods
-v3 API. Results are cached to vortex_gui_nexus_stats.json at the repo root for
+v3 API, and the version and upload time of the newest MAIN file from the v1 file
+list. Results are cached to vortex_gui_nexus_stats.json at the repo root for
 display in vortex_gui.py.
 
 Usage:
@@ -122,6 +123,20 @@ def fetch_all(target_ids=None, dry_run=False, force=False, max_age=None):
                         if "HTTP 404" not in str(e):
                             vu.log_warn(game_id, f"file groups: {e}")
                 entry["file_groups"] = file_groups
+
+                # The mod page data carries no upload date, so record the newest MAIN
+                # file's version and upload time (when the extension was last released).
+                entry["main_file_version"] = None
+                entry["main_file_uploaded"] = None
+                try:
+                    files = vu.nexus_get_mod_files(domain, mod_id, api_key)
+                    main = [f for f in files if str(f.get("category_name", "")).upper() == "MAIN"]
+                    if main:
+                        newest = max(main, key=lambda f: f.get("uploaded_timestamp", 0))
+                        entry["main_file_version"] = newest.get("version")
+                        entry["main_file_uploaded"] = newest.get("uploaded_timestamp")
+                except Exception as e:
+                    vu.log_warn(game_id, f"file list: {e}")
 
                 cache[game_id] = entry
                 fg_note = f"  groups={len(file_groups)}" if file_groups else ""

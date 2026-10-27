@@ -8,29 +8,37 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Rollback | a file or folder named `doometernalx64vk.exe` | - |
-| Injector | a file or folder named `eternalmodmanager.exe` | - |
-| Ktde | a file or folder named `keep the dead eternal - readme - install instructions.rtf` | - |
-| Meathook | a file or folder named `xinput1_3.dll` | - |
+| Rollback | a `doometernalx64vk.exe` file | the game folder |
+| Injector | a `eternalmodmanager.exe` file | the game folder |
+| Ktde | a `keep the dead eternal - readme - install instructions.rtf` file | the game folder |
+| Meathook | a `xinput1_3.dll` file | the game folder |
 | Zip Mod | - | - |
 
 Paths are relative to the game's install folder.
 
 ## Rollback
 
-Recognised when the archive contains a file or folder named `doometernalx64vk.exe`.
+Recognised when the archive contains a `doometernalx64vk.exe` file.
+
+Installs to: the game folder
 
 ## Injector
 
-Recognised when the archive contains a file or folder named `eternalmodmanager.exe`.
+Recognised when the archive contains a `eternalmodmanager.exe` file.
+
+Installs to: the game folder
 
 ## Ktde
 
-Recognised when the archive contains a file or folder named `keep the dead eternal - readme - install instructions.rtf`.
+Recognised when the archive contains a `keep the dead eternal - readme - install instructions.rtf` file.
+
+Installs to: the game folder
 
 ## Meathook
 
-Recognised when the archive contains a file or folder named `xinput1_3.dll`.
+Recognised when the archive contains a `xinput1_3.dll` file.
+
+Installs to: the game folder
 
 ## Zip Mod
 

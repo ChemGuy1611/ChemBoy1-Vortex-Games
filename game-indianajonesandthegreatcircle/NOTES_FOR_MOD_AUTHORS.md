@@ -8,9 +8,9 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Config File Mods | a `.local` file | `USER_DOCS\Saved Games\MachineGames\TheGreatCircle\base` |
-| Save Game Files | a `.dat` file | `ROAMINGAPPDATA\GSE Saves\2677660\remote\GAME-SLOT0` |
-| Sounds | a file with one of these extensions: `.pack` or `.bnk` | `base\sound\soundbanks\pc` |
+| Config File Mods | a `.local` file | `%USERPROFILE%\Saved Games\MachineGames\TheGreatCircle\base` |
+| Save Game Files | a `.dat` file | `%APPDATA%\GSE Saves\2677660\remote\GAME-SLOT0` |
+| Sounds | a `.pack` or `.bnk` file | `base\sound\soundbanks\pc` |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
@@ -22,7 +22,7 @@ Configuration tweaks, deployed to the game's config location.
 
 - Recognised by any file with the `.local` or `.cfg` extensions.
 
-Installs to: `USER_DOCS\Saved Games\MachineGames\TheGreatCircle\base`
+Installs to: `%USERPROFILE%\Saved Games\MachineGames\TheGreatCircle\base`
 
 **Common mistakes:**
 
@@ -36,7 +36,7 @@ Save files, deployed to the game's save folder.
 
 - Recognised by any file with the `.dat` extension.
 
-Installs to: `ROAMINGAPPDATA\GSE Saves\2677660\remote\GAME-SLOT0`
+Installs to: `%APPDATA%\GSE Saves\2677660\remote\GAME-SLOT0`
 
 **Common mistakes:**
 
@@ -44,7 +44,7 @@ Installs to: `ROAMINGAPPDATA\GSE Saves\2677660\remote\GAME-SLOT0`
 
 ## Sounds
 
-Recognised when the archive contains a file with one of these extensions: `.pack` or `.bnk`.
+Recognised when the archive contains a `.pack` or `.bnk` file.
 
 Installs to: `base\sound\soundbanks\pc`
 

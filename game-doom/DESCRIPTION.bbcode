@@ -1,4 +1,5 @@
 This extension adds DOOM (2016) modding support to Vortex Mod Manager.
+[summary]Automatically downloads DOOMModLoader and DOOMLauncher. Supports Steam and GOG versions.[/summary]
 
 [b]✅ Supported Versions:[/b]
 [list]
@@ -8,24 +9,92 @@ This extension adds DOOM (2016) modding support to Vortex Mod Manager.
 [/list]
 [b]🛠️ Mod Installation Notes:[/b]
 [list]
-[*]Installs DOOMModLoader mod with a file or folder named "doommodloader.exe".[/*]
-[*]Installs DOOMLauncher mod with a file or folder named "doomlauncher.exe".[/*]
-[*]Installs DOOM Legacy mod with a file or folder named "dinput8.dll".[/*]
-[*]Installs Version Rollback Files mod with a file or folder named "doomx64vk.exe".[/*]
+[*]DOOMModLoader mods with a "doommodloader.exe" file install to the game folder.[/*]
+[*]DOOMLauncher mods with a "doomlauncher.exe" file install to the game folder.[/*]
+[*]DOOM Legacy mods with a "dinput8.dll" file install to the game folder.[/*]
+[*]Version Rollback Files mods with a "doomx64vk.exe" file install to the game folder.[/*]
 [/list]
 [b]📋 Usage Notes:[/b]
 [list]
 [*]You can open several useful files/folders/URLs using the buttons within the folder icon on the Mods toolbar.[/*]
 [/list]
 
+[b][size=3]UPDATE 06-August-2024:
+[list]
+[*][b][size=3][url=https://github.com/ZwipZwapZapony/DOOMModLoader/releases]DOOMModLoader[/url] has been updated to support the April 2024 update of the game. This extension has been updated to download the new version from Github automatically. This new version can launch the updated game properly. [/size][/b]
+[*][b][size=3][url=https://github.com/brunoanc/DOOMLauncher]DOOMLauncher[/url] will also be downloaded to allow DOOMModLoader to launch the pre-update version of the game as well. So it will be up to you whether you want to use the new game version or downgrade. These new mods also can run the game with mods without using the "devmode_enable 1" commandline argument, meaning Steam Achievements are no longer disabled![/size][/b]
+[/list]
+[/size]Caveats:
+[list]
+[*][b][size=2]The new game version does not seem to like any custom arguments in the [b]".../base/candidate.cfg" file or the game will throw a blue error popup and black screen at launch.[/b][/size][/b]
+[*][b][size=2][b]If you had a save that was made with the "devmode_enable 1" commandline argument enabled, you need to leave the argument in place or the game will tell you the save is corrupted.[/b][/size][/b]
+[*][b][size=2][b]If you use the new game version with mods that depend on [url=https://github.com/brunoanc/DOOMLegacyMod]DoomLegacyMod[/url]﻿, you need to download the "202407" version that supports the April 2024 game version﻿﻿﻿.[/b][/size][/b]
+[/list]
+[b][size=3]If you would like to rollback to the previous version of DOOM, follow these instructions:[/size][/b]
+[list]
+[*][size=2]Press [winkey + R], then enter in the new window: [/size][code][size=2][size=2]steam://nav/console[/size][/size][/code]
+[*][size=2]This will open the Steam Console. Enter this in the Steam Console: [/size][code][size=2][size=2]download_depot 379720 379721 2206249600939156631[/size][/size][/code]
+[*][size=2]Once complete, go to [/size][code][size=2][size=2]Steam&#92;SteamApps&#92;content&#92;app_379720&#92;depot_379721[/size][/size][/code]
+[size=2] and compress all the files in that folder to a zip and install it with Vortex.[/size][/list]
+[b][size=3]The extension has been updated to automatically download the [url=https://github.com/jfmherokiller/DOOMExtract]DOOMModLoader[/url] and [url=https://github.com/brunoanc/DOOMLauncher]DOOMLauncher[/url] from Github.
+Instructions, modified from the [url=https://discord.gg/W9t4nZa]Doom 2016+ Modding Discord[/url]﻿, are below.
+[list=1]
+[*][u][i][b]Mod Loader Installation:[/b][/i][/u] This extension does this automatically, or you can get[size=2] it here [url=https://github.com/ZwipZwapZapony/DOOMModLoader/releases]DOOMModLoader[/url][b] [/b]and unzip to game folder.[/size]
+[*][u][i][b]Playing With Mods:[/b][/i][/u] Download one or more "mod loader"-based mods from Nexus Mods or elsewhere. Launch the game from Vortex. "It will run the DOOMModLoader.exe and build the mods in the "Mods" folder. Once it's done, it'll automatically run Doom 2016. If you have Doom 2016 on Steam, you should now switch to a Steam window and click "OK" when Steam asks if you want to launch Doom 2016 with some launch arguments.- Running Doom 2016 normally is no longer possible; If Doom 2016 detects any mods while "devMode_enable" isn't set to 1, Doom 2016 will crash itself. "devMode_enable" is set to 1 when launching Doom 2016 by running "DOOMModLoader.exe", but note that this disables achievements, multiplayer, and Snapmap. See "Mod Removal" below if you want to earn achievements or play multiplayer or Snapmap.
+[*][b][u][i]Mod Removal:[/i][/u] [/b]To uninstall all mods, first Disable them in Vortex, then run the DOOMModLoader.exe (you can do this by launching the game in Vortex).- The mod loader will now get rid of the mod patch files for Doom 2016 (though it'll still try to launch Doom 2016 with "devMode_enable" set to 1 once it's done removing the mod patch files).- After this, simply launch Doom 2016 normally, and you should be able to play without mods, letting you earn achievements and play multiplayer and snapmap. If you want to play with mods again, see "Playing With Mods" above.
+[/list]
+
+[b]📝 Notes for Mod Authors:[/b]
+[spoiler]
+Packaging rules for DOOM (2016) mods, so Vortex installs them to the right place.
+
+Vortex decides what a mod is by looking at the files and folders inside the archive. It tries each installer in order and the first one that matches wins, so archive layout is what determines where your mod ends up.
+
+========================================================================
+
+Modloader:
+
+Recognised when the archive contains a "doommodloader.exe" file.
+
+  Installs to: the game folder
+
+========================================================================
+
+Launcher:
+
+Recognised when the archive contains a "doomlauncher.exe" file.
+
+  Installs to: the game folder
+
+========================================================================
+
+Legacy:
+
+Recognised when the archive contains a "dinput8.dll" file.
+
+  Installs to: the game folder
+
+========================================================================
+
+Rollback:
+
+Recognised when the archive contains a "doomx64vk.exe" file.
+
+  Installs to: the game folder
+
+========================================================================
+
+Rules That Apply To Every Mod Type:
+
+    - Folder and file name matching is case-insensitive.
+    - Extra wrapper folders around a recognised folder are generally fine.
+[/spoiler]
+
 [b]❤️ Support the Mod Author: [/b]
 If you would like to support my work, you can do so below. Your support is greatly appreciated!
 
-
 [url=https://www.paypal.com/donate/?hosted_button_id=ZFE99JKP43D2G][img]https://live.staticflickr.com/65535/54395661414_10e6ef111d_m.jpg[/img][/url]
 
-
 [url=https://ko-fi.com/chemboy1nexusmods/][img]https://live.staticflickr.com/65535/54380730333_357df43249_n.jpg[/img][/url]
-
 
 [url=https://buymeacoffee.com/chemboy1/][img]https://live.staticflickr.com/65535/54379586002_8dcc6370e5_m.jpg[/img][/url]

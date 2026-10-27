@@ -2,8 +2,8 @@
 Name: Silver Pines Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-10-16
+Version: 1.0.3
+Date: 2026-10-26
 Notes:
 -
 //////////////////////////////////////////*/
@@ -54,7 +54,7 @@ const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL 
 const GAME_NAME = "Silver Pines";
 const GAME_NAME_SHORT = "Silver Pines";
 const GAME_STRING = "Carpenter"; //string for exe and data folder (seem to always match)
-const GAME_STRING_ALT = GAME_STRING; //CHANGE THIS IF IT DOESN'T MATCH
+const GAME_STRING_ALT = "Silver Pines"; //!Xbox version is different
 const EXEC = `${GAME_STRING}.exe`;
 const EXEC_EGS = EXEC;
 const EXEC_GOG = EXEC;
@@ -70,7 +70,7 @@ const isXna = false; //set to true if game is XNA engine
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
 let hasXbox = true; //toggle for Xbox version logic
 if (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) hasXbox = true;
-let multiExe = false; //set to true if there are multiple executables (typically for Xbox/EGS)
+let multiExe = true; //set to true if there are multiple executables (typically for Xbox/EGS)
 if (GAME_STRING_ALT !== GAME_STRING) {
   multiExe = true;
 } //*/
@@ -82,12 +82,13 @@ const enableSaveInstaller = false; //set to true if you want to enable the save 
 const hasCustomMods = false; //set to true if there are modTypes with folder paths dependent on which mod loader is installed
 const hasCustomLoader = false; //set to true if there is a custom mod loader
 const customLoaderInstaller = false; //set true if the custom loader uses an installer
+const hasTextureReplacer = false; //set to true if the game has a Texture Replacer BepInEx plugin that loads .png textures from BepInEx/plugins/TextureReplacer (set TEXTURES_STRING below)
 const debug = false; //toggle for debug mode
 const exeHasGameVersion = false; //toggle: true if the game devs stamp the real game version (not just the Unity player version) into the exe ProductVersion
 
 const DATA_FOLDER_DEFAULT = `${GAME_STRING}_Data`;
 let DATA_FOLDER = DATA_FOLDER_DEFAULT;
-const ALT_VERSION = "alt"; //Epic/GOG/demo exe - the Xbox build sets GAME_VERSION to "xbox" itself
+const ALT_VERSION = "xbox"; //Epic/GOG/demo exe - the Xbox build sets GAME_VERSION to "xbox" itself
 const DATA_FOLDER_ALT = `${GAME_STRING_ALT}_Data`; //don't always match
 const ROOT_FOLDERS = [DATA_FOLDER, DATA_FOLDER_ALT];
 const VERSION_FILE = path.join("Version.info"); // LIKELY to change - usually .txt or .info file, i.e. Version.info. app.info typically does NOT contain version number
@@ -534,6 +535,15 @@ const CUSTOM_PLUGIN_STRING = "XXX"; //string to ID Custom plugin file
 // -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+//Texture Replacer (BepInEx plugin) textures - the plugin loads every .png under this folder,
+//subfolders included, and matches each by file name to an in-game texture
+const TEXTURES_ID = `${GAME_ID}-texturereplacer`;
+const TEXTURES_NAME = "Texture Replacer Textures";
+const TEXTURES_FOLDER = "TextureReplacer";
+const TEXTURES_PATH = path.join(BEPINEX_PLUGINS_PATH, TEXTURES_FOLDER);
+const TEXTURES_EXTS = [".png"];
+const TEXTURES_STRING = "XXX"; //file name prefix of the game's textures (lowercased)
+
 const MOD_PATH_DEFAULT = ".";
 let REQ_FILE = EXEC;
 if (multiExe) {
@@ -569,6 +579,9 @@ if (hasCustomMods) {
 }
 if (hasCustomLoader) {
   MODTYPE_FOLDERS.push(CUSTOMLOADER_PLUGIN_PATH);
+}
+if (hasTextureReplacer) {
+  MODTYPE_FOLDERS.push(TEXTURES_PATH);
 }
 
 // -- END EDIT ZONE -- /////////////////////////////////////////////////////////////////////////////////
@@ -701,6 +714,14 @@ if (!isXna) {
     name: MELON_NAME,
     priority: "low",
     targetPath: "{gamePath}",
+  });
+}
+if (hasTextureReplacer) {
+  spec.modTypes.push({
+    id: TEXTURES_ID,
+    name: TEXTURES_NAME,
+    priority: "high",
+    targetPath: path.join("{gamePath}", TEXTURES_PATH),
   });
 }
 
@@ -1425,6 +1446,62 @@ function installAssets(files) {
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: ASSETS_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
+
+  const instructions = filtered.map((file) => {
+    return {
+      type: "copy",
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Installer Test for Texture Replacer textures
+function isTextureFile(file) {
+  return (
+    TEXTURES_EXTS.includes(path.extname(file).toLowerCase()) &&
+    path.basename(file).toLowerCase().startsWith(TEXTURES_STRING)
+  );
+}
+function testTextures(files, gameId) {
+  const isMod = files.some((file) => isTextureFile(file));
+  //an archive with a .dll is a plugin (possibly shipping its own textures) - leave it to the plugin installer
+  const isPlugin = files.some((file) => PLUGIN_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = gameId === spec.game.id && isMod && !isPlugin;
+
+  // Test for a mod installer.
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install Texture Replacer textures
+function installTextures(files) {
+  //anchor on the shallowest texture so textures sorted into subfolders keep them
+  const modFile = files
+    .filter((file) => isTextureFile(file))
+    .sort((a, b) => a.split(path.sep).length - b.split(path.sep).length)[0];
+  const idx = modFile.lastIndexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
+  const setModTypeInstruction = { type: "setmodtype", value: TEXTURES_ID };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
@@ -3022,6 +3099,9 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(`${GAME_ID}-plugin`, 33, testPlugin, (files, workingDir) =>
     installPlugin(context.api, gameSpec, files, workingDir),
   );
+  if (hasTextureReplacer) {
+    context.registerInstaller(TEXTURES_ID, 35, testTextures, installTextures);
+  }
   if (!isXna) {
     //.assets/.resource/.ress are Unity container formats
     context.registerInstaller(ASSETS_ID, 37, testAssets, installAssets);

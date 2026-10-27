@@ -8,9 +8,9 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Root / Game Folder Mods | a `data_sts2_windows_x86_64` folder | the game folder itself (no subfolder) |
-| Mod | a file with one of these extensions: `.dll` or `.pck` | `mods` |
-| Fallback Installer | anything not matched above | - |
+| Root / Game Folder Mods | a `data_sts2_windows_x86_64` folder | the game folder |
+| Mod | a `.dll` or `.pck` file | `mods` |
+| Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
@@ -28,7 +28,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `data_sts2_windows_x86_64` or `mods` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -36,7 +36,7 @@ Installs to: the game folder itself (no subfolder)
 
 ## Mod
 
-Recognised when the archive contains a file with one of these extensions: `.dll` or `.pck`.
+Recognised when the archive contains a `.dll` or `.pck` file.
 
 Installs to: `mods`
 
@@ -50,6 +50,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: the game folder
 
 **Common mistakes:**
 

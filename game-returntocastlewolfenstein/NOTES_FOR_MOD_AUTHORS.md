@@ -8,30 +8,34 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Iortcw | a file or folder named `iowolfsp.x64.exe` | - |
-| Realrtcw | a file or folder named `realrtcw.x64.exe` | - |
-| Mainfolder | a file or folder named `Main` | the game folder itself (no subfolder) |
-| Main | a file with the `.pk3` extension | `Main` |
+| Iortcw | a `iowolfsp.x64.exe` file | the game folder |
+| Realrtcw | a `realrtcw.x64.exe` file | the game folder |
+| Mainfolder | a `Main` folder | the game folder |
+| Main | a `.pk3` file | `Main` |
 
 Paths are relative to the game's install folder.
 
 ## Iortcw
 
-Recognised when the archive contains a file or folder named `iowolfsp.x64.exe`.
+Recognised when the archive contains a `iowolfsp.x64.exe` file.
+
+Installs to: the game folder
 
 ## Realrtcw
 
-Recognised when the archive contains a file or folder named `realrtcw.x64.exe`.
+Recognised when the archive contains a `realrtcw.x64.exe` file.
+
+Installs to: the game folder
 
 ## Mainfolder
 
-Recognised when the archive contains a file or folder named `Main`.
+Recognised when the archive contains a `Main` folder.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 ## Main
 
-Recognised when the archive contains a file with the `.pk3` extension.
+Recognised when the archive contains a `.pk3` file.
 
 Installs to: `Main`
 

@@ -29,6 +29,8 @@ MyComboMod.zip
     - Mirror the real in-game folder structure below those two folders.
     - This installer is tested before the individual pak/script/DLL installers, so a matching archive is always handled as a combo.
 
+  Installs to: the game folder
+
   Common mistakes:
     - Including only one of "Content" or "Binaries" - the archive then falls through to a different installer.
     - Adding an extra wrapper folder between "Binaries" and "Win64".
@@ -72,6 +74,7 @@ MyPakMod.zip
   Requirements:
     - Any archive containing a ".pak" file reaches this installer (unless an earlier one claimed it).
     - Only the pak files are installed - surrounding folders are discarded.
+    - Companion files are installed alongside paks: ".ucas" or ".utoc".
     - If the archive holds more than one pak, Vortex asks the user which to install - useful for optional variants.
 
   Installs to: "XXX\Content\Paks\~mods"
@@ -82,7 +85,7 @@ MyPakMod.zip
 
 ========================================================================
 
-UE4SS Itself:
+UE4SS:
 
 This installer handles the UE4SS runtime package, not individual mods. Most authors never need it - it exists so users can install UE4SS through Vortex.
 
@@ -157,7 +160,7 @@ MyRootMod.zip
     - Recognised by a top-level folder matching any of: "Engine", "Content", "Binaries", "Mods", "Paks", "Movies" or "Splash".
     - The matched folder and everything below it is copied into the game folder, preserving structure.
 
-  Installs to: the game folder itself (no subfolder)
+  Installs to: the game folder
 
   Common mistakes:
     - Zipping the folder that CONTAINS the game folders instead of the game folders themselves adds an extra level and misplaces every file.

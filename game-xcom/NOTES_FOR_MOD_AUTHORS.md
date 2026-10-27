@@ -8,26 +8,26 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| TFC Installer (tool) | a `tfcinstaller.exe` file | the game folder itself (no subfolder) |
-| UPK Explorer (tool) | a `upk explorer.exe` file | the game folder itself (no subfolder) |
+| TFC Installer (tool) | a `tfcinstaller.exe` file | the game folder |
+| UPK Explorer (tool) | a `upk explorer.exe` file | the game folder |
 | TFC Mods | a `gameprofile.xml` file or a `.packagepatch` file | `TFCInstaller\Mods` |
-| Root / Game Folder Mods | a `Engine` folder | the game folder itself (no subfolder) |
-| Cooked Content Mods | a `Maps` folder or a `.upk` file | `XXX\CookedPC` |
-| Movie / Cutscene Replacements | a `.bik` file | `XXX\Movies` |
-| Binaries / Injector Mods | a `XXX.exe` file or a `.exe` file | `Binaries\Win32` |
+| Root / Game Folder Mods | a `Engine` folder | the game folder |
+| Cooked Content Mods | a `Maps` folder or a `.upk` file | - |
+| Movie / Cutscene Replacements | a `.bik` file | - |
+| Binaries / Injector Mods | a `.exe` file | `Binaries\Win32` |
 | Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
 
 ## TFC Installer (tool)
 
-This installer handles the TFC Installer itself, not mods for it. It exists so users can install the TFC Installer through Vortex, and mod authors normally never package this.
+This installer handles the TFC Installer, not mods for it. It exists so users can install the TFC Installer through Vortex, and mod authors normally never package this.
 
 **Requirements:**
 
 - Recognised by a file named `tfcinstaller.exe` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -35,13 +35,13 @@ Installs to: the game folder itself (no subfolder)
 
 ## UPK Explorer (tool)
 
-This installer handles UPK Explorer itself, not mods for it. It exists so users can install UPK Explorer through Vortex, and mod authors normally never package this.
+This installer handles UPK Explorer, not mods for it. It exists so users can install UPK Explorer through Vortex, and mod authors normally never package this.
 
 **Requirements:**
 
 - Recognised by a file named `upk explorer.exe` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -76,7 +76,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `Engine`, `Binaries`, `Config`, `CookedPC`, `DLC`, `Localization` or `Movies` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -91,8 +91,6 @@ Packaged content deployed into the game's cooked content folder.
 - Recognised by a folder named `Maps` or `Packages` in the archive.
 - Recognised by any file with the `.upk` extension.
 
-Installs to: `XXX\CookedPC`
-
 ## Movie / Cutscene Replacements
 
 Replacement video files, deployed into the game's movies folder.
@@ -100,8 +98,6 @@ Replacement video files, deployed into the game's movies folder.
 **Requirements:**
 
 - Recognised by any file with the `.bik` extension.
-
-Installs to: `XXX\Movies`
 
 **Common mistakes:**
 
@@ -113,7 +109,6 @@ DLL injectors and other files that belong next to the game executable.
 
 **Requirements:**
 
-- Recognised by any file named `XXX.exe`.
 - Recognised by any file with the `.exe`, `.dll`, `.asi` or `.addon64` extensions.
 
 Installs to: `Binaries\Win32`

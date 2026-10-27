@@ -7,10 +7,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 Forger Patch Manager (tool):
 
-This installer handles Forger Patch Manager itself, not mods for it. It exists so users can install Forger Patch Manager through Vortex, and mod authors normally never package this.
+This installer handles Forger Patch Manager, not mods for it. It exists so users can install Forger Patch Manager through Vortex, and mod authors normally never package this.
 
   Requirements:
     - Recognised by a file named "forger.exe" in the archive.
+
+  Installs to: the game folder
 
   Common mistakes:
     - If you bundle Forger Patch Manager inside your mod archive, Vortex treats the whole download as Forger Patch Manager rather than as your mod. Ship the mod alone and list Forger Patch Manager as a requirement.
@@ -38,6 +40,8 @@ Mods laid out as one or more of the game's DLC folders, copied into the game fol
   Requirements:
     - Recognised by a folder named "dlc_35", "dlc_42", "dlc_211", "dlc_222", "dlc_223", "dlc_225", "dlc_231", "dlc_232", "dlc_234", "dlc_242", "dlc_243", "dlc_247" or "dlc_248" in the archive.
 
+  Installs to: the game folder
+
   Common mistakes:
     - Zip the DLC folders themselves, not the folder that contains them - an extra level misplaces every file.
 
@@ -49,6 +53,8 @@ Replacement ".forge" archives, deployed into the game's data folder.
 
   Requirements:
     - Recognised by any file with the ".forge" extension.
+
+  Installs to: the game folder
 
   Common mistakes:
     - Forge files must keep their original names to replace the right archive.
@@ -69,7 +75,7 @@ MyRootMod.zip
   Requirements:
     - Recognised by a folder named "videos" in the archive.
 
-  Installs to: the game folder itself (no subfolder)
+  Installs to: the game folder
 
   Common mistakes:
     - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
@@ -85,6 +91,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
   Requirements:
     - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
     - Vortex shows the user a notification when a mod installs through the fallback.
+
+  Installs to: the game folder
 
   Common mistakes:
     - If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.

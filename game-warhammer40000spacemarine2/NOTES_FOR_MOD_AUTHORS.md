@@ -8,24 +8,24 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Integrationstudio | a file or folder named `IntegrationStudio.exe` | `client_pc\root` |
-| Pak | a file with one of these extensions: `.pak` | `client_pc\root\mods` |
-| Root / Game Folder Mods | a `client_pc` folder | the game folder itself (no subfolder) |
-| Local | a file or folder named `local` | `client_pc\root` |
-| Localsub | a file or folder named one of: `ssl`, `video`, `textures`, `presets`, `texts` or `ui` | `client_pc\root\local` |
+| Integrationstudio | a `IntegrationStudio.exe` file | `client_pc\root` |
+| Pak | a `.pak` file | `client_pc\root\mods` |
+| Root / Game Folder Mods | a `client_pc` folder | the game folder |
+| Local | a `local` folder | `client_pc\root` |
+| Localsub | a `ssl`, `video`, `textures`, `presets`, `texts` or `ui` folder | `client_pc\root\local` |
 | Binaries | - | `client_pc\root\bin\pc` |
 
 Paths are relative to the game's install folder.
 
 ## Integrationstudio
 
-Recognised when the archive contains a file or folder named `IntegrationStudio.exe`.
+Recognised when the archive contains a `IntegrationStudio.exe` file.
 
 Installs to: `client_pc\root`
 
 ## Pak
 
-Recognised when the archive contains a file with one of these extensions: `.pak`.
+Recognised when the archive contains a `.pak` file.
 
 Installs to: `client_pc\root\mods`
 
@@ -43,7 +43,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `client_pc` or `server_pc` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -51,13 +51,13 @@ Installs to: the game folder itself (no subfolder)
 
 ## Local
 
-Recognised when the archive contains a file or folder named `local`.
+Recognised when the archive contains a `local` folder.
 
 Installs to: `client_pc\root`
 
 ## Localsub
 
-Recognised when the archive contains a file or folder named one of: `ssl`, `video`, `textures`, `presets`, `texts` or `ui`.
+Recognised when the archive contains a `ssl`, `video`, `textures`, `presets`, `texts` or `ui` folder.
 
 Installs to: `client_pc\root\local`
 

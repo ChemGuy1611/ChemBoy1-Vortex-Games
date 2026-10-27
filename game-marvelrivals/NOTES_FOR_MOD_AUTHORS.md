@@ -8,9 +8,9 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Root / Game Folder Mods | a top-level folder such as `Marvel` | the game folder itself (no subfolder) |
+| Root / Game Folder Mods | a top-level folder such as `Marvel` | the game folder |
 | Pak Mods | a `.pak` file | `MarvelGame\Marvel\Content\Paks\~mods` |
-| Signature Bypass | `dsound.dll` and `marvelrivalsutocsignaturebypass.asi` | `MarvelGame\Marvel\Binaries\Win64` |
+| Signature Bypass | a `dsound.dll` file and a `marvelrivalsutocsignaturebypass.asi` file | `MarvelGame\Marvel\Binaries\Win64` |
 
 Paths are relative to the game's install folder.
 
@@ -29,7 +29,7 @@ MyRootMod.zip
 - Recognised by a top-level folder matching any of: `Marvel`.
 - The matched folder and everything below it is copied into the game folder, preserving structure.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -48,6 +48,7 @@ MyPakMod.zip
 
 - Any archive containing a `.pak` file reaches this installer (unless an earlier one claimed it).
 - Only the pak files are installed - surrounding folders are discarded.
+- Companion files are installed alongside paks: `.ucas` or `.utoc`.
 - If the archive holds more than one pak, Vortex asks the user which to install - useful for optional variants.
 
 Installs to: `MarvelGame\Marvel\Content\Paks\~mods`

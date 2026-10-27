@@ -54,7 +54,7 @@ Mod types define where each category of mod gets deployed:
 | MelonLoader Mods | `mywintercar-melonloader-mods` | high | `{gamePath}/Mods` |
 | MelonLoader Plugins | `mywintercar-melonloader-plugins` | high | `{gamePath}/Plugins` |
 | MelonLoader Config | `mywintercar-melonloader-config` | high | `{gamePath}/UserData` |
-| Assembly DLL Mod | `mywintercar-assemblydll` | high | `{gamePath}/.` |
+| Assembly DLL Mod | `mywintercar-assemblydll` | high | `{gamePath}/mywintercar_Data/Managed` |
 | BepInExConfigManager | `mywintercar-bepcfgman` | high | `{gamePath}/BepInEx` |
 | MelonPreferencesManager | `mywintercar-melonprefman` | high | `{gamePath}/Mods` |
 | Assets/Resources File | `mywintercar-assets` | high | `{gamePath}/mywintercar_Data` |

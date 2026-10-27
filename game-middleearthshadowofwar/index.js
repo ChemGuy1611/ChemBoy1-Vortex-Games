@@ -2,8 +2,8 @@
 Name: Middle-earth: Shadow of War Vortex Extension
 Structure: Mod Loaders + Mods folder w/ LO support
 Author: ChemBoy1
-Version: 2.5.7
-Date: 2026-10-16
+Version: 2.5.8
+Date: 2026-10-25
 ///////////////////////////////////////////*/
 
 //Import libraries

@@ -8,25 +8,29 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Pric | a file or folder named `preyinterfacecustomizergui.exe` | - |
-| Chairloader | a file or folder named `chairmanager.exe` | - |
-| Chairmodzip | a file or folder named `modinfo.xml` | - |
-| Root / Game Folder Mods | a `GameSDK` folder | the game folder itself (no subfolder) |
-| Binaries | a file with one of these extensions: `.exe`, `.dll`, `.asi` or `.addon64` | - |
+| Pric | a `preyinterfacecustomizergui.exe` file | - |
+| Chairloader | a `chairmanager.exe` file | the game folder |
+| Chairmodzip | a `modinfo.xml` file | `Mods` |
+| Root / Game Folder Mods | a `GameSDK` folder | the game folder |
+| Binaries | a `.exe`, `.dll`, `.asi` or `.addon64` file | - |
 
 Paths are relative to the game's install folder.
 
 ## Pric
 
-Recognised when the archive contains a file or folder named `preyinterfacecustomizergui.exe`.
+Recognised when the archive contains a `preyinterfacecustomizergui.exe` file.
 
 ## Chairloader
 
-Recognised when the archive contains a file or folder named `chairmanager.exe`.
+Recognised when the archive contains a `chairmanager.exe` file.
+
+Installs to: the game folder
 
 ## Chairmodzip
 
-Recognised when the archive contains a file or folder named `modinfo.xml`.
+Recognised when the archive contains a `modinfo.xml` file.
+
+Installs to: `Mods`
 
 ## Root / Game Folder Mods
 
@@ -42,7 +46,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `GameSDK`, `Whiplash`, `Binaries`, `Engine` or `Localization` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -50,7 +54,7 @@ Installs to: the game folder itself (no subfolder)
 
 ## Binaries
 
-Recognised when the archive contains a file with one of these extensions: `.exe`, `.dll`, `.asi` or `.addon64`.
+Recognised when the archive contains a `.exe`, `.dll`, `.asi` or `.addon64` file.
 
 ## Rules That Apply To Every Mod Type
 

@@ -2,8 +2,8 @@
 Name: Deus Ex: Mankind Divided Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-10-16
+Version: 1.0.2
+Date: 2026-10-25
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -600,7 +600,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(ROOT_ID, 25, testRoot, installRoot);
   context.registerInstaller(RUNTIME_ID, 27, testRuntime, installRuntime);
   context.registerInstaller(DLCRUNTIME_ID, 29, testDlcRuntime, installDlcRuntime);
-  context.registerInstaller(BINARIES_ID, 29, testBinaries, installBinaries);
+  context.registerInstaller(BINARIES_ID, 30, testBinaries, installBinaries);
   //context.registerInstaller(CONFIG_ID, 43, testConfig, installConfig);
   //context.registerInstaller(SAVE_ID, 45, testSave, installSave);
 

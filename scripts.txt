@@ -21,6 +21,8 @@ release_extension.py
 release_scope.py
 sync_mod_pages.py
 test_sync_mod_pages.py
+carry_page_statements.py
+test_carry_page_statements.py
 test_release_extension.py
 test_bump_version.py
 test_discovery_ids.py

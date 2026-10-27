@@ -8,7 +8,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Root / Game Folder Mods | a `DATAS` folder | the game folder itself (no subfolder) |
+| Root / Game Folder Mods | a `DATAS` folder | the game folder |
 
 Paths are relative to the game's install folder.
 
@@ -26,7 +26,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `DATAS`, `FONT`, `INPUT`, `LEVELS`, `RTC`, `Shaders`, `SOUNDBANKS`, `TRTEXT`, `UPDATE` or `VIDEOS` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 

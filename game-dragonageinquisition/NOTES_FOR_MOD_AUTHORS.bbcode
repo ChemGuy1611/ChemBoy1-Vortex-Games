@@ -7,16 +7,20 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 Daimodmanager:
 
-Recognised when the archive contains a file or folder named "daimodmanager.exe".
+Recognised when the archive contains a "daimodmanager.exe" file.
+
+  Installs to: the game folder
 
 ========================================================================
 
 Frosty Mod Manager (tool):
 
-This installer handles Frosty Mod Manager itself, not mods for it. It exists so users can install Frosty Mod Manager through Vortex, and mod authors normally never package this.
+This installer handles Frosty Mod Manager, not mods for it. It exists so users can install Frosty Mod Manager through Vortex, and mod authors normally never package this.
 
   Requirements:
     - Recognised by a file named "frostymodmanager.exe" in the archive.
+
+  Installs to: the game folder
 
   Common mistakes:
     - If you bundle Frosty Mod Manager inside your mod archive, Vortex treats the whole download as Frosty Mod Manager rather than as your mod. Ship the mod alone and list Frosty Mod Manager as a requirement.
@@ -30,6 +34,8 @@ Frostbite mods in Frosty Mod Manager format. Vortex stages them for Frosty rathe
   Requirements:
     - Recognised by any file with the ".fbmod" or ".fbpack" extensions.
 
+  Installs to: "FrostyModManager\Mods\dragonageinquisition"
+
   Common mistakes:
     - These mods still have to be applied through Frosty Mod Manager - installing in Vortex alone does not patch the game.
 
@@ -37,7 +43,7 @@ Frostbite mods in Frosty Mod Manager format. Vortex stages them for Frosty rathe
 
 Frostyplugin:
 
-Recognised when the archive contains a file with one of these extensions: ".dll".
+Recognised when the archive contains a ".dll" file.
 
   Installs to: "FrostyModManager\Plugins"
 
@@ -45,7 +51,7 @@ Recognised when the archive contains a file with one of these extensions: ".dll"
 
 Daimod:
 
-Recognised when the archive contains a file with the ".daimod" extension.
+Recognised when the archive contains a ".daimod" file.
 
   Installs to: "DAIMod"
 
@@ -60,6 +66,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
   Requirements:
     - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
     - Vortex shows the user a notification when a mod installs through the fallback.
+
+  Installs to: the game folder
 
   Common mistakes:
     - If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.

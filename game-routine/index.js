@@ -2,8 +2,8 @@
 Name: ROUTINE Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-16
+Version: 1.0.3
+Date: 2026-10-25
 Notes:
 - The game is Unreal Engine 5.5.4. Per Nexus mod authors, UE4SS needs experimental-latest, MajorVersion/MinorVersion 5/5 in UE4SS-settings.ini (written on deploy by writeEngineVersion) and a hand-made ue4ss\UE4SS_Signatures\FText_Constructor.lua; the Download UE4SS button installs only the stock zip.
 ////////////////////////////////////////////////*/

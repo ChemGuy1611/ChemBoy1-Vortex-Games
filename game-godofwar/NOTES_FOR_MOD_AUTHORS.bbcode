@@ -7,19 +7,23 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 Scriptloader:
 
-Handled by the "testLoader" installer. Inspect the extension source for the exact archive layout it expects.
+Recognised when the archive contains a "version.dll" file and a "loader_config.toml" file.
+
+  Installs to: the game folder
 
 ========================================================================
 
 Data:
 
-Recognised when the archive contains a file or folder named "exec".
+Recognised when the archive contains a "exec" folder.
+
+  Installs to: the game folder
 
 ========================================================================
 
 Patchfolder:
 
-Recognised when the archive contains a file or folder named "patch".
+Recognised when the archive contains a "patch" folder.
 
   Installs to: "exec"
 
@@ -27,7 +31,7 @@ Recognised when the archive contains a file or folder named "patch".
 
 Execsub:
 
-Recognised when the archive contains a file or folder named one of: "ActivityFeed", "cinematics", "dc", "languages", "sound" or "wad".
+Recognised when the archive contains a "ActivityFeed", "cinematics", "dc", "languages", "sound" or "wad" folder.
 
   Installs to: "exec"
 
@@ -35,7 +39,7 @@ Recognised when the archive contains a file or folder named one of: "ActivityFee
 
 Pack:
 
-Recognised when the archive contains a file with one of these extensions: ".texpack" or ".lodpack".
+Recognised when the archive contains a ".texpack" or ".lodpack" file.
 
   Installs to: "exec\patch\pc_le"
 
@@ -43,7 +47,7 @@ Recognised when the archive contains a file with one of these extensions: ".texp
 
 Luamod:
 
-Recognised when the archive contains a file or folder named "lua" and a file with one of these extensions: ".lua".
+Recognised when the archive contains a "lua" folder and a ".lua" file.
 
   Installs to: "mods"
 
@@ -56,7 +60,7 @@ Save files, deployed to the game's save folder.
   Requirements:
     - Recognised by any file with the ".sav" extension.
 
-  Installs to: "USER_HOME\Saved Games\God of War\USERID_FOLDER"
+  Installs to: "%USERPROFILE%\Saved Games\God of War\<User ID>"
 
   Common mistakes:
     - Including an example save alongside a normal mod makes the archive install as a save.

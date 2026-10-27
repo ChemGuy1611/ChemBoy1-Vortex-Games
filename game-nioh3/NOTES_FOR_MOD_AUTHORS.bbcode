@@ -7,13 +7,15 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 Dllloader:
 
-Recognised when the archive contains a file or folder named "dinput8.dll".
+Recognised when the archive contains a "dinput8.dll" file.
+
+  Installs to: the game folder
 
 ========================================================================
 
 Rdbexplorer:
 
-Recognised when the archive contains a file or folder named "RDBExplorer.exe".
+Recognised when the archive contains a "RDBExplorer.exe" file.
 
   Installs to: "package"
 
@@ -21,7 +23,7 @@ Recognised when the archive contains a file or folder named "RDBExplorer.exe".
 
 Yumia:
 
-Recognised when the archive contains a file or folder named "yumia_mod_insert_into_rdb.exe".
+Recognised when the archive contains a "yumia_mod_insert_into_rdb.exe" file.
 
   Installs to: "package"
 
@@ -29,7 +31,7 @@ Recognised when the archive contains a file or folder named "yumia_mod_insert_in
 
 Looseloader:
 
-Recognised when the archive contains a file or folder named "LooseFileLoader.dll".
+Recognised when the archive contains a "LooseFileLoader.dll" file.
 
   Installs to: "plugins"
 
@@ -37,15 +39,15 @@ Recognised when the archive contains a file or folder named "LooseFileLoader.dll
 
 Modmanager:
 
-Recognised when the archive contains a file or folder named "Nioh3ModManager.exe".
+Recognised when the archive contains a "Nioh3ModManager.exe" file.
 
-  Installs to: the game folder itself (no subfolder)
+  Installs to: the game folder
 
 ========================================================================
 
 Mod:
 
-Recognised when the archive contains a file with one of these extensions: ".g1t", ".g1m" or ".g1ts".
+Recognised when the archive contains a ".g1t", ".g1m" or ".g1ts" file.
 
   Installs to: "ModArchives"
 
@@ -53,7 +55,7 @@ Recognised when the archive contains a file with one of these extensions: ".g1t"
 
 Loadermod:
 
-Recognised when the archive contains a file with one of these extensions: ".dll" or ".asi".
+Recognised when the archive contains a ".dll" or ".asi" file.
 
   Installs to: "plugins"
 
@@ -61,9 +63,9 @@ Recognised when the archive contains a file with one of these extensions: ".dll"
 
 Fdatayumia:
 
-Recognised when the archive contains a file or folder named "package" and a file with one of these extensions: ".fdata" or ".yumiamod.json".
+Recognised when the archive contains a "package" folder and a ".fdata" or ".yumiamod.json" file.
 
-  Installs to: the game folder itself (no subfolder)
+  Installs to: the game folder
 
 ========================================================================
 
@@ -76,6 +78,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
   Requirements:
     - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
     - Vortex shows the user a notification when a mod installs through the fallback.
+
+  Installs to: the game folder
 
   Common mistakes:
     - If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.

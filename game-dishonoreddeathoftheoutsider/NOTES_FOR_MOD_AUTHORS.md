@@ -8,31 +8,31 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Voidinstaller | a file or folder named `voidinstaller.exe` | the game folder itself (no subfolder) |
-| Voidexplorer | a file or folder named `voidexplorer.exe` | the game folder itself (no subfolder) |
-| Voidmod | a file or folder named `modinfo.xml` and a file with one of these extensions: `.voidindex` or `.voidresources` | `Void Installer\Mods` |
-| Root / Game Folder Mods | a `base` folder | the game folder itself (no subfolder) |
-| Video | a file with one of these extensions: `.bk2` | `base\video` |
+| Voidinstaller | a `voidinstaller.exe` file | the game folder |
+| Voidexplorer | a `voidexplorer.exe` file | the game folder |
+| Voidmod | a `modinfo.xml` file and a `.voidindex` or `.voidresources` file | `Void Installer\Mods` |
+| Root / Game Folder Mods | a `base` folder | the game folder |
+| Video | a `.bk2` file | `base\video` |
 | Save Game Files | a `profile.bin` file or a `.sav` file | - |
-| Config File Mods | a `dishonored_doconfig.cfg` file | `USERHOME\Saved Games\Arkane Studios\Dishonored_DO\base` |
+| Config File Mods | a `dishonored_doconfig.cfg` file | `%USERPROFILE%\Saved Games\Arkane Studios\Dishonored_DO\base` |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
 ## Voidinstaller
 
-Recognised when the archive contains a file or folder named `voidinstaller.exe`.
+Recognised when the archive contains a `voidinstaller.exe` file.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 ## Voidexplorer
 
-Recognised when the archive contains a file or folder named `voidexplorer.exe`.
+Recognised when the archive contains a `voidexplorer.exe` file.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 ## Voidmod
 
-Recognised when the archive contains a file or folder named `modinfo.xml` and a file with one of these extensions: `.voidindex` or `.voidresources`.
+Recognised when the archive contains a `modinfo.xml` file and a `.voidindex` or `.voidresources` file.
 
 Installs to: `Void Installer\Mods`
 
@@ -50,7 +50,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `base` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -58,7 +58,7 @@ Installs to: the game folder itself (no subfolder)
 
 ## Video
 
-Recognised when the archive contains a file with one of these extensions: `.bk2`.
+Recognised when the archive contains a `.bk2` file.
 
 Installs to: `base\video`
 
@@ -83,7 +83,7 @@ Configuration tweaks, deployed to the game's config location.
 
 - Recognised by any file named `dishonored_doconfig.cfg`.
 
-Installs to: `USERHOME\Saved Games\Arkane Studios\Dishonored_DO\base`
+Installs to: `%USERPROFILE%\Saved Games\Arkane Studios\Dishonored_DO\base`
 
 **Common mistakes:**
 

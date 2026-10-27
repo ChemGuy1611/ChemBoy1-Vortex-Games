@@ -48,9 +48,9 @@ describe("template-cobraengineACSE: registration with default toggles", () => {
     ]);
   });
 
-  // The ACSE mod installer sits at 28 (between root and localised) and the save installer
-  // shares priority 49 with the fallback. Both are reviewed oddities in the contract allowlist.
-  it("registers the installers, with the save installer tied to the fallback at 49", () => {
+  // The ACSE mod installer sits at 28 (between root and localised) and the save installer at
+  // 48, one step ahead of the fallback at 49.
+  it("registers the installers, with the save installer just ahead of the fallback", () => {
     assert.deepEqual(summary(ext.installers), [
       ["XXX-acse", 25],
       ["XXX-root", 27],
@@ -58,7 +58,7 @@ describe("template-cobraengineACSE: registration with default toggles", () => {
       ["XXX-localised", 29],
       ["XXX-movies", 31],
       ["XXX-ovldata", 33],
-      ["XXX-save", 49],
+      ["XXX-save", 48],
       ["XXX-fallback", 49],
     ]);
   });
@@ -288,7 +288,7 @@ describe("template-cobraengineACSE: toggles change what is registered", () => {
   it("fallbackInstaller off drops the fallback", async () => {
     const ext = await loadExtension(DIR, { transform: setConst("fallbackInstaller", "false") });
     assert.equal(ext.installers.length, 7);
-    assert.deepEqual(summary(ext.installers).at(-1), ["XXX-save", 49]);
+    assert.deepEqual(summary(ext.installers).at(-1), ["XXX-save", 48]);
   });
 
   it("allowSymlinks is on by default and off when toggled, as passed to the game details", async () => {

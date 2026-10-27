@@ -1,34 +1,93 @@
 This extension adds Control modding support to Vortex Mod Manager.
+[summary]Plugin and Loose File Loaders automatically installed.[/summary]
+
+Supports Steam, Epic, GOG, and Xbox versions.
+[b][size=3]The extension will automatically download and install the [url=https://www.nexusmods.com/control/mods/16]Plugin Loader[/url] and [url=https://www.nexusmods.com/control/mods/11]Loose Files Loader[/url].
+[size=3][b][color=#ea9999]NOTE: Some legacy mods for Control may not yet work with the new March 2025 Ultimate Edition update.[/color][/b][/size][/size][/b]
+
+[color=#d5a6bd]NOTE2: Most plugins and the Loose Files Loader do not appear to work on the Xbox version. [/color]
 
 [b]✅ Supported Versions:[/b]
 [list]
 [*]Steam[/*]
 [*]GOG[/*]
 [*]Epic[/*]
-[*]Xbox (Game Pass)[/*]
+[*]Xbox[/*]
 [*]Other versions may need to select the installation location manually.[/*]
 [/list]
 [b]🛠️ Mod Installation Notes:[/b]
 [list]
-[*]Installs Mod Folder mod with a file or folder named one of: "data_packfiles", "data", "data_pc" or "plugins".[/*]
-[*]Installs Mod Files (data_packfiles) mod with a file with one of these extensions: ".bin", ".packmeta" or ".rmdp" to the "data_packfiles" folder.[/*]
-[*]Installs Loose File Loader itself, recognised by a file or folder named "iphlpapi.dll".[/*]
-[*]Installs Plugin Loader itself, recognised by a file or folder named "xinput1_4.dll".[/*]
+[*]Mod Folder mods with a "data_packfiles", "data", "data_pc" or "plugins" folder install to the game folder.[/*]
+[*]Mod Files (data_packfiles) mods with a ".bin", ".packmeta" or ".rmdp" file install to the "data_packfiles" folder.[/*]
+[*]Loose File Loader installs to the game folder, recognised by an "iphlpapi.dll" file.[/*]
+[*]Plugin Loader installs to the game folder, recognised by a "xinput1_4.dll" file.[/*]
 [*]Archives with a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to Vortex's built-in FOMOD installer instead.[/*]
 [/list]
 [b]📋 Usage Notes:[/b]
 [list]
 [*]You can open several useful files/folders/URLs using the buttons within the folder icon on the Mods toolbar.[/*]
+[*]Includes installers to the game's data folder (data_packfiles) and files within (.bin, .rmdp, .packmeta).[/*]
+[*]Will install mods for Loose File Loader and Plugin loader ("data_pc" and "plugins" folders). [color=#ea9999][b]NOTE: Some of these mods don't work with the new March 2025 Ultimate Edition update.[/b][/color][/*]
+[*][size=2]The Save Editor is available through your browser using the included button.[/size][/*]
+[/list]
+
+[b]📝 Notes for Mod Authors:[/b]
+[spoiler]
+Packaging rules for Control mods, so Vortex installs them to the right place.
+
+Vortex decides what a mod is by looking at the files and folders inside the archive. It tries each installer in order and the first one that matches wins, so archive layout is what determines where your mod ends up.
+
+========================================================================
+
+Modfolder:
+
+Recognised when the archive contains a "data_packfiles", "data", "data_pc" or "plugins" folder.
+
+  Installs to: the game folder
+
+========================================================================
+
+Modpack:
+
+Recognised when the archive contains a ".bin", ".packmeta" or ".rmdp" file.
+
+  Installs to: "data_packfiles"
+
+========================================================================
+
+Loosefileloader:
+
+Recognised when the archive contains a "iphlpapi.dll" file.
+
+  Installs to: the game folder
+
+========================================================================
+
+Pluginloader:
+
+Recognised when the archive contains a "xinput1_4.dll" file.
+
+  Installs to: the game folder
+
+========================================================================
+
+Rules That Apply To Every Mod Type:
+
+    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
+    - Folder and file name matching is case-insensitive.
+    - Extra wrapper folders around a recognised folder are generally fine.
+[/spoiler]
+
+[b]🤝 Credits:[/b]
+[list]
+[*]Big thanks to [url=https://next.nexusmods.com/profile/registrator2000]registrator2000[/url] for his original Control extension, the Plugin and Loose Files Loaders, and for graciously allowing me to use this page for the new extension.[/*]
 [/list]
 
 [b]❤️ Support the Mod Author: [/b]
 If you would like to support my work, you can do so below. Your support is greatly appreciated!
 
-
 [url=https://www.paypal.com/donate/?hosted_button_id=ZFE99JKP43D2G][img]https://live.staticflickr.com/65535/54395661414_10e6ef111d_m.jpg[/img][/url]
 
-
 [url=https://ko-fi.com/chemboy1nexusmods/][img]https://live.staticflickr.com/65535/54380730333_357df43249_n.jpg[/img][/url]
-
 
 [url=https://buymeacoffee.com/chemboy1/][img]https://live.staticflickr.com/65535/54379586002_8dcc6370e5_m.jpg[/img][/url]

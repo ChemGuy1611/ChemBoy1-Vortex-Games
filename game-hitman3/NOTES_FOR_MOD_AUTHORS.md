@@ -8,21 +8,21 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Loader | a file or folder named `Deploy.exe` | `Simple Mod Framework` |
-| Mod | a file or folder named one of: `manifest.json` and a file with one of these extensions: `.rpkg` | `Vortex_Mods` |
-| Fallback Installer | anything not matched above | - |
+| Loader | a `Deploy.exe` file | `Simple Mod Framework` |
+| Mod | a `manifest.json` file and a `.rpkg` file | `Vortex_Mods` |
+| Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
 ## Loader
 
-Recognised when the archive contains a file or folder named `Deploy.exe`.
+Recognised when the archive contains a `Deploy.exe` file.
 
 Installs to: `Simple Mod Framework`
 
 ## Mod
 
-Recognised when the archive contains a file or folder named one of: `manifest.json` and a file with one of these extensions: `.rpkg`.
+Recognised when the archive contains a `manifest.json` file and a `.rpkg` file.
 
 Installs to: `Vortex_Mods`
 
@@ -36,6 +36,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: the game folder
 
 **Common mistakes:**
 

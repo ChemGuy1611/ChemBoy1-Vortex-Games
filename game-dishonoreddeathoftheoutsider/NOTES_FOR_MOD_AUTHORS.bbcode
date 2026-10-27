@@ -7,23 +7,23 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 Voidinstaller:
 
-Recognised when the archive contains a file or folder named "voidinstaller.exe".
+Recognised when the archive contains a "voidinstaller.exe" file.
 
-  Installs to: the game folder itself (no subfolder)
+  Installs to: the game folder
 
 ========================================================================
 
 Voidexplorer:
 
-Recognised when the archive contains a file or folder named "voidexplorer.exe".
+Recognised when the archive contains a "voidexplorer.exe" file.
 
-  Installs to: the game folder itself (no subfolder)
+  Installs to: the game folder
 
 ========================================================================
 
 Voidmod:
 
-Recognised when the archive contains a file or folder named "modinfo.xml" and a file with one of these extensions: ".voidindex" or ".voidresources".
+Recognised when the archive contains a "modinfo.xml" file and a ".voidindex" or ".voidresources" file.
 
   Installs to: "Void Installer\Mods"
 
@@ -42,7 +42,7 @@ MyRootMod.zip
   Requirements:
     - Recognised by a folder named "base" in the archive.
 
-  Installs to: the game folder itself (no subfolder)
+  Installs to: the game folder
 
   Common mistakes:
     - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
@@ -51,7 +51,7 @@ MyRootMod.zip
 
 Video:
 
-Recognised when the archive contains a file with one of these extensions: ".bk2".
+Recognised when the archive contains a ".bk2" file.
 
   Installs to: "base\video"
 
@@ -77,7 +77,7 @@ Configuration tweaks, deployed to the game's config location.
   Requirements:
     - Recognised by any file named "dishonored_doconfig.cfg".
 
-  Installs to: "USERHOME\Saved Games\Arkane Studios\Dishonored_DO\base"
+  Installs to: "%USERPROFILE%\Saved Games\Arkane Studios\Dishonored_DO\base"
 
   Common mistakes:
     - Shipping a config file with one of these names inside an unrelated mod makes the whole archive install as a config mod.

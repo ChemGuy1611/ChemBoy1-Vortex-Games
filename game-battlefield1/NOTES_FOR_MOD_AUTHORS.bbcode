@@ -7,10 +7,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 Frosty Mod Manager (tool):
 
-This installer handles Frosty Mod Manager itself, not mods for it. It exists so users can install Frosty Mod Manager through Vortex, and mod authors normally never package this.
+This installer handles Frosty Mod Manager, not mods for it. It exists so users can install Frosty Mod Manager through Vortex, and mod authors normally never package this.
 
   Requirements:
     - Recognised by a file named "frostymodmanager.exe" in the archive.
+
+  Installs to: the game folder
 
   Common mistakes:
     - If you bundle Frosty Mod Manager inside your mod archive, Vortex treats the whole download as Frosty Mod Manager rather than as your mod. Ship the mod alone and list Frosty Mod Manager as a requirement.
@@ -19,7 +21,9 @@ This installer handles Frosty Mod Manager itself, not mods for it. It exists so 
 
 Masseffectandromeda Fbmod:
 
-Recognised when the archive contains a file with the ".fbmod" extension.
+Recognised when the archive contains a ".fbmod" file.
+
+  Installs to: "FrostyModManager\Mods\bf1"
 
 ========================================================================
 

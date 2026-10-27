@@ -2,8 +2,8 @@
 Name: STAR WARS: Galactic Racer Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.4
-Date: 2026-10-16
+Version: 1.0.5
+Date: 2026-10-25
 Notes:
 -
 ////////////////////////////////////////////////*/

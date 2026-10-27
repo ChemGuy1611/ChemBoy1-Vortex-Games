@@ -54,7 +54,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | `likeadragonpirateyakuzainhawaii-modmanager` | 25 |
 | `likeadragonpirateyakuzainhawaii-mod` | 27 |
 | `likeadragonpirateyakuzainhawaii-data` | 29 |
-| `likeadragonpirateyakuzainhawaii-root` | 27 |
+| `likeadragonpirateyakuzainhawaii-root` | 28 |
 
 ## Registered Tools
 

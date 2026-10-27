@@ -2,8 +2,8 @@
 Name: Shadow of the Tomb Raider Vortex Extension
 Structure: 3rd-Party Mod Installer
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-10-16
+Version: 1.0.2
+Date: 2026-10-25
 ////////////////////////////////////////////*/
 //junk comment to change file size for reupload since Nexus Mods site doesn't like to work
 //Import libraries

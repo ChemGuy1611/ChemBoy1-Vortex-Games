@@ -36,7 +36,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | Godot Mod | `XXX-mod` | high | `{gamePath}/mods-unpacked` |
-| XXX | `XXX-XXX` | high | `{gamePath}/EXTRA_PATH` |
+| XXX | `XXX-XXX` | high | `{gamePath}/XXX` |
 | Godot Mod Loader | `XXX-godotmodloader` | low | `{gamePath}` |
 
 ## Mod Installers

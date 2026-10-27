@@ -9,19 +9,19 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | ACSE (mod loader) | a `ACSE` file | `Win64\ovldata` |
-| Root / Game Folder Mods | a `Win64` folder | the game folder itself (no subfolder) |
+| Root / Game Folder Mods | a `Win64` folder | the game folder |
 | ACSE Mods | a `Main.ovl` file | `Win64\ovldata` |
-| Localised | a file or folder named `localised` | `Win64\ovldata\ACSE` |
+| Localised | a `localised` folder | `Win64\ovldata\ACSE` |
 | Movie / Cutscene Replacements | a `.webm` file | `Movies` |
 | OVL Data Mods | a `ovldata` file | `Win64` |
-| Save Game Files | a `.blpr2` file | `USER_HOME\Saved Games\Frontier Developments\Planet Coaster 2\USERID_FOLDER\Saves` |
+| Save Game Files | a `.blpr2` file | `%USERPROFILE%\Saved Games\Frontier Developments\Planet Coaster 2\<User ID>\Saves` |
 | Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
 ## ACSE (mod loader)
 
-This installer handles ACSE itself, not mods for it. It exists so users can install ACSE through Vortex, and mod authors normally never package this.
+This installer handles ACSE, not mods for it. It exists so users can install ACSE through Vortex, and mod authors normally never package this.
 
 **Requirements:**
 
@@ -47,7 +47,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `Win64`, `Blueprints`, `TerrainSkirts`, `ProvidedCustomTextures`, `Parks` or `Movies` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -69,7 +69,7 @@ Installs to: `Win64\ovldata`
 
 ## Localised
 
-Recognised when the archive contains a file or folder named `localised`.
+Recognised when the archive contains a `localised` folder.
 
 Installs to: `Win64\ovldata\ACSE`
 
@@ -105,7 +105,7 @@ Save files, deployed to the game's save folder.
 
 - Recognised by any file with the `.blpr2` or `.prk2` extensions.
 
-Installs to: `USER_HOME\Saved Games\Frontier Developments\Planet Coaster 2\USERID_FOLDER\Saves`
+Installs to: `%USERPROFILE%\Saved Games\Frontier Developments\Planet Coaster 2\<User ID>\Saves`
 
 **Common mistakes:**
 

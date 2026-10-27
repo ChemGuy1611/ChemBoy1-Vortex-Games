@@ -7,10 +7,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 AnvilToolkit (tool):
 
-This installer handles AnvilToolkit itself, not mods for it. It exists so users can install AnvilToolkit through Vortex, and mod authors normally never package this.
+This installer handles AnvilToolkit, not mods for it. It exists so users can install AnvilToolkit through Vortex, and mod authors normally never package this.
 
   Requirements:
     - Recognised by a file named "anviltoolkit.exe" in the archive.
+
+  Installs to: the game folder
 
   Common mistakes:
     - If you bundle AnvilToolkit inside your mod archive, Vortex treats the whole download as AnvilToolkit rather than as your mod. Ship the mod alone and list AnvilToolkit as a requirement.
@@ -53,6 +55,8 @@ Mods laid out as one or more of the game's DLC folders, copied into the game fol
   Requirements:
     - Recognised by a folder named "dlc_10" in the archive.
 
+  Installs to: the game folder
+
   Common mistakes:
     - Zip the DLC folders themselves, not the folder that contains them - an extra level misplaces every file.
 
@@ -64,6 +68,8 @@ Unpacked forge content for AnvilToolkit to repack. The mod is not live until the
 
   Requirements:
     - Recognised by a folder named "Extracted" in the archive.
+
+  Installs to: the game folder
 
   Common mistakes:
     - Content unpacked with an AnvilToolkit older than 1.2.8 cannot be repacked by 1.2.8 or newer, which affects the pre-Unity titles. Repack on the old version first, delete the extracted folder, then unpack again on the new one.
@@ -77,6 +83,8 @@ A whole unpacked ".forge" archive, packaged as a folder named after the archive 
   Requirements:
     - Recognised by a folder named "<name>.forge" in the archive.
 
+  Installs to: the game folder
+
   Common mistakes:
     - Keep the folder named exactly after the ".forge" archive the content came from, extension included. The name is what tells AnvilToolkit which archive to repack into.
 
@@ -88,6 +96,8 @@ An unpacked ".data" file, packaged as a folder named after it. Nothing in the ar
 
   Requirements:
     - Recognised by a folder named "<name>.data" in the archive.
+
+  Installs to: the game folder
 
   Common mistakes:
     - Name the ".forge" archive your content belongs in somewhere the user will see it - the mod page, a readme, or the archive name. They have to type it into the rename prompt, and Vortex cannot work it out from the files.
@@ -101,6 +111,8 @@ Individual data files, staged under a placeholder folder for the user to rename 
   Requirements:
     - Recognised by any file with the ".data" extension.
 
+  Installs to: the game folder
+
   Common mistakes:
     - State which ".forge" archive the files belong in. The user is prompted for that name and has nothing else to go on.
 
@@ -112,6 +124,8 @@ Replacement ".forge" archives, deployed into the game's data folder.
 
   Requirements:
     - Recognised by any file with the ".forge" extension.
+
+  Installs to: the game folder
 
   Common mistakes:
     - Forge files must keep their original names to replace the right archive.
@@ -132,7 +146,7 @@ MyRootMod.zip
   Requirements:
     - Recognised by a folder named "videos" in the archive.
 
-  Installs to: the game folder itself (no subfolder)
+  Installs to: the game folder
 
   Common mistakes:
     - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
@@ -148,6 +162,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
   Requirements:
     - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
     - Vortex shows the user a notification when a mod installs through the fallback.
+
+  Installs to: the game folder
 
   Common mistakes:
     - If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.

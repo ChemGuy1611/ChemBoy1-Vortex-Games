@@ -14,6 +14,7 @@
  *            node generate_notes.js subnautica2 [GAME_ID ...]
  *            node generate_notes.js railroader --description
  *            node generate_notes.js --check [--templates] [GAME_ID ...]
+ *            node generate_notes.js --lint [GAME_ID ...]
  *
  * Flags:
  *   --json       Write machine-readable JSON to stdout; progress goes to stderr. This
@@ -21,14 +22,26 @@
  *   --templates  Also process template-* folders (when no GAME_ID args given).
  *   --check      Drift mode: compare what would be generated against the files on disk,
  *                write nothing, and exit non-zero if any file would change or is missing.
- *                Combine with --description to check DESCRIPTION.bbcode instead. The only
- *                read-only way to run this generator.
+ *                Combine with --description to check DESCRIPTION.bbcode instead. With
+ *                --lint, the only read-only ways to run this generator.
+ *   --lint       Judge the DESCRIPTION*.bbcode pages on disk (what a push sends) and write
+ *                nothing; implies --description. Reports per page: store (a listed store
+ *                the game is not discovered by), bare (a bullet with no destination),
+ *                duplicate, long-list (over 8 names in one list), name-repeat (a mod type
+ *                name quoting its own trigger extension) and stale (known-outdated hand-written
+ *                wording). Findings are for a person to judge: exit 0 unless a page errors.
  *   --description  Write DESCRIPTION.bbcode, the Nexus mod page description, in
  *                  place of the notes files. Two lists on the page are generated: the
- *                  "Mod Installation Notes" list, one line per installer, trigger +
- *                  destination, naming the mod type ("Installs UE4SS mod with a
- *                  "dwmapi.dll" file to the "Win64" folder."), and the "Supported Versions" list, one line per store
- *                  app-id constant that resolves to a real value - plus Ubisoft Connect
+ *                  "Mod Installation Notes" list (an extension with no installer gets
+ *                  one line: every mod goes to the game root folder unprocessed; the
+ *                  notes files say the same instead of an empty table), one line per installer, trigger +
+ *                  destination, opening with the mod type ("UE4SS Script mods with a
+ *                  ".lua" file install to the "Mods" folder."; trigger lists are shortened:
+ *                  repeats dropped, numbered runs as "0000" to "0035", over 8 names shown as
+ *                  6 plus a count), and the "Supported Versions" list, one line per store
+ *                  app-id constant that resolves to a real value and is one of the ids the
+ *                  game is discovered by (DISCOVERY_IDS_ACTIVE / spec discovery ids, plus the
+ *                  gameFinderQuery ids of queryArgs extensions) - plus Ubisoft Connect
  *                  and EA, which are found through the Windows registry and so are
  *                  listed whenever their constant is declared. An existing page keeps
  *                  everything the author wrote - only each list between its heading and
@@ -40,6 +53,9 @@
  *                  installer) and a Credits section (CREDITS_BY_GAME, else the engine
  *                  default). A second run changes nothing. The summary counts each kind
  *                  and lists any extension whose supportsSymlinks could not be resolved.
+ *                  Game pages (not templates) also carry the game's Notes for Mod Authors
+ *                  as a [spoiler] section in front of Credits (else the donation block);
+ *                  that block is generated and replaced on every run.
  *
  * Content comes from two tiers:
  *   Tier 1  hand-written prose keyed by the installer's test function name, with
@@ -64,6 +80,7 @@ const path = require("path");
 
 const {
   buildSymbolTable,
+  activeReassignments,
   splitAtTopLevelCommas,
   scanToMatchingClose,
   resolveWithFallback,
@@ -173,21 +190,68 @@ function detectEngine(dirName) {
 /**
  * Resolve an array-literal declaration (e.g. ROOT_FOLDERS = [EPIC_CODE_NAME, 'Engine'])
  * to its element values. buildSymbolTable only handles scalars, so arrays are read
- * straight from source here.
+ * straight from source here. A live guarded reassignment (`ASSEMBLY_FILES = [...]` inside
+ * `if (BEPINEX_BUILD === "mono")`) wins over the declaration, as it does for scalars.
+ * A literal extended with `.concat(OTHER_ARRAY)` (`[".pak", ".ucas", ".utoc"].concat(PAKMOD_EXTRA_EXTS)`)
+ * gets OTHER_ARRAY's elements appended, and a `...OTHER_ARRAY` spread element is expanded in place.
+ * Comments, empty strings, unresolved identifiers and `XXX` placeholders are dropped.
  */
-function resolveArray(name, src, table) {
-  const re = new RegExp(`(?:const|let)\\s+${name}\\s*=\\s*\\[([^\\]]*)\\]`);
-  const m = src.match(re);
+/** Remove `//` and `/* *\/` comments from a source fragment, leaving string literals intact. */
+function stripComments(s) {
+  let out = "";
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (ch === '"' || ch === "'" || ch === "`") {
+      const end = s.indexOf(ch, i + 1);
+      if (end === -1) return out + s.slice(i);
+      out += s.slice(i, end + 1);
+      i = end;
+    } else if (ch === "/" && s[i + 1] === "/") {
+      const end = s.indexOf("\n", i);
+      if (end === -1) return out;
+      i = end - 1;
+    } else if (ch === "/" && s[i + 1] === "*") {
+      const end = s.indexOf("*/", i + 2);
+      if (end === -1) return out;
+      i = end + 1;
+    } else {
+      out += ch;
+    }
+  }
+  return out;
+}
+
+let reassignCache = { src: null, map: null };
+const ARRAY_EXPR = String.raw`\[([^\]]*)\](?:\.concat\(\s*([A-Za-z_$]\w*)\s*\))?`;
+function resolveArray(name, src, table, depth = 0) {
+  if (reassignCache.src !== src) reassignCache = { src, map: activeReassignments(src) };
+  const over = reassignCache.map.get(name);
+  const m =
+    (over && over.match(new RegExp(`^${ARRAY_EXPR}$`))) ||
+    src.match(new RegExp(`(?:const|let)\\s+${name}\\s*=\\s*${ARRAY_EXPR}`));
   if (!m) return [];
-  if (!m[1].trim()) return [];
-  return splitAtTopLevelCommas(m[1])
-    .map((a) => a.trim())
-    .filter(Boolean)
-    .map((a) => {
-      const v = resolveWithFallback(a, table, src);
-      return v == null ? a : String(v);
-    })
-    .filter((v) => v && v !== "XXX");
+  const body = stripComments(m[1]);
+  const own = body.trim()
+    ? splitAtTopLevelCommas(body)
+        .map((a) => a.trim())
+        .filter((a) => a && !/^(['"`])\1$/.test(a))
+        .flatMap((a) => {
+          const spread = a.match(/^\.\.\.\s*([A-Za-z_$]\w*)$/);
+          if (spread) {
+            return spread[1] !== name && depth < 3
+              ? resolveArray(spread[1], src, table, depth + 1)
+              : [];
+          }
+          const v = resolveWithFallback(a, table, src);
+          // An identifier that did not resolve is a name, not a value a user can ship.
+          const isName = /^[A-Za-z_$][\w$.]*$/.test(a);
+          if (v == null || (isName && String(v) === a)) return isName ? [] : [a];
+          return [String(v)];
+        })
+        .filter((v) => v && !isPlaceholder(v))
+    : [];
+  const more = m[2] && m[2] !== name && depth < 3 ? resolveArray(m[2], src, table, depth + 1) : [];
+  return [...own, ...more];
 }
 
 /**
@@ -215,18 +279,75 @@ function resolveObjArray(objName, prop, src, table) {
   return [];
 }
 
+/**
+ * A template's constants are all `XXX` placeholders and its notes document them as written
+ * (`a XXX_Data folder`). In a game, a value still holding `XXX` is an unfilled template constant,
+ * so it is dropped rather than printed. buildNotes sets the flag per extension.
+ */
+let documentingTemplate = false;
+function isPlaceholder(v) {
+  return documentingTemplate ? v === "XXX" : String(v).includes("XXX");
+}
+
 /** Look up a scalar constant, returning null when unresolved or a placeholder. */
 function val(name, src, table) {
   let v = table.has(name) ? table.get(name) : resolveWithFallback(name, table, src);
   if (v == null) return null;
   v = String(v);
-  if (!v || v === name || v === "XXX" || v === "null" || v.includes("${")) return null;
+  if (!v || v === name || isPlaceholder(v) || v === "null" || v.includes("${")) return null;
   return v;
 }
+
+/** Destination prose for a mod type that deploys to the game folder root. */
+const GAME_FOLDER_PROSE = "the game folder";
+
+/** What the pages say for an extension that registers no installer at all. */
+const NO_INSTALLER_LINE =
+  "All mods are installed to the game's root folder exactly as they are packaged, with no processing.";
 
 /** Windows-style display path. */
 function disp(p) {
   return p ? String(p).replace(/\//g, "\\") : p;
+}
+
+/** Environment variable shown for each `util.getVortexPath(...)` root a path constant is built on. */
+const VORTEX_PATH_ENV = {
+  home: "%USERPROFILE%",
+  documents: "%USERPROFILE%\\Documents",
+  localAppData: "%LOCALAPPDATA%",
+  appData: "%APPDATA%",
+};
+
+/**
+ * A deploy target fit to print, or null when part of it only exists at runtime. Path constants
+ * built on `const DOCUMENTS = util.getVortexPath("documents")` resolve with the constant's name
+ * still in them, and a per-user folder (`USERID_FOLDER`) is only filled in once the game is
+ * found. The Vortex path roots become environment variables and the user folder `<User ID>`;
+ * any other leftover top-level constant name, `${...}` or `XXX` placeholder drops the path, so
+ * the caller falls back to prose instead of printing a variable name.
+ */
+function cleanTarget(p, src) {
+  if (p == null) return null;
+  // Decode \uXXXX escapes carried over from the string literal ("Ragnarök").
+  let s = String(p)
+    .replace(/\\u([0-9a-fA-F]{4})/g, (_, h) => String.fromCharCode(parseInt(h, 16)))
+    .replace(/%DOCUMENTS%/g, VORTEX_PATH_ENV.documents);
+  if (s.includes("${") || (!documentingTemplate && s.includes("XXX"))) return null;
+  const segs = s.split(/[\\/]+/);
+  for (let i = 0; i < segs.length; i++) {
+    const seg = segs[i];
+    if (!/^[A-Za-z_$][\w$]*$/.test(seg)) continue;
+    const decl = new RegExp(
+      `^(?:const|let|var)\\s+${seg.replace(/\$/g, "\\$")}\\s*=\\s*(.*)$`,
+      "m",
+    ).exec(src);
+    if (!decl) continue;
+    const root = decl[1].match(/^util\.getVortexPath\(\s*["'](\w+)["']\s*\)/);
+    if (root && VORTEX_PATH_ENV[root[1]]) segs[i] = VORTEX_PATH_ENV[root[1]];
+    else if (/^USER_?ID/i.test(seg)) segs[i] = "<User ID>";
+    else return null;
+  }
+  return segs.join("\\");
 }
 
 /**
@@ -291,7 +412,7 @@ function toolBlock({ title, tool, marker, installsTo, extra }) {
     quick: marker ? `a \`${marker}\` file` : `the ${tool} files`,
     installsTo: installsTo || null,
     lead:
-      `This installer handles ${tool} itself, not mods for it. It exists so users can ` +
+      `This installer handles ${tool}, not mods for it. It exists so users can ` +
       `install ${tool} through Vortex, and mod authors normally never package this.`,
     rules: [
       marker ? `Recognised by a file named \`${marker}\` in the archive.` : null,
@@ -449,7 +570,7 @@ const PROSE = [
         "When two enabled options both change the same archive, Vortex numbers their files into " +
           "one contiguous sequence for that archive. This is expected, not a conflict.",
         "Documentation files at the top level of the archive are installed alongside the patch " +
-          "files and are left untouched. `manifest.json` itself and any images it points at are " +
+          "files and are left untouched. `manifest.json` and any images it points at are " +
           "not installed - they are only used for the option picker.",
       ],
       pitfalls: [
@@ -468,7 +589,7 @@ const PROSE = [
           "reassigned per archive in option order; only the order of your files inside a single " +
           "folder is preserved.",
         "Expecting `NexusData` in a manifest to point Vortex at the right Nexus Mods " +
-          "mod page. Vortex tracks that identity itself and ignores the field.",
+          "mod page. Vortex tracks that identity on its own and ignores the field.",
       ],
     }),
   },
@@ -585,7 +706,9 @@ const PROSE = [
         `Any archive containing a \`${v.PAK_EXT || ".pak"}\` file reaches this installer (unless an earlier one claimed it).`,
         "Only the pak files are installed - surrounding folders are discarded.",
         v.PAKMOD_EXTS && v.PAKMOD_EXTS.length > 1
-          ? `Companion files are installed alongside paks: ${orList(v.PAKMOD_EXTS)}.`
+          ? `Companion files are installed alongside paks: ${orList(
+              v.PAKMOD_EXTS.filter((e) => e !== (v.PAK_EXT || ".pak")),
+            )}.`
           : null,
         "If the archive holds more than one pak, Vortex asks the user which to install - useful for optional variants.",
       ].filter(Boolean),
@@ -603,7 +726,8 @@ const PROSE = [
       const subs = v.UE4SS_SUBFOLDERS || [];
       if (!file && !subs.length) return null;
       return {
-        title: "UE4SS Itself",
+        title: "UE4SS",
+        toolName: "UE4SS",
         quick: file ? `a \`${file}\` file` : "the UE4SS support folders",
         installsTo: v.BINARIES_PATH || null,
         lead:
@@ -629,7 +753,7 @@ const PROSE = [
       if (!v.SIGBYPASS_DLL || !v.SIGBYPASS_LUA) return null;
       return {
         title: "Signature Bypass",
-        quick: `\`${v.SIGBYPASS_DLL}\` and \`${v.SIGBYPASS_LUA}\``,
+        quick: `a \`${v.SIGBYPASS_DLL}\` file and a \`${v.SIGBYPASS_LUA}\` file`,
         installsTo: v.BINARIES_PATH || null,
         lead: "This game ships signed pak files, so a signature bypass is required before most mods will load.",
         rules: [
@@ -711,7 +835,7 @@ const PROSE = [
       return {
         title: "Root / Game Folder Mods",
         quick: `a top-level folder such as ${orList(all.slice(0, 3))}`,
-        installsTo: "the game folder itself (no subfolder)",
+        installsTo: GAME_FOLDER_PROSE,
         targetIsProse: true,
         lead: "For mods that replace or add files inside the game installation, laid out the same way they appear in the game folder.",
         tree: [
@@ -797,7 +921,8 @@ const PROSE = [
     engine: "ue4-5",
     build: (v) => ({
       title: "Fallback Installer",
-      quick: "anything unrecognised with no pak file",
+      // "anything not matched" is what renderDescription keys its catch-all line on.
+      quick: "anything not matched above with no pak file",
       installsTo: v.BINARIES_PATH || null,
       lead:
         "This is the catch-all. Any archive with no `.pak` file that matched none of the installers above " +
@@ -847,16 +972,19 @@ const PROSE = [
   },
 
   // ── Unity: BepInEx / MelonLoader ──────────────────────────────────────────
+  // `loader` ties a block to one mod loader; it is left out when the extension does not offer
+  // that loader (see unityLoaders).
   {
     fn: "testBepinex",
     engine: ["unity-melon-bepinex"],
+    loader: "bep",
     build: (v) => {
       if (!v.BEPINEX_FOLDER || !v.BEPINEX_DLL_FILE) return null;
       return toolBlock({
         title: "BepInEx (mod loader)",
         tool: "BepInEx",
         marker: v.BEPINEX_DLL_FILE,
-        installsTo: "the game folder itself (no subfolder)",
+        installsTo: GAME_FOLDER_PROSE,
         extra: [
           `Requires BOTH a folder named \`${v.BEPINEX_FOLDER}\` and the loader file \`${v.BEPINEX_DLL_FILE}\`.`,
         ],
@@ -866,13 +994,14 @@ const PROSE = [
   {
     fn: "testMelon",
     engine: ["unity-melon-bepinex"],
+    loader: "mel",
     build: (v) => {
       if (!v.MELON_FOLDER || !v.MELON_DLL_FILE) return null;
       return toolBlock({
         title: "MelonLoader (mod loader)",
         tool: "MelonLoader",
         marker: v.MELON_DLL_FILE,
-        installsTo: "the game folder itself (no subfolder)",
+        installsTo: GAME_FOLDER_PROSE,
         extra: [
           `Requires BOTH a folder named \`${v.MELON_FOLDER}\` and the loader file \`${v.MELON_DLL_FILE}\`.`,
         ],
@@ -882,24 +1011,102 @@ const PROSE = [
   {
     fn: "testPlugin",
     engine: ["unity-melon-bepinex"],
-    build: (v) =>
-      matchBlock({
-        title: "Plugin Mods",
-        lead:
-          "The normal shape for a Unity mod: a compiled plugin DLL. Vortex installs it into the " +
-          "loader's mod folder, so the archive does not need to reproduce the loader folder structure.",
-        exts: v.PLUGIN_EXTS,
-        installsTo: v.BEPINEX_MOD_PATH || v.MELON_MODS_PATH || v.PLUGIN_PATH,
-        tree: ["MyPlugin.zip", "└── MyPlugin.dll"].join("\n"),
-        pitfalls: [
-          "Wrapping the DLL in a `BepInEx\\plugins` folder as well - it can end up nested one level too deep.",
-          "Shipping a plugin together with loader files, which makes the archive look like a loader install instead.",
-        ],
-      }),
+    // One section per mod loader the extension offers: the installer reads each DLL to tell
+    // which loader it was built for and routes it to that loader's folder.
+    build: (v) => {
+      const ext = (v.PLUGIN_EXTS && v.PLUGIN_EXTS[0]) || ".dll";
+      const both = v.LOADERS.length > 1;
+      // A loose plugin is wrapped in a folder of its own (pluginFolderName in the extension).
+      const wrap = (p) => (v.WRAPS_PLUGINS ? `${p}\\<ModName>` : p);
+      const wrapRule = v.WRAPS_PLUGINS
+        ? "A loose DLL is put in a folder of its own, named after its folder in the archive or " +
+          "else after the DLL, so files from different mods cannot overwrite each other."
+        : null;
+      const keepRule = (folders, dest) =>
+        folders && folders.length
+          ? `An archive that already has a ${orList(folders)} folder keeps that layout and ` +
+            `installs to ${dest}.`
+          : null;
+      const sharedPitfalls = [
+        "Shipping a plugin together with loader files, which makes the archive look like a loader install instead.",
+        both
+          ? "Putting BepInEx and MelonLoader plugins in one archive. Vortex cannot install both " +
+            "kinds together - publish them as separate files."
+          : null,
+      ].filter(Boolean);
+      const cancelLine =
+        v.preventPluginInstall === "true"
+          ? "Plugin archives built for a different mod loader than the one installed" +
+            `${both ? ", or mixing BepInEx and MelonLoader plugins," : ""} are cancelled.`
+          : null;
+      const out = [];
+      if (v.LOADERS.includes("bep")) {
+        const plugins = v.BEPINEX_PLUGINS_PATH || `${v.BEPINEX_FOLDER}\\plugins`;
+        const patchers = v.BEPINEX_PATCHERS_PATH || `${v.BEPINEX_FOLDER}\\patchers`;
+        out.push({
+          title: "BepInEx Plugin Mods",
+          quick: `a \`${ext}\` file built for BepInEx`,
+          installsTo: wrap(plugins),
+          lead:
+            "The normal shape for a BepInEx mod: a compiled plugin DLL. Vortex reads each DLL to " +
+            "tell which mod loader it was built for, so the archive does not need to reproduce " +
+            "the BepInEx folder structure.",
+          tree: ["MyPlugin.zip", "└── MyPlugin.dll"].join("\n"),
+          rules: [
+            `Recognised by any \`${ext}\` file that references BepInEx.`,
+            wrapRule,
+            `A preloader patcher (a DLL that references \`${v.BEP_PATCHER_STRING || "BepInEx.Preloader.Core.Patching"}\`) ` +
+              `goes to \`${disp(wrap(patchers))}\` instead.`,
+            keepRule(v.BEPINEX_MOD_FOLDERS, `\`${disp(v.BEPINEX_MOD_PATH || v.BEPINEX_FOLDER)}\``),
+          ].filter(Boolean),
+          pitfalls: sharedPitfalls,
+        });
+      }
+      if (v.LOADERS.includes("mel")) {
+        const mods = v.MELON_MODS_PATH || "Mods";
+        const plugins = v.MELON_PLUGINS_PATH || "Plugins";
+        out.push({
+          title: "MelonLoader Mods",
+          quick: `a \`${ext}\` file built for MelonLoader`,
+          installsTo: wrap(mods),
+          lead:
+            "The normal shape for a MelonLoader mod: a compiled mod DLL. Vortex reads each DLL to " +
+            "tell which mod loader it was built for, so the archive does not need to reproduce " +
+            "the MelonLoader folder structure.",
+          tree: ["MyMelonMod.zip", "└── MyMelonMod.dll"].join("\n"),
+          rules: [
+            `Recognised by any \`${ext}\` file that references MelonLoader.`,
+            wrapRule,
+            v.MELON_MANIFEST && v.WRAPS_PLUGINS
+              ? "MelonLoader only loads a mod in its own folder when that folder holds a " +
+                "`manifest.json`, so Vortex writes one when the archive has none."
+              : null,
+            `A MelonLoader plugin (a DLL that references \`${v.MEL_PLUGIN_STRING || "MelonPlugin"}\`) ` +
+              `goes to \`${disp(wrap(plugins))}\` instead.`,
+            keepRule(
+              v.MELON_MOD_FOLDERS,
+              !v.MELON_MOD_PATH || v.MELON_MOD_PATH === "."
+                ? GAME_FOLDER_PROSE
+                : `\`${disp(v.MELON_MOD_PATH)}\``,
+            ),
+          ].filter(Boolean),
+          pitfalls: sharedPitfalls,
+        });
+      }
+      if (!out.length) return null;
+      const last = out[out.length - 1];
+      last.rules.push(
+        "An archive whose DLLs reference neither loader installs to the game folder, and Vortex " +
+          "shows a notification asking the user to check the mod page.",
+      );
+      if (cancelLine) last.descExtra = [cancelLine];
+      return out;
+    },
   },
   {
     fn: "testBepCfgMan",
     engine: ["unity-melon-bepinex"],
+    loader: "bep",
     build: (v) => {
       if (!v.BEPCFGMAN_FILE) return null;
       return toolBlock({
@@ -914,6 +1121,7 @@ const PROSE = [
   {
     fn: "testMelonPrefMan",
     engine: ["unity-melon-bepinex"],
+    loader: "mel",
     build: (v) => {
       if (!v.MELONPREFMAN_FILE) return null;
       return toolBlock({
@@ -936,7 +1144,7 @@ const PROSE = [
             marker: v.UMM_INST_EXEC,
             installsTo: ".",
             extra: [
-              "Vortex reproduces the loader patch the manager would apply itself, so it deploys and " +
+              "Vortex reproduces the loader patch the manager would otherwise apply, so it deploys and " +
                 "purges like any other mod.",
             ],
           })
@@ -1032,8 +1240,7 @@ const PROSE = [
           "Mods that replace a compiled game assembly outright. These overwrite core game files, " +
           "so they conflict with any other mod touching the same assembly.",
         files: v.ASSEMBLY_FILES,
-        installsTo:
-          v.ASSEMBLY_PATH === "." ? "the game folder itself (no subfolder)" : v.ASSEMBLY_PATH,
+        installsTo: v.ASSEMBLY_PATH === "." ? GAME_FOLDER_PROSE : v.ASSEMBLY_PATH,
         targetIsProse: v.ASSEMBLY_PATH === ".",
         pitfalls: [
           "Assembly replacements cannot be combined with other assembly mods - state this clearly on the mod page.",
@@ -1399,7 +1606,7 @@ const PROSE = [
             tool: "ResoRep",
             marker: v.RESOREP_DLL_FILE,
             extra: [
-              "Vortex downloads the matching ResoRep package itself and writes its settings file, " +
+              "Vortex downloads the matching ResoRep package and writes its settings file, " +
                 "so this installer normally only ever runs on that automatic download.",
             ],
           })
@@ -1616,7 +1823,7 @@ const PROSE = [
         folders,
         files: v.ROOT_FILES,
         exts: v.ROOT_EXTS,
-        installsTo: "the game folder itself (no subfolder)",
+        installsTo: GAME_FOLDER_PROSE,
         targetIsProse: true,
         pitfalls: [
           "Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, " +
@@ -1668,10 +1875,10 @@ const PROSE = [
   {
     fn: "testFallback",
     engine: NON_UE_ENGINES,
-    build: () => ({
+    build: (v) => ({
       title: "Fallback Installer",
       quick: "anything not matched above",
-      installsTo: null,
+      installsTo: v.FALLBACK_PATH,
       lead:
         "The catch-all. Any archive that matched none of the installers above lands here and is " +
         "copied across unchanged.",
@@ -1687,6 +1894,24 @@ const PROSE = [
     }),
   },
 ];
+
+/**
+ * Mod loaders a Unity extension offers, as a subset of ["bep", "mel"], from the loader
+ * constants it declares. MelonLoader is Unity-only, so an XNA game never offers it. With
+ * loaderChoice off the extension only ever installs recommendedLoader ("bep"/"bepinex" or
+ * "mel"/"melon"), so the other loader is left out.
+ */
+function unityLoaders(v) {
+  const out = [];
+  if (v.BEPINEX_FOLDER) out.push("bep");
+  if (v.MELON_FOLDER && v.isXna !== "true") out.push("mel");
+  if (v.loaderChoice === "false") {
+    const rec = String(v.recommendedLoader || "").toLowerCase();
+    const only = rec.startsWith("bep") ? "bep" : rec.startsWith("mel") ? "mel" : null;
+    if (only && out.includes(only)) return [only];
+  }
+  return out;
+}
 
 /** Resolve every constant the UE4-5 prose blocks reference. */
 function buildVars(src, table) {
@@ -1719,6 +1944,16 @@ function buildVars(src, table) {
     "ASSEMBLY_PATH",
     "ASSETS_PATH",
     "PLUGIN_PATH",
+    "BEPINEX_PLUGINS_PATH",
+    "BEPINEX_PATCHERS_PATH",
+    "BEP_PATCHER_STRING",
+    "MELON_MOD_PATH",
+    "MELON_PLUGINS_PATH",
+    "MEL_PLUGIN_STRING",
+    "loaderChoice",
+    "recommendedLoader",
+    "isXna",
+    "preventPluginInstall",
     // Unity (Jiangyu - MENACE)
     "JIANGYU_FILE",
     "JIANGYU_PATH",
@@ -1799,6 +2034,8 @@ function buildVars(src, table) {
     "MIMOD_EXTS",
     "RAILLOADER_FILES",
     "MAPS_EXTS",
+    "BEPINEX_MOD_FOLDERS",
+    "MELON_MOD_FOLDERS",
   ]) {
     v[n] = resolveArray(n, src, table);
   }
@@ -1846,6 +2083,17 @@ function buildVars(src, table) {
   // Loader marker files are named inconsistently across the Unity extensions.
   if (!v.BEPINEX_DLL_FILE) v.BEPINEX_DLL_FILE = val("BEPINEX_FILE", src, table);
   if (!v.MELON_DLL_FILE) v.MELON_DLL_FILE = val("MELON_FILE", src, table);
+  v.LOADERS = unityLoaders(v);
+  v.WRAPS_PLUGINS = /\bfunction\s+pluginFolderName\b/.test(src);
+  v.MELON_MANIFEST = /\bfunction\s+melonManifest\b/.test(src);
+  // A fallback copy without a setmodtype instruction deploys to the game's default mod path
+  // (registerGame modPath), which is not always the game folder.
+  const fallbackBody = sliceFunction(src, "installFallback");
+  const defaultPath = val("MOD_PATH_DEFAULT", src, table);
+  v.FALLBACK_PATH =
+    fallbackBody && !/setmodtype/.test(fallbackBody) && defaultPath && !/^\.?\/?$/.test(defaultPath)
+      ? defaultPath
+      : null;
   // PAKMOD_EXTS is built as ['.pak'].concat(PAKMOD_EXTRA_EXTS)
   if (!v.PAKMOD_EXTS.length) {
     const extra = resolveArray("PAKMOD_EXTRA_EXTS", src, table);
@@ -1859,6 +2107,14 @@ function buildVars(src, table) {
   // which is frequently a function rather than a literal.
   for (const n of ["PAKMOD_PATH", "SCRIPTS_PATH", "DLL_PATH", "BINARIES_PATH", "LOGICMODS_PATH"]) {
     v[n] = val(n, src, table);
+  }
+  // An Xbox release whose getExecutable moves BINARIES_PATH to Binaries\WinGDK.
+  v.XBOX_WINGDK =
+    isRealValue(val("XBOXAPP_ID", src, table)) &&
+    /\bBINARIES_PATH\s*=\s*path\.join\([^)]*\bEXEC_FOLDER_XBOX\b/.test(src);
+  // Block rules print these paths directly, so they get the same clean-up as deploy targets.
+  for (const n of Object.keys(v)) {
+    if (/_PATH$/.test(n) && typeof v[n] === "string") v[n] = cleanTarget(v[n], src);
   }
   return v;
 }
@@ -1936,6 +2192,17 @@ function negatedRanges(body) {
 }
 
 /**
+ * Phrase a basename match. A name with an extension is a file and one without is a folder;
+ * only a list mixing the two keeps the generic wording.
+ */
+function namedMarker(names) {
+  const hasExt = (n) => /\.[A-Za-z0-9]+$/.test(n);
+  if (names.every(hasExt)) return `a ${orList(names)} file`;
+  if (!names.some(hasExt)) return `a ${orList(names)} folder`;
+  return `a file or folder named ${orList(names)}`;
+}
+
+/**
  * Read the recognisable file/folder conditions out of a test function body.
  * Returns human-readable phrases; unrecognised logic simply yields nothing,
  * so the section degrades to a bare priority note rather than saying anything false.
@@ -1943,8 +2210,9 @@ function negatedRanges(body) {
 function deriveTrigger(body, src, table) {
   const out = [];
   const seen = new Set();
+  // A template placeholder left in a game's source (`XXX.dll`) is not something to tell users to ship.
   const add = (s) => {
-    if (s && !seen.has(s)) {
+    if (s && !seen.has(s) && (documentingTemplate || !s.includes("XXX"))) {
       seen.add(s);
       out.push(s);
     }
@@ -1952,25 +2220,26 @@ function deriveTrigger(body, src, table) {
   const negated = negatedRanges(body);
   const isNegated = (idx) => negated.some(([from, to]) => idx > from && idx < to);
 
-  // path.basename(...) === CONST  ->  file or folder with that name
+  // path.basename(...) === CONST  ->  file or folder with that name. The name stops before a
+  // trailing `.toLowerCase()`, which would otherwise be read as part of the constant.
   for (const m of body.matchAll(
-    /path\.basename\([^)]*\)(?:\.toLowerCase\(\))?\s*===\s*([A-Za-z_$][\w.]*|'[^']*'|"[^"]*")(?:\.toLowerCase\(\))?/g,
+    /path\.basename\([^)]*\)(?:\.toLowerCase\(\))?\s*===\s*([A-Za-z_$][\w$]*(?:\.(?!toLowerCase\()[A-Za-z_$][\w$]*)*|'[^']*'|"[^"]*")(?:\.toLowerCase\(\))?/g,
   )) {
     const raw = m[1];
     if (/^(gameId|spec)/.test(raw) || isNegated(m.index)) continue;
     const value = resolveWithFallback(raw, table, src);
     if (value && value !== raw && !String(value).includes("${") && value !== "moduleconfig.xml") {
-      add(`a file or folder named \`${value}\``);
+      add(namedMarker([value]));
     }
   }
   // path.extname(...) === CONST  ->  file with that extension
   for (const m of body.matchAll(
-    /path\.extname\([^)]*\)(?:\.toLowerCase\(\))?\s*===\s*([A-Za-z_$][\w.]*|'[^']*'|"[^"]*")/g,
+    /path\.extname\([^)]*\)(?:\.toLowerCase\(\))?\s*===\s*([A-Za-z_$][\w$]*(?:\.(?!toLowerCase\()[A-Za-z_$][\w$]*)*|'[^']*'|"[^"]*")/g,
   )) {
     if (isNegated(m.index)) continue;
     const value = resolveWithFallback(m[1], table, src);
     if (value && value !== m[1] && !String(value).includes("${")) {
-      add(`a file with the \`${value}\` extension`);
+      add(`a \`${value}\` file`);
     }
   }
   // ARRAY.includes(path.basename/extname(...))
@@ -1981,21 +2250,40 @@ function deriveTrigger(body, src, table) {
     const arrName = m[1].replace(/_LOWER$/, "");
     const items = resolveArray(arrName, src, table);
     if (items.length) {
-      add(
-        m[2] === "extname"
-          ? `a file with one of these extensions: ${orList(items)}`
-          : `a file or folder named one of: ${orList(items)}`,
-      );
+      add(m[2] === "extname" ? `a ${orList(items)} file` : namedMarker(items));
     }
   }
-  return out;
+  // `a ".glb" file and a ".glb" or ".dat" file`: an alternative that one of the required items
+  // already satisfies adds nothing.
+  return out.filter((s) => {
+    const m = /^a (`[^`]+`(?:, `[^`]+`)* or `[^`]+`) (file|folder)$/.exec(s);
+    if (!m) return true;
+    return !m[1].match(/`[^`]+`/g).some((opt) => out.includes(`a ${opt} ${m[2]}`));
+  });
+}
+
+/**
+ * The mod type an install function assigns through its `setmodtype` instruction, or null when
+ * it sets none, sets the default type, or picks between several - a conditional choice cannot
+ * be reduced to one target.
+ */
+function setModTypeOf(src, fn, table) {
+  const body = fn ? sliceFunction(src, fn) : null;
+  if (!body) return null;
+  const ids = new Set();
+  for (const m of body.matchAll(
+    /type:\s*["']setmodtype["']\s*,\s*value:\s*([A-Za-z_$][\w$.]*|`[^`]*`|'[^']*'|"[^"]*")/g,
+  )) {
+    const id = resolveWithFallback(m[1], table, src);
+    if (!id || String(id).includes("${")) return null;
+    ids.add(String(id));
+  }
+  return ids.size === 1 ? [...ids][0] : null;
 }
 
 // ── rendering ───────────────────────────────────────────────────────────────
 
 const SEP = "=".repeat(72);
-
-const GAME_FOLDER_PROSE = "the game folder itself (no subfolder)";
 
 /** Format a deploy target: real paths get code formatting, prose does not. */
 function fmtTarget(s) {
@@ -2008,6 +2296,11 @@ function fmtTarget(s) {
   return `\`${disp(t)}\``;
 }
 
+/** Suffix for a target under Binaries\Win64 on a game whose Xbox build uses WinGDK. */
+function xboxNote(s) {
+  return s.xboxWinGdk ? " (`WinGDK` instead of `Win64` for the Xbox version)" : "";
+}
+
 function renderMarkdown(ctx) {
   const { title, gameName, sections, fallbackNote } = ctx;
   let md = `# ${title}\n\n`;
@@ -2017,11 +2310,16 @@ function renderMarkdown(ctx) {
     `It tries each installer in order and the first one that matches wins, so archive layout is what ` +
     `determines where your mod ends up.\n\n`;
   md += `## Quick Reference\n\n`;
-  md += `| Mod Type | Archive must contain | Installs to |\n| --- | --- | --- |\n`;
-  for (const s of sections) {
-    md += `| ${s.title} | ${s.quickTrigger || "-"} | ${fmtTarget(s)} |\n`;
+  if (!sections.length) {
+    // No installer: an empty table would say nothing.
+    md += NO_INSTALLER_LINE;
+  } else {
+    md += `| Mod Type | Archive must contain | Installs to |\n| --- | --- | --- |\n`;
+    for (const s of sections) {
+      md += `| ${s.title} | ${s.quickTrigger || "-"} | ${fmtTarget(s)} |\n`;
+    }
+    md += `\nPaths are relative to the game's install folder.`;
   }
-  md += `\nPaths are relative to the game's install folder.`;
   // Only mention the user-profile exception when a mod type actually deploys there. Games
   // with no config or save mod type were being told about a rule that does not apply to them.
   if (sections.some((s) => s.userProfile)) {
@@ -2041,7 +2339,7 @@ function renderMarkdown(ctx) {
       for (const r of s.rules) md += `- ${r}\n`;
       md += `\n`;
     }
-    if (s.target) md += `Installs to: ${fmtTarget(s)}\n\n`;
+    if (s.target) md += `Installs to: ${fmtTarget(s)}${xboxNote(s)}\n\n`;
     if (s.pitfalls && s.pitfalls.length) {
       md += `**Common mistakes:**\n\n`;
       for (const p of s.pitfalls) md += `- ${p}\n`;
@@ -2078,6 +2376,10 @@ function renderBBCode(ctx) {
   L.push("");
   L.push(SEP);
   L.push("");
+  if (!sections.length) {
+    L.push(NO_INSTALLER_LINE);
+    L.push("");
+  }
 
   for (const s of sections) {
     L.push(`${s.title}:`);
@@ -2102,7 +2404,7 @@ function renderBBCode(ctx) {
     }
     if (s.target) {
       L.push("");
-      L.push(`  Installs to: ${stripMd(fmtTarget(s))}`);
+      L.push(`  Installs to: ${stripMd(fmtTarget(s) + xboxNote(s))}`);
     }
     if (s.pitfalls && s.pitfalls.length) {
       L.push("");
@@ -2144,8 +2446,10 @@ function fixArticle(s) {
 /**
  * One line per installer, for the "Mod Installation Notes" list on a Nexus mod page.
  * Same sections the notes are built from, collapsed to trigger + destination:
- *   [*]Installs UE4SS mod with a "dwmapi.dll" file to the "Win64" folder.[/*]
- * The mod type is the registered mod type's display name (see modTypeNoun).
+ *   [*]UE4SS Script mods with a ".lua" file install to the "Mods" folder.[/*]
+ *   [*]UE4SS installs to the "Win64" folder, recognised by a "dwmapi.dll" file.[/*]
+ * Each line opens with the mod type, the registered mod type's display name (see modTypeNoun),
+ * or with the tool's name for a loader/manager installer.
  * Loader installers (the ones whose section carries a tool lead) are marked so the
  * author can move them to the top of the list, where the house style puts them.
  */
@@ -2161,8 +2465,8 @@ const TOOL_TYPE_NAME = /\b(loader|manager|launcher|injector|installer|extractor|
  * registered under the installer's id (or is registered in a way the parser misses), and the
  * section title is a mangled installer id ("Zipmod", "Masseffectandromeda Fbmod"). Keyed by the
  * full installer id; wins over the registered mod type name. A string is the mod type's name, as
- * in `Installs <name> mod with ...`. `{ tool: "Name" }` marks a loader/manager installer, worded
- * `Installs Name itself, recognised by ...`. Take names from the extension's own *_NAME constants.
+ * in `<name> mods with ... install to ...`. `{ tool: "Name" }` marks a loader/manager installer,
+ * worded `Name installs to ..., recognised by ...`. Take names from the extension's own *_NAME constants.
  */
 const MOD_TYPE_LABELS = {
   "ageofmythologyretold-reshade": "ReShade",
@@ -2184,8 +2488,6 @@ const MOD_TYPE_LABELS = {
   "doometernal-zip-mod": "Nested Archive",
   "doomthedarkages-zipmod": "Nested Archive",
   "dragonageinquisition-daimodmanager": { tool: "DAI Mod Manager" },
-  "dragonballsparkingzero-json": "SZModLoader JSON",
-  "dragonballsparkingzero-lfse": "LFSE",
   "dragonballsparkingzero-modloader": { tool: "SZModLoader" },
   "dragonballsparkingzero-modloadermod": "SZModLoader Plugin",
   "farcry3-ziggy": "Ziggy's",
@@ -2194,12 +2496,6 @@ const MOD_TYPE_LABELS = {
   "gzdoom-zipmod": "Nested Archive",
   "helldivers2-patch--MergedMods--This-is-fine--Ignore-this--SELECT-APPLY-CHANGES--DO-NOT-ENABLE":
     "Patch",
-  "inzoi-aigenerated": "AIGenerated (Documents)",
-  "inzoi-animations": "Animations (Documents)",
-  "inzoi-canvas": "Canvas (Documents)",
-  "inzoi-my3dprinter": "My3DPrinter (Documents)",
-  "inzoi-myappearances": "MyAppearances (Documents)",
-  "inzoi-textures": "Textures (Documents)",
   "kingdomcomedeliverance2-cfg": "CFG",
   "masseffectandromeda-fbmod": "Frosty",
   "ninjagaiden3razorsedge-steammodloader": { tool: "Essential Files for NG3RE" },
@@ -2244,14 +2540,91 @@ const MOD_TYPE_LABELS = {
  * The mod type a description bullet is about, as a noun phrase: `UE4SS mod`, or `UE4SS mods` when
  * `plural`. Named after the registered mod type, else the installer's section title. A trailing
  * "Mod"/"Mods" is dropped first so `UE4SS Script Mod` does not read "Script Mod mod". A name that is
- * nothing but "Mod" says nothing, so it falls back to the bare generic noun.
+ * nothing but "Mod" says nothing, so it falls back to the bare generic noun. File extensions in
+ * the name are dropped when the `trigger` already quotes one of them - `.par`, `(.webm)`,
+ * `(.a2/.a3/.bin)`, `.blcm file` - so `Frosty Mod .fbmod` with a ".fbmod" trigger reads
+ * `Frosty mods with a ".fbmod" file`. A name left wrapped in brackets is unwrapped.
  */
-function modTypeNoun(section, plural = false) {
+function modTypeNoun(section, plural = false, trigger = "") {
+  const quoted = trigger.toLowerCase();
   const name = stripMd(section.modTypeName || section.title || "")
+    .replace(/(^|\s)\(?(\.\w+(?:\s*\/\s*\.\w+)*)\)?(?:\s+file\b)?(?=\s|$)/gi, (m, lead, exts) =>
+      exts.split("/").some((e) => quoted.includes(`"${e.trim().toLowerCase()}"`)) ? lead : m,
+    )
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^\(([^)]*)\)/, "$1")
     .replace(/(^|\s+)mods?$/i, "")
     .trim();
   if (!name) return plural ? "Mods" : "mods";
   return `${name} ${plural ? "mods" : "mod"}`;
+}
+
+/** A mod type name qualified with a user-profile location: "Saves (Local AppData)". */
+const USER_PROFILE_NAME = /\((?:local ?appdata|roaming appdata|appdata|documents|saved games)\)/i;
+
+/**
+ * Destination prose for a config or save mod type whose user-profile folder cannot be resolved
+ * statically (built from a registry value or per-user folder at runtime); null for anything else.
+ */
+function userProfileProse(s) {
+  const name = `${s.modTypeName || ""} ${s.title || ""}`;
+  if (!s.userProfile && !USER_PROFILE_NAME.test(name)) return null;
+  if (/\bsave/i.test(name)) return "the game's save folder";
+  if (/\bconfig/i.test(name)) return "the game's config folder";
+  return null;
+}
+
+/** Description bullets open with the mod type or tool name, so its first letter is a capital. */
+function capitalize(s) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+/** Most names a description trigger list shows before the rest are summarised as a count. */
+const DESCRIPTION_LIST_CAP = 8;
+/** Names shown when a list is over the cap. */
+const DESCRIPTION_LIST_SHOWN = 6;
+/** A run of quoted names: `"a", "b" or "c"`, with the noun that follows it when there is one. */
+const QUOTED_LIST = /"[^"]*"(?:(?:, | or )"[^"]*")*( (?:folder|file)\b)?/g;
+
+/**
+ * Shorten the name lists in a description trigger. The notes keep every name; a mod page bullet
+ * only has to tell a user which kind of archive it is about. Repeated names are dropped, three or
+ * more consecutive zero-padded numbers collapse to a range (`"0000" to "0035"`), and a list still
+ * longer than DESCRIPTION_LIST_CAP shows its first DESCRIPTION_LIST_SHOWN names plus a count.
+ */
+function tidyTrigger(trigger) {
+  return trigger.replace(QUOTED_LIST, (match, noun = "") => {
+    const names = [...new Set([...match.matchAll(/"([^"]*)"/g)].map((m) => m[1]))];
+    const tokens = [];
+    for (let i = 0; i < names.length; ) {
+      let j = i;
+      while (
+        /^\d+$/.test(names[i]) &&
+        j + 1 < names.length &&
+        names[j + 1].length === names[i].length &&
+        /^\d+$/.test(names[j + 1]) &&
+        Number(names[j + 1]) === Number(names[j]) + 1
+      ) {
+        j++;
+      }
+      tokens.push(j - i >= 2 ? `"${names[i]}" to "${names[j]}"` : `"${names[i]}"`);
+      i = j > i + 1 ? j + 1 : i + 1;
+    }
+    const join = (list) =>
+      list.length > 1 ? `${list.slice(0, -1).join(", ")} or ${list[list.length - 1]}` : list[0];
+    if (tokens.length <= DESCRIPTION_LIST_CAP) return join(tokens) + noun;
+    // The count is the list's last alternative, so the noun moves into it:
+    // `an "action", "chr" or one of 13 other named folders`.
+    const kind = noun.trim();
+    const others = !kind
+      ? "names"
+      : kind === "file" && names.every((n) => n.startsWith("."))
+        ? "file types"
+        : `named ${kind}s`;
+    const rest = tokens.length - DESCRIPTION_LIST_SHOWN;
+    return join([...tokens.slice(0, DESCRIPTION_LIST_SHOWN), `one of ${rest} other ${others}`]);
+  });
 }
 
 function renderDescription(ctx) {
@@ -2259,40 +2632,53 @@ function renderDescription(ctx) {
   const L = [];
   L.push(INSTALL_HEADING);
   L.push("[list]");
+  // A multi-game extension can carry the same installer once per game; the page says it once.
+  const pushItem = (line) => {
+    const item = `[*]${line}[/*]`;
+    if (!L.includes(item)) L.push(item);
+  };
   for (const s of sections) {
     const trigger =
-      s.quickTrigger && s.quickTrigger !== "-" ? fixArticle(stripMd(s.quickTrigger)) : null;
+      s.quickTrigger && s.quickTrigger !== "-"
+        ? fixArticle(tidyTrigger(stripMd(s.quickTrigger)))
+        : null;
     const rawTarget = fmtTarget(s);
     const target =
       rawTarget === "-"
-        ? null
+        ? userProfileProse(s)
         : s.targetIsProse || rawTarget === GAME_FOLDER_PROSE
           ? rawTarget
-          : `the ${stripMd(rawTarget)} folder`;
+          : `the ${stripMd(rawTarget)} folder${stripMd(xboxNote(s))}`;
     // A tool installer handles the loader/manager itself, so "installs mods with" is wrong for it.
     const isTool = !!s.toolName || (s.lead && /not mods for it/i.test(s.lead));
     // The catch-all installer has no trigger worth naming and usually no mod type.
     const isFallback = trigger && /anything not matched/i.test(trigger);
+    // Every bullet opens with the mod type or tool it is about, not with a verb.
+    const mods = capitalize(modTypeNoun(s, true, trigger || ""));
     let line;
     if (isFallback) {
-      line = `Any other mod not described above is installed to ${target || GAME_FOLDER_PROSE}.`;
+      line = `Any other mod not described above installs to ${target || GAME_FOLDER_PROSE}.`;
     } else if (isTool) {
       // Section titles carry a "(tool)" / "(mod loader)" qualifier that reads as clutter here.
-      const toolName = s.toolName || s.title.replace(/\s*\([^)]*\)\s*$/, "");
-      line = target
-        ? `Installs ${toolName} itself to ${target}, recognised by ${trigger || "its own files"}.`
-        : `Installs ${toolName} itself, recognised by ${trigger || "its own files"}.`;
+      const toolName = capitalize(s.toolName || s.title.replace(/\s*\([^)]*\)\s*$/, ""));
+      if (target && trigger) line = `${toolName} installs to ${target}, recognised by ${trigger}.`;
+      else if (target) line = `${toolName} installs to ${target}.`;
+      else if (trigger) line = `${toolName} is recognised by ${trigger}.`;
+      else line = `${toolName} can be installed through Vortex.`;
     } else if (trigger && target) {
-      line = `Installs ${modTypeNoun(s)} with ${trigger} to ${target}.`;
+      line = `${mods} with ${trigger} install to ${target}.`;
     } else if (trigger) {
-      line = `Installs ${modTypeNoun(s)} with ${trigger}.`;
+      line = `${mods} are recognised by ${trigger}.`;
     } else if (target) {
-      line = `${modTypeNoun(s, true)} are installed to ${target}.`;
+      line = `${mods} install to ${target}.`;
     } else {
-      line = `${modTypeNoun(s, true)} are recognised by the ${s.title} installer.`;
+      line = `${mods} are supported.`;
     }
-    L.push(`[*]${line}[/*]`);
+    pushItem(line);
+    // Extra description-only lines a block attaches to its section.
+    for (const extra of s.descExtra || []) pushItem(stripMd(extra));
   }
+  if (!sections.length) pushItem(NO_INSTALLER_LINE);
   if (allFomodGuarded) {
     L.push(
       '[*]Archives with a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to Vortex\'s built-in FOMOD installer instead.[/*]',
@@ -2305,11 +2691,12 @@ function renderDescription(ctx) {
 /** Store label per resolved app-id constant, in the order the pages list them. */
 const STORE_IDS = [
   ["STEAMAPP_ID", "Steam"],
+  ["STEAMAPP_ID_DEMO", "Steam Demo"],
   ["GOGAPP_ID", "GOG"],
   ["EPICAPP_ID", "Epic"],
   ["UPLAYAPP_ID", "Ubisoft Connect"],
   ["EAAPP_ID", "EA"],
-  ["XBOXAPP_ID", "Xbox (Game Pass)"],
+  ["XBOXAPP_ID", "Xbox"],
 ];
 
 /**
@@ -2319,19 +2706,58 @@ const STORE_IDS = [
 const REGISTRY_STORES = new Set(["UPLAYAPP_ID", "EAAPP_ID"]);
 
 /**
+ * Values of the ids the game is discovered by: DISCOVERY_IDS_ACTIVE, else the literal array in
+ * the spec's `discovery: { ids: [...] }`, plus every `id:` in the `gameFinderQuery` object that
+ * extensions registering `queryArgs` declare their stores in. Null when none can be read.
+ */
+function discoveryIds(src, table) {
+  const resolveIds = (list) =>
+    splitAtTopLevelCommas(list)
+      .map((a) => a.trim())
+      .filter(Boolean)
+      .map((a) => {
+        const v = resolveWithFallback(a, table, src);
+        return v == null ? a : String(v);
+      });
+  let ids = resolveArray("DISCOVERY_IDS_ACTIVE", src, table);
+  if (!ids.length) {
+    const m = src.match(/\bdiscovery\s*:\s*\{[^}]*?\bids\s*:\s*\[([^\]]*)\]/);
+    if (m) ids = resolveIds(m[1]);
+  }
+  const q = /\bconst\s+gameFinderQuery\s*=\s*\{/.exec(src);
+  if (q) {
+    const open = q.index + q[0].length - 1;
+    const close = scanToMatchingClose(src, open, "{", "}");
+    if (close !== -1) {
+      const body = stripComments(src.slice(open + 1, close));
+      for (const m of body.matchAll(/\bid\s*:\s*([^,}\s]+)/g)) ids.push(...resolveIds(m[1]));
+    }
+  }
+  return ids.length ? new Set(ids) : null;
+}
+
+/**
  * The store list, one line per app-id constant that resolves to a real value.
  * A store the game is not sold on carries a null or empty constant, so it drops out.
  * The registry-detected stores are the exception: declaring the constant is enough to
- * list them, because the installation is found without the app id.
+ * list them, because the installation is found without the app id. Every other id must
+ * also be one the game is discovered by: Vortex never finds an install through an id it is
+ * not told about, and ids are often filled in long before (or deliberately without) being
+ * added to discovery - a demo, a store build that cannot be modded, an unreleased version.
  */
 function renderSupportedVersions(ctx) {
   const L = [];
   L.push(SUPPORTED_HEADING);
   L.push("[list]");
   for (const [name, label] of STORE_IDS) {
-    const supported = REGISTRY_STORES.has(name)
-      ? ctx.table.has(name)
-      : isRealValue(ctx.table.get(name));
+    const value = ctx.table.get(name);
+    let supported = REGISTRY_STORES.has(name) ? ctx.table.has(name) : isRealValue(value);
+    if (supported && !REGISTRY_STORES.has(name) && ctx.discovery) {
+      supported = ctx.discovery.has(String(value));
+    } else if (supported && name === "STEAMAPP_ID_DEMO") {
+      // Discovery could not be read: a demo id alone says nothing about support.
+      supported = false;
+    }
     if (supported) L.push(`[*]${label}[/*]`);
   }
   L.push("[*]Other versions may need to select the installation location manually.[/*]");
@@ -2348,66 +2774,191 @@ const CREDIT_LINES = {
   nagev:
     "Credit to [url=https://next.nexusmods.com/profile/Nagev/about-me]Nagev[/url] (Nexus Mods Vortex Developer) for his support on helping me learn to make Vortex extensions, and being patient when I break things :)",
   insomnious:
-    "Credit to [url=https://next.nexusmods.com/profile/insomnious/about-me]insomnious[/url] (Nexus Mods App Developer) for his Palworld extension and the method for dynamically setting the game executable so that the Game Pass version is supported.",
+    "Credit to [url=https://next.nexusmods.com/profile/insomnious/about-me]insomnious[/url] (Nexus Mods App Developer) for his Palworld extension and the method for dynamically setting the game executable so that the Xbox version is supported.",
   pickysaurus:
     "Credit to [url=https://next.nexusmods.com/profile/Pickysaurus/about-me]Pickysaurus[/url] (Nexus Mods Community Manager) for his Unreal Engine Mod Installer extension, which I customized to make it work here with all UE5 mods.",
   wistipouf:
     'Credit to [url=https://next.nexusmods.com/profile/Wistipouf/about-me]Wistipouf[/url] for writing the functions to automatically rename ".patch_0" files.',
+  beykerykt: "Credit to BeYkeRYkt and his Ready Or Not Vortex extension for some FBLO functions.",
+  "senjay-schedule1":
+    "Credit to Senjay and his [url=https://www.nexusmods.com/site/mods/1243]Schedule 1 Vortex extension[/url] for some of the logic used in the plugin installer.",
+  fch823:
+    "Credit to [url=https://next.nexusmods.com/profile/FCH823/about-me]FCH823[/url] for their [url=https://www.nexusmods.com/site/mods/588?tab=description]TFC Installer[/url] tool that enables data mods for this game.",
 };
 
 /** Credits an extension gets when CREDITS_BY_GAME has no entry for it, keyed by engine. */
-const ENGINE_CREDITS = { "ue4-5": ["nagev"] };
+const ENGINE_CREDITS = {
+  "ue4-5": ["pickysaurus", "beykerykt", "nagev"],
+  "unity-melon-bepinex": ["senjay-schedule1"],
+};
 
 /**
- * Per-game credits where the live page differs from the engine default, in live page order.
- * Seeded 2026-10-11 from the 270 published extension pages (read-only v1 sweep). An engine-default
- * game with no live credits is not listed: it gets ENGINE_CREDITS. Edit here, never on the page.
+ * Per-game credits where the live page differs from the engine default, Nagev's line last.
+ * Seeded 2026-10-11 from the 270 published extension pages (read-only v1 sweep) and widened
+ * 2026-10-26 with every credit the live pages carried (sync_mod_pages.py --specials). An
+ * engine-default game with no live credits beyond that default is not listed: it gets
+ * ENGINE_CREDITS. Edit here, never on the page.
  */
 const CREDITS_BY_GAME = {
-  abioticfactor: ["insomnious", "nagev"],
-  ageofmythologyretold: ["nagev"],
-  avowed: ["pickysaurus", "insomnious", "nagev"],
-  batmanarkhamasylum: ["nagev"],
-  batmanarkhamcity: ["nagev"],
+  abioticfactor: ["insomnious", "pickysaurus", "beykerykt", "nagev"],
+  ageofmythologyretold: ["insomnious", "nagev"],
+  alanwake2: ["nagev"],
+  anno117paxromana: ["nagev"],
+  avowed: ["pickysaurus", "insomnious", "beykerykt", "nagev"],
+  batmanarkhamasylum: ["fch823", "nagev"],
+  batmanarkhamcity: ["fch823", "nagev"],
   batmanarkhamorigins: [
     "Credit to Senjay and his [url=https://www.nexusmods.com/site/mods/903]Batman: Arkham Knight Vortex extension[/url] for some code used in the .upk installer.",
+    "fch823",
     "nagev",
   ],
   bellwright: [
-    "nagev",
     "Credit to DMVoidKitten for assisting with updating this extension to accomodate the game's changing mod landscape.",
+    "pickysaurus",
+    "beykerykt",
+    "nagev",
   ],
-  bioshock: ["nagev"],
-  bioshock2: ["nagev"],
-  bioshockinfinite: ["nagev"],
-  blackmythwukong: ["pickysaurus"],
-  clairobscurexpedition33: ["insomnious", "nagev"],
-  dishonored: ["insomnious", "nagev"],
+  bioshock: ["fch823", "nagev"],
+  bioshock2: ["fch823", "nagev"],
+  bioshockinfinite: ["fch823", "nagev"],
+  blackmythwukong: ["pickysaurus", "beykerykt"],
+  borderlands: ["fch823", "nagev"],
+  borderlands2: ["fch823", "nagev"],
+  borderlands3: ["nagev"],
+  clairobscurexpedition33: ["insomnious", "pickysaurus", "beykerykt", "nagev"],
+  control: [
+    "Big thanks to [url=https://next.nexusmods.com/profile/registrator2000]registrator2000[/url] for his original Control extension, the Plugin and Loose Files Loaders, and for graciously allowing me to use this page for the new extension.",
+  ],
+  crimsondesert: ["nagev"],
+  darkmessiahofmightandmagic: [
+    "Thanks to ClementJ18 for his [url=https://github.com/ClementJ18/moddb]Python moddb scraper[/url], which was used as inspiration for the moddb updater module.",
+  ],
+  deadrisingdeluxeremaster: ["nagev"],
+  deathstranding2onthebeach: ["nagev"],
+  deusex: ["nagev"],
+  deusexhumanrevolution: ["nagev"],
+  deusexinvisiblewar: ["nagev"],
+  deusexmankinddivided: ["nagev"],
+  dishonored: ["insomnious", "fch823", "nagev"],
   doometernal: [
     "Credit to deleted user Iluviel735 who made a previous extension for this game on Nexus Mods.",
   ],
-  frostpunk2: ["insomnious", "nagev"],
-  helldivers2: ["wistipouf"],
-  hellisus: ["pickysaurus", "nagev"],
-  keeper: ["pickysaurus", "nagev"],
-  liesofp: ["insomnious", "nagev"],
-  lordsofthefallen2023: ["insomnious", "nagev"],
-  lostsoulaside: ["pickysaurus", "nagev"],
-  manorlords: ["insomnious", "nagev"],
-  mechwarrior5clans: ["insomnious", "nagev"],
-  mortalkombat: ["pickysaurus"],
-  ninjagaiden2black: ["insomnious", "nagev"],
-  nobodywantstodie: ["pickysaurus"],
-  prey2017: ["nagev"],
-  senuassagahellblade2: ["insomnious", "nagev"],
-  sifu: ["insomnious", "nagev"],
-  stalker2heartofchornobyl: ["insomnious", "nagev"],
+  dragonsdogma2: ["nagev"],
+  dyinglightthebeast: ["nagev"],
+  europauniversalisiv: ["nagev"],
+  europauniversalisv: ["nagev"],
+  forzahorizon6: ["nagev"],
+  frostpunk2: ["insomnious", "pickysaurus", "beykerykt", "nagev"],
+  ghostreconwildlands: ["nagev"],
+  godofwar: [
+    "Credit to MorGuux (Morgan Gardner) - who made a previous version of the God of War Extension",
+  ],
+  helldivers2: ["wistipouf", "nagev"],
+  highonlife: [
+    "pickysaurus",
+    "Credit to Lilpit912 for having created a deprecated extension for this game.",
+    "beykerykt",
+    "nagev",
+  ],
+  hollowknight: [
+    "senjay-schedule1",
+    "Credit to Lilpit912 for having created a deprecated extension for this game.",
+    "nagev",
+  ],
+  horizonforbiddenwest: ["nagev"],
+  humanitz: [
+    "pickysaurus",
+    "Credit to tipsychaoscat for making a previous extension for this game.",
+    "beykerykt",
+    "nagev",
+  ],
+  kingdomcomedeliverance2: [
+    "Credit to [url=https://next.nexusmods.com/profile/infarctus/about-me]infarctus[/url] and his [url=https://www.nexusmods.com/site/mods/684]Darktide Vortex extension[/url] for assisting with some of the load order functions in this extension.",
+  ],
+  liesofp: ["insomnious", "pickysaurus", "beykerykt", "nagev"],
+  likeadragonpirateyakuzainhawaii: [
+    "Credit to [url=https://next.nexusmods.com/profile/GarnetSunset/mods]GarnetSunset[/url] for co-authoring the extension.",
+    "nagev",
+  ],
+  lordsofthefallen2023: ["insomnious", "pickysaurus", "beykerykt", "nagev"],
+  lotrwarinthenorthle: ["nagev"],
+  madmax: ["nagev"],
+  manorlords: ["insomnious", "pickysaurus", "beykerykt", "nagev"],
+  marvelsspiderman2: ["nagev"],
+  mechwarrior5clans: ["insomnious", "pickysaurus", "beykerykt", "nagev"],
+  menace: [
+    "senjay-schedule1",
+    "Credit to p0ss for Menace.ModpackLoader.dll file - [url=https://github.com/p0ss/MenaceAssetPacker]https://github.com/p0ss/MenaceAssetPacker[/url] (GPL 3.0 License)",
+  ],
+  metalgearsolidvtpp: ["nagev"],
+  mewgenics: ["nagev"],
+  middleearthshadowofwar: [
+    "Credit to Lilpit912 for having created a deprecated extension for this game.",
+    "nagev",
+  ],
+  monsterhunterstories3twistedreflection: ["nagev"],
+  monsterhunterwilds: ["nagev"],
+  mortalkombat: ["pickysaurus", "beykerykt"],
+  mywintercar: [
+    "senjay-schedule1",
+    "Credit to piotrulos for MSCLoader Installer, which I customized to remove unnecessary checks - GPL-3.0 License",
+  ],
+  needforspeedheat: ["nagev"],
+  needforspeedunbound: ["nagev"],
+  ninjagaiden2black: ["insomnious", "pickysaurus", "beykerykt", "nagev"],
+  ninjagaidenfour: ["nagev"],
+  ninjagaidenmastercollection: ["nagev"],
+  nioh2: ["nagev"],
+  nioh3: [
+    "Credit to eArmada8 for creating and maintaining Yumia fdata Tools under GPL-3.0 license ([url=https://github.com/eArmada8/yumia_fdata_tools]https://github.com/eArmada8/yumia_fdata_tools[/url] )",
+    "nagev",
+  ],
+  nobodywantstodie: ["pickysaurus", "beykerykt"],
+  onimushawayofthesword: ["nagev"],
+  painkillerblackedition: ["nagev"],
+  pathologic2: ["nagev"],
+  pathologic3: ["nagev"],
+  pragmata: ["nagev"],
+  prey2017: ["insomnious", "nagev"],
+  rage: ["nagev"],
+  railroader: ["nagev"],
+  residentevil4: ["nagev"],
+  residentevil42023: ["nagev"],
+  residentevil6: ["nagev"],
+  residentevil7: ["nagev"],
+  residentevilrequiem: ["nagev"],
+  roadtovostok: ["nagev"],
+  sacred2remaster: ["nagev"],
+  selaco: ["nagev"],
+  senuassagahellblade2: ["insomnious", "pickysaurus", "beykerykt", "nagev"],
+  sifu: ["insomnious", "pickysaurus", "beykerykt", "nagev"],
+  slaythespire2: ["nagev"],
+  stalker2heartofchornobyl: ["insomnious", "pickysaurus", "beykerykt", "nagev"],
+  starwarsbattlefront22017: [
+    "Thanks to [url=https://next.nexusmods.com/profile/alistair3149/about-me]alistair3149[/url] for making a previous extension for this game.",
+    "nagev",
+  ],
+  streetfighter6: ["nagev"],
   thelastofuspart1: [
     "Credit to rm-NoobInCoding on GitHub for creating [url=https://github.com/rm-NoobInCoding/UnPSARC]UnPSARC[/url] tool, and making it freely available with the MIT License.",
+    "nagev",
   ],
-  theouterworlds: ["insomnious", "nagev"],
-  untildawn: ["pickysaurus"],
-  wuchangfallenfeathers: ["pickysaurus", "insomnious", "nagev"],
+  thelastofuspart2: [
+    "Credit to derwangler for creating the [url=https://www.nexusmods.com/thelastofuspart2/mods/31]ndarc tool[/url] and the [url=https://www.nexusmods.com/thelastofuspart2/mods/32]ndmodloader[/url]. He was also gracious enough to allow me to include the ndarc executable in this extension for a better user experience.",
+    "nagev",
+  ],
+  theouterworlds: ["insomnious", "pickysaurus", "beykerykt", "nagev"],
+  trailsintheskyfirstchapter: [
+    "Credit to [url=https://github.com/eArmada8/kuro_mdl_tool]eArmada8 on GitHub[/url] for the .pac file extraction script.",
+    "nagev",
+  ],
+  unrealtournament2004: ["nagev"],
+  untildawn: ["pickysaurus", "beykerykt"],
+  warhammer40000spacemarine2: ["nagev"],
+  warhammer40kroguetrader: ["nagev"],
+  watchdogs: ["nagev"],
+  wuchangfallenfeathers: ["pickysaurus", "insomnious", "beykerykt", "nagev"],
+  yakuzakiwami3: ["nagev"],
 };
 
 /** Donation block, byte-identical across every published extension page. */
@@ -2498,8 +3049,80 @@ function warningBlocks(page) {
   };
 }
 
+const USAGE_HEADING = "[b]📋 Usage Notes:[/b]";
+const FOLDER_ICON_NOTE =
+  "[*]You can open several useful files/folders/URLs using the buttons within the folder icon on the Mods toolbar.[/*]";
+
+/**
+ * Usage notes a UE4-5 page carries beyond the folder-icon line, read from the template toggles:
+ * the UE4SS download button, which page sorts which mods, the same-drive rule for config and save
+ * mods, and the Engine Injector mod type. Worded as the live pages word them, so the page check
+ * finds the hand-written copies already covered.
+ */
+function usageNotesFor(src, engine, installers) {
+  if (engine !== "ue4-5") return [];
+  const has = (fn) => installers.some((i) => i.testFn === fn);
+  const ue4ss = boolLiteral(src, "ue4ssLoadOrder") !== false;
+  const notes = [];
+
+  if (ue4ss && /["'`]Download UE4SS[^"'`]*["'`]/.test(src)) {
+    const pageNo = /^\s*const\s+UE4SS_PAGE_NO\s*=\s*(\d+)/m.exec(src);
+    const from = pageNo && Number(pageNo[1]) !== 0 ? "Nexus Mods" : "GitHub";
+    notes.push(
+      `You can download UE4SS from ${from} using the button within the folder icon on the Mods toolbar.`,
+    );
+  }
+
+  const pages = [];
+  if (boolLiteral(src, "PAKMOD_LOADORDER") === true && has("testPak")) {
+    pages.push(["Pak mods", "Load Order"]);
+  }
+  if (ue4ss && src.includes('"UE4SS Load Order"')) {
+    pages.push(["UE4SS Script and DLL mods", "UE4SS Load Order"]);
+  }
+  if (boolLiteral(src, "logicModsLoadOrder") === true && src.includes('"LogicMods Load Order"')) {
+    pages.push(["UE4SS LogicMods (Blueprint)", "LogicMods Load Order"]);
+  }
+  if (pages.length) {
+    const parts = pages.map(
+      ([what, title], i) => `${what}${i ? "" : " are sorted"} on the "${title}" page`,
+    );
+    let line = `${joinAnd(parts)}.`;
+    if (pages[0][1] === "Load Order" && src.includes("retagFomodPakMod")) {
+      line += " Pak mods placed by a FOMOD installer show up there too.";
+    }
+    notes.push(line);
+  }
+
+  const types = [has("testConfig") && "Config", has("testSave") && "Save"].filter(Boolean);
+  const hardlinks =
+    boolLiteral(src, "preferHardlinks") === true || boolLiteral(src, "IO_STORE") === true;
+  if (types.length && hardlinks && src.includes("checkPartitions(")) {
+    const folder = types.map((t) => t.toLowerCase()).join("/");
+    let line =
+      `${joinAnd(types)} mods only work if the game, the mod staging folder and the ${folder} ` +
+      "folder are all on the same drive (limitation of hardlinks).";
+    if (src.includes("partitionCheckNotify("))
+      line += " Vortex shows a notification when they are not.";
+    notes.push(line);
+  }
+
+  const binaries = /^\s*const\s+BINARIES_NAME\s*=\s*["'`]([^"'`]+)["'`]/m.exec(src);
+  if (binaries && has("testBinaries")) {
+    notes.push(
+      `For upscalers, reshades, and other mods that need to be next to the game executable, please use the "${binaries[1]}" mod type. This is the fallback mod install location if no other installer is triggered.`,
+    );
+  }
+  return notes.map((n) => `[*]${n}[/*]`);
+}
+
+/** Credit lines as the bulleted list a Credits section holds. */
+function creditsList(lines) {
+  return ["[list]", ...lines.map((l) => `[*]${l}[/*]`), "[/list]"].join("\n");
+}
+
 function creditsSection(page) {
-  return page.credits.length ? [CREDITS_HEADING, ...page.credits].join("\n") : null;
+  return page.credits.length ? CREDITS_HEADING + "\n" + creditsList(page.credits) : null;
 }
 
 /**
@@ -2509,7 +3132,7 @@ function creditsSection(page) {
  * credit) is left alone, so a second run changes nothing. Returns { text, added, notes }.
  */
 function ensureBlocks(existing, page) {
-  const added = { symlinks: 0, logicmods: 0, credits: 0, creditLines: 0 };
+  const added = { symlinks: 0, logicmods: 0, usageNotes: 0, credits: 0, creditLines: 0 };
   const notes = [];
   let text = existing;
   const insertAt = (idx, block) => {
@@ -2540,37 +3163,101 @@ function ensureBlocks(existing, page) {
     }
   }
 
-  const wanted = page.credits;
-  if (wanted.length) {
-    const supportAt = text.indexOf(SUPPORT_HEADING);
-    let headAt = text.indexOf(CREDITS_HEADING);
-    if (headAt === -1) {
-      // A page that carries its own Credits heading (pulled from a live page) keeps it.
-      const own = /^\[(?:b|size=\d)\][^\n]*\bCredits:[^\n]*$/m.exec(text);
-      if (own) headAt = own.index;
-    }
-    if (headAt === -1) {
-      if (supportAt === -1) {
-        text = text.replace(/\s*$/, "") + "\n\n" + creditsSection(page) + "\n";
-      } else {
-        insertAt(supportAt, creditsSection(page));
-      }
-      added.credits++;
-      added.creditLines += wanted.length;
+  // Usage notes go at the end of the Usage Notes list; one already there (same text) is kept.
+  const usage = page.usageNotes.filter((n) => !text.includes(n.slice(3, -4)));
+  if (usage.length) {
+    const headAt = text.indexOf(USAGE_HEADING);
+    const listEnd = headAt === -1 ? -1 : text.indexOf("[/list]", headAt);
+    if (listEnd === -1) {
+      notes.push("no Usage Notes list - usage notes not added");
     } else {
-      const sectionEnd = supportAt > headAt ? supportAt : text.length;
-      const body = text.slice(headAt, sectionEnd);
-      const missing = wanted.filter((l) => !body.toLowerCase().includes(creditKey(l)));
-      if (missing.length) {
-        const kept = body.replace(/\s+$/, "");
-        const tail = body.slice(kept.length) || "\n\n";
-        text =
-          text.slice(0, headAt) + kept + "\n" + missing.join("\n") + tail + text.slice(sectionEnd);
-        added.creditLines += missing.length;
-      }
+      text = text.slice(0, listEnd) + usage.join("\n") + "\n" + text.slice(listEnd);
+      added.usageNotes += usage.length;
+    }
+  }
+
+  const wanted = page.credits;
+  let headAt = text.indexOf(CREDITS_HEADING);
+  if (headAt === -1) {
+    // A page that carries its own Credits heading (pulled from a live page) keeps it.
+    const own = /^\[(?:b|size=\d)\][^\n]*\bCredits:[^\n]*$/m.exec(text);
+    if (own) headAt = own.index;
+  }
+  if (headAt === -1 && wanted.length) {
+    const supportAt = text.indexOf(SUPPORT_HEADING);
+    if (supportAt === -1) {
+      text = text.replace(/\s*$/, "") + "\n\n" + creditsSection(page) + "\n";
+    } else {
+      insertAt(supportAt, creditsSection(page));
+    }
+    added.credits++;
+    added.creditLines += wanted.length;
+  } else if (headAt !== -1) {
+    // The credit lines are the paragraph right under the heading; what follows it (images,
+    // carried sections) is left alone. That paragraph is rebuilt as one bulleted list, with
+    // the missing credit lines added at its end.
+    const supportAt = text.indexOf(SUPPORT_HEADING, headAt);
+    const sectionEnd = supportAt === -1 ? text.length : supportAt;
+    const body = text.slice(headAt, sectionEnd).toLowerCase();
+    const missing = wanted.filter((l) => !body.includes(creditKey(l)));
+    const headEnd = text.indexOf("\n", headAt);
+    const blockStart = headEnd === -1 ? text.length : headEnd + 1;
+    let blockEnd = text.indexOf("\n\n", blockStart);
+    if (blockEnd === -1 || blockEnd > sectionEnd) blockEnd = sectionEnd;
+    const items = text
+      .slice(blockStart, blockEnd)
+      .split("\n")
+      .map((l) => l.trim())
+      .filter((l) => l && !/^\[\/?list(?:=[^\]]*)?\]$/i.test(l))
+      .map((l) => l.replace(/^\[\*\]\s*/, "").replace(/\s*\[\/\*\]$/, ""))
+      .concat(missing);
+    if (items.length) {
+      const list = creditsList(items);
+      text =
+        headEnd === -1
+          ? text + "\n" + list + "\n"
+          : text.slice(0, blockStart) + list + text.slice(blockEnd);
+      added.creditLines += missing.length;
     }
   }
   return { text, added, notes };
+}
+
+const AUTHOR_NOTES_HEADING = "[b]📝 Notes for Mod Authors:[/b]";
+const SPOILER_CLOSE = "[/spoiler]";
+
+/** The NOTES_FOR_MOD_AUTHORS.bbcode text without its title line (the page heading replaces it). */
+function authorNotesBody(bbcode) {
+  const lines = bbcode.replace(/\r/g, "").split("\n");
+  lines.shift();
+  if (lines.length) lines[0] = lines[0].replace(/^\[\/color\]\[\/b\]/, "");
+  return lines.join("\n").trim();
+}
+
+/**
+ * Put the game's Notes for Mod Authors on the page as a collapsed spoiler section, in front of the
+ * Credits section (else the support block). The block is generated: an existing one, from its
+ * heading to its [/spoiler], is replaced on every run, so the page follows the notes files.
+ */
+function applyAuthorNotes(existing, bbcode) {
+  let text = existing;
+  const oldAt = text.indexOf(AUTHOR_NOTES_HEADING);
+  if (oldAt !== -1) {
+    const closeAt = text.indexOf(SPOILER_CLOSE, oldAt);
+    if (closeAt !== -1) {
+      text = text.slice(0, oldAt) + text.slice(closeAt + SPOILER_CLOSE.length).replace(/^\n+/, "");
+    }
+  }
+  const block = `${AUTHOR_NOTES_HEADING}\n[spoiler]\n${authorNotesBody(bbcode)}\n${SPOILER_CLOSE}`;
+  let at = text.indexOf(CREDITS_HEADING);
+  if (at === -1) {
+    // A page that carries its own Credits heading (pulled from a live page) has it in front, too.
+    const own = /^\[(?:b|size=\d)\][^\n]*\bCredits:[^\n]*$/m.exec(text);
+    at = own ? own.index : text.indexOf(SUPPORT_HEADING);
+  }
+  if (at === -1) return text.replace(/\s*$/, "") + "\n\n" + block + "\n";
+  const gap = text.slice(Math.max(0, at - 2), at) === "\n\n" || at === 0 ? "" : "\n";
+  return text.slice(0, at) + gap + block + "\n\n" + text.slice(at);
 }
 
 /**
@@ -2590,11 +3277,9 @@ function scaffoldDescription(ctx, installBlock, supportedBlock) {
     L.push("");
   }
   L.push(installBlock);
-  L.push("[b]📋 Usage Notes:[/b]");
+  L.push(USAGE_HEADING);
   L.push("[list]");
-  L.push(
-    "[*]You can open several useful files/folders/URLs using the buttons within the folder icon on the Mods toolbar.[/*]",
-  );
+  L.push(FOLDER_ICON_NOTE, ...ctx.page.usageNotes);
   L.push("[/list]");
   L.push("");
   const credits = creditsSection(ctx.page);
@@ -2647,7 +3332,60 @@ function spliceDescription(existing, installBlock, supportedBlock) {
 
 // ── per-extension build ─────────────────────────────────────────────────────
 
+/** Hand-written wording known to be wrong or outdated; the lint flags it wherever it appears. */
+const STALE_PHRASES = [
+  [/\(no subfolder\)/i, '"(no subfolder)" - the generator words this "the game folder"'],
+  [/Xbox \(Game Pass\)/i, '"Xbox (Game Pass)" - the store is listed as "Xbox"'],
+  [/Game Pass version is supported/i, 'credit says "Game Pass version" - now "Xbox version"'],
+  [/\bXXX\b/, "unfilled XXX placeholder"],
+];
+
+/**
+ * Read-only checks on a page as it sits on disk, which is what a push sends. Returns one
+ * `{ kind, detail }` per finding. Kinds: store (a listed store the game is not discovered by),
+ * bare (a bullet with no destination: "are supported." / "are recognised by"), duplicate (a bullet listed twice), long-list (more than
+ * DESCRIPTION_LIST_CAP names in one list), name-repeat (a mod type name quoting its own
+ * trigger extension), stale (STALE_PHRASES).
+ */
+function lintDescription(text, ctx) {
+  const findings = [];
+  const add = (kind, detail) => findings.push({ kind, detail });
+  const items = [...text.matchAll(/\[\*\]([\s\S]*?)\[\/\*\]/g)].map((m) => m[1]);
+  const headAt = text.indexOf(SUPPORTED_HEADING);
+  const supportedList =
+    headAt === -1 ? null : /\[list\]([\s\S]*?)\[\/list\]/.exec(text.slice(headAt));
+  if (supportedList && ctx.discovery) {
+    const labels = [...supportedList[1].matchAll(/\[\*\](.*?)\[\/\*\]/g)].map((m) => m[1].trim());
+    for (const [name, label] of STORE_IDS) {
+      if (REGISTRY_STORES.has(name) || !labels.includes(label)) continue;
+      const value = ctx.table.get(name);
+      if (!isRealValue(value) || !ctx.discovery.has(String(value))) {
+        add("store", `lists ${label}, but ${name} is not one of the ids the game is discovered by`);
+      }
+    }
+  }
+  const seen = new Set();
+  for (const item of items) {
+    const short = item.length > 90 ? `${item.slice(0, 87)}...` : item;
+    if (seen.has(item)) add("duplicate", short);
+    seen.add(item);
+    if (/ are (supported\.|recognised by )/.test(item)) add("bare", short);
+    for (const m of item.matchAll(QUOTED_LIST)) {
+      const count = (m[0].match(/"[^"]*"/g) || []).length;
+      if (count > DESCRIPTION_LIST_CAP) add("long-list", `${count} names: ${short}`);
+    }
+    const lead = /^(.*?) mods with /.exec(item);
+    const exts = lead ? lead[1].match(/\.\w+\b/g) || [] : [];
+    if (exts.some((ext) => item.toLowerCase().includes(`"${ext.toLowerCase()}"`))) {
+      add("name-repeat", short);
+    }
+  }
+  for (const [re, why] of STALE_PHRASES) if (re.test(text)) add("stale", why);
+  return findings;
+}
+
 function buildNotes(dirName, src) {
+  documentingTemplate = dirName.startsWith("template-");
   const table = buildSymbolTable(src);
   const header = parseHeader(src);
   const engine = detectEngine(dirName);
@@ -2675,7 +3413,8 @@ function buildNotes(dirName, src) {
   const targetById = new Map();
   for (const mt of modTypes) {
     if (mt.id && mt.targetPath && !String(mt.targetPath).includes("${")) {
-      targetById.set(mt.id, String(mt.targetPath).replace(/^\{gamePath\}[\\/]?/, ""));
+      // A bare `{gamePath}` is the game folder itself, "." to fmtTarget.
+      targetById.set(mt.id, String(mt.targetPath).replace(/^\{gamePath\}[\\/]?/, "") || ".");
     }
   }
 
@@ -2699,48 +3438,68 @@ function buildNotes(dirName, src) {
             ? p.engine.includes(engine)
             : p.engine === engine),
     );
-    let section = null;
+    // A loader's own installers stay registered when the extension does not offer that loader,
+    // but describing them would tell users about a loader they never get.
+    if (block && block.loader && !vars.LOADERS.includes(block.loader)) continue;
+    // A block returns one section, or an array when one installer covers several mod types.
+    let parts = [];
     if (block) {
       const built = block.build(vars);
       if (built) {
-        section = built;
+        parts = Array.isArray(built) ? built : [built];
         tier1++;
       } else {
         // The block matched but a constant it needs did not resolve.
         dropped.push(inst.testFn);
       }
     }
-    if (!section) {
+    if (!parts.length) {
       // Tier 2 - derive what we can from the test function itself.
       const body = inst.testFn ? sliceFunction(src, inst.testFn) : null;
       const triggers = body ? deriveTrigger(body, src, table) : [];
       const name = prettifyId(inst.id, dirName);
-      section = {
-        title: name,
-        lead: triggers.length
-          ? `Recognised when the archive contains ${joinAnd(triggers)}.`
-          : `Handled by the \`${inst.testFn || inst.id}\` installer. ` +
-            `Inspect the extension source for the exact archive layout it expects.`,
-        rules: [],
-        pitfalls: [],
-      };
+      parts = [
+        {
+          title: name,
+          lead: triggers.length
+            ? `Recognised when the archive contains ${joinAnd(triggers)}.`
+            : `Handled by the \`${inst.testFn || inst.id}\` installer. ` +
+              `Inspect the extension source for the exact archive layout it expects.`,
+          rules: [],
+          pitfalls: [],
+        },
+      ];
       tier2++;
       if (inst.testFn && !block) unknownFns.push(inst.testFn);
     }
-    section.target = section.installsTo || targetById.get(inst.id) || null;
-    section.quickTrigger = quickTrigger(section);
     // The registered mod type this installer feeds, for the description bullets. An entry whose
     // name fell back to its own id has no real display name, so it does not count.
-    const modType = modTypes.find((m) => m.id && m.id === inst.id);
-    section.modTypeName =
-      modType && modType.name && modType.name !== modType.id ? modType.name : null;
-    const label = Object.hasOwn(MOD_TYPE_LABELS, inst.id) ? MOD_TYPE_LABELS[inst.id] : null;
-    if (typeof label === "string") section.modTypeName = label;
-    else if (label) section.toolName = label.tool;
-    // A mod type named for the tool itself ("Atlan Mod Loader") holds the tool, not mods for it.
-    else if (section.modTypeName && TOOL_TYPE_NAME.test(section.modTypeName))
-      section.toolName = section.modTypeName;
-    sections.push(section);
+    // Most installers share their mod type's id; one that does not names its type in the
+    // install function's `setmodtype` instruction instead.
+    const typeId = modTypes.some((m) => m.id === inst.id)
+      ? inst.id
+      : setModTypeOf(src, inst.installFn, table) || inst.id;
+    const modType = modTypes.find((m) => m.id && m.id === typeId);
+    const labelKey = Object.hasOwn(MOD_TYPE_LABELS, inst.id) ? inst.id : typeId;
+    const label = Object.hasOwn(MOD_TYPE_LABELS, labelKey) ? MOD_TYPE_LABELS[labelKey] : null;
+    for (const section of parts) {
+      const rawTarget = section.installsTo || targetById.get(typeId) || null;
+      section.target = section.targetIsProse ? rawTarget : cleanTarget(rawTarget, src);
+      // The Xbox build keeps its binaries in WinGDK; getExecutable switches the folder at runtime.
+      section.xboxWinGdk =
+        vars.XBOX_WINGDK &&
+        !!section.target &&
+        /(^|[\\/])Binaries[\\/]Win64([\\/]|$)/i.test(String(section.target));
+      section.quickTrigger = quickTrigger(section);
+      section.modTypeName =
+        modType && modType.name && modType.name !== modType.id ? modType.name : null;
+      if (typeof label === "string") section.modTypeName = label;
+      else if (label) section.toolName = label.tool;
+      // A mod type named for the tool itself ("Atlan Mod Loader") holds the tool, not mods for it.
+      else if (section.modTypeName && TOOL_TYPE_NAME.test(section.modTypeName))
+        section.toolName = section.modTypeName;
+      sections.push(section);
+    }
   }
 
   // What the page says beyond the two generated lists: warnings and credits.
@@ -2751,11 +3510,13 @@ function buildNotes(dirName, src) {
       engine === "ue4-5" && installers.some((i) => i.testFn === "testLogic")
         ? vars.LOGICMODS_FOLDER || "LogicMods"
         : null,
+    usageNotes: isTemplate ? [] : usageNotesFor(src, engine, installers),
     credits: isTemplate ? [] : creditsFor(gameId, engine),
   };
 
   const title = `Notes for Mod Authors - ${gameName}`;
-  const ctx = { title, gameName, sections, allFomodGuarded, table, page };
+  const discovery = discoveryIds(src, table);
+  const ctx = { title, gameName, sections, allFomodGuarded, table, page, discovery };
   const installBlock = renderDescription(ctx);
   const supportedBlock = renderSupportedVersions(ctx);
   return {
@@ -2764,6 +3525,7 @@ function buildNotes(dirName, src) {
     description: installBlock,
     supported: supportedBlock,
     page,
+    ctx,
     scaffold: () => scaffoldDescription(ctx, installBlock, supportedBlock),
     tier1,
     tier2,
@@ -2810,8 +3572,10 @@ const cliFlags = new Set(rawArgs.filter((a) => a.startsWith("--")));
 const gameArgs = rawArgs.filter((a) => !a.startsWith("--"));
 const doJson = cliFlags.has("--json");
 const doTemplates = cliFlags.has("--templates");
-const doDescription = cliFlags.has("--description");
-const doCheck = cliFlags.has("--check");
+// --lint judges the description pages on disk and writes nothing, so it implies both of these.
+const doLint = cliFlags.has("--lint");
+const doDescription = cliFlags.has("--description") || doLint;
+const doCheck = cliFlags.has("--check") || doLint;
 const jsonResults = [];
 
 function emit(line = "") {
@@ -2864,9 +3628,11 @@ let created = 0,
   tier2Total = 0,
   droppedTotal = 0;
 const tier2Heavy = [];
-const blockTotals = { symlinks: 0, logicmods: 0, credits: 0, creditLines: 0 };
+const blockTotals = { symlinks: 0, logicmods: 0, usageNotes: 0, credits: 0, creditLines: 0 };
 const unresolvedSymlinks = [];
 const pageNotes = [];
+const lintTotals = {};
+let lintPages = 0;
 
 for (const dir of extDirs) {
   const indexPath = path.join(ROOT, dir, "index.js");
@@ -2889,7 +3655,33 @@ for (const dir of extDirs) {
       tier2,
       unknownFns,
       dropped,
+      ctx,
     } = buildNotes(dir, src);
+    if (doLint) {
+      // Hand-kept variants (DESCRIPTION_custom.bbcode) are pushed too, so they are judged as well.
+      const pages = fs
+        .readdirSync(path.join(ROOT, dir))
+        .filter((f) => /^DESCRIPTION.*\.bbcode$/i.test(f))
+        .sort();
+      if (!pages.length) {
+        emit(`  LINT  ${dir}: missing - no ${DESCRIPTION_FILE}`);
+        lintTotals.missing = (lintTotals.missing || 0) + 1;
+      }
+      const found = [];
+      for (const file of pages) {
+        const text = fs.readFileSync(path.join(ROOT, dir, file), "utf8");
+        for (const f of lintDescription(text, ctx)) {
+          const where = file === DESCRIPTION_FILE ? "" : ` [${file}]`;
+          emit(`  LINT  ${dir}${where}: ${f.kind} - ${f.detail}`);
+          lintTotals[f.kind] = (lintTotals[f.kind] || 0) + 1;
+          found.push({ file, ...f });
+        }
+      }
+      if (found.length) lintPages++;
+      created++;
+      jsonResults.push({ id: dir, ok: true, lint: found });
+      continue;
+    }
     if (doDescription) {
       // The page is hand-written around these lists, so an existing file is spliced,
       // never rewritten. Only a brand new page gets the full scaffold.
@@ -2907,7 +3699,10 @@ for (const dir of extDirs) {
           continue;
         }
         const ensured = ensureBlocks(spliced, page);
-        const merged = ensured.text;
+        // Template pages are scaffolds, not published pages: no notes section.
+        const merged = dir.startsWith("template-")
+          ? ensured.text
+          : applyAuthorNotes(ensured.text, bbcode);
         blocks = ensured.added;
         for (const k of Object.keys(blockTotals)) blockTotals[k] += blocks[k];
         for (const n of ensured.notes) pageNotes.push(`${dir}: ${n}`);
@@ -2928,7 +3723,10 @@ for (const dir of extDirs) {
         jsonResults.push({ id: dir, ok: false, error: "drift", description: true });
         continue;
       } else {
-        writeFileAtomic(descPath, scaffold());
+        writeFileAtomic(
+          descPath,
+          dir.startsWith("template-") ? scaffold() : applyAuthorNotes(scaffold(), bbcode),
+        );
         emit(
           `  NEW   ${dir} (${DESCRIPTION_FILE} scaffolded - fill in the loader and usage lines)`,
         );
@@ -2962,6 +3760,29 @@ for (const dir of extDirs) {
 }
 
 emit("");
+if (doLint) {
+  const kinds = Object.entries(lintTotals)
+    .map(([k, n]) => `${k} ${n}`)
+    .join(", ");
+  emit(`Done.  Linted: ${created}  With findings: ${lintPages}  Errors: ${errors}`);
+  emit(`Findings: ${kinds || "none"}`);
+  if (doJson) {
+    process.stdout.write(
+      JSON.stringify(
+        {
+          timestamp: new Date().toISOString(),
+          linted: created,
+          findings: lintTotals,
+          results: jsonResults,
+        },
+        null,
+        2,
+      ) + "\n",
+    );
+  }
+  // Findings are for a person to judge, not a gate.
+  process.exit(errors > 0 ? 1 : 0);
+}
 const doneNote = doCheck ? `Drifted: ${drifted}` : `Written: ${created}`;
 emit(`Done.  ${doneNote}  Skipped: ${skipped}  Errors: ${errors}`);
 if (!doDescription) emit(`Sections: ${tier1Total} documented, ${tier2Total} auto-derived`);
@@ -2978,7 +3799,7 @@ if (doDescription) {
   const verb = doCheck ? "to add" : "added";
   emit(
     `Blocks ${verb}: symlink warning ${blockTotals.symlinks}, LogicMod-authors note ${blockTotals.logicmods}, ` +
-      `Credits section ${blockTotals.credits}, credit lines ${blockTotals.creditLines}`,
+      `usage notes ${blockTotals.usageNotes}, Credits section ${blockTotals.credits}, credit lines ${blockTotals.creditLines}`,
   );
   if (unresolvedSymlinks.length) {
     emit(`Symlink support unresolved, no warning written (${unresolvedSymlinks.length}):`);

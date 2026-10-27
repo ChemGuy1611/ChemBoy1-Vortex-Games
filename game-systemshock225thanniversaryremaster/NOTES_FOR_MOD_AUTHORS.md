@@ -8,29 +8,31 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Kpfmod | a file with one of these extensions: `.kpf` | `mods` |
-| Convertedlegacy | a file or folder named one of: `obj`, `mesh`, `bitmap`, `motions`, `sq_scripts`, `sdn2`, `strings`, `iface`, `intrface`, `misdml` or `snd` and a file with one of these extensions: `.dml`, `.gam` or `.mis` | `mods` |
-| Rootfolder | a file or folder named one of: `mods` or `cutscenes` | - |
-| Root / Game Folder Mods | a `mods` folder | the game folder itself (no subfolder) |
+| Kpfmod | a `.kpf` file | `mods` |
+| Convertedlegacy | a `obj`, `mesh`, `bitmap`, `motions`, `sq_scripts`, `sdn2`, `strings`, `iface`, `intrface`, `misdml` or `snd` folder and a `.dml`, `.gam` or `.mis` file | `mods` |
+| Rootfolder | a `mods` or `cutscenes` folder | the game folder |
+| Root / Game Folder Mods | a `mods` folder | the game folder |
 | Systemshock2 Classicmod | - | - |
 
 Paths are relative to the game's install folder.
 
 ## Kpfmod
 
-Recognised when the archive contains a file with one of these extensions: `.kpf`.
+Recognised when the archive contains a `.kpf` file.
 
 Installs to: `mods`
 
 ## Convertedlegacy
 
-Recognised when the archive contains a file or folder named one of: `obj`, `mesh`, `bitmap`, `motions`, `sq_scripts`, `sdn2`, `strings`, `iface`, `intrface`, `misdml` or `snd` and a file with one of these extensions: `.dml`, `.gam` or `.mis`.
+Recognised when the archive contains a `obj`, `mesh`, `bitmap`, `motions`, `sq_scripts`, `sdn2`, `strings`, `iface`, `intrface`, `misdml` or `snd` folder and a `.dml`, `.gam` or `.mis` file.
 
 Installs to: `mods`
 
 ## Rootfolder
 
-Recognised when the archive contains a file or folder named one of: `mods` or `cutscenes`.
+Recognised when the archive contains a `mods` or `cutscenes` folder.
+
+Installs to: the game folder
 
 ## Root / Game Folder Mods
 
@@ -46,7 +48,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `mods` or `cutscenes` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 

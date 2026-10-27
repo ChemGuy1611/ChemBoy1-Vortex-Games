@@ -8,8 +8,8 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Root / Game Folder Mods | a `System` folder | the game folder itself (no subfolder) |
-| Datamodfolder | a file or folder named one of: `AcquiredDataText`, `Bitmaps`, `Conversations`, `Flags`, `LipsincData`, `Maps`, `MatLib`, `SkeletalAnimations`, `SkeletalMeshes`, `Sounds`, `StaticMeshes`, `TagDatabase`, `Textures`, `UTX` or `VideoTextures` | `content\DX2` |
+| Root / Game Folder Mods | a `System` folder | the game folder |
+| Datamodfolder | a `AcquiredDataText`, `Bitmaps`, `Conversations`, `Flags`, `LipsincData`, `Maps`, `MatLib`, `SkeletalAnimations`, `SkeletalMeshes`, `Sounds`, `StaticMeshes`, `TagDatabase`, `Textures`, `UTX` or `VideoTextures` folder | `content\DX2` |
 | Binaries | - | `System` |
 
 Paths are relative to the game's install folder.
@@ -28,7 +28,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `System` or `content` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -36,7 +36,7 @@ Installs to: the game folder itself (no subfolder)
 
 ## Datamodfolder
 
-Recognised when the archive contains a file or folder named one of: `AcquiredDataText`, `Bitmaps`, `Conversations`, `Flags`, `LipsincData`, `Maps`, `MatLib`, `SkeletalAnimations`, `SkeletalMeshes`, `Sounds`, `StaticMeshes`, `TagDatabase`, `Textures`, `UTX` or `VideoTextures`.
+Recognised when the archive contains a `AcquiredDataText`, `Bitmaps`, `Conversations`, `Flags`, `LipsincData`, `Maps`, `MatLib`, `SkeletalAnimations`, `SkeletalMeshes`, `Sounds`, `StaticMeshes`, `TagDatabase`, `Textures`, `UTX` or `VideoTextures` folder.
 
 Installs to: `content\DX2`
 

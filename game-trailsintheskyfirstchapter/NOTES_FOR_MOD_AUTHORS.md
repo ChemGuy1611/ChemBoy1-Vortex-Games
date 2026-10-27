@@ -8,14 +8,14 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Pac | a file with one of these extensions: `.pac` | `pac\steam` |
-| Root / Game Folder Mods | a `asset` folder | the game folder itself (no subfolder) |
+| Pac | a `.pac` file | `pac\steam` |
+| Root / Game Folder Mods | a `asset` folder | the game folder |
 
 Paths are relative to the game's install folder.
 
 ## Pac
 
-Recognised when the archive contains a file with one of these extensions: `.pac`.
+Recognised when the archive contains a `.pac` file.
 
 Installs to: `pac\steam`
 
@@ -33,7 +33,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `asset`, `pac`, `asset_de`, `asset_en`, `asset_es`, `asset_fr`, `bgm1`, `bgm2`, `bgm3`, `layout`, `movie`, `movie_en`, `scene`, `script`, `script_de`, `script_en`, `script_es`, `script_fr`, `se`, `ssytem`, `table`, `table_de`, `table_en`, `table_es`, `table_fr`, `vfx`, `voice` or `voice_en` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 

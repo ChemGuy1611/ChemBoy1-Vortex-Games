@@ -8,19 +8,21 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Fluffy Mod Manager (tool) | a `modmanager.exe` file | - |
-| Psarc | a file with the `.psarc` extension | - |
+| Fluffy Mod Manager (tool) | a `modmanager.exe` file | the game folder |
+| Psarc | a `.psarc` file | the game folder |
 | Fluffy-Format Mods | anything not matched above | - |
 
 Paths are relative to the game's install folder.
 
 ## Fluffy Mod Manager (tool)
 
-This installer handles Fluffy Mod Manager itself, not mods for it. It exists so users can install Fluffy Mod Manager through Vortex, and mod authors normally never package this.
+This installer handles Fluffy Mod Manager, not mods for it. It exists so users can install Fluffy Mod Manager through Vortex, and mod authors normally never package this.
 
 **Requirements:**
 
 - Recognised by a file named `modmanager.exe` in the archive.
+
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -28,7 +30,9 @@ This installer handles Fluffy Mod Manager itself, not mods for it. It exists so 
 
 ## Psarc
 
-Recognised when the archive contains a file with the `.psarc` extension.
+Recognised when the archive contains a `.psarc` file.
+
+Installs to: the game folder
 
 ## Fluffy-Format Mods
 

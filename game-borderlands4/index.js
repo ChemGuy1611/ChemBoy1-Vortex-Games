@@ -2,8 +2,8 @@
 Name: Borderlands 4 Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-16
+Version: 1.0.3
+Date: 2026-10-25
 Notes:
 - Pak load order is off by design: the game loads paks from the Paks root (PAKMOD_LOADORDER = false).
 - Python SDK (oak2-sdk) and SDK mods are supported on top of the template; the SDK stays optional.

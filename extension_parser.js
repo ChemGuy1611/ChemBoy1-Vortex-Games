@@ -87,40 +87,15 @@ function buildSymbolTable(src) {
     if (!d.top && (topNames.has(d.name) || (d.owner && topNames.has(d.owner)))) raw.splice(k, 1);
   }
 
-  // Harvest guarded reassignments, e.g. `let X = 'a'; if (FLAG) { X = 'b'; }`. The
-  // declaration on its own is the wrong answer whenever the toggle that overrides it is on,
-  // which is what made both Godot extensions report the wrong loader file.
-  //
-  // A reassignment is taken only when its branch is provably live: either there is no
-  // enclosing block at all, or the block is an `if` on a discovered boolean flag (optionally
-  // negated) whose value selects it. Every other shape - a string comparison like
-  // `if (BEPINEX_BUILD === 'mono')`, a compound condition, a function body - is left alone.
-  // That conservative default matters: those shapes are the common case across the repo, and
-  // taking a dead branch would silently rewrite a value that is correct today.
-  // Only names declared at top level are eligible (topLevelDeclared, built above): without
-  // this filter a local assignment could overwrite a module constant that shares its name.
+  // Guarded reassignments (see activeReassignments) replace the declared value. Only names
+  // declared at top level are eligible (topLevelDeclared, built above): without this filter a
+  // local assignment could overwrite a module constant that shares its name.
   const declaredNames = new Set(raw.map((d) => d.name).filter((n) => topLevelDeclared.has(n)));
-  const flagValues = new Map(discoverFlags(src).map((f) => [f.name, f.value === "true"]));
-  const reassignRe = /^[ \t]*([A-Za-z_$]\w*)\s*=\s*([^=][^;\n]*?)\s*;[ \t]*$/gm;
-  let reM;
-  while ((reM = reassignRe.exec(stripped)) !== null) {
-    const name = reM[1];
+  for (const [name, value] of activeReassignments(src)) {
     if (!declaredNames.has(name)) continue;
-    const head = findInnermostBlockHead(stripped, reM.index);
-    let active;
-    if (head === null) {
-      active = true; // top level: last write wins
-    } else {
-      const pos = head.match(/^if\s*\(\s*([A-Za-z_$]\w*)\s*(?:===\s*true\s*)?\)\s*\{$/);
-      const neg = head.match(/^if\s*\(\s*!\s*([A-Za-z_$]\w*)\s*\)\s*\{$/);
-      if (pos && flagValues.has(pos[1])) active = flagValues.get(pos[1]);
-      else if (neg && flagValues.has(neg[1])) active = !flagValues.get(neg[1]);
-      else active = false;
-    }
-    if (!active) continue;
     for (let k = raw.length - 1; k >= 0; k--) {
       if (raw[k].name === name) {
-        raw[k].rawValue = reM[2].trim();
+        raw[k].rawValue = value;
         break;
       }
     }
@@ -230,6 +205,190 @@ function buildSymbolTable(src) {
   }
 
   return table;
+}
+
+/**
+ * Guarded reassignments of module-level names, e.g. `let X = 'a'; if (FLAG) { X = 'b'; }`, as a
+ * Map of name -> raw value expression, in source order so the last live write wins. The
+ * declaration on its own is the wrong answer whenever the branch that overrides it is live,
+ * which is what made both Godot extensions report the wrong loader file, and every mono Unity
+ * game report the IL2CPP assembly file.
+ *
+ * A reassignment is taken only when its branch is provably live: either there is no enclosing
+ * block at all, or the block is an `if (FLAG)` / `if (!FLAG)` on a discovered boolean flag whose
+ * value selects it, or it is one arm of a top-level `if / else if / else` chain whose every
+ * condition evaluateCondition can decide. Every other shape - a function body, a loop, a
+ * condition on a property or a call - is left alone. That conservative default matters:
+ * taking a dead branch would silently rewrite a value that is correct today.
+ *
+ * Exported because arrays never enter the symbol table, so callers that read an array
+ * declaration straight from source need these overrides too.
+ */
+function activeReassignments(src) {
+  const stripped = src.replace(/(?<!\/)\/\*[\s\S]*?\*\//g, "");
+  const flagValues = new Map(discoverFlags(src).map((f) => [f.name, f.value === "true"]));
+
+  // Module-level names, and the string literal each was declared with.
+  const topLevelDeclared = new Set();
+  const declaredLiterals = new Map();
+  const declRe =
+    /^[ \t]*(?:const|let)\s+([A-Za-z_$]\w*)\s*=\s*(?:(["'])([^"'\n]*)\2\s*;?[ \t]*(?:\/\/.*)?$)?/gm;
+  let dm;
+  while ((dm = declRe.exec(stripped)) !== null) {
+    if (findInnermostBlockHead(stripped, dm.index) !== null) continue;
+    topLevelDeclared.add(dm[1]);
+    if (dm[2] !== undefined) declaredLiterals.set(dm[1], dm[3]);
+  }
+  // Properties of top-level object literals, so a condition can test `UNREALDATA.loadOrder`:
+  // "OBJ.prop" -> the raw value expression it was written with.
+  const aliases = new Map();
+  const objRe = /^(?:const|let)\s+([A-Za-z_$]\w*)\s*=\s*\{/gm;
+  let om;
+  while ((om = objRe.exec(stripped)) !== null) {
+    const open = om.index + om[0].length - 1;
+    const close = scanToMatchingClose(stripped, open, "{", "}");
+    if (close === -1) continue;
+    const body = stripped.slice(open + 1, close).replace(/(?<![:"'])\/\/.*$/gm, "");
+    for (const prop of splitAtTopLevelCommas(body)) {
+      const pm = prop.trim().match(/^(\w+)\s*:\s*(.+?)\s*$/s);
+      if (pm) aliases.set(`${om[1]}.${pm[1]}`, pm[2]);
+    }
+  }
+
+  const reassignRe = /^[ \t]*([A-Za-z_$]\w*)\s*=\s*([^=][^;\n]*?)\s*;[ \t]*(?:\/\/.*)?$/gm;
+  const writes = [];
+  let reM;
+  while ((reM = reassignRe.exec(stripped)) !== null) {
+    if (topLevelDeclared.has(reM[1]))
+      writes.push({ index: reM.index, name: reM[1], value: reM[2].trim() });
+  }
+  // The brace-less one-line form, `if (!PAKMOD_LOADORDER) PAKMOD_PATH = ...; //comment`.
+  const inlineRe =
+    /^[ \t]*if\s*\((.*)\)\s*([A-Za-z_$]\w*)\s*=\s*([^=][^;\n]*?)\s*;[ \t]*(?:\/\/.*)?$/gm;
+  while ((reM = inlineRe.exec(stripped)) !== null) {
+    if (topLevelDeclared.has(reM[2]))
+      writes.push({ index: reM.index, name: reM[2], value: reM[3].trim(), cond: reM[1] });
+  }
+  writes.sort((a, b) => a.index - b.index);
+
+  // Whether a write runs: true, false, or null when its branch cannot be decided.
+  const writeState = (w, literals) => {
+    const open = findInnermostBlockOpen(stripped, w.index);
+    if (w.cond !== undefined) {
+      // Only a top-level one-line guard is evaluated; inside a block it is runtime code.
+      return open === -1 ? evaluateCondition(w.cond, flagValues, literals, aliases) : null;
+    }
+    if (open === -1) return true; // top level: last write wins
+    const lineStart = stripped.lastIndexOf("\n", open);
+    const head = stripped.substring(lineStart + 1, open + 1).trim();
+    const pos = head.match(IF_FLAG_RE);
+    const neg = head.match(IF_NOT_FLAG_RE);
+    if (pos && flagValues.has(pos[1])) return flagValues.get(pos[1]);
+    if (neg && flagValues.has(neg[1])) return !flagValues.get(neg[1]);
+    const arm = chainArmState(stripped, open, flagValues, literals, aliases);
+    if (!arm || findInnermostBlockOpen(stripped, arm.first) !== -1) return null;
+    return arm.active;
+  };
+
+  // A condition may test a name that is itself reassigned (`BEPINEX_BUILD = "il2cpp"` inside a
+  // dead `if (isXna)` branch). Such a name counts as a known literal only once every write to it
+  // is decided; its value is then the last live literal write, or the declaration. Repeat until
+  // no more names become known.
+  const written = new Set(writes.map((w) => w.name));
+  let literals = new Map([...declaredLiterals].filter(([n]) => !written.has(n)));
+  for (let pass = 0; pass < 5; pass++) {
+    const next = new Map([...declaredLiterals].filter(([n]) => !written.has(n)));
+    for (const name of written) {
+      const own = writes.filter((w) => w.name === name);
+      const states = own.map((w) => writeState(w, literals));
+      if (states.includes(null)) continue;
+      const live = own.filter((_, i) => states[i]);
+      if (!live.length) {
+        if (declaredLiterals.has(name)) next.set(name, declaredLiterals.get(name));
+        continue;
+      }
+      const lm = live[live.length - 1].value.match(/^(["'])([^"']*)\1$/);
+      if (lm) next.set(name, lm[2]);
+    }
+    const grew = next.size > literals.size;
+    literals = next;
+    if (!grew) break;
+  }
+
+  const out = new Map();
+  for (const w of writes) {
+    if (writeState(w, literals) !== true) continue;
+    out.delete(w.name); // re-insert so iteration order follows the last live write
+    out.set(w.name, w.value);
+  }
+  return out;
+}
+
+/**
+ * Value of an `if` condition made of `FLAG`, `!FLAG`, `FLAG === true|false` and
+ * `NAME === "literal"` / `NAME !== "literal"` terms joined by `&&`, or null when any term is
+ * some other shape or names a value that is not known. A name may be an `OBJ.prop` listed in
+ * `aliases` (object literal property -> raw value), which stands for the flag, literal or
+ * constant name the property was written with.
+ */
+function evaluateCondition(cond, flagValues, literals, aliases = new Map()) {
+  const flagOf = (name) => {
+    const raw = aliases.has(name) ? aliases.get(name) : name;
+    if (raw === "true" || raw === "false") return raw === "true";
+    return flagValues.has(raw) ? flagValues.get(raw) : null;
+  };
+  const literalOf = (name) => {
+    const raw = aliases.has(name) ? aliases.get(name) : name;
+    const q = raw.match(/^(["'])([^"']*)\1$/);
+    if (q) return q[2];
+    return literals.has(raw) ? literals.get(raw) : null;
+  };
+  const NAME = String.raw`[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)?`;
+  let result = true;
+  for (const term of cond.split("&&").map((t) => t.trim())) {
+    let m;
+    let value;
+    if ((m = term.match(new RegExp(`^(!?)\\s*(${NAME})$`)))) {
+      const f = flagOf(m[2]);
+      if (f === null) return null;
+      value = f !== (m[1] === "!");
+    } else if ((m = term.match(new RegExp(`^(${NAME})\\s*(===|!==)\\s*(true|false)$`)))) {
+      const f = flagOf(m[1]);
+      if (f === null) return null;
+      value = (f === (m[3] === "true")) === (m[2] === "===");
+    } else if ((m = term.match(new RegExp(`^(${NAME})\\s*(===|!==)\\s*(["'])([^"']*)\\3$`)))) {
+      const l = literalOf(m[1]);
+      if (l === null) return null;
+      value = (l === m[4]) === (m[2] === "===");
+    } else {
+      return null;
+    }
+    if (!value) result = false;
+  }
+  return result;
+}
+
+/**
+ * State of the `if` / `else if` / `else` arm whose block opens at `open`: { active, taken, first }
+ * where `active` says this arm runs, `taken` says this arm or an earlier one in the chain runs,
+ * and `first` is the `{` of the chain's opening `if`. Null when the block is not an arm of such a
+ * chain or any condition up to it cannot be evaluated.
+ */
+function chainArmState(stripped, open, flagValues, literals, aliases) {
+  const lineStart = stripped.lastIndexOf("\n", open);
+  const head = stripped.substring(lineStart + 1, open + 1).trim();
+  const ifM = head.match(/^(\}\s*else\s+)?if\s*\((.*)\)\s*\{$/);
+  const isElse = /^\}\s*else\s*\{$/.test(head);
+  if (!ifM && !isElse) return null;
+  const own = ifM ? evaluateCondition(ifM[2], flagValues, literals, aliases) : true;
+  if (own === null) return null;
+  if (ifM && !ifM[1]) return { active: own, taken: own, first: open };
+  // A chained arm's line starts with the `}` that closes the previous arm.
+  const prevOpen = scanToMatchingOpen(stripped, stripped.indexOf("}", lineStart + 1));
+  if (prevOpen === -1) return null;
+  const prev = chainArmState(stripped, prevOpen, flagValues, literals, aliases);
+  if (!prev) return null;
+  return { active: !prev.taken && own, taken: prev.taken || own, first: prev.first };
 }
 
 /**
@@ -539,7 +698,7 @@ function resolveValue(expr, table) {
  * Like resolveValue but falls back to a direct regex search in src when the
  * symbol table doesn't have the variable (handles template literals too).
  */
-function resolveWithFallback(expr, table, src) {
+function resolveWithFallback(expr, table, src, seen = new Set()) {
   if (!expr) return null;
   const e = expr.trim();
   // Handle path.join with fallback-aware arg resolution (dotAll -- see resolveValue)
@@ -577,6 +736,18 @@ function resolveWithFallback(expr, table, src) {
       const expr = src.slice(pjStart.index + pjStart[0].indexOf("path."), parenClose + 1);
       return resolveWithFallback(expr, table, src);
     }
+  }
+  // A bare alias of another constant the table could not resolve either
+  // (`const CANVAS_PATH = DOCS_PATH;`, DOCS_PATH being a path.join): follow it, once per
+  // name so an alias cycle cannot loop. `const` only: a `let` alias is a default that the
+  // store branches reassign at runtime (`let CONFIG_PATH = CONFIG_PATH_DEFAULT;` becomes the
+  // Xbox folder on Xbox), so its first value is not the folder every install uses.
+  const alias = src.match(
+    new RegExp(`const\\s+${e}\\s*=\\s*([A-Za-z_$][\\w$]*)\\s*;?\\s*(?://[^\\n]*)?$`, "m"),
+  );
+  if (alias && !seen.has(e)) {
+    const followed = resolveWithFallback(alias[1], table, src, new Set([...seen, e]));
+    if (followed != null && followed !== alias[1]) return followed;
   }
   return resolved;
 }
@@ -686,8 +857,45 @@ function extractModTypes(src, table) {
   const bracketClose = scanToMatchingClose(src, bracketOpen, "[", "]");
   if (bracketClose === -1) return results;
 
-  // Split into individual object entries
-  const block = src.slice(bracketOpen + 1, bracketClose);
+  const addEntries = (block) => {
+    for (const entry of splitObjectEntries(block)) {
+      const idRaw = extractField(entry, "id");
+      const nameRaw = extractField(entry, "name");
+      const priorityRaw = extractField(entry, "priority");
+      const targetPathRaw = extractFieldRaw(entry, "targetPath");
+      results.push({
+        id: resolveWithFallback(idRaw, table, src),
+        name: resolveWithFallback(nameRaw, table, src),
+        priority: resolveValue(priorityRaw, table),
+        targetPath: resolveWithFallback(targetPathRaw, table, src),
+      });
+    }
+  };
+
+  addEntries(src.slice(bracketOpen + 1, bracketClose));
+
+  // Also capture spec.modTypes.push(...) entries (conditional/guarded additions). One call can
+  // push several objects - spec.modTypes.push({ ... }, { ... }) - so every top-level object in
+  // the argument list counts, not just the first.
+  const stripped = src.replace(/(?<!\/)\/\*[\s\S]*?\*\//g, "");
+  const pushRe = /spec\.modTypes\.push\(\s*\{/g;
+  let pm;
+  while ((pm = pushRe.exec(stripped)) !== null) {
+    const lineStart = stripped.lastIndexOf("\n", pm.index);
+    const linePrefix = stripped.substring(lineStart + 1, pm.index).trim();
+    if (linePrefix.startsWith("//")) continue;
+    if (!isGuardChainActive(stripped, pm.index, table)) continue;
+    const parenOpen = stripped.indexOf("(", pm.index);
+    const parenClose = scanToMatchingClose(stripped, parenOpen, "(", ")");
+    if (parenClose === -1) continue;
+    addEntries(stripped.slice(parenOpen + 1, parenClose));
+  }
+
+  return results;
+}
+
+/** The bodies of the top-level `{...}` objects in an array or argument list, braces excluded. */
+function splitObjectEntries(block) {
   const entries = [];
   let depth = 0;
   let current = "";
@@ -709,55 +917,7 @@ function extractModTypes(src, table) {
     }
     if (depth > 0) current += ch;
   }
-
-  for (const entry of entries) {
-    const idRaw = extractField(entry, "id");
-    const nameRaw = extractField(entry, "name");
-    const priorityRaw = extractField(entry, "priority");
-    const targetPathRaw = extractFieldRaw(entry, "targetPath");
-
-    results.push({
-      id: resolveWithFallback(idRaw, table, src),
-      name: resolveWithFallback(nameRaw, table, src),
-      priority: resolveValue(priorityRaw, table),
-      targetPath: resolveWithFallback(targetPathRaw, table, src),
-    });
-  }
-
-  // Also capture spec.modTypes.push({...}) entries (conditional/guarded additions)
-  const stripped = src.replace(/(?<!\/)\/\*[\s\S]*?\*\//g, "");
-  const pushRe = /spec\.modTypes\.push\(\s*\{/g;
-  let pm;
-  while ((pm = pushRe.exec(stripped)) !== null) {
-    const lineStart = stripped.lastIndexOf("\n", pm.index);
-    const linePrefix = stripped.substring(lineStart + 1, pm.index).trim();
-    if (linePrefix.startsWith("//")) continue;
-    if (!isGuardChainActive(stripped, pm.index, table)) continue;
-    let depth = 1;
-    let i = pm.index + pm[0].length;
-    let entry = "";
-    while (i < stripped.length && depth > 0) {
-      const ch = stripped[i];
-      if (ch === "{") depth++;
-      else if (ch === "}") {
-        if (--depth === 0) break;
-      }
-      entry += ch;
-      i++;
-    }
-    const idRaw = extractField(entry, "id");
-    const nameRaw = extractField(entry, "name");
-    const priorityRaw = extractField(entry, "priority");
-    const targetPathRaw = extractFieldRaw(entry, "targetPath");
-    results.push({
-      id: resolveWithFallback(idRaw, table, src),
-      name: resolveWithFallback(nameRaw, table, src),
-      priority: resolveValue(priorityRaw, table),
-      targetPath: resolveWithFallback(targetPathRaw, table, src),
-    });
-  }
-
-  return results;
+  return entries;
 }
 
 /**
@@ -898,12 +1058,26 @@ function extractFieldRaw(objStr, fieldName) {
 }
 
 /**
+ * Name of the function a registerInstaller argument refers to, or null.
+ * Some games wrap the function in an arrow to inject the api, e.g.
+ * `(files, gameId) => testSave(context.api, files, gameId)`; the wrapped callee
+ * is the real identity.
+ */
+function calleeName(arg) {
+  const a = arg.trim();
+  if (/^[A-Za-z_$]\w*$/.test(a)) return a;
+  const arrowM = a.match(/=>\s*(?:\{\s*return\s+)?([A-Za-z_$]\w*)\s*\(/);
+  return arrowM ? arrowM[1] : null;
+}
+
+/**
  * Extract installer registrations with resolved IDs.
  *
- * Returns { id, priority, testFn, guardFlag } per registration. `testFn` is the
+ * Returns { id, priority, testFn, installFn, guardFlag } per registration. `testFn` is the
  * third argument to registerInstaller — the stable cross-extension identity of an
  * installer (e.g. `testLogic` means the same thing in every game that registers it),
- * so it is the join key for per-installer documentation. `guardFlag` is the boolean
+ * so it is the join key for per-installer documentation. `installFn` is the fourth
+ * argument, read for the mod type its instructions set. `guardFlag` is the boolean
  * feature flag wrapping the call, if any; guarded-off installers are already dropped.
  *
  * `id` and `priority` predate the extra fields and are unchanged.
@@ -932,34 +1106,26 @@ function extractInstallers(src, table) {
     const priority = m[2];
     const resolvedId = resolveValue(rawId, table);
 
-    // Third argument is the test function. Read the remaining args by
-    // depth-tracked scan so arrow-function install args don't confuse the split.
+    // Third argument is the test function, fourth the install function. Read the
+    // remaining args by depth-tracked scan so arrow-function args don't confuse the split.
     let testFn = null;
+    let installFn = null;
     const argsOpen = stripped.indexOf("(", m.index);
     const argsClose = scanToMatchingClose(stripped, argsOpen, "(", ")");
     if (argsClose !== -1) {
       const args = splitAtTopLevelCommas(stripped.slice(argsOpen + 1, argsClose));
-      if (args.length >= 3) {
-        const third = args[2].trim();
-        if (/^[A-Za-z_$]\w*$/.test(third)) {
-          testFn = third;
-        } else {
-          // Some games wrap the test in an arrow to inject the api, e.g.
-          // `(files, gameId) => testSave(context.api, files, gameId)`.
-          // The wrapped callee is the real identity.
-          const arrowM = third.match(/=>\s*(?:\{\s*return\s+)?([A-Za-z_$]\w*)\s*\(/);
-          if (arrowM) testFn = arrowM[1];
-        }
-      }
+      if (args.length >= 3) testFn = calleeName(args[2]);
+      if (args.length >= 4) installFn = calleeName(args[3]);
     }
 
-    results.push({ id: resolvedId, priority, testFn, guardFlag: guardFlagInst || null });
+    results.push({ id: resolvedId, priority, testFn, installFn, guardFlag: guardFlagInst || null });
   }
   return results;
 }
 
 module.exports = {
   buildSymbolTable,
+  activeReassignments,
   splitPathJoinArgs,
   splitAtTopLevelCommas,
   scanToMatchingClose,

@@ -13,14 +13,10 @@ const MARKER_NO_FOMOD = "matches a single marker file, so a FOMOD package never 
 
 module.exports = {
   "template-cobraengineACSE": {
-    "installer-priority-unique": "save and fallback installers both register at 49",
     "installer-fomod": `ACSE, ACSE mod, localised and ovldata ${MARKER_NO_FOMOD}`,
   },
   "template-reloaded2": {
     "installer-fomod": `Reloaded manager ${MARKER_NO_FOMOD}`,
-  },
-  "template-shinryu": {
-    "installer-priority-unique": "mod and root installers both register at 27",
   },
   "template-snowdropengine": {
     "installer-fomod": `mod loader and data subfolder ${MARKER_NO_FOMOD}`,

@@ -8,26 +8,28 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Me3 | a file or folder named `XXX.dll` | the game folder itself (no subfolder) |
-| Root | - | - |
-| Mod | a file with one of these extensions: `.XXX` | `mods` |
-| Fallback Installer | anything not matched above | - |
+| Me3 | - | the game folder |
+| Root | - | the game folder |
+| Mod | - | `mods` |
+| Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
 ## Me3
 
-Recognised when the archive contains a file or folder named `XXX.dll`.
+Handled by the `testMe3` installer. Inspect the extension source for the exact archive layout it expects.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 ## Root
 
 Handled by the `testRoot` installer. Inspect the extension source for the exact archive layout it expects.
 
+Installs to: the game folder
+
 ## Mod
 
-Recognised when the archive contains a file with one of these extensions: `.XXX`.
+Handled by the `testMod` installer. Inspect the extension source for the exact archive layout it expects.
 
 Installs to: `mods`
 
@@ -41,6 +43,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: the game folder
 
 **Common mistakes:**
 

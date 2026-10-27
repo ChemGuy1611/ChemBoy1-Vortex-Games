@@ -151,9 +151,9 @@ computed at runtime rather than templated — is registered explicitly instead, 
 Installers register in the 25–49 band, lowest tested first, first `supported: true` wins. Templates
 step by 2 (25, 27, 29, …) so a game extension can slot an extra installer between two template ones
 without renumbering. The fallback installer, where present, always sits at 49 and is registered
-last. Three templates break the ladder: `unity-umm` registers its root installer at 8,
-`cobraengineACSE` registers its save installer at 49 beside the fallback, and `shinryu` registers
-two installers at 27.
+last. Two templates break the odd-number step: `unity-umm` registers its root installer at 8, and
+`cobraengineACSE` puts its ACSE mod installer at 28 and its save installer at 48, one step ahead of
+the fallback. No two installers in a template share a priority.
 
 Every `testSupported` checks the game ID. Most also early-return `supported: false` when the
 archive contains `fomod/ModuleConfig.xml`, so FOMOD archives fall through to Vortex's own FOMOD

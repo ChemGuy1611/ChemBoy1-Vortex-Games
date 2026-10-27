@@ -5,17 +5,45 @@ This extension adds Europa Universalis IV modding support to Vortex Mod Manager.
 [*]Steam[/*]
 [*]GOG[/*]
 [*]Epic[/*]
-[*]Xbox (Game Pass)[/*]
+[*]Xbox[/*]
 [*]Other versions may need to select the installation location manually.[/*]
 [/list]
 [b]🛠️ Mod Installation Notes:[/b]
 [list]
-[*]Installs Mod (Documents) mod with a file with one of these extensions: ".mod" to the "game\mod" folder.[/*]
+[*]Mod (Documents) mods with a ".mod" file install to the "game\mod" folder.[/*]
 [*]Archives with a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to Vortex's built-in FOMOD installer instead.[/*]
 [/list]
 [b]📋 Usage Notes:[/b]
 [list]
 [*]You can open several useful files/folders/URLs using the buttons within the folder icon on the Mods toolbar.[/*]
+[/list]
+
+[b]📝 Notes for Mod Authors:[/b]
+[spoiler]
+Packaging rules for Europa Universalis IV mods, so Vortex installs them to the right place.
+
+Vortex decides what a mod is by looking at the files and folders inside the archive. It tries each installer in order and the first one that matches wins, so archive layout is what determines where your mod ends up.
+
+========================================================================
+
+Mod:
+
+Recognised when the archive contains a ".mod" file.
+
+  Installs to: "game\mod"
+
+========================================================================
+
+Rules That Apply To Every Mod Type:
+
+    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
+    - Folder and file name matching is case-insensitive.
+    - Extra wrapper folders around a recognised folder are generally fine.
+[/spoiler]
+
+[b]🤝 Credits:[/b]
+[list]
+[*]Credit to [url=https://next.nexusmods.com/profile/Nagev/about-me]Nagev[/url] (Nexus Mods Vortex Developer) for his support on helping me learn to make Vortex extensions, and being patient when I break things :)[/*]
 [/list]
 
 [b]❤️ Support the Mod Author: [/b]

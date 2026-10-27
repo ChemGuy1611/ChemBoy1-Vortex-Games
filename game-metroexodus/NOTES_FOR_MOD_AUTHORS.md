@@ -6,10 +6,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ## Quick Reference
 
-| Mod Type | Archive must contain | Installs to |
-| --- | --- | --- |
-
-Paths are relative to the game's install folder.
+All mods are installed to the game's root folder exactly as they are packaged, with no processing.
 
 ## Rules That Apply To Every Mod Type
 

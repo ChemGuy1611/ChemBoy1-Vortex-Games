@@ -8,21 +8,21 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Loader | a file or folder named `d3d11.dll` | the game folder itself (no subfolder) |
-| Mod | a file with the `.ini` extension and a file with one of these extensions: `.fmt`, `.vb`, `.ib` or `.dds` | `Mods` |
-| Fallback Installer | anything not matched above | - |
+| Loader | a `d3d11.dll` file | the game folder |
+| Mod | a `.ini` file and a `.fmt`, `.vb`, `.ib` or `.dds` file | `Mods` |
+| Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
 ## Loader
 
-Recognised when the archive contains a file or folder named `d3d11.dll`.
+Recognised when the archive contains a `d3d11.dll` file.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 ## Mod
 
-Recognised when the archive contains a file with the `.ini` extension and a file with one of these extensions: `.fmt`, `.vb`, `.ib` or `.dds`.
+Recognised when the archive contains a `.ini` file and a `.fmt`, `.vb`, `.ib` or `.dds` file.
 
 Installs to: `Mods`
 
@@ -36,6 +36,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: the game folder
 
 **Common mistakes:**
 

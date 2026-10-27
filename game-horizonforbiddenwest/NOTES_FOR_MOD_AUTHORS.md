@@ -8,8 +8,8 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Save Game Files | a `.dat` file | `userDocsPathString\Horizon Forbidden West Complete Edition\USERID_FOLDER` |
-| Managermod | a file or folder named one of: `modinfo.json` and a file with one of these extensions: `.core` or `.stream` | `mods` |
+| Save Game Files | a `.dat` file | - |
+| Managermod | a `modinfo.json` file and a `.core` or `.stream` file | `mods` |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
@@ -21,15 +21,13 @@ Save files, deployed to the game's save folder.
 
 - Recognised by any file with the `.dat` extension.
 
-Installs to: `userDocsPathString\Horizon Forbidden West Complete Edition\USERID_FOLDER`
-
 **Common mistakes:**
 
 - Including an example save alongside a normal mod makes the archive install as a save.
 
 ## Managermod
 
-Recognised when the archive contains a file or folder named one of: `modinfo.json` and a file with one of these extensions: `.core` or `.stream`.
+Recognised when the archive contains a `modinfo.json` file and a `.core` or `.stream` file.
 
 Installs to: `mods`
 

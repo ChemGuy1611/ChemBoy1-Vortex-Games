@@ -7,13 +7,17 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 Launcher:
 
-Recognised when the archive contains a file or folder named "mm.exe".
+Recognised when the archive contains a "mm.exe" file.
+
+  Installs to: the game folder
 
 ========================================================================
 
 Unlimited:
 
-Recognised when the archive contains a file or folder named "unlimited_edition".
+Recognised when the archive contains a "unlimited_edition" folder.
+
+  Installs to: "_mods"
 
 ========================================================================
 
@@ -30,7 +34,7 @@ MyRootMod.zip
   Requirements:
     - Recognised by a folder named "_mods" in the archive.
 
-  Installs to: the game folder itself (no subfolder)
+  Installs to: the game folder
 
   Common mistakes:
     - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
@@ -39,7 +43,7 @@ MyRootMod.zip
 
 Launchermod:
 
-Recognised when the archive contains a file or folder named "info.json".
+Recognised when the archive contains a "info.json" file.
 
   Installs to: "_mods"
 
@@ -47,13 +51,15 @@ Recognised when the archive contains a file or folder named "info.json".
 
 Data:
 
-Recognised when the archive contains a file or folder named "mm".
+Recognised when the archive contains a "mm" folder.
+
+  Installs to: the game folder
 
 ========================================================================
 
 Datasub:
 
-Recognised when the archive contains a file or folder named one of: "materials", "maps", "bin", "cfg", "media", "resource", "scripts" or "SAVE".
+Recognised when the archive contains a "materials", "maps", "bin", "cfg", "media", "resource", "scripts" or "SAVE" folder.
 
   Installs to: "mm"
 
@@ -61,7 +67,7 @@ Recognised when the archive contains a file or folder named one of: "materials",
 
 Vpk:
 
-Recognised when the archive contains a file with the ".vpk" extension.
+Recognised when the archive contains a ".vpk" file.
 
   Installs to: "vpks"
 
@@ -69,7 +75,7 @@ Recognised when the archive contains a file with the ".vpk" extension.
 
 Materialssub:
 
-Recognised when the archive contains a file or folder named one of: "models", "fx", "sprites", "cloth", "console", "correction", "decals", "detail", "effects", "engine", "envcubemaps", "generic", "hud", "nature", "overlays", "sun", "vgui" or "voice".
+Recognised when the archive contains a "models", "fx", "sprites", "cloth", "console", "correction", "decals", "detail", "effects", "engine", "envcubemaps", "generic", "hud", "nature", "overlays", "sun", "vgui" or "voice" folder.
 
   Installs to: "mm\materials"
 
@@ -77,7 +83,7 @@ Recognised when the archive contains a file or folder named one of: "models", "f
 
 Maps:
 
-Recognised when the archive contains a file with the ".bsp" extension.
+Recognised when the archive contains a ".bsp" file.
 
   Installs to: "mm\maps"
 

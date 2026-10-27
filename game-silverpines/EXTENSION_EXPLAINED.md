@@ -32,7 +32,7 @@
 | `isXna` | `false` | set to true if game is XNA engine |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
 | `hasXbox` | `true` | toggle for Xbox version logic |
-| `multiExe` | `false` | set to true if there are multiple executables (typically for Xbox/EGS) |
+| `multiExe` | `true` | set to true if there are multiple executables (typically for Xbox/EGS) |
 | `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
 | `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
 | `preventPluginInstall` | `true` | set to true if you want to prevent plugins not for the current mod loader from installing. Disable if using cross-compatibility plugins. |

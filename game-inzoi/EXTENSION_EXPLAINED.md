@@ -69,7 +69,13 @@ Mod types define where each category of mod gets deployed:
 | Paks (no "~mods") | `inzoi-pakalt` | high | `{gamePath}/BlueClient/Content/Paks` |
 | Root Folder | `inzoi-root` | high | `{gamePath}` |
 | UE5 MODKit Pak Mod | `inzoi-ue5modkitpak` | high | `DOCUMENTS/inZOI/Mods` |
-| Creations (Documents) | `inzoi-creations` | high | `CREATIONS_PATH` |
+| Creations (Documents) | `inzoi-creations` | high | `DOCUMENTS/inZOI` |
+| AIGenerated (Documents) | `inzoi-aigenerated` | high | `DOCUMENTS/inZOI` |
+| Canvas (Documents) | `inzoi-canvas` | high | `DOCUMENTS/inZOI` |
+| My3DPrinter (Documents) | `inzoi-my3dprinter` | high | `DOCUMENTS/inZOI/AIGenerated/My3DPrinter` |
+| MyAppearances (Documents) | `inzoi-myappearances` | high | `DOCUMENTS/inZOI/Creations/MyAppearances` |
+| Animations (Documents) | `inzoi-animations` | high | `DOCUMENTS/inZOI/AIGenerated/MyAIMotions` |
+| Textures (Documents) | `inzoi-textures` | high | `DOCUMENTS/inZOI/Creations/MyTextures` |
 | UE Sortable Pak Mod | `inzoi-ue5-sortable-modtype` | 25 | `{gamePath}/BlueClient/Content/Paks/~mods` |
 | UE4SS Script Mod | `inzoi-scripts` | 50 | `{gamePath}/BlueClient/Binaries/Win64/ue4ss/Mods` |
 | UE4SS DLL Mod | `inzoi-ue4ssdll` | 52 | `{gamePath}/BlueClient/Binaries/Win64/ue4ss/Mods` |

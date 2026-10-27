@@ -9,12 +9,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Mod Installer (tool) | a `fcmodinstaller.exe` file | `FCModInstaller` |
-| Ziggy | a file or folder named `readme - ziggy's mod.txt` | - |
-| Root / Game Folder Mods | a `bin` folder or a `""` file | the game folder itself (no subfolder) |
+| Ziggy | a `readme - ziggy's mod.txt` file | - |
+| Root / Game Folder Mods | a `bin` folder | the game folder |
 | Data File Mods | a `.dat` file | `data_win32` |
-| Binaries | a file with the `.dll` extension | `bin` |
-| Xml | a file or folder named `gamerprofile.xml` | `DOCUMENTS\My Games\Far Cry 3` |
-| Mimoda3 | a file or folder named `info.xml` | `FCModInstaller\ModifiedFilesFC3` |
+| Binaries | a `.dll` file | `bin` |
+| Xml | a `gamerprofile.xml` file | `%USERPROFILE%\Documents\My Games\Far Cry 3` |
+| Mimoda3 | a `info.xml` file | `FCModInstaller\ModifiedFilesFC3` |
 | Mod Installer Mods | a `.a2` file | `FCModInstaller\ModifiedFilesFC3` |
 | Fallback Installer | anything not matched above | - |
 
@@ -22,7 +22,7 @@ Paths are relative to the game's install folder.
 
 ## Mod Installer (tool)
 
-This installer handles the Far Cry Mod Installer itself, not mods for it. It exists so users can install the Far Cry Mod Installer through Vortex, and mod authors normally never package this.
+This installer handles the Far Cry Mod Installer, not mods for it. It exists so users can install the Far Cry Mod Installer through Vortex, and mod authors normally never package this.
 
 **Requirements:**
 
@@ -36,7 +36,7 @@ Installs to: `FCModInstaller`
 
 ## Ziggy
 
-Recognised when the archive contains a file or folder named `readme - ziggy's mod.txt`.
+Recognised when the archive contains a `readme - ziggy's mod.txt` file.
 
 ## Root / Game Folder Mods
 
@@ -51,9 +51,8 @@ MyRootMod.zip
 **Requirements:**
 
 - Recognised by a folder named `bin`, `data_win32` or `Support` in the archive.
-- Recognised by a file named `""`.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -71,19 +70,19 @@ Installs to: `data_win32`
 
 ## Binaries
 
-Recognised when the archive contains a file with the `.dll` extension.
+Recognised when the archive contains a `.dll` file.
 
 Installs to: `bin`
 
 ## Xml
 
-Recognised when the archive contains a file or folder named `gamerprofile.xml`.
+Recognised when the archive contains a `gamerprofile.xml` file.
 
-Installs to: `DOCUMENTS\My Games\Far Cry 3`
+Installs to: `%USERPROFILE%\Documents\My Games\Far Cry 3`
 
 ## Mimoda3
 
-Recognised when the archive contains a file or folder named `info.xml`.
+Recognised when the archive contains a `info.xml` file.
 
 Installs to: `FCModInstaller\ModifiedFilesFC3`
 

@@ -1,5 +1,9 @@
 # template-shinryu Changelog
 
+## [2026-10-25]
+
+- Changed: the root installer now registers at priority 28 instead of sharing 27 with the SRMM mod installer, so a mod that also ships an executable is always offered to the mod installer first instead of depending on registration order.
+
 ## [2026-10-17]
 
 - Added: a `modId` field to `info.json`, directly after `gameId`, set to the `"XXX"` placeholder. `release_extension.py` replaces it with the mod id at the end of the extension's `EXTENSION_URL` when the extension is released, so a finished extension carries a number, not a string.

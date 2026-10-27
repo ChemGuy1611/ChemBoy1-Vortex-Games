@@ -10,7 +10,11 @@ Covers: the summary builder, the v1 -> BBCode conversion, the report mode, the f
 (no PATCH, no files), --dry-run (no files), a 422 (backup kept, no state), a backup that does
 not read back (aborts before the PATCH), a forced first push (PATCH body, state, pushed body),
 an unchanged file (skipped although v1 is stale), a second push (no --force needed, backup
-holds the last-pushed body), backup names never overwriting each other, and --pull / --write.
+holds the last-pushed body), backup names never overwriting each other, --backup (snapshot
+read back, no PATCH, last-pushed source, altered read-back errors), --pull / --write, the
+[summary] note (appended to the summary, never sent as page text), special-statement
+classification, --specials (worklist), --mark-reviewed (refused until carried over, --force
+accepts the drop) and the reviewed push gate (re-gated when the live page changes).
 
 Run it after any change to sync_mod_pages.py, nexus_v3_patch_json, or the description format
 the summary builder reads (generate_notes.js Supported Versions list).
@@ -39,7 +43,7 @@ REPO_BODY = """This extension adds Fake modding support to Vortex Mod Manager.
 [b]✅ Supported Versions:[/b]
 [list]
 [*]Steam[/*]
-[*]Xbox (Game Pass)[/*]
+[*]Xbox[/*]
 [*]Other versions may need to select the installation location manually.[/*]
 [/list]
 [b]Mod Installation Notes:[/b]
@@ -85,11 +89,11 @@ class FakeApi:
 
 def check_helpers():
     assert smp.build_summary(REPO_BODY) == (
-        "This extension adds Fake modding support to Vortex Mod Manager. Steam and Game Pass versions supported."
+        "This extension adds Fake modding support to Vortex Mod Manager. Steam and Xbox versions supported."
     )
     three = REPO_BODY.replace("[*]Steam[/*]", "[*]Steam[/*]\n[*]GOG[/*]")
-    assert smp.build_summary(three).endswith("Steam, GOG and Game Pass versions supported."), smp.build_summary(three)
-    one = REPO_BODY.replace("[*]Xbox (Game Pass)[/*]\n", "")
+    assert smp.build_summary(three).endswith("Steam, GOG and Xbox versions supported."), smp.build_summary(three)
+    one = REPO_BODY.replace("[*]Xbox[/*]\n", "")
     assert smp.build_summary(one).endswith("Steam version supported."), smp.build_summary(one)
     assert smp.build_summary("Just a line.\n") == "Just a line."
     for bad in ("x" * 400, "\n\n"):
@@ -98,6 +102,47 @@ def check_helpers():
         except ValueError:
             continue
         raise AssertionError("an out-of-range summary was accepted")
+    # summary note: appended to the summary, never part of the page body
+    noted = REPO_BODY.replace("\n\n", "\n[summary]Load Order support for pak mods.[/summary]\n\n", 1)
+    body, note = smp.split_summary_note(noted)
+    assert note == "Load Order support for pak mods." and "[summary]" not in body, (note, body)
+    assert body == REPO_BODY.strip(), "the note line must leave the body exactly as without it"
+    assert smp.build_summary(noted).endswith("Steam and Xbox versions supported. Load Order support for pak mods.")
+    # special statements: page text the repo lacks, classified by the section it sat under
+    live = (
+        "This extension adds Fake support to Vortex Mod Manager. Mods go to the root folder.\n"
+        "[b]Supported Versions:[/b]\n[list]\n[*]Steam[/*]\n[*]Epic Games Store[/*]\n[/list]\n"
+        "[b]Mod Installation Notes:[/b]\n[list]\n[*]Installs stuff.[/*]\n[*]Includes download buttons for tools.[/*]\n[/list]\n"
+        "[b]Usage Notes:[/b]\n[list]\n[*]Reinstall the studio mod after each game update.[/*]\n[/list]\n"
+        "[url=https://www.paypal.com/donate][img]https://example.com/paypal.jpg[/img][/url]\n"
+    )
+    repo = REPO_BODY + "[url=https://www.paypal.com/donate][img]https://example.com/paypal.jpg[/img][/url]\n"
+    found = smp.find_specials(live, repo, "Adds Fake support to Vortex Mod Manager. SMF installed automatically.",
+                              smp.build_summary(repo))
+    kinds = {(s["kind"], s["text"]) for s in found}
+    assert kinds == {
+        ("special", "Mods go to the root folder."),
+        ("store", "[*]Epic Games Store[/*]"),
+        ("install", "[*]Includes download buttons for tools.[/*]"),
+        ("special", "[*]Reinstall the studio mod after each game update.[/*]"),
+        ("summary", "SMF installed automatically."),
+    }, kinds
+    # a page that opens with a notice keeps it: only the generated opening sentence is skipped
+    notice = "NOTE: You must update Vortex to 1.14.6+ first.\n" + live
+    assert ("special", "NOTE: You must update Vortex to 1.14.6+ first.") in {
+        (s["kind"], s["text"]) for s in smp.find_specials(notice, repo)}
+    assert smp.is_generated_opening("Adds Vortex support for Warhammer: Vermintide 2.")
+    assert not smp.is_generated_opening("If you used the Vortex extension prior to 2.0.0, do this:")
+    # a game name with its own sentence mark does not split the generated opening
+    for name in ("Dragon Ball: Sparking! Zero", "RV There Yet?", "S.T.A.L.K.E.R. 2: Heart of Chornobyl"):
+        opening = f"This extension adds {name} modding support to Vortex Mod Manager."
+        assert not smp.find_specials(opening + "\n", REPO_BODY, f"Adds {name} support to Vortex.", ""), name
+    # carried over (reworded is enough), the page is clean of blocking statements
+    carried = repo + "Mods go to the root folder.\n[*]Reinstall the studio mod after every game update.[/*]\n" \
+                     "[summary]SMF installed automatically.[/summary]\n"
+    left = [s for s in smp.find_specials(live, carried, "Adds Fake support to Vortex Mod Manager. SMF installed automatically.",
+                                         smp.build_summary(carried)) if s["kind"] in ("special", "summary")]
+    assert not left, left
     assert smp.v1_to_bbcode("a\n<br />b\r\n<br />\n<br />c") == "a\nb\n\nc"
     # no-break spaces survive the conversion (the live pages carry some)
     assert smp.v1_to_bbcode("x y\n<br />z") == "x y\nz"
@@ -193,7 +238,7 @@ def main():
         assert len(seen) == 1 and seen[0]["path"] == "/mods/4242", seen
         sent = seen[0]["body"]
         assert sent["description"] == REPO_BODY.strip(), sent
-        assert sent["summary"].endswith("Steam and Game Pass versions supported."), sent
+        assert sent["summary"].endswith("Steam and Xbox versions supported."), sent
         state = json.load(open(os.path.join(backups, smp.STATE_FILE), encoding="utf-8"))
         assert list(state) == ["4242"] and state["4242"]["id"] == "fake", state
         body_file = os.path.join(backups, *state["4242"]["body_file"].split("/"))
@@ -219,6 +264,28 @@ def main():
         print("second push ok: no --force, backup source=last-pushed holds the previous push")
         seen.clear()
 
+        # --backup: snapshot only, never a PATCH; a pushed page is saved from its last push
+        def snapshots():
+            return [n for n in os.listdir(os.path.join(backups, "fake")) if n.endswith("_snapshot.json")]
+
+        assert run("backup", dry_run=True)[0]["status"] == "backed-up" and not snapshots()
+        r = run("backup")[0]
+        assert r["status"] == "backed-up" and not seen and len(snapshots()) == 1, (r, seen)
+        rec = json.load(open(os.path.join(backups, "fake", snapshots()[0]), encoding="utf-8"))
+        assert rec["source"] == "last-pushed" and rec["summary"] and rec["v1_response"]["uid"] == LIVE_V1["uid"], rec
+        assert "[*]extra line[/*]" in rec["description"], "snapshot must hold the last-pushed body"
+        def alter_snapshot(path, data, **kw):
+            real_write(path, dict(data, summary="x") if path.endswith("_snapshot.json") else data, **kw)
+
+        smp.write_json_atomic = alter_snapshot
+        try:
+            r = run("backup")[0]
+        finally:
+            smp.write_json_atomic = real_write
+        assert r["status"] == "error" and "backup" in r["msg"], r
+        assert run("backup", ids=("nourl",))[0]["status"] == "no-url"
+        print("backup ok: snapshot saved + read back, dry run saves nothing, altered read-back errors, no PATCH")
+
         # pull + --write (state removed so the pull reads v1)
         os.remove(os.path.join(backups, smp.STATE_FILE))
         live_text = smp._norm(smp.v1_to_bbcode(LIVE_V1["description"]))
@@ -234,6 +301,44 @@ def main():
         run("pull", dry_run=True)
         assert len(os.listdir(os.path.join(backups, "fake"))) == count
         print("pull dry-run ok")
+
+        # specials + reviewed ledger (no push state, so the page reads as never pushed)
+        reviewed_path = os.path.join(backups, smp.REVIEWED_FILE)
+        write_repo(REPO_BODY)
+        r = run("specials")[0]
+        assert r["status"] == "specials" and {s["kind"] for s in r["specials"]} == {"special", "summary"}, r
+        worklists = os.listdir(os.path.join(backups, smp.SPECIALS_DIR))
+        assert len(worklists) == 1 and worklists[0].endswith("_specials.md"), worklists
+        r = run("review")[0]
+        assert r["status"] == "not-reviewed" and not os.path.exists(reviewed_path), r
+        r = run("push")[0]
+        assert r["status"] == "gated" and "not reviewed" in r["msg"] and not seen, r
+        print("specials ok: statements listed, worklist saved, review refused, push still gated")
+
+        carried = REPO_BODY + "Old text\nsecond line\nend\n[summary]old summary[/summary]\n"
+        write_repo(carried)
+        assert run("specials")[0]["status"] == "clean"
+        assert run("review")[0]["status"] == "reviewed" and os.path.exists(reviewed_path)
+        r = run("push")[0]
+        assert r["status"] == "pushed" and len(seen) == 1, (r, seen)
+        sent = seen[0]["body"]
+        assert "[summary]" not in sent["description"] and sent["summary"].endswith("supported. old summary"), sent
+        print("reviewed push ok: no --force, [summary] note kept off the page and appended to the summary")
+        seen.clear()
+
+        # a review only covers the live text it saw
+        os.remove(os.path.join(backups, smp.STATE_FILE))
+        write_repo(REPO_BODY)
+        smp.nexus_get_mod = lambda domain, mod_id, key: (
+            dict(LIVE_V1, summary="edited on the site", domain_name=domain, mod_id=mod_id), "1999")
+        r = run("push")[0]
+        assert r["status"] == "gated" and "changed since" in r["msg"] and not seen, r
+        # --force on the review accepts dropping what is not carried over
+        assert run("review")[0]["status"] == "not-reviewed"
+        assert run("review", force=True)[0]["status"] == "reviewed"
+        r = run("push")[0]
+        assert r["status"] == "pushed" and len(seen) == 1, (r, seen)
+        print("review gate ok: live change re-gates, --force review accepts the drop")
 
     api.close()
     print("ALL OK")

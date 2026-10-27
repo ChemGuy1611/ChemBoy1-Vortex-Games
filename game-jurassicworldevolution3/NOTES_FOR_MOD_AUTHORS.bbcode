@@ -7,7 +7,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ACSE (mod loader):
 
-This installer handles ACSE itself, not mods for it. It exists so users can install ACSE through Vortex, and mod authors normally never package this.
+This installer handles ACSE, not mods for it. It exists so users can install ACSE through Vortex, and mod authors normally never package this.
 
   Requirements:
     - Recognised by a file named "ACSE" in the archive.
@@ -32,7 +32,7 @@ MyRootMod.zip
   Requirements:
     - Recognised by a folder named "Win64", "Blueprints", "Islands", "TerrainSkirts" or "Movies" in the archive.
 
-  Installs to: the game folder itself (no subfolder)
+  Installs to: the game folder
 
   Common mistakes:
     - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
@@ -55,7 +55,7 @@ Lua mods that run under ACSE.
 
 Localised:
 
-Recognised when the archive contains a file or folder named "localised".
+Recognised when the archive contains a "localised" folder.
 
   Installs to: "Win64\ovldata\ACSE"
 
@@ -93,7 +93,7 @@ Save files, deployed to the game's save folder.
   Requirements:
     - Recognised by any file with the ".blpr2" or ".prk2" extensions.
 
-  Installs to: "USER_HOME\Saved Games\Frontier Developments\Jurassic World Evolution 3\USERID_FOLDER\Saves"
+  Installs to: "%USERPROFILE%\Saved Games\Frontier Developments\Jurassic World Evolution 3\<User ID>\Saves"
 
   Common mistakes:
     - Including an example save alongside a normal mod makes the archive install as a save.

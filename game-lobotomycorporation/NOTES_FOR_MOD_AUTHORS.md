@@ -8,16 +8,16 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Loader | a file or folder named `LobotomyBaseModLib.dll` | `LobotomyCorp_Data\Managed` |
-| Root / Game Folder Mods | a `LobotomyCorp_Data` folder | the game folder itself (no subfolder) |
+| Loader | a `LobotomyBaseModLib.dll` file | `LobotomyCorp_Data\Managed` |
+| Root / Game Folder Mods | a `LobotomyCorp_Data` folder | the game folder |
 | Mod | - | `LobotomyCorp_Data\BaseMods` |
-| Fallback Installer | anything not matched above | - |
+| Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
 ## Loader
 
-Recognised when the archive contains a file or folder named `LobotomyBaseModLib.dll`.
+Recognised when the archive contains a `LobotomyBaseModLib.dll` file.
 
 Installs to: `LobotomyCorp_Data\Managed`
 
@@ -35,7 +35,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `LobotomyCorp_Data` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -57,6 +57,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: the game folder
 
 **Common mistakes:**
 

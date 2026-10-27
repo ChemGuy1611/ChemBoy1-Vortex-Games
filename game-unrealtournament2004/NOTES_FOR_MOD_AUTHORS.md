@@ -8,14 +8,16 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Mod | a file or folder named one of: `Animations`, `Benchmark`, `ForceFeedback`, `Help`, `KarmaData`, `Maps`, `Music`, `Sounds`, `Speech`, `StaticMeshes`, `System`, `SystemLocalized`, `Textures`, `Web` or `Saves` and a file with one of these extensions: `...ANIMATIONS_EXTS`, `...KARMADATA_EXTS`, `...MAPS_EXTS`, `...MUSIC_EXTS`, `...SOUNDS_EXTS`, `...SPEECH_EXTS`, `...STATICMESHES_EXTS`, `...SYSTEM_EXTS`, `...TEXTURES_EXTS` or `...SAVES_EXTS` | - |
+| Mod | a `Animations`, `Benchmark`, `ForceFeedback`, `Help`, `KarmaData`, `Maps`, `Music`, `Sounds`, `Speech`, `StaticMeshes`, `System`, `SystemLocalized`, `Textures`, `Web` or `Saves` folder and a `.ukx`, `.ka`, `.ut2`, `.ogg`, `.uax`, `.xml`, `.usx`, `.u`, `.ucl`, `.dll`, `.ini`, `.utx` or `.uvx` file | the game folder |
 | Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
 
 ## Mod
 
-Recognised when the archive contains a file or folder named one of: `Animations`, `Benchmark`, `ForceFeedback`, `Help`, `KarmaData`, `Maps`, `Music`, `Sounds`, `Speech`, `StaticMeshes`, `System`, `SystemLocalized`, `Textures`, `Web` or `Saves` and a file with one of these extensions: `...ANIMATIONS_EXTS`, `...KARMADATA_EXTS`, `...MAPS_EXTS`, `...MUSIC_EXTS`, `...SOUNDS_EXTS`, `...SPEECH_EXTS`, `...STATICMESHES_EXTS`, `...SYSTEM_EXTS`, `...TEXTURES_EXTS` or `...SAVES_EXTS`.
+Recognised when the archive contains a `Animations`, `Benchmark`, `ForceFeedback`, `Help`, `KarmaData`, `Maps`, `Music`, `Sounds`, `Speech`, `StaticMeshes`, `System`, `SystemLocalized`, `Textures`, `Web` or `Saves` folder and a `.ukx`, `.ka`, `.ut2`, `.ogg`, `.uax`, `.xml`, `.usx`, `.u`, `.ucl`, `.dll`, `.ini`, `.utx` or `.uvx` file.
+
+Installs to: the game folder
 
 ## Fallback Installer
 

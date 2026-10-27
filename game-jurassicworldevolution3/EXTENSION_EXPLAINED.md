@@ -60,7 +60,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | `jurassicworldevolution3-localised` | 29 |
 | `jurassicworldevolution3-movies` | 31 |
 | `jurassicworldevolution3-ovldata` | 33 |
-| `jurassicworldevolution3-save` | 49 |
+| `jurassicworldevolution3-save` | 48 |
 | `jurassicworldevolution3-fallback` | 49 |
 
 ## Registered Tools

@@ -8,23 +8,27 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Manager | a file or folder named `mod manager re-mars-tered.exe` | - |
-| Managerlegacy | a file or folder named `modmanager.exe` | - |
-| Mod | a file or folder named one of: `modinfo.xml` | `mods` |
+| Manager | a `mod manager re-mars-tered.exe` file | the game folder |
+| Managerlegacy | a `modmanager.exe` file | the game folder |
+| Mod | a `modinfo.xml` file | `mods` |
 
 Paths are relative to the game's install folder.
 
 ## Manager
 
-Recognised when the archive contains a file or folder named `mod manager re-mars-tered.exe`.
+Recognised when the archive contains a `mod manager re-mars-tered.exe` file.
+
+Installs to: the game folder
 
 ## Managerlegacy
 
-Recognised when the archive contains a file or folder named `modmanager.exe`.
+Recognised when the archive contains a `modmanager.exe` file.
+
+Installs to: the game folder
 
 ## Mod
 
-Recognised when the archive contains a file or folder named one of: `modinfo.xml`.
+Recognised when the archive contains a `modinfo.xml` file.
 
 Installs to: `mods`
 

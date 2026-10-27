@@ -8,15 +8,15 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Mod | a file with one of these extensions: `.pk3` | `Mods` |
-| Root / Game Folder Mods | a `fm_banks` folder | the game folder itself (no subfolder) |
-| Binaries | - | - |
+| Mod | a `.pk3` file | `Mods` |
+| Root / Game Folder Mods | a `fm_banks` folder | the game folder |
+| Binaries | - | the game folder |
 
 Paths are relative to the game's install folder.
 
 ## Mod
 
-Recognised when the archive contains a file with one of these extensions: `.pk3`.
+Recognised when the archive contains a `.pk3` file.
 
 Installs to: `Mods`
 
@@ -34,7 +34,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `fm_banks`, `Save`, `soundfonts` or `UltimateSelacoBuilder` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -43,6 +43,8 @@ Installs to: the game folder itself (no subfolder)
 ## Binaries
 
 Handled by the `testBinaries` installer. Inspect the extension source for the exact archive layout it expects.
+
+Installs to: the game folder
 
 ## Rules That Apply To Every Mod Type
 

@@ -59,7 +59,7 @@ Mod types define where each category of mod gets deployed:
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `dynastywarriors3completeeditionremastered-ue4sscombo` | high | `{gamePath}` |
 | UE4SS LogicMods (Blueprint) | `dynastywarriors3completeeditionremastered-logicmods` | high | `{gamePath}/DW3CE_RE/Content/Paks` |
-| Paks (no "~mods") | `dynastywarriors3completeeditionremastered-pakalt` | high | `{gamePath}/DW3CE_RE/Content/Paks` |
+| Paks (with "~mods") | `dynastywarriors3completeeditionremastered-pakalt` | high | `{gamePath}/DW3CE_RE/Content/Paks/~mods` |
 | Root Folder | `dynastywarriors3completeeditionremastered-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `dynastywarriors3completeeditionremastered-uesortablepak` | 25 | `{gamePath}/DW3CE_RE/Content/Paks` |
 | UE4SS Script Mod | `dynastywarriors3completeeditionremastered-scripts` | 50 | `{gamePath}/DW3CE_RE/Binaries/Win64/ue4ss/Mods` |

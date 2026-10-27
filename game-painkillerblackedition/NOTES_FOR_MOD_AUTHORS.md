@@ -8,8 +8,8 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Root / Game Folder Mods | a `Bin` folder | the game folder itself (no subfolder) |
-| Mod | a file with one of these extensions: `.pak` or `.pkm` and a file or folder named one of: `models`, `movies` or `music` | `Data` |
+| Root / Game Folder Mods | a `Bin` folder | the game folder |
+| Mod | a `.pak` or `.pkm` file and a `models`, `movies` or `music` folder | `Data` |
 | Config File Mods | a `config.ini` file | `Bin` |
 | Save Game Files | a `.dat` file | `SaveGames` |
 | Binaries | - | `Bin` |
@@ -30,7 +30,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `Bin` or `Data` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -38,7 +38,7 @@ Installs to: the game folder itself (no subfolder)
 
 ## Mod
 
-Recognised when the archive contains a file with one of these extensions: `.pak` or `.pkm` and a file or folder named one of: `models`, `movies` or `music`.
+Recognised when the archive contains a `.pak` or `.pkm` file and a `models`, `movies` or `music` folder.
 
 Installs to: `Data`
 

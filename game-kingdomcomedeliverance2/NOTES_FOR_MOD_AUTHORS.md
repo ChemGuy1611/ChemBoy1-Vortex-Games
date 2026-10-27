@@ -8,17 +8,17 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Mod | a file or folder named `mod.cfg`, a file or folder named one of: `mod.manifest` and a file or folder named one of: `data`, `localization`, `engine` or `KCSE` | - |
-| Root / Game Folder Mods | a `bin` folder | the game folder itself (no subfolder) |
-| Cfg | a file with the `.cfg` extension | - |
-| Binaries | a file with the `.dll` extension and a file with the `.exe` extension | - |
-| Fallback Installer | anything not matched above | - |
+| Mod | a `mod.cfg` file, a `mod.manifest` file and a `data`, `localization`, `engine` or `KCSE` folder | - |
+| Root / Game Folder Mods | a `bin` folder | the game folder |
+| Cfg | a `.cfg` file | the game folder |
+| Binaries | a `.dll` file and a `.exe` file | - |
+| Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
 ## Mod
 
-Recognised when the archive contains a file or folder named `mod.cfg`, a file or folder named one of: `mod.manifest` and a file or folder named one of: `data`, `localization`, `engine` or `KCSE`.
+Recognised when the archive contains a `mod.cfg` file, a `mod.manifest` file and a `data`, `localization`, `engine` or `KCSE` folder.
 
 ## Root / Game Folder Mods
 
@@ -34,7 +34,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `bin` or `KCSE` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -42,11 +42,13 @@ Installs to: the game folder itself (no subfolder)
 
 ## Cfg
 
-Recognised when the archive contains a file with the `.cfg` extension.
+Recognised when the archive contains a `.cfg` file.
+
+Installs to: the game folder
 
 ## Binaries
 
-Recognised when the archive contains a file with the `.dll` extension and a file with the `.exe` extension.
+Recognised when the archive contains a `.dll` file and a `.exe` file.
 
 ## Fallback Installer
 
@@ -58,6 +60,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: the game folder
 
 **Common mistakes:**
 

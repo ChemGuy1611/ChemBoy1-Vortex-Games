@@ -8,8 +8,8 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Root / Game Folder Mods | a `assets` folder | the game folder itself (no subfolder) |
-| Asset | a file with one of these extensions: `.dat` and a file or folder named one of: `config`, `movies` or `sounds` | `Assets` |
+| Root / Game Folder Mods | a `assets` folder | the game folder |
+| Asset | a `.dat` file and a `config`, `movies` or `sounds` folder | `Assets` |
 
 Paths are relative to the game's install folder.
 
@@ -27,7 +27,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `assets`, `blob`, `config`, `fonts`, `shaders`, `textures` or `truetypefonts` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -35,7 +35,7 @@ Installs to: the game folder itself (no subfolder)
 
 ## Asset
 
-Recognised when the archive contains a file with one of these extensions: `.dat` and a file or folder named one of: `config`, `movies` or `sounds`.
+Recognised when the archive contains a `.dat` file and a `config`, `movies` or `sounds` folder.
 
 Installs to: `Assets`
 

@@ -1,29 +1,80 @@
 This extension adds Trails in the Sky 1st Chapter modding support to Vortex Mod Manager.
 
+[color=#ffff00][size=3][b]IMPORTANT: To run the game file extraction script, you must have [url=https://www.python.org/downloads/]Python [/url]installed. You can get it from the site or in the [url=https://apps.microsoft.com/detail/9ncvdn91xzqp?hl=en-US&amp;gl=US]Microsoft Store[/url].[/b][/size][/color]
+
 [b]✅ Supported Versions:[/b]
 [list]
 [*]Steam[/*]
+[*]Steam Demo[/*]
 [*]Other versions may need to select the installation location manually.[/*]
 [/list]
 [b]🛠️ Mod Installation Notes:[/b]
 [list]
-[*]Installs Pac Files mod with a file with one of these extensions: ".pac" to the "pac\steam" folder.[/*]
-[*]Installs Root Folder mod with an "asset" folder to the game folder itself (no subfolder).[/*]
+[*]Pac Files mods with a ".pac" file install to the "pac\steam" folder.[/*]
+[*]Root Folder mods with an "asset" folder install to the game folder.[/*]
 [*]Archives with a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to Vortex's built-in FOMOD installer instead.[/*]
 [/list]
 [b]📋 Usage Notes:[/b]
 [list]
 [*]You can open several useful files/folders/URLs using the buttons within the folder icon on the Mods toolbar.[/*]
+[*]Installs mods with an extracted data folder (i.e. "assets") to the game root folder. You must run the "Extract Game Files" function for these mods to load.[/*]
+[*][color=#ffff00][size=2][b]You can extract and clean up the .pac files at any time using the buttons within the folder icon on the Mods toolbar. [/b][/size][/color][/*]
+[/list]
+
+[b]📝 Notes for Mod Authors:[/b]
+[spoiler]
+Packaging rules for Trails in the Sky 1st Chapter mods, so Vortex installs them to the right place.
+
+Vortex decides what a mod is by looking at the files and folders inside the archive. It tries each installer in order and the first one that matches wins, so archive layout is what determines where your mod ends up.
+
+========================================================================
+
+Pac:
+
+Recognised when the archive contains a ".pac" file.
+
+  Installs to: "pac\steam"
+
+========================================================================
+
+Root / Game Folder Mods:
+
+For mods laid out the same way the files appear inside the game folder. Vortex copies the matched folder and everything under it straight into the game.
+
+[code]
+MyRootMod.zip
+└── asset\
+    └── ... files in their real relative locations
+[/code]
+
+  Requirements:
+    - Recognised by a folder named "asset", "pac", "asset_de", "asset_en", "asset_es", "asset_fr", "bgm1", "bgm2", "bgm3", "layout", "movie", "movie_en", "scene", "script", "script_de", "script_en", "script_es", "script_fr", "se", "ssytem", "table", "table_de", "table_en", "table_es", "table_fr", "vfx", "voice" or "voice_en" in the archive.
+
+  Installs to: the game folder
+
+  Common mistakes:
+    - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
+
+========================================================================
+
+Rules That Apply To Every Mod Type:
+
+    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
+    - Folder and file name matching is case-insensitive.
+    - Extra wrapper folders around a recognised folder are generally fine.
+[/spoiler]
+
+[b]🤝 Credits:[/b]
+[list]
+[*]Credit to [url=https://github.com/eArmada8/kuro_mdl_tool]eArmada8 on GitHub[/url] for the .pac file extraction script.[/*]
+[*]Credit to [url=https://next.nexusmods.com/profile/Nagev/about-me]Nagev[/url] (Nexus Mods Vortex Developer) for his support on helping me learn to make Vortex extensions, and being patient when I break things :)[/*]
 [/list]
 
 [b]❤️ Support the Mod Author: [/b]
 If you would like to support my work, you can do so below. Your support is greatly appreciated!
 
-
 [url=https://www.paypal.com/donate/?hosted_button_id=ZFE99JKP43D2G][img]https://live.staticflickr.com/65535/54395661414_10e6ef111d_m.jpg[/img][/url]
 
-
 [url=https://ko-fi.com/chemboy1nexusmods/][img]https://live.staticflickr.com/65535/54380730333_357df43249_n.jpg[/img][/url]
-
 
 [url=https://buymeacoffee.com/chemboy1/][img]https://live.staticflickr.com/65535/54379586002_8dcc6370e5_m.jpg[/img][/url]

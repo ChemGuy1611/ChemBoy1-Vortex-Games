@@ -8,14 +8,70 @@ This extension adds Deus Ex: Invisible War modding support to Vortex Mod Manager
 [/list]
 [b]🛠️ Mod Installation Notes:[/b]
 [list]
-[*]Installs Root Folder mod with a "System" folder to the game folder itself (no subfolder).[/*]
-[*]Installs Data Mod Folder mod with a file or folder named one of: "AcquiredDataText", "Bitmaps", "Conversations", "Flags", "LipsincData", "Maps", "MatLib", "SkeletalAnimations", "SkeletalMeshes", "Sounds", "StaticMeshes", "TagDatabase", "Textures", "UTX" or "VideoTextures" to the "content\DX2" folder.[/*]
-[*]Binaries (Engine Injector) mods are installed to the "System" folder.[/*]
+[*]Root Folder mods with a "System" folder install to the game folder.[/*]
+[*]Data Mod Folder mods with an "AcquiredDataText", "Bitmaps", "Conversations", "Flags", "LipsincData", "Maps" or one of 9 other named folders install to the "content\DX2" folder.[/*]
+[*]Binaries (Engine Injector) mods install to the "System" folder.[/*]
 [*]Archives with a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to Vortex's built-in FOMOD installer instead.[/*]
 [/list]
 [b]📋 Usage Notes:[/b]
 [list]
 [*]You can open several useful files/folders/URLs using the buttons within the folder icon on the Mods toolbar.[/*]
+[/list]
+
+[b]📝 Notes for Mod Authors:[/b]
+[spoiler]
+Packaging rules for Deus Ex: Invisible War mods, so Vortex installs them to the right place.
+
+Vortex decides what a mod is by looking at the files and folders inside the archive. It tries each installer in order and the first one that matches wins, so archive layout is what determines where your mod ends up.
+
+========================================================================
+
+Root / Game Folder Mods:
+
+For mods laid out the same way the files appear inside the game folder. Vortex copies the matched folder and everything under it straight into the game.
+
+[code]
+MyRootMod.zip
+└── System\
+    └── ... files in their real relative locations
+[/code]
+
+  Requirements:
+    - Recognised by a folder named "System" or "content" in the archive.
+
+  Installs to: the game folder
+
+  Common mistakes:
+    - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
+
+========================================================================
+
+Datamodfolder:
+
+Recognised when the archive contains a "AcquiredDataText", "Bitmaps", "Conversations", "Flags", "LipsincData", "Maps", "MatLib", "SkeletalAnimations", "SkeletalMeshes", "Sounds", "StaticMeshes", "TagDatabase", "Textures", "UTX" or "VideoTextures" folder.
+
+  Installs to: "content\DX2"
+
+========================================================================
+
+Binaries:
+
+Handled by the "testBinaries" installer. Inspect the extension source for the exact archive layout it expects.
+
+  Installs to: "System"
+
+========================================================================
+
+Rules That Apply To Every Mod Type:
+
+    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
+    - Folder and file name matching is case-insensitive.
+    - Extra wrapper folders around a recognised folder are generally fine.
+[/spoiler]
+
+[b]🤝 Credits:[/b]
+[list]
+[*]Credit to [url=https://next.nexusmods.com/profile/Nagev/about-me]Nagev[/url] (Nexus Mods Vortex Developer) for his support on helping me learn to make Vortex extensions, and being patient when I break things :)[/*]
 [/list]
 
 [b]❤️ Support the Mod Author: [/b]

@@ -276,6 +276,11 @@ contract was never written for, so the useful signal is what changed, not what i
 | `CB1_GAME_ROOT` | Folder holding the `game-*` folders, default the repo root. Points the run at a scratch copy, which is how a deliberately broken game proves the run can go red. |
 | `CB1_SMOKE_BASELINE` | Path to a baseline JSON file outside the repo. Missing file: the run records it and every game passes. Present file: a game fails on a load error or on any contract violation the baseline does not already hold; fixed violations are fine. Unset: report mode, a game fails only if it does not load or does not register exactly one game. |
 
+An extension that registers more than one game on purpose (a standalone expansion, a dedicated
+server registered as its own game) is listed in `MULTI_GAME` at the top of `tests/games-smoke.js`
+with its count and the reason. That count is asserted exactly instead of one, and the contract
+check's `registerGame called N times` finding is dropped for that game when N matches.
+
 Use it around a patch: record a baseline on the unpatched tree, patch, run again. A regression
 shows as a new violation or a load error for that game only. The first recording over the
 149 games in the parity lists loaded all of them and held 57 known violations (FOMOD guards on

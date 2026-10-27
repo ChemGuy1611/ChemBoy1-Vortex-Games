@@ -8,14 +8,14 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Mod | a file or folder named one of: `in_game`, `main_menu` or `loading_screen` | `game\mod` |
-| Root / Game Folder Mods | a `game` folder | the game folder itself (no subfolder) |
+| Mod | a `in_game`, `main_menu` or `loading_screen` folder | `game\mod` |
+| Root / Game Folder Mods | a `game` folder | the game folder |
 
 Paths are relative to the game's install folder.
 
 ## Mod
 
-Recognised when the archive contains a file or folder named one of: `in_game`, `main_menu` or `loading_screen`.
+Recognised when the archive contains a `in_game`, `main_menu` or `loading_screen` folder.
 
 Installs to: `game\mod`
 
@@ -33,7 +33,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `game` or `binaries` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 

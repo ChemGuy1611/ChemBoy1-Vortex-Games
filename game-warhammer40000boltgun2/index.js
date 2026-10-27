@@ -2,8 +2,8 @@
 Name: Warhammer 40,000: Boltgun 2 Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-10-16
+Version: 1.0.2
+Date: 2026-10-25
 Notes:
 -
 ////////////////////////////////////////////////*/

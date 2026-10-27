@@ -2,8 +2,8 @@
 Name: Alan Wake 2 Vortex Extension
 Structure: Root Folder Mod Loader
 Author: ChemBoy1
-Version: 1.2.2
-Date: 2026-10-16
+Version: 1.2.3
+Date: 2026-10-25
 //////////////////////////////////////////////////*/
 
 //Import libraries

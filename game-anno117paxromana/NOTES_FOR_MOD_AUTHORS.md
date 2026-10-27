@@ -8,15 +8,15 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Mod | a file with one of these extensions: `.jsonc` and a file or folder named one of: `data` | `mods` |
-| Root / Game Folder Mods | a `Bin` folder | the game folder itself (no subfolder) |
+| Mod | a `.jsonc` file and a `data` folder | `mods` |
+| Root / Game Folder Mods | a `Bin` folder | the game folder |
 | Binaries | - | `Bin\Win64` |
 
 Paths are relative to the game's install folder.
 
 ## Mod
 
-Recognised when the archive contains a file with one of these extensions: `.jsonc` and a file or folder named one of: `data`.
+Recognised when the archive contains a `.jsonc` file and a `data` folder.
 
 Installs to: `mods`
 
@@ -34,7 +34,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `Bin`, `maindata` or `mods` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 

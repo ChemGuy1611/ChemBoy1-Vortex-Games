@@ -54,7 +54,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | `yakuzakiwami3-modmanager` | 25 |
 | `yakuzakiwami3-mod` | 27 |
 | `yakuzakiwami3-data` | 29 |
-| `yakuzakiwami3-root` | 27 |
+| `yakuzakiwami3-root` | 28 |
 
 ## Registered Tools
 

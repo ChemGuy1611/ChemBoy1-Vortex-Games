@@ -7,13 +7,17 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 Loader:
 
-Recognised when the archive contains a file or folder named "SnakeBite Installer.exe".
+Recognised when the archive contains a "SnakeBite Installer.exe" file.
+
+  Installs to: the game folder
 
 ========================================================================
 
 Mgsvfix:
 
-Recognised when the archive contains a file or folder named one of: "mgsvfix.asi".
+Recognised when the archive contains a "mgsvfix.asi" file.
+
+  Installs to: the game folder
 
 ========================================================================
 
@@ -30,7 +34,7 @@ MyRootMod.zip
   Requirements:
     - Recognised by a folder named "master" in the archive.
 
-  Installs to: the game folder itself (no subfolder)
+  Installs to: the game folder
 
   Common mistakes:
     - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
@@ -39,7 +43,7 @@ MyRootMod.zip
 
 Mod:
 
-Recognised when the archive contains a file with one of these extensions: ".mgsv" or ".MGSVPreset".
+Recognised when the archive contains a ".mgsv" or ".MGSVPreset" file.
 
   Installs to: "SnakeBite_Mods"
 

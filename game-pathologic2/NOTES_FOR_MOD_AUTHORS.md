@@ -8,20 +8,22 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Loader | a file or folder named `P2ModLoader.exe` | - |
-| Mod | a file or folder named `modinfo.ltx` and a file with one of these extensions: `.xml` | `Mods` |
-| Root / Game Folder Mods | a `Pathologic_Data` folder or a `dxgi.dll` file | the game folder itself (no subfolder) |
-| Fallback Installer | anything not matched above | - |
+| Loader | a `P2ModLoader.exe` file | the game folder |
+| Mod | a `modinfo.ltx` file, a `Pathologic_Data` folder and a `.xml` file | `Mods` |
+| Root / Game Folder Mods | a `Pathologic_Data` folder or a `dxgi.dll` file | the game folder |
+| Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
 ## Loader
 
-Recognised when the archive contains a file or folder named `P2ModLoader.exe`.
+Recognised when the archive contains a `P2ModLoader.exe` file.
+
+Installs to: the game folder
 
 ## Mod
 
-Recognised when the archive contains a file or folder named `modinfo.ltx` and a file with one of these extensions: `.xml`.
+Recognised when the archive contains a `modinfo.ltx` file, a `Pathologic_Data` folder and a `.xml` file.
 
 Installs to: `Mods`
 
@@ -40,7 +42,7 @@ MyRootMod.zip
 - Recognised by a folder named `Pathologic_Data` or `MonoBleedingEdge` in the archive.
 - Recognised by a file named `dxgi.dll`, `version.dll`, `nvngx.dll`, `libxess.dll` or `amd_fidelityfx_dx12.dll`.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -56,6 +58,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: the game folder
 
 **Common mistakes:**
 

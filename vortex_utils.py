@@ -5018,6 +5018,10 @@ UNITY_PARITY_KNOWN_EXCEPTIONS = {
                         "decision 2026-09-14 - its users run MSCLoader, not BepInEx/"
                         "MelonLoader, so the two download paths stay on hardcoded URLs "
                         "and are accepted as permanently stale rather than ported",
+    "game-hollowknightsilksong": "has its own Customizer skin installer (testSkin/installSkin, "
+                                 ".png atlases into Mods/Customizer) in place of the template's "
+                                 "Texture Replacer installer (hasTextureReplacer, isTextureFile, "
+                                 "testTextures, installTextures), user decision 2026-10-27",
 }
 
 # Same idea for the RE Engine (Fluffy) and Frostbite families. Every other family has no

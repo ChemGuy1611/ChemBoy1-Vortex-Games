@@ -8,30 +8,36 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Modfolder | a file or folder named one of: `data_packfiles`, `data`, `data_pc` or `plugins` | - |
-| Modpack | a file with one of these extensions: `.bin`, `.packmeta` or `.rmdp` | `data_packfiles` |
-| Loosefileloader | a file or folder named `iphlpapi.dll` | - |
-| Pluginloader | a file or folder named `xinput1_4.dll` | - |
+| Modfolder | a `data_packfiles`, `data`, `data_pc` or `plugins` folder | the game folder |
+| Modpack | a `.bin`, `.packmeta` or `.rmdp` file | `data_packfiles` |
+| Loosefileloader | a `iphlpapi.dll` file | the game folder |
+| Pluginloader | a `xinput1_4.dll` file | the game folder |
 
 Paths are relative to the game's install folder.
 
 ## Modfolder
 
-Recognised when the archive contains a file or folder named one of: `data_packfiles`, `data`, `data_pc` or `plugins`.
+Recognised when the archive contains a `data_packfiles`, `data`, `data_pc` or `plugins` folder.
+
+Installs to: the game folder
 
 ## Modpack
 
-Recognised when the archive contains a file with one of these extensions: `.bin`, `.packmeta` or `.rmdp`.
+Recognised when the archive contains a `.bin`, `.packmeta` or `.rmdp` file.
 
 Installs to: `data_packfiles`
 
 ## Loosefileloader
 
-Recognised when the archive contains a file or folder named `iphlpapi.dll`.
+Recognised when the archive contains a `iphlpapi.dll` file.
+
+Installs to: the game folder
 
 ## Pluginloader
 
-Recognised when the archive contains a file or folder named `xinput1_4.dll`.
+Recognised when the archive contains a `xinput1_4.dll` file.
+
+Installs to: the game folder
 
 ## Rules That Apply To Every Mod Type
 

@@ -8,34 +8,34 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Manager | a file or folder named `modimporter.exe` | `Content` |
-| Modutility | a file or folder named `modutil.lua` | `Content\Mods\ModUtil` |
-| Loader | a file or folder named `d3d12.dll` | `Ship` |
-| Plugin | a file or folder named `manifest.json` and a file or folder named `main.lua` | - |
+| Manager | a `modimporter.exe` file | `Content` |
+| Modutility | a `modutil.lua` file | `Content\Mods\ModUtil` |
+| Loader | a `d3d12.dll` file | `Ship` |
+| Plugin | a `manifest.json` file and a `main.lua` file | - |
 
 Paths are relative to the game's install folder.
 
 ## Manager
 
-Recognised when the archive contains a file or folder named `modimporter.exe`.
+Recognised when the archive contains a `modimporter.exe` file.
 
 Installs to: `Content`
 
 ## Modutility
 
-Recognised when the archive contains a file or folder named `modutil.lua`.
+Recognised when the archive contains a `modutil.lua` file.
 
 Installs to: `Content\Mods\ModUtil`
 
 ## Loader
 
-Recognised when the archive contains a file or folder named `d3d12.dll`.
+Recognised when the archive contains a `d3d12.dll` file.
 
 Installs to: `Ship`
 
 ## Plugin
 
-Recognised when the archive contains a file or folder named `manifest.json` and a file or folder named `main.lua`.
+Recognised when the archive contains a `manifest.json` file and a `main.lua` file.
 
 ## Rules That Apply To Every Mod Type
 

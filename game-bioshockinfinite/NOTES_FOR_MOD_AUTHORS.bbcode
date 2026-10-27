@@ -7,12 +7,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 TFC Installer (tool):
 
-This installer handles the TFC Installer itself, not mods for it. It exists so users can install the TFC Installer through Vortex, and mod authors normally never package this.
+This installer handles the TFC Installer, not mods for it. It exists so users can install the TFC Installer through Vortex, and mod authors normally never package this.
 
   Requirements:
     - Recognised by a file named "tfcinstaller.exe" in the archive.
 
-  Installs to: the game folder itself (no subfolder)
+  Installs to: the game folder
 
   Common mistakes:
     - If you bundle the TFC Installer inside your mod archive, Vortex treats the whole download as the TFC Installer rather than as your mod. Ship the mod alone and list the TFC Installer as a requirement.
@@ -21,12 +21,12 @@ This installer handles the TFC Installer itself, not mods for it. It exists so u
 
 UPK Explorer (tool):
 
-This installer handles UPK Explorer itself, not mods for it. It exists so users can install UPK Explorer through Vortex, and mod authors normally never package this.
+This installer handles UPK Explorer, not mods for it. It exists so users can install UPK Explorer through Vortex, and mod authors normally never package this.
 
   Requirements:
     - Recognised by a file named "upk explorer.exe" in the archive.
 
-  Installs to: the game folder itself (no subfolder)
+  Installs to: the game folder
 
   Common mistakes:
     - If you bundle UPK Explorer inside your mod archive, Vortex treats the whole download as UPK Explorer rather than as your mod. Ship the mod alone and list UPK Explorer as a requirement.
@@ -61,7 +61,7 @@ MyRootMod.zip
   Requirements:
     - Recognised by a folder named "XGame", "DLC", "Engine", "Binaries", "Config", "Content", "CookedPCConsole_FR", "Localization" or "Movies" in the archive.
 
-  Installs to: the game folder itself (no subfolder)
+  Installs to: the game folder
 
   Common mistakes:
     - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.

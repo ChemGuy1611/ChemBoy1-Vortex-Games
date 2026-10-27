@@ -72,7 +72,7 @@ Mod types define where each category of mod gets deployed:
 | Root Folder | `howtofish-root` | high | `{gamePath}` |
 | BepInEx Injector | `howtofish-bepinex` | low | `{gamePath}` |
 | MelonLoader | `howtofish-melonloader` | low | `{gamePath}` |
-| Assembly DLL Mod | `howtofish-assemblydll` | 60 | `{gamePath}` |
+| Assembly DLL Mod | `howtofish-assemblydll` | 60 | `{gamePath}/How to Fish_Data/Managed` |
 | Assets/Resources File | `howtofish-assets` | 62 | `{gamePath}/How to Fish_Data` |
 
 ## Mod Installers

@@ -1007,7 +1007,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(LOCALISED_ID, 29, testLocalised, installLocalised);
   context.registerInstaller(MOVIES_ID, 31, testMovies, installMovies);
   context.registerInstaller(OVLDATA_ID, 33, testOvlData, installOvlData);
-  context.registerInstaller(SAVE_ID, 49, testSave, installSave);
+  context.registerInstaller(SAVE_ID, 48, testSave, installSave);
   if (fallbackInstaller) {
     context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) =>
       installFallback(context.api, files, destinationPath),

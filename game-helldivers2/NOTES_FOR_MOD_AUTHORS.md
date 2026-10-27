@@ -9,10 +9,10 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Patch Mods (.patch_0) | a file named `<archive hash>.patch_0` | - |
-| Data | a file with the `.dl_bin` extension | `data\game` |
-| Stream | a file with the `.stream` extension | `data` |
-| Binaries | a file with one of these extensions: `.exe`, `.dll`, `.asi` or `.addon64` | `bin` |
-| Fallback Installer | anything not matched above | - |
+| Data | a `.dl_bin` file | `data\game` |
+| Stream | a `.stream` file | `data` |
+| Binaries | a `.exe`, `.dll`, `.asi` or `.addon64` file | `bin` |
+| Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
@@ -39,7 +39,7 @@ MyArmourMod.zip
 - In a version 1 or 2 manifest the user may enable any number of options, and each enabled option installs exactly one of its `SubOptions`. A folder named in `Include` must hold the patch files directly - subfolders of it are not searched.
 - If a manifest cannot be read, or none of its options resolve to folders that exist in the archive, Vortex logs the problem and falls back to the folder layout. A bad manifest never stops the mod from installing.
 - When two enabled options both change the same archive, Vortex numbers their files into one contiguous sequence for that archive. This is expected, not a conflict.
-- Documentation files at the top level of the archive are installed alongside the patch files and are left untouched. `manifest.json` itself and any images it points at are not installed - they are only used for the option picker.
+- Documentation files at the top level of the archive are installed alongside the patch files and are left untouched. `manifest.json` and any images it points at are not installed - they are only used for the option picker.
 
 **Common mistakes:**
 
@@ -49,23 +49,23 @@ MyArmourMod.zip
 - Leaving out a `.patch_0` file but shipping its `.gpu_resources` or `.stream` sidecar. A sidecar is only ever installed next to the patch file it belongs to.
 - Nesting patch files one level below the folder you list in `Include`. That folder is read without recursion, so a mod built that way installs nothing.
 - Hand-numbering files across option folders to control which option wins. Numbers are reassigned per archive in option order; only the order of your files inside a single folder is preserved.
-- Expecting `NexusData` in a manifest to point Vortex at the right Nexus Mods mod page. Vortex tracks that identity itself and ignores the field.
+- Expecting `NexusData` in a manifest to point Vortex at the right Nexus Mods mod page. Vortex tracks that identity on its own and ignores the field.
 
 ## Data
 
-Recognised when the archive contains a file with the `.dl_bin` extension.
+Recognised when the archive contains a `.dl_bin` file.
 
 Installs to: `data\game`
 
 ## Stream
 
-Recognised when the archive contains a file with the `.stream` extension.
+Recognised when the archive contains a `.stream` file.
 
 Installs to: `data`
 
 ## Binaries
 
-Recognised when the archive contains a file with one of these extensions: `.exe`, `.dll`, `.asi` or `.addon64`.
+Recognised when the archive contains a `.exe`, `.dll`, `.asi` or `.addon64` file.
 
 Installs to: `bin`
 
@@ -79,6 +79,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: the game folder
 
 **Common mistakes:**
 

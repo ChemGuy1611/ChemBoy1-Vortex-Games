@@ -2,8 +2,8 @@
 Name: NINJA GAIDEN 2 Black Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-16
+Version: 1.0.3
+Date: 2026-10-25
 Notes:
 - UE4SS installs from this game's own Nexus page (UE4SS Prepackaged), not the GitHub release
 - Save data sits in a Steam ID subfolder of SaveGames (Steam) / wgs (Xbox)

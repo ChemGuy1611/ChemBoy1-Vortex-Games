@@ -8,14 +8,14 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| TFC Installer (tool) | a `tfcinstaller.exe` file | the game folder itself (no subfolder) |
-| Blcmm | a file or folder named `openblcmm.exe` | the game folder itself (no subfolder) |
+| TFC Installer (tool) | a `tfcinstaller.exe` file | the game folder |
+| Blcmm | a `openblcmm.exe` file | the game folder |
 | TFC Mods | a `gameprofile.xml` file or a `.packagepatch` file | `TFCInstaller\Mods` |
-| UPK Explorer (tool) | a `upk explorer.exe` file | the game folder itself (no subfolder) |
-| Sdk | a file or folder named `unrealsdk.dll` and a file or folder named `sdk_mods` | the game folder itself (no subfolder) |
-| Sdkmod | a file with the `.py` extension and a file with the `.sdkmod` extension | `sdk_mods` |
-| Blcmfile | a file with the `.blcm` extension | `Binaries` |
-| Root / Game Folder Mods | a `WillowGame` folder | the game folder itself (no subfolder) |
+| UPK Explorer (tool) | a `upk explorer.exe` file | the game folder |
+| Sdk | a `unrealsdk.dll` file and a `sdk_mods` folder | the game folder |
+| Sdkmod | a `.py` file and a `.sdkmod` file | `sdk_mods` |
+| Blcmfile | a `.blcm` file | `Binaries` |
+| Root / Game Folder Mods | a `WillowGame` folder | the game folder |
 | Cooked Content Mods | a `English(US)` folder or a `.tfc` file | `WillowGame\CookedPCConsole` |
 | Movie / Cutscene Replacements | a `.bik` file | `WillowGame\Movies` |
 | Binaries / Injector Mods | a `Borderlands2.exe` file or a `.dll` file | `Binaries\Win32` |
@@ -25,13 +25,13 @@ Paths are relative to the game's install folder.
 
 ## TFC Installer (tool)
 
-This installer handles the TFC Installer itself, not mods for it. It exists so users can install the TFC Installer through Vortex, and mod authors normally never package this.
+This installer handles the TFC Installer, not mods for it. It exists so users can install the TFC Installer through Vortex, and mod authors normally never package this.
 
 **Requirements:**
 
 - Recognised by a file named `tfcinstaller.exe` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -39,9 +39,9 @@ Installs to: the game folder itself (no subfolder)
 
 ## Blcmm
 
-Recognised when the archive contains a file or folder named `openblcmm.exe`.
+Recognised when the archive contains a `openblcmm.exe` file.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 ## TFC Mods
 
@@ -60,13 +60,13 @@ Installs to: `TFCInstaller\Mods`
 
 ## UPK Explorer (tool)
 
-This installer handles UPK Explorer itself, not mods for it. It exists so users can install UPK Explorer through Vortex, and mod authors normally never package this.
+This installer handles UPK Explorer, not mods for it. It exists so users can install UPK Explorer through Vortex, and mod authors normally never package this.
 
 **Requirements:**
 
 - Recognised by a file named `upk explorer.exe` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -74,19 +74,19 @@ Installs to: the game folder itself (no subfolder)
 
 ## Sdk
 
-Recognised when the archive contains a file or folder named `unrealsdk.dll` and a file or folder named `sdk_mods`.
+Recognised when the archive contains a `unrealsdk.dll` file and a `sdk_mods` folder.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 ## Sdkmod
 
-Recognised when the archive contains a file with the `.py` extension and a file with the `.sdkmod` extension.
+Recognised when the archive contains a `.py` file and a `.sdkmod` file.
 
 Installs to: `sdk_mods`
 
 ## Blcmfile
 
-Recognised when the archive contains a file with the `.blcm` extension.
+Recognised when the archive contains a `.blcm` file.
 
 Installs to: `Binaries`
 
@@ -104,7 +104,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `WillowGame`, `Engine`, `Binaries`, `DLC`, `Config`, `CookedPCConsole`, `Localization`, `Movies` or `Splash` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 

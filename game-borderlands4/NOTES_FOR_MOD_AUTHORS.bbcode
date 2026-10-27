@@ -7,9 +7,9 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 Pysdk:
 
-Recognised when the archive contains a file or folder named one of: "unrealsdk.dll" and a file or folder named one of: "sdk_mods".
+Recognised when the archive contains a "unrealsdk.dll" file and a "sdk_mods" folder.
 
-  Installs to: the game folder itself (no subfolder)
+  Installs to: the game folder
 
 ========================================================================
 
@@ -72,7 +72,7 @@ MyBlueprintMod.zip
 
 Pysdkmod:
 
-Recognised when the archive contains a file with one of these extensions: ".py" or ".sdkmod".
+Recognised when the archive contains a ".py" or ".sdkmod" file.
 
   Installs to: "sdk_mods"
 
@@ -90,9 +90,10 @@ MyPakMod.zip
   Requirements:
     - Any archive containing a ".pak" file reaches this installer (unless an earlier one claimed it).
     - Only the pak files are installed - surrounding folders are discarded.
+    - Companion files are installed alongside paks: ".ucas" or ".utoc".
     - If the archive holds more than one pak, Vortex asks the user which to install - useful for optional variants.
 
-  Installs to: "OakGame\Content\Paks\~mods"
+  Installs to: "OakGame\Content\Paks"
 
   Common mistakes:
     - Shipping several unrelated paks in one archive when you meant them all to install - the user gets a choice dialog and may pick only one.
@@ -100,7 +101,7 @@ MyPakMod.zip
 
 ========================================================================
 
-UE4SS Itself:
+UE4SS:
 
 This installer handles the UE4SS runtime package, not individual mods. Most authors never need it - it exists so users can install UE4SS through Vortex.
 
@@ -163,7 +164,7 @@ MyDllMod.zip
 
 Contentfolder:
 
-Recognised when the archive contains a file or folder named one of: "Content".
+Recognised when the archive contains a "Content" folder.
 
   Installs to: "OakGame"
 
@@ -183,7 +184,7 @@ MyRootMod.zip
     - Recognised by a top-level folder matching any of: "OakGame", "Engine", "Content", "Binaries", "Mods", "Paks" or "Movies".
     - The matched folder and everything below it is copied into the game folder, preserving structure.
 
-  Installs to: the game folder itself (no subfolder)
+  Installs to: the game folder
 
   Common mistakes:
     - Zipping the folder that CONTAINS the game folders instead of the game folders themselves adds an extra level and misplaces every file.

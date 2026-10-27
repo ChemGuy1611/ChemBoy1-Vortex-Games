@@ -18,7 +18,7 @@ MyRootMod.zip
   Requirements:
     - Recognised by a folder named "XXX_Data" or "XXX_Data" in the archive.
 
-  Installs to: the game folder itself (no subfolder)
+  Installs to: the game folder
 
   Common mistakes:
     - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
@@ -27,13 +27,13 @@ MyRootMod.zip
 
 Unity Mod Manager (tool):
 
-This installer handles Unity Mod Manager itself, not mods for it. It exists so users can install Unity Mod Manager through Vortex, and mod authors normally never package this.
+This installer handles Unity Mod Manager, not mods for it. It exists so users can install Unity Mod Manager through Vortex, and mod authors normally never package this.
 
   Requirements:
     - Recognised by a file named "UnityModManager.exe" in the archive.
-    - Vortex reproduces the loader patch the manager would apply itself, so it deploys and purges like any other mod.
+    - Vortex reproduces the loader patch the manager would otherwise apply, so it deploys and purges like any other mod.
 
-  Installs to: the game folder itself (no subfolder)
+  Installs to: the game folder
 
   Common mistakes:
     - If you bundle Unity Mod Manager inside your mod archive, Vortex treats the whole download as Unity Mod Manager rather than as your mod. Ship the mod alone and list Unity Mod Manager as a requirement.

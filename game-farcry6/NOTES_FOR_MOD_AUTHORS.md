@@ -9,19 +9,19 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Mod Installer (tool) | a `fcmodinstaller.exe` file | `FCModInstaller` |
-| Root / Game Folder Mods | a `bin` folder or a `""` file | the game folder itself (no subfolder) |
+| Root / Game Folder Mods | a `bin` folder | the game folder |
 | Data File Mods | a `.dat` file | `data_final\pc` |
-| Binaries | a file with the `.dll` extension | `bin` |
-| Mimoda3 | a file or folder named `info.xml` | `FCModInstaller\ModifiedFilesFC6` |
+| Binaries | a `.dll` file | `bin` |
+| Mimoda3 | a `info.xml` file | `FCModInstaller\ModifiedFilesFC6` |
 | Mod Installer Mods | a `.a2` file | `FCModInstaller\ModifiedFilesFC6` |
-| Xml | a file or folder named `gamerprofile.xml` and a file with the `.xml` extension | `DOCUMENTS\My Games\Far Cry 6\USERID_FOLDER` |
+| Xml | a `gamerprofile.xml` file and a `.xml` file | `%USERPROFILE%\Documents\My Games\Far Cry 6\<User ID>` |
 | Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
 
 ## Mod Installer (tool)
 
-This installer handles the Far Cry Mod Installer itself, not mods for it. It exists so users can install the Far Cry Mod Installer through Vortex, and mod authors normally never package this.
+This installer handles the Far Cry Mod Installer, not mods for it. It exists so users can install the Far Cry Mod Installer through Vortex, and mod authors normally never package this.
 
 **Requirements:**
 
@@ -46,9 +46,8 @@ MyRootMod.zip
 **Requirements:**
 
 - Recognised by a folder named `bin`, `data_final` or `Support` in the archive.
-- Recognised by a file named `""`.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -66,13 +65,13 @@ Installs to: `data_final\pc`
 
 ## Binaries
 
-Recognised when the archive contains a file with the `.dll` extension.
+Recognised when the archive contains a `.dll` file.
 
 Installs to: `bin`
 
 ## Mimoda3
 
-Recognised when the archive contains a file or folder named `info.xml`.
+Recognised when the archive contains a `info.xml` file.
 
 Installs to: `FCModInstaller\ModifiedFilesFC6`
 
@@ -92,9 +91,9 @@ Installs to: `FCModInstaller\ModifiedFilesFC6`
 
 ## Xml
 
-Recognised when the archive contains a file or folder named `gamerprofile.xml` and a file with the `.xml` extension.
+Recognised when the archive contains a `gamerprofile.xml` file and a `.xml` file.
 
-Installs to: `DOCUMENTS\My Games\Far Cry 6\USERID_FOLDER`
+Installs to: `%USERPROFILE%\Documents\My Games\Far Cry 6\<User ID>`
 
 ## Fallback Installer
 

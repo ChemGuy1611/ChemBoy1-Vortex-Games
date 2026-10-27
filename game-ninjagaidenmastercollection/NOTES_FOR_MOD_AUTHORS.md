@@ -8,52 +8,58 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Xboxmodloader | a file or folder named `tmx_ngloader.exe` | - |
-| Ninjagaidensigma Steammodloader | a file or folder named `ninja gaiden sigma.exe` | - |
-| Ninjagaidensigma2 Steammodloader | a file or folder named `ninja gaiden sigma2.exe` | - |
-| Ninjagaiden3razorsedge Steammodloader | a file or folder named `ninja gaiden 3 razor's edge.exe` | - |
-| Mlmod | a file with the `.dat` extension | `mods` |
-| Databinfolder | a file or folder named `databin` | - |
-| Databinsubfolder1 | a file or folder named one of: `bgm` or `movie` | `databin` |
-| Databinsubfolder23 | a file or folder named one of: `sound` or `movie` | - |
+| Xboxmodloader | a `tmx_ngloader.exe` file | the game folder |
+| Ninjagaidensigma Steammodloader | a `ninja gaiden sigma.exe` file | the game folder |
+| Ninjagaidensigma2 Steammodloader | a `ninja gaiden sigma2.exe` file | - |
+| Ninjagaiden3razorsedge Steammodloader | a `ninja gaiden 3 razor's edge.exe` file | - |
+| Mlmod | a `.dat` file | `mods` |
+| Databinfolder | a `databin` folder | the game folder |
+| Databinsubfolder1 | a `bgm` or `movie` folder | `databin` |
+| Databinsubfolder23 | a `sound` or `movie` folder | - |
 
 Paths are relative to the game's install folder.
 
 ## Xboxmodloader
 
-Recognised when the archive contains a file or folder named `tmx_ngloader.exe`.
+Recognised when the archive contains a `tmx_ngloader.exe` file.
+
+Installs to: the game folder
 
 ## Ninjagaidensigma Steammodloader
 
-Recognised when the archive contains a file or folder named `ninja gaiden sigma.exe`.
+Recognised when the archive contains a `ninja gaiden sigma.exe` file.
+
+Installs to: the game folder
 
 ## Ninjagaidensigma2 Steammodloader
 
-Recognised when the archive contains a file or folder named `ninja gaiden sigma2.exe`.
+Recognised when the archive contains a `ninja gaiden sigma2.exe` file.
 
 ## Ninjagaiden3razorsedge Steammodloader
 
-Recognised when the archive contains a file or folder named `ninja gaiden 3 razor's edge.exe`.
+Recognised when the archive contains a `ninja gaiden 3 razor's edge.exe` file.
 
 ## Mlmod
 
-Recognised when the archive contains a file with the `.dat` extension.
+Recognised when the archive contains a `.dat` file.
 
 Installs to: `mods`
 
 ## Databinfolder
 
-Recognised when the archive contains a file or folder named `databin`.
+Recognised when the archive contains a `databin` folder.
+
+Installs to: the game folder
 
 ## Databinsubfolder1
 
-Recognised when the archive contains a file or folder named one of: `bgm` or `movie`.
+Recognised when the archive contains a `bgm` or `movie` folder.
 
 Installs to: `databin`
 
 ## Databinsubfolder23
 
-Recognised when the archive contains a file or folder named one of: `sound` or `movie`.
+Recognised when the archive contains a `sound` or `movie` folder.
 
 ## Rules That Apply To Every Mod Type
 

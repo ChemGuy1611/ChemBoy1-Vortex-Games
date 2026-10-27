@@ -74,7 +74,7 @@ Mod types define where each category of mod gets deployed:
 | MelonLoader UserLibs | `pcbuildingsimulator-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
 | MelonPreferencesManager | `pcbuildingsimulator-melonprefman` | high | `{gamePath}/Mods` |
 | MelonLoader | `pcbuildingsimulator-melonloader` | low | `{gamePath}` |
-| Assembly DLL Mod | `pcbuildingsimulator-assemblydll` | 60 | `{gamePath}` |
+| Assembly DLL Mod | `pcbuildingsimulator-assemblydll` | 60 | `{gamePath}/PCBS_Data/Managed` |
 | Assets/Resources File | `pcbuildingsimulator-assets` | 62 | `{gamePath}/PCBS_Data` |
 | Save | `pcbuildingsimulator-save` | 39 | `{gamePath}/Saves` |
 

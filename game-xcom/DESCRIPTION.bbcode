@@ -8,20 +8,146 @@ This extension adds XCOM: Enemy Unknown modding support to Vortex Mod Manager.
 [/list]
 [b]🛠️ Mod Installation Notes:[/b]
 [list]
-[*]Installs TFC Installer itself to the game folder itself (no subfolder), recognised by a "tfcinstaller.exe" file.[/*]
-[*]Installs UPK Explorer itself to the game folder itself (no subfolder), recognised by a "upk explorer.exe" file.[/*]
-[*]Installs TFC mod with a "gameprofile.xml" file or a ".packagepatch" file to the "TFCInstaller\Mods" folder.[/*]
-[*]Installs Root Folder mod with an "Engine" folder to the game folder itself (no subfolder).[/*]
-[*]Installs Cooked Sub Folder mod with a "Maps" folder or a ".upk" file to the "XXX\CookedPC" folder.[/*]
-[*]Installs Movies mod with a ".bik" file to the "XXX\Movies" folder.[/*]
-[*]Installs Binaries (Engine Injector) mod with a "XXX.exe" file or a ".exe" file to the "Binaries\Win32" folder.[/*]
-[*]Any other mod not described above is installed to the game folder itself (no subfolder).[/*]
+[*]TFC Installer installs to the game folder, recognised by a "tfcinstaller.exe" file.[/*]
+[*]UPK Explorer installs to the game folder, recognised by a "upk explorer.exe" file.[/*]
+[*]TFC mods with a "gameprofile.xml" file or a ".packagepatch" file install to the "TFCInstaller\Mods" folder.[/*]
+[*]Root Folder mods with an "Engine" folder install to the game folder.[/*]
+[*]Cooked Sub Folder mods are recognised by a "Maps" folder or a ".upk" file.[/*]
+[*]Movies mods are recognised by a ".bik" file.[/*]
+[*]Binaries (Engine Injector) mods with a ".exe" file install to the "Binaries\Win32" folder.[/*]
+[*]Any other mod not described above installs to the game folder.[/*]
 [*]Archives with a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to Vortex's built-in FOMOD installer instead.[/*]
 [/list]
 [b]📋 Usage Notes:[/b]
 [list]
 [*]You can open several useful files/folders/URLs using the buttons within the folder icon on the Mods toolbar.[/*]
 [/list]
+
+[b]📝 Notes for Mod Authors:[/b]
+[spoiler]
+Packaging rules for XCOM: Enemy Unknown mods, so Vortex installs them to the right place.
+
+Vortex decides what a mod is by looking at the files and folders inside the archive. It tries each installer in order and the first one that matches wins, so archive layout is what determines where your mod ends up.
+
+========================================================================
+
+TFC Installer (tool):
+
+This installer handles the TFC Installer, not mods for it. It exists so users can install the TFC Installer through Vortex, and mod authors normally never package this.
+
+  Requirements:
+    - Recognised by a file named "tfcinstaller.exe" in the archive.
+
+  Installs to: the game folder
+
+  Common mistakes:
+    - If you bundle the TFC Installer inside your mod archive, Vortex treats the whole download as the TFC Installer rather than as your mod. Ship the mod alone and list the TFC Installer as a requirement.
+
+========================================================================
+
+UPK Explorer (tool):
+
+This installer handles UPK Explorer, not mods for it. It exists so users can install UPK Explorer through Vortex, and mod authors normally never package this.
+
+  Requirements:
+    - Recognised by a file named "upk explorer.exe" in the archive.
+
+  Installs to: the game folder
+
+  Common mistakes:
+    - If you bundle UPK Explorer inside your mod archive, Vortex treats the whole download as UPK Explorer rather than as your mod. Ship the mod alone and list UPK Explorer as a requirement.
+
+========================================================================
+
+TFC Mods:
+
+Texture/content mods handled through the TFC system.
+
+  Requirements:
+    - Recognised by any file named "gameprofile.xml", "gameprofile.idremappings.xml", "objectdescriptors.xml", "packageextensions.xml", "texturepack" or "game".
+    - Recognised by any file with the ".packagepatch", ".descriptor", ".tfcmapping" or ".inipatch" extensions.
+
+  Installs to: "TFCInstaller\Mods"
+
+  Common mistakes:
+    - Keep the original file names - the TFC system matches them by name.
+
+========================================================================
+
+Root / Game Folder Mods:
+
+For mods laid out the same way the files appear inside the game folder. Vortex copies the matched folder and everything under it straight into the game.
+
+[code]
+MyRootMod.zip
+└── Engine\
+    └── ... files in their real relative locations
+[/code]
+
+  Requirements:
+    - Recognised by a folder named "Engine", "Binaries", "Config", "CookedPC", "DLC", "Localization" or "Movies" in the archive.
+
+  Installs to: the game folder
+
+  Common mistakes:
+    - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
+
+========================================================================
+
+Cooked Content Mods:
+
+Packaged content deployed into the game's cooked content folder.
+
+  Requirements:
+    - Recognised by a folder named "Maps" or "Packages" in the archive.
+    - Recognised by any file with the ".upk" extension.
+
+========================================================================
+
+Movie / Cutscene Replacements:
+
+Replacement video files, deployed into the game's movies folder.
+
+  Requirements:
+    - Recognised by any file with the ".bik" extension.
+
+  Common mistakes:
+    - The replacement must keep the original file name, or the game will not pick it up.
+
+========================================================================
+
+Binaries / Injector Mods:
+
+DLL injectors and other files that belong next to the game executable.
+
+  Requirements:
+    - Recognised by any file with the ".exe", ".dll", ".asi" or ".addon64" extensions.
+
+  Installs to: "Binaries\Win32"
+
+========================================================================
+
+Fallback Installer:
+
+The catch-all. Any archive that matched none of the installers above lands here and is copied across unchanged.
+
+[b][color=#ffff00]NOTE: Landing in the fallback installer is a signal your archive layout needs fixing.[/color][/b]
+
+  Requirements:
+    - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
+    - Vortex shows the user a notification when a mod installs through the fallback.
+
+  Common mistakes:
+    - If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.
+
+========================================================================
+
+Rules That Apply To Every Mod Type:
+
+    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
+    - Folder and file name matching is case-insensitive.
+    - Extra wrapper folders around a recognised folder are generally fine.
+[/spoiler]
 
 [b]❤️ Support the Mod Author: [/b]
 If you would like to support my work, you can do so below. Your support is greatly appreciated!

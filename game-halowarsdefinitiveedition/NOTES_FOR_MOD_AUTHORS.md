@@ -8,13 +8,13 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Mod | a file or folder named one of: `data`, `art`, `campaign`, `physics`, `scenario`, `sound` or `video` | `Mods` |
+| Mod | a `data`, `art`, `campaign`, `physics`, `scenario`, `sound` or `video` folder | `Mods` |
 
 Paths are relative to the game's install folder.
 
 ## Mod
 
-Recognised when the archive contains a file or folder named one of: `data`, `art`, `campaign`, `physics`, `scenario`, `sound` or `video`.
+Recognised when the archive contains a `data`, `art`, `campaign`, `physics`, `scenario`, `sound` or `video` folder.
 
 Installs to: `Mods`
 

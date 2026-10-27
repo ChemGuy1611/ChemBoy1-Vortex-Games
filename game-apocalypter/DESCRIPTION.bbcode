@@ -3,24 +3,161 @@ This extension adds Apocalypter modding support to Vortex Mod Manager.
 [b]✅ Supported Versions:[/b]
 [list]
 [*]Steam[/*]
+[*]Steam Demo[/*]
 [*]Other versions may need to select the installation location manually.[/*]
 [/list]
 [b]🛠️ Mod Installation Notes:[/b]
 [list]
-[*]Installs BepInEx Injector itself to the game folder itself (no subfolder), recognised by a "BepInEx.Core.dll" file.[/*]
-[*]Installs MelonLoader itself to the game folder itself (no subfolder), recognised by a "version.dll" file.[/*]
-[*]Installs Root Folder mod with an "Apocalypter_Data" folder to the game folder itself (no subfolder).[/*]
-[*]Installs BepInEx Configuration Manager itself to the "BepInEx" folder, recognised by a "configurationmanager.dll" file.[/*]
-[*]Installs MelonLoader Preferences Manager itself to the "Mods" folder, recognised by a "melonprefmanager.mono.dll" file.[/*]
-[*]Installs Assembly DLL mod with a "GameAssembly.dll" file to the game folder itself (no subfolder).[/*]
-[*]Installs Plugin mod with a ".dll" file to the "BepInEx" folder.[/*]
-[*]Installs Assets/Resources File mod with a ".assets" file to the "Apocalypter_Data" folder.[/*]
-[*]Any other mod not described above is installed to the game folder itself (no subfolder).[/*]
+[*]BepInEx Injector installs to the game folder, recognised by a "BepInEx.dll" file.[/*]
+[*]Root Folder mods with an "Apocalypter_Data" folder install to the game folder.[/*]
+[*]BepInEx Configuration Manager installs to the "BepInEx" folder, recognised by a "configurationmanager.dll" file.[/*]
+[*]Assembly DLL mods with an "Assembly-CSharp.dll" file install to the "Apocalypter_Data\Managed" folder.[/*]
+[*]BepInEx Plugin mods with a ".dll" file built for BepInEx install to the "BepInEx\plugins\<ModName>" folder.[/*]
+[*]Plugin archives built for a different mod loader than the one installed are cancelled.[/*]
+[*]Assets/Resources File mods with a ".assets" file install to the "Apocalypter_Data" folder.[/*]
+[*]Any other mod not described above installs to the game folder.[/*]
 [*]Archives with a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to Vortex's built-in FOMOD installer instead.[/*]
 [/list]
 [b]📋 Usage Notes:[/b]
 [list]
 [*]You can open several useful files/folders/URLs using the buttons within the folder icon on the Mods toolbar.[/*]
+[/list]
+
+[b]📝 Notes for Mod Authors:[/b]
+[spoiler]
+Packaging rules for Apocalypter mods, so Vortex installs them to the right place.
+
+Vortex decides what a mod is by looking at the files and folders inside the archive. It tries each installer in order and the first one that matches wins, so archive layout is what determines where your mod ends up.
+
+========================================================================
+
+BepInEx (mod loader):
+
+This installer handles BepInEx, not mods for it. It exists so users can install BepInEx through Vortex, and mod authors normally never package this.
+
+  Requirements:
+    - Recognised by a file named "BepInEx.dll" in the archive.
+    - Requires BOTH a folder named "BepInEx" and the loader file "BepInEx.dll".
+
+  Installs to: the game folder
+
+  Common mistakes:
+    - If you bundle BepInEx inside your mod archive, Vortex treats the whole download as BepInEx rather than as your mod. Ship the mod alone and list BepInEx as a requirement.
+
+========================================================================
+
+Root / Game Folder Mods:
+
+For mods laid out the same way the files appear inside the game folder. Vortex copies the matched folder and everything under it straight into the game.
+
+[code]
+MyRootMod.zip
+└── Apocalypter_Data\
+    └── ... files in their real relative locations
+[/code]
+
+  Requirements:
+    - Recognised by a folder named "Apocalypter_Data" or "Apocalypter Demo_Data" in the archive.
+
+  Installs to: the game folder
+
+  Common mistakes:
+    - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
+
+========================================================================
+
+BepInEx Configuration Manager:
+
+This installer handles the BepInEx Configuration Manager plugin, not mods for it. It exists so users can install the BepInEx Configuration Manager plugin through Vortex, and mod authors normally never package this.
+
+  Requirements:
+    - Recognised by a file named "configurationmanager.dll" in the archive.
+    - Requires the file "configurationmanager.dll" together with a "plugins" folder.
+
+  Installs to: "BepInEx"
+
+  Common mistakes:
+    - If you bundle the BepInEx Configuration Manager plugin inside your mod archive, Vortex treats the whole download as the BepInEx Configuration Manager plugin rather than as your mod. Ship the mod alone and list the BepInEx Configuration Manager plugin as a requirement.
+
+========================================================================
+
+Assembly Replacement Mods:
+
+Mods that replace a compiled game assembly outright. These overwrite core game files, so they conflict with any other mod touching the same assembly.
+
+  Requirements:
+    - Recognised by any file named "Assembly-CSharp.dll" or "Assembly-CSharp-firstpass.dll".
+
+  Installs to: "Apocalypter_Data\Managed"
+
+  Common mistakes:
+    - Assembly replacements cannot be combined with other assembly mods - state this clearly on the mod page.
+    - Shipping an assembly alongside a plugin makes the whole archive install as an assembly mod.
+
+========================================================================
+
+BepInEx Plugin Mods:
+
+The normal shape for a BepInEx mod: a compiled plugin DLL. Vortex reads each DLL to tell which mod loader it was built for, so the archive does not need to reproduce the BepInEx folder structure.
+
+[code]
+MyPlugin.zip
+└── MyPlugin.dll
+[/code]
+
+  Requirements:
+    - Recognised by any ".dll" file that references BepInEx.
+    - A loose DLL is put in a folder of its own, named after its folder in the archive or else after the DLL, so files from different mods cannot overwrite each other.
+    - A preloader patcher (a DLL that references "BepInEx.Preloader.Core.Patching") goes to "BepInEx\patchers\<ModName>" instead.
+    - An archive that already has a "plugins", "patchers" or "config" folder keeps that layout and installs to "BepInEx".
+    - An archive whose DLLs reference neither loader installs to the game folder, and Vortex shows a notification asking the user to check the mod page.
+
+  Installs to: "BepInEx\plugins\<ModName>"
+
+  Common mistakes:
+    - Shipping a plugin together with loader files, which makes the archive look like a loader install instead.
+
+========================================================================
+
+Asset Replacement Mods:
+
+Mods that replace packed Unity asset files, deployed into the game's data folder.
+
+  Requirements:
+    - Recognised by any file with the ".assets", ".resource" or ".ress" extensions.
+
+  Installs to: "Apocalypter_Data"
+
+  Common mistakes:
+    - Asset files must keep their original names to replace the right bundle.
+
+========================================================================
+
+Fallback Installer:
+
+The catch-all. Any archive that matched none of the installers above lands here and is copied across unchanged.
+
+[b][color=#ffff00]NOTE: Landing in the fallback installer is a signal your archive layout needs fixing.[/color][/b]
+
+  Requirements:
+    - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
+    - Vortex shows the user a notification when a mod installs through the fallback.
+
+  Common mistakes:
+    - If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.
+
+========================================================================
+
+Rules That Apply To Every Mod Type:
+
+    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
+    - Folder and file name matching is case-insensitive.
+    - Extra wrapper folders around a recognised folder are generally fine.
+[/spoiler]
+
+[b]🤝 Credits:[/b]
+[list]
+[*]Credit to Senjay and his [url=https://www.nexusmods.com/site/mods/1243]Schedule 1 Vortex extension[/url] for some of the logic used in the plugin installer.[/*]
 [/list]
 
 [b]❤️ Support the Mod Author: [/b]

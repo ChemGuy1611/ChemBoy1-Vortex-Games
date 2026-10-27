@@ -7,7 +7,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 Modmanager:
 
-Recognised when the archive contains a file or folder named "shinryumodmanager.exe".
+Recognised when the archive contains a "shinryumodmanager.exe" file.
 
   Installs to: "runtime\media"
 
@@ -15,7 +15,7 @@ Recognised when the archive contains a file or folder named "shinryumodmanager.e
 
 Mod:
 
-Recognised when the archive contains a file or folder named one of: "mod-meta.yaml" or "modinfo.ini".
+Recognised when the archive contains a "mod-meta.yaml" or "modinfo.ini" file.
 
   Installs to: "runtime\media\mods"
 
@@ -29,7 +29,7 @@ For mods laid out the same way the files appear inside the game folder. Vortex c
     - Recognised by any file named "nvngx_dlss.dll", "dstoragecore.dll", "dstorage.dll", "amd_fidelityfx_dx12.dll", "amd_ags_x64.dll" or "libxess.dll".
     - Recognised by any file with the ".exe" extension.
 
-  Installs to: the game folder itself (no subfolder)
+  Installs to: the game folder
 
   Common mistakes:
     - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
@@ -38,7 +38,7 @@ For mods laid out the same way the files appear inside the game folder. Vortex c
 
 Data:
 
-Recognised when the archive contains a file with one of these extensions: ".par".
+Recognised when the archive contains a ".par" file.
 
   Installs to: "runtime\media\data"
 

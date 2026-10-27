@@ -8,19 +8,21 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Dhewm3 | a file or folder named `dhewm3.exe` | - |
-| Bfgedition Root | a file or folder named one of: `base` | - |
-| Root / Game Folder Mods | a `base` file | the game folder itself (no subfolder) |
+| Dhewm3 | a `dhewm3.exe` file | the game folder |
+| Bfgedition Root | a `base` folder | - |
+| Root / Game Folder Mods | a `base` file | the game folder |
 
 Paths are relative to the game's install folder.
 
 ## Dhewm3
 
-Recognised when the archive contains a file or folder named `dhewm3.exe`.
+Recognised when the archive contains a `dhewm3.exe` file.
+
+Installs to: the game folder
 
 ## Bfgedition Root
 
-Recognised when the archive contains a file or folder named one of: `base`.
+Recognised when the archive contains a `base` folder.
 
 ## Root / Game Folder Mods
 
@@ -30,7 +32,7 @@ For mods laid out the same way the files appear inside the game folder. Vortex c
 
 - Recognised by any file named `base`, `d3xp`, `d3le`, `tfphobos`, `womd_readme.txt`, `d3hdpack`, `arl`, `redux 20th anniversary edition rc1` or `installation`.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 

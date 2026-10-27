@@ -2,8 +2,8 @@
 Name: Far Cry New Dawn Vortex Extension
 Structure: Far Cry Game (Mod Installer)
 Author: ChemBoy1
-Version: 1.2.1
-Date: 2026-10-16
+Version: 1.2.2
+Date: 2026-10-25
 ///////////////////////////////////////////*/
 
 //Import libraries

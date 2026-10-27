@@ -8,45 +8,45 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Openhotfixloader | a file or folder named `openhotfixloader.dll` and a file or folder named `b3hm.exe` | `OakGame\Binaries\Win64\Plugins` |
-| Sdk | a file or folder named `unrealsdk.dll` and a file or folder named `sdk_mods` | the game folder itself (no subfolder) |
-| Sdkmod | a file with the `.py` extension and a file with the `.sdkmod` extension | `sdk_mods` |
-| Pluginloader | a file or folder named `d3d11.dll` | `OakGame\Binaries\Win64` |
-| Hotfix | a file with the `.bl3hotfix` extension | `OakGame\Binaries\Win64\Plugins\ohl-mods` |
-| Root / Game Folder Mods | a `OakGame` folder | the game folder itself (no subfolder) |
-| Pak | a file with the `.pak` extension | `OakGame\Content\Paks` |
-| Movies | a file with the `.mp4` extension | `OakGame\Content\Movies` |
+| Openhotfixloader | a `openhotfixloader.dll` file and a `b3hm.exe` file | `OakGame\Binaries\Win64\Plugins` |
+| Sdk | a `unrealsdk.dll` file and a `sdk_mods` folder | the game folder |
+| Sdkmod | a `.py` file and a `.sdkmod` file | `sdk_mods` |
+| Pluginloader | a `d3d11.dll` file | `OakGame\Binaries\Win64` |
+| Hotfix | a `.bl3hotfix` file | `OakGame\Binaries\Win64\Plugins\ohl-mods` |
+| Root / Game Folder Mods | a `OakGame` folder | the game folder |
+| Pak | a `.pak` file | `OakGame\Content\Paks` |
+| Movies | a `.mp4` file | `OakGame\Content\Movies` |
 | Binaries | - | `OakGame\Binaries\Win64` |
 
 Paths are relative to the game's install folder.
 
 ## Openhotfixloader
 
-Recognised when the archive contains a file or folder named `openhotfixloader.dll` and a file or folder named `b3hm.exe`.
+Recognised when the archive contains a `openhotfixloader.dll` file and a `b3hm.exe` file.
 
 Installs to: `OakGame\Binaries\Win64\Plugins`
 
 ## Sdk
 
-Recognised when the archive contains a file or folder named `unrealsdk.dll` and a file or folder named `sdk_mods`.
+Recognised when the archive contains a `unrealsdk.dll` file and a `sdk_mods` folder.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 ## Sdkmod
 
-Recognised when the archive contains a file with the `.py` extension and a file with the `.sdkmod` extension.
+Recognised when the archive contains a `.py` file and a `.sdkmod` file.
 
 Installs to: `sdk_mods`
 
 ## Pluginloader
 
-Recognised when the archive contains a file or folder named `d3d11.dll`.
+Recognised when the archive contains a `d3d11.dll` file.
 
 Installs to: `OakGame\Binaries\Win64`
 
 ## Hotfix
 
-Recognised when the archive contains a file with the `.bl3hotfix` extension.
+Recognised when the archive contains a `.bl3hotfix` file.
 
 Installs to: `OakGame\Binaries\Win64\Plugins\ohl-mods`
 
@@ -64,7 +64,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `OakGame` or `Engine` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -72,13 +72,13 @@ Installs to: the game folder itself (no subfolder)
 
 ## Pak
 
-Recognised when the archive contains a file with the `.pak` extension.
+Recognised when the archive contains a `.pak` file.
 
 Installs to: `OakGame\Content\Paks`
 
 ## Movies
 
-Recognised when the archive contains a file with the `.mp4` extension.
+Recognised when the archive contains a `.mp4` file.
 
 Installs to: `OakGame\Content\Movies`
 

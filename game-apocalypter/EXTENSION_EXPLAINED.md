@@ -71,7 +71,7 @@ Mod types define where each category of mod gets deployed:
 | MelonLoader UserLibs | `apocalypter-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
 | MelonPreferencesManager | `apocalypter-melonprefman` | high | `{gamePath}/Mods` |
 | MelonLoader | `apocalypter-melonloader` | low | `{gamePath}` |
-| Assembly DLL Mod | `apocalypter-assemblydll` | 60 | `{gamePath}` |
+| Assembly DLL Mod | `apocalypter-assemblydll` | 60 | `{gamePath}/Apocalypter_Data/Managed` |
 | Assets/Resources File | `apocalypter-assets` | 62 | `{gamePath}/Apocalypter_Data` |
 
 ## Mod Installers

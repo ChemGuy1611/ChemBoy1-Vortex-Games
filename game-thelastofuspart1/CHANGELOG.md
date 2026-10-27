@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.3.2] - 2026-10-25
+
+- Added the Nexus mod ID to the extension info.
+
 ## [2.3.1] - 2026-10-16
 
 - Added the game's Nexus Mods ID to the extension's info file.

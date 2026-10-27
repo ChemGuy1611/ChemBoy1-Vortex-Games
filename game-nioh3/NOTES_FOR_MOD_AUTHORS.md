@@ -8,63 +8,65 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Dllloader | a file or folder named `dinput8.dll` | - |
-| Rdbexplorer | a file or folder named `RDBExplorer.exe` | `package` |
-| Yumia | a file or folder named `yumia_mod_insert_into_rdb.exe` | `package` |
-| Looseloader | a file or folder named `LooseFileLoader.dll` | `plugins` |
-| Modmanager | a file or folder named `Nioh3ModManager.exe` | the game folder itself (no subfolder) |
-| Mod | a file with one of these extensions: `.g1t`, `.g1m` or `.g1ts` | `ModArchives` |
-| Loadermod | a file with one of these extensions: `.dll` or `.asi` | `plugins` |
-| Fdatayumia | a file or folder named `package` and a file with one of these extensions: `.fdata` or `.yumiamod.json` | the game folder itself (no subfolder) |
-| Fallback Installer | anything not matched above | - |
+| Dllloader | a `dinput8.dll` file | the game folder |
+| Rdbexplorer | a `RDBExplorer.exe` file | `package` |
+| Yumia | a `yumia_mod_insert_into_rdb.exe` file | `package` |
+| Looseloader | a `LooseFileLoader.dll` file | `plugins` |
+| Modmanager | a `Nioh3ModManager.exe` file | the game folder |
+| Mod | a `.g1t`, `.g1m` or `.g1ts` file | `ModArchives` |
+| Loadermod | a `.dll` or `.asi` file | `plugins` |
+| Fdatayumia | a `package` folder and a `.fdata` or `.yumiamod.json` file | the game folder |
+| Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
 ## Dllloader
 
-Recognised when the archive contains a file or folder named `dinput8.dll`.
+Recognised when the archive contains a `dinput8.dll` file.
+
+Installs to: the game folder
 
 ## Rdbexplorer
 
-Recognised when the archive contains a file or folder named `RDBExplorer.exe`.
+Recognised when the archive contains a `RDBExplorer.exe` file.
 
 Installs to: `package`
 
 ## Yumia
 
-Recognised when the archive contains a file or folder named `yumia_mod_insert_into_rdb.exe`.
+Recognised when the archive contains a `yumia_mod_insert_into_rdb.exe` file.
 
 Installs to: `package`
 
 ## Looseloader
 
-Recognised when the archive contains a file or folder named `LooseFileLoader.dll`.
+Recognised when the archive contains a `LooseFileLoader.dll` file.
 
 Installs to: `plugins`
 
 ## Modmanager
 
-Recognised when the archive contains a file or folder named `Nioh3ModManager.exe`.
+Recognised when the archive contains a `Nioh3ModManager.exe` file.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 ## Mod
 
-Recognised when the archive contains a file with one of these extensions: `.g1t`, `.g1m` or `.g1ts`.
+Recognised when the archive contains a `.g1t`, `.g1m` or `.g1ts` file.
 
 Installs to: `ModArchives`
 
 ## Loadermod
 
-Recognised when the archive contains a file with one of these extensions: `.dll` or `.asi`.
+Recognised when the archive contains a `.dll` or `.asi` file.
 
 Installs to: `plugins`
 
 ## Fdatayumia
 
-Recognised when the archive contains a file or folder named `package` and a file with one of these extensions: `.fdata` or `.yumiamod.json`.
+Recognised when the archive contains a `package` folder and a `.fdata` or `.yumiamod.json` file.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 ## Fallback Installer
 
@@ -76,6 +78,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: the game folder
 
 **Common mistakes:**
 

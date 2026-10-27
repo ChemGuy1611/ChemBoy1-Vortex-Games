@@ -8,9 +8,9 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Fluffy Mod Manager (tool) | a `modmanager.exe` file | - |
-| REFramework (mod loader) | a `dinput8.dll` file | - |
-| Loose Lua Scripts | a `.lua` file outside the REFramework folders | the game folder itself (no subfolder) |
+| Fluffy Mod Manager (tool) | a `modmanager.exe` file | the game folder |
+| REFramework (mod loader) | a `dinput8.dll` file | the game folder |
+| Loose Lua Scripts | a `.lua` file outside the REFramework folders | the game folder |
 | Preset Files | a `.prt` file | `Games\DragonsDogma2\Presets` |
 | Fluffy-Format Mods | anything not matched above | - |
 
@@ -18,11 +18,13 @@ Paths are relative to the game's install folder.
 
 ## Fluffy Mod Manager (tool)
 
-This installer handles Fluffy Mod Manager itself, not mods for it. It exists so users can install Fluffy Mod Manager through Vortex, and mod authors normally never package this.
+This installer handles Fluffy Mod Manager, not mods for it. It exists so users can install Fluffy Mod Manager through Vortex, and mod authors normally never package this.
 
 **Requirements:**
 
 - Recognised by a file named `modmanager.exe` in the archive.
+
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -30,11 +32,13 @@ This installer handles Fluffy Mod Manager itself, not mods for it. It exists so 
 
 ## REFramework (mod loader)
 
-This installer handles REFramework itself, not mods for it. It exists so users can install REFramework through Vortex, and mod authors normally never package this.
+This installer handles REFramework, not mods for it. It exists so users can install REFramework through Vortex, and mod authors normally never package this.
 
 **Requirements:**
 
 - Recognised by a file named `dinput8.dll` in the archive.
+
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -49,7 +53,7 @@ Standalone REFramework Lua scripts, shipped without the surrounding REFramework 
 - Recognised by a `.lua` file in an archive that does NOT already contain a REFramework folder (`reframework` or `autorun`).
 - Vortex adds the correct folder structure around the script for you.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 

@@ -10,10 +10,10 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `Polaris` |
 | Pak Mods | a `.pak` file | `Polaris\Content\Paks\~mods` |
-| Root / Game Folder Mods | a top-level folder such as `Polaris`, `Engine` or `Content` | the game folder itself (no subfolder) |
+| Root / Game Folder Mods | a top-level folder such as `Polaris`, `Engine` or `Content` | the game folder |
 | Config File Mods | a config file such as `engine.ini` or `game.ini` | - |
 | Save Game Files | a `.sav` file | - |
-| Fallback Installer | anything unrecognised with no pak file | `Polaris\Binaries\Win64` |
+| Fallback Installer | anything not matched above with no pak file | `Polaris\Binaries\Win64` |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
@@ -62,6 +62,7 @@ MyPakMod.zip
 
 - Any archive containing a `.pak` file reaches this installer (unless an earlier one claimed it).
 - Only the pak files are installed - surrounding folders are discarded.
+- Companion files are installed alongside paks: `.ucas` or `.utoc`.
 - If the archive holds more than one pak, Vortex asks the user which to install - useful for optional variants.
 
 Installs to: `Polaris\Content\Paks\~mods`
@@ -86,7 +87,7 @@ MyRootMod.zip
 - Recognised by a top-level folder matching any of: `Polaris`, `Engine`, `Content`, `Binaries`, `Mods`, `Paks` or `Movies`.
 - The matched folder and everything below it is copied into the game folder, preserving structure.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 

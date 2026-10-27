@@ -2,8 +2,8 @@
 Name: OCTOPATH TRAVELER 0 Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-16
+Version: 1.0.3
+Date: 2026-10-25
 Notes:
 - Steam Config and Save live in Documents\My Games (store folder, then the user ID folder); the Xbox version keeps Config in Local AppData.
 ////////////////////////////////////////////////*/

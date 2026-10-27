@@ -2,8 +2,8 @@
 Name: Slay the Spire 2 Vortex Extension
 Structure: Basic Game - GODOT Engine
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-10-16
+Version: 1.0.2
+Date: 2026-10-25
 Notes:
 - Game is GODOT Engine with a built-in mod loader
 - Separate save folders for vanilla and modded saves

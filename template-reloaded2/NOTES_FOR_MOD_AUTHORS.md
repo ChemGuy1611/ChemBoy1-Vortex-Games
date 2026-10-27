@@ -8,20 +8,22 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Reloaded-II (mod loader) | a `reloaded-ii.exe` file | - |
-| XXX Reloadedmodloader | a file or folder named `modconfig.json` and a file or folder named `XXX.modloader.dll` | `Reloaded\Mods\XXX_Mod_Loader` |
-| XXX Reloadedmod | a file or folder named `modconfig.json` | `Reloaded\Mods` |
+| Reloaded-II (mod loader) | a `reloaded-ii.exe` file | the game folder |
+| XXX Reloadedmodloader | a `modconfig.json` file and a `XXX.modloader.dll` file | `Reloaded\Mods\XXX_Mod_Loader` |
+| XXX Reloadedmod | a `modconfig.json` file | `Reloaded\Mods` |
 | Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder.
 
 ## Reloaded-II (mod loader)
 
-This installer handles Reloaded-II itself, not mods for it. It exists so users can install Reloaded-II through Vortex, and mod authors normally never package this.
+This installer handles Reloaded-II, not mods for it. It exists so users can install Reloaded-II through Vortex, and mod authors normally never package this.
 
 **Requirements:**
 
 - Recognised by a file named `reloaded-ii.exe` in the archive.
+
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -29,13 +31,13 @@ This installer handles Reloaded-II itself, not mods for it. It exists so users c
 
 ## XXX Reloadedmodloader
 
-Recognised when the archive contains a file or folder named `modconfig.json` and a file or folder named `XXX.modloader.dll`.
+Recognised when the archive contains a `modconfig.json` file and a `XXX.modloader.dll` file.
 
 Installs to: `Reloaded\Mods\XXX_Mod_Loader`
 
 ## XXX Reloadedmod
 
-Recognised when the archive contains a file or folder named `modconfig.json`.
+Recognised when the archive contains a `modconfig.json` file.
 
 Installs to: `Reloaded\Mods`
 

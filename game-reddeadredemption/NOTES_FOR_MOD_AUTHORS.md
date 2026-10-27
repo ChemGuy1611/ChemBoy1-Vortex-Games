@@ -8,42 +8,50 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Scripthook | a file or folder named `dinput8.dll` and a file or folder named `scripthookrdr.dll` | - |
-| Modloader | a file or folder named `kml.asi` | - |
-| Magicrdr | - | - |
-| Magicmod | a file with one of these extensions: `.wtd`, `.was`, `.dds`, `.mtl` or `.wsc` | `MagicRDR_Mods` |
-| Rpf | a file with the `.rpf` extension | `kml\rpf` |
-| Asiplugin | a file with the `.asi` extension | - |
+| Scripthook | a `dinput8.dll` file and a `scripthookrdr.dll` file | the game folder |
+| Modloader | a `kml.asi` file | the game folder |
+| Magicrdr | - | the game folder |
+| Magicmod | a `.wtd`, `.was`, `.dds`, `.mtl` or `.wsc` file | `MagicRDR_Mods` |
+| Rpf | a `.rpf` file | `kml\rpf` |
+| Asiplugin | a `.asi` file | the game folder |
 
 Paths are relative to the game's install folder.
 
 ## Scripthook
 
-Recognised when the archive contains a file or folder named `dinput8.dll` and a file or folder named `scripthookrdr.dll`.
+Recognised when the archive contains a `dinput8.dll` file and a `scripthookrdr.dll` file.
+
+Installs to: the game folder
 
 ## Modloader
 
-Recognised when the archive contains a file or folder named `kml.asi`.
+Recognised when the archive contains a `kml.asi` file.
+
+Installs to: the game folder
 
 ## Magicrdr
 
 Handled by the `testMagic` installer. Inspect the extension source for the exact archive layout it expects.
 
+Installs to: the game folder
+
 ## Magicmod
 
-Recognised when the archive contains a file with one of these extensions: `.wtd`, `.was`, `.dds`, `.mtl` or `.wsc`.
+Recognised when the archive contains a `.wtd`, `.was`, `.dds`, `.mtl` or `.wsc` file.
 
 Installs to: `MagicRDR_Mods`
 
 ## Rpf
 
-Recognised when the archive contains a file with the `.rpf` extension.
+Recognised when the archive contains a `.rpf` file.
 
 Installs to: `kml\rpf`
 
 ## Asiplugin
 
-Recognised when the archive contains a file with the `.asi` extension.
+Recognised when the archive contains a `.asi` file.
+
+Installs to: the game folder
 
 ## Rules That Apply To Every Mod Type
 

@@ -2,8 +2,8 @@
 Name: Trepang2 Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.2.3
-Date: 2026-10-16
+Version: 1.2.4
+Date: 2026-10-25
 Notes:
 - Rebuilt on the unified UE4-5 template, added Xbox Game Pass version support
 - Dropped the Unreal Engine Mod Installer (UEMI) dependency - pak modtype/installer now self-owned per template-ue4-5; existing pak mods migrate automatically on update

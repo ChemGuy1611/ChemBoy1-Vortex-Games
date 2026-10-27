@@ -9,13 +9,13 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `StateOfDecay2` |
-| Pak Mods | a `.pak` file | `LOCALAPPDATA\StateOfDecay2\Saved\Paks` |
-| Root / Game Folder Mods | a top-level folder such as `StateOfDecay2`, `Engine` or `Content` | the game folder itself (no subfolder) |
+| Pak Mods | a `.pak` file | `%LOCALAPPDATA%\StateOfDecay2\Saved\Paks` |
+| Root / Game Folder Mods | a top-level folder such as `StateOfDecay2`, `Engine` or `Content` | the game folder |
 | Config File Mods | a config file such as `engine.ini` or `game.ini` | - |
 | Save Game Files | a `.sav` file | - |
-| Cooked | a file or folder named `Cooked` | `{localAppData}\StateOfDecay2\Saved` |
-| Modmanager | a file or folder named `modintegrator.exe` | - |
-| Fallback Installer | anything unrecognised with no pak file | `StateOfDecay2\Binaries\Win64` |
+| Cooked | a `Cooked` folder | `{localAppData}\StateOfDecay2\Saved` |
+| Modmanager | a `modintegrator.exe` file | the game folder |
+| Fallback Installer | anything not matched above with no pak file | `StateOfDecay2\Binaries\Win64` |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
@@ -66,7 +66,7 @@ MyPakMod.zip
 - Only the pak files are installed - surrounding folders are discarded.
 - If the archive holds more than one pak, Vortex asks the user which to install - useful for optional variants.
 
-Installs to: `LOCALAPPDATA\StateOfDecay2\Saved\Paks`
+Installs to: `%LOCALAPPDATA%\StateOfDecay2\Saved\Paks`
 
 **Common mistakes:**
 
@@ -88,7 +88,7 @@ MyRootMod.zip
 - Recognised by a top-level folder matching any of: `StateOfDecay2`, `Engine`, `Content`, `Binaries`, `Mods`, `Paks` or `Movies`.
 - The matched folder and everything below it is copied into the game folder, preserving structure.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -120,13 +120,15 @@ Save files are deployed to the game's save folder in your user profile.
 
 ## Cooked
 
-Recognised when the archive contains a file or folder named `Cooked`.
+Recognised when the archive contains a `Cooked` folder.
 
 Installs to: `{localAppData}\StateOfDecay2\Saved`
 
 ## Modmanager
 
-Recognised when the archive contains a file or folder named `modintegrator.exe`.
+Recognised when the archive contains a `modintegrator.exe` file.
+
+Installs to: the game folder
 
 ## Fallback Installer
 
@@ -139,7 +141,7 @@ This is the catch-all. Any archive with no `.pak` file that matched none of the 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
 
-Installs to: `StateOfDecay2\Binaries\Win64`
+Installs to: `StateOfDecay2\Binaries\Win64` (`WinGDK` instead of `Win64` for the Xbox version)
 
 **Common mistakes:**
 

@@ -8,38 +8,38 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Base | a file or folder named `base` | - |
-| Maps | a file or folder named `maps` | - |
-| Streampacks | a file or folder named `streampacks` | - |
-| Videos | a file or folder named `videos` | - |
-| Pk4 | a file with the `.pk4` extension | - |
-| Exe | a file with the `.exe` extension | - |
+| Base | a `base` folder | - |
+| Maps | a `maps` folder | - |
+| Streampacks | a `streampacks` folder | - |
+| Videos | a `videos` folder | - |
+| Pk4 | a `.pk4` file | - |
+| Exe | a `.exe` file | - |
 
 Paths are relative to the game's install folder.
 
 ## Base
 
-Recognised when the archive contains a file or folder named `base`.
+Recognised when the archive contains a `base` folder.
 
 ## Maps
 
-Recognised when the archive contains a file or folder named `maps`.
+Recognised when the archive contains a `maps` folder.
 
 ## Streampacks
 
-Recognised when the archive contains a file or folder named `streampacks`.
+Recognised when the archive contains a `streampacks` folder.
 
 ## Videos
 
-Recognised when the archive contains a file or folder named `videos`.
+Recognised when the archive contains a `videos` folder.
 
 ## Pk4
 
-Recognised when the archive contains a file with the `.pk4` extension.
+Recognised when the archive contains a `.pk4` file.
 
 ## Exe
 
-Recognised when the archive contains a file with the `.exe` extension.
+Recognised when the archive contains a `.exe` file.
 
 ## Rules That Apply To Every Mod Type
 

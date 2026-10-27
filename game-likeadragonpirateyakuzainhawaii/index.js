@@ -1102,7 +1102,7 @@ function applyGame(context, gameSpec) {
   }
   context.registerInstaller(DATAMOD_ID, 29, testData, installData);
   if (rootInstaller) {
-    context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
+    context.registerInstaller(ROOT_ID, 28, testRoot, installRoot);
   }
 
   //register actions

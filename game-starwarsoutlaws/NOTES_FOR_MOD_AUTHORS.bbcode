@@ -7,19 +7,23 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 Modloader:
 
-Recognised when the archive contains a file or folder named "version.dll".
+Recognised when the archive contains a "version.dll" file.
+
+  Installs to: the game folder
 
 ========================================================================
 
 Data:
 
-Recognised when the archive contains a file or folder named "helix".
+Recognised when the archive contains a "helix" folder.
+
+  Installs to: the game folder
 
 ========================================================================
 
 Datasub:
 
-Recognised when the archive contains a file or folder named one of: "baked", "graph objects" or "game system data".
+Recognised when the archive contains a "baked", "graph objects" or "game system data" folder.
 
   Installs to: "helix"
 
@@ -27,7 +31,7 @@ Recognised when the archive contains a file or folder named one of: "baked", "gr
 
 Plugins:
 
-Recognised when the archive contains a file with one of these extensions: ".dll" or ".asi".
+Recognised when the archive contains a ".dll" or ".asi" file.
 
   Installs to: "plugins"
 
@@ -41,7 +45,7 @@ Configuration tweaks, deployed to the game's config location.
     - Recognised by any file named "graphic settings.cfg".
     - Recognised by any file with the ".cfg" extension.
 
-  Installs to: "DOCUMENTS\My Games\Outlaws"
+  Installs to: "%USERPROFILE%\Documents\My Games\Outlaws"
 
   Common mistakes:
     - Shipping a config file with one of these names inside an unrelated mod makes the whole archive install as a config mod.

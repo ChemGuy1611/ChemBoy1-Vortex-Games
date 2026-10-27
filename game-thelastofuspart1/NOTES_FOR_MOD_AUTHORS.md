@@ -8,37 +8,39 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Buildfolderpakbin | a file or folder named `build`, a file with the `.pak` extension and a file with the `.bin` extension | - |
-| Binfolder | a file or folder named `bin`, a file with the `.pak` extension and a file with the `.bin` extension | `build\pc\main` |
-| Pak | a file with the `.pak` extension | `build\pc\main` |
-| Buildfolder | a file or folder named `build` | the game folder itself (no subfolder) |
-| Save Game Files | a `USR-DATA` file | `USER_HOME\Saved Games\The Last of Us Part I\users\USERID_FOLDER\savedata` |
-| Config File Mods | a `screeninfo.cfg` file | `USER_HOME\Saved Games\The Last of Us Part I\users\USERID_FOLDER` |
-| Psarctool | a file or folder named `UnPSARC.exe` | `build\pc\main` |
+| Buildfolderpakbin | a `build` folder, a `.pak` file and a `.bin` file | the game folder |
+| Binfolder | a `bin` folder, a `.pak` file and a `.bin` file | `build\pc\main` |
+| Pak | a `.pak` file | `build\pc\main` |
+| Buildfolder | a `build` folder | the game folder |
+| Save Game Files | a `USR-DATA` file | `%USERPROFILE%\Saved Games\The Last of Us Part I\users\<User ID>\savedata` |
+| Config File Mods | a `screeninfo.cfg` file | `%USERPROFILE%\Saved Games\The Last of Us Part I\users\<User ID>` |
+| Psarctool | a `UnPSARC.exe` file | `build\pc\main` |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
 ## Buildfolderpakbin
 
-Recognised when the archive contains a file or folder named `build`, a file with the `.pak` extension and a file with the `.bin` extension.
+Recognised when the archive contains a `build` folder, a `.pak` file and a `.bin` file.
+
+Installs to: the game folder
 
 ## Binfolder
 
-Recognised when the archive contains a file or folder named `bin`, a file with the `.pak` extension and a file with the `.bin` extension.
+Recognised when the archive contains a `bin` folder, a `.pak` file and a `.bin` file.
 
 Installs to: `build\pc\main`
 
 ## Pak
 
-Recognised when the archive contains a file with the `.pak` extension.
+Recognised when the archive contains a `.pak` file.
 
 Installs to: `build\pc\main`
 
 ## Buildfolder
 
-Recognised when the archive contains a file or folder named `build`.
+Recognised when the archive contains a `build` folder.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 ## Save Game Files
 
@@ -48,7 +50,7 @@ Save files, deployed to the game's save folder.
 
 - Recognised by any file named `USR-DATA`.
 
-Installs to: `USER_HOME\Saved Games\The Last of Us Part I\users\USERID_FOLDER\savedata`
+Installs to: `%USERPROFILE%\Saved Games\The Last of Us Part I\users\<User ID>\savedata`
 
 **Common mistakes:**
 
@@ -62,7 +64,7 @@ Configuration tweaks, deployed to the game's config location.
 
 - Recognised by any file named `screeninfo.cfg`.
 
-Installs to: `USER_HOME\Saved Games\The Last of Us Part I\users\USERID_FOLDER`
+Installs to: `%USERPROFILE%\Saved Games\The Last of Us Part I\users\<User ID>`
 
 **Common mistakes:**
 
@@ -70,7 +72,7 @@ Installs to: `USER_HOME\Saved Games\The Last of Us Part I\users\USERID_FOLDER`
 
 ## Psarctool
 
-Recognised when the archive contains a file or folder named `UnPSARC.exe`.
+Recognised when the archive contains a `UnPSARC.exe` file.
 
 Installs to: `build\pc\main`
 

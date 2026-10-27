@@ -8,25 +8,25 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Modkitmod | a file with the `.uplugin` extension and a file with the `.pak` extension | `LOCALAPPDATA\Whiskerwood\Saved\mods` |
+| Modkitmod | a `.uplugin` file and a `.pak` file | `%LOCALAPPDATA%\Whiskerwood\Saved\mods` |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `Whiskerwood` |
 | Blueprint Mods (LogicMods) | a `LogicMods` folder | `Whiskerwood\Content\Paks` |
 | Pak Mods | a `.pak` file | `Whiskerwood\Content\Paks\~mods` |
-| UE4SS Itself | a `dwmapi.dll` file | `Whiskerwood\Binaries\Win64` |
+| UE4SS | a `dwmapi.dll` file | `Whiskerwood\Binaries\Win64` |
 | UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `Whiskerwood\Binaries\Win64\ue4ss\Mods` |
 | UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | `Whiskerwood\Binaries\Win64\ue4ss\Mods` |
-| Root / Game Folder Mods | a top-level folder such as `Whiskerwood`, `Engine` or `Content` | the game folder itself (no subfolder) |
+| Root / Game Folder Mods | a top-level folder such as `Whiskerwood`, `Engine` or `Content` | the game folder |
 | Config File Mods | a config file such as `engine.ini` or `game.ini` | - |
 | Save Game Files | a `.whisker` file | - |
-| Fallback Installer | anything unrecognised with no pak file | `Whiskerwood\Binaries\Win64` |
+| Fallback Installer | anything not matched above with no pak file | `Whiskerwood\Binaries\Win64` |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
 ## Modkitmod
 
-Recognised when the archive contains a file with the `.uplugin` extension and a file with the `.pak` extension.
+Recognised when the archive contains a `.uplugin` file and a `.pak` file.
 
-Installs to: `LOCALAPPDATA\Whiskerwood\Saved\mods`
+Installs to: `%LOCALAPPDATA%\Whiskerwood\Saved\mods`
 
 ## Combo Mods (pak + UE4SS script/DLL together)
 
@@ -107,7 +107,7 @@ Installs to: `Whiskerwood\Content\Paks\~mods`
 - Shipping several unrelated paks in one archive when you meant them all to install - the user gets a choice dialog and may pick only one.
 - Blueprint mods belong in a `LogicMods` folder instead - see above.
 
-## UE4SS Itself
+## UE4SS
 
 This installer handles the UE4SS runtime package, not individual mods. Most authors never need it - it exists so users can install UE4SS through Vortex.
 
@@ -116,7 +116,7 @@ This installer handles the UE4SS runtime package, not individual mods. Most auth
 - Recognised by a file named `dwmapi.dll` at any level of the archive.
 - Also recognised by any of the UE4SS support folders: `MapGenBP`, `MemberVarLayoutTemplates`, `UE4SS_Signatures` or `VTableLayoutTemplates`.
 
-Installs to: `Whiskerwood\Binaries\Win64`
+Installs to: `Whiskerwood\Binaries\Win64` (`WinGDK` instead of `Win64` for the Xbox version)
 
 **Common mistakes:**
 
@@ -139,7 +139,7 @@ MyScriptMod.zip
 - Wrap the `Scripts` folder in a folder named after your mod. That folder name becomes the mod's UE4SS name and is what gets written to the load order.
 - If you omit the wrapper folder, Vortex falls back to naming the mod after the archive file.
 
-Installs to: `Whiskerwood\Binaries\Win64\ue4ss\Mods`
+Installs to: `Whiskerwood\Binaries\Win64\ue4ss\Mods` (`WinGDK` instead of `Win64` for the Xbox version)
 
 **Common mistakes:**
 
@@ -162,7 +162,7 @@ MyDllMod.zip
 - The archive must contain a `.dll` file AND a folder named `dlls`.
 - Wrap the `dlls` folder in a folder named after your mod - that name is used in the load order.
 
-Installs to: `Whiskerwood\Binaries\Win64\ue4ss\Mods`
+Installs to: `Whiskerwood\Binaries\Win64\ue4ss\Mods` (`WinGDK` instead of `Win64` for the Xbox version)
 
 **Common mistakes:**
 
@@ -183,7 +183,7 @@ MyRootMod.zip
 - Recognised by a top-level folder matching any of: `Whiskerwood`, `Engine`, `Content`, `Binaries`, `Mods`, `Paks` or `Movies`.
 - The matched folder and everything below it is copied into the game folder, preserving structure.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -224,7 +224,7 @@ This is the catch-all. Any archive with no `.pak` file that matched none of the 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
 
-Installs to: `Whiskerwood\Binaries\Win64`
+Installs to: `Whiskerwood\Binaries\Win64` (`WinGDK` instead of `Win64` for the Xbox version)
 
 **Common mistakes:**
 

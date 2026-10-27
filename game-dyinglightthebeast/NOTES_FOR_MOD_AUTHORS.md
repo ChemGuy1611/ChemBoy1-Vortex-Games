@@ -8,29 +8,29 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Mergerutility | - | `ph_ft` |
-| Supermerger | - | `ph_ft` |
-| Pak | a file with the `.pak` extension | `ph_ft\mods` |
-| Root / Game Folder Mods | a `ph_ft` folder | the game folder itself (no subfolder) |
+| Mergerutility | a `unleashthemods.exe` file | `ph_ft` |
+| Supermerger | a `SuperModMerger.exe` file | `ph_ft` |
+| Pak | a `.pak` file | `ph_ft\mods` |
+| Root / Game Folder Mods | a `ph_ft` folder | the game folder |
 | Binaries | - | `ph_ft\work\bin\x64` |
 
 Paths are relative to the game's install folder.
 
 ## Mergerutility
 
-Handled by the `testMergerUtility` installer. Inspect the extension source for the exact archive layout it expects.
+Recognised when the archive contains a `unleashthemods.exe` file.
 
 Installs to: `ph_ft`
 
 ## Supermerger
 
-Handled by the `testSuperMerger` installer. Inspect the extension source for the exact archive layout it expects.
+Recognised when the archive contains a `SuperModMerger.exe` file.
 
 Installs to: `ph_ft`
 
 ## Pak
 
-Recognised when the archive contains a file with the `.pak` extension.
+Recognised when the archive contains a `.pak` file.
 
 Installs to: `ph_ft\mods`
 
@@ -48,7 +48,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `ph_ft` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 

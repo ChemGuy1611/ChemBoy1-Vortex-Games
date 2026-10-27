@@ -8,16 +8,16 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | - |
+| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | the game folder |
 | Blueprint Mods (LogicMods) | a `LogicMods` folder | `XXX\Content\Paks` |
 | Pak Mods | a `.pak` file | `XXX\Content\Paks\~mods` |
-| UE4SS Itself | a `dwmapi.dll` file | `XXX\Binaries\Win64` |
+| UE4SS | a `dwmapi.dll` file | `XXX\Binaries\Win64` |
 | UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `XXX\Binaries\Win64\ue4ss\Mods` |
 | UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | `XXX\Binaries\Win64\ue4ss\Mods` |
-| Root / Game Folder Mods | a top-level folder such as `Engine`, `Content` or `Binaries` | the game folder itself (no subfolder) |
+| Root / Game Folder Mods | a top-level folder such as `Engine`, `Content` or `Binaries` | the game folder |
 | Config File Mods | a config file such as `engine.ini` or `game.ini` | - |
 | Save Game Files | a `.sav` file | - |
-| Fallback Installer | anything unrecognised with no pak file | `XXX\Binaries\Win64` |
+| Fallback Installer | anything not matched above with no pak file | `XXX\Binaries\Win64` |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
@@ -45,6 +45,8 @@ MyComboMod.zip
 - Both a `Content` folder and a `Binaries` folder must be present, or this installer is skipped.
 - Mirror the real in-game folder structure below those two folders.
 - This installer is tested before the individual pak/script/DLL installers, so a matching archive is always handled as a combo.
+
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -89,6 +91,7 @@ MyPakMod.zip
 
 - Any archive containing a `.pak` file reaches this installer (unless an earlier one claimed it).
 - Only the pak files are installed - surrounding folders are discarded.
+- Companion files are installed alongside paks: `.ucas` or `.utoc`.
 - If the archive holds more than one pak, Vortex asks the user which to install - useful for optional variants.
 
 Installs to: `XXX\Content\Paks\~mods`
@@ -98,7 +101,7 @@ Installs to: `XXX\Content\Paks\~mods`
 - Shipping several unrelated paks in one archive when you meant them all to install - the user gets a choice dialog and may pick only one.
 - Blueprint mods belong in a `LogicMods` folder instead - see above.
 
-## UE4SS Itself
+## UE4SS
 
 This installer handles the UE4SS runtime package, not individual mods. Most authors never need it - it exists so users can install UE4SS through Vortex.
 
@@ -174,7 +177,7 @@ MyRootMod.zip
 - Recognised by a top-level folder matching any of: `Engine`, `Content`, `Binaries`, `Mods`, `Paks`, `Movies` or `Splash`.
 - The matched folder and everything below it is copied into the game folder, preserving structure.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 

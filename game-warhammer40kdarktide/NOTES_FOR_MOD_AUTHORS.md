@@ -8,20 +8,20 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Dmfdml | a file with the `.bat` extension | - |
-| Mod | a file with the `.mod` extension | - |
-| Root / Game Folder Mods | a `mods` folder | the game folder itself (no subfolder) |
+| Dmfdml | a `.bat` file | - |
+| Mod | a `.mod` file | - |
+| Root / Game Folder Mods | a `mods` folder | the game folder |
 | Darktide Binaries | - | `binaries` |
 
 Paths are relative to the game's install folder.
 
 ## Dmfdml
 
-Recognised when the archive contains a file with the `.bat` extension.
+Recognised when the archive contains a `.bat` file.
 
 ## Mod
 
-Recognised when the archive contains a file with the `.mod` extension.
+Recognised when the archive contains a `.mod` file.
 
 ## Root / Game Folder Mods
 
@@ -37,7 +37,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `mods`, `binaries`, `bundle` or `launcher` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 

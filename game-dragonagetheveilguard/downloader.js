@@ -430,6 +430,11 @@ async function download(api, requirements, force) {
             // Nexus-sourced (the install picks up the page's real author/picture/description) and
             // the resolved modId/fileId are the genuine ones, worth keeping.
             nexusSourced: true,
+            // An archive from a Nexus page is something Vortex's own update check and update
+            // button can handle, so the mod is left Nexus-sourced for them as well. A pinned
+            // requirement is the exception: Vortex follows the page's update chain and knows
+            // nothing of the pin, so it would offer the newer file the pin exists to hold back.
+            vortexUpdateCheck: !isPinned(req),
           });
           installedAny = true;
           continue;
@@ -483,8 +488,8 @@ async function download(api, requirements, force) {
   }
 }
 
-// info: { name, assetDate, pageUrl, version, nightlyRunNumber, modType, nexusSourced } - all
-// optional except name.
+// info: { name, assetDate, pageUrl, version, nightlyRunNumber, modType, nexusSourced,
+// vortexUpdateCheck } - all optional except name.
 async function installDownload(api, dlId, info) {
   const state = api.getState();
   const gameId = selectors.activeGameId(state);
@@ -529,9 +534,13 @@ async function installDownload(api, dlId, info) {
       // source: 'website' + url makes Vortex show a clickable "Source" link to the repo
       // page in the mod details panel (mod_management customRenderer gates on this pair).
       // The source stamp is deliberately unconditional while the link is not: a file this
-      // module fetched came from a GitHub release or a Nexus mod PAGE, never a Nexus mod FILE,
-      // and it must not be left looking like one even when there is no page to link to.
-      attributes.source = "website";
+      // module fetched from a GitHub release or CI artifact is never a Nexus mod FILE, and it
+      // must not be left looking like one even when there is no page to link to.
+      // The one exception is an unpinned archive from a Nexus page (vortexUpdateCheck): that
+      // file IS a Nexus mod file, so it is stamped source: 'nexus' and Vortex's own update
+      // check covers it alongside this module's. It keeps the genuine modId/fileId the install
+      // resolved (see nexusSourced) - which is what that check reads.
+      attributes.source = info.vortexUpdateCheck === true ? "nexus" : "website";
       if (info.pageUrl !== undefined) {
         attributes.url = info.pageUrl;
       }
@@ -558,9 +567,9 @@ async function installDownload(api, dlId, info) {
       // above - the plural setModAttributes merges, and a merge can never delete a key.
       // Do not "tidy" them away. See https://github.com/Nexus-Mods/Vortex/issues/21979.
       // Skipped for a Nexus-page requirement: there the ids are the real ones for the page the
-      // file was fetched from, so they are worth keeping. Nothing runs away with them either -
-      // the mod is still stamped source: 'website', and the bulk update check filters on
-      // source === 'nexus', so this module stays the only thing updating it.
+      // file was fetched from, so they are worth keeping. Whether Vortex's own update check
+      // uses them is decided by the source stamp above - it filters on source === 'nexus', so
+      // a pinned requirement stamped 'website' keeps its ids without being offered updates.
       if (!nexusSourced) {
         batch.push(actions.setModAttribute(gameId, modId, "modId", undefined));
         batch.push(actions.setModAttribute(gameId, modId, "fileId", undefined));
@@ -819,11 +828,17 @@ async function getLatestNightlyArtifact(api, requirement) {
 // isUpdateAvailable and installAssetAsMod can treat it like one. browser_download_url is
 // deliberately absent: there is no fetchable URL to put in it.
 //
-// The installed mod is stamped source: 'website', NOT source: 'nexus'. A Nexus-sourced mod is
-// picked up by Vortex's own update check, which would then own the notification, the version
-// column and the update button for a mod this module installs and replaces itself - two update
-// mechanisms on one mod - and it is also the shape that gets a wrong modId stamped onto a file
-// whose md5 happens to match something else on the site.
+// Which source the installed mod is stamped with depends on what was installed:
+//
+//   AN ARCHIVE is stamped source: 'nexus' and keeps the page's genuine modId/fileId, so
+//   Vortex's own update check and update button work on it alongside this module's check -
+//   an update Vortex installs goes through the same archive pipeline this module uses. A
+//   PINNED archive is the exception and stays source: 'website': Vortex follows the page's
+//   update chain, knows nothing of the pin, and would offer exactly the file the pin holds back.
+//
+//   A NAKED FILE (directCopyAsMod) is stamped source: 'website'. Vortex's update button would
+//   download the new file and hand it to the archive installer, which cannot open an .exe, and
+//   the mod it would be replacing is one this module created itself rather than an install.
 
 // Nexus game domain the requirement's page sits under. The fallback is only right for a
 // requirement hosted on the page of the game being managed; every cross-game one sets the field.
@@ -1349,7 +1364,7 @@ async function installAssetAsMod(api, requirement, asset, fetchAsset) {
   }
   // Which page and file this came from, recorded for diagnostics only. Deliberately NOT the
   // modId/fileId pair Vortex reads, which only means anything alongside source: 'nexus' - see
-  // the Nexus section for why that source is not used here.
+  // the Nexus section for why a naked file never gets that source.
   if (isNexusRequirement(requirement)) {
     attributes.nexusModId = asset.nexusModId;
     attributes.nexusFileId = asset.nexusFileId;

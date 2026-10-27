@@ -74,7 +74,7 @@ Mod types define where each category of mod gets deployed:
 | MelonLoader UserLibs | `hollowknight-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
 | MelonPreferencesManager | `hollowknight-melonprefman` | high | `{gamePath}/Mods` |
 | MelonLoader | `hollowknight-melonloader` | low | `{gamePath}` |
-| Assembly DLL Mod | `hollowknight-assemblydll` | 60 | `{gamePath}` |
+| Assembly DLL Mod | `hollowknight-assemblydll` | 60 | `{gamePath}/hollow_knight_Data/Managed` |
 | Assets/Resources File | `hollowknight-assets` | 62 | `{gamePath}/hollow_knight_Data` |
 
 ## Mod Installers

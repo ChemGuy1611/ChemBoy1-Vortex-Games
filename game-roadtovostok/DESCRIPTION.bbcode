@@ -1,32 +1,103 @@
 This extension adds Road to Vostok modding support to Vortex Mod Manager.
+[summary]Mod Loader and MCM automatically installed.[/summary]
 
 [b]✅ Supported Versions:[/b]
 [list]
 [*]Steam[/*]
+[*]Steam Demo[/*]
 [*]Other versions may need to select the installation location manually.[/*]
 [/list]
 [b]🛠️ Mod Installation Notes:[/b]
 [list]
-[*]Installs Metro Mod Loader itself, recognised by a file or folder named "modloader.gd".[/*]
-[*]Installs ModConfigurationMenu mod with a file or folder named "ModConfigurationMenu" to the "mods" folder.[/*]
-[*]Installs Godot mod with a file with one of these extensions: ".vmz" to the "mods" folder.[/*]
-[*]Installs Godot mod with a file or folder named one of: "mod.txt".[/*]
-[*]Any other mod not described above is installed to the game folder itself (no subfolder).[/*]
+[*]Metro Mod Loader installs to the game folder, recognised by a "modloader.gd" file.[/*]
+[*]ModConfigurationMenu mods with a "ModConfigurationMenu" folder install to the "mods" folder.[/*]
+[*]Godot mods with a ".vmz" file install to the "mods" folder.[/*]
+[*]Godot mods with a "mod.txt" file install to the "mods" folder.[/*]
+[*]Any other mod not described above installs to the "mods" folder.[/*]
 [*]Archives with a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to Vortex's built-in FOMOD installer instead.[/*]
 [/list]
 [b]📋 Usage Notes:[/b]
 [list]
 [*]You can open several useful files/folders/URLs using the buttons within the folder icon on the Mods toolbar.[/*]
+[*]Automatically installs [url=https://www.nexusmods.com/roadtovostok/mods/20]Metro Mod Loader[/url] to game root.[/*]
+[*]Automatically installs [url=https://github.com/DoinkOink/Mod-Configuration-Menu-Road-To-Vostok]ModConfigurationMenu[/url] to "mods" folder.[/*]
+[*]All other mods are installed to the "mods" folder with a fallback notification.[/*]
+[/list]
+
+[b]📝 Notes for Mod Authors:[/b]
+[spoiler]
+Packaging rules for Road to Vostok mods, so Vortex installs them to the right place.
+
+Vortex decides what a mod is by looking at the files and folders inside the archive. It tries each installer in order and the first one that matches wins, so archive layout is what determines where your mod ends up.
+
+========================================================================
+
+Godotmodloader:
+
+Recognised when the archive contains a "modloader.gd" file.
+
+  Installs to: the game folder
+
+========================================================================
+
+Mcm:
+
+Recognised when the archive contains a "ModConfigurationMenu" folder.
+
+  Installs to: "mods"
+
+========================================================================
+
+Mod:
+
+Recognised when the archive contains a ".vmz" file.
+
+  Installs to: "mods"
+
+========================================================================
+
+Mod Rezip:
+
+Recognised when the archive contains a "mod.txt" file.
+
+  Installs to: "mods"
+
+========================================================================
+
+Fallback Installer:
+
+The catch-all. Any archive that matched none of the installers above lands here and is copied across unchanged.
+
+[b][color=#ffff00]NOTE: Landing in the fallback installer is a signal your archive layout needs fixing.[/color][/b]
+
+  Requirements:
+    - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
+    - Vortex shows the user a notification when a mod installs through the fallback.
+
+  Installs to: "mods"
+
+  Common mistakes:
+    - If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.
+
+========================================================================
+
+Rules That Apply To Every Mod Type:
+
+    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
+    - Folder and file name matching is case-insensitive.
+    - Extra wrapper folders around a recognised folder are generally fine.
+[/spoiler]
+
+[b]🤝 Credits:[/b]
+[list]
+[*]Credit to [url=https://next.nexusmods.com/profile/Nagev/about-me]Nagev[/url] (Nexus Mods Vortex Developer) for his support on helping me learn to make Vortex extensions, and being patient when I break things :)[/*]
 [/list]
 
 [b]❤️ Support the Mod Author: [/b]
 If you would like to support my work, you can do so below. Your support is greatly appreciated!
 
-
 [url=https://www.paypal.com/donate/?hosted_button_id=ZFE99JKP43D2G][img]https://live.staticflickr.com/65535/54395661414_10e6ef111d_m.jpg[/img][/url]
 
-
 [url=https://ko-fi.com/chemboy1nexusmods/][img]https://live.staticflickr.com/65535/54380730333_357df43249_n.jpg[/img][/url]
-
 
 [url=https://buymeacoffee.com/chemboy1/][img]https://live.staticflickr.com/65535/54379586002_8dcc6370e5_m.jpg[/img][/url]

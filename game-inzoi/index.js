@@ -2,8 +2,8 @@
 Name: inZOI Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.4
-Date: 2026-10-16
+Version: 1.0.5
+Date: 2026-10-25
 Notes:
 - Mods are installed to the MODKit Mods folder in User Documents by default, so game folder mod types
   are only offered when Documents, the game folder and the Vortex staging folder share a drive.

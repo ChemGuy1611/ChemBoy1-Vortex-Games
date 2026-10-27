@@ -8,7 +8,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Root / Game Folder Mods | a `dropzone` folder | the game folder itself (no subfolder) |
+| Root / Game Folder Mods | a `dropzone` folder | the game folder |
 
 Paths are relative to the game's install folder.
 
@@ -26,7 +26,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `dropzone`, `archives_win64`, `dlc_win64`, `locations`, `global`, `effects`, `scripts` or `videos` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 

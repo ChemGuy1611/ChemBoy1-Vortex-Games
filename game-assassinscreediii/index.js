@@ -2,8 +2,8 @@
 Name: Assassin's Creed III Vortex Extension
 Structure: Anvil Engine - AnvilToolkit/ForgerPatchManager
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-16
+Version: 1.0.3
+Date: 2026-10-25
 Notes:
 -
 //////////////////////////////////////////////////////////*/

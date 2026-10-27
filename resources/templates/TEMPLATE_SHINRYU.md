@@ -24,12 +24,10 @@ place, `ROOT_FILES` an engine-DLL allowlist (`nvngx_dlss.dll`, `dstorage*.dll`, 
 | `MODMANAGER_ID`    | `runtime/media`, spec `low` |
 
 **Installers:** `MODMANAGER` 25 → `MODMANAGERMOD` 27 (behind `needsModInstaller`) → `DATAMOD` 29 →
-`ROOT` 27 (behind `rootInstaller`). There is no fallback installer.
+`ROOT` 28 (behind `rootInstaller`). There is no fallback installer.
 
-**Priority collision to watch.** `MODMANAGERMOD` and `ROOT` both register at 27, and `ROOT` is
-registered _after_ `DATAMOD` in source order. With equal priority the registration order decides
-which is tested first, so changing the order of those `registerInstaller` lines silently changes
-which installer claims an ambiguous archive.
+`ROOT` sits at 28 so a mod that also ships an executable is always offered to `MODMANAGERMOD` (27)
+first, whatever the order of the `registerInstaller` lines in source.
 
 **Tools:** `Launch Modded Game` (SRMM with `parameters: ['--run', '--silent']`, `defaultPrimary`),
 the Shin Ryu MM UI (asset `modmanager.png`), and `Launch (No Mods)` pointing at the game exe

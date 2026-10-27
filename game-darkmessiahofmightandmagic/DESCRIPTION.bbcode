@@ -1,5 +1,7 @@
 This extension adds Dark Messiah of Might & Magic modding support to Vortex Mod Manager.
 
+[color=#ffff00][b]This extension will guide the user to download and install the [url=https://www.moddb.com/games/dark-messiah-of-might-magic/downloads]wiltOS Mod Launcher[/url] for the game. This allows a new way to load mods. It also passes commandline arguments, sets game settings, and makes the game large address aware (use more than 2GB RAM).[/b][/color]
+
 [b]✅ Supported Versions:[/b]
 [list]
 [*]Steam[/*]
@@ -7,31 +9,164 @@ This extension adds Dark Messiah of Might & Magic modding support to Vortex Mod 
 [/list]
 [b]🛠️ Mod Installation Notes:[/b]
 [list]
-[*]Installs wiltOS Mod Launcher itself, recognised by a file or folder named "mm.exe".[/*]
-[*]Installs Unlimited Edition mod with a file or folder named "unlimited_edition".[/*]
-[*]Installs Root Folder mod with a "_mods" folder to the game folder itself (no subfolder).[/*]
-[*]Installs Launcher mod with a file or folder named "info.json" to the "_mods" folder.[/*]
-[*]Installs Game Data Folder mod with a file or folder named "mm".[/*]
-[*]Installs Data Subfolder mod with a file or folder named one of: "materials", "maps", "bin", "cfg", "media", "resource", "scripts" or "SAVE" to the "mm" folder.[/*]
-[*]Installs VPK Files mod with a file with the ".vpk" extension to the "vpks" folder.[/*]
-[*]Installs Materials Subfolder mod with a file or folder named one of: "models", "fx", "sprites", "cloth", "console", "correction", "decals", "detail", "effects", "engine", "envcubemaps", "generic", "hud", "nature", "overlays", "sun", "vgui" or "voice" to the "mm\materials" folder.[/*]
-[*]Installs Maps (.bsp) mod with a file with the ".bsp" extension to the "mm\maps" folder.[/*]
-[*]Installs Save mod with a ".sav" file to the "mm\SAVE" folder.[/*]
-[*]Installs Config mod with a "config.cfg" file to the "mm\cfg" folder.[/*]
+[*]WiltOS Mod Launcher installs to the game folder, recognised by a "mm.exe" file.[/*]
+[*]Unlimited Edition mods with a "unlimited_edition" folder install to the "_mods" folder.[/*]
+[*]Root Folder mods with a "_mods" folder install to the game folder.[/*]
+[*]Launcher mods with an "info.json" file install to the "_mods" folder.[/*]
+[*]Game Data Folder mods with a "mm" folder install to the game folder.[/*]
+[*]Data Subfolder mods with a "materials", "maps", "bin", "cfg", "media", "resource", "scripts" or "SAVE" folder install to the "mm" folder.[/*]
+[*]VPK Files mods with a ".vpk" file install to the "vpks" folder.[/*]
+[*]Materials Subfolder mods with a "models", "fx", "sprites", "cloth", "console", "correction" or one of 12 other named folders install to the "mm\materials" folder.[/*]
+[*]Maps mods with a ".bsp" file install to the "mm\maps" folder.[/*]
+[*]Save mods with a ".sav" file install to the "mm\SAVE" folder.[/*]
+[*]Config mods with a "config.cfg" file install to the "mm\cfg" folder.[/*]
 [/list]
 [b]📋 Usage Notes:[/b]
 [list]
 [*]You can open several useful files/folders/URLs using the buttons within the folder icon on the Mods toolbar.[/*]
+[*]Will automatically install the wiltOS Mod Launcher to the root game folder.[/*]
+[*]Installs mods intended for use with the Mod Launcher (such as [url=https://www.moddb.com/mods/dark-messiah-unlimited-edition/downloads/wos-unlimited-edition-141-all-in-one]Unlimited Edition[/url]﻿) to the "_mods" folder (if mod zip includes "info.json" file).[/*]
+[*]Note - If you plan to use the mod [url=https://www.nexusmods.com/darkmessiahofmightandmagic/mods/60?tab=description]DME[/url], you will need to do some manual steps and file manipulation to get it to work. Read the description carefully. I contacted the mod author to see if they can update to use the new Mod Launcher.[/*]
+[*][size=2]Includes tools in the "Dashboard" tab to launch the game with additional arguments and also to launch the RTX Remix version with the appropriate arguments. Please update the RTX Remix tool command line arguments with your preferred resolution if you use it.[/size][/*]
+[*][size=2]You can browse to download the latest wOS Mod Launcher using the button in the folder icon on the Mods toolbar.[/size][/*]
+[/list]
+
+[b]📝 Notes for Mod Authors:[/b]
+[spoiler]
+Packaging rules for Dark Messiah of Might & Magic mods, so Vortex installs them to the right place.
+
+Vortex decides what a mod is by looking at the files and folders inside the archive. It tries each installer in order and the first one that matches wins, so archive layout is what determines where your mod ends up.
+
+========================================================================
+
+Launcher:
+
+Recognised when the archive contains a "mm.exe" file.
+
+  Installs to: the game folder
+
+========================================================================
+
+Unlimited:
+
+Recognised when the archive contains a "unlimited_edition" folder.
+
+  Installs to: "_mods"
+
+========================================================================
+
+Root / Game Folder Mods:
+
+For mods laid out the same way the files appear inside the game folder. Vortex copies the matched folder and everything under it straight into the game.
+
+[code]
+MyRootMod.zip
+└── _mods\
+    └── ... files in their real relative locations
+[/code]
+
+  Requirements:
+    - Recognised by a folder named "_mods" in the archive.
+
+  Installs to: the game folder
+
+  Common mistakes:
+    - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
+
+========================================================================
+
+Launchermod:
+
+Recognised when the archive contains a "info.json" file.
+
+  Installs to: "_mods"
+
+========================================================================
+
+Data:
+
+Recognised when the archive contains a "mm" folder.
+
+  Installs to: the game folder
+
+========================================================================
+
+Datasub:
+
+Recognised when the archive contains a "materials", "maps", "bin", "cfg", "media", "resource", "scripts" or "SAVE" folder.
+
+  Installs to: "mm"
+
+========================================================================
+
+Vpk:
+
+Recognised when the archive contains a ".vpk" file.
+
+  Installs to: "vpks"
+
+========================================================================
+
+Materialssub:
+
+Recognised when the archive contains a "models", "fx", "sprites", "cloth", "console", "correction", "decals", "detail", "effects", "engine", "envcubemaps", "generic", "hud", "nature", "overlays", "sun", "vgui" or "voice" folder.
+
+  Installs to: "mm\materials"
+
+========================================================================
+
+Maps:
+
+Recognised when the archive contains a ".bsp" file.
+
+  Installs to: "mm\maps"
+
+========================================================================
+
+Save Game Files:
+
+Save files, deployed to the game's save folder.
+
+  Requirements:
+    - Recognised by any file with the ".sav" extension.
+
+  Installs to: "mm\SAVE"
+
+  Common mistakes:
+    - Including an example save alongside a normal mod makes the archive install as a save.
+
+========================================================================
+
+Config File Mods:
+
+Configuration tweaks, deployed to the game's config location.
+
+  Requirements:
+    - Recognised by any file named "config.cfg".
+
+  Installs to: "mm\cfg"
+
+  Common mistakes:
+    - Shipping a config file with one of these names inside an unrelated mod makes the whole archive install as a config mod.
+
+========================================================================
+
+Rules That Apply To Every Mod Type:
+
+    - Folder and file name matching is case-insensitive.
+    - Extra wrapper folders around a recognised folder are generally fine.
+[/spoiler]
+
+[b]🤝 Credits:[/b]
+[list]
+[*]Thanks to ClementJ18 for his [url=https://github.com/ClementJ18/moddb]Python moddb scraper[/url], which was used as inspiration for the moddb updater module.[/*]
 [/list]
 
 [b]❤️ Support the Mod Author: [/b]
 If you would like to support my work, you can do so below. Your support is greatly appreciated!
 
-
 [url=https://www.paypal.com/donate/?hosted_button_id=ZFE99JKP43D2G][img]https://live.staticflickr.com/65535/54395661414_10e6ef111d_m.jpg[/img][/url]
 
-
 [url=https://ko-fi.com/chemboy1nexusmods/][img]https://live.staticflickr.com/65535/54380730333_357df43249_n.jpg[/img][/url]
-
 
 [url=https://buymeacoffee.com/chemboy1/][img]https://live.staticflickr.com/65535/54379586002_8dcc6370e5_m.jpg[/img][/url]

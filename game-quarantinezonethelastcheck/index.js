@@ -2,8 +2,8 @@
 Name: Quarantine Zone: The Last Check Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-16
+Version: 1.0.3
+Date: 2026-10-25
 Notes:
 -
 ////////////////////////////////////////////////*/

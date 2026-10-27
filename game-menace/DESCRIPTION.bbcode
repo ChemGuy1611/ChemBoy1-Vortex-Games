@@ -1,44 +1,273 @@
 This extension adds MENACE modding support to Vortex Mod Manager.
+[summary]MelonLoader and ModpackLoader installed automatically.[/summary]
+
+MelonLoader will be automatically installed.
+[b][color=#ffff00][size=4].NET 10 and .NET 6 are required for ModpackLoader and MelonLoader.[/size][/color]
+[color=#f4f4f4][size=3]Vortex will send notifications for each if they are not installed.[/size][/color]
+[size=3][url=https://dotnet.microsoft.com/en-us/download/dotnet/10.0]https://dotnet.microsoft.com/en-us/download/dotnet/10.0[/url]
+[url=https://dotnet.microsoft.com/en-us/download/dotnet/6.0]https://dotnet.microsoft.com/en-us/download/dotnet/6.0[/url][/size][/b]
 
 [b]✅ Supported Versions:[/b]
 [list]
 [*]Steam[/*]
+[*]Steam Demo[/*]
 [*]GOG[/*]
 [*]Epic[/*]
-[*]Xbox (Game Pass)[/*]
+[*]Xbox[/*]
 [*]Other versions may need to select the installation location manually.[/*]
 [/list]
 [b]🛠️ Mod Installation Notes:[/b]
 [list]
-[*]Installs MelonLoader itself to the game folder itself (no subfolder), recognised by a "MelonLoader.dll" file.[/*]
-[*]Installs Menace ModKit mod with a file or folder named "Menace.Modkit.App.exe" to the game folder itself (no subfolder).[/*]
-[*]Installs Jiangyu Loader itself to the "Mods" folder, recognised by a "Jiangyu.Loader.dll" file.[/*]
-[*]Installs Jiangyu mod with a "jiangyu.json" file to the "Mods" folder.[/*]
-[*]Installs ModpackLoader mod with a file or folder named "Menace.ModpackLoader.dll" and a file or folder named "UserLibs" to the game folder itself (no subfolder).[/*]
-[*]Installs Modpack mod with a file or folder named "modpack.json" to the "Mods" folder.[/*]
-[*]Installs Root Game Folder mod with a "Menace_Data" folder to the game folder itself (no subfolder).[/*]
-[*]Installs Assembly DLL mod with a "GameAssembly.dll" file to the game folder itself (no subfolder).[/*]
-[*]Installs MelonLoader Preferences Manager itself to the "Mods" folder, recognised by a "melonprefmanager.il2cpp.dll" file.[/*]
-[*]Installs Custom Leaders Plugin mod with a file or folder named "MenaceCustomLeader.dll" to the "Mods" folder.[/*]
-[*]Installs Plugin mod with a ".dll" file to the "Mods" folder.[/*]
-[*]Custom Leaders mods are installed to the "Mods\customleaders" folder.[/*]
-[*]Installs Assets/Resources File mod with a ".assets" file to the "Menace_Data" folder.[/*]
-[*]Any other mod not described above is installed to the game folder itself (no subfolder).[/*]
+[*]MelonLoader installs to the game folder, recognised by a "MelonLoader.dll" file.[/*]
+[*]Menace ModKit mods with a "Menace.Modkit.App.exe" file install to the game folder.[/*]
+[*]Jiangyu Loader installs to the "Mods" folder, recognised by a "Jiangyu.Loader.dll" file.[/*]
+[*]Jiangyu mods with a "jiangyu.json" file install to the "Mods" folder.[/*]
+[*]ModpackLoader mods with a "Menace.ModpackLoader.dll" file and a "UserLibs" folder install to the game folder.[/*]
+[*]Modpack mods with a "modpack.json" file install to the "Mods" folder.[/*]
+[*]Root Game Folder mods with a "Menace_Data" folder install to the game folder.[/*]
+[*]Assembly DLL mods with a "GameAssembly.dll" file install to the game folder.[/*]
+[*]MelonLoader Preferences Manager installs to the "Mods" folder, recognised by a "melonprefmanager.il2cpp.dll" file.[/*]
+[*]Custom Leaders Plugin mods with a "MenaceCustomLeader.dll" file install to the "Mods" folder.[/*]
+[*]MelonLoader mods with a ".dll" file built for MelonLoader install to the "Mods\<ModName>" folder.[/*]
+[*]Plugin archives built for a different mod loader than the one installed are cancelled.[/*]
+[*]Custom Leaders mods install to the "Mods\customleaders" folder.[/*]
+[*]Assets/Resources File mods with a ".assets" file install to the "Menace_Data" folder.[/*]
+[*]Any other mod not described above installs to the game folder.[/*]
 [*]Archives with a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to Vortex's built-in FOMOD installer instead.[/*]
 [/list]
 [b]📋 Usage Notes:[/b]
 [list]
 [*]You can open several useful files/folders/URLs using the buttons within the folder icon on the Mods toolbar.[/*]
+[*][b][size=3][url=https://www.nexusmods.com/menace/mods/9]MelonLoader [/url]﻿[color=#ffff00]﻿will be automatically downloaded and installed. [/color][color=#ea9999]- 0.7.3+ is required. Older versions [u][i]will [/i][/u]crash on launch.[/color][/size][/b][/*]
+[*][b][color=#ffff00]Automatically Installs [url=https://github.com/antistrategie/jiangyu]Jiangyu Loader [/url]to the "Mods" folder. [/color]Recognized by a "Jiangyu.Loader.dll" file.[/b][/*]
+[*][b][color=#ffff00]Automatically installs [url=https://github.com/antistrategie/MenaceModkit]ModpackLoader [/url]to the "Mods" and "UserLibs" folders.[/color] Recognized by a "Menace.ModpackLoader.dll" file.[/b][/*]
+[*]Installs [url=https://github.com/antistrategie/MenaceModkit]ModKit [/url]to the game root. Must be installed via button or dropping archive into Vortex, since it is deprecated.[/*]
+[*]Xbox (no longer on Game Pass 😢)[/*]
+[*]Steam Demo [color=#f9cb9c]- Note: Some mods may not work with the demo version[/color][/*]
+[/list]
+
+[b]📝 Notes for Mod Authors:[/b]
+[spoiler]
+Packaging rules for MENACE mods, so Vortex installs them to the right place.
+
+Vortex decides what a mod is by looking at the files and folders inside the archive. It tries each installer in order and the first one that matches wins, so archive layout is what determines where your mod ends up.
+
+========================================================================
+
+MelonLoader (mod loader):
+
+This installer handles MelonLoader, not mods for it. It exists so users can install MelonLoader through Vortex, and mod authors normally never package this.
+
+  Requirements:
+    - Recognised by a file named "MelonLoader.dll" in the archive.
+    - Requires BOTH a folder named "MelonLoader" and the loader file "MelonLoader.dll".
+
+  Installs to: the game folder
+
+  Common mistakes:
+    - If you bundle MelonLoader inside your mod archive, Vortex treats the whole download as MelonLoader rather than as your mod. Ship the mod alone and list MelonLoader as a requirement.
+
+========================================================================
+
+Modkit:
+
+Recognised when the archive contains a "Menace.Modkit.App.exe" file.
+
+  Installs to: the game folder
+
+========================================================================
+
+Jiangyu Loader:
+
+This installer handles the Jiangyu loader, not mods for it. It exists so users can install the Jiangyu loader through Vortex, and mod authors normally never package this.
+
+  Requirements:
+    - Recognised by a file named "Jiangyu.Loader.dll" in the archive.
+    - Vortex downloads and installs the loader on its own, so this installer only comes into play for a copy the user downloaded by hand from a mod page.
+
+  Installs to: "Mods"
+
+  Common mistakes:
+    - If you bundle the Jiangyu loader inside your mod archive, Vortex treats the whole download as the Jiangyu loader rather than as your mod. Ship the mod alone and list the Jiangyu loader as a requirement.
+
+========================================================================
+
+Jiangyu Mods:
+
+A Jiangyu mod is a folder with a "jiangyu.json" manifest at its root, exactly as "jiangyu package" produces it. Ship that folder inside the archive, or the manifest and its files at the top level - both are handled.
+
+[code]
+MyMod.zip
+└── MyMod
+    ├── jiangyu.json
+    ├── assets
+    ├── compiled
+    └── templates
+[/code]
+
+  Requirements:
+    - Recognised by any file named "jiangyu.json".
+
+  Installs to: "Mods"
+
+  Common mistakes:
+    - The "name" in "jiangyu.json" decides the folder your mod is installed into, and is what other mods list in "depends". Keep it stable between releases - changing it makes existing dependencies stop resolving.
+    - Vortex adds a numbered prefix to that folder so the load order page can reorder your mod. Do not rely on the folder name in any path inside your mod.
+
+========================================================================
+
+Modpackloader:
+
+Recognised when the archive contains a "Menace.ModpackLoader.dll" file and a "UserLibs" folder.
+
+  Installs to: the game folder
+
+========================================================================
+
+Modpackmod:
+
+Recognised when the archive contains a "modpack.json" file.
+
+  Installs to: "Mods"
+
+========================================================================
+
+Root / Game Folder Mods:
+
+For mods laid out the same way the files appear inside the game folder. Vortex copies the matched folder and everything under it straight into the game.
+
+[code]
+MyRootMod.zip
+└── Menace_Data\
+    └── ... files in their real relative locations
+[/code]
+
+  Requirements:
+    - Recognised by a folder named "Menace_Data" or "Menace_Data" in the archive.
+
+  Installs to: the game folder
+
+  Common mistakes:
+    - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
+
+========================================================================
+
+Assembly Replacement Mods:
+
+Mods that replace a compiled game assembly outright. These overwrite core game files, so they conflict with any other mod touching the same assembly.
+
+  Requirements:
+    - Recognised by any file named "GameAssembly.dll".
+
+  Installs to: the game folder
+
+  Common mistakes:
+    - Assembly replacements cannot be combined with other assembly mods - state this clearly on the mod page.
+    - Shipping an assembly alongside a plugin makes the whole archive install as an assembly mod.
+
+========================================================================
+
+MelonLoader Preferences Manager:
+
+This installer handles the MelonLoader Preferences Manager, not mods for it. It exists so users can install the MelonLoader Preferences Manager through Vortex, and mod authors normally never package this.
+
+  Requirements:
+    - Recognised by a file named "melonprefmanager.il2cpp.dll" in the archive.
+
+  Installs to: "Mods"
+
+  Common mistakes:
+    - If you bundle the MelonLoader Preferences Manager inside your mod archive, Vortex treats the whole download as the MelonLoader Preferences Manager rather than as your mod. Ship the mod alone and list the MelonLoader Preferences Manager as a requirement.
+
+========================================================================
+
+Customleadersplugin:
+
+Recognised when the archive contains a "MenaceCustomLeader.dll" file.
+
+  Installs to: "Mods"
+
+========================================================================
+
+MelonLoader Mods:
+
+The normal shape for a MelonLoader mod: a compiled mod DLL. Vortex reads each DLL to tell which mod loader it was built for, so the archive does not need to reproduce the MelonLoader folder structure.
+
+[code]
+MyMelonMod.zip
+└── MyMelonMod.dll
+[/code]
+
+  Requirements:
+    - Recognised by any ".dll" file that references MelonLoader.
+    - A loose DLL is put in a folder of its own, named after its folder in the archive or else after the DLL, so files from different mods cannot overwrite each other.
+    - MelonLoader only loads a mod in its own folder when that folder holds a "manifest.json", so Vortex writes one when the archive has none.
+    - A MelonLoader plugin (a DLL that references "MelonPlugin") goes to "Plugins\<ModName>" instead.
+    - An archive that already has a "mods", "plugins", "userdata" or "userlibs" folder keeps that layout and installs to the game folder.
+    - An archive whose DLLs reference neither loader installs to the game folder, and Vortex shows a notification asking the user to check the mod page.
+
+  Installs to: "Mods\<ModName>"
+
+  Common mistakes:
+    - Shipping a plugin together with loader files, which makes the archive look like a loader install instead.
+
+========================================================================
+
+Customleaders:
+
+Handled by the "testCustomLeaders" installer. Inspect the extension source for the exact archive layout it expects.
+
+  Installs to: "Mods\customleaders"
+
+========================================================================
+
+Asset Replacement Mods:
+
+Mods that replace packed Unity asset files, deployed into the game's data folder.
+
+  Requirements:
+    - Recognised by any file with the ".assets", ".resource" or ".ress" extensions.
+
+  Installs to: "Menace_Data"
+
+  Common mistakes:
+    - Asset files must keep their original names to replace the right bundle.
+
+========================================================================
+
+Fallback Installer:
+
+The catch-all. Any archive that matched none of the installers above lands here and is copied across unchanged.
+
+[b][color=#ffff00]NOTE: Landing in the fallback installer is a signal your archive layout needs fixing.[/color][/b]
+
+  Requirements:
+    - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
+    - Vortex shows the user a notification when a mod installs through the fallback.
+
+  Common mistakes:
+    - If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.
+
+========================================================================
+
+Rules That Apply To Every Mod Type:
+
+    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
+    - Folder and file name matching is case-insensitive.
+    - Extra wrapper folders around a recognised folder are generally fine.
+[/spoiler]
+
+[b]🤝 Credits:[/b]
+[list]
+[*]Credit to Senjay and his [url=https://www.nexusmods.com/site/mods/1243]Schedule 1 Vortex extension[/url] for some of the logic used in the plugin installer.[/*]
+[*]Credit to p0ss for Menace.ModpackLoader.dll file - [url=https://github.com/p0ss/MenaceAssetPacker]https://github.com/p0ss/MenaceAssetPacker[/url] (GPL 3.0 License)[/*]
 [/list]
 
 [b]❤️ Support the Mod Author: [/b]
 If you would like to support my work, you can do so below. Your support is greatly appreciated!
 
-
 [url=https://www.paypal.com/donate/?hosted_button_id=ZFE99JKP43D2G][img]https://live.staticflickr.com/65535/54395661414_10e6ef111d_m.jpg[/img][/url]
 
-
 [url=https://ko-fi.com/chemboy1nexusmods/][img]https://live.staticflickr.com/65535/54380730333_357df43249_n.jpg[/img][/url]
-
 
 [url=https://buymeacoffee.com/chemboy1/][img]https://live.staticflickr.com/65535/54379586002_8dcc6370e5_m.jpg[/img][/url]

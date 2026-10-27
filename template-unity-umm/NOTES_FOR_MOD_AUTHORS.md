@@ -8,8 +8,8 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Root / Game Folder Mods | a `XXX_Data` folder | the game folder itself (no subfolder) |
-| Unity Mod Manager (tool) | a `UnityModManager.exe` file | the game folder itself (no subfolder) |
+| Root / Game Folder Mods | a `XXX_Data` folder | the game folder |
+| Unity Mod Manager (tool) | a `UnityModManager.exe` file | the game folder |
 | Unity Mod Manager Mods | an `info.json` file | `Mods\<ModName>` |
 | Assembly Replacement Mods | a `Assembly-CSharp.dll` file | `XXX_Data\Managed` |
 | Asset Replacement Mods | a `.assets` file | `XXX_Data` |
@@ -31,7 +31,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `XXX_Data` or `XXX_Data` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -39,14 +39,14 @@ Installs to: the game folder itself (no subfolder)
 
 ## Unity Mod Manager (tool)
 
-This installer handles Unity Mod Manager itself, not mods for it. It exists so users can install Unity Mod Manager through Vortex, and mod authors normally never package this.
+This installer handles Unity Mod Manager, not mods for it. It exists so users can install Unity Mod Manager through Vortex, and mod authors normally never package this.
 
 **Requirements:**
 
 - Recognised by a file named `UnityModManager.exe` in the archive.
-- Vortex reproduces the loader patch the manager would apply itself, so it deploys and purges like any other mod.
+- Vortex reproduces the loader patch the manager would otherwise apply, so it deploys and purges like any other mod.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 

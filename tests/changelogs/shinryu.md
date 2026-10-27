@@ -2,6 +2,10 @@
 
 Covers `template-shinryu`. Suite file: `tests/templates/shinryu.test.js`.
 
+## [2026-10-25]
+
+- Changed: the registration and toggle tests expect the root installer at priority 28, and the routing case for a mod that also ships an exe now reads as mod (27) before root (28) rather than a tie. The `installer-priority-unique` allowlist entry for this template is removed.
+
 ## [2026-10-11]
 
 - Changed: the `known gap` test for the root installer throwing on a marker DLL in another case now asserts the fixed install (the DLL's folder is stripped) and lost its `known gap:` prefix.

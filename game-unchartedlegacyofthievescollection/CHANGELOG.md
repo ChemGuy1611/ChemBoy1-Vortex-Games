@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3.4] - 2026-10-25
+
+- Added the Nexus mod ID to the extension info.
+
 ## [0.3.3] - 2026-10-16
 
 - Fixed: Mod files with no file extension were skipped during installation

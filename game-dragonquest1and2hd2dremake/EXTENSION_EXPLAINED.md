@@ -66,10 +66,10 @@ Mod types define where each category of mod gets deployed:
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `dragonquest1and2hd2dremake-ue4sscombo` | high | `{gamePath}` |
 | UE4SS LogicMods (Blueprint) | `dragonquest1and2hd2dremake-logicmods` | high | `{gamePath}/Game/Content/Paks/LogicMods` |
-| Paks (no "~mods") | `dragonquest1and2hd2dremake-pakalt` | high | `{gamePath}/Game/Content/Paks` |
+| Paks (with "~mods") | `dragonquest1and2hd2dremake-pakalt` | high | `{gamePath}/Game/Content/Paks/~mods` |
 | Root Folder | `dragonquest1and2hd2dremake-root` | high | `{gamePath}` |
 | Content Folder | `dragonquest1and2hd2dremake-contentfolder` | high | `{gamePath}/Game` |
-| UE Sortable Pak Mod | `dragonquest1and2hd2dremake-uesortablepak` | 25 | `{gamePath}/Game/Content/Paks/~mods` |
+| UE Sortable Pak Mod | `dragonquest1and2hd2dremake-uesortablepak` | 25 | `{gamePath}/Game/Content/Paks` |
 | UE4SS Script Mod | `dragonquest1and2hd2dremake-scripts` | 50 | `{gamePath}/Game/Binaries/Win64/ue4ss/Mods` |
 | UE4SS DLL Mod | `dragonquest1and2hd2dremake-ue4ssdll` | 52 | `{gamePath}/Game/Binaries/Win64/ue4ss/Mods` |
 | Binaries (Engine Injector) | `dragonquest1and2hd2dremake-binaries` | 54 | `{gamePath}/Game/Binaries/Win64` |

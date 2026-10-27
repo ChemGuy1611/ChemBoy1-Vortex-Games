@@ -10,8 +10,8 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `Game` |
 | Pak Mods | a `.pak` file | `Game\Content\Paks\~mods` |
-| Root / Game Folder Mods | a top-level folder such as `Game`, `Engine` or `Content` | the game folder itself (no subfolder) |
-| Fallback Installer | anything unrecognised with no pak file | `Game\Binaries\Win64` |
+| Root / Game Folder Mods | a top-level folder such as `Game`, `Engine` or `Content` | the game folder |
+| Fallback Installer | anything not matched above with no pak file | `Game\Binaries\Win64` |
 
 Paths are relative to the game's install folder.
 
@@ -60,6 +60,7 @@ MyPakMod.zip
 
 - Any archive containing a `.pak` file reaches this installer (unless an earlier one claimed it).
 - Only the pak files are installed - surrounding folders are discarded.
+- Companion files are installed alongside paks: `.ucas` or `.utoc`.
 - If the archive holds more than one pak, Vortex asks the user which to install - useful for optional variants.
 
 Installs to: `Game\Content\Paks\~mods`
@@ -84,7 +85,7 @@ MyRootMod.zip
 - Recognised by a top-level folder matching any of: `Game`, `Engine`, `Content`, `Binaries`, `Mods`, `Paks` or `Movies`.
 - The matched folder and everything below it is copied into the game folder, preserving structure.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 

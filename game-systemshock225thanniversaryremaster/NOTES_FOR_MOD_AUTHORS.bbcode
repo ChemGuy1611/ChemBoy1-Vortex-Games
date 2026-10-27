@@ -7,7 +7,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 Kpfmod:
 
-Recognised when the archive contains a file with one of these extensions: ".kpf".
+Recognised when the archive contains a ".kpf" file.
 
   Installs to: "mods"
 
@@ -15,7 +15,7 @@ Recognised when the archive contains a file with one of these extensions: ".kpf"
 
 Convertedlegacy:
 
-Recognised when the archive contains a file or folder named one of: "obj", "mesh", "bitmap", "motions", "sq_scripts", "sdn2", "strings", "iface", "intrface", "misdml" or "snd" and a file with one of these extensions: ".dml", ".gam" or ".mis".
+Recognised when the archive contains a "obj", "mesh", "bitmap", "motions", "sq_scripts", "sdn2", "strings", "iface", "intrface", "misdml" or "snd" folder and a ".dml", ".gam" or ".mis" file.
 
   Installs to: "mods"
 
@@ -23,7 +23,9 @@ Recognised when the archive contains a file or folder named one of: "obj", "mesh
 
 Rootfolder:
 
-Recognised when the archive contains a file or folder named one of: "mods" or "cutscenes".
+Recognised when the archive contains a "mods" or "cutscenes" folder.
+
+  Installs to: the game folder
 
 ========================================================================
 
@@ -40,7 +42,7 @@ MyRootMod.zip
   Requirements:
     - Recognised by a folder named "mods" or "cutscenes" in the archive.
 
-  Installs to: the game folder itself (no subfolder)
+  Installs to: the game folder
 
   Common mistakes:
     - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.

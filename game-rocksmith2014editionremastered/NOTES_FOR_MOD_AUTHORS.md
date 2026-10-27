@@ -8,9 +8,9 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Root / Game Folder Mods | a `base` folder or a `cache.psarc` file | the game folder itself (no subfolder) |
-| Cdlcmod | a file with the `.psarc` extension | `dlc` |
-| Eof | a file or folder named `eof.exe` | `EditorOnFire` |
+| Root / Game Folder Mods | a `base` folder or a `cache.psarc` file | the game folder |
+| Cdlcmod | a `.psarc` file | `dlc` |
+| Eof | a `eof.exe` file | `EditorOnFire` |
 
 Paths are relative to the game's install folder.
 
@@ -29,7 +29,7 @@ MyRootMod.zip
 - Recognised by a folder named `base`, `dlc`, `guitarcade` or `venues` in the archive.
 - Recognised by a file named `cache.psarc`, `audio.psarc`, `crowd.psarc`, `etudes.psarc`, `gears.psarc`, `guitars.psarc`, `session.psarc`, `songs.psarc`, `static.psarc` or `video.psarc`.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -37,13 +37,13 @@ Installs to: the game folder itself (no subfolder)
 
 ## Cdlcmod
 
-Recognised when the archive contains a file with the `.psarc` extension.
+Recognised when the archive contains a `.psarc` file.
 
 Installs to: `dlc`
 
 ## Eof
 
-Recognised when the archive contains a file or folder named `eof.exe`.
+Recognised when the archive contains a `eof.exe` file.
 
 Installs to: `EditorOnFire`
 

@@ -7,15 +7,15 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 Modloader:
 
-Recognised when the archive contains a file or folder named "winmm.dll".
+Recognised when the archive contains a "winmm.dll" file.
 
-  Installs to: the game folder itself (no subfolder)
+  Installs to: the game folder
 
 ========================================================================
 
 Psarc:
 
-Recognised when the archive contains a file with the ".psarc" extension.
+Recognised when the archive contains a ".psarc" file.
 
   Installs to: "mods"
 
@@ -23,13 +23,15 @@ Recognised when the archive contains a file with the ".psarc" extension.
 
 Buildfolderpakbin:
 
-Recognised when the archive contains a file or folder named "build", a file with the ".pak" extension and a file with the ".bin" extension.
+Recognised when the archive contains a "build" folder, a ".pak" file and a ".bin" file.
+
+  Installs to: the game folder
 
 ========================================================================
 
 Binfolder:
 
-Recognised when the archive contains a file or folder named "bin", a file with the ".pak" extension and a file with the ".bin" extension.
+Recognised when the archive contains a "bin" folder, a ".pak" file and a ".bin" file.
 
   Installs to: "build\pc\main"
 
@@ -37,7 +39,7 @@ Recognised when the archive contains a file or folder named "bin", a file with t
 
 Pak:
 
-Recognised when the archive contains a file with the ".pak" extension.
+Recognised when the archive contains a ".pak" file.
 
   Installs to: "build\pc\main"
 
@@ -45,9 +47,9 @@ Recognised when the archive contains a file with the ".pak" extension.
 
 Buildfolder:
 
-Recognised when the archive contains a file or folder named "build".
+Recognised when the archive contains a "build" folder.
 
-  Installs to: the game folder itself (no subfolder)
+  Installs to: the game folder
 
 ========================================================================
 
@@ -58,7 +60,7 @@ Save files, deployed to the game's save folder.
   Requirements:
     - Recognised by any file named "USR-DATA".
 
-  Installs to: "DOCUMENTS\The Last of Us Part II\USERID_FOLDER\savedata"
+  Installs to: "%USERPROFILE%\Documents\The Last of Us Part II\<User ID>\savedata"
 
   Common mistakes:
     - Including an example save alongside a normal mod makes the archive install as a save.
@@ -72,7 +74,7 @@ Configuration tweaks, deployed to the game's config location.
   Requirements:
     - Recognised by any file named "screeninfo.cfg".
 
-  Installs to: "USER_HOME\SOFTWARE\Naughty Dog\The Last of Us Part II"
+  Installs to: "%USERPROFILE%\SOFTWARE\Naughty Dog\The Last of Us Part II"
 
   Common mistakes:
     - Shipping a config file with one of these names inside an unrelated mod makes the whole archive install as a config mod.
@@ -81,7 +83,7 @@ Configuration tweaks, deployed to the game's config location.
 
 Psarctoolndarc:
 
-Recognised when the archive contains a file or folder named "ndarc.exe".
+Recognised when the archive contains a "ndarc.exe" file.
 
   Installs to: "build\pc\main"
 

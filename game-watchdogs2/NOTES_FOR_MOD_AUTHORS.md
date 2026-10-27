@@ -8,17 +8,17 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Loader | a file or folder named `DisruptManager.exe` | `Disrupt_Manager` |
-| Root / Game Folder Mods | a `data_win64` folder | the game folder itself (no subfolder) |
-| Binaries | a file with one of these extensions: `.exe`, `.dll`, `.asi` or `.addon64` | `bin` |
-| Mod | a file with one of these extensions: `.dat` or `.fat` | `Disrupt_Manager\Watch Dogs 2` |
-| Fallback Installer | anything not matched above | - |
+| Loader | a `DisruptManager.exe` file | `Disrupt_Manager` |
+| Root / Game Folder Mods | a `data_win64` folder | the game folder |
+| Binaries | a `.exe`, `.dll`, `.asi` or `.addon64` file | `bin` |
+| Mod | a `.dat` or `.fat` file | `Disrupt_Manager\Watch Dogs 2` |
+| Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
 ## Loader
 
-Recognised when the archive contains a file or folder named `DisruptManager.exe`.
+Recognised when the archive contains a `DisruptManager.exe` file.
 
 Installs to: `Disrupt_Manager`
 
@@ -36,7 +36,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `data_win64`, `bin` or `worlds` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -44,13 +44,13 @@ Installs to: the game folder itself (no subfolder)
 
 ## Binaries
 
-Recognised when the archive contains a file with one of these extensions: `.exe`, `.dll`, `.asi` or `.addon64`.
+Recognised when the archive contains a `.exe`, `.dll`, `.asi` or `.addon64` file.
 
 Installs to: `bin`
 
 ## Mod
 
-Recognised when the archive contains a file with one of these extensions: `.dat` or `.fat`.
+Recognised when the archive contains a `.dat` or `.fat` file.
 
 Installs to: `Disrupt_Manager\Watch Dogs 2`
 
@@ -64,6 +64,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: the game folder
 
 **Common mistakes:**
 

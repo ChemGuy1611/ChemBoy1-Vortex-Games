@@ -8,14 +8,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| BepInEx (mod loader) | a `winhttp.dll` file | the game folder itself (no subfolder) |
-| Bepinex Loaderpatch | a file or folder named `doorstop_config.ini` | the game folder itself (no subfolder) |
-| MelonLoader (mod loader) | a `version.dll` file | the game folder itself (no subfolder) |
-| Root / Game Folder Mods | a `MOUSE_Data` folder | the game folder itself (no subfolder) |
+| BepInEx (mod loader) | a `winhttp.dll` file | the game folder |
+| Bepinex Loaderpatch | a `doorstop_config.ini` file | the game folder |
+| Root / Game Folder Mods | a `MOUSE_Data` folder | the game folder |
 | BepInEx Configuration Manager | a `configurationmanager.dll` file | `BepInEx` |
-| MelonLoader Preferences Manager | a `melonprefmanager.mono.dll` file | `Mods` |
-| Assembly Replacement Mods | a `GameAssembly.dll` file | the game folder itself (no subfolder) |
-| Plugin Mods | a `.dll` file | `BepInEx` |
+| Assembly Replacement Mods | a `Assembly-CSharp.dll` file | `MOUSE_Data\Managed` |
+| BepInEx Plugin Mods | a `.dll` file built for BepInEx | `BepInEx\plugins\<ModName>` |
 | Asset Replacement Mods | a `.assets` file | `MOUSE_Data` |
 | Fallback Installer | anything not matched above | - |
 
@@ -23,14 +21,14 @@ Paths are relative to the game's install folder.
 
 ## BepInEx (mod loader)
 
-This installer handles BepInEx itself, not mods for it. It exists so users can install BepInEx through Vortex, and mod authors normally never package this.
+This installer handles BepInEx, not mods for it. It exists so users can install BepInEx through Vortex, and mod authors normally never package this.
 
 **Requirements:**
 
 - Recognised by a file named `winhttp.dll` in the archive.
 - Requires BOTH a folder named `BepInEx` and the loader file `winhttp.dll`.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -38,24 +36,9 @@ Installs to: the game folder itself (no subfolder)
 
 ## Bepinex Loaderpatch
 
-Recognised when the archive contains a file or folder named `doorstop_config.ini`.
+Recognised when the archive contains a `doorstop_config.ini` file.
 
-Installs to: the game folder itself (no subfolder)
-
-## MelonLoader (mod loader)
-
-This installer handles MelonLoader itself, not mods for it. It exists so users can install MelonLoader through Vortex, and mod authors normally never package this.
-
-**Requirements:**
-
-- Recognised by a file named `version.dll` in the archive.
-- Requires BOTH a folder named `MelonLoader` and the loader file `version.dll`.
-
-Installs to: the game folder itself (no subfolder)
-
-**Common mistakes:**
-
-- If you bundle MelonLoader inside your mod archive, Vortex treats the whole download as MelonLoader rather than as your mod. Ship the mod alone and list MelonLoader as a requirement.
+Installs to: the game folder
 
 ## Root / Game Folder Mods
 
@@ -71,7 +54,7 @@ MyRootMod.zip
 
 - Recognised by a folder named `MOUSE_Data` or `MOUSE_Data` in the archive.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -79,7 +62,7 @@ Installs to: the game folder itself (no subfolder)
 
 ## BepInEx Configuration Manager
 
-This installer handles the BepInEx Configuration Manager plugin itself, not mods for it. It exists so users can install the BepInEx Configuration Manager plugin through Vortex, and mod authors normally never package this.
+This installer handles the BepInEx Configuration Manager plugin, not mods for it. It exists so users can install the BepInEx Configuration Manager plugin through Vortex, and mod authors normally never package this.
 
 **Requirements:**
 
@@ -92,38 +75,24 @@ Installs to: `BepInEx`
 
 - If you bundle the BepInEx Configuration Manager plugin inside your mod archive, Vortex treats the whole download as the BepInEx Configuration Manager plugin rather than as your mod. Ship the mod alone and list the BepInEx Configuration Manager plugin as a requirement.
 
-## MelonLoader Preferences Manager
-
-This installer handles the MelonLoader Preferences Manager itself, not mods for it. It exists so users can install the MelonLoader Preferences Manager through Vortex, and mod authors normally never package this.
-
-**Requirements:**
-
-- Recognised by a file named `melonprefmanager.mono.dll` in the archive.
-
-Installs to: `Mods`
-
-**Common mistakes:**
-
-- If you bundle the MelonLoader Preferences Manager inside your mod archive, Vortex treats the whole download as the MelonLoader Preferences Manager rather than as your mod. Ship the mod alone and list the MelonLoader Preferences Manager as a requirement.
-
 ## Assembly Replacement Mods
 
 Mods that replace a compiled game assembly outright. These overwrite core game files, so they conflict with any other mod touching the same assembly.
 
 **Requirements:**
 
-- Recognised by any file named `GameAssembly.dll`.
+- Recognised by any file named `Assembly-CSharp.dll` or `Assembly-CSharp-firstpass.dll`.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: `MOUSE_Data\Managed`
 
 **Common mistakes:**
 
 - Assembly replacements cannot be combined with other assembly mods - state this clearly on the mod page.
 - Shipping an assembly alongside a plugin makes the whole archive install as an assembly mod.
 
-## Plugin Mods
+## BepInEx Plugin Mods
 
-The normal shape for a Unity mod: a compiled plugin DLL. Vortex installs it into the loader's mod folder, so the archive does not need to reproduce the loader folder structure.
+The normal shape for a BepInEx mod: a compiled plugin DLL. Vortex reads each DLL to tell which mod loader it was built for, so the archive does not need to reproduce the BepInEx folder structure.
 
 ```text
 MyPlugin.zip
@@ -132,13 +101,16 @@ MyPlugin.zip
 
 **Requirements:**
 
-- Recognised by any file with the `.dll` extension.
+- Recognised by any `.dll` file that references BepInEx.
+- A loose DLL is put in a folder of its own, named after its folder in the archive or else after the DLL, so files from different mods cannot overwrite each other.
+- A preloader patcher (a DLL that references `BepInEx.Preloader.Core.Patching`) goes to `BepInEx\patchers\<ModName>` instead.
+- An archive that already has a `plugins`, `patchers` or `config` folder keeps that layout and installs to `BepInEx`.
+- An archive whose DLLs reference neither loader installs to the game folder, and Vortex shows a notification asking the user to check the mod page.
 
-Installs to: `BepInEx`
+Installs to: `BepInEx\plugins\<ModName>`
 
 **Common mistakes:**
 
-- Wrapping the DLL in a `BepInEx\plugins` folder as well - it can end up nested one level too deep.
 - Shipping a plugin together with loader files, which makes the archive look like a loader install instead.
 
 ## Asset Replacement Mods

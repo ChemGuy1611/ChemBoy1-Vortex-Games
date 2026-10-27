@@ -68,10 +68,10 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `borderlands4-logicmods` | high | `{gamePath}/OakGame/Content/Paks/LogicMods` |
 | Python SDK | `borderlands4-pysdk` | high | `{gamePath}/.` |
 | SDK Mod | `borderlands4-pysdkmod` | high | `{gamePath}/sdk_mods` |
-| Paks (no "~mods") | `borderlands4-pakalt` | high | `{gamePath}/OakGame/Content/Paks` |
+| Paks (with "~mods") | `borderlands4-pakalt` | high | `{gamePath}/OakGame/Content/Paks/~mods` |
 | Root Folder | `borderlands4-root` | high | `{gamePath}` |
 | Content Folder | `borderlands4-contentfolder` | high | `{gamePath}/OakGame` |
-| UE Sortable Pak Mod | `borderlands4-uesortablepak` | 25 | `{gamePath}/OakGame/Content/Paks/~mods` |
+| UE Sortable Pak Mod | `borderlands4-uesortablepak` | 25 | `{gamePath}/OakGame/Content/Paks` |
 | UE4SS Script Mod | `borderlands4-scripts` | 50 | `{gamePath}/OakGame/Binaries/Win64/ue4ss/Mods` |
 | UE4SS DLL Mod | `borderlands4-ue4ssdll` | 52 | `{gamePath}/OakGame/Binaries/Win64/ue4ss/Mods` |
 | Binaries (Engine Injector) | `borderlands4-binaries` | 54 | `{gamePath}/OakGame/Binaries/Win64` |

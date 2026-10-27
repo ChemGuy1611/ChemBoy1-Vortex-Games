@@ -11,15 +11,15 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `HellIsUs` |
 | Blueprint Mods (LogicMods) | a `LogicMods` folder | `HellIsUs\Content\Paks` |
 | Pak Mods | a `.pak` file | `HellIsUs\Content\Paks\~mods` |
-| UE4SS Itself | a `dwmapi.dll` file | `HellIsUs\Binaries\Win64` |
-| Signature Bypass | `dsound.dll` and `universal.lua` | `HellIsUs\Binaries\Win64` |
+| UE4SS | a `dwmapi.dll` file | `HellIsUs\Binaries\Win64` |
+| Signature Bypass | a `dsound.dll` file and a `universal.lua` file | `HellIsUs\Binaries\Win64` |
 | UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `HellIsUs\Binaries\Win64\ue4ss\Mods` |
 | UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | `HellIsUs\Binaries\Win64\ue4ss\Mods` |
-| Contentfolder | a file or folder named `Content` | `HellIsUs` |
-| Root / Game Folder Mods | a top-level folder such as `HellIsUs`, `Engine` or `Content` | the game folder itself (no subfolder) |
+| Contentfolder | a `Content` folder | `HellIsUs` |
+| Root / Game Folder Mods | a top-level folder such as `HellIsUs`, `Engine` or `Content` | the game folder |
 | Config File Mods | a config file such as `engine.ini` or `game.ini` | - |
 | Save Game Files | a `.sav` file | - |
-| Fallback Installer | anything unrecognised with no pak file | `HellIsUs\Binaries\Win64` |
+| Fallback Installer | anything not matched above with no pak file | `HellIsUs\Binaries\Win64` |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
@@ -93,6 +93,7 @@ MyPakMod.zip
 
 - Any archive containing a `.pak` file reaches this installer (unless an earlier one claimed it).
 - Only the pak files are installed - surrounding folders are discarded.
+- Companion files are installed alongside paks: `.ucas` or `.utoc`.
 - If the archive holds more than one pak, Vortex asks the user which to install - useful for optional variants.
 
 Installs to: `HellIsUs\Content\Paks\~mods`
@@ -102,7 +103,7 @@ Installs to: `HellIsUs\Content\Paks\~mods`
 - Shipping several unrelated paks in one archive when you meant them all to install - the user gets a choice dialog and may pick only one.
 - Blueprint mods belong in a `LogicMods` folder instead - see above.
 
-## UE4SS Itself
+## UE4SS
 
 This installer handles the UE4SS runtime package, not individual mods. Most authors never need it - it exists so users can install UE4SS through Vortex.
 
@@ -111,7 +112,7 @@ This installer handles the UE4SS runtime package, not individual mods. Most auth
 - Recognised by a file named `dwmapi.dll` at any level of the archive.
 - Also recognised by any of the UE4SS support folders: `MapGenBP`, `MemberVarLayoutTemplates`, `UE4SS_Signatures` or `VTableLayoutTemplates`.
 
-Installs to: `HellIsUs\Binaries\Win64`
+Installs to: `HellIsUs\Binaries\Win64` (`WinGDK` instead of `Win64` for the Xbox version)
 
 **Common mistakes:**
 
@@ -125,7 +126,7 @@ This game ships signed pak files, so a signature bypass is required before most 
 
 - Recognised only when BOTH `dsound.dll` and `universal.lua` are present in the archive.
 
-Installs to: `HellIsUs\Binaries\Win64`
+Installs to: `HellIsUs\Binaries\Win64` (`WinGDK` instead of `Win64` for the Xbox version)
 
 **Common mistakes:**
 
@@ -148,7 +149,7 @@ MyScriptMod.zip
 - Wrap the `Scripts` folder in a folder named after your mod. That folder name becomes the mod's UE4SS name and is what gets written to the load order.
 - If you omit the wrapper folder, Vortex falls back to naming the mod after the archive file.
 
-Installs to: `HellIsUs\Binaries\Win64\ue4ss\Mods`
+Installs to: `HellIsUs\Binaries\Win64\ue4ss\Mods` (`WinGDK` instead of `Win64` for the Xbox version)
 
 **Common mistakes:**
 
@@ -171,7 +172,7 @@ MyDllMod.zip
 - The archive must contain a `.dll` file AND a folder named `dlls`.
 - Wrap the `dlls` folder in a folder named after your mod - that name is used in the load order.
 
-Installs to: `HellIsUs\Binaries\Win64\ue4ss\Mods`
+Installs to: `HellIsUs\Binaries\Win64\ue4ss\Mods` (`WinGDK` instead of `Win64` for the Xbox version)
 
 **Common mistakes:**
 
@@ -179,7 +180,7 @@ Installs to: `HellIsUs\Binaries\Win64\ue4ss\Mods`
 
 ## Contentfolder
 
-Recognised when the archive contains a file or folder named `Content`.
+Recognised when the archive contains a `Content` folder.
 
 Installs to: `HellIsUs`
 
@@ -198,7 +199,7 @@ MyRootMod.zip
 - Recognised by a top-level folder matching any of: `HellIsUs`, `Engine`, `Content`, `Binaries`, `Mods`, `Paks` or `Movies`.
 - The matched folder and everything below it is copied into the game folder, preserving structure.
 
-Installs to: the game folder itself (no subfolder)
+Installs to: the game folder
 
 **Common mistakes:**
 
@@ -239,7 +240,7 @@ This is the catch-all. Any archive with no `.pak` file that matched none of the 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
 
-Installs to: `HellIsUs\Binaries\Win64`
+Installs to: `HellIsUs\Binaries\Win64` (`WinGDK` instead of `Win64` for the Xbox version)
 
 **Common mistakes:**
 
