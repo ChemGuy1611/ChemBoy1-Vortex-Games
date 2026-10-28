@@ -13,12 +13,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | BepInEx Configuration Manager | a `configurationmanager.dll` file | `BepInEx` |
 | Assembly Replacement Mods | a `GameAssembly.dll` file | the game folder |
 | BepInEx Plugin Mods | a `.dll` file built for BepInEx | `BepInEx\plugins\<ModName>` |
-| Pcbuild | a `.pcbs` file | `PCs` |
+| PC Build | a `.pcbs` file | `PCs` |
 | Asset Replacement Mods | a `.assets` file | `PCBS2_Data` |
 | Save Game Files | a `.binary` file | `Saves` |
-| Fallback Installer | anything not matched above | - |
+| Fallback Installer | anything not matched above | the game folder |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder. Config and save folders are in your user profile, not the game's install folder.
 
 ## BepInEx (mod loader)
 
@@ -108,7 +108,7 @@ Installs to: `BepInEx\plugins\<ModName>`
 
 - Shipping a plugin together with loader files, which makes the archive look like a loader install instead.
 
-## Pcbuild
+## PC Build
 
 Recognised when the archive contains a `.pcbs` file.
 
@@ -152,6 +152,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: the game folder
 
 **Common mistakes:**
 

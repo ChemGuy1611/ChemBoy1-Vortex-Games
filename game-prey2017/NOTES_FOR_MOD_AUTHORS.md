@@ -8,15 +8,15 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Pric | a `preyinterfacecustomizergui.exe` file | - |
+| Prey Interface Customizer | a `preyinterfacecustomizergui.exe` file | - |
 | Chairloader | a `chairmanager.exe` file | the game folder |
-| Chairmodzip | a `modinfo.xml` file | `Mods` |
+| Chair Mod Zip | a `modinfo.xml` file | `Mods` |
 | Root / Game Folder Mods | a `GameSDK` folder | the game folder |
-| Binaries | a `.exe`, `.dll`, `.asi` or `.addon64` file | - |
+| Binaries (Engine Injector) | a `.exe`, `.dll`, `.asi` or `.addon64` file | - |
 
 Paths are relative to the game's install folder.
 
-## Pric
+## Prey Interface Customizer
 
 Recognised when the archive contains a `preyinterfacecustomizergui.exe` file.
 
@@ -26,7 +26,7 @@ Recognised when the archive contains a `chairmanager.exe` file.
 
 Installs to: the game folder
 
-## Chairmodzip
+## Chair Mod Zip
 
 Recognised when the archive contains a `modinfo.xml` file.
 
@@ -52,7 +52,7 @@ Installs to: the game folder
 
 - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
 
-## Binaries
+## Binaries (Engine Injector)
 
 Recognised when the archive contains a `.exe`, `.dll`, `.asi` or `.addon64` file.
 

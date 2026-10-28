@@ -15,7 +15,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Cooked Content Mods | a `.blk` file | `ContentBaked\pc\BulkContent` |
 | Movie / Cutscene Replacements | a `.bik` file | `ContentBaked\pc\BinkMovies` |
 | Binaries / Injector Mods | a `BioshockHD.exe` file or a `.dll` file | `Build\Final` |
-| Fallback Installer | anything not matched above | - |
+| Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
@@ -127,6 +127,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: the game folder
 
 **Common mistakes:**
 

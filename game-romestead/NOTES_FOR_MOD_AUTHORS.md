@@ -12,9 +12,9 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Root / Game Folder Mods | a `Romestead_Data` folder | the game folder |
 | BepInEx Configuration Manager | a `configurationmanager.dll` file | `BepInEx` |
 | Assembly Replacement Mods | a `Romestead.dll` file | the game folder |
-| Modsettingsmenu | a `BepInEx` folder and a `modsettingsmenu.dll` file | the game folder |
+| Mod Settings Menu | a `BepInEx` folder and a `modsettingsmenu.dll` file | the game folder |
 | BepInEx Plugin Mods | a `.dll` file built for BepInEx | `BepInEx\plugins\<ModName>` |
-| Fallback Installer | anything not matched above | - |
+| Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
@@ -83,7 +83,7 @@ Installs to: the game folder
 - Assembly replacements cannot be combined with other assembly mods - state this clearly on the mod page.
 - Shipping an assembly alongside a plugin makes the whole archive install as an assembly mod.
 
-## Modsettingsmenu
+## Mod Settings Menu
 
 Recognised when the archive contains a `BepInEx` folder and a `modsettingsmenu.dll` file.
 
@@ -122,6 +122,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: the game folder
 
 **Common mistakes:**
 

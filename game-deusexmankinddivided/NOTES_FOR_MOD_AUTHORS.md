@@ -9,9 +9,9 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Root / Game Folder Mods | a `DLC` folder | the game folder |
-| Runtime | a `Game.layer.0.all.archive`, `Game.layer.0.en.archive`, `Game.layer.1.all.archive`, `Game.layer.1.en.archive`, `Game.layer.0.de.archive`, `Game.layer.1.de.archive`, `Game.layer.0.es.archive`, `Game.layer.1.es.archive`, `Game.layer.0.fr.archive`, `Game.layer.1.fr.archive`, `Game.layer.0.it.archive`, `Game.layer.1.it.archive`, `Game.layer.0.mx.archive`, `Game.layer.1.mx.archive`, `Game.layer.0.pt.archive`, `Game.layer.1.pt.archive`, `Game.layer.0.ru.archive` or `Game.layer.1.ru.archive` file | `runtime` |
-| Dlcruntime | a `DLC01.layer.0.all.archive`, `DLC02.layer.0.all.archive`, `DLCPackAssault.layer.0.all.archive`, `DLCPackClassic.layer.0.all.archive`, `DLCPackEnforcer.layer.0.all.archive`, `DLCPackIntruder.layer.0.all.archive`, `DLCPackTactical.layer.0.all.archive` or `DLCPreOrder.layer.0.all.archive` file | `DLC\runtime` |
-| Binaries | a `.dll`, `.exe`, `.asi` or `.addon64` file | `retail` |
+| runtime file | a `Game.layer.0.all.archive`, `Game.layer.0.en.archive`, `Game.layer.1.all.archive`, `Game.layer.1.en.archive`, `Game.layer.0.de.archive`, `Game.layer.1.de.archive`, `Game.layer.0.es.archive`, `Game.layer.1.es.archive`, `Game.layer.0.fr.archive`, `Game.layer.1.fr.archive`, `Game.layer.0.it.archive`, `Game.layer.1.it.archive`, `Game.layer.0.mx.archive`, `Game.layer.1.mx.archive`, `Game.layer.0.pt.archive`, `Game.layer.1.pt.archive`, `Game.layer.0.ru.archive` or `Game.layer.1.ru.archive` file | `runtime` |
+| DLC runtime file | a `DLC01.layer.0.all.archive`, `DLC02.layer.0.all.archive`, `DLCPackAssault.layer.0.all.archive`, `DLCPackClassic.layer.0.all.archive`, `DLCPackEnforcer.layer.0.all.archive`, `DLCPackIntruder.layer.0.all.archive`, `DLCPackTactical.layer.0.all.archive` or `DLCPreOrder.layer.0.all.archive` file | `DLC\runtime` |
+| Binaries (Engine Injector) | a `.dll`, `.exe`, `.asi` or `.addon64` file | `retail` |
 
 Paths are relative to the game's install folder.
 
@@ -35,19 +35,19 @@ Installs to: the game folder
 
 - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
 
-## Runtime
+## runtime file
 
 Recognised when the archive contains a `Game.layer.0.all.archive`, `Game.layer.0.en.archive`, `Game.layer.1.all.archive`, `Game.layer.1.en.archive`, `Game.layer.0.de.archive`, `Game.layer.1.de.archive`, `Game.layer.0.es.archive`, `Game.layer.1.es.archive`, `Game.layer.0.fr.archive`, `Game.layer.1.fr.archive`, `Game.layer.0.it.archive`, `Game.layer.1.it.archive`, `Game.layer.0.mx.archive`, `Game.layer.1.mx.archive`, `Game.layer.0.pt.archive`, `Game.layer.1.pt.archive`, `Game.layer.0.ru.archive` or `Game.layer.1.ru.archive` file.
 
 Installs to: `runtime`
 
-## Dlcruntime
+## DLC runtime file
 
 Recognised when the archive contains a `DLC01.layer.0.all.archive`, `DLC02.layer.0.all.archive`, `DLCPackAssault.layer.0.all.archive`, `DLCPackClassic.layer.0.all.archive`, `DLCPackEnforcer.layer.0.all.archive`, `DLCPackIntruder.layer.0.all.archive`, `DLCPackTactical.layer.0.all.archive` or `DLCPreOrder.layer.0.all.archive` file.
 
 Installs to: `DLC\runtime`
 
-## Binaries
+## Binaries (Engine Injector)
 
 Recognised when the archive contains a `.dll`, `.exe`, `.asi` or `.addon64` file.
 

@@ -25,7 +25,7 @@ MyRootMod.zip
 
 ========================================================================
 
-Runtime:
+runtime file:
 
 Recognised when the archive contains a "Game.layer.0.all.archive", "Game.layer.0.en.archive", "Game.layer.1.all.archive", "Game.layer.1.en.archive", "Game.layer.0.de.archive", "Game.layer.1.de.archive", "Game.layer.0.es.archive", "Game.layer.1.es.archive", "Game.layer.0.fr.archive", "Game.layer.1.fr.archive", "Game.layer.0.it.archive", "Game.layer.1.it.archive", "Game.layer.0.mx.archive", "Game.layer.1.mx.archive", "Game.layer.0.pt.archive", "Game.layer.1.pt.archive", "Game.layer.0.ru.archive" or "Game.layer.1.ru.archive" file.
 
@@ -33,7 +33,7 @@ Recognised when the archive contains a "Game.layer.0.all.archive", "Game.layer.0
 
 ========================================================================
 
-Dlcruntime:
+DLC runtime file:
 
 Recognised when the archive contains a "DLC01.layer.0.all.archive", "DLC02.layer.0.all.archive", "DLCPackAssault.layer.0.all.archive", "DLCPackClassic.layer.0.all.archive", "DLCPackEnforcer.layer.0.all.archive", "DLCPackIntruder.layer.0.all.archive", "DLCPackTactical.layer.0.all.archive" or "DLCPreOrder.layer.0.all.archive" file.
 
@@ -41,7 +41,7 @@ Recognised when the archive contains a "DLC01.layer.0.all.archive", "DLC02.layer
 
 ========================================================================
 
-Binaries:
+Binaries (Engine Injector):
 
 Recognised when the archive contains a ".dll", ".exe", ".asi" or ".addon64" file.
 
@@ -51,6 +51,6 @@ Recognised when the archive contains a ".dll", ".exe", ".asi" or ".addon64" file
 
 Rules That Apply To Every Mod Type:
 
-    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
+    - Archives that contain a FOMOD installer (a "fomod" folder with "ModuleConfig.xml") are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
     - Folder and file name matching is case-insensitive.
-    - Extra wrapper folders around a recognised folder are generally fine.
+    - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.

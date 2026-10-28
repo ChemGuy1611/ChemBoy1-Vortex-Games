@@ -47,7 +47,7 @@ Mod types define where each category of mod gets deployed:
 | Movies | `borderlands-movies` | high | `{gamePath}/WillowGame/Movies` |
 | TFC Installer | `borderlands-tfcinstaller` | low | `{gamePath}/.` |
 | UPK Explorer | `borderlands-tfcexplorer` | low | `{gamePath}/.` |
-| Binaries (Engine Injector) | `borderlands-binaries` | 50 | `?` |
+| Binaries (Engine Injector) | `borderlands-binaries` | 50 | `{gamePath}/Binaries` |
 
 ## Mod Installers
 

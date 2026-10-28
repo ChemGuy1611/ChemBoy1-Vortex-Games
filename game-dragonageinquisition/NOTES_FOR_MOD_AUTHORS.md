@@ -8,16 +8,16 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Daimodmanager | a `daimodmanager.exe` file | the game folder |
+| Dai Mod Manager | a `daimodmanager.exe` file | the game folder |
 | Frosty Mod Manager (tool) | a `frostymodmanager.exe` file | the game folder |
 | Frosty Mods | a `.fbmod` file | `FrostyModManager\Mods\dragonageinquisition` |
-| Frostyplugin | a `.dll` file | `FrostyModManager\Plugins` |
-| Daimod | a `.daimod` file | `DAIMod` |
+| Frosty Plugin | a `.dll` file | `FrostyModManager\Plugins` |
+| DAIMod .daimod | a `.daimod` file | `DAIMod` |
 | Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
-## Daimodmanager
+## Dai Mod Manager
 
 Recognised when the archive contains a `daimodmanager.exe` file.
 
@@ -51,13 +51,13 @@ Installs to: `FrostyModManager\Mods\dragonageinquisition`
 
 - These mods still have to be applied through Frosty Mod Manager - installing in Vortex alone does not patch the game.
 
-## Frostyplugin
+## Frosty Plugin
 
 Recognised when the archive contains a `.dll` file.
 
 Installs to: `FrostyModManager\Plugins`
 
-## Daimod
+## DAIMod .daimod
 
 Recognised when the archive contains a `.daimod` file.
 

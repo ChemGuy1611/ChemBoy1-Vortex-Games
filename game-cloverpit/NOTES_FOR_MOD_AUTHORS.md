@@ -17,7 +17,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | BepInEx Plugin Mods | a `.dll` file built for BepInEx | `BepInEx\plugins\<ModName>` |
 | MelonLoader Mods | a `.dll` file built for MelonLoader | `Mods\<ModName>` |
 | Asset Replacement Mods | a `.assets` file | `CloverPit_Data` |
-| Fallback Installer | anything not matched above | - |
+| Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
@@ -187,6 +187,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: the game folder
 
 **Common mistakes:**
 

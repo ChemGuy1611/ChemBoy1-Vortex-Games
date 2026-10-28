@@ -1,14 +1,14 @@
 This extension adds Rise of the Tomb Raider modding support to Vortex Mod Manager.
 
 The extension will automatically download and install the [url=https://www.nexusmods.com/riseofthetombraider/mods/94]ROTTR Mod Manager[/url], which is used to install and enable/disable ".tiger" mods for the game.
-[size=3][b][color=#ea9999]Unfortunately, modding the Xbox version of this game is not possible due to the game files being encrypted and kept in a protected folder that Vortex cannot access.[/color]
-[b][color=#ffff00]ROTTR Mod Manager does not work for the Epic version of the game[/color][/b][/b][/size]
+[size=3][b][color=#ffff00]ROTTR Mod Manager does not work for the Epic version of the game[/color][/b][/size]
 
 [b]✅ Supported Versions:[/b]
 [list]
 [*]Steam[/*]
 [*]GOG[/*]
 [*]Epic[/*]
+[*][b][color=#ea9999]❌ Xbox is NOT supported[/color][/b] because the game files are encrypted and kept in a protected folder that Vortex cannot access.[/*]
 [*]Other versions may need to select the installation location manually.[/*]
 [/list]
 [b]🛠️ Mod Installation Notes:[/b]
@@ -31,7 +31,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ========================================================================
 
-Manager:
+ROTTR Mod Manager:
 
 Recognised when the archive contains a "rottrmodmanager.exe" file.
 
@@ -39,7 +39,7 @@ Recognised when the archive contains a "rottrmodmanager.exe" file.
 
 ========================================================================
 
-Trmodmanager:
+TR Reboot Mod Manager:
 
 Recognised when the archive contains a "trreboottools.modmanager.exe" file.
 
@@ -47,7 +47,7 @@ Recognised when the archive contains a "trreboottools.modmanager.exe" file.
 
 ========================================================================
 
-Binaries:
+Binaries / Root Folder:
 
 Recognised when the archive contains a ".dll", ".exe", ".tiger", ".asi" or ".addon64" file.
 
@@ -55,7 +55,7 @@ Recognised when the archive contains a ".dll", ".exe", ".tiger", ".asi" or ".add
 
 ========================================================================
 
-Modmanagermod:
+Mod Manager Mod:
 
 Recognised when the archive contains a "tr2mesh", ".tr2pcd", ".drm", ".skl", ".tr10dtp", ".tr10material", ".tr10modeldata", ".t10script", ".t10shaderlib", ".tr10sound", ".dds", ".tr10objectref", ".tr10dtp" or ".tr10anim" file.
 
@@ -66,7 +66,7 @@ Recognised when the archive contains a "tr2mesh", ".tr2pcd", ".drm", ".skl", ".t
 Rules That Apply To Every Mod Type:
 
     - Folder and file name matching is case-insensitive.
-    - Extra wrapper folders around a recognised folder are generally fine.
+    - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
 [/spoiler]
 
 [b]❤️ Support the Mod Author: [/b]

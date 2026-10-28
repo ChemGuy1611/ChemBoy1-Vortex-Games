@@ -17,8 +17,8 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | BepInEx Plugin Mods | a `.dll` file built for BepInEx | `BepInEx\plugins\<ModName>` |
 | MelonLoader Mods | a `.dll` file built for MelonLoader | `Mods\<ModName>` |
 | Asset Replacement Mods | a `.assets` file | `Megabonk_Data` |
-| Customcharacters | a `.json` or `.manifest` file | - |
-| Fallback Installer | anything not matched above | - |
+| Custom Characters | a `.json` or `.manifest` file | - |
+| Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
@@ -178,7 +178,7 @@ Installs to: `Megabonk_Data`
 
 - Asset files must keep their original names to replace the right bundle.
 
-## Customcharacters
+## Custom Characters
 
 Recognised when the archive contains a `.json` or `.manifest` file.
 
@@ -192,6 +192,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: the game folder
 
 **Common mistakes:**
 

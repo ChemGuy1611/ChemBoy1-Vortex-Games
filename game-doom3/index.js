@@ -1,5 +1,5 @@
 /*//////////////////////////////////////////
-Name: DOOM 3 & DOOM 3: BFG Edition Vortex Extension
+Name: DOOM 3 and DOOM 3: BFG Edition Vortex Extension
 Structure: Basic multi-game with multiple exes
 Author: ChemBoy1
 Version: 1.0.2

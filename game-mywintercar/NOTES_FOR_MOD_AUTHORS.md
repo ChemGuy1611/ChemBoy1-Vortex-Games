@@ -8,22 +8,22 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Mscloader | a `MSCLInstaller.exe` file | the game folder |
+| MSCLoader | a `MSCLInstaller.exe` file | the game folder |
 | BepInEx (mod loader) | a `BepInEx.dll` file | the game folder |
 | MelonLoader (mod loader) | a `MelonLoader.dll` file | the game folder |
-| Root | a `mywintercar_Data` folder | the game folder |
+| Root Game Folder | a `mywintercar_Data` folder | the game folder |
 | BepInEx Configuration Manager | a `configurationmanager.dll` file | `BepInEx` |
 | MelonLoader Preferences Manager | a `melonprefmanager.mono.dll` file | `Mods` |
 | Assembly Replacement Mods | a `Assembly-CSharp.dll` file | `mywintercar_Data\Managed` |
 | BepInEx Plugin Mods | a `.dll` file built for BepInEx | `BepInEx\plugins` |
 | MelonLoader Mods | a `.dll` file built for MelonLoader | `Mods` |
 | Asset Replacement Mods | a `.assets` file | `mywintercar_Data` |
-| Texturepack | a `packinfo.json` file | `Mods\Assets\TexturePackLoader` |
-| Fallback Installer | anything not matched above | - |
+| Texture Pack (MSCLoader) | a `packinfo.json` file | `Mods\Assets\TexturePackLoader` |
+| Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
-## Mscloader
+## MSCLoader
 
 Recognised when the archive contains a `MSCLInstaller.exe` file.
 
@@ -59,7 +59,7 @@ Installs to: the game folder
 
 - If you bundle MelonLoader inside your mod archive, Vortex treats the whole download as MelonLoader rather than as your mod. Ship the mod alone and list MelonLoader as a requirement.
 
-## Root
+## Root Game Folder
 
 Recognised when the archive contains a `mywintercar_Data` folder.
 
@@ -168,7 +168,7 @@ Installs to: `mywintercar_Data`
 
 - Asset files must keep their original names to replace the right bundle.
 
-## Texturepack
+## Texture Pack (MSCLoader)
 
 Recognised when the archive contains a `packinfo.json` file.
 
@@ -184,6 +184,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: the game folder
 
 **Common mistakes:**
 

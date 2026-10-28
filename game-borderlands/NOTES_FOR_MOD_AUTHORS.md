@@ -11,13 +11,13 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | TFC Installer (tool) | a `tfcinstaller.exe` file | the game folder |
 | UPK Explorer (tool) | a `upk explorer.exe` file | the game folder |
 | TFC Mods | a `gameprofile.xml` file or a `.packagepatch` file | `TFCInstaller\Mods` |
-| Sdk | a `unrealsdk.dll` file and a `sdk_mods` folder | the game folder |
-| Sdkmod | a `.py` file and a `.sdkmod` file | `sdk_mods` |
+| Python SDK | a `unrealsdk.dll` file and a `sdk_mods` folder | the game folder |
+| SDK Mod | a `.py` file and a `.sdkmod` file | `sdk_mods` |
 | Root / Game Folder Mods | a `WillowGame` folder | the game folder |
 | Cooked Content Mods | a `DLC` folder or a `.upk` file | `WillowGame\CookedPC` |
 | Movie / Cutscene Replacements | a `.bik` file | `WillowGame\Movies` |
-| Binaries / Injector Mods | a `Borderlands.exe` file or a `.dll` file | - |
-| Fallback Installer | anything not matched above | - |
+| Binaries / Injector Mods | a `Borderlands.exe` file or a `.dll` file | `Binaries` |
+| Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
@@ -64,13 +64,13 @@ Installs to: `TFCInstaller\Mods`
 
 - Keep the original file names - the TFC system matches them by name.
 
-## Sdk
+## Python SDK
 
 Recognised when the archive contains a `unrealsdk.dll` file and a `sdk_mods` folder.
 
 Installs to: the game folder
 
-## Sdkmod
+## SDK Mod
 
 Recognised when the archive contains a `.py` file and a `.sdkmod` file.
 
@@ -130,6 +130,8 @@ DLL injectors and other files that belong next to the game executable.
 - Recognised by any file named `Borderlands.exe` or `BorderlandsGOTY.exe`.
 - Recognised by any file with the `.dll`, `.asi` or `.addon64` extensions.
 
+Installs to: `Binaries`
+
 ## Fallback Installer
 
 The catch-all. Any archive that matched none of the installers above lands here and is copied across unchanged.
@@ -140,6 +142,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: the game folder
 
 **Common mistakes:**
 

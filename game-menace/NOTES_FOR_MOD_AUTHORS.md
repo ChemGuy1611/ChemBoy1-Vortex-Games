@@ -9,19 +9,19 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | MelonLoader (mod loader) | a `MelonLoader.dll` file | the game folder |
-| Modkit | a `Menace.Modkit.App.exe` file | the game folder |
+| Menace ModKit | a `Menace.Modkit.App.exe` file | the game folder |
 | Jiangyu Loader | a `Jiangyu.Loader.dll` file | `Mods` |
 | Jiangyu Mods | a `jiangyu.json` file | `Mods` |
-| Modpackloader | a `Menace.ModpackLoader.dll` file and a `UserLibs` folder | the game folder |
-| Modpackmod | a `modpack.json` file | `Mods` |
+| ModpackLoader | a `Menace.ModpackLoader.dll` file and a `UserLibs` folder | the game folder |
+| Modpack Mod | a `modpack.json` file | `Mods` |
 | Root / Game Folder Mods | a `Menace_Data` folder | the game folder |
 | Assembly Replacement Mods | a `GameAssembly.dll` file | the game folder |
 | MelonLoader Preferences Manager | a `melonprefmanager.il2cpp.dll` file | `Mods` |
-| Customleadersplugin | a `MenaceCustomLeader.dll` file | `Mods` |
+| Custom Leaders Plugin | a `MenaceCustomLeader.dll` file | `Mods` |
 | MelonLoader Mods | a `.dll` file built for MelonLoader | `Mods\<ModName>` |
-| Customleaders | - | `Mods\customleaders` |
+| Custom Leaders Mod | - | `Mods\customleaders` |
 | Asset Replacement Mods | a `.assets` file | `Menace_Data` |
-| Fallback Installer | anything not matched above | - |
+| Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
@@ -40,7 +40,7 @@ Installs to: the game folder
 
 - If you bundle MelonLoader inside your mod archive, Vortex treats the whole download as MelonLoader rather than as your mod. Ship the mod alone and list MelonLoader as a requirement.
 
-## Modkit
+## Menace ModKit
 
 Recognised when the archive contains a `Menace.Modkit.App.exe` file.
 
@@ -85,13 +85,13 @@ Installs to: `Mods`
 - The `name` in `jiangyu.json` decides the folder your mod is installed into, and is what other mods list in `depends`. Keep it stable between releases - changing it makes existing dependencies stop resolving.
 - Vortex adds a numbered prefix to that folder so the load order page can reorder your mod. Do not rely on the folder name in any path inside your mod.
 
-## Modpackloader
+## ModpackLoader
 
 Recognised when the archive contains a `Menace.ModpackLoader.dll` file and a `UserLibs` folder.
 
 Installs to: the game folder
 
-## Modpackmod
+## Modpack Mod
 
 Recognised when the archive contains a `modpack.json` file.
 
@@ -146,7 +146,7 @@ Installs to: `Mods`
 
 - If you bundle the MelonLoader Preferences Manager inside your mod archive, Vortex treats the whole download as the MelonLoader Preferences Manager rather than as your mod. Ship the mod alone and list the MelonLoader Preferences Manager as a requirement.
 
-## Customleadersplugin
+## Custom Leaders Plugin
 
 Recognised when the archive contains a `MenaceCustomLeader.dll` file.
 
@@ -176,7 +176,7 @@ Installs to: `Mods\<ModName>`
 
 - Shipping a plugin together with loader files, which makes the archive look like a loader install instead.
 
-## Customleaders
+## Custom Leaders Mod
 
 Handled by the `testCustomLeaders` installer. Inspect the extension source for the exact archive layout it expects.
 
@@ -206,6 +206,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: the game folder
 
 **Common mistakes:**
 

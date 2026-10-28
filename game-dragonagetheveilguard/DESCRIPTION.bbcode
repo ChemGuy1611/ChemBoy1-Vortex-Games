@@ -1,7 +1,6 @@
 This extension adds Dragon Age: The Veilguard modding support to Vortex Mod Manager.
 [summary]Frosty Mod Manager automatically installed.[/summary]
 
-Frosty Mod Manager Alpha will be installed automatically.
 [size=3][color=#ffff00]This extension will automatically download, install, and check for updates to [/color][url=https://github.com/J-Lyt/FrostyToolsuite/releases]Frosty Mod Manager[/url][color=#ffff00]. You will need to do some setup, including acquiring an encryption key, before you can use Frosty to install mods.[/color][/size]
 [list]
 [*][b][size=3][color=#00ff00][size=3][b]Installation Guide: [url=https://docs.google.com/document/d/1F6X8fjh6RS_IHX7cqx36lyhCEpLPZSYknki-M28w_K0/edit?tab=t.0]https://docs.google.com/document/d/1F6X8fjh6RS_IHX7cqx36lyhCEpLPZSYknki-M28w_K0/edit?tab=t.0[/url][/b][/size][/color][/size][/b][/*]
@@ -63,7 +62,7 @@ This installer handles Frosty Mod Manager, not mods for it. It exists so users c
 
 ========================================================================
 
-Davex:
+DAVExtender:
 
 Recognised when the archive contains a "d3d11.dll" file.
 
@@ -71,7 +70,7 @@ Recognised when the archive contains a "d3d11.dll" file.
 
 ========================================================================
 
-Sdkpatch:
+SDK Patch (EA/Epic):
 
 Recognised when the archive contains a "DragonAgeTheVeilguardSDK.dll" file.
 
@@ -95,9 +94,9 @@ Frostbite mods in Frosty Mod Manager format. Vortex stages them for Frosty rathe
 
 Rules That Apply To Every Mod Type:
 
-    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
+    - Archives that contain a FOMOD installer (a "fomod" folder with "ModuleConfig.xml") are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
     - Folder and file name matching is case-insensitive.
-    - Extra wrapper folders around a recognised folder are generally fine.
+    - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
 [/spoiler]
 
 [b]❤️ Support the Mod Author: [/b]

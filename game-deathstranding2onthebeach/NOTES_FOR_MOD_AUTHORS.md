@@ -8,11 +8,11 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Managermod | a `modinfo.json` file and a `.core` or `.stream` file | `mods` |
+| DS2 Manager Mod | a `modinfo.json` file and a `.core` or `.stream` file | `mods` |
 
 Paths are relative to the game's install folder.
 
-## Managermod
+## DS2 Manager Mod
 
 Recognised when the archive contains a `modinfo.json` file and a `.core` or `.stream` file.
 

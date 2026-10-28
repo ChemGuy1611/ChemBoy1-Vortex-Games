@@ -8,24 +8,24 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Modmanager | a `DarkAgesModManager.exe` file | the game folder |
-| Atlanextractor | a `AtlanResourceExtractor.exe` file | the game folder |
+| Atlan Mod Loader | a `DarkAgesModManager.exe` file | the game folder |
+| Atlan Resource Extractor | a `AtlanResourceExtractor.exe` file | the game folder |
 | Valen | a `Valen.exe` file | the game folder |
-| Patcher | a `DarkAgesPatcher.exe` file | the game folder |
+| DarkAgesPatcher | a `DarkAgesPatcher.exe` file | the game folder |
 | Sound | a `.snd` or `.pck` file | `base\sound\soundbanks\pc` |
 | Config File Mods | a `.cfg` file | `base` |
-| Zipmod | a `darkagesmod.txt` file | - |
-| Binaries | - | the game folder |
+| Zip Mod | a `darkagesmod.txt` file | - |
+| Binaries / Root Folder | - | the game folder |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder. Config and save folders are in your user profile, not the game's install folder.
 
-## Modmanager
+## Atlan Mod Loader
 
 Recognised when the archive contains a `DarkAgesModManager.exe` file.
 
 Installs to: the game folder
 
-## Atlanextractor
+## Atlan Resource Extractor
 
 Recognised when the archive contains a `AtlanResourceExtractor.exe` file.
 
@@ -37,7 +37,7 @@ Recognised when the archive contains a `Valen.exe` file.
 
 Installs to: the game folder
 
-## Patcher
+## DarkAgesPatcher
 
 Recognised when the archive contains a `DarkAgesPatcher.exe` file.
 
@@ -63,11 +63,11 @@ Installs to: `base`
 
 - Shipping a config file with one of these names inside an unrelated mod makes the whole archive install as a config mod.
 
-## Zipmod
+## Zip Mod
 
 Recognised when the archive contains a `darkagesmod.txt` file.
 
-## Binaries
+## Binaries / Root Folder
 
 Handled by the `testBinaries` installer. Inspect the extension source for the exact archive layout it expects.
 

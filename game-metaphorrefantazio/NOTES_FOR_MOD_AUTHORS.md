@@ -9,9 +9,9 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Reloaded-II (mod loader) | a `reloaded-ii.exe` file | the game folder |
-| Reloadedmodloader | a `modconfig.json` file and a `mrfpc.modloader.dll` file | `Reloaded\Mods\MRFPC_Mod_Loader` |
-| Reloadedmod | a `modconfig.json` file | `Reloaded\Mods` |
-| Fallback Installer | anything not matched above | - |
+| MRFPC Mod Loader | a `modconfig.json` file and a `mrfpc.modloader.dll` file | `Reloaded\Mods\MRFPC_Mod_Loader` |
+| Reloaded Mod | a `modconfig.json` file | `Reloaded\Mods` |
+| Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
@@ -29,13 +29,13 @@ Installs to: the game folder
 
 - If you bundle Reloaded-II inside your mod archive, Vortex treats the whole download as Reloaded-II rather than as your mod. Ship the mod alone and list Reloaded-II as a requirement.
 
-## Reloadedmodloader
+## MRFPC Mod Loader
 
 Recognised when the archive contains a `modconfig.json` file and a `mrfpc.modloader.dll` file.
 
 Installs to: `Reloaded\Mods\MRFPC_Mod_Loader`
 
-## Reloadedmod
+## Reloaded Mod
 
 Recognised when the archive contains a `modconfig.json` file.
 
@@ -51,6 +51,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: the game folder
 
 **Common mistakes:**
 

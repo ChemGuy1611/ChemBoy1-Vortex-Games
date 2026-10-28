@@ -11,7 +11,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Dmfdml | a `.bat` file | - |
 | Mod | a `.mod` file | - |
 | Root / Game Folder Mods | a `mods` folder | the game folder |
-| Darktide Binaries | - | `binaries` |
+| Binaries | - | `binaries` |
 
 Paths are relative to the game's install folder.
 
@@ -43,7 +43,7 @@ Installs to: the game folder
 
 - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
 
-## Darktide Binaries
+## Binaries
 
 Handled by the `testBinaries` installer. Inspect the extension source for the exact archive layout it expects.
 

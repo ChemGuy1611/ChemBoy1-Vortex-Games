@@ -1,8 +1,6 @@
 This extension adds Dragon's Dogma 2 modding support to Vortex Mod Manager.
 [summary]Fluffy Mod Manager and REFramework will be installed automatically.[/summary]
 
-Fluffy Mod Manager and REFramework will be installed automatically.
-Should automatically detect the installation location for the Steam version of the game. Other versions will need to specify the game folder manually when activating the game.
 [color=#ffff00][size=3]This extension will automatically download and install[url=https://www.nexusmods.com/site/mods/818] Fluffy Mod Manager[/url] and [url=https://www.nexusmods.com/dragonsdogma2/mods/8]REFramework[/url] (for plugins and script mods).
 [color=#00ff00][size=3][b]You need to enable mods in Fluffy Mod Manager for complete installation! There is a tool included with the extension to launch Fluffy in the Dashboard tab. A notification will be shown after deploying mods with a button to run Fluffy.[/b][/size][/color][/size][/color]
 
@@ -15,14 +13,13 @@ Should automatically detect the installation location for the Steam version of t
 [list]
 [*]Fluffy Mod Manager installs to the game folder, recognised by a "modmanager.exe" file.[/*]
 [*]REFramework installs to the game folder, recognised by a "dinput8.dll" file.[/*]
-[*]Loose Lua (REFramework) mods with a ".lua" file outside the REFramework folders install to the game folder.[/*]
+[*]Loose Lua (REFramework) mods with a ".lua" file outside the REFramework folders install to the "reframework\autorun" folder.[/*]
 [*]Fluffy Preset mods with a ".prt" file install to the "Games\DragonsDogma2\Presets" folder.[/*]
-[*]Any other mod not described above installs to the game folder.[/*]
+[*]Any other mod not described above installs to the "Games\DragonsDogma2\Mods" folder.[/*]
 [/list]
 [b]📋 Usage Notes:[/b]
 [list]
 [*]You can open several useful files/folders/URLs using the buttons within the folder icon on the Mods toolbar.[/*]
-[*][size=2]Automatically installs[url=https://www.nexusmods.com/site/mods/818] Fluffy Mod Manager[/url] (FMM) and [url=https://www.nexusmods.com/dragonsdogma2/mods/8]REFramework[/url]﻿ (for plugins and script mods). You must run FMM to install mods into the game data archives. [/size][/*]
 [*][size=2]For mods not to be used with FMM (upscalers, reshades, etc.), you will need to change the mod type to "Binaries / Root Folder".[/size][/*]
 [/list]
 
@@ -70,7 +67,7 @@ Standalone REFramework Lua scripts, shipped without the surrounding REFramework 
     - Recognised by a ".lua" file in an archive that does NOT already contain a REFramework folder ("reframework" or "autorun").
     - Vortex adds the correct folder structure around the script for you.
 
-  Installs to: the game folder
+  Installs to: "reframework\autorun"
 
   Common mistakes:
     - Including an REFramework folder as well switches the archive to a different installer, which expects the full structure to already be correct.
@@ -96,6 +93,8 @@ The catch-all for RE Engine mods packaged in the normal Fluffy Mod Manager layou
     - Any archive not claimed by an earlier installer is treated as a Fluffy-format mod.
     - An archive already zipped in the Fluffy layout is installed as it is, with no repacking.
 
+  Installs to: "Games\DragonsDogma2\Mods"
+
   Common mistakes:
     - Because this is a catch-all, a badly laid-out archive still installs - it just may not work. Match the layout Fluffy Mod Manager expects.
 
@@ -104,7 +103,7 @@ The catch-all for RE Engine mods packaged in the normal Fluffy Mod Manager layou
 Rules That Apply To Every Mod Type:
 
     - Folder and file name matching is case-insensitive.
-    - Extra wrapper folders around a recognised folder are generally fine.
+    - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
 [/spoiler]
 
 [b]🤝 Credits:[/b]

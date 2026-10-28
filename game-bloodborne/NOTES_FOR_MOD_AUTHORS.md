@@ -8,22 +8,22 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Shadps4 | a `shadps4.exe` file | the game folder |
-| Shadlauncher | a `shadps4qtlauncher.exe` file | the game folder |
+| shadPS4 | a `shadps4.exe` file | the game folder |
+| Shad Launcher | a `shadps4qtlauncher.exe` file | the game folder |
 | Smithbox | a `smithbox.exe` file | the game folder |
 | Flver | a `flver_editor.exe` file | the game folder |
-| Dvdroot Ps4 | a `action`, `chr`, `event`, `facegen`, `map`, `menu`, `movie`, `msg`, `mtd`, `obj`, `other`, `param`, `paramdef`, `parts`, `remo`, `script`, `sfx`, `shader` or `sound` folder | `CUSA03173\dvdroot_ps4` |
+| Game Data (dvdroot_ps4) | a `action`, `chr`, `event`, `facegen`, `map`, `menu`, `movie`, `msg`, `mtd`, `obj`, `other`, `param`, `paramdef`, `parts`, `remo`, `script`, `sfx`, `shader` or `sound` folder | `CUSA03173\dvdroot_ps4` |
 | Save Game Files | a `userdata0000` file | `user\savedata\1\CUSA03173\SPRJ0005` |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder. Config and save folders are in your user profile, not the game's install folder.
 
-## Shadps4
+## shadPS4
 
 Recognised when the archive contains a `shadps4.exe` file.
 
 Installs to: the game folder
 
-## Shadlauncher
+## Shad Launcher
 
 Recognised when the archive contains a `shadps4qtlauncher.exe` file.
 
@@ -41,7 +41,7 @@ Recognised when the archive contains a `flver_editor.exe` file.
 
 Installs to: the game folder
 
-## Dvdroot Ps4
+## Game Data (dvdroot_ps4)
 
 Recognised when the archive contains a `action`, `chr`, `event`, `facegen`, `map`, `menu`, `movie`, `msg`, `mtd`, `obj`, `other`, `param`, `paramdef`, `parts`, `remo`, `script`, `sfx`, `shader` or `sound` folder.
 

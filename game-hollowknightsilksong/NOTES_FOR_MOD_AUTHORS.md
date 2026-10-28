@@ -13,9 +13,9 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | BepInEx Configuration Manager | a `configurationmanager.dll` file | `BepInEx` |
 | Assembly Replacement Mods | a `Assembly-CSharp.dll` file | `Hollow Knight Silksong_Data\Managed` |
 | BepInEx Plugin Mods | a `.dll` file built for BepInEx | `BepInEx\plugins\<ModName>` |
-| Skin | a `.png` file | `Hollow Knight Silksong_Data\Mods\Customizer` |
+| Skin Mod | a `.png` file | `Hollow Knight Silksong_Data\Mods\Customizer` |
 | Asset Replacement Mods | a `.assets` file | `Hollow Knight Silksong_Data` |
-| Fallback Installer | anything not matched above | - |
+| Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
@@ -107,7 +107,7 @@ Installs to: `BepInEx\plugins\<ModName>`
 
 - Shipping a plugin together with loader files, which makes the archive look like a loader install instead.
 
-## Skin
+## Skin Mod
 
 Recognised when the archive contains a `.png` file.
 
@@ -137,6 +137,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: the game folder
 
 **Common mistakes:**
 

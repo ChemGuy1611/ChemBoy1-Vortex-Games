@@ -8,41 +8,41 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Merger | a `ResonanceModMerger.exe` file | the game folder |
-| Framework | a `RAPTL_Framework.asi` file | the game folder |
-| Asiloader | a `RAPTL_Framework.asi` file | the game folder |
-| Mod | a `.psc` file | `Mods` |
-| Frameworkmod | a `textures` folder | `Mods` |
+| Mod Merger | a `ResonanceModMerger.exe` file | the game folder |
+| Resonance Framework | a `RAPTL_Framework.asi` file | the game folder |
+| ASI Loader | a `RAPTL_Framework.asi` file | the game folder |
+| Script Mod | a `.psc` file | `Mods` |
+| Resonance Framework Mod | a `textures` folder | `Mods` |
 | Root / Game Folder Mods | a `DATAS` folder | the game folder |
-| Texturestudio | a `.exe` file | `TextureStudio` |
+| TextureStudio | a `.exe` file | `TextureStudio` |
 
 Paths are relative to the game's install folder.
 
-## Merger
+## Mod Merger
 
 Recognised when the archive contains a `ResonanceModMerger.exe` file.
 
 Installs to: the game folder
 
-## Framework
+## Resonance Framework
 
 Recognised when the archive contains a `RAPTL_Framework.asi` file.
 
 Installs to: the game folder
 
-## Asiloader
+## ASI Loader
 
 Recognised when the archive contains a `RAPTL_Framework.asi` file.
 
 Installs to: the game folder
 
-## Mod
+## Script Mod
 
 Recognised when the archive contains a `.psc` file.
 
 Installs to: `Mods`
 
-## Frameworkmod
+## Resonance Framework Mod
 
 Recognised when the archive contains a `textures` folder.
 
@@ -68,7 +68,7 @@ Installs to: the game folder
 
 - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
 
-## Texturestudio
+## TextureStudio
 
 Recognised when the archive contains a `.exe` file.
 

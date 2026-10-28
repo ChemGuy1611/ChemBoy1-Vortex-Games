@@ -39,7 +39,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ========================================================================
 
-Scripthook:
+ScriptHookRDR:
 
 Recognised when the archive contains a "dinput8.dll" file and a "scripthookrdr.dll" file.
 
@@ -47,7 +47,7 @@ Recognised when the archive contains a "dinput8.dll" file and a "scripthookrdr.d
 
 ========================================================================
 
-Modloader:
+kepmehz Mod Loader:
 
 Recognised when the archive contains a "kml.asi" file.
 
@@ -55,7 +55,7 @@ Recognised when the archive contains a "kml.asi" file.
 
 ========================================================================
 
-Magicrdr:
+Magic-RDR:
 
 Handled by the "testMagic" installer. Inspect the extension source for the exact archive layout it expects.
 
@@ -63,7 +63,7 @@ Handled by the "testMagic" installer. Inspect the extension source for the exact
 
 ========================================================================
 
-Magicmod:
+MagicRDR Mod (Loose):
 
 Recognised when the archive contains a ".wtd", ".was", ".dds", ".mtl" or ".wsc" file.
 
@@ -71,7 +71,7 @@ Recognised when the archive contains a ".wtd", ".was", ".dds", ".mtl" or ".wsc" 
 
 ========================================================================
 
-Rpf:
+RPF File:
 
 Recognised when the archive contains a ".rpf" file.
 
@@ -79,7 +79,7 @@ Recognised when the archive contains a ".rpf" file.
 
 ========================================================================
 
-Asiplugin:
+ASI Script / Plugin:
 
 Recognised when the archive contains a ".asi" file.
 
@@ -89,9 +89,9 @@ Recognised when the archive contains a ".asi" file.
 
 Rules That Apply To Every Mod Type:
 
-    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
+    - Archives that contain a FOMOD installer (a "fomod" folder with "ModuleConfig.xml") are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
     - Folder and file name matching is case-insensitive.
-    - Extra wrapper folders around a recognised folder are generally fine.
+    - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
 [/spoiler]
 
 [b]❤️ Support the Mod Author: [/b]

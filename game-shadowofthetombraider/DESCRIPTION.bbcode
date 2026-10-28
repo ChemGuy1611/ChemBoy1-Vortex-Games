@@ -3,7 +3,6 @@ This extension adds Shadow of the Tomb Raider modding support to Vortex Mod Mana
 
 [b]The extension will automatically download and install the [url=https://www.nexusmods.com/shadowofthetombraider/mods/185]SOTTR Mod Manager[/url], which is used to install and enable/disable mods for the game.[/b]
 Users may be interested in the[url=https://github.com/Kaldaien/SpecialK/releases/sk_special_projects] custom version of Special K[/url] for installing legacy texture mods. It is no longer auto-installed by the extension and must be installed by the user.
-Steam, Epic, GOG, and Xbox versions supported. The Steam Demo is NOT supported.
 
 [b]✅ Supported Versions:[/b]
 [list]
@@ -11,6 +10,7 @@ Steam, Epic, GOG, and Xbox versions supported. The Steam Demo is NOT supported.
 [*]GOG[/*]
 [*]Epic[/*]
 [*]Xbox[/*]
+[*][b][color=#ea9999]❌ Steam Demo is NOT supported[/color][/b][/*]
 [*]Other versions may need to select the installation location manually.[/*]
 [/list]
 [b]🛠️ Mod Installation Notes:[/b]
@@ -33,7 +33,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ========================================================================
 
-Manager:
+SOTTR Mod Manager:
 
 Recognised when the archive contains a "sottrmodmanager.exe" file.
 
@@ -41,7 +41,7 @@ Recognised when the archive contains a "sottrmodmanager.exe" file.
 
 ========================================================================
 
-Trmodmanager:
+TR Reboot Mod Manager:
 
 Recognised when the archive contains a "trreboottools.modmanager.exe" file.
 
@@ -49,7 +49,7 @@ Recognised when the archive contains a "trreboottools.modmanager.exe" file.
 
 ========================================================================
 
-Binaries:
+Binaries / Root Folder:
 
 Recognised when the archive contains a ".dll", ".exe", ".tiger", ".asi" or ".addon64" file.
 
@@ -57,7 +57,7 @@ Recognised when the archive contains a ".dll", ".exe", ".tiger", ".asi" or ".add
 
 ========================================================================
 
-Modmanagermod:
+Mod Manager Mod:
 
 Recognised when the archive contains a ".tr11dtp", ".tr11material", ".tr11modeldata", ".t11script", ".t11shaderlib", ".tr11sound", ".dds", ".tr11objectref", ".tr11dtp" or ".tr11anim" file.
 
@@ -68,7 +68,7 @@ Recognised when the archive contains a ".tr11dtp", ".tr11material", ".tr11modeld
 Rules That Apply To Every Mod Type:
 
     - Folder and file name matching is case-insensitive.
-    - Extra wrapper folders around a recognised folder are generally fine.
+    - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
 [/spoiler]
 
 [b]❤️ Support the Mod Author: [/b]

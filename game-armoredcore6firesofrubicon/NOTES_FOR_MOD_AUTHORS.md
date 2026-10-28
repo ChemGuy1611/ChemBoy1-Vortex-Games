@@ -8,20 +8,20 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Me3 | - | the game folder |
-| Root | - | the game folder |
+| Mod Engine 3 | - | the game folder |
+| Root Folder | - | the game folder |
 | Mod | - | `mods` |
 | Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
-## Me3
+## Mod Engine 3
 
 Handled by the `testMe3` installer. Inspect the extension source for the exact archive layout it expects.
 
 Installs to: the game folder
 
-## Root
+## Root Folder
 
 Handled by the `testRoot` installer. Inspect the extension source for the exact archive layout it expects.
 

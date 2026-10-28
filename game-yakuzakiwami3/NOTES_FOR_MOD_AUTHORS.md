@@ -8,20 +8,20 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Modmanager | a `shinryumodmanager.exe` file | `runtime\media` |
-| Mod | a `mod-meta.yaml` or `modinfo.ini` file | `runtime\media\mods` |
+| Shin Ryu MM | a `shinryumodmanager.exe` file | `runtime\media` |
+| SRMM Mod | a `mod-meta.yaml` or `modinfo.ini` file | `runtime\media\mods` |
 | Root / Game Folder Mods | a `nvngx_dlss.dll` file or a `.exe` file | the game folder |
-| Data | a `.par` file | `runtime\media\data` |
+| .par Data File | a `.par` file | `runtime\media\data` |
 
 Paths are relative to the game's install folder.
 
-## Modmanager
+## Shin Ryu MM
 
 Recognised when the archive contains a `shinryumodmanager.exe` file.
 
 Installs to: `runtime\media`
 
-## Mod
+## SRMM Mod
 
 Recognised when the archive contains a `mod-meta.yaml` or `modinfo.ini` file.
 
@@ -42,7 +42,7 @@ Installs to: the game folder
 
 - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
 
-## Data
+## .par Data File
 
 Recognised when the archive contains a `.par` file.
 

@@ -13,9 +13,9 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | MelonLoader Preferences Manager | a `melonprefmanager.il2cpp.dll` file | `Mods` |
 | Assembly Replacement Mods | a `GameAssembly.dll` file | the game folder |
 | MelonLoader Mods | a `.dll` file built for MelonLoader | `Mods\<ModName>` |
-| Customassets | a `CustomManga`, `CustomDakimakura`, `CustomPosters` or `CustomCard` folder | `UserData` |
+| Custom Assets | a `CustomManga`, `CustomDakimakura`, `CustomPosters` or `CustomCard` folder | `UserData` |
 | Asset Replacement Mods | a `.assets` file | `Anime Shop Simulator_Data` |
-| Fallback Installer | anything not matched above | - |
+| Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
@@ -107,7 +107,7 @@ Installs to: `Mods\<ModName>`
 
 - Shipping a plugin together with loader files, which makes the archive look like a loader install instead.
 
-## Customassets
+## Custom Assets
 
 Recognised when the archive contains a `CustomManga`, `CustomDakimakura`, `CustomPosters` or `CustomCard` folder.
 
@@ -137,6 +137,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: the game folder
 
 **Common mistakes:**
 

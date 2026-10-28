@@ -8,7 +8,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Modloader | a `SZModLib` folder | `SparkingZERO\Mods` |
+| SZModLoader | a `SZModLib` folder | `SparkingZERO\Mods` |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `SparkingZERO` |
 | Blueprint Mods (LogicMods) | a `LogicMods` folder | `SparkingZERO\Content\Paks` |
 | Pak Mods | a `.pak` file | `SparkingZERO\Content\Paks\~mods` |
@@ -17,16 +17,16 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `SparkingZERO\Binaries\Win64\ue4ss\Mods` |
 | UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | `SparkingZERO\Binaries\Win64\ue4ss\Mods` |
 | Root / Game Folder Mods | a top-level folder such as `SparkingZERO`, `Engine` or `Content` | the game folder |
-| Config File Mods | a config file such as `engine.ini` or `game.ini` | - |
-| Save Game Files | a `.sav` file | - |
-| Lfse | a `LFSE` folder | `SparkingZERO\Mods` |
-| Modloadermod | a `.uplugin` file | `SparkingZERO\Mods` |
-| Json | a `.json` file | `SparkingZERO\Mods\ZeroSpark\Json` |
+| Config File Mods | a config file such as `engine.ini` or `game.ini` | the game's config folder |
+| Save Game Files | a `.sav` file | the game's save folder |
+| LFSE | a `LFSE` folder | `SparkingZERO\Mods` |
+| SZModLoader Mod | a `.uplugin` file | `SparkingZERO\Mods` |
+| SZModLoader JSON | a `.json` file | `SparkingZERO\Mods\ZeroSpark\Json` |
 | Fallback Installer | anything not matched above with no pak file | `SparkingZERO\Binaries\Win64` |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder. Config and save folders are in your user profile, not the game's install folder.
 
-## Modloader
+## SZModLoader
 
 Recognised when the archive contains a `SZModLib` folder.
 
@@ -216,6 +216,8 @@ Config tweaks are deployed to the game's config folder in your user profile, not
 
 - Recognised by any of these filenames in the archive: `engine.ini`, `game.ini`, `gameusersettings.ini`, `input.ini`, `scalability.ini`, `hardware.ini`, `deviceprofiles.ini`, `compat.ini`, `runtimeoptions.ini`, `gameplaytags.ini`, `enhancedinput.ini` or `consolevariables.ini`.
 
+Installs to: the game's config folder
+
 **Common mistakes:**
 
 - Shipping a config file with one of these names inside an unrelated mod - the whole archive is then treated as a config mod.
@@ -228,23 +230,25 @@ Save files are deployed to the game's save folder in your user profile.
 
 - Recognised by any file with extension `.sav`.
 
+Installs to: the game's save folder
+
 **Common mistakes:**
 
 - Including an example save alongside a normal mod - the archive is then treated as a save, not a mod.
 
-## Lfse
+## LFSE
 
 Recognised when the archive contains a `LFSE` folder.
 
 Installs to: `SparkingZERO\Mods`
 
-## Modloadermod
+## SZModLoader Mod
 
 Recognised when the archive contains a `.uplugin` file.
 
 Installs to: `SparkingZERO\Mods`
 
-## Json
+## SZModLoader JSON
 
 Recognised when the archive contains a `.json` file.
 

@@ -176,12 +176,18 @@ def split_summary_note(text):
     return _norm("\n".join(kept)), note
 
 
+# Store labels generate_notes.js writes into the Supported Versions list (its STORE_IDS).
+# Any other item there is a hand-written caveat ("Xbox is NOT supported"), not a store.
+STORE_LABELS = ("Steam", "Steam Demo", "GOG", "Epic", "Ubisoft Connect", "EA", "Xbox")
+
+
 def build_summary(description):
     """Page summary from a DESCRIPTION.bbcode: its first line plus a store sentence.
 
     "This extension adds X modding support to Vortex Mod Manager. Steam and Xbox versions
-    supported." The stores come from the Supported Versions list; the trailing "Other versions
-    may need..." item is not a store. A `[summary]...[/summary]` note line is appended last.
+    supported." The stores come from the Supported Versions list: only items that are a store
+    label (STORE_LABELS) count, so the trailing "Other versions may need..." item and any
+    hand-written caveat are left out. A `[summary]...[/summary]` note line is appended last.
     Raises ValueError when the result is not 1-350 characters."""
     description, note = split_summary_note(description)
     first = next((ln.strip() for ln in description.splitlines() if ln.strip()), "")
@@ -191,7 +197,7 @@ def build_summary(description):
     if m:
         for item in re.findall(r"\[\*\](.*?)\[/\*\]", m.group(1)):
             item = item.strip()
-            if item and not item.startswith("Other versions"):
+            if item in STORE_LABELS:
                 stores.append(item)
     sentence = ""
     if stores:

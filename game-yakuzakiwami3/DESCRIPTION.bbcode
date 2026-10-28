@@ -33,7 +33,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ========================================================================
 
-Modmanager:
+Shin Ryu MM:
 
 Recognised when the archive contains a "shinryumodmanager.exe" file.
 
@@ -41,7 +41,7 @@ Recognised when the archive contains a "shinryumodmanager.exe" file.
 
 ========================================================================
 
-Mod:
+SRMM Mod:
 
 Recognised when the archive contains a "mod-meta.yaml" or "modinfo.ini" file.
 
@@ -64,7 +64,7 @@ For mods laid out the same way the files appear inside the game folder. Vortex c
 
 ========================================================================
 
-Data:
+.par Data File:
 
 Recognised when the archive contains a ".par" file.
 
@@ -74,9 +74,9 @@ Recognised when the archive contains a ".par" file.
 
 Rules That Apply To Every Mod Type:
 
-    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
+    - Archives that contain a FOMOD installer (a "fomod" folder with "ModuleConfig.xml") are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
     - Folder and file name matching is case-insensitive.
-    - Extra wrapper folders around a recognised folder are generally fine.
+    - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
 [/spoiler]
 
 [b]🤝 Credits:[/b]

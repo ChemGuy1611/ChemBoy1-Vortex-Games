@@ -11,11 +11,11 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Installer (tool) | a `fcmodinstaller.exe` file | `FCModInstaller` |
 | Root / Game Folder Mods | a `bin` folder | the game folder |
 | Data File Mods | a `.dat` file | `data_win32` |
-| XXX Binaries | a `.dll` file | `bin` |
-| XXX Mimoda3 | a `info.xml` file | `FCModInstaller\ModifiedFilesFCXXX` |
+| Binaries (Engine Injector) | a `.dll` file | `bin` |
+| Repacked FCMI Mod | a `info.xml` file | `FCModInstaller\ModifiedFilesFCXXX` |
 | Mod Installer Mods | a `.a2` file | `FCModInstaller\ModifiedFilesFCXXX` |
-| XXX Xml | a `gamerprofile.xml` file and a `.xml` file | `%USERPROFILE%\Documents\My Games\Far Cry XXX\<User ID>` |
-| Fallback Installer | anything not matched above | - |
+| XML Settings Mod | a `gamerprofile.xml` file and a `.xml` file | `%USERPROFILE%\Documents\My Games\Far Cry XXX\<User ID>` |
+| Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
@@ -63,13 +63,13 @@ Packed game data replacements.
 
 Installs to: `data_win32`
 
-## XXX Binaries
+## Binaries (Engine Injector)
 
 Recognised when the archive contains a `.dll` file.
 
 Installs to: `bin`
 
-## XXX Mimoda3
+## Repacked FCMI Mod
 
 Recognised when the archive contains a `info.xml` file.
 
@@ -89,7 +89,7 @@ Installs to: `FCModInstaller\ModifiedFilesFCXXX`
 
 - These are applied through the Mod Installer tool, not deployed straight into the game.
 
-## XXX Xml
+## XML Settings Mod
 
 Recognised when the archive contains a `gamerprofile.xml` file and a `.xml` file.
 
@@ -105,6 +105,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: the game folder
 
 **Common mistakes:**
 

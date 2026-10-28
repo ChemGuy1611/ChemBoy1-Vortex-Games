@@ -8,14 +8,14 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Mod | a `Community Update` folder | the game folder |
+| Mod Folder | a `Community Update` folder | the game folder |
 | Root / Game Folder Mods | a `System` folder | the game folder |
-| Launcher | a `deusex.exe` file | `System` |
-| Binaries | a `engine.dll`, `deusexechelonrenderer.dll`, `d3d9.dll` or `rtx.conf` file and a `.exe`, `.dll`, `.asi` or `.addon64` file | `System` |
+| Deus Exe (Launcher) | a `deusex.exe` file | `System` |
+| Binaries (Engine Injector) | a `engine.dll`, `deusexechelonrenderer.dll`, `d3d9.dll` or `rtx.conf` file and a `.exe`, `.dll`, `.asi` or `.addon64` file | `System` |
 
 Paths are relative to the game's install folder.
 
-## Mod
+## Mod Folder
 
 Recognised when the archive contains a `Community Update` folder.
 
@@ -41,13 +41,13 @@ Installs to: the game folder
 
 - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
 
-## Launcher
+## Deus Exe (Launcher)
 
 Recognised when the archive contains a `deusex.exe` file.
 
 Installs to: `System`
 
-## Binaries
+## Binaries (Engine Injector)
 
 Recognised when the archive contains a `engine.dll`, `deusexechelonrenderer.dll`, `d3d9.dll` or `rtx.conf` file and a `.exe`, `.dll`, `.asi` or `.addon64` file.
 

@@ -9,11 +9,11 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Fluffy Mod Manager (tool) | a `modmanager.exe` file | the game folder |
-| Loose Lua Scripts | a `.lua` file outside the REFramework folders | - |
+| Loose Lua Scripts | a `.lua` file outside the REFramework folders | `reframework\autorun` |
 | REFramework (mod loader) | a `dinput8.dll` file | the game folder |
 | Root / Game Folder Mods | a `nvngx_dlss.dll` file or a `.exe` file | the game folder |
 | Preset Files | a `.prt` file | `Games\RE7\Presets` |
-| Fluffy-Format Mods | anything not matched above | - |
+| Fluffy-Format Mods | anything not matched above | `Games\RE7\Mods` |
 
 Paths are relative to the game's install folder.
 
@@ -39,6 +39,8 @@ Standalone REFramework Lua scripts, shipped without the surrounding REFramework 
 
 - Recognised by a `.lua` file in an archive that does NOT already contain a REFramework folder (`reframework` or `autorun`).
 - Vortex adds the correct folder structure around the script for you.
+
+Installs to: `reframework\autorun`
 
 **Common mistakes:**
 
@@ -91,6 +93,8 @@ The catch-all for RE Engine mods packaged in the normal Fluffy Mod Manager layou
 
 - Any archive not claimed by an earlier installer is treated as a Fluffy-format mod.
 - An archive already zipped in the Fluffy layout is installed as it is, with no repacking.
+
+Installs to: `Games\RE7\Mods`
 
 **Common mistakes:**
 

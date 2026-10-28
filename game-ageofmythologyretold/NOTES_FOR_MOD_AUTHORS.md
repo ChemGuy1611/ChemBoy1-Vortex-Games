@@ -11,9 +11,9 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Save Game Files | a `.mythsav` file | `%USERPROFILE%\Games\Age of Mythology Retold\<User ID>\savegames` |
 | Config File Mods | a `.xml` file | `%USERPROFILE%\Games\Age of Mythology Retold\<User ID>\users` |
 | Reshade | a `reshade-shaders` folder | the game folder |
-| Binaries | a `.dll` or `.ini` file | the game folder |
+| Binaries / Root Game Folder | a `.dll` or `.ini` file | the game folder |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder. Config and save folders are in your user profile, not the game's install folder.
 
 ## Save Game Files
 
@@ -49,7 +49,7 @@ Recognised when the archive contains a `reshade-shaders` folder.
 
 Installs to: the game folder
 
-## Binaries
+## Binaries / Root Game Folder
 
 Recognised when the archive contains a `.dll` or `.ini` file.
 

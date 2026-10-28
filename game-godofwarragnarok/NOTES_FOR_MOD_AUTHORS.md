@@ -8,55 +8,57 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Scriptloader | a `winmm.dll` file and a `GOWR-Script-Loader.ini` file | the game folder |
-| Data | a `exec` folder | the game folder |
-| Patchfolder | a `patch` folder | `exec` |
-| Execsub | a `ActivityFeed`, `cinematics`, `dc`, `languages`, `sound` or `wad` folder | `exec` |
-| Pack | a `.texpack` or `.lodpack` file | `exec\patch\pc_le` |
-| Luamod | a `int9` folder and a `.lua` file | `mod` |
-| Save | - | - |
+| GoWR-Script-Loader | a `winmm.dll` file and a `GOWR-Script-Loader.ini` file | the game folder |
+| exec folder | a `exec` folder | the game folder |
+| patch Folder | a `patch` folder | `exec` |
+| exec subfolder | a `ActivityFeed`, `cinematics`, `dc`, `languages`, `sound` or `wad` folder | `exec` |
+| Texpack/Lodpack | a `.texpack` or `.lodpack` file | `exec\patch\pc_le` |
+| Lua Mod | a `int9` folder and a `.lua` file | `mod` |
+| Save (Documents) | - | the game's save folder |
 
 Paths are relative to the game's install folder.
 
-## Scriptloader
+## GoWR-Script-Loader
 
 Recognised when the archive contains a `winmm.dll` file and a `GOWR-Script-Loader.ini` file.
 
 Installs to: the game folder
 
-## Data
+## exec folder
 
 Recognised when the archive contains a `exec` folder.
 
 Installs to: the game folder
 
-## Patchfolder
+## patch Folder
 
 Recognised when the archive contains a `patch` folder.
 
 Installs to: `exec`
 
-## Execsub
+## exec subfolder
 
 Recognised when the archive contains a `ActivityFeed`, `cinematics`, `dc`, `languages`, `sound` or `wad` folder.
 
 Installs to: `exec`
 
-## Pack
+## Texpack/Lodpack
 
 Recognised when the archive contains a `.texpack` or `.lodpack` file.
 
 Installs to: `exec\patch\pc_le`
 
-## Luamod
+## Lua Mod
 
 Recognised when the archive contains a `int9` folder and a `.lua` file.
 
 Installs to: `mod`
 
-## Save
+## Save (Documents)
 
 Handled by the `testSave` installer. Inspect the extension source for the exact archive layout it expects.
+
+Installs to: the game's save folder
 
 ## Rules That Apply To Every Mod Type
 

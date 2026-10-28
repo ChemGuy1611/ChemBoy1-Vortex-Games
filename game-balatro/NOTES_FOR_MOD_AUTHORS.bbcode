@@ -5,7 +5,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ========================================================================
 
-LOVELY:
+Lovely-Injector:
 
 Recognised when the archive contains a "winmm.dll" file.
 
@@ -13,7 +13,7 @@ Recognised when the archive contains a "winmm.dll" file.
 
 ========================================================================
 
-Steammodded:
+SteamModded:
 
 Recognised when the archive contains a "tk_debug_window.py" file.
 
@@ -21,7 +21,7 @@ Recognised when the archive contains a "tk_debug_window.py" file.
 
 ========================================================================
 
-Malverk:
+Malverk (Texture Pack Manager):
 
 Recognised when the archive contains a "malverk.lua" file.
 
@@ -37,6 +37,6 @@ Recognised when the archive contains a ".lua" file and a "assets", "libs", "loca
 
 Rules That Apply To Every Mod Type:
 
-    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
+    - Archives that contain a FOMOD installer (a "fomod" folder with "ModuleConfig.xml") are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
     - Folder and file name matching is case-insensitive.
-    - Extra wrapper folders around a recognised folder are generally fine.
+    - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.

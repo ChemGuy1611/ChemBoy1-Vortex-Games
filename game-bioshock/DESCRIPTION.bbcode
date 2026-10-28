@@ -1,6 +1,5 @@
 This extension adds BioShock Remastered modding support to Vortex Mod Manager.
 
-Classic (2007) versions are also supported. The Steam and GOG versions should be automatically discovered. Retail versions will need to specify the install location manually.
 [b][color=#ea9999]Be mindful when installing mods whether they are intended for the Remastered or classic version of the game.
 [color=#ffff00][size=3][b]This extension will automatically download and install the [url=https://www.nexusmods.com/site/mods/588?tab=description]TFC Installer for UE2/3[/url]. This allows you to install texture mods and other types of mods that update the game data archives.[/b][/size][/color][/color][/b]
 
@@ -9,6 +8,7 @@ Classic (2007) versions are also supported. The Steam and GOG versions should be
 [*]Steam[/*]
 [*]GOG[/*]
 [*]Epic[/*]
+[*]Classic (2007) versions are also supported. The Steam and GOG versions should be automatically discovered.[/*]
 [*]Other versions may need to select the installation location manually.[/*]
 [/list]
 [b]🛠️ Mod Installation Notes:[/b]
@@ -149,6 +149,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
     - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
     - Vortex shows the user a notification when a mod installs through the fallback.
 
+  Installs to: the game folder
+
   Common mistakes:
     - If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.
 
@@ -157,7 +159,7 @@ The catch-all. Any archive that matched none of the installers above lands here 
 Rules That Apply To Every Mod Type:
 
     - Folder and file name matching is case-insensitive.
-    - Extra wrapper folders around a recognised folder are generally fine.
+    - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
 [/spoiler]
 
 [b]🤝 Credits:[/b]

@@ -9,17 +9,17 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | TFC Installer (tool) | a `tfcinstaller.exe` file | the game folder |
-| Blcmm | a `openblcmm.exe` file | the game folder |
+| OpenBLCMM | a `openblcmm.exe` file | the game folder |
 | TFC Mods | a `gameprofile.xml` file or a `.packagepatch` file | `TFCInstaller\Mods` |
 | UPK Explorer (tool) | a `upk explorer.exe` file | the game folder |
-| Sdk | a `unrealsdk.dll` file and a `sdk_mods` folder | the game folder |
-| Sdkmod | a `.py` file and a `.sdkmod` file | `sdk_mods` |
-| Blcmfile | a `.blcm` file | `Binaries` |
+| Python SDK | a `unrealsdk.dll` file and a `sdk_mods` folder | the game folder |
+| SDK Mod | a `.py` file and a `.sdkmod` file | `sdk_mods` |
+| .blcm file (OpenBLCMM) | a `.blcm` file | `Binaries` |
 | Root / Game Folder Mods | a `WillowGame` folder | the game folder |
 | Cooked Content Mods | a `English(US)` folder or a `.tfc` file | `WillowGame\CookedPCConsole` |
 | Movie / Cutscene Replacements | a `.bik` file | `WillowGame\Movies` |
 | Binaries / Injector Mods | a `Borderlands2.exe` file or a `.dll` file | `Binaries\Win32` |
-| Fallback Installer | anything not matched above | - |
+| Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
@@ -37,7 +37,7 @@ Installs to: the game folder
 
 - If you bundle the TFC Installer inside your mod archive, Vortex treats the whole download as the TFC Installer rather than as your mod. Ship the mod alone and list the TFC Installer as a requirement.
 
-## Blcmm
+## OpenBLCMM
 
 Recognised when the archive contains a `openblcmm.exe` file.
 
@@ -72,19 +72,19 @@ Installs to: the game folder
 
 - If you bundle UPK Explorer inside your mod archive, Vortex treats the whole download as UPK Explorer rather than as your mod. Ship the mod alone and list UPK Explorer as a requirement.
 
-## Sdk
+## Python SDK
 
 Recognised when the archive contains a `unrealsdk.dll` file and a `sdk_mods` folder.
 
 Installs to: the game folder
 
-## Sdkmod
+## SDK Mod
 
 Recognised when the archive contains a `.py` file and a `.sdkmod` file.
 
 Installs to: `sdk_mods`
 
-## Blcmfile
+## .blcm file (OpenBLCMM)
 
 Recognised when the archive contains a `.blcm` file.
 
@@ -156,6 +156,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: the game folder
 
 **Common mistakes:**
 

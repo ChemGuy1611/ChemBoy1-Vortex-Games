@@ -32,7 +32,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ========================================================================
 
-Micropatches:
+MicroPatches:
 
 Recognised when the archive contains a "MicroPatches.dll" file.
 
@@ -46,19 +46,19 @@ Recognised when the archive contains a "ModFinder.exe" file.
 
 ========================================================================
 
-Saveeditor:
+Arcemi Save Editor:
 
 Recognised when the archive contains a "Arcemi Save Game Editor.exe" file.
 
 ========================================================================
 
-Portraitmanager:
+Portrait Manager:
 
 Recognised when the archive contains a "Portrait Manager Owlcat.exe" file.
 
 ========================================================================
 
-Mod:
+Owlcat Mod:
 
 Recognised when the archive contains a "owlcatmodificationmanifest.json" file, a "Assemblies", "Blueprints", "Bundles" or "Localization" folder and a ".dll" file.
 
@@ -66,7 +66,7 @@ Recognised when the archive contains a "owlcatmodificationmanifest.json" file, a
 
 ========================================================================
 
-Plugin:
+Plugin (UnityModManager):
 
 Recognised when the archive contains a ".dll" file.
 
@@ -74,7 +74,7 @@ Recognised when the archive contains a ".dll" file.
 
 ========================================================================
 
-Portrait:
+Portraits:
 
 Recognised when the archive contains a "fulllength.png", "medium.png" or "small.png" file.
 
@@ -115,9 +115,9 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 Rules That Apply To Every Mod Type:
 
-    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
+    - Archives that contain a FOMOD installer (a "fomod" folder with "ModuleConfig.xml") are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
     - Folder and file name matching is case-insensitive.
-    - Extra wrapper folders around a recognised folder are generally fine.
+    - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
 [/spoiler]
 
 [b]❤️ Support the Mod Author: [/b]

@@ -1,6 +1,6 @@
-# Notes for Mod Authors - DOOM 3 & DOOM 3: BFG Edition
+# Notes for Mod Authors - DOOM 3 and DOOM 3: BFG Edition
 
-Packaging rules for DOOM 3 & DOOM 3: BFG Edition mods, so Vortex installs them to the right place.
+Packaging rules for DOOM 3 and DOOM 3: BFG Edition mods, so Vortex installs them to the right place.
 
 Vortex decides what a mod is by looking at the files and folders inside the archive. It tries each installer in order and the first one that matches wins, so archive layout is what determines where your mod ends up.
 
@@ -9,7 +9,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Dhewm3 | a `dhewm3.exe` file | the game folder |
-| Bfgedition Root | a `base` folder | - |
+| Bfg Edition Root | a `base` folder | - |
 | Root / Game Folder Mods | a `base` file | the game folder |
 
 Paths are relative to the game's install folder.
@@ -20,7 +20,7 @@ Recognised when the archive contains a `dhewm3.exe` file.
 
 Installs to: the game folder
 
-## Bfgedition Root
+## Bfg Edition Root
 
 Recognised when the archive contains a `base` folder.
 

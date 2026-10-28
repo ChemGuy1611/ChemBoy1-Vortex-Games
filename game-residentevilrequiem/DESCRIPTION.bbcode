@@ -14,16 +14,15 @@ This extension adds Resident Evil Requiem modding support to Vortex Mod Manager.
 [list]
 [*]Fluffy Mod Manager installs to the game folder, recognised by a "modmanager.exe" file.[/*]
 [*]REFramework installs to the game folder, recognised by a "dinput8.dll" file.[/*]
-[*]Loose Lua (REFramework) mods with a ".lua" file outside the REFramework folders install to the game folder.[/*]
+[*]Loose Lua (REFramework) mods with a ".lua" file outside the REFramework folders install to the "reframework\autorun" folder.[/*]
 [*]Binaries / Root Folder mods with a "nvngx_dlss.dll" file or a ".exe" file install to the game folder.[/*]
 [*]Fluffy Preset mods with a ".prt" file install to the "Games\RE9\Presets" folder.[/*]
-[*]Any other mod not described above installs to the game folder.[/*]
+[*]Any other mod not described above installs to the "Games\RE9\Mods" folder.[/*]
 [*]Archives with a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to Vortex's built-in FOMOD installer instead.[/*]
 [/list]
 [b]📋 Usage Notes:[/b]
 [list]
 [*]You can open several useful files/folders/URLs using the buttons within the folder icon on the Mods toolbar.[/*]
-[*][size=2]Automatically installs[url=https://www.nexusmods.com/site/mods/818] Fluffy Mod Manager[/url] (FMM) and [url=https://www.nexusmods.com/residentevilrequiem/mods/13]REFramework[/url]﻿﻿﻿ (for plugins and script mods). You must run FMM to install mods into the game data archives. [/size][/*]
 [*][size=2]Installs mods with .exe files or a few select dlls directly to the game root folder (bypassing Fluffy).[/size][/*]
 [*][size=2]For mods not to be used with FMM (upscalers, reshades, etc.), you will need to change the mod type to "Binaries / Root Folder" and unzip the mod in the staging folder.[/size][/*]
 [/list]
@@ -72,7 +71,7 @@ Standalone REFramework Lua scripts, shipped without the surrounding REFramework 
     - Recognised by a ".lua" file in an archive that does NOT already contain a REFramework folder ("reframework" or "autorun").
     - Vortex adds the correct folder structure around the script for you.
 
-  Installs to: the game folder
+  Installs to: "reframework\autorun"
 
   Common mistakes:
     - Including an REFramework folder as well switches the archive to a different installer, which expects the full structure to already be correct.
@@ -113,6 +112,8 @@ The catch-all for RE Engine mods packaged in the normal Fluffy Mod Manager layou
     - Any archive not claimed by an earlier installer is treated as a Fluffy-format mod.
     - An archive already zipped in the Fluffy layout is installed as it is, with no repacking.
 
+  Installs to: "Games\RE9\Mods"
+
   Common mistakes:
     - Because this is a catch-all, a badly laid-out archive still installs - it just may not work. Match the layout Fluffy Mod Manager expects.
 
@@ -120,9 +121,9 @@ The catch-all for RE Engine mods packaged in the normal Fluffy Mod Manager layou
 
 Rules That Apply To Every Mod Type:
 
-    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
+    - Archives that contain a FOMOD installer (a "fomod" folder with "ModuleConfig.xml") are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
     - Folder and file name matching is case-insensitive.
-    - Extra wrapper folders around a recognised folder are generally fine.
+    - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
 [/spoiler]
 
 [b]🤝 Credits:[/b]

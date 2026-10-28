@@ -12,10 +12,10 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Root / Game Folder Mods | a `MoonSweepers_Data` folder | the game folder |
 | BepInEx Configuration Manager | a `configurationmanager.dll` file | `BepInEx` |
 | Assembly Replacement Mods | a `GameAssembly.dll` file | the game folder |
-| Bepinexpatcher | a `moonsweepers.modengine.dll` file | `BepInEx\patchers\MoonSweepers.ModEngine` |
+| MoonSweepers BepInEx Patcher | a `moonsweepers.modengine.dll` file | `BepInEx\patchers\MoonSweepers.ModEngine` |
 | BepInEx Plugin Mods | a `.dll` file built for BepInEx | `BepInEx\plugins\<ModName>` |
 | Asset Replacement Mods | a `.assets` file | `MoonSweepers_Data` |
-| Fallback Installer | anything not matched above | - |
+| Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
@@ -84,7 +84,7 @@ Installs to: the game folder
 - Assembly replacements cannot be combined with other assembly mods - state this clearly on the mod page.
 - Shipping an assembly alongside a plugin makes the whole archive install as an assembly mod.
 
-## Bepinexpatcher
+## MoonSweepers BepInEx Patcher
 
 Recognised when the archive contains a `moonsweepers.modengine.dll` file.
 
@@ -137,6 +137,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: the game folder
 
 **Common mistakes:**
 

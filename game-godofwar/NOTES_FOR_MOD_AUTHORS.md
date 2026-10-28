@@ -8,47 +8,47 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Scriptloader | a `version.dll` file and a `loader_config.toml` file | the game folder |
-| Data | a `exec` folder | the game folder |
-| Patchfolder | a `patch` folder | `exec` |
-| Execsub | a `ActivityFeed`, `cinematics`, `dc`, `languages`, `sound` or `wad` folder | `exec` |
-| Pack | a `.texpack` or `.lodpack` file | `exec\patch\pc_le` |
-| Luamod | a `lua` folder and a `.lua` file | `mods` |
+| Script Loader | a `version.dll` file and a `loader_config.toml` file | the game folder |
+| exec folder | a `exec` folder | the game folder |
+| patch Folder | a `patch` folder | `exec` |
+| exec subfolder | a `ActivityFeed`, `cinematics`, `dc`, `languages`, `sound` or `wad` folder | `exec` |
+| Texpack/Lodpack | a `.texpack` or `.lodpack` file | `exec\patch\pc_le` |
+| Lua Mod | a `lua` folder and a `.lua` file | `mods` |
 | Save Game Files | a `.sav` file | `%USERPROFILE%\Saved Games\God of War\<User ID>` |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder. Config and save folders are in your user profile, not the game's install folder.
 
-## Scriptloader
+## Script Loader
 
 Recognised when the archive contains a `version.dll` file and a `loader_config.toml` file.
 
 Installs to: the game folder
 
-## Data
+## exec folder
 
 Recognised when the archive contains a `exec` folder.
 
 Installs to: the game folder
 
-## Patchfolder
+## patch Folder
 
 Recognised when the archive contains a `patch` folder.
 
 Installs to: `exec`
 
-## Execsub
+## exec subfolder
 
 Recognised when the archive contains a `ActivityFeed`, `cinematics`, `dc`, `languages`, `sound` or `wad` folder.
 
 Installs to: `exec`
 
-## Pack
+## Texpack/Lodpack
 
 Recognised when the archive contains a `.texpack` or `.lodpack` file.
 
 Installs to: `exec\patch\pc_le`
 
-## Luamod
+## Lua Mod
 
 Recognised when the archive contains a `lua` folder and a `.lua` file.
 

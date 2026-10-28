@@ -19,7 +19,7 @@ This installer handles Reloaded-II, not mods for it. It exists so users can inst
 
 ========================================================================
 
-Reloadedmodloader:
+MRFPC Mod Loader:
 
 Recognised when the archive contains a "modconfig.json" file and a "mrfpc.modloader.dll" file.
 
@@ -27,7 +27,7 @@ Recognised when the archive contains a "modconfig.json" file and a "mrfpc.modloa
 
 ========================================================================
 
-Reloadedmod:
+Reloaded Mod:
 
 Recognised when the archive contains a "modconfig.json" file.
 
@@ -45,6 +45,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
     - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
     - Vortex shows the user a notification when a mod installs through the fallback.
 
+  Installs to: the game folder
+
   Common mistakes:
     - If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.
 
@@ -53,4 +55,4 @@ The catch-all. Any archive that matched none of the installers above lands here 
 Rules That Apply To Every Mod Type:
 
     - Folder and file name matching is case-insensitive.
-    - Extra wrapper folders around a recognised folder are generally fine.
+    - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.

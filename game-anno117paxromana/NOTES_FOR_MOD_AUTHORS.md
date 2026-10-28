@@ -10,7 +10,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | Mod | a `.jsonc` file and a `data` folder | `mods` |
 | Root / Game Folder Mods | a `Bin` folder | the game folder |
-| Binaries | - | `Bin\Win64` |
+| Binaries (Engine Injector) | - | `Bin\Win64` |
 
 Paths are relative to the game's install folder.
 
@@ -40,7 +40,7 @@ Installs to: the game folder
 
 - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
 
-## Binaries
+## Binaries (Engine Injector)
 
 Handled by the `testBinaries` installer. Inspect the extension source for the exact archive layout it expects.
 

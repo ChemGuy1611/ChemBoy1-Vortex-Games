@@ -4,7 +4,7 @@
 
 | Property | Value |
 | --- | --- |
-| Name | DOOM 3 & DOOM 3: BFG Edition Vortex Extension |
+| Name | DOOM 3 and DOOM 3: BFG Edition Vortex Extension |
 | Engine / Structure | Basic multi-game with multiple exes |
 | Author | ChemBoy1 |
 

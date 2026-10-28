@@ -8,27 +8,27 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Kpfmod | a `.kpf` file | `mods` |
-| Convertedlegacy | a `obj`, `mesh`, `bitmap`, `motions`, `sq_scripts`, `sdn2`, `strings`, `iface`, `intrface`, `misdml` or `snd` folder and a `.dml`, `.gam` or `.mis` file | `mods` |
-| Rootfolder | a `mods` or `cutscenes` folder | the game folder |
+| Mod .kpf | a `.kpf` file | `mods` |
+| Converted Legacy Mod | a `obj`, `mesh`, `bitmap`, `motions`, `sq_scripts`, `sdn2`, `strings`, `iface`, `intrface`, `misdml` or `snd` folder and a `.dml`, `.gam` or `.mis` file | `mods` |
+| Root Folder | a `mods` or `cutscenes` folder | the game folder |
 | Root / Game Folder Mods | a `mods` folder | the game folder |
-| Systemshock2 Classicmod | - | - |
+| Classic Mod | - | - |
 
 Paths are relative to the game's install folder.
 
-## Kpfmod
+## Mod .kpf
 
 Recognised when the archive contains a `.kpf` file.
 
 Installs to: `mods`
 
-## Convertedlegacy
+## Converted Legacy Mod
 
 Recognised when the archive contains a `obj`, `mesh`, `bitmap`, `motions`, `sq_scripts`, `sdn2`, `strings`, `iface`, `intrface`, `misdml` or `snd` folder and a `.dml`, `.gam` or `.mis` file.
 
 Installs to: `mods`
 
-## Rootfolder
+## Root Folder
 
 Recognised when the archive contains a `mods` or `cutscenes` folder.
 
@@ -54,7 +54,7 @@ Installs to: the game folder
 
 - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
 
-## Systemshock2 Classicmod
+## Classic Mod
 
 Handled by the `testClassic` installer. Inspect the extension source for the exact archive layout it expects.
 

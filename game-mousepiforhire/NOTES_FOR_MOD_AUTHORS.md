@@ -9,13 +9,13 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | BepInEx (mod loader) | a `winhttp.dll` file | the game folder |
-| Bepinex Loaderpatch | a `doorstop_config.ini` file | the game folder |
+| BepInEx Loader Patch | a `doorstop_config.ini` file | the game folder |
 | Root / Game Folder Mods | a `MOUSE_Data` folder | the game folder |
 | BepInEx Configuration Manager | a `configurationmanager.dll` file | `BepInEx` |
 | Assembly Replacement Mods | a `Assembly-CSharp.dll` file | `MOUSE_Data\Managed` |
 | BepInEx Plugin Mods | a `.dll` file built for BepInEx | `BepInEx\plugins\<ModName>` |
 | Asset Replacement Mods | a `.assets` file | `MOUSE_Data` |
-| Fallback Installer | anything not matched above | - |
+| Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
@@ -34,7 +34,7 @@ Installs to: the game folder
 
 - If you bundle BepInEx inside your mod archive, Vortex treats the whole download as BepInEx rather than as your mod. Ship the mod alone and list BepInEx as a requirement.
 
-## Bepinex Loaderpatch
+## BepInEx Loader Patch
 
 Recognised when the archive contains a `doorstop_config.ini` file.
 
@@ -137,6 +137,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: the game folder
 
 **Common mistakes:**
 

@@ -5,7 +5,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ========================================================================
 
-Openhotfixloader:
+OpenHotfixLoader:
 
 Recognised when the archive contains a "openhotfixloader.dll" file and a "b3hm.exe" file.
 
@@ -13,7 +13,7 @@ Recognised when the archive contains a "openhotfixloader.dll" file and a "b3hm.e
 
 ========================================================================
 
-Sdk:
+Python SDK:
 
 Recognised when the archive contains a "unrealsdk.dll" file and a "sdk_mods" folder.
 
@@ -21,7 +21,7 @@ Recognised when the archive contains a "unrealsdk.dll" file and a "sdk_mods" fol
 
 ========================================================================
 
-Sdkmod:
+SDK Mod:
 
 Recognised when the archive contains a ".py" file and a ".sdkmod" file.
 
@@ -29,7 +29,7 @@ Recognised when the archive contains a ".py" file and a ".sdkmod" file.
 
 ========================================================================
 
-Pluginloader:
+Plugin Loader:
 
 Recognised when the archive contains a "d3d11.dll" file.
 
@@ -37,7 +37,7 @@ Recognised when the archive contains a "d3d11.dll" file.
 
 ========================================================================
 
-Hotfix:
+Hotfix Mod:
 
 Recognised when the archive contains a ".bl3hotfix" file.
 
@@ -65,7 +65,7 @@ MyRootMod.zip
 
 ========================================================================
 
-Pak:
+Pak Mod:
 
 Recognised when the archive contains a ".pak" file.
 
@@ -81,7 +81,7 @@ Recognised when the archive contains a ".mp4" file.
 
 ========================================================================
 
-Binaries:
+Binaries (Engine Injector):
 
 Handled by the "testBinaries" installer. Inspect the extension source for the exact archive layout it expects.
 
@@ -91,6 +91,6 @@ Handled by the "testBinaries" installer. Inspect the extension source for the ex
 
 Rules That Apply To Every Mod Type:
 
-    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
+    - Archives that contain a FOMOD installer (a "fomod" folder with "ModuleConfig.xml") are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
     - Folder and file name matching is case-insensitive.
-    - Extra wrapper folders around a recognised folder are generally fine.
+    - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.

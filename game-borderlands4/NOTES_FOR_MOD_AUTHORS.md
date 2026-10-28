@@ -8,23 +8,23 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Pysdk | a `unrealsdk.dll` file and a `sdk_mods` folder | the game folder |
+| Python SDK | a `unrealsdk.dll` file and a `sdk_mods` folder | the game folder |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `OakGame` |
 | Blueprint Mods (LogicMods) | a `LogicMods` folder | `OakGame\Content\Paks` |
-| Pysdkmod | a `.py` or `.sdkmod` file | `sdk_mods` |
+| SDK Mod | a `.py` or `.sdkmod` file | `sdk_mods` |
 | Pak Mods | a `.pak` file | `OakGame\Content\Paks` |
 | UE4SS | a `dwmapi.dll` file | `OakGame\Binaries\Win64` |
 | UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `OakGame\Binaries\Win64\ue4ss\Mods` |
 | UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | `OakGame\Binaries\Win64\ue4ss\Mods` |
-| Contentfolder | a `Content` folder | `OakGame` |
+| Content Folder | a `Content` folder | `OakGame` |
 | Root / Game Folder Mods | a top-level folder such as `OakGame`, `Engine` or `Content` | the game folder |
-| Config File Mods | a config file such as `engine.ini` or `game.ini` | - |
-| Save Game Files | a `.sav` or `.yaml` file | - |
+| Config File Mods | a config file such as `engine.ini` or `game.ini` | the game's config folder |
+| Save Game Files | a `.sav` or `.yaml` file | the game's save folder |
 | Fallback Installer | anything not matched above with no pak file | `OakGame\Binaries\Win64` |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder. Config and save folders are in your user profile, not the game's install folder.
 
-## Pysdk
+## Python SDK
 
 Recognised when the archive contains a `unrealsdk.dll` file and a `sdk_mods` folder.
 
@@ -87,7 +87,7 @@ Installs to: `OakGame\Content\Paks`
 - Putting the `.pak` at the top level of the archive with no `LogicMods` folder. Vortex then treats it as an ordinary pak mod, installs it to the wrong place, and the blueprint mod never loads.
 - Renaming the folder (`Logic_Mods`, `logicmod`, `BPMods`) - the name must be exactly `LogicMods`.
 
-## Pysdkmod
+## SDK Mod
 
 Recognised when the archive contains a `.py` or `.sdkmod` file.
 
@@ -177,7 +177,7 @@ Installs to: `OakGame\Binaries\Win64\ue4ss\Mods`
 
 - A bare `.dll` with no `dlls` folder is not recognised as a UE4SS DLL mod and will reach the fallback installer.
 
-## Contentfolder
+## Content Folder
 
 Recognised when the archive contains a `Content` folder.
 
@@ -212,6 +212,8 @@ Config tweaks are deployed to the game's config folder in your user profile, not
 
 - Recognised by any of these filenames in the archive: `engine.ini`, `game.ini`, `gameusersettings.ini`, `input.ini`, `scalability.ini`, `hardware.ini`, `deviceprofiles.ini`, `compat.ini`, `runtimeoptions.ini`, `gameplaytags.ini`, `enhancedinput.ini` or `consolevariables.ini`.
 
+Installs to: the game's config folder
+
 **Common mistakes:**
 
 - Shipping a config file with one of these names inside an unrelated mod - the whole archive is then treated as a config mod.
@@ -223,6 +225,8 @@ Save files are deployed to the game's save folder in your user profile.
 **Requirements:**
 
 - Recognised by any file with extension `.sav` or `.yaml`.
+
+Installs to: the game's save folder
 
 **Common mistakes:**
 

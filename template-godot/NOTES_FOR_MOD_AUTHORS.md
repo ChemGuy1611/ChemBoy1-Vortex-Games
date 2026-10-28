@@ -8,19 +8,19 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| XXX Godotmodloader | a `mod_loader.gd` file | the game folder |
-| XXX Mod | a `.gd` file | `mods-unpacked` |
-| Fallback Installer | anything not matched above | - |
+| Godot Mod Loader | a `mod_loader.gd` file | the game folder |
+| Godot Mod | a `.gd` file | `mods-unpacked` |
+| Fallback Installer | anything not matched above | `mods-unpacked` |
 
 Paths are relative to the game's install folder.
 
-## XXX Godotmodloader
+## Godot Mod Loader
 
 Recognised when the archive contains a `mod_loader.gd` file.
 
 Installs to: the game folder
 
-## XXX Mod
+## Godot Mod
 
 Recognised when the archive contains a `.gd` file.
 
@@ -36,6 +36,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: `mods-unpacked`
 
 **Common mistakes:**
 

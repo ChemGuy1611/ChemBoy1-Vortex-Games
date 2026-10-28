@@ -8,21 +8,21 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Jsfolder | a `js` folder | the game folder |
-| Jsfile | a `.js` file | `js\plugins` |
+| js folder | a `js` folder | the game folder |
+| js file | a `.js` file | `js\plugins` |
 | Root / Game Folder Mods | a `LookOutside` folder | the game folder |
-| Json | a `.json` file | `data` |
-| Fallback Installer | anything not matched above | - |
+| JSON Mod | a `.json` file | `data` |
+| Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
-## Jsfolder
+## js folder
 
 Recognised when the archive contains a `js` folder.
 
 Installs to: the game folder
 
-## Jsfile
+## js file
 
 Recognised when the archive contains a `.js` file.
 
@@ -48,7 +48,7 @@ Installs to: the game folder
 
 - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
 
-## Json
+## JSON Mod
 
 Recognised when the archive contains a `.json` file.
 
@@ -64,6 +64,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: the game folder
 
 **Common mistakes:**
 

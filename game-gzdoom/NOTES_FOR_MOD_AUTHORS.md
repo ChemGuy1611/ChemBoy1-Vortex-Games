@@ -8,27 +8,27 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Dml | - | `DML` |
-| Gzdoom | a `uzdoom.exe` file | `DML\FILE\PORT\gzdoom` |
-| Wad | a `doom.wad`, `doom2.wad`, `freedoom.wad` or `nerve.wad` file and a `.iwad` or `.ipk3` file | `DML\FILE\IWAD` |
+| Doom Mod Loader | - | `DML` |
+| UZDoom | a `uzdoom.exe` file | `DML\FILE\PORT\gzdoom` |
+| IWAD (Game) | a `doom.wad`, `doom2.wad`, `freedoom.wad` or `nerve.wad` file and a `.iwad` or `.ipk3` file | `DML\FILE\IWAD` |
 | Mod | a `.wad`, `.pk3`, `.zip`, `.pak`, `.pk7`, `.grp`, `.rff`, `.deh`, `.iwad` or `.ipk3` file | `DML\FILE\PWAD` |
-| Zipmod | - | - |
+| Zip Mod | - | - |
 
 Paths are relative to the game's install folder.
 
-## Dml
+## Doom Mod Loader
 
 Handled by the `testDML` installer. Inspect the extension source for the exact archive layout it expects.
 
 Installs to: `DML`
 
-## Gzdoom
+## UZDoom
 
 Recognised when the archive contains a `uzdoom.exe` file.
 
 Installs to: `DML\FILE\PORT\gzdoom`
 
-## Wad
+## IWAD (Game)
 
 Recognised when the archive contains a `doom.wad`, `doom2.wad`, `freedoom.wad` or `nerve.wad` file and a `.iwad` or `.ipk3` file.
 
@@ -40,7 +40,7 @@ Recognised when the archive contains a `.wad`, `.pk3`, `.zip`, `.pak`, `.pk7`, `
 
 Installs to: `DML\FILE\PWAD`
 
-## Zipmod
+## Zip Mod
 
 Handled by the `testZipContent` installer. Inspect the extension source for the exact archive layout it expects.
 

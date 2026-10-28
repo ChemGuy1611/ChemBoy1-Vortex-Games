@@ -1,7 +1,5 @@
 This extension adds Digimon Story Time Stranger modding support to Vortex Mod Manager.
-[summary]Reloaded-II Mod Manager is automatically installed. Supports both Steam and Steam Demo versions.[/summary]
-
-Supports both Steam and Steam Demo versions.
+[summary]Reloaded-II Mod Manager is automatically installed.[/summary]
 
 [b][size=3]This extension will automatically install [url=https://github.com/Reloaded-Project/Reloaded-II]Reloaded-II Mod Manager[/url]. It can be run from the Dashboard tab in Vortex.[/size][/b]
 
@@ -52,7 +50,7 @@ This installer handles Reloaded-II, not mods for it. It exists so users can inst
 
 ========================================================================
 
-Reloadedmodloader:
+Mod Loader:
 
 Recognised when the archive contains a "modconfig.json" file.
 
@@ -60,7 +58,7 @@ Recognised when the archive contains a "modconfig.json" file.
 
 ========================================================================
 
-Reloadedmod:
+Reloaded Mod:
 
 Recognised when the archive contains a "modconfig.json" file.
 
@@ -78,6 +76,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
     - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
     - Vortex shows the user a notification when a mod installs through the fallback.
 
+  Installs to: the game folder
+
   Common mistakes:
     - If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.
 
@@ -86,7 +86,7 @@ The catch-all. Any archive that matched none of the installers above lands here 
 Rules That Apply To Every Mod Type:
 
     - Folder and file name matching is case-insensitive.
-    - Extra wrapper folders around a recognised folder are generally fine.
+    - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
 [/spoiler]
 
 [b]❤️ Support the Mod Author: [/b]

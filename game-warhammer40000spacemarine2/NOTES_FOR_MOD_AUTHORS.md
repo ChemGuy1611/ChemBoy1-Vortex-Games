@@ -8,22 +8,22 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Integrationstudio | a `IntegrationStudio.exe` file | `client_pc\root` |
-| Pak | a `.pak` file | `client_pc\root\mods` |
+| Integration Studio | a `IntegrationStudio.exe` file | `client_pc\root` |
+| Paks | a `.pak` file | `client_pc\root\mods` |
 | Root / Game Folder Mods | a `client_pc` folder | the game folder |
-| Local | a `local` folder | `client_pc\root` |
-| Localsub | a `ssl`, `video`, `textures`, `presets`, `texts` or `ui` folder | `client_pc\root\local` |
-| Binaries | - | `client_pc\root\bin\pc` |
+| Local (Loose) | a `local` folder | `client_pc\root` |
+| Local (Loose Subfolder) | a `ssl`, `video`, `textures`, `presets`, `texts` or `ui` folder | `client_pc\root\local` |
+| Binaries (Engine Injector) | - | `client_pc\root\bin\pc` |
 
 Paths are relative to the game's install folder.
 
-## Integrationstudio
+## Integration Studio
 
 Recognised when the archive contains a `IntegrationStudio.exe` file.
 
 Installs to: `client_pc\root`
 
-## Pak
+## Paks
 
 Recognised when the archive contains a `.pak` file.
 
@@ -49,19 +49,19 @@ Installs to: the game folder
 
 - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
 
-## Local
+## Local (Loose)
 
 Recognised when the archive contains a `local` folder.
 
 Installs to: `client_pc\root`
 
-## Localsub
+## Local (Loose Subfolder)
 
 Recognised when the archive contains a `ssl`, `video`, `textures`, `presets`, `texts` or `ui` folder.
 
 Installs to: `client_pc\root\local`
 
-## Binaries
+## Binaries (Engine Injector)
 
 Handled by the `testBinaries` installer. Inspect the extension source for the exact archive layout it expects.
 

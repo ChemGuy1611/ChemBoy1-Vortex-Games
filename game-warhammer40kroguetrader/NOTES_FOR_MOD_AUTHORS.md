@@ -8,19 +8,19 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Micropatches | a `MicroPatches.dll` file | `%USERPROFILE%\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\UnityModManager` |
+| MicroPatches | a `MicroPatches.dll` file | `%USERPROFILE%\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\UnityModManager` |
 | Modfinder | a `ModFinder.exe` file | - |
-| Saveeditor | a `Arcemi Save Game Editor.exe` file | - |
-| Portraitmanager | a `Portrait Manager Owlcat.exe` file | - |
-| Mod | a `owlcatmodificationmanifest.json` file, a `Assemblies`, `Blueprints`, `Bundles` or `Localization` folder and a `.dll` file | `%USERPROFILE%\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\Modifications` |
-| Plugin | a `.dll` file | `%USERPROFILE%\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\UnityModManager` |
-| Portrait | a `fulllength.png`, `medium.png` or `small.png` file | `%USERPROFILE%\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\Portraits` |
+| Arcemi Save Editor | a `Arcemi Save Game Editor.exe` file | - |
+| Portrait Manager | a `Portrait Manager Owlcat.exe` file | - |
+| Owlcat Mod | a `owlcatmodificationmanifest.json` file, a `Assemblies`, `Blueprints`, `Bundles` or `Localization` folder and a `.dll` file | `%USERPROFILE%\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\Modifications` |
+| Plugin (UnityModManager) | a `.dll` file | `%USERPROFILE%\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\UnityModManager` |
+| Portraits | a `fulllength.png`, `medium.png` or `small.png` file | `%USERPROFILE%\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\Portraits` |
 | Save Game Files | a `.zks` file | `%USERPROFILE%\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\Saved Games` |
 | Fallback Installer | anything not matched above | `%USERPROFILE%\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader` |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder. Config and save folders are in your user profile, not the game's install folder.
 
-## Micropatches
+## MicroPatches
 
 Recognised when the archive contains a `MicroPatches.dll` file.
 
@@ -30,27 +30,27 @@ Installs to: `%USERPROFILE%\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue 
 
 Recognised when the archive contains a `ModFinder.exe` file.
 
-## Saveeditor
+## Arcemi Save Editor
 
 Recognised when the archive contains a `Arcemi Save Game Editor.exe` file.
 
-## Portraitmanager
+## Portrait Manager
 
 Recognised when the archive contains a `Portrait Manager Owlcat.exe` file.
 
-## Mod
+## Owlcat Mod
 
 Recognised when the archive contains a `owlcatmodificationmanifest.json` file, a `Assemblies`, `Blueprints`, `Bundles` or `Localization` folder and a `.dll` file.
 
 Installs to: `%USERPROFILE%\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\Modifications`
 
-## Plugin
+## Plugin (UnityModManager)
 
 Recognised when the archive contains a `.dll` file.
 
 Installs to: `%USERPROFILE%\AppData\LocalLow\Owlcat Games\Warhammer 40000 Rogue Trader\UnityModManager`
 
-## Portrait
+## Portraits
 
 Recognised when the archive contains a `fulllength.png`, `medium.png` or `small.png` file.
 

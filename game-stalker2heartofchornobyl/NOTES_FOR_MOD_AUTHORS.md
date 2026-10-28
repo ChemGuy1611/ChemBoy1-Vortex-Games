@@ -8,21 +8,21 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Merger | a `simple_mod_merger.exe` file | `Stalker2SimpleModMerger` |
+| Simple Mod Merger | a `simple_mod_merger.exe` file | `Stalker2SimpleModMerger` |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `Stalker2` |
 | Blueprint Mods (LogicMods) | a `LogicMods` folder | `Stalker2\Content\Paks` |
-| Herbatamod | a `GameLite` folder | `Stalker2\Content` |
-| UE4SS | a `dwmapi.dll` file | - |
-| UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | - |
-| UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | - |
+| Herbata Mod (GameLite) | a `GameLite` folder | `Stalker2\Content` |
+| UE4SS | a `dwmapi.dll` file | `Stalker2\Binaries\Win64` |
+| UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `Stalker2\Binaries\Win64\ue4ss\Mods` |
+| UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | `Stalker2\Binaries\Win64\ue4ss\Mods` |
 | Root / Game Folder Mods | a top-level folder such as `Stalker2`, `Engine` or `Content` | the game folder |
-| Config File Mods | a config file such as `engine.ini` or `game.ini` | - |
-| Save Game Files | a `.sav` file | - |
-| Fallback Installer | anything not matched above with no pak file | - |
+| Config File Mods | a config file such as `engine.ini` or `game.ini` | the game's config folder |
+| Save Game Files | a `.sav` file | the game's save folder |
+| Fallback Installer | anything not matched above with no pak file | `Stalker2\Binaries\Win64` |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder. Config and save folders are in your user profile, not the game's install folder.
 
-## Merger
+## Simple Mod Merger
 
 Recognised when the archive contains a `simple_mod_merger.exe` file.
 
@@ -85,7 +85,7 @@ Installs to: `Stalker2\Content\Paks`
 - Putting the `.pak` at the top level of the archive with no `LogicMods` folder. Vortex then treats it as an ordinary pak mod, installs it to the wrong place, and the blueprint mod never loads.
 - Renaming the folder (`Logic_Mods`, `logicmod`, `BPMods`) - the name must be exactly `LogicMods`.
 
-## Herbatamod
+## Herbata Mod (GameLite)
 
 Recognised when the archive contains a `GameLite` folder.
 
@@ -98,6 +98,8 @@ This installer handles the UE4SS runtime package, not individual mods. Most auth
 **Requirements:**
 
 - Recognised by a file named `dwmapi.dll` at any level of the archive.
+
+Installs to: `Stalker2\Binaries\Win64` (`WinGDK` instead of `Win64` for the Xbox version)
 
 **Common mistakes:**
 
@@ -120,6 +122,8 @@ MyScriptMod.zip
 - Wrap the `Scripts` folder in a folder named after your mod. That folder name becomes the mod's UE4SS name and is what gets written to the load order.
 - If you omit the wrapper folder, Vortex falls back to naming the mod after the archive file.
 
+Installs to: `Stalker2\Binaries\Win64\ue4ss\Mods` (`WinGDK` instead of `Win64` for the Xbox version)
+
 **Common mistakes:**
 
 - Putting `main.lua` directly in the archive root with no `Scripts` folder - the mod is not recognised as a script mod.
@@ -140,6 +144,8 @@ MyDllMod.zip
 
 - The archive must contain a `.dll` file AND a folder named `dlls`.
 - Wrap the `dlls` folder in a folder named after your mod - that name is used in the load order.
+
+Installs to: `Stalker2\Binaries\Win64\ue4ss\Mods` (`WinGDK` instead of `Win64` for the Xbox version)
 
 **Common mistakes:**
 
@@ -174,6 +180,8 @@ Config tweaks are deployed to the game's config folder in your user profile, not
 
 - Recognised by any of these filenames in the archive: `engine.ini`, `game.ini`, `gameusersettings.ini`, `input.ini`, `scalability.ini`, `hardware.ini`, `deviceprofiles.ini`, `compat.ini`, `runtimeoptions.ini`, `gameplaytags.ini`, `enhancedinput.ini` or `consolevariables.ini`.
 
+Installs to: the game's config folder
+
 **Common mistakes:**
 
 - Shipping a config file with one of these names inside an unrelated mod - the whole archive is then treated as a config mod.
@@ -185,6 +193,8 @@ Save files are deployed to the game's save folder in your user profile.
 **Requirements:**
 
 - Recognised by any file with extension `.sav`.
+
+Installs to: the game's save folder
 
 **Common mistakes:**
 
@@ -200,6 +210,8 @@ This is the catch-all. Any archive with no `.pak` file that matched none of the 
 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
+
+Installs to: `Stalker2\Binaries\Win64` (`WinGDK` instead of `Win64` for the Xbox version)
 
 **Common mistakes:**
 

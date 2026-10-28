@@ -16,14 +16,14 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Pak Mods | a `.pak` file | `SB\Content\Paks\~mods` |
 | Root / Game Folder Mods | a top-level folder such as `SB`, `Engine` or `Content` | the game folder |
 | Config File Mods | a config file such as `engine.ini` or `game.ini` | `%LOCALAPPDATA%\SB\Saved\Config\WindowsNoEditor` |
-| Save Game Files | a `.sav` file | - |
-| Menu | a `menu` folder and a `.bk2` or `.webm` file | `SB\Content\Movies\Menu` |
-| Movie | a `.bk2` file | `SB\Content\Movies` |
-| Splash | a `splash.bmp` file | `SB\Content\Splash` |
-| Cnsjson | a `.json` file | `SB\Content\Paks\~mods\CustomNanosuitSystem` |
+| Save Game Files | a `.sav` file | the game's save folder |
+| Menu Mod (.bk2/.webm) | a `menu` folder and a `.bk2` or `.webm` file | `SB\Content\Movies\Menu` |
+| Movie Mod (.bk2) | a `.bk2` file | `SB\Content\Movies` |
+| Splash Screen | a `splash.bmp` file | `SB\Content\Splash` |
+| CNS JSON Mod | a `.json` file | `SB\Content\Paks\~mods\CustomNanosuitSystem` |
 | Fallback Installer | anything not matched above with no pak file | `SB\Binaries\Win64` |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder. Config and save folders are in your user profile, not the game's install folder.
 
 ## Combo Mods (pak + UE4SS script/DLL together)
 
@@ -209,29 +209,31 @@ Save files are deployed to the game's save folder in your user profile.
 
 - Recognised by any file with extension `.sav`.
 
+Installs to: the game's save folder
+
 **Common mistakes:**
 
 - Including an example save alongside a normal mod - the archive is then treated as a save, not a mod.
 
-## Menu
+## Menu Mod (.bk2/.webm)
 
 Recognised when the archive contains a `menu` folder and a `.bk2` or `.webm` file.
 
 Installs to: `SB\Content\Movies\Menu`
 
-## Movie
+## Movie Mod (.bk2)
 
 Recognised when the archive contains a `.bk2` file.
 
 Installs to: `SB\Content\Movies`
 
-## Splash
+## Splash Screen
 
 Recognised when the archive contains a `splash.bmp` file.
 
 Installs to: `SB\Content\Splash`
 
-## Cnsjson
+## CNS JSON Mod
 
 Recognised when the archive contains a `.json` file.
 

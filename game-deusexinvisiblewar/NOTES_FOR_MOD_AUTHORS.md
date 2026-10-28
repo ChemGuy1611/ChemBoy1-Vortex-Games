@@ -9,8 +9,8 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Root / Game Folder Mods | a `System` folder | the game folder |
-| Datamodfolder | a `AcquiredDataText`, `Bitmaps`, `Conversations`, `Flags`, `LipsincData`, `Maps`, `MatLib`, `SkeletalAnimations`, `SkeletalMeshes`, `Sounds`, `StaticMeshes`, `TagDatabase`, `Textures`, `UTX` or `VideoTextures` folder | `content\DX2` |
-| Binaries | - | `System` |
+| Data Mod Folder | a `AcquiredDataText`, `Bitmaps`, `Conversations`, `Flags`, `LipsincData`, `Maps`, `MatLib`, `SkeletalAnimations`, `SkeletalMeshes`, `Sounds`, `StaticMeshes`, `TagDatabase`, `Textures`, `UTX` or `VideoTextures` folder | `content\DX2` |
+| Binaries (Engine Injector) | - | `System` |
 
 Paths are relative to the game's install folder.
 
@@ -34,13 +34,13 @@ Installs to: the game folder
 
 - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
 
-## Datamodfolder
+## Data Mod Folder
 
 Recognised when the archive contains a `AcquiredDataText`, `Bitmaps`, `Conversations`, `Flags`, `LipsincData`, `Maps`, `MatLib`, `SkeletalAnimations`, `SkeletalMeshes`, `Sounds`, `StaticMeshes`, `TagDatabase`, `Textures`, `UTX` or `VideoTextures` folder.
 
 Installs to: `content\DX2`
 
-## Binaries
+## Binaries (Engine Injector)
 
 Handled by the `testBinaries` installer. Inspect the extension source for the exact archive layout it expects.
 

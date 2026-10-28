@@ -5,7 +5,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ========================================================================
 
-Dllloader:
+DLL Plugin Loader:
 
 Recognised when the archive contains a "dinput8.dll" file.
 
@@ -13,7 +13,7 @@ Recognised when the archive contains a "dinput8.dll" file.
 
 ========================================================================
 
-Rdbexplorer:
+RDBExplorer:
 
 Recognised when the archive contains a "RDBExplorer.exe" file.
 
@@ -21,7 +21,7 @@ Recognised when the archive contains a "RDBExplorer.exe" file.
 
 ========================================================================
 
-Yumia:
+Yumia fdata Tools:
 
 Recognised when the archive contains a "yumia_mod_insert_into_rdb.exe" file.
 
@@ -29,7 +29,7 @@ Recognised when the archive contains a "yumia_mod_insert_into_rdb.exe" file.
 
 ========================================================================
 
-Looseloader:
+Loose File Loader:
 
 Recognised when the archive contains a "LooseFileLoader.dll" file.
 
@@ -37,7 +37,7 @@ Recognised when the archive contains a "LooseFileLoader.dll" file.
 
 ========================================================================
 
-Modmanager:
+ModManager:
 
 Recognised when the archive contains a "Nioh3ModManager.exe" file.
 
@@ -45,7 +45,7 @@ Recognised when the archive contains a "Nioh3ModManager.exe" file.
 
 ========================================================================
 
-Mod:
+ModManager Loose Mod:
 
 Recognised when the archive contains a ".g1t", ".g1m" or ".g1ts" file.
 
@@ -53,7 +53,7 @@ Recognised when the archive contains a ".g1t", ".g1m" or ".g1ts" file.
 
 ========================================================================
 
-Loadermod:
+Plugin Mod:
 
 Recognised when the archive contains a ".dll" or ".asi" file.
 
@@ -61,7 +61,7 @@ Recognised when the archive contains a ".dll" or ".asi" file.
 
 ========================================================================
 
-Fdatayumia:
+.fdata Package (Yumia):
 
 Recognised when the archive contains a "package" folder and a ".fdata" or ".yumiamod.json" file.
 
@@ -88,6 +88,6 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 Rules That Apply To Every Mod Type:
 
-    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
+    - Archives that contain a FOMOD installer (a "fomod" folder with "ModuleConfig.xml") are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
     - Folder and file name matching is case-insensitive.
-    - Extra wrapper folders around a recognised folder are generally fine.
+    - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.

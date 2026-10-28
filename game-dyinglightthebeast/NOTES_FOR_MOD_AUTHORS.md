@@ -8,27 +8,27 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Mergerutility | a `unleashthemods.exe` file | `ph_ft` |
-| Supermerger | a `SuperModMerger.exe` file | `ph_ft` |
-| Pak | a `.pak` file | `ph_ft\mods` |
+| UTM Mod Merger Utility | a `unleashthemods.exe` file | `ph_ft` |
+| Super Mod Merger | a `SuperModMerger.exe` file | `ph_ft` |
+| Pak Mod (Merged) | a `.pak` file | `ph_ft\mods` |
 | Root / Game Folder Mods | a `ph_ft` folder | the game folder |
-| Binaries | - | `ph_ft\work\bin\x64` |
+| Binaries (Engine Injector) | - | `ph_ft\work\bin\x64` |
 
 Paths are relative to the game's install folder.
 
-## Mergerutility
+## UTM Mod Merger Utility
 
 Recognised when the archive contains a `unleashthemods.exe` file.
 
 Installs to: `ph_ft`
 
-## Supermerger
+## Super Mod Merger
 
 Recognised when the archive contains a `SuperModMerger.exe` file.
 
 Installs to: `ph_ft`
 
-## Pak
+## Pak Mod (Merged)
 
 Recognised when the archive contains a `.pak` file.
 
@@ -54,7 +54,7 @@ Installs to: the game folder
 
 - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
 
-## Binaries
+## Binaries (Engine Injector)
 
 Handled by the `testBinaries` installer. Inspect the extension source for the exact archive layout it expects.
 

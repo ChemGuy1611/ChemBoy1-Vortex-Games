@@ -8,18 +8,18 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Manager | a `modimporter.exe` file | `Content` |
-| Modutility | a `ModUtil` folder | `Content\Mods` |
+| Mod Importer | a `modimporter.exe` file | `Content` |
+| Mod Utility | a `ModUtil` folder | `Content\Mods` |
 
 Paths are relative to the game's install folder.
 
-## Manager
+## Mod Importer
 
 Recognised when the archive contains a `modimporter.exe` file.
 
 Installs to: `Content`
 
-## Modutility
+## Mod Utility
 
 Recognised when the archive contains a `ModUtil` folder.
 

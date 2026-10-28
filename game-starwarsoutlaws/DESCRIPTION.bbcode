@@ -1,7 +1,5 @@
 This extension adds Star Wars Outlaws modding support to Vortex Mod Manager.
-[summary]Supports Steam and Ubisoft versions.[/summary]
 
-Supports Steam and Ubisoft versions.
 Modders - You can use DTZxPorter's [url=https://dtzxporter.com/tools/hunter]Hunter[/url] to extract game files.
 
 [b]✅ Supported Versions:[/b]
@@ -35,7 +33,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ========================================================================
 
-Modloader:
+Snowdrop ModLoader:
 
 Recognised when the archive contains a "version.dll" file.
 
@@ -43,7 +41,7 @@ Recognised when the archive contains a "version.dll" file.
 
 ========================================================================
 
-Data:
+Game Data Folder:
 
 Recognised when the archive contains a "helix" folder.
 
@@ -51,7 +49,7 @@ Recognised when the archive contains a "helix" folder.
 
 ========================================================================
 
-Datasub:
+Game Data Subfolder:
 
 Recognised when the archive contains a "baked", "graph objects" or "game system data" folder.
 
@@ -59,7 +57,7 @@ Recognised when the archive contains a "baked", "graph objects" or "game system 
 
 ========================================================================
 
-Plugins:
+ModLoader Plugin:
 
 Recognised when the archive contains a ".dll" or ".asi" file.
 
@@ -92,6 +90,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
     - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
     - Vortex shows the user a notification when a mod installs through the fallback.
 
+  Installs to: the game folder
+
   Common mistakes:
     - If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.
 
@@ -100,7 +100,7 @@ The catch-all. Any archive that matched none of the installers above lands here 
 Rules That Apply To Every Mod Type:
 
     - Folder and file name matching is case-insensitive.
-    - Extra wrapper folders around a recognised folder are generally fine.
+    - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
 [/spoiler]
 
 [b]❤️ Support the Mod Author: [/b]

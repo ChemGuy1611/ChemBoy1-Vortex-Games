@@ -1,7 +1,7 @@
 This extension adds System Shock 2 (Classic AND 25th Anniversary Remaster) modding support to Vortex Mod Manager.
-[summary]Supports Steam, GOG, and Epic. Converts legacy SS2 mods for Remaster.[/summary]
+[summary]Converts legacy SS2 mods for Remaster.[/summary]
 
-Supports Steam, GOG, and Epic. Converts legacy SS2 mods for the Remaster.
+Converts legacy SS2 mods for the Remaster.
 
 [b]✅ Supported Versions:[/b]
 [list]
@@ -43,7 +43,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ========================================================================
 
-Kpfmod:
+Mod .kpf:
 
 Recognised when the archive contains a ".kpf" file.
 
@@ -51,7 +51,7 @@ Recognised when the archive contains a ".kpf" file.
 
 ========================================================================
 
-Convertedlegacy:
+Converted Legacy Mod:
 
 Recognised when the archive contains a "obj", "mesh", "bitmap", "motions", "sq_scripts", "sdn2", "strings", "iface", "intrface", "misdml" or "snd" folder and a ".dml", ".gam" or ".mis" file.
 
@@ -59,7 +59,7 @@ Recognised when the archive contains a "obj", "mesh", "bitmap", "motions", "sq_s
 
 ========================================================================
 
-Rootfolder:
+Root Folder:
 
 Recognised when the archive contains a "mods" or "cutscenes" folder.
 
@@ -87,7 +87,7 @@ MyRootMod.zip
 
 ========================================================================
 
-Systemshock2 Classicmod:
+Classic Mod:
 
 Handled by the "testClassic" installer. Inspect the extension source for the exact archive layout it expects.
 
@@ -95,9 +95,9 @@ Handled by the "testClassic" installer. Inspect the extension source for the exa
 
 Rules That Apply To Every Mod Type:
 
-    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
+    - Archives that contain a FOMOD installer (a "fomod" folder with "ModuleConfig.xml") are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
     - Folder and file name matching is case-insensitive.
-    - Extra wrapper folders around a recognised folder are generally fine.
+    - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
 [/spoiler]
 
 [b]❤️ Support the Mod Author: [/b]

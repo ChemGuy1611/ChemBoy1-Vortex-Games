@@ -8,13 +8,15 @@ This extension supports all 3 games in the collection with a single extension:
 [*]NINJA GAIDEN Sigma 2 (NGS2)
 [*]NINJA GAIDEN 3 Razor's Edge (NG3RE)
 [/list]
-Supports the Steam and Xbox versions of all 3 games. Other versions will need to specify the game folder manually when activating the game.
 This extension will automatically download and install  [url=https://www.nexusmods.com/ninjagaidenmastercollection/mods/34]TMX Mod Loader[/url].
 
 [color=#ea9999][size=3][b]You MUST run the Mod Loader using the included tool in the Vortex Dashboard tab [i][u]AFTER LAUNCHING THE GAME[/u][/i]. [/b][/size][/color]You may get a hex check error popup that you can safely ignore.
 
 [b]✅ Supported Versions:[/b]
 [list]
+[*]Steam[/*]
+[*]Xbox[/*]
+[*]Steam and Xbox versions of all 3 games[/*]
 [*]Other versions may need to select the installation location manually.[/*]
 [/list]
 [b]🛠️ Mod Installation Notes:[/b]
@@ -42,7 +44,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ========================================================================
 
-Xboxmodloader:
+Tmx_NgLoader (Mods Loader):
 
 Recognised when the archive contains a "tmx_ngloader.exe" file.
 
@@ -50,7 +52,7 @@ Recognised when the archive contains a "tmx_ngloader.exe" file.
 
 ========================================================================
 
-Ninjagaidensigma Steammodloader:
+Essential Files for NGS1:
 
 Recognised when the archive contains a "ninja gaiden sigma.exe" file.
 
@@ -58,19 +60,19 @@ Recognised when the archive contains a "ninja gaiden sigma.exe" file.
 
 ========================================================================
 
-Ninjagaidensigma2 Steammodloader:
+Ninjagaidensigma2 Steam Mod Loader:
 
 Recognised when the archive contains a "ninja gaiden sigma2.exe" file.
 
 ========================================================================
 
-Ninjagaiden3razorsedge Steammodloader:
+Ninjagaiden3razorsedge Steam Mod Loader:
 
 Recognised when the archive contains a "ninja gaiden 3 razor's edge.exe" file.
 
 ========================================================================
 
-Mlmod:
+Mod Loader Mod:
 
 Recognised when the archive contains a ".dat" file.
 
@@ -78,7 +80,7 @@ Recognised when the archive contains a ".dat" file.
 
 ========================================================================
 
-Databinfolder:
+Databin Folder:
 
 Recognised when the archive contains a "databin" folder.
 
@@ -86,7 +88,7 @@ Recognised when the archive contains a "databin" folder.
 
 ========================================================================
 
-Databinsubfolder1:
+Databin Subfolder:
 
 Recognised when the archive contains a "bgm" or "movie" folder.
 
@@ -94,7 +96,7 @@ Recognised when the archive contains a "bgm" or "movie" folder.
 
 ========================================================================
 
-Databinsubfolder23:
+Data Bin Subfolder 23:
 
 Recognised when the archive contains a "sound" or "movie" folder.
 
@@ -103,7 +105,7 @@ Recognised when the archive contains a "sound" or "movie" folder.
 Rules That Apply To Every Mod Type:
 
     - Folder and file name matching is case-insensitive.
-    - Extra wrapper folders around a recognised folder are generally fine.
+    - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
 [/spoiler]
 
 [b]🤝 Credits:[/b]

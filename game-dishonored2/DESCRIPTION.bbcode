@@ -1,5 +1,5 @@
 This extension adds Dishonored 2 modding support to Vortex Mod Manager.
-[summary]Supports Xbox, Steam, GOG, and Epic versions. Automatically installs Void Installer.[/summary]
+[summary]Automatically installs Void Installer.[/summary]
 
 [size=3][b][color=#ffff00]The extension will automatically download and install [url=https://www.nexusmods.com/dishonored2/mods/31]Void Installer[/url]. It is a new tool for modding the game and is required for most mods. [/color][/b][/size]
 
@@ -36,7 +36,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ========================================================================
 
-Voidinstaller:
+Void Installer:
 
 Recognised when the archive contains a "voidinstaller.exe" file.
 
@@ -44,7 +44,7 @@ Recognised when the archive contains a "voidinstaller.exe" file.
 
 ========================================================================
 
-Voidexplorer:
+Void Explorer:
 
 Recognised when the archive contains a "voidexplorer.exe" file.
 
@@ -52,7 +52,7 @@ Recognised when the archive contains a "voidexplorer.exe" file.
 
 ========================================================================
 
-Voidmod:
+Void Mod:
 
 Recognised when the archive contains a "modinfo.xml" file and a ".voidindex" or ".voidresources" file.
 
@@ -80,7 +80,7 @@ MyRootMod.zip
 
 ========================================================================
 
-Video:
+Video Mod:
 
 Recognised when the archive contains a ".bk2" file.
 
@@ -95,6 +95,8 @@ Save files, deployed to the game's save folder.
   Requirements:
     - Recognised by any file named "profile.bin".
     - Recognised by any file with the ".sav" extension.
+
+  Installs to: the game's save folder
 
   Common mistakes:
     - Including an example save alongside a normal mod makes the archive install as a save.
@@ -118,7 +120,7 @@ Configuration tweaks, deployed to the game's config location.
 Rules That Apply To Every Mod Type:
 
     - Folder and file name matching is case-insensitive.
-    - Extra wrapper folders around a recognised folder are generally fine.
+    - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
 [/spoiler]
 
 [b]❤️ Support the Mod Author: [/b]

@@ -8,14 +8,14 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Godotmodloader | a `mod_loader.gd` file | the game folder |
+| Godot Mod Loader | a `mod_loader.gd` file | the game folder |
 | Map Mods | a `.map` file with a matching `.json` file | `maps` |
-| Mod | a `.gd` file | `mods-unpacked` |
+| Godot Mod | a `.gd` file | `mods-unpacked` |
 | Fallback Installer | anything not matched above | `mods-unpacked` |
 
 Paths are relative to the game's install folder.
 
-## Godotmodloader
+## Godot Mod Loader
 
 Recognised when the archive contains a `mod_loader.gd` file.
 
@@ -46,7 +46,7 @@ Installs to: `maps`
 - Shipping the map file without its matching `.json` - the pair is what identifies a map, so a lone map file is not recognised and falls through to another installer.
 - Putting the map files at the archive root - the installer then has to invent a folder name from the archive filename.
 
-## Mod
+## Godot Mod
 
 Recognised when the archive contains a `.gd` file.
 

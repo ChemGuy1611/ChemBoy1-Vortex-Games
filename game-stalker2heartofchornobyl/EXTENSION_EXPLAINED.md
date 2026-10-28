@@ -62,12 +62,12 @@ Mod types define where each category of mod gets deployed:
 | Simple Mod Merger | `stalker2heartofchornobyl-merger` | low | `{gamePath}/Stalker2SimpleModMerger` |
 | UE5 Sortable Mod | `stalker2heartofchornobyl-ue5-sortable-modtype` | 25 | `{gamePath}/Stalker2/Content/Paks/~mods` |
 | Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `{gamePath}/Stalker2/Content/Paks/~mods` |
-| UE4SS Scripts | `stalker2heartofchornobyl-scripts` | 40 | `?` |
-| UE4SS DLL Mod | `stalker2heartofchornobyl-ue4ssdll` | 42 | `?` |
+| UE4SS Scripts | `stalker2heartofchornobyl-scripts` | 40 | `{gamePath}/Stalker2/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `stalker2heartofchornobyl-ue4ssdll` | 42 | `{gamePath}/Stalker2/Binaries/Win64/ue4ss/Mods` |
 | Config (LocalAppData) | `stalker2heartofchornobyl-config` | 44 | `?` |
 | Saves (LocalAppData) | `stalker2heartofchornobyl-save` | 46 | `?` |
-| Binaries (Engine Injector) | `stalker2heartofchornobyl-binaries` | 48 | `?` |
-| UE4SS | `stalker2heartofchornobyl-ue4ss` | 50 | `?` |
+| Binaries (Engine Injector) | `stalker2heartofchornobyl-binaries` | 48 | `{gamePath}/Stalker2/Binaries/Win64` |
+| UE4SS | `stalker2heartofchornobyl-ue4ss` | 50 | `{gamePath}/Stalker2/Binaries/Win64` |
 
 ## Mod Installers
 

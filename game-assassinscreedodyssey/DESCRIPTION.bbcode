@@ -1,8 +1,6 @@
 This extension adds AC Odyssey modding support to Vortex Mod Manager.
 [summary]Note that AnvilToolkit is required for some mods and will be automatically installed by this extension.[/summary]
 
-Note that AnvilToolkit and Forger Patch Manager are required for some mods and will be automatically installed by this extension.
-This will work for both the Steam and Ubisoft Connect versions of the game.
 This extension will automatically install [url=https://www.nexusmods.com/site/mods/455]AnvilToolkit[/url] and [url=https://www.nexusmods.com/assassinscreedodyssey/mods/42]Forger Patch Manager[/url]. These tools can be run from the Dashboard tab in Vortex.
 The extension will also send you a notification about [url=https://www.undertow.club/downloads/resorep.1254]Resorep[/url]﻿, which is a legacy utility for texture injection. The app is behind a login "wall", so it must be downloaded and installed manually if you want to use it.
 
@@ -248,9 +246,9 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 Rules That Apply To Every Mod Type:
 
-    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
+    - Archives that contain a FOMOD installer (a "fomod" folder with "ModuleConfig.xml") are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
     - Folder and file name matching is case-insensitive.
-    - Extra wrapper folders around a recognised folder are generally fine.
+    - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
 [/spoiler]
 
 [b]❤️ Support the Mod Author: [/b]

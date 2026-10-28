@@ -8,35 +8,35 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Buildfolderpakbin | a `build` folder, a `.pak` file and a `.bin` file | the game folder |
-| Binfolder | a `bin` folder, a `.pak` file and a `.bin` file | `build\pc\main` |
-| Pak | a `.pak` file | `build\pc\main` |
-| Buildfolder | a `build` folder | the game folder |
+| Build Folder Pak Bin | a `build` folder, a `.pak` file and a `.bin` file | the game folder |
+| bin Folder | a `bin` folder, a `.pak` file and a `.bin` file | `build\pc\main` |
+| Pak (actor97) | a `.pak` file | `build\pc\main` |
+| Build Folder | a `build` folder | the game folder |
 | Save Game Files | a `USR-DATA` file | `%USERPROFILE%\Saved Games\The Last of Us Part I\users\<User ID>\savedata` |
 | Config File Mods | a `screeninfo.cfg` file | `%USERPROFILE%\Saved Games\The Last of Us Part I\users\<User ID>` |
-| Psarctool | a `UnPSARC.exe` file | `build\pc\main` |
+| UnPSARC Tool | a `UnPSARC.exe` file | `build\pc\main` |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder. Config and save folders are in your user profile, not the game's install folder.
 
-## Buildfolderpakbin
+## Build Folder Pak Bin
 
 Recognised when the archive contains a `build` folder, a `.pak` file and a `.bin` file.
 
 Installs to: the game folder
 
-## Binfolder
+## bin Folder
 
 Recognised when the archive contains a `bin` folder, a `.pak` file and a `.bin` file.
 
 Installs to: `build\pc\main`
 
-## Pak
+## Pak (actor97)
 
 Recognised when the archive contains a `.pak` file.
 
 Installs to: `build\pc\main`
 
-## Buildfolder
+## Build Folder
 
 Recognised when the archive contains a `build` folder.
 
@@ -70,7 +70,7 @@ Installs to: `%USERPROFILE%\Saved Games\The Last of Us Part I\users\<User ID>`
 
 - Shipping a config file with one of these names inside an unrelated mod makes the whole archive install as a config mod.
 
-## Psarctool
+## UnPSARC Tool
 
 Recognised when the archive contains a `UnPSARC.exe` file.
 

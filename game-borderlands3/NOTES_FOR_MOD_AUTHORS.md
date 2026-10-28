@@ -8,43 +8,43 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Openhotfixloader | a `openhotfixloader.dll` file and a `b3hm.exe` file | `OakGame\Binaries\Win64\Plugins` |
-| Sdk | a `unrealsdk.dll` file and a `sdk_mods` folder | the game folder |
-| Sdkmod | a `.py` file and a `.sdkmod` file | `sdk_mods` |
-| Pluginloader | a `d3d11.dll` file | `OakGame\Binaries\Win64` |
-| Hotfix | a `.bl3hotfix` file | `OakGame\Binaries\Win64\Plugins\ohl-mods` |
+| OpenHotfixLoader | a `openhotfixloader.dll` file and a `b3hm.exe` file | `OakGame\Binaries\Win64\Plugins` |
+| Python SDK | a `unrealsdk.dll` file and a `sdk_mods` folder | the game folder |
+| SDK Mod | a `.py` file and a `.sdkmod` file | `sdk_mods` |
+| Plugin Loader | a `d3d11.dll` file | `OakGame\Binaries\Win64` |
+| Hotfix Mod | a `.bl3hotfix` file | `OakGame\Binaries\Win64\Plugins\ohl-mods` |
 | Root / Game Folder Mods | a `OakGame` folder | the game folder |
-| Pak | a `.pak` file | `OakGame\Content\Paks` |
+| Pak Mod | a `.pak` file | `OakGame\Content\Paks` |
 | Movies | a `.mp4` file | `OakGame\Content\Movies` |
-| Binaries | - | `OakGame\Binaries\Win64` |
+| Binaries (Engine Injector) | - | `OakGame\Binaries\Win64` |
 
 Paths are relative to the game's install folder.
 
-## Openhotfixloader
+## OpenHotfixLoader
 
 Recognised when the archive contains a `openhotfixloader.dll` file and a `b3hm.exe` file.
 
 Installs to: `OakGame\Binaries\Win64\Plugins`
 
-## Sdk
+## Python SDK
 
 Recognised when the archive contains a `unrealsdk.dll` file and a `sdk_mods` folder.
 
 Installs to: the game folder
 
-## Sdkmod
+## SDK Mod
 
 Recognised when the archive contains a `.py` file and a `.sdkmod` file.
 
 Installs to: `sdk_mods`
 
-## Pluginloader
+## Plugin Loader
 
 Recognised when the archive contains a `d3d11.dll` file.
 
 Installs to: `OakGame\Binaries\Win64`
 
-## Hotfix
+## Hotfix Mod
 
 Recognised when the archive contains a `.bl3hotfix` file.
 
@@ -70,7 +70,7 @@ Installs to: the game folder
 
 - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
 
-## Pak
+## Pak Mod
 
 Recognised when the archive contains a `.pak` file.
 
@@ -82,7 +82,7 @@ Recognised when the archive contains a `.mp4` file.
 
 Installs to: `OakGame\Content\Movies`
 
-## Binaries
+## Binaries (Engine Injector)
 
 Handled by the `testBinaries` installer. Inspect the extension source for the exact archive layout it expects.
 

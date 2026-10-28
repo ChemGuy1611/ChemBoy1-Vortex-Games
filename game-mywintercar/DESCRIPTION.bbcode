@@ -1,8 +1,6 @@
 This extension adds My Winter Car modding support to Vortex Mod Manager.
 [summary]Choice of MelonLoader or BepInEx will be automatically installed.[/summary]
 
-Choice of MelonLoader or BepInEx will be automatically installed.
-
 [b]✅ Supported Versions:[/b]
 [list]
 [*]Steam[/*]
@@ -29,7 +27,6 @@ Choice of MelonLoader or BepInEx will be automatically installed.
 [*]You can open several useful files/folders/URLs using the buttons within the folder icon on the Mods toolbar.[/*]
 [*][color=#ffff00][b][url=https://www.nexusmods.com/mywintercar/mods/3]MSCLoader[/url]﻿, BepInEx ([url=https://github.com/BepInEx/BepInEx/releases/tag/v5.4.23.4]Mono[/url]﻿), or [url=https://github.com/LavaGang/MelonLoader]MelonLoader [/url]﻿will be automatically downloaded and installed, based on user choice. You can swap loaders at any time by Removing the current one from Vortex and changing your selection in the popup. If you are switching away from MSCLoader, use the Purge function to get the popup.[/b][/color][/*]
 [*][b]  [color=#ea9999]﻿NOTE: If you are using MSCLoader, you must run the installer after the mod downloads. Vortex will send a notification reminding you to do this.[/color][/b][/*]
-[*][size=2]You can change which mod loader you have installed by Removing the current one and changing your selection in the popup.[/size][/*]
 [/list]
 
 [b]📝 Notes for Mod Authors:[/b]
@@ -40,7 +37,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ========================================================================
 
-Mscloader:
+MSCLoader:
 
 Recognised when the archive contains a "MSCLInstaller.exe" file.
 
@@ -78,7 +75,7 @@ This installer handles MelonLoader, not mods for it. It exists so users can inst
 
 ========================================================================
 
-Root:
+Root Game Folder:
 
 Recognised when the archive contains a "mywintercar_Data" folder.
 
@@ -189,7 +186,7 @@ Mods that replace packed Unity asset files, deployed into the game's data folder
 
 ========================================================================
 
-Texturepack:
+Texture Pack (MSCLoader):
 
 Recognised when the archive contains a "packinfo.json" file.
 
@@ -207,6 +204,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
     - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
     - Vortex shows the user a notification when a mod installs through the fallback.
 
+  Installs to: the game folder
+
   Common mistakes:
     - If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.
 
@@ -214,9 +213,9 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 Rules That Apply To Every Mod Type:
 
-    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
+    - Archives that contain a FOMOD installer (a "fomod" folder with "ModuleConfig.xml") are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
     - Folder and file name matching is case-insensitive.
-    - Extra wrapper folders around a recognised folder are generally fine.
+    - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
 [/spoiler]
 
 [b]🤝 Credits:[/b]

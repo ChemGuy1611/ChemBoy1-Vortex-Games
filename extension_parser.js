@@ -207,6 +207,13 @@ function buildSymbolTable(src) {
   return table;
 }
 
+/** The head of the getExecutable function, whose body sets per-install paths. */
+const GET_EXECUTABLE_HEAD_RE = /^(?:async\s+)?function\s+getExecutable\s*\([^)]*\)\s*\{$/;
+/** Path constants only: a store flag such as GAME_VERSION is set there too but is runtime state. */
+const PATH_NAME_RE = /_(?:PATH|TARGET|FOLDER)$/;
+/** A write value that is a path in itself: `path.join(...)`, a string literal or a constant. */
+const DEFAULT_WRITE_VALUE_RE = /^(?:path\.join\(.*\)|(["'])[^"']*\1|[A-Z_][A-Z0-9_]*)$/;
+
 /**
  * Guarded reassignments of module-level names, e.g. `let X = 'a'; if (FLAG) { X = 'b'; }`, as a
  * Map of name -> raw value expression, in source order so the last live write wins. The
@@ -217,8 +224,10 @@ function buildSymbolTable(src) {
  * A reassignment is taken only when its branch is provably live: either there is no enclosing
  * block at all, or the block is an `if (FLAG)` / `if (!FLAG)` on a discovered boolean flag whose
  * value selects it, or it is one arm of a top-level `if / else if / else` chain whose every
- * condition evaluateCondition can decide. Every other shape - a function body, a loop, a
- * condition on a property or a call - is left alone. That conservative default matters:
+ * condition evaluateCondition can decide. One function body counts too: a name declared `""` and
+ * given its path straight in getExecutable's body, which is the value for the default install.
+ * Every other shape - any other function body, a loop, a condition on a property or a call - is
+ * left alone. That conservative default matters:
  * taking a dead branch would silently rewrite a value that is correct today.
  *
  * Exported because arrays never enter the symbol table, so callers that read an array
@@ -281,6 +290,16 @@ function activeReassignments(src) {
     if (open === -1) return true; // top level: last write wins
     const lineStart = stripped.lastIndexOf("\n", open);
     const head = stripped.substring(lineStart + 1, open + 1).trim();
+    // A path declared empty and only filled in by getExecutable: the write straight in its
+    // body (after the store-specific `if` returns) is the default install's value.
+    if (
+      PATH_NAME_RE.test(w.name) &&
+      declaredLiterals.get(w.name) === "" &&
+      DEFAULT_WRITE_VALUE_RE.test(w.value) &&
+      GET_EXECUTABLE_HEAD_RE.test(head)
+    ) {
+      return true;
+    }
     const pos = head.match(IF_FLAG_RE);
     const neg = head.match(IF_NOT_FLAG_RE);
     if (pos && flagValues.has(pos[1])) return flagValues.get(pos[1]);
@@ -1073,7 +1092,8 @@ function calleeName(arg) {
 /**
  * Extract installer registrations with resolved IDs.
  *
- * Returns { id, priority, testFn, installFn, guardFlag } per registration. `testFn` is the
+ * Returns { id, rawId, priority, testFn, installFn, guardFlag } per registration. `rawId` is
+ * the id argument as written (usually a `FOO_ID` constant). `testFn` is the
  * third argument to registerInstaller — the stable cross-extension identity of an
  * installer (e.g. `testLogic` means the same thing in every game that registers it),
  * so it is the join key for per-installer documentation. `installFn` is the fourth
@@ -1118,7 +1138,14 @@ function extractInstallers(src, table) {
       if (args.length >= 4) installFn = calleeName(args[3]);
     }
 
-    results.push({ id: resolvedId, priority, testFn, installFn, guardFlag: guardFlagInst || null });
+    results.push({
+      id: resolvedId,
+      rawId,
+      priority,
+      testFn,
+      installFn,
+      guardFlag: guardFlagInst || null,
+    });
   }
   return results;
 }

@@ -8,26 +8,26 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| LOVELY | a `winmm.dll` file | the game folder |
-| Steammodded | a `tk_debug_window.py` file | `%APPDATA%\Balatro\Mods` |
-| Malverk | a `malverk.lua` file | `%APPDATA%\Balatro\Mods` |
+| Lovely-Injector | a `winmm.dll` file | the game folder |
+| SteamModded | a `tk_debug_window.py` file | `%APPDATA%\Balatro\Mods` |
+| Malverk (Texture Pack Manager) | a `malverk.lua` file | `%APPDATA%\Balatro\Mods` |
 | Mod | a `.lua` file and a `assets`, `libs`, `localization`, `lovely`, `lsp_def`, `api` or `utils` folder | - |
 
 Paths are relative to the game's install folder.
 
-## LOVELY
+## Lovely-Injector
 
 Recognised when the archive contains a `winmm.dll` file.
 
 Installs to: the game folder
 
-## Steammodded
+## SteamModded
 
 Recognised when the archive contains a `tk_debug_window.py` file.
 
 Installs to: `%APPDATA%\Balatro\Mods`
 
-## Malverk
+## Malverk (Texture Pack Manager)
 
 Recognised when the archive contains a `malverk.lua` file.
 

@@ -5,7 +5,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ========================================================================
 
-Manager:
+ROTTR Mod Manager:
 
 Recognised when the archive contains a "rottrmodmanager.exe" file.
 
@@ -13,7 +13,7 @@ Recognised when the archive contains a "rottrmodmanager.exe" file.
 
 ========================================================================
 
-Trmodmanager:
+TR Reboot Mod Manager:
 
 Recognised when the archive contains a "trreboottools.modmanager.exe" file.
 
@@ -21,7 +21,7 @@ Recognised when the archive contains a "trreboottools.modmanager.exe" file.
 
 ========================================================================
 
-Binaries:
+Binaries / Root Folder:
 
 Recognised when the archive contains a ".dll", ".exe", ".tiger", ".asi" or ".addon64" file.
 
@@ -29,7 +29,7 @@ Recognised when the archive contains a ".dll", ".exe", ".tiger", ".asi" or ".add
 
 ========================================================================
 
-Modmanagermod:
+Mod Manager Mod:
 
 Recognised when the archive contains a "tr2mesh", ".tr2pcd", ".drm", ".skl", ".tr10dtp", ".tr10material", ".tr10modeldata", ".t10script", ".t10shaderlib", ".tr10sound", ".dds", ".tr10objectref", ".tr10dtp" or ".tr10anim" file.
 
@@ -40,4 +40,4 @@ Recognised when the archive contains a "tr2mesh", ".tr2pcd", ".drm", ".skl", ".t
 Rules That Apply To Every Mod Type:
 
     - Folder and file name matching is case-insensitive.
-    - Extra wrapper folders around a recognised folder are generally fine.
+    - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.

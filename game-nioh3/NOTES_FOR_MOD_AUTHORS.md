@@ -8,61 +8,61 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Dllloader | a `dinput8.dll` file | the game folder |
-| Rdbexplorer | a `RDBExplorer.exe` file | `package` |
-| Yumia | a `yumia_mod_insert_into_rdb.exe` file | `package` |
-| Looseloader | a `LooseFileLoader.dll` file | `plugins` |
-| Modmanager | a `Nioh3ModManager.exe` file | the game folder |
-| Mod | a `.g1t`, `.g1m` or `.g1ts` file | `ModArchives` |
-| Loadermod | a `.dll` or `.asi` file | `plugins` |
-| Fdatayumia | a `package` folder and a `.fdata` or `.yumiamod.json` file | the game folder |
+| DLL Plugin Loader | a `dinput8.dll` file | the game folder |
+| RDBExplorer | a `RDBExplorer.exe` file | `package` |
+| Yumia fdata Tools | a `yumia_mod_insert_into_rdb.exe` file | `package` |
+| Loose File Loader | a `LooseFileLoader.dll` file | `plugins` |
+| ModManager | a `Nioh3ModManager.exe` file | the game folder |
+| ModManager Loose Mod | a `.g1t`, `.g1m` or `.g1ts` file | `ModArchives` |
+| Plugin Mod | a `.dll` or `.asi` file | `plugins` |
+| .fdata Package (Yumia) | a `package` folder and a `.fdata` or `.yumiamod.json` file | the game folder |
 | Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
-## Dllloader
+## DLL Plugin Loader
 
 Recognised when the archive contains a `dinput8.dll` file.
 
 Installs to: the game folder
 
-## Rdbexplorer
+## RDBExplorer
 
 Recognised when the archive contains a `RDBExplorer.exe` file.
 
 Installs to: `package`
 
-## Yumia
+## Yumia fdata Tools
 
 Recognised when the archive contains a `yumia_mod_insert_into_rdb.exe` file.
 
 Installs to: `package`
 
-## Looseloader
+## Loose File Loader
 
 Recognised when the archive contains a `LooseFileLoader.dll` file.
 
 Installs to: `plugins`
 
-## Modmanager
+## ModManager
 
 Recognised when the archive contains a `Nioh3ModManager.exe` file.
 
 Installs to: the game folder
 
-## Mod
+## ModManager Loose Mod
 
 Recognised when the archive contains a `.g1t`, `.g1m` or `.g1ts` file.
 
 Installs to: `ModArchives`
 
-## Loadermod
+## Plugin Mod
 
 Recognised when the archive contains a `.dll` or `.asi` file.
 
 Installs to: `plugins`
 
-## Fdatayumia
+## .fdata Package (Yumia)
 
 Recognised when the archive contains a `package` folder and a `.fdata` or `.yumiamod.json` file.
 

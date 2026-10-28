@@ -8,41 +8,41 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Packetloader | a `ShadowOfWarPacketLoader.dll` file | `x64\plugins` |
-| Dllloader | a `ShadowOfWarDllLoader.dll` file | `x64` |
-| Modloader | a `bink2w64.dll` file and a `modloader` folder | `x64` |
-| Arch06mod | a `.arch06` file | `Mods` |
-| Pluginsandpackets | a `.dll` file, a `PacketLoader` folder and a `Internal` folder | `x64\plugins` |
+| Packet Loader | a `ShadowOfWarPacketLoader.dll` file | `x64\plugins` |
+| DLL Loader | a `ShadowOfWarDllLoader.dll` file | `x64` |
+| Middle-Earth-Mod-Loader | a `bink2w64.dll` file and a `modloader` folder | `x64` |
+| .arch06 Mod | a `.arch06` file | `Mods` |
+| Plugins / Packets | a `.dll` file, a `PacketLoader` folder and a `Internal` folder | `x64\plugins` |
 | Root / Game Folder Mods | a `game` folder | the game folder |
 | Fallback Installer | anything not matched above | `x64\plugins` |
 
 Paths are relative to the game's install folder.
 
-## Packetloader
+## Packet Loader
 
 Recognised when the archive contains a `ShadowOfWarPacketLoader.dll` file.
 
 Installs to: `x64\plugins`
 
-## Dllloader
+## DLL Loader
 
 Recognised when the archive contains a `ShadowOfWarDllLoader.dll` file.
 
 Installs to: `x64`
 
-## Modloader
+## Middle-Earth-Mod-Loader
 
 Recognised when the archive contains a `bink2w64.dll` file and a `modloader` folder.
 
 Installs to: `x64`
 
-## Arch06mod
+## .arch06 Mod
 
 Recognised when the archive contains a `.arch06` file.
 
 Installs to: `Mods`
 
-## Pluginsandpackets
+## Plugins / Packets
 
 Recognised when the archive contains a `.dll` file, a `PacketLoader` folder and a `Internal` folder.
 

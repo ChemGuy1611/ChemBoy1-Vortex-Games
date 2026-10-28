@@ -8,15 +8,15 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Loader | a `ModManager.exe` file and a `bin` folder | the game folder |
+| NexusTools Mod Loader | a `ModManager.exe` file and a `bin` folder | the game folder |
 | Mod | a `modconfig.json` file and a `.dat` or `.fat` file | `data_win64\mods` |
 | Root / Game Folder Mods | a `data_win64` folder | the game folder |
-| Binaries | a `.exe`, `.dll`, `.asi` or `.addon64` file | `bin` |
+| Binaries (Engine Injector) | a `.exe`, `.dll`, `.asi` or `.addon64` file | `bin` |
 | Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
-## Loader
+## NexusTools Mod Loader
 
 Recognised when the archive contains a `ModManager.exe` file and a `bin` folder.
 
@@ -48,7 +48,7 @@ Installs to: the game folder
 
 - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
 
-## Binaries
+## Binaries (Engine Injector)
 
 Recognised when the archive contains a `.exe`, `.dll`, `.asi` or `.addon64` file.
 

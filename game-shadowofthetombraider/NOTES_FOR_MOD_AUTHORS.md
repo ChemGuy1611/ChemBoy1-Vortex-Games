@@ -8,32 +8,32 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Manager | a `sottrmodmanager.exe` file | the game folder |
-| Trmodmanager | a `trreboottools.modmanager.exe` file | the game folder |
-| Binaries | a `.dll`, `.exe`, `.tiger`, `.asi` or `.addon64` file | the game folder |
-| Modmanagermod | a `.tr11dtp`, `.tr11material`, `.tr11modeldata`, `.t11script`, `.t11shaderlib`, `.tr11sound`, `.dds`, `.tr11objectref`, `.tr11dtp` or `.tr11anim` file | `Mods` |
+| SOTTR Mod Manager | a `sottrmodmanager.exe` file | the game folder |
+| TR Reboot Mod Manager | a `trreboottools.modmanager.exe` file | the game folder |
+| Binaries / Root Folder | a `.dll`, `.exe`, `.tiger`, `.asi` or `.addon64` file | the game folder |
+| Mod Manager Mod | a `.tr11dtp`, `.tr11material`, `.tr11modeldata`, `.t11script`, `.t11shaderlib`, `.tr11sound`, `.dds`, `.tr11objectref`, `.tr11dtp` or `.tr11anim` file | `Mods` |
 
 Paths are relative to the game's install folder.
 
-## Manager
+## SOTTR Mod Manager
 
 Recognised when the archive contains a `sottrmodmanager.exe` file.
 
 Installs to: the game folder
 
-## Trmodmanager
+## TR Reboot Mod Manager
 
 Recognised when the archive contains a `trreboottools.modmanager.exe` file.
 
 Installs to: the game folder
 
-## Binaries
+## Binaries / Root Folder
 
 Recognised when the archive contains a `.dll`, `.exe`, `.tiger`, `.asi` or `.addon64` file.
 
 Installs to: the game folder
 
-## Modmanagermod
+## Mod Manager Mod
 
 Recognised when the archive contains a `.tr11dtp`, `.tr11material`, `.tr11modeldata`, `.t11script`, `.t11shaderlib`, `.tr11sound`, `.dds`, `.tr11objectref`, `.tr11dtp` or `.tr11anim` file.
 

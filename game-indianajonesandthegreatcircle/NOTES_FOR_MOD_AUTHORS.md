@@ -12,7 +12,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Save Game Files | a `.dat` file | `%APPDATA%\GSE Saves\2677660\remote\GAME-SLOT0` |
 | Sounds | a `.pack` or `.bnk` file | `base\sound\soundbanks\pc` |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder. Config and save folders are in your user profile, not the game's install folder.
 
 ## Config File Mods
 

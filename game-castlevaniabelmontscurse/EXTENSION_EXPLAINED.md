@@ -41,6 +41,7 @@
 | `hasCustomMods` | `false` | set to true if there are modTypes with folder paths dependent on which mod loader is installed |
 | `hasCustomLoader` | `false` | set to true if there is a custom mod loader |
 | `customLoaderInstaller` | `false` | set true if the custom loader uses an installer |
+| `hasTextureReplacer` | `false` | set to true if the game has a Texture Replacer BepInEx plugin that loads .png textures from BepInEx/plugins/TextureReplacer (set TEXTURES_STRING below) |
 | `debug` | `false` | toggle for debug mode |
 | `exeHasGameVersion` | `false` | toggle: true if the game devs stamp the real game version (not just the Unity player version) into the exe ProductVersion |
 | `hasVersionFile` | `false` | set to true if there is a Version.info file that contains the game version number |

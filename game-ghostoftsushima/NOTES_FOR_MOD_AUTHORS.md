@@ -8,12 +8,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Psarc | a `.psarc` file | `cache_pc\psarc` |
-| Save Game Files | a `.sav` file | - |
+| PSARC (Archive) | a `.psarc` file | `cache_pc\psarc` |
+| Save Game Files | a `.sav` file | the game's save folder |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder. Config and save folders are in your user profile, not the game's install folder.
 
-## Psarc
+## PSARC (Archive)
 
 Recognised when the archive contains a `.psarc` file.
 
@@ -26,6 +26,8 @@ Save files, deployed to the game's save folder.
 **Requirements:**
 
 - Recognised by any file with the `.sav` extension.
+
+Installs to: the game's save folder
 
 **Common mistakes:**
 

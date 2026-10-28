@@ -8,14 +8,14 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Binaries | a `.exe`, `.dll`, `.asi` or `.addon64` file | `Bin32` |
+| Binaries (Engine Injector) | a `.exe`, `.dll`, `.asi` or `.addon64` file | `Bin32` |
 | Root / Game Folder Mods | a `BIO4` folder | the game folder |
 | Save Game Files | a `.sav` file | `Bin32\profile\player\saves` |
 | Fallback Installer | anything not matched above | the game folder |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder. Config and save folders are in your user profile, not the game's install folder.
 
-## Binaries
+## Binaries (Engine Injector)
 
 Recognised when the archive contains a `.exe`, `.dll`, `.asi` or `.addon64` file.
 

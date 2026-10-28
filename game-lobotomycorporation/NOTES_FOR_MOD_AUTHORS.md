@@ -8,14 +8,14 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Loader | a `LobotomyBaseModLib.dll` file | `LobotomyCorp_Data\Managed` |
+| BaseMod Loader | a `LobotomyBaseModLib.dll` file | `LobotomyCorp_Data\Managed` |
 | Root / Game Folder Mods | a `LobotomyCorp_Data` folder | the game folder |
-| Mod | - | `LobotomyCorp_Data\BaseMods` |
+| BaseMod | - | `LobotomyCorp_Data\BaseMods` |
 | Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
-## Loader
+## BaseMod Loader
 
 Recognised when the archive contains a `LobotomyBaseModLib.dll` file.
 
@@ -41,7 +41,7 @@ Installs to: the game folder
 
 - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
 
-## Mod
+## BaseMod
 
 Handled by the `testMod` installer. Inspect the extension source for the exact archive layout it expects.
 

@@ -5,7 +5,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ========================================================================
 
-Launcher:
+wiltOS Mod Launcher:
 
 Recognised when the archive contains a "mm.exe" file.
 
@@ -41,7 +41,7 @@ MyRootMod.zip
 
 ========================================================================
 
-Launchermod:
+Launcher Mod:
 
 Recognised when the archive contains a "info.json" file.
 
@@ -49,7 +49,7 @@ Recognised when the archive contains a "info.json" file.
 
 ========================================================================
 
-Data:
+Game Data Folder:
 
 Recognised when the archive contains a "mm" folder.
 
@@ -57,7 +57,7 @@ Recognised when the archive contains a "mm" folder.
 
 ========================================================================
 
-Datasub:
+Data Subfolder:
 
 Recognised when the archive contains a "materials", "maps", "bin", "cfg", "media", "resource", "scripts" or "SAVE" folder.
 
@@ -65,7 +65,7 @@ Recognised when the archive contains a "materials", "maps", "bin", "cfg", "media
 
 ========================================================================
 
-Vpk:
+VPK Files:
 
 Recognised when the archive contains a ".vpk" file.
 
@@ -73,7 +73,7 @@ Recognised when the archive contains a ".vpk" file.
 
 ========================================================================
 
-Materialssub:
+Materials Subfolder:
 
 Recognised when the archive contains a "models", "fx", "sprites", "cloth", "console", "correction", "decals", "detail", "effects", "engine", "envcubemaps", "generic", "hud", "nature", "overlays", "sun", "vgui" or "voice" folder.
 
@@ -81,7 +81,7 @@ Recognised when the archive contains a "models", "fx", "sprites", "cloth", "cons
 
 ========================================================================
 
-Maps:
+Maps (.bsp):
 
 Recognised when the archive contains a ".bsp" file.
 
@@ -120,4 +120,4 @@ Configuration tweaks, deployed to the game's config location.
 Rules That Apply To Every Mod Type:
 
     - Folder and file name matching is case-insensitive.
-    - Extra wrapper folders around a recognised folder are generally fine.
+    - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.

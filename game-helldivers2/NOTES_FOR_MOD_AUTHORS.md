@@ -9,9 +9,9 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Patch Mods (.patch_0) | a file named `<archive hash>.patch_0` | - |
-| Data | a `.dl_bin` file | `data\game` |
-| Stream | a `.stream` file | `data` |
-| Binaries | a `.exe`, `.dll`, `.asi` or `.addon64` file | `bin` |
+| Game Data (.dl_bin) | a `.dl_bin` file | `data\game` |
+| Data Stream File (.stream) | a `.stream` file | `data` |
+| Binaries (Engine Injector) | a `.exe`, `.dll`, `.asi` or `.addon64` file | `bin` |
 | Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
@@ -51,19 +51,19 @@ MyArmourMod.zip
 - Hand-numbering files across option folders to control which option wins. Numbers are reassigned per archive in option order; only the order of your files inside a single folder is preserved.
 - Expecting `NexusData` in a manifest to point Vortex at the right Nexus Mods mod page. Vortex tracks that identity on its own and ignores the field.
 
-## Data
+## Game Data (.dl_bin)
 
 Recognised when the archive contains a `.dl_bin` file.
 
 Installs to: `data\game`
 
-## Stream
+## Data Stream File (.stream)
 
 Recognised when the archive contains a `.stream` file.
 
 Installs to: `data`
 
-## Binaries
+## Binaries (Engine Injector)
 
 Recognised when the archive contains a `.exe`, `.dll`, `.asi` or `.addon64` file.
 

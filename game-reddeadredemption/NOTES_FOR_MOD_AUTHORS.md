@@ -8,46 +8,46 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Scripthook | a `dinput8.dll` file and a `scripthookrdr.dll` file | the game folder |
-| Modloader | a `kml.asi` file | the game folder |
-| Magicrdr | - | the game folder |
-| Magicmod | a `.wtd`, `.was`, `.dds`, `.mtl` or `.wsc` file | `MagicRDR_Mods` |
-| Rpf | a `.rpf` file | `kml\rpf` |
-| Asiplugin | a `.asi` file | the game folder |
+| ScriptHookRDR | a `dinput8.dll` file and a `scripthookrdr.dll` file | the game folder |
+| kepmehz Mod Loader | a `kml.asi` file | the game folder |
+| Magic-RDR | - | the game folder |
+| MagicRDR Mod (Loose) | a `.wtd`, `.was`, `.dds`, `.mtl` or `.wsc` file | `MagicRDR_Mods` |
+| RPF File | a `.rpf` file | `kml\rpf` |
+| ASI Script / Plugin | a `.asi` file | the game folder |
 
 Paths are relative to the game's install folder.
 
-## Scripthook
+## ScriptHookRDR
 
 Recognised when the archive contains a `dinput8.dll` file and a `scripthookrdr.dll` file.
 
 Installs to: the game folder
 
-## Modloader
+## kepmehz Mod Loader
 
 Recognised when the archive contains a `kml.asi` file.
 
 Installs to: the game folder
 
-## Magicrdr
+## Magic-RDR
 
 Handled by the `testMagic` installer. Inspect the extension source for the exact archive layout it expects.
 
 Installs to: the game folder
 
-## Magicmod
+## MagicRDR Mod (Loose)
 
 Recognised when the archive contains a `.wtd`, `.was`, `.dds`, `.mtl` or `.wsc` file.
 
 Installs to: `MagicRDR_Mods`
 
-## Rpf
+## RPF File
 
 Recognised when the archive contains a `.rpf` file.
 
 Installs to: `kml\rpf`
 
-## Asiplugin
+## ASI Script / Plugin
 
 Recognised when the archive contains a `.asi` file.
 

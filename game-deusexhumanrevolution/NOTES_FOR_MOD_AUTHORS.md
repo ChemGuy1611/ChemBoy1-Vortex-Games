@@ -8,25 +8,25 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Mod000 | a `.000` file | `mods` |
-| Patcher | a `DXHR-Patcher_1.5.jar` file | the game folder |
-| Modhook | a `DFEngine.dll` file | the game folder |
+| Mod .000 File | a `.000` file | `mods` |
+| DXHR Patcher | a `DXHR-Patcher_1.5.jar` file | the game folder |
+| DXHRDC-ModHook | a `DFEngine.dll` file | the game folder |
 
 Paths are relative to the game's install folder.
 
-## Mod000
+## Mod .000 File
 
 Recognised when the archive contains a `.000` file.
 
 Installs to: `mods`
 
-## Patcher
+## DXHR Patcher
 
 Recognised when the archive contains a `DXHR-Patcher_1.5.jar` file.
 
 Installs to: the game folder
 
-## Modhook
+## DXHRDC-ModHook
 
 Recognised when the archive contains a `DFEngine.dll` file.
 

@@ -9,8 +9,8 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Root / Game Folder Mods | a `base` folder or a `cache.psarc` file | the game folder |
-| Cdlcmod | a `.psarc` file | `dlc` |
-| Eof | a `eof.exe` file | `EditorOnFire` |
+| CDLC Mod | a `.psarc` file | `dlc` |
+| Editor On Fire | a `eof.exe` file | `EditorOnFire` |
 
 Paths are relative to the game's install folder.
 
@@ -35,13 +35,13 @@ Installs to: the game folder
 
 - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
 
-## Cdlcmod
+## CDLC Mod
 
 Recognised when the archive contains a `.psarc` file.
 
 Installs to: `dlc`
 
-## Eof
+## Editor On Fire
 
 Recognised when the archive contains a `eof.exe` file.
 

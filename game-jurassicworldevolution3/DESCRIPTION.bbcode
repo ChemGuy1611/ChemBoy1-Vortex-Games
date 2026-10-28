@@ -19,7 +19,7 @@ ACSE will be automatically downloaded and installed.
 [*]Movies mods with a ".webm" file install to the "Movies" folder.[/*]
 [*]Ovldata Subfolder mods with an "ovldata" file install to the "Win64" folder.[/*]
 [*]Saves mods with a ".blpr2" file install to the "%USERPROFILE%\Saved Games\Frontier Developments\Jurassic World Evolution 3\<User ID>\Saves" folder.[/*]
-[*]Any other mod not described above installs to the game folder.[/*]
+[*]Any other mod not described above installs to the "Win64\ovldata" folder.[/*]
 [/list]
 [b]📋 Usage Notes:[/b]
 [list]
@@ -84,7 +84,7 @@ Lua mods that run under ACSE.
 
 ========================================================================
 
-Localised:
+ACSE Localization:
 
 Recognised when the archive contains a "localised" folder.
 
@@ -141,6 +141,8 @@ The catch-all. Any archive that matched none of the installers above lands here 
     - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
     - Vortex shows the user a notification when a mod installs through the fallback.
 
+  Installs to: "Win64\ovldata"
+
   Common mistakes:
     - If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.
 
@@ -149,7 +151,7 @@ The catch-all. Any archive that matched none of the installers above lands here 
 Rules That Apply To Every Mod Type:
 
     - Folder and file name matching is case-insensitive.
-    - Extra wrapper folders around a recognised folder are generally fine.
+    - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
 [/spoiler]
 
 [b]❤️ Support the Mod Author: [/b]

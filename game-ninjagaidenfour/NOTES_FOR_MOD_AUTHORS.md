@@ -9,7 +9,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Root / Game Folder Mods | a `assets` folder | the game folder |
-| Asset | a `.dat` file and a `config`, `movies` or `sounds` folder | `Assets` |
+| Asset Mod | a `.dat` file and a `config`, `movies` or `sounds` folder | `Assets` |
 
 Paths are relative to the game's install folder.
 
@@ -33,7 +33,7 @@ Installs to: the game folder
 
 - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
 
-## Asset
+## Asset Mod
 
 Recognised when the archive contains a `.dat` file and a `config`, `movies` or `sounds` folder.
 

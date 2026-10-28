@@ -21,10 +21,10 @@ Fluffy Mod Manager and REFramework will be automically installed.
 [list]
 [*]Fluffy Mod Manager installs to the game folder, recognised by a "modmanager.exe" file.[/*]
 [*]REFramework installs to the game folder, recognised by a "dinput8.dll" file.[/*]
-[*]Loose Lua/Plugin (REFramework) mods with a ".lua" file outside the REFramework folders install to the game folder.[/*]
+[*]Loose Lua/Plugin (REFramework) mods with a ".lua" file outside the REFramework folders install to the "reframework\autorun" folder.[/*]
 [*]Binaries / Root Folder mods with a "nvngx_dlss.dll" file or a ".exe" file install to the game folder.[/*]
 [*]Fluffy Preset mods with a ".prt" file install to the "Games\RE8\Presets" folder.[/*]
-[*]Any other mod not described above installs to the game folder.[/*]
+[*]Any other mod not described above installs to the "Games\RE8\Mods" folder.[/*]
 [*]Archives with a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to Vortex's built-in FOMOD installer instead.[/*]
 [/list]
 [b]📋 Usage Notes:[/b]
@@ -79,7 +79,7 @@ Standalone REFramework Lua scripts, shipped without the surrounding REFramework 
     - Recognised by a ".lua" file in an archive that does NOT already contain a REFramework folder ("reframework" or "autorun").
     - Vortex adds the correct folder structure around the script for you.
 
-  Installs to: the game folder
+  Installs to: "reframework\autorun"
 
   Common mistakes:
     - Including an REFramework folder as well switches the archive to a different installer, which expects the full structure to already be correct.
@@ -120,6 +120,8 @@ The catch-all for RE Engine mods packaged in the normal Fluffy Mod Manager layou
     - Any archive not claimed by an earlier installer is treated as a Fluffy-format mod.
     - An archive already zipped in the Fluffy layout is installed as it is, with no repacking.
 
+  Installs to: "Games\RE8\Mods"
+
   Common mistakes:
     - Because this is a catch-all, a badly laid-out archive still installs - it just may not work. Match the layout Fluffy Mod Manager expects.
 
@@ -127,9 +129,9 @@ The catch-all for RE Engine mods packaged in the normal Fluffy Mod Manager layou
 
 Rules That Apply To Every Mod Type:
 
-    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
+    - Archives that contain a FOMOD installer (a "fomod" folder with "ModuleConfig.xml") are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
     - Folder and file name matching is case-insensitive.
-    - Extra wrapper folders around a recognised folder are generally fine.
+    - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
 [/spoiler]
 
 [b]❤️ Support the Mod Author: [/b]

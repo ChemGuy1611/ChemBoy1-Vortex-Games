@@ -1,7 +1,6 @@
 This extension adds Doom I & II (UZDoom) modding support to Vortex Mod Manager.
 [summary]Automatically installs DML and UZDoom and checks for updates.[/summary]
 
-Automatically installs DML and UZDoom. Checks for UZDoom and DML updates.
 [color=#ffff00][size=3][b]This extension will automatically download and install [url=https://github.com/Premo36/DML2.X]DML[/url] and [url=https://github.com/UZDoom/UZDoom]UZDoom[/url] for the user. This extension is built on top of these open-source software packages. Vortex checks for DML and UZDoom updates when Vortex runs an update check
 [color=#f6b26b][size=3][b]Note: Game WADs (DOOM.WAD and DOOM2.WAD) must be obtained by the user and installed as a mod in Vortex. The WADs cannot be included here for legal reasons.[/b][/size][/color]
 [list]
@@ -24,7 +23,6 @@ Automatically installs DML and UZDoom. Checks for UZDoom and DML updates.
 [b]📋 Usage Notes:[/b]
 [list]
 [*]You can open several useful files/folders/URLs using the buttons within the folder icon on the Mods toolbar.[/*]
-[*]Automatically installs DML and UZDoom.[/*]
 [*]Installs mods (".wad", ".pk3", ".zip", ".pak", ".pk7", ".grp", ".rff", ".deh", ".iwad", ".ipk3") for UZDoom to the correct folder for DML to detect them automatically.[/*]
 [*]Installs game wads ("IWADs") to the correct folder for DML to detect them automatically.[/*]
 [*][size=2]There is no restriction on what folder you choose for installation. Everything will be contained with a top level folder for DML, but please be mindful to select a sensible installation folder where your Windows user account has write access.[/size][/*]
@@ -39,7 +37,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ========================================================================
 
-Dml:
+Doom Mod Loader:
 
 Handled by the "testDML" installer. Inspect the extension source for the exact archive layout it expects.
 
@@ -47,7 +45,7 @@ Handled by the "testDML" installer. Inspect the extension source for the exact a
 
 ========================================================================
 
-Gzdoom:
+UZDoom:
 
 Recognised when the archive contains a "uzdoom.exe" file.
 
@@ -55,7 +53,7 @@ Recognised when the archive contains a "uzdoom.exe" file.
 
 ========================================================================
 
-Wad:
+IWAD (Game):
 
 Recognised when the archive contains a "doom.wad", "doom2.wad", "freedoom.wad" or "nerve.wad" file and a ".iwad" or ".ipk3" file.
 
@@ -71,7 +69,7 @@ Recognised when the archive contains a ".wad", ".pk3", ".zip", ".pak", ".pk7", "
 
 ========================================================================
 
-Zipmod:
+Zip Mod:
 
 Handled by the "testZipContent" installer. Inspect the extension source for the exact archive layout it expects.
 
@@ -79,9 +77,9 @@ Handled by the "testZipContent" installer. Inspect the extension source for the 
 
 Rules That Apply To Every Mod Type:
 
-    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
+    - Archives that contain a FOMOD installer (a "fomod" folder with "ModuleConfig.xml") are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
     - Folder and file name matching is case-insensitive.
-    - Extra wrapper folders around a recognised folder are generally fine.
+    - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
 [/spoiler]
 
 [b]❤️ Support the Mod Author: [/b]

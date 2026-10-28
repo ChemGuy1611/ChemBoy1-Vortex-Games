@@ -22,7 +22,6 @@ This extension adds Hades modding support to Vortex Mod Manager.
 [b]📋 Usage Notes:[/b]
 [list]
 [*]You can open several useful files/folders/URLs using the buttons within the folder icon on the Mods toolbar.[/*]
-[*]Automatically downloads and installs [url=https://www.nexusmods.com/hades/mods/26]Mod Importer[/url]﻿﻿ and [url=https://www.nexusmods.com/hades/mods/27]Mod Utility[/url]﻿, which are required by most mods.[/*]
 [*]Includes mod types to install mods to the game's root folder and binaries folders.[/*]
 [/list]
 
@@ -34,7 +33,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ========================================================================
 
-Manager:
+Mod Importer:
 
 Recognised when the archive contains a "modimporter.exe" file.
 
@@ -42,7 +41,7 @@ Recognised when the archive contains a "modimporter.exe" file.
 
 ========================================================================
 
-Modutility:
+Mod Utility:
 
 Recognised when the archive contains a "ModUtil" folder.
 
@@ -52,9 +51,9 @@ Recognised when the archive contains a "ModUtil" folder.
 
 Rules That Apply To Every Mod Type:
 
-    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
+    - Archives that contain a FOMOD installer (a "fomod" folder with "ModuleConfig.xml") are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
     - Folder and file name matching is case-insensitive.
-    - Extra wrapper folders around a recognised folder are generally fine.
+    - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
 [/spoiler]
 
 [b]❤️ Support the Mod Author: [/b]

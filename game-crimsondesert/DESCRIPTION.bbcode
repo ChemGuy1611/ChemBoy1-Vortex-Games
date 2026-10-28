@@ -59,7 +59,7 @@ MyRootMod.zip
 
 ========================================================================
 
-Dmm:
+Definitive Mod Manager:
 
 Recognised when the archive contains a ".exe" file.
 
@@ -75,7 +75,7 @@ Recognised when the archive contains a "CD JSON Mod Manager.exe", "CrimsonSharp.
 
 ========================================================================
 
-Specialpatchmod:
+Special Patch Mod:
 
 Recognised when the archive contains a ".dll", ".asi" or ".addon64" file.
 
@@ -83,7 +83,7 @@ Recognised when the archive contains a ".dll", ".asi" or ".addon64" file.
 
 ========================================================================
 
-Browsermod:
+Crimson Sharp Mod:
 
 Recognised when the archive contains a "manifest.json" file, a "files" folder and a "meta", "0000", "0001", "0002", "0003", "0004", "0005", "0006", "0007", "0008", "0009", "0010", "0011", "0012", "0013", "0014", "0015", "0016", "0017", "0018", "0019", "0020", "0021", "0022", "0023", "0024", "0025", "0026", "0027", "0028", "0029", "0030", "0031", "0032", "0033", "0034" or "0035" folder.
 
@@ -91,7 +91,7 @@ Recognised when the archive contains a "manifest.json" file, a "files" folder an
 
 ========================================================================
 
-Patchmod:
+Patch Mod:
 
 Recognised when the archive contains a "modinfo.json" file.
 
@@ -113,7 +113,7 @@ Recognised when the archive contains a ".json" file.
 
 ========================================================================
 
-Binaries:
+Binaries (Engine Injector):
 
 Recognised when the archive contains a ".dll", ".asi" or ".addon64" file.
 
@@ -140,9 +140,9 @@ The catch-all. Any archive that matched none of the installers above lands here 
 
 Rules That Apply To Every Mod Type:
 
-    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
+    - Archives that contain a FOMOD installer (a "fomod" folder with "ModuleConfig.xml") are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
     - Folder and file name matching is case-insensitive.
-    - Extra wrapper folders around a recognised folder are generally fine.
+    - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
 [/spoiler]
 
 [b]🤝 Credits:[/b]

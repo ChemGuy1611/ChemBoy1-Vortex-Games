@@ -9,14 +9,14 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Root / Game Folder Mods | a `bin64` folder | the game folder |
-| Dmm | a `.exe` file | the game folder |
+| Definitive Mod Manager | a `.exe` file | the game folder |
 | Tools | a `CD JSON Mod Manager.exe`, `CrimsonSharp.exe`, `CrimsonSaveEditorStandalone.exe`, `PazGui.exe`, `CDModManager.exe`, `QT_ModManager.exe` or `CrimsonDesertModManager.exe` file | the game folder |
-| Specialpatchmod | a `.dll`, `.asi` or `.addon64` file | the game folder |
-| Browsermod | a `manifest.json` file, a `files` folder and a `meta`, `0000`, `0001`, `0002`, `0003`, `0004`, `0005`, `0006`, `0007`, `0008`, `0009`, `0010`, `0011`, `0012`, `0013`, `0014`, `0015`, `0016`, `0017`, `0018`, `0019`, `0020`, `0021`, `0022`, `0023`, `0024`, `0025`, `0026`, `0027`, `0028`, `0029`, `0030`, `0031`, `0032`, `0033`, `0034` or `0035` folder | `mods` |
-| Patchmod | a `modinfo.json` file | `mods` |
+| Special Patch Mod | a `.dll`, `.asi` or `.addon64` file | the game folder |
+| Crimson Sharp Mod | a `manifest.json` file, a `files` folder and a `meta`, `0000`, `0001`, `0002`, `0003`, `0004`, `0005`, `0006`, `0007`, `0008`, `0009`, `0010`, `0011`, `0012`, `0013`, `0014`, `0015`, `0016`, `0017`, `0018`, `0019`, `0020`, `0021`, `0022`, `0023`, `0024`, `0025`, `0026`, `0027`, `0028`, `0029`, `0030`, `0031`, `0032`, `0033`, `0034` or `0035` folder | `mods` |
+| Patch Mod | a `modinfo.json` file | `mods` |
 | Texture | a `meta`, `0000`, `0001`, `0002`, `0003`, `0004`, `0005`, `0006`, `0007`, `0008`, `0009`, `0010`, `0011`, `0012`, `0013`, `0014`, `0015`, `0016`, `0017`, `0018`, `0019`, `0020`, `0021`, `0022`, `0023`, `0024`, `0025`, `0026`, `0027`, `0028`, `0029`, `0030`, `0031`, `0032`, `0033`, `0034` or `0035` folder and a `.dds` file | - |
 | Json | a `.json` file | `mods` |
-| Binaries | a `.dll`, `.asi` or `.addon64` file | `bin64` |
+| Binaries (Engine Injector) | a `.dll`, `.asi` or `.addon64` file | `bin64` |
 | Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
@@ -41,7 +41,7 @@ Installs to: the game folder
 
 - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
 
-## Dmm
+## Definitive Mod Manager
 
 Recognised when the archive contains a `.exe` file.
 
@@ -53,19 +53,19 @@ Recognised when the archive contains a `CD JSON Mod Manager.exe`, `CrimsonSharp.
 
 Installs to: the game folder
 
-## Specialpatchmod
+## Special Patch Mod
 
 Recognised when the archive contains a `.dll`, `.asi` or `.addon64` file.
 
 Installs to: the game folder
 
-## Browsermod
+## Crimson Sharp Mod
 
 Recognised when the archive contains a `manifest.json` file, a `files` folder and a `meta`, `0000`, `0001`, `0002`, `0003`, `0004`, `0005`, `0006`, `0007`, `0008`, `0009`, `0010`, `0011`, `0012`, `0013`, `0014`, `0015`, `0016`, `0017`, `0018`, `0019`, `0020`, `0021`, `0022`, `0023`, `0024`, `0025`, `0026`, `0027`, `0028`, `0029`, `0030`, `0031`, `0032`, `0033`, `0034` or `0035` folder.
 
 Installs to: `mods`
 
-## Patchmod
+## Patch Mod
 
 Recognised when the archive contains a `modinfo.json` file.
 
@@ -81,7 +81,7 @@ Recognised when the archive contains a `.json` file.
 
 Installs to: `mods`
 
-## Binaries
+## Binaries (Engine Injector)
 
 Recognised when the archive contains a `.dll`, `.asi` or `.addon64` file.
 

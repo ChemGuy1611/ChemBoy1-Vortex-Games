@@ -9,12 +9,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Root / Game Folder Mods | a `Bin` folder | the game folder |
-| Mod | a `.pak` or `.pkm` file and a `models`, `movies` or `music` folder | `Data` |
+| Data Mod | a `.pak` or `.pkm` file and a `models`, `movies` or `music` folder | `Data` |
 | Config File Mods | a `config.ini` file | `Bin` |
 | Save Game Files | a `.dat` file | `SaveGames` |
-| Binaries | - | `Bin` |
+| Binaries (Engine Injector) | - | `Bin` |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder. Config and save folders are in your user profile, not the game's install folder.
 
 ## Root / Game Folder Mods
 
@@ -36,7 +36,7 @@ Installs to: the game folder
 
 - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
 
-## Mod
+## Data Mod
 
 Recognised when the archive contains a `.pak` or `.pkm` file and a `models`, `movies` or `music` folder.
 
@@ -70,7 +70,7 @@ Installs to: `SaveGames`
 
 - Including an example save alongside a normal mod makes the archive install as a save.
 
-## Binaries
+## Binaries (Engine Injector)
 
 Handled by the `testBinaries` installer. Inspect the extension source for the exact archive layout it expects.
 

@@ -10,8 +10,8 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | Frosty Mod Manager (tool) | a `frostymodmanager.exe` file | the game folder |
 | Frosty Mods | a `.fbmod` file | `FrostyModManager\Mods\NeedForSpeedUnbound` |
-| Plugin | a `.dll` file | `FrostyModManager\Plugins` |
-| Key | a `nfsunbound.key` file | `FrostyModManager` |
+| Plugin (FMM) | a `.dll` file | `FrostyModManager\Plugins` |
+| Key (FMM) | a `nfsunbound.key` file | `FrostyModManager` |
 | Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
@@ -44,13 +44,13 @@ Installs to: `FrostyModManager\Mods\NeedForSpeedUnbound`
 
 - These mods still have to be applied through Frosty Mod Manager - installing in Vortex alone does not patch the game.
 
-## Plugin
+## Plugin (FMM)
 
 Recognised when the archive contains a `.dll` file.
 
 Installs to: `FrostyModManager\Plugins`
 
-## Key
+## Key (FMM)
 
 Recognised when the archive contains a `nfsunbound.key` file.
 

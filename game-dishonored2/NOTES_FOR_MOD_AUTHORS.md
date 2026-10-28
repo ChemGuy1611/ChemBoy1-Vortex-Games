@@ -8,29 +8,29 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Voidinstaller | a `voidinstaller.exe` file | the game folder |
-| Voidexplorer | a `voidexplorer.exe` file | the game folder |
-| Voidmod | a `modinfo.xml` file and a `.voidindex` or `.voidresources` file | `Void Installer\Mods` |
+| Void Installer | a `voidinstaller.exe` file | the game folder |
+| Void Explorer | a `voidexplorer.exe` file | the game folder |
+| Void Mod | a `modinfo.xml` file and a `.voidindex` or `.voidresources` file | `Void Installer\Mods` |
 | Root / Game Folder Mods | a `base` folder | the game folder |
-| Video | a `.bk2` file | `base\video` |
-| Save Game Files | a `profile.bin` file or a `.sav` file | - |
+| Video Mod | a `.bk2` file | `base\video` |
+| Save Game Files | a `profile.bin` file or a `.sav` file | the game's save folder |
 | Config File Mods | a `dishonored2config.cfg` file | `%USERPROFILE%\Saved Games\Arkane Studios\Dishonored2\base` |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder. Config and save folders are in your user profile, not the game's install folder.
 
-## Voidinstaller
+## Void Installer
 
 Recognised when the archive contains a `voidinstaller.exe` file.
 
 Installs to: the game folder
 
-## Voidexplorer
+## Void Explorer
 
 Recognised when the archive contains a `voidexplorer.exe` file.
 
 Installs to: the game folder
 
-## Voidmod
+## Void Mod
 
 Recognised when the archive contains a `modinfo.xml` file and a `.voidindex` or `.voidresources` file.
 
@@ -56,7 +56,7 @@ Installs to: the game folder
 
 - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
 
-## Video
+## Video Mod
 
 Recognised when the archive contains a `.bk2` file.
 
@@ -70,6 +70,8 @@ Save files, deployed to the game's save folder.
 
 - Recognised by any file named `profile.bin`.
 - Recognised by any file with the `.sav` extension.
+
+Installs to: the game's save folder
 
 **Common mistakes:**
 

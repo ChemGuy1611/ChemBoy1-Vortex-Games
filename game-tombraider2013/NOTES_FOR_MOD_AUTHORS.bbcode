@@ -5,7 +5,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ========================================================================
 
-Trmodmanager:
+TR Reboot Mod Manager:
 
 Recognised when the archive contains a "trreboottools.modmanager.exe" file.
 
@@ -13,7 +13,7 @@ Recognised when the archive contains a "trreboottools.modmanager.exe" file.
 
 ========================================================================
 
-Texmod:
+TexMod:
 
 Recognised when the archive contains a "texmod.exe" file.
 
@@ -21,7 +21,7 @@ Recognised when the archive contains a "texmod.exe" file.
 
 ========================================================================
 
-Texmodpack:
+TexMod Pack:
 
 Recognised when the archive contains a ".tpf" file.
 
@@ -29,7 +29,7 @@ Recognised when the archive contains a ".tpf" file.
 
 ========================================================================
 
-Managermod:
+Manager Mod:
 
 Recognised when the archive contains a ".tr9dtp", ".tr9material", ".tr9modeldata", ".t9script", ".t9shaderlib", ".tr9sound", ".dds", ".tr9objectref", ".tr9dtp" or ".tr9anim" file.
 
@@ -39,6 +39,6 @@ Recognised when the archive contains a ".tr9dtp", ".tr9material", ".tr9modeldata
 
 Rules That Apply To Every Mod Type:
 
-    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
+    - Archives that contain a FOMOD installer (a "fomod" folder with "ModuleConfig.xml") are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
     - Folder and file name matching is case-insensitive.
-    - Extra wrapper folders around a recognised folder are generally fine.
+    - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.

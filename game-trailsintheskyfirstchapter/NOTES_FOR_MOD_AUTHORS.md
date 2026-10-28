@@ -8,12 +8,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Pac | a `.pac` file | `pac\steam` |
+| Pac Files | a `.pac` file | `pac\steam` |
 | Root / Game Folder Mods | a `asset` folder | the game folder |
 
 Paths are relative to the game's install folder.
 
-## Pac
+## Pac Files
 
 Recognised when the archive contains a `.pac` file.
 

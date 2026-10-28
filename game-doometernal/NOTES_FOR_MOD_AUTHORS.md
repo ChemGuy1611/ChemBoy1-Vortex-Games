@@ -9,7 +9,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Rollback | a `doometernalx64vk.exe` file | the game folder |
-| Injector | a `eternalmodmanager.exe` file | the game folder |
+| EternalModInjector | a `eternalmodmanager.exe` file | the game folder |
 | Ktde | a `keep the dead eternal - readme - install instructions.rtf` file | the game folder |
 | Meathook | a `xinput1_3.dll` file | the game folder |
 | Zip Mod | - | - |
@@ -22,7 +22,7 @@ Recognised when the archive contains a `doometernalx64vk.exe` file.
 
 Installs to: the game folder
 
-## Injector
+## EternalModInjector
 
 Recognised when the archive contains a `eternalmodmanager.exe` file.
 

@@ -8,32 +8,32 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Manager | a `modimporter.exe` file | `Content` |
-| Modutility | a `modutil.lua` file | `Content\Mods\ModUtil` |
-| Loader | a `d3d12.dll` file | `Ship` |
-| Plugin | a `manifest.json` file and a `main.lua` file | - |
+| Mod Importer | a `modimporter.exe` file | `Content` |
+| Mod Utility | a `modutil.lua` file | `Content\Mods\ModUtil` |
+| Mod Loader (Hell2Modding) | a `d3d12.dll` file | `Ship` |
+| ReturnOfModding Plugin | a `manifest.json` file and a `main.lua` file | - |
 
 Paths are relative to the game's install folder.
 
-## Manager
+## Mod Importer
 
 Recognised when the archive contains a `modimporter.exe` file.
 
 Installs to: `Content`
 
-## Modutility
+## Mod Utility
 
 Recognised when the archive contains a `modutil.lua` file.
 
 Installs to: `Content\Mods\ModUtil`
 
-## Loader
+## Mod Loader (Hell2Modding)
 
 Recognised when the archive contains a `d3d12.dll` file.
 
 Installs to: `Ship`
 
-## Plugin
+## ReturnOfModding Plugin
 
 Recognised when the archive contains a `manifest.json` file and a `main.lua` file.
 

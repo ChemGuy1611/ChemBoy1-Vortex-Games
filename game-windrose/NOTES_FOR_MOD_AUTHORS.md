@@ -10,17 +10,17 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `R5` |
 | Blueprint Mods (LogicMods) | a `LogicMods` folder | `R5` |
-| Server Uesortablepak | a `.pak` file | `R5` |
+| UE Sortable Pak Mod | a `.pak` file | `R5` |
 | Pak Mods | a `.pak` file | `R5` |
 | UE4SS | a `dwmapi.dll` file | `R5\Binaries\Win64` |
 | UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `R5\Binaries\Win64\ue4ss\Mods` |
 | UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | `R5\Binaries\Win64\ue4ss\Mods` |
 | Root / Game Folder Mods | a top-level folder such as `R5`, `Engine` or `Content` | the game folder |
-| Config File Mods | a config file such as `engine.ini` or `game.ini` | - |
-| Save Game Files | a `.sst` file | - |
+| Config File Mods | a config file such as `engine.ini` or `game.ini` | the game's config folder |
+| Save Game Files | a `.sst` file | the game's save folder |
 | Fallback Installer | anything not matched above with no pak file | `R5\Binaries\Win64` |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder. Config and save folders are in your user profile, not the game's install folder.
 
 ## Combo Mods (pak + UE4SS script/DLL together)
 
@@ -79,7 +79,7 @@ Installs to: `R5`
 - Putting the `.pak` at the top level of the archive with no `LogicMods` folder. Vortex then treats it as an ordinary pak mod, installs it to the wrong place, and the blueprint mod never loads.
 - Renaming the folder (`Logic_Mods`, `logicmod`, `BPMods`) - the name must be exactly `LogicMods`.
 
-## Server Uesortablepak
+## UE Sortable Pak Mod
 
 Recognised when the archive contains a `.pak` file.
 
@@ -197,6 +197,8 @@ Config tweaks are deployed to the game's config folder in your user profile, not
 
 - Recognised by any of these filenames in the archive: `engine.ini`, `game.ini`, `gameusersettings.ini`, `input.ini`, `scalability.ini`, `hardware.ini`, `deviceprofiles.ini`, `compat.ini`, `runtimeoptions.ini`, `gameplaytags.ini`, `enhancedinput.ini` or `consolevariables.ini`.
 
+Installs to: the game's config folder
+
 **Common mistakes:**
 
 - Shipping a config file with one of these names inside an unrelated mod - the whole archive is then treated as a config mod.
@@ -208,6 +210,8 @@ Save files are deployed to the game's save folder in your user profile.
 **Requirements:**
 
 - Recognised by any file with extension `.sst`.
+
+Installs to: the game's save folder
 
 **Common mistakes:**
 

@@ -9,10 +9,10 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Mewtator | a `Mewtator.exe` file | the game folder |
-| Saveeeditor | a `MewgenicsSaveEditor.exe` file | the game folder |
+| MewgenicsSaveEditor | a `MewgenicsSaveEditor.exe` file | the game folder |
 | Mewjector | a `version.dll` file | the game folder |
 | Mod | a `description.json` file and a `data`, `audio`, `levels`, `shaders`, `swfs` or `textures` folder | `mods` |
-| Mewjectormod | a `.dll` file | `mods` |
+| Mewjector Mod | a `.dll` file | `mods` |
 | Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
@@ -23,7 +23,7 @@ Recognised when the archive contains a `Mewtator.exe` file.
 
 Installs to: the game folder
 
-## Saveeeditor
+## MewgenicsSaveEditor
 
 Recognised when the archive contains a `MewgenicsSaveEditor.exe` file.
 
@@ -41,7 +41,7 @@ Recognised when the archive contains a `description.json` file and a `data`, `au
 
 Installs to: `mods`
 
-## Mewjectormod
+## Mewjector Mod
 
 Recognised when the archive contains a `.dll` file.
 

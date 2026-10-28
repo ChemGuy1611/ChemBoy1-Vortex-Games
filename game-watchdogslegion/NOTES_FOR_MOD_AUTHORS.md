@@ -8,15 +8,15 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Loader | a `DisruptManager.exe` file | `Disrupt_Manager` |
+| Mod Loader | a `DisruptManager.exe` file | `Disrupt_Manager` |
 | Root / Game Folder Mods | a `data_win64` folder | the game folder |
-| Binaries | a `.exe`, `.dll`, `.asi` or `.addon64` file | `bin` |
+| Binaries (Engine Injector) | a `.exe`, `.dll`, `.asi` or `.addon64` file | `bin` |
 | Mod | a `.dat` or `.fat` file | `Disrupt_Manager\Watch Dogs Legion` |
 | Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
 
-## Loader
+## Mod Loader
 
 Recognised when the archive contains a `DisruptManager.exe` file.
 
@@ -42,7 +42,7 @@ Installs to: the game folder
 
 - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
 
-## Binaries
+## Binaries (Engine Injector)
 
 Recognised when the archive contains a `.exe`, `.dll`, `.asi` or `.addon64` file.
 

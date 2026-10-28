@@ -8,27 +8,27 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Godotmodloader | a `modloader.gd` file | the game folder |
-| Mcm | a `ModConfigurationMenu` folder | `mods` |
-| Mod | a `.vmz` file | `mods` |
+| Metro Mod Loader | a `modloader.gd` file | the game folder |
+| ModConfigurationMenu | a `ModConfigurationMenu` folder | `mods` |
+| Godot Mod | a `.vmz` file | `mods` |
 | Mod Rezip | a `mod.txt` file | `mods` |
 | Fallback Installer | anything not matched above | `mods` |
 
 Paths are relative to the game's install folder.
 
-## Godotmodloader
+## Metro Mod Loader
 
 Recognised when the archive contains a `modloader.gd` file.
 
 Installs to: the game folder
 
-## Mcm
+## ModConfigurationMenu
 
 Recognised when the archive contains a `ModConfigurationMenu` folder.
 
 Installs to: `mods`
 
-## Mod
+## Godot Mod
 
 Recognised when the archive contains a `.vmz` file.
 

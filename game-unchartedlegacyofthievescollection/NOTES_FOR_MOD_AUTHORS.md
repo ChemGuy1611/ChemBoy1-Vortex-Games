@@ -9,8 +9,8 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Fluffy Mod Manager (tool) | a `modmanager.exe` file | the game folder |
-| Psarc | a `.psarc` file | the game folder |
-| Fluffy-Format Mods | anything not matched above | - |
+| PSARC Files | a `.psarc` file | the game folder |
+| Fluffy-Format Mods | anything not matched above | `Games\UC4\Mods` |
 
 Paths are relative to the game's install folder.
 
@@ -28,7 +28,7 @@ Installs to: the game folder
 
 - If you bundle Fluffy Mod Manager inside your mod archive, Vortex treats the whole download as Fluffy Mod Manager rather than as your mod. Ship the mod alone and list Fluffy Mod Manager as a requirement.
 
-## Psarc
+## PSARC Files
 
 Recognised when the archive contains a `.psarc` file.
 
@@ -42,6 +42,8 @@ The catch-all for RE Engine mods packaged in the normal Fluffy Mod Manager layou
 
 - Any archive not claimed by an earlier installer is treated as a Fluffy-format mod.
 - An archive already zipped in the Fluffy layout is installed as it is, with no repacking.
+
+Installs to: `Games\UC4\Mods`
 
 **Common mistakes:**
 

@@ -5,7 +5,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ========================================================================
 
-Modloader:
+ND Mod Loader:
 
 Recognised when the archive contains a "winmm.dll" file.
 
@@ -13,7 +13,7 @@ Recognised when the archive contains a "winmm.dll" file.
 
 ========================================================================
 
-Psarc:
+.psarc (Mod Loader):
 
 Recognised when the archive contains a ".psarc" file.
 
@@ -21,7 +21,7 @@ Recognised when the archive contains a ".psarc" file.
 
 ========================================================================
 
-Buildfolderpakbin:
+Build Folder Pak Bin:
 
 Recognised when the archive contains a "build" folder, a ".pak" file and a ".bin" file.
 
@@ -29,7 +29,7 @@ Recognised when the archive contains a "build" folder, a ".pak" file and a ".bin
 
 ========================================================================
 
-Binfolder:
+bin Folder:
 
 Recognised when the archive contains a "bin" folder, a ".pak" file and a ".bin" file.
 
@@ -37,7 +37,7 @@ Recognised when the archive contains a "bin" folder, a ".pak" file and a ".bin" 
 
 ========================================================================
 
-Pak:
+Pak (actor97):
 
 Recognised when the archive contains a ".pak" file.
 
@@ -45,7 +45,7 @@ Recognised when the archive contains a ".pak" file.
 
 ========================================================================
 
-Buildfolder:
+Build Folder:
 
 Recognised when the archive contains a "build" folder.
 
@@ -81,7 +81,7 @@ Configuration tweaks, deployed to the game's config location.
 
 ========================================================================
 
-Psarctoolndarc:
+ndarc Tool:
 
 Recognised when the archive contains a "ndarc.exe" file.
 
@@ -91,6 +91,6 @@ Recognised when the archive contains a "ndarc.exe" file.
 
 Rules That Apply To Every Mod Type:
 
-    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
+    - Archives that contain a FOMOD installer (a "fomod" folder with "ModuleConfig.xml") are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
     - Folder and file name matching is case-insensitive.
-    - Extra wrapper folders around a recognised folder are generally fine.
+    - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.

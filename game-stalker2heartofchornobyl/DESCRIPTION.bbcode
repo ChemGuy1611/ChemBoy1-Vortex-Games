@@ -23,13 +23,13 @@ This extension adds S.T.A.L.K.E.R. 2: Heart of Chornobyl modding support to Vort
 [*]UE4SS Script-LogicMod Combo mods with both a "Content" and a "Binaries" folder install to the "Stalker2" folder.[/*]
 [*]UE4SS LogicMods (Blueprint) mods with a "LogicMods" folder install to the "Stalker2\Content\Paks" folder.[/*]
 [*]Herbata Mod (GameLite) mods with a "GameLite" folder install to the "Stalker2\Content" folder.[/*]
-[*]UE4SS is recognised by a "dwmapi.dll" file.[/*]
-[*]UE4SS Scripts mods are recognised by a ".lua" file and a "Scripts" folder.[/*]
-[*]UE4SS DLL mods are recognised by a ".dll" file and a "dlls" folder.[/*]
+[*]UE4SS installs to the "Stalker2\Binaries\Win64" folder ("WinGDK" instead of "Win64" for the Xbox version), recognised by a "dwmapi.dll" file.[/*]
+[*]UE4SS Scripts mods with a ".lua" file and a "Scripts" folder install to the "Stalker2\Binaries\Win64\ue4ss\Mods" folder ("WinGDK" instead of "Win64" for the Xbox version).[/*]
+[*]UE4SS DLL mods with a ".dll" file and a "dlls" folder install to the "Stalker2\Binaries\Win64\ue4ss\Mods" folder ("WinGDK" instead of "Win64" for the Xbox version).[/*]
 [*]Root Game Folder mods with a top-level folder such as "Stalker2", "Engine" or "Content" install to the game folder.[/*]
 [*]Config (LocalAppData) mods with a config file such as "engine.ini" or "game.ini" install to the game's config folder.[/*]
 [*]Saves (LocalAppData) mods with a ".sav" file install to the game's save folder.[/*]
-[*]Any other mod not described above installs to the game folder.[/*]
+[*]Any other mod not described above installs to the "Stalker2\Binaries\Win64" folder ("WinGDK" instead of "Win64" for the Xbox version).[/*]
 [*]Archives with a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to Vortex's built-in FOMOD installer instead.[/*]
 [/list]
 [b]📋 Usage Notes:[/b]
@@ -50,7 +50,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ========================================================================
 
-Merger:
+Simple Mod Merger:
 
 Recognised when the archive contains a "simple_mod_merger.exe" file.
 
@@ -115,7 +115,7 @@ MyBlueprintMod.zip
 
 ========================================================================
 
-Herbatamod:
+Herbata Mod (GameLite):
 
 Recognised when the archive contains a "GameLite" folder.
 
@@ -129,6 +129,8 @@ This installer handles the UE4SS runtime package, not individual mods. Most auth
 
   Requirements:
     - Recognised by a file named "dwmapi.dll" at any level of the archive.
+
+  Installs to: "Stalker2\Binaries\Win64" ("WinGDK" instead of "Win64" for the Xbox version)
 
   Common mistakes:
     - If your script mod archive happens to contain a file named "dwmapi.dll", it will be treated as a UE4SS install rather than as your mod.
@@ -151,6 +153,8 @@ MyScriptMod.zip
     - Wrap the "Scripts" folder in a folder named after your mod. That folder name becomes the mod's UE4SS name and is what gets written to the load order.
     - If you omit the wrapper folder, Vortex falls back to naming the mod after the archive file.
 
+  Installs to: "Stalker2\Binaries\Win64\ue4ss\Mods" ("WinGDK" instead of "Win64" for the Xbox version)
+
   Common mistakes:
     - Putting "main.lua" directly in the archive root with no "Scripts" folder - the mod is not recognised as a script mod.
     - Naming the wrapper folder something generic like "Mods" - that name is what appears in the load order.
@@ -171,6 +175,8 @@ MyDllMod.zip
   Requirements:
     - The archive must contain a ".dll" file AND a folder named "dlls".
     - Wrap the "dlls" folder in a folder named after your mod - that name is used in the load order.
+
+  Installs to: "Stalker2\Binaries\Win64\ue4ss\Mods" ("WinGDK" instead of "Win64" for the Xbox version)
 
   Common mistakes:
     - A bare ".dll" with no "dlls" folder is not recognised as a UE4SS DLL mod and will reach the fallback installer.
@@ -205,6 +211,8 @@ Config tweaks are deployed to the game's config folder in your user profile, not
   Requirements:
     - Recognised by any of these filenames in the archive: "engine.ini", "game.ini", "gameusersettings.ini", "input.ini", "scalability.ini", "hardware.ini", "deviceprofiles.ini", "compat.ini", "runtimeoptions.ini", "gameplaytags.ini", "enhancedinput.ini" or "consolevariables.ini".
 
+  Installs to: the game's config folder
+
   Common mistakes:
     - Shipping a config file with one of these names inside an unrelated mod - the whole archive is then treated as a config mod.
 
@@ -216,6 +224,8 @@ Save files are deployed to the game's save folder in your user profile.
 
   Requirements:
     - Recognised by any file with extension ".sav".
+
+  Installs to: the game's save folder
 
   Common mistakes:
     - Including an example save alongside a normal mod - the archive is then treated as a save, not a mod.
@@ -232,6 +242,8 @@ This is the catch-all. Any archive with no ".pak" file that matched none of the 
     - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
     - Vortex shows the user a notification when a mod installs through the fallback.
 
+  Installs to: "Stalker2\Binaries\Win64" ("WinGDK" instead of "Win64" for the Xbox version)
+
   Common mistakes:
     - If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report it as broken.
 
@@ -239,9 +251,9 @@ This is the catch-all. Any archive with no ".pak" file that matched none of the 
 
 Rules That Apply To Every Mod Type:
 
-    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
+    - Archives that contain a FOMOD installer (a "fomod" folder with "ModuleConfig.xml") are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
     - Folder and file name matching is case-insensitive.
-    - Extra wrapper folders around a recognised folder are generally fine.
+    - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
 [/spoiler]
 
 [b]🤝 Credits:[/b]

@@ -8,11 +8,11 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Root | - | the game folder |
+| Root Folder | - | the game folder |
 
 Paths are relative to the game's install folder.
 
-## Root
+## Root Folder
 
 Handled by the `testRoot` installer. Inspect the extension source for the exact archive layout it expects.
 

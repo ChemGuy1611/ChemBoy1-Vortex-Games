@@ -28,8 +28,10 @@
  *                nothing; implies --description. Reports per page: store (a listed store
  *                the game is not discovered by), bare (a bullet with no destination),
  *                duplicate, long-list (over 8 names in one list), name-repeat (a mod type
- *                name quoting its own trigger extension) and stale (known-outdated hand-written
- *                wording). Findings are for a person to judge: exit 0 unless a page errors.
+ *                name quoting its own trigger extension), repeat (hand-written text outside
+ *                the lists that the page already states) and stale (known-outdated
+ *                hand-written wording). Findings are for a person to judge: exit 0 unless a
+ *                page errors.
  *   --description  Write DESCRIPTION.bbcode, the Nexus mod page description, in
  *                  place of the notes files. Two lists on the page are generated: the
  *                  "Mod Installation Notes" list (an extension with no installer gets
@@ -923,7 +925,8 @@ const PROSE = [
       title: "Fallback Installer",
       // "anything not matched" is what renderDescription keys its catch-all line on.
       quick: "anything not matched above with no pak file",
-      installsTo: v.BINARIES_PATH || null,
+      installsTo: v.BINARIES_PATH || "the game's binaries folder",
+      targetIsProse: !v.BINARIES_PATH,
       lead:
         "This is the catch-all. Any archive with no `.pak` file that matched none of the installers above " +
         "lands here and is copied, unchanged, into the game's binaries folder.",
@@ -1367,7 +1370,8 @@ const PROSE = [
       return {
         title: "Loose Lua Scripts",
         quick: `a \`${ext}\` file outside the REFramework folders`,
-        installsTo: null,
+        // installLooseLua writes every script under reframework\autorun itself.
+        installsTo: "reframework\\autorun",
         lead: `Standalone REFramework Lua scripts, shipped without the surrounding REFramework folder structure.`,
         rules: [
           `Recognised by a \`${ext}\` file in an archive that does NOT already contain a REFramework folder` +
@@ -1394,10 +1398,10 @@ const PROSE = [
   {
     fn: "testFluffyMod",
     engine: "reengine",
-    build: () => ({
+    build: (v) => ({
       title: "Fluffy-Format Mods",
       quick: "anything not matched above",
-      installsTo: null,
+      installsTo: v.FLUFFYMOD_PATH || v.SPEC_MOD_PATH || null,
       lead:
         "The catch-all for RE Engine mods packaged in the normal Fluffy Mod Manager layout. " +
         "Most content mods for this game land here, which is the intended outcome.",
@@ -1414,10 +1418,11 @@ const PROSE = [
     // given extension, and every current RE Engine game ships reZip = true.
     fn: "testZipContent",
     engine: "reengine",
-    build: () => ({
+    build: (v) => ({
       title: "Fluffy-Format Mods",
       quick: "anything not matched above",
-      installsTo: null,
+      // The zip has no setmodtype, so it lands in the game's mod path: the Fluffy Mods folder.
+      installsTo: v.FLUFFYMOD_PATH || v.SPEC_MOD_PATH || null,
       lead:
         "The catch-all for RE Engine mods packaged in the normal Fluffy Mod Manager layout. " +
         "Most content mods for this game land here, which is the intended outcome.",
@@ -1969,6 +1974,7 @@ function buildVars(src, table) {
     "UPKEXPLORER_EXEC",
     // RE Engine / Fluffy
     "FLUFFY_EXEC",
+    "FLUFFYMOD_PATH",
     "REF_FILE",
     "LUA_EXT",
     // Anvil
@@ -2086,13 +2092,24 @@ function buildVars(src, table) {
   v.LOADERS = unityLoaders(v);
   v.WRAPS_PLUGINS = /\bfunction\s+pluginFolderName\b/.test(src);
   v.MELON_MANIFEST = /\bfunction\s+melonManifest\b/.test(src);
+  // The spec's `modPath:` (a constant or a string literal), for extensions without a
+  // MOD_PATH_DEFAULT.
+  const specModPath = /\bmodPath\s*:\s*(?:([A-Z_][A-Z0-9_]*)|(["'])([^"']*)\2)\s*,/.exec(src);
+  v.SPEC_MOD_PATH = !specModPath
+    ? null
+    : specModPath[1]
+      ? val(specModPath[1], src, table)
+      : specModPath[3];
   // A fallback copy without a setmodtype instruction deploys to the game's default mod path
-  // (registerGame modPath), which is not always the game folder.
+  // (registerGame modPath), which is not always the game folder. "." is kept: fmtTarget
+  // words it "the game folder", which the Quick Reference would otherwise show as "-".
   const fallbackBody = sliceFunction(src, "installFallback");
-  const defaultPath = val("MOD_PATH_DEFAULT", src, table);
+  const defaultPath = val("MOD_PATH_DEFAULT", src, table) || v.SPEC_MOD_PATH;
   v.FALLBACK_PATH =
-    fallbackBody && !/setmodtype/.test(fallbackBody) && defaultPath && !/^\.?\/?$/.test(defaultPath)
-      ? defaultPath
+    fallbackBody && !/setmodtype/.test(fallbackBody) && defaultPath
+      ? /^\.?\/?$/.test(defaultPath)
+        ? "."
+        : defaultPath
       : null;
   // PAKMOD_EXTS is built as ['.pak'].concat(PAKMOD_EXTRA_EXTS)
   if (!v.PAKMOD_EXTS.length) {
@@ -2301,8 +2318,24 @@ function xboxNote(s) {
   return s.xboxWinGdk ? " (`WinGDK` instead of `Win64` for the Xbox version)" : "";
 }
 
+/** The closing rules both renderers list, so the markdown and BBCode notes say the same thing. */
+function everyTypeRules(ctx) {
+  const rules = [];
+  if (ctx.allFomodGuarded) {
+    rules.push(
+      "Archives that contain a FOMOD installer (a `fomod` folder with `ModuleConfig.xml`) are handed to " +
+        "Vortex's built-in FOMOD installer instead, and none of the rules above apply.",
+    );
+  }
+  rules.push("Folder and file name matching is case-insensitive.");
+  rules.push(
+    "Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.",
+  );
+  return rules;
+}
+
 function renderMarkdown(ctx) {
-  const { title, gameName, sections, fallbackNote } = ctx;
+  const { title, gameName, sections } = ctx;
   let md = `# ${title}\n\n`;
   md += `Packaging rules for ${gameName} mods, so Vortex installs them to the right place.\n\n`;
   md +=
@@ -2323,9 +2356,7 @@ function renderMarkdown(ctx) {
   // Only mention the user-profile exception when a mod type actually deploys there. Games
   // with no config or save mod type were being told about a rule that does not apply to them.
   if (sections.some((s) => s.userProfile)) {
-    md +=
-      ` Config and save mods deploy into your ` +
-      `user profile instead, so no game-relative path is shown for them.`;
+    md += ` Config and save folders are in your user profile, not the game's install folder.`;
   }
   md += `\n\n`;
 
@@ -2348,14 +2379,7 @@ function renderMarkdown(ctx) {
   }
 
   md += `## Rules That Apply To Every Mod Type\n\n`;
-  if (ctx.allFomodGuarded) {
-    md +=
-      `- Archives that contain a FOMOD installer (a \`fomod\` folder with \`ModuleConfig.xml\`) are handed to ` +
-      `Vortex's built-in FOMOD installer instead, and none of the rules above apply.\n`;
-  }
-  md += `- Folder and file name matching is case-insensitive.\n`;
-  md += `- Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.\n`;
-  if (fallbackNote) md += `- ${fallbackNote}\n`;
+  for (const r of everyTypeRules(ctx)) md += `- ${r}\n`;
   md += `\n`;
   // Collapse to a single trailing newline -- every section above ends with its own
   // blank-line separator, so the last one leaves a stray double-blank at EOF.
@@ -2418,13 +2442,7 @@ function renderBBCode(ctx) {
 
   L.push("Rules That Apply To Every Mod Type:");
   L.push("");
-  if (ctx.allFomodGuarded) {
-    L.push(
-      '    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.',
-    );
-  }
-  L.push("    - Folder and file name matching is case-insensitive.");
-  L.push("    - Extra wrapper folders around a recognised folder are generally fine.");
+  for (const r of everyTypeRules(ctx)) L.push(`    - ${stripMd(r)}`);
   L.push("");
   return L.join("\n");
 }
@@ -2657,7 +2675,11 @@ function renderDescription(ctx) {
     const mods = capitalize(modTypeNoun(s, true, trigger || ""));
     let line;
     if (isFallback) {
-      line = `Any other mod not described above installs to ${target || GAME_FOLDER_PROSE}.`;
+      // An unresolved destination is not assumed to be the game folder: RE Engine's catch-all
+      // lands in the Fluffy Mods folder and the Unreal one in Binaries.
+      line = target
+        ? `Any other mod not described above installs to ${target}.`
+        : "Any other mod not described above is installed exactly as it is packaged.";
     } else if (isTool) {
       // Section titles carry a "(tool)" / "(mod loader)" qualifier that reads as clutter here.
       const toolName = capitalize(s.toolName || s.title.replace(/\s*\([^)]*\)\s*$/, ""));
@@ -2689,6 +2711,7 @@ function renderDescription(ctx) {
 }
 
 /** Store label per resolved app-id constant, in the order the pages list them. */
+// sync_mod_pages.py STORE_LABELS mirrors these labels to build the page summary; keep in step.
 const STORE_IDS = [
   ["STEAMAPP_ID", "Steam"],
   ["STEAMAPP_ID_DEMO", "Steam Demo"],
@@ -2706,9 +2729,12 @@ const STORE_IDS = [
 const REGISTRY_STORES = new Set(["UPLAYAPP_ID", "EAAPP_ID"]);
 
 /**
- * Values of the ids the game is discovered by: DISCOVERY_IDS_ACTIVE, else the literal array in
- * the spec's `discovery: { ids: [...] }`, plus every `id:` in the `gameFinderQuery` object that
- * extensions registering `queryArgs` declare their stores in. Null when none can be read.
+ * Values of the ids the game is discovered by: DISCOVERY_IDS_ACTIVE, plus the literal array in
+ * every spec's `discovery: { ids: [...] }`, plus every `id:` in each `gameFinderQuery` object
+ * (`gameFinderQuery1`, `gameFinderQuery2`, ...) that extensions registering `queryArgs` declare
+ * their stores in. Every spec counts, because a multi-game extension (DOOM 3 Classic and BFG,
+ * Space Marine and its Master Crafted Edition) discovers each game by its own ids.
+ * Null when none can be read.
  */
 function discoveryIds(src, table) {
   const resolveIds = (list) =>
@@ -2719,21 +2745,56 @@ function discoveryIds(src, table) {
         const v = resolveWithFallback(a, table, src);
         return v == null ? a : String(v);
       });
-  let ids = resolveArray("DISCOVERY_IDS_ACTIVE", src, table);
-  if (!ids.length) {
-    const m = src.match(/\bdiscovery\s*:\s*\{[^}]*?\bids\s*:\s*\[([^\]]*)\]/);
-    if (m) ids = resolveIds(m[1]);
+  // A commented-out spec or query is not discovery. Checked per match: stripping comments from
+  // the whole file is not safe, a regex literal holding a quote desyncs the string scan.
+  const inComment = (at) => {
+    const lineStart = src.lastIndexOf("\n", at) + 1;
+    return (
+      src.slice(lineStart, at).includes("//") ||
+      src.lastIndexOf("/*", at) > src.lastIndexOf("*/", at)
+    );
+  };
+  const ids = resolveArray("DISCOVERY_IDS_ACTIVE", src, table);
+  for (const m of src.matchAll(/\bdiscovery\s*:\s*\{[^}]*?\bids\s*:\s*\[([^\]]*)\]/g)) {
+    if (!inComment(m.index)) ids.push(...resolveIds(m[1]));
   }
-  const q = /\bconst\s+gameFinderQuery\s*=\s*\{/.exec(src);
-  if (q) {
+  for (const q of src.matchAll(/\bconst\s+gameFinderQuery\w*\s*=\s*\{/g)) {
+    if (inComment(q.index)) continue;
     const open = q.index + q[0].length - 1;
     const close = scanToMatchingClose(src, open, "{", "}");
-    if (close !== -1) {
-      const body = stripComments(src.slice(open + 1, close));
-      for (const m of body.matchAll(/\bid\s*:\s*([^,}\s]+)/g)) ids.push(...resolveIds(m[1]));
-    }
+    if (close === -1) continue;
+    const body = stripComments(src.slice(open + 1, close));
+    for (const m of body.matchAll(/\bid\s*:\s*([^,}\s]+)/g)) ids.push(...resolveIds(m[1]));
   }
   return ids.length ? new Set(ids) : null;
+}
+
+/** Suffixes of a store id that are not a version of the game a user plays. */
+const NON_GAME_STORE_SUFFIX = /_(?:DEMO|SERVER)/;
+
+/**
+ * A store's app-id constant plus its edition variants: `STEAMAPP_ID_MCE`, `EPICAPP_ID_BFG`,
+ * `XBOXAPP_ID_SPACERS`, the numbered `STEAMAPP_ID1` of a collection. A store counts as
+ * supported when any of them does. Demo and dedicated-server ids are not variants; the
+ * Steam demo has its own STORE_IDS entry.
+ */
+function storeIdNames(name, table) {
+  if (NON_GAME_STORE_SUFFIX.test(name)) return [name];
+  const variant = new RegExp(`^${name}(?:_[A-Z][A-Z0-9_]*|\\d+)$`);
+  return [
+    name,
+    ...[...table.keys()].filter((k) => variant.test(k) && !NON_GAME_STORE_SUFFIX.test(k)),
+  ];
+}
+
+/** Whether one app-id constant makes its store a supported version (see renderSupportedVersions). */
+function storeIdSupported(name, base, ctx) {
+  const value = ctx.table.get(name);
+  if (REGISTRY_STORES.has(base)) return ctx.table.has(name);
+  if (!isRealValue(value)) return false;
+  // Discovery could not be read: a demo id alone says nothing about support.
+  if (!ctx.discovery) return base !== "STEAMAPP_ID_DEMO";
+  return ctx.discovery.has(String(value));
 }
 
 /**
@@ -2745,22 +2806,19 @@ function discoveryIds(src, table) {
  * not told about, and ids are often filled in long before (or deliberately without) being
  * added to discovery - a demo, a store build that cannot be modded, an unreleased version.
  */
+/** Closing line of the Supported Versions list; hand-written store notes go in front of it. */
+const OTHER_VERSIONS_ITEM =
+  "[*]Other versions may need to select the installation location manually.[/*]";
+
 function renderSupportedVersions(ctx) {
   const L = [];
   L.push(SUPPORTED_HEADING);
   L.push("[list]");
   for (const [name, label] of STORE_IDS) {
-    const value = ctx.table.get(name);
-    let supported = REGISTRY_STORES.has(name) ? ctx.table.has(name) : isRealValue(value);
-    if (supported && !REGISTRY_STORES.has(name) && ctx.discovery) {
-      supported = ctx.discovery.has(String(value));
-    } else if (supported && name === "STEAMAPP_ID_DEMO") {
-      // Discovery could not be read: a demo id alone says nothing about support.
-      supported = false;
-    }
+    const supported = storeIdNames(name, ctx.table).some((n) => storeIdSupported(n, name, ctx));
     if (supported) L.push(`[*]${label}[/*]`);
   }
-  L.push("[*]Other versions may need to select the installation location manually.[/*]");
+  L.push(OTHER_VERSIONS_ITEM);
   L.push("[/list]");
   return L.join("\n");
 }
@@ -3305,16 +3363,38 @@ function scaffoldDescription(ctx, installBlock, supportedBlock) {
  */
 const AUTHOR_ITEM = /\[(?:b|i|u|color|size|url|img)[=\]]/i;
 
-function spliceList(existing, heading, block) {
+/**
+ * True for a Supported Versions item this generator writes: a store label or the closing
+ * "Other versions" line. Every other item in that list was written by hand.
+ */
+function isGeneratedStoreItem(item) {
+  const text = item
+    .replace(/^\[\*\]/, "")
+    .replace(/\[\/\*\]\s*$/, "")
+    .trim();
+  return STORE_IDS.some(([, label]) => label === text) || `[*]${text}[/*]` === OTHER_VERSIONS_ITEM;
+}
+
+/**
+ * `keep` picks the old items to carry over; `before` is the generated line they go in
+ * front of, or null for the top of the list.
+ */
+function spliceList(
+  existing,
+  heading,
+  block,
+  keep = (item) => AUTHOR_ITEM.test(item),
+  before = null,
+) {
   const start = existing.indexOf(heading);
   if (start === -1) return null;
   const listEnd = existing.indexOf("[/list]", start);
   if (listEnd === -1) return null;
   const oldItems = existing.slice(start, listEnd).match(/^\[\*\].*$/gm) || [];
-  const kept = oldItems.filter((item) => AUTHOR_ITEM.test(item));
+  const kept = oldItems.filter(keep);
   const lines = block.split("\n");
-  const listOpen = lines.indexOf("[list]");
-  if (kept.length && listOpen !== -1) lines.splice(listOpen + 1, 0, ...kept);
+  const at = before ? lines.indexOf(before) : lines.indexOf("[list]") + 1;
+  if (kept.length && at > 0) lines.splice(at, 0, ...kept);
   return existing.slice(0, start) + lines.join("\n") + existing.slice(listEnd + "[/list]".length);
 }
 
@@ -3323,11 +3403,24 @@ function spliceList(existing, heading, block) {
  * a page without that heading is not one this generator wrote, so the caller refuses
  * it. The store list is optional: a page laid out without it still gets its install
  * list updated rather than being skipped wholesale.
+ *
+ * The store list keeps every hand-written item, plain or not ("Xbox is NOT supported"),
+ * placed after the stores and ahead of the closing "Other versions" line. Its generated
+ * items are a fixed set, so anything outside that set is safe to carry over.
  */
 function spliceDescription(existing, installBlock, supportedBlock) {
   const withInstall = spliceList(existing, INSTALL_HEADING, installBlock);
   if (withInstall === null) return null;
-  return spliceList(withInstall, SUPPORTED_HEADING, supportedBlock) || withInstall;
+  const keepStoreNote = (item) => !isGeneratedStoreItem(item);
+  return (
+    spliceList(
+      withInstall,
+      SUPPORTED_HEADING,
+      supportedBlock,
+      keepStoreNote,
+      OTHER_VERSIONS_ITEM,
+    ) || withInstall
+  );
 }
 
 // ── per-extension build ─────────────────────────────────────────────────────
@@ -3335,17 +3428,89 @@ function spliceDescription(existing, installBlock, supportedBlock) {
 /** Hand-written wording known to be wrong or outdated; the lint flags it wherever it appears. */
 const STALE_PHRASES = [
   [/\(no subfolder\)/i, '"(no subfolder)" - the generator words this "the game folder"'],
-  [/Xbox \(Game Pass\)/i, '"Xbox (Game Pass)" - the store is listed as "Xbox"'],
+  [/\(Game Pass\)/i, '"(Game Pass)" - the store is listed as "Xbox", in the summary too'],
   [/Game Pass version is supported/i, 'credit says "Game Pass version" - now "Xbox version"'],
   [/\bXXX\b/, "unfilled XXX placeholder"],
 ];
+
+/** Share of the shorter statement's words the other must also contain for `repeat` to fire. */
+const REPEAT_OVERLAP = 0.8;
+/** Words too common to count towards a `repeat` overlap. */
+const REPEAT_STOP_WORDS = new Set(
+  "the a an and or to of for is are be will this that it in on with by as your you".split(" "),
+);
+
+/** The words of a page statement, lowercased, with markup, links and images removed. */
+function statementWords(s) {
+  return s
+    .replace(/\[img\][\s\S]*?\[\/img\]/gi, " ")
+    .replace(/\[\/?[a-z*]+(?:=[^\]]*)?\]/gi, " ")
+    .replace(/https?:\/\/[^\s[\]]+/g, " ")
+    .replace(/&(?:[a-z]+|#\d+);/gi, " ")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}_\s]/gu, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+/** True when two statements say the same thing: equal words, or most of the shorter one's. */
+function sameStatement(a, b) {
+  if (a.join(" ") === b.join(" ")) return true;
+  const wa = new Set(a.filter((w) => !REPEAT_STOP_WORDS.has(w)));
+  const wb = new Set(b.filter((w) => !REPEAT_STOP_WORDS.has(w)));
+  const smaller = Math.min(wa.size, wb.size);
+  if (smaller < 3) return false;
+  let shared = 0;
+  for (const w of wa) if (wb.has(w)) shared++;
+  return shared / smaller >= REPEAT_OVERLAP;
+}
+
+/**
+ * Hand-written page text that says something the page already says: a sentence outside the
+ * bulleted lists restated by another such sentence or by a bullet. The Notes for Mod Authors
+ * spoiler is generated and repetitive by design, and a `[summary]` note is sent only as the
+ * page summary, so both are left out.
+ */
+function repeatedStatements(text) {
+  const page = text
+    .replace(/\[spoiler\][\s\S]*?\[\/spoiler\]/gi, "\n")
+    .replace(/\[summary\][\s\S]*?\[\/summary\]/gi, "\n");
+  const bullets = [...page.matchAll(/\[\*\]([\s\S]*?)(?:\[\/\*\]|\n)/g)].map((m) => ({
+    text: m[1],
+    words: statementWords(m[1]),
+  }));
+  const sentences = [];
+  for (const line of page.replace(/\[list(?:=[^\]]*)?\][\s\S]*?\[\/list\]/gi, "\n").split("\n")) {
+    for (const s of line.trim().split(/(?<=[.!?])\s+(?=[A-Z[])/)) {
+      const words = statementWords(s);
+      if (words.length >= 4) sentences.push({ text: s, words });
+    }
+  }
+  const show = (s) => {
+    const t = s
+      .replace(/\[\/?[a-z*]+(?:=[^\]]*)?\]/gi, "")
+      .replace(/\s+/g, " ")
+      .trim();
+    return t.length > 70 ? `${t.slice(0, 67)}...` : t;
+  };
+  const found = [];
+  sentences.forEach((a, i) => {
+    for (const b of sentences.slice(i + 1)) {
+      if (sameStatement(a.words, b.words)) found.push(`"${show(a.text)}" / "${show(b.text)}"`);
+    }
+    const bullet = bullets.find((b) => sameStatement(a.words, b.words));
+    if (bullet) found.push(`"${show(a.text)}" / bullet "${show(bullet.text)}"`);
+  });
+  return found;
+}
 
 /**
  * Read-only checks on a page as it sits on disk, which is what a push sends. Returns one
  * `{ kind, detail }` per finding. Kinds: store (a listed store the game is not discovered by),
  * bare (a bullet with no destination: "are supported." / "are recognised by"), duplicate (a bullet listed twice), long-list (more than
  * DESCRIPTION_LIST_CAP names in one list), name-repeat (a mod type name quoting its own
- * trigger extension), stale (STALE_PHRASES).
+ * trigger extension), repeat (hand-written text the page already states, `repeatedStatements`),
+ * stale (STALE_PHRASES).
  */
 function lintDescription(text, ctx) {
   const findings = [];
@@ -3358,9 +3523,12 @@ function lintDescription(text, ctx) {
     const labels = [...supportedList[1].matchAll(/\[\*\](.*?)\[\/\*\]/g)].map((m) => m[1].trim());
     for (const [name, label] of STORE_IDS) {
       if (REGISTRY_STORES.has(name) || !labels.includes(label)) continue;
-      const value = ctx.table.get(name);
-      if (!isRealValue(value) || !ctx.discovery.has(String(value))) {
-        add("store", `lists ${label}, but ${name} is not one of the ids the game is discovered by`);
+      const names = storeIdNames(name, ctx.table);
+      if (!names.some((n) => storeIdSupported(n, name, ctx))) {
+        add(
+          "store",
+          `lists ${label}, but ${names.join(" / ")} is not one of the ids the game is discovered by`,
+        );
       }
     }
   }
@@ -3380,6 +3548,7 @@ function lintDescription(text, ctx) {
       add("name-repeat", short);
     }
   }
+  for (const pair of repeatedStatements(text)) add("repeat", pair);
   for (const [re, why] of STALE_PHRASES) if (re.test(text)) add("stale", why);
   return findings;
 }
@@ -3441,6 +3610,14 @@ function buildNotes(dirName, src) {
     // A loader's own installers stay registered when the extension does not offer that loader,
     // but describing them would tell users about a loader they never get.
     if (block && block.loader && !vars.LOADERS.includes(block.loader)) continue;
+    // The registered mod type this installer feeds, for the description bullets. An entry whose
+    // name fell back to its own id has no real display name, so it does not count.
+    // Most installers share their mod type's id; one that does not names its type in the
+    // install function's `setmodtype` instruction instead.
+    const typeId = modTypes.some((m) => m.id === inst.id)
+      ? inst.id
+      : setModTypeOf(src, inst.installFn, table) || inst.id;
+    const modType = modTypes.find((m) => m.id && m.id === typeId);
     // A block returns one section, or an array when one installer covers several mod types.
     let parts = [];
     if (block) {
@@ -3457,7 +3634,7 @@ function buildNotes(dirName, src) {
       // Tier 2 - derive what we can from the test function itself.
       const body = inst.testFn ? sliceFunction(src, inst.testFn) : null;
       const triggers = body ? deriveTrigger(body, src, table) : [];
-      const name = prettifyId(inst.id, dirName);
+      const name = fallbackTitle(inst, modType, table, dirName);
       parts = [
         {
           title: name,
@@ -3472,14 +3649,6 @@ function buildNotes(dirName, src) {
       tier2++;
       if (inst.testFn && !block) unknownFns.push(inst.testFn);
     }
-    // The registered mod type this installer feeds, for the description bullets. An entry whose
-    // name fell back to its own id has no real display name, so it does not count.
-    // Most installers share their mod type's id; one that does not names its type in the
-    // install function's `setmodtype` instruction instead.
-    const typeId = modTypes.some((m) => m.id === inst.id)
-      ? inst.id
-      : setModTypeOf(src, inst.installFn, table) || inst.id;
-    const modType = modTypes.find((m) => m.id && m.id === typeId);
     const labelKey = Object.hasOwn(MOD_TYPE_LABELS, inst.id) ? inst.id : typeId;
     const label = Object.hasOwn(MOD_TYPE_LABELS, labelKey) ? MOD_TYPE_LABELS[labelKey] : null;
     for (const section of parts) {
@@ -3498,6 +3667,15 @@ function buildNotes(dirName, src) {
       // A mod type named for the tool itself ("Atlan Mod Loader") holds the tool, not mods for it.
       else if (section.modTypeName && TOOL_TYPE_NAME.test(section.modTypeName))
         section.toolName = section.modTypeName;
+      // A user-profile folder only known at runtime is still named, so the Quick Reference
+      // and the section say where the mod goes instead of "-".
+      if (!section.target) {
+        const prose = userProfileProse(section);
+        if (prose) {
+          section.target = prose;
+          section.targetIsProse = true;
+        }
+      }
       sections.push(section);
     }
   }
@@ -3553,6 +3731,24 @@ function joinAnd(items) {
   return items.slice(0, -1).join(", ") + " and " + items[items.length - 1];
 }
 
+/**
+ * Heading for an installer with no prose block. Ids are often several words run together
+ * (`buildfolderpakbin`), so a real display name wins: the `FOO_NAME` constant declared beside
+ * the installer's `FOO_ID`, then the registered name of the mod type sharing its id, and only
+ * then the id. A mod type the installer merely feeds (several installers sending files to one
+ * "Binaries" type) is skipped - its name would give each of them the same heading.
+ */
+function fallbackTitle(inst, modType, table, dirName) {
+  const idConst = inst.rawId && inst.rawId.match(/^([A-Z][A-Z0-9_]*)_ID$/);
+  if (idConst) {
+    const name = table.get(`${idConst[1]}_NAME`);
+    if (isRealValue(name) && !/\$\{/.test(name)) return String(name);
+  }
+  if (modType && modType.id === inst.id && modType.name && modType.name !== modType.id)
+    return modType.name;
+  return prettifyId(inst.id, dirName);
+}
+
 /** Turn `subnautica2-logicmods` into `Logic Mods` when no prose block exists. */
 function prettifyId(id, dirName) {
   if (!id) return "Mod";
@@ -3561,8 +3757,55 @@ function prettifyId(id, dirName) {
     .replace(new RegExp(`^${gameId}-?`), "")
     .replace(/^-/, "");
   if (!s) s = String(id);
-  s = s.replace(/[-_]+/g, " ").trim();
+  s = s.replace(/[-_]+/g, " ").trim().split(" ").map(splitRunTogether).join(" ");
   return s.replace(/\b\w/g, (c) => c.toUpperCase()) || String(id);
+}
+
+/** Words an id commonly ends with, longest first so `subfolder` peels before `folder`. */
+const ID_TAIL_WORDS = [
+  "subfolder",
+  "launcher",
+  "injector",
+  "manager",
+  "edition",
+  "folder",
+  "legacy",
+  "loader",
+  "plugin",
+  "editor",
+  "files",
+  "patch",
+  "root",
+  "file",
+  "mods",
+  "mod",
+  "zip",
+  "pak",
+  "bin",
+  "sub",
+];
+
+/**
+ * Split one id word like `buildfolderpakbin` into `build folder pak bin` by peeling known
+ * trailing words. A word that is not built from them keeps its own spelling, and a stem is
+ * never peeled below three letters, so `zip` and `mod` stay whole.
+ */
+function splitRunTogether(word) {
+  const tail = [];
+  let stem = word.toLowerCase() === word ? word : "";
+  if (!stem) return word;
+  const digits = stem.match(/\d+$/);
+  if (digits && ID_TAIL_WORDS.some((w) => stem.slice(0, -digits[0].length).endsWith(w))) {
+    tail.unshift(digits[0]);
+    stem = stem.slice(0, -digits[0].length);
+  }
+  for (;;) {
+    const w = ID_TAIL_WORDS.find((t) => stem.endsWith(t) && stem.length - t.length >= 3);
+    if (!w) break;
+    tail.unshift(w);
+    stem = stem.slice(0, -w.length);
+  }
+  return tail.length ? [stem, ...tail].join(" ") : word;
 }
 
 // ── CLI ─────────────────────────────────────────────────────────────────────

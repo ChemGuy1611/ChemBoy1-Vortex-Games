@@ -19,7 +19,7 @@ This installer handles Fluffy Mod Manager, not mods for it. It exists so users c
 
 ========================================================================
 
-Psarc:
+PSARC Files:
 
 Recognised when the archive contains a ".psarc" file.
 
@@ -35,6 +35,8 @@ The catch-all for RE Engine mods packaged in the normal Fluffy Mod Manager layou
     - Any archive not claimed by an earlier installer is treated as a Fluffy-format mod.
     - An archive already zipped in the Fluffy layout is installed as it is, with no repacking.
 
+  Installs to: "Games\UC4\Mods"
+
   Common mistakes:
     - Because this is a catch-all, a badly laid-out archive still installs - it just may not work. Match the layout Fluffy Mod Manager expects.
 
@@ -43,4 +45,4 @@ The catch-all for RE Engine mods packaged in the normal Fluffy Mod Manager layou
 Rules That Apply To Every Mod Type:
 
     - Folder and file name matching is case-insensitive.
-    - Extra wrapper folders around a recognised folder are generally fine.
+    - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
