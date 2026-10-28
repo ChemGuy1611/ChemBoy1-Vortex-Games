@@ -30,7 +30,6 @@ This extension adds Resident Evil 4 (2023) + Chainsaw Demo modding support to Vo
 [*][size=2]For mods not to be used with FMM (upscalers, reshades, etc.), you will need to change the mod type to "Binaries / Root Folder" and unzip the mod in the staging folder.[/size][/*]
 [*][size=2]Switches mod folder automatically based on if you are managing the full game (RE4R) or the Steam Demo (RE4R_Demo).[/size][/*]
 [/list]
-
 [b]📝 Notes for Mod Authors:[/b]
 [spoiler]
 Packaging rules for Resident Evil 4 (2023) + Chainsaw Demo mods, so Vortex installs them to the right place.
@@ -136,7 +135,6 @@ Rules That Apply To Every Mod Type:
     - Folder and file name matching is case-insensitive.
     - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
 [/spoiler]
-
 [b]🤝 Credits:[/b]
 [list]
 [*]Credit to [url=https://next.nexusmods.com/profile/Nagev/about-me]Nagev[/url] (Nexus Mods Vortex Developer) for his support on helping me learn to make Vortex extensions, and being patient when I break things :)[/*]
@@ -149,7 +147,6 @@ A: Here are a few details as to why this choice was made:
 [*][size=2]Most mod authors package their mods for Fluffy. Rather than "pushing against" the community and trying to create custom solutions, it seems better for the Vortex user to integrate with Fluffy and allow it to handle mod variants and install patterns. This avoids a lot of edge case install failures and avoids resorting to a less polished user experience. [/size]
 [*][size=2]A secondary requirement of using Fluffy properly is keeping mods in zip files. The Vortex extension must re-zip the mod files during installation to do this. This is usually very fast, but could take a short time for large file-size mods, depending on your PC performance.[/size][/size]
 [/list]
-
 [b]❤️ Support the Mod Author: [/b]
 If you would like to support my work, you can do so below. Your support is greatly appreciated!
 

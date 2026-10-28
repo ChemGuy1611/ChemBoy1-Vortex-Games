@@ -2217,7 +2217,7 @@ class MainWindow(QMainWindow):
             flags=[
                 ("--upload", "Upload (Nexus API v3)", True),
                 ("--edit-changelog", "Open Changelog editor", True),
-                ("--push-description", "Push description to Nexus page", False),
+                ("--push-description", "Push description to Nexus page", True),
                 ("--no-open", "Skip opening Nexus Page", False),
                 ("--dry-run", "Dry run (no writes)", False),
                 ("--skip-node-check", "Skip Node syntax", False),

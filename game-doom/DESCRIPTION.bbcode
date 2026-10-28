@@ -43,7 +43,6 @@ Instructions, modified from the [url=https://discord.gg/W9t4nZa]Doom 2016+ Moddi
 [*][u][i][b]Playing With Mods:[/b][/i][/u] Download one or more "mod loader"-based mods from Nexus Mods or elsewhere. Launch the game from Vortex. "It will run the DOOMModLoader.exe and build the mods in the "Mods" folder. Once it's done, it'll automatically run Doom 2016. If you have Doom 2016 on Steam, you should now switch to a Steam window and click "OK" when Steam asks if you want to launch Doom 2016 with some launch arguments.- Running Doom 2016 normally is no longer possible; If Doom 2016 detects any mods while "devMode_enable" isn't set to 1, Doom 2016 will crash itself. "devMode_enable" is set to 1 when launching Doom 2016 by running "DOOMModLoader.exe", but note that this disables achievements, multiplayer, and Snapmap. See "Mod Removal" below if you want to earn achievements or play multiplayer or Snapmap.
 [*][b][u][i]Mod Removal:[/i][/u] [/b]To uninstall all mods, first Disable them in Vortex, then run the DOOMModLoader.exe (you can do this by launching the game in Vortex).- The mod loader will now get rid of the mod patch files for Doom 2016 (though it'll still try to launch Doom 2016 with "devMode_enable" set to 1 once it's done removing the mod patch files).- After this, simply launch Doom 2016 normally, and you should be able to play without mods, letting you earn achievements and play multiplayer and snapmap. If you want to play with mods again, see "Playing With Mods" above.
 [/list]
-
 [b]📝 Notes for Mod Authors:[/b]
 [spoiler]
 Packaging rules for DOOM (2016) mods, so Vortex installs them to the right place.
@@ -89,7 +88,6 @@ Rules That Apply To Every Mod Type:
     - Folder and file name matching is case-insensitive.
     - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
 [/spoiler]
-
 [b]❤️ Support the Mod Author: [/b]
 If you would like to support my work, you can do so below. Your support is greatly appreciated!
 

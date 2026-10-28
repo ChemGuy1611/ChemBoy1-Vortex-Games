@@ -3193,8 +3193,11 @@ function ensureBlocks(existing, page) {
   const added = { symlinks: 0, logicmods: 0, usageNotes: 0, credits: 0, creditLines: 0 };
   const notes = [];
   let text = existing;
-  const insertAt = (idx, block) => {
-    const gap = text.slice(Math.max(0, idx - 2), idx) === "\n\n" || idx === 0 ? "" : "\n";
+  // `hugList`: a warning landing right under the store list starts on its next line, no blank line.
+  const insertAt = (idx, block, hugList = false) => {
+    const before = text.slice(0, idx);
+    const hug = hugList && /\[\/list\]\r?\n$/.test(before);
+    const gap = before.endsWith("\n\n") || idx === 0 || hug ? "" : "\n";
     text = text.slice(0, idx) + gap + block + "\n\n" + text.slice(idx);
   };
   const warn = warningBlocks(page);
@@ -3207,7 +3210,7 @@ function ensureBlocks(existing, page) {
     notes.push("no install list heading - warning blocks not added");
   } else {
     if (warn.logicmods && !LOGICMODS_KEY.test(text)) {
-      insertAt(installAt, warn.logicmods);
+      insertAt(installAt, warn.logicmods, true);
       added.logicmods++;
     }
     if (warn.symlinks && !SYMLINK_KEY.test(text)) {
@@ -3216,6 +3219,7 @@ function ensureBlocks(existing, page) {
       insertAt(
         logicAt === -1 ? text.indexOf(INSTALL_HEADING) : text.lastIndexOf("\n", logicAt) + 1,
         warn.symlinks,
+        true,
       );
       added.symlinks++;
     }
@@ -3271,14 +3275,30 @@ function ensureBlocks(existing, page) {
       .concat(missing);
     if (items.length) {
       const list = creditsList(items);
+      // The block can end right at the support heading, with no line break left in front of it.
+      const tail = text.slice(blockEnd);
+      const lineBreak = tail && !/^\r?\n/.test(tail) ? "\n" : "";
       text =
         headEnd === -1
           ? text + "\n" + list + "\n"
-          : text.slice(0, blockStart) + list + text.slice(blockEnd);
+          : text.slice(0, blockStart) + list + lineBreak + tail;
       added.creditLines += missing.length;
     }
   }
-  return { text, added, notes };
+  return { text: hugListAbove(text, SUPPORT_HEADING), added, notes };
+}
+
+/**
+ * Drop the blank lines between a `[/list]` and the heading right under it (the Credits list and
+ * the support block): Nexus already spaces a list from what follows it, so a blank line there
+ * shows as an extra gap. Anything else in front of the heading keeps its blank line.
+ */
+function hugListAbove(text, heading) {
+  const at = text.indexOf(heading);
+  if (at === -1) return text;
+  const m = /\[\/list\](\r?\n)(?:\r?\n)+$/.exec(text.slice(0, at));
+  if (!m) return text;
+  return text.slice(0, m.index + "[/list]".length) + m[1] + text.slice(at);
 }
 
 const AUTHOR_NOTES_HEADING = "[b]📝 Notes for Mod Authors:[/b]";
@@ -3296,6 +3316,9 @@ function authorNotesBody(bbcode) {
  * Put the game's Notes for Mod Authors on the page as a collapsed spoiler section, in front of the
  * Credits section (else the support block). The block is generated: an existing one, from its
  * heading to its [/spoiler], is replaced on every run, so the page follows the notes files.
+ * Right after a list (the usual Usage Notes) the heading starts on the next line, and the section
+ * after the [/spoiler] does too: Nexus already spaces a list or spoiler from what follows it, so a
+ * blank line there shows as an extra gap.
  */
 function applyAuthorNotes(existing, bbcode) {
   let text = existing;
@@ -3313,9 +3336,18 @@ function applyAuthorNotes(existing, bbcode) {
     const own = /^\[(?:b|size=\d)\][^\n]*\bCredits:[^\n]*$/m.exec(text);
     at = own ? own.index : text.indexOf(SUPPORT_HEADING);
   }
-  if (at === -1) return text.replace(/\s*$/, "") + "\n\n" + block + "\n";
-  const gap = text.slice(Math.max(0, at - 2), at) === "\n\n" || at === 0 ? "" : "\n";
-  return text.slice(0, at) + gap + block + "\n\n" + text.slice(at);
+  if (at === -1) {
+    const body = text.replace(/\s*$/, "");
+    return body + (body.endsWith("[/list]") ? "\n" : "\n\n") + block + "\n";
+  }
+  const head = text.slice(0, at);
+  const afterList = /\[\/list\](\r?\n)(?:\r?\n)*$/.exec(head);
+  if (afterList) {
+    const listEnd = afterList.index + "[/list]".length;
+    return head.slice(0, listEnd) + afterList[1] + block + "\n" + text.slice(at);
+  }
+  const gap = head.endsWith("\n\n") || at === 0 ? "" : "\n";
+  return head + gap + block + "\n" + text.slice(at);
 }
 
 /**
@@ -3330,7 +3362,6 @@ function scaffoldDescription(ctx, installBlock, supportedBlock) {
   L.push(supportedBlock);
   const warn = Object.values(warningBlocks(ctx.page)).filter(Boolean);
   if (warn.length) {
-    L.push("");
     L.push(warn.join("\n\n"));
     L.push("");
   }
@@ -3339,12 +3370,9 @@ function scaffoldDescription(ctx, installBlock, supportedBlock) {
   L.push("[list]");
   L.push(FOLDER_ICON_NOTE, ...ctx.page.usageNotes);
   L.push("[/list]");
-  L.push("");
+  // Each section below follows a list, so it starts on the next line (see hugListAbove).
   const credits = creditsSection(ctx.page);
-  if (credits) {
-    L.push(credits);
-    L.push("");
-  }
+  if (credits) L.push(credits);
   L.push(SUPPORT_BLOCK);
   L.push("");
   return L.join("\n");
@@ -3412,15 +3440,33 @@ function spliceDescription(existing, installBlock, supportedBlock) {
   const withInstall = spliceList(existing, INSTALL_HEADING, installBlock);
   if (withInstall === null) return null;
   const keepStoreNote = (item) => !isGeneratedStoreItem(item);
-  return (
+  const spliced =
     spliceList(
       withInstall,
       SUPPORTED_HEADING,
       supportedBlock,
       keepStoreNote,
       OTHER_VERSIONS_ITEM,
-    ) || withInstall
-  );
+    ) || withInstall;
+  return tightenAfterStoreList(spliced);
+}
+
+/**
+ * Whatever follows the store list (a warning block or the install list) starts on the very
+ * next line: Nexus already spaces a list from what comes after it, so a blank line there
+ * shows as an extra gap.
+ */
+function tightenAfterStoreList(text) {
+  const headAt = text.indexOf(SUPPORTED_HEADING);
+  if (headAt === -1) return text;
+  const listEnd = text.indexOf("[/list]", headAt);
+  if (listEnd === -1) return text;
+  const after = listEnd + "[/list]".length;
+  const rest = text.slice(after);
+  const gap = /^(?:\r?\n){2,}/.exec(rest);
+  if (!gap) return text;
+  const eol = gap[0].startsWith("\r\n") ? "\r\n" : "\n";
+  return text.slice(0, after) + eol + rest.slice(gap[0].length);
 }
 
 // ── per-extension build ─────────────────────────────────────────────────────
