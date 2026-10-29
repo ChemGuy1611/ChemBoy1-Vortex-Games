@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.0] - 2026-10-29
+
+- Added: Xbox / Game Pass version support.
+
 ## [1.0.3] - 2026-10-25
 
 - Added the Nexus mod ID to the extension info.

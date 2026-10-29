@@ -18,7 +18,6 @@
 | Executable (GOG) | `Bloodlines2.exe` |
 | Executable (Demo) | `Bloodlines2.exe` |
 | Extension Page | [https://www.nexusmods.com/site/mods/1500](https://www.nexusmods.com/site/mods/1500) |
-| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Vampire%3A_The_Masquerade_-_Bloodlines_2](https://www.pcgamingwiki.com/wiki/Vampire%3A_The_Masquerade_-_Bloodlines_2) |
 
 ## Supported Stores
 

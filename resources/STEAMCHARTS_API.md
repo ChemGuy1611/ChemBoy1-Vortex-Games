@@ -233,3 +233,5 @@ every lookup here is the same `steamAppId` that extension registers).
 resolve a title).
 `MODDB_API.md` (a third-party site that _does_ enforce a bot check, and the fallback routes needed
 to work around one — the contrast with this host's open access).
+`STEAMCMD_API.md` (the full appinfo record for the same AppID: launch executables, install folder,
+Steam Cloud save paths).

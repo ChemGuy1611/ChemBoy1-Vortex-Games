@@ -2,8 +2,8 @@
 Name: Vampire: The Masquerade - Bloodlines 2 Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.3
-Date: 2026-10-25
+Version: 1.0.5
+Date: 2026-10-29
 Notes:
 -
 ////////////////////////////////////////////////*/
@@ -67,7 +67,8 @@ const EXEC_EPIC = EXEC; //change these 3 if different
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const PARAMETERS_STRING = ""; //launch arguments to pass when launching the game
-const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Vampire%3A_The_Masquerade_-_Bloodlines_2";
+const PCGAMINGWIKI_URL =
+  "https://www.pcgamingwiki.com/wiki/Vampire%3A_The_Masquerade_-_Bloodlines_2";
 const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1500"; //Nexus link to this extension. Used for links
 
@@ -127,6 +128,7 @@ const CONFIG_LOC = "Local AppData"; //string for notification text.
 const SAVE_LOC = CONFIG_LOC; //string for notification text. Config and Save mods are almost always in the same place
 const CONFIGMOD_LOCATION = LOCALAPPDATA; //almost always matches. Some are in game folder or Documents.
 const SAVEMOD_LOCATION = CONFIGMOD_LOCATION;
+const STORE_FOLDERS = { steam: "Steam", gog: "GOG", epic: "Epic" }; //per-store folder inside Local AppData\Bloodlines2, holding Saved\Config + Saved\SaveGames (Steam + GOG per PCGamingWiki; Epic UNVERIFIED)
 
 //shipping exe
 const SHIPEXE_STRING_DEFAULT = "";
@@ -190,6 +192,7 @@ const MAX_UPDATE_WAIT_MS = 5 * 60 * 1000; // release the guard for an update tha
 let updating_mod = false; // used to see if it's a mod update or not
 let USERID_FOLDER = "";
 let STORE_FOLDER = "";
+let DISCOVERY_STORE = "steam"; //store Vortex discovered the game from. Set in setup()
 
 //other constants
 const APPMANIFEST_FILE = "appxmanifest.xml";
@@ -652,9 +655,24 @@ function getUserIdFolder(savePath) {
   return (SAVE_PATH = path.join(savePath, USERID_FOLDER));
 }
 
+//Point CONFIG_PATH and SAVE_PATH at the folder of the store the game was discovered from (Steam when unknown)
+function setStorePaths() {
+  const STORE = STORE_FOLDERS[DISCOVERY_STORE] ?? STORE_FOLDERS.steam;
+  CONFIG_PATH = path.join(
+    CONFIGMOD_LOCATION,
+    DATA_FOLDER,
+    STORE,
+    "Saved",
+    "Config",
+    CONFIG_FOLDERNAME,
+  );
+  SAVE_PATH = path.join(SAVEMOD_LOCATION, DATA_FOLDER, STORE, "Saved", "SaveGames");
+}
+
 //Get correct executable for game version
 function getExecutable(discoveryPath) {
   if (!hasXbox && !multiExe) {
+    setStorePaths();
     return EXEC;
   }
   if (hasXbox) {
@@ -682,10 +700,7 @@ function getExecutable(discoveryPath) {
     );
     SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
     DLL_PATH = SCRIPTS_PATH;
-    CONFIG_PATH = CONFIG_PATH_DEFAULT;
-    //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
-    //SAVE_PATH = setSavePath;
-    SAVE_PATH = SAVE_PATH_DEFAULT;
+    setStorePaths();
     return EXEC;
   } //*/
   if (statCheckSync(discoveryPath, EXEC_DEMO)) {
@@ -697,10 +712,7 @@ function getExecutable(discoveryPath) {
     );
     SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
     DLL_PATH = SCRIPTS_PATH;
-    CONFIG_PATH = CONFIG_PATH_DEFAULT;
-    //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
-    //SAVE_PATH = setSavePath;
-    SAVE_PATH = SAVE_PATH_DEFAULT;
+    setStorePaths();
     return EXEC_DEMO;
   } //*/
   if (statCheckSync(discoveryPath, EXEC_EPIC)) {
@@ -712,10 +724,7 @@ function getExecutable(discoveryPath) {
     );
     SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
     DLL_PATH = SCRIPTS_PATH;
-    CONFIG_PATH = CONFIG_PATH_DEFAULT;
-    //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
-    //SAVE_PATH = setSavePath;
-    SAVE_PATH = SAVE_PATH_DEFAULT;
+    setStorePaths();
     return EXEC_EPIC;
   } //*/
   if (statCheckSync(discoveryPath, EXEC_GOG)) {
@@ -727,10 +736,7 @@ function getExecutable(discoveryPath) {
     );
     SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
     DLL_PATH = SCRIPTS_PATH;
-    CONFIG_PATH = CONFIG_PATH_DEFAULT;
-    //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
-    //SAVE_PATH = setSavePath;
-    SAVE_PATH = SAVE_PATH_DEFAULT;
+    setStorePaths();
     return EXEC_GOG;
   } //*/
   GAME_VERSION = "default";
@@ -3127,6 +3133,9 @@ async function setup(discovery, api, gameSpec) {
   }
   // ASYNC CODE ///////////////////////////////////
   GAME_VERSION = await setGameVersionAsync(GAME_PATH);
+  //Steam, GOG and Epic share one exe name, so only the discovered store says which folder the game uses
+  DISCOVERY_STORE = discovery.store;
+  setStorePaths();
   if (CHECK_CONFIG) {
     //if game, staging folder, and config and save folders are on the same drive
     await vfs.ensureDirWritableAsync(CONFIG_PATH);

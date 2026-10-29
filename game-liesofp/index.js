@@ -2,8 +2,8 @@
 Name: Lies of P Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.1.4
-Date: 2026-10-25
+Version: 1.1.5
+Date: 2026-10-28
 Notes:
 - Rebuilt on the unified UE4-5 template (base file: game-trepang2/index.js), added UE4SS/LogicMods/Save mod support
 - Fixed a latent bug from the pre-FBLO 0.5.x extension: its Steam/Epic Config/Save paths joined a relative "Saved\Config\..." string onto the game's own install path instead of %LocalAppData%, pointing at a folder that doesn't exist (confirmed against real save/config location via web search). Now uses the template's standard LocalAppData path, matching Xbox (which was already correct).
@@ -125,10 +125,12 @@ const UE4SS_MOD_PATH = path.join(UE4SS_FOLDER, "Mods"); //this should probably n
 //config and save
 const DATA_FOLDER = EPIC_CODE_NAME; //almost always matches.
 const CONFIG_FOLDERNAME = "WindowsNoEditor"; //UE 4 games are often 'WindowsNoEditor' - "Windows", "WindowsClient", "WindowsNoEditor"
-const CONFIG_LOC = "Local AppData"; //string for notification text.
+const CONFIG_LOC = "Game Folder"; //string for notification text. Steam/Epic/GOG keep config and saves inside the install folder (Xbox: Local AppData)
 const SAVE_LOC = CONFIG_LOC; //string for notification text. Config and Save mods are almost always in the same place
-const CONFIGMOD_LOCATION = LOCALAPPDATA; //almost always matches. Some are in game folder or Documents.
+const CONFIGMOD_LOCATION = LOCALAPPDATA; //Xbox only - Steam/Epic/GOG use CONFIG_PATH_GAME/SAVE_PATH_GAME (see getExecutable())
 const SAVEMOD_LOCATION = CONFIGMOD_LOCATION;
+const CONFIG_PATH_GAME = path.join(EPIC_CODE_NAME, "Saved", "Config", CONFIG_FOLDERNAME); //relative to the game folder - set as CONFIG_PATH in getExecutable()
+const SAVE_PATH_GAME = path.join(EPIC_CODE_NAME, "Saved", "SaveGames"); //relative to the game folder - set as SAVE_PATH in getExecutable()
 
 //shipping exe
 const SHIPEXE_STRING_DEFAULT = "";
@@ -674,10 +676,8 @@ function getExecutable(discoveryPath) {
     );
     SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
     DLL_PATH = SCRIPTS_PATH;
-    CONFIG_PATH = CONFIG_PATH_DEFAULT;
-    //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
-    //SAVE_PATH = setSavePath;
-    SAVE_PATH = SAVE_PATH_DEFAULT;
+    CONFIG_PATH = path.join(discoveryPath, CONFIG_PATH_GAME);
+    SAVE_PATH = getUserIdFolder(path.join(discoveryPath, SAVE_PATH_GAME));
     return EXEC;
   } //*/
   if (statCheckSync(discoveryPath, EXEC_DEMO)) {
@@ -689,10 +689,8 @@ function getExecutable(discoveryPath) {
     );
     SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
     DLL_PATH = SCRIPTS_PATH;
-    CONFIG_PATH = CONFIG_PATH_DEFAULT;
-    //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
-    //SAVE_PATH = setSavePath;
-    SAVE_PATH = SAVE_PATH_DEFAULT;
+    CONFIG_PATH = path.join(discoveryPath, CONFIG_PATH_GAME);
+    SAVE_PATH = getUserIdFolder(path.join(discoveryPath, SAVE_PATH_GAME));
     return EXEC_DEMO;
   } //*/
   if (statCheckSync(discoveryPath, EXEC_EPIC)) {
@@ -704,10 +702,8 @@ function getExecutable(discoveryPath) {
     );
     SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
     DLL_PATH = SCRIPTS_PATH;
-    CONFIG_PATH = CONFIG_PATH_DEFAULT;
-    //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
-    //SAVE_PATH = setSavePath;
-    SAVE_PATH = SAVE_PATH_DEFAULT;
+    CONFIG_PATH = path.join(discoveryPath, CONFIG_PATH_GAME);
+    SAVE_PATH = getUserIdFolder(path.join(discoveryPath, SAVE_PATH_GAME));
     return EXEC_EPIC;
   } //*/
   if (statCheckSync(discoveryPath, EXEC_GOG)) {
@@ -719,10 +715,8 @@ function getExecutable(discoveryPath) {
     );
     SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
     DLL_PATH = SCRIPTS_PATH;
-    CONFIG_PATH = CONFIG_PATH_DEFAULT;
-    //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
-    //SAVE_PATH = setSavePath;
-    SAVE_PATH = SAVE_PATH_DEFAULT;
+    CONFIG_PATH = path.join(discoveryPath, CONFIG_PATH_GAME);
+    SAVE_PATH = getUserIdFolder(path.join(discoveryPath, SAVE_PATH_GAME));
     return EXEC_GOG;
   } //*/
   GAME_VERSION = "default";
@@ -1543,7 +1537,7 @@ function installConfig(api, files) {
   });
   instructions.push(setModTypeInstruction);
   GAME_PATH = getDiscoveryPath(api);
-  const IS_CONFIG = checkPartitions(CONFIGMOD_LOCATION, GAME_PATH);
+  const IS_CONFIG = checkPartitions(CONFIG_PATH, GAME_PATH);
   if (IS_CONFIG === false) {
     //api.showErrorNotification(`Could not install mod as Config`, `You tried installing a Config mod, but the game, staging folder, and ${CONFIG_LOC} folder are not all on the same drive. Please move the game and/or staging folder to the same drive as the ${CONFIG_LOC} folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
     configInstallerNotify(api);
@@ -1663,7 +1657,7 @@ async function installSave(api, files) {
     };
   });
   instructions.push(setModTypeInstruction);
-  const IS_SAVE = checkPartitions(SAVEMOD_LOCATION, GAME_PATH);
+  const IS_SAVE = checkPartitions(SAVE_PATH, GAME_PATH);
   if (IS_SAVE === false) {
     saveInstallerNotify(api);
     throw new VortexError("User canceled", { kind: "user-canceled", skipped: false });
@@ -3061,11 +3055,11 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
-  CHECK_CONFIG = checkPartitions(CONFIGMOD_LOCATION, GAME_PATH);
+  CHECK_CONFIG = checkPartitions(CONFIG_PATH, GAME_PATH);
   if (configSaveMatch) {
     CHECK_SAVE = CHECK_CONFIG;
   } else {
-    CHECK_SAVE = checkPartitions(SAVEMOD_LOCATION, GAME_PATH);
+    CHECK_SAVE = checkPartitions(SAVE_PATH, GAME_PATH);
   }
   if (!CHECK_CONFIG || !CHECK_SAVE) {
     partitionCheckNotify(api, CHECK_CONFIG, CHECK_SAVE);
@@ -3350,7 +3344,7 @@ function applyGame(context, gameSpec) {
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
       if (GAME_PATH !== undefined) {
-        CHECK_CONFIG = checkPartitions(CONFIGMOD_LOCATION, GAME_PATH);
+        CHECK_CONFIG = checkPartitions(CONFIG_PATH, GAME_PATH);
       }
       return gameId === GAME_ID && CHECK_CONFIG === true;
     },
@@ -3368,7 +3362,7 @@ function applyGame(context, gameSpec) {
         if (configSaveMatch) {
           CHECK_SAVE = CHECK_CONFIG;
         } else {
-          CHECK_SAVE = checkPartitions(SAVEMOD_LOCATION, GAME_PATH);
+          CHECK_SAVE = checkPartitions(SAVE_PATH, GAME_PATH);
         }
       }
       return (

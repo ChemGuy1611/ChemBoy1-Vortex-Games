@@ -69,7 +69,7 @@ Mod types define where each category of mod gets deployed:
 | Binaries (Engine Injector) | `halloweenthegame-binaries` | 54 | `{gamePath}/Ravage/Binaries/Win64` |
 | UE4SS | `halloweenthegame-ue4ss` | 56 | `{gamePath}/Ravage/Binaries/Win64` |
 | Config (Local AppData) | `halloweenthegame-config` | 62 | `?` |
-| Saves (Local AppData) | `halloweenthegame-save` | 64 | `?` |
+| Saves (Game Folder) | `halloweenthegame-save` | 64 | `?` |
 
 ## Mod Installers
 

@@ -2,8 +2,8 @@
 Name: S.T.A.L.K.E.R. 2: Heart of Chornobyl Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 2.1.7
-Date: 2026-10-18
+Version: 2.1.8
+Date: 2026-10-29
 //////////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -44,8 +44,9 @@ const STEAMAPP_ID = "1643320";
 const STEAMAPP_ID_DEMO = null;
 const EPICAPP_ID = "c04ba25a0e674b1ab3ea79e50c24a722";
 const GOGAPP_ID = "1529799785";
-const XBOXAPP_ID = "GSCGameWorld.S.T.A.L.K.E.R.2HeartofChernobyl";
-const XBOXEXECNAME = "Stalker2RedirectionApp"; // resolved via MS Store catalog - verify against a live install
+const XBOXAPP_ID = "GSCGameWorld.S.T.A.L.K.E.R.2HeartofChernobylXboxEd"; // https://apps.microsoft.com/detail/9p7zbf3s7pss - Xbox Play Anywhere package; the old GSCGameWorld.S.T.A.L.K.E.R.2HeartofChernobyl product (9n3d6v4n58jr) is no longer sold
+const XBOXEXECNAME = "AppSTALKER2Shipping"; // resolved via MS Store catalog - verify against a live install
+const XBOX_PUB_ID = "6fr1t1rwfarwt"; // resolved via MS Store catalog - verify against a live install
 const GAME_NAME = "S.T.A.L.K.E.R. 2 Heart of Chornobyl";
 const GAME_NAME_SHORT = "STALKER 2";
 const EXEC_DEFAULT = "Stalker2.exe";
@@ -158,7 +159,7 @@ const SAVE_PATH_EPIC = SAVE_PATH_DEFAULT;
 const SAVE_PATH_XBOX = path.join(
   LOCALAPPDATA,
   "Packages",
-  `${XBOXAPP_ID}_6fr1t1rwfarwt`,
+  `${XBOXAPP_ID}_${XBOX_PUB_ID}`,
   "SystemAppData",
   "xgs",
 ); //XBOX Version

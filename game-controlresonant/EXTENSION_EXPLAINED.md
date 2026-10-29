@@ -22,6 +22,7 @@
 
 - **Steam** — `3669870`
 - **Epic Games Store** — `6d334eff6285472eb9ddb79992cb43e9`
+- **GOG** — `1627372090`
 - **Xbox / Microsoft Store** — `Remedy.CONTROLResonant`
 
 ## Feature Flags

@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.4] - 2026-10-28
+
+- Fixed: Save mods now install to the game's real save folder (Local AppData\KoeiTecmo\DW3CE_RE)
+
 ## [1.0.3] - 2026-10-25
 
 - Added the Nexus mod ID to the extension info.

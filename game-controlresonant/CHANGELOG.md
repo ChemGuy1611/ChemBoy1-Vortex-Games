@@ -1,8 +1,8 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.1.0] - 2026-10-29
 
-- None Planned
+- Added: GOG version support.
 
 ## [1.0.5] - 2026-10-25
 

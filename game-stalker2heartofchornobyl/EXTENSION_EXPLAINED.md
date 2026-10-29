@@ -24,7 +24,7 @@
 - **Steam** — `1643320`
 - **Epic Games Store** — `c04ba25a0e674b1ab3ea79e50c24a722`
 - **GOG** — `1529799785`
-- **Xbox / Microsoft Store** — `GSCGameWorld.S.T.A.L.K.E.R.2HeartofChernobyl`
+- **Xbox / Microsoft Store** — `GSCGameWorld.S.T.A.L.K.E.R.2HeartofChernobylXboxEd`
 
 ## Feature Flags
 

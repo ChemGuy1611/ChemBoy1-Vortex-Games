@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.5] - 2026-10-29
+
+- Fixed: Config and Save mods now use the folder of the store the game was installed from, even when folders for several stores exist.
+
+## [1.0.4] - 2026-10-28
+
+- Fixed: Config and Save mods now install to the game's store-specific Local AppData folder (Bloodlines2\Steam or Bloodlines2\GOG)
+
 ## [1.0.3] - 2026-10-25
 
 - Added the Nexus mod ID to the extension info.

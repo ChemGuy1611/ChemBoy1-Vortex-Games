@@ -315,3 +315,5 @@ queries, each with its own bot-protection behaviour and usage rules).
 search endpoint that resolves a name to an AppID when the wiki cannot).
 `MICROSOFT_STORE_CATALOG_API.md` (turning the `xbox_url` resolved here into the actual
 `XBOXAPP_ID`/`XBOXEXECNAME`/`XBOX_PUB_ID` identity strings a Store product ID alone doesn't carry).
+`STEAMCMD_API.md` (Steam appinfo: launch exe, install folder and the Steam Cloud save root — a
+second source for save locations when the wiki's Game data rows are blank).

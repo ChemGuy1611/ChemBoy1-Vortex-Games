@@ -2,8 +2,8 @@
 Name: TEKKEN 8 Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.8
-Date: 2026-10-25
+Version: 1.0.9
+Date: 2026-10-28
 Notes:
 -
 ////////////////////////////////////////////////*/
@@ -100,7 +100,7 @@ const UE4SS_DOMAIN = GAME_ID; //either GAME_ID or 'site'
 const UE4SS_MOD_PATH = path.join("ue4ss", "Mods"); //this should probably never change (unless UE4SS team changes it again lol)
 
 //config and save
-const DATA_FOLDER = EPIC_CODE_NAME; //almost always matches.
+const DATA_FOLDER = "TEKKEN 8"; //Local AppData folder differs from the project folder (Polaris)
 const CONFIG_FOLDERNAME = "Windows"; //UE 4 games are often 'WindowsNoEditor' - "Windows", "WindowsClient", "WindowsNoEditor"
 const CONFIG_LOC = "Local AppData"; //string for notification text.
 const SAVE_LOC = CONFIG_LOC; //string for notification text. Config and Save mods are almost always in the same place

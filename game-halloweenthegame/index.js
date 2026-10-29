@@ -2,8 +2,8 @@
 Name: Halloween: The Game Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.1.0
-Date: 2026-10-22
+Version: 1.1.3
+Date: 2026-10-29
 Notes:
 -
 ////////////////////////////////////////////////*/
@@ -124,9 +124,11 @@ const UE4SS_MOD_PATH = path.join(UE4SS_FOLDER, "Mods"); //this should probably n
 const DATA_FOLDER = "Halloween"; //almost always matches.
 const CONFIG_FOLDERNAME = "Windows"; //UE 4 games are often 'WindowsNoEditor' - "Windows", "WindowsClient", "WindowsNoEditor"
 const CONFIG_LOC = "Local AppData"; //string for notification text.
-const SAVE_LOC = CONFIG_LOC; //string for notification text. Config and Save mods are almost always in the same place
+const SAVE_LOC = "Game Folder"; //string for notification text. This game's saves sit inside the install folder, not Local AppData
 const CONFIGMOD_LOCATION = LOCALAPPDATA; //almost always matches. Some are in game folder or Documents.
-const SAVEMOD_LOCATION = CONFIGMOD_LOCATION;
+const SAVEMOD_LOCATION = CONFIGMOD_LOCATION; //not the real save location (see getExecutable() override) - kept equal to CONFIGMOD_LOCATION so configSaveMatch stays true and the partition check runs against a real path instead of the game-folder-relative one
+const SAVE_PATH_GAME = path.join(EPIC_CODE_NAME, "Saved", "SaveGames"); //relative to the game folder - set as SAVE_PATH in getExecutable()
+const SAVE_STORE_FOLDERS = { steam: "STEAM", epic: "EPIC" }; //per-store folder inside SAVE_PATH_GAME, save files sit directly in it. Steam from Steam Cloud config; Epic UNVERIFIED
 
 //shipping exe
 const SHIPEXE_STRING_DEFAULT = "";
@@ -190,6 +192,7 @@ const MAX_UPDATE_WAIT_MS = 5 * 60 * 1000; // release the guard for an update tha
 let updating_mod = false; // used to see if it's a mod update or not
 let USERID_FOLDER = "";
 let STORE_FOLDER = "";
+let DISCOVERY_STORE = "steam"; //store Vortex discovered the game from. Set in setup()
 
 //other constants
 const APPMANIFEST_FILE = "appxmanifest.xml";
@@ -636,9 +639,19 @@ function getUserIdFolder(savePath) {
   return (SAVE_PATH = path.join(savePath, USERID_FOLDER));
 }
 
+//Point SAVE_PATH at the save folder of the store the game was discovered from (Steam when unknown)
+function setStoreSavePath(gamePath) {
+  //Vortex calls executable() with no path for known (undiscovered) games
+  if (!gamePath) return;
+  const folder = SAVE_STORE_FOLDERS[DISCOVERY_STORE] ?? SAVE_STORE_FOLDERS.steam;
+  SAVE_PATH = path.join(gamePath, SAVE_PATH_GAME, folder);
+}
+
 //Get correct executable for game version
 function getExecutable(discoveryPath) {
   if (!hasXbox && !multiExe) {
+    //Steam and Epic share one exe, so the save folder comes from the discovered store instead
+    setStoreSavePath(discoveryPath);
     return EXEC;
   }
   if (hasXbox) {
@@ -668,8 +681,7 @@ function getExecutable(discoveryPath) {
     DLL_PATH = SCRIPTS_PATH;
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
     //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
-    //SAVE_PATH = setSavePath;
-    SAVE_PATH = SAVE_PATH_DEFAULT;
+    SAVE_PATH = path.join(discoveryPath, SAVE_PATH_GAME, SAVE_STORE_FOLDERS[GAME_VERSION] ?? "");
     return EXEC;
   } //*/
   if (statCheckSync(discoveryPath, EXEC_DEMO)) {
@@ -683,8 +695,7 @@ function getExecutable(discoveryPath) {
     DLL_PATH = SCRIPTS_PATH;
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
     //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
-    //SAVE_PATH = setSavePath;
-    SAVE_PATH = SAVE_PATH_DEFAULT;
+    SAVE_PATH = path.join(discoveryPath, SAVE_PATH_GAME, SAVE_STORE_FOLDERS[GAME_VERSION] ?? "");
     return EXEC_DEMO;
   } //*/
   if (statCheckSync(discoveryPath, EXEC_EPIC)) {
@@ -698,8 +709,7 @@ function getExecutable(discoveryPath) {
     DLL_PATH = SCRIPTS_PATH;
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
     //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
-    //SAVE_PATH = setSavePath;
-    SAVE_PATH = SAVE_PATH_DEFAULT;
+    SAVE_PATH = path.join(discoveryPath, SAVE_PATH_GAME, SAVE_STORE_FOLDERS[GAME_VERSION] ?? "");
     return EXEC_EPIC;
   } //*/
   if (statCheckSync(discoveryPath, EXEC_GOG)) {
@@ -713,8 +723,7 @@ function getExecutable(discoveryPath) {
     DLL_PATH = SCRIPTS_PATH;
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
     //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
-    //SAVE_PATH = setSavePath;
-    SAVE_PATH = SAVE_PATH_DEFAULT;
+    SAVE_PATH = path.join(discoveryPath, SAVE_PATH_GAME, SAVE_STORE_FOLDERS[GAME_VERSION] ?? "");
     return EXEC_GOG;
   } //*/
   GAME_VERSION = "default";
@@ -3067,6 +3076,8 @@ async function setup(discovery, api, gameSpec) {
   }
   // ASYNC CODE ///////////////////////////////////
   GAME_VERSION = await setGameVersionAsync(GAME_PATH);
+  DISCOVERY_STORE = discovery.store;
+  setStoreSavePath(GAME_PATH);
   if (CHECK_CONFIG) {
     //if game, staging folder, and config and save folders are on the same drive
     await vfs.ensureDirWritableAsync(CONFIG_PATH);

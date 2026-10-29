@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.9] - 2026-10-28
+
+- Fixed: Config and Save mods now install to the game's real Local AppData folder ("TEKKEN 8")
+
 ## [1.0.8] - 2026-10-25
 
 - Added the Nexus mod ID to the extension info.

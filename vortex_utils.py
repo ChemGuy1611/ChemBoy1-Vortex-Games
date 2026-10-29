@@ -4,7 +4,7 @@ vortex_utils.py
 Shared utility functions for Vortex extension developer scripts.
 Centralizes common patterns: index.js parsing, name processing,
 API key loading, HTTP helpers, PCGamingWiki lookups, egdata.app, gogdb.org,
-and Microsoft Store catalog lookups, and logging.
+Steam appinfo (steamcmd.net), and Microsoft Store catalog lookups, and logging.
 
 Usage:
     from vortex_utils import (
@@ -24,6 +24,9 @@ Usage:
         egdata_search_queries, normalize_title_for_match, store_title_matches,
         strip_edition_suffix, is_edition_variant_title,
         fetch_epic_app_id, gogdb_search, fetch_gog_app_id, fetch_xbox_identity,
+        STEAMCMD_INFO_API, fetch_steam_appinfo, steam_launch_exes, steam_cloud_saves,
+        steam_game_exe, steam_cloud_folder, steam_ue_code_name, describe_steam_cloud_saves,
+        STEAM_LAUNCHER_EXE_RE, STEAM_CLOUD_STORE_FOLDERS, STEAM_CODE_NAME_SURE_SOURCES,
         add_to_discovery_ids,
         const_value, is_unset, is_missing, set_or_insert, replace_const_rhs,
         js_string_literal, strip_js_comments, mask_comments_and_strings,
@@ -1373,6 +1376,171 @@ def verify_gog_app_id(game_name, product_id, base_game=True):
     if not base_game or store_title_matches(game_name, title) or is_edition_variant_title(game_name, title):
         return "ok", title
     return "title", title
+
+
+# == Steam appinfo (steamcmd.net) helpers ======================================
+
+# JSON mirror of Steam's per-app product info (launch entries, install folder,
+# Steam Cloud paths). No key. steamdb.info shows the same data but answers
+# scripted requests with 403. See resources/STEAMCMD_API.md.
+STEAMCMD_INFO_API = "https://api.steamcmd.net/v1/info"
+
+
+def fetch_steam_appinfo(appid):
+    """Fetch the appinfo record for one Steam App ID from steamcmd.net.
+    Returns the app's dict (keys like "common", "config", "ufs", "depots"), or {}
+    when the request fails or the app is unknown (the API answers an unknown ID
+    with an empty object, not an error). Messages go to stderr so a caller's
+    stdout (audit_steam_appinfo.py --json) stays parseable."""
+    try:
+        data = http_get_json(f"{STEAMCMD_INFO_API}/{appid}")
+        info = (data.get("data") or {}).get(str(appid)) or {}
+    except Exception as e:
+        print(f"    steamcmd.net appinfo error: {e}", file=sys.stderr)
+        return {}
+    if info.get("_missing_token") and "config" not in info:
+        # Steam hides the record behind an access token (usually unreleased or
+        # restricted apps): only "common" comes back, no launch or cloud data.
+        print(f"    steamcmd.net: appinfo for {appid} is token-restricted (common fields only)",
+              file=sys.stderr)
+    return info
+
+
+def _steam_launch_rank(entry):
+    """Sort key for appinfo launch entries: public branch first, then entries not
+    gated on owning a DLC, then type "default". Entries carrying config.betakey
+    only show up on that (usually private dev/QA) branch."""
+    config = entry.get("config") or {}
+    branches = [b for b in re.split(r"[\s,]+", config.get("betakey") or "") if b]
+    return (
+        1 if branches and "public" not in branches else 0,
+        1 if config.get("ownsdlc") else 0,
+        0 if entry.get("type") == "default" else 1,
+    )
+
+
+def steam_launch_exes(appinfo):
+    """Windows launch executables from an appinfo record, best candidate first:
+    public-branch entries before beta-branch ones (config.betakey), then entries not
+    gated on DLC ownership, then type "default". Branch entries are kept at the end,
+    not dropped: some apps list their only launch path, or the only <X>/Binaries/
+    path, under a branch. Returns a list of forward-slash relative paths
+    ("steam/PBZ.exe"). Entries whose config.oslist excludes windows (macOS .app
+    bundles, Linux binaries) are skipped."""
+    entries = list(((appinfo or {}).get("config") or {}).get("launch", {}).values())
+    entries.sort(key=_steam_launch_rank)
+    exes = []
+    for entry in entries:
+        oslist = (entry.get("config") or {}).get("oslist", "windows")
+        exe = (entry.get("executable") or "").replace("\\", "/").lstrip("./")
+        if "windows" in oslist and exe.lower().endswith(".exe") and exe not in exes:
+            exes.append(exe)
+    return exes
+
+
+def steam_cloud_saves(appinfo):
+    """Windows Steam Cloud save entries from an appinfo record, with the Windows
+    ufs.rootoverrides already applied. Returns a list of {"root", "path"} dicts,
+    path forward-slashed (e.g. {"root": "gameinstall",
+    "path": "ProjectPBZ/Saved/SaveGames/Steam/{64BitSteamID}"}). Roots are Steam's
+    names: gameinstall, WinAppDataLocal, WinAppDataLocalLow, WinAppDataRoaming,
+    WinMyDocuments, WinSavedGames, WindowsHome."""
+    ufs = (appinfo or {}).get("ufs") or {}
+    # os is usually "Windows" but appinfo also carries lowercase spellings ("macos", "linux")
+    overrides = [o for o in (ufs.get("rootoverrides") or {}).values()
+                 if (o.get("os") or "").lower() == "windows"]
+    saves = []
+    for entry in (ufs.get("savefiles") or {}).values():
+        platforms = list((entry.get("platforms") or {}).values())
+        if platforms and not any(p in ("Windows", "all") for p in platforms):
+            continue
+        root = entry.get("root") or ""
+        path = (entry.get("path") or "").replace("\\", "/")
+        for o in overrides:
+            if o.get("root") != root:
+                continue
+            for t in (o.get("pathtransforms") or {}).values():
+                if t.get("find") and path.startswith(t["find"]):
+                    path = t.get("replace", "") + path[len(t["find"]):]
+            root = o.get("useinstead") or root
+            if o.get("addpath"):
+                path = f'{o["addpath"].rstrip("/")}/{path}'
+            break
+        if not root.startswith("Win") and root != "gameinstall":
+            continue
+        entry_out = {"root": root, "path": path}
+        if entry_out not in saves:
+            saves.append(entry_out)
+    return saves
+
+
+# Launch entries that start a launcher, anti-cheat wrapper or bootstrapper instead of the
+# game itself. Valid for Steam, wrong as EXEC and useless as a project-name hint.
+STEAM_LAUNCHER_EXE_RE = re.compile(
+    r"(^|/)(start_protected_game|easyanticheat[^/]*|launcher|[^/]*_launcher|gamebootstrapper"
+    r"|epiconlineservices[^/]*)\.exe$",
+    re.IGNORECASE,
+)
+
+# Store layer some games put between the project folder and Saved/, or under SaveGames/.
+STEAM_CLOUD_STORE_FOLDERS = {"steam", "epic", "egs", "gog", "wingdk"}
+
+# steam_ue_code_name() sources that matched the hand-set EPIC_CODE_NAME every time
+# they were present across the repo's UE4-5 extensions.
+STEAM_CODE_NAME_SURE_SOURCES = ("launch path", "Steam Cloud gameinstall path")
+
+
+def steam_game_exe(launch_exes):
+    """Pick the game executable from steam_launch_exes() output, skipping launchers and
+    anti-cheat wrappers. Returns (exec_filename, dir_parts) or (None, [])."""
+    for exe in launch_exes:
+        if STEAM_LAUNCHER_EXE_RE.search(exe):
+            continue
+        parts = exe.split("/")
+        return parts[-1], parts[:-1]
+    return None, []
+
+
+def steam_cloud_folder(entry):
+    """Folder chain before Saved/ in a steam_cloud_saves() entry, store folders removed
+    ("11bitstudios/Frostpunk2" from "11bitstudios/Frostpunk2/Steam/Saved/SaveGames").
+    None when the path has no Saved/ segment (not an Unreal-style save path)."""
+    segs = [s for s in entry["path"].split("/") if s]
+    if "Saved" not in segs:
+        return None
+    folder = [s for s in segs[:segs.index("Saved")] if s.lower() not in STEAM_CLOUD_STORE_FOLDERS]
+    return "/".join(folder) or None
+
+
+def steam_ue_code_name(launch_exes, cloud_saves):
+    """Infer the Unreal Engine project folder (the one holding Binaries/ and Content/).
+    Returns (code_name, source) or (None, None). Sources, most precise first:
+      1. <X>/Binaries/ in a launch path
+      2. Steam Cloud save path inside the game folder, last folder before Saved/
+      3. any Steam Cloud save path, last folder before Saved/
+      4. launch exe name without .exe (non-launcher entries only)
+    installdir is deliberately not used: it matched the project folder about a third of
+    the time. Precision per source: resources/STEAMCMD_API.md."""
+    for exe in launch_exes:
+        m = re.match(r"([^/]+)/Binaries/", exe, re.IGNORECASE)
+        if m:
+            return m.group(1), "launch path"
+    for wanted_root in ("gameinstall", None):
+        for entry in cloud_saves:
+            if wanted_root and entry["root"] != wanted_root:
+                continue
+            folder = steam_cloud_folder(entry)
+            if folder:
+                return folder.split("/")[-1], f"Steam Cloud {entry['root']} path"
+    exec_filename, _ = steam_game_exe(launch_exes)
+    if exec_filename:
+        return re.sub(r"\.exe$", "", exec_filename, flags=re.IGNORECASE), "launch exe name"
+    return None, None
+
+
+def describe_steam_cloud_saves(cloud_saves):
+    """One-line summary of steam_cloud_saves() entries ("root/path; root/path")."""
+    return "; ".join(f"{e['root']}/{e['path']}" for e in cloud_saves)
 
 
 # == Microsoft Store (Xbox) catalog helpers ====================================
@@ -4820,6 +4988,7 @@ AUDIT_SKIP_STORE_ID = "store-id"
 AUDIT_SKIP_FOMOD = "fomod-check"
 AUDIT_SKIP_PRIORITY = "installer-priority"
 AUDIT_SKIP_MODPAGE = "modpage-tags"
+AUDIT_SKIP_STEAM_APPINFO = "steam-appinfo"
 
 _AUDIT_SKIP_RE = re.compile(
     r'//!\s*audit-skip\s*:\s*([A-Za-z0-9_\-]+(?:\s*,\s*[A-Za-z0-9_\-]+)*)\s+-\s+(\S.*?)\s*$'

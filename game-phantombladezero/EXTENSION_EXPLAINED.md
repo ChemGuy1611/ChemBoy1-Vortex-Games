@@ -13,10 +13,11 @@
 | Property | Value |
 | --- | --- |
 | Game ID | `phantombladezero` |
-| Executable | `XXX.exe` |
+| Executable | `steam/PBZ.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
-| Executable (GOG) | `XXX.exe` |
-| Executable (Demo) | `XXX.exe` |
+| Executable (GOG) | `steam/PBZ.exe` |
+| Executable (Demo) | `steam/PBZ.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/2524](https://www.nexusmods.com/site/mods/2524) |
 | PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Phantom_Blade_Zero](https://www.pcgamingwiki.com/wiki/Phantom_Blade_Zero) |
 
 ## Supported Stores
@@ -59,16 +60,16 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `phantombladezero-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `phantombladezero-logicmods` | high | `{gamePath}/XXX/Content/Paks` |
-| Paks (no "~mods") | `phantombladezero-pakalt` | high | `{gamePath}/XXX/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `phantombladezero-logicmods` | high | `{gamePath}/ProjectPBZ/Content/Paks` |
+| Paks (no "~mods") | `phantombladezero-pakalt` | high | `{gamePath}/ProjectPBZ/Content/Paks` |
 | Root Folder | `phantombladezero-root` | high | `{gamePath}` |
-| UE Sortable Pak Mod | `phantombladezero-uesortablepak` | 25 | `{gamePath}/XXX/Content/Paks/~mods` |
-| UE4SS Script Mod | `phantombladezero-scripts` | 50 | `{gamePath}/XXX/Binaries/Win64/ue4ss/Mods` |
-| UE4SS DLL Mod | `phantombladezero-ue4ssdll` | 52 | `{gamePath}/XXX/Binaries/Win64/ue4ss/Mods` |
-| Binaries (Engine Injector) | `phantombladezero-binaries` | 54 | `{gamePath}/XXX/Binaries/Win64` |
-| UE4SS | `phantombladezero-ue4ss` | 56 | `{gamePath}/XXX/Binaries/Win64` |
+| UE Sortable Pak Mod | `phantombladezero-uesortablepak` | 25 | `{gamePath}/ProjectPBZ/Content/Paks/~mods` |
+| UE4SS Script Mod | `phantombladezero-scripts` | 50 | `{gamePath}/ProjectPBZ/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `phantombladezero-ue4ssdll` | 52 | `{gamePath}/ProjectPBZ/Binaries/Win64/ue4ss/Mods` |
+| Binaries (Engine Injector) | `phantombladezero-binaries` | 54 | `{gamePath}/ProjectPBZ/Binaries/Win64` |
+| UE4SS | `phantombladezero-ue4ss` | 56 | `{gamePath}/ProjectPBZ/Binaries/Win64` |
 | Config (Local AppData) | `phantombladezero-config` | 62 | `?` |
-| Saves (Local AppData) | `phantombladezero-save` | 64 | `?` |
+| Saves (Game Folder) | `phantombladezero-save` | 64 | `?` |
 
 ## Mod Installers
 

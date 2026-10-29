@@ -253,4 +253,5 @@ identity.
 `REGISTER_GAME.md` (`spec.game.details.xboxAppId` / `environment.XboxAPPId`, the other places
 `XBOXAPP_ID` gets used). `PCGAMINGWIKI_API.md` (the Availability-table scrape that supplies the Store
 product URL this lookup starts from). `TEMPLATES_OVERVIEW.md` (`template-ue4-5`'s Xbox constant block
-and `hasXbox`-gated path building, the shape these three values plug into).
+and `hasXbox`-gated path building, the shape these three values plug into). `STEAMCMD_API.md` (the
+Steam-side equivalent: exe, project folder and save location from an App ID, no install needed).

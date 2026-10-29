@@ -23,6 +23,7 @@
 ## Supported Stores
 
 - **Steam** — `3527290`
+- **Xbox / Microsoft Store** — `LandfallPublishing.PEAK`
 
 ## Feature Flags
 
@@ -30,7 +31,7 @@
 | --- | --- | --- |
 | `isXna` | `false` | set to true if game is XNA engine |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
-| `hasXbox` | `false` | toggle for Xbox version logic |
+| `hasXbox` | `true` | toggle for Xbox version logic |
 | `multiExe` | `false` | set to true if there are multiple executables (typically for Xbox/EGS) |
 | `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
 | `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
@@ -137,5 +138,6 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
+- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.

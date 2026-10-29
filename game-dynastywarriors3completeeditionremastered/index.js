@@ -2,8 +2,8 @@
 Name: DYNASTY WARRIORS 3: Complete Edition Remastered Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.3
-Date: 2026-10-25
+Version: 1.0.4
+Date: 2026-10-28
 Notes:
 -
 ////////////////////////////////////////////////*/
@@ -128,6 +128,7 @@ const CONFIG_LOC = "Local AppData"; //string for notification text.
 const SAVE_LOC = CONFIG_LOC; //string for notification text. Config and Save mods are almost always in the same place
 const CONFIGMOD_LOCATION = LOCALAPPDATA; //almost always matches. Some are in game folder or Documents.
 const SAVEMOD_LOCATION = CONFIGMOD_LOCATION;
+const SAVE_DATA_FOLDER = path.join("KoeiTecmo", EPIC_CODE_NAME); //saves sit under a publisher folder, config does not (Local AppData\KoeiTecmo\DW3CE_RE\Saved\SaveGames)
 
 //shipping exe
 const SHIPEXE_STRING_DEFAULT = "";
@@ -157,7 +158,7 @@ const CONFIG_PATH_DEFAULT = path.join(
   CONFIG_FOLDERNAME,
 );
 const CONFIG_PATH_XBOX = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, "Saved", "Config", "WinGDK"); //XBOX Version
-const SAVE_PATH_DEFAULT = path.join(SAVEMOD_LOCATION, DATA_FOLDER, "Saved", "SaveGames");
+const SAVE_PATH_DEFAULT = path.join(SAVEMOD_LOCATION, SAVE_DATA_FOLDER, "Saved", "SaveGames");
 const SAVE_PATH_XBOX = path.join(
   LOCALAPPDATA,
   "Packages",

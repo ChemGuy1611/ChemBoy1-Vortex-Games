@@ -31,6 +31,14 @@ Fills in all XXX fields it can resolve automatically from Steam, GOG, Epic,
 PCGamingWiki, and (for Xbox titles) Microsoft's Store product catalog.
 Remaining XXX fields are reported at the end for manual entry.
 
+Steam appinfo (launch executables, Steam Cloud save paths) comes from the
+steamcmd.net mirror - steamdb.info answers scripted requests with 403. It sets
+EXEC (skipping launcher/anti-cheat wrappers; on template-ue4-5 only when the exe
+is not `${EPIC_CODE_NAME}.exe`) and EPIC_CODE_NAME (launch path Binaries/ folder,
+then the folder before Saved/ in a cloud save path, then the exe name; the source
+is left as a trailing comment). Cloud save paths become review comments on
+SAVEMOD_LOCATION and, for template-ue4-5, DATA_FOLDER - never value changes.
+
 Config/save paths: PCGamingWiki's resolved path is auto-set for Unity templates
 only. For template-basic, -godot, -rpgmaker, -frostbite, and -snowdropengine it
 is added as a review comment on the placeholder const instead (path CONSTRUCTION
@@ -96,6 +104,9 @@ from vortex_utils import (
     get_api_key, run_generate_explained_batch,
     run_generate_notes_batch, lint_check,
     fetch_epic_app_id, fetch_gog_app_id, fetch_xbox_identity, add_to_discovery_ids,
+    fetch_steam_appinfo, steam_launch_exes, steam_cloud_saves, steam_game_exe,
+    steam_cloud_folder, steam_ue_code_name, describe_steam_cloud_saves,
+    STEAM_CODE_NAME_SURE_SOURCES,
     download_exec_icon, download_cover_art, download_title_image, download_banner_image,
     update_index_header, sanitize_game_name, normalize_game_name, write_index_js,
     read_index_js, extract_steamapp_id, extract_game_name,
@@ -194,52 +205,6 @@ def steam_appdetails(appid):
     return None
 
 
-def scrape_steamdb_info(appid):
-    """Scrape steamdb.info/app/{appid}/info/ once. Returns dict with installdir and
-    launch executables. Called once in create_extension() and shared across helpers."""
-    result = {'installdir': None, 'launch_exes': []}
-    try:
-        html = http_get(f"https://steamdb.info/app/{appid}/info/")
-        m = re.search(r"installdir\s*</td>\s*<td[^>]*>\s*([^<]+?)\s*</td>", html, re.IGNORECASE)
-        if m:
-            result['installdir'] = m.group(1).strip()
-        exes = re.findall(r'executable\s*</td>\s*<td[^>]*>\s*([^<]+?)\s*</td>', html, re.IGNORECASE)
-        for exe in exes:
-            exe = exe.strip().replace("\\", "/")
-            if exe and exe.lower().endswith(".exe"):
-                parts = exe.split("/")
-                result['launch_exes'].append({'filename': parts[-1], 'dir_parts': parts[:-1]})
-    except Exception as e:
-        print(f"    SteamDB info page error: {e}")
-    return result
-
-
-def get_exec_info(steam_data, steamdb_data):
-    """Extract the primary executable filename and directory parts.
-    Returns (exec_filename, dir_parts) or (None, []).
-
-    Method 1: Parse Steam launch options for the full exe path.
-    Method 2: Use launch executables from the SteamDB info page scrape."""
-    # Method 1: Steam launch options (most reliable -full path available)
-    launch = (steam_data or {}).get("launch", [])
-    for entry in sorted(launch, key=lambda x: 0 if x.get("type") == "default" else 1):
-        cat = entry.get("category", "")
-        if "vr" in cat.lower() or "tool" in cat.lower():
-            continue
-        exe = entry.get("executable", "").replace("\\", "/")
-        if exe:
-            parts = exe.split("/")
-            return parts[-1], (parts[:-1] if len(parts) > 1 else [])
-
-    # Method 2: SteamDB launch executables
-    exes = (steamdb_data or {}).get("launch_exes", [])
-    if exes:
-        e = exes[0]
-        return e['filename'], e['dir_parts']
-
-    return None, []
-
-
 def get_demo_appid(steam_data):
     """Return the Steam App ID of the game's demo, or None if no demo exists.
     Steam appdetails includes a 'demos' array when a demo is available."""
@@ -247,28 +212,6 @@ def get_demo_appid(steam_data):
     if demos:
         appid = demos[0].get("appid")
         return str(appid) if appid else None
-    return None
-
-
-def get_epic_code_name(steam_data, steamdb_data):
-    """Find the Unreal Engine project code name (folder containing Binaries/ and Content/).
-
-    Method 1: Parse Steam launch executable paths for ([^/]+)/Binaries/ pattern.
-    Method 2: Use the installdir from the already-scraped SteamDB info page.
-    Returns the code name string, or None if not found."""
-
-    # Method 1: launch executable path contains folder structure
-    for entry in (steam_data or {}).get("launch", []):
-        exe = entry.get("executable", "").replace("\\", "/")
-        m = re.match(r"([^/]+)/Binaries/", exe, re.IGNORECASE)
-        if m:
-            return m.group(1)
-
-    # Method 2: installdir from SteamDB (already scraped, no extra request)
-    installdir = (steamdb_data or {}).get("installdir")
-    if installdir:
-        return installdir
-
     return None
 
 
@@ -630,6 +573,16 @@ def sub_binaries_path(src, dir_parts):
     )
 
 
+def sub_ue_exec(src, new_rhs):
+    """Replace template-ue4-5's default EXEC = `${EPIC_CODE_NAME}.exe` with new_rhs.
+    Only acts on that exact default, so a hand-set EXEC is never touched."""
+    return re.sub(
+        r"^([ \t]*const\s+EXEC\s*=\s*)`\$\{EPIC_CODE_NAME\}\.exe`",
+        lambda m: m.group(1) + new_rhs,
+        src, count=1, flags=re.MULTILINE,
+    )
+
+
 def sub_toggle(src, toggle_name, value):
     """Set a boolean feature toggle (const NAME = false/true;) to the given value.
     Only acts if the toggle currently holds the opposite value."""
@@ -763,24 +716,37 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
     gog_id = lookup_gog(game_name)
     print(f"  GOG      : {gog_id or 'not found'}")
 
-    # ── SteamDB data, executable, demo ID, and UE code name ──────────────────
-    print("\n[SteamDB]")
+    # ── Steam appinfo: executable, demo ID, UE code name, cloud saves ────────
+    print("\n[Steam appinfo]")
     time.sleep(0.3)
-    steamdb_data = scrape_steamdb_info(appid)
-    exec_filename, dir_parts = get_exec_info(steam_data, steamdb_data)
+    appinfo = fetch_steam_appinfo(appid)
+    launch_exes = steam_launch_exes(appinfo)
+    cloud_saves = steam_cloud_saves(appinfo)
+    exec_filename, dir_parts = steam_game_exe(launch_exes)
     gog_exec_used = False
     if exec_filename is None and gog_id:
         exec_filename, dir_parts = lookup_gog_executable(gog_id)
         gog_exec_used = exec_filename is not None
     game_string = re.sub(r'\.exe$', '', exec_filename, flags=re.IGNORECASE) if exec_filename else None
     demo_appid = get_demo_appid(steam_data)
-    epic_code_name = get_epic_code_name(steam_data, steamdb_data)
+    epic_code_name, code_name_source = steam_ue_code_name(launch_exes, cloud_saves)
     exec_source = " (from GOG manifest)" if gog_exec_used else ""
     print(f"  Exec     : {exec_filename or 'not found (left as XXX)'}{exec_source}")
     if dir_parts:
         print(f"  Bin path : {'/'.join(dir_parts)}")
     print(f"  Demo ID  : {demo_appid or 'none found'}")
-    print(f"  UE code  : {epic_code_name or 'not found (left as XXX)'}")
+    print(f"  UE code  : {epic_code_name + ' (from ' + code_name_source + ')' if epic_code_name else 'not found (left as XXX)'}")
+    print(f"  Cloud    : {describe_steam_cloud_saves(cloud_saves) or 'no Steam Cloud save paths'}")
+    # template-ue4-5 ships EXEC as `${EPIC_CODE_NAME}.exe`, which sub() never touches.
+    # Overwrite it only when Steam launches something else (other name or a subfolder).
+    ue_exec_override = None
+    if (template_name == "template-ue4-5" and exec_filename and not gog_exec_used and epic_code_name
+            and (dir_parts or exec_filename.lower() != f"{epic_code_name}.exe".lower())):
+        ue_exec_override = (
+            f"path.join({', '.join(js_string_literal(p) for p in [*dir_parts, exec_filename])})"
+            if dir_parts else js_string_literal(exec_filename)
+        )
+        print(f"  EXEC     : {'/'.join([*dir_parts, exec_filename])} (differs from {epic_code_name}.exe)")
 
     # ── 5. PCGamingWiki ───────────────────────────────────────────────────────
     time.sleep(0.3)
@@ -977,6 +943,30 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
             src = add_or_append_comment(src, pcgw_spec['save_var'], f"PCGW save: {format_pcgw_path(save_info)}")
         if save_info and pcgw_spec['save_loc_var']:
             src = add_or_append_comment(src, pcgw_spec['save_loc_var'], f"PCGW base: {save_info['base']}")
+    if epic_code_name and re.search(r"^const EPIC_CODE_NAME\b", src, re.MULTILINE):
+        sure = code_name_source in STEAM_CODE_NAME_SURE_SOURCES
+        src = add_or_append_comment(
+            src, "EPIC_CODE_NAME", f"from {code_name_source}{'' if sure else ' - verify'}")
+    if ue_exec_override:
+        src = sub_ue_exec(src, ue_exec_override)
+        src = add_line_comment(src, "EXEC", "from Steam launch config - check EXEC_EPIC/EXEC_GOG")
+    # Steam Cloud save paths land as review comments only. The root is reliable; folder
+    # names under it can be stale, so a value change would need checking anyway.
+    if cloud_saves and re.search(r"^const SAVEMOD_LOCATION\b", src, re.MULTILINE):
+        note = f"Steam Cloud: {describe_steam_cloud_saves(cloud_saves)}"
+        if any(e["root"] == "gameinstall" for e in cloud_saves):
+            note += " - saves in game folder: set SAVE_PATH in getExecutable() (see game-phantombladezero)"
+        src = add_or_append_comment(src, "SAVEMOD_LOCATION", note)
+    if template_name == "template-ue4-5" and epic_code_name:
+        local_folders = []
+        for e in cloud_saves:
+            folder = steam_cloud_folder(e) if e["root"] == "WinAppDataLocal" else None
+            if folder and folder.lower() != epic_code_name.lower() and folder not in local_folders:
+                local_folders.append(folder)
+        if local_folders:
+            src = add_or_append_comment(
+                src, "DATA_FOLDER",
+                f"Steam Cloud LocalAppData folder: {', '.join(local_folders)} - verify, set if real")
     write_index_js(dest, src)
     print("  index.js written")
 

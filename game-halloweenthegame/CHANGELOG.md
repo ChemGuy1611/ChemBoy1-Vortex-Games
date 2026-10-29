@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.3] - 2026-10-29
+
+- Fixed: Error when starting Vortex before the game was discovered.
+
+## [1.1.2] - 2026-10-29
+
+- Fixed: Save mods on the Epic version now install to the Epic save folder.
+
+## [1.1.1] - 2026-10-28
+
+- Fixed: Save mods now install to the game folder, where the game keeps its saves
+
 ## [1.1.0] - 2026-10-22
 
 - Added: Epic Games Store version support.

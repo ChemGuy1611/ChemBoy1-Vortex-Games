@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.5] - 2026-10-28
+
+- Fixed: Config and Save mods on the Steam and Epic versions now install to the game folder, where the game actually reads them
+
 ## [1.1.4] - 2026-10-25
 
 - Added the Nexus mod ID to the extension info.

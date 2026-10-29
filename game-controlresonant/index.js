@@ -2,8 +2,8 @@
 Name: CONTROL Resonant Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 1.0.5
-Date: 2026-10-25
+Version: 1.1.0
+Date: 2026-10-29
 Notes:
 -
 ///////////////////////////////////////////*/
@@ -28,14 +28,14 @@ const GAME_ID = "controlresonant";
 const STEAMAPP_ID = "3669870"; // https://steamdb.info/app/3669870/
 const STEAMAPP_ID_DEMO = null;
 const EPICAPP_ID = "6d334eff6285472eb9ddb79992cb43e9"; // https://store.epicgames.com/en-US/p/control-resonant-3568d3
-const GOGAPP_ID = null;
+const GOGAPP_ID = "1627372090"; // https://www.gogdb.org/product/1627372090
 const XBOXAPP_ID = "Remedy.CONTROLResonant"; // https://apps.microsoft.com/detail/9p092299fsgw
 const XBOXEXECNAME = "CONTROLResonant"; // resolved via MS Store catalog - verify against a live install
 const XBOX_PUB_ID = "a0f1gph4eb81p"; // resolved via MS Store catalog - verify against a live install
 const INSTALL_HIVE = "HKEY_LOCAL_MACHINE"; //typically HKEY_LOCAL_MACHINE or HKEY_CURRENT_USER
 const INSTALL_KEY = `SOFTWARE\\WOW6432Node\\XXX\\XXX`; //for finding install in registry - requires winapi-bindings
 const INSTALL_VALUE = "XXX"; //often InstallDir or InstallPath
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID, EPICAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const GAME_NAME = "CONTROL Resonant";
 const GAME_NAME_SHORT = "CONTROL Resonant";

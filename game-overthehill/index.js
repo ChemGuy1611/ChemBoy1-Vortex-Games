@@ -2,8 +2,8 @@
 Name: over the hill Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-10-17
+Version: 1.1.0
+Date: 2026-10-29
 Notes:
 -
 //////////////////////////////////////////*/
@@ -45,11 +45,11 @@ const GAME_ID = "overthehill";
 const STEAMAPP_ID = "2929250"; // https://steamdb.info/app/2929250/
 const STEAMAPP_ID_DEMO = null;
 const EPICAPP_ID = null;
-const GOGAPP_ID = null;
+const GOGAPP_ID = "1442763024"; // https://www.gogdb.org/product/1442763024
 const XBOXAPP_ID = "Funselektor.overthehill"; // https://apps.microsoft.com/detail/9pmdqwhs0dc2
 const XBOXEXECNAME = "GDKStubGame"; // resolved via MS Store catalog - verify against a live install
 const XBOX_PUB_ID = "43tswnvjm2gzr"; // resolved via MS Store catalog - verify against a live install
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const GAME_NAME = "over the hill";
 const GAME_NAME_SHORT = "over the hill";

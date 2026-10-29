@@ -33,6 +33,7 @@ categorize_games.py
 audit_parity.py
 verify_propagation.py
 audit_mod_pages.py
+audit_steam_appinfo.py
 analyze_vortex_log.py
 read_vortex_db.py
 audit_scripts.py

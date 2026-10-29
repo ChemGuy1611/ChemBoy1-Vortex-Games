@@ -2,8 +2,8 @@
 Name: Phantom Blade Zero Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-10-27
+Version: 1.0.1
+Date: 2026-10-29
 Notes:
 -
 ////////////////////////////////////////////////*/
@@ -61,15 +61,16 @@ const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL 
 
 const GAME_NAME = "Phantom Blade Zero";
 const GAME_NAME_SHORT = "Phantom Blade Zero"; //Try for 8-10 characters
-const EPIC_CODE_NAME = "XXX"; //Folder in root
-const EXEC = `${EPIC_CODE_NAME}.exe`; //This is true ~80% of the time. Change if different
-const EXEC_EPIC = EXEC; //change these 3 if different
+const EPIC_CODE_NAME = "ProjectPBZ"; //Folder in root
+const EXEC = path.join("steam", "PBZ.exe"); //Steam launch config: steam\PBZ.exe
+const EXEC_EPIC = path.join("epic", "PBZ.exe");
+//change these 3 if different
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const PARAMETERS_STRING = ""; //launch arguments to pass when launching the game
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Phantom_Blade_Zero";
 const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
-const EXTENSION_URL = "https://www.nexusmods.com/site/mods/2524"; //Nexus link to this extension. Used for links
+const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 
 //feature toggles
 let hasXbox = false; //toggle for Xbox version logic.
@@ -83,7 +84,7 @@ const hasModKit = false; //toggle for UE ModKit mod support
 const hasServer = false; //toggle for server pak mod logic
 const preferHardlinks = true; //set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users
 const autoDownloadUe4ss = false; //toggle for auto downloading UE4SS (only applies when ue4ssLoadOrder is enabled)
-const writeEngineVersion = false; //toggle to write ENGINE_VERSION into UE4SS-settings.ini (EngineVersionOverride) on deploy, when UE4SS is installed
+const writeEngineVersion = true; //toggle to write ENGINE_VERSION into UE4SS-settings.ini (EngineVersionOverride) on deploy, when UE4SS is installed
 const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
 const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
@@ -91,7 +92,7 @@ const debug = false; //toggle for debug mode
 const exeHasGameVersion = false; //toggle: true if the game devs stamp the real game version (not just the UE engine version) into the exe ProductVersion
 
 //UE specific
-const ENGINE_VERSION = "5.X.X.0"; //Unreal Engine version. usually '4.27.2.0' or '5.X.X.0'. Written to UE4SS-settings.ini if writeEngineVersion is enabled
+const ENGINE_VERSION = "5.7.4.0"; //Unreal Engine version. usually '4.27.2.0' or '5.X.X.0'. Written to UE4SS-settings.ini if writeEngineVersion is enabled
 const MAJOR_VERSION = ENGINE_VERSION.split(".")[0]; //major UE version
 const MINOR_VERSION = ENGINE_VERSION.split(".")[1]; //minor UE version
 const ROOT_FOLDERS = [EPIC_CODE_NAME, "Engine"]; //addressable folders in root
@@ -124,9 +125,11 @@ const UE4SS_MOD_PATH = path.join(UE4SS_FOLDER, "Mods"); //this should probably n
 const DATA_FOLDER = EPIC_CODE_NAME; //almost always matches.
 const CONFIG_FOLDERNAME = "Windows"; //UE 4 games are often 'WindowsNoEditor' - "Windows", "WindowsClient", "WindowsNoEditor"
 const CONFIG_LOC = "Local AppData"; //string for notification text.
-const SAVE_LOC = CONFIG_LOC; //string for notification text. Config and Save mods are almost always in the same place
+const SAVE_LOC = "Game Folder"; //string for notification text. This game's saves sit inside the install folder, not Local AppData
+const SAVE_PATH_GAME = path.join(EPIC_CODE_NAME, "Saved", "SaveGames"); //relative to the game folder - set as SAVE_PATH in getExecutable()
+const SAVE_STORE_FOLDERS = { steam: "Steam", epic: "Epic" }; //per-store folder inside SAVE_PATH_GAME. Steam from Steam Cloud config; Epic UNVERIFIED
 const CONFIGMOD_LOCATION = LOCALAPPDATA; //almost always matches. Some are in game folder or Documents.
-const SAVEMOD_LOCATION = CONFIGMOD_LOCATION;
+const SAVEMOD_LOCATION = CONFIGMOD_LOCATION; //not the real save location (see getExecutable() override) - kept equal to CONFIGMOD_LOCATION so configSaveMatch stays true and the partition check runs against a real path instead of the game-folder-relative one
 
 //shipping exe
 const SHIPEXE_STRING_DEFAULT = "";
@@ -135,6 +138,11 @@ const SHIPEXE_STRING_GOG = "";
 const SHIPEXE_STRING_XBOX = "";
 const SHIPEXE_STRING_DEMO = "";
 const SHIPEXE_PROJECTNAME = EPIC_CODE_NAME; //almost always matches.
+const SHIPPING_FOLDERS = {
+  steam: path.join("platform", "steam"),
+  epic: path.join("platform", "epic"),
+}; //this game's shipping exe sits in platform\<store>, not ProjectPBZ\Binaries\Win64 (Epic folder UNVERIFIED)
+const SHIPPING_EXE_NAME = "PBZ.exe";
 
 //Save Editor (only used if one is available)
 const SAVE_EDITOR_ID = `${GAME_ID}-saveeditor`;
@@ -190,6 +198,7 @@ const MAX_UPDATE_WAIT_MS = 5 * 60 * 1000; // release the guard for an update tha
 let updating_mod = false; // used to see if it's a mod update or not
 let USERID_FOLDER = "";
 let STORE_FOLDER = "";
+let DISCOVERY_STORE = "steam"; //store Vortex discovered the game from. Set in setup()
 
 //other constants
 const APPMANIFEST_FILE = "appxmanifest.xml";
@@ -209,11 +218,8 @@ const UE5_SORTABLE_NAME = "UE Sortable Pak Mod";
 //Information for modtypes, installers, tools, and actions
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries (Engine Injector)";
-let BINARIES_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_DEFAULT);
-let SHIPPING_EXE = path.join(
-  BINARIES_PATH,
-  `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEFAULT}-Shipping.exe`,
-);
+let BINARIES_PATH = SHIPPING_FOLDERS.steam;
+let SHIPPING_EXE = path.join(BINARIES_PATH, SHIPPING_EXE_NAME);
 
 const GOG_FILE = path.join("Plugins", "OnlineSubsystemGOG", "GalaxySDK", "Galaxy64.dll");
 const STEAM_FILE = path.join(
@@ -639,9 +645,19 @@ function getUserIdFolder(savePath) {
   return (SAVE_PATH = path.join(savePath, USERID_FOLDER));
 }
 
+//Point SAVE_PATH at the save folder of the store the game was discovered from (Steam when unknown)
+function setStoreSavePath(gamePath) {
+  //Vortex calls executable() with no path for known (undiscovered) games
+  if (!gamePath) return;
+  const folder = SAVE_STORE_FOLDERS[DISCOVERY_STORE] ?? SAVE_STORE_FOLDERS.steam;
+  SAVE_PATH = getUserIdFolder(path.join(gamePath, SAVE_PATH_GAME, folder));
+}
+
 //Get correct executable for game version
 function getExecutable(discoveryPath) {
   if (!hasXbox && !multiExe) {
+    //Steam and Epic share one exe, so the save folder comes from the discovered store instead
+    setStoreSavePath(discoveryPath);
     return EXEC;
   }
   if (hasXbox) {
@@ -662,17 +678,15 @@ function getExecutable(discoveryPath) {
   }
   if (statCheckSync(discoveryPath, EXEC)) {
     GAME_VERSION = "steam";
-    BINARIES_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_DEFAULT);
-    SHIPPING_EXE = path.join(
-      BINARIES_PATH,
-      `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEFAULT}-Shipping.exe`,
-    );
+    BINARIES_PATH = SHIPPING_FOLDERS.steam;
+    SHIPPING_EXE = path.join(BINARIES_PATH, SHIPPING_EXE_NAME);
     SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
     DLL_PATH = SCRIPTS_PATH;
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
     //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
-    //SAVE_PATH = setSavePath;
-    SAVE_PATH = SAVE_PATH_DEFAULT;
+    SAVE_PATH = getUserIdFolder(
+      path.join(discoveryPath, SAVE_PATH_GAME, SAVE_STORE_FOLDERS[GAME_VERSION] ?? ""),
+    );
     return EXEC;
   } //*/
   if (statCheckSync(discoveryPath, EXEC_DEMO)) {
@@ -686,23 +700,22 @@ function getExecutable(discoveryPath) {
     DLL_PATH = SCRIPTS_PATH;
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
     //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
-    //SAVE_PATH = setSavePath;
-    SAVE_PATH = SAVE_PATH_DEFAULT;
+    SAVE_PATH = getUserIdFolder(
+      path.join(discoveryPath, SAVE_PATH_GAME, SAVE_STORE_FOLDERS[GAME_VERSION] ?? ""),
+    );
     return EXEC_DEMO;
   } //*/
   if (statCheckSync(discoveryPath, EXEC_EPIC)) {
     GAME_VERSION = "epic";
-    BINARIES_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_DEFAULT);
-    SHIPPING_EXE = path.join(
-      BINARIES_PATH,
-      `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_EGS}-Shipping.exe`,
-    );
+    BINARIES_PATH = SHIPPING_FOLDERS.epic;
+    SHIPPING_EXE = path.join(BINARIES_PATH, SHIPPING_EXE_NAME);
     SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
     DLL_PATH = SCRIPTS_PATH;
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
     //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
-    //SAVE_PATH = setSavePath;
-    SAVE_PATH = SAVE_PATH_DEFAULT;
+    SAVE_PATH = getUserIdFolder(
+      path.join(discoveryPath, SAVE_PATH_GAME, SAVE_STORE_FOLDERS[GAME_VERSION] ?? ""),
+    );
     return EXEC_EPIC;
   } //*/
   if (statCheckSync(discoveryPath, EXEC_GOG)) {
@@ -716,8 +729,9 @@ function getExecutable(discoveryPath) {
     DLL_PATH = SCRIPTS_PATH;
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
     //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
-    //SAVE_PATH = setSavePath;
-    SAVE_PATH = SAVE_PATH_DEFAULT;
+    SAVE_PATH = getUserIdFolder(
+      path.join(discoveryPath, SAVE_PATH_GAME, SAVE_STORE_FOLDERS[GAME_VERSION] ?? ""),
+    );
     return EXEC_GOG;
   } //*/
   GAME_VERSION = "default";
@@ -3070,6 +3084,8 @@ async function setup(discovery, api, gameSpec) {
   }
   // ASYNC CODE ///////////////////////////////////
   GAME_VERSION = await setGameVersionAsync(GAME_PATH);
+  DISCOVERY_STORE = discovery.store;
+  setStoreSavePath(GAME_PATH);
   if (CHECK_CONFIG) {
     //if game, staging folder, and config and save folders are on the same drive
     await vfs.ensureDirWritableAsync(CONFIG_PATH);

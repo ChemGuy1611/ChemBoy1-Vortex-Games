@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.1.8] - 2026-10-29
+
+- Fixed: Xbox / Game Pass version detection and launching for the game's current Microsoft Store release (Xbox Play Anywhere).
+
 ## [2.1.7] - 2026-10-18
 
 - Changed: Launching the Xbox / Game Pass version now uses the game's current Microsoft Store app name.

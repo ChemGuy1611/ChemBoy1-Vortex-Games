@@ -2,8 +2,8 @@
 Name: PEAK Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
-Version: 1.0.3
-Date: 2026-10-25
+Version: 1.1.0
+Date: 2026-10-29
 Notes:
 -
 //////////////////////////////////////////*/
@@ -47,10 +47,10 @@ const STEAMAPP_ID = "3527290";
 const STEAMAPP_ID_DEMO = null;
 const EPICAPP_ID = null;
 const GOGAPP_ID = null;
-const XBOXAPP_ID = null;
-const XBOXEXECNAME = "Game";
-const XBOX_PUB_ID = "XXX"; //string after "ID_"
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const XBOXAPP_ID = "LandfallPublishing.PEAK"; // https://apps.microsoft.com/detail/9nmkf7lpvx44
+const XBOXEXECNAME = "Game"; // resolved via MS Store catalog - verify against a live install
+const XBOX_PUB_ID = "xh6ds9terj0x8"; // resolved via MS Store catalog - verify against a live install
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const TS_COMMUNITY = "peak"; //https://thunderstore.io/c/peak/
 const TS_BROWSER_CONFIG = {
@@ -75,7 +75,7 @@ const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1356"; //Nexus link t
 //feature toggles
 const isXna = false; //set to true if game is XNA engine
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
-let hasXbox = false; //toggle for Xbox version logic
+let hasXbox = true; //toggle for Xbox version logic
 if (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) hasXbox = true;
 let multiExe = false; //set to true if there are multiple executables (typically for Xbox/EGS)
 if (GAME_STRING_ALT !== GAME_STRING) {

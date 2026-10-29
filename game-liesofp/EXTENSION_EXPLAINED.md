@@ -75,8 +75,8 @@ Mod types define where each category of mod gets deployed:
 | UE4SS DLL Mod | `liesofp-ue4ssdll` | 52 | `{gamePath}/LiesofP/Binaries/Win64/ue4ss/Mods` |
 | Binaries (Engine Injector) | `liesofp-binaries` | 54 | `{gamePath}/LiesofP/Binaries/Win64` |
 | UE4SS | `liesofp-ue4ss` | 56 | `{gamePath}/LiesofP/Binaries/Win64` |
-| Config (Local AppData) | `liesofp-config` | 62 | `?` |
-| Saves (Local AppData) | `liesofp-save` | 64 | `?` |
+| Config (Game Folder) | `liesofp-config` | 62 | `?` |
+| Saves (Game Folder) | `liesofp-save` | 64 | `?` |
 
 ## Mod Installers
 

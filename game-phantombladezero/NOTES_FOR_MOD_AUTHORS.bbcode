@@ -29,7 +29,7 @@ MyComboMod.zip
     - Mirror the real in-game folder structure below those two folders.
     - This installer is tested before the individual pak/script/DLL installers, so a matching archive is always handled as a combo.
 
-  Installs to: the game folder
+  Installs to: "ProjectPBZ"
 
   Common mistakes:
     - Including only one of "Content" or "Binaries" - the archive then falls through to a different installer.
@@ -54,6 +54,8 @@ MyBlueprintMod.zip
     - Everything from the "LogicMods" folder down is copied to the game, keeping its structure.
     - Extra folders above "LogicMods" are fine - the installer finds it at any depth.
 
+  Installs to: "ProjectPBZ\Content\Paks"
+
   Common mistakes:
     - Putting the ".pak" at the top level of the archive with no "LogicMods" folder. Vortex then treats it as an ordinary pak mod, installs it to the wrong place, and the blueprint mod never loads.
     - Renaming the folder ("Logic_Mods", "logicmod", "BPMods") - the name must be exactly "LogicMods".
@@ -75,6 +77,8 @@ MyPakMod.zip
     - Companion files are installed alongside paks: ".ucas" or ".utoc".
     - If the archive holds more than one pak, Vortex asks the user which to install - useful for optional variants.
 
+  Installs to: "ProjectPBZ\Content\Paks\~mods"
+
   Common mistakes:
     - Shipping several unrelated paks in one archive when you meant them all to install - the user gets a choice dialog and may pick only one.
     - Blueprint mods belong in a "LogicMods" folder instead - see above.
@@ -88,6 +92,8 @@ This installer handles the UE4SS runtime package, not individual mods. Most auth
   Requirements:
     - Recognised by a file named "dwmapi.dll" at any level of the archive.
     - Also recognised by any of the UE4SS support folders: "MapGenBP", "MemberVarLayoutTemplates", "UE4SS_Signatures" or "VTableLayoutTemplates".
+
+  Installs to: "ProjectPBZ\Binaries\Win64"
 
   Common mistakes:
     - If your script mod archive happens to contain a file named "dwmapi.dll", it will be treated as a UE4SS install rather than as your mod.
@@ -110,6 +116,8 @@ MyScriptMod.zip
     - Wrap the "Scripts" folder in a folder named after your mod. That folder name becomes the mod's UE4SS name and is what gets written to the load order.
     - If you omit the wrapper folder, Vortex falls back to naming the mod after the archive file.
 
+  Installs to: "ProjectPBZ\Binaries\Win64\ue4ss\Mods"
+
   Common mistakes:
     - Putting "main.lua" directly in the archive root with no "Scripts" folder - the mod is not recognised as a script mod.
     - Naming the wrapper folder something generic like "Mods" - that name is what appears in the load order.
@@ -131,6 +139,8 @@ MyDllMod.zip
     - The archive must contain a ".dll" file AND a folder named "dlls".
     - Wrap the "dlls" folder in a folder named after your mod - that name is used in the load order.
 
+  Installs to: "ProjectPBZ\Binaries\Win64\ue4ss\Mods"
+
   Common mistakes:
     - A bare ".dll" with no "dlls" folder is not recognised as a UE4SS DLL mod and will reach the fallback installer.
 
@@ -142,12 +152,12 @@ For mods that replace or add files inside the game installation, laid out the sa
 
 [code]
 MyRootMod.zip
-└── Engine\
+└── ProjectPBZ\
     └── ... files in their real relative locations
 [/code]
 
   Requirements:
-    - Recognised by a top-level folder matching any of: "Engine", "Content", "Binaries", "Mods", "Paks", "Movies" or "Splash".
+    - Recognised by a top-level folder matching any of: "ProjectPBZ", "Engine", "Content", "Binaries", "Mods", "Paks", "Movies" or "Splash".
     - The matched folder and everything below it is copied into the game folder, preserving structure.
 
   Installs to: the game folder
@@ -195,7 +205,7 @@ This is the catch-all. Any archive with no ".pak" file that matched none of the 
     - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
     - Vortex shows the user a notification when a mod installs through the fallback.
 
-  Installs to: the game's binaries folder
+  Installs to: "ProjectPBZ\Binaries\Win64"
 
   Common mistakes:
     - If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report it as broken.
