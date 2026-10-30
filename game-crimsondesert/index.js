@@ -2,8 +2,8 @@
 Name: Crimson Desert Vortex Extension
 Structure: Basic Game w/ 3rd Party Manager Integration
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-25
+Version: 1.1.0
+Date: 2026-10-29
 Notes:
 - Supports plugin mods and data mods with "00XX" folders (XX <= 35)
 - Supports Crimson Browser (manifest.json and files folder) and JSON Mod Manager (.json or "0036+" folder) mods
@@ -213,8 +213,8 @@ const SAVE_EDITOR_FILE_STRING = "Save Editor";
 
 const DMM_ID = `${GAME_ID}-dmm`;
 const DMM_NAME = "Definitive Mod Manager";
-const DMM_EXEC_STRING = "DMM";
-let DMM_EXEC = "DMM.exe";
+const DMM_EXEC = "DMM.exe";
+const DMM_FILES = [DMM_EXEC.toLowerCase()];
 const DMM_ARGS = [];
 const DMM_PAGE_NO = 633;
 const DMM_FILE_NO = 9166;
@@ -418,6 +418,17 @@ let tools = [
     parameters: PARAMETERS,
   }, //*/
   {
+    id: `${DMM_ID}tool`,
+    name: DMM_NAME,
+    logo: "dmm.png",
+    executable: () => DMM_EXEC,
+    requiredFiles: [DMM_EXEC],
+    relative: true,
+    exclusive: false,
+    //shell: true,
+    //parameters: DMM_ARGS,
+  }, //*/
+  {
     id: BROWSER_ID,
     name: BROWSER_NAME,
     logo: "browser.png",
@@ -614,33 +625,6 @@ async function requiresLauncher(gamePath, store) {
 
 //Get correct executable for game version
 function getExecutable(discoveryPath) {
-  /*try {
-    let files = fs.readdirSync(discoveryPath);
-    files = files.filter(file => (
-      path.basename(file).startsWith(DMM_EXEC_STRING)
-      && path.extname(file).toLowerCase() === '.exe'
-    ));
-    if (files !== undefined && files.length > 0) {
-      DMM_EXEC = files.sort((a,b) => a.toLowerCase().localeCompare(b.toLowerCase()))
-        .reverse()[0];
-      log('warn', `Found ${DMM_EXEC} for ${GAME_NAME}`);
-      tools.push({
-        id: DMM_ID,
-        name: DMM_NAME,
-        logo: 'dmm.png',
-        executable: () => DMM_EXEC,
-        requiredFiles: [
-          DMM_EXEC,
-        ],
-        relative: true,
-        exclusive: false,
-      });
-    } else {
-      //pass
-    }
-  } catch(err) {
-    log('warn', `DMM not found at ${discoveryPath}: ${err.message}`);
-  } //*/
   if (statCheckSync(discoveryPath, EXEC_XBOX)) {
     GAME_VERSION = "xbox";
     return EXEC_XBOX;
@@ -798,11 +782,7 @@ function installRoot(files) {
 
 //Test for DMM exe file
 function testDmm(files, gameId) {
-  const isDmm = files.some(
-    (file) =>
-      path.basename(file).startsWith(DMM_EXEC_STRING) &&
-      path.extname(file).toLowerCase() === ".exe",
-  );
+  const isDmm = files.some((file) => DMM_FILES.includes(path.basename(file).toLowerCase()));
   let supported = gameId === spec.game.id && isDmm;
 
   // Test for a mod installer
@@ -826,11 +806,7 @@ function testDmm(files, gameId) {
 //Install DMM exe file
 function installDmm(files) {
   const MOD_TYPE = DMM_ID;
-  const modFile = files.find(
-    (file) =>
-      path.basename(file).startsWith(DMM_EXEC_STRING) &&
-      path.extname(file).toLowerCase() === ".exe",
-  );
+  const modFile = files.find((file) => DMM_FILES.includes(path.basename(file).toLowerCase()));
   const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
@@ -926,14 +902,22 @@ function testSpecialPatchMod(files, gameId) {
 }
 
 //Installer install Special Patch Mod files
-function installSpecialPatchMod(files) {
+function installSpecialPatchMod(files, fileName) {
   const setModTypeInstruction = { type: "setmodtype", value: ROOT_ID };
+  const modFile = files.find(
+    (file) =>
+      //i.e. "0036" folder
+      path.basename(file).startsWith("00") && path.basename(file).length === 4,
+  );
+  //wrap in a folder named after the mod if the "00XX" folder is at the archive root
+  const folder =
+    path.dirname(modFile) === "." ? path.basename(fileName).replace(".installing", "") : "";
 
   // Remove directories and anything that isn't in the rootPath.
   const pluginFiles = files.filter((file) =>
     BINARIES_EXTS.includes(path.extname(file).toLowerCase()),
   );
-  const modFiles = files.filter((file) => !pluginFiles.includes(file));
+  const modFiles = files.filter((file) => !file.endsWith(path.sep) && !pluginFiles.includes(file));
   const instructions = pluginFiles
     .map((file) => {
       return {
@@ -947,7 +931,7 @@ function installSpecialPatchMod(files) {
         return {
           type: "copy",
           source: file,
-          destination: path.join(PATCH_MOD_PATH, file),
+          destination: path.join(PATCH_MOD_PATH, folder, file),
         };
       }),
     );
@@ -1163,8 +1147,9 @@ function testJsonMod(files, gameId) {
 }
 
 //Install patch mod files - file selection popup
-async function installJsonMod(api, files) {
+async function installJsonMod(api, files, fileName) {
   const fileExt = PATCH_MOD_EXTS;
+  const folder = path.basename(fileName).replace(".installing", "");
   const modFiles = files.filter((file) => fileExt.includes(path.extname(file).toLowerCase()));
   const modType = {
     type: "setmodtype",
@@ -1176,7 +1161,7 @@ async function installJsonMod(api, files) {
     return {
       type: "copy",
       source: file,
-      destination: path.basename(file),
+      destination: path.join(folder, path.basename(file)),
     };
   });
   instructions.push(modType);
@@ -1748,38 +1733,8 @@ async function isDmmInstalled(api, spec) {
   const mods = state.persistent.mods[spec.game.id] || {};
   let test = Object.keys(mods).some((id) => mods[id]?.type === DMM_ID);
   if (test === false) {
-    try {
-      GAME_PATH = getDiscoveryPath(api);
-      let files = await fsp.readdir(GAME_PATH);
-      files = files.filter(
-        (file) =>
-          path.basename(file).startsWith(DMM_EXEC_STRING) &&
-          path.extname(file).toLowerCase() === ".exe",
-      );
-      if (files !== undefined && files.length > 0) {
-        DMM_EXEC = files
-          .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))
-          .reverse()[0];
-        log("warn", `Found ${DMM_EXEC} for ${GAME_NAME}`);
-        tools.push({
-          id: DMM_ID,
-          name: DMM_NAME,
-          logo: "dmm.png",
-          executable: () => DMM_EXEC,
-          requiredFiles: [DMM_EXEC],
-          relative: true,
-          exclusive: false,
-          //shell: true,
-          //parameters: DMM_ARGS,
-        });
-        test = true;
-      } else {
-        test = false;
-      }
-    } catch (err) {
-      log("warn", `DMM not found at ${GAME_PATH}: ${err.message}`);
-      test = false;
-    }
+    GAME_PATH = getDiscoveryPath(api);
+    test = await statCheckAsync(GAME_PATH, DMM_EXEC);
   }
   return test;
 }
@@ -2605,8 +2560,8 @@ function applyGame(context, gameSpec) {
       installPatchMod(context.api, files, fileName),
     );
     context.registerInstaller(`${GAME_ID}-texture`, 34, testTextureMod, installTextureMod);
-    context.registerInstaller(`${GAME_ID}-json`, 35, testJsonMod, (files) =>
-      installJsonMod(context.api, files),
+    context.registerInstaller(`${GAME_ID}-json`, 35, testJsonMod, (files, fileName) =>
+      installJsonMod(context.api, files, fileName),
     ); //.json patches, no data files
   } else {
     context.registerInstaller(`${GAME_ID}-vortexmod`, 33, testVortex, (files, fileName) =>
@@ -3034,36 +2989,6 @@ function deployNotify(api) {
 async function runDmm(api, file, args = []) {
   GAME_PATH = getDiscoveryPath(api);
   const TOOL_NAME = DMM_NAME;
-  try {
-    GAME_PATH = getDiscoveryPath(api);
-    let files = await fsp.readdir(GAME_PATH);
-    files = files.filter(
-      (file) =>
-        path.basename(file).startsWith(DMM_EXEC_STRING) &&
-        path.extname(file).toLowerCase() === ".exe",
-    );
-    if (files !== undefined && files.length > 0) {
-      DMM_EXEC = files.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())).reverse()[0];
-      file = DMM_EXEC;
-      log("warn", `Found ${DMM_EXEC} for ${GAME_NAME}`);
-      tools.push({
-        id: DMM_ID,
-        name: DMM_NAME,
-        logo: "dmm.png",
-        executable: () => DMM_EXEC,
-        requiredFiles: [DMM_EXEC],
-        relative: true,
-        exclusive: false,
-        //shell: true,
-        //parameters: DMM_ARGS,
-      });
-      //pass
-    } else {
-      //pass
-    }
-  } catch (err) {
-    log("warn", `DMM exe not found at ${GAME_PATH}: ${err.message}`);
-  }
   try {
     const TOOL_PATH = path.join(GAME_PATH, file);
     if (TOOL_PATH !== undefined) {

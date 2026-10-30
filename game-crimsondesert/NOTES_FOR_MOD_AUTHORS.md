@@ -9,7 +9,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Root / Game Folder Mods | a `bin64` folder | the game folder |
-| Definitive Mod Manager | a `.exe` file | the game folder |
+| Definitive Mod Manager | a `DMM_EXEC.toLowerCase()` folder | the game folder |
 | Tools | a `CD JSON Mod Manager.exe`, `CrimsonSharp.exe`, `CrimsonSaveEditorStandalone.exe`, `PazGui.exe`, `CDModManager.exe`, `QT_ModManager.exe` or `CrimsonDesertModManager.exe` file | the game folder |
 | Special Patch Mod | a `.dll`, `.asi` or `.addon64` file | the game folder |
 | Crimson Sharp Mod | a `manifest.json` file, a `files` folder and a `meta`, `0000`, `0001`, `0002`, `0003`, `0004`, `0005`, `0006`, `0007`, `0008`, `0009`, `0010`, `0011`, `0012`, `0013`, `0014`, `0015`, `0016`, `0017`, `0018`, `0019`, `0020`, `0021`, `0022`, `0023`, `0024`, `0025`, `0026`, `0027`, `0028`, `0029`, `0030`, `0031`, `0032`, `0033`, `0034` or `0035` folder | `mods` |
@@ -43,7 +43,7 @@ Installs to: the game folder
 
 ## Definitive Mod Manager
 
-Recognised when the archive contains a `.exe` file.
+Recognised when the archive contains a `DMM_EXEC.toLowerCase()` folder.
 
 Installs to: the game folder
 

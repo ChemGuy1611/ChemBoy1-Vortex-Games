@@ -225,6 +225,13 @@ result is what Vortex stores. It cannot change per install afterwards. Tools wit
 are found by walking the game folder for their `requiredFiles`, which is a static array. A tool
 whose location differs per build (for example `Binaries\Win64` vs `Binaries\WinGDK` on the Xbox
 build) therefore needs one static entry per variant; only the entry whose file exists shows up.
+The walk is recursive and matches by file name only (`discoverRelativeTools`), so a bare
+`requiredFiles: ["Tool.exe"]` also finds `<game>\SubFolder\Tool.exe`. This only happens while the
+tool has not been discovered yet: a tool already discovered keeps its stored path. Because a bare
+name matches a file of that name anywhere in the game folder, a leftover copy in another folder
+(for example an older install in the game root) can be picked instead. Use the full relative path
+(`path.join("SubFolder", "Tool.exe")`) for `executable` and `requiredFiles` to pin the tool to one
+folder.
 
 `queryPath` on a tool is used when the tool lives outside the game dir (e.g. a separate ModKit install).
 It returns the tool's **folder**, not the executable — Vortex joins `executable()` onto it.

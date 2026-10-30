@@ -11,7 +11,7 @@ This extension adds Crimson Desert modding support to Vortex Mod Manager.
 [b]🛠️ Mod Installation Notes:[/b]
 [list]
 [*]Root Folder mods with a "bin64" folder install to the game folder.[/*]
-[*]Definitive Mod Manager installs to the game folder, recognised by a ".exe" file.[/*]
+[*]Definitive Mod Manager installs to the game folder, recognised by a "DMM_EXEC.toLowerCase()" folder.[/*]
 [*]Tools mods with a "CD JSON Mod Manager.exe", "CrimsonSharp.exe", "CrimsonSaveEditorStandalone.exe", "PazGui.exe", "CDModManager.exe", "QT_ModManager.exe" or "CrimsonDesertModManager.exe" file install to the game folder.[/*]
 [*]Special Patch mods with a ".dll", ".asi" or ".addon64" file install to the game folder.[/*]
 [*]Crimson Sharp mods with a "manifest.json" file, a "files" folder and a "meta" or "0000" to "0035" folder install to the "mods" folder.[/*]
@@ -60,7 +60,7 @@ MyRootMod.zip
 
 Definitive Mod Manager:
 
-Recognised when the archive contains a ".exe" file.
+Recognised when the archive contains a "DMM_EXEC.toLowerCase()" folder.
 
   Installs to: the game folder
 

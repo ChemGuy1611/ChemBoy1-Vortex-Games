@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.0] - 2026-10-29
+
+- Fixed: JSON patch mods, and mods that include both a plugin and a "00XX" folder, now install into their own folder inside "mods" instead of directly into it.
+- Added: Definitive Mod Manager (DMM.exe) is now registered as a tool, so it appears in the dashboard and can be launched from Vortex.
+
 ## [1.0.2] - 2026-10-25
 
 - Added the Nexus mod ID to the extension info.
