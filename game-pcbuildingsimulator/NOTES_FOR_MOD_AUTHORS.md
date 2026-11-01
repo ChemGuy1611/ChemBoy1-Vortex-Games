@@ -13,7 +13,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | BepInEx Configuration Manager | a `configurationmanager.dll` file | `BepInEx` |
 | Assembly Replacement Mods | a `Assembly-CSharp.dll` file | `PCBS_Data\Managed` |
 | BepInEx Plugin Mods | a `.dll` file built for BepInEx | `BepInEx\plugins\<ModName>` |
-| Asset Replacement Mods | a `.assets` file | `PCBS_Data` |
+| Asset Replacement Mods | a `.assets`, `.resource` or `.ress` file | `PCBS_Data` |
 | Save Game Files | a `.binary` file | `Saves` |
 | Fallback Installer | anything not matched above | the game folder |
 

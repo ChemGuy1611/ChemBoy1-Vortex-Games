@@ -8,7 +8,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Root / Game Folder Mods | a `Bin` folder | the game folder |
+| Root / Game Folder Mods | a `Bin` or `Data` folder | the game folder |
 | Data Mod | a `.pak` or `.pkm` file and a `models`, `movies` or `music` folder | `Data` |
 | Config File Mods | a `config.ini` file | `Bin` |
 | Save Game Files | a `.dat` file | `SaveGames` |

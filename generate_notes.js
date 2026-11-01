@@ -196,6 +196,8 @@ function detectEngine(dirName) {
  * `if (BEPINEX_BUILD === "mono")`) wins over the declaration, as it does for scalars.
  * A literal extended with `.concat(OTHER_ARRAY)` (`[".pak", ".ucas", ".utoc"].concat(PAKMOD_EXTRA_EXTS)`)
  * gets OTHER_ARRAY's elements appended, and a `...OTHER_ARRAY` spread element is expanded in place.
+ * An element written as `CONST.toLowerCase()` resolves to CONST as declared: matching is
+ * case-insensitive, and the declared spelling is the one users see in the game folder.
  * Comments, empty strings, unresolved identifiers and `XXX` placeholders are dropped.
  */
 /** Remove `//` and `/* *\/` comments from a source fragment, leaving string literals intact. */
@@ -237,6 +239,7 @@ function resolveArray(name, src, table, depth = 0) {
     ? splitAtTopLevelCommas(body)
         .map((a) => a.trim())
         .filter((a) => a && !/^(['"`])\1$/.test(a))
+        .map((a) => a.replace(/\.to(?:Lower|Upper)Case\(\)$/, ""))
         .flatMap((a) => {
           const spread = a.match(/^\.\.\.\s*([A-Za-z_$]\w*)$/);
           if (spread) {
@@ -368,9 +371,36 @@ function folderParent(p, folder) {
   return parts.join("/") || ".";
 }
 
-/** Quote a list of names for prose: `a`, `b` or `c`. */
+/**
+ * Quote each name with `wrap`, folding three or more consecutive zero-padded numbers of one width
+ * into a range (`0000` to `0035`). Still names every value, just not one by one.
+ */
+function numberRuns(names, wrap) {
+  const tokens = [];
+  for (let i = 0; i < names.length; ) {
+    let j = i;
+    while (
+      /^\d+$/.test(names[i]) &&
+      j + 1 < names.length &&
+      names[j + 1].length === names[i].length &&
+      /^\d+$/.test(names[j + 1]) &&
+      Number(names[j + 1]) === Number(names[j]) + 1
+    ) {
+      j++;
+    }
+    tokens.push(
+      j - i >= 2
+        ? `${wrap}${names[i]}${wrap} to ${wrap}${names[j]}${wrap}`
+        : `${wrap}${names[i]}${wrap}`,
+    );
+    i = j > i + 1 ? j + 1 : i + 1;
+  }
+  return tokens;
+}
+
+/** Quote a list of names for prose: `a`, `b` or `c`; number runs read as a range. */
 function orList(items, wrap = "`") {
-  const w = items.map((i) => `${wrap}${i}${wrap}`);
+  const w = numberRuns(items, wrap);
   if (w.length === 0) return "";
   if (w.length === 1) return w[0];
   return w.slice(0, -1).join(", ") + " or " + w[w.length - 1];
@@ -437,6 +467,7 @@ function matchBlock({
   files,
   exts,
   folders,
+  quickFolders,
   installsTo,
   tree,
   pitfalls,
@@ -459,10 +490,16 @@ function matchBlock({
     );
   }
   if (!rules.length) return null;
+  // The one-line trigger names the first folder unless the caller says which folders matter most.
+  // Names differing only in case are one folder to the installer, so each is listed once.
+  const quickFolderList = (
+    quickFolders && quickFolders.length ? quickFolders : (folders || []).slice(0, 1)
+  ).filter((f, i, all) => all.findIndex((o) => o.toLowerCase() === f.toLowerCase()) === i);
   const quickBits = [
-    folders && folders.length ? `a \`${folders[0]}\` folder` : null,
+    quickFolderList.length ? `a ${orList(quickFolderList)} folder` : null,
     files && files.length ? `a \`${files[0]}\` file` : null,
-    exts && exts.length ? `a \`${exts[0]}\` file` : null,
+    // Every extension is an alternative trigger, so the one-liner lists them all.
+    exts && exts.length ? `a ${orList(exts)} file` : null,
   ].filter(Boolean);
   return {
     title,
@@ -524,6 +561,86 @@ const PROSE = [
             "mod. Do not rely on the folder name in any path inside your mod.",
         ],
       }),
+  },
+  {
+    // The "00XX" folder check is a startsWith/length test that deriveTrigger cannot read, and
+    // without it this installer looks identical to the Binaries one.
+    fn: "testSpecialPatchMod",
+    game: "game-crimsondesert",
+    build: (v) => {
+      const exts = v.BINARIES_EXTS || [];
+      if (!exts.length || !v.BINARIES_PATH || !v.PATCH_MOD_PATH) return null;
+      return {
+        title: "Special Patch Mod",
+        quick: `a ${orList(exts)} file and a \`00XX\` folder`,
+        lead:
+          `Recognised when the archive contains a ${orList(exts)} file and a \`00XX\` folder ` +
+          "(four characters starting with `00`, such as `0036`).",
+        rules: [
+          `${orList(exts)} files install to \`${v.BINARIES_PATH}\`; everything else installs to ` +
+            `\`${v.PATCH_MOD_PATH}\`.`,
+          "A `00XX` folder at the top level of the archive is wrapped in a folder named after the mod.",
+          "An archive that also contains an `.exe` file is not treated as a Special Patch mod.",
+        ],
+        pitfalls: [],
+        installsTo: `the "${v.BINARIES_PATH}" folder (plugin files) and the "${v.PATCH_MOD_PATH}" folder (everything else)`,
+        targetIsProse: true,
+      };
+    },
+  },
+  {
+    // NESTED_ZIP_KINDS is an array of objects the parser cannot read, so the markers are spelled out.
+    fn: "testNestedZip",
+    game: "game-forzahorizon6",
+    build: () => ({
+      title: "Car / Sky Zip Mods",
+      quick: "a `.carbin` file or a `FrameData.xml` file",
+      lead:
+        "Car and sky mods replace one whole zip in the game's `media\\cars` or `media\\hdrskies` " +
+        "folder. Vortex extracts every download, so this installer packs the files back into a zip " +
+        "named after the car or sky they replace. Vortex asks which one during install; for a car it " +
+        "suggests the name of the `.carbin` file.",
+      rules: [
+        "Recognised by a `.carbin` file (car) or a `FrameData.xml` file (sky). The folder holding " +
+          "that file becomes the top level of the zip.",
+        "An archive that already contains a `media` or `mediapc` folder is installed as packaged " +
+          "instead.",
+      ],
+      pitfalls: [
+        "For a car swap, the `.carbin` name is only a suggestion. Say on the mod page which car " +
+          "users should enter.",
+      ],
+      installsTo:
+        'a zip named after the replaced car or sky in the "mediapc\\cars" or "mediapc\\hdrskies" folder',
+      targetIsProse: true,
+    }),
+  },
+  {
+    fn: "testLoose",
+    game: "game-forzahorizon6",
+    build: () => ({
+      title: "Loose Media File Mods",
+      quick: "files named like the game's own media files",
+      lead:
+        "For loose files that replace game files, including files inside the game's top-level " +
+        "`media` zips such as `Camera.zip`. Vortex looks each file name up in the game's media " +
+        "folder and its zips, and places the file in the matching `mediapc` sub-folder (for example " +
+        "`mediapc\\Camera`).",
+      rules: [
+        "Recognised when most files in the archive share a name with a file the game reads from its " +
+          "media folder. Readme-type files the game does not have are skipped.",
+        "New files go to the same folder as the game files next to them in the archive.",
+        "A name found in several places goes where the archive's own folder names point, otherwise " +
+          "to the general folder.",
+        "Archives with `.dll`, `.exe` or `.asi` files are not handled here.",
+      ],
+      pitfalls: [
+        "To target one of several same-named files (for example a seasonal crowd folder), keep the " +
+          "game's folder structure in the archive.",
+      ],
+      installsTo: 'the matching "mediapc" sub-folder',
+      targetIsProse: true,
+    }),
   },
   {
     fn: "testPatch",
@@ -892,6 +1009,28 @@ const PROSE = [
         rules: [`Recognised by any file with extension ${orList(exts)}.`],
         pitfalls: [
           `Including an example save alongside a normal mod - the archive is then treated as a save, not a mod.`,
+        ],
+      };
+    },
+  },
+  // Quarantine Zone's mod kit (and its mod.io mods) ship no mod.json - the installer keys on the
+  // .uplugin alone and names the folder after it, unlike the template's manifest-driven variant.
+  {
+    fn: "testModKitMod",
+    game: "game-quarantinezonethelastcheck",
+    build: (v) => {
+      if (!v.MODKITMOD_EXT) return null;
+      return {
+        title: "Mod Kit Mods",
+        quick: `a \`${v.MODKITMOD_EXT}\` file`,
+        installsTo: null,
+        lead: `Mods produced with the game's mod kit - including the mods hosted on mod.io - identified by a \`${v.MODKITMOD_EXT}\` plugin file.`,
+        rules: [
+          `Recognised when the archive contains a \`${v.MODKITMOD_EXT}\` file.`,
+          `Everything beside the \`${v.MODKITMOD_EXT}\` file (its \`Content\` folder included) is installed into a folder named after the \`${v.MODKITMOD_EXT}\` file.`,
+        ],
+        pitfalls: [
+          `Placing the \`${v.MODKITMOD_EXT}\` file in a different folder from its \`Content\` folder - only files at or below the \`${v.MODKITMOD_EXT}\` file's folder are installed.`,
         ],
       };
     },
@@ -1826,6 +1965,8 @@ const PROSE = [
           "For mods laid out the same way the files appear inside the game folder. " +
           "Vortex copies the matched folder and everything under it straight into the game.",
         folders,
+        // Every top-level root folder belongs in the one-line trigger; the sub-folders stay in the rules.
+        quickFolders: v.ROOT_FOLDERS,
         files: v.ROOT_FILES,
         exts: v.ROOT_EXTS,
         installsTo: GAME_FOLDER_PROSE,
@@ -1999,6 +2140,9 @@ function buildVars(src, table) {
     // Godot
     "MAPS_PATH",
     "MAPS_FOLDER",
+    // Crimson Desert
+    "BINARIES_PATH",
+    "PATCH_MOD_PATH",
   ]) {
     v[n] = val(n, src, table);
   }
@@ -2510,6 +2654,8 @@ const MOD_TYPE_LABELS = {
   "dragonballsparkingzero-modloadermod": "SZModLoader Plugin",
   "farcry3-ziggy": "Ziggy's",
   "farmingsimulator25-zip": "Nested Archive",
+  "forzahorizon6-loosemedia": "Loose Media",
+  "forzahorizon6-nestedzip": "Car / Sky",
   "ghostreconwildlands-forgemod": "Forge",
   "gzdoom-zipmod": "Nested Archive",
   "helldivers2-patch--MergedMods--This-is-fine--Ignore-this--SELECT-APPLY-CHANGES--DO-NOT-ENABLE":
@@ -2614,21 +2760,7 @@ const QUOTED_LIST = /"[^"]*"(?:(?:, | or )"[^"]*")*( (?:folder|file)\b)?/g;
 function tidyTrigger(trigger) {
   return trigger.replace(QUOTED_LIST, (match, noun = "") => {
     const names = [...new Set([...match.matchAll(/"([^"]*)"/g)].map((m) => m[1]))];
-    const tokens = [];
-    for (let i = 0; i < names.length; ) {
-      let j = i;
-      while (
-        /^\d+$/.test(names[i]) &&
-        j + 1 < names.length &&
-        names[j + 1].length === names[i].length &&
-        /^\d+$/.test(names[j + 1]) &&
-        Number(names[j + 1]) === Number(names[j]) + 1
-      ) {
-        j++;
-      }
-      tokens.push(j - i >= 2 ? `"${names[i]}" to "${names[j]}"` : `"${names[i]}"`);
-      i = j > i + 1 ? j + 1 : i + 1;
-    }
+    const tokens = numberRuns(names, '"');
     const join = (list) =>
       list.length > 1 ? `${list.slice(0, -1).join(", ")} or ${list[list.length - 1]}` : list[0];
     if (tokens.length <= DESCRIPTION_LIST_CAP) return join(tokens) + noun;

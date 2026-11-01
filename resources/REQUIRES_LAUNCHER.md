@@ -200,3 +200,5 @@ Or inline in `context.registerGame()` — both work identically.
 that need a non-default hand-off).
 `MICROSOFT_STORE_CATALOG_API.md` (resolving the xbox branch's `appId`/`appExecName` values from a
 Store product ID without an installed Game Pass copy).
+`USER_CONFIGURABLE_MOD_PATHS.md` (a Steam launch option that moves the mod folder: reading it from
+Steam's `localconfig.vdf`, and why the game has to start through Steam for it to apply).

@@ -8,10 +8,27 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Root / Game Folder Mods | a `media` folder | the game folder |
+| Car / Sky Zip Mods | a `.carbin` file or a `FrameData.xml` file | a zip named after the replaced car or sky in the "mediapc\cars" or "mediapc\hdrskies" folder |
+| Root / Game Folder Mods | a `media` or `mediapc` folder | the game folder |
+| Loose Media File Mods | files named like the game's own media files | the matching "mediapc" sub-folder |
 | Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
+
+## Car / Sky Zip Mods
+
+Car and sky mods replace one whole zip in the game's `media\cars` or `media\hdrskies` folder. Vortex extracts every download, so this installer packs the files back into a zip named after the car or sky they replace. Vortex asks which one during install; for a car it suggests the name of the `.carbin` file.
+
+**Requirements:**
+
+- Recognised by a `.carbin` file (car) or a `FrameData.xml` file (sky). The folder holding that file becomes the top level of the zip.
+- An archive that already contains a `media` or `mediapc` folder is installed as packaged instead.
+
+Installs to: a zip named after the replaced car or sky in the "mediapc\cars" or "mediapc\hdrskies" folder
+
+**Common mistakes:**
+
+- For a car swap, the `.carbin` name is only a suggestion. Say on the mod page which car users should enter.
 
 ## Root / Game Folder Mods
 
@@ -25,13 +42,30 @@ MyRootMod.zip
 
 **Requirements:**
 
-- Recognised by a folder named `media`, `_library`, `audio`, `brakes`, `cars`, `charactercustomisation`, `cinematic_assets`, `crowds`, `deformableterrain`, `dynamicpost`, `graphicscache`, `hdrskies`, `lensflare`, `livery`, `nerddata`, `openworld`, `particles`, `physics`, `stripped`, `timeofday`, `tracks`, `ui`, `water` or `weather` in the archive.
+- Recognised by a folder named `media`, `mediapc`, `animation`, `audio`, `brakes`, `camera`, `cars`, `charactercustomisation`, `cinematic_assets`, `cinematics`, `colourgrades`, `crowds`, `crowds_autumn`, `crowds_spring`, `crowds_winter`, `deformableterrain`, `displaymappers`, `dynamicpost`, `gametunablesettings`, `graphicscache`, `hdrskies`, `inputmappingprofiles`, `lensflare`, `livery`, `nerddata`, `objectmodelgame`, `openworld`, `particles`, `particlesmodels`, `performance`, `physics`, `popcornfx`, `posteffects`, `profileschema`, `rendering`, `renderscenarios`, `rules`, `shadersdxil`, `sky`, `stateflow`, `stripped`, `timeofday`, `tracks`, `ui`, `water`, `weather`, `weathertextures`, `wheeltunablesettingspc` or `_library` in the archive.
 
 Installs to: the game folder
 
 **Common mistakes:**
 
 - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
+
+## Loose Media File Mods
+
+For loose files that replace game files, including files inside the game's top-level `media` zips such as `Camera.zip`. Vortex looks each file name up in the game's media folder and its zips, and places the file in the matching `mediapc` sub-folder (for example `mediapc\Camera`).
+
+**Requirements:**
+
+- Recognised when most files in the archive share a name with a file the game reads from its media folder. Readme-type files the game does not have are skipped.
+- New files go to the same folder as the game files next to them in the archive.
+- A name found in several places goes where the archive's own folder names point, otherwise to the general folder.
+- Archives with `.dll`, `.exe` or `.asi` files are not handled here.
+
+Installs to: the matching "mediapc" sub-folder
+
+**Common mistakes:**
+
+- To target one of several same-named files (for example a seasonal crowd folder), keep the game's folder structure in the archive.
 
 ## Fallback Installer
 

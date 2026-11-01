@@ -8,7 +8,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Root / Game Folder Mods | a `base` folder or a `cache.psarc` file | the game folder |
+| Root / Game Folder Mods | a `base`, `dlc`, `guitarcade` or `venues` folder or a `cache.psarc` file | the game folder |
 | CDLC Mod | a `.psarc` file | `dlc` |
 | Editor On Fire | a `eof.exe` file | `EditorOnFire` |
 

@@ -208,3 +208,5 @@ Runtime siblings: `VORTEX_MOD_INSTALL.md`, `VORTEX_PROFILES.md`, `VORTEX_GAME_LI
 per-method purge): `NTFS_LINKS.md`. Diagram of deploy/purge: `VORTEX_FLOWCHARTS.md` §4. Third-party purge trigger that leaves
 `deploymentNecessary` set without re-deploying: `STEAM_FILE_DOWNLOADER.md`. A worked case of a mod
 type target chosen to keep mods on the staging volume so hardlinks stay available: `RESOREP.md`.
+Letting the player move a mod type's target folder from a settings page, purging the old target
+first: `USER_CONFIGURABLE_MOD_PATHS.md`.

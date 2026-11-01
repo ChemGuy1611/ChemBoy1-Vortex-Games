@@ -22,7 +22,6 @@ module.exports = {
     "installer-fomod": `mod loader and data subfolder ${MARKER_NO_FOMOD}`,
   },
   "template-unity-umm": {
-    "modtype-priority": "UMM and Mods types sit at 8 and 10 to beat helper-extension mod types",
     "installer-priority-range": "root installer sits at 8 to run ahead of the UMM installers",
   },
 };

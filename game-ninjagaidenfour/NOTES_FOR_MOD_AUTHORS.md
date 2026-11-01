@@ -8,7 +8,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Root / Game Folder Mods | a `assets` folder | the game folder |
+| Root / Game Folder Mods | a `assets`, `blob`, `config`, `fonts`, `shaders`, `textures` or `truetypefonts` folder | the game folder |
 | Asset Mod | a `.dat` file and a `config`, `movies` or `sounds` folder | `Assets` |
 
 Paths are relative to the game's install folder.

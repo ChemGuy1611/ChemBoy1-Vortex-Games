@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.2.0] - 2026-10-30
+
+- Added: Railroader home folder setting (Settings > Mods). If you move the game's home folder with the "-homedir" Steam launch option, set the same folder here so native mods deploy where the game reads them. "Use Steam's Folder" reads it from your Steam launch options.
+- Added: Vortex warns when Steam starts the game with a different home folder than Vortex uses.
+- Added: "Open Home Folder" button (game settings and logs).
+- Fixed: "Open Save Folder" now opens the save folder in the game's home folder.
+
+## [1.1.1] - 2026-10-30
+
+- Fixed: Native Railroader mods now install into "Documents\Railroader\Mods", where the game reads them, instead of the game's "Mods" folder.
+- Added: "Open Native Mods Folder" button.
+
+## [1.1.0] - 2026-10-30
+
+- Added: Support for native Railroader mods (Railroader 2026.1 and later). They install into the "Mods" folder and show as "Native Mod" in the mod list.
+
 ## [1.0.6] - 2026-10-25
 
 - Added the Nexus mod ID to the extension info.

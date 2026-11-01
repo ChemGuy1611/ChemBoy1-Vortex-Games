@@ -2,6 +2,10 @@
 
 Covers `template-unity-umm`. Suite file: `tests/templates/unity-umm.test.js`.
 
+## [2026-10-30]
+
+- Changed: the registration test follows the template moving the Unity Mod Manager and Mods mod types from priorities 8 and 10 to 26 and 27. The comment no longer calls those priorities a contract oddity.
+
 ## [2026-10-11]
 
 - Changed: the toolbar `run` helper now awaits the button's action, since "Open Save Folder" is async. The `known gap` test for it now asserts that the shell receives the resolved path as a string, and the Xbox save-folder test reads the path directly instead of awaiting a promise.

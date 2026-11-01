@@ -10,11 +10,11 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | TFC Installer (tool) | a `tfcinstaller.exe` file | `SinglePlayer` |
 | UPK Explorer (tool) | a `upk explorer.exe` file | `SinglePlayer` |
-| TFC Mods | a `gameprofile.xml` file or a `.packagepatch` file | `SinglePlayer\TFCInstaller\Mods` |
-| Root / Game Folder Mods | a `BMGame` folder | the game folder |
+| TFC Mods | a `gameprofile.xml` file or a `.packagepatch`, `.descriptor`, `.tfcmapping` or `.inipatch` file | `SinglePlayer\TFCInstaller\Mods` |
+| Root / Game Folder Mods | a `BMGame`, `Engine` or `Binaries` folder | the game folder |
 | Cooked Content Mods | a `Maps` folder or a `.upk` file | `SinglePlayer` |
 | Movie / Cutscene Replacements | a `.usm` file | `SinglePlayer\BMGame\Movies` |
-| Binaries / Injector Mods | a `BatmanOrigins.exe` file or a `.exe` file | `SinglePlayer\Binaries\Win32` |
+| Binaries / Injector Mods | a `BatmanOrigins.exe` file or a `.exe`, `.dll`, `.asi` or `.addon64` file | `SinglePlayer\Binaries\Win32` |
 | Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.

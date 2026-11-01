@@ -10,7 +10,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | Integration Studio | a `IntegrationStudio.exe` file | `client_pc\root` |
 | Paks | a `.pak` file | `client_pc\root\mods` |
-| Root / Game Folder Mods | a `client_pc` folder | the game folder |
+| Root / Game Folder Mods | a `client_pc` or `server_pc` folder | the game folder |
 | Local (Loose) | a `local` folder | `client_pc\root` |
 | Local (Loose Subfolder) | a `ssl`, `video`, `textures`, `presets`, `texts` or `ui` folder | `client_pc\root\local` |
 | Binaries (Engine Injector) | - | `client_pc\root\bin\pc` |

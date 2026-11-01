@@ -1525,7 +1525,7 @@ function applyGame(context, gameSpec) {
   //register mod types explicitly (due to potentially dynamic DATA_FOLDER)
   context.registerModType(
     UMM_ID,
-    8,
+    26,
     (gameId) => {
       var _a;
       return (
@@ -1542,7 +1542,7 @@ function applyGame(context, gameSpec) {
   );
   context.registerModType(
     MODS_ID,
-    10,
+    27,
     (gameId) => {
       var _a;
       return (

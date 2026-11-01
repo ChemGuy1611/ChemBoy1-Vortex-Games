@@ -10,7 +10,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | js folder | a `js` folder | the game folder |
 | js file | a `.js` file | `js\plugins` |
-| Root / Game Folder Mods | a `Elderfield` folder | the game folder |
+| Root / Game Folder Mods | a `Elderfield`, `audio`, `css`, `data`, `effects`, `fonts`, `icon`, `img`, `lib`, `locales` or `swiftshader` folder | the game folder |
 | JSON Mod | a `.json` file | `data` |
 | Fallback Installer | anything not matched above | the game folder |
 

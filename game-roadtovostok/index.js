@@ -2,8 +2,8 @@
 Name: Road to Vostok Vortex Extension
 Structure: Godot Engine Game
 Author: ChemBoy1
-Version: 1.0.5
-Date: 2026-10-25
+Version: 1.0.6
+Date: 2026-10-30
 Notes:
 - 
 ///////////////////////////////////////////*/
@@ -959,22 +959,19 @@ function applyGame(context, gameSpec) {
   it does NOT make Vortex treat .vmz as a downloadable/installable archive, because that list
   (knownArchiveExt) is hardcoded in Vortex core and cannot be extended by an extension. */
   context.registerArchiveType("vmz", (fileName, options) => {
+    //Vortex's node-7z returns Promises and reports listed entries ({ name, attr }) through a progress callback
     const szip = new util.SevenZip();
     const handler = {
-      readDir: (archPath) =>
-        new Promise((resolve, reject) => {
-          const files = [];
-          const stream = szip.list(fileName);
-          stream.on("data", (data) => files.push(data.file));
-          stream.on("end", () => resolve(files));
-          stream.on("error", reject);
-        }),
-      extractAll: (outputPath) =>
-        new Promise((resolve, reject) => {
-          const stream = szip.extractFull(fileName, outputPath);
-          stream.on("end", resolve);
-          stream.on("error", reject);
-        }),
+      readDir: async (archPath) => {
+        const files = [];
+        await szip.list(fileName, {}, (entries) => {
+          for (const entry of entries) {
+            if (!(entry.attr ?? "").includes("D")) files.push(entry.name);
+          }
+        });
+        return files;
+      },
+      extractAll: (outputPath) => szip.extractFull(fileName, outputPath),
     };
     return Promise.resolve(handler);
   }); //*/

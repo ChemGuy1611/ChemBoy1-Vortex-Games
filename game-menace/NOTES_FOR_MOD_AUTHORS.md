@@ -20,7 +20,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Custom Leaders Plugin | a `MenaceCustomLeader.dll` file | `Mods` |
 | MelonLoader Mods | a `.dll` file built for MelonLoader | `Mods\<ModName>` |
 | Custom Leaders Mod | - | `Mods\customleaders` |
-| Asset Replacement Mods | a `.assets` file | `Menace_Data` |
+| Asset Replacement Mods | a `.assets`, `.resource` or `.ress` file | `Menace_Data` |
 | Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.

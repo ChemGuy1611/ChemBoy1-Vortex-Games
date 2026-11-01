@@ -9,7 +9,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Mod | a `mod.cfg` file, a `mod.manifest` file and a `data`, `localization`, `engine` or `KCSE` folder | - |
-| Root / Game Folder Mods | a `bin` folder | the game folder |
+| Root / Game Folder Mods | a `bin` or `KCSE` folder | the game folder |
 | Cfg | a `.cfg` file | the game folder |
 | Binaries | a `.dll` file and a `.exe` file | - |
 | Fallback Installer | anything not matched above | the game folder |

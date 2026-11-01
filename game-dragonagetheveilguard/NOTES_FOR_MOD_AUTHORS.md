@@ -11,7 +11,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Frosty Mod Manager (tool) | a `frostymodmanager.exe` file | `FrostyModManager` |
 | DAVExtender | a `d3d11.dll` file | the game folder |
 | SDK Patch (EA/Epic) | a `DragonAgeTheVeilguardSDK.dll` file | `FrostyModManager\Profiles` |
-| Frosty Mods | a `.fbmod` file | `FrostyModManager\Mods\Dragon Age The Veilguard` |
+| Frosty Mods | a `.fbmod` or `.archive` file | `FrostyModManager\Mods\Dragon Age The Veilguard` |
 
 Paths are relative to the game's install folder.
 

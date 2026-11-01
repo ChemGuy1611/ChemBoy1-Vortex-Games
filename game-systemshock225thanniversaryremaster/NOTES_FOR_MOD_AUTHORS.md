@@ -11,7 +11,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod .kpf | a `.kpf` file | `mods` |
 | Converted Legacy Mod | a `obj`, `mesh`, `bitmap`, `motions`, `sq_scripts`, `sdn2`, `strings`, `iface`, `intrface`, `misdml` or `snd` folder and a `.dml`, `.gam` or `.mis` file | `mods` |
 | Root Folder | a `mods` or `cutscenes` folder | the game folder |
-| Root / Game Folder Mods | a `mods` folder | the game folder |
+| Root / Game Folder Mods | a `mods` or `cutscenes` folder | the game folder |
 | Classic Mod | - | - |
 
 Paths are relative to the game's install folder.

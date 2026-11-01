@@ -152,13 +152,16 @@ context.registerSettings(
 );
 ```
 
-- The `visible` callback hides the section when the wrong game is active —
+Signature: `registerSettings(title, element, props?, visible?, priority?)`. Behaviour below is
+from Vortex's `views/Settings.tsx` and `views/GameSettings.tsx`.
 
-    always set this for game-specific settings.
-
-- The `props` callback is **not** the place to read state; do that inside the
-
-    component with `useSelector`.
+| #   | Argument   | Type                                | What it does                                                                                                                                                                                                                                                                                                                                                                           |
+| --- | ---------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `title`    | `string`                            | Tab the section goes in. Every registration with the same title is merged into one tab, so `"Mods"`, `"Interface"`, `"Download"`, `"Workarounds"` and `"Vortex"` join the built-in tabs; any other string makes a new tab. The untranslated title is the tab's identity (`setSettingsPage("Mods")` deep-links to it); the label shown is translated.                                  |
+| 2   | `element`  | React function or class component   | Rendered inside the tab, with a horizontal rule between sections. It receives whatever `props` returns, plus two props Vortex adds to every section: `changeStartup(key, value)` and `startup` (the startup-settings object).                                                                                                                                                         |
+| 3   | `props`    | `() => object` (optional)           | Called on **every render** of the tab; the returned object is spread into `element`'s props. Use it to hand the component callbacks bound to `context.api` (`onBrowse: () => …`). Not the place to read state — read state inside the component with `useSelector`, so it re-renders when the state changes. Omitted → `{}`.                                                          |
+| 4   | `visible`  | `() => boolean` (optional)          | Filters the section out when it returns `false`; a tab whose sections are all hidden is not shown. Omitted → always visible. Having a `visible` callback also marks the section as **game-specific**: in Vortex's modern layout those sections are removed from the main Settings page and shown on the separate "Game settings" page instead (only while `visible()` is true). Always set it for game settings, typically `() => selectors.activeGameId(api.getState()) === GAME_ID`. |
+| 5   | `priority` | `number` (optional)                 | Sort order, ascending (lower = earlier). Orders sections within a tab, and a tab's own position is the lowest priority among its sections. Defaults to 100 via `priority \|\| 100`, so `0` also becomes 100 — use `1` for "first". Built-in examples: Interface 10, dashboard settings 1000.                                                                                          |
 
 ---
 
@@ -325,3 +328,5 @@ const udf = api.getState()?.settings?.[GAME_ID]?.udf ?? undefined;
 `VORTEX_PROFILES.md` (per-profile state and `settings`/`persistent` hive swap on profile change).
 `VORTEX_REACT_PAGES.md` (`registerSettings`/`registerReducer` as used inside a page's Settings
 tab). `UNDERUSED_API_FUNCTIONS.md` (additional settings-adjacent API surface).
+`USER_CONFIGURABLE_MOD_PATHS.md` (a settings page with a folder picker that moves a mod type's
+deployment target, and the purge it needs).

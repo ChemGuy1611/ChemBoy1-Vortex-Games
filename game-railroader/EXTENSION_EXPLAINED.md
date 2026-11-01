@@ -35,9 +35,10 @@
 | `hasXbox` | `false` | toggle for Xbox version logic |
 | `multiExe` | `false` | set to true if there are multiple executables (and conseq. DATA_FOLDERs) (typically for Xbox/EGS) |
 | `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
-| `autoDownloadUmm` | `true` | download Unity Mod Manager from Nexus during setup |
+| `ummSupport` | `true` | Unity Mod Manager support: download, tool, UMM installer and mod type, "Run" button. info.json mods still install when off (native mods share that manifest name) |
+| `autoDownloadUmm` | `true` | download Unity Mod Manager from Nexus during setup (needs ummSupport) |
 | `railloaderSupport` | `true` | install Railloader mods, and a user-supplied Railloader archive |
-| `seedUmmParams` | `true` | pre-seed UMM's Params.xml and registry values so the tool opens pointed at this game |
+| `seedUmmParams` | `true` | pre-seed UMM's Params.xml and registry values so the tool opens pointed at this game (needs ummSupport) |
 | `hasVersionFile` | `true` | toggle for version file. Set to false if game doesn't have |
 | `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
 | `debug` | `false` | toggle for debug mode |
@@ -50,8 +51,9 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | Root Folder | `railroader-root` | high | `{gamePath}` |
-| Unity Mod Manager | `railroader-umm` | 8 | `{gamePath}` |
-| Mod | `railroader-mods` | 10 | `{gamePath}/Mods` |
+| Unity Mod Manager | `railroader-umm` | 26 | `{gamePath}` |
+| Mod | `railroader-mods` | 27 | `{gamePath}/Mods` |
+| Native Mod | `railroader-nativemod` | 28 | `getNativeModPath(context.api)` |
 | Assembly DLL Mod | `railroader-assemblydll` | 60 | `{gamePath}/Railroader_Data/Managed` |
 | Assets/Resources File | `railroader-assets` | 62 | `{gamePath}/Railroader_Data` |
 
@@ -84,6 +86,8 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Run Unity Mod Manager
 - Get Railloader
 - Open Mods Folder
+- Open Native Mods Folder
+- Open Home Folder
 - Open Data Folder
 - Open Save Folder
 - Open PCGamingWiki Page
@@ -104,6 +108,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 | Type | Path |
 | --- | --- |
 | Config (Registry) | `HKEY_CURRENT_USER\\Software\\Giraffe Lab LLC\\Railroader` |
+| Save | `Saves` |
 
 ## Special Features
 

@@ -36,6 +36,8 @@
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
 | `needsModInstaller` | `false` | set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing |
 | `rootInstaller` | `true` | enable root installer. Set false if you need to avoid installer collisions |
+| `looseInstaller` | `true` | enable installer that places loose media files into the matching mediapc sub-folder |
+| `nestedZipInstaller` | `true` | enable installer that re-zips car/sky mods into the matching mediapc sub-folder |
 | `saveInstaller` | `false` | enable save installer. Set false if path is outside of game folder |
 | `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
 | `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
@@ -50,6 +52,9 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | Root Folder | `forzahorizon6-root` | high | `{gamePath}` |
+| Loose Files | `forzahorizon6-loosemedia` | high | `{gamePath}/mediapc` |
+| Car Mod | `forzahorizon6-car` | high | `{gamePath}/mediapc/cars` |
+| Sky Mod | `forzahorizon6-sky` | high | `{gamePath}/mediapc/hdrskies` |
 
 ## Mod Installers
 
@@ -57,7 +62,9 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
+| `forzahorizon6-nestedzip` | 26 |
 | `forzahorizon6-root` | 27 |
+| `forzahorizon6-loosemedia` | 28 |
 | `forzahorizon6-fallback` | 49 |
 
 ## Registered Tools

@@ -9,11 +9,11 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | BepInEx (mod loader) | a `BepInEx.dll` file | the game folder |
-| Root / Game Folder Mods | a `Apocalypter_Data` folder | the game folder |
+| Root / Game Folder Mods | a `Apocalypter_Data` or `Apocalypter Demo_Data` folder | the game folder |
 | BepInEx Configuration Manager | a `configurationmanager.dll` file | `BepInEx` |
 | Assembly Replacement Mods | a `Assembly-CSharp.dll` file | `Apocalypter_Data\Managed` |
 | BepInEx Plugin Mods | a `.dll` file built for BepInEx | `BepInEx\plugins\<ModName>` |
-| Asset Replacement Mods | a `.assets` file | `Apocalypter_Data` |
+| Asset Replacement Mods | a `.assets`, `.resource` or `.ress` file | `Apocalypter_Data` |
 | Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.

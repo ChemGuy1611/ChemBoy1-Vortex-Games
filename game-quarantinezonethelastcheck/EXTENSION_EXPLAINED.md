@@ -32,7 +32,7 @@
 | `hasXbox` | `false` | toggle for Xbox version logic. |
 | `multiExe` | `false` | toggle for multiple executables (Epic/GOG/Demo don't match Steam) |
 | `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
-| `hasModKit` | `false` | toggle for UE ModKit mod support |
+| `hasModKit` | `true` | toggle for UE ModKit mod support |
 | `hasServer` | `false` | toggle for server pak mod logic |
 | `preferHardlinks` | `true` | set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users |
 | `autoDownloadUe4ss` | `false` | toggle for auto downloading UE4SS (only applies when ue4ssLoadOrder is enabled) |
@@ -42,6 +42,7 @@
 | `hasUserIdFolder` | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
 | `debug` | `false` | toggle for debug mode |
 | `exeHasGameVersion` | `false` | toggle: true if the game devs stamp the real game version (not just the UE engine version) into the exe ProductVersion |
+| `modioBrowser` | `true` | register the "Browse mod.io" page - browse and install the game's mod.io mods inside Vortex |
 | `PAKMOD_LOADORDER` | `true` | set to false if you don't want loadOrder. If must be in "Paks" root, disable loadOrder. |
 | `FBLO` | `true` | set to false to use legacy load order page |
 | `ue4ssLoadOrder` | `true` | master toggle for UE4SS support: UE4SS/Scripts/DLL/LogicMods mod types and installers, UE4SS buttons, load order page, and mods.txt writing |
@@ -63,6 +64,7 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `quarantinezonethelastcheck-logicmods` | high | `{gamePath}/QZSim/Content/Paks` |
 | Paks (no "~mods") | `quarantinezonethelastcheck-pakalt` | high | `{gamePath}/QZSim/Content/Paks` |
 | Root Folder | `quarantinezonethelastcheck-root` | high | `{gamePath}` |
+| ModKit mod | `quarantinezonethelastcheck-modkitmod` | high | `{gamePath}/QZSim/Mods` |
 | UE Sortable Pak Mod | `quarantinezonethelastcheck-uesortablepak` | 25 | `{gamePath}/QZSim/Content/Paks/~mods` |
 | UE4SS Script Mod | `quarantinezonethelastcheck-scripts` | 50 | `{gamePath}/QZSim/Binaries/Win64/ue4ss/Mods` |
 | UE4SS DLL Mod | `quarantinezonethelastcheck-ue4ssdll` | 52 | `{gamePath}/QZSim/Binaries/Win64/ue4ss/Mods` |
@@ -77,6 +79,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
+| `quarantinezonethelastcheck-modkitmod` | 25 |
 | `quarantinezonethelastcheck-ue4sscombo` | 26 |
 | `quarantinezonethelastcheck-logicmods` | 27 |
 | `quarantinezonethelastcheck-uesortablepak` | 29 |
@@ -103,6 +106,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open UE4SS mods.txt
 - Open PCGamingWiki Page
 - Open Nexus Mods Page
+- Open mod.io Page
 - Open SteamDB Page
 - View Changelog
 - Submit Bug Report

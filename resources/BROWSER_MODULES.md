@@ -36,6 +36,7 @@ files, required with a relative path. Two files, not one — the source module a
 const { registerThunderstoreBrowser, onceThunderstoreBrowser } = require("./thunderstore_browser");
 const { registerGameBananaBrowser, onceGameBananaBrowser } = require("./gamebanana_browser");
 const { registerModWorkshopBrowser, onceModWorkshopBrowser } = require("./modworkshop_browser");
+const { registerModioBrowser, onceModioBrowser } = require("./modio_browser");
 ```
 
 `index.js` never requires the base directly; the source module does. Copying only the source module
@@ -202,7 +203,7 @@ about fifteen lines. Fields marked source-specific are defined by the module for
 
 | Field                                                                         | Required | Purpose                                                                                                                                                                                                                        |
 | ----------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| source key                                                                    | yes      | Identifies the site section to open; sets the home URL. `tsCommunity` (Thunderstore), `gbGameId` (GameBanana), `mwsGame` (ModWorkshop), `fcGame` (fcmodding), `moddbPath` (ModDB)                                              |
+| source key                                                                    | yes      | Identifies the site section to open; sets the home URL. `tsCommunity` (Thunderstore), `gbGameId` (GameBanana), `mwsGame` (ModWorkshop), `fcGame` (fcmodding), `moddbPath` (ModDB), `modioGame` (mod.io)                       |
 | `requirements`                                                                | no       | The adopter's requirement table, for install routing and installed-detection                                                                                                                                                   |
 | `installRequirement`                                                          | no       | `(api, gameSpec, requirement) => Promise` — adopter injects its requirement downloader                                                                                                                                         |
 | `packageAttribute`                                                            | no       | Mod attribute holding the package key (default `thunderstorePackage` / `gamebananaItem`)                                                                                                                                       |
@@ -220,7 +221,8 @@ Fields only one source needs stay on that source's adapter:
 | `gbSection`                      | `gamebanana_browser.js`                                                                                          | Section the page opens on, e.g. `mods` (default) or `tools` — GameBanana listings are `/{section}/games/{gameId}`                                                                                                                                                         |
 | `fcGame`                         | `fcmodding_browser.js`                                                                                           | Section the page opens on — `fc3`, `fc4`, `fc5`, `fc6`, `fcnd` or `fcp`, the same slug the extension already uses                                                                                                                                                         |
 | `homeUrl`                        | `gamebanana_browser.js`                                                                                          | Full override for the home URL, e.g. the game's hub page instead of one section                                                                                                                                                                                           |
-| `fileIdAttribute`                | `gamebanana_browser.js`, `modworkshop_browser.js`, `moddb_browser.js`                                            | Mod attribute holding the installed file id (default `gamebananaFileId` / `modworkshopFileId` / `moddbFileId`, the same one that source's downloader tracks)                                                                                                              |
+| `fileIdAttribute`                | `gamebanana_browser.js`, `modworkshop_browser.js`, `moddb_browser.js`, `modio_browser.js`                        | Mod attribute holding the installed file id (default `gamebananaFileId` / `modworkshopFileId` / `moddbFileId`, the same one that source's downloader tracks; `modioFileId`, which has no downloader)                                                                     |
+| `platform`                       | `modio_browser.js`                                                                                               | mod.io platform whose live file is installed (default `windows`) - a mod.io mod carries one live file per platform                                                                                                                                                       |
 | `moddbPath`                      | `moddb_browser.js`                                                                                               | The game on moddb.com (`games/deus-ex`, `mods/realrtcw-realism-mod`) — the same field and value `moddb_downloader.js` takes                                                                                                                                               |
 | `homePath`                       | `moddb_browser.js`                                                                                               | Where the page opens, if not `{moddbPath}/mods`. The mods list, not the file index: a game's `/downloads` page carries only the files uploaded to the game page itself, while the mods list is where the community actually is and every mod page links to its own files. |
 | `browseKey`                      | `moddb_browser.js` (on a **requirement**, not the config)                                                        | The browse key of the one file a requirement installs. Without it the requirement is not routed, because a ModDB requirement names a mod page and a key names a single file on that page                                                                                  |
@@ -408,6 +410,7 @@ base skips both.
 | `modworkshop_browser.js`  | modworkshop.net         | `game-roadtovostok`                                                                                                                                                                                                                                                                                                                               |
 | `fcmodding_browser.js`    | downloads.fcmodding.com | `game-farcry3`, `game-farcry4`, `game-farcry5`, `game-farcry6`, `game-farcrynewdawn`, `game-farcryprimal`, `template-farcry`                                                                                                                                                                                                                      |
 | `moddb_browser.js`        | moddb.com               | `game-darkmessiahofmightandmagic`, `game-returntocastlewolfenstein`, `game-deusex`, `game-deusexinvisiblewar`, `game-doom3`, `game-gzdoom` (two pages), `game-painkillerblackedition`, `game-redfactionguerrillaremarstered`, `game-systemshock225thanniversaryremaster` (classic game only), `game-unrealtournament2004`, `game-wolfenstein2009` |
+| `modio_browser.js`        | mod.io                  | `game-quarantinezonethelastcheck`                                                                                                                                                                                                                                                                                                                 |
 
 ### Quirks per source
 
@@ -464,6 +467,17 @@ base skips both.
   came from. Update comparison is on the file id, a site-wide autoincrement, because ModDB versions
   are free text and often absent.
 
+- **mod.io** is the only source whose documented API needs a key a public extension cannot ship, so
+  the module reads the site's own frontend endpoint (`https://mod.io/v1` with `X-Modio-Origin: web`)
+  instead — undocumented, and liable to change. It is also the only source whose API calls cannot go
+  through the renderer's `fetch`: that header forces a CORS preflight mod.io answers only for its own
+  origin, so the module uses Node's `https`. A download click opens the file's `binary_url`
+  (`g-{gameId}.modapi.io/.../files/{fileId}/download`) in a popup, which redirects to
+  `binary.modcdn.io/mods/{hash}/{modId}/{fileName}`; both carry the mod id. A mod keeps one live file
+  per platform, so the installed file is the configured platform's, and updates compare file ids.
+  Dependencies are a flag on the mod record plus one call for the list. Games that gate downloads
+  behind a login or purchase save the file from a `blob:` URL and cannot be supported (`MODIO_API.md`).
+
 ## See also
 
 `EMBEDDED_BROWSER.md` (the `Webview` control, the download capture chain, popups and partitions).
@@ -475,6 +489,8 @@ base skips both.
 the `mods.farcry.info` database is not a download route).
 `MODDB_API.md` (the fifth source: the RSS feed, the download-start interstitial, the mirror URL, and
 the bot-block that forces `fetchStrategy: 'click'`).
+`MODIO_API.md` (the sixth source: the keyless website endpoint, per-platform live files, the
+`binary_url` redirect and why the requests go through Node rather than `fetch`).
 `DEPRECATED_METHODS.md` (the `new Promise` form these modules use to wrap callback-based download
 events in place of the deprecated `util.toPromise` — and the one event, `import-downloads`, that
 needs a different wrap).
@@ -505,7 +521,9 @@ The URL segment is read from the URL the caller supplied, not the one a redirect
   has to change. GameBanana therefore implements `resolveForInstall`, which resolves the redirect
   (`HEAD` with redirects followed, `response.url`) and hands over
   `files.gamebanana.com/{section}/{fileName}` instead. Its `archiveName` stays as a backstop for the
-  path where that resolution fails and the `/dl/` URL is used unchanged.
+  path where that resolution fails and the `/dl/` URL is used unchanged. mod.io is the same shape —
+  `binary_url` ends in the segment `download` and its CDN sends no `Content-Disposition` — and takes
+  the same fix, reading the redirect's `Location` with a Node `HEAD` request.
 
 Getting this wrong on GameBanana costs more than a bad folder name: an id carries no archive
 extension, and Vortex deletes download-folder files that have none, so the archive disappears on a

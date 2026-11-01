@@ -9,11 +9,11 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | MelonLoader (mod loader) | a `version.dll` file | the game folder |
-| Root / Game Folder Mods | a `Car Mechanic Simulator 2027_Data` folder | the game folder |
+| Root / Game Folder Mods | a `Car Mechanic Simulator 2027_Data` or `Car Mechanic Simulator 2027 Demo_Data` folder | the game folder |
 | MelonLoader Preferences Manager | a `melonprefmanager.il2cpp.dll` file | `Mods` |
 | Assembly Replacement Mods | a `GameAssembly.dll` file | the game folder |
 | MelonLoader Mods | a `.dll` file built for MelonLoader | `Mods\<ModName>` |
-| Asset Replacement Mods | a `.assets` file | `Car Mechanic Simulator 2027_Data` |
+| Asset Replacement Mods | a `.assets`, `.resource` or `.ress` file | `Car Mechanic Simulator 2027_Data` |
 | Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.

@@ -10,13 +10,13 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | BepInEx (mod loader) | a `BepInEx.Core.dll` file | the game folder |
 | MelonLoader (mod loader) | a `version.dll` file | the game folder |
-| Root / Game Folder Mods | a `Balls_Data` folder | the game folder |
+| Root / Game Folder Mods | a `Balls_Data` or `BALL x PIT_Data` folder | the game folder |
 | BepInEx Configuration Manager | a `configurationmanager.dll` file | `BepInEx` |
 | MelonLoader Preferences Manager | a `melonprefmanager.il2cpp.dll` file | `Mods` |
 | Assembly Replacement Mods | a `GameAssembly.dll` file | the game folder |
 | BepInEx Plugin Mods | a `.dll` file built for BepInEx | `BepInEx\plugins\<ModName>` |
 | MelonLoader Mods | a `.dll` file built for MelonLoader | `Mods\<ModName>` |
-| Asset Replacement Mods | a `.assets` file | `Balls_Data` |
+| Asset Replacement Mods | a `.assets`, `.resource` or `.ress` file | `Balls_Data` |
 | Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.

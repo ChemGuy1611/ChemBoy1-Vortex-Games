@@ -10,7 +10,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | id5Tweaker | a `dinput8.dll` file and a `id5Tweaker.ini` file | the game folder |
 | Mod | a `.streamed` or `.resources` file and a `info.txt` file | `mods` |
-| Root / Game Folder Mods | a `base` folder | the game folder |
+| Root / Game Folder Mods | a `base`, `dlc`, `mods`, `mp`, `SAVES` or `virtualtextures` folder | the game folder |
 | Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.

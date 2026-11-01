@@ -13,7 +13,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | SDK Mod | a `.py` file and a `.sdkmod` file | `sdk_mods` |
 | Plugin Loader | a `d3d11.dll` file | `OakGame\Binaries\Win64` |
 | Hotfix Mod | a `.bl3hotfix` file | `OakGame\Binaries\Win64\Plugins\ohl-mods` |
-| Root / Game Folder Mods | a `OakGame` folder | the game folder |
+| Root / Game Folder Mods | a `OakGame` or `Engine` folder | the game folder |
 | Pak Mod | a `.pak` file | `OakGame\Content\Paks` |
 | Movies | a `.mp4` file | `OakGame\Content\Movies` |
 | Binaries (Engine Injector) | - | `OakGame\Binaries\Win64` |

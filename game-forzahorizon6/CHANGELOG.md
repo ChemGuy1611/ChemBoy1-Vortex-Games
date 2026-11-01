@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.0.0] - 2026-10-30
+
+- Changed: Mods with loose game sub-folders (like "cars" or "tracks") now install inside the "mediapc" folder instead of the "media" folder.
+- Fixed: Mods with a game sub-folder nested inside another (for example "cars\_library") now install from the outer folder.
+- Added: More of the game's media folder names are now recognised (for example "animation", "camera", "sky" and "rules").
+- Added: Loose files that replace game files (for example camera settings) now install into the matching "mediapc" sub-folder.
+- Added: Car and sky mods are packed into a zip in "mediapc\cars" or "mediapc\hdrskies", and Vortex asks which car or sky they replace.
+- Fixed: Car mods no longer install into the "mediapc\UI" folder.
+- Added: "Loose Files", "Car Mod" and "Sky Mod" mod types, so these mods are labelled by kind in the mod list.
+
+## [1.0.3] - 2026-10-30
+
+- Added: Mods containing a "mediapc" folder now install to the game folder.
+
 ## [1.0.2] - 2026-10-25
 
 - Added the Nexus mod ID to the extension info.

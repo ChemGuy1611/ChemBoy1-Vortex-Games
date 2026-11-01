@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0] - 2026-11-01
+
+- Added: Installer for modkit mods with .uplugin file
+- Added: "Browse mod.io" page to browse the game's mods on mod.io and install them directly in Vortex, with update checks and dependency installs, plus an "Open mod.io Page" button.
+- Modkit mods now install into a folder named after their .uplugin file instead of the archive name.
+
 ## [1.0.3] - 2026-10-25
 
 - Added the Nexus mod ID to the extension info.

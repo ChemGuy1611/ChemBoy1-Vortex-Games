@@ -9,7 +9,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Mod Loader | a `DisruptManager.exe` file | `Disrupt_Manager` |
-| Root / Game Folder Mods | a `data_win64` folder | the game folder |
+| Root / Game Folder Mods | a `data_win64` or `bin` folder | the game folder |
 | Binaries (Engine Injector) | a `.exe`, `.dll`, `.asi` or `.addon64` file | `bin` |
 | Mod | a `.dat` or `.fat` file | `Disrupt_Manager\Watch Dogs Legion` |
 | Fallback Installer | anything not matched above | the game folder |

@@ -15,13 +15,13 @@ This extension adds Phantom Blade Zero modding support to Vortex Mod Manager.
 [*]UE4SS Script-LogicMod Combo mods with both a "Content" and a "Binaries" folder install to the "ProjectPBZ" folder.[/*]
 [*]UE4SS LogicMods (Blueprint) mods with a "LogicMods" folder install to the "ProjectPBZ\Content\Paks" folder.[/*]
 [*]UE Sortable Pak mods with a ".pak" file install to the "ProjectPBZ\Content\Paks\~mods" folder.[/*]
-[*]UE4SS installs to the "ProjectPBZ\Binaries\Win64" folder, recognised by a "dwmapi.dll" file.[/*]
-[*]UE4SS Script mods with a ".lua" file and a "Scripts" folder install to the "ProjectPBZ\Binaries\Win64\ue4ss\Mods" folder.[/*]
-[*]UE4SS DLL mods with a ".dll" file and a "dlls" folder install to the "ProjectPBZ\Binaries\Win64\ue4ss\Mods" folder.[/*]
+[*]UE4SS installs to the "platform\steam" folder, recognised by a "dwmapi.dll" file.[/*]
+[*]UE4SS Script mods with a ".lua" file and a "Scripts" folder install to the "platform\steam\ue4ss\Mods" folder.[/*]
+[*]UE4SS DLL mods with a ".dll" file and a "dlls" folder install to the "platform\steam\ue4ss\Mods" folder.[/*]
 [*]Root Folder mods with a top-level folder such as "ProjectPBZ", "Engine" or "Content" install to the game folder.[/*]
 [*]Config (Local AppData) mods with a config file such as "engine.ini" or "game.ini" install to the game's config folder.[/*]
 [*]Saves (Game Folder) mods with a ".sav" file install to the game's save folder.[/*]
-[*]Any other mod not described above installs to the "ProjectPBZ\Binaries\Win64" folder.[/*]
+[*]Any other mod not described above installs to the "platform\steam" folder.[/*]
 [*]Archives with a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to Vortex's built-in FOMOD installer instead.[/*]
 [/list]
 [b]📋 Usage Notes:[/b]
@@ -128,7 +128,7 @@ This installer handles the UE4SS runtime package, not individual mods. Most auth
     - Recognised by a file named "dwmapi.dll" at any level of the archive.
     - Also recognised by any of the UE4SS support folders: "MapGenBP", "MemberVarLayoutTemplates", "UE4SS_Signatures" or "VTableLayoutTemplates".
 
-  Installs to: "ProjectPBZ\Binaries\Win64"
+  Installs to: "platform\steam"
 
   Common mistakes:
     - If your script mod archive happens to contain a file named "dwmapi.dll", it will be treated as a UE4SS install rather than as your mod.
@@ -151,7 +151,7 @@ MyScriptMod.zip
     - Wrap the "Scripts" folder in a folder named after your mod. That folder name becomes the mod's UE4SS name and is what gets written to the load order.
     - If you omit the wrapper folder, Vortex falls back to naming the mod after the archive file.
 
-  Installs to: "ProjectPBZ\Binaries\Win64\ue4ss\Mods"
+  Installs to: "platform\steam\ue4ss\Mods"
 
   Common mistakes:
     - Putting "main.lua" directly in the archive root with no "Scripts" folder - the mod is not recognised as a script mod.
@@ -174,7 +174,7 @@ MyDllMod.zip
     - The archive must contain a ".dll" file AND a folder named "dlls".
     - Wrap the "dlls" folder in a folder named after your mod - that name is used in the load order.
 
-  Installs to: "ProjectPBZ\Binaries\Win64\ue4ss\Mods"
+  Installs to: "platform\steam\ue4ss\Mods"
 
   Common mistakes:
     - A bare ".dll" with no "dlls" folder is not recognised as a UE4SS DLL mod and will reach the fallback installer.
@@ -240,7 +240,7 @@ This is the catch-all. Any archive with no ".pak" file that matched none of the 
     - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
     - Vortex shows the user a notification when a mod installs through the fallback.
 
-  Installs to: "ProjectPBZ\Binaries\Win64"
+  Installs to: "platform\steam"
 
   Common mistakes:
     - If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report it as broken.

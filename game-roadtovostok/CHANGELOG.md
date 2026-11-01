@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.6] - 2026-10-30
+
+- Fixed: Vortex could not read the contents of ".vmz" files (used when Vortex inspects or merges mod archives).
+
 ## [1.0.5] - 2026-10-25
 
 - Added the Nexus mod ID to the extension info.

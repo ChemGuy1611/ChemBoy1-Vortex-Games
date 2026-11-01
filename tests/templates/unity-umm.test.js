@@ -96,13 +96,13 @@ describe("template-unity-umm: registration with default toggles", () => {
     ext = await loadExtension(DIR);
   });
 
-  // The UMM and Mods types sit at 8 and 10 to beat helper-extension mod types, and the root
-  // installer sits at 8 to run ahead of the UMM installers. Both are reviewed contract oddities.
+  // The UMM and Mods types sit just after the root type, inside the 25-75 mod type range. The root
+  // installer sits at 8 to run ahead of the UMM installers, a reviewed contract oddity.
   it("registers the root, UMM, Mods, assembly and assets mod types", () => {
     assert.deepEqual(summary(ext.modTypes), [
       ["XXX-root", 25],
-      ["XXX-umm", 8],
-      ["XXX-mods", 10],
+      ["XXX-umm", 26],
+      ["XXX-mods", 27],
       ["XXX-assemblydll", 60],
       ["XXX-assets", 62],
     ]);

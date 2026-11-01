@@ -2,8 +2,8 @@
 Name: Forza Horizon 6 Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-25
+Version: 2.0.0
+Date: 2026-10-30
 Notes:
 - 
 ///////////////////////////////////////////*/
@@ -57,6 +57,8 @@ const multiModPath = false; //set to true if there are multiple possible mod pat
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
 const needsModInstaller = false; //set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing
 const rootInstaller = true; //enable root installer. Set false if you need to avoid installer collisions
+const looseInstaller = true; //enable installer that places loose media files into the matching mediapc sub-folder
+const nestedZipInstaller = true; //enable installer that re-zips car/sky mods into the matching mediapc sub-folder
 const saveInstaller = false; //enable save installer. Set false if path is outside of game folder
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
@@ -66,33 +68,58 @@ const debug = false; //toggle for debug mode
 
 //info for modtypes, installers, tools, and actions
 const DATA_FOLDER = "media";
-let ROOT_FOLDERS = [DATA_FOLDER];
+const MEDIAPC_FOLDER = "mediapc";
+let ROOT_FOLDERS = [DATA_FOLDER, MEDIAPC_FOLDER];
 const ROOTSUB_FOLDERS = [
-  "_library",
+  "animation",
   "audio",
   "brakes",
+  "camera",
   "cars",
   "charactercustomisation",
   "cinematic_assets",
+  "cinematics",
+  "colourgrades",
   "crowds",
+  "crowds_autumn",
+  "crowds_spring",
+  "crowds_winter",
   "deformableterrain",
+  "displaymappers",
   "dynamicpost",
+  "gametunablesettings",
   "graphicscache",
   "hdrskies",
+  "inputmappingprofiles",
   "lensflare",
   "livery",
   "nerddata",
+  "objectmodelgame",
   "openworld",
   "particles",
+  "particlesmodels",
+  "performance",
   "physics",
+  "popcornfx",
+  "posteffects",
+  "profileschema",
+  "rendering",
+  "renderscenarios",
+  "rules",
+  "shadersdxil",
+  "sky",
+  "stateflow",
   "stripped",
   "timeofday",
   "tracks",
   "ui",
   "water",
   "weather",
+  "weathertextures",
+  "wheeltunablesettingspc",
+  "_library", //last - can also be a subfolder of other folders
 ];
-const ROOTSUB_PATH = DATA_FOLDER;
+const ROOTSUB_PATH = MEDIAPC_FOLDER;
 
 const CONFIGMOD_LOCATION = LOCALAPPDATA;
 const SAVEMOD_LOCATION = LOCALAPPDATA;
@@ -129,6 +156,41 @@ const LOADER_URL = `XXX`; //if not on Nexus
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Folder";
+
+const LOOSE_ID = `${GAME_ID}-loosemedia`;
+const LOOSE_NAME = "Loose Files";
+const LOOSE_PATH = MEDIAPC_FOLDER;
+const LOOSE_IGNORE_EXTS = [".txt", ".md", ".pdf", ".url", ".html", ".png", ".jpg"]; //readme-type files dropped when the game has no file by that name
+
+const CAR_ID = `${GAME_ID}-car`;
+const CAR_NAME = "Car Mod";
+const CAR_PATH = path.join(MEDIAPC_FOLDER, "cars");
+
+const SKY_ID = `${GAME_ID}-sky`;
+const SKY_NAME = "Sky Mod";
+const SKY_PATH = path.join(MEDIAPC_FOLDER, "hdrskies");
+
+const NESTEDZIP_ID = `${GAME_ID}-nestedzip`;
+const NESTEDZIP_NAME = "Car / Sky Zip";
+//Mods that replace a whole zip inside a media sub-folder. Vortex extracts them, so they are re-zipped under the name of the zip they replace
+const NESTED_ZIP_KINDS = [
+  {
+    folder: "cars",
+    label: "car",
+    modTypeId: CAR_ID,
+    markerExts: [".carbin"],
+    markerFiles: [],
+    defaultFromMarker: true,
+  },
+  {
+    folder: "hdrskies",
+    label: "sky",
+    modTypeId: SKY_ID,
+    markerExts: [],
+    markerFiles: ["framedata.xml"],
+    defaultFromMarker: false,
+  },
+];
 
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries (Engine Injector)";
@@ -214,6 +276,12 @@ if (needsModInstaller) {
 if (saveInstaller) {
   MODTYPE_FOLDERS.push(SAVE_PATH);
 }
+if (looseInstaller) {
+  MODTYPE_FOLDERS.push(LOOSE_PATH);
+}
+if (nestedZipInstaller) {
+  MODTYPE_FOLDERS.push(CAR_PATH, SKY_PATH);
+}
 const IGNORE_CONFLICTS = [
   path.join("**", "changelog*"),
   path.join("**", "readme*"),
@@ -285,6 +353,30 @@ if (saveInstaller) {
     priority: "high",
     targetPath: path.join("{gamePath}", SAVE_PATH),
   });
+}
+if (looseInstaller) {
+  spec.modTypes.push({
+    id: LOOSE_ID,
+    name: LOOSE_NAME,
+    priority: "high",
+    targetPath: path.join("{gamePath}", LOOSE_PATH),
+  });
+}
+if (nestedZipInstaller) {
+  spec.modTypes.push(
+    {
+      id: CAR_ID,
+      name: CAR_NAME,
+      priority: "high",
+      targetPath: path.join("{gamePath}", CAR_PATH),
+    },
+    {
+      id: SKY_ID,
+      name: SKY_NAME,
+      priority: "high",
+      targetPath: path.join("{gamePath}", SKY_PATH),
+    },
+  );
 }
 
 //3rd party tools and launchers
@@ -661,9 +753,11 @@ function installRoot(files) {
     ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
   );
   if (modFile === undefined) {
-    modFile = files.find((file) =>
-      ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
-    );
+    // Shallowest match wins, so a sub-folder nested inside another (e.g. "cars\_library") is not picked over its parent.
+    const depth = (file) => file.split(path.sep).filter(Boolean).length;
+    modFile = files
+      .filter((file) => ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()))
+      .sort((a, b) => depth(a) - depth(b))[0];
     folder = ROOTSUB_PATH;
   }
   const ROOT_IDX = path.basename(modFile); //!don't use path.sep since some sub-items are files
@@ -683,6 +777,313 @@ function installRoot(files) {
   });
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
+}
+
+//Find the car/sky marker file closest to the archive root
+function findNestedZipMarker(files) {
+  for (const kind of NESTED_ZIP_KINDS) {
+    const markers = files.filter((file) => {
+      if (file.endsWith(path.sep)) return false;
+      const name = path.basename(file).toLowerCase();
+      return kind.markerExts.includes(path.extname(name)) || kind.markerFiles.includes(name);
+    });
+    if (markers.length) {
+      const depth = (file) => file.split(path.sep).length;
+      return { kind, marker: markers.sort((a, b) => depth(a) - depth(b))[0] };
+    }
+  }
+  return undefined;
+}
+
+//Installer test for car/sky mods that replace a whole zip
+function testNestedZip(files, gameId) {
+  //a mod already laid out in a media/mediapc folder installs as packaged (Root installer)
+  const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map((str) => str.toLowerCase());
+  const hasRootFolder = files.some((file) =>
+    ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
+  );
+  let supported =
+    gameId === spec.game.id && !hasRootFolder && findNestedZipMarker(files) !== undefined;
+
+  // Test for a mod installer.
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Names (without ".zip") of the zips in a media sub-folder, in the game's casing
+const NESTED_ZIP_NAMES = {};
+async function getNestedZipNames(kind) {
+  if (!NESTED_ZIP_NAMES[kind.folder]?.length) {
+    const entries = await fsp
+      .readdir(path.join(GAME_PATH, DATA_FOLDER, kind.folder))
+      .catch(() => []);
+    NESTED_ZIP_NAMES[kind.folder] = entries
+      .filter((entry) => path.extname(entry).toLowerCase() === ".zip")
+      .map((entry) => path.basename(entry, path.extname(entry)));
+  }
+  return NESTED_ZIP_NAMES[kind.folder];
+}
+
+//Ask which car/sky the mod replaces. Re-asks until the name matches a zip in the game
+async function askNestedZipName(api, kind, defaultName, knownNames) {
+  const NAME_INPUT_ID = "zipName";
+  let value = defaultName;
+  let error = "";
+  for (;;) {
+    const listText =
+      knownNames.length && knownNames.length <= 50 ? `\n\nAvailable: ${knownNames.join(", ")}` : "";
+    const result = await api.showDialog(
+      "question",
+      `${NESTEDZIP_NAME} - choose the ${kind.label}`,
+      {
+        text:
+          `${error}This mod replaces one ${kind.label} in the game's "${DATA_FOLDER}\\${kind.folder}" folder. ` +
+          `Vortex packs it into a zip in "${MEDIAPC_FOLDER}\\${kind.folder}" named after the ${kind.label} it replaces.\n\n` +
+          `Enter the name of the ${kind.label} to replace (the zip file name without ".zip"). ` +
+          `The mod page usually says which one.${listText}`,
+        input: [{ id: NAME_INPUT_ID, type: "text", label: `${kind.label} name`, value }],
+      },
+      [{ label: "Cancel" }, { label: "Install", default: true }],
+    );
+    if (result.action !== "Install") throw new util.UserCanceled();
+    value = (result.input[NAME_INPUT_ID] ?? "").trim().replace(/\.zip$/i, "");
+    if (!value) {
+      error = `Enter a ${kind.label} name.\n\n`;
+      continue;
+    }
+    if (!knownNames.length) return value; //game folder not readable - trust the user
+    const match = knownNames.find((name) => name.toLowerCase() === value.toLowerCase());
+    if (match) return match;
+    error = `"${value}" is not a ${kind.label} in this game.\n\n`;
+  }
+}
+
+//Installer install car/sky mods - re-zip the contents under the name of the zip they replace
+async function installNestedZip(api, files, destinationPath) {
+  const { kind, marker } = findNestedZipMarker(files);
+  const knownNames = await getNestedZipNames(kind);
+  const defaultName = kind.defaultFromMarker ? path.basename(marker, path.extname(marker)) : "";
+  const zipName = (await askNestedZipName(api, kind, defaultName, knownNames)) + ".zip";
+  const markerDir = path.dirname(marker);
+  const sourceDir = markerDir === "." ? destinationPath : path.join(destinationPath, markerDir);
+  const entries = await fsp.readdir(sourceDir);
+  await new util.SevenZip().add(
+    path.join(destinationPath, zipName),
+    entries.map((entry) => path.join(sourceDir, entry)),
+    { raw: ["-r"] },
+  );
+  const instructions = [
+    { type: "copy", source: zipName, destination: zipName },
+    { type: "setmodtype", value: kind.modTypeId },
+  ];
+  return Promise.resolve({ instructions });
+}
+
+//Index of every file the game reads from the media folder: lowercase file name -> Map(lowercase folder -> folder in game casing).
+//Top-level media zips read as folders of the same name, so their contents are indexed under that name. Built once per session
+let MEDIA_INDEX_PATH = "";
+let MEDIA_INDEX_PROMISE = undefined;
+function getMediaIndex(gamePath) {
+  if (MEDIA_INDEX_PROMISE === undefined || MEDIA_INDEX_PATH !== gamePath) {
+    MEDIA_INDEX_PATH = gamePath;
+    MEDIA_INDEX_PROMISE = buildMediaIndex(gamePath).catch((err) => {
+      MEDIA_INDEX_PROMISE = undefined;
+      throw err;
+    });
+  }
+  return MEDIA_INDEX_PROMISE;
+}
+
+//List the files (not folders) inside a zip. Vortex's node-7z hands entries ({ name, attr }) to a progress callback
+async function listZipFiles(zipPath) {
+  const entries = [];
+  await new util.SevenZip().list(zipPath, {}, (batch) => {
+    for (const entry of batch) {
+      if (!(entry.attr ?? "").includes("D")) entries.push(entry.name);
+    }
+  });
+  return entries;
+}
+
+async function buildMediaIndex(gamePath) {
+  const mediaPath = path.join(gamePath, DATA_FOLDER);
+  const index = new Map();
+  const add = (name, folder) => {
+    const key = name.toLowerCase();
+    if (!index.has(key)) index.set(key, new Map());
+    index.get(key).set(folder.toLowerCase(), folder);
+  };
+  const topZips = [];
+  await util.walk(
+    mediaPath,
+    (iterPath, stats) => {
+      if (stats.isDirectory()) return Promise.resolve();
+      const rel = path.relative(mediaPath, iterPath);
+      const folder = path.dirname(rel) === "." ? "" : path.dirname(rel);
+      if (folder === "" && path.extname(rel).toLowerCase() === ".zip") topZips.push(rel);
+      else add(path.basename(rel), folder);
+      return Promise.resolve();
+    },
+    { ignoreErrors: true },
+  );
+  for (const zip of topZips) {
+    const zipFolder = path.basename(zip, path.extname(zip));
+    try {
+      for (const entry of await listZipFiles(path.join(mediaPath, zip))) {
+        const inner = path.dirname(entry.replace(/[\\/]/g, path.sep));
+        add(path.basename(entry), inner === "." ? zipFolder : path.join(zipFolder, inner));
+      }
+    } catch (err) {
+      log("warn", `${GAME_NAME} ${LOOSE_NAME}: could not list "${zip}"`, { error: err.message });
+    }
+  }
+  return index;
+}
+
+const splitFolder = (folder) => (folder === "." ? [] : folder.split(/[\\/]+/).filter(Boolean));
+
+//Number of trailing folder names two folder paths share (case-insensitive)
+function sharedTail(a, b) {
+  let n = 0;
+  while (
+    n < a.length &&
+    n < b.length &&
+    a[a.length - 1 - n].toLowerCase() === b[b.length - 1 - n].toLowerCase()
+  ) {
+    n++;
+  }
+  return n;
+}
+
+//Work out where each loose mod file goes in mediapc. Returns undefined when any file can't be placed.
+//A file name found in one place in the game goes there. Those files also show how the mod's own folders line up with
+//the game's (mod folder -> game folder), which places the rest: names found in several places and files the game doesn't have
+function resolveLoose(files, index) {
+  const modFiles = files.filter((file) => !file.endsWith(path.sep));
+  if (modFiles.some((file) => BINARIES_EXTS.includes(path.extname(file).toLowerCase())))
+    return undefined;
+  const votes = new Map(); //mod folder prefix -> Map(game folder prefix -> vote)
+  let hits = 0;
+  for (const file of modFiles) {
+    const locations = index.get(path.basename(file).toLowerCase());
+    if (!locations) continue;
+    hits++;
+    if (locations.size !== 1) continue;
+    const modFolder = splitFolder(path.dirname(file));
+    const gameFolder = splitFolder([...locations.values()][0]);
+    const shared = sharedTail(modFolder, gameFolder);
+    const modPrefix = modFolder.slice(0, modFolder.length - shared);
+    const gamePrefix = gameFolder.slice(0, gameFolder.length - shared);
+    const modKey = modPrefix.join(path.sep).toLowerCase();
+    const gameKey = gamePrefix.join(path.sep).toLowerCase();
+    if (!votes.has(modKey)) votes.set(modKey, new Map());
+    const vote = votes.get(modKey).get(gameKey) ?? { modPrefix, gamePrefix, count: 0 };
+    vote.count++;
+    votes.get(modKey).set(gameKey, vote);
+  }
+  const counted = modFiles.filter(
+    (file) =>
+      index.has(path.basename(file).toLowerCase()) ||
+      !LOOSE_IGNORE_EXTS.includes(path.extname(file).toLowerCase()),
+  );
+  if (hits === 0 || hits * 2 < counted.length) return undefined; //mostly files the game doesn't have - not a loose media mod
+  const mappings = [...votes.values()]
+    .map((options) => [...options.values()].sort((a, b) => b.count - a.count)[0])
+    .sort((a, b) => b.modPrefix.length - a.modPrefix.length); //most specific mod folder first
+  const sameFolder = (a, b) =>
+    a.length === b.length && a.every((seg, i) => seg.toLowerCase() === b[i].toLowerCase());
+  const placements = [];
+  for (const file of modFiles) {
+    const name = path.basename(file);
+    const modFolder = splitFolder(path.dirname(file));
+    const locations = index.get(name.toLowerCase());
+    if (!locations && LOOSE_IGNORE_EXTS.includes(path.extname(name).toLowerCase())) continue;
+    let target;
+    if (locations?.size === 1) {
+      target = splitFolder([...locations.values()][0]);
+    } else {
+      const mapping = mappings.find((m) =>
+        m.modPrefix.every((seg, i) => modFolder[i]?.toLowerCase() === seg.toLowerCase()),
+      );
+      const mapped = mapping && [
+        ...mapping.gamePrefix,
+        ...modFolder.slice(mapping.modPrefix.length),
+      ];
+      if (locations) {
+        const candidates = [...locations.values()].map(splitFolder);
+        target =
+          mapped && candidates.some((c) => sameFolder(c, mapped))
+            ? mapped
+            : candidates.sort(
+                (a, b) =>
+                  sharedTail(modFolder, b) - sharedTail(modFolder, a) || a.length - b.length,
+              )[0];
+      } else if (mapped) {
+        target = mapped;
+      } else {
+        return undefined;
+      }
+    }
+    placements.push({ source: file, destination: path.join(...target, name) }); //relative to mediapc (Loose Files mod type)
+  }
+  return placements.length ? placements : undefined;
+}
+
+//Installer test for loose media files
+async function testLoose(files, gameId) {
+  let supported = gameId === spec.game.id && GAME_PATH !== "";
+
+  // Test for a mod installer.
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+  if (supported) {
+    try {
+      supported = resolveLoose(files, await getMediaIndex(GAME_PATH)) !== undefined;
+    } catch (err) {
+      log("warn", `${GAME_NAME} ${LOOSE_NAME}: could not index the media folder`, {
+        error: err.message,
+      });
+      supported = false;
+    }
+  }
+
+  return {
+    supported,
+    requiredFiles: [],
+  };
+}
+
+//Installer install loose media files into the matching mediapc sub-folder
+async function installLoose(files) {
+  const placements = resolveLoose(files, await getMediaIndex(GAME_PATH)) ?? [];
+  const instructions = placements.map(({ source, destination }) => ({
+    type: "copy",
+    source,
+    destination,
+  }));
+  instructions.push({ type: "setmodtype", value: LOOSE_ID });
+  return { instructions };
 }
 
 //Fallback installer to Binaries folder
@@ -1181,8 +1582,17 @@ function applyGame(context, gameSpec) {
   if (hasLoader) {
     context.registerInstaller(LOADER_ID, 25, testLoader, installLoader);
   }
+  if (nestedZipInstaller) {
+    //before Root - car mods carry folders (e.g. "UI") the Root installer also matches
+    context.registerInstaller(NESTEDZIP_ID, 26, testNestedZip, (files, destinationPath) =>
+      installNestedZip(context.api, files, destinationPath),
+    );
+  }
   if (rootInstaller) {
     context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
+  }
+  if (looseInstaller) {
+    context.registerInstaller(LOOSE_ID, 28, testLoose, installLoose);
   }
   if (binariesInstaller) {
     context.registerInstaller(BINARIES_ID, 29, testBinaries, installBinaries);

@@ -131,33 +131,33 @@ Some games use a custom extension that is structurally identical to a ZIP file (
 context.registerArchiveType("vmz", (fileName, options) => {
     const szip = new util.SevenZip();
     const handler = {
-        readDir: (archPath) =>
-            new Promise((resolve, reject) => {
-                const files = [];
-                const stream = szip.list(fileName);
-                stream.on("data", (data) => files.push(data.file));
-                stream.on("end", () => resolve(files));
-                stream.on("error", reject);
-            }),
-        extractAll: (outputPath) =>
-            new Promise((resolve, reject) => {
-                const stream = szip.extractFull(fileName, outputPath);
-                stream.on("end", resolve);
-                stream.on("error", reject);
-            }),
+        readDir: async (archPath) => {
+            const files = [];
+            await szip.list(fileName, {}, (entries) => {
+                for (const entry of entries) {
+                    if (!(entry.attr ?? "").includes("D")) files.push(entry.name);
+                }
+            });
+            return files;
+        },
+        extractAll: (outputPath) => szip.extractFull(fileName, outputPath),
     };
     return Promise.resolve(handler);
 });
 ```
 
-### util.SevenZip (node-7z) method signatures used above
+### util.SevenZip (node-7z) method signatures
 
-| Method                                           | Signature      | Notes                                               |
-| ------------------------------------------------ | -------------- | --------------------------------------------------- |
-| `szip.list(archivePath, opts?)`                  | returns stream | `data` event: `{ file, size, compressedSize, ... }` |
-| `szip.extractFull(archivePath, destPath, opts?)` | returns stream | Extracts with full directory structure              |
-| `szip.extract(archivePath, destPath, opts?)`     | returns stream | Extracts flat (no paths)                            |
-| `szip.add(archivePath, files, opts?)`            | returns stream | Add files; `opts.raw: ['-r']` for recursive         |
+`util.SevenZip` is Vortex's own fork of `node-7z` (`github:Nexus-Mods/node-7z`, package version 0.8.1), not the stream-based `node-7z` 2.x/3.x on npm. Every method returns a **Promise** and reports entries through an optional **progress callback** as the last argument. There are no streams: calling `.on(...)` on the result throws `stream.on is not a function` (verified on Vortex 2.10).
+
+| Method                                                       | Returns                      | Notes                                                                                                            |
+| ------------------------------------------------------------ | ---------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `szip.list(archivePath, opts?, progress?)`                   | Promise (archive info)       | `progress(entries)` gets arrays of `{ name, attr, size, crc, date }`; `attr` contains `D` for folders; `name` uses `\` |
+| `szip.extractFull(archivePath, destPath, opts?, progress?)`  | Promise                      | Extracts with full directory structure                                                                           |
+| `szip.extract(archivePath, destPath, opts?, progress?)`      | Promise                      | Extracts flat (no paths)                                                                                         |
+| `szip.add(archivePath, files, opts?, progress?)`             | Promise                      | Add files; `opts.raw: ['-r']` for recursive (`raw` values are passed to 7z as-is)                                 |
+
+`opts` keys become 7z switches (`{ r: true }` -> `-r`, `{ p: "pw" }` -> `-ppw`); `raw` is an array appended verbatim. Listing is fast: 28 zips with 18,923 entries in under a second.
 
 ### `opts.raw` does not work as a file filter on extraction
 
@@ -165,7 +165,7 @@ Passing a member name through `raw` to pull a single file out of an archive — 
 
 To read one small member out of a large archive, read the ZIP structures directly instead: scan the tail for the end-of-central-directory record, walk the central directory to the entry, then read its local header and `zlib.inflateRawSync` the compressed bytes. This needs no temp files and no child process, and it stays fast on archives in the gigabyte range. See [FILE_PARSING.md](FILE_PARSING.md) for the other in-extension parsing options.
 
-All node-7z streams are thenable — you can `await szip.add(...)` directly, or use `.on('end'/'error')` for the Promise wrapper pattern above.
+Every `util.SevenZip` method returns a Promise — `await szip.add(...)` directly. Do not wrap the call in `.on('end'/'error')` handlers; the result has no `.on`.
 
 ---
 

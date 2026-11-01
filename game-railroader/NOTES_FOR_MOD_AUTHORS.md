@@ -14,7 +14,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Unity Mod Manager Mods | an `info.json` file | `Mods\<ModName>` |
 | Railloader Mods | a `Definition.json` file | `Mods\<ModName>` |
 | Assembly Replacement Mods | a `Assembly-CSharp.dll` file | `Railroader_Data\Managed` |
-| Asset Replacement Mods | a `.assets` file | `Railroader_Data` |
+| Asset Replacement Mods | a `.assets`, `.resource` or `.ress` file | `Railroader_Data` |
 | Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.

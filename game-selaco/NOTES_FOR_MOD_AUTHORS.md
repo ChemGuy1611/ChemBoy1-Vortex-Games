@@ -9,7 +9,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Mod | a `.pk3` file | `Mods` |
-| Root / Game Folder Mods | a `fm_banks` folder | the game folder |
+| Root / Game Folder Mods | a `fm_banks`, `Save`, `soundfonts` or `UltimateSelacoBuilder` folder | the game folder |
 | Binaries | - | the game folder |
 
 Paths are relative to the game's install folder.

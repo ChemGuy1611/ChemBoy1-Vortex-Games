@@ -8,7 +8,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Config File Mods | a `.local` file | `%USERPROFILE%\Saved Games\MachineGames\TheGreatCircle\base` |
+| Config File Mods | a `.local` or `.cfg` file | `%USERPROFILE%\Saved Games\MachineGames\TheGreatCircle\base` |
 | Save Game Files | a `.dat` file | `%APPDATA%\GSE Saves\2677660\remote\GAME-SLOT0` |
 | Sounds | a `.pack` or `.bnk` file | `base\sound\soundbanks\pc` |
 

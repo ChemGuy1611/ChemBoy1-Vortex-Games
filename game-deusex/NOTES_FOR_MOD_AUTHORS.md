@@ -9,7 +9,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Mod Folder | a `Community Update` folder | the game folder |
-| Root / Game Folder Mods | a `System` folder | the game folder |
+| Root / Game Folder Mods | a `System`, `Maps`, `Textures`, `Sounds`, `Music`, `Save` or `GOTY_1` folder | the game folder |
 | Deus Exe (Launcher) | a `deusex.exe` file | `System` |
 | Binaries (Engine Injector) | a `engine.dll`, `deusexechelonrenderer.dll`, `d3d9.dll` or `rtx.conf` file and a `.exe`, `.dll`, `.asi` or `.addon64` file | `System` |
 

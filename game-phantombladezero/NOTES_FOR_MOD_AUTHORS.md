@@ -11,13 +11,13 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `ProjectPBZ` |
 | Blueprint Mods (LogicMods) | a `LogicMods` folder | `ProjectPBZ\Content\Paks` |
 | Pak Mods | a `.pak` file | `ProjectPBZ\Content\Paks\~mods` |
-| UE4SS | a `dwmapi.dll` file | `ProjectPBZ\Binaries\Win64` |
-| UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `ProjectPBZ\Binaries\Win64\ue4ss\Mods` |
-| UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | `ProjectPBZ\Binaries\Win64\ue4ss\Mods` |
+| UE4SS | a `dwmapi.dll` file | `platform\steam` |
+| UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `platform\steam\ue4ss\Mods` |
+| UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | `platform\steam\ue4ss\Mods` |
 | Root / Game Folder Mods | a top-level folder such as `ProjectPBZ`, `Engine` or `Content` | the game folder |
 | Config File Mods | a config file such as `engine.ini` or `game.ini` | the game's config folder |
 | Save Game Files | a `.sav` file | the game's save folder |
-| Fallback Installer | anything not matched above with no pak file | `ProjectPBZ\Binaries\Win64` |
+| Fallback Installer | anything not matched above with no pak file | `platform\steam` |
 
 Paths are relative to the game's install folder. Config and save folders are in your user profile, not the game's install folder.
 
@@ -110,7 +110,7 @@ This installer handles the UE4SS runtime package, not individual mods. Most auth
 - Recognised by a file named `dwmapi.dll` at any level of the archive.
 - Also recognised by any of the UE4SS support folders: `MapGenBP`, `MemberVarLayoutTemplates`, `UE4SS_Signatures` or `VTableLayoutTemplates`.
 
-Installs to: `ProjectPBZ\Binaries\Win64`
+Installs to: `platform\steam`
 
 **Common mistakes:**
 
@@ -133,7 +133,7 @@ MyScriptMod.zip
 - Wrap the `Scripts` folder in a folder named after your mod. That folder name becomes the mod's UE4SS name and is what gets written to the load order.
 - If you omit the wrapper folder, Vortex falls back to naming the mod after the archive file.
 
-Installs to: `ProjectPBZ\Binaries\Win64\ue4ss\Mods`
+Installs to: `platform\steam\ue4ss\Mods`
 
 **Common mistakes:**
 
@@ -156,7 +156,7 @@ MyDllMod.zip
 - The archive must contain a `.dll` file AND a folder named `dlls`.
 - Wrap the `dlls` folder in a folder named after your mod - that name is used in the load order.
 
-Installs to: `ProjectPBZ\Binaries\Win64\ue4ss\Mods`
+Installs to: `platform\steam\ue4ss\Mods`
 
 **Common mistakes:**
 
@@ -222,7 +222,7 @@ This is the catch-all. Any archive with no `.pak` file that matched none of the 
 - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
 - Vortex shows the user a notification when a mod installs through the fallback.
 
-Installs to: `ProjectPBZ\Binaries\Win64`
+Installs to: `platform\steam`
 
 **Common mistakes:**
 

@@ -14,7 +14,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Unpacked .data Folder | a `<name>.data` folder | the game folder |
 | Loose Data Files | a `.data` file | the game folder |
 | Forge File Mods | a `.forge` file | the game folder |
-| Root / Game Folder Mods | a `Videos` folder | the game folder |
+| Root / Game Folder Mods | a `Videos` or `SoundData` folder | the game folder |
 | Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.

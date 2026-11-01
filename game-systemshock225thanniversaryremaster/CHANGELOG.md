@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.3] - 2026-10-31
+
+- Fixed: The Remaster was not detected automatically after the game's executable was renamed to SystemShock2Remastered.exe (affected Epic, and Steam/GOG on current game versions).
+
 ## [1.0.2] - 2026-10-25
 
 - Added the Nexus mod ID to the extension info.

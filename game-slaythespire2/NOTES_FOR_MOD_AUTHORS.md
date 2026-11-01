@@ -8,7 +8,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Root / Game Folder Mods | a `data_sts2_windows_x86_64` folder | the game folder |
+| Root / Game Folder Mods | a `data_sts2_windows_x86_64` or `mods` folder | the game folder |
 | Mod | a `.dll` or `.pck` file | `mods` |
 | Fallback Installer | anything not matched above | the game folder |
 

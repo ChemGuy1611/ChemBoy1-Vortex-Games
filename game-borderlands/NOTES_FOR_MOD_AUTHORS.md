@@ -10,13 +10,13 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | TFC Installer (tool) | a `tfcinstaller.exe` file | the game folder |
 | UPK Explorer (tool) | a `upk explorer.exe` file | the game folder |
-| TFC Mods | a `gameprofile.xml` file or a `.packagepatch` file | `TFCInstaller\Mods` |
+| TFC Mods | a `gameprofile.xml` file or a `.packagepatch`, `.descriptor`, `.tfcmapping` or `.inipatch` file | `TFCInstaller\Mods` |
 | Python SDK | a `unrealsdk.dll` file and a `sdk_mods` folder | the game folder |
 | SDK Mod | a `.py` file and a `.sdkmod` file | `sdk_mods` |
-| Root / Game Folder Mods | a `WillowGame` folder | the game folder |
-| Cooked Content Mods | a `DLC` folder or a `.upk` file | `WillowGame\CookedPC` |
+| Root / Game Folder Mods | a `WillowGame`, `Engine` or `Binaries` folder | the game folder |
+| Cooked Content Mods | a `DLC` folder or a `.upk` or `.u` file | `WillowGame\CookedPC` |
 | Movie / Cutscene Replacements | a `.bik` file | `WillowGame\Movies` |
-| Binaries / Injector Mods | a `Borderlands.exe` file or a `.dll` file | `Binaries` |
+| Binaries / Injector Mods | a `Borderlands.exe` file or a `.dll`, `.asi` or `.addon64` file | `Binaries` |
 | Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.

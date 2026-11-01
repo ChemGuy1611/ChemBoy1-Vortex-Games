@@ -232,3 +232,5 @@ listening for it during the install-session rework, and skip decisions are now r
 (`start-download`/`import-downloads`). `VORTEX_NEXUS_INTEGRATION.md`
 (`check-mods-version`/endorse events). `COLLECTIONS_FEATURE.md` (collection install/export
 events). `VORTEX_EXTENSION_LOADING.md` (`startup`/extension-load lifecycle).
+`USER_CONFIGURABLE_MOD_PATHS.md` (`purge-mods-in-path` clearing a mod type's old target before its
+folder setting changes).

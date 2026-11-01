@@ -9,11 +9,11 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Mod Installer (tool) | a `fcmodinstaller.exe` file | `FCModInstaller` |
-| Root / Game Folder Mods | a `bin` folder | the game folder |
-| Data File Mods | a `.dat` file | `data_win32` |
+| Root / Game Folder Mods | a `bin`, `data_win32` or `Support` folder | the game folder |
+| Data File Mods | a `.dat` or `.fat` file | `data_win32` |
 | Binaries (Engine Injector) | a `.dll` file | `bin` |
 | Repacked FCMI Mod | a `info.xml` file | `FCModInstaller\ModifiedFilesFCP` |
-| Mod Installer Mods | a `.a2` file | `FCModInstaller\ModifiedFilesFCP` |
+| Mod Installer Mods | a `.a2`, `.a3`, `.a4`, `.a5` or `.bin` file | `FCModInstaller\ModifiedFilesFCP` |
 | XML Settings Mod | a `gamerprofile.xml` file and a `.xml` file | `%USERPROFILE%\Documents\My Games\Far Cry Primal` |
 | Fallback Installer | anything not matched above | the game folder |
 

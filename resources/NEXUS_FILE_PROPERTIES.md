@@ -59,7 +59,22 @@ The list endpoint returns the wrapper object below. The single-file endpoint ret
 
 ### `content_preview_link` Response Shape
 
-The URL resolves to a JSON document describing the archive's internal file tree:
+The URL is unauthenticated (no `apikey` header needed). Two response shapes exist.
+
+**Flat manifest** — what current links (`https://mod-file-manifests.nexusmods.com/...`) return:
+
+| key        | type             | description                                                                 |
+| ---------- | ---------------- | --------------------------------------------------------------------------- |
+| `version`  | `number`         | Manifest format version (`1`)                                               |
+| `archive`  | `object`         | `size` (bytes) and `hashes` (`SHA1`, `SHA256`, `SHA512`, `MD5`, `CRC32`, `XXH64`, `XXH3_64`) of the uploaded archive |
+| `repacked` | `object`         | Same `size` + `hashes` for Nexus's repacked copy                            |
+| `files`    | `ManifestFile[]` | One entry per file in the archive; directories are not listed separately   |
+
+Each `ManifestFile` has `file_path` (forward-slash path within the archive), `file_size` (bytes) and
+`file_hashes` (same hash set as above). The manifest lists paths only — reading a file's contents
+still needs the archive.
+
+**Tree** — the older shape, describing the archive's internal file tree:
 
 | key        | type         | description                      |
 | ---------- | ------------ | -------------------------------- |

@@ -9,7 +9,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Mod (Documents) | a `in_game`, `main_menu` or `loading_screen` folder | `game\mod` |
-| Root / Game Folder Mods | a `game` folder | the game folder |
+| Root / Game Folder Mods | a `game` or `binaries` folder | the game folder |
 
 Paths are relative to the game's install folder.
 

@@ -13,7 +13,7 @@
 | Property | Value |
 | --- | --- |
 | Game ID | `systemshock225thanniversaryremaster` |
-| Executable | `N/A` |
+| Executable | `SystemShock2Remastered.exe` |
 | Executable (GOG) | `hathor_Shipping_Playfab_Galaxy_x64.exe` |
 | Extension Page | [https://www.nexusmods.com/site/mods/1359](https://www.nexusmods.com/site/mods/1359) |
 

@@ -11,7 +11,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | GRW ScriptHook Reforged | a `dinput8.dll` file | the game folder |
 | ScriptHook Plugin | a `.asi` or `.dll` file | `plugins` |
 | Forge Mod | a `.forge` or `.data` file | `mods` |
-| Root / Game Folder Mods | a `sounddata` folder | the game folder |
+| Root / Game Folder Mods | a `sounddata`, `videos` or `EasyAntiCheat` folder | the game folder |
 | Mod | a `.pck` or `.bk2` file | the game folder |
 
 Paths are relative to the game's install folder.

@@ -14,7 +14,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Assembly Replacement Mods | a `GameAssembly.dll` file | the game folder |
 | BepInEx Plugin Mods | a `.dll` file built for BepInEx | `BepInEx\plugins\<ModName>` |
 | Mod Pack | a `mod.json` file | `Mods` |
-| Asset Replacement Mods | a `.assets` file | `Dressmaker_Data` |
+| Asset Replacement Mods | a `.assets`, `.resource` or `.ress` file | `Dressmaker_Data` |
 | Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.

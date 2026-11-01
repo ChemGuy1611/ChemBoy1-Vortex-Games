@@ -9,12 +9,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | ACSE (mod loader) | a `ACSE` file | `Win64\ovldata` |
-| Root / Game Folder Mods | a `Win64` folder | the game folder |
+| Root / Game Folder Mods | a `Win64`, `Blueprints`, `TerrainSkirts`, `ProvidedCustomTextures`, `Parks` or `Movies` folder | the game folder |
 | ACSE Mods | a `Main.ovl` file | `Win64\ovldata` |
 | ACSE Localization | a `localised` folder | `Win64\ovldata\ACSE` |
 | Movie / Cutscene Replacements | a `.webm` file | `Movies` |
 | OVL Data Mods | a `ovldata` file | `Win64` |
-| Save Game Files | a `.blpr2` file | `%USERPROFILE%\Saved Games\Frontier Developments\Planet Coaster 2\<User ID>\Saves` |
+| Save Game Files | a `.blpr2` or `.prk2` file | `%USERPROFILE%\Saved Games\Frontier Developments\Planet Coaster 2\<User ID>\Saves` |
 | Fallback Installer | anything not matched above | `Win64\ovldata` |
 
 Paths are relative to the game's install folder. Config and save folders are in your user profile, not the game's install folder.

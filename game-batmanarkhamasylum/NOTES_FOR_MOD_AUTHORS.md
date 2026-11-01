@@ -10,8 +10,8 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | TFC Installer (tool) | a `tfcinstaller.exe` file | the game folder |
 | UPK Explorer (tool) | a `upk explorer.exe` file | the game folder |
-| TFC Mods | a `gameprofile.xml` file or a `.packagepatch` file | `TFCInstaller\Mods` |
-| Root / Game Folder Mods | a `BmGame` folder | the game folder |
+| TFC Mods | a `gameprofile.xml` file or a `.packagepatch`, `.descriptor`, `.tfcmapping` or `.inipatch` file | `TFCInstaller\Mods` |
+| Root / Game Folder Mods | a `BmGame`, `Engine` or `Binaries` folder | the game folder |
 | Cooked Content Mods | a `Maps` folder or a `.upk` file | `BmGame\CookedPC` |
 | Movie / Cutscene Replacements | a `.bik` file | `BmGame\Movies` |
 | Binaries / Injector Mods | a `BmLauncher.exe` file or a `.dll` file | `Binaries` |

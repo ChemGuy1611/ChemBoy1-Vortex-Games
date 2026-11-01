@@ -1,5 +1,9 @@
 # template-unity-umm Changelog
 
+## [2026-10-30]
+
+- Changed: the Unity Mod Manager and Mods mod types are registered at priorities 26 and 27 (were 8 and 10), so every mod type sits inside the 25-75 range. They keep their order, just after the root type at 25.
+
 ## [2026-10-17]
 
 - Added: a `modId` field to `info.json`, directly after `gameId`, set to the `"XXX"` placeholder. `release_extension.py` replaces it with the mod id at the end of the extension's `EXTENSION_URL` when the extension is released, so a finished extension carries a number, not a string.

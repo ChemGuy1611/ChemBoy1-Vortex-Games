@@ -10,7 +10,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | P2ModLoader | a `P2ModLoader.exe` file | the game folder |
 | Mod | a `modinfo.ltx` file, a `Pathologic_Data` folder and a `.xml` file | `Mods` |
-| Root / Game Folder Mods | a `Pathologic_Data` folder or a `dxgi.dll` file | the game folder |
+| Root / Game Folder Mods | a `Pathologic_Data` or `MonoBleedingEdge` folder or a `dxgi.dll` file | the game folder |
 | Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.

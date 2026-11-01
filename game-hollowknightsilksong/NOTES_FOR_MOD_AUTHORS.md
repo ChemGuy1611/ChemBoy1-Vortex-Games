@@ -14,7 +14,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Assembly Replacement Mods | a `Assembly-CSharp.dll` file | `Hollow Knight Silksong_Data\Managed` |
 | BepInEx Plugin Mods | a `.dll` file built for BepInEx | `BepInEx\plugins\<ModName>` |
 | Skin Mod | a `.png` file | `Hollow Knight Silksong_Data\Mods\Customizer` |
-| Asset Replacement Mods | a `.assets` file | `Hollow Knight Silksong_Data` |
+| Asset Replacement Mods | a `.assets`, `.resource` or `.ress` file | `Hollow Knight Silksong_Data` |
 | Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.

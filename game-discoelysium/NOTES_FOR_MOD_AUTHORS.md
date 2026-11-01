@@ -9,11 +9,11 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | BepInEx (mod loader) | a `BepInEx.Core.dll` file | the game folder |
-| Root / Game Folder Mods | a `disco_Data` folder | the game folder |
+| Root / Game Folder Mods | a `disco_Data` or `Disco Elysium_Data` folder | the game folder |
 | BepInEx Configuration Manager | a `configurationmanager.dll` file | `BepInEx` |
 | Assembly Replacement Mods | a `GameAssembly.dll` file | the game folder |
 | BepInEx Plugin Mods | a `.dll` file built for BepInEx | `BepInEx\plugins\<ModName>` |
-| Asset Replacement Mods | a `.assets` file | `disco_Data` |
+| Asset Replacement Mods | a `.assets`, `.resource` or `.ress` file | `disco_Data` |
 | Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.

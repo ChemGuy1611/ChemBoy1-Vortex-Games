@@ -10,10 +10,11 @@ This extension adds Crimson Desert modding support to Vortex Mod Manager.
 [/list]
 [b]🛠️ Mod Installation Notes:[/b]
 [list]
+[*][color=#ffff00][b][url=https://www.nexusmods.com/crimsondesert/mods/633]DMM[/url] will be installed automatically. You must run the tool to complete mod install.[/b][/color][/*]
 [*]Root Folder mods with a "bin64" folder install to the game folder.[/*]
-[*]Definitive Mod Manager installs to the game folder, recognised by a "DMM_EXEC.toLowerCase()" folder.[/*]
+[*]Definitive Mod Manager installs to the game folder, recognised by a "DMM.exe" file.[/*]
 [*]Tools mods with a "CD JSON Mod Manager.exe", "CrimsonSharp.exe", "CrimsonSaveEditorStandalone.exe", "PazGui.exe", "CDModManager.exe", "QT_ModManager.exe" or "CrimsonDesertModManager.exe" file install to the game folder.[/*]
-[*]Special Patch mods with a ".dll", ".asi" or ".addon64" file install to the game folder.[/*]
+[*]Special Patch mods with a ".dll", ".asi" or ".addon64" file and a "00XX" folder install to the "bin64" folder (plugin files) and the "mods" folder (everything else).[/*]
 [*]Crimson Sharp mods with a "manifest.json" file, a "files" folder and a "meta" or "0000" to "0035" folder install to the "mods" folder.[/*]
 [*]Patch mods with a "modinfo.json" file install to the "mods" folder.[/*]
 [*]Texture mods are recognised by a "meta" or "0000" to "0035" folder and a ".dds" file.[/*]
@@ -25,9 +26,8 @@ This extension adds Crimson Desert modding support to Vortex Mod Manager.
 [b]📋 Usage Notes:[/b]
 [list]
 [*]You can open several useful files/folders/URLs using the buttons within the folder icon on the Mods toolbar.[/*]
-[*]Supports mods for [url=https://www.nexusmods.com/crimsondesert/mods/84?tab=description]Crimson Browser[/url]﻿ ("manifest.json" and "files" folder) and [url=https://www.nexusmods.com/crimsondesert/mods/633]DMM[/url] (.json file or "00XX" folder). Installs mods to the "mods" folder. [b][color=#ffff00]You must run the tool to complete mod install.[/color][/b][/*]
-[*]Installs multiple tools, like [url=https://www.nexusmods.com/crimsondesert/mods/62?tab=posts]Unpacker [/url]and [url=https://www.nexusmods.com/crimsondesert/mods/20]Save Editor[/url]﻿ ﻿to game root folder. Includes a launch tool.[/*]
-[*]All other mods installed to game root folder with a fallback notification.[/*]
+[*]Supports mods for [url=https://www.nexusmods.com/crimsondesert/mods/84?tab=description]Crimson Browser[/url]﻿ ("manifest.json" and "files" folder) and [url=https://www.nexusmods.com/crimsondesert/mods/633]DMM[/url] (.json file or "00XX" folder). Installs mods to the "mods" folder.[/*]
+[*]Installs multiple tools, like [url=https://www.nexusmods.com/crimsondesert/mods/62?tab=posts]Unpacker [/url]and [url=https://www.nexusmods.com/crimsondesert/mods/20]Save Editor[/url]﻿ ﻿to game root folder.[/*]
 [*][size=2]Includes launch tools for multiple managers and other tools.﻿﻿[/size][/*]
 [/list]
 [b]📝 Notes for Mod Authors:[/b]
@@ -60,7 +60,7 @@ MyRootMod.zip
 
 Definitive Mod Manager:
 
-Recognised when the archive contains a "DMM_EXEC.toLowerCase()" folder.
+Recognised when the archive contains a "DMM.exe" file.
 
   Installs to: the game folder
 
@@ -76,15 +76,20 @@ Recognised when the archive contains a "CD JSON Mod Manager.exe", "CrimsonSharp.
 
 Special Patch Mod:
 
-Recognised when the archive contains a ".dll", ".asi" or ".addon64" file.
+Recognised when the archive contains a ".dll", ".asi" or ".addon64" file and a "00XX" folder (four characters starting with "00", such as "0036").
 
-  Installs to: the game folder
+  Requirements:
+    - ".dll", ".asi" or ".addon64" files install to "bin64"; everything else installs to "mods".
+    - A "00XX" folder at the top level of the archive is wrapped in a folder named after the mod.
+    - An archive that also contains an ".exe" file is not treated as a Special Patch mod.
+
+  Installs to: the "bin64" folder (plugin files) and the "mods" folder (everything else)
 
 ========================================================================
 
 Crimson Sharp Mod:
 
-Recognised when the archive contains a "manifest.json" file, a "files" folder and a "meta", "0000", "0001", "0002", "0003", "0004", "0005", "0006", "0007", "0008", "0009", "0010", "0011", "0012", "0013", "0014", "0015", "0016", "0017", "0018", "0019", "0020", "0021", "0022", "0023", "0024", "0025", "0026", "0027", "0028", "0029", "0030", "0031", "0032", "0033", "0034" or "0035" folder.
+Recognised when the archive contains a "manifest.json" file, a "files" folder and a "meta" or "0000" to "0035" folder.
 
   Installs to: "mods"
 
@@ -100,7 +105,7 @@ Recognised when the archive contains a "modinfo.json" file.
 
 Texture:
 
-Recognised when the archive contains a "meta", "0000", "0001", "0002", "0003", "0004", "0005", "0006", "0007", "0008", "0009", "0010", "0011", "0012", "0013", "0014", "0015", "0016", "0017", "0018", "0019", "0020", "0021", "0022", "0023", "0024", "0025", "0026", "0027", "0028", "0029", "0030", "0031", "0032", "0033", "0034" or "0035" folder and a ".dds" file.
+Recognised when the archive contains a "meta" or "0000" to "0035" folder and a ".dds" file.
 
 ========================================================================
 

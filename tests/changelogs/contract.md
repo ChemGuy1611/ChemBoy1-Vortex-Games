@@ -2,6 +2,10 @@
 
 Covers every `template-*` folder. Suite files: `tests/contract.test.js`, `tests/contract-checks.js`, `tests/contract-allowlist.js`.
 
+## [2026-10-30]
+
+- Removed: the `template-unity-umm` `modtype-priority` allowlist entry. The template now registers its Unity Mod Manager and Mods mod types at 26 and 27, inside the range, so the check passes for it.
+
 ## [2026-10-04] (2)
 
 - Changed: the mod type priority ceiling is `75 + (number of mod types - 1)`, because every template registers its `low` types at 75 plus the array index. Eight allowlist entries for those priorities were removed.

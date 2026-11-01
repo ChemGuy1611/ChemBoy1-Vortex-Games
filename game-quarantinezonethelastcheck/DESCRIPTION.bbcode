@@ -12,6 +12,7 @@ This extension adds Quarantine Zone: The Last Check modding support to Vortex Mo
 
 [b]🛠️ Mod Installation Notes:[/b]
 [list]
+[*]ModKit mods with a ".uplugin" file install to the "QZSim\Mods" folder.[/*]
 [*]UE4SS Script-LogicMod Combo mods with both a "Content" and a "Binaries" folder install to the "QZSim" folder.[/*]
 [*]UE4SS LogicMods (Blueprint) mods with a "LogicMods" folder install to the "QZSim\Content\Paks" folder.[/*]
 [*]UE Sortable Pak mods with a ".pak" file install to the "QZSim\Content\Paks\~mods" folder.[/*]
@@ -37,6 +38,21 @@ This extension adds Quarantine Zone: The Last Check modding support to Vortex Mo
 Packaging rules for Quarantine Zone: The Last Check mods, so Vortex installs them to the right place.
 
 Vortex decides what a mod is by looking at the files and folders inside the archive. It tries each installer in order and the first one that matches wins, so archive layout is what determines where your mod ends up.
+
+========================================================================
+
+Mod Kit Mods:
+
+Mods produced with the game's mod kit - including the mods hosted on mod.io - identified by a ".uplugin" plugin file.
+
+  Requirements:
+    - Recognised when the archive contains a ".uplugin" file.
+    - Everything beside the ".uplugin" file (its "Content" folder included) is installed into a folder named after the ".uplugin" file.
+
+  Installs to: "QZSim\Mods"
+
+  Common mistakes:
+    - Placing the ".uplugin" file in a different folder from its "Content" folder - only files at or below the ".uplugin" file's folder are installed.
 
 ========================================================================
 

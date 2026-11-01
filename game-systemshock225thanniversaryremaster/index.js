@@ -2,8 +2,8 @@
 Name: System Shock 2 (Classic AND 25th Anniversary Remaster) Vortex Extension
 Structure: Basic game w/ mods folder
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-25
+Version: 1.0.3
+Date: 2026-10-31
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -42,6 +42,8 @@ let STAGING_FOLDER_CLASSIC = "";
 let DOWNLOAD_FOLDER = "";
 let DOWNLOAD_FOLDER_CLASSIC = "";
 
+//Current release exe is the same on all stores. Store-specific exes below are older builds and the Steam developer beta branch.
+const EXEC = "SystemShock2Remastered.exe";
 //Different exes for each version, use getExecutable function in context.registerGame
 const EXEC_STEAM = "hathor_Shipping_Playfab_Steam_x64.exe";
 const EXEC_GOG = "hathor_Shipping_Playfab_Galaxy_x64.exe";
@@ -1176,6 +1178,9 @@ function getExecutable(discoveryPath) {
       return false;
     }
   };
+  if (isCorrectExec(EXEC)) {
+    return EXEC;
+  }
   if (isCorrectExec(EXEC_STEAM)) {
     GAME_VERSION = "steam";
     return EXEC_STEAM;
@@ -1188,7 +1193,7 @@ function getExecutable(discoveryPath) {
     GAME_VERSION = "epic";
     return EXEC_EPIC;
   }
-  return EXEC_STEAM;
+  return EXEC;
 }
 
 //Get game store version based on which executable is in the game folder

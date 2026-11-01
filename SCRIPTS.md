@@ -335,6 +335,43 @@ Per-check `[PASS]` / `[FAIL]` / `[WARN]` lines for: v1 mod shape (13 required fi
 
 ---
 
+## nexus_mod_preview.py
+
+Prints a Nexus Mods mod's description and its file list, with each file's archive contents read from Nexus's content preview. Shows which file ships which manifest or folder layout without downloading anything — what an extension installer needs to know about a mod format — and works where the mod page refuses scripted fetches (nexusmods.com answers those with HTTP 403). Read-only.
+
+### nexus_mod_preview.py — Environment Variables
+
+| Variable        | Required | Description                                                           |
+| --------------- | -------- | --------------------------------------------------------------------- |
+| `NEXUS_API_KEY` | Required | Nexus Mods API key. Read from env var, with HKCU/HKLM registry fallback. |
+
+### nexus_mod_preview.py — Usage
+
+```sh
+python nexus_mod_preview.py URL [options]
+python nexus_mod_preview.py DOMAIN MOD_ID [options]
+python nexus_mod_preview.py DOMAIN MOD_ID --archived
+python nexus_mod_preview.py DOMAIN MOD_ID --no-preview --desc-chars 0
+python nexus_mod_preview.py https://www.nexusmods.com/railroader/mods/1809
+python nexus_mod_preview.py railroader 1809 --no-desc --file 7723 --file 7618
+```
+
+`URL` is a mod page URL; anything after the mod id (`?tab=files`, etc.) is ignored. `DOMAIN` is the Nexus game domain (the URL slug).
+
+| Option           | Effect                                                                 |
+| ---------------- | ---------------------------------------------------------------------- |
+| `--archived`     | Include files in the ARCHIVED category (hidden by default).            |
+| `--file ID`      | Only show this file id. Repeat for several. Shows it even if archived. |
+| `--no-desc`      | Skip the mod description.                                              |
+| `--no-preview`   | Skip the archive contents, list files only.                            |
+| `--desc-chars N` | Truncate the description to N characters (default 5000, 0 = all).      |
+
+### nexus_mod_preview.py — Notes
+
+Mod and file data come from `vortex_utils.nexus_get_mod` and `nexus_get_mod_files` (v1 API, with retries). Each file's `content_preview_link` is an unauthenticated JSON manifest; the script reads its flat `files` list of `file_path` entries and falls back to the older nested `children` tree (both shapes: `resources/NEXUS_FILE_PROPERTIES.md`). The preview lists paths only — reading a manifest's contents still needs the file itself. Output is ASCII-only so it prints on any console.
+
+---
+
 ## refresh_extensions_feed.py
 
 Refreshes the reference snapshot of Nexus's public `GET /v3/vortex/extensions` feed in `resources/`. It overwrites `vortex-extensions-feed.json` with the live response (pretty-printed, in the form `oxfmt --check` accepts) and rewrites the generated tables in `resources/vortex-extensions-feed.md`, the block between its `feed-snapshot` markers: fetch time, extension, theme and translation counts, upload range, ChemBoy1 rows, largest authors, and how many `game-*` folders have a ChemBoy1 game row. The rest of that markdown file is hand-written and must be re-checked after a refresh. API audits read the fetch time in that file to decide when to re-run this script. The folder-coverage row and the list of folders without a ChemBoy1 row come from `load_vortex_manifest()`, so they need Vortex's cached `nexus_gamelist.json`; without it the row reads "unavailable". Each uncovered folder is listed with what the feed holds for its game (another author's row, a ChemBoy1 row of type `other`, or nothing) and the state of its `EXTENSION_URL`, which separates an extension that is not published yet (no row, URL `XXX`) from a published one the feed lacks (no row, URL set).

@@ -10,7 +10,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | Dai Mod Manager | a `daimodmanager.exe` file | the game folder |
 | Frosty Mod Manager (tool) | a `frostymodmanager.exe` file | the game folder |
-| Frosty Mods | a `.fbmod` file | `FrostyModManager\Mods\dragonageinquisition` |
+| Frosty Mods | a `.fbmod` or `.fbpack` file | `FrostyModManager\Mods\dragonageinquisition` |
 | Frosty Plugin | a `.dll` file | `FrostyModManager\Plugins` |
 | DAIMod .daimod | a `.daimod` file | `DAIMod` |
 | Fallback Installer | anything not matched above | the game folder |

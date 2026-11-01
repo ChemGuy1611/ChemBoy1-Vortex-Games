@@ -63,6 +63,77 @@ archive contains is the arrangement that works:
 | ---------------------- | ----------------- | ---------------------------- |
 | `Definition.json`      | Railloader        | `.dll` named in `assemblies` |
 | `info.json` (any case) | Unity Mod Manager | sibling `.dll`               |
+| `Info.json` (any case) | Railroader native | data `.json`, `Scripts/*.rl` |
+
+The first two share `<gamePath>\Mods`; native mods live elsewhere (below).
+
+### Native mods (Railroader 2026.1+)
+
+Railroader 2026.1 ("Maintenance of Way", Steam experimental branch at the time of writing) loads
+data mods itself, with no external loader. They do **not** go in the game folder: the game reads
+them from `Mods\<Name>\` inside its home folder.
+
+#### The home folder
+
+Railroader keeps all per-user data in one home folder, on every game version:
+
+| Inside the home folder               | What                                 |
+| ------------------------------------ | ------------------------------------ |
+| `Mods\`                              | Native mods, one folder each         |
+| `Saves\`                             | Save games                           |
+| `Sound\`, `ModDev\`                  | Game data and mod-development output |
+| `Preferences.json` + log files (root) | Settings and logs                    |
+
+The default is `%USERPROFILE%\Documents\Railroader` (resolve Documents with
+`util.getVortexPath("documents")`, which follows a redirected or OneDrive Documents folder). The
+player can move it with the Steam launch option `-homedir "<path>"`. The extension therefore keeps
+the home folder as a Vortex setting (Settings > Mods, empty = default) that the Native Mod type,
+"Open Native Mods Folder", "Open Save Folder" and "Open Home Folder" all read. "Use Steam's Folder"
+reads `-homedir` from Steam's `localconfig.vdf`, and setup warns when Steam's value and the setting
+disagree. Changing the setting purges native mods from the old folder before switching; the full
+pattern is in `USER_CONFIGURABLE_MOD_PATHS.md`.
+
+#### Telling native mods from UMM mods
+
+Their manifest has the same file name as a UMM mod's, so the file name alone cannot tell them
+apart. The contents can:
+
+```json
+{
+  "identifier": "tetz95/connelly-junction",
+  "version": "4.0.0",
+  "name": "Tetz's Connelly Junction",
+  "author": "Tetz95",
+  "description": "...",
+  "dependencies": {
+    "required": ["rr/game", "joo/signals-everywhere"],
+    "optional": [],
+    "incompatible": ["tetz95/branch-junctions"]
+  },
+  "mixintos": {
+    "signals": ["file(connelly-junction-signals.json)"],
+    "ctcPanel": ["file(connelly-junction-ctc-panel.json)"]
+  }
+}
+```
+
+The keys are lowercase (`identifier`, `name`, `dependencies`, `mixintos`), where UMM uses PascalCase
+(`Id`, `AssemblyName`, `EntryMethod`). `identifier` is `author/slug`, and the slash makes it unusable
+as a folder name, so a flat archive takes its folder name from `name`. Script mods add
+`Scripts/*.rl` files.
+
+`testSupported` only receives the archive's file list (`archivePath` is the archive, not the
+extracted folder), so the manifest cannot be read at test time, and file names alone guess wrong:
+some UMM mods ship no `.dll`, and native mods may. The manifest can be read at install time, from
+the working directory, and an install function cannot decline and hand the archive to the next
+installer. So the split belongs in the install:
+
+- **One test** claims any archive with an `info.json`.
+- **One install** reads each manifest. A manifest with an `identifier` key is native: the mod gets
+  its own "Native Mod" type (targeting the Documents folder above), and a flat archive takes its folder name from
+  `name`. Otherwise it is UMM: the shared `Mods` type, folder name from `Id`. Either falls back to
+  the archive name. An archive mixing both kinds, or with a manifest that does not parse, gets the
+  UMM type.
 
 ---
 
@@ -115,3 +186,5 @@ Treat this as an open test question rather than designing around either answer.
 `FOMOD_INSTALLER.md` (the `ModuleConfig.xml` early-return every `testSupported` keeps).
 `NEXUS_MODS_API.md` (the GraphQL search used to rule out a Nexus-hosted copy).
 `NOTIFICATIONS_DIALOGS.md` (`showDialog`, behind the offline-host warning).
+`USER_CONFIGURABLE_MOD_PATHS.md` (the home folder setting: folder picker, Steam `-homedir`
+detection and the purge on change).

@@ -10,7 +10,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | Dmfdml | a `.bat` file | - |
 | Mod | a `.mod` file | - |
-| Root / Game Folder Mods | a `mods` folder | the game folder |
+| Root / Game Folder Mods | a `mods`, `binaries`, `bundle` or `launcher` folder | the game folder |
 | Binaries | - | `binaries` |
 
 Paths are relative to the game's install folder.

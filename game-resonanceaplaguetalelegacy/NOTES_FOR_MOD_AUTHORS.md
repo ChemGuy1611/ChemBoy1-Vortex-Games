@@ -13,7 +13,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | ASI Loader | a `RAPTL_Framework.asi` file | the game folder |
 | Script Mod | a `.psc` file | `Mods` |
 | Resonance Framework Mod | a `textures` folder | `Mods` |
-| Root / Game Folder Mods | a `DATAS` folder | the game folder |
+| Root / Game Folder Mods | a `DATAS`, `FONT`, `INPUT`, `LEVELS`, `Resources`, `RTC`, `RTE`, `Shaders`, `SOUNDBANKS` or `VIDEOS` folder | the game folder |
 | TextureStudio | a `.exe` file | `TextureStudio` |
 
 Paths are relative to the game's install folder.

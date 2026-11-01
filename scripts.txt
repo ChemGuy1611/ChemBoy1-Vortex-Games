@@ -3,6 +3,7 @@ vortex_utils.py
 gui_tray.py
 nexus_upload.py
 check_nexus_api.py
+nexus_mod_preview.py
 refresh_extensions_feed.py
 diff_vortex_api_typings.py
 new_extension.py

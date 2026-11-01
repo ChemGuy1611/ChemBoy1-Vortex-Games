@@ -14,7 +14,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Assembly Replacement Mods | a `GameAssembly.dll` file | the game folder |
 | MelonLoader Mods | a `.dll` file built for MelonLoader | `Mods\<ModName>` |
 | Custom Assets | a `CustomManga`, `CustomDakimakura`, `CustomPosters` or `CustomCard` folder | `UserData` |
-| Asset Replacement Mods | a `.assets` file | `Anime Shop Simulator_Data` |
+| Asset Replacement Mods | a `.assets`, `.resource` or `.ress` file | `Anime Shop Simulator_Data` |
 | Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.

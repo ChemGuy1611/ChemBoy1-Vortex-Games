@@ -13,7 +13,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Middle-Earth-Mod-Loader | a `bink2w64.dll` file and a `modloader` folder | `x64` |
 | .arch06 Mod | a `.arch06` file | `Mods` |
 | Plugins / Packets | a `.dll` file, a `PacketLoader` folder and a `Internal` folder | `x64\plugins` |
-| Root / Game Folder Mods | a `game` folder | the game folder |
+| Root / Game Folder Mods | a `game` or `x64` folder | the game folder |
 | Fallback Installer | anything not matched above | `x64\plugins` |
 
 Paths are relative to the game's install folder.

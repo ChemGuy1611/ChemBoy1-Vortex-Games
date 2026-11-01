@@ -14,7 +14,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Assembly Replacement Mods | a `GameAssembly.dll` file | the game folder |
 | BepInEx Plugin Mods | a `.dll` file built for BepInEx | `BepInEx\plugins\<ModName>` |
 | PC Build | a `.pcbs` file | `PCs` |
-| Asset Replacement Mods | a `.assets` file | `PCBS2_Data` |
+| Asset Replacement Mods | a `.assets`, `.resource` or `.ress` file | `PCBS2_Data` |
 | Save Game Files | a `.binary` file | `Saves` |
 | Fallback Installer | anything not matched above | the game folder |
 

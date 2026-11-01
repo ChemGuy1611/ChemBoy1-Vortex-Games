@@ -11,7 +11,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Prey Interface Customizer | a `preyinterfacecustomizergui.exe` file | - |
 | Chairloader | a `chairmanager.exe` file | the game folder |
 | Chair Mod Zip | a `modinfo.xml` file | `Mods` |
-| Root / Game Folder Mods | a `GameSDK` folder | the game folder |
+| Root / Game Folder Mods | a `GameSDK`, `Whiplash`, `Binaries`, `Engine` or `Localization` folder | the game folder |
 | Binaries (Engine Injector) | a `.exe`, `.dll`, `.asi` or `.addon64` file | - |
 
 Paths are relative to the game's install folder.

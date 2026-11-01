@@ -119,3 +119,5 @@ const manifest = await util.getManifest(api, "mymodtype", GAME_ID);
 `getManifest`). `EVENTS.md` (`did-deploy` passes `deployment` directly, avoiding the disk read).
 `NTFS_LINKS.md` (what the recorded `deploymentMethod` actually put on disk, and when a
 manifest-based fallback purge replaces the method's own purge).
+`USER_CONFIGURABLE_MOD_PATHS.md` (the manifest and files left in a mod type's old target when its
+folder setting changes without a purge first).

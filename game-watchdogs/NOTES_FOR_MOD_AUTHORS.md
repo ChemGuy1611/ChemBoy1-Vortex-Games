@@ -10,7 +10,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | NexusTools Mod Loader | a `ModManager.exe` file and a `bin` folder | the game folder |
 | Mod | a `modconfig.json` file and a `.dat` or `.fat` file | `data_win64\mods` |
-| Root / Game Folder Mods | a `data_win64` folder | the game folder |
+| Root / Game Folder Mods | a `data_win64` or `bin` folder | the game folder |
 | Binaries (Engine Injector) | a `.exe`, `.dll`, `.asi` or `.addon64` file | `bin` |
 | Fallback Installer | anything not matched above | the game folder |
 

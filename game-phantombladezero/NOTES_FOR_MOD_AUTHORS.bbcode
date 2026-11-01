@@ -93,7 +93,7 @@ This installer handles the UE4SS runtime package, not individual mods. Most auth
     - Recognised by a file named "dwmapi.dll" at any level of the archive.
     - Also recognised by any of the UE4SS support folders: "MapGenBP", "MemberVarLayoutTemplates", "UE4SS_Signatures" or "VTableLayoutTemplates".
 
-  Installs to: "ProjectPBZ\Binaries\Win64"
+  Installs to: "platform\steam"
 
   Common mistakes:
     - If your script mod archive happens to contain a file named "dwmapi.dll", it will be treated as a UE4SS install rather than as your mod.
@@ -116,7 +116,7 @@ MyScriptMod.zip
     - Wrap the "Scripts" folder in a folder named after your mod. That folder name becomes the mod's UE4SS name and is what gets written to the load order.
     - If you omit the wrapper folder, Vortex falls back to naming the mod after the archive file.
 
-  Installs to: "ProjectPBZ\Binaries\Win64\ue4ss\Mods"
+  Installs to: "platform\steam\ue4ss\Mods"
 
   Common mistakes:
     - Putting "main.lua" directly in the archive root with no "Scripts" folder - the mod is not recognised as a script mod.
@@ -139,7 +139,7 @@ MyDllMod.zip
     - The archive must contain a ".dll" file AND a folder named "dlls".
     - Wrap the "dlls" folder in a folder named after your mod - that name is used in the load order.
 
-  Installs to: "ProjectPBZ\Binaries\Win64\ue4ss\Mods"
+  Installs to: "platform\steam\ue4ss\Mods"
 
   Common mistakes:
     - A bare ".dll" with no "dlls" folder is not recognised as a UE4SS DLL mod and will reach the fallback installer.
@@ -205,7 +205,7 @@ This is the catch-all. Any archive with no ".pak" file that matched none of the 
     - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
     - Vortex shows the user a notification when a mod installs through the fallback.
 
-  Installs to: "ProjectPBZ\Binaries\Win64"
+  Installs to: "platform\steam"
 
   Common mistakes:
     - If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report it as broken.

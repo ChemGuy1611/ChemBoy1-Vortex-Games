@@ -2,8 +2,8 @@
 Name: Railroader Vortex Extension
 Structure: Unity UMM (Unity Mod Manager)
 Author: ChemBoy1
-Version: 1.0.6
-Date: 2026-10-25
+Version: 1.2.0
+Date: 2026-10-30
 Notes:
 - First UMM implementation.
 //////////////////////////////////////////*/
@@ -17,13 +17,14 @@ const crypto = require("crypto");
 const template = require("string-template");
 const winapi = require("winapi-bindings");
 const { parseStringPromise, Builder } = require("xml2js");
+const React = require("react");
 
 // -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const USER_HOME = util.getVortexPath("home");
-const LOCALLOW = path.join(USER_HOME, "AppData", "LocalLow");
-//const DOCUMENTS = util.getVortexPath("documents");
+//const USER_HOME = util.getVortexPath("home");
+//const LOCALLOW = path.join(USER_HOME, "AppData", "LocalLow");
+const DOCUMENTS = util.getVortexPath("documents");
 //const ROAMINGAPPDATA = util.getVortexPath("appData");
 const LOCALAPPDATA = util.getVortexPath("localAppData");
 
@@ -60,9 +61,10 @@ let hasXbox = false; //toggle for Xbox version logic
 if (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) hasXbox = true;
 const multiExe = false; //set to true if there are multiple executables (and conseq. DATA_FOLDERs) (typically for Xbox/EGS)
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
-const autoDownloadUmm = true; //download Unity Mod Manager from Nexus during setup
+const ummSupport = true; //Unity Mod Manager support: download, tool, UMM installer and mod type, "Run" button. info.json mods still install when off (native mods share that manifest name)
+const autoDownloadUmm = true; //download Unity Mod Manager from Nexus during setup (needs ummSupport)
 const railloaderSupport = true; //install Railloader mods, and a user-supplied Railloader archive
-const seedUmmParams = true; //pre-seed UMM's Params.xml and registry values so the tool opens pointed at this game
+const seedUmmParams = true; //pre-seed UMM's Params.xml and registry values so the tool opens pointed at this game (needs ummSupport)
 const hasVersionFile = true; //toggle for version file. Set to false if game doesn't have
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
 const debug = false; //toggle for debug mode
@@ -126,6 +128,13 @@ const MODS_FOLDER = "Mods"; //both loaders read their mods from here
 const UMM_MOD_ID = `${GAME_ID}-ummmod`;
 const UMM_MOD_NAME = "UMM Mod";
 const UMM_MOD_FILE = "info.json"; //UMM's config calls it Info.json, shipped mods use lower case
+const NATIVE_MOD_ID = `${GAME_ID}-nativemod`;
+const HOME_DIR_DEFAULT = path.join(DOCUMENTS, GAME_STRING); //the game's home folder (mods, saves, settings and logs). Players can move it with a Steam launch option, so the Vortex setting can too
+const HOME_DIR_ARGS = ["-homedir"]; //launch options that move the home folder
+const NATIVE_MODS_FOLDER = "Mods"; //native mods live here inside the home folder, not in the game folder
+const SAVE_FOLDER = "Saves";
+const NATIVE_MOD_NAME = "Native Mod";
+const NATIVE_MOD_KEYS = ["identifier"]; //native mods (Railroader 2026.1+) share UMM's info.json name; a manifest with one of these keys is native
 
 const RAILLOADER_ID = `${GAME_ID}-railloader`;
 const RAILLOADER_NAME = "Railloader";
@@ -158,7 +167,7 @@ const CONFIG_KEY = `Software\\${DEV_REGSTRING}\\${GAME_REGSTRING}`;
 const CONFIG_REGPATH_FULL = `${CONFIG_HIVE}\\${CONFIG_KEY}`; //*/
 //const CONFIG_PATH = path.join(LOCALLOW, DEV_REGSTRING, GAME_REGSTRING, 'Settings');
 const CONFIG_FILES = ["settings.json"];
-const SAVE_PATH_DEFAULT = path.join(LOCALLOW, DEV_REGSTRING, GAME_REGSTRING, "SaveGames");
+const SAVE_PATH_DEFAULT = path.join(HOME_DIR_DEFAULT, SAVE_FOLDER); //getSavePath follows the home folder setting
 const SAVE_PATH_XBOX = path.join(
   LOCALAPPDATA,
   "Packages",
@@ -430,7 +439,7 @@ async function getSavePath(api) {
     SAVE_PATH = SAVE_PATH_XBOX;
     return SAVE_PATH;
   } else {
-    SAVE_PATH = SAVE_PATH_DEFAULT;
+    SAVE_PATH = path.join(getHomeDir(api), SAVE_FOLDER);
     return SAVE_PATH;
   }
 } //*/
@@ -497,6 +506,336 @@ async function deploy(api) {
   //useful to deploy mods after doing some action
   return new Promise((resolve, reject) =>
     api.events.emit("deploy-mods", (err) => (err ? reject(err) : resolve())),
+  );
+}
+
+// HOME FOLDER SETTING ///////////////////////////////////////////////////////////////////////////
+
+//Stored home folder. An empty string means the game's default, so a moved Documents folder is still followed
+const SET_HOME_DIR = `SET_${GAME_ID.toUpperCase()}_HOME_DIR`;
+function setHomeDir(homeDir) {
+  return { type: SET_HOME_DIR, payload: homeDir };
+}
+setHomeDir.toString = () => SET_HOME_DIR;
+
+//The game's home folder: the Vortex setting, or the default under Documents
+function getHomeDir(api) {
+  const homeDir = api.getState()?.settings?.[GAME_ID]?.homeDir;
+  return typeof homeDir === "string" && homeDir.length > 0 ? homeDir : HOME_DIR_DEFAULT;
+}
+
+function getNativeModPath(api) {
+  return path.join(getHomeDir(api), NATIVE_MODS_FOLDER);
+}
+
+const trimPath = (folder) => path.normalize(folder).replace(/[\\/]+$/, "");
+const samePath = (a, b) => trimPath(a).toLowerCase() === trimPath(b).toLowerCase();
+const isInsidePath = (child, parent) => {
+  const relative = path.relative(parent, child);
+  return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
+};
+
+//Steam launch option value for a home folder, for telling the player what to set
+const homeDirLaunchOption = (homeDir) => `${HOME_DIR_ARGS[0]} "${homeDir}"`;
+
+//Find the LaunchOptions value inside an app's block of Steam's localconfig.vdf
+function readSteamLaunchOptions(vdf, appId) {
+  const opener = new RegExp(`"${appId}"\\s*\\{`, "g");
+  let match;
+  while ((match = opener.exec(vdf)) !== null) {
+    const start = match.index + match[0].length;
+    let depth = 1;
+    let inString = false;
+    let index = start;
+    for (; index < vdf.length && depth > 0; index++) {
+      const char = vdf[index];
+      if (inString) {
+        if (char === "\\") {
+          index++;
+        } else if (char === '"') {
+          inString = false;
+        }
+      } else if (char === '"') {
+        inString = true;
+      } else if (char === "{") {
+        depth++;
+      } else if (char === "}") {
+        depth--;
+      }
+    }
+    const block = vdf.slice(start, index - 1);
+    const options = /"LaunchOptions"\s+"((?:\\.|[^"\\])*)"/i.exec(block);
+    if (options) {
+      return options[1].replace(/\\(["\\])/g, "$1");
+    }
+  }
+  return undefined;
+}
+
+//Pull the home folder out of a launch options string ("-homedir "D:\RR"" or -homedir D:\RR)
+function readHomeDirArg(launchOptions) {
+  for (const arg of HOME_DIR_ARGS) {
+    const escaped = arg.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const match = new RegExp(`(?:^|\\s)${escaped}(?:\\s+|=)(?:"([^"]+)"|(\\S+))`, "i").exec(
+      launchOptions,
+    );
+    if (match) {
+      return trimPath(match[1] ?? match[2]);
+    }
+  }
+  return undefined;
+}
+
+//Home folder Steam launches the game with. Read only: Steam rewrites localconfig.vdf while it runs.
+//Returns the folder, null when Steam passes no home folder option (the game uses its default), or undefined when unknown
+async function detectSteamHomeDir() {
+  try {
+    const steamPath = await util.GameStoreHelper.getGameStore("steam")?.getGameStorePath();
+    if (!steamPath) {
+      return undefined;
+    }
+    const userDataPath = path.join(steamPath, "userdata");
+    let newest;
+    for (const user of await fsp.readdir(userDataPath)) {
+      const configFile = path.join(userDataPath, user, "config", "localconfig.vdf");
+      let stat;
+      let vdf;
+      try {
+        stat = await fsp.stat(configFile);
+        vdf = await fsp.readFile(configFile, { encoding: "utf8" });
+      } catch {
+        continue;
+      }
+      const launchOptions = readSteamLaunchOptions(vdf, STEAMAPP_ID);
+      //several Steam accounts on one PC: the most recently written config is the active one
+      if (launchOptions !== undefined && (newest === undefined || stat.mtimeMs > newest.mtime)) {
+        newest = { mtime: stat.mtimeMs, launchOptions };
+      }
+    }
+    if (newest === undefined) {
+      return undefined;
+    }
+    return readHomeDirArg(newest.launchOptions) ?? null;
+  } catch (err) {
+    log("warn", `Could not read ${GAME_NAME}'s Steam launch options: ${err}`);
+    return undefined;
+  }
+}
+
+//Move the home folder. Native mods are purged from the old Mods folder first - a normal purge only
+//looks in the current folder, so skipping this leaves deployed files behind
+async function changeHomeDir(api, newDir) {
+  let homeDir = trimPath(newDir);
+  if (path.basename(homeDir).toLowerCase() === NATIVE_MODS_FOLDER.toLowerCase()) {
+    homeDir = path.dirname(homeDir); //the Mods folder itself was picked
+  }
+  const state = api.getState();
+  const vortexFolders = [
+    selectors.installPathForGame(state, GAME_ID),
+    selectors.downloadPathForGame(state, GAME_ID),
+  ].filter((folder) => typeof folder === "string" && folder.length > 0);
+  if (vortexFolders.some((folder) => isInsidePath(homeDir, folder))) {
+    api.showErrorNotification(
+      `Invalid ${GAME_NAME} home folder`,
+      `"${homeDir}" is inside a Vortex staging or download folder. Pick a different folder.`,
+      { allowReport: false },
+    );
+    return false;
+  }
+  const oldDir = getHomeDir(api);
+  if (samePath(homeDir, oldDir)) {
+    return false;
+  }
+  try {
+    await vfs.ensureDirWritableAsync(path.join(homeDir, NATIVE_MODS_FOLDER));
+    await api.emitAndAwait(
+      "purge-mods-in-path",
+      GAME_ID,
+      NATIVE_MOD_ID,
+      path.join(oldDir, NATIVE_MODS_FOLDER),
+    );
+    api.store.dispatch(setHomeDir(samePath(homeDir, HOME_DIR_DEFAULT) ? "" : homeDir));
+    api.store.dispatch(actions.setDeploymentNecessary(GAME_ID, true));
+  } catch (err) {
+    api.showErrorNotification(`Failed to change the ${GAME_NAME} home folder`, err, {
+      allowReport: false,
+    });
+    return false;
+  }
+  const isDefault = samePath(homeDir, HOME_DIR_DEFAULT);
+  api.sendNotification({
+    id: `${GAME_ID}-homedir-changed`,
+    type: "info",
+    message: `${GAME_NAME} home folder changed - deploy to move your native mods`,
+    actions: [
+      {
+        title: "More",
+        action: (dismiss) => {
+          api.showDialog(
+            "info",
+            `${GAME_NAME} Home Folder`,
+            {
+              text:
+                `Vortex now deploys native mods to "${path.join(homeDir, NATIVE_MODS_FOLDER)}".\n\n` +
+                (isDefault
+                  ? `This is the game's default home folder. Remove any "${HOME_DIR_ARGS[0]}" option from ${GAME_NAME}'s launch options in Steam.`
+                  : `The game only uses this folder when Steam passes it. In Steam, open ${GAME_NAME} > Properties > General > Launch Options and set:\n\n${homeDirLaunchOption(homeDir)}`),
+            },
+            [{ label: "Close", action: () => dismiss() }],
+          );
+        },
+      },
+    ],
+  });
+  return true;
+}
+
+//Settings page "Browse" button
+async function browseHomeDir(api) {
+  const picked = await api.selectDir({
+    title: `Select the ${GAME_NAME} home folder`,
+    defaultPath: getHomeDir(api),
+  });
+  if (picked) {
+    await changeHomeDir(api, picked);
+  }
+}
+
+//Settings page "Use Steam's Folder" button
+async function applySteamHomeDir(api) {
+  const steamDir = await detectSteamHomeDir();
+  if (steamDir === undefined) {
+    api.sendNotification({
+      id: `${GAME_ID}-homedir-detect`,
+      type: "warning",
+      message: `Could not read ${GAME_NAME}'s launch options from Steam`,
+      displayMS: 5000,
+    });
+    return;
+  }
+  const target = steamDir ?? HOME_DIR_DEFAULT;
+  if (samePath(target, getHomeDir(api))) {
+    api.sendNotification({
+      id: `${GAME_ID}-homedir-detect`,
+      type: "success",
+      message: `The ${GAME_NAME} home folder already matches Steam`,
+      displayMS: 5000,
+    });
+    return;
+  }
+  await changeHomeDir(api, target);
+}
+
+//Warn at setup when Steam launches the game with a different home folder than Vortex deploys to. Never moves anything by itself
+async function checkSteamHomeDir(api, discovery) {
+  if (discovery?.store !== undefined && discovery.store !== "steam") {
+    return;
+  }
+  const steamDir = await detectSteamHomeDir();
+  if (steamDir === undefined) {
+    return;
+  }
+  const steamHome = steamDir ?? HOME_DIR_DEFAULT;
+  const vortexHome = getHomeDir(api);
+  if (samePath(steamHome, vortexHome)) {
+    return;
+  }
+  api.sendNotification({
+    id: `${GAME_ID}-homedir-mismatch`,
+    type: "warning",
+    message: `Steam starts ${GAME_NAME} with a different home folder than Vortex uses`,
+    actions: [
+      {
+        title: "More",
+        action: (dismiss) => {
+          api.showDialog(
+            "question",
+            `${GAME_NAME} Home Folder`,
+            {
+              text:
+                `Steam launches ${GAME_NAME} with the home folder "${steamHome}", ` +
+                `but Vortex deploys native mods to "${path.join(vortexHome, NATIVE_MODS_FOLDER)}". ` +
+                `The game will not see those mods.\n\n` +
+                `Use Steam's folder, or change ${GAME_NAME}'s launch options in Steam to match Vortex:\n\n` +
+                homeDirLaunchOption(vortexHome),
+            },
+            [
+              { label: "Keep Vortex's Folder", action: () => dismiss() },
+              {
+                label: "Use Steam's Folder",
+                action: () => {
+                  dismiss();
+                  changeHomeDir(api, steamHome);
+                },
+              },
+            ],
+          );
+        },
+      },
+    ],
+  });
+}
+
+//Settings page: Settings > Mods while the game is active
+function HomeDirSettings(props) {
+  const { Icon, More } = require("vortex-api");
+  const {
+    Button,
+    ControlLabel,
+    FormControl,
+    FormGroup,
+    HelpBlock,
+    InputGroup,
+    Panel,
+  } = require("react-bootstrap");
+  const { useSelector } = require("react-redux");
+  const stored = useSelector((state) => state?.settings?.[GAME_ID]?.homeDir ?? "");
+  const homeDir = stored.length > 0 ? stored : HOME_DIR_DEFAULT;
+  const h = React.createElement;
+  return h(
+    "form",
+    { id: `${GAME_ID}-settings-form` },
+    h(
+      FormGroup,
+      { controlId: `${GAME_ID}-homedir` },
+      h(
+        ControlLabel,
+        null,
+        `${GAME_NAME} Home Folder`,
+        h(
+          More,
+          { id: `${GAME_ID}-homedir-more`, name: `${GAME_NAME} Home Folder` },
+          `${GAME_NAME} keeps native mods ("${NATIVE_MODS_FOLDER}"), saves ("${SAVE_FOLDER}"), settings and logs in one home folder, ` +
+            `by default "${HOME_DIR_DEFAULT}". The Steam launch option ${HOME_DIR_ARGS[0]} "<folder>" moves it. ` +
+            `Set the same folder here so Vortex deploys native mods where the game reads them. ` +
+            `Changing it purges native mods from the old folder; deploy afterwards to put them in the new one.`,
+        ),
+      ),
+      h(
+        Panel,
+        null,
+        h(
+          Panel.Body,
+          null,
+          h(
+            InputGroup,
+            null,
+            h(FormControl, { className: "install-path-input", disabled: true, value: homeDir }),
+            h(Button, { onClick: props.onBrowse, title: "Browse" }, h(Icon, { name: "browse" })),
+          ),
+          h(
+            HelpBlock,
+            null,
+            stored.length > 0
+              ? `Steam launch option for this folder: ${homeDirLaunchOption(homeDir)}`
+              : "Default folder - no Steam launch option needed.",
+          ),
+          h(Button, { onClick: props.onDetect }, "Use Steam's Folder"),
+          " ",
+          h(Button, { onClick: props.onReset, disabled: stored.length === 0 }, "Reset to Default"),
+        ),
+      ),
+    ),
   );
 }
 
@@ -946,6 +1285,17 @@ async function readModName(manifestPath, key, fallback) {
   return fallback;
 }
 
+//Read an info.json manifest, which native and UMM mods both use, and say which kind it is
+async function isNativeManifest(manifestPath) {
+  try {
+    const parsed = JSON.parse(await fsp.readFile(manifestPath, { encoding: "utf8" }));
+    return NATIVE_MOD_KEYS.some((key) => typeof parsed[key] === "string");
+  } catch (err) {
+    log("warn", `Could not read manifest ${manifestPath}: ${err}`);
+  }
+  return false;
+}
+
 //Turn any of the shipped archive shapes into a single "<Name>/..." folder under the Mods folder
 function modsFolderInstructions(files, rootPath, modName) {
   const filtered = files.filter(
@@ -965,7 +1315,7 @@ function modsFolderInstructions(files, rootPath, modName) {
   });
 }
 
-//Installer test for UMM mod files
+//Installer test for UMM and native mod files (both ship an info.json)
 function testUmmMod(files, gameId) {
   const isMod = files.some((file) => path.basename(file).toLowerCase() === UMM_MOD_FILE);
   let supported = gameId === spec.game.id && isMod;
@@ -988,7 +1338,7 @@ function testUmmMod(files, gameId) {
   });
 }
 
-//Installer install UMM mod files. Every folder holding a manifest is its own mod, so an archive with several installs them all
+//Installer install UMM and native mod files. Every folder holding a manifest is its own mod, so an archive with several installs them all. The manifest decides the mod type: native only when every manifest in the archive is native
 async function installUmmMod(files, workingDir) {
   const manifests = files.filter((file) => path.basename(file).toLowerCase() === UMM_MOD_FILE);
   const roots = [...new Set(manifests.map((file) => path.dirname(file)))];
@@ -1001,15 +1351,20 @@ async function installUmmMod(files, workingDir) {
   );
   const fallbackName = path.basename(workingDir, ".installing");
   const instructions = [];
+  let allNative = true;
   for (const rootPath of modRoots) {
     const modFile = manifests.find((file) => path.dirname(file) === rootPath);
+    const manifestPath = path.join(workingDir, modFile);
+    const isNative = await isNativeManifest(manifestPath);
+    allNative = allNative && isNative;
+    //a native "identifier" is "author/slug", not usable as a folder name, so a flat native archive takes "name"
     const modName =
       rootPath === "."
-        ? await readModName(path.join(workingDir, modFile), "Id", fallbackName)
+        ? await readModName(manifestPath, isNative ? "name" : "Id", fallbackName)
         : path.basename(rootPath);
     instructions.push(...modsFolderInstructions(files, rootPath, modName));
   }
-  instructions.push({ type: "setmodtype", value: MODS_ID });
+  instructions.push({ type: "setmodtype", value: allNative ? NATIVE_MOD_ID : MODS_ID });
   return Promise.resolve({ instructions });
 }
 
@@ -1622,14 +1977,20 @@ async function setup(discovery, api, gameSpec) {
   MODTYPE_FOLDERS.push(ASSEMBLY_PATH);
   MODTYPE_FOLDERS.push(ASSETS_PATH);
   MODTYPE_FOLDERS.push(MODS_FOLDER); //both loaders expect this to exist, UMM's own installer creates it too
-  if (autoDownloadUmm) {
+  await vfs.ensureDirWritableAsync(getNativeModPath(api));
+  checkSteamHomeDir(api, discovery).catch((err) =>
+    log("warn", `${GAME_NAME} home folder check failed: ${err}`),
+  );
+  if (ummSupport && autoDownloadUmm) {
     await downloadUmm(api, gameSpec);
   }
-  if (seedUmmParams) {
+  if (ummSupport && seedUmmParams) {
     await writeUmmParams(api);
     setUmmRegistry(api);
   }
-  setUmmTool(api);
+  if (ummSupport) {
+    setUmmTool(api);
+  }
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
@@ -1644,9 +2005,42 @@ function applyGame(context, gameSpec) {
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     getGameVersion: resolveGameVersion,
-    supportedTools: tools,
+    supportedTools: ummSupport ? tools : tools.filter((tool) => tool.id !== UMM_ID),
   };
   context.registerGame(game);
+
+  //home folder setting (Settings > Mods)
+  context.registerReducer(["settings", GAME_ID], {
+    reducers: {
+      [setHomeDir.toString()]: (state, payload) => ({ ...state, homeDir: payload }),
+    },
+    defaults: { homeDir: "" },
+  });
+  context.registerSettings(
+    "Mods",
+    HomeDirSettings,
+    () => ({
+      onBrowse: () =>
+        browseHomeDir(context.api).catch((err) =>
+          context.api.showErrorNotification(`Failed to change the ${GAME_NAME} home folder`, err, {
+            allowReport: false,
+          }),
+        ),
+      onDetect: () =>
+        applySteamHomeDir(context.api).catch((err) =>
+          context.api.showErrorNotification(
+            `Failed to read ${GAME_NAME}'s Steam launch options`,
+            err,
+            {
+              allowReport: false,
+            },
+          ),
+        ),
+      onReset: () => changeHomeDir(context.api, HOME_DIR_DEFAULT),
+    }),
+    () => selectors.activeGameId(context.api.getState()) === GAME_ID,
+    150,
+  );
 
   //register mod types
   (gameSpec.modTypes || []).forEach((type, idx) => {
@@ -1670,26 +2064,28 @@ function applyGame(context, gameSpec) {
   });
 
   //register mod types explicitly (due to potentially dynamic DATA_FOLDER)
-  context.registerModType(
-    UMM_ID,
-    8,
-    (gameId) => {
-      var _a;
-      return (
-        gameId === GAME_ID &&
-        !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
-        _a === void 0
-          ? void 0
-          : _a.path)
-      );
-    },
-    (game) => pathPattern(context.api, game, "{gamePath}"),
-    () => Promise.resolve(false),
-    { name: UMM_NAME },
-  );
+  if (ummSupport) {
+    context.registerModType(
+      UMM_ID,
+      26,
+      (gameId) => {
+        var _a;
+        return (
+          gameId === GAME_ID &&
+          !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+          _a === void 0
+            ? void 0
+            : _a.path)
+        );
+      },
+      (game) => pathPattern(context.api, game, "{gamePath}"),
+      () => Promise.resolve(false),
+      { name: UMM_NAME },
+    );
+  }
   context.registerModType(
     MODS_ID,
-    10,
+    27,
     (gameId) => {
       var _a;
       return (
@@ -1703,6 +2099,23 @@ function applyGame(context, gameSpec) {
     (game) => pathPattern(context.api, game, path.join("{gamePath}", MODS_FOLDER)),
     () => Promise.resolve(false),
     { name: MODS_NAME },
+  );
+  context.registerModType(
+    NATIVE_MOD_ID,
+    28,
+    (gameId) => {
+      var _a;
+      return (
+        gameId === GAME_ID &&
+        !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+        _a === void 0
+          ? void 0
+          : _a.path)
+      );
+    },
+    (game) => pathPattern(context.api, game, getNativeModPath(context.api)),
+    () => Promise.resolve(false),
+    { name: NATIVE_MOD_NAME },
   );
   context.registerModType(
     ASSEMBLY_ID,
@@ -1744,9 +2157,11 @@ function applyGame(context, gameSpec) {
   if (railloaderSupport) {
     context.registerInstaller(RAILLOADER_ID, 23, testRailloaderApp, installRailloaderApp);
   }
-  context.registerInstaller(UMM_ID, 25, testUmm, (files, workingDir) =>
-    installUmm(context.api, files, workingDir),
-  );
+  if (ummSupport) {
+    context.registerInstaller(UMM_ID, 25, testUmm, (files, workingDir) =>
+      installUmm(context.api, files, workingDir),
+    );
+  }
   context.registerInstaller(UMM_MOD_ID, 27, testUmmMod, installUmmMod);
   if (railloaderSupport) {
     context.registerInstaller(RAILLOADER_MOD_ID, 29, testRailloaderMod, installRailloaderMod);
@@ -1773,7 +2188,7 @@ function applyGame(context, gameSpec) {
     () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
-      return gameId === GAME_ID;
+      return ummSupport && gameId === GAME_ID;
     },
   );
   context.registerAction(
@@ -1802,6 +2217,48 @@ function applyGame(context, gameSpec) {
       const openPath = path.join(GAME_PATH, MODS_FOLDER);
       try {
         window.api.shell.openFile(openPath);
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Native Mods Folder",
+    () => {
+      try {
+        window.api.shell.openFile(getNativeModPath(context.api));
+      } catch (err) {
+        context.api.showErrorNotification("Failed to open the file or folder", err, {
+          allowReport: false,
+        });
+      }
+    },
+    () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    },
+  );
+  context.registerAction(
+    "mod-icons",
+    300,
+    "open-ext",
+    {},
+    "Open Home Folder",
+    () => {
+      try {
+        window.api.shell.openFile(getHomeDir(context.api));
       } catch (err) {
         context.api.showErrorNotification("Failed to open the file or folder", err, {
           allowReport: false,
