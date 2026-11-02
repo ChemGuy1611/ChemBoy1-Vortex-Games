@@ -543,7 +543,7 @@ function testLoader(files, gameId) {
 const LOADER_EXCLUDE_FOLDERS = [".venv", "__pycache__", ".git", ".github"];
 
 function isExcludedLoaderFile(file) {
-  const segments = file.toLowerCase().split(/[\\/]/);
+  const segments = file.toLowerCase().split(path.sep);
   return LOADER_EXCLUDE_FOLDERS.some((folder) => segments.includes(folder));
 }
 
@@ -598,7 +598,7 @@ function findModRootFile(files) {
     const matches = files.filter((file) => path.basename(file).toLowerCase() === rootName);
     if (matches.length > 0) {
       return matches.reduce((best, file) =>
-        file.split(/[\\/]/).length < best.split(/[\\/]/).length ? file : best,
+        file.split(path.sep).length < best.split(path.sep).length ? file : best,
       );
     }
   }

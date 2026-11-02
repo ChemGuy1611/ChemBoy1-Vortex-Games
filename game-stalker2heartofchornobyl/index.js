@@ -2,7 +2,7 @@
 Name: S.T.A.L.K.E.R. 2: Heart of Chornobyl Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 2.2.0
+Version: 2.2.1
 Date: 2026-11-01
 //////////////////////////////////////////////////////////*/
 
@@ -936,7 +936,7 @@ async function installUe4ssCombo(files, workingDir) {
       files
         .filter((f) => f.toLowerCase().includes(UE4SS_MOD_PATH.toLowerCase()))
         .map((f) => {
-          const segments = f.split(/[\\/]+/);
+          const segments = f.split(path.sep);
           const scriptsAt = segments.findIndex(
             (segment, i) =>
               i > 0 &&
@@ -1879,7 +1879,7 @@ function installNewPakMod(files) {
 //folder marker. Matching segments works for both shapes - a directory entry splits to
 //["LogicMods", ""] and the blank is filtered out.
 function pathSegments(files) {
-  return files.flatMap((file) => file.split(/[\\/]+/)).filter(Boolean);
+  return files.flatMap((file) => file.split(path.sep)).filter(Boolean);
 }
 
 //Mirrors the registration-priority ladder (see the registerInstaller calls in main()) for

@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.2.8] - 2026-11-01
+
+- Changed: Internal cleanup of how file paths are handled. No change to how mods install.
+
 ## [1.2.7] - 2026-10-23
 
 - Fixed: RuneSchema Loader now shows on the UE4SS load order page as its Vortex mod instead of a manual mod.

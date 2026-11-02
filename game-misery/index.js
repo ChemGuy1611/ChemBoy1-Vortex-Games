@@ -2,8 +2,8 @@
 Name: MISERY Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.12
-Date: 2026-10-25
+Version: 1.0.13
+Date: 2026-11-01
 Notes:
 - 
 ////////////////////////////////////////////////*/
@@ -1070,7 +1070,7 @@ async function installUe4ssCombo(files, workingDir) {
       files
         .filter((f) => f.toLowerCase().includes(UE4SS_MOD_PATH.toLowerCase()))
         .map((f) => {
-          const segments = f.split(/[\\/]+/);
+          const segments = f.split(path.sep);
           const scriptsAt = segments.findIndex(
             (segment, i) =>
               i > 0 &&
@@ -2622,7 +2622,7 @@ function loadOrderPrefix(api, mod) {
 //folder marker. Matching segments works for both shapes - a directory entry splits to
 //["LogicMods", ""] and the blank is filtered out.
 function pathSegments(files) {
-  return files.flatMap((file) => file.split(/[\\/]+/)).filter(Boolean);
+  return files.flatMap((file) => file.split(path.sep)).filter(Boolean);
 }
 
 //Mirrors the registration-priority ladder in main() for just the installers that sit ABOVE the

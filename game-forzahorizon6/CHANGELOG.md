@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.0.1] - 2026-11-01
+
+- Changed: Internal cleanup of how file paths are handled. No change to how mods install.
+
 ## [2.0.0] - 2026-10-30
 
 - Changed: Mods with loose game sub-folders (like "cars" or "tracks") now install inside the "mediapc" folder instead of the "media" folder.

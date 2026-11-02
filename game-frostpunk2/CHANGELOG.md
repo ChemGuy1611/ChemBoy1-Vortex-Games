@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.1] - 2026-11-01
+
+- Changed: Internal cleanup of how file paths are handled. No change to how mods install.
+
 ## [1.1.0] - 2026-11-01
 
 - Added: "Browse mod.io" page to browse the game's mods on mod.io and install them directly in Vortex, with update checks and dependency installs, plus an "Open mod.io Page" button.

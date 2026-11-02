@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.6] - 2026-11-01
+
+- Changed: Internal cleanup of how file paths are handled. No change to how mods install.
+
 ## [1.1.5] - 2026-10-28
 
 - Fixed: Config and Save mods on the Steam and Epic versions now install to the game folder, where the game actually reads them

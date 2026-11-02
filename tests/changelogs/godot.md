@@ -2,6 +2,10 @@
 
 Covers `template-godot`. Suite file: `tests/templates/godot.test.js`.
 
+## [2026-11-01]
+
+- Note: the template now splits installer paths on `path.sep`. The suite already passes native paths, so it is unchanged.
+
 ## [2026-10-11]
 
 - Added: a test that the unpacked mod installer cuts at `mod_main.gd` itself when its name also appears in the folder name. Suite is now 68 tests.

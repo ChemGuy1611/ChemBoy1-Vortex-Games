@@ -2,7 +2,7 @@
 
 ## [1.2.1] - 2026-11-01
 
-- Changed: manifest.json and icon.png files are no longer skipped during deployment and conflict checks.
+- Changed: manifest.json and icon.png files are no longer skipped during deployment.
 
 ## [1.2.0] - 2026-10-30
 

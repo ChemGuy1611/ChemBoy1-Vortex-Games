@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.5] - 2026-11-01
+
+- Changed: Internal cleanup of how file paths are handled. No change to how mods install.
+
 ## [1.0.4] - 2026-10-22
 
 - Fixed: The Epic Games Store version was still being detected, despite the change in 1.0.3.

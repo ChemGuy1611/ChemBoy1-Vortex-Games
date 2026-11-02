@@ -4,6 +4,10 @@
 
 - None
 
+## [1.1.1] - 2026-11-01
+
+- Changed: Internal cleanup of how file paths are handled. No change to how mods install.
+
 ## [1.1.0] - 2026-10-27
 
 - Added: FFR Modding Tools is downloaded and its installer run automatically, with a Dashboard tool to launch it and a button to download it again.

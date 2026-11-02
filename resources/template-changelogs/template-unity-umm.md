@@ -3,6 +3,7 @@
 ## [2026-11-01]
 
 - Changed: removed `manifest.json` and `icon.png` from `IGNORE_CONFLICTS` and `IGNORE_DEPLOY`, so they are no longer skipped during deployment and conflict checks. Applied to `game-railroader`.
+- Fixed: restored both to `IGNORE_CONFLICTS`, because mods installed through the fallback installer showed conflicts on them. `IGNORE_DEPLOY` still leaves them out, so those copies deploy. Applied to `game-railroader`.
 
 ## [2026-10-30]
 

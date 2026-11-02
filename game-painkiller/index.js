@@ -2,8 +2,8 @@
 Name: Painkiller Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.3
-Date: 2026-10-25
+Version: 1.0.4
+Date: 2026-11-01
 Notes:
 - The game is Unreal Engine 4.27.2 (PCGamingWiki, page "Painkiller (2025)" - the page named just "Painkiller" is the 2004 game). Config is Saved\Config\WindowsNoEditor and saves are Saved\SaveGames\<Steam ID>, both confirmed on disk from the demo.
 - Steam only. The Steam demo (4047990) was a time-limited Next Fest demo and is no longer listed; its id stays so existing demo installs are still found. No Epic, GOG or Microsoft Store (PC) release; GOG's "Painkiller" is a different game.
@@ -1097,7 +1097,7 @@ async function installUe4ssCombo(files, workingDir) {
       files
         .filter((f) => f.toLowerCase().includes(UE4SS_MOD_PATH.toLowerCase()))
         .map((f) => {
-          const segments = f.split(/[\\/]+/);
+          const segments = f.split(path.sep);
           const scriptsAt = segments.findIndex(
             (segment, i) =>
               i > 0 &&
@@ -2703,7 +2703,7 @@ function loadOrderPrefix(api, mod) {
 //folder marker. Matching segments works for both shapes - a directory entry splits to
 //["LogicMods", ""] and the blank is filtered out.
 function pathSegments(files) {
-  return files.flatMap((file) => file.split(/[\\/]+/)).filter(Boolean);
+  return files.flatMap((file) => file.split(path.sep)).filter(Boolean);
 }
 
 //Mirrors the registration-priority ladder in main() for just the installers that sit ABOVE the

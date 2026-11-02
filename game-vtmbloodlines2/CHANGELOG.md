@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.6] - 2026-11-01
+
+- Changed: Internal cleanup of how file paths are handled. No change to how mods install.
+
 ## [1.0.5] - 2026-10-29
 
 - Fixed: Config and Save mods now use the folder of the store the game was installed from, even when folders for several stores exist.

@@ -2,8 +2,8 @@
 Name: METAL EDEN Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.3
-Date: 2026-10-25
+Version: 1.0.4
+Date: 2026-11-01
 Notes:
 - The game is Unreal Engine 5.3.1 with signed IO Store containers, so the Sig Bypass is required. Steam, GOG and the Steam demo are supported; there is no Epic or Xbox build.
 - Saves live in %LOCALAPPDATA%\MetalEden\Saved\SaveGames\<user id>\FileSave, so the Save folder is the user id folder plus FileSave. A user with several user id folders gets the first one alphabetically.
@@ -1103,7 +1103,7 @@ async function installUe4ssCombo(files, workingDir) {
       files
         .filter((f) => f.toLowerCase().includes(UE4SS_MOD_PATH.toLowerCase()))
         .map((f) => {
-          const segments = f.split(/[\\/]+/);
+          const segments = f.split(path.sep);
           const scriptsAt = segments.findIndex(
             (segment, i) =>
               i > 0 &&
@@ -2709,7 +2709,7 @@ function loadOrderPrefix(api, mod) {
 //folder marker. Matching segments works for both shapes - a directory entry splits to
 //["LogicMods", ""] and the blank is filtered out.
 function pathSegments(files) {
-  return files.flatMap((file) => file.split(/[\\/]+/)).filter(Boolean);
+  return files.flatMap((file) => file.split(path.sep)).filter(Boolean);
 }
 
 //Mirrors the registration-priority ladder in main() for just the installers that sit ABOVE the

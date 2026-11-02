@@ -2,8 +2,8 @@
 Name: Marvel Rivals Vortex Extension
 Structure: UE5
 Author: ChemBoy1
-Version: 1.1.5
-Date: 2026-10-25
+Version: 1.1.6
+Date: 2026-11-01
 ////////////////////////////////////////*/
 
 //Import libraries
@@ -840,7 +840,7 @@ function loadOrderPrefix(api, mod) {
 //path segments instead. Matching segments works for both a directory entry (which splits to
 //["Marvel", ""], with the blank filtered out) and a file nested under that folder.
 function pathSegments(files) {
-  return files.flatMap((file) => file.split(/[\\/]+/)).filter(Boolean);
+  return files.flatMap((file) => file.split(path.sep)).filter(Boolean);
 }
 
 //Mirrors the registration-priority ladder in main() for just the installer that sits ABOVE the

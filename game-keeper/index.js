@@ -2,8 +2,8 @@
 Name: Keeper Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.3
-Date: 2026-10-25
+Version: 1.0.4
+Date: 2026-11-01
 Notes:
 - The project folder differs per store: Steam and GOG use Keeper\ (Keeper\Content, Keeper\Binaries\Win64), the Microsoft Store (Xbox) build uses PaganIdol\ (PaganIdol\Content, PaganIdol\Binaries\WinGDK). EPIC_CODE_NAME is the Steam/GOG folder and XBOX_CODE_NAME the Xbox one. The template assumes one folder, so setProjectFolder() (every site marked KEEPER ONLY) swaps each project-relative path to the active store's folder from getExecutable() and setup().
 - The game is Unreal Engine 5.5.4. No Keeper mod has used UE4SS yet; other UE 5.5 games needed a hand-made ue4ss\UE4SS_Signatures\*.lua next to stock UE4SS, which the Download UE4SS button does not provide, so UE4SS may not start until a signature file is added.
@@ -1133,7 +1133,7 @@ async function installUe4ssCombo(files, workingDir) {
       files
         .filter((f) => f.toLowerCase().includes(UE4SS_MOD_PATH.toLowerCase()))
         .map((f) => {
-          const segments = f.split(/[\\/]+/);
+          const segments = f.split(path.sep);
           const scriptsAt = segments.findIndex(
             (segment, i) =>
               i > 0 &&
@@ -2689,7 +2689,7 @@ function loadOrderPrefix(api, mod) {
 //folder marker. Matching segments works for both shapes - a directory entry splits to
 //["LogicMods", ""] and the blank is filtered out.
 function pathSegments(files) {
-  return files.flatMap((file) => file.split(/[\\/]+/)).filter(Boolean);
+  return files.flatMap((file) => file.split(path.sep)).filter(Boolean);
 }
 
 //Mirrors the registration-priority ladder in main() for just the installers that sit ABOVE the

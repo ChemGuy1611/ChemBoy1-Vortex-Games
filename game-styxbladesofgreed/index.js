@@ -2,8 +2,8 @@
 Name: Styx: Blades of Greed Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.3
-Date: 2026-10-25
+Version: 1.0.4
+Date: 2026-11-01
 Notes:
 - The game is Unreal Engine 5.6.0. UE4SS 3.0.1 is deployed on the test install, but it was not confirmed that the game starts with it; other UE 5.6 games needed a hand-made ue4ss\UE4SS_Signatures\*.lua next to stock UE4SS, which the Download UE4SS button does not provide.
 - Config (%LOCALAPPDATA%\Styx3\Saved\Config\WindowsClient), flat SaveGames (no user id folder) and the shipping exe (Styx3-Win64-Shipping.exe) were confirmed on disk. The test install is a repack with no Steam/Epic/GOG files, so store and game version detection are unverified.
@@ -1084,7 +1084,7 @@ async function installUe4ssCombo(files, workingDir) {
       files
         .filter((f) => f.toLowerCase().includes(UE4SS_MOD_PATH.toLowerCase()))
         .map((f) => {
-          const segments = f.split(/[\\/]+/);
+          const segments = f.split(path.sep);
           const scriptsAt = segments.findIndex(
             (segment, i) =>
               i > 0 &&
@@ -2640,7 +2640,7 @@ function loadOrderPrefix(api, mod) {
 //folder marker. Matching segments works for both shapes - a directory entry splits to
 //["LogicMods", ""] and the blank is filtered out.
 function pathSegments(files) {
-  return files.flatMap((file) => file.split(/[\\/]+/)).filter(Boolean);
+  return files.flatMap((file) => file.split(path.sep)).filter(Boolean);
 }
 
 //Mirrors the registration-priority ladder in main() for just the installers that sit ABOVE the

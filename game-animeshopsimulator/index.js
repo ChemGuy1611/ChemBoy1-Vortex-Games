@@ -558,6 +558,8 @@ const PARAMETERS_STRING = "";
 const PARAMETERS = [PARAMETERS_STRING];
 
 const IGNORE_CONFLICTS = [
+  path.join("**", "manifest.json"),
+  path.join("**", "icon.png"),
   path.join("**", "changelog*"),
   path.join("**", "readme*"),
   path.join("**", "license*"),

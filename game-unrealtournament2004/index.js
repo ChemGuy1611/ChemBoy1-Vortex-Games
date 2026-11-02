@@ -2,8 +2,8 @@
 Name: Unreal Tournament 2004 Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-25
+Version: 1.0.3
+Date: 2026-11-01
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -308,7 +308,7 @@ function makeFindGame(api, gameSpec) {
     if (!instPath) {
       throw new Error("empty registry key");
     }
-    const splitPath = instPath.value.split("\\");
+    const splitPath = instPath.value.split(path.sep);
     const gamePath = splitPath.slice(0, splitPath.length - 2).join(path.sep);
     return () => Promise.resolve(gamePath);
   } catch {

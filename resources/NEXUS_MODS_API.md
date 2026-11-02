@@ -156,6 +156,11 @@ id). Unwrapped rows return the schema directly as the response body; everything 
 in `{ "data": ... }`. The **Tier** column carries the operation's stability badge — see
 "Stability Tiers" above for what each one guarantees.
 
+Publishing a version string the file group already has is accepted, not rejected: the v1 file list
+then shows the earlier upload as `ARCHIVED` and the new one as `MAIN`, both with that version.
+Vortex's extension updater compares version numbers only (`semver.lt`), so an install already on
+that version is not offered the new upload.
+
 #### Mods
 
 | Method | Path                                         | Operation                        | Tier         | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |

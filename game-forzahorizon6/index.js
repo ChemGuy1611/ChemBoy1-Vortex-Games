@@ -2,8 +2,8 @@
 Name: Forza Horizon 6 Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 2.0.0
-Date: 2026-10-30
+Version: 2.0.1
+Date: 2026-11-01
 Notes:
 - 
 ///////////////////////////////////////////*/
@@ -953,7 +953,7 @@ async function buildMediaIndex(gamePath) {
   return index;
 }
 
-const splitFolder = (folder) => (folder === "." ? [] : folder.split(/[\\/]+/).filter(Boolean));
+const splitFolder = (folder) => (folder === "." ? [] : folder.split(path.sep).filter(Boolean));
 
 //Number of trailing folder names two folder paths share (case-insensitive)
 function sharedTail(a, b) {

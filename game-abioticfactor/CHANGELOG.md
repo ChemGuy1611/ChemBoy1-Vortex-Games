@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.1] - 2026-11-01
+
+- Changed: Internal cleanup of how file paths are handled. No change to how mods install.
+
 ## [1.1.0] - 2026-11-01
 
 - Added: Installer for modkit mods with a .uplugin file. They now install into their own folder in "AbioticFactor/Mods" instead of being flattened into "~mods".

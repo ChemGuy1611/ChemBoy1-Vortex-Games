@@ -2,8 +2,8 @@
 Name: ROMEO IS A DEAD MAN Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.3
-Date: 2026-10-25
+Version: 1.0.4
+Date: 2026-11-01
 Notes:
 - The game is Unreal Engine 5.6.1. Per the Nexus UE4SS mod author, UE4SS needs experimental-latest, MajorVersion/MinorVersion 5/6 in UE4SS-settings.ini (written on deploy by writeEngineVersion) and a hand-made ue4ss\UE4SS_Signatures folder (UE4SS_Signatures_ROMEO_IS_A_DEAD_MAN.zip from github.com/forest-soft/ue4ss_signatures); the Download UE4SS button installs only the stock zip.
 - Saves live in %USERPROFILE%\Saved Games\Grasshopper Manufacture\ROMEO IS A DEAD MAN\SavedGames\<userid> (PCGamingWiki + Nexus save mod + leftover user data), Config in %LOCALAPPDATA%\SevGame\Saved\Config\Windows.
@@ -1089,7 +1089,7 @@ async function installUe4ssCombo(files, workingDir) {
       files
         .filter((f) => f.toLowerCase().includes(UE4SS_MOD_PATH.toLowerCase()))
         .map((f) => {
-          const segments = f.split(/[\\/]+/);
+          const segments = f.split(path.sep);
           const scriptsAt = segments.findIndex(
             (segment, i) =>
               i > 0 &&
@@ -2645,7 +2645,7 @@ function loadOrderPrefix(api, mod) {
 //folder marker. Matching segments works for both shapes - a directory entry splits to
 //["LogicMods", ""] and the blank is filtered out.
 function pathSegments(files) {
-  return files.flatMap((file) => file.split(/[\\/]+/)).filter(Boolean);
+  return files.flatMap((file) => file.split(path.sep)).filter(Boolean);
 }
 
 //Mirrors the registration-priority ladder in main() for just the installers that sit ABOVE the

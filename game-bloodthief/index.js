@@ -2,8 +2,8 @@
 Name: Bloodthief Vortex Extension
 Structure: Godot Engine Game
 Author: ChemBoy1
-Version: 1.1.2
-Date: 2026-10-25
+Version: 1.1.3
+Date: 2026-11-01
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -489,7 +489,7 @@ function testLoader(files, gameId) {
 const LOADER_EXCLUDE_FOLDERS = [".venv", "__pycache__", ".git", ".github"];
 
 function isExcludedLoaderFile(file) {
-  const segments = file.toLowerCase().split(/[\\/]/);
+  const segments = file.toLowerCase().split(path.sep);
   return LOADER_EXCLUDE_FOLDERS.some((folder) => segments.includes(folder));
 }
 
@@ -544,7 +544,7 @@ function findModRootFile(files) {
     const matches = files.filter((file) => path.basename(file).toLowerCase() === rootName);
     if (matches.length > 0) {
       return matches.reduce((best, file) =>
-        file.split(/[\\/]/).length < best.split(/[\\/]/).length ? file : best,
+        file.split(path.sep).length < best.split(path.sep).length ? file : best,
       );
     }
   }

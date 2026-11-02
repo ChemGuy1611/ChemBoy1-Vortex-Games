@@ -1,8 +1,9 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.1.1] - 2026-11-01
 
 - Fixed: Modkit mods with a FOMOD installer are no longer listed on the Paks load order page.
+- Changed: Internal cleanup of how file paths are handled. No change to how mods install.
 
 ## [1.1.0] - 2026-11-01
 

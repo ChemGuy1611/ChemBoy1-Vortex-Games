@@ -2,7 +2,7 @@
 
 ## [1.0.6] - 2026-11-01
 
-- Changed: manifest.json and icon.png files are no longer skipped during conflict checks.
+- Fixed: manifest.json and icon.png files no longer cause mod conflicts.
 
 ## [1.0.5] - 2026-10-25
 

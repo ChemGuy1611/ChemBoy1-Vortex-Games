@@ -2,8 +2,8 @@
 Name: Lobotomy Corporation Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 1.1.2
-Date: 2026-10-25
+Version: 1.1.3
+Date: 2026-11-01
 Notes:
 - The BaseMod loader is the Lobotomy Mod Manager (LMM) release archive, downloaded from GitHub.
   Only the patcher's PatchFiles folder is deployed, and the prebuilt patched assembly is used in
@@ -666,7 +666,7 @@ function getModRoot(files) {
   let depth = Number.MAX_SAFE_INTEGER;
 
   files.forEach((file) => {
-    const segments = file.split(/[\\/]/).filter((segment) => segment !== "");
+    const segments = file.split(path.sep).filter((segment) => segment !== "");
     // a trailing separator means the entry is itself a folder, so its last segment counts
     const limit = file.endsWith(path.sep) ? segments.length : segments.length - 1;
     for (let index = 0; index < limit; index++) {
@@ -685,7 +685,7 @@ function getModRoot(files) {
     if (file.endsWith(path.sep) || !MOD_EXTS.includes(path.extname(file).toLowerCase())) {
       return;
     }
-    const segments = file.split(/[\\/]/).filter((segment) => segment !== "");
+    const segments = file.split(path.sep).filter((segment) => segment !== "");
     if (segments.length - 1 < depth) {
       depth = segments.length - 1;
       root = segments.slice(0, segments.length - 1).join(path.sep);

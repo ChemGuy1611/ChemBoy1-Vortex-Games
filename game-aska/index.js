@@ -561,6 +561,8 @@ const PARAMETERS_STRING = "";
 const PARAMETERS = [PARAMETERS_STRING];
 
 const IGNORE_CONFLICTS = [
+  path.join("**", "manifest.json"),
+  path.join("**", "icon.png"),
   path.join("**", "CHANGELOG.md"),
   path.join("**", "readme.txt"),
   path.join("**", "README.txt"),

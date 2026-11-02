@@ -409,6 +409,8 @@ const PARAMETERS = [PARAMETERS_STRING];
 //The ModKit and the ModpackLoader mod on Nexus both supply the loader runtime, so those files are
 //expected to be identical duplicates rather than a conflict the user has to resolve.
 const IGNORE_CONFLICTS = [
+  path.join("**", "manifest.json"),
+  path.join("**", "icon.png"),
   ...MODPACKLOADER_DLLS.map((dll) => path.join("**", dll)),
   path.join("**", JIANGYU_FILE),
   path.join("**", "CHANGELOG.md"),

@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.2] - 2026-11-01
+
+- Changed: Internal cleanup of how file paths are handled. No change to how mods install.
+
 ## [1.0.1] - 2026-10-29
 
 - Fixed: UE4SS and DLL mods now install next to the game's real executable in the platform folder.

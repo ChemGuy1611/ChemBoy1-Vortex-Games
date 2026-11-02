@@ -2,8 +2,8 @@
 Name: Stellar Blade Vortex Extension
 Structure: UE5 (static exe)
 Author: ChemBoy1
-Version: 1.0.10
-Date: 2026-10-25
+Version: 1.0.11
+Date: 2026-11-01
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -638,7 +638,7 @@ function installUe4ssCombo(files, fileName) {
       files
         .filter((f) => f.toLowerCase().includes(UE4SS_MOD_PATH.toLowerCase()))
         .map((f) => {
-          const segments = f.split(/[\\/]+/);
+          const segments = f.split(path.sep);
           const scriptsAt = segments.findIndex(
             (segment, i) =>
               i > 0 &&
@@ -2162,7 +2162,7 @@ function loadOrderPrefix(api, mod) {
 //path segments instead. Matching segments works for both a directory entry (which splits to
 //["LogicMods", ""], with the blank filtered out) and a file nested under that folder.
 function pathSegments(files) {
-  return files.flatMap((file) => file.split(/[\\/]+/)).filter(Boolean);
+  return files.flatMap((file) => file.split(path.sep)).filter(Boolean);
 }
 
 //Mirrors the registration-priority ladder in main() for just the installers that sit ABOVE the

@@ -3,6 +3,7 @@
 ## [2026-11-01]
 
 - Changed: removed `manifest.json` and `icon.png` from `IGNORE_CONFLICTS` and `IGNORE_DEPLOY`, so they are no longer skipped during deployment and conflict checks. The plugin installer still drops Thunderstore package metadata through `PACKAGE_META_FILES`. Applied to every game on this template.
+- Fixed: restored both to `IGNORE_CONFLICTS`, because mods that do not wrap their files (no-dll packages through the fallback installer, metadata inside a `plugins/` or `Mods/` folder) showed conflicts on them. `IGNORE_DEPLOY` still leaves them out, so those copies deploy. Applied to every game on this template.
 
 ## [2026-10-23]
 

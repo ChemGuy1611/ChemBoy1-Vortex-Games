@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.5] - 2026-11-01
+
+- Changed: Internal cleanup of how file paths are handled. No change to how mods install.
+
 ## [1.0.4] - 2026-10-28
 
 - Fixed: Save mods now install to the game's real save folder (Local AppData\KoeiTecmo\DW3CE_RE)

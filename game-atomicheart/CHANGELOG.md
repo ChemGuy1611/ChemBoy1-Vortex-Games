@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.13] - 2026-11-01
+
+- Changed: Internal cleanup of how file paths are handled. No change to how mods install.
+
 ## [1.0.12] - 2026-10-18
 
 - Changed: Launching the Xbox / Game Pass version now uses the game's current Microsoft Store app name.

@@ -4903,8 +4903,9 @@ describe("template-ue4-5: path and status helpers", () => {
     helpers = ext.exports.internals;
   });
 
-  it("splits paths into segments on either separator, dropping blanks", () => {
-    assert.deepEqual(helpers.pathSegments(["a\\b/c", "d//e\\", "", "f"]), [
+  it("splits paths into segments on the native separator, dropping blanks", () => {
+    const doubled = `d${path.sep}${path.sep}e${path.sep}`;
+    assert.deepEqual(helpers.pathSegments([sep("a", "b", "c"), doubled, "", "f"]), [
       "a",
       "b",
       "c",
@@ -4916,10 +4917,16 @@ describe("template-ue4-5: path and status helpers", () => {
 
   describe("beatsPakInstaller", () => {
     it("is true for Binaries plus Content and for a LogicMods folder", () => {
-      assert.equal(helpers.beatsPakInstaller(["Binaries\\x.dll", "Content\\a.dat"]), true);
-      assert.equal(helpers.beatsPakInstaller(["content/a.dat", "BINARIES/x.dll"]), true);
-      assert.equal(helpers.beatsPakInstaller(["LogicMods\\a.pak"]), true);
-      assert.equal(helpers.beatsPakInstaller(["logicmods/a.pak"]), true);
+      assert.equal(
+        helpers.beatsPakInstaller([sep("Binaries", "x.dll"), sep("Content", "a.dat")]),
+        true,
+      );
+      assert.equal(
+        helpers.beatsPakInstaller([sep("content", "a.dat"), sep("BINARIES", "x.dll")]),
+        true,
+      );
+      assert.equal(helpers.beatsPakInstaller([sep("LogicMods", "a.pak")]), true);
+      assert.equal(helpers.beatsPakInstaller([sep("logicmods", "a.pak")]), true);
     });
 
     it("is false for anything the pak installer would take", () => {

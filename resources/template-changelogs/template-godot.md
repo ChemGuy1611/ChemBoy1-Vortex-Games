@@ -1,5 +1,9 @@
 # template-godot Changelog
 
+## [2026-11-01]
+
+- Changed: `isExcludedLoaderFile` and `findModRootFile` split on `path.sep` instead of a literal separator regex. Their input is Vortex's native installer file list, so behavior is unchanged. Applied to `game-bloodthief`.
+
 ## [2026-10-17]
 
 - Added: a `modId` field to `info.json`, directly after `gameId`, set to the `"XXX"` placeholder. `release_extension.py` replaces it with the mod id at the end of the extension's `EXTENSION_URL` when the extension is released, so a finished extension carries a number, not a string.

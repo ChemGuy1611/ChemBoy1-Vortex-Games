@@ -5,6 +5,7 @@ Covers `template-unitymelonloaderbepinex-hybrid`. Suite file: `tests/templates/u
 ## [2026-11-01]
 
 - Changed: the ignore list test follows the template dropping `manifest.json` and `icon.png` from `IGNORE_CONFLICTS` and `IGNORE_DEPLOY` (see the template's changelog entry of this date).
+- Changed: the same test follows the template restoring both to `IGNORE_CONFLICTS`.
 
 ## [2026-10-23]
 
