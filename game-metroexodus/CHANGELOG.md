@@ -1,8 +1,9 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [0.3.0] - 2026-11-01
 
-- None
+- Added: Installer and mod type for Exodus SDK mods. Each installs into its own folder in "SDKMods", ready to pick with "Add Existing Mod" in the Exodus SDK launcher.
+- Added: "Browse mod.io" page to browse the game's mods on mod.io and install them directly in Vortex, with update checks and dependency installs, plus an "Open mod.io Page" button.
 
 ## [0.2.3] - 2026-10-25
 

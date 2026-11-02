@@ -413,18 +413,14 @@ describe("template-unitymelonloaderbepinex-hybrid: game definition", () => {
     });
   });
 
-  it("ignores package metadata only at the top of a mod, and documents everywhere", () => {
+  it("ignores documents everywhere, and leaves package metadata alone", () => {
     const { ignoreConflicts, ignoreDeploy } = ext.game.details;
     assert.deepEqual(ignoreConflicts, [
-      sep("**", "manifest.json"),
-      sep("**", "icon.png"),
       sep("**", "changelog*"),
       sep("**", "readme*"),
       sep("**", "license*"),
     ]);
     assert.deepEqual(ignoreDeploy, [
-      sep("*", "manifest.json"),
-      sep("*", "icon.png"),
       sep("**", "changelog*"),
       sep("**", "readme*"),
       sep("**", "license*"),

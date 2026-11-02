@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.2.1] - 2026-11-01
+
+- Changed: manifest.json and icon.png files are no longer skipped during deployment and conflict checks.
+
 ## [1.2.0] - 2026-10-30
 
 - Added: Railroader home folder setting (Settings > Mods). If you move the game's home folder with the "-homedir" Steam launch option, set the same folder here so native mods deploy where the game reads them. "Use Steam's Folder" reads it from your Steam launch options.

@@ -2,8 +2,8 @@
 Name: Metro Exodus Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.2.3
-Date: 2026-10-25
+Version: 0.3.0
+Date: 2026-11-01
 */
 
 //Import libraries
@@ -13,6 +13,8 @@ const { actions, fs: vfs, util, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const { parseStringPromise } = require("xml2js");
+//Embedded mod.io browser page (needs base_browser.js beside it)
+const { registerModioBrowser, onceModioBrowser } = require("./modio_browser");
 
 //Specify all the information about the game
 const STEAMAPP_ID_LEGACY = "412020";
@@ -30,8 +32,11 @@ const EXEC_XBOX = "gamelaunchhelper.exe";
 //feature toggles
 let hasXbox = false; //toggle for Xbox version logic
 if (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) hasXbox = true;
+const modioBrowser = true; //register the "Browse mod.io" page - browse and install the game's mod.io mods inside Vortex
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/907"; //Nexus link to this extension. Used for links
+const MODIO_GAME = "exodussdk"; //mod.io game name_id - https://mod.io/g/exodussdk
+const MODIO_URL = `https://mod.io/g/${MODIO_GAME}/m`;
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Metro_Exodus";
 const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 let STAGING_FOLDER = ""; //Vortex staging folder path
@@ -51,6 +56,22 @@ const IGNORE_DEPLOY = [
   path.join("**", "readme*"),
   path.join("**", "license*"),
 ];
+
+//Exodus SDK projects - whole mod folders the SDK launcher loads with "Add Existing Mod", not files
+//the game reads from its own folder. Each gets its own folder here.
+const SDKMOD_ID = `${GAME_ID}-sdkmod`;
+const SDKMOD_NAME = "SDK Mod";
+const SDKMOD_PATH = "SDKMods";
+const SDKMOD_FOLDERS = ["content", "cache"]; //a project holds ALL of these side by side
+
+//Embedded mod.io browser page - the user browses the live site and installs from it. Most mod.io
+//mods are SDK projects, so they land through the SDK mod installer.
+const MODIO_BROWSER_CONFIG = {
+  modioGame: MODIO_GAME,
+  pageId: `${GAME_ID}-modio-browse`,
+  pageTitle: "Browse mod.io",
+};
+
 const spec = {
   game: {
     id: GAME_ID,
@@ -76,7 +97,14 @@ const spec = {
       XboxAPPId: XBOXAPP_ID,
     },
   },
-  modTypes: [],
+  modTypes: [
+    {
+      id: SDKMOD_ID,
+      name: SDKMOD_NAME,
+      priority: "high",
+      targetPath: path.join("{gamePath}", SDKMOD_PATH),
+    },
+  ],
   discovery: {
     ids: DISCOVERY_IDS_ACTIVE,
     names: [],
@@ -272,6 +300,96 @@ async function resolveGameVersion(gamePath) {
   }
 }
 
+//Find the folders holding an SDK project: the path above SDKMOD_FOLDERS, "" for the archive root
+function getSdkModRoots(files) {
+  const found = new Map();
+  files.forEach((file) => {
+    const segs = file.split(path.sep).slice(0, -1);
+    const index = segs.findIndex((seg) => SDKMOD_FOLDERS.includes(seg.toLowerCase()));
+    if (index === -1) return;
+    const root = segs.slice(0, index).join(path.sep);
+    found.set(root, (found.get(root) ?? new Set()).add(segs[index].toLowerCase()));
+  });
+  return [...found.keys()].filter((root) => found.get(root).size === SDKMOD_FOLDERS.length);
+}
+
+//Test for SDK projects
+function testSdkMod(files, gameId) {
+  let supported = gameId === spec.game.id && getSdkModRoots(files).length > 0;
+
+  // Test for a mod installer
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install SDK projects, one folder per project. A project at the archive root is wrapped in a folder
+//named after the archive, since the launcher adds a folder.
+function installSdkMod(api, files, destinationPath) {
+  const modFiles = files.filter((file) => !file.endsWith(path.sep));
+  const archiveName = path
+    .basename(destinationPath)
+    .replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*/gi, "");
+  const instructions = getSdkModRoots(files).flatMap((root) => {
+    const folder = root === "" ? archiveName : path.basename(root);
+    return modFiles
+      .filter((file) => root === "" || file.startsWith(root + path.sep))
+      .map((file) => ({
+        type: "copy",
+        source: file,
+        destination: path.join(folder, path.relative(root, file)),
+      }));
+  });
+  instructions.push({ type: "setmodtype", value: SDKMOD_ID });
+  sdkModNotify(api);
+  return Promise.resolve({ instructions });
+}
+
+//Explain the launcher step - Vortex can deploy an SDK project, but only the launcher can load it
+function sdkModNotify(api) {
+  const MESSAGE = "SDK Mods Must Be Added in the Exodus SDK";
+  api.sendNotification({
+    id: `${GAME_ID}-sdkmod`,
+    type: "info",
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: "More",
+        action: (dismiss) => {
+          api.showDialog(
+            "question",
+            MESSAGE,
+            {
+              text:
+                `You installed an Exodus SDK mod. The game does not read these from its own folder, so there is one more step, and the Metro Exodus SDK must be installed.\n` +
+                `\n` +
+                `1. Deploy your mods in Vortex.\n` +
+                `2. Run the Exodus SDK launcher.\n` +
+                `3. Click "Add Existing Mod" and pick the mod's folder in:\n` +
+                `${path.join(GAME_PATH, SDKMOD_PATH)}\n` +
+                `4. Select the mod and click "Launch Game".\n`,
+            },
+            [{ label: "Close", action: () => dismiss() }],
+          );
+        },
+      },
+    ],
+  });
+}
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   const state = api.getState();
@@ -281,6 +399,7 @@ async function setup(discovery, api, gameSpec) {
   if (hasXbox) {
     GAME_VERSION = await setGameVersion(GAME_PATH);
   }
+  await vfs.ensureDirWritableAsync(path.join(discovery.path, SDKMOD_PATH));
   return vfs.ensureDirWritableAsync(path.join(discovery.path, gameSpec.game.modPath));
 }
 
@@ -320,6 +439,9 @@ function applyGame(context, gameSpec) {
     );
   });
   //register mod installers
+  context.registerInstaller(SDKMOD_ID, 25, testSdkMod, (files, destinationPath) =>
+    installSdkMod(context.api, files, destinationPath),
+  );
 
   //register actions
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
@@ -382,6 +504,27 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     },
   );
+  if (modioBrowser) {
+    context.registerAction(
+      "mod-icons",
+      300,
+      "open-ext",
+      {},
+      "Open mod.io Page",
+      () => {
+        try {
+          window.api.shell.openUrl(MODIO_URL);
+        } catch (err) {
+          context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+        }
+      },
+      () => {
+        const state = context.api.getState();
+        const gameId = selectors.activeGameId(state);
+        return gameId === GAME_ID;
+      },
+    );
+  }
   context.registerAction(
     "mod-icons",
     300,
@@ -463,6 +606,11 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     },
   );
+
+  //register the embedded mod.io browser page
+  if (modioBrowser) {
+    registerModioBrowser(context, gameSpec, MODIO_BROWSER_CONFIG);
+  }
 }
 
 //main function
@@ -471,6 +619,10 @@ function main(context) {
   context.once(() => {
     const api = context.api;
     // put code here that should be run (once) when Vortex starts up
+    if (modioBrowser) {
+      //claims downloads started from the browse page, and update-checks the mods installed through it
+      onceModioBrowser(api, spec, MODIO_BROWSER_CONFIG);
+    }
   });
   return true;
 }

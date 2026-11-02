@@ -2,8 +2,8 @@
 Name: Dimraeth Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
-Version: 1.0.3
-Date: 2026-10-25
+Version: 1.0.4
+Date: 2026-11-01
 Notes:
 -
 //////////////////////////////////////////*/
@@ -554,17 +554,11 @@ const PARAMETERS_STRING = "";
 const PARAMETERS = [PARAMETERS_STRING];
 
 const IGNORE_CONFLICTS = [
-  path.join("**", "manifest.json"),
-  path.join("**", "icon.png"),
   path.join("**", "changelog*"),
   path.join("**", "readme*"),
   path.join("**", "license*"),
 ];
 const IGNORE_DEPLOY = [
-  //top-level only: package metadata that would land in a shared loader folder. A wrapped plugin's
-  //own copy still deploys - MelonLoader skips a mod folder without its manifest.json
-  path.join("*", "manifest.json"),
-  path.join("*", "icon.png"),
   path.join("**", "changelog*"),
   path.join("**", "readme*"),
   path.join("**", "license*"),

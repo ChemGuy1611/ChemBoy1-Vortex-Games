@@ -2,8 +2,8 @@
 Name: Frostpunk 2 Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.3
-Date: 2026-10-25
+Version: 1.1.0
+Date: 2026-11-01
 Notes:
 -
 ////////////////////////////////////////////////*/
@@ -38,6 +38,8 @@ const {
   resolveVersionByModVersion,
   testRequirementVersion,
 } = require("./downloader");
+//Embedded mod.io browser page (needs base_browser.js beside it)
+const { registerModioBrowser, onceModioBrowser } = require("./modio_browser");
 
 // -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -70,6 +72,8 @@ const PARAMETERS_STRING = ""; //launch arguments to pass when launching the game
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Frostpunk_2";
 const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/960"; //Nexus link to this extension. Used for links
+const MODIO_GAME = "frostpunk2"; //mod.io game name_id - https://mod.io/g/frostpunk2
+const MODIO_URL = `https://mod.io/g/${MODIO_GAME}/m`;
 
 //feature toggles
 let hasXbox = false; //toggle for Xbox version logic.
@@ -89,6 +93,7 @@ const IO_STORE = false; //true if the Paks folder contains .ucas and .utoc files
 const hasUserIdFolder = true; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 const debug = false; //toggle for debug mode
 const exeHasGameVersion = false; //toggle: true if the game devs stamp the real game version (not just the UE engine version) into the exe ProductVersion
+const modioBrowser = true; //register the "Browse mod.io" page - browse and install the game's mod.io mods inside Vortex
 
 //UE specific
 const ENGINE_VERSION = "5.4.3.0"; //Unreal Engine version. usually '4.27.2.0' or '5.X.X.0'. Written to UE4SS-settings.ini if writeEngineVersion is enabled
@@ -458,6 +463,14 @@ if (ue4ssLoadOrder) {
 if (hasModKit) {
   MODTYPE_FOLDERS.push(MODKITMOD_PATH);
 }
+
+//Embedded mod.io browser page - the user browses the live site and installs from it. mod.io mods
+//are ordinary paks, so they land through the pak installer like any other.
+const MODIO_BROWSER_CONFIG = {
+  modioGame: MODIO_GAME,
+  pageId: `${GAME_ID}-modio-browse`,
+  pageTitle: "Browse mod.io",
+};
 
 // -- END EDIT ZONE -- /////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2711,6 +2724,13 @@ function testPak(files, gameId) {
   });
 }
 
+//A numbered pakchunk set (FrostKit output) is the parts of ONE mod, not options to pick from. A
+//repeated chunk name means separate option folders, which still get the file selection dialog.
+function isPakChunkSet(files) {
+  const names = files.map((file) => path.basename(file).toLowerCase());
+  return names.every((name) => /^pakchunk\d+-/.test(name)) && new Set(names).size === names.length;
+}
+
 //install pak mods
 async function installPak(api, files) {
   const fileExt = UNREALDATA.fileExt;
@@ -2720,7 +2740,9 @@ async function installPak(api, files) {
     value: UE5_SORTABLE_ID,
   };
   const installFiles =
-    modFiles.length > PAK_FILE_MIN ? await chooseFilesToInstall(api, modFiles, fileExt) : modFiles;
+    modFiles.length > PAK_FILE_MIN && !isPakChunkSet(modFiles)
+      ? await chooseFilesToInstall(api, modFiles, fileExt)
+      : modFiles;
   const unrealModFiles = {
     type: "attribute",
     key: "unrealModFiles",
@@ -3766,6 +3788,27 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     },
   );
+  if (modioBrowser) {
+    context.registerAction(
+      "mod-icons",
+      300,
+      "open-ext",
+      {},
+      "Open mod.io Page",
+      () => {
+        try {
+          window.api.shell.openUrl(MODIO_URL);
+        } catch (err) {
+          context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+        }
+      },
+      () => {
+        const state = context.api.getState();
+        const gameId = selectors.activeGameId(state);
+        return gameId === GAME_ID;
+      },
+    );
+  }
   context.registerAction(
     "mod-icons",
     300,
@@ -3846,6 +3889,11 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     },
   );
+
+  //register the embedded mod.io browser page
+  if (modioBrowser) {
+    registerModioBrowser(context, gameSpec, MODIO_BROWSER_CONFIG);
+  }
 }
 
 //Main function
@@ -3976,6 +4024,10 @@ function main(context) {
       }
       return onCheckModVersion(api, gameId, mods, forced);
     });
+    if (modioBrowser) {
+      //claims downloads started from the browse page, and update-checks the mods installed through it
+      onceModioBrowser(api, spec, MODIO_BROWSER_CONFIG);
+    }
     api.onAsync("did-deploy", (profileId) => didDeploy(api, profileId)); //*/
     //api.onAsync('did-purge', (profileId) => didPurge(api, profileId)); //*/
     //detect mod update (to maintain LO position)

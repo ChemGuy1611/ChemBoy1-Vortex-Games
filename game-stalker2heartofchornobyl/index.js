@@ -2,8 +2,8 @@
 Name: S.T.A.L.K.E.R. 2: Heart of Chornobyl Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 2.1.8
-Date: 2026-10-29
+Version: 2.2.0
+Date: 2026-11-01
 //////////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -37,6 +37,8 @@ const {
   resolveVersionByModVersion,
   testRequirementVersion,
 } = require("./downloader");
+//Embedded mod.io browser page (needs base_browser.js beside it)
+const { registerModioBrowser, onceModioBrowser } = require("./modio_browser");
 
 //Specify all information about the game
 const GAME_ID = "stalker2heartofchornobyl";
@@ -57,6 +59,8 @@ let SHIPPINGEXE_NAME = `Stalker2-Win64-Shipping.exe`;
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/S.T.A.L.K.E.R._2:_Heart_of_Chornobyl";
 const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/958"; //Nexus link to this extension. Used for links
+const MODIO_GAME = "stalker2"; //mod.io game name_id - https://mod.io/g/stalker2
+const MODIO_URL = `https://mod.io/g/${MODIO_GAME}/m`;
 
 let GAME_PATH = ""; //patched in the setup function to the discovered game path
 let GAME_VERSION = "";
@@ -117,6 +121,7 @@ const collectionsLoadOrder = true; //include UE4SS and LogicMods load orders in 
 const autoDeployMerge = false; //automatically run the merge tool on deploy (takes a long time and requires user input)
 const debug = false;
 const exeHasGameVersion = false; //toggle: true if the game devs stamp the real game version (not just the UE engine version) into the exe ProductVersion
+const modioBrowser = true; //register the "Browse mod.io" page - browse and install the game's mod.io mods inside Vortex
 
 //Discovery IDs
 const gameFinderQuery = {
@@ -195,7 +200,7 @@ const enableNewPak = false;
 const NEWPAK_ID = `${GAME_ID}-newpak`;
 const NEWPAK_NAME = "2.0 Pak";
 const NEWPAK_PATH = UE5_PATH;
-const NEWPAK_FOLDERS = ["NewContent", "OverrrideContent"];
+const NEWPAK_FOLDERS = ["NewContent", "OverrideContent"];
 
 const LOGICMODS_ID = `${GAME_ID}-logicmods`;
 const LOGICMODS_NAME = "UE4SS LogicMods (Blueprint)";
@@ -383,6 +388,14 @@ if (ue4ssLoadOrder) {
   //LogicMods are only loaded when UE4SS's BPModLoaderMod is present
   MODTYPE_FOLDERS.push(LOGICMODS_PATH);
 }
+
+//Embedded mod.io browser page - the user browses the live site and installs from it. mod.io mods
+//are ordinary paks in extra folders, so they land through the pak installer like any other.
+const MODIO_BROWSER_CONFIG = {
+  modioGame: MODIO_GAME,
+  pageId: `${GAME_ID}-modio-browse`,
+  pageTitle: "Browse mod.io",
+};
 
 //This will be filled in from the data above
 const spec = {
@@ -1921,6 +1934,17 @@ function testPak(files, gameId) {
   });
 }
 
+//A NewContent + OverrideContent set is the parts of ONE mod, not options to pick from. Different
+//folders above them mean separate option folders, which still get the file selection dialog.
+function isNewPakSet(files) {
+  const wrappers = files.map((file) => {
+    const segs = file.split(path.sep);
+    const index = segs.findIndex((seg) => NEWPAK_FOLDERS.includes(seg));
+    return index === -1 ? null : segs.slice(0, index).join(path.sep);
+  });
+  return !wrappers.includes(null) && new Set(wrappers).size === 1;
+}
+
 //install pak mods
 async function installPak(api, files) {
   const fileExt = UNREALDATA.fileExt;
@@ -1930,7 +1954,9 @@ async function installPak(api, files) {
     value: UE5_SORTABLE_ID,
   };
   const installFiles =
-    modFiles.length > PAK_FILE_MIN ? await chooseFilesToInstall(api, modFiles, UE5_EXT) : modFiles;
+    modFiles.length > PAK_FILE_MIN && !isNewPakSet(modFiles)
+      ? await chooseFilesToInstall(api, modFiles, UE5_EXT)
+      : modFiles;
   const unrealModFiles = {
     type: "attribute",
     key: "unrealModFiles",
@@ -3470,6 +3496,27 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     },
   );
+  if (modioBrowser) {
+    context.registerAction(
+      "mod-icons",
+      300,
+      "open-ext",
+      {},
+      "Open mod.io Page",
+      () => {
+        try {
+          window.api.shell.openUrl(MODIO_URL);
+        } catch (err) {
+          context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+        }
+      },
+      () => {
+        const state = context.api.getState();
+        const gameId = selectors.activeGameId(state);
+        return gameId === GAME_ID;
+      },
+    );
+  }
   context.registerAction(
     "mod-icons",
     300,
@@ -3563,6 +3610,11 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   }); //*/
+
+  //register the embedded mod.io browser page
+  if (modioBrowser) {
+    registerModioBrowser(context, gameSpec, MODIO_BROWSER_CONFIG);
+  }
 }
 
 //Main function
@@ -3666,6 +3718,10 @@ function main(context) {
       }
       return onCheckModVersion(api, gameId, mods, forced);
     });
+    if (modioBrowser) {
+      //claims downloads started from the browse page, and update-checks the mods installed through it
+      onceModioBrowser(api, spec, MODIO_BROWSER_CONFIG);
+    }
     //* Ask user to enable toolbar on profile change
     context.api.events.on("profile-did-change", () => {
       if (isGameActive(api)) {

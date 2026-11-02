@@ -30,6 +30,23 @@
 | Flag | Value | Description |
 | --- | --- | --- |
 | `hasXbox` | `false` | toggle for Xbox version logic |
+| `modioBrowser` | `true` | register the "Browse mod.io" page - browse and install the game's mod.io mods inside Vortex |
+
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+| --- | --- | --- | --- |
+| SDK Mod | `metroexodus-sdkmod` | high | `{gamePath}/SDKMods` |
+
+## Mod Installers
+
+Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+
+| Installer ID | Priority |
+| --- | --- |
+| `metroexodus-sdkmod` | 25 |
 
 ## Registered Tools
 
@@ -43,6 +60,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Open PCGamingWiki Page
 - Open Nexus Mods Page
+- Open mod.io Page
 - Open SteamDB Page
 - View Changelog
 - Submit Bug Report
@@ -50,6 +68,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 ## Special Features
 
+- **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.

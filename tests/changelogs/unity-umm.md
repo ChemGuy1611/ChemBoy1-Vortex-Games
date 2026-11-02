@@ -2,6 +2,10 @@
 
 Covers `template-unity-umm`. Suite file: `tests/templates/unity-umm.test.js`.
 
+## [2026-11-01]
+
+- Note: the template dropped `manifest.json` and `icon.png` from `IGNORE_CONFLICTS` and `IGNORE_DEPLOY` (see the template's changelog entry of this date). No test asserts those lists, so the suite is unchanged.
+
 ## [2026-10-30]
 
 - Changed: the registration test follows the template moving the Unity Mod Manager and Mods mod types from priorities 8 and 10 to 26 and 27. The comment no longer calls those priorities a contract oddity.

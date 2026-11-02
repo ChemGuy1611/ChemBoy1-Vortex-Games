@@ -14,6 +14,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Assembly Replacement Mods | a `GameAssembly.dll` file | the game folder |
 | MelonLoader Mods | a `.dll` file built for MelonLoader | `Mods\<ModName>` |
 | Asset Replacement Mods | a `.assets`, `.resource` or `.ress` file | `over the hill_Data` |
+| Livery | a `.png`, `.jpg` or `.jpeg` file | - |
 | Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
@@ -119,6 +120,10 @@ Installs to: `over the hill_Data`
 **Common mistakes:**
 
 - Asset files must keep their original names to replace the right bundle.
+
+## Livery
+
+Recognised when the archive contains a `.png`, `.jpg` or `.jpeg` file.
 
 ## Fallback Installer
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.0.4] - 2026-11-01
+
+- Changed: manifest.json and icon.png files are no longer skipped during deployment and conflict checks.
+
 ## [3.0.3] - 2026-10-25
 
 - Added the Nexus mod ID to the extension info.

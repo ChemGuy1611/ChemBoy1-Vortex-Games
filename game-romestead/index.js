@@ -2,8 +2,8 @@
 Name: Romestead Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
-Version: 1.1.5
-Date: 2026-10-25
+Version: 1.1.6
+Date: 2026-11-01
 Notes:
 - Romestead is a .NET 8 / MonoGame game, not a Unity game: there is no `<Game>`_Data folder, no
   Managed folder and no MelonLoader support. isXna gates every Unity-only path off.
@@ -582,17 +582,11 @@ const PARAMETERS_STRING = "";
 const PARAMETERS = [PARAMETERS_STRING];
 
 const IGNORE_CONFLICTS = [
-  path.join("**", "manifest.json"),
-  path.join("**", "icon.png"),
   path.join("**", "changelog*"),
   path.join("**", "readme*"),
   path.join("**", "license*"),
 ];
 const IGNORE_DEPLOY = [
-  //top-level only: package metadata that would land in a shared loader folder. A wrapped plugin's
-  //own copy still deploys - MelonLoader skips a mod folder without its manifest.json
-  path.join("*", "manifest.json"),
-  path.join("*", "icon.png"),
   path.join("**", "changelog*"),
   path.join("**", "readme*"),
   path.join("**", "license*"),

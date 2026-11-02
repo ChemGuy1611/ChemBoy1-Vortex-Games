@@ -45,6 +45,7 @@
 | `hasTextureReplacer` | `false` | set to true if the game has a Texture Replacer BepInEx plugin that loads .png textures from BepInEx/plugins/TextureReplacer (set TEXTURES_STRING below) |
 | `debug` | `false` | toggle for debug mode |
 | `exeHasGameVersion` | `false` | toggle: true if the game devs stamp the real game version (not just the Unity player version) into the exe ProductVersion |
+| `modioBrowser` | `true` | register the "Browse mod.io" page - browse and install the game's mod.io mods inside Vortex |
 | `hasVersionFile` | `false` | set to true if there is a Version.info file that contains the game version number |
 | `hasUserIdFolder` | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
 | `loaderChoice` | `false` | true if loader choice is enabled |
@@ -77,6 +78,7 @@ Mod types define where each category of mod gets deployed:
 | MelonLoader | `overthehill-melonloader` | low | `{gamePath}` |
 | Assembly DLL Mod | `overthehill-assemblydll` | 60 | `{gamePath}` |
 | Assets/Resources File | `overthehill-assets` | 62 | `{gamePath}/over the hill_Data` |
+| Livery | `overthehill-livery` | 66 | `?` |
 
 ## Mod Installers
 
@@ -92,6 +94,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | `overthehill-assemblydll` | 31 |
 | `overthehill-plugin` | 33 |
 | `overthehill-assets` | 37 |
+| `overthehill-livery` | 41 |
 | `overthehill-fallback` | 49 |
 
 ## Registered Tools
@@ -115,6 +118,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open MelonLoader Log
 - Open PCGamingWiki Page
 - Open Nexus Mods Page
+- Open mod.io Page
 - Open SteamDB Page
 - View Changelog
 - Submit Bug Report

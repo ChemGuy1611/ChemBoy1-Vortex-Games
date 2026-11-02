@@ -142,6 +142,29 @@ Quarantine Zone and Abiotic Factor both ship this layout (Abiotic's sometimes ad
 Anno 117 archives are `<Wrapper>/modinfo.json` plus `data/base/config/...`, sometimes several mods in
 one archive, and install whole into the game's `mods` folder with the wrapper kept.
 
+STALKER 2 archives are `[Wrapper/Windows/]{NewContent,OverrideContent}/Windows/Stalker2/Mods/<Name>/Content/Paks/Windows/*`
+plus `Manifest_UFSFiles_Win64.txt`. The folders around the paks mean nothing to the installer, which
+flattens the paks into `~mods`. Half of the 40 most popular mods are a New + Override pair, sometimes
+with a third `<Name>Cfg` plugin. These are parts of one mod, so all of them install together. One of
+the 40 (`NoQuestCooldown`) has a base set with no `NewContent` folder and still gets the file chooser.
+
+Frostpunk 2 archives are loose `.pak` files installed to `~mods`. About a third are the FrostKit chunk
+set `pakchunk0/1/10/11/12-Windows_0_P.pak`, again one mod. The chunk names repeat across mods without
+conflict, since each pak mod deploys into its own folder under `~mods`.
+
+Over the Hill archives are vehicle liveries: `[Wrapper/]manifest.json` plus images, sometimes in
+`icons/` and `textures/`. The game reads `Documents\My Games\over the hill\LocalLiveries\<Pack>\`, one
+folder per pack with a free name. Half the archives have the manifest at the root, so an installer
+has to supply the folder. A `manifest.json` also marks Thunderstore packages, so check the other files
+too: a livery holds only images.
+
+Metro Exodus archives are mostly whole Exodus SDK projects (`[Wrapper/]content/`, `cache/`, about 75k
+files and 2 GB). They do not load from the game folder: their authors say to click "Add Existing Mod"
+in the SDK launcher, pick the mod's folder, then "Launch Game". So each project keeps a folder of its
+own, under `<GameFolder>/SDKMods/`. A project is recognised by `content` and `cache` folders side by
+side, which leaves ordinary mods with a `content` folder alone. The rest of that game's mods have no
+shared layout: a save, skin packs, an `.asi` mod and a `.rar` inside a zip.
+
 ## Shared modio_browser.js Module
 
 `resources/browsers/modio_browser.js` (plus `base_browser.js`, both copied beside the adopter's

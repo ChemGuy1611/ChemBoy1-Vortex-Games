@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.2.0] - 2026-11-01
+
+- Added: "Browse mod.io" page to browse the game's mods on mod.io and install them directly in Vortex, with update checks and dependency installs, plus an "Open mod.io Page" button.
+- Improved: Mods with both NewContent and OverrideContent paks now install all of them without asking which files to install.
+
 ## [2.1.8] - 2026-10-29
 
 - Fixed: Xbox / Game Pass version detection and launching for the game's current Microsoft Store release (Xbox Play Anywhere).

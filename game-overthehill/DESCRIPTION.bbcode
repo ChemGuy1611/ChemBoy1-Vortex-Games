@@ -16,12 +16,14 @@ This extension adds over the hill modding support to Vortex Mod Manager.
 [*]MelonLoader mods with a ".dll" file built for MelonLoader install to the "Mods\<ModName>" folder.[/*]
 [*]Plugin archives built for a different mod loader than the one installed are cancelled.[/*]
 [*]Assets/Resources File mods with a ".assets", ".resource" or ".ress" file install to the "over the hill_Data" folder.[/*]
+[*]Livery mods are recognised by a ".png", ".jpg" or ".jpeg" file.[/*]
 [*]Any other mod not described above installs to the game folder.[/*]
 [*]Archives with a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to Vortex's built-in FOMOD installer instead.[/*]
 [/list]
 [b]📋 Usage Notes:[/b]
 [list]
 [*]You can open several useful files/folders/URLs using the buttons within the folder icon on the Mods toolbar.[/*]
+[*]You can browse mod.io and install its mods directly in Vortex using the "Browse mod.io" page in the sidebar.[/*]
 [/list]
 [b]📝 Notes for Mod Authors:[/b]
 [spoiler]
@@ -130,6 +132,12 @@ Mods that replace packed Unity asset files, deployed into the game's data folder
 
   Common mistakes:
     - Asset files must keep their original names to replace the right bundle.
+
+========================================================================
+
+Livery:
+
+Recognised when the archive contains a ".png", ".jpg" or ".jpeg" file.
 
 ========================================================================
 

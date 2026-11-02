@@ -3307,6 +3307,44 @@ function usageNotesFor(src, engine, installers) {
   return notes.map((n) => `[*]${n}[/*]`);
 }
 
+// What each browser module's registerXBrowser call browses, keyed by X in lower case.
+const BROWSER_SITES = {
+  thunderstore: "Thunderstore",
+  gamebanana: "GameBanana",
+  moddb: "ModDB",
+  modio: "mod.io",
+  modworkshop: "ModWorkshop",
+  fcmodding: "FCModding",
+};
+// Extensions managing two games whose browse page only shows on one of them.
+const BROWSER_PAGE_SCOPE = {
+  "game-systemshock225thanniversaryremaster": " when managing System Shock 2 (1999)",
+};
+
+/**
+ * Usage note for each embedded mod-site browser the extension registers, one per site, naming the
+ * sidebar pages by the `pageTitle` in their config. Any engine: the browser modules are not tied to
+ * a template. A page switched off by its toggle (`moddbBrowser`, `modioBrowser`, ...) gets no note.
+ */
+function browserNotes(src, dirName) {
+  const titlesBySite = new Map();
+  for (const m of src.matchAll(/^[ \t]*register([A-Za-z]+)Browser\(context,\s*\w+,\s*(\w+)\)/gm)) {
+    const source = m[1].toLowerCase();
+    const site = BROWSER_SITES[source];
+    if (!site || boolLiteral(src, `${source}Browser`) === false) continue;
+    const config = new RegExp(`const\\s+${m[2]}\\s*=\\s*\\{[\\s\\S]*?pageTitle:\\s*["'\`]([^"'\`]+)`);
+    const title = config.exec(src);
+    if (!title) continue;
+    titlesBySite.set(site, [...(titlesBySite.get(site) || []), `"${title[1]}"`]);
+  }
+  const scope = BROWSER_PAGE_SCOPE[dirName] || "";
+  return [...titlesBySite].map(
+    ([site, titles]) =>
+      `[*]You can browse ${site} and install its mods directly in Vortex using the ${joinAnd(titles)} ` +
+      `page${titles.length > 1 ? "s" : ""} in the sidebar${scope}.[/*]`,
+  );
+}
+
 /** Credit lines as the bulleted list a Credits section holds. */
 function creditsList(lines) {
   return ["[list]", ...lines.map((l) => `[*]${l}[/*]`), "[/list]"].join("\n");
@@ -3868,7 +3906,9 @@ function buildNotes(dirName, src) {
       engine === "ue4-5" && installers.some((i) => i.testFn === "testLogic")
         ? vars.LOGICMODS_FOLDER || "LogicMods"
         : null,
-    usageNotes: isTemplate ? [] : usageNotesFor(src, engine, installers),
+    usageNotes: isTemplate
+      ? []
+      : [...usageNotesFor(src, engine, installers), ...browserNotes(src, dirName)],
     credits: isTemplate ? [] : creditsFor(gameId, engine),
   };
 

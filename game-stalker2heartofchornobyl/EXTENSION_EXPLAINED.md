@@ -44,6 +44,7 @@
 | `autoDeployMerge` | `false` | automatically run the merge tool on deploy (takes a long time and requires user input) |
 | `debug` | `false` | enables verbose debug logging |
 | `exeHasGameVersion` | `false` | toggle: true if the game devs stamp the real game version (not just the UE engine version) into the exe ProductVersion |
+| `modioBrowser` | `true` | register the "Browse mod.io" page - browse and install the game's mod.io mods inside Vortex |
 | `enableNewPak` | `false` |  |
 
 ## Mod Types
@@ -114,6 +115,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open UE4SS mods.txt
 - Open PCGamingWiki Page
 - Open Nexus Mods Page
+- Open mod.io Page
 - Open SteamDB Page
 - View Changelog
 - Submit Bug Report

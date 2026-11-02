@@ -44,6 +44,7 @@
 | `hasUserIdFolder` | `true` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
 | `debug` | `false` | toggle for debug mode |
 | `exeHasGameVersion` | `false` | toggle: true if the game devs stamp the real game version (not just the UE engine version) into the exe ProductVersion |
+| `modioBrowser` | `true` | register the "Browse mod.io" page - browse and install the game's mod.io mods inside Vortex |
 | `PAKMOD_LOADORDER` | `true` | set to false if you don't want loadOrder. If must be in "Paks" root, disable loadOrder. |
 | `FBLO` | `true` | set to false to use legacy load order page |
 | `ue4ssLoadOrder` | `true` | master toggle for UE4SS support: UE4SS/Scripts/DLL/LogicMods mod types and installers, UE4SS buttons, load order page, and mods.txt writing |
@@ -109,6 +110,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open UE4SS mods.txt
 - Open PCGamingWiki Page
 - Open Nexus Mods Page
+- Open mod.io Page
 - Open SteamDB Page
 - View Changelog
 - Submit Bug Report

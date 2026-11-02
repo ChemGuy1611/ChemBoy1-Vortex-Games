@@ -1,5 +1,9 @@
 # template-unitymelonloaderbepinex-hybrid Changelog
 
+## [2026-11-01]
+
+- Changed: removed `manifest.json` and `icon.png` from `IGNORE_CONFLICTS` and `IGNORE_DEPLOY`, so they are no longer skipped during deployment and conflict checks. The plugin installer still drops Thunderstore package metadata through `PACKAGE_META_FILES`. Applied to every game on this template.
+
 ## [2026-10-23]
 
 - Added: `hasTextureReplacer` toggle (default off) for games with a Texture Replacer BepInEx plugin that loads `.png` textures from `BepInEx/plugins/TextureReplacer`. When on, it registers a "Texture Replacer Textures" mod type (`TEXTURES_ID`) deploying to that folder, adds the folder to the setup write check, and registers an installer at priority 35 for archives holding a `.png` whose file name starts with `TEXTURES_STRING` (placeholder `"XXX"`, never matches until set) and no `.dll`. The installer anchors on the shallowest matching texture, so textures sorted into subfolders keep them and outer wrapper folders are dropped. First used by `game-storyofseasonsgrandbazaar` (prefix `tex_`).

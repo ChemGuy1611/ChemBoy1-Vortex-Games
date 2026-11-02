@@ -2,8 +2,8 @@
 Name: over the hill Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
-Version: 1.1.0
-Date: 2026-10-29
+Version: 1.2.0
+Date: 2026-11-01
 Notes:
 -
 //////////////////////////////////////////*/
@@ -30,13 +30,15 @@ const {
   testRequirementVersion,
 } = require("./downloader");
 const { downloadBepinexBe, checkForBepinexBeUpdate } = require("./bepinexbe_downloader");
+//Embedded mod.io browser page (needs base_browser.js beside it)
+const { registerModioBrowser, onceModioBrowser } = require("./modio_browser");
 
 // -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 const USER_HOME = util.getVortexPath("home");
 const LOCALLOW = path.join(USER_HOME, "AppData", "LocalLow");
-//const DOCUMENTS = util.getVortexPath("documents");
+const DOCUMENTS = util.getVortexPath("documents");
 //const ROAMINGAPPDATA = util.getVortexPath("appData");
 const LOCALAPPDATA = util.getVortexPath("localAppData");
 
@@ -64,6 +66,8 @@ const EXEC_ALT = `${GAME_STRING_ALT}.exe`;
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Over_the_Hill";
 const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/2467"; //Nexus link to this extension. Used for links
+const MODIO_GAME = "over-the-hill"; //mod.io game name_id - https://mod.io/g/over-the-hill
+const MODIO_URL = `https://mod.io/g/${MODIO_GAME}/m`;
 
 //feature toggles
 const isXna = false; //set to true if game is XNA engine
@@ -85,6 +89,7 @@ const customLoaderInstaller = false; //set true if the custom loader uses an ins
 const hasTextureReplacer = false; //set to true if the game has a Texture Replacer BepInEx plugin that loads .png textures from BepInEx/plugins/TextureReplacer (set TEXTURES_STRING below)
 const debug = false; //toggle for debug mode
 const exeHasGameVersion = false; //toggle: true if the game devs stamp the real game version (not just the Unity player version) into the exe ProductVersion
+const modioBrowser = true; //register the "Browse mod.io" page - browse and install the game's mod.io mods inside Vortex
 
 const DATA_FOLDER_DEFAULT = `${GAME_STRING}_Data`;
 let DATA_FOLDER = DATA_FOLDER_DEFAULT;
@@ -553,17 +558,11 @@ const PARAMETERS_STRING = "";
 const PARAMETERS = [PARAMETERS_STRING];
 
 const IGNORE_CONFLICTS = [
-  path.join("**", "manifest.json"),
-  path.join("**", "icon.png"),
   path.join("**", "changelog*"),
   path.join("**", "readme*"),
   path.join("**", "license*"),
 ];
 const IGNORE_DEPLOY = [
-  //top-level only: package metadata that would land in a shared loader folder. A wrapped plugin's
-  //own copy still deploys - MelonLoader skips a mod folder without its manifest.json
-  path.join("*", "manifest.json"),
-  path.join("*", "icon.png"),
   path.join("**", "changelog*"),
   path.join("**", "readme*"),
   path.join("**", "license*"),
@@ -583,6 +582,21 @@ if (hasCustomLoader) {
 if (hasTextureReplacer) {
   MODTYPE_FOLDERS.push(TEXTURES_PATH);
 }
+
+//Vehicle livery packs - the game reads one folder per pack from here, outside the game folder
+const LIVERY_ID = `${GAME_ID}-livery`;
+const LIVERY_NAME = "Livery";
+const LIVERY_PATH = path.join(DOCUMENTS, "My Games", "over the hill", "LocalLiveries");
+const LIVERY_FILES = ["manifest.json"];
+const LIVERY_EXTS = [".png", ".jpg", ".jpeg"];
+
+//Embedded mod.io browser page - the user browses the live site and installs from it. mod.io mods
+//are livery packs, so they land through the livery installer.
+const MODIO_BROWSER_CONFIG = {
+  modioGame: MODIO_GAME,
+  pageId: `${GAME_ID}-modio-browse`,
+  pageTitle: "Browse mod.io",
+};
 
 // -- END EDIT ZONE -- /////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2004,6 +2018,86 @@ function unknownDllNotify(api, modName) {
   });
 }
 
+//Hardlinks cannot cross drives, so a mod type outside the game folder is only offered when the
+//game, staging and mod type folders share one - otherwise it would rule out hardlinks for every mod
+function checkPartitions(folder, discoveryPath) {
+  try {
+    fs.mkdirSync(discoveryPath, { recursive: true });
+    fs.mkdirSync(STAGING_FOLDER, { recursive: true });
+    fs.mkdirSync(folder, { recursive: true });
+    const a = fs.statSync(discoveryPath).dev;
+    const b = fs.statSync(STAGING_FOLDER).dev;
+    const c = fs.statSync(folder).dev;
+    return a === b && b === c;
+  } catch {
+    return false;
+  }
+}
+
+function isLiveryFile(file) {
+  return LIVERY_FILES.includes(path.basename(file).toLowerCase());
+}
+
+//Test for livery packs. manifest.json alone also marks Thunderstore packages, so every other file
+//must be an image.
+function testLivery(files, gameId) {
+  const modFiles = files.filter((file) => !file.endsWith(path.sep));
+  const isMod =
+    modFiles.some(isLiveryFile) &&
+    modFiles.every(
+      (file) => isLiveryFile(file) || LIVERY_EXTS.includes(path.extname(file).toLowerCase()),
+    );
+  let supported = gameId === spec.game.id && isMod;
+
+  // Test for a mod installer.
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install livery packs, one folder per manifest. A pack with its manifest at the archive root is
+//wrapped in a folder named after the archive, since the game reads one folder per pack.
+function installLivery(api, files, destinationPath) {
+  if (!checkPartitions(LIVERY_PATH, GAME_PATH)) {
+    api.showErrorNotification(
+      "Could not install Livery mod",
+      `The game, Vortex staging folder and Documents folder are not all on the same drive, so Vortex cannot use hardlinks to deploy to the game's local livery folder. Move the game and staging folder to the same drive as "${LIVERY_PATH}" to install these mods with Vortex.`,
+      { allowReport: false },
+    );
+    throw new VortexError("User canceled", { kind: "user-canceled", skipped: false });
+  }
+  const modFiles = files.filter((file) => !file.endsWith(path.sep));
+  const archiveName = path
+    .basename(destinationPath)
+    .replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*/gi, "");
+  const instructions = modFiles.filter(isLiveryFile).flatMap((manifest) => {
+    const rootPath = path.dirname(manifest);
+    const isWrapped = rootPath !== ".";
+    const packFolder = isWrapped ? path.basename(rootPath) : archiveName;
+    return modFiles
+      .filter((file) => !isWrapped || file.startsWith(rootPath + path.sep))
+      .map((file) => ({
+        type: "copy",
+        source: file,
+        destination: path.join(packFolder, path.relative(rootPath, file)),
+      }));
+  });
+  instructions.push({ type: "setmodtype", value: LIVERY_ID });
+  return Promise.resolve({ instructions });
+}
+
 //Fallback installer to root folder
 function testFallback(files, gameId) {
   let supported = gameId === spec.game.id;
@@ -2878,6 +2972,7 @@ async function setup(discovery, api, gameSpec) {
     MODTYPE_FOLDERS.push(ASSETS_PATH);
   }
   await modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
+  await vfs.ensureDirWritableAsync(LIVERY_PATH);
   //REQUIRED: MELONPREFMAN_REQUIREMENTS is built at module load, when GAME_PATH is still '', so the
   //baked-in directCopyPath is relative and would never resolve. setup() runs on every
   //gamemode-activated, so this reassignment precedes every path that reads the field.
@@ -3081,6 +3176,17 @@ function applyGame(context, gameSpec) {
       { name: SAVE_NAME },
     );
   }
+  context.registerModType(
+    LIVERY_ID,
+    66,
+    (gameId) => {
+      const gamePath = getDiscoveryPath(context.api);
+      return gameId === GAME_ID && gamePath !== undefined && checkPartitions(LIVERY_PATH, gamePath);
+    },
+    (game) => pathPattern(context.api, game, LIVERY_PATH),
+    () => Promise.resolve(false),
+    { name: LIVERY_NAME },
+  );
 
   //register mod installers
   if (hasCustomLoader) {
@@ -3109,6 +3215,9 @@ function applyGame(context, gameSpec) {
   if (hasCustomMods) {
     context.registerInstaller(CUSTOM_ID, 39, testCustom, installCustom);
   }
+  context.registerInstaller(LIVERY_ID, 41, testLivery, (files, destinationPath) =>
+    installLivery(context.api, files, destinationPath),
+  );
   if (enableSaveInstaller) {
     context.registerInstaller(SAVE_ID, 47, testSave, installSave); //best to only enable if saves are stored in the game's folder
   }
@@ -3389,6 +3498,27 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     },
   );
+  if (modioBrowser) {
+    context.registerAction(
+      "mod-icons",
+      300,
+      "open-ext",
+      {},
+      "Open mod.io Page",
+      () => {
+        try {
+          window.api.shell.openUrl(MODIO_URL);
+        } catch (err) {
+          context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+        }
+      },
+      () => {
+        const state = context.api.getState();
+        const gameId = selectors.activeGameId(state);
+        return gameId === GAME_ID;
+      },
+    );
+  }
   context.registerAction(
     "mod-icons",
     300,
@@ -3473,6 +3603,11 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     },
   );
+
+  //register the embedded mod.io browser page
+  if (modioBrowser) {
+    registerModioBrowser(context, gameSpec, MODIO_BROWSER_CONFIG);
+  }
 }
 
 //main function
@@ -3485,6 +3620,10 @@ function main(context) {
       if (gameId !== GAME_ID) return Promise.resolve();
       return onCheckModVersion(api, gameId, mods, forced);
     });
+    if (modioBrowser) {
+      //claims downloads started from the browse page, and update-checks the mods installed through it
+      onceModioBrowser(api, spec, MODIO_BROWSER_CONFIG);
+    }
     api.onAsync("did-deploy", async (profileId, deployment) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;

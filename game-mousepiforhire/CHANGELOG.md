@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.1] - 2026-11-01
+
+- Changed: manifest.json and icon.png files are no longer skipped during deployment and conflict checks.
+
 ## [1.1.0] - 2026-10-18
 
 - Added: Support for the GOG version of the game.

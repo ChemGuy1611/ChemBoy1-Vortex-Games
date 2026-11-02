@@ -2,6 +2,10 @@
 
 Covers `template-unitymelonloaderbepinex-hybrid`. Suite file: `tests/templates/unitymelonloaderbepinex-hybrid.test.js`.
 
+## [2026-11-01]
+
+- Changed: the ignore list test follows the template dropping `manifest.json` and `icon.png` from `IGNORE_CONFLICTS` and `IGNORE_DEPLOY` (see the template's changelog entry of this date).
+
 ## [2026-10-23]
 
 - Added: tests for the new `hasTextureReplacer` toggle (see the template's changelog entry of this date): registration (mod type at 44 with its name, installer at 35, both absent with the toggle off) and routing (prefixed `.png` in any case, unprefixed `.png`, wrong extension, an archive with a `.dll`); the placeholder prefix never matching; install output anchored on the shallowest texture with a subfolder listed first, and a full `BepInEx/plugins/TextureReplacer` path flattened to the folder's root; setup creating the `TextureReplacer` folder only with the toggle on. Suite is now 473 tests.

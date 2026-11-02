@@ -1,5 +1,9 @@
 # template-unity-umm Changelog
 
+## [2026-11-01]
+
+- Changed: removed `manifest.json` and `icon.png` from `IGNORE_CONFLICTS` and `IGNORE_DEPLOY`, so they are no longer skipped during deployment and conflict checks. Applied to `game-railroader`.
+
 ## [2026-10-30]
 
 - Changed: the Unity Mod Manager and Mods mod types are registered at priorities 26 and 27 (were 8 and 10), so every mod type sits inside the 25-75 range. They keep their order, just after the root type at 25.
