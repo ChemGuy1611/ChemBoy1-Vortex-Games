@@ -17,6 +17,9 @@ fetch_cover_art.py
 make_title_image.py
 fetch_exec_icon.py
 render_svg.py
+svg_to_mdi.py
+find_modio_games.py
+modio_listings.py
 fetch_nexus_stats.py
 release_extension.py
 release_scope.py
@@ -48,6 +51,7 @@ lint_extensions.js
 audit_deprecated_usage.js
 sweep_template_fixes.js
 parser_snapshot.js
+replay_installers.js
 
 # Documentation
 SCRIPTS.md

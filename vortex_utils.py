@@ -95,6 +95,7 @@ Usage:
         NEVER_UPLOAD_GAMES, NEVER_UPLOAD_LIST, DEPRECATED_GAMES, DEPRECATED_LIST, releasable_game_ids, fetch_vortex_extensions_feed,
         is_valid_nexus_game_id, git_show_text,
         changelog_entry_is_empty, unreleased_intermediate_sections,
+        SVG_PATH_COMMAND_RE, SVG_PATH_NUMBER_RE,
     )
 """
 
@@ -2658,6 +2659,17 @@ def download_banner_image(appid, game_id, out_path, sgdb_key):
     w, h = img.size
     source = f"SteamGridDB hero ({w}x{h}) - https://www.steamgriddb.com/hero/{hero_id}"
     return True, source
+
+
+# == SVG path data =============================================================
+
+# Tokenizers for SVG path data ("M12 2L2 22h20z"), shared by render_svg.py (draws a path) and
+# svg_to_mdi.py (rescales one into a 24x24 viewBox). COMMAND_RE yields (command, raw argument
+# text) pairs; NUMBER_RE splits the argument text, including compact forms such as ".5.5" and
+# "1e-3". Arc flags written without separators ("a1 1 0 011 1") are not split - neither consumer
+# has met them in a vendor SVG.
+SVG_PATH_NUMBER_RE = re.compile(r"[-+]?(?:\d*\.\d+|\d+\.?)(?:[eE][-+]?\d+)?")
+SVG_PATH_COMMAND_RE = re.compile(r"([MmLlHhVvCcSsQqTtAaZz])([^MmLlHhVvCcSsQqTtAaZz]*)")
 
 
 # == Image resize helpers ======================================================

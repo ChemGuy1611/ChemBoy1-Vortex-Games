@@ -53,6 +53,8 @@ try:
 except ImportError:  # pragma: no cover - install hint only
     sys.exit("Missing dependencies. Install with: python -m pip install --user svglib reportlab pillow")
 
+from vortex_utils import SVG_PATH_COMMAND_RE, SVG_PATH_NUMBER_RE
+
 DEFAULT_VIEWBOX = "0 0 24 24"
 DEFAULT_SIZE = 256
 DEFAULT_FILL = "#ffffff"
@@ -124,8 +126,8 @@ def render_path(path_data, viewbox, size, fill, bg, out_file):
     return out_file
 
 
-NUMBER_RE = re.compile(r"[-+]?(?:\d*\.\d+|\d+\.?)(?:[eE][-+]?\d+)?")
-COMMAND_RE = re.compile(r"([MmLlHhVvCcSsQqTtAaZz])([^MmLlHhVvCcSsQqTtAaZz]*)")
+NUMBER_RE = SVG_PATH_NUMBER_RE
+COMMAND_RE = SVG_PATH_COMMAND_RE
 
 
 def arc_to_beziers(x0, y0, rx, ry, rotation, large_arc, sweep, x1, y1):

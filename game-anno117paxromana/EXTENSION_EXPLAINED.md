@@ -23,6 +23,12 @@
 - **Epic Games Store** — `feeef62ced99452d87cf9cd14ced4030`
 - **Ubisoft Connect** — `Registry`
 
+## Feature Flags
+
+| Flag | Value | Description |
+| --- | --- | --- |
+| `modioBrowser` | `true` | register the "Browse mod.io" page - browse and install the game's mod.io mods inside Vortex |
+
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
@@ -57,6 +63,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open Downloads Folder
 - Open PCGamingWiki Page
 - Open Nexus Mods Page
+- Open mod.io Page
 - Open SteamDB Page
 - Submit Bug Report
 

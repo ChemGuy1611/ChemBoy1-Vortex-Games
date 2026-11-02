@@ -2,8 +2,8 @@
 Name: Abiotic Factor Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.3
-Date: 2026-10-25
+Version: 1.1.0
+Date: 2026-11-01
 Notes:
 -
 ////////////////////////////////////////////////*/
@@ -38,6 +38,8 @@ const {
   resolveVersionByModVersion,
   testRequirementVersion,
 } = require("./downloader");
+//Embedded mod.io browser page (needs base_browser.js beside it)
+const { registerModioBrowser, onceModioBrowser } = require("./modio_browser");
 
 // -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -70,6 +72,8 @@ const PARAMETERS_STRING = ""; //launch arguments to pass when launching the game
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Abiotic_Factor";
 const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1392"; //Nexus link to this extension. Used for links
+const MODIO_GAME = "abiotic-factor"; //mod.io game name_id - https://mod.io/g/abiotic-factor
+const MODIO_URL = `https://mod.io/g/${MODIO_GAME}/m`;
 
 //feature toggles
 let hasXbox = false; //toggle for Xbox version logic.
@@ -79,7 +83,7 @@ if (EXEC !== EXEC_EPIC || EXEC !== EXEC_GOG || EXEC !== EXEC_DEMO) {
   multiExe = true;
 } //*/
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
-const hasModKit = false; //toggle for UE ModKit mod support
+const hasModKit = true; //toggle for UE ModKit mod support
 const hasServer = false; //toggle for server pak mod logic
 const preferHardlinks = true; //set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users
 const autoDownloadUe4ss = false; //toggle for auto downloading UE4SS (only applies when ue4ssLoadOrder is enabled)
@@ -89,6 +93,7 @@ const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
 const hasUserIdFolder = true; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 const debug = false; //toggle for debug mode
 const exeHasGameVersion = false; //toggle: true if the game devs stamp the real game version (not just the UE engine version) into the exe ProductVersion
+const modioBrowser = true; //register the "Browse mod.io" page - browse and install the game's mod.io mods inside Vortex
 
 //UE specific
 const ENGINE_VERSION = "5.X.X.0"; //Unreal Engine version. usually '4.27.2.0' or '5.X.X.0'. Written to UE4SS-settings.ini if writeEngineVersion is enabled
@@ -417,7 +422,6 @@ const CONTENT_PATH = EPIC_CODE_NAME;
 //ModKit (only used if game supports)
 const MODKITMOD_ID = `${GAME_ID}-modkitmod`;
 const MODKITMOD_NAME = "ModKit mod";
-const MODKITMOD_FILE = "mod.json";
 const MODKITMOD_EXT = ".uplugin";
 const MODKITMOD_PATH = path.join(EPIC_CODE_NAME, "Mods");
 
@@ -454,6 +458,14 @@ if (ue4ssLoadOrder) {
 if (hasModKit) {
   MODTYPE_FOLDERS.push(MODKITMOD_PATH);
 }
+
+//Embedded mod.io browser page - the user browses the live site and installs from it. mod.io mods
+//are .uplugin packages, so they land through the ModKit mod installer like any other.
+const MODIO_BROWSER_CONFIG = {
+  modioGame: MODIO_GAME,
+  pageId: `${GAME_ID}-modio-browse`,
+  pageTitle: "Browse mod.io",
+};
 
 // -- END EDIT ZONE -- /////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -950,8 +962,7 @@ async function deploy(api) {
 //Installer test for modkit mod files
 function testModKitMod(files, gameId) {
   const isMod = files.some((file) => path.extname(file).toLowerCase() === MODKITMOD_EXT);
-  const isJson = files.some((file) => path.basename(file).toLowerCase() === MODKITMOD_FILE);
-  let supported = gameId === spec.game.id && isMod && isJson;
+  let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer
   if (
@@ -972,31 +983,15 @@ function testModKitMod(files, gameId) {
 }
 
 //Installer install modkit mod files
-async function installModKitMod(files, fileName) {
-  const modFile = files.find((file) => path.basename(file).toLowerCase() === MODKITMOD_FILE);
+function installModKitMod(files) {
+  const modFile = files.find((file) => path.extname(file).toLowerCase() === MODKITMOD_EXT);
   const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MODKITMOD_ID };
-  let MOD_NAME = path.basename(fileName);
-  let MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, "");
-  if (rootPath !== ".") {
-    MOD_NAME = path.basename(rootPath);
-    MOD_FOLDER = MOD_NAME;
-  }
-  try {
-    //read mod.json file to get folder name (game will crash if this doesn't match)
-    let contents = await fsp.readFile(path.join(fileName, rootPath, MODKITMOD_FILE), "utf8");
-    contents = util.deBOM(contents);
-    const JSON_OBJECT = JSON.parse(contents);
-    const JSON_MOD_NAME = JSON_OBJECT["modPluginName"];
-    if (typeof JSON_MOD_NAME === "string" && JSON_MOD_NAME !== "") {
-      MOD_FOLDER = JSON_MOD_NAME; //without a name the folder keeps the wrapper or archive name
-    }
-  } catch {
-    //mod.json could not be read.
-    log("error", `Could not read mod.json file for mod ${MOD_NAME}.`);
-  }
+  //folder named after the .uplugin file, as Unreal expects - archive and wrapper folder names
+  //often carry version suffixes (mod.io archives are named like "modfile_6445078-1epa-ectr.zip")
+  const MOD_FOLDER = path.basename(modFile, path.extname(modFile));
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
@@ -2712,8 +2707,7 @@ function beatsPakInstaller(files) {
   const segsLower = pathSegments(files).map((seg) => seg.toLowerCase());
   if (hasModKit) {
     const hasModKitExt = files.some((file) => path.extname(file).toLowerCase() === MODKITMOD_EXT);
-    const hasModKitFile = segsLower.includes(MODKITMOD_FILE.toLowerCase());
-    if (hasModKitExt && hasModKitFile) return true; //Mod Kit (25)
+    if (hasModKitExt) return true; //Mod Kit (25)
   }
   const hasBinariesFolder = segsLower.includes("binaries");
   const hasContentFolder = segsLower.includes("content");
@@ -3708,6 +3702,27 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     },
   );
+  if (modioBrowser) {
+    context.registerAction(
+      "mod-icons",
+      300,
+      "open-ext",
+      {},
+      "Open mod.io Page",
+      () => {
+        try {
+          window.api.shell.openUrl(MODIO_URL);
+        } catch (err) {
+          context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+        }
+      },
+      () => {
+        const state = context.api.getState();
+        const gameId = selectors.activeGameId(state);
+        return gameId === GAME_ID;
+      },
+    );
+  }
   context.registerAction(
     "mod-icons",
     300,
@@ -3788,6 +3803,11 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     },
   );
+
+  //register the embedded mod.io browser page
+  if (modioBrowser) {
+    registerModioBrowser(context, gameSpec, MODIO_BROWSER_CONFIG);
+  }
 }
 
 //Main function
@@ -3917,6 +3937,10 @@ function main(context) {
       }
       return onCheckModVersion(api, gameId, mods, forced);
     });
+    if (modioBrowser) {
+      //claims downloads started from the browse page, and update-checks the mods installed through it
+      onceModioBrowser(api, spec, MODIO_BROWSER_CONFIG);
+    }
     api.onAsync("did-deploy", (profileId) => didDeploy(api, profileId)); //*/
     //api.onAsync('did-purge', (profileId) => didPurge(api, profileId)); //*/
     //detect mod update (to maintain LO position)

@@ -1,5 +1,9 @@
 # Changelog
 
+## Planned Improvements (Not Yet Released)
+
+- Fixed: Modkit mods with a FOMOD installer are no longer listed on the Paks load order page.
+
 ## [1.1.0] - 2026-11-01
 
 - Added: Installer for modkit mods with .uplugin file

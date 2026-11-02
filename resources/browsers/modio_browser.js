@@ -29,7 +29,9 @@
 //      "download" with no extension. A capture is unaffected (Vortex receives the post-redirect
 //      CDN URL, which ends in the real file name); the install path resolves the redirect first.
 //   4. A mod carries one live file per platform, so the file installed is the configured
-//      platform's live file (default 'windows'), not simply the mod's default modfile.
+//      platform's live file (default 'windows'), not simply the mod's default modfile. The site
+//      lists a Download row for every platform's file with no default, so a click on another
+//      platform's build is swapped for the configured platform's live file.
 //   5. Versions are free text, so update comparison uses the file id, which grows with every
 //      upload.
 //
@@ -72,6 +74,17 @@ const DEFAULT_VERSION_ATTRIBUTE = "modioVersion";
 const DEFAULT_FILE_ID_ATTRIBUTE = "modioFileId";
 const DEFAULT_PLATFORM = "windows";
 
+// How the site labels the platforms that sit beside a Windows file. Anything else shows its raw id.
+const PLATFORM_LABELS = {
+  windows: "Windows",
+  windowsserver: "Windows Server",
+  xboxone: "Xbox One",
+  xboxseriesx: "Xbox Series X",
+  ps4: "PS4",
+  ps5: "PS5",
+  linuxserver: "Linux Server",
+};
+
 // Hosts the embedded view stays on: the site (and its login host, auth.mod.io), the per-game
 // download API hosts (g-{gameId}.modapi.io), and the binary CDN the downloads redirect to.
 const DEFAULT_ALLOWED_HOSTS = ["mod.io", "modapi.io", "modcdn.io"];
@@ -90,6 +103,10 @@ function fileIdAttribute(config) {
 
 function platformOf(config) {
   return config.platform || DEFAULT_PLATFORM;
+}
+
+function platformLabel(platform) {
+  return PLATFORM_LABELS[platform] || platform;
 }
 
 //API path segment for the game - mod.io accepts "@{name_id}" anywhere a numeric game id goes
@@ -218,10 +235,15 @@ async function fetchFileByName(config, modId, fileName) {
   }
 }
 
-//The file the site currently serves for the configured platform. mod.io keeps one live file per
-//platform; the record's own modfile is usually that same file and saves a second request.
+//The file the site currently serves for the configured platform (null when the mod only has files
+//for other platforms). mod.io keeps one live file per platform; a game without per-platform files
+//lists none and has just the record's modfile, which also saves a request when it is the live file.
 async function liveFile(config, mod) {
-  const live = (mod.platforms || []).find((entry) => entry.platform === platformOf(config));
+  const platforms = mod.platforms || [];
+  const live = platforms.find((entry) => entry.platform === platformOf(config));
+  if (live === undefined && platforms.length > 0) {
+    return null;
+  }
   const liveId = live?.modfile_live;
   if (liveId === undefined || String(liveId) === String(mod.modfile?.id)) {
     return mod.modfile || null;
@@ -321,6 +343,44 @@ async function resolveModioModForInstall(config, ref) {
   return cdnUrl !== null ? { ...resolved, downloadUrl: cdnUrl } : resolved;
 }
 
+// --- download clicks ------------------------------------------------------
+
+//Fetch the file a Download click named, unless it is a build for another platform - then the
+//configured platform's live file goes through the same capture path instead, so what follows is
+//the usual claim and stamp. A file naming no platforms (a game without per-platform files) is left
+//alone, and so is one whose lookup failed: the click still works as it did without this check.
+async function downloadClickedFile(ctx, url, ref) {
+  const { config, adapterState } = ctx;
+  const clicked = await fetchFile(config, ref.modId, ref.fileId);
+  const platforms = (clicked?.platforms || []).map((entry) => entry.platform);
+  if (platforms.length === 0 || platforms.includes(platformOf(config))) {
+    ctx.requestDownload(url, false);
+    return;
+  }
+  const mod = await fetchMod(config, ref.modId);
+  const file = isAvailable(mod) ? await liveFile(config, mod) : null;
+  const liveUrl = file?.download?.binary_url;
+  const clickedLabel = platformLabel(platforms[0]);
+  const wantedLabel = platformLabel(platformOf(config));
+  log("info", "swapping a mod.io download click for another platform", {
+    modId: ref.modId,
+    clickedFile: ref.fileId,
+    clickedPlatforms: platforms,
+    installedFile: file?.id,
+  });
+  adapterState.api.sendNotification({
+    id: `modio-platform-swap-${ref.modId}`,
+    type: liveUrl ? "info" : "warning",
+    message: liveUrl
+      ? `That file is the ${clickedLabel} build - installing the ${wantedLabel} file instead`
+      : `That file is the ${clickedLabel} build and this mod has no ${wantedLabel} file to install`,
+    displayMS: 8000,
+  });
+  if (liveUrl) {
+    ctx.requestDownload(liveUrl, false);
+  }
+}
+
 // --- update comparison ----------------------------------------------------
 
 //Whether the mod's current file is newer than the installed one. File ids grow with every upload
@@ -376,13 +436,21 @@ const adapter = {
   extraAttributes: (config, resolved) => [[fileIdAttribute(config), Number(resolved.fileId)]],
 
   //A download URL is handed to the capture chain, so a click on a mod that is already installed
-  //still downloads - the install driver would skip it as installed
+  //still downloads - the install driver would skip it as installed. A popup that names its file is
+  //checked for the platform first; a navigation is already downloading, so it is too late for that.
   routeUrl: (ctx, url, navigated) => {
-    if (parseDownloadRef(url) !== null) {
-      ctx.requestDownload(url, navigated);
-      return true;
+    const ref = parseDownloadRef(url);
+    if (ref === null) {
+      return false;
     }
-    return false;
+    if (navigated || ref.fileId === undefined) {
+      ctx.requestDownload(url, navigated);
+    } else {
+      downloadClickedFile(ctx, url, ref).catch((err) =>
+        log("warn", `Failed to start a mod.io download: ${err}`),
+      );
+    }
+    return true;
   },
 
   //Updates are compared on file id, which is the only reliable ordering mod.io offers
@@ -398,9 +466,15 @@ const adapter = {
 
 const browser = createBrowserModule(adapter);
 
+//Install the event handlers, and keep the api for routeUrl, whose context does not carry it
+function onceModioBrowser(api, gameSpec, config) {
+  browser.pageState(gameSpec).adapterState.api = api;
+  browser.onceBrowser(api, gameSpec, config);
+}
+
 module.exports = {
   registerModioBrowser: browser.registerBrowser,
-  onceModioBrowser: browser.onceBrowser,
+  onceModioBrowser,
   makeModioBrowsePage: browser.makeBrowsePage,
   installModioMod: browser.installItem,
   resolveModioMod,

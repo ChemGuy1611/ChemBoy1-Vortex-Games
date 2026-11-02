@@ -266,6 +266,7 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `download_cover_art(appid, game_name, out_path, sgdb_key)`                                          | Download and save a 640x360 cover art JPEG with no title text. SteamGridDB grid/hero or Steam `library_hero.jpg`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `download_title_image(appid, game_name, out_path, sgdb_key, hero_id=None, logo_id=None)`            | Download and save a 1920x1080 title image (with logo text). SteamGridDB hero+logo composite, grid, or Steam capsule. `hero_id`/`logo_id` force a specific SteamGridDB asset instead of auto-picking by appid; a pinned asset never falls back to the grid/capsule art - if the composite cannot be built the call returns `(False, None)` and `out_path` is left untouched. Composite logo is scaled to `TITLE_LOGO_WIDTH_FRAC` (0.50) of image width, capped at `TITLE_LOGO_HEIGHT_FRAC` (0.40) of height; small native logos are upscaled.                                                                                                                                                                                                                                                                                                                                                        |
 | `download_banner_image(appid, game_id, out_path, sgdb_key)`                                         | Download official SteamGridDB hero at full size. No crop or resize.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `SVG_PATH_COMMAND_RE`, `SVG_PATH_NUMBER_RE`                                                         | Tokenizers for SVG path data: `(command, raw args)` pairs, and the numbers inside the args (compact `.5.5` and exponent forms included; arc flags written without separators are not split). Shared by `render_svg.py` and `svg_to_mdi.py`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 
 ### vortex_utils.py -- Requirements
 
@@ -576,6 +577,8 @@ The split exists because svglib's path parser drops paths it cannot handle and r
 
 reportlab 5.x also dropped its bundled `_renderPM` C backend, so `rlPyCairo` + `pycairo` are what actually draw the file-mode pixels. The pycairo wheel is self-contained on Windows — no GTK or Cairo install needed.
 
+The path tokenizer (`SVG_PATH_COMMAND_RE` / `SVG_PATH_NUMBER_RE`) comes from `vortex_utils.py`, shared with `svg_to_mdi.py`.
+
 ### render_svg.py — Usage
 
 ```sh
@@ -600,6 +603,99 @@ python render_svg.py --js-const DEFAULT_MDI resources/browsers/thunderstore_brow
 
 - PNG at the requested size, plus the intermediate `.svg` next to it when rendering from a path string.
 - Exit code `0` on success, `1` on a missing file, unparseable SVG, or a const the regex cannot find.
+
+---
+
+## svg_to_mdi.py
+
+Rescales a vendor SVG logo's path data into the 24x24 viewBox an `mdi:` page icon takes. Browser modules trace each site's own mark for their sidebar icon (`defaults.mdi`), and a vendor file uses its own viewBox (mod.io's cog is 3478 x 3638 units, offset from the origin), so the path has to be moved and scaled first. The script reads the viewBox and path(s), fits the artwork into the target size minus padding, centres it and prints the new path data: absolute coordinates are scaled and shifted, relative ones only scaled, arc radii scaled with their flags kept. It reproduces the `DEFAULT_MDI` shipped in `modio_browser.js` exactly.
+
+`transform=` attributes are not applied - the script warns when it sees one, and `--translate X Y` covers the plain-translate case (ModWorkshop's logo carries `translate(-23.375834,-34.820791)`).
+
+### svg_to_mdi.py — Requirements
+
+Python standard library plus `vortex_utils.py` (`SVG_PATH_COMMAND_RE`, `SVG_PATH_NUMBER_RE`). `--render` additionally needs `render_svg.py`'s packages.
+
+### svg_to_mdi.py — Usage
+
+```sh
+python svg_to_mdi.py FILE.svg [--path-index N ...] [--translate X Y] [--pad P] [--size S] [--decimals D] [--js-const NAME] [--render PNG]
+python svg_to_mdi.py modio-cog-white.svg
+python svg_to_mdi.py mws_logo_white.svg --path-index 0 --translate -23.375834 -34.820791
+python svg_to_mdi.py logo.svg --js-const DEFAULT_MDI --render icon.png
+```
+
+- `FILE.svg` — vendor SVG with a `viewBox` and one or more `<path d="...">` elements.
+- `--path-index N` — use only path N (0-based, repeatable); default is every path, joined. A multi-colour logo usually has one monochrome outline path worth keeping.
+- `--translate X Y` — translate applied to the source coordinates before scaling.
+- `--pad P` — margin left inside the target box (default 0.5).
+- `--size S` — target viewBox size (default 24).
+- `--decimals D` — decimal places (default 2).
+- `--js-const NAME` — print `const NAME = "...";` instead of bare path data.
+- `--render PNG` — also render the result at 256 px through `render_svg.py`. An icon is always looked at before it ships.
+
+### svg_to_mdi.py — Output
+
+- The rescaled path data (or const declaration) on stdout; the transform warning on stderr.
+- Exit code `1` when the file has no viewBox, no paths, or a malformed path.
+
+---
+
+## find_modio_games.py
+
+Finds which game extensions in the repo have a mod.io page. Fetches every game mod.io lists (about 400) and matches each against the `game-*` folders: by Steam app id first (mod.io keeps Steam store links in a game's `other_urls`, compared with every `STEAMAPP_ID*` constant), then by exact normalised name (`GAME_NAME*` constants). Each match shows the `name_id` a browser page's `modioGame` config needs, mod count, whether direct downloads are open, platforms, and whether the extension already bundles `modio_browser.js`. Uses mod.io's keyless website endpoint; see `resources/MODIO_API.md`.
+
+### find_modio_games.py — Requirements
+
+Python standard library plus `vortex_utils.py` (`http_get_json`, `iter_extension_folders`, `normalize_game_name`). No API key.
+
+### find_modio_games.py — Usage
+
+```sh
+python find_modio_games.py
+python find_modio_games.py --loose
+python find_modio_games.py --json modio_matches.json
+```
+
+- `--loose` — also list fuzzy name candidates (containment, or similarity of 0.85 or more) for games whose mod.io record has no Steam link. Candidates only: `RuneScape: Dragonwilds` matches mod.io's classic `RuneScape`, a different game.
+- `--json FILE` — write `{ matches, loose }` as JSON.
+
+### find_modio_games.py — Output
+
+- A table, most mods first: extension, `modioGame`, mods, match kind (`steam` / `name`), `dl` (`open` when `api_access_options` allows direct downloads, which a browser page needs; `auth` otherwise), adopted, platforms.
+- With `--loose`, the candidate list after it.
+
+---
+
+## modio_listings.py
+
+Lists what is inside a mod.io game's most popular mod archives without downloading them. For each mod it takes the live file for one platform (mod.io keeps one per platform, and a mod's default file can be another platform's build: Abiotic Factor's is the PS5 one), then reads only the zip's central directory with two HTTP range requests, so even 2 GB archives list in about a second. Uses mod.io's keyless website endpoint (`https://mod.io/v1` with `X-Modio-Origin: web`); see `resources/MODIO_API.md`.
+
+Its JSON output is the input of `replay_installers.js`, which shows which of an extension's installers would claim each archive.
+
+### modio_listings.py — Requirements
+
+Python standard library plus `vortex_utils.py` (`http_get_json`, `http_get_bytes`). No API key.
+
+### modio_listings.py — Usage
+
+```sh
+python modio_listings.py GAME [--count N] [--platform P] [--out FILE]
+python modio_listings.py stalker2 --count 40
+python modio_listings.py abiotic-factor --out abiotic.json
+python modio_listings.py 12104
+```
+
+- `GAME` — the game's mod.io `name_id` (the slug in `https://mod.io/g/<slug>`) or its numeric id.
+- `--count N` — mods to list, most popular first (default 20).
+- `--platform P` — mod.io platform whose live file is listed (default `windows`).
+- `--out FILE` — output JSON (default `modio_listings_<name_id>.json` in the current folder).
+
+### modio_listings.py — Output
+
+- One line per mod: entry count, `not a plain zip` (7z, rar, zip64), the HTTP error, or `unreachable` (a timed-out CDN read is recorded and the run continues).
+- JSON list of `{ modId, name, filename, size, files }`, where `files` is the archive's entry paths (`/`-separated, directories included) or `null` when it could not be read.
+- Exit code `1` when the game is not found on mod.io.
 
 ---
 
@@ -1284,6 +1380,36 @@ With `--json`, stdout receives:
 ```
 
 `form` is `access` (`util.x`), `destructure` (`const { x } = util`), `unresolved-receiver` or `info.json`.
+
+---
+
+## replay_installers.js
+
+Runs real archive listings through a game extension's installers without Vortex and reports which installer claims each archive and where its files would land. The extension is loaded under the template test harness (`tests/harness/load-extension.js`), so the installers are the extension's own. For each archive they are tried in priority order; the first whose `testSupported` accepts the file list runs its install function, and the copy instructions and mod type it returns are printed. Nothing is installed or written. Use it before adopting a new mod source, or after an installer change, to see how a whole catalogue of real archives is handled.
+
+### replay_installers.js — Requirements
+
+Node.js 24. No packages beyond the repo's test harness.
+
+### replay_installers.js — Usage
+
+```sh
+node replay_installers.js GAME_ID LISTINGS.json [--answer cancel|all] [--show N]
+node replay_installers.js stalker2heartofchornobyl modio_listings_stalker2.json
+node replay_installers.js abioticfactor abiotic.json --answer all --show 10
+```
+
+- `GAME_ID` — extension id, with or without the `game-` prefix.
+- `LISTINGS.json` — a list of `{ name, filename?, files }` with `/`-separated archive entry paths, as written by `modio_listings.py`. Entries with `files: null` are skipped.
+- `--answer cancel|all` — how an installer's dialog is answered: `cancel` (default; the archive is reported as stopped after the dialog) or `all` (the "Install All" button of a multi-file chooser).
+- `--show N` — copy instructions printed per archive (default 4).
+
+### replay_installers.js — Output
+
+- One block per archive: claiming installer and priority, mod type, files copied out of total, any dialog the installer raised, duplicate destinations, and the first N `source => destination` lines. `!!` marks an archive no installer claims or whose install stopped.
+- A tally per installer at the end.
+- The harness imports `node:test`, so a few `ℹ tests 0` summary lines follow the output; ignore them.
+- Exit code `1` when the extension or the listings file cannot be read.
 
 ---
 

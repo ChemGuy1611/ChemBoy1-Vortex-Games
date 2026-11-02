@@ -353,7 +353,8 @@ Three traps the two live adapters already hit:
   far has had a fetchable logo — check `/favicon.ico`, an `og:image` or `apple-touch-icon` in the served
   HTML, and `/assets/*logo*.svg` before concluding otherwise, retrying with a browser `User-Agent` since
   an intermittent bot-block looks exactly like a missing file. A vendor SVG's outline path rescaled into
-  the 24x24 viewBox beats anything hand-drawn.
+  the 24x24 viewBox beats anything hand-drawn: `python svg_to_mdi.py logo.svg --render icon.png` does
+  the rescale and draws the result.
 - **Anything used by exactly one source stays in that adapter.** The base is only allowed to grow when
   two sources do the same thing the same way.
 
@@ -410,7 +411,7 @@ base skips both.
 | `modworkshop_browser.js`  | modworkshop.net         | `game-roadtovostok`                                                                                                                                                                                                                                                                                                                               |
 | `fcmodding_browser.js`    | downloads.fcmodding.com | `game-farcry3`, `game-farcry4`, `game-farcry5`, `game-farcry6`, `game-farcrynewdawn`, `game-farcryprimal`, `template-farcry`                                                                                                                                                                                                                      |
 | `moddb_browser.js`        | moddb.com               | `game-darkmessiahofmightandmagic`, `game-returntocastlewolfenstein`, `game-deusex`, `game-deusexinvisiblewar`, `game-doom3`, `game-gzdoom` (two pages), `game-painkillerblackedition`, `game-redfactionguerrillaremarstered`, `game-systemshock225thanniversaryremaster` (classic game only), `game-unrealtournament2004`, `game-wolfenstein2009` |
-| `modio_browser.js`        | mod.io                  | `game-quarantinezonethelastcheck`                                                                                                                                                                                                                                                                                                                 |
+| `modio_browser.js`        | mod.io                  | `game-quarantinezonethelastcheck`, `game-anno117paxromana`, `game-abioticfactor`                                                                                                                                                                                                                                                                  |
 
 ### Quirks per source
 

@@ -415,7 +415,6 @@ const SIGBYPASS_DOMAIN = "site";
 //ModKit (only used if game supports)
 const MODKITMOD_ID = `${GAME_ID}-modkitmod`;
 const MODKITMOD_NAME = "ModKit mod";
-const MODKITMOD_FILE = "mod.json";
 const MODKITMOD_EXT = ".uplugin";
 const MODKITMOD_PATH = path.join(EPIC_CODE_NAME, "Mods");
 
@@ -950,7 +949,6 @@ async function deploy(api) {
 //Installer test for modkit mod files
 function testModKitMod(files, gameId) {
   const isMod = files.some((file) => path.extname(file).toLowerCase() === MODKITMOD_EXT);
-  //const isJson = files.some((file) => path.basename(file).toLowerCase() === MODKITMOD_FILE);
   let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer
@@ -972,7 +970,7 @@ function testModKitMod(files, gameId) {
 }
 
 //Installer install modkit mod files
-async function installModKitMod(files, fileName) {
+function installModKitMod(files) {
   const modFile = files.find((file) => path.extname(file).toLowerCase() === MODKITMOD_EXT);
   const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
@@ -980,21 +978,7 @@ async function installModKitMod(files, fileName) {
   const setModTypeInstruction = { type: "setmodtype", value: MODKITMOD_ID };
   //folder named after the .uplugin file, as Unreal expects - archive and wrapper folder names
   //often carry version suffixes (mod.io archives are named like "mymod_v0911-326r.zip")
-  const MOD_NAME = path.basename(modFile, path.extname(modFile));
-  let MOD_FOLDER = MOD_NAME;
-  /*try {
-    //read mod.json file to get folder name (game will crash if this doesn't match)
-    let contents = await fsp.readFile(path.join(fileName, rootPath, MODKITMOD_FILE), "utf8");
-    contents = util.deBOM(contents);
-    const JSON_OBJECT = JSON.parse(contents);
-    const JSON_MOD_NAME = JSON_OBJECT["modPluginName"];
-    if (typeof JSON_MOD_NAME === "string" && JSON_MOD_NAME !== "") {
-      MOD_FOLDER = JSON_MOD_NAME; //without a name the folder keeps the wrapper or archive name
-    }
-  } catch {
-    //mod.json could not be read.
-    log("error", `Could not read mod.json file for mod ${MOD_NAME}.`);
-  } //*/
+  const MOD_FOLDER = path.basename(modFile, path.extname(modFile));
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
@@ -2666,8 +2650,7 @@ function beatsPakInstaller(files) {
   const segsLower = pathSegments(files).map((seg) => seg.toLowerCase());
   if (hasModKit) {
     const hasModKitExt = files.some((file) => path.extname(file).toLowerCase() === MODKITMOD_EXT);
-    const hasModKitFile = segsLower.includes(MODKITMOD_FILE.toLowerCase());
-    if (hasModKitExt && hasModKitFile) return true; //Mod Kit (25)
+    if (hasModKitExt) return true; //Mod Kit (25)
   }
   const hasBinariesFolder = segsLower.includes("binaries");
   const hasContentFolder = segsLower.includes("content");

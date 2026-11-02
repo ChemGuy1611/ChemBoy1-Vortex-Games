@@ -5,6 +5,21 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ========================================================================
 
+Mod Kit Mods:
+
+Mods produced with the game's mod kit - including the mods hosted on mod.io - identified by a ".uplugin" plugin file.
+
+  Requirements:
+    - Recognised when the archive contains a ".uplugin" file.
+    - Everything beside the ".uplugin" file (its "Content" folder included) is installed into a folder named after the ".uplugin" file.
+
+  Installs to: "AbioticFactor\Mods"
+
+  Common mistakes:
+    - Placing the ".uplugin" file in a different folder from its "Content" folder - only files at or below the ".uplugin" file's folder are installed.
+
+========================================================================
+
 Combo Mods (pak + UE4SS script/DLL together):
 
 Use this layout when one download ships both game content and UE4SS mods. It is recognised by the presence of BOTH a "Content" folder and a "Binaries" folder, laid out exactly as they appear inside the game folder.

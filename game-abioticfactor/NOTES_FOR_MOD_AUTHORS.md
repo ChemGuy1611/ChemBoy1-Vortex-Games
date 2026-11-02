@@ -8,6 +8,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
+| Mod Kit Mods | a `.uplugin` file | `AbioticFactor\Mods` |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `AbioticFactor` |
 | Blueprint Mods (LogicMods) | a `LogicMods` folder | `AbioticFactor\Content\Paks` |
 | Pak Mods | a `.pak` file | `AbioticFactor\Content\Paks\~mods` |
@@ -21,6 +22,21 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Fallback Installer | anything not matched above with no pak file | `AbioticFactor\Binaries\Win64` |
 
 Paths are relative to the game's install folder. Config and save folders are in your user profile, not the game's install folder.
+
+## Mod Kit Mods
+
+Mods produced with the game's mod kit - including the mods hosted on mod.io - identified by a `.uplugin` plugin file.
+
+**Requirements:**
+
+- Recognised when the archive contains a `.uplugin` file.
+- Everything beside the `.uplugin` file (its `Content` folder included) is installed into a folder named after the `.uplugin` file.
+
+Installs to: `AbioticFactor\Mods`
+
+**Common mistakes:**
+
+- Placing the `.uplugin` file in a different folder from its `Content` folder - only files at or below the `.uplugin` file's folder are installed.
 
 ## Combo Mods (pak + UE4SS script/DLL together)
 

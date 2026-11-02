@@ -57,13 +57,17 @@ works too. The `name_id` is the slug in the site URL: `https://mod.io/g/quaranti
 | `status`       | `1` = accepted                                                                  |
 | `visible`      | `1` = public                                                                    |
 | `modfile`      | The current file record (below)                                                 |
-| `platforms`    | `[{ platform, modfile_live }]` - the live file id per platform                  |
+| `platforms`    | `[{ platform, modfile_live }]` - the live file id per platform; may be empty    |
 | `dependencies` | Boolean: whether the mod declares any. The list itself is a separate call       |
 | `tags`         | `[{ name }]`                                                                    |
 
-A mod carries one live file per platform. `modfile` is usually the Windows live file, but pick the
-file from `platforms[].modfile_live` for the platform you install for and fetch it by id when it
-differs.
+A mod carries one live file per platform. `modfile` is one of them and often not the Windows one: of
+the 100 most popular mods in November 2026 it was another platform's file on 97 for Abiotic Factor
+and 47 for STALKER 2. Pick the file from `platforms[].modfile_live` for the platform you install for
+and fetch it by id when it differs. Each platform's file has its own archive name.
+
+A game without per-platform files (Anno 117) has an empty `platforms` on both the mod and the file
+records, and `modfile` is the only live file.
 
 ### Dependencies
 
@@ -109,6 +113,12 @@ Archive naming follows from that:
 On a game whose files anyone may download, the site renders a plain `<a target="_blank">` pointing at
 `binary_url` - a popup, which an embedded page sees in `onNewWindow`.
 
+Which files get a button depends on the game. With no per-platform files, the mod's `modfile` is the
+one live file. With per-platform files, the live list holds one row per platform's live file,
+labelled by platform ("Windows", "PS5", "Xbox Series X", "Windows Server") - the site does not pick
+one, so a user can click another platform's build as easily as the Windows one. Older files are
+listed separately under "Download files manually".
+
 On a game that restricts downloads to logged-in users or purchasers, it instead fetches the file in
 the page and saves it from a `blob:` URL. Vortex's download manager cannot fetch that, so such games
 are not supported by the browser module.
@@ -126,6 +136,11 @@ Content/Paks/Windows/ModNameGame-Windows.utoc
 
 The `.uplugin` sits at the archive root with no wrapper folder, and the archive name carries a
 version and upload suffix, so an installer should name the target folder after the `.uplugin` file.
+Quarantine Zone and Abiotic Factor both ship this layout (Abiotic's sometimes adds
+`Config/<Plugin>Tags.ini`), with no `mod.json`, and load it from `<GameFolder>/Mods/<Plugin>/`.
+
+Anno 117 archives are `<Wrapper>/modinfo.json` plus `data/base/config/...`, sometimes several mods in
+one archive, and install whole into the game's `mods` folder with the wrapper kept.
 
 ## Shared modio_browser.js Module
 
@@ -139,6 +154,12 @@ a managed install, stamped with `modioMod` (mod id), `modioVersion` and `modioFi
   form names the file by its archive name, resolved through `?filename=`.
 - **Installs:** the file clicked is the file installed, even an older one from the Files tab. Installs
   started by the module itself (update notifications, dependencies) take the platform's live file.
+- **Wrong-platform clicks:** before a clicked file downloads, its record is checked. A file listing
+  platforms without the configured one is swapped for that platform's live file, with a notification
+  ("That file is the PS5 build - installing the Windows file instead"). A mod with no file for the
+  platform installs nothing and says so. A file listing no platforms, or a failed lookup, downloads
+  as clicked. `modio_browser.js` keeps the `api` for that notification itself, in the source's
+  `adapterState`, because the base's `routeUrl` context does not carry one.
 - **Updates:** compared by file id.
 - **Dependencies:** offered when the mod's `dependencies` flag is set; mods without any cost no
   extra call.
@@ -146,6 +167,17 @@ a managed install, stamped with `modioMod` (mod id), `modioVersion` and `modioFi
 
 Wiring reference: `resources/browsers/template_modio_browser.js`. Adopters and the base contract:
 `BROWSER_MODULES.md`.
+
+## Repo tools
+
+- `python find_modio_games.py [--loose]` — which `game-*` extensions have a mod.io page, with the
+  `modioGame` value, mod count, download access and adoption state.
+- `python modio_listings.py <name_id> --count 40` — what the most popular archives contain, read
+  from the zip central directory without downloading them.
+- `node replay_installers.js <game_id> modio_listings_<name_id>.json` — which of the extension's
+  installers claims each of those archives and where its files would land.
+
+Details: `SCRIPTS.md`.
 
 ## See also
 

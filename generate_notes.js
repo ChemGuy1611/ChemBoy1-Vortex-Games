@@ -1013,11 +1013,12 @@ const PROSE = [
       };
     },
   },
-  // Quarantine Zone's mod kit (and its mod.io mods) ship no mod.json - the installer keys on the
-  // .uplugin alone and names the folder after it, unlike the template's manifest-driven variant.
+  // Quarantine Zone's and Abiotic Factor's mod kits (and their mod.io mods) ship no mod.json - the
+  // installer keys on the .uplugin alone and names the folder after it, unlike the template's
+  // manifest-driven variant.
   {
     fn: "testModKitMod",
-    game: "game-quarantinezonethelastcheck",
+    game: ["game-quarantinezonethelastcheck", "game-abioticfactor"],
     build: (v) => {
       if (!v.MODKITMOD_EXT) return null;
       return {
@@ -3774,13 +3775,14 @@ function buildNotes(dirName, src) {
   const dropped = [];
 
   for (const inst of sorted) {
-    // A block pinned with `game` applies to that one extension folder only. Needed where a test
-    // function name is shared across extensions that have no engine key to tell them apart.
+    // A block pinned with `game` applies to those extension folders only (one name or an array).
+    // Needed where a test function name is shared across extensions that have no engine key to
+    // tell them apart.
     const block = PROSE.find(
       (p) =>
         p.fn === inst.testFn &&
         (p.game !== undefined
-          ? p.game === dirName
+          ? [p.game].flat().includes(dirName)
           : Array.isArray(p.engine)
             ? p.engine.includes(engine)
             : p.engine === engine),
