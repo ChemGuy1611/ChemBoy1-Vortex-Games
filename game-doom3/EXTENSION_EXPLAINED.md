@@ -28,6 +28,7 @@
 | Flag | Value | Description |
 | --- | --- | --- |
 | `moddbBrowser` | `true` | register the "Browse ModDB" page (moddb.com) |
+| `gamebananaBrowser` | `true` | register the "Browse GameBanana" page - browse and install the game's GameBanana mods inside Vortex |
 
 ## Mod Types
 
@@ -49,6 +50,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | --- | --- |
 | `doom3-dhewm3` | 25 |
 | `doom3-binaries` | 27 |
+| `doom3-pk4folder` | 29 |
 | `doom3bfgedition-root` | 25 |
 
 ## Toolbar Actions
@@ -59,6 +61,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open Downloads Folder
 - Open PCGamingWiki Page
 - Open Nexus Mods Page
+- Open GameBanana Page
 - Open SteamDB Page
 - Submit Bug Report
 - Open PCGamingWiki Page

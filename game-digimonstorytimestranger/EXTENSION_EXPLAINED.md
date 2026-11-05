@@ -30,6 +30,7 @@
 | `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
 | `setupNotification` | `true` | enable to show the user a notification with special instructions (specify below) - default true: Reloaded-II Mod Manager setup instructions are always relevant |
 | `debug` | `false` | toggle for debug mode |
+| `gamebananaBrowser` | `true` | register the "Browse GameBanana" page - browse and install the game's GameBanana mods inside Vortex |
 
 ## Mod Types
 
@@ -63,6 +64,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open Downloads Folder
 - Open PCGamingWiki Page
 - Open Nexus Mods Page
+- Open GameBanana Page
 - Open SteamDB Page
 - Submit Bug Report
 

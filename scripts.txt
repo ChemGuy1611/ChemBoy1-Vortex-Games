@@ -18,8 +18,8 @@ make_title_image.py
 fetch_exec_icon.py
 render_svg.py
 svg_to_mdi.py
-find_modio_games.py
 modio_listings.py
+mod_listings.py
 fetch_nexus_stats.py
 release_extension.py
 release_scope.py
@@ -35,6 +35,7 @@ setup_test_folder.py
 deploy_to_vortex.py
 categorize_games.py
 audit_parity.py
+audit_modules.py
 verify_propagation.py
 audit_mod_pages.py
 audit_steam_appinfo.py

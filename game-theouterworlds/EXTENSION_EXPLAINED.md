@@ -68,7 +68,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `theouterworlds-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `theouterworlds-logicmods` | high | `{gamePath}/Indiana/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `theouterworlds-logicmods` | high | `{gamePath}/Indiana/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `theouterworlds-pakalt` | high | `{gamePath}/Indiana/Content/Paks` |
 | Root Folder | `theouterworlds-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `theouterworlds-uesortablepak` | 25 | `{gamePath}/Indiana/Content/Paks/~mods` |

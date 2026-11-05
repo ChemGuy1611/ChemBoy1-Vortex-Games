@@ -1,8 +1,9 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.1.0] - 2026-11-05
 
-- None
+- Changed: LogicMods (Blueprint) mods now always install directly into the LogicMods folder. Installed mods convert automatically when you next manage the game. Deploy when prompted.
+- Added: A notification when a pak mod looks like a Blueprint mod, with a button to set it as a LogicMods mod.
 
 ## [1.0.6] - 2026-11-01
 

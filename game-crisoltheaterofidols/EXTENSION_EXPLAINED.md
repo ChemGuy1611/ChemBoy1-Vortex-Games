@@ -63,7 +63,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `crisoltheaterofidols-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `crisoltheaterofidols-logicmods` | high | `{gamePath}/CRToiPrototype/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `crisoltheaterofidols-logicmods` | high | `{gamePath}/CRToiPrototype/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `crisoltheaterofidols-pakalt` | high | `{gamePath}/CRToiPrototype/Content/Paks` |
 | Root Folder | `crisoltheaterofidols-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `crisoltheaterofidols-uesortablepak` | 25 | `{gamePath}/CRToiPrototype/Content/Paks/~mods` |

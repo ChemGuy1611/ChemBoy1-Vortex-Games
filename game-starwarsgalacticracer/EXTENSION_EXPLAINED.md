@@ -59,7 +59,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `starwarsgalacticracer-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `starwarsgalacticracer-logicmods` | high | `{gamePath}/Griffin/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `starwarsgalacticracer-logicmods` | high | `{gamePath}/Griffin/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `starwarsgalacticracer-pakalt` | high | `{gamePath}/Griffin/Content/Paks` |
 | Root Folder | `starwarsgalacticracer-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `starwarsgalacticracer-uesortablepak` | 25 | `{gamePath}/Griffin/Content/Paks/~mods` |

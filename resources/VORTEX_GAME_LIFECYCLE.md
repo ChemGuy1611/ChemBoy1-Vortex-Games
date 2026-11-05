@@ -165,15 +165,18 @@ discovered")` rather than crashing.
   emitting `gamemode-activated`, and `changeGameMode`'s comment block warns handlers about this.
 - A failed activation always clears the next profile (`setNextProfile(undefined)`) — the visible
   symptom is being dropped back to the dashboard.
-- **Epic store finds no games in 2.10.0-beta.1 through beta.3 (and 2.9.0-beta.2).** Stable 2.9.0
-  and 2.9.1 are not affected. The core Epic store passes the raw
-  `.item` file text to its schema instead of the parsed JSON, so every manifest is rejected. The log
-  shows `Failed to parse EGS manifest ... expected object, received string` once per `.item` file,
-  then `Game entry not found` for every Epic-only game, even when `EPICAPP_ID` matches the
-  manifest's `AppName`. Those betas also read only the `WOW6432Node` registry key, so a current
-  64-bit Epic launcher that writes only the native key is not seen at all. Both are fixed upstream by
-  PR #24596 (`Fix Epic game detection`, merged into master, not in any tag up to beta.3). Until a release ships the fix, set the
-  game folder manually. Extension code cannot work around it through `findByAppId`.
+- **Epic store finds no games in 2.10.0 stable and 2.10.0-beta.1 through beta.3.** The core Epic
+  store passes the raw `.item` file text to its schema instead of the parsed JSON, so every manifest
+  is rejected. The log shows `Failed to parse EGS manifest ... expected object, received string` once
+  per `.item` file, then `Game entry not found` for every Epic-only game, even when `EPICAPP_ID`
+  matches the manifest's `AppName`. The raw-text call dates to commit `d3520c382` (#24124) and is also
+  in the `v2.9.1` source, where the rejection is not logged; older builds were not run to confirm it.
+  These versions also read only the `WOW6432Node` registry key, so a current 64-bit Epic launcher
+  that writes only the native key is not seen at all. Both are fixed by PR #24596 (`Fix Epic game
+  detection`), which is on `master` but not on `release/v2.10`, so 2.10.0 shipped without it (backport
+  request: issue #24739). Until a
+  release ships the fix, set the game folder manually. Extension code cannot work around it through
+  `findByAppId`.
 
 ## See also
 

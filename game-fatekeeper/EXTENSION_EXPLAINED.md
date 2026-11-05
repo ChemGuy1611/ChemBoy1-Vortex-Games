@@ -59,7 +59,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `fatekeeper-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `fatekeeper-logicmods` | high | `{gamePath}/SLASHER/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `fatekeeper-logicmods` | high | `{gamePath}/SLASHER/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `fatekeeper-pakalt` | high | `{gamePath}/SLASHER/Content/Paks` |
 | Root Game Folder | `fatekeeper-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `fatekeeper-uesortablepak` | 25 | `{gamePath}/SLASHER/Content/Paks/~mods` |

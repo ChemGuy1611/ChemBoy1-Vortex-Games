@@ -61,7 +61,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `voidtrain-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `voidtrain-logicmods` | high | `{gamePath}/VoidTrain/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `voidtrain-logicmods` | high | `{gamePath}/VoidTrain/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `voidtrain-pakalt` | high | `{gamePath}/VoidTrain/Content/Paks` |
 | Root Folder | `voidtrain-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `voidtrain-uesortablepak` | 25 | `{gamePath}/VoidTrain/Content/Paks/~mods` |

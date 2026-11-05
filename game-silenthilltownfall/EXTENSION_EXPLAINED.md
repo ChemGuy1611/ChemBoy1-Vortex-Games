@@ -61,7 +61,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `silenthilltownfall-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `silenthilltownfall-logicmods` | high | `{gamePath}/Townfall/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `silenthilltownfall-logicmods` | high | `{gamePath}/Townfall/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `silenthilltownfall-pakalt` | high | `{gamePath}/Townfall/Content/Paks` |
 | Root Folder | `silenthilltownfall-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `silenthilltownfall-uesortablepak` | 25 | `{gamePath}/Townfall/Content/Paks/~mods` |

@@ -140,11 +140,10 @@ from vortex_utils import (
     resolve_extension_folder, extension_prefix,
     changelog_entry_is_empty, unreleased_intermediate_sections,
     PACKAGE_EXCLUDES, is_valid_nexus_game_id, set_info_mod_id,
-    NEVER_UPLOAD_GAMES, DEPRECATED_GAMES,
+    NEVER_UPLOAD_GAMES, DEPRECATED_GAMES, SEVENZIP,
 )
 from nexus_upload import pick_file_group, upload_zip, extract_changelog_entry
 from sync_mod_pages import push_pages
-SEVENZIP = os.environ.get("SEVENZIP_PATH", r"C:\Program Files\7-Zip\7z.exe")
 NEXUS_SITE_URL = "https://www.nexusmods.com/games/site"
 UNRELEASED_LIST = "games-unreleased.txt"
 

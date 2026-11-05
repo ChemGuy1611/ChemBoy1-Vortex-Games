@@ -2,8 +2,8 @@
 Name: Mewgenics Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-25
+Version: 1.1.1
+Date: 2026-11-04
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -14,7 +14,8 @@ const path = require("path");
 const template = require("string-template");
 const { parseStringPromise } = require("xml2js");
 const React = require("react");
-const { registerThunderstoreBrowser, onceThunderstoreBrowser } = require("./thunderstore_browser");
+//Embedded ModWorkshop browser page (needs base_browser.js beside it)
+const { registerModWorkshopBrowser, onceModWorkshopBrowser } = require("./modworkshop_browser");
 //const winapi = require('winapi-bindings');
 
 /*const USER_HOME = util.getVortexPath("home");
@@ -24,7 +25,7 @@ const ROAMINGAPPDATA = util.getVortexPath("appData");
 //const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Feature toggles
-const thunderstoreBrowser = true; //register the "Browse Thunderstore" page
+const modworkshopBrowser = true; //register the "Browse ModWorkshop" page - browse and install the game's ModWorkshop mods inside Vortex
 
 //Specify all the information about the game
 const GAME_ID = "mewgenics";
@@ -37,11 +38,14 @@ const XBOXEXECNAME = null;
 const XBOX_PUB_ID = ""; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
-const TS_COMMUNITY = "mewgenics"; //https://thunderstore.io/c/mewgenics/
-const TS_BROWSER_CONFIG = {
-  tsCommunity: TS_COMMUNITY,
-  pageId: `${GAME_ID}-thunderstore-browse`,
-  pageTitle: "Browse Thunderstore",
+//Embedded ModWorkshop browser page - the user browses the live site and installs from it.
+//ModWorkshop mods are ordinary archives, so they land through the same installers as any other.
+const MWS_GAME = "mewgenics"; //ModWorkshop game slug - https://modworkshop.net/g/mewgenics
+const MWS_URL = `https://modworkshop.net/g/${MWS_GAME}`;
+const MWS_BROWSER_CONFIG = {
+  mwsGame: MWS_GAME,
+  pageId: `${GAME_ID}-modworkshop-browse`,
+  pageTitle: "Browse ModWorkshop",
 };
 
 const GAME_NAME = "Mewgenics";
@@ -1479,9 +1483,9 @@ function applyGame(context, gameSpec) {
     { name: LOADER_NAME },
   );
 
-  //register the embedded Thunderstore browser page
-  if (thunderstoreBrowser) {
-    registerThunderstoreBrowser(context, gameSpec, TS_BROWSER_CONFIG);
+  //register the embedded ModWorkshop browser page
+  if (modworkshopBrowser) {
+    registerModWorkshopBrowser(context, gameSpec, MWS_BROWSER_CONFIG);
   }
 
   //register mod installers
@@ -1594,6 +1598,27 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     },
   );
+  if (modworkshopBrowser) {
+    context.registerAction(
+      "mod-icons",
+      300,
+      "open-ext",
+      {},
+      "Open ModWorkshop Page",
+      () => {
+        try {
+          window.api.shell.openUrl(MWS_URL);
+        } catch (err) {
+          context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+        }
+      },
+      () => {
+        const state = context.api.getState();
+        const gameId = selectors.activeGameId(state);
+        return gameId === GAME_ID;
+      },
+    );
+  }
   context.registerAction(
     "mod-icons",
     300,
@@ -1695,9 +1720,9 @@ function main(context) {
   context.once(() => {
     // put code here that should be run (once) when Vortex starts up
     const api = context.api;
-    if (thunderstoreBrowser) {
+    if (modworkshopBrowser) {
       //claims downloads started from the browse page, and update-checks the mods installed through it
-      onceThunderstoreBrowser(api, spec, TS_BROWSER_CONFIG);
+      onceModWorkshopBrowser(api, spec, MWS_BROWSER_CONFIG);
     }
     api.onAsync("did-deploy", async (profileId, deployment) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);

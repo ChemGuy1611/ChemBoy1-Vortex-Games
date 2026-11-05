@@ -61,6 +61,13 @@ caps at ten items with no paging, the only activity metric available is _ten ite
 days they span_, i.e. files per month. That is enough to tell a live scene from a dead page and
 nothing more.
 
+Measure from the oldest item to today rather than across the window, or ten files from 2012 read as
+active, and keep a floor of about 90 days, or one file posted yesterday reads as 30 a month. Even
+then a burst can fake a scene: Bloodborne's and Resident Evil Requiem's whole feeds are one author's
+variants posted within days, so look at the titles. Many games have a page with no files, whose
+feed answers `200` with no items. The channel `<title>` (`Files RSS feed - Doom III - ModDB`) names the
+page's game, which is the only way to check a guessed slug without a browser.
+
 A `200` with items means the slug is real. A `404` means it is not. A `301` means the slug is real
 but not canonical — **follow it**, because the redirect target is the slug the site actually uses,
 and matching page paths against a non-canonical slug silently matches nothing.

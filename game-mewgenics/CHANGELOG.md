@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.1] - 2026-11-04
+
+- Changed: Browse pages no longer open ads and other pop-ups in your web browser. A blocked page shows a notification with an "Open" button instead.
+
+## [1.1.0] - 2026-11-03
+
+- Changed: Replaced the "Browse Thunderstore" page with a "Browse ModWorkshop" page, where the game's mods are, and added an "Open ModWorkshop Page" button.
+
 ## [1.0.2] - 2026-10-25
 
 - Added the Nexus mod ID to the extension info.

@@ -61,7 +61,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `nobodywantstodie-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `nobodywantstodie-logicmods` | high | `{gamePath}/detnoir/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `nobodywantstodie-logicmods` | high | `{gamePath}/detnoir/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `nobodywantstodie-pakalt` | high | `{gamePath}/detnoir/Content/Paks` |
 | Root Folder | `nobodywantstodie-root` | high | `{gamePath}` |
 | UE5 Paks | `nobodywantstodie-ue5` | high | `{gamePath}/detnoir/Content/Paks/~mods` |

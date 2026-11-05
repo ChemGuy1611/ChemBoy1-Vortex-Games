@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.2.0] - 2026-11-05
+
+- Changed: LogicMods (Blueprint) mods now always install directly into the LogicMods folder. Installed mods convert automatically when you next manage the game. Deploy when prompted.
+- Added: A notification when a pak mod looks like a Blueprint mod, with a button to set it as a LogicMods mod.
+
+## [1.1.2] - 2026-11-04
+
+- Changed: Browse pages no longer open ads and other pop-ups in your web browser. A blocked page shows a notification with an "Open" button instead.
+
 ## [1.1.1] - 2026-11-01
 
 - Fixed: Modkit mods with a FOMOD installer are no longer listed on the Paks load order page.

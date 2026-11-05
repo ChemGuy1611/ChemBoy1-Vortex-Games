@@ -62,7 +62,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `highonlife-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `highonlife-logicmods` | high | `{gamePath}/Oregon/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `highonlife-logicmods` | high | `{gamePath}/Oregon/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `highonlife-pakalt` | high | `{gamePath}/Oregon/Content/Paks` |
 | Root Folder | `highonlife-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `highonlife-uesortablepak` | 25 | `{gamePath}/Oregon/Content/Paks/~mods` |

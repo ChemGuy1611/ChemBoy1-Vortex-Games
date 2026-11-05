@@ -10,7 +10,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | Official Mod Kit Mods | a `mod_manifest.json` manifest | `%USERPROFILE%\Documents\inZOI\Mods` |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `BlueClient` |
-| Blueprint Mods (LogicMods) | a `LogicMods` folder | `BlueClient\Content\Paks` |
+| Blueprint Mods (LogicMods) | a `LogicMods` folder | `BlueClient\Content\Paks\LogicMods` |
 | Creations (Documents) | - | `%USERPROFILE%\Documents\inZOI` |
 | Pak Mods | a `.pak` file | `BlueClient\Content\Paks\~mods` |
 | AIGenerated (Documents) | - | `%USERPROFILE%\Documents\inZOI` |
@@ -81,7 +81,7 @@ Installs to: `BlueClient`
 
 Blueprint mods built against UE4SS must sit inside a folder named `LogicMods`. This is the single most common packaging mistake for Unreal games.
 
-> **NOTE:** A blueprint `.pak` outside a `LogicMods` folder will install, but it will not work in game.
+> **NOTE:** You MUST include a `LogicMods` folder above your `.pak` file. Without it, the mod installs as a regular pak mod and will not load until the player switches it.
 
 ```text
 MyBlueprintMod.zip
@@ -92,14 +92,15 @@ MyBlueprintMod.zip
 **Requirements:**
 
 - The archive must contain a folder named `LogicMods` (case does not matter).
-- Everything from the `LogicMods` folder down is copied to the game, keeping its structure.
-- Extra folders above `LogicMods` are fine - the installer finds it at any depth.
+- Every file inside the `LogicMods` folder is copied straight into the game's `LogicMods` folder. Subfolders inside it are not kept.
+- Extra folders above `LogicMods` are fine - the installer finds it at any depth. Files beside `LogicMods` are not installed.
+- If the archive also holds a `.pak` outside `LogicMods`, nothing is flattened: each file keeps its path under `Paks`.
 
-Installs to: `BlueClient\Content\Paks`
+Installs to: `BlueClient\Content\Paks\LogicMods`
 
 **Common mistakes:**
 
-- Putting the `.pak` at the top level of the archive with no `LogicMods` folder. Vortex then treats it as an ordinary pak mod, installs it to the wrong place, and the blueprint mod never loads.
+- Putting the `.pak` at the top level of the archive with no `LogicMods` folder. Vortex then treats it as an ordinary pak mod, so the blueprint mod does not load. If the pak holds a `ModActor` asset, Vortex offers the player a button to move it to `LogicMods`, but only if they accept it.
 - Renaming the folder (`Logic_Mods`, `logicmod`, `BPMods`) - the name must be exactly `LogicMods`.
 
 ## Creations (Documents)

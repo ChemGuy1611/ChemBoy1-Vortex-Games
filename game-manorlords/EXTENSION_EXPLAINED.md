@@ -67,7 +67,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `manorlords-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `manorlords-logicmods` | high | `{gamePath}/ManorLords/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `manorlords-logicmods` | high | `{gamePath}/ManorLords/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `manorlords-pakalt` | high | `{gamePath}/ManorLords/Content/Paks` |
 | Root Folder | `manorlords-root` | high | `{gamePath}` |
 | MLUE4SS Mod | `manorlords-mlue4ss` | high | `{gamePath}/.` |

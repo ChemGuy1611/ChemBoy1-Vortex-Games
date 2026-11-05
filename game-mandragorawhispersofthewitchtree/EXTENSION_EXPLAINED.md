@@ -23,7 +23,6 @@
 | Executable (GOG) | `man.exe` |
 | Executable (Demo) | `man.exe` |
 | Extension Page | [https://www.nexusmods.com/site/mods/1284](https://www.nexusmods.com/site/mods/1284) |
-| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Mandragora%3A_Whispers_of_the_Witch_Tree](https://www.pcgamingwiki.com/wiki/Mandragora%3A_Whispers_of_the_Witch_Tree) |
 
 ## Supported Stores
 

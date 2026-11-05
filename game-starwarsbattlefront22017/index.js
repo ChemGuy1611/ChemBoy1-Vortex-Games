@@ -2,8 +2,8 @@
 Name: STAR WARS Battlefront II Vortex Extension
 Structure: Frostbite Engine - Frosty Mod Manager
 Author: ChemBoy1
-Version: 1.1.2
-Date: 2026-10-25
+Version: 1.2.1
+Date: 2026-11-04
 Notes:
 -
 /////////////////////////////////////////////*/
@@ -15,6 +15,8 @@ const { actions, fs: vfs, util, selectors, log, VortexError } = require("vortex-
 const path = require("path");
 const template = require("string-template");
 const winapi = require("winapi-bindings");
+//Embedded GameBanana browser page (needs base_browser.js beside it)
+const { registerGameBananaBrowser, onceGameBananaBrowser } = require("./gamebanana_browser");
 
 const DOCUMENTS = util.getVortexPath("documents");
 const LOCALAPPDATA = util.getVortexPath("localAppData");
@@ -42,6 +44,8 @@ const EXEC = "starwarsbattlefrontii.exe";
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Star_Wars_Battlefront_II_(2017)";
 const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/112";
+const GB_GAME_ID = "6420"; //GameBanana game id - https://gamebanana.com/games/6420
+const GB_URL = `https://gamebanana.com/games/${GB_GAME_ID}`;
 
 const CONFIG_FOLDER = path.join("STAR WARS Battlefront II", "settings"); // Developer folder, game subfolder (e.g. "BioWare", "Mass Effect Andromeda")
 const FROSTYMOD_FOLDER = "StarWarsBattlefrontII"; // Game-specific folder name inside FrostyModManager/Mods/
@@ -54,6 +58,7 @@ const fallbackInstaller = true; //enable fallback installer. Set false if you ne
 const setupNotification = true; //enable to show the user a notification with special instructions (specify below)
 const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 const debug = false; //toggle for debug mode
+const gamebananaBrowser = true; //register the "Browse GameBanana" page - browse and install the game's GameBanana mods inside Vortex
 
 let GAME_PATH = "";
 let GAME_VERSION = ""; //Game version
@@ -119,6 +124,14 @@ const IGNORE_DEPLOY = [
   path.join("**", "readme*"),
   path.join("**", "license*"),
 ];
+
+//Embedded GameBanana browser page - the user browses the live site and installs from it.
+//GameBanana mods are ordinary archives, so they land through the same installers as any other.
+const GB_BROWSER_CONFIG = {
+  gbGameId: GB_GAME_ID,
+  pageId: `${GAME_ID}-gamebanana-browse`,
+  pageTitle: "Browse GameBanana",
+};
 
 // Filled in from data above
 const spec = {
@@ -1482,6 +1495,27 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     },
   );
+  if (gamebananaBrowser) {
+    context.registerAction(
+      "mod-icons",
+      300,
+      "open-ext",
+      {},
+      "Open GameBanana Page",
+      () => {
+        try {
+          window.api.shell.openUrl(GB_URL);
+        } catch (err) {
+          context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+        }
+      },
+      () => {
+        const state = context.api.getState();
+        const gameId = selectors.activeGameId(state);
+        return gameId === GAME_ID;
+      },
+    );
+  }
   context.registerAction(
     "mod-icons",
     300,
@@ -1562,6 +1596,11 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     },
   );
+
+  //register the embedded GameBanana browser page
+  if (gamebananaBrowser) {
+    registerGameBananaBrowser(context, gameSpec, GB_BROWSER_CONFIG);
+  }
 }
 
 //main function
@@ -1569,6 +1608,10 @@ function main(context) {
   applyGame(context, spec);
   context.once(() => {
     // put code here that should be run (once) when Vortex starts up
+    if (gamebananaBrowser) {
+      //claims downloads started from the browse page, and update-checks the mods installed through it
+      onceGameBananaBrowser(context.api, spec, GB_BROWSER_CONFIG);
+    }
     const api = context.api;
     api.onAsync("did-deploy", async (profileId, deployment) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);

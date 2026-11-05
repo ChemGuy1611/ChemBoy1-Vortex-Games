@@ -60,7 +60,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `humanitz-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `humanitz-logicmods` | high | `{gamePath}/Humanitz/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `humanitz-logicmods` | high | `{gamePath}/Humanitz/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `humanitz-pakalt` | high | `{gamePath}/Humanitz/Content/Paks` |
 | Root Folder | `humanitz-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `humanitz-uesortablepak` | 25 | `{gamePath}/Humanitz/Content/Paks/~mods` |

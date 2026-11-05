@@ -2,8 +2,8 @@
 Name: Street Fighter 6 Vortex Extension
 Structure: 3rd Party Mod Manager (Fluffy)
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-25
+Version: 1.1.1
+Date: 2026-11-04
 Notes:
 - Exe name same in demo version - different Fluffy folder name
 */
@@ -16,6 +16,8 @@ const path = require("path");
 const template = require("string-template");
 const winapi = require("winapi-bindings");
 const { parseStringPromise } = require("xml2js");
+//Embedded GameBanana browser page (needs base_browser.js beside it)
+const { registerGameBananaBrowser, onceGameBananaBrowser } = require("./gamebanana_browser");
 
 //Specify all information about the game
 const STEAMAPP_ID = "1364780";
@@ -32,6 +34,8 @@ const REF_STRING = "REFramework"; //file name for nightly latest URL - constant 
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Street_Fighter_6";
 const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/956"; //Nexus link to this extension. Used for links
+const GB_GAME_ID = "18493"; //GameBanana game id - https://gamebanana.com/games/18493
+const GB_URL = `https://gamebanana.com/games/${GB_GAME_ID}`;
 
 const FLUFFY_FOLDER = "SF6";
 const FLUFFY_FOLDER_DEMO = "SF6_Demo";
@@ -62,6 +66,7 @@ if (HAS_DEMO || hasXbox) {
 }
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
 const debug = false; //toggle for debug mode
+const gamebananaBrowser = true; //register the "Browse GameBanana" page - browse and install the game's GameBanana mods inside Vortex
 
 let GAME_VERSION = "";
 let GAME_PATH = "";
@@ -165,6 +170,14 @@ const IGNORE_DEPLOY = [
   path.join("**", "license*"),
 ];
 let MODTYPE_FOLDERS = [];
+
+//Embedded GameBanana browser page - the user browses the live site and installs from it.
+//GameBanana mods are ordinary archives, so they land through the same installers as any other.
+const GB_BROWSER_CONFIG = {
+  gbGameId: GB_GAME_ID,
+  pageId: `${GAME_ID}-gamebanana-browse`,
+  pageTitle: "Browse GameBanana",
+};
 
 //Filled in from data above
 const spec = {
@@ -1327,6 +1340,27 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     },
   );
+  if (gamebananaBrowser) {
+    context.registerAction(
+      "mod-icons",
+      300,
+      "open-ext",
+      {},
+      "Open GameBanana Page",
+      () => {
+        try {
+          window.api.shell.openUrl(GB_URL);
+        } catch (err) {
+          context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+        }
+      },
+      () => {
+        const state = context.api.getState();
+        const gameId = selectors.activeGameId(state);
+        return gameId === GAME_ID;
+      },
+    );
+  }
   context.registerAction(
     "mod-icons",
     300,
@@ -1442,6 +1476,11 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     },
   ); //*/
+
+  //register the embedded GameBanana browser page
+  if (gamebananaBrowser) {
+    registerGameBananaBrowser(context, gameSpec, GB_BROWSER_CONFIG);
+  }
 }
 
 //Main function
@@ -1450,6 +1489,10 @@ function main(context) {
   context.once(() => {
     const api = context.api;
     // put code here that should be run (once) when Vortex starts up
+    if (gamebananaBrowser) {
+      //claims downloads started from the browse page, and update-checks the mods installed through it
+      onceGameBananaBrowser(context.api, spec, GB_BROWSER_CONFIG);
+    }
     context.api.onAsync("did-deploy", async (profileId, deployment) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(
         context.api.getState(),

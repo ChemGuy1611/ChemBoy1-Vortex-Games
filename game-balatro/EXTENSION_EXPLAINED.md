@@ -29,6 +29,7 @@
 | Flag | Value | Description |
 | --- | --- | --- |
 | `thunderstoreBrowser` | `true` | register the "Browse Thunderstore" page |
+| `gamebananaBrowser` | `true` | register the "Browse GameBanana" page - browse and install the game's GameBanana mods inside Vortex |
 
 ## Mod Types
 
@@ -63,6 +64,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Download Malverk (Texture Pack Manager) Latest
 - Open PCGamingWiki Page
 - Open Nexus Mods Page
+- Open GameBanana Page
 - Open SteamDB Page
 - View Changelog
 - Submit Bug Report

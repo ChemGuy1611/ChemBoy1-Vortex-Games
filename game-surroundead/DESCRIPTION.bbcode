@@ -5,12 +5,10 @@ This extension adds SurrounDead modding support to Vortex Mod Manager.
 [*]Steam[/*]
 [*]Other versions may need to select the installation location manually.[/*]
 [/list]
-[size=3][b][color=#f9cb9c]UE4SS LogicMod (Blueprint) Mod Authors - You MUST include a "LogicMods" folder above your .pak file in order for this extension to install the mod to the correct location. Without this, there is no way to differentiate between LogicMod paks and regular pak mods.[/color][/b][/size]
-
 [b]🛠️ Mod Installation Notes:[/b]
 [list]
 [*]UE4SS Script-LogicMod Combo mods with both a "Content" and a "Binaries" folder install to the "SurrounDead" folder.[/*]
-[*]UE4SS LogicMods (Blueprint) mods with a "LogicMods" folder install to the "SurrounDead\Content\Paks" folder.[/*]
+[*]UE4SS LogicMods (Blueprint) mods with a "LogicMods" folder install to the "SurrounDead\Content\Paks\LogicMods" folder.[/*]
 [*]UE Sortable Pak mods with a ".pak" file install to the "SurrounDead\Content\Paks\~mods" folder.[/*]
 [*]UE4SS installs to the "SurrounDead\Binaries\Win64" folder, recognised by a "dwmapi.dll" file.[/*]
 [*]UE4SS Script mods with a ".lua" file and a "Scripts" folder install to the "SurrounDead\Binaries\Win64\ue4ss\Mods" folder.[/*]
@@ -28,6 +26,7 @@ This extension adds SurrounDead modding support to Vortex Mod Manager.
 [*]Pak mods are sorted on the "Load Order" page, UE4SS Script and DLL mods on the "UE4SS Load Order" page and UE4SS LogicMods (Blueprint) on the "LogicMods Load Order" page. Pak mods placed by a FOMOD installer show up there too.[/*]
 [*]Config and Save mods only work if the game, the mod staging folder and the config/save folder are all on the same drive (limitation of hardlinks). Vortex shows a notification when they are not.[/*]
 [*]For upscalers, reshades, and other mods that need to be next to the game executable, please use the "Binaries (Engine Injector)" mod type. This is the fallback mod install location if no other installer is triggered.[/*]
+[*]UE4SS LogicMods (Blueprint) mods need a "LogicMods" folder above the .pak file to install to the correct location. A .pak without that folder installs as a regular pak mod. If it holds a "ModActor" asset, Vortex shows a notification with a button to set it as a LogicMods mod.[/*]
 [/list]
 [b]📝 Notes for Mod Authors:[/b]
 [spoiler]
@@ -73,7 +72,7 @@ Blueprint Mods (LogicMods):
 
 Blueprint mods built against UE4SS must sit inside a folder named "LogicMods". This is the single most common packaging mistake for Unreal games.
 
-[b][color=#ffff00]NOTE: A blueprint ".pak" outside a "LogicMods" folder will install, but it will not work in game.[/color][/b]
+[b][color=#ffff00]NOTE: You MUST include a "LogicMods" folder above your ".pak" file. Without it, the mod installs as a regular pak mod and will not load until the player switches it.[/color][/b]
 
 [code]
 MyBlueprintMod.zip
@@ -83,13 +82,14 @@ MyBlueprintMod.zip
 
   Requirements:
     - The archive must contain a folder named "LogicMods" (case does not matter).
-    - Everything from the "LogicMods" folder down is copied to the game, keeping its structure.
-    - Extra folders above "LogicMods" are fine - the installer finds it at any depth.
+    - Every file inside the "LogicMods" folder is copied straight into the game's "LogicMods" folder. Subfolders inside it are not kept.
+    - Extra folders above "LogicMods" are fine - the installer finds it at any depth. Files beside "LogicMods" are not installed.
+    - If the archive also holds a ".pak" outside "LogicMods", nothing is flattened: each file keeps its path under "Paks".
 
-  Installs to: "SurrounDead\Content\Paks"
+  Installs to: "SurrounDead\Content\Paks\LogicMods"
 
   Common mistakes:
-    - Putting the ".pak" at the top level of the archive with no "LogicMods" folder. Vortex then treats it as an ordinary pak mod, installs it to the wrong place, and the blueprint mod never loads.
+    - Putting the ".pak" at the top level of the archive with no "LogicMods" folder. Vortex then treats it as an ordinary pak mod, so the blueprint mod does not load. If the pak holds a "ModActor" asset, Vortex offers the player a button to move it to "LogicMods", but only if they accept it.
     - Renaming the folder ("Logic_Mods", "logicmod", "BPMods") - the name must be exactly "LogicMods".
 
 ========================================================================

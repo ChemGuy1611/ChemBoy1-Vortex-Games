@@ -152,6 +152,7 @@ Hook priority: non-extension hooks use steps of 100 (50 = between built-ins). Th
 - `expectSuccess: true` is useful for CLI tools where a non-zero exit indicates a real error.
 - `detach: true` is needed for launching external launchers (Steam, etc.) that should outlive Vortex.
 - `shell: true` is rarely needed — only when the command string requires shell interpretation (pipes, redirects). Prefer it with caution as it reduces control over the process.
+- Calling this with no active profile writes the whole process environment to `vortex.log`, in plaintext and including any API keys (core `tool_variables_base`, Vortex 2.10.0; reported as issue #24740). Avoid launching tools during startup before a profile is active, and scrub any log before sharing it.
 
 ---
 

@@ -495,24 +495,29 @@ Useful ids in the mod pool: `4694` Game Extension, `4902` AI Assisted, `4488` AI
 ## What You Cannot Do
 
 The read surface is broad; the write surface for mods is almost nonexistent. Confirmed against the
-full introspected schema, none of the following is possible from any API tier (v1 REST, v2 GraphQL,
-or v3 REST):
+full introspected schema and the v3 spec (re-checked 2026-11-04), none of the following is possible
+from any API tier (v1 REST, v2 GraphQL, or v3 REST):
 
 - **Add or remove a tag on a mod.** The whole tag-assignment mutation family is collection-scoped.
+  v3 `Mod` returns `tags`, read-only; `editMod` takes only `summary` and `description`.
 - **Add, remove or reorder a mod's images or videos.** Likewise collection-scoped
   (`addImageToCollection`, `addVideoToCollection`).
-- **Read how many gallery images a mod page has.** `Mod` exposes only `pictureUrl` /
-  `thumbnailUrl` (the primary image); there is no image or media list on it. The `media(...)` search
-  returns only the site's community gallery (`Image` / `Video` nodes carry `game` and `owner`, no mod
-  reference) and its filter has no mod field — an extension author's account returns 0 hits there.
-  The v1 mod JSON has only `picture_url`, and the v3 mod object is just `id` / `name` / `game_id` /
-  `game_scoped_id`. Counting a page's images means loading the page itself.
 - **Change a mod page's permission switches** — "allow users to add tags", "allow users to add
   images/videos". `editCollection` exposes `allowUserMedia` and `manuallyVerifyMedia`; the `Mod`
   type has no counterpart and no mutation targets it.
-- **Edit a mod's name, summary, description, or category.**
+- **Edit a mod's name or category.** Summary and description are writable through v3 `PATCH /mods/{id}`
+  (`editMod`), see `NEXUS_MODS_API.md`.
+- **Read or write a mod page's AI disclosure.** Tested against pages that hold one: the text is absent
+  from the v1 and v3 mod responses and from every scalar field on GraphQL `Mod`, and no schema type,
+  field, input or enum value names it. A script therefore cannot tell whether a page has a disclosure.
 
-All of these are website-only operations. For bulk work the realistic pattern is: use GraphQL to
+A page's gallery is not readable here either: GraphQL `Mod` exposes only `pictureUrl` /
+`thumbnailUrl`, and the `media(...)` search returns only the site's community gallery (no mod
+reference). Use v3 `getMod` / `getModById`, whose `gallery_images[]` lists it (added by 2026-11-04);
+`primary_image` is separate and can be missing from that list. `audit_mod_pages.py --gallery` counts
+every extension page this way.
+
+All of the operations above are website-only. For bulk work the realistic pattern is: use GraphQL to
 _audit_ current state across many mods in a few requests, generate a worklist, then apply the
 changes by hand through the mod pages.
 

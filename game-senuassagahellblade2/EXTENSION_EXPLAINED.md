@@ -60,7 +60,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `senuassagahellblade2-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `senuassagahellblade2-logicmods` | high | `{gamePath}/Hellblade2/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `senuassagahellblade2-logicmods` | high | `{gamePath}/Hellblade2/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `senuassagahellblade2-pakalt` | high | `{gamePath}/Hellblade2/Content/Paks` |
 | Root Folder | `senuassagahellblade2-root` | high | `{gamePath}` |
 | UE5 Paks | `senuassagahellblade2-ue5` | high | `{gamePath}/Hellblade2/Content/Paks/~mods` |

@@ -35,6 +35,7 @@
 | `CHECK_CONFIG` | `false` | boolean to check if game, staging folder, and config folder are on the same drive |
 | `mod_update_all_profile` | `false` | for mod update to keep them in the load order and not uncheck them |
 | `updating_mod` | `false` | used to see if it's a mod update or not |
+| `gamebananaBrowser` | `true` | register the "Browse GameBanana" page - browse and install the game's GameBanana mods inside Vortex |
 
 ## Mod Types
 
@@ -68,6 +69,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open Config Folder (LocalAppData)
 - Open PCGamingWiki Page
 - Open Nexus Mods Page
+- Open GameBanana Page
 - Open SteamDB Page
 - View Changelog
 - Submit Bug Report

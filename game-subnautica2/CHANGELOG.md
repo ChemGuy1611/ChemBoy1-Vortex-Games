@@ -5,6 +5,8 @@
 - ModKit?
 - Game version now falls back to the real Steam/Epic build number, then a build hash, if the version.json file cannot be read.
 - The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
+- Changed: LogicMods (Blueprint) mods now always install directly into the LogicMods folder. Installed mods convert automatically when you next manage the game. Deploy when prompted.
+- Added: A notification when a pak mod looks like a Blueprint mod, with a button to set it as a LogicMods mod.
 
 ## [0.5.7] - 2026-11-01
 

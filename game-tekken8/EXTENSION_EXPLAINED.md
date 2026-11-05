@@ -58,7 +58,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `tekken8-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `tekken8-logicmods` | high | `{gamePath}/Polaris/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `tekken8-logicmods` | high | `{gamePath}/Polaris/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `tekken8-pakalt` | high | `{gamePath}/Polaris/Content/Paks` |
 | Root Game Folder | `tekken8-root` | high | `{gamePath}` |
 | Root Sub-Folders | `tekken8-rootsubfolders` | high | `{gamePath}/Polaris` |

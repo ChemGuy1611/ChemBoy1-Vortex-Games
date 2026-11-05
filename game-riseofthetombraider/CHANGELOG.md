@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.3] - 2026-11-04
+
+- Fixed: Mod Manager mods containing only ".tr2mesh" files were not recognised by the Mod Manager Mod installer.
+
 ## [1.0.2] - 2026-10-25
 
 - Added the Nexus mod ID to the extension info.

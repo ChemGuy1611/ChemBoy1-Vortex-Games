@@ -60,7 +60,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `avowed-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `avowed-logicmods` | high | `{gamePath}/Alabama/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `avowed-logicmods` | high | `{gamePath}/Alabama/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `avowed-pakalt` | high | `{gamePath}/Alabama/Content/Paks` |
 | Root Folder | `avowed-root` | high | `{gamePath}` |
 | UE5 Paks | `avowed-ue5` | high | `{gamePath}/Alabama/Content/Paks/~mods` |

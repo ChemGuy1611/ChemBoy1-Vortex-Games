@@ -98,6 +98,11 @@ Useful fields on the game object: `id`, `name`, `short_name`, `thumbnail`, `bann
 (pipe/comma-delimited `Label|URL` pairs), `mods_count`, `forum_id`, `default_mod_manager_id`,
 `mod_managers[]`, `hidden_tag_ids[]`.
 
+`mods_count` is the real mod count, a numeric string that equals `meta.total` of the game's mod
+search. A second field, `mod_count`, disagrees with it (PAYDAY 3: `309` vs `"3696"`; Road to Vostok:
+`0` vs `"440"`), so do not read that one. `GET /games?limit=50&page={n}` lists every game; a `limit`
+of 100 does not return JSON. A `buttons` entry can carry the game's Steam store URL.
+
 Supporting lookups: `GET /games/{game_id}/categories`, `GET /games/{game_id}/tags`,
 `GET /games/{game_id}/documents`, `GET /games/{game_id}/users`. Categories and tags return the same
 `data`/`meta` envelope and supply the numeric ids that the mod search filters on.

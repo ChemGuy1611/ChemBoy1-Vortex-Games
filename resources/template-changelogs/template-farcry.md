@@ -1,5 +1,9 @@
 # template-farcry Changelog
 
+## [2026-11-04]
+
+- Changed: the bundled `base_browser.js`. Browse pages no longer open off-site pages in the system browser on their own. A host outside `externalHosts` (default `nexusmods.com`, `github.com`) becomes a notification with an "Open" button.
+
 ## [2026-10-17]
 
 - Added: a `modId` field to `info.json`, directly after `gameId`, set to the `"XXX"` placeholder. `release_extension.py` replaces it with the mod id at the end of the extension's `EXTENSION_URL` when the extension is released, so a finished extension carries a number, not a string.

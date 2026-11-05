@@ -2,8 +2,8 @@
 Name: Windrose Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
-Version: 1.1.7
-Date: 2026-11-01
+Version: 1.2.0
+Date: 2026-11-05
 Notes:
 - User selects where to install pak mods (SP or MP)
 - Dedicated Server registered as a separate game
@@ -303,8 +303,8 @@ const LOGICMODS_ID = `${GAME_ID}-logicmods`;
 const LOGICMODS_NAME = "UE4SS LogicMods (Blueprint)";
 const UE4SSCOMBO_ID = `${GAME_ID}-ue4sscombo`;
 const UE4SSCOMBO_NAME = "UE4SS Script-LogicMod Combo";
-const LOGICMODS_PATH = path.join(EPIC_CODE_NAME);
 const LOGICMODS_FOLDER = "LogicMods";
+const LOGICMODS_PATH = path.join(EPIC_CODE_NAME, "Content", "Paks", LOGICMODS_FOLDER); //ends in the folder so a pak mod switched to this type deploys directly into it
 const LOGICMODS_EXT = ".pak";
 const UE4SS_ICON =
   "M12 0c-6.5745 0-11.899 5.371-11.899 12s5.324 12 11.899 12c6.57 0 11.899-5.371 11.899-12s-5.328-12-11.903-12zM12 0.527c3.035 0 5.894 1.196 8.043 3.359 2.144 2.156 3.34 5.075 3.332 8.114 0 3.062-1.184 5.945-3.332 8.114-2.121 2.153-5.02 3.363-8.043 3.359-3.023 0.004-5.922-1.207-8.043-3.359-2.144-2.156-3.344-5.075-3.336-8.114 0-3.062 1.187-5.945 3.332-8.114 2.121-2.156 5.024-3.368 8.047-3.359zM11.402 4.75c-1.937 0.52-3.731 1.516-6.121 4.258s-1.937 5.008-1.937 5.008c0 0 0.66-1.559 2.246-3.2 0.754-0.777 1.313-1.039 1.7-1.039 0.344-0.02 0.633 0.258 0.633 0.602v5.567c0 0.551-0.356 0.672-0.683 0.664-0.278-0.004-0.536-0.101-0.536-0.101 1.629 2.367 5.528 2.699 5.528 2.699l1.711-1.829 0.039 0.035 1.567 1.336c2.867-1.703 4.25-4.859 4.25-4.859-1.281 1.352-2.094 1.668-2.579 1.668-0.43-0.004-0.598-0.254-0.598-0.254-0.023-0.117-0.062-1.813-0.078-3.508-0.016-1.754 0-3.512 0.086-3.516 0.496-0.93 2.075-2.805 2.075-2.805-2.949 0.582-4.555 2.516-4.555 2.516-0.476-0.375-1.445-0.313-1.445-0.313 0.453 0.25 0.906 0.977 0.906 1.578v5.922c0 0-0.989 0.871-1.75 0.871-0.453 0-0.731-0.246-0.883-0.449-0.059-0.078-0.11-0.164-0.149-0.258v-7.313c-0.106 0.078-0.235 0.121-0.363 0.125-0.164 0-0.332-0.082-0.446-0.32-0.086-0.18-0.141-0.449-0.141-0.844 0-1.348 1.523-2.243 1.523-2.243z";
@@ -461,7 +461,7 @@ const IGNORE_DEPLOY = [
 let MODTYPE_FOLDERS = [PAK_PATH, PAK_ALT_PATH, SERVERPAKS_PATH];
 if (ue4ssLoadOrder) {
   //LogicMods are only loaded when UE4SS's BPModLoaderMod is present
-  MODTYPE_FOLDERS.push(path.join(LOGICMODS_PATH, "Content", "Paks", LOGICMODS_FOLDER));
+  MODTYPE_FOLDERS.push(LOGICMODS_PATH);
 }
 
 // -- END EDIT ZONE -- /////////////////////////////////////////////////////////////////////////////////
@@ -1364,29 +1364,48 @@ function testLogic(files, gameId) {
   });
 }
 
-//Install save files
+//Install LogicMods files. The mod type path ends in the LogicMods folder, so everything inside
+//the archive's LogicMods folder is staged flat at the mod root.
 function installLogic(files) {
   const modFile = files.find(
     (file) => path.basename(file).toLowerCase() === LOGICMODS_FOLDER.toLowerCase(),
   );
-  const idx = modFile.lastIndexOf(path.basename(modFile));
+  const folderPrefix = (modFile.endsWith(path.sep) ? modFile : modFile + path.sep).toLowerCase();
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
-  const setModTypeInstruction = { type: "setmodtype", value: LOGICMODS_ID };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
-  const instructions = filtered.map((file) => {
-    return {
+  const isInFolder = (file) => file.toLowerCase().startsWith(folderPrefix);
+  const isPak = (file) => path.extname(file).toLowerCase() === LOGICMODS_EXT;
+  const pakBasenames = filtered
+    .filter((f) => isInFolder(f) && isPak(f))
+    .map((f) => path.basename(f, path.extname(f)));
+  let instructions;
+  let modTypeId = LOGICMODS_ID;
+  if (filtered.some((file) => !isInFolder(file) && isPak(file))) {
+    //A pak outside the LogicMods folder can't deploy through this mod type. The Combo type targets
+    //the game root, so every pak keeps its own folder under Paks.
+    modTypeId = UE4SSCOMBO_ID;
+    instructions = filtered.map((file) => ({
       type: "copy",
       source: file,
-      destination: path.join("Content", "Paks", file.substr(idx)),
-    };
-  });
-  instructions.push(setModTypeInstruction);
-  const pakBasenames = filtered
-    .filter((f) => path.extname(f).toLowerCase() === LOGICMODS_EXT)
-    .map((f) => path.basename(f, path.extname(f)));
+      destination: path.join(path.dirname(LOGICMODS_PATH), file.slice(rootPrefix.length)),
+    }));
+  } else {
+    const seen = new Set();
+    instructions = [];
+    for (const file of filtered.filter(isInFolder)) {
+      const name = path.basename(file);
+      if (seen.has(name.toLowerCase())) {
+        log("warn", `[${GAME_ID}] LogicMods install skipped duplicate file name "${file}"`);
+        continue;
+      }
+      seen.add(name.toLowerCase());
+      instructions.push({ type: "copy", source: file, destination: name });
+    }
+  }
+  instructions.push({ type: "setmodtype", value: modTypeId });
   if (pakBasenames.length) {
     instructions.push({ type: "attribute", key: LO_ATTRIBUTE_LOGIC, value: pakBasenames });
   }
@@ -1608,8 +1627,7 @@ function testRoot(files, gameId) {
     CONTENTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()),
   );
   let supported =
-    (gameId === spec.game.id || gameId === specServer.game.id) &&
-    (isMod || isSub || isContentSub);
+    (gameId === spec.game.id || gameId === specServer.game.id) && (isMod || isSub || isContentSub);
 
   // Test for a mod installer.
   if (
@@ -2375,6 +2393,77 @@ function pathSegments(files) {
   return files.flatMap((file) => file.split(path.sep)).filter(Boolean);
 }
 
+//True when a buffer holds the file name "ModActor.uasset" on its own, so "XModActor.uasset" misses.
+function bufferHasModActor(buffer) {
+  const name = Buffer.from("ModActor.uasset");
+  let at = buffer.indexOf(name);
+  while (at !== -1) {
+    if (at === 0 || !/[A-Za-z0-9_]/.test(String.fromCharCode(buffer[at - 1]))) return true;
+    at = buffer.indexOf(name, at + 1);
+  }
+  return false;
+}
+
+//True when a pak holds the ModActor asset that UE4SS's BPModLoaderMod loads, which marks it as a
+//Blueprint mod. An IoStore pak can be a small stub listing nothing, so its .utoc is searched first.
+//Reads only the file index unless the footer can't locate it. Any unreadable or encrypted pak counts as false.
+async function pakHasModActor(pakPath) {
+  const PAK_MAGIC = Buffer.from([0xe1, 0x12, 0x6f, 0x5a]);
+  const SIZE_LIMIT = 50 * 1024 * 1024;
+  let handle;
+  try {
+    const utocPath = pakPath.slice(0, -path.extname(pakPath).length) + ".utoc";
+    const utocStats = await fsp.stat(utocPath).catch(() => undefined);
+    if (utocStats && utocStats.size <= SIZE_LIMIT) {
+      if (bufferHasModActor(await fsp.readFile(utocPath))) return true;
+    }
+    handle = await fsp.open(pakPath, "r");
+    const { size } = await handle.stat();
+    const readRange = async (position, length) => {
+      if (position < 0 || length > SIZE_LIMIT || position + length > size) {
+        throw new Error("pak range out of bounds");
+      }
+      const buffer = Buffer.alloc(length);
+      await handle.read(buffer, 0, length, position);
+      return buffer;
+    };
+    const tailLength = Math.min(size, 2048);
+    const tail = await readRange(size - tailLength, tailLength);
+    const magicAt = tail.lastIndexOf(PAK_MAGIC);
+    if (magicAt < 1 || magicAt + 24 > tail.length) return false;
+    if (tail[magicAt - 1] !== 0) return false; //encrypted index
+    const version = tail.readUInt32LE(magicAt + 4);
+    const indexOffset = Number(tail.readBigUInt64LE(magicAt + 8));
+    const indexSize = Number(tail.readBigUInt64LE(magicAt + 16));
+    if (indexOffset + indexSize > size) {
+      //Some games add bytes to the footer, so the index can't be located. Search the whole pak instead.
+      return size <= SIZE_LIMIT && bufferHasModActor(await readRange(0, size));
+    }
+    const index = await readRange(indexOffset, indexSize);
+    if (bufferHasModActor(index)) return true;
+    if (version < 10) return false;
+    //Version 10+ keeps file names in a separate directory index: skip the mount point string,
+    //entry count and path hash seed, then the optional path hash index, to reach its location.
+    const mountLength = index.readInt32LE(0);
+    let position = 4 + (mountLength < 0 ? -mountLength * 2 : mountLength) + 12;
+    const hasPathHashIndex = index.readInt32LE(position) !== 0;
+    position += 4 + (hasPathHashIndex ? 36 : 0);
+    if (index.readInt32LE(position) === 0) return false;
+    position += 4;
+    return bufferHasModActor(
+      await readRange(
+        Number(index.readBigUInt64LE(position)),
+        Number(index.readBigUInt64LE(position + 8)),
+      ),
+    );
+  } catch (err) {
+    log("debug", `[${GAME_ID}] Could not read pak index of "${pakPath}"`, err);
+    return false;
+  } finally {
+    await handle?.close();
+  }
+}
+
 //Mirrors the registration-priority ladder in main() for just the installers that sit ABOVE
 //BOTH pak installers' priorities (client UE5_SORTABLE_ID = 30, server UE5_SORTABLE_ID_SERVER =
 //29): UE4SS Combo (26, always registered) and LogicMods (27, only when ue4ssLoadOrder) -
@@ -2930,9 +3019,7 @@ async function deserializeLogicMods(api) {
   }
   const mods = state?.persistent?.mods?.[activeGameId] ?? {};
   GAME_PATH = getDiscoveryPath(api, activeGameId);
-  //! windrose's LOGICMODS_PATH is EPIC_CODE_NAME only (not Content/Paks like template) - installLogic copies
-  //! into Content/Paks/LogicMods under that, so the actual on-disk folder needs the extra segments here.
-  const logicModsFolder = path.join(GAME_PATH, LOGICMODS_PATH, "Content", "Paks", LOGICMODS_FOLDER);
+  const logicModsFolder = path.join(GAME_PATH, LOGICMODS_PATH);
   const bpmlFolder = path.join(GAME_PATH, BINARIES_PATH, UE4SS_MOD_PATH, BPML_FOLDER);
   const profile = selectors.activeProfile(state);
   const filename = profile.id + "_" + LOGICMODS_LO_FILE;
@@ -3502,6 +3589,13 @@ async function setup(discovery, api, gameSpec) {
     MODTYPE_FOLDERS.push(SCRIPTS_PATH);
   }
   MODTYPE_FOLDERS.push(BINARIES_PATH);
+  await migrateLogicModsLayout(api, gameSpec.game.id).catch((err) =>
+    log(
+      "warn",
+      `[${gameSpec.game.id}] migrateLogicModsLayout failed, retrying next activation`,
+      err,
+    ),
+  );
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
@@ -3525,6 +3619,13 @@ async function setupServer(discovery, api, gameSpec) {
     MODTYPE_FOLDERS.push(SCRIPTS_PATH);
   }
   MODTYPE_FOLDERS.push(BINARIES_PATH);
+  await migrateLogicModsLayout(api, gameSpec.game.id).catch((err) =>
+    log(
+      "warn",
+      `[${gameSpec.game.id}] migrateLogicModsLayout failed, retrying next activation`,
+      err,
+    ),
+  );
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
@@ -3847,9 +3948,7 @@ function applyGame(context, gameSpec) {
       () => {
         GAME_PATH = getDiscoveryPath(context.api, GAME_ID);
         try {
-          window.api.shell.openFile(
-            path.join(GAME_PATH, LOGICMODS_PATH, "Content", "Paks", LOGICMODS_FOLDER),
-          );
+          window.api.shell.openFile(path.join(GAME_PATH, LOGICMODS_PATH));
         } catch (err) {
           context.api.showErrorNotification("Failed to open the file or folder", err, {
             allowReport: false,
@@ -4255,9 +4354,7 @@ function applyGameServer(context, gameSpec) {
       () => {
         GAME_PATH = getDiscoveryPath(context.api, GAME_ID_SERVER);
         try {
-          window.api.shell.openFile(
-            path.join(GAME_PATH, LOGICMODS_PATH, "Content", "Paks", LOGICMODS_FOLDER),
-          );
+          window.api.shell.openFile(path.join(GAME_PATH, LOGICMODS_PATH));
         } catch (err) {
           context.api.showErrorNotification("Failed to open the file or folder", err, {
             allowReport: false,
@@ -4699,9 +4796,11 @@ function main(context) {
     //game and the dedicated server (each has its own registerLoadOrder/pak modtype).
     api.events.on("did-install-mod", (gameId, archiveId, modId) => {
       if (![GAME_ID, GAME_ID_SERVER].includes(gameId)) return;
-      retagFomodPakMod(api, gameId, modId).catch((err) =>
-        log("warn", `[${gameId}] retagFomodPakMod failed for "${modId}"`, err),
-      );
+      //The Blueprint pak check runs after it, so it reads the mod's final type.
+      retagFomodPakMod(api, gameId, modId)
+        .catch((err) => log("warn", `[${gameId}] retagFomodPakMod failed for "${modId}"`, err))
+        .then(() => notifyBlueprintPak(api, gameId, modId))
+        .catch((err) => log("warn", `[${gameId}] notifyBlueprintPak failed for "${modId}"`, err));
     });
   });
   return true;
@@ -4725,6 +4824,224 @@ const requestDeployment = (api, spec) => {
     ],
   });
 };
+
+//Mark the game for deployment and offer a Deploy button after a LogicMods change.
+function logicModsDeployNotify(api, message, gameId) {
+  api.store.dispatch(actions.setDeploymentNecessary(gameId, true));
+  api.sendNotification({
+    id: `${gameId}-logicmods-deploy-notif`,
+    type: "warning",
+    message,
+    actions: [
+      {
+        title: "Deploy",
+        action: (dismiss) => {
+          deploy(api);
+          dismiss();
+        },
+      },
+    ],
+  });
+}
+
+//Count the files a LogicMods deployment manifest lists in a folder. No manifest counts as none.
+async function logicModsDeployedCount(folder) {
+  try {
+    const manifestPath = path.join(folder, `vortex.deployment.${LOGICMODS_ID}.json`);
+    const manifest = JSON.parse(await fsp.readFile(manifestPath, "utf8"));
+    return Array.isArray(manifest?.files) ? manifest.files.length : 0;
+  } catch (err) {
+    if (err.code === "ENOENT") return 0;
+    throw err;
+  }
+}
+
+//Move one mod's staged files to the current layout, deleting the folders left behind. Returns true
+//when the mod has to become a Combo mod because it holds a pak outside its LogicMods folder. The old
+//layout staged every file under Content\Paks, because its mod type targeted the project folder.
+async function moveStagedLogicMod(stagingFolder, files, gameId) {
+  const oldRoot = path.join("Content", "Paks") + path.sep;
+  const isUnderOldRoot = (file) => file.toLowerCase().startsWith(oldRoot.toLowerCase());
+  const fromPaks = (file) => (isUnderOldRoot(file) ? file.slice(oldRoot.length) : file);
+  const isInFolder = (file) =>
+    isUnderOldRoot(file) &&
+    fromPaks(file).split(path.sep)[0].toLowerCase() === LOGICMODS_FOLDER.toLowerCase();
+  const isCombo = files.some(
+    (file) => !isInFolder(file) && path.extname(file).toLowerCase() === LOGICMODS_EXT,
+  );
+  const moves = [];
+  if (isCombo) {
+    for (const file of files) {
+      moves.push([file, path.join(path.dirname(LOGICMODS_PATH), fromPaks(file))]);
+    }
+  } else {
+    const others = files.filter((file) => !isInFolder(file));
+    const taken = new Set(others.map((file) => fromPaks(file).toLowerCase()));
+    for (const file of others.filter(isUnderOldRoot)) {
+      moves.push([file, fromPaks(file)]);
+    }
+    for (const file of files.filter(isInFolder)) {
+      const name = path.basename(file);
+      if (taken.has(name.toLowerCase())) {
+        log("warn", `[${gameId}] LogicMods migration skipped duplicate file name "${file}"`);
+        continue;
+      }
+      taken.add(name.toLowerCase());
+      moves.push([file, name]);
+    }
+  }
+  for (const [source, destination] of moves) {
+    const target = path.join(stagingFolder, destination);
+    await fsp.mkdir(path.dirname(target), { recursive: true });
+    await fsp.rename(path.join(stagingFolder, source), target);
+  }
+  const movedFolders = new Set(
+    (isCombo ? files : files.filter(isUnderOldRoot))
+      .filter((file) => path.dirname(file) !== ".")
+      .map((file) => file.split(path.sep)[0]),
+  );
+  for (const folder of movedFolders) {
+    await fsp.rm(path.join(stagingFolder, folder), { recursive: true, force: true });
+  }
+  return isCombo;
+}
+
+//Convert installed LogicMods mods to the layout where the mod type path ends in the LogicMods
+//folder and paks are staged flat. Runs on every activation and does nothing once converted. A
+//deployment manifest lives in its mod type's target folder, so deployed files are purged before
+//anything moves. The purge handler swallows its failures (a running game refuses it), so nothing
+//moves unless the manifest is confirmed empty, and the next activation tries again.
+async function migrateLogicModsLayout(api, gameId) {
+  if (!ue4ssLoadOrder) return;
+  const oldLayoutMods = [];
+  const mods = api.getState()?.persistent?.mods?.[gameId] ?? {};
+  for (const mod of Object.values(mods)) {
+    if (mod?.type !== LOGICMODS_ID || mod?.state !== "installed") continue;
+    const stagingFolder = getModStagingFolder(api, mod.id, gameId);
+    if (!stagingFolder) continue;
+    const files = (await getAllFiles(stagingFolder)).map((file) =>
+      path.relative(stagingFolder, file),
+    );
+    const oldFolder = path.join("Content", "Paks", LOGICMODS_FOLDER) + path.sep;
+    const isOldLayout = files.some((file) =>
+      file.toLowerCase().startsWith(oldFolder.toLowerCase()),
+    );
+    if (isOldLayout) oldLayoutMods.push({ id: mod.id, stagingFolder, files });
+  }
+  const oldTarget = path.join(GAME_PATH, EPIC_CODE_NAME);
+  const newTarget = path.join(GAME_PATH, LOGICMODS_PATH);
+  const foldersToPurge = [];
+  if ((await logicModsDeployedCount(oldTarget)) > 0) foldersToPurge.push(oldTarget);
+  if (oldLayoutMods.length > 0 && (await logicModsDeployedCount(newTarget)) > 0) {
+    foldersToPurge.push(newTarget);
+  }
+  if (oldLayoutMods.length === 0 && foldersToPurge.length === 0) return;
+  for (const folder of foldersToPurge) {
+    await api.emitAndAwait("purge-mods-in-path", gameId, LOGICMODS_ID, folder);
+    if ((await logicModsDeployedCount(folder)) > 0) {
+      log("warn", `[${gameId}] LogicMods migration waiting: could not purge "${folder}"`);
+      return;
+    }
+  }
+  const batch = [];
+  for (const { id, stagingFolder, files } of oldLayoutMods) {
+    try {
+      if (await moveStagedLogicMod(stagingFolder, files, gameId)) {
+        batch.push(actions.setModType(gameId, id, UE4SSCOMBO_ID));
+      }
+    } catch (err) {
+      log("warn", `[${gameId}] LogicMods migration failed for "${id}"`, err);
+    }
+  }
+  if (batch.length > 0) util.batchDispatch(api.store, batch);
+  logicModsDeployNotify(api, "LogicMods Updated - Deploy to Put Them Back in the Game", gameId);
+}
+
+//After a pak mod installs, offer to switch it to the LogicMods type if every pak holds ModActor.
+//Only ever a suggestion: a player on another loader may want the pak exactly where it is.
+async function notifyBlueprintPak(api, gameId, modId) {
+  if (![GAME_ID, GAME_ID_SERVER].includes(gameId) || !ue4ssLoadOrder) return;
+  const state = api.getState();
+  const mod = state?.persistent?.mods?.[gameId]?.[modId];
+  if (mod?.type !== (gameId === GAME_ID_SERVER ? UE5_SORTABLE_ID_SERVER : UE5_SORTABLE_ID)) return;
+  const installingDependencies = state?.session?.base?.activity?.installing_dependencies ?? [];
+  if (
+    Array.isArray(installingDependencies)
+      ? installingDependencies.length > 0
+      : !!installingDependencies
+  )
+    return;
+  const stagingFolder = getModStagingFolder(api, modId, gameId);
+  if (!stagingFolder) return;
+  const files = (await getAllFiles(stagingFolder)).map((file) =>
+    path.relative(stagingFolder, file),
+  );
+  const pakFiles = files.filter((file) => path.extname(file).toLowerCase() === LOGICMODS_EXT);
+  if (pakFiles.length === 0 || pakFiles.some((file) => path.dirname(file) !== ".")) return;
+  const hasModActor = await Promise.all(
+    pakFiles.map((file) => pakHasModActor(path.join(stagingFolder, file))),
+  );
+  if (!hasModActor.every(Boolean)) {
+    if (hasModActor.some(Boolean)) {
+      log("info", `[${gameId}] "${modId}" mixes Blueprint and regular paks, no type suggestion`);
+    }
+    return;
+  }
+  const modName = util.renderModName(mod);
+  const SET_LOGICMODS_LABEL = "Set as LogicMods";
+  const DO_NOT_CHANGE_LABEL = "Do Not Change";
+  const setAsLogicMods = () => {
+    util.batchDispatch(api.store, [
+      actions.setModType(gameId, modId, LOGICMODS_ID),
+      actions.setModAttribute(
+        gameId,
+        modId,
+        LO_ATTRIBUTE_LOGIC,
+        pakFiles.map((file) => path.basename(file, path.extname(file))),
+      ),
+    ]);
+    api.events.emit("recalculate-modtype-conflicts", [modId]);
+    logicModsDeployNotify(api, "Deployment Required to Move Mod to the LogicMods Folder", gameId);
+  };
+  api.sendNotification({
+    id: `${gameId}-blueprintpak-${modId}`,
+    type: "info",
+    message: `"${modName}" Looks Like a UE4SS Blueprint Mod`,
+    allowSuppress: true,
+    actions: [
+      {
+        title: "More",
+        action: (dismiss) => {
+          api
+            .showDialog(
+              "question",
+              "Blueprint Mod Installed as a Pak Mod",
+              {
+                text:
+                  `"${modName}" contains a ModActor asset, which UE4SS loads from the LogicMods folder. ` +
+                  `Packaged this way, it installed as a regular pak mod, so UE4SS will not load it.\n\n` +
+                  `Use "Set as LogicMods" to move it there. It needs UE4SS installed. ` +
+                  `Some of these mods also need their files renamed, so check the mod page if it doesn't load.\n\n` +
+                  `If you load this mod with another mod loader, choose "${DO_NOT_CHANGE_LABEL}".`,
+              },
+              [{ label: DO_NOT_CHANGE_LABEL }, { label: SET_LOGICMODS_LABEL }],
+            )
+            .then((result) => {
+              if (result.action === SET_LOGICMODS_LABEL) setAsLogicMods();
+              if ([SET_LOGICMODS_LABEL, DO_NOT_CHANGE_LABEL].includes(result.action)) dismiss();
+            });
+        },
+      },
+      {
+        title: SET_LOGICMODS_LABEL,
+        action: (dismiss) => {
+          setAsLogicMods();
+          dismiss();
+        },
+      },
+    ],
+  });
+}
 
 //FOMOD's built-in installer (and the generic basicInstaller fallback) never emit a
 //`setmodtype` instruction, so a mod they hand off keeps modtype '' forever - and
@@ -5086,13 +5403,13 @@ function getModPageURL(api, vortexModId) {
 }
 
 //Resolve the staging folder of a Vortex-managed load order entry (undefined when not resolvable)
-function getModStagingFolder(api, vortexModId) {
+function getModStagingFolder(api, vortexModId, gameId) {
   if (vortexModId === undefined) return undefined;
   const state = api.getState();
-  const activeGameId = selectors.activeGameId(state);
+  const modGameId = gameId ?? selectors.activeGameId(state);
   const installationPath =
-    state?.persistent?.mods?.[activeGameId]?.[vortexModId]?.installationPath ?? undefined;
-  const stagingPath = selectors.installPathForGame(state, activeGameId);
+    state?.persistent?.mods?.[modGameId]?.[vortexModId]?.installationPath ?? undefined;
+  const stagingPath = selectors.installPathForGame(state, modGameId);
   if (!installationPath || !stagingPath) return undefined;
   return path.join(stagingPath, installationPath);
 }
@@ -6998,11 +7315,9 @@ function LogicModsContextMenu({
 
   const isEntryLocked = isLocked(item);
 
-  //! windrose's LogicMods folder physically lives at GAME_PATH/LOGICMODS_PATH/Content/Paks/LogicMods (installLogic's
-  //! destination), NOT GAME_PATH/LOGICMODS_PATH/LogicMods like the single-game template - LOGICMODS_PATH here is
-  //! only EPIC_CODE_NAME. GAME_PATH is refreshed here since this menu is shared between both registered games.
+  //GAME_PATH is refreshed here since this menu is shared between both registered games.
   GAME_PATH = getDiscoveryPath(api, activeGameId);
-  const logicModsFolder = path.join(GAME_PATH, LOGICMODS_PATH, "Content", "Paks", LOGICMODS_FOLDER);
+  const logicModsFolder = path.join(GAME_PATH, LOGICMODS_PATH);
 
   const [menuPosition, clampRef] = useClampedMenuPosition(x, y);
   const menuStyle = {

@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.1] - 2026-11-04
+
+- Changed: Browse pages no longer open ads and other pop-ups in your web browser. A blocked page shows a notification with an "Open" button instead.
+
+## [1.3.0] - 2026-11-03
+
+- Added: "Browse GameBanana" and "Browse ModWorkshop" pages to browse the game's mods on those sites and install them directly in Vortex, with "Open GameBanana Page" and "Open ModWorkshop Page" buttons.
+
 ## [1.2.2] - 2026-10-25
 
 - Added the Nexus mod ID to the extension info.

@@ -59,7 +59,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `farfarwest-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `farfarwest-logicmods` | high | `{gamePath}/FarFarWest/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `farfarwest-logicmods` | high | `{gamePath}/FarFarWest/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `farfarwest-pakalt` | high | `{gamePath}/FarFarWest/Content/Paks` |
 | Root Game Folder | `farfarwest-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `farfarwest-uesortablepak` | 25 | `{gamePath}/FarFarWest/Content/Paks/~mods` |

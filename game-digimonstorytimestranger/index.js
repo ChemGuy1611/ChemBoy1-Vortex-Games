@@ -2,8 +2,8 @@
 Name: Digimon Story Time Stranger Vortex Extension
 Structure: Reloaded-II Game (Mod Installer)
 Author: ChemBoy1
-Version: 1.0.3
-Date: 2026-10-25
+Version: 1.1.1
+Date: 2026-11-04
 /////////////////////////////////////////////////*/
 
 //Import libraries
@@ -12,6 +12,8 @@ const fsp = fs.promises;
 const { actions, fs: vfs, util, selectors, log, VortexError } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
+//Embedded GameBanana browser page (needs base_browser.js beside it)
+const { registerGameBananaBrowser, onceGameBananaBrowser } = require("./gamebanana_browser");
 
 //Specify all the information about the game
 const GAME_ID = "digimonstorytimestranger";
@@ -37,6 +39,7 @@ if (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) hasXbox = true;
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 const setupNotification = true; //enable to show the user a notification with special instructions (specify below) - default true: Reloaded-II Mod Manager setup instructions are always relevant
 const debug = false; //toggle for debug mode
+const gamebananaBrowser = true; //register the "Browse GameBanana" page - browse and install the game's GameBanana mods inside Vortex
 
 let GAME_PATH = "";
 let GAME_VERSION = "";
@@ -101,6 +104,8 @@ const MOD_PATH_DEFAULT = ".";
 const REQ_FILE = EXEC;
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1480"; //Nexus link to this extension. Used for links
+const GB_GAME_ID = "23494"; //GameBanana game id - https://gamebanana.com/games/23494
+const GB_URL = `https://gamebanana.com/games/${GB_GAME_ID}`;
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Digimon_Story%3A_Time_Stranger";
 const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const IGNORE_CONFLICTS = [
@@ -114,6 +119,14 @@ const IGNORE_DEPLOY = [
   path.join("**", "license*"),
 ];
 let MODTYPE_FOLDERS = [RELOADEDMOD_PATH, SAVE_PATH];
+
+//Embedded GameBanana browser page - the user browses the live site and installs from it.
+//GameBanana mods are ordinary archives, so they land through the same installers as any other.
+const GB_BROWSER_CONFIG = {
+  gbGameId: GB_GAME_ID,
+  pageId: `${GAME_ID}-gamebanana-browse`,
+  pageTitle: "Browse GameBanana",
+};
 
 const spec = {
   game: {
@@ -1184,6 +1197,27 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     },
   );
+  if (gamebananaBrowser) {
+    context.registerAction(
+      "mod-icons",
+      300,
+      "open-ext",
+      {},
+      "Open GameBanana Page",
+      () => {
+        try {
+          window.api.shell.openUrl(GB_URL);
+        } catch (err) {
+          context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+        }
+      },
+      () => {
+        const state = context.api.getState();
+        const gameId = selectors.activeGameId(state);
+        return gameId === GAME_ID;
+      },
+    );
+  }
   context.registerAction(
     "mod-icons",
     300,
@@ -1222,6 +1256,11 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     },
   );
+
+  //register the embedded GameBanana browser page
+  if (gamebananaBrowser) {
+    registerGameBananaBrowser(context, gameSpec, GB_BROWSER_CONFIG);
+  }
 }
 
 //main function
@@ -1229,6 +1268,10 @@ function main(context) {
   applyGame(context, spec);
   context.once(() => {
     // put code here that should be run (once) when Vortex starts up
+    if (gamebananaBrowser) {
+      //claims downloads started from the browse page, and update-checks the mods installed through it
+      onceGameBananaBrowser(context.api, spec, GB_BROWSER_CONFIG);
+    }
     const api = context.api;
     api.onAsync("did-deploy", async (profileId, deployment) => {
       const lastActiveProfile = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);

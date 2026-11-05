@@ -49,11 +49,12 @@
  *                  everything the author wrote - only each list between its heading and
  *                  the closing [/list] is replaced. A missing page is scaffolded with
  *                  the standard section order for the author to finish.
- *                  Three more blocks are added to a page that lacks them, never removed
+ *                  Two more blocks are added to a page that lacks them, never removed
  *                  or rewritten: a red symlink warning (supportsSymlinks resolves to
- *                  false), the yellow LogicMod-authors note (ue4-5 with a testLogic
- *                  installer) and a Credits section (CREDITS_BY_GAME, else the engine
- *                  default). A second run changes nothing. The summary counts each kind
+ *                  false) and a Credits section (CREDITS_BY_GAME, else the engine
+ *                  default). The yellow LogicMod-authors note on older pages comes out
+ *                  once the extension has notifyBlueprintPak, replaced by a Usage Note.
+ *                  A second run changes nothing. The summary counts each kind
  *                  and lists any extension whose supportsSymlinks could not be resolved.
  *                  Game pages (not templates) also carry the game's Notes for Mod Authors
  *                  as a [spoiler] section in front of Credits (else the donation block);
@@ -356,22 +357,6 @@ function cleanTarget(p, src) {
 }
 
 /**
- * The folder a `<folder>` directory is installed INTO. LOGICMODS_PATH names the parent in the
- * template (`.../Paks`) but already ends in the folder itself in 33 games (`.../Paks/LogicMods`),
- * so appending the folder name again printed `LogicMods\LogicMods`. Either way the pak lands in
- * `<parent>/<folder>`, so the parent is the one destination that reads right for both.
- */
-function folderParent(p, folder) {
-  const parts = String(p)
-    .split(/[\\/]+/)
-    .filter(Boolean);
-  if (parts.length && parts[parts.length - 1].toLowerCase() === String(folder).toLowerCase()) {
-    parts.pop();
-  }
-  return parts.join("/") || ".";
-}
-
-/**
  * Quote each name with `wrap`, folding three or more consecutive zero-padded numbers of one width
  * into a range (`0000` to `0035`). Still names every value, just not one by one.
  */
@@ -616,6 +601,52 @@ const PROSE = [
     }),
   },
   {
+    fn: "testModFolder",
+    game: "game-returntocastlewolfenstein",
+    build: () => ({
+      title: "Standalone",
+      quick: "a `.pk3` file inside a folder plus other game files",
+      lead:
+        "Handles an archive where every `.pk3` file sits inside a folder and the archive also " +
+        "holds something besides `.pk3` files and documents: gamecode `.dll` files, a shortcut or " +
+        "configs. The archive installs to the game folder exactly as packaged, so the mod's " +
+        'folder stays next to "Main".',
+      rules: [
+        "Players load the mod with the launch option `+set fs_game <folder name>`.",
+        'A folder of only `.pk3` files and documents is treated as packaging, and its files go to "Main".',
+      ],
+      pitfalls: [
+        "Gamecode `.dll` files replace the game's copies while the mod is enabled, so two mods that " +
+          "ship them conflict.",
+      ],
+      installsTo: "the game folder",
+      targetIsProse: true,
+    }),
+  },
+  {
+    fn: "testPk4Folder",
+    game: "game-doom3",
+    build: () => ({
+      title: "Packaged .pk4",
+      quick: "a `.pk4` file inside a folder",
+      lead:
+        "Handles an archive where every `.pk4` file sits inside a folder. A `.pk4` at the top " +
+        'level of the archive needs no special handling and installs to the "base" folder.',
+      rules: [
+        "If the archive holds anything besides `.pk4` files and documents, or a `description.txt`, " +
+          'it is a standalone mod: the folder stays next to "base", so it appears in the game\'s ' +
+          "Mods menu, and anything packaged beside the folder (a launcher script) installs with it.",
+        'Otherwise the folder is only packaging, and its files install to the "base" folder.',
+      ],
+      pitfalls: [
+        "To ship a standalone mod, include a `description.txt` in its folder. Without one, a folder " +
+          'of only `.pk4` files and documents is treated as packaging and goes to "base".',
+      ],
+      installsTo: 'the game folder (standalone mods) or the "base" folder (everything else)',
+      targetIsProse: true,
+    }),
+  },
+  {
     fn: "testLoose",
     game: "game-forzahorizon6",
     build: () => ({
@@ -755,22 +786,24 @@ const PROSE = [
       return {
         title: `Blueprint Mods (${folder})`,
         quick: `a \`${folder}\` folder`,
-        installsTo: v.LOGICMODS_PATH ? folderParent(v.LOGICMODS_PATH, folder) : null,
+        installsTo: v.LOGICMODS_PATH || null,
         lead:
           `Blueprint mods built against UE4SS must sit inside a folder named \`${folder}\`. ` +
           `This is the single most common packaging mistake for Unreal games.`,
         tree: ["MyBlueprintMod.zip", `└── ${folder}\\`, "    └── MyBlueprintMod.pak"].join("\n"),
         rules: [
           `The archive must contain a folder named \`${folder}\` (case does not matter).`,
-          `Everything from the \`${folder}\` folder down is copied to the game, keeping its structure.`,
-          `Extra folders above \`${folder}\` are fine - the installer finds it at any depth.`,
+          `Every file inside the \`${folder}\` folder is copied straight into the game's \`${folder}\` folder. Subfolders inside it are not kept.`,
+          `Extra folders above \`${folder}\` are fine - the installer finds it at any depth. Files beside \`${folder}\` are not installed.`,
+          `If the archive also holds a \`.pak\` outside \`${folder}\`, nothing is flattened: each file keeps its path under \`Paks\`.`,
         ],
         pitfalls: [
           `Putting the \`.pak\` at the top level of the archive with no \`${folder}\` folder. ` +
-            `Vortex then treats it as an ordinary pak mod, installs it to the wrong place, and the blueprint mod never loads.`,
+            `Vortex then treats it as an ordinary pak mod, so the blueprint mod does not load. ` +
+            `If the pak holds a \`ModActor\` asset, Vortex offers the player a button to move it to \`${folder}\`, but only if they accept it.`,
           `Renaming the folder (\`Logic_Mods\`, \`logicmod\`, \`BPMods\`) - the name must be exactly \`${folder}\`.`,
         ],
-        warn: `A blueprint \`.pak\` outside a \`${folder}\` folder will install, but it will not work in game.`,
+        warn: `You MUST include a \`${folder}\` folder above your \`.pak\` file. Without it, the mod installs as a regular pak mod and will not load until the player switches it.`,
       };
     },
   },
@@ -2671,6 +2704,7 @@ const MOD_TYPE_LABELS = {
   "redfactionguerrillaremarstered-managerlegacy": { tool: "Mod Manager" },
   "residentevil5goldedition-root": "Root Folder",
   "residentevil7-looselua": "Loose Lua Script",
+  "returntocastlewolfenstein-modfolder": "Standalone",
   "roadtovostok-mod-rezip": "Godot",
   "robocoproguecity-binaries": "Binaries (Engine Injector)",
   "robocoproguecity-config": "Config",
@@ -3226,6 +3260,10 @@ function creditKey(line) {
 
 const SYMLINK_KEY = /does not support symlinks/i;
 const LOGICMODS_KEY = /LogicMod \(Blueprint\) Mod Authors/i;
+// The LogicMod-authors note older pages carry, with the blank line after it. Its text now lives in
+// the Usage Notes and the Notes for Mod Authors.
+const LOGICMODS_NOTE_LINE =
+  /^\[size=3\]\[b\]\[color=#f9cb9c\]UE4SS LogicMod \(Blueprint\) Mod Authors - [^\n]*\r?\n(?:\r?\n)?/m;
 
 /** The warning blocks a page carries between its store list and its install list. */
 function warningBlocks(page) {
@@ -3234,9 +3272,6 @@ function warningBlocks(page) {
       page.symlinks.supported === false
         ? "[size=3][b][color=#ea9999]This game does not support symlinks. You must have the mod staging folder and the game on the same drive to use this extension.[/color][/b][/size]"
         : null,
-    logicmods: page.logicFolder
-      ? `[size=3][b][color=#f9cb9c]UE4SS LogicMod (Blueprint) Mod Authors - You MUST include a "${page.logicFolder}" folder above your .pak file in order for this extension to install the mod to the correct location. Without this, there is no way to differentiate between LogicMod paks and regular pak mods.[/color][/b][/size]`
-      : null,
   };
 }
 
@@ -3285,6 +3320,13 @@ function usageNotesFor(src, engine, installers) {
     notes.push(line);
   }
 
+  if (ue4ss && has("testLogic") && src.includes("notifyBlueprintPak")) {
+    notes.push(
+      'UE4SS LogicMods (Blueprint) mods need a "LogicMods" folder above the .pak file to install to the correct location. ' +
+        'A .pak without that folder installs as a regular pak mod. If it holds a "ModActor" asset, Vortex shows a notification with a button to set it as a LogicMods mod.',
+    );
+  }
+
   const types = [has("testConfig") && "Config", has("testSave") && "Save"].filter(Boolean);
   const hardlinks =
     boolLiteral(src, "preferHardlinks") === true || boolLiteral(src, "IO_STORE") === true;
@@ -3318,6 +3360,7 @@ const BROWSER_SITES = {
 };
 // Extensions managing two games whose browse page only shows on one of them.
 const BROWSER_PAGE_SCOPE = {
+  "game-doom3": " when managing DOOM 3 (not the BFG Edition)",
   "game-systemshock225thanniversaryremaster": " when managing System Shock 2 (1999)",
 };
 
@@ -3332,7 +3375,9 @@ function browserNotes(src, dirName) {
     const source = m[1].toLowerCase();
     const site = BROWSER_SITES[source];
     if (!site || boolLiteral(src, `${source}Browser`) === false) continue;
-    const config = new RegExp(`const\\s+${m[2]}\\s*=\\s*\\{[\\s\\S]*?pageTitle:\\s*["'\`]([^"'\`]+)`);
+    const config = new RegExp(
+      `const\\s+${m[2]}\\s*=\\s*\\{[\\s\\S]*?pageTitle:\\s*["'\`]([^"'\`]+)`,
+    );
     const title = config.exec(src);
     if (!title) continue;
     titlesBySite.set(site, [...(titlesBySite.get(site) || []), `"${title[1]}"`]);
@@ -3345,6 +3390,10 @@ function browserNotes(src, dirName) {
   );
 }
 
+// One whole line holding a note in the shape browserNotes writes; group 1 is the note itself.
+const BROWSER_NOTE_LINE =
+  /^(\[\*\]You can browse .+ and install its mods directly in Vortex using the .+ in the sidebar.*\[\/\*\])\r?\n/gm;
+
 /** Credit lines as the bulleted list a Credits section holds. */
 function creditsList(lines) {
   return ["[list]", ...lines.map((l) => `[*]${l}[/*]`), "[/list]"].join("\n");
@@ -3355,13 +3404,22 @@ function creditsSection(page) {
 }
 
 /**
- * Add the blocks a page is missing without touching anything the author wrote: the symlink and
- * LogicMod-authors warnings go in front of the install list, the Credits section in front of the
- * support block. A block already on the page (matched by key phrase, or by profile link for a
- * credit) is left alone, so a second run changes nothing. Returns { text, added, notes }.
+ * Add the blocks a page is missing without touching anything the author wrote: the symlink warning
+ * goes in front of the install list, the Credits section in front of the support block. A block
+ * already on the page (matched by key phrase, or by profile link for a credit) is left alone, so a
+ * second run changes nothing. Two generated things are taken out: a browser page note the extension
+ * no longer earns, and the LogicMod-authors note once the extension has the Blueprint pak
+ * notification its Usage Note describes. Returns { text, added, notes }.
  */
 function ensureBlocks(existing, page) {
-  const added = { symlinks: 0, logicmods: 0, usageNotes: 0, credits: 0, creditLines: 0 };
+  const added = {
+    symlinks: 0,
+    logicmods: 0,
+    usageNotes: 0,
+    staleBrowserNotes: 0,
+    credits: 0,
+    creditLines: 0,
+  };
   const notes = [];
   let text = existing;
   // `hugList`: a warning landing right under the store list starts on its next line, no blank line.
@@ -3373,6 +3431,10 @@ function ensureBlocks(existing, page) {
   };
   const warn = warningBlocks(page);
 
+  if (page.hasBlueprintNotice && LOGICMODS_NOTE_LINE.test(text)) {
+    text = text.replace(LOGICMODS_NOTE_LINE, "");
+    added.logicmods++;
+  }
   if (page.symlinks.supported === true && SYMLINK_KEY.test(text)) {
     notes.push("symlink warning on the page but the extension supports symlinks - left in place");
   }
@@ -3380,10 +3442,6 @@ function ensureBlocks(existing, page) {
   if (installAt === -1) {
     notes.push("no install list heading - warning blocks not added");
   } else {
-    if (warn.logicmods && !LOGICMODS_KEY.test(text)) {
-      insertAt(installAt, warn.logicmods, true);
-      added.logicmods++;
-    }
     if (warn.symlinks && !SYMLINK_KEY.test(text)) {
       // Scaffold order is symlinks first, so sit in front of the LogicMod note when it is there.
       const logicAt = text.search(LOGICMODS_KEY);
@@ -3395,6 +3453,15 @@ function ensureBlocks(existing, page) {
       added.symlinks++;
     }
   }
+
+  // A browser note the extension no longer earns comes out: its page was removed, its toggle was
+  // switched off or its wording changed. Only the exact generated sentence matches, so a line the
+  // author wrote about a site stays.
+  text = text.replace(BROWSER_NOTE_LINE, (line, note) => {
+    if (page.usageNotes.includes(note)) return line;
+    added.staleBrowserNotes++;
+    return "";
+  });
 
   // Usage notes go at the end of the Usage Notes list; one already there (same text) is kept.
   const usage = page.usageNotes.filter((n) => !text.includes(n.slice(3, -4)));
@@ -3902,10 +3969,7 @@ function buildNotes(dirName, src) {
   const gameId = dirName.replace(/^(game|template)-/, "");
   const page = {
     symlinks: resolveSymlinkSupport(src),
-    logicFolder:
-      engine === "ue4-5" && installers.some((i) => i.testFn === "testLogic")
-        ? vars.LOGICMODS_FOLDER || "LogicMods"
-        : null,
+    hasBlueprintNotice: engine === "ue4-5" && src.includes("notifyBlueprintPak"),
     usageNotes: isTemplate
       ? []
       : [...usageNotesFor(src, engine, installers), ...browserNotes(src, dirName)],
@@ -4091,7 +4155,14 @@ let created = 0,
   tier2Total = 0,
   droppedTotal = 0;
 const tier2Heavy = [];
-const blockTotals = { symlinks: 0, logicmods: 0, usageNotes: 0, credits: 0, creditLines: 0 };
+const blockTotals = {
+  symlinks: 0,
+  logicmods: 0,
+  usageNotes: 0,
+  staleBrowserNotes: 0,
+  credits: 0,
+  creditLines: 0,
+};
 const unresolvedSymlinks = [];
 const pageNotes = [];
 const lintTotals = {};
@@ -4261,8 +4332,10 @@ if (tier2Heavy.length) {
 if (doDescription) {
   const verb = doCheck ? "to add" : "added";
   emit(
-    `Blocks ${verb}: symlink warning ${blockTotals.symlinks}, LogicMod-authors note ${blockTotals.logicmods}, ` +
-      `usage notes ${blockTotals.usageNotes}, Credits section ${blockTotals.credits}, credit lines ${blockTotals.creditLines}`,
+    `Blocks ${verb}: symlink warning ${blockTotals.symlinks}, ` +
+      `usage notes ${blockTotals.usageNotes}, Credits section ${blockTotals.credits}, credit lines ${blockTotals.creditLines}. ` +
+      `Stale browser notes ${doCheck ? "to remove" : "removed"}: ${blockTotals.staleBrowserNotes}. ` +
+      `LogicMod-authors notes ${doCheck ? "to remove" : "removed"}: ${blockTotals.logicmods}`,
   );
   if (unresolvedSymlinks.length) {
     emit(`Symlink support unresolved, no warning written (${unresolvedSymlinks.length}):`);

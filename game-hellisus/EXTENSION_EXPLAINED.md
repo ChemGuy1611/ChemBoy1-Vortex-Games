@@ -8,10 +8,6 @@
 | Engine / Structure | UE5 (Xbox-Integrated) |
 | Author | ChemBoy1 |
 
-### Notes
-
-- LOGICMODS_PATH ends in the LogicMods folder for this game (kept from the 0.1.0 extension)
-
 ## Key Identifiers
 
 | Property | Value |

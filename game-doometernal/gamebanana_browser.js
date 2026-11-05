@@ -55,6 +55,7 @@ const { createBrowserModule } = require("./base_browser");
 
 const SITE_BASE = "https://gamebanana.com";
 const API_BASE = "https://gamebanana.com/apiv11";
+const ARCHIVE_EXTS = [".zip", ".rar", ".7z"];
 
 // Mod attributes. Dedicated attributes rather than the standard 'version' one because
 // Vortex's md5 meta lookup can overwrite 'version' with data from an unrelated Nexus match.
@@ -316,12 +317,20 @@ async function fetchUpdateVersion(config, ref) {
   }
 }
 
+//The newest file is not always the mod: authors using Reloaded-II's updater upload a
+//*releasemetadata*.json beside each archive, and it can be newer than the archive. So the
+//archives are preferred, and a submission with no archive at all keeps its newest file.
 function newestFile(files) {
   const usable = (files || []).filter((file) => file?._idRow);
   if (usable.length === 0) {
     return null;
   }
-  return usable.slice().sort((a, b) => (b._tsDateAdded || 0) - (a._tsDateAdded || 0))[0];
+  const archives = usable.filter((file) => {
+    const name = String(file._sFile || "").toLowerCase();
+    return ARCHIVE_EXTS.some((ext) => name.endsWith(ext));
+  });
+  const candidates = archives.length > 0 ? archives : usable;
+  return candidates.slice().sort((a, b) => (b._tsDateAdded || 0) - (a._tsDateAdded || 0))[0];
 }
 
 //The file a reference points at: the one it names, else the submission's newest

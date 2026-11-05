@@ -60,7 +60,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `beastofreincarnation-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `beastofreincarnation-logicmods` | high | `{gamePath}/BeastOfReincarnation/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `beastofreincarnation-logicmods` | high | `{gamePath}/BeastOfReincarnation/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `beastofreincarnation-pakalt` | high | `{gamePath}/BeastOfReincarnation/Content/Paks` |
 | Root Folder | `beastofreincarnation-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `beastofreincarnation-uesortablepak` | 25 | `{gamePath}/BeastOfReincarnation/Content/Paks/~mods` |

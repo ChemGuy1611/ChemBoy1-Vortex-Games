@@ -2,8 +2,8 @@
 Name: Rise of the Tomb Raider Vortex Extension
 Structure: 3rd-Party Mod Installer
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-25
+Version: 1.0.3
+Date: 2026-11-04
 ////////////////////////////////////////////*/
 //junk comment to change file size for reupload since Nexus Mods site doesn't like to work
 //Import libraries
@@ -50,7 +50,7 @@ const MANAGERMOD_ID = `${GAME_ID}-modmanagermod`;
 const MANAGERMOD_NAME = "Mod Manager Mod";
 const MANAGERMOD_PATH = path.join("Mods");
 const MANAGERMOD_EXTS = [
-  "tr2mesh",
+  ".tr2mesh",
   ".tr2pcd",
   ".drm",
   ".skl",

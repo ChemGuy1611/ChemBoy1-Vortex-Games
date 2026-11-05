@@ -2,8 +2,8 @@
 Name: Resident Evil Requiem Vortex Extension
 Structure: Fluffy + REFramework (RE Engine)
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-25
+Version: 1.1.1
+Date: 2026-11-04
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -14,6 +14,8 @@ const path = require("path");
 const template = require("string-template");
 const winapi = require("winapi-bindings");
 const { parseStringPromise } = require("xml2js");
+//Embedded GameBanana browser page (needs base_browser.js beside it)
+const { registerGameBananaBrowser, onceGameBananaBrowser } = require("./gamebanana_browser");
 
 //Specify all information about the game
 const GAME_ID = "residentevilrequiem";
@@ -32,6 +34,8 @@ const GAME_NAME_SHORT = "RE9 Requiem";
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Resident_Evil_Requiem";
 const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1653"; //Nexus link to this extension. Used for links
+const GB_GAME_ID = "24380"; //GameBanana game id - https://gamebanana.com/games/24380
+const GB_URL = `https://gamebanana.com/games/${GB_GAME_ID}`;
 
 const FLUFFY_FOLDER = "RE9";
 const FLUFFY_FOLDER_DEMO = "RE9_Demo";
@@ -69,6 +73,7 @@ if (HAS_DEMO || hasXbox) {
 }
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
 const debug = false; //toggle for debug mode
+const gamebananaBrowser = true; //register the "Browse GameBanana" page - browse and install the game's GameBanana mods inside Vortex
 
 //global variables to set later
 let GAME_PATH = ""; //game installation path
@@ -180,6 +185,14 @@ const IGNORE_DEPLOY = [
   path.join("**", "license*"),
 ];
 let MODTYPE_FOLDERS = [];
+
+//Embedded GameBanana browser page - the user browses the live site and installs from it.
+//GameBanana mods are ordinary archives, so they land through the same installers as any other.
+const GB_BROWSER_CONFIG = {
+  gbGameId: GB_GAME_ID,
+  pageId: `${GAME_ID}-gamebanana-browse`,
+  pageTitle: "Browse GameBanana",
+};
 
 //Filled in from data above
 const spec = {
@@ -1480,6 +1493,27 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     },
   );
+  if (gamebananaBrowser) {
+    context.registerAction(
+      "mod-icons",
+      300,
+      "open-ext",
+      {},
+      "Open GameBanana Page",
+      () => {
+        try {
+          window.api.shell.openUrl(GB_URL);
+        } catch (err) {
+          context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+        }
+      },
+      () => {
+        const state = context.api.getState();
+        const gameId = selectors.activeGameId(state);
+        return gameId === GAME_ID;
+      },
+    );
+  }
   context.registerAction(
     "mod-icons",
     300,
@@ -1573,6 +1607,11 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   }); //*/
+
+  //register the embedded GameBanana browser page
+  if (gamebananaBrowser) {
+    registerGameBananaBrowser(context, gameSpec, GB_BROWSER_CONFIG);
+  }
 }
 
 //Main function
@@ -1580,6 +1619,10 @@ function main(context) {
   applyGame(context, spec);
   context.once(() => {
     // put code here that should be run (once) when Vortex starts up
+    if (gamebananaBrowser) {
+      //claims downloads started from the browse page, and update-checks the mods installed through it
+      onceGameBananaBrowser(context.api, spec, GB_BROWSER_CONFIG);
+    }
     const api = context.api;
     context.api.onAsync("did-deploy", async (profileId, deployment) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(

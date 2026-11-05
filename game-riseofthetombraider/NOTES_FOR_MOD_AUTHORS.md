@@ -11,7 +11,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | ROTTR Mod Manager | a `rottrmodmanager.exe` file | the game folder |
 | TR Reboot Mod Manager | a `trreboottools.modmanager.exe` file | the game folder |
 | Binaries / Root Folder | a `.dll`, `.exe`, `.tiger`, `.asi` or `.addon64` file | the game folder |
-| Mod Manager Mod | a `tr2mesh`, `.tr2pcd`, `.drm`, `.skl`, `.tr10dtp`, `.tr10material`, `.tr10modeldata`, `.t10script`, `.t10shaderlib`, `.tr10sound`, `.dds`, `.tr10objectref`, `.tr10dtp` or `.tr10anim` file | `Mods` |
+| Mod Manager Mod | a `.tr2mesh`, `.tr2pcd`, `.drm`, `.skl`, `.tr10dtp`, `.tr10material`, `.tr10modeldata`, `.t10script`, `.t10shaderlib`, `.tr10sound`, `.dds`, `.tr10objectref`, `.tr10dtp` or `.tr10anim` file | `Mods` |
 
 Paths are relative to the game's install folder.
 
@@ -35,7 +35,7 @@ Installs to: the game folder
 
 ## Mod Manager Mod
 
-Recognised when the archive contains a `tr2mesh`, `.tr2pcd`, `.drm`, `.skl`, `.tr10dtp`, `.tr10material`, `.tr10modeldata`, `.t10script`, `.t10shaderlib`, `.tr10sound`, `.dds`, `.tr10objectref`, `.tr10dtp` or `.tr10anim` file.
+Recognised when the archive contains a `.tr2mesh`, `.tr2pcd`, `.drm`, `.skl`, `.tr10dtp`, `.tr10material`, `.tr10modeldata`, `.t10script`, `.t10shaderlib`, `.tr10sound`, `.dds`, `.tr10objectref`, `.tr10dtp` or `.tr10anim` file.
 
 Installs to: `Mods`
 

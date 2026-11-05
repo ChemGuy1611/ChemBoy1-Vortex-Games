@@ -46,6 +46,7 @@
 | `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
 | `hasUserIdFolder` | `true` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
 | `debug` | `false` | toggle for debug mode |
+| `gamebananaBrowser` | `true` | register the "Browse GameBanana" page - browse and install the game's GameBanana mods inside Vortex |
 | `exeHasGameVersion` | `false` | toggle: true if the game devs stamp the real game version (not just the UE engine version) into the exe ProductVersion |
 | `PAKMOD_LOADORDER` | `true` | set to false if you don't want loadOrder. If must be in "Paks" root, disable loadOrder. |
 | `FBLO` | `true` | set to false to use legacy load order page |
@@ -92,6 +93,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | `dragonballsparkingzero-modloader` | 25 |
 | `dragonballsparkingzero-ue4sscombo` | 26 |
 | `dragonballsparkingzero-logicmods` | 27 |
+| `dragonballsparkingzero-modloadermod` | 28 |
 | `dragonballsparkingzero-ue5-sortable-modtype` | 29 |
 | `dragonballsparkingzero-ue4ss` | 31 |
 | `dragonballsparkingzero-sigbypass` | 33 |
@@ -101,7 +103,6 @@ Installers run in priority order (lower number = tested first). The first instal
 | `dragonballsparkingzero-config` | 41 |
 | `dragonballsparkingzero-save` | 43 |
 | `dragonballsparkingzero-lfse` | 44 |
-| `dragonballsparkingzero-modloadermod` | 45 |
 | `dragonballsparkingzero-json` | 46 |
 | `dragonballsparkingzero-binaries` | 49 |
 
@@ -123,6 +124,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open UE4SS mods.txt
 - Open PCGamingWiki Page
 - Open Nexus Mods Page
+- Open GameBanana Page
 - Open SteamDB Page
 - View Changelog
 - Submit Bug Report

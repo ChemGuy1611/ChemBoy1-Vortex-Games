@@ -33,6 +33,7 @@
 | `setupNotification` | `true` | enable to show the user a notification with special instructions (specify below) |
 | `hasUserIdFolder` | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
 | `debug` | `false` | toggle for debug mode |
+| `gamebananaBrowser` | `true` | register the "Browse GameBanana" page - browse and install the game's GameBanana mods inside Vortex |
 
 ## Mod Types
 
@@ -76,6 +77,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open Frosty Mods Folder
 - Open PCGamingWiki Page
 - Open Nexus Mods Page
+- Open GameBanana Page
 - Open SteamDB Page
 - View Changelog
 - Submit Bug Report

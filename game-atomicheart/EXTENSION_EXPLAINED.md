@@ -59,7 +59,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `atomicheart-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `atomicheart-logicmods` | high | `{gamePath}/AtomicHeart/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `atomicheart-logicmods` | high | `{gamePath}/AtomicHeart/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `atomicheart-pakalt` | high | `{gamePath}/AtomicHeart/Content/Paks` |
 | Root Game Folder | `atomicheart-root` | high | `{gamePath}` |
 | Root Sub-Folders | `atomicheart-rootsubfolders` | high | `{gamePath}/AtomicHeart` |

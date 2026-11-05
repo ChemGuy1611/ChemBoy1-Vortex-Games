@@ -59,7 +59,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `phantombladezero-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `phantombladezero-logicmods` | high | `{gamePath}/ProjectPBZ/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `phantombladezero-logicmods` | high | `{gamePath}/ProjectPBZ/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `phantombladezero-pakalt` | high | `{gamePath}/ProjectPBZ/Content/Paks` |
 | Root Folder | `phantombladezero-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `phantombladezero-uesortablepak` | 25 | `{gamePath}/ProjectPBZ/Content/Paks/~mods` |

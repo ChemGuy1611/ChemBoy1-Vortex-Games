@@ -61,7 +61,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `finalfantasy7rebirth-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `finalfantasy7rebirth-logicmods` | high | `{gamePath}/End/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `finalfantasy7rebirth-logicmods` | high | `{gamePath}/End/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `finalfantasy7rebirth-pakalt` | high | `{gamePath}/End/Content/Paks` |
 | Root Folder | `finalfantasy7rebirth-root` | high | `{gamePath}` |
 | FF7RML Mod | `finalfantasy7rebirth-modloadermod` | high | `{gamePath}/End/Mods` |

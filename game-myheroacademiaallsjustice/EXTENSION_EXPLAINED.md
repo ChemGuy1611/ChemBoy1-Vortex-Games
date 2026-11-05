@@ -44,6 +44,7 @@
 | `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
 | `hasUserIdFolder` | `true` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
 | `debug` | `false` | toggle for debug mode |
+| `gamebananaBrowser` | `true` | register the "Browse GameBanana" page - browse and install the game's GameBanana mods inside Vortex |
 | `exeHasGameVersion` | `false` | toggle: true if the game devs stamp the real game version (not just the UE engine version) into the exe ProductVersion |
 | `PAKMOD_LOADORDER` | `true` | set to false if you don't want loadOrder. If must be in "Paks" root, disable loadOrder. |
 | `FBLO` | `true` | set to false to use legacy load order page |
@@ -63,7 +64,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `myheroacademiaallsjustice-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `myheroacademiaallsjustice-logicmods` | high | `{gamePath}/HeroGame/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `myheroacademiaallsjustice-logicmods` | high | `{gamePath}/HeroGame/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `myheroacademiaallsjustice-pakalt` | high | `{gamePath}/HeroGame/Content/Paks` |
 | Root Folder | `myheroacademiaallsjustice-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `myheroacademiaallsjustice-uesortablepak` | 25 | `{gamePath}/HeroGame/Content/Paks/~mods` |
@@ -108,6 +109,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open UE4SS mods.txt
 - Open PCGamingWiki Page
 - Open Nexus Mods Page
+- Open GameBanana Page
 - Open SteamDB Page
 - View Changelog
 - Submit Bug Report

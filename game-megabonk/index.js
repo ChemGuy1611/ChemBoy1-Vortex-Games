@@ -2,8 +2,8 @@
 Name: Megabonk Vortex Extension
 Structure: Unity BepinEx/MelonLoader Hybrid (IL2CPP & x64)
 Author: ChemBoy1
-Version: 1.1.6
-Date: 2026-11-01
+Version: 1.1.7
+Date: 2026-11-04
 //////////////////////////////////////////*/
 
 //Import libraries

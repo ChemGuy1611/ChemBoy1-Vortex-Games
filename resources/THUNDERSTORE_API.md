@@ -47,6 +47,13 @@ https://thunderstore.io/api/cyberstorm/community/hades-ii/
    "total_download_count":1039597,"has_mod_manager_support":true, ...}
 ```
 
+`total_package_count` does not say how much a community really offers. It reads `0` for `cairn`,
+whose listing holds 2 packages, and `50` for `windrose`, where 44 of 53 are deprecated and only 9
+are live. For "how many mods does this community show", read `count` from
+`GET /api/cyberstorm/listing/{community}/?page_size=1`, which matched the live packages in
+`/c/{community}/api/v1/package/` on the five communities checked (`hades-ii` differed by 3). Add
+`&deprecated=true` to include deprecated packages.
+
 ### Package detail
 
 | Endpoint                                                                | Notes                                                                                                                                             |

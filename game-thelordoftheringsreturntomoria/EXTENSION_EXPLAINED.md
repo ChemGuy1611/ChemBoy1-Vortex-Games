@@ -60,7 +60,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `thelordoftheringsreturntomoria-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `thelordoftheringsreturntomoria-logicmods` | high | `{gamePath}/Moria/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `thelordoftheringsreturntomoria-logicmods` | high | `{gamePath}/Moria/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `thelordoftheringsreturntomoria-pakalt` | high | `{gamePath}/Moria/Content/Paks` |
 | Root Folder | `thelordoftheringsreturntomoria-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `thelordoftheringsreturntomoria-uesortablepak` | 25 | `{gamePath}/Moria/Content/Paks/~mods` |

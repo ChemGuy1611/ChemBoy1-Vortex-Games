@@ -19,7 +19,7 @@ Usage:
         roman_to_arabic, arabic_to_roman,
         name_lookup_variants, lookup_pcgamingwiki, pcgw_get_json,
         pcgw_title_from_url, pcgw_page_wikitext, parse_pcgw_availability,
-        get_api_key, http_get, http_get_bytes, http_get_json, http_post_json,
+        get_api_key, http_get, http_get_bytes, http_get_json, http_post_json, zip_listing, SEVENZIP,
         nexus_v3_get, nexus_v3_post_json, nexus_v3_patch_json,
         egdata_search_queries, normalize_title_for_match, store_title_matches,
         strip_edition_suffix, is_edition_variant_title,
@@ -108,6 +108,7 @@ import platform
 import re
 import shutil
 import ssl
+import struct
 import subprocess
 import sys
 import tempfile
@@ -186,6 +187,8 @@ DEPRECATED_LIST = os.path.join(LISTS_DIR, "games-deprecated.txt")
 with open(DEPRECATED_LIST, encoding="utf-8") as _deprecated_fh:
     DEPRECATED_GAMES = frozenset(line.strip() for line in _deprecated_fh if line.strip())
 del _deprecated_fh
+
+SEVENZIP = os.environ.get("SEVENZIP_PATH", r"C:\Program Files\7-Zip\7z.exe")
 
 VORTEX_PLUGINS_DIR = os.environ.get("VORTEX_PLUGINS_DIR", r"C:\ProgramData\vortex\plugins")
 # User-extensions folder of a Vortex dev build run from source: the dev app is named
@@ -309,6 +312,30 @@ def http_get_json(url, headers=None):
     """Fetch a URL and return the parsed JSON response body.
     Retries up to 2 times on 429 / 5xx / network errors (2 s, 4 s delays)."""
     return json.loads(http_get(url, headers))
+
+
+_ZIP_EOCD = bytes([0x50, 0x4B, 5, 6])  # end of central directory record
+_ZIP_CEN = bytes([0x50, 0x4B, 1, 2])  # central directory file header
+_ZIP_TAIL_BYTES = 70000  # EOCD sits in the last 22 bytes + up to 64 KB of comment
+
+
+def zip_listing(url):
+    """Entry names of a remote zip, read from its central directory with two range requests.
+    Returns None when the URL does not serve a plain zip (zip64, or another format)."""
+    tail = http_get_bytes(url, {"Range": f"bytes=-{_ZIP_TAIL_BYTES}"})
+    i = tail.rfind(_ZIP_EOCD)
+    if i < 0:
+        return None
+    cd_size, cd_offset = struct.unpack("<II", tail[i + 12 : i + 20])
+    if cd_offset == 0xFFFFFFFF:
+        return None  # zip64
+    cd = http_get_bytes(url, {"Range": f"bytes={cd_offset}-{cd_offset + cd_size - 1}"})
+    names, p = [], 0
+    while cd[p : p + 4] == _ZIP_CEN:
+        name_len, extra_len, comment_len = struct.unpack("<HHH", cd[p + 28 : p + 34])
+        names.append(cd[p + 46 : p + 46 + name_len].decode("utf-8", "replace"))
+        p += 46 + name_len + extra_len + comment_len
+    return names
 
 
 # == API key loading ===========================================================

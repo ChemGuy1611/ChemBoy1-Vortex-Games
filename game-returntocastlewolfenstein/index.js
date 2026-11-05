@@ -2,8 +2,8 @@
 Name: Return to Castle Wolfenstein Vortex Extension
 Structure: Generic Game with Custom Engine Mod (RealRTCW)
 Author: ChemBoy1
-Version: 1.1.5
-Date: 2026-10-25
+Version: 1.2.1
+Date: 2026-11-04
 ////////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -19,9 +19,12 @@ const {
   downloadModDbRequirement,
 } = require("./moddb_downloader");
 const { registerModDbBrowser, onceModDbBrowser } = require("./moddb_browser");
+//Embedded GameBanana browser page (needs base_browser.js beside it)
+const { registerGameBananaBrowser, onceGameBananaBrowser } = require("./gamebanana_browser");
 
 //feature toggles
 const moddbBrowser = true; //register the "Browse ModDB" page (moddb.com)
+const gamebananaBrowser = true; //register the "Browse GameBanana" page - browse and install the game's GameBanana mods inside Vortex
 
 //Specify all the information about the game
 const STEAMAPP_ID = "9010";
@@ -91,8 +94,31 @@ const PK3_NAME = ".pk3 Data (Main)";
 const PK3_PATH = path.join(MAIN_FOLDER);
 const PK3_EXT = ".pk3";
 
+//Standalone mods: a folder next to "Main", loaded with "+set fs_game <folder>". They often carry
+//their own gamecode .dll files for the game folder, so the archive installs exactly as packaged.
+const MOD_FOLDER_ID = `${GAME_ID}-modfolder`;
+const DOC_EXTS = [
+  ".txt",
+  ".md",
+  ".rtf",
+  ".pdf",
+  ".doc",
+  ".docx",
+  ".nfo",
+  ".htm",
+  ".html",
+  ".url",
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".gif",
+  ".bmp",
+];
+
 //Filled in from data above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/937"; //Nexus link to this extension. Used for links
+const GB_GAME_ID = "375"; //GameBanana game id - https://gamebanana.com/games/375
+const GB_URL = `https://gamebanana.com/games/${GB_GAME_ID}`;
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Return_to_Castle_Wolfenstein";
 const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 let STAGING_FOLDER = ""; //Vortex staging folder path
@@ -108,6 +134,16 @@ const IGNORE_DEPLOY = [
   path.join("**", "readme*"),
   path.join("**", "license*"),
 ];
+
+//Embedded GameBanana browser page - the user browses the live site and installs from it.
+//GameBanana mods are ordinary archives, so they land through the same installers as any other.
+const GB_BROWSER_CONFIG = {
+  gbGameId: GB_GAME_ID,
+  pageId: `${GAME_ID}-gamebanana-browse`,
+  pageTitle: "Browse GameBanana",
+  priority: 41, //directly below the ModDB page, so the sidebar order stays stable
+};
+
 const spec = {
   game: {
     id: GAME_ID,
@@ -469,7 +505,9 @@ function installRealrtcw(files) {
 
 //Installer test for Main folderfiles
 function testMainFolder(files, gameId) {
-  const isMod = files.some((file) => path.basename(file) === MAIN_FOLDER);
+  const isMod = files.some(
+    (file) => path.basename(file).toLowerCase() === MAIN_FOLDER.toLowerCase(),
+  );
   let supported = gameId === spec.game.id && isMod;
 
   return Promise.resolve({
@@ -488,14 +526,74 @@ function installMainFolder(files) {
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MAIN_ID };
 
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
+  // Remove directories and anything that isn't in the rootPath, plus docs and screenshots beside
+  // the Main folder: mods reuse names like "1.jpg", which would conflict in the game folder.
+  const filtered = files.filter(
+    (file) =>
+      !file.endsWith(path.sep) &&
+      file.startsWith(rootPrefix) &&
+      !(path.dirname(file) === rootPath && DOC_EXTS.includes(path.extname(file).toLowerCase())),
+  );
 
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
       source: file,
       destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for standalone mods: every .pk3 is inside a folder, and the archive holds more than .pk3 files
+//and docs. A folder of only .pk3 files and docs is packaging, which the .pk3 installer handles.
+function testModFolder(files, gameId) {
+  const fileList = files.filter((file) => !file.endsWith(path.sep));
+  const pk3Files = fileList.filter((file) => path.extname(file).toLowerCase() === PK3_EXT);
+  const isMod =
+    pk3Files.length > 0 &&
+    pk3Files.every((file) => path.dirname(file) !== ".") &&
+    fileList.some((file) => {
+      const ext = path.extname(file).toLowerCase();
+      return ext !== PK3_EXT && !DOC_EXTS.includes(ext);
+    });
+  let supported = gameId === spec.game.id && isMod;
+
+  // Test for a mod installer
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install standalone mods, keeping the mod's folder and anything packaged beside it
+function installModFolder(files) {
+  const fileList = files.filter((file) => !file.endsWith(path.sep));
+  const modFile = fileList
+    .filter((file) => path.extname(file).toLowerCase() === PK3_EXT)
+    .sort((a, b) => a.split(path.sep).length - b.split(path.sep).length)[0];
+  const parentFolder = path.dirname(path.dirname(modFile));
+  const rootPrefix = parentFolder === "." ? "" : parentFolder + path.sep;
+  const setModTypeInstruction = { type: "setmodtype", value: MAIN_ID };
+
+  const filtered = fileList.filter((file) => file.startsWith(rootPrefix));
+  const instructions = filtered.map((file) => {
+    return {
+      type: "copy",
+      source: file,
+      destination: file.slice(rootPrefix.length),
     };
   });
   instructions.push(setModTypeInstruction);
@@ -611,6 +709,11 @@ function applyGame(context, gameSpec) {
     registerModDbBrowser(context, gameSpec, MODDB_BROWSER_CONFIG);
   }
 
+  //register the embedded GameBanana browser page
+  if (gamebananaBrowser) {
+    registerGameBananaBrowser(context, gameSpec, GB_BROWSER_CONFIG);
+  }
+
   //register mod types
   (gameSpec.modTypes || []).forEach((type, idx) => {
     context.registerModType(
@@ -636,6 +739,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(IORTCW_ID, 25, testIortcw, installIortcw);
   context.registerInstaller(REALRTCW_ID, 30, testRealrtcw, installRealrtcw);
   context.registerInstaller(MAIN_ID, 35, testMainFolder, installMainFolder);
+  context.registerInstaller(MOD_FOLDER_ID, 38, testModFolder, installModFolder);
   context.registerInstaller(PK3_ID, 40, testPk3, installPk3);
 
   context.registerAction(
@@ -715,6 +819,27 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     },
   );
+  if (gamebananaBrowser) {
+    context.registerAction(
+      "mod-icons",
+      300,
+      "open-ext",
+      {},
+      "Open GameBanana Page",
+      () => {
+        try {
+          window.api.shell.openUrl(GB_URL);
+        } catch (err) {
+          context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+        }
+      },
+      () => {
+        const state = context.api.getState();
+        const gameId = selectors.activeGameId(state);
+        return gameId === GAME_ID;
+      },
+    );
+  }
   context.registerAction(
     "mod-icons",
     300,
@@ -813,6 +938,10 @@ function main(context) {
     if (moddbBrowser) {
       //installs downloads started from the browse page, and update-checks the mods installed through it
       onceModDbBrowser(context.api, spec, MODDB_BROWSER_CONFIG);
+    }
+    if (gamebananaBrowser) {
+      //claims downloads started from the browse page, and update-checks the mods installed through it
+      onceGameBananaBrowser(context.api, spec, GB_BROWSER_CONFIG);
     }
   });
   return true;

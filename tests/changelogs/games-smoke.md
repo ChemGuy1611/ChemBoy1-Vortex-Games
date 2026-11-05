@@ -11,3 +11,11 @@ Covers the game-level smoke run. File: `tests/games-smoke.js`, script `npm run t
 ## [2026-10-26]
 
 - Added: `MULTI_GAME` exceptions for extensions that register more than one game on purpose (robocoproguecity: base game and Unfinished Business; windrose: game and Dedicated Server). Their registration count is asserted exactly instead of one, and the matching `registerGame called N times` contract finding is dropped for them.
+
+## [2026-11-03]
+
+- Added: `doom3` to `MULTI_GAME` (DOOM 3 and DOOM 3: BFG Edition). It is outside the default parity-list run, so the gap only showed when it was named through `CB1_GAMES`.
+
+## [2026-11-04]
+
+- Added: `systemshock225thanniversaryremaster` to `MULTI_GAME` (the 25th Anniversary Remaster and classic System Shock 2). Same gap as `doom3`, found running the smoke over every browser module adopter.

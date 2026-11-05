@@ -59,7 +59,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `starwarszerocompany-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `starwarszerocompany-logicmods` | high | `{gamePath}/SWZeroCompany/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `starwarszerocompany-logicmods` | high | `{gamePath}/SWZeroCompany/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `starwarszerocompany-pakalt` | high | `{gamePath}/SWZeroCompany/Content/Paks` |
 | Root Folder | `starwarszerocompany-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `starwarszerocompany-uesortablepak` | 25 | `{gamePath}/SWZeroCompany/Content/Paks/~mods` |

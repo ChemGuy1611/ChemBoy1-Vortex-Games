@@ -27,6 +27,8 @@
 | --- | --- | --- |
 | `mod_update_all_profile` | `false` | for mod update to keep them in the load order and not uncheck them |
 | `updating_mod` | `false` | used to see if it's a mod update or not |
+| `gamebananaBrowser` | `true` | register the "Browse GameBanana" page - browse and install the game's GameBanana mods inside Vortex |
+| `modworkshopBrowser` | `true` | register the "Browse ModWorkshop" page - browse and install the game's ModWorkshop mods inside Vortex |
 
 ## Mod Types
 
@@ -62,6 +64,8 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open Patch Order Folder
 - Open PCGamingWiki Page
 - Open Nexus Mods Page
+- Open GameBanana Page
+- Open ModWorkshop Page
 - Open SteamDB Page
 - Submit Bug Report
 

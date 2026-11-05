@@ -1,8 +1,12 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.1.1] - 2026-11-04
 
-- None
+- Changed: Browse pages no longer open ads and other pop-ups in your web browser. A blocked page shows a notification with an "Open" button instead.
+
+## [1.1.0] - 2026-11-03
+
+- Added: "Browse GameBanana" page to browse the game's mods on GameBanana and install them directly in Vortex, with an "Open GameBanana Page" button.
 
 ## [1.0.3] - 2026-10-25
 

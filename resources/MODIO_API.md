@@ -193,8 +193,8 @@ Wiring reference: `resources/browsers/template_modio_browser.js`. Adopters and t
 
 ## Repo tools
 
-- `python find_modio_games.py [--loose]` — which `game-*` extensions have a mod.io page, with the
-  `modioGame` value, mod count, download access and adoption state.
+- `python audit_modules.py --sites modio --adopted [--loose]` — which `game-*` extensions have a
+  mod.io page, with the `modioGame` value, mod count, download access and adoption state.
 - `python modio_listings.py <name_id> --count 40` — what the most popular archives contain, read
   from the zip central directory without downloading them.
 - `node replay_installers.js <game_id> modio_listings_<name_id>.json` — which of the extension's

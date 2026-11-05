@@ -1,0 +1,1 @@
+AI is used to assist with extension releases and with a small portion of the extension functionality. 80%+ of the extension is made by hand and developed with nearly 3 years of work prior to any AI involvement. Every line of AI-produced code is human reviewed and validated.

@@ -2,8 +2,8 @@
 Name: METAL GEAR SOLID V: THE PHANTOM PAIN Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 1.4.2
-Date: 2026-10-25
+Version: 1.5.1
+Date: 2026-11-04
 Notes:
 -
 ///////////////////////////////////////////*/
@@ -22,6 +22,8 @@ const {
   checkForCodebergUpdate,
   isCodebergRequirementInstalled,
 } = require("./codeberg_downloader");
+//Embedded GameBanana browser page (needs base_browser.js beside it)
+const { registerGameBananaBrowser, onceGameBananaBrowser } = require("./gamebanana_browser");
 //const winapi = require('winapi-bindings');
 
 /*const USER_HOME = util.getVortexPath("home");
@@ -55,6 +57,8 @@ const EXEC_DEMO = EXEC;
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Metal_Gear_Solid_V%3A_The_Phantom_Pain";
 const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/2196"; //Nexus link to this extension. Used for links
+const GB_GAME_ID = "7316"; //GameBanana game id - https://gamebanana.com/games/7316
+const GB_URL = `https://gamebanana.com/games/${GB_GAME_ID}`;
 
 //feature toggles
 const hasLoader = true; //true if game needs a mod loader
@@ -73,6 +77,7 @@ const fallbackInstaller = false; //enable fallback installer. Set false if you n
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
 const hasUserIdFolder = true; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 const debug = false; //toggle for debug mode
+const gamebananaBrowser = true; //register the "Browse GameBanana" page - browse and install the game's GameBanana mods inside Vortex
 
 //info for modtypes, installers, tools, and actions
 const DATA_FOLDER = "master";
@@ -265,6 +270,14 @@ const IGNORE_DEPLOY = [
   path.join("**", "readme*"),
   path.join("**", "license*"),
 ];
+
+//Embedded GameBanana browser page - the user browses the live site and installs from it.
+//GameBanana mods are ordinary archives, so they land through the same installers as any other.
+const GB_BROWSER_CONFIG = {
+  gbGameId: GB_GAME_ID,
+  pageId: `${GAME_ID}-gamebanana-browse`,
+  pageTitle: "Browse GameBanana",
+};
 
 //filled in from data above
 const spec = {
@@ -2671,6 +2684,27 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     },
   );
+  if (gamebananaBrowser) {
+    context.registerAction(
+      "mod-icons",
+      300,
+      "open-ext",
+      {},
+      "Open GameBanana Page",
+      () => {
+        try {
+          window.api.shell.openUrl(GB_URL);
+        } catch (err) {
+          context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+        }
+      },
+      () => {
+        const state = context.api.getState();
+        const gameId = selectors.activeGameId(state);
+        return gameId === GAME_ID;
+      },
+    );
+  }
   context.registerAction(
     "mod-icons",
     300,
@@ -2752,6 +2786,11 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     },
   );
+
+  //register the embedded GameBanana browser page
+  if (gamebananaBrowser) {
+    registerGameBananaBrowser(context, gameSpec, GB_BROWSER_CONFIG);
+  }
 }
 
 //main function
@@ -2759,6 +2798,10 @@ function main(context) {
   applyGame(context, spec);
   context.once(() => {
     // put code here that should be run (once) when Vortex starts up
+    if (gamebananaBrowser) {
+      //claims downloads started from the browse page, and update-checks the mods installed through it
+      onceGameBananaBrowser(context.api, spec, GB_BROWSER_CONFIG);
+    }
     const api = context.api;
     api.onAsync("did-deploy", async (profileId) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);

@@ -57,7 +57,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `fantasylifeithegirlwhostealstime-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `fantasylifeithegirlwhostealstime-logicmods` | high | `{gamePath}/Game/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `fantasylifeithegirlwhostealstime-logicmods` | high | `{gamePath}/Game/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `fantasylifeithegirlwhostealstime-pakalt` | high | `{gamePath}/Game/Content/Paks` |
 | Root Game Folder | `fantasylifeithegirlwhostealstime-root` | high | `{gamePath}` |
 | Root Sub-Folders | `fantasylifeithegirlwhostealstime-rootsubfolders` | high | `{gamePath}/Game` |

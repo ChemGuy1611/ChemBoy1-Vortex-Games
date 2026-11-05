@@ -28,6 +28,7 @@ Usage:
     python patch_extensions.py GAME_ID [GAME_ID ...] --only template_gap_fixes --no-resize --dry-run   # port the 2026-10-11 template gap fixes (lastIndexOf wrapper cuts, EACCESS -> EACCES, .JS, Shinryu marker case, UMM save folder await, Anvil rename notice + rename redeploy, Fluffy loose-lua root + nested archive case, Unity hybrid dialogs / archive flags / custom loader / ALT_VERSION / Melon Nexus button, UE4-5 LogicMods .PAK stem / ModKit name guard / Xbox combo mod folder / legacy preSort / beatsPakInstaller gate / Open LogicMods Folder button, the last skipped where LOGICMODS_PATH already ends in the folder); registered disabled; pass the family's at-parity game ids only
     python patch_extensions.py GAME_ID [GAME_ID ...] --only farcry_parity --no-resize --dry-run   # splice template-farcry's baseline block (fallback installer trio, modFoldersEnsureWritable, 4 toggles + wiring) into Far Cry games below template shape parity (registered disabled; all-or-nothing per game, a variant that misses an anchor is reported for a hand port)
     python patch_extensions.py GAME_ID [GAME_ID ...] --only fluffy_has_demo --no-resize --dry-run   # bring REFramework/Fluffy games to template-reframework-fluffy's HAS_DEMO shape: const, multiExe, 3 demo checks, demo launch tool only when HAS_DEMO (registered disabled; all-or-nothing per game)
+    python patch_extensions.py GAME_ID [GAME_ID ...] --only logicmods_standard_path --no-resize --dry-run   # bring UE4-5 games to template-ue4-5's LogicMods layout, migration and Blueprint pak notification (registered disabled)
     python patch_extensions.py GAME_ID [GAME_ID ...] --only PATCH_NAME --no-resize   # --no-resize skips the PNG / title image / cover art resize passes that follow the patches (code-only run)
     python patch_extensions.py GAME_ID [GAME_ID ...] --only PATCH_NAME
     python patch_extensions.py --audit                        # run the read-only audits (installer priorities + FOMOD checks + store ID wiring) then exit
@@ -1550,7 +1551,8 @@ def patch_template_gap_fixes(game_id, src, context):
     # Per-pair guards. UE4-5 games that kept the folder in LOGICMODS_PATH ("already ends in the folder")
     # open the right folder from the toolbar already; appending LOGICMODS_FOLDER there would double it.
     # The two ALT_VERSION pairs are hybrid-only: Unity UMM carries the identical text on purpose.
-    path_has_folder = re.search(r'^const LOGICMODS_PATH = [^\n/]*"LogicMods"', src, re.MULTILINE)
+    path_has_folder = re.search(r'^(?:const|let) LOGICMODS_PATH = [^\n/]*(?:"LogicMods"|LOGICMODS_FOLDER)',
+                                src, re.MULTILINE)
     is_hybrid = "BEP_PATCHER_STRING" in src
     skipped_by_guard = {
         "open_logicmods_folder": bool(path_has_folder),
@@ -1777,6 +1779,100 @@ def patch_farcry_parity(game_id, src, context):
                        f"({', '.join(missing_fn)}), {len(new) - len(src):+d} bytes")
 
 
+LOGICMODS_TEMPLATE = "template-ue4-5"
+LOGICMODS_DID_INSTALL_OLD = (
+    '    api.events.on("did-install-mod", (gameId, archiveId, modId) => {\n'
+    '      retagFomodPakMod(api, gameId, modId).catch((err) =>\n'
+    '        log("warn", `[${GAME_ID}] retagFomodPakMod failed for "${modId}"`, err),\n'
+    '      );\n'
+    '    });\n')
+LOGICMODS_SETUP_TAIL = "  return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);\n"
+LOGICMODS_FOMOD_ANCHOR = "//FOMOD's built-in installer"
+# Comments the games that already targeted the folder carry on these lines. Now true of every game.
+LOGICMODS_STALE_COMMENT = "//LOGICMODS_PATH already ends in the folder for this game"
+
+
+def _logicmods_template_blocks():
+    """Pull the LogicMods blocks out of template-ue4-5 verbatim, so the patch can't drift from it."""
+    tsrc = read_index_js(os.path.join(REPO_ROOT, LOGICMODS_TEMPLATE))
+    if tsrc is None:
+        raise RuntimeError(f"{LOGICMODS_TEMPLATE}/index.js not found")
+
+    def between(start_text, end_text):
+        start = tsrc.index(start_text)
+        return tsrc[start:tsrc.index(end_text, start)]
+
+    path_line = re.search(r'^const LOGICMODS_PATH = [^\n]*\n', tsrc, re.MULTILINE).group(0)
+    tail_start = tsrc.index("  await migrateLogicModsLayout(api)")
+    handler_start = tsrc.index("    //The Blueprint pak check runs after it")
+    return {
+        "path_comment": path_line.split("; ", 1)[1].rstrip("\n"),
+        "install": between("//Install LogicMods files.", "//Installer test for UE4SS files"),
+        "parser": between("//True when a buffer holds", "//Mirrors the registration-priority ladder"),
+        "helpers": between("//Mark the game for deployment", LOGICMODS_FOMOD_ANCHOR),
+        "setup": tsrc[tail_start:tsrc.index(LOGICMODS_SETUP_TAIL, tail_start)],
+        "did_install": tsrc[handler_start:tsrc.index("\n    });\n", handler_start) + len("\n    });\n")],
+    }
+
+
+def patch_logicmods_standard_path(game_id, src, context):
+    """
+    Bring a UE4-5 game to the standard LogicMods layout of template-ue4-5: LOGICMODS_PATH ends in
+    the LogicMods folder, installLogic stages flat, plus the migration and the Blueprint pak
+    notification. Blocks are copied verbatim from the template. Every anchor must match exactly
+    once; a game that misses one is left untouched and reported, so a variant gets a hand port
+    instead of a partial splice. Registered disabled. Code left in the old shape on purpose,
+    because only a hand edit can place it, is named in the message.
+    """
+    if "async function migrateLogicModsLayout(" in src:
+        return src, False, SKIP_ALREADY_SET
+    if "function installLogic(" not in src:
+        return src, False, "no LogicMods installer"
+    blocks = _logicmods_template_blocks()
+    new = src
+
+    decl = re.compile(
+        r'^(const|let) LOGICMODS_PATH = path\.join\(((?:\w+, )*\w+), "Content", "Paks"(?:, "LogicMods")?\);[^\n]*\n'
+        r'const LOGICMODS_FOLDER = "LogicMods";[^\n]*\n', re.MULTILINE)
+    if len(decl.findall(new)) != 1:
+        return src, False, "LOGICMODS_PATH declaration not in the expected shape - hand port"
+    new = decl.sub(lambda m: (
+        'const LOGICMODS_FOLDER = "LogicMods";\n'
+        f'{m.group(1)} LOGICMODS_PATH = path.join({m.group(2)}, "Content", "Paks", LOGICMODS_FOLDER); '
+        f'{blocks["path_comment"]}\n'), new)
+
+    new = new.replace("path.join(LOGICMODS_PATH, LOGICMODS_FOLDER));", "LOGICMODS_PATH);")
+    new = new.replace("path.join(GAME_PATH, LOGICMODS_PATH, LOGICMODS_FOLDER)",
+                      "path.join(GAME_PATH, LOGICMODS_PATH)")
+    new = re.sub(rf"^[ \t]*{re.escape(LOGICMODS_STALE_COMMENT)}\n", "", new, flags=re.MULTILINE)
+    new = new.replace(f" {LOGICMODS_STALE_COMMENT}", "")
+
+    installer = re.compile(r"(?:^//[^\n]*\n)*^function installLogic\(files\) \{\n.*?^\}\n\n",
+                           re.MULTILINE | re.DOTALL)
+    segments = re.compile(r"^function pathSegments\(files\) \{\n.*?^\}\n\n", re.MULTILINE | re.DOTALL)
+    for pattern, label in ((installer, "installLogic"), (segments, "pathSegments")):
+        if len(pattern.findall(new)) != 1:
+            return src, False, f"{label} not in the expected shape - hand port"
+    new = installer.sub(lambda m: blocks["install"], new)
+    new = segments.sub(lambda m: m.group(0) + blocks["parser"], new)
+
+    for anchor in (LOGICMODS_SETUP_TAIL, LOGICMODS_DID_INSTALL_OLD, LOGICMODS_FOMOD_ANCHOR):
+        count = new.count(anchor)
+        if count != 1:
+            return src, False, f"anchor x{count} (want 1): {anchor.strip()[:60]!r} - hand port"
+    new = new.replace(LOGICMODS_SETUP_TAIL, blocks["setup"] + LOGICMODS_SETUP_TAIL)
+    new = new.replace(LOGICMODS_DID_INSTALL_OLD, blocks["did_install"])
+    new = new.replace(LOGICMODS_FOMOD_ANCHOR, blocks["helpers"] + LOGICMODS_FOMOD_ANCHOR)
+
+    follow_ups = []
+    if "LOGICMODS_PATH, LOGICMODS_FOLDER" in new:
+        follow_ups.append("LOGICMODS_FOLDER still joined onto LOGICMODS_PATH")
+    if re.search(r'^\s+LOGICMODS_PATH = path\.join\([^\n]*"Paks"\);', new, re.MULTILINE):
+        follow_ups.append("LOGICMODS_PATH reassigned without the folder")
+    note = f" - HAND EDIT: {'; '.join(follow_ups)}" if follow_ups else ""
+    return new, True, f"{len(new) - len(src):+d} bytes{note}"
+
+
 # ── Patch registry ────────────────────────────────────────────────────────────
 # Add new patches here. Set enabled=False to skip without removing.
 
@@ -1804,6 +1900,7 @@ PATCHES = [
     {"name": "template_gap_fixes",               "enabled": False,"fn": patch_template_gap_fixes},
     {"name": "farcry_parity",                    "enabled": False,"fn": patch_farcry_parity},
     {"name": "fluffy_has_demo",                  "enabled": False,"fn": patch_fluffy_has_demo},
+    {"name": "logicmods_standard_path",          "enabled": False,"fn": patch_logicmods_standard_path},
 ]
 
 

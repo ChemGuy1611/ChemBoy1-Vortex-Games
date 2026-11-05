@@ -61,7 +61,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `thesinkingcity2-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `thesinkingcity2-logicmods` | high | `{gamePath}/PlayGround/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `thesinkingcity2-logicmods` | high | `{gamePath}/PlayGround/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `thesinkingcity2-pakalt` | high | `{gamePath}/PlayGround/Content/Paks` |
 | Root Folder | `thesinkingcity2-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `thesinkingcity2-uesortablepak` | 25 | `{gamePath}/PlayGround/Content/Paks/~mods` |

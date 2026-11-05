@@ -196,6 +196,19 @@ purposes, **sibling configs must carry identical `requirements` tables** — req
 the registered config, so a table only the second config declares is never consulted. A sibling
 declaring a different table is warn-logged rather than silently merged.
 
+### Two sources on one game
+
+A game may also carry pages from two different sites: `game-helldivers2` has GameBanana and
+ModWorkshop, and `game-balatro`, `game-doom3`, `game-returntocastlewolfenstein` and
+`game-unrealtournament2004` each add GameBanana beside an existing page. The extension carries both
+source modules plus one `base_browser.js`, and calls each source's register and once exports with its
+own config.
+
+Nothing else is needed, because state is keyed by source. A download started from one page is claimed
+and stamped by that source only, its install leaves the other source's mods alone, and each source's
+update check covers the mods carrying its own attribute. Every page defaults to `priority` 40, so give
+the second page an explicit value, such as 41, to keep the sidebar order stable.
+
 ## Config contract
 
 All game-specific knowledge arrives in one object, which is what makes a second adopter a copy plus
@@ -217,7 +230,8 @@ Fields only one source needs stay on that source's adapter:
 | Field                            | Module                                                                                                           | Purpose                                                                                                                                                                                                                                                                   |
 | -------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `hideAds` / `adSelectors`        | any source with an `adSelectors` default (`gamebanana_browser.js`, `modworkshop_browser.js`, `moddb_browser.js`) | Hide the site's ad slots in the embedded view (default on). `adSelectors` replaces the adapter's list rather than extending it; a source with no list injects nothing                                                                                                     |
-| `blockAdPopups` / `blockedHosts` | any source with a `blockedHosts` default (`gamebanana_browser.js`, `moddb_browser.js`)                           | Drop links that lead to an ad network instead of opening them in the system browser (default on)                                                                                                                                                                          |
+| `blockAdPopups` / `blockedHosts` | `blockAdPopups` any source; `blockedHosts` default in `gamebanana_browser.js`, `moddb_browser.js`                | Hold back off-site links instead of opening them in the system browser (default on). A `blockedHosts` match is dropped silently, anything else outside `externalHosts` becomes a notification. `blockAdPopups: false` opens everything off-site, as before                |
+| `externalHosts`                  | any source                                                                                                       | Off-site hosts that open in the system browser without asking, replacing the default (`nexusmods.com`, `github.com`). A subdomain matches its parent                                                                                                                      |
 | `gbSection`                      | `gamebanana_browser.js`                                                                                          | Section the page opens on, e.g. `mods` (default) or `tools` — GameBanana listings are `/{section}/games/{gameId}`                                                                                                                                                         |
 | `fcGame`                         | `fcmodding_browser.js`                                                                                           | Section the page opens on — `fc3`, `fc4`, `fc5`, `fc6`, `fcnd` or `fcp`, the same slug the extension already uses                                                                                                                                                         |
 | `homeUrl`                        | `gamebanana_browser.js`                                                                                          | Full override for the home URL, e.g. the game's hub page instead of one section                                                                                                                                                                                           |
@@ -387,10 +401,16 @@ module can do about it, both local to the page:
   already looks up by id — core's own control does the same thing in its `dom-ready` handler.
   Injected CSS lasts for one document, so it has to go on **every** `dom-ready`, not once on mount.
   This is cosmetic: the ad requests still happen, the page just stops showing the result.
-- **Drop ad destinations.** Without this, an ad click or pop-under reaches `onNewWindow`, fails the
-  host allow-list, and gets handed to `window.api.shell.openUrl` — so the ad opens in the user's real
-  browser, which is worse than the ad was. Match the URL against an ad-host list before that
-  fallback.
+- **Hold back off-site pages.** Without this, an ad click or pop-under reaches `onNewWindow`, fails
+  the host allow-list, and opens in the user's real browser, which is worse than the ad was. A list
+  of ad hosts cannot solve this alone, because any network missing from it gets through, and how a
+  page asks to open tells nothing: pop-unders fire on real clicks, and a script can request any window
+  type. So nothing opens on its own. A URL on the host allow-list stays in the view, a
+  `blockedHosts` match is dropped, an `externalHosts` match opens in the system browser, and anything
+  else becomes an info notification naming the host, with an **Open** button. Self-redirects take the
+  same path. Each host gets its own notification id, so an ad firing on the same click cannot replace
+  a real link, and a shared `group` collapses them into one entry. Toolbar actions the user chose
+  (Open in browser) are not held back.
 
 What a module **cannot** reasonably do is block the requests themselves. That needs
 `session.webRequest` in the main process, which is the same session Vortex downloads through, and
@@ -406,9 +426,9 @@ base skips both.
 | Module                    | Source                  | Adopters                                                                                                                                                                                                                                                                                                                                          |
 | ------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `base_browser.js`         | —                       | every adopter of every source below                                                                                                                                                                                                                                                                                                               |
-| `thunderstore_browser.js` | thunderstore.io         | `game-hades2`, `game-megabonk`, `game-hollowknightsilksong`, `game-burglingnomes`, `game-cairn`, `game-aska`, `game-blueprince`, `game-cloverpit`, `game-footballmanager26`, `game-discoelysium`, `game-peak`, `game-howtofish`, `game-romestead`, `game-balatro`, `game-mewgenics`, `game-rvthereyet`, `game-windrose`                          |
-| `gamebanana_browser.js`   | gamebanana.com          | `game-doometernal`                                                                                                                                                                                                                                                                                                                                |
-| `modworkshop_browser.js`  | modworkshop.net         | `game-roadtovostok`                                                                                                                                                                                                                                                                                                                               |
+| `thunderstore_browser.js` | thunderstore.io         | `game-hades2`, `game-megabonk`, `game-hollowknightsilksong`, `game-burglingnomes`, `game-cairn`, `game-aska`, `game-blueprince`, `game-cloverpit`, `game-footballmanager26`, `game-discoelysium`, `game-peak`, `game-howtofish`, `game-romestead`, `game-balatro`, `game-rvthereyet`, `game-windrose` |
+| `gamebanana_browser.js`   | gamebanana.com          | `game-doometernal`, `game-dragonballsparkingzero`, `game-marvelrivals`, `game-sifu`, `game-legobatmanlegacyofthedarkknight`, `game-stellarblade`, `game-myheroacademiaallsjustice`, `game-clairobscurexpedition33`, `game-streetfighter6`, `game-residentevil22019`, `game-residentevil42023`, `game-residentevilrequiem`, `game-devilmaycry5`, `game-digimonstorytimestranger`, `game-metaphorrefantazio`, `game-metalgearsolidvtpp`, `game-starwarsbattlefront22017`, `game-helldivers2`, `game-unrealtournament2004`, `game-returntocastlewolfenstein`, `game-balatro`, `game-doom3` (classic game only) |
+| `modworkshop_browser.js`  | modworkshop.net         | `game-roadtovostok`, `game-helldivers2`, `game-mewgenics` |
 | `fcmodding_browser.js`    | downloads.fcmodding.com | `game-farcry3`, `game-farcry4`, `game-farcry5`, `game-farcry6`, `game-farcrynewdawn`, `game-farcryprimal`, `template-farcry`                                                                                                                                                                                                                      |
 | `moddb_browser.js`        | moddb.com               | `game-darkmessiahofmightandmagic`, `game-returntocastlewolfenstein`, `game-deusex`, `game-deusexinvisiblewar`, `game-doom3`, `game-gzdoom` (two pages), `game-painkillerblackedition`, `game-redfactionguerrillaremarstered`, `game-systemshock225thanniversaryremaster` (classic game only), `game-unrealtournament2004`, `game-wolfenstein2009` |
 | `modio_browser.js`        | mod.io                  | `game-quarantinezonethelastcheck`, `game-anno117paxromana`, `game-abioticfactor`, `game-stalker2heartofchornobyl`, `game-frostpunk2`, `game-overthehill`, `game-metroexodus`                                                                                                                                                                      |
@@ -424,7 +444,10 @@ base skips both.
   first-hyphen rule. A **stale file id is not an error**: `gamebanana.com/dl/{fileId}` for a file that
   has been superseded redirects to the submission's download _page_, so a download built from a
   hardcoded file id silently fetches HTML once the submission is updated. Resolve the current file
-  through the API and keep any hardcoded id as a fallback only.
+  through the API and keep any hardcoded id as a fallback only. When a reference names no file, the
+  **newest archive** is picked, not the newest file: authors using Reloaded-II's updater upload a
+  `*releasemetadata*.json` beside each archive, sometimes after it. A submission with no archive at
+  all keeps its newest file.
 - **Thunderstore** is the only source with a dependency closure, and the only one whose versions are
   semver by convention. Its dependency entries are version-pinned, but the pin is a **minimum, not an
   exact match** — two mods routinely pin different versions of the same dependency, and one install

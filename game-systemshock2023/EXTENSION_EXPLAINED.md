@@ -66,7 +66,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `systemshock2023-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `systemshock2023-logicmods` | high | `{gamePath}/SystemShock/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `systemshock2023-logicmods` | high | `{gamePath}/SystemShock/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `systemshock2023-pakalt` | high | `{gamePath}/SystemShock/Content/Paks` |
 | Root Folder | `systemshock2023-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `systemshock2023-uesortablepak` | 25 | `{gamePath}/SystemShock/Content/Paks/~mods` |

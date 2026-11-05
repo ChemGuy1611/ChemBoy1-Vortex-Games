@@ -94,14 +94,40 @@ async function writeModysTxt(modsJsonPath) {
 
 ---
 
+## How BPModLoaderMod scans `LogicMods`
+
+`LoadModConfigs()` in `assets/Mods/BPModLoaderMod/Scripts/main.lua` looks at `Content/Paks/LogicMods`
+to a fixed depth:
+
+| Location                               | `.pak` registered | `config.lua` read |
+| -------------------------------------- | ----------------- | ----------------- |
+| `LogicMods/foo.pak`                    | Yes               | No                |
+| `LogicMods/<subfolder>/foo.pak`        | Yes               | Yes               |
+| `LogicMods/<subfolder>/<deeper>/foo.pak` | No              | No                |
+
+A pak with no `config.lua` gets the default config: asset path `/Game/Mods/<pak name>/ModActor`. The
+scan is not recursive, so an installer that adds a folder level can stop a mod from being registered
+while a recursive load order page still lists it.
+
+The UE4-5 template installs every file from an archive's `LogicMods` folder flat at
+`Content/Paks/LogicMods`, so its paks are always registered and always get the default config: a
+`config.lua` from a subfolder lands at the top of `LogicMods` too, where it is not read. See
+[templates/TEMPLATE_UE4_5.md](templates/TEMPLATE_UE4_5.md).
+
+A pak with `ModActor.uasset` in its index is a Blueprint mod. Its name may still not match its
+`Mods/<folder>`, which BPModLoaderMod requires, so some of these mods also have to be renamed.
+
+---
+
 ## Key source locations (RE-UE4SS repo)
 
-| File                            | Role                                                   |
-| ------------------------------- | ------------------------------------------------------ |
-| `assets/Mods/mods.txt`          | Runtime config shipped with releases                   |
-| `assets/Mods/mods.json`         | Build-time source of truth                             |
-| `UE4SS/src/UE4SSProgram.cpp`    | `start_mods()`, `start_lua_mods()`, `start_cpp_mods()` |
-| `tools/buildscripts/release.py` | `modify_mods_txt()` + `modify_mods_json()`             |
+| File                                      | Role                                                   |
+| ----------------------------------------- | ------------------------------------------------------ |
+| `assets/Mods/mods.txt`                    | Runtime config shipped with releases                   |
+| `assets/Mods/mods.json`                   | Build-time source of truth                             |
+| `assets/Mods/BPModLoaderMod/Scripts/main.lua` | `LogicMods` scan, `load_order.txt` reader          |
+| `UE4SS/src/UE4SSProgram.cpp`              | `start_mods()`, `start_lua_mods()`, `start_cpp_mods()` |
+| `tools/buildscripts/release.py`           | `modify_mods_txt()` + `modify_mods_json()`             |
 
 ---
 

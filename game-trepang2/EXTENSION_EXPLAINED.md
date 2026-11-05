@@ -67,7 +67,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `trepang2-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `trepang2-logicmods` | high | `{gamePath}/CPPFPS/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `trepang2-logicmods` | high | `{gamePath}/CPPFPS/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `trepang2-pakalt` | high | `{gamePath}/CPPFPS/Content/Paks` |
 | Root Folder | `trepang2-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `trepang2-uesortablepak` | 25 | `{gamePath}/CPPFPS/Content/Paks/~mods` |

@@ -58,7 +58,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `vein-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `vein-logicmods` | high | `{gamePath}/Vein/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `vein-logicmods` | high | `{gamePath}/Vein/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `vein-pakalt` | high | `{gamePath}/Vein/Content/Paks` |
 | Root Folder | `vein-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `vein-uesortablepak` | 25 | `{gamePath}/Vein/Content/Paks/~mods` |

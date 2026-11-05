@@ -65,7 +65,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `witchfire-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `witchfire-logicmods` | high | `{gamePath}/Witchfire/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `witchfire-logicmods` | high | `{gamePath}/Witchfire/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `witchfire-pakalt` | high | `{gamePath}/Witchfire/Content/Paks` |
 | Root Folder | `witchfire-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `witchfire-uesortablepak` | 25 | `{gamePath}/Witchfire/Content/Paks/~mods` |

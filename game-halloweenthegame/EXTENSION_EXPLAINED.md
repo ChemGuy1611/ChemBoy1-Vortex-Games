@@ -60,7 +60,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `halloweenthegame-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `halloweenthegame-logicmods` | high | `{gamePath}/Ravage/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `halloweenthegame-logicmods` | high | `{gamePath}/Ravage/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `halloweenthegame-pakalt` | high | `{gamePath}/Ravage/Content/Paks` |
 | Root Folder | `halloweenthegame-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `halloweenthegame-uesortablepak` | 25 | `{gamePath}/Ravage/Content/Paks/~mods` |

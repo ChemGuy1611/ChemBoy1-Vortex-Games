@@ -38,18 +38,13 @@ Environment variables:
 
 import argparse
 import json
-import struct
 import sys
 import urllib.error
 
-from vortex_utils import http_get_bytes, http_get_json
+from vortex_utils import http_get_json, zip_listing
 
 API_BASE = "https://mod.io/v1"
 API_HEADERS = {"X-Modio-Origin": "web"}
-
-ZIP_EOCD = bytes([0x50, 0x4B, 5, 6])  # end of central directory record
-ZIP_CEN = bytes([0x50, 0x4B, 1, 2])  # central directory file header
-TAIL_BYTES = 70000  # EOCD sits in the last 22 bytes + up to 64 KB of comment
 
 
 def api_get(path):
@@ -58,24 +53,6 @@ def api_get(path):
 
 def game_ref(game):
     return game if game.isdigit() else f"@{game}"
-
-
-def zip_listing(url):
-    """Entry names of a remote zip, read from its central directory. None when not a plain zip."""
-    tail = http_get_bytes(url, {"Range": f"bytes=-{TAIL_BYTES}"})
-    i = tail.rfind(ZIP_EOCD)
-    if i < 0:
-        return None
-    cd_size, cd_offset = struct.unpack("<II", tail[i + 12 : i + 20])
-    if cd_offset == 0xFFFFFFFF:
-        return None  # zip64
-    cd = http_get_bytes(url, {"Range": f"bytes={cd_offset}-{cd_offset + cd_size - 1}"})
-    names, p = [], 0
-    while cd[p : p + 4] == ZIP_CEN:
-        name_len, extra_len, comment_len = struct.unpack("<HHH", cd[p + 28 : p + 34])
-        names.append(cd[p + 46 : p + 46 + name_len].decode("utf-8", "replace"))
-        p += 46 + name_len + extra_len + comment_len
-    return names
 
 
 def platform_file(game, mod, platform):

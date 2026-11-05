@@ -2,8 +2,8 @@
 Name: DOOM 3 and DOOM 3: BFG Edition Vortex Extension
 Structure: Basic multi-game with multiple exes
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-25
+Version: 1.1.1
+Date: 2026-11-04
 /////////////////////////////////////////*/
 /*
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣠⣤⣤⣤⡴⣦⡴⣖⠶⣴⠶⡶⣖⡶⣶⢶⣲⡾⠿⢿⡷⣾⢿⣷⣦⢾⣷⣾⣶⣤⣀⣰⣤⣀⡀⠀⠀⢀⣴⣿⡿⡿⣿⣿⣦⣄⠀⠀⣠⣴⣿⡿⢿⡿⣷⣦⡄⠀⠀⢀⣀⣤⣦⣀⣤⣶⣶⣷⣦⣴⡿⢿⡷⣿⠿⡿⣿⣷⢶⣦⢴⡲⣦⢶⡶⢶⡲⣖⡶⣦⣤⣤⣤⣤⣤⣤⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -50,9 +50,12 @@ const {
 } = require("./downloader");
 const { parseStringPromise } = require("xml2js");
 const { registerModDbBrowser, onceModDbBrowser } = require("./moddb_browser");
+//Embedded GameBanana browser page (needs base_browser.js beside it)
+const { registerGameBananaBrowser, onceGameBananaBrowser } = require("./gamebanana_browser");
 
 //feature toggles
 const moddbBrowser = true; //register the "Browse ModDB" page (moddb.com)
+const gamebananaBrowser = true; //register the "Browse GameBanana" page - browse and install the game's GameBanana mods inside Vortex
 
 //Specify all information about the game
 const GAME_ID = "doom3";
@@ -137,6 +140,31 @@ const ROOT_FILES = [
 const MANUAL_INTERVENTION_FILES = [WOMD_FILE, D3HDP_FILE, ARL_FILE, REDUX_FILE, REDUX_DHEWM3_FILE]; //<-- These require the user to do manual file manipulation - trigger notification when installing
 const ROOT_FOLDERS_BFG = ["base"];
 
+//.pk4 mods packaged inside a folder. A folder that comes with anything besides .pk4 files and docs
+//is a standalone mod the game lists in its Mods menu, so it stays a folder beside "base". Otherwise
+//the folder is only packaging, and its files belong in "base".
+const PK4_FOLDER_ID = `${GAME_ID}-pk4folder`;
+const PK4_EXTS = [".pk4"];
+const MOD_FOLDER_FILES = ["description.txt"]; //the file the game's Mods menu reads a mod's name from
+const DOC_EXTS = [
+  ".txt",
+  ".md",
+  ".rtf",
+  ".pdf",
+  ".doc",
+  ".docx",
+  ".nfo",
+  ".htm",
+  ".html",
+  ".url",
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".gif",
+  ".bmp",
+  ".tga",
+];
+
 const DHEWM3_ID = `${GAME_ID}-dhewm3`;
 const DHEWM3_NAME = "Dhewm3";
 const DHEWM3_EXEC = "dhewm3.exe";
@@ -185,6 +213,8 @@ const IGNORE_CONFLICTS = [
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/686"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Doom_3";
 const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
+const GB_GAME_ID = "27"; //GameBanana game id - https://gamebanana.com/games/27
+const GB_URL = `https://gamebanana.com/games/${GB_GAME_ID}`;
 
 //Embedded ModDB browser page - the user browses the live moddb.com section for this game and
 //installs from it. Vortex's download manager cannot fetch from this host, so the page fetches
@@ -195,6 +225,17 @@ const MODDB_BROWSER_CONFIG = {
   moddbPath: "games/doom-iii",
   pageId: `${GAME_ID}-moddb-browse`,
   pageTitle: "Browse ModDB",
+};
+
+//Embedded GameBanana browser page - the user browses the live site and installs from it.
+//GameBanana mods are ordinary archives, so they land through the same installers as any other.
+//Its Doom 3 section is for the classic game, so like the ModDB page it registers against the
+//classic spec and not DOOM 3: BFG Edition.
+const GB_BROWSER_CONFIG = {
+  gbGameId: GB_GAME_ID,
+  pageId: `${GAME_ID}-gamebanana-browse`,
+  pageTitle: "Browse GameBanana",
+  priority: 41, //directly below the ModDB page, so the sidebar order stays stable
 };
 
 const spec = {
@@ -684,6 +725,64 @@ function installRoot(api, files, fileName) {
   return Promise.resolve({ instructions });
 }
 
+//Installer test for .pk4 files packaged inside a folder. A .pk4 at the archive root is left to the
+//default install, which already puts it in "base".
+function testPk4Folder(files, gameId) {
+  const pk4Files = files.filter((file) => PK4_EXTS.includes(path.extname(file).toLowerCase()));
+  const isMod = pk4Files.length > 0 && pk4Files.every((file) => path.dirname(file) !== ".");
+  let supported = gameId === spec.game.id && isMod;
+
+  // Test for a mod installer.
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install for .pk4 files packaged inside a folder
+function installPk4Folder(files) {
+  const fileList = files.filter((file) => !file.endsWith(path.sep));
+  const modFile = fileList
+    .filter((file) => PK4_EXTS.includes(path.extname(file).toLowerCase()))
+    .sort((a, b) => a.split(path.sep).length - b.split(path.sep).length)[0];
+  const modFolder = path.dirname(modFile);
+  const isStandalone = fileList.some((file) => {
+    const ext = path.extname(file).toLowerCase();
+    return (
+      MOD_FOLDER_FILES.includes(path.basename(file).toLowerCase()) ||
+      (!PK4_EXTS.includes(ext) && !DOC_EXTS.includes(ext))
+    );
+  });
+
+  //A standalone mod keeps its folder, along with anything packaged beside it (launcher scripts).
+  const parentFolder = path.dirname(modFolder);
+  const parentPrefix = parentFolder === "." ? "" : parentFolder + path.sep;
+  const rootPrefix = isStandalone ? parentPrefix : modFolder + path.sep;
+  const setModTypeInstruction = { type: "setmodtype", value: isStandalone ? ROOT_ID : BASE_ID };
+
+  const filtered = fileList.filter((file) => file.startsWith(rootPrefix));
+  const instructions = filtered.map((file) => {
+    return {
+      type: "copy",
+      source: file,
+      destination: file.slice(rootPrefix.length),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
 function manualManipulationNotify(api, fileName) {
   const state = api.getState();
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
@@ -1036,6 +1135,11 @@ function applyGame(context, gameSpec) {
     registerModDbBrowser(context, gameSpec, MODDB_BROWSER_CONFIG);
   }
 
+  //register the embedded GameBanana browser page
+  if (gamebananaBrowser) {
+    registerGameBananaBrowser(context, gameSpec, GB_BROWSER_CONFIG);
+  }
+
   //register mod types
   (gameSpec.modTypes || []).forEach((type, idx) => {
     context.registerModType(
@@ -1062,6 +1166,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(ROOT_ID, 27, testRoot, (files, fileName) =>
     installRoot(context.api, files, fileName),
   );
+  context.registerInstaller(PK4_FOLDER_ID, 29, testPk4Folder, installPk4Folder);
 
   //register actions
   /*
@@ -1184,6 +1289,27 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     },
   );
+  if (gamebananaBrowser) {
+    context.registerAction(
+      "mod-icons",
+      300,
+      "open-ext",
+      {},
+      "Open GameBanana Page",
+      () => {
+        try {
+          window.api.shell.openUrl(GB_URL);
+        } catch (err) {
+          context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+        }
+      },
+      () => {
+        const state = context.api.getState();
+        const gameId = selectors.activeGameId(state);
+        return gameId === GAME_ID;
+      },
+    );
+  }
   context.registerAction(
     "mod-icons",
     300,
@@ -1404,6 +1530,10 @@ function main(context) {
     if (moddbBrowser) {
       //installs downloads started from the browse page, and update-checks the mods installed through it
       onceModDbBrowser(api, spec, MODDB_BROWSER_CONFIG);
+    }
+    if (gamebananaBrowser) {
+      //claims downloads started from the browse page, and update-checks the mods installed through it
+      onceGameBananaBrowser(api, spec, GB_BROWSER_CONFIG);
     }
   });
   return true;

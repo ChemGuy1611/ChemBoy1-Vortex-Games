@@ -86,6 +86,11 @@ Purge the old target first with the `purge-mods-in-path` event. Vortex registers
 `api.onAsync("purge-mods-in-path", (gameId, modType, modPath) => …)` in
 `mod_management/index.ts`; pass `""` as `modType` for a game's default mod type.
 
+The same event moves a fixed mod type target between extension versions. It works when awaited from
+`setup()` during game activation. A running game or tool makes it skip the purge and still resolve,
+so confirm the old `vortex.deployment.<modType>.json` is gone or empty before moving any staged
+files, and try again on the next activation otherwise.
+
 ```js
 async function changeHomeDir(api, newDir) {
   let homeDir = trimPath(newDir);

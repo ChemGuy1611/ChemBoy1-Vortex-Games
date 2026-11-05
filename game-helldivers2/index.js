@@ -2,8 +2,8 @@
 Name: Helldivers 2 Vortex Extension
 Structure: Custom Game Data
 Author: ChemBoy1
-Version: 1.2.2
-Date: 2026-10-25
+Version: 1.3.1
+Date: 2026-11-04
 /////////////////////////////////////////*/
 
 //Import libraries
@@ -13,6 +13,9 @@ const { actions, fs: vfs, util, selectors, log, MainPage, VortexError } = requir
 const path = require("path");
 const template = require("string-template");
 const React = require("react");
+//Embedded GameBanana + ModWorkshop browser pages (both need base_browser.js beside them)
+const { registerGameBananaBrowser, onceGameBananaBrowser } = require("./gamebanana_browser");
+const { registerModWorkshopBrowser, onceModWorkshopBrowser } = require("./modworkshop_browser");
 
 //Specify all info about the game
 const STEAMAPP_ID = "553850";
@@ -110,6 +113,12 @@ const clearPatchOverride = (profileId, hash) => ({
 
 //Filled in from info above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/845"; //Nexus link to this extension. Used for links
+const GB_GAME_ID = "20276"; //GameBanana game id - https://gamebanana.com/games/20276
+const GB_URL = `https://gamebanana.com/games/${GB_GAME_ID}`;
+const MWS_GAME = "hd2"; //ModWorkshop game slug - https://modworkshop.net/g/hd2
+const MWS_URL = `https://modworkshop.net/g/${MWS_GAME}`;
+const gamebananaBrowser = true; //register the "Browse GameBanana" page - browse and install the game's GameBanana mods inside Vortex
+const modworkshopBrowser = true; //register the "Browse ModWorkshop" page - browse and install the game's ModWorkshop mods inside Vortex
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Helldivers_2";
 const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const IGNORE_CONFLICTS = [
@@ -122,6 +131,21 @@ const IGNORE_DEPLOY = [
   path.join("**", "readme*"),
   path.join("**", "license*"),
 ];
+
+//Embedded browser pages - the user browses the live site and installs from it.
+//Mods from either site are ordinary archives, so they land through the same installers as any other.
+const GB_BROWSER_CONFIG = {
+  gbGameId: GB_GAME_ID,
+  pageId: `${GAME_ID}-gamebanana-browse`,
+  pageTitle: "Browse GameBanana",
+};
+const MWS_BROWSER_CONFIG = {
+  mwsGame: MWS_GAME,
+  pageId: `${GAME_ID}-modworkshop-browse`,
+  pageTitle: "Browse ModWorkshop",
+  priority: 41, //directly below the GameBanana page, so the sidebar order stays stable
+};
+
 const spec = {
   game: {
     id: GAME_ID,
@@ -2010,6 +2034,48 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     },
   );
+  if (gamebananaBrowser) {
+    context.registerAction(
+      "mod-icons",
+      300,
+      "open-ext",
+      {},
+      "Open GameBanana Page",
+      () => {
+        try {
+          window.api.shell.openUrl(GB_URL);
+        } catch (err) {
+          context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+        }
+      },
+      () => {
+        const state = context.api.getState();
+        const gameId = selectors.activeGameId(state);
+        return gameId === GAME_ID;
+      },
+    );
+  }
+  if (modworkshopBrowser) {
+    context.registerAction(
+      "mod-icons",
+      300,
+      "open-ext",
+      {},
+      "Open ModWorkshop Page",
+      () => {
+        try {
+          window.api.shell.openUrl(MWS_URL);
+        } catch (err) {
+          context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+        }
+      },
+      () => {
+        const state = context.api.getState();
+        const gameId = selectors.activeGameId(state);
+        return gameId === GAME_ID;
+      },
+    );
+  }
   context.registerAction(
     "mod-icons",
     300,
@@ -2048,6 +2114,14 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     },
   );
+
+  //register the embedded browser pages
+  if (gamebananaBrowser) {
+    registerGameBananaBrowser(context, gameSpec, GB_BROWSER_CONFIG);
+  }
+  if (modworkshopBrowser) {
+    registerModWorkshopBrowser(context, gameSpec, MWS_BROWSER_CONFIG);
+  }
 }
 
 const requestDeployment = (context) => {
@@ -3470,6 +3544,13 @@ function main(context) {
 
   context.once(() => {
     // put code here that should be run (once) when Vortex starts up
+    //claim downloads started from the browse pages, and update-check the mods installed through them
+    if (gamebananaBrowser) {
+      onceGameBananaBrowser(context.api, spec, GB_BROWSER_CONFIG);
+    }
+    if (modworkshopBrowser) {
+      onceModWorkshopBrowser(context.api, spec, MWS_BROWSER_CONFIG);
+    }
     const api = context.api;
 
     //Fires for EVERY game Vortex activates, not just this one, so everything below is gated on the

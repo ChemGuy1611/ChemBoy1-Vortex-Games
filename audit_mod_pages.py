@@ -38,6 +38,11 @@ one-off exception can be parked with a marker on the EXTENSION_URL line:
 
     const EXTENSION_URL = "..."; //!audit-skip: modpage-tags - <reason>
 
+--gallery adds each live page's image count, read from v3 getMod (gallery_images plus
+primary_image when the gallery leaves it out). No batch route returns images, so it costs
+one v3 call per page and stays opt-in. It is a status report: no image policy exists, so
+counts and unreadable pages never land under "Needs attention" or change the exit code.
+
 This audit is read-only. No Nexus API tier can add/remove a mod tag or toggle a mod
 page's media/tag permission switches (confirmed exhaustively across v1/v3 REST and v2
 GraphQL -- see resources/NEXUS_GRAPHQL_API.md "What You Cannot Do"), so output is a
@@ -47,6 +52,7 @@ Usage:
     python audit_mod_pages.py                   # full report
     python audit_mod_pages.py --json             # machine-readable report
     python audit_mod_pages.py --show-suppressed  # also list suppressed/excluded entries
+    python audit_mod_pages.py --gallery          # also count each page's images
 
 Environment variables:
     NEXUS_API_KEY  Required. Read from env var, with HKCU/HKLM registry fallback.
@@ -67,7 +73,7 @@ from vortex_utils import (
     REPO_ROOT, HELPER_PREFIX, iter_game_folders, read_index_js,
     extract_extension_url, parse_nexus_mod_url,
     audit_skip_lines, AUDIT_SKIP_MODPAGE,
-    get_api_key, nexus_graphql, DEPRECATED_GAMES,
+    get_api_key, nexus_graphql, nexus_v3_get, DEPRECATED_GAMES,
 )
 
 TARGET_TAGS = {4694: "Game Extension", 4902: "AI Assisted"}
@@ -257,6 +263,30 @@ def _fetch_account_site_mods(api_key):
     return mods
 
 
+def _count_page_images(mod):
+    """Images on a page, from a v3 Mod object. primary_image may be absent from
+    gallery_images, and is null on a page with none, so count it only when it adds one."""
+    urls = {image.get("url") for image in mod.get("gallery_images") or []}
+    primary = mod.get("primary_image") or {}
+    if primary.get("url"):
+        urls.add(primary["url"])
+    return len(urls)
+
+
+def _fetch_gallery_counts(extensions, api_key):
+    """Return (rows, errors) for the given extensions, one v3 getMod call each. rows has
+    game_id, domain, mod_id, images; errors has game_id, domain, mod_id, error."""
+    rows, errors = [], []
+    for e in extensions:
+        where = {"game_id": e["game_id"], "domain": e["domain"], "mod_id": e["mod_id"]}
+        try:
+            body = nexus_v3_get(f"/games/{e['domain']}/mods/{e['mod_id']}", api_key)
+            rows.append({**where, "images": _count_page_images(body["data"])})
+        except (RuntimeError, OSError, ValueError, KeyError, TypeError) as exc:
+            errors.append({**where, "error": str(exc)})
+    return rows, errors
+
+
 def check_permission_visibility(api_key):
     """Live-introspect the Mod type + top-level Mutation type. Returns (unreadable, hits)
     where unreadable is True when hits is empty, and hits lists any field name that matches PERMISSION_FIELD_HINTS -- i.e. any sign
@@ -279,7 +309,7 @@ def check_permission_visibility(api_key):
     return (len(hits) == 0), hits
 
 
-def run_audit(api_key):
+def run_audit(api_key, gallery=False):
     extensions = list(_get_local_extensions())
     no_url = [e for e in extensions if e["no_url"]]
     live = [e for e in extensions if not e["no_url"] and not e["suppress_reason"]]
@@ -319,7 +349,7 @@ def run_audit(api_key):
 
     perm_unreadable, perm_hits = check_permission_visibility(api_key)
 
-    return {
+    report = {
         "ok": ok,
         "tag_exempt": exempt,
         "findings": findings,
@@ -328,6 +358,9 @@ def run_audit(api_key):
         "permission_switches_unreadable": perm_unreadable,
         "permission_hits": perm_hits,
     }
+    if gallery:
+        report["gallery"], report["gallery_errors"] = _fetch_gallery_counts(live, api_key)
+    return report
 
 
 def print_report(report, show_suppressed):
@@ -384,6 +417,25 @@ def print_report(report, show_suppressed):
         for h in report["permission_hits"]:
             print(f"    {h}")
 
+    if "gallery" in report:
+        rows = report["gallery"]
+        print(f"\nGallery images (status only, {len(rows)} pages counted):")
+        tally = {}
+        for row in rows:
+            tally[row["images"]] = tally.get(row["images"], 0) + 1
+        for images, pages in sorted(tally.items()):
+            print(f"  {images} image(s): {pages} page(s)")
+        for label, picked in (("No images", [r for r in rows if r["images"] == 0]),
+                              ("More than one image", [r for r in rows if r["images"] > 1])):
+            print(f"  {label}: {len(picked)}")
+            for row in sorted(picked, key=lambda r: (-r["images"], r["game_id"])):
+                print(f"    - {row['game_id']} -- {row['domain']}/mods/{row['mod_id']}: {row['images']}")
+        errors = report["gallery_errors"]
+        if errors:
+            print(f"  Could not read: {len(errors)}")
+            for err in errors:
+                print(f"    - {err['game_id']} -- {err['domain']}/mods/{err['mod_id']}: {err['error']}")
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -392,6 +444,8 @@ def main():
     parser.add_argument("--json", action="store_true", help="Emit a JSON report instead of text")
     parser.add_argument("--show-suppressed", action="store_true",
                          help="List suppressed/excluded extensions, not just the count")
+    parser.add_argument("--gallery", action="store_true",
+                         help="Also count each live page's images (one v3 API call per page)")
     args = parser.parse_args()
 
     api_key = get_api_key("NEXUS_API_KEY")
@@ -399,7 +453,7 @@ def main():
         print("ERROR: NEXUS_API_KEY not found in env / registry", file=sys.stderr)
         sys.exit(1)
 
-    report = run_audit(api_key)
+    report = run_audit(api_key, gallery=args.gallery)
 
     if args.json:
         out = dict(report)

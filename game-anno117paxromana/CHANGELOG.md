@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.1] - 2026-11-04
+
+- Changed: Browse pages no longer open ads and other pop-ups in your web browser. A blocked page shows a notification with an "Open" button instead.
+
 ## [1.1.0] - 2026-11-01
 
 - Added: "Browse mod.io" page to browse the game's mods on mod.io and install them directly in Vortex, with update checks and dependency installs, plus an "Open mod.io Page" button.

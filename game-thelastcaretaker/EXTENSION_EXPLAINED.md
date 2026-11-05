@@ -60,7 +60,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `thelastcaretaker-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `thelastcaretaker-logicmods` | high | `{gamePath}/Voyage/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `thelastcaretaker-logicmods` | high | `{gamePath}/Voyage/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `thelastcaretaker-pakalt` | high | `{gamePath}/Voyage/Content/Paks` |
 | Root Folder | `thelastcaretaker-root` | high | `{gamePath}` |
 | ModKit Mod | `thelastcaretaker-modkitmod` | high | `{gamePath}/Voyage` |

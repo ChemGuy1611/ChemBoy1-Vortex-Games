@@ -69,7 +69,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `warhammer40000boltgun-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `warhammer40000boltgun-logicmods` | high | `{gamePath}/Boltgun/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `warhammer40000boltgun-logicmods` | high | `{gamePath}/Boltgun/Content/Paks/LogicMods` |
 | Paks (with "~mods") | `warhammer40000boltgun-pakalt` | high | `{gamePath}/Boltgun/Content/Paks/~mods` |
 | Root Folder | `warhammer40000boltgun-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `warhammer40000boltgun-uesortablepak` | 25 | `{gamePath}/Boltgun/Content/Paks` |

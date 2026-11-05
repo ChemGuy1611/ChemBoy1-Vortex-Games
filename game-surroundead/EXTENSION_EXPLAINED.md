@@ -59,7 +59,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `surroundead-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `surroundead-logicmods` | high | `{gamePath}/SurrounDead/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `surroundead-logicmods` | high | `{gamePath}/SurrounDead/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `surroundead-pakalt` | high | `{gamePath}/SurrounDead/Content/Paks` |
 | Root Folder | `surroundead-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `surroundead-uesortablepak` | 25 | `{gamePath}/SurrounDead/Content/Paks/~mods` |

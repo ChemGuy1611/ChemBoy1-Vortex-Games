@@ -60,7 +60,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `theouterworlds2-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `theouterworlds2-logicmods` | high | `{gamePath}/Arkansas/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `theouterworlds2-logicmods` | high | `{gamePath}/Arkansas/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `theouterworlds2-pakalt` | high | `{gamePath}/Arkansas/Content/Paks` |
 | Root Folder | `theouterworlds2-root` | high | `{gamePath}` |
 | Content Folder | `theouterworlds2-contentfolder` | high | `{gamePath}/Arkansas` |

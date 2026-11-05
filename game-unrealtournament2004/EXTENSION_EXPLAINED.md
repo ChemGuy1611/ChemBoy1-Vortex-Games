@@ -33,6 +33,7 @@
 | `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
 | `debug` | `false` | toggle for debug mode |
 | `moddbBrowser` | `true` | register the "Browse ModDB" page (moddb.com) |
+| `gamebananaBrowser` | `true` | register the "Browse GameBanana" page - browse and install the game's GameBanana mods inside Vortex |
 
 ## Mod Types
 
@@ -69,6 +70,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open Save Folder
 - Open PCGamingWiki Page
 - Open Nexus Mods Page
+- Open GameBanana Page
 - Open SteamDB Page
 - Open Unreal Wiki Page
 - Open OldUnreal Page

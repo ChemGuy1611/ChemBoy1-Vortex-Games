@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.2.1] - 2026-11-04
+
+- Fixed: Standalone mods now keep their own folder next to "Main" instead of being flattened into it, along with any game files they include. Reinstall any affected mods.
+- Fixed: Mods with a lowercase "main" folder no longer lose files packaged beside it. Reinstall any affected mods.
+- Changed: Browse pages no longer open ads and other pop-ups in your web browser. A blocked page shows a notification with an "Open" button instead.
+
+## [1.2.0] - 2026-11-03
+
+- Added: "Browse GameBanana" page to browse the game's mods on GameBanana and install them directly in Vortex, with an "Open GameBanana Page" button.
+
 ## [1.1.5] - 2026-10-25
 
 - Added the Nexus mod ID to the extension info.

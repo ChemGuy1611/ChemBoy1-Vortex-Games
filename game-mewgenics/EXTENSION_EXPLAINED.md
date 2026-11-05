@@ -28,7 +28,7 @@
 
 | Flag | Value | Description |
 | --- | --- | --- |
-| `thunderstoreBrowser` | `true` | register the "Browse Thunderstore" page |
+| `modworkshopBrowser` | `true` | register the "Browse ModWorkshop" page - browse and install the game's ModWorkshop mods inside Vortex |
 | `enableLoadOrder` | `true` | true if you want to use load order sorting |
 | `hasLoader` | `false` | Disabled since it is not actually necessary. Installer and modType still works. |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
@@ -74,6 +74,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open Save Folder
 - Open PCGamingWiki Page
 - Open Nexus Mods Page
+- Open ModWorkshop Page
 - Open SteamDB Page
 - View Changelog
 - Submit Bug Report

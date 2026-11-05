@@ -60,7 +60,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `deadasdisco-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `deadasdisco-logicmods` | high | `{gamePath}/Pagoda/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `deadasdisco-logicmods` | high | `{gamePath}/Pagoda/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `deadasdisco-pakalt` | high | `{gamePath}/Pagoda/Content/Paks` |
 | Root Folder | `deadasdisco-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `deadasdisco-uesortablepak` | 25 | `{gamePath}/Pagoda/Content/Paks/~mods` |

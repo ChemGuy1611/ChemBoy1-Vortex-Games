@@ -62,7 +62,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `silenthill2-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `silenthill2-logicmods` | high | `{gamePath}/SHProto/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `silenthill2-logicmods` | high | `{gamePath}/SHProto/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `silenthill2-pakalt` | high | `{gamePath}/SHProto/Content/Paks` |
 | Root Folder | `silenthill2-root` | high | `{gamePath}` |
 | UE5 Paks | `silenthill2-ue5` | high | `{gamePath}/SHProto/Content/Paks/~mods` |

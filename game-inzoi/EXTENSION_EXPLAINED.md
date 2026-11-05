@@ -65,7 +65,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `inzoi-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `inzoi-logicmods` | high | `{gamePath}/BlueClient/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `inzoi-logicmods` | high | `{gamePath}/BlueClient/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `inzoi-pakalt` | high | `{gamePath}/BlueClient/Content/Paks` |
 | Root Folder | `inzoi-root` | high | `{gamePath}` |
 | UE5 MODKit Pak Mod | `inzoi-ue5modkitpak` | high | `DOCUMENTS/inZOI/Mods` |

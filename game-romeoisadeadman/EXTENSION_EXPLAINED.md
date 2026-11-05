@@ -66,7 +66,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `romeoisadeadman-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `romeoisadeadman-logicmods` | high | `{gamePath}/SevGame/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `romeoisadeadman-logicmods` | high | `{gamePath}/SevGame/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `romeoisadeadman-pakalt` | high | `{gamePath}/SevGame/Content/Paks` |
 | Root Folder | `romeoisadeadman-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `romeoisadeadman-uesortablepak` | 25 | `{gamePath}/SevGame/Content/Paks/~mods` |

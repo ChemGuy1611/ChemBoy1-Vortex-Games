@@ -2,8 +2,8 @@
 Name: Balatro Vortex Extension
 Structure: Mod Loader (Mods in AppData Folder)
 Author: ChemBoy1
-Version: 1.0.4
-Date: 2026-10-25
+Version: 1.1.1
+Date: 2026-11-04
 ///////////////////////////////////////*/
 
 //Import libraries
@@ -21,9 +21,12 @@ const {
 } = require("./downloader");
 const { parseStringPromise } = require("xml2js");
 const { registerThunderstoreBrowser, onceThunderstoreBrowser } = require("./thunderstore_browser");
+//Embedded GameBanana browser page (needs base_browser.js beside it)
+const { registerGameBananaBrowser, onceGameBananaBrowser } = require("./gamebanana_browser");
 
 //Feature toggles
 const thunderstoreBrowser = true; //register the "Browse Thunderstore" page
+const gamebananaBrowser = true; //register the "Browse GameBanana" page - browse and install the game's GameBanana mods inside Vortex
 
 //Specify all the information about the game
 const GAME_ID = "balatro";
@@ -32,6 +35,16 @@ const TS_BROWSER_CONFIG = {
   tsCommunity: TS_COMMUNITY,
   pageId: `${GAME_ID}-thunderstore-browse`,
   pageTitle: "Browse Thunderstore",
+};
+//Embedded GameBanana browser page - the user browses the live site and installs from it.
+//GameBanana mods are ordinary archives, so they land through the same installers as any other.
+const GB_GAME_ID = "21356"; //GameBanana game id - https://gamebanana.com/games/21356
+const GB_URL = `https://gamebanana.com/games/${GB_GAME_ID}`;
+const GB_BROWSER_CONFIG = {
+  gbGameId: GB_GAME_ID,
+  pageId: `${GAME_ID}-gamebanana-browse`,
+  pageTitle: "Browse GameBanana",
+  priority: 41, //directly below the Thunderstore page, so the sidebar order stays stable
 };
 const GAME_NAME = "Balatro";
 const GAME_NAME_SHORT = "Balatro";
@@ -951,6 +964,11 @@ function applyGame(context, gameSpec) {
     registerThunderstoreBrowser(context, gameSpec, TS_BROWSER_CONFIG);
   }
 
+  //register the embedded GameBanana browser page
+  if (gamebananaBrowser) {
+    registerGameBananaBrowser(context, gameSpec, GB_BROWSER_CONFIG);
+  }
+
   //register mod installers
   context.registerInstaller(LOVELY_ID, 25, testLovely, installLovely);
   context.registerInstaller(STEAMMODDED_ID, 27, testSteamModded, installSteamModded);
@@ -1071,6 +1089,27 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     },
   );
+  if (gamebananaBrowser) {
+    context.registerAction(
+      "mod-icons",
+      300,
+      "open-ext",
+      {},
+      "Open GameBanana Page",
+      () => {
+        try {
+          window.api.shell.openUrl(GB_URL);
+        } catch (err) {
+          context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+        }
+      },
+      () => {
+        const state = context.api.getState();
+        const gameId = selectors.activeGameId(state);
+        return gameId === GAME_ID;
+      },
+    );
+  }
   context.registerAction(
     "mod-icons",
     300,
@@ -1189,6 +1228,10 @@ function main(context) {
     if (thunderstoreBrowser) {
       //claims downloads started from the browse page, and update-checks the mods installed through it
       onceThunderstoreBrowser(api, spec, TS_BROWSER_CONFIG);
+    }
+    if (gamebananaBrowser) {
+      //claims downloads started from the browse page, and update-checks the mods installed through it
+      onceGameBananaBrowser(api, spec, GB_BROWSER_CONFIG);
     }
   });
   return true;

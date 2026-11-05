@@ -1,5 +1,16 @@
 # template-ue4-5 Changelog
 
+## [2026-11-05]
+
+- Fixed: `pakHasModActor` missed every Blueprint mod on a game whose pak footer has extra bytes (Black Myth: Wukong adds 2 after the version), because the index location read from the footer was impossible. A pak like that is now searched whole, up to the existing 50 MB limit.
+
+## [2026-11-04]
+
+- Changed: `LOGICMODS_PATH` now ends in the `LogicMods` folder (`LOGICMODS_FOLDER` moved above it and used in it), so a pak mod switched to the LogicMods type deploys to the right place. The five sites that joined the folder on again (`MODTYPE_FOLDERS`, `deserializeLogicMods`, three "Open LogicMods Folder" buttons) no longer do.
+- Changed: `installLogic` roots on the `LogicMods` folder, not the first pak, and stages every file inside it flat. A duplicate file name keeps the first and logs a warning. Files beside the folder are dropped. An archive with a pak outside the folder installs as `UE4SSCOMBO_ID`, with each file keeping its path under `Paks`, and records only the paks inside `LogicMods`.
+- Added: `migrateLogicModsLayout`, awaited in `setup()` when `ue4ssLoadOrder` is on, converts installed mods on every activation and is a no-op once done. It purges the old deployment first, moves nothing while the old manifest still lists files (a running game refuses the purge, so the next activation retries), then flattens each staged mod and offers Deploy. Helpers: `logicModsDeployedCount`, `moveStagedLogicMod`, `logicModsDeployNotify`.
+- Added: `notifyBlueprintPak`, chained after `retagFomodPakMod` on `did-install-mod`, suggests the LogicMods type when every pak at a sortable pak mod's staging root holds a `ModActor` asset (`pakHasModActor`, `bufferHasModActor`). It never changes the type itself, and stays quiet during a collection install. Pilot: `game-finalfantasy7rebirth` 1.1.0.
+
 ## [2026-11-01]
 
 - Changed: `pathSegments` and the UE4SS mod folder lookup in `installUe4ssCombo` split on `path.sep` instead of a literal separator regex. Their input is always native (Vortex's installer file list, or `getAllFiles`), so behavior is unchanged. Applied to every game on this template.

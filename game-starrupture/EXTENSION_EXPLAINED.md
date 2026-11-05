@@ -58,7 +58,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `starrupture-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `starrupture-logicmods` | high | `{gamePath}/StarRupture/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `starrupture-logicmods` | high | `{gamePath}/StarRupture/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `starrupture-pakalt` | high | `{gamePath}/StarRupture/Content/Paks` |
 | Root Folder | `starrupture-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `starrupture-uesortablepak` | 25 | `{gamePath}/StarRupture/Content/Paks/~mods` |

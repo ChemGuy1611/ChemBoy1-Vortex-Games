@@ -11,6 +11,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | ioRTCW | a `iowolfsp.x64.exe` file | the game folder |
 | RealRTCW | a `realrtcw.x64.exe` file | the game folder |
 | Main Folder | a `Main` folder | the game folder |
+| Standalone | a `.pk3` file inside a folder plus other game files | the game folder |
 | .pk3 Data (Main) | a `.pk3` file | `Main` |
 
 Paths are relative to the game's install folder.
@@ -32,6 +33,21 @@ Installs to: the game folder
 Recognised when the archive contains a `Main` folder.
 
 Installs to: the game folder
+
+## Standalone
+
+Handles an archive where every `.pk3` file sits inside a folder and the archive also holds something besides `.pk3` files and documents: gamecode `.dll` files, a shortcut or configs. The archive installs to the game folder exactly as packaged, so the mod's folder stays next to "Main".
+
+**Requirements:**
+
+- Players load the mod with the launch option `+set fs_game <folder name>`.
+- A folder of only `.pk3` files and documents is treated as packaging, and its files go to "Main".
+
+Installs to: the game folder
+
+**Common mistakes:**
+
+- Gamecode `.dll` files replace the game's copies while the mod is enabled, so two mods that ship them conflict.
 
 ## .pk3 Data (Main)
 

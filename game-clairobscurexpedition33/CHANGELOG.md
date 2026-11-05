@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.2.0] - 2026-11-05
+
+- Changed: LogicMods (Blueprint) mods now always install directly into the LogicMods folder. Installed mods convert automatically when you next manage the game. Deploy when prompted.
+- Added: A notification when a pak mod looks like a Blueprint mod, with a button to set it as a LogicMods mod.
+
+## [1.1.1] - 2026-11-04
+
+- Changed: Browse pages no longer open ads and other pop-ups in your web browser. A blocked page shows a notification with an "Open" button instead.
+
+## [1.1.0] - 2026-11-03
+
+- Added: "Browse GameBanana" page to browse the game's mods on GameBanana and install them directly in Vortex, with an "Open GameBanana Page" button.
+
+## [1.0.6] - 2026-11-03
+
+- Fixed: LogicMods (Blueprint) mods installing into a second LogicMods folder, which stopped mods packaged in a subfolder from loading. Reinstall any affected mods.
+
 ## [1.0.5] - 2026-11-01
 
 - Changed: Internal cleanup of how file paths are handled. No change to how mods install.

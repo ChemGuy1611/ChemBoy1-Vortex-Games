@@ -4,6 +4,14 @@
 
 - Xbox support - waiting on stable (and easy to install) mod injector for Xbox version
 
+## [1.1.1] - 2026-11-04
+
+- Changed: Browse pages no longer open ads and other pop-ups in your web browser. A blocked page shows a notification with an "Open" button instead.
+
+## [1.1.0] - 2026-11-03
+
+- Added: "Browse GameBanana" page to browse the game's mods on GameBanana and install them directly in Vortex, with an "Open GameBanana Page" button.
+
 ## [1.0.4] - 2026-10-25
 
 - Added the Nexus mod ID to the extension info.

@@ -60,7 +60,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `clivebarkershellraiserrevival-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `clivebarkershellraiserrevival-logicmods` | high | `{gamePath}/Hellraiser/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `clivebarkershellraiserrevival-logicmods` | high | `{gamePath}/Hellraiser/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `clivebarkershellraiserrevival-pakalt` | high | `{gamePath}/Hellraiser/Content/Paks` |
 | Root Folder | `clivebarkershellraiserrevival-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `clivebarkershellraiserrevival-uesortablepak` | 25 | `{gamePath}/Hellraiser/Content/Paks/~mods` |

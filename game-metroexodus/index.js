@@ -2,8 +2,8 @@
 Name: Metro Exodus Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.3.0
-Date: 2026-11-01
+Version: 0.4.1
+Date: 2026-11-04
 */
 
 //Import libraries
@@ -22,8 +22,10 @@ const STEAMAPP_ID = "1449560";
 const EPICAPP_ID = "153e4dd8955e452aa60ba9ba2d906bf1";
 const GOGAPP_ID = "1407287452";
 const XBOXAPP_ID = "DeepSilver.ProjectWindfall"; //Microsoft Store Edition, resolved via MS Store catalog - verify against a live install
-const XBOXEXECNAME = "App"; // resolved via MS Store catalog - verify against a live install
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID_LEGACY, STEAMAPP_ID, EPICAPP_ID, GOGAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const XBOXAPP_ID_ENHANCED = "DeepSilver.MetroExodusEnhancedEdition"; //Enhanced Edition, resolved via MS Store catalog - verify against a live install
+const XBOXEXECNAME = "App"; // same on both editions, resolved via MS Store catalog - verify against a live install
+const XBOX_PUB_ID = "hmv7qcest37me"; // same on both editions, resolved via MS Store catalog - verify against a live install
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID_LEGACY, STEAMAPP_ID, EPICAPP_ID, GOGAPP_ID, XBOXAPP_ID_ENHANCED, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_ID = "metroexodus";
 const GAME_NAME = "Metro Exodus";
 const EXEC = "MetroExodus.exe";
@@ -231,13 +233,27 @@ async function queryPath() {
   return game.gamePath;
 }
 
+//Get the Xbox app id of the installed edition. Both editions use gamelaunchhelper.exe, so only appxmanifest.xml tells them apart
+async function getXboxLaunchId(gamePath) {
+  try {
+    const appManifest = await fsp.readFile(path.join(gamePath, APPMANIFEST_FILE), "utf8");
+    const parsed = await parseStringPromise(appManifest);
+    if (parsed?.Package?.Identity?.[0]?.$?.Name === XBOXAPP_ID) {
+      return XBOXAPP_ID;
+    }
+  } catch (err) {
+    log("error", `Could not read appmanifest.xml file to get Xbox app id: ${err}`);
+  }
+  return XBOXAPP_ID_ENHANCED;
+}
+
 //Set launcher requirements
 async function requiresLauncher(gamePath, store) {
   if (store === "xbox" && DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) {
     return {
       launcher: "xbox",
       addInfo: {
-        appId: XBOXAPP_ID,
+        appId: await getXboxLaunchId(gamePath),
         // appExecName is the <Application id="" in the appxmanifest.xml file
         parameters: [{ appExecName: XBOXEXECNAME }],
       },

@@ -8,7 +8,7 @@ top of the usual pak handling.
 
 **Constants:** `EPIC_CODE_NAME` (the project folder, and `REQ_FILE`), `PAKMOD_PATH`
 `<code>/Content/Paks/~mods`, `PAK_ALT_PATH` `<code>/Content/Paks`, `LOGICMODS_PATH`
-`<code>/Content/Paks` with the `LogicMods` subfolder, `BINARIES_PATH` `<code>/Binaries/Win64`
+`<code>/Content/Paks/LogicMods`, `BINARIES_PATH` `<code>/Binaries/Win64`
 (`WinGDK` on Xbox), `CONFIG_PATH_DEFAULT`
 `%LOCALAPPDATA%/<data>/Saved/Config/<CONFIG_FOLDERNAME>` where `CONFIG_FOLDERNAME` is `Windows`,
 `WindowsNoEditor`, or `WinGDK`, `SAVE_PATH_DEFAULT` `%LOCALAPPDATA%/<data>/Saved/SaveGames` with an
@@ -38,21 +38,21 @@ of a pak mod, for custom frameworks that add `.toml` or `.json` sidecars).
 The mod types from `spec` register at 30 plus their position in the list (`high` is 30 in this
 template, not the 25 other templates use). The rest use the explicit priorities below.
 
-| Mod type          | Priority               | Target                  |
-| ----------------- | ---------------------- | ----------------------- |
-| `UE4SSCOMBO_ID`   | spec                   | `{gamePath}`            |
-| `LOGICMODS_ID`    | spec                   | `<code>/Content/Paks`   |
-| `PAK_ALT_ID`      | spec                   | `<code>/Content/Paks`   |
-| `ROOT_ID`         | spec                   | `{gamePath}`            |
-| `MODKITMOD_ID`    | spec, when `hasModKit` | `<code>/Mods`           |
-| `UE5_SORTABLE_ID` | 25                     | pak mods folder         |
-| `SCRIPTS_ID`      | 50                     | `<binaries>/ue4ss/Mods` |
-| `DLL_ID`          | 52                     | `<binaries>/ue4ss/Mods` |
-| `BINARIES_ID`     | 54                     | `<code>/Binaries/Win64` |
-| `UE4SS_ID`        | 56                     | `<code>/Binaries/Win64` |
-| `SIGBYPASS_ID`    | 58                     | binaries folder         |
-| `CONFIG_ID`       | 62                     | absolute config path    |
-| `SAVE_ID`         | 64                     | absolute save path      |
+| Mod type          | Priority               | Target                          |
+| ----------------- | ---------------------- | ------------------------------- |
+| `UE4SSCOMBO_ID`   | spec                   | `{gamePath}`                    |
+| `LOGICMODS_ID`    | spec                   | `<code>/Content/Paks/LogicMods` |
+| `PAK_ALT_ID`      | spec                   | `<code>/Content/Paks`           |
+| `ROOT_ID`         | spec                   | `{gamePath}`                    |
+| `MODKITMOD_ID`    | spec, when `hasModKit` | `<code>/Mods`                   |
+| `UE5_SORTABLE_ID` | 25                     | pak mods folder                 |
+| `SCRIPTS_ID`      | 50                     | `<binaries>/ue4ss/Mods`         |
+| `DLL_ID`          | 52                     | `<binaries>/ue4ss/Mods`         |
+| `BINARIES_ID`     | 54                     | `<code>/Binaries/Win64`         |
+| `UE4SS_ID`        | 56                     | `<code>/Binaries/Win64`         |
+| `SIGBYPASS_ID`    | 58                     | binaries folder                 |
+| `CONFIG_ID`       | 62                     | absolute config path            |
+| `SAVE_ID`         | 64                     | absolute save path              |
 
 `UE5_SORTABLE_ID` keeps its exact name across every UE4-5 extension on purpose, so pak mods stay
 interchangeable between them.
@@ -71,6 +71,25 @@ claims anything that is not a pak and not a FOMOD, and `installBinaries` fires
 `MODKITMOD` needs `hasModKit`. `LOGICMODS`, `UE4SS`, `SCRIPTS` and `DLL` need `ue4ssLoadOrder`
 (`logicModsLoadOrder` does not gate the LogicMods installer, only its load-order page).
 `SIGBYPASS` needs `SIGBYPASS_REQUIRED`.
+
+## LogicMods layout
+
+`LOGICMODS` roots on the archive's `LogicMods` folder and stages every file inside it flat, so a pak
+lands at `Paks/LogicMods/foo.pak`. BPModLoaderMod's scan depth is in
+[RE-UE4SS_MODS_CONFIG.md](../RE-UE4SS_MODS_CONFIG.md). An archive that also has a pak outside the
+folder installs as `UE4SSCOMBO_ID` instead, each file keeping its path under `Paks`.
+
+`migrateLogicModsLayout` runs from `setup()` on every activation, with `ue4ssLoadOrder` on, and is a
+no-op once mods are converted. It handles mods staged under a `LogicMods` folder and a deployment
+manifest left in `Paks`, purging first and moving nothing until the old manifest is empty. A running
+game refuses the purge, so the next activation retries.
+
+`notifyBlueprintPak` runs after `retagFomodPakMod` on `did-install-mod`. When every pak at a sortable
+pak mod's staging root holds a `ModActor` asset, it suggests the LogicMods type with a notification.
+`pakHasModActor` reads only the pak's file index (or the `.utoc` beside an IO Store stub) and counts
+any unreadable or encrypted pak as false. A game can add bytes to the pak footer, as Black Myth: Wukong
+does, which makes the index location impossible. Such a pak is searched whole, up to 50 MB. The type never changes without the player's click, because
+a player using another loader may want the pak where it is. Nothing shows during a collection install.
 
 `UE4SSCOMBO` at 26 is **not** gated on `ue4ssLoadOrder`, because besides UE4SS script-plus-blueprint
 combos it also handles any mod that ships both a `Binaries` and a `Content` folder.

@@ -67,7 +67,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `styxbladesofgreed-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `styxbladesofgreed-logicmods` | high | `{gamePath}/Styx3/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `styxbladesofgreed-logicmods` | high | `{gamePath}/Styx3/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `styxbladesofgreed-pakalt` | high | `{gamePath}/Styx3/Content/Paks` |
 | Root Folder | `styxbladesofgreed-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `styxbladesofgreed-uesortablepak` | 25 | `{gamePath}/Styx3/Content/Paks/~mods` |

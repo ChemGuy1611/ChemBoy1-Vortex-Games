@@ -67,7 +67,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `liesofp-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `liesofp-logicmods` | high | `{gamePath}/LiesofP/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `liesofp-logicmods` | high | `{gamePath}/LiesofP/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `liesofp-pakalt` | high | `{gamePath}/LiesofP/Content/Paks` |
 | Root Folder | `liesofp-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `liesofp-uesortablepak` | 25 | `{gamePath}/LiesofP/Content/Paks/~mods` |

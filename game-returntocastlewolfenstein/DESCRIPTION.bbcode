@@ -12,6 +12,7 @@ This extension adds Return to Castle Wolfenstein modding support to Vortex Mod M
 [*]IoRTCW mods with an "iowolfsp.x64.exe" file install to the game folder.[/*]
 [*]RealRTCW mods with a "realrtcw.x64.exe" file install to the game folder.[/*]
 [*]Main Folder mods with a "Main" folder install to the game folder.[/*]
+[*]Standalone mods with a ".pk3" file inside a folder plus other game files install to the game folder.[/*]
 [*]Data (Main) mods with a ".pk3" file install to the "Main" folder.[/*]
 [/list]
 [b]📋 Usage Notes:[/b]
@@ -20,7 +21,10 @@ This extension adds Return to Castle Wolfenstein modding support to Vortex Mod M
 [*]Automatic installers for RealRTCW and ioRTCW to remove extra folder above the executables.[/*]
 [*]Automatic installers for "Main" folders to remove extra folders above.[/*]
 [*]Automatic installers for .pk3 files to "Main" folder.[/*]
+[*]Standalone mods stay in their own folder next to "Main". To play one, launch the game with the launch option +set fs_game <folder name>, for example +set fs_game normandy. Shortcuts included with a mod point to a fixed install path, so edit the shortcut if your game is installed somewhere else.[/*]
+[*]Some mods include their own cgamex86.dll, qagamex86.dll, or uix86.dll, which replace the game's copies while the mod is enabled. Keep only one of these mods enabled at a time, and disable it to play the unmodified game or another mod.[/*]
 [*]You can browse ModDB and install its mods directly in Vortex using the "Browse ModDB" page in the sidebar.[/*]
+[*]You can browse GameBanana and install its mods directly in Vortex using the "Browse GameBanana" page in the sidebar.[/*]
 [/list]
 
 [b][size=3]It is highly recommended that you download and install one of the following mods to improve the gameplay experience on modern systems. You will be presented with the option to download them in a Vortex notification:[/size][/b]
@@ -57,6 +61,21 @@ Main Folder:
 Recognised when the archive contains a "Main" folder.
 
   Installs to: the game folder
+
+========================================================================
+
+Standalone:
+
+Handles an archive where every ".pk3" file sits inside a folder and the archive also holds something besides ".pk3" files and documents: gamecode ".dll" files, a shortcut or configs. The archive installs to the game folder exactly as packaged, so the mod's folder stays next to "Main".
+
+  Requirements:
+    - Players load the mod with the launch option "+set fs_game <folder name>".
+    - A folder of only ".pk3" files and documents is treated as packaging, and its files go to "Main".
+
+  Installs to: the game folder
+
+  Common mistakes:
+    - Gamecode ".dll" files replace the game's copies while the mod is enabled, so two mods that ship them conflict.
 
 ========================================================================
 

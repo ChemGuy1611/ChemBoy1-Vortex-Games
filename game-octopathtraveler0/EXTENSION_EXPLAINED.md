@@ -64,7 +64,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `octopathtraveler0-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `octopathtraveler0-logicmods` | high | `{gamePath}/Octopath_Traveler0/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `octopathtraveler0-logicmods` | high | `{gamePath}/Octopath_Traveler0/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `octopathtraveler0-pakalt` | high | `{gamePath}/Octopath_Traveler0/Content/Paks` |
 | Root Folder | `octopathtraveler0-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `octopathtraveler0-uesortablepak` | 25 | `{gamePath}/Octopath_Traveler0/Content/Paks/~mods` |

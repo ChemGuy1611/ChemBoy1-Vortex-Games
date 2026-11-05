@@ -66,7 +66,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `subnautica2-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `subnautica2-logicmods` | high | `{gamePath}/Subnautica2/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `subnautica2-logicmods` | high | `{gamePath}/Subnautica2/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `subnautica2-pakalt` | high | `{gamePath}/Subnautica2/Content/Paks` |
 | Root Game Folder | `subnautica2-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `subnautica2-uesortablepak` | 25 | `{gamePath}/Subnautica2/Content/Paks/~mods` |

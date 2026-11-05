@@ -68,7 +68,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `stateofdecay2-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `stateofdecay2-logicmods` | high | `{gamePath}/StateOfDecay2/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `stateofdecay2-logicmods` | high | `{gamePath}/StateOfDecay2/Content/Paks/LogicMods` |
 | Root Folder | `stateofdecay2-root` | high | `{gamePath}` |
 | Cooked Mods | `stateofdecay2-cooked` | high | `{localAppData}/StateOfDecay2/Saved` |
 | SoD2 Mod Manager | `stateofdecay2-modmanager` | low | `{gamePath}` |

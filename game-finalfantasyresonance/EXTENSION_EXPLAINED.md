@@ -60,7 +60,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `finalfantasyresonance-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `finalfantasyresonance-logicmods` | high | `{gamePath}/FFRS/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `finalfantasyresonance-logicmods` | high | `{gamePath}/FFRS/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `finalfantasyresonance-pakalt` | high | `{gamePath}/FFRS/Content/Paks` |
 | Root Folder | `finalfantasyresonance-root` | high | `{gamePath}` |
 | FFR Modding Tools Pack | `finalfantasyresonance-ffrspack` | high | `{gamePath}/FFRSPacks` |

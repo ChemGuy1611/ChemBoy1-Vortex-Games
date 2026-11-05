@@ -28,7 +28,12 @@
 // asserted exactly, so a lost or extra registration still fails. The contract check's
 // "registerGame called N times" finding is dropped for these games when N matches.
 const MULTI_GAME = {
+  doom3: [2, "DOOM 3 and DOOM 3: BFG Edition, registered as separate games"],
   robocoproguecity: [2, "base game and the standalone Unfinished Business expansion"],
+  systemshock225thanniversaryremaster: [
+    2,
+    "the 25th Anniversary Remaster and classic System Shock 2",
+  ],
   windrose: [2, "game and its Dedicated Server, registered as a separate game"],
 };
 

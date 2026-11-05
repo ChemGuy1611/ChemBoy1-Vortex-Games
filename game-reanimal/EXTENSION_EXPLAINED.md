@@ -66,7 +66,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `reanimal-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `reanimal-logicmods` | high | `{gamePath}/Everholm/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `reanimal-logicmods` | high | `{gamePath}/Everholm/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `reanimal-pakalt` | high | `{gamePath}/Everholm/Content/Paks` |
 | Root Folder | `reanimal-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `reanimal-uesortablepak` | 25 | `{gamePath}/Everholm/Content/Paks/~mods` |

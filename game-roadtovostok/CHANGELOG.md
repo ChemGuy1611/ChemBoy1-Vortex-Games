@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.7] - 2026-11-04
+
+- Changed: Browse pages no longer open ads and other pop-ups in your web browser. A blocked page shows a notification with an "Open" button instead.
+
 ## [1.0.6] - 2026-10-30
 
 - Fixed: Vortex could not read the contents of ".vmz" files (used when Vortex inspects or merges mod archives).

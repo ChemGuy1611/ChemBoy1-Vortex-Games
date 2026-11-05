@@ -29,6 +29,7 @@
 | Flag | Value | Description |
 | --- | --- | --- |
 | `moddbBrowser` | `true` | register the "Browse ModDB" page (moddb.com) |
+| `gamebananaBrowser` | `true` | register the "Browse GameBanana" page - browse and install the game's GameBanana mods inside Vortex |
 
 ## Mod Types
 
@@ -50,6 +51,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | `returntocastlewolfenstein-iortcw` | 25 |
 | `returntocastlewolfenstein-realrtcw` | 30 |
 | `returntocastlewolfenstein-mainfolder` | 35 |
+| `returntocastlewolfenstein-modfolder` | 38 |
 | `returntocastlewolfenstein-main` | 40 |
 
 ## Registered Tools
@@ -66,6 +68,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Download Latest RealRTCW
 - Open PCGamingWiki Page
 - Open Nexus Mods Page
+- Open GameBanana Page
 - Open SteamDB Page
 - View Changelog
 - Submit Bug Report

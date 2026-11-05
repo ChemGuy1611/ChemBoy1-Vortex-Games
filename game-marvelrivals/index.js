@@ -2,8 +2,8 @@
 Name: Marvel Rivals Vortex Extension
 Structure: UE5
 Author: ChemBoy1
-Version: 1.1.6
-Date: 2026-11-01
+Version: 1.2.1
+Date: 2026-11-04
 ////////////////////////////////////////*/
 
 //Import libraries
@@ -13,6 +13,8 @@ const { actions, fs: vfs, util, selectors, log, VortexError } = require("vortex-
 const path = require("path");
 const template = require("string-template");
 const React = require("react");
+//Embedded GameBanana browser page (needs base_browser.js beside it)
+const { registerGameBananaBrowser, onceGameBananaBrowser } = require("./gamebanana_browser");
 
 const LOCALAPPDATA = util.getVortexPath("localAppData");
 
@@ -133,6 +135,9 @@ const REPAK_DOMAIN = GAME_ID;
 
 // FILLED IN FROM DATA ABOVE
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1132"; //Nexus link to this extension. Used for links
+const GB_GAME_ID = "21533"; //GameBanana game id - https://gamebanana.com/games/21533
+const GB_URL = `https://gamebanana.com/games/${GB_GAME_ID}`;
+const gamebananaBrowser = true; //register the "Browse GameBanana" page - browse and install the game's GameBanana mods inside Vortex
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Marvel_Rivals";
 const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const IGNORE_CONFLICTS = [
@@ -145,6 +150,14 @@ const IGNORE_DEPLOY = [
   path.join("**", "readme*"),
   path.join("**", "license*"),
 ];
+//Embedded GameBanana browser page - the user browses the live site and installs from it.
+//GameBanana mods are ordinary archives, so they land through the same installers as any other.
+const GB_BROWSER_CONFIG = {
+  gbGameId: GB_GAME_ID,
+  pageId: `${GAME_ID}-gamebanana-browse`,
+  pageTitle: "Browse GameBanana",
+};
+
 const spec = {
   game: {
     id: GAME_ID,
@@ -1318,6 +1331,27 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     },
   );
+  if (gamebananaBrowser) {
+    context.registerAction(
+      "mod-icons",
+      300,
+      "open-ext",
+      {},
+      "Open GameBanana Page",
+      () => {
+        try {
+          window.api.shell.openUrl(GB_URL);
+        } catch (err) {
+          context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+        }
+      },
+      () => {
+        const state = context.api.getState();
+        const gameId = selectors.activeGameId(state);
+        return gameId === GAME_ID;
+      },
+    );
+  }
   context.registerAction(
     "mod-icons",
     300,
@@ -1400,6 +1434,11 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     },
   );
+
+  //register the embedded GameBanana browser page
+  if (gamebananaBrowser) {
+    registerGameBananaBrowser(context, gameSpec, GB_BROWSER_CONFIG);
+  }
 }
 
 //Main function
@@ -1445,6 +1484,10 @@ function main(context) {
 
   context.once(() => {
     // put code here that should be run (once) when Vortex starts up
+    if (gamebananaBrowser) {
+      //claims downloads started from the browse page, and update-checks the mods installed through it
+      onceGameBananaBrowser(context.api, spec, GB_BROWSER_CONFIG);
+    }
     const api = context.api;
     api.onAsync("did-deploy", (profileId) => didDeploy(api, profileId)); //*/
     //api.onAsync('did-purge', (profileId) => didPurge(api, profileId)); //*/

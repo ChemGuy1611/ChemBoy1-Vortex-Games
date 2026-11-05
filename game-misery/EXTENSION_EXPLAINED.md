@@ -57,7 +57,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `misery-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `misery-logicmods` | high | `{gamePath}/MISERY/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `misery-logicmods` | high | `{gamePath}/MISERY/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `misery-pakalt` | high | `{gamePath}/MISERY/Content/Paks` |
 | Root Game Folder | `misery-root` | high | `{gamePath}` |
 | Root Sub-Folders | `misery-rootsubfolders` | high | `{gamePath}/MISERY` |

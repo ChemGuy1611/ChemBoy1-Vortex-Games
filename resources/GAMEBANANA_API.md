@@ -70,7 +70,7 @@ Lightweight subset — ideal for update automation. Returns `_aFiles[]`, `_sLice
 
 `_sDownloadUrl` (`https://gamebanana.com/dl/{fileId}`) is the direct download link (redirects to the file CDN). `_sMd5Checksum` allows integrity verification. `_sAvResult: "clean"` indicates the antivirus scan passed.
 
-When a submission has multiple files, select the newest by `_tsDateAdded` rather than assuming array order.
+When a submission has multiple files, select the newest archive by `_tsDateAdded` rather than assuming array order. The newest file overall can be a Reloaded-II `*releasemetadata*.json` (see below).
 
 ### Updates: `GET /apiv11/{Model}/{itemId}/Updates?_nPage=1&_nPerpage=3`
 
@@ -91,7 +91,17 @@ Example: `https://gamebanana.com/apiv11/Mod/Index?_nPerpage=15&_aFilters%5BGener
 
 ### Game feed: `GET /apiv11/Game/{gameId}/Subfeed?_nPage=1`
 
-Recent submissions across all models for one game.
+Recent submissions across all models for one game. Its `_aMetadata._nRecordCount` counts every model, including tools, sounds and requests, so it overstates a game's mods.
+
+### Game lookup and mod count
+
+- `GET /apiv11/Util/Game/NameMatch?_sName={name}&_nPerpage=50&_nPage=1` — games matching a name, each with `_idRow` and `_sName`. It returns near matches too, so compare the name yourself.
+- `GET /apiv11/Game/{gameId}/ProfilePage` — sum `_nItemCount` over `_aModRootCategories` for the game's mod count. It equals `_nRecordCount` from `Mod/Index` with the game filter (20 for DOOM Eternal, 186 for Marvel Rivals, 54 for Street Fighter 6). `_aSections` lists every other section and has no `Mod` entry.
+
+### Reading a mod's files
+
+- `GET /apiv11/Mod/{id}/Files` — the file records. **The newest record is not always the mod.** Authors using Reloaded-II's updater upload a `*releasemetadata*.json` beside each archive, and it can be newer than the archive. Filter to archive extensions before picking newest.
+- No endpoint lists an archive's contents: `File/{id}/RawFileList` answers `200` with an empty body. The CDN honours range requests, so a zip's central directory can be read remotely, but rar and 7z are common (all 20 of the top Digimon Story Time Stranger mods are 7z), so those have to be downloaded. `mod_listings.py` does both.
 
 ## Legacy Core API
 

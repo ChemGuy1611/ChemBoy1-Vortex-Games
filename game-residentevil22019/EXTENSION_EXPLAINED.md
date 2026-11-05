@@ -35,6 +35,7 @@
 | `multiExe` | `true` | set to true if there are multiple executables (and multiple FLUFFY_FOLDERs) (typically for Demo) |
 | `setupNotification` | `true` | enable to show the user a notification with special instructions (specify below) |
 | `debug` | `false` | toggle for debug mode |
+| `gamebananaBrowser` | `true` | register the "Browse GameBanana" page - browse and install the game's GameBanana mods inside Vortex |
 
 ## Mod Types
 
@@ -78,6 +79,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open Save Folder (Steam)
 - Open PCGamingWiki Page
 - Open Nexus Mods Page
+- Open GameBanana Page
 - Open SteamDB Page
 - View Changelog
 - Submit Bug Report

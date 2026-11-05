@@ -60,7 +60,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `gearsofwareday-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `gearsofwareday-logicmods` | high | `{gamePath}/FairlightConcept/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `gearsofwareday-logicmods` | high | `{gamePath}/FairlightConcept/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `gearsofwareday-pakalt` | high | `{gamePath}/FairlightConcept/Content/Paks` |
 | Root Folder | `gearsofwareday-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `gearsofwareday-uesortablepak` | 25 | `{gamePath}/FairlightConcept/Content/Paks/~mods` |

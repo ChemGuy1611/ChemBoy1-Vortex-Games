@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.4] - 2026-11-04
+
+- Changed: Browse pages no longer open ads and other pop-ups in your web browser. A blocked page shows a notification with an "Open" button instead.
+
 ## [1.0.3] - 2026-10-31
 
 - Fixed: The Remaster was not detected automatically after the game's executable was renamed to SystemShock2Remastered.exe (affected Epic, and Steam/GOG on current game versions).

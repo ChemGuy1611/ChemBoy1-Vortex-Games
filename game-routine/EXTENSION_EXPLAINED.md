@@ -64,7 +64,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `routine-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `routine-logicmods` | high | `{gamePath}/Routine/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `routine-logicmods` | high | `{gamePath}/Routine/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `routine-pakalt` | high | `{gamePath}/Routine/Content/Paks` |
 | Root Folder | `routine-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `routine-uesortablepak` | 25 | `{gamePath}/Routine/Content/Paks/~mods` |

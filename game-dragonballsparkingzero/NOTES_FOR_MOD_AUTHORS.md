@@ -10,7 +10,8 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | SZModLoader | a `SZModLib` folder | `SparkingZERO\Mods` |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `SparkingZERO` |
-| Blueprint Mods (LogicMods) | a `LogicMods` folder | `SparkingZERO\Content\Paks` |
+| Blueprint Mods (LogicMods) | a `LogicMods` folder | `SparkingZERO\Content\Paks\LogicMods` |
+| SZModLoader Mod | a `.uplugin` file | `SparkingZERO\Mods` |
 | Pak Mods | a `.pak` file | `SparkingZERO\Content\Paks\~mods` |
 | UE4SS | a `dwmapi.dll` file | `SparkingZERO\Binaries\Win64` |
 | Signature Bypass | a `dsound.dll` file and a `dbsparkingzeroutocbypass.asi` file | `SparkingZERO\Binaries\Win64` |
@@ -20,7 +21,6 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Config File Mods | a config file such as `engine.ini` or `game.ini` | the game's config folder |
 | Save Game Files | a `.sav` file | the game's save folder |
 | LFSE | a `LFSE` folder | `SparkingZERO\Mods` |
-| SZModLoader Mod | a `.uplugin` file | `SparkingZERO\Mods` |
 | SZModLoader JSON | a `.json` file | `SparkingZERO\Mods\ZeroSpark\Json` |
 | Fallback Installer | anything not matched above with no pak file | `SparkingZERO\Binaries\Win64` |
 
@@ -68,7 +68,7 @@ Installs to: `SparkingZERO`
 
 Blueprint mods built against UE4SS must sit inside a folder named `LogicMods`. This is the single most common packaging mistake for Unreal games.
 
-> **NOTE:** A blueprint `.pak` outside a `LogicMods` folder will install, but it will not work in game.
+> **NOTE:** You MUST include a `LogicMods` folder above your `.pak` file. Without it, the mod installs as a regular pak mod and will not load until the player switches it.
 
 ```text
 MyBlueprintMod.zip
@@ -79,15 +79,22 @@ MyBlueprintMod.zip
 **Requirements:**
 
 - The archive must contain a folder named `LogicMods` (case does not matter).
-- Everything from the `LogicMods` folder down is copied to the game, keeping its structure.
-- Extra folders above `LogicMods` are fine - the installer finds it at any depth.
+- Every file inside the `LogicMods` folder is copied straight into the game's `LogicMods` folder. Subfolders inside it are not kept.
+- Extra folders above `LogicMods` are fine - the installer finds it at any depth. Files beside `LogicMods` are not installed.
+- If the archive also holds a `.pak` outside `LogicMods`, nothing is flattened: each file keeps its path under `Paks`.
 
-Installs to: `SparkingZERO\Content\Paks`
+Installs to: `SparkingZERO\Content\Paks\LogicMods`
 
 **Common mistakes:**
 
-- Putting the `.pak` at the top level of the archive with no `LogicMods` folder. Vortex then treats it as an ordinary pak mod, installs it to the wrong place, and the blueprint mod never loads.
+- Putting the `.pak` at the top level of the archive with no `LogicMods` folder. Vortex then treats it as an ordinary pak mod, so the blueprint mod does not load. If the pak holds a `ModActor` asset, Vortex offers the player a button to move it to `LogicMods`, but only if they accept it.
 - Renaming the folder (`Logic_Mods`, `logicmod`, `BPMods`) - the name must be exactly `LogicMods`.
+
+## SZModLoader Mod
+
+Recognised when the archive contains a `.uplugin` file.
+
+Installs to: `SparkingZERO\Mods`
 
 ## Pak Mods
 
@@ -239,12 +246,6 @@ Installs to: the game's save folder
 ## LFSE
 
 Recognised when the archive contains a `LFSE` folder.
-
-Installs to: `SparkingZERO\Mods`
-
-## SZModLoader Mod
-
-Recognised when the archive contains a `.uplugin` file.
 
 Installs to: `SparkingZERO\Mods`
 

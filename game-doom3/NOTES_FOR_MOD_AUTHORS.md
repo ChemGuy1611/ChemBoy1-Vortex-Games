@@ -11,6 +11,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Dhewm3 | a `dhewm3.exe` file | the game folder |
 | Bfg Edition Root | a `base` folder | - |
 | Root / Game Folder Mods | a `base` file | the game folder |
+| Packaged .pk4 | a `.pk4` file inside a folder | the game folder (standalone mods) or the "base" folder (everything else) |
 
 Paths are relative to the game's install folder.
 
@@ -37,6 +38,21 @@ Installs to: the game folder
 **Common mistakes:**
 
 - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
+
+## Packaged .pk4
+
+Handles an archive where every `.pk4` file sits inside a folder. A `.pk4` at the top level of the archive needs no special handling and installs to the "base" folder.
+
+**Requirements:**
+
+- If the archive holds anything besides `.pk4` files and documents, or a `description.txt`, it is a standalone mod: the folder stays next to "base", so it appears in the game's Mods menu, and anything packaged beside the folder (a launcher script) installs with it.
+- Otherwise the folder is only packaging, and its files install to the "base" folder.
+
+Installs to: the game folder (standalone mods) or the "base" folder (everything else)
+
+**Common mistakes:**
+
+- To ship a standalone mod, include a `description.txt` in its folder. Without one, a folder of only `.pk4` files and documents is treated as packaging and goes to "base".
 
 ## Rules That Apply To Every Mod Type
 

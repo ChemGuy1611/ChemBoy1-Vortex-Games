@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.1] - 2026-11-04
+
+- Changed: Browse pages no longer open ads and other pop-ups in your web browser. A blocked page shows a notification with an "Open" button instead.
+
+## [0.4.0] - 2026-11-03
+
+- Added: Discovery and launch support for the Xbox version of Metro Exodus Enhanced Edition.
+
 ## [0.3.0] - 2026-11-01
 
 - Added: Installer and mod type for Exodus SDK mods. Each installs into its own folder in "SDKMods", ready to pick with "Add Existing Mod" in the Exodus SDK launcher.

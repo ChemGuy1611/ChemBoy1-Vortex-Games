@@ -25,7 +25,9 @@
  * Output:
  *   One block per archive: claiming installer and priority, mod type, files copied / total, any
  *   dialog the installer raised, duplicate destinations, and the first N source => destination
- *   lines. Then a tally per installer. Exit code 1 when the extension or the listings cannot be read.
+ *   lines. Then a tally per installer. An installer that throws, or has not finished after 5 seconds
+ *   (usually real staging or a prompt the harness cannot answer), prints as "stopped" and the run
+ *   carries on. Exit code 1 when the extension or the listings cannot be read.
  */
 
 "use strict";
@@ -35,6 +37,7 @@ const path = require("path");
 const { loadExtension } = require("./tests/harness/load-extension.js");
 
 const REPO_ROOT = __dirname;
+const INSTALL_TIMEOUT_MS = 5000;
 
 function parseArgs(argv) {
   const args = { answer: "cancel", show: 4, positional: [] };
@@ -109,16 +112,30 @@ async function main() {
     dialogs = [];
     const staging = path.join(REPO_ROOT, "nonexistent-staging");
     let result;
+    let timer;
     try {
-      result = await claimed.install(
-        files,
-        staging,
-        ext.game.id,
-        () => undefined,
-        undefined,
-        true,
-        entry.filename,
-      );
+      result = await Promise.race([
+        claimed.install(
+          files,
+          staging,
+          ext.game.id,
+          () => undefined,
+          undefined,
+          true,
+          entry.filename,
+        ),
+        //An install waiting on something the harness never answers would otherwise drain Node's
+        //event loop and end the whole run with exit code 0 and no tally
+        new Promise((_, reject) => {
+          timer = setTimeout(
+            () =>
+              reject(
+                new Error("never finished: it waits on something the harness does not answer"),
+              ),
+            INSTALL_TIMEOUT_MS,
+          );
+        }),
+      ]);
     } catch (err) {
       const asked = dialogs.length ? ` after dialog "${dialogs.join('", "')}"` : "";
       console.log(
@@ -126,6 +143,8 @@ async function main() {
       );
       count(`${claimed.id} (stopped)`);
       continue;
+    } finally {
+      clearTimeout(timer);
     }
     const copies = result.instructions.filter((i) => i.type === "copy");
     const modType = result.instructions.find((i) => i.type === "setmodtype")?.value || "(none)";

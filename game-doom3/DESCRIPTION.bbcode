@@ -18,6 +18,7 @@ This extension adds DOOM 3 and DOOM 3: BFG Edition modding support to Vortex Mod
 [*]Dhewm3 mods with a "dhewm3.exe" file install to the game folder.[/*]
 [*]Root Folder mods are recognised by a "base" folder.[/*]
 [*]Binaries / Root Folder mods with a "base" file install to the game folder.[/*]
+[*]Packaged mods with a ".pk4" file inside a folder install to the game folder (standalone mods) or the "base" folder (everything else).[/*]
 [*]Archives with a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to Vortex's built-in FOMOD installer instead.[/*]
 [/list]
 [b]📋 Usage Notes:[/b]
@@ -26,7 +27,9 @@ This extension adds DOOM 3 and DOOM 3: BFG Edition modding support to Vortex Mod
 [*]The extension has a list of known mods that it will install to the root game folder. If your mod is not installed properly by the extension, use the "Unpack as-is" option from the right-click context menu and set the modtype to "Binaries / Root Folder", then do any file/folder manipulation in the Staging Folder. Mods that are known to require manual manipulation will trigger a notification to the user after installation.[/*]
 [*]Includes mod types for the "d3xp" (Ressurection of Evil) and "d3le" (Lost Mission) folders (can be selected manually) to place .pk4 files in those folders.[/*]
 [*]Note that due to inconsistent mod packaging, this extension will require more manual intervention than other games.[/*]
-[*]You can browse ModDB and install its mods directly in Vortex using the "Browse ModDB" page in the sidebar.[/*]
+[*]Mods that come in their own folder: a folder with a description.txt, launcher script, or other game files is a standalone mod, so it stays next to "base" and appears in the game's Mods menu. A folder with only .pk4 files and docs goes into "base".[/*]
+[*]You can browse ModDB and install its mods directly in Vortex using the "Browse ModDB" page in the sidebar when managing DOOM 3 (not the BFG Edition).[/*]
+[*]You can browse GameBanana and install its mods directly in Vortex using the "Browse GameBanana" page in the sidebar when managing DOOM 3 (not the BFG Edition).[/*]
 [/list]
 [b]📝 Notes for Mod Authors:[/b]
 [spoiler]
@@ -61,6 +64,21 @@ For mods laid out the same way the files appear inside the game folder. Vortex c
 
   Common mistakes:
     - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
+
+========================================================================
+
+Packaged .pk4:
+
+Handles an archive where every ".pk4" file sits inside a folder. A ".pk4" at the top level of the archive needs no special handling and installs to the "base" folder.
+
+  Requirements:
+    - If the archive holds anything besides ".pk4" files and documents, or a "description.txt", it is a standalone mod: the folder stays next to "base", so it appears in the game's Mods menu, and anything packaged beside the folder (a launcher script) installs with it.
+    - Otherwise the folder is only packaging, and its files install to the "base" folder.
+
+  Installs to: the game folder (standalone mods) or the "base" folder (everything else)
+
+  Common mistakes:
+    - To ship a standalone mod, include a "description.txt" in its folder. Without one, a folder of only ".pk4" files and documents is treated as packaging and goes to "base".
 
 ========================================================================
 

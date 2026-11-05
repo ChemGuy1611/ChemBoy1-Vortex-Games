@@ -65,7 +65,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `rvthereyet-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `rvthereyet-logicmods` | high | `{gamePath}/Ride/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `rvthereyet-logicmods` | high | `{gamePath}/Ride/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `rvthereyet-pakalt` | high | `{gamePath}/Ride/Content/Paks` |
 | Root Folder | `rvthereyet-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `rvthereyet-uesortablepak` | 25 | `{gamePath}/Ride/Content/Paks/~mods` |

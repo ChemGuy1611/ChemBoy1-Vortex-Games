@@ -64,7 +64,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `ofashandsteel-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `ofashandsteel-logicmods` | high | `{gamePath}/ofAshAndSteelGame/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `ofashandsteel-logicmods` | high | `{gamePath}/ofAshAndSteelGame/Content/Paks/LogicMods` |
 | Paks (with "~mods") | `ofashandsteel-pakalt` | high | `{gamePath}/ofAshAndSteelGame/Content/Paks/~mods` |
 | Root Folder | `ofashandsteel-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `ofashandsteel-uesortablepak` | 25 | `{gamePath}/ofAshAndSteelGame/Content/Paks` |

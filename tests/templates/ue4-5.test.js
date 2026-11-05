@@ -1214,14 +1214,14 @@ describe("template-ue4-5: UE4SS combo, LogicMods and UE4SS installers", () => {
     );
   });
 
-  it("logic installs the LogicMods folder into Paks and records the pak names", async () => {
+  it("logic stages the LogicMods folder's files flat and records the pak names", async () => {
     const { instructions } = await logic(
       tree("Mod/LogicMods/a.pak", "Mod/LogicMods/b.pak", "Mod/LogicMods/readme.txt"),
     );
     assert.deepEqual(instructions, [
-      copy(sep("Mod", "LogicMods", "a.pak"), sep("LogicMods", "a.pak")),
-      copy(sep("Mod", "LogicMods", "b.pak"), sep("LogicMods", "b.pak")),
-      copy(sep("Mod", "LogicMods", "readme.txt"), sep("LogicMods", "readme.txt")),
+      copy(sep("Mod", "LogicMods", "a.pak"), "a.pak"),
+      copy(sep("Mod", "LogicMods", "b.pak"), "b.pak"),
+      copy(sep("Mod", "LogicMods", "readme.txt"), "readme.txt"),
       modType(ID.logic),
       attribute("logicModFiles", ["a", "b"]),
     ]);
@@ -1230,9 +1230,83 @@ describe("template-ue4-5: UE4SS combo, LogicMods and UE4SS installers", () => {
   it("logic without a wrapper folder installs from the top", async () => {
     const { instructions } = await logic(tree("LogicMods/a.pak"));
     assert.deepEqual(instructions, [
-      copy(sep("LogicMods", "a.pak"), sep("LogicMods", "a.pak")),
+      copy(sep("LogicMods", "a.pak"), "a.pak"),
       modType(ID.logic),
       attribute("logicModFiles", ["a"]),
+    ]);
+  });
+
+  it("logic keeps an IO Store pak's companion files beside it", async () => {
+    const { instructions } = await logic(
+      tree("LogicMods/a.pak", "LogicMods/a.ucas", "LogicMods/a.utoc"),
+    );
+    assert.deepEqual(
+      instructions.filter(({ type }) => type === "copy").map(({ destination }) => destination),
+      ["a.pak", "a.ucas", "a.utoc"],
+    );
+    assert.deepEqual(instructions.at(-1), attribute("logicModFiles", ["a"]));
+  });
+
+  it("logic flattens every subfolder, whichever order the archive lists them in", async () => {
+    for (const [files, expected] of [
+      [["LogicMods/Sub/a.pak"], ["a.pak"]],
+      [
+        ["LogicMods/A/a.pak", "LogicMods/B/b.pak"],
+        ["a.pak", "b.pak"],
+      ],
+      [
+        ["LogicMods/Sub/b.pak", "LogicMods/a.pak"],
+        ["b.pak", "a.pak"],
+      ],
+    ]) {
+      const { instructions } = await logic(tree(...files));
+      assert.deepEqual(
+        instructions.filter(({ type }) => type === "copy").map(({ destination }) => destination),
+        expected,
+        files.join(),
+      );
+    }
+  });
+
+  it("logic drops a file beside the LogicMods folder", async () => {
+    const { instructions } = await logic(tree("Mod/readme.txt", "Mod/LogicMods/a.pak"));
+    assert.deepEqual(instructions, [
+      copy(sep("Mod", "LogicMods", "a.pak"), "a.pak"),
+      modType(ID.logic),
+      attribute("logicModFiles", ["a"]),
+    ]);
+  });
+
+  it("logic finds the folder whatever its case", async () => {
+    const { instructions } = await logic(tree("Mod/LOGICMODS/a.pak"));
+    assert.deepEqual(instructions[0], copy(sep("Mod", "LOGICMODS", "a.pak"), "a.pak"));
+  });
+
+  it("logic keeps the first of two files with one name and logs the other", async () => {
+    vortex.logs.length = 0;
+    const { instructions } = await logic(tree("LogicMods/A/x.pak", "LogicMods/B/X.PAK"));
+    assert.deepEqual(
+      instructions.filter(({ type }) => type === "copy"),
+      [copy(sep("LogicMods", "A", "x.pak"), "x.pak")],
+    );
+    assert.equal(
+      vortex.logs.some(
+        ({ level, message }) =>
+          level === "warn" &&
+          message ===
+            `[XXX] LogicMods install skipped duplicate file name "${sep("LogicMods", "B", "X.PAK")}"`,
+      ),
+      true,
+    );
+  });
+
+  it("logic turns an archive with a pak outside the folder into a Combo mod", async () => {
+    const { instructions } = await logic(tree("Mod/~mods/x.pak", "Mod/LogicMods/y.pak"));
+    assert.deepEqual(instructions, [
+      copy(sep("Mod", "~mods", "x.pak"), sep("XXX", "Content", "Paks", "~mods", "x.pak")),
+      copy(sep("Mod", "LogicMods", "y.pak"), sep("XXX", "Content", "Paks", "LogicMods", "y.pak")),
+      modType(ID.combo),
+      attribute("logicModFiles", ["y"]),
     ]);
   });
 
@@ -1294,7 +1368,7 @@ describe("template-ue4-5: UE4SS combo, LogicMods and UE4SS installers", () => {
 
   it("logic drops a wrapper whose name ends in LogicMods", async () => {
     const { instructions } = await logic(tree("MyLogicMods/LogicMods/a.pak"));
-    assert.equal(instructions[0].destination, sep("LogicMods", "a.pak"));
+    assert.equal(instructions[0].destination, "a.pak");
   });
 });
 
@@ -2778,7 +2852,7 @@ describe("template-ue4-5: mod type behavior", () => {
     const win64 = (...rest) => sep(gameDir, "XXX", "Binaries", "Win64", ...rest);
     assert.equal(pathOf(ext, ID.combo), gameDir);
     assert.equal(pathOf(ext, ID.root), gameDir);
-    assert.equal(pathOf(ext, ID.logic), sep(gameDir, "XXX", "Content", "Paks"));
+    assert.equal(pathOf(ext, ID.logic), sep(gameDir, "XXX", "Content", "Paks", "LogicMods"));
     assert.equal(pathOf(ext, ID.pakAlt), sep(gameDir, "XXX", "Content", "Paks"));
     assert.equal(pathOf(ext, ID.pak), sep(gameDir, "XXX", "Content", "Paks", "~mods"));
     assert.equal(pathOf(ext, ID.scripts), win64("ue4ss", "Mods"));
@@ -4720,6 +4794,19 @@ describe("template-ue4-5: after a deployment, UE4SS and LogicMods", () => {
   });
 });
 
+// Fires did-install-mod. The handler is fire-and-forget, so this waits until it has been quiet for a while.
+const fireDidInstall = async (ext, modId = "m1", gameId = GAME_ID) => {
+  ext.api.events.emit("did-install-mod", gameId, "archive", modId);
+  let last = -1;
+  let quiet = 0;
+  for (let poll = 0; poll < 400 && quiet < 12; poll++) {
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    const activity = ext.dispatched.length + ext.notifications.length + vortex.logs.length;
+    quiet = activity === last ? quiet + 1 : 0;
+    last = activity;
+  }
+};
+
 describe("template-ue4-5: retagging a FOMOD-installed pak mod", () => {
   const FOMOD_MOD = {
     m1: { id: "m1", type: "", installationPath: "Fomod Pak", attributes: { name: "Fomod Pak" } },
@@ -4744,18 +4831,7 @@ describe("template-ue4-5: retagging a FOMOD-installed pak mod", () => {
     };
     return { ext, gameDir };
   }
-  const install = async (ext, modId = "m1", gameId = GAME_ID) => {
-    ext.api.events.emit("did-install-mod", gameId, "archive", modId);
-    // The handler is fire-and-forget, so wait until it has been quiet for a while.
-    let last = -1;
-    let quiet = 0;
-    for (let poll = 0; poll < 400 && quiet < 12; poll++) {
-      await new Promise((resolve) => setTimeout(resolve, 5));
-      const activity = ext.dispatched.length + ext.notifications.length + vortex.logs.length;
-      quiet = activity === last ? quiet + 1 : 0;
-      last = activity;
-    }
-  };
+  const install = fireDidInstall;
   const types = (ext) => ext.dispatched.map(({ type }) => type);
 
   it("tags the mod as a sortable pak, refreshes the order and asks for a deployment", async () => {
@@ -5686,6 +5762,583 @@ describe("template-ue4-5: drive checks and notices", () => {
     openMore(ext, notification).press("Contact Ext. Developer");
     assert.equal(ext.errors.at(-1)[0], "Failed to open the URL");
     assert.deepEqual(ext.errors.at(-1)[2], { allowReport: false });
+  });
+});
+
+// A pak with just enough of the file index and footer for the ModActor check to read. Version 10 and
+// up keeps file names in a directory index the main index points to, so `names` are written there.
+function fakePak({
+  names = [],
+  version = 8,
+  encrypted = false,
+  wideMount = false,
+  pathHash = false,
+  footerPadding = 0,
+}) {
+  const mount = "../../";
+  const nameBytes = Buffer.from(names.join("\0"));
+  const int32 = (value) => {
+    const buffer = Buffer.alloc(4);
+    buffer.writeInt32LE(value);
+    return buffer;
+  };
+  const uint64 = (value) => {
+    const buffer = Buffer.alloc(8);
+    buffer.writeBigUInt64LE(BigInt(value));
+    return buffer;
+  };
+  let index = nameBytes;
+  if (version >= 10) {
+    index = Buffer.concat([
+      int32(wideMount ? -mount.length : mount.length), // negative means two bytes per character
+      Buffer.from(mount, wideMount ? "utf16le" : "latin1"),
+      Buffer.alloc(12), // entry count and path hash seed
+      int32(pathHash ? 1 : 0),
+      Buffer.alloc(pathHash ? 36 : 0),
+      int32(1), // has a directory index
+      uint64(0), // the directory index sits at the start of the file
+      uint64(nameBytes.length),
+    ]);
+  }
+  const data = version >= 10 ? nameBytes : Buffer.alloc(0);
+  const footer = Buffer.concat([
+    Buffer.alloc(16), // encryption key guid
+    Buffer.from([encrypted ? 1 : 0]),
+    Buffer.from([0xe1, 0x12, 0x6f, 0x5a]),
+    int32(version),
+    Buffer.alloc(footerPadding), // extra bytes some games add, which move the index fields
+    uint64(data.length),
+    uint64(index.length),
+    Buffer.alloc(20), // index hash
+  ]);
+  return Buffer.concat([data, index, footer]);
+}
+
+const MODACTOR_PAK = () => fakePak({ names: ["Mods/Foo/ModActor.uasset"] });
+const PLAIN_PAK = () => fakePak({ names: ["Mods/Foo/Other.uasset"] });
+
+describe("template-ue4-5: finding the ModActor asset in a pak", () => {
+  let check;
+  let dir;
+  before(async () => {
+    const ext = await boot({ transform: exposing("pakHasModActor") });
+    check = ext.exports.internals.pakHasModActor;
+    dir = makeTempDir();
+  });
+  const pak = (bytes, name = "a.pak") => {
+    const file = path.join(dir, name);
+    fs.writeFileSync(file, bytes);
+    return file;
+  };
+
+  it("finds it in the index of an older pak version", async () => {
+    assert.equal(await check(pak(MODACTOR_PAK())), true);
+  });
+
+  it("finds it in the directory index of a version 10 pak", async () => {
+    const names = ["Mods/Foo/ModActor.uasset"];
+    assert.equal(await check(pak(fakePak({ names, version: 11 }))), true);
+    assert.equal(await check(pak(fakePak({ names, version: 11, pathHash: true }))), true);
+  });
+
+  it("reads past a mount point stored as wide text", async () => {
+    const names = ["Mods/Foo/ModActor.uasset"];
+    assert.equal(await check(pak(fakePak({ names, version: 11, wideMount: true }))), true);
+  });
+
+  it("is false when the pak lists other assets only", async () => {
+    assert.equal(await check(pak(PLAIN_PAK())), false);
+    assert.equal(await check(pak(fakePak({ names: ["Other.uasset"], version: 11 }))), false);
+  });
+
+  it("misses a longer file name that ends the same way", async () => {
+    const names = ["Mods/Foo/XModActor.uasset", "Mods/Foo/_ModActor.uasset"];
+    assert.equal(await check(pak(fakePak({ names }))), false);
+  });
+
+  it("finds a name after a longer lookalike", async () => {
+    const names = ["Mods/Foo/XModActor.uasset", "Mods/Foo/ModActor.uasset"];
+    assert.equal(await check(pak(fakePak({ names }))), true);
+  });
+
+  it("is false for an encrypted index", async () => {
+    const names = ["Mods/Foo/ModActor.uasset"];
+    assert.equal(await check(pak(fakePak({ names, encrypted: true }))), false);
+  });
+
+  it("searches the .utoc of an IO Store pak whose .pak is a stub", async () => {
+    const file = pak(PLAIN_PAK(), "stub.pak");
+    assert.equal(await check(file), false);
+    fs.writeFileSync(path.join(dir, "stub.utoc"), "\0Mods/Foo/ModActor.uasset\0");
+    assert.equal(await check(file), true);
+  });
+
+  it("is false, without throwing, for a pak it cannot read", async () => {
+    assert.equal(await check(pak(Buffer.from("not a pak"), "junk.pak")), false);
+    assert.equal(await check(pak(Buffer.alloc(0), "empty.pak")), false);
+    assert.equal(await check(path.join(dir, "missing.pak")), false);
+  });
+
+  it("searches the whole pak when a game's footer can't locate the index", async () => {
+    const custom = (names, version) => fakePak({ names, version, footerPadding: 2 });
+    for (const version of [8, 11]) {
+      assert.equal(await check(pak(custom(["Mods/Foo/ModActor.uasset"], version))), true);
+      assert.equal(await check(pak(custom(["Mods/Foo/Other.uasset"], version))), false);
+      assert.equal(await check(pak(custom(["Mods/Foo/XModActor.uasset"], version))), false);
+    }
+  });
+
+  it("leaves a pak over the size limit unsearched when its footer can't locate the index", async () => {
+    const file = path.join(dir, "large.pak");
+    const footer = fakePak({ names: ["Mods/Foo/ModActor.uasset"] });
+    const magic = footer.lastIndexOf(Buffer.from([0xe1, 0x12, 0x6f, 0x5a]));
+    footer.writeBigUInt64LE(2n ** 40n, magic + 8);
+    const handle = fs.openSync(file, "w");
+    fs.writeSync(handle, footer, 0, footer.length, 51 * 1024 * 1024);
+    fs.closeSync(handle);
+    assert.equal(await check(file), false);
+  });
+});
+
+describe("template-ue4-5: moving LogicMods mods to the flat layout", () => {
+  const PAKS = (gameDir, ...rest) => sep(gameDir, "XXX", "Content", "Paks", ...rest);
+  const MANIFEST = "vortex.deployment.XXX-logicmods.json";
+  const stagedFiles = () =>
+    fs
+      .readdirSync(STAGING, { recursive: true })
+      .filter((file) => fs.statSync(path.join(STAGING, file)).isFile())
+      .map((file) => file.split(path.sep).join("/"))
+      .sort();
+
+  // A game whose mods hold `staged` files, keyed by mod id. `manifests` gives each deployment
+  // manifest's file count, keyed by "paks" or "logic". Purging removes the manifest unless refused.
+  async function logicGame({ staged, manifests = {}, purgeRefused = false, transform, modExtra }) {
+    fs.rmSync(STAGING, { recursive: true, force: true });
+    fs.mkdirSync(STAGING, { recursive: true });
+    const mods = {};
+    for (const [id, files] of Object.entries(staged)) {
+      mods[id] = {
+        id,
+        type: ID.logic,
+        state: "installed",
+        installationPath: id,
+        attributes: { name: id },
+        ...modExtra,
+      };
+      for (const file of files) write(path.join(STAGING, id, ...file.split("/")));
+    }
+    const gameDir = makeGameDir(["XXX.exe"]);
+    const folders = { paks: PAKS(gameDir), logic: PAKS(gameDir, "LogicMods") };
+    for (const [key, count] of Object.entries(manifests)) {
+      write(
+        path.join(folders[key], MANIFEST),
+        JSON.stringify({ files: new Array(count).fill({}) }),
+      );
+    }
+    const ext = await boot({ transform, state: stateFor({ gameDir, mods }) });
+    const purged = [];
+    ext.api.emitAndAwait = async (event, gameId, modTypeId, folder) => {
+      purged.push({ event, gameId, modTypeId, folder });
+      if (!purgeRefused) fs.rmSync(path.join(folder, MANIFEST), { force: true });
+    };
+    const activate = () => ext.game.setup({ path: gameDir });
+    return { ext, gameDir, purged, activate };
+  }
+  const deployNotices = (ext) =>
+    ext.notifications.filter(({ id }) => id === "XXX-logicmods-deploy-notif");
+
+  it("purges the old Paks deployment, flattens staged mods and offers a deployment", async () => {
+    const { ext, gameDir, purged, activate } = await logicGame({
+      staged: { m1: ["LogicMods/a.pak", "LogicMods/a.ucas"], m2: ["LogicMods/Sub/b.pak"] },
+      manifests: { paks: 3 },
+    });
+    await activate();
+    assert.deepEqual(stagedFiles(), ["m1/a.pak", "m1/a.ucas", "m2/b.pak"]);
+    assert.deepEqual(purged, [
+      {
+        event: "purge-mods-in-path",
+        gameId: "XXX",
+        modTypeId: ID.logic,
+        folder: PAKS(gameDir),
+      },
+    ]);
+    assert.equal(deployNotices(ext).length, 1);
+    assert.equal(
+      ext.dispatched.some(({ type }) => type === "setDeploymentNecessary"),
+      true,
+    );
+  });
+
+  it("does nothing on the next activation", async () => {
+    const { ext, purged, activate } = await logicGame({
+      staged: { m1: ["LogicMods/a.pak"] },
+      manifests: { paks: 1 },
+    });
+    await activate();
+    purged.length = 0;
+    ext.notifications.length = 0;
+    await activate();
+    assert.deepEqual(purged, []);
+    assert.deepEqual(deployNotices(ext), []);
+  });
+
+  it("does nothing for mods already flat with a deployment at the new folder", async () => {
+    const { ext, purged, activate } = await logicGame({
+      staged: { m1: ["a.pak"] },
+      manifests: { logic: 1 },
+    });
+    await activate();
+    assert.deepEqual(stagedFiles(), ["m1/a.pak"]);
+    assert.deepEqual(purged, []);
+    assert.deepEqual(deployNotices(ext), []);
+  });
+
+  it("purges the new folder too when a nested mod is deployed there", async () => {
+    const { gameDir, purged, activate } = await logicGame({
+      staged: { m1: ["LogicMods/a.pak"], m2: ["b.pak"] },
+      manifests: { logic: 2 },
+    });
+    await activate();
+    assert.deepEqual(stagedFiles(), ["m1/a.pak", "m2/b.pak"]);
+    assert.deepEqual(
+      purged.map(({ folder }) => folder),
+      [PAKS(gameDir, "LogicMods")],
+    );
+  });
+
+  it("clears a leftover Paks deployment even when every mod is already flat", async () => {
+    const { ext, gameDir, purged, activate } = await logicGame({
+      staged: { m1: ["a.pak"] },
+      manifests: { paks: 1 },
+    });
+    await activate();
+    assert.deepEqual(
+      purged.map(({ folder }) => folder),
+      [PAKS(gameDir)],
+    );
+    assert.equal(deployNotices(ext).length, 1);
+  });
+
+  it("makes a staged mod with a pak outside its LogicMods folder a Combo mod", async () => {
+    const { ext, activate } = await logicGame({
+      staged: { m1: ["LogicMods/y.pak", "~mods/x.pak"] },
+      manifests: { paks: 2 },
+    });
+    await activate();
+    assert.deepEqual(stagedFiles(), [
+      "m1/XXX/Content/Paks/LogicMods/y.pak",
+      "m1/XXX/Content/Paks/~mods/x.pak",
+    ]);
+    assert.deepEqual(
+      ext.dispatched.filter(({ type }) => type === "setModType").map(({ payload }) => payload),
+      [["XXX", "m1", ID.combo]],
+    );
+  });
+
+  it("moves nothing while a running game refuses the purge, and tries again next time", async () => {
+    const { ext, activate } = await logicGame({
+      staged: { m1: ["LogicMods/a.pak"] },
+      manifests: { paks: 1 },
+      purgeRefused: true,
+    });
+    await activate();
+    assert.deepEqual(stagedFiles(), ["m1/LogicMods/a.pak"]);
+    assert.deepEqual(deployNotices(ext), []);
+    assert.equal(
+      vortex.logs.some(({ message }) => message.startsWith("[XXX] LogicMods migration waiting")),
+      true,
+    );
+    ext.api.emitAndAwait = async (_event, _gameId, _modTypeId, folder) => {
+      fs.rmSync(path.join(folder, MANIFEST), { force: true });
+    };
+    await activate();
+    assert.deepEqual(stagedFiles(), ["m1/a.pak"]);
+    assert.equal(deployNotices(ext).length, 1);
+  });
+
+  it("keeps the first of two staged files with one name and logs the other", async () => {
+    vortex.logs.length = 0;
+    const { activate } = await logicGame({
+      staged: { m1: ["LogicMods/A/x.pak", "LogicMods/B/x.pak"] },
+    });
+    await activate();
+    assert.deepEqual(stagedFiles(), ["m1/x.pak"]);
+    assert.equal(
+      vortex.logs.some(({ message }) =>
+        message.startsWith("[XXX] LogicMods migration skipped duplicate file name"),
+      ),
+      true,
+    );
+  });
+
+  it("leaves another mod's move alone when one mod fails", async () => {
+    const { ext, activate } = await logicGame({
+      staged: { m1: ["LogicMods/a.pak"], m2: ["LogicMods/b.pak"] },
+    });
+    const realRename = fs.promises.rename;
+    mock.method(fs.promises, "rename", (source, ...rest) =>
+      source.includes(`${path.sep}m1${path.sep}`)
+        ? Promise.reject(new Error("locked"))
+        : realRename(source, ...rest),
+    );
+    await activate();
+    assert.deepEqual(stagedFiles(), ["m1/LogicMods/a.pak", "m2/b.pak"]);
+    assert.equal(deployNotices(ext).length, 1);
+  });
+
+  it("skips mods of another type and mods not fully installed", async () => {
+    for (const modExtra of [{ type: ID.pak }, { state: "installing" }]) {
+      const { purged, activate } = await logicGame({
+        staged: { m1: ["LogicMods/a.pak"] },
+        modExtra,
+      });
+      await activate();
+      assert.deepEqual(stagedFiles(), ["m1/LogicMods/a.pak"]);
+      assert.deepEqual(purged, []);
+    }
+  });
+
+  it("does nothing while UE4SS support is switched off", async () => {
+    const { ext, purged, activate } = await logicGame({
+      staged: { m1: ["LogicMods/a.pak"] },
+      manifests: { paks: 1 },
+      transform: noUe4ss,
+    });
+    await activate();
+    assert.deepEqual(stagedFiles(), ["m1/LogicMods/a.pak"]);
+    assert.deepEqual(purged, []);
+    assert.deepEqual(deployNotices(ext), []);
+  });
+
+  it("still finishes setup when a manifest cannot be read, and logs it", async () => {
+    vortex.logs.length = 0;
+    const { gameDir, activate } = await logicGame({ staged: { m1: ["a.pak"] } });
+    write(path.join(PAKS(gameDir), MANIFEST), "not json");
+    await activate();
+    assert.equal(fs.existsSync(PAKS(gameDir, "LogicMods")), true);
+    assert.equal(
+      vortex.logs.some(
+        ({ level, message }) =>
+          level === "warn" &&
+          message === "[XXX] migrateLogicModsLayout failed, retrying next activation",
+      ),
+      true,
+    );
+  });
+
+  it("creates the LogicMods folder once, not a second one inside it", async () => {
+    const { gameDir, activate } = await logicGame({ staged: {} });
+    await activate();
+    assert.equal(fs.existsSync(PAKS(gameDir, "LogicMods")), true);
+    assert.equal(fs.existsSync(PAKS(gameDir, "LogicMods", "LogicMods")), false);
+  });
+
+  it("the deployment notice's button deploys and dismisses", async () => {
+    const { ext, activate } = await logicGame({ staged: { m1: ["LogicMods/a.pak"] } });
+    await activate();
+    const seen = answerDeploy(ext);
+    const notice = deployNotices(ext)[0];
+    assert.equal(notice.type, "warning");
+    assert.deepEqual(
+      notice.actions.map(({ title }) => title),
+      ["Deploy"],
+    );
+    let dismissed = 0;
+    await notice.actions[0].action(() => dismissed++);
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.deepEqual(seen, ["deploy-mods"]);
+    assert.equal(dismissed, 1);
+  });
+});
+
+describe("template-ue4-5: offering LogicMods for a Blueprint pak", () => {
+  const SET_LABEL = "Set as LogicMods";
+  const KEEP_LABEL = "Do Not Change";
+  const NOTICE_ID = "XXX-blueprintpak-m1";
+
+  // A game where mod `m1` was just installed and holds `staged` paks: file name to pak bytes.
+  async function blueprintGame({
+    staged = { "a.pak": MODACTOR_PAK() },
+    type = ID.pak,
+    ...rest
+  } = {}) {
+    fs.rmSync(STAGING, { recursive: true, force: true });
+    for (const [file, bytes] of Object.entries(staged)) {
+      write(path.join(STAGING, "Mod", ...file.split("/")), bytes);
+    }
+    const mods = {
+      m1: { id: "m1", type, installationPath: "Mod", attributes: { name: "Cool Mod" } },
+    };
+    const { ext } = await pakGame({ mods, modState: {}, ...rest });
+    ext.api.store.dispatch = (action) => {
+      ext.dispatched.push(action);
+      if (action.type === "setModType") {
+        ext.state.persistent.mods[GAME_ID][action.payload[1]].type = action.payload[2];
+      }
+      return action;
+    };
+    return ext;
+  }
+  const notice = (ext) => ext.notifications.find(({ id }) => id === NOTICE_ID);
+  const button = (ext, title) => notice(ext).actions.find((action) => action.title === title);
+
+  // Opens the More dialog with the dialog answering `action`, returning the times it dismissed.
+  async function pressInMore(ext, action) {
+    ext.api.showDialog = async (...args) => {
+      ext.dialogs.push(args);
+      return { action };
+    };
+    let dismissed = 0;
+    await button(ext, "More").action(() => dismissed++);
+    await new Promise((resolve) => setImmediate(resolve));
+    return dismissed;
+  }
+
+  it("suggests it for a pak holding the ModActor asset, as a choice to make", async () => {
+    const ext = await blueprintGame();
+    await fireDidInstall(ext);
+    const shown = notice(ext);
+    assert.equal(shown.type, "info");
+    assert.equal(shown.allowSuppress, true);
+    assert.equal(shown.message, '"Cool Mod" Looks Like a UE4SS Blueprint Mod');
+    assert.deepEqual(
+      shown.actions.map(({ title }) => title),
+      ["More", SET_LABEL],
+    );
+    assert.deepEqual(ext.dispatched, []);
+  });
+
+  it("stays quiet for a plain pak", async () => {
+    const ext = await blueprintGame({ staged: { "a.pak": PLAIN_PAK() } });
+    await fireDidInstall(ext);
+    assert.equal(notice(ext), undefined);
+  });
+
+  it("stays quiet for a mod with no pak", async () => {
+    const ext = await blueprintGame({ staged: { "readme.txt": "text" } });
+    await fireDidInstall(ext);
+    assert.equal(notice(ext), undefined);
+  });
+
+  it("logs a mod mixing Blueprint and regular paks, offering nothing", async () => {
+    vortex.logs.length = 0;
+    const ext = await blueprintGame({
+      staged: { "a.pak": MODACTOR_PAK(), "b.pak": PLAIN_PAK() },
+    });
+    await fireDidInstall(ext);
+    assert.equal(notice(ext), undefined);
+    assert.equal(
+      vortex.logs.some(
+        ({ message }) =>
+          message === '[XXX] "m1" mixes Blueprint and regular paks, no type suggestion',
+      ),
+      true,
+    );
+  });
+
+  it("stays quiet for a pak not at the staging root", async () => {
+    const ext = await blueprintGame({ staged: { "Sub/a.pak": MODACTOR_PAK() } });
+    await fireDidInstall(ext);
+    assert.equal(notice(ext), undefined);
+  });
+
+  it("stays quiet for a mod of any other type", async () => {
+    for (const type of [ID.logic, ID.root, ID.combo, ID.pakAlt]) {
+      const ext = await blueprintGame({ type });
+      await fireDidInstall(ext);
+      assert.equal(notice(ext), undefined, type);
+    }
+  });
+
+  it("stays quiet for another game", async () => {
+    const ext = await blueprintGame();
+    await fireDidInstall(ext, "m1", "othergame");
+    assert.equal(notice(ext), undefined);
+  });
+
+  it("stays quiet while UE4SS support is switched off", async () => {
+    const ext = await blueprintGame({ transform: noUe4ss });
+    await fireDidInstall(ext);
+    assert.equal(notice(ext), undefined);
+  });
+
+  it("stays quiet during a collection install, in either state shape", async () => {
+    for (const installing of [["dep"], true]) {
+      const ext = await blueprintGame();
+      ext.state.session = { base: { activity: { installing_dependencies: installing } } };
+      await fireDidInstall(ext);
+      assert.equal(notice(ext), undefined, String(installing));
+    }
+  });
+
+  it("speaks again once the collection has finished", async () => {
+    const ext = await blueprintGame();
+    ext.state.session = { base: { activity: { installing_dependencies: [] } } };
+    await fireDidInstall(ext);
+    assert.notEqual(notice(ext), undefined);
+  });
+
+  it("runs after the FOMOD retag, so a retagged mod is checked by its final type", async () => {
+    const ext = await blueprintGame({ type: "" });
+    await fireDidInstall(ext);
+    assert.equal(ext.dispatched[0].type, "setModType");
+    assert.deepEqual(ext.dispatched[0].payload, ["XXX", "m1", ID.pak]);
+    assert.notEqual(notice(ext), undefined);
+  });
+
+  it("the button switches the type, records the paks and asks for a deployment", async () => {
+    const ext = await blueprintGame({
+      staged: { "a.pak": MODACTOR_PAK(), "B.PAK": MODACTOR_PAK() },
+    });
+    await fireDidInstall(ext);
+    const emitted = [];
+    ext.api.events.on("recalculate-modtype-conflicts", (ids) => emitted.push(ids));
+    let dismissed = 0;
+    await button(ext, SET_LABEL).action(() => dismissed++);
+    assert.deepEqual(
+      ext.dispatched.slice(0, 2).map(({ type, payload }) => [type, payload]),
+      [
+        ["setModType", ["XXX", "m1", ID.logic]],
+        ["setModAttribute", ["XXX", "m1", "logicModFiles", ["a", "B"]]],
+      ],
+    );
+    assert.equal(ext.dispatched[2].type, "setDeploymentNecessary");
+    assert.deepEqual(emitted, [["m1"]]);
+    assert.equal(dismissed, 1);
+    assert.equal(ext.notifications.at(-1).id, "XXX-logicmods-deploy-notif");
+  });
+
+  it("More explains the choice and names both answers", async () => {
+    const ext = await blueprintGame();
+    await fireDidInstall(ext);
+    await pressInMore(ext, "Cancel");
+    const [kind, title, content, buttons] = ext.dialogs.at(-1);
+    assert.equal(kind, "question");
+    assert.equal(title, "Blueprint Mod Installed as a Pak Mod");
+    assert.match(content.text, /"Cool Mod" contains a ModActor asset/);
+    assert.match(content.text, /choose "Do Not Change"/);
+    assert.deepEqual(buttons, [{ label: KEEP_LABEL }, { label: SET_LABEL }]);
+  });
+
+  it("More's Set as LogicMods switches the type and dismisses", async () => {
+    const ext = await blueprintGame();
+    await fireDidInstall(ext);
+    assert.equal(await pressInMore(ext, SET_LABEL), 1);
+    assert.deepEqual(ext.dispatched[0].payload, ["XXX", "m1", ID.logic]);
+  });
+
+  it("More's Do Not Change dismisses and changes nothing", async () => {
+    const ext = await blueprintGame();
+    await fireDidInstall(ext);
+    assert.equal(await pressInMore(ext, KEEP_LABEL), 1);
+    assert.deepEqual(ext.dispatched, []);
+  });
+
+  it("closing More any other way leaves the notice up", async () => {
+    const ext = await blueprintGame();
+    await fireDidInstall(ext);
+    assert.equal(await pressInMore(ext, "Cancel"), 0);
+    assert.deepEqual(ext.dispatched, []);
   });
 });
 

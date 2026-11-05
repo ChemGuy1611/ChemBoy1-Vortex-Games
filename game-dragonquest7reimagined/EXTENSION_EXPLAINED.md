@@ -64,7 +64,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `dragonquest7reimagined-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `dragonquest7reimagined-logicmods` | high | `{gamePath}/DQ7R/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `dragonquest7reimagined-logicmods` | high | `{gamePath}/DQ7R/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `dragonquest7reimagined-pakalt` | high | `{gamePath}/DQ7R/Content/Paks` |
 | Root Folder | `dragonquest7reimagined-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `dragonquest7reimagined-uesortablepak` | 25 | `{gamePath}/DQ7R/Content/Paks/~mods` |

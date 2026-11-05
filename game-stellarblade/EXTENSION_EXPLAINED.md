@@ -39,6 +39,7 @@
 | `autoDownloadUe4ss` | `true` | toggle for auto downloading UE4SS (only applies when ue4ssLoadOrder is enabled) |
 | `writeEngineVersion` | `false` | toggle to write ENGINE_VERSION into UE4SS-settings.ini (EngineVersionOverride) on deploy, when UE4SS is installed |
 | `debug` | `false` | toggle for debug mode |
+| `gamebananaBrowser` | `true` | register the "Browse GameBanana" page - browse and install the game's GameBanana mods inside Vortex |
 | `exeHasGameVersion` | `false` | toggle: true if the game devs stamp the real game version (not just the UE engine version) into the exe ProductVersion |
 | `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
 
@@ -106,6 +107,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open UE4SS mods.txt
 - Open PCGamingWiki Page
 - Open Nexus Mods Page
+- Open GameBanana Page
 - Open SteamDB Page
 - View Changelog
 - Open Downloads Folder

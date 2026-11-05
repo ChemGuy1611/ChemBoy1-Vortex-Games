@@ -2,8 +2,8 @@
 Name: Devil May Cry 5 Vortex Extension
 Structure: Fluffy + REFramework (RE Engine)
 Author: ChemBoy1
-Version: 2.0.3
-Date: 2026-10-25
+Version: 2.1.1
+Date: 2026-11-04
 Notes:
 -
 ///////////////////////////////////////////*/
@@ -16,6 +16,8 @@ const path = require("path");
 const template = require("string-template");
 const winapi = require("winapi-bindings");
 const { parseStringPromise } = require("xml2js");
+//Embedded GameBanana browser page (needs base_browser.js beside it)
+const { registerGameBananaBrowser, onceGameBananaBrowser } = require("./gamebanana_browser");
 
 // -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -39,6 +41,8 @@ const GAME_NAME_SHORT = "DMC 5";
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Devil_May_Cry_5";
 const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/434"; //Nexus link to this extension. Used for links
+const GB_GAME_ID = "8646"; //GameBanana game id - https://gamebanana.com/games/8646
+const GB_URL = `https://gamebanana.com/games/${GB_GAME_ID}`;
 
 const FLUFFY_FOLDER = "DMC5";
 const FLUFFY_FOLDER_DEMO = ""; //!set as "" if no demo
@@ -71,6 +75,7 @@ if (HAS_DEMO || hasXbox) {
 }
 const setupNotification = true; //enable to show the user a notification with special instructions (specify below)
 const debug = false; //toggle for debug mode
+const gamebananaBrowser = true; //register the "Browse GameBanana" page - browse and install the game's GameBanana mods inside Vortex
 
 // -- END EDIT ZONE -- /////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -188,6 +193,14 @@ let MODTYPE_FOLDERS = [];
 
 // -- END EDIT ZONE -- /////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//Embedded GameBanana browser page - the user browses the live site and installs from it.
+//GameBanana mods are ordinary archives, so they land through the same installers as any other.
+const GB_BROWSER_CONFIG = {
+  gbGameId: GB_GAME_ID,
+  pageId: `${GAME_ID}-gamebanana-browse`,
+  pageTitle: "Browse GameBanana",
+};
 
 //Filled in from data above
 const spec = {
@@ -1437,6 +1450,27 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     },
   );
+  if (gamebananaBrowser) {
+    context.registerAction(
+      "mod-icons",
+      300,
+      "open-ext",
+      {},
+      "Open GameBanana Page",
+      () => {
+        try {
+          window.api.shell.openUrl(GB_URL);
+        } catch (err) {
+          context.api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+        }
+      },
+      () => {
+        const state = context.api.getState();
+        const gameId = selectors.activeGameId(state);
+        return gameId === GAME_ID;
+      },
+    );
+  }
   context.registerAction(
     "mod-icons",
     300,
@@ -1518,6 +1552,11 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     },
   );
+
+  //register the embedded GameBanana browser page
+  if (gamebananaBrowser) {
+    registerGameBananaBrowser(context, gameSpec, GB_BROWSER_CONFIG);
+  }
 }
 
 //Main function
@@ -1525,6 +1564,10 @@ function main(context) {
   applyGame(context, spec);
   context.once(() => {
     // put code here that should be run (once) when Vortex starts up
+    if (gamebananaBrowser) {
+      //claims downloads started from the browse page, and update-checks the mods installed through it
+      onceGameBananaBrowser(context.api, spec, GB_BROWSER_CONFIG);
+    }
     context.api.onAsync("did-deploy", async (profileId) => {
       const api = context.api;
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);

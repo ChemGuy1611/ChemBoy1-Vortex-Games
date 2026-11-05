@@ -84,6 +84,11 @@ const CLAIM_MAX_AGE_MS = 60 * 60 * 1000;
 // How deep the dependency walk follows a package's own dependencies.
 const DEPENDENCY_DEPTH_CAP = 5;
 
+// Off-site hosts a page may open in the system browser without asking. Anything else is held
+// behind a notification, because an ad network not on an adapter's blocked list would otherwise
+// open in the user's real browser.
+const DEFAULT_EXTERNAL_HOSTS = ["nexusmods.com", "github.com"];
+
 // --- version helpers ------------------------------------------------------
 
 // Versions are semver by convention on some sites and free text on others, and authors still
@@ -218,6 +223,37 @@ function isBlockedHost(adapter, config, url) {
     return list.some((blocked) => host === blocked || host.endsWith(`.${blocked}`));
   } catch {
     return false;
+  }
+}
+
+//Whether an off-site link is trusted to open in the system browser without asking
+function isExternalHost(config, url) {
+  const list = config.externalHosts || DEFAULT_EXTERNAL_HOSTS;
+  try {
+    const parsed = new URL(url);
+    //a custom protocol launches an application, whatever host its URL names
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+      return false;
+    }
+    const host = parsed.hostname.toLowerCase();
+    return list.some((external) => host === external || host.endsWith(`.${external}`));
+  } catch {
+    return false;
+  }
+}
+
+//What a blocked URL is called in its notification, or null when it holds nothing to go to
+function blockedUrlLabel(url) {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === "about:" || parsed.protocol === "javascript:") {
+      return null;
+    }
+    return parsed.protocol === "https:" || parsed.protocol === "http:"
+      ? parsed.hostname.toLowerCase()
+      : parsed.protocol;
+  } catch {
+    return null;
   }
 }
 
@@ -889,15 +925,44 @@ function makeBrowsePage(adapter, gameSpec, config) {
           }
           return;
         }
-        if (isBlockedHost(adapter, config, url)) {
-          //an ad click or pop-under: drop it rather than open a browser
-          log("debug", `Blocked an ad destination from the ${adapter.label} browser: ${url}`);
-        } else {
-          //off-site links open in the system browser, never in the page
+        const openExternal = () => {
           try {
             window.api.shell.openUrl(url);
           } catch (err) {
             api.showErrorNotification("Failed to open the URL", err, { allowReport: false });
+          }
+        };
+        if (isBlockedHost(adapter, config, url)) {
+          //an ad click or pop-under: drop it rather than open a browser
+          log("debug", `Blocked an ad destination from the ${adapter.label} browser: ${url}`);
+        } else if (config.blockAdPopups === false || isExternalHost(config, url)) {
+          //off-site links open in the system browser, never in the page
+          openExternal();
+        } else {
+          //a page cannot be told apart from an ad by how it asks to open, so nothing else opens
+          //on its own. One notification per host, so an ad firing on the same click as a real
+          //link cannot replace it; the group collapses them into one entry.
+          log("debug", `Blocked a pop-up from the ${adapter.label} browser: ${url}`);
+          const label = blockedUrlLabel(url);
+          if (label !== null) {
+            api.sendNotification({
+              id: `${PAGE_ID}-blocked-${label}`,
+              group: `${PAGE_ID}-blocked`,
+              type: "info",
+              title: "Blocked a pop-up",
+              message: label,
+              displayMS: 15000,
+              allowSuppress: true,
+              actions: [
+                {
+                  title: "Open",
+                  action: (dismiss) => {
+                    openExternal();
+                    dismiss();
+                  },
+                },
+              ],
+            });
           }
         }
         if (navigated) {
@@ -1188,6 +1253,7 @@ function createBrowserModule(adapter) {
     isHostAllowed: (config, url) => isHostAllowed(adapter, config, url),
     adHidingCss: (config) => adHidingCss(adapter, config),
     isBlockedHost: (config, url) => isBlockedHost(adapter, config, url),
+    isExternalHost: (config, url) => isExternalHost(config, url),
   };
 }
 

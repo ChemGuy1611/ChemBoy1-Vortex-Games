@@ -59,7 +59,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `codevein2-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `codevein2-logicmods` | high | `{gamePath}/CodeVein2/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `codevein2-logicmods` | high | `{gamePath}/CodeVein2/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `codevein2-pakalt` | high | `{gamePath}/CodeVein2/Content/Paks` |
 | Root Folder | `codevein2-root` | high | `{gamePath}` |
 | RHFF Framework | `codevein2-rhff` | high | `{gamePath}/CodeVein2/Binaries/Win64` |

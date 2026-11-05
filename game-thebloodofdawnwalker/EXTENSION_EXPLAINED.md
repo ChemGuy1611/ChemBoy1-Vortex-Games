@@ -60,7 +60,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `thebloodofdawnwalker-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `thebloodofdawnwalker-logicmods` | high | `{gamePath}/Dawnwalker/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `thebloodofdawnwalker-logicmods` | high | `{gamePath}/Dawnwalker/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `thebloodofdawnwalker-pakalt` | high | `{gamePath}/Dawnwalker/Content/Paks` |
 | Root Folder | `thebloodofdawnwalker-root` | high | `{gamePath}` |
 | UE Sortable Pak Mod | `thebloodofdawnwalker-uesortablepak` | 25 | `{gamePath}/Dawnwalker/Content/Paks/~mods` |

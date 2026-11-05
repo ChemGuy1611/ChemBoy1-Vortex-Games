@@ -71,6 +71,8 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `http_get(url, headers)`                                                                            | Fetch a URL and return UTF-8 string. Retries up to 2 times on 429/5xx/network errors (2 s, 4 s delays).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | `http_get_bytes(url, headers)`                                                                      | Fetch a URL and return raw bytes. Same retry behaviour as `http_get`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | `http_get_json(url, headers)`                                                                       | Fetch a URL and return the parsed JSON body. Same retry behaviour as `http_get`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `zip_listing(url)`                                                                                  | Entry names of a remote zip, read from its central directory with two range requests. `None` when the URL does not serve a plain zip (zip64, or another format). |
+| `SEVENZIP`                                                                                          | Path of `7z.exe`: `SEVENZIP_PATH`, else the default install folder. |
 | `http_post_json(url, data, headers)`                                                                | POST a JSON-serializable dict to a URL and return parsed JSON response. Same retry behaviour as `http_get`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `egdata_search_queries(game_name)`                                                                  | Ordered title strings to try against egdata's `/search`: every `name_lookup_variants()` alternate, each also offered as bare words with every run of punctuation replaced by a space. egdata returns zero results for any query containing an apostrophe (straight or curly), hyphen, comma or underscore, even when the indexed title has one, and reads a period literally (`S.T.A.L.K.E.R. 2` matches an unrelated title).                                                                                                                                                                                                                                                                                                         |
 | `normalize_title_for_match(title)`                                                                  | Fold a title to bare lowercase words — drops `®`/`™`, apostrophes and all other punctuation — so store and game spellings compare equal.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
@@ -304,11 +306,13 @@ Verifies Nexus Mods v1 and v3 API response shapes against documentation. Tests r
 
 `--check-spec` adds a drift check against the live OpenAPI document at `https://api.nexusmods.com/openapi.yaml`: it diffs the path list against the catalog baked into `SPEC_KNOWN_PATHS` (which mirrors the endpoint catalog in `resources/NEXUS_MODS_API.md`), then, for every path both sides know, diffs the HTTP methods the spec lists on it against the method set recorded for that path (a new method on an already-known path, like `GET /mods/{id}` arriving beside `PATCH`, is invisible to a path diff), fails for any live `operationId` that `resources/NEXUS_MODS_API.md` does not name in backticks, compares the request-body fields of the write operations this repo sends (`createMultipartUpload`, `finaliseUpload`, `createModFileVersion`, `editMod`, plus `createUpload` for its scheduled `md5` change) against `SPEC_REQUEST_BODIES` — a new or removed field, or a field that became or stopped being required, is a `[FAIL]`, because a path diff cannot see either (`crc64nvme` arrived on `/uploads/multipart` that way) — confirms every endpoint the upload flow depends on is still present and not deprecated, and flags any deprecation that is not already documented. This is what catches endpoints being _added_ or _removed_ — the per-endpoint probes can only see the paths they already know about. When it reports drift, update both `SPEC_KNOWN_PATHS` and `resources/NEXUS_MODS_API.md` in the same pass. A path listed in `SPEC_RETIRING_PATHS` (with its scheduled removal date) is treated as an expected, not a failing, removal once that date has passed — its disappearance prints as `[INFO]` telling you to retire the `SPEC_KNOWN_PATHS` entry, instead of a permanent `[FAIL]`. The tier tally only counts `Beta`/`Experimental`/`Deprecated` badges as stability tiers; any other `x-badges` entry (e.g. a scheduled-change warning like `md5 required from 2026-12-01`) falls through to `Stable` instead of being counted as a bogus fourth tier.
 
+`--check-spec` also compares every operation against `resources/nexus-v3-spec-baseline.json`, a generated file that is never hand-edited. Each operation is reduced to flat rows: auth schemes (`none` when a credential is optional), `x-badges`, the deprecated flag, parameters, response status codes, and every nested request and success-response field with its type, required state, nullability and enum values. A difference is one `[FAIL]` per operation, followed by `+`, `-` and `~` lines naming each changed row. This is what catches a nested field, a response field, a new status code or a change in auth, none of which the path, method and `SPEC_REQUEST_BODIES` checks can see. It does not compare descriptions, so prose such as a removal date in an operation's text is still not caught. After reviewing a change, update `resources/NEXUS_MODS_API.md` and any caller, then run `--update-spec-baseline`.
+
 ### check_nexus_api.py — Environment Variables
 
 | Variable        | Required                                         | Description                                                                                                                                                   |
 | --------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `NEXUS_API_KEY` | Required, except with `--check-spec --spec-only` | Nexus Mods API key. Read from env var, with HKCU/HKLM registry fallback. The OpenAPI document is served unauthenticated, so the spec diff alone needs no key. |
+| `NEXUS_API_KEY` | Required, except with `--check-spec --spec-only` or `--update-spec-baseline` | Nexus Mods API key. Read from env var, with HKCU/HKLM registry fallback. The OpenAPI document is served unauthenticated, so the spec diff alone needs no key. |
 
 ### check_nexus_api.py — Usage
 
@@ -318,6 +322,7 @@ python check_nexus_api.py --domain site --mod-id 1960
 python check_nexus_api.py --test-upload
 python check_nexus_api.py --check-spec
 python check_nexus_api.py --check-spec --spec-only
+python check_nexus_api.py --update-spec-baseline
 ```
 
 - No arguments — runs read-only checks only.
@@ -325,6 +330,7 @@ python check_nexus_api.py --check-spec --spec-only
 - `--test-upload` — also POSTs a 1-byte upload session to verify step 3 + step 7 shapes. Creates a dangling session that expires automatically; does not upload data or publish files.
 - `--check-spec` — also diff the live OpenAPI document against the documented endpoint catalog.
 - `--spec-only` — with `--check-spec`, skip the live endpoint probes and run only the spec diff. Needs no API key.
+- `--update-spec-baseline` — print how the live spec differs from the recorded baseline, rewrite `resources/nexus-v3-spec-baseline.json`, and exit. Runs no other check. Needs no API key.
 
 ### check_nexus_api.py — Requirements
 
@@ -332,7 +338,7 @@ python check_nexus_api.py --check-spec --spec-only
 
 ### check_nexus_api.py — Output
 
-Per-check `[PASS]` / `[FAIL]` / `[WARN]` lines for: v1 mod shape (13 required fields), rate limit headers (daily + hourly limit and remaining, plus a documented-tier match), v3 mod-files shape (5 required fields + known extras), v3 mod-by-uid read (`data.id` + `data.description`), 3 dead-endpoint status codes, and (with `--test-upload`) upload session shape (step 3) + upload state shape (step 7) + step 8 field-validation against `POST /v3/mod-files/{id}/versions`. With `--check-spec`, adds spec version, path-count diff (naming any added or removed path, `[INFO]` instead of `[FAIL]` for an expected `SPEC_RETIRING_PATHS` removal), per-path method diff (naming any added or removed operation), an every-operationId-is-documented check, a request-body field + required-set check per `SPEC_REQUEST_BODIES` entry, per-endpoint presence and stability tier for the upload flow, new-deprecation detection, and an operations-by-tier tally. Summary: `Passed: N/total`. Exits `0` if all pass, `1` if any fail.
+Per-check `[PASS]` / `[FAIL]` / `[WARN]` lines for: v1 mod shape (13 required fields), rate limit headers (daily + hourly limit and remaining, plus a documented-tier match), v3 mod-files shape (5 required fields + known extras), v3 mod-by-uid read (`data.id` + `data.description`), 3 dead-endpoint status codes, and (with `--test-upload`) upload session shape (step 3) + upload state shape (step 7) + step 8 field-validation against `POST /v3/mod-files/{id}/versions`. With `--check-spec`, adds spec version, path-count diff (naming any added or removed path, `[INFO]` instead of `[FAIL]` for an expected `SPEC_RETIRING_PATHS` removal), per-path method diff (naming any added or removed operation), an every-operationId-is-documented check, a request-body field + required-set check per `SPEC_REQUEST_BODIES` entry, the every-operation baseline comparison (one `[PASS]` with the operation and row counts, or one `[FAIL]` per changed operation with its changed rows), per-endpoint presence and stability tier for the upload flow, new-deprecation detection, and an operations-by-tier tally. Summary: `Passed: N/total`. Exits `0` if all pass, `1` if any fail.
 
 ---
 
@@ -641,32 +647,6 @@ python svg_to_mdi.py logo.svg --js-const DEFAULT_MDI --render icon.png
 
 ---
 
-## find_modio_games.py
-
-Finds which game extensions in the repo have a mod.io page. Fetches every game mod.io lists (about 400) and matches each against the `game-*` folders: by Steam app id first (mod.io keeps Steam store links in a game's `other_urls`, compared with every `STEAMAPP_ID*` constant), then by exact normalised name (`GAME_NAME*` constants). Each match shows the `name_id` a browser page's `modioGame` config needs, mod count, whether direct downloads are open, platforms, and whether the extension already bundles `modio_browser.js`. Uses mod.io's keyless website endpoint; see `resources/MODIO_API.md`.
-
-### find_modio_games.py — Requirements
-
-Python standard library plus `vortex_utils.py` (`http_get_json`, `iter_extension_folders`, `normalize_game_name`). No API key.
-
-### find_modio_games.py — Usage
-
-```sh
-python find_modio_games.py
-python find_modio_games.py --loose
-python find_modio_games.py --json modio_matches.json
-```
-
-- `--loose` — also list fuzzy name candidates (containment, or similarity of 0.85 or more) for games whose mod.io record has no Steam link. Candidates only: `RuneScape: Dragonwilds` matches mod.io's classic `RuneScape`, a different game.
-- `--json FILE` — write `{ matches, loose }` as JSON.
-
-### find_modio_games.py — Output
-
-- A table, most mods first: extension, `modioGame`, mods, match kind (`steam` / `name`), `dl` (`open` when `api_access_options` allows direct downloads, which a browser page needs; `auth` otherwise), adopted, platforms.
-- With `--loose`, the candidate list after it.
-
----
-
 ## modio_listings.py
 
 Lists what is inside a mod.io game's most popular mod archives without downloading them. For each mod it takes the live file for one platform (mod.io keeps one per platform, and a mod's default file can be another platform's build: Abiotic Factor's is the PS5 one), then reads only the zip's central directory with two HTTP range requests, so even 2 GB archives list in about a second. Uses mod.io's keyless website endpoint (`https://mod.io/v1` with `X-Modio-Origin: web`); see `resources/MODIO_API.md`.
@@ -675,7 +655,7 @@ Its JSON output is the input of `replay_installers.js`, which shows which of an 
 
 ### modio_listings.py — Requirements
 
-Python standard library plus `vortex_utils.py` (`http_get_json`, `http_get_bytes`). No API key.
+Python standard library plus `vortex_utils.py` (`http_get_json`, `zip_listing`). No API key.
 
 ### modio_listings.py — Usage
 
@@ -696,6 +676,44 @@ python modio_listings.py 12104
 - One line per mod: entry count, `not a plain zip` (7z, rar, zip64), the HTTP error, or `unreachable` (a timed-out CDN read is recorded and the run continues).
 - JSON list of `{ modId, name, filename, size, files }`, where `files` is the archive's entry paths (`/`-separated, directories included) or `null` when it could not be read.
 - Exit code `1` when the game is not found on mod.io.
+
+---
+
+## mod_listings.py
+
+Lists what is inside a GameBanana or ModWorkshop game's most downloaded mod archives, so a browser page can be judged against an extension's installers before it is built. Its JSON has the same shape as `modio_listings.py` and is the input of `replay_installers.js`.
+
+A zip is read through its central directory with two range requests, whatever its size. Neither site has a listing endpoint and GameBanana mods are often rar or 7z, which range requests cannot read, so those are downloaded up to the size limits into a new empty temp folder, listed with 7-Zip's list command, and deleted. Nothing is extracted or run, and the mod's own file name is never used on disk.
+
+### mod_listings.py — Requirements
+
+Python standard library, `vortex_utils.py` (`http_get_json`, `zip_listing`, `SEVENZIP`) and 7-Zip. No API key.
+
+### mod_listings.py — Usage
+
+```sh
+python mod_listings.py gamebanana 21179 --count 20
+python mod_listings.py modworkshop mewgenics --out mewgenics.json
+python mod_listings.py gamebanana 23494 --max-mb 100 --budget-mb 500
+```
+
+- `SITE` — `gamebanana` or `modworkshop`.
+- `GAME` — GameBanana game id, or ModWorkshop `short_name` or numeric id. `audit_modules.py --sites` prints both.
+- `--count N` — how many mods to list, most downloaded first. Default 20.
+- `--max-mb N` — largest rar/7z to download. Default 50.
+- `--budget-mb N` — total rar/7z download for the run. Default 300.
+- `--out FILE` — output path. Default `mod_listings_<SITE>_<GAME>.json` in the current folder.
+
+GameBanana's newest archive is the one listed: authors using Reloaded-II's updater also upload a release metadata `.json` beside each archive, sometimes newer than it.
+
+### mod_listings.py — Output
+
+- The game's name, so a wrong id shows, then one line per mod: entry count, or why it could not be listed (over a limit, not an archive, the HTTP error, unreachable).
+- A summary of mods listed and megabytes downloaded.
+- JSON list of `{ modId, name, filename, size, files }`, where `files` is the archive's entry paths (`/`-separated, directories ending in `/`) or `null` when it could not be read.
+- Exit code `1` when the game is not found or 7-Zip is missing.
+
+Set `SEVENZIP_PATH` when 7-Zip is not in its default folder.
 
 ---
 
@@ -1197,10 +1215,11 @@ Two paths, depending on whether the page already exists:
 These blocks are added to an existing page when it lacks them (matched by key phrase, so a second run changes nothing, and an author's own wording is never replaced):
 
 - **Symlink warning** (red) in front of the install list, when `supportsSymlinks` resolves to `false`. Resolved from a literal, a boolean constant such as `allowSymlinks`, or `SYM_LINKS`, which the UE4-5 template flips to `false` inside `if (IO_STORE)`. An extension that never sets the key supports symlinks (Vortex only treats `=== false` as unsupported). An expression that cannot be resolved gets no warning and is listed in the run summary and in `unresolvedSymlinks` of the JSON output.
-- **LogicMod-authors note** (yellow) in front of the install list, for UE4-5 extensions that register the `testLogic` installer. An extension with UE4SS switched off registers none, so it gets no note.
-- **UE4-5 usage notes** at the end of the `📋 Usage Notes` list, read from the template toggles (`usageNotesFor`): the UE4SS download button (from GitHub, or Nexus Mods when `UE4SS_PAGE_NO` is set), which load order page sorts which mods (`PAKMOD_LOADORDER`, the UE4SS and LogicMods pages, FOMOD paks retagged), the same-drive rule for Config/Save mods (`preferHardlinks` or `IO_STORE` with `checkPartitions`), and the `BINARIES_NAME` mod type as the fallback install location. A note whose text is already on the page is not added again.
-- **Browser page usage note** at the end of the `📋 Usage Notes` list, any engine (`browserNotes`): one line per mod site the extension registers a browser page for (`registerXBrowser` calls, skipped when the `xBrowser` toggle is false), naming the sidebar pages by their config's `pageTitle`. Site names live in `BROWSER_SITES`; a new browser module adds its entry there. `BROWSER_PAGE_SCOPE` adds a qualifier for a two-game extension whose page shows on one game only. Same rule as above: text already on the page is not added again, so rewording it later adds a second line rather than replacing the first.
+- **UE4-5 usage notes** at the end of the `📋 Usage Notes` list, read from the template toggles (`usageNotesFor`): the UE4SS download button (from GitHub, or Nexus Mods when `UE4SS_PAGE_NO` is set), which load order page sorts which mods (`PAKMOD_LOADORDER`, the UE4SS and LogicMods pages, FOMOD paks retagged), the `LogicMods` folder rule and the Blueprint pak notification (`notifyBlueprintPak` present, `ue4ssLoadOrder` on), the same-drive rule for Config/Save mods (`preferHardlinks` or `IO_STORE` with `checkPartitions`), and the `BINARIES_NAME` mod type as the fallback install location. A note whose text is already on the page is not added again.
+- **Browser page usage note** at the end of the `📋 Usage Notes` list, any engine (`browserNotes`): one line per mod site the extension registers a browser page for (`registerXBrowser` calls, skipped when the `xBrowser` toggle is false), naming the sidebar pages by their config's `pageTitle`. Site names live in `BROWSER_SITES`; a new browser module adds its entry there. `BROWSER_PAGE_SCOPE` adds a qualifier for a two-game extension whose page shows on one game only. Text already on the page is not added again. A line in exactly this generated shape that the extension no longer earns (its page was removed, its toggle switched off, or its wording changed) is removed, and the run reports the count as stale browser notes; a line the author wrote about a site stays.
 - **Credits** section in front of the donation block, as a bulleted list. Lines come from `CREDITS_BY_GAME` (per-game, seeded from the live pages), else the engine default `ENGINE_CREDITS` (UE4-5: Pickysaurus, BeYkeRYkt, Nagev). On a page that already has a Credits section, the paragraph right under its heading is rebuilt as one `[list]` of `[*]` items (plain credit lines become bullets; images and carried sections after it are left alone) and the lines whose profile link is missing are added at its end. The donation block starts on the line right after the Credits `[/list]`, with no blank line in between. Edit credits in the generator, never on the page.
+
+One generated block is removed: the yellow **LogicMod-authors note** older pages carry, once the extension has `notifyBlueprintPak`. The Usage Note above replaces it for players, and the Blueprint section of the Notes for Mod Authors carries the requirement for mod authors. The run reports the count.
 
 Every game page (templates excluded) also carries a **Notes for Mod Authors** section: the heading `[b]📝 Notes for Mod Authors:[/b]` followed by the game's `NOTES_FOR_MOD_AUTHORS.bbcode` (minus its title line) inside `[spoiler]...[/spoiler]`, in front of the Credits section, else in front of the donation block. Unlike the blocks above it is generated content: on every run the block from its heading to its `[/spoiler]` is replaced, so the page follows the notes files and `--check` reports drift when they change. When a list sits right above it (normally Usage Notes), the heading starts on the line after `[/list]` with no blank line in between; the Credits heading (or the donation block) likewise starts on the line after `[/spoiler]`.
 
@@ -1401,13 +1420,13 @@ node replay_installers.js abioticfactor abiotic.json --answer all --show 10
 ```
 
 - `GAME_ID` — extension id, with or without the `game-` prefix.
-- `LISTINGS.json` — a list of `{ name, filename?, files }` with `/`-separated archive entry paths, as written by `modio_listings.py`. Entries with `files: null` are skipped.
+- `LISTINGS.json` — a list of `{ name, filename?, files }` with `/`-separated archive entry paths, as written by `modio_listings.py` or `mod_listings.py`. Entries with `files: null` are skipped.
 - `--answer cancel|all` — how an installer's dialog is answered: `cancel` (default; the archive is reported as stopped after the dialog) or `all` (the "Install All" button of a multi-file chooser).
 - `--show N` — copy instructions printed per archive (default 4).
 
 ### replay_installers.js — Output
 
-- One block per archive: claiming installer and priority, mod type, files copied out of total, any dialog the installer raised, duplicate destinations, and the first N `source => destination` lines. `!!` marks an archive no installer claims or whose install stopped.
+- One block per archive: claiming installer and priority, mod type, files copied out of total, any dialog the installer raised, duplicate destinations, and the first N `source => destination` lines. `!!` marks an archive no installer claims or whose install stopped. An install stops when it throws, or when it has not finished after 5 seconds, usually because it reads real staging or asks something the harness cannot answer; the claim is still proven, the destinations are not.
 - A tally per installer at the end.
 - The harness imports `node:test`, so a few `ℹ tests 0` summary lines follow the output; ignore them.
 - Exit code `1` when the extension or the listings file cannot be read.
@@ -1510,9 +1529,9 @@ Each game is matched against the engine categories in order — the first match 
 
 `games-merge.txt` and `games-mergemods.txt` track two unrelated features that share a word. `context.registerMerge` merges file _contents_ during deployment. `mergeMods` picks the deployment _destination folder_: `true` merges every mod into one tree, `false` gives each its own folder, and a function returns the folder name per mod - which is how an extension writes a numbered load-order prefix at deploy time. Nearly every extension sets the boolean somewhere in its game spec, so only the callback form is listed. Both predicates strip comments first, and `has_mergemods_callback` matches only a literal function value: a bare identifier (`mergeMods: reZip`) is skipped, because in these extensions those names are boolean consts.
 
-No host has an inline-download list. GitHub requirements are tracked by `games-downloader.txt` — the shared `downloader.js` module is GitHub-sourced — and GameBanana, ModDB, ModWorkshop, Thunderstore, Codeberg, and builds.bepinex.dev by their own `games-downloader-*.txt` module lists: every extension fetching a requirement from those hosts carries the matching downloader module, so the module list is the complete list. A bare host URL left in an extension is a browse link behind an `Open <host> Page` button, which was never counted as a download.
+No host has an inline-download list. GitHub requirements are tracked by `games-downloader.txt` — the shared `downloader.js` module is GitHub-sourced — and GameBanana, ModDB, ModWorkshop, Thunderstore, Codeberg, and builds.bepinex.dev by their own `games-downloader-*.txt` module lists. Those lists hold the extensions that carry the module, not everything that fetches from the host: `audit_modules.py` reports the direct-asset URLs still fetched by hand. A bare host URL left in an extension is usually a browse link behind an `Open <host> Page` button, which was never counted as a download.
 
-Browser modules (`resources/browsers/`) have no list of their own. A game gets a source's browser page as standard equipment alongside that source's downloader module, so its roster is the same `games-downloader-*.txt` list — a separate `games-browser-*.txt` would just be a copy that drifts. Find current adopters by grepping which of those games also carry a `*_browser.js` file.
+Browser modules (`resources/browsers/`) have no list of their own, and the `games-downloader-*.txt` lists are not their roster either. A browser page and a downloader module are independent decisions: the page means the site has a live scene for the game, the downloader means the extension has a requirement hosted there, and most ModDB browser adopters carry no `moddb_downloader.js`. Find current adopters by looking for a bundled `*_browser.js` file; `audit_modules.py --sites --adopted` lists them by site.
 
 ### categorize_games.py — unreleased list
 
@@ -1525,6 +1544,64 @@ Because the const is hand-maintained rather than checked against Nexus, the list
 Nothing in `index.js` marks a permanent test bed — an extension run live to verify changes, versioned and changelogged normally, but never uploaded — so those are excluded by ID through `resources/lists/games-never-upload.txt` — a hand-maintained list (this script never writes it) that `vortex_utils.py` loads as `NEVER_UPLOAD_GAMES`, aliased here as `UNRELEASED_LIST_EXCLUDED_GAMES`. It holds the permanent test beds plus Personal-version extensions for games NexusMods supports officially; `release_scope.py` and `release_extension.py --upload` read the same set. Add an ID to that file when a new permanent case appears, so `games-unreleased.txt` stays a list of extensions genuinely awaiting a first release.
 
 `resources/lists/games-deprecated.txt` is the other hand-maintained list this script never writes: retired extensions that stay in the repo frozen and are never updated or released again. `vortex_utils.py` loads it as `DEPRECATED_GAMES`; `release_extension.py --upload` refuses its ids, `releasable_game_ids()` and `release_scope.py` leave them out, and `audit_mod_pages.py` skips their pages. Add an ID to that file when an extension is retired.
+
+---
+
+## audit_modules.py
+
+Mechanical layer for the browser and downloader module audit. Read-only. Checks that every bundled copy of a shared module matches its canonical file in `resources/downloader/` or `resources/browsers/` and is wired correctly, then looks for extensions that could gain a module. Also replaces the former mod.io-only lookup: `--sites modio` prints each game's `modioGame` value, mod count and download access.
+
+### audit_modules.py — Requirements
+
+Python standard library plus `vortex_utils.py`. No API key: every site is read through a keyless endpoint (`resources/MODIO_API.md`, `resources/THUNDERSTORE_API.md`, `resources/MODWORKSHOP_API.md`, `resources/GAMEBANANA_API.md`, `resources/MODDB_API.md`).
+
+### audit_modules.py — Usage
+
+```sh
+python audit_modules.py
+python audit_modules.py --sites
+python audit_modules.py --sites modio moddb
+python audit_modules.py --sites --loose
+python audit_modules.py --sites --adopted
+python audit_modules.py --sites --json module_audit.json
+```
+
+- `--sites [SITE ...]` — look extensions up on `thunderstore`, `modio`, `modworkshop`, `gamebanana`, `moddb`, `fcmodding`; no names means all of them. A few minutes for all.
+- `--loose` — add fuzzy name matches (containment, or similarity of 0.85 or more). Candidates only: `RuneScape: Dragonwilds` matches mod.io's classic `RuneScape`, a different game.
+- `--adopted` — also print rows for extensions that already bundle that site's browser.
+- `--json FILE` — write the whole report as JSON.
+
+### audit_modules.py — Checks
+
+Parity, offline, every run. Scope is `game-*`, `template-*` and `helper-*`; `zCustomGames` and `zArchive` are skipped.
+
+- **Copies.** md5 against canonical. A frozen extension prints as excepted. `MODULE_COPY_EXCEPTIONS` holds permanent divergences, each with a predicate: `game-dragonagetheveilguard/downloader.js` may differ only in its `normalizeFrostyVersion` swap, so a missed propagation wave still fails it.
+- **Wiring.** A module bundled but never required, required but not bundled, a source browser without `base_browser.js` or the reverse, a destructured name the module does not export, and a browser page with no `register*Browser` or `once*Browser` call.
+- **Template snippets.** Each `template_*.js` imports only what its module exports.
+- **Lists.** Each `games-downloader*.txt` against the disk. Reports only; `categorize_games.py` regenerates them.
+
+Downloader candidates, offline, every run: a live direct-asset URL on a supported host, or a `browse-for-download` route. A bare releases page is a link and is not counted. Rows are grouped by upstream, so a loader many games fetch by hand stands out, and split by whether the extension already bundles that host's module. Upstreams in `HAND_ROLLED_EXCLUDED` (REFramework-nightly, Reloaded-II) stay hand-rolled by decision: each prints as one line with its extension count and leaves the groups.
+
+Browser candidates, `--sites` only:
+
+| Site           | Lookup                                      | Match order                  | Count                                 |
+| -------------- | ------------------------------------------- | ---------------------------- | ------------------------------------- |
+| `thunderstore` | Ecosystem schema, one request               | Steam id, Epic id, then name | Community listing count               |
+| `modio`        | Every mod.io game                           | Steam id, then name          | Total mods                            |
+| `modworkshop`  | Every ModWorkshop game                      | Steam id, then name          | Game's `mods_count`                   |
+| `gamebanana`   | Name search per extension                   | Name                         | Sum of the mod root categories        |
+| `moddb`        | RSS feed per derived slug, 404 means no page | Feed title vs name, else slug | Files per month, oldest feed item to now, 90 days at least |
+| `fcmodding`    | `games-farcrygame.txt`, no network          | Closed set                   | None                                  |
+
+There is no cutoff. Every match is listed, most mods first, and a row below `THIN_MODS` (10 mods) or `THIN_FILES_PER_MONTH` (1 file a month on ModDB) is marked `thin`. Rows at exactly zero fold into one list under the table: the page exists but holds nothing, which is common on ModDB. Matches recorded in `CANDIDATE_DECLINED` print under their own heading with the reason.
+
+A `short` match is an exact hit on `GAME_NAME_SHORT` only, which drops the subtitle or edition, so it can be an older game of that name. A ModDB `slug` match means the feed title differed from the game's name, so the page may be another game. Check both by hand.
+
+The ModDB feed holds ten items, so its rate tops out at 3.33 files a month: ten files inside 90 days. One author's burst of variants reaches that as easily as a busy scene, so read the page before calling it live.
+
+### audit_modules.py — Output
+
+Parity section, downloader candidates, then one table per site, then any lookups that failed and a summary line. Exit code `1` on any parity or wiring problem, `0` otherwise. Candidates never fail the run.
 
 ---
 
@@ -1631,9 +1708,10 @@ No additional packages required (Python stdlib only). Needs `NEXUS_API_KEY`.
 python audit_mod_pages.py
 python audit_mod_pages.py --json
 python audit_mod_pages.py --show-suppressed
+python audit_mod_pages.py --gallery
 ```
 
-Run without arguments for a full text report. `--json` emits a structured report instead. `--show-suppressed` lists suppressed/excluded extensions individually instead of just a count.
+Run without arguments for a full text report. `--json` emits a structured report instead. `--show-suppressed` lists suppressed/excluded extensions individually instead of just a count. `--gallery` also counts each live page's images. It makes one v3 `getMod` call per page, around 280 in all, because `getModsBatch` and the GraphQL `Mod` type do not return images, so it stays opt-in. Combine it with `--json` for the keys `gallery` and `gallery_errors`.
 
 ### audit_mod_pages.py — Output
 
@@ -1642,6 +1720,8 @@ Four buckets: **OK** (exactly the two required tags), **Helper pages (tag policy
 Also lists mods on the account's `site` domain with no local `game-*` match — non-extension mods (Anti-Stutter, XeSS, etc.) and anything published from outside this repo (e.g. `extension-re-engine-wrapper`'s dependency mod). Named, but never tag-checked: the two-tag policy does not cover non-extension mods (2026-10-10 user call), so this list is status reporting only, not a worklist.
 
 Finally, live-introspects the `Mod` type and the non-Collection-scoped half of `Mutation` for any field name suggesting the user-tag/user-media permission switches have become API-visible (`allowUser*`, `userTag*`, `userMedia*`, `manuallyVerify*`, `userPermission*`). Confirmed absent as of 2026-09-27 — this check exists so that finding is re-verified every run instead of silently going stale as a hardcoded assumption.
+
+With `--gallery`, adds a **Gallery images** section: pages per image count, then the pages with no images and those with more than one. A page's count is its distinct image URLs across `gallery_images` and `primary_image`, because the primary image is sometimes missing from the gallery list, so a page with one gallery image can count as two. This section is status only: no image policy exists, so a count or an unreadable page never lands under **Needs attention** and never changes the exit code.
 
 This audit is read-only. No Nexus API tier can add/remove a mod tag or toggle a mod page's media/tag permission switches (confirmed exhaustively across v1/v3 REST and v2 GraphQL — see `resources/NEXUS_GRAPHQL_API.md` "What You Cannot Do"), so output is a report for manual remediation on the site, never an auto-fix.
 
@@ -2228,6 +2308,7 @@ python patch_extensions.py GAME_ID [GAME_ID ...] --only rootpath_prefix_scope --
 python patch_extensions.py GAME_ID [GAME_ID ...] --only template_gap_fixes --no-resize --dry-run
 python patch_extensions.py GAME_ID [GAME_ID ...] --only farcry_parity --no-resize --dry-run
 python patch_extensions.py GAME_ID [GAME_ID ...] --only fluffy_has_demo --no-resize --dry-run
+python patch_extensions.py GAME_ID [GAME_ID ...] --only logicmods_standard_path --no-resize --dry-run
 python patch_extensions.py GAME_ID [GAME_ID ...] --only PATCH_NAME --no-resize
 python patch_extensions.py --audit
 python patch_extensions.py GAME_ID [GAME_ID ...] --audit
@@ -2281,6 +2362,7 @@ A patch run exits `1` when any game errored (a patch raised, the patched source 
 | `template_gap_fixes`                | Ports the template gap fixes dated 2026-10-11 (`resources/template-changelogs/`). A literal old -> new table (`TEMPLATE_GAP_FIXES`) applied to every game that still carries the old text: wrapper-name cuts `modFile.indexOf(path.basename(modFile))` / `indexOf(ROOT_IDX)` / the `${basename}${path.sep}` and `MODFILE_IDX` forms / the reloaded2 `ROOT_PATH` form -> `lastIndexOf`, `"EACCESS"` -> `"EACCES"`, RPG Maker `.JS` plugin stamping and scan (`path.extname`), the Shinryu root marker lowercase, the Unity UMM "Open Save Folder" `async`/`await`, the Anvil rename notice name regex plus `rename()` await and redeploy, the Fluffy loose-lua root (whole-function block, listed first so the cut pair cannot pre-empt it) and nested-archive extension case, and the Unity hybrid set (folder-branch and custom data-file cuts, `ALT_VERSION` `"alt"` label plus the `installRoot` guard, sticky patcher/plugin flags, the five refusal dialogs cancelling whichever way they close via `_dialog_ok_block`, the single `.NET` notice, swapped custom-loader names, `isCustomInstalled` / `hasCustomMarker` / `checkCustomInstalled`, the Melon Nexus toolbar button for games that have `melonFromNexus`), and the UE4-5 set (LogicMods pak stem via `path.extname`, the ModKit `modPluginName` guard, the UE4SS combo mod folder read from path segments for the Xbox file list, the legacy `preSort` missing-mod guard, the `beatsPakInstaller` gate on `ue4ssLoadOrder`, the toolbar "Open LogicMods Folder" path; that last pair is skipped for a game whose `LOGICMODS_PATH` already ends in `"LogicMods"`, where appending the folder would double it; the two hybrid `ALT_VERSION` pairs apply only to a source that carries `BEP_PATCHER_STRING`, because Unity UMM has the identical text on purpose; the two `const wrongLoader` / `const mixedModHandling` pairs are dropped again when a `wrongLoader.action` / `mixedModHandling.action` check would still read the removed const, as in an older hybrid shape without `preventPluginInstall`). Reports each pair applied with its count; a game with none of the old text is skipped. **Registered disabled** - run per family with `--only template_gap_fixes --no-resize`, and pass only that family's at-parity game ids (`resources/lists/games-*-parity.txt`). |
 | `farcry_parity`                     | Brings a Far Cry (Dunia) game to `template-farcry` shape parity for the shared baseline block: the `allowSymlinks` / `fallbackInstaller` / `setupNotification` / `debug` toggles, `testFallback` / `installFallback` / `fallbackInstallerNotify` / `modFoldersEnsureWritable` (copied verbatim out of the template at run time) and their wiring (`supportsSymlinks`, gated `setupNotify`, the `setup()` write guard over `MODTYPE_FOLDERS`, the priority-49 registration). Every anchor is a literal that must match exactly once; a game that misses one is left untouched and reported "hand port". **Registered disabled** - run with `--only farcry_parity --no-resize` on Far Cry games below parity, then `template_gap_fixes` on the same ids. |
 | `fluffy_has_demo`                   | Brings a REFramework / Fluffy game's demo handling to the `template-reframework-fluffy` shape: the `HAS_DEMO` constant (`EXEC_DEMO` set and different from `EXEC`) inserted before `let multiExe`, `multiExe` read from it, the two `statCheckSync(discoveryPath, EXEC_DEMO)` checks and the `multiExe && statCheckAsync(...)` check guarded by `HAS_DEMO`, and the "Custom Launch (Demo)" tool spread into `tools` only when `HAS_DEMO` (the gated block is copied verbatim out of the template at run time). All-or-nothing per game: each part must be applied or already in template form, else the game is left untouched and reported "hand-edit". Idempotent; a game fully in shape is skipped. **Registered disabled** - run with `--only fluffy_has_demo --no-resize` on the RE Engine at-parity ids (`resources/lists/games-reengine-parity.txt`). |
+| `logicmods_standard_path`           | Brings a UE4-5 game to the standard LogicMods layout of `template-ue4-5`: `LOGICMODS_PATH` ends in the folder, `installLogic` stages flat, plus the layout migration and the Blueprint pak notification. Blocks are copied verbatim from the template at run time. Every anchor must match exactly once, or the game is left untouched and reported for a hand port. Code it can't place is named as `HAND EDIT` in the message. Registered disabled. |
 
 Each patch skips a game if the value is already set (unless `--force-pcgw` is used for `pcgamingwiki_url`). Games that fail a non-trivial step are always printed in the output so failures are visible. After writing any changed `index.js`, `generate_explained.js` is run automatically to keep `EXTENSION_EXPLAINED.md` in sync.
 

@@ -65,7 +65,7 @@ Mod types define where each category of mod gets deployed:
 | --- | --- | --- | --- |
 | Server Pak Mod | `windrose-serverpaks` | high | `{gamePath}/R5/Builds/WindowsServer/R5` |
 | UE4SS Script-LogicMod Combo | `windrose-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `windrose-logicmods` | high | `{gamePath}/R5` |
+| UE4SS LogicMods (Blueprint) | `windrose-logicmods` | high | `{gamePath}/R5/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `windrose-pakalt` | high | `{gamePath}/R5/Content/Paks` |
 | Root Game Folder | `windrose-root` | high | `{gamePath}` |
 | Root Sub-Folders | `windrose-rootsubfolders` | high | `{gamePath}/R5` |
