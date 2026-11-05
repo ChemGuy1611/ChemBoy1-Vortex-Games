@@ -2,7 +2,7 @@
 Name: Dead As Disco Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.1.0
+Version: 1.1.1
 Date: 2026-11-05
 Notes:
 -
@@ -110,7 +110,7 @@ const PAKMOD_LOADORDER = true; //set to false if you don't want loadOrder. If mu
 const FBLO = true; //set to false to use legacy load order page
 const LO_IMAGE_WIDTH = 96; //Width of the load order thumbnail image
 const SPECIAL_LO_INSTRUCTIONS = ""; //Show special load order instructions
-const PAKMOD_EXTRA_EXTS = []; //extra extensions to include with paks (usually for custom modding frameworks, i.e .toml, .json)
+const PAKMOD_EXTRA_EXTS = [".json"]; //extra extensions to include with paks (usually for custom modding frameworks, i.e .toml, .json)
 const ue4ssLoadOrder = true; //master toggle for UE4SS support: UE4SS/Scripts/DLL/LogicMods mod types and installers, UE4SS buttons, load order page, and mods.txt writing
 const logicModsLoadOrder = true; //enable load order page and load_order.txt writing for LogicMods/Blueprint pak mods
 const collectionsLoadOrder = true; //include UE4SS and LogicMods load orders in collections (ANDed with the toggles above)

@@ -3192,9 +3192,6 @@ async function setup(discovery, api, gameSpec) {
     }
   }
   MODTYPE_FOLDERS.push(BINARIES_PATH);
-  await migrateLogicModsLayout(api).catch((err) =>
-    log("warn", `[${GAME_ID}] migrateLogicModsLayout failed, retrying next activation`, err),
-  );
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
@@ -4050,111 +4047,6 @@ function logicModsDeployNotify(api, message) {
       },
     ],
   });
-}
-
-//Count the files a LogicMods deployment manifest lists in a folder. No manifest counts as none.
-async function logicModsDeployedCount(folder) {
-  try {
-    const manifestPath = path.join(folder, `vortex.deployment.${LOGICMODS_ID}.json`);
-    const manifest = JSON.parse(await fsp.readFile(manifestPath, "utf8"));
-    return Array.isArray(manifest?.files) ? manifest.files.length : 0;
-  } catch (err) {
-    if (err.code === "ENOENT") return 0;
-    throw err;
-  }
-}
-
-//Move one mod's staged files to the current layout, deleting the folders left behind. Returns true
-//when the mod has to become a Combo mod because it holds a pak outside its LogicMods folder.
-async function moveStagedLogicMod(stagingFolder, files) {
-  const isInFolder = (file) =>
-    file.split(path.sep)[0].toLowerCase() === LOGICMODS_FOLDER.toLowerCase();
-  const isCombo = files.some(
-    (file) => !isInFolder(file) && path.extname(file).toLowerCase() === LOGICMODS_EXT,
-  );
-  const moves = [];
-  if (isCombo) {
-    for (const file of files) {
-      moves.push([file, path.join(path.dirname(LOGICMODS_PATH), file)]);
-    }
-  } else {
-    const taken = new Set(files.filter((f) => !isInFolder(f)).map((f) => f.toLowerCase()));
-    for (const file of files.filter(isInFolder)) {
-      const name = path.basename(file);
-      if (taken.has(name.toLowerCase())) {
-        log("warn", `[${GAME_ID}] LogicMods migration skipped duplicate file name "${file}"`);
-        continue;
-      }
-      taken.add(name.toLowerCase());
-      moves.push([file, name]);
-    }
-  }
-  for (const [source, destination] of moves) {
-    const target = path.join(stagingFolder, destination);
-    await fsp.mkdir(path.dirname(target), { recursive: true });
-    await fsp.rename(path.join(stagingFolder, source), target);
-  }
-  const movedFolders = new Set(
-    (isCombo ? files : files.filter(isInFolder))
-      .filter((file) => path.dirname(file) !== ".")
-      .map((file) => file.split(path.sep)[0]),
-  );
-  for (const folder of movedFolders) {
-    await fsp.rm(path.join(stagingFolder, folder), { recursive: true, force: true });
-  }
-  return isCombo;
-}
-
-//Convert installed LogicMods mods to the layout where the mod type path ends in the LogicMods
-//folder and paks are staged flat. Runs on every activation and does nothing once converted. A
-//deployment manifest lives in its mod type's target folder, so deployed files are purged before
-//anything moves. The purge handler swallows its failures (a running game refuses it), so nothing
-//moves unless the manifest is confirmed empty, and the next activation tries again.
-async function migrateLogicModsLayout(api) {
-  if (!ue4ssLoadOrder) return;
-  const oldLayoutMods = [];
-  const mods = api.getState()?.persistent?.mods?.[GAME_ID] ?? {};
-  for (const mod of Object.values(mods)) {
-    if (mod?.type !== LOGICMODS_ID || mod?.state !== "installed") continue;
-    const stagingFolder = getModStagingFolder(api, mod.id);
-    if (!stagingFolder) continue;
-    const files = (await getAllFiles(stagingFolder)).map((file) =>
-      path.relative(stagingFolder, file),
-    );
-    const isOldLayout = files.some(
-      (file) =>
-        path.dirname(file) !== "." &&
-        file.split(path.sep)[0].toLowerCase() === LOGICMODS_FOLDER.toLowerCase(),
-    );
-    if (isOldLayout) oldLayoutMods.push({ id: mod.id, stagingFolder, files });
-  }
-  const oldTarget = path.join(GAME_PATH, path.dirname(LOGICMODS_PATH));
-  const newTarget = path.join(GAME_PATH, LOGICMODS_PATH);
-  const foldersToPurge = [];
-  if ((await logicModsDeployedCount(oldTarget)) > 0) foldersToPurge.push(oldTarget);
-  if (oldLayoutMods.length > 0 && (await logicModsDeployedCount(newTarget)) > 0) {
-    foldersToPurge.push(newTarget);
-  }
-  if (oldLayoutMods.length === 0 && foldersToPurge.length === 0) return;
-  for (const folder of foldersToPurge) {
-    await api.emitAndAwait("purge-mods-in-path", GAME_ID, LOGICMODS_ID, folder);
-    if ((await logicModsDeployedCount(folder)) > 0) {
-      log("warn", `[${GAME_ID}] LogicMods migration waiting: could not purge "${folder}"`);
-      return;
-    }
-  }
-  const batch = [];
-  for (const { id, stagingFolder, files } of oldLayoutMods) {
-    try {
-      if (await moveStagedLogicMod(stagingFolder, files)) {
-        batch.push(actions.setModType(GAME_ID, id, UE4SSCOMBO_ID));
-      }
-    } catch (err) {
-      log("warn", `[${GAME_ID}] LogicMods migration failed for "${id}"`, err);
-    }
-  }
-  if (batch.length > 0) util.batchDispatch(api.store, batch);
-  logicModsDeployNotify(api, "LogicMods Updated - Deploy to Put Them Back in the Game");
 }
 
 //After a pak mod installs, offer to switch it to the LogicMods type if every pak holds ModActor.

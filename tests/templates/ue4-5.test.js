@@ -5900,254 +5900,33 @@ describe("template-ue4-5: finding the ModActor asset in a pak", () => {
   });
 });
 
-describe("template-ue4-5: moving LogicMods mods to the flat layout", () => {
-  const PAKS = (gameDir, ...rest) => sep(gameDir, "XXX", "Content", "Paks", ...rest);
-  const MANIFEST = "vortex.deployment.XXX-logicmods.json";
-  const stagedFiles = () =>
-    fs
-      .readdirSync(STAGING, { recursive: true })
-      .filter((file) => fs.statSync(path.join(STAGING, file)).isFile())
-      .map((file) => file.split(path.sep).join("/"))
-      .sort();
-
-  // A game whose mods hold `staged` files, keyed by mod id. `manifests` gives each deployment
-  // manifest's file count, keyed by "paks" or "logic". Purging removes the manifest unless refused.
-  async function logicGame({ staged, manifests = {}, purgeRefused = false, transform, modExtra }) {
-    fs.rmSync(STAGING, { recursive: true, force: true });
-    fs.mkdirSync(STAGING, { recursive: true });
-    const mods = {};
-    for (const [id, files] of Object.entries(staged)) {
-      mods[id] = {
-        id,
-        type: ID.logic,
-        state: "installed",
-        installationPath: id,
-        attributes: { name: id },
-        ...modExtra,
-      };
-      for (const file of files) write(path.join(STAGING, id, ...file.split("/")));
-    }
-    const gameDir = makeGameDir(["XXX.exe"]);
-    const folders = { paks: PAKS(gameDir), logic: PAKS(gameDir, "LogicMods") };
-    for (const [key, count] of Object.entries(manifests)) {
-      write(
-        path.join(folders[key], MANIFEST),
-        JSON.stringify({ files: new Array(count).fill({}) }),
-      );
-    }
-    const ext = await boot({ transform, state: stateFor({ gameDir, mods }) });
-    const purged = [];
-    ext.api.emitAndAwait = async (event, gameId, modTypeId, folder) => {
-      purged.push({ event, gameId, modTypeId, folder });
-      if (!purgeRefused) fs.rmSync(path.join(folder, MANIFEST), { force: true });
-    };
-    const activate = () => ext.game.setup({ path: gameDir });
-    return { ext, gameDir, purged, activate };
-  }
-  const deployNotices = (ext) =>
-    ext.notifications.filter(({ id }) => id === "XXX-logicmods-deploy-notif");
-
-  it("purges the old Paks deployment, flattens staged mods and offers a deployment", async () => {
-    const { ext, gameDir, purged, activate } = await logicGame({
-      staged: { m1: ["LogicMods/a.pak", "LogicMods/a.ucas"], m2: ["LogicMods/Sub/b.pak"] },
-      manifests: { paks: 3 },
-    });
-    await activate();
-    assert.deepEqual(stagedFiles(), ["m1/a.pak", "m1/a.ucas", "m2/b.pak"]);
-    assert.deepEqual(purged, [
-      {
-        event: "purge-mods-in-path",
-        gameId: "XXX",
-        modTypeId: ID.logic,
-        folder: PAKS(gameDir),
-      },
-    ]);
-    assert.equal(deployNotices(ext).length, 1);
-    assert.equal(
-      ext.dispatched.some(({ type }) => type === "setDeploymentNecessary"),
-      true,
-    );
-  });
-
-  it("does nothing on the next activation", async () => {
-    const { ext, purged, activate } = await logicGame({
-      staged: { m1: ["LogicMods/a.pak"] },
-      manifests: { paks: 1 },
-    });
-    await activate();
-    purged.length = 0;
-    ext.notifications.length = 0;
-    await activate();
-    assert.deepEqual(purged, []);
-    assert.deepEqual(deployNotices(ext), []);
-  });
-
-  it("does nothing for mods already flat with a deployment at the new folder", async () => {
-    const { ext, purged, activate } = await logicGame({
-      staged: { m1: ["a.pak"] },
-      manifests: { logic: 1 },
-    });
-    await activate();
-    assert.deepEqual(stagedFiles(), ["m1/a.pak"]);
-    assert.deepEqual(purged, []);
-    assert.deepEqual(deployNotices(ext), []);
-  });
-
-  it("purges the new folder too when a nested mod is deployed there", async () => {
-    const { gameDir, purged, activate } = await logicGame({
-      staged: { m1: ["LogicMods/a.pak"], m2: ["b.pak"] },
-      manifests: { logic: 2 },
-    });
-    await activate();
-    assert.deepEqual(stagedFiles(), ["m1/a.pak", "m2/b.pak"]);
-    assert.deepEqual(
-      purged.map(({ folder }) => folder),
-      [PAKS(gameDir, "LogicMods")],
-    );
-  });
-
-  it("clears a leftover Paks deployment even when every mod is already flat", async () => {
-    const { ext, gameDir, purged, activate } = await logicGame({
-      staged: { m1: ["a.pak"] },
-      manifests: { paks: 1 },
-    });
-    await activate();
-    assert.deepEqual(
-      purged.map(({ folder }) => folder),
-      [PAKS(gameDir)],
-    );
-    assert.equal(deployNotices(ext).length, 1);
-  });
-
-  it("makes a staged mod with a pak outside its LogicMods folder a Combo mod", async () => {
-    const { ext, activate } = await logicGame({
-      staged: { m1: ["LogicMods/y.pak", "~mods/x.pak"] },
-      manifests: { paks: 2 },
-    });
-    await activate();
-    assert.deepEqual(stagedFiles(), [
-      "m1/XXX/Content/Paks/LogicMods/y.pak",
-      "m1/XXX/Content/Paks/~mods/x.pak",
-    ]);
-    assert.deepEqual(
-      ext.dispatched.filter(({ type }) => type === "setModType").map(({ payload }) => payload),
-      [["XXX", "m1", ID.combo]],
-    );
-  });
-
-  it("moves nothing while a running game refuses the purge, and tries again next time", async () => {
-    const { ext, activate } = await logicGame({
-      staged: { m1: ["LogicMods/a.pak"] },
-      manifests: { paks: 1 },
-      purgeRefused: true,
-    });
-    await activate();
-    assert.deepEqual(stagedFiles(), ["m1/LogicMods/a.pak"]);
-    assert.deepEqual(deployNotices(ext), []);
-    assert.equal(
-      vortex.logs.some(({ message }) => message.startsWith("[XXX] LogicMods migration waiting")),
-      true,
-    );
-    ext.api.emitAndAwait = async (_event, _gameId, _modTypeId, folder) => {
-      fs.rmSync(path.join(folder, MANIFEST), { force: true });
-    };
-    await activate();
-    assert.deepEqual(stagedFiles(), ["m1/a.pak"]);
-    assert.equal(deployNotices(ext).length, 1);
-  });
-
-  it("keeps the first of two staged files with one name and logs the other", async () => {
-    vortex.logs.length = 0;
-    const { activate } = await logicGame({
-      staged: { m1: ["LogicMods/A/x.pak", "LogicMods/B/x.pak"] },
-    });
-    await activate();
-    assert.deepEqual(stagedFiles(), ["m1/x.pak"]);
-    assert.equal(
-      vortex.logs.some(({ message }) =>
-        message.startsWith("[XXX] LogicMods migration skipped duplicate file name"),
-      ),
-      true,
-    );
-  });
-
-  it("leaves another mod's move alone when one mod fails", async () => {
-    const { ext, activate } = await logicGame({
-      staged: { m1: ["LogicMods/a.pak"], m2: ["LogicMods/b.pak"] },
-    });
-    const realRename = fs.promises.rename;
-    mock.method(fs.promises, "rename", (source, ...rest) =>
-      source.includes(`${path.sep}m1${path.sep}`)
-        ? Promise.reject(new Error("locked"))
-        : realRename(source, ...rest),
-    );
-    await activate();
-    assert.deepEqual(stagedFiles(), ["m1/LogicMods/a.pak", "m2/b.pak"]);
-    assert.equal(deployNotices(ext).length, 1);
-  });
-
-  it("skips mods of another type and mods not fully installed", async () => {
-    for (const modExtra of [{ type: ID.pak }, { state: "installing" }]) {
-      const { purged, activate } = await logicGame({
-        staged: { m1: ["LogicMods/a.pak"] },
-        modExtra,
-      });
-      await activate();
-      assert.deepEqual(stagedFiles(), ["m1/LogicMods/a.pak"]);
-      assert.deepEqual(purged, []);
-    }
-  });
-
-  it("does nothing while UE4SS support is switched off", async () => {
-    const { ext, purged, activate } = await logicGame({
-      staged: { m1: ["LogicMods/a.pak"] },
-      manifests: { paks: 1 },
-      transform: noUe4ss,
-    });
-    await activate();
-    assert.deepEqual(stagedFiles(), ["m1/LogicMods/a.pak"]);
-    assert.deepEqual(purged, []);
-    assert.deepEqual(deployNotices(ext), []);
-  });
-
-  it("still finishes setup when a manifest cannot be read, and logs it", async () => {
-    vortex.logs.length = 0;
-    const { gameDir, activate } = await logicGame({ staged: { m1: ["a.pak"] } });
-    write(path.join(PAKS(gameDir), MANIFEST), "not json");
-    await activate();
-    assert.equal(fs.existsSync(PAKS(gameDir, "LogicMods")), true);
-    assert.equal(
-      vortex.logs.some(
-        ({ level, message }) =>
-          level === "warn" &&
-          message === "[XXX] migrateLogicModsLayout failed, retrying next activation",
-      ),
-      true,
-    );
-  });
-
+describe("template-ue4-5: the LogicMods folder", () => {
   it("creates the LogicMods folder once, not a second one inside it", async () => {
-    const { gameDir, activate } = await logicGame({ staged: {} });
-    await activate();
-    assert.equal(fs.existsSync(PAKS(gameDir, "LogicMods")), true);
-    assert.equal(fs.existsSync(PAKS(gameDir, "LogicMods", "LogicMods")), false);
+    const gameDir = makeGameDir(["XXX.exe"]);
+    const ext = await boot({ state: stateFor({ gameDir }) });
+    await ext.game.setup({ path: gameDir });
+    const logicMods = sep(gameDir, "XXX", "Content", "Paks", "LogicMods");
+    assert.equal(fs.existsSync(logicMods), true);
+    assert.equal(fs.existsSync(path.join(logicMods, "LogicMods")), false);
   });
 
-  it("the deployment notice's button deploys and dismisses", async () => {
-    const { ext, activate } = await logicGame({ staged: { m1: ["LogicMods/a.pak"] } });
-    await activate();
-    const seen = answerDeploy(ext);
-    const notice = deployNotices(ext)[0];
-    assert.equal(notice.type, "warning");
-    assert.deepEqual(
-      notice.actions.map(({ title }) => title),
-      ["Deploy"],
+  it("leaves a mod staged under a LogicMods folder alone, with no purge and no notice", async () => {
+    fs.rmSync(STAGING, { recursive: true, force: true });
+    write(path.join(STAGING, "m1", "LogicMods", "a.pak"));
+    const gameDir = makeGameDir(["XXX.exe"]);
+    const mods = {
+      m1: { id: "m1", type: ID.logic, state: "installed", installationPath: "m1", attributes: {} },
+    };
+    const ext = await boot({ state: stateFor({ gameDir, mods }) });
+    const purged = [];
+    ext.api.emitAndAwait = async (...args) => purged.push(args);
+    await ext.game.setup({ path: gameDir });
+    assert.equal(fs.existsSync(path.join(STAGING, "m1", "LogicMods", "a.pak")), true);
+    assert.deepEqual(purged, []);
+    assert.equal(
+      ext.notifications.some(({ id }) => id === "XXX-logicmods-deploy-notif"),
+      false,
     );
-    let dismissed = 0;
-    await notice.actions[0].action(() => dismissed++);
-    await new Promise((resolve) => setImmediate(resolve));
-    assert.deepEqual(seen, ["deploy-mods"]);
-    assert.equal(dismissed, 1);
   });
 });
 
@@ -6306,6 +6085,24 @@ describe("template-ue4-5: offering LogicMods for a Blueprint pak", () => {
     assert.deepEqual(emitted, [["m1"]]);
     assert.equal(dismissed, 1);
     assert.equal(ext.notifications.at(-1).id, "XXX-logicmods-deploy-notif");
+  });
+
+  it("the deployment notice's button deploys and dismisses", async () => {
+    const ext = await blueprintGame();
+    await fireDidInstall(ext);
+    await button(ext, SET_LABEL).action(() => {});
+    const seen = answerDeploy(ext);
+    const deployNotice = ext.notifications.find(({ id }) => id === "XXX-logicmods-deploy-notif");
+    assert.equal(deployNotice.type, "warning");
+    assert.deepEqual(
+      deployNotice.actions.map(({ title }) => title),
+      ["Deploy"],
+    );
+    let dismissed = 0;
+    await deployNotice.actions[0].action(() => dismissed++);
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.deepEqual(seen, ["deploy-mods"]);
+    assert.equal(dismissed, 1);
   });
 
   it("More explains the choice and names both answers", async () => {

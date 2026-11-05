@@ -21,6 +21,8 @@ Driver: the `profile_management` core extension (`index.ts`, `sync.ts`, `util/ma
 | `pendingRemove?` | Marked for deletion                                                      |
 | `features?`      | `{ [featureId]: value }` — extension-contributed profile features        |
 
+`lastActivated` is `undefined` on a game's first profile until a switch to it completes. A switch that gets cancelled, for example at the "Purge files from different instance?" dialog, leaves it unset, so treat it as optional when reading it.
+
 Mod enablement lives in `modState`, **per profile, not global**. Switching profiles changes which
 mods deploy. The same is true of load order and Gamebryo plugin state, which are keyed by profile.
 

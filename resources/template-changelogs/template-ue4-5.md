@@ -2,6 +2,7 @@
 
 ## [2026-11-05]
 
+- Removed: `migrateLogicModsLayout`, `moveStagedLogicMod`, `logicModsDeployedCount` and the `setup()` call. Games built from the template never have the old layout. `logicModsDeployNotify` stays, for `notifyBlueprintPak`. Every game that shipped on the old layout keeps its own copy of the migration.
 - Fixed: `pakHasModActor` missed every Blueprint mod on a game whose pak footer has extra bytes (Black Myth: Wukong adds 2 after the version), because the index location read from the footer was impossible. A pak like that is now searched whole, up to the existing 50 MB limit.
 
 ## [2026-11-04]

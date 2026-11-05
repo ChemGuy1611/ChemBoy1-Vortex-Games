@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.1] - 2026-11-05
+
+- Added: Pak mods now also install any .json files packaged with them.
+
 ## [1.1.0] - 2026-11-05
 
 - Changed: LogicMods (Blueprint) mods now always install directly into the LogicMods folder. Installed mods convert automatically when you next manage the game. Deploy when prompted.

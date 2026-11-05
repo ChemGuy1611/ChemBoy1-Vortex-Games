@@ -79,10 +79,12 @@ lands at `Paks/LogicMods/foo.pak`. BPModLoaderMod's scan depth is in
 [RE-UE4SS_MODS_CONFIG.md](../RE-UE4SS_MODS_CONFIG.md). An archive that also has a pak outside the
 folder installs as `UE4SSCOMBO_ID` instead, each file keeping its path under `Paks`.
 
-`migrateLogicModsLayout` runs from `setup()` on every activation, with `ue4ssLoadOrder` on, and is a
-no-op once mods are converted. It handles mods staged under a `LogicMods` folder and a deployment
-manifest left in `Paks`, purging first and moving nothing until the old manifest is empty. A running
-game refuses the purge, so the next activation retries.
+A game built from this template starts on this layout, so the template has no layout migration. Games
+that shipped on the older layout carry their own `migrateLogicModsLayout` in `index.js`, run from
+`setup()` on every activation with `ue4ssLoadOrder` on, and a no-op once mods are converted. It handles
+mods staged under a `LogicMods` folder and a deployment manifest left in `Paks`, purging first and
+moving nothing until the old manifest is empty. A running game refuses the purge, so the next
+activation retries.
 
 `notifyBlueprintPak` runs after `retagFomodPakMod` on `did-install-mod`. When every pak at a sortable
 pak mod's staging root holds a `ModActor` asset, it suggests the LogicMods type with a notification.
