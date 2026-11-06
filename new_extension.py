@@ -169,7 +169,10 @@ def steam_search(game_name):
     Prefers exact title match, then all-words-match, then falls back to the top
     result — Steam ranks by popularity, so franchise year variants (e.g. CMS 2021
     vs 2026) would otherwise shadow the intended release."""
-    clean = re.sub(r"[^\w\s]", " ", game_name).strip()
+    # Drop apostrophes outright: "Queen's" -> "Queens". Turning them into a space
+    # ("Queen s Domain") makes Steam's search return nothing.
+    clean = re.sub(r"['’]", "", game_name)
+    clean = re.sub(r"[^\w\s]", " ", clean).strip()
     url = "https://steamcommunity.com/actions/SearchApps/{}".format(
         urllib.parse.quote(clean)
     )
