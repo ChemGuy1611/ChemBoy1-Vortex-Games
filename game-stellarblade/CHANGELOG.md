@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.3.0] - 2026-11-05
+
+- Added: Support for ATOOL (Animation Tool). ATOOL installs into its own folder in LogicMods, and ATOOL animation mods install their paks to ~mods and their sound files into ATOOL's audio folder.
+- Added: Support for the Mod Pak Chunk ID Patcher. It installs into ~mods and gets a tool to run it from Vortex.
+
 ## [1.2.0] - 2026-11-05
 
 - Changed: LogicMods (Blueprint) mods now always install directly into the LogicMods folder. Installed mods convert automatically when you next manage the game. Deploy when prompted.

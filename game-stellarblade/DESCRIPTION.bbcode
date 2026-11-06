@@ -12,6 +12,8 @@ This extension adds Stellar Blade modding support to Vortex Mod Manager.
 [b]🛠️ Mod Installation Notes:[/b]
 [list]
 [*]UE4SS Script-LogicMod Combo mods with both a "Content" and a "Binaries" folder install to the "SB" folder.[/*]
+[*]UE4SS LogicMods (Blueprint) mods install to the "SB\Content\Paks\LogicMods" folder.[/*]
+[*]ATOOL Animation mods are supported.[/*]
 [*]UE4SS LogicMods (Blueprint) mods with a "LogicMods" folder install to the "SB\Content\Paks\LogicMods" folder.[/*]
 [*]UE4SS installs to the "SB\Binaries\Win64" folder, recognised by a "dwmapi.dll" file.[/*]
 [*]UE4SS Script mods with a ".lua" file and a "Scripts" folder install to the "SB\Binaries\Win64\ue4ss\Mods" folder.[/*]
@@ -24,6 +26,7 @@ This extension adds Stellar Blade modding support to Vortex Mod Manager.
 [*]Movie mods with a ".bk2" file install to the "SB\Content\Movies" folder.[/*]
 [*]Splash Screen mods with a "splash.bmp" file install to the "SB\Content\Splash" folder.[/*]
 [*]CNS JSON mods with a ".json" file install to the "SB\Content\Paks\~mods\CustomNanosuitSystem" folder.[/*]
+[*]Mod Pak Chunk ID Patcher installs to the "SB\Content\Paks\~mods" folder.[/*]
 [*]Any other mod not described above installs to the "SB\Binaries\Win64" folder.[/*]
 [*]Archives with a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to Vortex's built-in FOMOD installer instead.[/*]
 [/list]
@@ -76,6 +79,20 @@ MyComboMod.zip
   Common mistakes:
     - Including only one of "Content" or "Binaries" - the archive then falls through to a different installer.
     - Adding an extra wrapper folder between "Binaries" and "Win64".
+
+========================================================================
+
+Atool:
+
+Handled by the "testAtool" installer. Inspect the extension source for the exact archive layout it expects.
+
+  Installs to: "SB\Content\Paks\LogicMods"
+
+========================================================================
+
+ATOOL Animation Mod:
+
+Handled by the "testAtoolAnim" installer. Inspect the extension source for the exact archive layout it expects.
 
 ========================================================================
 
@@ -267,6 +284,14 @@ CNS JSON Mod:
 Recognised when the archive contains a ".json" file.
 
   Installs to: "SB\Content\Paks\~mods\CustomNanosuitSystem"
+
+========================================================================
+
+Mod Pak Chunk ID Patcher:
+
+Handled by the "testChunkPatcher" installer. Inspect the extension source for the exact archive layout it expects.
+
+  Installs to: "SB\Content\Paks\~mods"
 
 ========================================================================
 

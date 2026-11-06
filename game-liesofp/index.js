@@ -2,8 +2,8 @@
 Name: Lies of P Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.2.0
-Date: 2026-11-05
+Version: 1.2.1
+Date: 2026-11-06
 Notes:
 - Rebuilt on the unified UE4-5 template (base file: game-trepang2/index.js), added UE4SS/LogicMods/Save mod support
 - Fixed a latent bug from the pre-FBLO 0.5.x extension: its Steam/Epic Config/Save paths joined a relative "Saved\Config\..." string onto the game's own install path instead of %LocalAppData%, pointing at a folder that doesn't exist (confirmed against real save/config location via web search). Now uses the template's standard LocalAppData path, matching Xbox (which was already correct).
@@ -116,8 +116,8 @@ const PAKMOD_EXTRA_EXTS = []; //extra extensions to include with paks (usually f
 const ue4ssLoadOrder = true; //master toggle for UE4SS support: UE4SS/Scripts/DLL/LogicMods mod types and installers, UE4SS buttons, load order page, and mods.txt writing
 const logicModsLoadOrder = true; //enable load order page and load_order.txt writing for LogicMods/Blueprint pak mods
 const collectionsLoadOrder = true; //include UE4SS and LogicMods load orders in collections (ANDed with the toggles above)
-const UE4SS_PAGE_NO = 0; //set these if there is a customized UE4SS Nexus page
-const UE4SS_FILE_NO = 0;
+const UE4SS_PAGE_NO = 259; //set these if there is a customized UE4SS Nexus page
+const UE4SS_FILE_NO = 886;
 const UE4SS_DOMAIN = GAME_ID; //either GAME_ID or 'site'
 const UE4SS_FOLDER = "ue4ss"; //this should probably never change
 const UE4SS_MOD_PATH = path.join(UE4SS_FOLDER, "Mods"); //this should probably never change (unless UE4SS team changes it again lol)

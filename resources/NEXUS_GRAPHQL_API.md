@@ -539,7 +539,20 @@ changes by hand through the mod pages.
   int literal without casting silently fails every comparison both ways — a mod carrying exactly
   the right tag reads as simultaneously missing it and carrying a stray one.
 - **Filter values are strings even for numbers and booleans** in `BaseFilterValue`; only
-  `IntFilterValue` and `BooleanFilterValue` take native types.
+  `IntFilterValue` and `BooleanFilterValue` take native types. `modFileContents` takes `gameId` and
+  `modId` as native ints.
+- **`fileExtensionExact` needs the leading dot.** `"json"` returns 0 results with no error; `".json"`
+  returns them.
+- **Two values for one filter field did not act as OR.** `modId` listing two mods returned 0 results
+  from `modFileContents`. Use one alias per mod instead.
+- **`modFileContents` filter fields** (`ModFileContentSearchFilter`): `gameId`, `modId`, `fileId`,
+  `filePathWildcard`, `filePathPartsExact`, `fileNameWildcard`, `fileExtensionExact`, `fileSize`, plus
+  nested `filter` / `op` for grouping. `filePathPartsExact` matches one whole folder name anywhere in
+  the path (`"sbmod"` finds every `sbmod/...` entry). `fileId` lists one archive's contents. Some
+  recently uploaded files return `totalCount: 0` here, so an empty result does not mean an empty archive.
+- **Queries have a complexity cap of 10000** (`QUERY_TOO_COMPLEX`). `mods` at `count: 80` selecting
+  `modRequirements` sits right at it, and two more scalar fields pushed it over. `count: 60` is safe.
+- **`modsRequiringThisMod.nodes` is a sample.** `totalCount` reported 196 where `nodes` held 20.
 - The mod counts returned by `mods(filter: {uploaderId: ...})` include unpublished and hidden mods
   that other indexes omit, so totals will not match `GET /v3/vortex/extensions` or a profile page.
 

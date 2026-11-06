@@ -9,6 +9,8 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `SB` |
+| Atool | - | `SB\Content\Paks\LogicMods` |
+| ATOOL Animation Mod | - | - |
 | Blueprint Mods (LogicMods) | a `LogicMods` folder | `SB\Content\Paks\LogicMods` |
 | UE4SS | a `dwmapi.dll` file | `SB\Binaries\Win64` |
 | UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `SB\Binaries\Win64\ue4ss\Mods` |
@@ -21,6 +23,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Movie Mod (.bk2) | a `.bk2` file | `SB\Content\Movies` |
 | Splash Screen | a `splash.bmp` file | `SB\Content\Splash` |
 | CNS JSON Mod | a `.json` file | `SB\Content\Paks\~mods\CustomNanosuitSystem` |
+| Mod Pak Chunk ID Patcher | - | `SB\Content\Paks\~mods` |
 | Fallback Installer | anything not matched above with no pak file | `SB\Binaries\Win64` |
 
 Paths are relative to the game's install folder. Config and save folders are in your user profile, not the game's install folder.
@@ -56,6 +59,16 @@ Installs to: `SB`
 
 - Including only one of `Content` or `Binaries` - the archive then falls through to a different installer.
 - Adding an extra wrapper folder between `Binaries` and `Win64`.
+
+## Atool
+
+Handled by the `testAtool` installer. Inspect the extension source for the exact archive layout it expects.
+
+Installs to: `SB\Content\Paks\LogicMods`
+
+## ATOOL Animation Mod
+
+Handled by the `testAtoolAnim` installer. Inspect the extension source for the exact archive layout it expects.
 
 ## Blueprint Mods (LogicMods)
 
@@ -239,6 +252,12 @@ Installs to: `SB\Content\Splash`
 Recognised when the archive contains a `.json` file.
 
 Installs to: `SB\Content\Paks\~mods\CustomNanosuitSystem`
+
+## Mod Pak Chunk ID Patcher
+
+Handled by the `testChunkPatcher` installer. Inspect the extension source for the exact archive layout it expects.
+
+Installs to: `SB\Content\Paks\~mods`
 
 ## Fallback Installer
 

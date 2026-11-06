@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.1] - 2026-11-06
+
+- Fixed: The "Download UE4SS" button now installs "UE4SS for FarFarWest", the build mods require. The page it used before is no longer available.
+
 ## [1.1.0] - 2026-11-05
 
 - Changed: LogicMods (Blueprint) mods now always install directly into the LogicMods folder. Installed mods convert automatically when you next manage the game. Deploy when prompted.

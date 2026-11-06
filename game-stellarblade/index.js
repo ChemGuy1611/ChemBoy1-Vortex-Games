@@ -2,7 +2,7 @@
 Name: Stellar Blade Vortex Extension
 Structure: UE5 (static exe)
 Author: ChemBoy1
-Version: 1.2.0
+Version: 1.3.0
 Date: 2026-11-05
 //////////////////////////////////////////////////*/
 
@@ -310,6 +310,25 @@ const CNSJSON_PATH = path.join(EPIC_CODE_NAME, "Content", "Paks", "~mods", "Cust
 const CNSJSON_EXT = ".json";
 const CNSJSON_STRING = ".dekcns.json";
 
+//ATOOL (Animation Tool) - this game's own LogicMods animation framework, no template equivalent
+const ATOOL_ID = `${GAME_ID}-atool`;
+const ATOOL_FILES = ["HD-ATOOL_P.pak"]; //ATOOL's own pak, which identifies the ATOOL archive
+const ATOOL_FOLDER = "HD-ATOOL_P"; //ATOOL's own folder inside LogicMods, kept whole (it holds subfolders)
+const ATOOLANIM_ID = `${GAME_ID}-atoolanim`;
+const ATOOLANIM_NAME = "ATOOL Animation Mod";
+const ATOOLANIM_PATH = path.dirname(LOGICMODS_PATH); //Paks folder: animation paks go to ~mods, their sounds into ATOOL's folder
+const ATOOLAUDIO_FOLDERS = ["audio"]; //folder ATOOL animation mods ship their sound files in
+const ATOOLAUDIO_FOLDER = ATOOLAUDIO_FOLDERS[0];
+const ATOOLAUDIO_EXTS = [".wav"];
+const ATOOLAUDIO_PATH = path.join(LOGICMODS_PATH, ATOOL_FOLDER, ATOOLAUDIO_FOLDER);
+
+//Mod Pak Chunk ID Patcher - fixes duplicate Container_Id values across pak mods. Runs from inside ~mods.
+const CHUNKPATCHER_ID = `${GAME_ID}-chunkidpatcher`;
+const CHUNKPATCHER_NAME = "Mod Pak Chunk ID Patcher";
+const CHUNKPATCHER_FILES = ["StellarBlade_Chunk_Id_exe.exe"];
+const CHUNKPATCHER_PATH = PAK_PATH; //~mods
+const CHUNKPATCHER_EXEC = path.join(CHUNKPATCHER_PATH, CHUNKPATCHER_FILES[0]);
+
 const MOD_PATH_DEFAULT = PAK_PATH;
 const MODTYPE_FOLDERS = [
   MENU_PATH,
@@ -318,6 +337,8 @@ const MODTYPE_FOLDERS = [
   SCRIPTS_PATH,
   PAK_PATH,
   CNSJSON_PATH,
+  ATOOLANIM_PATH,
+  CHUNKPATCHER_PATH,
 ];
 
 //Filled in from data above
@@ -375,6 +396,18 @@ const spec = {
       name: LOGICMODS_NAME,
       priority: "high",
       targetPath: path.join("{gamePath}", LOGICMODS_PATH),
+    },
+    {
+      id: ATOOLANIM_ID,
+      name: ATOOLANIM_NAME,
+      priority: "high",
+      targetPath: path.join("{gamePath}", ATOOLANIM_PATH),
+    },
+    {
+      id: CHUNKPATCHER_ID,
+      name: CHUNKPATCHER_NAME,
+      priority: "high",
+      targetPath: path.join("{gamePath}", CHUNKPATCHER_PATH),
     },
     {
       id: UE4SS_ID,
@@ -458,6 +491,18 @@ const tools = [
     //defaultPrimary: true,
     parameters: [],
   }, //*/
+  {
+    id: CHUNKPATCHER_ID,
+    name: CHUNKPATCHER_NAME,
+    logo: `exec.png`,
+    executable: () => CHUNKPATCHER_EXEC,
+    requiredFiles: [CHUNKPATCHER_EXEC],
+    detach: true,
+    relative: true,
+    exclusive: true,
+    shell: true,
+    parameters: [],
+  }, //runs in its own folder (~mods), which is where it looks for pak mods
 ];
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
@@ -740,6 +785,113 @@ function installLogic(files) {
   if (pakBasenames.length) {
     instructions.push({ type: "attribute", key: LO_ATTRIBUTE_LOGIC, value: pakBasenames });
   }
+  return Promise.resolve({ instructions });
+}
+
+//True for ATOOL's own pak, which marks the ATOOL archive itself
+function isAtoolPak(file) {
+  const names = ATOOL_FILES.map((name) => name.toLowerCase());
+  return names.includes(path.basename(file).toLowerCase());
+}
+
+//True for a sound file inside an audio folder, which marks an ATOOL animation mod
+function isAtoolAudio(file) {
+  const folders = ATOOLAUDIO_FOLDERS.map((folder) => folder.toLowerCase());
+  return (
+    ATOOLAUDIO_EXTS.includes(path.extname(file).toLowerCase()) &&
+    folders.includes(path.basename(path.dirname(file)).toLowerCase())
+  );
+}
+
+//Installer test for ATOOL itself
+function testAtool(files, gameId) {
+  let supported = gameId === spec.game.id && files.some(isAtoolPak);
+
+  // Test for a mod installer
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install ATOOL itself. Everything in the folder holding its pak goes into ATOOL's folder inside
+//LogicMods, subfolders included, because the animation mods' sounds are read from an audio folder in it.
+function installAtool(files) {
+  const pakFile = files.find(isAtoolPak);
+  const rootPath = path.dirname(pakFile);
+  const folderPrefix = rootPath === "." ? "" : rootPath + path.sep;
+  const filtered = files.filter(
+    (file) => !file.endsWith(path.sep) && file.startsWith(folderPrefix),
+  );
+  const instructions = filtered.map((file) => ({
+    type: "copy",
+    source: file,
+    destination: path.join(ATOOL_FOLDER, file.slice(folderPrefix.length)),
+  }));
+  instructions.push({ type: "setmodtype", value: LOGICMODS_ID });
+  const pakBasenames = filtered.filter(isAtoolPak).map((f) => path.basename(f, path.extname(f)));
+  instructions.push({ type: "attribute", key: LO_ATTRIBUTE_LOGIC, value: pakBasenames });
+  return Promise.resolve({ instructions });
+}
+
+//Installer test for ATOOL animation mods, recognized by their audio folder
+function testAtoolAnim(files, gameId) {
+  let supported = gameId === spec.game.id && files.some(isAtoolAudio) && !files.some(isAtoolPak);
+
+  // Test for a mod installer
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install ATOOL animation mods: paks to ~mods, sound files into the audio folder inside ATOOL's
+//folder. Readmes and preview images are left out.
+function installAtoolAnim(files) {
+  const audioFolder = path.relative(ATOOLANIM_PATH, ATOOLAUDIO_PATH);
+  const pakFolder = path.relative(ATOOLANIM_PATH, PAK_PATH);
+  const seen = new Set();
+  const instructions = [];
+  for (const file of files) {
+    if (file.endsWith(path.sep)) continue;
+    let destination;
+    if (isAtoolAudio(file)) {
+      destination = path.join(audioFolder, path.basename(file));
+    } else if (UNREALDATA.fileExt.includes(path.extname(file).toLowerCase())) {
+      destination = path.join(pakFolder, path.basename(file));
+    } else {
+      continue;
+    }
+    if (seen.has(destination.toLowerCase())) {
+      log("warn", `[${GAME_ID}] ATOOL animation install skipped duplicate file name "${file}"`);
+      continue;
+    }
+    seen.add(destination.toLowerCase());
+    instructions.push({ type: "copy", source: file, destination });
+  }
+  instructions.push({ type: "setmodtype", value: ATOOLANIM_ID });
   return Promise.resolve({ instructions });
 }
 
@@ -1415,6 +1567,42 @@ function testBinaries(files, gameId) {
     supported,
     requiredFiles: [],
   });
+}
+
+//Installer test for the Mod Pak Chunk ID Patcher (nexusmods.com/stellarblade/mods/861)
+function testChunkPatcher(files, gameId) {
+  const names = CHUNKPATCHER_FILES.map((name) => name.toLowerCase());
+  let supported =
+    gameId === spec.game.id &&
+    files.some((file) => names.includes(path.basename(file).toLowerCase()));
+
+  // Test for a mod installer
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install the Mod Pak Chunk ID Patcher into ~mods, the folder it works on
+function installChunkPatcher(files) {
+  const names = CHUNKPATCHER_FILES.map((name) => name.toLowerCase());
+  const exeFile = files.find((file) => names.includes(path.basename(file).toLowerCase()));
+  const instructions = [
+    { type: "copy", source: exeFile, destination: path.basename(exeFile) },
+    { type: "setmodtype", value: CHUNKPATCHER_ID },
+  ];
+  return Promise.resolve({ instructions });
 }
 
 //Fallback installer to Binaries folder
@@ -2771,7 +2959,9 @@ function applyGame(context, gameSpec) {
 
   //register mod installers
   context.registerInstaller(UE4SSCOMBO_ID, 25, testUe4ssCombo, installUe4ssCombo);
-  context.registerInstaller(LOGICMODS_ID, 27, testLogic, installLogic);
+  context.registerInstaller(ATOOL_ID, 26, testAtool, installAtool);
+  context.registerInstaller(ATOOLANIM_ID, 27, testAtoolAnim, installAtoolAnim);
+  context.registerInstaller(LOGICMODS_ID, 28, testLogic, installLogic);
   context.registerInstaller(UE4SS_ID, 29, testUe4ss, installUe4ss);
   context.registerInstaller(SCRIPTS_ID, 31, testScripts, (files, fileName) =>
     installScripts(context.api, files, fileName),
@@ -2782,15 +2972,16 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(UE5_SORTABLE_ID, 35, testPak, (files) =>
     installPak(context.api, files),
   ); //Pak installer
-  context.registerInstaller(ROOT_ID, 37, testRoot, installRoot);
-  context.registerInstaller(CONFIG_ID, 39, testConfig, (files) =>
+  context.registerInstaller(ROOT_ID, 36, testRoot, installRoot);
+  context.registerInstaller(CONFIG_ID, 37, testConfig, (files) =>
     installConfig(context.api, files),
   );
-  context.registerInstaller(SAVE_ID, 41, testSave, (files) => installSave(context.api, files));
-  context.registerInstaller(MENU_ID, 43, testMenu, installMenu);
-  context.registerInstaller(MOVIE_ID, 45, testMovies, installMovies);
-  context.registerInstaller(SPLASH_ID, 47, testSplash, installSplash);
-  context.registerInstaller(CNSJSON_ID, 48, testJson, installJson);
+  context.registerInstaller(SAVE_ID, 38, testSave, (files) => installSave(context.api, files));
+  context.registerInstaller(MENU_ID, 39, testMenu, installMenu);
+  context.registerInstaller(MOVIE_ID, 40, testMovies, installMovies);
+  context.registerInstaller(SPLASH_ID, 41, testSplash, installSplash);
+  context.registerInstaller(CNSJSON_ID, 42, testJson, installJson);
+  context.registerInstaller(CHUNKPATCHER_ID, 43, testChunkPatcher, installChunkPatcher);
   context.registerInstaller(BINARIES_ID, 49, testBinaries, (files, fileName) =>
     installBinaries(context.api, files, fileName),
   );

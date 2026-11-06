@@ -51,6 +51,8 @@ Mod types define where each category of mod gets deployed:
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `stellarblade-ue4sscombo` | high | `{gamePath}` |
 | UE4SS LogicMods (Blueprint) | `stellarblade-logicmods` | high | `{gamePath}/SB/Content/Paks/LogicMods` |
+| ATOOL Animation Mod | `stellarblade-atoolanim` | high | `{gamePath}/ATOOLANIM_PATH` |
+| Mod Pak Chunk ID Patcher | `stellarblade-chunkidpatcher` | high | `{gamePath}/SB/Content/Paks/~mods` |
 | UE4SS | `stellarblade-ue4ss` | high | `{gamePath}/SB/Binaries/Win64` |
 | UE4SS Script Mod | `stellarblade-scripts` | high | `{gamePath}/SB/Binaries/Win64/ue4ss/Mods` |
 | UE4SS DLL Mod | `stellarblade-ue4ssdll` | high | `{gamePath}/SB/Binaries/Win64/ue4ss/Mods` |
@@ -72,18 +74,21 @@ Installers run in priority order (lower number = tested first). The first instal
 | Installer ID | Priority |
 | --- | --- |
 | `stellarblade-ue4sscombo` | 25 |
-| `stellarblade-logicmods` | 27 |
+| `stellarblade-atool` | 26 |
+| `stellarblade-atoolanim` | 27 |
+| `stellarblade-logicmods` | 28 |
 | `stellarblade-ue4ss` | 29 |
 | `stellarblade-scripts` | 31 |
 | `stellarblade-ue4ssdll` | 33 |
 | `stellarblade-uesortablepak` | 35 |
-| `stellarblade-root` | 37 |
-| `stellarblade-config` | 39 |
-| `stellarblade-save` | 41 |
-| `stellarblade-menu` | 43 |
-| `stellarblade-movie` | 45 |
-| `stellarblade-splash` | 47 |
-| `stellarblade-cnsjson` | 48 |
+| `stellarblade-root` | 36 |
+| `stellarblade-config` | 37 |
+| `stellarblade-save` | 38 |
+| `stellarblade-menu` | 39 |
+| `stellarblade-movie` | 40 |
+| `stellarblade-splash` | 41 |
+| `stellarblade-cnsjson` | 42 |
+| `stellarblade-chunkidpatcher` | 43 |
 | `stellarblade-binaries` | 49 |
 
 ## Registered Tools

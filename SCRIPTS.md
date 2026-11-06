@@ -344,7 +344,7 @@ Per-check `[PASS]` / `[FAIL]` / `[WARN]` lines for: v1 mod shape (13 required fi
 
 ## nexus_mod_preview.py
 
-Prints a Nexus Mods mod's description and its file list, with each file's archive contents read from Nexus's content preview. Shows which file ships which manifest or folder layout without downloading anything — what an extension installer needs to know about a mod format — and works where the mod page refuses scripted fetches (nexusmods.com answers those with HTTP 403). Read-only.
+Prints a Nexus Mods mod's description and its file list, with each file's archive contents read from Nexus's content preview. Shows which file ships which manifest or folder layout without downloading anything — what an extension installer needs to know about a mod format — and works where the mod page refuses scripted fetches (nexusmods.com answers those with HTTP 403). When a file's content preview is missing or cannot be fetched, the listing comes from the v2 GraphQL file index instead. `--listing` writes the listings as the JSON input `replay_installers.js` reads, so a mod's archives can be replayed through an extension's installers in two commands. Read-only apart from that output file.
 
 ### nexus_mod_preview.py — Environment Variables
 
@@ -361,6 +361,8 @@ python nexus_mod_preview.py DOMAIN MOD_ID --archived
 python nexus_mod_preview.py DOMAIN MOD_ID --no-preview --desc-chars 0
 python nexus_mod_preview.py https://www.nexusmods.com/railroader/mods/1809
 python nexus_mod_preview.py railroader 1809 --no-desc --file 7723 --file 7618
+python nexus_mod_preview.py stellarblade 1662 --no-desc --archived --listing atool.json
+node replay_installers.js stellarblade atool.json
 ```
 
 `URL` is a mod page URL; anything after the mod id (`?tab=files`, etc.) is ignored. `DOMAIN` is the Nexus game domain (the URL slug).
@@ -372,10 +374,13 @@ python nexus_mod_preview.py railroader 1809 --no-desc --file 7723 --file 7618
 | `--no-desc`      | Skip the mod description.                                              |
 | `--no-preview`   | Skip the archive contents, list files only.                            |
 | `--desc-chars N` | Truncate the description to N characters (default 5000, 0 = all).      |
+| `--listing FILE` | Also write the shown files' archive listings to FILE as JSON, a list of `{name, filename, files}` (the `replay_installers.js` input). A file with no listing gets `"files": null`, which the replay skips. Not with `--no-preview`. |
 
 ### nexus_mod_preview.py — Notes
 
 Mod and file data come from `vortex_utils.nexus_get_mod` and `nexus_get_mod_files` (v1 API, with retries). Each file's `content_preview_link` is an unauthenticated JSON manifest; the script reads its flat `files` list of `file_path` entries and falls back to the older nested `children` tree (both shapes: `resources/NEXUS_FILE_PROPERTIES.md`). The preview lists paths only — reading a manifest's contents still needs the file itself. Output is ASCII-only so it prints on any console.
+
+Nexus builds the preview link from the archive name without escaping it, so the script percent-encodes the link before fetching (archive names with spaces used to fail with "URL can't contain control characters"). When a file has no preview link, or the fetch fails (Nexus answers 404 for many files, including most older stellarblade uploads), the listing is read from GraphQL `modFileContents` filtered by game id and file id, 80 entries per page with later pages batched as aliases, and the file's line says where the listing came from. Some recent uploads are missing from that index too; those print "no listing", which does not mean the archive is empty.
 
 ---
 
@@ -1543,7 +1548,9 @@ Because the const is hand-maintained rather than checked against Nexus, the list
 
 Nothing in `index.js` marks a permanent test bed — an extension run live to verify changes, versioned and changelogged normally, but never uploaded — so those are excluded by ID through `resources/lists/games-never-upload.txt` — a hand-maintained list (this script never writes it) that `vortex_utils.py` loads as `NEVER_UPLOAD_GAMES`, aliased here as `UNRELEASED_LIST_EXCLUDED_GAMES`. It holds the permanent test beds plus Personal-version extensions for games NexusMods supports officially; `release_scope.py` and `release_extension.py --upload` read the same set. Add an ID to that file when a new permanent case appears, so `games-unreleased.txt` stays a list of extensions genuinely awaiting a first release.
 
-`resources/lists/games-deprecated.txt` is the other hand-maintained list this script never writes: retired extensions that stay in the repo frozen and are never updated or released again. `vortex_utils.py` loads it as `DEPRECATED_GAMES`; `release_extension.py --upload` refuses its ids, `releasable_game_ids()` and `release_scope.py` leave them out, and `audit_mod_pages.py` skips their pages. Add an ID to that file when an extension is retired.
+`resources/lists/games-deprecated.txt` is the other hand-maintained list of game IDs this script never writes: retired extensions that stay in the repo frozen and are never updated or released again. `vortex_utils.py` loads it as `DEPRECATED_GAMES`; `release_extension.py --upload` refuses its ids, `releasable_game_ids()` and `release_scope.py` leave them out, and `audit_mod_pages.py` skips their pages. Add an ID to that file when an extension is retired.
+
+`resources/lists/framework-audit-reviewed.txt` is also hand-maintained and never written here. It is not a game list: `audit_frameworks.py` reads it to skip candidates already checked.
 
 ---
 
@@ -1726,6 +1733,56 @@ With `--gallery`, adds a **Gallery images** section: pages per image count, then
 This audit is read-only. No Nexus API tier can add/remove a mod tag or toggle a mod page's media/tag permission switches (confirmed exhaustively across v1/v3 REST and v2 GraphQL — see `resources/NEXUS_GRAPHQL_API.md` "What You Cannot Do"), so output is a report for manual remediation on the site, never an auto-fix.
 
 Exit code `1` if anything lands under **Needs attention** — a non-suppressed extension with a missing or stray tag, a mod page that cannot be fetched (dead or unresolvable), or a `helper-*` folder with no resolvable `EXTENSION_URL` — `0` otherwise. Warnings and the missing-`NEXUS_API_KEY` error go to stderr, so `--json` output on stdout always parses. A `helper-*` row is identified by its folder suffix (`helper-falloutlondonsetup` → `falloutlondonsetup`), never by its `GAME_ID` const, which names the helper's target game.
+
+---
+
+## audit_frameworks.py
+
+Mechanical layer for the framework audit: looks through each UE4-5 game's Nexus mods (`resources/lists/games-ue4-5.txt`, minus `games-deprecated.txt` and `games-never-upload.txt` unless a game is named on the command line) for modding frameworks its extension would need real changes to support. A framework that loads regular mods from the `~mods` folder needs no change and is not a finding. Read-only: the output is a worklist to judge by hand, never a patch.
+
+The first signal is the requirement graph. It scans the game's top 60 mods by downloads for mods that at least 5 others require, plus on-site mods that at least 3 top mods name as a requirement. Popular content mods get required too, so the count only picks candidates. Each candidate's own archive and up to 12 dependents' archives (Nexus returns a sample of 20) then decide the verdict.
+
+The second signal is file name fingerprints. It samples up to 240 files for each of `.json`, `.toml`, `.yaml`, `.xml` and `.ini` that the game does not already handle, and reports a name recurring across 5 or more mods. This catches a framework whose dependents declare no requirement. It is noisier, because it cannot see whether the file sits beside a pak.
+
+An extension counts as handled when it is in the pak family or the game's `PAKMOD_EXTRA_EXTS`, or when the game's `index.js` quotes it and `template-ue4-5` does not (a game-specific installer). A dependent one of the game's own installers would take is left out: a `.uplugin` plus the game's `MODKITMOD_FILE` when `hasModKit` is on, or a file name the game's `index.js` quotes and the template does not (inzoi's `appearance.dat`). Those file names are never fingerprints either.
+
+### audit_frameworks.py — Environment Variables
+
+| Variable        | Required | Description                                                              |
+| --------------- | -------- | ------------------------------------------------------------------------ |
+| `NEXUS_API_KEY` | Required | Nexus Mods API key. Read from env var, with HKCU/HKLM registry fallback. |
+
+### audit_frameworks.py — Requirements
+
+No additional packages required (Python stdlib only). Needs `NEXUS_API_KEY`.
+
+### audit_frameworks.py — Usage
+
+```sh
+python audit_frameworks.py
+python audit_frameworks.py deadasdisco tekken8
+python audit_frameworks.py --json
+python audit_frameworks.py --show-dropped
+python audit_frameworks.py --min-requirers 10
+```
+
+Run without arguments for every UE4-5 game. `--json` emits a structured report instead. `--show-dropped` lists dropped and already-reviewed candidates with the reason, not just the counts. `--min-requirers` changes the candidate threshold (default 5).
+
+### audit_frameworks.py — Output
+
+One block per game with something to check, each row tagged with what it needs:
+
+- **`extra-exts`** — dependents ship an extension beside their paks that the pak installer would drop. The usual fix is `PAKMOD_EXTRA_EXTS`.
+- **`loose-files`** — dependents ship an unhandled extension away from any pak, and `index.js` never names the candidate (a named framework already has an installer for its mods' files). The usual fix is a new mod type or installer.
+- **`native-code`** — the candidate ships a `.dll`, `.asi` or `.exe` and `index.js` never names it. Check whether it installs correctly or needs a requirement entry.
+- **`external`** — an off-site requirement that at least 3 top mods list and `index.js` never names. There is no archive to read, so check it by hand.
+- **`fingerprint`** — a file name recurring across sampled mods.
+
+A candidate with none of these is dropped: pak-only content mods, script or LogicMods loaders the UE4SS installers already cover, signature-bypass loaders (a `bitfix` folder or a known sig bypass file such as `sig.lua`), which the universal sig bypass already covers, and mods `index.js` already names. Each game checks at most 10 candidates. Any past that cap appear under dropped as not checked.
+
+Candidates checked and found to need no change go in `resources/lists/framework-audit-reviewed.txt`, a hand-maintained list this script never writes. Each line is `scope|target|reason`: scope is a `GAME_ID` or `*`, and target is part of a mod name, `=<name>` for the whole name only, `mod:<id>`, or `file:<name>` (`*` wildcards allowed). Name targets ignore case and punctuation. A plain name target matches any mod name containing it, so a broad one hides more than intended: `*|UE4SS` used to hide custom UE4SS builds such as legobatman's LOTDK UE4SS, which is why that entry is now `*|=UE4SS`. A line with no reason is ignored with a warning.
+
+Exit code `1` if any game has a finding or could not be checked, `0` otherwise. Progress and warnings go to stderr, so `--json` output on stdout always parses.
 
 ---
 

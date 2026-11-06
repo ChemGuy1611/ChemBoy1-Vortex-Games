@@ -1,0 +1,99 @@
+# Hand-maintained: audit_frameworks.py reads this file and never writes it. categorize_games.py leaves it alone.
+#
+# One entry per line: scope|target|reason
+#   scope   a GAME_ID, or * for every game
+#   target  part of a Nexus mod name (case and punctuation ignored), =<name> for the whole
+#           name only, mod:<id> for one mod, or file:<name> for a file name that recurs
+#           across mods (* wildcards allowed)
+#   reason  why this needs no extension change (required)
+#
+# A candidate belongs here once it has been checked and needs no extension change.
+*|Simple BP Mod Loader|Spam-uploaded to many UE games. Loads regular mods from the ~mods folder, so no extension change is needed.
+*|=UE4SS|Installed and managed by every UE4-5 extension. Exact name only, so custom UE4SS builds still show up for review.
+*|=RE-UE4SS|The standard UE4SS project the extensions install from GitHub. Exact name only.
+*|Signature Bypass|Covered by the SIGBYPASS_REQUIRED toggle.
+*|Sig Bypass|Covered by the SIGBYPASS_REQUIRED toggle.
+*|Mod Enabler|Signature-bypass style enabler. The universal sig bypass the extensions install already covers it.
+*|Bitfix|Signature-bypass style loader. The universal sig bypass the extensions install already covers it.
+*|ASI Loader|Ultimate ASI Loader is a dll that installs normally through the extension.
+*|ReShade|Off-site post-processing injector the user installs, not a framework.
+*|VC++ v14|Microsoft Visual C++ runtime, a system prerequisite.
+*|Ability to read|Joke requirement, not a framework.
+*|Google Translate|Translation website, not a framework.
+abioticfactor|mod:35|Game-specific UE4SS build. The extension already installs it (UE4SS_PAGE_NO).
+atomicheart|mod:186|Game-specific UE4SS build. The extension already installs it (UE4SS_PAGE_NO).
+blackmythwukong|mod:19|Older game-specific UE4SS build, not updated since 2024. The extension deliberately installs UE4SS from GitHub instead.
+dynastywarriors3completeeditionremastered|mod:7|Stock UE4SS repackaged for the game. The extension installs the same from GitHub.
+farfarwest|mod:2|Game-specific UE4SS build. The extension installs it (UE4SS_PAGE_NO, since 1.1.1).
+finalfantasy7rebirth|mod:1181|Regular pak mod with a FOMOD installer, not a framework.
+hellisus|mod:43|Stock UE4SS dev package repackaged for the game. The extension installs UE4SS from GitHub.
+highonlife|UE4SS v3.0.1 experimental|Off-site link to a stock UE4SS GitHub build, which the extension installs.
+inzoi|file:meta.json|In-game creation preset metadata (beside appearance.dat), installed by the creations installer.
+legobatmanlegacyofthedarkknight|mod:5|Older UE4SS build for the game. The extension installs Loomirr's LOTDK UE4SS (mod 230) instead, which covers it.
+legobatmanlegacyofthedarkknight|file:mod.json|LOTDK Expanded suit mod file. The UE4SS combo installer keeps the author's game-folder layout.
+legobatmanlegacyofthedarkknight|file:characterselectsystem.ini|LOTDK Expanded suit registry config. The UE4SS combo installer keeps the author's game-folder layout.
+legobatmanlegacyofthedarkknight|file:batcomputercharactermodes.ini|LOTDK Expanded suit registry config. The UE4SS combo installer keeps the author's game-folder layout.
+liesofp|mod:259|Custom UE4SS build with game signatures. The extension installs it (UE4SS_PAGE_NO).
+manorlords|mod:229|ML-UE4SS Mod Loader, a game-specific UE4SS build. The extension already installs it (UE4SS_PAGE_NO).
+manorlords|file:modmanifest.json|ML-UE4SS Mod Loader (mod 229) manifest inside UE4SS mod folders. The extension installs 229 as its UE4SS and an installer handles these mods.
+manorlords|file:mod_manifest.json|ML-UE4SS Mod Loader (mod 229) manifest inside UE4SS mod folders. The extension installs 229 as its UE4SS and an installer handles these mods.
+manorlords|file:game_manifest.json|ML-UE4SS Mod Loader (mod 229) manifest inside UE4SS mod folders. The extension installs 229 as its UE4SS and an installer handles these mods.
+manorlords|file:mod_tool_manifest.json|ML-UE4SS Mod Loader (mod 229) manifest inside UE4SS mod folders. The extension installs 229 as its UE4SS and an installer handles these mods.
+manorlords|file:modconfigliveedit_default.json|Mod config menu defaults inside ML-UE4SS (mod 229) mod folders. The extension installs 229 as its UE4SS and an installer handles these mods.
+marvelrivals|Project Galacta|Main file is regular pak/ucas/utoc mod files. The .exe is a separate external manager app. No action needed.
+mortalkombat|MK1Hook|Does the same job as the loader the extension already integrates.
+runescapedragonwilds|mod:4|Game-specific UE4SS build. The extension already installs it (UE4SS_PAGE_NO).
+rvthereyet|RE-UE4SS Framework|Off-site link to stock UE4SS on GitHub, which the extension installs.
+rvthereyet|UE4SS experimental build|Off-site link to a stock UE4SS GitHub build, which the extension installs.
+rvthereyet|UE4SS Experimental Latest Release|Off-site link to the stock UE4SS GitHub release, which the extension installs.
+silenthilltownfall|UE4SS For Silent Hill|Game-specific UE4SS build on mod 4. The extension already installs it (UE4SS_PAGE_NO).
+stalker2heartofchornobyl|mod:484|Ultra Plus is a graphics mod with its own setup tool. The mods that require it are add-ons to it, not a framework.
+starwarsgalacticracer|mod:2|Game-specific UE4SS build. The extension already installs it (UE4SS_PAGE_NO).
+stellarblade|file:*.toml|Source patches for Auto Modding Script (mod 987) and Stellar Tool config. Every live archive with them also ships the built _P.pak, which the pak installer takes.
+thelastcaretaker|mod:4|Game-specific UE4SS build. The extension already installs it (UE4SS_PAGE_NO).
+valormortis|mod:9|Stock UE4SS repackaged for the game. The extension installs the same from GitHub.
+whiskerwood|file:mod.json|Ships inside UE4SS-style Lua mod folders, which the UE4SS script installer takes whole. No action needed.
+windrose|mod:43|Game-specific UE4SS build. The extension already installs it (UE4SS_PAGE_NO).
+wuchangfallenfeathers|mod:384|Stock UE4SS repackaged for the game. The extension installs the same from GitHub.
+*|file:ue4ss-settings.ini|UE4SS's own settings file.
+*|file:vtablelayout.ini|UE4SS's own layout file.
+*|file:mods.json|UE4SS's own mod list.
+*|file:engine.ini|Unreal engine config tweak, not a framework.
+*|file:reshade.ini|ReShade preset config, not a framework.
+*|file:modinfo.ini|Fluffy Mod Manager metadata shipped beside the paks, not a framework.
+*|file:moduleconfig.xml|FOMOD installer file, handled by Vortex.
+*|file:info.xml|FOMOD installer file, handled by Vortex.
+*|file:packagerestoredata.json|Unreal cook output shipped by accident.
+*|file:shaderassetinfo-*|Unreal cook output shipped by accident.
+*|file:game.ini|Unreal engine config file, installed by the Config installer.
+*|file:gameusersettings.ini|Unreal engine config file, installed by the Config installer.
+*|file:input.ini|Unreal engine config file, installed by the Config installer.
+*|file:scalability.ini|Unreal engine config file, installed by the Config installer.
+*|file:hardware.ini|Unreal engine config file, installed by the Config installer.
+*|file:deviceprofiles.ini|Unreal engine config file, installed by the Config installer.
+*|file:compat.ini|Unreal engine config file, installed by the Config installer.
+*|file:runtimeoptions.ini|Unreal engine config file, installed by the Config installer.
+*|file:gameplaytags.ini|Unreal engine config file, installed by the Config installer.
+*|file:enhancedinput.ini|Unreal engine config file, installed by the Config installer.
+*|file:consolevariables.ini|Unreal engine config file, installed by the Config installer.
+*|file:config.txt|UE4SS mod config file, ships inside the mod folder the UE4SS installers take whole.
+*|file:settings.json|UE4SS mod config file, ships inside the mod folder the UE4SS installers take whole.
+*|file:config.lua|UE4SS mod config file, ships inside the mod folder the UE4SS installers take whole.
+*|file:membervariablelayout.ini|UE4SS's own layout file.
+*|file:winmm.ini|Ultimate ASI Loader config (named after its winmm.dll), installs with the loader.
+*|file:desktop.ini|Windows folder view settings shipped by accident.
+*|file:imgui.ini|ImGui window layout saved by an overlay or tool, not a framework.
+*|file:shadertoggler.ini|ReShade ShaderToggler add-on config, not a framework.
+*|file:pyproject.toml|Python project file from a mod's build tools, not a framework.
+*|file:settings.ini|Generic settings file name used by many unrelated tools and mods, not a framework.
+*|file:config.ini|Generic config file name used by many unrelated tools and mods, not a framework.
+*|file:valid_udt_names.json|UE4SS UVTD dumper config, not a framework.
+*|file:object_items.json|UE4SS UVTD dumper config, not a framework.
+*|file:virtual_generator_includes.json|UE4SS UVTD dumper config, not a framework.
+*|file:types_not_to_dump.json|UE4SS UVTD dumper config, not a framework.
+*|file:uprefix_to_fprefix.json|UE4SS UVTD dumper config, not a framework.
+*|file:member_rename_map.json|UE4SS UVTD dumper config, not a framework.
+*|file:private_variables.json|UE4SS UVTD dumper config, not a framework.
+*|file:class_inheritance.json|UE4SS UVTD dumper config, not a framework.
+*|file:pdbs_to_dump.json|UE4SS UVTD dumper config, not a framework.
+*|file:types_filter.json|UE4SS UVTD dumper config, not a framework.

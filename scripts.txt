@@ -38,6 +38,7 @@ audit_parity.py
 audit_modules.py
 verify_propagation.py
 audit_mod_pages.py
+audit_frameworks.py
 audit_steam_appinfo.py
 analyze_vortex_log.py
 read_vortex_db.py

@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.2.1] - 2026-11-06
+
+- Changed: The "Download UE4SS" button now installs Loomirr's LOTDK UE4SS, which includes the LOTDK Expanded runtime that custom suit mods need.
+
 ## [1.2.0] - 2026-11-05
 
 - Changed: LogicMods (Blueprint) mods now always install directly into the LogicMods folder. Installed mods convert automatically when you next manage the game. Deploy when prompted.
