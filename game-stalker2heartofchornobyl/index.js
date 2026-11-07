@@ -2,8 +2,8 @@
 Name: S.T.A.L.K.E.R. 2: Heart of Chornobyl Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 2.3.0
-Date: 2026-11-05
+Version: 2.3.1
+Date: 2026-11-06
 //////////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -2456,11 +2456,18 @@ function isModMergerInstalled(api, spec) {
   return Object.keys(mods).some((id) => mods[id]?.type === MERGER_ID);
 }
 
-//Check if UE4SS is installed
+//Check if UE4SS is installed: a UE4SS mod in Vortex, or the UE4SS proxy dll on disk (manual install)
 function isUe4ssInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some((id) => mods[id]?.type === UE4SS_ID);
+  if (Object.keys(mods).some((id) => mods[id]?.type === UE4SS_ID)) {
+    return true;
+  }
+  const gamePath = getDiscoveryPath(api);
+  if (!gamePath) {
+    return false;
+  }
+  return statCheckSync(path.join(gamePath, BINARIES_PATH), UE4SS_FILE);
 }
 
 //Function to auto-download Simple Mod Merger from Nexus

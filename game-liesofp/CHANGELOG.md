@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.2.2] - 2026-11-06
+
+- Fixed: A UE4SS installed manually (outside Vortex) is now detected, so the UE4SS and LogicMods load orders and the UE4SS settings update work with it.
+
 ## [1.2.1] - 2026-11-06
 
 - Changed: The "Download UE4SS" button now installs "UE4SS for Lies of P", the custom build made for this game that mods require.

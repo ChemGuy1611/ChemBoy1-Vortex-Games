@@ -1,8 +1,9 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.1.1] - 2026-11-06
 
 - Improved: Detection of Blueprint mods in pak files with a non-standard footer.
+- Fixed: A UE4SS installed manually (outside Vortex) is now detected, so the UE4SS and LogicMods load orders and the UE4SS settings update work with it.
 
 ## [1.1.0] - 2026-11-03
 

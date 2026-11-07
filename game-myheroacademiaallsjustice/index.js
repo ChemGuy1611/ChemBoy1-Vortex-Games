@@ -2,8 +2,8 @@
 Name: MY HERO ACADEMIA: All's Justice Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.2.0
-Date: 2026-11-05
+Version: 1.2.1
+Date: 2026-11-06
 Notes:
 - There is no exe in the game root: the only exe is HeroGame\Binaries\Win64\AJGAME.exe (no -Shipping suffix). Saves live in %LOCALAPPDATA%\BANDAI NAMCO Entertainment\MY HERO ACADEMIA Alls Justice\Saved\SaveGames\<user id>. PCGamingWiki lists the Config folder as Saved\Windows (no Config folder); this extension keeps the standard Saved\Config\Windows, unverified. Nexus mod authors require the Sig Bypass (installed into Binaries\Win64) for pak mods to load.
 ////////////////////////////////////////////////*/
@@ -1877,11 +1877,18 @@ function fallbackInstallerNotify(api, modName) {
 
 // AUTOMATIC MOD DOWNLOADERS ///////////////////////////////////////////////////
 
-//Check if UE4SS is installed
+//Check if UE4SS is installed: a UE4SS mod in Vortex, or the UE4SS proxy dll on disk (manual install)
 function isUe4ssInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some((id) => mods[id]?.type === UE4SS_ID);
+  if (Object.keys(mods).some((id) => mods[id]?.type === UE4SS_ID)) {
+    return true;
+  }
+  const gamePath = getDiscoveryPath(api);
+  if (!gamePath) {
+    return false;
+  }
+  return statCheckSync(path.join(gamePath, BINARIES_PATH), UE4SS_FILE);
 }
 
 //Check if Signature Bypass is installed

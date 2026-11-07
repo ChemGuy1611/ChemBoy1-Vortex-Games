@@ -2,8 +2,8 @@
 Name: inZOI Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.1.0
-Date: 2026-11-05
+Version: 1.1.1
+Date: 2026-11-06
 Notes:
 - Mods are installed to the MODKit Mods folder in User Documents by default, so game folder mod types
   are only offered when Documents, the game folder and the Vortex staging folder share a drive.
@@ -2120,11 +2120,18 @@ function fallbackInstallerNotify(api, modName) {
 
 // AUTOMATIC MOD DOWNLOADERS ///////////////////////////////////////////////////
 
-//Check if UE4SS is installed
+//Check if UE4SS is installed: a UE4SS mod in Vortex, or the UE4SS proxy dll on disk (manual install)
 function isUe4ssInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some((id) => mods[id]?.type === UE4SS_ID);
+  if (Object.keys(mods).some((id) => mods[id]?.type === UE4SS_ID)) {
+    return true;
+  }
+  const gamePath = getDiscoveryPath(api);
+  if (!gamePath) {
+    return false;
+  }
+  return statCheckSync(path.join(gamePath, BINARIES_PATH), UE4SS_FILE);
 }
 
 //Check if Signature Bypass is installed

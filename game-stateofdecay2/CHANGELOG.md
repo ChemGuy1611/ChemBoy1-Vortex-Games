@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.1.6] - 2026-11-06
+
+- Fixed: A UE4SS installed manually (outside Vortex) is now detected, so the UE4SS and LogicMods load orders and the UE4SS settings update work with it.
+
 ## [3.1.5] - 2026-11-01
 
 - Changed: Internal cleanup of how file paths are handled. No change to how mods install.

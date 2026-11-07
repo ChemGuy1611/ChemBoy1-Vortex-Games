@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.3.1] - 2026-11-06
+
+- Fixed: A UE4SS installed manually (outside Vortex) is now detected, so the UE4SS and LogicMods load orders and the UE4SS settings update work with it.
+
 ## [1.3.0] - 2026-11-05
 
 - Added: Support for ATOOL (Animation Tool). ATOOL installs into its own folder in LogicMods, and ATOOL animation mods install their paks to ~mods and their sound files into ATOOL's audio folder.

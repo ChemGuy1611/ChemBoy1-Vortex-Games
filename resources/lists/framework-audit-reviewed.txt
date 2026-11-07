@@ -22,12 +22,19 @@
 *|Google Translate|Translation website, not a framework.
 abioticfactor|mod:35|Game-specific UE4SS build. The extension already installs it (UE4SS_PAGE_NO).
 atomicheart|mod:186|Game-specific UE4SS build. The extension already installs it (UE4SS_PAGE_NO).
+beastofreincarnation|file:beastofreincarnationfix.ini|Config for the ultrawide/QoL fix dll. It ships beside the dll and the binaries installer puts both in Binaries\Win64.
 blackmythwukong|mod:19|Older game-specific UE4SS build, not updated since 2024. The extension deliberately installs UE4SS from GitHub instead.
+dragonballsparkingzero|mod:101|Reloaded-II (Ryo) audio mod. Reloaded-II mods are not supported by the Unreal extensions.
+dragonballsparkingzero|file:pluginsettings.ini|SparkingZERO Mod Loader plugin config inside the plugin's Config folder. The plugin installer keeps the folder whole.
+dragonballsparkingzero|file:accesstransformers.ini|SparkingZERO Mod Loader plugin config inside the plugin's Config folder. The plugin installer keeps the folder whole.
 dynastywarriors3completeeditionremastered|mod:7|Stock UE4SS repackaged for the game. The extension installs the same from GitHub.
+dynastywarriors3completeeditionremastered|file:manifest.json|Author build report at the archive root, not read by the game. Dropping it is harmless.
+dynastywarriors3completeeditionremastered|file:validation.json|Author build report at the archive root, not read by the game. Dropping it is harmless.
 farfarwest|mod:2|Game-specific UE4SS build. The extension installs it (UE4SS_PAGE_NO, since 1.1.1).
 finalfantasy7rebirth|mod:1181|Regular pak mod with a FOMOD installer, not a framework.
 hellisus|mod:43|Stock UE4SS dev package repackaged for the game. The extension installs UE4SS from GitHub.
 highonlife|UE4SS v3.0.1 experimental|Off-site link to a stock UE4SS GitHub build, which the extension installs.
+humanitz|file:hzmm.config.json|HumanitZ Mod Manager config inside UE4SS Lua mod folders, which the UE4SS script installer takes whole.
 inzoi|file:meta.json|In-game creation preset metadata (beside appearance.dat), installed by the creations installer.
 legobatmanlegacyofthedarkknight|mod:5|Older UE4SS build for the game. The extension installs Loomirr's LOTDK UE4SS (mod 230) instead, which covers it.
 legobatmanlegacyofthedarkknight|file:mod.json|LOTDK Expanded suit mod file. The UE4SS combo installer keeps the author's game-folder layout.
@@ -49,9 +56,12 @@ rvthereyet|UE4SS Experimental Latest Release|Off-site link to the stock UE4SS Gi
 silenthilltownfall|UE4SS For Silent Hill|Game-specific UE4SS build on mod 4. The extension already installs it (UE4SS_PAGE_NO).
 stalker2heartofchornobyl|mod:484|Ultra Plus is a graphics mod with its own setup tool. The mods that require it are add-ons to it, not a framework.
 starwarsgalacticracer|mod:2|Game-specific UE4SS build. The extension already installs it (UE4SS_PAGE_NO).
+stateofdecay2|file:metadata.json|SoD2 Mod Manager project file beside cooked source assets. The archives also ship the built pak, which the pak installer takes.
 stellarblade|file:*.toml|Source patches for Auto Modding Script (mod 987) and Stellar Tool config. Every live archive with them also ships the built _P.pak, which the pak installer takes.
 thelastcaretaker|mod:4|Game-specific UE4SS build. The extension already installs it (UE4SS_PAGE_NO).
+thelordoftheringsreturntomoria|file:validation.json|Author build report at the archive root beside the paks, not read by the game. Dropping it is harmless.
 valormortis|mod:9|Stock UE4SS repackaged for the game. The extension installs the same from GitHub.
+vtmbloodlines2|file:mod.json|One author's per-mod metadata. Each archive bundles a full flat-layout UE4SS, which the UE4SS installer takes whole.
 whiskerwood|file:mod.json|Ships inside UE4SS-style Lua mod folders, which the UE4SS script installer takes whole. No action needed.
 windrose|mod:43|Game-specific UE4SS build. The extension already installs it (UE4SS_PAGE_NO).
 wuchangfallenfeathers|mod:384|Stock UE4SS repackaged for the game. The extension installs the same from GitHub.

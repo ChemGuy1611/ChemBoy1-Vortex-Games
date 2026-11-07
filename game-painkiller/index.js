@@ -2,8 +2,8 @@
 Name: Painkiller Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.1.0
-Date: 2026-11-05
+Version: 1.1.1
+Date: 2026-11-06
 Notes:
 - The game is Unreal Engine 4.27.2 (PCGamingWiki, page "Painkiller (2025)" - the page named just "Painkiller" is the 2004 game). Config is Saved\Config\WindowsNoEditor and saves are Saved\SaveGames\<Steam ID>, both confirmed on disk from the demo.
 - Steam only. The Steam demo (4047990) was a time-limited Next Fest demo and is no longer listed; its id stays so existing demo installs are still found. No Epic, GOG or Microsoft Store (PC) release; GOG's "Painkiller" is a different game.
@@ -1932,11 +1932,18 @@ function fallbackInstallerNotify(api, modName) {
 
 // AUTOMATIC MOD DOWNLOADERS ///////////////////////////////////////////////////
 
-//Check if UE4SS is installed
+//Check if UE4SS is installed: a UE4SS mod in Vortex, or the UE4SS proxy dll on disk (manual install)
 function isUe4ssInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some((id) => mods[id]?.type === UE4SS_ID);
+  if (Object.keys(mods).some((id) => mods[id]?.type === UE4SS_ID)) {
+    return true;
+  }
+  const gamePath = getDiscoveryPath(api);
+  if (!gamePath) {
+    return false;
+  }
+  return statCheckSync(path.join(gamePath, BINARIES_PATH), UE4SS_FILE);
 }
 
 //Check if Signature Bypass is installed

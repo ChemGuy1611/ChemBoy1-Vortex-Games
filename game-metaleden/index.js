@@ -2,8 +2,8 @@
 Name: METAL EDEN Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.1.0
-Date: 2026-11-05
+Version: 1.1.1
+Date: 2026-11-06
 Notes:
 - The game is Unreal Engine 5.3.1 with signed IO Store containers, so the Sig Bypass is required. Steam, GOG and the Steam demo are supported; there is no Epic or Xbox build.
 - Saves live in %LOCALAPPDATA%\MetalEden\Saved\SaveGames\<user id>\FileSave, so the Save folder is the user id folder plus FileSave. A user with several user id folders gets the first one alphabetically.
@@ -1938,11 +1938,18 @@ function fallbackInstallerNotify(api, modName) {
 
 // AUTOMATIC MOD DOWNLOADERS ///////////////////////////////////////////////////
 
-//Check if UE4SS is installed
+//Check if UE4SS is installed: a UE4SS mod in Vortex, or the UE4SS proxy dll on disk (manual install)
 function isUe4ssInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some((id) => mods[id]?.type === UE4SS_ID);
+  if (Object.keys(mods).some((id) => mods[id]?.type === UE4SS_ID)) {
+    return true;
+  }
+  const gamePath = getDiscoveryPath(api);
+  if (!gamePath) {
+    return false;
+  }
+  return statCheckSync(path.join(gamePath, BINARIES_PATH), UE4SS_FILE);
 }
 
 //Check if Signature Bypass is installed
