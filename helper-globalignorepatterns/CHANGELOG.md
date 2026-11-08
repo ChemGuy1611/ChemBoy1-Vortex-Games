@@ -1,8 +1,10 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.1.0] - 2026-11-08
 
-- None Planned
+- Added: Credits, exceptions, third-party notice, READ_ME, and CHANGE-LOG files are now excluded from mod conflict detection and deployment for every game.
+- Added: Document files with README, CHANGELOG, LICENSE, CREDITS, or Patch Notes anywhere in their name, COPYING and GPL license files, PDF, Word, RTF, URL, and NFO files, and Thumbs.db, desktop.ini, and .DS_Store are now excluded from mod conflict detection and deployment for every game.
+- Fixed: Mod files whose names only begin with README, CHANGELOG, or LICENSE (for example, License_Plates.dds) are no longer skipped during deployment.
 
 ## [1.0.1] - 2026-10-25
 

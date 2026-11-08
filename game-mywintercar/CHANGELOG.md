@@ -1,5 +1,9 @@
 # Changelog
 
+## Planned Improvements (Not Yet Released)
+
+- Fixed: Mod files whose names only begin with LICENSE (for example, License_Plates.dds) are no longer skipped during deployment.
+
 ## [1.0.3] - 2026-11-01
 
 - Changed: manifest.json and icon.png files are no longer skipped during deployment.

@@ -1,5 +1,10 @@
 # template-frostbite Changelog
 
+## [2026-11-08]
+
+- Added: the `changelog` and `readme` patterns in `IGNORE_CONFLICTS` and `IGNORE_DEPLOY` also match a hyphen, underscore or space between the words (`READ_ME.txt`, `Change Log.md`), written as `change?([-_ ])log` and `read?([-_ ])me`.
+- Fixed: the `changelog*`, `readme*` and `license*` globs in `IGNORE_CONFLICTS` and `IGNORE_DEPLOY` also matched mod files that only begin with those names (`License_Plates.dds`), which `IGNORE_DEPLOY` then skipped silently. Each is now a pair: `name!(*.*)` for files with no extension and `name*.{txt,md,rtf,pdf,html,htm}` for documents.
+
 ## [2026-10-17]
 
 - Added: a `modId` field to `info.json`, directly after `gameId`, set to the `"XXX"` placeholder. `release_extension.py` replaces it with the mod id at the end of the extension's `EXTENSION_URL` when the extension is released, so a finished extension carries a number, not a string.

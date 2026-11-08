@@ -2,6 +2,11 @@
 
 Covers `template-reframework-fluffy`. Suite file: `tests/templates/reframework-fluffy.test.js`.
 
+## [2026-11-08]
+
+- Changed: the ignore list expectations follow the template's `change?([-_ ])log` and `read?([-_ ])me` patterns (see the template's changelog entry of this date).
+- Changed: the ignore list expectations follow the template replacing the `changelog*`, `readme*` and `license*` globs with document-only pairs (see the template's changelog entry of this date).
+
 ## [2026-10-12]
 
 - Changed: the template registers the "Custom Launch (Demo)" tool only when `HAS_DEMO` is true. The default-tools test now expects Fluffy and Custom Launch (2 tools) and loads a demo build to check the third, so the demo button's fields are read from the demo load instead of the default load. Suite is now 153 tests.

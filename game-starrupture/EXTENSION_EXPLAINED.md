@@ -66,6 +66,7 @@ Mod types define where each category of mod gets deployed:
 | UE4SS DLL Mod | `starrupture-ue4ssdll` | 52 | `{gamePath}/StarRupture/Binaries/Win64/ue4ss/Mods` |
 | Binaries (Engine Injector) | `starrupture-binaries` | 54 | `{gamePath}/StarRupture/Binaries/Win64` |
 | UE4SS | `starrupture-ue4ss` | 56 | `{gamePath}/StarRupture/Binaries/Win64` |
+| StarRupture Mod Loader | `starrupture-modloader` | 60 | `{gamePath}/StarRupture/Binaries/Win64` |
 | Config (Local AppData) | `starrupture-config` | 62 | `?` |
 | Saves (Local AppData) | `starrupture-save` | 64 | `?` |
 
@@ -78,7 +79,9 @@ Installers run in priority order (lower number = tested first). The first instal
 | `starrupture-ue4sscombo` | 26 |
 | `starrupture-logicmods` | 27 |
 | `starrupture-uesortablepak` | 29 |
+| `starrupture-modloader` | 30 |
 | `starrupture-ue4ss` | 31 |
+| `starrupture-modloaderplugin` | 32 |
 | `starrupture-scripts` | 35 |
 | `starrupture-ue4ssdll` | 37 |
 | `starrupture-root` | 39 |
@@ -90,6 +93,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
+- Download Mod Loader
 - Open Paks Folder
 - Open Binaries Folder
 - Open UE4SS Mods Folder

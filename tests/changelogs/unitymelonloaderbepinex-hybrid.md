@@ -2,6 +2,11 @@
 
 Covers `template-unitymelonloaderbepinex-hybrid`. Suite file: `tests/templates/unitymelonloaderbepinex-hybrid.test.js`.
 
+## [2026-11-08]
+
+- Changed: the ignore list expectations follow the template's `change?([-_ ])log` and `read?([-_ ])me` patterns (see the template's changelog entry of this date).
+- Changed: the ignore list expectations follow the template replacing the `changelog*`, `readme*` and `license*` globs with document-only pairs (see the template's changelog entry of this date).
+
 ## [2026-11-01]
 
 - Changed: the ignore list test follows the template dropping `manifest.json` and `icon.png` from `IGNORE_CONFLICTS` and `IGNORE_DEPLOY` (see the template's changelog entry of this date).

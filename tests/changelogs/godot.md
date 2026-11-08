@@ -2,6 +2,11 @@
 
 Covers `template-godot`. Suite file: `tests/templates/godot.test.js`.
 
+## [2026-11-08]
+
+- Changed: the ignore list expectations follow the template's `change?([-_ ])log` and `read?([-_ ])me` patterns (see the template's changelog entry of this date).
+- Changed: the ignore list expectations follow the template replacing the `changelog*`, `readme*` and `license*` globs with document-only pairs (see the template's changelog entry of this date).
+
 ## [2026-11-01]
 
 - Note: the template now splits installer paths on `path.sep`. The suite already passes native paths, so it is unchanged.

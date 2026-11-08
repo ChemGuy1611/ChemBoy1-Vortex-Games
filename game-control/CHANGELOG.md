@@ -1,5 +1,9 @@
 # Changelog
 
+## Planned Improvements (Not Yet Released)
+
+- Fixed: Mod files whose names only begin with LICENSE (for example, License_Plates.dds) are no longer skipped during deployment.
+
 ## [2.1.2] - 2026-10-25
 
 - Added the Nexus mod ID to the extension info.

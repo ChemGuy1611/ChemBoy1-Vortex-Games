@@ -70,14 +70,20 @@ const EXTENSION_URL = "https://www.nexusmods.com/site/mods/906"; //Nexus link to
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Shadow_of_the_Tomb_Raider";
 const STEAMDB_URL = `https://steamdb.info/app/${STEAMAPP_ID}/`;
 const IGNORE_CONFLICTS = [
-  path.join("**", "changelog*"),
-  path.join("**", "readme*"),
-  path.join("**", "license*"),
+  path.join("**", "change?([-_ ])log!(*.*)"),
+  path.join("**", "change?([-_ ])log*.{txt,md,rtf,pdf,html,htm}"),
+  path.join("**", "read?([-_ ])me!(*.*)"),
+  path.join("**", "read?([-_ ])me*.{txt,md,rtf,pdf,html,htm}"),
+  path.join("**", "license!(*.*)"),
+  path.join("**", "license*.{txt,md,rtf,pdf,html,htm}"),
 ];
 const IGNORE_DEPLOY = [
-  path.join("**", "changelog*"),
-  path.join("**", "readme*"),
-  path.join("**", "license*"),
+  path.join("**", "change?([-_ ])log!(*.*)"),
+  path.join("**", "change?([-_ ])log*.{txt,md,rtf,pdf,html,htm}"),
+  path.join("**", "read?([-_ ])me!(*.*)"),
+  path.join("**", "read?([-_ ])me*.{txt,md,rtf,pdf,html,htm}"),
+  path.join("**", "license!(*.*)"),
+  path.join("**", "license*.{txt,md,rtf,pdf,html,htm}"),
 ];
 const spec = {
   game: {

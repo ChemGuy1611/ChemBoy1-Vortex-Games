@@ -418,14 +418,20 @@ describe("template-unitymelonloaderbepinex-hybrid: game definition", () => {
     assert.deepEqual(ignoreConflicts, [
       sep("**", "manifest.json"),
       sep("**", "icon.png"),
-      sep("**", "changelog*"),
-      sep("**", "readme*"),
-      sep("**", "license*"),
+      sep("**", "change?([-_ ])log!(*.*)"),
+      sep("**", "change?([-_ ])log*.{txt,md,rtf,pdf,html,htm}"),
+      sep("**", "read?([-_ ])me!(*.*)"),
+      sep("**", "read?([-_ ])me*.{txt,md,rtf,pdf,html,htm}"),
+      sep("**", "license!(*.*)"),
+      sep("**", "license*.{txt,md,rtf,pdf,html,htm}"),
     ]);
     assert.deepEqual(ignoreDeploy, [
-      sep("**", "changelog*"),
-      sep("**", "readme*"),
-      sep("**", "license*"),
+      sep("**", "change?([-_ ])log!(*.*)"),
+      sep("**", "change?([-_ ])log*.{txt,md,rtf,pdf,html,htm}"),
+      sep("**", "read?([-_ ])me!(*.*)"),
+      sep("**", "read?([-_ ])me*.{txt,md,rtf,pdf,html,htm}"),
+      sep("**", "license!(*.*)"),
+      sep("**", "license*.{txt,md,rtf,pdf,html,htm}"),
     ]);
   });
 

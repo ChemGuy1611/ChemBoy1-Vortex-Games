@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0] - 2026-11-08
+
+- Added: Support for the StarRupture Mod Loader and its plugins. Plugins now install into the loader's folder, and the loader is no longer mistaken for UE4SS. Reinstall the loader and any plugins you already have.
+- Added: A Download Mod Loader button on the Mods page.
+- Fixed: Mod files whose names only begin with README, CHANGELOG, or LICENSE (for example, License_Plates.dds) are no longer skipped during deployment.
+- Added: README and CHANGELOG files spelled with a hyphen, underscore, or space (for example, READ_ME.txt or Change Log.md) are now excluded from mod conflict detection and deployment.
+
 ## [1.1.1] - 2026-11-06
 
 - Fixed: A UE4SS installed manually (outside Vortex) is now detected, so the UE4SS and LogicMods load orders and the UE4SS settings update work with it.

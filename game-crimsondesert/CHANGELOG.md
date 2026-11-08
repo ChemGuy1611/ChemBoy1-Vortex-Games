@@ -1,5 +1,10 @@
 # Changelog
 
+## Planned Improvements (Not Yet Released)
+
+- Fixed: Mod files whose names only begin with README, CHANGELOG, or LICENSE (for example, License_Plates.dds) are no longer skipped during deployment.
+- Added: README and CHANGELOG files spelled with a hyphen, underscore, or space (for example, READ_ME.txt or Change Log.md) are now excluded from mod conflict detection and deployment.
+
 ## [1.1.0] - 2026-10-29
 
 - Fixed: JSON patch mods, and mods that include both a plugin and a "00XX" folder, now install into their own folder inside "mods" instead of directly into it.

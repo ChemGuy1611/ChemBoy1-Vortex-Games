@@ -304,7 +304,8 @@ const IGNORE_CONFLICTS = [
   path.join("**", "README.txt"),
   path.join("**", "ReadMe.txt"),
   path.join("**", "Readme.txt"),
-  path.join("**", "license*"),
+  path.join("**", "license!(*.*)"),
+  path.join("**", "license*.{txt,md,rtf,pdf,html,htm}"),
 ];
 const IGNORE_DEPLOY = [
   path.join("**", "CHANGELOG.md"),
@@ -312,7 +313,8 @@ const IGNORE_DEPLOY = [
   path.join("**", "README.txt"),
   path.join("**", "ReadMe.txt"),
   path.join("**", "Readme.txt"),
-  path.join("**", "license*"),
+  path.join("**", "license!(*.*)"),
+  path.join("**", "license*.{txt,md,rtf,pdf,html,htm}"),
 ];
 //had to split BepInEx and Plugins folders into separate write check since MSCLoader author is a special kind of individual
 let MODTYPE_FOLDERS = [ASSEMBLY_PATH, MSCLOADER_PLUGIN_PATH, TEXTUREPACK_PATH];

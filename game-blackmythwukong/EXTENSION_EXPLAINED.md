@@ -74,6 +74,7 @@ Mod types define where each category of mod gets deployed:
 | UE4SS DLL Mod | `blackmythwukong-ue4ssdll` | 52 | `{gamePath}/b1/Binaries/Win64/ue4ss/Mods` |
 | Binaries (Engine Injector) | `blackmythwukong-binaries` | 54 | `{gamePath}/b1/Binaries/Win64` |
 | UE4SS | `blackmythwukong-ue4ss` | 56 | `{gamePath}/b1/Binaries/Win64` |
+| CSharpLoader Mod | `blackmythwukong-csharploader` | 60 | `{gamePath}/b1/Binaries/Win64/CSharpLoader` |
 | Sig Bypass | `blackmythwukong-sigbypass` | 58 | `{gamePath}/b1/Binaries/Win64` |
 | Config (Local AppData) | `blackmythwukong-config` | 62 | `?` |
 | Saves (Game Folder) | `blackmythwukong-save` | 64 | `?` |
@@ -86,6 +87,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | --- | --- |
 | `blackmythwukong-ue4sscombo` | 26 |
 | `blackmythwukong-logicmods` | 27 |
+| `blackmythwukong-csharploader` | 28 |
 | `blackmythwukong-ue5-sortable-modtype` | 29 |
 | `blackmythwukong-ue4ss` | 31 |
 | `blackmythwukong-sigbypass` | 33 |

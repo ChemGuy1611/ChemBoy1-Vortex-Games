@@ -1,0 +1,48 @@
+This Vortex extension allows you to avoid common file conflicts from readmes, changelogs, license files, credits, and similar documents in all games you manage with Vortex.
+
+Just install the extension and it works silently in the background. Matching files are never flagged as conflicts and are not deployed to the game folder. They stay in the mod's staging folder, so you can still read them.
+
+[b]Documents with any of these in the file name:[/b]
+[list]
+[*]"readme"[/*]
+[*]"changelog" (also "change log", "change_log", and "change-log")[/*]
+[*]"license" or "licence"[/*]
+[*]"credit"[/*]
+[*]"patch notes" (also "patch_notes", "patch-notes", and "patchnotes")[/*]
+[/list]
+
+[b]Documents with these names:[/b]
+[list]
+[*]Names starting with "read me", "read_me", or "read-me"[/*]
+[*]Names starting with "gpl-"[/*]
+[*]COPYING[/*]
+[*]EXCEPTIONS and CommonLibSSE-NG-EXCEPTIONS[/*]
+[*]NOTICE and Notices[/*]
+[*]Third-party notices and third-party licenses, with or without a hyphen, underscore, or space[/*]
+[/list]
+
+Documents are files ending in .txt, .md, .rtf, .pdf, .html, .htm, .doc, .docx, .url, or .nfo.
+
+[b]Files with no extension:[/b]
+[list]
+[*]Names starting with "readme", "read me", "changelog", "change log", or "license"[/*]
+[*]COPYING, NOTICE, and NOTICES[/*]
+[/list]
+
+[b]These file types, whatever the name:[/b]
+[list]
+[*]PDF (.pdf)[/*]
+[*]Word (.doc and .docx)[/*]
+[*]Rich text (.rtf)[/*]
+[*]Internet shortcuts (.url)[/*]
+[*]Info files (.nfo)[/*]
+[/list]
+
+[b]System files:[/b]
+[list]
+[*]Thumbs.db[/*]
+[*]desktop.ini[/*]
+[*].DS_Store[/*]
+[/list]
+
+Mod files that only start with one of these words, such as License_Plates.dds, are still deployed.

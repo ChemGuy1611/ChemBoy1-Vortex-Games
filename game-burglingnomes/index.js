@@ -566,7 +566,8 @@ const IGNORE_CONFLICTS = [
   path.join("**", "README.txt"),
   path.join("**", "ReadMe.txt"),
   path.join("**", "Readme.txt"),
-  path.join("**", "license*"),
+  path.join("**", "license!(*.*)"),
+  path.join("**", "license*.{txt,md,rtf,pdf,html,htm}"),
 ];
 const IGNORE_DEPLOY = [
   path.join("**", "CHANGELOG.md"),
@@ -574,7 +575,8 @@ const IGNORE_DEPLOY = [
   path.join("**", "README.txt"),
   path.join("**", "ReadMe.txt"),
   path.join("**", "Readme.txt"),
-  path.join("**", "license*"),
+  path.join("**", "license!(*.*)"),
+  path.join("**", "license*.{txt,md,rtf,pdf,html,htm}"),
 ];
 //setup() calls ensureDirWritable on every entry, which CREATES them - so a folder listed here for a
 //loader the game cannot run leaves junk directories in the game install.

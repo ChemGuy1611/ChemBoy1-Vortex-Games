@@ -12,7 +12,9 @@ This extension adds StarRupture modding support to Vortex Mod Manager.
 [*]UE4SS Script-LogicMod Combo mods with both a "Content" and a "Binaries" folder install to the "StarRupture" folder.[/*]
 [*]UE4SS LogicMods (Blueprint) mods with a "LogicMods" folder install to the "StarRupture\Content\Paks\LogicMods" folder.[/*]
 [*]UE Sortable Pak mods with a ".pak" file install to the "StarRupture\Content\Paks\~mods" folder.[/*]
+[*]StarRupture Mod Loader installs to the "StarRupture\Binaries\Win64" folder.[/*]
 [*]UE4SS installs to the "StarRupture\Binaries\Win64" folder, recognised by a "dwmapi.dll" file.[/*]
+[*]Binaries (Engine Injector) mods install to the "StarRupture\Binaries\Win64" folder.[/*]
 [*]UE4SS Script mods with a ".lua" file and a "Scripts" folder install to the "StarRupture\Binaries\Win64\ue4ss\Mods" folder.[/*]
 [*]UE4SS DLL mods with a ".dll" file and a "dlls" folder install to the "StarRupture\Binaries\Win64\ue4ss\Mods" folder.[/*]
 [*]Root Folder mods with a top-level folder such as "StarRupture", "Engine" or "Content" install to the game folder.[/*]
@@ -119,6 +121,14 @@ MyPakMod.zip
 
 ========================================================================
 
+StarRupture Mod Loader:
+
+Handled by the "testModLoader" installer. Inspect the extension source for the exact archive layout it expects.
+
+  Installs to: "StarRupture\Binaries\Win64"
+
+========================================================================
+
 UE4SS:
 
 This installer handles the UE4SS runtime package, not individual mods. Most authors never need it - it exists so users can install UE4SS through Vortex.
@@ -131,6 +141,14 @@ This installer handles the UE4SS runtime package, not individual mods. Most auth
 
   Common mistakes:
     - If your script mod archive happens to contain a file named "dwmapi.dll", it will be treated as a UE4SS install rather than as your mod.
+
+========================================================================
+
+Mod Loader Plugin:
+
+Handled by the "testModLoaderPlugin" installer. Inspect the extension source for the exact archive layout it expects.
+
+  Installs to: "StarRupture\Binaries\Win64"
 
 ========================================================================
 

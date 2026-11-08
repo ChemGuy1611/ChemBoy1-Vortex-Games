@@ -2,8 +2,8 @@
 Name: Global Ignore Patterns Helper Extension
 Structure: Utility Extension (global helper, no target game)
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-10-25
+Version: 1.1.0
+Date: 2026-11-08
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -16,13 +16,33 @@ const EXTENSION_NAME = "Global Ignore Patterns Helper";
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/2381";
 
 // Glob patterns applied to every known game's ignoreConflicts/ignoreDeploy.
-// Matches the readme*/changelog* convention already baked into every
-// game-*/template-* index.js, plus license* which this extension adds
-// globally so per-extension files never need to carry it themselves.
+// Vortex matches these case-insensitively. Each document name uses two patterns:
+// the name followed by anything without a dot, and the name followed by anything
+// ending in a document extension, so that a mod file that only begins with the
+// name (License_Plates.dds) still deploys. A leading * also catches names that only
+// contain the word (SMIM Readme.txt). The notice names below are exact apart from
+// the extension and the word separator, and only this extension carries them, along
+// with the document and system file types. [-_ ] is a hyphen, underscore or space,
+// and ?([-_ ]) also allows no separator.
+const DOC_EXTS = "{txt,md,rtf,pdf,html,htm,doc,docx,url,nfo}";
 const PATTERNS = [
-  path.join("**", "changelog*"),
-  path.join("**", "readme*"),
-  path.join("**", "license*"),
+  path.join("**", "change?([-_ ])log!(*.*)"),
+  path.join("**", `*change?([-_ ])log*.${DOC_EXTS}`),
+  path.join("**", "read?([-_ ])me!(*.*)"),
+  path.join("**", `read?([-_ ])me*.${DOC_EXTS}`),
+  path.join("**", `*readme*.${DOC_EXTS}`),
+  path.join("**", "license!(*.*)"),
+  path.join("**", `*licen[cs]e*.${DOC_EXTS}`),
+  path.join("**", `copying{,.${DOC_EXTS}}`),
+  path.join("**", `gpl-*.${DOC_EXTS}`),
+  path.join("**", `*credit*.${DOC_EXTS}`),
+  path.join("**", `*patch?([-_ ])notes*.${DOC_EXTS}`),
+  path.join("**", "*.{pdf,doc,docx,rtf,url,nfo}"),
+  path.join("**", "{Thumbs.db,desktop.ini,.DS_Store}"),
+  path.join("**", `CommonLibSSE[-_ ]NG[-_ ]EXCEPTIONS.${DOC_EXTS}`),
+  path.join("**", `EXCEPTIONS.${DOC_EXTS}`),
+  path.join("**", `NOTICE{,S}{,.${DOC_EXTS}}`),
+  path.join("**", `THIRD?([-_ ])PARTY?([-_ ]){NOTICES,LICENSES}.${DOC_EXTS}`),
 ];
 
 const IGNORE_KEYS = ["ignoreConflicts", "ignoreDeploy"];

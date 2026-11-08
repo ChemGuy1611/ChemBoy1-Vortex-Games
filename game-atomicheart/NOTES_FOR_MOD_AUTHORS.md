@@ -17,6 +17,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Root / Game Folder Mods | a top-level folder such as `AtomicHeart`, `Engine` or `Content` | the game folder |
 | Config File Mods | a config file such as `engine.ini` or `game.ini` | the game's config folder |
 | Save Game Files | a `.sav` file | the game's save folder |
+| GameTune Override | - | `AtomicHeart\Content\GameTune` |
 | Fallback Installer | anything not matched above with no pak file | `AtomicHeart\Binaries\Win64` |
 
 Paths are relative to the game's install folder. Config and save folders are in your user profile, not the game's install folder.
@@ -209,6 +210,12 @@ Installs to: the game's save folder
 **Common mistakes:**
 
 - Including an example save alongside a normal mod - the archive is then treated as a save, not a mod.
+
+## GameTune Override
+
+Handled by the `testGameTune` installer. Inspect the extension source for the exact archive layout it expects.
+
+Installs to: `AtomicHeart\Content\GameTune`
 
 ## Fallback Installer
 

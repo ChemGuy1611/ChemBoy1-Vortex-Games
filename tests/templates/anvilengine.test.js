@@ -33,9 +33,12 @@ const copy = (source, destination) => ({ type: "copy", source, destination });
 const modType = (value) => ({ type: "setmodtype", value });
 const RENAME = "RENAME_ME_TO_FORGE_NAME.forge";
 const GLOBS = [
-  path.join("**", "changelog*"),
-  path.join("**", "readme*"),
-  path.join("**", "license*"),
+  path.join("**", "change?([-_ ])log!(*.*)"),
+  path.join("**", "change?([-_ ])log*.{txt,md,rtf,pdf,html,htm}"),
+  path.join("**", "read?([-_ ])me!(*.*)"),
+  path.join("**", "read?([-_ ])me*.{txt,md,rtf,pdf,html,htm}"),
+  path.join("**", "license!(*.*)"),
+  path.join("**", "license*.{txt,md,rtf,pdf,html,htm}"),
 ];
 
 const flags = (...names) => all(...names.map((name) => setConst(name, "true")));

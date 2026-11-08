@@ -2,8 +2,8 @@
 Name: Black Myth Wukong Vortex Extension
 Structure: UE5
 Author: ChemBoy1
-Version: 1.1.1
-Date: 2026-11-06
+Version: 1.2.0
+Date: 2026-11-08
 Notes:
 - SigBypass and UE4SS both install from this game's own Nexus page, not the universal SigBypass page
 - Save data lives inside the game install folder, not Local AppData
@@ -365,6 +365,21 @@ const UE4SS_NATIVE_MODS = [
   "SplitScreenMod",
 ];
 const ENABLEDTXT_FILE = "enabled.txt";
+
+//CSharpLoader and ProtobufLoader mods (the loaders themselves ship the full game path and use the root installer)
+const CSHARPLOADER_ID = `${GAME_ID}-csharploader`;
+const CSHARPLOADER_NAME = "CSharpLoader Mod";
+const CSHARPLOADER_FOLDER = "CSharpLoader"; //inside the Binaries folder, joined where used because that folder can change at discovery
+const CSHARPLOADER_MODS_FOLDER = "Mods";
+const PROTOBUFLOADER_FOLDER = "ProtobufLoader";
+const CSHARPLOADER_FOLDERS = [CSHARPLOADER_FOLDER];
+const PROTOBUFLOADER_FOLDERS = [PROTOBUFLOADER_FOLDER];
+const CSHARPLOADER_SKIP_FOLDERS = [EPIC_CODE_NAME]; //full game path archives stay with the root installer
+const PROTOBUF_DATA_EXTS = [".data"];
+const PROTOBUF_DOC_EXTS = [".txt", ".md", ".jpg", ".jpeg", ".png", ".webp"]; //may sit beside .data files, never installed
+const CSHARPMOD_EXTS = [".dll"];
+const CSHARPMOD_EXCLUDE_FOLDERS = [DLL_FOLDER, SCRIPTS_FOLDER, UE4SS_FOLDER, "Binaries", "Content"]; //a dll named after its folder is not a C# mod if the archive has one of these
+const CSHARPMOD_EXCLUDE_FILES = [ENABLEDTXT_FILE, UE4SS_FILE, UE4SS_PLUGIN]; //same, for these files
 const UE4SS_ICON =
   "M12 0c-6.5745 0-11.899 5.371-11.899 12s5.324 12 11.899 12c6.57 0 11.899-5.371 11.899-12s-5.328-12-11.903-12zM12 0.527c3.035 0 5.894 1.196 8.043 3.359 2.144 2.156 3.34 5.075 3.332 8.114 0 3.062-1.184 5.945-3.332 8.114-2.121 2.153-5.02 3.363-8.043 3.359-3.023 0.004-5.922-1.207-8.043-3.359-2.144-2.156-3.344-5.075-3.336-8.114 0-3.062 1.187-5.945 3.332-8.114 2.121-2.156 5.024-3.368 8.047-3.359zM11.402 4.75c-1.937 0.52-3.731 1.516-6.121 4.258s-1.937 5.008-1.937 5.008c0 0 0.66-1.559 2.246-3.2 0.754-0.777 1.313-1.039 1.7-1.039 0.344-0.02 0.633 0.258 0.633 0.602v5.567c0 0.551-0.356 0.672-0.683 0.664-0.278-0.004-0.536-0.101-0.536-0.101 1.629 2.367 5.528 2.699 5.528 2.699l1.711-1.829 0.039 0.035 1.567 1.336c2.867-1.703 4.25-4.859 4.25-4.859-1.281 1.352-2.094 1.668-2.579 1.668-0.43-0.004-0.598-0.254-0.598-0.254-0.023-0.117-0.062-1.813-0.078-3.508-0.016-1.754 0-3.512 0.086-3.516 0.496-0.93 2.075-2.805 2.075-2.805-2.949 0.582-4.555 2.516-4.555 2.516-0.476-0.375-1.445-0.313-1.445-0.313 0.453 0.25 0.906 0.977 0.906 1.578v5.922c0 0-0.989 0.871-1.75 0.871-0.453 0-0.731-0.246-0.883-0.449-0.059-0.078-0.11-0.164-0.149-0.258v-7.313c-0.106 0.078-0.235 0.121-0.363 0.125-0.164 0-0.332-0.082-0.446-0.32-0.086-0.18-0.141-0.449-0.141-0.844 0-1.348 1.523-2.243 1.523-2.243z";
 const BLUEPRINT_ICON =
@@ -432,14 +447,20 @@ const REQ_FILE = EPIC_CODE_NAME;
 const PARAMETERS = [PARAMETERS_STRING];
 
 const IGNORE_CONFLICTS = [
-  path.join("**", "changelog*"),
-  path.join("**", "readme*"),
-  path.join("**", "license*"),
+  path.join("**", "change?([-_ ])log!(*.*)"),
+  path.join("**", "change?([-_ ])log*.{txt,md,rtf,pdf,html,htm}"),
+  path.join("**", "read?([-_ ])me!(*.*)"),
+  path.join("**", "read?([-_ ])me*.{txt,md,rtf,pdf,html,htm}"),
+  path.join("**", "license!(*.*)"),
+  path.join("**", "license*.{txt,md,rtf,pdf,html,htm}"),
 ];
 const IGNORE_DEPLOY = [
-  path.join("**", "changelog*"),
-  path.join("**", "readme*"),
-  path.join("**", "license*"),
+  path.join("**", "change?([-_ ])log!(*.*)"),
+  path.join("**", "change?([-_ ])log*.{txt,md,rtf,pdf,html,htm}"),
+  path.join("**", "read?([-_ ])me!(*.*)"),
+  path.join("**", "read?([-_ ])me*.{txt,md,rtf,pdf,html,htm}"),
+  path.join("**", "license!(*.*)"),
+  path.join("**", "license*.{txt,md,rtf,pdf,html,htm}"),
 ];
 let MODTYPE_FOLDERS = [PAK_PATH, PAK_ALT_PATH];
 if (ue4ssLoadOrder) {
@@ -1440,6 +1461,110 @@ async function installDll(api, files, fileName) {
   });
   instructions.push(setModTypeInstruction);
   instructions.push(MOD_ATTRIBUTE);
+  return Promise.resolve({ instructions });
+}
+
+//Work out where a CSharpLoader or ProtobufLoader mod's files go inside the CSharpLoader folder.
+//Returns a function giving each file's destination (undefined leaves the file out), or undefined
+//when the archive is not one of these mods.
+function getCSharpLoaderDestination(files) {
+  const lower = (list) => list.map((str) => str.toLowerCase());
+  const segments = (file) => file.toLowerCase().split(path.sep);
+  const folders = (file) => segments(file).slice(0, -1);
+  const ext = (file) => path.extname(file).toLowerCase();
+  const paths = files.filter((file) => !file.endsWith(path.sep));
+  const skipFolders = lower(CSHARPLOADER_SKIP_FOLDERS);
+  if (
+    paths.length === 0 ||
+    paths.some(
+      (file) =>
+        PAKMOD_EXTS.includes(ext(file)) || folders(file).some((seg) => skipFolders.includes(seg)),
+    )
+  ) {
+    return undefined;
+  }
+
+  //Keep everything below a named folder, under the given destination folders
+  const fromFolder = (names, destFolders) => {
+    const wanted = lower(names);
+    if (!paths.some((file) => folders(file).some((seg) => wanted.includes(seg)))) return undefined;
+    return (file) => {
+      const idx = folders(file).findIndex((seg) => wanted.includes(seg));
+      return idx === -1
+        ? undefined
+        : path.join(...destFolders, ...file.split(path.sep).slice(idx + 1));
+    };
+  };
+  const protobufFolders = [CSHARPLOADER_MODS_FOLDER, PROTOBUFLOADER_FOLDER];
+  const named =
+    fromFolder(CSHARPLOADER_FOLDERS, []) ?? fromFolder(PROTOBUFLOADER_FOLDERS, protobufFolders);
+  if (named !== undefined) return named;
+
+  //Bare Protobuf mod: .data files in their own folder
+  const payload = paths.filter((file) => !PROTOBUF_DOC_EXTS.includes(ext(file)));
+  if (
+    payload.length > 0 &&
+    payload.every((file) => PROTOBUF_DATA_EXTS.includes(ext(file)) && path.dirname(file) !== ".")
+  ) {
+    return (file) =>
+      PROTOBUF_DATA_EXTS.includes(ext(file))
+        ? path.join(...protobufFolders, path.basename(path.dirname(file)), path.basename(file))
+        : undefined;
+  }
+
+  //Bare C# mod: a dll named after the folder it sits in
+  const excludeFolders = lower(CSHARPMOD_EXCLUDE_FOLDERS);
+  const excludeFiles = lower(CSHARPMOD_EXCLUDE_FILES);
+  const isExcluded = paths.some(
+    (file) =>
+      folders(file).some((seg) => excludeFolders.includes(seg)) ||
+      excludeFiles.includes(path.basename(file).toLowerCase()),
+  );
+  const modDll = paths.find(
+    (file) =>
+      CSHARPMOD_EXTS.includes(ext(file)) &&
+      path.basename(file, path.extname(file)).toLowerCase() ===
+        path.basename(path.dirname(file)).toLowerCase(),
+  );
+  if (isExcluded || modDll === undefined) return undefined;
+  const modFolder = path.dirname(modDll);
+  const prefix = modFolder + path.sep;
+  return (file) =>
+    file.startsWith(prefix)
+      ? path.join(CSHARPLOADER_MODS_FOLDER, path.basename(modFolder), file.slice(prefix.length))
+      : undefined;
+}
+
+//Test for CSharpLoader and ProtobufLoader mod files
+function testCSharpLoader(files, gameId) {
+  let supported = gameId === spec.game.id && getCSharpLoaderDestination(files) !== undefined;
+
+  // Test for a mod installer
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install CSharpLoader and ProtobufLoader mod files
+function installCSharpLoader(files) {
+  const getDestination = getCSharpLoaderDestination(files);
+  const instructions = files
+    .filter((file) => !file.endsWith(path.sep))
+    .map((file) => ({ type: "copy", source: file, destination: getDestination(file) }))
+    .filter((instruction) => instruction.destination !== undefined);
+  instructions.push({ type: "setmodtype", value: CSHARPLOADER_ID });
   return Promise.resolve({ instructions });
 }
 
@@ -3222,6 +3347,7 @@ async function setup(discovery, api, gameSpec) {
     }
   }
   MODTYPE_FOLDERS.push(BINARIES_PATH);
+  MODTYPE_FOLDERS.push(path.join(BINARIES_PATH, CSHARPLOADER_FOLDER));
   await migrateLogicModsLayout(api).catch((err) =>
     log("warn", `[${GAME_ID}] migrateLogicModsLayout failed, retrying next activation`, err),
   );
@@ -3460,6 +3586,18 @@ function applyGame(context, gameSpec) {
     );
   }
 
+  //register CSharpLoader modtype
+  context.registerModType(
+    CSHARPLOADER_ID,
+    60,
+    (gameId) =>
+      gameId === GAME_ID && !!context.api.getState().settings.gameMode.discovered[gameId]?.path,
+    (game) =>
+      pathPattern(context.api, game, path.join("{gamePath}", BINARIES_PATH, CSHARPLOADER_FOLDER)),
+    () => Promise.resolve(false),
+    { name: CSHARPLOADER_NAME },
+  );
+
   //register sigbypass modtype
   if (SIGBYPASS_REQUIRED === true) {
     context.registerModType(
@@ -3526,6 +3664,7 @@ function applyGame(context, gameSpec) {
   if (ue4ssLoadOrder) {
     context.registerInstaller(LOGICMODS_ID, 27, testLogic, installLogic);
   }
+  context.registerInstaller(CSHARPLOADER_ID, 28, testCSharpLoader, installCSharpLoader);
   context.registerInstaller(UE5_SORTABLE_ID, 29, testPak, (files) =>
     installPak(context.api, files),
   ); //Pak installer

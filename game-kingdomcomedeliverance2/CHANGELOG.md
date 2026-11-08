@@ -3,6 +3,8 @@
 ## Planned Improvements (Not Yet Released)
 
 - Changed launcher settings so that Steam version launches through Steam (so that Steam launch arguments are used).
+- Fixed: Mod files whose names only begin with README, CHANGELOG, or LICENSE (for example, License_Plates.dds) are no longer skipped during deployment.
+- Added: README and CHANGELOG files spelled with a hyphen, underscore, or space (for example, READ_ME.txt or Change Log.md) are now excluded from mod conflict detection and deployment.
 
 ## [1.1.2] - 2026-10-25
 

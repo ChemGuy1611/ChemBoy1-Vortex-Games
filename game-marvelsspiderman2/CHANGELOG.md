@@ -1,5 +1,10 @@
 # Changelog
 
+## Planned Improvements (Not Yet Released)
+
+- Fixed: Mod files whose names only begin with README, CHANGELOG, or LICENSE (for example, License_Plates.dds) are no longer skipped during deployment.
+- Added: README and CHANGELOG files spelled with a hyphen, underscore, or space (for example, READ_ME.txt or Change Log.md) are now excluded from mod conflict detection and deployment.
+
 ## [1.1.0] - 2026-10-18
 
 - Added: A notification with a "TOC Reset" button now appears when Vortex detects a game update (requires a Vortex version that reports game updates to extensions).

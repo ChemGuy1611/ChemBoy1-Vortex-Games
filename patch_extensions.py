@@ -69,7 +69,8 @@ from vortex_utils import (
     is_placeholder_value, replace_const_rhs, print_count_summary, js_string_literal,
     strip_js_comments, is_real_value,
     audit_skip_lines, store_id_skip_reason, is_store_id_parked, AUDIT_SKIP_STORE_ID, AUDIT_SKIP_FOMOD, AUDIT_SKIP_PRIORITY,
-    find_registerinstaller_calls, node_check_source, read_index_js,
+    find_registerinstaller_calls, node_check_source, read_index_js, ignore_doc_glob_calls,
+    IGNORE_DOC_STEMS,
 )
 NEXUS_SITE_BASE = "https://www.nexusmods.com/site/mods"
 
@@ -627,11 +628,12 @@ def patch_ignore_conflicts_deploy_constants(game_id, src, context):
     if not missing_conflicts and not missing_deploy:
         return src, False, SKIP_ALREADY_SET
 
+    globs = ", ".join(ignore_doc_glob_calls("changelog", "'") + ignore_doc_glob_calls("readme", "'"))
     lines = []
     if missing_conflicts:
-        lines.append("const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];")
+        lines.append(f"const IGNORE_CONFLICTS = [{globs}];")
     if missing_deploy:
-        lines.append("const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];")
+        lines.append(f"const IGNORE_DEPLOY = [{globs}];")
 
     insert_block = "\n".join(lines) + "\n"
     m = re.search(r'^const\s+spec\s*=\s*\{', src, re.MULTILINE)
@@ -757,7 +759,7 @@ IGNORE_ARRAY_RE = re.compile(
 
 def patch_license_ignore_pattern(game_id, src, context):
     """
-    Add a license* glob as a new trailing entry in IGNORE_CONFLICTS/IGNORE_DEPLOY,
+    Add the license document globs as new trailing entries in IGNORE_CONFLICTS/IGNORE_DEPLOY,
     wherever that array literal already exists - the majority readme*/changelog*
     glob shape (single- and multi-line) AND the minority literal-cased shape
     (readme.txt/README.txt/etc, e.g. game-vein/game-aska). Canonical:
@@ -775,7 +777,7 @@ def patch_license_ignore_pattern(game_id, src, context):
 
         quote_m = re.search(r'(["\'])', body)
         q = quote_m.group(1) if quote_m else '"'
-        entry_call = f'path.join({q}**{q}, {q}license*{q})'
+        entry_calls = ignore_doc_glob_calls("license", q)
 
         if '\n' in body:
             lines = body.rstrip().split('\n')
@@ -784,12 +786,12 @@ def patch_license_ignore_pattern(game_id, src, context):
             new_body = body.rstrip()
             if not new_body.endswith(','):
                 new_body += ','
-            new_body += f'\n{indent}{entry_call},\n'
+            new_body += ''.join(f'\n{indent}{call},' for call in entry_calls) + '\n'
         else:
             new_body = body.rstrip()
             if new_body.endswith(','):
                 new_body = new_body[:-1]
-            new_body = new_body + f', {entry_call}'
+            new_body = new_body + ', ' + ', '.join(entry_calls)
 
         changed_arrays.append(m.group(1))
         return f'const {m.group(1)} = [{new_body}]'
@@ -801,7 +803,47 @@ def patch_license_ignore_pattern(game_id, src, context):
             return src, False, SKIP_ALREADY_SET
         return src, False, "no IGNORE_CONFLICTS/IGNORE_DEPLOY array found"
 
-    return new_src, True, f"added license* glob to {', '.join(changed_arrays)}"
+    return new_src, True, f"added license globs to {', '.join(changed_arrays)}"
+
+
+BROAD_IGNORE_GLOB_RE = re.compile(r'''path\.join\((["'])\*\*\1,\s*\1(changelog|readme|license)\*\1\)''')
+NO_SEPARATOR_DOC_GLOB_RE = re.compile(r'''(["'])(changelog|readme)(!\(\*\.\*\)|\*\.\{txt,md,rtf,pdf,html,htm\})\1''')
+
+
+def patch_narrow_ignore_globs(game_id, src, context):
+    """
+    Replace broad changelog*/readme*/license* ignore globs with document-only pairs.
+    A bare name* glob also matches mod files that only begin with the name
+    (License_Plates.dds), which ignoreDeploy then silently skips. Each one becomes the
+    ignore_doc_glob_calls pair, in place, keeping quote style and multi-line indentation.
+    A changelog/readme pair written without the separator class is upgraded to the
+    current stem. Only IGNORE_CONFLICTS/IGNORE_DEPLOY arrays are touched; literal entries
+    such as readme.txt are left alone. Safe to re-run.
+    """
+    changed_arrays = []
+
+    def _process_array(m):
+        body = m.group('body')
+
+        def _expand(entry):
+            line_start = body.rfind('\n', 0, entry.start()) + 1
+            prefix = body[line_start:entry.start()]
+            sep = f'\n{prefix}' if line_start and not prefix.strip() else ' '
+            return f',{sep}'.join(ignore_doc_glob_calls(entry.group(2), entry.group(1)))
+
+        new_body = BROAD_IGNORE_GLOB_RE.sub(_expand, body)
+        new_body = NO_SEPARATOR_DOC_GLOB_RE.sub(
+            lambda e: f'{e.group(1)}{IGNORE_DOC_STEMS[e.group(2)]}{e.group(3)}{e.group(1)}', new_body
+        )
+        if new_body == body:
+            return m.group(0)
+        changed_arrays.append(m.group(1))
+        return f'const {m.group(1)} = [{new_body}]'
+
+    new_src = IGNORE_ARRAY_RE.sub(_process_array, src)
+    if not changed_arrays:
+        return src, False, SKIP_ALREADY_SET
+    return new_src, True, f"narrowed globs in {', '.join(changed_arrays)}"
 
 
 def patch_findgame_launcher_async(game_id, src, context):
@@ -1793,6 +1835,7 @@ PATCHES = [
     {"name": "ignore_conflicts_deploy_constants","enabled": True, "fn": patch_ignore_conflicts_deploy_constants},
     {"name": "spec_ignore_fields",              "enabled": True, "fn": patch_spec_ignore_fields},
     {"name": "license_ignore_pattern",           "enabled": True, "fn": patch_license_ignore_pattern},
+    {"name": "narrow_ignore_globs",              "enabled": False,"fn": patch_narrow_ignore_globs},
     {"name": "findgame_launcher_async",          "enabled": True, "fn": patch_findgame_launcher_async},
     {"name": "extension_url",                    "enabled": True, "fn": patch_extension_url},
     {"name": "pcgamingwiki_url",                 "enabled": True, "fn": patch_pcgamingwiki_url},

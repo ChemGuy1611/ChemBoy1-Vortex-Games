@@ -2,6 +2,11 @@
 
 Covers `template-anvilengine`. Suite file: `tests/templates/anvilengine.test.js`.
 
+## [2026-11-08]
+
+- Changed: the ignore list expectations follow the template's `change?([-_ ])log` and `read?([-_ ])me` patterns (see the template's changelog entry of this date).
+- Changed: the ignore list expectations follow the template replacing the `changelog*`, `readme*` and `license*` globs with document-only pairs (see the template's changelog entry of this date).
+
 ## [2026-10-11]
 
 - Changed: the three `known gap` tests (Extracted wrapper cut, root wrapper cut, rename notice name) now assert the fixed results and lost their prefix. The rename notice test covers five names, including a trailing `.zip.installing` and an upper-case `.RAR`. The EACCES gap test now asserts the report is offered, on both the rejected-promise and the thrown-error route, plus an unknown code on the thrown route.

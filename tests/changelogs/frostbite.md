@@ -2,6 +2,11 @@
 
 Covers `template-frostbite`. Suite file: `tests/templates/frostbite.test.js`.
 
+## [2026-11-08]
+
+- Note: the template's `changelog` and `readme` ignore patterns became `change?([-_ ])log` and `read?([-_ ])me` (see the template's changelog entry of this date). No test asserts those lists, so the suite is unchanged.
+- Note: the template replaced the `changelog*`, `readme*` and `license*` globs in `IGNORE_CONFLICTS` and `IGNORE_DEPLOY` with document-only pairs (see the template's changelog entry of this date). No test asserts those lists, so the suite is unchanged.
+
 ## [2026-10-11]
 
 - Added: a test that the Frosty, plugin and key installers cut at the marker itself when its name also appears in a parent folder.

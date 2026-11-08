@@ -99,14 +99,20 @@ let GAME_PATH = ""; //Game installation path
 let GAME_VERSION = ""; //Game version
 let MODTYPE_FOLDERS = [DAI_PATH, UPDATE_PATH, PLUGIN_PATH, FROSTYMOD_PATH]; // Folders to ensure are writable on setup
 const IGNORE_CONFLICTS = [
-  path.join("**", "changelog*"),
-  path.join("**", "readme*"),
-  path.join("**", "license*"),
+  path.join("**", "change?([-_ ])log!(*.*)"),
+  path.join("**", "change?([-_ ])log*.{txt,md,rtf,pdf,html,htm}"),
+  path.join("**", "read?([-_ ])me!(*.*)"),
+  path.join("**", "read?([-_ ])me*.{txt,md,rtf,pdf,html,htm}"),
+  path.join("**", "license!(*.*)"),
+  path.join("**", "license*.{txt,md,rtf,pdf,html,htm}"),
 ];
 const IGNORE_DEPLOY = [
-  path.join("**", "changelog*"),
-  path.join("**", "readme*"),
-  path.join("**", "license*"),
+  path.join("**", "change?([-_ ])log!(*.*)"),
+  path.join("**", "change?([-_ ])log*.{txt,md,rtf,pdf,html,htm}"),
+  path.join("**", "read?([-_ ])me!(*.*)"),
+  path.join("**", "read?([-_ ])me*.{txt,md,rtf,pdf,html,htm}"),
+  path.join("**", "license!(*.*)"),
+  path.join("**", "license*.{txt,md,rtf,pdf,html,htm}"),
 ];
 const spec = {
   game: {

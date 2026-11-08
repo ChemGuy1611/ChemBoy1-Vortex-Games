@@ -1,5 +1,10 @@
 # template-ue4-5 Changelog
 
+## [2026-11-08]
+
+- Added: the `changelog` and `readme` patterns in `IGNORE_CONFLICTS` and `IGNORE_DEPLOY` also match a hyphen, underscore or space between the words (`READ_ME.txt`, `Change Log.md`), written as `change?([-_ ])log` and `read?([-_ ])me`.
+- Fixed: the `changelog*`, `readme*` and `license*` globs in `IGNORE_CONFLICTS` and `IGNORE_DEPLOY` also matched mod files that only begin with those names (`License_Plates.dds`), which `IGNORE_DEPLOY` then skipped silently. Each is now a pair: `name!(*.*)` for files with no extension and `name*.{txt,md,rtf,pdf,html,htm}` for documents.
+
 ## [2026-11-06]
 
 - Changed: `isUe4ssInstalled` also returns true when the UE4SS proxy dll (`UE4SS_FILE`) is on disk in the Binaries folder, so a manual UE4SS install counts. The check runs only when no mod has the UE4SS mod type. This affects the UE4SS and LogicMods load order syncs and the engine version write in `didDeploy`, and the Nexus UE4SS download skip. Applied to every game on this template (`game-robocoproguecity` keeps its per-game mod type id and discovery path).

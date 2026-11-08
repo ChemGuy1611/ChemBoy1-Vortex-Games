@@ -4,6 +4,8 @@
 
 - Changed: LogicMods (Blueprint) mods now always install directly into the LogicMods folder. Installed mods convert automatically when you next manage the game. Deploy when prompted.
 - Added: A notification when a pak mod looks like a Blueprint mod, with a button to set it as a LogicMods mod.
+- Fixed: Mod files whose names only begin with README, CHANGELOG, or LICENSE (for example, License_Plates.dds) are no longer skipped during deployment.
+- Added: README and CHANGELOG files spelled with a hyphen, underscore, or space (for example, READ_ME.txt or Change Log.md) are now excluded from mod conflict detection and deployment.
 
 ## [1.0.2] - 2026-11-01
 

@@ -3,6 +3,8 @@
 ## Planned Improvements (Not Yet Released)
 
 - Config and save installers (partition check)
+- Fixed: Mod files whose names only begin with README, CHANGELOG, or LICENSE (for example, License_Plates.dds) are no longer skipped during deployment.
+- Added: README and CHANGELOG files spelled with a hyphen, underscore, or space (for example, READ_ME.txt or Change Log.md) are now excluded from mod conflict detection and deployment.
 
 ## [1.0.2] - 2026-10-25
 

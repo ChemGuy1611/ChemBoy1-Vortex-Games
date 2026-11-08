@@ -222,7 +222,14 @@ describe("template-ue4-5: registration with default toggles", () => {
     assert.equal(details.epicAppId, "XXX");
     assert.equal(details.xboxAppId, "XXX");
     assert.equal(details.supportsSymlinks, false);
-    const ignored = [sep("**", "changelog*"), sep("**", "readme*"), sep("**", "license*")];
+    const ignored = [
+      sep("**", "change?([-_ ])log!(*.*)"),
+      sep("**", "change?([-_ ])log*.{txt,md,rtf,pdf,html,htm}"),
+      sep("**", "read?([-_ ])me!(*.*)"),
+      sep("**", "read?([-_ ])me*.{txt,md,rtf,pdf,html,htm}"),
+      sep("**", "license!(*.*)"),
+      sep("**", "license*.{txt,md,rtf,pdf,html,htm}"),
+    ];
     assert.deepEqual(details.ignoreConflicts, ignored);
     assert.deepEqual(details.ignoreDeploy, ignored);
     assert.deepEqual(environment, {

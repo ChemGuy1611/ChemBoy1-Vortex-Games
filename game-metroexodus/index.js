@@ -49,14 +49,20 @@ const APPMANIFEST_FILE = "appxmanifest.xml";
 //The Xbox version launches through a different exe, so require a game data file that every version has instead of MetroExodus.exe
 const REQ_FILE = hasXbox ? "content.vfx" : EXEC;
 const IGNORE_CONFLICTS = [
-  path.join("**", "changelog*"),
-  path.join("**", "readme*"),
-  path.join("**", "license*"),
+  path.join("**", "change?([-_ ])log!(*.*)"),
+  path.join("**", "change?([-_ ])log*.{txt,md,rtf,pdf,html,htm}"),
+  path.join("**", "read?([-_ ])me!(*.*)"),
+  path.join("**", "read?([-_ ])me*.{txt,md,rtf,pdf,html,htm}"),
+  path.join("**", "license!(*.*)"),
+  path.join("**", "license*.{txt,md,rtf,pdf,html,htm}"),
 ];
 const IGNORE_DEPLOY = [
-  path.join("**", "changelog*"),
-  path.join("**", "readme*"),
-  path.join("**", "license*"),
+  path.join("**", "change?([-_ ])log!(*.*)"),
+  path.join("**", "change?([-_ ])log*.{txt,md,rtf,pdf,html,htm}"),
+  path.join("**", "read?([-_ ])me!(*.*)"),
+  path.join("**", "read?([-_ ])me*.{txt,md,rtf,pdf,html,htm}"),
+  path.join("**", "license!(*.*)"),
+  path.join("**", "license*.{txt,md,rtf,pdf,html,htm}"),
 ];
 
 //Exodus SDK projects - whole mod folders the SDK launcher loads with "Add Existing Mod", not files

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0] - 2026-11-08
+
+- Added: CSharpLoader and ProtobufLoader mods packaged without the full game path now install into the CSharpLoader folder. Reinstall any affected mods.
+- Fixed: Mod files whose names only begin with README, CHANGELOG, or LICENSE (for example, License_Plates.dds) are no longer skipped during deployment.
+- Added: README and CHANGELOG files spelled with a hyphen, underscore, or space (for example, READ_ME.txt or Change Log.md) are now excluded from mod conflict detection and deployment.
+
 ## [1.1.1] - 2026-11-06
 
 - Fixed: A UE4SS installed manually (outside Vortex) is now detected, so the UE4SS and LogicMods load orders and the UE4SS settings update work with it.

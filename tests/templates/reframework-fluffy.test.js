@@ -170,9 +170,12 @@ describe("template-reframework-fluffy: registration with default toggles", () =>
     assert.equal(game.details.supportsSymlinks, true);
     assert.deepEqual(game.details.ignoreDeploy, game.details.ignoreConflicts);
     assert.deepEqual(game.details.ignoreDeploy, [
-      sep("**", "changelog*"),
-      sep("**", "readme*"),
-      sep("**", "license*"),
+      sep("**", "change?([-_ ])log!(*.*)"),
+      sep("**", "change?([-_ ])log*.{txt,md,rtf,pdf,html,htm}"),
+      sep("**", "read?([-_ ])me!(*.*)"),
+      sep("**", "read?([-_ ])me*.{txt,md,rtf,pdf,html,htm}"),
+      sep("**", "license!(*.*)"),
+      sep("**", "license*.{txt,md,rtf,pdf,html,htm}"),
     ]);
     assert.deepEqual(game.environment, { SteamAPPId: "XXX" });
   });

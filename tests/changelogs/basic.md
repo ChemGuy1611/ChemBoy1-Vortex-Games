@@ -2,6 +2,11 @@
 
 Covers `template-basic`. Suite file: `tests/templates/basic.test.js`. It is the reference for the pattern the other per-template suites follow.
 
+## [2026-11-08]
+
+- Note: the template's `changelog` and `readme` ignore patterns became `change?([-_ ])log` and `read?([-_ ])me` (see the template's changelog entry of this date). No test asserts those lists, so the suite is unchanged.
+- Note: the template replaced the `changelog*`, `readme*` and `license*` globs in `IGNORE_CONFLICTS` and `IGNORE_DEPLOY` with document-only pairs (see the template's changelog entry of this date). No test asserts those lists, so the suite is unchanged.
+
 ## [2026-10-11]
 
 - Added: a root installer test that a wrapper whose name ends with the root folder's name (`MyXXX/XXX`) is cut at the root folder itself.

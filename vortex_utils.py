@@ -90,7 +90,7 @@ Usage:
         ensure_vortex_api_name, extract_extension_name, extract_index_header,
         extension_display_name, extension_prefix, resolve_extension_folder,
         iter_helper_folders, list_helper_ids, is_multi_game_extension,
-        add_planned_improvement, open_planned_improvements,
+        IGNORE_DOC_STEMS, ignore_doc_glob_calls, add_planned_improvement, open_planned_improvements,
         split_planned_bullets, move_planned_to_version, add_changelog_note,
         NEVER_UPLOAD_GAMES, NEVER_UPLOAD_LIST, DEPRECATED_GAMES, DEPRECATED_LIST, releasable_game_ids, fetch_vortex_extensions_feed,
         is_valid_nexus_game_id, git_show_text,
@@ -3294,6 +3294,24 @@ def make_changelog():
         "\n"
         "- Initial Release\n"
     )
+
+
+IGNORE_DOC_STEMS = {"changelog": "change?([-_ ])log", "readme": "read?([-_ ])me"}
+
+
+def ignore_doc_glob_calls(name, quote='"'):
+    """The two JS path.join() expressions that ignore one document name (readme, changelog,
+    license) in an IGNORE_CONFLICTS/IGNORE_DEPLOY array, using the given JS quote character:
+    the name followed by anything without a dot, and the name followed by anything ending in
+    a document extension. Unlike a bare 'name*' glob, these leave mod files that only begin
+    with the name (License_Plates.dds) alone. Two-word names also accept a hyphen, underscore
+    or space between the words (READ_ME.txt, Change Log.md), per IGNORE_DOC_STEMS."""
+    q = quote
+    stem = IGNORE_DOC_STEMS.get(name, name)
+    return [
+        f"path.join({q}**{q}, {q}{stem}!(*.*){q})",
+        f"path.join({q}**{q}, {q}{stem}*.{{txt,md,rtf,pdf,html,htm}}{q})",
+    ]
 
 
 def add_planned_improvement(folder, bullet):

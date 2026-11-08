@@ -10,6 +10,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `b1` |
 | Blueprint Mods (LogicMods) | a `LogicMods` folder | `b1\Content\Paks\LogicMods` |
+| CSharpLoader Mod | - | `b1\Binaries\Win64\CSharpLoader` |
 | Pak Mods | a `.pak` file | `b1\Content\Paks\~mods` |
 | UE4SS | a `dwmapi.dll` file | `b1\Binaries\Win64` |
 | Signature Bypass | a `dsound.dll` file and a `sig.lua` file | `b1\Binaries\Win64` |
@@ -79,6 +80,12 @@ Installs to: `b1\Content\Paks\LogicMods`
 
 - Putting the `.pak` at the top level of the archive with no `LogicMods` folder. Vortex then treats it as an ordinary pak mod, so the blueprint mod does not load. If the pak holds a `ModActor` asset, Vortex offers the player a button to move it to `LogicMods`, but only if they accept it.
 - Renaming the folder (`Logic_Mods`, `logicmod`, `BPMods`) - the name must be exactly `LogicMods`.
+
+## CSharpLoader Mod
+
+Handled by the `testCSharpLoader` installer. Inspect the extension source for the exact archive layout it expects.
+
+Installs to: `b1\Binaries\Win64\CSharpLoader`
 
 ## Pak Mods
 

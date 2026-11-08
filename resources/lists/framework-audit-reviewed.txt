@@ -107,3 +107,4 @@ wuchangfallenfeathers|mod:384|Stock UE4SS repackaged for the game. The extension
 *|file:class_inheritance.json|UE4SS UVTD dumper config, not a framework.
 *|file:pdbs_to_dump.json|UE4SS UVTD dumper config, not a framework.
 *|file:types_filter.json|UE4SS UVTD dumper config, not a framework.
+starrupture|mod:89|AlienX's Mod Loader has its own installer, plugin installer and download button in the extension.

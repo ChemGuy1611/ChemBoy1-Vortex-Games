@@ -18,6 +18,7 @@ This extension adds Atomic Heart modding support to Vortex Mod Manager.
 [*]Root Game Folder mods with a top-level folder such as "AtomicHeart", "Engine" or "Content" install to the game folder.[/*]
 [*]Config (Local AppData) mods with a config file such as "engine.ini" or "game.ini" install to the game's config folder.[/*]
 [*]Saves (Local AppData) mods with a ".sav" file install to the game's save folder.[/*]
+[*]GameTune Override mods install to the "AtomicHeart\Content\GameTune" folder.[/*]
 [*]Any other mod not described above installs to the "AtomicHeart\Binaries\Win64" folder ("WinGDK" instead of "Win64" for the Xbox version).[/*]
 [*]Archives with a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to Vortex's built-in FOMOD installer instead.[/*]
 [/list]
@@ -224,6 +225,14 @@ Save files are deployed to the game's save folder in your user profile.
 
   Common mistakes:
     - Including an example save alongside a normal mod - the archive is then treated as a save, not a mod.
+
+========================================================================
+
+GameTune Override:
+
+Handled by the "testGameTune" installer. Inspect the extension source for the exact archive layout it expects.
+
+  Installs to: "AtomicHeart\Content\GameTune"
 
 ========================================================================
 

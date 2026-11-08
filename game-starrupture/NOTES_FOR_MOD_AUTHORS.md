@@ -11,7 +11,9 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `StarRupture` |
 | Blueprint Mods (LogicMods) | a `LogicMods` folder | `StarRupture\Content\Paks\LogicMods` |
 | Pak Mods | a `.pak` file | `StarRupture\Content\Paks\~mods` |
+| StarRupture Mod Loader | - | `StarRupture\Binaries\Win64` |
 | UE4SS | a `dwmapi.dll` file | `StarRupture\Binaries\Win64` |
+| Mod Loader Plugin | - | `StarRupture\Binaries\Win64` |
 | UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `StarRupture\Binaries\Win64\ue4ss\Mods` |
 | UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | `StarRupture\Binaries\Win64\ue4ss\Mods` |
 | Root / Game Folder Mods | a top-level folder such as `StarRupture`, `Engine` or `Content` | the game folder |
@@ -102,6 +104,12 @@ Installs to: `StarRupture\Content\Paks\~mods`
 - Shipping several unrelated paks in one archive when you meant them all to install - the user gets a choice dialog and may pick only one.
 - Blueprint mods belong in a `LogicMods` folder instead - see above.
 
+## StarRupture Mod Loader
+
+Handled by the `testModLoader` installer. Inspect the extension source for the exact archive layout it expects.
+
+Installs to: `StarRupture\Binaries\Win64`
+
 ## UE4SS
 
 This installer handles the UE4SS runtime package, not individual mods. Most authors never need it - it exists so users can install UE4SS through Vortex.
@@ -116,6 +124,12 @@ Installs to: `StarRupture\Binaries\Win64`
 **Common mistakes:**
 
 - If your script mod archive happens to contain a file named `dwmapi.dll`, it will be treated as a UE4SS install rather than as your mod.
+
+## Mod Loader Plugin
+
+Handled by the `testModLoaderPlugin` installer. Inspect the extension source for the exact archive layout it expects.
+
+Installs to: `StarRupture\Binaries\Win64`
 
 ## UE4SS Script Mods (Lua)
 

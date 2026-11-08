@@ -48,7 +48,7 @@ function main(context) {
 }
 ```
 
-Example: `helper-globalignorepatterns` (adds README/CHANGELOG/LICENSE glob patterns to every game's `ignoreConflicts`/`ignoreDeploy`, without needing per-game support).
+Example: `helper-globalignorepatterns` (adds README/CHANGELOG/LICENSE, credit/third-party notice, other document and system file patterns to every game's `ignoreConflicts`/`ignoreDeploy`, without needing per-game support).
 
 ---
 

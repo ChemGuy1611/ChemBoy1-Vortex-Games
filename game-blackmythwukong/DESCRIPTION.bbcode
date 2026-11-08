@@ -13,6 +13,7 @@ This extension adds Black Myth Wukong modding support to Vortex Mod Manager.
 [list]
 [*]UE4SS Script-LogicMod Combo mods with both a "Content" and a "Binaries" folder install to the "b1" folder.[/*]
 [*]UE4SS LogicMods (Blueprint) mods with a "LogicMods" folder install to the "b1\Content\Paks\LogicMods" folder.[/*]
+[*]CSharpLoader mods install to the "b1\Binaries\Win64\CSharpLoader" folder.[/*]
 [*]UE Sortable Pak mods with a ".pak" file install to the "b1\Content\Paks\~mods" folder.[/*]
 [*]UE4SS installs to the "b1\Binaries\Win64" folder, recognised by a "dwmapi.dll" file.[/*]
 [*]Sig Bypass mods with a "dsound.dll" file and a "sig.lua" file install to the "b1\Binaries\Win64" folder.[/*]
@@ -96,6 +97,14 @@ MyBlueprintMod.zip
   Common mistakes:
     - Putting the ".pak" at the top level of the archive with no "LogicMods" folder. Vortex then treats it as an ordinary pak mod, so the blueprint mod does not load. If the pak holds a "ModActor" asset, Vortex offers the player a button to move it to "LogicMods", but only if they accept it.
     - Renaming the folder ("Logic_Mods", "logicmod", "BPMods") - the name must be exactly "LogicMods".
+
+========================================================================
+
+CSharpLoader Mod:
+
+Handled by the "testCSharpLoader" installer. Inspect the extension source for the exact archive layout it expects.
+
+  Installs to: "b1\Binaries\Win64\CSharpLoader"
 
 ========================================================================
 

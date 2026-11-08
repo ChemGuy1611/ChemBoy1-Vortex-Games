@@ -2,6 +2,11 @@
 
 Covers `template-shinryu`. Suite file: `tests/templates/shinryu.test.js`.
 
+## [2026-11-08]
+
+- Note: the template's `changelog` and `readme` ignore patterns became `change?([-_ ])log` and `read?([-_ ])me` (see the template's changelog entry of this date). No test asserts those lists, so the suite is unchanged.
+- Note: the template replaced the `changelog*`, `readme*` and `license*` globs in `IGNORE_CONFLICTS` and `IGNORE_DEPLOY` with document-only pairs (see the template's changelog entry of this date). No test asserts those lists, so the suite is unchanged.
+
 ## [2026-10-25]
 
 - Changed: the registration and toggle tests expect the root installer at priority 28, and the routing case for a mod that also ships an exe now reads as mod (27) before root (28) rather than a tie. The `installer-priority-unique` allowlist entry for this template is removed.

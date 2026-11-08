@@ -373,7 +373,8 @@ const IGNORE_CONFLICTS = [
   path.join("**", "README.txt"),
   path.join("**", "ReadMe.txt"),
   path.join("**", "Readme.txt"),
-  path.join("**", "license*"),
+  path.join("**", "license!(*.*)"),
+  path.join("**", "license*.{txt,md,rtf,pdf,html,htm}"),
 ];
 const IGNORE_DEPLOY = [
   path.join("**", "CHANGELOG.txt"),
@@ -381,7 +382,8 @@ const IGNORE_DEPLOY = [
   path.join("**", "README.txt"),
   path.join("**", "ReadMe.txt"),
   path.join("**", "Readme.txt"),
-  path.join("**", "license*"),
+  path.join("**", "license!(*.*)"),
+  path.join("**", "license*.{txt,md,rtf,pdf,html,htm}"),
 ];
 let MODTYPE_FOLDERS = [UE5_PATH, HERBATAMOD_PATH_FULL, MERGER_PATH];
 if (ue4ssLoadOrder) {

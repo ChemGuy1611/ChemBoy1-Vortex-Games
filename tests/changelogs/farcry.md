@@ -2,6 +2,11 @@
 
 Covers `template-farcry`. Suite file: `tests/templates/farcry.test.js`.
 
+## [2026-11-08]
+
+- Changed: the ignore list expectations follow the template's `change?([-_ ])log` and `read?([-_ ])me` patterns (see the template's changelog entry of this date).
+- Changed: the ignore list expectations follow the template replacing the `changelog*`, `readme*` and `license*` globs with document-only pairs (see the template's changelog entry of this date).
+
 ## [2026-10-11]
 
 - Changed: the `known gap` test for the root installer now asserts the fixed result (`ModSupport/Support/a.txt` installs as `Support/a.txt`) and lost its `known gap:` prefix.

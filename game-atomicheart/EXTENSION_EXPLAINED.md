@@ -68,6 +68,7 @@ Mod types define where each category of mod gets deployed:
 | UE4SS DLL Mod | `atomicheart-ue4ssdll` | 52 | `{gamePath}/AtomicHeart/Binaries/Win64/ue4ss/Mods` |
 | Binaries (Engine Injector) | `atomicheart-binaries` | 54 | `{gamePath}/AtomicHeart/Binaries/Win64` |
 | UE4SS | `atomicheart-ue4ss` | 56 | `{gamePath}/AtomicHeart/Binaries/Win64` |
+| GameTune Override | `atomicheart-gametune` | 60 | `{gamePath}/AtomicHeart/Content/GameTune` |
 | Config (Local AppData) | `atomicheart-config` | 62 | `?` |
 | Saves (Local AppData) | `atomicheart-save` | 64 | `?` |
 
@@ -86,6 +87,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | `atomicheart-root` | 39 |
 | `atomicheart-config` | 41 |
 | `atomicheart-save` | 43 |
+| `atomicheart-gametune` | 47 |
 | `atomicheart-binaries` | 49 |
 
 ## Toolbar Actions

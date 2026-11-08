@@ -1,5 +1,10 @@
 # template-farcry Changelog
 
+## [2026-11-08]
+
+- Added: the `changelog` and `readme` patterns in `IGNORE_CONFLICTS` and `IGNORE_DEPLOY` also match a hyphen, underscore or space between the words (`READ_ME.txt`, `Change Log.md`), written as `change?([-_ ])log` and `read?([-_ ])me`.
+- Fixed: the `changelog*`, `readme*` and `license*` globs in `IGNORE_CONFLICTS` and `IGNORE_DEPLOY` also matched mod files that only begin with those names (`License_Plates.dds`), which `IGNORE_DEPLOY` then skipped silently. Each is now a pair: `name!(*.*)` for files with no extension and `name*.{txt,md,rtf,pdf,html,htm}` for documents.
+
 ## [2026-11-04]
 
 - Changed: the bundled `base_browser.js`. Browse pages no longer open off-site pages in the system browser on their own. A host outside `externalHosts` (default `nexusmods.com`, `github.com`) becomes a notification with an "Open" button.

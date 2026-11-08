@@ -77,7 +77,7 @@ from vortex_utils import (
     inject_register_actions, update_index_header, write_index_js,
     make_info_json, make_changelog, is_missing, const_value,
     write_text_atomic, report_node_check, replace_const_rhs, touch_empty,
-    NEW_EXTENSION_VERSION,
+    NEW_EXTENSION_VERSION, ignore_doc_glob_calls,
 )
 
 # String constants always replaced with "XXX"
@@ -357,11 +357,12 @@ def _fixup_ignore_arrays(src):
     has_deploy = bool(re.search(r'^[ \t]*(?:const|let)\s+IGNORE_DEPLOY\s*=', src, re.MULTILINE))
     if has_conflicts and has_deploy:
         return src
+    globs = ", ".join(ignore_doc_glob_calls("changelog", "'") + ignore_doc_glob_calls("readme", "'"))
     lines = []
     if not has_conflicts:
-        lines.append("const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];")
+        lines.append(f"const IGNORE_CONFLICTS = [{globs}];")
     if not has_deploy:
-        lines.append("const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];")
+        lines.append(f"const IGNORE_DEPLOY = [{globs}];")
     block = '\n'.join(lines) + '\n'
     m = re.search(r'^[ \t]*(?:const|let)\s+MODTYPE_FOLDERS\s*=[^\n]+\n', src, re.MULTILINE)
     if m:
