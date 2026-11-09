@@ -8,16 +8,28 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| DS2 Manager Mod | a `modinfo.json` file and a `.core` or `.stream` file | `mods` |
+| Loaderfolders | - | - |
+| Native Mod | - | `nativemods` |
+| Data Mod | - | `datamods` |
 | Save Game Files | a `.dat` file | the game's save folder |
 
 Paths are relative to the game's install folder. Config and save folders are in your user profile, not the game's install folder.
 
-## DS2 Manager Mod
+## Loaderfolders
 
-Recognised when the archive contains a `modinfo.json` file and a `.core` or `.stream` file.
+Handled by the `testLoaderFolders` installer. Inspect the extension source for the exact archive layout it expects.
 
-Installs to: `mods`
+## Native Mod
+
+Handled by the `testNativeMod` installer. Inspect the extension source for the exact archive layout it expects.
+
+Installs to: `nativemods`
+
+## Data Mod
+
+Handled by the `testDataMod` installer. Inspect the extension source for the exact archive layout it expects.
+
+Installs to: `datamods`
 
 ## Save Game Files
 

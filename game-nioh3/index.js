@@ -2,8 +2,8 @@
 Name: Nioh 3 Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-25
+Version: 1.0.4
+Date: 2026-11-09
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -79,6 +79,7 @@ if (reZip) {
   MOD_PATH = "ModArchives";
 }
 const MOD_EXTS = [".g1t", ".g1m", ".g1ts"];
+const MOD_FILES = ["nioh3modmanifest.json"]; //Mod Manager option manifest. These archives must stay whole so the manager can offer their options
 
 const MOD_MANAGER_ID = `${GAME_ID}-modmanager`;
 const MOD_MANAGER_NAME = "ModManager";
@@ -846,42 +847,44 @@ function installYumiaMod(files, api) {
 
   const queryVariant = () => {
     const package = Object.keys(packageFolders).filter((key) => packageFolders[key].length > 1);
-    return Promise.map(package, (idx) => {
-      return api
-        .showDialog(
-          "question",
-          "Choose Variant",
-          {
-            text:
-              'This mod has several variants for the the "package" folder - please ' +
-              "choose one or more variants you wish to install. (You can change your selection " +
-              "by re-installing the mod)",
-            checkboxes: packageFolders[idx].map((iter) => ({
-              id: iter,
-              text: iter,
-              value: false,
-            })),
-          },
-          [{ label: "Cancel" }, { label: "Install Selected" }, { label: "Install All_plural" }],
-        )
-        .then((result) => {
-          if (result.action === "Cancel")
-            return Promise.reject(
-              new VortexError("User cancelled.", { kind: "user-canceled", skipped: true }),
-            );
-          else {
-            const installAll =
-              result.action === "Install All" || result.action === "Install All_plural";
-            filtered = installAll ? filtered : createFileArray(result.input); //need to tease the data out to a simple array of all files that contain selcted folder(s)
-            /*
+    return Promise.all(
+      package.map((idx) => {
+        return api
+          .showDialog(
+            "question",
+            "Choose Variant",
+            {
+              text:
+                'This mod has several variants for the the "package" folder - please ' +
+                "choose one or more variants you wish to install. (You can change your selection " +
+                "by re-installing the mod)",
+              checkboxes: packageFolders[idx].map((iter) => ({
+                id: iter,
+                text: iter,
+                value: false,
+              })),
+            },
+            [{ label: "Cancel" }, { label: "Install Selected" }, { label: "Install All_plural" }],
+          )
+          .then((result) => {
+            if (result.action === "Cancel")
+              return Promise.reject(
+                new VortexError("User cancelled.", { kind: "user-canceled", skipped: true }),
+              );
+            else {
+              const installAll =
+                result.action === "Install All" || result.action === "Install All_plural";
+              filtered = installAll ? filtered : createFileArray(result.input); //need to tease the data out to a simple array of all files that contain selcted folder(s)
+              /*
             : Object.keys(result.input).filter(s => result.input[s]) 
               //.map(file => file);
               //.map(folder => filtered.filter(file => file.includes(folder)));
               .forEach(folder => filtered.filter(file => file.includes(folder))); //*/
-            return Promise.resolve();
-          }
-        });
-    });
+              return Promise.resolve();
+            }
+          });
+      }),
+    );
   };
 
   const createFileArray = (input) => {
@@ -921,7 +924,7 @@ function installYumiaMod(files, api) {
     return instructions;
   };
 
-  const prom = hasVariants ? queryVariant : Promise.resolve;
+  const prom = hasVariants ? queryVariant : () => Promise.resolve();
   return prom().then(() => Promise.resolve({ instructions: generateInstructions() }));
 }
 
@@ -972,7 +975,11 @@ function installRdbMod(files) {
 
 //Test for Loose .g1t/.g1m mod files
 function testMod(files, gameId) {
-  const isMod = files.some((file) => MOD_EXTS.includes(path.extname(file).toLowerCase()));
+  const isMod = files.some(
+    (file) =>
+      MOD_EXTS.includes(path.extname(file).toLowerCase()) ||
+      MOD_FILES.includes(path.basename(file).toLowerCase()),
+  );
   let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer

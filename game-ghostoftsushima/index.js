@@ -1,8 +1,8 @@
 /*//////////////////////////////////////////
 Name: Ghost of Tsushima Vortex Extension
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-25
+Version: 1.0.3
+Date: 2026-11-09
 ///////////////////////////////////////////*/
 
 //import libraries
@@ -343,42 +343,44 @@ function installPsarc(api, files, fileName) {
   let filtered = files;
   const queryVariant = () => {
     const psarcs = Object.keys(psarcFiles).filter((key) => psarcFiles[key].length > 1);
-    return Promise.map(psarcs, (psarcFile) => {
-      return api
-        .showDialog(
-          "question",
-          "Choose Variant",
-          {
-            text:
-              'This mod has several variants for "{{psarc}}" - please ' +
-              "choose the variant you wish to install. (You can choose a " +
-              "different variant by re-installing the mod)",
-            choices: psarcFiles[psarcFile].map((iter, idx) => ({
-              id: iter,
-              text: iter,
-              value: idx === 0,
-            })),
-            parameters: {
-              psarc: psarcFile,
+    return Promise.all(
+      psarcs.map((psarcFile) => {
+        return api
+          .showDialog(
+            "question",
+            "Choose Variant",
+            {
+              text:
+                'This mod has several variants for "{{psarc}}" - please ' +
+                "choose the variant you wish to install. (You can choose a " +
+                "different variant by re-installing the mod)",
+              choices: psarcFiles[psarcFile].map((iter, idx) => ({
+                id: iter,
+                text: iter,
+                value: idx === 0,
+              })),
+              parameters: {
+                psarc: psarcFile,
+              },
             },
-          },
-          [{ label: "Cancel" }, { label: "Confirm" }],
-        )
-        .then((res) => {
-          if (res.action === "Confirm") {
-            const choice = Object.keys(res.input).find((choice) => res.input[choice]);
-            filtered = filtered.filter(
-              (file) =>
-                path.extname(file) !== PSARC_EXT ||
-                (path.basename(file) === psarcFile && file.includes(choice)) ||
-                path.basename(file) !== psarcFile,
-            );
-            return Promise.resolve();
-          } else {
-            return new VortexError("User canceled", { kind: "user-canceled", skipped: false });
-          }
-        });
-    });
+            [{ label: "Cancel" }, { label: "Confirm" }],
+          )
+          .then((res) => {
+            if (res.action === "Confirm") {
+              const choice = Object.keys(res.input).find((choice) => res.input[choice]);
+              filtered = filtered.filter(
+                (file) =>
+                  path.extname(file) !== PSARC_EXT ||
+                  (path.basename(file) === psarcFile && file.includes(choice)) ||
+                  path.basename(file) !== psarcFile,
+              );
+              return Promise.resolve();
+            } else {
+              throw new VortexError("User canceled", { kind: "user-canceled", skipped: false });
+            }
+          });
+      }),
+    );
   };
   const generateInstructions = () => {
     const fileInstructions = filtered.reduce((accum, iter) => {
@@ -400,7 +402,7 @@ function installPsarc(api, files, fileName) {
     return instructions;
   };
 
-  const prom = hasVariants ? queryVariant : Promise.resolve;
+  const prom = hasVariants ? queryVariant : () => Promise.resolve();
   return prom().then(() => Promise.resolve({ instructions: generateInstructions() }));
 } //*/
 

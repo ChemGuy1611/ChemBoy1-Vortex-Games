@@ -1,7 +1,12 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.0.4] - 2026-11-09
 
+- Fixed: Mods with a Mod Manager options file now install complete for Mod Manager, instead of only their first folder.
+
+## [1.0.3] - 2026-11-09
+
+- Fixed: Yumia mods that include a "package" folder no longer fail to install with an error.
 - Fixed: Mod files whose names only begin with LICENSE (for example, License_Plates.dds) are no longer skipped during deployment.
 
 ## [1.0.2] - 2026-10-25

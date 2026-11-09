@@ -2,8 +2,8 @@
 Name: Red Dead Redemption Vortex Extension
 Structure: 3rd-Party Mod Installer
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-25
+Version: 1.1.0
+Date: 2026-11-09
 ////////////////////////////////////////////*/
 
 //Import libraries
@@ -57,6 +57,8 @@ const RPF_EXT = ".rpf";
 const MAGICMOD_ID = `${GAME_ID}-magicmod`;
 const MAGICMOD_PATH = path.join("MagicRDR_Mods");
 const MAGICMOD_EXTS = [".wtd", ".was", ".dds", ".mtl", ".wsc"];
+//Models count only when no later installer handles the archive, so a plugin or .rpf mod that also ships models stays on its own installer
+const MAGICMOD_MODEL_EXTS = [".wft", ".wfd", ".wedt"];
 
 const SCRIPTHOOK_ID = `${GAME_ID}-scripthook`;
 const SCRIPTHOOK_FILE = "dinput8.dll";
@@ -67,7 +69,7 @@ const MODLOADER_FILE = "kml.asi";
 
 const ASIPLUGIN_ID = `${GAME_ID}-asiplugin`;
 const ASIPLUGIN_PATH = ".";
-const ASIPLUGIN_EXT = ".asi";
+const ASIPLUGIN_EXTS = [".asi", ".red"]; //.red = RedHook plugins, loaded from the game folder
 
 const MAGIC_ID = `${GAME_ID}-magicrdr`;
 const MAGIC_NAME = "Magic-RDR";
@@ -713,8 +715,11 @@ function installModLoader(files) {
 
 //Test for loose files (installed with Magic-RDR)
 function testMagicMod(files, gameId) {
+  const exts = files.map((file) => path.extname(file).toLowerCase());
+  const hasOtherRoute = exts.some((ext) => ext === RPF_EXT || ASIPLUGIN_EXTS.includes(ext));
   const isMod =
-    files.find((file) => MAGICMOD_EXTS.includes(path.extname(file).toLowerCase())) !== undefined;
+    exts.some((ext) => MAGICMOD_EXTS.includes(ext)) ||
+    (exts.some((ext) => MAGICMOD_MODEL_EXTS.includes(ext)) && !hasOtherRoute);
   let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer.
@@ -735,23 +740,45 @@ function testMagicMod(files, gameId) {
   });
 }
 
+//Deepest folder every file shares, as a path prefix. Mod pages name the .rpf to edit by folder, so
+//a mod split across named folders has to stay whole.
+function magicModRootPrefix(files) {
+  let shared = null;
+  for (const file of files) {
+    const parts = path.dirname(file).split(path.sep);
+    if (shared === null) {
+      shared = parts;
+      continue;
+    }
+    let depth = 0;
+    while (
+      depth < shared.length &&
+      depth < parts.length &&
+      shared[depth].toLowerCase() === parts[depth].toLowerCase()
+    ) {
+      depth++;
+    }
+    shared = shared.slice(0, depth);
+  }
+  return shared === null || shared.length === 0 || shared[0] === "."
+    ? ""
+    : shared.join(path.sep) + path.sep;
+}
+
 //Install loose files (installed with Magic-RDR)
 function installMagicMod(files, fileName) {
-  const modFile = files.find((file) => MAGICMOD_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.lastIndexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
-  const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
   const setModTypeInstruction = { type: "setmodtype", value: MAGICMOD_ID };
   const MOD_NAME = path.basename(fileName);
   const MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, "");
 
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix));
+  // Remove directories, then strip the folder every file shares.
+  const filtered = files.filter((file) => !file.endsWith(path.sep));
+  const rootPrefix = magicModRootPrefix(filtered);
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
       source: file,
-      destination: path.join(MOD_FOLDER, file.substr(idx)),
+      destination: path.join(MOD_FOLDER, file.substr(rootPrefix.length)),
     };
   });
   instructions.push(setModTypeInstruction);
@@ -851,8 +878,7 @@ function installRPF(files) {
 
 //Test for ASI plugin files
 function testAsiPlugin(files, gameId) {
-  const isMod =
-    files.find((file) => path.extname(file).toLowerCase() === ASIPLUGIN_EXT) !== undefined;
+  const isMod = files.some((file) => ASIPLUGIN_EXTS.includes(path.extname(file).toLowerCase()));
   let supported = gameId === spec.game.id && isMod;
 
   // Test for a mod installer
@@ -875,7 +901,7 @@ function testAsiPlugin(files, gameId) {
 
 //Install ASI plugin files
 function installAsiPlugin(files) {
-  const modFile = files.find((file) => path.extname(file).toLowerCase() === ASIPLUGIN_EXT);
+  const modFile = files.find((file) => ASIPLUGIN_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.lastIndexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;

@@ -75,6 +75,18 @@ Usage:
     python audit_frameworks.py --json               # machine-readable report
     python audit_frameworks.py --show-dropped       # also list dropped candidates
     python audit_frameworks.py --min-requirers 10   # candidate threshold (default 5)
+    python audit_frameworks.py nioh3 --samples DIR  # also replay sample archives for each row
+
+--samples DIR is the first triage step, automated. For every game with a row it takes each
+finding's own mod plus up to 3 dependents, and up to 3 mods carrying each of the top 2
+fingerprints, writes their archive listings into DIR with nexus_mod_preview.py, and runs them
+through the game's real installers with replay_installers.js. The report then shows the
+installer tally and the archives that were unclaimed or reached the fallback installer. The
+full replay of each game is DIR/replay_<game>.txt. Nothing outside DIR is written.
+
+A mod counts as named by index.js when its id is in a *_PAGE_NO constant, when its full name or
+leading name (before a version, credit or " - " subtitle) appears with doubled letters
+collapsed, as an acronym, or as one of its own native file names.
 
 Environment variables:
     NEXUS_API_KEY  Required. Read from env var, with HKCU/HKLM registry fallback.
@@ -90,6 +102,7 @@ import json
 import math
 import os
 import re
+import subprocess
 import sys
 import time
 from typing import NamedTuple
@@ -114,6 +127,12 @@ DEPENDENT_MIN_MODS = 3
 FINGERPRINT_EXTS = (".json", ".toml", ".yaml", ".xml", ".ini")
 FINGERPRINT_PAGES = 3
 FINGERPRINT_MIN_MODS = 5
+
+MIN_NAME_HEAD = 6  # shorter leading names ("Cheat - ...") match too much of an index.js
+SAMPLE_DEPENDENTS = 3
+SAMPLE_FINGERPRINT_FILES = 2
+SAMPLE_FINGERPRINT_MODS = 3
+SAMPLE_ROWS_SHOWN = 6
 
 PAK_FAMILY = frozenset({".pak", ".ucas", ".utoc"})
 NATIVE_EXTS = frozenset({".dll", ".asi", ".exe"})
@@ -159,6 +178,8 @@ UNITY_STOPWORDS = ACRONYM_STOPWORDS | {"IL2CPP", "BEPINEX", "MONO", "API", "NET"
 UNITY_STOCK_LOADER = re.compile(r"bepinex|beepinex|melonloader", re.IGNORECASE)
 EXTS_CONST = re.compile(r"const\s+([A-Z0-9_]+_EXTS)\s*=\s*\[([^\]]*)\]\s*;?")
 LOADER_PAGE_CONST = re.compile(r"const\s+(?:BEPINEX|MELON|CUSTOMLOADER)_PAGE_NO\s*=\s*(\d+)\s*;?")
+ANY_PAGE_CONST = re.compile(r"const\s+[A-Z0-9_]*PAGE_NO\s*=\s*(\d+)\s*;?")
+NAME_TAIL = re.compile(r"\s+-\s+|\s*[(\[]|\s+v?\d+(?:\.\d+)+\b|\s+v\d+\b")
 TEXTURE_REPLACER_ON = re.compile(r"const\s+hasTextureReplacer\s*=\s*true\s*;?")
 CUSTOM_MODS_ON = re.compile(r"const\s+hasCustomMods\s*=\s*true\s*;?")
 
@@ -362,9 +383,19 @@ def is_sig_bypass(own_files):
     return False
 
 
+def squeeze(text):
+    """Collapse doubled letters, so Steamodded and SteamModded compare equal."""
+    return re.sub(r"(.)\1+", r"\1", normalize_name(text))
+
+
 def is_named_in_source(name, own_files, src, stopwords=ACRONYM_STOPWORDS):
-    """True when index.js already names this mod: its full name, an acronym, or a native file."""
-    if normalize_name(name) in normalize_name(src):
+    """True when index.js already names this mod: its full or leading name, an acronym, or a
+    native file."""
+    squeezed_src = squeeze(src)
+    if squeeze(name) in squeezed_src:
+        return True
+    head = NAME_TAIL.split(name, 1)[0]
+    if head != name and len(normalize_name(head)) >= MIN_NAME_HEAD and squeeze(head) in squeezed_src:
         return True
     # Word start only: CNS matches CNSJSON_ID, but ZOI must not match inZOI.
     if any(token not in stopwords and re.search(rf"(?<![A-Za-z0-9]){token}", src)
@@ -728,7 +759,11 @@ def audit_game(game_id, src, profile, reviewed, template, api_key, min_requirers
     for candidate in picked[MAX_CANDIDATES:]:
         result["dropped"].append({**candidate, "why": f"past the {MAX_CANDIDATES} candidate cap, not checked"})
 
+    page_ids = set(ANY_PAGE_CONST.findall(src))
     for candidate in picked[:MAX_CANDIDATES]:
+        if candidate["mod_id"] in page_ids:
+            result["dropped"].append({**candidate, "why": "index.js already names it (page constant)"})
+            continue
         try:
             own_files, dependent_files = fetch_candidate_evidence(candidate, game_num, api_key)
         except RuntimeError as exc:  # a requirement can point at a deleted or hidden mod
@@ -758,6 +793,102 @@ def game_has_findings(game):
     return bool(game["findings"] or game["externals"] or game["fingerprints"])
 
 
+def fetch_dependent_ids(game_num, mod_id, api_key):
+    data = _query(f"query {{ m: mod(gameId: {game_num}, modId: {int(mod_id)}) "
+                  "{ modRequirements { modsRequiringThisMod { nodes { modId gameId } } } } }", api_key)
+    requiring = ((data.get("m") or {}).get("modRequirements") or {}).get("modsRequiringThisMod") or {}
+    return [str(node["modId"]) for node in requiring.get("nodes") or [] if str(node.get("gameId")) == str(game_num)]
+
+
+def fetch_fingerprint_carriers(game_num, row, api_key):
+    fields = " ".join(
+        f'p{page}: modFileContents(filter: {{ gameId: [{{ value: {game_num}, op: EQUALS }}], '
+        f'fileExtensionExact: [{{ value: "{row["ext"]}", op: EQUALS }}] }}, '
+        f'count: 80, offset: {page * 80}) {{ nodes {{ modId fileName }} }}'
+        for page in range(FINGERPRINT_PAGES)
+    )
+    data = _query(f"query {{ {fields} }}", api_key)
+    carriers = []
+    for page in range(FINGERPRINT_PAGES):
+        for node in (data.get(f"p{page}") or {}).get("nodes") or []:
+            mod_id = str(node.get("modId"))
+            if (node.get("fileName") or "").lower() == row["file"] and mod_id not in carriers:
+                carriers.append(mod_id)
+    return carriers
+
+
+def sample_mod_ids(game, game_num, api_key):
+    """The mods worth replaying for one game: each finding plus some dependents, and the
+    carriers of its most common fingerprints."""
+    picks = []
+    for finding in game["findings"]:
+        picks.append(finding["mod_id"])
+        picks += fetch_dependent_ids(game_num, finding["mod_id"], api_key)[:SAMPLE_DEPENDENTS]
+    for row in game["fingerprints"][:SAMPLE_FINGERPRINT_FILES]:
+        picks += fetch_fingerprint_carriers(game_num, row, api_key)[:SAMPLE_FINGERPRINT_MODS]
+    return list(dict.fromkeys(picks))
+
+
+def fetch_listing(domain, mod_id, path):
+    """Write one mod's archive listings to path and return them, or None when Nexus refuses."""
+    if os.path.exists(path):
+        os.remove(path)
+    subprocess.run([sys.executable, os.path.join(REPO_ROOT, "nexus_mod_preview.py"), domain, mod_id,
+                    "--no-desc", "--listing", path],
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False, cwd=REPO_ROOT)
+    if not os.path.exists(path):
+        return None
+    with open(path, encoding="utf-8-sig") as fh:
+        return json.load(fh)
+
+
+def summarize_replay(lines):
+    """Return (installer tally, the rows worth reading) from replay_installers.js output. An
+    install stopped only because the harness has no staging folder is not worth reading."""
+    tally = []
+    if "Tally:" in lines:
+        tally = [ln.strip() for ln in lines[lines.index("Tally:") + 1:] if ln.strip()[:1].isdigit()]
+    rows = [ln for ln in lines if (ln.startswith("!!") and "nonexistent-staging" not in ln)
+            or (ln.startswith("==") and "-fallback (" in ln)]
+    return tally, rows
+
+
+def replay_samples(report, out_dir, api_key):
+    """Fill in game["samples"] for every game with a row, keeping listings and replays in out_dir."""
+    os.makedirs(out_dir, exist_ok=True)
+    for game in report["games"]:
+        if not game_has_findings(game):
+            continue
+        game_id, domain = game["game_id"], game["domain"]
+        print(f"  replaying samples for {game_id}", file=sys.stderr, flush=True)
+        try:
+            game_num = int(nexus_game_id_for_domain(domain, api_key))
+            picks = sample_mod_ids(game, game_num, api_key)
+        except RuntimeError as exc:
+            game["samples"] = {"error": str(exc)}
+            continue
+        merged, failed = [], []
+        for mod_id in picks:
+            listing = fetch_listing(domain, mod_id, os.path.join(out_dir, f"{game_id}_{mod_id}.json"))
+            if listing is None:
+                failed.append(mod_id)
+            else:
+                merged += listing
+        samples = {"mods": picks, "failed": failed, "archives": len(merged), "tally": [], "rows": []}
+        if merged:
+            merged_path = os.path.join(out_dir, f"merged_{game_id}.json")
+            with open(merged_path, "w", encoding="utf-8") as fh:
+                json.dump(merged, fh)
+            replay = subprocess.run(["node", os.path.join(REPO_ROOT, "replay_installers.js"), game_id, merged_path,
+                                     "--show", "2"],
+                                    capture_output=True, text=True, encoding="utf-8", errors="replace",
+                                    check=False, cwd=REPO_ROOT)
+            with open(os.path.join(out_dir, f"replay_{game_id}.txt"), "w", encoding="utf-8") as fh:
+                fh.write(replay.stdout + replay.stderr)
+            samples["tally"], samples["rows"] = summarize_replay(replay.stdout.splitlines())
+        game["samples"] = samples
+
+
 def print_report(report, show_dropped):
     print("=== Framework Audit ===\n")
     games = report["games"]
@@ -785,6 +916,17 @@ def print_report(report, show_dropped):
         for f in game["fingerprints"]:
             print(f"  [fingerprint] {f['file']} -- in {f['mods_in_sample']} sampled mods "
                   f"({f['ext_total']} {f['ext']} files in all)")
+        samples = game.get("samples")
+        if samples and "error" in samples:
+            print(f"  [samples] could not read: {samples['error']}")
+        elif samples:
+            failed = f", {len(samples['failed'])} mods not listable" if samples["failed"] else ""
+            print(f"  [samples] {samples['archives']} archives from {len(samples['mods'])} mods{failed}: "
+                  f"{'; '.join(samples['tally']) or 'nothing replayed'}")
+            for row in samples["rows"][:SAMPLE_ROWS_SHOWN]:
+                print(f"      {row[:150]}")
+            if len(samples["rows"]) > SAMPLE_ROWS_SHOWN:
+                print(f"      ... {len(samples['rows']) - SAMPLE_ROWS_SHOWN} more in replay_{game['game_id']}.txt")
 
     dropped = sum(len(g["dropped"]) for g in games)
     reviewed = sum(len(g["reviewed"]) for g in games)
@@ -818,6 +960,9 @@ def main():
                         help="List dropped and already-reviewed candidates, not just the counts")
     parser.add_argument("--min-requirers", type=int, default=MIN_REQUIRERS,
                         help=f"Requirers a top mod needs to become a candidate (default {MIN_REQUIRERS})")
+    parser.add_argument("--samples", metavar="DIR",
+                        help="Replay sample archives for every row through the game's installers, "
+                             "keeping listings and replays in DIR")
     args = parser.parse_args()
 
     api_key = get_api_key("NEXUS_API_KEY")
@@ -855,6 +1000,9 @@ def main():
             report["errors"].append({"game_id": game_id, "error": str(exc)})
     for game_id in sorted(target_ids - seen):
         report["errors"].append({"game_id": game_id, "error": "no game-* folder with this GAME_ID"})
+
+    if args.samples:
+        replay_samples(report, args.samples, api_key)
 
     if args.json:
         print(json.dumps(report, indent=2))

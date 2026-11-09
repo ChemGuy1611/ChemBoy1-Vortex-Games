@@ -8,6 +8,26 @@
 #   reason  why this needs no extension change (required)
 #
 # A candidate belongs here once it has been checked and needs no extension change.
+warhammer40000spacemarine2|file:tpl_meta_info.json|Metadata inside extracted .tpl asset folders. Those archives already install through the existing local, root and Integration Studio installers.
+warhammer40000spacemarine2|mod:89|Astartes Overhaul. Reviewed, needs no extension change.
+warhammer40000spacemarine2|mod:65|PakCacher. Reviewed, needs no extension change.
+warhammer40000spacemarine2|file:obj_list.json|Reviewed, needs no extension change.
+warhammer40000spacemarine2|file:pct_locations.yaml|Reviewed, needs no extension change.
+warhammer40000spacemarine2|file:warhammer 40000 space marine 2.ini|Reviewed, needs no extension change.
+*|file:reshadepreset.ini|ReShade preset, not a framework.
+*|file:reshadeeffectshadertoggler.ini|ReShade Effect Shader Toggler add-on config, not a framework.
+@basic|file:d3dx.ini|3DMigoto config shipped by shader and texture mods, not a framework.
+@basic|file:enbseries.ini|ENBSeries preset config, not a framework.
+metalgearsolidvtpp|file:global.ini|ReShade's PersonalFiles/Global.ini in graphics presets, not a framework.
+madmax|file:global.ini|ReShade's PersonalFiles/Global.ini in graphics presets, not a framework.
+godofwar|file:3dvision2sbs.ini|3DMigoto ShaderFixes file, not a framework.
+godofwar|file:mouse.ini|3DMigoto ShaderFixes file, not a framework.
+godofwar|file:upscale.ini|3DMigoto ShaderFixes file, not a framework.
+godofwar|file:help.ini|3DMigoto ShaderFixes file, not a framework.
+reddeadredemption|file:be.windows.forms.hexbox.xml|.NET library documentation shipped with a modding tool, not a framework.
+reddeadredemption|file:system.memory.xml|.NET library documentation shipped with a modding tool, not a framework.
+residentevil5goldedition|Fluffy|Old engine, not RE Engine. Fluffy Mod Manager is not really needed for this game.
+residentevil6|Fluffy|Old engine, not RE Engine. Fluffy Mod Manager is not really needed for this game.
 @ue4-5|Simple BP Mod Loader|Spam-uploaded to many UE games. Loads regular mods from the ~mods folder, so no extension change is needed.
 @ue4-5|=UE4SS|Installed and managed by every UE4-5 extension. Exact name only, so custom UE4SS builds still show up for review.
 @ue4-5|=RE-UE4SS|The standard UE4SS project the extensions install from GitHub. Exact name only.
@@ -144,3 +164,71 @@ pcbuildingsimulator|=Java Runtime Environment 8|Needed only by the unitypatcher 
 pcbuildingsimulator|=unitypatcher|External patching tool that .bat scripts run by hand. Part .xml files install without it.
 prodeus|=.NET 6.0|System runtime. The extension already checks for it when MelonLoader is used.
 prodeus|=UniverseLib|Off-site library the user installs. Its dll goes through the plugin installer.
+ninjagaidenfour|file:lazyload.ini|Settings file for the game's dll loader, shipped with dll mods. Archives that wrap it in an extra folder are a packaging issue for the mod author.
+nioh2|mod:18|Game-specific Mod Enabler. The extension's installers take it and its dependents.
+thelastofuspart2|mod:32|ndmodloader. The extension's installers take it and its dependents.
+thelastofuspart2|file:t2r.modclient.ini|Settings file for one client tool, not a mod framework.
+slaythespire2|mod:103|BaseLib library. The mod installer takes it and its dependents.
+slaythespire2|=BaseLib|Same library listed as an external link. The mod installer takes it.
+slaythespire2|mod:137|RitsuLib library. The mod installer takes it and its dependents.
+slaythespire2|mod:27|ModConfig library. The mod installer takes it and its dependents.
+slaythespire2|mod:539|Patchoulib library. The mod installer takes it and its dependents.
+slaythespire2|file:mod_manifest.json|Mod metadata inside archives the mod installer already takes.
+anno117paxromana|file:modinfo.json|The game's own mod metadata. The extension's mod installer takes these folders.
+anno117paxromana|file:assets.xml|Data file inside mod folders the mod installer already keeps whole.
+anno117paxromana|file:texts_*.xml|Language files inside mod folders the mod installer already keeps whole.
+trailsintheskyfirstchapter|mod:28|Loose file loader is a bare dll at the archive root, and the game root is the right place for it.
+trailsintheskyfirstchapter|=sora1looseload|Same loader listed as an external link.
+controlresonant|mod:9|DLL Mod Loader. The root installer places it and its crmods folder correctly.
+controlresonant|mod:35|Mod Settings Menu. The root installer places it under crmods correctly.
+controlresonant|file:rmt_manifest.json|Manifest beside data_pack2. The root installer places these archives correctly.
+europauniversalisv|file:metadata.json|Standard mod metadata in .metadata, which the mod installer keys on.
+marvelsspiderman2|file:info.json|Sits inside Overstrike's packaged mod formats, which the extension installs.
+farmingsimulator25|file:moddesc.xml|Every mod archive has one. The zip installer takes these mods.
+forzahorizon6|mod:56|RevoluSound team pack. The root installer places mediapc correctly.
+forzahorizon6|file:camerasettings.ini|Game file under mediapc. The root installer places it correctly.
+kingdomcomedeliverance2|mod:485|Content mod. Its pak files sit in standard mod folders the mod installer takes.
+kingdomcomedeliverance2|mod:1188|Content mod. Its pak files sit in standard mod folders the mod installer takes.
+nioh3|file:*.yumiamod.json|Yumia mod metadata beside .fdata files, which the extension's installers take.
+crimsondesert|mod:7|RenoDX. The binaries installer places it.
+dyinglightthebeast|mod:17|Native plugin. The binaries installer places it.
+ghostreconwildlands|mod:142|GhostHook loader and its plugins. The extension's loader and plugin installers take them.
+ghostreconwildlands|file:lang.ini|Ships with plugins the plugin installer takes.
+helldivers2|mod:4664|Standalone mod manager. The binaries installer takes the Windows build.
+helldivers2|mod:109|Standalone mod manager. The binaries installer takes it.
+helldivers2|mod:196|ReShade addon. The binaries installer takes it.
+lobotomycorporation|mod:68|Single dll mod. The extension's installers take it.
+mewgenics|mod:36|Standalone mod manager. The extension's own mod format covers the mods.
+residentevil4|mod:32|Trainer. A flat install to the game root is correct.
+residentevil4|file:trainer_settings.ini|Trainer settings, not a mod framework.
+residentevil4|file:trainer.ini|Trainer settings, not a mod framework.
+residentevil4|file:hdproject.ini|Settings for the HD Project mod, not a mod framework.
+residentevil5goldedition|mod:2|Trainer. A flat install to the game root is correct.
+riseofthetombraider|mod:20|Modding tools for authors, not something players install to the game.
+warhammer40kroguetrader|mod:104|ReDress plugin. The plugin installer takes it.
+warhammer40kroguetrader|file:settings.xml|One mod's settings inside archives the plugin installer takes.
+balatro|file:manifest.json|Mod metadata inside archives the mod installer takes.
+balatro|file:lovely.toml|Patch file inside archives the mod installer takes.
+balatro|file:mod.json|Mod metadata inside archives the mod installer takes.
+thelastofuspart1|file:level-sets-*.json|Game data inside build folders the extension's installers take.
+thelastofuspart1|file:params.json|Game data inside folders the extension's installers take.
+thelastofuspart1|file:optiscaler.ini|OptiScaler settings, not a mod framework.
+deusex|=Deus Ex: Revision|A separate Steam game, not a framework for this one.
+middleearthshadowofwar|=Shadow of War Mod Essentials|A Nexus collection, not a framework.
+horizonforbiddenwest|mod:50|Gameplay Tweaks. Its flat winhttp.dll and mod ini files install to the game root by default.
+horizonforbiddenwest|=Vortex ModForge extension|Another author's Vortex extension for the same game, not a framework to integrate.
+doometernal|=Atlan Mod Loader|A DOOM: The Dark Ages tool, listed by cross-game mods.
+doometernal|mod:18|EternalPatcher is a standalone tool, not a framework the mods load through.
+watchdogs|mod:81|Standard and NexusTools builds install correctly. The loose build is merge material for modders.
+watchdogs|file:loc.json|Data file inside mods the NexusTools route takes.
+watchdogs|file:integrity.json|Data file inside mods the NexusTools route takes.
+watchdogs|file:trackingconfig.json|Data file inside mods the NexusTools route takes.
+watchdogs|file:profile.ini|Settings file, not a mod framework.
+hitman3|file:dxgi.ini|Settings for a proxy dll, not a mod framework.
+hitman3|file:chrisrubino.ini|One mod's settings, not a mod framework.
+hitman3|file:h3disguisenpc.ini|One mod's settings, not a mod framework.
+darkmessiahofmightandmagic|=Advanced SDK|Off-site base module the user installs by hand.
+doom3|file:iospecial.ini|Mods that ship it could not be listed. Closed without a finding.
+returntocastlewolfenstein|file:setup.ini|Mods that ship it could not be listed. Closed without a finding.
+horizonzerodawnremastered|mod:51|Native Loader. Its winmm.dll installs to the game root by default, and its plugins have their own installer.
+horizonzerodawnremastered|mod:59|Data Loader. The native mod installer takes it, and its data mods have their own installer.

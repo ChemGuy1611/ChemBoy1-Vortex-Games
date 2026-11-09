@@ -9,6 +9,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Mod Folder | a `data_packfiles`, `data`, `data_pc` or `plugins` folder | the game folder |
+| Tweakables | a `tweakables.xml` file | the game folder |
 | Mod Files (data_packfiles) | a `.bin`, `.packmeta` or `.rmdp` file | `data_packfiles` |
 | Loose File Loader | a `iphlpapi.dll` file | the game folder |
 | Plugin Loader | a `xinput1_4.dll` file | the game folder |
@@ -18,6 +19,12 @@ Paths are relative to the game's install folder.
 ## Mod Folder
 
 Recognised when the archive contains a `data_packfiles`, `data`, `data_pc` or `plugins` folder.
+
+Installs to: the game folder
+
+## Tweakables
+
+Recognised when the archive contains a `tweakables.xml` file.
 
 Installs to: the game folder
 

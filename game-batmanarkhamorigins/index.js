@@ -2,8 +2,8 @@
 Name: Batman: Arkham Origins Vortex Extension
 Structure: UE 2-3 Game + TFC Installer
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-25
+Version: 1.0.3
+Date: 2026-11-09
 Notes:
 -
 /////////////////////////////////////////*/
@@ -875,41 +875,43 @@ async function installCookedSub(
 
   const queryVariant = () => {
     const patch = Object.keys(upkFiles).filter((key) => upkFiles[key].length > 1);
-    return Promise.map(patch, (upkFile) => {
-      return api
-        .showDialog(
-          "question",
-          "Choose Variant",
-          {
-            text:
-              'This mod has several variants for "{{file}}" - please ' +
-              "choose the variant you wish to install. (You can choose a " +
-              "different variant by re-installing the mod)",
-            choices: upkFiles[upkFile].map((iter, idx) => ({
-              id: iter,
-              text: iter,
-              value: idx === 0,
-            })),
-            parameters: {
-              file: upkFile,
+    return Promise.all(
+      patch.map((upkFile) => {
+        return api
+          .showDialog(
+            "question",
+            "Choose Variant",
+            {
+              text:
+                'This mod has several variants for "{{file}}" - please ' +
+                "choose the variant you wish to install. (You can choose a " +
+                "different variant by re-installing the mod)",
+              choices: upkFiles[upkFile].map((iter, idx) => ({
+                id: iter,
+                text: iter,
+                value: idx === 0,
+              })),
+              parameters: {
+                file: upkFile,
+              },
             },
-          },
-          [{ label: "Cancel" }, { label: "Confirm" }],
-        )
-        .then((res) => {
-          if (res.action === "Confirm") {
-            const choice = Object.keys(res.input).find((choice) => res.input[choice]);
-            filtered = filtered.filter(
-              (file) =>
-                //only include files in same directory as chosen variant
-                path.dirname(file) === path.dirname(choice),
-            );
-            return Promise.resolve();
-          } else {
-            throw new VortexError("User canceled", { kind: "user-canceled", skipped: false });
-          }
-        });
-    });
+            [{ label: "Cancel" }, { label: "Confirm" }],
+          )
+          .then((res) => {
+            if (res.action === "Confirm") {
+              const choice = Object.keys(res.input).find((choice) => res.input[choice]);
+              filtered = filtered.filter(
+                (file) =>
+                  //only include files in same directory as chosen variant
+                  path.dirname(file) === path.dirname(choice),
+              );
+              return Promise.resolve();
+            } else {
+              throw new VortexError("User canceled", { kind: "user-canceled", skipped: false });
+            }
+          });
+      }),
+    );
   };
 
   const generateInstructions = () => {
@@ -931,7 +933,7 @@ async function installCookedSub(
     return instructions;
   };
 
-  const prom = hasVariants ? queryVariant : Promise.resolve;
+  const prom = hasVariants ? queryVariant : () => Promise.resolve();
   return prom().then(() => Promise.resolve({ instructions: generateInstructions() }));
 }
 

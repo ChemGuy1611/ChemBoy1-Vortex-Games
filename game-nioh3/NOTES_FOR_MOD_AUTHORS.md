@@ -13,7 +13,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Yumia fdata Tools | a `yumia_mod_insert_into_rdb.exe` file | `package` |
 | Loose File Loader | a `LooseFileLoader.dll` file | `plugins` |
 | ModManager | a `Nioh3ModManager.exe` file | the game folder |
-| ModManager Loose Mod | a `.g1t`, `.g1m` or `.g1ts` file | `ModArchives` |
+| ModManager Loose Mod | a `.g1t`, `.g1m` or `.g1ts` file and a `nioh3modmanifest.json` file | `ModArchives` |
 | Plugin Mod | a `.dll` or `.asi` file | `plugins` |
 | .fdata Package (Yumia) | a `package` folder and a `.fdata` or `.yumiamod.json` file | the game folder |
 | Fallback Installer | anything not matched above | the game folder |
@@ -52,7 +52,7 @@ Installs to: the game folder
 
 ## ModManager Loose Mod
 
-Recognised when the archive contains a `.g1t`, `.g1m` or `.g1ts` file.
+Recognised when the archive contains a `.g1t`, `.g1m` or `.g1ts` file and a `nioh3modmanifest.json` file.
 
 Installs to: `ModArchives`
 

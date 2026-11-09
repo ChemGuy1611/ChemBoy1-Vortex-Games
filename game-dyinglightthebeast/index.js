@@ -2,8 +2,8 @@
 Name: Dying Light The Beast Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-10-25
+Version: 1.0.3
+Date: 2026-11-09
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -768,42 +768,44 @@ function installPak(api, files, fileName) {
   let filtered = files;
   const queryVariant = () => {
     const paks = Object.keys(pakFiles).filter((key) => pakFiles[key].length > 1);
-    return Promise.map(paks, (pakFile) => {
-      return api
-        .showDialog(
-          "question",
-          "Choose Variant",
-          {
-            text:
-              'This mod has several variants for "{{pak}}" - please ' +
-              "choose the variant you wish to install. (You can choose a " +
-              "different variant by re-installing the mod)",
-            choices: pakFiles[pakFile].map((iter, idx) => ({
-              id: iter,
-              text: iter,
-              value: idx === 0,
-            })),
-            parameters: {
-              pak: pakFile,
+    return Promise.all(
+      paks.map((pakFile) => {
+        return api
+          .showDialog(
+            "question",
+            "Choose Variant",
+            {
+              text:
+                'This mod has several variants for "{{pak}}" - please ' +
+                "choose the variant you wish to install. (You can choose a " +
+                "different variant by re-installing the mod)",
+              choices: pakFiles[pakFile].map((iter, idx) => ({
+                id: iter,
+                text: iter,
+                value: idx === 0,
+              })),
+              parameters: {
+                pak: pakFile,
+              },
             },
-          },
-          [{ label: "Cancel" }, { label: "Confirm" }],
-        )
-        .then((res) => {
-          if (res.action === "Confirm") {
-            const choice = Object.keys(res.input).find((choice) => res.input[choice]);
-            filtered = filtered.filter(
-              (file) =>
-                path.extname(file) !== PAK_EXT ||
-                (path.basename(file) === pakFile && file.includes(choice)) ||
-                path.basename(file) !== pakFile,
-            );
-            return Promise.resolve();
-          } else {
-            return new VortexError("User canceled", { kind: "user-canceled", skipped: false });
-          }
-        });
-    });
+            [{ label: "Cancel" }, { label: "Confirm" }],
+          )
+          .then((res) => {
+            if (res.action === "Confirm") {
+              const choice = Object.keys(res.input).find((choice) => res.input[choice]);
+              filtered = filtered.filter(
+                (file) =>
+                  path.extname(file) !== PAK_EXT ||
+                  (path.basename(file) === pakFile && file.includes(choice)) ||
+                  path.basename(file) !== pakFile,
+              );
+              return Promise.resolve();
+            } else {
+              throw new VortexError("User canceled", { kind: "user-canceled", skipped: false });
+            }
+          });
+      }),
+    );
   };
   const generateInstructions = () => {
     const fileInstructions = filtered.reduce((accum, iter) => {
@@ -825,7 +827,7 @@ function installPak(api, files, fileName) {
     return instructions;
   };
 
-  const prom = hasVariants ? queryVariant : Promise.resolve;
+  const prom = hasVariants ? queryVariant : () => Promise.resolve();
   return prom().then(() => Promise.resolve({ instructions: generateInstructions() }));
 } //*/
 

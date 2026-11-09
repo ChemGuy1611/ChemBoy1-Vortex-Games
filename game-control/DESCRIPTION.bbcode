@@ -17,6 +17,7 @@ This extension adds Control modding support to Vortex Mod Manager.
 [b]🛠️ Mod Installation Notes:[/b]
 [list]
 [*]Mod Folder mods with a "data_packfiles", "data", "data_pc" or "plugins" folder install to the game folder.[/*]
+[*]Mod Folder mods with a "tweakables.xml" file install to the game folder.[/*]
 [*]Mod Files (data_packfiles) mods with a ".bin", ".packmeta" or ".rmdp" file install to the "data_packfiles" folder.[/*]
 [*]Loose File Loader installs to the game folder, recognised by an "iphlpapi.dll" file.[/*]
 [*]Plugin Loader installs to the game folder, recognised by a "xinput1_4.dll" file.[/*]
@@ -40,6 +41,14 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 Mod Folder:
 
 Recognised when the archive contains a "data_packfiles", "data", "data_pc" or "plugins" folder.
+
+  Installs to: the game folder
+
+========================================================================
+
+Tweakables:
+
+Recognised when the archive contains a "tweakables.xml" file.
 
   Installs to: the game folder
 

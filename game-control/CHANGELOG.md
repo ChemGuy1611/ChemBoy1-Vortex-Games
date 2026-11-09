@@ -1,7 +1,8 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [2.1.3] - 2026-11-09
 
+- Fixed: Tweakables mods packaged without the full data folder now install to data\globaldb instead of the game folder.
 - Fixed: Mod files whose names only begin with LICENSE (for example, License_Plates.dds) are no longer skipped during deployment.
 
 ## [2.1.2] - 2026-10-25

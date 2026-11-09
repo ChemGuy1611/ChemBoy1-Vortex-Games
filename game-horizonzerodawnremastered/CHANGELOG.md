@@ -2,19 +2,17 @@
 
 ## Planned Improvements (Not Yet Released)
 
-- Changed: HFW Mod Manager now appears in the mod list with its version, and can be disabled or removed from there
-- Added: Update check for HFW Mod Manager, with a notification when a new version is released
-- Fixed: HFW Mod Manager now installs the current version instead of an outdated one
+- HFW Mod Manager support, once the manager supports Horizon Zero Dawn Remastered.
+
+## [1.0.0] - 2026-11-09
+
+- Added: Native Loader plugins now install to the nativemods folder, and Data Loader mods to the datamods folder.
 - Fixed: Mod files with no file extension were skipped during installation
 - Added an "Open SteamDB Page" button next to the PCGamingWiki one.
 - The various "Open X Folder"/"Open X Page" buttons now show an error message if the folder or page can't be opened, instead of failing silently.
 - Fixed: Mods packaged inside an outer folder whose name contains the name of the mod's own folder or file (for example "MyData" for "Data") now install into the right place.
 - Fixed: Mod files whose names only begin with README, CHANGELOG, or LICENSE (for example, License_Plates.dds) are no longer skipped during deployment.
 - Added: README and CHANGELOG files spelled with a hyphen, underscore, or space (for example, READ_ME.txt or Change Log.md) are now excluded from mod conflict detection and deployment.
-
-## [0.2.0] - 2026-04-13
-
-- Added: HFW Mod Manager integration for installing .core and .stream mods
 
 ## [0.1.2]
 

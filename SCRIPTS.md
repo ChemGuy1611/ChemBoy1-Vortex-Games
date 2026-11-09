@@ -1772,9 +1772,14 @@ python audit_frameworks.py deadasdisco tekken8
 python audit_frameworks.py --json
 python audit_frameworks.py --show-dropped
 python audit_frameworks.py --min-requirers 10
+python audit_frameworks.py nioh3 --samples DIR
 ```
 
 Run without arguments for every game in every family. `--family` limits the run to one family and can be repeated. `--json` emits a structured report instead. `--show-dropped` lists dropped and already-reviewed candidates with the reason, not just the counts. `--min-requirers` changes the candidate threshold (default 5).
+
+`--samples DIR` also replays real archives for every game with a row: each finding's own mod plus up to 3 dependents, and up to 3 mods carrying each of the 2 most common fingerprints. Listings come from `nexus_mod_preview.py`, and `replay_installers.js` runs them through the game's real installers. The report gains a `[samples]` line per game with the installer tally and the archives that were unclaimed or reached the fallback installer (`samples` in `--json`). `DIR` keeps each listing and the full `replay_<game>.txt`; nothing else is written. It adds several requests per mod, so name the games or a family.
+
+A mod counts as named by `index.js`, and so is dropped, when its id is in a `*_PAGE_NO` constant, when its full name or leading name (before a version, credit or ` - ` subtitle, 6 characters or longer) appears with doubled letters collapsed, as an acronym, or as one of its own native file names.
 
 ### audit_frameworks.py — Output
 

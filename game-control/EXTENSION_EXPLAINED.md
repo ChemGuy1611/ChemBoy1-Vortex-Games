@@ -44,6 +44,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | Installer ID | Priority |
 | --- | --- |
 | `control-modfolder` | 25 |
+| `control-tweakables` | 27 |
 | `control-modpack` | 30 |
 | `control-loosefileloader` | 35 |
 | `control-pluginloader` | 40 |

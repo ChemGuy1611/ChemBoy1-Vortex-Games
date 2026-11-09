@@ -26,6 +26,7 @@
 | Flag | Value | Description |
 | --- | --- | --- |
 | `modManagerInstalled` | `false` |  |
+| `hasModManager` | `false` | HFW Mod Manager and its mods. Off until the manager supports this game |
 
 ## Mod Types
 
@@ -36,6 +37,8 @@ Mod types define where each category of mod gets deployed:
 | DS2 Manager Mod | `horizonzerodawnremastered-managermod` | high | `{gamePath}/mods` |
 | DS2 Mod Manager | `horizonzerodawnremastered-modmanager` | low | `{gamePath}` |
 | Save Game (Documents) | `horizonzerodawnremastered-save` | high | `userDocsPathString/Horizon Zero Dawn Remastered/USERID_FOLDER` |
+| Native Mod | `horizonzerodawnremastered-nativemod` | high | `{gamePath}/nativemods` |
+| Data Mod | `horizonzerodawnremastered-datamod` | high | `{gamePath}/datamods` |
 
 ## Mod Installers
 
@@ -43,7 +46,9 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `horizonzerodawnremastered-managermod` | 35 |
+| `horizonzerodawnremastered-loaderfolders` | 29 |
+| `horizonzerodawnremastered-nativemod` | 31 |
+| `horizonzerodawnremastered-datamod` | 33 |
 | `horizonzerodawnremastered-save` | 45 |
 
 ## Registered Tools

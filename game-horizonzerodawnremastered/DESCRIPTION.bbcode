@@ -8,7 +8,9 @@ This extension adds Horizon Zero Dawn Remastered modding support to Vortex Mod M
 [/list]
 [b]🛠️ Mod Installation Notes:[/b]
 [list]
-[*]DS2 Manager mods with a "modinfo.json" file and a ".core" or ".stream" file install to the "mods" folder.[/*]
+[*]Loaderfolders mods are supported.[/*]
+[*]Native mods install to the "nativemods" folder.[/*]
+[*]Data mods install to the "datamods" folder.[/*]
 [*]Save Game (Documents) mods with a ".dat" file install to the game's save folder.[/*]
 [*]Archives with a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to Vortex's built-in FOMOD installer instead.[/*]
 [/list]
@@ -25,11 +27,25 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ========================================================================
 
-DS2 Manager Mod:
+Loaderfolders:
 
-Recognised when the archive contains a "modinfo.json" file and a ".core" or ".stream" file.
+Handled by the "testLoaderFolders" installer. Inspect the extension source for the exact archive layout it expects.
 
-  Installs to: "mods"
+========================================================================
+
+Native Mod:
+
+Handled by the "testNativeMod" installer. Inspect the extension source for the exact archive layout it expects.
+
+  Installs to: "nativemods"
+
+========================================================================
+
+Data Mod:
+
+Handled by the "testDataMod" installer. Inspect the extension source for the exact archive layout it expects.
+
+  Installs to: "datamods"
 
 ========================================================================
 

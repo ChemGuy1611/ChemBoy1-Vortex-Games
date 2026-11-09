@@ -66,6 +66,11 @@ This one is lint-backed: the repo ships custom ESLint rules `vortex/no-bluebird-
 (error), `vortex/no-bluebird-resolve-promiselike` (warn), and a restricted-import warning on the
 `bluebird` package itself.
 
+Extensions get the same native global `Promise`: Vortex does not replace it with Bluebird. Code carried
+over from an extension that imported Bluebird breaks when that import is gone. `Promise.map` is
+undefined, and a detached `const prom = Promise.resolve; prom()` throws
+`PromiseResolve called on non-object`. Use `Promise.all(arr.map(fn))` and `() => Promise.resolve()`.
+
 ---
 
 ## TypeScript

@@ -17,9 +17,9 @@ This extension will automatically install [url=https://github.com/Foxxyyy/Magic
 [*]ScriptHookRDR mods with a "dinput8.dll" file and a "scripthookrdr.dll" file install to the game folder.[/*]
 [*]Kepmehz Mod Loader installs to the game folder, recognised by a "kml.asi" file.[/*]
 [*]Magic RDR mods install to the game folder.[/*]
-[*]MagicRDR Mod (Loose) mods with a ".wtd", ".was", ".dds", ".mtl" or ".wsc" file install to the "MagicRDR_Mods" folder.[/*]
+[*]MagicRDR Mod (Loose) mods install to the "MagicRDR_Mods" folder.[/*]
 [*]RPF File mods with a ".rpf" file install to the "kml\rpf" folder.[/*]
-[*]ASI Script / Plugin mods with a ".asi" file install to the game folder.[/*]
+[*]ASI Script / Plugin mods with a ".asi" or ".red" file install to the game folder.[/*]
 [*]Archives with a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to Vortex's built-in FOMOD installer instead.[/*]
 [/list]
 [b]📋 Usage Notes:[/b]
@@ -64,7 +64,7 @@ Handled by the "testMagic" installer. Inspect the extension source for the exact
 
 MagicRDR Mod (Loose):
 
-Recognised when the archive contains a ".wtd", ".was", ".dds", ".mtl" or ".wsc" file.
+Handled by the "testMagicMod" installer. Inspect the extension source for the exact archive layout it expects.
 
   Installs to: "MagicRDR_Mods"
 
@@ -80,7 +80,7 @@ Recognised when the archive contains a ".rpf" file.
 
 ASI Script / Plugin:
 
-Recognised when the archive contains a ".asi" file.
+Recognised when the archive contains a ".asi" or ".red" file.
 
   Installs to: the game folder
 

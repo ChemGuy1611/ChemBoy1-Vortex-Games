@@ -2,8 +2,8 @@
 Name: Control Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 2.1.2
-Date: 2026-10-25
+Version: 2.1.3
+Date: 2026-11-09
 /////////////////////////////////////////*/
 
 //Import libraries
@@ -76,6 +76,10 @@ const MODFOLDER_DATA = `data`;
 const MODFOLDER_DATAPC = `data_pc`;
 const MODFOLDER_PLUGINS = `plugins`;
 const MODFOLDER_FOLDERS = [MODFOLDER_PACK, MODFOLDER_DATA, MODFOLDER_DATAPC, MODFOLDER_PLUGINS];
+
+const TWEAKABLES_ID = `${GAME_ID}-tweakables`;
+const TWEAKABLES_PATH = path.join(MODFOLDER_DATA, "globaldb");
+const TWEAKABLES_FILES = ["tweakables.xml"];
 
 const MODPACK_ID = `${GAME_ID}-modpack`;
 const MODPACK_NAME = `Mod Files (data_packfiles)`;
@@ -662,6 +666,45 @@ function installModFolder(files) {
   return Promise.resolve({ instructions });
 }
 
+//Installer test for a tweakables.xml packaged without the game's data folder
+function testTweakables(files, gameId) {
+  const isMod = files.some((file) => TWEAKABLES_FILES.includes(path.basename(file).toLowerCase()));
+  let supported = gameId === spec.game.id && isMod;
+
+  // Test for a mod installer
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install tweakables.xml to the folder Loose File Loader reads it from
+function installTweakables(files) {
+  const modFile = files.find((file) =>
+    TWEAKABLES_FILES.includes(path.basename(file).toLowerCase()),
+  );
+  const instructions = [
+    {
+      type: "copy",
+      source: modFile,
+      destination: path.join(TWEAKABLES_PATH, path.basename(modFile)),
+    },
+    { type: "setmodtype", value: MODFOLDER_ID },
+  ];
+  return Promise.resolve({ instructions });
+}
+
 //Installer test for Root folder files
 function testModPack(files, gameId) {
   const isMod = files.some((file) => MODPACK_EXTS.includes(path.extname(file).toLowerCase()));
@@ -949,6 +992,7 @@ function applyGame(context, gameSpec) {
 
   //register mod installers
   context.registerInstaller(MODFOLDER_ID, 25, testModFolder, installModFolder);
+  context.registerInstaller(TWEAKABLES_ID, 27, testTweakables, installTweakables);
   context.registerInstaller(MODPACK_ID, 30, testModPack, installModPack);
   context.registerInstaller(LOOSELOADER_ID, 35, testLooseLoader, installLooseLoader);
   context.registerInstaller(PLUGINLOADER_ID, 40, testPluginLoader, installPluginLoader);

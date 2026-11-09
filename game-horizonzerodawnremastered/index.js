@@ -1,8 +1,8 @@
 /*
 Name: Horizon Zero Dawn Remastered Vortex Extension
 Author: ChemBoy1
-Version: 0.1.2
-Date: 11/07/2024
+Version: 1.0.0
+Date: 2026-11-09
 */
 
 //import libraries
@@ -40,6 +40,9 @@ let DOWNLOAD_FOLDER = ""; //Vortex download folder path
 let GAME_PATH = ""; //Game installation path
 let GAME_VERSION = ""; //Game version
 let modManagerInstalled = false;
+
+//feature toggles
+const hasModManager = false; //HFW Mod Manager and its mods. Off until the manager supports this game
 
 //Info for mod types and installers
 const MODMANAGER_ID = `${GAME_ID}-modmanager`;
@@ -83,6 +86,23 @@ const MANAGERMOD_PATH = path.join("mods");
 const MANAGERMOD_EXTS = [".core", ".stream"];
 const MANAGERMOD_FILES = ["modinfo.json"];
 
+//Native Loader plugins: <game>\nativemods\<mod>\<mod>.dll
+const NATIVEMOD_ID = `${GAME_ID}-nativemod`;
+const NATIVEMOD_NAME = "Native Mod";
+const NATIVEMOD_PATH = "nativemods";
+const NATIVEMOD_EXTS = [".dll"];
+
+//Data Loader mods: <game>\datamods\<mod>\<game folders>\file.core
+const DATAMOD_ID = `${GAME_ID}-datamod`;
+const DATAMOD_NAME = "Data Mod";
+const DATAMOD_PATH = "datamods";
+const DATAMOD_EXTS = [".core"];
+const DATAMOD_ROOT_FOLDERS = ["default_assets", "interface", "localized", "models"]; //the game's own top folders, used to find where the mod's folder sits
+const DATAMOD_EXCLUDE_FILES = ["packfilelocators.bin"]; //archives with this replace the game's own package files
+
+const LOADERMOD_ID = `${GAME_ID}-loaderfolders`;
+const LOADERMOD_FOLDERS = [NATIVEMOD_PATH, DATAMOD_PATH];
+
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_EXT = ".dat";
 const userDocsValue = util.getVortexPath("documents");
@@ -110,7 +130,12 @@ const REQ_FILE = EXEC;
 const PARAMETERS_STRING = "";
 const PARAMETERS = [PARAMETERS_STRING];
 
-let MODTYPE_FOLDERS = [MANAGERMOD_PATH];
+let MODTYPE_FOLDERS = [NATIVEMOD_PATH, DATAMOD_PATH];
+if (hasModManager) MODTYPE_FOLDERS.push(MANAGERMOD_PATH);
+
+//Mod types and tools that exist only with the Mod Manager
+const MODMANAGER_FEATURE_IDS = [MANAGERMOD_ID, MODMANAGER_ID];
+const isEnabledFeature = (entry) => hasModManager || !MODMANAGER_FEATURE_IDS.includes(entry.id);
 const IGNORE_CONFLICTS = [
   path.join("**", "change?([-_ ])log!(*.*)"),
   path.join("**", "change?([-_ ])log*.{txt,md,rtf,pdf,html,htm}"),
@@ -171,7 +196,19 @@ const spec = {
       priority: "high",
       targetPath: SAVE_PATH,
     },
-  ],
+    {
+      id: NATIVEMOD_ID,
+      name: NATIVEMOD_NAME,
+      priority: "high",
+      targetPath: path.join("{gamePath}", NATIVEMOD_PATH),
+    },
+    {
+      id: DATAMOD_ID,
+      name: DATAMOD_NAME,
+      priority: "high",
+      targetPath: path.join("{gamePath}", DATAMOD_PATH),
+    },
+  ].filter(isEnabledFeature),
   discovery: {
     ids: DISCOVERY_IDS_ACTIVE,
     names: [],
@@ -205,7 +242,7 @@ const tools = [
     //defaultPrimary: true,
     //parameters: [],
   }, //*/
-];
+].filter(isEnabledFeature);
 
 //Set mod type priorities
 function statCheckSync(gamePath, file) {
@@ -347,6 +384,168 @@ async function requiresLauncher(gamePath, store) {
 }
 
 // MOD INSTALLER FUNCTIONS //////////////////////////////////////////////////////////////
+
+//Test for an archive already laid out as the game's nativemods and datamods folders
+function testLoaderFolders(files, gameId) {
+  const isMod = files.some((file) =>
+    file
+      .toLowerCase()
+      .split(path.sep)
+      .some((segment) => LOADERMOD_FOLDERS.includes(segment)),
+  );
+  let supported = gameId === spec.game.id && isMod;
+
+  // Test for a mod installer
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install nativemods and datamods folders to the game folder, dropping anything outside them
+function installLoaderFolders(files) {
+  const instructions = [];
+  files
+    .filter((file) => !file.endsWith(path.sep))
+    .forEach((file) => {
+      const segments = file.split(path.sep);
+      const idx = segments.findIndex((segment) =>
+        LOADERMOD_FOLDERS.includes(segment.toLowerCase()),
+      );
+      if (idx !== -1) {
+        instructions.push({
+          type: "copy",
+          source: file,
+          destination: segments.slice(idx).join(path.sep),
+        });
+      }
+    });
+  return Promise.resolve({ instructions });
+}
+
+//A Native Loader plugin is a dll named after the folder it sits in. Proxy dlls (version.dll, dxgi.dll) are not.
+function isNativeModFile(file) {
+  const ext = path.extname(file);
+  return (
+    NATIVEMOD_EXTS.includes(ext.toLowerCase()) &&
+    path.basename(path.dirname(file)).toLowerCase() === path.basename(file, ext).toLowerCase()
+  );
+}
+
+//Test for Native Loader plugins
+function testNativeMod(files, gameId) {
+  const isMod = files.some((file) => isNativeModFile(file));
+  let supported = gameId === spec.game.id && isMod;
+
+  // Test for a mod installer
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install Native Loader plugins, each keeping its own folder
+function installNativeMod(files) {
+  const folders = files.filter((file) => isNativeModFile(file)).map((file) => path.dirname(file));
+  const instructions = [{ type: "setmodtype", value: NATIVEMOD_ID }];
+  files
+    .filter((file) => !file.endsWith(path.sep))
+    .forEach((file) => {
+      const folder = folders.find((iter) => file.startsWith(iter + path.sep));
+      if (folder !== undefined) {
+        instructions.push({
+          type: "copy",
+          source: file,
+          destination: path.join(path.basename(folder), file.slice(folder.length + 1)),
+        });
+      }
+    });
+  return Promise.resolve({ instructions });
+}
+
+//A Data Loader mod file sits below a folder. A bare .core at the archive root is a Mod Manager mod.
+function isDataModFile(file) {
+  return DATAMOD_EXTS.includes(path.extname(file).toLowerCase()) && path.dirname(file) !== ".";
+}
+
+//Test for Data Loader mods
+function testDataMod(files, gameId) {
+  const isMod = files.some((file) => isDataModFile(file));
+  const isExcluded = files.some((file) => {
+    const name = path.basename(file).toLowerCase();
+    return MANAGERMOD_FILES.includes(name) || DATAMOD_EXCLUDE_FILES.includes(name);
+  });
+  let supported = gameId === spec.game.id && isMod && !isExcluded;
+
+  // Test for a mod installer
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install Data Loader mods, keeping the mod's folder or giving it one named after the archive
+function installDataMod(files, fileName) {
+  const segments = files.find((file) => isDataModFile(file)).split(path.sep);
+  const rootIdx = segments.findIndex((segment) =>
+    DATAMOD_ROOT_FOLDERS.includes(segment.toLowerCase()),
+  );
+  const modIdx = rootIdx === -1 ? 0 : rootIdx - 1;
+  const MOD_FOLDER =
+    modIdx < 0
+      ? path.basename(fileName).replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*/gi, "")
+      : "";
+  const wrapper = segments.slice(0, Math.max(modIdx, 0));
+  const rootPrefix = wrapper.length > 0 ? wrapper.join(path.sep) + path.sep : "";
+
+  //Files beside the mod's folder are readmes
+  const filtered = files.filter(
+    (file) =>
+      !file.endsWith(path.sep) &&
+      file.startsWith(rootPrefix) &&
+      file.slice(rootPrefix.length).includes(path.sep),
+  );
+  const instructions = filtered.map((file) => ({
+    type: "copy",
+    source: file,
+    destination: path.join(MOD_FOLDER, file.slice(rootPrefix.length)),
+  }));
+  instructions.push({ type: "setmodtype", value: DATAMOD_ID });
+  return Promise.resolve({ instructions });
+}
 
 //test for HFW MM files/exts
 function testManagerMod(files, gameId) {
@@ -624,7 +823,7 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
-  await downloadModManager(api, true);
+  if (hasModManager) await downloadModManager(api, true);
   await vfs.ensureDirWritableAsync(SAVE_PATH);
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
@@ -666,7 +865,12 @@ function applyGame(context, gameSpec) {
   });
 
   //register mod installers
-  context.registerInstaller(MANAGERMOD_ID, 35, testManagerMod, installManagerMod);
+  context.registerInstaller(LOADERMOD_ID, 29, testLoaderFolders, installLoaderFolders);
+  context.registerInstaller(NATIVEMOD_ID, 31, testNativeMod, installNativeMod);
+  context.registerInstaller(DATAMOD_ID, 33, testDataMod, installDataMod);
+  if (hasModManager) {
+    context.registerInstaller(MANAGERMOD_ID, 35, testManagerMod, installManagerMod);
+  }
   context.registerInstaller(`${GAME_ID}-save`, 45, testSave, installSave);
 
   //register actions
@@ -830,7 +1034,7 @@ function main(context) {
     // put code here that should be run (once) when Vortex starts up
     const api = context.api;
     context.api.onAsync("check-mods-version", async (gameId, mods, forced) => {
-      if (gameId !== GAME_ID) return;
+      if (!hasModManager || gameId !== GAME_ID) return;
       try {
         await testRequirementVersion(api, MODMANAGER_REQUIREMENTS[0]);
       } catch (err) {
@@ -843,7 +1047,7 @@ function main(context) {
         context.api.getState(),
         GAME_ID,
       );
-      if (profileId !== LAST_ACTIVE_PROFILE) return;
+      if (!hasModManager || profileId !== LAST_ACTIVE_PROFILE) return;
       modManagerInstalled = await isModManagerInstalled(context.api);
       if (!modManagerInstalled) {
         await downloadModManager(context.api, true);
@@ -856,7 +1060,7 @@ function main(context) {
         context.api.getState(),
         GAME_ID,
       );
-      if (profileId !== LAST_ACTIVE_PROFILE) return;
+      if (!hasModManager || profileId !== LAST_ACTIVE_PROFILE) return;
       modManagerInstalled = await isModManagerInstalled(context.api);
       if (!modManagerInstalled) {
         await downloadModManager(context.api, true);

@@ -4,6 +4,10 @@
 
 - ? handle .rpack files? - <https://www.nexusmods.com/dyinglightthebeast/mods/99>
 - ? handle dataen.pak file?
+
+## [1.0.3] - 2026-11-09
+
+- Fixed: .pak mods no longer fail to install with an error. Cancelling the variant choice now cancels the install.
 - Fixed: Mod files whose names only begin with README, CHANGELOG, or LICENSE (for example, License_Plates.dds) are no longer skipped during deployment.
 - Added: README and CHANGELOG files spelled with a hyphen, underscore, or space (for example, READ_ME.txt or Change Log.md) are now excluded from mod conflict detection and deployment.
 
