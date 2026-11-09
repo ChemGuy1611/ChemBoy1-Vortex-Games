@@ -15,6 +15,8 @@ This extension adds Castlevania: Belmont's Curse modding support to Vortex Mod M
 [*]Assembly DLL mods with a "GameAssembly.dll" file install to the game folder.[/*]
 [*]BepInEx Plugin mods with a ".dll" file built for BepInEx install to the "BepInEx\plugins\<ModName>" folder.[/*]
 [*]Plugin archives built for a different mod loader than the one installed are cancelled.[/*]
+[*]Belmont Outfit Addons Pack mods install to the "BepInEx\plugins\BelmontOutfitAddons\Outfits" folder.[/*]
+[*]Belmont Texture Overrider Textures mods install to the "BepInEx\plugins\BelmontTextureOverrider\Textures" folder.[/*]
 [*]Assets/Resources File mods with a ".assets", ".resource" or ".ress" file install to the "Castlevania Belmont's Curse_Data" folder.[/*]
 [*]Any other mod not described above installs to the game folder.[/*]
 [*]Archives with a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to Vortex's built-in FOMOD installer instead.[/*]
@@ -116,6 +118,22 @@ MyPlugin.zip
 
   Common mistakes:
     - Shipping a plugin together with loader files, which makes the archive look like a loader install instead.
+
+========================================================================
+
+Belmont Outfit Addons Pack:
+
+Handled by the "testOutfit" installer. Inspect the extension source for the exact archive layout it expects.
+
+  Installs to: "BepInEx\plugins\BelmontOutfitAddons\Outfits"
+
+========================================================================
+
+Belmont Texture Overrider Textures:
+
+Handled by the "testTextures" installer. Inspect the extension source for the exact archive layout it expects.
+
+  Installs to: "BepInEx\plugins\BelmontTextureOverrider\Textures"
 
 ========================================================================
 

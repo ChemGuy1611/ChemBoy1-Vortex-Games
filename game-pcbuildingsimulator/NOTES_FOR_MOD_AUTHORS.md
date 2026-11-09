@@ -14,6 +14,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Assembly Replacement Mods | a `Assembly-CSharp.dll` file | `PCBS_Data\Managed` |
 | BepInEx Plugin Mods | a `.dll` file built for BepInEx | `BepInEx\plugins\<ModName>` |
 | Asset Replacement Mods | a `.assets`, `.resource` or `.ress` file | `PCBS_Data` |
+| Custom Parts Import Files | a `.xml` file | `BepInEx\plugins\assets` |
 | Save Game Files | a `.binary` file | `Saves` |
 | Fallback Installer | anything not matched above | the game folder |
 
@@ -120,6 +121,12 @@ Installs to: `PCBS_Data`
 **Common mistakes:**
 
 - Asset files must keep their original names to replace the right bundle.
+
+## Custom Parts Import Files
+
+Recognised when the archive contains a `.xml` file.
+
+Installs to: `BepInEx\plugins\assets`
 
 ## Save Game Files
 

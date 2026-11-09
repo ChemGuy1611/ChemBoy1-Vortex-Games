@@ -14,6 +14,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | BepInEx Configuration Manager | a `configurationmanager.dll` file | `BepInEx` |
 | MelonLoader Preferences Manager | a `melonprefmanager.mono.dll` file | `Mods` |
 | Assembly Replacement Mods | a `Assembly-CSharp.dll` file | `Duckov_Data\Managed` |
+| Official Mod | - | `Duckov_Data\Mods` |
 | BepInEx Plugin Mods | a `.dll` file built for BepInEx | `BepInEx\plugins\<ModName>` |
 | MelonLoader Mods | a `.dll` file built for MelonLoader | `Mods\<ModName>` |
 | Asset Replacement Mods | a `.assets`, `.resource` or `.ress` file | `Duckov_Data` |
@@ -114,6 +115,12 @@ Installs to: `Duckov_Data\Managed`
 
 - Assembly replacements cannot be combined with other assembly mods - state this clearly on the mod page.
 - Shipping an assembly alongside a plugin makes the whole archive install as an assembly mod.
+
+## Official Mod
+
+Handled by the `testOfficial` installer. Inspect the extension source for the exact archive layout it expects.
+
+Installs to: `Duckov_Data\Mods`
 
 ## BepInEx Plugin Mods
 

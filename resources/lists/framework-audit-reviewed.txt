@@ -1,20 +1,20 @@
 # Hand-maintained: audit_frameworks.py reads this file and never writes it. categorize_games.py leaves it alone.
 #
 # One entry per line: scope|target|reason
-#   scope   a GAME_ID, or * for every game
+#   scope   a GAME_ID, * for every game, or @<family> for one template family (@ue4-5, @unity, @basic)
 #   target  part of a Nexus mod name (case and punctuation ignored), =<name> for the whole
 #           name only, mod:<id> for one mod, or file:<name> for a file name that recurs
 #           across mods (* wildcards allowed)
 #   reason  why this needs no extension change (required)
 #
 # A candidate belongs here once it has been checked and needs no extension change.
-*|Simple BP Mod Loader|Spam-uploaded to many UE games. Loads regular mods from the ~mods folder, so no extension change is needed.
-*|=UE4SS|Installed and managed by every UE4-5 extension. Exact name only, so custom UE4SS builds still show up for review.
-*|=RE-UE4SS|The standard UE4SS project the extensions install from GitHub. Exact name only.
-*|Signature Bypass|Covered by the SIGBYPASS_REQUIRED toggle.
-*|Sig Bypass|Covered by the SIGBYPASS_REQUIRED toggle.
-*|Mod Enabler|Signature-bypass style enabler. The universal sig bypass the extensions install already covers it.
-*|Bitfix|Signature-bypass style loader. The universal sig bypass the extensions install already covers it.
+@ue4-5|Simple BP Mod Loader|Spam-uploaded to many UE games. Loads regular mods from the ~mods folder, so no extension change is needed.
+@ue4-5|=UE4SS|Installed and managed by every UE4-5 extension. Exact name only, so custom UE4SS builds still show up for review.
+@ue4-5|=RE-UE4SS|The standard UE4SS project the extensions install from GitHub. Exact name only.
+@ue4-5|Signature Bypass|Covered by the SIGBYPASS_REQUIRED toggle.
+@ue4-5|Sig Bypass|Covered by the SIGBYPASS_REQUIRED toggle.
+@ue4-5|Mod Enabler|Signature-bypass style enabler. The universal sig bypass the extensions install already covers it.
+@ue4-5|Bitfix|Signature-bypass style loader. The universal sig bypass the extensions install already covers it.
 *|ASI Loader|Ultimate ASI Loader is a dll that installs normally through the extension.
 *|ReShade|Off-site post-processing injector the user installs, not a framework.
 *|VC++ v14|Microsoft Visual C++ runtime, a system prerequisite.
@@ -65,31 +65,31 @@ vtmbloodlines2|file:mod.json|One author's per-mod metadata. Each archive bundles
 whiskerwood|file:mod.json|Ships inside UE4SS-style Lua mod folders, which the UE4SS script installer takes whole. No action needed.
 windrose|mod:43|Game-specific UE4SS build. The extension already installs it (UE4SS_PAGE_NO).
 wuchangfallenfeathers|mod:384|Stock UE4SS repackaged for the game. The extension installs the same from GitHub.
-*|file:ue4ss-settings.ini|UE4SS's own settings file.
-*|file:vtablelayout.ini|UE4SS's own layout file.
-*|file:mods.json|UE4SS's own mod list.
-*|file:engine.ini|Unreal engine config tweak, not a framework.
+@ue4-5|file:ue4ss-settings.ini|UE4SS's own settings file.
+@ue4-5|file:vtablelayout.ini|UE4SS's own layout file.
+@ue4-5|file:mods.json|UE4SS's own mod list.
+@ue4-5|file:engine.ini|Unreal engine config tweak, not a framework.
 *|file:reshade.ini|ReShade preset config, not a framework.
 *|file:modinfo.ini|Fluffy Mod Manager metadata shipped beside the paks, not a framework.
 *|file:moduleconfig.xml|FOMOD installer file, handled by Vortex.
 *|file:info.xml|FOMOD installer file, handled by Vortex.
-*|file:packagerestoredata.json|Unreal cook output shipped by accident.
-*|file:shaderassetinfo-*|Unreal cook output shipped by accident.
-*|file:game.ini|Unreal engine config file, installed by the Config installer.
-*|file:gameusersettings.ini|Unreal engine config file, installed by the Config installer.
-*|file:input.ini|Unreal engine config file, installed by the Config installer.
-*|file:scalability.ini|Unreal engine config file, installed by the Config installer.
-*|file:hardware.ini|Unreal engine config file, installed by the Config installer.
-*|file:deviceprofiles.ini|Unreal engine config file, installed by the Config installer.
-*|file:compat.ini|Unreal engine config file, installed by the Config installer.
-*|file:runtimeoptions.ini|Unreal engine config file, installed by the Config installer.
-*|file:gameplaytags.ini|Unreal engine config file, installed by the Config installer.
-*|file:enhancedinput.ini|Unreal engine config file, installed by the Config installer.
-*|file:consolevariables.ini|Unreal engine config file, installed by the Config installer.
-*|file:config.txt|UE4SS mod config file, ships inside the mod folder the UE4SS installers take whole.
-*|file:settings.json|UE4SS mod config file, ships inside the mod folder the UE4SS installers take whole.
-*|file:config.lua|UE4SS mod config file, ships inside the mod folder the UE4SS installers take whole.
-*|file:membervariablelayout.ini|UE4SS's own layout file.
+@ue4-5|file:packagerestoredata.json|Unreal cook output shipped by accident.
+@ue4-5|file:shaderassetinfo-*|Unreal cook output shipped by accident.
+@ue4-5|file:game.ini|Unreal engine config file, installed by the Config installer.
+@ue4-5|file:gameusersettings.ini|Unreal engine config file, installed by the Config installer.
+@ue4-5|file:input.ini|Unreal engine config file, installed by the Config installer.
+@ue4-5|file:scalability.ini|Unreal engine config file, installed by the Config installer.
+@ue4-5|file:hardware.ini|Unreal engine config file, installed by the Config installer.
+@ue4-5|file:deviceprofiles.ini|Unreal engine config file, installed by the Config installer.
+@ue4-5|file:compat.ini|Unreal engine config file, installed by the Config installer.
+@ue4-5|file:runtimeoptions.ini|Unreal engine config file, installed by the Config installer.
+@ue4-5|file:gameplaytags.ini|Unreal engine config file, installed by the Config installer.
+@ue4-5|file:enhancedinput.ini|Unreal engine config file, installed by the Config installer.
+@ue4-5|file:consolevariables.ini|Unreal engine config file, installed by the Config installer.
+@ue4-5|file:config.txt|UE4SS mod config file, ships inside the mod folder the UE4SS installers take whole.
+@ue4-5|file:settings.json|UE4SS mod config file, ships inside the mod folder the UE4SS installers take whole.
+@ue4-5|file:config.lua|UE4SS mod config file, ships inside the mod folder the UE4SS installers take whole.
+@ue4-5|file:membervariablelayout.ini|UE4SS's own layout file.
 *|file:winmm.ini|Ultimate ASI Loader config (named after its winmm.dll), installs with the loader.
 *|file:desktop.ini|Windows folder view settings shipped by accident.
 *|file:imgui.ini|ImGui window layout saved by an overlay or tool, not a framework.
@@ -97,14 +97,50 @@ wuchangfallenfeathers|mod:384|Stock UE4SS repackaged for the game. The extension
 *|file:pyproject.toml|Python project file from a mod's build tools, not a framework.
 *|file:settings.ini|Generic settings file name used by many unrelated tools and mods, not a framework.
 *|file:config.ini|Generic config file name used by many unrelated tools and mods, not a framework.
-*|file:valid_udt_names.json|UE4SS UVTD dumper config, not a framework.
-*|file:object_items.json|UE4SS UVTD dumper config, not a framework.
-*|file:virtual_generator_includes.json|UE4SS UVTD dumper config, not a framework.
-*|file:types_not_to_dump.json|UE4SS UVTD dumper config, not a framework.
-*|file:uprefix_to_fprefix.json|UE4SS UVTD dumper config, not a framework.
-*|file:member_rename_map.json|UE4SS UVTD dumper config, not a framework.
-*|file:private_variables.json|UE4SS UVTD dumper config, not a framework.
-*|file:class_inheritance.json|UE4SS UVTD dumper config, not a framework.
-*|file:pdbs_to_dump.json|UE4SS UVTD dumper config, not a framework.
-*|file:types_filter.json|UE4SS UVTD dumper config, not a framework.
+@ue4-5|file:valid_udt_names.json|UE4SS UVTD dumper config, not a framework.
+@ue4-5|file:object_items.json|UE4SS UVTD dumper config, not a framework.
+@ue4-5|file:virtual_generator_includes.json|UE4SS UVTD dumper config, not a framework.
+@ue4-5|file:types_not_to_dump.json|UE4SS UVTD dumper config, not a framework.
+@ue4-5|file:uprefix_to_fprefix.json|UE4SS UVTD dumper config, not a framework.
+@ue4-5|file:member_rename_map.json|UE4SS UVTD dumper config, not a framework.
+@ue4-5|file:private_variables.json|UE4SS UVTD dumper config, not a framework.
+@ue4-5|file:class_inheritance.json|UE4SS UVTD dumper config, not a framework.
+@ue4-5|file:pdbs_to_dump.json|UE4SS UVTD dumper config, not a framework.
+@ue4-5|file:types_filter.json|UE4SS UVTD dumper config, not a framework.
 starrupture|mod:89|AlienX's Mod Loader has its own installer, plugin installer and download button in the extension.
+hollowknightsilksong|mod:26|Stock BepInEx plus Configuration Manager. The extension installs both.
+escapefromduckov|mod:3|Stock BepInEx plus Configuration Manager. The extension installs both.
+burglingnomes|mod:2|Stock BepInEx repackaged for the game. The extension installs the same.
+hollowknightsilksong|mod:44|BepInEx plugin that hosts MelonLoader mods, not a replacement loader. The plugin installer takes it.
+mousepiforhire|mod:1|BepInEx loader patch. The extension already handles it (BEP_LOADER_PATCH).
+mousepiforhire|mod:7|Unstripped BepInEx build. Deliberately not used, the extension uses the loader patch instead.
+pcbuildingsimulator|mod:275|Content mod that bundles BepInEx and SebaDB, not a framework of its own.
+aska|mod:66|Named BepInEx BE build. The exact build is not needed, the newest BE the extension installs is best.
+storyofseasonsgrandbazaar|mod:121|Named BepInEx BE build. The exact build is not needed, the newest BE the extension installs is best.
+menace|file:*template.json|Modpack stat files, taken by the modpack installer.
+dressmaker|file:patch.mesh.json|Dressmaker ModLoader import files, taken by the modpack installer.
+romestead|file:localization.json|Ships beside the plugin dll, so the plugin installer takes it.
+mywintercar|file:showboltsize.cfg|Stray config file inside shared save games, not a framework.
+hollowknightsilksong|file:info.json|Customizer skin atlas data, taken by the skin installer.
+@unity|file:doorstop_config.ini|BepInEx and UnityDoorstop's own config file.
+@unity|file:bepinex*.xml|BepInEx API documentation files that ship with the loader.
+@unity|file:0harmony.xml|Harmony API documentation file that ships with BepInEx.
+@unity|file:monomod*.xml|MonoMod API documentation files that ship with BepInEx.
+@unity|file:melonloader.xml|MelonLoader API documentation file.
+@unity|file:unityengine.*module.xml|Unity API documentation files, not a framework.
+@unity|file:microsoft.netcore.app.*|.NET runtime files that ship with BepInEx IL2CPP builds.
+@unity|file:com.bepis.bepinex.configurationmanager.cfg|Configuration Manager's own settings file.
+mywintercar|file:countrygarage.json|Save data file inside shared save games, not a framework.
+mywintercar|file:garagepitcovers.xml|Save data file inside shared save games, not a framework.
+mywintercar|file:futufon3310.xml|Save data file inside shared save games, not a framework.
+aska|file:aska_mod.ini|One author's mod config beside the plugin dll. The plugin installer keeps the folder whole.
+aska|mod:65|Stock BepInEx BE build repackaged for the game. The extension installs the newest BE.
+silverpines|mod:20|Stock BepInEx 6 IL2CPP build repackaged for the game. The extension installs the same.
+storyofseasonsgrandbazaar|mod:17|Stock BepInEx plus a Windows installer app. The extension installs BepInEx itself.
+animeshopsimulator|file:_example.json|Sample data in UserData beside the mod's dll. The plugin installer keeps the Mods and UserData folders.
+pcbuildingsimulator|file:com.sebag.pcbs.db.cfg|SebaDB's own settings file, shipped in archives that carry dlls, which the plugin installer takes.
+pcbuildingsimulator|=Java|Needed only by the unitypatcher .bat route, which Vortex cannot run. Part .xml files install without it.
+pcbuildingsimulator|=Java Runtime Environment 8|Needed only by the unitypatcher .bat route, which Vortex cannot run. Part .xml files install without it.
+pcbuildingsimulator|=unitypatcher|External patching tool that .bat scripts run by hand. Part .xml files install without it.
+prodeus|=.NET 6.0|System runtime. The extension already checks for it when MelonLoader is used.
+prodeus|=UniverseLib|Off-site library the user installs. Its dll goes through the plugin installer.

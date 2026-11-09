@@ -2,8 +2,8 @@
 Name: PC Building Simulator Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
-Version: 1.0.4
-Date: 2026-11-01
+Version: 1.1.0
+Date: 2026-11-09
 Notes:
 -
 //////////////////////////////////////////*/
@@ -288,6 +288,12 @@ const BEPINEX_PLUGINS_NAME = "BepInEx Plugins";
 const BEPINEX_PLUGINS_FOLDER = "plugins";
 const BEPINEX_PLUGINS_PATH = path.join(BEPINEX_FOLDER, BEPINEX_PLUGINS_FOLDER);
 
+//Custom Parts Import (SebaDB) part files - the plugin reads every .xml file in its assets folder
+const SEBADB_ID = `${GAME_ID}-sebadb`;
+const SEBADB_NAME = "Custom Parts Import Files";
+const SEBADB_PATH = path.join(BEPINEX_PLUGINS_PATH, "assets");
+const SEBADB_EXTS = [".xml"];
+
 const BEPINEX_PATCHERS_ID = `${GAME_ID}-bepinex-patchers`;
 const BEPINEX_PATCHERS_NAME = "BepInEx Patchers";
 const BEPINEX_PATCHERS_FOLDER = "patchers";
@@ -570,7 +576,7 @@ const IGNORE_DEPLOY = [
 ];
 //setup() calls ensureDirWritable on every entry, which CREATES them - so a folder listed here for a
 //loader the game cannot run leaves junk directories in the game install.
-let MODTYPE_FOLDERS = [BEPINEX_PATCHERS_PATH, BEPINEX_PLUGINS_PATH, BEPINEX_CONFIG_PATH];
+let MODTYPE_FOLDERS = [BEPINEX_PATCHERS_PATH, BEPINEX_PLUGINS_PATH, BEPINEX_CONFIG_PATH, SEBADB_PATH];
 if (!isXna) {
   MODTYPE_FOLDERS.push(MELON_PLUGINS_PATH, MELON_MODS_PATH, MELON_CONFIG_PATH, MELON_USERLIB_PATH);
 }
@@ -727,6 +733,12 @@ if (hasTextureReplacer) {
     targetPath: path.join("{gamePath}", TEXTURES_PATH),
   });
 }
+spec.modTypes.push({
+  id: SEBADB_ID,
+  name: SEBADB_NAME,
+  priority: "high",
+  targetPath: path.join("{gamePath}", SEBADB_PATH),
+});
 
 //3rd party tools and launchers
 let tools = [
@@ -1460,6 +1472,48 @@ function installAssets(files) {
       destination: path.join(file.substr(idx)),
     };
   });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Installer Test for Custom Parts Import (SebaDB) part files
+function testSebaDb(files, gameId) {
+  const isMod = files.some((file) => SEBADB_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = gameId === spec.game.id && isMod;
+
+  // Test for a mod installer.
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install Custom Parts Import (SebaDB) part files
+function installSebaDb(files) {
+  const setModTypeInstruction = { type: "setmodtype", value: SEBADB_ID };
+
+  //Part files go directly in the assets folder, whatever folders the author sorted them into.
+  //Only the .xml files are taken - the .asset.txt and .bat files are for a separate patching tool.
+  const instructions = files
+    .filter((file) => SEBADB_EXTS.includes(path.extname(file).toLowerCase()))
+    .map((file) => {
+      return {
+        type: "copy",
+        source: file,
+        destination: path.basename(file),
+      };
+    });
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
 }
@@ -3176,6 +3230,7 @@ function applyGame(context, gameSpec) {
   if (hasCustomMods) {
     context.registerInstaller(CUSTOM_ID, 39, testCustom, installCustom);
   }
+  context.registerInstaller(SEBADB_ID, 41, testSebaDb, installSebaDb);
   if (enableSaveInstaller) {
     context.registerInstaller(SAVE_ID, 47, testSave, installSave); //best to only enable if saves are stored in the game's folder
   }

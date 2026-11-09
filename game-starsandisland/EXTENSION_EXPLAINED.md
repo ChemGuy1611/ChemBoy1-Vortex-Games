@@ -76,6 +76,7 @@ Mod types define where each category of mod gets deployed:
 | MelonLoader | `starsandisland-melonloader` | low | `{gamePath}` |
 | Assembly DLL Mod | `starsandisland-assemblydll` | 60 | `{gamePath}` |
 | Assets/Resources File | `starsandisland-assets` | 62 | `{gamePath}/StarsandIsland_Data` |
+| Official Mod | `starsandisland-officialmod` | 66 | `?` |
 
 ## Mod Installers
 
@@ -91,6 +92,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | `starsandisland-assemblydll` | 31 |
 | `starsandisland-plugin` | 33 |
 | `starsandisland-assets` | 37 |
+| `starsandisland-officialmod` | 41 |
 | `starsandisland-fallback` | 49 |
 
 ## Registered Tools

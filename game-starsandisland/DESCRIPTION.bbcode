@@ -16,6 +16,7 @@ This extension adds Starsand Island modding support to Vortex Mod Manager.
 [*]BepInEx Plugin mods with a ".dll" file built for BepInEx install to the "BepInEx\plugins\<ModName>" folder.[/*]
 [*]Plugin archives built for a different mod loader than the one installed are cancelled.[/*]
 [*]Assets/Resources File mods with a ".assets", ".resource" or ".ress" file install to the "StarsandIsland_Data" folder.[/*]
+[*]Official mods are supported.[/*]
 [*]Any other mod not described above installs to the game folder.[/*]
 [*]Archives with a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to Vortex's built-in FOMOD installer instead.[/*]
 [/list]
@@ -131,6 +132,12 @@ Mods that replace packed Unity asset files, deployed into the game's data folder
 
   Common mistakes:
     - Asset files must keep their original names to replace the right bundle.
+
+========================================================================
+
+Official Mod:
+
+Handled by the "testOfficial" installer. Inspect the extension source for the exact archive layout it expects.
 
 ========================================================================
 

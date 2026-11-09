@@ -2,8 +2,8 @@
 Name: Escape from Duckov Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
-Version: 1.0.6
-Date: 2026-11-01
+Version: 1.1.0
+Date: 2026-11-09
 Notes:
 -
 //////////////////////////////////////////*/
@@ -543,6 +543,13 @@ const TEXTURES_FOLDER = "TextureReplacer";
 const TEXTURES_PATH = path.join(BEPINEX_PLUGINS_PATH, TEXTURES_FOLDER);
 const TEXTURES_EXTS = [".png"];
 const TEXTURES_STRING = "XXX"; //file name prefix of the game's textures (lowercased)
+
+//Official mods (the game's own mod system) - each mod is a folder holding info.ini and its dll.
+//The folder sits under <data folder>/Mods. Alt builds reset DATA_FOLDER, so the path is built on use.
+const OFFICIAL_ID = `${GAME_ID}-officialmod`;
+const OFFICIAL_NAME = "Official Mod";
+const OFFICIAL_FOLDER = "Mods";
+const OFFICIAL_FILES = ["info.ini"]; //lowercased
 
 const MOD_PATH_DEFAULT = ".";
 let REQ_FILE = EXEC;
@@ -1569,6 +1576,87 @@ function installCustom(files) {
       //destination: path.join(folder, file.substr(idx)),
     };
   });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Installer Test for official mods. A folder is an official mod when info.ini and a dll sit side by side.
+function isOfficialFile(file, files) {
+  return (
+    OFFICIAL_FILES.includes(path.basename(file).toLowerCase()) &&
+    files.some(
+      (other) =>
+        path.dirname(other) === path.dirname(file) &&
+        PLUGIN_EXTS.includes(path.extname(other).toLowerCase()),
+    )
+  );
+}
+function testOfficial(files, gameId) {
+  const isMod = files.some((file) => isOfficialFile(file, files));
+  let supported = gameId === spec.game.id && isMod;
+
+  // Test for a mod installer.
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Read "name" from a mod's info.ini, made safe for a folder name. Empty if there is no usable name.
+async function readOfficialName(destinationPath, modFile) {
+  try {
+    const raw = await fsp.readFile(path.join(destinationPath, modFile), "utf8");
+    const match = raw.replace(/^﻿/, "").match(/^[ \t]*name[ \t]*=[ \t]*(.*?)[ \t\r]*$/im);
+    if (match === null) {
+      return "";
+    }
+    return match[1]
+      .replace(/[<>:"/\\|?*]/g, "_")
+      .trim()
+      .replace(/[. ]+$/, "");
+  } catch {
+    return "";
+  }
+}
+
+//Installer install official mods
+async function installOfficial(files, destinationPath) {
+  const setModTypeInstruction = { type: "setmodtype", value: OFFICIAL_ID };
+  const archiveName = path
+    .basename(destinationPath)
+    .replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*/gi, "");
+
+  //An archive can hold several mods. Keep each mod's own folder name, since the author's name is
+  //the one the mod expects, and wrap a mod that sits at the archive root.
+  const instructions = [];
+  for (const modFile of files.filter((file) => isOfficialFile(file, files))) {
+    const rootPath = path.dirname(modFile);
+    const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
+    const modFolder =
+      rootPath === "."
+        ? (await readOfficialName(destinationPath, modFile)) || archiveName
+        : path.basename(rootPath);
+    files
+      .filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix))
+      .forEach((file) => {
+        instructions.push({
+          type: "copy",
+          source: file,
+          destination: path.join(modFolder, file.substr(rootPrefix.length)),
+        });
+      });
+  }
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
 }
@@ -2880,6 +2968,7 @@ async function setup(discovery, api, gameSpec) {
     MODTYPE_FOLDERS.push(ASSEMBLY_PATH);
     MODTYPE_FOLDERS.push(ASSETS_PATH);
   }
+  MODTYPE_FOLDERS.push(path.join(DATA_FOLDER, OFFICIAL_FOLDER));
   await modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
   //REQUIRED: MELONPREFMAN_REQUIREMENTS is built at module load, when GAME_PATH is still '', so the
   //baked-in directCopyPath is relative and would never resolve. setup() runs on every
@@ -3085,6 +3174,25 @@ function applyGame(context, gameSpec) {
     );
   }
 
+  //DATA_FOLDER switches once an alt build is detected, so it is read when the folder is asked for
+  context.registerModType(
+    OFFICIAL_ID,
+    66,
+    (gameId) => {
+      var _a;
+      return (
+        gameId === GAME_ID &&
+        !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null ||
+        _a === void 0
+          ? void 0
+          : _a.path)
+      );
+    },
+    (game) => pathPattern(context.api, game, path.join("{gamePath}", DATA_FOLDER, OFFICIAL_FOLDER)),
+    () => Promise.resolve(false),
+    { name: OFFICIAL_NAME },
+  );
+
   //register mod installers
   if (hasCustomLoader) {
     context.registerInstaller(CUSTOMLOADER_ID, 25, testCustomLoader, installCustomLoader);
@@ -3099,6 +3207,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(MELONPREFMAN_ID, 30, testMelonPrefMan, installMelonPrefMan);
   context.registerInstaller(ASSEMBLY_ID, 31, testAssembly, installAssembly);
   //32 - if there are other known dll files that are not loader plugins, add installers for them here
+  context.registerInstaller(OFFICIAL_ID, 32, testOfficial, installOfficial);
   context.registerInstaller(`${GAME_ID}-plugin`, 33, testPlugin, (files, workingDir) =>
     installPlugin(context.api, gameSpec, files, workingDir),
   );

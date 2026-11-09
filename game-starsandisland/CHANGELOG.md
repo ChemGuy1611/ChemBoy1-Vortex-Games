@@ -1,8 +1,9 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.1.0] - 2026-11-09
 
 - Fixed: Mod files whose names only begin with LICENSE (for example, License_Plates.dds) are no longer skipped during deployment.
+- Added: Support for the game's official mods (mod folders with a mod.json file), which now install to the game's Mods folder in AppData\LocalLow.
 
 ## [1.0.7] - 2026-11-01
 

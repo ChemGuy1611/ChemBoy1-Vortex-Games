@@ -15,6 +15,7 @@ This extension adds Escape from Duckov modding support to Vortex Mod Manager.
 [*]BepInEx Configuration Manager installs to the "BepInEx" folder, recognised by a "configurationmanager.dll" file.[/*]
 [*]MelonLoader Preferences Manager installs to the "Mods" folder, recognised by a "melonprefmanager.mono.dll" file.[/*]
 [*]Assembly DLL mods with an "Assembly-CSharp.dll" file install to the "Duckov_Data\Managed" folder.[/*]
+[*]Official mods install to the "Duckov_Data\Mods" folder.[/*]
 [*]BepInEx Plugin mods with a ".dll" file built for BepInEx install to the "BepInEx\plugins\<ModName>" folder.[/*]
 [*]MelonLoader mods with a ".dll" file built for MelonLoader install to the "Mods\<ModName>" folder.[/*]
 [*]Plugin archives built for a different mod loader than the one installed, or mixing BepInEx and MelonLoader plugins, are cancelled.[/*]
@@ -126,6 +127,14 @@ Mods that replace a compiled game assembly outright. These overwrite core game f
   Common mistakes:
     - Assembly replacements cannot be combined with other assembly mods - state this clearly on the mod page.
     - Shipping an assembly alongside a plugin makes the whole archive install as an assembly mod.
+
+========================================================================
+
+Official Mod:
+
+Handled by the "testOfficial" installer. Inspect the extension source for the exact archive layout it expects.
+
+  Installs to: "Duckov_Data\Mods"
 
 ========================================================================
 

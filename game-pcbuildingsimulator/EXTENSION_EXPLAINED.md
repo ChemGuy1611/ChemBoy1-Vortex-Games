@@ -75,6 +75,7 @@ Mod types define where each category of mod gets deployed:
 | MelonLoader UserLibs | `pcbuildingsimulator-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
 | MelonPreferencesManager | `pcbuildingsimulator-melonprefman` | high | `{gamePath}/Mods` |
 | MelonLoader | `pcbuildingsimulator-melonloader` | low | `{gamePath}` |
+| Custom Parts Import Files | `pcbuildingsimulator-sebadb` | high | `{gamePath}/BepInEx/plugins/assets` |
 | Assembly DLL Mod | `pcbuildingsimulator-assemblydll` | 60 | `{gamePath}/PCBS_Data/Managed` |
 | Assets/Resources File | `pcbuildingsimulator-assets` | 62 | `{gamePath}/PCBS_Data` |
 | Save | `pcbuildingsimulator-save` | 39 | `{gamePath}/Saves` |
@@ -93,6 +94,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | `pcbuildingsimulator-assemblydll` | 31 |
 | `pcbuildingsimulator-plugin` | 33 |
 | `pcbuildingsimulator-assets` | 37 |
+| `pcbuildingsimulator-sebadb` | 41 |
 | `pcbuildingsimulator-save` | 47 |
 | `pcbuildingsimulator-fallback` | 49 |
 

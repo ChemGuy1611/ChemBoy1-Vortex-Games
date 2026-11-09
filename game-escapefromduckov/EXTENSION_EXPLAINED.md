@@ -76,6 +76,7 @@ Mod types define where each category of mod gets deployed:
 | MelonLoader | `escapefromduckov-melonloader` | low | `{gamePath}` |
 | Assembly DLL Mod | `escapefromduckov-assemblydll` | 60 | `{gamePath}/Duckov_Data/Managed` |
 | Assets/Resources File | `escapefromduckov-assets` | 62 | `{gamePath}/Duckov_Data` |
+| Official Mod | `escapefromduckov-officialmod` | 66 | `{gamePath}/Duckov_Data/Mods` |
 
 ## Mod Installers
 
@@ -89,6 +90,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | `escapefromduckov-bepcfgman` | 29 |
 | `escapefromduckov-melonprefman` | 30 |
 | `escapefromduckov-assemblydll` | 31 |
+| `escapefromduckov-officialmod` | 32 |
 | `escapefromduckov-plugin` | 33 |
 | `escapefromduckov-assets` | 37 |
 | `escapefromduckov-fallback` | 49 |

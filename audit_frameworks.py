@@ -1,11 +1,16 @@
 """
 audit_frameworks.py
 
-Mechanical layer for the framework audit: looks through each UE4-5 game's Nexus mods for
-modding frameworks that its extension would need real changes to support. A framework
-that loads regular mods from the ~mods folder needs no change and is not a finding.
+Mechanical layer for the framework audit: looks through each game's Nexus mods for modding
+frameworks that its extension would need real changes to support. A framework the extension's
+existing installers already cover (one that loads regular mods from the ~mods folder, say)
+needs no change and is not a finding.
 
 Read-only. Output is a worklist to judge by hand, never a patch.
+
+Each template family has a profile (see PROFILES) that decides what counts as handled and
+which verdicts apply. The families are ue4-5, unity and basic. The UE4-5 verdicts are
+described first; the Unity and basic ones follow them.
 
 Two signals, both from the Nexus v2 GraphQL API:
 
@@ -37,11 +42,35 @@ quotes and the template does not (inzoi's appearance.dat). Those file names are 
 fingerprints either. resources/lists/framework-audit-reviewed.txt holds candidates already checked
 and found to need no change. A name target there matches any mod name containing it, or the
 whole name only when written with a leading "=" (=UE4SS skips plain UE4SS uploads but still
-reports custom builds such as "ML-UE4SS Mod Loader"). Deprecated extensions (games-deprecated.txt) and extensions that
-are never released (games-never-upload.txt) are skipped unless named on the command line.
+reports custom builds such as "ML-UE4SS Mod Loader"). A scope there is a GAME_ID, * for every
+game, or @<family> for one template family. Deprecated extensions (games-deprecated.txt) and
+extensions that are never released (games-never-upload.txt) are skipped unless named on the
+command line.
+
+Unity verdicts (template-unitymelonloaderbepinex-hybrid):
+    loader-build  The candidate ships a BepInEx or MelonLoader core tree and is not the page
+                  the game's BEPINEX_PAGE_NO / MELON_PAGE_NO / CUSTOMLOADER_PAGE_NO points at.
+                  Usual fix: point the page constant at it, if it is more than a stock repack.
+    custom-loader The candidate ships a proxy dll or .exe with no such tree, and index.js
+                  never names it. Usual fix: the hasCustomLoader toggle set.
+    loose-files   Dependents with no .dll and no other file an installer claims, so they reach
+                  the fallback installer. Usual fix: a new mod type or installer.
+    external      As above, ignoring off-site BepInEx and MelonLoader links.
+A candidate that is only plugin dlls is dropped: the plugin installer takes it and its
+dependents. Unity extensions are matched on their own extension constants, not the template's,
+because the template quotes .json behind a toggle that is off by default.
+
+Basic verdicts (template-basic):
+    native-code   The candidate ships a .dll/.asi/.exe and index.js never names it. Check
+                  whether it installs correctly or needs a requirement entry.
+    loose-files   Dependents with no file an installer claims. Only for a game that quotes its
+                  own mod extension: a game with no mod extension sends whole archives to its
+                  mod folder, so an unhandled extension means nothing there.
+    external      As above.
 
 Usage:
-    python audit_frameworks.py                      # every game in games-ue4-5.txt
+    python audit_frameworks.py                      # every game in every family
+    python audit_frameworks.py --family basic       # one family (repeatable)
     python audit_frameworks.py deadasdisco tekken8  # just these games
     python audit_frameworks.py --json               # machine-readable report
     python audit_frameworks.py --show-dropped       # also list dropped candidates
@@ -50,8 +79,9 @@ Usage:
 Environment variables:
     NEXUS_API_KEY  Required. Read from env var, with HKCU/HKLM registry fallback.
 
-Exit code 1 if any game has a finding or could not be checked, 0 otherwise. Progress and
-warnings go to stderr, so --json output on stdout always parses.
+Exit code 1 if any game has a finding or could not be checked, 0 otherwise. A game with no
+Nexus page is counted separately and does not affect the exit code. Progress and warnings go
+to stderr, so --json output on stdout always parses.
 """
 
 import argparse
@@ -62,15 +92,14 @@ import os
 import re
 import sys
 import time
+from typing import NamedTuple
 
 from vortex_utils import (
     DEPRECATED_GAMES, LISTS_DIR, NEVER_UPLOAD_GAMES, REPO_ROOT, get_api_key, iter_game_folders,
     nexus_game_id_for_domain, nexus_graphql, read_id_list, read_index_js,
 )
 
-UE_LIST = os.path.join(LISTS_DIR, "games-ue4-5.txt")
 REVIEWED_LIST = os.path.join(LISTS_DIR, "framework-audit-reviewed.txt")
-TEMPLATE_FOLDER = os.path.join(REPO_ROOT, "template-ue4-5")
 
 TOP_MODS = 60  # 80 can pass the API's query complexity cap of 10000 once requirements are selected
 MIN_REQUIRERS = 5
@@ -119,7 +148,23 @@ EXTRA_EXTS_CONST = re.compile(r"const\s+PAKMOD_EXTRA_EXTS\s*=\s*\[([^\]]*)\]\s*;
 MODKIT_ON = re.compile(r"const\s+hasModKit\s*=\s*true\s*;?")
 MODKIT_FILE_CONST = re.compile(r"""const\s+MODKITMOD_FILE\s*=\s*["']([^"']+)["']\s*;?""")
 NEXUS_PAGE_ID = re.compile(r"""nexusPageId["']?\s*:\s*["']([^"']+)["']""")
+NEXUS_PAGE_ID_CONST = re.compile(r"""nexusPageId["']?\s*:\s*([A-Za-z_][A-Za-z0-9_]*)""")
 ACRONYM = re.compile(r"\b[A-Z][A-Z0-9]{2,}\b")
+
+UNITY_HANDLED_EXTS = frozenset({".dll", ".assets", ".resource", ".ress"})
+# Image files are real payload in a Unity texture pack, unlike the UE case.
+UNITY_NOISE_EXTS = NOISE_EXTS - {".png", ".jpg", ".jpeg", ".bmp", ".tga"}
+UNITY_FINGERPRINT_EXTS = FINGERPRINT_EXTS + (".cfg",)
+UNITY_STOPWORDS = ACRONYM_STOPWORDS | {"IL2CPP", "BEPINEX", "MONO", "API", "NET", "CPP", "UNITY"}
+UNITY_STOCK_LOADER = re.compile(r"bepinex|beepinex|melonloader", re.IGNORECASE)
+EXTS_CONST = re.compile(r"const\s+([A-Z0-9_]+_EXTS)\s*=\s*\[([^\]]*)\]\s*;?")
+LOADER_PAGE_CONST = re.compile(r"const\s+(?:BEPINEX|MELON|CUSTOMLOADER)_PAGE_NO\s*=\s*(\d+)\s*;?")
+TEXTURE_REPLACER_ON = re.compile(r"const\s+hasTextureReplacer\s*=\s*true\s*;?")
+CUSTOM_MODS_ON = re.compile(r"const\s+hasCustomMods\s*=\s*true\s*;?")
+
+# Saves and settings: quoted by many basic games and shipped by many mods (ReShade presets),
+# so they neither mark a game's mod format nor count as a dependent's unhandled file.
+BASIC_NON_MOD_EXTS = frozenset({".sav", ".save", ".ini", ".cfg", ".xxx"})
 
 TOP_MODS_QUERY = """
 query($domain: String!, $count: Int!) {
@@ -159,10 +204,14 @@ def load_reviewed(path=REVIEWED_LIST):
     return entries
 
 
-def reviewed_reason_for_mod(reviewed, game_id, name, mod_id):
+def scope_matches(entry, game_id, family):
+    return entry["scope"] in ("*", game_id, f"@{family}")
+
+
+def reviewed_reason_for_mod(reviewed, game_id, family, name, mod_id):
     wanted = normalize_name(name or "")
     for entry in reviewed:
-        if entry["scope"] not in ("*", game_id):
+        if not scope_matches(entry, game_id, family):
             continue
         target = entry["target"]
         if target.startswith("file:"):
@@ -180,10 +229,10 @@ def reviewed_reason_for_mod(reviewed, game_id, name, mod_id):
     return None
 
 
-def reviewed_reason_for_file(reviewed, game_id, file_name):
+def reviewed_reason_for_file(reviewed, game_id, family, file_name):
     for entry in reviewed:
         target = entry["target"]
-        if entry["scope"] in ("*", game_id) and target.startswith("file:") \
+        if scope_matches(entry, game_id, family) and target.startswith("file:") \
                 and fnmatch.fnmatchcase(file_name.lower(), target[5:].strip().lower()):
             return entry["reason"]
     return None
@@ -198,7 +247,8 @@ def file_literals(src):
 
 
 def template_context(template_src):
-    return {"exts": extension_literals(template_src), "files": file_literals(template_src)}
+    return {"exts": extension_literals(template_src), "files": file_literals(template_src),
+            "ext_consts": {name for name, _body in EXTS_CONST.findall(template_src)}}
 
 
 def build_ext_context(src, template):
@@ -221,6 +271,37 @@ def build_ext_context(src, template):
             "modkit_file": modkit_file}
 
 
+def build_unity_context(src, template):
+    """What a Unity extension handles. game: extensions an installer claims, from the fixed
+    Unity set, the toggles that are on, and anything this game quotes beyond the template.
+    pinned_loaders: Nexus page ids the extension already installs a loader from."""
+    handled = set(UNITY_HANDLED_EXTS)
+    if TEXTURE_REPLACER_ON.search(src):
+        handled.add(".png")
+    if CUSTOM_MODS_ON.search(src):
+        handled.add(".json")
+    # A game's own *_EXTS array backs a game-specific installer, even for an extension the
+    # template also quotes (silksong's SKIN_EXTS = [".png"]).
+    for const_name, body in EXTS_CONST.findall(src):
+        if const_name not in template["ext_consts"]:
+            handled |= {ext.lower() for ext in EXT_LITERAL.findall(body)}
+    return {"pak": set(), "game": handled | (extension_literals(src) - template["exts"]),
+            "template": set(template["exts"]), "game_files": file_literals(src) - template["files"],
+            "skip_files": set(template["files"]), "modkit_file": None, "stopwords": UNITY_STOPWORDS,
+            "pinned_loaders": {page for page in LOADER_PAGE_CONST.findall(src) if page != "0"}}
+
+
+def build_basic_context(src, template):
+    """What a basic extension handles. game: extensions an installer can claim, this game's own
+    plus the template's binaries. mod_exts: this game's own extensions that mark a mod format,
+    empty for a game that sends whole archives to its mod folder."""
+    own = extension_literals(src) - template["exts"]
+    return {"pak": set(), "game": (own | template["exts"]) - {".xxx"},
+            "mod_exts": own - BASIC_NON_MOD_EXTS - NOISE_EXTS,
+            "template": set(template["exts"]), "game_files": file_literals(src) - template["files"],
+            "skip_files": set(template["files"]), "modkit_file": None, "stopwords": ACRONYM_STOPWORDS}
+
+
 def _base_names(files):
     return {os.path.basename((n.get("filePath") or "").replace(chr(92), "/")).lower() for n in files}
 
@@ -237,9 +318,17 @@ def is_installer_package(files, ctx):
 
 
 def extension_domain(game_id, src):
-    """The Nexus domain: GAME_ID, unless hyphens forced an explicit nexusPageId."""
+    """The Nexus domain: GAME_ID, unless the game sets nexusPageId, as a literal or a const
+    (gzdoom has no domain of its own and points at doom1993's)."""
     match = NEXUS_PAGE_ID.search(src)
-    return match.group(1) if match else game_id
+    if match:
+        return match.group(1)
+    match = NEXUS_PAGE_ID_CONST.search(src)
+    if match:
+        value = re.search(rf"""const\s+{match.group(1)}\s*=\s*["']([^"']+)["']\s*;?""", src)
+        if value:
+            return value.group(1)
+    return game_id
 
 
 def _file_ext(node):
@@ -273,12 +362,12 @@ def is_sig_bypass(own_files):
     return False
 
 
-def is_named_in_source(name, own_files, src):
+def is_named_in_source(name, own_files, src, stopwords=ACRONYM_STOPWORDS):
     """True when index.js already names this mod: its full name, an acronym, or a native file."""
     if normalize_name(name) in normalize_name(src):
         return True
     # Word start only: CNS matches CNSJSON_ID, but ZOI must not match inZOI.
-    if any(token not in ACRONYM_STOPWORDS and re.search(rf"(?<![A-Za-z0-9]){token}", src)
+    if any(token not in stopwords and re.search(rf"(?<![A-Za-z0-9]){token}", src)
            for token in ACRONYM.findall(name)):
         return True
     src_lower = src.lower()
@@ -353,6 +442,159 @@ def classify_candidate(name, own_files, dependent_files, ctx, src):
             "loose_exts": loose,
         },
     }
+
+
+def classify_ue(candidate, own_files, dependent_files, ctx, src):
+    return classify_candidate(candidate["name"], own_files, dependent_files, ctx, src)
+
+
+def has_loader_tree(own_files):
+    """True when the archive carries a BepInEx or MelonLoader core, not just a plugin for one."""
+    return any("bepinex/core" in folder or "melonloader" in folder.split("/")
+               for folder in (_file_dir(node) for node in own_files))
+
+
+def ships_proxy_or_exe(own_files):
+    for node in own_files:
+        ext = _file_ext(node)
+        base = os.path.basename((node.get("filePath") or "").replace(chr(92), "/")).lower()
+        if ext == ".exe" or (ext == ".dll" and os.path.splitext(base)[0] in PROXY_DLLS):
+            return True
+    return False
+
+
+def has_root_folder(files):
+    """True when an archive holds the game's <name>_Data folder, which the root installer takes."""
+    return any(part.endswith("_data") for node in files for part in _file_dir(node).split("/"))
+
+
+def classify_unity(candidate, own_files, dependent_files, ctx, src):
+    """Decide what a Unity candidate would need. See the module docstring for the verdicts."""
+    with_files = [files for files in dependent_files.values() if files]
+    sampled = [files for files in with_files if not is_installer_package(files, ctx)]
+    installer_skipped = len(with_files) - len(sampled)
+    threshold = max(DEPENDENT_MIN_MODS, math.ceil(len(sampled) * DEPENDENT_MIN_SHARE))
+    loose_counts = {}
+    for files in sampled:
+        exts = {_file_ext(node) for node in files}
+        if exts & ctx["game"] or has_root_folder(files):
+            continue  # an installer claims this archive
+        for ext in exts - UNITY_NOISE_EXTS - {""}:
+            loose_counts[ext] = loose_counts.get(ext, 0) + 1
+    loose = {e: n for e, n in loose_counts.items() if n >= threshold}
+    own_exts = {_file_ext(node) for node in own_files}
+    named = is_named_in_source(candidate["name"], own_files, src, ctx["stopwords"])
+
+    verdicts = []
+    why_dropped = None
+    if has_loader_tree(own_files):
+        if candidate["mod_id"] in ctx["pinned_loaders"]:
+            why_dropped = "the extension already installs this build (page constant)"
+        else:
+            verdicts.append("loader-build")
+    elif ships_proxy_or_exe(own_files) and not named:
+        verdicts.append("custom-loader")
+    if loose and not named:
+        verdicts.append("loose-files")
+
+    if verdicts:
+        why_dropped = None
+    elif not why_dropped:
+        if named:
+            why_dropped = "index.js already names it"
+        elif installer_skipped and not sampled:
+            why_dropped = "dependents match the game's own installers"
+        elif not own_files:
+            why_dropped = "no archive contents available"
+        elif own_exts - UNITY_NOISE_EXTS - {""} <= {".dll"}:
+            why_dropped = "plugin library, the plugin installer takes it and its dependents"
+        else:
+            why_dropped = "nothing beyond what the extension handles"
+    return {
+        "verdicts": verdicts,
+        "why_dropped": why_dropped,
+        "evidence": {
+            "own_exts": sorted(e for e in own_exts if e),
+            "dependents_sampled": len(sampled),
+            "installer_dependents_skipped": installer_skipped,
+            "extra_exts": {},
+            "loose_exts": loose,
+            "loose_label": "in dependents with no dll, no installer claims them",
+        },
+    }
+
+
+def classify_basic(candidate, own_files, dependent_files, ctx, src):
+    """Decide what a basic-template candidate would need. See the module docstring for the verdicts."""
+    with_files = [files for files in dependent_files.values() if files]
+    sampled = [files for files in with_files if not is_installer_package(files, ctx)]
+    installer_skipped = len(with_files) - len(sampled)
+    threshold = max(DEPENDENT_MIN_MODS, math.ceil(len(sampled) * DEPENDENT_MIN_SHARE))
+    loose_counts = {}
+    if ctx["mod_exts"]:
+        for files in sampled:
+            exts = {_file_ext(node) for node in files}
+            if exts & ctx["game"]:
+                continue  # an installer claims this archive
+            for ext in exts - NOISE_EXTS - BASIC_NON_MOD_EXTS - {""}:
+                loose_counts[ext] = loose_counts.get(ext, 0) + 1
+    loose = {e: n for e, n in loose_counts.items() if n >= threshold}
+    own_exts = {_file_ext(node) for node in own_files}
+    named = is_named_in_source(candidate["name"], own_files, src, ctx["stopwords"])
+
+    verdicts = []
+    if own_exts & NATIVE_EXTS and not named:
+        verdicts.append("native-code")
+    if loose and not named:
+        verdicts.append("loose-files")
+
+    why_dropped = None
+    if not verdicts:
+        if named:
+            why_dropped = "index.js already names it"
+        elif installer_skipped and not sampled:
+            why_dropped = "dependents match the game's own installers"
+        elif not own_files:
+            why_dropped = "no archive contents available"
+        else:
+            why_dropped = "no native code, dependents need nothing extra"
+    return {
+        "verdicts": verdicts,
+        "why_dropped": why_dropped,
+        "evidence": {
+            "own_exts": sorted(e for e in own_exts if e),
+            "dependents_sampled": len(sampled),
+            "installer_dependents_skipped": installer_skipped,
+            "extra_exts": {},
+            "loose_exts": loose,
+            "loose_label": "in dependents, no installer claims them",
+        },
+    }
+
+
+class FrameworkProfile(NamedTuple):
+    family: str
+    list_files: tuple
+    template_folder: str
+    build_context: object  # (src, template) -> ctx
+    classify: object  # (candidate, own_files, dependent_files, ctx, src) -> decision
+    fingerprint_exts: tuple
+    external_stock: object = None  # compiled regex for off-site names to ignore
+
+
+PROFILES = (
+    FrameworkProfile("ue4-5", ("games-ue4-5.txt",), "template-ue4-5", build_ext_context, classify_ue,
+                     FINGERPRINT_EXTS),
+    FrameworkProfile("unity", ("games-unity-melonloader-bepinex.txt",),
+                     "template-unitymelonloaderbepinex-hybrid", build_unity_context, classify_unity,
+                     UNITY_FINGERPRINT_EXTS, UNITY_STOCK_LOADER),
+    FrameworkProfile("basic", ("games-basic.txt",), "template-basic", build_basic_context, classify_basic,
+                     FINGERPRINT_EXTS),
+)
+
+
+class NotOnNexusError(RuntimeError):
+    """The game has no Nexus domain, so it has no mods to audit."""
 
 
 def _query(query, api_key, variables=None):
@@ -432,11 +674,12 @@ def fetch_candidate_evidence(candidate, game_num, api_key):
                        for i, mod_id in enumerate(dependents)}
 
 
-def fetch_fingerprints(game_id, game_num, ctx, reviewed, api_key):
+def fetch_fingerprints(game_id, profile, game_num, ctx, reviewed, api_key):
     """Sample config-style files the game does not handle; report names recurring across mods."""
     found = []
     handled = ctx["pak"] | ctx["game"]
-    for ext in FINGERPRINT_EXTS:
+    skip_files = ctx.get("skip_files", set())
+    for ext in profile.fingerprint_exts:
         if ext in handled:
             continue
         fields = " ".join(
@@ -452,30 +695,32 @@ def fetch_fingerprints(game_id, game_num, ctx, reviewed, api_key):
             for node in (data.get(f"p{page}") or {}).get("nodes") or []:
                 mods_by_name.setdefault((node.get("fileName") or "").lower(), set()).add(node.get("modId"))
         for file_name, mods in mods_by_name.items():
-            if file_name == ctx.get("modkit_file") or file_name in ctx["game_files"]:
+            if file_name == ctx.get("modkit_file") or file_name in ctx["game_files"] or file_name in skip_files:
                 continue  # a file one of the game's own installers keys on
-            if len(mods) >= FINGERPRINT_MIN_MODS and not reviewed_reason_for_file(reviewed, game_id, file_name):
+            if len(mods) >= FINGERPRINT_MIN_MODS \
+                    and not reviewed_reason_for_file(reviewed, game_id, profile.family, file_name):
                 found.append({"file": file_name, "ext": ext, "mods_in_sample": len(mods), "ext_total": total})
     return sorted(found, key=lambda f: -f["mods_in_sample"])
 
 
-def audit_game(game_id, src, reviewed, template, api_key, min_requirers):
+def audit_game(game_id, src, profile, reviewed, template, api_key, min_requirers):
     domain = extension_domain(game_id, src)
     game_num = nexus_game_id_for_domain(domain, api_key)
     if not game_num:
-        raise RuntimeError(f"no Nexus game id for domain {domain!r}")
+        raise NotOnNexusError(f"no Nexus game id for domain {domain!r}")
     game_num = int(game_num)
-    ctx = build_ext_context(src, template)
+    family = profile.family
+    ctx = profile.build_context(src, template)
     page = fetch_top_mods(domain, api_key)
     candidates, externals = collect_candidates(page, game_num, min_requirers)
 
     result = {
-        "game_id": game_id, "domain": domain, "total_mods": page.get("totalCount") or 0,
+        "game_id": game_id, "family": family, "domain": domain, "total_mods": page.get("totalCount") or 0,
         "findings": [], "externals": [], "fingerprints": [], "dropped": [], "reviewed": [],
     }
     picked = []
     for candidate in candidates:
-        reason = reviewed_reason_for_mod(reviewed, game_id, candidate["name"], candidate["mod_id"])
+        reason = reviewed_reason_for_mod(reviewed, game_id, family, candidate["name"], candidate["mod_id"])
         if reason:
             result["reviewed"].append({**candidate, "reason": reason})
         else:
@@ -489,20 +734,23 @@ def audit_game(game_id, src, reviewed, template, api_key, min_requirers):
         except RuntimeError as exc:  # a requirement can point at a deleted or hidden mod
             result["dropped"].append({**candidate, "why": f"could not read: {exc}"})
             continue
-        decision = classify_candidate(candidate["name"], own_files, dependent_files, ctx, src)
-        url = f"https://www.nexusmods.com/{domain}/mods/{candidate['mod_id']}"
+        decision = profile.classify(candidate, own_files, dependent_files, ctx, src)
+        url =f"https://www.nexusmods.com/{domain}/mods/{candidate['mod_id']}"
         if decision["verdicts"]:
             result["findings"].append({**candidate, "url": url, "verdicts": decision["verdicts"],
                                        "evidence": decision["evidence"]})
         else:
             result["dropped"].append({**candidate, "why": decision["why_dropped"]})
 
+    stopwords = ctx.get("stopwords", ACRONYM_STOPWORDS)
     for external in externals:
-        if reviewed_reason_for_mod(reviewed, game_id, external["name"], None):
+        if profile.external_stock and profile.external_stock.search(external["name"]):
             continue
-        if not is_named_in_source(external["name"], [], src):
+        if reviewed_reason_for_mod(reviewed, game_id, family, external["name"], None):
+            continue
+        if not is_named_in_source(external["name"], [], src, stopwords):
             result["externals"].append(external)
-    result["fingerprints"] = fetch_fingerprints(game_id, game_num, ctx, reviewed, api_key)
+    result["fingerprints"] = fetch_fingerprints(game_id, profile, game_num, ctx, reviewed, api_key)
     return result
 
 
@@ -518,7 +766,7 @@ def print_report(report, show_dropped):
     print(f"Games with something to check: {len(hits)}")
 
     for game in hits:
-        print(f"\n{game['game_id']} ({game['total_mods']} mods)")
+        print(f"\n{game['game_id']} [{game['family']}] ({game['total_mods']} mods)")
         for f in game["findings"]:
             evidence = f["evidence"]
             tags = "[" + ", ".join(f["verdicts"]) + "]"
@@ -530,7 +778,8 @@ def print_report(report, show_dropped):
                 print(f"      beside dependents' paks, not installed: {detail}")
             if evidence["loose_exts"]:
                 detail = ", ".join(f"{e} ({n}/{sampled})" for e, n in sorted(evidence["loose_exts"].items()))
-                print(f"      in dependents, away from paks: {detail}")
+                label = evidence.get("loose_label", "in dependents, away from paks")
+                print(f"      {label}: {detail}")
         for e in game["externals"]:
             print(f"  [external] {e['name']} -- listed by {e['top_mods']} top mods -- {e['url']}")
         for f in game["fingerprints"]:
@@ -548,6 +797,9 @@ def print_report(report, show_dropped):
             for r in game["reviewed"]:
                 print(f"  - {game['game_id']}: {r['name']} (required by {r['requirers']}): reviewed, {r['reason']}")
 
+    if report["not_on_nexus"]:
+        print(f"\nNot on Nexus: {len(report['not_on_nexus'])} ({', '.join(report['not_on_nexus'])})")
+
     if report["errors"]:
         print(f"\nCould not check: {len(report['errors'])}")
         for err in report["errors"]:
@@ -558,7 +810,9 @@ def main():
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument("game_ids", nargs="*", help="Games to check (default: every game in games-ue4-5.txt)")
+    parser.add_argument("game_ids", nargs="*", help="Games to check (default: every game in the selected families)")
+    parser.add_argument("--family", action="append", choices=[p.family for p in PROFILES],
+                        help="Limit to this template family (repeatable, default: all)")
     parser.add_argument("--json", action="store_true", help="Emit a JSON report instead of text")
     parser.add_argument("--show-dropped", action="store_true",
                         help="List dropped and already-reviewed candidates, not just the counts")
@@ -571,20 +825,32 @@ def main():
         print("ERROR: NEXUS_API_KEY not found in env / registry", file=sys.stderr)
         sys.exit(1)
 
+    active = [p for p in PROFILES if not args.family or p.family in args.family]
+    ids_by_family = {
+        p.family: {game_id for name in p.list_files for game_id in read_id_list(os.path.join(LISTS_DIR, name))}
+        for p in active
+    }
     target_ids = set(args.game_ids) or (
-        set(read_id_list(UE_LIST)) - set(DEPRECATED_GAMES) - set(NEVER_UPLOAD_GAMES)
+        set().union(*ids_by_family.values()) - set(DEPRECATED_GAMES) - set(NEVER_UPLOAD_GAMES)
     )
     reviewed = load_reviewed()
-    template = template_context(read_index_js(TEMPLATE_FOLDER))
+    templates = {p.family: template_context(read_index_js(os.path.join(REPO_ROOT, p.template_folder)))
+                 for p in active}
 
-    report = {"games": [], "errors": []}
+    report = {"games": [], "not_on_nexus": [], "errors": []}
     seen = set()
     for _folder, game_id, src in iter_game_folders(target_ids):
         seen.add(game_id)
+        profile = next((p for p in active if game_id in ids_by_family[p.family]), None)
+        if profile is None:
+            report["errors"].append({"game_id": game_id, "error": "no framework profile for this game's template"})
+            continue
         print(f"  checking {game_id}", file=sys.stderr, flush=True)
         try:
-            report["games"].append(audit_game(game_id, src, reviewed, template,
+            report["games"].append(audit_game(game_id, src, profile, reviewed, templates[profile.family],
                                               api_key, args.min_requirers))
+        except NotOnNexusError:
+            report["not_on_nexus"].append(game_id)
         except RuntimeError as exc:
             report["errors"].append({"game_id": game_id, "error": str(exc)})
     for game_id in sorted(target_ids - seen):

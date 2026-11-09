@@ -41,7 +41,7 @@
 | `hasCustomMods` | `false` | set to true if there are modTypes with folder paths dependent on which mod loader is installed |
 | `hasCustomLoader` | `false` | set to true if there is a custom mod loader |
 | `customLoaderInstaller` | `false` | set true if the custom loader uses an installer |
-| `hasTextureReplacer` | `false` | set to true if the game has a Texture Replacer BepInEx plugin that loads .png textures from BepInEx/plugins/TextureReplacer (set TEXTURES_STRING below) |
+| `hasTextureReplacer` | `true` | set to true if the game has a Texture Replacer BepInEx plugin that loads .png textures from BepInEx/plugins/TextureReplacer (set TEXTURES_STRING below) |
 | `debug` | `false` | toggle for debug mode |
 | `exeHasGameVersion` | `false` | toggle: true if the game devs stamp the real game version (not just the Unity player version) into the exe ProductVersion |
 | `hasVersionFile` | `false` | set to true if there is a Version.info file that contains the game version number |
@@ -74,6 +74,8 @@ Mod types define where each category of mod gets deployed:
 | MelonLoader UserLibs | `castlevaniabelmontscurse-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
 | MelonPreferencesManager | `castlevaniabelmontscurse-melonprefman` | high | `{gamePath}/Mods` |
 | MelonLoader | `castlevaniabelmontscurse-melonloader` | low | `{gamePath}` |
+| Belmont Texture Overrider Textures | `castlevaniabelmontscurse-texturereplacer` | high | `{gamePath}/BepInEx/plugins/BelmontTextureOverrider/Textures` |
+| Belmont Outfit Addons Pack | `castlevaniabelmontscurse-outfitaddons` | high | `{gamePath}/BepInEx/plugins/BelmontOutfitAddons/Outfits` |
 | Assembly DLL Mod | `castlevaniabelmontscurse-assemblydll` | 60 | `{gamePath}` |
 | Assets/Resources File | `castlevaniabelmontscurse-assets` | 62 | `{gamePath}/Castlevania Belmont's Curse_Data` |
 
@@ -90,6 +92,8 @@ Installers run in priority order (lower number = tested first). The first instal
 | `castlevaniabelmontscurse-melonprefman` | 30 |
 | `castlevaniabelmontscurse-assemblydll` | 31 |
 | `castlevaniabelmontscurse-plugin` | 33 |
+| `castlevaniabelmontscurse-outfitaddons` | 34 |
+| `castlevaniabelmontscurse-texturereplacer` | 35 |
 | `castlevaniabelmontscurse-assets` | 37 |
 | `castlevaniabelmontscurse-fallback` | 49 |
 

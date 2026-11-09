@@ -1,9 +1,10 @@
 # Changelog
 
-## Planned Improvements (Not Yet Released)
+## [1.1.0] - 2026-11-09
 
 - Fixed: Mod files whose names only begin with README, CHANGELOG, or LICENSE (for example, License_Plates.dds) are no longer skipped during deployment.
 - Added: README and CHANGELOG files spelled with a hyphen, underscore, or space (for example, READ_ME.txt or Change Log.md) are now excluded from mod conflict detection and deployment.
+- Added: Support for the game's official mods (mod folders with an info.ini file), which now install to the game's Mods folder.
 
 ## [1.0.6] - 2026-11-01
 

@@ -1739,13 +1739,19 @@ Exit code `1` if anything lands under **Needs attention** — a non-suppressed e
 
 ## audit_frameworks.py
 
-Mechanical layer for the framework audit: looks through each UE4-5 game's Nexus mods (`resources/lists/games-ue4-5.txt`, minus `games-deprecated.txt` and `games-never-upload.txt` unless a game is named on the command line) for modding frameworks its extension would need real changes to support. A framework that loads regular mods from the `~mods` folder needs no change and is not a finding. Read-only: the output is a worklist to judge by hand, never a patch.
+Mechanical layer for the framework audit: looks through each game's Nexus mods for modding frameworks its extension would need real changes to support. A framework the extension's existing installers already cover, such as one that loads regular mods from the `~mods` folder, needs no change and is not a finding. Read-only: the output is a worklist to judge by hand, never a patch.
+
+Each template family has a profile in `PROFILES` that decides what counts as handled and which verdicts apply. The families are `ue4-5` (`games-ue4-5.txt`), `unity` (`games-unity-melonloader-bepinex.txt`) and `basic` (`games-basic.txt`). `games-deprecated.txt` and `games-never-upload.txt` are excluded unless a game is named on the command line, and a named game with no profile is reported as could not be checked. The paragraphs below describe the UE4-5 profile; the Unity and basic differences follow them.
 
 The first signal is the requirement graph. It scans the game's top 60 mods by downloads for mods that at least 5 others require, plus on-site mods that at least 3 top mods name as a requirement. Popular content mods get required too, so the count only picks candidates. Each candidate's own archive and up to 12 dependents' archives (Nexus returns a sample of 20) then decide the verdict.
 
 The second signal is file name fingerprints. It samples up to 240 files for each of `.json`, `.toml`, `.yaml`, `.xml` and `.ini` that the game does not already handle, and reports a name recurring across 5 or more mods. This catches a framework whose dependents declare no requirement. It is noisier, because it cannot see whether the file sits beside a pak.
 
 An extension counts as handled when it is in the pak family or the game's `PAKMOD_EXTRA_EXTS`, or when the game's `index.js` quotes it and `template-ue4-5` does not (a game-specific installer). A dependent one of the game's own installers would take is left out: a `.uplugin` plus the game's `MODKITMOD_FILE` when `hasModKit` is on, or a file name the game's `index.js` quotes and the template does not (inzoi's `appearance.dat`). Those file names are never fingerprints either.
+
+The Unity profile has no pak concept. Any archive with a `.dll` goes to the plugin installer, so the gap it looks for is dependents with no `.dll` that no other installer claims and that would reach the fallback installer. Handled extensions are `.dll`, the assets extensions, `.png` when `hasTextureReplacer` is on, `.json` when `hasCustomMods` is on, anything in a `*_EXTS` constant only the game defines, and anything the game quotes beyond the template. A dependent holding the game's `_Data` folder is left out, because the root installer takes it. Fingerprints also sample `.cfg` and skip file names the template quotes.
+
+The basic profile relies on `native-code` and `external`. It reports `loose-files` only for a game that quotes its own mod extension, because a game with none sends whole archives to its mod folder and an unhandled extension means nothing there. Save and settings extensions (`.sav`, `.save`, `.ini`, `.cfg`) neither mark a mod format nor count as unhandled files. A game whose `nexusPageId` is a constant is audited on that constant's domain (`gzdoom` uses `doom1993`).
 
 ### audit_frameworks.py — Environment Variables
 
@@ -1761,13 +1767,14 @@ No additional packages required (Python stdlib only). Needs `NEXUS_API_KEY`.
 
 ```sh
 python audit_frameworks.py
+python audit_frameworks.py --family basic
 python audit_frameworks.py deadasdisco tekken8
 python audit_frameworks.py --json
 python audit_frameworks.py --show-dropped
 python audit_frameworks.py --min-requirers 10
 ```
 
-Run without arguments for every UE4-5 game. `--json` emits a structured report instead. `--show-dropped` lists dropped and already-reviewed candidates with the reason, not just the counts. `--min-requirers` changes the candidate threshold (default 5).
+Run without arguments for every game in every family. `--family` limits the run to one family and can be repeated. `--json` emits a structured report instead. `--show-dropped` lists dropped and already-reviewed candidates with the reason, not just the counts. `--min-requirers` changes the candidate threshold (default 5).
 
 ### audit_frameworks.py — Output
 
@@ -1778,12 +1785,16 @@ One block per game with something to check, each row tagged with what it needs:
 - **`native-code`** — the candidate ships a `.dll`, `.asi` or `.exe` and `index.js` never names it. Check whether it installs correctly or needs a requirement entry.
 - **`external`** — an off-site requirement that at least 3 top mods list and `index.js` never names. There is no archive to read, so check it by hand.
 - **`fingerprint`** — a file name recurring across sampled mods.
+- **`loader-build`** (Unity) — the candidate ships a BepInEx or MelonLoader core tree and is not the page the game's `BEPINEX_PAGE_NO`, `MELON_PAGE_NO` or `CUSTOMLOADER_PAGE_NO` points at. If it is more than a stock repack, the usual fix is that page constant.
+- **`custom-loader`** (Unity) — the candidate ships a proxy dll or `.exe` with no such tree, and `index.js` never names it. The usual fix is the `hasCustomLoader` toggle set.
+
+Unity uses `loose-files` for dependents that reach the fallback installer, and leaves off-site BepInEx and MelonLoader links out of `external`. A Unity candidate that is only plugin dlls is dropped.
 
 A candidate with none of these is dropped: pak-only content mods, script or LogicMods loaders the UE4SS installers already cover, signature-bypass loaders (a `bitfix` folder or a known sig bypass file such as `sig.lua`), which the universal sig bypass already covers, and mods `index.js` already names. Each game checks at most 10 candidates. Any past that cap appear under dropped as not checked.
 
-Candidates checked and found to need no change go in `resources/lists/framework-audit-reviewed.txt`, a hand-maintained list this script never writes. Each line is `scope|target|reason`: scope is a `GAME_ID` or `*`, and target is part of a mod name, `=<name>` for the whole name only, `mod:<id>`, or `file:<name>` (`*` wildcards allowed). Name targets ignore case and punctuation. A plain name target matches any mod name containing it, so a broad one hides more than intended: `*|UE4SS` used to hide custom UE4SS builds such as legobatman's LOTDK UE4SS, which is why that entry is now `*|=UE4SS`. A line with no reason is ignored with a warning.
+Candidates checked and found to need no change go in `resources/lists/framework-audit-reviewed.txt`, a hand-maintained list this script never writes. Each line is `scope|target|reason`: scope is a `GAME_ID`, `*`, or `@<family>` for one template family, and target is part of a mod name, `=<name>` for the whole name only, `mod:<id>`, or `file:<name>` (`*` wildcards allowed). Name targets ignore case and punctuation. A plain name target matches any mod name containing it, so a broad one hides more than intended: `*|UE4SS` used to hide custom UE4SS builds such as legobatman's LOTDK UE4SS, which is why that entry is now `@ue4-5|=UE4SS`. A line with no reason is ignored with a warning.
 
-Exit code `1` if any game has a finding or could not be checked, `0` otherwise. Progress and warnings go to stderr, so `--json` output on stdout always parses.
+A game with no Nexus page (gzdoom) is listed under "Not on Nexus" and does not affect the exit code. Exit code `1` if any game has a finding or could not be checked, `0` otherwise. Progress and warnings go to stderr, so `--json` output on stdout always parses.
 
 ---
 

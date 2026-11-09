@@ -4305,7 +4305,8 @@ def nexus_download_file(domain, mod_id, file_id, api_key, dest_path):
     links = nexus_get_file_download_link(domain, mod_id, file_id, api_key)
     if not links:
         raise RuntimeError(f"nexus_download_file {domain}/{mod_id}/{file_id}: no download mirrors returned")
-    uri = links[0]["URI"]
+    # The CDN hands back file names unencoded, and urllib rejects a URL with a space in it.
+    uri = urllib.parse.quote(links[0]["URI"], safe="%/:=&?~#+!$,;'@()*[]")
     req = urllib.request.Request(uri, headers={"User-Agent": NEXUS_USER_AGENT})
     os.makedirs(os.path.dirname(dest_path) or ".", exist_ok=True)
     with urllib.request.urlopen(req, timeout=60) as resp, open(dest_path, "wb") as out:

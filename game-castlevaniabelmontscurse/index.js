@@ -2,8 +2,8 @@
 Name: Castlevania: Belmont's Curse Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
-Version: 1.0.3
-Date: 2026-11-01
+Version: 1.1.0
+Date: 2026-11-09
 Notes:
 -
 //////////////////////////////////////////*/
@@ -82,7 +82,7 @@ const enableSaveInstaller = false; //set to true if you want to enable the save 
 const hasCustomMods = false; //set to true if there are modTypes with folder paths dependent on which mod loader is installed
 const hasCustomLoader = false; //set to true if there is a custom mod loader
 const customLoaderInstaller = false; //set true if the custom loader uses an installer
-const hasTextureReplacer = false; //set to true if the game has a Texture Replacer BepInEx plugin that loads .png textures from BepInEx/plugins/TextureReplacer (set TEXTURES_STRING below)
+const hasTextureReplacer = true; //set to true if the game has a Texture Replacer BepInEx plugin that loads .png textures from BepInEx/plugins/TextureReplacer (set TEXTURES_STRING below)
 const debug = false; //toggle for debug mode
 const exeHasGameVersion = false; //toggle: true if the game devs stamp the real game version (not just the Unity player version) into the exe ProductVersion
 
@@ -535,14 +535,34 @@ const CUSTOM_PLUGIN_STRING = "XXX"; //string to ID Custom plugin file
 // -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//Texture Replacer (BepInEx plugin) textures - the plugin loads every .png under this folder,
+//Belmont Texture Overrider (BepInEx plugin) textures - the plugin loads every image under this folder,
 //subfolders included, and matches each by file name to an in-game texture
 const TEXTURES_ID = `${GAME_ID}-texturereplacer`;
-const TEXTURES_NAME = "Texture Replacer Textures";
-const TEXTURES_FOLDER = "TextureReplacer";
+const TEXTURES_NAME = "Belmont Texture Overrider Textures";
+const TEXTURES_FOLDER = path.join("BelmontTextureOverrider", "Textures");
 const TEXTURES_PATH = path.join(BEPINEX_PLUGINS_PATH, TEXTURES_FOLDER);
-const TEXTURES_EXTS = [".png"];
-const TEXTURES_STRING = "XXX"; //file name prefix of the game's textures (lowercased)
+const TEXTURES_EXTS = [
+  ".png",
+  ".tga",
+  ".dds",
+  ".jpg",
+  ".jpeg",
+  ".bmp",
+  ".tif",
+  ".tiff",
+  ".exr",
+  ".psd",
+  ".gif",
+  ".webp",
+  ".hdr",
+];
+const TEXTURES_STRING = "mc_"; //file name prefix of the game's textures (lowercased)
+
+//Belmont Outfit Addons (BepInEx plugin) packs - each pack is a folder holding an outfit.json
+const OUTFIT_ID = `${GAME_ID}-outfitaddons`;
+const OUTFIT_NAME = "Belmont Outfit Addons Pack";
+const OUTFIT_PATH = path.join(BEPINEX_PLUGINS_PATH, "BelmontOutfitAddons", "Outfits");
+const OUTFIT_FILES = ["outfit.json"]; //lowercased
 
 const MOD_PATH_DEFAULT = ".";
 let REQ_FILE = EXEC;
@@ -585,6 +605,7 @@ if (hasCustomLoader) {
 if (hasTextureReplacer) {
   MODTYPE_FOLDERS.push(TEXTURES_PATH);
 }
+MODTYPE_FOLDERS.push(OUTFIT_PATH);
 
 // -- END EDIT ZONE -- /////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -726,6 +747,12 @@ if (hasTextureReplacer) {
     targetPath: path.join("{gamePath}", TEXTURES_PATH),
   });
 }
+spec.modTypes.push({
+  id: OUTFIT_ID,
+  name: OUTFIT_NAME,
+  priority: "high",
+  targetPath: path.join("{gamePath}", OUTFIT_PATH),
+});
 
 //3rd party tools and launchers
 let tools = [
@@ -1515,6 +1542,80 @@ function installTextures(files) {
       destination: path.join(file.substr(idx)),
     };
   });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Installer Test for Belmont Outfit Addons packs
+function isOutfitFile(file) {
+  return OUTFIT_FILES.includes(path.basename(file).toLowerCase());
+}
+function testOutfit(files, gameId) {
+  const isMod = files.some((file) => isOutfitFile(file));
+  //an archive with a .dll is a plugin - leave it to the plugin installer
+  const isPlugin = files.some((file) => PLUGIN_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = gameId === spec.game.id && isMod && !isPlugin;
+
+  // Test for a mod installer.
+  if (
+    supported &&
+    files.find(
+      (file) =>
+        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
+        path.basename(path.dirname(file)).toLowerCase() === "fomod",
+    )
+  ) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Read the "id" from a pack's outfit.json, made safe for a folder name. Empty if there is no usable id.
+async function readOutfitId(destinationPath, modFile) {
+  try {
+    const raw = await fsp.readFile(path.join(destinationPath, modFile), "utf8");
+    const id = JSON.parse(raw.replace(/^﻿/, "")).id;
+    if (typeof id !== "string") {
+      return "";
+    }
+    return id
+      .replace(/[<>:"/\\|?*]/g, "_")
+      .trim()
+      .replace(/[. ]+$/, "");
+  } catch {
+    return "";
+  }
+}
+
+//Installer install Belmont Outfit Addons packs
+async function installOutfit(files, destinationPath) {
+  const setModTypeInstruction = { type: "setmodtype", value: OUTFIT_ID };
+  const archiveName = path
+    .basename(destinationPath)
+    .replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*/gi, "");
+
+  //An archive can hold several packs. Name each pack's folder after its id, falling back to the
+  //author's folder name, and drop everything around the packs.
+  const instructions = [];
+  for (const modFile of files.filter((file) => isOutfitFile(file))) {
+    const rootPath = path.dirname(modFile);
+    const rootPrefix = rootPath === "." ? "" : rootPath + path.sep;
+    const fallbackFolder = rootPath === "." ? archiveName : path.basename(rootPath);
+    const packFolder = (await readOutfitId(destinationPath, modFile)) || fallbackFolder;
+    files
+      .filter((file) => !file.endsWith(path.sep) && file.startsWith(rootPrefix))
+      .forEach((file) => {
+        instructions.push({
+          type: "copy",
+          source: file,
+          destination: path.join(packFolder, file.substr(rootPrefix.length)),
+        });
+      });
+  }
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
 }
@@ -3101,6 +3202,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(`${GAME_ID}-plugin`, 33, testPlugin, (files, workingDir) =>
     installPlugin(context.api, gameSpec, files, workingDir),
   );
+  context.registerInstaller(OUTFIT_ID, 34, testOutfit, installOutfit);
   if (hasTextureReplacer) {
     context.registerInstaller(TEXTURES_ID, 35, testTextures, installTextures);
   }

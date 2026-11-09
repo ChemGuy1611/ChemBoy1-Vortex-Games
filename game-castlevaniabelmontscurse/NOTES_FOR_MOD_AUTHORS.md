@@ -13,6 +13,8 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | BepInEx Configuration Manager | a `configurationmanager.dll` file | `BepInEx` |
 | Assembly Replacement Mods | a `GameAssembly.dll` file | the game folder |
 | BepInEx Plugin Mods | a `.dll` file built for BepInEx | `BepInEx\plugins\<ModName>` |
+| Belmont Outfit Addons Pack | - | `BepInEx\plugins\BelmontOutfitAddons\Outfits` |
+| Belmont Texture Overrider Textures | - | `BepInEx\plugins\BelmontTextureOverrider\Textures` |
 | Asset Replacement Mods | a `.assets`, `.resource` or `.ress` file | `Castlevania Belmont's Curse_Data` |
 | Fallback Installer | anything not matched above | the game folder |
 
@@ -105,6 +107,18 @@ Installs to: `BepInEx\plugins\<ModName>`
 **Common mistakes:**
 
 - Shipping a plugin together with loader files, which makes the archive look like a loader install instead.
+
+## Belmont Outfit Addons Pack
+
+Handled by the `testOutfit` installer. Inspect the extension source for the exact archive layout it expects.
+
+Installs to: `BepInEx\plugins\BelmontOutfitAddons\Outfits`
+
+## Belmont Texture Overrider Textures
+
+Handled by the `testTextures` installer. Inspect the extension source for the exact archive layout it expects.
+
+Installs to: `BepInEx\plugins\BelmontTextureOverrider\Textures`
 
 ## Asset Replacement Mods
 

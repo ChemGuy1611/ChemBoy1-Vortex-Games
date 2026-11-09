@@ -14,6 +14,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Assembly Replacement Mods | a `GameAssembly.dll` file | the game folder |
 | BepInEx Plugin Mods | a `.dll` file built for BepInEx | `BepInEx\plugins\<ModName>` |
 | Asset Replacement Mods | a `.assets`, `.resource` or `.ress` file | `StarsandIsland_Data` |
+| Official Mod | - | - |
 | Fallback Installer | anything not matched above | the game folder |
 
 Paths are relative to the game's install folder.
@@ -119,6 +120,10 @@ Installs to: `StarsandIsland_Data`
 **Common mistakes:**
 
 - Asset files must keep their original names to replace the right bundle.
+
+## Official Mod
+
+Handled by the `testOfficial` installer. Inspect the extension source for the exact archive layout it expects.
 
 ## Fallback Installer
 
