@@ -98,7 +98,7 @@ from vortex_utils import (
     REPO_ROOT, TITLE_IMAGES_DIR, BANNER_IMAGES_DIR, js_string_literal,
     http_get, http_get_bytes, http_get_json,
     name_lookup_variants,
-    lookup_pcgamingwiki, pcgw_page_wikitext, parse_pcgw_availability,
+    lookup_pcgamingwiki, pcgw_page_wikitext, parse_pcgw_availability, pcgw_epic_is_ubisoft_key,
     parse_pcgw_data_paths, format_pcgw_path,
     parse_ue_engine_version,
     get_api_key, run_generate_explained_batch,
@@ -401,10 +401,12 @@ def lookup_gog_executable(gog_id):
 
 def fetch_pcgw_availability(page_title):
     """Fetch PCGamingWiki page wikitext and check the Availability section for store presence.
-    Returns dict: {'xbox': bool, 'xbox_url': str|None, 'epic_url': str|None, 'engine_version': str|None}.
+    Returns dict: {'xbox': bool, 'xbox_url': str|None, 'epic_url': str|None, 'epic_ubisoft_key': bool,
+    'engine_version': str|None}. epic_ubisoft_key is True when the Epic row's DRM is Ubisoft
+    Connect alone (a Ubisoft launcher key, never an EPICAPP_ID - see pcgw_epic_is_ubisoft_key).
     engine_version is a 4-part string like '5.4.4.0' parsed from {{Infobox game/row/engine|...|build=X.Y.Z}}."""
-    result = {'xbox': False, 'xbox_url': None, 'epic_url': None, 'engine_version': None,
-              'unity_paths': {}, 'wikitext': None}
+    result = {'xbox': False, 'xbox_url': None, 'epic_url': None, 'epic_ubisoft_key': False,
+              'engine_version': None, 'unity_paths': {}, 'wikitext': None}
     if not page_title:
         return result
     try:
@@ -417,6 +419,7 @@ def fetch_pcgw_availability(page_title):
             result['xbox_url'] = f"https://apps.microsoft.com/detail/{listed['xbox']}"
         if listed['epic']:
             result['epic_url'] = f"https://store.epicgames.com/en-US/p/{listed['epic']}"
+            result['epic_ubisoft_key'] = pcgw_epic_is_ubisoft_key(wikitext)
         result['engine_version'] = parse_ue_engine_version(wikitext)['engine_version']
         result['unity_paths'] = parse_unity_data_paths(wikitext)
     except Exception as e:
@@ -759,17 +762,27 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
     time.sleep(0.3)
     availability = fetch_pcgw_availability(pcgw_title)
     xbox_found = availability['xbox']
-    epic_found = bool(availability.get('epic_url'))
+    # A Ubisoft game's Epic copy that is only a Ubisoft Connect key gets no EPICAPP_ID.
+    epic_ubisoft_key = availability.get('epic_ubisoft_key', False)
+    epic_found = bool(availability.get('epic_url')) and not epic_ubisoft_key
     engine_version = availability['engine_version']
     resolved_epic_id = None
     epic_offer_id = None
+    epic_error = None
     if epic_found:
         time.sleep(0.3)
-        resolved_epic_id, epic_offer_id = fetch_epic_app_id(game_name)
-    if not epic_found:
+        try:
+            resolved_epic_id, epic_offer_id = fetch_epic_app_id(game_name)
+        except Exception as err:  # egdata down or changed - scaffold anyway
+            epic_error = err
+    if epic_ubisoft_key:
+        print(f"  Epic     : Ubisoft Connect key only (PCGW DRM) - skipped, EPICAPP_ID stays null")
+    elif not epic_found:
         print(f"  Epic     : not found")
     elif resolved_epic_id:
         print(f"  Epic     : {resolved_epic_id}")
+    elif epic_error:
+        print(f"  Epic     : found, egdata lookup failed ({epic_error}) (set ID manually)")
     else:
         print(f"  Epic     : found (set ID manually)")
     resolved_xbox_app_id = None

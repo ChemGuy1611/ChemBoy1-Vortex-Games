@@ -8,7 +8,8 @@ Steam appinfo (steamcmd.net), and Microsoft Store catalog lookups, and logging.
 
 Usage:
     from vortex_utils import (
-        REPO_ROOT, PCGW_API, PCGW_USER_AGENT, NEXUS_USER_AGENT, EGDATA_API,
+        REPO_ROOT, PCGW_API, PCGW_USER_AGENT, NEXUS_USER_AGENT, EGDATA_API, EGDATA_SEARCH_PATH,
+        EGDATA_REQUEST_INTERVAL, EGDATA_TARPIT_WAIT, EGDATA_TARPIT_RETRIES, EgdataTarpitError,
         TITLE_IMAGES_DIR, BANNER_IMAGES_DIR, LISTS_DIR,
         GUI_FLAGS_PATH, GUI_STATS_PATH,
         GAME_PREFIX, HELPER_PREFIX, TEMPLATE_PREFIX, VORTEX_PLUGINS_DIR, VORTEX_DEV_PLUGINS_DIR, NEW_EXTENSION_VERSION,
@@ -19,6 +20,7 @@ Usage:
         roman_to_arabic, arabic_to_roman,
         name_lookup_variants, lookup_pcgamingwiki, pcgw_get_json,
         pcgw_title_from_url, pcgw_page_wikitext, parse_pcgw_availability,
+        pcgw_epic_is_ubisoft_key, is_ubisoft_extension,
         get_api_key, http_get, http_get_bytes, http_get_json, http_post_json, zip_listing, SEVENZIP,
         nexus_v3_get, nexus_v3_post_json, nexus_v3_patch_json,
         egdata_search_queries, normalize_title_for_match, store_title_matches,
@@ -129,6 +131,9 @@ REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 PCGW_API    = "https://www.pcgamingwiki.com/w/api.php"
 EGDATA_API  = "https://api.egdata.app"
+# egdata retired POST /search in 2026 (HTTP 410 "DEPRECATED"). v2 takes the same
+# body ({"title", "offerType", "limit"}) but returns its hits under "offers".
+EGDATA_SEARCH_PATH = "/search/v2/search"
 
 # PCGamingWiki requires a descriptive User-Agent with contact information and
 # rejects generic library defaults with HTTP 403. Sent on every PCGW request via
@@ -768,6 +773,35 @@ def parse_pcgw_availability(wikitext):
     return found
 
 
+def pcgw_epic_is_ubisoft_key(wikitext):
+    """Return True when PCGamingWiki's Epic Games Store row shows the Epic copy is only a
+    Ubisoft Connect key.
+
+    Most Ubisoft games sold on Epic install and run through the Ubisoft launcher, so an
+    EPICAPP_ID never applies to them. PCGW records this in the row's DRM column, which
+    then names only Ubisoft ("Uplay" / "Ubisoft Connect"). Some Ubisoft releases also run
+    through Epic (Anno 117 Pax Romana: "Epic Games Store, Uplay") and keep their Epic id,
+    so the DRM column must name Ubisoft and not Epic. No Epic row -> False."""
+    m = re.search(
+        rf'\{{\{{Availability/row\|\s*(?:{_PCGW_AVAILABILITY_STORES["epic"]})\s*\|[^|\n]*\|([^|\n]*)\|',
+        wikitext or "", re.IGNORECASE,
+    )
+    if not m:
+        return False
+    drm = m.group(1)
+    return bool(re.search(r"uplay|ubisoft", drm, re.IGNORECASE)) and not re.search(r"epic", drm, re.IGNORECASE)
+
+
+def is_ubisoft_extension(src):
+    """Return True if an extension's index.js declares UPLAYAPP_ID, with any value but null.
+
+    Only Ubisoft games (and the anvilengine / farcry / snowdropengine templates) carry the
+    const, so its declaration is the extension-side signal that a game is Ubisoft's -
+    used where no PCGamingWiki page is at hand to run pcgw_epic_is_ubisoft_key()."""
+    value = const_value(src, "UPLAYAPP_ID")
+    return value is not None and value != "null"
+
+
 # == PCGamingWiki save/config path parsing =====================================
 
 _PCGW_BASE_DISPLAY = {
@@ -1012,15 +1046,17 @@ def get_ue_engine_version(game_name, debug=False):
 # == egdata.app helpers ========================================================
 
 def egdata_search_queries(game_name):
-    """Return the ordered list of title strings to try against egdata's /search.
+    """Return the ordered list of title strings to try against egdata's search.
 
-    egdata's search returns zero results for any query containing an apostrophe
-    (straight or curly), hyphen, comma or underscore, even when the indexed title
-    contains one, and a period is read literally ("S.T.A.L.K.E.R. 2" matches an
-    unrelated title). So every name variant is also offered as bare words, with
-    each run of punctuation replaced by a space. Built on top of
-    name_lookup_variants(), so franchise-prefix, numeral and edition-suffix
-    alternates are covered too. Order runs exact-first, loosest-last.
+    The retired v1 search returned zero results for any query containing an
+    apostrophe, hyphen, comma or underscore, so every name variant is also
+    offered as bare words, with each run of punctuation replaced by a space.
+    The v2 search (EGDATA_SEARCH_PATH) reversed that: punctuated titles hit,
+    and some bare-word forms ("Warhammer 40 000 Rogue Trader") now miss. The
+    exact form is tried first, so the bare-word variants only act as a fallback.
+    Built on top of name_lookup_variants(), so franchise-prefix, numeral and
+    edition-suffix alternates are covered too. Order runs exact-first,
+    loosest-last.
     """
     queries = []
     for base in name_lookup_variants(game_name):
@@ -1090,46 +1126,34 @@ def store_title_matches(game_name, offer_title):
 def fetch_epic_app_id(game_name):
     """Fetch the EPICAPP_ID for a game from egdata.app using a two-step chain.
 
-    Step 1: POST /search with {"title": <query>, "offerType": "BASE_GAME", "limit": 5}
-            for each query from egdata_search_queries(game_name), taking the first
-            element whose title passes store_title_matches() -> its id (offer ID)
+    Step 1: search (EGDATA_SEARCH_PATH) with {"title": <query>, "offerType": "BASE_GAME",
+            "limit": 5} for each query from egdata_search_queries(game_name), taking the
+            first offer whose title passes store_title_matches() -> its id (offer ID)
     Step 2: GET /offers/{offer_id}/items
             -> find item with entitlementType == "EXECUTABLE"
             -> return releaseInfo[0].appId
 
-    Returns (app_id, offer_id) tuple, or (None, None) if not found or on any error.
+    Returns (app_id, offer_id) tuple, or (None, None) if the game is not found.
+    Network and HTTP errors propagate: swallowing them made a retired endpoint
+    look like "no Epic version" for every game, so callers decide how to report.
     """
     offer_id = None
-    for i, query in enumerate(egdata_search_queries(game_name)):
-        try:
-            if i:
-                time.sleep(0.3)
-            result = http_post_json(
-                f"{EGDATA_API}/search",
-                {"title": query, "offerType": "BASE_GAME", "limit": 5},
-            )
-            for element in result.get("elements", []):
-                if element.get("id") and store_title_matches(game_name, element.get("title")):
-                    offer_id = element["id"]
-                    break
-            if offer_id:
+    for query in egdata_search_queries(game_name):
+        for offer in _egdata_search(query, "BASE_GAME"):
+            if offer.get("id") and store_title_matches(game_name, offer.get("title")):
+                offer_id = offer["id"]
                 break
-        except Exception:
-            return None, None
+        if offer_id:
+            break
     if not offer_id:
         return None, None
 
-    try:
-        time.sleep(0.3)
-        items = json.loads(http_get(f"{EGDATA_API}/offers/{offer_id}/items"))
-        for item in items:
-            if item.get("entitlementType") == "EXECUTABLE":
-                for release in item.get("releaseInfo", []):
-                    app_id = release.get("appId")
-                    if app_id:
-                        return app_id, offer_id
-    except Exception:
-        return None, None
+    for item in _egdata_offer_items(offer_id):
+        if item.get("entitlementType") == "EXECUTABLE":
+            for release in item.get("releaseInfo", []):
+                app_id = release.get("appId")
+                if app_id:
+                    return app_id, offer_id
 
     return None, None
 
@@ -1138,21 +1162,82 @@ def fetch_epic_app_id(game_name):
 EGDATA_LOOSE_OFFER_CAP = 40
 
 
+# egdata pacing and bot-mitigation handling. Past roughly 90 requests in a few
+# minutes egdata "tarpits" a client: HTTP 204, empty body, header
+# x-egdata-mitigation: tarpit, each reply held back 3-5 s. Under load it can
+# also answer 200 with a JSON object that is not the requested data (a search
+# reply without "offers", an object where the items list belongs). urllib reads
+# both as success, so before this check they surfaced as parse errors or, worse,
+# as an empty search - which verify_epic_app_id reported as an unverified id.
+EGDATA_REQUEST_INTERVAL = 1.0  # seconds before every egdata request
+EGDATA_TARPIT_WAIT = 30        # seconds to back off after a tarpit reply
+EGDATA_TARPIT_RETRIES = 3
+
+
+class EgdataTarpitError(RuntimeError):
+    """egdata kept answering with its bot-mitigation tarpit after every retry."""
+
+
+def _egdata_json(path, body=None, valid=None):
+    """Request an egdata path (GET, or POST JSON when body is given) and return parsed JSON.
+
+    Every call waits EGDATA_REQUEST_INTERVAL first. A tarpit reply (HTTP 204, an
+    empty body, or parsed JSON that fails the caller's valid(obj) check) waits
+    EGDATA_TARPIT_WAIT seconds and retries, up to EGDATA_TARPIT_RETRIES times,
+    then raises EgdataTarpitError quoting the last body. Network errors, 429 and
+    5xx keep the shared _execute_with_retry handling.
+    """
+    url = f"{EGDATA_API}{path}"
+    headers = {"User-Agent": "Mozilla/5.0"}
+    data = None
+    if body is not None:
+        data = json.dumps(body).encode("utf-8")
+        headers["Content-Type"] = "application/json"
+
+    def _do():
+        req = urllib.request.Request(url, data=data, headers=headers)
+        with urllib.request.urlopen(req, timeout=_HTTP_TIMEOUT) as resp:
+            return resp.status, resp.read()
+
+    for attempt in range(EGDATA_TARPIT_RETRIES + 1):
+        time.sleep(EGDATA_TARPIT_WAIT if attempt else EGDATA_REQUEST_INTERVAL)
+        status, raw = _execute_with_retry(_do)
+        if status == 204 or not raw.strip():
+            continue
+        obj = json.loads(raw.decode("utf-8"))
+        if valid is None or valid(obj):
+            return obj
+    raise EgdataTarpitError(
+        f"egdata bot-mitigation on {path} after {EGDATA_TARPIT_RETRIES} retries "
+        f"(HTTP {status}, body {raw[:200]!r})"
+    )
+
+
 def _egdata_search(title, offer_type=None, limit=5):
-    """POST /search and return the elements list. No offerType = every offer type."""
+    """POST the v2 search and return its offers list. No offerType = every offer type."""
     body = {"title": title, "limit": limit}
     if offer_type:
         body["offerType"] = offer_type
-    return http_post_json(f"{EGDATA_API}/search", body).get("elements", [])
+    # A zero-hit search still carries "offers": []. A reply without it, or one whose
+    # meta says the search timed out, is not an answer and is retried.
+    reply = _egdata_json(
+        EGDATA_SEARCH_PATH, body,
+        valid=lambda obj: (isinstance(obj, dict) and isinstance(obj.get("offers"), list)
+                           and not (obj.get("meta") or {}).get("timed_out")),
+    )
+    return reply["offers"]
+
+
+def _egdata_offer_items(offer_id):
+    """Return an offer's items list (GET /offers/{id}/items)."""
+    return _egdata_json(f"/offers/{offer_id}/items", valid=lambda obj: isinstance(obj, list))
 
 
 def _egdata_offer_app_ids(offer_id):
     """Return [(appId, is_executable)] for every release on an offer's items."""
-    time.sleep(0.3)
-    items = json.loads(http_get(f"{EGDATA_API}/offers/{offer_id}/items"))
     return [
         (release["appId"], item.get("entitlementType") == "EXECUTABLE")
-        for item in items
+        for item in _egdata_offer_items(offer_id)
         for release in item.get("releaseInfo", [])
         if release.get("appId")
     ]
@@ -1185,7 +1270,6 @@ def verify_epic_app_id(game_name, app_id, base_game=True):
         if base_game:
             offers = {}
             for query in queries:
-                time.sleep(0.3)
                 for element in _egdata_search(query, "BASE_GAME"):
                     if element.get("id") and store_title_matches(game_name, element.get("title")):
                         offers[element["id"]] = element["title"]
@@ -1204,7 +1288,6 @@ def verify_epic_app_id(game_name, app_id, base_game=True):
         seen = set()
         for offer_type in ("BASE_GAME", None):
             for query in queries:
-                time.sleep(0.3)
                 for element in _egdata_search(query, offer_type, limit=25):
                     offer_id = element.get("id")
                     if not offer_id or offer_id in seen:

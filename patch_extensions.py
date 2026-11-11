@@ -32,9 +32,9 @@ Usage:
     python patch_extensions.py GAME_ID [GAME_ID ...] --only PATCH_NAME
     python patch_extensions.py --audit                        # run the read-only audits (installer priorities + FOMOD checks + store ID wiring) then exit
     python patch_extensions.py GAME_ID [GAME_ID ...] --audit  # scope audits to specific games only
-    python patch_extensions.py --audit --resolve              # also look for missing Epic/GOG/Xbox versions: egdata + gogdb search, plus a PCGamingWiki availability cross-check, for every unresolved EPICAPP_ID/GOGAPP_ID/XBOXAPP_ID; Xbox hits print their PC package format and protected WindowsApps formats are ignored (network-bound, ~10 min for the whole repo, read-only)
+    python patch_extensions.py --audit --resolve              # also look for missing Epic/GOG/Xbox versions: egdata + gogdb search, plus a PCGamingWiki availability cross-check, for every unresolved EPICAPP_ID/GOGAPP_ID/XBOXAPP_ID; Xbox hits print their PC package format and protected WindowsApps formats are ignored (network-bound, ~30 min for the whole repo - egdata is paced at 1 s per request, read-only)
     python patch_extensions.py --audit --resolve xbox         # limit the resolution pass to one store (epic, gog, xbox, or all)
-    python patch_extensions.py --audit --verify               # also check every filled-in EPICAPP_ID / GOGAPP_ID / XBOXAPP_ID against the store's own catalog (egdata.app, api.gog.com, Microsoft Store + PCGamingWiki): typos, ids that match nothing, ids copied from another game, ids shared by two extensions, wrong Xbox publisher hashes (network-bound, ~15 min for the whole repo, read-only)
+    python patch_extensions.py --audit --verify               # also check every filled-in EPICAPP_ID / GOGAPP_ID / XBOXAPP_ID against the store's own catalog (egdata.app, api.gog.com, Microsoft Store + PCGamingWiki): typos, ids that match nothing, ids copied from another game, ids shared by two extensions, wrong Xbox publisher hashes (network-bound, ~25 min for the whole repo, Epic alone ~15, read-only)
     python patch_extensions.py --audit --verify gog           # limit the verification pass to one store (epic, gog, xbox, or all)
     python patch_extensions.py GAME_ID --audit --verify       # verify one extension's store ids only
     python patch_extensions.py --audit --show-suppressed      # also list the findings parked by an '//!audit-skip: <rule> - <reason>' marker, with their reasons
@@ -58,6 +58,7 @@ from vortex_utils import (
     REPO_ROOT, TITLE_IMAGES_DIR,
     lookup_pcgamingwiki, extract_game_name,
     pcgw_title_from_url, pcgw_page_wikitext, parse_pcgw_availability,
+    pcgw_epic_is_ubisoft_key, is_ubisoft_extension,
     run_generate_explained_batch,
     fetch_epic_app_id, verify_epic_app_id, verify_gog_app_id, verify_xbox_identity, PCGW_FETCH_INTERVAL,
     fetch_gog_app_id, fetch_xbox_identity, add_to_discovery_ids,
@@ -121,7 +122,10 @@ def patch_epic_app_id(game_id, src, context):
     if not game_name:
         return src, False, "could not extract game name"
 
-    app_id, _ = fetch_epic_app_id(game_name)
+    try:
+        app_id, _ = fetch_epic_app_id(game_name)
+    except Exception as err:
+        return src, False, f"egdata lookup failed for '{game_name}': {err}"
     if not app_id:
         return src, False, f"not found on egdata.app for '{game_name}'"
 
@@ -2184,6 +2188,7 @@ def audit_store_id_resolve(folder_paths, stores):
         const, resolver, second_field = STORE_RESOLVERS[store]
         targets = []
         parked = 0
+        ubisoft = 0
         for folder, index_path in folder_paths:
             if not folder.startswith("game-"):
                 continue  # templates carry a placeholder GAME_NAME ("XXX"); nothing to look up
@@ -2194,12 +2199,19 @@ def audit_store_id_resolve(folder_paths, stores):
             if is_store_id_parked(src, const):
                 parked += 1
                 continue
+            # Ubisoft games on Epic are mostly Ubisoft Connect keys, never an EPICAPP_ID.
+            # The PCGW cross-check still reads each page's DRM column, so a Ubisoft game
+            # that really runs through Epic is not lost by skipping the name search here.
+            if store == "epic" and is_ubisoft_extension(src):
+                ubisoft += 1
+                continue
             game_name = extract_game_name(src)
             if game_name:
                 targets.append((folder, game_name))
 
+        skipped = f", {ubisoft} Ubisoft skipped" if ubisoft else ""
         print(f"\n--- {store}: {len(targets)} extension(s) with an unresolved {const}"  # noqa: raw-log-print
-              f" ({parked} parked by audit-skip) ---")
+              f" ({parked} parked by audit-skip{skipped}) ---")
         for folder, game_name in targets:
             try:
                 app_id, extra = resolver(game_name)
@@ -2266,18 +2278,23 @@ def audit_store_pcgw_crosscheck(folder_paths, stores):
           flush=True)
     total = 0
     ignored = 0
+    ubisoft_keys = []
     protected = []
     for i, (folder, title, wanted) in enumerate(targets):
         if i:
             time.sleep(PCGW_FETCH_INTERVAL)
         try:
-            listed = parse_pcgw_availability(pcgw_page_wikitext(title))
+            wikitext = pcgw_page_wikitext(title)
+            listed = parse_pcgw_availability(wikitext)
         except Exception as err:  # one bad page must not abort the pass
             print(f"  {folder}: PCGW fetch failed for '{title}' -- {err}", flush=True)  # noqa: raw-log-print
             continue
         for store in wanted:
             ref = listed[store]
             if not ref:
+                continue
+            if store == "epic" and pcgw_epic_is_ubisoft_key(wikitext):
+                ubisoft_keys.append(folder)
                 continue
             const = PCGW_STORE_CONSTS[store]
             detail = f"PCGW lists {PCGW_STORE_LABELS[store]} '{ref}'"
@@ -2299,6 +2316,9 @@ def audit_store_pcgw_crosscheck(folder_paths, stores):
     if ignored:
         print(f"  ({ignored} Ubisoft/EA Game Pass library entries ignored - launcher titles, not Xbox versions)",  # noqa: raw-log-print
               flush=True)
+    if ubisoft_keys:
+        print(f"  ({len(ubisoft_keys)} Epic rows ignored - Ubisoft Connect key only, never an EPICAPP_ID: "  # noqa: raw-log-print
+              f"{', '.join(ubisoft_keys)})", flush=True)
     if protected:
         print(f"  ({len(protected)} protected-format Xbox packages ignored - encrypted WindowsApps installs, "  # noqa: raw-log-print
               f"not moddable: {', '.join(protected)})", flush=True)
@@ -2381,7 +2401,7 @@ def audit_epic_verify(folder_paths):
     eyeballed. Returns the finding count (shared + mismatch + unverified + failed).
     """
     targets, parked = _collect_store_values(folder_paths, "EPICAPP_ID")
-    _print_verify_header("EPICAPP_ID", targets, parked, 2)
+    _print_verify_header("EPICAPP_ID", targets, parked, 7)
     findings = _report_shared_values(targets)
 
     loose = []
