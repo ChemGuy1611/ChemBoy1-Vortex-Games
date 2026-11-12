@@ -9,7 +9,7 @@ Steam appinfo (steamcmd.net), and Microsoft Store catalog lookups, and logging.
 Usage:
     from vortex_utils import (
         REPO_ROOT, PCGW_API, PCGW_USER_AGENT, NEXUS_USER_AGENT, EGDATA_API, EGDATA_SEARCH_PATH,
-        EGDATA_REQUEST_INTERVAL, EGDATA_TARPIT_WAIT, EGDATA_TARPIT_RETRIES, EgdataTarpitError,
+        EGDATA_SEARCH_COUNTRY, EGDATA_REQUEST_INTERVAL, EGDATA_TARPIT_WAIT, EGDATA_TARPIT_RETRIES, EgdataTarpitError,
         TITLE_IMAGES_DIR, BANNER_IMAGES_DIR, LISTS_DIR,
         GUI_FLAGS_PATH, GUI_STATS_PATH,
         GAME_PREFIX, HELPER_PREFIX, TEMPLATE_PREFIX, VORTEX_PLUGINS_DIR, VORTEX_DEV_PLUGINS_DIR, NEW_EXTENSION_VERSION,
@@ -133,8 +133,10 @@ REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
 PCGW_API    = "https://www.pcgamingwiki.com/w/api.php"
 EGDATA_API  = "https://api.egdata.app"
 # egdata retired POST /search in 2026 (HTTP 410 "DEPRECATED"). v2 takes the same
-# body ({"title", "offerType", "limit"}) but returns its hits under "offers".
+# fields ("title", "offerType", "limit") and returns its hits under "offers". It is
+# a GET with a query string: a POST to it answers 303 pointing at that GET form.
 EGDATA_SEARCH_PATH = "/search/v2/search"
+EGDATA_SEARCH_COUNTRY = "US"  # the country egdata's own POST redirect fills in
 
 # PCGamingWiki requires a descriptive User-Agent with contact information and
 # rejects generic library defaults with HTTP 403. Sent on every PCGW request via
@@ -1196,8 +1198,8 @@ class EgdataTarpitError(RuntimeError):
     """egdata kept answering with its bot-mitigation tarpit after every retry."""
 
 
-def _egdata_json(path, body=None, valid=None):
-    """Request an egdata path (GET, or POST JSON when body is given) and return parsed JSON.
+def _egdata_json(path, valid=None):
+    """GET an egdata path (query string included) and return parsed JSON.
 
     Every call waits EGDATA_REQUEST_INTERVAL first. A tarpit reply (HTTP 204, an
     empty body, or parsed JSON that fails the caller's valid(obj) check) waits
@@ -1207,13 +1209,9 @@ def _egdata_json(path, body=None, valid=None):
     """
     url = f"{EGDATA_API}{path}"
     headers = {"User-Agent": "Mozilla/5.0"}
-    data = None
-    if body is not None:
-        data = json.dumps(body).encode("utf-8")
-        headers["Content-Type"] = "application/json"
 
     def _do():
-        req = urllib.request.Request(url, data=data, headers=headers)
+        req = urllib.request.Request(url, headers=headers)
         with urllib.request.urlopen(req, timeout=_HTTP_TIMEOUT) as resp:
             return resp.status, resp.read()
 
@@ -1232,14 +1230,14 @@ def _egdata_json(path, body=None, valid=None):
 
 
 def _egdata_search(title, offer_type=None, limit=5):
-    """POST the v2 search and return its offers list. No offerType = every offer type."""
-    body = {"title": title, "limit": limit}
+    """GET the v2 search and return its offers list. No offerType = every offer type."""
+    params = {"country": EGDATA_SEARCH_COUNTRY, "limit": limit, "title": title}
     if offer_type:
-        body["offerType"] = offer_type
+        params["offerType"] = offer_type
     # A zero-hit search still carries "offers": []. A reply without it, or one whose
     # meta says the search timed out, is not an answer and is retried.
     reply = _egdata_json(
-        EGDATA_SEARCH_PATH, body,
+        f"{EGDATA_SEARCH_PATH}?{urllib.parse.urlencode(params)}",
         valid=lambda obj: (isinstance(obj, dict) and isinstance(obj.get("offers"), list)
                            and not (obj.get("meta") or {}).get("timed_out")),
     )

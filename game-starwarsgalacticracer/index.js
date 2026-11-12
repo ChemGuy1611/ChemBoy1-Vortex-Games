@@ -2,8 +2,8 @@
 Name: STAR WARS: Galactic Racer Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.1.1
-Date: 2026-11-06
+Version: 1.2.0
+Date: 2026-11-12
 Notes:
 -
 ////////////////////////////////////////////////*/
@@ -52,12 +52,12 @@ const LOCALAPPDATA = util.getVortexPath("localAppData");
 const GAME_ID = "starwarsgalacticracer"; //same as Nexus domain
 const STEAMAPP_ID = "4078430"; // https://steamdb.info/app/4078430/
 const STEAMAPP_ID_DEMO = null; //VERIFY if the EPIC_CODE_NAME and EXEC_DEMO match Steam full game
-const EPICAPP_ID = "XXX"; // https://store.epicgames.com/en-US/p/star-wars-galactic-racer-246fdc
+const EPICAPP_ID = "0dac888d0ced4360a749c9d2760b8d24"; //from egdata.app // https://store.epicgames.com/en-US/p/star-wars-galactic-racer-246fdc
 const GOGAPP_ID = null; // from gogdb.org
 const XBOXAPP_ID = null; //from appxmanifest.xml
 const XBOXEXECNAME = "AppUEGameShipping"; //from appxmanifest.xml
 const XBOX_PUB_ID = null; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const GAME_NAME = "STAR WARS: Galactic Racer";
 const GAME_NAME_SHORT = "SW Galactic Racer"; //Try for 8-10 characters
